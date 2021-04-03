@@ -1,12 +1,12 @@
 import React from 'react';
 import {Text, View} from 'react-native';
 
-const Home = () => {
+const WalletStack = () => {
   return (
     <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-      <Text>Home!</Text>
+      <Text>Wallet!</Text>
     </View>
   );
 };
 
-export default Home;
+export default WalletStack;

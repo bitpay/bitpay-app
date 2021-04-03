@@ -1,12 +1,12 @@
 import React from 'react';
 import {Text, View} from 'react-native';
 
-const Card = () => {
+const HomeStack = () => {
   return (
     <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-      <Text>Card!</Text>
+      <Text>Home!</Text>
     </View>
   );
 };
 
-export default Card;
+export default HomeStack;
