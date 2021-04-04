@@ -6,16 +6,35 @@ import logger from 'redux-logger'; // https://github.com/LogRocket/redux-logger
 import {composeWithDevTools} from 'redux-devtools-extension';
 import AsyncStorage from '@react-native-community/async-storage';
 import {persistStore, persistReducer} from 'redux-persist'; // https://github.com/rt2zz/redux-persist
+import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 
-const persistConfig = {
-  key: 'root',
+const basePersistConfig = {
   storage: AsyncStorage,
-  whitelist: [],
+  stateReconciler: autoMergeLevel2,
 };
+
+const rootPersistConfig = {
+  ...basePersistConfig,
+  key: 'root',
+  blacklist: ['APP', 'AUTH'],
+};
+
+/*
+ * Create a rootReducer using combineReducers
+ * Set persist config for each and whitelist/blacklist store values
+ * redux-persist will automatically persist and rehydrate store from async storage during app init
+ * */
 
 const rootReducer = combineReducers({
   APP: appReducer,
-  AUTH: authReducer,
+  AUTH: persistReducer(
+    {
+      ...basePersistConfig,
+      key: 'AUTH',
+      whitelist: ['account'],
+    },
+    authReducer,
+  ),
 });
 
 const getStore = () => {
@@ -26,7 +45,8 @@ const getStore = () => {
     middlewareEnhancers = composeWithDevTools(middlewareEnhancers);
   }
 
-  const persistedReducer = persistReducer(persistConfig, rootReducer);
+  // @ts-ignore
+  const persistedReducer = persistReducer(rootPersistConfig, rootReducer);
   const store = createStore(persistedReducer, undefined, middlewareEnhancers);
   const persistor = persistStore(store);
 
