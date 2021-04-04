@@ -1,9 +1,11 @@
 import {Action, applyMiddleware, combineReducers, createStore} from 'redux';
+import {appReducer} from './app/app.reducer';
 import {authReducer} from './auth/auth.reducer';
 import thunkMiddleware, {ThunkAction} from 'redux-thunk';
 import {composeWithDevTools} from 'redux-devtools-extension';
 
 const rootReducer = combineReducers({
+  APP: appReducer,
   AUTH: authReducer,
 });
 

@@ -10,6 +10,7 @@ const startGetSession = (): Thunk => async (dispatch, getState) => {
     console.log(session);
   } catch (err) {
     console.error(err);
+    dispatch(failedGetSession());
   }
 };
 
@@ -29,7 +30,5 @@ const successCreateAccount = (account: Account): AuthActionType => ({
 
 export const AuthActions = {
   startGetSession,
-  successGetSession,
-  failedGetSession,
   successCreateAccount,
 };
