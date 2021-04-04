@@ -1,6 +1,7 @@
 import {Action, applyMiddleware, combineReducers, createStore} from 'redux';
 import {authReducer} from './auth/auth.reducer';
 import thunkMiddleware, {ThunkAction} from 'redux-thunk';
+import {composeWithDevTools} from 'redux-devtools-extension';
 
 const rootReducer = combineReducers({
   AUTH: authReducer,
@@ -8,12 +9,17 @@ const rootReducer = combineReducers({
 
 const getStore = () => {
   const middlewares = [thunkMiddleware];
-  const middlewareEnhancers = applyMiddleware(...middlewares);
+  let middlewareEnhancers = applyMiddleware(...middlewares);
+
+  if (__DEV__) {
+    middlewareEnhancers = composeWithDevTools(middlewareEnhancers);
+  }
+
   return createStore(rootReducer, undefined, middlewareEnhancers);
 };
 
-// Infer the `RootState` and `AppDispatch` types from the store itself
 export type RootState = ReturnType<typeof rootReducer>;
+
 export type Thunk<ReturnType = void> = ThunkAction<
   ReturnType,
   RootState,
