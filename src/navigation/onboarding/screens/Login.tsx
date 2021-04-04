@@ -1,24 +1,13 @@
 import React from 'react';
 import {Button, Text, View} from 'react-native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {RouteProp} from '@react-navigation/native';
+import {StackScreenProps} from '@react-navigation/stack';
 import {OnboardingStackParamList} from '../OnboardingStack';
 import {useDispatch} from 'react-redux';
 import {AuthActions} from '../../../store/auth/auth.actions';
 
-type LoginScreenRouteProp = RouteProp<OnboardingStackParamList, 'Login'>;
+type Props = StackScreenProps<OnboardingStackParamList, 'Login'>;
 
-type LoginScreenNavigationProp = StackNavigationProp<
-  OnboardingStackParamList,
-  'Login'
->;
-
-type Props = {
-  route: LoginScreenRouteProp;
-  navigation: LoginScreenNavigationProp;
-};
-
-const LoginScreen = ({route, navigation}: Props) => {
+const LoginScreen = ({route}: Props) => {
   console.log(route);
   const dispatch = useDispatch();
 
