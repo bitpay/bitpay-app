@@ -14,6 +14,7 @@
     "@react-navigation/bottom-tabs": "^5.11.8",
     "@react-navigation/native": "^5.9.3",
     "@react-navigation/stack": "^5.14.3",
+    "@types/redux-logger": "^3.0.8",
     "axios": "^0.21.1",
     "react": "17.0.1",
     "react-native": "0.64.0",
@@ -23,6 +24,7 @@
     "react-native-screens": "^2.18.1",
     "react-redux": "^7.2.3",
     "redux": "^4.0.5",
+    "redux-logger": "^3.0.6",
     "redux-thunk": "^2.3.0"
   },
   "devDependencies": {
