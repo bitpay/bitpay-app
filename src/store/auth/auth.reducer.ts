@@ -1,6 +1,8 @@
 import {AuthActionTypes, AuthActionType} from './auth.types';
 import {Account} from './auth.models';
 
+export const authReduxPersistWhiteList = ['account'];
+
 export interface AuthState {
   account: Account | undefined;
 }

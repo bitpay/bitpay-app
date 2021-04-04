@@ -1,6 +1,6 @@
 import {Action, applyMiddleware, combineReducers, createStore} from 'redux';
 import {appReducer} from './app/app.reducer';
-import {authReducer} from './auth/auth.reducer';
+import {authReduxPersistWhiteList, authReducer} from './auth/auth.reducer';
 import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
 import logger from 'redux-logger'; // https://github.com/LogRocket/redux-logger
 import {composeWithDevTools} from 'redux-devtools-extension';
@@ -31,7 +31,7 @@ const rootReducer = combineReducers({
     {
       ...basePersistConfig,
       key: 'AUTH',
-      whitelist: ['account'],
+      whitelist: authReduxPersistWhiteList,
     },
     authReducer,
   ),
