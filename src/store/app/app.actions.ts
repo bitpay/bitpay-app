@@ -1,6 +1,6 @@
-import {sleep} from '../../utils/helper-methods';
 import {AppActionTypes} from './app.types';
 import {Thunk} from '../index';
+import {sleep} from '../../utils/helper-methods';
 
 const startAppInit = (): Thunk => async (dispatch, getState) => {
   try {
