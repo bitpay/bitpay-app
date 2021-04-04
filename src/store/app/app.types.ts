@@ -6,7 +6,6 @@ export enum AppActionTypes {
 
 interface SuccessAppInit {
   type: typeof AppActionTypes.SUCCESS_APP_INIT;
-  payload: any;
 }
 
 interface FailedAppInit {

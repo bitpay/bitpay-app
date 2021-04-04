@@ -6,16 +6,15 @@ const startAppInit = (): Thunk => async (dispatch, getState) => {
   try {
     // do app init stuff
     await sleep(1000);
-    dispatch(successAppInit(null));
+    dispatch(successAppInit());
   } catch (err) {
     console.error(err);
     dispatch(failedAppInit());
   }
 };
 
-const successAppInit = (payload: any) => ({
+const successAppInit = () => ({
   type: AppActionTypes.SUCCESS_APP_INIT,
-  payload,
 });
 
 const failedAppInit = () => ({
