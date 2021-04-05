@@ -1,23 +1,9 @@
 import React from 'react';
 import {Text, View} from 'react-native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {RouteProp} from '@react-navigation/native';
+import {StackScreenProps} from '@react-navigation/stack';
 import {OnboardingStackParamList} from '../OnboardingStack';
 
-type CreateAccountScreenRouteProp = RouteProp<
-  OnboardingStackParamList,
-  'CreateAccount'
->;
-
-type CreateAccountScreenNavigationProp = StackNavigationProp<
-  OnboardingStackParamList,
-  'CreateAccount'
->;
-
-type Props = {
-  route: CreateAccountScreenRouteProp;
-  navigation: CreateAccountScreenNavigationProp;
-};
+type Props = StackScreenProps<OnboardingStackParamList, 'CreateAccount'>;
 
 const CreateAccountScreen = ({}: Props) => {
   return (

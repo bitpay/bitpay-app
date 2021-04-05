@@ -1,15 +1,17 @@
-import {AppActionTypes, AppActionType} from './app.types';
+import { AppActionType, AppActionTypes } from './app.types';
 
 export interface AppState {
   network: string;
   baseURL: string;
   appIsLoading: boolean;
+  onboardingCompleted: boolean;
 }
 
 const initialState: AppState = {
   network: 'livenet',
   baseURL: 'https://bitpay.com',
   appIsLoading: true,
+  onboardingCompleted: false,
 };
 
 export const appReducer = (
@@ -21,6 +23,12 @@ export const appReducer = (
       return {
         ...state,
         appIsLoading: false,
+      };
+
+    case AppActionTypes.SET_ONBOARDING_COMPLETED:
+      return {
+        ...state,
+        onboardingCompleted: true,
       };
 
     default:

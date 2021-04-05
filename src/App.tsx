@@ -9,7 +9,7 @@ import {RootState} from './store';
 import {AppActions} from './store/app/app.actions';
 
 const App = () => {
-  const account = useSelector(({AUTH}: RootState) => AUTH.account);
+  const onboardingCompleted = useSelector(({APP}: RootState) => APP.onboardingCompleted);
   const appIsLoading = useSelector(({APP}: RootState) => APP.appIsLoading);
 
   const dispatch = useDispatch();
@@ -24,7 +24,7 @@ const App = () => {
 
   return (
     <NavigationContainer>
-      {account ? <TabsStack /> : <OnboardingStack />}
+      {!onboardingCompleted ? <OnboardingStack /> : <TabsStack />}
     </NavigationContainer>
   );
 };

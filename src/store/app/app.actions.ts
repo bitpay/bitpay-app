@@ -1,11 +1,16 @@
 import {AppActionTypes} from './app.types';
-import {Thunk} from '../index';
-import {sleep} from '../../utils/helper-methods';
+import {RootState, Thunk} from '../index';
+import {AuthActions} from '../auth/auth.actions';
 
 const startAppInit = (): Thunk => async (dispatch, getState) => {
+  const store: RootState = getState();
+
   try {
-    // do app init stuff
-    await sleep(1000);
+    // if onboarding is not completed or if a user is not paired - fetch a session
+    if (!store.APP.onboardingCompleted || !store.AUTH.account) {
+      await dispatch(AuthActions.startGetSession());
+    }
+
     dispatch(successAppInit());
   } catch (err) {
     console.error(err);
@@ -21,6 +26,11 @@ const failedAppInit = () => ({
   type: AppActionTypes.FAILED_APP_INIT,
 });
 
+const setOnboardingCompleted = () => ({
+  type: AppActionTypes.SET_ONBOARDING_COMPLETED,
+});
+
 export const AppActions = {
   startAppInit,
+  setOnboardingCompleted,
 };

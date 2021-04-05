@@ -10,15 +10,7 @@ type Props = StackScreenProps<OnboardingStackParamList, 'Login'>;
 const LoginScreen = ({route}: Props) => {
   console.log(route);
   const dispatch = useDispatch();
-
-  const login = () => {
-    dispatch(
-      AuthActions.successCreateAccount({
-        email: 'jwhite@bitpay.com',
-        isVerified: true,
-      }),
-    );
-  };
+  const login = () => dispatch(AuthActions.startLogin());
 
   return (
     <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>

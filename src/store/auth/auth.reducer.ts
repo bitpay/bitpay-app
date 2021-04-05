@@ -1,14 +1,16 @@
 import {AuthActionTypes, AuthActionType} from './auth.types';
-import {Account} from './auth.models';
+import {Account, Session} from './auth.models';
 
-export const authReduxPersistWhiteList = ['account'];
+export const authReduxPersistWhiteList = [];
 
 export interface AuthState {
   account: Account | undefined;
+  session: Session | undefined;
 }
 
 const initialState: AuthState = {
   account: undefined,
+  session: undefined,
 };
 
 export const authReducer = (
@@ -16,7 +18,10 @@ export const authReducer = (
   action: AuthActionType,
 ): AuthState => {
   switch (action.type) {
-    case AuthActionTypes.SUCCESS_CREATE_ACCOUNT:
+    case AuthActionTypes.SUCCESS_GET_SESSION:
+      return {...state, session: action.payload};
+
+    case AuthActionTypes.SUCCESS_LOGIN:
       return {...state, account: action.payload};
 
     default:

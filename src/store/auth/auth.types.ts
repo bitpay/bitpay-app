@@ -1,9 +1,10 @@
-import {Account, Session} from './auth.models';
+import { Account, Session } from './auth.models';
 
 export enum AuthActionTypes {
   SUCCESS_GET_SESSION = 'AUTH/SUCCESS_GET_SESSION',
   FAILED_GET_SESSION = 'AUTH/FAILED_GET_SESSION',
-  SUCCESS_CREATE_ACCOUNT = 'AUTH/SUCCESS_CREATE_ACCOUNT',
+  SUCCESS_LOGIN = 'AUTH/SUCCESS_LOGIN',
+  FAILED_LOGIN = 'AUTH/FAILED_LOGIN',
 }
 
 interface SuccessGetSession {
@@ -15,12 +16,17 @@ interface FailedGetSession {
   type: typeof AuthActionTypes.FAILED_GET_SESSION;
 }
 
-interface SuccessCreateAccount {
-  type: typeof AuthActionTypes.SUCCESS_CREATE_ACCOUNT;
+interface SuccessLogin {
+  type: typeof AuthActionTypes.SUCCESS_LOGIN;
   payload: Account;
+}
+
+interface FailedLogin {
+  type: typeof AuthActionTypes.FAILED_LOGIN;
 }
 
 export type AuthActionType =
   | SuccessGetSession
   | FailedGetSession
-  | SuccessCreateAccount;
+  | SuccessLogin
+  | FailedLogin;
