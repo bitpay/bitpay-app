@@ -42,7 +42,7 @@ const getStore = () => {
   let middlewareEnhancers = applyMiddleware(...middlewares);
 
   if (__DEV__) {
-    middlewareEnhancers = composeWithDevTools(middlewareEnhancers);
+    middlewareEnhancers = composeWithDevTools({trace: true, traceLimit: 25})(middlewareEnhancers);
   }
 
   // @ts-ignore
