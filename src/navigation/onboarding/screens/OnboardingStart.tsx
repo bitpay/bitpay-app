@@ -1,24 +1,8 @@
 import React from 'react';
 import {Button, Text, View} from 'react-native';
-
-import {StackNavigationProp} from '@react-navigation/stack';
+import {StackScreenProps} from '@react-navigation/stack';
 import {OnboardingScreens, OnboardingStackParamList} from '../OnboardingStack';
-import {RouteProp} from '@react-navigation/native';
-
-type OnboardingStartScreenRouteProp = RouteProp<
-  OnboardingStackParamList,
-  'OnboardingStart'
->;
-
-type OnboardingStartScreenNavigationProp = StackNavigationProp<
-  OnboardingStackParamList,
-  'OnboardingStart'
->;
-
-type Props = {
-  route: OnboardingStartScreenRouteProp;
-  navigation: OnboardingStartScreenNavigationProp;
-};
+type Props = StackScreenProps<OnboardingStackParamList, 'OnboardingStart'>;
 
 const OnboardingStart = ({navigation}: Props) => {
   return (

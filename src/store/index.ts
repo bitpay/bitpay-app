@@ -58,7 +58,7 @@ const getStore = () => {
 
 export type RootState = ReturnType<typeof rootReducer>;
 
-export type Thunk<ReturnType = void> = ThunkAction<
+export type Effect<ReturnType = void> = ThunkAction<
   ReturnType,
   RootState,
   unknown,

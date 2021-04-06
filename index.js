@@ -1,5 +1,5 @@
 import {AppRegistry} from 'react-native';
-import App from './src/App';
+import Root from './src/Root';
 import React from 'react';
 import {name as appName} from './app.json';
 import getStore from './src/store';
@@ -12,7 +12,7 @@ const ReduxProvider = () => {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        {storeRehydrated => storeRehydrated && <App />}
+        {storeRehydrated => storeRehydrated && <Root />}
       </PersistGate>
     </Provider>
   );

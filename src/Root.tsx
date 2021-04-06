@@ -6,16 +6,16 @@ import SplashScreen from './navigation/app/screens/Splash';
 import TabsStack from './navigation/tabs/TabsStack';
 import OnboardingStack from './navigation/onboarding/OnboardingStack';
 import {RootState} from './store';
-import {AppActions} from './store/app/app.actions';
+import {AppEffects} from './store/app';
 
-const App = () => {
+const Root = () => {
   const onboardingCompleted = useSelector(({APP}: RootState) => APP.onboardingCompleted);
   const appIsLoading = useSelector(({APP}: RootState) => APP.appIsLoading);
 
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(AppActions.startAppInit());
+    dispatch(AppEffects.startAppInit());
   }, [dispatch]);
 
   if (appIsLoading) {
@@ -29,4 +29,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default Root;

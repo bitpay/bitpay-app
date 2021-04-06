@@ -3,14 +3,14 @@ import {Button, Text, View} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import {OnboardingStackParamList} from '../OnboardingStack';
 import {useDispatch} from 'react-redux';
-import {AuthActions} from '../../../store/auth/auth.actions';
+import {AuthEffects} from '../../../store/auth';
 
 type Props = StackScreenProps<OnboardingStackParamList, 'Login'>;
 
 const LoginScreen = ({route}: Props) => {
   console.log(route);
   const dispatch = useDispatch();
-  const login = () => dispatch(AuthActions.startLogin());
+  const login = () => dispatch(AuthEffects.startLogin());
 
   return (
     <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
