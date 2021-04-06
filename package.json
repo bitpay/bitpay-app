@@ -16,10 +16,12 @@
     "@react-navigation/native": "^5.9.3",
     "@react-navigation/stack": "^5.14.3",
     "@types/redux-logger": "^3.0.8",
+    "add": "^2.0.6",
     "axios": "^0.21.1",
     "react": "17.0.1",
     "react-native": "0.64.0",
     "react-native-gesture-handler": "^1.10.3",
+    "react-native-modal": "^11.7.0",
     "react-native-reanimated": "^2.0.1",
     "react-native-safe-area-context": "^3.2.0",
     "react-native-screens": "^2.18.1",
@@ -29,7 +31,8 @@
     "redux": "^4.0.5",
     "redux-logger": "^3.0.6",
     "redux-persist": "^6.0.0",
-    "redux-thunk": "^2.3.0"
+    "redux-thunk": "^2.3.0",
+    "yarn": "^1.22.10"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",

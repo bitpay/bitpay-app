@@ -16,7 +16,7 @@ const basePersistConfig = {
 const rootPersistConfig = {
   ...basePersistConfig,
   key: 'root',
-  blacklist: [],
+  blacklist: ['APP', 'AUTH'],
 };
 
 /*
