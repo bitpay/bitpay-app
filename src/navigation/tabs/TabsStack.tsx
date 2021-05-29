@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   transactButton: {
     justifyContent: 'center',
     alignItems: 'center',
-    paddingBottom: 45,
+    flex: 1,
   },
   content: {
     padding: 22,
