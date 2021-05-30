@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import BitPayLogo from '../../../assets/img/logos/bitpay-white.svg';
+import BitPayLogo from '../../../../assets/img/logos/bitpay-white.svg';
 import {BitPay} from '../../../styles/colors';
 
 const SplashContainer = styled.View`

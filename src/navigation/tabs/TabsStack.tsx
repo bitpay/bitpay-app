@@ -6,15 +6,15 @@ import WalletRoot from './Wallet/WalletStack';
 import CardRoot from './Card/CardStack';
 import SettingsRoot from './Settings/SettingsStack';
 
-import HomeIcon from '../../assets/img/tab-icons/home.svg';
-import HomeFocusedIcon from '../../assets/img/tab-icons/home-focused.svg';
-import WalletIcon from '../../assets/img/tab-icons/wallet.svg';
-import WalletFocusedIcon from '../../assets/img/tab-icons/wallet-focused.svg';
-import CardIcon from '../../assets/img/tab-icons/card.svg';
-import CardFocusedIcon from '../../assets/img/tab-icons/card-focused.svg';
-import SettingsIcon from '../../assets/img/tab-icons/settings.svg';
-import SettingsFocusedIcon from '../../assets/img/tab-icons/settings-focused.svg';
-import TransactButtonIcon from '../../assets/img/tab-icons/transact-button.svg';
+import HomeIcon from '../../../assets/img/tab-icons/home.svg';
+import HomeFocusedIcon from '../../../assets/img/tab-icons/home-focused.svg';
+import WalletIcon from '../../../assets/img/tab-icons/wallet.svg';
+import WalletFocusedIcon from '../../../assets/img/tab-icons/wallet-focused.svg';
+import CardIcon from '../../../assets/img/tab-icons/card.svg';
+import CardFocusedIcon from '../../../assets/img/tab-icons/card-focused.svg';
+import SettingsIcon from '../../../assets/img/tab-icons/settings.svg';
+import SettingsFocusedIcon from '../../../assets/img/tab-icons/settings-focused.svg';
+import TransactButtonIcon from '../../../assets/img/tab-icons/transact-button.svg';
 
 import {SvgProps} from 'react-native-svg';
 import {StyleSheet, View, Text, TouchableOpacity, Button} from 'react-native';
