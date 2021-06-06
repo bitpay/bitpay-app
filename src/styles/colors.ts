@@ -1,7 +1,7 @@
 /* Primary */
 export const Midnight = '#0C204E';
 export const BitPay = '#1A3B8B';
-export const Action = '#4F6EF7';
+export const Action = '#2240C4';
 
 /* Secondary */
 export const SlateDark = '#434D5A';
