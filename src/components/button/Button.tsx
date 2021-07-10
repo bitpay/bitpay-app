@@ -2,6 +2,7 @@ import React from 'react';
 import styled, {css} from 'styled-components/native';
 import {Action, Air, White} from '../../styles/colors';
 import {TouchableOpacity} from 'react-native';
+import BaseText from '../base-text/BaseText';
 type ButtonStyle = 'primary' | 'secondary' | undefined;
 type ButtonType = 'link' | 'pill' | undefined;
 
@@ -43,8 +44,7 @@ const Container = styled.TouchableOpacity`
     `}
 `;
 
-const Text = styled.Text`
-  font-family: 'Heebo';
+const Text = styled(BaseText)`
   font-weight: ${({pill}: TextProps) => (pill ? 400 : 500)};
   font-size: 18px;
   line-height: 25px;
