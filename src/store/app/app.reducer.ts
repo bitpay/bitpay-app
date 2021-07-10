@@ -1,6 +1,8 @@
 import {AppActionType, AppActionTypes} from './app.types';
 import {Session} from './app.models';
 
+export const appReduxPersistWhiteList = [];
+
 export interface AppState {
   network: string;
   baseURL: string;
@@ -10,7 +12,7 @@ export interface AppState {
 }
 
 const initialState: AppState = {
-  network: 'livenet',
+  network: 'mainnet',
   baseURL: 'https://bitpay.com',
   appIsLoading: true,
   onboardingCompleted: false,
