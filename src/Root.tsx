@@ -9,7 +9,9 @@ import {RootState} from './store';
 import {AppEffects} from './store/app';
 
 const Root = () => {
-  const onboardingCompleted = useSelector(({APP}: RootState) => APP.onboardingCompleted);
+  const onboardingCompleted = useSelector(
+    ({APP}: RootState) => APP.onboardingCompleted,
+  );
   const appIsLoading = useSelector(({APP}: RootState) => APP.appIsLoading);
 
   const dispatch = useDispatch();

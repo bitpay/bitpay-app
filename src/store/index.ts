@@ -1,6 +1,9 @@
 import {Action, applyMiddleware, combineReducers, createStore} from 'redux';
 import {appReducer} from './app/app.reducer';
-import {authReduxPersistWhiteList, authReducer} from './auth/auth.reducer';
+import {
+  bitPayIdReduxPersistWhiteList,
+  bitPayIdReducer,
+} from './bitpay-id/bitpay-id.reducer';
 import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
 import logger from 'redux-logger'; // https://github.com/LogRocket/redux-logger
 import {composeWithDevTools} from 'redux-devtools-extension';
@@ -16,7 +19,7 @@ const basePersistConfig = {
 const rootPersistConfig = {
   ...basePersistConfig,
   key: 'root',
-  blacklist: ['APP', 'AUTH'],
+  blacklist: ['APP', 'BITPAY_ID'],
 };
 
 /*
@@ -27,13 +30,13 @@ const rootPersistConfig = {
 
 const rootReducer = combineReducers({
   APP: appReducer,
-  AUTH: persistReducer(
+  BITPAY_ID: persistReducer(
     {
       ...basePersistConfig,
-      key: 'AUTH',
-      whitelist: authReduxPersistWhiteList,
+      key: 'BITPAY_ID',
+      whitelist: bitPayIdReduxPersistWhiteList,
     },
-    authReducer,
+    bitPayIdReducer,
   ),
 });
 
@@ -42,7 +45,9 @@ const getStore = () => {
   let middlewareEnhancers = applyMiddleware(...middlewares);
 
   if (__DEV__) {
-    middlewareEnhancers = composeWithDevTools({trace: true, traceLimit: 25})(middlewareEnhancers);
+    middlewareEnhancers = composeWithDevTools({trace: true, traceLimit: 25})(
+      middlewareEnhancers,
+    );
   }
 
   // @ts-ignore

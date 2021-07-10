@@ -1,10 +1,12 @@
-import { AppActionType, AppActionTypes } from './app.types';
+import {AppActionType, AppActionTypes} from './app.types';
+import {Session} from './app.models';
 
 export interface AppState {
   network: string;
   baseURL: string;
   appIsLoading: boolean;
   onboardingCompleted: boolean;
+  session: Session | undefined;
 }
 
 const initialState: AppState = {
@@ -12,6 +14,7 @@ const initialState: AppState = {
   baseURL: 'https://bitpay.com',
   appIsLoading: true,
   onboardingCompleted: false,
+  session: undefined,
 };
 
 export const appReducer = (
@@ -19,6 +22,12 @@ export const appReducer = (
   action: AppActionType,
 ): AppState => {
   switch (action.type) {
+    case AppActionTypes.SUCCESS_GET_SESSION:
+      return {
+        ...state,
+        session: action.payload,
+      };
+
     case AppActionTypes.SUCCESS_APP_INIT:
       return {
         ...state,
