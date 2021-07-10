@@ -3,10 +3,11 @@ import styled, {css} from 'styled-components/native';
 import {Action, Air, White} from '../../styles/colors';
 import {TouchableOpacity} from 'react-native';
 import BaseText from '../base-text/BaseText';
+import {BaseButtonProps} from 'react-native-gesture-handler';
 type ButtonStyle = 'primary' | 'secondary' | undefined;
 type ButtonType = 'link' | 'pill' | undefined;
 
-interface ButtonProps {
+interface ButtonProps extends BaseButtonProps {
   buttonStyle?: ButtonStyle;
   buttonType?: ButtonType;
   children: string;
