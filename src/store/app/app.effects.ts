@@ -3,10 +3,15 @@ import {AppActions} from './';
 import axios from 'axios';
 import {Session} from './app.models';
 
-export const startGetSession = (): Effect => async dispatch => {
+export const startGetSession = (): Effect => async (
+  dispatch,
+  getState: () => RootState,
+) => {
+  const store = getState();
+
   try {
     const {data: session} = await axios.get<Session>(
-      'https://bitpay.com/auth/session',
+      `${store.APP.baseBitPayURL}/auth/session`,
     );
     dispatch(AppActions.successGetSession(session));
   } catch (err) {

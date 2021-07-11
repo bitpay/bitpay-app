@@ -1,19 +1,16 @@
 import React from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
 import OnboardingStartScreen from './screens/OnboardingStart';
-import CreateAccount from './screens/CreateAccount';
-import Login from './screens/Login';
+import LoginSignup from './screens/Login-Signup';
 
 export type OnboardingStackParamList = {
   OnboardingStart: undefined;
-  CreateAccount: undefined;
-  Login: undefined;
+  LoginSignup: {context: 'login' | 'signup'};
 };
 
 export enum OnboardingScreens {
   ONBOARDING_START = 'OnboardingStart',
-  CREATE_ACCOUNT = 'CreateAccount',
-  LOGIN = 'Login',
+  LOGIN_SIGNUP = 'LoginSignup',
 }
 
 const Onboarding = createStackNavigator<OnboardingStackParamList>();
@@ -30,10 +27,9 @@ const OnboardingStack = () => {
         component={OnboardingStartScreen}
       />
       <Onboarding.Screen
-        name={OnboardingScreens.CREATE_ACCOUNT}
-        component={CreateAccount}
+        name={OnboardingScreens.LOGIN_SIGNUP}
+        component={LoginSignup}
       />
-      <Onboarding.Screen name={OnboardingScreens.LOGIN} component={Login} />
     </Onboarding.Navigator>
   );
 };

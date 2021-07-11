@@ -1,7 +1,6 @@
 import React from 'react';
 import styled, {css} from 'styled-components/native';
 import {Action, Air, White} from '../../styles/colors';
-import {TouchableOpacity} from 'react-native';
 import BaseText from '../base-text/BaseText';
 import {BaseButtonProps} from 'react-native-gesture-handler';
 type ButtonStyle = 'primary' | 'secondary' | undefined;
@@ -10,6 +9,7 @@ type ButtonType = 'link' | 'pill' | undefined;
 interface ButtonProps extends BaseButtonProps {
   buttonStyle?: ButtonStyle;
   buttonType?: ButtonType;
+  onPress?: () => any;
   children: string;
 }
 
@@ -23,7 +23,7 @@ interface TextProps {
   pill?: boolean;
 }
 
-const Container = styled.TouchableOpacity`
+const ButtonContainer = styled.TouchableOpacity`
   background: ${Action};
   border-radius: 12px;
   padding: 18px;
@@ -45,6 +45,10 @@ const Container = styled.TouchableOpacity`
     `}
 `;
 
+const LinkContainer = styled.TouchableOpacity`
+  padding: 10px;
+`;
+
 const Text = styled(BaseText)`
   font-weight: ${({pill}: TextProps) => (pill ? 400 : 500)};
   font-size: 18px;
@@ -53,37 +57,39 @@ const Text = styled(BaseText)`
   color: ${({secondary}: TextProps) => (secondary ? Action : White)};
 `;
 
-const Button = ({buttonStyle, buttonType, children}: ButtonProps) => {
+const ACTIVE_OPACITY = 0.8;
+
+const Button = ({onPress, buttonStyle, buttonType, children}: ButtonProps) => {
   if (buttonType === 'link') {
     return (
-      <TouchableOpacity>
+      <LinkContainer onPress={onPress} activeOpacity={ACTIVE_OPACITY}>
         <Text secondary>{children}</Text>
-      </TouchableOpacity>
+      </LinkContainer>
     );
   }
 
   if (buttonType === 'pill') {
     return (
-      <Container pill>
+      <ButtonContainer pill onPress={onPress} activeOpacity={ACTIVE_OPACITY}>
         <Text secondary pill>
           {children}
         </Text>
-      </Container>
+      </ButtonContainer>
     );
   }
 
   if (buttonStyle === 'secondary') {
     return (
-      <Container secondary>
+      <ButtonContainer secondary onPress={onPress} activeOpacity={ACTIVE_OPACITY}>
         <Text secondary>{children}</Text>
-      </Container>
+      </ButtonContainer>
     );
   }
 
   return (
-    <Container>
+    <ButtonContainer onPress={onPress} activeOpacity={ACTIVE_OPACITY}>
       <Text>{children}</Text>
-    </Container>
+    </ButtonContainer>
   );
 };
 

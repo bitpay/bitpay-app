@@ -5,15 +5,15 @@ export const appReduxPersistWhiteList = [];
 
 export interface AppState {
   network: string;
-  baseURL: string;
+  baseBitPayURL: string;
   appIsLoading: boolean;
   onboardingCompleted: boolean;
   session: Session | undefined;
 }
 
 const initialState: AppState = {
-  network: 'mainnet',
-  baseURL: 'https://bitpay.com',
+  network: 'testnet',
+  baseBitPayURL: 'https://test.bitpay.com',
   appIsLoading: true,
   onboardingCompleted: false,
   session: undefined,

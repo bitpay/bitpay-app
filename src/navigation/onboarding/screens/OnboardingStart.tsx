@@ -9,12 +9,20 @@ const OnboardingStart = ({navigation}: Props) => {
     <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
       <Text>Onboarding Start</Text>
       <Button
-        title="Get Started"
-        onPress={() => navigation.navigate(OnboardingScreens.CREATE_ACCOUNT)}
+        title="Create Account"
+        onPress={() =>
+          navigation.navigate(OnboardingScreens.LOGIN_SIGNUP, {
+            context: 'signup',
+          })
+        }
       />
       <Button
         title="Login"
-        onPress={() => navigation.navigate(OnboardingScreens.LOGIN)}
+        onPress={() =>
+          navigation.navigate(OnboardingScreens.LOGIN_SIGNUP, {
+            context: 'login',
+          })
+        }
       />
     </View>
   );
