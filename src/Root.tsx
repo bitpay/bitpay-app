@@ -1,12 +1,16 @@
 import 'react-native-gesture-handler';
 import React, {useEffect} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
-import {NavigationContainer} from '@react-navigation/native';
+import {DefaultTheme, NavigationContainer} from '@react-navigation/native';
 import SplashScreen from './navigation/app/screens/Splash';
 import TabsStack from './navigation/tabs/TabsStack';
 import OnboardingStack from './navigation/onboarding/OnboardingStack';
 import {RootState} from './store';
 import {AppEffects} from './store/app';
+
+// TODO build themes
+const navTheme = DefaultTheme;
+navTheme.colors.background = '#fff';
 
 const Root = () => {
   const onboardingCompleted = useSelector(
@@ -25,7 +29,7 @@ const Root = () => {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={navTheme}>
       {!onboardingCompleted ? <OnboardingStack /> : <TabsStack />}
     </NavigationContainer>
   );
