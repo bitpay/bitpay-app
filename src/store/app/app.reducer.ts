@@ -1,7 +1,7 @@
 import {AppActionType, AppActionTypes} from './app.types';
 import {Session} from './app.models';
 
-export const appReduxPersistWhiteList = [];
+export const appReduxPersistBlackList = [];
 
 export interface AppState {
   network: string;

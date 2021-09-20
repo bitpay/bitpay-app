@@ -29,7 +29,7 @@ export const startAppInit = (): Effect => async (
   try {
     // if onboarding is not completed or if a user is not paired - fetch a session
     if (!store.APP.onboardingCompleted || !store.BITPAY_ID.account) {
-      await dispatch(startGetSession());
+      // await dispatch(startGetSession());
     }
 
     dispatch(AppActions.successAppInit());

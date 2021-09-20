@@ -1,7 +1,7 @@
 import {BitPayIdActionTypes, BitPayIdActionType} from './bitpay-id.types';
 import {Account} from './bitpay-id.models';
 
-export const bitPayIdReduxPersistWhiteList = [];
+export const bitPayIdReduxPersistBlackList = [];
 
 export interface BitPayIdState {
   account: Account | undefined;
