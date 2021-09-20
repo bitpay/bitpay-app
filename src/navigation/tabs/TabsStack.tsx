@@ -53,6 +53,7 @@ const TransactModal = () => {
           backdropOpacity={0.3}
           isVisible={modalVisible}
           backdropTransitionOutTiming={0}
+          hideModalContentWhileAnimating={true}
           onBackdropPress={() => setModalVisible(false)}
           style={styles.contentView}>
           <View style={styles.content}>
