@@ -109,6 +109,7 @@ const BoxInput = ({label, onFocus, onBlur, error, type, ...props}: Props) => {
         onBlur={_onBlur}
         isFocused={isFocused}
         isError={error}
+        autoCapitalize={'none'}
       />
       {type === 'password' && (
         <ObfuscationToggle
