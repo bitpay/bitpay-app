@@ -8,7 +8,7 @@ import styled from 'styled-components/native';
 import BitPayLogo from '../../../../assets/img/logos/bitpay-primary.svg';
 import BaseText from '../../../components/base-text/BaseText';
 import {useForm, Controller} from 'react-hook-form';
-import BoxInput from '../../../components/form/Box-Input';
+import BoxInput from '../../../components/form/BoxInput';
 import {SlateDark} from '../../../styles/colors';
 import Back from '../../../components/back/Back';
 import {yupResolver} from '@hookform/resolvers/yup';

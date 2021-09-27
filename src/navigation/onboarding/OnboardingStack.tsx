@@ -1,7 +1,7 @@
 import React from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
 import OnboardingStartScreen from './screens/OnboardingStart';
-import LoginSignup from './screens/Login-Signup';
+import LoginSignup from './screens/LoginSignup';
 
 export type OnboardingStackParamList = {
   OnboardingStart: undefined;
