@@ -2,6 +2,7 @@ import React from 'react';
 import styled, {css} from 'styled-components/native';
 import {Action, Air, White} from '../../styles/colors';
 import BaseText from '../base-text/BaseText';
+import Haptic from '../haptic-feedback/haptic';
 import {BaseButtonProps} from 'react-native-gesture-handler';
 type ButtonStyle = 'primary' | 'secondary' | undefined;
 type ButtonType = 'link' | 'pill' | undefined;
@@ -60,9 +61,14 @@ const Text = styled(BaseText)`
 const ACTIVE_OPACITY = 0.8;
 
 const Button = ({onPress, buttonStyle, buttonType, children}: ButtonProps) => {
+  const _onPress = () => {
+    Haptic('impactLight');
+    onPress && onPress();
+  };
+
   if (buttonType === 'link') {
     return (
-      <LinkContainer onPress={onPress} activeOpacity={ACTIVE_OPACITY}>
+      <LinkContainer onPress={_onPress} activeOpacity={ACTIVE_OPACITY}>
         <Text secondary>{children}</Text>
       </LinkContainer>
     );
@@ -70,7 +76,7 @@ const Button = ({onPress, buttonStyle, buttonType, children}: ButtonProps) => {
 
   if (buttonType === 'pill') {
     return (
-      <ButtonContainer pill onPress={onPress} activeOpacity={ACTIVE_OPACITY}>
+      <ButtonContainer pill onPress={_onPress} activeOpacity={ACTIVE_OPACITY}>
         <Text secondary pill>
           {children}
         </Text>
@@ -80,14 +86,17 @@ const Button = ({onPress, buttonStyle, buttonType, children}: ButtonProps) => {
 
   if (buttonStyle === 'secondary') {
     return (
-      <ButtonContainer secondary onPress={onPress} activeOpacity={ACTIVE_OPACITY}>
+      <ButtonContainer
+        secondary
+        onPress={_onPress}
+        activeOpacity={ACTIVE_OPACITY}>
         <Text secondary>{children}</Text>
       </ButtonContainer>
     );
   }
 
   return (
-    <ButtonContainer onPress={onPress} activeOpacity={ACTIVE_OPACITY}>
+    <ButtonContainer onPress={_onPress} activeOpacity={ACTIVE_OPACITY}>
       <Text>{children}</Text>
     </ButtonContainer>
   );

@@ -12,6 +12,8 @@ target 'BitPayApp' do
     :hermes_enabled => false
   )
 
+  pod 'RNReactNativeHapticFeedback', :path => '../node_modules/react-native-haptic-feedback'
+
   target 'BitPayAppTests' do
     inherit! :complete
     # Pods for testing
