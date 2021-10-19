@@ -3,6 +3,7 @@ import {createStackNavigator} from '@react-navigation/stack';
 import OnboardingStartScreen from './screens/OnboardingStart';
 import LoginSignup from './screens/LoginSignup';
 import {TransitionPresets} from '@react-navigation/stack';
+import {screenOptions} from '../../constants/navigation-options';
 
 export type OnboardingStackParamList = {
   OnboardingStart: undefined;
@@ -19,9 +20,7 @@ const Onboarding = createStackNavigator<OnboardingStackParamList>();
 const OnboardingStack = () => {
   return (
     <Onboarding.Navigator
-      screenOptions={{
-        header: () => null,
-      }}
+      screenOptions={screenOptions}
       initialRouteName="OnboardingStart">
       <Onboarding.Screen
         name={OnboardingScreens.ONBOARDING_START}

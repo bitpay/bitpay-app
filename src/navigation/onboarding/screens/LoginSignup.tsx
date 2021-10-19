@@ -5,12 +5,10 @@ import {OnboardingScreens, OnboardingStackParamList} from '../OnboardingStack';
 import {useDispatch} from 'react-redux';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
 import styled from 'styled-components/native';
-import BitPayLogo from '../../../../assets/img/logos/bitpay-primary.svg';
 import BaseText from '../../../components/base-text/BaseText';
 import {useForm, Controller} from 'react-hook-form';
 import BoxInput from '../../../components/form/BoxInput';
 import {SlateDark} from '../../../styles/colors';
-import Back from '../../../components/back/Back';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 
@@ -21,18 +19,10 @@ const LoginContainer = styled.SafeAreaView`
   align-items: center;
 `;
 
-const NavigationContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-`;
-
 const HeaderContainer = styled.View`
   width: 100%;
   padding: 0 20px;
-  margin-bottom: 50px;
+  margin: 25px 0;
 `;
 
 const HeaderText = styled(BaseText)`
@@ -74,11 +64,6 @@ const LoginText = styled(BaseText)`
   font-size: 18px;
 `;
 
-const BackButtonContainer = styled.View`
-  position: absolute;
-  left: 20px;
-`;
-
 const schema = yup.object().shape({
   email: yup.string().email().required(),
   password: yup.string().required(),
@@ -106,14 +91,6 @@ const LoginScreen = ({navigation, route}: Props) => {
 
   return (
     <LoginContainer>
-      <NavigationContainer>
-        {context === 'signup' && (
-          <BackButtonContainer>
-            <Back onPress={navigation.goBack} />
-          </BackButtonContainer>
-        )}
-        <BitPayLogo width={90} height={90} />
-      </NavigationContainer>
       <HeaderContainer>
         <HeaderText>{headerText}</HeaderText>
       </HeaderContainer>
