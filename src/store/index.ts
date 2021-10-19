@@ -75,6 +75,8 @@ const getStore = () => {
   const store = createStore(persistedReducer, undefined, middlewareEnhancers);
   const persistor = persistStore(store);
 
+  persistor.purge().then(() => console.log('purged persistence'));
+
   return {
     store,
     persistor,
