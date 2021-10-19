@@ -1,7 +1,7 @@
 import styled, {css} from 'styled-components/native';
 import React, {useEffect, useState} from 'react';
 import BaseText from '../base-text/BaseText';
-import {Action, Caution} from '../../styles/colors';
+import {Action, Caution, Slate} from '../../styles/colors';
 import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
 
@@ -14,6 +14,7 @@ const Input = styled.TextInput`
   height: 55px;
   margin: 10px 0 0 0;
   border: 1px solid #e1e4e7;
+  color: black;
   padding: 10px;
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
@@ -105,6 +106,7 @@ const BoxInput = ({label, onFocus, onBlur, error, type, ...props}: Props) => {
       <Input
         {...props}
         secureTextEntry={isSecureTextEntry}
+        placeholderTextColor={Slate}
         onFocus={_onFocus}
         onBlur={_onBlur}
         isFocused={isFocused}
