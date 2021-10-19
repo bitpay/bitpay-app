@@ -11,16 +11,22 @@ const OnboardingStart = ({navigation}: Props) => {
       <Button
         title="Create Account"
         onPress={() =>
-          navigation.navigate(OnboardingScreens.LOGIN_SIGNUP, {
-            context: 'signup',
+          navigation.navigate({
+            name: OnboardingScreens.LOGIN_SIGNUP,
+            params: {
+              context: 'signup',
+            },
           })
         }
       />
       <Button
         title="Login"
         onPress={() =>
-          navigation.navigate(OnboardingScreens.LOGIN_SIGNUP, {
-            context: 'login',
+          navigation.navigate({
+            name: OnboardingScreens.LOGIN_SIGNUP,
+            params: {
+              context: 'login',
+            },
           })
         }
       />

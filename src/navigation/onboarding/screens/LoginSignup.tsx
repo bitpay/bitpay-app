@@ -148,6 +148,8 @@ const LoginScreen = ({navigation, route}: Props) => {
                   <Button
                     buttonType={'link'}
                     onPress={() =>
+                      // TODO fix react navigation 6.* ts issue for replace
+                      // @ts-ignore
                       navigation.replace(OnboardingScreens.LOGIN_SIGNUP, {
                         context: 'login',
                       })
