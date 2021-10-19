@@ -1,15 +1,27 @@
 import BackIcon from '../../../assets/img/back.svg';
 import React from 'react';
-import {TouchableOpacity} from 'react-native';
+import {Platform} from 'react-native';
+import styled, {css} from 'styled-components/native';
 
 interface Props {
-  onPress: () => any;
+  platform: string;
 }
-const Back = ({onPress}: Props) => {
+
+const BackContainer = styled.View`
+  padding-top: 10px;
+  transform: scale(1.1);
+  ${({platform}: Props) =>
+    platform === 'ios' &&
+    css`
+      padding-left: 15px;
+    `}
+`;
+
+const Back = () => {
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
+    <BackContainer platform={Platform.OS}>
       <BackIcon />
-    </TouchableOpacity>
+    </BackContainer>
   );
 };
 
