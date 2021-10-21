@@ -1,11 +1,17 @@
 import React, {useState} from 'react';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {
+  BottomTabNavigationProp,
+  createBottomTabNavigator,
+} from '@react-navigation/bottom-tabs';
+import {TouchableOpacity, Button} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
 
 import HomeRoot from './Home/HomeStack';
 import WalletRoot from './Wallet/WalletStack';
 import CardRoot from './Card/CardStack';
 import SettingsRoot from './Settings/SettingsStack';
 
+import {SvgProps} from 'react-native-svg';
 import HomeIcon from '../../../assets/img/tab-icons/home.svg';
 import HomeFocusedIcon from '../../../assets/img/tab-icons/home-focused.svg';
 import WalletIcon from '../../../assets/img/tab-icons/wallet.svg';
@@ -16,9 +22,6 @@ import SettingsIcon from '../../../assets/img/tab-icons/settings.svg';
 import SettingsFocusedIcon from '../../../assets/img/tab-icons/settings-focused.svg';
 import TransactButtonIcon from '../../../assets/img/tab-icons/transact-button.svg';
 
-import {SvgProps} from 'react-native-svg';
-import {TouchableOpacity, Button} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import BaseText from '../../components/base-text/BaseText';
 import BottomPopupModal from '../../components/modal/base/bottom-popup/BottomPopupModal';
@@ -51,10 +54,51 @@ const Icons: {[key: string]: React.FC<SvgProps>} = {
   TransactButton: TransactButtonIcon,
 };
 
-const TransactModal = () => {
-  const navigation = useNavigation();
-  console.log(navigation);
+type TabParamList = {
+  Home: undefined;
+  Wallet: undefined;
+  TransactButton: undefined;
+  Card: undefined;
+  Settings: undefined;
+};
 
+const Tab = createBottomTabNavigator<TabParamList>();
+
+const TabsStack = () => {
+  const TransactionButton = () => null;
+  return (
+    <Tab.Navigator
+      initialRouteName="Home"
+      screenOptions={({route}) => ({
+        headerShown: false,
+        tabBarShowLabel: false,
+        lazy: true,
+        tabBarIcon: ({focused}) => {
+          let {name: icon} = route;
+
+          if (focused) {
+            icon += 'Focused';
+          }
+          const Icon = Icons[icon];
+
+          return <Icon />;
+        },
+      })}>
+      <Tab.Screen name="Home" component={HomeRoot} />
+      <Tab.Screen name="Wallet" component={WalletRoot} />
+      <Tab.Screen
+        name="TransactButton"
+        component={TransactionButton}
+        options={{tabBarButton: () => <TransactModal />}}
+      />
+      <Tab.Screen name="Card" component={CardRoot} />
+      <Tab.Screen name="Settings" component={SettingsRoot} />
+    </Tab.Navigator>
+  );
+};
+
+const TransactModal = () => {
+  const navigation = useNavigation<BottomTabNavigationProp<TabParamList>>();
   const [modalVisible, setModalVisible] = useState(false);
   const hideModal = () => setModalVisible(false);
   const showModal = () => setModalVisible(true);
@@ -89,40 +133,6 @@ const TransactModal = () => {
         </BottomPopupModal>
       </>
     </>
-  );
-};
-
-const Tab = createBottomTabNavigator();
-
-const TabsStack = () => {
-  const TransactionButton = () => null;
-  return (
-    <Tab.Navigator
-      tabBarOptions={{showLabel: false}}
-      initialRouteName="Home"
-      lazy={true}
-      screenOptions={({route}) => ({
-        tabBarIcon: ({focused}) => {
-          let {name: icon} = route;
-
-          if (focused) {
-            icon += 'Focused';
-          }
-          const Icon = Icons[icon];
-
-          return <Icon />;
-        },
-      })}>
-      <Tab.Screen name="Home" component={HomeRoot} />
-      <Tab.Screen name="Wallet" component={WalletRoot} />
-      <Tab.Screen
-        name="TransactButton"
-        component={TransactionButton}
-        options={{tabBarButton: () => <TransactModal />}}
-      />
-      <Tab.Screen name="Card" component={CardRoot} />
-      <Tab.Screen name="Settings" component={SettingsRoot} />
-    </Tab.Navigator>
   );
 };
 
