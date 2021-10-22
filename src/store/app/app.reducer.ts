@@ -1,7 +1,10 @@
 import {AppActionType, AppActionTypes} from './app.types';
 import {Session} from './app.models';
 
-export const appReduxPersistBlackList = [];
+type AppReduxPersistBlackList = ['appIsLoading'];
+export const appReduxPersistBlackList: AppReduxPersistBlackList = [
+  'appIsLoading',
+];
 
 export interface AppState {
   network: string;
