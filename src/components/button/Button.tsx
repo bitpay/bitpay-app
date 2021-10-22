@@ -1,7 +1,7 @@
 import React from 'react';
 import styled, {css} from 'styled-components/native';
 import {Action, Air, White} from '../../styles/colors';
-import BaseText from '../base-text/BaseText';
+import BaseText from '../styled/base-text/BaseText';
 import Haptic from '../haptic-feedback/haptic';
 import {BaseButtonProps} from 'react-native-gesture-handler';
 type ButtonStyle = 'primary' | 'secondary' | undefined;
