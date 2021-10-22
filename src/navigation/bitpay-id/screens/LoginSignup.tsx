@@ -1,7 +1,7 @@
 import React from 'react';
 import Button from '../../../components/button/Button';
 import {StackScreenProps} from '@react-navigation/stack';
-import {OnboardingScreens, OnboardingStackParamList} from '../OnboardingStack';
+import {BitpayIdStackParamList} from '../BitpayIdStack';
 import {useDispatch} from 'react-redux';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
 import styled from 'styled-components/native';
@@ -12,7 +12,7 @@ import {SlateDark} from '../../../styles/colors';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 
-type Props = StackScreenProps<OnboardingStackParamList, 'LoginSignup'>;
+type Props = StackScreenProps<BitpayIdStackParamList, 'LoginSignup'>;
 
 const LoginContainer = styled.SafeAreaView`
   justify-content: center;
@@ -86,7 +86,7 @@ const LoginScreen = ({navigation, route}: Props) => {
     dispatch(action);
   };
 
-  const {context = 'login'} = route.params || {};
+  const context = route.params?.context || 'login';
   const headerText = context === 'login' ? 'Welcome back!' : 'Create Account';
 
   return (
@@ -148,7 +148,7 @@ const LoginScreen = ({navigation, route}: Props) => {
                   <Button
                     buttonType={'link'}
                     onPress={() =>
-                      navigation.replace(OnboardingScreens.LOGIN_SIGNUP, {
+                      navigation.replace('LoginSignup', {
                         context: 'login',
                       })
                     }>

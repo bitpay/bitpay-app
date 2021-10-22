@@ -1,32 +1,28 @@
 import React from 'react';
 import {Button, Text, View} from 'react-native';
-import {StackScreenProps} from '@react-navigation/stack';
-import {OnboardingScreens, OnboardingStackParamList} from '../OnboardingStack';
-type Props = StackScreenProps<OnboardingStackParamList, 'OnboardingStart'>;
+import {useNavigation} from '@react-navigation/native';
 
-const OnboardingStart = ({navigation}: Props) => {
+const OnboardingStart = () => {
+  const navigation = useNavigation();
+
   return (
     <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
       <Text>Onboarding Start</Text>
       <Button
         title="Create Account"
         onPress={() =>
-          navigation.navigate({
-            name: OnboardingScreens.LOGIN_SIGNUP,
-            params: {
-              context: 'signup',
-            },
+          navigation.navigate('BitpayId', {
+            screen: 'LoginSignup',
+            params: {context: 'signup'},
           })
         }
       />
       <Button
         title="Login"
         onPress={() =>
-          navigation.navigate({
-            name: OnboardingScreens.LOGIN_SIGNUP,
-            params: {
-              context: 'login',
-            },
+          navigation.navigate('BitpayId', {
+            screen: 'LoginSignup',
+            params: {context: 'login'},
           })
         }
       />
