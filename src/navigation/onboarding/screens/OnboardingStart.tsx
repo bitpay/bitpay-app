@@ -1,33 +1,134 @@
-import React from 'react';
-import {Button, SafeAreaView, Text, StatusBar} from 'react-native';
+import React, {useRef, useState} from 'react';
+import {StatusBar, Dimensions} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
+import styled from 'styled-components/native';
+
+import Carousel, {Pagination} from 'react-native-snap-carousel';
+import OnboardingSlide from '../components/OnboardingSlide';
+
+import CryptoToCash from '../../../../assets/img/onboarding/crypto-to-cash.svg';
+import GiftCards from '../../../../assets/img/onboarding/gift-cards.svg';
+import MultiFactor from '../../../../assets/img/onboarding/multi-factor.svg';
+import ProtectCrypto from '../../../../assets/img/onboarding/protect-crypto.svg';
+
+import Button from '../../../components/button/Button';
+import haptic from '../../../components/haptic-feedback/haptic';
+import {Action} from '../../../styles/colors';
+
+const WIDTH = Dimensions.get('window').width;
+const ITEM_WIDTH = Math.round(WIDTH * 0.95);
+
+const onboardingSlides = [
+  {
+    title: 'Turn crypto into dollars with our BitPay Card',
+    text:
+      'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
+    subText: '*Currently available in the USA. More countries coming soon.',
+    img: () => <CryptoToCash />,
+  },
+  {
+    title: 'Spend crypto at your favorite places',
+    text:
+      'Discover a curated list of places you can spend your crypto. Purchase, manage, & spend store credits instantly.',
+    img: () => <GiftCards />,
+  },
+  {
+    title: 'Leverage multi-factor security',
+    text:
+      'Use multi-factor wallets to split payment authorization across up to 12 devices or trusted copayers for enhanced security.',
+    img: () => <MultiFactor />,
+  },
+  {
+    title: 'Control your money with or without an account',
+    text:
+      'Websites and exchanges get hacked. BitPay allows you to privately store, manage, and use your crypto funds without having to trust a centralized bank or exchange.',
+    img: () => <ProtectCrypto />,
+  },
+];
+
+const OnboardingContainer = styled.SafeAreaView`
+  flex: 1;
+`;
+
+const CtaContainer = styled.View`
+  padding: 10px;
+`;
+
+const Row = styled.View`
+  flex-direction: row;
+  justify-content: center;
+  margin: 10px 0;
+`;
+
+const Column = styled.View`
+  flex-direction: column;
+  justify-content: center;
+  margin: 0 5px;
+  flex: 1;
+`;
 
 const OnboardingStart = () => {
   const navigation = useNavigation();
+  const ref = useRef(null);
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+
+  const login = () => {
+    haptic('impactLight');
+    navigation.navigate('BitpayId', {
+      screen: 'LoginSignup',
+      params: {context: 'signup'},
+    });
+  };
 
   return (
-    <SafeAreaView>
+    <OnboardingContainer>
       <StatusBar barStyle="dark-content" />
-      <Text>Onboarding Start</Text>
-      <Button
-        title="Create Account"
-        onPress={() =>
-          navigation.navigate('BitpayId', {
-            screen: 'LoginSignup',
-            params: {context: 'signup'},
-          })
-        }
+      <Carousel
+        layout={'stack'}
+        data={onboardingSlides}
+        renderItem={OnboardingSlide}
+        ref={ref}
+        sliderWidth={WIDTH}
+        itemWidth={ITEM_WIDTH}
+        onBeforeSnapToItem={(index: number) => {
+          haptic('impactLight');
+          setActiveSlideIndex(index);
+        }}
       />
-      <Button
-        title="Login"
-        onPress={() =>
-          navigation.navigate('BitpayId', {
-            screen: 'LoginSignup',
-            params: {context: 'login'},
-          })
-        }
-      />
-    </SafeAreaView>
+      <CtaContainer>
+        <Row>
+          <Column>
+            <Pagination
+              dotsLength={onboardingSlides.length}
+              activeDotIndex={activeSlideIndex}
+              tappableDots={true}
+              // @ts-ignore
+              carouselRef={ref}
+              animatedDuration={100}
+              animatedFriction={19}
+              animatedTension={100}
+              dotStyle={{
+                backgroundColor: Action,
+                width: 15,
+                height: 15,
+                borderRadius: 10,
+                marginHorizontal: 1,
+              }}
+              inactiveDotOpacity={0.4}
+              inactiveDotScale={0.6}
+            />
+          </Column>
+          <Column>
+            <Button buttonStyle={'primary'} onPress={login}>
+              Get Started
+            </Button>
+          </Column>
+        </Row>
+        <Row>
+          <Button buttonType={'link'}>Continue without an account</Button>
+        </Row>
+      </CtaContainer>
+    </OnboardingContainer>
   );
 };
 

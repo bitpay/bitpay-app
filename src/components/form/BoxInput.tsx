@@ -1,6 +1,6 @@
 import styled, {css} from 'styled-components/native';
 import React, {useEffect, useState} from 'react';
-import BaseText from '../styled/base-text/BaseText';
+import {BaseText} from '../styled/text/Text';
 import {Action, Caution, Slate} from '../../styles/colors';
 import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';

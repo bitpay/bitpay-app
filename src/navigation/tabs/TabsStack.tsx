@@ -23,7 +23,7 @@ import SettingsFocusedIcon from '../../../assets/img/tab-icons/settings-focused.
 import TransactButtonIcon from '../../../assets/img/tab-icons/transact-button.svg';
 
 import styled from 'styled-components/native';
-import BaseText from '../../components/styled/base-text/BaseText';
+import {BaseText} from '../../components/styled/text/Text';
 import BottomPopupModal from '../../components/modal/base/bottom-popup/BottomPopupModal';
 
 const TransactButton = styled.View`

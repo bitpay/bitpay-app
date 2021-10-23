@@ -5,7 +5,7 @@ import {BitpayIdStackParamList} from '../BitpayIdStack';
 import {useDispatch} from 'react-redux';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
 import styled from 'styled-components/native';
-import BaseText from '../../../components/styled/base-text/BaseText';
+import {BaseText} from '../../../components/styled/text/Text';
 import {useForm, Controller} from 'react-hook-form';
 import BoxInput from '../../../components/form/BoxInput';
 import {SlateDark} from '../../../styles/colors';
