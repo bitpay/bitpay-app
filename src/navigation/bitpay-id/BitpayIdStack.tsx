@@ -1,7 +1,6 @@
 import React from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
 import LoginSignup from './screens/LoginSignup';
-import {TransitionPresets} from '@react-navigation/stack';
 import {screenOptions} from '../../constants/navigation-options';
 
 export type BitpayIdStackParamList = {
@@ -22,9 +21,6 @@ const BitpayIdStack = () => {
       <BitpayId.Screen
         name={BitpayIdScreens.LOGIN_SIGNUP}
         component={LoginSignup}
-        options={{
-          ...TransitionPresets.SlideFromRightIOS,
-        }}
       />
     </BitpayId.Navigator>
   );

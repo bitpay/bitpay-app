@@ -5,7 +5,7 @@ import {
   NavigationContainer,
   NavigatorScreenParams,
 } from '@react-navigation/native';
-import {createStackNavigator} from '@react-navigation/stack';
+import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
 import {RootState} from './store';
 import {AppEffects} from './store/app';
 import navTheme from './theme';
@@ -58,6 +58,9 @@ export default () => {
     : RootStacks.ONBOARDING;
 
   const Root = createStackNavigator<RootStackParamList>();
+  const baseOptions = {
+    ...TransitionPresets.SlideFromRightIOS,
+  };
 
   return (
     <NavigationContainer theme={navTheme}>
@@ -66,9 +69,21 @@ export default () => {
           headerShown: false,
         }}
         initialRouteName={initialRoute}>
-        <Root.Screen name={RootStacks.ONBOARDING} component={OnboardingStack} />
-        <Root.Screen name={RootStacks.TABS} component={TabsStack} />
-        <Root.Screen name={RootStacks.BITPAY_ID} component={BitpayIdStack} />
+        <Root.Screen
+          name={RootStacks.ONBOARDING}
+          component={OnboardingStack}
+          options={{...baseOptions}}
+        />
+        <Root.Screen
+          name={RootStacks.TABS}
+          component={TabsStack}
+          options={{...baseOptions}}
+        />
+        <Root.Screen
+          name={RootStacks.BITPAY_ID}
+          component={BitpayIdStack}
+          options={{...baseOptions}}
+        />
       </Root.Navigator>
     </NavigationContainer>
   );

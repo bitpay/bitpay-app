@@ -6,8 +6,7 @@ const OnboardingStart = () => {
   const navigation = useNavigation();
 
   return (
-    <SafeAreaView
-      style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+    <SafeAreaView>
       <StatusBar barStyle="dark-content" />
       <Text>Onboarding Start</Text>
       <Button
