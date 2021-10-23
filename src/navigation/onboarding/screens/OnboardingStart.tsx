@@ -1,12 +1,14 @@
 import React from 'react';
-import {Button, Text, View} from 'react-native';
+import {Button, SafeAreaView, Text, StatusBar} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 
 const OnboardingStart = () => {
   const navigation = useNavigation();
 
   return (
-    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+    <SafeAreaView
+      style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+      <StatusBar barStyle="dark-content" />
       <Text>Onboarding Start</Text>
       <Button
         title="Create Account"
@@ -26,7 +28,7 @@ const OnboardingStart = () => {
           })
         }
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
