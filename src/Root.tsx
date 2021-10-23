@@ -18,6 +18,7 @@ import TabsStack from './navigation/tabs/TabsStack';
 import BitpayIdStack, {
   BitpayIdStackParamList,
 } from './navigation/bitpay-id/BitpayIdStack';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 export type RootStackParamList = {
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
@@ -50,7 +51,11 @@ export default () => {
   }, [dispatch]);
 
   if (appIsLoading) {
-    return <SplashScreen />;
+    return (
+      <SafeAreaProvider>
+        <SplashScreen />
+      </SafeAreaProvider>
+    );
   }
 
   const initialRoute = onboardingCompleted
@@ -63,28 +68,30 @@ export default () => {
   };
 
   return (
-    <NavigationContainer theme={navTheme}>
-      <Root.Navigator
-        screenOptions={{
-          headerShown: false,
-        }}
-        initialRouteName={initialRoute}>
-        <Root.Screen
-          name={RootStacks.ONBOARDING}
-          component={OnboardingStack}
-          options={{...baseOptions}}
-        />
-        <Root.Screen
-          name={RootStacks.TABS}
-          component={TabsStack}
-          options={{...baseOptions}}
-        />
-        <Root.Screen
-          name={RootStacks.BITPAY_ID}
-          component={BitpayIdStack}
-          options={{...baseOptions}}
-        />
-      </Root.Navigator>
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <NavigationContainer theme={navTheme}>
+        <Root.Navigator
+          screenOptions={{
+            headerShown: false,
+          }}
+          initialRouteName={initialRoute}>
+          <Root.Screen
+            name={RootStacks.ONBOARDING}
+            component={OnboardingStack}
+            options={{...baseOptions}}
+          />
+          <Root.Screen
+            name={RootStacks.TABS}
+            component={TabsStack}
+            options={{...baseOptions}}
+          />
+          <Root.Screen
+            name={RootStacks.BITPAY_ID}
+            component={BitpayIdStack}
+            options={{...baseOptions}}
+          />
+        </Root.Navigator>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 };

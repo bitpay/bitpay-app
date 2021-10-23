@@ -30,15 +30,19 @@ const TitleContainer = styled.View`
 `;
 
 const TextContainer = styled.View`
-  padding: 16px;
+  padding: 10px;
 `;
 
 const SubTextContainer = styled.View`
-  width: ${WIDTH * 0.75}px;
+  width: ${WIDTH * 0.8}px;
   margin-top: 10px;
 `;
 
-export default ({item}: {item: OnboardingSlide}) => {
+export default ({
+  item,
+}: {
+  item: OnboardingSlide;
+}) => {
   const {title, text, subText, img} = item;
 
   return (

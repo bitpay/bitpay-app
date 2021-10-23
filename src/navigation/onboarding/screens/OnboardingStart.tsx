@@ -48,16 +48,21 @@ const onboardingSlides = [
 
 const OnboardingContainer = styled.SafeAreaView`
   flex: 1;
+  position: relative;
 `;
 
 const CtaContainer = styled.View`
   padding: 10px;
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
 `;
 
 const Row = styled.View`
   flex-direction: row;
   justify-content: center;
-  margin: 10px 0;
+  margin: 5px 0;
 `;
 
 const Column = styled.View`
@@ -84,13 +89,16 @@ const OnboardingStart = () => {
     <OnboardingContainer>
       <StatusBar barStyle="dark-content" />
       <Carousel
-        layout={'stack'}
+        vertical={false}
+        layout={'default'}
         data={onboardingSlides}
         renderItem={OnboardingSlide}
         ref={ref}
         sliderWidth={WIDTH}
         itemWidth={ITEM_WIDTH}
-        onBeforeSnapToItem={(index: number) => {
+        // @ts-ignore
+        disableIntervalMomentum={true}
+        onScrollIndexChanged={(index: number) => {
           haptic('impactLight');
           setActiveSlideIndex(index);
         }}
@@ -102,10 +110,9 @@ const OnboardingStart = () => {
               dotsLength={onboardingSlides.length}
               activeDotIndex={activeSlideIndex}
               tappableDots={true}
-              // @ts-ignore
               carouselRef={ref}
               animatedDuration={100}
-              animatedFriction={19}
+              animatedFriction={100}
               animatedTension={100}
               dotStyle={{
                 backgroundColor: Action,

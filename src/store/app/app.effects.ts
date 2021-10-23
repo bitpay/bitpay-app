@@ -2,6 +2,7 @@ import {RootState, Effect} from '../index';
 import {AppActions} from './';
 import axios from 'axios';
 import {Session} from './app.models';
+import {sleep} from '../../utils/helper-methods';
 
 export const startGetSession = (): Effect => async (
   dispatch,
