@@ -15,9 +15,6 @@ import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {Action} from '../../../styles/colors';
 
-const WIDTH = Dimensions.get('window').width;
-const ITEM_WIDTH = Math.round(WIDTH * 0.95);
-
 const onboardingSlides = [
   {
     title: 'Turn crypto into dollars with our BitPay Card',
@@ -45,6 +42,8 @@ const onboardingSlides = [
     img: () => <ProtectCrypto />,
   },
 ];
+
+const WIDTH = Dimensions.get('window').width;
 
 const OnboardingContainer = styled.SafeAreaView`
   flex: 1;
@@ -91,17 +90,18 @@ const OnboardingStart = () => {
       <Carousel
         vertical={false}
         layout={'default'}
+        useExperimentalSnap={true}
         data={onboardingSlides}
         renderItem={OnboardingSlide}
         ref={ref}
         sliderWidth={WIDTH}
-        itemWidth={ITEM_WIDTH}
-        // @ts-ignore
-        disableIntervalMomentum={true}
+        itemWidth={Math.round(WIDTH)}
         onScrollIndexChanged={(index: number) => {
           haptic('impactLight');
           setActiveSlideIndex(index);
         }}
+        // @ts-ignore
+        disableIntervalMomentum={true}
       />
       <CtaContainer>
         <Row>
@@ -122,7 +122,7 @@ const OnboardingStart = () => {
                 marginHorizontal: 1,
               }}
               inactiveDotOpacity={0.4}
-              inactiveDotScale={0.6}
+              inactiveDotScale={0.5}
             />
           </Column>
           <Column>

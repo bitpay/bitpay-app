@@ -16,11 +16,12 @@ const SlideContainer = styled.View`
   background: white;
   justify-content: center;
   align-items: center;
+  padding: 10px;
 `;
 
 const ImageContainer = styled.View`
   margin-top: 10px;
-  height: 250px;
+  height: 200px;
   display: flex;
   justify-content: center;
 `;
@@ -38,11 +39,7 @@ const SubTextContainer = styled.View`
   margin-top: 10px;
 `;
 
-export default ({
-  item,
-}: {
-  item: OnboardingSlide;
-}) => {
+export default ({item}: {item: OnboardingSlide}) => {
   const {title, text, subText, img} = item;
 
   return (
