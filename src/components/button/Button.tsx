@@ -26,14 +26,14 @@ interface TextProps {
 
 const ButtonContainer = styled.TouchableOpacity`
   background: ${Action};
-  border-radius: 12px;
+  border-radius: 6px;
   padding: 18px;
+  margin: 5px 0;
   ${({secondary}: ContainerProps) =>
     secondary &&
     css`
       background: transparent;
       border: 2px solid ${Action};
-      border-radius: 6px;
       padding: 18px 28px;
     `}
 

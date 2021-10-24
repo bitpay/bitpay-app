@@ -84,6 +84,13 @@ const OnboardingStart = () => {
     });
   };
 
+  const continueWithoutAccount = () => {
+    haptic('impactLight');
+    navigation.navigate('Onboarding', {
+      screen: 'Pin',
+    });
+  };
+
   return (
     <OnboardingContainer>
       <StatusBar barStyle="dark-content" />
@@ -132,7 +139,9 @@ const OnboardingStart = () => {
           </Column>
         </Row>
         <Row>
-          <Button buttonType={'link'}>Continue without an account</Button>
+          <Button buttonType={'link'} onPress={continueWithoutAccount}>
+            Continue without an account
+          </Button>
         </Row>
       </CtaContainer>
     </OnboardingContainer>

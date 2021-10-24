@@ -11,3 +11,7 @@ export const screenOptions: StackNavigationOptions = {
   },
   headerShadowVisible: false,
 };
+
+export const headerRightContainerStyle = {
+  paddingHorizontal: 10,
+};
