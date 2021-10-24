@@ -11,6 +11,7 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
+    "@freakycoder/react-native-bounceable": "^0.2.5",
     "@hookform/resolvers": "^2.6.1",
     "@react-native-community/async-storage": "^1.12.1",
     "@react-native-community/masked-view": "^0.1.10",
@@ -27,6 +28,7 @@
     "react-native-haptic-feedback": "^1.11.0",
     "react-native-modal": "^11.10.0",
     "react-native-reanimated": "^2.0.1",
+    "react-native-rounded-checkbox": "^0.3.3",
     "react-native-safe-area-context": "^3.2.0",
     "react-native-screens": "^2.18.1",
     "react-native-snap-carousel": "4.0.0-beta.6",

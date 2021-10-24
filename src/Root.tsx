@@ -83,7 +83,10 @@ export default () => {
           <Root.Screen
             name={RootStacks.TABS}
             component={TabsStack}
-            options={{...baseOptions}}
+            options={{
+              ...baseOptions,
+              gestureEnabled: false,
+            }}
           />
           <Root.Screen
             name={RootStacks.BITPAY_ID}

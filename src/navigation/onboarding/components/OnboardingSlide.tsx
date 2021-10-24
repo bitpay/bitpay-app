@@ -1,4 +1,9 @@
-import {Disclaimer, H3, Paragraph} from '../../../components/styled/text/Text';
+import {
+  Disclaimer,
+  H3,
+  Paragraph,
+  TextAlign,
+} from '../../../components/styled/text/Text';
 import React, {ReactElement} from 'react';
 import styled from 'styled-components/native';
 import {
@@ -29,14 +34,20 @@ export default ({item}: {item: OnboardingSlide}) => {
     <SlideContainer>
       <ImageContainer>{img()}</ImageContainer>
       <TitleContainer>
-        <H3>{title}</H3>
+        <TextAlign align={'center'}>
+          <H3>{title}</H3>
+        </TextAlign>
       </TitleContainer>
       <TextContainer>
-        <Paragraph>{text}</Paragraph>
+        <TextAlign align={'center'}>
+          <Paragraph>{text}</Paragraph>
+        </TextAlign>
       </TextContainer>
       {subText && (
         <SubTextContainer>
-          <Disclaimer>{subText}</Disclaimer>
+          <TextAlign align={'center'}>
+            <Disclaimer>{subText}</Disclaimer>
+          </TextAlign>
         </SubTextContainer>
       )}
     </SlideContainer>

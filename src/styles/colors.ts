@@ -18,3 +18,6 @@ export const White = '#FFFFFF';
 export const Caution = '#ef476f';
 export const Success = '#2fcfa4';
 export const Warning = '#fdb455';
+
+export const Disabled = '#edeef0';
+export const DisabledDark = '#bebec0';

@@ -1,6 +1,6 @@
 import React from 'react';
 import styled, {css} from 'styled-components/native';
-import {Action, Air, White} from '../../styles/colors';
+import {Action, Air, Disabled, DisabledDark, White} from '../../styles/colors';
 import {BaseText} from '../styled/text/Text';
 import Haptic from '../haptic-feedback/haptic';
 import {BaseButtonProps} from 'react-native-gesture-handler';
@@ -12,16 +12,19 @@ interface ButtonProps extends BaseButtonProps {
   buttonType?: ButtonType;
   onPress?: () => any;
   children: string;
+  disabled?: boolean;
 }
 
 interface ContainerProps {
   secondary?: boolean;
   pill?: boolean;
+  disabled?: boolean;
 }
 
 interface TextProps {
   secondary?: boolean;
   pill?: boolean;
+  disabled?: boolean;
 }
 
 const ButtonContainer = styled.TouchableOpacity`
@@ -44,6 +47,12 @@ const ButtonContainer = styled.TouchableOpacity`
       border-radius: 17.5px;
       padding: 8px 15px;
     `}
+
+  ${({disabled}: ContainerProps) =>
+    disabled &&
+    css`
+      background: ${Disabled};
+    `}
 `;
 
 const LinkContainer = styled.TouchableOpacity`
@@ -56,19 +65,37 @@ const Text = styled(BaseText)`
   line-height: 25px;
   text-align: center;
   color: ${({secondary}: TextProps) => (secondary ? Action : White)};
+  ${({disabled}: ContainerProps) =>
+    disabled &&
+    css`
+      color: ${DisabledDark} !important;
+    `}
 `;
 
 const ACTIVE_OPACITY = 0.8;
 
-const Button = ({onPress, buttonStyle, buttonType, children}: ButtonProps) => {
+const Button = ({
+  onPress,
+  buttonStyle,
+  buttonType,
+  children,
+  disabled,
+}: ButtonProps) => {
   const _onPress = () => {
+    if (disabled || !onPress) {
+      return;
+    }
+
     Haptic('impactLight');
-    onPress && onPress();
+    onPress();
   };
 
   if (buttonType === 'link') {
     return (
-      <LinkContainer onPress={_onPress} activeOpacity={ACTIVE_OPACITY}>
+      <LinkContainer
+        disabled={disabled}
+        onPress={_onPress}
+        activeOpacity={ACTIVE_OPACITY}>
         <Text secondary>{children}</Text>
       </LinkContainer>
     );
@@ -76,8 +103,12 @@ const Button = ({onPress, buttonStyle, buttonType, children}: ButtonProps) => {
 
   if (buttonType === 'pill') {
     return (
-      <ButtonContainer pill onPress={_onPress} activeOpacity={ACTIVE_OPACITY}>
-        <Text secondary pill>
+      <ButtonContainer
+        pill
+        onPress={_onPress}
+        disabled={disabled}
+        activeOpacity={ACTIVE_OPACITY}>
+        <Text secondary pill disabled={disabled}>
           {children}
         </Text>
       </ButtonContainer>
@@ -89,15 +120,21 @@ const Button = ({onPress, buttonStyle, buttonType, children}: ButtonProps) => {
       <ButtonContainer
         secondary
         onPress={_onPress}
+        disabled={disabled}
         activeOpacity={ACTIVE_OPACITY}>
-        <Text secondary>{children}</Text>
+        <Text secondary disabled={disabled}>
+          {children}
+        </Text>
       </ButtonContainer>
     );
   }
 
   return (
-    <ButtonContainer onPress={_onPress} activeOpacity={ACTIVE_OPACITY}>
-      <Text>{children}</Text>
+    <ButtonContainer
+      onPress={_onPress}
+      disabled={disabled}
+      activeOpacity={ACTIVE_OPACITY}>
+      <Text disabled={disabled}>{children}</Text>
     </ButtonContainer>
   );
 };

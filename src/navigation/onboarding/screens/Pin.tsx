@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components/native';
 import Pin from '../../../../assets/img/onboarding/pin.svg';
-import {H3, Paragraph} from '../../../components/styled/text/Text';
+import {H3, Paragraph, TextAlign} from '../../../components/styled/text/Text';
 import {
   CtaContainer,
   ImageContainer,
@@ -22,12 +22,16 @@ const PinScreen = () => {
         <Pin />
       </ImageContainer>
       <TitleContainer>
-        <H3>Set a PIN or use your fingerprint to unlock</H3>
+        <TextAlign align={'center'}>
+          <H3>Set a PIN or use your fingerprint to unlock</H3>
+        </TextAlign>
       </TitleContainer>
       <TextContainer>
-        <Paragraph>
-          This adds an extra layer of security to your {'\n'} BitPay app.
-        </Paragraph>
+        <TextAlign align={'center'}>
+          <Paragraph>
+            This adds an extra layer of security to your {'\n'} BitPay app.
+          </Paragraph>
+        </TextAlign>
       </TextContainer>
       <CtaContainer>
         <Button buttonStyle={'primary'}>PIN</Button>

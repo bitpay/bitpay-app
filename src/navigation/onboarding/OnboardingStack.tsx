@@ -10,17 +10,22 @@ import haptic from '../../components/haptic-feedback/haptic';
 import OnboardingStartScreen from './screens/OnboardingStart';
 import PinScreen from './screens/Pin';
 import CreateWallet from './screens/CreateWallet';
+import TermsOfUse from './screens/TermsOfUse';
 
 export type OnboardingStackParamList = {
   OnboardingStart: undefined;
   Pin: undefined;
   CreateWallet: undefined;
+  TermsOfUse: {
+    context?: 'skip' | undefined;
+  };
 };
 
 export enum OnboardingScreens {
   ONBOARDING_START = 'OnboardingStart',
   PIN = 'Pin',
   CREATE_WALLET = 'CreateWallet',
+  TERMS_OF_USE = 'TermsOfUse',
 }
 
 const Onboarding = createStackNavigator<OnboardingStackParamList>();
@@ -83,7 +88,17 @@ const OnboardingStack = () => {
           gestureEnabled: false,
           headerLeft: () => null,
           headerRight: () => (
-            <Button buttonType={'pill'} onPress={undefined}>
+            <Button
+              buttonType={'pill'}
+              onPress={() => {
+                haptic('impactLight');
+                navigation.navigate('Onboarding', {
+                  screen: 'TermsOfUse',
+                  params: {
+                    context: 'skip',
+                  },
+                });
+              }}>
               Skip
             </Button>
           ),
@@ -91,6 +106,16 @@ const OnboardingStack = () => {
         }}
         name={OnboardingScreens.CREATE_WALLET}
         component={CreateWallet}
+      />
+      <Onboarding.Screen
+        options={{
+          headerRightContainerStyle,
+          gestureEnabled: false,
+          headerRight: () => null,
+          ...TransitionPresets.SlideFromRightIOS,
+        }}
+        name={OnboardingScreens.TERMS_OF_USE}
+        component={TermsOfUse}
       />
     </Onboarding.Navigator>
   );

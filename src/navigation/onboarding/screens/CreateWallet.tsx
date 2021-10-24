@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components/native';
 import CreateWallet from '../../../../assets/img/onboarding/create-wallet.svg';
-import {H3, Paragraph} from '../../../components/styled/text/Text';
+import {H3, Paragraph, TextAlign} from '../../../components/styled/text/Text';
 import {
   CtaContainer,
   ImageContainer,
@@ -22,13 +22,17 @@ const PinScreen = () => {
         <CreateWallet />
       </ImageContainer>
       <TitleContainer>
-        <H3>Would you like to create or import a wallet?</H3>
+        <TextAlign align={'center'}>
+          <H3>Would you like to create or import a wallet?</H3>
+        </TextAlign>
       </TitleContainer>
       <TextContainer>
-        <Paragraph>
-          A wallet, formely known as a key, is a place where you store your
-          assets.
-        </Paragraph>
+        <TextAlign align={'center'}>
+          <Paragraph>
+            A wallet, formely known as a key, is a place where you store your
+            assets.
+          </Paragraph>
+        </TextAlign>
       </TextContainer>
       <CtaContainer>
         <Button buttonStyle={'primary'}>Create a Wallet</Button>

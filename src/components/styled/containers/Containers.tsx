@@ -9,6 +9,11 @@ export const ImageContainer = styled.View`
   justify-content: center;
 `;
 
+export const HeaderTitleContainer = styled.View`
+  margin-top: 10px;
+  padding: 10px;
+`;
+
 export const TitleContainer = styled.View`
   width: ${WIDTH * 0.75}px;
 `;
