@@ -31,3 +31,11 @@ export const CtaContainer = styled.View`
   flex-direction: column;
   margin-top: 30px;
 `;
+
+export const CtaContainerAbsolute = styled.View`
+  padding: 10px;
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+`;

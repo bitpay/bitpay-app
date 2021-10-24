@@ -14,6 +14,7 @@ import ProtectCrypto from '../../../../assets/img/onboarding/protect-crypto.svg'
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {Action} from '../../../styles/colors';
+import {CtaContainerAbsolute} from '../../../components/styled/containers/Containers';
 
 const onboardingSlides = [
   {
@@ -48,14 +49,6 @@ const WIDTH = Dimensions.get('window').width;
 const OnboardingContainer = styled.SafeAreaView`
   flex: 1;
   position: relative;
-`;
-
-const CtaContainer = styled.View`
-  padding: 10px;
-  position: absolute;
-  bottom: 10px;
-  left: 0;
-  right: 0;
 `;
 
 const Row = styled.View`
@@ -110,7 +103,7 @@ const OnboardingStart = () => {
         // @ts-ignore
         disableIntervalMomentum={true}
       />
-      <CtaContainer>
+      <CtaContainerAbsolute>
         <Row>
           <Column>
             <Pagination
@@ -143,7 +136,7 @@ const OnboardingStart = () => {
             Continue without an account
           </Button>
         </Row>
-      </CtaContainer>
+      </CtaContainerAbsolute>
     </OnboardingContainer>
   );
 };

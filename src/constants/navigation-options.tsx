@@ -14,4 +14,5 @@ export const screenOptions: StackNavigationOptions = {
 
 export const headerRightContainerStyle = {
   paddingHorizontal: 10,
+  height: 50,
 };
