@@ -15,7 +15,7 @@ Install dependencies with `yarn` >= 14.15.0
 
 
 ### Redux Dev Tools
-This Root uses `react-redux` https://react-redux.js.org/ for state management. To take advantage of the tooling available, go to https://github.com/jhen0409/react-native-debugger and install the debugger.
+This project uses `react-redux` https://react-redux.js.org/ for state management. To take advantage of the tooling available, go to https://github.com/jhen0409/react-native-debugger and install the debugger.
 
 1. To enable - make sure debugger is open - tap `D` in the hosting terminal window or shake the device 
 2. A menu will popup - tap `Debug with Chrome`(IOS) or `Debug`(Android)
