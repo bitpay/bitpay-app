@@ -1,9 +1,16 @@
 import {AppActionType, AppActionTypes} from './app.types';
 import {Session} from './app.models';
+import {OnGoingProcessMessages} from '../../components/ongoing-process/OngoingProcess';
 
-type AppReduxPersistBlackList = ['appIsLoading'];
+type AppReduxPersistBlackList = [
+  'appIsLoading',
+  'showOnGoingProcessModal',
+  'onGoingProcessModalMessage',
+];
 export const appReduxPersistBlackList: AppReduxPersistBlackList = [
   'appIsLoading',
+  'showOnGoingProcessModal',
+  'onGoingProcessModalMessage',
 ];
 
 export interface AppState {
@@ -12,6 +19,8 @@ export interface AppState {
   appIsLoading: boolean;
   onboardingCompleted: boolean;
   session: Session | undefined;
+  showOnGoingProcessModal: boolean;
+  onGoingProcessModalMessage: string | undefined;
 }
 
 const initialState: AppState = {
@@ -20,6 +29,8 @@ const initialState: AppState = {
   appIsLoading: true,
   onboardingCompleted: false,
   session: undefined,
+  showOnGoingProcessModal: false,
+  onGoingProcessModalMessage: OnGoingProcessMessages.GENERAL_AWAITING,
 };
 
 export const appReducer = (
@@ -43,6 +54,19 @@ export const appReducer = (
       return {
         ...state,
         onboardingCompleted: true,
+      };
+
+    case AppActionTypes.SHOW_ONGOING_PROCESS_MODAL:
+      return {
+        ...state,
+        showOnGoingProcessModal: true,
+        onGoingProcessModalMessage: action.payload,
+      };
+
+    case AppActionTypes.DISMISS_ONGOING_PROCESS_MODAL:
+      return {
+        ...state,
+        showOnGoingProcessModal: false,
       };
 
     default:

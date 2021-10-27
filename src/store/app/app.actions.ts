@@ -1,5 +1,6 @@
 import {AppActionType, AppActionTypes} from './app.types';
 import {Session} from './app.models';
+import {OnGoingProcessMessages} from '../../components/ongoing-process/OngoingProcess';
 
 export const successGetSession = (session: Session): AppActionType => ({
   type: AppActionTypes.SUCCESS_GET_SESSION,
@@ -20,4 +21,15 @@ export const failedAppInit = (): AppActionType => ({
 
 export const setOnboardingCompleted = (): AppActionType => ({
   type: AppActionTypes.SET_ONBOARDING_COMPLETED,
+});
+
+export const showOnGoingProcessModal = (
+  message: OnGoingProcessMessages,
+): AppActionType => ({
+  type: AppActionTypes.SHOW_ONGOING_PROCESS_MODAL,
+  payload: message,
+});
+
+export const dismissOnGoingProcessModal = (): AppActionType => ({
+  type: AppActionTypes.DISMISS_ONGOING_PROCESS_MODAL,
 });
