@@ -1,14 +1,16 @@
 import 'react-native-gesture-handler';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 import React, {useEffect} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
+import {RootState} from './store';
+import {AppEffects} from './store/app';
+
+import navTheme from './theme';
 import {
   NavigationContainer,
   NavigatorScreenParams,
 } from '@react-navigation/native';
 import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
-import {RootState} from './store';
-import {AppEffects} from './store/app';
-import navTheme from './theme';
 
 import SplashScreen from './navigation/app/screens/Splash';
 import OnboardingStack, {
@@ -18,7 +20,8 @@ import TabsStack from './navigation/tabs/TabsStack';
 import BitpayIdStack, {
   BitpayIdStackParamList,
 } from './navigation/bitpay-id/BitpayIdStack';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
+
+import OnGoingProcessModal from './components/ongoing-process/OngoingProcess';
 
 export type RootStackParamList = {
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
@@ -95,6 +98,7 @@ export default () => {
           />
         </Root.Navigator>
       </NavigationContainer>
+      <OnGoingProcessModal />
     </SafeAreaProvider>
   );
 };

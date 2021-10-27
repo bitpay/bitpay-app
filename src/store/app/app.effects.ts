@@ -3,6 +3,7 @@ import {AppActions} from './';
 import axios from 'axios';
 import {Session} from './app.models';
 import {sleep} from '../../utils/helper-methods';
+import {OnGoingProcessMessages} from '../../components/ongoing-process/OngoingProcess';
 
 export const startGetSession = (): Effect => async (
   dispatch,
@@ -38,4 +39,18 @@ export const startAppInit = (): Effect => async (
     console.error(err);
     dispatch(AppActions.failedAppInit());
   }
+};
+
+export const startOnGoingProcessModal = (
+  message: OnGoingProcessMessages,
+): Effect => async (dispatch, getState: () => RootState) => {
+  const store: RootState = getState();
+
+  // if modal currently active dismiss and sleep to allow animation to complete before showing next
+  if (store.APP.showOnGoingProcessModal) {
+    dispatch(AppActions.dismissOnGoingProcessModal());
+    await sleep(500);
+  }
+
+  dispatch(AppActions.showOnGoingProcessModal(message));
 };
