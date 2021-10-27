@@ -1,8 +1,11 @@
 import React from 'react';
-import {StackNavigationOptions} from '@react-navigation/stack';
+import {
+  StackNavigationOptions,
+  TransitionPresets,
+} from '@react-navigation/stack';
 import Back from '../components/back/Back';
 
-export const screenOptions: StackNavigationOptions = {
+export const baseNavigatorOptions: StackNavigationOptions = {
   headerBackImage: () => <Back />,
   headerTitle: '',
   headerBackTitleVisible: false,
@@ -10,6 +13,10 @@ export const screenOptions: StackNavigationOptions = {
     backgroundColor: 'transparent',
   },
   headerShadowVisible: false,
+};
+
+export const baseScreenOptions: StackNavigationOptions = {
+  ...TransitionPresets.SlideFromRightIOS,
 };
 
 export const headerRightContainerStyle = {

@@ -1,7 +1,10 @@
 import React from 'react';
-import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
+import {createStackNavigator} from '@react-navigation/stack';
 import LoginSignup from './screens/LoginSignup';
-import {screenOptions} from '../../constants/navigation-options';
+import {
+  baseNavigatorOptions,
+  baseScreenOptions,
+} from '../../constants/navigation-options';
 
 export type BitpayIdStackParamList = {
   LoginSignup: {context: 'login' | 'signup'};
@@ -16,12 +19,12 @@ const BitpayId = createStackNavigator<BitpayIdStackParamList>();
 const BitpayIdStack = () => {
   return (
     <BitpayId.Navigator
-      screenOptions={{...screenOptions}}
+      screenOptions={{...baseNavigatorOptions}}
       initialRouteName={BitpayIdScreens.LOGIN_SIGNUP}>
       <BitpayId.Screen
         name={BitpayIdScreens.LOGIN_SIGNUP}
         component={LoginSignup}
-        options={{...TransitionPresets.SlideFromRightIOS}}
+        options={{...baseScreenOptions}}
       />
     </BitpayId.Navigator>
   );

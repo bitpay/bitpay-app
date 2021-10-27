@@ -22,6 +22,7 @@ import BitpayIdStack, {
 } from './navigation/bitpay-id/BitpayIdStack';
 
 import OnGoingProcessModal from './components/ongoing-process/OngoingProcess';
+import {baseScreenOptions} from './constants/navigation-options';
 
 export type RootStackParamList = {
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
@@ -66,9 +67,6 @@ export default () => {
     : RootStacks.ONBOARDING;
 
   const Root = createStackNavigator<RootStackParamList>();
-  const baseOptions = {
-    ...TransitionPresets.SlideFromRightIOS,
-  };
 
   return (
     <SafeAreaProvider>
@@ -81,20 +79,20 @@ export default () => {
           <Root.Screen
             name={RootStacks.ONBOARDING}
             component={OnboardingStack}
-            options={{...baseOptions}}
+            options={{...baseScreenOptions}}
           />
           <Root.Screen
             name={RootStacks.TABS}
             component={TabsStack}
             options={{
-              ...baseOptions,
+              ...baseScreenOptions,
               gestureEnabled: false,
             }}
           />
           <Root.Screen
             name={RootStacks.BITPAY_ID}
             component={BitpayIdStack}
-            options={{...baseOptions}}
+            options={{...baseScreenOptions}}
           />
         </Root.Navigator>
       </NavigationContainer>

@@ -6,10 +6,10 @@ import {
 import {TouchableOpacity, Button} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 
-import HomeRoot from './Home/HomeStack';
-import WalletRoot from './Wallet/WalletStack';
-import CardRoot from './Card/CardStack';
-import SettingsRoot from './Settings/SettingsStack';
+import HomeRoot from './home/HomeStack';
+import WalletRoot from './wallet/WalletStack';
+import CardRoot from './card/CardStack';
+import SettingsRoot from './settings/SettingsStack';
 
 import {SvgProps} from 'react-native-svg';
 import HomeIcon from '../../../assets/img/tab-icons/home.svg';
