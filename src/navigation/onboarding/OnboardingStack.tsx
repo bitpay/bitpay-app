@@ -1,8 +1,9 @@
 import React from 'react';
-import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
+import {createStackNavigator} from '@react-navigation/stack';
 import {
+  baseNavigatorOptions,
+  baseScreenOptions,
   headerRightContainerStyle,
-  screenOptions,
 } from '../../constants/navigation-options';
 import {useNavigation} from '@react-navigation/native';
 import Button from '../../components/button/Button';
@@ -36,11 +37,12 @@ const OnboardingStack = () => {
   return (
     <Onboarding.Navigator
       screenOptions={{
-        ...screenOptions,
+        ...baseNavigatorOptions,
       }}
       initialRouteName="OnboardingStart">
       <Onboarding.Screen
         options={{
+          ...baseScreenOptions,
           headerRightContainerStyle,
           headerRight: () => (
             <Button
@@ -55,13 +57,13 @@ const OnboardingStack = () => {
               Log In
             </Button>
           ),
-          ...TransitionPresets.SlideFromRightIOS,
         }}
         name={OnboardingScreens.ONBOARDING_START}
         component={OnboardingStartScreen}
       />
       <Onboarding.Screen
         options={{
+          ...baseScreenOptions,
           headerRightContainerStyle,
           gestureEnabled: false,
           headerLeft: () => null,
@@ -77,13 +79,13 @@ const OnboardingStack = () => {
               Skip
             </Button>
           ),
-          ...TransitionPresets.SlideFromRightIOS,
         }}
         name={OnboardingScreens.PIN}
         component={PinScreen}
       />
       <Onboarding.Screen
         options={{
+          ...baseScreenOptions,
           headerRightContainerStyle,
           gestureEnabled: false,
           headerLeft: () => null,
@@ -102,17 +104,16 @@ const OnboardingStack = () => {
               Skip
             </Button>
           ),
-          ...TransitionPresets.SlideFromRightIOS,
         }}
         name={OnboardingScreens.CREATE_WALLET}
         component={CreateWallet}
       />
       <Onboarding.Screen
         options={{
+          ...baseScreenOptions,
           headerRightContainerStyle,
           gestureEnabled: false,
           headerRight: () => null,
-          ...TransitionPresets.SlideFromRightIOS,
         }}
         name={OnboardingScreens.TERMS_OF_USE}
         component={TermsOfUse}
