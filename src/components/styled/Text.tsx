@@ -1,6 +1,6 @@
 import styled, {css} from 'styled-components/native';
 import {StyledComponentBase} from 'styled-components';
-import {Action} from '../../../styles/colors';
+import {Action} from '../../styles/colors';
 
 export const BaseText: StyledComponentBase<any, any> = styled.Text`
   font-family: 'Heebo';
@@ -12,6 +12,15 @@ export const H3 = styled(BaseText)`
   font-weight: 700;
   line-height: 34px;
   letter-spacing: 0;
+`;
+
+export const H4 = styled(BaseText)`
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 30px;
+  letter-spacing: 0px;
+  text-align: left;
 `;
 
 export const Paragraph = styled(BaseText)`

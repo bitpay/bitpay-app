@@ -4,7 +4,7 @@ import {
   baseNavigatorOptions,
   baseScreenOptions,
   headerRightContainerStyle,
-} from '../../constants/navigation-options';
+} from '../../constants/NavigationOptions';
 import {useNavigation} from '@react-navigation/native';
 import Button from '../../components/button/Button';
 import haptic from '../../components/haptic-feedback/haptic';

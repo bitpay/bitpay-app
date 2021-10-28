@@ -3,7 +3,7 @@ import {AppActions} from './';
 import axios from 'axios';
 import {Session} from './app.models';
 import {sleep} from '../../utils/helper-methods';
-import {OnGoingProcessMessages} from '../../components/ongoing-process/OngoingProcess';
+import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 
 export const startGetSession = (): Effect => async (
   dispatch,

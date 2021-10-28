@@ -6,11 +6,12 @@ import {RootState} from './store';
 import {AppEffects} from './store/app';
 
 import navTheme from './theme';
+import {baseScreenOptions} from './constants/NavigationOptions';
 import {
   NavigationContainer,
   NavigatorScreenParams,
 } from '@react-navigation/native';
-import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
+import {createStackNavigator} from '@react-navigation/stack';
 
 import SplashScreen from './navigation/app/screens/Splash';
 import OnboardingStack, {
@@ -21,8 +22,8 @@ import BitpayIdStack, {
   BitpayIdStackParamList,
 } from './navigation/bitpay-id/BitpayIdStack';
 
-import OnGoingProcessModal from './components/ongoing-process/OngoingProcess';
-import {baseScreenOptions} from './constants/navigation-options';
+import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
+import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
 
 export type RootStackParamList = {
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
@@ -97,6 +98,7 @@ export default () => {
         </Root.Navigator>
       </NavigationContainer>
       <OnGoingProcessModal />
+      <BottomNotificationModal />
     </SafeAreaProvider>
   );
 };

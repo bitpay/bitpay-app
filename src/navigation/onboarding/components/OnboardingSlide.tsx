@@ -3,7 +3,7 @@ import {
   H3,
   Paragraph,
   TextAlign,
-} from '../../../components/styled/text/Text';
+} from '../../../components/styled/Text';
 import React, {ReactElement} from 'react';
 import styled from 'styled-components/native';
 import {
@@ -11,7 +11,7 @@ import {
   SubTextContainer,
   TextContainer,
   TitleContainer,
-} from '../../../components/styled/containers/Containers';
+} from '../../../components/styled/Containers';
 
 interface OnboardingSlide {
   title: string;

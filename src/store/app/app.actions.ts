@@ -1,6 +1,7 @@
 import {AppActionType, AppActionTypes} from './app.types';
 import {Session} from './app.models';
-import {OnGoingProcessMessages} from '../../components/ongoing-process/OngoingProcess';
+import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 
 export const successGetSession = (session: Session): AppActionType => ({
   type: AppActionTypes.SUCCESS_GET_SESSION,
@@ -32,4 +33,15 @@ export const showOnGoingProcessModal = (
 
 export const dismissOnGoingProcessModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_ONGOING_PROCESS_MODAL,
+});
+
+export const showBottomNotificationModal = (
+  config: BottomNotificationConfig,
+): AppActionType => ({
+  type: AppActionTypes.SHOW_BOTTOM_NOTIFICATION_MODAL,
+  payload: config,
+});
+
+export const dismissBottomNotificationModal = (): AppActionType => ({
+  type: AppActionTypes.DISMISS_BOTTOM_NOTIFICATION_MODAL,
 });

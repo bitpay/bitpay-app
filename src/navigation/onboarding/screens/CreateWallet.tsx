@@ -1,13 +1,13 @@
 import React from 'react';
 import styled from 'styled-components/native';
 import CreateWallet from '../../../../assets/img/onboarding/create-wallet.svg';
-import {H3, Paragraph, TextAlign} from '../../../components/styled/text/Text';
+import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainer,
   ImageContainer,
   TextContainer,
   TitleContainer,
-} from '../../../components/styled/containers/Containers';
+} from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 
 const CreateWalletContainer = styled.SafeAreaView`

@@ -4,7 +4,7 @@ import LoginSignup from './screens/LoginSignup';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
-} from '../../constants/navigation-options';
+} from '../../constants/NavigationOptions';
 
 export type BitpayIdStackParamList = {
   LoginSignup: {context: 'login' | 'signup'};
