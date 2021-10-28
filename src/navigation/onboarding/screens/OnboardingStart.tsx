@@ -14,11 +14,11 @@ import ProtectCrypto from '../../../../assets/img/onboarding/protect-crypto.svg'
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {Action} from '../../../styles/colors';
-import {CtaContainerAbsolute} from '../../../components/styled/containers/Containers';
+import {CtaContainerAbsolute} from '../../../components/styled/Containers';
 
 const onboardingSlides = [
   {
-    title: 'Turn crypto into dollars with our BitPay Card',
+    title: 'Turn crypto into dollars with our BitPay card',
     text:
       'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
     subText: '*Currently available in the USA. More countries coming soon.',

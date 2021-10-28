@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import styled from 'styled-components/native';
-import {BaseText, Link, Paragraph} from '../../../components/styled/text/Text';
+import {BaseText, Link, Paragraph} from '../../../components/styled/Text';
 import {RoundedCheckbox} from 'react-native-rounded-checkbox';
 import Checkbox from '../../../../assets/img/check.svg';
 import {Linking} from 'react-native';

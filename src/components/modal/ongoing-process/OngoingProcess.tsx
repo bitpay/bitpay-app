@@ -1,9 +1,9 @@
 import Modal from 'react-native-modal';
 import React from 'react';
-import {BaseText} from '../styled/text/Text';
+import {BaseText} from '../../styled/Text';
 import styled from 'styled-components/native';
 import {ActivityIndicator} from 'react-native';
-import {RootState} from '../../store';
+import {RootState} from '../../../store';
 import {useSelector} from 'react-redux';
 
 export enum OnGoingProcessMessages {
