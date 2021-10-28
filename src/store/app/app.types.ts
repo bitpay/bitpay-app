@@ -1,5 +1,6 @@
 import {Session} from './app.models';
-import {OnGoingProcessMessages} from '../../components/ongoing-process/OngoingProcess';
+import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 
 export enum AppActionTypes {
   SUCCESS_GET_SESSION = 'APP/SUCCESS_GET_SESSION',
@@ -9,6 +10,8 @@ export enum AppActionTypes {
   SET_ONBOARDING_COMPLETED = 'APP/SET_ONBOARDING_COMPLETED',
   SHOW_ONGOING_PROCESS_MODAL = 'APP/SHOW_ONGOING_PROCESS_MODAL',
   DISMISS_ONGOING_PROCESS_MODAL = 'APP/DISMISS_ONGOING_PROCESS_MODAL',
+  SHOW_BOTTOM_NOTIFICATION_MODAL = 'APP/SHOW_BOTTOM_NOTIFICATION_MODAL',
+  DISMISS_BOTTOM_NOTIFICATION_MODAL = 'APP/DISMISS_BOTTOM_NOTIFICATION_MODAL',
 }
 
 interface SuccessGetSession {
@@ -41,6 +44,15 @@ interface DismissOnGoingProcessModal {
   type: typeof AppActionTypes.DISMISS_ONGOING_PROCESS_MODAL;
 }
 
+interface ShowBottomNotificationModal {
+  type: typeof AppActionTypes.SHOW_BOTTOM_NOTIFICATION_MODAL;
+  payload: BottomNotificationConfig;
+}
+
+interface DismissBottomNotificationModal {
+  type: typeof AppActionTypes.DISMISS_BOTTOM_NOTIFICATION_MODAL;
+}
+
 export type AppActionType =
   | SuccessGetSession
   | FailedGetSession
@@ -48,4 +60,6 @@ export type AppActionType =
   | FailedAppInit
   | SetOnboardingCompleted
   | ShowOnGoingProcessModal
-  | DismissOnGoingProcessModal;
+  | DismissOnGoingProcessModal
+  | ShowBottomNotificationModal
+  | DismissBottomNotificationModal;

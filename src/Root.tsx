@@ -22,8 +22,8 @@ import BitpayIdStack, {
   BitpayIdStackParamList,
 } from './navigation/bitpay-id/BitpayIdStack';
 
-import OnGoingProcessModal from './components/ongoing-process/OngoingProcess';
-import {baseScreenOptions} from './constants/navigation-options';
+import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
+import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
 
 export type RootStackParamList = {
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
@@ -98,6 +98,7 @@ export default () => {
         </Root.Navigator>
       </NavigationContainer>
       <OnGoingProcessModal />
+      <BottomNotificationModal />
     </SafeAreaProvider>
   );
 };

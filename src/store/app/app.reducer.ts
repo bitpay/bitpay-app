@@ -1,6 +1,7 @@
 import {AppActionType, AppActionTypes} from './app.types';
 import {Session} from './app.models';
-import {OnGoingProcessMessages} from '../../components/ongoing-process/OngoingProcess';
+import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 
 type AppReduxPersistBlackList = [
   'appIsLoading',
@@ -21,6 +22,8 @@ export interface AppState {
   session: Session | undefined;
   showOnGoingProcessModal: boolean;
   onGoingProcessModalMessage: string | undefined;
+  showBottomNotificationModal: boolean;
+  bottomNotificationModalConfig: BottomNotificationConfig | undefined;
 }
 
 const initialState: AppState = {
@@ -31,6 +34,8 @@ const initialState: AppState = {
   session: undefined,
   showOnGoingProcessModal: false,
   onGoingProcessModalMessage: OnGoingProcessMessages.GENERAL_AWAITING,
+  showBottomNotificationModal: false,
+  bottomNotificationModalConfig: undefined,
 };
 
 export const appReducer = (
@@ -67,6 +72,19 @@ export const appReducer = (
       return {
         ...state,
         showOnGoingProcessModal: false,
+      };
+
+    case AppActionTypes.SHOW_BOTTOM_NOTIFICATION_MODAL:
+      return {
+        ...state,
+        showBottomNotificationModal: true,
+        bottomNotificationModalConfig: action.payload,
+      };
+
+    case AppActionTypes.DISMISS_BOTTOM_NOTIFICATION_MODAL:
+      return {
+        ...state,
+        showBottomNotificationModal: false,
       };
 
     default:

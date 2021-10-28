@@ -21,3 +21,5 @@ export const Warning = '#fdb455';
 
 export const Disabled = '#edeef0';
 export const DisabledDark = '#bebec0';
+
+export const NotificationPrimary = '#1F3AB3';

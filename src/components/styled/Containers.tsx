@@ -44,3 +44,9 @@ export const CtaContainerAbsolute = styled.View`
   left: 0;
   right: 0;
 `;
+
+export const Hr = styled.View`
+  border-bottom-color: #ebebeb;
+  border-bottom-width: 1px;
+  margin: 20px 0;
+`;
