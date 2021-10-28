@@ -19,8 +19,7 @@ export const H4 = styled(BaseText)`
   font-style: normal;
   font-weight: 500;
   line-height: 30px;
-  letter-spacing: 0px;
-  text-align: left;
+  letter-spacing: 0;
 `;
 
 export const Paragraph = styled(BaseText)`
