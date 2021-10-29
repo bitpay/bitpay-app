@@ -5,11 +5,12 @@ import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from './store';
 import {AppEffects} from './store/app';
 
-import navTheme from './theme';
 import {baseScreenOptions} from './constants/NavigationOptions';
 import {
   NavigationContainer,
   NavigatorScreenParams,
+  DefaultTheme,
+  DarkTheme,
 } from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 
@@ -24,7 +25,7 @@ import BitpayIdStack, {
 
 import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
-import {StatusBar} from 'react-native';
+import {StatusBar, useColorScheme} from 'react-native';
 
 export type RootStackParamList = {
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
@@ -45,6 +46,7 @@ declare global {
 }
 
 export default () => {
+  const scheme = useColorScheme();
   const onboardingCompleted = useSelector(
     ({APP}: RootState) => APP.onboardingCompleted,
   );
@@ -73,7 +75,7 @@ export default () => {
   return (
     <SafeAreaProvider>
       <StatusBar translucent backgroundColor="transparent" />
-      <NavigationContainer theme={navTheme}>
+      <NavigationContainer theme={scheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Root.Navigator
           screenOptions={{
             headerShown: false,
