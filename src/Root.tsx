@@ -24,6 +24,7 @@ import BitpayIdStack, {
 
 import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
+import {StatusBar} from 'react-native';
 
 export type RootStackParamList = {
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
@@ -71,6 +72,7 @@ export default () => {
 
   return (
     <SafeAreaProvider>
+      <StatusBar translucent backgroundColor="transparent" />
       <NavigationContainer theme={navTheme}>
         <Root.Navigator
           screenOptions={{
