@@ -8,6 +8,7 @@
     "ios:device": "react-native run-ios --device",
     "start": "react-native start",
     "test": "jest",
+    "android:build:debug": "./scripts/android-debug.sh",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
