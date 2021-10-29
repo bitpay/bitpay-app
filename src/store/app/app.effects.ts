@@ -34,6 +34,8 @@ export const startAppInit = (): Effect => async (
       // await dispatch(startGetSession());
     }
 
+    await sleep(1000);
+
     dispatch(AppActions.successAppInit());
   } catch (err) {
     console.error(err);
