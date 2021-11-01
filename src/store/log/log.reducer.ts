@@ -1,7 +1,9 @@
 import { LogEntry } from './log.models';
 import { LogActionType, LogActionTypes } from './log.types';
 
-export const logReduxPersistBlackList = [];
+export const logReduxPersistBlackList = [
+  'logs'
+];
 
 export interface LogState {
   logs: LogEntry[]
