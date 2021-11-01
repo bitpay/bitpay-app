@@ -12,6 +12,7 @@ import {
   bitPayIdReducer,
   bitPayIdReduxPersistBlackList,
 } from './bitpay-id/bitpay-id.reducer';
+import { logReducer, logReduxPersistBlackList } from './log/log.reducer';
 
 const basePersistConfig = {
   storage: AsyncStorage,
@@ -41,6 +42,14 @@ const reducers = {
     },
     bitPayIdReducer,
   ),
+  LOG: persistReducer(
+    {
+      ...basePersistConfig,
+      key: 'LOG',
+      blacklist: logReduxPersistBlackList
+    },
+    logReducer
+  )
 };
 
 const rootReducer = combineReducers(reducers);
