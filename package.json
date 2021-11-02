@@ -16,6 +16,7 @@
     "@freakycoder/react-native-bounceable": "^0.2.5",
     "@hookform/resolvers": "^2.6.1",
     "@react-native-community/async-storage": "^1.12.1",
+    "@react-native-community/checkbox": "^0.5.9",
     "@react-native-community/masked-view": "^0.1.10",
     "@react-navigation/bottom-tabs": "6.0.9",
     "@react-navigation/native": "6.0.6",
