@@ -1,11 +1,9 @@
 import React, {useState} from 'react';
 import styled from 'styled-components/native';
 import {BaseText, Link, Paragraph} from '../../../components/styled/Text';
-import {RoundedCheckbox} from 'react-native-rounded-checkbox';
-import Checkbox from '../../../../assets/img/check.svg';
 import {Linking} from 'react-native';
 import haptic from '../../../components/haptic-feedback/haptic';
-
+import Checkbox from '../../../components/checkbox/Checkbox';
 interface Props {
   emit: (id: number) => void;
   term: {
@@ -40,7 +38,8 @@ const TermText = styled(BaseText)`
 
 const CheckBoxContainer = styled.View`
   flex-direction: column;
-  margin-right: 15px;
+  margin-right: 20px;
+  margin-top: 10px;
 `;
 
 const TermTextContainer = styled.View`
@@ -51,10 +50,13 @@ const TermTextContainer = styled.View`
 const TermsBox = ({term, emit}: Props) => {
   const {statement, acknowledgement, link} = term;
   const [checked, setChecked] = useState(false);
+
   return (
     <TermsBoxContainer activeOpacity={1.0}>
       <CheckBoxContainer>
-        <RoundedCheckbox
+        <Checkbox
+          checked={checked}
+          disabled={false}
           onPress={(): void => {
             if (!checked) {
               haptic('impactLight');
@@ -62,15 +64,7 @@ const TermsBox = ({term, emit}: Props) => {
               emit(term.id);
             }
           }}
-          active={checked}
-          uncheckedColor={'white'}
-          outerStyle={{
-            shadowColor: 'grey',
-            shadowOffset: {width: 0, height: 0.25},
-            shadowOpacity: 0.3,
-          }}>
-          <Checkbox />
-        </RoundedCheckbox>
+        />
       </CheckBoxContainer>
       <TermTextContainer>
         <TermText>{statement}</TermText>
