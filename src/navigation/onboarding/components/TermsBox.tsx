@@ -38,8 +38,7 @@ const TermText = styled(BaseText)`
 
 const CheckBoxContainer = styled.View`
   flex-direction: column;
-  margin-right: 20px;
-  margin-top: 10px;
+  margin: 10px 20px 0 0;
 `;
 
 const TermTextContainer = styled.View`
@@ -56,7 +55,6 @@ const TermsBox = ({term, emit}: Props) => {
       <CheckBoxContainer>
         <Checkbox
           checked={checked}
-          disabled={false}
           onPress={(): void => {
             if (!checked) {
               haptic('impactLight');

@@ -1,19 +1,19 @@
 import React, {ReactElement, useState} from 'react';
 import styled from 'styled-components/native';
-import {BitPay} from '../../styles/colors';
 import {FlatList} from 'react-native';
-import CheckBox from '@react-native-community/checkbox';
 import {CurrencyImageContainer} from '../styled/Containers';
-import Haptic from '../haptic-feedback/haptic';
 import {
   ListContainer,
   RowContainer,
   RowDetailsContainer,
 } from '../styled/Containers';
 import {MainLabel, SecondaryLabel} from '../styled/Text';
+import haptic from '../haptic-feedback/haptic';
+import Checkbox from '../checkbox/Checkbox';
 
 interface ListProps {
   itemList?: Array<ItemProps>;
+  emit: (checked: boolean) => void;
 }
 
 interface ItemProps {
@@ -28,6 +28,7 @@ interface ItemProps {
 interface Props {
   id: number;
   item: ItemProps;
+  emit: (checked: boolean) => void;
 }
 
 const CheckBoxContainer = styled.View`
@@ -35,9 +36,15 @@ const CheckBoxContainer = styled.View`
   justify-content: center;
 `;
 
-const CurrencySelectorRow = ({item}: Props) => {
-  const {mainLabel, secondaryLabel, img, checked, disabled} = item;
-  const [toggleCheckBox, setToggleCheckBox] = useState(checked);
+const CurrencySelectorRow = ({item, emit}: Props) => {
+  const {
+    mainLabel,
+    secondaryLabel,
+    img,
+    checked: initialCheckValue,
+    disabled,
+  } = item;
+  const [checked, setChecked] = useState(!!initialCheckValue);
 
   return (
     <RowContainer>
@@ -47,13 +54,13 @@ const CurrencySelectorRow = ({item}: Props) => {
         <SecondaryLabel>{secondaryLabel}</SecondaryLabel>
       </RowDetailsContainer>
       <CheckBoxContainer>
-        <CheckBox
+        <Checkbox
+          checked={checked}
           disabled={disabled}
-          value={toggleCheckBox}
-          onValueChange={newValue => setToggleCheckBox(newValue)}
-          tintColors={{true: BitPay, false: BitPay}}
-          onChange={() => {
-            Haptic('impactLight');
+          onPress={(): void => {
+            setChecked(!checked);
+            haptic('impactLight');
+            emit(checked);
           }}
         />
       </CheckBoxContainer>
@@ -61,13 +68,13 @@ const CurrencySelectorRow = ({item}: Props) => {
   );
 };
 
-const CurrencySelectorList = ({itemList}: ListProps) => {
+const CurrencySelectorList = ({itemList, emit}: ListProps) => {
   return (
     <ListContainer>
       <FlatList
         data={itemList}
         renderItem={({item}) => (
-          <CurrencySelectorRow item={item} id={item.id} />
+          <CurrencySelectorRow item={item} id={item.id} emit={emit} />
         )}
       />
     </ListContainer>
