@@ -1,15 +1,24 @@
 import React, {ReactElement} from 'react';
 import styled from 'styled-components/native';
-import { FlatList} from 'react-native';
-import { CurrencyImageContainer } from '../styled/Containers';
-import { MainLabel, MainNote, SecondaryLabel, SecondaryNote } from '../styled/Text';
-import { ListContainer, RowContainer, RowDetailsContainer } from '../styled/Containers';
+import {FlatList} from 'react-native';
+import {CurrencyImageContainer} from '../styled/Containers';
+import {
+  MainLabel,
+  MainNote,
+  SecondaryLabel,
+  SecondaryNote,
+} from '../styled/Text';
+import {
+  ListContainer,
+  RowContainer,
+  RowDetailsContainer,
+} from '../styled/Containers';
 
 interface WalletsProps {
-  walletList?: Array<WalletProps>
+  walletList?: Array<WalletProps>;
 }
 
-interface WalletProps{
+interface WalletProps {
   id: number;
   img: () => ReactElement;
   mainLabel?: string;
@@ -19,8 +28,8 @@ interface WalletProps{
 }
 
 interface Props {
-  id: number,
-  wallet: WalletProps
+  id: number;
+  wallet: WalletProps;
 }
 
 const NoteContainer = styled.View`
@@ -32,7 +41,7 @@ const NoteContainer = styled.View`
 
 const WalletItemContent = ({wallet}: Props) => {
   const {mainLabel, secondaryLabel, img, mainNote, secondaryNote} = wallet;
-  
+
   return (
     <RowContainer>
       <CurrencyImageContainer>{img()}</CurrencyImageContainer>
@@ -43,24 +52,19 @@ const WalletItemContent = ({wallet}: Props) => {
       <NoteContainer>
         <MainNote>{mainNote}</MainNote>
         <SecondaryNote>{secondaryNote}</SecondaryNote>
-      </NoteContainer>      
+      </NoteContainer>
     </RowContainer>
   );
 };
 
-const WalletDetailsList = ({
-  walletList
-}: WalletsProps) => {
+const WalletDetailsList = ({walletList}: WalletsProps) => {
   return (
     <ListContainer>
       <FlatList
         data={walletList}
-        renderItem={({ item }) => 
-        <WalletItemContent 
-          wallet={item} 
-          id={item.id} 
-        />
-        }
+        renderItem={({item}) => (
+          <WalletItemContent wallet={item} id={item.id} />
+        )}
       />
     </ListContainer>
   );

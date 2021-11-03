@@ -1,18 +1,22 @@
 import React, {ReactElement, useState} from 'react';
 import styled from 'styled-components/native';
 import {BitPay} from '../../styles/colors';
-import { FlatList} from 'react-native';
+import {FlatList} from 'react-native';
 import CheckBox from '@react-native-community/checkbox';
-import { CurrencyImageContainer } from '../styled/Containers';
+import {CurrencyImageContainer} from '../styled/Containers';
 import Haptic from '../haptic-feedback/haptic';
-import { ListContainer, RowContainer, RowDetailsContainer } from '../styled/Containers';
-import { MainLabel, SecondaryLabel } from '../styled/Text';
+import {
+  ListContainer,
+  RowContainer,
+  RowDetailsContainer,
+} from '../styled/Containers';
+import {MainLabel, SecondaryLabel} from '../styled/Text';
 
 interface ListProps {
-  itemList?: Array<ItemProps>
+  itemList?: Array<ItemProps>;
 }
 
-interface ItemProps{
+interface ItemProps {
   id: number;
   img: () => ReactElement;
   mainLabel?: string;
@@ -22,8 +26,8 @@ interface ItemProps{
 }
 
 interface Props {
-  id: number,
-  item: ItemProps
+  id: number;
+  item: ItemProps;
 }
 
 const CheckBoxContainer = styled.View`
@@ -34,41 +38,37 @@ const CheckBoxContainer = styled.View`
 const CurrencySelectorRow = ({item}: Props) => {
   const {mainLabel, secondaryLabel, img, checked, disabled} = item;
   const [toggleCheckBox, setToggleCheckBox] = useState(checked);
-  
+
   return (
     <RowContainer>
       <CurrencyImageContainer>{img()}</CurrencyImageContainer>
-        <RowDetailsContainer>
-          <MainLabel>{mainLabel}</MainLabel>
-          <SecondaryLabel>{secondaryLabel}</SecondaryLabel>
-        </RowDetailsContainer>
+      <RowDetailsContainer>
+        <MainLabel>{mainLabel}</MainLabel>
+        <SecondaryLabel>{secondaryLabel}</SecondaryLabel>
+      </RowDetailsContainer>
       <CheckBoxContainer>
-         <CheckBox
-            disabled={disabled}
-            value={toggleCheckBox}
-            onValueChange={(newValue) => setToggleCheckBox(newValue)}
-            tintColors={{ true: BitPay, false: BitPay }}
-            onChange={()=>{
-              Haptic('impactLight');
-            }}
-          />
-      </CheckBoxContainer>      
+        <CheckBox
+          disabled={disabled}
+          value={toggleCheckBox}
+          onValueChange={newValue => setToggleCheckBox(newValue)}
+          tintColors={{true: BitPay, false: BitPay}}
+          onChange={() => {
+            Haptic('impactLight');
+          }}
+        />
+      </CheckBoxContainer>
     </RowContainer>
   );
 };
 
-const CurrencySelectorList = ({
-  itemList
-}: ListProps) => {
+const CurrencySelectorList = ({itemList}: ListProps) => {
   return (
     <ListContainer>
       <FlatList
         data={itemList}
-        renderItem={({ item }) => 
-          <CurrencySelectorRow
-            item={item}
-            id={item.id}
-        />}
+        renderItem={({item}) => (
+          <CurrencySelectorRow item={item} id={item.id} />
+        )}
       />
     </ListContainer>
   );
