@@ -1,7 +1,7 @@
 import React from 'react';
 import {RoundedCheckbox} from 'react-native-rounded-checkbox';
 import Check from '../../../assets/img/check.svg';
-import {Action, White} from '../../styles/colors';
+import {Action, SlateDark, White} from '../../styles/colors';
 import styled from 'styled-components/native';
 
 interface Props {
@@ -22,7 +22,7 @@ const Border = styled.View`
         return 'transparent';
       }
 
-      return checked ? Action : '#434d5a';
+      return checked ? Action : SlateDark;
     }};
   position: absolute;
   top: 0;
