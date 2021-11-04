@@ -2,6 +2,7 @@ import {AppActionType, AppActionTypes} from './app.types';
 import {Session} from './app.models';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
+import { BitPayColorSchemeName } from '../../theme';
 
 export const successGetSession = (session: Session): AppActionType => ({
   type: AppActionTypes.SUCCESS_GET_SESSION,
@@ -44,4 +45,9 @@ export const showBottomNotificationModal = (
 
 export const dismissBottomNotificationModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_BOTTOM_NOTIFICATION_MODAL,
+});
+
+export const setColorScheme = (scheme: BitPayColorSchemeName): AppActionType => ({
+  type: AppActionTypes.SET_COLOR_SCHEME,
+  payload: scheme
 });

@@ -2,6 +2,8 @@ import {AppActionType, AppActionTypes} from './app.types';
 import {Session} from './app.models';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
+import { Appearance } from 'react-native';
+import { BitPayColorSchemeName } from '../../theme';
 
 type AppReduxPersistBlackList = [
   'appIsLoading',
@@ -24,6 +26,7 @@ export interface AppState {
   onGoingProcessModalMessage: string | undefined;
   showBottomNotificationModal: boolean;
   bottomNotificationModalConfig: BottomNotificationConfig | undefined;
+  colorScheme: BitPayColorSchemeName;
 }
 
 const initialState: AppState = {
@@ -36,6 +39,7 @@ const initialState: AppState = {
   onGoingProcessModalMessage: OnGoingProcessMessages.GENERAL_AWAITING,
   showBottomNotificationModal: false,
   bottomNotificationModalConfig: undefined,
+  colorScheme: Appearance.getColorScheme()
 };
 
 export const appReducer = (
@@ -85,6 +89,12 @@ export const appReducer = (
       return {
         ...state,
         showBottomNotificationModal: false,
+      };
+
+    case AppActionTypes.SET_COLOR_SCHEME:
+      return {
+        ...state,
+        colorScheme: action.payload
       };
 
     default:
