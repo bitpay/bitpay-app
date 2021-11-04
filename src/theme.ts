@@ -2,6 +2,8 @@
 import {DefaultTheme, DarkTheme} from '@react-navigation/native';
 import {useColorScheme} from 'react-native';
 
+export type BitPayColorSchemeName = 'light' | 'dark' | 'system' | null | undefined;
+
 function NavTheme() {
   const scheme = useColorScheme();
   let navTheme;
