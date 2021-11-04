@@ -12,6 +12,7 @@ import {
   bitPayIdReducer,
   bitPayIdReduxPersistBlackList,
 } from './bitpay-id/bitpay-id.reducer';
+import {keyReducer, keyReduxPersistBlackList} from './key/key.reducer';
 
 const basePersistConfig = {
   storage: AsyncStorage,
@@ -32,6 +33,14 @@ const reducers = {
       blacklist: appReduxPersistBlackList,
     },
     appReducer,
+  ),
+  KEY: persistReducer(
+    {
+      ...basePersistConfig,
+      key: 'KEY',
+      blacklist: keyReduxPersistBlackList,
+    },
+    keyReducer,
   ),
   BITPAY_ID: persistReducer(
     {
