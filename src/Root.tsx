@@ -1,7 +1,7 @@
 import { NavigationContainer, NavigatorScreenParams } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import React, { useEffect } from 'react';
-import { Appearance, StatusBar } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Appearance, AppState, AppStateStatus, StatusBar } from 'react-native';
 import 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
@@ -37,6 +37,7 @@ declare global {
 
 export default () => {
   const dispatch = useDispatch();
+  const [_, rerender] = useState({});
   const onboardingCompleted = useSelector(({ APP }: RootState) => APP.onboardingCompleted);
   const appIsLoading = useSelector(({ APP }: RootState) => APP.appIsLoading);
   const appColorScheme = useSelector(({ APP }: RootState) => APP.colorScheme);
@@ -44,6 +45,20 @@ export default () => {
   useEffect(() => {
     dispatch(AppEffects.startAppInit());
   }, [dispatch]);
+
+  useEffect(() => {
+    function onAppStateChange(status: AppStateStatus) {
+      // status === 'active' when the app goes from background to foreground, 
+      // if app scheme === 'system', rerender in case the system theme has changed
+      if (status === 'active' && appColorScheme === 'system') {
+        rerender({});
+      }
+    };
+
+    AppState.addEventListener('change', onAppStateChange);
+
+    return () => AppState.removeEventListener('change', onAppStateChange);
+  }, [rerender, appColorScheme]);
 
   if (appIsLoading) {
     return (
