@@ -2,6 +2,7 @@ import {AppActionType, AppActionTypes} from './app.types';
 import {Session} from './app.models';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
+import {BASE_BITPAY_URL, NETWORK} from '../../constants/config';
 
 type AppReduxPersistBlackList = [
   'appIsLoading',
@@ -15,7 +16,7 @@ export const appReduxPersistBlackList: AppReduxPersistBlackList = [
 ];
 
 export interface AppState {
-  network: string;
+  network: 'livenet' | 'testnet';
   baseBitPayURL: string;
   appIsLoading: boolean;
   onboardingCompleted: boolean;
@@ -27,8 +28,8 @@ export interface AppState {
 }
 
 const initialState: AppState = {
-  network: 'testnet',
-  baseBitPayURL: 'https://test.bitpay.com',
+  network: NETWORK,
+  baseBitPayURL: BASE_BITPAY_URL,
   appIsLoading: true,
   onboardingCompleted: false,
   session: undefined,
