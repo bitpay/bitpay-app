@@ -46,12 +46,12 @@ export const startOnboardingCreateWallet =
         seedType: 'new',
       });
 
-      await dispatch(startCreateWallet(key, coins));
-
+      const credentials = await dispatch(startCreateWallet(key, coins));
       dispatch(AppActions.dismissOnGoingProcessModal());
       dispatch(
         KeyActions.successOnboardingCreateWallet({
           key: key.toObj(),
+          credentials,
         }),
       );
     } catch (err) {}

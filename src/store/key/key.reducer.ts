@@ -21,10 +21,20 @@ export const keyReducer = (
   action: KeyActionType,
 ): KeyState => {
   switch (action.type) {
-    case KeyActionTypes.SUCCESS_ONBOARDING_CREATE_WALLET:
-      const {key} = action.payload;
+    case KeyActionTypes.CREATE_KEY_PROFILE:
       return {
         ...state,
+        keyProfile: action.payload,
+      };
+
+    case KeyActionTypes.SUCCESS_ONBOARDING_CREATE_WALLET:
+      const {key, credentials} = action.payload;
+      return {
+        ...state,
+        keyProfile: {
+          ...state.keyProfile,
+          credentials,
+        },
         keys: [...state.keys, key],
       };
 

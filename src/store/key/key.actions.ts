@@ -16,6 +16,8 @@ export const createKeyProfile = (keyProfile: KeyProfile): KeyActionType => ({
 
 export const successOnboardingCreateWallet = (payload: {
   key: KeyObj;
+  // TODO type
+  credentials: any;
 }): KeyActionType => ({
   type: KeyActionTypes.SUCCESS_ONBOARDING_CREATE_WALLET,
   payload,

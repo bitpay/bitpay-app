@@ -25,6 +25,8 @@ interface successOnboardingCreateWallet {
   type: typeof KeyActionTypes.SUCCESS_ONBOARDING_CREATE_WALLET;
   payload: {
     key: KeyObj;
+    // TODO type
+    credentials: any;
   };
 }
 

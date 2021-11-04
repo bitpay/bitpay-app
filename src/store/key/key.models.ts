@@ -1,8 +1,8 @@
 import {Key as IKey} from 'bitcore-wallet-client/src/lib/key';
 
 export interface KeyProfile {
-  createdOn: number;
-  credentials: Array<any>;
+  createdOn?: number;
+  credentials?: any;
 }
 
 export interface KeyObj {
