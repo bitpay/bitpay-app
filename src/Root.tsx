@@ -14,7 +14,6 @@ import OnboardingStack, { OnboardingStackParamList } from './navigation/onboardi
 import TabsStack from './navigation/tabs/TabsStack';
 import { RootState } from './store';
 import { AppEffects } from './store/app';
-import { BitPayColorSchemeName } from './theme';
 import { BitPayDarkTheme, BitPayLightTheme } from './themes/bitpay';
 
 export type RootStackParamList = {
@@ -49,8 +48,8 @@ export default () => {
   useEffect(() => {
     function onAppStateChange(status: AppStateStatus) {
       // status === 'active' when the app goes from background to foreground, 
-      // if app scheme === 'system', rerender in case the system theme has changed
-      if (status === 'active' && appColorScheme === 'system') {
+      // if no app scheme set, rerender in case the system theme has changed
+      if (status === 'active' && !appColorScheme) {
         rerender({});
       }
     };
@@ -68,7 +67,7 @@ export default () => {
     );
   }
 
-  const scheme: BitPayColorSchemeName = appColorScheme === 'system' ? Appearance.getColorScheme() : appColorScheme;
+  const scheme = appColorScheme || Appearance.getColorScheme();
   const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
 
   const initialRoute = onboardingCompleted

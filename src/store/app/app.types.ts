@@ -1,7 +1,7 @@
 import {Session} from './app.models';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
-import { BitPayColorSchemeName } from '../../theme';
+import { ColorSchemeName } from 'react-native';
 
 export enum AppActionTypes {
   SUCCESS_GET_SESSION = 'APP/SUCCESS_GET_SESSION',
@@ -57,7 +57,7 @@ interface DismissBottomNotificationModal {
 
 interface SetColorScheme {
   type: typeof AppActionTypes.SET_COLOR_SCHEME;
-  payload: BitPayColorSchemeName;
+  payload: ColorSchemeName;
 }
 
 export type AppActionType =
