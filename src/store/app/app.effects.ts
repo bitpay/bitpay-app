@@ -49,4 +49,5 @@ export const startOnGoingProcessModal =
     }
 
     dispatch(AppActions.showOnGoingProcessModal(message));
+    return sleep(0);
   };

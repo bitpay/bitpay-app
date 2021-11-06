@@ -8,6 +8,7 @@ import {AppEffects} from './store/app';
 import navTheme from './theme';
 import {baseScreenOptions} from './constants/NavigationOptions';
 import {
+  createNavigationContainerRef,
   NavigationContainer,
   NavigatorScreenParams,
 } from '@react-navigation/native';
@@ -44,6 +45,19 @@ declare global {
   }
 }
 
+// Used for navigation within effects as the useNavigation hook is only allowed within components
+export const navigationRef = createNavigationContainerRef<RootStackParamList>();
+export const navigate = (
+  name: keyof RootStackParamList,
+  params: NavigatorScreenParams<
+    OnboardingStackParamList & BitpayIdStackParamList
+  >,
+) => {
+  if (navigationRef.isReady()) {
+    navigationRef.navigate(name, params);
+  }
+};
+
 export default () => {
   const onboardingCompleted = useSelector(
     ({APP}: RootState) => APP.onboardingCompleted,
@@ -73,7 +87,7 @@ export default () => {
   return (
     <SafeAreaProvider>
       <StatusBar translucent backgroundColor="transparent" />
-      <NavigationContainer theme={navTheme}>
+      <NavigationContainer ref={navigationRef} theme={navTheme}>
         <Root.Navigator
           screenOptions={{
             headerShown: false,

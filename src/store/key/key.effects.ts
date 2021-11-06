@@ -4,6 +4,8 @@ import {KeyActions} from './';
 import {COINS, SupportedCoins} from '../../constants/coin';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {AppActions} from '../app';
+import {startOnGoingProcessModal} from '../app/app.effects';
+import {navigate} from '../../Root';
 
 const BWC = BwcProvider.getInstance();
 const bwcClient = BWC.getClient();
@@ -36,10 +38,8 @@ export const startOnboardingCreateWallet =
   (coins: Array<SupportedCoins>): Effect =>
   async dispatch => {
     try {
-      dispatch(
-        AppActions.showOnGoingProcessModal(
-          OnGoingProcessMessages.CREATING_WALLET,
-        ),
+      await dispatch(
+        startOnGoingProcessModal(OnGoingProcessMessages.CREATING_WALLET),
       );
 
       const key = BWC.createKey({
@@ -54,6 +54,7 @@ export const startOnboardingCreateWallet =
           credentials,
         }),
       );
+      navigate('Onboarding', {screen: 'BackupWallet'});
     } catch (err) {}
   };
 
