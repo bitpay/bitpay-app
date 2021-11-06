@@ -502,3 +502,5 @@ export const COINS: {[key in string]: CoinOpts} = {
     },
   },
 };
+
+export const SUPPORTED_TOKENS = ['usdc', 'gusd', 'pax', 'busd', 'dai', 'wbtc'];

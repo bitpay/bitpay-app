@@ -13,22 +13,22 @@ import Checkbox from '../checkbox/Checkbox';
 
 interface ListProps {
   itemList?: Array<ItemProps>;
-  emit: (checked: boolean) => void;
+  emit: (value: {checked: boolean; asset: string}) => void;
 }
 
-interface ItemProps {
-  id: number;
+export interface ItemProps {
+  id: string | number;
   img: () => ReactElement;
-  mainLabel?: string;
-  secondaryLabel?: string;
+  mainLabel: string;
+  secondaryLabel: string;
   disabled?: boolean;
   checked?: boolean;
 }
 
 interface Props {
-  id: number;
+  id: string | number;
   item: ItemProps;
-  emit: (checked: boolean) => void;
+  emit: (value: {checked: boolean; asset: string}) => void;
 }
 
 const CheckBoxContainer = styled.View`
@@ -46,23 +46,24 @@ const CurrencySelectorRow = ({item, emit}: Props) => {
   } = item;
   const [checked, setChecked] = useState(!!initialCheckValue);
 
+  const toggle = (): void => {
+    setChecked(!checked);
+    haptic('impactLight');
+    emit({
+      asset: secondaryLabel,
+      checked: !checked,
+    });
+  };
+
   return (
-    <RowContainer>
+    <RowContainer activeOpacity={1} onPress={toggle}>
       <CurrencyImageContainer>{img()}</CurrencyImageContainer>
       <RowDetailsContainer>
         <MainLabel>{mainLabel}</MainLabel>
         <SecondaryLabel>{secondaryLabel}</SecondaryLabel>
       </RowDetailsContainer>
       <CheckBoxContainer>
-        <Checkbox
-          checked={checked}
-          disabled={disabled}
-          onPress={(): void => {
-            setChecked(!checked);
-            haptic('impactLight');
-            emit(checked);
-          }}
-        />
+        <Checkbox checked={checked} disabled={disabled} onPress={toggle} />
       </CheckBoxContainer>
     </RowContainer>
   );

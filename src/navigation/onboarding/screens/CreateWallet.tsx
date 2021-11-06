@@ -9,6 +9,7 @@ import {
   TitleContainer,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
+import {useNavigation} from '@react-navigation/native';
 
 const CreateWalletContainer = styled.SafeAreaView`
   flex: 1;
@@ -16,6 +17,10 @@ const CreateWalletContainer = styled.SafeAreaView`
 `;
 
 const PinScreen = () => {
+  const navigation = useNavigation();
+  const gotoSelectAssets = () =>
+    navigation.navigate('Onboarding', {screen: 'SelectAssets'});
+
   return (
     <CreateWalletContainer>
       <ImageContainer>
@@ -35,7 +40,9 @@ const PinScreen = () => {
         </TextAlign>
       </TextContainer>
       <CtaContainer>
-        <Button buttonStyle={'primary'}>Create a Wallet</Button>
+        <Button buttonStyle={'primary'} onPress={gotoSelectAssets}>
+          Create a Wallet
+        </Button>
         <Button buttonStyle={'secondary'}>I already have a wallet</Button>
       </CtaContainer>
     </CreateWalletContainer>

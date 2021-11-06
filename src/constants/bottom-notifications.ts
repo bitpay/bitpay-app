@@ -4,6 +4,7 @@ import {AppActions} from '../store/app';
 enum Keys {
   BACKUP_KEY = 'BACKUP_KEY',
   DONT_RISK = 'DONT_RISK',
+  ASSET_REQUIRED = 'ASSET_REQUIRED',
 }
 
 export const BottomNotifications: {[key in Keys]: BottomNotificationConfig} = {
@@ -34,6 +35,20 @@ export const BottomNotifications: {[key in Keys]: BottomNotificationConfig} = {
     actions: [
       {
         text: 'I’m Sure',
+        action: AppActions.dismissBottomNotificationModal,
+        primary: true,
+      },
+    ],
+  },
+  ASSET_REQUIRED: {
+    type: 'info',
+    title: 'Asset required',
+    message:
+      'To remove this asset you must first remove your selected token assets.',
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: 'Ok',
         action: AppActions.dismissBottomNotificationModal,
         primary: true,
       },

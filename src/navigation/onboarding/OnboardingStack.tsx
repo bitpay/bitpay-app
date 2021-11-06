@@ -12,6 +12,11 @@ import OnboardingStartScreen from './screens/OnboardingStart';
 import PinScreen from './screens/Pin';
 import CreateWallet from './screens/CreateWallet';
 import TermsOfUse from './screens/TermsOfUse';
+import SelectAssets from '../wallet/SelectAssets';
+import {useDispatch} from 'react-redux';
+import {AppActions} from '../../store/app';
+import {BottomNotifications} from '../../constants/bottom-notifications';
+import Backup from '../wallet/Backup';
 
 export type OnboardingStackParamList = {
   OnboardingStart: undefined;
@@ -20,6 +25,8 @@ export type OnboardingStackParamList = {
   TermsOfUse: {
     context?: 'skip' | undefined;
   };
+  SelectAssets: undefined;
+  BackupWallet: undefined;
 };
 
 export enum OnboardingScreens {
@@ -27,22 +34,25 @@ export enum OnboardingScreens {
   PIN = 'Pin',
   CREATE_WALLET = 'CreateWallet',
   TERMS_OF_USE = 'TermsOfUse',
+  SELECT_ASSETS = 'SelectAssets',
+  BACKUP_WALLET = 'BackupWallet',
 }
 
 const Onboarding = createStackNavigator<OnboardingStackParamList>();
 
 const OnboardingStack = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
 
   return (
     <Onboarding.Navigator
       screenOptions={{
         ...baseNavigatorOptions,
+        ...baseScreenOptions,
       }}
       initialRouteName="OnboardingStart">
       <Onboarding.Screen
         options={{
-          ...baseScreenOptions,
           headerRightContainerStyle,
           headerRight: () => (
             <Button
@@ -63,7 +73,6 @@ const OnboardingStack = () => {
       />
       <Onboarding.Screen
         options={{
-          ...baseScreenOptions,
           headerRightContainerStyle,
           gestureEnabled: false,
           headerLeft: () => null,
@@ -85,7 +94,6 @@ const OnboardingStack = () => {
       />
       <Onboarding.Screen
         options={{
-          ...baseScreenOptions,
           headerRightContainerStyle,
           gestureEnabled: false,
           headerLeft: () => null,
@@ -110,13 +118,57 @@ const OnboardingStack = () => {
       />
       <Onboarding.Screen
         options={{
-          ...baseScreenOptions,
           headerRightContainerStyle,
           gestureEnabled: false,
           headerRight: () => null,
         }}
         name={OnboardingScreens.TERMS_OF_USE}
         component={TermsOfUse}
+      />
+      <Onboarding.Screen
+        options={{
+          headerRightContainerStyle,
+          gestureEnabled: false,
+          headerRight: () => (
+            <Button
+              buttonType={'pill'}
+              onPress={() => {
+                haptic('impactLight');
+                navigation.navigate('Onboarding', {
+                  screen: 'TermsOfUse',
+                  params: {
+                    context: 'skip',
+                  },
+                });
+              }}>
+              Skip
+            </Button>
+          ),
+        }}
+        name={OnboardingScreens.SELECT_ASSETS}
+        component={SelectAssets}
+      />
+      <Onboarding.Screen
+        options={{
+          headerRightContainerStyle,
+          gestureEnabled: false,
+          headerRight: () => (
+            <Button
+              buttonType={'pill'}
+              onPress={async () => {
+                haptic('impactLight');
+                await dispatch(
+                  AppActions.showBottomNotificationModal(
+                    BottomNotifications.BACKUP_KEY,
+                  ),
+                );
+              }}>
+              Skip
+            </Button>
+          ),
+        }}
+        name={OnboardingScreens.BACKUP_WALLET}
+        component={Backup}
       />
     </Onboarding.Navigator>
   );

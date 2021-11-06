@@ -40,7 +40,7 @@ export const CtaContainer = styled.View`
 export const CtaContainerAbsolute = styled.View`
   padding: 10px;
   position: absolute;
-  bottom: 10px;
+  bottom: 5px;
   left: 0;
   right: 0;
 `;
@@ -54,13 +54,13 @@ export const Hr = styled.View`
 // LIST
 export const ListContainer = styled.View`
   flex: 1;
-  width: 100%;
 `;
 
-export const RowContainer = styled.View`
+export const RowContainer = styled.TouchableOpacity`
   flex: 1;
   flex-direction: row;
-  padding: 10px;
+  margin: 10px 0;
+  padding: 0 10px 0 10px;
 `;
 
 export const RowDetailsContainer = styled.View`
@@ -78,4 +78,3 @@ export const CurrencyImageContainer = styled.View`
   align-self: center;
   border-radius: 8px;
 `;
-

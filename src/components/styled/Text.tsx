@@ -56,14 +56,11 @@ export const Link = styled(BaseText)`
   color: ${Action};
 `;
 
-
 // LIST
 export const MainLabel = styled(BaseText)`
   font-size: 18px;
   font-style: normal;
   font-weight: 500;
-  line-height: 18px;
-  text-align: left;
 `;
 
 export const SecondaryLabel = styled(BaseText)`
@@ -89,4 +86,3 @@ export const SecondaryNote = styled(BaseText)`
   line-height: 19px;
   text-align: right;
 `;
-
