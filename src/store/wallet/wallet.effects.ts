@@ -1,6 +1,6 @@
 import {Effect, RootState} from '../index';
 import {BwcProvider} from '../../lib/bwc';
-import {KeyActions} from './';
+import {WalletActions} from './';
 import {COINS, SupportedCoins} from '../../constants/coin';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {AppActions} from '../app';
@@ -10,27 +10,27 @@ import {navigate} from '../../Root';
 const BWC = BwcProvider.getInstance();
 const bwcClient = BWC.getClient();
 
-export const startKeyStoreInit =
+export const startWalletStoreInit =
   (): Effect => async (dispatch, getState: () => RootState) => {
     try {
       // creating keyProfile
       const {
-        KEY: {keyProfile},
+        WALLET: {keyProfile},
       } = getState();
 
       if (!keyProfile) {
         dispatch(
-          KeyActions.createKeyProfile({
+          WalletActions.createKeyProfile({
             createdOn: Date.now(),
             credentials: [],
           }),
         );
       }
       // added success/failed for logging
-      dispatch(KeyActions.successKeyStoreInit());
+      dispatch(WalletActions.successWalletStoreInit());
     } catch (e) {
       console.error(e);
-      dispatch(KeyActions.failedKeyStoreInit());
+      dispatch(WalletActions.failedWalletStoreInit());
     }
   };
 
@@ -49,7 +49,7 @@ export const startOnboardingCreateWallet =
       const credentials = await dispatch(startCreateWallet(key, coins));
       dispatch(AppActions.dismissOnGoingProcessModal());
       dispatch(
-        KeyActions.successOnboardingCreateWallet({
+        WalletActions.successOnboardingCreateWallet({
           key: key.toObj(),
           credentials,
         }),

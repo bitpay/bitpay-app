@@ -4,7 +4,7 @@ import axios from 'axios';
 import {Session} from './app.models';
 import {sleep} from '../../utils/helper-methods';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
-import {startKeyStoreInit} from '../key/key.effects';
+import {startWalletStoreInit} from '../wallet/wallet.effects';
 
 export const startGetSession =
   (): Effect => async (dispatch, getState: () => RootState) => {
@@ -27,7 +27,7 @@ export const startAppInit =
 
     try {
       // splitting inits into store specific ones as to keep it cleaner in the main init here
-      dispatch(startKeyStoreInit());
+      dispatch(startWalletStoreInit());
 
       await sleep(500);
       dispatch(AppActions.successAppInit());

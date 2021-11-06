@@ -15,7 +15,7 @@ import {SUPPORTED_TOKENS, SupportedCoins} from '../../constants/coin';
 import {useDispatch} from 'react-redux';
 import {AppActions} from '../../store/app';
 import {BottomNotifications} from '../../constants/bottom-notifications';
-import {startOnboardingCreateWallet} from '../../store/key/key.effects';
+import {startOnboardingCreateWallet} from '../../store/wallet/wallet.effects';
 const WIDTH = Dimensions.get('window').width;
 
 const AssetSelectionContainer = styled.SafeAreaView`
@@ -34,7 +34,7 @@ const SelectAssets = () => {
   const dispatch = useDispatch();
 
   const [routes] = useState([
-    // {key: 'popular', name: 'Popular'},
+    // {wallet: 'popular', name: 'Popular'},
     {key: 'coins', name: 'Coins'},
     {key: 'tokens', name: 'Tokens'},
   ]);
