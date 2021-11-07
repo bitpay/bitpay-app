@@ -14,8 +14,8 @@ import Button from '../../components/button/Button';
 import {SUPPORTED_TOKENS, SupportedCoins} from '../../constants/coin';
 import {useDispatch} from 'react-redux';
 import {AppActions} from '../../store/app';
-import {BottomNotifications} from '../../constants/bottom-notifications';
 import {startOnboardingCreateWallet} from '../../store/wallet/wallet.effects';
+import {showBottomNotificationModal} from '../../store/app/app.actions';
 const WIDTH = Dimensions.get('window').width;
 
 const AssetSelectionContainer = styled.SafeAreaView`
@@ -50,9 +50,23 @@ const SelectAssets = () => {
       ).length
     ) {
       dispatch(
-        AppActions.showBottomNotificationModal(
-          BottomNotifications.ASSET_REQUIRED,
-        ),
+        showBottomNotificationModal({
+          type: 'info',
+          title: 'Asset required',
+          message:
+            'To remove this asset you must first remove your selected token assets.',
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: 'OK',
+              action: () => {
+                dispatch(AppActions.dismissBottomNotificationModal());
+                setActiveSlideIndex(1);
+              },
+              primary: true,
+            },
+          ],
+        }),
       );
     }
   };

@@ -17,7 +17,7 @@ export interface BottomNotificationConfig {
   type: 'success' | 'info' | 'warning' | 'error';
   title: string;
   message: string;
-  actions?: Array<{text: string; primary?: boolean; action: () => any}>;
+  actions: Array<{text: string; primary?: boolean; action: () => any}>;
   enableBackdropDismiss: boolean;
 }
 
@@ -119,17 +119,17 @@ const BottomNotification = () => {
         </MessageContainer>
         <Hr />
         <CtaContainer platform={Platform.OS}>
-          {actions?.map((action, index) => {
+          {actions?.map(({primary, action, text}, index) => {
             return (
               <Cta
                 key={index}
                 suppressHighlighting={true}
-                primary={action.primary}
+                primary={primary}
                 onPress={() => {
                   haptic('impactLight');
-                  dispatch(action.action());
+                  action();
                 }}>
-                {action.text.toUpperCase()}
+                {text.toUpperCase()}
               </Cta>
             );
           })}

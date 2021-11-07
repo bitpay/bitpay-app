@@ -15,16 +15,17 @@ import TermsOfUse from './screens/TermsOfUse';
 import SelectAssets from '../wallet/SelectAssets';
 import {useDispatch} from 'react-redux';
 import {AppActions} from '../../store/app';
-import {BottomNotifications} from '../../constants/bottom-notifications';
 import Backup from '../wallet/Backup';
 
 export type OnboardingStackParamList = {
   OnboardingStart: undefined;
   Pin: undefined;
   CreateWallet: undefined;
-  TermsOfUse: {
-    context?: 'skip' | undefined;
-  };
+  TermsOfUse:
+    | {
+        context?: 'skip' | undefined;
+      }
+    | undefined;
   SelectAssets: undefined;
   BackupWallet: undefined;
 };
@@ -158,9 +159,27 @@ const OnboardingStack = () => {
               onPress={async () => {
                 haptic('impactLight');
                 await dispatch(
-                  AppActions.showBottomNotificationModal(
-                    BottomNotifications.BACKUP_KEY,
-                  ),
+                  AppActions.showBottomNotificationModal({
+                    type: 'warning',
+                    title: 'Are you sure?',
+                    message:
+                      'You will not be able to add funds to your wallet until you backup your recovery phrase.',
+                    enableBackdropDismiss: true,
+                    actions: [
+                      {
+                        text: 'BACKUP YOUR KEY',
+                        action: AppActions.dismissBottomNotificationModal,
+                        primary: true,
+                      },
+                      {
+                        text: 'LATER',
+                        action: () =>
+                          navigation.navigate('Onboarding', {
+                            screen: 'TermsOfUse',
+                          }),
+                      },
+                    ],
+                  }),
                 );
               }}>
               Skip
