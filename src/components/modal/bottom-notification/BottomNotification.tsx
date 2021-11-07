@@ -12,6 +12,7 @@ import SuccessSvg from '../../../../assets/img/success.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
 import WarningSvg from '../../../../assets/img/warning.svg';
 import ErrorSvg from '../../../../assets/img/error.svg';
+import {sleep} from '../../../utils/helper-methods';
 
 export interface BottomNotificationConfig {
   type: 'success' | 'info' | 'warning' | 'error';
@@ -125,8 +126,10 @@ const BottomNotification = () => {
                 key={index}
                 suppressHighlighting={true}
                 primary={primary}
-                onPress={() => {
+                onPress={async () => {
                   haptic('impactLight');
+                  dispatch(AppActions.dismissBottomNotificationModal());
+                  await sleep(0);
                   action();
                 }}>
                 {text.toUpperCase()}

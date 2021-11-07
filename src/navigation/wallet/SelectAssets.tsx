@@ -60,7 +60,6 @@ const SelectAssets = () => {
             {
               text: 'OK',
               action: () => {
-                dispatch(AppActions.dismissBottomNotificationModal());
                 setActiveSlideIndex(1);
               },
               primary: true,
