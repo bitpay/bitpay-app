@@ -61,7 +61,7 @@ const LinkContainer = styled.TouchableOpacity`
 
 const Text = styled(BaseText)`
   font-weight: ${({pill}: TextProps) => (pill ? 400 : 500)};
-  font-size: 18px;
+  font-size: ${({pill}: TextProps) => (pill ? 15 : 18)}px;
   line-height: 25px;
   text-align: center;
   color: ${({secondary}: TextProps) => (secondary ? Action : White)};

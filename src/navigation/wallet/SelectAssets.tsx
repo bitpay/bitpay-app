@@ -25,7 +25,7 @@ const AssetSelectionContainer = styled.SafeAreaView`
 const Choice = styled(BaseText)`
   font-size: 15px;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 400;
   position: relative;
   color: ${NotificationPrimary};
 `;
@@ -34,7 +34,7 @@ const SelectAssets = () => {
   const dispatch = useDispatch();
 
   const [routes] = useState([
-    // {wallet: 'popular', name: 'Popular'},
+    //{wallet: 'popular', name: 'Popular'},
     {key: 'coins', name: 'Coins'},
     {key: 'tokens', name: 'Tokens'},
   ]);
@@ -134,11 +134,13 @@ const SelectAssets = () => {
             <TabBar
               {...props}
               style={{
+                width: '50%',
                 backgroundColor: 'white',
-                width: '60%',
+                justifyContent: 'center',
                 shadowColor: 'transparent',
                 marginBottom: 10,
                 marginLeft: 10,
+                marginRight: 10,
               }}
               renderIndicator={indicatorProps => {
                 return (
