@@ -71,7 +71,9 @@ const SelectAssets = () => {
     }
   };
 
-  const checkAndToggleEthIfTokenSelected = (assets: Array<string>) => {
+  const checkAndToggleEthIfTokenSelected = (
+    assets: Array<string>,
+  ): Array<string> => {
     // if selecting token force eth wallet
     for (const selected of assets) {
       if (SUPPORTED_TOKENS.includes(selected.toLowerCase())) {
@@ -97,6 +99,7 @@ const SelectAssets = () => {
         break;
       }
     }
+    return assets;
   };
 
   const assetToggled = ({
@@ -115,8 +118,7 @@ const SelectAssets = () => {
       assets = [...assets, asset];
     }
     // if token selected set eth asset selected
-    checkAndToggleEthIfTokenSelected(assets);
-    setSelectedAssets(assets);
+    setSelectedAssets(checkAndToggleEthIfTokenSelected(assets));
   };
 
   const createWallet = async () => {
