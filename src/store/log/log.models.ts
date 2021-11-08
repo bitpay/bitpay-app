@@ -3,22 +3,22 @@ export enum LogLevel {
   Warn,
   Info,
   Debug,
-  None
+  None,
 }
 
 export interface LogEntry {
   /**
    * Log entry level.
    */
-  level: LogLevel,
+  level: LogLevel;
 
   /**
    * Date/time of the log entry in ISO string format.
    */
-  timestamp: string,
+  timestamp: string;
 
   /**
    * Log entry message string.
    */
-  message: string
+  message: string;
 }
