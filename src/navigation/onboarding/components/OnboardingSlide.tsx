@@ -27,7 +27,7 @@ const SlideContainer = styled.View`
   margin-top: 20px;
 `;
 
-export default ({item}: {item: OnboardingSlide}) => {
+export const OnboardingSlide = ({item}: {item: OnboardingSlide}) => {
   const {title, text, subText, img} = item;
 
   return (
@@ -53,3 +53,5 @@ export default ({item}: {item: OnboardingSlide}) => {
     </SlideContainer>
   );
 };
+
+export default OnboardingSlide;

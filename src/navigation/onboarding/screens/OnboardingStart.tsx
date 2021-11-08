@@ -92,7 +92,7 @@ const OnboardingStart = () => {
         layout={'default'}
         useExperimentalSnap={true}
         data={onboardingSlides}
-        renderItem={OnboardingSlide}
+        renderItem={(slideProps) => <OnboardingSlide {...slideProps} />}
         ref={ref}
         sliderWidth={WIDTH}
         itemWidth={Math.round(WIDTH)}
