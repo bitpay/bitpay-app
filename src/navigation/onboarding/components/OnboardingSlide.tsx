@@ -1,4 +1,4 @@
-import { useTheme } from '@react-navigation/native';
+import {useTheme} from '@react-navigation/native';
 import React, {ReactElement} from 'react';
 import styled from 'styled-components/native';
 import {
@@ -31,7 +31,7 @@ const SlideContainer = styled.View`
 export const OnboardingSlide = ({item}: {item: OnboardingSlide}) => {
   const {title, text, subText, img} = item;
   const theme = useTheme();
-  const themedText = { color: theme.colors.text };
+  const themedText = {color: theme.colors.text};
 
   return (
     <SlideContainer>

@@ -1,7 +1,7 @@
 import {Session} from './app.models';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
-import { ColorSchemeName } from 'react-native';
+import {ColorSchemeName} from 'react-native';
 
 export enum AppActionTypes {
   SUCCESS_GET_SESSION = 'APP/SUCCESS_GET_SESSION',
@@ -13,7 +13,7 @@ export enum AppActionTypes {
   DISMISS_ONGOING_PROCESS_MODAL = 'APP/DISMISS_ONGOING_PROCESS_MODAL',
   SHOW_BOTTOM_NOTIFICATION_MODAL = 'APP/SHOW_BOTTOM_NOTIFICATION_MODAL',
   DISMISS_BOTTOM_NOTIFICATION_MODAL = 'APP/DISMISS_BOTTOM_NOTIFICATION_MODAL',
-  SET_COLOR_SCHEME = 'APP/SET_COLOR_SCHEME'
+  SET_COLOR_SCHEME = 'APP/SET_COLOR_SCHEME',
 }
 
 interface SuccessGetSession {

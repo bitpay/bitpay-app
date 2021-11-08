@@ -1,4 +1,4 @@
-import { ColorSchemeName } from 'react-native';
+import {ColorSchemeName} from 'react-native';
 import {Session} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
@@ -49,5 +49,5 @@ export const dismissBottomNotificationModal = (): AppActionType => ({
 
 export const setColorScheme = (scheme: ColorSchemeName): AppActionType => ({
   type: AppActionTypes.SET_COLOR_SCHEME,
-  payload: scheme
+  payload: scheme,
 });
