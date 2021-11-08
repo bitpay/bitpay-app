@@ -78,4 +78,3 @@ export const CurrencyImageContainer = styled.View`
   align-self: center;
   border-radius: 8px;
 `;
-

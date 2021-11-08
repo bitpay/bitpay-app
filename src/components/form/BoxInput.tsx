@@ -83,7 +83,7 @@ const BoxInput = ({label, onFocus, onBlur, error, type, ...props}: Props) => {
     if (type === 'password') {
       setSecureTextEntry(true);
     }
-  }, []);
+  }, [type]);
 
   const _onFocus = () => {
     setIsFocused(true);
