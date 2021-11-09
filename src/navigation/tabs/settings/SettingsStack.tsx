@@ -41,7 +41,7 @@ const SettingsStack = () => {
         name={SettingsScreens.THEME}
         component={ThemeSettings}
         options={{
-          title: 'Theme'
+          title: 'Theme',
         }}
       />
       <Settings.Screen

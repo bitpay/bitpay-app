@@ -1,12 +1,12 @@
 import React from 'react';
-import { Button, ColorSchemeName, View } from 'react-native';
-import { useDispatch } from 'react-redux';
-import { AppActions } from '../../../store/app';
+import {Button, ColorSchemeName, View} from 'react-native';
+import {useDispatch} from 'react-redux';
+import {AppActions} from '../../../store/app';
 
 const ThemeSettings: React.FC = () => {
   const dispatch = useDispatch();
   const onSetThemePress = (setScheme: ColorSchemeName) => {
-    dispatch(AppActions.setColorScheme(setScheme))
+    dispatch(AppActions.setColorScheme(setScheme));
   };
 
   return (
