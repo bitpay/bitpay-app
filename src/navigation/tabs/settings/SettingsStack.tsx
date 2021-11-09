@@ -1,11 +1,42 @@
+import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
-import {Text, View} from 'react-native';
+import SettingsHome from './SettingsHome';
+import SessionLog from './SessionLog';
+import {
+  baseNavigatorOptions,
+  baseScreenOptions,
+} from '../../../constants/NavigationOptions';
+
+export type SettingsStackParamList = {
+  Home: undefined;
+  SessionLog: undefined;
+};
 
 const SettingsStack = () => {
+  const Settings = createStackNavigator<SettingsStackParamList>();
+
   return (
-    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-      <Text>Settings!</Text>
-    </View>
+    <Settings.Navigator
+      initialRouteName="Home"
+      screenOptions={{
+        ...baseNavigatorOptions,
+        ...baseScreenOptions,
+      }}>
+      <Settings.Screen
+        name="Home"
+        component={SettingsHome}
+        options={{
+          title: 'Settings',
+        }}
+      />
+      <Settings.Screen
+        name="SessionLog"
+        component={SessionLog}
+        options={{
+          title: 'Session Log',
+        }}
+      />
+    </Settings.Navigator>
   );
 };
 

@@ -4,6 +4,7 @@ import axios from 'axios';
 import {Session} from './app.models';
 import {sleep} from '../../utils/helper-methods';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import { LogActions } from '../log';
 
 export const startGetSession = (): Effect => async (
   dispatch,
@@ -26,6 +27,8 @@ export const startAppInit = (): Effect => async (
   dispatch,
   getState: () => RootState,
 ) => {
+    dispatch(LogActions.clear());
+    dispatch(LogActions.info('Initializing app...'));
   const store: RootState = getState();
 
   try {
@@ -37,6 +40,7 @@ export const startAppInit = (): Effect => async (
     await sleep(1000);
 
     dispatch(AppActions.successAppInit());
+    dispatch(LogActions.info('Initialized app successfully.'));
   } catch (err) {
     console.error(err);
     dispatch(AppActions.failedAppInit());
