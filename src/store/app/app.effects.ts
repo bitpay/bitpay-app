@@ -26,6 +26,8 @@ export const startAppInit = (): Effect => async (
   dispatch,
   getState: () => RootState,
 ) => {
+    dispatch(LogActions.clear());
+    dispatch(LogActions.info('Initializing app...'));
   const store: RootState = getState();
 
   try {
@@ -37,6 +39,7 @@ export const startAppInit = (): Effect => async (
     await sleep(1000);
 
     dispatch(AppActions.successAppInit());
+    dispatch(LogActions.info('Initialized app successfully.'));
   } catch (err) {
     console.error(err);
     dispatch(AppActions.failedAppInit());
