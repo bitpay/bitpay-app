@@ -6,6 +6,15 @@ export const BaseText: StyledComponentBase<any, any> = styled.Text`
   font-family: 'Heebo';
 `;
 
+export const H2 = styled(BaseText)`
+  font-size: 38px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 42px;
+  letter-spacing: 0;
+  text-align: center;
+`;
+
 export const H3 = styled(BaseText)`
   font-size: 25px;
   font-style: normal;

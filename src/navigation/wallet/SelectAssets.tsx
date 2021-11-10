@@ -4,18 +4,17 @@ import {BaseText, H3, TextAlign} from '../../components/styled/Text';
 import {
   CtaContainerAbsolute,
   TextContainer,
+  WIDTH,
 } from '../../components/styled/Containers';
-import {Air, NotificationPrimary} from '../../styles/colors';
+import {Action, NotificationPrimary} from '../../styles/colors';
 import CurrencySelectorList from '../../components/list/CurrencySelectorList';
-import {Dimensions} from 'react-native';
-import {TabBar, TabView, TabBarIndicator} from 'react-native-tab-view';
+import {TabBar, TabView} from 'react-native-tab-view';
 import {CurrencyList} from '../../constants/CurrencySelectionListOptions';
 import Button from '../../components/button/Button';
 import {SUPPORTED_TOKENS, SupportedCoins} from '../../constants/coin';
 import {useDispatch} from 'react-redux';
 import {startOnboardingCreateWallet} from '../../store/wallet/wallet.effects';
 import {showBottomNotificationModal} from '../../store/app/app.actions';
-const WIDTH = Dimensions.get('window').width;
 
 const AssetSelectionContainer = styled.SafeAreaView`
   flex: 1;
@@ -33,7 +32,7 @@ const SelectAssets = () => {
   const dispatch = useDispatch();
 
   const [routes] = useState([
-    //{wallet: 'popular', name: 'Popular'},
+    // {key: 'popular', name: 'All'},
     {key: 'coins', name: 'Coins'},
     {key: 'tokens', name: 'Tokens'},
   ]);
@@ -148,25 +147,17 @@ const SelectAssets = () => {
             <TabBar
               {...props}
               style={{
-                width: '50%',
+                width: '60%',
                 backgroundColor: 'white',
                 justifyContent: 'center',
                 shadowColor: 'transparent',
-                marginBottom: 10,
+                marginBottom: 15,
                 marginLeft: 10,
-                marginRight: 10,
               }}
-              renderIndicator={indicatorProps => {
-                return (
-                  <TabBarIndicator
-                    {...indicatorProps}
-                    style={{
-                      height: '100%',
-                      borderRadius: 20,
-                      backgroundColor: Air,
-                    }}
-                  />
-                );
+              indicatorStyle={{
+                backgroundColor: Action,
+                height: 2,
+                borderRadius: 20,
               }}
               renderLabel={({route}) => <Choice>{route.name}</Choice>}
             />

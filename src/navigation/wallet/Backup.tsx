@@ -9,6 +9,7 @@ import {
   TitleContainer,
 } from '../../components/styled/Containers';
 import Button from '../../components/button/Button';
+import {useNavigation} from '@react-navigation/native';
 
 const BackupContainer = styled.SafeAreaView`
   flex: 1;
@@ -16,9 +17,9 @@ const BackupContainer = styled.SafeAreaView`
 `;
 
 const BackupScreen = () => {
-  // const navigation = useNavigation();
-  // const gotoSelectAssets = () =>
-  //   navigation.navigate('Onboarding', {screen: 'SelectAssets'});
+  const navigation = useNavigation();
+  const gotoBackup = () =>
+    navigation.navigate('Onboarding', {screen: 'RecoveryPhrase'});
 
   return (
     <BackupContainer>
@@ -39,7 +40,9 @@ const BackupScreen = () => {
         </TextAlign>
       </TextContainer>
       <CtaContainer>
-        <Button buttonStyle={'primary'}>Backup your Recovery Phrase</Button>
+        <Button buttonStyle={'primary'} onPress={gotoBackup}>
+          Backup your Recovery Phrase
+        </Button>
       </CtaContainer>
     </BackupContainer>
   );

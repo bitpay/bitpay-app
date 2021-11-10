@@ -16,6 +16,8 @@ import SelectAssets from '../wallet/SelectAssets';
 import {useDispatch} from 'react-redux';
 import {AppActions} from '../../store/app';
 import Backup from '../wallet/Backup';
+import RecoveryPhrase from '../wallet/RecoveryPhrase';
+import VerifyPhrase from '../wallet/VerifyPhrase';
 
 export type OnboardingStackParamList = {
   OnboardingStart: undefined;
@@ -28,6 +30,8 @@ export type OnboardingStackParamList = {
     | undefined;
   SelectAssets: undefined;
   BackupWallet: undefined;
+  RecoveryPhrase: undefined;
+  VerifyPhrase: undefined;
 };
 
 export enum OnboardingScreens {
@@ -37,6 +41,8 @@ export enum OnboardingScreens {
   TERMS_OF_USE = 'TermsOfUse',
   SELECT_ASSETS = 'SelectAssets',
   BACKUP_WALLET = 'BackupWallet',
+  RECOVERY_PHRASE = 'RecoveryPhrase',
+  VERIFY_PHRASE = 'VerifyPhrase',
 }
 
 const Onboarding = createStackNavigator<OnboardingStackParamList>();
@@ -121,6 +127,7 @@ const OnboardingStack = () => {
         options={{
           headerRightContainerStyle,
           gestureEnabled: false,
+          headerLeft: () => null,
           headerRight: () => null,
         }}
         name={OnboardingScreens.TERMS_OF_USE}
@@ -153,6 +160,7 @@ const OnboardingStack = () => {
         options={{
           headerRightContainerStyle,
           gestureEnabled: false,
+          headerLeft: () => null,
           headerRight: () => (
             <Button
               buttonType={'pill'}
@@ -168,7 +176,10 @@ const OnboardingStack = () => {
                     actions: [
                       {
                         text: 'BACKUP YOUR KEY',
-                        action: AppActions.dismissBottomNotificationModal,
+                        action: () =>
+                          navigation.navigate('Onboarding', {
+                            screen: 'RecoveryPhrase',
+                          }),
                         primary: true,
                       },
                       {
@@ -188,6 +199,78 @@ const OnboardingStack = () => {
         }}
         name={OnboardingScreens.BACKUP_WALLET}
         component={Backup}
+      />
+      <Onboarding.Screen
+        options={{
+          headerRightContainerStyle,
+          gestureEnabled: false,
+          headerRight: () => (
+            <Button
+              buttonType={'pill'}
+              onPress={async () => {
+                haptic('impactLight');
+                await dispatch(
+                  AppActions.showBottomNotificationModal({
+                    type: 'warning',
+                    title: 'Don’t risk losing your money',
+                    message:
+                      'Your recovery key is composed of 12 randomly selected words. Take a couple of minutes to carefully write down each word in the order they appear.',
+                    enableBackdropDismiss: true,
+                    actions: [
+                      {
+                        text: "I'M SURE",
+                        action: () =>
+                          navigation.navigate('Onboarding', {
+                            screen: 'TermsOfUse',
+                          }),
+                        primary: true,
+                      },
+                    ],
+                  }),
+                );
+              }}>
+              Cancel
+            </Button>
+          ),
+        }}
+        name={OnboardingScreens.RECOVERY_PHRASE}
+        component={RecoveryPhrase}
+      />
+      <Onboarding.Screen
+        options={{
+          headerRightContainerStyle,
+          gestureEnabled: false,
+          headerRight: () => (
+            <Button
+              buttonType={'pill'}
+              onPress={async () => {
+                haptic('impactLight');
+                await dispatch(
+                  AppActions.showBottomNotificationModal({
+                    type: 'warning',
+                    title: 'Don’t risk losing your money',
+                    message:
+                      'Your recovery key is composed of 12 randomly selected words. Take a couple of minutes to carefully write down each word in order they appear.',
+                    enableBackdropDismiss: true,
+                    actions: [
+                      {
+                        text: "I'M SURE",
+                        action: () =>
+                          navigation.navigate('Onboarding', {
+                            screen: 'TermsOfUse',
+                          }),
+                        primary: true,
+                      },
+                    ],
+                  }),
+                );
+              }}>
+              Cancel
+            </Button>
+          ),
+        }}
+        name={OnboardingScreens.VERIFY_PHRASE}
+        component={VerifyPhrase}
       />
     </Onboarding.Navigator>
   );

@@ -1,6 +1,6 @@
 import styled from 'styled-components/native';
 import {Dimensions} from 'react-native';
-const WIDTH = Dimensions.get('window').width;
+export const WIDTH = Dimensions.get('window').width;
 
 export const ImageContainer = styled.View`
   margin: 10px 0;
@@ -30,7 +30,6 @@ export const SubTextContainer = styled.View`
 `;
 
 export const CtaContainer = styled.View`
-  flex: 1;
   padding: 10px;
   align-self: stretch;
   flex-direction: column;
