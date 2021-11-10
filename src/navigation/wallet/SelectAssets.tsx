@@ -13,7 +13,6 @@ import {CurrencyList} from '../../constants/CurrencySelectionListOptions';
 import Button from '../../components/button/Button';
 import {SUPPORTED_TOKENS, SupportedCoins} from '../../constants/coin';
 import {useDispatch} from 'react-redux';
-import {AppActions} from '../../store/app';
 import {startOnboardingCreateWallet} from '../../store/wallet/wallet.effects';
 import {showBottomNotificationModal} from '../../store/app/app.actions';
 const WIDTH = Dimensions.get('window').width;

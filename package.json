@@ -9,7 +9,7 @@
     "start": "react-native start",
     "test": "jest",
     "android:build:debug": "./scripts/android-debug.sh",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint": "eslint --fix . --ext .js,.jsx,.ts,.tsx",
     "postinstall": "./scripts/postinstall.sh",
     "clean": "react-native-clean-project"
   },

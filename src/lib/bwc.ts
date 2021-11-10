@@ -41,5 +41,4 @@ export class BwcProvider {
   public createKey(opts: KeyOpts) {
     return new BWC.Key(opts);
   }
-
 }

@@ -9,7 +9,6 @@ import {
   TitleContainer,
 } from '../../components/styled/Containers';
 import Button from '../../components/button/Button';
-import {useNavigation} from '@react-navigation/native';
 
 const BackupContainer = styled.SafeAreaView`
   flex: 1;
@@ -34,14 +33,13 @@ const BackupScreen = () => {
       <TextContainer>
         <TextAlign align={'center'}>
           <Paragraph>
-            If you delete the BitPay app or lose your device, you’ll need your recovery phrase regain acess to your funds.
+            If you delete the BitPay app or lose your device, you’ll need your
+            recovery phrase regain access to your funds.
           </Paragraph>
         </TextAlign>
       </TextContainer>
       <CtaContainer>
-        <Button buttonStyle={'primary'}>
-          Backup your Recovery Phrase
-        </Button>
+        <Button buttonStyle={'primary'}>Backup your Recovery Phrase</Button>
       </CtaContainer>
     </BackupContainer>
   );
