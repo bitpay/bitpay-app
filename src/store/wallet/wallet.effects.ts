@@ -1,11 +1,20 @@
 import {Effect, RootState} from '../index';
 import {BwcProvider} from '../../lib/bwc';
 import {WalletActions} from './';
-import {COINS, SupportedCoins} from '../../constants/coin';
+import {
+  ASSETS,
+  SUPPORTED_TOKENS,
+  SupportedAssets,
+  SupportedCoins,
+  SupportedTokens,
+  Token,
+  TokenOpts,
+} from '../../constants/assets';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {AppActions} from '../app';
 import {startOnGoingProcessModal} from '../app/app.effects';
 import {navigate} from '../../Root';
+import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 
 const BWC = BwcProvider.getInstance();
 const bwcClient = BWC.getClient();
@@ -35,7 +44,7 @@ export const startWalletStoreInit =
   };
 
 export const startOnboardingCreateWallet =
-  (coins: Array<SupportedCoins>): Effect =>
+  (assets: Array<SupportedAssets>): Effect =>
   async dispatch => {
     try {
       await dispatch(
@@ -46,7 +55,7 @@ export const startOnboardingCreateWallet =
         seedType: 'new',
       });
 
-      const credentials = await dispatch(startCreateWallet(key, coins));
+      const credentials = await dispatch(startCreateWallet(key, assets));
       dispatch(AppActions.dismissOnGoingProcessModal());
       dispatch(
         WalletActions.successOnboardingCreateWallet({
@@ -72,14 +81,21 @@ export const startCreateWallet =
         },
       ) => any;
     },
-    coins: Array<SupportedCoins>,
+    assets: Array<SupportedAssets>,
   ): Effect =>
   async (dispatch, getState: () => RootState) => {
     const {
       APP: {network},
     } = getState();
 
-    const credentials: Array<object> = [];
+    const credentials: Array<Credentials & {preferences?: any}> = [];
+
+    const coins: Array<SupportedCoins> = assets.filter(
+      asset => !SUPPORTED_TOKENS.includes(asset),
+    );
+    const tokens: Array<SupportedTokens> = assets.filter(asset =>
+      SUPPORTED_TOKENS.includes(asset),
+    );
 
     for (const coin of coins) {
       await new Promise<void>(resolve => {
@@ -94,7 +110,7 @@ export const startCreateWallet =
         );
 
         bwcClient.createWallet(
-          COINS[coin].name,
+          ASSETS[coin].name,
           'me',
           1,
           1,
@@ -116,6 +132,27 @@ export const startCreateWallet =
           },
         );
       });
+    }
+
+    const ethCredentials = credentials.find(asset => asset.coin === 'eth');
+
+    if (ethCredentials && tokens.length) {
+      for (const token of tokens) {
+        await new Promise<void>(resolve => {
+          const tokenCredentials: Token = ethCredentials.getTokenCredentials(
+            TokenOpts[token],
+          );
+          bwcClient.fromObj(tokenCredentials);
+          // Add the token info to the ethWallet.
+          ethCredentials.preferences = ethCredentials.preferences || {};
+          ethCredentials.preferences.tokens =
+            ethCredentials.preferences.tokens || [];
+          ethCredentials.preferences.tokens.push(TokenOpts[token]);
+          console.log('added token', token);
+          credentials.push(bwcClient.credentials);
+          resolve();
+        });
+      }
     }
 
     return credentials;

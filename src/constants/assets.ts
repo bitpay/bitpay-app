@@ -1,17 +1,8 @@
-export type SupportedCoins =
-  | 'btc'
-  | 'bch'
-  | 'ltc'
-  | 'doge'
-  | 'eth'
-  | 'usdc'
-  | 'gusd'
-  | 'pax'
-  | 'busd'
-  | 'dai'
-  | 'wbtc';
+export type SupportedCoins = 'btc' | 'bch' | 'ltc' | 'doge' | 'eth';
+export type SupportedTokens = 'usdc' | 'gusd' | 'pax' | 'busd' | 'dai' | 'wbtc';
+export type SupportedAssets = SupportedCoins & SupportedTokens;
 
-export interface CoinOpts {
+export interface AssetOpts {
   // Bitcore-node
   name: string;
   chain: string;
@@ -56,7 +47,7 @@ export interface CoinOpts {
   };
 }
 
-export const COINS: {[key in string]: CoinOpts} = {
+export const ASSETS: {[key in string]: AssetOpts} = {
   btc: {
     name: 'Bitcoin',
     chain: 'BTC',
@@ -500,6 +491,52 @@ export const COINS: {[key in string]: CoinOpts} = {
       backgroundColor: '#f7921a',
       gradientBackgroundColor: '#f7921a',
     },
+  },
+};
+
+export interface Token {
+  name: string;
+  symbol: string;
+  decimal: number;
+  address: string;
+}
+
+export const TokenOpts = {
+  usdc: {
+    name: 'USD Coin',
+    symbol: 'USDC',
+    decimal: 6,
+    address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+  },
+  pax: {
+    name: 'Paxos Standard',
+    symbol: 'PAX',
+    decimal: 18,
+    address: '0x8e870d67f660d95d5be530380d0ec0bd388289e1',
+  },
+  gusd: {
+    name: 'Gemini Dollar',
+    symbol: 'GUSD',
+    decimal: 2,
+    address: '0x056fd409e1d7a124bd7017459dfea2f387b6d5cd',
+  },
+  busd: {
+    name: 'Binance USD Coin',
+    symbol: 'BUSD',
+    decimal: 18,
+    address: '0x4fabb145d64652a948d72533023f6e7a623c7c53',
+  },
+  dai: {
+    name: 'Dai',
+    symbol: 'DAI',
+    decimal: 18,
+    address: '0x6b175474e89094c44da98b954eedeac495271d0f',
+  },
+  wbtc: {
+    name: 'Wrapped Bitcoin',
+    symbol: 'WBTC',
+    decimal: 9,
+    address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
   },
 };
 
