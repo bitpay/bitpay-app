@@ -1,4 +1,5 @@
 import {
+  LinkingOptions,
   NavigationContainer,
   NavigatorScreenParams,
 } from '@react-navigation/native';
@@ -83,10 +84,23 @@ export default () => {
 
   const Root = createStackNavigator<RootStackParamList>();
 
+  const config = {
+    // configuration for associating screens with paths
+    screens: {
+      // ScreenName: 'desired/uri/path/and/:param'
+    }
+  };
+  const linking: LinkingOptions<RootStackParamList> = {
+    prefixes: [
+      'bitpay://'
+    ],
+    config
+  };
+
   return (
     <SafeAreaProvider>
       <StatusBar translucent backgroundColor="transparent" />
-      <NavigationContainer theme={theme}>
+      <NavigationContainer theme={theme} linking={linking}>
         <Root.Navigator
           screenOptions={{
             headerShown: false,
