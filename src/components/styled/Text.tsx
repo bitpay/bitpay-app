@@ -19,8 +19,7 @@ export const H4 = styled(BaseText)`
   font-style: normal;
   font-weight: 500;
   line-height: 30px;
-  letter-spacing: 0px;
-  text-align: left;
+  letter-spacing: 0;
 `;
 
 export const Paragraph = styled(BaseText)`
@@ -55,4 +54,37 @@ export const Link = styled(BaseText)`
   line-height: 25px;
   font-weight: 400;
   color: ${Action};
+`;
+
+// LIST
+export const MainLabel = styled(BaseText)`
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 18px;
+  text-align: left;
+`;
+
+export const SecondaryLabel = styled(BaseText)`
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 16px;
+  text-align: left;
+`;
+
+export const MainNote = styled(BaseText)`
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: right;
+`;
+
+export const SecondaryNote = styled(BaseText)`
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 300;
+  line-height: 19px;
+  text-align: right;
 `;

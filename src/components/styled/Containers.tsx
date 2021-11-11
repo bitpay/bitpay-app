@@ -50,3 +50,31 @@ export const Hr = styled.View`
   border-bottom-width: 1px;
   margin: 20px 0;
 `;
+
+// LIST
+export const ListContainer = styled.View`
+  flex: 1;
+  width: 100%;
+`;
+
+export const RowContainer = styled.View`
+  flex: 1;
+  flex-direction: row;
+  padding: 10px;
+`;
+
+export const RowDetailsContainer = styled.View`
+  flex: 1;
+  flex-direction: column;
+  margin-left: 12px;
+  justify-content: center;
+`;
+
+export const CurrencyImageContainer = styled.View`
+  height: 50px;
+  width: 50px;
+  display: flex;
+  justify-content: center;
+  align-self: center;
+  border-radius: 8px;
+`;

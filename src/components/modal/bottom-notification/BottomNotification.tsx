@@ -1,12 +1,13 @@
 import React from 'react';
 import BottomPopupModal from '../base/bottom-popup/BottomPopupModal';
 import {BaseText, H4} from '../../styled/Text';
-import styled from 'styled-components/native';
+import styled, {css} from 'styled-components/native';
 import {useDispatch, useSelector} from 'react-redux';
 import {AppActions} from '../../../store/app';
 import {RootState} from '../../../store';
 import {NotificationPrimary} from '../../../styles/colors';
 import haptic from '../../haptic-feedback/haptic';
+import {Platform} from 'react-native';
 import SuccessSvg from '../../../../assets/img/success.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
 import WarningSvg from '../../../../assets/img/warning.svg';
@@ -49,14 +50,14 @@ const ImageContainer = styled.View`
 `;
 
 const MessageContainer = styled.View`
-  margin-top: 10px;
+  margin: 15px 0 20px 0;
 `;
 
 const Message = styled(BaseText)`
-  font-size: 14px;
+  font-size: 16px;
   font-style: normal;
-  font-weight: 500;
-  line-height: 19px;
+  font-weight: 400;
+  line-height: 24px;
   letter-spacing: 0.5px;
   text-align: left;
 `;
@@ -70,7 +71,11 @@ const Hr = styled.View`
 const CtaContainer = styled.View`
   flex-direction: row;
   justify-content: space-between;
-  margin-bottom: 10px;
+  ${({platform}: {platform: string}) =>
+    platform === 'ios' &&
+    css`
+      margin-bottom: 10px;
+    `}
 `;
 
 const Cta = styled.Text`
@@ -98,10 +103,12 @@ const BottomNotification = () => {
   return (
     <BottomPopupModal
       isVisible={isVisible}
-      onBackdropPress={() =>
-        enableBackdropDismiss &&
-        dispatch(AppActions.dismissBottomNotificationModal())
-      }>
+      onBackdropPress={() => {
+        if (enableBackdropDismiss) {
+          dispatch(AppActions.dismissBottomNotificationModal());
+          haptic('impactLight');
+        }
+      }}>
       <BottomNotificationContainer>
         <Row>
           <ImageContainer>{notificationType[type || 'info']()}</ImageContainer>
@@ -111,7 +118,7 @@ const BottomNotification = () => {
           <Message>{message}</Message>
         </MessageContainer>
         <Hr />
-        <CtaContainer>
+        <CtaContainer platform={Platform.OS}>
           {actions?.map((action, index) => {
             return (
               <Cta
