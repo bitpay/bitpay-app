@@ -1,29 +1,37 @@
 import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
-import SettingsHome from './SettingsHome';
-import SessionLog from './SessionLog';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
 } from '../../../constants/NavigationOptions';
+import SessionLog from './SessionLog';
+import SettingsHome from './SettingsHome';
+import ThemeSettings from './Theme';
 
 export type SettingsStackParamList = {
   Home: undefined;
+  Theme: undefined;
   SessionLog: undefined;
 };
+
+export enum SettingsScreens {
+  HOME = 'Home',
+  THEME = 'Theme',
+  SESSION_LOG = 'SessionLog',
+}
 
 const SettingsStack = () => {
   const Settings = createStackNavigator<SettingsStackParamList>();
 
   return (
     <Settings.Navigator
-      initialRouteName="Home"
+      initialRouteName={SettingsScreens.HOME}
       screenOptions={{
         ...baseNavigatorOptions,
         ...baseScreenOptions,
       }}>
       <Settings.Screen
-        name="Home"
+        name={SettingsScreens.HOME}
         component={SettingsHome}
         options={{
           title: 'Settings',
@@ -31,7 +39,14 @@ const SettingsStack = () => {
         }}
       />
       <Settings.Screen
-        name="SessionLog"
+        name={SettingsScreens.THEME}
+        component={ThemeSettings}
+        options={{
+          title: 'Theme',
+        }}
+      />
+      <Settings.Screen
+        name={SettingsScreens.SESSION_LOG}
         component={SessionLog}
         options={{
           title: 'Session Log',

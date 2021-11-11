@@ -1,31 +1,28 @@
-import 'react-native-gesture-handler';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
-import React, {useEffect} from 'react';
-import {useDispatch, useSelector} from 'react-redux';
-import {RootState} from './store';
-import {AppEffects} from './store/app';
-
-import navTheme from './theme';
-import {baseScreenOptions} from './constants/NavigationOptions';
 import {
   createNavigationContainerRef,
   NavigationContainer,
   NavigatorScreenParams,
 } from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
-
+import React, {useEffect, useState} from 'react';
+import {Appearance, AppState, AppStateStatus, StatusBar} from 'react-native';
+import 'react-native-gesture-handler';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {useDispatch, useSelector} from 'react-redux';
+import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
+import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
+import {baseScreenOptions} from './constants/NavigationOptions';
 import SplashScreen from './navigation/app/screens/Splash';
+import BitpayIdStack, {
+  BitpayIdStackParamList,
+} from './navigation/bitpay-id/BitpayIdStack';
 import OnboardingStack, {
   OnboardingStackParamList,
 } from './navigation/onboarding/OnboardingStack';
 import TabsStack from './navigation/tabs/TabsStack';
-import BitpayIdStack, {
-  BitpayIdStackParamList,
-} from './navigation/bitpay-id/BitpayIdStack';
-
-import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
-import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
-import {StatusBar} from 'react-native';
+import {RootState} from './store';
+import {AppEffects} from './store/app';
+import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 
 export type RootStackParamList = {
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
@@ -59,16 +56,31 @@ export const navigate = (
 };
 
 export default () => {
+  const dispatch = useDispatch();
+  const [, rerender] = useState({});
   const onboardingCompleted = useSelector(
     ({APP}: RootState) => APP.onboardingCompleted,
   );
   const appIsLoading = useSelector(({APP}: RootState) => APP.appIsLoading);
-
-  const dispatch = useDispatch();
+  const appColorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
 
   useEffect(() => {
     dispatch(AppEffects.startAppInit());
   }, [dispatch]);
+
+  useEffect(() => {
+    function onAppStateChange(status: AppStateStatus) {
+      // status === 'active' when the app goes from background to foreground,
+      // if no app scheme set, rerender in case the system theme has changed
+      if (status === 'active' && !appColorScheme) {
+        rerender({});
+      }
+    }
+
+    AppState.addEventListener('change', onAppStateChange);
+
+    return () => AppState.removeEventListener('change', onAppStateChange);
+  }, [rerender, appColorScheme]);
 
   if (appIsLoading) {
     return (
@@ -77,6 +89,9 @@ export default () => {
       </SafeAreaProvider>
     );
   }
+
+  const scheme = appColorScheme || Appearance.getColorScheme();
+  const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
 
   const initialRoute = onboardingCompleted
     ? RootStacks.TABS
@@ -87,7 +102,7 @@ export default () => {
   return (
     <SafeAreaProvider>
       <StatusBar translucent backgroundColor="transparent" />
-      <NavigationContainer ref={navigationRef} theme={navTheme}>
+      <NavigationContainer ref={navigationRef} theme={theme}>
         <Root.Navigator
           screenOptions={{
             headerShown: false,
