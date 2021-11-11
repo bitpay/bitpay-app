@@ -1,7 +1,18 @@
 // TODO build themes
-import {DefaultTheme} from '@react-navigation/native';
+import {DefaultTheme, DarkTheme} from '@react-navigation/native';
+import {useColorScheme} from 'react-native';
 
-const navTheme = DefaultTheme;
-navTheme.colors.background = '#fff';
+function NavTheme() {
+  const scheme = useColorScheme();
+  let navTheme;
 
-export default navTheme;
+  if (scheme === 'dark') {
+    navTheme = DarkTheme;
+  } else {
+    navTheme = DefaultTheme;
+  }
+
+  return navTheme;
+}
+
+export default NavTheme();
