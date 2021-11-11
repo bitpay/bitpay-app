@@ -36,4 +36,6 @@ This project uses `react-redux` https://react-redux.js.org/ for state management
 2. A menu will popup - tap `Debug with Chrome`(IOS) or `Debug`(Android)
 3. The logs should move from the terminal to the debugger
 
-
+### Storybook
+1. In `src/contants/config.ts` change `APP_LOAD_STORY_BOOK=false` to `APP_LOAD_STORY_BOOK=true`
+2. Run `yarn <platform>` ex: `yarn ios`. Since we set `APP_LOAD_STORY_BOOK=true`, this runs Storybook instead of your actual app.
