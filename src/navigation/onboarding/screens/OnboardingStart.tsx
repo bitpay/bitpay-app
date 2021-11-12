@@ -1,5 +1,5 @@
 import React, {useRef, useState} from 'react';
-import {StatusBar, Dimensions} from 'react-native';
+import {StatusBar} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import styled from 'styled-components/native';
 
@@ -8,13 +8,16 @@ import OnboardingSlide from '../components/OnboardingSlide';
 
 import CryptoToCash from '../../../../assets/img/onboarding/crypto-to-cash.svg';
 import GiftCards from '../../../../assets/img/onboarding/gift-cards.svg';
-import MultiFactor from '../../../../assets/img/onboarding/multi-factor.svg';
+import WalletAndCoins from '../../../../assets/img/onboarding/wallet-and-coins.svg';
 import ProtectCrypto from '../../../../assets/img/onboarding/protect-crypto.svg';
 
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {Action} from '../../../styles/colors';
-import {CtaContainerAbsolute} from '../../../components/styled/Containers';
+import {
+  CtaContainerAbsolute,
+  WIDTH,
+} from '../../../components/styled/Containers';
 
 const onboardingSlides = [
   {
@@ -29,18 +32,16 @@ const onboardingSlides = [
     img: () => <GiftCards />,
   },
   {
-    title: 'Leverage multi-factor security',
-    text: 'Use multi-factor wallets to split payment authorization across up to 12 devices or trusted copayers for enhanced security.',
-    img: () => <MultiFactor />,
+    title: 'Keep your funds safe & secure',
+    text: 'Websites and exchanges get hacked. BitPay allows you to privately store, manage, and use your crypto funds without having to trust a centralized bank or exchange.',
+    img: () => <WalletAndCoins />,
   },
   {
-    title: 'Control your money with or without an account',
-    text: 'Websites and exchanges get hacked. BitPay allows you to privately store, manage, and use your crypto funds without having to trust a centralized bank or exchange.',
+    title: 'Seamlessly buy & swap with a decentralized exchange',
+    text: ' Buy with a credit card or existing funds, then seamlessly swap coins at competitive rates without leaving the app.',
     img: () => <ProtectCrypto />,
   },
 ];
-
-const WIDTH = Dimensions.get('window').width;
 
 const OnboardingContainer = styled.SafeAreaView`
   flex: 1;
