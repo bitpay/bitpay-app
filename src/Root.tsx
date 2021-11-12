@@ -5,14 +5,20 @@ import {
 } from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import React, {useEffect, useState} from 'react';
-import {Appearance, AppState, AppStateStatus, Linking, StatusBar} from 'react-native';
+import {
+  Appearance,
+  AppState,
+  AppStateStatus,
+  Linking,
+  StatusBar,
+} from 'react-native';
 import 'react-native-gesture-handler';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {useDispatch, useSelector} from 'react-redux';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
 import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
-import { DEEPLINK_PREFIX } from './constants/config';
+import {DEEPLINK_PREFIX} from './constants/config';
 import {baseScreenOptions} from './constants/NavigationOptions';
 import RNBootSplash from 'react-native-bootsplash';
 import BitpayIdStack, {
@@ -25,7 +31,7 @@ import OnboardingStack, {
 import TabsStack from './navigation/tabs/TabsStack';
 import {RootState} from './store';
 import {AppEffects} from './store/app';
-import { LogActions } from './store/log';
+import {LogActions} from './store/log';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 
 export type RootStackParamList = {
@@ -82,16 +88,16 @@ export default () => {
   const scheme = appColorScheme || Appearance.getColorScheme();
   const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
 
-  const initialRoute = true || onboardingCompleted
+  const initialRoute = onboardingCompleted
     ? RootStacks.TABS
     : RootStacks.ONBOARDING;
 
   const Root = createStackNavigator<RootStackParamList>();
 
-  Linking.addEventListener('url', async ({ url }) => {
+  Linking.addEventListener('url', async ({url}) => {
     if (url && url.startsWith(`${DEEPLINK_PREFIX}://`)) {
       dispatch(LogActions.info(`Deep link received: ${url}`));
-      
+
       try {
         // clicking a deeplink from the IAB in iOS doesn't auto-close the IAB, so do it manually
         if (await InAppBrowser.isAvailable()) {
@@ -104,19 +110,17 @@ export default () => {
   });
 
   const linking: LinkingOptions<RootStackParamList> = {
-    prefixes: [
-      `${DEEPLINK_PREFIX}://`
-    ],
+    prefixes: [`${DEEPLINK_PREFIX}://`],
     config: {
       // configuration for associating screens with paths
       screens: {
         [RootStacks.BITPAY_ID]: {
           screens: {
-            [BitpayIdScreens.PAIR]: 'wallet-card/pairing'
-          }
-        }
-      }
-    }
+            [BitpayIdScreens.PAIR]: 'wallet-card/pairing',
+          },
+        },
+      },
+    },
   };
 
   return (

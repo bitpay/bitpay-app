@@ -1,6 +1,9 @@
-import { createStackNavigator } from '@react-navigation/stack';
+import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
-import { baseNavigatorOptions, baseScreenOptions } from '../../../constants/NavigationOptions';
+import {
+  baseNavigatorOptions,
+  baseScreenOptions,
+} from '../../../constants/NavigationOptions';
 import CardHome from './CardHome';
 
 export type CardStackParamList = {
@@ -19,14 +22,15 @@ const CardStack = () => {
       initialRouteName={CardScreens.HOME}
       screenOptions={{
         ...baseNavigatorOptions,
-        ...baseScreenOptions
+        ...baseScreenOptions,
       }}>
-        <Card.Screen
+      <Card.Screen
         name={CardScreens.HOME}
         component={CardHome}
         options={{
-          title: 'Card'
-        }} />
+          title: 'Card',
+        }}
+      />
     </Card.Navigator>
   );
 };

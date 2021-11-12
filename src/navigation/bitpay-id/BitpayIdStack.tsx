@@ -10,9 +10,9 @@ import Pair from './screens/Pair';
 export type BitpayIdStackParamList = {
   LoginSignup: {context: 'login' | 'signup'};
   Pair: {
-    secret?: string,
-    dashboardRedirect?: boolean,
-    vcd?: string
+    secret?: string;
+    dashboardRedirect?: boolean;
+    vcd?: string;
   };
 };
 
@@ -32,15 +32,16 @@ const BitpayIdStack = () => {
         name={BitpayIdScreens.LOGIN_SIGNUP}
         component={LoginSignup}
         options={{
-          ...baseScreenOptions
+          ...baseScreenOptions,
         }}
       />
       <BitpayId.Screen
         name={BitpayIdScreens.PAIR}
         component={Pair}
         options={{
-          ...baseScreenOptions
-        }} />
+          ...baseScreenOptions,
+        }}
+      />
     </BitpayId.Navigator>
   );
 };
