@@ -5,6 +5,21 @@ Welcome to BitPay App v2!
 Install dependencies with `yarn` >= 14.15.0
 
 ### IOS
+
+TEMPORARY - If using XCode 13 you will need to comment out the following in the Podfile before pod install
+```
+  # Enables Flipper.
+  #
+  # Note that if you have use_frameworks! enabled, Flipper will not work and
+  # you should disable the next line.
+  use_flipper!()
+
+  post_install do |installer|
+    react_native_post_install(installer)
+  end
+end
+```
+
 1. Install Pods `cd ios && pod install && cd ..`
 2. `yarn start` to start dev server
 3. Build and deploy to simulator `yarn ios` or device `yarn ios:device`
@@ -21,4 +36,6 @@ This project uses `react-redux` https://react-redux.js.org/ for state management
 2. A menu will popup - tap `Debug with Chrome`(IOS) or `Debug`(Android)
 3. The logs should move from the terminal to the debugger
 
-
+### Storybook
+1. In `src/contants/config.ts` change `APP_LOAD_STORY_BOOK=false` to `APP_LOAD_STORY_BOOK=true`
+2. Run `yarn <platform>` ex: `yarn ios`. Since we set `APP_LOAD_STORY_BOOK=true`, this runs Storybook instead of your actual app.

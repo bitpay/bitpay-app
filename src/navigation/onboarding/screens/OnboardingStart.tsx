@@ -19,27 +19,23 @@ import {CtaContainerAbsolute} from '../../../components/styled/Containers';
 const onboardingSlides = [
   {
     title: 'Turn crypto into dollars with our BitPay card',
-    text:
-      'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
+    text: 'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
     subText: '*Currently available in the USA. More countries coming soon.',
     img: () => <CryptoToCash />,
   },
   {
     title: 'Spend crypto at your favorite places',
-    text:
-      'Discover a curated list of places you can spend your crypto. Purchase, manage, & spend store credits instantly.',
+    text: 'Discover a curated list of places you can spend your crypto. Purchase, manage, & spend store credits instantly.',
     img: () => <GiftCards />,
   },
   {
     title: 'Leverage multi-factor security',
-    text:
-      'Use multi-factor wallets to split payment authorization across up to 12 devices or trusted copayers for enhanced security.',
+    text: 'Use multi-factor wallets to split payment authorization across up to 12 devices or trusted copayers for enhanced security.',
     img: () => <MultiFactor />,
   },
   {
     title: 'Control your money with or without an account',
-    text:
-      'Websites and exchanges get hacked. BitPay allows you to privately store, manage, and use your crypto funds without having to trust a centralized bank or exchange.',
+    text: 'Websites and exchanges get hacked. BitPay allows you to privately store, manage, and use your crypto funds without having to trust a centralized bank or exchange.',
     img: () => <ProtectCrypto />,
   },
 ];
@@ -92,7 +88,7 @@ const OnboardingStart = () => {
         layout={'default'}
         useExperimentalSnap={true}
         data={onboardingSlides}
-        renderItem={OnboardingSlide}
+        renderItem={slideProps => <OnboardingSlide {...slideProps} />}
         ref={ref}
         sliderWidth={WIDTH}
         itemWidth={Math.round(WIDTH)}
