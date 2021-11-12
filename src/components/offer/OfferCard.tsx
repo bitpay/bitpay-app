@@ -52,7 +52,7 @@ const ArrowContainer = styled.View`
   height: 36px;
   background: #f3f4f5;
   margin-left: 26px;
-  border-radius: 50;
+  border-radius: 18px;
   justify-content: center;
   align-items: center;
 `;
