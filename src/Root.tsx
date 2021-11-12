@@ -7,6 +7,7 @@ import {createStackNavigator} from '@react-navigation/stack';
 import React, {useEffect, useState} from 'react';
 import {Appearance, AppState, AppStateStatus, Linking, StatusBar} from 'react-native';
 import 'react-native-gesture-handler';
+import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {useDispatch, useSelector} from 'react-redux';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
@@ -81,15 +82,24 @@ export default () => {
   const scheme = appColorScheme || Appearance.getColorScheme();
   const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
 
-  const initialRoute = onboardingCompleted
+  const initialRoute = true || onboardingCompleted
     ? RootStacks.TABS
     : RootStacks.ONBOARDING;
 
   const Root = createStackNavigator<RootStackParamList>();
 
-  Linking.addEventListener('url', ({ url }) => {
+  Linking.addEventListener('url', async ({ url }) => {
     if (url && url.startsWith(`${DEEPLINK_PREFIX}://`)) {
       dispatch(LogActions.info(`Deep link received: ${url}`));
+      
+      try {
+        // clicking a deeplink from the IAB in iOS doesn't auto-close the IAB, so do it manually
+        if (await InAppBrowser.isAvailable()) {
+          InAppBrowser.close();
+        }
+      } catch (err) {
+        console.log(err);
+      }
     }
   });
 
