@@ -34,7 +34,11 @@ const CardHome: React.FC = () => {
 
     try {
       if (isIabAvailable) {
-        await InAppBrowser.open(url, {});
+        await InAppBrowser.open(url, {
+          animated: true,
+          modalEnabled: true,
+          modalPresentationStyle: 'pageSheet',
+        });
       } else {
         Linking.openURL(url);
       }
