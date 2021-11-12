@@ -51,7 +51,6 @@ const OnboardingContainer = styled.SafeAreaView`
 const Row = styled.View`
   flex-direction: row;
   justify-content: center;
-  margin: 5px 0;
 `;
 
 const Column = styled.View`

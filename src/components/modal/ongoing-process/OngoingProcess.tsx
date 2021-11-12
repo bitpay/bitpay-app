@@ -5,6 +5,7 @@ import styled from 'styled-components/native';
 import {ActivityIndicator} from 'react-native';
 import {RootState} from '../../../store';
 import {useSelector} from 'react-redux';
+import {SlateDark} from '../../../styles/colors';
 
 export enum OnGoingProcessMessages {
   GENERAL_AWAITING = "Just a second, we're setting a few things up",
@@ -61,7 +62,7 @@ const OnGoingProcessModal: React.FC = () => {
       <OnGoingProcessContainer>
         <Row>
           <ActivityIndicatorContainer>
-            <ActivityIndicator />
+            <ActivityIndicator color={SlateDark} />
           </ActivityIndicatorContainer>
           <Message>{message}</Message>
         </Row>
