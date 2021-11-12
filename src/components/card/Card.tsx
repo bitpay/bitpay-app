@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {ReactNode} from 'react';
+import {ReactElement, ReactNode} from 'react';
 import styled from 'styled-components/native';
 import {Black, SlateDark, White} from '../../styles/colors';
 import Arrow from '../../../assets/img/forward-arrow.svg';
@@ -13,6 +13,7 @@ interface CardProps {
   price?: string;
   pillText?: string;
   onCTAPress: () => void;
+  backgroundImg?: () => ReactElement;
 }
 
 const CardHeader = styled.View`
@@ -40,7 +41,6 @@ const CardPrice = styled.Text`
   line-height: 46px;
   color: ${Black};
   font-weight: bold;
-  margin-top: ${CardGutter};
 `;
 
 const CardFooter = styled.View`
@@ -76,6 +76,18 @@ const FooterArrow = styled.TouchableHighlight`
   justify-content: center;
 `;
 
+const BackgroundImage = styled.View`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: auto;
+  width: auto;
+  border-radius: 27px;
+  overflow: hidden;
+`;
+
 const Card = ({
   children,
   bodyHeader,
@@ -83,6 +95,7 @@ const Card = ({
   pillText,
   bodyDesc,
   onCTAPress,
+  backgroundImg,
 }: CardProps) => {
   const _onPress = () => {
     Haptic('impactLight');
@@ -90,6 +103,8 @@ const Card = ({
   };
   return (
     <CardContainer>
+      {backgroundImg && <BackgroundImage>{backgroundImg()}</BackgroundImage>}
+
       <CardHeader>{children}</CardHeader>
 
       <CardBody>
