@@ -16,7 +16,7 @@ export const appReduxPersistBlackList: AppReduxPersistBlackList = [
 ];
 
 export interface AppState {
-  network: string;
+  network: 'mainnet' | 'testnet';
   baseBitPayURL: string;
   appIsLoading: boolean;
   onboardingCompleted: boolean;
