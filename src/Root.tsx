@@ -5,15 +5,17 @@ import {
 } from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import React, {useEffect, useState} from 'react';
-import {Appearance, AppState, AppStateStatus, StatusBar} from 'react-native';
+import {Appearance, AppState, AppStateStatus, Linking, StatusBar} from 'react-native';
 import 'react-native-gesture-handler';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {useDispatch, useSelector} from 'react-redux';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
 import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
+import { DEEPLINK_PREFIX } from './constants/config';
 import {baseScreenOptions} from './constants/NavigationOptions';
 import RNBootSplash from 'react-native-bootsplash';
 import BitpayIdStack, {
+  BitpayIdScreens,
   BitpayIdStackParamList,
 } from './navigation/bitpay-id/BitpayIdStack';
 import OnboardingStack, {
@@ -22,6 +24,7 @@ import OnboardingStack, {
 import TabsStack from './navigation/tabs/TabsStack';
 import {RootState} from './store';
 import {AppEffects} from './store/app';
+import { LogActions } from './store/log';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 
 export type RootStackParamList = {
@@ -84,17 +87,26 @@ export default () => {
 
   const Root = createStackNavigator<RootStackParamList>();
 
-  const config = {
-    // configuration for associating screens with paths
-    screens: {
-      // ScreenName: 'desired/uri/path/and/:param'
+  Linking.addEventListener('url', ({ url }) => {
+    if (url && url.startsWith(`${DEEPLINK_PREFIX}://`)) {
+      dispatch(LogActions.info(`Deep link received: ${url}`));
     }
-  };
+  });
+
   const linking: LinkingOptions<RootStackParamList> = {
     prefixes: [
-      'bitpay://'
+      `${DEEPLINK_PREFIX}://`
     ],
-    config
+    config: {
+      // configuration for associating screens with paths
+      screens: {
+        [RootStacks.BITPAY_ID]: {
+          screens: {
+            [BitpayIdScreens.PAIR]: 'wallet-card/pairing'
+          }
+        }
+      }
+    }
   };
 
   return (
