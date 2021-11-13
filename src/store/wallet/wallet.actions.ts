@@ -26,3 +26,8 @@ export const successOnboardingCreateWallet = (payload: {
 export const failedOnboardingCreateWallet = (): WalletActionType => ({
   type: WalletActionTypes.FAILED_ONBOARDING_CREATE_WALLET,
 });
+
+export const setBackupComplete = (keyId: string): WalletActionType => ({
+  type: WalletActionTypes.SET_BACKUP_COMPLETE,
+  payload: keyId,
+});

@@ -13,6 +13,7 @@ export interface KeyObj {
   mnemonicHasPassphrase: boolean;
   version: number;
   xPrivKey: string;
+  backupComplete: boolean;
 }
 
 export interface Key extends IKey {}

@@ -11,6 +11,8 @@ import {StackScreenProps} from '@react-navigation/stack';
 import {OnboardingStackParamList} from '../OnboardingStack';
 import {useNavigation} from '@react-navigation/native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
+import {useDispatch} from 'react-redux';
+import {AppActions} from '../../../store/app';
 
 type Props = StackScreenProps<OnboardingStackParamList, 'TermsOfUse'>;
 
@@ -56,6 +58,7 @@ const TermsOfUseContainer = styled.SafeAreaView`
 const TermsOfUse = ({navigation: _navigation, route}: Props) => {
   useAndroidBackHandler(() => true);
   const navigation = useNavigation();
+  const dispatch = useDispatch();
 
   const [termsList, setTermsList] = useState(Terms);
   _navigation.addListener('transitionStart', () => {
@@ -79,7 +82,10 @@ const TermsOfUse = ({navigation: _navigation, route}: Props) => {
       </HeaderTitleContainer>
       <CtaContainerAbsolute>
         <Button
-          onPress={() => navigation.navigate('Tabs')}
+          onPress={() => {
+            dispatch(AppActions.setOnboardingCompleted());
+            navigation.navigate('Tabs');
+          }}
           buttonStyle={'primary'}
           disabled={agreed.length !== termsList.length}>
           Agree and Continue

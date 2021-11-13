@@ -25,6 +25,7 @@ import {sleep} from '../../utils/helper-methods';
 import {AppActions} from '../../store/app';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../store';
+import {WalletActions} from '../../store/wallet';
 
 const VerifyPhraseContainer = styled.View`
   flex: 1;
@@ -113,7 +114,8 @@ const VerifyPhrase = () => {
       // filter out empty string and compare words against real order
       const compareWords = update.filter(w => w);
       if (_words.every((_word, index) => _word === compareWords[index])) {
-        await dispatch(
+        dispatch(WalletActions.setBackupComplete(key.id));
+        dispatch(
           AppActions.showBottomNotificationModal({
             type: 'success',
             title: 'Phrase verified',
@@ -135,7 +137,7 @@ const VerifyPhrase = () => {
 
         setProgress(1);
       } else {
-        await dispatch(
+        dispatch(
           AppActions.showBottomNotificationModal({
             type: 'warning',
             title: 'Incorrect Recovery Phrase',

@@ -38,6 +38,15 @@ export const walletReducer = (
         keys: [...state.keys, key],
       };
 
+    case WalletActionTypes.SET_BACKUP_COMPLETE:
+      const idToUpdate = action.payload;
+      return {
+        ...state,
+        keys: state.keys.map(_key =>
+          _key.id === idToUpdate ? {..._key, backupComplete: true} : _key,
+        ),
+      };
+
     default:
       return state;
   }

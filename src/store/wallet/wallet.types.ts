@@ -6,6 +6,7 @@ export enum WalletActionTypes {
   CREATE_KEY_PROFILE = 'WALLET/CREATE_KEY_PROFILE',
   SUCCESS_ONBOARDING_CREATE_WALLET = 'WALLET/SUCCESS_ONBOARDING_CREATE_WALLET',
   FAILED_ONBOARDING_CREATE_WALLET = 'WALLET/FAILED_ONBOARDING_CREATE_WALLET',
+  SET_BACKUP_COMPLETE = 'WALLET/SET_BACKUP_COMPLETE',
 }
 
 interface successWalletStoreInit {
@@ -34,9 +35,15 @@ interface failedOnboardingCreateWallet {
   type: typeof WalletActionTypes.FAILED_ONBOARDING_CREATE_WALLET;
 }
 
+interface setBackupComplete {
+  type: typeof WalletActionTypes.SET_BACKUP_COMPLETE;
+  payload: string;
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
   | createKeyProfile
   | successOnboardingCreateWallet
-  | failedOnboardingCreateWallet;
+  | failedOnboardingCreateWallet
+  | setBackupComplete;
