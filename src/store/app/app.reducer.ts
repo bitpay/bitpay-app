@@ -4,6 +4,7 @@ import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/Ong
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {BASE_BITPAY_URL, NETWORK} from '../../constants/config';
 import {ColorSchemeName} from 'react-native';
+import {NavScreenParams, RootStackParamList} from '../../Root';
 
 type AppReduxPersistBlackList = [
   'appIsLoading',
@@ -27,6 +28,7 @@ export interface AppState {
   showBottomNotificationModal: boolean;
   bottomNotificationModalConfig: BottomNotificationConfig | undefined;
   colorScheme: ColorSchemeName;
+  currentRoute: [keyof RootStackParamList, NavScreenParams] | undefined;
 }
 
 const initialState: AppState = {
@@ -39,7 +41,8 @@ const initialState: AppState = {
   onGoingProcessModalMessage: OnGoingProcessMessages.GENERAL_AWAITING,
   showBottomNotificationModal: false,
   bottomNotificationModalConfig: undefined,
-  colorScheme: null,
+  colorScheme: 'light',
+  currentRoute: undefined,
 };
 
 export const appReducer = (
@@ -95,6 +98,12 @@ export const appReducer = (
       return {
         ...state,
         colorScheme: action.payload,
+      };
+
+    case AppActionTypes.SET_CURRENT_ROUTE:
+      return {
+        ...state,
+        currentRoute: action.payload,
       };
 
     default:

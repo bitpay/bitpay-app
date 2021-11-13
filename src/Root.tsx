@@ -21,14 +21,20 @@ import OnboardingStack, {
 } from './navigation/onboarding/OnboardingStack';
 import TabsStack from './navigation/tabs/TabsStack';
 import {RootState} from './store';
-import {AppEffects} from './store/app';
+import {AppEffects, AppActions} from './store/app';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
+import debounce from 'lodash.debounce';
+import {LogActions} from './store/log';
 
 export type RootStackParamList = {
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
   Tabs: undefined;
   BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
 };
+
+export type NavScreenParams = NavigatorScreenParams<
+  OnboardingStackParamList & BitpayIdStackParamList
+>;
 
 export enum RootStacks {
   ONBOARDING = 'Onboarding',
@@ -46,14 +52,14 @@ declare global {
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 export const navigate = (
   name: keyof RootStackParamList,
-  params: NavigatorScreenParams<
-    OnboardingStackParamList & BitpayIdStackParamList
-  >,
+  params: NavScreenParams,
 ) => {
   if (navigationRef.isReady()) {
     navigationRef.navigate(name, params);
   }
 };
+
+const Root = createStackNavigator<RootStackParamList>();
 
 export default () => {
   const dispatch = useDispatch();
@@ -63,6 +69,7 @@ export default () => {
   );
   const appIsLoading = useSelector(({APP}: RootState) => APP.appIsLoading);
   const appColorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
+  const currentRoute = useSelector(({APP}: RootState) => APP.currentRoute);
 
   useEffect(() => {
     dispatch(AppEffects.startAppInit());
@@ -98,12 +105,37 @@ export default () => {
     ? RootStacks.TABS
     : RootStacks.ONBOARDING;
 
-  const Root = createStackNavigator<RootStackParamList>();
-
   return (
     <SafeAreaProvider>
       <StatusBar translucent backgroundColor="transparent" />
-      <NavigationContainer ref={navigationRef} theme={theme}>
+      <NavigationContainer
+        ref={navigationRef}
+        theme={theme}
+        onReady={() => {
+          if (currentRoute && !onboardingCompleted) {
+            const [currentStack, params] = currentRoute;
+            navigationRef.navigate(currentStack, params);
+            dispatch(
+              LogActions.info(
+                `Navigating to cached route... ${currentStack} ${JSON.stringify(
+                  params,
+                )}`,
+              ),
+            );
+          }
+        }}
+        onStateChange={debounce(navEvent => {
+          if (navEvent) {
+            const {routes} = navEvent;
+            const {name, params} = navEvent.routes[routes.length - 1];
+            dispatch(AppActions.setCurrentRoute([name, params]));
+            dispatch(
+              LogActions.info(
+                `Navigation event... ${name} ${JSON.stringify(params)}`,
+              ),
+            );
+          }
+        }, 0)}>
         <Root.Navigator
           screenOptions={{
             headerShown: false,
