@@ -85,6 +85,7 @@ export default () => {
   if (appIsLoading) {
     return (
       <SafeAreaProvider>
+        <StatusBar translucent backgroundColor="transparent" />
         <SplashScreen />
       </SafeAreaProvider>
     );
