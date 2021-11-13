@@ -204,6 +204,7 @@ const OnboardingStack = () => {
         options={{
           headerRightContainerStyle,
           gestureEnabled: false,
+          headerLeft: () => null,
           headerRight: () => (
             <Button
               buttonType={'pill'}

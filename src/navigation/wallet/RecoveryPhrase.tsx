@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import styled from 'styled-components/native';
 import {
   BaseText,
@@ -20,6 +20,7 @@ import haptic from '../../components/haptic-feedback/haptic';
 import Carousel from 'react-native-snap-carousel';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../store';
+import {sleep} from '../../utils/helper-methods';
 
 const RecoveryPhraseContainer = styled.View`
   flex: 1;
@@ -66,6 +67,15 @@ const RecoveryPhrase = () => {
   const words = key.mnemonic.trim().split(' ');
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
+  useEffect(() => {
+    return navigation.addListener('blur', async () => {
+      await sleep(400);
+      setActiveSlideIndex(0);
+      // @ts-ignore
+      ref.current.snapToItem(0);
+    });
+  }, [navigation]);
+
   return (
     <RecoveryPhraseContainer>
       <HeaderTitleContainer>
@@ -108,7 +118,6 @@ const RecoveryPhrase = () => {
           sliderWidth={WIDTH}
           itemWidth={Math.round(WIDTH)}
           onScrollIndexChanged={(index: number) => {
-            haptic('impactLight');
             setActiveSlideIndex(index);
           }}
           scrollEnabled={false}
@@ -121,10 +130,11 @@ const RecoveryPhrase = () => {
         <CtaContainer>
           <Button
             buttonStyle={'primary'}
-            onPress={() => {
+            onPress={async () => {
               if (activeSlideIndex === 11) {
                 navigation.navigate('Onboarding', {screen: 'VerifyPhrase'});
               } else {
+                haptic('impactLight');
                 // @ts-ignore
                 ref.current.snapToNext();
               }
