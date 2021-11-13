@@ -9524,6 +9524,11 @@ react-native@0.64.1:
     whatwg-fetch "^3.0.0"
     ws "^6.1.4"
 
+react-navigation-backhandler@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/react-navigation-backhandler/-/react-navigation-backhandler-2.0.1.tgz#5857703b69e0e74ef25d9c8915becebf154e8591"
+  integrity sha512-k4mhEaDfqVGR9P96MbSIAOXwLLiseYlRVZGMBcHInr97ondrebjiRdXOoA9rh87+g1epEPIvqtgFGJEUp4skPg==
+
 react-popper-tooltip@^2.8.3:
   version "2.11.1"
   resolved "https://registry.yarnpkg.com/react-popper-tooltip/-/react-popper-tooltip-2.11.1.tgz#3c4bdfd8bc10d1c2b9a162e859bab8958f5b2644"

@@ -21,6 +21,7 @@ import Carousel from 'react-native-snap-carousel';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../store';
 import {sleep} from '../../utils/helper-methods';
+import {useAndroidBackHandler} from 'react-navigation-backhandler';
 
 const RecoveryPhraseContainer = styled.View`
   flex: 1;
@@ -61,6 +62,7 @@ export const CountText = styled(BaseText)`
 `;
 
 const RecoveryPhrase = () => {
+  useAndroidBackHandler(() => true);
   const ref = useRef(null);
   const navigation = useNavigation();
   const key = useSelector(({WALLET}: RootState) => WALLET.keys[0]);

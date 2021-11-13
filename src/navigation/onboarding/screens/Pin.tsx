@@ -9,6 +9,7 @@ import {
   TitleContainer,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
+import {useAndroidBackHandler} from 'react-navigation-backhandler';
 
 const PinContainer = styled.SafeAreaView`
   flex: 1;
@@ -16,6 +17,8 @@ const PinContainer = styled.SafeAreaView`
 `;
 
 const PinScreen = () => {
+  useAndroidBackHandler(() => true);
+
   return (
     <PinContainer>
       <ImageContainer>

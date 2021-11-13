@@ -10,6 +10,7 @@ import styled from 'styled-components/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import {OnboardingStackParamList} from '../OnboardingStack';
 import {useNavigation} from '@react-navigation/native';
+import {useAndroidBackHandler} from 'react-navigation-backhandler';
 
 type Props = StackScreenProps<OnboardingStackParamList, 'TermsOfUse'>;
 
@@ -53,6 +54,7 @@ const TermsOfUseContainer = styled.SafeAreaView`
 `;
 
 const TermsOfUse = ({navigation: _navigation, route}: Props) => {
+  useAndroidBackHandler(() => true);
   const navigation = useNavigation();
 
   const [termsList, setTermsList] = useState(Terms);

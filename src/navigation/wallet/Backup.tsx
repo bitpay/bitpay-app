@@ -10,6 +10,7 @@ import {
 } from '../../components/styled/Containers';
 import Button from '../../components/button/Button';
 import {useNavigation} from '@react-navigation/native';
+import {useAndroidBackHandler} from 'react-navigation-backhandler';
 
 const BackupContainer = styled.SafeAreaView`
   flex: 1;
@@ -17,6 +18,7 @@ const BackupContainer = styled.SafeAreaView`
 `;
 
 const BackupScreen = () => {
+  useAndroidBackHandler(() => true);
   const navigation = useNavigation();
   const gotoBackup = () =>
     navigation.navigate('Onboarding', {screen: 'RecoveryPhrase'});

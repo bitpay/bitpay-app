@@ -10,6 +10,7 @@ import {
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {useNavigation} from '@react-navigation/native';
+import {useAndroidBackHandler} from 'react-navigation-backhandler';
 
 const CreateWalletContainer = styled.SafeAreaView`
   flex: 1;
@@ -17,6 +18,7 @@ const CreateWalletContainer = styled.SafeAreaView`
 `;
 
 const PinScreen = () => {
+  useAndroidBackHandler(() => true);
   const navigation = useNavigation();
   const gotoSelectAssets = () =>
     navigation.navigate('Onboarding', {screen: 'SelectAssets'});
