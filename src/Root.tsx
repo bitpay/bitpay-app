@@ -11,7 +11,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
 import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
 import {baseScreenOptions} from './constants/NavigationOptions';
-import SplashScreen from './navigation/app/screens/Splash';
+import RNBootSplash from 'react-native-bootsplash';
 import BitpayIdStack, {
   BitpayIdStackParamList,
 } from './navigation/bitpay-id/BitpayIdStack';
@@ -51,6 +51,12 @@ export default () => {
   const appColorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
 
   useEffect(() => {
+    if (!appIsLoading) {
+      RNBootSplash.hide({fade: true});
+    }
+  }, [appIsLoading]);
+
+  useEffect(() => {
     dispatch(AppEffects.startAppInit());
   }, [dispatch]);
 
@@ -67,14 +73,6 @@ export default () => {
 
     return () => AppState.removeEventListener('change', onAppStateChange);
   }, [rerender, appColorScheme]);
-
-  if (appIsLoading) {
-    return (
-      <SafeAreaProvider>
-        <SplashScreen />
-      </SafeAreaProvider>
-    );
-  }
 
   const scheme = appColorScheme || Appearance.getColorScheme();
   const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
