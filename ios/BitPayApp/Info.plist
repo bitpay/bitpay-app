@@ -36,9 +36,19 @@
 		</dict>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string/>
+	<string></string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Heebo-Black.ttf</string>
+		<string>Heebo-Bold.ttf</string>
+		<string>Heebo-ExtraBold.ttf</string>
+		<string>Heebo-Light.ttf</string>
+		<string>Heebo-Medium.ttf</string>
+		<string>Heebo-Regular.ttf</string>
+		<string>Heebo-Thin.ttf</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
+	<string>BootSplash</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>armv7</string>
@@ -51,15 +61,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>UIAppFonts</key>
-	<array>
-		<string>Heebo-Black.ttf</string>
-		<string>Heebo-Bold.ttf</string>
-		<string>Heebo-ExtraBold.ttf</string>
-		<string>Heebo-Light.ttf</string>
-		<string>Heebo-Medium.ttf</string>
-		<string>Heebo-Regular.ttf</string>
-		<string>Heebo-Thin.ttf</string>
-	</array>
 </dict>
 </plist>
