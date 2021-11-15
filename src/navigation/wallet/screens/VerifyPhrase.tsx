@@ -27,7 +27,6 @@ import {
 import {sleep} from '../../../utils/helper-methods';
 import {AppActions} from '../../../store/app';
 import {useDispatch} from 'react-redux';
-import {WalletActions} from '../../../store/wallet';
 import {startWalletBackupComplete} from '../../../store/wallet/wallet.effects';
 
 export interface VerifyPhraseProps {
@@ -123,7 +122,7 @@ const VerifyPhrase = () => {
     } else {
       // filter out empty string and compare words against real order
       const compareWords = update.filter(w => w);
-      if (true || words.every((_word, index) => _word === compareWords[index])) {
+      if (words.every((_word, index) => _word === compareWords[index])) {
         dispatch(startWalletBackupComplete({keyId}));
 
         setProgress(1);
