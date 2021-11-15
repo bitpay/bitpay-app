@@ -33,6 +33,7 @@
     "react": "17.0.1",
     "react-hook-form": "^7.10.1",
     "react-native": "0.64.1",
+    "react-native-bootsplash": "^3.2.6",
     "react-native-config": "^1.4.5",
     "react-native-crypto": "^2.1.0",
     "react-native-device-info": "^8.1.3",
