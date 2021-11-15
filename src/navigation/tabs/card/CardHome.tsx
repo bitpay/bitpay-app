@@ -1,10 +1,9 @@
 import {useTheme} from '@react-navigation/native';
 import React from 'react';
-import {Button, Linking, StyleProp, Text, TextStyle, View} from 'react-native';
-import InAppBrowser from 'react-native-inappbrowser-reborn';
+import {Button, StyleProp, Text, TextStyle, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../../store';
-import {LogActions} from '../../../store/log';
+import {AppEffects} from '../../../store/app';
 
 const CardHome: React.FC = () => {
   const dispatch = useDispatch();
@@ -24,32 +23,7 @@ const CardHome: React.FC = () => {
       url += `?context=${context}`;
     }
 
-    let isIabAvailable = false;
-
-    try {
-      isIabAvailable = await InAppBrowser.isAvailable();
-    } catch (err) {
-      console.log(err);
-    }
-
-    try {
-      if (isIabAvailable) {
-        await InAppBrowser.open(url, {
-          animated: true,
-          modalEnabled: true,
-          modalPresentationStyle: 'pageSheet',
-        });
-      } else {
-        Linking.openURL(url);
-      }
-    } catch (err) {
-      const logMsg = `Error opening URL ${url} with ${
-        isIabAvailable ? 'IAB' : 'Linking module'
-      }.\n${JSON.stringify(err)}`;
-      dispatch(LogActions.error(logMsg));
-      console.log(logMsg);
-      console.error(err);
-    }
+    dispatch(AppEffects.openUrlWithInAppBrowser(url));
   };
 
   return (

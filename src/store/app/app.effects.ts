@@ -1,10 +1,14 @@
-import {RootState, Effect} from '../index';
-import {AppActions} from './';
 import axios from 'axios';
-import {Session} from './app.models';
-import {sleep} from '../../utils/helper-methods';
+import {Linking} from 'react-native';
+import InAppBrowser, {
+  InAppBrowserOptions,
+} from 'react-native-inappbrowser-reborn';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {sleep} from '../../utils/helper-methods';
+import {RootState, Effect} from '../index';
 import {LogActions} from '../log';
+import {AppActions} from './';
+import {Session} from './app.models';
 
 export const startGetSession =
   (): Effect => async (dispatch, getState: () => RootState) => {
@@ -55,4 +59,58 @@ export const startOnGoingProcessModal =
     }
 
     dispatch(AppActions.showOnGoingProcessModal(message));
+  };
+
+/**
+ * Open a URL with the InAppBrowser if available, else lets the device handle the URL.
+ * @param url 
+ * @param options 
+ * @returns 
+ */
+export const openUrlWithInAppBrowser =
+  (url: string, options: InAppBrowserOptions = {}): Effect =>
+  async dispatch => {
+    let isIabAvailable = false;
+
+    try {
+      isIabAvailable = await InAppBrowser.isAvailable();
+    } catch (err) {
+      console.log(err);
+    }
+
+    const handler = isIabAvailable ? 'InAppBrowser' : 'external app';
+
+    try {
+      dispatch(LogActions.info(`Opening URL ${url} with ${handler}`));
+
+      if (isIabAvailable) {
+        // successfully resolves after IAB is cancelled or dismissed
+        const result = await InAppBrowser.open(url, {
+          // iOS options
+          animated: true,
+          modalEnabled: true,
+          modalPresentationStyle: 'pageSheet',
+
+          // android options
+          forceCloseOnRedirection: false,
+          showInRecents: false,
+
+          ...options,
+        });
+
+        dispatch(
+          LogActions.info(`InAppBrowser closed with type: ${result.type}`),
+        );
+      } else {
+        // successfully resolves if an installed app handles the URL,
+        // or the user confirms any presented 'open' dialog
+        await Linking.openURL(url);
+      }
+    } catch (err) {
+      const logMsg = `Error opening URL ${url} with ${handler}.\n${JSON.stringify(
+        err,
+      )}`;
+
+      dispatch(LogActions.error(logMsg));
+    }
   };
