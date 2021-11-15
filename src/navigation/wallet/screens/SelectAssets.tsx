@@ -1,20 +1,20 @@
 import React, {useState} from 'react';
 import styled from 'styled-components/native';
-import {BaseText, H3, TextAlign} from '../../components/styled/Text';
+import {BaseText, H3, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainerAbsolute,
   TextContainer,
   WIDTH,
-} from '../../components/styled/Containers';
-import {Action, NotificationPrimary} from '../../styles/colors';
-import CurrencySelectorList from '../../components/list/CurrencySelectorList';
+} from '../../../components/styled/Containers';
+import {Action, NotificationPrimary} from '../../../styles/colors';
+import CurrencySelectorList from '../../../components/list/CurrencySelectorList';
 import {TabBar, TabView} from 'react-native-tab-view';
-import {CurrencyList} from '../../constants/CurrencySelectionListOptions';
-import Button from '../../components/button/Button';
-import {SUPPORTED_TOKENS, SupportedAssets} from '../../constants/assets';
+import {CurrencyList} from '../../../constants/CurrencySelectionListOptions';
+import Button from '../../../components/button/Button';
+import {SUPPORTED_TOKENS, SupportedAssets} from '../../../constants/assets';
 import {useDispatch} from 'react-redux';
-import {startOnboardingCreateWallet} from '../../store/wallet/wallet.effects';
-import {showBottomNotificationModal} from '../../store/app/app.actions';
+import {startCreateWallet} from '../../../store/wallet/wallet.effects';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
 const AssetSelectionContainer = styled.SafeAreaView`
   flex: 1;
@@ -122,7 +122,7 @@ const SelectAssets = () => {
     const assets = selectedAssets.map(selected =>
       selected.toLowerCase(),
     ) as Array<SupportedAssets>;
-    dispatch(startOnboardingCreateWallet(assets));
+    dispatch(startCreateWallet(assets));
   };
 
   return (

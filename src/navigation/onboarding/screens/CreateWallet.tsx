@@ -22,7 +22,6 @@ const PinScreen = () => {
   const navigation = useNavigation();
   const gotoSelectAssets = () =>
     navigation.navigate('Onboarding', {screen: 'SelectAssets'});
-
   return (
     <CreateWalletContainer>
       <ImageContainer>
@@ -36,7 +35,7 @@ const PinScreen = () => {
       <TextContainer>
         <TextAlign align={'center'}>
           <Paragraph>
-            A wallet, formely known as a key, is a place where you store your
+            A wallet, formerly known as a key, is a place where you store your
             assets.
           </Paragraph>
         </TextAlign>

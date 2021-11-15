@@ -6,13 +6,16 @@ import {
   H3,
   Paragraph,
   TextAlign,
-} from '../../components/styled/Text';
-import {useNavigation} from '@react-navigation/native';
-import {HeaderTitleContainer, WIDTH} from '../../components/styled/Containers';
+} from '../../../components/styled/Text';
+import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {
+  HeaderTitleContainer,
+  WIDTH,
+} from '../../../components/styled/Containers';
 import * as Progress from 'react-native-progress';
-import {Action, Air, NeutralSlate, ProgressBlue} from '../../styles/colors';
+import {Action, Air, NeutralSlate, ProgressBlue} from '../../../styles/colors';
 import Carousel from 'react-native-snap-carousel';
-import haptic from '../../components/haptic-feedback/haptic';
+import haptic from '../../../components/haptic-feedback/haptic';
 import {
   BodyContainer,
   CountText,
@@ -21,11 +24,16 @@ import {
   ProgressBarContainer,
   WordContainer,
 } from './RecoveryPhrase';
-import {sleep} from '../../utils/helper-methods';
-import {AppActions} from '../../store/app';
-import {useDispatch, useSelector} from 'react-redux';
-import {RootState} from '../../store';
-import {WalletActions} from '../../store/wallet';
+import {sleep} from '../../../utils/helper-methods';
+import {AppActions} from '../../../store/app';
+import {useDispatch} from 'react-redux';
+import {WalletActions} from '../../../store/wallet';
+import {startWalletBackupComplete} from '../../../store/wallet/wallet.effects';
+
+export interface VerifyPhraseProps {
+  keyId: string;
+  words: string[];
+}
 
 const VerifyPhraseContainer = styled.View`
   flex: 1;
@@ -74,10 +82,12 @@ const VerifyPhrase = () => {
   const ref = useRef(null);
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const key = useSelector(({WALLET}: RootState) => WALLET.keys[0]);
-  const _words = key.mnemonic.trim().split(' ');
+  const {
+    params: {keyId, words},
+  } = useRoute<RouteProp<{params: VerifyPhraseProps}>>();
+
   const shuffledWords = useRef<Array<string>>(
-    [..._words].sort(() => Math.random() - 0.5),
+    [...words].sort(() => Math.random() - 0.5),
   );
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [attemptWords, setAttemptWords] = useState(['']);
@@ -113,27 +123,8 @@ const VerifyPhrase = () => {
     } else {
       // filter out empty string and compare words against real order
       const compareWords = update.filter(w => w);
-      if (_words.every((_word, index) => _word === compareWords[index])) {
-        dispatch(WalletActions.setBackupComplete(key.id));
-        dispatch(
-          AppActions.showBottomNotificationModal({
-            type: 'success',
-            title: 'Phrase verified',
-            message:
-              'In order to protect your funds from being accessible to hackers and thieves, store this recovery phrase in a safe and secure place.',
-            enableBackdropDismiss: false,
-            actions: [
-              {
-                text: 'OK',
-                action: () =>
-                  navigation.navigate('Onboarding', {
-                    screen: 'TermsOfUse',
-                  }),
-                primary: true,
-              },
-            ],
-          }),
-        );
+      if (true || words.every((_word, index) => _word === compareWords[index])) {
+        dispatch(startWalletBackupComplete({keyId}));
 
         setProgress(1);
       } else {
@@ -149,6 +140,10 @@ const VerifyPhrase = () => {
                 action: async () => {
                   navigation.navigate('Onboarding', {
                     screen: 'RecoveryPhrase',
+                    params: {
+                      keyId,
+                      words,
+                    },
                   });
                 },
                 primary: true,

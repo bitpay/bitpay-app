@@ -6,22 +6,25 @@ import {
   H3,
   Paragraph,
   TextAlign,
-} from '../../components/styled/Text';
-import Button from '../../components/button/Button';
-import {useNavigation} from '@react-navigation/native';
+} from '../../../components/styled/Text';
+import Button from '../../../components/button/Button';
+import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {
   CtaContainer,
   HeaderTitleContainer,
   WIDTH,
-} from '../../components/styled/Containers';
+} from '../../../components/styled/Containers';
 import * as Progress from 'react-native-progress';
-import {Air, ProgressBlue} from '../../styles/colors';
-import haptic from '../../components/haptic-feedback/haptic';
+import {Air, ProgressBlue} from '../../../styles/colors';
+import haptic from '../../../components/haptic-feedback/haptic';
 import Carousel from 'react-native-snap-carousel';
-import {useSelector} from 'react-redux';
-import {RootState} from '../../store';
-import {sleep} from '../../utils/helper-methods';
+import {sleep} from '../../../utils/helper-methods';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
+
+export interface RecoveryPhraseProps {
+  keyId: string;
+  words: string[];
+}
 
 const RecoveryPhraseContainer = styled.View`
   flex: 1;
@@ -65,8 +68,10 @@ const RecoveryPhrase = () => {
   useAndroidBackHandler(() => true);
   const ref = useRef(null);
   const navigation = useNavigation();
-  const key = useSelector(({WALLET}: RootState) => WALLET.keys[0]);
-  const words = key.mnemonic.trim().split(' ');
+  const {
+    params: {keyId, words},
+  } = useRoute<RouteProp<{params: RecoveryPhraseProps}>>();
+
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
   useEffect(() => {
@@ -134,7 +139,10 @@ const RecoveryPhrase = () => {
             buttonStyle={'primary'}
             onPress={async () => {
               if (activeSlideIndex === 11) {
-                navigation.navigate('Onboarding', {screen: 'VerifyPhrase'});
+                navigation.navigate('Onboarding', {
+                  screen: 'VerifyPhrase',
+                  params: {keyId, words},
+                });
               } else {
                 haptic('impactLight');
                 // @ts-ignore

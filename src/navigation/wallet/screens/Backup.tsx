@@ -1,16 +1,17 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import Backup from '../../../assets/img/onboarding/backup.svg';
-import {H3, Paragraph, TextAlign} from '../../components/styled/Text';
+import Backup from '../../../../assets/img/onboarding/backup.svg';
+import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainer,
   ImageContainer,
   TextContainer,
   TitleContainer,
-} from '../../components/styled/Containers';
-import Button from '../../components/button/Button';
-import {useNavigation} from '@react-navigation/native';
+} from '../../../components/styled/Containers';
+import Button from '../../../components/button/Button';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
+import {useDispatch} from 'react-redux';
+import {startWalletBackup} from '../../../store/wallet/wallet.effects';
 
 const BackupContainer = styled.SafeAreaView`
   flex: 1;
@@ -19,9 +20,8 @@ const BackupContainer = styled.SafeAreaView`
 
 const BackupScreen = () => {
   useAndroidBackHandler(() => true);
-  const navigation = useNavigation();
-  const gotoBackup = () =>
-    navigation.navigate('Onboarding', {screen: 'RecoveryPhrase'});
+  const dispatch = useDispatch();
+  const gotoBackup = () => dispatch(startWalletBackup({keyId: 'onboarding'}));
 
   return (
     <BackupContainer>

@@ -13,7 +13,7 @@ import {
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {AppActions} from '../app';
 import {startOnGoingProcessModal} from '../app/app.effects';
-import {navigate} from '../../Root';
+import {navigationRef} from '../../Root';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 
 const BWC = BwcProvider.getInstance();
@@ -22,19 +22,6 @@ const bwcClient = BWC.getClient();
 export const startWalletStoreInit =
   (): Effect => async (dispatch, getState: () => RootState) => {
     try {
-      // creating keyProfile
-      const {
-        WALLET: {keyProfile},
-      } = getState();
-
-      if (!keyProfile) {
-        dispatch(
-          WalletActions.createKeyProfile({
-            createdOn: Date.now(),
-            credentials: [],
-          }),
-        );
-      }
       // added success/failed for logging
       dispatch(WalletActions.successWalletStoreInit());
     } catch (e) {
@@ -43,7 +30,7 @@ export const startWalletStoreInit =
     }
   };
 
-export const startOnboardingCreateWallet =
+export const startCreateWallet =
   (assets: Array<SupportedAssets>): Effect =>
   async dispatch => {
     try {
@@ -55,19 +42,24 @@ export const startOnboardingCreateWallet =
         seedType: 'new',
       });
 
-      const credentials = await dispatch(startCreateWallet(key, assets));
+      const credentials = await dispatch(
+        startCreateWalletCredentials(key, assets),
+      );
       dispatch(AppActions.dismissOnGoingProcessModal());
       dispatch(
-        WalletActions.successOnboardingCreateWallet({
+        WalletActions.successCreateWallet({
           key: key.toObj(),
-          credentials,
+          wallet: {
+            id: key.id,
+            assets: credentials,
+          },
         }),
       );
-      navigate('Onboarding', {screen: 'BackupWallet'});
+      navigationRef.navigate('Onboarding', {screen: 'BackupWallet'});
     } catch (err) {}
   };
 
-export const startCreateWallet =
+export const startCreateWalletCredentials =
   (
     key: {
       createCredentials: (
@@ -88,7 +80,7 @@ export const startCreateWallet =
       APP: {network},
     } = getState();
 
-    const credentials: Array<Credentials & {preferences?: any}> = [];
+    const credentials: Array<Credentials & {tokens?: any}> = [];
 
     const coins: Array<SupportedCoins> = assets.filter(
       asset => !SUPPORTED_TOKENS.includes(asset),
@@ -144,10 +136,8 @@ export const startCreateWallet =
           );
           bwcClient.fromObj(tokenCredentials);
           // Add the token info to the ethWallet.
-          ethCredentials.preferences = ethCredentials.preferences || {};
-          ethCredentials.preferences.tokens =
-            ethCredentials.preferences.tokens || [];
-          ethCredentials.preferences.tokens.push(TokenOpts[token]);
+          ethCredentials.tokens = ethCredentials.tokens || [];
+          ethCredentials.tokens.push(TokenOpts[token]);
           console.log('added token', token);
           credentials.push(bwcClient.credentials);
           resolve();
@@ -156,4 +146,59 @@ export const startCreateWallet =
     }
 
     return credentials;
+  };
+
+export const startWalletBackup =
+  ({keyId}: {keyId: string}): Effect =>
+  async (dispatch, getState: () => RootState) => {
+    const {WALLET}: RootState = getState();
+    const {keys} = WALLET.keyProfile;
+
+    const key =
+      keyId === 'onboarding' ? keys[0] : keys.find(_key => _key.id === keyId);
+
+    if (key) {
+      const {id, mnemonic} = key;
+
+      navigationRef.navigate('Onboarding', {
+        screen: 'RecoveryPhrase',
+        params: {
+          keyId: id,
+          words: mnemonic.trim().split(' '),
+        },
+      });
+    } else {
+      // TODO handle if key not found
+    }
+  };
+
+export const startWalletBackupComplete =
+  ({keyId}: {keyId: string}): Effect =>
+  async (dispatch, getState: () => RootState) => {
+    const {APP}: RootState = getState();
+    dispatch(WalletActions.setBackupComplete(keyId));
+
+    if (!APP.onboardingCompleted) {
+      dispatch(
+        AppActions.showBottomNotificationModal({
+          type: 'success',
+          title: 'Phrase verified',
+          message:
+            'In order to protect your funds from being accessible to hackers and thieves, store this recovery phrase in a safe and secure place.',
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: 'OK',
+              action: () =>
+                navigationRef.navigate('Onboarding', {
+                  screen: 'TermsOfUse',
+                }),
+              primary: true,
+            },
+          ],
+        }),
+      );
+    } else {
+      // TODO
+    }
   };

@@ -1,19 +1,20 @@
-import {KeyObj, KeyProfile} from './wallet.models';
+import {WalletObj, KeyProfile} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 
 type WalletReduxPersistBlackList = [];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
 
 export interface WalletState {
-  keyProfile: KeyProfile | undefined;
-  keys: Array<KeyObj>;
-  assets: Array<object> | undefined;
+  keyProfile: KeyProfile;
+  wallets: Array<WalletObj>;
 }
 
 const initialState: WalletState = {
-  keyProfile: undefined,
-  keys: [],
-  assets: [],
+  keyProfile: {
+    createdOn: Date.now(),
+    keys: [],
+  },
+  wallets: [],
 };
 
 export const walletReducer = (
@@ -21,29 +22,25 @@ export const walletReducer = (
   action: WalletActionType,
 ): WalletState => {
   switch (action.type) {
-    case WalletActionTypes.CREATE_KEY_PROFILE:
-      return {
-        ...state,
-        keyProfile: action.payload,
-      };
-
-    case WalletActionTypes.SUCCESS_ONBOARDING_CREATE_WALLET:
-      const {key, credentials} = action.payload;
+    case WalletActionTypes.SUCCESS_CREATE_WALLET:
+      const {key, wallet} = action.payload;
       return {
         ...state,
         keyProfile: {
           ...state.keyProfile,
-          credentials,
+          keys: [...state.keyProfile.keys, key],
         },
-        keys: [...state.keys, key],
+        wallets: [...state.wallets, wallet],
       };
 
     case WalletActionTypes.SET_BACKUP_COMPLETE:
       const idToUpdate = action.payload;
       return {
         ...state,
-        keys: state.keys.map(_key =>
-          _key.id === idToUpdate ? {..._key, backupComplete: true} : _key,
+        wallets: state.wallets.map(_wallet =>
+          _wallet.id === idToUpdate
+            ? {..._wallet, backupComplete: true}
+            : _wallet,
         ),
       };
 

@@ -19,6 +19,9 @@ import BitpayIdStack, {
 import OnboardingStack, {
   OnboardingStackParamList,
 } from './navigation/onboarding/OnboardingStack';
+import WalletStack, {
+  WalletStackParamList,
+} from './navigation/wallet/WalletStack';
 import TabsStack from './navigation/tabs/TabsStack';
 import {RootState} from './store';
 import {AppEffects, AppActions} from './store/app';
@@ -30,16 +33,18 @@ export type RootStackParamList = {
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
   Tabs: undefined;
   BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
+  Wallet: NavigatorScreenParams<WalletStackParamList>;
 };
 
 export type NavScreenParams = NavigatorScreenParams<
-  OnboardingStackParamList & BitpayIdStackParamList
+  OnboardingStackParamList & BitpayIdStackParamList & WalletStackParamList
 >;
 
 export enum RootStacks {
   ONBOARDING = 'Onboarding',
   TABS = 'Tabs',
   BITPAY_ID = 'BitpayId',
+  WALLET = 'Wallet'
 }
 
 declare global {
@@ -132,7 +137,7 @@ export default () => {
               ),
             );
           }
-        }, 0)}>
+        }, 300)}>
         <Root.Navigator
           screenOptions={{
             headerShown: false,
@@ -154,6 +159,11 @@ export default () => {
           <Root.Screen
             name={RootStacks.BITPAY_ID}
             component={BitpayIdStack}
+            options={{...baseScreenOptions}}
+          />
+          <Root.Screen
+            name={RootStacks.WALLET}
+            component={WalletStack}
             options={{...baseScreenOptions}}
           />
         </Root.Navigator>

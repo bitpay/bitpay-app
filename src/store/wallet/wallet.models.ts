@@ -1,8 +1,8 @@
 import {Key as IKey} from 'bitcore-wallet-client/src/lib/key';
 
 export interface KeyProfile {
-  createdOn?: number;
-  credentials?: any;
+  createdOn: number;
+  keys: Array<KeyObj>;
 }
 
 export interface KeyObj {
@@ -13,7 +13,12 @@ export interface KeyObj {
   mnemonicHasPassphrase: boolean;
   version: number;
   xPrivKey: string;
-  backupComplete: boolean;
+}
+
+export interface WalletObj {
+  id: string;
+  assets: [object];
+  backupComplete?: boolean;
 }
 
 export interface Key extends IKey {}

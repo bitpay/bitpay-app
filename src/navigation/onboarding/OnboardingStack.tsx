@@ -12,12 +12,15 @@ import OnboardingStartScreen from './screens/OnboardingStart';
 import PinScreen from './screens/Pin';
 import CreateWallet from './screens/CreateWallet';
 import TermsOfUse from './screens/TermsOfUse';
-import SelectAssets from '../wallet/SelectAssets';
+import SelectAssets from '../wallet/screens/SelectAssets';
 import {useDispatch} from 'react-redux';
 import {AppActions} from '../../store/app';
-import Backup from '../wallet/Backup';
-import RecoveryPhrase from '../wallet/RecoveryPhrase';
-import VerifyPhrase from '../wallet/VerifyPhrase';
+import Backup from '../wallet/screens/Backup';
+import RecoveryPhrase, {
+  RecoveryPhraseProps,
+} from '../wallet/screens/RecoveryPhrase';
+import VerifyPhrase, {VerifyPhraseProps} from '../wallet/screens/VerifyPhrase';
+import {startWalletBackup} from '../../store/wallet/wallet.effects';
 
 export type OnboardingStackParamList = {
   OnboardingStart: undefined;
@@ -30,8 +33,8 @@ export type OnboardingStackParamList = {
     | undefined;
   SelectAssets: undefined;
   BackupWallet: undefined;
-  RecoveryPhrase: undefined;
-  VerifyPhrase: undefined;
+  RecoveryPhrase: RecoveryPhraseProps;
+  VerifyPhrase: VerifyPhraseProps;
 };
 
 export enum OnboardingScreens {
@@ -177,9 +180,7 @@ const OnboardingStack = () => {
                       {
                         text: 'BACKUP YOUR KEY',
                         action: () =>
-                          navigation.navigate('Onboarding', {
-                            screen: 'RecoveryPhrase',
-                          }),
+                          dispatch(startWalletBackup({keyId: 'onboarding'})),
                         primary: true,
                       },
                       {
@@ -208,9 +209,9 @@ const OnboardingStack = () => {
           headerRight: () => (
             <Button
               buttonType={'pill'}
-              onPress={async () => {
+              onPress={() => {
                 haptic('impactLight');
-                await dispatch(
+                dispatch(
                   AppActions.showBottomNotificationModal({
                     type: 'warning',
                     title: 'Don’t risk losing your money',
@@ -241,12 +242,13 @@ const OnboardingStack = () => {
         options={{
           headerRightContainerStyle,
           gestureEnabled: false,
+          headerLeft: () => null,
           headerRight: () => (
             <Button
               buttonType={'pill'}
-              onPress={async () => {
+              onPress={() => {
                 haptic('impactLight');
-                await dispatch(
+                dispatch(
                   AppActions.showBottomNotificationModal({
                     type: 'warning',
                     title: 'Don’t risk losing your money',
