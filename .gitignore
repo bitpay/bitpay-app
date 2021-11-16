@@ -60,3 +60,7 @@ buck-out/
 
 .env
 .env.production
+
+# Jest
+#
+.jest/
