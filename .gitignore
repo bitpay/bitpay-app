@@ -64,3 +64,4 @@ buck-out/
 # Jest
 #
 .jest/
+coverage/
