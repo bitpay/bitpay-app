@@ -18,7 +18,7 @@ import BitpayIdStack, {
 import OnboardingStack, {
   OnboardingStackParamList,
 } from './navigation/onboarding/OnboardingStack';
-import TabsStack from './navigation/tabs/TabsStack';
+import TabsStack, {TabsStackParamList} from './navigation/tabs/TabsStack';
 import {RootState} from './store';
 import {AppEffects} from './store/app';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
@@ -26,7 +26,7 @@ import {useDeeplinks} from './utils/hooks';
 
 export type RootStackParamList = {
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
-  Tabs: undefined;
+  Tabs: NavigatorScreenParams<TabsStackParamList>;
   BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
 };
 
@@ -79,7 +79,9 @@ export default () => {
   const scheme = appColorScheme || Appearance.getColorScheme();
   const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
 
-  const initialRoute = onboardingCompleted ? RootStacks.TABS : RootStacks.ONBOARDING;
+  const initialRoute = onboardingCompleted
+    ? RootStacks.TABS
+    : RootStacks.ONBOARDING;
 
   const Root = createStackNavigator<RootStackParamList>();
 

@@ -4,12 +4,12 @@ import {
   createBottomTabNavigator,
 } from '@react-navigation/bottom-tabs';
 import {TouchableOpacity, Button} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, NavigatorScreenParams} from '@react-navigation/native';
 
 import HomeRoot from './home/HomeStack';
 import WalletRoot from './wallet/WalletStack';
 import CardRoot from './card/CardStack';
-import SettingsRoot from './settings/SettingsStack';
+import SettingsRoot, {SettingsStackParamList} from './settings/SettingsStack';
 
 import {SvgProps} from 'react-native-svg';
 import HomeIcon from '../../../assets/img/tab-icons/home.svg';
@@ -54,21 +54,29 @@ const Icons: {[key: string]: React.FC<SvgProps>} = {
   TransactButton: TransactButtonIcon,
 };
 
-type TabParamList = {
+export enum TabsScreens {
+  HOME = 'Home',
+  WALLET = 'Wallet',
+  TRANSACT_BUTTON = 'TransactButton',
+  CARD = 'Card',
+  SETTINGS = 'Settings',
+}
+
+export type TabsStackParamList = {
   Home: undefined;
   Wallet: undefined;
   TransactButton: undefined;
   Card: undefined;
-  Settings: undefined;
+  Settings: NavigatorScreenParams<SettingsStackParamList> | undefined;
 };
 
-const Tab = createBottomTabNavigator<TabParamList>();
+const Tab = createBottomTabNavigator<TabsStackParamList>();
 
 const TabsStack = () => {
   const TransactionButton = () => null;
   return (
     <Tab.Navigator
-      initialRouteName="Home"
+      initialRouteName={TabsScreens.HOME}
       screenOptions={({route}) => ({
         headerShown: false,
         tabBarShowLabel: false,
@@ -84,21 +92,22 @@ const TabsStack = () => {
           return <Icon />;
         },
       })}>
-      <Tab.Screen name="Home" component={HomeRoot} />
-      <Tab.Screen name="Wallet" component={WalletRoot} />
+      <Tab.Screen name={TabsScreens.HOME} component={HomeRoot} />
+      <Tab.Screen name={TabsScreens.WALLET} component={WalletRoot} />
       <Tab.Screen
-        name="TransactButton"
+        name={TabsScreens.TRANSACT_BUTTON}
         component={TransactionButton}
         options={{tabBarButton: () => <TransactModal />}}
       />
-      <Tab.Screen name="Card" component={CardRoot} />
-      <Tab.Screen name="Settings" component={SettingsRoot} />
+      <Tab.Screen name={TabsScreens.CARD} component={CardRoot} />
+      <Tab.Screen name={TabsScreens.SETTINGS} component={SettingsRoot} />
     </Tab.Navigator>
   );
 };
 
 const TransactModal = () => {
-  const navigation = useNavigation<BottomTabNavigationProp<TabParamList>>();
+  const navigation =
+    useNavigation<BottomTabNavigationProp<TabsStackParamList>>();
   const [modalVisible, setModalVisible] = useState(false);
   const hideModal = () => setModalVisible(false);
   const showModal = () => setModalVisible(true);
@@ -117,14 +126,14 @@ const TransactModal = () => {
             <Button
               title="Go to Settings"
               onPress={() => {
-                navigation.navigate('Settings');
+                navigation.navigate(TabsScreens.SETTINGS);
                 hideModal();
               }}
             />
             <Button
               title="Go to Card"
               onPress={() => {
-                navigation.navigate('Card');
+                navigation.navigate(TabsScreens.CARD);
                 hideModal();
               }}
             />

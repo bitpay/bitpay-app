@@ -63,9 +63,9 @@ export const startOnGoingProcessModal =
 
 /**
  * Open a URL with the InAppBrowser if available, else lets the device handle the URL.
- * @param url 
- * @param options 
- * @returns 
+ * @param url
+ * @param options
+ * @returns
  */
 export const openUrlWithInAppBrowser =
   (url: string, options: InAppBrowserOptions = {}): Effect =>
