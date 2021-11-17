@@ -18,7 +18,7 @@ interface CardProps {
 
 const CardHeader = styled.View`
   min-height: 30px;
-  margin-bottom: ${CardGutter};
+  padding: ${CardGutter};
 `;
 
 const CardBodyHeader = styled.Text`
@@ -45,11 +45,12 @@ const CardPrice = styled.Text`
 
 const CardFooter = styled.View`
   min-height: 30px;
-  padding-top: ${CardGutter};
+  padding: ${CardGutter};
 `;
 
 const CardBody = styled.View`
   flex-grow: 1;
+  padding: ${CardGutter};
 `;
 
 const CardPill = styled.View`

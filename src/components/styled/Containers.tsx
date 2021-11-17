@@ -88,5 +88,4 @@ export const CardContainer = styled.View<{}>`
   width: 215px;
   background: #f5f7f8;
   border-radius: 21px;
-  padding: 15px;
 `;
