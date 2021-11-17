@@ -1,11 +1,14 @@
-import {RouteProp, useRoute} from '@react-navigation/core';
+import {RouteProp, useNavigation, useRoute} from '@react-navigation/core';
 import {useTheme} from '@react-navigation/native';
 import React from 'react';
-import {StyleProp, Text, TextStyle, View} from 'react-native';
+import {Button, StyleProp, Text, TextStyle, View} from 'react-native';
+import {RootStacks} from '../../../Root';
+import {TabsScreens} from '../../tabs/TabsStack';
 import {BitpayIdStackParamList} from '../BitpayIdStack';
 
 const Pair: React.FC = () => {
   const theme = useTheme();
+  const navigator = useNavigation();
   const route = useRoute<RouteProp<BitpayIdStackParamList, 'Pair'>>();
 
   const baseTextStyle: StyleProp<TextStyle> = {color: theme.colors.text};
@@ -26,6 +29,14 @@ const Pair: React.FC = () => {
           <Text style={baseTextStyle}>
             Virtual Card Design: {vcd || 'not sent'}
           </Text>
+          <Button
+            title="Home"
+            onPress={() =>
+              navigator.navigate(RootStacks.TABS, {
+                screen: TabsScreens.HOME,
+              })
+            }
+          />
         </>
       )}
     </View>
