@@ -1,10 +1,5 @@
 import {Key as IKey} from 'bitcore-wallet-client/src/lib/key';
 
-export interface KeyProfile {
-  createdOn: number;
-  keys: Array<KeyObj>;
-}
-
 export interface KeyObj {
   compliantDerivation: boolean;
   fingerPrint: string;

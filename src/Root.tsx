@@ -44,7 +44,7 @@ export enum RootStacks {
   ONBOARDING = 'Onboarding',
   TABS = 'Tabs',
   BITPAY_ID = 'BitpayId',
-  WALLET = 'Wallet'
+  WALLET = 'Wallet',
 }
 
 declare global {

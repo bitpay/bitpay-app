@@ -151,8 +151,9 @@ export const startCreateWalletCredentials =
 export const startWalletBackup =
   ({keyId}: {keyId: string}): Effect =>
   async (dispatch, getState: () => RootState) => {
-    const {WALLET}: RootState = getState();
-    const {keys} = WALLET.keyProfile;
+    const {
+      WALLET: {keys},
+    }: RootState = getState();
 
     const key =
       keyId === 'onboarding' ? keys[0] : keys.find(_key => _key.id === keyId);

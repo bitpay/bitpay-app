@@ -1,20 +1,43 @@
-import {WalletObj, KeyProfile} from './wallet.models';
+import {KeyObj, WalletObj} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 
 type WalletReduxPersistBlackList = [];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
 
+/*
+ * NOTE - Structure change
+
+ wallet: {
+      id: key.id,
+      assets: credentials,
+    }
+
+ example -
+ wallets: [key.id]: {
+      id: key.id,
+      assets: [
+       {
+        coin: 'btc'
+       },
+       {
+        coin: 'eth',
+        tokens: ...tokens
+        ....
+       }
+      ],
+    }
+ * */
+
 export interface WalletState {
-  keyProfile: KeyProfile;
-  wallets: Array<WalletObj>;
+  createdOn: number;
+  keys: KeyObj[];
+  wallets: {[key in string]: WalletObj};
 }
 
 const initialState: WalletState = {
-  keyProfile: {
-    createdOn: Date.now(),
-    keys: [],
-  },
-  wallets: [],
+  createdOn: Date.now(),
+  keys: [],
+  wallets: {},
 };
 
 export const walletReducer = (
@@ -26,22 +49,17 @@ export const walletReducer = (
       const {key, wallet} = action.payload;
       return {
         ...state,
-        keyProfile: {
-          ...state.keyProfile,
-          keys: [...state.keyProfile.keys, key],
-        },
-        wallets: [...state.wallets, wallet],
+        keys: [...state.keys, key],
+        wallets: {...state.wallets, [key.id]: wallet},
       };
 
     case WalletActionTypes.SET_BACKUP_COMPLETE:
-      const idToUpdate = action.payload;
+      const id = action.payload;
+      const updatedWallet = {...state.wallets[id], backupComplete: true};
+
       return {
         ...state,
-        wallets: state.wallets.map(_wallet =>
-          _wallet.id === idToUpdate
-            ? {..._wallet, backupComplete: true}
-            : _wallet,
-        ),
+        wallets: {...state.wallets, [id]: updatedWallet},
       };
 
     default:
