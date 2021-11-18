@@ -155,11 +155,6 @@ const VerifyPhrase = () => {
 
   return (
     <VerifyPhraseContainer>
-      <HeaderTitleContainer>
-        <TextAlign align={'left'}>
-          <H3>Verify your Phrase</H3>
-        </TextAlign>
-      </HeaderTitleContainer>
       <ProgressBarContainer>
         <Progress.Bar
           progress={progress}

@@ -9,6 +9,7 @@ export const baseNavigatorOptions: StackNavigationOptions = {
   headerBackImage: () => <Back />,
   headerTitle: '',
   headerBackTitleVisible: false,
+  headerTitleAlign: 'center',
   headerStyle: {
     backgroundColor: 'transparent',
   },
@@ -17,9 +18,4 @@ export const baseNavigatorOptions: StackNavigationOptions = {
 
 export const baseScreenOptions: StackNavigationOptions = {
   ...TransitionPresets.SlideFromRightIOS,
-};
-
-export const headerRightContainerStyle = {
-  paddingHorizontal: 10,
-  height: 50,
 };

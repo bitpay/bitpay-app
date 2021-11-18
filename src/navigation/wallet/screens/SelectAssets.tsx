@@ -1,14 +1,11 @@
 import React, {useState} from 'react';
 import styled from 'styled-components/native';
-import {BaseText, H3, TextAlign} from '../../../components/styled/Text';
+import {H3, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainerAbsolute,
   TextContainer,
-  WIDTH,
 } from '../../../components/styled/Containers';
-import {Action, NotificationPrimary} from '../../../styles/colors';
 import CurrencySelectorList from '../../../components/list/CurrencySelectorList';
-import {TabBar, TabView} from 'react-native-tab-view';
 import {CurrencyList} from '../../../constants/CurrencySelectionListOptions';
 import Button from '../../../components/button/Button';
 import {SUPPORTED_TOKENS, SupportedAssets} from '../../../constants/assets';
@@ -20,25 +17,16 @@ const AssetSelectionContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const Choice = styled(BaseText)`
-  font-size: 15px;
-  font-style: normal;
-  font-weight: 400;
-  position: relative;
-  color: ${NotificationPrimary};
+const CurrencySelectorListContainer = styled.View`
+  margin-top: 20px;
+  flex: 1;
 `;
 
 const SelectAssets = () => {
   const dispatch = useDispatch();
 
-  const [routes] = useState([
-    // {key: 'popular', name: 'All'},
-    {key: 'coins', name: 'Coins'},
-    {key: 'tokens', name: 'Tokens'},
-  ]);
   const [currencyList, setCurrencyList] = useState(CurrencyList);
   const [selectedAssets, setSelectedAssets] = useState<Array<string>>([]);
-  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
   const checkAndNotifyEthRequired = (asset: string) => {
     if (
@@ -57,9 +45,7 @@ const SelectAssets = () => {
           actions: [
             {
               text: 'OK',
-              action: () => {
-                setActiveSlideIndex(1);
-              },
+              action: () => {},
               primary: true,
             },
           ],
@@ -75,22 +61,19 @@ const SelectAssets = () => {
     for (const selected of assets) {
       if (SUPPORTED_TOKENS.includes(selected.toLowerCase())) {
         if (!assets.includes('ETH')) {
-          setCurrencyList({
-            ...CurrencyList,
-            coins: [
-              ...CurrencyList.coins.map(coin => {
-                if (coin.id === 'c/eth') {
-                  return {
-                    ...coin,
-                    // to force rerender
-                    id: Math.random(),
-                    checked: true,
-                  };
-                }
-                return coin;
-              }),
-            ],
-          });
+          setCurrencyList(
+            CurrencyList.map(coin => {
+              if (coin.id === 'eth') {
+                return {
+                  ...coin,
+                  // to force rerender
+                  id: Math.random(),
+                  checked: true,
+                };
+              }
+              return coin;
+            }),
+          );
           assets = [...assets, 'ETH'];
         }
         break;
@@ -127,46 +110,19 @@ const SelectAssets = () => {
 
   return (
     <AssetSelectionContainer>
-      <TextContainer>
-        <TextAlign align={'left'}>
-          <H3>Select Assets</H3>
-        </TextAlign>
-      </TextContainer>
-      <TabView
-        navigationState={{index: activeSlideIndex, routes}}
-        renderScene={({route}) => {
-          return (
-            <CurrencySelectorList
-              emit={assetToggled}
-              itemList={currencyList[route.key]}
-            />
-          );
-        }}
-        renderTabBar={props => {
-          return (
-            <TabBar
-              {...props}
-              style={{
-                width: '60%',
-                backgroundColor: 'white',
-                justifyContent: 'center',
-                shadowColor: 'transparent',
-                marginBottom: 15,
-                marginLeft: 10,
-              }}
-              indicatorStyle={{
-                backgroundColor: Action,
-                height: 2,
-                borderRadius: 20,
-              }}
-              renderLabel={({route}) => <Choice>{route.name}</Choice>}
-            />
-          );
-        }}
-        onIndexChange={setActiveSlideIndex}
-        initialLayout={{width: WIDTH}}
-      />
-      <CtaContainerAbsolute>
+      <CurrencySelectorListContainer>
+        <CurrencySelectorList emit={assetToggled} itemList={currencyList}/>
+      </CurrencySelectorListContainer>
+
+      <CtaContainerAbsolute
+        background={true}
+        style={{
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 4},
+          shadowOpacity: 0.1,
+          shadowRadius: 12,
+          elevation: 5,
+        }}>
         <Button
           onPress={createWallet}
           buttonStyle={'primary'}

@@ -26,7 +26,6 @@ export interface ItemProps {
 }
 
 interface Props {
-  id: string | number;
   item: ItemProps;
   emit: (value: {checked: boolean; asset: string}) => void;
 }
@@ -73,9 +72,10 @@ const CurrencySelectorList = ({itemList, emit}: ListProps) => {
   return (
     <ListContainer>
       <FlatList
+        contentContainerStyle={{paddingBottom: 100}}
         data={itemList}
         renderItem={({item}) => (
-          <CurrencySelectorRow item={item} id={item.id} emit={emit} />
+          <CurrencySelectorRow item={item} emit={emit} key={item.id} />
         )}
       />
     </ListContainer>

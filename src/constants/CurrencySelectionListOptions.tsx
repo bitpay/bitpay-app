@@ -15,117 +15,77 @@ import WbtcIcon from '../../assets/img/currencies/wbtc.svg';
 
 import {ItemProps} from '../components/list/CurrencySelectorList';
 
-interface CurrencyList {
-  [key: string]: Array<ItemProps>;
-}
-
-export const CurrencyList: CurrencyList = {
-  popular: [
-    {
-      id: 'p/btc',
-      img: () => <BtcIcon />,
-      mainLabel: 'Bitcoin',
-      secondaryLabel: 'BTC',
-    },
-    {
-      id: 'p/bch',
-      img: () => <BchIcon />,
-      mainLabel: 'Bitcoin Cash',
-      secondaryLabel: 'BCH',
-    },
-    {
-      id: 'p/eth',
-      img: () => <EthIcon />,
-      mainLabel: 'Ethereum',
-      secondaryLabel: 'ETH',
-    },
-    {
-      id: 'e/doge',
-      img: () => <DogeIcon />,
-      mainLabel: 'Dogecoin',
-      secondaryLabel: 'DOGE',
-    },
-    {
-      id: 'p/ltc',
-      img: () => <LtcIcon />,
-      mainLabel: 'Litecoin',
-      secondaryLabel: 'LTC',
-    },
-  ],
-  coins: [
-    {
-      id: 'c/btc',
-      img: () => <BtcIcon />,
-      mainLabel: 'Bitcoin',
-      secondaryLabel: 'BTC',
-    },
-    {
-      id: 'c/bch',
-      img: () => <BchIcon />,
-      mainLabel: 'Bitcoin Cash',
-      secondaryLabel: 'BCH',
-    },
-    {
-      id: 'c/eth',
-      img: () => <EthIcon />,
-      mainLabel: 'Ethereum',
-      secondaryLabel: 'ETH',
-    },
-    {
-      id: 'c/doge',
-      img: () => <DogeIcon />,
-      mainLabel: 'Dogecoin',
-      secondaryLabel: 'DOGE',
-    },
-    {
-      id: 'c/ltc',
-      img: () => <LtcIcon />,
-      mainLabel: 'Litecoin',
-      secondaryLabel: 'LTC',
-    },
-    {
-      id: 'c/xrp',
-      img: () => <XrpIcon />,
-      mainLabel: 'Xrp',
-      secondaryLabel: 'XRP',
-    },
-  ],
-  tokens: [
-    {
-      id: 't/usdc',
-      img: () => <UsdcIcon />,
-      mainLabel: 'Usdc',
-      secondaryLabel: 'USDC',
-    },
-    {
-      id: 't/gusd',
-      img: () => <GusdIcon />,
-      mainLabel: 'Gusd',
-      secondaryLabel: 'GUSD',
-    },
-    {
-      id: 't/busd',
-      img: () => <BusdIcon />,
-      mainLabel: 'Busd',
-      secondaryLabel: 'BUSD',
-    },
-    {
-      id: 't/dai',
-      img: () => <DaiIcon />,
-      mainLabel: 'Dai',
-      secondaryLabel: 'DAI',
-    },
-    {
-      id: 't/pax',
-      img: () => <PaxIcon />,
-      mainLabel: 'Pax',
-      secondaryLabel: 'PAX',
-    },
-    {
-      id: 't/wbtc',
-      img: () => <WbtcIcon />,
-      mainLabel: 'Wbtc',
-      secondaryLabel: 'WBTC',
-    },
-  ],
-};
+export const CurrencyList: Array<ItemProps> = [
+  {
+    id: 'btc',
+    img: () => <BtcIcon />,
+    mainLabel: 'Bitcoin',
+    secondaryLabel: 'BTC',
+  },
+  {
+    id: 'bch',
+    img: () => <BchIcon />,
+    mainLabel: 'Bitcoin Cash',
+    secondaryLabel: 'BCH',
+  },
+  {
+    id: 'eth',
+    img: () => <EthIcon />,
+    mainLabel: 'Ethereum',
+    secondaryLabel: 'ETH',
+  },
+  {
+    id: 'doge',
+    img: () => <DogeIcon />,
+    mainLabel: 'Dogecoin',
+    secondaryLabel: 'DOGE',
+  },
+  {
+    id: 'ltc',
+    img: () => <LtcIcon />,
+    mainLabel: 'Litecoin',
+    secondaryLabel: 'LTC',
+  },
+  {
+    id: 'xrp',
+    img: () => <XrpIcon />,
+    mainLabel: 'Xrp',
+    secondaryLabel: 'XRP',
+  },
+  {
+    id: 'usdc',
+    img: () => <UsdcIcon />,
+    mainLabel: 'Usdc',
+    secondaryLabel: 'USDC',
+  },
+  {
+    id: 'gusd',
+    img: () => <GusdIcon />,
+    mainLabel: 'Gusd',
+    secondaryLabel: 'GUSD',
+  },
+  {
+    id: 'busd',
+    img: () => <BusdIcon />,
+    mainLabel: 'Busd',
+    secondaryLabel: 'BUSD',
+  },
+  {
+    id: 'dai',
+    img: () => <DaiIcon />,
+    mainLabel: 'Dai',
+    secondaryLabel: 'DAI',
+  },
+  {
+    id: 'pax',
+    img: () => <PaxIcon />,
+    mainLabel: 'Pax',
+    secondaryLabel: 'PAX',
+  },
+  {
+    id: 'wbtc',
+    img: () => <WbtcIcon />,
+    mainLabel: 'Wbtc',
+    secondaryLabel: 'WBTC',
+  },
+];

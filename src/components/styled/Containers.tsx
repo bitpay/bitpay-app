@@ -1,6 +1,12 @@
-import styled from 'styled-components/native';
+import styled, {css} from 'styled-components/native';
 import {Dimensions} from 'react-native';
 export const WIDTH = Dimensions.get('window').width;
+
+// Nav
+export const HeaderRightContainer = styled.View`
+  height: 50px;
+  margin-right: 10px;
+`;
 
 export const ImageContainer = styled.View`
   margin: 10px 0;
@@ -36,12 +42,19 @@ export const CtaContainer = styled.View`
   margin-top: 30px;
 `;
 
-export const CtaContainerAbsolute = styled.View`
-  padding: 10px;
+export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
+  padding: 15px;
   position: absolute;
-  bottom: 5px;
+  bottom: 0;
   left: 0;
   right: 0;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  ${({background}) =>
+    background &&
+    css`
+      background: white;
+    `};
 `;
 
 export const Hr = styled.View`
@@ -56,7 +69,6 @@ export const ListContainer = styled.View`
 `;
 
 export const RowContainer = styled.TouchableOpacity`
-  flex: 1;
   flex-direction: row;
   margin: 10px 0;
   padding: 0 10px 0 10px;

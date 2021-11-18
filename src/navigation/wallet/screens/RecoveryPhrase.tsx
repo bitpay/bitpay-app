@@ -31,7 +31,7 @@ const RecoveryPhraseContainer = styled.View`
 `;
 
 export const ProgressBarContainer = styled.View`
-  padding: 10px 0;
+  padding: 15px 0;
 `;
 
 export const BodyContainer = styled.View`
@@ -85,11 +85,6 @@ const RecoveryPhrase = () => {
 
   return (
     <RecoveryPhraseContainer>
-      <HeaderTitleContainer>
-        <TextAlign align={'left'}>
-          <H3>Recovery Phrase</H3>
-        </TextAlign>
-      </HeaderTitleContainer>
       <ProgressBarContainer>
         <Progress.Bar
           progress={0.3}

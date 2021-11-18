@@ -55,6 +55,10 @@ const TermsOfUseContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
+const TermsContainer = styled.View`
+  padding: 0 10px;
+`;
+
 const TermsOfUse = ({navigation: _navigation, route}: Props) => {
   useAndroidBackHandler(() => true);
   const navigation = useNavigation();
@@ -74,12 +78,11 @@ const TermsOfUse = ({navigation: _navigation, route}: Props) => {
 
   return (
     <TermsOfUseContainer>
-      <HeaderTitleContainer>
-        <H3>Terms of Use</H3>
+      <TermsContainer>
         {termsList.map((term: Term, index: number) => {
           return <TermsBox term={term} emit={setChecked} key={index} />;
         })}
-      </HeaderTitleContainer>
+      </TermsContainer>
       <CtaContainerAbsolute>
         <Button
           onPress={() => {

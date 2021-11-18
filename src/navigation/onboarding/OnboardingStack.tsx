@@ -3,7 +3,6 @@ import {createStackNavigator} from '@react-navigation/stack';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
-  headerRightContainerStyle,
 } from '../../constants/NavigationOptions';
 import {useNavigation} from '@react-navigation/native';
 import Button from '../../components/button/Button';
@@ -21,6 +20,8 @@ import RecoveryPhrase, {
 } from '../wallet/screens/RecoveryPhrase';
 import VerifyPhrase, {VerifyPhraseProps} from '../wallet/screens/VerifyPhrase';
 import {startWalletBackup} from '../../store/wallet/wallet.effects';
+import {HeaderRightContainer} from '../../components/styled/Containers';
+import {HeaderTitle} from '../../components/styled/Text';
 
 export type OnboardingStackParamList = {
   OnboardingStart: undefined;
@@ -63,19 +64,20 @@ const OnboardingStack = () => {
       initialRouteName="OnboardingStart">
       <Onboarding.Screen
         options={{
-          headerRightContainerStyle,
           headerRight: () => (
-            <Button
-              buttonType={'pill'}
-              onPress={() => {
-                haptic('impactLight');
-                navigation.navigate('BitpayId', {
-                  screen: 'LoginSignup',
-                  params: {context: 'login'},
-                });
-              }}>
-              Log In
-            </Button>
+            <HeaderRightContainer>
+              <Button
+                buttonType={'pill'}
+                onPress={() => {
+                  haptic('impactLight');
+                  navigation.navigate('BitpayId', {
+                    screen: 'LoginSignup',
+                    params: {context: 'login'},
+                  });
+                }}>
+                Log In
+              </Button>
+            </HeaderRightContainer>
           ),
         }}
         name={OnboardingScreens.ONBOARDING_START}
@@ -83,20 +85,21 @@ const OnboardingStack = () => {
       />
       <Onboarding.Screen
         options={{
-          headerRightContainerStyle,
           gestureEnabled: false,
           headerLeft: () => null,
           headerRight: () => (
-            <Button
-              buttonType={'pill'}
-              onPress={() => {
-                haptic('impactLight');
-                navigation.navigate('Onboarding', {
-                  screen: 'CreateWallet',
-                });
-              }}>
-              Skip
-            </Button>
+            <HeaderRightContainer>
+              <Button
+                buttonType={'pill'}
+                onPress={() => {
+                  haptic('impactLight');
+                  navigation.navigate('Onboarding', {
+                    screen: 'CreateWallet',
+                  });
+                }}>
+                Skip
+              </Button>
+            </HeaderRightContainer>
           ),
         }}
         name={OnboardingScreens.PIN}
@@ -104,23 +107,24 @@ const OnboardingStack = () => {
       />
       <Onboarding.Screen
         options={{
-          headerRightContainerStyle,
           gestureEnabled: false,
           headerLeft: () => null,
           headerRight: () => (
-            <Button
-              buttonType={'pill'}
-              onPress={() => {
-                haptic('impactLight');
-                navigation.navigate('Onboarding', {
-                  screen: 'TermsOfUse',
-                  params: {
-                    context: 'skip',
-                  },
-                });
-              }}>
-              Skip
-            </Button>
+            <HeaderRightContainer>
+              <Button
+                buttonType={'pill'}
+                onPress={() => {
+                  haptic('impactLight');
+                  navigation.navigate('Onboarding', {
+                    screen: 'TermsOfUse',
+                    params: {
+                      context: 'skip',
+                    },
+                  });
+                }}>
+                Skip
+              </Button>
+            </HeaderRightContainer>
           ),
         }}
         name={OnboardingScreens.CREATE_WALLET}
@@ -128,32 +132,25 @@ const OnboardingStack = () => {
       />
       <Onboarding.Screen
         options={{
-          headerRightContainerStyle,
           gestureEnabled: false,
-          headerLeft: () => null,
-          headerRight: () => null,
-        }}
-        name={OnboardingScreens.TERMS_OF_USE}
-        component={TermsOfUse}
-      />
-      <Onboarding.Screen
-        options={{
-          headerRightContainerStyle,
-          gestureEnabled: false,
+          headerTitle: () => <HeaderTitle>Select Assets</HeaderTitle>,
+          headerTitleAlign: 'center',
           headerRight: () => (
-            <Button
-              buttonType={'pill'}
-              onPress={() => {
-                haptic('impactLight');
-                navigation.navigate('Onboarding', {
-                  screen: 'TermsOfUse',
-                  params: {
-                    context: 'skip',
-                  },
-                });
-              }}>
-              Skip
-            </Button>
+            <HeaderRightContainer>
+              <Button
+                buttonType={'pill'}
+                onPress={() => {
+                  haptic('impactLight');
+                  navigation.navigate('Onboarding', {
+                    screen: 'TermsOfUse',
+                    params: {
+                      context: 'skip',
+                    },
+                  });
+                }}>
+                Skip
+              </Button>
+            </HeaderRightContainer>
           ),
         }}
         name={OnboardingScreens.SELECT_ASSETS}
@@ -161,41 +158,42 @@ const OnboardingStack = () => {
       />
       <Onboarding.Screen
         options={{
-          headerRightContainerStyle,
           gestureEnabled: false,
           headerLeft: () => null,
           headerRight: () => (
-            <Button
-              buttonType={'pill'}
-              onPress={async () => {
-                haptic('impactLight');
-                await dispatch(
-                  AppActions.showBottomNotificationModal({
-                    type: 'warning',
-                    title: 'Are you sure?',
-                    message:
-                      'You will not be able to add funds to your wallet until you backup your recovery phrase.',
-                    enableBackdropDismiss: true,
-                    actions: [
-                      {
-                        text: 'BACKUP YOUR KEY',
-                        action: () =>
-                          dispatch(startWalletBackup({keyId: 'onboarding'})),
-                        primary: true,
-                      },
-                      {
-                        text: 'LATER',
-                        action: () =>
-                          navigation.navigate('Onboarding', {
-                            screen: 'TermsOfUse',
-                          }),
-                      },
-                    ],
-                  }),
-                );
-              }}>
-              Skip
-            </Button>
+            <HeaderRightContainer>
+              <Button
+                buttonType={'pill'}
+                onPress={async () => {
+                  haptic('impactLight');
+                  await dispatch(
+                    AppActions.showBottomNotificationModal({
+                      type: 'warning',
+                      title: 'Are you sure?',
+                      message:
+                        'You will not be able to add funds to your wallet until you backup your recovery phrase.',
+                      enableBackdropDismiss: true,
+                      actions: [
+                        {
+                          text: 'BACKUP YOUR KEY',
+                          action: () =>
+                            dispatch(startWalletBackup({keyId: 'onboarding'})),
+                          primary: true,
+                        },
+                        {
+                          text: 'LATER',
+                          action: () =>
+                            navigation.navigate('Onboarding', {
+                              screen: 'TermsOfUse',
+                            }),
+                        },
+                      ],
+                    }),
+                  );
+                }}>
+                Skip
+              </Button>
+            </HeaderRightContainer>
           ),
         }}
         name={OnboardingScreens.BACKUP_WALLET}
@@ -203,36 +201,38 @@ const OnboardingStack = () => {
       />
       <Onboarding.Screen
         options={{
-          headerRightContainerStyle,
           gestureEnabled: false,
+          headerTitle: () => <HeaderTitle>Recovery Phrase</HeaderTitle>,
           headerLeft: () => null,
           headerRight: () => (
-            <Button
-              buttonType={'pill'}
-              onPress={() => {
-                haptic('impactLight');
-                dispatch(
-                  AppActions.showBottomNotificationModal({
-                    type: 'warning',
-                    title: 'Don’t risk losing your money',
-                    message:
-                      'Your recovery key is composed of 12 randomly selected words. Take a couple of minutes to carefully write down each word in the order they appear.',
-                    enableBackdropDismiss: true,
-                    actions: [
-                      {
-                        text: "I'M SURE",
-                        action: () =>
-                          navigation.navigate('Onboarding', {
-                            screen: 'TermsOfUse',
-                          }),
-                        primary: true,
-                      },
-                    ],
-                  }),
-                );
-              }}>
-              Cancel
-            </Button>
+            <HeaderRightContainer>
+              <Button
+                buttonType={'pill'}
+                onPress={() => {
+                  haptic('impactLight');
+                  dispatch(
+                    AppActions.showBottomNotificationModal({
+                      type: 'warning',
+                      title: 'Don’t risk losing your money',
+                      message:
+                        'Your recovery key is composed of 12 randomly selected words. Take a couple of minutes to carefully write down each word in the order they appear.',
+                      enableBackdropDismiss: true,
+                      actions: [
+                        {
+                          text: "I'M SURE",
+                          action: () =>
+                            navigation.navigate('Onboarding', {
+                              screen: 'TermsOfUse',
+                            }),
+                          primary: true,
+                        },
+                      ],
+                    }),
+                  );
+                }}>
+                Cancel
+              </Button>
+            </HeaderRightContainer>
           ),
         }}
         name={OnboardingScreens.RECOVERY_PHRASE}
@@ -240,40 +240,52 @@ const OnboardingStack = () => {
       />
       <Onboarding.Screen
         options={{
-          headerRightContainerStyle,
           gestureEnabled: false,
+          headerTitle: () => <HeaderTitle>Verify your Phrase</HeaderTitle>,
           headerLeft: () => null,
           headerRight: () => (
-            <Button
-              buttonType={'pill'}
-              onPress={() => {
-                haptic('impactLight');
-                dispatch(
-                  AppActions.showBottomNotificationModal({
-                    type: 'warning',
-                    title: 'Don’t risk losing your money',
-                    message:
-                      'Your recovery key is composed of 12 randomly selected words. Take a couple of minutes to carefully write down each word in order they appear.',
-                    enableBackdropDismiss: true,
-                    actions: [
-                      {
-                        text: "I'M SURE",
-                        action: () =>
-                          navigation.navigate('Onboarding', {
-                            screen: 'TermsOfUse',
-                          }),
-                        primary: true,
-                      },
-                    ],
-                  }),
-                );
-              }}>
-              Cancel
-            </Button>
+            <HeaderRightContainer>
+              <Button
+                buttonType={'pill'}
+                onPress={() => {
+                  haptic('impactLight');
+                  dispatch(
+                    AppActions.showBottomNotificationModal({
+                      type: 'warning',
+                      title: 'Don’t risk losing your money',
+                      message:
+                        'Your recovery key is composed of 12 randomly selected words. Take a couple of minutes to carefully write down each word in order they appear.',
+                      enableBackdropDismiss: true,
+                      actions: [
+                        {
+                          text: "I'M SURE",
+                          action: () =>
+                            navigation.navigate('Onboarding', {
+                              screen: 'TermsOfUse',
+                            }),
+                          primary: true,
+                        },
+                      ],
+                    }),
+                  );
+                }}>
+                Cancel
+              </Button>
+            </HeaderRightContainer>
           ),
         }}
         name={OnboardingScreens.VERIFY_PHRASE}
         component={VerifyPhrase}
+      />
+      <Onboarding.Screen
+        options={{
+          gestureEnabled: false,
+          headerTitle: () => <HeaderTitle>Terms of Use</HeaderTitle>,
+          headerLeft: () => null,
+          headerRight: () => null,
+        }}
+        name={OnboardingScreens.TERMS_OF_USE}
+        component={TermsOfUse}
       />
     </Onboarding.Navigator>
   );

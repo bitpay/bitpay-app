@@ -47,6 +47,15 @@ export const Disclaimer = styled(BaseText)`
   letter-spacing: 0;
 `;
 
+// Nav
+export const HeaderTitle = styled(BaseText)`
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 30px;
+  letter-spacing: 0;
+`;
+
 interface TextAlignProps {
   align: 'center' | 'left' | 'end';
 }
