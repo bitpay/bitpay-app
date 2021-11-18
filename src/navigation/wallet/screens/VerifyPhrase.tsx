@@ -28,7 +28,6 @@ import {sleep} from '../../../utils/helper-methods';
 import {AppActions} from '../../../store/app';
 import {useDispatch} from 'react-redux';
 import {startWalletBackupComplete} from '../../../store/wallet/wallet.effects';
-
 export interface VerifyPhraseProps {
   keyId: string;
   words: string[];
@@ -103,10 +102,10 @@ const VerifyPhrase = () => {
   }, [navigation]);
 
   const wordSelected = async (word: string) => {
-    haptic('impactLight');
     if (isAnimating) {
       return;
     }
+    haptic('impactLight');
     // lock UI - (unlocks from onSnap event in carousel props in jsx)
     setIsAnimating(true);
     // update words and append empty string for next entry
@@ -115,7 +114,7 @@ const VerifyPhrase = () => {
     setAttemptWords(update);
     setActiveSlideIndex(activeSlideIndex + 1);
     // sleep for animation time
-    await sleep(100);
+    await sleep(0);
     if (activeSlideIndex !== 11) {
       // @ts-ignore
       ref.current.snapToNext();
@@ -179,9 +178,9 @@ const VerifyPhrase = () => {
           layout={'default'}
           useExperimentalSnap={true}
           data={attemptWords}
-          renderItem={({item: word}: {item: string}) => {
+          renderItem={({item: word, index}: {item: string; index: number}) => {
             return (
-              <WordContainer key={word}>
+              <WordContainer key={index}>
                 <H2>{word}</H2>
                 <DottedBorder />
               </WordContainer>
@@ -190,9 +189,6 @@ const VerifyPhrase = () => {
           ref={ref}
           sliderWidth={WIDTH}
           itemWidth={Math.round(WIDTH)}
-          onScrollIndexChanged={(index: number) => {
-            setActiveSlideIndex(index);
-          }}
           onSnapToItem={() => setIsAnimating(false)}
           scrollEnabled={false}
           // @ts-ignore

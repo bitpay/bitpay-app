@@ -4,6 +4,7 @@ import {Action, Air, Disabled, DisabledDark, White} from '../../styles/colors';
 import {BaseText} from '../styled/Text';
 import Haptic from '../haptic-feedback/haptic';
 import {BaseButtonProps} from 'react-native-gesture-handler';
+import debounce from 'lodash.debounce';
 type ButtonStyle = 'primary' | 'secondary' | undefined;
 type ButtonType = 'link' | 'pill' | undefined;
 
@@ -13,6 +14,7 @@ interface ButtonProps extends BaseButtonProps {
   onPress?: () => any;
   children: string;
   disabled?: boolean;
+  debounceTime?: number;
 }
 
 interface ContainerProps {
@@ -80,6 +82,7 @@ const Button = ({
   buttonType,
   children,
   disabled,
+  debounceTime,
 }: ButtonProps) => {
   const _onPress = () => {
     if (disabled || !onPress) {
@@ -90,11 +93,16 @@ const Button = ({
     onPress();
   };
 
+  const debouncedOnPress = debounce(_onPress, debounceTime || 0, {
+    leading: true,
+    trailing: false,
+  });
+
   if (buttonType === 'link') {
     return (
       <LinkContainer
         disabled={disabled}
-        onPress={_onPress}
+        onPress={debouncedOnPress}
         activeOpacity={ACTIVE_OPACITY}>
         <Text secondary>{children}</Text>
       </LinkContainer>
@@ -105,7 +113,7 @@ const Button = ({
     return (
       <ButtonContainer
         pill
-        onPress={_onPress}
+        onPress={debouncedOnPress}
         disabled={disabled}
         activeOpacity={ACTIVE_OPACITY}>
         <Text secondary pill disabled={disabled}>
@@ -119,7 +127,7 @@ const Button = ({
     return (
       <ButtonContainer
         secondary
-        onPress={_onPress}
+        onPress={debouncedOnPress}
         disabled={disabled}
         activeOpacity={ACTIVE_OPACITY}>
         <Text secondary disabled={disabled}>
@@ -131,7 +139,7 @@ const Button = ({
 
   return (
     <ButtonContainer
-      onPress={_onPress}
+      onPress={debouncedOnPress}
       disabled={disabled}
       activeOpacity={ACTIVE_OPACITY}>
       <Text disabled={disabled}>{children}</Text>

@@ -16,10 +16,10 @@ import {
 } from '../../../components/styled/Containers';
 import * as Progress from 'react-native-progress';
 import {Air, ProgressBlue} from '../../../styles/colors';
-import haptic from '../../../components/haptic-feedback/haptic';
 import Carousel from 'react-native-snap-carousel';
 import {sleep} from '../../../utils/helper-methods';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
+import {Platform} from 'react-native';
 
 export interface RecoveryPhraseProps {
   keyId: string;
@@ -137,6 +137,7 @@ const RecoveryPhrase = () => {
         <CtaContainer>
           <Button
             buttonStyle={'primary'}
+            debounceTime={Platform.OS === 'android' ? 200 : 0}
             onPress={async () => {
               if (activeSlideIndex === 11) {
                 navigation.navigate('Onboarding', {
@@ -144,7 +145,6 @@ const RecoveryPhrase = () => {
                   params: {keyId, words},
                 });
               } else {
-                haptic('impactLight');
                 // @ts-ignore
                 ref.current.snapToNext();
               }
