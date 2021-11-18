@@ -30,12 +30,13 @@ const BackgroundImage = styled.View`
   overflow: hidden;
 `;
 
-interface CardProps {
+export interface CardProps {
   header?: ReactNode;
   body?: ReactNode;
   footer?: ReactNode;
   backgroundImg?: () => ReactElement;
 }
+
 const Card = ({header, body, footer, backgroundImg}: CardProps) => {
   return (
     <CardContainer>

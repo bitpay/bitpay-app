@@ -1,11 +1,11 @@
 import * as React from 'react';
-import {ReactElement, ReactNode} from 'react';
+import {ReactNode} from 'react';
 import styled from 'styled-components/native';
 import {Black, SlateDark, White} from '../../styles/colors';
 import Arrow from '../../../assets/img/forward-arrow.svg';
 import Haptic from '../haptic-feedback/haptic';
 import {CardGutter} from '../styled/Containers';
-import Card from '../card/Card';
+import Card, {CardProps} from '../card/Card';
 import {View} from 'react-native';
 
 interface BodyProps {
@@ -17,13 +17,6 @@ interface BodyProps {
 
 interface FooterProps {
   onCTAPress?: () => void;
-}
-
-interface HomeCardProps {
-  header?: ReactNode;
-  backgroundImg?: () => ReactElement;
-  body: BodyProps;
-  footer: FooterProps;
 }
 
 const CardHeader = styled.View`
@@ -76,7 +69,7 @@ const FooterArrow = styled.TouchableHighlight`
   justify-content: center;
 `;
 
-const HomeCard = ({backgroundImg, body, footer, header}: HomeCardProps) => {
+const HomeCard = ({backgroundImg, body, footer, header}: CardProps) => {
   const HeaderComp: React.FC<{headerComp?: ReactNode}> = (
     headerComp?: ReactNode,
   ) => <CardHeader>{headerComp}</CardHeader>;
