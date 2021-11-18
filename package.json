@@ -22,6 +22,7 @@
     "@react-navigation/native": "6.0.6",
     "@react-navigation/stack": "6.0.11",
     "@tradle/react-native-http": "2.0.1",
+    "@types/bitauth": "0.4.1",
     "asyncstorage-down": "4.2.0",
     "axios": "0.21.1",
     "bitauth": "0.4.1",
