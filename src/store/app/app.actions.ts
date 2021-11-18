@@ -1,8 +1,9 @@
 import {ColorSchemeName} from 'react-native';
-import {Session} from './app.models';
+import {AppIdentity, Session} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {Network} from '../../constants';
 
 export const successGetSession = (session: Session): AppActionType => ({
   type: AppActionTypes.SUCCESS_GET_SESSION,
@@ -55,4 +56,12 @@ export const setColorScheme = (scheme: ColorSchemeName): AppActionType => ({
 export const setCurrentRoute = (route: any): AppActionType => ({
   type: AppActionTypes.SET_CURRENT_ROUTE,
   payload: route,
+});
+
+export const successGenerateAppIdentity = (
+  network: Network,
+  identity: AppIdentity,
+): AppActionType => ({
+  type: AppActionTypes.SUCCESS_GENERATE_APP_IDENTITY,
+  payload: {network, identity},
 });

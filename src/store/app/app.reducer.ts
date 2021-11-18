@@ -1,9 +1,10 @@
 import {ColorSchemeName} from 'react-native';
+import {Network} from '../../constants';
 import {BASE_BITPAY_URL, NETWORK} from '../../constants/config';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {NavScreenParams, RootStackParamList} from '../../Root';
-import {Session} from './app.models';
+import {AppIdentity, Session} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
 
 type AppReduxPersistBlackList = [
@@ -18,7 +19,10 @@ export const appReduxPersistBlackList: AppReduxPersistBlackList = [
 ];
 
 export interface AppState {
-  network: 'mainnet' | 'testnet';
+  identity: {
+    [key in Network]: AppIdentity | undefined;
+  };
+  network: Network;
   baseBitPayURL: string;
   appIsLoading: boolean;
   onboardingCompleted: boolean;
@@ -32,7 +36,11 @@ export interface AppState {
 }
 
 const initialState: AppState = {
-  network: NETWORK,
+  identity: {
+    [Network.livenet]: undefined,
+    [Network.testnet]: undefined,
+  },
+  network: Network.testnet,
   baseBitPayURL: BASE_BITPAY_URL,
   appIsLoading: true,
   onboardingCompleted: false,
@@ -104,6 +112,17 @@ export const appReducer = (
       return {
         ...state,
         currentRoute: action.payload,
+      };
+
+    case AppActionTypes.SUCCESS_GENERATE_APP_IDENTITY:
+      const {network, identity} = action.payload;
+
+      return {
+        ...state,
+        identity: {
+          ...state.identity,
+          [network]: identity,
+        },
       };
 
     default:
