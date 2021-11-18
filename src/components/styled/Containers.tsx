@@ -80,10 +80,9 @@ export const CurrencyImageContainer = styled.View`
 `;
 
 // Card
-
 export const CardGutter = '15px';
 
-export const CardContainer = styled.View<{}>`
+export const CardContainer = styled.View`
   min-height: 250px;
   width: 215px;
   background: #f5f7f8;

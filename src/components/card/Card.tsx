@@ -1,49 +1,9 @@
+import {CardContainer, CardGutter} from '../styled/Containers';
+import styled from 'styled-components/native';
 import * as React from 'react';
 import {ReactElement, ReactNode} from 'react';
-import styled from 'styled-components/native';
-import {Black, SlateDark, White} from '../../styles/colors';
-import Arrow from '../../../assets/img/forward-arrow.svg';
-import Haptic from '../haptic-feedback/haptic';
-import {CardContainer, CardGutter} from '../styled/Containers';
-
-interface CardProps {
-  children?: ReactNode;
-  bodyHeader?: string;
-  bodyDesc?: string;
-  price?: string;
-  pillText?: string;
-  onCTAPress: () => void;
-  backgroundImg?: () => ReactElement;
-}
 
 const CardHeader = styled.View`
-  min-height: 30px;
-  padding: ${CardGutter};
-`;
-
-const CardBodyHeader = styled.Text`
-  font-size: 14px;
-  line-height: 21px;
-  color: ${SlateDark};
-  margin-top: ${CardGutter};
-`;
-
-const CardBodyDesc = styled.Text`
-  font-weight: 500;
-  font-size: 18px;
-  line-height: 25px;
-  color: ${SlateDark};
-  margin-top: ${CardGutter};
-`;
-
-const CardPrice = styled.Text`
-  font-size: 31px;
-  line-height: 46px;
-  color: ${Black};
-  font-weight: bold;
-`;
-
-const CardFooter = styled.View`
   min-height: 30px;
   padding: ${CardGutter};
 `;
@@ -53,28 +13,9 @@ const CardBody = styled.View`
   padding: ${CardGutter};
 `;
 
-const CardPill = styled.View`
-  background-color: #cbf3e8;
-  align-self: flex-start;
-  border-radius: 7px;
-  padding: 4px 8px;
-`;
-
-const CardPillText = styled.Text`
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 19px;
-  color: ${SlateDark};
-`;
-
-const FooterArrow = styled.TouchableHighlight`
-  width: 30px;
-  height: 30px;
-  align-self: flex-end;
-  border-radius: 50px;
-  background-color: ${White};
-  align-items: center;
-  justify-content: center;
+const CardFooter = styled.View`
+  min-height: 30px;
+  padding: ${CardGutter};
 `;
 
 const BackgroundImage = styled.View`
@@ -89,41 +30,20 @@ const BackgroundImage = styled.View`
   overflow: hidden;
 `;
 
-const Card = ({
-  children,
-  bodyHeader,
-  price,
-  pillText,
-  bodyDesc,
-  onCTAPress,
-  backgroundImg,
-}: CardProps) => {
-  const _onPress = () => {
-    Haptic('impactLight');
-    onCTAPress();
-  };
+interface CardProps {
+  header?: ReactNode;
+  body?: ReactNode;
+  footer?: ReactNode;
+  backgroundImg?: () => ReactElement;
+}
+const Card = ({header, body, footer, backgroundImg}: CardProps) => {
   return (
     <CardContainer>
       {backgroundImg && <BackgroundImage>{backgroundImg()}</BackgroundImage>}
 
-      <CardHeader>{children}</CardHeader>
-
-      <CardBody>
-        {bodyHeader && <CardBodyHeader>{bodyHeader}</CardBodyHeader>}
-        {price && <CardPrice>{price}</CardPrice>}
-        {pillText && (
-          <CardPill>
-            <CardPillText>{pillText}</CardPillText>
-          </CardPill>
-        )}
-        {bodyDesc && <CardBodyDesc>{bodyDesc}</CardBodyDesc>}
-      </CardBody>
-
-      <CardFooter>
-        <FooterArrow onPress={_onPress} underlayColor="white">
-          <Arrow />
-        </FooterArrow>
-      </CardFooter>
+      {header && <CardHeader>{header}</CardHeader>}
+      {body && <CardBody>{body}</CardBody>}
+      {footer && <CardFooter>{footer}</CardFooter>}
     </CardContainer>
   );
 };
