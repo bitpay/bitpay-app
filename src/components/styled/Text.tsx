@@ -6,6 +6,15 @@ export const BaseText: StyledComponentBase<any, any> = styled.Text`
   font-family: 'Heebo';
 `;
 
+export const H2 = styled(BaseText)`
+  font-size: 38px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 42px;
+  letter-spacing: 0;
+  text-align: center;
+`;
+
 export const H3 = styled(BaseText)`
   font-size: 25px;
   font-style: normal;
@@ -38,6 +47,15 @@ export const Disclaimer = styled(BaseText)`
   letter-spacing: 0;
 `;
 
+// Nav
+export const HeaderTitle = styled(BaseText)`
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 30px;
+  letter-spacing: 0;
+`;
+
 interface TextAlignProps {
   align: 'center' | 'left' | 'end';
 }
@@ -61,8 +79,6 @@ export const MainLabel = styled(BaseText)`
   font-size: 18px;
   font-style: normal;
   font-weight: 500;
-  line-height: 18px;
-  text-align: left;
 `;
 
 export const SecondaryLabel = styled(BaseText)`

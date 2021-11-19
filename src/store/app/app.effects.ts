@@ -4,6 +4,7 @@ import axios from 'axios';
 import {Session} from './app.models';
 import {sleep} from '../../utils/helper-methods';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {startWalletStoreInit} from '../wallet/wallet.effects';
 import {LogActions} from '../log';
 
 export const startGetSession =
@@ -23,18 +24,13 @@ export const startGetSession =
 
 export const startAppInit =
   (): Effect => async (dispatch, getState: () => RootState) => {
-    dispatch(LogActions.clear());
-    dispatch(LogActions.info('Initializing app...'));
-    const store: RootState = getState();
-
     try {
-      // if onboarding is not completed or if a user is not paired - fetch a session
-      if (!store.APP.onboardingCompleted || !store.BITPAY_ID.account) {
-        // await dispatch(startGetSession());
-      }
+      dispatch(LogActions.clear());
+      dispatch(LogActions.info('Initializing app...'));
+      // splitting inits into store specific ones as to keep it cleaner in the main init here
+      dispatch(startWalletStoreInit());
 
-      await sleep(1000);
-
+      await sleep(500);
       dispatch(AppActions.successAppInit());
       dispatch(LogActions.info('Initialized app successfully.'));
     } catch (err) {
@@ -55,4 +51,5 @@ export const startOnGoingProcessModal =
     }
 
     dispatch(AppActions.showOnGoingProcessModal(message));
+    return sleep(0);
   };

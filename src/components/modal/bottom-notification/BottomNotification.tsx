@@ -12,12 +12,17 @@ import SuccessSvg from '../../../../assets/img/success.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
 import WarningSvg from '../../../../assets/img/warning.svg';
 import ErrorSvg from '../../../../assets/img/error.svg';
+import {sleep} from '../../../utils/helper-methods';
 
 export interface BottomNotificationConfig {
   type: 'success' | 'info' | 'warning' | 'error';
   title: string;
   message: string;
-  actions?: Array<{text: string; primary?: boolean; action: () => any}>;
+  actions: Array<{
+    text: string;
+    primary?: boolean;
+    action: (rootState: RootState) => any;
+  }>;
   enableBackdropDismiss: boolean;
 }
 
@@ -91,6 +96,7 @@ const Cta = styled.Text`
 
 const BottomNotification = () => {
   const dispatch = useDispatch();
+  const rootState = useSelector((state: RootState) => state);
   const isVisible = useSelector(
     ({APP}: RootState) => APP.showBottomNotificationModal,
   );
@@ -119,17 +125,19 @@ const BottomNotification = () => {
         </MessageContainer>
         <Hr />
         <CtaContainer platform={Platform.OS}>
-          {actions?.map((action, index) => {
+          {actions?.map(({primary, action, text}, index) => {
             return (
               <Cta
                 key={index}
                 suppressHighlighting={true}
-                primary={action.primary}
-                onPress={() => {
+                primary={primary}
+                onPress={async () => {
                   haptic('impactLight');
-                  dispatch(action.action());
+                  dispatch(AppActions.dismissBottomNotificationModal());
+                  await sleep(0);
+                  action(rootState);
                 }}>
-                {action.text.toUpperCase()}
+                {text.toUpperCase()}
               </Cta>
             );
           })}
