@@ -3,6 +3,7 @@ import {Dimensions} from 'react-native';
 import {Carousel} from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
 import haptic from '../haptic-feedback/haptic';
+import {WIDTH} from '../styled/Containers';
 import ExchangeRateCard from './OfferCard';
 
 export interface OfferProps {
@@ -15,8 +16,6 @@ export interface OfferProps {
 interface OfferSlide {
   items: Array<OfferProps>;
 }
-
-const WIDTH = Dimensions.get('window').width;
 
 const OffersContainer = styled.SafeAreaView`
   flex: 1;
