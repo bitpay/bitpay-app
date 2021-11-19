@@ -1,8 +1,10 @@
-import {AppActionType, AppActionTypes} from './app.types';
-import {Session} from './app.models';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
-import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {ColorSchemeName} from 'react-native';
+import {BASE_BITPAY_URL, NETWORK} from '../../constants/config';
+import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
+import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {NavScreenParams, RootStackParamList} from '../../Root';
+import {Session} from './app.models';
+import {AppActionType, AppActionTypes} from './app.types';
 
 type AppReduxPersistBlackList = [
   'appIsLoading',
@@ -26,11 +28,12 @@ export interface AppState {
   showBottomNotificationModal: boolean;
   bottomNotificationModalConfig: BottomNotificationConfig | undefined;
   colorScheme: ColorSchemeName;
+  currentRoute: [keyof RootStackParamList, NavScreenParams] | undefined;
 }
 
 const initialState: AppState = {
-  network: 'testnet',
-  baseBitPayURL: 'https://test.bitpay.com',
+  network: NETWORK,
+  baseBitPayURL: BASE_BITPAY_URL,
   appIsLoading: true,
   onboardingCompleted: false,
   session: undefined,
@@ -38,7 +41,8 @@ const initialState: AppState = {
   onGoingProcessModalMessage: OnGoingProcessMessages.GENERAL_AWAITING,
   showBottomNotificationModal: false,
   bottomNotificationModalConfig: undefined,
-  colorScheme: null,
+  colorScheme: 'light',
+  currentRoute: undefined,
 };
 
 export const appReducer = (
@@ -94,6 +98,12 @@ export const appReducer = (
       return {
         ...state,
         colorScheme: action.payload,
+      };
+
+    case AppActionTypes.SET_CURRENT_ROUTE:
+      return {
+        ...state,
+        currentRoute: action.payload,
       };
 
     default:

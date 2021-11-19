@@ -2,6 +2,7 @@ import {Session} from './app.models';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {ColorSchemeName} from 'react-native';
+import {NavScreenParams, RootStackParamList} from '../../Root';
 
 export enum AppActionTypes {
   SUCCESS_GET_SESSION = 'APP/SUCCESS_GET_SESSION',
@@ -14,6 +15,7 @@ export enum AppActionTypes {
   SHOW_BOTTOM_NOTIFICATION_MODAL = 'APP/SHOW_BOTTOM_NOTIFICATION_MODAL',
   DISMISS_BOTTOM_NOTIFICATION_MODAL = 'APP/DISMISS_BOTTOM_NOTIFICATION_MODAL',
   SET_COLOR_SCHEME = 'APP/SET_COLOR_SCHEME',
+  SET_CURRENT_ROUTE = 'APP/SET_CURRENT_ROUTE',
 }
 
 interface SuccessGetSession {
@@ -60,6 +62,11 @@ interface SetColorScheme {
   payload: ColorSchemeName;
 }
 
+interface SetCurrentRoute {
+  type: typeof AppActionTypes.SET_CURRENT_ROUTE;
+  payload: [keyof RootStackParamList, NavScreenParams];
+}
+
 export type AppActionType =
   | SuccessGetSession
   | FailedGetSession
@@ -70,4 +77,5 @@ export type AppActionType =
   | DismissOnGoingProcessModal
   | ShowBottomNotificationModal
   | DismissBottomNotificationModal
-  | SetColorScheme;
+  | SetColorScheme
+  | SetCurrentRoute;

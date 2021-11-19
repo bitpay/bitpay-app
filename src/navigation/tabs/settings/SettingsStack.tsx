@@ -35,6 +35,7 @@ const SettingsStack = () => {
         component={SettingsHome}
         options={{
           title: 'Settings',
+          headerLeft: () => null,
         }}
       />
       <Settings.Screen

@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components/native';
 import {Caution} from '../../styles/colors';
-import {BaseText} from '../styled/text/Text';
+import {BaseText} from '../styled/Text';
 import {ExchangeRateProps} from './ExchangeRatesSlides';
 
 const ExchangeRateCardContainer = styled.View`
