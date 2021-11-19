@@ -3,17 +3,12 @@ import styled from 'styled-components/native';
 import {
   BaseText,
   H2,
-  H3,
   Paragraph,
   TextAlign,
 } from '../../../components/styled/Text';
 import Button from '../../../components/button/Button';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
-import {
-  CtaContainer,
-  HeaderTitleContainer,
-  WIDTH,
-} from '../../../components/styled/Containers';
+import {CtaContainer, WIDTH} from '../../../components/styled/Containers';
 import * as Progress from 'react-native-progress';
 import {Air, ProgressBlue} from '../../../styles/colors';
 import Carousel from 'react-native-snap-carousel';

@@ -29,20 +29,21 @@ const PinScreen = () => {
       </ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>
-          <H3>Would you like to create or import a wallet?</H3>
+          <H3>Create a new wallet or import an existing wallet</H3>
         </TextAlign>
       </TitleContainer>
       <TextContainer>
         <TextAlign align={'center'}>
           <Paragraph>
-            A wallet, formerly known as a key, is a place where you store your
-            assets.
+            Store your assets safely and securely with BitPay's non-custodial
+            wallet. Reminder: you own your keys, so be sure to have a pen and
+            paper handy to write down your 12 words.
           </Paragraph>
         </TextAlign>
       </TextContainer>
       <CtaContainer>
         <Button buttonStyle={'primary'} onPress={gotoSelectAssets}>
-          Create a Wallet
+          Create a BitPay Wallet
         </Button>
         <Button buttonStyle={'secondary'}>I already have a wallet</Button>
       </CtaContainer>

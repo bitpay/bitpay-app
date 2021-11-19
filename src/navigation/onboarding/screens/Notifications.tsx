@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import ProtectCrypto from '../../../../assets/img/onboarding/protect-crypto.svg';
+import Notifications from '../../../../assets/img/onboarding/notifications.svg';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainer,
@@ -10,44 +10,39 @@ import {
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import {useDispatch} from 'react-redux';
-import {startWalletBackup} from '../../../store/wallet/wallet.effects';
 
-const BackupContainer = styled.SafeAreaView`
+const NotificationsContainer = styled.SafeAreaView`
   flex: 1;
   align-items: center;
 `;
 
-const BackupScreen = () => {
+const NotificationsScreen = () => {
   useAndroidBackHandler(() => true);
-  const dispatch = useDispatch();
-  const gotoBackup = () => dispatch(startWalletBackup({keyId: 'onboarding'}));
 
   return (
-    <BackupContainer>
+    <NotificationsContainer>
       <ImageContainer>
-        <ProtectCrypto />
+        <Notifications />
       </ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>
-          <H3>Would you like to backup your wallet?</H3>
+          <H3>Turn on notifications</H3>
         </TextAlign>
       </TitleContainer>
       <TextContainer>
         <TextAlign align={'center'}>
           <Paragraph>
-            If you delete the BitPay app or lose your device, you’ll need your
-            recovery phrase regain access to your funds.
+            Get important updates on your account, new features, promos and
+            more. You can change this at any time in Settings.
           </Paragraph>
         </TextAlign>
       </TextContainer>
       <CtaContainer>
-        <Button buttonStyle={'primary'} onPress={gotoBackup}>
-          Backup your Recovery Phrase
-        </Button>
+        <Button buttonStyle={'primary'}>Allow</Button>
+        <Button buttonStyle={'secondary'}>Deny</Button>
       </CtaContainer>
-    </BackupContainer>
+    </NotificationsContainer>
   );
 };
 
-export default BackupScreen;
+export default NotificationsScreen;

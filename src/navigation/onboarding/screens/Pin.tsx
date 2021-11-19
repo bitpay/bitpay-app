@@ -26,13 +26,13 @@ const PinScreen = () => {
       </ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>
-          <H3>Set a PIN or use your fingerprint to unlock</H3>
+          <H3>Protect your wallet</H3>
         </TextAlign>
       </TitleContainer>
       <TextContainer>
         <TextAlign align={'center'}>
           <Paragraph>
-            This adds an extra layer of security to your {'\n'} BitPay app.
+            Set up an extra layer of security to keep your wallet secure.
           </Paragraph>
         </TextAlign>
       </TextContainer>

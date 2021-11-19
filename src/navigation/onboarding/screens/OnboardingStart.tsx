@@ -9,7 +9,7 @@ import OnboardingSlide from '../components/OnboardingSlide';
 import CryptoToCash from '../../../../assets/img/onboarding/crypto-to-cash.svg';
 import GiftCards from '../../../../assets/img/onboarding/gift-cards.svg';
 import WalletAndCoins from '../../../../assets/img/onboarding/wallet-and-coins.svg';
-import ProtectCrypto from '../../../../assets/img/onboarding/protect-crypto.svg';
+import SwapCrypto from '../../../../assets/img/onboarding/swap-crypto.svg';
 
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -39,7 +39,7 @@ const onboardingSlides = [
   {
     title: 'Seamlessly buy & swap with a decentralized exchange',
     text: ' Buy with a credit card or existing funds, then seamlessly swap coins at competitive rates without leaving the app.',
-    img: () => <ProtectCrypto />,
+    img: () => <SwapCrypto />,
   },
 ];
 
@@ -76,7 +76,7 @@ const OnboardingStart = () => {
   const continueWithoutAccount = () => {
     haptic('impactLight');
     navigation.navigate('Onboarding', {
-      screen: 'Pin',
+      screen: 'Notifications',
     });
   };
 

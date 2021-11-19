@@ -8,10 +8,11 @@ import {useNavigation} from '@react-navigation/native';
 import Button from '../../components/button/Button';
 import haptic from '../../components/haptic-feedback/haptic';
 import OnboardingStartScreen from './screens/OnboardingStart';
+import NotificationsScreen from './screens/Notifications';
 import PinScreen from './screens/Pin';
-import CreateWallet from './screens/CreateWallet';
-import TermsOfUse from './screens/TermsOfUse';
-import SelectAssets from '../wallet/screens/SelectAssets';
+import CreateWalletScreen from './screens/CreateWallet';
+import TermsOfUseScreen from './screens/TermsOfUse';
+import SelectAssetsScreen from '../wallet/screens/SelectAssets';
 import {useDispatch} from 'react-redux';
 import {AppActions} from '../../store/app';
 import Backup from '../wallet/screens/Backup';
@@ -25,6 +26,7 @@ import {HeaderTitle} from '../../components/styled/Text';
 
 export type OnboardingStackParamList = {
   OnboardingStart: undefined;
+  Notifications: undefined;
   Pin: undefined;
   CreateWallet: undefined;
   TermsOfUse:
@@ -40,6 +42,7 @@ export type OnboardingStackParamList = {
 
 export enum OnboardingScreens {
   ONBOARDING_START = 'OnboardingStart',
+  NOTIFICATIONS = 'Notifications',
   PIN = 'Pin',
   CREATE_WALLET = 'CreateWallet',
   TERMS_OF_USE = 'TermsOfUse',
@@ -94,6 +97,28 @@ const OnboardingStack = () => {
                 onPress={() => {
                   haptic('impactLight');
                   navigation.navigate('Onboarding', {
+                    screen: 'Pin',
+                  });
+                }}>
+                Skip
+              </Button>
+            </HeaderRightContainer>
+          ),
+        }}
+        name={OnboardingScreens.NOTIFICATIONS}
+        component={NotificationsScreen}
+      />
+      <Onboarding.Screen
+        options={{
+          gestureEnabled: false,
+          headerLeft: () => null,
+          headerRight: () => (
+            <HeaderRightContainer>
+              <Button
+                buttonType={'pill'}
+                onPress={() => {
+                  haptic('impactLight');
+                  navigation.navigate('Onboarding', {
                     screen: 'CreateWallet',
                   });
                 }}>
@@ -128,7 +153,7 @@ const OnboardingStack = () => {
           ),
         }}
         name={OnboardingScreens.CREATE_WALLET}
-        component={CreateWallet}
+        component={CreateWalletScreen}
       />
       <Onboarding.Screen
         options={{
@@ -154,7 +179,7 @@ const OnboardingStack = () => {
           ),
         }}
         name={OnboardingScreens.SELECT_ASSETS}
-        component={SelectAssets}
+        component={SelectAssetsScreen}
       />
       <Onboarding.Screen
         options={{
@@ -285,7 +310,7 @@ const OnboardingStack = () => {
           headerRight: () => null,
         }}
         name={OnboardingScreens.TERMS_OF_USE}
-        component={TermsOfUse}
+        component={TermsOfUseScreen}
       />
     </Onboarding.Navigator>
   );
