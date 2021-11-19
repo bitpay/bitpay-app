@@ -14,9 +14,9 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		4A28C9FE104F6E0A4BE35300 /* libPods-BitPayApp-BitPayAppTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AC97D07A9C8650B1D63AB7CB /* libPods-BitPayApp-BitPayAppTests.a */; };
+		5BCF1C352740B8B2006D872E /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5BCF1C342740B8B2006D872E /* BootSplash.storyboard */; };
 		66FFDC8F0B063607A7715F70 /* libPods-BitPayApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C6D2B83099A369CC71732940 /* libPods-BitPayApp.a */; };
 		71BABDA4524A43E98A190C87 /* Heebo-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6D649751C2644FDCA18A5547 /* Heebo-Light.ttf */; };
-		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		D34892F44CAB44409EC335A9 /* Heebo-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F4435EB64D2448EC885B3036 /* Heebo-Black.ttf */; };
 		D9739196BA804EA29143DA96 /* Heebo-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 715670CB346B45A7A9EC2044 /* Heebo-Bold.ttf */; };
 		E6807D9059A643129784A5C3 /* Heebo-Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4DCF32F2D2364E70AD2F1E68 /* Heebo-Thin.ttf */; };
@@ -47,10 +47,10 @@
 		4DCF32F2D2364E70AD2F1E68 /* Heebo-Thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Thin.ttf"; path = "../assets/fonts/Heebo-Thin.ttf"; sourceTree = "<group>"; };
 		539121FA0B57AEB9CC2A75E2 /* Pods-BitPayApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp.debug.xcconfig"; path = "Target Support Files/Pods-BitPayApp/Pods-BitPayApp.debug.xcconfig"; sourceTree = "<group>"; };
 		53F30A480504B51D0EB1920A /* Pods-BitPayApp-BitPayAppTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp-BitPayAppTests.debug.xcconfig"; path = "Target Support Files/Pods-BitPayApp-BitPayAppTests/Pods-BitPayApp-BitPayAppTests.debug.xcconfig"; sourceTree = "<group>"; };
+		5BCF1C342740B8B2006D872E /* BootSplash.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = BootSplash.storyboard; path = BitPayApp/BootSplash.storyboard; sourceTree = "<group>"; };
 		6D649751C2644FDCA18A5547 /* Heebo-Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Light.ttf"; path = "../assets/fonts/Heebo-Light.ttf"; sourceTree = "<group>"; };
 		6EEF4B2FDB87531BFD34B491 /* Pods-BitPayApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp.release.xcconfig"; path = "Target Support Files/Pods-BitPayApp/Pods-BitPayApp.release.xcconfig"; sourceTree = "<group>"; };
 		715670CB346B45A7A9EC2044 /* Heebo-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Bold.ttf"; path = "../assets/fonts/Heebo-Bold.ttf"; sourceTree = "<group>"; };
-		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = BitPayApp/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		9B89A10904D2515DC9F23D8C /* Pods-BitPayApp-BitPayAppTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp-BitPayAppTests.release.xcconfig"; path = "Target Support Files/Pods-BitPayApp-BitPayAppTests/Pods-BitPayApp-BitPayAppTests.release.xcconfig"; sourceTree = "<group>"; };
 		AC97D07A9C8650B1D63AB7CB /* libPods-BitPayApp-BitPayAppTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BitPayApp-BitPayAppTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BCDAB70057C84109A9201936 /* Heebo-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Regular.ttf"; path = "../assets/fonts/Heebo-Regular.ttf"; sourceTree = "<group>"; };
@@ -102,9 +102,9 @@
 			children = (
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
 				13B07FB01A68108700A75B9A /* AppDelegate.m */,
+				5BCF1C342740B8B2006D872E /* BootSplash.storyboard */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
-				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB71A68108700A75B9A /* main.m */,
 			);
 			name = BitPayApp;
@@ -271,11 +271,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				D34892F44CAB44409EC335A9 /* Heebo-Black.ttf in Resources */,
 				D9739196BA804EA29143DA96 /* Heebo-Bold.ttf in Resources */,
 				0F819B33648D4741AAFCAD09 /* Heebo-ExtraBold.ttf in Resources */,
+				5BCF1C352740B8B2006D872E /* BootSplash.storyboard in Resources */,
 				71BABDA4524A43E98A190C87 /* Heebo-Light.ttf in Resources */,
 				03632D4B8959429DA3B141C2 /* Heebo-Medium.ttf in Resources */,
 				F64C0BF216CE4402A51A5ACC /* Heebo-Regular.ttf in Resources */,

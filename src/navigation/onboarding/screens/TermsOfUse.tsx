@@ -1,15 +1,16 @@
 import React, {useState} from 'react';
 import {
   CtaContainerAbsolute,
-  HeaderTitleContainer,
 } from '../../../components/styled/Containers';
-import {H3} from '../../../components/styled/Text';
 import TermsBox from '../components/TermsBox';
 import Button from '../../../components/button/Button';
 import styled from 'styled-components/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import {OnboardingStackParamList} from '../OnboardingStack';
 import {useNavigation} from '@react-navigation/native';
+import {useAndroidBackHandler} from 'react-navigation-backhandler';
+import {useDispatch} from 'react-redux';
+import {AppActions} from '../../../store/app';
 
 type Props = StackScreenProps<OnboardingStackParamList, 'TermsOfUse'>;
 
@@ -33,7 +34,7 @@ let Terms: Array<Term> = [
   {
     id: 2,
     statement:
-      'BitPay cannot recover your funds if you don’t set up a recovery key or if you lose your key',
+      'BitPay cannot recover your funds if you don’t set up a recovery wallet or if you lose your wallet',
     acknowledgement:
       'I understand that if this app is moved to another device or deleted, my crypto funds can only be recovered with the recovery phrase.',
   },
@@ -52,8 +53,14 @@ const TermsOfUseContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
+const TermsContainer = styled.View`
+  padding: 0 10px;
+`;
+
 const TermsOfUse = ({navigation: _navigation, route}: Props) => {
+  useAndroidBackHandler(() => true);
   const navigation = useNavigation();
+  const dispatch = useDispatch();
 
   const [termsList, setTermsList] = useState(Terms);
   _navigation.addListener('transitionStart', () => {
@@ -69,15 +76,17 @@ const TermsOfUse = ({navigation: _navigation, route}: Props) => {
 
   return (
     <TermsOfUseContainer>
-      <HeaderTitleContainer>
-        <H3>Terms of Use</H3>
+      <TermsContainer>
         {termsList.map((term: Term, index: number) => {
           return <TermsBox term={term} emit={setChecked} key={index} />;
         })}
-      </HeaderTitleContainer>
+      </TermsContainer>
       <CtaContainerAbsolute>
         <Button
-          onPress={() => navigation.navigate('Tabs')}
+          onPress={() => {
+            dispatch(AppActions.setOnboardingCompleted());
+            navigation.navigate('Tabs');
+          }}
           buttonStyle={'primary'}
           disabled={agreed.length !== termsList.length}>
           Agree and Continue

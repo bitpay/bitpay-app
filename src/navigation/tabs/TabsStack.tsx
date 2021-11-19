@@ -25,6 +25,7 @@ import TransactButtonIcon from '../../../assets/img/tab-icons/transact-button.sv
 import styled from 'styled-components/native';
 import {BaseText} from '../../components/styled/Text';
 import BottomPopupModal from '../../components/modal/base/bottom-popup/BottomPopupModal';
+import {useAndroidBackHandler} from 'react-navigation-backhandler';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -65,6 +66,7 @@ type TabParamList = {
 const Tab = createBottomTabNavigator<TabParamList>();
 
 const TabsStack = () => {
+  useAndroidBackHandler(() => true);
   const TransactionButton = () => null;
   return (
     <Tab.Navigator
