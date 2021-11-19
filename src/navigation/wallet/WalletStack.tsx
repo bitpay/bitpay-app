@@ -3,7 +3,6 @@ import {createStackNavigator} from '@react-navigation/stack';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
-  headerRightContainerStyle,
 } from '../../constants/NavigationOptions';
 import Backup from './screens/Backup';
 import RecoveryPhrase, {RecoveryPhraseProps} from './screens/RecoveryPhrase';
@@ -33,7 +32,6 @@ const WalletStack = () => {
       initialRouteName={WalletScreens.BACKUP_WALLET}>
       <Wallet.Screen
         options={{
-          headerRightContainerStyle,
           gestureEnabled: false,
         }}
         name={WalletScreens.SELECT_ASSETS}
@@ -41,7 +39,6 @@ const WalletStack = () => {
       />
       <Wallet.Screen
         options={{
-          headerRightContainerStyle,
           gestureEnabled: false,
           headerLeft: () => null,
         }}
@@ -50,7 +47,6 @@ const WalletStack = () => {
       />
       <Wallet.Screen
         options={{
-          headerRightContainerStyle,
           gestureEnabled: false,
           headerLeft: () => null,
         }}
@@ -59,7 +55,6 @@ const WalletStack = () => {
       />
       <Wallet.Screen
         options={{
-          headerRightContainerStyle,
           gestureEnabled: false,
           headerLeft: () => null,
         }}
