@@ -29,23 +29,24 @@ import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 import debounce from 'lodash.debounce';
 import {LogActions} from './store/log';
 
+// ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
   Tabs: undefined;
   BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
   Wallet: NavigatorScreenParams<WalletStackParamList>;
 };
-
-export type NavScreenParams = NavigatorScreenParams<
-  OnboardingStackParamList & BitpayIdStackParamList & WalletStackParamList
->;
-
+// ROOT NAVIGATION CONFIG
 export enum RootStacks {
   ONBOARDING = 'Onboarding',
   TABS = 'Tabs',
   BITPAY_ID = 'BitpayId',
   WALLET = 'Wallet',
 }
+// ROOT NAVIGATION CONFIG
+export type NavScreenParams = NavigatorScreenParams<
+  OnboardingStackParamList & BitpayIdStackParamList & WalletStackParamList
+>;
 
 declare global {
   namespace ReactNavigation {
@@ -53,7 +54,6 @@ declare global {
   }
 }
 
-// Used for navigation within effects as the useNavigation hook is only allowed within components
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 export const navigate = (
   name: keyof RootStackParamList,
@@ -76,16 +76,19 @@ export default () => {
   const appColorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
   const currentRoute = useSelector(({APP}: RootState) => APP.currentRoute);
 
+  // SPLASH SCREEN
   useEffect(() => {
     if (!appIsLoading) {
       RNBootSplash.hide({fade: true});
     }
   }, [appIsLoading]);
 
+  // MAIN APP INIT
   useEffect(() => {
     dispatch(AppEffects.startAppInit());
   }, [dispatch]);
 
+  // THEME
   useEffect(() => {
     function onAppStateChange(status: AppStateStatus) {
       // status === 'active' when the app goes from background to foreground,
@@ -103,6 +106,7 @@ export default () => {
   const scheme = appColorScheme || Appearance.getColorScheme();
   const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
 
+  // ROOT STACKS AND GLOBAL COMPONENTS
   const initialRoute = onboardingCompleted
     ? RootStacks.TABS
     : RootStacks.ONBOARDING;
@@ -114,6 +118,7 @@ export default () => {
         ref={navigationRef}
         theme={theme}
         onReady={() => {
+          // routing to previous route if onboarding
           if (currentRoute && !onboardingCompleted) {
             const [currentStack, params] = currentRoute;
             navigationRef.navigate(currentStack, params);
@@ -127,6 +132,7 @@ export default () => {
           }
         }}
         onStateChange={debounce(navEvent => {
+          // storing current route
           if (navEvent) {
             const {routes} = navEvent;
             const {name, params} = navEvent.routes[routes.length - 1];
