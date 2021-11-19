@@ -1,10 +1,6 @@
 import React, {useState} from 'react';
 import styled from 'styled-components/native';
-import {H3, TextAlign} from '../../../components/styled/Text';
-import {
-  CtaContainerAbsolute,
-  TextContainer,
-} from '../../../components/styled/Containers';
+import {CtaContainerAbsolute} from '../../../components/styled/Containers';
 import CurrencySelectorList from '../../../components/list/CurrencySelectorList';
 import {CurrencyList} from '../../../constants/CurrencySelectionListOptions';
 import Button from '../../../components/button/Button';
@@ -111,7 +107,7 @@ const SelectAssets = () => {
   return (
     <AssetSelectionContainer>
       <CurrencySelectorListContainer>
-        <CurrencySelectorList emit={assetToggled} itemList={currencyList}/>
+        <CurrencySelectorList emit={assetToggled} itemList={currencyList} />
       </CurrencySelectorListContainer>
 
       <CtaContainerAbsolute

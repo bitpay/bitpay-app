@@ -3,15 +3,11 @@ import styled from 'styled-components/native';
 import {
   BaseText,
   H2,
-  H3,
   Paragraph,
   TextAlign,
 } from '../../../components/styled/Text';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
-import {
-  HeaderTitleContainer,
-  WIDTH,
-} from '../../../components/styled/Containers';
+import {WIDTH} from '../../../components/styled/Containers';
 import * as Progress from 'react-native-progress';
 import {Action, Air, NeutralSlate, ProgressBlue} from '../../../styles/colors';
 import Carousel from 'react-native-snap-carousel';
@@ -27,10 +23,12 @@ import {
 import {sleep} from '../../../utils/helper-methods';
 import {AppActions} from '../../../store/app';
 import {useDispatch} from 'react-redux';
-import {startWalletBackupComplete} from '../../../store/wallet/wallet.effects';
+import {WalletActions} from '../../../store/wallet';
+import {navigationRef} from '../../../Root';
 export interface VerifyPhraseProps {
   keyId: string;
   words: string[];
+  isOnboarding?: boolean;
 }
 
 const VerifyPhraseContainer = styled.View`
@@ -81,7 +79,7 @@ const VerifyPhrase = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {
-    params: {keyId, words},
+    params: {keyId, words, isOnboarding},
   } = useRoute<RouteProp<{params: VerifyPhraseProps}>>();
 
   const shuffledWords = useRef<Array<string>>(
@@ -122,9 +120,33 @@ const VerifyPhrase = () => {
       // filter out empty string and compare words against real order
       const compareWords = update.filter(w => w);
       if (words.every((_word, index) => _word === compareWords[index])) {
-        dispatch(startWalletBackupComplete({keyId}));
-
+        dispatch(WalletActions.setBackupComplete(keyId));
         setProgress(1);
+        dispatch(
+          AppActions.showBottomNotificationModal({
+            type: 'success',
+            title: 'Phrase verified',
+            message:
+              'In order to protect your funds from being accessible to hackers and thieves, store this recovery phrase in a safe and secure place.',
+            enableBackdropDismiss: false,
+            actions: [
+              {
+                text: 'OK',
+                action: () => {
+                  if (isOnboarding) {
+                    navigationRef.navigate('Onboarding', {
+                      screen: 'TermsOfUse',
+                    });
+                  } else {
+                    // TODO wallet stack redirection
+                  }
+                },
+
+                primary: true,
+              },
+            ],
+          }),
+        );
       } else {
         dispatch(
           AppActions.showBottomNotificationModal({
@@ -141,6 +163,7 @@ const VerifyPhrase = () => {
                     params: {
                       keyId,
                       words,
+                      isOnboarding,
                     },
                   });
                 },

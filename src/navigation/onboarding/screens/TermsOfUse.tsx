@@ -1,9 +1,7 @@
 import React, {useState} from 'react';
 import {
   CtaContainerAbsolute,
-  HeaderTitleContainer,
 } from '../../../components/styled/Containers';
-import {H3} from '../../../components/styled/Text';
 import TermsBox from '../components/TermsBox';
 import Button from '../../../components/button/Button';
 import styled from 'styled-components/native';

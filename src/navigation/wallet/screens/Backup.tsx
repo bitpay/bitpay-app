@@ -10,8 +10,9 @@ import {
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import {useDispatch} from 'react-redux';
-import {startWalletBackup} from '../../../store/wallet/wallet.effects';
+import {useNavigation} from '@react-navigation/native';
+import {useSelector} from 'react-redux';
+import {RootState} from '../../../store';
 
 const BackupContainer = styled.SafeAreaView`
   flex: 1;
@@ -20,8 +21,17 @@ const BackupContainer = styled.SafeAreaView`
 
 const BackupScreen = () => {
   useAndroidBackHandler(() => true);
-  const dispatch = useDispatch();
-  const gotoBackup = () => dispatch(startWalletBackup({keyId: 'onboarding'}));
+  const navigation = useNavigation();
+  const {id, mnemonic} = useSelector(({WALLET}: RootState) => WALLET.keys[0]);
+  const gotoBackup = () =>
+    navigation.navigate('Onboarding', {
+      screen: 'RecoveryPhrase',
+      params: {
+        keyId: id,
+        words: mnemonic.trim().split(' '),
+        isOnboarding: true,
+      },
+    });
 
   return (
     <BackupContainer>

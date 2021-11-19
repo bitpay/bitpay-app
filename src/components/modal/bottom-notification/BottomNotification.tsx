@@ -18,7 +18,11 @@ export interface BottomNotificationConfig {
   type: 'success' | 'info' | 'warning' | 'error';
   title: string;
   message: string;
-  actions: Array<{text: string; primary?: boolean; action: () => any}>;
+  actions: Array<{
+    text: string;
+    primary?: boolean;
+    action: (rootState: RootState) => any;
+  }>;
   enableBackdropDismiss: boolean;
 }
 
@@ -92,6 +96,7 @@ const Cta = styled.Text`
 
 const BottomNotification = () => {
   const dispatch = useDispatch();
+  const rootState = useSelector((state: RootState) => state);
   const isVisible = useSelector(
     ({APP}: RootState) => APP.showBottomNotificationModal,
   );
@@ -130,7 +135,7 @@ const BottomNotification = () => {
                   haptic('impactLight');
                   dispatch(AppActions.dismissBottomNotificationModal());
                   await sleep(0);
-                  action();
+                  action(rootState);
                 }}>
                 {text.toUpperCase()}
               </Cta>

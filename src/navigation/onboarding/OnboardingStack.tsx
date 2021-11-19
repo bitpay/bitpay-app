@@ -20,7 +20,6 @@ import RecoveryPhrase, {
   RecoveryPhraseProps,
 } from '../wallet/screens/RecoveryPhrase';
 import VerifyPhrase, {VerifyPhraseProps} from '../wallet/screens/VerifyPhrase';
-import {startWalletBackup} from '../../store/wallet/wallet.effects';
 import {HeaderRightContainer} from '../../components/styled/Containers';
 import {HeaderTitle} from '../../components/styled/Text';
 
@@ -191,7 +190,7 @@ const OnboardingStack = () => {
                 buttonType={'pill'}
                 onPress={async () => {
                   haptic('impactLight');
-                  await dispatch(
+                  dispatch(
                     AppActions.showBottomNotificationModal({
                       type: 'warning',
                       title: 'Are you sure?',
@@ -201,8 +200,18 @@ const OnboardingStack = () => {
                       actions: [
                         {
                           text: 'BACKUP YOUR KEY',
-                          action: () =>
-                            dispatch(startWalletBackup({keyId: 'onboarding'})),
+                          action: rootState => {
+                            const key = rootState.WALLET.keys[0];
+                            const {id, mnemonic} = key;
+                            navigation.navigate('Onboarding', {
+                              screen: 'RecoveryPhrase',
+                              params: {
+                                keyId: id,
+                                words: mnemonic.trim().split(' '),
+                                isOnboarding: true,
+                              },
+                            });
+                          },
                           primary: true,
                         },
                         {

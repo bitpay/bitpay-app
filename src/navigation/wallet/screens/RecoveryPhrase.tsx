@@ -19,6 +19,7 @@ import {Platform} from 'react-native';
 export interface RecoveryPhraseProps {
   keyId: string;
   words: string[];
+  isOnboarding?: boolean;
 }
 
 const RecoveryPhraseContainer = styled.View`
@@ -64,7 +65,7 @@ const RecoveryPhrase = () => {
   const ref = useRef(null);
   const navigation = useNavigation();
   const {
-    params: {keyId, words},
+    params: {keyId, words, isOnboarding},
   } = useRoute<RouteProp<{params: RecoveryPhraseProps}>>();
 
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
@@ -77,6 +78,18 @@ const RecoveryPhrase = () => {
       ref.current.snapToItem(0);
     });
   }, [navigation]);
+
+  const next = () => {
+    if (activeSlideIndex === 11) {
+      navigation.navigate(isOnboarding ? 'Onboarding' : 'Wallet', {
+        screen: 'VerifyPhrase',
+        params: {keyId, words, isOnboarding},
+      });
+    } else {
+      // @ts-ignore
+      ref.current.snapToNext();
+    }
+  };
 
   return (
     <RecoveryPhraseContainer>
@@ -128,17 +141,7 @@ const RecoveryPhrase = () => {
           <Button
             buttonStyle={'primary'}
             debounceTime={Platform.OS === 'android' ? 200 : 0}
-            onPress={async () => {
-              if (activeSlideIndex === 11) {
-                navigation.navigate('Onboarding', {
-                  screen: 'VerifyPhrase',
-                  params: {keyId, words},
-                });
-              } else {
-                // @ts-ignore
-                ref.current.snapToNext();
-              }
-            }}>
+            onPress={next}>
             Next
           </Button>
         </CtaContainer>
