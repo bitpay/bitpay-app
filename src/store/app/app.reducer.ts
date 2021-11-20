@@ -1,10 +1,10 @@
-import {AppActionType, AppActionTypes} from './app.types';
-import {Session} from './app.models';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
-import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
-import {BASE_BITPAY_URL, NETWORK} from '../../constants/config';
 import {ColorSchemeName} from 'react-native';
+import {BASE_BITPAY_URL, NETWORK} from '../../constants/config';
+import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
+import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {NavScreenParams, RootStackParamList} from '../../Root';
+import {Session} from './app.models';
+import {AppActionType, AppActionTypes} from './app.types';
 
 type AppReduxPersistBlackList = [
   'appIsLoading',
@@ -18,7 +18,7 @@ export const appReduxPersistBlackList: AppReduxPersistBlackList = [
 ];
 
 export interface AppState {
-  network: 'livenet' | 'testnet';
+  network: 'mainnet' | 'testnet';
   baseBitPayURL: string;
   appIsLoading: boolean;
   onboardingCompleted: boolean;

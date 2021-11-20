@@ -3,17 +3,7 @@ import React, {useState} from 'react';
 import {StyleProp, Text, TextStyle} from 'react-native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../store';
-import {LogEntry, LogLevel} from '../../../store/log/log.models';
-
-const LogDisplay = ({log}: {log: LogEntry}) => {
-  const formattedLevel = LogLevel[log.level].toLowerCase();
-
-  return (
-    <Text>
-      [{log.timestamp}] [{formattedLevel}] {log.message}
-    </Text>
-  );
-};
+import {LogLevel} from '../../../store/log/log.models';
 
 const SessionLogs: React.FC = () => {
   const theme = useTheme();
@@ -23,7 +13,11 @@ const SessionLogs: React.FC = () => {
 
   const filteredLogs = logs
     .filter(log => log.level <= filterLevel)
-    .map(log => <LogDisplay log={log} key={log.timestamp} />);
+    .map(log => {
+      const formattedLevel = LogLevel[log.level].toLowerCase();
+
+      return `[${log.timestamp}] [${formattedLevel}] ${log.message}\n`;
+    });
 
   return <Text style={textStyle}>{filteredLogs}</Text>;
 };

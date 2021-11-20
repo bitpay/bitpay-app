@@ -20,9 +20,9 @@ export enum SettingsScreens {
   SESSION_LOG = 'SessionLog',
 }
 
-const SettingsStack = () => {
-  const Settings = createStackNavigator<SettingsStackParamList>();
+const Settings = createStackNavigator<SettingsStackParamList>();
 
+const SettingsStack = () => {
   return (
     <Settings.Navigator
       initialRouteName={SettingsScreens.HOME}
