@@ -117,7 +117,7 @@ export default () => {
 
   return (
     <SafeAreaProvider>
-      <StatusBar translucent backgroundColor="transparent" />
+      {/*<StatusBar translucent backgroundColor="transparent" />*/}
       <NavigationContainer
         ref={navigationRef}
         theme={theme}
