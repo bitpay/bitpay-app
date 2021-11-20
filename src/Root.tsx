@@ -4,35 +4,38 @@ import {
   NavigatorScreenParams,
 } from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
+import debounce from 'lodash.debounce';
 import React, {useEffect, useState} from 'react';
 import {Appearance, AppState, AppStateStatus, StatusBar} from 'react-native';
+import RNBootSplash from 'react-native-bootsplash';
 import 'react-native-gesture-handler';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {useDispatch, useSelector} from 'react-redux';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
 import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
 import {baseScreenOptions} from './constants/NavigationOptions';
-import RNBootSplash from 'react-native-bootsplash';
 import BitpayIdStack, {
   BitpayIdStackParamList,
 } from './navigation/bitpay-id/BitpayIdStack';
 import OnboardingStack, {
   OnboardingStackParamList,
 } from './navigation/onboarding/OnboardingStack';
+import TabsStack, {
+  TabsStackParamList
+} from './navigation/tabs/TabsStack';
 import WalletStack, {
   WalletStackParamList,
 } from './navigation/wallet/WalletStack';
-import TabsStack from './navigation/tabs/TabsStack';
 import {RootState} from './store';
 import {AppEffects, AppActions} from './store/app';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
-import debounce from 'lodash.debounce';
 import {LogActions} from './store/log';
+import {useDeeplinks} from './utils/hooks';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
-  Tabs: undefined;
+  Tabs: NavigatorScreenParams<TabsStackParamList>;
   BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
   Wallet: NavigatorScreenParams<WalletStackParamList>;
 };
@@ -69,6 +72,7 @@ const Root = createStackNavigator<RootStackParamList>();
 export default () => {
   const dispatch = useDispatch();
   const [, rerender] = useState({});
+  const linking = useDeeplinks();
   const onboardingCompleted = useSelector(
     ({APP}: RootState) => APP.onboardingCompleted,
   );
@@ -117,6 +121,7 @@ export default () => {
       <NavigationContainer
         ref={navigationRef}
         theme={theme}
+        linking={linking}
         onReady={() => {
           // routing to previous route if onboarding
           if (currentRoute && !onboardingCompleted) {

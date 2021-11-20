@@ -39,3 +39,25 @@ This project uses `react-redux` https://react-redux.js.org/ for state management
 ### Storybook
 1. In `src/contants/config.ts` change `APP_LOAD_STORY_BOOK=false` to `APP_LOAD_STORY_BOOK=true`
 2. Run `yarn <platform>` ex: `yarn ios`. Since we set `APP_LOAD_STORY_BOOK=true`, this runs Storybook instead of your actual app.
+
+## Deeplinking
+Test deeplinking via command line with these commands: 
+
+#### iOS
+`npx uri-scheme open bitpay://your/deeplink/path?with=param --ios`
+
+#### Android
+`npx uri-scheme open bitpay://your/deeplink/path?with=param --android`
+
+### Modifying the intent prefix
+If you want to associate the app with a different intent prefix eg. `myapp://`:
+
+1. Open `src/constants/config.ts`
+2. Modify `DEEPLINK_PREFIX` to your desired prefix eg. `myapp` (no colon or slashes)
+3. Update the OS specific configs:
+  #### iOS
+    1. Open `ios/BitPayApp/info.plist`
+    2. Find `CFBundleURLSchemes` and modify the value to your desired prefix eg. `myapp`
+  #### Android
+    1. Open `android/app/src/main/AndroidManifest.xml`
+    2. Locate `<intent-filter><data android:scheme="...">` and modify the value to your desired prefix eg. `myapp`
