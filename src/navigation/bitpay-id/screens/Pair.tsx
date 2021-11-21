@@ -30,7 +30,7 @@ const Pair: React.FC = () => {
             Virtual Card Design: {vcd || 'not sent'}
           </Text>
           <Button
-            title="Home"
+            title="GeneralRoot"
             onPress={() =>
               navigator.navigate(RootStacks.TABS, {
                 screen: TabsScreens.HOME,

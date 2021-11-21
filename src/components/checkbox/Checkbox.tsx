@@ -8,11 +8,13 @@ interface Props {
   onPress: () => any;
   checked: boolean;
   disabled?: boolean;
+  radio?: boolean;
 }
 
 interface BorderProps {
   checked: boolean;
   disabled: boolean | undefined;
+  radio?: boolean;
 }
 
 const Border = styled.View`
@@ -29,30 +31,35 @@ const Border = styled.View`
   bottom: 0;
   left: 0;
   right: 0;
-  border-radius: 5px;
+  border-radius: ${({radio}) => (radio ? '50px' : '5px')};
 `;
 
-const baseStyles = {
+const baseCheckboxStyles = {
   borderRadius: 5,
   width: 30,
   height: 30,
 };
 
-const Checkbox: React.FC<Props> = ({onPress, checked, disabled}) => {
+const baseRadioStyles = {
+  width: 33,
+  height: 33,
+};
+
+const Checkbox: React.FC<Props> = ({onPress, checked, disabled, radio}) => {
+  const baseStyles = radio ? baseRadioStyles : baseCheckboxStyles;
+
   return (
     <RoundedCheckbox
       onPress={() => !disabled && onPress()}
       active={checked}
       uncheckedColor={!disabled ? White : undefined}
       checkedColor={Action}
-      innerStyle={{
-        ...baseStyles,
-      }}
+      innerStyle={{}}
       outerStyle={{
         ...baseStyles,
         borderColor: 'transparent',
       }}>
-      <Border checked={checked} disabled={disabled} />
+      <Border checked={checked} disabled={disabled} radio={radio} />
       <Check />
     </RoundedCheckbox>
   );

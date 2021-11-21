@@ -4,20 +4,15 @@ import {
   baseNavigatorOptions,
   baseScreenOptions,
 } from '../../../constants/NavigationOptions';
-import SessionLog from './SessionLog';
-import SettingsHome from './SettingsHome';
-import ThemeSettings from './Theme';
+import SettingsRoot from './SettingsRoot';
+import {HeaderTitle} from '../../../components/styled/Text';
 
 export type SettingsStackParamList = {
-  Home: undefined;
-  Theme: undefined;
-  SessionLog: undefined;
+  Root: undefined;
 };
 
 export enum SettingsScreens {
-  HOME = 'Home',
-  THEME = 'Theme',
-  SESSION_LOG = 'SessionLog',
+  Root = 'Root',
 }
 
 const Settings = createStackNavigator<SettingsStackParamList>();
@@ -25,31 +20,16 @@ const Settings = createStackNavigator<SettingsStackParamList>();
 const SettingsStack = () => {
   return (
     <Settings.Navigator
-      initialRouteName={SettingsScreens.HOME}
+      initialRouteName={SettingsScreens.Root}
       screenOptions={{
         ...baseNavigatorOptions,
         ...baseScreenOptions,
       }}>
       <Settings.Screen
-        name={SettingsScreens.HOME}
-        component={SettingsHome}
+        name={SettingsScreens.Root}
+        component={SettingsRoot}
         options={{
-          title: 'Settings',
-          headerLeft: () => null,
-        }}
-      />
-      <Settings.Screen
-        name={SettingsScreens.THEME}
-        component={ThemeSettings}
-        options={{
-          title: 'Theme',
-        }}
-      />
-      <Settings.Screen
-        name={SettingsScreens.SESSION_LOG}
-        component={SessionLog}
-        options={{
-          title: 'Session Log',
+          headerTitle: () => <HeaderTitle>Settings</HeaderTitle>,
         }}
       />
     </Settings.Navigator>
