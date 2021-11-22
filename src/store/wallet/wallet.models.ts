@@ -18,7 +18,7 @@ export interface WalletObj {
 
 export interface Key extends IKey {}
 
-export interface ExchangeRateObj {
+export interface ExchangeRate {
   ts?: number;
   rate?: number;
   fetchedOn?: number;

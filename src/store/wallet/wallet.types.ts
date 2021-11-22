@@ -1,4 +1,4 @@
-import {ExchangeRateObj, KeyObj, WalletObj} from './wallet.models';
+import {ExchangeRate, KeyObj, WalletObj} from './wallet.models';
 
 export enum WalletActionTypes {
   SUCCESS_WALLET_STORE_INIT = 'WALLET/SUCCESS_WALLET_STORE_INIT',
@@ -38,7 +38,7 @@ interface setBackupComplete {
 interface successGetRates {
   type: typeof WalletActionTypes.SUCCESS_GET_RATES;
   payload: {
-    rates: ExchangeRateObj;
+    rates: ExchangeRate;
   };
 }
 
