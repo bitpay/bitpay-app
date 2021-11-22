@@ -1,28 +1,30 @@
 module.exports = {
-  'preset': 'react-native',
-  'moduleFileExtensions': [
-    'ts',
-    'tsx',
-    'js',
-    'jsx',
-    'json',
-    'node'
+  preset: 'react-native',
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  setupFiles: [
+    '<rootDir>/node_modules/react-native-gesture-handler/jestSetup.js',
+    '<rootDir>/test/setup.js',
   ],
-  'transformIgnorePatterns': [
+  transformIgnorePatterns: [
     '\\.snap$',
-    'node_modules/(?!(@freakycoder|@react-native|react-native|rn-fetch|redux-persist-filesystem|@react-navigation' +
-    '|@react-native-community|react-navigation|react-navigation-redux-helpers|@sentry))'
+    'node_modules/(?!(@freakycoder|@react-native|react-native|@react-navigation|@react-native-community|react-navigation-backhandler|react-native-gesture-handler))',
   ],
-  'globals': {
+  globals: {
     'ts-jest': {
-      'tsconfig': 'tsconfig.spec.json',
+      tsconfig: 'tsconfig.spec.json',
     },
   },
-  'transform': {
+  transform: {
     '^.+\\.svg$': 'jest-svg-transformer',
     '^.+\\.jsx$': 'babel-jest',
-    '^.+\\.tsx?$': 'ts-jest'
+    '^.+\\.tsx?$': 'ts-jest',
   },
-  'testRegex': '(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$',
-  'cacheDirectory': '.jest/cache',
+  testRegex: '(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$',
+  cacheDirectory: '.jest/cache',
+  setupFilesAfterEnv: ['@testing-library/jest-native/extend-expect'],
+  moduleNameMapper: {
+    '\\.(jpg|ico|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
+      '<rootDir>/test/mock.js',
+    '\\.(css|less)$': '<rootDir>/test/mock.js',
+  },
 };

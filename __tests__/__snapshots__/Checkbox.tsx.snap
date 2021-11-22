@@ -16,7 +16,7 @@ exports[`renders correctly 1`] = `
       "alignItems": "center",
       "borderColor": "transparent",
       "borderRadius": 5,
-      "borderWidth": 1,
+      "borderWidth": 0,
       "height": 30,
       "justifyContent": "center",
       "transform": Array [
@@ -44,17 +44,17 @@ exports[`renders correctly 1`] = `
           "width": 30,
         },
         Object {
-          "backgroundColor": "#2240C4",
+          "backgroundColor": "#FFFFFF",
         },
       ]
     }
   >
     <View
-      checked={true}
+      checked={false}
       style={
         Array [
           Object {
-            "borderColor": "#2240C4",
+            "borderColor": "#434D5A",
             "borderRadius": 5,
             "borderStyle": "solid",
             "borderWidth": 1,

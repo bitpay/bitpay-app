@@ -1,13 +1,12 @@
 import React from 'react';
-import renderer from 'react-test-renderer';
 import Checkbox from '../src/components/checkbox/Checkbox';
-import { Text } from 'react-native';
+import {render} from '@testing-library/react-native';
 
-it('renders correctly', () => {
-  const tree = renderer
-    .create(<Checkbox onPress={(): void => {}} checked={true}>
-      <Text>toggle</Text>
-    </Checkbox>)
-    .toJSON();
-  expect(tree).toMatchSnapshot();
+it('renders correctly', async () => {
+  const mockFn = jest.fn();
+  const {toJSON} = render(
+    <Checkbox onPress={() => mockFn} checked={false} data-testID={'testId'} />,
+  );
+
+  expect(toJSON()).toMatchSnapshot();
 });
