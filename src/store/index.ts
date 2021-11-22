@@ -12,6 +12,10 @@ import {
   bitPayIdReducer,
   bitPayIdReduxPersistBlackList,
 } from './bitpay-id/bitpay-id.reducer';
+import {
+  walletReducer,
+  walletReduxPersistBlackList,
+} from './wallet/wallet.reducer';
 import {logReducer, logReduxPersistBlackList} from './log/log.reducer';
 
 const basePersistConfig = {
@@ -33,6 +37,14 @@ const reducers = {
       blacklist: appReduxPersistBlackList,
     },
     appReducer,
+  ),
+  WALLET: persistReducer(
+    {
+      ...basePersistConfig,
+      key: 'WALLET',
+      blacklist: walletReduxPersistBlackList,
+    },
+    walletReducer,
   ),
   BITPAY_ID: persistReducer(
     {

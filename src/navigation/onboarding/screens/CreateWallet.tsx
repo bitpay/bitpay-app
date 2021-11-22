@@ -9,6 +9,8 @@ import {
   TitleContainer,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
+import {useNavigation} from '@react-navigation/native';
+import {useAndroidBackHandler} from 'react-navigation-backhandler';
 
 const CreateWalletContainer = styled.SafeAreaView`
   flex: 1;
@@ -16,6 +18,10 @@ const CreateWalletContainer = styled.SafeAreaView`
 `;
 
 const PinScreen = () => {
+  useAndroidBackHandler(() => true);
+  const navigation = useNavigation();
+  const gotoSelectAssets = () =>
+    navigation.navigate('Onboarding', {screen: 'SelectAssets'});
   return (
     <CreateWalletContainer>
       <ImageContainer>
@@ -23,19 +29,22 @@ const PinScreen = () => {
       </ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>
-          <H3>Would you like to create or import a wallet?</H3>
+          <H3>Create a new wallet or import an existing wallet</H3>
         </TextAlign>
       </TitleContainer>
       <TextContainer>
         <TextAlign align={'center'}>
           <Paragraph>
-            A wallet, formely known as a key, is a place where you store your
-            assets.
+            Store your assets safely and securely with BitPay's non-custodial
+            wallet. Reminder: you own your keys, so be sure to have a pen and
+            paper handy to write down your 12 words.
           </Paragraph>
         </TextAlign>
       </TextContainer>
       <CtaContainer>
-        <Button buttonStyle={'primary'}>Create a Wallet</Button>
+        <Button buttonStyle={'primary'} onPress={gotoSelectAssets}>
+          Create a BitPay Wallet
+        </Button>
         <Button buttonStyle={'secondary'}>I already have a wallet</Button>
       </CtaContainer>
     </CreateWalletContainer>
