@@ -17,10 +17,6 @@ import {
   walletReduxPersistBlackList,
 } from './wallet/wallet.reducer';
 import {logReducer, logReduxPersistBlackList} from './log/log.reducer';
-import {
-  exchangeRateReducer,
-  exchangeRatesReduxPersistBlackList,
-} from './exchange-rate/exchange-rate.reducer';
 
 const basePersistConfig = {
   storage: AsyncStorage,
@@ -65,14 +61,6 @@ const reducers = {
       blacklist: logReduxPersistBlackList,
     },
     logReducer,
-  ),
-  EXCHANGE_RATES: persistReducer(
-    {
-      ...basePersistConfig,
-      key: 'EXCHANGE_RATES',
-      blacklist: exchangeRatesReduxPersistBlackList,
-    },
-    exchangeRateReducer,
   ),
 };
 
