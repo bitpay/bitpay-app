@@ -3,13 +3,14 @@ import {
   BottomTabNavigationProp,
   createBottomTabNavigator,
 } from '@react-navigation/bottom-tabs';
-import {TouchableOpacity, Button} from 'react-native';
-import {useNavigation, NavigatorScreenParams} from '@react-navigation/native';
+import {Button, TouchableOpacity} from 'react-native';
+import {NavigatorScreenParams, useNavigation} from '@react-navigation/native';
 
 import HomeRoot from './home/HomeStack';
 import WalletRoot from './wallet/WalletStack';
 import CardRoot from './card/CardStack';
-import SettingsRoot, {SettingsStackParamList} from './settings/SettingsStack';
+import SettingsRoot from './settings/SettingsStack';
+import {SettingsStackParamList} from './settings/SettingsStack';
 
 import {SvgProps} from 'react-native-svg';
 import HomeIcon from '../../../assets/img/tab-icons/home.svg';

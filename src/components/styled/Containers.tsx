@@ -58,9 +58,8 @@ export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
 `;
 
 export const Hr = styled.View`
-  border-bottom-color: #ebebeb;
+  border-bottom-color: #ebecee;
   border-bottom-width: 1px;
-  margin: 20px 0;
 `;
 
 // LIST
