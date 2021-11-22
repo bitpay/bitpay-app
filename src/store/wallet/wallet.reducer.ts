@@ -1,4 +1,4 @@
-import {KeyObj, WalletObj} from './wallet.models';
+import {ExchangeRate, KeyObj, WalletObj} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 
 type WalletReduxPersistBlackList = [];
@@ -32,12 +32,14 @@ export interface WalletState {
   createdOn: number;
   keys: KeyObj[];
   wallets: {[key in string]: WalletObj};
+  rates: Array<ExchangeRate>;
 }
 
 const initialState: WalletState = {
   createdOn: Date.now(),
   keys: [],
   wallets: {},
+  rates: [],
 };
 
 export const walletReducer = (
@@ -60,6 +62,14 @@ export const walletReducer = (
       return {
         ...state,
         wallets: {...state.wallets, [id]: updatedWallet},
+      };
+
+    case WalletActionTypes.SUCCESS_GET_RATES:
+      const {rates} = action.payload;
+
+      return {
+        ...state,
+        rates: [...state.rates, rates],
       };
 
     default:

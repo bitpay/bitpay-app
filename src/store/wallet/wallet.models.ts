@@ -17,3 +17,11 @@ export interface WalletObj {
 }
 
 export interface Key extends IKey {}
+
+export interface ExchangeRate {
+  ts?: number;
+  rate?: number;
+  fetchedOn?: number;
+  code?: string;
+  name?: string;
+}

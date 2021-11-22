@@ -15,6 +15,8 @@ import {AppActions} from '../app';
 import {startOnGoingProcessModal} from '../app/app.effects';
 import {navigationRef} from '../../Root';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
+import {BASE_BWS_URL} from '../../constants/config';
+import axios from 'axios';
 
 const BWC = BwcProvider.getInstance();
 const bwcClient = BWC.getClient();
@@ -147,3 +149,13 @@ export const startCreateWalletCredentials =
 
     return credentials;
   };
+
+export const getRates = (): Effect => async dispatch => {
+  try {
+    const {data: rates} = await axios.get(`${BASE_BWS_URL}/v3/fiatrates/`);
+    dispatch(WalletActions.successGetRates(rates));
+  } catch (err) {
+    console.error(err);
+    dispatch(WalletActions.failedGetRates());
+  }
+};
