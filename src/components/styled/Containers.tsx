@@ -89,3 +89,17 @@ export const CurrencyImageContainer = styled.View`
   align-self: center;
   border-radius: 8px;
 `;
+
+// Card
+export const CardGutter = '15px';
+
+interface CardContainerProps {
+  minHeight?: string;
+  width?: string;
+}
+export const CardContainer = styled.View<CardContainerProps>`
+  width: ${({width}: CardContainerProps) => width || '215px'};
+  min-height: ${({minHeight}: CardContainerProps) => minHeight || '250px'};
+  background: #f5f7f8;
+  border-radius: 21px;
+`;
