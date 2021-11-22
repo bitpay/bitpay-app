@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Hr,
   Setting,
   Settings,
   SettingsContainer,
@@ -11,6 +10,7 @@ import Button from '../../../../../components/button/Button';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../../store';
+import {Hr} from '../../../../../components/styled/Containers';
 
 const GeneralSettingsRoot: React.FC = () => {
   const navigation = useNavigation();

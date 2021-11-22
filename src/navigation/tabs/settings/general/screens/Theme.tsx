@@ -3,7 +3,6 @@ import {ColorSchemeName, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {AppActions} from '../../../../../store/app';
 import {
-  Hr,
   Setting,
   Settings,
   SettingsContainer,
@@ -11,6 +10,7 @@ import {
 } from '../../SettingsRoot';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {RootState} from '../../../../../store';
+import {Hr} from '../../../../../components/styled/Containers';
 
 const ThemeSettings: React.FC = () => {
   const dispatch = useDispatch();

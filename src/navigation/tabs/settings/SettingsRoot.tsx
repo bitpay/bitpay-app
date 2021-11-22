@@ -6,6 +6,7 @@ import AngleRight from '../../../../assets/img/angle-right.svg';
 import {View} from 'react-native';
 import {useDispatch} from 'react-redux';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
+import {Hr} from '../../../components/styled/Containers';
 
 interface HomeSetting {
   title: string;
@@ -31,11 +32,6 @@ export const Setting = styled.TouchableOpacity`
   justify-content: space-between;
   align-items: center;
   height: 58px;
-`;
-
-export const Hr = styled.View`
-  border-bottom-color: #ebecee;
-  border-bottom-width: 1px;
 `;
 
 export const SettingTitle = styled(BaseText)`
