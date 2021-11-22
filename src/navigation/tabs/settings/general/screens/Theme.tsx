@@ -24,7 +24,7 @@ const ThemeSettings: React.FC = () => {
   const SETTINGS: {title: string; theme: ColorSchemeName}[] = [
     {title: 'Light Mode', theme: 'light'},
     {title: 'Dark Mode', theme: 'dark'},
-    {title: 'System Mode', theme: null},
+    {title: 'System Default', theme: null},
   ];
 
   return (

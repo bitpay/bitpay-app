@@ -5,7 +5,6 @@ import {
   SettingsContainer,
   SettingTitle,
 } from '../../SettingsRoot';
-import AngleRight from '../../../../../../assets/img/angle-right.svg';
 import Button from '../../../../../components/button/Button';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
@@ -30,7 +29,11 @@ const GeneralSettingsRoot: React.FC = () => {
             onPress={() =>
               navigation.navigate('GeneralSettings', {screen: 'Theme'})
             }>
-            {colorScheme === 'light' ? 'Light Mode' : 'Dark Mode'}
+            {colorScheme === 'light'
+              ? 'Light Mode'
+              : colorScheme === 'dark'
+              ? 'Dark Mode'
+              : 'System Default'}
           </Button>
         </Setting>
         <Hr />
