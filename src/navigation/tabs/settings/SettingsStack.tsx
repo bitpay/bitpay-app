@@ -29,6 +29,7 @@ const SettingsStack = () => {
         name={SettingsScreens.Root}
         component={SettingsRoot}
         options={{
+          headerLeft: () => null,
           headerTitle: () => <HeaderTitle>Settings</HeaderTitle>,
         }}
       />

@@ -54,7 +54,9 @@ const Checkbox: React.FC<Props> = ({onPress, checked, disabled, radio}) => {
       active={checked}
       uncheckedColor={!disabled ? White : undefined}
       checkedColor={Action}
-      innerStyle={{}}
+      innerStyle={{
+        ...baseStyles,
+      }}
       outerStyle={{
         ...baseStyles,
         borderColor: 'transparent',

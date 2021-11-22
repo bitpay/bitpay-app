@@ -30,7 +30,7 @@ export const Setting = styled.TouchableOpacity`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  height: 60px;
+  height: 58px;
 `;
 
 export const Hr = styled.View`
@@ -107,7 +107,7 @@ const SettingsHomeScreen: React.FC = () => {
             </View>
           );
         })}
-        {LINKS.map(({title, link}) => {
+        {LINKS.map(({title, link}, index) => {
           return (
             <View key={title}>
               <Setting
@@ -115,7 +115,7 @@ const SettingsHomeScreen: React.FC = () => {
                 onPress={() => dispatch(openUrlWithInAppBrowser(link))}>
                 <SettingTitle>{title}</SettingTitle>
               </Setting>
-              <Hr />
+              {LINKS.length - 1 !== index && <Hr />}
             </View>
           );
         })}
