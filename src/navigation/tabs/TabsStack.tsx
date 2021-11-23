@@ -1,10 +1,6 @@
-import React, {useState} from 'react';
-import {
-  BottomTabNavigationProp,
-  createBottomTabNavigator,
-} from '@react-navigation/bottom-tabs';
-import {Button, TouchableOpacity} from 'react-native';
-import {NavigatorScreenParams, useNavigation} from '@react-navigation/native';
+import React from 'react';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {NavigatorScreenParams} from '@react-navigation/native';
 
 import HomeRoot from './home/HomeStack';
 import WalletRoot from './wallet/WalletStack';
@@ -23,26 +19,8 @@ import SettingsIcon from '../../../assets/img/tab-icons/settings.svg';
 import SettingsFocusedIcon from '../../../assets/img/tab-icons/settings-focused.svg';
 import TransactButtonIcon from '../../../assets/img/tab-icons/transact-button.svg';
 
-import styled from 'styled-components/native';
-import {BaseText} from '../../components/styled/Text';
-import BottomPopupModal from '../../components/modal/base/bottom-popup/BottomPopupModal';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-
-const TransactButton = styled.View`
-  justify-content: center;
-  align-items: center;
-  flex: 1;
-`;
-
-const TransactModalContainer = styled.View`
-  padding: 22px;
-  min-height: 300px;
-  background: white;
-  justify-content: center;
-  align-items: center;
-  border-top-left-radius: 17px;
-  border-top-right-radius: 17px;
-`;
+import TransactModal from '../../components/modal/transact-menu/TransactMenu';
 
 const Icons: {[key: string]: React.FC<SvgProps>} = {
   Home: HomeIcon,
@@ -105,46 +83,6 @@ const TabsStack = () => {
       <Tab.Screen name={TabsScreens.CARD} component={CardRoot} />
       <Tab.Screen name={TabsScreens.SETTINGS} component={SettingsRoot} />
     </Tab.Navigator>
-  );
-};
-
-const TransactModal = () => {
-  const navigation =
-    useNavigation<BottomTabNavigationProp<TabsStackParamList>>();
-  const [modalVisible, setModalVisible] = useState(false);
-  const hideModal = () => setModalVisible(false);
-  const showModal = () => setModalVisible(true);
-
-  return (
-    <>
-      <TransactButton>
-        <TouchableOpacity onPress={showModal}>
-          <TransactButtonIcon />
-        </TouchableOpacity>
-      </TransactButton>
-      <>
-        <BottomPopupModal isVisible={modalVisible} onBackdropPress={hideModal}>
-          <TransactModalContainer>
-            <BaseText>Transact Button Menu</BaseText>
-            <Button
-              title="Go to Settings"
-              onPress={() => {
-                navigation.navigate(TabsScreens.SETTINGS);
-                hideModal();
-              }}
-            />
-            <Button
-              title="Go to Card"
-              onPress={() => {
-                navigation.navigate(TabsScreens.CARD);
-                hideModal();
-              }}
-            />
-            <Button title="close" onPress={hideModal} />
-          </TransactModalContainer>
-        </BottomPopupModal>
-      </>
-    </>
   );
 };
 
