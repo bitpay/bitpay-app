@@ -48,11 +48,13 @@ const Checkbox: React.FC<Props> = ({onPress, checked, disabled}) => {
       innerStyle={{
         ...baseStyles,
       }}
+      // @ts-ignore --> testing
+      testID="checkbox"
       outerStyle={{
         ...baseStyles,
         borderColor: 'transparent',
       }}>
-      <Border checked={checked} disabled={disabled} />
+      <Border checked={checked} disabled={disabled} testID="checkboxBorder" />
       <Check />
     </RoundedCheckbox>
   );

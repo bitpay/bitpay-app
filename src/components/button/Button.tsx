@@ -141,7 +141,8 @@ const Button = ({
     <ButtonContainer
       onPress={debouncedOnPress}
       disabled={disabled}
-      activeOpacity={ACTIVE_OPACITY}>
+      activeOpacity={ACTIVE_OPACITY}
+      testID={'button'}>
       <Text disabled={disabled}>{children}</Text>
     </ButtonContainer>
   );

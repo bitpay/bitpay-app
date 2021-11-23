@@ -26,6 +26,7 @@ exports[`should render correctly 1`] = `
       "paddingTop": 18,
     }
   }
+  testID="button"
 >
   <Text
     style={
