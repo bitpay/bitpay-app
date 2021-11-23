@@ -10,27 +10,41 @@ import {Appearance, AppState, AppStateStatus, StatusBar} from 'react-native';
 import RNBootSplash from 'react-native-bootsplash';
 import 'react-native-gesture-handler';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
-import {useDispatch, useSelector} from 'react-redux';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
 import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
 import {baseScreenOptions} from './constants/NavigationOptions';
+import {useDispatch, useSelector} from 'react-redux';
+import {RootState} from './store';
+import {AppEffects, AppActions} from './store/app';
+import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
+import {LogActions} from './store/log';
+import {useDeeplinks} from './utils/hooks';
+
 import BitpayIdStack, {
   BitpayIdStackParamList,
 } from './navigation/bitpay-id/BitpayIdStack';
 import OnboardingStack, {
   OnboardingStackParamList,
 } from './navigation/onboarding/OnboardingStack';
-import TabsStack, {
-  TabsStackParamList
-} from './navigation/tabs/TabsStack';
+import TabsStack, {TabsStackParamList} from './navigation/tabs/TabsStack';
 import WalletStack, {
   WalletStackParamList,
 } from './navigation/wallet/WalletStack';
-import {RootState} from './store';
-import {AppEffects, AppActions} from './store/app';
-import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
-import {LogActions} from './store/log';
-import {useDeeplinks} from './utils/hooks';
+import GeneralSettingsStack, {
+  GeneralSettingsStackParamList,
+} from './navigation/tabs/settings/general/GeneralStack';
+import SecuritySettingsStack, {
+  SecuritySettingsStackParamList,
+} from './navigation/tabs/settings/security/SecurityStack';
+import ContactSettingsStack, {
+  ContactSettingsStackParamList,
+} from './navigation/tabs/settings/contacts/ContactsStack';
+import NotificationSettingsStack, {
+  NotificationSettingsStackParamList,
+} from './navigation/tabs/settings/notifications/NotificationsStack';
+import AboutStack, {
+  AboutStackParamList,
+} from './navigation/tabs/settings/about/AboutStack';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -38,6 +52,11 @@ export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabsStackParamList>;
   BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
   Wallet: NavigatorScreenParams<WalletStackParamList>;
+  GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
+  SecuritySettings: NavigatorScreenParams<SecuritySettingsStackParamList>;
+  ContactSettings: NavigatorScreenParams<ContactSettingsStackParamList>;
+  NotificationSettings: NavigatorScreenParams<NotificationSettingsStackParamList>;
+  About: NavigatorScreenParams<AboutStackParamList>;
 };
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
@@ -45,10 +64,23 @@ export enum RootStacks {
   TABS = 'Tabs',
   BITPAY_ID = 'BitpayId',
   WALLET = 'Wallet',
+  // SETTINGS
+  GENERAL_SETTINGS = 'GeneralSettings',
+  SECURITY_SETTINGS = 'SecuritySettings',
+  CONTACT_SETTINGS = 'ContactSettings',
+  NOTIFICATION_SETTINGS = 'NotificationSettings',
+  ABOUT = 'About',
 }
 // ROOT NAVIGATION CONFIG
 export type NavScreenParams = NavigatorScreenParams<
-  OnboardingStackParamList & BitpayIdStackParamList & WalletStackParamList
+  OnboardingStackParamList &
+    BitpayIdStackParamList &
+    WalletStackParamList &
+    GeneralSettingsStackParamList &
+    SecuritySettingsStackParamList &
+    ContactSettingsStackParamList &
+    NotificationSettingsStackParamList &
+    AboutStackParamList
 >;
 
 declare global {
@@ -109,6 +141,10 @@ export default () => {
 
   const scheme = appColorScheme || Appearance.getColorScheme();
   const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
+  StatusBar.setBarStyle(
+    scheme === 'light' ? 'dark-content' : 'light-content',
+    true,
+  );
 
   // ROOT STACKS AND GLOBAL COMPONENTS
   const initialRoute = onboardingCompleted
@@ -117,7 +153,6 @@ export default () => {
 
   return (
     <SafeAreaProvider>
-      {/*<StatusBar translucent backgroundColor="transparent" />*/}
       <NavigationContainer
         ref={navigationRef}
         theme={theme}
@@ -175,6 +210,32 @@ export default () => {
           <Root.Screen
             name={RootStacks.WALLET}
             component={WalletStack}
+            options={{...baseScreenOptions}}
+          />
+          {/* SETTINGS */}
+          <Root.Screen
+            name={RootStacks.GENERAL_SETTINGS}
+            component={GeneralSettingsStack}
+            options={{...baseScreenOptions}}
+          />
+          <Root.Screen
+            name={RootStacks.SECURITY_SETTINGS}
+            component={SecuritySettingsStack}
+            options={{...baseScreenOptions}}
+          />
+          <Root.Screen
+            name={RootStacks.CONTACT_SETTINGS}
+            component={ContactSettingsStack}
+            options={{...baseScreenOptions}}
+          />
+          <Root.Screen
+            name={RootStacks.NOTIFICATION_SETTINGS}
+            component={NotificationSettingsStack}
+            options={{...baseScreenOptions}}
+          />
+          <Root.Screen
+            name={RootStacks.ABOUT}
+            component={AboutStack}
             options={{...baseScreenOptions}}
           />
         </Root.Navigator>
