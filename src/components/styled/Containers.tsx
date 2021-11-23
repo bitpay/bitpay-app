@@ -1,6 +1,12 @@
-import styled from 'styled-components/native';
+import styled, {css} from 'styled-components/native';
 import {Dimensions} from 'react-native';
-const WIDTH = Dimensions.get('window').width;
+export const WIDTH = Dimensions.get('window').width;
+
+// Nav
+export const HeaderRightContainer = styled.View`
+  height: 50px;
+  margin-right: 10px;
+`;
 
 export const ImageContainer = styled.View`
   margin: 10px 0;
@@ -30,37 +36,41 @@ export const SubTextContainer = styled.View`
 `;
 
 export const CtaContainer = styled.View`
-  flex: 1;
   padding: 10px;
   align-self: stretch;
   flex-direction: column;
   margin-top: 30px;
 `;
 
-export const CtaContainerAbsolute = styled.View`
-  padding: 10px;
+export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
+  padding: 15px;
   position: absolute;
-  bottom: 10px;
+  bottom: 0;
   left: 0;
   right: 0;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  ${({background}) =>
+    background &&
+    css`
+      background: white;
+    `};
 `;
 
 export const Hr = styled.View`
-  border-bottom-color: #ebebeb;
+  border-bottom-color: #ebecee;
   border-bottom-width: 1px;
-  margin: 20px 0;
 `;
 
 // LIST
 export const ListContainer = styled.View`
   flex: 1;
-  width: 100%;
 `;
 
-export const RowContainer = styled.View`
-  flex: 1;
+export const RowContainer = styled.TouchableOpacity`
   flex-direction: row;
-  padding: 10px;
+  margin: 10px 0;
+  padding: 0 10px 0 10px;
 `;
 
 export const RowDetailsContainer = styled.View`
@@ -77,4 +87,18 @@ export const CurrencyImageContainer = styled.View`
   justify-content: center;
   align-self: center;
   border-radius: 8px;
+`;
+
+// Card
+export const CardGutter = '15px';
+
+interface CardContainerProps {
+  minHeight?: string;
+  width?: string;
+}
+export const CardContainer = styled.View<CardContainerProps>`
+  width: ${({width}: CardContainerProps) => width || '215px'};
+  min-height: ${({minHeight}: CardContainerProps) => minHeight || '250px'};
+  background: #f5f7f8;
+  border-radius: 21px;
 `;
