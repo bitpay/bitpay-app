@@ -114,3 +114,7 @@ export type Effect<ReturnType = void> = ThunkAction<
 >;
 
 export default getStore;
+
+export function configureTestStore(initialState: any) {
+  return createStore(rootReducer, initialState);
+}

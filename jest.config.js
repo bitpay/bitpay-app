@@ -7,7 +7,7 @@ module.exports = {
   ],
   transformIgnorePatterns: [
     '\\.snap$',
-    'node_modules/(?!(@freakycoder|@react-native|react-native|@react-navigation|@react-native-community|react-navigation-backhandler|react-native-gesture-handler))',
+    'node_modules/(?!(@freakycoder|@react-native|react-native|@react-navigation|react-navigation-backhandler|react-native-gesture-handler))',
   ],
   globals: {
     'ts-jest': {
@@ -27,4 +27,5 @@ module.exports = {
       '<rootDir>/test/mock.js',
     '\\.(css|less)$': '<rootDir>/test/mock.js',
   },
+  resetMocks: true,
 };
