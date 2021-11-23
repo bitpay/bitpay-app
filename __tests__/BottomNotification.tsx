@@ -39,7 +39,7 @@ describe('Bottom Notification Modal', () => {
         <BottomNotification />
       </Provider>,
     );
-    await waitFor(() => expect(toJSON()).toMatchSnapshot());
+    expect(toJSON()).toMatchSnapshot();
   });
 
   it('should display all the details', async () => {
