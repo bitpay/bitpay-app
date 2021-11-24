@@ -27,7 +27,7 @@ export const startGetSession =
   };
 
 export const startAppInit =
-  (): Effect => async (dispatch, getState: () => RootState) => {
+  (): Effect => async (dispatch, _getState: () => RootState) => {
     try {
       dispatch(LogActions.clear());
       dispatch(LogActions.info('Initializing app...'));

@@ -8,7 +8,7 @@ import {AppIdentity} from '../../store/app/app.models';
 const useAppIdentity = (): {identity?: AppIdentity; error?: any} => {
   const dispatch = useDispatch();
   const logger = useLogger();
-  const { APP } = useSelector((root: RootState) => root);
+  const {APP} = useSelector((root: RootState) => root);
 
   let identity = APP.identity[APP.network];
 

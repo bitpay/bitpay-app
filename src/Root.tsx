@@ -50,7 +50,7 @@ import useAppIdentity from './utils/hooks/useAppIdentity';
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
-  Tabs: NavigatorScreenParams<TabsStackParamList>;
+  Tabs: NavigatorScreenParams<TabsStackParamList> | undefined;
   BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
   Wallet: NavigatorScreenParams<WalletStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
