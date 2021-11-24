@@ -1,6 +1,6 @@
 import {ColorSchemeName} from 'react-native';
 import {Network} from '../../constants';
-import {BASE_BITPAY_URL, NETWORK} from '../../constants/config';
+import {BASE_BITPAY_URLS} from '../../constants/config';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {NavScreenParams, RootStackParamList} from '../../Root';
@@ -20,7 +20,7 @@ export const appReduxPersistBlackList: AppReduxPersistBlackList = [
 
 export interface AppState {
   identity: {
-    [key in Network]: AppIdentity | undefined;
+    [key in Network]: AppIdentity;
   };
   network: Network;
   baseBitPayURL: string;
@@ -37,11 +37,19 @@ export interface AppState {
 
 const initialState: AppState = {
   identity: {
-    [Network.livenet]: undefined,
-    [Network.testnet]: undefined,
+    [Network.livenet]: {
+      priv: '',
+      pub: '',
+      sin: '',
+    },
+    [Network.testnet]: {
+      priv: '',
+      pub: '',
+      sin: '',
+    },
   },
-  network: Network.testnet,
-  baseBitPayURL: BASE_BITPAY_URL,
+  network: Network.livenet,
+  baseBitPayURL: BASE_BITPAY_URLS[Network.livenet],
   appIsLoading: true,
   onboardingCompleted: false,
   session: undefined,

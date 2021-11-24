@@ -45,6 +45,7 @@ import NotificationSettingsStack, {
 import AboutStack, {
   AboutStackParamList,
 } from './navigation/tabs/settings/about/AboutStack';
+import useAppIdentity from './utils/hooks/useAppIdentity';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -102,6 +103,7 @@ export const navigate = (
 const Root = createStackNavigator<RootStackParamList>();
 
 export default () => {
+  useAppIdentity();
   const dispatch = useDispatch();
   const [, rerender] = useState({});
   const linking = useDeeplinks();

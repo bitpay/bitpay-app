@@ -1,6 +1,10 @@
+import {Network} from '.';
+
 // GENERAL
-export const NETWORK = 'testnet';
-export const BASE_BITPAY_URL = 'https://test.bitpay.com';
+export const BASE_BITPAY_URLS = {
+  [Network.livenet]: 'https://bitpay.com',
+  [Network.testnet]: 'https://test.bitpay.com',
+};
 export const DEEPLINK_PREFIX = 'bitpay';
 
 // BWC
