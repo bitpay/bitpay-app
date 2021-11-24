@@ -1,3 +1,4 @@
+import axios from 'axios';
 import {Network} from '../constants';
 import {BASE_BITPAY_URLS} from '../constants/config';
 import {AppIdentity} from '../store/app/app.models';
@@ -14,7 +15,6 @@ export class BitPayApi {
     [k: string]: BitPayApi;
   } = {};
 
-  // required properties
   /**
    * Required. Used to determine the API endpoint.
    */
@@ -35,7 +35,11 @@ export class BitPayApi {
    */
   private token: string | null = null;
 
-  private constructor(network: Network, identity: AppIdentity, config?: BitPayApiConfig) {
+  private constructor(
+    network: Network,
+    identity: AppIdentity,
+    config?: BitPayApiConfig,
+  ) {
     this.network = network;
     this.identity = identity;
 
@@ -44,15 +48,19 @@ export class BitPayApi {
 
   /**
    * Initializes the API for the given network and sets the identity keys.
-   * @param network 
-   * @param identity 
+   * @param network
+   * @param identity
    * @param config API options.
    * @param config.baseUrl Override the default API base URL.
    * @param config.token Update the API token.
    * @param config.identity Update the API identity.
-   * @returns 
+   * @returns
    */
-  static init(network: Network, identity: AppIdentity, config?: BitPayApiConfig) {
+  static init(
+    network: Network,
+    identity: AppIdentity,
+    config?: BitPayApiConfig,
+  ) {
     if (!BitPayApi.instances[network]) {
       BitPayApi.instances[network] = new BitPayApi(network, identity, config);
     }
@@ -61,8 +69,8 @@ export class BitPayApi {
   }
 
   /**
-   * Get the API instance for the provided network. Requires the API to first be initialized for that network. 
-   * @param network 
+   * Get the API instance for the provided network. Requires the API to first be initialized for that network.
+   * @param network
    * @returns The API instance for the provided network.
    */
   static getInstance(network: Network) {
@@ -75,10 +83,12 @@ export class BitPayApi {
     return api;
   }
 
-  get apiUrl(): `${string}/api/v2` {
-    const host = this.baseUrl || BASE_BITPAY_URLS[this.network];
+  get host(): string {
+    return this.baseUrl || BASE_BITPAY_URLS[this.network];
+  }
 
-    return `${host}/api/v2`;
+  get apiUrl(): `${string}/api/v2` {
+    return `${this.host}/api/v2`;
   }
 
   /**
@@ -90,7 +100,7 @@ export class BitPayApi {
    * @returns The current API instance.
    */
   use(config: BitPayApiConfig = {}) {
-    const { baseUrl, token, identity } = config;
+    const {baseUrl, token, identity} = config;
 
     if (token) {
       this.token = token;
@@ -105,6 +115,17 @@ export class BitPayApi {
     }
 
     return this;
+  }
+
+  async fetchSession() {
+    try {
+      const {data: session} = await axios.get(`${this.host}/auth/session`);
+
+      return session;
+    } catch (err) {
+      console.log('err', err);
+      throw err;
+    }
   }
 }
 

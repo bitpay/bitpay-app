@@ -2,6 +2,20 @@ import {AppActions} from '../app/';
 import {Effect} from '../index';
 import {BitPayIdActions} from './index';
 
+import BitPayApi from '../../lib/bitpay-api';
+
+export const startFetchSession = (): Effect => async (dispatch, getState) => {
+  try {
+    const {network} = getState().APP;
+    const api = BitPayApi.getInstance(network);
+    const session = await api.fetchSession();
+
+    dispatch(BitPayIdActions.successFetchSession(session));
+  } catch (err) {
+    dispatch(BitPayIdActions.failedFetchSession());
+  }
+};
+
 export const startLogin =
   ({email, password}: {email: string; password: string}): Effect =>
   async (dispatch, getState) => {

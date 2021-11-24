@@ -1,18 +1,9 @@
 import {ColorSchemeName} from 'react-native';
-import {AppIdentity, Session} from './app.models';
+import {AppIdentity} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
-
-export const successGetSession = (session: Session): AppActionType => ({
-  type: AppActionTypes.SUCCESS_GET_SESSION,
-  payload: session,
-});
-
-export const failedGetSession = (): AppActionType => ({
-  type: AppActionTypes.FAILED_GET_SESSION,
-});
 
 export const successAppInit = (): AppActionType => ({
   type: AppActionTypes.SUCCESS_APP_INIT,

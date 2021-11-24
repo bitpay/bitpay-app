@@ -1,9 +1,20 @@
 import {Network} from '../../constants';
-import {User} from './bitpay-id.models';
+import {Session, User} from './bitpay-id.models';
 
 export enum BitPayIdActionTypes {
+  SUCCESS_FETCH_SESSION = 'BitPayId/SUCCESS_FETCH_SESSION',
+  FAILED_FETCH_SESSION = 'BitPayId/FAILED_FETCH_SESSION',
   SUCCESS_LOGIN = 'BitPayId/SUCCESS_LOGIN',
   FAILED_LOGIN = 'BitPayId/FAILED_LOGIN',
+}
+
+interface SuccessFetchSession {
+  type: typeof BitPayIdActionTypes.SUCCESS_FETCH_SESSION;
+  payload: {session: Session};
+}
+
+interface FailedFetchSession {
+  type: typeof BitPayIdActionTypes.FAILED_FETCH_SESSION;
 }
 
 interface SuccessLogin {
@@ -16,5 +27,7 @@ interface FailedLogin {
 }
 
 export type BitPayIdActionType =
+  | SuccessFetchSession
+  | FailedFetchSession
   | SuccessLogin
   | FailedLogin;

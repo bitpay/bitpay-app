@@ -1,4 +1,3 @@
-import axios from 'axios';
 import BitAuth from 'bitauth';
 import {Linking} from 'react-native';
 import InAppBrowser, {
@@ -13,22 +12,7 @@ import {RootState, Effect} from '../index';
 import {LogActions} from '../log';
 import {startWalletStoreInit} from '../wallet/wallet.effects';
 import {AppActions} from './';
-import {AppIdentity, Session} from './app.models';
-
-export const startGetSession =
-  (): Effect => async (dispatch, getState: () => RootState) => {
-    const store = getState();
-
-    try {
-      const {data: session} = await axios.get<Session>(
-        `${store.APP.baseBitPayURL}/auth/session`,
-      );
-      dispatch(AppActions.successGetSession(session));
-    } catch (err) {
-      console.error(err);
-      dispatch(AppActions.failedGetSession());
-    }
-  };
+import {AppIdentity} from './app.models';
 
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
@@ -90,7 +74,10 @@ const initializeAppIdentity = (): Effect<AppIdentity> => (dispatch, getState) =>
  * @returns void
  */
 const initializeBitPayApi = (network: Network, identity: AppIdentity): Effect => () => {
-  BitPayApi.init(network, identity, { token: '', baseUrl: BASE_BITPAY_URLS[network] });
+  BitPayApi.init(network, identity, {
+    token: '',
+    baseUrl: BASE_BITPAY_URLS[network]
+  });
 };
 
 export const startOnGoingProcessModal =

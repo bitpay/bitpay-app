@@ -1,8 +1,3 @@
-export interface Session {
-  csrfToken: string;
-  isAuthenticated: boolean;
-}
-
 export interface AppIdentity {
   /**
    * Timestamp when this identity was generated, in seconds.
