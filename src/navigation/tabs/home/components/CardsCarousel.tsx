@@ -1,31 +1,77 @@
 import React, {ReactNode, useRef} from 'react';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
-import BuyGiftCards from './empty-states/BuyGiftCards';
 import Carousel from 'react-native-snap-carousel';
 import {WIDTH} from '../../../../components/styled/Containers';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CreateWallet from './empty-states/CreateWallet';
-import GetMastercard from './empty-states/GetMastercard';
-import ConnectCoinbase from './empty-states/ConnectCoinbase';
 import styled from 'styled-components/native';
+
+import HomeCard from '../../../../components/home-card/HomeCard';
+import {CurrencyInfoList} from './CurrencyList';
+
+const HeaderImg = styled.View`
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+`;
 
 const CarouselContainer = styled.View`
   margin: 10px 0;
 `;
 
+const CurrencyCardComponet = (currency: string) => {
+  const _onCTAPress = () => {
+    /** TODO: Redirect me */
+  };
+
+  const currencyInfo = CurrencyInfoList.find(
+    ({id}: {id: string}) => id === currency,
+  );
+
+  const HeaderComponent = (
+    <HeaderImg>{currencyInfo && currencyInfo.img()}</HeaderImg>
+  );
+
+  return (
+    <>
+      {currencyInfo && (
+        <HomeCard
+          header={HeaderComponent}
+          body={{header: currencyInfo.mainLabel, price: 'TODO$'}}
+          footer={{
+            onCTAPress: _onCTAPress,
+          }}
+        />
+      )}
+    </>
+  );
+};
+
 const CardsCarousel = () => {
-  const cardsList = [];
+  const cardsList: Array<ReactNode | null> = [];
   const wallets = useSelector(({WALLET}: RootState) => WALLET.wallets);
   const ref = useRef(null);
 
-  // Empty State
   if (wallets && !Object.keys(wallets).length) {
     cardsList.push(() => <CreateWallet />);
-    cardsList.push(() => <GetMastercard />);
-    cardsList.push(() => <ConnectCoinbase />);
-    cardsList.push(() => <BuyGiftCards />);
   }
+
+  Object.values(wallets).map((wallets: any) => {
+    const {assets} = wallets;
+    if (!assets.length) {
+      cardsList.push(() => <CreateWallet />);
+      return;
+    }
+
+    assets &&
+      assets.map((asset: any) => {
+        cardsList.push(() => CurrencyCardComponet(asset.coin));
+      });
+
+    cardsList.push(() => <CreateWallet />);
+  });
 
   const _renderItem = ({item}: {item: ReactNode}) => {
     return <>{item()}</>;
