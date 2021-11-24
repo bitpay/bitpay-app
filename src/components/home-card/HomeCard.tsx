@@ -2,7 +2,7 @@ import * as React from 'react';
 import {ReactElement, ReactNode} from 'react';
 import styled from 'styled-components/native';
 import {Black, SlateDark, White} from '../../styles/colors';
-import Arrow from '../../../assets/img/forward-arrow.svg';
+import Arrow from '../../../assets/img/arrow-right.svg';
 import Haptic from '../haptic-feedback/haptic';
 import {CardGutter} from '../styled/Containers';
 import Card from '../card/Card';
