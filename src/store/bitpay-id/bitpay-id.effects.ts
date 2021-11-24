@@ -1,16 +1,17 @@
-import {Effect} from '../index';
 import {AppActions} from '../app/';
+import {Effect} from '../index';
 import {BitPayIdActions} from './index';
 
 export const startLogin =
   ({email, password}: {email: string; password: string}): Effect =>
-  async dispatch => {
+  async (dispatch, getState) => {
+    const { network } = getState().APP;
     try {
       console.log(email, password);
       await dispatch(
-        BitPayIdActions.successLogin({
+        BitPayIdActions.successLogin(network, {
           email: 'jwhite@bitpay.com',
-          isVerified: true,
+          userSettings: {}
         }),
       );
       dispatch(AppActions.setOnboardingCompleted());
