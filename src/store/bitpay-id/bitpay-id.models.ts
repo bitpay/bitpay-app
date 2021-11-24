@@ -1,4 +1,11 @@
-export interface Account {
+export interface User {
   email: string;
-  isVerified: boolean;
+  eid?: string;
+  familyName?: string,
+  givenName?: string,
+  userSettings: {
+    acknowledgePrivacyNotice?: boolean,
+    agreedCardholderAgreement?: boolean,
+    optInEmailMarketing?: boolean,
+  },
 }

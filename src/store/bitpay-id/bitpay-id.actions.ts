@@ -1,9 +1,10 @@
 import {BitPayIdActionTypes, BitPayIdActionType} from './bitpay-id.types';
-import {Account} from './bitpay-id.models';
+import {User} from './bitpay-id.models';
+import {Network} from '../../constants';
 
-export const successLogin = (account: Account): BitPayIdActionType => ({
+export const successLogin = (network: Network, user: User): BitPayIdActionType => ({
   type: BitPayIdActionTypes.SUCCESS_LOGIN,
-  payload: account,
+  payload: { network: network, user },
 });
 
 export const failedLogin = (): BitPayIdActionType => ({

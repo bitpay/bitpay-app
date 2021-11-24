@@ -1,14 +1,27 @@
 import {BitPayIdActionTypes, BitPayIdActionType} from './bitpay-id.types';
-import {Account} from './bitpay-id.models';
+import {User} from './bitpay-id.models';
+import { Network } from '../../constants';
 
 export const bitPayIdReduxPersistBlackList = [];
 
 export interface BitPayIdState {
-  account: Account | undefined;
+  apiToken: {
+    [key in Network]: string | null | undefined
+  };
+  user: {
+    [key in Network]: User | null
+  }
 }
 
 const initialState: BitPayIdState = {
-  account: undefined,
+  apiToken: {
+    [Network.mainnet]: null,
+    [Network.testnet]: null
+  },
+  user: {
+    [Network.mainnet]: null,
+    [Network.testnet]: null
+  }
 };
 
 export const bitPayIdReducer = (
@@ -17,7 +30,13 @@ export const bitPayIdReducer = (
 ): BitPayIdState => {
   switch (action.type) {
     case BitPayIdActionTypes.SUCCESS_LOGIN:
-      return {...state, account: action.payload};
+      return {
+        ...state,
+        user: {
+          ...state.user,
+          [action.payload.network]: action.payload.user
+        }
+      };
 
     default:
       return state;

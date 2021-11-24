@@ -1,4 +1,5 @@
-import {Account} from './bitpay-id.models';
+import {Network} from '../../constants';
+import {User} from './bitpay-id.models';
 
 export enum BitPayIdActionTypes {
   SUCCESS_LOGIN = 'BitPayId/SUCCESS_LOGIN',
@@ -7,11 +8,13 @@ export enum BitPayIdActionTypes {
 
 interface SuccessLogin {
   type: typeof BitPayIdActionTypes.SUCCESS_LOGIN;
-  payload: Account;
+  payload: { network: Network, user: User};
 }
 
 interface FailedLogin {
   type: typeof BitPayIdActionTypes.FAILED_LOGIN;
 }
 
-export type BitPayIdActionType = SuccessLogin | FailedLogin;
+export type BitPayIdActionType =
+  | SuccessLogin
+  | FailedLogin;
