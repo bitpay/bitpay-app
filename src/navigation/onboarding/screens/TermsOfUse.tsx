@@ -1,7 +1,5 @@
 import React, {useState} from 'react';
-import {
-  CtaContainerAbsolute,
-} from '../../../components/styled/Containers';
+import {CtaContainerAbsolute} from '../../../components/styled/Containers';
 import TermsBox from '../components/TermsBox';
 import Button from '../../../components/button/Button';
 import styled from 'styled-components/native';

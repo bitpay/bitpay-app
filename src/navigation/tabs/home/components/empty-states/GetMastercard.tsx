@@ -22,7 +22,7 @@ const GetMastercard = () => {
   };
   return (
     <HomeCard
-      backgroundImg={() => <BitPayBBackgroundImg/>}
+      backgroundImg={() => <BitPayBBackgroundImg />}
       header={HeaderComponent}
       body={{description: 'Get the BitPay prepaid Mastercard®'}}
       footer={{

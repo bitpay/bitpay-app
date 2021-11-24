@@ -16,7 +16,7 @@ const HeaderComponent = (
   </HeaderImg>
 );
 
-const ConnectCoinbaseCard = () => {
+const ConnectCoinbase = () => {
   const _onCTAPress = () => {
     /** TODO: Redirect me */
   };
@@ -31,4 +31,4 @@ const ConnectCoinbaseCard = () => {
   );
 };
 
-export default ConnectCoinbaseCard;
+export default ConnectCoinbase;

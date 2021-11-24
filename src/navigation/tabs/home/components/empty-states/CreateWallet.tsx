@@ -1,7 +1,7 @@
 import React from 'react';
 import HomeCard from '../../../../../components/home-card/HomeCard';
 
-const CreateWalletCard = () => {
+const CreateWallet = () => {
   const _onCTAPress = () => {
     /** TODO: Redirect me */
   };
@@ -15,4 +15,4 @@ const CreateWalletCard = () => {
   );
 };
 
-export default CreateWalletCard;
+export default CreateWallet;
