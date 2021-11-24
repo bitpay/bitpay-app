@@ -12,6 +12,7 @@ export interface BitPayIdState {
   user: {
     [key in Network]: User | null;
   };
+  loginStatus: 'success' | 'failed' | null;
 }
 
 const initialState: BitPayIdState = {
@@ -27,6 +28,7 @@ const initialState: BitPayIdState = {
     [Network.mainnet]: null,
     [Network.testnet]: null,
   },
+  loginStatus: null,
 };
 
 export const bitPayIdReducer = (
@@ -43,10 +45,23 @@ export const bitPayIdReducer = (
     case BitPayIdActionTypes.SUCCESS_LOGIN:
       return {
         ...state,
+        loginStatus: 'success',
         user: {
           ...state.user,
-          [action.payload.network]: action.payload.user
-        }
+          [action.payload.network]: action.payload.user,
+        },
+      };
+
+    case BitPayIdActionTypes.FAILED_LOGIN:
+      return {
+        ...state,
+        loginStatus: 'failed',
+      };
+
+    case BitPayIdActionTypes.RESET_LOGIN:
+      return {
+        ...state,
+        loginStatus: null,
       };
 
     default:

@@ -6,6 +6,7 @@ export enum BitPayIdActionTypes {
   FAILED_FETCH_SESSION = 'BitPayId/FAILED_FETCH_SESSION',
   SUCCESS_LOGIN = 'BitPayId/SUCCESS_LOGIN',
   FAILED_LOGIN = 'BitPayId/FAILED_LOGIN',
+  RESET_LOGIN = 'BitPayId/RESET_LOGIN',
 }
 
 interface SuccessFetchSession {
@@ -19,15 +20,20 @@ interface FailedFetchSession {
 
 interface SuccessLogin {
   type: typeof BitPayIdActionTypes.SUCCESS_LOGIN;
-  payload: { network: Network, user: User};
+  payload: {network: Network; user: User; session: Session};
 }
 
 interface FailedLogin {
   type: typeof BitPayIdActionTypes.FAILED_LOGIN;
 }
 
+interface ResetLogin {
+  type: typeof BitPayIdActionTypes.RESET_LOGIN;
+}
+
 export type BitPayIdActionType =
   | SuccessFetchSession
   | FailedFetchSession
   | SuccessLogin
-  | FailedLogin;
+  | FailedLogin
+  | ResetLogin;

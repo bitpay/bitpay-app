@@ -1,9 +1,9 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import Button from '../../../components/button/Button';
 import {StackScreenProps} from '@react-navigation/stack';
 import {BitpayIdStackParamList} from '../BitpayIdStack';
-import {useDispatch} from 'react-redux';
-import {BitPayIdEffects} from '../../../store/bitpay-id';
+import {useDispatch, useSelector} from 'react-redux';
+import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import styled from 'styled-components/native';
 import {BaseText} from '../../../components/styled/Text';
 import {useForm, Controller} from 'react-hook-form';
@@ -11,6 +11,7 @@ import BoxInput from '../../../components/form/BoxInput';
 import {SlateDark} from '../../../styles/colors';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import {RootState} from '../../../store';
 
 type Props = StackScreenProps<BitpayIdStackParamList, 'LoginSignup'>;
 
@@ -70,15 +71,33 @@ const schema = yup.object().shape({
 });
 
 const LoginScreen = ({navigation, route}: Props) => {
+  const dispatch = useDispatch();
+  const {session, loginStatus} = useSelector(
+    ({BITPAY_ID}: RootState) => BITPAY_ID,
+  );
   const {
     control,
     handleSubmit,
     formState: {errors},
   } = useForm({resolver: yupResolver(schema)});
 
-  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(BitPayIdEffects.startFetchSession());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (loginStatus === 'success') {
+      navigation.navigate('Profile');
+      dispatch(BitPayIdActions.resetLogin());
+    }
+  }, [dispatch, loginStatus, navigation]);
 
   const onSubmit = (formData: {email: string; password: string}) => {
+    if (!session || !session.csrfToken) {
+      console.log('CSRF token not found.');
+      return;
+    }
+
     const action =
       context === 'login'
         ? BitPayIdEffects.startLogin(formData)

@@ -2,6 +2,7 @@ import axios from 'axios';
 import {Network} from '../constants';
 import {BASE_BITPAY_URLS} from '../constants/config';
 import {AppIdentity} from '../store/app/app.models';
+import {hashPassword} from '../utils/password';
 
 interface BitPayApiConfig {
   token?: string;
@@ -126,6 +127,37 @@ export class BitPayApi {
       console.log('err', err);
       throw err;
     }
+  }
+
+  async login(email: string, password: string, csrfToken: string) {
+    const hashedPassword = hashPassword(password);
+
+    const body = {
+      email,
+      hashedPassword,
+      authSource: '',
+    };
+
+    if (!hashedPassword) {
+      return {accessTypes: []};
+    }
+
+    const config = {
+      headers: {
+        'x-csrf-token': csrfToken,
+      },
+    };
+
+    const {data} = await axios.post<{
+      /**
+       * @param merchant User has merchant capabilities.
+       * @param visaCard User has any BitPay cards.
+       * @param visaManagement Deprecated.
+       */
+      accessTypes: 'merchant' | 'visaCard' | 'visaManagement'[];
+    }>(`${this.host}/auth/login`, body, config);
+
+    return data;
   }
 }
 

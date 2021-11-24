@@ -1,8 +1,7 @@
+import BitPayApi from '../../lib/bitpay-api';
 import {AppActions} from '../app/';
 import {Effect} from '../index';
 import {BitPayIdActions} from './index';
-
-import BitPayApi from '../../lib/bitpay-api';
 
 export const startFetchSession = (): Effect => async (dispatch, getState) => {
   try {
@@ -19,16 +18,22 @@ export const startFetchSession = (): Effect => async (dispatch, getState) => {
 export const startLogin =
   ({email, password}: {email: string; password: string}): Effect =>
   async (dispatch, getState) => {
-    const { network } = getState().APP;
     try {
-      console.log(email, password);
-      await dispatch(
-        BitPayIdActions.successLogin(network, {
-          email: 'jwhite@bitpay.com',
-          userSettings: {}
-        }),
+      const {APP, BITPAY_ID} = getState();
+      const api = BitPayApi.getInstance(APP.network);
+
+      await api.login(email, password, BITPAY_ID.session.csrfToken);
+      const session = await api.fetchSession();
+
+      // TODO: start pairing logic
+
+      dispatch(
+        BitPayIdActions.successLogin(
+          APP.network,
+          {email, userSettings: {}},
+          session,
+        ),
       );
-      dispatch(AppActions.setOnboardingCompleted());
     } catch (err) {
       console.error(err);
       dispatch(BitPayIdActions.failedLogin());

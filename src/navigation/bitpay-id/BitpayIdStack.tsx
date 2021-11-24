@@ -1,4 +1,4 @@
-import { NavigatorScreenParams } from '@react-navigation/core';
+import {NavigatorScreenParams} from '@react-navigation/core';
 import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
 import {
