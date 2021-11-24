@@ -104,7 +104,6 @@ const Root = createStackNavigator<RootStackParamList>();
 export default () => {
   const dispatch = useDispatch();
   const [, rerender] = useState({});
-  const { identity } = useAppIdentity();
   const linking = useDeeplinks();
   const onboardingCompleted = useSelector(
     ({APP}: RootState) => APP.onboardingCompleted,
@@ -122,9 +121,7 @@ export default () => {
 
   // MAIN APP INIT
   useEffect(() => {
-    if (identity)  {
-      dispatch(AppEffects.startAppInit({ identity }));
-    }
+    dispatch(AppEffects.startAppInit());
   }, [dispatch]);
 
   // THEME

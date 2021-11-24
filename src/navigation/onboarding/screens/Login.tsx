@@ -4,11 +4,11 @@ import {useDispatch, useSelector} from 'react-redux';
 import LoginForm from '../../../components/auth/loginForm';
 import {RootState} from '../../../store';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
-import {BitpayIdStackParamList} from '../BitpayIdStack';
+import {OnboardingStackParamList} from '../OnboardingStack';
 
-type Props = StackScreenProps<BitpayIdStackParamList, 'LoginSignup'>;
+type LoginProps = StackScreenProps<OnboardingStackParamList, 'Login'>;
 
-const LoginScreen = ({navigation, route}: Props) => {
+export const LoginScreen: React.FC<LoginProps> = ({navigation, route}) => {
   const dispatch = useDispatch();
   const {session, loginStatus} = useSelector(
     ({BITPAY_ID}: RootState) => BITPAY_ID,
@@ -20,9 +20,11 @@ const LoginScreen = ({navigation, route}: Props) => {
 
   useEffect(() => {
     if (loginStatus === 'success') {
-      navigation.navigate('Profile');
+      // TODO: navigate to next onboarding step
+      // dispatch(successOnboardingStep)
+      console.log('TODO: go to next onboarding step');
     }
-  }, [loginStatus, navigation]);
+  }, [loginStatus]);
 
   const context = route.params?.context || 'login';
 
@@ -41,7 +43,7 @@ const LoginScreen = ({navigation, route}: Props) => {
   };
 
   const onAlreadyHaveAccount = () => {
-    navigation.replace('LoginSignup', {
+    navigation.replace('Login', {
       context: 'login',
     });
   };

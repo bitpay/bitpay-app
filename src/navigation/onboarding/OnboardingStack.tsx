@@ -22,9 +22,11 @@ import RecoveryPhrase, {
 import VerifyPhrase, {VerifyPhraseProps} from '../wallet/screens/VerifyPhrase';
 import {HeaderRightContainer} from '../../components/styled/Containers';
 import {HeaderTitle} from '../../components/styled/Text';
+import LoginScreen from './screens/Login';
 
 export type OnboardingStackParamList = {
   OnboardingStart: undefined;
+  Login: {context: 'login' | 'signup'};
   Notifications: undefined;
   Pin: undefined;
   CreateWallet: undefined;
@@ -41,6 +43,7 @@ export type OnboardingStackParamList = {
 
 export enum OnboardingScreens {
   ONBOARDING_START = 'OnboardingStart',
+  LOGIN = 'Login',
   NOTIFICATIONS = 'Notifications',
   PIN = 'Pin',
   CREATE_WALLET = 'CreateWallet',
@@ -72,8 +75,8 @@ const OnboardingStack = () => {
                 buttonType={'pill'}
                 onPress={() => {
                   haptic('impactLight');
-                  navigation.navigate('BitpayId', {
-                    screen: 'LoginSignup',
+                  navigation.navigate('Onboarding', {
+                    screen: 'Login',
                     params: {context: 'login'},
                   });
                 }}>
@@ -84,6 +87,10 @@ const OnboardingStack = () => {
         }}
         name={OnboardingScreens.ONBOARDING_START}
         component={OnboardingStartScreen}
+      />
+      <Onboarding.Screen
+        name={OnboardingScreens.LOGIN}
+        component={LoginScreen}
       />
       <Onboarding.Screen
         options={{

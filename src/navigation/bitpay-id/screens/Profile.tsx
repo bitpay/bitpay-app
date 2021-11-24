@@ -1,10 +1,10 @@
 import React from 'react';
 import {Button, Text, View} from 'react-native';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../store';
+import {useSelector} from 'react-redux';
+import {RootState} from '../../../store';
 
 export const Profile: React.FC = () => {
-  const { APP, BITPAY_ID} = useSelector((root: RootState) => root);
+  const {APP, BITPAY_ID} = useSelector((root: RootState) => root);
   const user = BITPAY_ID.user[APP.network];
 
   const onLogoutPress = () => {
@@ -13,15 +13,15 @@ export const Profile: React.FC = () => {
 
   return (
     <View>
-      {user && <>
-        <Text>
-          Hello {user.givenName} {user.familyName}!
-        </Text>
-        <Button onPress={onLogoutPress} title="Logout" />
-      </>}
-      {!user && <Text>
-        Not paired with BitPay ID.
-      </Text>}
+      {user && (
+        <>
+          <Text>
+            Hello {user.givenName} {user.familyName}!
+          </Text>
+          <Button onPress={onLogoutPress} title="Logout" />
+        </>
+      )}
+      {!user && <Text>Not paired with BitPay ID.</Text>}
     </View>
   );
 };
