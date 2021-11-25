@@ -68,7 +68,7 @@ const ObfuscationToggle = styled.TouchableOpacity`
 `;
 
 interface Props {
-  label: string;
+  label?: string;
   onFocus?: () => void;
   onBlur?: () => void;
   errors?: any;
@@ -102,7 +102,7 @@ const BoxInput = ({label, onFocus, onBlur, error, type, ...props}: Props) => {
 
   return (
     <InputContainer>
-      <Label>{label}</Label>
+      {label && <Label>{label}</Label>}
       <Input
         {...props}
         secureTextEntry={isSecureTextEntry}
