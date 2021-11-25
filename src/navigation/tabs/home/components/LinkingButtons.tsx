@@ -3,7 +3,10 @@ import styled from 'styled-components/native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import {Action, NeutralSlate, White} from '../../../../styles/colors';
-import ArrowRight from '../../../../../assets/img/arrow-right.svg';
+import BuySvg from '../../../../../assets/img/home/linking-buttons/buy.svg';
+import ReceiveSvg from '../../../../../assets/img/home/linking-buttons/receive.svg';
+import SendSvg from '../../../../../assets/img/home/linking-buttons/send.svg';
+import SwapSvg from '../../../../../assets/img/home/linking-buttons/swap.svg';
 import Haptic from '../../../../components/haptic-feedback/haptic';
 
 const ButtonsRow = styled.View`
@@ -36,39 +39,46 @@ const LinkButton = styled.TouchableOpacity<{theme: string}>`
 const LinkingButtons = () => {
   const colorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
 
-  const _onPress = (action: string) => {
+  const _onPress = (cta: () => void) => {
     Haptic('impactLight');
-
-    switch (action) {
-      case 'buy':
-        /** TODO: Redirect me*/
-        break;
-      case 'swap':
-        /** TODO: Redirect me*/
-        break;
-      case 'receive':
-        /** TODO: Redirect me*/
-        break;
-      case 'send':
-        /** TODO: Redirect me*/
-        break;
-    }
+    cta();
   };
-
-  const buttonsList: Array<{label: string; img: ReactNode}> = [
+  const buttonsList: Array<{label: string; img: ReactNode; cta: () => void}> = [
     // TODO: update icons
-    {label: 'buy', img: () => <ArrowRight />},
-    {label: 'swap', img: () => <ArrowRight />},
-    {label: 'receive', img: () => <ArrowRight />},
-    {label: 'send', img: () => <ArrowRight />},
+    {
+      label: 'buy',
+      img: () => <BuySvg />,
+      cta: () => {
+        /** TODO: Redirect me*/
+      },
+    },
+    {
+      label: 'swap',
+      img: () => <SwapSvg />,
+      cta: () => {
+        /** TODO: Redirect me*/
+      },
+    },
+    {
+      label: 'receive',
+      img: () => <ReceiveSvg />,
+      cta: () => {
+        /** TODO: Redirect me*/
+      },
+    },
+    {
+      label: 'send',
+      img: () => <SendSvg />,
+      cta: () => {
+        /** TODO: Redirect me*/
+      },
+    },
   ];
   return (
     <ButtonsRow>
       {buttonsList.map(button => (
         <ButtonContainer>
-          <LinkButton
-            theme={colorScheme}
-            onPress={() => _onPress(button.label)}>
+          <LinkButton theme={colorScheme} onPress={() => _onPress(button.cta)}>
             {button.img()}
           </LinkButton>
           <ButtonText theme={colorScheme}>
