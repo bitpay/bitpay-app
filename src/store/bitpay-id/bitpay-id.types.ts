@@ -11,6 +11,7 @@ export enum BitPayIdActionTypes {
   SUCCESS_PAIRING_BITPAY_ID = 'BitPayId/SUCCESS_PAIRING_BITPAY_ID',
   FAILED_PAIRING_BITPAY_ID = 'BitPayId/FAILED_PAIRING_BITPAY_ID',
   UPDATE_PAIRING_BITPAY_ID_STATUS = 'BitPayId/UPDATE_PAIRING_BITPAY_ID_STATUS',
+  BITPAY_ID_DISCONNECTED = 'BitPayId/BITPAY_ID_DISCONNECTED',
 }
 
 interface SuccessFetchSession {
@@ -50,6 +51,11 @@ interface UpdatePairingBitPayIdStatus {
   payload: PairingBitPayIdStatus;
 }
 
+interface BitPayIdDisconnected {
+  type: typeof BitPayIdActionTypes.BITPAY_ID_DISCONNECTED;
+  payload: {network: Network};
+}
+
 export type BitPayIdActionType =
   | SuccessFetchSession
   | FailedFetchSession
@@ -58,4 +64,5 @@ export type BitPayIdActionType =
   | UpdateLoginStatus
   | SuccessPairingBitPayId
   | FailedPairingBitPayId
-  | UpdatePairingBitPayIdStatus;
+  | UpdatePairingBitPayIdStatus
+  | BitPayIdDisconnected;

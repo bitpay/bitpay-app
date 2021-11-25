@@ -48,3 +48,8 @@ export const updatePairingBitPayIdStatus = (
   type: BitPayIdActionTypes.UPDATE_PAIRING_BITPAY_ID_STATUS,
   payload: status,
 });
+
+export const bitPayIdDisconnected = (network: Network): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.BITPAY_ID_DISCONNECTED,
+  payload: {network},
+});

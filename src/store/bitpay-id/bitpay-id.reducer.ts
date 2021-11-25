@@ -97,6 +97,19 @@ export const bitPayIdReducer = (
         pairingBitPayIdStatus: action.payload,
       };
 
+    case BitPayIdActionTypes.BITPAY_ID_DISCONNECTED:
+      return {
+        ...state,
+        apiToken: {
+          ...state.apiToken,
+          [action.payload.network]: null,
+        },
+        user: {
+          ...state.user,
+          [action.payload.network]: null,
+        },
+      };
+
     default:
       return state;
   }
