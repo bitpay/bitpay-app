@@ -75,7 +75,6 @@ const initializeAppIdentity = (): Effect<AppIdentity> => (dispatch, getState) =>
  */
 const initializeBitPayApi = (network: Network, identity: AppIdentity): Effect => () => {
   BitPayApi.init(network, identity, {
-    token: '',
     baseUrl: BASE_BITPAY_URLS[network]
   });
 };

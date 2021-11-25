@@ -3,7 +3,7 @@ import React, {useEffect} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import LoginForm from '../../../components/auth/loginForm';
 import {RootState} from '../../../store';
-import {BitPayIdEffects} from '../../../store/bitpay-id';
+import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {OnboardingStackParamList} from '../OnboardingStack';
 
 type LoginProps = StackScreenProps<OnboardingStackParamList, 'Login'>;
@@ -20,11 +20,10 @@ export const LoginScreen: React.FC<LoginProps> = ({navigation, route}) => {
 
   useEffect(() => {
     if (loginStatus === 'success') {
-      // TODO: navigate to next onboarding step
-      // dispatch(successOnboardingStep)
-      console.log('TODO: go to next onboarding step');
+      navigation.navigate('Notifications');
+      dispatch(BitPayIdActions.updateLoginStatus(null));
     }
-  }, [loginStatus]);
+  }, [loginStatus, navigation, dispatch]);
 
   const context = route.params?.context || 'login';
 

@@ -1,4 +1,3 @@
-import {NavigatorScreenParams} from '@react-navigation/core';
 import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
 import {
@@ -11,12 +10,13 @@ import Profile from './screens/Profile';
 
 export type BitpayIdStackParamList = {
   LoginSignup: {context: 'login' | 'signup'};
-  Pair: NavigatorScreenParams<{
+  Pair: {
     secret?: string;
+    code?: string;
     dashboardRedirect?: boolean;
     vcd?: string;
-  }>;
-  Profile: NavigatorScreenParams<undefined> | undefined;
+  };
+  Profile: undefined;
 };
 
 export enum BitpayIdScreens {

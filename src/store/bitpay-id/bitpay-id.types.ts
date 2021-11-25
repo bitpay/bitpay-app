@@ -1,12 +1,16 @@
 import {Network} from '../../constants';
 import {Session, User} from './bitpay-id.models';
+import {LoginStatus, PairingBitPayIdStatus} from './bitpay-id.reducer';
 
 export enum BitPayIdActionTypes {
   SUCCESS_FETCH_SESSION = 'BitPayId/SUCCESS_FETCH_SESSION',
   FAILED_FETCH_SESSION = 'BitPayId/FAILED_FETCH_SESSION',
   SUCCESS_LOGIN = 'BitPayId/SUCCESS_LOGIN',
   FAILED_LOGIN = 'BitPayId/FAILED_LOGIN',
-  RESET_LOGIN = 'BitPayId/RESET_LOGIN',
+  UPDATE_LOGIN_STATUS = 'BitPayId/UPDATE_LOGIN_STATUS',
+  SUCCESS_PAIRING_BITPAY_ID = 'BitPayId/SUCCESS_PAIRING_BITPAY_ID',
+  FAILED_PAIRING_BITPAY_ID = 'BitPayId/FAILED_PAIRING_BITPAY_ID',
+  UPDATE_PAIRING_BITPAY_ID_STATUS = 'BitPayId/UPDATE_PAIRING_BITPAY_ID_STATUS',
 }
 
 interface SuccessFetchSession {
@@ -27,8 +31,23 @@ interface FailedLogin {
   type: typeof BitPayIdActionTypes.FAILED_LOGIN;
 }
 
-interface ResetLogin {
-  type: typeof BitPayIdActionTypes.RESET_LOGIN;
+interface UpdateLoginStatus {
+  type: typeof BitPayIdActionTypes.UPDATE_LOGIN_STATUS;
+  payload: LoginStatus;
+}
+
+interface SuccessPairingBitPayId {
+  type: typeof BitPayIdActionTypes.SUCCESS_PAIRING_BITPAY_ID;
+  payload: {network: Network; token: string; user: User};
+}
+
+interface FailedPairingBitPayId {
+  type: typeof BitPayIdActionTypes.FAILED_PAIRING_BITPAY_ID;
+}
+
+interface UpdatePairingBitPayIdStatus {
+  type: typeof BitPayIdActionTypes.UPDATE_PAIRING_BITPAY_ID_STATUS;
+  payload: PairingBitPayIdStatus;
 }
 
 export type BitPayIdActionType =
@@ -36,4 +55,7 @@ export type BitPayIdActionType =
   | FailedFetchSession
   | SuccessLogin
   | FailedLogin
-  | ResetLogin;
+  | UpdateLoginStatus
+  | SuccessPairingBitPayId
+  | FailedPairingBitPayId
+  | UpdatePairingBitPayIdStatus;

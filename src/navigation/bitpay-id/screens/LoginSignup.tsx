@@ -3,7 +3,7 @@ import React, {useEffect} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import LoginForm from '../../../components/auth/loginForm';
 import {RootState} from '../../../store';
-import {BitPayIdEffects} from '../../../store/bitpay-id';
+import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {BitpayIdStackParamList} from '../BitpayIdStack';
 
 type Props = StackScreenProps<BitpayIdStackParamList, 'LoginSignup'>;
@@ -21,8 +21,9 @@ const LoginScreen = ({navigation, route}: Props) => {
   useEffect(() => {
     if (loginStatus === 'success') {
       navigation.navigate('Profile');
+      dispatch(BitPayIdActions.updateLoginStatus(null));
     }
-  }, [loginStatus, navigation]);
+  }, [loginStatus, navigation, dispatch]);
 
   const context = route.params?.context || 'login';
 

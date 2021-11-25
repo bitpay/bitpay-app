@@ -4,6 +4,14 @@ import {Network} from '../../constants';
 
 export const bitPayIdReduxPersistBlackList = [];
 
+export type LoginStatus =
+  | 'success'
+  | 'failed'
+  | 'twoFactorPending'
+  | 'emailAuthenticationPending'
+  | null;
+export type PairingBitPayIdStatus = 'success' | 'failed' | null;
+
 export interface BitPayIdState {
   session: Session;
   apiToken: {
@@ -12,7 +20,8 @@ export interface BitPayIdState {
   user: {
     [key in Network]: User | null;
   };
-  loginStatus: 'success' | 'failed' | null;
+  loginStatus: LoginStatus;
+  pairingBitPayIdStatus: PairingBitPayIdStatus;
 }
 
 const initialState: BitPayIdState = {
@@ -29,6 +38,7 @@ const initialState: BitPayIdState = {
     [Network.testnet]: null,
   },
   loginStatus: null,
+  pairingBitPayIdStatus: null,
 };
 
 export const bitPayIdReducer = (
@@ -58,10 +68,28 @@ export const bitPayIdReducer = (
         loginStatus: 'failed',
       };
 
-    case BitPayIdActionTypes.RESET_LOGIN:
+    case BitPayIdActionTypes.UPDATE_LOGIN_STATUS:
       return {
         ...state,
-        loginStatus: null,
+        loginStatus: action.payload,
+      };
+
+    case BitPayIdActionTypes.SUCCESS_PAIRING_BITPAY_ID:
+      return {
+        ...state,
+        pairingBitPayIdStatus: 'success',
+      };
+
+    case BitPayIdActionTypes.FAILED_PAIRING_BITPAY_ID:
+      return {
+        ...state,
+        pairingBitPayIdStatus: 'failed',
+      };
+
+    case BitPayIdActionTypes.UPDATE_PAIRING_BITPAY_ID_STATUS:
+      return {
+        ...state,
+        pairingBitPayIdStatus: action.payload,
       };
 
     default:
