@@ -7,6 +7,7 @@ import {Action} from '../../../styles/colors';
 
 const ImportWallerContainer = styled.SafeAreaView`
   flex: 1;
+  margin-top: 10px;
 `;
 
 const ImportWallet = () => {
