@@ -24,7 +24,7 @@ interface FailedFetchSession {
 
 interface SuccessLogin {
   type: typeof BitPayIdActionTypes.SUCCESS_LOGIN;
-  payload: {network: Network; user: User; session: Session};
+  payload: {network: Network; session: Session};
 }
 
 interface FailedLogin {

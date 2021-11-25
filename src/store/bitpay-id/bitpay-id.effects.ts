@@ -69,14 +69,7 @@ export const startLogin =
       dispatch(
         BitPayIdActions.successPairingBitPayId(APP.network, token, user),
       );
-
-      dispatch(
-        BitPayIdActions.successLogin(
-          APP.network,
-          {email, userSettings: {}},
-          session,
-        ),
-      );
+      dispatch(BitPayIdActions.successLogin(APP.network, session));
     } catch (err) {
       console.error(err);
       dispatch(LogActions.error('Login failed.'));

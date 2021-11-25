@@ -1,5 +1,5 @@
 import {BitPayIdActionTypes, BitPayIdActionType} from './bitpay-id.types';
-import {Session, User} from './bitpay-id.models';
+import {Session} from './bitpay-id.models';
 import {Network} from '../../constants';
 import {LoginStatus, PairingBitPayIdStatus} from './bitpay-id.reducer';
 
@@ -14,11 +14,10 @@ export const failedFetchSession = (): BitPayIdActionType => ({
 
 export const successLogin = (
   network: Network,
-  user: User,
   session: Session,
 ): BitPayIdActionType => ({
   type: BitPayIdActionTypes.SUCCESS_LOGIN,
-  payload: {network, user, session},
+  payload: {network, session},
 });
 
 export const failedLogin = (): BitPayIdActionType => ({

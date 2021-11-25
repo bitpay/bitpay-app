@@ -56,10 +56,7 @@ export const bitPayIdReducer = (
       return {
         ...state,
         loginStatus: 'success',
-        user: {
-          ...state.user,
-          [action.payload.network]: action.payload.user,
-        },
+        session: action.payload.session,
       };
 
     case BitPayIdActionTypes.FAILED_LOGIN:
@@ -78,6 +75,14 @@ export const bitPayIdReducer = (
       return {
         ...state,
         pairingBitPayIdStatus: 'success',
+        apiToken: {
+          ...state.apiToken,
+          [action.payload.network]: action.payload.token,
+        },
+        user: {
+          ...state.user,
+          [action.payload.network]: action.payload.user,
+        },
       };
 
     case BitPayIdActionTypes.FAILED_PAIRING_BITPAY_ID:
