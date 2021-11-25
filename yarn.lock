@@ -1992,6 +1992,14 @@
   resolved "https://registry.yarnpkg.com/@react-navigation/elements/-/elements-1.2.1.tgz#86f19781c6f34a5c9dd25dca99915e0306f477d1"
   integrity sha512-EnmAbKMsptrliRKf95rdgS6BhMjML+mIns06+G1Vdih6BrEo7/0iytThUv3WBf99AI76dyEq/cqLUwHPiFzXWg==
 
+"@react-navigation/material-top-tabs@^6.0.6":
+  version "6.0.6"
+  resolved "https://registry.yarnpkg.com/@react-navigation/material-top-tabs/-/material-top-tabs-6.0.6.tgz#efabd409e970c76cac4b9c61ac4d9bf735cf6d39"
+  integrity sha512-kbm/0jndRVeGdAgOd4NcDSdSQiYeA7fkctCKbPxe3mT36j9qOqpfHfmd2dbv/VbNCngdTtZ3/+QMxTIViZGy7g==
+  dependencies:
+    color "^3.1.3"
+    warn-once "^0.1.0"
+
 "@react-navigation/native@6.0.6":
   version "6.0.6"
   resolved "https://registry.yarnpkg.com/@react-navigation/native/-/native-6.0.6.tgz#0f2577358d73d7b21ff5b2455f0a2d51b1ad2837"
