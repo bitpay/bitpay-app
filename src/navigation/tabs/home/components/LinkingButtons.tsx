@@ -8,6 +8,7 @@ import ReceiveSvg from '../../../../../assets/img/home/linking-buttons/receive.s
 import SendSvg from '../../../../../assets/img/home/linking-buttons/send.svg';
 import SwapSvg from '../../../../../assets/img/home/linking-buttons/swap.svg';
 import Haptic from '../../../../components/haptic-feedback/haptic';
+import {ColorSchemeName} from 'react-native';
 
 const ButtonsRow = styled.View`
   width: 100%;
@@ -19,20 +20,21 @@ const ButtonContainer = styled.View`
   align-items: center;
 `;
 
-const ButtonText = styled.Text<{theme: string}>`
+const ButtonText = styled.Text<{theme: ColorSchemeName}>`
   font-size: 12px;
   line-height: 18px;
-  color: ${({theme}: {theme: string}) => (theme === 'light' ? Action : White)};
+  color: ${({theme}: {theme: ColorSchemeName}) =>
+    theme === 'light' ? Action : White};
   margin-top: 5px;
 `;
 
-const LinkButton = styled.TouchableOpacity<{theme: string}>`
+const LinkButton = styled.TouchableOpacity<{theme: ColorSchemeName}>`
   height: 43px;
   width: 43px;
   border-radius: 11px;
   align-items: center;
   justify-content: center;
-  background: ${({theme}: {theme: string}) =>
+  background: ${({theme}: {theme: ColorSchemeName}) =>
     theme === 'light' ? NeutralSlate : '#0C204E'};
 `;
 
@@ -47,28 +49,28 @@ const LinkingButtons = () => {
     // TODO: update icons
     {
       label: 'buy',
-      img: () => <BuySvg />,
+      img: <BuySvg />,
       cta: () => {
         /** TODO: Redirect me*/
       },
     },
     {
       label: 'swap',
-      img: () => <SwapSvg />,
+      img: <SwapSvg />,
       cta: () => {
         /** TODO: Redirect me*/
       },
     },
     {
       label: 'receive',
-      img: () => <ReceiveSvg />,
+      img: <ReceiveSvg />,
       cta: () => {
         /** TODO: Redirect me*/
       },
     },
     {
       label: 'send',
-      img: () => <SendSvg />,
+      img: <SendSvg />,
       cta: () => {
         /** TODO: Redirect me*/
       },
@@ -79,7 +81,7 @@ const LinkingButtons = () => {
       {buttonsList.map(button => (
         <ButtonContainer>
           <LinkButton theme={colorScheme} onPress={() => _onPress(button.cta)}>
-            {button.img()}
+            {button.img}
           </LinkButton>
           <ButtonText theme={colorScheme}>
             {button.label.toUpperCase()}
