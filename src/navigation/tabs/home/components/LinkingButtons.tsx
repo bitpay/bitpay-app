@@ -38,6 +38,12 @@ const LinkButton = styled.TouchableOpacity<{theme: ColorSchemeName}>`
     theme === 'light' ? NeutralSlate : '#0C204E'};
 `;
 
+interface ButtonListProps {
+  label: string;
+  img: ReactNode;
+  cta: () => void;
+}
+
 const LinkingButtons = () => {
   const colorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
 
@@ -45,7 +51,7 @@ const LinkingButtons = () => {
     Haptic('impactLight');
     cta();
   };
-  const buttonsList: Array<{label: string; img: ReactNode; cta: () => void}> = [
+  const buttonsList: Array<ButtonListProps> = [
     // TODO: update icons
     {
       label: 'buy',
@@ -78,8 +84,8 @@ const LinkingButtons = () => {
   ];
   return (
     <ButtonsRow>
-      {buttonsList.map(button => (
-        <ButtonContainer>
+      {buttonsList.map((button: ButtonListProps) => (
+        <ButtonContainer key={button.label}>
           <LinkButton theme={colorScheme} onPress={() => _onPress(button.cta)}>
             {button.img}
           </LinkButton>
