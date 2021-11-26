@@ -1,9 +1,20 @@
 import React, {useState} from 'react';
 import styled from 'styled-components/native';
-import {Slate, SlateDark, White} from '../../../styles/colors';
+import {Caution, Slate, SlateDark, White} from '../../../styles/colors';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
 import {CtaContainer} from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
+import {useDispatch} from 'react-redux';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {yupResolver} from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import {useForm, Controller} from 'react-hook-form';
+import {BaseText} from '../../../components/styled/Text';
+import {useLogger} from '../../../utils/hooks/useLogger';
+import {WalletOptions} from '../../../store/wallet/wallet.models';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
+import { startImportMemonic, startImportMnemonic } from '../../../store/wallet/wallet.effects';
 
 const Gutter = '10px';
 export const ImportWalletContainer = styled.View`
@@ -50,11 +61,65 @@ export const ImportWalletTextInput = styled.TextInput`
   border-top-left-radius: 4px;
 `;
 
+const ErrorText = styled(BaseText)`
+  color: ${Caution};
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 0 0 10px;
+`;
+
+const schema = yup.object().shape({
+  words: yup.string().required(),
+});
+
 const RecoveryPhrase = () => {
   const [inputValue, onChangeText] = useState();
+  const dispatch = useDispatch();
+  const logger = useLogger();
+  const {
+    control,
+    handleSubmit,
+    formState: {errors},
+  } = useForm({resolver: yupResolver(schema)});
 
-  const importWallet = () => {
+  const onSubmit = (formData: {words: string}) => {
     //  TODO: Import wallet
+
+    const {words} = formData;
+    if (!words) {
+      return;
+    }
+
+    const wordList = words.trim().split(/[\u3000\s]+/);
+
+    if (wordList.length % 3 != 0) {
+      logger.info('Incorrect words length');
+      dispatch(
+        showBottomNotificationModal({
+          type: 'warning',
+          title: 'Something went wrong',
+          message: 'The recovery phrase is invalid.',
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: 'OK',
+              action: () => {},
+              primary: true,
+            },
+          ],
+        }),
+      );
+      return;
+    }
+
+    const opts: Partial<WalletOptions> = {};
+    opts.mnemonic = words;
+
+    importWallet(words, opts);
+  };
+
+  const importWallet = (words: string, opts: Partial<WalletOptions>): void => {
+    dispatch(startImportMnemonic(words, opts));
   };
 
   return (
@@ -75,17 +140,27 @@ const RecoveryPhrase = () => {
         </ImgContainer>
       </HeaderContainer>
 
-      <ImportWalletTextInput
-        multiline
-        numberOfLines={5}
-        onChangeText={(text: string) => onChangeText(text)}
+      <Controller
+        control={control}
+        render={({field: {onChange, onBlur, value}}) => (
+          <ImportWalletTextInput
+            multiline
+            numberOfLines={5}
+            onChangeText={(text: string) => onChange(text)}
+            onBlur={onBlur}
+            value={value}
+          />
+        )}
+        name="words"
+        defaultValue=""
       />
 
+      {errors?.words?.message && (
+        <ErrorText>Recovery phrase is required.</ErrorText>
+      )}
+
       <CtaContainer>
-        <Button
-          buttonStyle={'primary'}
-          onPress={importWallet}
-          disabled={!inputValue}>
+        <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
           Import Wallet
         </Button>
       </CtaContainer>

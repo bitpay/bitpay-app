@@ -17,6 +17,8 @@ import {navigationRef} from '../../Root';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {BASE_BWS_URL} from '../../constants/config';
 import axios from 'axios';
+import {WalletOptions} from './wallet.models';
+import {useLogger} from '../../utils/hooks';
 
 const BWC = BwcProvider.getInstance();
 const bwcClient = BWC.getClient();
@@ -159,3 +161,94 @@ export const getRates = (): Effect => async dispatch => {
     dispatch(WalletActions.failedGetRates());
   }
 };
+
+import {coinSupported, normalizeMnemonic} from '../../utils/helper-methods';
+
+export const startImportMnemonic =
+  (words: string, opts: Partial<WalletOptions>): Effect =>
+  async dispatch => {
+    await dispatch(
+      startOnGoingProcessModal(OnGoingProcessMessages.IMPORTING_WALLET),
+    );
+    // useLogger().info('Importing Wallets Mnemonic');
+    words = normalizeMnemonic(words);
+    opts.words = words;
+    try {
+      const credentials: Array<Credentials & {tokens?: any}> = [];
+
+      const {key, walletClients} = await dispatch(
+        startImportWalletCredentials(opts),
+      );
+      console.log('--------------> key and walletClients');
+      console.log(key);
+      // Is it possible to have multiple wallet clients
+      // walletClients.forEach(walletClient => {
+      //   console.log(walletClient.credentials);
+      // });
+
+      const walletClient = walletClients[0];
+      console.log(walletClients);
+      walletClients.forEach(walletClient => {
+        credentials.push(walletClient.credentials);
+      });
+
+      dispatch(AppActions.dismissOnGoingProcessModal());
+
+      dispatch(
+        WalletActions.successCreateWallet({
+          key: key,
+          wallet: {
+            id: key.id,
+            assets: credentials,
+          },
+        }),
+      );
+
+      navigationRef.navigate('Onboarding', {
+        screen: 'TermsOfUse',
+      });
+      console.log('-------------------');
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+export const startImportWalletCredentials =
+  (opts: Partial<WalletOptions>): Effect =>
+  async disptch => {
+    const value = await new Promise((resolve, reject) => {
+      BWC.Client.serverAssistedImport(
+        opts,
+        {baseUrl: 'https://bws.bitpay.com/bws/api'},
+        async (err, key, walletClients) => {
+          if (err) {
+            //  TODO: Handle this
+          }
+          if (walletClients.length === 0) {
+            //  TODO: Handle this - WALLET_DOES_NOT_EXIST
+          } else {
+            let customTokens: Array<Credentials & {tokens?: any}> = [];
+            walletClients.forEach((w: any) => {
+              if (coinSupported(w.credentials.coin) && w.credentials.token) {
+                customTokens.push({
+                  ...w.credentials.token,
+                  ...{symbol: w.credentials.token.symbol.toLowerCase()},
+                });
+              }
+            });
+
+            if (customTokens && customTokens[0]) {
+              //  TODO: How to create custom token
+            }
+
+            return resolve({key, walletClients});
+          }
+        },
+      );
+    });
+    return value;
+  };
+
+export const addAndBindWalletClients =
+  (data, opts?): Effect =>
+  async dispatch => {};
