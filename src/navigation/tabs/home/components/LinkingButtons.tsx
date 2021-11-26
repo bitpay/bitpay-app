@@ -20,22 +20,22 @@ const ButtonContainer = styled.View`
   align-items: center;
 `;
 
-const ButtonText = styled.Text<{theme: ColorSchemeName}>`
+const ButtonText = styled.Text<{colorSchemeName: ColorSchemeName}>`
   font-size: 12px;
   line-height: 18px;
-  color: ${({theme}: {theme: ColorSchemeName}) =>
-    theme === 'light' ? Action : White};
+  color: ${({colorSchemeName}: {colorSchemeName: ColorSchemeName}) =>
+    colorSchemeName === 'light' ? Action : White};
   margin-top: 5px;
 `;
 
-const LinkButton = styled.TouchableOpacity<{theme: ColorSchemeName}>`
+const LinkButton = styled.TouchableOpacity<{colorSchemeName: ColorSchemeName}>`
   height: 43px;
   width: 43px;
   border-radius: 11px;
   align-items: center;
   justify-content: center;
-  background: ${({theme}: {theme: ColorSchemeName}) =>
-    theme === 'light' ? NeutralSlate : '#0C204E'};
+  background: ${({colorSchemeName}: {colorSchemeName: ColorSchemeName}) =>
+    colorSchemeName === 'light' ? NeutralSlate : '#0C204E'};
 `;
 
 interface ButtonListProps {
@@ -86,10 +86,12 @@ const LinkingButtons = () => {
     <ButtonsRow>
       {buttonsList.map((button: ButtonListProps) => (
         <ButtonContainer key={button.label}>
-          <LinkButton theme={colorScheme} onPress={() => _onPress(button.cta)}>
+          <LinkButton
+            colorSchemeName={colorScheme}
+            onPress={() => _onPress(button.cta)}>
             {button.img}
           </LinkButton>
-          <ButtonText theme={colorScheme}>
+          <ButtonText colorSchemeName={colorScheme}>
             {button.label.toUpperCase()}
           </ButtonText>
         </ButtonContainer>
