@@ -37,7 +37,7 @@ export interface AppState {
 
 const initialState: AppState = {
   identity: {
-    [Network.livenet]: {
+    [Network.mainnet]: {
       priv: '',
       pub: '',
       sin: '',
@@ -48,8 +48,8 @@ const initialState: AppState = {
       sin: '',
     },
   },
-  network: Network.livenet,
-  baseBitPayURL: BASE_BITPAY_URLS[Network.livenet],
+  network: Network.mainnet,
+  baseBitPayURL: BASE_BITPAY_URLS[Network.mainnet],
   appIsLoading: true,
   onboardingCompleted: false,
   session: undefined,
