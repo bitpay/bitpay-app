@@ -65,3 +65,7 @@ export const successGenerateAppIdentity = (
   type: AppActionTypes.SUCCESS_GENERATE_APP_IDENTITY,
   payload: {network, identity},
 });
+
+export const failedGenerateAppIdentity = (): AppActionType => ({
+  type: AppActionTypes.FAILED_GENERATE_APP_IDENTITY,
+});

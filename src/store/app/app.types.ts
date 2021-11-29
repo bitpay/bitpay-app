@@ -18,6 +18,7 @@ export enum AppActionTypes {
   SET_COLOR_SCHEME = 'APP/SET_COLOR_SCHEME',
   SET_CURRENT_ROUTE = 'APP/SET_CURRENT_ROUTE',
   SUCCESS_GENERATE_APP_IDENTITY = 'APP/SUCCESS_GENERATE_APP_IDENTITY',
+  FAILED_GENERATE_APP_IDENTITY = 'APP/FAILED_GENERATE_APP_IDENTITY',
 }
 
 interface SuccessGetSession {
@@ -74,6 +75,10 @@ interface SuccessGenerateAppIdentity {
   payload: {network: Network; identity: AppIdentity};
 }
 
+interface FailedGenerateAppIdentity {
+  type: typeof AppActionTypes.FAILED_GENERATE_APP_IDENTITY;
+}
+
 export type AppActionType =
   | SuccessGetSession
   | FailedGetSession
@@ -86,4 +91,5 @@ export type AppActionType =
   | DismissBottomNotificationModal
   | SetColorScheme
   | SetCurrentRoute
-  | SuccessGenerateAppIdentity;
+  | SuccessGenerateAppIdentity
+  | FailedGenerateAppIdentity;
