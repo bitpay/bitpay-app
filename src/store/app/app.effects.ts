@@ -4,8 +4,8 @@ import InAppBrowser, {
   InAppBrowserOptions,
 } from 'react-native-inappbrowser-reborn';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
-import { Network } from '../../constants';
-import { BASE_BITPAY_URLS } from '../../constants/config';
+import {Network} from '../../constants';
+import {BASE_BITPAY_URLS} from '../../constants/config';
 import BitPayApi from '../../lib/bitpay-api';
 import {sleep} from '../../utils/helper-methods';
 import {RootState, Effect} from '../index';
@@ -19,7 +19,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(LogActions.clear());
     dispatch(LogActions.info('Initializing app...'));
 
-    const { APP } = getState();
+    const {APP} = getState();
     const identity = dispatch(initializeAppIdentity());
     dispatch(initializeBitPayApi(APP.network, identity));
 
@@ -39,45 +39,48 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
  * Checks to ensure that the App Identity is defined, else generates a new one.
  * @returns The App Identity.
  */
-const initializeAppIdentity = (): Effect<AppIdentity> => (dispatch, getState) => {
-  const {APP} = getState();
-  let identity = APP.identity[APP.network];
+const initializeAppIdentity =
+  (): Effect<AppIdentity> => (dispatch, getState) => {
+    const {APP} = getState();
+    let identity = APP.identity[APP.network];
 
-  dispatch(LogActions.info('Initializing App Identity...'));
+    dispatch(LogActions.info('Initializing App Identity...'));
 
-  if (!identity || !Object.keys(identity).length || !identity.priv) {
-    try {
-      dispatch(LogActions.info('Generating new App Identity...'));
+    if (!identity || !Object.keys(identity).length || !identity.priv) {
+      try {
+        dispatch(LogActions.info('Generating new App Identity...'));
 
-      identity = BitAuth.generateSin();
+        identity = BitAuth.generateSin();
 
-      dispatch(AppActions.successGenerateAppIdentity(APP.network, identity));
-    } catch (error) {
-      dispatch(
-        LogActions.error(
-          'Error generating App Identity: ' + JSON.stringify(error),
-        ),
-      );
-      dispatch(AppActions.failedGenerateAppIdentity());
+        dispatch(AppActions.successGenerateAppIdentity(APP.network, identity));
+      } catch (error) {
+        dispatch(
+          LogActions.error(
+            'Error generating App Identity: ' + JSON.stringify(error),
+          ),
+        );
+        dispatch(AppActions.failedGenerateAppIdentity());
+      }
     }
-  }
 
-  dispatch(LogActions.info('Initialized App Identity successfully.'));
+    dispatch(LogActions.info('Initialized App Identity successfully.'));
 
-  return identity;
-};
+    return identity;
+  };
 
 /**
  * Initializes the BitPayAPI for the given network and identity.
- * @param network 
- * @param identity 
+ * @param network
+ * @param identity
  * @returns void
  */
-const initializeBitPayApi = (network: Network, identity: AppIdentity): Effect => () => {
-  BitPayApi.init(network, identity, {
-    baseUrl: BASE_BITPAY_URLS[network]
-  });
-};
+const initializeBitPayApi =
+  (network: Network, identity: AppIdentity): Effect =>
+  () => {
+    BitPayApi.init(network, identity, {
+      baseUrl: BASE_BITPAY_URLS[network],
+    });
+  };
 
 export const startOnGoingProcessModal =
   (message: OnGoingProcessMessages): Effect =>
