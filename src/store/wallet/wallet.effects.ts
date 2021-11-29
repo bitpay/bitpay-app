@@ -56,6 +56,7 @@ export const startCreateWallet =
           wallet: {
             id: key.id,
             assets: credentials,
+            totalBalance: 0
           },
         }),
       );
