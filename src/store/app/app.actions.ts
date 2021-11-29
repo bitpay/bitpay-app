@@ -56,3 +56,10 @@ export const setCurrentRoute = (route: any): AppActionType => ({
   type: AppActionTypes.SET_CURRENT_ROUTE,
   payload: route,
 });
+
+export const setNotificationsAccepted = (
+  notificationsAccepted: boolean,
+): AppActionType => ({
+  type: AppActionTypes.SET_NOTIFICATIONS_ACCEPTED,
+  payload: notificationsAccepted,
+});
