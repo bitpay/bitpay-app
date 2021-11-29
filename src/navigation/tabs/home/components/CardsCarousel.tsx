@@ -56,22 +56,22 @@ const CardsCarousel = () => {
 
   if (wallets && !Object.keys(wallets).length) {
     cardsList.push(() => <CreateWallet />);
-  }
+  } else {
+    Object.values(wallets).map((wallet: any) => {
+      const {assets, totalBalance} = wallet;
+      if (!assets.length) {
+        cardsList.push(() => <CreateWallet />);
+        return;
+      }
 
-  Object.values(wallets).map((wallet: any) => {
-    const {assets, totalBalance} = wallet;
-    if (!assets.length) {
+      assets &&
+        assets.map((asset: any) => {
+          cardsList.push(() => CurrencyCardComponet(asset.coin, totalBalance));
+        });
+
       cardsList.push(() => <CreateWallet />);
-      return;
-    }
-
-    assets &&
-      assets.map((asset: any) => {
-        cardsList.push(() => CurrencyCardComponet(asset.coin, totalBalance));
-      });
-
-    cardsList.push(() => <CreateWallet />);
-  });
+    });
+  }
 
   const _renderItem = ({item}: {item: ReactNode}) => {
     return <>{item()}</>;
