@@ -1,6 +1,6 @@
 import {ColorSchemeName} from 'react-native';
 import {Network} from '../../constants';
-import {BASE_BITPAY_URLS} from '../../constants/config';
+import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {NavScreenParams, RootStackParamList} from '../../Root';
@@ -48,7 +48,7 @@ const initialState: AppState = {
       sin: '',
     },
   },
-  network: Network.mainnet,
+  network: APP_NETWORK,
   baseBitPayURL: BASE_BITPAY_URLS[Network.mainnet],
   appIsLoading: true,
   onboardingCompleted: false,
