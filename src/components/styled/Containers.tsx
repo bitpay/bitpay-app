@@ -1,5 +1,6 @@
 import styled, {css} from 'styled-components/native';
-import {Dimensions} from 'react-native';
+import {ColorSchemeName, Dimensions} from 'react-native';
+import {Midnight, NeutralSlate} from '../../styles/colors';
 export const WIDTH = Dimensions.get('window').width;
 
 // Nav
@@ -95,10 +96,12 @@ export const CardGutter = '15px';
 interface CardContainerProps {
   minHeight?: string;
   width?: string;
+  appColorScheme?: ColorSchemeName;
 }
 export const CardContainer = styled.View<CardContainerProps>`
   width: ${({width}: CardContainerProps) => width || '215px'};
   min-height: ${({minHeight}: CardContainerProps) => minHeight || '250px'};
-  background: #f5f7f8;
+  background: ${({appColorScheme}: CardContainerProps) =>
+    appColorScheme === 'light' ? NeutralSlate : Midnight};
   border-radius: 21px;
 `;

@@ -6,7 +6,9 @@ import Arrow from '../../../assets/img/arrow-right.svg';
 import Haptic from '../haptic-feedback/haptic';
 import {CardGutter} from '../styled/Containers';
 import Card from '../card/Card';
-import {View} from 'react-native';
+import {ColorSchemeName, View} from 'react-native';
+import {useSelector} from 'react-redux';
+import {RootState} from '../../store';
 
 interface BodyProps {
   header?: string;
@@ -30,18 +32,20 @@ const CardHeader = styled.View`
   min-height: 30px;
 `;
 
-const CardBodyHeader = styled.Text`
+const CardBodyHeader = styled.Text<{appColorScheme: ColorSchemeName}>`
   font-size: 14px;
   line-height: 21px;
-  color: ${SlateDark};
+  color: ${({appColorScheme}: {appColorScheme: ColorSchemeName}) =>
+    appColorScheme === 'light' ? SlateDark : White};
   margin-top: ${CardGutter};
 `;
 
-const CardBodyDesc = styled.Text`
+const CardBodyDesc = styled.Text<{appColorScheme: ColorSchemeName}>`
   font-weight: 500;
   font-size: 18px;
   line-height: 25px;
-  color: ${SlateDark};
+  color: ${({appColorScheme}: {appColorScheme: ColorSchemeName}) =>
+    appColorScheme === 'light' ? SlateDark : White};
   margin-top: ${CardGutter};
 `;
 
@@ -81,10 +85,16 @@ const HomeCard = ({backgroundImg, body, footer, header}: HomeCardProps) => {
     headerComp?: ReactNode,
   ) => <CardHeader>{headerComp}</CardHeader>;
 
+  const appColorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
+
   const BodyComp: React.FC<BodyProps> = (bodyComp?: BodyProps) =>
     bodyComp ? (
       <View>
-        {bodyComp.header && <CardBodyHeader>{bodyComp.header}</CardBodyHeader>}
+        {bodyComp.header && (
+          <CardBodyHeader appColorScheme={appColorScheme}>
+            {bodyComp.header}
+          </CardBodyHeader>
+        )}
         {bodyComp.price && <CardPrice>{bodyComp.price}</CardPrice>}
         {bodyComp.pillText && (
           <CardPill>
@@ -92,7 +102,9 @@ const HomeCard = ({backgroundImg, body, footer, header}: HomeCardProps) => {
           </CardPill>
         )}
         {bodyComp.description && (
-          <CardBodyDesc>{bodyComp.description}</CardBodyDesc>
+          <CardBodyDesc appColorScheme={appColorScheme}>
+            {bodyComp.description}
+          </CardBodyDesc>
         )}
       </View>
     ) : null;

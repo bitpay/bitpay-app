@@ -21,7 +21,7 @@ const CarouselContainer = styled.View`
   margin: 10px 0;
 `;
 
-const CurrencyCardComponet = (currency: string) => {
+const CurrencyCardComponet = (currency: string, price: string) => {
   const _onCTAPress = () => {
     /** TODO: Redirect me */
   };
@@ -39,7 +39,7 @@ const CurrencyCardComponet = (currency: string) => {
       {currencyInfo && (
         <HomeCard
           header={HeaderComponent}
-          body={{header: currencyInfo.mainLabel, price: 'TODO$'}}
+          body={{header: currencyInfo.mainLabel, price: `${price}$`}}
           footer={{
             onCTAPress: _onCTAPress,
           }}
@@ -58,8 +58,8 @@ const CardsCarousel = () => {
     cardsList.push(() => <CreateWallet />);
   }
 
-  Object.values(wallets).map((wallets: any) => {
-    const {assets} = wallets;
+  Object.values(wallets).map((wallet: any) => {
+    const {assets, totalBalance} = wallet;
     if (!assets.length) {
       cardsList.push(() => <CreateWallet />);
       return;
@@ -67,7 +67,7 @@ const CardsCarousel = () => {
 
     assets &&
       assets.map((asset: any) => {
-        cardsList.push(() => CurrencyCardComponet(asset.coin));
+        cardsList.push(() => CurrencyCardComponet(asset.coin, totalBalance));
       });
 
     cardsList.push(() => <CreateWallet />);
