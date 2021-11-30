@@ -2,6 +2,8 @@ import {CardContainer, CardGutter} from '../styled/Containers';
 import styled from 'styled-components/native';
 import * as React from 'react';
 import {ReactElement, ReactNode} from 'react';
+import {useSelector} from 'react-redux';
+import {RootState} from '../../store';
 
 const CardHeader = styled.View`
   min-height: 30px;
@@ -40,16 +42,11 @@ export interface CardProps {
   };
 }
 
-const Card = ({
-  header,
-  body,
-  footer,
-  backgroundImg,
-  containerProps,
-}: CardProps) => {
+const Card = ({header, body, footer, backgroundImg, containerProps}: CardProps) => {
+  const appColorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
   const width = containerProps && containerProps.width;
   return (
-    <CardContainer width={width}>
+    <CardContainer appColorScheme={appColorScheme} width={width}>
       {backgroundImg && <BackgroundImage>{backgroundImg()}</BackgroundImage>}
 
       {header && <CardHeader>{header}</CardHeader>}

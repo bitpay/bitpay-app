@@ -6,7 +6,7 @@ import {useDispatch} from 'react-redux';
 import {DEEPLINK_PREFIX} from '../../constants/config';
 import {BitpayIdScreens} from '../../navigation/bitpay-id/BitpayIdStack';
 import {RootStackParamList, RootStacks} from '../../Root';
-import { useLogger } from '.';
+import {useLogger} from '.';
 
 export const useDeeplinks = () => {
   const dispatch = useDispatch();
