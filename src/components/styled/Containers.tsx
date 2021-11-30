@@ -94,7 +94,7 @@ export const CardGutter = '15px';
 
 interface CardContainerProps {
   minHeight?: string;
-  width?: string;
+  width?: string | undefined;
 }
 export const CardContainer = styled.View<CardContainerProps>`
   width: ${({width}: CardContainerProps) => width || '215px'};
