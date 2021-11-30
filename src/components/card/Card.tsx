@@ -35,11 +35,21 @@ export interface CardProps {
   body?: ReactNode;
   footer?: ReactNode;
   backgroundImg?: () => ReactElement;
+  containerProps?: {
+    width?: string;
+  };
 }
 
-const Card = ({header, body, footer, backgroundImg}: CardProps) => {
+const Card = ({
+  header,
+  body,
+  footer,
+  backgroundImg,
+  containerProps,
+}: CardProps) => {
+  const width = containerProps && containerProps.width;
   return (
-    <CardContainer>
+    <CardContainer width={width}>
       {backgroundImg && <BackgroundImage>{backgroundImg()}</BackgroundImage>}
 
       {header && <CardHeader>{header}</CardHeader>}
