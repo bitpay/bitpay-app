@@ -10,6 +10,7 @@ import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../../store';
 import {Hr} from '../../../../../components/styled/Containers';
+import AngleRight from '../../../../../../assets/img/angle-right.svg';
 
 const GeneralSettingsRoot: React.FC = () => {
   const navigation = useNavigation();
@@ -37,6 +38,14 @@ const GeneralSettingsRoot: React.FC = () => {
           </Button>
         </Setting>
         <Hr />
+        <Setting
+          onPress={() =>
+            navigation.navigate('GeneralSettings', {screen: 'CustomizeHome'})
+          }>
+          <SettingTitle>CustomizeHome</SettingTitle>
+          <AngleRight />
+        </Setting>
+        <Hr></Hr>
       </Settings>
     </SettingsContainer>
   );
