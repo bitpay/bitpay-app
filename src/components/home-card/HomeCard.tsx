@@ -1,7 +1,13 @@
 import * as React from 'react';
 import {ReactElement, ReactNode} from 'react';
 import styled from 'styled-components/native';
-import {Black, SlateDark, White} from '../../styles/colors';
+import {
+  Black,
+  Midnight,
+  NeutralSlate,
+  SlateDark,
+  White,
+} from '../../styles/colors';
 import Arrow from '../../../assets/img/arrow-right.svg';
 import Haptic from '../haptic-feedback/haptic';
 import {CardGutter} from '../styled/Containers';
@@ -49,10 +55,11 @@ const CardBodyDesc = styled.Text<{appColorScheme: ColorSchemeName}>`
   margin-top: ${CardGutter};
 `;
 
-const CardPrice = styled.Text`
+const CardPrice = styled.Text<{appColorScheme: ColorSchemeName}>`
   font-size: 31px;
   line-height: 46px;
-  color: ${Black};
+  color: ${({appColorScheme}: {appColorScheme: ColorSchemeName}) =>
+    appColorScheme === 'light' ? Black : White};
   font-weight: bold;
 `;
 
@@ -95,7 +102,11 @@ const HomeCard = ({backgroundImg, body, footer, header}: HomeCardProps) => {
             {bodyComp.header}
           </CardBodyHeader>
         )}
-        {bodyComp.price && <CardPrice>{bodyComp.price}</CardPrice>}
+        {bodyComp.price && (
+          <CardPrice appColorScheme={appColorScheme}>
+            {bodyComp.price}
+          </CardPrice>
+        )}
         {bodyComp.pillText && (
           <CardPill>
             <CardPillText>{bodyComp.pillText}</CardPillText>
@@ -122,12 +133,18 @@ const HomeCard = ({backgroundImg, body, footer, header}: HomeCardProps) => {
       </FooterArrow>
     ) : null;
   };
+
+  const containerProps = {
+    backgroundColor: appColorScheme === 'light' ? NeutralSlate : Midnight,
+  };
+
   return (
     <Card
       backgroundImg={backgroundImg}
       header={HeaderComp(header)}
       body={BodyComp(body)}
       footer={FooterComp(footer)}
+      containerProps={containerProps}
     />
   );
 };

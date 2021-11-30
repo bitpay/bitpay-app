@@ -14,6 +14,7 @@ export const Feather = '#F6F7FC';
 export const Black = '#303133';
 export const Grey = '#E7E7E7';
 export const White = '#FFFFFF';
+export const LightBlack = '#252525';
 
 /* Interface */
 export const Caution = '#ef476f';
