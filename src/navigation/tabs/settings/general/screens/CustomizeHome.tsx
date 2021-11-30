@@ -16,7 +16,6 @@ const HeaderImg = styled.View`
 const CardListContainer = styled.View`
   flex-direction: row;
   justify-content: space-between;
-  margin: 10px;
   flex-wrap: wrap;
 `;
 
@@ -26,6 +25,11 @@ const CustomizeHomeContainer = styled.SafeAreaView`
 
 const CustomizeHomeCardContainer = styled.View`
   margin: 10px 0;
+`;
+
+const ScrollViewContainer = styled.ScrollView`
+  margin-top: 20px;
+  padding: 0 15px;
 `;
 
 const CurrencyCardComponet = (currency: string, price: string) => {
@@ -83,9 +87,9 @@ const CustomizeHome = () => {
 
   return (
     <CustomizeHomeContainer>
-      <ScrollView>
+      <ScrollViewContainer>
         <CardListContainer>{cardsList.map(card => card())}</CardListContainer>
-      </ScrollView>
+      </ScrollViewContainer>
     </CustomizeHomeContainer>
   );
 };
