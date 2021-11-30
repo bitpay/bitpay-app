@@ -1,10 +1,9 @@
 import React, {ReactNode, useState} from 'react';
-import {ScrollView} from 'react-native';
 import CustomizeHomeCard from '../../../../../components/customize-home-card/CustomizeHomeCard';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../../store';
 import styled from 'styled-components/native';
-import { CurrencyList } from '../../../../../constants/CurrencySelectionListOptions';
+import {CurrencyList} from '../../../../../constants/CurrencySelectionListOptions';
 
 const HeaderImg = styled.View`
   width: 20px;

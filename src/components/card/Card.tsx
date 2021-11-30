@@ -2,8 +2,6 @@ import {CardContainer, CardGutter} from '../styled/Containers';
 import styled from 'styled-components/native';
 import * as React from 'react';
 import {ReactElement, ReactNode} from 'react';
-import {useSelector} from 'react-redux';
-import {RootState} from '../../store';
 
 const CardHeader = styled.View`
   min-height: 30px;

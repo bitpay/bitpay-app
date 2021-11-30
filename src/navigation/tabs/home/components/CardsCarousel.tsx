@@ -8,7 +8,7 @@ import CreateWallet from './empty-states/CreateWallet';
 import styled from 'styled-components/native';
 
 import HomeCard from '../../../../components/home-card/HomeCard';
-import { CurrencyList } from '../../../../constants/CurrencySelectionListOptions';
+import {CurrencyList} from '../../../../constants/CurrencySelectionListOptions';
 
 const HeaderImg = styled.View`
   width: 30px;
