@@ -153,7 +153,7 @@ export const startCreateWalletCredentials =
 export const getRates = (): Effect => async dispatch => {
   try {
     const {data: rates} = await axios.get(`${BASE_BWS_URL}/v3/fiatrates/`);
-    dispatch(WalletActions.successGetRates(rates));
+    dispatch(WalletActions.successGetRates({rates}));
   } catch (err) {
     console.error(err);
     dispatch(WalletActions.failedGetRates());

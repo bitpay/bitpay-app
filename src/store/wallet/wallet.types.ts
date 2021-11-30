@@ -38,7 +38,7 @@ interface setBackupComplete {
 interface successGetRates {
   type: typeof WalletActionTypes.SUCCESS_GET_RATES;
   payload: {
-    rates: ExchangeRate;
+    rates: {[key in string]: Array<ExchangeRate>};
   };
 }
 

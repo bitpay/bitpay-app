@@ -32,14 +32,14 @@ export interface WalletState {
   createdOn: number;
   keys: KeyObj[];
   wallets: {[key in string]: WalletObj};
-  rates: Array<ExchangeRate>;
+  rates: {[key in string]: Array<ExchangeRate>};
 }
 
 const initialState: WalletState = {
   createdOn: Date.now(),
   keys: [],
   wallets: {},
-  rates: [],
+  rates: {},
 };
 
 export const walletReducer = (
@@ -69,7 +69,7 @@ export const walletReducer = (
 
       return {
         ...state,
-        rates: [...state.rates, rates],
+        rates: {...state.rates, ...rates},
       };
 
     default:
