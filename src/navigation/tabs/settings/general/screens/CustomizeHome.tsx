@@ -3,8 +3,8 @@ import {ScrollView} from 'react-native';
 import CustomizeHomeCard from '../../../../../components/customize-home-card/CustomizeHomeCard';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../../store';
-import {CurrencyInfoList} from '../../../home/components/CurrencyList';
 import styled from 'styled-components/native';
+import { CurrencyList } from '../../../../../constants/CurrencySelectionListOptions';
 
 const HeaderImg = styled.View`
   width: 20px;
@@ -36,12 +36,12 @@ const CurrencyCardComponet = (currency: string, price: string) => {
     setChecked(!checked);
   };
 
-  const currencyInfo = CurrencyInfoList.find(
-    ({id}: {id: string}) => id === currency,
+  const currencyInfo = CurrencyList.find(
+    ({id}: {id: string | number}) => id === currency,
   );
 
   const HeaderComponent = (
-    <HeaderImg>{currencyInfo && currencyInfo.img()}</HeaderImg>
+    <HeaderImg>{currencyInfo && currencyInfo.roundIcon()}</HeaderImg>
   );
 
   return (
@@ -52,7 +52,7 @@ const CurrencyCardComponet = (currency: string, price: string) => {
             header={HeaderComponent}
             body={{
               header: currencyInfo.mainLabel,
-              price: `${price} ${currency.toUpperCase()}`,
+              price: `${price} ${currencyInfo.secondaryLabel}`,
             }}
             footer={{
               onCTAPress: _onCTAPress,

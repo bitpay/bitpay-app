@@ -8,7 +8,7 @@ import CreateWallet from './empty-states/CreateWallet';
 import styled from 'styled-components/native';
 
 import HomeCard from '../../../../components/home-card/HomeCard';
-import {CurrencyInfoList} from './CurrencyList';
+import { CurrencyList } from '../../../../constants/CurrencySelectionListOptions';
 
 const HeaderImg = styled.View`
   width: 30px;
@@ -26,12 +26,12 @@ const CurrencyCardComponet = (currency: string, price: string) => {
     /** TODO: Redirect me */
   };
 
-  const currencyInfo = CurrencyInfoList.find(
-    ({id}: {id: string}) => id === currency,
+  const currencyInfo = CurrencyList.find(
+    ({id}: {id: string | number}) => id === currency,
   );
 
   const HeaderComponent = (
-    <HeaderImg>{currencyInfo && currencyInfo.img()}</HeaderImg>
+    <HeaderImg>{currencyInfo && currencyInfo.roundIcon()}</HeaderImg>
   );
 
   return (

@@ -23,6 +23,7 @@ export interface ItemProps {
   secondaryLabel: string;
   disabled?: boolean;
   checked?: boolean;
+  roundIcon: () => ReactElement;
 }
 
 interface Props {
