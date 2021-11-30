@@ -39,14 +39,25 @@ export interface CardProps {
   backgroundImg?: () => ReactElement;
   containerProps?: {
     width?: string;
+    minHeight?: string;
   };
 }
 
-const Card = ({header, body, footer, backgroundImg, containerProps}: CardProps) => {
+const Card = ({
+  header,
+  body,
+  footer,
+  backgroundImg,
+  containerProps,
+}: CardProps) => {
   const appColorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
   const width = containerProps && containerProps.width;
+  const minHeight = containerProps && containerProps.minHeight;
   return (
-    <CardContainer appColorScheme={appColorScheme} width={width}>
+    <CardContainer
+      appColorScheme={appColorScheme}
+      width={width}
+      minHeight={minHeight}>
       {backgroundImg && <BackgroundImage>{backgroundImg()}</BackgroundImage>}
 
       {header && <CardHeader>{header}</CardHeader>}

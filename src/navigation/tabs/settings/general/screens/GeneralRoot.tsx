@@ -45,7 +45,7 @@ const GeneralSettingsRoot: React.FC = () => {
           <SettingTitle>CustomizeHome</SettingTitle>
           <AngleRight />
         </Setting>
-        <Hr></Hr>
+        <Hr />
       </Settings>
     </SettingsContainer>
   );
