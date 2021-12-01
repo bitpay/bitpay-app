@@ -16,6 +16,7 @@ export enum AppActionTypes {
   DISMISS_BOTTOM_NOTIFICATION_MODAL = 'APP/DISMISS_BOTTOM_NOTIFICATION_MODAL',
   SET_COLOR_SCHEME = 'APP/SET_COLOR_SCHEME',
   SET_CURRENT_ROUTE = 'APP/SET_CURRENT_ROUTE',
+  SET_NOTIFICATIONS_ACCEPTED = 'APP/SET_NOTIFICATIONS_ACCEPTED',
 }
 
 interface SuccessGetSession {
@@ -67,6 +68,11 @@ interface SetCurrentRoute {
   payload: [keyof RootStackParamList, NavScreenParams];
 }
 
+interface SetNotificationsAccepted {
+  type: typeof AppActionTypes.SET_NOTIFICATIONS_ACCEPTED;
+  payload: boolean;
+}
+
 export type AppActionType =
   | SuccessGetSession
   | FailedGetSession
@@ -78,4 +84,5 @@ export type AppActionType =
   | ShowBottomNotificationModal
   | DismissBottomNotificationModal
   | SetColorScheme
-  | SetCurrentRoute;
+  | SetCurrentRoute
+  | SetNotificationsAccepted;
