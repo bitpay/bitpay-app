@@ -9,9 +9,6 @@ import TransactButtonIcon from '../../../../assets/img/tab-icons/transact-button
 import styled from 'styled-components/native';
 import {BaseText} from '../../styled/Text';
 import React, {ReactElement, useState} from 'react';
-import {TabsStackParamList} from '../../../navigation/tabs/TabsStack';
-import {useNavigation} from '@react-navigation/native';
-import {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
 import BottomPopupModal from '../base/bottom-popup/BottomPopupModal';
 import {FlatList, TouchableOpacity, View} from 'react-native';
 import {SlateDark} from '../../../styles/colors';
@@ -88,75 +85,65 @@ interface TransactMenuItemProps {
   img: () => ReactElement;
   title?: string;
   description?: string;
-  nextView?: any;
+  onPress: () => void;
 }
-
-// TODO
-enum NextScreen {
-  BUY_CRYPTO = 'BuyCrypto',
-  EXCHANGE = 'Exchange',
-  RECEIVE = 'Receive',
-  SEND = 'Send',
-  BUY_GIFT_CARD = 'BuyGiftCard',
-  SCAN = 'Scan',
-}
-
-const TransactMenuList: Array<TransactMenuItemProps> = [
-  {
-    id: 'buyCrypto',
-    img: () => <BuyCryptoIcon />,
-    title: 'Buy Crypto',
-    description: 'Buy crypto with cash',
-    nextView: NextScreen.BUY_CRYPTO,
-  },
-  {
-    id: 'exchange',
-    img: () => <ExchangeIcon />,
-    title: 'Exchange',
-    description: 'Swap crypto for another',
-    nextView: NextScreen.EXCHANGE,
-  },
-  {
-    id: 'receive',
-    img: () => <ReceiveIcon />,
-    title: 'Receive',
-    description: 'Get crypto from another wallet',
-    nextView: NextScreen.RECEIVE,
-  },
-  {
-    id: 'send',
-    img: () => <SendIcon />,
-    title: 'Send',
-    description: 'Send crypto to another wallet',
-    nextView: NextScreen.SEND,
-  },
-  {
-    id: 'buyGiftCard',
-    img: () => <BuyGiftCardIcon />,
-    title: 'Buy Gift Cards',
-    description: 'Buy gift cards with crypto',
-    nextView: NextScreen.BUY_GIFT_CARD,
-  },
-];
-
-const ScanButton: TransactMenuItemProps = {
-  id: 'scan',
-  img: () => <ScanIcon />,
-  title: 'Scan',
-  nextView: NextScreen.SCAN,
-};
-
-const CloseButton: TransactMenuItemProps = {
-  id: 'close',
-  img: () => <CloseIcon />,
-};
 
 const TransactModal = () => {
-  const navigation =
-    useNavigation<BottomTabNavigationProp<TabsStackParamList>>();
   const [modalVisible, setModalVisible] = useState(false);
   const hideModal = () => setModalVisible(false);
   const showModal = () => setModalVisible(true);
+
+  // TODO: navigation
+  const TransactMenuList: Array<TransactMenuItemProps> = [
+    {
+      id: 'buyCrypto',
+      img: () => <BuyCryptoIcon />,
+      title: 'Buy Crypto',
+      description: 'Buy crypto with cash',
+      onPress: () => {},
+    },
+    {
+      id: 'exchange',
+      img: () => <ExchangeIcon />,
+      title: 'Exchange',
+      description: 'Swap crypto for another',
+      onPress: () => {},
+    },
+    {
+      id: 'receive',
+      img: () => <ReceiveIcon />,
+      title: 'Receive',
+      description: 'Get crypto from another wallet',
+      onPress: () => {},
+    },
+    {
+      id: 'send',
+      img: () => <SendIcon />,
+      title: 'Send',
+      description: 'Send crypto to another wallet',
+      onPress: () => {},
+    },
+    {
+      id: 'buyGiftCard',
+      img: () => <BuyGiftCardIcon />,
+      title: 'Buy Gift Cards',
+      description: 'Buy gift cards with crypto',
+      onPress: () => {},
+    },
+  ];
+
+  const ScanButton: TransactMenuItemProps = {
+    id: 'scan',
+    img: () => <ScanIcon />,
+    title: 'Scan',
+    onPress: () => {},
+  };
+
+  const CloseButton: TransactMenuItemProps = {
+    id: 'close',
+    img: () => <CloseIcon />,
+    onPress: () => {},
+  };
 
   return (
     <>
@@ -173,7 +160,7 @@ const TransactModal = () => {
               renderItem={({item}) => (
                 <TransactItemContainer
                   onPress={() => {
-                    navigation.navigate(item.nextView);
+                    item.onPress();
                     hideModal();
                   }}>
                   <ItemIconContainer>{item.img()}</ItemIconContainer>
@@ -188,7 +175,7 @@ const TransactModal = () => {
             />
             <ScanButtonContainer
               onPress={() => {
-                navigation.navigate(ScanButton.nextView);
+                ScanButton.onPress();
                 hideModal();
               }}>
               <View>{ScanButton.img()}</View>
