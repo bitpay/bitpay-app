@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components/native';
 import {Action, SlateDark} from '../../styles/colors';
+import haptic from '../haptic-feedback/haptic';
 import {BaseText} from '../styled/Text';
 import {QuickLinkProps} from './QuickLinksSlides';
 
@@ -49,7 +50,11 @@ export default ({item}: {item: QuickLinkProps}) => {
   const {img, title, description, onPress} = item;
 
   return (
-    <QuickLinkCardContainer onPress={() => onPress()}>
+    <QuickLinkCardContainer
+      onPress={() => {
+        haptic('impactLight');
+        onPress();
+      }}>
       <TextContainer>
         <TitleText>{title}</TitleText>
         <DescriptionText>{description}</DescriptionText>

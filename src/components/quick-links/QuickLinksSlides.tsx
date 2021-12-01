@@ -1,4 +1,4 @@
-import React, {ReactElement, useRef} from 'react';
+import React, {ReactElement} from 'react';
 import {Carousel} from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
 import haptic from '../haptic-feedback/haptic';
@@ -18,7 +18,7 @@ interface QuickLinkSlide {
   items: Array<QuickLinkProps>;
 }
 
-const QuickLinksContainer = styled.SafeAreaView`
+const QuickLinksContainer = styled.View`
   flex: 1;
   position: relative;
   left: 16px;
@@ -26,8 +26,6 @@ const QuickLinksContainer = styled.SafeAreaView`
 `;
 
 const QuickLinksSlides = ({items}: QuickLinkSlide) => {
-  const ref = useRef(null);
-
   return (
     <QuickLinksContainer>
       <Carousel
@@ -36,7 +34,6 @@ const QuickLinksSlides = ({items}: QuickLinkSlide) => {
         useExperimentalSnap={true}
         data={items}
         renderItem={QuickLinkCard}
-        ref={ref}
         sliderWidth={WIDTH}
         itemWidth={212}
         inactiveSlideScale={1}
