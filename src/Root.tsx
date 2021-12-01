@@ -49,7 +49,7 @@ import AboutStack, {
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
-  Tabs: NavigatorScreenParams<TabsStackParamList> | undefined;
+  Tabs: NavigatorScreenParams<TabsStackParamList>;
   BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
   Wallet: NavigatorScreenParams<WalletStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
