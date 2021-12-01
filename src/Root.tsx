@@ -186,58 +186,41 @@ export default () => {
         }, 300)}>
         <Root.Navigator
           screenOptions={{
+            ...baseScreenOptions,
             headerShown: false,
           }}
           initialRouteName={initialRoute}>
           <Root.Screen
             name={RootStacks.ONBOARDING}
             component={OnboardingStack}
-            options={{...baseScreenOptions}}
           />
           <Root.Screen
             name={RootStacks.TABS}
             component={TabsStack}
             options={{
-              ...baseScreenOptions,
               gestureEnabled: false,
             }}
           />
-          <Root.Screen
-            name={RootStacks.BITPAY_ID}
-            component={BitpayIdStack}
-            options={{...baseScreenOptions}}
-          />
-          <Root.Screen
-            name={RootStacks.WALLET}
-            component={WalletStack}
-            options={{...baseScreenOptions}}
-          />
+          <Root.Screen name={RootStacks.BITPAY_ID} component={BitpayIdStack} />
+          <Root.Screen name={RootStacks.WALLET} component={WalletStack} />
           {/* SETTINGS */}
           <Root.Screen
             name={RootStacks.GENERAL_SETTINGS}
             component={GeneralSettingsStack}
-            options={{...baseScreenOptions}}
           />
           <Root.Screen
             name={RootStacks.SECURITY_SETTINGS}
             component={SecuritySettingsStack}
-            options={{...baseScreenOptions}}
           />
           <Root.Screen
             name={RootStacks.CONTACT_SETTINGS}
             component={ContactSettingsStack}
-            options={{...baseScreenOptions}}
           />
           <Root.Screen
             name={RootStacks.NOTIFICATION_SETTINGS}
             component={NotificationSettingsStack}
-            options={{...baseScreenOptions}}
           />
-          <Root.Screen
-            name={RootStacks.ABOUT}
-            component={AboutStack}
-            options={{...baseScreenOptions}}
-          />
+          <Root.Screen name={RootStacks.ABOUT} component={AboutStack} />
         </Root.Navigator>
       </NavigationContainer>
       <OnGoingProcessModal />
