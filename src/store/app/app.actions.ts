@@ -58,6 +58,7 @@ export const setCurrentRoute = (route: any): AppActionType => ({
   payload: route,
 });
 
+
 export const successGenerateAppIdentity = (
   network: Network,
   identity: AppIdentity,
@@ -68,4 +69,11 @@ export const successGenerateAppIdentity = (
 
 export const failedGenerateAppIdentity = (): AppActionType => ({
   type: AppActionTypes.FAILED_GENERATE_APP_IDENTITY,
+});
+
+export const setNotificationsAccepted = (
+  notificationsAccepted: boolean,
+): AppActionType => ({
+  type: AppActionTypes.SET_NOTIFICATIONS_ACCEPTED,
+  payload: notificationsAccepted,
 });

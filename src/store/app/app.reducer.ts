@@ -33,6 +33,7 @@ export interface AppState {
   bottomNotificationModalConfig: BottomNotificationConfig | undefined;
   colorScheme: ColorSchemeName;
   currentRoute: [keyof RootStackParamList, NavScreenParams] | undefined;
+  notificationsAccepted: boolean;
 }
 
 const initialState: AppState = {
@@ -59,6 +60,7 @@ const initialState: AppState = {
   bottomNotificationModalConfig: undefined,
   colorScheme: 'light',
   currentRoute: undefined,
+  notificationsAccepted: false,
 };
 
 export const appReducer = (
@@ -131,6 +133,12 @@ export const appReducer = (
           ...state.identity,
           [network]: identity,
         },
+      };
+
+    case AppActionTypes.SET_NOTIFICATIONS_ACCEPTED:
+      return {
+        ...state,
+        notificationsAccepted: action.payload,
       };
 
     default:
