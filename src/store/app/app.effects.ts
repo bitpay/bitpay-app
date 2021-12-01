@@ -1,4 +1,5 @@
 import axios from 'axios';
+import BitAuth from 'bitauth';
 import {Linking} from 'react-native';
 import InAppBrowser, {
   InAppBrowserOptions,
@@ -26,22 +27,54 @@ export const startGetSession =
     }
   };
 
-export const startAppInit =
-  (): Effect => async (dispatch, getState: () => RootState) => {
-    try {
-      dispatch(LogActions.clear());
-      dispatch(LogActions.info('Initializing app...'));
-      // splitting inits into store specific ones as to keep it cleaner in the main init here
-      dispatch(startWalletStoreInit());
+export const startAppInit = (): Effect => async (dispatch, _getState) => {
+  try {
+    dispatch(LogActions.clear());
+    dispatch(LogActions.info('Initializing app...'));
 
-      await sleep(500);
-      dispatch(AppActions.successAppInit());
-      dispatch(LogActions.info('Initialized app successfully.'));
-    } catch (err) {
-      console.error(err);
-      dispatch(AppActions.failedAppInit());
+    dispatch(initializeAppIdentity());
+
+    // splitting inits into store specific ones as to keep it cleaner in the main init here
+    dispatch(startWalletStoreInit());
+
+    await sleep(500);
+    dispatch(AppActions.successAppInit());
+    dispatch(LogActions.info('Initialized app successfully.'));
+  } catch (err) {
+    console.error(err);
+    dispatch(AppActions.failedAppInit());
+  }
+};
+
+/**
+ * Checks to ensure that the App Identity is defined, else generates a new one.
+ * @returns undefined
+ */
+const initializeAppIdentity = (): Effect => (dispatch, getState) => {
+  const {APP} = getState();
+  let identity = APP.identity[APP.network];
+
+  dispatch(LogActions.info('Initializing App Identity...'));
+
+  if (!identity || !Object.keys(identity).length || !identity.priv) {
+    try {
+      dispatch(LogActions.info('Generating new App Identity...'));
+
+      identity = BitAuth.generateSin();
+
+      dispatch(AppActions.successGenerateAppIdentity(APP.network, identity));
+    } catch (error) {
+      dispatch(
+        LogActions.error(
+          'Error generating App Identity: ' + JSON.stringify(error),
+        ),
+      );
+      dispatch(AppActions.failedGenerateAppIdentity());
     }
-  };
+  }
+
+  dispatch(LogActions.info('Initialized App Identity successfully.'));
+};
 
 export const startOnGoingProcessModal =
   (message: OnGoingProcessMessages): Effect =>
