@@ -83,7 +83,7 @@ const TermsOfUse = ({navigation: _navigation, route}: Props) => {
         <Button
           onPress={() => {
             dispatch(AppActions.setOnboardingCompleted());
-            navigation.navigate('Tabs');
+            navigation.navigate('Tabs', {screen: 'Home'});
           }}
           buttonStyle={'primary'}
           disabled={agreed.length !== termsList.length}>

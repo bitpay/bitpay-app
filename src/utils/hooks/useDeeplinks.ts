@@ -35,7 +35,7 @@ export const useDeeplinks = () => {
     return () => {
       Linking.removeEventListener('url', urlEventHandler);
     };
-  }, [dispatch]);
+  }, [dispatch, logger]);
 
   const linkingOptions: LinkingOptions<RootStackParamList> = {
     prefixes: [`${DEEPLINK_PREFIX}://`],
