@@ -31,7 +31,7 @@ const CurrencyCardComponet = (currency: string, price: string) => {
   );
 
   const HeaderComponent = (
-    <HeaderImg>{currencyInfo && currencyInfo.roundIcon()}</HeaderImg>
+    <HeaderImg>{currencyInfo && currencyInfo.roundIcon}</HeaderImg>
   );
 
   return (
