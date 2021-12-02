@@ -1,4 +1,4 @@
-import React, {ReactNode, useRef} from 'react';
+import React, {ReactNode} from 'react';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import Carousel from 'react-native-snap-carousel';
@@ -39,6 +39,7 @@ const CurrencyCardComponet = (currency: string, price: string) => {
       {currencyInfo && (
         <HomeCard
           header={HeaderComponent}
+          // TODO: update the price code
           body={{header: currencyInfo.mainLabel, price: `${price}$`}}
           footer={{
             onCTAPress: _onCTAPress,
@@ -50,31 +51,24 @@ const CurrencyCardComponet = (currency: string, price: string) => {
 };
 
 const CardsCarousel = () => {
-  const cardsList: Array<ReactNode | null> = [];
+  const cardsList: ReactNode[] = [];
   const wallets = useSelector(({WALLET}: RootState) => WALLET.wallets);
-  const ref = useRef(null);
 
-  if (wallets && !Object.keys(wallets).length) {
-    cardsList.push(() => <CreateWallet />);
-  } else {
-    Object.values(wallets).map((wallet: any) => {
-      const {assets, totalBalance} = wallet;
-      if (!assets.length) {
-        cardsList.push(() => <CreateWallet />);
-        return;
-      }
+  if (wallets) {
+    if (Object.keys(wallets).length) {
+      Object.values(wallets).forEach((wallet: any) => {
+        const {assets, totalBalance} = wallet;
+        assets &&
+          assets.map((asset: any) => {
+            cardsList.push(CurrencyCardComponet(asset.coin, totalBalance));
+          });
+      });
+    }
 
-      assets &&
-        assets.map((asset: any) => {
-          cardsList.push(() => CurrencyCardComponet(asset.coin, totalBalance));
-        });
-
-      cardsList.push(() => <CreateWallet />);
-    });
+    cardsList.push(<CreateWallet />);
   }
-
   const _renderItem = ({item}: {item: ReactNode}) => {
-    return <>{item()}</>;
+    return <>{item}</>;
   };
 
   return (
@@ -85,7 +79,6 @@ const CardsCarousel = () => {
         useExperimentalSnap={true}
         data={cardsList}
         renderItem={_renderItem}
-        ref={ref}
         sliderWidth={WIDTH}
         itemWidth={225}
         inactiveSlideScale={1}
