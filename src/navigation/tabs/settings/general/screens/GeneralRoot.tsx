@@ -42,7 +42,7 @@ const GeneralSettingsRoot: React.FC = () => {
           onPress={() =>
             navigation.navigate('GeneralSettings', {screen: 'CustomizeHome'})
           }>
-          <SettingTitle>CustomizeHome</SettingTitle>
+          <SettingTitle>Customize Home</SettingTitle>
           <AngleRight />
         </Setting>
         <Hr />
