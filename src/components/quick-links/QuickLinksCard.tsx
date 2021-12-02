@@ -57,7 +57,9 @@ export default ({item}: {item: QuickLinkProps}) => {
       }}>
       <TextContainer>
         <TitleText>{title}</TitleText>
-        <DescriptionText>{description}</DescriptionText>
+        <DescriptionText numberOfLines={2} ellipsizeMode={'tail'}>
+          {description}
+        </DescriptionText>
       </TextContainer>
       <ImgContainer>{img()}</ImgContainer>
     </QuickLinkCardContainer>
