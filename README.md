@@ -20,7 +20,7 @@ TEMPORARY - If using XCode 13 you will need to comment out the following in the 
 end
 ```
 
-1. Install Pods `cd ios && pod install && cd ..`
+1. Install Pods `yarn pod:install`
 2. `yarn start` to start dev server
 3. Build and deploy to simulator `yarn ios` or device `yarn ios:device`
 
