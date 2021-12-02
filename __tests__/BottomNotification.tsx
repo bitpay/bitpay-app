@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  cleanup,
-  fireEvent,
-  render,
-  waitFor,
-} from '@testing-library/react-native';
+import {cleanup, fireEvent, render} from '@testing-library/react-native';
 import {Provider} from 'react-redux';
 import BottomNotification from '../src/components/modal/bottom-notification/BottomNotification';
 import {configureTestStore} from '../src/store';

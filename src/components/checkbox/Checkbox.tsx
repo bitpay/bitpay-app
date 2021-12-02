@@ -63,7 +63,12 @@ const Checkbox: React.FC<Props> = ({onPress, checked, disabled, radio}) => {
         ...baseStyles,
         borderColor: 'transparent',
       }}>
-      <Border checked={checked} disabled={disabled} radio={radio} testID="checkboxBorder" />
+      <Border
+        checked={checked}
+        disabled={disabled}
+        radio={radio}
+        testID="checkboxBorder"
+      />
       <Check />
     </RoundedCheckbox>
   );
