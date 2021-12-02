@@ -1,5 +1,4 @@
 import React, {ReactElement, useRef} from 'react';
-import {Dimensions} from 'react-native';
 import {Carousel} from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
 import haptic from '../haptic-feedback/haptic';
