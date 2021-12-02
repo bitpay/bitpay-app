@@ -72,22 +72,22 @@ const CustomizeHome = () => {
   const wallets = useSelector(({WALLET}: RootState) => WALLET.wallets);
   const cardsList: Array<ReactNode | null> = [];
 
-  Object.values(wallets).map((wallet: any) => {
-    const {assets, totalBalance} = wallet;
-    if (!assets.length) {
-      return;
-    }
-
-    assets &&
-      assets.map((asset: any) => {
-        cardsList.push(() => CurrencyCardComponet(asset.coin, totalBalance));
+  if (wallets) {
+    if (Object.keys(wallets).length) {
+      Object.values(wallets).forEach((wallet: any) => {
+        const {assets, totalBalance} = wallet;
+        assets &&
+          assets.map((asset: any) => {
+            cardsList.push(CurrencyCardComponet(asset.coin, totalBalance));
+          });
       });
-  });
+    }
+  }
 
   return (
     <CustomizeHomeContainer>
       <ScrollViewContainer>
-        <CardListContainer>{cardsList.map(card => card())}</CardListContainer>
+        <CardListContainer>{cardsList.map(card => card)}</CardListContainer>
       </ScrollViewContainer>
     </CustomizeHomeContainer>
   );
