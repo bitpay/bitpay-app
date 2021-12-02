@@ -88,51 +88,45 @@ const FooterArrow = styled.TouchableHighlight`
 `;
 
 const HomeCard = ({backgroundImg, body, footer, header}: HomeCardProps) => {
-  const HeaderComp: React.FC<{headerComp?: ReactNode}> = (
-    headerComp?: ReactNode,
-  ) => <CardHeader>{headerComp}</CardHeader>;
+  const HeaderComp = <CardHeader>{header}</CardHeader>;
 
   const appColorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
 
-  const BodyComp: React.FC<BodyProps> = (bodyComp?: BodyProps) =>
-    bodyComp ? (
-      <View>
-        {bodyComp.header && (
-          <CardBodyHeader appColorScheme={appColorScheme}>
-            {bodyComp.header}
-          </CardBodyHeader>
-        )}
-        {bodyComp.price && (
-          <CardPrice appColorScheme={appColorScheme}>
-            {bodyComp.price}
-          </CardPrice>
-        )}
-        {bodyComp.pillText && (
-          <CardPill>
-            <CardPillText>{bodyComp.pillText}</CardPillText>
-          </CardPill>
-        )}
-        {bodyComp.description && (
-          <CardBodyDesc appColorScheme={appColorScheme}>
-            {bodyComp.description}
-          </CardBodyDesc>
-        )}
-      </View>
-    ) : null;
+  const BodyComp = (
+    <View>
+      {body.header && (
+        <CardBodyHeader appColorScheme={appColorScheme}>
+          {body.header}
+        </CardBodyHeader>
+      )}
+      {body.price && (
+        <CardPrice appColorScheme={appColorScheme}>{body.price}</CardPrice>
+      )}
+      {body.pillText && (
+        <CardPill>
+          <CardPillText>{body.pillText}</CardPillText>
+        </CardPill>
+      )}
+      {body.description && (
+        <CardBodyDesc appColorScheme={appColorScheme}>
+          {body.description}
+        </CardBodyDesc>
+      )}
+    </View>
+  );
 
-  const FooterComp: React.FC<FooterProps> = (footerComp?: FooterProps) => {
-    const _onPress = () => {
-      if (footerComp && footerComp.onCTAPress) {
-        Haptic('impactLight');
-        footerComp.onCTAPress();
-      }
-    };
-    return footerComp ? (
-      <FooterArrow onPress={_onPress} underlayColor="white">
-        <Arrow />
-      </FooterArrow>
-    ) : null;
+  const _onPress = () => {
+    if (footer && footer.onCTAPress) {
+      Haptic('impactLight');
+      footer.onCTAPress();
+    }
   };
+
+  const FooterComp = (
+    <FooterArrow onPress={_onPress} underlayColor="white">
+      <Arrow />
+    </FooterArrow>
+  );
 
   const containerProps = {
     backgroundColor: appColorScheme === 'light' ? NeutralSlate : Midnight,
@@ -141,9 +135,9 @@ const HomeCard = ({backgroundImg, body, footer, header}: HomeCardProps) => {
   return (
     <Card
       backgroundImg={backgroundImg}
-      header={HeaderComp(header)}
-      body={BodyComp(body)}
-      footer={FooterComp(footer)}
+      header={HeaderComp}
+      body={BodyComp}
+      footer={FooterComp}
       containerProps={containerProps}
     />
   );
