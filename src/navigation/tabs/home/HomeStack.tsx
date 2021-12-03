@@ -1,5 +1,4 @@
 import React from 'react';
-import {ScrollView} from 'react-native';
 import styled from 'styled-components/native';
 import CardsCarousel from './components/CardsCarousel';
 import {useSelector} from 'react-redux';
@@ -12,6 +11,10 @@ const HomeContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
+const ScrollView = styled.ScrollView`
+  padding: 10px;
+`;
+
 const HomeStack = () => {
   const priceHistory = useSelector(
     ({WALLET}: RootState) => WALLET.priceHistory,
@@ -19,14 +22,13 @@ const HomeStack = () => {
   const exchangeRatesItems = priceHistory.map(
     (ph: PriceHistory, index: number) => {
       const currencyInfo = CurrencyList.find(
-        ({secondaryLabel}: {secondaryLabel: string}) =>
-          secondaryLabel === ph.coin,
+        ({id}: {id: string | number}) => id === ph.coin,
       );
       return {
         id: index,
-        img: currencyInfo?.img,
+        img: currencyInfo?.roundIcon,
         coinName: currencyInfo?.mainLabel,
-        average: ph.priceDisplayPercentChange,
+        average: ph.percentChange,
       };
     },
   );

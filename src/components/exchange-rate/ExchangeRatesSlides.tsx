@@ -18,16 +18,13 @@ interface ExchangeRateSlide {
 
 const WIDTH = Dimensions.get('window').width;
 
-const ExchangeRatesContainer = styled.SafeAreaView`
+const ExchangeRatesContainer = styled.View`
   flex: 1;
   position: relative;
-  left: 16px;
   top: 30px;
 `;
 
 const ExchangeRatesSlides = ({items}: ExchangeRateSlide) => {
-  const ref = useRef(null);
-
   return (
     <ExchangeRatesContainer>
       <Carousel
@@ -36,7 +33,6 @@ const ExchangeRatesSlides = ({items}: ExchangeRateSlide) => {
         useExperimentalSnap={true}
         data={items}
         renderItem={ExchangeRateCard}
-        ref={ref}
         sliderWidth={WIDTH}
         itemWidth={110}
         inactiveSlideScale={1}

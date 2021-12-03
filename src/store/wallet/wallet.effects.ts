@@ -178,7 +178,7 @@ export const getPriceHistory = (): Effect => async dispatch => {
     );
     const formattedData = data.map((d: PriceHistory) => {
       return {
-        coin: d.currencyPair.split(':')[0],
+        coin: d.currencyPair.split(':')[0].toLowerCase(),
         ...d,
       };
     });

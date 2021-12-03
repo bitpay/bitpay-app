@@ -29,6 +29,6 @@ export interface ExchangeRate {
 export interface PriceHistory {
   coin: string;
   priceDisplay: Array<number>;
-  priceDisplayPercentChange: string;
+  percentChange: string;
   currencyPair: string;
 }
