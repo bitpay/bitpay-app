@@ -1,6 +1,6 @@
 import styled, {css} from 'styled-components/native';
 import {StyledComponentBase} from 'styled-components';
-import {Action} from '../../styles/colors';
+import {Action, SlateDark} from '../../styles/colors';
 
 export const BaseText: StyledComponentBase<any, any> = styled.Text`
   font-family: 'Heebo';
@@ -72,6 +72,14 @@ export const Link = styled(BaseText)`
   line-height: 25px;
   font-weight: 400;
   color: ${Action};
+`;
+
+export const SectionTitle = styled(BaseText)`
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 18px;
+  text-align: left;
+  color: ${SlateDark};
 `;
 
 // LIST
