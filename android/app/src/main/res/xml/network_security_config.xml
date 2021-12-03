@@ -1,4 +1,5 @@
 <network-security-config>
+  <base-config cleartextTrafficPermitted="true" />
   <domain-config cleartextTrafficPermitted="true">
     <domain includeSubdomains="true">localhost</domain>
     <!-- Add your local IP here. -->
