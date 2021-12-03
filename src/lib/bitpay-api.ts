@@ -20,7 +20,7 @@ export class BitPayApi {
   /**
    * Required. Used to determine the API endpoint.
    */
-  private network = Network.livenet;
+  private network = Network.mainnet;
 
   /**
    * Required. Contains the keys used to sign API requests.
