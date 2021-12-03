@@ -1,38 +1,27 @@
-import axios from 'axios';
 import BitAuth from 'bitauth';
 import {Linking} from 'react-native';
 import InAppBrowser, {
   InAppBrowserOptions,
 } from 'react-native-inappbrowser-reborn';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {Network} from '../../constants';
+import {BASE_BITPAY_URLS} from '../../constants/config';
+import BitPayApi from '../../lib/bitpay-api';
 import {sleep} from '../../utils/helper-methods';
 import {RootState, Effect} from '../index';
 import {LogActions} from '../log';
 import {startWalletStoreInit} from '../wallet/wallet.effects';
 import {AppActions} from './';
-import {Session} from './app.models';
+import {AppIdentity} from './app.models';
 
-export const startGetSession =
-  (): Effect => async (dispatch, getState: () => RootState) => {
-    const store = getState();
-
-    try {
-      const {data: session} = await axios.get<Session>(
-        `${store.APP.baseBitPayURL}/auth/session`,
-      );
-      dispatch(AppActions.successGetSession(session));
-    } catch (err) {
-      console.error(err);
-      dispatch(AppActions.failedGetSession());
-    }
-  };
-
-export const startAppInit = (): Effect => async (dispatch, _getState) => {
+export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     dispatch(LogActions.clear());
     dispatch(LogActions.info('Initializing app...'));
 
-    dispatch(initializeAppIdentity());
+    const {APP} = getState();
+    const identity = dispatch(initializeAppIdentity());
+    dispatch(initializeBitPayApi(APP.network, identity));
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here
     dispatch(startWalletStoreInit());
@@ -48,33 +37,50 @@ export const startAppInit = (): Effect => async (dispatch, _getState) => {
 
 /**
  * Checks to ensure that the App Identity is defined, else generates a new one.
- * @returns undefined
+ * @returns The App Identity.
  */
-const initializeAppIdentity = (): Effect => (dispatch, getState) => {
-  const {APP} = getState();
-  let identity = APP.identity[APP.network];
+const initializeAppIdentity =
+  (): Effect<AppIdentity> => (dispatch, getState) => {
+    const {APP} = getState();
+    let identity = APP.identity[APP.network];
 
-  dispatch(LogActions.info('Initializing App Identity...'));
+    dispatch(LogActions.info('Initializing App Identity...'));
 
-  if (!identity || !Object.keys(identity).length || !identity.priv) {
-    try {
-      dispatch(LogActions.info('Generating new App Identity...'));
+    if (!identity || !Object.keys(identity).length || !identity.priv) {
+      try {
+        dispatch(LogActions.info('Generating new App Identity...'));
 
-      identity = BitAuth.generateSin();
+        identity = BitAuth.generateSin();
 
-      dispatch(AppActions.successGenerateAppIdentity(APP.network, identity));
-    } catch (error) {
-      dispatch(
-        LogActions.error(
-          'Error generating App Identity: ' + JSON.stringify(error),
-        ),
-      );
-      dispatch(AppActions.failedGenerateAppIdentity());
+        dispatch(AppActions.successGenerateAppIdentity(APP.network, identity));
+      } catch (error) {
+        dispatch(
+          LogActions.error(
+            'Error generating App Identity: ' + JSON.stringify(error),
+          ),
+        );
+        dispatch(AppActions.failedGenerateAppIdentity());
+      }
     }
-  }
 
-  dispatch(LogActions.info('Initialized App Identity successfully.'));
-};
+    dispatch(LogActions.info('Initialized App Identity successfully.'));
+
+    return identity;
+  };
+
+/**
+ * Initializes the BitPayAPI for the given network and identity.
+ * @param network
+ * @param identity
+ * @returns void
+ */
+const initializeBitPayApi =
+  (network: Network, identity: AppIdentity): Effect =>
+  () => {
+    BitPayApi.init(network, identity, {
+      baseUrl: BASE_BITPAY_URLS[network],
+    });
+  };
 
 export const startOnGoingProcessModal =
   (message: OnGoingProcessMessages): Effect =>

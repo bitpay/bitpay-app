@@ -67,8 +67,8 @@ const OnboardingStart = () => {
 
   const login = () => {
     haptic('impactLight');
-    navigation.navigate('BitpayId', {
-      screen: 'LoginSignup',
+    navigation.navigate('Onboarding', {
+      screen: 'Login',
       params: {context: 'signup'},
     });
   };

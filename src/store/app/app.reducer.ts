@@ -4,7 +4,7 @@ import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {NavScreenParams, RootStackParamList} from '../../Root';
-import {AppIdentity, Session} from './app.models';
+import {AppIdentity} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
 
 type AppReduxPersistBlackList = [
@@ -26,7 +26,6 @@ export interface AppState {
   baseBitPayURL: string;
   appIsLoading: boolean;
   onboardingCompleted: boolean;
-  session: Session | undefined;
   showOnGoingProcessModal: boolean;
   onGoingProcessModalMessage: string | undefined;
   showBottomNotificationModal: boolean;
@@ -53,7 +52,6 @@ const initialState: AppState = {
   baseBitPayURL: BASE_BITPAY_URLS[Network.mainnet],
   appIsLoading: true,
   onboardingCompleted: false,
-  session: undefined,
   showOnGoingProcessModal: false,
   onGoingProcessModalMessage: OnGoingProcessMessages.GENERAL_AWAITING,
   showBottomNotificationModal: false,
@@ -68,12 +66,6 @@ export const appReducer = (
   action: AppActionType,
 ): AppState => {
   switch (action.type) {
-    case AppActionTypes.SUCCESS_GET_SESSION:
-      return {
-        ...state,
-        session: action.payload,
-      };
-
     case AppActionTypes.SUCCESS_APP_INIT:
       return {
         ...state,
