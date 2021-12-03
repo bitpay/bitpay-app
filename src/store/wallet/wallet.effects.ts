@@ -55,7 +55,7 @@ export const startCreateWallet =
           wallet: {
             id: key.id,
             assets: credentials,
-            totalBalance: 0
+            totalBalance: 0,
           },
         }),
       );
@@ -207,8 +207,8 @@ export const startImportMnemonic =
 
 export const startImportWalletCredentials =
   (opts: Partial<WalletOptions>): Effect =>
-  async disptch => {
-    const value = await new Promise((resolve) => {
+  async () => {
+    const value = await new Promise(resolve => {
       BWC.Client.serverAssistedImport(
         opts,
         {baseUrl: 'https://bws.bitpay.com/bws/api'},

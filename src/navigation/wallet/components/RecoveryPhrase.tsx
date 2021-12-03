@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React from 'react';
 import styled from 'styled-components/native';
 import {Caution, Slate, SlateDark, White} from '../../../styles/colors';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
@@ -12,7 +12,7 @@ import {useForm, Controller} from 'react-hook-form';
 import {BaseText} from '../../../components/styled/Text';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {WalletOptions} from '../../../store/wallet/wallet.models';
-import { startImportMnemonic } from '../../../store/wallet/wallet.effects';
+import {startImportMnemonic} from '../../../store/wallet/wallet.effects';
 
 const Gutter = '10px';
 export const ImportWalletContainer = styled.View`
@@ -87,7 +87,7 @@ const RecoveryPhrase = () => {
 
     const wordList = words.trim().split(/[\u3000\s]+/);
 
-    if (wordList.length % 3 != 0) {
+    if (wordList.length % 3 !== 0) {
       logger.info('Incorrect words length');
       dispatch(
         showBottomNotificationModal({
