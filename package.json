@@ -82,6 +82,7 @@
     "@storybook/addon-ondevice-actions": "5.3.23",
     "@storybook/addon-ondevice-knobs": "5.3.25",
     "@storybook/react-native": "5.3.25",
+    "@types/bitauth": "0.4.1",
     "@types/jest": "26.0.24",
     "@types/lodash.debounce": "4.0.6",
     "@types/lodash.throttle": "4.1.6",

@@ -27,7 +27,7 @@ export interface AssetOpts {
   };
   paymentInfo: {
     paymentCode: string;
-    protocolPrefix: {livenet: string; testnet: string};
+    protocolPrefix: {mainnet: string; testnet: string};
     // Urls
     ratesApi: string;
     blockExplorerUrls: string;
@@ -68,7 +68,7 @@ export const ASSETS: {[key in string]: AssetOpts} = {
     },
     paymentInfo: {
       paymentCode: 'BIP73',
-      protocolPrefix: {livenet: 'bitcoin', testnet: 'bitcoin'},
+      protocolPrefix: {mainnet: 'bitcoin', testnet: 'bitcoin'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/btc',
       blockExplorerUrls: 'bitpay.com/insight/#/BTC/mainnet/',
       blockExplorerUrlsTestnet: 'bitpay.com/insight/#/BTC/testnet/',
@@ -105,7 +105,7 @@ export const ASSETS: {[key in string]: AssetOpts} = {
     },
     paymentInfo: {
       paymentCode: 'BIP73',
-      protocolPrefix: {livenet: 'bitcoincash', testnet: 'bchtest'},
+      protocolPrefix: {mainnet: 'bitcoincash', testnet: 'bchtest'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/bch',
       blockExplorerUrls: 'bitpay.com/insight/#/BCH/mainnet/',
       blockExplorerUrlsTestnet: 'bitpay.com/insight/#/BCH/testnet/',
@@ -142,7 +142,7 @@ export const ASSETS: {[key in string]: AssetOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {mainnet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/eth',
       blockExplorerUrls: 'etherscan.io/',
       blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
@@ -179,7 +179,7 @@ export const ASSETS: {[key in string]: AssetOpts} = {
     },
     paymentInfo: {
       paymentCode: 'BIP73',
-      protocolPrefix: {livenet: 'ripple', testnet: 'ripple'},
+      protocolPrefix: {mainnet: 'ripple', testnet: 'ripple'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/xrp',
       blockExplorerUrls: 'xrpscan.com/',
       blockExplorerUrlsTestnet: 'test.bithomp.com/explorer/',
@@ -216,7 +216,7 @@ export const ASSETS: {[key in string]: AssetOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {mainnet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/busd',
       blockExplorerUrls: 'etherscan.io/',
       blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
@@ -253,7 +253,7 @@ export const ASSETS: {[key in string]: AssetOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {mainnet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/pax',
       blockExplorerUrls: 'etherscan.io/',
       blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
@@ -290,7 +290,7 @@ export const ASSETS: {[key in string]: AssetOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {mainnet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/usdc',
       blockExplorerUrls: 'etherscan.io/',
       blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
@@ -327,7 +327,7 @@ export const ASSETS: {[key in string]: AssetOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {mainnet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/gusd',
       blockExplorerUrls: 'etherscan.io/',
       blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
@@ -364,7 +364,7 @@ export const ASSETS: {[key in string]: AssetOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {mainnet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/gusd',
       blockExplorerUrls: 'etherscan.io/',
       blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
@@ -401,7 +401,7 @@ export const ASSETS: {[key in string]: AssetOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {mainnet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/btc',
       blockExplorerUrls: 'etherscan.io/',
       blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
@@ -438,7 +438,7 @@ export const ASSETS: {[key in string]: AssetOpts} = {
     },
     paymentInfo: {
       paymentCode: 'BIP73',
-      protocolPrefix: {livenet: 'dogecoin', testnet: 'dogecoin'},
+      protocolPrefix: {mainnet: 'dogecoin', testnet: 'dogecoin'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/doge',
       blockExplorerUrls: 'blockchair.com/',
       blockExplorerUrlsTestnet: 'sochain.com/',
@@ -475,7 +475,7 @@ export const ASSETS: {[key in string]: AssetOpts} = {
     },
     paymentInfo: {
       paymentCode: 'BIP73',
-      protocolPrefix: {livenet: 'litecoin', testnet: 'litecoin'},
+      protocolPrefix: {mainnet: 'litecoin', testnet: 'litecoin'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/ltc',
       blockExplorerUrls: 'bitpay.com/insight/#/LTC/mainnet/',
       blockExplorerUrlsTestnet: 'bitpay.com/insight/#/LTC/testnet/',

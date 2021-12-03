@@ -1,50 +1,49 @@
-import React, {ReactElement, useRef} from 'react';
+import React, {ReactElement} from 'react';
 import {Carousel} from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
 import haptic from '../haptic-feedback/haptic';
 import {WIDTH} from '../styled/Containers';
-import ExchangeRateCard from './OfferCard';
+import QuickLinkCard from './QuickLinksCard';
 
-export interface OfferProps {
-  id: number;
+export interface QuickLinkProps {
+  id: string;
   img: () => ReactElement;
   title?: string;
   description?: string;
+  link?: string;
+  onPress: () => void;
 }
 
-interface OfferSlide {
-  items: Array<OfferProps>;
+interface QuickLinkSlide {
+  items: Array<QuickLinkProps>;
 }
 
-const OffersContainer = styled.SafeAreaView`
+const QuickLinksContainer = styled.View`
   flex: 1;
   position: relative;
   left: 16px;
   top: 30px;
 `;
 
-const OffersSlides = ({items}: OfferSlide) => {
-  const ref = useRef(null);
-
+const QuickLinksSlides = ({items}: QuickLinkSlide) => {
   return (
-    <OffersContainer>
+    <QuickLinksContainer>
       <Carousel
         vertical={false}
         layout={'default'}
         useExperimentalSnap={true}
         data={items}
-        renderItem={ExchangeRateCard}
-        ref={ref}
+        renderItem={QuickLinkCard}
         sliderWidth={WIDTH}
-        itemWidth={270}
+        itemWidth={212}
         inactiveSlideScale={1}
         inactiveSlideOpacity={1}
         onScrollIndexChanged={() => {
           haptic('impactLight');
         }}
       />
-    </OffersContainer>
+    </QuickLinksContainer>
   );
 };
 
-export default OffersSlides;
+export default QuickLinksSlides;
