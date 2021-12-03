@@ -18,11 +18,12 @@ interface ListProps {
 
 export interface ItemProps {
   id: string | number;
-  img: () => ReactElement;
+  img: ReactElement;
   mainLabel: string;
   secondaryLabel: string;
   disabled?: boolean;
   checked?: boolean;
+  roundIcon: ReactElement;
 }
 
 interface Props {
@@ -56,7 +57,7 @@ const CurrencySelectorRow = ({item, emit}: Props) => {
 
   return (
     <RowContainer activeOpacity={1} onPress={toggle}>
-      <CurrencyImageContainer>{img()}</CurrencyImageContainer>
+      <CurrencyImageContainer>{img}</CurrencyImageContainer>
       <RowDetailsContainer>
         <MainLabel>{mainLabel}</MainLabel>
         <SecondaryLabel>{secondaryLabel}</SecondaryLabel>

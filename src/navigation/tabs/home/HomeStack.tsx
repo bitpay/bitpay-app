@@ -1,10 +1,16 @@
 import React from 'react';
-import {Text, View} from 'react-native';
+import {ScrollView} from 'react-native';
+import styled from 'styled-components/native';
+import CardsCarousel from './components/CardsCarousel';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../store';
 import {CurrencyList} from '../../../constants/CurrencySelectionListOptions';
 import {PriceHistory} from '../../../store/wallet/wallet.models';
 import ExchangeRatesSlides from '../../../components/exchange-rate/ExchangeRatesSlides';
+
+const HomeContainer = styled.SafeAreaView`
+  flex: 1;
+`;
 
 const HomeStack = () => {
   const priceHistory = useSelector(
@@ -26,10 +32,12 @@ const HomeStack = () => {
   );
 
   return (
-    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-      <Text>Home!</Text>
-      <ExchangeRatesSlides items={exchangeRatesItems} />
-    </View>
+    <HomeContainer>
+      <ScrollView>
+        <CardsCarousel />
+        <ExchangeRatesSlides items={exchangeRatesItems} />
+      </ScrollView>
+    </HomeContainer>
   );
 };
 
