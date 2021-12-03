@@ -20,7 +20,7 @@ const TransactButton = styled.View`
 `;
 
 const TransactModalContainer = styled.View`
-  padding: 30px 30px 0px 30px;
+  padding: 30px;
   min-height: 300px;
   background: white;
   justify-content: center;
