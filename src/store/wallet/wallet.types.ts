@@ -1,4 +1,4 @@
-import {ExchangeRate, KeyObj, WalletObj} from './wallet.models';
+import {ExchangeRate, KeyObj, PriceHistory, WalletObj} from './wallet.models';
 
 export enum WalletActionTypes {
   SUCCESS_WALLET_STORE_INIT = 'WALLET/SUCCESS_WALLET_STORE_INIT',
@@ -8,6 +8,8 @@ export enum WalletActionTypes {
   SET_BACKUP_COMPLETE = 'WALLET/SET_BACKUP_COMPLETE',
   SUCCESS_GET_RATES = 'WALLET/SUCCESS_GET_RATES',
   FAILED_GET_RATES = 'WALLET/FAILED_GET_RATES',
+  SUCCESS_GET_PRICE_HISTORY = 'WALLET/SUCCESS_GET_PRICE_HISTORY',
+  FAILED_GET_PRICE_HISTORY = 'WALLET/FAILED_GET_PRICE_HISTORY',
 }
 
 interface successWalletStoreInit {
@@ -46,6 +48,15 @@ interface failedGetRates {
   type: typeof WalletActionTypes.FAILED_GET_RATES;
 }
 
+interface successGetPriceHistory {
+  type: typeof WalletActionTypes.SUCCESS_GET_PRICE_HISTORY;
+  payload: Array<PriceHistory>;
+}
+
+interface failedGetPriceHistory {
+  type: typeof WalletActionTypes.FAILED_GET_PRICE_HISTORY;
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -53,4 +64,6 @@ export type WalletActionType =
   | failedCreateWallet
   | setBackupComplete
   | successGetRates
-  | failedGetRates;
+  | failedGetRates
+  | successGetPriceHistory
+  | failedGetPriceHistory;

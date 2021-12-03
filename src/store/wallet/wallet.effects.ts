@@ -3,6 +3,7 @@ import {BwcProvider} from '../../lib/bwc';
 import {WalletActions} from './';
 import {
   ASSETS,
+  SUPPORTED_COINS,
   SUPPORTED_TOKENS,
   SupportedAssets,
   SupportedCoins,
@@ -17,6 +18,7 @@ import {navigationRef} from '../../Root';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {BASE_BWS_URL} from '../../constants/config';
 import axios from 'axios';
+import {PriceHistory} from './wallet.models';
 
 const BWC = BwcProvider.getInstance();
 const bwcClient = BWC.getClient();
@@ -24,6 +26,7 @@ const bwcClient = BWC.getClient();
 export const startWalletStoreInit =
   (): Effect => async (dispatch, _getState: () => RootState) => {
     try {
+      dispatch(getPriceHistory());
       // added success/failed for logging
       dispatch(WalletActions.successWalletStoreInit());
     } catch (e) {
@@ -157,5 +160,31 @@ export const getRates = (): Effect => async dispatch => {
   } catch (err) {
     console.error(err);
     dispatch(WalletActions.failedGetRates());
+  }
+};
+
+export const getPriceHistory = (): Effect => async dispatch => {
+  try {
+    //TODO: update exchange currency
+    const coinsList = SUPPORTED_COINS.map(coin => `${coin.toUpperCase()}:USD`)
+      .toString()
+      .split(',')
+      .join('","');
+    const {
+      data: {data},
+    } = await axios.get(
+      `https://bitpay.com/currencies/prices?currencyPairs=["${coinsList}"]`,
+    );
+    const formattedData = data.map((d: PriceHistory) => {
+      return {
+        coin: d.currencyPair.split(':')[0],
+        ...d,
+      };
+    });
+
+    dispatch(WalletActions.successGetPriceHistory(formattedData));
+  } catch (err) {
+    console.error(err);
+    dispatch(WalletActions.failedGetPriceHistory());
   }
 };
