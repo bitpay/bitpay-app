@@ -47,4 +47,5 @@ export interface WalletOptions {
   useLegacyCoinType?: boolean;
   useLegacyPurpose?: boolean;
   useNativeSegwit?: boolean;
+  words?: string;
 }

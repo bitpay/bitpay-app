@@ -21,13 +21,3 @@ export const coinSupported = (coin: string): boolean => {
     availableCoin => availableCoin === coin.toLowerCase(),
   );
 };
-
-// export const getMatchedKey = (key) => {
-//   return this.keys.find(k => this.isMatch(key, k));
-// };
-//
-// export const isMatch = (key1, key2)  => {
-//   if (key1.fingerPrint && key2.fingerPrint)
-//     return key1.fingerPrint === key2.fingerPrint;
-//   else return key1.id === key2.id;
-// };

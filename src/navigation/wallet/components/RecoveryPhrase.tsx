@@ -12,9 +12,7 @@ import {useForm, Controller} from 'react-hook-form';
 import {BaseText} from '../../../components/styled/Text';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {WalletOptions} from '../../../store/wallet/wallet.models';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
-import { startImportMemonic, startImportMnemonic } from '../../../store/wallet/wallet.effects';
+import { startImportMnemonic } from '../../../store/wallet/wallet.effects';
 
 const Gutter = '10px';
 export const ImportWalletContainer = styled.View`
@@ -73,7 +71,6 @@ const schema = yup.object().shape({
 });
 
 const RecoveryPhrase = () => {
-  const [inputValue, onChangeText] = useState();
   const dispatch = useDispatch();
   const logger = useLogger();
   const {
@@ -83,8 +80,6 @@ const RecoveryPhrase = () => {
   } = useForm({resolver: yupResolver(schema)});
 
   const onSubmit = (formData: {words: string}) => {
-    //  TODO: Import wallet
-
     const {words} = formData;
     if (!words) {
       return;

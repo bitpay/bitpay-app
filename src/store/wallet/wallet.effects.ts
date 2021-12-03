@@ -18,7 +18,6 @@ import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {BASE_BWS_URL} from '../../constants/config';
 import axios from 'axios';
 import {WalletOptions} from './wallet.models';
-import {useLogger} from '../../utils/hooks';
 
 const BWC = BwcProvider.getInstance();
 const bwcClient = BWC.getClient();
@@ -171,24 +170,15 @@ export const startImportMnemonic =
     await dispatch(
       startOnGoingProcessModal(OnGoingProcessMessages.IMPORTING_WALLET),
     );
-    // useLogger().info('Importing Wallets Mnemonic');
-    words = normalizeMnemonic(words);
-    opts.words = words;
     try {
+      words = normalizeMnemonic(words);
+      opts.words = words;
       const credentials: Array<Credentials & {tokens?: any}> = [];
 
       const {key, walletClients} = await dispatch(
         startImportWalletCredentials(opts),
       );
-      console.log('--------------> key and walletClients');
-      console.log(key);
-      // Is it possible to have multiple wallet clients
-      // walletClients.forEach(walletClient => {
-      //   console.log(walletClient.credentials);
-      // });
-
-      const walletClient = walletClients[0];
-      console.log(walletClients);
+      // @ts-ignore
       walletClients.forEach(walletClient => {
         credentials.push(walletClient.credentials);
       });
@@ -208,19 +198,21 @@ export const startImportMnemonic =
       navigationRef.navigate('Onboarding', {
         screen: 'TermsOfUse',
       });
-      console.log('-------------------');
     } catch (e) {
-      console.log(e);
+      // TODO: Handle me
+      dispatch(AppActions.dismissOnGoingProcessModal());
+      console.error(e);
     }
   };
 
 export const startImportWalletCredentials =
   (opts: Partial<WalletOptions>): Effect =>
   async disptch => {
-    const value = await new Promise((resolve, reject) => {
+    const value = await new Promise((resolve) => {
       BWC.Client.serverAssistedImport(
         opts,
         {baseUrl: 'https://bws.bitpay.com/bws/api'},
+        // @ts-ignore
         async (err, key, walletClients) => {
           if (err) {
             //  TODO: Handle this
@@ -239,7 +231,7 @@ export const startImportWalletCredentials =
             });
 
             if (customTokens && customTokens[0]) {
-              //  TODO: How to create custom token
+              //  TODO: Create Custom Token
             }
 
             return resolve({key, walletClients});
@@ -249,7 +241,3 @@ export const startImportWalletCredentials =
     });
     return value;
   };
-
-export const addAndBindWalletClients =
-  (data, opts?): Effect =>
-  async dispatch => {};
