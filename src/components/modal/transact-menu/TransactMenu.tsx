@@ -72,12 +72,11 @@ const ScanButtonContainer = styled.TouchableOpacity`
   height: 60px;
   padding-left: 11px;
   padding-right: 26px;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 `;
 
 const CloseButtonContainer = styled.TouchableOpacity`
   align-self: center;
-  margin-bottom: 7px;
 `;
 
 interface TransactMenuItemProps {
@@ -157,8 +156,10 @@ const TransactModal = () => {
           <TransactModalContainer>
             <FlatList
               data={TransactMenuList}
+              scrollEnabled={false}
               renderItem={({item}) => (
                 <TransactItemContainer
+                  activeOpacity={0.7}
                   onPress={() => {
                     item.onPress();
                     hideModal();
