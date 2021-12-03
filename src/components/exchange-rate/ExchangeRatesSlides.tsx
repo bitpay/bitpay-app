@@ -7,7 +7,7 @@ import ExchangeRateCard from './ExchangeRateCard';
 
 export interface ExchangeRateProps {
   id: number;
-  img: () => ReactElement;
+  img: ReactElement;
   coinName?: string;
   average?: number;
 }
