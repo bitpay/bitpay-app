@@ -12,6 +12,8 @@ import React, {ReactElement, useState} from 'react';
 import BottomPopupModal from '../base/bottom-popup/BottomPopupModal';
 import {FlatList, TouchableOpacity, View} from 'react-native';
 import {SlateDark} from '../../../styles/colors';
+import {useNavigation} from '@react-navigation/native';
+import {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -87,6 +89,14 @@ interface TransactMenuItemProps {
   onPress: () => void;
 }
 
+export enum transactScreens {
+  CAMERA = 'Camera',
+}
+
+export type TransactStackParamList = {
+  Camera: undefined;
+};
+
 const TransactModal = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const hideModal = () => setModalVisible(false);
@@ -135,7 +145,9 @@ const TransactModal = () => {
     id: 'scan',
     img: () => <ScanIcon />,
     title: 'Scan',
-    onPress: () => {},
+    onPress: () => {
+      navigation.navigate(transactScreens.CAMERA);
+    },
   };
 
   const CloseButton: TransactMenuItemProps = {
@@ -143,6 +155,9 @@ const TransactModal = () => {
     img: () => <CloseIcon />,
     onPress: () => {},
   };
+
+  const navigation =
+    useNavigation<BottomTabNavigationProp<TransactStackParamList>>();
 
   return (
     <>

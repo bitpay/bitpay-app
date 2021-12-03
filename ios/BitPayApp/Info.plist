@@ -60,6 +60,9 @@
       <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
     <key>UIViewControllerBasedStatusBarAppearance</key>
+	<!-- Required with iOS 10 and higher -->
+	<key>NSCameraUsageDescription</key>
+	<string>Enable the camera to get started</string>
     <false/>
 		<key>CFBundleURLTypes</key>
 		<array>

@@ -40,6 +40,7 @@ export enum TabsScreens {
   TRANSACT_BUTTON = 'TransactButton',
   CARD = 'Card',
   SETTINGS = 'Settings',
+  CAMERA = 'Camera',
 }
 
 export type TabsStackParamList = {
@@ -48,6 +49,7 @@ export type TabsStackParamList = {
   TransactButton: undefined;
   Card: undefined;
   Settings: NavigatorScreenParams<SettingsStackParamList> | undefined;
+  Camera: undefined;
 };
 
 const Tab = createBottomTabNavigator<TabsStackParamList>();
