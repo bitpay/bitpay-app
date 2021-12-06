@@ -15,7 +15,7 @@ export type PairingBitPayIdStatus = 'success' | 'failed' | null;
 export interface BitPayIdState {
   session: Session;
   apiToken: {
-    [key in Network]: string | null;
+    [key in Network]: string;
   };
   user: {
     [key in Network]: User | null;
@@ -30,8 +30,8 @@ const initialState: BitPayIdState = {
     isAuthenticated: false,
   },
   apiToken: {
-    [Network.mainnet]: null,
-    [Network.testnet]: null,
+    [Network.mainnet]: '',
+    [Network.testnet]: '',
   },
   user: {
     [Network.mainnet]: null,
