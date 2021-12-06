@@ -5,8 +5,7 @@ import InAppBrowser, {
 } from 'react-native-inappbrowser-reborn';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
-import {BASE_BITPAY_URLS} from '../../constants/config';
-import BitPayApi from '../../lib/bitpay-api';
+import BitPayIdApi from '../../api/bitpay-id';
 import {sleep} from '../../utils/helper-methods';
 import {RootState, Effect} from '../index';
 import {LogActions} from '../log';
@@ -21,7 +20,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     const {APP} = getState();
     const identity = dispatch(initializeAppIdentity());
-    dispatch(initializeBitPayApi(APP.network, identity));
+    dispatch(initializeApi(APP.network, identity));
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here
     dispatch(startWalletStoreInit());
@@ -68,17 +67,15 @@ const initializeAppIdentity =
   };
 
 /**
- * Initializes the BitPayAPI for the given network and identity.
+ * Initializes APIs for the given network and identity.
  * @param network
  * @param identity
  * @returns void
  */
-const initializeBitPayApi =
+const initializeApi =
   (network: Network, identity: AppIdentity): Effect =>
   () => {
-    BitPayApi.init(network, identity, {
-      baseUrl: BASE_BITPAY_URLS[network],
-    });
+    BitPayIdApi.init(network, identity);
   };
 
 export const startOnGoingProcessModal =

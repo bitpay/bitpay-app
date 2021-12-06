@@ -1,5 +1,5 @@
 import DeviceInfo from 'react-native-device-info';
-import BitPayApi from '../../lib/bitpay-api';
+import BitPayIdApi from '../../api/bitpay-id';
 import {AppActions} from '../app/';
 import {Effect} from '../index';
 import {LogActions} from '../log';
@@ -12,10 +12,9 @@ interface PairParams {
   code?: string;
 }
 
-export const startFetchSession = (): Effect => async (dispatch, getState) => {
+export const startFetchSession = (): Effect => async (dispatch) => {
   try {
-    const {network} = getState().APP;
-    const api = BitPayApi.getInstance(network);
+    const api = BitPayIdApi.getInstance();
     const session = await api.fetchSession();
 
     dispatch(BitPayIdActions.successFetchSession(session));
@@ -30,7 +29,7 @@ export const startLogin =
     dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
     try {
       const {APP, BITPAY_ID} = getState();
-      const api = BitPayApi.getInstance(APP.network);
+      const api = BitPayIdApi.getInstance();
       const deviceName = await DeviceInfo.getDeviceName();
 
       // authenticate
@@ -104,7 +103,7 @@ export const startPairing =
     const identity = state.APP.identity[network];
 
     try {
-      const api = BitPayApi.getInstance(network).use({identity});
+      const api = BitPayIdApi.getInstance().use({identity});
       const {user, token} = await api.pairAndFetchUser(
         secret,
         deviceName,

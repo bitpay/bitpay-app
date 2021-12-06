@@ -6,16 +6,17 @@ import {AppIdentity} from '../store/app/app.models';
 import {Session, User} from '../store/bitpay-id/bitpay-id.models';
 import {hashPassword} from '../utils/password';
 
-interface BitPayApiConfig {
-  baseUrl?: string;
+interface BitPayIdApiConfig {
+  overrideHost?: string;
+  network?: Network;
   identity?: AppIdentity;
 }
 
-export class BitPayApi {
-  // static properties
-  private static instances: {
-    [k: string]: BitPayApi;
-  } = {};
+export class BitPayIdApi {
+  /**
+   * Singleton
+   */
+  private static instance: BitPayIdApi;
 
   /**
    * Required. Used to determine the API endpoint.
@@ -30,12 +31,12 @@ export class BitPayApi {
   /**
    * Overrides the configured API endpoint base URL if set. Can be changed at runtime.
    */
-  private baseUrl: string | null = null;
+  private overrideHost: string | null = null;
 
   private constructor(
     network: Network,
     identity: AppIdentity,
-    config?: BitPayApiConfig,
+    config?: BitPayIdApiConfig,
   ) {
     this.network = network;
     this.identity = identity;
@@ -48,39 +49,38 @@ export class BitPayApi {
    * @param network
    * @param identity
    * @param config API options.
-   * @param config.baseUrl Override the default API base URL.
+   * @param config.overrideHost Override the default API base URL.
    * @param config.identity Update the API identity.
    * @returns
    */
   static init(
     network: Network,
     identity: AppIdentity,
-    config?: BitPayApiConfig,
+    config?: BitPayIdApiConfig,
   ) {
-    if (!BitPayApi.instances[network]) {
-      BitPayApi.instances[network] = new BitPayApi(network, identity, config);
+    if (!BitPayIdApi.instance) {
+      BitPayIdApi.instance = new BitPayIdApi(network, identity, config);
     }
 
-    return BitPayApi.instances[network];
+    return BitPayIdApi.instance;
   }
 
   /**
-   * Get the API instance for the provided network. Requires the API to first be initialized for that network.
-   * @param network
-   * @returns The API instance for the provided network.
+   * Get the API singleton. Requires the API to first be initialized.
+   * @returns The API instance.
    */
-  static getInstance(network: Network) {
-    const api = BitPayApi.instances[network];
+  static getInstance() {
+    const api = BitPayIdApi.instance;
 
     if (!api) {
-      throw new Error(`BitPay API for ${network} not initialized.`);
+      throw new Error('BitPay API not initialized.');
     }
 
     return api;
   }
 
   get host(): string {
-    return this.baseUrl || BASE_BITPAY_URLS[this.network];
+    return this.overrideHost || BASE_BITPAY_URLS[this.network];
   }
 
   get apiUrl(): `${string}/api/v2` {
@@ -90,15 +90,20 @@ export class BitPayApi {
   /**
    * Update the API options.
    * @param config API options.
-   * @param config.baseUrl Override the default API base URL.
+   * @param config.overrideHost Override the default API base URL.
+   * @param config.network Override the API network.
    * @param config.identity Update the API identity.
    * @returns The current API instance.
    */
-  use(config: BitPayApiConfig = {}) {
-    const {baseUrl, identity} = config;
+  use(config: BitPayIdApiConfig = {}) {
+    const {overrideHost, network, identity} = config;
 
-    if (baseUrl) {
-      this.baseUrl = baseUrl;
+    if (overrideHost) {
+      this.overrideHost = overrideHost;
+    }
+
+    if (network) {
+      this.network = network;
     }
 
     if (identity) {
@@ -309,4 +314,4 @@ export class BitPayApi {
   }
 }
 
-export default BitPayApi;
+export default BitPayIdApi;
