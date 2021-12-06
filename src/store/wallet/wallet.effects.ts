@@ -22,7 +22,7 @@ const BWC = BwcProvider.getInstance();
 const bwcClient = BWC.getClient();
 
 export const startWalletStoreInit =
-  (): Effect => async (dispatch, getState: () => RootState) => {
+  (): Effect => async (dispatch, _getState: () => RootState) => {
     try {
       // added success/failed for logging
       dispatch(WalletActions.successWalletStoreInit());
@@ -54,6 +54,7 @@ export const startCreateWallet =
           wallet: {
             id: key.id,
             assets: credentials,
+            totalBalance: 0,
           },
         }),
       );

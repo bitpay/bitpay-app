@@ -1,7 +1,5 @@
 import React, {useState} from 'react';
-import {
-  CtaContainerAbsolute,
-} from '../../../components/styled/Containers';
+import {CtaContainerAbsolute} from '../../../components/styled/Containers';
 import TermsBox from '../components/TermsBox';
 import Button from '../../../components/button/Button';
 import styled from 'styled-components/native';
@@ -85,7 +83,7 @@ const TermsOfUse = ({navigation: _navigation, route}: Props) => {
         <Button
           onPress={() => {
             dispatch(AppActions.setOnboardingCompleted());
-            navigation.navigate('Tabs');
+            navigation.navigate('Tabs', {screen: 'Home'});
           }}
           buttonStyle={'primary'}
           disabled={agreed.length !== termsList.length}>

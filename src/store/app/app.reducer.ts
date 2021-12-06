@@ -1,9 +1,10 @@
 import {ColorSchemeName} from 'react-native';
-import {BASE_BITPAY_URL, NETWORK} from '../../constants/config';
+import {Network} from '../../constants';
+import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {NavScreenParams, RootStackParamList} from '../../Root';
-import {Session} from './app.models';
+import {AppIdentity} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
 
 type AppReduxPersistBlackList = [
@@ -18,31 +19,46 @@ export const appReduxPersistBlackList: AppReduxPersistBlackList = [
 ];
 
 export interface AppState {
-  network: 'mainnet' | 'testnet';
+  identity: {
+    [key in Network]: AppIdentity;
+  };
+  network: Network;
   baseBitPayURL: string;
   appIsLoading: boolean;
   onboardingCompleted: boolean;
-  session: Session | undefined;
   showOnGoingProcessModal: boolean;
   onGoingProcessModalMessage: string | undefined;
   showBottomNotificationModal: boolean;
   bottomNotificationModalConfig: BottomNotificationConfig | undefined;
   colorScheme: ColorSchemeName;
   currentRoute: [keyof RootStackParamList, NavScreenParams] | undefined;
+  notificationsAccepted: boolean;
 }
 
 const initialState: AppState = {
-  network: NETWORK,
-  baseBitPayURL: BASE_BITPAY_URL,
+  identity: {
+    [Network.mainnet]: {
+      priv: '',
+      pub: '',
+      sin: '',
+    },
+    [Network.testnet]: {
+      priv: '',
+      pub: '',
+      sin: '',
+    },
+  },
+  network: APP_NETWORK,
+  baseBitPayURL: BASE_BITPAY_URLS[Network.mainnet],
   appIsLoading: true,
   onboardingCompleted: false,
-  session: undefined,
   showOnGoingProcessModal: false,
   onGoingProcessModalMessage: OnGoingProcessMessages.GENERAL_AWAITING,
   showBottomNotificationModal: false,
   bottomNotificationModalConfig: undefined,
   colorScheme: 'light',
   currentRoute: undefined,
+  notificationsAccepted: false,
 };
 
 export const appReducer = (
@@ -50,12 +66,6 @@ export const appReducer = (
   action: AppActionType,
 ): AppState => {
   switch (action.type) {
-    case AppActionTypes.SUCCESS_GET_SESSION:
-      return {
-        ...state,
-        session: action.payload,
-      };
-
     case AppActionTypes.SUCCESS_APP_INIT:
       return {
         ...state,
@@ -104,6 +114,23 @@ export const appReducer = (
       return {
         ...state,
         currentRoute: action.payload,
+      };
+
+    case AppActionTypes.SUCCESS_GENERATE_APP_IDENTITY:
+      const {network, identity} = action.payload;
+
+      return {
+        ...state,
+        identity: {
+          ...state.identity,
+          [network]: identity,
+        },
+      };
+
+    case AppActionTypes.SET_NOTIFICATIONS_ACCEPTED:
+      return {
+        ...state,
+        notificationsAccepted: action.payload,
       };
 
     default:

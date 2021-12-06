@@ -91,6 +91,11 @@ const SettingsHomeScreen: React.FC = () => {
   return (
     <SettingsContainer>
       <Settings>
+        <Setting
+          onPress={() => navigation.navigate('BitpayId', {screen: 'Profile'})}>
+          <SettingTitle>TODO: BITPAY ID PLACEHOLDER</SettingTitle>
+        </Setting>
+
         <Hr />
         {SETTINGS.map(({title, onPress}) => {
           return (

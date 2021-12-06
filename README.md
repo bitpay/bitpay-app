@@ -5,21 +5,6 @@ Welcome to BitPay App v2!
 Install dependencies with `yarn` >= 14.15.0
 
 ### IOS
-
-TEMPORARY - If using XCode 13 you will need to comment out the following in the Podfile before pod install
-```
-  # Enables Flipper.
-  #
-  # Note that if you have use_frameworks! enabled, Flipper will not work and
-  # you should disable the next line.
-  use_flipper!()
-
-  post_install do |installer|
-    react_native_post_install(installer)
-  end
-end
-```
-
 1. Install Pods `cd ios && pod install && cd ..`
 2. `yarn start` to start dev server
 3. Build and deploy to simulator `yarn ios` or device `yarn ios:device`
@@ -28,6 +13,22 @@ end
 1. `yarn start` to start dev server
 2. Build and deploy to simulator or device `yarn android`
 
+#### Accessing your local server
+To make requests to your local server, first take your local BitPay server cert and copy it into `android/app/src/main/res/raw` folder in either .pem or .der format.
+- To convert .crt to .der, run: `openssl x509 -in your_cert_name.crt -out your_cert_name.der -outform DER`
+
+Then open `android/app/src/main/res/xml/network_security_config.xml` and add your local IP to the domain-config and your cert to the trust-anchors (without the file extension).
+
+For example if your local IP is `123.0.0.7` and your cert is in `res/raw/lbitpay.der`: 
+
+    <domain-config>
+      ...
+      <domain includeSubdomains="true">123.0.0.7</domain>
+      <trust-anchors>
+        <certificates src="@raw/lbitpay" />
+      </trust-anchors>
+    </domain-config>
+    
 
 ### Redux Dev Tools
 This project uses `react-redux` https://react-redux.js.org/ for state management. To take advantage of the tooling available, go to https://github.com/jhen0409/react-native-debugger and install the debugger.

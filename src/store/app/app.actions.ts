@@ -1,17 +1,9 @@
 import {ColorSchemeName} from 'react-native';
-import {Session} from './app.models';
+import {AppIdentity} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
-
-export const successGetSession = (session: Session): AppActionType => ({
-  type: AppActionTypes.SUCCESS_GET_SESSION,
-  payload: session,
-});
-
-export const failedGetSession = (): AppActionType => ({
-  type: AppActionTypes.FAILED_GET_SESSION,
-});
+import {Network} from '../../constants';
 
 export const successAppInit = (): AppActionType => ({
   type: AppActionTypes.SUCCESS_APP_INIT,
@@ -55,4 +47,24 @@ export const setColorScheme = (scheme: ColorSchemeName): AppActionType => ({
 export const setCurrentRoute = (route: any): AppActionType => ({
   type: AppActionTypes.SET_CURRENT_ROUTE,
   payload: route,
+});
+
+
+export const successGenerateAppIdentity = (
+  network: Network,
+  identity: AppIdentity,
+): AppActionType => ({
+  type: AppActionTypes.SUCCESS_GENERATE_APP_IDENTITY,
+  payload: {network, identity},
+});
+
+export const failedGenerateAppIdentity = (): AppActionType => ({
+  type: AppActionTypes.FAILED_GENERATE_APP_IDENTITY,
+});
+
+export const setNotificationsAccepted = (
+  notificationsAccepted: boolean,
+): AppActionType => ({
+  type: AppActionTypes.SET_NOTIFICATIONS_ACCEPTED,
+  payload: notificationsAccepted,
 });
