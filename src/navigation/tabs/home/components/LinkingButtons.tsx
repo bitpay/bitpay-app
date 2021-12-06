@@ -9,6 +9,7 @@ import SendSvg from '../../../../../assets/img/home/linking-buttons/send.svg';
 import SwapSvg from '../../../../../assets/img/home/linking-buttons/swap.svg';
 import Haptic from '../../../../components/haptic-feedback/haptic';
 import {ColorSchemeName} from 'react-native';
+import {BaseText} from '../../../../components/styled/Text';
 
 const ButtonsRow = styled.View`
   width: 100%;
@@ -20,7 +21,7 @@ const ButtonContainer = styled.View`
   align-items: center;
 `;
 
-const ButtonText = styled.Text<{colorSchemeName: ColorSchemeName}>`
+const ButtonText = styled(BaseText)<{colorSchemeName: ColorSchemeName}>`
   font-size: 12px;
   line-height: 18px;
   color: ${({colorSchemeName}: {colorSchemeName: ColorSchemeName}) =>

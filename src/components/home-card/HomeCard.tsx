@@ -15,6 +15,7 @@ import Card from '../card/Card';
 import {ColorSchemeName, View} from 'react-native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../store';
+import {BaseText} from '../styled/Text';
 
 interface BodyProps {
   header?: string;
@@ -38,7 +39,7 @@ const CardHeader = styled.View`
   min-height: 30px;
 `;
 
-const CardBodyHeader = styled.Text<{appColorScheme: ColorSchemeName}>`
+const CardBodyHeader = styled(BaseText)<{appColorScheme: ColorSchemeName}>`
   font-size: 14px;
   line-height: 21px;
   color: ${({appColorScheme}: {appColorScheme: ColorSchemeName}) =>
@@ -46,7 +47,7 @@ const CardBodyHeader = styled.Text<{appColorScheme: ColorSchemeName}>`
   margin-top: ${CardGutter};
 `;
 
-const CardBodyDesc = styled.Text<{appColorScheme: ColorSchemeName}>`
+const CardBodyDesc = styled(BaseText)<{appColorScheme: ColorSchemeName}>`
   font-weight: 500;
   font-size: 18px;
   line-height: 25px;
@@ -55,7 +56,7 @@ const CardBodyDesc = styled.Text<{appColorScheme: ColorSchemeName}>`
   margin-top: ${CardGutter};
 `;
 
-const CardPrice = styled.Text<{appColorScheme: ColorSchemeName}>`
+const CardPrice = styled(BaseText)<{appColorScheme: ColorSchemeName}>`
   font-size: 31px;
   line-height: 46px;
   color: ${({appColorScheme}: {appColorScheme: ColorSchemeName}) =>
@@ -70,7 +71,7 @@ const CardPill = styled.View`
   padding: 4px 8px;
 `;
 
-const CardPillText = styled.Text`
+const CardPillText = styled(BaseText)`
   font-weight: 500;
   font-size: 14px;
   line-height: 19px;

@@ -7,6 +7,7 @@ import {Black, LightBlack, NeutralSlate, White} from '../../styles/colors';
 import Checkbox from '../checkbox/Checkbox';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../store';
+import {BaseText} from '../styled/Text';
 
 interface BodyProps {
   header?: string;
@@ -28,14 +29,14 @@ const CardHeader = styled.View`
   min-height: 20px;
 `;
 
-const CardBodyHeader = styled.Text<{appColorScheme: ColorSchemeName}>`
+const CardBodyHeader = styled(BaseText)<{appColorScheme: ColorSchemeName}>`
   font-size: 16px;
   line-height: 20px;
   color: ${({appColorScheme}: {appColorScheme: ColorSchemeName}) =>
     appColorScheme === 'light' ? Black : White};
 `;
 
-const CardPrice = styled.Text<{appColorScheme: ColorSchemeName}>`
+const CardPrice = styled(BaseText)<{appColorScheme: ColorSchemeName}>`
   font-size: 26px;
   line-height: 38px;
   color: ${({appColorScheme}: {appColorScheme: ColorSchemeName}) =>
