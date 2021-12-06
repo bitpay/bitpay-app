@@ -49,7 +49,6 @@ export const setCurrentRoute = (route: any): AppActionType => ({
   payload: route,
 });
 
-
 export const successGenerateAppIdentity = (
   network: Network,
   identity: AppIdentity,
