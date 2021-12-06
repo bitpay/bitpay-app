@@ -36,7 +36,7 @@ export const startCreateWallet =
   (assets: Array<SupportedAssets>): Effect =>
   async dispatch => {
     try {
-      await dispatch(
+      dispatch(
         startOnGoingProcessModal(OnGoingProcessMessages.CREATING_WALLET),
       );
 

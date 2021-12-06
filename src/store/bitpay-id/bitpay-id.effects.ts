@@ -4,6 +4,8 @@ import {AppActions} from '../app/';
 import {Effect} from '../index';
 import {LogActions} from '../log';
 import {BitPayIdActions} from './index';
+import {startOnGoingProcessModal} from '../app/app.effects';
+import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 
 interface PairParams {
   secret: string;
@@ -25,6 +27,7 @@ export const startFetchSession = (): Effect => async (dispatch, getState) => {
 export const startLogin =
   ({email, password}: {email: string; password: string}): Effect =>
   async (dispatch, getState) => {
+    dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
     try {
       const {APP, BITPAY_ID} = getState();
       const api = BitPayApi.getInstance(APP.network);
@@ -76,6 +79,7 @@ export const startLogin =
       dispatch(LogActions.error(JSON.stringify(err)));
       dispatch(BitPayIdActions.failedLogin());
     }
+    dispatch(AppActions.dismissOnGoingProcessModal());
   };
 
 export const startCreateAccount =
