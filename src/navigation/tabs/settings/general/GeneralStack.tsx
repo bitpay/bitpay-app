@@ -7,15 +7,18 @@ import {
 import {HeaderTitle} from '../../../../components/styled/Text';
 import GeneralRoot from './screens/GeneralRoot';
 import Theme from './screens/Theme';
+import CustomizeHome from './screens/CustomizeHome';
 
 export type GeneralSettingsStackParamList = {
   Root: undefined;
   Theme: undefined;
+  CustomizeHome: undefined;
 };
 
 export enum GeneralSettingsScreens {
   ROOT = 'Root',
   THEME = 'Theme',
+  CUSTOMIZE_HOME = 'CustomizeHome',
 }
 
 const GeneralSettings = createStackNavigator<GeneralSettingsStackParamList>();
@@ -40,6 +43,13 @@ const GeneralSettingsStack = () => {
         component={Theme}
         options={{
           headerTitle: () => <HeaderTitle>Theme</HeaderTitle>,
+        }}
+      />
+      <GeneralSettings.Screen
+        name={GeneralSettingsScreens.CUSTOMIZE_HOME}
+        component={CustomizeHome}
+        options={{
+          headerTitle: () => <HeaderTitle>Customize Home</HeaderTitle>,
         }}
       />
     </GeneralSettings.Navigator>
