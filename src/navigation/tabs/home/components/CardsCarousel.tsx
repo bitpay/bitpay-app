@@ -21,7 +21,7 @@ const CarouselContainer = styled.View`
   margin: 10px 0;
 `;
 
-const CurrencyCardComponet = (currency: string, price: string) => {
+const CurrencyCardComponent = (currency: string, price: string) => {
   const _onCTAPress = () => {
     /** TODO: Redirect me */
   };
@@ -60,7 +60,7 @@ const CardsCarousel = () => {
         const {assets, totalBalance} = wallet;
         assets &&
           assets.map((asset: any) => {
-            cardsList.push(CurrencyCardComponet(asset.coin, totalBalance));
+            cardsList.push(CurrencyCardComponent(asset.coin, totalBalance));
           });
       });
     }
