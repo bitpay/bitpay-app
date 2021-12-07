@@ -2,7 +2,7 @@ import {Action, applyMiddleware, combineReducers, createStore} from 'redux';
 import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
 import logger from 'redux-logger'; // https://github.com/LogRocket/redux-logger
 import {composeWithDevTools} from 'redux-devtools-extension';
-import AsyncStorage from '@react-native-community/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {persistStore, persistReducer} from 'redux-persist'; // https://github.com/rt2zz/redux-persist
 import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
