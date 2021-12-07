@@ -194,10 +194,6 @@ export const startImportMnemonic =
           },
         }),
       );
-
-      navigationRef.navigate('Onboarding', {
-        screen: 'TermsOfUse',
-      });
     } catch (e) {
       // TODO: Handle me
       dispatch(AppActions.dismissOnGoingProcessModal());
