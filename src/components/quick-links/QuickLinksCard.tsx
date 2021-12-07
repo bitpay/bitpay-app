@@ -61,7 +61,7 @@ export default ({item}: {item: QuickLinkProps}) => {
           {description}
         </DescriptionText>
       </TextContainer>
-      <ImgContainer>{img()}</ImgContainer>
+      <ImgContainer>{img}</ImgContainer>
     </QuickLinkCardContainer>
   );
 };

@@ -7,7 +7,7 @@ import QuickLinkCard from './QuickLinksCard';
 
 export interface QuickLinkProps {
   id: string;
-  img: () => ReactElement;
+  img: ReactElement;
   title?: string;
   description?: string;
   link?: string;
