@@ -1,26 +1,41 @@
 import React from 'react';
-import styled from 'styled-components/native';
-import CardsCarousel from './components/CardsCarousel';
-import PortfolioBalance from './components/PortfolioBalance';
-import LinkingButtons from './components/LinkingButtons';
+import {createStackNavigator} from '@react-navigation/stack';
+import {
+  baseNavigatorOptions,
+  baseScreenOptions,
+} from '../../../constants/NavigationOptions';
+import HomeRoot from './HomeRoot';
+import {View} from 'react-native';
 
-const HomeContainer = styled.SafeAreaView`
-  flex: 1;
-`;
+export type HomeStackParamList = {
+  Root: undefined;
+};
 
-const ScrollView = styled.ScrollView`
-  padding: 10px;
-`;
+export enum HomeScreens {
+  Root = 'Root',
+}
+
+const Home = createStackNavigator<HomeStackParamList>();
 
 const HomeStack = () => {
   return (
-    <HomeContainer>
-      <ScrollView>
-        <PortfolioBalance />
-        <CardsCarousel />
-        <LinkingButtons/>
-      </ScrollView>
-    </HomeContainer>
+    <Home.Navigator
+      initialRouteName={HomeScreens.Root}
+      screenOptions={{
+        ...baseNavigatorOptions,
+        ...baseScreenOptions,
+      }}>
+      <Home.Screen
+        name={HomeScreens.Root}
+        component={HomeRoot}
+        options={{
+          headerLeft: () => null,
+          headerTitle: () => null,
+          // TODO: Add scanner and profile
+          headerRight: () => <View />,
+        }}
+      />
+    </Home.Navigator>
   );
 };
 
