@@ -2,7 +2,10 @@ import {BitPayIdActionTypes, BitPayIdActionType} from './bitpay-id.types';
 import {Session, User} from './bitpay-id.models';
 import {Network} from '../../constants';
 
-export const bitPayIdReduxPersistBlackList = [];
+export const bitPayIdReduxPersistBlackList: (keyof BitPayIdState)[] = [
+  'loginStatus',
+  'pairingBitPayIdStatus',
+];
 
 export type LoginStatus =
   | 'success'

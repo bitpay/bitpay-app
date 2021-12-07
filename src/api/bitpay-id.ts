@@ -1,122 +1,15 @@
 import axios from 'axios';
-import BitAuth from 'bitauth';
-import {Network} from '../constants';
-import {BASE_BITPAY_URLS} from '../constants/config';
-import {AppIdentity} from '../store/app/app.models';
+import DeviceInfo from 'react-native-device-info';
+import {APP_NETWORK, BASE_BITPAY_URLS} from '../constants/config';
 import {Session, User} from '../store/bitpay-id/bitpay-id.models';
 import {hashPassword} from '../utils/password';
+import BitPayApi from './bitpay-api';
 
-interface BitPayIdApiConfig {
-  overrideHost?: string;
-  network?: Network;
-  identity?: AppIdentity;
-}
-
-export class BitPayIdApi {
-  /**
-   * Singleton
-   */
-  private static instance: BitPayIdApi;
-
-  /**
-   * Required. Used to determine the API endpoint.
-   */
-  private network = Network.mainnet;
-
-  /**
-   * Required. Contains the keys used to sign API requests.
-   */
-  private identity: AppIdentity;
-
-  /**
-   * Overrides the configured API endpoint base URL if set. Can be changed at runtime.
-   */
-  private overrideHost: string | null = null;
-
-  private constructor(
-    network: Network,
-    identity: AppIdentity,
-    config?: BitPayIdApiConfig,
-  ) {
-    this.network = network;
-    this.identity = identity;
-
-    this.use(config);
-  }
-
-  /**
-   * Initializes the API for the given network and sets the identity keys.
-   * @param network
-   * @param identity
-   * @param config API options.
-   * @param config.overrideHost Override the default API base URL.
-   * @param config.identity Update the API identity.
-   * @returns
-   */
-  static init(
-    network: Network,
-    identity: AppIdentity,
-    config?: BitPayIdApiConfig,
-  ) {
-    if (!BitPayIdApi.instance) {
-      BitPayIdApi.instance = new BitPayIdApi(network, identity, config);
-    }
-
-    return BitPayIdApi.instance;
-  }
-
-  /**
-   * Get the API singleton. Requires the API to first be initialized.
-   * @returns The API instance.
-   */
-  static getInstance() {
-    const api = BitPayIdApi.instance;
-
-    if (!api) {
-      throw new Error('BitPay API not initialized.');
-    }
-
-    return api;
-  }
-
-  get host(): string {
-    return this.overrideHost || BASE_BITPAY_URLS[this.network];
-  }
-
-  get apiUrl(): `${string}/api/v2` {
-    return `${this.host}/api/v2`;
-  }
-
-  /**
-   * Update the API options.
-   * @param config API options.
-   * @param config.overrideHost Override the default API base URL.
-   * @param config.network Override the API network.
-   * @param config.identity Update the API identity.
-   * @returns The current API instance.
-   */
-  use(config: BitPayIdApiConfig = {}) {
-    const {overrideHost, network, identity} = config;
-
-    if (overrideHost) {
-      this.overrideHost = overrideHost;
-    }
-
-    if (network) {
-      this.network = network;
-    }
-
-    if (identity) {
-      this.identity = identity;
-    }
-
-    return this;
-  }
-
+export const BitPayIdApi = {
   async fetchSession(): Promise<Session> {
     try {
       const {data: session} = await axios.get<Session>(
-        `${this.host}/auth/session`,
+        `${BASE_BITPAY_URLS[APP_NETWORK]}/auth/session`,
       );
 
       return session;
@@ -124,7 +17,7 @@ export class BitPayIdApi {
       console.log('err', err);
       throw err;
     }
-  }
+  },
 
   async login(
     email: string,
@@ -161,7 +54,7 @@ export class BitPayIdApi {
          * @param visaManagement Deprecated.
          */
         accessTypes: 'merchant' | 'visaCard' | 'visaManagement'[];
-      }>(`${this.host}/auth/login`, body, config);
+      }>(`${BASE_BITPAY_URLS[APP_NETWORK]}/auth/login`, body, config);
 
       return data;
     } catch (err: any) {
@@ -173,7 +66,7 @@ export class BitPayIdApi {
 
       throw err;
     }
-  }
+  },
 
   /**
    * Requests a pairing code for an authenticated user.
@@ -189,7 +82,7 @@ export class BitPayIdApi {
       };
 
       const {data} = await axios.post<{data: {url: string}}>(
-        `${this.host}/auth/generateBitAuthPairingCode`,
+        `${BASE_BITPAY_URLS[APP_NETWORK]}/auth/generateBitAuthPairingCode`,
         null,
         config,
       );
@@ -211,99 +104,31 @@ export class BitPayIdApi {
       console.log('err:', err);
       throw err;
     }
-  }
+  },
 
   /**
-   * Pairs with a BitPayID and fetches the user's basic data.
+   * Pairs with a BitPayID and creates an API token.
    * @param secret Encrypted token required to pair the BitPayID.
-   * @param deviceName The name of the device running the app.
-   * @param code Two-factor authentication code.
-   * @returns An API token and basic data for the paired user.
-   */
-  async pairAndFetchUser(
-    secret: string,
-    deviceName: string,
-    code?: string,
-  ): Promise<{token: string; user: User}> {
-    const token = await this.pair(secret, deviceName, code);
-    const user = await this.getUser(token);
-
-    return {token, user};
-  }
-
-  /**
-   * Pairs with a BitPayID and fetches an API token to make future requests.
-   * @param secret Encrypted token required to pair the BitPayID.
-   * @param deviceName The name of the device running the app.
    * @param code Two-factor authentication code.
    * @returns An API token used to make session-less requests on behalf of the user.
    */
-  async pair(
-    secret: string,
-    deviceName: string,
-    code?: string,
-  ): Promise<string> {
-    const unsignedParams: any = {
-      secret,
-      version: 2,
-      deviceName,
-      code,
-    };
-
-    const unsignedData = JSON.stringify(unsignedParams);
-    const signature = BitAuth.sign(unsignedData, this.identity.priv);
-    const verified = BitAuth.verifySignature(
-      unsignedData,
-      this.identity.pub,
-      signature,
-    );
-
-    if (!verified) {
-      throw new Error('Signature could not be verified.');
-    }
-
-    const params = JSON.stringify({
-      ...unsignedParams,
-      signature,
-      pubkey: this.identity.pub,
-    });
-    const url = this.apiUrl;
-    const data = {method: 'createToken', params};
-    const config = {headers: {'content-type': 'application/json'}};
-
-    const {data: response} = await axios.post<{data: string}>(
-      url,
-      data,
-      config,
-    );
-    const token = response.data;
+  async pair(secret: string, code?: string): Promise<string> {
+    const api = BitPayApi.getInstance();
+    const deviceName = DeviceInfo.getDeviceNameSync() || 'unknown device';
+    const token = await api.createToken(secret, deviceName, code);
 
     return token;
-  }
+  },
 
   /**
    * Fetches basic user info.
    * @param token API token for a paired user.
    * @returns Basic user info.
    */
-  async getUser(token: string): Promise<User> {
-    const url = `${this.apiUrl}/${token}`;
-    const data = {method: 'getBasicInfo', token};
-    const signature: any = BitAuth.sign(
-      `${this.apiUrl}/${token}${JSON.stringify(data)}`,
-      this.identity.priv,
-    );
-    const config = {
-      headers: {
-        'content-type': 'application/json',
-        'x-identity': this.identity.pub,
-        'x-signature': signature.toString('hex'),
-      },
-    };
-
-    const {
-      data: {data: user, error},
-    } = await axios.post<{data: User; error: any}>(url, data, config);
+  async fetchBasicUserInfo(token: string): Promise<User> {
+    const api = BitPayApi.getInstance();
+    const response = await api.request<User>('getBasicInfo', token);
+    const {data: user, error} = response.data;
 
     if (error) {
       console.debug('Error while fetching user data.');
@@ -311,7 +136,7 @@ export class BitPayIdApi {
     }
 
     return user;
-  }
-}
+  },
+};
 
 export default BitPayIdApi;

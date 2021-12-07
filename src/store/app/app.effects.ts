@@ -5,7 +5,7 @@ import InAppBrowser, {
 } from 'react-native-inappbrowser-reborn';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
-import BitPayIdApi from '../../api/bitpay-id';
+import BitPayIdApi from '../../api/bitpay-api';
 import {sleep} from '../../utils/helper-methods';
 import {RootState, Effect} from '../index';
 import {LogActions} from '../log';
