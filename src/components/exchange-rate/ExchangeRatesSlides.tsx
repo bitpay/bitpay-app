@@ -1,4 +1,4 @@
-import React, {ReactElement, useRef} from 'react';
+import React, {ReactElement} from 'react';
 import {Dimensions} from 'react-native';
 import {Carousel} from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
@@ -7,7 +7,7 @@ import ExchangeRateCard from './ExchangeRateCard';
 
 export interface ExchangeRateProps {
   id: number;
-  img: ReactElement;
+  img: ReactElement | undefined;
   coinName?: string;
   average?: number;
 }
@@ -20,8 +20,8 @@ const WIDTH = Dimensions.get('window').width;
 
 const ExchangeRatesContainer = styled.View`
   flex: 1;
-  position: relative;
-  top: 30px;
+  margin-top: 10px;
+  min-height: 91px;
 `;
 
 const ExchangeRatesSlides = ({items}: ExchangeRateSlide) => {
