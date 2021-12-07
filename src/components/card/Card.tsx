@@ -35,11 +35,28 @@ export interface CardProps {
   body?: ReactNode;
   footer?: ReactNode;
   backgroundImg?: () => ReactElement;
+  containerProps?: {
+    width?: string;
+    minHeight?: string;
+    backgroundColor?: string;
+  };
 }
 
-const Card = ({header, body, footer, backgroundImg}: CardProps) => {
+const Card = ({
+  header,
+  body,
+  footer,
+  backgroundImg,
+  containerProps,
+}: CardProps) => {
+  const width = containerProps && containerProps.width;
+  const minHeight = containerProps && containerProps.minHeight;
+  const backgroundColor = containerProps && containerProps.backgroundColor;
   return (
-    <CardContainer>
+    <CardContainer
+      backgroundColor={backgroundColor}
+      width={width}
+      minHeight={minHeight}>
       {backgroundImg && <BackgroundImage>{backgroundImg()}</BackgroundImage>}
 
       {header && <CardHeader>{header}</CardHeader>}
