@@ -3,7 +3,7 @@ import DeviceInfo from 'react-native-device-info';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../constants/config';
 import {Session, User} from '../store/bitpay-id/bitpay-id.models';
 import {hashPassword} from '../utils/password';
-import BitPayApi from './bitpay-api';
+import BitPayApi from './bitpay';
 
 export const BitPayIdApi = {
   async fetchSession(): Promise<Session> {

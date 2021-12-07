@@ -4,8 +4,9 @@ import InAppBrowser, {
   InAppBrowserOptions,
 } from 'react-native-inappbrowser-reborn';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import BitPayApi from '../../api/bitpay';
+import GraphQlApi from '../../api/graphql';
 import {Network} from '../../constants';
-import BitPayIdApi from '../../api/bitpay-api';
 import {sleep} from '../../utils/helper-methods';
 import {RootState, Effect} from '../index';
 import {LogActions} from '../log';
@@ -75,7 +76,8 @@ const initializeAppIdentity =
 const initializeApi =
   (network: Network, identity: AppIdentity): Effect =>
   () => {
-    BitPayIdApi.init(network, identity);
+    BitPayApi.init(network, identity);
+    GraphQlApi.init(network, identity);
   };
 
 export const startOnGoingProcessModal =
