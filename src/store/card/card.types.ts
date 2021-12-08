@@ -1,3 +1,4 @@
+import {Card} from './card.models';
 import {FetchCardsStatus} from './card.reducer';
 
 export enum CardActionTypes {
@@ -8,7 +9,7 @@ export enum CardActionTypes {
 
 interface SuccessFetchCards {
   type: CardActionTypes.SUCCESS_FETCH_CARDS;
-  payload: {};
+  payload: {cards: Card[]};
 }
 
 interface FailedFetchCards {

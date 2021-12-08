@@ -26,6 +26,7 @@ export const cardReducer = (
       return {
         ...state,
         fetchCardsStatus: 'success',
+        cards: action.payload.cards,
       };
     case CardActionTypes.FAILED_FETCH_CARDS:
       return {

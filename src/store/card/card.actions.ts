@@ -1,9 +1,10 @@
+import {Card} from './card.models';
 import {FetchCardsStatus} from './card.reducer';
 import {CardActionType, CardActionTypes} from './card.types';
 
-export const successFetchCards = (): CardActionType => ({
+export const successFetchCards = (cards: Card[]): CardActionType => ({
   type: CardActionTypes.SUCCESS_FETCH_CARDS,
-  payload: {},
+  payload: {cards},
 });
 
 export const failedFetchCards = (): CardActionType => ({
