@@ -1,4 +1,8 @@
 import {Network} from '../../constants';
+import {
+  BitPayIdActionType,
+  BitPayIdActionTypes,
+} from '../bitpay-id/bitpay-id.types';
 import {Card} from './card.models';
 import {CardActionType, CardActionTypes} from './card.types';
 
@@ -25,9 +29,17 @@ const initialState: CardState = {
 
 export const cardReducer = (
   state: CardState = initialState,
-  action: CardActionType,
+  action: CardActionType | BitPayIdActionType,
 ): CardState => {
   switch (action.type) {
+    case BitPayIdActionTypes.BITPAY_ID_DISCONNECTED:
+      return {
+        ...state,
+        cards: {
+          ...state.cards,
+          [action.payload.network]: [],
+        },
+      };
     case CardActionTypes.SUCCESS_FETCH_CARDS:
       return {
         ...state,
