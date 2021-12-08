@@ -1,8 +1,10 @@
+import {batch} from 'react-redux';
 import BitPayIdApi from '../../api/bitpay-id';
 import UserApi from '../../api/user';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {AppActions} from '../app/';
 import {startOnGoingProcessModal} from '../app/app.effects';
+import {CardEffects} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
 import {BitPayIdActions, BitPayIdEffects} from './index';
@@ -92,14 +94,34 @@ export const startPairing =
 
     try {
       const token = await BitPayIdApi.pair(secret, code);
-      const user = await UserApi.fetchBasicInfo(token);
+
+      // TODO: combine graph queries
+      batch(() => {
+        dispatch(BitPayIdEffects.startFetchBasicInfo(token));
+        dispatch(CardEffects.startFetchAll(token));
+      });
 
       dispatch(LogActions.info('Successfully paired with BitPayID.'));
-      dispatch(BitPayIdActions.successPairingBitPayId(network, token, user));
+      dispatch(BitPayIdActions.successPairingBitPayId(network, token));
     } catch (err) {
       console.error(err);
       dispatch(LogActions.error('Pairing failed.'));
       dispatch(LogActions.error(JSON.stringify(err)));
       dispatch(BitPayIdActions.failedPairingBitPayId());
+    }
+  };
+
+export const startFetchBasicInfo =
+  (token: string): Effect =>
+  async (dispatch, getState) => {
+    try {
+      const {APP} = getState();
+      const user = await UserApi.fetchBasicInfo(token);
+
+      dispatch(BitPayIdActions.successFetchBasicInfo(APP.network, user));
+    } catch (err) {
+      dispatch(LogActions.error('Failed to fetch basic user info'));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(BitPayIdActions.failedFetchBasicInfo());
     }
   };
