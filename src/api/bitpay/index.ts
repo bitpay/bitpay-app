@@ -3,7 +3,7 @@ import BitAuth from 'bitauth';
 import {Network} from '../../constants';
 import {BASE_BITPAY_URLS} from '../../constants/config';
 import {AppIdentity} from '../../store/app/app.models';
-import {BpApiResponse} from './bitpay.types';
+import {BpApiResponse, CreateTokenResponse} from './bitpay.types';
 
 interface BitPayIdApiConfig {
   overrideHost?: string;
@@ -150,8 +150,12 @@ export class BitPayIdApi {
       },
     };
 
-    const response = await axios.post<string>(this.apiUrl, data, config);
-    const {data: token} = response;
+    const response = await axios.post<CreateTokenResponse>(
+      this.apiUrl,
+      data,
+      config,
+    );
+    const {data: token} = response.data;
 
     return token;
   }
