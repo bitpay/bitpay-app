@@ -1,10 +1,14 @@
+import {Network} from '../../constants';
 import {Card} from './card.models';
 import {FetchCardsStatus} from './card.reducer';
 import {CardActionType, CardActionTypes} from './card.types';
 
-export const successFetchCards = (cards: Card[]): CardActionType => ({
+export const successFetchCards = (
+  network: Network,
+  cards: Card[],
+): CardActionType => ({
   type: CardActionTypes.SUCCESS_FETCH_CARDS,
-  payload: {cards},
+  payload: {network, cards},
 });
 
 export const failedFetchCards = (): CardActionType => ({

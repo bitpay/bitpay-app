@@ -13,18 +13,33 @@ import {LogActions} from '../log';
 import {startWalletStoreInit} from '../wallet/wallet.effects';
 import {AppActions} from './';
 import {AppIdentity} from './app.models';
+import {BitPayIdEffects} from '../bitpay-id';
+import UserApi from '../../api/user';
+import {CardEffects} from '../card';
 
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     dispatch(LogActions.clear());
     dispatch(LogActions.info('Initializing app...'));
 
-    const {APP} = getState();
+    const {APP, BITPAY_ID} = getState();
+    const network = APP.network;
+    const token = BITPAY_ID.apiToken[network];
+    const isPaired = !!token;
     const identity = dispatch(initializeAppIdentity());
-    dispatch(initializeApi(APP.network, identity));
+
+    await dispatch(initializeApi(APP.network, identity));
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here
-    dispatch(startWalletStoreInit());
+    await dispatch(startWalletStoreInit());
+
+    if (isPaired) {
+      const {basicInfo: user, cards} = await UserApi.fetchAllUserData(token);
+
+      await dispatch(BitPayIdEffects.startBitPayIdStoreInit(network, {user}));
+      await dispatch(CardEffects.startCardStoreInit(network, {cards}));
+    }
+
     await sleep(500);
     dispatch(AppActions.successAppInit());
     dispatch(LogActions.info('Initialized app successfully.'));

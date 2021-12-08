@@ -1,6 +1,6 @@
 import {GqlQueryParams} from '../graphql.types';
 
-const cardFields = `
+export const cardFields = `
   id,
   token,
   currency {

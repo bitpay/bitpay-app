@@ -2,17 +2,25 @@ import {batch} from 'react-redux';
 import BitPayIdApi from '../../api/bitpay-id';
 import UserApi from '../../api/user';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {Network} from '../../constants';
 import {AppActions} from '../app/';
 import {startOnGoingProcessModal} from '../app/app.effects';
-import {CardEffects} from '../card';
+import {CardActions} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
+import {User} from './bitpay-id.models';
 import {BitPayIdActions, BitPayIdEffects} from './index';
 
 interface PairParams {
   secret: string;
   code?: string;
 }
+
+export const startBitPayIdStoreInit =
+  (network: Network, {user}: {user: User}): Effect<Promise<void>> =>
+  async dispatch => {
+    dispatch(BitPayIdActions.successFetchBasicInfo(network, user));
+  };
 
 export const startFetchSession = (): Effect => async dispatch => {
   try {
@@ -94,15 +102,14 @@ export const startPairing =
 
     try {
       const token = await BitPayIdApi.pair(secret, code);
+      const {basicInfo, cards} = await UserApi.fetchAllUserData(token);
 
-      // TODO: combine graph queries
       batch(() => {
-        dispatch(BitPayIdEffects.startFetchBasicInfo(token));
-        dispatch(CardEffects.startFetchAll(token));
+        dispatch(LogActions.info('Successfully paired with BitPayID.'));
+        dispatch(BitPayIdActions.successFetchBasicInfo(network, basicInfo));
+        dispatch(CardActions.successFetchCards(network, cards));
+        dispatch(BitPayIdActions.successPairingBitPayId(network, token));
       });
-
-      dispatch(LogActions.info('Successfully paired with BitPayID.'));
-      dispatch(BitPayIdActions.successPairingBitPayId(network, token));
     } catch (err) {
       console.error(err);
       dispatch(LogActions.error('Pairing failed.'));

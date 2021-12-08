@@ -1,3 +1,4 @@
+import {Card} from '../../store/card/card.models';
 import GraphQlApi from '../graphql';
 import UserQueries from './queries';
 
@@ -22,6 +23,23 @@ interface FetchBasicInfoResponse {
   };
 }
 
+interface FetchAllUserDataResponse {
+  user: {
+    basicInfo: BasicUserInfo;
+    cards: Card[];
+  };
+}
+
+const fetchAllUserData = async (token: string) => {
+  const query = UserQueries.FETCH_ALL_USER_DATA(token);
+  const response =
+    await GraphQlApi.getInstance().request<FetchAllUserDataResponse>(query);
+
+  const {data} = response.data;
+
+  return data.user;
+};
+
 const fetchBasicInfo = async (token: string) => {
   const query = UserQueries.FETCH_BASIC_INFO(token);
   const {data} = await GraphQlApi.getInstance().request<FetchBasicInfoResponse>(
@@ -36,6 +54,7 @@ const fetchBasicInfo = async (token: string) => {
 };
 
 const UserApi = {
+  fetchAllUserData,
   fetchBasicInfo,
 };
 

@@ -1,3 +1,4 @@
+import {Network} from '../../constants';
 import {Card} from './card.models';
 import {CardActionType, CardActionTypes} from './card.types';
 
@@ -8,12 +9,17 @@ export const cardReduxPersistBlacklist: Array<keyof CardState> = [
 export type FetchCardsStatus = 'success' | 'failed' | null;
 
 export interface CardState {
-  cards: Card[];
+  cards: {
+    [key in Network]: Card[];
+  };
   fetchCardsStatus: FetchCardsStatus;
 }
 
 const initialState: CardState = {
-  cards: [],
+  cards: {
+    [Network.mainnet]: [],
+    [Network.testnet]: [],
+  },
   fetchCardsStatus: null,
 };
 
@@ -26,7 +32,10 @@ export const cardReducer = (
       return {
         ...state,
         fetchCardsStatus: 'success',
-        cards: action.payload.cards,
+        cards: {
+          ...state.cards,
+          [action.payload.network]: action.payload.cards,
+        },
       };
     case CardActionTypes.FAILED_FETCH_CARDS:
       return {

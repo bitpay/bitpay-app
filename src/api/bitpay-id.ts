@@ -1,7 +1,7 @@
 import axios from 'axios';
 import DeviceInfo from 'react-native-device-info';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../constants/config';
-import {Session, User} from '../store/bitpay-id/bitpay-id.models';
+import {Session} from '../store/bitpay-id/bitpay-id.models';
 import {hashPassword} from '../utils/password';
 import BitPayApi from './bitpay';
 
@@ -118,24 +118,6 @@ export const BitPayIdApi = {
     const token = await api.createToken(secret, deviceName, code);
 
     return token;
-  },
-
-  /**
-   * Fetches basic user info.
-   * @param token API token for a paired user.
-   * @returns Basic user info.
-   */
-  async fetchBasicUserInfo(token: string): Promise<User> {
-    const api = BitPayApi.getInstance();
-    const response = await api.request<User>('getBasicInfo', token);
-    const {data: user, error} = response.data;
-
-    if (error) {
-      console.debug('Error while fetching user data.');
-      throw new Error(error);
-    }
-
-    return user;
   },
 };
 
