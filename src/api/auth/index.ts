@@ -1,11 +1,12 @@
 import axios from 'axios';
 import DeviceInfo from 'react-native-device-info';
-import {APP_NETWORK, BASE_BITPAY_URLS} from '../constants/config';
-import {Session} from '../store/bitpay-id/bitpay-id.models';
-import {hashPassword} from '../utils/password';
-import BitPayApi from './bitpay';
+import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
+import {Session} from '../../store/bitpay-id/bitpay-id.models';
+import {hashPassword} from '../../utils/password';
+import BitPayApi from '../bitpay';
+import {GeneratePairingCodeResponse, LoginResponse} from './auth.types';
 
-export const BitPayIdApi = {
+export const AuthApi = {
   async fetchSession(): Promise<Session> {
     try {
       const {data: session} = await axios.get<Session>(
@@ -23,11 +24,7 @@ export const BitPayIdApi = {
     email: string,
     password: string,
     csrfToken: string,
-  ): Promise<{
-    accessTypes?: 'merchant' | 'visaCard' | 'visaManagement'[];
-    twoFactorPending?: boolean;
-    emailAuthenticationPending?: boolean;
-  }> {
+  ): Promise<LoginResponse> {
     const hashedPassword = hashPassword(password);
 
     const body = {
@@ -47,14 +44,11 @@ export const BitPayIdApi = {
     };
 
     try {
-      const {data} = await axios.post<{
-        /**
-         * @param merchant User has merchant capabilities.
-         * @param visaCard User has any BitPay cards.
-         * @param visaManagement Deprecated.
-         */
-        accessTypes: 'merchant' | 'visaCard' | 'visaManagement'[];
-      }>(`${BASE_BITPAY_URLS[APP_NETWORK]}/auth/login`, body, config);
+      const {data} = await axios.post<LoginResponse>(
+        `${BASE_BITPAY_URLS[APP_NETWORK]}/auth/login`,
+        body,
+        config,
+      );
 
       return data;
     } catch (err: any) {
@@ -73,7 +67,7 @@ export const BitPayIdApi = {
    * @param csrfToken CSRF token.
    * @returns A secret pairing code.
    */
-  async generatePairingCode(csrfToken: string) {
+  async generatePairingCode(csrfToken: string): Promise<string> {
     try {
       const config = {
         headers: {
@@ -81,7 +75,7 @@ export const BitPayIdApi = {
         },
       };
 
-      const {data} = await axios.post<{data: {url: string}}>(
+      const {data} = await axios.post<GeneratePairingCodeResponse>(
         `${BASE_BITPAY_URLS[APP_NETWORK]}/auth/generateBitAuthPairingCode`,
         null,
         config,
@@ -99,7 +93,7 @@ export const BitPayIdApi = {
           return paramMap;
         }, {} as {[k: string]: string});
 
-      return pairingParams.secret || '';
+      return pairingParams.secret;
     } catch (err) {
       console.log('err:', err);
       throw err;
@@ -121,4 +115,4 @@ export const BitPayIdApi = {
   },
 };
 
-export default BitPayIdApi;
+export default AuthApi;

@@ -6,16 +6,16 @@ import InAppBrowser, {
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import BitPayApi from '../../api/bitpay';
 import GraphQlApi from '../../api/graphql';
+import UserApi from '../../api/user';
 import {Network} from '../../constants';
 import {sleep} from '../../utils/helper-methods';
+import {BitPayIdEffects} from '../bitpay-id';
+import {CardEffects} from '../card';
 import {RootState, Effect} from '../index';
 import {LogActions} from '../log';
 import {startWalletStoreInit} from '../wallet/wallet.effects';
 import {AppActions} from './';
 import {AppIdentity} from './app.models';
-import {BitPayIdEffects} from '../bitpay-id';
-import UserApi from '../../api/user';
-import {CardEffects} from '../card';
 
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {

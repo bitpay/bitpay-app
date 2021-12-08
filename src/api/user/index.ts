@@ -1,34 +1,6 @@
-import {Card} from '../../store/card/card.models';
 import GraphQlApi from '../graphql';
-import UserQueries from './queries';
-
-interface BasicUserInfo {
-  eid: string;
-  email: string;
-  experiments: string[];
-  familyName: string;
-  givenName: string;
-  name: string;
-  referralCode: string;
-  userSettings: {
-    agreedCardholderAgreement: boolean;
-    acknowledgePrivacyNotice: boolean;
-    optInEmailMarketing: boolean;
-  };
-}
-
-interface FetchBasicInfoResponse {
-  user: {
-    basicInfo: BasicUserInfo;
-  };
-}
-
-interface FetchAllUserDataResponse {
-  user: {
-    basicInfo: BasicUserInfo;
-    cards: Card[];
-  };
-}
+import UserQueries from './user.queries';
+import {FetchAllUserDataResponse, FetchBasicInfoResponse} from './user.types';
 
 const fetchAllUserData = async (token: string) => {
   const query = UserQueries.FETCH_ALL_USER_DATA(token);

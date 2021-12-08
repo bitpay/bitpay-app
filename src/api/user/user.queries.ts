@@ -1,5 +1,5 @@
-import {cardFields} from '../card/queries';
-import {GqlQueryParams} from '../graphql.types';
+import {cardFields} from '../card/card.queries';
+import {GqlQueryParams} from '../graphql/graphql.types';
 
 export const basicInfoFields = `
   givenName

@@ -1,5 +1,5 @@
 import {batch} from 'react-redux';
-import BitPayIdApi from '../../api/bitpay-id';
+import AuthApi from '../../api/auth';
 import UserApi from '../../api/user';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
@@ -24,7 +24,7 @@ export const startBitPayIdStoreInit =
 
 export const startFetchSession = (): Effect => async dispatch => {
   try {
-    const session = await BitPayIdApi.fetchSession();
+    const session = await AuthApi.fetchSession();
 
     dispatch(BitPayIdActions.successFetchSession(session));
   } catch (err) {
@@ -42,7 +42,7 @@ export const startLogin =
       // authenticate
       dispatch(LogActions.info('Authenticating BitPayID credentials...'));
       const {twoFactorPending, emailAuthenticationPending} =
-        await BitPayIdApi.login(email, password, BITPAY_ID.session.csrfToken);
+        await AuthApi.login(email, password, BITPAY_ID.session.csrfToken);
 
       // TODO
       if (twoFactorPending) {
@@ -65,10 +65,10 @@ export const startLogin =
       );
 
       // refresh session
-      const session = await BitPayIdApi.fetchSession();
+      const session = await AuthApi.fetchSession();
 
       // start pairing
-      const secret = await BitPayIdApi.generatePairingCode(session.csrfToken);
+      const secret = await AuthApi.generatePairingCode(session.csrfToken);
       dispatch(BitPayIdEffects.startPairing({secret}));
 
       dispatch(BitPayIdActions.successLogin(APP.network, session));
@@ -101,7 +101,7 @@ export const startPairing =
     const network = state.APP.network;
 
     try {
-      const token = await BitPayIdApi.pair(secret, code);
+      const token = await AuthApi.pair(secret, code);
       const {basicInfo, cards} = await UserApi.fetchAllUserData(token);
 
       batch(() => {

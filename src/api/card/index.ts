@@ -1,18 +1,6 @@
-import {Card} from '../../store/card/card.models';
 import GraphQlApi from '../graphql';
-import CardQueries from './queries';
-
-interface FetchAllCardsResponse {
-  user: {
-    cards: Card[];
-  };
-}
-
-interface FetchCardResponse {
-  user: {
-    card: Card;
-  };
-}
+import {FetchAllCardsResponse, FetchCardResponse} from './card.types';
+import CardQueries from './card.queries';
 
 const fetchAll = async (token: string) => {
   const query = CardQueries.FETCH_CARDS(token);

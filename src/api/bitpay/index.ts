@@ -1,8 +1,8 @@
 import axios from 'axios';
 import BitAuth from 'bitauth';
-import {Network} from '../constants';
-import {BASE_BITPAY_URLS} from '../constants/config';
-import {AppIdentity} from '../store/app/app.models';
+import {Network} from '../../constants';
+import {BASE_BITPAY_URLS} from '../../constants/config';
+import {AppIdentity} from '../../store/app/app.models';
 import {BpApiResponse} from './bitpay.types';
 
 interface BitPayIdApiConfig {

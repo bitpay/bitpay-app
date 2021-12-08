@@ -1,4 +1,4 @@
-import {GqlQueryParams} from '../graphql.types';
+import {GqlQueryParams} from '../graphql/graphql.types';
 
 export const cardFields = `
   id,
