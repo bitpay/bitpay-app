@@ -1,6 +1,10 @@
 import {Network} from '../../constants';
 import {Session, User} from './bitpay-id.models';
-import {LoginStatus, PairingBitPayIdStatus} from './bitpay-id.reducer';
+import {
+  FetchBasicInfoStatus,
+  LoginStatus,
+  PairingBitPayIdStatus,
+} from './bitpay-id.reducer';
 
 export enum BitPayIdActionTypes {
   SUCCESS_FETCH_SESSION = 'BitPayId/SUCCESS_FETCH_SESSION',
@@ -11,6 +15,9 @@ export enum BitPayIdActionTypes {
   SUCCESS_PAIRING_BITPAY_ID = 'BitPayId/SUCCESS_PAIRING_BITPAY_ID',
   FAILED_PAIRING_BITPAY_ID = 'BitPayId/FAILED_PAIRING_BITPAY_ID',
   UPDATE_PAIRING_BITPAY_ID_STATUS = 'BitPayId/UPDATE_PAIRING_BITPAY_ID_STATUS',
+  SUCCESS_FETCH_BASIC_INFO = 'BitPayId/SUCCCESS_FETCH_BASIC_INFO',
+  FAILED_FETCH_BASIC_INFO = 'BitPayId/FAILED_FETCH_BASIC_INFO',
+  UPDATE_FETCH_BASIC_INFO_STATUS = 'BitPayId/UPDATE_FETCH_BASIC_INFO_STATUS',
   BITPAY_ID_DISCONNECTED = 'BitPayId/BITPAY_ID_DISCONNECTED',
 }
 
@@ -39,7 +46,7 @@ interface UpdateLoginStatus {
 
 interface SuccessPairingBitPayId {
   type: typeof BitPayIdActionTypes.SUCCESS_PAIRING_BITPAY_ID;
-  payload: {network: Network; token: string; user: User};
+  payload: {network: Network; token: string};
 }
 
 interface FailedPairingBitPayId {
@@ -49,6 +56,20 @@ interface FailedPairingBitPayId {
 interface UpdatePairingBitPayIdStatus {
   type: typeof BitPayIdActionTypes.UPDATE_PAIRING_BITPAY_ID_STATUS;
   payload: PairingBitPayIdStatus;
+}
+
+interface SuccessFetchBasicInfo {
+  type: typeof BitPayIdActionTypes.SUCCESS_FETCH_BASIC_INFO;
+  payload: {network: Network; user: User};
+}
+
+interface FailedFetchBasicInnfo {
+  type: typeof BitPayIdActionTypes.FAILED_FETCH_BASIC_INFO;
+}
+
+interface UpdateFetchBasicInfoStatus {
+  type: typeof BitPayIdActionTypes.UPDATE_FETCH_BASIC_INFO_STATUS;
+  payload: FetchBasicInfoStatus;
 }
 
 interface BitPayIdDisconnected {
@@ -65,4 +86,7 @@ export type BitPayIdActionType =
   | SuccessPairingBitPayId
   | FailedPairingBitPayId
   | UpdatePairingBitPayIdStatus
+  | SuccessFetchBasicInfo
+  | FailedFetchBasicInnfo
+  | UpdateFetchBasicInfoStatus
   | BitPayIdDisconnected;
