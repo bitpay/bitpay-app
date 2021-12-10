@@ -1,0 +1,13 @@
+<network-security-config>
+  <base-config cleartextTrafficPermitted="true" />
+  <domain-config cleartextTrafficPermitted="true">
+    <domain includeSubdomains="true">localhost</domain>
+    <!-- Add your local IP here. -->
+    <!--<domain includeSubdomains="true">127.0.0.1</domain>-->
+    <trust-anchors>
+      <!-- Add your local cert to the res/raw folder eg. res/raw/your_cert.der  -->
+      <!-- Filename must be lowercase and in .pem or .der format. Don't include the file extension in the src attribute. -->
+      <!-- <certificates src="@raw/your_cert" /> -->
+    </trust-anchors>
+  </domain-config>
+</network-security-config>

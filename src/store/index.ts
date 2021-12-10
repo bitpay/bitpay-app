@@ -1,22 +1,24 @@
-import {Action, applyMiddleware, combineReducers, createStore} from 'redux';
-import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
-import logger from 'redux-logger'; // https://github.com/LogRocket/redux-logger
-import {composeWithDevTools} from 'redux-devtools-extension';
 import AsyncStorage from '@react-native-community/async-storage';
-import {persistStore, persistReducer} from 'redux-persist'; // https://github.com/rt2zz/redux-persist
-import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
-import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
+import {Action, applyMiddleware, combineReducers, createStore} from 'redux';
+import {composeWithDevTools} from 'redux-devtools-extension';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from 'redux-logger'; // https://github.com/LogRocket/redux-logger
 import {getUniqueId} from 'react-native-device-info';
+import {persistStore, persistReducer} from 'redux-persist'; // https://github.com/rt2zz/redux-persist
+import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
+import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
+import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
 import {appReducer, appReduxPersistBlackList} from './app/app.reducer';
 import {
   bitPayIdReducer,
   bitPayIdReduxPersistBlackList,
 } from './bitpay-id/bitpay-id.reducer';
+import {cardReducer, cardReduxPersistBlacklist} from './card/card.reducer';
+import {logReducer, logReduxPersistBlackList} from './log/log.reducer';
 import {
   walletReducer,
   walletReduxPersistBlackList,
 } from './wallet/wallet.reducer';
-import {logReducer, logReduxPersistBlackList} from './log/log.reducer';
 
 const basePersistConfig = {
   storage: AsyncStorage,
@@ -38,14 +40,6 @@ const reducers = {
     },
     appReducer,
   ),
-  WALLET: persistReducer(
-    {
-      ...basePersistConfig,
-      key: 'WALLET',
-      blacklist: walletReduxPersistBlackList,
-    },
-    walletReducer,
-  ),
   BITPAY_ID: persistReducer(
     {
       ...basePersistConfig,
@@ -54,6 +48,14 @@ const reducers = {
     },
     bitPayIdReducer,
   ),
+  CARD: persistReducer(
+    {
+      ...basePersistConfig,
+      key: 'CARD',
+      blacklist: cardReduxPersistBlacklist,
+    },
+    cardReducer,
+  ),
   LOG: persistReducer(
     {
       ...basePersistConfig,
@@ -61,6 +63,14 @@ const reducers = {
       blacklist: logReduxPersistBlackList,
     },
     logReducer,
+  ),
+  WALLET: persistReducer(
+    {
+      ...basePersistConfig,
+      key: 'WALLET',
+      blacklist: walletReduxPersistBlackList,
+    },
+    walletReducer,
   ),
 };
 
