@@ -4,6 +4,7 @@ import {BaseText} from '../styled/Text';
 import {Action, Caution, Slate} from '../../styles/colors';
 import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
+import Search from '../../../assets/img/search.svg';
 
 interface ContainerProps {
   isFocused: boolean;
@@ -67,12 +68,20 @@ const ObfuscationToggle = styled.TouchableOpacity`
   top: 40px;
 `;
 
+const SearchIconContainer = styled.View`
+  position: absolute;
+  right: 0;
+  top: 31px;
+  border-left-color: #eceffd;
+  border-left-width: 1px;
+  padding: 5px 15px;
+`;
 interface Props {
-  label: string;
+  label?: string;
   onFocus?: () => void;
   onBlur?: () => void;
   errors?: any;
-  type?: 'password';
+  type?: 'password' | 'search';
   [x: string]: any;
 }
 const BoxInput = ({label, onFocus, onBlur, error, type, ...props}: Props) => {
@@ -118,6 +127,11 @@ const BoxInput = ({label, onFocus, onBlur, error, type, ...props}: Props) => {
           onPress={() => setSecureTextEntry(!isSecureTextEntry)}>
           {isSecureTextEntry ? <ObfuscationHide /> : <ObfuscationShow />}
         </ObfuscationToggle>
+      )}
+      {type === 'search' && (
+        <SearchIconContainer>
+          <Search />
+        </SearchIconContainer>
       )}
       {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
     </InputContainer>

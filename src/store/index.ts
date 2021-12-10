@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-community/async-storage';
 import {Action, applyMiddleware, combineReducers, createStore} from 'redux';
 import {composeWithDevTools} from 'redux-devtools-extension';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -19,6 +18,7 @@ import {
   walletReducer,
   walletReduxPersistBlackList,
 } from './wallet/wallet.reducer';
+import {shopReducer, shopReduxPersistBlackList} from './shop/shop.reducer';
 
 const basePersistConfig = {
   storage: AsyncStorage,
@@ -63,6 +63,14 @@ const reducers = {
       blacklist: logReduxPersistBlackList,
     },
     logReducer,
+  ),
+  SHOP: persistReducer(
+    {
+      ...basePersistConfig,
+      key: 'SHOP',
+      blacklist: shopReduxPersistBlackList,
+    },
+    shopReducer,
   ),
   WALLET: persistReducer(
     {
