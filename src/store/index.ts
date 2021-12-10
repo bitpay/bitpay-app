@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-community/async-storage';
 import {Action, applyMiddleware, combineReducers, createStore} from 'redux';
 import {composeWithDevTools} from 'redux-devtools-extension';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from 'redux-logger'; // https://github.com/LogRocket/redux-logger
 import {getUniqueId} from 'react-native-device-info';
 import {persistStore, persistReducer} from 'redux-persist'; // https://github.com/rt2zz/redux-persist
