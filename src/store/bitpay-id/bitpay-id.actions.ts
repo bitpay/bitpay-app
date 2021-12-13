@@ -1,7 +1,11 @@
 import {BitPayIdActionTypes, BitPayIdActionType} from './bitpay-id.types';
-import {Session} from './bitpay-id.models';
+import {Session, User} from './bitpay-id.models';
 import {Network} from '../../constants';
-import {LoginStatus, PairingBitPayIdStatus} from './bitpay-id.reducer';
+import {
+  FetchBasicInfoStatus,
+  LoginStatus,
+  PairingBitPayIdStatus,
+} from './bitpay-id.reducer';
 
 export const successFetchSession = (session: Session): BitPayIdActionType => ({
   type: BitPayIdActionTypes.SUCCESS_FETCH_SESSION,
@@ -32,10 +36,9 @@ export const updateLoginStatus = (status: LoginStatus): BitPayIdActionType => ({
 export const successPairingBitPayId = (
   network: Network,
   token: string,
-  user: any,
 ): BitPayIdActionType => ({
   type: BitPayIdActionTypes.SUCCESS_PAIRING_BITPAY_ID,
-  payload: {network, token, user},
+  payload: {network, token},
 });
 
 export const failedPairingBitPayId = (): BitPayIdActionType => ({
@@ -46,6 +49,25 @@ export const updatePairingBitPayIdStatus = (
   status: PairingBitPayIdStatus,
 ): BitPayIdActionType => ({
   type: BitPayIdActionTypes.UPDATE_PAIRING_BITPAY_ID_STATUS,
+  payload: status,
+});
+
+export const successFetchBasicInfo = (
+  network: Network,
+  user: User,
+): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.SUCCESS_FETCH_BASIC_INFO,
+  payload: {network, user},
+});
+
+export const failedFetchBasicInfo = (): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.FAILED_FETCH_BASIC_INFO,
+});
+
+export const updateFetchBasicInfoStatus = (
+  status: FetchBasicInfoStatus,
+): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.UPDATE_FETCH_BASIC_INFO_STATUS,
   payload: status,
 });
 

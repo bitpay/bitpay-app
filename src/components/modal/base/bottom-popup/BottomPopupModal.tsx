@@ -19,6 +19,7 @@ const BottomPopupModal: React.FC<Props> = ({
       hideModalContentWhileAnimating={true}
       useNativeDriverForBackdrop={true}
       useNativeDriver={true}
+      testID="modalBackdrop"
       onBackdropPress={onBackdropPress}
       // swipeDirection={'down'}
       // onSwipeComplete={hideModal}

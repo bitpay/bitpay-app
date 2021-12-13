@@ -4,10 +4,13 @@ import InAppBrowser, {
   InAppBrowserOptions,
 } from 'react-native-inappbrowser-reborn';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import BitPayApi from '../../api/bitpay';
+import GraphQlApi from '../../api/graphql';
+import UserApi from '../../api/user';
 import {Network} from '../../constants';
-import {BASE_BITPAY_URLS} from '../../constants/config';
-import BitPayApi from '../../lib/bitpay-api';
 import {sleep} from '../../utils/helper-methods';
+import {BitPayIdEffects} from '../bitpay-id';
+import {CardEffects} from '../card';
 import {RootState, Effect} from '../index';
 import {LogActions} from '../log';
 import {startWalletStoreInit} from '../wallet/wallet.effects';
@@ -19,12 +22,23 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(LogActions.clear());
     dispatch(LogActions.info('Initializing app...'));
 
-    const {APP} = getState();
+    const {APP, BITPAY_ID} = getState();
+    const network = APP.network;
+    const token = BITPAY_ID.apiToken[network];
+    const isPaired = !!token;
     const identity = dispatch(initializeAppIdentity());
-    dispatch(initializeBitPayApi(APP.network, identity));
+
+    await dispatch(initializeApi(APP.network, identity));
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here
-    dispatch(startWalletStoreInit());
+    await dispatch(startWalletStoreInit());
+
+    if (isPaired) {
+      const {basicInfo: user, cards} = await UserApi.fetchAllUserData(token);
+
+      await dispatch(BitPayIdEffects.startBitPayIdStoreInit(network, {user}));
+      await dispatch(CardEffects.startCardStoreInit(network, {cards}));
+    }
 
     await sleep(500);
     dispatch(AppActions.successAppInit());
@@ -69,17 +83,16 @@ const initializeAppIdentity =
   };
 
 /**
- * Initializes the BitPayAPI for the given network and identity.
+ * Initializes APIs for the given network and identity.
  * @param network
  * @param identity
  * @returns void
  */
-const initializeBitPayApi =
+const initializeApi =
   (network: Network, identity: AppIdentity): Effect =>
   () => {
-    BitPayApi.init(network, identity, {
-      baseUrl: BASE_BITPAY_URLS[network],
-    });
+    BitPayApi.init(network, identity);
+    GraphQlApi.init(network, identity);
   };
 
 export const startOnGoingProcessModal =

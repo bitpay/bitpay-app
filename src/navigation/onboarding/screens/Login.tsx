@@ -5,6 +5,7 @@ import LoginForm from '../../../components/auth/loginForm';
 import {RootState} from '../../../store';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {OnboardingStackParamList} from '../OnboardingStack';
+import {Keyboard} from 'react-native';
 
 type LoginProps = StackScreenProps<OnboardingStackParamList, 'Login'>;
 
@@ -28,6 +29,7 @@ export const LoginScreen: React.FC<LoginProps> = ({navigation, route}) => {
   const context = route.params?.context || 'login';
 
   const onSubmit = (email: string, password: string) => {
+    Keyboard.dismiss();
     if (!session || !session.csrfToken) {
       console.log('CSRF token not found.');
       return;
