@@ -3,6 +3,7 @@ import {BwcProvider} from '../../lib/bwc';
 import {WalletActions} from './';
 import {
   ASSETS,
+  SUPPORTED_COINS,
   SUPPORTED_TOKENS,
   SupportedAssets,
   SupportedCoins,
@@ -17,7 +18,9 @@ import {navigationRef} from '../../Root';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {BASE_BWS_URL} from '../../constants/config';
 import axios from 'axios';
+import {PriceHistory} from './wallet.models';
 import {WalletOptions} from './wallet.models';
+import {coinSupported, normalizeMnemonic} from '../../utils/helper-methods';
 
 const BWC = BwcProvider.getInstance();
 const bwcClient = BWC.getClient();
@@ -25,6 +28,7 @@ const bwcClient = BWC.getClient();
 export const startWalletStoreInit =
   (): Effect => async (dispatch, _getState: () => RootState) => {
     try {
+      dispatch(getPriceHistory());
       // added success/failed for logging
       dispatch(WalletActions.successWalletStoreInit());
     } catch (e) {
@@ -155,14 +159,38 @@ export const startCreateWalletCredentials =
 export const getRates = (): Effect => async dispatch => {
   try {
     const {data: rates} = await axios.get(`${BASE_BWS_URL}/v3/fiatrates/`);
-    dispatch(WalletActions.successGetRates(rates));
+    dispatch(WalletActions.successGetRates({rates}));
   } catch (err) {
     console.error(err);
     dispatch(WalletActions.failedGetRates());
   }
 };
 
-import {coinSupported, normalizeMnemonic} from '../../utils/helper-methods';
+export const getPriceHistory = (): Effect => async dispatch => {
+  try {
+    //TODO: update exchange currency
+    const coinsList = SUPPORTED_COINS.map(coin => `${coin.toUpperCase()}:USD`)
+      .toString()
+      .split(',')
+      .join('","');
+    const {
+      data: {data},
+    } = await axios.get(
+      `https://bitpay.com/currencies/prices?currencyPairs=["${coinsList}"]`,
+    );
+    const formattedData = data.map((d: PriceHistory) => {
+      return {
+        coin: d.currencyPair.split(':')[0].toLowerCase(),
+        ...d,
+      };
+    });
+
+    dispatch(WalletActions.successGetPriceHistory(formattedData));
+  } catch (err) {
+    console.error(err);
+    dispatch(WalletActions.failedGetPriceHistory());
+  }
+};
 
 export const startImportMnemonic =
   (words: string, opts: Partial<WalletOptions>): Effect =>

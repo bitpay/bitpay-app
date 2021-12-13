@@ -26,6 +26,13 @@ export interface ExchangeRate {
   name?: string;
 }
 
+export interface PriceHistory {
+  coin: string;
+  priceDisplay: Array<number>;
+  percentChange: string;
+  currencyPair: string;
+}
+
 export interface WalletOptions {
   keyId: any;
   name: any;

@@ -2,7 +2,11 @@ import {BitPayIdActionTypes, BitPayIdActionType} from './bitpay-id.types';
 import {Session, User} from './bitpay-id.models';
 import {Network} from '../../constants';
 
-export const bitPayIdReduxPersistBlackList = [];
+export const bitPayIdReduxPersistBlackList: (keyof BitPayIdState)[] = [
+  'loginStatus',
+  'pairingBitPayIdStatus',
+  'fetchBasicInfoStatus',
+];
 
 export type LoginStatus =
   | 'success'
@@ -11,17 +15,19 @@ export type LoginStatus =
   | 'emailAuthenticationPending'
   | null;
 export type PairingBitPayIdStatus = 'success' | 'failed' | null;
+export type FetchBasicInfoStatus = 'success' | 'failed' | null;
 
 export interface BitPayIdState {
   session: Session;
   apiToken: {
-    [key in Network]: string | null;
+    [key in Network]: string;
   };
   user: {
     [key in Network]: User | null;
   };
   loginStatus: LoginStatus;
   pairingBitPayIdStatus: PairingBitPayIdStatus;
+  fetchBasicInfoStatus: FetchBasicInfoStatus;
 }
 
 const initialState: BitPayIdState = {
@@ -30,8 +36,8 @@ const initialState: BitPayIdState = {
     isAuthenticated: false,
   },
   apiToken: {
-    [Network.mainnet]: null,
-    [Network.testnet]: null,
+    [Network.mainnet]: '',
+    [Network.testnet]: '',
   },
   user: {
     [Network.mainnet]: null,
@@ -39,6 +45,7 @@ const initialState: BitPayIdState = {
   },
   loginStatus: null,
   pairingBitPayIdStatus: null,
+  fetchBasicInfoStatus: null,
 };
 
 export const bitPayIdReducer = (
@@ -79,10 +86,6 @@ export const bitPayIdReducer = (
           ...state.apiToken,
           [action.payload.network]: action.payload.token,
         },
-        user: {
-          ...state.user,
-          [action.payload.network]: action.payload.user,
-        },
       };
 
     case BitPayIdActionTypes.FAILED_PAIRING_BITPAY_ID:
@@ -95,6 +98,28 @@ export const bitPayIdReducer = (
       return {
         ...state,
         pairingBitPayIdStatus: action.payload,
+      };
+
+    case BitPayIdActionTypes.SUCCESS_FETCH_BASIC_INFO:
+      return {
+        ...state,
+        fetchBasicInfoStatus: 'success',
+        user: {
+          ...state.user,
+          [action.payload.network]: action.payload.user,
+        },
+      };
+
+    case BitPayIdActionTypes.FAILED_FETCH_BASIC_INFO:
+      return {
+        ...state,
+        fetchBasicInfoStatus: 'failed',
+      };
+
+    case BitPayIdActionTypes.UPDATE_FETCH_BASIC_INFO_STATUS:
+      return {
+        ...state,
+        fetchBasicInfoStatus: action.payload,
       };
 
     case BitPayIdActionTypes.BITPAY_ID_DISCONNECTED:
