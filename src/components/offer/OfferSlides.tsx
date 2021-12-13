@@ -1,4 +1,4 @@
-import React, {ReactElement, useRef} from 'react';
+import React, {ReactElement} from 'react';
 import {Carousel} from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
 import haptic from '../haptic-feedback/haptic';
@@ -7,9 +7,10 @@ import ExchangeRateCard from './OfferCard';
 
 export interface OfferProps {
   id: number;
-  img: () => ReactElement;
+  img: ReactElement;
   title?: string;
   description?: string;
+  onPress: () => void;
 }
 
 interface OfferSlide {
@@ -18,14 +19,10 @@ interface OfferSlide {
 
 const OffersContainer = styled.SafeAreaView`
   flex: 1;
-  position: relative;
-  left: 16px;
-  top: 30px;
+  margin: 10px 0 20px;
 `;
 
 const OffersSlides = ({items}: OfferSlide) => {
-  const ref = useRef(null);
-
   return (
     <OffersContainer>
       <Carousel
@@ -34,7 +31,6 @@ const OffersSlides = ({items}: OfferSlide) => {
         useExperimentalSnap={true}
         data={items}
         renderItem={ExchangeRateCard}
-        ref={ref}
         sliderWidth={WIDTH}
         itemWidth={270}
         inactiveSlideScale={1}

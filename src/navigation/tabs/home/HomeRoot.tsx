@@ -14,6 +14,8 @@ import {PriceHistory} from '../../../store/wallet/wallet.models';
 import {CurrencyList} from '../../../constants/CurrencySelectionListOptions';
 import ExchangeRatesSlides from '../../../components/exchange-rate/ExchangeRatesSlides';
 import QuickLinksSlides from '../../../components/quick-links/QuickLinksSlides';
+import OffersSlides from '../../../components/offer/OfferSlides';
+
 const HomeContainer = styled.SafeAreaView`
   flex: 1;
 `;
@@ -55,6 +57,8 @@ const HomeRoot = () => {
     });
   };
 
+  const goToOffers = () => {};
+
   const priceHistory = useSelector(
     ({WALLET}: RootState) => WALLET.priceHistory,
   );
@@ -85,6 +89,31 @@ const HomeRoot = () => {
     },
   ];
 
+  const offerItems = [
+    {
+      id: 1,
+      title: 'JOMASHOP',
+      description: '20% off select products for BitPay customers.',
+      img: (
+        <Image
+          source={require('../../../../assets/img/home/offers/jomashop.png')}
+        />
+      ),
+      onPress: () => {},
+    },
+    {
+      id: 2,
+      title: 'AIRBNB',
+      description: '20% off select products for BitPay customers.',
+      img: (
+        <Image
+          source={require('../../../../assets/img/home/offers/airbnb.png')}
+        />
+      ),
+      onPress: () => {},
+    },
+  ];
+
   return (
     <HomeContainer>
       <Home>
@@ -99,6 +128,16 @@ const HomeRoot = () => {
         <CardsCarousel />
 
         <LinkingButtons />
+
+        <HeaderContainer justifyContent={'space-between'}>
+          <Title colorSchemaName={colorScheme}>Limited Time Offers</Title>
+
+          <TouchableOpacity onPress={goToOffers}>
+            <HomeLink colorSchemaName={colorScheme}> See all</HomeLink>
+          </TouchableOpacity>
+        </HeaderContainer>
+
+        <OffersSlides items={offerItems} />
 
         <HeaderContainer>
           <Title colorSchemaName={colorScheme}>Exchange Rates</Title>
