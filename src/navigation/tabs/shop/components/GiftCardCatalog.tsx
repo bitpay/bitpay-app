@@ -2,10 +2,11 @@ import React, {useState} from 'react';
 import debounce from 'lodash.debounce';
 import styled, {css} from 'styled-components/native';
 import {Action, Cloud, SlateDark} from '../../../../styles/colors';
-import {Dimensions, View} from 'react-native';
+import {View} from 'react-native';
 import {SvgUri} from 'react-native-svg';
 import {useForm, Controller} from 'react-hook-form';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
+import {HEIGHT, WIDTH} from '../../../../components/styled/Containers';
 import BoxInput from '../../../../components/form/BoxInput';
 import GiftCardCarouselList from './GiftCardCarouselList';
 import {purchasedBrands} from '../stubs/gift-cards';
@@ -14,8 +15,6 @@ import GiftCardCatalogItem from './GiftCardCatalogItem';
 import GiftCardCreditsItem from './GiftCardCreditsItem';
 import {CardConfig} from '../../../../store/shop/shop.models';
 
-const WIDTH = Dimensions.get('window').width;
-const HEIGHT = Dimensions.get('window').height;
 const horizontalPadding = 20;
 
 const ListItemTouchableHighlight = styled.TouchableHighlight`

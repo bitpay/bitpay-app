@@ -1,10 +1,10 @@
 import React, {useCallback, useEffect, useRef} from 'react';
 import styled, {css} from 'styled-components/native';
 import {Action, NeutralSlate, SlateDark} from '../../../styles/colors';
-import {Dimensions, Platform, ScrollView} from 'react-native';
+import {Platform, ScrollView} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {purchasedBrands} from './stubs/gift-cards';
-import {BaseText} from '../../../components/styled/Text';
+import {HEIGHT} from '../../../components/styled/Containers';
 import GiftCardCatalog from './components/GiftCardCatalog';
 import {
   getCardConfigFromApiConfigMap,
@@ -14,8 +14,6 @@ import {useDispatch, useSelector} from 'react-redux';
 import {startFetchCatalog} from '../../../store/shop/shop.effects';
 import {RootState} from '../../../store';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
-
-const HEIGHT = Dimensions.get('window').height;
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -36,19 +34,6 @@ const ShopHeader = styled.Text`
   })};
   text-align: center;
   margin-bottom: 40px;
-`;
-
-interface TabTextProps {
-  focused: boolean;
-}
-
-export const TabText = styled(BaseText)<TabTextProps>`
-  ${({focused}) =>
-    css`
-      font-weight: 600;
-      font-size: 17px;
-      color: ${focused ? 'white' : 'black'};
-    `}
 `;
 
 const ShopOnline = () => {
