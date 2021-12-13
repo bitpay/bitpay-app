@@ -22,12 +22,12 @@ import RecoveryPhrase, {
 import VerifyPhrase, {VerifyPhraseProps} from '../wallet/screens/VerifyPhrase';
 import {HeaderRightContainer} from '../../components/styled/Containers';
 import {HeaderTitle} from '../../components/styled/Text';
-import LoginScreen from './screens/Login';
 import ImportWalletScreen from '../wallet/screens/ImportWallet';
+import LoginSignup from './screens/LoginSignup';
 
 export type OnboardingStackParamList = {
   OnboardingStart: undefined;
-  Login: {context: 'login' | 'signup'};
+  LoginSignup: {context: 'login' | 'signup'};
   Notifications: undefined;
   Pin: undefined;
   CreateWallet: undefined;
@@ -45,7 +45,7 @@ export type OnboardingStackParamList = {
 
 export enum OnboardingScreens {
   ONBOARDING_START = 'OnboardingStart',
-  LOGIN = 'Login',
+  LOGIN_SIGNUP = 'LoginSignup',
   NOTIFICATIONS = 'Notifications',
   PIN = 'Pin',
   CREATE_WALLET = 'CreateWallet',
@@ -79,7 +79,7 @@ const OnboardingStack = () => {
                 onPress={() => {
                   haptic('impactLight');
                   navigation.navigate('Onboarding', {
-                    screen: 'Login',
+                    screen: 'LoginSignup',
                     params: {context: 'login'},
                   });
                 }}>
@@ -92,8 +92,8 @@ const OnboardingStack = () => {
         component={OnboardingStartScreen}
       />
       <Onboarding.Screen
-        name={OnboardingScreens.LOGIN}
-        component={LoginScreen}
+        name={OnboardingScreens.LOGIN_SIGNUP}
+        component={LoginSignup}
       />
       <Onboarding.Screen
         options={{

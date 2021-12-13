@@ -7,7 +7,7 @@ import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {OnboardingStackParamList} from '../OnboardingStack';
 import {Keyboard} from 'react-native';
 
-type LoginProps = StackScreenProps<OnboardingStackParamList, 'Login'>;
+type LoginProps = StackScreenProps<OnboardingStackParamList, 'LoginSignup'>;
 
 export const LoginScreen: React.FC<LoginProps> = ({navigation, route}) => {
   const dispatch = useDispatch();
@@ -44,7 +44,7 @@ export const LoginScreen: React.FC<LoginProps> = ({navigation, route}) => {
   };
 
   const onAlreadyHaveAccount = () => {
-    navigation.replace('Login', {
+    navigation.replace('LoginSignup', {
       context: 'login',
     });
   };
