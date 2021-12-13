@@ -19,9 +19,9 @@ interface ExchangeRateSlide {
 const WIDTH = Dimensions.get('window').width;
 
 const ExchangeRatesContainer = styled.View`
-  flex: 1;
-  margin-top: 10px;
-  min-height: 91px;
+  min-height: 150px;
+  width: 100%;
+  margin-left: -10px;
 `;
 
 const ExchangeRatesSlides = ({items}: ExchangeRateSlide) => {
@@ -34,7 +34,7 @@ const ExchangeRatesSlides = ({items}: ExchangeRateSlide) => {
         data={items}
         renderItem={ExchangeRateCard}
         sliderWidth={WIDTH}
-        itemWidth={110}
+        itemWidth={140}
         inactiveSlideScale={1}
         inactiveSlideOpacity={1}
         onScrollIndexChanged={() => {

@@ -19,6 +19,7 @@ const ButtonsRow = styled.View`
 
 const ButtonContainer = styled.View`
   align-items: center;
+  margin: 20px 0;
 `;
 
 const ButtonText = styled(BaseText)<{colorSchemeName: ColorSchemeName}>`
@@ -37,6 +38,7 @@ const LinkButton = styled.TouchableOpacity<{colorSchemeName: ColorSchemeName}>`
   justify-content: center;
   background: ${({colorSchemeName}: {colorSchemeName: ColorSchemeName}) =>
     colorSchemeName === 'light' ? NeutralSlate : '#0C204E'};
+  margin: 10px 0;
 `;
 
 interface ButtonListProps {

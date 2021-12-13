@@ -3,8 +3,16 @@ import PortfolioBalance from './components/PortfolioBalance';
 import CardsCarousel from './components/CardsCarousel';
 import LinkingButtons from './components/LinkingButtons';
 import React from 'react';
-import {BaseText, Link, TextAlign} from '../../../components/styled/Text';
-import Button from '../../../components/button/Button';
+import {BaseText} from '../../../components/styled/Text';
+import {ColorSchemeName, TouchableOpacity} from 'react-native';
+import haptic from '../../../components/haptic-feedback/haptic';
+import {navigationRef} from '../../../Root';
+import {useSelector} from 'react-redux';
+import {RootState} from '../../../store';
+import {SlateDark, White, Action} from '../../../styles/colors';
+import {PriceHistory} from '../../../store/wallet/wallet.models';
+import {CurrencyList} from '../../../constants/CurrencySelectionListOptions';
+import ExchangeRatesSlides from '../../../components/exchange-rate/ExchangeRatesSlides';
 
 const HomeContainer = styled.SafeAreaView`
   flex: 1;
@@ -15,17 +23,22 @@ const Home = styled.ScrollView`
   padding: 0 15px;
 `;
 
-const Row = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  margin-top: 10px;
+const HomeLink = styled(BaseText)<{colorSchemaName: ColorSchemeName}>`
+  font-weight: 500;
+  font-size: 14px;
+  color: ${({colorSchemeName}: {colorSchemeName: ColorSchemeName}) =>
+    !colorSchemeName || colorSchemeName === 'light' ? Action : White};
+  text-decoration: ${({colorSchemeName}: {colorSchemeName: ColorSchemeName}) =>
+    !colorSchemeName || colorSchemeName === 'light' ? 'none' : 'underline'};
 `;
 
-const Action = styled(Link)``;
+const Title = styled(BaseText)<{colorSchemaName: ColorSchemeName}>`
+  font-size: 14px;
+  color: ${({colorSchemeName}: {colorSchemeName: ColorSchemeName}) =>
+    !colorSchemeName || colorSchemeName === 'light' ? SlateDark : White};
+`;
 
-const Title = styled(BaseText)``;
-
-const HeaderContainer = styled.View<{justifyContent: string}>`
+const HeaderContainer = styled.View<{justifyContent?: string}>`
   flex-direction: row;
   margin-top: 10px;
   justify-content: ${({justifyContent}: {justifyContent: string}) =>
@@ -33,7 +46,31 @@ const HeaderContainer = styled.View<{justifyContent: string}>`
 `;
 
 const HomeRoot = () => {
-  const goToCustomize = () => {};
+  const colorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
+
+  const goToCustomize = () => {
+    haptic('impactLight');
+    navigationRef.navigate('GeneralSettings', {
+      screen: 'CustomizeHome',
+    });
+  };
+
+  const priceHistory = useSelector(
+    ({WALLET}: RootState) => WALLET.priceHistory,
+  );
+  const exchangeRatesItems = priceHistory.map(
+    (ph: PriceHistory, index: number) => {
+      const currencyInfo = CurrencyList.find(
+        ({id}: {id: string | number}) => id === ph.coin,
+      );
+      return {
+        id: index,
+        img: currencyInfo?.roundIcon,
+        coinName: currencyInfo?.mainLabel,
+        average: ph.percentChange,
+      };
+    },
+  );
 
   return (
     <HomeContainer>
@@ -41,13 +78,20 @@ const HomeRoot = () => {
         <PortfolioBalance />
 
         <HeaderContainer justifyContent={'flex-end'}>
-          <Button buttonType={'link'} onPress={goToCustomize}>
-            <Link>Customize</Link>
-          </Button>
+          <TouchableOpacity onPress={goToCustomize}>
+            <HomeLink colorSchemaName={colorScheme}>Customize</HomeLink>
+          </TouchableOpacity>
         </HeaderContainer>
-        <TextAlign align={'right'}>here</TextAlign>
+
         <CardsCarousel />
+
         <LinkingButtons />
+
+        <HeaderContainer>
+          <Title colorSchemaName={colorScheme}>Exchange Rates</Title>
+        </HeaderContainer>
+
+        <ExchangeRatesSlides items={exchangeRatesItems} />
       </Home>
     </HomeContainer>
   );

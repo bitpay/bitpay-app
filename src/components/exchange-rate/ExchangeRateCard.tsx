@@ -8,8 +8,8 @@ const ExchangeRateCardContainer = styled.View`
   justify-content: flex-start;
   align-items: center;
   flex-direction: column;
-  width: 100px;
-  height: 91px;
+  width: 130px;
+  height: 100px;
   border-radius: 12px;
   background-color: white;
 `;
@@ -17,6 +17,9 @@ const ExchangeRateCardContainer = styled.View`
 const CoinIconContainer = styled.View`
   padding-top: 19px;
   padding-bottom: 6px;
+  svg {
+    height: 100px;
+  }
 `;
 
 const CoinNameText = styled(BaseText)`
@@ -39,13 +42,19 @@ export default ({item}: {item: ExchangeRateProps}) => {
 
   return (
     <ExchangeRateCardContainer
-      style={{
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 4},
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        elevation: 5,
-      }}>
+      style={[
+        {
+          shadowColor: '#000',
+          shadowOffset: {width: -2, height: 4},
+          shadowOpacity: 0.1,
+          shadowRadius: 5,
+          borderRadius: 12,
+          position: 'absolute',
+          top: 12,
+          bottom: 18,
+          left: 10,
+        },
+      ]}>
       <CoinIconContainer>{img}</CoinIconContainer>
       <CoinNameText>{coinName}</CoinNameText>
       <CoinAverageText average={average}>{average}%</CoinAverageText>
