@@ -2,9 +2,14 @@ import axios from 'axios';
 import DeviceInfo from 'react-native-device-info';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
 import {Session} from '../../store/bitpay-id/bitpay-id.models';
+import {isAxiosError} from '../../utils/axios';
 import {hashPassword} from '../../utils/password';
 import BitPayApi from '../bitpay';
-import {GeneratePairingCodeResponse, LoginResponse} from './auth.types';
+import {
+  GeneratePairingCodeResponse,
+  LoginErrorResponse,
+  LoginResponse,
+} from './auth.types';
 
 export const AuthApi = {
   async fetchSession(): Promise<Session> {
@@ -52,10 +57,12 @@ export const AuthApi = {
 
       return data;
     } catch (err: any) {
-      if (err.response?.data?.twoFactorPending) {
-        return {twoFactorPending: true};
-      } else if (err.response?.data?.emailAuthenticationPending) {
-        return {emailAuthenticationPending: true};
+      if (isAxiosError<LoginErrorResponse>(err)) {
+        if (err.response?.data?.twoFactorPending) {
+          return {twoFactorPending: true};
+        } else if (err.response?.data?.emailAuthenticationPending) {
+          return {emailAuthenticationPending: true};
+        }
       }
 
       throw err;

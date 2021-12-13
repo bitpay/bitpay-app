@@ -7,19 +7,19 @@ export const clear = (): LogActionType => {
   };
 };
 
-export const debug = (message: string): LogActionType =>
+export const debug = (message?: string): LogActionType =>
   _log(message, LogLevel.Debug);
 
-export const info = (message: string): LogActionType =>
+export const info = (message?: string): LogActionType =>
   _log(message, LogLevel.Info);
 
-export const warn = (message: string): LogActionType =>
+export const warn = (message?: string): LogActionType =>
   _log(message, LogLevel.Warn);
 
-export const error = (message: string): LogActionType =>
+export const error = (message?: string): LogActionType =>
   _log(message, LogLevel.Error);
 
-function _log(message: string, level: LogLevel): LogActionType {
+function _log(message: string = '', level: LogLevel): LogActionType {
   return {
     type: LogActionTypes.ADD_LOG,
     payload: {

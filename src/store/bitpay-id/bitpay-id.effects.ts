@@ -11,15 +11,21 @@ import {LogActions} from '../log';
 import {User} from './bitpay-id.models';
 import {BitPayIdActions, BitPayIdEffects} from './index';
 
+interface BitPayIdStoreInitParams {
+  user?: User;
+}
+
 interface PairParams {
   secret: string;
   code?: string;
 }
 
 export const startBitPayIdStoreInit =
-  (network: Network, {user}: {user: User}): Effect<Promise<void>> =>
+  (network: Network, {user}: BitPayIdStoreInitParams): Effect<Promise<void>> =>
   async dispatch => {
-    dispatch(BitPayIdActions.successFetchBasicInfo(network, user));
+    if (user) {
+      dispatch(BitPayIdActions.successFetchBasicInfo(network, user));
+    }
   };
 
 export const startFetchSession = (): Effect => async dispatch => {

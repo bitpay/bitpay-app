@@ -4,6 +4,11 @@ export interface LoginResponse {
   emailAuthenticationPending?: boolean;
 }
 
+export interface LoginErrorResponse {
+  twoFactorPending?: boolean;
+  emailAuthenticationPending?: boolean;
+}
+
 export interface GeneratePairingCodeResponse {
   data: {
     /**
