@@ -1,7 +1,8 @@
 import React, {useCallback, useEffect, useRef} from 'react';
 import styled, {css} from 'styled-components/native';
 import {Action, NeutralSlate, SlateDark} from '../../../styles/colors';
-import {Dimensions, ScrollView, Platform} from 'react-native';
+import {Dimensions, Platform, ScrollView} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {purchasedBrands} from './stubs/gift-cards';
 import {BaseText} from '../../../components/styled/Text';
 import GiftCardCatalog from './components/GiftCardCatalog';
@@ -18,8 +19,8 @@ const HEIGHT = Dimensions.get('window').height;
 
 const Tab = createMaterialTopTabNavigator();
 
-const ShopContainer = styled.SafeAreaView`
-  height: 100%;
+const ShopContainer = styled.View`
+  flex: 1;
 `;
 
 const ShopHeader = styled.Text`
@@ -58,9 +59,7 @@ const ShopHome = () => {
   const availableCardMap = useSelector(
     ({SHOP}: RootState) => SHOP.availableCardMap,
   );
-  const directory = useSelector(
-    ({SHOP}: RootState) => SHOP.categories,
-  );
+  const directory = useSelector(({SHOP}: RootState) => SHOP.categories);
   const availableGiftCards = getCardConfigFromApiConfigMap(availableCardMap);
   const curations = getGiftCardCurations(availableGiftCards, directory);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -94,8 +93,17 @@ const ShopHome = () => {
     dispatch(startFetchCatalog());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const insets = useSafeAreaInsets();
+
   return (
-    <ShopContainer>
+    <ShopContainer
+      style={{
+        paddingTop: insets.top,
+        paddingBottom: 0,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
+      }}>
       <ScrollView
         contentContainerStyle={{
           height: scrollViewHeight,
