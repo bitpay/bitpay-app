@@ -4,7 +4,7 @@ import CardsCarousel from './components/CardsCarousel';
 import LinkingButtons from './components/LinkingButtons';
 import React from 'react';
 import {BaseText} from '../../../components/styled/Text';
-import {ColorSchemeName, TouchableOpacity} from 'react-native';
+import {ColorSchemeName, Image, TouchableOpacity} from 'react-native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {navigationRef} from '../../../Root';
 import {useSelector} from 'react-redux';
@@ -13,7 +13,7 @@ import {SlateDark, White, Action} from '../../../styles/colors';
 import {PriceHistory} from '../../../store/wallet/wallet.models';
 import {CurrencyList} from '../../../constants/CurrencySelectionListOptions';
 import ExchangeRatesSlides from '../../../components/exchange-rate/ExchangeRatesSlides';
-
+import QuickLinksSlides from '../../../components/quick-links/QuickLinksSlides';
 const HomeContainer = styled.SafeAreaView`
   flex: 1;
 `;
@@ -72,6 +72,19 @@ const HomeRoot = () => {
     },
   );
 
+  const quickLinksItems = [
+    {
+      id: '1',
+      title: 'Leave Feedback',
+      description: "Let us know how we're doing",
+      img: (
+        <Image
+          source={require('../../../../assets/img/home/quick-links/icon-chat.png')}
+        />
+      ),
+    },
+  ];
+
   return (
     <HomeContainer>
       <Home>
@@ -90,8 +103,13 @@ const HomeRoot = () => {
         <HeaderContainer>
           <Title colorSchemaName={colorScheme}>Exchange Rates</Title>
         </HeaderContainer>
-
         <ExchangeRatesSlides items={exchangeRatesItems} />
+
+        <HeaderContainer>
+          <Title colorSchemaName={colorScheme}>Quick Links</Title>
+        </HeaderContainer>
+
+        <QuickLinksSlides items={quickLinksItems} />
       </Home>
     </HomeContainer>
   );

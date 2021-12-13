@@ -20,9 +20,7 @@ interface QuickLinkSlide {
 
 const QuickLinksContainer = styled.View`
   flex: 1;
-  position: relative;
-  left: 16px;
-  top: 30px;
+  margin: 10px 0 20px;
 `;
 
 const QuickLinksSlides = ({items}: QuickLinkSlide) => {

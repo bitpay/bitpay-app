@@ -51,7 +51,6 @@ export default ({item}: {item: ExchangeRateProps}) => {
           borderRadius: 12,
           position: 'absolute',
           top: 12,
-          bottom: 18,
           left: 10,
         },
       ]}>
