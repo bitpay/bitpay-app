@@ -18,6 +18,7 @@ import {
   walletReducer,
   walletReduxPersistBlackList,
 } from './wallet/wallet.reducer';
+import {shopReducer, shopReduxPersistBlackList} from './shop/shop.reducer';
 
 const basePersistConfig = {
   storage: AsyncStorage,
@@ -62,6 +63,14 @@ const reducers = {
       blacklist: logReduxPersistBlackList,
     },
     logReducer,
+  ),
+  SHOP: persistReducer(
+    {
+      ...basePersistConfig,
+      key: 'SHOP',
+      blacklist: shopReduxPersistBlackList,
+    },
+    shopReducer,
   ),
   WALLET: persistReducer(
     {
