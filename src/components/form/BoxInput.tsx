@@ -6,9 +6,11 @@ import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
 import Search from '../../../assets/img/search.svg';
 
+type InputType = 'password' | 'search';
 interface ContainerProps {
   isFocused: boolean;
   isError?: boolean;
+  type?: InputType;
 }
 
 const Input = styled.TextInput`
@@ -17,6 +19,11 @@ const Input = styled.TextInput`
   border: 1px solid #e1e4e7;
   color: black;
   padding: 10px;
+  ${({type}: ContainerProps) =>
+    type &&
+    css`
+      padding-right: ${type === 'search' ? 65 : 40}px;
+    `};
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
   font-weight: 500;
@@ -81,7 +88,7 @@ interface Props {
   onFocus?: () => void;
   onBlur?: () => void;
   errors?: any;
-  type?: 'password' | 'search';
+  type?: InputType;
   [x: string]: any;
 }
 const BoxInput = ({label, onFocus, onBlur, error, type, ...props}: Props) => {
@@ -121,6 +128,7 @@ const BoxInput = ({label, onFocus, onBlur, error, type, ...props}: Props) => {
         isFocused={isFocused}
         isError={error}
         autoCapitalize={'none'}
+        type={type}
       />
       {type === 'password' && (
         <ObfuscationToggle
