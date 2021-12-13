@@ -1,14 +1,17 @@
+import debounce from 'lodash.debounce';
 import React from 'react';
+import {BaseButtonProps} from 'react-native-gesture-handler';
 import styled, {css} from 'styled-components/native';
 import {Action, Air, Disabled, DisabledDark, White} from '../../styles/colors';
-import {BaseText} from '../styled/Text';
+import {BitPayTheme} from '../../themes/bitpay';
 import Haptic from '../haptic-feedback/haptic';
-import {BaseButtonProps} from 'react-native-gesture-handler';
-import debounce from 'lodash.debounce';
+import {BaseText} from '../styled/Text';
+
 type ButtonStyle = 'primary' | 'secondary' | undefined;
 type ButtonType = 'link' | 'pill' | undefined;
 
 interface ButtonProps extends BaseButtonProps {
+  theme?: BitPayTheme;
   buttonStyle?: ButtonStyle;
   buttonType?: ButtonType;
   onPress?: () => any;
@@ -24,6 +27,7 @@ interface ContainerProps {
 }
 
 interface TextProps {
+  theme?: BitPayTheme;
   secondary?: boolean;
   pill?: boolean;
   disabled?: boolean;
@@ -61,13 +65,14 @@ const LinkContainer = styled.TouchableOpacity`
   padding: 10px;
 `;
 
-const Text = styled(BaseText)`
-  font-weight: ${({pill}: TextProps) => (pill ? 400 : 500)};
-  font-size: ${({pill}: TextProps) => (pill ? 15 : 18)}px;
+const Text = styled(BaseText)<TextProps>`
+  font-weight: ${({pill}) => (pill ? 400 : 500)};
+  font-size: ${({pill}) => (pill ? 15 : 18)}px;
   line-height: 25px;
   text-align: center;
-  color: ${({secondary}: TextProps) => (secondary ? Action : White)};
-  ${({disabled}: ContainerProps) =>
+  color: ${({theme, secondary}) =>
+    secondary ? (theme && theme.dark ? theme.colors.text : Action) : White};
+  ${({disabled}) =>
     disabled &&
     css`
       color: ${DisabledDark} !important;
@@ -77,6 +82,7 @@ const Text = styled(BaseText)`
 const ACTIVE_OPACITY = 0.8;
 
 const Button = ({
+  theme,
   onPress,
   buttonStyle,
   buttonType,
@@ -104,7 +110,9 @@ const Button = ({
         disabled={disabled}
         onPress={debouncedOnPress}
         activeOpacity={ACTIVE_OPACITY}>
-        <Text secondary>{children}</Text>
+        <Text theme={theme} secondary>
+          {children}
+        </Text>
       </LinkContainer>
     );
   }
@@ -130,7 +138,7 @@ const Button = ({
         onPress={debouncedOnPress}
         disabled={disabled}
         activeOpacity={ACTIVE_OPACITY}>
-        <Text secondary disabled={disabled}>
+        <Text theme={theme} secondary disabled={disabled}>
           {children}
         </Text>
       </ButtonContainer>

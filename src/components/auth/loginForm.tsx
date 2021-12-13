@@ -1,9 +1,11 @@
 import {yupResolver} from '@hookform/resolvers/yup';
+import {useTheme} from '@react-navigation/native';
 import React from 'react';
 import {useForm, Controller} from 'react-hook-form';
 import styled from 'styled-components/native';
 import * as yup from 'yup';
 import {SlateDark} from '../../styles/colors';
+import {BitPayTheme} from '../../themes/bitpay';
 import Button from '../button/Button';
 import BoxInput from '../form/BoxInput';
 import {BaseText} from '../styled/Text';
@@ -31,7 +33,12 @@ const HeaderContainer = styled.View`
   margin: 25px 0;
 `;
 
-const HeaderText = styled(BaseText)`
+interface HeaderTextProps {
+  theme?: BitPayTheme;
+}
+
+const HeaderText = styled(BaseText)<HeaderTextProps>`
+  color: ${({theme}) => theme && theme.colors.text};
   font-size: 25px;
   font-weight: 700;
   line-height: 34px;
@@ -81,6 +88,7 @@ export const LoginForm: React.FC<LoginProps> = props => {
     handleSubmit,
     formState: {errors},
   } = useForm({resolver: yupResolver(schema)});
+  const theme = useTheme();
   const {context, onSubmit, onAlreadyHaveAccount, onTroubleLoggingIn} = props;
 
   const onSubmitPress = handleSubmit(
@@ -100,7 +108,10 @@ export const LoginForm: React.FC<LoginProps> = props => {
   if (context === 'login') {
     header = 'Welcome back!';
     secondaryAction = (
-      <Button buttonType={'link'} onPress={() => onTroubleLoggingIn()}>
+      <Button
+        theme={theme}
+        buttonType={'link'}
+        onPress={() => onTroubleLoggingIn()}>
         Trouble logging in?
       </Button>
     );
@@ -109,7 +120,10 @@ export const LoginForm: React.FC<LoginProps> = props => {
     secondaryAction = (
       <Row>
         <LoginText>Already have an account?</LoginText>
-        <Button buttonType={'link'} onPress={() => onAlreadyHaveAccount()}>
+        <Button
+          theme={theme}
+          buttonType={'link'}
+          onPress={() => onAlreadyHaveAccount()}>
           Log in
         </Button>
       </Row>
@@ -119,7 +133,7 @@ export const LoginForm: React.FC<LoginProps> = props => {
   return (
     <LoginContainer>
       <HeaderContainer>
-        <HeaderText>{header}</HeaderText>
+        <HeaderText theme={theme}>{header}</HeaderText>
       </HeaderContainer>
       <FormContainer>
         <InputContainer>
@@ -127,6 +141,7 @@ export const LoginForm: React.FC<LoginProps> = props => {
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
+                theme={theme}
                 placeholder={'satoshi@example.com'}
                 label={'EMAIL'}
                 onBlur={onBlur}
@@ -144,6 +159,7 @@ export const LoginForm: React.FC<LoginProps> = props => {
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
+                theme={theme}
                 placeholder={'strongPassword123'}
                 label={'PASSWORD'}
                 type={'password'}
