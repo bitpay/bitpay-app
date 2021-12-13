@@ -35,7 +35,7 @@ export function getCardConfigFromApiBrandConfig(
   const [firstCard] = cards;
   const {currency} = firstCard;
   const range = cards.find(
-    c => !!(c.maxAmount || c.minAmount) && c.currency === currency,
+    c => c.maxAmount && c.minAmount && c.currency === currency,
   ) as ApiCard;
   const fixed = cards.filter(c => c.amount && c.currency);
   const supportedAmounts = fixed
