@@ -219,6 +219,7 @@ export const startImportMnemonic =
           wallet: {
             id: key.id,
             assets: credentials,
+            totalBalance: 0,
           },
         }),
       );

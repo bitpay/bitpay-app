@@ -13,7 +13,7 @@ import {BaseText} from '../../../components/styled/Text';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {WalletOptions} from '../../../store/wallet/wallet.models';
 import {startImportMnemonic} from '../../../store/wallet/wallet.effects';
-import { navigationRef } from '../../../Root';
+import {navigationRef} from '../../../Root';
 
 const Gutter = '10px';
 export const ImportWalletContainer = styled.View`
@@ -114,7 +114,10 @@ const RecoveryPhrase = () => {
     importWallet(words, opts);
   };
 
-  const importWallet = async (words: string, opts: Partial<WalletOptions>): void => {
+  const importWallet = async (
+    words: string,
+    opts: Partial<WalletOptions>,
+  ): void => {
     try {
       await dispatch(startImportMnemonic(words, opts));
       navigationRef.navigate('Onboarding', {
