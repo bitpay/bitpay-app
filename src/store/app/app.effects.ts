@@ -13,7 +13,7 @@ import {BitPayIdEffects} from '../bitpay-id';
 import {CardEffects} from '../card';
 import {RootState, Effect} from '../index';
 import {LogActions} from '../log';
-import {startWalletStoreInit} from '../wallet/wallet.effects';
+import {startWalletStoreInit} from '../wallet/effects';
 import {AppActions} from './';
 import {AppIdentity} from './app.models';
 
