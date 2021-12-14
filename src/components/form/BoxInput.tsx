@@ -4,10 +4,13 @@ import {BaseText} from '../styled/Text';
 import {Action, Caution, Slate} from '../../styles/colors';
 import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
+import Search from '../../../assets/img/search.svg';
 
+type InputType = 'password' | 'search';
 interface ContainerProps {
   isFocused: boolean;
   isError?: boolean;
+  type?: InputType;
 }
 
 const Input = styled.TextInput`
@@ -16,6 +19,11 @@ const Input = styled.TextInput`
   border: 1px solid #e1e4e7;
   color: black;
   padding: 10px;
+  ${({type}: ContainerProps) =>
+    type &&
+    css`
+      padding-right: ${type === 'search' ? 65 : 40}px;
+    `};
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
   font-weight: 500;
@@ -67,12 +75,20 @@ const ObfuscationToggle = styled.TouchableOpacity`
   top: 40px;
 `;
 
+const SearchIconContainer = styled.View`
+  position: absolute;
+  right: 0;
+  top: 31px;
+  border-left-color: #eceffd;
+  border-left-width: 1px;
+  padding: 5px 15px;
+`;
 interface Props {
   label?: string;
   onFocus?: () => void;
   onBlur?: () => void;
   errors?: any;
-  type?: 'password';
+  type?: InputType;
   [x: string]: any;
 }
 const BoxInput = ({label, onFocus, onBlur, error, type, ...props}: Props) => {
@@ -112,12 +128,18 @@ const BoxInput = ({label, onFocus, onBlur, error, type, ...props}: Props) => {
         isFocused={isFocused}
         isError={error}
         autoCapitalize={'none'}
+        type={type}
       />
       {type === 'password' && (
         <ObfuscationToggle
           onPress={() => setSecureTextEntry(!isSecureTextEntry)}>
           {isSecureTextEntry ? <ObfuscationHide /> : <ObfuscationShow />}
         </ObfuscationToggle>
+      )}
+      {type === 'search' && (
+        <SearchIconContainer>
+          <Search />
+        </SearchIconContainer>
       )}
       {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
     </InputContainer>
