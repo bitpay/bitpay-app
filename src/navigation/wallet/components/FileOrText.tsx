@@ -15,6 +15,7 @@ import {Action, Feather} from '../../../styles/colors';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import Haptic from '../../../components/haptic-feedback/haptic';
+import {BaseText} from '../../../components/styled/Text';
 
 const InputContainer = styled.View`
   margin-top: -10px;
@@ -30,7 +31,7 @@ const AdvancedOptionsButton = styled.TouchableOpacity`
   border-radius: 6px;
 `;
 
-const AdvancedOptionsButtonText = styled.Text`
+const AdvancedOptionsButtonText = styled(BaseText)`
   font-size: 16px;
   line-height: 25px;
   color: ${Action};
@@ -88,35 +89,38 @@ const FileOrText = () => {
       </HeaderTitleContainer>
 
       <CtaContainer>
-        <AdvancedOptionsContainer>
-          <AdvancedOptionsButton onPress={_onPressShowOptions}>
-            {showOptions ? (
-              <>
-                <AdvancedOptionsButtonText>
-                  Hide Advanced Options
-                </AdvancedOptionsButtonText>
-                <ChevronUpSvg />
-              </>
-            ) : (
-              <>
-                <AdvancedOptionsButtonText>
-                  Show Advanced Options
-                </AdvancedOptionsButtonText>
-                <ChevronDownSvg />
-              </>
-            )}
-          </AdvancedOptionsButton>
+        {__DEV__ && (
+          <AdvancedOptionsContainer>
+            <AdvancedOptionsButton onPress={_onPressShowOptions}>
+              {showOptions ? (
+                <>
+                  <AdvancedOptionsButtonText>
+                    Hide Advanced Options
+                  </AdvancedOptionsButtonText>
+                  <ChevronUpSvg />
+                </>
+              ) : (
+                <>
+                  <AdvancedOptionsButtonText>
+                    Show Advanced Options
+                  </AdvancedOptionsButtonText>
+                  <ChevronDownSvg />
+                </>
+              )}
+            </AdvancedOptionsButton>
 
-          {showOptions && (
-            <AdvancedOptions>
-              <BoxInput
-                label={'WALLET SERVICE URL'}
-                onChangeText={(text: string) => onChangeOptions(text)}
-                value={options}
-              />
-            </AdvancedOptions>
-          )}
-        </AdvancedOptionsContainer>
+            {showOptions && (
+              <AdvancedOptions>
+                <BoxInput
+                  label={'WALLET SERVICE URL'}
+                  onChangeText={(text: string) => onChangeOptions(text)}
+                  value={options}
+                />
+              </AdvancedOptions>
+            )}
+          </AdvancedOptionsContainer>
+        )}
+
         <Button
           buttonStyle={'primary'}
           onPress={importWallet}

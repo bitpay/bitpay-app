@@ -15,8 +15,8 @@ interface KeyOpts {
 
 export class BwcProvider {
   static instance: BwcProvider;
-  private client;
-  public Client = BWC;
+  static API = BWC;
+  private readonly client;
 
   constructor() {
     console.log('BWC instance created');

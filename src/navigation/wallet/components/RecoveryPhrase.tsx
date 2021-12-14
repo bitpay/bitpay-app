@@ -20,7 +20,7 @@ export const ImportWalletContainer = styled.View`
   padding: ${Gutter} 0;
 `;
 
-const ImportWalletParagraph = styled.Text`
+const ImportWalletParagraph = styled(BaseText)`
   font-size: 16px;
   line-height: 25px;
   padding: ${Gutter};
@@ -34,7 +34,7 @@ const HeaderContainer = styled.View`
   align-items: center;
 `;
 
-export const ImportWalletTitle = styled.Text`
+export const ImportWalletTitle = styled(BaseText)`
   font-weight: 500;
   font-size: 13px;
   line-height: 18px;

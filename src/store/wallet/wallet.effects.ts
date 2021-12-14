@@ -180,8 +180,8 @@ export const getPriceHistory = (): Effect => async dispatch => {
     );
     const formattedData = data.map((d: PriceHistory) => {
       return {
-        coin: d.currencyPair.split(':')[0].toLowerCase(),
         ...d,
+        coin: d.currencyPair.split(':')[0].toLowerCase(),
       };
     });
 
@@ -233,8 +233,8 @@ export const startImportMnemonic =
 export const startImportWalletCredentials =
   (opts: Partial<WalletOptions>): Effect =>
   async () => {
-    const value = await new Promise(resolve => {
-      BWC.Client.serverAssistedImport(
+    return new Promise(resolve => {
+      BwcProvider.API.serverAssistedImport(
         opts,
         {baseUrl: 'https://bws.bitpay.com/bws/api'},
         // @ts-ignore
@@ -264,5 +264,4 @@ export const startImportWalletCredentials =
         },
       );
     });
-    return value;
   };
