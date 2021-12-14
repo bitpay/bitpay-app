@@ -51,8 +51,8 @@ const AdvancedOptions = styled.View`
 `;
 
 const FileOrText = () => {
-  const [inputValue, onChangeText] = useState();
-  const [password, onChangePassword] = useState();
+  const [inputValue, onChangeText] = useState<string>();
+  const [password, onChangePassword] = useState<string>();
   const [options, onChangeOptions] = useState('https://bws.bitpay.com/bws/api');
   const [showOptions, setShowOptions] = useState(false);
 
