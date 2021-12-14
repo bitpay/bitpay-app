@@ -118,7 +118,7 @@ const BoxInput = ({label, onFocus, onBlur, error, type, ...props}: Props) => {
 
   return (
     <InputContainer>
-      <Label>{label}</Label>
+      {label && <Label>{label}</Label>}
       <Input
         {...props}
         secureTextEntry={isSecureTextEntry}

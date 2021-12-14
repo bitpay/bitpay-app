@@ -1,6 +1,5 @@
 import React, {useCallback, useEffect, useRef} from 'react';
 import styled, {css} from 'styled-components/native';
-import {Action, NeutralSlate, SlateDark} from '../../../styles/colors';
 import {Platform, ScrollView} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {purchasedBrands} from './stubs/gift-cards';
@@ -14,6 +13,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import {startFetchCatalog} from '../../../store/shop/shop.effects';
 import {RootState} from '../../../store';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
+import {ScreenOptions} from '../../../styles/tabNavigator';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -97,37 +97,7 @@ const ShopHome = () => {
         ref={scrollViewRef}
         keyboardDismissMode="on-drag">
         <ShopHeader>Shop with Crypto</ShopHeader>
-        <Tab.Navigator
-          screenOptions={{
-            swipeEnabled: false,
-            tabBarLabelStyle: {
-              fontSize: 16,
-              fontWeight: '500',
-              textTransform: 'none',
-              paddingVertical: 4,
-            },
-            tabBarActiveTintColor: 'white',
-            tabBarInactiveTintColor: SlateDark,
-            tabBarPressColor: '#e7e7e7',
-            tabBarIndicatorStyle: {
-              height: 40,
-              borderRadius: 50,
-              backgroundColor: Action,
-              marginBottom: Platform.select({
-                ios: 7,
-                android: 8,
-              }),
-              width: 112,
-              marginLeft: 9,
-            },
-            tabBarStyle: {
-              width: 261,
-              alignSelf: 'center',
-              backgroundColor: NeutralSlate,
-              borderRadius: 50,
-              elevation: 0,
-            },
-          }}>
+        <Tab.Navigator screenOptions={ScreenOptions(112)}>
           <Tab.Screen name="Gift Cards" component={memoizedGiftCardCatalog} />
           <Tab.Screen name="Shop Online" component={ShopOnline} />
         </Tab.Navigator>

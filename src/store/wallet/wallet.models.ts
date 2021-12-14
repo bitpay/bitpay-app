@@ -32,3 +32,27 @@ export interface PriceHistory {
   percentChange: string;
   currencyPair: string;
 }
+
+export interface WalletOptions {
+  keyId: any;
+  name: any;
+  m: any;
+  n: any;
+  myName: any;
+  networkName: string;
+  bwsurl: any;
+  singleAddress: any;
+  coin: string;
+  extendedPrivateKey: any;
+  mnemonic: any;
+  derivationStrategy: any;
+  secret: any;
+  account: any;
+  passphrase: any;
+  walletPrivKey: any;
+  compliantDerivation: any;
+  useLegacyCoinType?: boolean;
+  useLegacyPurpose?: boolean;
+  useNativeSegwit?: boolean;
+  words?: string;
+}
