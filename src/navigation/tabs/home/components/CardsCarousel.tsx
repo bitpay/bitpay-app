@@ -45,7 +45,11 @@ const CurrencyCardComponent = (
       {currencyInfo &&
         currencyInfo.map(
           (currency, index) =>
-            currency && <Img isFirst={index === 0 || (index % 7 === 0)}>{currency.roundIcon}</Img>,
+            currency && (
+              <Img isFirst={index === 0 || index % 7 === 0}>
+                {currency.roundIcon}
+              </Img>
+            ),
         )}
     </HeaderImg>
   );
@@ -73,8 +77,8 @@ const CardsCarousel = () => {
         if (show && assets) {
           const currencyList: string[] = [];
           assets.forEach(
-            (assets: any) =>
-              assets.network === 'livenet' && currencyList.push(assets.coin),
+            (asset: any) =>
+              asset.network === 'livenet' && currencyList.push(asset.coin),
           );
           if (currencyList.length) {
             cardsList.push(CurrencyCardComponent(currencyList, totalBalance));

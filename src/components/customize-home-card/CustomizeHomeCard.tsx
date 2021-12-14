@@ -58,7 +58,10 @@ const CustomizeHomeCard = ({body, footer, header}: CustomizeHomeCardProps) => {
   const BodyComp = (
     <View>
       {body.header && (
-        <CardBodyHeader appColorScheme={appColorScheme}>
+        <CardBodyHeader
+          appColorScheme={appColorScheme}
+          numberOfLines={1}
+          ellipsizeMode={'tail'}>
           {body.header}
         </CardBodyHeader>
       )}
