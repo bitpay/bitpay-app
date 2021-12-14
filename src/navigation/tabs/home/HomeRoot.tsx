@@ -28,16 +28,16 @@ const Home = styled.ScrollView`
 const HomeLink = styled(BaseText)<{colorSchemaName: ColorSchemeName}>`
   font-weight: 500;
   font-size: 14px;
-  color: ${({colorSchemeName}: {colorSchemeName: ColorSchemeName}) =>
-    !colorSchemeName || colorSchemeName === 'light' ? Action : White};
-  text-decoration: ${({colorSchemeName}: {colorSchemeName: ColorSchemeName}) =>
-    !colorSchemeName || colorSchemeName === 'light' ? 'none' : 'underline'};
+  color: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
+    !colorScheme || colorScheme === 'light' ? Action : White};
+  text-decoration: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
+    !colorScheme || colorScheme === 'light' ? 'none' : 'underline'};
 `;
 
 const Title = styled(BaseText)<{colorSchemaName: ColorSchemeName}>`
   font-size: 14px;
-  color: ${({colorSchemeName}: {colorSchemeName: ColorSchemeName}) =>
-    !colorSchemeName || colorSchemeName === 'light' ? SlateDark : White};
+  color: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
+    !colorScheme || colorScheme === 'light' ? SlateDark : White};
 `;
 
 const HeaderContainer = styled.View<{justifyContent?: string}>`

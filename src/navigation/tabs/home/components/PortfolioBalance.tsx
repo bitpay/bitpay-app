@@ -7,11 +7,11 @@ import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import {useTheme} from '@react-navigation/native';
 
-const Header = styled(BaseText)<{colorSchemeName: ColorSchemeName}>`
+const Header = styled(BaseText)<{colorScheme: ColorSchemeName}>`
   font-size: 14px;
   line-height: 19px;
-  color: ${({colorSchemeName}: {colorSchemeName: ColorSchemeName}) =>
-    colorSchemeName === 'light' ? SlateDark : Feather};
+  color: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
+    colorScheme === 'light' ? SlateDark : Feather};
 `;
 
 const PortfolioBalanceText = styled(BaseText)`
@@ -45,7 +45,7 @@ const PortfolioBalance = () => {
 
   return (
     <View>
-      <Header colorSchemeName={colorScheme}>Portfolio Balance</Header>
+      <Header colorScheme={colorScheme}>Portfolio Balance</Header>
       <PortfolioBalanceText style={themedText}>
         {portfolioBalance}
       </PortfolioBalanceText>
