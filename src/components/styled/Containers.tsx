@@ -1,7 +1,8 @@
 import styled, {css} from 'styled-components/native';
 import {Dimensions} from 'react-native';
 import {NeutralSlate} from '../../styles/colors';
-export const WIDTH = Dimensions.get('window').width;
+
+export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
 
 // Nav
 export const HeaderRightContainer = styled.View`

@@ -22,6 +22,9 @@ const PinScreen = () => {
   const navigation = useNavigation();
   const gotoSelectAssets = () =>
     navigation.navigate('Onboarding', {screen: 'SelectAssets'});
+  const goToImportWallet = () =>
+    navigation.navigate('Onboarding', {screen: 'ImportWallet'});
+
   return (
     <CreateWalletContainer>
       <ImageContainer>
@@ -45,7 +48,9 @@ const PinScreen = () => {
         <Button buttonStyle={'primary'} onPress={gotoSelectAssets}>
           Create a BitPay Wallet
         </Button>
-        <Button buttonStyle={'secondary'}>I already have a wallet</Button>
+        <Button buttonStyle={'secondary'} onPress={goToImportWallet}>
+          I already have a wallet
+        </Button>
       </CtaContainer>
     </CreateWalletContainer>
   );

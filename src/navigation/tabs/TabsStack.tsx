@@ -3,7 +3,7 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {NavigatorScreenParams} from '@react-navigation/native';
 
 import HomeRoot from './home/HomeStack';
-import WalletRoot from './wallet/WalletStack';
+import ShopRoot from './shop/ShopStack';
 import CardRoot from './card/CardStack';
 import SettingsRoot from './settings/SettingsStack';
 import {SettingsStackParamList} from './settings/SettingsStack';
@@ -11,8 +11,8 @@ import {SettingsStackParamList} from './settings/SettingsStack';
 import {SvgProps} from 'react-native-svg';
 import HomeIcon from '../../../assets/img/tab-icons/home.svg';
 import HomeFocusedIcon from '../../../assets/img/tab-icons/home-focused.svg';
-import WalletIcon from '../../../assets/img/tab-icons/wallet.svg';
-import WalletFocusedIcon from '../../../assets/img/tab-icons/wallet-focused.svg';
+import ShopIcon from '../../../assets/img/tab-icons/shop.svg';
+import ShopFocusedIcon from '../../../assets/img/tab-icons/shop-focused.svg';
 import CardIcon from '../../../assets/img/tab-icons/card.svg';
 import CardFocusedIcon from '../../../assets/img/tab-icons/card-focused.svg';
 import SettingsIcon from '../../../assets/img/tab-icons/settings.svg';
@@ -25,8 +25,8 @@ import TransactModal from '../../components/modal/transact-menu/TransactMenu';
 const Icons: {[key: string]: React.FC<SvgProps>} = {
   Home: HomeIcon,
   HomeFocused: HomeFocusedIcon,
-  Wallet: WalletIcon,
-  WalletFocused: WalletFocusedIcon,
+  Shop: ShopIcon,
+  ShopFocused: ShopFocusedIcon,
   Card: CardIcon,
   CardFocused: CardFocusedIcon,
   Settings: SettingsIcon,
@@ -36,7 +36,7 @@ const Icons: {[key: string]: React.FC<SvgProps>} = {
 
 export enum TabsScreens {
   HOME = 'Home',
-  WALLET = 'Wallet',
+  SHOP = 'Shop',
   TRANSACT_BUTTON = 'TransactButton',
   CARD = 'Card',
   SETTINGS = 'Settings',
@@ -44,7 +44,7 @@ export enum TabsScreens {
 
 export type TabsStackParamList = {
   Home: undefined;
-  Wallet: undefined;
+  Shop: undefined;
   TransactButton: undefined;
   Card: undefined;
   Settings: NavigatorScreenParams<SettingsStackParamList> | undefined;
@@ -61,7 +61,7 @@ const TabsStack = () => {
       screenOptions={({route}) => ({
         headerShown: false,
         tabBarShowLabel: false,
-        lazy: true,
+        lazy: false,
         tabBarIcon: ({focused}) => {
           let {name: icon} = route;
 
@@ -74,7 +74,7 @@ const TabsStack = () => {
         },
       })}>
       <Tab.Screen name={TabsScreens.HOME} component={HomeRoot} />
-      <Tab.Screen name={TabsScreens.WALLET} component={WalletRoot} />
+      <Tab.Screen name={TabsScreens.SHOP} component={ShopRoot} />
       <Tab.Screen
         name={TabsScreens.TRANSACT_BUTTON}
         component={TransactionButton}
