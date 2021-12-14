@@ -11,42 +11,54 @@ import HomeCard from '../../../../components/home-card/HomeCard';
 import {CurrencyList} from '../../../../constants/CurrencySelectionListOptions';
 
 const HeaderImg = styled.View`
+  align-items: center;
+  justify-content: flex-start;
+  flex-direction: row;
+  flex: 1;
+  flex-wrap: wrap;
+`;
+
+const Img = styled.View<{isFirst: boolean}>`
   width: 30px;
   height: 30px;
-  align-items: center;
-  justify-content: center;
+  margin-left: ${({isFirst}: {isFirst: boolean}) => (isFirst ? 0 : '-5px')};
 `;
 
 const CarouselContainer = styled.View`
   margin: 10px 0;
 `;
 
-const CurrencyCardComponent = (currency: string, price: string) => {
+const CurrencyCardComponent = (
+  currencyList: string[],
+  totalBalance: string,
+) => {
   const _onCTAPress = () => {
     /** TODO: Redirect me */
   };
 
-  const currencyInfo = CurrencyList.find(
-    ({id}: {id: string | number}) => id === currency,
+  const currencyInfo = currencyList.map(currency =>
+    CurrencyList.find(({id}: {id: string | number}) => id === currency),
   );
 
   const HeaderComponent = (
-    <HeaderImg>{currencyInfo && currencyInfo.roundIcon}</HeaderImg>
+    <HeaderImg>
+      {currencyInfo &&
+        currencyInfo.map(
+          (currency, index) =>
+            currency && <Img isFirst={index === 0 || (index % 7 === 0)}>{currency.roundIcon}</Img>,
+        )}
+    </HeaderImg>
   );
 
   return (
-    <>
-      {currencyInfo && (
-        <HomeCard
-          header={HeaderComponent}
-          // TODO: update the price code
-          body={{header: currencyInfo.mainLabel, price: `${price}$`}}
-          footer={{
-            onCTAPress: _onCTAPress,
-          }}
-        />
-      )}
-    </>
+    <HomeCard
+      header={HeaderComponent}
+      // TODO: update the price code
+      body={{header: 'My Everything Wallet', price: `$${totalBalance}`}}
+      footer={{
+        onCTAPress: _onCTAPress,
+      }}
+    />
   );
 };
 
@@ -57,11 +69,17 @@ const CardsCarousel = () => {
   if (wallets) {
     if (Object.keys(wallets).length) {
       Object.values(wallets).forEach((wallet: any) => {
-        const {assets, totalBalance} = wallet;
-        assets &&
-          assets.map((asset: any) => {
-            cardsList.push(CurrencyCardComponent(asset.coin, totalBalance));
-          });
+        const {assets, totalBalance, show} = wallet;
+        if (show && assets) {
+          const currencyList: string[] = [];
+          assets.forEach(
+            (assets: any) =>
+              assets.network === 'livenet' && currencyList.push(assets.coin),
+          );
+          if (currencyList.length) {
+            cardsList.push(CurrencyCardComponent(currencyList, totalBalance));
+          }
+        }
       });
     }
 

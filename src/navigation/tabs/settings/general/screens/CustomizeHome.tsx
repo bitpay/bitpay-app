@@ -6,10 +6,11 @@ import styled from 'styled-components/native';
 import {CurrencyList} from '../../../../../constants/CurrencySelectionListOptions';
 
 const HeaderImg = styled.View`
-  width: 20px;
-  height: 20px;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  flex-direction: row;
+  flex: 1;
+  flex-wrap: wrap;
 `;
 
 const CardListContainer = styled.View`
@@ -31,40 +32,52 @@ const ScrollViewContainer = styled.ScrollView`
   padding: 0 15px;
 `;
 
-const CurrencyCardComponet = (currency: string, price: string) => {
+const Img = styled.View<{isFirst: boolean}>`
+  width: 30px;
+  height: 30px;
+  margin-left: ${({isFirst}: {isFirst: boolean}) => (isFirst ? 0 : '-5px')};
+`;
+
+const CurrencyCardComponent = (
+  currencyList: string[],
+  price: string,
+  show: boolean,
+) => {
   /** TODO: Assign stored value */
-  const [checked, setChecked] = useState(false);
+  const [checked, setChecked] = useState(show);
   const _onCTAPress = () => {
     /** TODO: Store the value and Redirect me */
     setChecked(!checked);
   };
 
-  const currencyInfo = CurrencyList.find(
-    ({id}: {id: string | number}) => id === currency,
+  const currencyInfo = currencyList.map(currency =>
+    CurrencyList.find(({id}: {id: string | number}) => id === currency),
   );
 
   const HeaderComponent = (
-    <HeaderImg>{currencyInfo && currencyInfo.roundIcon}</HeaderImg>
+    <HeaderImg>
+      {currencyInfo &&
+        currencyInfo.map(
+          (currency, index) =>
+            currency && <Img isFirst={index === 0 || index % 5 === 0}>{currency.roundIcon}</Img>,
+        )}
+    </HeaderImg>
   );
 
   return (
-    <>
-      {currencyInfo && (
-        <CustomizeHomeCardContainer>
-          <CustomizeHomeCard
-            header={HeaderComponent}
-            body={{
-              header: currencyInfo.mainLabel,
-              price: `${price} ${currencyInfo.secondaryLabel}`,
-            }}
-            footer={{
-              onCTAPress: _onCTAPress,
-              checked: checked,
-            }}
-          />
-        </CustomizeHomeCardContainer>
-      )}
-    </>
+    <CustomizeHomeCardContainer>
+      <CustomizeHomeCard
+        header={HeaderComponent}
+        body={{
+          header: 'My Everything Wallet',
+          price: `$ ${price}`,
+        }}
+        footer={{
+          onCTAPress: _onCTAPress,
+          checked: checked,
+        }}
+      />
+    </CustomizeHomeCardContainer>
   );
 };
 
@@ -75,11 +88,19 @@ const CustomizeHome = () => {
   if (wallets) {
     if (Object.keys(wallets).length) {
       Object.values(wallets).forEach((wallet: any) => {
-        const {assets, totalBalance} = wallet;
-        assets &&
-          assets.map((asset: any) => {
-            cardsList.push(CurrencyCardComponet(asset.coin, totalBalance));
-          });
+        const {assets, totalBalance, show} = wallet;
+        if (assets) {
+          const currencyList: string[] = [];
+          assets.forEach(
+            (assets: any) =>
+              assets.network === 'livenet' && currencyList.push(assets.coin),
+          );
+          if (currencyList.length) {
+            cardsList.push(
+              CurrencyCardComponent(currencyList, totalBalance, show),
+            );
+          }
+        }
       });
     }
   }
