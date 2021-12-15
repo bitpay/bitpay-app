@@ -51,7 +51,8 @@ export default ({item}: {item: ExchangeRateProps}) => {
           borderRadius: 12,
           position: 'absolute',
           top: 12,
-          left: 10,
+          elevation: 3,
+          left: 15,
         },
       ]}
       isDark={theme.dark}>

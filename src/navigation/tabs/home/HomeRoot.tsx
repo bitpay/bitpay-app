@@ -18,6 +18,7 @@ import ExchangeRatesSlides, {
 import QuickLinksSlides from '../../../components/quick-links/QuickLinksSlides';
 import OffersSlides from '../../../components/offer/OfferSlides';
 import {useTheme} from '@react-navigation/native';
+import {ScreenGutter} from '../../../components/styled/Containers';
 
 const HomeContainer = styled.SafeAreaView`
   flex: 1;
@@ -25,7 +26,6 @@ const HomeContainer = styled.SafeAreaView`
 
 const Home = styled.ScrollView`
   margin-top: 20px;
-  padding: 0 15px;
 `;
 
 const HomeLink = styled(BaseText)<{isDark: boolean}>`
@@ -43,7 +43,7 @@ const Title = styled(BaseText)<{isDark: boolean}>`
 
 const HeaderContainer = styled.View<{justifyContent?: string}>`
   flex-direction: row;
-  margin-top: 10px;
+  margin: 10px ${ScreenGutter} 0;
   justify-content: ${({justifyContent}) => justifyContent || 'flex-start'};
 `;
 

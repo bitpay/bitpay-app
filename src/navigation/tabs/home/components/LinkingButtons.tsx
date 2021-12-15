@@ -8,6 +8,7 @@ import SwapSvg from '../../../../../assets/img/home/linking-buttons/swap.svg';
 import Haptic from '../../../../components/haptic-feedback/haptic';
 import {BaseText} from '../../../../components/styled/Text';
 import {useTheme} from '@react-navigation/native';
+import {ScreenGutter} from '../../../../components/styled/Containers';
 
 const ButtonsRow = styled.View`
   width: 100%;
@@ -17,7 +18,7 @@ const ButtonsRow = styled.View`
 
 const ButtonContainer = styled.View`
   align-items: center;
-  margin: 20px 0;
+  margin: 20px ${ScreenGutter};
 `;
 
 const ButtonText = styled(BaseText)<{isDark: boolean}>`

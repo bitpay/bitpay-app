@@ -1,10 +1,14 @@
 import React from 'react';
-import {StyleProp, Text, TextStyle, View} from 'react-native';
+import {StyleProp, Text, TextStyle} from 'react-native';
 import styled from 'styled-components/native';
 import {BaseText} from '../../../../components/styled/Text';
 import {Feather, SlateDark} from '../../../../styles/colors';
 import {useTheme} from '@react-navigation/native';
+import {ScreenGutter} from '../../../../components/styled/Containers';
 
+const ProfileContainer = styled.View`
+  margin: 0 ${ScreenGutter};
+`;
 const Header = styled(BaseText)<{isDark: boolean}>`
   font-size: 14px;
   line-height: 19px;
@@ -40,7 +44,7 @@ const PortfolioBalance = () => {
   const percentageDifference = '+2.5%';
 
   return (
-    <View>
+    <ProfileContainer>
       <Header isDark={theme.dark}>Portfolio Balance</Header>
       <PortfolioBalanceText style={themedText}>
         {portfolioBalance}
@@ -51,7 +55,7 @@ const PortfolioBalance = () => {
         </PercentagePill>
         <Text style={themedText}>Last day</Text>
       </Row>
-    </View>
+    </ProfileContainer>
   );
 };
 

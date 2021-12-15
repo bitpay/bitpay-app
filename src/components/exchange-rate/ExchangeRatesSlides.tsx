@@ -23,7 +23,6 @@ const WIDTH = Dimensions.get('window').width;
 const ExchangeRatesContainer = styled.View`
   min-height: 125px;
   width: 100%;
-  margin-left: -10px;
 `;
 
 const ExchangeRatesSlides = ({items}: ExchangeRateSlide) => {

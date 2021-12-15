@@ -2,7 +2,7 @@ import React, {ReactNode} from 'react';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import Carousel from 'react-native-snap-carousel';
-import {WIDTH} from '../../../../components/styled/Containers';
+import {ScreenGutter, WIDTH} from '../../../../components/styled/Containers';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CreateWallet from './empty-states/CreateWallet';
 import styled from 'styled-components/native';
@@ -18,14 +18,15 @@ const HeaderImg = styled.View`
   flex-wrap: wrap;
 `;
 
-const Img = styled.View<{isFirst: boolean}>`
-  width: 30px;
-  height: 30px;
+const Img = styled.View<{isFirst: boolean; size: string}>`
+  width: ${({size}) => size};
+  height: ${({size}) => size};
+  min-height: 22px;
   margin-left: ${({isFirst}) => (isFirst ? 0 : '-5px')};
 `;
 
 const CarouselContainer = styled.View`
-  margin: 10px 0;
+  margin: 10px 0 10px ${ScreenGutter};
 `;
 
 const CurrencyCardComponent = (
@@ -40,14 +41,19 @@ const CurrencyCardComponent = (
     CurrencyList.find(({id}: {id: string | number}) => id === currency),
   );
 
+  const iconSize = currencyInfo.length > 7 ? 20 : 30;
+
   const HeaderComponent = (
     <HeaderImg>
       {currencyInfo &&
         currencyInfo.map(
           (currency, index) =>
             currency && (
-              <Img key={index} isFirst={index === 0 || index % 7 === 0}>
-                {currency.roundIcon(30)}
+              <Img
+                key={index}
+                isFirst={index === 0 || index % 11 === 0}
+                size={iconSize + 'px'}>
+                {currency.roundIcon(iconSize)}
               </Img>
             ),
         )}
