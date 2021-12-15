@@ -22,8 +22,6 @@ const Img = styled.View<{isFirst: boolean}>`
   width: 30px;
   height: 30px;
   margin-left: ${({isFirst}: {isFirst: boolean}) => (isFirst ? 0 : '-5px')};
-  svg {
-  }
 `;
 
 const CarouselContainer = styled.View`
@@ -71,6 +69,7 @@ const CurrencyCardComponent = (
 const CardsCarousel = () => {
   const cardsList: ReactNode[] = [];
   const wallets = useSelector(({WALLET}: RootState) => WALLET.wallets);
+  const network = useSelector(({APP}: RootState) => APP.network);
 
   if (wallets) {
     if (Object.keys(wallets).length) {
@@ -80,7 +79,7 @@ const CardsCarousel = () => {
           const currencyList: string[] = [];
           assets.forEach(
             (asset: any) =>
-              asset.network === 'livenet' && currencyList.push(asset.coin),
+              asset.network === network && currencyList.push(asset.coin),
           );
           if (currencyList.length) {
             cardsList.push(CurrencyCardComponent(currencyList, totalBalance));
