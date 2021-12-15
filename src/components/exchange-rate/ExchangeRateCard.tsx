@@ -4,7 +4,6 @@ import {
   Black,
   Caution,
   LightBlack,
-  NeutralSlate,
   White,
 } from '../../styles/colors';
 import {BaseText} from '../styled/Text';
@@ -19,7 +18,7 @@ const ExchangeRateCardContainer = styled.View<{colorScheme: ColorSchemeName}>`
   height: 100px;
   border-radius: 12px;
   background-color: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
-    colorScheme === 'light' ? NeutralSlate : LightBlack};
+    colorScheme === 'light' ? White : LightBlack};
 `;
 
 const CoinIconContainer = styled.View`
