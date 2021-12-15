@@ -5,8 +5,6 @@ import Haptic from '../haptic-feedback/haptic';
 import styled from 'styled-components/native';
 import {LightBlack, NeutralSlate} from '../../styles/colors';
 import Checkbox from '../checkbox/Checkbox';
-import {useSelector} from 'react-redux';
-import {RootState} from '../../store';
 import {BaseText} from '../styled/Text';
 import {useTheme} from '@react-navigation/native';
 
@@ -52,8 +50,6 @@ const CustomizeHomeCard = ({body, footer, header}: CustomizeHomeCardProps) => {
   const theme = useTheme();
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
 
-  const appColorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
-
   const BodyComp = (
     <View>
       {body.header && (
@@ -88,7 +84,7 @@ const CustomizeHomeCard = ({body, footer, header}: CustomizeHomeCardProps) => {
   const containerProps = {
     width: '165px',
     minHeight: '172px',
-    backgroundColor: appColorScheme === 'light' ? NeutralSlate : LightBlack,
+    backgroundColor: theme.dark ? LightBlack : NeutralSlate,
   };
 
   return (

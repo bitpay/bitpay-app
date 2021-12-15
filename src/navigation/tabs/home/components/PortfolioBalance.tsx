@@ -1,16 +1,14 @@
 import React from 'react';
-import {ColorSchemeName, StyleProp, Text, TextStyle, View} from 'react-native';
+import {StyleProp, Text, TextStyle, View} from 'react-native';
 import styled from 'styled-components/native';
 import {BaseText} from '../../../../components/styled/Text';
 import {Feather, SlateDark} from '../../../../styles/colors';
-import {useSelector} from 'react-redux';
-import {RootState} from '../../../../store';
 import {useTheme} from '@react-navigation/native';
 
-const Header = styled(BaseText)<{colorScheme: ColorSchemeName}>`
+const Header = styled(BaseText)<{isDark: boolean}>`
   font-size: 14px;
   line-height: 19px;
-  color: ${({colorScheme}) => (colorScheme === 'light' ? SlateDark : Feather)};
+  color: ${({isDark}) => (isDark ? Feather : SlateDark)};
 `;
 
 const PortfolioBalanceText = styled(BaseText)`
@@ -35,7 +33,6 @@ const PercentagePillText = styled(BaseText)`
 `;
 
 const PortfolioBalance = () => {
-  const colorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
   const theme = useTheme();
   const themedText: StyleProp<TextStyle> = {color: theme.colors.text};
   //  TODO: update me
@@ -44,7 +41,7 @@ const PortfolioBalance = () => {
 
   return (
     <View>
-      <Header colorScheme={colorScheme}>Portfolio Balance</Header>
+      <Header isDark={theme.dark}>Portfolio Balance</Header>
       <PortfolioBalanceText style={themedText}>
         {portfolioBalance}
       </PortfolioBalanceText>
