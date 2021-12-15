@@ -4,7 +4,7 @@ import CardsCarousel from './components/CardsCarousel';
 import LinkingButtons from './components/LinkingButtons';
 import React from 'react';
 import {BaseText} from '../../../components/styled/Text';
-import {ColorSchemeName, Image, TouchableOpacity} from 'react-native';
+import {Image, TouchableOpacity} from 'react-native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {navigationRef} from '../../../Root';
 import {useSelector} from 'react-redux';
@@ -17,6 +17,7 @@ import ExchangeRatesSlides, {
 } from '../../../components/exchange-rate/ExchangeRatesSlides';
 import QuickLinksSlides from '../../../components/quick-links/QuickLinksSlides';
 import OffersSlides from '../../../components/offer/OfferSlides';
+import {useTheme} from '@react-navigation/native';
 
 const HomeContainer = styled.SafeAreaView`
   flex: 1;
@@ -27,20 +28,17 @@ const Home = styled.ScrollView`
   padding: 0 15px;
 `;
 
-const HomeLink = styled(BaseText)<{colorScheme: ColorSchemeName}>`
+const HomeLink = styled(BaseText)<{isDark: boolean}>`
   font-weight: 500;
   font-size: 14px;
-  color: ${({colorScheme}) =>
-    !colorScheme || colorScheme === 'light' ? Action : White};
-  text-decoration: ${({colorScheme}) =>
-    !colorScheme || colorScheme === 'light' ? 'none' : 'underline'};
+  color: ${({isDark}) => (isDark ? White : Action)};
+  text-decoration: ${({isDark}) => (isDark ? 'underline' : 'none')};
   text-decoration-color: ${White};
 `;
 
-const Title = styled(BaseText)<{colorScheme: ColorSchemeName}>`
+const Title = styled(BaseText)<{isDark: boolean}>`
   font-size: 14px;
-  color: ${({colorScheme}) =>
-    !colorScheme || colorScheme === 'light' ? SlateDark : White};
+  color: ${({isDark}) => (isDark ? White : SlateDark)};
 `;
 
 const HeaderContainer = styled.View<{justifyContent?: string}>`
@@ -50,7 +48,7 @@ const HeaderContainer = styled.View<{justifyContent?: string}>`
 `;
 
 const HomeRoot = () => {
-  const colorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
+  const theme = useTheme();
 
   const goToCustomize = () => {
     haptic('impactLight');
@@ -74,7 +72,7 @@ const HomeRoot = () => {
       img: currencyInfo?.roundIcon(20),
       coinName: currencyInfo?.mainLabel,
       average: +ph.percentChange,
-      colorScheme,
+      theme,
     });
   });
 
@@ -89,7 +87,7 @@ const HomeRoot = () => {
         />
       ),
       onPress: () => {},
-      colorScheme,
+      theme,
     },
   ];
 
@@ -125,7 +123,7 @@ const HomeRoot = () => {
 
         <HeaderContainer justifyContent={'flex-end'}>
           <TouchableOpacity onPress={goToCustomize}>
-            <HomeLink colorScheme={colorScheme}>Customize</HomeLink>
+            <HomeLink isDark={theme.dark}>Customize</HomeLink>
           </TouchableOpacity>
         </HeaderContainer>
 
@@ -134,10 +132,10 @@ const HomeRoot = () => {
         <LinkingButtons />
 
         <HeaderContainer justifyContent={'space-between'}>
-          <Title colorScheme={colorScheme}>Limited Time Offers</Title>
+          <Title isDark={theme.dark}>Limited Time Offers</Title>
 
           <TouchableOpacity onPress={goToOffers}>
-            <HomeLink colorScheme={colorScheme}> See all</HomeLink>
+            <HomeLink isDark={theme.dark}> See all</HomeLink>
           </TouchableOpacity>
         </HeaderContainer>
 
@@ -146,7 +144,7 @@ const HomeRoot = () => {
         {exchangeRatesItems.length > 0 && (
           <>
             <HeaderContainer>
-              <Title colorScheme={colorScheme}>Exchange Rates</Title>
+              <Title isDark={theme.dark}>Exchange Rates</Title>
             </HeaderContainer>
 
             <ExchangeRatesSlides items={exchangeRatesItems} />
@@ -154,7 +152,7 @@ const HomeRoot = () => {
         )}
 
         <HeaderContainer>
-          <Title colorScheme={colorScheme}>Quick Links</Title>
+          <Title isDark={theme.dark}>Quick Links</Title>
         </HeaderContainer>
 
         <QuickLinksSlides items={quickLinksItems} />

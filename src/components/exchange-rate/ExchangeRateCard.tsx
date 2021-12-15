@@ -1,19 +1,18 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import {Black, Caution, LightBlack, White} from '../../styles/colors';
+import {Caution, LightBlack, White} from '../../styles/colors';
 import {BaseText} from '../styled/Text';
 import {ExchangeRateProps} from './ExchangeRatesSlides';
-import {ColorSchemeName} from 'react-native';
+import {StyleProp, TextStyle} from 'react-native';
 
-const ExchangeRateCardContainer = styled.View<{colorScheme: ColorSchemeName}>`
+const ExchangeRateCardContainer = styled.View<{isDark: boolean}>`
   justify-content: flex-start;
   align-items: center;
   flex-direction: column;
   width: 130px;
   height: 100px;
   border-radius: 12px;
-  background-color: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
-    colorScheme === 'light' ? White : LightBlack};
+  background-color: ${({isDark}) => (isDark ? LightBlack : White)};
 `;
 
 const CoinIconContainer = styled.View`
@@ -21,14 +20,13 @@ const CoinIconContainer = styled.View`
   padding-bottom: 6px;
 `;
 
-const CoinNameText = styled(BaseText)<{colorScheme: ColorSchemeName}>`
+const CoinNameText = styled(BaseText)`
   font-style: normal;
   font-weight: 500;
   font-size: 12px;
   line-height: 19px;
-  color: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
-    colorScheme === 'light' ? Black : White};
 `;
+
 const CoinAverageText = styled(BaseText)`
   font-style: normal;
   font-weight: 500;
@@ -39,7 +37,8 @@ const CoinAverageText = styled(BaseText)`
 `;
 
 export default ({item}: {item: ExchangeRateProps}) => {
-  const {img, coinName, average, colorScheme} = item;
+  const {img, coinName, average, theme} = item;
+  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
 
   return (
     <ExchangeRateCardContainer
@@ -55,9 +54,9 @@ export default ({item}: {item: ExchangeRateProps}) => {
           left: 10,
         },
       ]}
-      colorScheme={colorScheme}>
+      isDark={theme.dark}>
       <CoinIconContainer>{img}</CoinIconContainer>
-      <CoinNameText colorScheme={colorScheme}>{coinName}</CoinNameText>
+      <CoinNameText style={textStyle}>{coinName}</CoinNameText>
       <CoinAverageText average={average}>{average}%</CoinAverageText>
     </ExchangeRateCardContainer>
   );

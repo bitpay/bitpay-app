@@ -10,10 +10,9 @@ import {
 import haptic from '../haptic-feedback/haptic';
 import {BaseText} from '../styled/Text';
 import {QuickLinkProps} from './QuickLinksSlides';
-import {ColorSchemeName} from 'react-native';
 
 const QuickLinkCardContainer = styled.TouchableOpacity<{
-  colorScheme: ColorSchemeName;
+  isDark: boolean;
 }>`
   justify-content: center;
   align-items: flex-start;
@@ -21,8 +20,7 @@ const QuickLinkCardContainer = styled.TouchableOpacity<{
   width: 202px;
   height: 91px;
   border-radius: 12px;
-  background-color: ${({colorScheme}) =>
-    colorScheme === 'light' ? NeutralSlate : LightBlack};
+  background-color: ${({isDark}) => (isDark ? LightBlack : NeutralSlate)};
   overflow: hidden;
 `;
 
@@ -41,23 +39,23 @@ const TextContainer = styled.View`
   width: 118px;
 `;
 
-const TitleText = styled(BaseText)`
+const TitleText = styled(BaseText)<{isDark: boolean}>`
   font-style: normal;
   font-weight: 500;
   font-size: 12px;
   line-height: 25px;
-  color: ${({colorScheme}) => (colorScheme === 'light' ? Action : White)};
+  color: ${({isDark}) => (isDark ? White : Action)};
 `;
-const DescriptionText = styled(BaseText)`
+const DescriptionText = styled(BaseText)<{isDark: boolean}>`
   font-style: normal;
   font-weight: 400;
   font-size: 12px;
   line-height: 16px;
-  color: ${({colorScheme}) => (colorScheme === 'light' ? SlateDark : White)};
+  color: ${({isDark}) => (isDark ? White : SlateDark)};
 `;
 
 export default ({item}: {item: QuickLinkProps}) => {
-  const {img, title, description, onPress, colorScheme} = item;
+  const {img, title, description, onPress, theme} = item;
 
   return (
     <QuickLinkCardContainer
@@ -65,13 +63,13 @@ export default ({item}: {item: QuickLinkProps}) => {
         haptic('impactLight');
         onPress();
       }}
-      colorScheme={colorScheme}>
+      isDark={theme.dark}>
       <TextContainer>
-        <TitleText colorScheme={colorScheme}>{title}</TitleText>
+        <TitleText isDark={theme.dark}>{title}</TitleText>
         <DescriptionText
           numberOfLines={2}
           ellipsizeMode={'tail'}
-          colorScheme={colorScheme}>
+          isDark={theme.dark}>
           {description}
         </DescriptionText>
       </TextContainer>
