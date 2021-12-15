@@ -1,5 +1,5 @@
 import {useNavigation} from '@react-navigation/core';
-import React from 'react';
+import React, {ReactElement} from 'react';
 import styled from 'styled-components/native';
 import haptic from '../haptic-feedback/haptic';
 import {NeutralSlate, SlateDark} from '../../styles/colors';
@@ -16,7 +16,7 @@ interface Props {
 interface AdvertisementObjProps {
   title: string;
   text: string;
-  img: () => any;
+  img: ReactElement;
   navigate: keyof ReactNavigation.RootParamList;
 }
 
@@ -26,13 +26,13 @@ const AdvertisementObj: AdvertisementObj<AdvertisementObjProps> = {
   buyCrypto: {
     title: 'Buy Crypto',
     text: 'Exchange ERC-20 Tokens or cross chain assets',
-    img: () => <AdvBuyImg />,
+    img: <AdvBuyImg />,
     navigate: 'BuyCrypto',
   },
   swapCrypto: {
     title: 'Swap Crypto',
     text: 'Buy direct using your debit or credit card',
-    img: () => <AdvSwapImg />,
+    img: <AdvSwapImg />,
     navigate: 'SwapCrypto',
   },
 };
@@ -82,7 +82,7 @@ const AdvertisementCard: React.FC<Props> = ({id}) => {
         {AdvertisementObj[id].title}
       </AdvertisementCardTitle>
       <AdvertisementCardText>{AdvertisementObj[id].text}</AdvertisementCardText>
-      <AdvertisementCardImg>{AdvertisementObj[id].img()}</AdvertisementCardImg>
+      <AdvertisementCardImg>{AdvertisementObj[id].img}</AdvertisementCardImg>
     </AdvertisementCardContainer>
   );
 };

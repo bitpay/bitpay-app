@@ -65,7 +65,7 @@ export type RootStackParamList = {
   NotificationSettings: NavigatorScreenParams<NotificationSettingsStackParamList>;
   About: NavigatorScreenParams<AboutStackParamList>;
   BuyCrypto: NavigatorScreenParams<BuyCryptoStackParamList>;
-  SwapCrypto: NavigatorScreenParams<BuyCryptoStackParamList>;
+  SwapCrypto: NavigatorScreenParams<SwapCryptoStackParamList>;
 };
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
