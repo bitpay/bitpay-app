@@ -12,8 +12,8 @@ import {useForm, Controller} from 'react-hook-form';
 import {BaseText} from '../../../components/styled/Text';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {WalletOptions} from '../../../store/wallet/wallet.models';
-import {startImportMnemonic} from '../../../store/wallet/wallet.effects';
 import {navigationRef} from '../../../Root';
+import {startImportMnemonic} from '../../../store/wallet/effects';
 
 const Gutter = '10px';
 export const ImportWalletContainer = styled.View`
@@ -117,7 +117,7 @@ const RecoveryPhrase = () => {
   const importWallet = async (
     words: string,
     opts: Partial<WalletOptions>,
-  ): void => {
+  ): Promise<void> => {
     try {
       await dispatch(startImportMnemonic(words, opts));
       navigationRef.navigate('Onboarding', {
