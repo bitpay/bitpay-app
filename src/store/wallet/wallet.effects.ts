@@ -234,8 +234,8 @@ export const startImportMnemonic =
 
 export const startImportWalletCredentials =
   (opts: Partial<WalletOptions>): Effect =>
-  async (): Promise<{key: string; walletClients: any}> => {
-    return new Promise<{key: string; walletClients: any}>(resolve => {
+  async (): Promise<{key: any; walletClients: any}> => {
+    return new Promise<{key: any; walletClients: any}>(resolve => {
       BwcProvider.API.serverAssistedImport(
         opts,
         {baseUrl: 'https://bws.bitpay.com/bws/api'},
