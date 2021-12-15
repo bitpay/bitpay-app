@@ -33,9 +33,9 @@ const ScrollViewContainer = styled.ScrollView`
 `;
 
 const Img = styled.View<{isFirst: boolean}>`
-  width: 30px;
-  height: 30px;
-  margin-left: ${({isFirst}: {isFirst: boolean}) => (isFirst ? 0 : '-5px')};
+  width: 20px;
+  height: 20px;
+  margin-left: ${({isFirst}: {isFirst: boolean}) => (isFirst ? 0 : '-3px')};
 `;
 
 const CurrencyCardComponent = (
@@ -60,8 +60,8 @@ const CurrencyCardComponent = (
         currencyInfo.map(
           (currency, index) =>
             currency && (
-              <Img isFirst={index === 0 || index % 5 === 0}>
-                {currency.roundIcon}
+              <Img key={index} isFirst={index === 0 || index % 7 === 0}>
+                {currency.roundIcon(20)}
               </Img>
             ),
         )}

@@ -1,7 +1,10 @@
 import {Action, NeutralSlate, SlateDark, White} from './colors';
 import {Platform} from 'react-native';
+import {MaterialTopTabNavigationOptions} from '@react-navigation/material-top-tabs';
 
-export const ScreenOptions = (width: number) => {
+export const ScreenOptions = (
+  width: number,
+): MaterialTopTabNavigationOptions => {
   const gutter = 8;
   const totalWidth = width * 2 + gutter * 4;
 

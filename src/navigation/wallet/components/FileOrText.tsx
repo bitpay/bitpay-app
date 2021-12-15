@@ -51,9 +51,9 @@ const AdvancedOptions = styled.View`
 `;
 
 const FileOrText = () => {
-  const [inputValue, onChangeText] = useState();
-  const [password, onChangePassword] = useState();
-  const [options, onChangeOptions] = useState('https://bws.bitpay.com/bws/api');
+  const [inputValue, setInputValue] = useState<string>();
+  const [password, setPassword] = useState<string>();
+  const [options, setOptions] = useState('https://bws.bitpay.com/bws/api');
   const [showOptions, setShowOptions] = useState(false);
 
   const importWallet = () => {
@@ -73,7 +73,7 @@ const FileOrText = () => {
       <ImportWalletTextInput
         multiline
         numberOfLines={5}
-        onChangeText={(text: string) => onChangeText(text)}
+        onChangeText={(text: string) => setInputValue(text)}
       />
 
       <HeaderTitleContainer>
@@ -82,7 +82,7 @@ const FileOrText = () => {
           <BoxInput
             placeholder={'strongPassword123'}
             type={'password'}
-            onChangeText={(text: string) => onChangePassword(text)}
+            onChangeText={(text: string) => setPassword(text)}
             value={password}
           />
         </InputContainer>
@@ -113,7 +113,7 @@ const FileOrText = () => {
               <AdvancedOptions>
                 <BoxInput
                   label={'WALLET SERVICE URL'}
-                  onChangeText={(text: string) => onChangeOptions(text)}
+                  onChangeText={(text: string) => setOptions(text)}
                   value={options}
                 />
               </AdvancedOptions>

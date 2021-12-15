@@ -117,7 +117,7 @@ const RecoveryPhrase = () => {
   const importWallet = async (
     words: string,
     opts: Partial<WalletOptions>,
-  ): void => {
+  ): Promise<void> => {
     try {
       await dispatch(startImportMnemonic(words, opts));
       navigationRef.navigate('Onboarding', {

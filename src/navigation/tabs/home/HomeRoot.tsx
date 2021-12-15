@@ -12,7 +12,9 @@ import {RootState} from '../../../store';
 import {SlateDark, White, Action} from '../../../styles/colors';
 import {PriceHistory} from '../../../store/wallet/wallet.models';
 import {CurrencyList} from '../../../constants/CurrencySelectionListOptions';
-import ExchangeRatesSlides from '../../../components/exchange-rate/ExchangeRatesSlides';
+import ExchangeRatesSlides, {
+  ExchangeRateProps,
+} from '../../../components/exchange-rate/ExchangeRatesSlides';
 import QuickLinksSlides from '../../../components/quick-links/QuickLinksSlides';
 import OffersSlides from '../../../components/offer/OfferSlides';
 
@@ -25,7 +27,7 @@ const Home = styled.ScrollView`
   padding: 0 15px;
 `;
 
-const HomeLink = styled(BaseText)<{colorSchemaName: ColorSchemeName}>`
+const HomeLink = styled(BaseText)<{colorScheme: ColorSchemeName}>`
   font-weight: 500;
   font-size: 14px;
   color: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
@@ -34,7 +36,7 @@ const HomeLink = styled(BaseText)<{colorSchemaName: ColorSchemeName}>`
     !colorScheme || colorScheme === 'light' ? 'none' : 'underline'};
 `;
 
-const Title = styled(BaseText)<{colorSchemaName: ColorSchemeName}>`
+const Title = styled(BaseText)<{colorScheme: ColorSchemeName}>`
   font-size: 14px;
   color: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
     !colorScheme || colorScheme === 'light' ? SlateDark : White};
@@ -43,7 +45,7 @@ const Title = styled(BaseText)<{colorSchemaName: ColorSchemeName}>`
 const HeaderContainer = styled.View<{justifyContent?: string}>`
   flex-direction: row;
   margin-top: 10px;
-  justify-content: ${({justifyContent}: {justifyContent: string}) =>
+  justify-content: ${({justifyContent}: {justifyContent?: string}) =>
     justifyContent || 'flex-start'};
 `;
 
@@ -62,19 +64,18 @@ const HomeRoot = () => {
   const priceHistory = useSelector(
     ({WALLET}: RootState) => WALLET.priceHistory,
   );
-  const exchangeRatesItems = priceHistory.map(
-    (ph: PriceHistory, index: number) => {
-      const currencyInfo = CurrencyList.find(
-        ({id}: {id: string | number}) => id === ph.coin,
-      );
-      return {
-        id: index,
-        img: currencyInfo?.roundIcon,
-        coinName: currencyInfo?.mainLabel,
-        average: ph.percentChange,
-      };
-    },
-  );
+  const exchangeRatesItems: Array<ExchangeRateProps> = [];
+  priceHistory.forEach((ph: PriceHistory, index: number) => {
+    const currencyInfo = CurrencyList.find(
+      ({id}: {id: string | number}) => id === ph.coin,
+    );
+    exchangeRatesItems.push({
+      id: index,
+      img: currencyInfo?.roundIcon(20),
+      coinName: currencyInfo?.mainLabel,
+      average: +ph.percentChange,
+    });
+  });
 
   const quickLinksItems = [
     {
@@ -86,6 +87,7 @@ const HomeRoot = () => {
           source={require('../../../../assets/img/home/quick-links/icon-chat.png')}
         />
       ),
+      onPress: () => {},
     },
   ];
 
@@ -121,7 +123,7 @@ const HomeRoot = () => {
 
         <HeaderContainer justifyContent={'flex-end'}>
           <TouchableOpacity onPress={goToCustomize}>
-            <HomeLink colorSchemaName={colorScheme}>Customize</HomeLink>
+            <HomeLink colorScheme={colorScheme}>Customize</HomeLink>
           </TouchableOpacity>
         </HeaderContainer>
 
@@ -130,22 +132,27 @@ const HomeRoot = () => {
         <LinkingButtons />
 
         <HeaderContainer justifyContent={'space-between'}>
-          <Title colorSchemaName={colorScheme}>Limited Time Offers</Title>
+          <Title colorScheme={colorScheme}>Limited Time Offers</Title>
 
           <TouchableOpacity onPress={goToOffers}>
-            <HomeLink colorSchemaName={colorScheme}> See all</HomeLink>
+            <HomeLink v={colorScheme}> See all</HomeLink>
           </TouchableOpacity>
         </HeaderContainer>
 
         <OffersSlides items={offerItems} />
 
-        <HeaderContainer>
-          <Title colorSchemaName={colorScheme}>Exchange Rates</Title>
-        </HeaderContainer>
-        <ExchangeRatesSlides items={exchangeRatesItems} />
+        {exchangeRatesItems.length > 0 && (
+          <>
+            <HeaderContainer>
+              <Title colorScheme={colorScheme}>Exchange Rates</Title>
+            </HeaderContainer>
+
+            <ExchangeRatesSlides items={exchangeRatesItems} />
+          </>
+        )}
 
         <HeaderContainer>
-          <Title colorSchemaName={colorScheme}>Quick Links</Title>
+          <Title colorScheme={colorScheme}>Quick Links</Title>
         </HeaderContainer>
 
         <QuickLinksSlides items={quickLinksItems} />

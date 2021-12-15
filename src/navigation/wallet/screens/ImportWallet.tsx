@@ -15,7 +15,7 @@ const ImportWallet = () => {
 
   return (
     <ImportWallerContainer>
-      <Tab.Navigator screenOptions={ScreenOptions(150)}>
+      <Tab.Navigator screenOptions={{...ScreenOptions(150)}}>
         <Tab.Screen name="Recovery Phrase" component={RecoveryPhrase} />
         <Tab.Screen name="File/Text" component={FileOrText} />
       </Tab.Navigator>

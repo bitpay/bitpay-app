@@ -22,6 +22,8 @@ const Img = styled.View<{isFirst: boolean}>`
   width: 30px;
   height: 30px;
   margin-left: ${({isFirst}: {isFirst: boolean}) => (isFirst ? 0 : '-5px')};
+  svg {
+  }
 `;
 
 const CarouselContainer = styled.View`
@@ -46,8 +48,8 @@ const CurrencyCardComponent = (
         currencyInfo.map(
           (currency, index) =>
             currency && (
-              <Img isFirst={index === 0 || index % 7 === 0}>
-                {currency.roundIcon}
+              <Img key={index} isFirst={index === 0 || index % 7 === 0}>
+                {currency.roundIcon(30)}
               </Img>
             ),
         )}
