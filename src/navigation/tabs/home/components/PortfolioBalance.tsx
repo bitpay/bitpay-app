@@ -1,5 +1,5 @@
 import React from 'react';
-import {ColorSchemeName, Text, View} from 'react-native';
+import {ColorSchemeName, StyleProp, Text, TextStyle, View} from 'react-native';
 import styled from 'styled-components/native';
 import {BaseText} from '../../../../components/styled/Text';
 import {Feather, SlateDark} from '../../../../styles/colors';
@@ -10,8 +10,7 @@ import {useTheme} from '@react-navigation/native';
 const Header = styled(BaseText)<{colorScheme: ColorSchemeName}>`
   font-size: 14px;
   line-height: 19px;
-  color: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
-    colorScheme === 'light' ? SlateDark : Feather};
+  color: ${({colorScheme}) => (colorScheme === 'light' ? SlateDark : Feather)};
 `;
 
 const PortfolioBalanceText = styled(BaseText)`
@@ -38,7 +37,7 @@ const PercentagePillText = styled(BaseText)`
 const PortfolioBalance = () => {
   const colorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
   const theme = useTheme();
-  const themedText = {color: theme.colors.text};
+  const themedText: StyleProp<TextStyle> = {color: theme.colors.text};
   //  TODO: update me
   const portfolioBalance = '$98,140.12 USD ';
   const percentageDifference = '+2.5%';

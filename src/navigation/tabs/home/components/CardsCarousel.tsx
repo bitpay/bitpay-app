@@ -21,7 +21,7 @@ const HeaderImg = styled.View`
 const Img = styled.View<{isFirst: boolean}>`
   width: 30px;
   height: 30px;
-  margin-left: ${({isFirst}: {isFirst: boolean}) => (isFirst ? 0 : '-5px')};
+  margin-left: ${({isFirst}) => (isFirst ? 0 : '-5px')};
 `;
 
 const CarouselContainer = styled.View`

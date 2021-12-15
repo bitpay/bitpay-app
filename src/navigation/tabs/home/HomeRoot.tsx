@@ -30,23 +30,22 @@ const Home = styled.ScrollView`
 const HomeLink = styled(BaseText)<{colorScheme: ColorSchemeName}>`
   font-weight: 500;
   font-size: 14px;
-  color: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
+  color: ${({colorScheme}) =>
     !colorScheme || colorScheme === 'light' ? Action : White};
-  text-decoration: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
+  text-decoration: ${({colorScheme}) =>
     !colorScheme || colorScheme === 'light' ? 'none' : 'underline'};
 `;
 
 const Title = styled(BaseText)<{colorScheme: ColorSchemeName}>`
   font-size: 14px;
-  color: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
+  color: ${({colorScheme}) =>
     !colorScheme || colorScheme === 'light' ? SlateDark : White};
 `;
 
 const HeaderContainer = styled.View<{justifyContent?: string}>`
   flex-direction: row;
   margin-top: 10px;
-  justify-content: ${({justifyContent}: {justifyContent?: string}) =>
-    justifyContent || 'flex-start'};
+  justify-content: ${({justifyContent}) => justifyContent || 'flex-start'};
 `;
 
 const HomeRoot = () => {

@@ -25,8 +25,7 @@ const ButtonContainer = styled.View`
 const ButtonText = styled(BaseText)<{colorScheme: ColorSchemeName}>`
   font-size: 12px;
   line-height: 18px;
-  color: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
-    colorScheme === 'light' ? Action : White};
+  color: ${({colorScheme}) => (colorScheme === 'light' ? Action : White)};
   margin-top: 5px;
 `;
 
@@ -36,7 +35,7 @@ const LinkButton = styled.TouchableOpacity<{colorScheme: ColorSchemeName}>`
   border-radius: 11px;
   align-items: center;
   justify-content: center;
-  background: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
+  background: ${({colorScheme}) =>
     colorScheme === 'light' ? NeutralSlate : '#0C204E'};
   margin: 10px 0;
 `;
