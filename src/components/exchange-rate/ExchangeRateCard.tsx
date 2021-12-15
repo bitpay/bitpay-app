@@ -4,6 +4,7 @@ import {Caution, LightBlack, White} from '../../styles/colors';
 import {BaseText} from '../styled/Text';
 import {ExchangeRateProps} from './ExchangeRatesSlides';
 import {StyleProp, TextStyle} from 'react-native';
+import {ScreenGutter} from '../styled/Containers';
 
 const ExchangeRateCardContainer = styled.View<{isDark: boolean}>`
   justify-content: flex-start;
@@ -13,6 +14,7 @@ const ExchangeRateCardContainer = styled.View<{isDark: boolean}>`
   height: 100px;
   border-radius: 12px;
   background-color: ${({isDark}) => (isDark ? LightBlack : White)};
+  left: ${ScreenGutter};
 `;
 
 const CoinIconContainer = styled.View`
@@ -52,7 +54,6 @@ export default ({item}: {item: ExchangeRateProps}) => {
           position: 'absolute',
           top: 12,
           elevation: 3,
-          left: 15,
         },
       ]}
       isDark={theme.dark}>

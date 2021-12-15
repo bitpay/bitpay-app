@@ -2,7 +2,7 @@ import React, {ReactElement} from 'react';
 import {Carousel} from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
 import haptic from '../haptic-feedback/haptic';
-import {ScreenGutter, WIDTH} from '../styled/Containers';
+import {WIDTH} from '../styled/Containers';
 import ExchangeRateCard from './OfferCard';
 
 export interface OfferProps {
@@ -19,7 +19,7 @@ interface OfferSlide {
 
 const OffersContainer = styled.View`
   flex: 1;
-  margin: 10px 0 20px ${ScreenGutter};
+  margin: 10px 0 20px};
 `;
 
 const OffersSlides = ({items}: OfferSlide) => {

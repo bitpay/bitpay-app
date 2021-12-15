@@ -4,7 +4,7 @@ import styled from 'styled-components/native';
 import {Midnight, NeutralSlate, SlateDark, White} from '../../styles/colors';
 import Arrow from '../../../assets/img/arrow-right.svg';
 import Haptic from '../haptic-feedback/haptic';
-import {CardGutter} from '../styled/Containers';
+import {CardGutter, ScreenGutter} from '../styled/Containers';
 import Card from '../card/Card';
 import {StyleProp, TextStyle, View} from 'react-native';
 import {BaseText} from '../styled/Text';
@@ -77,6 +77,10 @@ const FooterArrow = styled.TouchableHighlight`
   justify-content: center;
 `;
 
+const CardContainer = styled.View`
+  left: ${ScreenGutter};
+`;
+
 const HomeCard = ({backgroundImg, body, footer, header}: HomeCardProps) => {
   const HeaderComp = <CardHeader>{header}</CardHeader>;
   const theme = useTheme();
@@ -116,13 +120,15 @@ const HomeCard = ({backgroundImg, body, footer, header}: HomeCardProps) => {
   };
 
   return (
-    <Card
-      backgroundImg={backgroundImg}
-      header={HeaderComp}
-      body={BodyComp}
-      footer={FooterComp}
-      containerProps={containerProps}
-    />
+    <CardContainer>
+      <Card
+        backgroundImg={backgroundImg}
+        header={HeaderComp}
+        body={BodyComp}
+        footer={FooterComp}
+        containerProps={containerProps}
+      />
+    </CardContainer>
   );
 };
 

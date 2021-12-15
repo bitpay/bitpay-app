@@ -2,7 +2,7 @@ import React, {ReactNode} from 'react';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import Carousel from 'react-native-snap-carousel';
-import {ScreenGutter, WIDTH} from '../../../../components/styled/Containers';
+import {WIDTH} from '../../../../components/styled/Containers';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CreateWallet from './empty-states/CreateWallet';
 import styled from 'styled-components/native';
@@ -26,7 +26,7 @@ const Img = styled.View<{isFirst: boolean; size: string}>`
 `;
 
 const CarouselContainer = styled.View`
-  margin: 10px 0 10px ${ScreenGutter};
+  margin: 10px 0 10px;
 `;
 
 const CurrencyCardComponent = (

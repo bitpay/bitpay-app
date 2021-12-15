@@ -5,6 +5,7 @@ import {OfferProps} from './OfferSlides';
 import ArrowRight from '../../../assets/img/arrow-right.svg';
 import {White} from '../../styles/colors';
 import Haptic from '../haptic-feedback/haptic';
+import {ScreenGutter} from '../styled/Containers';
 
 const OfferCardContainer = styled.View`
   justify-content: flex-start;
@@ -13,6 +14,7 @@ const OfferCardContainer = styled.View`
   width: 260px;
   height: 182px;
   border-radius: 12px;
+  left: ${ScreenGutter};
 `;
 
 const ImgBackground = styled.View`
