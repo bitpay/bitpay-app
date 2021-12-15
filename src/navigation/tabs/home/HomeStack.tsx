@@ -9,6 +9,9 @@ import styled from 'styled-components/native';
 import ProfileSvg from '../../../../assets/img/home/profile.svg';
 import ScanSvg from '../../../../assets/img/home/scan.svg';
 import {ScreenGutter} from '../../../components/styled/Containers';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../../store';
+import { AppActions } from '../../../store/app';
 
 export type HomeStackParamList = {
   Root: undefined;
@@ -39,6 +42,16 @@ const HomeStack = () => {
       <ProfileSvg />
     </HeaderContainer>
   );
+
+  const dispatch = useDispatch();
+
+  const onboardingCompleted = useSelector(
+    ({APP}: RootState) => APP.onboardingCompleted,
+  );
+
+  if (!onboardingCompleted) {
+    dispatch(AppActions.showOnboardingFinishModal());
+  }
 
   return (
     <Home.Navigator

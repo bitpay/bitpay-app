@@ -82,7 +82,6 @@ const TermsOfUse = ({navigation: _navigation, route}: Props) => {
       <CtaContainerAbsolute>
         <Button
           onPress={() => {
-            dispatch(AppActions.setOnboardingCompleted());
             navigation.navigate('Tabs', {screen: 'Home'});
           }}
           buttonStyle={'primary'}
