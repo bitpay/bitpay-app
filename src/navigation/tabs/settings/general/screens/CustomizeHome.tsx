@@ -88,6 +88,7 @@ const CurrencyCardComponent = (
 const CustomizeHome = () => {
   const wallets = useSelector(({WALLET}: RootState) => WALLET.wallets);
   const cardsList: Array<ReactNode | null> = [];
+  const network = useSelector(({APP}: RootState) => APP.network);
 
   if (wallets) {
     if (Object.keys(wallets).length) {
@@ -97,7 +98,7 @@ const CustomizeHome = () => {
           const currencyList: string[] = [];
           assets.forEach(
             (asset: any) =>
-              asset.network === 'livenet' && currencyList.push(asset.coin),
+              asset.network === network && currencyList.push(asset.coin),
           );
           if (currencyList.length) {
             cardsList.push(
