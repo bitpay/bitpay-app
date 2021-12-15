@@ -42,6 +42,7 @@ export const startCreateWallet =
             id: key.id,
             assets: credentials,
             totalBalance: 0,
+            show: true,
           },
         }),
       );

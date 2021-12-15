@@ -49,6 +49,7 @@ export const startImportMnemonic =
             id: key.id,
             assets: credentials,
             totalBalance: 0,
+            show: true,
           },
         }),
       );
