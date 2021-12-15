@@ -35,6 +35,7 @@ const ScrollViewContainer = styled.ScrollView`
 const Img = styled.View<{isFirst: boolean}>`
   width: 20px;
   height: 20px;
+  min-height: 22px;
   margin-left: ${({isFirst}) => (isFirst ? 0 : '-3px')};
 `;
 
