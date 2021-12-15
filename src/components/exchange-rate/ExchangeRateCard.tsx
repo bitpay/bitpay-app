@@ -1,32 +1,39 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import {Caution} from '../../styles/colors';
+import {
+  Black,
+  Caution,
+  LightBlack,
+  NeutralSlate,
+  White,
+} from '../../styles/colors';
 import {BaseText} from '../styled/Text';
 import {ExchangeRateProps} from './ExchangeRatesSlides';
+import {ColorSchemeName} from 'react-native';
 
-const ExchangeRateCardContainer = styled.View`
+const ExchangeRateCardContainer = styled.View<{colorScheme: ColorSchemeName}>`
   justify-content: flex-start;
   align-items: center;
   flex-direction: column;
   width: 130px;
   height: 100px;
   border-radius: 12px;
-  background-color: white;
+  background-color: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
+    colorScheme === 'light' ? NeutralSlate : LightBlack};
 `;
 
 const CoinIconContainer = styled.View`
   padding-top: 19px;
   padding-bottom: 6px;
-  svg {
-    height: 100px;
-  }
 `;
 
-const CoinNameText = styled(BaseText)`
+const CoinNameText = styled(BaseText)<{colorScheme: ColorSchemeName}>`
   font-style: normal;
   font-weight: 500;
   font-size: 12px;
   line-height: 19px;
+  color: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
+    colorScheme === 'light' ? Black : White};
 `;
 const CoinAverageText = styled(BaseText)`
   font-style: normal;
@@ -38,7 +45,7 @@ const CoinAverageText = styled(BaseText)`
 `;
 
 export default ({item}: {item: ExchangeRateProps}) => {
-  const {img, coinName, average} = item;
+  const {img, coinName, average, colorScheme} = item;
 
   return (
     <ExchangeRateCardContainer
@@ -53,9 +60,10 @@ export default ({item}: {item: ExchangeRateProps}) => {
           top: 12,
           left: 10,
         },
-      ]}>
+      ]}
+      colorScheme={colorScheme}>
       <CoinIconContainer>{img}</CoinIconContainer>
-      <CoinNameText>{coinName}</CoinNameText>
+      <CoinNameText colorScheme={colorScheme}>{coinName}</CoinNameText>
       <CoinAverageText average={average}>{average}%</CoinAverageText>
     </ExchangeRateCardContainer>
   );

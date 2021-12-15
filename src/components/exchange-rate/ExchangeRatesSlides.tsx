@@ -1,5 +1,5 @@
 import React, {ReactElement} from 'react';
-import {Dimensions} from 'react-native';
+import {ColorSchemeName, Dimensions} from 'react-native';
 import {Carousel} from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
 import haptic from '../haptic-feedback/haptic';
@@ -10,6 +10,7 @@ export interface ExchangeRateProps {
   img: ReactElement | undefined;
   coinName?: string;
   average?: number;
+  colorScheme: ColorSchemeName;
 }
 
 interface ExchangeRateSlide {

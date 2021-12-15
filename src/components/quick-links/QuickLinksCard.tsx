@@ -1,18 +1,28 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import {Action, SlateDark} from '../../styles/colors';
+import {
+  Action,
+  LightBlack,
+  NeutralSlate,
+  SlateDark,
+  White,
+} from '../../styles/colors';
 import haptic from '../haptic-feedback/haptic';
 import {BaseText} from '../styled/Text';
 import {QuickLinkProps} from './QuickLinksSlides';
+import {ColorSchemeName} from 'react-native';
 
-const QuickLinkCardContainer = styled.TouchableOpacity`
+const QuickLinkCardContainer = styled.TouchableOpacity<{
+  colorScheme: ColorSchemeName;
+}>`
   justify-content: center;
   align-items: flex-start;
   flex-direction: row;
   width: 202px;
   height: 91px;
   border-radius: 12px;
-  background-color: #f5f7f8;
+  background-color: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
+    colorScheme === 'light' ? NeutralSlate : LightBlack};
   overflow: hidden;
 `;
 
@@ -36,28 +46,34 @@ const TitleText = styled(BaseText)`
   font-weight: 500;
   font-size: 12px;
   line-height: 25px;
-  color: ${Action};
+  color: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
+    colorScheme === 'light' ? Action : White};
 `;
 const DescriptionText = styled(BaseText)`
   font-style: normal;
   font-weight: 400;
   font-size: 12px;
   line-height: 16px;
-  color: ${SlateDark};
+  color: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
+    colorScheme === 'light' ? SlateDark : White};
 `;
 
 export default ({item}: {item: QuickLinkProps}) => {
-  const {img, title, description, onPress} = item;
+  const {img, title, description, onPress, colorScheme} = item;
 
   return (
     <QuickLinkCardContainer
       onPress={() => {
         haptic('impactLight');
         onPress();
-      }}>
+      }}
+      colorScheme={colorScheme}>
       <TextContainer>
-        <TitleText>{title}</TitleText>
-        <DescriptionText numberOfLines={2} ellipsizeMode={'tail'}>
+        <TitleText colorScheme={colorScheme}>{title}</TitleText>
+        <DescriptionText
+          numberOfLines={2}
+          ellipsizeMode={'tail'}
+          colorScheme={colorScheme}>
           {description}
         </DescriptionText>
       </TextContainer>

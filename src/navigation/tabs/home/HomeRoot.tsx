@@ -74,6 +74,7 @@ const HomeRoot = () => {
       img: currencyInfo?.roundIcon(20),
       coinName: currencyInfo?.mainLabel,
       average: +ph.percentChange,
+      colorScheme,
     });
   });
 
@@ -88,6 +89,7 @@ const HomeRoot = () => {
         />
       ),
       onPress: () => {},
+      colorScheme,
     },
   ];
 
