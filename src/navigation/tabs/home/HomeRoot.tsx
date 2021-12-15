@@ -34,6 +34,7 @@ const HomeLink = styled(BaseText)<{colorScheme: ColorSchemeName}>`
     !colorScheme || colorScheme === 'light' ? Action : White};
   text-decoration: ${({colorScheme}) =>
     !colorScheme || colorScheme === 'light' ? 'none' : 'underline'};
+  text-decoration-color: ${White};
 `;
 
 const Title = styled(BaseText)<{colorScheme: ColorSchemeName}>`
@@ -136,7 +137,7 @@ const HomeRoot = () => {
           <Title colorScheme={colorScheme}>Limited Time Offers</Title>
 
           <TouchableOpacity onPress={goToOffers}>
-            <HomeLink v={colorScheme}> See all</HomeLink>
+            <HomeLink colorScheme={colorScheme}> See all</HomeLink>
           </TouchableOpacity>
         </HeaderContainer>
 
