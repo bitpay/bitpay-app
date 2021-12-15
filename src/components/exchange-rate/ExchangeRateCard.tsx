@@ -1,11 +1,6 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import {
-  Black,
-  Caution,
-  LightBlack,
-  White,
-} from '../../styles/colors';
+import {Black, Caution, LightBlack, White} from '../../styles/colors';
 import {BaseText} from '../styled/Text';
 import {ExchangeRateProps} from './ExchangeRatesSlides';
 import {ColorSchemeName} from 'react-native';

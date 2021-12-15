@@ -21,7 +21,7 @@ const QuickLinkCardContainer = styled.TouchableOpacity<{
   width: 202px;
   height: 91px;
   border-radius: 12px;
-  background-color: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
+  background-color: ${({colorScheme}) =>
     colorScheme === 'light' ? NeutralSlate : LightBlack};
   overflow: hidden;
 `;
@@ -46,16 +46,14 @@ const TitleText = styled(BaseText)`
   font-weight: 500;
   font-size: 12px;
   line-height: 25px;
-  color: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
-    colorScheme === 'light' ? Action : White};
+  color: ${({colorScheme}) => (colorScheme === 'light' ? Action : White)};
 `;
 const DescriptionText = styled(BaseText)`
   font-style: normal;
   font-weight: 400;
   font-size: 12px;
   line-height: 16px;
-  color: ${({colorScheme}: {colorScheme: ColorSchemeName}) =>
-    colorScheme === 'light' ? SlateDark : White};
+  color: ${({colorScheme}) => (colorScheme === 'light' ? SlateDark : White)};
 `;
 
 export default ({item}: {item: QuickLinkProps}) => {
