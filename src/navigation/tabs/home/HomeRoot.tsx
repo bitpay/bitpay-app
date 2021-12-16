@@ -1,29 +1,30 @@
+import React from 'react';
+import {Image, TouchableOpacity} from 'react-native';
+import {useSelector} from 'react-redux';
+import {useTheme} from '@react-navigation/native';
+
+import {navigationRef} from '../../../Root';
+import {RootState} from '../../../store';
+import {PriceHistory} from '../../../store/wallet/wallet.models';
+
 import styled from 'styled-components/native';
+import {BaseText} from '../../../components/styled/Text';
+import {SlateDark, White, Action} from '../../../styles/colors';
+
+import haptic from '../../../components/haptic-feedback/haptic';
 import PortfolioBalance from './components/PortfolioBalance';
 import CardsCarousel from './components/CardsCarousel';
 import LinkingButtons from './components/LinkingButtons';
-import React from 'react';
-import {BaseText} from '../../../components/styled/Text';
-import {Image, TouchableOpacity} from 'react-native';
-import haptic from '../../../components/haptic-feedback/haptic';
-import {navigationRef} from '../../../Root';
-import {useSelector} from 'react-redux';
-import {RootState} from '../../../store';
-import {SlateDark, White, Action} from '../../../styles/colors';
-import {PriceHistory} from '../../../store/wallet/wallet.models';
 import {CurrencyList} from '../../../constants/CurrencySelectionListOptions';
 import ExchangeRatesSlides, {
   ExchangeRateProps,
 } from '../../../components/exchange-rate/ExchangeRatesSlides';
 import QuickLinksSlides from '../../../components/quick-links/QuickLinksSlides';
 import OffersSlides from '../../../components/offer/OfferSlides';
-import {useTheme} from '@react-navigation/native';
 import {ScreenGutter} from '../../../components/styled/Containers';
-import AdvertisementCard, {
-  AdvertisementProps,
-} from '../../../components/advertisement/AdvertisementCard';
-import AdvBuyImg from '../../../../assets/img/advertisement/adv-buy.svg';
-import AdvSwapImg from '../../../../assets/img/advertisement/adv-swap.svg';
+import AdvertisementCard from '../../../components/advertisement/AdvertisementCard';
+import {AdvertisementList} from '../../../components/advertisement/advertisement';
+import {OfferItems} from '../../../components/offer/offer';
 
 const HomeContainer = styled.SafeAreaView`
   flex: 1;
@@ -98,54 +99,6 @@ const HomeRoot = () => {
     },
   ];
 
-  // Limited time offers
-  const offerItems = [
-    {
-      id: 1,
-      title: 'JOMASHOP',
-      description: '20% off select products for BitPay customers.',
-      img: (
-        <Image
-          source={require('../../../../assets/img/home/offers/jomashop.png')}
-        />
-      ),
-      onPress: () => {},
-    },
-    {
-      id: 2,
-      title: 'AIRBNB',
-      description: '20% off select products for BitPay customers.',
-      img: (
-        <Image
-          source={require('../../../../assets/img/home/offers/airbnb.png')}
-        />
-      ),
-      onPress: () => {},
-    },
-  ];
-
-  // Advertisement Cards
-  const advertisementList: AdvertisementProps[] = [
-    {
-      id: 'buyCrypto',
-      title: 'Buy Crypto',
-      text: 'Exchange ERC-20 Tokens or cross chain assets',
-      img: <AdvBuyImg />,
-      onPress: () => {
-        navigationRef.navigate('BuyCrypto', {screen: 'Root'});
-      },
-    },
-    {
-      id: 'swapCrypto',
-      title: 'Swap Crypto',
-      text: 'Buy direct using your debit or credit card',
-      img: <AdvSwapImg />,
-      onPress: () => {
-        navigationRef.navigate('SwapCrypto', {screen: 'Root'});
-      },
-    },
-  ];
-
   return (
     <HomeContainer>
       <Home>
@@ -169,13 +122,13 @@ const HomeRoot = () => {
           </TouchableOpacity>
         </HeaderContainer>
 
-        <OffersSlides items={offerItems} />
+        <OffersSlides items={OfferItems} />
 
         <HeaderContainer>
           <Title isDark={theme.dark}>Do More</Title>
         </HeaderContainer>
 
-        <AdvertisementCard items={advertisementList} />
+        <AdvertisementCard items={AdvertisementList} />
 
         {exchangeRatesItems.length > 0 && (
           <>
