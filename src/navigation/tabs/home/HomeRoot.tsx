@@ -19,6 +19,11 @@ import QuickLinksSlides from '../../../components/quick-links/QuickLinksSlides';
 import OffersSlides from '../../../components/offer/OfferSlides';
 import {useTheme} from '@react-navigation/native';
 import {ScreenGutter} from '../../../components/styled/Containers';
+import AdvertisementCard, {
+  AdvertisementProps,
+} from '../../../components/advertisement/AdvertisementCard';
+import AdvBuyImg from '../../../../assets/img/advertisement/adv-buy.svg';
+import AdvSwapImg from '../../../../assets/img/advertisement/adv-swap.svg';
 
 const HomeContainer = styled.SafeAreaView`
   flex: 1;
@@ -59,6 +64,7 @@ const HomeRoot = () => {
 
   const goToOffers = () => {};
 
+  // Exchange Rates
   const priceHistory = useSelector(
     ({WALLET}: RootState) => WALLET.priceHistory,
   );
@@ -76,6 +82,7 @@ const HomeRoot = () => {
     });
   });
 
+  // Quick Links
   const quickLinksItems = [
     {
       id: '1',
@@ -91,6 +98,7 @@ const HomeRoot = () => {
     },
   ];
 
+  // Limited time offers
   const offerItems = [
     {
       id: 1,
@@ -113,6 +121,28 @@ const HomeRoot = () => {
         />
       ),
       onPress: () => {},
+    },
+  ];
+
+  // Advertisement Cards
+  const advertisementList: AdvertisementProps[] = [
+    {
+      id: 'buyCrypto',
+      title: 'Buy Crypto',
+      text: 'Exchange ERC-20 Tokens or cross chain assets',
+      img: <AdvBuyImg />,
+      onPress: () => {
+        navigationRef.navigate('BuyCrypto', {screen: 'Root'});
+      },
+    },
+    {
+      id: 'swapCrypto',
+      title: 'Swap Crypto',
+      text: 'Buy direct using your debit or credit card',
+      img: <AdvSwapImg />,
+      onPress: () => {
+        navigationRef.navigate('SwapCrypto', {screen: 'Root'});
+      },
     },
   ];
 
@@ -140,6 +170,12 @@ const HomeRoot = () => {
         </HeaderContainer>
 
         <OffersSlides items={offerItems} />
+
+        <HeaderContainer>
+          <Title isDark={theme.dark}>Do More</Title>
+        </HeaderContainer>
+
+        <AdvertisementCard items={advertisementList} />
 
         {exchangeRatesItems.length > 0 && (
           <>
