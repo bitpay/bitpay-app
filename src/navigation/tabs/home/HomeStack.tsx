@@ -6,6 +6,7 @@ import {RootState} from '../../../store';
 import {CurrencyList} from '../../../constants/CurrencySelectionListOptions';
 import {PriceHistory} from '../../../store/wallet/wallet.models';
 import ExchangeRatesSlides from '../../../components/exchange-rate/ExchangeRatesSlides';
+import AdvertisementCard from '../../../components/advertisement/AdvertisementCard';
 
 const HomeContainer = styled.SafeAreaView`
   flex: 1;
@@ -13,6 +14,10 @@ const HomeContainer = styled.SafeAreaView`
 
 const ScrollView = styled.ScrollView`
   padding: 10px;
+`;
+
+const AdvertismentContainer = styled.View`
+  margin-top: 10px;
 `;
 
 const HomeStack = () => {
@@ -38,6 +43,11 @@ const HomeStack = () => {
       <ScrollView>
         <CardsCarousel />
         <ExchangeRatesSlides items={exchangeRatesItems} />
+
+        <AdvertismentContainer>
+          <AdvertisementCard id="swapCrypto" />
+          <AdvertisementCard id="buyCrypto" />
+        </AdvertismentContainer>
       </ScrollView>
     </HomeContainer>
   );
