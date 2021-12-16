@@ -60,6 +60,7 @@ const AdvertisementCard = ({items}: {items: AdvertisementProps[]}) => {
       {items &&
         items.map(item => (
           <AdvertisementCardContainer
+            key={item.id}
             isDark={theme.dark}
             onPress={() => _onPress(item)}>
             <AdvertisementCardTitle style={textStyle}>
