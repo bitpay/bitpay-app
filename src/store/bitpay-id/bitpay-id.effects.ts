@@ -41,8 +41,9 @@ export const startFetchSession = (): Effect => async dispatch => {
 export const startLogin =
   ({email, password}: {email: string; password: string}): Effect =>
   async (dispatch, getState) => {
-    dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
     try {
+      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
+
       const {APP, BITPAY_ID} = getState();
 
       // authenticate
@@ -83,8 +84,9 @@ export const startLogin =
       dispatch(LogActions.error('Login failed.'));
       dispatch(LogActions.error(JSON.stringify(err)));
       dispatch(BitPayIdActions.failedLogin());
+    } finally {
+      dispatch(AppActions.dismissOnGoingProcessModal());
     }
-    dispatch(AppActions.dismissOnGoingProcessModal());
   };
 
 export const startCreateAccount =
