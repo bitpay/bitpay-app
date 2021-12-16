@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import {TextInputProps} from 'react-native';
 import styled, {css} from 'styled-components/native';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
 import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
@@ -88,15 +89,17 @@ const SearchIconContainer = styled.View`
   border-left-width: 1px;
   padding: 5px 15px;
 `;
-interface Props {
+
+interface Props extends TextInputProps {
   theme?: BitPayTheme;
   label?: string;
   onFocus?: () => void;
   onBlur?: () => void;
-  errors?: any;
+  error?: any;
   type?: InputType;
   [x: string]: any;
 }
+
 const BoxInput = ({
   label,
   onFocus,
