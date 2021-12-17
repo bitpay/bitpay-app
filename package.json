@@ -7,18 +7,21 @@
     "ios": "react-native run-ios",
     "ios:device": "react-native run-ios --device",
     "start": "react-native start",
-    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "test:unit": "jest --watch",
     "android:build:debug": "./scripts/android-debug.sh",
     "lint": "eslint --fix . --ext .js,.jsx,.ts,.tsx",
     "postinstall": "./scripts/postinstall.sh",
-    "clean": "react-native-clean-project"
+    "clean": "react-native-clean-project",
+    "pod:install": "command -v pod && (cd ios/ && pod install && cd ..) || echo \"pod command not found\""
   },
   "dependencies": {
     "@freakycoder/react-native-bounceable": "0.2.5",
     "@hookform/resolvers": "2.8.3",
-    "@react-native-community/async-storage": "1.12.1",
+    "@react-native-async-storage/async-storage": "1.15.14",
     "@react-native-community/masked-view": "0.1.11",
     "@react-navigation/bottom-tabs": "6.0.9",
+    "@react-navigation/material-top-tabs": "6.0.6",
     "@react-navigation/native": "6.0.6",
     "@react-navigation/stack": "6.0.11",
     "@tradle/react-native-http": "2.0.1",
@@ -45,7 +48,7 @@
     "react-native-level-fs": "3.0.1",
     "react-native-modal": "11.10.0",
     "react-native-os": "1.2.6",
-    "react-native-pager-view": "5.4.8",
+    "react-native-pager-view": "5.4.9",
     "react-native-progress": "5.0.0",
     "react-native-randombytes": "3.6.1",
     "react-native-reanimated": "2.2.4",
@@ -82,6 +85,8 @@
     "@storybook/addon-ondevice-knobs": "5.3.25",
     "@storybook/react-native": "5.3.25",
     "@types/bitauth": "0.4.1",
+    "@testing-library/jest-native": "^4.0.4",
+    "@testing-library/react-native": "^8.0.0",
     "@types/jest": "26.0.24",
     "@types/lodash.debounce": "4.0.6",
     "@types/lodash.throttle": "4.1.6",
@@ -95,27 +100,18 @@
     "babel-loader": "8.2.3",
     "eslint": "7.32.0",
     "jest": "26.6.3",
+    "jest-svg-transformer": "^1.0.0",
     "metro-react-native-babel-preset": "0.64.0",
     "react-dom": "17.0.1",
     "react-native-clean-project": "3.6.7",
     "react-native-codegen": "0.0.7",
     "react-test-renderer": "17.0.1",
     "redux-devtools-extension": "2.13.9",
+    "ts-jest": "^26.0.7",
     "typescript": "4.4.4"
   },
   "resolutions": {
     "@types/react": "^17"
-  },
-  "jest": {
-    "preset": "react-native",
-    "moduleFileExtensions": [
-      "ts",
-      "tsx",
-      "js",
-      "jsx",
-      "json",
-      "node"
-    ]
   },
   "react-native": {
     "crypto": "react-native-crypto",

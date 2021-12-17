@@ -5,6 +5,7 @@ Welcome to BitPay App v2!
 Install dependencies with `yarn` >= 14.15.0
 
 ### IOS
+
 1. Install Pods `cd ios && pod install && cd ..`
 2. `yarn start` to start dev server
 3. Build and deploy to simulator `yarn ios` or device `yarn ios:device`

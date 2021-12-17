@@ -541,3 +541,5 @@ export const TokenOpts = {
 };
 
 export const SUPPORTED_TOKENS = ['usdc', 'gusd', 'pax', 'busd', 'dai', 'wbtc'];
+
+export const SUPPORTED_COINS = ['btc', 'bch', 'eth', 'doge', 'ltc'];

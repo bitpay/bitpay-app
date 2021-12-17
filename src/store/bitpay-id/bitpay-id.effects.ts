@@ -1,20 +1,30 @@
-import DeviceInfo from 'react-native-device-info';
-import BitPayApi from '../../lib/bitpay-api';
+import {batch} from 'react-redux';
+import AuthApi from '../../api/auth';
+import UserApi from '../../api/user';
+import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {Network} from '../../constants';
 import {AppActions} from '../app/';
+import {startOnGoingProcessModal} from '../app/app.effects';
+import {CardActions} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
-import {BitPayIdActions} from './index';
+import {User} from './bitpay-id.models';
+import {BitPayIdActions, BitPayIdEffects} from './index';
 
 interface PairParams {
   secret: string;
   code?: string;
 }
 
-export const startFetchSession = (): Effect => async (dispatch, getState) => {
+export const startBitPayIdStoreInit =
+  (network: Network, {user}: {user: User}): Effect<Promise<void>> =>
+  async dispatch => {
+    dispatch(BitPayIdActions.successFetchBasicInfo(network, user));
+  };
+
+export const startFetchSession = (): Effect => async dispatch => {
   try {
-    const {network} = getState().APP;
-    const api = BitPayApi.getInstance(network);
-    const session = await api.fetchSession();
+    const session = await AuthApi.fetchSession();
 
     dispatch(BitPayIdActions.successFetchSession(session));
   } catch (err) {
@@ -25,18 +35,14 @@ export const startFetchSession = (): Effect => async (dispatch, getState) => {
 export const startLogin =
   ({email, password}: {email: string; password: string}): Effect =>
   async (dispatch, getState) => {
+    dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
     try {
       const {APP, BITPAY_ID} = getState();
-      const api = BitPayApi.getInstance(APP.network);
-      const deviceName = await DeviceInfo.getDeviceName();
 
       // authenticate
       dispatch(LogActions.info('Authenticating BitPayID credentials...'));
-      const {twoFactorPending, emailAuthenticationPending} = await api.login(
-        email,
-        password,
-        BITPAY_ID.session.csrfToken,
-      );
+      const {twoFactorPending, emailAuthenticationPending} =
+        await AuthApi.login(email, password, BITPAY_ID.session.csrfToken);
 
       // TODO
       if (twoFactorPending) {
@@ -59,16 +65,12 @@ export const startLogin =
       );
 
       // refresh session
-      const session = await api.fetchSession();
+      const session = await AuthApi.fetchSession();
 
       // start pairing
-      const secret = await api.generatePairingCode(session.csrfToken);
-      const {token, user} = await api.pairAndFetchUser(secret, deviceName);
+      const secret = await AuthApi.generatePairingCode(session.csrfToken);
+      dispatch(BitPayIdEffects.startPairing({secret}));
 
-      dispatch(LogActions.info('Successfully paired with BitPayID.'));
-      dispatch(
-        BitPayIdActions.successPairingBitPayId(APP.network, token, user),
-      );
       dispatch(BitPayIdActions.successLogin(APP.network, session));
     } catch (err) {
       console.error(err);
@@ -76,6 +78,7 @@ export const startLogin =
       dispatch(LogActions.error(JSON.stringify(err)));
       dispatch(BitPayIdActions.failedLogin());
     }
+    dispatch(AppActions.dismissOnGoingProcessModal());
   };
 
 export const startCreateAccount =
@@ -92,26 +95,40 @@ export const startCreateAccount =
   };
 
 export const startPairing =
-  ({secret, code}: PairParams): Effect =>
+  ({secret, code}: PairParams): Effect<Promise<void>> =>
   async (dispatch, getState) => {
-    const deviceName = DeviceInfo.getModel() || 'unknown device';
     const state = getState();
     const network = state.APP.network;
-    const identity = state.APP.identity[network];
 
     try {
-      const api = BitPayApi.getInstance(network).use({identity});
-      const {user, token} = await api.pairAndFetchUser(
-        secret,
-        deviceName,
-        code,
-      );
+      const token = await AuthApi.pair(secret, code);
+      const {basicInfo, cards} = await UserApi.fetchAllUserData(token);
 
-      dispatch(BitPayIdActions.successPairingBitPayId(network, token, user));
+      batch(() => {
+        dispatch(LogActions.info('Successfully paired with BitPayID.'));
+        dispatch(BitPayIdActions.successFetchBasicInfo(network, basicInfo));
+        dispatch(CardActions.successFetchCards(network, cards));
+        dispatch(BitPayIdActions.successPairingBitPayId(network, token));
+      });
     } catch (err) {
       console.error(err);
       dispatch(LogActions.error('Pairing failed.'));
       dispatch(LogActions.error(JSON.stringify(err)));
       dispatch(BitPayIdActions.failedPairingBitPayId());
+    }
+  };
+
+export const startFetchBasicInfo =
+  (token: string): Effect =>
+  async (dispatch, getState) => {
+    try {
+      const {APP} = getState();
+      const user = await UserApi.fetchBasicInfo(token);
+
+      dispatch(BitPayIdActions.successFetchBasicInfo(APP.network, user));
+    } catch (err) {
+      dispatch(LogActions.error('Failed to fetch basic user info'));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(BitPayIdActions.failedFetchBasicInfo());
     }
   };

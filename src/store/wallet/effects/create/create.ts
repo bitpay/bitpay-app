@@ -1,6 +1,3 @@
-import {Effect, RootState} from '../index';
-import {BwcProvider} from '../../lib/bwc';
-import {WalletActions} from './';
 import {
   ASSETS,
   SUPPORTED_TOKENS,
@@ -9,34 +6,24 @@ import {
   SupportedTokens,
   Token,
   TokenOpts,
-} from '../../constants/assets';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
-import {AppActions} from '../app';
-import {startOnGoingProcessModal} from '../app/app.effects';
-import {navigationRef} from '../../Root';
+} from '../../../../constants/assets';
+import {Effect, RootState} from '../../../index';
+import {startOnGoingProcessModal} from '../../../app/app.effects';
+import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
+import {AppActions} from '../../../app';
+import {WalletActions} from '../../index';
+import {navigationRef} from '../../../../Root';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
-import {BASE_BWS_URL} from '../../constants/config';
-import axios from 'axios';
+import {BwcProvider} from '../../../../lib/bwc';
 
 const BWC = BwcProvider.getInstance();
 const bwcClient = BWC.getClient();
-
-export const startWalletStoreInit =
-  (): Effect => async (dispatch, _getState: () => RootState) => {
-    try {
-      // added success/failed for logging
-      dispatch(WalletActions.successWalletStoreInit());
-    } catch (e) {
-      console.error(e);
-      dispatch(WalletActions.failedWalletStoreInit());
-    }
-  };
 
 export const startCreateWallet =
   (assets: Array<SupportedAssets>): Effect =>
   async dispatch => {
     try {
-      await dispatch(
+      dispatch(
         startOnGoingProcessModal(OnGoingProcessMessages.CREATING_WALLET),
       );
 
@@ -150,13 +137,3 @@ export const startCreateWalletCredentials =
 
     return credentials;
   };
-
-export const getRates = (): Effect => async dispatch => {
-  try {
-    const {data: rates} = await axios.get(`${BASE_BWS_URL}/v3/fiatrates/`);
-    dispatch(WalletActions.successGetRates(rates));
-  } catch (err) {
-    console.error(err);
-    dispatch(WalletActions.failedGetRates());
-  }
-};
