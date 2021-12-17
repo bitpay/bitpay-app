@@ -3,10 +3,11 @@ import React from 'react';
 import styled from 'styled-components/native';
 import {BaseText} from '../../../components/styled/Text';
 import AngleRight from '../../../../assets/img/angle-right.svg';
-import {View} from 'react-native';
+import {StyleProp, TextStyle, View} from 'react-native';
 import {useDispatch} from 'react-redux';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {Hr} from '../../../components/styled/Containers';
+import {useTheme} from "@react-navigation/native";
 
 interface HomeSetting {
   title: string;
@@ -45,6 +46,8 @@ export const SettingTitle = styled(BaseText)`
 const SettingsHomeScreen: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const theme = useTheme();
+  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
   const SETTINGS: HomeSetting[] = [
     {
       title: 'General',
@@ -93,7 +96,7 @@ const SettingsHomeScreen: React.FC = () => {
       <Settings>
         <Setting
           onPress={() => navigation.navigate('BitpayId', {screen: 'Profile'})}>
-          <SettingTitle>TODO: BITPAY ID PLACEHOLDER</SettingTitle>
+          <SettingTitle style={textStyle}>TODO: BITPAY ID PLACEHOLDER</SettingTitle>
         </Setting>
 
         <Hr />
@@ -101,7 +104,7 @@ const SettingsHomeScreen: React.FC = () => {
           return (
             <View key={title}>
               <Setting onPress={onPress}>
-                <SettingTitle>{title}</SettingTitle>
+                <SettingTitle style={textStyle}>{title}</SettingTitle>
                 <AngleRight />
               </Setting>
               <Hr />
@@ -114,7 +117,7 @@ const SettingsHomeScreen: React.FC = () => {
               <Setting
                 activeOpacity={1}
                 onPress={() => dispatch(openUrlWithInAppBrowser(link))}>
-                <SettingTitle>{title}</SettingTitle>
+                <SettingTitle style={textStyle}>{title}</SettingTitle>
               </Setting>
               {LINKS.length - 1 !== index && <Hr />}
             </View>
