@@ -9,6 +9,7 @@ import Haptic from '../../../../components/haptic-feedback/haptic';
 import {BaseText} from '../../../../components/styled/Text';
 import {useTheme} from '@react-navigation/native';
 import {ScreenGutter} from '../../../../components/styled/Containers';
+import {navigationRef} from "../../../../Root";
 
 const ButtonsRow = styled.View`
   width: 100%;
@@ -57,14 +58,14 @@ const LinkingButtons = () => {
       label: 'buy',
       img: <BuySvg />,
       cta: () => {
-        /** TODO: Redirect me*/
+        navigationRef.navigate('BuyCrypto', {screen: 'Root'});
       },
     },
     {
       label: 'swap',
       img: <SwapSvg />,
       cta: () => {
-        /** TODO: Redirect me*/
+        navigationRef.navigate('SwapCrypto', {screen: 'Root'});
       },
     },
     {
