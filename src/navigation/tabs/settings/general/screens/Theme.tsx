@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {ColorSchemeName, View} from 'react-native';
+import {ColorSchemeName, StyleProp, TextStyle, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {AppActions} from '../../../../../store/app';
 import {
@@ -11,6 +11,7 @@ import {
 import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {RootState} from '../../../../../store';
 import {Hr} from '../../../../../components/styled/Containers';
+import {useTheme} from '@react-navigation/native';
 
 const ThemeSettings: React.FC = () => {
   const dispatch = useDispatch();
@@ -20,6 +21,8 @@ const ThemeSettings: React.FC = () => {
     dispatch(AppActions.setColorScheme(setScheme));
   };
   const [selected, setSelected] = useState(currentTheme);
+  const selectedTheme = useTheme();
+  const textStyle: StyleProp<TextStyle> = {color: selectedTheme.colors.text};
 
   const SETTINGS: {title: string; theme: ColorSchemeName}[] = [
     {title: 'Light Mode', theme: 'light'},
@@ -35,7 +38,7 @@ const ThemeSettings: React.FC = () => {
           return (
             <View key={theme}>
               <Setting onPress={() => onSetThemePress(theme)}>
-                <SettingTitle>{title}</SettingTitle>
+                <SettingTitle style={textStyle}>{title}</SettingTitle>
                 <Checkbox
                   radio={true}
                   onPress={() => onSetThemePress(theme)}
