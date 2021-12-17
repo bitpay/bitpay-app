@@ -7,7 +7,7 @@ import {StyleProp, TextStyle, View} from 'react-native';
 import {useDispatch} from 'react-redux';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {Hr} from '../../../components/styled/Containers';
-import {useTheme} from "@react-navigation/native";
+import {useTheme} from '@react-navigation/native';
 
 interface HomeSetting {
   title: string;
@@ -96,7 +96,9 @@ const SettingsHomeScreen: React.FC = () => {
       <Settings>
         <Setting
           onPress={() => navigation.navigate('BitpayId', {screen: 'Profile'})}>
-          <SettingTitle style={textStyle}>TODO: BITPAY ID PLACEHOLDER</SettingTitle>
+          <SettingTitle style={textStyle}>
+            TODO: BITPAY ID PLACEHOLDER
+          </SettingTitle>
         </Setting>
 
         <Hr />

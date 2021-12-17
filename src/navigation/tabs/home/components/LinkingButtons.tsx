@@ -9,7 +9,7 @@ import Haptic from '../../../../components/haptic-feedback/haptic';
 import {BaseText} from '../../../../components/styled/Text';
 import {useTheme} from '@react-navigation/native';
 import {ScreenGutter} from '../../../../components/styled/Containers';
-import {navigationRef} from "../../../../Root";
+import {navigationRef} from '../../../../Root';
 
 const ButtonsRow = styled.View`
   width: 100%;

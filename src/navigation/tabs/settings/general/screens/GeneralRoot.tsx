@@ -11,7 +11,7 @@ import {useSelector} from 'react-redux';
 import {RootState} from '../../../../../store';
 import {Hr} from '../../../../../components/styled/Containers';
 import AngleRight from '../../../../../../assets/img/angle-right.svg';
-import {StyleProp, TextStyle} from "react-native";
+import {StyleProp, TextStyle} from 'react-native';
 
 const GeneralSettingsRoot: React.FC = () => {
   const navigation = useNavigation();
