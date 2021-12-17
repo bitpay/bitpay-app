@@ -25,3 +25,34 @@ export interface ExchangeRate {
   code?: string;
   name?: string;
 }
+
+export interface PriceHistory {
+  coin: string;
+  priceDisplay: Array<number>;
+  percentChange: string;
+  currencyPair: string;
+}
+
+export interface WalletOptions {
+  keyId: any;
+  name: any;
+  m: any;
+  n: any;
+  myName: any;
+  networkName: string;
+  bwsurl: any;
+  singleAddress: any;
+  coin: string;
+  extendedPrivateKey: any;
+  mnemonic: any;
+  derivationStrategy: any;
+  secret: any;
+  account: any;
+  passphrase: any;
+  walletPrivKey: any;
+  compliantDerivation: any;
+  useLegacyCoinType?: boolean;
+  useLegacyPurpose?: boolean;
+  useNativeSegwit?: boolean;
+  words?: string;
+}

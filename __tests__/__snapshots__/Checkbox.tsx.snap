@@ -1,0 +1,153 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly 1`] = `
+<View
+  accessible={true}
+  focusable={true}
+  onClick={[Function]}
+  onResponderGrant={[Function]}
+  onResponderMove={[Function]}
+  onResponderRelease={[Function]}
+  onResponderTerminate={[Function]}
+  onResponderTerminationRequest={[Function]}
+  onStartShouldSetResponder={[Function]}
+  style={
+    Object {
+      "alignItems": "center",
+      "borderColor": "transparent",
+      "borderRadius": 5,
+      "borderWidth": 0,
+      "height": 30,
+      "justifyContent": "center",
+      "transform": Array [
+        Object {
+          "scale": 0.9,
+        },
+      ],
+      "width": 30,
+    }
+  }
+  testID="checkbox"
+>
+  <View
+    style={
+      Array [
+        Object {
+          "alignItems": "center",
+          "borderRadius": 20,
+          "height": 40,
+          "justifyContent": "center",
+          "width": 40,
+        },
+        Object {
+          "borderRadius": 5,
+          "height": 30,
+          "width": 30,
+        },
+        Object {
+          "backgroundColor": "#FFFFFF",
+        },
+      ]
+    }
+  >
+    <View
+      checked={false}
+      style={
+        Array [
+          Object {
+            "borderColor": "#434D5A",
+            "borderRadius": 5,
+            "borderStyle": "solid",
+            "borderWidth": 1,
+            "bottom": 0,
+            "left": 0,
+            "position": "absolute",
+            "right": 0,
+            "top": 0,
+          },
+        ]
+      }
+      testID="checkboxBorder"
+    />
+    <svg
+      data-file-name="SvgCheck"
+    />
+  </View>
+</View>
+`;
+
+exports[`renders correctly 2`] = `
+<View
+  accessible={true}
+  focusable={true}
+  onClick={[Function]}
+  onResponderGrant={[Function]}
+  onResponderMove={[Function]}
+  onResponderRelease={[Function]}
+  onResponderTerminate={[Function]}
+  onResponderTerminationRequest={[Function]}
+  onStartShouldSetResponder={[Function]}
+  style={
+    Object {
+      "alignItems": "center",
+      "borderColor": "transparent",
+      "borderRadius": 5,
+      "borderWidth": 1,
+      "height": 30,
+      "justifyContent": "center",
+      "transform": Array [
+        Object {
+          "scale": 0.9,
+        },
+      ],
+      "width": 30,
+    }
+  }
+  testID="checkbox"
+>
+  <View
+    style={
+      Array [
+        Object {
+          "alignItems": "center",
+          "borderRadius": 20,
+          "height": 40,
+          "justifyContent": "center",
+          "width": 40,
+        },
+        Object {
+          "borderRadius": 5,
+          "height": 30,
+          "width": 30,
+        },
+        Object {
+          "backgroundColor": "#2240C4",
+        },
+      ]
+    }
+  >
+    <View
+      checked={true}
+      style={
+        Array [
+          Object {
+            "borderColor": "#2240C4",
+            "borderRadius": 5,
+            "borderStyle": "solid",
+            "borderWidth": 1,
+            "bottom": 0,
+            "left": 0,
+            "position": "absolute",
+            "right": 0,
+            "top": 0,
+          },
+        ]
+      }
+      testID="checkboxBorder"
+    />
+    <svg
+      data-file-name="SvgCheck"
+    />
+  </View>
+</View>
+`;

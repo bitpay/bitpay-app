@@ -23,6 +23,7 @@ import VerifyPhrase, {VerifyPhraseProps} from '../wallet/screens/VerifyPhrase';
 import {HeaderRightContainer} from '../../components/styled/Containers';
 import {HeaderTitle} from '../../components/styled/Text';
 import LoginScreen from './screens/Login';
+import ImportWalletScreen from '../wallet/screens/ImportWallet';
 
 export type OnboardingStackParamList = {
   OnboardingStart: undefined;
@@ -39,6 +40,7 @@ export type OnboardingStackParamList = {
   BackupWallet: undefined;
   RecoveryPhrase: RecoveryPhraseProps;
   VerifyPhrase: VerifyPhraseProps;
+  ImportWallet: undefined;
 };
 
 export enum OnboardingScreens {
@@ -52,6 +54,7 @@ export enum OnboardingScreens {
   BACKUP_WALLET = 'BackupWallet',
   RECOVERY_PHRASE = 'RecoveryPhrase',
   VERIFY_PHRASE = 'VerifyPhrase',
+  IMPORT_WALLET = 'ImportWallet',
 }
 
 const Onboarding = createStackNavigator<OnboardingStackParamList>();
@@ -327,6 +330,15 @@ const OnboardingStack = () => {
         }}
         name={OnboardingScreens.TERMS_OF_USE}
         component={TermsOfUseScreen}
+      />
+      <Onboarding.Screen
+        options={{
+          gestureEnabled: false,
+          headerTitle: () => <HeaderTitle>Import Wallet</HeaderTitle>,
+          headerTitleAlign: 'center',
+        }}
+        name={OnboardingScreens.IMPORT_WALLET}
+        component={ImportWalletScreen}
       />
     </Onboarding.Navigator>
   );

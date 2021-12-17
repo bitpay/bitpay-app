@@ -8,12 +8,14 @@ export const SlateDark = '#434D5A';
 export const Slate = '#9BA3AE';
 export const NeutralSlate = '#F5F7F8';
 export const Air = '#EBEDF8';
+export const Cloud = '#F2F2F2';
 export const Feather = '#F6F7FC';
 
 /* Neutrals */
 export const Black = '#303133';
 export const Grey = '#E7E7E7';
 export const White = '#FFFFFF';
+export const LightBlack = '#252525';
 
 /* Interface */
 export const Caution = '#ef476f';

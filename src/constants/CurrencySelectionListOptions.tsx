@@ -13,78 +13,103 @@ import DaiIcon from '../../assets/img/currencies/dai.svg';
 import PaxIcon from '../../assets/img/currencies/pax.svg';
 import WbtcIcon from '../../assets/img/currencies/wbtc.svg';
 
+import BtcRoundIcon from '../../assets/img/currencies/round/btc.svg';
+import BchRoundIcon from '../../assets/img/currencies/round/bch.svg';
+import EthRoundIcon from '../../assets/img/currencies/round/eth.svg';
+import DogeRoundIcon from '../../assets/img/currencies/round/doge.svg';
+import LtcRoundIcon from '../../assets/img/currencies/round/ltc.svg';
+import XrpRoundIcon from '../../assets/img/currencies/round/xrp.svg';
+import UsdcRoundIcon from '../../assets/img/currencies/round/usdc.svg';
+import GusdRoundIcon from '../../assets/img/currencies/round/gusd.svg';
+import BusdRoundIcon from '../../assets/img/currencies/round/busd.svg';
+import DaiRoundIcon from '../../assets/img/currencies/round/dai.svg';
+import PaxRoundIcon from '../../assets/img/currencies/round/pax.svg';
+import WbtcRoundIcon from '../../assets/img/currencies/round/wbtc.svg';
+
 import {ItemProps} from '../components/list/CurrencySelectorList';
 
 export const CurrencyList: Array<ItemProps> = [
   {
     id: 'btc',
-    img: () => <BtcIcon />,
+    img: <BtcIcon />,
+    roundIcon: <BtcRoundIcon />,
     mainLabel: 'Bitcoin',
     secondaryLabel: 'BTC',
   },
   {
     id: 'bch',
-    img: () => <BchIcon />,
+    img: <BchIcon />,
+    roundIcon: <BchRoundIcon />,
     mainLabel: 'Bitcoin Cash',
     secondaryLabel: 'BCH',
   },
   {
     id: 'eth',
-    img: () => <EthIcon />,
+    img: <EthIcon />,
+    roundIcon: <EthRoundIcon />,
     mainLabel: 'Ethereum',
     secondaryLabel: 'ETH',
   },
   {
     id: 'doge',
-    img: () => <DogeIcon />,
+    img: <DogeIcon />,
+    roundIcon: <DogeRoundIcon />,
     mainLabel: 'Dogecoin',
     secondaryLabel: 'DOGE',
   },
   {
     id: 'ltc',
-    img: () => <LtcIcon />,
+    img: <LtcIcon />,
+    roundIcon: <LtcRoundIcon />,
     mainLabel: 'Litecoin',
     secondaryLabel: 'LTC',
   },
   {
     id: 'xrp',
-    img: () => <XrpIcon />,
+    img: <XrpIcon />,
+    roundIcon: <XrpRoundIcon />,
     mainLabel: 'Xrp',
     secondaryLabel: 'XRP',
   },
   {
     id: 'usdc',
-    img: () => <UsdcIcon />,
+    img: <UsdcIcon />,
+    roundIcon: <UsdcRoundIcon />,
     mainLabel: 'Usdc',
     secondaryLabel: 'USDC',
   },
   {
     id: 'gusd',
-    img: () => <GusdIcon />,
+    img: <GusdIcon />,
+    roundIcon: <GusdRoundIcon />,
     mainLabel: 'Gusd',
     secondaryLabel: 'GUSD',
   },
   {
     id: 'busd',
-    img: () => <BusdIcon />,
+    img: <BusdIcon />,
+    roundIcon: <BusdRoundIcon />,
     mainLabel: 'Busd',
     secondaryLabel: 'BUSD',
   },
   {
     id: 'dai',
-    img: () => <DaiIcon />,
+    img: <DaiIcon />,
+    roundIcon: <DaiRoundIcon />,
     mainLabel: 'Dai',
     secondaryLabel: 'DAI',
   },
   {
     id: 'pax',
-    img: () => <PaxIcon />,
+    img: <PaxIcon />,
+    roundIcon: <PaxRoundIcon />,
     mainLabel: 'Pax',
     secondaryLabel: 'PAX',
   },
   {
     id: 'wbtc',
-    img: () => <WbtcIcon />,
+    img: <WbtcIcon />,
+    roundIcon: <WbtcRoundIcon />,
     mainLabel: 'Wbtc',
     secondaryLabel: 'WBTC',
   },

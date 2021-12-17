@@ -1,0 +1,79 @@
+import React from 'react';
+import {cleanup, fireEvent, render} from '@testing-library/react-native';
+import {Provider} from 'react-redux';
+import BottomNotification from '../src/components/modal/bottom-notification/BottomNotification';
+import {configureTestStore} from '../src/store';
+
+const mockFn = jest.fn();
+
+const initialState = {
+  APP: {
+    showBottomNotificationModal: true,
+    bottomNotificationModalConfig: {
+      type: 'success',
+      title: 'Modal Title',
+      message: 'Modal Message',
+      enableBackdropDismiss: true,
+      actions: [
+        {
+          text: 'close',
+          action: mockFn,
+        },
+      ],
+    },
+  },
+};
+
+const store = configureTestStore(initialState);
+
+describe('Bottom Notification Modal', () => {
+  afterEach(cleanup);
+  it('should render correctly', async () => {
+    const {toJSON} = render(
+      <Provider store={store}>
+        <BottomNotification />
+      </Provider>,
+    );
+    expect(toJSON()).toMatchSnapshot();
+  });
+
+  it('should display all the details', async () => {
+    const {findByText} = render(
+      <Provider store={store}>
+        <BottomNotification />
+      </Provider>,
+    );
+
+    const title = await findByText('Modal Title');
+    const message = await findByText('Modal Message');
+    const cta = await findByText('CLOSE');
+
+    expect(title).toBeTruthy();
+    expect(message).toBeTruthy();
+    expect(cta).toBeTruthy();
+  });
+
+  it('should enable backdrop', async () => {
+    const {getByTestId} = render(
+      <Provider store={store}>
+        <BottomNotification />
+      </Provider>,
+    );
+
+    const backdrop = await getByTestId('modalBackdrop');
+    expect(backdrop).toBeTruthy();
+    fireEvent.press(backdrop);
+  });
+
+  it('should close modal on cta press', async () => {
+    const {getAllByText} = render(
+      <Provider store={store}>
+        <BottomNotification />
+      </Provider>,
+    );
+    const buttons = getAllByText('CLOSE');
+    expect(buttons.length).toBe(1);
+
+    await fireEvent.press(buttons[0]);
+  });
+});

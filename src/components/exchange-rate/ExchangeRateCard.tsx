@@ -46,7 +46,7 @@ export default ({item}: {item: ExchangeRateProps}) => {
         shadowRadius: 12,
         elevation: 5,
       }}>
-      <CoinIconContainer>{img()}</CoinIconContainer>
+      <CoinIconContainer>{img}</CoinIconContainer>
       <CoinNameText>{coinName}</CoinNameText>
       <CoinAverageText average={average}>{average}%</CoinAverageText>
     </ExchangeRateCardContainer>

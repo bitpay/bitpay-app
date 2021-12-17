@@ -1,3 +1,4 @@
+import {useNavigation} from '@react-navigation/core';
 import BuyCryptoIcon from '../../../../assets/img/tab-icons/transact-menu/buy-crypto.svg';
 import BuyGiftCardIcon from '../../../../assets/img/tab-icons/transact-menu/buy-gift-card.svg';
 import ExchangeIcon from '../../../../assets/img/tab-icons/transact-menu/exchange.svg';
@@ -103,20 +104,26 @@ const TransactModal = () => {
   const showModal = () => setModalVisible(true);
 
   // TODO: navigation
+  const navigation = useNavigation();
+
   const TransactMenuList: Array<TransactMenuItemProps> = [
     {
       id: 'buyCrypto',
       img: () => <BuyCryptoIcon />,
       title: 'Buy Crypto',
       description: 'Buy crypto with cash',
-      onPress: () => {},
+      onPress: () => {
+        navigation.navigate('BuyCrypto', {screen: 'Root'});
+      },
     },
     {
       id: 'exchange',
       img: () => <ExchangeIcon />,
       title: 'Exchange',
       description: 'Swap crypto for another',
-      onPress: () => {},
+      onPress: () => {
+        navigation.navigate('SwapCrypto', {screen: 'Root'});
+      },
     },
     {
       id: 'receive',

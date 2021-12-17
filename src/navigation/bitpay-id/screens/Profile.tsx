@@ -10,7 +10,7 @@ type ProfileProps = StackScreenProps<BitpayIdStackParamList, 'Profile'>;
 
 export const Profile: React.FC<ProfileProps> = props => {
   const dispatch = useDispatch();
-  const {APP, BITPAY_ID} = useSelector((root: RootState) => root);
+  const {APP, BITPAY_ID, CARD} = useSelector((root: RootState) => root);
   const {navigation} = props;
   const user = BITPAY_ID.user[APP.network];
 
@@ -22,6 +22,14 @@ export const Profile: React.FC<ProfileProps> = props => {
     dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
   };
 
+  const cardList = CARD.cards[APP.network].map(c => {
+    return (
+      <Text key={c.id}>
+        [{c.brand}] ({c.id})
+      </Text>
+    );
+  });
+
   return (
     <View>
       <Text>TODO: BitPay ID Profile Placeholder</Text>
@@ -30,6 +38,8 @@ export const Profile: React.FC<ProfileProps> = props => {
           <Text>
             Hello {user.givenName} {user.familyName}!
           </Text>
+          <Text>Cards:</Text>
+          {cardList}
           <Button onPress={onDisconnectPress} title="Disconnect" />
         </>
       )}

@@ -6,8 +6,8 @@ import {CurrencyList} from '../../../constants/CurrencySelectionListOptions';
 import Button from '../../../components/button/Button';
 import {SUPPORTED_TOKENS, SupportedAssets} from '../../../constants/assets';
 import {useDispatch} from 'react-redux';
-import {startCreateWallet} from '../../../store/wallet/wallet.effects';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {startCreateWallet} from '../../../store/wallet/effects';
 
 const AssetSelectionContainer = styled.SafeAreaView`
   flex: 1;

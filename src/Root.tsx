@@ -49,6 +49,13 @@ import AboutStack, {
   AboutStackParamList,
 } from './navigation/tabs/settings/about/AboutStack';
 
+import BuyCryptoStack, {
+  BuyCryptoStackParamList,
+} from './navigation/services/buy-crypto/BuyCryptoStack';
+import SwapCryptoStack, {
+  SwapCryptoStackParamList,
+} from './navigation/services/swap-crypto/SwapCryptoStack';
+
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
@@ -61,6 +68,8 @@ export type RootStackParamList = {
   ContactSettings: NavigatorScreenParams<ContactSettingsStackParamList>;
   NotificationSettings: NavigatorScreenParams<NotificationSettingsStackParamList>;
   About: NavigatorScreenParams<AboutStackParamList>;
+  BuyCrypto: NavigatorScreenParams<BuyCryptoStackParamList>;
+  SwapCrypto: NavigatorScreenParams<SwapCryptoStackParamList>;
 };
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
@@ -75,6 +84,8 @@ export enum RootStacks {
   CONTACT_SETTINGS = 'ContactSettings',
   NOTIFICATION_SETTINGS = 'NotificationSettings',
   ABOUT = 'About',
+  BUY_CRYPTO = 'BuyCrypto',
+  SWAP_CRYPTO = 'SwapCrypto',
 }
 // ROOT NAVIGATION CONFIG
 export type NavScreenParams = NavigatorScreenParams<
@@ -86,7 +97,9 @@ export type NavScreenParams = NavigatorScreenParams<
     SecuritySettingsStackParamList &
     ContactSettingsStackParamList &
     NotificationSettingsStackParamList &
-    AboutStackParamList
+    AboutStackParamList &
+    BuyCryptoStackParamList &
+    SwapCryptoStackParamList
 >;
 
 declare global {
@@ -232,6 +245,14 @@ export default () => {
             component={NotificationSettingsStack}
           />
           <Root.Screen name={RootStacks.ABOUT} component={AboutStack} />
+          <Root.Screen
+            name={RootStacks.BUY_CRYPTO}
+            component={BuyCryptoStack}
+          />
+          <Root.Screen
+            name={RootStacks.SWAP_CRYPTO}
+            component={SwapCryptoStack}
+          />
         </Root.Navigator>
       </NavigationContainer>
       <OnGoingProcessModal />
