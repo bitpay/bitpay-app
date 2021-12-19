@@ -1,14 +1,15 @@
 import React, {ReactNode} from 'react';
 import styled from 'styled-components/native';
-import {useSelector} from 'react-redux';
-import {RootState} from '../../../../store';
 import {Action, NeutralSlate, White} from '../../../../styles/colors';
 import BuySvg from '../../../../../assets/img/home/linking-buttons/buy.svg';
 import ReceiveSvg from '../../../../../assets/img/home/linking-buttons/receive.svg';
 import SendSvg from '../../../../../assets/img/home/linking-buttons/send.svg';
 import SwapSvg from '../../../../../assets/img/home/linking-buttons/swap.svg';
 import Haptic from '../../../../components/haptic-feedback/haptic';
-import {ColorSchemeName} from 'react-native';
+import {BaseText} from '../../../../components/styled/Text';
+import {useTheme} from '@react-navigation/native';
+import {ScreenGutter} from '../../../../components/styled/Containers';
+import {navigationRef} from '../../../../Root';
 
 const ButtonsRow = styled.View`
   width: 100%;
@@ -18,24 +19,24 @@ const ButtonsRow = styled.View`
 
 const ButtonContainer = styled.View`
   align-items: center;
+  margin: 20px ${ScreenGutter};
 `;
 
-const ButtonText = styled.Text<{colorSchemeName: ColorSchemeName}>`
+const ButtonText = styled(BaseText)<{isDark: boolean}>`
   font-size: 12px;
   line-height: 18px;
-  color: ${({colorSchemeName}: {colorSchemeName: ColorSchemeName}) =>
-    colorSchemeName === 'light' ? Action : White};
+  color: ${({isDark}) => (isDark ? White : Action)};
   margin-top: 5px;
 `;
 
-const LinkButton = styled.TouchableOpacity<{colorSchemeName: ColorSchemeName}>`
+const LinkButton = styled.TouchableOpacity<{isDark: boolean}>`
   height: 43px;
   width: 43px;
   border-radius: 11px;
   align-items: center;
   justify-content: center;
-  background: ${({colorSchemeName}: {colorSchemeName: ColorSchemeName}) =>
-    colorSchemeName === 'light' ? NeutralSlate : '#0C204E'};
+  background: ${({isDark}) => (isDark ? '#0C204E' : NeutralSlate)};
+  margin: 10px 0;
 `;
 
 interface ButtonListProps {
@@ -45,7 +46,7 @@ interface ButtonListProps {
 }
 
 const LinkingButtons = () => {
-  const colorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
+  const theme = useTheme();
 
   const _onPress = (cta: () => void) => {
     Haptic('impactLight');
@@ -57,14 +58,14 @@ const LinkingButtons = () => {
       label: 'buy',
       img: <BuySvg />,
       cta: () => {
-        /** TODO: Redirect me*/
+        navigationRef.navigate('BuyCrypto', {screen: 'Root'});
       },
     },
     {
       label: 'swap',
       img: <SwapSvg />,
       cta: () => {
-        /** TODO: Redirect me*/
+        navigationRef.navigate('SwapCrypto', {screen: 'Root'});
       },
     },
     {
@@ -86,12 +87,10 @@ const LinkingButtons = () => {
     <ButtonsRow>
       {buttonsList.map((button: ButtonListProps) => (
         <ButtonContainer key={button.label}>
-          <LinkButton
-            colorSchemeName={colorScheme}
-            onPress={() => _onPress(button.cta)}>
+          <LinkButton isDark={theme.dark} onPress={() => _onPress(button.cta)}>
             {button.img}
           </LinkButton>
-          <ButtonText colorSchemeName={colorScheme}>
+          <ButtonText isDark={theme.dark}>
             {button.label.toUpperCase()}
           </ButtonText>
         </ButtonContainer>

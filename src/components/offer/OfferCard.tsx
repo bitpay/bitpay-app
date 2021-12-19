@@ -3,6 +3,9 @@ import styled from 'styled-components/native';
 import {BaseText} from '../styled/Text';
 import {OfferProps} from './OfferSlides';
 import ArrowRight from '../../../assets/img/arrow-right.svg';
+import {White} from '../../styles/colors';
+import Haptic from '../haptic-feedback/haptic';
+import {ScreenGutter} from '../styled/Containers';
 
 const OfferCardContainer = styled.View`
   justify-content: flex-start;
@@ -11,6 +14,7 @@ const OfferCardContainer = styled.View`
   width: 260px;
   height: 182px;
   border-radius: 12px;
+  left: ${ScreenGutter};
 `;
 
 const ImgBackground = styled.View`
@@ -57,17 +61,33 @@ const ArrowContainer = styled.View`
   align-items: center;
 `;
 
+const FooterArrow = styled.TouchableHighlight`
+  width: 30px;
+  height: 30px;
+  align-self: center;
+  border-radius: 50px;
+  background-color: ${White};
+  align-items: center;
+  justify-content: center;
+`;
+
 export default ({item}: {item: OfferProps}) => {
-  const {img, title, description} = item;
+  const {img, title, description, onPress} = item;
+  const _onPress = () => {
+    Haptic('impactLight');
+    onPress();
+  };
 
   return (
     <OfferCardContainer>
-      <ImgBackground>{img()}</ImgBackground>
+      <ImgBackground>{img}</ImgBackground>
       <OfferTitleText>{title}</OfferTitleText>
       <DescriptionContainer>
         <DescriptionText>{description}</DescriptionText>
         <ArrowContainer>
-          <ArrowRight />
+          <FooterArrow onPress={_onPress} underlayColor="white">
+            <ArrowRight />
+          </FooterArrow>
         </ArrowContainer>
       </DescriptionContainer>
     </OfferCardContainer>

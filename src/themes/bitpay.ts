@@ -27,7 +27,7 @@ export const BitPayDarkTheme: BitPayTheme = {
     ...DarkTheme.colors,
 
     primary: BitPay,
-    background: Black,
+    background: '#000000',
     card: DarkTheme.colors.card,
     text: White,
     border: DarkTheme.colors.border,

@@ -97,7 +97,7 @@ const ShopHome = () => {
         ref={scrollViewRef}
         keyboardDismissMode="on-drag">
         <ShopHeader>Shop with Crypto</ShopHeader>
-        <Tab.Navigator screenOptions={ScreenOptions(112)}>
+        <Tab.Navigator screenOptions={{...ScreenOptions(112)}}>
           <Tab.Screen name="Gift Cards" component={memoizedGiftCardCatalog} />
           <Tab.Screen name="Shop Online" component={ShopOnline} />
         </Tab.Navigator>
