@@ -29,6 +29,10 @@ const CarouselContainer = styled.View`
   margin: 10px 0 10px;
 `;
 
+const _renderItem = ({item}: {item: ReactNode}) => {
+  return <>{item}</>;
+};
+
 const CurrencyCardComponent = (
   currencyList: string[],
   totalBalance: string,
@@ -78,27 +82,22 @@ const CardsCarousel = () => {
   const network = useSelector(({APP}: RootState) => APP.network);
 
   if (wallets) {
-    if (Object.keys(wallets).length) {
-      Object.values(wallets).forEach((wallet: any) => {
-        const {assets, totalBalance, show} = wallet;
-        if (show && assets) {
-          const currencyList: string[] = [];
-          assets.forEach(
-            (asset: any) =>
-              asset.network === network && currencyList.push(asset.coin),
-          );
-          if (currencyList.length) {
-            cardsList.push(CurrencyCardComponent(currencyList, totalBalance));
-          }
+    Object.values(wallets).forEach((wallet: any) => {
+      const {assets, totalBalance, show} = wallet;
+      if (show && assets) {
+        const currencyList: string[] = [];
+        assets.forEach(
+          (asset: any) =>
+            asset.network === network && currencyList.push(asset.coin),
+        );
+        if (currencyList.length) {
+          cardsList.push(CurrencyCardComponent(currencyList, totalBalance));
         }
-      });
-    }
+      }
+    });
 
     cardsList.push(<CreateWallet />);
   }
-  const _renderItem = ({item}: {item: ReactNode}) => {
-    return <>{item}</>;
-  };
 
   return (
     <CarouselContainer>
