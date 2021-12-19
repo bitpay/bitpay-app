@@ -1,9 +1,7 @@
 import React from 'react';
 import {Image, TouchableOpacity} from 'react-native';
 import {useSelector} from 'react-redux';
-import {useTheme} from '@react-navigation/native';
-
-import {navigationRef} from '../../../Root';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import {RootState} from '../../../store';
 import {PriceHistory} from '../../../store/wallet/wallet.models';
 
@@ -47,7 +45,7 @@ const Title = styled(BaseText)<{isDark: boolean}>`
   color: ${({isDark}) => (isDark ? White : SlateDark)};
 `;
 
-const HeaderContainer = styled.View<{justifyContent?: string}>`
+const SectionHeaderContainer = styled.View<{justifyContent?: string}>`
   flex-direction: row;
   margin: 10px ${ScreenGutter} 0;
   justify-content: ${({justifyContent}) => justifyContent || 'flex-start'};
@@ -55,15 +53,7 @@ const HeaderContainer = styled.View<{justifyContent?: string}>`
 
 const HomeRoot = () => {
   const theme = useTheme();
-
-  const goToCustomize = () => {
-    haptic('impactLight');
-    navigationRef.navigate('GeneralSettings', {
-      screen: 'CustomizeHome',
-    });
-  };
-
-  const goToOffers = () => {};
+  const navigation = useNavigation();
 
   // Exchange Rates
   const priceHistory = useSelector(
@@ -104,45 +94,50 @@ const HomeRoot = () => {
       <Home>
         <PortfolioBalance />
 
-        <HeaderContainer justifyContent={'flex-end'}>
-          <TouchableOpacity onPress={goToCustomize}>
+        <SectionHeaderContainer justifyContent={'flex-end'}>
+          <TouchableOpacity
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('GeneralSettings', {
+                screen: 'CustomizeHome',
+              });
+            }}>
             <HomeLink isDark={theme.dark}>Customize</HomeLink>
           </TouchableOpacity>
-        </HeaderContainer>
+        </SectionHeaderContainer>
 
         <CardsCarousel />
 
         <LinkingButtons />
 
-        <HeaderContainer justifyContent={'space-between'}>
+        <SectionHeaderContainer justifyContent={'space-between'}>
           <Title isDark={theme.dark}>Limited Time Offers</Title>
-
-          <TouchableOpacity onPress={goToOffers}>
+          <TouchableOpacity onPress={() => console.log('offers')}>
             <HomeLink isDark={theme.dark}> See all</HomeLink>
           </TouchableOpacity>
-        </HeaderContainer>
+        </SectionHeaderContainer>
 
         <OffersSlides items={OfferItems} />
 
-        <HeaderContainer>
+        <SectionHeaderContainer>
           <Title isDark={theme.dark}>Do More</Title>
-        </HeaderContainer>
+        </SectionHeaderContainer>
 
         <AdvertisementCard items={AdvertisementList} />
 
         {exchangeRatesItems.length > 0 && (
           <>
-            <HeaderContainer>
+            <SectionHeaderContainer>
               <Title isDark={theme.dark}>Exchange Rates</Title>
-            </HeaderContainer>
+            </SectionHeaderContainer>
 
             <ExchangeRatesSlides items={exchangeRatesItems} />
           </>
         )}
 
-        <HeaderContainer>
+        <SectionHeaderContainer>
           <Title isDark={theme.dark}>Quick Links</Title>
-        </HeaderContainer>
+        </SectionHeaderContainer>
 
         <QuickLinksSlides items={quickLinksItems} />
       </Home>
