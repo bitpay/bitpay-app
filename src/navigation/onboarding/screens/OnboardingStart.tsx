@@ -80,7 +80,7 @@ const OnboardingStart = () => {
     },
     {
       title: 'Seamlessly buy & swap with a decentralized exchange',
-      text: ' Buy with a credit card or existing funds, then seamlessly swap coins at competitive rates without leaving the app.',
+      text: 'Buy with a credit card or existing funds, then seamlessly swap coins at competitive rates without leaving the app.',
       img: () => <OnboardingImage source={OnboardingImages.swap[themeType]} />,
     },
   ];
