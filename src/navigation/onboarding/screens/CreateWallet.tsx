@@ -3,7 +3,6 @@ import styled from 'styled-components/native';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainer,
-  PngImage,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
@@ -11,6 +10,7 @@ import Button from '../../../components/button/Button';
 import {useNavigation} from '@react-navigation/native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
+import {OnboardingImage} from '../components/Containers';
 
 const CreateWalletContainer = styled.SafeAreaView`
   flex: 1;
@@ -29,7 +29,7 @@ const CreateOrImportWallet = () => {
 
   return (
     <CreateWalletContainer>
-      <PngImage source={CreateWalletImage[themeType]} />
+      <OnboardingImage source={CreateWalletImage[themeType]} />
       <TitleContainer>
         <TextAlign align={'center'}>
           <H3>Create a new wallet or import an existing wallet</H3>

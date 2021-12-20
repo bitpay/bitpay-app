@@ -3,7 +3,6 @@ import styled from 'styled-components/native';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainer,
-  PngImage,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
@@ -14,6 +13,7 @@ import {AppActions} from '../../../store/app';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useNavigation} from '@react-navigation/native';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
+import {OnboardingImage} from '../components/Containers';
 
 const NotificationsContainer = styled.SafeAreaView`
   flex: 1;
@@ -40,7 +40,7 @@ const NotificationsScreen = () => {
 
   return (
     <NotificationsContainer>
-      <PngImage source={NotificationImage[themeType]} />
+      <OnboardingImage source={NotificationImage[themeType]} />
       <TitleContainer>
         <TextAlign align={'center'}>
           <H3>Turn on notifications</H3>

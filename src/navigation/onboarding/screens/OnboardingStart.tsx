@@ -11,10 +11,10 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import {Action} from '../../../styles/colors';
 import {
   CtaContainerAbsolute,
-  PngImage,
   WIDTH,
 } from '../../../components/styled/Containers';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
+import {OnboardingImage} from '../components/Containers';
 
 // IMAGES
 const OnboardingImages = {
@@ -64,22 +64,24 @@ const OnboardingStart = () => {
       title: 'Turn crypto into dollars with our BitPay card',
       text: 'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
       subText: '*Currently available in the USA. More countries coming soon.',
-      img: () => <PngImage source={OnboardingImages.card[themeType]} />,
+      img: () => <OnboardingImage source={OnboardingImages.card[themeType]} />,
     },
     {
       title: 'Spend crypto at your favorite places',
       text: 'Discover a curated list of places you can spend your crypto. Purchase, manage, & spend store credits instantly.',
-      img: () => <PngImage source={OnboardingImages.spend[themeType]} />,
+      img: () => <OnboardingImage source={OnboardingImages.spend[themeType]} />,
     },
     {
       title: 'Keep your funds safe & secure',
       text: 'Websites and exchanges get hacked. BitPay allows you to privately store, manage, and use your crypto funds without having to trust a centralized bank or exchange.',
-      img: () => <PngImage source={OnboardingImages.wallet[themeType]} />,
+      img: () => (
+        <OnboardingImage source={OnboardingImages.wallet[themeType]} />
+      ),
     },
     {
       title: 'Seamlessly buy & swap with a decentralized exchange',
       text: ' Buy with a credit card or existing funds, then seamlessly swap coins at competitive rates without leaving the app.',
-      img: () => <PngImage source={OnboardingImages.swap[themeType]} />,
+      img: () => <OnboardingImage source={OnboardingImages.swap[themeType]} />,
     },
   ];
 

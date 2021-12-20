@@ -3,13 +3,13 @@ import styled from 'styled-components/native';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainer,
-  PngImage,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
+import {OnboardingImage} from '../components/Containers';
 
 const PinImage = {
   light: require('../../../../assets/img/onboarding/light/pin.png'),
@@ -26,7 +26,7 @@ const PinScreen = () => {
   const themeType = useThemeType();
   return (
     <PinContainer>
-      <PngImage source={PinImage[themeType]} />
+      <OnboardingImage source={PinImage[themeType]} />
       <TitleContainer>
         <TextAlign align={'center'}>
           <H3>Protect your wallet</H3>

@@ -1,10 +1,8 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import ProtectCrypto from '../../../../assets/img/onboarding/protect-crypto.svg';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainer,
-  PngImage,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
@@ -14,6 +12,7 @@ import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../store';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
+import {OnboardingImage} from '../../onboarding/components/Containers';
 
 const BackupContainer = styled.SafeAreaView`
   flex: 1;
@@ -42,7 +41,7 @@ const BackupScreen = () => {
 
   return (
     <BackupContainer>
-      <PngImage source={BackupImage[themeType]} />
+      <OnboardingImage source={BackupImage[themeType]} />
       <TitleContainer>
         <TextAlign align={'center'}>
           <H3>Would you like to backup your wallet?</H3>
