@@ -1,15 +1,20 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import Pin from '../../../../assets/img/onboarding/pin.svg';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainer,
-  ImageContainer,
+  PngImage,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
+import {useThemeType} from '../../../utils/hooks/useThemeType';
+
+const PinImage = {
+  light: require('../../../../assets/img/onboarding/light/pin.png'),
+  dark: require('../../../../assets/img/onboarding/dark/pin.png'),
+};
 
 const PinContainer = styled.SafeAreaView`
   flex: 1;
@@ -18,12 +23,10 @@ const PinContainer = styled.SafeAreaView`
 
 const PinScreen = () => {
   useAndroidBackHandler(() => true);
-
+  const themeType = useThemeType();
   return (
     <PinContainer>
-      <ImageContainer>
-        <Pin />
-      </ImageContainer>
+      <PngImage source={PinImage[themeType]} />
       <TitleContainer>
         <TextAlign align={'center'}>
           <H3>Protect your wallet</H3>
