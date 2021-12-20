@@ -1,10 +1,8 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import ProtectCrypto from '../../../../assets/img/onboarding/protect-crypto.svg';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainer,
-  ImageContainer,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
@@ -13,14 +11,22 @@ import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../store';
+import {useThemeType} from '../../../utils/hooks/useThemeType';
+import {OnboardingImage} from '../../onboarding/components/Containers';
 
 const BackupContainer = styled.SafeAreaView`
   flex: 1;
   align-items: center;
 `;
 
+const BackupImage = {
+  light: require('../../../../assets/img/onboarding/light/backup.png'),
+  dark: require('../../../../assets/img/onboarding/dark/backup.png'),
+};
+
 const BackupScreen = () => {
   useAndroidBackHandler(() => true);
+  const themeType = useThemeType();
   const navigation = useNavigation();
   const {id, mnemonic} = useSelector(({WALLET}: RootState) => WALLET.keys[0]);
   const gotoBackup = () =>
@@ -35,9 +41,7 @@ const BackupScreen = () => {
 
   return (
     <BackupContainer>
-      <ImageContainer>
-        <ProtectCrypto />
-      </ImageContainer>
+      <OnboardingImage source={BackupImage[themeType]} />
       <TitleContainer>
         <TextAlign align={'center'}>
           <H3>Would you like to backup your wallet?</H3>
