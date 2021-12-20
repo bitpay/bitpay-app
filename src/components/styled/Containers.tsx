@@ -12,6 +12,11 @@ export const HeaderRightContainer = styled.View`
   margin-right: 10px;
 `;
 
+export const PngImage = styled.Image`
+  height: ${HEIGHT * 0.3}px;
+  width: ${HEIGHT * 0.3}px;
+`;
+
 export const ImageContainer = styled.View`
   margin: 10px 0;
   height: 200px;
