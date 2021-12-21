@@ -4,6 +4,8 @@ import {NeutralSlate} from '../../styles/colors';
 
 export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
 
+export const ScreenGutter = '15px';
+
 // Nav
 export const HeaderRightContainer = styled.View`
   height: 50px;

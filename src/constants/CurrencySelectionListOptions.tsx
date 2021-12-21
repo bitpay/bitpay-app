@@ -32,84 +32,108 @@ export const CurrencyList: Array<ItemProps> = [
   {
     id: 'btc',
     img: <BtcIcon />,
-    roundIcon: <BtcRoundIcon />,
+    roundIcon: (size: number = 30) => (
+      <BtcRoundIcon width={size} height={size} />
+    ),
     mainLabel: 'Bitcoin',
     secondaryLabel: 'BTC',
   },
   {
     id: 'bch',
     img: <BchIcon />,
-    roundIcon: <BchRoundIcon />,
+    roundIcon: (size: number = 30) => (
+      <BchRoundIcon width={size} height={size} />
+    ),
     mainLabel: 'Bitcoin Cash',
     secondaryLabel: 'BCH',
   },
   {
     id: 'eth',
     img: <EthIcon />,
-    roundIcon: <EthRoundIcon />,
+    roundIcon: (size: number = 30) => (
+      <EthRoundIcon width={size} height={size} />
+    ),
     mainLabel: 'Ethereum',
     secondaryLabel: 'ETH',
   },
   {
     id: 'doge',
     img: <DogeIcon />,
-    roundIcon: <DogeRoundIcon />,
+    roundIcon: (size: number = 30) => (
+      <DogeRoundIcon width={size} height={size} />
+    ),
     mainLabel: 'Dogecoin',
     secondaryLabel: 'DOGE',
   },
   {
     id: 'ltc',
     img: <LtcIcon />,
-    roundIcon: <LtcRoundIcon />,
+    roundIcon: (size: number = 30) => (
+      <LtcRoundIcon width={size} height={size} />
+    ),
     mainLabel: 'Litecoin',
     secondaryLabel: 'LTC',
   },
   {
     id: 'xrp',
     img: <XrpIcon />,
-    roundIcon: <XrpRoundIcon />,
+    roundIcon: (size: number = 30) => (
+      <XrpRoundIcon width={size} height={size} />
+    ),
     mainLabel: 'Xrp',
     secondaryLabel: 'XRP',
   },
   {
     id: 'usdc',
     img: <UsdcIcon />,
-    roundIcon: <UsdcRoundIcon />,
+    roundIcon: (size: number = 30) => (
+      <UsdcRoundIcon width={size} height={size} />
+    ),
     mainLabel: 'Usdc',
     secondaryLabel: 'USDC',
   },
   {
     id: 'gusd',
     img: <GusdIcon />,
-    roundIcon: <GusdRoundIcon />,
+    roundIcon: (size: number = 30) => (
+      <GusdRoundIcon width={size} height={size} />
+    ),
     mainLabel: 'Gusd',
     secondaryLabel: 'GUSD',
   },
   {
     id: 'busd',
     img: <BusdIcon />,
-    roundIcon: <BusdRoundIcon />,
+    roundIcon: (size: number = 30) => (
+      <BusdRoundIcon width={size} height={size} />
+    ),
     mainLabel: 'Busd',
     secondaryLabel: 'BUSD',
   },
   {
     id: 'dai',
     img: <DaiIcon />,
-    roundIcon: <DaiRoundIcon />,
+    roundIcon: (size: number = 30) => (
+      <DaiRoundIcon width={size} height={size} />
+    ),
     mainLabel: 'Dai',
     secondaryLabel: 'DAI',
   },
   {
     id: 'pax',
     img: <PaxIcon />,
-    roundIcon: <PaxRoundIcon />,
+    roundIcon: (size: number = 30) => (
+      <PaxRoundIcon width={size} height={size} />
+    ),
     mainLabel: 'Pax',
     secondaryLabel: 'PAX',
   },
   {
     id: 'wbtc',
     img: <WbtcIcon />,
-    roundIcon: <WbtcRoundIcon />,
+    roundIcon: (size: number = 30) => (
+      <WbtcRoundIcon width={size} height={size} />
+    ),
     mainLabel: 'Wbtc',
     secondaryLabel: 'WBTC',
   },

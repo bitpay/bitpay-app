@@ -1,20 +1,14 @@
 import * as React from 'react';
 import {ReactElement, ReactNode} from 'react';
 import styled from 'styled-components/native';
-import {
-  Black,
-  Midnight,
-  NeutralSlate,
-  SlateDark,
-  White,
-} from '../../styles/colors';
+import {Midnight, NeutralSlate, SlateDark, White} from '../../styles/colors';
 import Arrow from '../../../assets/img/arrow-right.svg';
 import Haptic from '../haptic-feedback/haptic';
-import {CardGutter} from '../styled/Containers';
+import {CardGutter, ScreenGutter} from '../styled/Containers';
 import Card from '../card/Card';
-import {ColorSchemeName, View} from 'react-native';
-import {useSelector} from 'react-redux';
-import {RootState} from '../../store';
+import {StyleProp, TextStyle, View} from 'react-native';
+import {BaseText} from '../styled/Text';
+import {useTheme} from '@react-navigation/native';
 
 interface BodyProps {
   header?: string;
@@ -38,28 +32,24 @@ const CardHeader = styled.View`
   min-height: 30px;
 `;
 
-const CardBodyHeader = styled.Text<{appColorScheme: ColorSchemeName}>`
+const CardBodyHeader = styled(BaseText)<{isDarkMode: boolean}>`
   font-size: 14px;
   line-height: 21px;
-  color: ${({appColorScheme}: {appColorScheme: ColorSchemeName}) =>
-    appColorScheme === 'light' ? SlateDark : White};
+  color: ${({isDarkMode}) => (isDarkMode ? White : SlateDark)};
   margin-top: ${CardGutter};
 `;
 
-const CardBodyDesc = styled.Text<{appColorScheme: ColorSchemeName}>`
+const CardBodyDesc = styled(BaseText)<{isDarkMode: boolean}>`
   font-weight: 500;
   font-size: 18px;
   line-height: 25px;
-  color: ${({appColorScheme}: {appColorScheme: ColorSchemeName}) =>
-    appColorScheme === 'light' ? SlateDark : White};
+  color: ${({isDarkMode}) => (isDarkMode ? White : SlateDark)};
   margin-top: ${CardGutter};
 `;
 
-const CardPrice = styled.Text<{appColorScheme: ColorSchemeName}>`
+const CardPrice = styled(BaseText)`
   font-size: 31px;
   line-height: 46px;
-  color: ${({appColorScheme}: {appColorScheme: ColorSchemeName}) =>
-    appColorScheme === 'light' ? Black : White};
   font-weight: bold;
 `;
 
@@ -70,7 +60,7 @@ const CardPill = styled.View`
   padding: 4px 8px;
 `;
 
-const CardPillText = styled.Text`
+const CardPillText = styled(BaseText)`
   font-weight: 500;
   font-size: 14px;
   line-height: 19px;
@@ -87,30 +77,27 @@ const FooterArrow = styled.TouchableHighlight`
   justify-content: center;
 `;
 
+const CardContainer = styled.View`
+  left: ${ScreenGutter};
+`;
+
 const HomeCard = ({backgroundImg, body, footer, header}: HomeCardProps) => {
   const HeaderComp = <CardHeader>{header}</CardHeader>;
-
-  const appColorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
-
+  const theme = useTheme();
+  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
   const BodyComp = (
     <View>
       {body.header && (
-        <CardBodyHeader appColorScheme={appColorScheme}>
-          {body.header}
-        </CardBodyHeader>
+        <CardBodyHeader isDarkMode={theme.dark}>{body.header}</CardBodyHeader>
       )}
-      {body.price && (
-        <CardPrice appColorScheme={appColorScheme}>{body.price}</CardPrice>
-      )}
+      {body.price && <CardPrice style={textStyle}>{body.price}</CardPrice>}
       {body.pillText && (
         <CardPill>
           <CardPillText>{body.pillText}</CardPillText>
         </CardPill>
       )}
       {body.description && (
-        <CardBodyDesc appColorScheme={appColorScheme}>
-          {body.description}
-        </CardBodyDesc>
+        <CardBodyDesc isDarkMode={theme.dark}>{body.description}</CardBodyDesc>
       )}
     </View>
   );
@@ -129,17 +116,19 @@ const HomeCard = ({backgroundImg, body, footer, header}: HomeCardProps) => {
   );
 
   const containerProps = {
-    backgroundColor: appColorScheme === 'light' ? NeutralSlate : Midnight,
+    backgroundColor: theme.dark ? Midnight : NeutralSlate,
   };
 
   return (
-    <Card
-      backgroundImg={backgroundImg}
-      header={HeaderComp}
-      body={BodyComp}
-      footer={FooterComp}
-      containerProps={containerProps}
-    />
+    <CardContainer>
+      <Card
+        backgroundImg={backgroundImg}
+        header={HeaderComp}
+        body={BodyComp}
+        footer={FooterComp}
+        containerProps={containerProps}
+      />
+    </CardContainer>
   );
 };
 

@@ -1,12 +1,12 @@
 import React, {ReactNode} from 'react';
-import {ColorSchemeName, View} from 'react-native';
+import {StyleProp, TextStyle, View} from 'react-native';
 import Card from '../card/Card';
 import Haptic from '../haptic-feedback/haptic';
 import styled from 'styled-components/native';
-import {Black, LightBlack, NeutralSlate, White} from '../../styles/colors';
+import {LightBlack, NeutralSlate} from '../../styles/colors';
 import Checkbox from '../checkbox/Checkbox';
-import {useSelector} from 'react-redux';
-import {RootState} from '../../store';
+import {BaseText} from '../styled/Text';
+import {useTheme} from '@react-navigation/native';
 
 interface BodyProps {
   header?: string;
@@ -28,18 +28,14 @@ const CardHeader = styled.View`
   min-height: 20px;
 `;
 
-const CardBodyHeader = styled.Text<{appColorScheme: ColorSchemeName}>`
+const CardBodyHeader = styled(BaseText)`
   font-size: 16px;
   line-height: 20px;
-  color: ${({appColorScheme}: {appColorScheme: ColorSchemeName}) =>
-    appColorScheme === 'light' ? Black : White};
 `;
 
-const CardPrice = styled.Text<{appColorScheme: ColorSchemeName}>`
+const CardPrice = styled(BaseText)`
   font-size: 26px;
   line-height: 38px;
-  color: ${({appColorScheme}: {appColorScheme: ColorSchemeName}) =>
-    appColorScheme === 'light' ? Black : White};
   font-weight: bold;
 `;
 
@@ -51,21 +47,21 @@ const FooterAction = styled.TouchableHighlight`
 
 const CustomizeHomeCard = ({body, footer, header}: CustomizeHomeCardProps) => {
   const HeaderComp = <CardHeader>{header}</CardHeader>;
-
-  const appColorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
+  const theme = useTheme();
+  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
 
   const BodyComp = (
     <View>
       {body.header && (
-        <CardBodyHeader appColorScheme={appColorScheme}>
+        <CardBodyHeader
+          style={textStyle}
+          numberOfLines={1}
+          ellipsizeMode={'tail'}>
           {body.header}
         </CardBodyHeader>
       )}
       {body.price && (
-        <CardPrice
-          numberOfLines={1}
-          ellipsizeMode={'tail'}
-          appColorScheme={appColorScheme}>
+        <CardPrice style={textStyle} numberOfLines={1} ellipsizeMode={'tail'}>
           {body.price}
         </CardPrice>
       )}
@@ -88,7 +84,7 @@ const CustomizeHomeCard = ({body, footer, header}: CustomizeHomeCardProps) => {
   const containerProps = {
     width: '165px',
     minHeight: '172px',
-    backgroundColor: appColorScheme === 'light' ? NeutralSlate : LightBlack,
+    backgroundColor: theme.dark ? LightBlack : NeutralSlate,
   };
 
   return (

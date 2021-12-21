@@ -1,55 +1,62 @@
 import React from 'react';
+import {createStackNavigator} from '@react-navigation/stack';
+import {
+  baseNavigatorOptions,
+  baseScreenOptions,
+} from '../../../constants/NavigationOptions';
+import HomeRoot from './HomeRoot';
 import styled from 'styled-components/native';
-import CardsCarousel from './components/CardsCarousel';
-import {useSelector} from 'react-redux';
-import {RootState} from '../../../store';
-import {CurrencyList} from '../../../constants/CurrencySelectionListOptions';
-import {PriceHistory} from '../../../store/wallet/wallet.models';
-import ExchangeRatesSlides from '../../../components/exchange-rate/ExchangeRatesSlides';
-import AdvertisementCard from '../../../components/advertisement/AdvertisementCard';
+import ProfileSvg from '../../../../assets/img/home/profile.svg';
+import ScanSvg from '../../../../assets/img/home/scan.svg';
+import {ScreenGutter} from '../../../components/styled/Containers';
 
-const HomeContainer = styled.SafeAreaView`
-  flex: 1;
+export type HomeStackParamList = {
+  Root: undefined;
+};
+
+export enum HomeScreens {
+  Root = 'Root',
+}
+
+const HeaderContainer = styled.View`
+  flex-direction: row;
+  margin: 0 ${ScreenGutter};
 `;
 
-const ScrollView = styled.ScrollView`
-  padding: 10px;
+const ScanImg = styled.View`
+  margin-right: ${ScreenGutter};
 `;
 
-const AdvertismentContainer = styled.View`
-  margin-top: 10px;
-`;
+const Home = createStackNavigator<HomeStackParamList>();
 
 const HomeStack = () => {
-  const priceHistory = useSelector(
-    ({WALLET}: RootState) => WALLET.priceHistory,
-  );
-  const exchangeRatesItems = priceHistory.map(
-    (ph: PriceHistory, index: number) => {
-      const currencyInfo = CurrencyList.find(
-        ({id}: {id: string | number}) => id === ph.coin,
-      );
-      return {
-        id: index,
-        img: currencyInfo?.roundIcon,
-        coinName: currencyInfo?.mainLabel,
-        average: ph.percentChange,
-      };
-    },
+  //  TODO: Update me
+  const HeaderRightComponent = (
+    <HeaderContainer>
+      <ScanImg>
+        <ScanSvg />
+      </ScanImg>
+      <ProfileSvg />
+    </HeaderContainer>
   );
 
   return (
-    <HomeContainer>
-      <ScrollView>
-        <CardsCarousel />
-        <ExchangeRatesSlides items={exchangeRatesItems} />
-
-        <AdvertismentContainer>
-          <AdvertisementCard id="swapCrypto" />
-          <AdvertisementCard id="buyCrypto" />
-        </AdvertismentContainer>
-      </ScrollView>
-    </HomeContainer>
+    <Home.Navigator
+      initialRouteName={HomeScreens.Root}
+      screenOptions={{
+        ...baseNavigatorOptions,
+        ...baseScreenOptions,
+      }}>
+      <Home.Screen
+        name={HomeScreens.Root}
+        component={HomeRoot}
+        options={{
+          headerLeft: () => null,
+          headerTitle: () => null,
+          headerRight: () => HeaderRightComponent,
+        }}
+      />
+    </Home.Navigator>
   );
 };
 

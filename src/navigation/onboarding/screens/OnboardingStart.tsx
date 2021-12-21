@@ -6,11 +6,6 @@ import styled from 'styled-components/native';
 import Carousel, {Pagination} from 'react-native-snap-carousel';
 import OnboardingSlide from '../components/OnboardingSlide';
 
-import CryptoToCash from '../../../../assets/img/onboarding/crypto-to-cash.svg';
-import GiftCards from '../../../../assets/img/onboarding/gift-cards.svg';
-import WalletAndCoins from '../../../../assets/img/onboarding/wallet-and-coins.svg';
-import SwapCrypto from '../../../../assets/img/onboarding/swap-crypto.svg';
-
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {Action} from '../../../styles/colors';
@@ -18,30 +13,28 @@ import {
   CtaContainerAbsolute,
   WIDTH,
 } from '../../../components/styled/Containers';
+import {useThemeType} from '../../../utils/hooks/useThemeType';
+import {OnboardingImage} from '../components/Containers';
 
-const onboardingSlides = [
-  {
-    title: 'Turn crypto into dollars with our BitPay card',
-    text: 'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
-    subText: '*Currently available in the USA. More countries coming soon.',
-    img: () => <CryptoToCash />,
+// IMAGES
+const OnboardingImages = {
+  card: {
+    light: require('../../../../assets/img/onboarding/light/card.png'),
+    dark: require('../../../../assets/img/onboarding/dark/card.png'),
   },
-  {
-    title: 'Spend crypto at your favorite places',
-    text: 'Discover a curated list of places you can spend your crypto. Purchase, manage, & spend store credits instantly.',
-    img: () => <GiftCards />,
+  spend: {
+    light: require('../../../../assets/img/onboarding/light/spend.png'),
+    dark: require('../../../../assets/img/onboarding/dark/spend.png'),
   },
-  {
-    title: 'Keep your funds safe & secure',
-    text: 'Websites and exchanges get hacked. BitPay allows you to privately store, manage, and use your crypto funds without having to trust a centralized bank or exchange.',
-    img: () => <WalletAndCoins />,
+  wallet: {
+    light: require('../../../../assets/img/onboarding/light/wallet.png'),
+    dark: require('../../../../assets/img/onboarding/dark/wallet.png'),
   },
-  {
-    title: 'Seamlessly buy & swap with a decentralized exchange',
-    text: ' Buy with a credit card or existing funds, then seamlessly swap coins at competitive rates without leaving the app.',
-    img: () => <SwapCrypto />,
+  swap: {
+    light: require('../../../../assets/img/onboarding/light/swap.png'),
+    dark: require('../../../../assets/img/onboarding/dark/swap.png'),
   },
-];
+};
 
 const OnboardingContainer = styled.SafeAreaView`
   flex: 1;
@@ -62,23 +55,35 @@ const Column = styled.View`
 
 const OnboardingStart = () => {
   const navigation = useNavigation();
+  const themeType = useThemeType();
   const ref = useRef(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
-  const login = () => {
-    haptic('impactLight');
-    navigation.navigate('Onboarding', {
-      screen: 'Login',
-      params: {context: 'signup'},
-    });
-  };
-
-  const continueWithoutAccount = () => {
-    haptic('impactLight');
-    navigation.navigate('Onboarding', {
-      screen: 'Notifications',
-    });
-  };
+  const onboardingSlides = [
+    {
+      title: 'Turn crypto into dollars with our BitPay card',
+      text: 'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
+      subText: '*Currently available in the USA. More countries coming soon.',
+      img: () => <OnboardingImage source={OnboardingImages.card[themeType]} />,
+    },
+    {
+      title: 'Spend crypto at your favorite places',
+      text: 'Discover a curated list of places you can spend your crypto. Purchase, manage, & spend store credits instantly.',
+      img: () => <OnboardingImage source={OnboardingImages.spend[themeType]} />,
+    },
+    {
+      title: 'Keep your funds safe & secure',
+      text: 'Websites and exchanges get hacked. BitPay allows you to privately store, manage, and use your crypto funds without having to trust a centralized bank or exchange.',
+      img: () => (
+        <OnboardingImage source={OnboardingImages.wallet[themeType]} />
+      ),
+    },
+    {
+      title: 'Seamlessly buy & swap with a decentralized exchange',
+      text: 'Buy with a credit card or existing funds, then seamlessly swap coins at competitive rates without leaving the app.',
+      img: () => <OnboardingImage source={OnboardingImages.swap[themeType]} />,
+    },
+  ];
 
   return (
     <OnboardingContainer>
@@ -122,13 +127,28 @@ const OnboardingStart = () => {
             />
           </Column>
           <Column>
-            <Button buttonStyle={'primary'} onPress={login}>
+            <Button
+              buttonStyle={'primary'}
+              onPress={() => {
+                haptic('impactLight');
+                navigation.navigate('Onboarding', {
+                  screen: 'Login',
+                  params: {context: 'signup'},
+                });
+              }}>
               Get Started
             </Button>
           </Column>
         </Row>
         <Row>
-          <Button buttonType={'link'} onPress={continueWithoutAccount}>
+          <Button
+            buttonType={'link'}
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('Onboarding', {
+                screen: 'Notifications',
+              });
+            }}>
             Continue without an account
           </Button>
         </Row>

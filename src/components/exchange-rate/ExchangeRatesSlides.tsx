@@ -4,12 +4,14 @@ import {Carousel} from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
 import haptic from '../haptic-feedback/haptic';
 import ExchangeRateCard from './ExchangeRateCard';
+import {Theme} from '@react-navigation/native';
 
 export interface ExchangeRateProps {
   id: number;
   img: ReactElement | undefined;
   coinName?: string;
   average?: number;
+  theme: Theme;
 }
 
 interface ExchangeRateSlide {
@@ -19,9 +21,8 @@ interface ExchangeRateSlide {
 const WIDTH = Dimensions.get('window').width;
 
 const ExchangeRatesContainer = styled.View`
-  flex: 1;
-  margin-top: 10px;
-  min-height: 91px;
+  min-height: 125px;
+  width: 100%;
 `;
 
 const ExchangeRatesSlides = ({items}: ExchangeRateSlide) => {
@@ -34,7 +35,7 @@ const ExchangeRatesSlides = ({items}: ExchangeRateSlide) => {
         data={items}
         renderItem={ExchangeRateCard}
         sliderWidth={WIDTH}
-        itemWidth={110}
+        itemWidth={140}
         inactiveSlideScale={1}
         inactiveSlideOpacity={1}
         onScrollIndexChanged={() => {

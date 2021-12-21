@@ -2,16 +2,18 @@ import React, {ReactElement} from 'react';
 import {Carousel} from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
 import haptic from '../haptic-feedback/haptic';
-import {WIDTH} from '../styled/Containers';
+import {ScreenGutter, WIDTH} from '../styled/Containers';
 import QuickLinkCard from './QuickLinksCard';
+import {Theme} from '@react-navigation/native';
 
 export interface QuickLinkProps {
   id: string;
-  img: () => ReactElement;
+  img: ReactElement;
   title?: string;
   description?: string;
   link?: string;
   onPress: () => void;
+  theme: Theme;
 }
 
 interface QuickLinkSlide {
@@ -20,9 +22,7 @@ interface QuickLinkSlide {
 
 const QuickLinksContainer = styled.View`
   flex: 1;
-  position: relative;
-  left: 16px;
-  top: 30px;
+  margin: 10px 0 20px ${ScreenGutter};
 `;
 
 const QuickLinksSlides = ({items}: QuickLinkSlide) => {
