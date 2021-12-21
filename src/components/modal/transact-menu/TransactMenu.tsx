@@ -1,4 +1,3 @@
-import {useNavigation} from '@react-navigation/core';
 import BuyCryptoIcon from '../../../../assets/img/tab-icons/transact-menu/buy-crypto.svg';
 import BuyGiftCardIcon from '../../../../assets/img/tab-icons/transact-menu/buy-gift-card.svg';
 import ExchangeIcon from '../../../../assets/img/tab-icons/transact-menu/exchange.svg';
@@ -13,8 +12,7 @@ import React, {ReactElement, useState} from 'react';
 import BottomPopupModal from '../base/bottom-popup/BottomPopupModal';
 import {FlatList, TouchableOpacity, View} from 'react-native';
 import {SlateDark} from '../../../styles/colors';
-import {useNavigation} from '@react-navigation/native';
-import {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
+import {navigationRef} from "../../../Root";
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -103,9 +101,6 @@ const TransactModal = () => {
   const hideModal = () => setModalVisible(false);
   const showModal = () => setModalVisible(true);
 
-  // TODO: navigation
-  const navigation = useNavigation();
-
   const TransactMenuList: Array<TransactMenuItemProps> = [
     {
       id: 'buyCrypto',
@@ -113,7 +108,7 @@ const TransactModal = () => {
       title: 'Buy Crypto',
       description: 'Buy crypto with cash',
       onPress: () => {
-        navigation.navigate('BuyCrypto', {screen: 'Root'});
+        navigationRef.navigate('BuyCrypto', {screen: 'Root'});
       },
     },
     {
@@ -122,7 +117,7 @@ const TransactModal = () => {
       title: 'Exchange',
       description: 'Swap crypto for another',
       onPress: () => {
-        navigation.navigate('SwapCrypto', {screen: 'Root'});
+        navigationRef.navigate('SwapCrypto', {screen: 'Root'});
       },
     },
     {
@@ -153,7 +148,7 @@ const TransactModal = () => {
     img: () => <ScanIcon />,
     title: 'Scan',
     onPress: () => {
-      navigation.navigate(transactScreens.CAMERA);
+      navigationRef.navigate('Camera', {screen: 'Camera'});
     },
   };
 
@@ -162,9 +157,6 @@ const TransactModal = () => {
     img: () => <CloseIcon />,
     onPress: () => {},
   };
-
-  const navigation =
-    useNavigation<BottomTabNavigationProp<TransactStackParamList>>();
 
   return (
     <>

@@ -20,7 +20,7 @@ import SettingsFocusedIcon from '../../../assets/img/tab-icons/settings-focused.
 import TransactButtonIcon from '../../../assets/img/tab-icons/transact-button.svg';
 
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import TransactModal from '../../components/modal/transact-menu/TransactMenu';
+import TransactModal, {TransactStackParamList} from '../../components/modal/transact-menu/TransactMenu';
 
 const Icons: {[key: string]: React.FC<SvgProps>} = {
   Home: HomeIcon,
@@ -46,7 +46,7 @@ export enum TabsScreens {
 export type TabsStackParamList = {
   Home: undefined;
   Shop: undefined;
-  TransactButton: undefined;
+  TransactButton: NavigatorScreenParams<TransactStackParamList>;
   Card: undefined;
   Settings: NavigatorScreenParams<SettingsStackParamList> | undefined;
   Camera: undefined;
