@@ -1,9 +1,11 @@
+import {useNavigation, useTheme} from '@react-navigation/native';
 import React from 'react';
+import {StyleProp, TextStyle} from 'react-native';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {Link, Paragraph} from '../../../components/styled/Text';
 
-export const WalletConnectRootContainer = styled.View`
+export const WalletConnectContainer = styled.View`
   flex: 1;
 `;
 
@@ -12,18 +14,33 @@ export const ScrollView = styled.ScrollView`
   margin-top: 20px;
 `;
 
+const TextContainer = styled(Paragraph)<{isDark: boolean}>`
+  padding-bottom: 57px;
+`;
+
 const WalletConnectRoot = () => {
+  const navigation = useNavigation();
+  const theme = useTheme();
+  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
   return (
-    <WalletConnectRootContainer>
+    <WalletConnectContainer>
       <ScrollView>
-        <Paragraph style={{paddingBottom: 57}}>
+        <TextContainer style={textStyle}>
           WalletConnect is an open source protocol for connecting decentralized
           applications to mobile wallets with QR code scanning or deep linking.{' '}
-          <Link>Learn more</Link>
-        </Paragraph>
-        <Button buttonStyle={'primary'}>Connect</Button>
+          <Link isDark={theme.dark}>Learn more</Link>
+        </TextContainer>
+        <Button
+          buttonStyle={'primary'}
+          onPress={() => {
+            navigation.navigate('WalletConnect', {
+              screen: 'WalletConnectStart',
+            });
+          }}>
+          Connect
+        </Button>
       </ScrollView>
-    </WalletConnectRootContainer>
+    </WalletConnectContainer>
   );
 };
 
