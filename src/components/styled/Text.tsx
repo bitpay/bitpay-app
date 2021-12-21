@@ -76,7 +76,7 @@ export const Disclaimer = styled(BaseText)`
 export const HeaderTitle = styled(BaseText)`
   font-size: 18px;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 30px;
   letter-spacing: 0;
   color: ${({theme}) => theme.colors.text};
