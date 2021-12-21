@@ -1,24 +1,48 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Action, applyMiddleware, combineReducers, createStore} from 'redux';
 import {composeWithDevTools} from 'redux-devtools-extension';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from 'redux-logger'; // https://github.com/LogRocket/redux-logger
 import {getUniqueId} from 'react-native-device-info';
 import {persistStore, persistReducer} from 'redux-persist'; // https://github.com/rt2zz/redux-persist
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
 import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
-import {appReducer, appReduxPersistBlackList} from './app/app.reducer';
+import {
+  appReducer,
+  appReduxPersistBlackList,
+  AppState,
+} from './app/app.reducer';
+import {AppActionType} from './app/app.types';
 import {
   bitPayIdReducer,
   bitPayIdReduxPersistBlackList,
+  BitPayIdState,
 } from './bitpay-id/bitpay-id.reducer';
-import {cardReducer, cardReduxPersistBlacklist} from './card/card.reducer';
-import {logReducer, logReduxPersistBlackList} from './log/log.reducer';
+import {BitPayIdActionType} from './bitpay-id/bitpay-id.types';
+import {
+  cardReducer,
+  cardReduxPersistBlacklist,
+  CardState,
+} from './card/card.reducer';
+import {CardActionType} from './card/card.types';
+import {
+  logReducer,
+  logReduxPersistBlackList,
+  LogState,
+} from './log/log.reducer';
+import {LogActionType} from './log/log.types';
+import {
+  shopReducer,
+  shopReduxPersistBlackList,
+  ShopState,
+} from './shop/shop.reducer';
+import {ShopActionType} from './shop/shop.types';
 import {
   walletReducer,
   walletReduxPersistBlackList,
+  WalletState,
 } from './wallet/wallet.reducer';
-import {shopReducer, shopReduxPersistBlackList} from './shop/shop.reducer';
+import {WalletActionType} from './wallet/wallet.types';
 
 const basePersistConfig = {
   storage: AsyncStorage,
@@ -32,7 +56,7 @@ const basePersistConfig = {
  * */
 
 const reducers = {
-  APP: persistReducer(
+  APP: persistReducer<AppState, AppActionType>(
     {
       ...basePersistConfig,
       key: 'APP',
@@ -40,7 +64,7 @@ const reducers = {
     },
     appReducer,
   ),
-  BITPAY_ID: persistReducer(
+  BITPAY_ID: persistReducer<BitPayIdState, BitPayIdActionType>(
     {
       ...basePersistConfig,
       key: 'BITPAY_ID',
@@ -48,7 +72,7 @@ const reducers = {
     },
     bitPayIdReducer,
   ),
-  CARD: persistReducer(
+  CARD: persistReducer<CardState, CardActionType>(
     {
       ...basePersistConfig,
       key: 'CARD',
@@ -56,7 +80,7 @@ const reducers = {
     },
     cardReducer,
   ),
-  LOG: persistReducer(
+  LOG: persistReducer<LogState, LogActionType>(
     {
       ...basePersistConfig,
       key: 'LOG',
@@ -64,7 +88,7 @@ const reducers = {
     },
     logReducer,
   ),
-  SHOP: persistReducer(
+  SHOP: persistReducer<ShopState, ShopActionType>(
     {
       ...basePersistConfig,
       key: 'SHOP',
@@ -72,7 +96,7 @@ const reducers = {
     },
     shopReducer,
   ),
-  WALLET: persistReducer(
+  WALLET: persistReducer<WalletState, WalletActionType>(
     {
       ...basePersistConfig,
       key: 'WALLET',
