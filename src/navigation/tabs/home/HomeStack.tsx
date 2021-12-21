@@ -9,16 +9,20 @@ import styled from 'styled-components/native';
 import ProfileSvg from '../../../../assets/img/home/profile.svg';
 import ScanSvg from '../../../../assets/img/home/scan.svg';
 import {ScreenGutter} from '../../../components/styled/Containers';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../../store';
-import { AppActions } from '../../../store/app';
+import ImportWalletScreen from '../../wallet/screens/ImportWallet';
+import SelectAssetsScreen from '../../wallet/screens/SelectAssets';
+import {HeaderTitle} from '../../../components/styled/Text';
 
 export type HomeStackParamList = {
   Root: undefined;
+  SelectAssets: undefined;
+  ImportWallet: undefined;
 };
 
 export enum HomeScreens {
   Root = 'Root',
+  SELECT_ASSETS = 'SelectAssets',
+  IMPORT_WALLET = 'ImportWallet',
 }
 
 const HeaderContainer = styled.View`
@@ -43,16 +47,6 @@ const HomeStack = () => {
     </HeaderContainer>
   );
 
-  const dispatch = useDispatch();
-
-  const onboardingCompleted = useSelector(
-    ({APP}: RootState) => APP.onboardingCompleted,
-  );
-
-  if (!onboardingCompleted) {
-    dispatch(AppActions.showOnboardingFinishModal());
-  }
-
   return (
     <Home.Navigator
       initialRouteName={HomeScreens.Root}
@@ -68,6 +62,24 @@ const HomeStack = () => {
           headerTitle: () => null,
           headerRight: () => HeaderRightComponent,
         }}
+      />
+      <Home.Screen
+        options={{
+          gestureEnabled: false,
+          headerTitle: () => <HeaderTitle>Select Assets</HeaderTitle>,
+          headerTitleAlign: 'center',
+        }}
+        name={HomeScreens.SELECT_ASSETS}
+        component={SelectAssetsScreen}
+      />
+      <Home.Screen
+        options={{
+          gestureEnabled: false,
+          headerTitle: () => <HeaderTitle>Import Wallet</HeaderTitle>,
+          headerTitleAlign: 'center',
+        }}
+        name={HomeScreens.IMPORT_WALLET}
+        component={ImportWalletScreen}
       />
     </Home.Navigator>
   );

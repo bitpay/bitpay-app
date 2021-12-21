@@ -13,6 +13,9 @@ import {RootState} from '../../../store';
 import {useDispatch, useSelector} from 'react-redux';
 import {AppActions} from '../../../store/app';
 import {White} from '../../../styles/colors';
+import LinearGradient from 'react-native-linear-gradient';
+import haptic from '../../../components/haptic-feedback/haptic';
+import {navigationRef} from '../../../Root';
 
 interface OnboardingFinishModalProps {
   id: string;
@@ -24,13 +27,21 @@ interface OnboardingFinishModalProps {
   }>;
 }
 
+const BackgroundGradient = styled(LinearGradient).attrs({
+  colors: ['#AD4FF7', '#1A3B8B'],
+  start: {x: 0, y: 0},
+  end: {x: 0, y: 0},
+  useAngle: true,
+  angle: 225,
+})`
+  border-radius: 10px;
+`;
+
 const OnboardingFinishModalContainer = styled.View`
   justify-content: center;
   align-items: center;
   width: ${WIDTH - 16}px;
-  border-radius: 10px;
   padding: 20px;
-  background: #ad4ff7; // TODO linear gradient
 `;
 
 const OnboardingFinishModal: React.FC = () => {
@@ -40,6 +51,11 @@ const OnboardingFinishModal: React.FC = () => {
   const dispatch = useDispatch();
   const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
   const modalType = keys.length ? 'addFunds' : 'createWallet';
+  const dismissModal = () => {
+    haptic('impactLight');
+    dispatch(AppActions.setOnboardingCompleted());
+    dispatch(AppActions.dismissOnboardingFinishModal());
+  };
 
   // TODO add navigation
   let OnboardingFinishModalTypes: {
@@ -53,15 +69,15 @@ const OnboardingFinishModal: React.FC = () => {
         {
           text: 'Buy Crypto',
           onPress: () => {
-            dispatch(AppActions.setOnboardingCompleted())
-            dispatch(AppActions.dismissOnboardingFinishModal());
+            dismissModal();
+            navigationRef.navigate('BuyCrypto', {screen: 'Root'});
           },
         },
         {
           text: 'Receive Crypto',
           onPress: () => {
-            dispatch(AppActions.setOnboardingCompleted())
-            dispatch(AppActions.dismissOnboardingFinishModal());
+            dismissModal();
+            // TODO: navigationRef
           },
         },
       ],
@@ -75,15 +91,15 @@ const OnboardingFinishModal: React.FC = () => {
         {
           text: 'Create Wallet',
           onPress: () => {
-            dispatch(AppActions.setOnboardingCompleted());
-            dispatch(AppActions.dismissOnboardingFinishModal());
+            dismissModal();
+            navigationRef.navigate('Home', {screen: 'SelectAssets'});
           },
         },
         {
           text: 'Import Wallet',
           onPress: () => {
-            dispatch(AppActions.setOnboardingCompleted());
-            dispatch(AppActions.dismissOnboardingFinishModal());
+            dismissModal();
+             navigationRef.navigate('Home', {screen: 'ImportWallet'});
           },
         },
       ],
@@ -103,38 +119,40 @@ const OnboardingFinishModal: React.FC = () => {
       style={{
         alignItems: 'center',
       }}>
-      <OnboardingFinishModalContainer>
-        <TitleContainer style={{marginTop: 10}}>
-          <TextAlign align={'center'} style={{color: White}}>
-            <H3>{OnboardingFinishModalTypes[modalType].title}</H3>
-          </TextAlign>
-        </TitleContainer>
-        <TextContainer>
-          <TextAlign align={'center'} style={{color: White}}>
-            <Paragraph>
-              {OnboardingFinishModalTypes[modalType].description}
-            </Paragraph>
-          </TextAlign>
-        </TextContainer>
-        <CtaContainer style={{marginTop: 10}}>
-          <Button
-            buttonStyle={'primary'}
-            buttonType={'pill'}
-            onPress={() =>
-              OnboardingFinishModalTypes[modalType].buttons[0].onPress()
-            }>
-            {OnboardingFinishModalTypes[modalType].buttons[0].text}
-          </Button>
-          <Button
-            buttonStyle={'primary'}
-            buttonType={'pill'}
-            onPress={() =>
-              OnboardingFinishModalTypes[modalType].buttons[1].onPress()
-            }>
-            {OnboardingFinishModalTypes[modalType].buttons[1].text}
-          </Button>
-        </CtaContainer>
-      </OnboardingFinishModalContainer>
+      <BackgroundGradient>
+        <OnboardingFinishModalContainer>
+          <TitleContainer style={{marginTop: 10}}>
+            <TextAlign align={'center'} style={{color: White}}>
+              <H3>{OnboardingFinishModalTypes[modalType].title}</H3>
+            </TextAlign>
+          </TitleContainer>
+          <TextContainer>
+            <TextAlign align={'center'} style={{color: White}}>
+              <Paragraph>
+                {OnboardingFinishModalTypes[modalType].description}
+              </Paragraph>
+            </TextAlign>
+          </TextContainer>
+          <CtaContainer style={{marginTop: 10}}>
+            <Button
+              buttonStyle={'primary'}
+              buttonType={'pill'}
+              onPress={() =>
+                OnboardingFinishModalTypes[modalType].buttons[0].onPress()
+              }>
+              {OnboardingFinishModalTypes[modalType].buttons[0].text}
+            </Button>
+            <Button
+              buttonStyle={'primary'}
+              buttonType={'pill'}
+              onPress={() =>
+                OnboardingFinishModalTypes[modalType].buttons[1].onPress()
+              }>
+              {OnboardingFinishModalTypes[modalType].buttons[1].text}
+            </Button>
+          </CtaContainer>
+        </OnboardingFinishModalContainer>
+      </BackgroundGradient>
     </Modal>
   );
 };
