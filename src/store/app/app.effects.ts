@@ -107,7 +107,7 @@ export const startOnGoingProcessModal =
     }
 
     dispatch(AppActions.showOnGoingProcessModal(message));
-    return sleep(0);
+    return sleep(100);
   };
 
 /**

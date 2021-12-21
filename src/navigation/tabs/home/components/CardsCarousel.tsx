@@ -11,65 +11,93 @@ import HomeCard from '../../../../components/home-card/HomeCard';
 import {CurrencyList} from '../../../../constants/CurrencySelectionListOptions';
 
 const HeaderImg = styled.View`
-  width: 30px;
-  height: 30px;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  flex-direction: row;
+  flex: 1;
+  flex-wrap: wrap;
+`;
+
+const Img = styled.View<{isFirst: boolean; size: string}>`
+  width: ${({size}) => size};
+  height: ${({size}) => size};
+  min-height: 22px;
+  margin-left: ${({isFirst}) => (isFirst ? 0 : '-5px')};
 `;
 
 const CarouselContainer = styled.View`
-  margin: 10px 0;
+  margin: 10px 0 10px;
 `;
 
-const CurrencyCardComponent = (currency: string, price: string) => {
+const _renderItem = ({item}: {item: ReactNode}) => {
+  return <>{item}</>;
+};
+
+const CurrencyCardComponent = (
+  currencyList: string[],
+  totalBalance: string,
+) => {
   const _onCTAPress = () => {
     /** TODO: Redirect me */
   };
 
-  const currencyInfo = CurrencyList.find(
-    ({id}: {id: string | number}) => id === currency,
+  const currencyInfo = currencyList.map(currency =>
+    CurrencyList.find(({id}: {id: string | number}) => id === currency),
   );
 
+  const iconSize = currencyInfo.length > 7 ? 20 : 30;
+
   const HeaderComponent = (
-    <HeaderImg>{currencyInfo && currencyInfo.roundIcon}</HeaderImg>
+    <HeaderImg>
+      {currencyInfo &&
+        currencyInfo.map(
+          (currency, index) =>
+            currency && (
+              <Img
+                key={index}
+                isFirst={index === 0 || index % 11 === 0}
+                size={iconSize + 'px'}>
+                {currency.roundIcon(iconSize)}
+              </Img>
+            ),
+        )}
+    </HeaderImg>
   );
 
   return (
-    <>
-      {currencyInfo && (
-        <HomeCard
-          header={HeaderComponent}
-          // TODO: update the price code
-          body={{header: currencyInfo.mainLabel, price: `${price}$`}}
-          footer={{
-            onCTAPress: _onCTAPress,
-          }}
-        />
-      )}
-    </>
+    <HomeCard
+      header={HeaderComponent}
+      // TODO: update the price code
+      body={{header: 'My Everything Wallet', price: `$${totalBalance}`}}
+      footer={{
+        onCTAPress: _onCTAPress,
+      }}
+    />
   );
 };
 
 const CardsCarousel = () => {
   const cardsList: ReactNode[] = [];
   const wallets = useSelector(({WALLET}: RootState) => WALLET.wallets);
+  const network = useSelector(({APP}: RootState) => APP.network);
 
   if (wallets) {
-    if (Object.keys(wallets).length) {
-      Object.values(wallets).forEach((wallet: any) => {
-        const {assets, totalBalance} = wallet;
-        assets &&
-          assets.map((asset: any) => {
-            cardsList.push(CurrencyCardComponent(asset.coin, totalBalance));
-          });
-      });
-    }
+    Object.values(wallets).forEach((wallet: any) => {
+      const {assets, totalBalance, show} = wallet;
+      if (show && assets) {
+        const currencyList: string[] = [];
+        assets.forEach(
+          (asset: any) =>
+            asset.network === network && currencyList.push(asset.coin),
+        );
+        if (currencyList.length) {
+          cardsList.push(CurrencyCardComponent(currencyList, totalBalance));
+        }
+      }
+    });
 
     cardsList.push(<CreateWallet />);
   }
-  const _renderItem = ({item}: {item: ReactNode}) => {
-    return <>{item}</>;
-  };
 
   return (
     <CarouselContainer>

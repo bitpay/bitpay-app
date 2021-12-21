@@ -1,10 +1,8 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import Notifications from '../../../../assets/img/onboarding/notifications.svg';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainer,
-  ImageContainer,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
@@ -14,14 +12,22 @@ import {useDispatch} from 'react-redux';
 import {AppActions} from '../../../store/app';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useNavigation} from '@react-navigation/native';
+import {useThemeType} from '../../../utils/hooks/useThemeType';
+import {OnboardingImage} from '../components/Containers';
 
 const NotificationsContainer = styled.SafeAreaView`
   flex: 1;
   align-items: center;
 `;
 
+const NotificationImage = {
+  light: require('../../../../assets/img/onboarding/light/notifications.png'),
+  dark: require('../../../../assets/img/onboarding/dark/notifications.png'),
+};
+
 const NotificationsScreen = () => {
   useAndroidBackHandler(() => true);
+  const themeType = useThemeType();
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const onSetNotificationsPress = (notificationsAccepted: boolean) => {
@@ -34,9 +40,7 @@ const NotificationsScreen = () => {
 
   return (
     <NotificationsContainer>
-      <ImageContainer>
-        <Notifications />
-      </ImageContainer>
+      <OnboardingImage source={NotificationImage[themeType]} />
       <TitleContainer>
         <TextAlign align={'center'}>
           <H3>Turn on notifications</H3>
