@@ -7,11 +7,11 @@ import {createStackNavigator} from '@react-navigation/stack';
 import Camera from './screens/Camera';
 
 export enum CameraScreens {
-  CAMERA = 'Camera',
+  Root = 'Root',
 }
 
 export type CameraStackParamList = {
-  Camera: undefined;
+  Root: undefined;
 };
 
 const CameraNavigator = createStackNavigator<CameraStackParamList>();
@@ -20,12 +20,12 @@ const CameraStack = () => {
   return (
     <CameraNavigator.Navigator
       screenOptions={{...baseNavigatorOptions, ...baseScreenOptions}}
-      initialRouteName={CameraScreens.CAMERA}>
+      initialRouteName={CameraScreens.Root}>
       <CameraNavigator.Screen
         options={{
           gestureEnabled: false,
         }}
-        name={CameraScreens.CAMERA}
+        name={CameraScreens.Root}
         component={Camera}
       />
     </CameraNavigator.Navigator>
