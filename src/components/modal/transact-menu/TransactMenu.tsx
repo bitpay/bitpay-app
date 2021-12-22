@@ -12,7 +12,7 @@ import React, {ReactElement, useState} from 'react';
 import BottomPopupModal from '../base/bottom-popup/BottomPopupModal';
 import {FlatList, TouchableOpacity, View} from 'react-native';
 import {SlateDark} from '../../../styles/colors';
-import {navigationRef} from "../../../Root";
+import {navigationRef} from '../../../Root';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -87,14 +87,6 @@ interface TransactMenuItemProps {
   description?: string;
   onPress: () => void;
 }
-
-export enum transactScreens {
-  CAMERA = 'Camera',
-}
-
-export type TransactStackParamList = {
-  Camera: undefined;
-};
 
 const TransactModal = () => {
   const [modalVisible, setModalVisible] = useState(false);

@@ -20,7 +20,9 @@ import SettingsFocusedIcon from '../../../assets/img/tab-icons/settings-focused.
 import TransactButtonIcon from '../../../assets/img/tab-icons/transact-button.svg';
 
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import TransactModal, {TransactStackParamList} from '../../components/modal/transact-menu/TransactMenu';
+import TransactModal, {
+  TransactStackParamList,
+} from '../../components/modal/transact-menu/TransactMenu';
 
 const Icons: {[key: string]: React.FC<SvgProps>} = {
   Home: HomeIcon,
