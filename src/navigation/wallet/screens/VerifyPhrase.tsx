@@ -24,7 +24,6 @@ import {sleep} from '../../../utils/helper-methods';
 import {AppActions} from '../../../store/app';
 import {useDispatch} from 'react-redux';
 import {WalletActions} from '../../../store/wallet';
-import {navigationRef} from '../../../Root';
 export interface VerifyPhraseProps {
   keyId: string;
   words: string[];
@@ -134,7 +133,7 @@ const VerifyPhrase = () => {
                 text: 'OK',
                 action: () => {
                   if (isOnboarding) {
-                    navigationRef.navigate('Onboarding', {
+                    navigation.navigate('Onboarding', {
                       screen: 'TermsOfUse',
                     });
                   } else {

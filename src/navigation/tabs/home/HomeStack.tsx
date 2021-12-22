@@ -10,7 +10,7 @@ import ProfileSvg from '../../../../assets/img/home/profile.svg';
 import ScanSvg from '../../../../assets/img/home/scan.svg';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {TouchableOpacity} from 'react-native';
-import {navigationRef} from '../../../Root';
+import {useNavigation} from '@react-navigation/native';
 
 export type HomeStackParamList = {
   Root: undefined;
@@ -32,8 +32,9 @@ const ScanImg = styled.View`
 const Home = createStackNavigator<HomeStackParamList>();
 
 const HomeStack = () => {
+  const navigation = useNavigation();
   const goToQRScan = () => {
-    navigationRef.navigate('Camera', {screen: 'Root'});
+    navigation.navigate('Camera', {screen: 'Root'});
   };
   //  TODO: Update me
   const HeaderRightComponent = (

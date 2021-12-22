@@ -12,7 +12,7 @@ import React, {ReactElement, useState} from 'react';
 import BottomPopupModal from '../base/bottom-popup/BottomPopupModal';
 import {FlatList, TouchableOpacity, View} from 'react-native';
 import {SlateDark} from '../../../styles/colors';
-import {navigationRef} from '../../../Root';
+import {useNavigation} from '@react-navigation/native';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -89,6 +89,7 @@ interface TransactMenuItemProps {
 }
 
 const TransactModal = () => {
+  const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
   const hideModal = () => setModalVisible(false);
   const showModal = () => setModalVisible(true);
@@ -100,7 +101,7 @@ const TransactModal = () => {
       title: 'Buy Crypto',
       description: 'Buy crypto with cash',
       onPress: () => {
-        navigationRef.navigate('BuyCrypto', {screen: 'Root'});
+        navigation.navigate('BuyCrypto', {screen: 'Root'});
       },
     },
     {
@@ -109,7 +110,7 @@ const TransactModal = () => {
       title: 'Exchange',
       description: 'Swap crypto for another',
       onPress: () => {
-        navigationRef.navigate('SwapCrypto', {screen: 'Root'});
+        navigation.navigate('SwapCrypto', {screen: 'Root'});
       },
     },
     {
@@ -140,7 +141,7 @@ const TransactModal = () => {
     img: () => <ScanIcon />,
     title: 'Scan',
     onPress: () => {
-      navigationRef.navigate('Camera', {screen: 'Root'});
+      navigation.navigate('Camera', {screen: 'Root'});
     },
   };
 
