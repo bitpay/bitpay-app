@@ -135,7 +135,7 @@ const BoxInput = ({
 
   return (
     <InputContainer>
-{label && <Label theme={theme}>{label}</Label>}
+      {label && <Label theme={theme}>{label}</Label>}
       <Input
         {...props}
         secureTextEntry={isSecureTextEntry}

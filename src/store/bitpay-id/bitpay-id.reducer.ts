@@ -4,16 +4,26 @@ import {Network} from '../../constants';
 
 export const bitPayIdReduxPersistBlackList: (keyof BitPayIdState)[] = [
   'loginStatus',
+  'twoFactorAuthStatus',
+  'twoFactorPairingStatus',
   'pairingBitPayIdStatus',
   'fetchBasicInfoStatus',
 ];
 
+export type FetchSessionStatus = 'loading' | 'success' | 'failed' | null;
 export type LoginStatus =
   | 'success'
   | 'failed'
   | 'twoFactorPending'
   | 'emailAuthenticationPending'
   | null;
+export type PendingLoginStatus = Extract<
+  LoginStatus,
+  'twoFactorPending' | 'emailAuthenticationPending'
+>;
+export type TwoFactorAuthStatus = 'success' | 'failed' | null;
+export type TwoFactorPairingStatus = 'success' | 'failed' | null;
+export type EmailPairingStatus = 'success' | 'failed' | null;
 export type PairingBitPayIdStatus = 'success' | 'failed' | null;
 export type FetchBasicInfoStatus = 'success' | 'failed' | null;
 
@@ -25,7 +35,11 @@ export interface BitPayIdState {
   user: {
     [key in Network]: User | null;
   };
+  fetchSessionStatus: FetchSessionStatus;
   loginStatus: LoginStatus;
+  twoFactorAuthStatus: TwoFactorAuthStatus;
+  twoFactorPairingStatus: TwoFactorPairingStatus;
+  emailPairingStatus: EmailPairingStatus;
   pairingBitPayIdStatus: PairingBitPayIdStatus;
   fetchBasicInfoStatus: FetchBasicInfoStatus;
 }
@@ -43,7 +57,11 @@ const initialState: BitPayIdState = {
     [Network.mainnet]: null,
     [Network.testnet]: null,
   },
+  fetchSessionStatus: null,
   loginStatus: null,
+  twoFactorAuthStatus: null,
+  twoFactorPairingStatus: null,
+  emailPairingStatus: null,
   pairingBitPayIdStatus: null,
   fetchBasicInfoStatus: null,
 };
@@ -56,13 +74,33 @@ export const bitPayIdReducer = (
     case BitPayIdActionTypes.SUCCESS_FETCH_SESSION:
       return {
         ...state,
+        fetchSessionStatus: 'success',
         session: action.payload.session,
+      };
+
+    case BitPayIdActionTypes.FAILED_FETCH_SESSION:
+      return {
+        ...state,
+        fetchSessionStatus: 'failed',
+      };
+
+    case BitPayIdActionTypes.UPDATE_FETCH_SESSION_STATUS:
+      return {
+        ...state,
+        fetchSessionStatus: action.payload,
       };
 
     case BitPayIdActionTypes.SUCCESS_LOGIN:
       return {
         ...state,
         loginStatus: 'success',
+        session: action.payload.session,
+      };
+
+    case BitPayIdActionTypes.PENDING_LOGIN:
+      return {
+        ...state,
+        loginStatus: action.payload.status,
         session: action.payload.session,
       };
 
@@ -76,6 +114,65 @@ export const bitPayIdReducer = (
       return {
         ...state,
         loginStatus: action.payload,
+      };
+
+    case BitPayIdActionTypes.SUCCESS_SUBMIT_TWO_FACTOR_AUTH:
+      return {
+        ...state,
+        twoFactorAuthStatus: 'success',
+        session: {
+          ...state.session,
+          [action.payload.network]: action.payload.session,
+        },
+      };
+
+    case BitPayIdActionTypes.SUCCESS_SUBMIT_TWO_FACTOR_PAIRING:
+      return {
+        ...state,
+
+        twoFactorPairingStatus: 'success',
+      };
+
+    case BitPayIdActionTypes.FAILED_SUBMIT_TWO_FACTOR_AUTH:
+      return {
+        ...state,
+        twoFactorAuthStatus: 'failed',
+      };
+
+    case BitPayIdActionTypes.FAILED_SUBMIT_TWO_FACTOR_PAIRING:
+      return {
+        ...state,
+        twoFactorPairingStatus: 'failed',
+      };
+
+    case BitPayIdActionTypes.UPDATE_TWO_FACTOR_AUTH_STATUS:
+      return {
+        ...state,
+        twoFactorAuthStatus: action.payload,
+      };
+
+    case BitPayIdActionTypes.UPDATE_TWO_FACTOR_PAIRING_STATUS:
+      return {
+        ...state,
+        twoFactorPairingStatus: 'success',
+      };
+
+    case BitPayIdActionTypes.SUCCESS_EMAIL_PAIRING:
+      return {
+        ...state,
+        emailPairingStatus: 'success',
+      };
+
+    case BitPayIdActionTypes.FAILED_EMAIL_PAIRING:
+      return {
+        ...state,
+        emailPairingStatus: 'failed',
+      };
+
+    case BitPayIdActionTypes.UPDATE_EMAIL_PAIRING_STATUS:
+      return {
+        ...state,
+        emailPairingStatus: action.payload,
       };
 
     case BitPayIdActionTypes.SUCCESS_PAIRING_BITPAY_ID:
@@ -98,6 +195,16 @@ export const bitPayIdReducer = (
       return {
         ...state,
         pairingBitPayIdStatus: action.payload,
+      };
+
+    case BitPayIdActionTypes.COMPLETED_PAIRING:
+      return {
+        ...state,
+        loginStatus: null,
+        twoFactorAuthStatus: null,
+        twoFactorPairingStatus: null,
+        emailPairingStatus: null,
+        pairingBitPayIdStatus: null,
       };
 
     case BitPayIdActionTypes.SUCCESS_FETCH_BASIC_INFO:

@@ -46,7 +46,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
         const response = await UserApi.fetchAllUserData(token);
         user = response.basicInfo;
         cards = response.cards;
-
       } catch (err: any) {
         if (isAxiosError(err)) {
           dispatch(LogActions.error(`${err.name}: ${err.message}`));

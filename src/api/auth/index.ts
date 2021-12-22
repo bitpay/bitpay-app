@@ -13,16 +13,11 @@ import {
 
 export const AuthApi = {
   async fetchSession(): Promise<Session> {
-    try {
-      const {data: session} = await axios.get<Session>(
-        `${BASE_BITPAY_URLS[APP_NETWORK]}/auth/session`,
-      );
+    const {data: session} = await axios.get<Session>(
+      `${BASE_BITPAY_URLS[APP_NETWORK]}/auth/session`,
+    );
 
-      return session;
-    } catch (err) {
-      console.log('err', err);
-      throw err;
-    }
+    return session;
   },
 
   async login(
@@ -67,6 +62,28 @@ export const AuthApi = {
 
       throw err;
     }
+  },
+
+  async submitTwoFactor(
+    code: string,
+    csrfToken: string,
+  ): Promise<LoginResponse> {
+    const body = {
+      twoFactorCode: code,
+    };
+    const config = {
+      headers: {
+        'x-csrf-token': csrfToken,
+      },
+    };
+
+    const {data} = await axios.post<LoginResponse>(
+      `${BASE_BITPAY_URLS[APP_NETWORK]}/dashboard-api/verify-two-factor-code`,
+      body,
+      config,
+    );
+
+    return data;
   },
 
   /**
