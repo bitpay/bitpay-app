@@ -1,6 +1,6 @@
 import React from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
-import Camera from './screens/Camera';
+import QRScan from './screens/QRScan';
 
 export enum CameraScreens {
   Root = 'Root',
@@ -15,7 +15,7 @@ const CameraNavigator = createStackNavigator<CameraStackParamList>();
 const CameraStack = () => {
   return (
     <CameraNavigator.Navigator screenOptions={{headerShown: false}}>
-      <CameraNavigator.Screen name={CameraScreens.Root} component={Camera} />
+      <CameraNavigator.Screen name={CameraScreens.Root} component={QRScan} />
     </CameraNavigator.Navigator>
   );
 };

@@ -1,7 +1,6 @@
 import React from 'react';
 import {RNCamera} from 'react-native-camera';
 import styled from 'styled-components/native';
-import {View} from 'react-native';
 import Back from '../../../components/back/Back';
 import {useNavigation} from '@react-navigation/native';
 
@@ -14,7 +13,7 @@ const BackButton = styled.TouchableOpacity`
   margin-left: 10px;
 `;
 
-const Camera = () => {
+const QRScan = () => {
   const navigation = useNavigation();
   const goBack = () => {
     navigation.goBack();
@@ -39,14 +38,12 @@ const Camera = () => {
             console.log(barcodes);
           }
         }}>
-        <View>
-          <BackButton onPress={goBack}>
-            <Back />
-          </BackButton>
-        </View>
+        <BackButton onPress={goBack}>
+          <Back />
+        </BackButton>
       </RNCamera>
     </CameraContainer>
   );
 };
 
-export default Camera;
+export default QRScan;
