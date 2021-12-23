@@ -11,7 +11,7 @@ import {EmailPairingStatus} from '../../../store/bitpay-id/bitpay-id.reducer';
 import {AuthStackParamList} from '../AuthStack';
 import AuthFormContainer, {
   AuthFormParagraph,
-} from '../components/authFormContainer';
+} from '../components/AuthFormContainer';
 
 export type EmailAuthenticationParamList = {} | undefined;
 
