@@ -1,26 +1,49 @@
 import React from 'react';
 import {RNCamera} from 'react-native-camera';
-import styled from 'styled-components/native';
+import styled, {css} from 'styled-components/native';
 import Back from '../../../components/back/Back';
 import {useNavigation} from '@react-navigation/native';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {ScreenGutter} from "../../../components/styled/Containers";
+import QRScanGuide from '../../../../assets/img/qr-scan-guides.svg';
+import {Platform} from 'react-native';
 
-const ScanContainer = styled.SafeAreaView`
+const QRContainer = styled.SafeAreaView`
   flex: 1;
-  padding: ${ScreenGutter};
 `;
 
 const BackButton = styled.TouchableOpacity`
   width: 41px;
+  z-index: 1;
+  margin-left: ${Platform.select({
+    ios: css`
+      0
+    `,
+    android: css`15px`,
+  })}; ;
+`;
+
+const QRGuideContainer = styled.View`
+  display: flex;
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  top: 0;
+  left: 0;
+`;
+
+const QRGuide = styled.View`
+  width: 60%;
+  max-width: 400px;
+  max-height: 50%;
+  margin: auto;
+  opacity: 0.7;
 `;
 
 const QRScan = () => {
   const navigation = useNavigation();
-  const goBack = () => {
-    haptic('impactLight');
-    navigation.goBack();
-  };
+
   return (
     <RNCamera
       style={{
@@ -36,15 +59,25 @@ const QRScan = () => {
         buttonNegative: 'Cancel',
       }}
       onGoogleVisionBarcodesDetected={({barcodes}) => {
-        if (barcodes[0] && barcodes[0].data) {
+        if (barcodes.length && barcodes[0].data) {
+          //  TODO: Handle me
           console.log(barcodes);
         }
       }}>
-      <ScanContainer>
-        <BackButton onPress={goBack}>
+      <QRContainer>
+        <BackButton
+          onPress={() => {
+            haptic('impactLight');
+            navigation.goBack();
+          }}>
           <Back />
         </BackButton>
-      </ScanContainer>
+        <QRGuideContainer>
+          <QRGuide>
+            <QRScanGuide />
+          </QRGuide>
+        </QRGuideContainer>
+      </QRContainer>
     </RNCamera>
   );
 };
