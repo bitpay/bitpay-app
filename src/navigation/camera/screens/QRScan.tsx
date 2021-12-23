@@ -4,14 +4,15 @@ import styled from 'styled-components/native';
 import Back from '../../../components/back/Back';
 import {useNavigation} from '@react-navigation/native';
 import haptic from '../../../components/haptic-feedback/haptic';
+import {ScreenGutter} from "../../../components/styled/Containers";
 
 const ScanContainer = styled.SafeAreaView`
   flex: 1;
+  padding: ${ScreenGutter};
 `;
 
 const BackButton = styled.TouchableOpacity`
   width: 41px;
-  margin-left: 10px;
 `;
 
 const QRScan = () => {
