@@ -6,7 +6,6 @@ import {Network} from '../../../constants';
 import {navigationRef} from '../../../Root';
 import {RootState} from '../../../store';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
-import {Session} from '../../../store/bitpay-id/bitpay-id.models';
 import {EmailPairingStatus} from '../../../store/bitpay-id/bitpay-id.reducer';
 import {AuthStackParamList} from '../AuthStack';
 import AuthFormContainer, {
@@ -31,8 +30,11 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
   const pollId = useRef<ReturnType<typeof setInterval>>();
   const pollCountdown = useRef(POLL_TIMEOUT);
   const network = useSelector<RootState, Network>(({APP}) => APP.network);
-  const session = useSelector<RootState, Session>(
-    ({BITPAY_ID}) => BITPAY_ID.session,
+  const isAuthenticated = useSelector<RootState, boolean>(
+    ({BITPAY_ID}) => BITPAY_ID.session.isAuthenticated,
+  );
+  const csrfToken = useSelector<RootState, string>(
+    ({BITPAY_ID}) => BITPAY_ID.session.csrfToken,
   );
   const emailPairingStatus = useSelector<RootState, EmailPairingStatus>(
     ({BITPAY_ID}) => BITPAY_ID.emailPairingStatus,
@@ -63,20 +65,14 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
 
   // check poll result
   useEffect(() => {
-    if (session.isAuthenticated) {
+    if (isAuthenticated) {
       if (pollId.current) {
         clearInterval(pollId.current);
       }
 
-      dispatch(BitPayIdEffects.startEmailPairing(network, session.csrfToken));
+      dispatch(BitPayIdEffects.startEmailPairing(network, csrfToken));
     }
-  }, [
-    session.isAuthenticated,
-    session.csrfToken,
-    navigation,
-    network,
-    dispatch,
-  ]);
+  }, [isAuthenticated, csrfToken, navigation, network, dispatch]);
 
   useEffect(() => {
     switch (emailPairingStatus) {
