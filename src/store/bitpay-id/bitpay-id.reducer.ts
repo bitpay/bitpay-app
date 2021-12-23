@@ -129,7 +129,6 @@ export const bitPayIdReducer = (
     case BitPayIdActionTypes.SUCCESS_SUBMIT_TWO_FACTOR_PAIRING:
       return {
         ...state,
-
         twoFactorPairingStatus: 'success',
       };
 

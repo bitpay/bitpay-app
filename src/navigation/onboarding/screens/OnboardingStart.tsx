@@ -1,23 +1,27 @@
+import {useNavigation} from '@react-navigation/native';
+import {StackScreenProps} from '@react-navigation/stack';
 import React, {useRef, useState} from 'react';
 import {StatusBar} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import styled from 'styled-components/native';
-
 import Carousel, {Pagination} from 'react-native-snap-carousel';
-import OnboardingSlide from '../components/OnboardingSlide';
-
+import styled from 'styled-components/native';
 import CryptoToCash from '../../../../assets/img/onboarding/crypto-to-cash.svg';
 import GiftCards from '../../../../assets/img/onboarding/gift-cards.svg';
-import WalletAndCoins from '../../../../assets/img/onboarding/wallet-and-coins.svg';
 import SwapCrypto from '../../../../assets/img/onboarding/swap-crypto.svg';
-
+import WalletAndCoins from '../../../../assets/img/onboarding/wallet-and-coins.svg';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {Action} from '../../../styles/colors';
 import {
   CtaContainerAbsolute,
   WIDTH,
 } from '../../../components/styled/Containers';
+import {navigationRef} from '../../../Root';
+import {Action} from '../../../styles/colors';
+import OnboardingSlide from '../components/OnboardingSlide';
+import {OnboardingStackParamList} from '../OnboardingStack';
+
+type OnboardingStartParamList = {} | undefined;
+type OnboardingStartProps = OnboardingStartParamList &
+  StackScreenProps<OnboardingStackParamList, 'OnboardingStart'>;
 
 const onboardingSlides = [
   {
@@ -60,16 +64,16 @@ const Column = styled.View`
   flex: 1;
 `;
 
-const OnboardingStart = () => {
+const OnboardingStart: React.FC<OnboardingStartProps> = () => {
   const navigation = useNavigation();
   const ref = useRef(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
   const login = () => {
     haptic('impactLight');
-    navigation.navigate('Onboarding', {
-      screen: 'Login',
-      params: {context: 'signup'},
+    navigationRef.navigate('Auth', {
+      screen: 'LoginSignup',
+      params: {context: 'login'},
     });
   };
 

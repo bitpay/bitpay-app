@@ -11,7 +11,6 @@ import TwoFactorAuthentication, {
   TwoFactorAuthenticationParamList,
 } from './screens/TwoFactor.Auth';
 import LoginSignup, {LoginSignupParamList} from './screens/LoginSignup';
-import {NavigationProp} from '@react-navigation/core';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../store';
 import {LoginStatus} from '../../store/bitpay-id/bitpay-id.reducer';
@@ -27,16 +26,14 @@ export enum AuthScreens {
 }
 
 export type AuthStackParamList = {
-  LoginSignup: LoginSignupParamList | undefined;
-  EmailAuthentication: EmailAuthenticationParamList | undefined;
-  TwoFactorAuthentication: TwoFactorAuthenticationParamList | undefined;
-  TwoFactorPairing: TwoFactorPairingParamList | undefined;
+  LoginSignup: LoginSignupParamList;
+  EmailAuthentication: EmailAuthenticationParamList;
+  TwoFactorAuthentication: TwoFactorAuthenticationParamList;
+  TwoFactorPairing: TwoFactorPairingParamList;
 };
 
-export type AuthStackNavigationProp = NavigationProp<AuthStackParamList>;
-
 const Auth = createStackNavigator<AuthStackParamList>();
-const AuthStack = () => {
+const AuthStack: React.FC = () => {
   const loginStatus = useSelector<RootState, LoginStatus>(
     ({BITPAY_ID}) => BITPAY_ID.loginStatus,
   );
