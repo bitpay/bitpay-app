@@ -15,7 +15,7 @@ import {AppActions} from '../../../store/app';
 import {White} from '../../../styles/colors';
 import LinearGradient from 'react-native-linear-gradient';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {navigationRef} from '../../../Root';
+import {useNavigation} from '@react-navigation/native';
 
 interface OnboardingFinishModalProps {
   id: string;
@@ -51,6 +51,7 @@ const OnboardingFinishModal: React.FC = () => {
   const dispatch = useDispatch();
   const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
   const modalType = keys.length ? 'addFunds' : 'createWallet';
+  const navigation = useNavigation();
   const dismissModal = () => {
     haptic('impactLight');
     dispatch(AppActions.setOnboardingCompleted());
@@ -70,7 +71,7 @@ const OnboardingFinishModal: React.FC = () => {
           text: 'Buy Crypto',
           onPress: () => {
             dismissModal();
-            navigationRef.navigate('BuyCrypto', {screen: 'Root'});
+            navigation.navigate('BuyCrypto', {screen: 'Root'});
           },
         },
         {
@@ -92,14 +93,14 @@ const OnboardingFinishModal: React.FC = () => {
           text: 'Create Wallet',
           onPress: () => {
             dismissModal();
-            navigationRef.navigate('Home', {screen: 'SelectAssets'});
+            navigation.navigate('Home', {screen: 'SelectAssets'});
           },
         },
         {
           text: 'Import Wallet',
           onPress: () => {
             dismissModal();
-             navigationRef.navigate('Home', {screen: 'ImportWallet'});
+            navigation.navigate('Home', {screen: 'ImportWallet'});
           },
         },
       ],
