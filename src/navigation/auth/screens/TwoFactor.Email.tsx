@@ -15,13 +15,15 @@ import AuthFormContainer, {
 
 export type EmailAuthenticationParamList = {} | undefined;
 
-type EmailAuthenticationProps = EmailAuthenticationParamList &
-  StackScreenProps<AuthStackParamList, 'EmailAuthentication'>;
+type EmailAuthenticationScreenProps = StackScreenProps<
+  AuthStackParamList,
+  'EmailAuthentication'
+>;
 
 const POLL_INTERVAL = 1000 * 3;
 const POLL_TIMEOUT = 1000 * 60 * 5;
 
-const EmailAuthentication: React.FC<EmailAuthenticationProps> = ({
+const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
   navigation,
 }) => {
   const dispatch = useDispatch();

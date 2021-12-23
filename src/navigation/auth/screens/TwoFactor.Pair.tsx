@@ -21,8 +21,10 @@ import AuthFormContainer, {
 
 export type TwoFactorPairingParamList = {} | undefined;
 
-type TwoFactorPairingProps = TwoFactorPairingParamList &
-  StackScreenProps<AuthStackParamList, 'TwoFactorAuthentication'>;
+type TwoFactorPairingScreenProps = StackScreenProps<
+  AuthStackParamList,
+  'TwoFactorAuthentication'
+>;
 
 interface TwoFactorPairingFieldValues {
   code: string;
@@ -32,7 +34,9 @@ const schema = yup.object().shape({
   code: yup.string().required('Required'),
 });
 
-const TwoFactorPairing: React.FC<TwoFactorPairingProps> = ({navigation}) => {
+const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
+  navigation,
+}) => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const twoFactorPairingStatus = useSelector<RootState, TwoFactorPairingStatus>(

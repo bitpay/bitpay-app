@@ -7,7 +7,9 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import Button from '../../components/button/Button';
 import haptic from '../../components/haptic-feedback/haptic';
-import OnboardingStartScreen from './screens/OnboardingStart';
+import OnboardingStartScreen, {
+  OnboardingStartParamList,
+} from './screens/OnboardingStart';
 import NotificationsScreen from './screens/Notifications';
 import PinScreen from './screens/Pin';
 import CreateWalletScreen from './screens/CreateWallet';
@@ -25,7 +27,7 @@ import {HeaderTitle} from '../../components/styled/Text';
 import ImportWalletScreen from '../wallet/screens/ImportWallet';
 
 export type OnboardingStackParamList = {
-  OnboardingStart: undefined;
+  OnboardingStart: OnboardingStartParamList;
   Notifications: undefined;
   Pin: undefined;
   CreateWallet: undefined;

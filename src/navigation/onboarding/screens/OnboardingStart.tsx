@@ -19,9 +19,11 @@ import {Action} from '../../../styles/colors';
 import OnboardingSlide from '../components/OnboardingSlide';
 import {OnboardingStackParamList} from '../OnboardingStack';
 
-type OnboardingStartParamList = {} | undefined;
-type OnboardingStartProps = OnboardingStartParamList &
-  StackScreenProps<OnboardingStackParamList, 'OnboardingStart'>;
+export type OnboardingStartParamList = {} | undefined;
+type OnboardingStartScreenProps = StackScreenProps<
+  OnboardingStackParamList,
+  'OnboardingStart'
+>;
 
 const onboardingSlides = [
   {
@@ -64,7 +66,7 @@ const Column = styled.View`
   flex: 1;
 `;
 
-const OnboardingStart: React.FC<OnboardingStartProps> = () => {
+const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
   const navigation = useNavigation();
   const ref = useRef(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
