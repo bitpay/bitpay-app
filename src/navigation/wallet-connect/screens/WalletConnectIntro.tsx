@@ -7,10 +7,10 @@ import {Link, Paragraph} from '../../../components/styled/Text';
 
 export const WalletConnectContainer = styled.View`
   flex: 1;
+  padding: 0 16px;
 `;
 
 export const ScrollView = styled.ScrollView`
-  padding: 0 16px;
   margin-top: 20px;
 `;
 
@@ -18,7 +18,7 @@ const TextContainer = styled(Paragraph)<{isDark: boolean}>`
   padding-bottom: 57px;
 `;
 
-const WalletConnectRoot = () => {
+const WalletConnectIntro = () => {
   const navigation = useNavigation();
   const theme = useTheme();
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
@@ -44,4 +44,4 @@ const WalletConnectRoot = () => {
   );
 };
 
-export default WalletConnectRoot;
+export default WalletConnectIntro;

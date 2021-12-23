@@ -4,7 +4,7 @@ import Button from '../../../components/button/Button';
 import {Paragraph} from '../../../components/styled/Text';
 import VerifiedIcon from '../../../../assets/img/wallet-connect/verified-icon.svg';
 import WalletIcon from '../../../../assets/img/wallet-connect/wallet-icon.svg';
-import {useTheme} from '@react-navigation/native';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import {
   LightBlack,
   NeutralSlate,
@@ -12,7 +12,10 @@ import {
   White,
 } from '../../../styles/colors';
 import {StyleProp, TextStyle} from 'react-native';
-import {ScrollView, WalletConnectContainer} from './WalletConnectRoot';
+import {ScrollView, WalletConnectContainer} from './WalletConnectIntro';
+import haptic from '../../../components/haptic-feedback/haptic';
+import {AppActions} from '../../../store/app';
+import {useDispatch} from 'react-redux';
 
 const RequestLabel = styled(Paragraph)<{isDark: boolean}>`
   color: ${({isDark}) => (isDark ? White : SlateDark)};
@@ -45,6 +48,8 @@ const DescriptionItem = styled(Paragraph)`
 const WalletConnectStart = () => {
   const theme = useTheme();
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
+  const dispatch = useDispatch();
+  const navigation = useNavigation();
 
   return (
     <WalletConnectContainer>
@@ -71,7 +76,33 @@ const WalletConnectStart = () => {
             </DescriptionItem>
           </DescriptionItemContainer>
         </DescriptionContainer>
-        <Button buttonStyle={'primary'}>Connect</Button>
+        <Button
+          buttonStyle={'primary'}
+          onPress={async () => {
+            haptic('impactLight');
+            dispatch(
+              AppActions.showBottomNotificationModal({
+                type: 'success',
+                title: 'Connected',
+                message: 'You can now return to your browser.',
+                enableBackdropDismiss: true,
+                actions: [
+                  {
+                    text: 'GOT IT',
+                    action: () => {
+                      dispatch(AppActions.dismissBottomNotificationModal());
+                      navigation.navigate('WalletConnect', {
+                        screen: 'WalletConnectHome',
+                      });
+                    },
+                    primary: true,
+                  },
+                ],
+              }),
+            );
+          }}>
+          Connect
+        </Button>
       </ScrollView>
     </WalletConnectContainer>
   );

@@ -21,6 +21,7 @@ import TransactButtonIcon from '../../../assets/img/tab-icons/transact-button.sv
 
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import TransactModal from '../../components/modal/transact-menu/TransactMenu';
+import WalletConnectIntro from '../wallet-connect/WalletConnectStack';
 
 const Icons: {[key: string]: React.FC<SvgProps>} = {
   Home: HomeIcon,
@@ -75,7 +76,7 @@ const TabsStack = () => {
           return <Icon />;
         },
       })}>
-      <Tab.Screen name={TabsScreens.HOME} component={HomeRoot} />
+      <Tab.Screen name={TabsScreens.HOME} component={WalletConnectIntro} />
       <Tab.Screen name={TabsScreens.SHOP} component={ShopRoot} />
       <Tab.Screen
         name={TabsScreens.TRANSACT_BUTTON}
