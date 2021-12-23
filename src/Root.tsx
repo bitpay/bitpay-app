@@ -45,6 +45,7 @@ import NotificationSettingsStack, {
 import AboutStack, {
   AboutStackParamList,
 } from './navigation/tabs/settings/about/AboutStack';
+import AuthStack, {AuthStackParamList} from './navigation/auth/AuthStack';
 
 import BuyCryptoStack, {
   BuyCryptoStackParamList,
@@ -55,6 +56,7 @@ import SwapCryptoStack, {
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
+  Auth: NavigatorScreenParams<AuthStackParamList>;
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
   Tabs: NavigatorScreenParams<TabsStackParamList>;
   BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
@@ -69,6 +71,7 @@ export type RootStackParamList = {
 };
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
+  AUTH = 'Auth',
   ONBOARDING = 'Onboarding',
   TABS = 'Tabs',
   BITPAY_ID = 'BitpayId',
@@ -84,7 +87,8 @@ export enum RootStacks {
 }
 // ROOT NAVIGATION CONFIG
 export type NavScreenParams = NavigatorScreenParams<
-  OnboardingStackParamList &
+  AuthStackParamList &
+    OnboardingStackParamList &
     BitpayIdStackParamList &
     WalletStackParamList &
     GeneralSettingsStackParamList &
@@ -203,6 +207,7 @@ export default () => {
             headerShown: false,
           }}
           initialRouteName={initialRoute}>
+          <Root.Screen name={RootStacks.AUTH} component={AuthStack} />
           <Root.Screen
             name={RootStacks.ONBOARDING}
             component={OnboardingStack}
