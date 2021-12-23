@@ -28,6 +28,10 @@ export const updateFetchSessionStatus = (
   payload: status,
 });
 
+export const resetAuthStack = (): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.RESET_AUTH_STACK,
+});
+
 export const successLogin = (
   network: Network,
   session: Session,

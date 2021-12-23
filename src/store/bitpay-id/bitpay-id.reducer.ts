@@ -196,6 +196,7 @@ export const bitPayIdReducer = (
         pairingBitPayIdStatus: action.payload,
       };
 
+    case BitPayIdActionTypes.RESET_AUTH_STACK:
     case BitPayIdActionTypes.COMPLETED_PAIRING:
       return {
         ...state,

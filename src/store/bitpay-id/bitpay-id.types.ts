@@ -15,6 +15,7 @@ export enum BitPayIdActionTypes {
   SUCCESS_FETCH_SESSION = 'BitPayId/SUCCESS_FETCH_SESSION',
   FAILED_FETCH_SESSION = 'BitPayId/FAILED_FETCH_SESSION',
   UPDATE_FETCH_SESSION_STATUS = 'BitPayId/UPDATE_FETCH_SESSION_STATUS',
+  RESET_AUTH_STACK = 'BitPayId/RESET_AUTH_STACK',
   SUCCESS_LOGIN = 'BitPayId/SUCCESS_LOGIN',
   FAILED_LOGIN = 'BitPayId/FAILED_LOGIN',
   PENDING_LOGIN = 'BitPayId/PENDING_LOGIN',
@@ -50,6 +51,10 @@ interface FailedFetchSession {
 interface UpdateFetchSessionStatus {
   type: typeof BitPayIdActionTypes.UPDATE_FETCH_SESSION_STATUS;
   payload: FetchSessionStatus;
+}
+
+interface ResetAuthStack {
+  type: typeof BitPayIdActionTypes.RESET_AUTH_STACK;
 }
 
 interface SuccessLogin {
@@ -154,6 +159,7 @@ export type BitPayIdActionType =
   | UpdateFetchSessionStatus
 
   // auth
+  | ResetAuthStack
   | SuccessLogin
   | FailedLogin
   | PendingLogin

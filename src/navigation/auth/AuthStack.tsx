@@ -1,5 +1,6 @@
-import React from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
+import React, {useEffect} from 'react';
+import {useDispatch, useSelector} from 'react-redux';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
@@ -11,8 +12,8 @@ import TwoFactorAuthentication, {
   TwoFactorAuthenticationParamList,
 } from './screens/TwoFactor.Auth';
 import LoginSignup, {LoginSignupParamList} from './screens/LoginSignup';
-import {useSelector} from 'react-redux';
 import {RootState} from '../../store';
+import {BitPayIdActions} from '../../store/bitpay-id';
 import {LoginStatus} from '../../store/bitpay-id/bitpay-id.reducer';
 import TwoFactorPairing, {
   TwoFactorPairingParamList,
@@ -34,11 +35,18 @@ export type AuthStackParamList = {
 
 const Auth = createStackNavigator<AuthStackParamList>();
 const AuthStack: React.FC = () => {
+  const dispatch = useDispatch();
   const loginStatus = useSelector<RootState, LoginStatus>(
     ({BITPAY_ID}) => BITPAY_ID.loginStatus,
   );
   const isTwoFactorPending = loginStatus === 'twoFactorPending';
   const isEmailAuthPending = loginStatus === 'emailAuthenticationPending';
+
+  useEffect(() => {
+    return () => {
+      dispatch(BitPayIdActions.resetAuthStack());
+    };
+  }, [dispatch]);
 
   return (
     <Auth.Navigator
