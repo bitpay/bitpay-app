@@ -68,7 +68,7 @@ const CurrencyCardComponent = (
     <HomeCard
       header={HeaderComponent}
       // TODO: update the price code
-      body={{header: 'My Everything Wallet', price: `$${totalBalance}`}}
+      body={{title: 'My Everything Wallet', value: `$${totalBalance}`}}
       footer={{
         onCTAPress: _onCTAPress,
       }}
