@@ -8,12 +8,15 @@ import Backup from './screens/Backup';
 import RecoveryPhrase, {RecoveryPhraseProps} from './screens/RecoveryPhrase';
 import VerifyPhrase, {VerifyPhraseProps} from './screens/VerifyPhrase';
 import SelectAssets from './screens/SelectAssets';
+import WalletOverview from './screens/WalletOverview';
+import {WalletObj} from '../../store/wallet/wallet.models';
 
 export type WalletStackParamList = {
   SelectAssets: undefined;
   BackupWallet: {keyId: string};
   RecoveryPhrase: RecoveryPhraseProps;
   VerifyPhrase: VerifyPhraseProps;
+  WalletOverview: {wallet: WalletObj};
 };
 
 export enum WalletScreens {
@@ -21,6 +24,7 @@ export enum WalletScreens {
   BACKUP_WALLET = 'BackupWallet',
   RECOVERY_PHRASE = 'RecoveryPhrase',
   VERIFY_PHRASE = 'VerifyPhrase',
+  WALLET_OVERVIEW = 'WalletOverview',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -60,6 +64,10 @@ const WalletStack = () => {
         }}
         name={WalletScreens.VERIFY_PHRASE}
         component={VerifyPhrase}
+      />
+      <Wallet.Screen
+        name={WalletScreens.WALLET_OVERVIEW}
+        component={WalletOverview}
       />
     </Wallet.Navigator>
   );

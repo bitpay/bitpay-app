@@ -1,4 +1,5 @@
 import {Key as IKey} from 'bitcore-wallet-client/src/lib/key';
+import {AssetOpts} from '../../constants/assets';
 
 export interface KeyObj {
   compliantDerivation: boolean;
@@ -12,8 +13,10 @@ export interface KeyObj {
 
 export interface WalletObj {
   id: string;
-  assets: [object];
+  assets: [AssetOpts];
   backupComplete?: boolean;
+  show?: boolean;
+  totalBalance?: number;
 }
 
 export interface Key extends IKey {}

@@ -9,6 +9,10 @@ import styled from 'styled-components/native';
 
 import HomeCard from '../../../../components/home-card/HomeCard';
 import {CurrencyList} from '../../../../constants/CurrencySelectionListOptions';
+import {useNavigation} from '@react-navigation/native';
+import {AssetOpts} from '../../../../constants/assets';
+import {WalletObj, WalletOptions} from '../../../../store/wallet/wallet.models';
+import {Network} from '../../../../constants';
 
 const HeaderImg = styled.View`
   align-items: center;
@@ -33,17 +37,20 @@ const _renderItem = ({item}: {item: ReactNode}) => {
   return <>{item}</>;
 };
 
-const CurrencyCardComponent = (
-  currencyList: string[],
-  totalBalance: string,
-) => {
-  const _onCTAPress = () => {
-    /** TODO: Redirect me */
-  };
+interface CurrencyCardProps {
+  wallet: WalletObj;
+  network: Network;
+}
 
-  const currencyInfo = currencyList.map(currency =>
-    CurrencyList.find(({id}: {id: string | number}) => id === currency),
-  );
+const CurrencyCardComponent = ({wallet, network}: CurrencyCardProps) => {
+  const navigation = useNavigation();
+
+  const {assets, totalBalance} = wallet;
+  const currencyInfo = assets
+    .map(asset => asset.coin)
+    .map(currency =>
+      CurrencyList.find(({id}: {id: string | number}) => id === currency),
+    );
 
   const iconSize = currencyInfo.length > 7 ? 20 : 30;
 
@@ -67,10 +74,14 @@ const CurrencyCardComponent = (
   return (
     <HomeCard
       header={HeaderComponent}
-      // TODO: update the price code
       body={{title: 'My Everything Wallet', value: `$${totalBalance}`}}
       footer={{
-        onCTAPress: _onCTAPress,
+        onCTAPress: () => {
+          navigation.navigate('Wallet', {
+            screen: 'WalletOverview',
+            params: {wallet},
+          });
+        },
       }}
     />
   );
@@ -82,17 +93,9 @@ const CardsCarousel = () => {
   const network = useSelector(({APP}: RootState) => APP.network);
 
   if (wallets) {
-    Object.values(wallets).forEach((wallet: any) => {
-      const {assets, totalBalance, show} = wallet;
-      if (show && assets) {
-        const currencyList: string[] = [];
-        assets.forEach(
-          (asset: any) =>
-            asset.network === network && currencyList.push(asset.coin),
-        );
-        if (currencyList.length) {
-          cardsList.push(CurrencyCardComponent(currencyList, totalBalance));
-        }
+    Object.values(wallets).forEach((wallet: WalletObj) => {
+      if (wallet.show) {
+        cardsList.push(CurrencyCardComponent({wallet, network}));
       }
     });
 
