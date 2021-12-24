@@ -69,6 +69,7 @@ export type RootStackParamList = {
 };
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
+  HOME = 'Home',
   ONBOARDING = 'Onboarding',
   TABS = 'Tabs',
   BITPAY_ID = 'BitpayId',
@@ -243,9 +244,9 @@ export default () => {
             component={SwapCryptoStack}
           />
         </Root.Navigator>
+        <OnGoingProcessModal />
+        <BottomNotificationModal />
       </NavigationContainer>
-      <OnGoingProcessModal />
-      <BottomNotificationModal />
     </SafeAreaProvider>
   );
 };

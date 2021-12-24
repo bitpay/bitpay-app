@@ -33,6 +33,7 @@ export interface AppState {
   colorScheme: ColorSchemeName;
   currentRoute: [keyof RootStackParamList, NavScreenParams] | undefined;
   notificationsAccepted: boolean;
+  showOnboardingFinishModal: boolean;
 }
 
 const initialState: AppState = {
@@ -59,6 +60,7 @@ const initialState: AppState = {
   colorScheme: 'light',
   currentRoute: undefined,
   notificationsAccepted: false,
+  showOnboardingFinishModal: false,
 };
 
 export const appReducer = (
@@ -131,6 +133,18 @@ export const appReducer = (
       return {
         ...state,
         notificationsAccepted: action.payload,
+      };
+
+    case AppActionTypes.SHOW_ONBOARDING_FINISH_MODAL:
+      return {
+        ...state,
+        showOnboardingFinishModal: true,
+      };
+
+    case AppActionTypes.DISMISS_ONBOARDING_FINISH_MODAL:
+      return {
+        ...state,
+        showOnboardingFinishModal: false,
       };
 
     default:
