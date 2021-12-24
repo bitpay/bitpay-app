@@ -30,9 +30,7 @@ import TabsStack, {TabsStackParamList} from './navigation/tabs/TabsStack';
 import WalletStack, {
   WalletStackParamList,
 } from './navigation/wallet/WalletStack';
-import ScanStack, {
-  ScanStackParamList,
-} from './navigation/scan/ScanStack';
+import ScanStack, {ScanStackParamList} from './navigation/scan/ScanStack';
 import GeneralSettingsStack, {
   GeneralSettingsStackParamList,
 } from './navigation/tabs/settings/general/GeneralStack';
@@ -62,7 +60,7 @@ export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabsStackParamList>;
   BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
   Wallet: NavigatorScreenParams<WalletStackParamList>;
-  Scan: undefined;
+  Scan: NavigatorScreenParams<ScanStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
   SecuritySettings: NavigatorScreenParams<SecuritySettingsStackParamList>;
   ContactSettings: NavigatorScreenParams<ContactSettingsStackParamList>;
@@ -92,14 +90,14 @@ export type NavScreenParams = NavigatorScreenParams<
   OnboardingStackParamList &
     BitpayIdStackParamList &
     WalletStackParamList &
-    ScanStackParamList &
     GeneralSettingsStackParamList &
     SecuritySettingsStackParamList &
     ContactSettingsStackParamList &
     NotificationSettingsStackParamList &
     AboutStackParamList &
     BuyCryptoStackParamList &
-    SwapCryptoStackParamList
+    SwapCryptoStackParamList &
+    ScanStackParamList
 >;
 
 declare global {
@@ -225,7 +223,10 @@ export default () => {
           <Root.Screen
             name={RootStacks.SCAN}
             component={ScanStack}
-            options={{...baseScreenOptions}}
+            options={{
+              ...baseScreenOptions,
+              headerStyle: {backgroundColor: 'red'},
+            }}
           />
           {/* SETTINGS */}
           <Root.Screen
