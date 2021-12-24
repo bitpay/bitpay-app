@@ -7,17 +7,6 @@ const ScanContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const ScanGuideContainer = styled.View`
-  display: flex;
-  position: absolute;
-  height: 100%;
-  width: 100%;
-  align-items: center;
-  justify-content: center;
-  top: 0;
-  left: 0;
-`;
-
 const ScanGuide = styled.View`
   width: 60%;
   max-width: 400px;
@@ -48,11 +37,9 @@ const Scan = () => {
         }
       }}>
       <ScanContainer>
-        <ScanGuideContainer>
-          <ScanGuide>
-            <ScanGuideSvg />
-          </ScanGuide>
-        </ScanGuideContainer>
+        <ScanGuide>
+          <ScanGuideSvg />
+        </ScanGuide>
       </ScanContainer>
     </RNCamera>
   );
