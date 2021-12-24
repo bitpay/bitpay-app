@@ -141,7 +141,7 @@ const TransactModal = () => {
     img: () => <ScanIcon />,
     title: 'Scan',
     onPress: () => {
-      navigation.navigate('Camera', {screen: 'Root'});
+      navigation.navigate('Scan');
     },
   };
 

@@ -34,7 +34,7 @@ const Home = createStackNavigator<HomeStackParamList>();
 const HomeStack = () => {
   const navigation = useNavigation();
   const goToQRScan = () => {
-    navigation.navigate('Camera', {screen: 'Root'});
+    navigation.navigate('Scan');
   };
   //  TODO: Update me
   const HeaderRightComponent = (
