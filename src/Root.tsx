@@ -52,12 +52,9 @@ import BuyCryptoStack, {
 import SwapCryptoStack, {
   SwapCryptoStackParamList,
 } from './navigation/services/swap-crypto/SwapCryptoStack';
-import HomeStack, {HomeStackParamList} from './navigation/tabs/home/HomeStack';
-import OnboardingFinishModal from './navigation/onboarding/components/OnboardingFinishModal';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
-  Home: NavigatorScreenParams<HomeStackParamList>;
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
   Tabs: NavigatorScreenParams<TabsStackParamList>;
   BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
@@ -88,8 +85,7 @@ export enum RootStacks {
 }
 // ROOT NAVIGATION CONFIG
 export type NavScreenParams = NavigatorScreenParams<
-  HomeStackParamList &
-    OnboardingStackParamList &
+  OnboardingStackParamList &
     BitpayIdStackParamList &
     WalletStackParamList &
     GeneralSettingsStackParamList &
@@ -208,7 +204,6 @@ export default () => {
             headerShown: false,
           }}
           initialRouteName={initialRoute}>
-          <Root.Screen name={RootStacks.HOME} component={HomeStack} />
           <Root.Screen
             name={RootStacks.ONBOARDING}
             component={OnboardingStack}
@@ -249,10 +244,9 @@ export default () => {
             component={SwapCryptoStack}
           />
         </Root.Navigator>
+        <OnGoingProcessModal />
+        <BottomNotificationModal />
       </NavigationContainer>
-      <OnGoingProcessModal />
-      <BottomNotificationModal />
-      <OnboardingFinishModal />
     </SafeAreaProvider>
   );
 };

@@ -24,6 +24,7 @@ import AdvertisementCard from '../../../components/advertisement/AdvertisementCa
 import {AdvertisementList} from '../../../components/advertisement/advertisement';
 import {OfferItems} from '../../../components/offer/offer';
 import {AppActions} from '../../../store/app';
+import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishModal';
 
 const HomeContainer = styled.SafeAreaView`
   flex: 1;
@@ -60,7 +61,7 @@ const HomeRoot = () => {
   if (!onboardingCompleted) {
     dispatch(AppActions.showOnboardingFinishModal());
   }
-  
+
   const theme = useTheme();
   const navigation = useNavigation();
 
@@ -100,6 +101,7 @@ const HomeRoot = () => {
 
   return (
     <HomeContainer>
+      <OnboardingFinishModal />
       <Home>
         <PortfolioBalance />
 
