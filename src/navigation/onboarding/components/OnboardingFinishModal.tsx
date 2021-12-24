@@ -15,16 +15,17 @@ import {AppActions} from '../../../store/app';
 import {White} from '../../../styles/colors';
 import LinearGradient from 'react-native-linear-gradient';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {useNavigation} from '@react-navigation/native';
 
 interface OnboardingFinishModalProps {
   id: string;
   title: string;
   description?: string;
-  buttons: Array<{
-    text: string;
-    onPress: () => void;
-  }>;
+  buttons: Array<ButtonProps>;
+}
+
+interface ButtonProps {
+  onPress: () => void;
+  text: string;
 }
 
 const BackgroundGradient = styled(LinearGradient).attrs({
@@ -51,7 +52,6 @@ const OnboardingFinishModal: React.FC = () => {
   const dispatch = useDispatch();
   const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
   const modalType = keys.length ? 'addFunds' : 'createWallet';
-  const navigation = useNavigation();
   const dismissModal = () => {
     haptic('impactLight');
     dispatch(AppActions.setOnboardingCompleted());
@@ -59,7 +59,7 @@ const OnboardingFinishModal: React.FC = () => {
   };
 
   // TODO add navigation
-  let OnboardingFinishModalTypes: {
+  const OnboardingFinishModalTypes: {
     [key in string]: OnboardingFinishModalProps;
   } = {
     addFunds: {
@@ -71,14 +71,12 @@ const OnboardingFinishModal: React.FC = () => {
           text: 'Buy Crypto',
           onPress: () => {
             dismissModal();
-            navigation.navigate('BuyCrypto', {screen: 'Root'});
           },
         },
         {
           text: 'Receive Crypto',
           onPress: () => {
             dismissModal();
-            // TODO: navigationRef
           },
         },
       ],
@@ -93,19 +91,19 @@ const OnboardingFinishModal: React.FC = () => {
           text: 'Create Wallet',
           onPress: () => {
             dismissModal();
-            navigation.navigate('Home', {screen: 'SelectAssets'});
           },
         },
         {
           text: 'Import Wallet',
           onPress: () => {
             dismissModal();
-            navigation.navigate('Home', {screen: 'ImportWallet'});
           },
         },
       ],
     },
   };
+
+  const {title, description, buttons} = OnboardingFinishModalTypes[modalType];
 
   return (
     <Modal
@@ -117,40 +115,33 @@ const OnboardingFinishModal: React.FC = () => {
       hideModalContentWhileAnimating={true}
       useNativeDriverForBackdrop={true}
       useNativeDriver={true}
+      onBackdropPress={dismissModal}
       style={{
         alignItems: 'center',
       }}>
       <BackgroundGradient>
         <OnboardingFinishModalContainer>
           <TitleContainer style={{marginTop: 10}}>
-            <TextAlign align={'center'} style={{color: White}}>
-              <H3>{OnboardingFinishModalTypes[modalType].title}</H3>
+            <TextAlign align={'center'}>
+              <H3 style={{color: White}}>{title}</H3>
             </TextAlign>
           </TitleContainer>
           <TextContainer>
-            <TextAlign align={'center'} style={{color: White}}>
-              <Paragraph>
-                {OnboardingFinishModalTypes[modalType].description}
-              </Paragraph>
+            <TextAlign align={'center'}>
+              <Paragraph style={{color: White}}>{description}</Paragraph>
             </TextAlign>
           </TextContainer>
           <CtaContainer style={{marginTop: 10}}>
-            <Button
-              buttonStyle={'primary'}
-              buttonType={'pill'}
-              onPress={() =>
-                OnboardingFinishModalTypes[modalType].buttons[0].onPress()
-              }>
-              {OnboardingFinishModalTypes[modalType].buttons[0].text}
-            </Button>
-            <Button
-              buttonStyle={'primary'}
-              buttonType={'pill'}
-              onPress={() =>
-                OnboardingFinishModalTypes[modalType].buttons[1].onPress()
-              }>
-              {OnboardingFinishModalTypes[modalType].buttons[1].text}
-            </Button>
+            {buttons.map(({onPress, text}) => {
+              return (
+                <Button
+                  buttonStyle={'primary'}
+                  buttonType={'pill'}
+                  onPress={onPress}>
+                  {text}
+                </Button>
+              );
+            })}
           </CtaContainer>
         </OnboardingFinishModalContainer>
       </BackgroundGradient>
