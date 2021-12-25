@@ -223,10 +223,6 @@ export default () => {
           <Root.Screen
             name={RootStacks.SCAN}
             component={ScanStack}
-            options={{
-              ...baseScreenOptions,
-              headerStyle: {backgroundColor: 'red'},
-            }}
           />
           {/* SETTINGS */}
           <Root.Screen
