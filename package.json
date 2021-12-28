@@ -39,6 +39,7 @@
     "react-hook-form": "7.19.5",
     "react-native": "0.64.1",
     "react-native-bootsplash": "3.2.6",
+    "react-native-camera": "4.2.1",
     "react-native-config": "1.4.5",
     "react-native-crypto": "2.2.0",
     "react-native-device-info": "8.4.7",

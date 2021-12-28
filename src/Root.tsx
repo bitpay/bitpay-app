@@ -30,6 +30,7 @@ import TabsStack, {TabsStackParamList} from './navigation/tabs/TabsStack';
 import WalletStack, {
   WalletStackParamList,
 } from './navigation/wallet/WalletStack';
+import ScanStack, {ScanStackParamList} from './navigation/scan/ScanStack';
 import GeneralSettingsStack, {
   GeneralSettingsStackParamList,
 } from './navigation/tabs/settings/general/GeneralStack';
@@ -59,6 +60,7 @@ export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabsStackParamList>;
   BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
   Wallet: NavigatorScreenParams<WalletStackParamList>;
+  Scan: NavigatorScreenParams<ScanStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
   SecuritySettings: NavigatorScreenParams<SecuritySettingsStackParamList>;
   ContactSettings: NavigatorScreenParams<ContactSettingsStackParamList>;
@@ -74,6 +76,7 @@ export enum RootStacks {
   TABS = 'Tabs',
   BITPAY_ID = 'BitpayId',
   WALLET = 'Wallet',
+  SCAN = 'Scan',
   // SETTINGS
   GENERAL_SETTINGS = 'GeneralSettings',
   SECURITY_SETTINGS = 'SecuritySettings',
@@ -94,7 +97,8 @@ export type NavScreenParams = NavigatorScreenParams<
     NotificationSettingsStackParamList &
     AboutStackParamList &
     BuyCryptoStackParamList &
-    SwapCryptoStackParamList
+    SwapCryptoStackParamList &
+    ScanStackParamList
 >;
 
 declare global {
@@ -217,6 +221,10 @@ export default () => {
           />
           <Root.Screen name={RootStacks.BITPAY_ID} component={BitpayIdStack} />
           <Root.Screen name={RootStacks.WALLET} component={WalletStack} />
+          <Root.Screen
+            name={RootStacks.SCAN}
+            component={ScanStack}
+          />
           {/* SETTINGS */}
           <Root.Screen
             name={RootStacks.GENERAL_SETTINGS}

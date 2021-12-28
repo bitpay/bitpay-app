@@ -61,6 +61,9 @@
     </array>
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
+    <!-- Required with iOS 10 and higher -->
+    <key>NSCameraUsageDescription</key>
+    <string>Enable the camera to get started</string>
 		<key>CFBundleURLTypes</key>
 		<array>
 			<dict>
