@@ -1,10 +1,14 @@
 import {ShopActionType, ShopActionTypes} from './shop.types';
-import {AvailableCardMap} from './shop.models';
+import {
+  AvailableCardMap,
+  CategoriesAndCurations,
+  DirectIntegrationMap,
+} from './shop.models';
 
 export const successFetchCatalog = (payload: {
   availableCardMap: AvailableCardMap;
-  categories: any;
-  integrations: any;
+  categoriesAndCurations: CategoriesAndCurations;
+  integrations: DirectIntegrationMap;
 }): ShopActionType => ({
   type: ShopActionTypes.SUCCESS_FETCH_CATALOG,
   payload,

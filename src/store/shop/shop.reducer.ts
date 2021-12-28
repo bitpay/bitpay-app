@@ -1,4 +1,8 @@
-import {AvailableCardMap} from './shop.models';
+import {
+  AvailableCardMap,
+  CategoriesAndCurations,
+  DirectIntegrationMap,
+} from './shop.models';
 import {ShopActionType, ShopActionTypes} from './shop.types';
 
 type ShopReduxPersistBlackList = [];
@@ -6,13 +10,13 @@ export const shopReduxPersistBlackList: ShopReduxPersistBlackList = [];
 
 export interface ShopState {
   availableCardMap: AvailableCardMap;
-  categories: any;
-  integrations: any;
+  categoriesAndCurations: CategoriesAndCurations;
+  integrations: DirectIntegrationMap;
 }
 
 const initialState: ShopState = {
   availableCardMap: {},
-  categories: {curated: {}, categories: {}},
+  categoriesAndCurations: {curated: {}, categories: {}},
   integrations: {},
 };
 
@@ -22,11 +26,12 @@ export const shopReducer = (
 ): ShopState => {
   switch (action.type) {
     case ShopActionTypes.SUCCESS_FETCH_CATALOG:
-      const {availableCardMap, categories, integrations} = action.payload;
+      const {availableCardMap, categoriesAndCurations, integrations} =
+        action.payload;
       return {
         ...state,
         availableCardMap,
-        categories,
+        categoriesAndCurations,
         integrations,
       };
 

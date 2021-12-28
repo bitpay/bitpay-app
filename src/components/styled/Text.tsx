@@ -31,6 +31,14 @@ export const H4 = styled(BaseText)`
   letter-spacing: 0;
 `;
 
+export const H6 = styled(BaseText)`
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0;
+`;
+
 export const Paragraph = styled(BaseText)`
   font-size: 16px;
   font-style: normal;

@@ -13,12 +13,12 @@ export const startFetchCatalog = (): Effect => async dispatch => {
         axios.get(`${baseUrl}/merchant-directory/integrations`),
       ]);
     const {data: availableCardMap} = catalogResponse;
-    const {data: categories} = directoryResponse;
+    const {data: categoriesAndCurations} = directoryResponse;
     const {data: integrations} = integrationsResponse;
     dispatch(
       ShopActions.successFetchCatalog({
         availableCardMap,
-        categories,
+        categoriesAndCurations,
         integrations,
       }),
     );
