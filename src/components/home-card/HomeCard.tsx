@@ -11,9 +11,9 @@ import {BaseText} from '../styled/Text';
 import {useTheme} from '@react-navigation/native';
 
 interface BodyProps {
-  header?: string;
+  title?: string;
   description?: string;
-  price?: string;
+  value?: string;
   pillText?: string;
 }
 
@@ -85,19 +85,21 @@ const HomeCard = ({backgroundImg, body, footer, header}: HomeCardProps) => {
   const HeaderComp = <CardHeader>{header}</CardHeader>;
   const theme = useTheme();
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
+  const {title, value, pillText, description} = body;
+
   const BodyComp = (
     <View>
-      {body.header && (
-        <CardBodyHeader isDarkMode={theme.dark}>{body.header}</CardBodyHeader>
+      {title && (
+        <CardBodyHeader isDarkMode={theme.dark}>{title}</CardBodyHeader>
       )}
-      {body.price && <CardPrice style={textStyle}>{body.price}</CardPrice>}
-      {body.pillText && (
+      {value && <CardPrice style={textStyle}>{value}</CardPrice>}
+      {pillText && (
         <CardPill>
-          <CardPillText>{body.pillText}</CardPillText>
+          <CardPillText>{pillText}</CardPillText>
         </CardPill>
       )}
-      {body.description && (
-        <CardBodyDesc isDarkMode={theme.dark}>{body.description}</CardBodyDesc>
+      {description && (
+        <CardBodyDesc isDarkMode={theme.dark}>{description}</CardBodyDesc>
       )}
     </View>
   );
