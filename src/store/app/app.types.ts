@@ -18,6 +18,8 @@ export enum AppActionTypes {
   SUCCESS_GENERATE_APP_IDENTITY = 'APP/SUCCESS_GENERATE_APP_IDENTITY',
   FAILED_GENERATE_APP_IDENTITY = 'APP/FAILED_GENERATE_APP_IDENTITY',
   SET_NOTIFICATIONS_ACCEPTED = 'APP/SET_NOTIFICATIONS_ACCEPTED',
+  SHOW_ONBOARDING_FINISH_MODAL = 'APP/SHOW_ONBOARDING_FINISH_MODAL',
+  DISMISS_ONBOARDING_FINISH_MODAL = 'APP/DISMISS_ONBOARDING_FINISH_MODAL',
 }
 
 interface SuccessAppInit {
@@ -74,6 +76,14 @@ interface SetNotificationsAccepted {
   payload: boolean;
 }
 
+interface ShowOnboardingFinishModal {
+  type: typeof AppActionTypes.SHOW_ONBOARDING_FINISH_MODAL;
+}
+
+interface DismissOnboardingFinishModal {
+  type: typeof AppActionTypes.DISMISS_ONBOARDING_FINISH_MODAL;
+}
+
 export type AppActionType =
   | SuccessAppInit
   | FailedAppInit
@@ -86,4 +96,6 @@ export type AppActionType =
   | SetCurrentRoute
   | SuccessGenerateAppIdentity
   | FailedGenerateAppIdentity
-  | SetNotificationsAccepted;
+  | SetNotificationsAccepted
+  | ShowOnboardingFinishModal
+  | DismissOnboardingFinishModal;

@@ -157,3 +157,55 @@ export interface PhoneCountryInfo {
   phoneCountryCode: string;
   countryIsoCode: string;
 }
+
+export interface DirectoryDiscount {
+  type: 'flatrate' | 'percentage' | 'custom';
+  amount?: number;
+  currency?: string;
+  value?: string;
+}
+
+export interface DirectIntegrationApiObject {
+  displayName: string;
+  caption: string;
+  cta?: {
+    displayText: string;
+    link: string;
+  };
+  icon: string;
+  link: string;
+  displayLink: string;
+  tags: string[];
+  domains: string[];
+  discount?: DirectoryDiscount;
+  theme: string;
+  instructions: string;
+}
+
+export interface GiftCardCuration {
+  displayName: string;
+  giftCards: CardConfig[];
+}
+
+export interface Category {
+  displayName: string;
+  emoji: string;
+  icon: string;
+  tags: string[];
+}
+
+export interface CurationMap {
+  [curationName: string]: GiftCardCuration;
+}
+export interface CategoryMap {
+  [categoryName: string]: Category;
+}
+
+export interface DirectIntegrationMap {
+  [integrationName: string]: DirectIntegrationApiObject;
+}
+
+export interface CategoriesAndCurations {
+  curated: CurationMap;
+  categories: CategoryMap;
+}

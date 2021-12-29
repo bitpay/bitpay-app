@@ -1,75 +1,37 @@
-import React, {useState} from 'react';
+import React, {useMemo, useState} from 'react';
 import debounce from 'lodash.debounce';
 import styled, {css} from 'styled-components/native';
-import {Action, Cloud, SlateDark} from '../../../../styles/colors';
+import {Cloud} from '../../../../styles/colors';
 import {View} from 'react-native';
 import {SvgUri} from 'react-native-svg';
 import {useForm, Controller} from 'react-hook-form';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
-import {HEIGHT, WIDTH} from '../../../../components/styled/Containers';
-import BoxInput from '../../../../components/form/BoxInput';
-import GiftCardCarouselList from './GiftCardCarouselList';
+import {WIDTH} from '../../../../components/styled/Containers';
+import ShopCarouselList, {ShopCarouselItem} from './ShopCarouselList';
 import {purchasedBrands} from '../stubs/gift-cards';
-import {H4, Paragraph} from '../../../../components/styled/Text';
+import {Paragraph} from '../../../../components/styled/Text';
 import GiftCardCatalogItem from './GiftCardCatalogItem';
 import GiftCardCreditsItem from './GiftCardCreditsItem';
-import {CardConfig} from '../../../../store/shop/shop.models';
-
-const horizontalPadding = 20;
-
-const ListItemTouchableHighlight = styled.TouchableHighlight`
-  padding-left: ${horizontalPadding}px;
-  padding-right: ${horizontalPadding}px;
-`;
-
-const SectionContainer = styled.View`
-  width: 100%;
-  padding: 0 ${horizontalPadding}px;
-`;
-
-const SectionSpacer = styled.View`
-  height: 30px;
-`;
-
-const SectionHeaderContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-`;
-
-const SectionHeaderButton = styled.Text`
-  margin-top: 32px;
-  margin-bottom: 16px;
-  color: ${Action};
-  font-weight: 500;
-`;
-
-const SectionHeader = styled.Text`
-  color: ${SlateDark};
-  font-size: 14px;
-  text-align: left;
-  margin-bottom: 16px;
-  margin-top: 40px;
-  flex-grow: 1;
-`;
-
-const SectionDivider = styled.View`
-  border-bottom-color: ${Cloud};
-  border-bottom-width: 1px;
-  margin: 20px ${horizontalPadding}px;
-  margin-top: 40px;
-  width: ${WIDTH - horizontalPadding * 2}px;
-`;
-
-const SearchBox = styled(BoxInput)`
-  width: ${WIDTH - horizontalPadding * 2}px;
-  font-size: 16px;
-  position: relative;
-`;
-
-const SearchResults = styled.View`
-  min-height: ${HEIGHT - 300}px;
-`;
+import {
+  CardConfig,
+  Category,
+  GiftCardCuration,
+} from '../../../../store/shop/shop.models';
+import {
+  CategoryItemTouchableHighlight,
+  HideableView,
+  ListItemTouchableHighlight,
+  NoResultsContainer,
+  NoResultsHeader,
+  SearchBox,
+  SearchResults,
+  SectionContainer,
+  SectionDivider,
+  SectionHeader,
+  SectionHeaderButton,
+  SectionHeaderContainer,
+  SectionSpacer,
+} from './styled/ShopTabComponents';
 
 interface CategoryItemProps {
   isLast: boolean;
@@ -92,17 +54,27 @@ const CategoryText = styled.Text`
   font-size: 14px;
 `;
 
-const NoResultsContainer = styled.View`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: ${HEIGHT - 300}px;
-  padding-top: 20px;
-`;
-
-const NoResultsHeader = styled(H4)`
-  font-size: 17px;
-`;
+const Curations = ({curations}: {curations: GiftCardCuration[]}) => (
+  <>
+    {curations.map(curation => (
+      <View key={curation.displayName}>
+        <SectionContainer>
+          <SectionHeader>{curation.displayName}</SectionHeader>
+        </SectionContainer>
+        <ShopCarouselList
+          items={curation.giftCards}
+          itemComponent={(item: ShopCarouselItem) => (
+            <GiftCardCatalogItem cardConfig={item as CardConfig} />
+          )}
+          itemUnderlayColor={'#fbfbff'}
+          itemWidthInLastSlide={WIDTH}
+          maxItemsPerColumn={3}
+          screenWidth={WIDTH}
+        />
+      </View>
+    ))}
+  </>
+);
 
 export default ({
   scrollViewRef,
@@ -112,11 +84,11 @@ export default ({
 }: {
   scrollViewRef: any;
   availableGiftCards: CardConfig[];
-  curations: any;
-  categories: any;
+  curations: GiftCardCuration[];
+  categories: Category[];
 }) => {
   const [searchVal, setSearchVal] = useState('');
-  const [searchResults, setSearchResults] = useState([] as any);
+  const [searchResults, setSearchResults] = useState([] as CardConfig[]);
   const {control} = useForm();
   const purchasedBrandsHeight = purchasedBrands.length * 68 + 260;
 
@@ -126,7 +98,12 @@ export default ({
       giftCard.displayName.toLowerCase().includes(text.toLocaleLowerCase()),
     );
     setSearchResults(newSearchResults);
-  }, 400);
+  }, 300);
+
+  const memoizedCurations = useMemo(
+    () => <Curations curations={curations} />,
+    [curations],
+  );
 
   return (
     <View>
@@ -179,8 +156,8 @@ export default ({
           name="search"
         />
       </SectionContainer>
-      {searchVal ? (
-        searchResults.length ? (
+      <HideableView show={!!searchVal}>
+        {searchResults.length ? (
           <SearchResults>
             {searchResults.map((cardConfig: CardConfig) => (
               <ListItemTouchableHighlight
@@ -196,41 +173,30 @@ export default ({
             <NoResultsHeader>No Results</NoResultsHeader>
             <Paragraph>Please try searching something else.</Paragraph>
           </NoResultsContainer>
-        )
-      ) : (
-        <>
-          {curations.map(curation => (
-            <View key={curation.displayName}>
-              <SectionContainer>
-                <SectionHeader>{curation.displayName}</SectionHeader>
-              </SectionContainer>
-              <GiftCardCarouselList
-                giftCards={curation.giftCards}
-                screenWidth={WIDTH}
-              />
-            </View>
-          ))}
-          <SectionContainer>
-            <SectionHeaderContainer>
-              <SectionHeader>Categories</SectionHeader>
-              <TouchableWithoutFeedback>
-                <SectionHeaderButton>See all</SectionHeaderButton>
-              </TouchableWithoutFeedback>
-            </SectionHeaderContainer>
-          </SectionContainer>
-          {categories.map((category: any, index) => (
-            <ListItemTouchableHighlight
-              key={category.displayName}
-              onPress={() => console.log('press', category.displayName)}
-              underlayColor={'#fbfbff'}>
-              <CategoryItem isLast={index === categories.length - 1}>
-                <SvgUri height="21px" uri={category.icon} />
-                <CategoryText>{category.displayName}</CategoryText>
-              </CategoryItem>
-            </ListItemTouchableHighlight>
-          ))}
-        </>
-      )}
+        )}
+      </HideableView>
+      <HideableView show={!searchVal}>
+        {memoizedCurations}
+        <SectionContainer>
+          <SectionHeaderContainer>
+            <SectionHeader>Categories</SectionHeader>
+            <TouchableWithoutFeedback>
+              <SectionHeaderButton>See all</SectionHeaderButton>
+            </TouchableWithoutFeedback>
+          </SectionHeaderContainer>
+        </SectionContainer>
+        {categories.map((category, index) => (
+          <CategoryItemTouchableHighlight
+            key={category.displayName}
+            onPress={() => console.log('press', category.displayName)}
+            underlayColor={'#fbfbff'}>
+            <CategoryItem isLast={index === categories.length - 1}>
+              <SvgUri height="21px" uri={category.icon} />
+              <CategoryText>{category.displayName}</CategoryText>
+            </CategoryItem>
+          </CategoryItemTouchableHighlight>
+        ))}
+      </HideableView>
     </View>
   );
 };
