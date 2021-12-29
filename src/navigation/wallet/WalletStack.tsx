@@ -11,7 +11,8 @@ import SelectAssets from './screens/SelectAssets';
 import WalletOverview from './screens/WalletOverview';
 import {WalletObj} from '../../store/wallet/wallet.models';
 import {useTheme} from '@react-navigation/native';
-import {Black, Grey} from '../../styles/colors';
+import {Black, Grey, SlateDark, White} from '../../styles/colors';
+import Back from '../../components/back/Back';
 
 export type WalletStackParamList = {
   SelectAssets: undefined;
@@ -32,7 +33,6 @@ export enum WalletScreens {
 const Wallet = createStackNavigator<WalletStackParamList>();
 
 const WalletStack = () => {
-
   const theme = useTheme();
 
   return (
@@ -74,6 +74,14 @@ const WalletStack = () => {
         options={{
           headerStyle: {
             backgroundColor: theme.dark ? Black : Grey,
+          },
+          headerBackImage: () => {
+            const props = {
+              color: theme.dark ? White : SlateDark,
+              background: theme.dark ? SlateDark : White,
+              opacity: 1,
+            };
+            return <Back {...props} />;
           },
         }}
         name={WalletScreens.WALLET_OVERVIEW}
