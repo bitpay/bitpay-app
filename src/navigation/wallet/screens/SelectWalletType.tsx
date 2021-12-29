@@ -7,7 +7,7 @@ import {Feather, LightBlack, SlateDark, White} from '../../../styles/colors';
 import CreateWalletSvg from '../../../../assets/img/wallet/create-wallet.svg';
 import RecoverySvg from '../../../../assets/img/wallet/recover.svg';
 import MultisigSvg from '../../../../assets/img/wallet/multisig.svg';
-import {BaseText, H4} from '../../../components/styled/Text';
+import {BaseText, H6} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 
 interface WalletType {
@@ -43,9 +43,8 @@ const ImageContainer = styled.View`
   width: 100px;
 `;
 
-const Title = styled(H4)`
-  font-weight: bold;
-  font-size: 16px;
+const Title = styled(H6)`
+  margin-bottom: 3px;
 `;
 
 const InfoContainer = styled.View`
