@@ -2,7 +2,7 @@ import {useTheme} from '@react-navigation/native';
 import React from 'react';
 import {Platform} from 'react-native';
 import {Color, Rect, Svg, Ellipse, Circle} from 'react-native-svg';
-import styled, {css} from 'styled-components/native';
+import styled from 'styled-components/native';
 import {SlateDark, White} from '../../styles/colors';
 
 interface SettingsSvgProps {
@@ -21,14 +21,10 @@ const SettingsSvg: React.FC<SettingsSvgProps> = ({color, background}) => {
   );
 };
 
-const SettingsSvgContainer = styled.TouchableOpacity<{platform: string}>`
+const SettingsSvgContainer = styled.TouchableOpacity`
   padding-top: 10px;
   transform: scale(1.1);
-  ${({platform}) =>
-    platform === 'ios' &&
-    css`
-      padding-right: 15px;
-    `}
+  padding-right: 15px;
 `;
 
 const Settings = ({onPress}: {onPress: () => void}) => {
@@ -37,10 +33,7 @@ const Settings = ({onPress}: {onPress: () => void}) => {
   const background = theme.dark ? SlateDark : White;
 
   return (
-    <SettingsSvgContainer
-      platform={Platform.OS}
-      activeOpacity={0.75}
-      onPress={onPress}>
+    <SettingsSvgContainer activeOpacity={0.75} onPress={onPress}>
       <SettingsSvg color={color} background={background} />
     </SettingsSvgContainer>
   );
