@@ -1,6 +1,7 @@
 import styled, {css} from 'styled-components/native';
 import {Dimensions} from 'react-native';
-import {NeutralSlate} from '../../styles/colors';
+import {NeutralSlate, SlateDark} from '../../styles/colors';
+import {BaseText} from './Text';
 
 export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
 
@@ -113,4 +114,15 @@ export const CardContainer = styled.View<CardContainerProps>`
   background: ${({backgroundColor}: CardContainerProps) =>
     backgroundColor || NeutralSlate};
   border-radius: 21px;
+`;
+
+// Bottom Modal
+export const ModalContainer = styled.View`
+  padding: 30px;
+  min-height: 300px;
+  background: white;
+  justify-content: center;
+  align-content: center;
+  border-top-left-radius: 17px;
+  border-top-right-radius: 17px;
 `;
