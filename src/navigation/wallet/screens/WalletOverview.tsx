@@ -10,12 +10,11 @@ import {FlatList} from 'react-native';
 import {Asset} from '../../../store/wallet/wallet.models';
 import {AssetListIcons} from '../../../constants/AssetListIcons';
 import AddAsset from '../../../../assets/img/add-asset.svg';
-import {useDispatch, useSelector} from 'react-redux';
-import {WalletActions} from '../../../store/wallet';
+import {useSelector} from 'react-redux';
 import {RootState} from '../../../store';
 import {formatFiatBalance} from '../../../utils/helper-methods';
 
-const OverviewContainer = styled.SafeAreaView`
+const OverviewContainer = styled.View`
   flex: 1;
 `;
 
@@ -39,7 +38,7 @@ const AssetListHeader = styled.View`
 `;
 
 const AssetListFooter = styled.TouchableOpacity`
-  padding: 10px;
+  padding: 10px 10px 100px 10px;
   margin-top: 15px;
   flex-direction: row;
   align-items: center;
@@ -86,7 +85,6 @@ const buildAssetList = (assets: Asset[]) => {
 };
 
 const WalletOverview = () => {
-  const dispatch = useDispatch();
   const route = useRoute<RouteProp<WalletStackParamList, 'WalletOverview'>>();
   const navigation = useNavigation();
   useEffect(() => {
