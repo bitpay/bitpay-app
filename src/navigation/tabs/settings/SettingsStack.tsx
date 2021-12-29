@@ -6,6 +6,8 @@ import {
 } from '../../../constants/NavigationOptions';
 import SettingsRoot from './SettingsRoot';
 import {HeaderTitle} from '../../../components/styled/Text';
+import {useTheme} from '@react-navigation/native';
+import {StyleProp, TextStyle} from 'react-native';
 
 export type SettingsStackParamList = {
   Root: undefined;
@@ -18,6 +20,9 @@ export enum SettingsScreens {
 const Settings = createStackNavigator<SettingsStackParamList>();
 
 const SettingsStack = () => {
+  const theme = useTheme();
+  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
+
   return (
     <Settings.Navigator
       initialRouteName={SettingsScreens.Root}
@@ -30,7 +35,9 @@ const SettingsStack = () => {
         component={SettingsRoot}
         options={{
           headerLeft: () => null,
-          headerTitle: () => <HeaderTitle>Settings</HeaderTitle>,
+          headerTitle: () => (
+            <HeaderTitle style={textStyle}>Settings</HeaderTitle>
+          ),
         }}
       />
     </Settings.Navigator>

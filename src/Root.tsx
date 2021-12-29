@@ -221,10 +221,7 @@ export default () => {
           />
           <Root.Screen name={RootStacks.BITPAY_ID} component={BitpayIdStack} />
           <Root.Screen name={RootStacks.WALLET} component={WalletStack} />
-          <Root.Screen
-            name={RootStacks.SCAN}
-            component={ScanStack}
-          />
+          <Root.Screen name={RootStacks.SCAN} component={ScanStack} />
           {/* SETTINGS */}
           <Root.Screen
             name={RootStacks.GENERAL_SETTINGS}
