@@ -66,6 +66,11 @@ export const Hr = styled.View`
   border-bottom-width: 1px;
 `;
 
+export const Column = styled.View`
+  flex: 1;
+  flex-direction: column;
+`;
+
 // LIST
 export const ListContainer = styled.View`
   flex: 1;
@@ -73,6 +78,7 @@ export const ListContainer = styled.View`
 
 export const RowContainer = styled.TouchableOpacity`
   flex-direction: row;
+  align-items: center;
   margin: 10px 0;
   padding: 0 10px 0 10px;
 `;
@@ -84,7 +90,7 @@ export const RowDetailsContainer = styled.View`
   justify-content: center;
 `;
 
-export const CurrencyImageContainer = styled.View`
+export const AssetImageContainer = styled.View`
   height: 50px;
   width: 50px;
   display: flex;
