@@ -10,6 +10,7 @@ export enum WalletActionTypes {
   FAILED_GET_RATES = 'WALLET/FAILED_GET_RATES',
   SUCCESS_GET_PRICE_HISTORY = 'WALLET/SUCCESS_GET_PRICE_HISTORY',
   FAILED_GET_PRICE_HISTORY = 'WALLET/FAILED_GET_PRICE_HISTORY',
+  UPDATE_ASSET_BALANCE = 'WALLET/UPDATE_ASSET_BALANCE',
 }
 
 interface successWalletStoreInit {
@@ -57,6 +58,15 @@ interface failedGetPriceHistory {
   type: typeof WalletActionTypes.FAILED_GET_PRICE_HISTORY;
 }
 
+interface updateAssetBalance {
+  type: typeof WalletActionTypes.UPDATE_ASSET_BALANCE;
+  payload: {
+    keyId: string;
+    assetId: string;
+    balance: number;
+  };
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -66,4 +76,5 @@ export type WalletActionType =
   | successGetRates
   | failedGetRates
   | successGetPriceHistory
-  | failedGetPriceHistory;
+  | failedGetPriceHistory
+  | updateAssetBalance;
