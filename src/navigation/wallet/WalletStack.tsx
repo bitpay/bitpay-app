@@ -12,6 +12,7 @@ import SelectWalletType from './screens/SelectWalletType';
 import {HeaderTitle} from '../../components/styled/Text';
 import {useTheme} from '@react-navigation/native';
 import {StyleProp, TextStyle} from 'react-native';
+import ImportWallet, {ImportWalletProps} from './screens/ImportWallet';
 
 export type WalletStackParamList = {
   SelectAssets: undefined;
@@ -19,6 +20,7 @@ export type WalletStackParamList = {
   RecoveryPhrase: RecoveryPhraseProps;
   VerifyPhrase: VerifyPhraseProps;
   SelectWalletType: undefined;
+  ImportWallet: ImportWalletProps;
 };
 
 export enum WalletScreens {
@@ -27,6 +29,7 @@ export enum WalletScreens {
   RECOVERY_PHRASE = 'RecoveryPhrase',
   VERIFY_PHRASE = 'VerifyPhrase',
   SELECT_WALLET_TYPE = 'SelectWalletType',
+  IMPORT_WALLET = 'ImportWallet',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -79,6 +82,16 @@ const WalletStack = () => {
         }}
         name={WalletScreens.SELECT_WALLET_TYPE}
         component={SelectWalletType}
+      />
+      <Wallet.Screen
+        options={{
+          gestureEnabled: false,
+          headerTitle: () => (
+            <HeaderTitle style={textStyle}>Import Wallete</HeaderTitle>
+          ),
+        }}
+        name={WalletScreens.IMPORT_WALLET}
+        component={ImportWallet}
       />
     </Wallet.Navigator>
   );

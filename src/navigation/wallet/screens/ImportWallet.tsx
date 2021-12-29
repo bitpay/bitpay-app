@@ -5,6 +5,10 @@ import RecoveryPhrase from '../components/RecoveryPhrase';
 import FileOrText from '../components/FileOrText';
 import {ScreenOptions} from '../../../styles/tabNavigator';
 
+export interface ImportWalletProps {
+  isOnboarding?: boolean;
+}
+
 const ImportWallerContainer = styled.SafeAreaView`
   flex: 1;
   margin-top: 10px;

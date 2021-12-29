@@ -23,7 +23,9 @@ import VerifyPhrase, {VerifyPhraseProps} from '../wallet/screens/VerifyPhrase';
 import {HeaderRightContainer} from '../../components/styled/Containers';
 import {HeaderTitle} from '../../components/styled/Text';
 import LoginScreen from './screens/Login';
-import ImportWalletScreen from '../wallet/screens/ImportWallet';
+import ImportWalletScreen, {
+  ImportWalletProps,
+} from '../wallet/screens/ImportWallet';
 
 export type OnboardingStackParamList = {
   OnboardingStart: undefined;
@@ -40,7 +42,7 @@ export type OnboardingStackParamList = {
   BackupWallet: undefined;
   RecoveryPhrase: RecoveryPhraseProps;
   VerifyPhrase: VerifyPhraseProps;
-  ImportWallet: undefined;
+  ImportWallet: ImportWalletProps;
 };
 
 export enum OnboardingScreens {
