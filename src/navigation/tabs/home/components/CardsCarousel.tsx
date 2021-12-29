@@ -10,8 +10,7 @@ import styled from 'styled-components/native';
 import HomeCard from '../../../../components/home-card/HomeCard';
 import {CurrencyList} from '../../../../constants/CurrencySelectionListOptions';
 import {useNavigation} from '@react-navigation/native';
-import {AssetOpts} from '../../../../constants/assets';
-import {WalletObj, WalletOptions} from '../../../../store/wallet/wallet.models';
+import {WalletObj} from '../../../../store/wallet/wallet.models';
 import {Network} from '../../../../constants';
 
 const HeaderImg = styled.View`

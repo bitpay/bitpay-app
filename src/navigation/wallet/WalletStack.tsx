@@ -10,6 +10,8 @@ import VerifyPhrase, {VerifyPhraseProps} from './screens/VerifyPhrase';
 import SelectAssets from './screens/SelectAssets';
 import WalletOverview from './screens/WalletOverview';
 import {WalletObj} from '../../store/wallet/wallet.models';
+import {useTheme} from '@react-navigation/native';
+import {Black, Grey} from '../../styles/colors';
 
 export type WalletStackParamList = {
   SelectAssets: undefined;
@@ -30,6 +32,9 @@ export enum WalletScreens {
 const Wallet = createStackNavigator<WalletStackParamList>();
 
 const WalletStack = () => {
+
+  const theme = useTheme();
+
   return (
     <Wallet.Navigator
       screenOptions={{...baseNavigatorOptions, ...baseScreenOptions}}
@@ -66,6 +71,11 @@ const WalletStack = () => {
         component={VerifyPhrase}
       />
       <Wallet.Screen
+        options={{
+          headerStyle: {
+            backgroundColor: theme.dark ? Black : Grey,
+          },
+        }}
         name={WalletScreens.WALLET_OVERVIEW}
         component={WalletOverview}
       />

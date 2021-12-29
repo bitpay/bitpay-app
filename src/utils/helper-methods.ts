@@ -8,3 +8,7 @@ export const coinSupported = (coin: string): boolean => {
     availableCoin => availableCoin === coin.toLowerCase(),
   );
 };
+
+export const formatFiatBalance = (balance = 0) => {
+  return `$${balance.toFixed(2)}`;
+};
