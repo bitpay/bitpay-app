@@ -7,7 +7,6 @@ import {createStackNavigator} from '@react-navigation/stack';
 import debounce from 'lodash.debounce';
 import React, {useEffect, useState} from 'react';
 import {Appearance, AppState, AppStateStatus, StatusBar} from 'react-native';
-import RNBootSplash from 'react-native-bootsplash';
 import 'react-native-gesture-handler';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
@@ -126,16 +125,8 @@ export default () => {
   const onboardingCompleted = useSelector(
     ({APP}: RootState) => APP.onboardingCompleted,
   );
-  const appIsLoading = useSelector(({APP}: RootState) => APP.appIsLoading);
   const appColorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
   const currentRoute = useSelector(({APP}: RootState) => APP.currentRoute);
-
-  // SPLASH SCREEN
-  useEffect(() => {
-    if (!appIsLoading) {
-      RNBootSplash.hide({fade: true});
-    }
-  }, [appIsLoading]);
 
   // MAIN APP INIT
   useEffect(() => {
@@ -221,10 +212,7 @@ export default () => {
           />
           <Root.Screen name={RootStacks.BITPAY_ID} component={BitpayIdStack} />
           <Root.Screen name={RootStacks.WALLET} component={WalletStack} />
-          <Root.Screen
-            name={RootStacks.SCAN}
-            component={ScanStack}
-          />
+          <Root.Screen name={RootStacks.SCAN} component={ScanStack} />
           {/* SETTINGS */}
           <Root.Screen
             name={RootStacks.GENERAL_SETTINGS}
