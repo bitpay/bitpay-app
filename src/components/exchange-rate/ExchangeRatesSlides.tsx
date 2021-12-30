@@ -35,7 +35,7 @@ const ExchangeRatesSlides = ({items}: ExchangeRateSlide) => {
         data={items}
         renderItem={ExchangeRateCard}
         sliderWidth={WIDTH}
-        itemWidth={140}
+        itemWidth={150}
         inactiveSlideScale={1}
         inactiveSlideOpacity={1}
         onScrollIndexChanged={() => {
