@@ -141,11 +141,14 @@ const WalletStack = () => {
           component={ImportWallet}
         />
       </Wallet.Navigator>
-      <WalletOptionsBottomPopupModal
-        isVisible={showWalletOptions}
-        wallet={wallet}
-        onBackdropPress={() => setShowWalletOptions(false)}
-      />
+        
+      {wallet && (
+        <WalletOptionsBottomPopupModal
+          isVisible={showWalletOptions}
+          wallet={wallet}
+          onBackdropPress={() => setShowWalletOptions(false)}
+        />
+      )}
     </>
   );
 };
