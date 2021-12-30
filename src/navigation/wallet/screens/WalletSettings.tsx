@@ -8,6 +8,7 @@ import styled from 'styled-components/native';
 import {
   Hr,
   ScreenGutter,
+  Setting,
   SettingTitle,
 } from '../../../components/styled/Containers';
 import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
@@ -52,7 +53,7 @@ const InfoImageContainer = styled.View`
   margin-left: 8px;
 `;
 
-const AssetsListCtaContainer = styled.View`
+const Section = styled.View`
   padding: ${ScreenGutter} 0;
 `;
 
@@ -103,7 +104,7 @@ const WalletSettings = () => {
           <AssetSettingsRow asset={asset} key={asset.id} />
         ))}
 
-        <AssetsListCtaContainer>
+        <Section>
           <Button
             buttonType={'link'}
             onPress={() => {
@@ -111,7 +112,66 @@ const WalletSettings = () => {
             }}>
             Add an Asset
           </Button>
-        </AssetsListCtaContainer>
+        </Section>
+
+        <Section>
+          <Title>Security</Title>
+          <Setting
+            onPress={() => {
+              haptic('impactLight');
+              //    TODO: Redirect me
+            }}>
+            <SettingTitle>Backup</SettingTitle>
+          </Setting>
+          <Hr />
+
+          <Setting
+            onPress={() => {
+              haptic('impactLight');
+              //    TODO: Redirect me
+            }}>
+            <SettingTitle>Request Encrypt Password</SettingTitle>
+          </Setting>
+          <Hr />
+        </Section>
+
+        <Section>
+          <Title>Advanced</Title>
+          <Setting
+            onPress={() => {
+              haptic('impactLight');
+              //    TODO: Redirect me
+            }}>
+            <SettingTitle>Sync Wallets Across Devices</SettingTitle>
+          </Setting>
+          <Hr />
+
+          <Setting
+            onPress={() => {
+              haptic('impactLight');
+              //    TODO: Redirect me
+            }}>
+            <SettingTitle>Export Key</SettingTitle>
+          </Setting>
+          <Hr />
+
+          <Setting
+            onPress={() => {
+              haptic('impactLight');
+              //    TODO: Redirect me
+            }}>
+            <SettingTitle>Extended Private Key</SettingTitle>
+          </Setting>
+          <Hr />
+
+          <Setting
+            onPress={() => {
+              haptic('impactLight');
+              //    TODO: Redirect me
+            }}>
+            <SettingTitle>Delete</SettingTitle>
+          </Setting>
+        </Section>
       </ScrollView>
     </WalletSettingsContainer>
   );
