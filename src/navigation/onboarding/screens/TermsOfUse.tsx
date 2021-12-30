@@ -8,7 +8,6 @@ import {OnboardingStackParamList} from '../OnboardingStack';
 import {useNavigation} from '@react-navigation/native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {useDispatch} from 'react-redux';
-import {AppActions} from '../../../store/app';
 
 type Props = StackScreenProps<OnboardingStackParamList, 'TermsOfUse'>;
 
@@ -58,7 +57,6 @@ const TermsContainer = styled.View`
 const TermsOfUse = ({navigation: _navigation, route}: Props) => {
   useAndroidBackHandler(() => true);
   const navigation = useNavigation();
-  const dispatch = useDispatch();
 
   const [termsList, setTermsList] = useState(Terms);
   _navigation.addListener('transitionStart', () => {
