@@ -1,12 +1,9 @@
-import React, {ReactElement} from 'react';
+import React from 'react';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../components/styled/Containers';
-import {StyleProp, TextStyle} from 'react-native';
+import {ImageSourcePropType, StyleProp, TextStyle} from 'react-native';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {Feather, LightBlack, SlateDark, White} from '../../../styles/colors';
-import CreateWalletSvg from '../../../../assets/img/wallet/create-wallet.svg';
-import RecoverySvg from '../../../../assets/img/wallet/recover.svg';
-import MultisigSvg from '../../../../assets/img/wallet/multisig.svg';
 import {BaseText, H6} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 
@@ -15,7 +12,8 @@ interface WalletType {
   title: string;
   description: string;
   cta: () => void;
-  img: ReactElement;
+  img: ImageSourcePropType;
+  height: string;
 }
 
 const SelectWalletTypeContainer = styled.SafeAreaView`
@@ -59,6 +57,13 @@ const Description = styled(BaseText)<{isDark: boolean}>`
   color: ${({isDark}) => (isDark ? White : SlateDark)};
 `;
 
+const Image = styled.Image<{imgHeight: string}>`
+  width: 80px;
+  height: ${({imgHeight}) => imgHeight};
+  position: absolute;
+  bottom: 0;
+`;
+
 const SelectWalletType = () => {
   const theme = useTheme();
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
@@ -71,14 +76,16 @@ const SelectWalletType = () => {
       description:
         'Add coins like Bitcoin and Dogecoin, and also tokens like USDC and PAX',
       cta: () => navigation.navigate('Wallet', {screen: 'SelectAssets'}),
-      img: <CreateWalletSvg height={115} />,
+      img: require('../../../../assets/img/wallet/wallet-type/create-wallet.png'),
+      height: '98px',
     },
     {
       id: 'multisig',
       title: 'Multisig Wallet',
       description: 'Requires multiple devices and is the most secure',
       cta: () => {},
-      img: <MultisigSvg height={130} />,
+      img: require('../../../../assets/img/wallet/wallet-type/multisig.png'),
+      height: '80px',
     },
     {
       id: 'recover',
@@ -89,7 +96,8 @@ const SelectWalletType = () => {
           screen: 'ImportWallet',
           params: {isOnboarding: false},
         }),
-      img: <RecoverySvg height={115} />,
+      img: require('../../../../assets/img/wallet/wallet-type/recover.png'),
+      height: '80px',
     },
   ];
   return (
@@ -103,7 +111,13 @@ const SelectWalletType = () => {
             }}
             isDark={theme.dark}
             key={type.id}>
-            <ImageContainer>{type.img}</ImageContainer>
+            <ImageContainer>
+              <Image
+                source={type.img}
+                resizeMode={'contain'}
+                imgHeight={type.height}
+              />
+            </ImageContainer>
             <InfoContainer>
               <Title style={textStyle}>{type.title}</Title>
               <Description isDark={theme.dark}>{type.description}</Description>
