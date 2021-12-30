@@ -128,7 +128,7 @@ export const startCreateWalletCredentials =
           bwcClient.fromObj(tokenCredentials);
           // Add the token info to the ethWallet.
           ethCredentials.tokens = ethCredentials.tokens || [];
-          ethCredentials.tokens.push(TokenOpts[token]);
+          ethCredentials.tokens.push({...TokenOpts[token], balance: 0});
           console.log('added token', token);
           credentials.push(bwcClient.credentials);
           resolve();
@@ -136,5 +136,5 @@ export const startCreateWalletCredentials =
       }
     }
 
-    return credentials;
+    return credentials.map(credential => ({...credential, balance: 0}));
   };

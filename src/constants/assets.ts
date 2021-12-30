@@ -499,9 +499,10 @@ export interface Token {
   symbol: string;
   decimal: number;
   address: string;
+  balance?: number;
 }
 
-export const TokenOpts = {
+export const TokenOpts: {[key in string]: Token} = {
   usdc: {
     name: 'USD Coin',
     symbol: 'USDC',

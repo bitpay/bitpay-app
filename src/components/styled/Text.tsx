@@ -31,10 +31,24 @@ export const H4 = styled(BaseText)`
   letter-spacing: 0;
 `;
 
+export const H5 = styled(BaseText)`
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 25px;
+  letter-spacing: 0;
+`;
+
 export const H6 = styled(BaseText)`
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
+`;
+
+export const H7 = styled(BaseText)`
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
   line-height: 18px;
   letter-spacing: 0;
 `;
@@ -65,7 +79,7 @@ export const HeaderTitle = styled(BaseText)`
 `;
 
 interface TextAlignProps {
-  align: 'center' | 'left' | 'end';
+  align: 'center' | 'left' | 'right';
 }
 
 export const TextAlign = styled.Text<TextAlignProps>`
@@ -101,7 +115,6 @@ export const MainNote = styled(BaseText)`
   font-size: 18px;
   font-style: normal;
   font-weight: 700;
-  line-height: 18px;
   text-align: right;
 `;
 
