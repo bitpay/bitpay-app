@@ -1,12 +1,11 @@
 import React from 'react';
-import {
-  Setting,
-  Settings,
-  SettingsContainer,
-  SettingTitle,
-} from '../../SettingsRoot';
+import {Settings, SettingsContainer} from '../../SettingsRoot';
 import Button from '../../../../../components/button/Button';
-import {Hr} from '../../../../../components/styled/Containers';
+import {
+  Hr,
+  Setting,
+  SettingTitle,
+} from '../../../../../components/styled/Containers';
 
 const SecuritySettingsRoot: React.FC = () => {
   return (

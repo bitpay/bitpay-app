@@ -1,15 +1,14 @@
 import React from 'react';
-import {
-  Setting,
-  Settings,
-  SettingsContainer,
-  SettingTitle,
-} from '../../SettingsRoot';
+import {Settings, SettingsContainer} from '../../SettingsRoot';
 import Button from '../../../../../components/button/Button';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../../store';
-import {Hr} from '../../../../../components/styled/Containers';
+import {
+  Hr,
+  Setting,
+  SettingTitle,
+} from '../../../../../components/styled/Containers';
 import AngleRight from '../../../../../../assets/img/angle-right.svg';
 import {StyleProp, TextStyle} from 'react-native';
 

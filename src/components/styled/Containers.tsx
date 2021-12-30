@@ -1,6 +1,6 @@
 import styled, {css} from 'styled-components/native';
 import {Dimensions} from 'react-native';
-import {NeutralSlate, SlateDark} from '../../styles/colors';
+import {NeutralSlate} from '../../styles/colors';
 import {BaseText} from './Text';
 
 export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
@@ -125,4 +125,20 @@ export const ModalContainer = styled.View`
   align-content: center;
   border-top-left-radius: 17px;
   border-top-right-radius: 17px;
+`;
+
+// Settings List
+export const Setting = styled.TouchableOpacity`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  height: 58px;
+`;
+
+export const SettingTitle = styled(BaseText)`
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-align: left;
 `;

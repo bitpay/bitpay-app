@@ -26,7 +26,9 @@ import DaiRoundIcon from '../../assets/img/currencies/round/dai.svg';
 import PaxRoundIcon from '../../assets/img/currencies/round/pax.svg';
 import WbtcRoundIcon from '../../assets/img/currencies/round/wbtc.svg';
 
-export const AssetListIcons: {[key in string]: {square: ReactElement, round: ReactElement}} = {
+export const AssetListIcons: {
+  [key in string]: {square: ReactElement; round: ReactElement};
+} = {
   btc: {
     square: <BtcIcon />,
     round: <BtcRoundIcon />,

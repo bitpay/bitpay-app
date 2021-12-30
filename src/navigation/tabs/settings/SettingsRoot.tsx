@@ -1,12 +1,11 @@
 import {useNavigation} from '@react-navigation/core';
 import React from 'react';
 import styled from 'styled-components/native';
-import {BaseText} from '../../../components/styled/Text';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import {StyleProp, TextStyle, View} from 'react-native';
 import {useDispatch} from 'react-redux';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
-import {Hr} from '../../../components/styled/Containers';
+import {Hr, Setting, SettingTitle} from '../../../components/styled/Containers';
 import {useTheme} from '@react-navigation/native';
 
 interface HomeSetting {
@@ -26,21 +25,6 @@ export const SettingsContainer = styled.SafeAreaView`
 export const Settings = styled.ScrollView`
   margin-top: 20px;
   padding: 0 15px;
-`;
-
-export const Setting = styled.TouchableOpacity`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  height: 58px;
-`;
-
-export const SettingTitle = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  letter-spacing: 0;
-  text-align: left;
 `;
 
 const SettingsHomeScreen: React.FC = () => {

@@ -1,6 +1,5 @@
 import {useTheme} from '@react-navigation/native';
 import React from 'react';
-import {Platform} from 'react-native';
 import {Color, Rect, Svg, Ellipse, Circle} from 'react-native-svg';
 import styled from 'styled-components/native';
 import {SlateDark, White} from '../../styles/colors';
