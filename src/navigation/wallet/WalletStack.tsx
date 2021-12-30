@@ -10,7 +10,7 @@ import VerifyPhrase, {VerifyPhraseProps} from './screens/VerifyPhrase';
 import SelectAssets from './screens/SelectAssets';
 import WalletOverview from './screens/WalletOverview';
 import {WalletObj} from '../../store/wallet/wallet.models';
-import {useRoute, useTheme} from '@react-navigation/native';
+import {useTheme} from '@react-navigation/native';
 import {Black, Grey, SlateDark, White} from '../../styles/colors';
 import Back from '../../components/back/Back';
 import Settings from '../../components/settings/Settings';
@@ -47,8 +47,8 @@ const Wallet = createStackNavigator<WalletStackParamList>();
 
 const WalletStack = () => {
   const theme = useTheme();
-    const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
-    const [showWalletOptions, setShowWalletOptions] = useState(false);
+  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
+  const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [wallet, setWallet] = useState<WalletObj | null>(null);
 
   return (
@@ -120,26 +120,26 @@ const WalletStack = () => {
           name={WalletScreens.WALLET_SETTINGS}
           component={WalletSettings}
         />
-          <Wallet.Screen
-              options={{
-                  gestureEnabled: false,
-                  headerTitle: () => (
-                      <HeaderTitle style={textStyle}>Select Wallet Type</HeaderTitle>
-                  ),
-              }}
-              name={WalletScreens.SELECT_WALLET_TYPE}
-              component={SelectWalletType}
-          />
-          <Wallet.Screen
-              options={{
-                  gestureEnabled: false,
-                  headerTitle: () => (
-                      <HeaderTitle style={textStyle}>Import Wallete</HeaderTitle>
-                  ),
-              }}
-              name={WalletScreens.IMPORT_WALLET}
-              component={ImportWallet}
-          />
+        <Wallet.Screen
+          options={{
+            gestureEnabled: false,
+            headerTitle: () => (
+              <HeaderTitle style={textStyle}>Select Wallet Type</HeaderTitle>
+            ),
+          }}
+          name={WalletScreens.SELECT_WALLET_TYPE}
+          component={SelectWalletType}
+        />
+        <Wallet.Screen
+          options={{
+            gestureEnabled: false,
+            headerTitle: () => (
+              <HeaderTitle style={textStyle}>Import Wallete</HeaderTitle>
+            ),
+          }}
+          name={WalletScreens.IMPORT_WALLET}
+          component={ImportWallet}
+        />
       </Wallet.Navigator>
       <WalletOptionsBottomPopupModal
         isVisible={showWalletOptions}
