@@ -141,7 +141,7 @@ const WalletStack = () => {
           component={ImportWallet}
         />
       </Wallet.Navigator>
-        
+
       {wallet && (
         <WalletOptionsBottomPopupModal
           isVisible={showWalletOptions}
