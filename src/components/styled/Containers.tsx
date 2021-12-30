@@ -1,6 +1,7 @@
 import styled, {css} from 'styled-components/native';
 import {Dimensions} from 'react-native';
-import {NeutralSlate} from '../../styles/colors';
+import {NeutralSlate, SlateDark} from '../../styles/colors';
+import {BaseText} from './Text';
 
 export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
 
@@ -66,6 +67,11 @@ export const Hr = styled.View`
   border-bottom-width: 1px;
 `;
 
+export const Column = styled.View`
+  flex: 1;
+  flex-direction: column;
+`;
+
 // LIST
 export const ListContainer = styled.View`
   flex: 1;
@@ -73,6 +79,7 @@ export const ListContainer = styled.View`
 
 export const RowContainer = styled.TouchableOpacity`
   flex-direction: row;
+  align-items: center;
   margin: 10px 0;
   padding: 0 10px 0 10px;
 `;
@@ -84,7 +91,7 @@ export const RowDetailsContainer = styled.View`
   justify-content: center;
 `;
 
-export const CurrencyImageContainer = styled.View`
+export const AssetImageContainer = styled.View`
   height: 50px;
   width: 50px;
   display: flex;
@@ -107,4 +114,15 @@ export const CardContainer = styled.View<CardContainerProps>`
   background: ${({backgroundColor}: CardContainerProps) =>
     backgroundColor || NeutralSlate};
   border-radius: 21px;
+`;
+
+// Bottom Modal
+export const ModalContainer = styled.View`
+  padding: 30px;
+  min-height: 300px;
+  background: white;
+  justify-content: center;
+  align-content: center;
+  border-top-left-radius: 17px;
+  border-top-right-radius: 17px;
 `;

@@ -4,17 +4,22 @@ import {Platform} from 'react-native';
 import {Circle, Color, G, Path, Svg} from 'react-native-svg';
 import styled, {css} from 'styled-components/native';
 
-interface Props {
-  platform: string;
-}
-
 interface BackSvgProps {
   color: Color | null | undefined;
+  background: Color | undefined;
+  opacity: number | undefined;
 }
 
-const BackSvg: React.FC<BackSvgProps> = ({color}) => {
-  const fill = color || '#434D5A';
+interface Props {
+  color?: Color | undefined;
+  background?: Color | undefined;
+  opacity?: number | undefined;
+}
 
+const BackSvg: React.FC<BackSvgProps> = ({color, background, opacity}) => {
+  const fill = color || '#434D5A';
+  const backgroundFill = background;
+  const circleOpacity = opacity || 0.100000001;
   return (
     <Svg
       title="Button/Back"
@@ -36,10 +41,11 @@ const BackSvg: React.FC<BackSvgProps> = ({color}) => {
             <G id="Close" transform="translate(5.000000, 5.000000)">
               <Circle
                 id="Oval"
-                opacity="0.100000001"
+                opacity={circleOpacity}
                 cx="20.5"
                 cy="20.5"
                 r="20.5"
+                fill={backgroundFill}
               />
               <G id="Group" transform="translate(8.000000, 9.000000)">
                 <G
@@ -56,23 +62,27 @@ const BackSvg: React.FC<BackSvgProps> = ({color}) => {
   );
 };
 
-const BackContainer = styled.View`
+const BackContainer = styled.View<{platform: string}>`
   padding-top: 10px;
   transform: scale(1.1);
-  ${({platform}: Props) =>
+  ${({platform}) =>
     platform === 'ios' &&
     css`
       padding-left: 15px;
     `}
 `;
 
-const Back = () => {
+const Back = ({color, background, opacity}: Props) => {
   const theme = useTheme();
   const backColor = theme.dark ? '#fff' : null;
 
   return (
     <BackContainer platform={Platform.OS}>
-      <BackSvg color={backColor} />
+      <BackSvg
+        color={color || backColor}
+        background={background}
+        opacity={opacity}
+      />
     </BackContainer>
   );
 };
