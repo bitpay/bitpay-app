@@ -48,3 +48,12 @@ export const successGetPriceHistory = (
 export const failedGetPriceHistory = (): WalletActionType => ({
   type: WalletActionTypes.FAILED_GET_PRICE_HISTORY,
 });
+
+export const updateAssetBalance = (payload: {
+  keyId: string;
+  assetId: string;
+  balance: number;
+}): WalletActionType => ({
+  type: WalletActionTypes.UPDATE_ASSET_BALANCE,
+  payload,
+});

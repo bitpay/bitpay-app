@@ -13,21 +13,12 @@ import BottomPopupModal from '../base/bottom-popup/BottomPopupModal';
 import {FlatList, TouchableOpacity, View} from 'react-native';
 import {SlateDark} from '../../../styles/colors';
 import {useNavigation} from '@react-navigation/native';
+import {ModalContainer} from '../../styled/Containers';
 
 const TransactButton = styled.View`
   justify-content: center;
   align-items: center;
   flex: 1;
-`;
-
-const TransactModalContainer = styled.View`
-  padding: 30px;
-  min-height: 300px;
-  background: white;
-  justify-content: center;
-  align-content: center;
-  border-top-left-radius: 17px;
-  border-top-right-radius: 17px;
 `;
 
 const TransactItemContainer = styled.TouchableOpacity`
@@ -160,7 +151,7 @@ const TransactModal = () => {
       </TransactButton>
       <>
         <BottomPopupModal isVisible={modalVisible} onBackdropPress={hideModal}>
-          <TransactModalContainer>
+          <ModalContainer>
             <FlatList
               data={TransactMenuList}
               scrollEnabled={false}
@@ -192,7 +183,7 @@ const TransactModal = () => {
             <CloseButtonContainer onPress={hideModal}>
               <View>{CloseButton.img()}</View>
             </CloseButtonContainer>
-          </TransactModalContainer>
+          </ModalContainer>
         </BottomPopupModal>
       </>
     </>

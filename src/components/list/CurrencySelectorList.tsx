@@ -1,7 +1,7 @@
 import React, {ReactElement, useState} from 'react';
 import styled from 'styled-components/native';
 import {FlatList} from 'react-native';
-import {CurrencyImageContainer} from '../styled/Containers';
+import {AssetImageContainer} from '../styled/Containers';
 import {
   ListContainer,
   RowContainer,
@@ -57,7 +57,7 @@ const CurrencySelectorRow = ({item, emit}: Props) => {
 
   return (
     <RowContainer activeOpacity={1} onPress={toggle}>
-      <CurrencyImageContainer>{img}</CurrencyImageContainer>
+      <AssetImageContainer>{img}</AssetImageContainer>
       <RowDetailsContainer>
         <MainLabel>{mainLabel}</MainLabel>
         <SecondaryLabel>{secondaryLabel}</SecondaryLabel>
