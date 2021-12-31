@@ -21,7 +21,7 @@ const GeneralSettingsRoot: React.FC = () => {
   return (
     <SettingsContainer>
       <Settings>
-        <Hr />
+        <Hr isDark={theme.dark} />
         <Setting
           onPress={() =>
             navigation.navigate('GeneralSettings', {screen: 'Theme'})
@@ -39,7 +39,7 @@ const GeneralSettingsRoot: React.FC = () => {
               : 'System Default'}
           </Button>
         </Setting>
-        <Hr />
+        <Hr isDark={theme.dark} />
         <Setting
           onPress={() =>
             navigation.navigate('GeneralSettings', {screen: 'CustomizeHome'})
@@ -47,7 +47,7 @@ const GeneralSettingsRoot: React.FC = () => {
           <SettingTitle style={textStyle}>Customize Home</SettingTitle>
           <AngleRight />
         </Setting>
-        <Hr />
+        <Hr isDark={theme.dark} />
       </Settings>
     </SettingsContainer>
   );

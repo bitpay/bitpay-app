@@ -85,7 +85,7 @@ const SettingsHomeScreen: React.FC = () => {
           </SettingTitle>
         </Setting>
 
-        <Hr />
+        <Hr isDark={theme.dark} />
         {SETTINGS.map(({title, onPress}) => {
           return (
             <View key={title}>
@@ -93,7 +93,7 @@ const SettingsHomeScreen: React.FC = () => {
                 <SettingTitle style={textStyle}>{title}</SettingTitle>
                 <AngleRight />
               </Setting>
-              <Hr />
+              <Hr isDark={theme.dark} />
             </View>
           );
         })}
@@ -105,7 +105,7 @@ const SettingsHomeScreen: React.FC = () => {
                 onPress={() => dispatch(openUrlWithInAppBrowser(link))}>
                 <SettingTitle style={textStyle}>{title}</SettingTitle>
               </Setting>
-              {LINKS.length - 1 !== index && <Hr />}
+              {LINKS.length - 1 !== index && <Hr isDark={theme.dark} />}
             </View>
           );
         })}

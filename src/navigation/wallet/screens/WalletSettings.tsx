@@ -123,7 +123,7 @@ const WalletSettings = () => {
 
           <ChevronRightSvg height={16} />
         </WalletNameContainer>
-        <Hr />
+        <Hr isDark={theme.dark} />
 
         <AssetsHeaderContainer>
           <Title style={textStyle}>Assets</Title>
@@ -157,7 +157,7 @@ const WalletSettings = () => {
               Backup
             </WalletSettingsTitle>
           </Setting>
-          <Hr />
+          <Hr isDark={theme.dark} />
 
           <SettingView>
             <WalletSettingsTitle isDark={theme.dark}>
@@ -209,7 +209,7 @@ const WalletSettings = () => {
             </Info>
           )}
 
-          <Hr />
+          <Hr isDark={theme.dark} />
         </Section>
 
         <Section>
@@ -223,7 +223,7 @@ const WalletSettings = () => {
               Sync Wallets Across Devices
             </WalletSettingsTitle>
           </Setting>
-          <Hr />
+          <Hr isDark={theme.dark} />
 
           <Setting
             onPress={() => {
@@ -234,7 +234,7 @@ const WalletSettings = () => {
               Export Key
             </WalletSettingsTitle>
           </Setting>
-          <Hr />
+          <Hr isDark={theme.dark} />
 
           <Setting
             onPress={() => {
@@ -245,7 +245,7 @@ const WalletSettings = () => {
               Extended Private Key
             </WalletSettingsTitle>
           </Setting>
-          <Hr />
+          <Hr isDark={theme.dark} />
 
           <Setting
             onPress={() => {

@@ -62,8 +62,8 @@ export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
     `};
 `;
 
-export const Hr = styled.View`
-  border-bottom-color: #ebecee;
+export const Hr = styled.View<{isDark: boolean}>`
+  border-bottom-color: ${({isDark}) => (isDark ? SlateDark : '#ebecee')};
   border-bottom-width: 1px;
 `;
 

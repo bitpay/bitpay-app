@@ -32,7 +32,7 @@ const ThemeSettings: React.FC = () => {
   return (
     <SettingsContainer>
       <Settings>
-        <Hr />
+        <Hr isDark={selectedTheme.dark} />
         {SETTINGS.map(({title, theme}) => {
           return (
             <View key={theme}>
@@ -44,7 +44,7 @@ const ThemeSettings: React.FC = () => {
                   checked={selected === theme}
                 />
               </Setting>
-              <Hr />
+              <Hr isDark={selectedTheme.dark} />
             </View>
           );
         })}
