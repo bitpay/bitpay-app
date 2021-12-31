@@ -16,7 +16,6 @@ import {
 } from '../../../components/styled/Containers';
 import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
-import InfoIcon from '../../../../assets/img/info-blue.svg';
 import {Asset} from '../../../store/wallet/wallet.models';
 import {AssetListIcons} from '../../../constants/AssetListIcons';
 import AssetSettingsRow, {
@@ -27,6 +26,7 @@ import {Black, SlateDark, White} from '../../../styles/colors';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {useDispatch} from 'react-redux';
+import InfoIcon from '../../../components/icons/info/InfoIcon';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
