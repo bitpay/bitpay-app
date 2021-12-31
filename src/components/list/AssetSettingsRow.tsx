@@ -1,6 +1,8 @@
 import React, {ReactElement} from 'react';
 import styled from 'styled-components/native';
 import {BaseText} from '../styled/Text';
+import {useTheme} from '@react-navigation/native';
+import {StyleProp, TextStyle} from 'react-native';
 
 export interface AssetSettingsRowProps {
   id: string;
@@ -20,10 +22,13 @@ const AssetName = styled(BaseText)`
   margin-left: 15px;
 `;
 const AssetSettingsRow = ({asset}: {asset: AssetSettingsRowProps}) => {
+  const theme = useTheme();
+  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
+
   return (
     <Row>
       {asset.img()}
-      <AssetName>{asset.assetName}</AssetName>
+      <AssetName style={textStyle}>{asset.assetName}</AssetName>
     </Row>
   );
 };

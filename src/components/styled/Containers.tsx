@@ -1,6 +1,6 @@
 import styled, {css} from 'styled-components/native';
 import {Dimensions} from 'react-native';
-import {NeutralSlate} from '../../styles/colors';
+import {NeutralSlate, SlateDark} from '../../styles/colors';
 import {BaseText} from './Text';
 
 export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
@@ -151,14 +151,14 @@ export const SettingView = styled.View`
 `;
 
 // Info
-export const Info = styled.View`
-  background-color: #f8f9fe;
+export const Info = styled.View<{isDark: boolean}>`
+  background-color: ${({isDark}) => (isDark ? SlateDark : '#f8f9fe')};
   border-radius: 8px;
   padding: 15px;
   margin-bottom: 15px;
 `;
 
-export const InfoTriangle = styled.View`
+export const InfoTriangle = styled.View<{isDark: boolean}>`
   width: 12px;
   height: 12px;
   position: absolute;
@@ -169,5 +169,5 @@ export const InfoTriangle = styled.View`
   border-right-width: 12px;
   border-right-color: transparent;
   border-bottom-width: 12px;
-  border-bottom-color: #f8f9fe;
+  border-bottom-color: ${({isDark}) => (isDark ? SlateDark : '#f8f9fe')};
 `;

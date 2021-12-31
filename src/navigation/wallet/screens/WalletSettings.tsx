@@ -1,9 +1,9 @@
 import React, {useState} from 'react';
-import {BaseText} from '../../../components/styled/Text';
-import {useRoute} from '@react-navigation/native';
+import {BaseText, Link} from '../../../components/styled/Text';
+import {useRoute, useTheme} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {View} from 'react-native';
+import {StyleProp, TextStyle, View, TouchableOpacity} from 'react-native';
 import styled from 'styled-components/native';
 import {
   Hr,
@@ -23,8 +23,10 @@ import AssetSettingsRow, {
   AssetSettingsRowProps,
 } from '../../../components/list/AssetSettingsRow';
 import Button from '../../../components/button/Button';
-import {Black, SlateDark} from '../../../styles/colors';
+import {Black, SlateDark, White} from '../../../styles/colors';
 import Checkbox from '../../../components/checkbox/Checkbox';
+import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
+import {useDispatch} from 'react-redux';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -54,8 +56,8 @@ const WalletNameContainer = styled.TouchableOpacity`
   justify-content: space-between;
 `;
 
-const InfoImageContainer = styled.View<{margin: string}>`
-  margin: ${({margin}) => margin};
+const InfoImageContainer = styled.View<{infoMargin: string}>`
+  margin: ${({infoMargin}) => infoMargin};
 `;
 
 const InfoTitle = styled(BaseText)`
@@ -68,14 +70,20 @@ const InfoHeader = styled.View`
   margin-bottom: 10px;
 `;
 
-const InfoDescription = styled(BaseText)`
+const InfoDescription = styled(BaseText)<{isDark: boolean}>`
   font-size: 16px;
-  color: ${SlateDark};
+  color: ${({isDark}) => (isDark ? White : SlateDark)};
 `;
 
 const Section = styled.View`
   padding: ${ScreenGutter} 0;
 `;
+
+const WalletSettingsTitle = styled(SettingTitle)<{isDark: boolean}>`
+  color: ${({isDark}) => (isDark ? White : SlateDark)};
+`;
+
+// const WalletSettingsLink = styled(Link).
 
 const buildAssetList = (assets: Asset[]) => {
   const assetList = [] as Array<AssetSettingsRowProps>;
@@ -96,6 +104,9 @@ const WalletSettings = () => {
 
   const assetsList = buildAssetList(wallet.assets);
   const [showInfo, setShowInfo] = useState(false);
+  const theme = useTheme();
+  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
+  const dispatch = useDispatch();
 
   return (
     <WalletSettingsContainer>
@@ -106,8 +117,10 @@ const WalletSettings = () => {
             //    TODO: Redirect me
           }}>
           <View>
-            <Title>Wallet name</Title>
-            <SettingTitle>wallet 1</SettingTitle>
+            <Title style={textStyle}>Wallet name</Title>
+            <WalletSettingsTitle isDark={theme.dark}>
+              wallet 1
+            </WalletSettingsTitle>
           </View>
 
           <ChevronRightSvg height={16} />
@@ -115,8 +128,8 @@ const WalletSettings = () => {
         <Hr />
 
         <AssetsHeaderContainer>
-          <Title>Assets</Title>
-          <InfoImageContainer margin={'0% 0% 0% 8px'}>
+          <Title style={textStyle}>Assets</Title>
+          <InfoImageContainer infoMargin={'0 0 0 8px'}>
             <InfoIcon />
           </InfoImageContainer>
         </AssetsHeaderContainer>
@@ -136,18 +149,22 @@ const WalletSettings = () => {
         </Section>
 
         <Section>
-          <Title>Security</Title>
+          <Title style={textStyle}>Security</Title>
           <Setting
             onPress={() => {
               haptic('impactLight');
               //    TODO: Redirect me
             }}>
-            <SettingTitle>Backup</SettingTitle>
+            <WalletSettingsTitle isDark={theme.dark}>
+              Backup
+            </WalletSettingsTitle>
           </Setting>
           <Hr />
 
           <SettingView>
-            <SettingTitle>Request Encrypt Password</SettingTitle>
+            <WalletSettingsTitle isDark={theme.dark}>
+              Request Encrypt Password
+            </WalletSettingsTitle>
 
             <Checkbox
               onPress={() => {
@@ -160,21 +177,37 @@ const WalletSettings = () => {
           </SettingView>
 
           {showInfo && (
-            <Info>
-              <InfoTriangle />
+            <Info isDark={theme.dark}>
+              <InfoTriangle isDark={theme.dark} />
 
               <InfoHeader>
-                <InfoImageContainer margin={'0% 8px 0% 0%'}>
+                <InfoImageContainer infoMargin={'0 8px 0 0'}>
                   <InfoIcon />
                 </InfoImageContainer>
 
-                <InfoTitle>Password Not Recoverable</InfoTitle>
+                <InfoTitle style={textStyle}>
+                  Password Not Recoverable
+                </InfoTitle>
               </InfoHeader>
-              <InfoDescription>
+              <InfoDescription isDark={theme.dark}>
                 This password cannot be recovered. If this password is lost,
                 funds can only be recovered by reimporting your 12-word recovery
                 phrase.
               </InfoDescription>
+
+              <Section>
+                <TouchableOpacity
+                  onPress={() => {
+                    haptic('impactLight');
+                    dispatch(
+                      openUrlWithInAppBrowser(
+                        'https://support.bitpay.com/hc/en-us/articles/360000244506-What-Does-a-Spending-Password-Do-',
+                      ),
+                    );
+                  }}>
+                  <Link>Learn More</Link>
+                </TouchableOpacity>
+              </Section>
             </Info>
           )}
 
@@ -182,13 +215,15 @@ const WalletSettings = () => {
         </Section>
 
         <Section>
-          <Title>Advanced</Title>
+          <Title style={textStyle}>Advanced</Title>
           <Setting
             onPress={() => {
               haptic('impactLight');
               //    TODO: Redirect me
             }}>
-            <SettingTitle>Sync Wallets Across Devices</SettingTitle>
+            <WalletSettingsTitle isDark={theme.dark}>
+              Sync Wallets Across Devices
+            </WalletSettingsTitle>
           </Setting>
           <Hr />
 
@@ -197,7 +232,9 @@ const WalletSettings = () => {
               haptic('impactLight');
               //    TODO: Redirect me
             }}>
-            <SettingTitle>Export Key</SettingTitle>
+            <WalletSettingsTitle isDark={theme.dark}>
+              Export Key
+            </WalletSettingsTitle>
           </Setting>
           <Hr />
 
@@ -206,7 +243,9 @@ const WalletSettings = () => {
               haptic('impactLight');
               //    TODO: Redirect me
             }}>
-            <SettingTitle>Extended Private Key</SettingTitle>
+            <WalletSettingsTitle isDark={theme.dark}>
+              Extended Private Key
+            </WalletSettingsTitle>
           </Setting>
           <Hr />
 
@@ -215,7 +254,9 @@ const WalletSettings = () => {
               haptic('impactLight');
               //    TODO: Redirect me
             }}>
-            <SettingTitle>Delete</SettingTitle>
+            <WalletSettingsTitle isDark={theme.dark}>
+              Delete
+            </WalletSettingsTitle>
           </Setting>
         </Section>
       </ScrollView>
