@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {BaseText} from '../../../components/styled/Text';
 import {useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
@@ -7,9 +7,12 @@ import {View} from 'react-native';
 import styled from 'styled-components/native';
 import {
   Hr,
+  Info,
+  InfoTriangle,
   ScreenGutter,
   Setting,
   SettingTitle,
+  SettingView,
 } from '../../../components/styled/Containers';
 import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -20,6 +23,8 @@ import AssetSettingsRow, {
   AssetSettingsRowProps,
 } from '../../../components/list/AssetSettingsRow';
 import Button from '../../../components/button/Button';
+import {Black, SlateDark} from '../../../styles/colors';
+import Checkbox from '../../../components/checkbox/Checkbox';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -49,8 +54,23 @@ const WalletNameContainer = styled.TouchableOpacity`
   justify-content: space-between;
 `;
 
-const InfoImageContainer = styled.View`
-  margin-left: 8px;
+const InfoImageContainer = styled.View<{margin: string}>`
+  margin: ${({margin}) => margin};
+`;
+
+const InfoTitle = styled(BaseText)`
+  font-size: 16px;
+  color: ${Black};
+`;
+
+const InfoHeader = styled.View`
+  flex-direction: row;
+  margin-bottom: 10px;
+`;
+
+const InfoDescription = styled(BaseText)`
+  font-size: 16px;
+  color: ${SlateDark};
 `;
 
 const Section = styled.View`
@@ -75,6 +95,7 @@ const WalletSettings = () => {
   } = useRoute<RouteProp<WalletStackParamList, 'WalletSettings'>>();
 
   const assetsList = buildAssetList(wallet.assets);
+  const [showInfo, setShowInfo] = useState(false);
 
   return (
     <WalletSettingsContainer>
@@ -95,7 +116,7 @@ const WalletSettings = () => {
 
         <AssetsHeaderContainer>
           <Title>Assets</Title>
-          <InfoImageContainer>
+          <InfoImageContainer margin={'0% 0% 0% 8px'}>
             <InfoIcon />
           </InfoImageContainer>
         </AssetsHeaderContainer>
@@ -125,13 +146,38 @@ const WalletSettings = () => {
           </Setting>
           <Hr />
 
-          <Setting
-            onPress={() => {
-              haptic('impactLight');
-              //    TODO: Redirect me
-            }}>
+          <SettingView>
             <SettingTitle>Request Encrypt Password</SettingTitle>
-          </Setting>
+
+            <Checkbox
+              onPress={() => {
+                haptic('impactLight');
+                //    TODO: Update me
+                setShowInfo(!showInfo);
+              }}
+              checked={showInfo}
+            />
+          </SettingView>
+
+          {showInfo && (
+            <Info>
+              <InfoTriangle />
+
+              <InfoHeader>
+                <InfoImageContainer margin={'0% 8px 0% 0%'}>
+                  <InfoIcon />
+                </InfoImageContainer>
+
+                <InfoTitle>Password Not Recoverable</InfoTitle>
+              </InfoHeader>
+              <InfoDescription>
+                This password cannot be recovered. If this password is lost,
+                funds can only be recovered by reimporting your 12-word recovery
+                phrase.
+              </InfoDescription>
+            </Info>
+          )}
+
           <Hr />
         </Section>
 
