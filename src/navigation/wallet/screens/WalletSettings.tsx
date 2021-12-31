@@ -83,8 +83,6 @@ const WalletSettingsTitle = styled(SettingTitle)<{isDark: boolean}>`
   color: ${({isDark}) => (isDark ? White : SlateDark)};
 `;
 
-// const WalletSettingsLink = styled(Link).
-
 const buildAssetList = (assets: Asset[]) => {
   const assetList = [] as Array<AssetSettingsRowProps>;
   assets.forEach(({coin, walletName, walletId}) => {
@@ -205,7 +203,7 @@ const WalletSettings = () => {
                       ),
                     );
                   }}>
-                  <Link>Learn More</Link>
+                  <Link isDark={theme.dark}>Learn More</Link>
                 </TouchableOpacity>
               </Section>
             </Info>

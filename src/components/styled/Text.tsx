@@ -1,6 +1,6 @@
 import styled, {css} from 'styled-components/native';
 import {StyledComponentBase} from 'styled-components';
-import {Action} from '../../styles/colors';
+import {Action, White} from '../../styles/colors';
 
 export const BaseText: StyledComponentBase<any, any> = styled.Text`
   font-family: 'Heebo';
@@ -89,11 +89,13 @@ export const TextAlign = styled.Text<TextAlignProps>`
     `}
 `;
 
-export const Link = styled(BaseText)`
+export const Link = styled(BaseText)<{isDark: boolean}>`
   font-size: 16px;
   line-height: 25px;
   font-weight: 400;
-  color: ${Action};
+  color: ${({isDark}) => (isDark ? White : Action)};
+  text-decoration: ${({isDark}) => (isDark ? 'underline' : 'none')};
+  text-decoration-color: ${White};
 `;
 
 // LIST
