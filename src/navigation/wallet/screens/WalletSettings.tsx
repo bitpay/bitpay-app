@@ -75,7 +75,7 @@ const InfoDescription = styled(BaseText)<{isDark: boolean}>`
   color: ${({isDark}) => (isDark ? White : SlateDark)};
 `;
 
-const Section = styled.View`
+const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
 `;
 
@@ -136,7 +136,7 @@ const WalletSettings = () => {
           <AssetSettingsRow asset={asset} key={asset.id} />
         ))}
 
-        <Section>
+        <VerticalPadding>
           <Button
             buttonType={'link'}
             onPress={() => {
@@ -144,9 +144,9 @@ const WalletSettings = () => {
             }}>
             Add an Asset
           </Button>
-        </Section>
+        </VerticalPadding>
 
-        <Section>
+        <VerticalPadding>
           <Title style={textStyle}>Security</Title>
           <Setting
             onPress={() => {
@@ -174,45 +174,40 @@ const WalletSettings = () => {
             />
           </SettingView>
 
-          {showInfo && (
-            <Info isDark={theme.dark}>
-              <InfoTriangle isDark={theme.dark} />
+          <Info isDark={theme.dark}>
+            <InfoTriangle isDark={theme.dark} />
 
-              <InfoHeader>
-                <InfoImageContainer infoMargin={'0 8px 0 0'}>
-                  <InfoIcon />
-                </InfoImageContainer>
+            <InfoHeader>
+              <InfoImageContainer infoMargin={'0 8px 0 0'}>
+                <InfoIcon />
+              </InfoImageContainer>
 
-                <InfoTitle style={textStyle}>
-                  Password Not Recoverable
-                </InfoTitle>
-              </InfoHeader>
-              <InfoDescription isDark={theme.dark}>
-                This password cannot be recovered. If this password is lost,
-                funds can only be recovered by reimporting your 12-word recovery
-                phrase.
-              </InfoDescription>
+              <InfoTitle style={textStyle}>Password Not Recoverable</InfoTitle>
+            </InfoHeader>
+            <InfoDescription isDark={theme.dark}>
+              This password cannot be recovered. If this password is lost, funds
+              can only be recovered by reimporting your 12-word recovery phrase.
+            </InfoDescription>
 
-              <Section>
-                <TouchableOpacity
-                  onPress={() => {
-                    haptic('impactLight');
-                    dispatch(
-                      openUrlWithInAppBrowser(
-                        'https://support.bitpay.com/hc/en-us/articles/360000244506-What-Does-a-Spending-Password-Do-',
-                      ),
-                    );
-                  }}>
-                  <Link isDark={theme.dark}>Learn More</Link>
-                </TouchableOpacity>
-              </Section>
-            </Info>
-          )}
+            <VerticalPadding>
+              <TouchableOpacity
+                onPress={() => {
+                  haptic('impactLight');
+                  dispatch(
+                    openUrlWithInAppBrowser(
+                      'https://support.bitpay.com/hc/en-us/articles/360000244506-What-Does-a-Spending-Password-Do-',
+                    ),
+                  );
+                }}>
+                <Link isDark={theme.dark}>Learn More</Link>
+              </TouchableOpacity>
+            </VerticalPadding>
+          </Info>
 
           <Hr isDark={theme.dark} />
-        </Section>
+        </VerticalPadding>
 
-        <Section>
+        <VerticalPadding>
           <Title style={textStyle}>Advanced</Title>
           <Setting
             onPress={() => {
@@ -256,7 +251,7 @@ const WalletSettings = () => {
               Delete
             </WalletSettingsTitle>
           </Setting>
-        </Section>
+        </VerticalPadding>
       </ScrollView>
     </WalletSettingsContainer>
   );
