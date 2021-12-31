@@ -134,7 +134,7 @@ const WalletStack = () => {
           options={{
             gestureEnabled: false,
             headerTitle: () => (
-              <HeaderTitle style={textStyle}>Import Wallete</HeaderTitle>
+              <HeaderTitle style={textStyle}>Import Wallet</HeaderTitle>
             ),
           }}
           name={WalletScreens.IMPORT_WALLET}
