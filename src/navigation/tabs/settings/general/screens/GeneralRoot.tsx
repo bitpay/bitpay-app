@@ -1,15 +1,14 @@
 import React from 'react';
-import {
-  Setting,
-  Settings,
-  SettingsContainer,
-  SettingTitle,
-} from '../../SettingsRoot';
+import {Settings, SettingsContainer} from '../../SettingsRoot';
 import Button from '../../../../../components/button/Button';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../../store';
-import {Hr} from '../../../../../components/styled/Containers';
+import {
+  Hr,
+  Setting,
+  SettingTitle,
+} from '../../../../../components/styled/Containers';
 import AngleRight from '../../../../../../assets/img/angle-right.svg';
 import {StyleProp, TextStyle} from 'react-native';
 
@@ -22,7 +21,7 @@ const GeneralSettingsRoot: React.FC = () => {
   return (
     <SettingsContainer>
       <Settings>
-        <Hr />
+        <Hr isDark={theme.dark} />
         <Setting
           onPress={() =>
             navigation.navigate('GeneralSettings', {screen: 'Theme'})
@@ -40,7 +39,7 @@ const GeneralSettingsRoot: React.FC = () => {
               : 'System Default'}
           </Button>
         </Setting>
-        <Hr />
+        <Hr isDark={theme.dark} />
         <Setting
           onPress={() =>
             navigation.navigate('GeneralSettings', {screen: 'CustomizeHome'})
@@ -48,7 +47,7 @@ const GeneralSettingsRoot: React.FC = () => {
           <SettingTitle style={textStyle}>Customize Home</SettingTitle>
           <AngleRight />
         </Setting>
-        <Hr />
+        <Hr isDark={theme.dark} />
       </Settings>
     </SettingsContainer>
   );
