@@ -54,7 +54,7 @@ const AssetsHeaderContainer = styled.View`
 `;
 
 const WalletNameContainer = styled.TouchableOpacity`
-  padding: 20px 0;
+  padding: 10px 0 20px 0;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
