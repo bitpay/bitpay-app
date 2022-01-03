@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
+import {createStackNavigator} from '@react-navigation/stack';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
@@ -16,9 +16,10 @@ import Back from '../../components/back/Back';
 import Settings from '../../components/settings/Settings';
 import WalletOptionsBottomPopupModal from './components/WalletOptionsBottomPopupModal';
 import WalletSettings from './screens/WalletSettings';
-import SelectWalletType from './screens/SelectWalletType';
-import {HeaderTitle} from '../../components/styled/Text';
+import {BaseText, HeaderTitle, TextAlign} from '../../components/styled/Text';
 import {StyleProp, TextStyle} from 'react-native';
+import styled from 'styled-components/native';
+import SelectWalletType from './screens/SelectWalletType';
 import ImportWallet, {ImportWalletProps} from './screens/ImportWallet';
 
 export type WalletStackParamList = {
@@ -44,6 +45,11 @@ export enum WalletScreens {
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
+
+const HeaderSubtitle = styled(BaseText)`
+  font-size: 16px;
+  line-height: 25px;
+`;
 
 const WalletStack = () => {
   const theme = useTheme();
@@ -114,8 +120,21 @@ const WalletStack = () => {
         />
         <Wallet.Screen
           options={{
-            headerShown: false,
-            ...TransitionPresets.ModalPresentationIOS,
+            headerTitle: () => (
+              <>
+                <TextAlign align={'center'}>
+                  <HeaderTitle style={textStyle}>Wallet Settings</HeaderTitle>
+                </TextAlign>
+                {wallet && (
+                  <TextAlign align={'center'}>
+                    <HeaderSubtitle style={textStyle}>
+                      This wallet contains {wallet.assets.length} asset
+                      {wallet.assets.length > 1 && 's'}
+                    </HeaderSubtitle>
+                  </TextAlign>
+                )}
+              </>
+            ),
           }}
           name={WalletScreens.WALLET_SETTINGS}
           component={WalletSettings}
@@ -141,7 +160,6 @@ const WalletStack = () => {
           component={ImportWallet}
         />
       </Wallet.Navigator>
-
       {wallet && (
         <WalletOptionsBottomPopupModal
           isVisible={showWalletOptions}
