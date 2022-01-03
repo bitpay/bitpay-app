@@ -119,7 +119,7 @@ const HomeRoot = () => {
 
         <CardsCarousel />
 
-        <LinkingButtons />
+        <LinkingButtons receiveCta={() => null} sendCta={() => null} />
 
         <SectionHeaderContainer justifyContent={'space-between'}>
           <Title isDark={theme.dark}>Limited Time Offers</Title>

@@ -138,7 +138,7 @@ const WalletSettings = () => {
         <Hr isDark={theme.dark} />
 
         <AssetsHeaderContainer>
-          <Title style={textStyle}>Assets ({wallet.assets.length})</Title>
+          <Title style={textStyle}>Assets</Title>
           <InfoImageContainer infoMargin={'0 0 0 8px'}>
             <InfoIcon />
           </InfoImageContainer>

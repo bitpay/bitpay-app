@@ -3,12 +3,7 @@ import BottomPopupModal from '../../../components/modal/base/bottom-popup/Bottom
 import {BaseText, H4, TextAlign} from '../../../components/styled/Text';
 import styled from 'styled-components/native';
 import {Action, SlateDark} from '../../../styles/colors';
-import BackupSvg from '../../../../assets/img/wallet/backup.svg';
-import EncryptSvg from '../../../../assets/img/wallet/encrypt.svg';
-import SettingsSvg from '../../../../assets/img/wallet/settings.svg';
 import {ModalContainer} from '../../../components/styled/Containers';
-import {useNavigation} from '@react-navigation/native';
-import {WalletObj} from '../../../store/wallet/wallet.models';
 
 const WalletOptionsTitleContainer = styled.View`
   margin-bottom: 25px;
@@ -47,60 +42,32 @@ const OptionDescriptionText = styled(BaseText)`
   color: ${SlateDark};
 `;
 
-interface Props {
-  isVisible: boolean;
-  wallet: WalletObj;
-  closeModal: () => void;
-}
-
-interface WalletOption {
+export interface Option {
   img: ReactElement;
   title: string;
   description: string;
   onPress: () => void;
 }
 
-const WalletOptionsBottomPopupModal = ({
+interface Props {
+  isVisible: boolean;
+  closeModal: () => void;
+  title: string;
+  options: Array<Option>;
+}
+
+const OptionsBottomPopupModal = ({
   isVisible,
   closeModal,
-  wallet,
+  title,
+  options,
 }: Props) => {
-  const navigation = useNavigation();
-  const options: Array<WalletOption> = [
-    {
-      img: <BackupSvg />,
-      title: 'Create a Backup Phrase',
-      description:
-        'The only way to recover a wallet if your phone is lost or stolen.',
-      onPress: () => null,
-    },
-    {
-      img: <EncryptSvg />,
-      title: 'Encrypt your wallet',
-      description:
-        'Prevent an unauthorized used from sending funds out of your wallet.',
-      onPress: () => null,
-    },
-    {
-      img: <SettingsSvg />,
-      title: 'Wallet Settings',
-      description: 'View all the ways to manage and configure your wallet.',
-      onPress: () =>
-        navigation.navigate('Wallet', {
-          screen: 'WalletSettings',
-          params: {
-            wallet,
-          },
-        }),
-    },
-  ];
-
   return (
     <BottomPopupModal isVisible={isVisible} onBackdropPress={closeModal}>
       <ModalContainer>
         <WalletOptionsTitleContainer>
           <TextAlign align={'center'}>
-            <H4>Wallet Options</H4>
+            <H4>{title}</H4>
           </TextAlign>
         </WalletOptionsTitleContainer>
         {options.map(({img, title, description, onPress}, index) => {
@@ -125,4 +92,4 @@ const WalletOptionsBottomPopupModal = ({
   );
 };
 
-export default WalletOptionsBottomPopupModal;
+export default OptionsBottomPopupModal;

@@ -8,7 +8,6 @@ import SwapSvg from '../../../../../assets/img/home/linking-buttons/swap.svg';
 import Haptic from '../../../../components/haptic-feedback/haptic';
 import {BaseText} from '../../../../components/styled/Text';
 import {useTheme} from '@react-navigation/native';
-import {ScreenGutter} from '../../../../components/styled/Containers';
 import {navigationRef} from '../../../../Root';
 
 const ButtonsRow = styled.View`
@@ -19,7 +18,7 @@ const ButtonsRow = styled.View`
 
 const ButtonContainer = styled.View`
   align-items: center;
-  margin: 20px ${ScreenGutter};
+  margin: 20px 0;
 `;
 
 const ButtonText = styled(BaseText)<{isDark: boolean}>`
@@ -45,13 +44,13 @@ interface ButtonListProps {
   cta: () => void;
 }
 
-const LinkingButtons = () => {
-  const theme = useTheme();
+interface Props {
+  receiveCta: () => void;
+  sendCta: () => void;
+}
 
-  const _onPress = (cta: () => void) => {
-    Haptic('impactLight');
-    cta();
-  };
+const LinkingButtons = ({receiveCta, sendCta}: Props) => {
+  const theme = useTheme();
   const buttonsList: Array<ButtonListProps> = [
     // TODO: update icons
     {
@@ -71,28 +70,27 @@ const LinkingButtons = () => {
     {
       label: 'receive',
       img: <ReceiveSvg />,
-      cta: () => {
-        /** TODO: Redirect me*/
-      },
+      cta: receiveCta,
     },
     {
       label: 'send',
       img: <SendSvg />,
-      cta: () => {
-        /** TODO: Redirect me*/
-      },
+      cta: sendCta,
     },
   ];
   return (
     <ButtonsRow>
-      {buttonsList.map((button: ButtonListProps) => (
-        <ButtonContainer key={button.label}>
-          <LinkButton isDark={theme.dark} onPress={() => _onPress(button.cta)}>
-            {button.img}
+      {buttonsList.map(({label, cta, img}: ButtonListProps) => (
+        <ButtonContainer key={label}>
+          <LinkButton
+            isDark={theme.dark}
+            onPress={() => {
+              Haptic('impactLight');
+              cta();
+            }}>
+            {img}
           </LinkButton>
-          <ButtonText isDark={theme.dark}>
-            {button.label.toUpperCase()}
-          </ButtonText>
+          <ButtonText isDark={theme.dark}>{label.toUpperCase()}</ButtonText>
         </ButtonContainer>
       ))}
     </ButtonsRow>
