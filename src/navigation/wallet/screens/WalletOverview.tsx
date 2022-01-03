@@ -1,10 +1,9 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {BaseText, H5, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {Grey} from '../../../styles/colors';
 import AssetRow, {AssetRowProps} from '../../../components/list/AssetRow';
 import {FlatList} from 'react-native';
 import {Asset} from '../../../store/wallet/wallet.models';
@@ -13,15 +12,17 @@ import AddAsset from '../../../../assets/img/add-asset.svg';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../store';
 import {formatFiatBalance} from '../../../utils/helper-methods';
+import WalletOptionsBottomPopupModal from '../components/WalletOptionsBottomPopupModal';
+import Settings from '../../../components/settings/Settings';
 
 const OverviewContainer = styled.View`
   flex: 1;
 `;
 
 const BalanceContainer = styled.View`
-  height: 20%;
-  background: ${Grey};
-  padding: 20px;
+  height: 10%;
+  margin-top: 20px;
+  padding: 10px;
 `;
 
 const Balance = styled(BaseText)`
@@ -87,9 +88,18 @@ const buildAssetList = (assets: Asset[]) => {
 const WalletOverview = () => {
   const route = useRoute<RouteProp<WalletStackParamList, 'WalletOverview'>>();
   const navigation = useNavigation();
+  const [showWalletOptions, setShowWalletOptions] = useState(false);
+
   useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>Wallet1</HeaderTitle>,
+      headerRight: () => (
+        <Settings
+          onPress={() => {
+            setShowWalletOptions(true);
+          }}
+        />
+      ),
     });
   }, [navigation]);
   const {
@@ -123,6 +133,11 @@ const WalletOverview = () => {
         renderItem={({item}) => {
           return <AssetRow id={item.id} asset={item} />;
         }}
+      />
+      <WalletOptionsBottomPopupModal
+        isVisible={showWalletOptions}
+        wallet={wallet}
+        closeModal={() => setShowWalletOptions(false)}
       />
     </OverviewContainer>
   );

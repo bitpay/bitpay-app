@@ -78,6 +78,11 @@ export const HeaderTitle = styled(BaseText)`
   letter-spacing: 0;
 `;
 
+export const HeaderSubtitle = styled(BaseText)`
+  font-size: 16px;
+  line-height: 25px;
+`;
+
 interface TextAlignProps {
   align: 'center' | 'left' | 'right';
 }
