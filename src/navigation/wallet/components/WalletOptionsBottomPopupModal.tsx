@@ -50,7 +50,7 @@ const OptionDescriptionText = styled(BaseText)`
 interface Props {
   isVisible: boolean;
   wallet: WalletObj;
-  onBackdropPress: () => void;
+  closeModal: () => void;
 }
 
 interface WalletOption {
@@ -62,7 +62,7 @@ interface WalletOption {
 
 const WalletOptionsBottomPopupModal = ({
   isVisible,
-  onBackdropPress,
+  closeModal,
   wallet,
 }: Props) => {
   const navigation = useNavigation();
@@ -96,7 +96,7 @@ const WalletOptionsBottomPopupModal = ({
   ];
 
   return (
-    <BottomPopupModal isVisible={isVisible} onBackdropPress={onBackdropPress}>
+    <BottomPopupModal isVisible={isVisible} onBackdropPress={closeModal}>
       <ModalContainer>
         <WalletOptionsTitleContainer>
           <TextAlign align={'center'}>
@@ -109,7 +109,7 @@ const WalletOptionsBottomPopupModal = ({
               key={index}
               activeOpacity={0.75}
               onPress={() => {
-                onBackdropPress();
+                closeModal();
                 onPress();
               }}>
               <OptionIconContainer>{img}</OptionIconContainer>
