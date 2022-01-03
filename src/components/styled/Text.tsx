@@ -103,6 +103,15 @@ export const Link = styled(BaseText)<{isDark: boolean}>`
   text-decoration-color: ${White};
 `;
 
+// WALLET
+export const Balance = styled(BaseText)`
+  font-size: 36px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 53px;
+  letter-spacing: 0;
+`;
+
 // LIST
 export const MainLabel = styled(BaseText)`
   font-size: 18px;

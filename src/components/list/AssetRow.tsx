@@ -37,9 +37,10 @@ export interface AssetRowProps {
 interface Props {
   id: string;
   asset: AssetRowProps;
+  onPress: () => void;
 }
 
-const AssetRow = ({asset}: Props) => {
+const AssetRow = ({asset, onPress}: Props) => {
   const {
     assetName,
     assetAbbreviation,
@@ -49,7 +50,7 @@ const AssetRow = ({asset}: Props) => {
     isToken,
   } = asset;
   return (
-    <RowContainer activeOpacity={0.75}>
+    <RowContainer activeOpacity={0.75} onPress={onPress}>
       {isToken && (
         <NestedArrowContainer>
           <NestedArrow />
