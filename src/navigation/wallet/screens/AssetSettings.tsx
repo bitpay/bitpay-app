@@ -19,6 +19,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 
 import {SlateDark, White} from '../../../styles/colors';
 import Checkbox from '../../../components/checkbox/Checkbox';
+import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 
 const AssetSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -61,7 +62,7 @@ const AssetSettings = () => {
   } = useRoute<RouteProp<WalletStackParamList, 'AssetSettings'>>();
   const theme = useTheme();
   const navigation = useNavigation();
-  const [showInfo, setShowInfo] = useState(false);
+  const [demoToggle, setDemoToggle] = useState(false);
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
 
   useEffect(() => {
@@ -99,13 +100,13 @@ const AssetSettings = () => {
             Hide Asset
           </AssetSettingsTitle>
 
-          <Checkbox
-            onPress={() => {
+          <ToggleSwitch
+            onChange={value => {
               haptic('impactLight');
               //    TODO: Update me
-              setShowInfo(!showInfo);
+              setDemoToggle(value);
             }}
-            checked={showInfo}
+            isEnabled={demoToggle}
           />
         </SettingView>
         <Info isDark={theme.dark}>
@@ -121,13 +122,12 @@ const AssetSettings = () => {
             Hide Balance
           </AssetSettingsTitle>
 
-          <Checkbox
-            onPress={() => {
+          <ToggleSwitch
+            onChange={value => {
               haptic('impactLight');
               //    TODO: Update me
-              setShowInfo(!showInfo);
             }}
-            checked={showInfo}
+            isEnabled={false}
           />
         </SettingView>
 
@@ -148,14 +148,12 @@ const AssetSettings = () => {
             <AssetSettingsTitle isDark={theme.dark}>
               Request Encrypt Password
             </AssetSettingsTitle>
-
-            <Checkbox
-              onPress={() => {
+            <ToggleSwitch
+              onChange={value => {
                 haptic('impactLight');
                 //    TODO: Update me
-                setShowInfo(!showInfo);
               }}
-              checked={showInfo}
+              isEnabled={false}
             />
           </SettingView>
 
