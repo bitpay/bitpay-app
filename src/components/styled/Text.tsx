@@ -1,8 +1,7 @@
 import styled, {css} from 'styled-components/native';
-import {StyledComponentBase} from 'styled-components';
 import {Action, White} from '../../styles/colors';
 
-export const BaseText: StyledComponentBase<any, any> = styled.Text`
+export const BaseText = styled.Text`
   font-family: 'Heebo';
 `;
 

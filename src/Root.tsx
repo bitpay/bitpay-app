@@ -8,6 +8,7 @@ import debounce from 'lodash.debounce';
 import React, {useEffect, useState} from 'react';
 import {Appearance, AppState, AppStateStatus, StatusBar} from 'react-native';
 import 'react-native-gesture-handler';
+import {ThemeProvider} from 'styled-components/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
 import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
@@ -162,87 +163,89 @@ export default () => {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer
-        ref={navigationRef}
-        theme={theme}
-        linking={linking}
-        onReady={() => {
-          // routing to previous route if onboarding
-          if (currentRoute && !onboardingCompleted) {
-            const [currentStack, params] = currentRoute;
-            navigationRef.navigate(currentStack, params);
-            dispatch(
-              LogActions.info(
-                `Navigating to cached route... ${currentStack} ${JSON.stringify(
-                  params,
-                )}`,
-              ),
-            );
-          }
-        }}
-        onStateChange={debounce(navEvent => {
-          // storing current route
-          if (navEvent) {
-            const {routes} = navEvent;
-            const {name, params} = navEvent.routes[routes.length - 1];
-            dispatch(AppActions.setCurrentRoute([name, params]));
-            dispatch(
-              LogActions.info(
-                `Navigation event... ${name} ${JSON.stringify(params)}`,
-              ),
-            );
-          }
-        }, 300)}>
-        <Root.Navigator
-          screenOptions={{
-            ...baseScreenOptions,
-            headerShown: false,
+      <ThemeProvider theme={theme}>
+        <NavigationContainer
+          ref={navigationRef}
+          theme={theme}
+          linking={linking}
+          onReady={() => {
+            // routing to previous route if onboarding
+            if (currentRoute && !onboardingCompleted) {
+              const [currentStack, params] = currentRoute;
+              navigationRef.navigate(currentStack, params);
+              dispatch(
+                LogActions.info(
+                  `Navigating to cached route... ${currentStack} ${JSON.stringify(
+                    params,
+                  )}`,
+                ),
+              );
+            }
           }}
-          initialRouteName={initialRoute}>
-          <Root.Screen
-            name={RootStacks.ONBOARDING}
-            component={OnboardingStack}
-          />
-          <Root.Screen
-            name={RootStacks.TABS}
-            component={TabsStack}
-            options={{
-              gestureEnabled: false,
+          onStateChange={debounce(navEvent => {
+            // storing current route
+            if (navEvent) {
+              const {routes} = navEvent;
+              const {name, params} = navEvent.routes[routes.length - 1];
+              dispatch(AppActions.setCurrentRoute([name, params]));
+              dispatch(
+                LogActions.info(
+                  `Navigation event... ${name} ${JSON.stringify(params)}`,
+                ),
+              );
+            }
+          }, 300)}>
+          <Root.Navigator
+            screenOptions={{
+              ...baseScreenOptions,
+              headerShown: false,
             }}
-          />
-          <Root.Screen name={RootStacks.BITPAY_ID} component={BitpayIdStack} />
-          <Root.Screen name={RootStacks.WALLET} component={WalletStack} />
-          <Root.Screen name={RootStacks.SCAN} component={ScanStack} />
-          {/* SETTINGS */}
-          <Root.Screen
-            name={RootStacks.GENERAL_SETTINGS}
-            component={GeneralSettingsStack}
-          />
-          <Root.Screen
-            name={RootStacks.SECURITY_SETTINGS}
-            component={SecuritySettingsStack}
-          />
-          <Root.Screen
-            name={RootStacks.CONTACT_SETTINGS}
-            component={ContactSettingsStack}
-          />
-          <Root.Screen
-            name={RootStacks.NOTIFICATION_SETTINGS}
-            component={NotificationSettingsStack}
-          />
-          <Root.Screen name={RootStacks.ABOUT} component={AboutStack} />
-          <Root.Screen
-            name={RootStacks.BUY_CRYPTO}
-            component={BuyCryptoStack}
-          />
-          <Root.Screen
-            name={RootStacks.SWAP_CRYPTO}
-            component={SwapCryptoStack}
-          />
-        </Root.Navigator>
-        <OnGoingProcessModal />
-        <BottomNotificationModal />
-      </NavigationContainer>
+            initialRouteName={initialRoute}>
+            <Root.Screen
+              name={RootStacks.ONBOARDING}
+              component={OnboardingStack}
+            />
+            <Root.Screen
+              name={RootStacks.TABS}
+              component={TabsStack}
+              options={{
+                gestureEnabled: false,
+              }}
+            />
+            <Root.Screen name={RootStacks.BITPAY_ID} component={BitpayIdStack} />
+            <Root.Screen name={RootStacks.WALLET} component={WalletStack} />
+            <Root.Screen name={RootStacks.SCAN} component={ScanStack} />
+            {/* SETTINGS */}
+            <Root.Screen
+              name={RootStacks.GENERAL_SETTINGS}
+              component={GeneralSettingsStack}
+            />
+            <Root.Screen
+              name={RootStacks.SECURITY_SETTINGS}
+              component={SecuritySettingsStack}
+            />
+            <Root.Screen
+              name={RootStacks.CONTACT_SETTINGS}
+              component={ContactSettingsStack}
+            />
+            <Root.Screen
+              name={RootStacks.NOTIFICATION_SETTINGS}
+              component={NotificationSettingsStack}
+            />
+            <Root.Screen name={RootStacks.ABOUT} component={AboutStack} />
+            <Root.Screen
+              name={RootStacks.BUY_CRYPTO}
+              component={BuyCryptoStack}
+            />
+            <Root.Screen
+              name={RootStacks.SWAP_CRYPTO}
+              component={SwapCryptoStack}
+            />
+          </Root.Navigator>
+          <OnGoingProcessModal />
+          <BottomNotificationModal />
+        </NavigationContainer>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 };
