@@ -9,6 +9,8 @@ import {WalletConnectContainer, ScrollView} from './WalletConnectIntro';
 import WalletConnectIcon from '../../../../assets/img/wallet-connect/wallet-connect-icon.svg';
 import EthIcon from '../../../../assets/img/currencies/eth.svg';
 import AngleRight from '../../../../assets/img/angle-right.svg';
+import {useDispatch} from 'react-redux';
+import {AppActions} from '../../../store/app';
 
 const TitleText = styled(BaseText)`
   font-size: 16px;
@@ -61,7 +63,7 @@ const PRContainer = styled.View`
   padding-bottom: 64px;
 `;
 
-const PRItemContainer = styled.View`
+const PRItemContainer = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
@@ -83,6 +85,7 @@ const PRItemNoteContainer = styled.View`
 const WalletConnectHome = () => {
   const navigation = useNavigation();
   const theme = useTheme();
+  const dispatch = useDispatch();
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
   return (
     <WalletConnectContainer>
@@ -129,7 +132,13 @@ const WalletConnectHome = () => {
               <H7 style={textStyle}>No pending requests</H7>
             </PRItemTitleContainer>
           </PRItemContainer>
-          <PRItemContainer>
+          <PRItemContainer
+            onPress={() => {
+              dispatch(AppActions.dismissBottomNotificationModal());
+              navigation.navigate('WalletConnect', {
+                screen: 'WalletConnectRequestDetails',
+              });
+            }}>
             <PRItemTitleContainer>
               <IconContainer>
                 <WalletConnectIcon />

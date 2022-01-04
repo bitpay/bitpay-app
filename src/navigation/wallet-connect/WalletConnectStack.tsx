@@ -5,19 +5,21 @@ import {
   baseNavigatorOptions,
   baseScreenOptions,
 } from '../../constants/NavigationOptions';
+import {StyleProp, TextStyle} from 'react-native';
+import {useTheme} from '@react-navigation/native';
 import WalletConnectIntro from './screens/WalletConnectIntro';
 import WalletConnectIcon from '../../../assets/img/wallet-connect/wallet-connect-icon.svg';
 import WalletConnectStart from './screens/WalletConnectStart';
-import {StyleProp, TextStyle} from 'react-native';
-import {useTheme} from '@react-navigation/native';
 import WalletConnectHome from './screens/WalletConnectHome';
 import WalletConnectConnections from './screens/WalletConnectConnections';
+import WalletConnectRequestDetails from './screens/WalletConnectRequestDetails';
 
 export type WalletConnectStackParamList = {
   Root: undefined;
   WalletConnectStart: undefined;
   WalletConnectConnections: undefined;
   WalletConnectHome: undefined;
+  WalletConnectRequestDetails: undefined;
 };
 
 export enum WalletConnectScreens {
@@ -25,6 +27,7 @@ export enum WalletConnectScreens {
   WC_START = 'WalletConnectStart',
   WC_CONNECTIONS = 'WalletConnectConnections',
   WC_HOME = 'WalletConnectHome',
+  WC_REQUEST_DETAILS = 'WalletConnectRequestDetails',
 }
 
 const WalletConnect = createStackNavigator<WalletConnectStackParamList>();
@@ -75,6 +78,17 @@ const WalletConnectStack = () => {
       <WalletConnect.Screen
         name={WalletConnectScreens.WC_HOME}
         component={WalletConnectHome}
+        options={{
+          headerTitle: () => (
+            <HeaderTitle style={textStyle}>
+              <WalletConnectIcon /> WalletConnect
+            </HeaderTitle>
+          ),
+        }}
+      />
+      <WalletConnect.Screen
+        name={WalletConnectScreens.WC_REQUEST_DETAILS}
+        component={WalletConnectRequestDetails}
         options={{
           headerTitle: () => (
             <HeaderTitle style={textStyle}>
