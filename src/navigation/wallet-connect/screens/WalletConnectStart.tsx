@@ -92,7 +92,7 @@ const WalletConnectStart = () => {
                     action: () => {
                       dispatch(AppActions.dismissBottomNotificationModal());
                       navigation.navigate('WalletConnect', {
-                        screen: 'WalletConnectHome',
+                        screen: 'WalletConnectConnections',
                       });
                     },
                     primary: true,

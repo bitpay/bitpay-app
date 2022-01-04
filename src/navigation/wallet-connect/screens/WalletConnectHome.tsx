@@ -10,7 +10,6 @@ import WalletConnectIcon from '../../../../assets/img/wallet-connect/wallet-conn
 import EthIcon from '../../../../assets/img/currencies/eth.svg';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 
-
 const TitleText = styled(BaseText)`
   font-size: 16px;
   font-style: normal;
@@ -36,7 +35,7 @@ const SummaryItemContainer = styled.View`
   height: 71px;
 `;
 
-const NoteContainer = styled.View<{isDark: boolean, isDappUri?: boolean}>`
+const NoteContainer = styled.View<{isDark: boolean; isDappUri?: boolean}>`
   background-color: ${({isDark}) => (isDark ? LightBlack : NeutralSlate)};
   border-radius: 40px;
   height: 37px;
@@ -88,7 +87,6 @@ const WalletConnectHome = () => {
   return (
     <WalletConnectContainer>
       <ScrollView>
-          
         <SummaryContainer>
           <TitleText style={textStyle}>Summary</TitleText>
           <Hr isDark={theme.dark} />
@@ -98,19 +96,25 @@ const WalletConnectHome = () => {
               <IconContainer>
                 <WalletConnectIcon width={18} height={18} />
               </IconContainer>
-              <IconLabel style={textStyle} numberOfLines={1} ellipsizeMode={'tail'}>
-              https://example.walletconnectblablabla
+              <IconLabel
+                style={textStyle}
+                numberOfLines={1}
+                ellipsizeMode={'tail'}>
+                https://example.walletconnectblablabla
               </IconLabel>
             </NoteContainer>
           </SummaryItemContainer>
           <Hr isDark={theme.dark} />
           <SummaryItemContainer>
-            <H7 style={textStyle} >Linked Wallet</H7>
+            <H7 style={textStyle}>Linked Wallet</H7>
             <NoteContainer isDark={theme.dark}>
               <IconContainer>
                 <EthIcon width={18} height={18} />
               </IconContainer>
-              <IconLabel style={textStyle} numberOfLines={1} ellipsizeMode={'middle'}>
+              <IconLabel
+                style={textStyle}
+                numberOfLines={1}
+                ellipsizeMode={'middle'}>
                 FHgTasdasdasdsadsa2321FHgTasdasdasdsadsa2321
               </IconLabel>
             </NoteContainer>
@@ -121,25 +125,25 @@ const WalletConnectHome = () => {
           <TitleText style={textStyle}>Pending Requests</TitleText>
           <Hr isDark={theme.dark} />
           <PRItemContainer>
-              <PRItemTitleContainer>
-                <H7 style={textStyle}>No pending requests</H7>
-              </PRItemTitleContainer>
+            <PRItemTitleContainer>
+              <H7 style={textStyle}>No pending requests</H7>
+            </PRItemTitleContainer>
           </PRItemContainer>
           <PRItemContainer>
             <PRItemTitleContainer>
-                <IconContainer>
-              <WalletConnectIcon />
-             </IconContainer>
+              <IconContainer>
+                <WalletConnectIcon />
+              </IconContainer>
               <IconLabel style={textStyle}>WalletConnect Example</IconLabel>
             </PRItemTitleContainer>
             <PRItemNoteContainer>
-                <IconLabel>0.00 ETH</IconLabel>
-                <IconContainer>
-                    <AngleRight />
-                </IconContainer>
+              <IconLabel>0.00 ETH</IconLabel>
+              <IconContainer>
+                <AngleRight />
+              </IconContainer>
             </PRItemNoteContainer>
           </PRItemContainer>
-          <Hr isDark={theme.dark}/>
+          <Hr isDark={theme.dark} />
         </PRContainer>
       </ScrollView>
       <Button
