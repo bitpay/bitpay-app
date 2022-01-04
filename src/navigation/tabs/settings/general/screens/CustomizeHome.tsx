@@ -3,7 +3,7 @@ import CustomizeHomeCard from '../../../../../components/customize-home-card/Cus
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../../store';
 import styled from 'styled-components/native';
-import {CurrencyList} from '../../../../../constants/CurrencySelectionListOptions';
+import {CurrencyList} from '../../../../../constants/AssetSelectionOptions';
 
 const HeaderImg = styled.View`
   align-items: center;

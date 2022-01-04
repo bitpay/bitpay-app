@@ -1,5 +1,5 @@
 import styled, {css} from 'styled-components/native';
-import {Action, White} from '../../styles/colors';
+import {Action, SlateDark, White} from '../../styles/colors';
 
 export const BaseText = styled.Text`
   font-family: 'Heebo';
@@ -50,6 +50,10 @@ export const H7 = styled(BaseText)`
   font-weight: 400;
   line-height: 18px;
   letter-spacing: 0;
+`;
+
+export const SubText = styled(H7)`
+  color: ${SlateDark};
 `;
 
 export const Paragraph = styled(BaseText)`
