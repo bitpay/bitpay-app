@@ -8,7 +8,6 @@ import Pair from './screens/Pair';
 import Profile from './screens/Profile';
 
 export type BitpayIdStackParamList = {
-  LoginSignup: {context: 'login' | 'signup'};
   Pair: {
     secret?: string;
     code?: string;
@@ -19,7 +18,6 @@ export type BitpayIdStackParamList = {
 };
 
 export enum BitpayIdScreens {
-  LOGIN_SIGNUP = 'LoginSignup',
   PAIR = 'Pair',
   PROFILE = 'Profile',
 }
@@ -30,7 +28,7 @@ const BitpayIdStack = () => {
   return (
     <BitpayId.Navigator
       screenOptions={{...baseNavigatorOptions}}
-      initialRouteName={BitpayIdScreens.LOGIN_SIGNUP}>
+      initialRouteName={BitpayIdScreens.PROFILE}>
       <BitpayId.Screen
         name={BitpayIdScreens.PAIR}
         component={Pair}
