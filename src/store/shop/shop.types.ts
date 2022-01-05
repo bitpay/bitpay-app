@@ -1,4 +1,8 @@
-import {AvailableCardMap} from './shop.models';
+import {
+  AvailableCardMap,
+  CategoriesAndCurations,
+  DirectIntegrationMap,
+} from './shop.models';
 
 export enum ShopActionTypes {
   SUCCESS_FETCH_CATALOG = 'SHOP/SUCCESS_FETCH_CATALOG',
@@ -9,8 +13,8 @@ interface successFetchCatalog {
   type: typeof ShopActionTypes.SUCCESS_FETCH_CATALOG;
   payload: {
     availableCardMap: AvailableCardMap;
-    categories: any;
-    integrations: any;
+    categoriesAndCurations: CategoriesAndCurations;
+    integrations: DirectIntegrationMap;
   };
 }
 

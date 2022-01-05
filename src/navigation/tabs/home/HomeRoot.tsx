@@ -1,6 +1,6 @@
 import React from 'react';
 import {Image, TouchableOpacity} from 'react-native';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {RootState} from '../../../store';
 import {PriceHistory} from '../../../store/wallet/wallet.models';
@@ -23,6 +23,8 @@ import {ScreenGutter} from '../../../components/styled/Containers';
 import AdvertisementCard from '../../../components/advertisement/AdvertisementCard';
 import {AdvertisementList} from '../../../components/advertisement/advertisement';
 import {OfferItems} from '../../../components/offer/offer';
+import {AppActions} from '../../../store/app';
+import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishModal';
 
 const HomeContainer = styled.SafeAreaView`
   flex: 1;
@@ -52,6 +54,14 @@ const SectionHeaderContainer = styled.View<{justifyContent?: string}>`
 `;
 
 const HomeRoot = () => {
+  const dispatch = useDispatch();
+  const onboardingCompleted = useSelector(
+    ({APP}: RootState) => APP.onboardingCompleted,
+  );
+  if (!onboardingCompleted) {
+    dispatch(AppActions.showOnboardingFinishModal());
+  }
+
   const theme = useTheme();
   const navigation = useNavigation();
 
@@ -91,6 +101,7 @@ const HomeRoot = () => {
 
   return (
     <HomeContainer>
+      <OnboardingFinishModal />
       <Home>
         <PortfolioBalance />
 
@@ -108,7 +119,7 @@ const HomeRoot = () => {
 
         <CardsCarousel />
 
-        <LinkingButtons />
+        <LinkingButtons receiveCta={() => null} sendCta={() => null} />
 
         <SectionHeaderContainer justifyContent={'space-between'}>
           <Title isDark={theme.dark}>Limited Time Offers</Title>

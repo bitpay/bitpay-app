@@ -19,6 +19,7 @@ import {LogActions} from '../log';
 import {startWalletStoreInit} from '../wallet/effects';
 import {AppActions} from './';
 import {AppIdentity} from './app.models';
+import RNBootSplash from 'react-native-bootsplash';
 
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
@@ -73,6 +74,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     await sleep(500);
     dispatch(AppActions.successAppInit());
     dispatch(LogActions.info('Initialized app successfully.'));
+    RNBootSplash.hide({fade: true});
   } catch (err) {
     console.error(err);
     dispatch(AppActions.failedAppInit());

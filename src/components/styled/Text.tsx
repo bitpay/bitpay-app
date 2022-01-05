@@ -1,8 +1,7 @@
 import styled, {css} from 'styled-components/native';
-import {StyledComponentBase} from 'styled-components';
-import {Action} from '../../styles/colors';
+import {Action, White} from '../../styles/colors';
 
-export const BaseText: StyledComponentBase<any, any> = styled.Text`
+export const BaseText = styled.Text`
   font-family: 'Heebo';
 `;
 
@@ -31,6 +30,28 @@ export const H4 = styled(BaseText)`
   letter-spacing: 0;
 `;
 
+export const H5 = styled(BaseText)`
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 25px;
+  letter-spacing: 0;
+`;
+
+export const H6 = styled(BaseText)`
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+`;
+
+export const H7 = styled(BaseText)`
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 18px;
+  letter-spacing: 0;
+`;
+
 export const Paragraph = styled(BaseText)`
   font-size: 16px;
   font-style: normal;
@@ -56,8 +77,13 @@ export const HeaderTitle = styled(BaseText)`
   letter-spacing: 0;
 `;
 
+export const HeaderSubtitle = styled(BaseText)`
+  font-size: 16px;
+  line-height: 25px;
+`;
+
 interface TextAlignProps {
-  align: 'center' | 'left' | 'end';
+  align: 'center' | 'left' | 'right';
 }
 
 export const TextAlign = styled.Text<TextAlignProps>`
@@ -67,11 +93,22 @@ export const TextAlign = styled.Text<TextAlignProps>`
     `}
 `;
 
-export const Link = styled(BaseText)`
+export const Link = styled(BaseText)<{isDark: boolean}>`
   font-size: 16px;
   line-height: 25px;
   font-weight: 400;
-  color: ${Action};
+  color: ${({isDark}) => (isDark ? White : Action)};
+  text-decoration: ${({isDark}) => (isDark ? 'underline' : 'none')};
+  text-decoration-color: ${White};
+`;
+
+// WALLET
+export const Balance = styled(BaseText)`
+  font-size: 36px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 53px;
+  letter-spacing: 0;
 `;
 
 // LIST
@@ -93,7 +130,6 @@ export const MainNote = styled(BaseText)`
   font-size: 18px;
   font-style: normal;
   font-weight: 700;
-  line-height: 18px;
   text-align: right;
 `;
 

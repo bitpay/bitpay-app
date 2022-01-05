@@ -1,4 +1,3 @@
-import {useNavigation} from '@react-navigation/core';
 import BuyCryptoIcon from '../../../../assets/img/tab-icons/transact-menu/buy-crypto.svg';
 import BuyGiftCardIcon from '../../../../assets/img/tab-icons/transact-menu/buy-gift-card.svg';
 import ExchangeIcon from '../../../../assets/img/tab-icons/transact-menu/exchange.svg';
@@ -13,21 +12,13 @@ import React, {ReactElement, useState} from 'react';
 import BottomPopupModal from '../base/bottom-popup/BottomPopupModal';
 import {FlatList, TouchableOpacity, View} from 'react-native';
 import {SlateDark} from '../../../styles/colors';
+import {useNavigation} from '@react-navigation/native';
+import {ModalContainer} from '../../styled/Containers';
 
 const TransactButton = styled.View`
   justify-content: center;
   align-items: center;
   flex: 1;
-`;
-
-const TransactModalContainer = styled.View`
-  padding: 30px;
-  min-height: 300px;
-  background: white;
-  justify-content: center;
-  align-content: center;
-  border-top-left-radius: 17px;
-  border-top-right-radius: 17px;
 `;
 
 const TransactItemContainer = styled.TouchableOpacity`
@@ -89,12 +80,10 @@ interface TransactMenuItemProps {
 }
 
 const TransactModal = () => {
+  const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
   const hideModal = () => setModalVisible(false);
   const showModal = () => setModalVisible(true);
-
-  // TODO: navigation
-  const navigation = useNavigation();
 
   const TransactMenuList: Array<TransactMenuItemProps> = [
     {
@@ -142,7 +131,9 @@ const TransactModal = () => {
     id: 'scan',
     img: () => <ScanIcon />,
     title: 'Scan',
-    onPress: () => {},
+    onPress: () => {
+      navigation.navigate('Scan', {screen: 'Root'});
+    },
   };
 
   const CloseButton: TransactMenuItemProps = {
@@ -160,7 +151,7 @@ const TransactModal = () => {
       </TransactButton>
       <>
         <BottomPopupModal isVisible={modalVisible} onBackdropPress={hideModal}>
-          <TransactModalContainer>
+          <ModalContainer>
             <FlatList
               data={TransactMenuList}
               scrollEnabled={false}
@@ -192,7 +183,7 @@ const TransactModal = () => {
             <CloseButtonContainer onPress={hideModal}>
               <View>{CloseButton.img()}</View>
             </CloseButtonContainer>
-          </TransactModalContainer>
+          </ModalContainer>
         </BottomPopupModal>
       </>
     </>

@@ -1,4 +1,5 @@
-import React, {useCallback, useEffect, useRef} from 'react';
+import debounce from 'lodash.debounce';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import styled, {css} from 'styled-components/native';
 import {Platform, ScrollView} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -14,6 +15,11 @@ import {startFetchCatalog} from '../../../store/shop/shop.effects';
 import {RootState} from '../../../store';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import {ScreenOptions} from '../../../styles/tabNavigator';
+import {ShopOnline} from './components/ShopOnline';
+import {
+  Category,
+  DirectIntegrationApiObject,
+} from '../../../store/shop/shop.models';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -36,28 +42,51 @@ const ShopHeader = styled.Text`
   margin-bottom: 40px;
 `;
 
-const ShopOnline = () => {
-  return <></>;
-};
-
 const ShopHome = () => {
   const availableCardMap = useSelector(
     ({SHOP}: RootState) => SHOP.availableCardMap,
   );
-  const directory = useSelector(({SHOP}: RootState) => SHOP.categories);
-  const availableGiftCards = getCardConfigFromApiConfigMap(availableCardMap);
-  const curations = getGiftCardCurations(availableGiftCards, directory);
+  const integrationsMap = useSelector(({SHOP}: RootState) => SHOP.integrations);
+  const categoriesAndCurations = useSelector(
+    ({SHOP}: RootState) => SHOP.categoriesAndCurations,
+  );
   const scrollViewRef = useRef<ScrollView>(null);
-  const categories = Object.values(directory.categories) as any[];
+
+  const availableGiftCards = getCardConfigFromApiConfigMap(availableCardMap);
+  const curations = getGiftCardCurations(
+    availableGiftCards,
+    categoriesAndCurations,
+  );
+  const integrations = Object.values(
+    integrationsMap,
+  ) as DirectIntegrationApiObject[];
+  const categories = Object.values(
+    categoriesAndCurations.categories,
+  ) as Category[];
+  const categoriesWitIntegrations = categories
+    .map(category => ({
+      ...category,
+      integrations: integrations.filter(integration =>
+        category.tags.some((tag: string) => integration.tags.includes(tag)),
+      ),
+    }))
+    .filter(category => category.integrations.length);
+
   const purchasedBrandsHeight = purchasedBrands.length * 68 + 260;
   const curationsHeight = curations.length * 320;
   const categoriesHeight = categories.length * 70;
   const searchBarHeight = 150;
-  const scrollViewHeight =
+  const giftCardScrollViewHeight =
     purchasedBrandsHeight +
     curationsHeight +
     categoriesHeight +
     searchBarHeight;
+
+  const integrationsScrollViewHeight = categoriesWitIntegrations.length * 273;
+
+  const [scrollViewHeight, setScrollViewHeight] = useState(
+    giftCardScrollViewHeight,
+  );
 
   const memoizedGiftCardCatalog = useCallback(
     () => (
@@ -72,6 +101,17 @@ const ShopHome = () => {
     [availableGiftCards, categories, curations].map(obj => JSON.stringify(obj)),
   );
 
+  const memoizedShopOnline = useCallback(
+    () => (
+      <ShopOnline
+        integrations={integrations}
+        categories={categoriesWitIntegrations}
+      />
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [integrations].map(obj => JSON.stringify(obj)),
+  );
+
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -80,6 +120,18 @@ const ShopHome = () => {
   }, []);
 
   const insets = useSafeAreaInsets();
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedSetScrollViewHeight = useCallback(
+    debounce(tabTitle => {
+      setScrollViewHeight(
+        tabTitle.includes('Gift Cards')
+          ? giftCardScrollViewHeight
+          : integrationsScrollViewHeight,
+      );
+    }, 600),
+    [],
+  );
 
   return (
     <ShopContainer
@@ -97,9 +149,17 @@ const ShopHome = () => {
         ref={scrollViewRef}
         keyboardDismissMode="on-drag">
         <ShopHeader>Shop with Crypto</ShopHeader>
-        <Tab.Navigator screenOptions={{...ScreenOptions(112)}}>
+        <Tab.Navigator
+          screenOptions={ScreenOptions(112)}
+          screenListeners={{
+            tabPress: tab => {
+              if (tab.target) {
+                debouncedSetScrollViewHeight(tab.target);
+              }
+            },
+          }}>
           <Tab.Screen name="Gift Cards" component={memoizedGiftCardCatalog} />
-          <Tab.Screen name="Shop Online" component={ShopOnline} />
+          <Tab.Screen name="Shop Online" component={memoizedShopOnline} />
         </Tab.Navigator>
       </ScrollView>
     </ShopContainer>

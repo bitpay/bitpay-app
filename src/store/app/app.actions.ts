@@ -67,3 +67,11 @@ export const setNotificationsAccepted = (
   type: AppActionTypes.SET_NOTIFICATIONS_ACCEPTED,
   payload: notificationsAccepted,
 });
+
+export const showOnboardingFinishModal = (): AppActionType => ({
+  type: AppActionTypes.SHOW_ONBOARDING_FINISH_MODAL,
+});
+
+export const dismissOnboardingFinishModal = (): AppActionType => ({
+  type: AppActionTypes.DISMISS_ONBOARDING_FINISH_MODAL,
+});

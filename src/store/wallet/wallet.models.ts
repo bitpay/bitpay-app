@@ -1,4 +1,6 @@
 import {Key as IKey} from 'bitcore-wallet-client/src/lib/key';
+import {Credentials} from 'bitcore-wallet-client/src/lib/credentials';
+import {Token} from '../../constants/assets';
 
 export interface KeyObj {
   compliantDerivation: boolean;
@@ -10,10 +12,17 @@ export interface KeyObj {
   xPrivKey: string;
 }
 
+export interface Asset extends Credentials {
+  balance: number;
+  tokens?: [Token];
+}
+
 export interface WalletObj {
   id: string;
-  assets: [object];
+  assets: Asset[];
   backupComplete?: boolean;
+  show?: boolean;
+  totalBalance?: number;
 }
 
 export interface Key extends IKey {}

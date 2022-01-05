@@ -1,6 +1,7 @@
 import styled, {css} from 'styled-components/native';
 import {Dimensions} from 'react-native';
-import {NeutralSlate} from '../../styles/colors';
+import {NeutralSlate, SlateDark} from '../../styles/colors';
+import {BaseText} from './Text';
 
 export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
 
@@ -61,9 +62,14 @@ export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
     `};
 `;
 
-export const Hr = styled.View`
-  border-bottom-color: #ebecee;
+export const Hr = styled.View<{isDark: boolean}>`
+  border-bottom-color: ${({isDark}) => (isDark ? SlateDark : '#ebecee')};
   border-bottom-width: 1px;
+`;
+
+export const Column = styled.View`
+  flex: 1;
+  flex-direction: column;
 `;
 
 // LIST
@@ -73,6 +79,7 @@ export const ListContainer = styled.View`
 
 export const RowContainer = styled.TouchableOpacity`
   flex-direction: row;
+  align-items: center;
   margin: 10px 0;
   padding: 0 10px 0 10px;
 `;
@@ -84,7 +91,7 @@ export const RowDetailsContainer = styled.View`
   justify-content: center;
 `;
 
-export const CurrencyImageContainer = styled.View`
+export const AssetImageContainer = styled.View`
   height: 50px;
   width: 50px;
   display: flex;
@@ -107,4 +114,60 @@ export const CardContainer = styled.View<CardContainerProps>`
   background: ${({backgroundColor}: CardContainerProps) =>
     backgroundColor || NeutralSlate};
   border-radius: 21px;
+`;
+
+// Bottom Modal
+export const ModalContainer = styled.View`
+  padding: 30px;
+  min-height: 300px;
+  background: white;
+  justify-content: center;
+  align-content: center;
+  border-top-left-radius: 17px;
+  border-top-right-radius: 17px;
+`;
+
+// Settings List
+export const Setting = styled.TouchableOpacity`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  height: 58px;
+`;
+
+export const SettingTitle = styled(BaseText)`
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-align: left;
+`;
+
+export const SettingView = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  height: 58px;
+`;
+
+// Info
+export const Info = styled.View<{isDark: boolean}>`
+  background-color: ${({isDark}) => (isDark ? SlateDark : '#f8f9fe')};
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+`;
+
+export const InfoTriangle = styled.View<{isDark: boolean}>`
+  width: 12px;
+  height: 12px;
+  position: absolute;
+  top: -12px;
+  left: 20px;
+  border-left-width: 12px;
+  border-left-color: transparent;
+  border-right-width: 12px;
+  border-right-color: transparent;
+  border-bottom-width: 12px;
+  border-bottom-color: ${({isDark}) => (isDark ? SlateDark : '#f8f9fe')};
 `;

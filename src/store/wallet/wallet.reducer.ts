@@ -80,6 +80,27 @@ export const walletReducer = (
         priceHistory: action.payload,
       };
 
+    case WalletActionTypes.UPDATE_ASSET_BALANCE:
+      const {keyId, assetId, balance} = action.payload;
+      const walletToUpdate = state.wallets[keyId];
+      if (walletToUpdate) {
+        walletToUpdate.assets = walletToUpdate.assets.map(asset => {
+          if (asset.walletId === assetId) {
+            asset.balance = balance;
+          }
+          return asset;
+        });
+      }
+      return {
+        ...state,
+        wallets: {
+          ...state.wallets,
+          [keyId]: {
+            ...walletToUpdate,
+          },
+        },
+      };
+
     default:
       return state;
   }

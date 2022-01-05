@@ -1,10 +1,9 @@
 import React from 'react';
+import {Settings, SettingsContainer} from '../../SettingsRoot';
 import {
   Setting,
-  Settings,
-  SettingsContainer,
   SettingTitle,
-} from '../../SettingsRoot';
+} from '../../../../../components/styled/Containers';
 
 const ContactSettingsRoot: React.FC = () => {
   return (

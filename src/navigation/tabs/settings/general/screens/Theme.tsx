@@ -2,15 +2,14 @@ import React, {useState} from 'react';
 import {ColorSchemeName, StyleProp, TextStyle, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {AppActions} from '../../../../../store/app';
-import {
-  Setting,
-  Settings,
-  SettingsContainer,
-  SettingTitle,
-} from '../../SettingsRoot';
+import {Settings, SettingsContainer} from '../../SettingsRoot';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {RootState} from '../../../../../store';
-import {Hr} from '../../../../../components/styled/Containers';
+import {
+  Hr,
+  Setting,
+  SettingTitle,
+} from '../../../../../components/styled/Containers';
 import {useTheme} from '@react-navigation/native';
 
 const ThemeSettings: React.FC = () => {
@@ -33,7 +32,7 @@ const ThemeSettings: React.FC = () => {
   return (
     <SettingsContainer>
       <Settings>
-        <Hr />
+        <Hr isDark={selectedTheme.dark} />
         {SETTINGS.map(({title, theme}) => {
           return (
             <View key={theme}>
@@ -45,7 +44,7 @@ const ThemeSettings: React.FC = () => {
                   checked={selected === theme}
                 />
               </Setting>
-              <Hr />
+              <Hr isDark={selectedTheme.dark} />
             </View>
           );
         })}
