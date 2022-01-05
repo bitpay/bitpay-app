@@ -4,25 +4,18 @@ import Button from '../../../components/button/Button';
 import {Paragraph} from '../../../components/styled/Text';
 import VerifiedIcon from '../../../../assets/img/wallet-connect/verified-icon.svg';
 import WalletIcon from '../../../../assets/img/wallet-connect/wallet-icon.svg';
-import {useNavigation, useTheme} from '@react-navigation/native';
-import {
-  LightBlack,
-  NeutralSlate,
-  SlateDark,
-  White,
-} from '../../../styles/colors';
-import {StyleProp, TextStyle} from 'react-native';
-import {ScrollView, WalletConnectContainer} from './WalletConnectIntro';
+import {useNavigation} from '@react-navigation/native';
+import {LightBlack, NeutralSlate} from '../../../styles/colors';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {AppActions} from '../../../store/app';
 import {useDispatch} from 'react-redux';
+import {
+  ScrollView,
+  WalletConnectContainer,
+} from '../styled/WalletConnectContainers';
 
-const RequestLabel = styled(Paragraph)<{isDark: boolean}>`
-  color: ${({isDark}) => (isDark ? White : SlateDark)};
-`;
-
-const UriContainer = styled.View<{isDark: boolean}>`
-  background-color: ${({isDark}) => (isDark ? LightBlack : NeutralSlate)};
+const UriContainer = styled.View`
+  background-color: ${props => (props.theme.dark ? LightBlack : NeutralSlate)};
   border-radius: 6px;
   height: 64px;
   margin-top: 25px;
@@ -43,35 +36,30 @@ const DescriptionItemContainer = styled.View`
 
 const DescriptionItem = styled(Paragraph)`
   padding-left: 9px;
+  color: ${props => props.theme.colors.text};
 `;
 
 const WalletConnectStart = () => {
-  const theme = useTheme();
-  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
   const dispatch = useDispatch();
   const navigation = useNavigation();
 
   return (
     <WalletConnectContainer>
       <ScrollView>
-        <RequestLabel isDark={theme.dark}>
-          Lorem ipsum wants to connect to your wallet.
-        </RequestLabel>
-        <UriContainer isDark={theme.dark}>
-          <Paragraph style={textStyle}>
-            https://example.walletconnect.org
-          </Paragraph>
+        <Paragraph>Lorem ipsum wants to connect to your wallet.</Paragraph>
+        <UriContainer>
+          <Paragraph>https://example.walletconnect.org</Paragraph>
         </UriContainer>
         <DescriptionContainer>
           <DescriptionItemContainer>
             <WalletIcon />
-            <DescriptionItem style={textStyle}>
+            <DescriptionItem>
               View your wallet balance and activity.
             </DescriptionItem>
           </DescriptionItemContainer>
           <DescriptionItemContainer>
             <VerifiedIcon />
-            <DescriptionItem style={textStyle}>
+            <DescriptionItem>
               Request approval for transactions.
             </DescriptionItem>
           </DescriptionItemContainer>

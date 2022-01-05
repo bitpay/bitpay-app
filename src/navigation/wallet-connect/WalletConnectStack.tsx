@@ -91,9 +91,7 @@ const WalletConnectStack = () => {
         component={WalletConnectRequestDetails}
         options={{
           headerTitle: () => (
-            <HeaderTitle style={textStyle}>
-              <WalletConnectIcon /> WalletConnect
-            </HeaderTitle>
+            <HeaderTitle style={textStyle}>Sign Request</HeaderTitle>
           ),
         }}
       />

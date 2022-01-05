@@ -1,6 +1,6 @@
 import styled, {css} from 'styled-components/native';
 import {Dimensions} from 'react-native';
-import {NeutralSlate, SlateDark} from '../../styles/colors';
+import {LightBlack, NeutralSlate, SlateDark} from '../../styles/colors';
 import {BaseText} from './Text';
 
 export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');

@@ -1,105 +1,62 @@
-import {useNavigation, useTheme} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import React from 'react';
-import {StyleProp, TextStyle} from 'react-native';
 import styled from 'styled-components/native';
-import {BaseText, H7, Paragraph} from '../../../components/styled/Text';
+import {Paragraph} from '../../../components/styled/Text';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
-import {WalletConnectContainer, ScrollView} from './WalletConnectIntro';
 import WalletConnectIcon from '../../../../assets/img/wallet-connect/wallet-connect-icon.svg';
 import TrashIcon from '../../../../assets/img/wallet-connect/trash-icon.svg';
 import AddConnection from '../../../../assets/img/add-asset.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useDispatch} from 'react-redux';
 import {AppActions} from '../../../store/app';
-
-const TitleText = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 18px;
-  text-transform: uppercase;
-  margin-bottom: 12px;
-`;
-
-const Hr = styled.View<{isDark: boolean}>`
-  border-bottom-color: ${({isDark}) => (isDark ? LightBlack : '#ebebeb')};
-  border-bottom-width: 1px;
-`;
+import {Hr} from '../../../components/styled/Containers';
+import {IconLabel, HeaderTitle} from '../styled/WalletConnectText';
+import {
+  ItemContainer,
+  ItemNoteTouchableContainer,
+  ItemTitleTouchableContainer,
+  ScrollView,
+  WalletConnectContainer,
+} from '../styled/WalletConnectContainers';
 
 const ConnectionsContainer = styled.View`
   padding-bottom: 33px;
 `;
 
-const IconLabel = styled(H7)`
-  padding: 0 6px;
-`;
-
-const IconContainer = styled.View<{isDark: boolean}>`
+const IconContainer = styled.View`
   height: 37px;
   width: 37px;
   border-radius: 40px;
   overflow: hidden;
-  background-color: ${({isDark}) => (isDark ? LightBlack : NeutralSlate)};
+  background-color: ${props => (props.theme.dark ? LightBlack : NeutralSlate)};
   align-items: center;
   justify-content: center;
 `;
 
-const ConnectionItemContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  height: 71px;
-`;
-
-const ConnectionItemTitleContainer = styled.TouchableOpacity`
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-`;
-
-const ConnectionItemNoteContainer = styled.TouchableOpacity`
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
-  padding-right: 10px;
-`;
-
-const AddConnectionContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-`;
-
-const AddConnectionLabel = styled(Paragraph)`
-  padding-left: 16px;
-`;
-
 const WalletConnectConnections = () => {
   const navigation = useNavigation();
-  const theme = useTheme();
   const dispatch = useDispatch();
-  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
+
   return (
     <WalletConnectContainer>
       <ScrollView>
         <ConnectionsContainer>
-          <TitleText style={textStyle}>Connections</TitleText>
-          <Hr isDark={theme.dark} />
-          <ConnectionItemContainer>
-            <ConnectionItemTitleContainer
+          <HeaderTitle>Connections</HeaderTitle>
+          <Hr />
+          <ItemContainer>
+            <ItemTitleTouchableContainer
               onPress={() => {
                 navigation.navigate('WalletConnect', {
                   screen: 'WalletConnectHome',
                 });
               }}>
-              <IconContainer isDark={theme.dark}>
+              <IconContainer>
                 <WalletConnectIcon width={17} />
               </IconContainer>
-              <IconLabel style={textStyle}>
-                https://example.walletconnect.org
-              </IconLabel>
-            </ConnectionItemTitleContainer>
-            <ConnectionItemNoteContainer
+              <IconLabel>https://example.walletconnect.org</IconLabel>
+            </ItemTitleTouchableContainer>
+            <ItemNoteTouchableContainer
+              style={{paddingRight: 10}}
               onPress={async () => {
                 haptic('impactLight');
                 dispatch(
@@ -128,33 +85,14 @@ const WalletConnectConnections = () => {
                 );
               }}>
               <TrashIcon />
-            </ConnectionItemNoteContainer>
-          </ConnectionItemContainer>
-          <Hr isDark={theme.dark} />
-          <ConnectionItemContainer>
-            <ConnectionItemTitleContainer
-              onPress={() => {
-                navigation.navigate('WalletConnect', {
-                  screen: 'WalletConnectHome',
-                });
-              }}>
-              <IconContainer isDark={theme.dark}>
-                <WalletConnectIcon width={17} />
-              </IconContainer>
-              <IconLabel style={textStyle}>
-                https://example.walletconnect.org
-              </IconLabel>
-            </ConnectionItemTitleContainer>
-            <ConnectionItemNoteContainer>
-              <TrashIcon />
-            </ConnectionItemNoteContainer>
-          </ConnectionItemContainer>
-          <Hr isDark={theme.dark} />
+            </ItemNoteTouchableContainer>
+          </ItemContainer>
+          <Hr />
         </ConnectionsContainer>
-        <AddConnectionContainer>
+        <ItemTitleTouchableContainer>
           <AddConnection />
-          <AddConnectionLabel>Add Connection</AddConnectionLabel>
-        </AddConnectionContainer>
+          <Paragraph style={{paddingLeft: 16}}>Add Connection</Paragraph>
+        </ItemTitleTouchableContainer>
       </ScrollView>
     </WalletConnectContainer>
   );

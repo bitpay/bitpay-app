@@ -50,6 +50,7 @@ export const H7 = styled(BaseText)`
   font-weight: 400;
   line-height: 18px;
   letter-spacing: 0;
+  color: ${props => props.theme.colors.text};
 `;
 
 export const SubText = styled(H7)`
@@ -62,6 +63,7 @@ export const Paragraph = styled(BaseText)`
   font-weight: 400;
   line-height: 25px;
   letter-spacing: 0;
+  color: ${props => props.theme.colors.text};
 `;
 
 export const Disclaimer = styled(BaseText)`

@@ -268,9 +268,9 @@ export default () => {
               component={SwapCryptoStack}
             />
             <Root.Screen
-            name={RootStacks.WALLET_CONNECT}
-            component={WalletConnectStack}
-          />
+              name={RootStacks.WALLET_CONNECT}
+              component={WalletConnectStack}
+            />
           </Root.Navigator>
           <OnGoingProcessModal />
           <BottomNotificationModal />
