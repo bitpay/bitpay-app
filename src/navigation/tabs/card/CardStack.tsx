@@ -4,10 +4,10 @@ import {
   baseNavigatorOptions,
   baseScreenOptions,
 } from '../../../constants/NavigationOptions';
-import CardHome from './CardHome';
+import CardHome, {CardHomeScreenParamList} from './screens/CardHome';
 
 export type CardStackParamList = {
-  Home: undefined;
+  Home: CardHomeScreenParamList;
 };
 
 export enum CardScreens {
