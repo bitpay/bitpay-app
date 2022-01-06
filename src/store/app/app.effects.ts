@@ -26,10 +26,15 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(LogActions.info('Initializing app...'));
 
     if (!__DEV__) {
-      await analytics.setup(SEGMENT_API_KEY, {
-        recordScreenViews: false,
-        trackAppLifecycleEvents: true,
-      });
+      try {
+        await analytics.setup(SEGMENT_API_KEY, {
+          recordScreenViews: false,
+          trackAppLifecycleEvents: true,
+        });
+      } catch (err) {
+        dispatch(LogActions.error('Segment setup failed'));
+        dispatch(LogActions.error(JSON.stringify(err)));
+      }
     }
 
     const {APP, BITPAY_ID} = getState();
