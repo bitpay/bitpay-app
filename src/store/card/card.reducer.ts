@@ -4,7 +4,11 @@ import {
   BitPayIdActionTypes,
 } from '../bitpay-id/bitpay-id.types';
 import {Card} from './card.models';
-import {CardActionType, CardActionTypes} from './card.types';
+import {
+  CardActionType,
+  CardActionTypes,
+  VirtualDesignCurrency,
+} from './card.types';
 
 export const cardReduxPersistBlacklist: Array<keyof CardState> = [
   'fetchCardsStatus',
@@ -17,6 +21,7 @@ export interface CardState {
     [key in Network]: Card[];
   };
   fetchCardsStatus: FetchCardsStatus;
+  virtualDesignCurrency: VirtualDesignCurrency;
 }
 
 const initialState: CardState = {
@@ -25,6 +30,7 @@ const initialState: CardState = {
     [Network.testnet]: [],
   },
   fetchCardsStatus: null,
+  virtualDesignCurrency: 'bitpay-b',
 };
 
 export const cardReducer = (
@@ -58,6 +64,11 @@ export const cardReducer = (
       return {
         ...state,
         fetchCardsStatus: action.payload,
+      };
+    case CardActionTypes.VIRTUAL_DESIGN_CURRENCY_UPDATED:
+      return {
+        ...state,
+        virtualDesignCurrency: action.payload,
       };
     default:
       return state;
