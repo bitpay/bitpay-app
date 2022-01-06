@@ -14,7 +14,7 @@ const GroupEnabled = {
   galileo: true,
 };
 
-class OverviewSlide {
+export class OverviewSlide {
   readonly provider: string;
   private readonly _cards: Card[] = [];
 
@@ -40,7 +40,9 @@ const CardDashboard: React.FC<CardDashboardProps> = () => {
   const cards = useSelector<RootState, Card[]>(
     ({APP, CARD}) => CARD.cards[APP.network],
   );
-  const virtualDesignCurrency = useSelector<RootState, VirtualDesignCurrency>(({CARD}) => CARD.virtualDesignCurrency);
+  const virtualDesignCurrency = useSelector<RootState, VirtualDesignCurrency>(
+    ({CARD}) => CARD.virtualDesignCurrency,
+  );
 
   const memoizedSlides = useMemo(() => {
     // sort galileo before firstView, then virtual before physical
@@ -91,7 +93,7 @@ const CardDashboard: React.FC<CardDashboardProps> = () => {
         data={memoizedSlides}
         renderItem={({item}) => (
           <CardOverviewSlide
-            card={item.primaryCard}
+            slide={item}
             designCurrency={virtualDesignCurrency}
           />
         )}

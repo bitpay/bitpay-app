@@ -1,4 +1,4 @@
-import {SupportedCurrencies} from '../store/card/card.types';
+import {VirtualDesignCurrency} from '../store/card/card.types';
 import {Network} from '.';
 
 // GENERAL
@@ -18,55 +18,59 @@ export const APP_LOAD_STORY_BOOK = false;
 
 // Card
 export const SUPPORTED_DESIGN_CURRENCIES: {
-  [k in SupportedCurrencies]: {
-    currency: k,
+  [k in VirtualDesignCurrency]: {
+    currency: k;
     enabled: boolean;
     reason?: string;
   };
 } = {
-  'BTC': {
-    'currency': 'BTC',
-    'enabled': true,
+  'bitpay-b': {
+    currency: 'bitpay-b',
+    enabled: true,
   },
-  'BCH': {
-    'currency': 'BCH',
-    'enabled': true,
+  BTC: {
+    currency: 'BTC',
+    enabled: true,
   },
-  'ETH': {
-    'currency': 'ETH',
-    'enabled': true
+  BCH: {
+    currency: 'BCH',
+    enabled: true,
   },
-  'GUSD': {
-    'currency': 'GUSD',
-    'enabled': true
+  ETH: {
+    currency: 'ETH',
+    enabled: true,
   },
-  'PAX': {
-    'currency': 'PAX',
-    'enabled': true
+  GUSD: {
+    currency: 'GUSD',
+    enabled: true,
   },
-  'BUSD': {
-    'currency': 'BUSD',
-    'enabled': true
+  PAX: {
+    currency: 'PAX',
+    enabled: true,
   },
-  'USDC': {
-    'currency': 'USDC',
-    'enabled': true
+  BUSD: {
+    currency: 'BUSD',
+    enabled: true,
   },
-  'XRP': {
-    'currency': 'XRP',
-    'enabled': false,
-    'reason': 'usaRestricted'
+  USDC: {
+    currency: 'USDC',
+    enabled: true,
   },
-  'DOGE': {
-    'currency': 'DOGE',
-    'enabled': true
+  XRP: {
+    currency: 'XRP',
+    enabled: false,
+    reason: 'usaRestricted',
   },
-  'DAI': {
-    'currency': 'DAI',
-    'enabled': true
+  DOGE: {
+    currency: 'DOGE',
+    enabled: true,
   },
-  'WBTC': {
-    'currency': 'WBTC',
-    'enabled': true
-  }
+  DAI: {
+    currency: 'DAI',
+    enabled: true,
+  },
+  WBTC: {
+    currency: 'WBTC',
+    enabled: true,
+  },
 };

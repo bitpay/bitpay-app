@@ -1,11 +1,13 @@
+import {NavigationProp, useNavigation} from '@react-navigation/native';
 import React from 'react';
 import styled from 'styled-components/native';
-import {Card} from '../../../../store/card/card.models';
 import {VirtualDesignCurrency} from '../../../../store/card/card.types';
+import {CardStackParamList} from '../CardStack';
+import {OverviewSlide} from './CardDashboard';
 import MastercardFront from './CardFront.Mastercard';
 
 export interface CardOverviewSlideProps {
-  card: Card;
+  slide: OverviewSlide;
   designCurrency: VirtualDesignCurrency;
 }
 
@@ -32,16 +34,20 @@ const DEFAULTS = {
 };
 
 const CardOverviewSlide: React.FC<CardOverviewSlideProps> = props => {
-  const {card, designCurrency} = props;
+  const navigation = useNavigation<NavigationProp<CardStackParamList>>();
 
-  const BrandFront = (card.brand && BRANDS[card.brand]) || BRANDS.default;
+  const {designCurrency, slide} = props;
+  const primaryCard = slide.primaryCard;
+
+  const BrandFront =
+    (primaryCard.brand && BRANDS[primaryCard.brand]) || BRANDS.default;
   const formattedBalance = DEFAULTS.balance;
-  const nickname = card.nickname;
-  const fiatCurrency = card.currency.code;
-  const fiatSymbol = card.currency.symbol;
+  const nickname = primaryCard.nickname;
+  const fiatCurrency = primaryCard.currency.code;
+  const fiatSymbol = primaryCard.currency.symbol;
 
   return (
-    <SlideContainer>
+    <SlideContainer onTouchEnd={() => navigation.navigate('Settings', {slide})}>
       <BrandFront
         balance={formattedBalance}
         nickname={nickname}
