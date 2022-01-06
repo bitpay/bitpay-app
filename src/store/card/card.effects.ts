@@ -3,11 +3,14 @@ import CardApi from '../../api/card';
 import {Network} from '../../constants';
 import {Effect} from '../index';
 import {Card} from './card.models';
+import ReactNative from 'react-native';
+const {Dosh} = ReactNative.NativeModules;
 
 export const startCardStoreInit =
   (network: Network, {cards}: {cards: Card[]}): Effect<Promise<void>> =>
   async dispatch => {
     dispatch(CardActions.successFetchCards(network, cards));
+    Dosh.initDosh();
   };
 
 export const startFetchAll =
