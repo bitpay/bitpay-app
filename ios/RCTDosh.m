@@ -20,7 +20,7 @@ RCT_EXPORT_METHOD(initializeDosh)
 RCT_EXPORT_METHOD(present)
 {
   [DoshAdapter present];
-  RCTLogInfo(@"Initialized Dosh");
+  RCTLogInfo(@"Dosh present");
 }
 
 @end
