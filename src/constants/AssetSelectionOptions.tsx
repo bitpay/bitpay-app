@@ -26,17 +26,17 @@ import DaiRoundIcon from '../../assets/img/currencies/round/dai.svg';
 import PaxRoundIcon from '../../assets/img/currencies/round/pax.svg';
 import WbtcRoundIcon from '../../assets/img/currencies/round/wbtc.svg';
 
-import {ItemProps} from '../components/list/CurrencySelectorList';
+import {ItemProps} from '../components/list/AssetSelectorRow';
 
-export const CurrencyList: Array<ItemProps> = [
+export const AssetSelectionOptions: Array<ItemProps> = [
   {
     id: 'btc',
     img: <BtcIcon />,
     roundIcon: (size: number = 30) => (
       <BtcRoundIcon width={size} height={size} />
     ),
-    mainLabel: 'Bitcoin',
-    secondaryLabel: 'BTC',
+    assetName: 'Bitcoin',
+    assetAbbreviation: 'BTC',
   },
   {
     id: 'bch',
@@ -44,8 +44,8 @@ export const CurrencyList: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <BchRoundIcon width={size} height={size} />
     ),
-    mainLabel: 'Bitcoin Cash',
-    secondaryLabel: 'BCH',
+    assetName: 'Bitcoin Cash',
+    assetAbbreviation: 'BCH',
   },
   {
     id: 'eth',
@@ -53,8 +53,8 @@ export const CurrencyList: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <EthRoundIcon width={size} height={size} />
     ),
-    mainLabel: 'Ethereum',
-    secondaryLabel: 'ETH',
+    assetName: 'Ethereum',
+    assetAbbreviation: 'ETH',
   },
   {
     id: 'doge',
@@ -62,8 +62,8 @@ export const CurrencyList: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <DogeRoundIcon width={size} height={size} />
     ),
-    mainLabel: 'Dogecoin',
-    secondaryLabel: 'DOGE',
+    assetName: 'Dogecoin',
+    assetAbbreviation: 'DOGE',
   },
   {
     id: 'ltc',
@@ -71,8 +71,8 @@ export const CurrencyList: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <LtcRoundIcon width={size} height={size} />
     ),
-    mainLabel: 'Litecoin',
-    secondaryLabel: 'LTC',
+    assetName: 'Litecoin',
+    assetAbbreviation: 'LTC',
   },
   {
     id: 'xrp',
@@ -80,8 +80,8 @@ export const CurrencyList: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <XrpRoundIcon width={size} height={size} />
     ),
-    mainLabel: 'Xrp',
-    secondaryLabel: 'XRP',
+    assetName: 'Xrp',
+    assetAbbreviation: 'XRP',
   },
   {
     id: 'usdc',
@@ -89,8 +89,8 @@ export const CurrencyList: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <UsdcRoundIcon width={size} height={size} />
     ),
-    mainLabel: 'Usdc',
-    secondaryLabel: 'USDC',
+    assetName: 'Usdc',
+    assetAbbreviation: 'USDC',
   },
   {
     id: 'gusd',
@@ -98,8 +98,8 @@ export const CurrencyList: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <GusdRoundIcon width={size} height={size} />
     ),
-    mainLabel: 'Gusd',
-    secondaryLabel: 'GUSD',
+    assetName: 'Gusd',
+    assetAbbreviation: 'GUSD',
   },
   {
     id: 'busd',
@@ -107,8 +107,8 @@ export const CurrencyList: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <BusdRoundIcon width={size} height={size} />
     ),
-    mainLabel: 'Busd',
-    secondaryLabel: 'BUSD',
+    assetName: 'Busd',
+    assetAbbreviation: 'BUSD',
   },
   {
     id: 'dai',
@@ -116,8 +116,8 @@ export const CurrencyList: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <DaiRoundIcon width={size} height={size} />
     ),
-    mainLabel: 'Dai',
-    secondaryLabel: 'DAI',
+    assetName: 'Dai',
+    assetAbbreviation: 'DAI',
   },
   {
     id: 'pax',
@@ -125,8 +125,8 @@ export const CurrencyList: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <PaxRoundIcon width={size} height={size} />
     ),
-    mainLabel: 'Pax',
-    secondaryLabel: 'PAX',
+    assetName: 'Pax',
+    assetAbbreviation: 'PAX',
   },
   {
     id: 'wbtc',
@@ -134,7 +134,7 @@ export const CurrencyList: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <WbtcRoundIcon width={size} height={size} />
     ),
-    mainLabel: 'Wbtc',
-    secondaryLabel: 'WBTC',
+    assetName: 'Wbtc',
+    assetAbbreviation: 'WBTC',
   },
 ];

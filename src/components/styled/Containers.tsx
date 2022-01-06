@@ -84,11 +84,8 @@ export const RowContainer = styled.TouchableOpacity`
   padding: 0 10px 0 10px;
 `;
 
-export const RowDetailsContainer = styled.View`
-  flex: 1;
-  flex-direction: column;
-  margin-left: 12px;
-  justify-content: center;
+export const AssetColumn = styled(Column)`
+  margin-left: 10px;
 `;
 
 export const AssetImageContainer = styled.View`
