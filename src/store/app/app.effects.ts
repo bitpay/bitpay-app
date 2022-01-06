@@ -8,9 +8,12 @@ import BitPayApi from '../../api/bitpay';
 import GraphQlApi from '../../api/graphql';
 import UserApi from '../../api/user';
 import {Network} from '../../constants';
+import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
 import {BitPayIdEffects} from '../bitpay-id';
+import {User} from '../bitpay-id/bitpay-id.models';
 import {CardEffects} from '../card';
+import {Card} from '../card/card.models';
 import {RootState, Effect} from '../index';
 import {LogActions} from '../log';
 import {startWalletStoreInit} from '../wallet/effects';
@@ -31,15 +34,42 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     await dispatch(initializeApi(APP.network, identity));
 
-    // splitting inits into store specific ones as to keep it cleaner in the main init here
-    await dispatch(startWalletStoreInit());
+    let user: User | undefined;
+    let cards: Card[] | undefined;
 
     if (isPaired) {
-      const {basicInfo: user, cards} = await UserApi.fetchAllUserData(token);
+      try {
+        dispatch(
+          LogActions.info(
+            'App is paired with BitPayID, refreshing user data...',
+          ),
+        );
+        const response = await UserApi.fetchAllUserData(token);
+        user = response.basicInfo;
+        cards = response.cards;
+      } catch (err: any) {
+        if (isAxiosError(err)) {
+          dispatch(LogActions.error(`${err.name}: ${err.message}`));
+          dispatch(LogActions.error(err.config.url));
+          dispatch(LogActions.error(JSON.stringify(err.config.data || {})));
+        } else if (err instanceof Error) {
+          dispatch(LogActions.error(`${err.name}: ${err.message}`));
+        } else {
+          dispatch(LogActions.error(JSON.stringify(err)));
+        }
 
-      await dispatch(BitPayIdEffects.startBitPayIdStoreInit(network, {user}));
-      await dispatch(CardEffects.startCardStoreInit(network, {cards}));
+        dispatch(
+          LogActions.info(
+            'Failed to refresh user data. Continuing initialization.',
+          ),
+        );
+      }
     }
+
+    // splitting inits into store specific ones as to keep it cleaner in the main init here
+    await dispatch(startWalletStoreInit());
+    await dispatch(BitPayIdEffects.startBitPayIdStoreInit(network, {user}));
+    await dispatch(CardEffects.startCardStoreInit(network, {cards}));
 
     await sleep(500);
     dispatch(AppActions.successAppInit());
@@ -48,6 +78,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
   } catch (err) {
     console.error(err);
     dispatch(AppActions.failedAppInit());
+    dispatch(LogActions.error('Failed to initialize app.'));
+    dispatch(LogActions.error(JSON.stringify(err)));
   }
 };
 

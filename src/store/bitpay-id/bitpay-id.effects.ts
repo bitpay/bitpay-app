@@ -9,21 +9,29 @@ import {CardActions} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
 import {User} from './bitpay-id.models';
-import {BitPayIdActions, BitPayIdEffects} from './index';
+import {BitPayIdActions} from './index';
 
-interface PairParams {
-  secret: string;
-  code?: string;
+interface BitPayIdStoreInitParams {
+  user?: User;
+}
+
+interface StartLoginParams {
+  email: string;
+  password: string;
 }
 
 export const startBitPayIdStoreInit =
-  (network: Network, {user}: {user: User}): Effect<Promise<void>> =>
+  (network: Network, {user}: BitPayIdStoreInitParams): Effect<Promise<void>> =>
   async dispatch => {
-    dispatch(BitPayIdActions.successFetchBasicInfo(network, user));
+    if (user) {
+      dispatch(BitPayIdActions.successFetchBasicInfo(network, user));
+    }
   };
 
 export const startFetchSession = (): Effect => async dispatch => {
   try {
+    dispatch(BitPayIdActions.updateFetchSessionStatus('loading'));
+
     const session = await AuthApi.fetchSession();
 
     dispatch(BitPayIdActions.successFetchSession(session));
@@ -33,10 +41,12 @@ export const startFetchSession = (): Effect => async dispatch => {
 };
 
 export const startLogin =
-  ({email, password}: {email: string; password: string}): Effect =>
+  ({email, password}: StartLoginParams): Effect =>
   async (dispatch, getState) => {
-    dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
     try {
+      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
+      dispatch(BitPayIdActions.updateLoginStatus(null));
+
       const {APP, BITPAY_ID} = getState();
 
       // authenticate
@@ -44,18 +54,19 @@ export const startLogin =
       const {twoFactorPending, emailAuthenticationPending} =
         await AuthApi.login(email, password, BITPAY_ID.session.csrfToken);
 
-      // TODO
+      // refresh session
+      const session = await AuthApi.fetchSession();
+
       if (twoFactorPending) {
         dispatch(LogActions.debug('Two-factor authentication pending.'));
-        dispatch(BitPayIdActions.updateLoginStatus('twoFactorPending'));
+        dispatch(BitPayIdActions.pendingLogin('twoFactorPending', session));
         return;
       }
 
-      // TODO
       if (emailAuthenticationPending) {
         dispatch(LogActions.debug('Email authentication pending.'));
         dispatch(
-          BitPayIdActions.updateLoginStatus('emailAuthenticationPending'),
+          BitPayIdActions.pendingLogin('emailAuthenticationPending', session),
         );
         return;
       }
@@ -64,21 +75,100 @@ export const startLogin =
         LogActions.info('Successfully authenticated BitPayID credentials.'),
       );
 
+      // start pairing
+      const secret = await AuthApi.generatePairingCode(session.csrfToken);
+      await dispatch(startPairAndLoadUser(APP.network, secret));
+
+      // complete
+      dispatch(BitPayIdActions.successLogin(APP.network, session));
+    } catch (err) {
+      batch(() => {
+        console.error(err);
+        dispatch(LogActions.error('Login failed.'));
+        dispatch(LogActions.error(JSON.stringify(err)));
+        dispatch(BitPayIdActions.failedLogin());
+      });
+    } finally {
+      dispatch(AppActions.dismissOnGoingProcessModal());
+    }
+  };
+
+export const startTwoFactorAuth =
+  (code: string): Effect =>
+  async (dispatch, getState) => {
+    try {
+      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
+
+      const {APP, BITPAY_ID} = getState();
+
+      await AuthApi.submitTwoFactor(code, BITPAY_ID.session.csrfToken);
+
       // refresh session
       const session = await AuthApi.fetchSession();
 
-      // start pairing
-      const secret = await AuthApi.generatePairingCode(session.csrfToken);
-      dispatch(BitPayIdEffects.startPairing({secret}));
-
-      dispatch(BitPayIdActions.successLogin(APP.network, session));
+      // complete
+      dispatch(
+        BitPayIdActions.successSubmitTwoFactorAuth(APP.network, session),
+      );
     } catch (err) {
-      console.error(err);
-      dispatch(LogActions.error('Login failed.'));
-      dispatch(LogActions.error(JSON.stringify(err)));
-      dispatch(BitPayIdActions.failedLogin());
+      batch(() => {
+        console.error(err);
+        dispatch(LogActions.error('Two factor authentication failed.'));
+        dispatch(LogActions.error(JSON.stringify(err)));
+        dispatch(BitPayIdActions.failedSubmitTwoFactorAuth());
+      });
+    } finally {
+      dispatch(AppActions.dismissOnGoingProcessModal());
     }
-    dispatch(AppActions.dismissOnGoingProcessModal());
+  };
+
+export const startTwoFactorPairing =
+  (code: string): Effect =>
+  async (dispatch, getState) => {
+    try {
+      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
+
+      const {APP, BITPAY_ID} = getState();
+      const secret = await AuthApi.generatePairingCode(
+        BITPAY_ID.session.csrfToken,
+      );
+
+      await dispatch(startPairAndLoadUser(APP.network, secret, code));
+
+      dispatch(BitPayIdActions.successSubmitTwoFactorPairing());
+    } catch (err) {
+      batch(() => {
+        console.error(err);
+        dispatch(LogActions.error('Pairing with two factor failed.'));
+        dispatch(LogActions.error(JSON.stringify(err)));
+        dispatch(BitPayIdActions.failedSubmitTwoFactorPairing());
+      });
+    } finally {
+      dispatch(AppActions.dismissOnGoingProcessModal());
+    }
+  };
+
+export const startEmailPairing =
+  (network: Network, csrfToken: string): Effect =>
+  async dispatch => {
+    try {
+      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
+
+      const secret = await AuthApi.generatePairingCode(csrfToken);
+
+      await dispatch(startPairAndLoadUser(network, secret));
+
+      dispatch(BitPayIdActions.successEmailPairing());
+    } catch (err) {
+      batch(() => {
+        console.error(err);
+        dispatch(LogActions.error('Pairing from email authentication failed.'));
+        dispatch(LogActions.error(JSON.stringify(err)));
+        dispatch(BitPayIdActions.failedEmailPairing());
+      });
+    } finally {
+      dispatch(AppActions.dismissOnGoingProcessModal());
+    }
   };
 
 export const startCreateAccount =
@@ -94,12 +184,25 @@ export const startCreateAccount =
     }
   };
 
-export const startPairing =
-  ({secret, code}: PairParams): Effect<Promise<void>> =>
+export const startDeeplinkPairing =
+  (secret: string, code?: string): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     const state = getState();
     const network = state.APP.network;
 
+    try {
+      await dispatch(startPairAndLoadUser(network, secret, code));
+    } catch (err) {
+      console.error(err);
+      dispatch(LogActions.error('Pairing failed.'));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(BitPayIdActions.failedPairingBitPayId());
+    }
+  };
+
+const startPairAndLoadUser =
+  (network: Network, secret: string, code?: string): Effect<Promise<void>> =>
+  async dispatch => {
     try {
       const token = await AuthApi.pair(secret, code);
       const {basicInfo, cards} = await UserApi.fetchAllUserData(token);
@@ -111,10 +214,12 @@ export const startPairing =
         dispatch(BitPayIdActions.successPairingBitPayId(network, token));
       });
     } catch (err) {
-      console.error(err);
-      dispatch(LogActions.error('Pairing failed.'));
-      dispatch(LogActions.error(JSON.stringify(err)));
-      dispatch(BitPayIdActions.failedPairingBitPayId());
+      dispatch(
+        LogActions.error(
+          'An error occurred while pairing and loading user data.',
+        ),
+      );
+      throw err;
     }
   };
 

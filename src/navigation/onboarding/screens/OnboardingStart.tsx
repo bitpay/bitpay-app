@@ -1,20 +1,26 @@
+import {useNavigation} from '@react-navigation/native';
+import {StackScreenProps} from '@react-navigation/stack';
 import React, {useRef, useState} from 'react';
 import {StatusBar} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import styled from 'styled-components/native';
-
 import Carousel, {Pagination} from 'react-native-snap-carousel';
-import OnboardingSlide from '../components/OnboardingSlide';
-
+import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {Action} from '../../../styles/colors';
 import {
   CtaContainerAbsolute,
   WIDTH,
 } from '../../../components/styled/Containers';
+import {Action} from '../../../styles/colors';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingImage} from '../components/Containers';
+import OnboardingSlide from '../components/OnboardingSlide';
+import {OnboardingStackParamList} from '../OnboardingStack';
+
+export type OnboardingStartParamList = {} | undefined;
+type OnboardingStartScreenProps = StackScreenProps<
+  OnboardingStackParamList,
+  'OnboardingStart'
+>;
 
 // IMAGES
 const OnboardingImages = {
@@ -53,7 +59,7 @@ const Column = styled.View`
   flex: 1;
 `;
 
-const OnboardingStart = () => {
+const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
   const navigation = useNavigation();
   const themeType = useThemeType();
   const ref = useRef(null);
@@ -131,8 +137,8 @@ const OnboardingStart = () => {
               buttonStyle={'primary'}
               onPress={() => {
                 haptic('impactLight');
-                navigation.navigate('Onboarding', {
-                  screen: 'Login',
+                navigation.navigate('Auth', {
+                  screen: 'LoginSignup',
                   params: {context: 'signup'},
                 });
               }}>
