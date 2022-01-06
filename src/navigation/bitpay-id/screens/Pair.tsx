@@ -24,7 +24,7 @@ const Pair: React.FC = () => {
 
   useEffect(() => {
     if (secret) {
-      dispatch(BitPayIdEffects.startPairing({secret, code}));
+      dispatch(BitPayIdEffects.startDeeplinkPairing(secret, code));
     }
   }, [dispatch, secret, code]);
 
