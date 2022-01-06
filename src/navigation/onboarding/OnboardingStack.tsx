@@ -328,11 +328,6 @@ const OnboardingStack = () => {
         component={TermsOfUseScreen}
       />
       <Onboarding.Screen
-        options={{
-          gestureEnabled: false,
-          headerTitle: () => <HeaderTitle>Import Wallet</HeaderTitle>,
-          headerTitleAlign: 'center',
-        }}
         name={OnboardingScreens.IMPORT_WALLET}
         component={ImportWalletScreen}
       />

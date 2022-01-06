@@ -1,9 +1,12 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import styled from 'styled-components/native';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import RecoveryPhrase from '../components/RecoveryPhrase';
 import FileOrText from '../components/FileOrText';
 import {ScreenOptions} from '../../../styles/tabNavigator';
+import {HeaderTitle} from '../../../components/styled/Text';
+import Settings from '../../../components/settings/Settings';
+import {useNavigation} from '@react-navigation/native';
 
 export interface ImportWalletProps {
   isOnboarding?: boolean;
@@ -16,6 +19,15 @@ const ImportWallerContainer = styled.SafeAreaView`
 
 const ImportWallet = () => {
   const Tab = createMaterialTopTabNavigator();
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    navigation.setOptions({
+      gestureEnabled: false,
+      headerTitle: () => <HeaderTitle>Import Wallet</HeaderTitle>,
+      headerTitleAlign: 'center',
+    });
+  }, [navigation]);
 
   return (
     <ImportWallerContainer>

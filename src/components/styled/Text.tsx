@@ -79,6 +79,7 @@ export const HeaderTitle = styled(BaseText)`
   font-weight: 500;
   line-height: 30px;
   letter-spacing: 0;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 export const HeaderSubtitle = styled(BaseText)`

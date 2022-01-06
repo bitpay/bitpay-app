@@ -1,10 +1,10 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {ImageSourcePropType, StyleProp, TextStyle} from 'react-native';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {Feather, LightBlack, SlateDark, White} from '../../../styles/colors';
-import {BaseText, H6} from '../../../components/styled/Text';
+import {BaseText, H6, HeaderTitle} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 
 interface WalletType {
@@ -68,6 +68,14 @@ const SelectWalletType = () => {
   const theme = useTheme();
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
   const navigation = useNavigation();
+
+  useEffect(() => {
+    navigation.setOptions({
+      gestureEnabled: false,
+      headerTitle: () => <HeaderTitle>Select Wallet Type</HeaderTitle>,
+      headerTitleAlign: 'center',
+    });
+  }, [navigation]);
 
   const walletTypeList: WalletType[] = [
     {
