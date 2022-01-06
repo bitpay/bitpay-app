@@ -5,7 +5,6 @@ import RecoveryPhrase from '../components/RecoveryPhrase';
 import FileOrText from '../components/FileOrText';
 import {ScreenOptions} from '../../../styles/tabNavigator';
 import {HeaderTitle} from '../../../components/styled/Text';
-import Settings from '../../../components/settings/Settings';
 import {useNavigation} from '@react-navigation/native';
 
 export interface ImportWalletProps {

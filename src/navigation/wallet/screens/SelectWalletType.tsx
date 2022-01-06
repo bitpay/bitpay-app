@@ -1,8 +1,8 @@
 import React, {useEffect} from 'react';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../components/styled/Containers';
-import {ImageSourcePropType, StyleProp, TextStyle} from 'react-native';
-import {useNavigation, useTheme} from '@react-navigation/native';
+import {ImageSourcePropType} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
 import {Feather, LightBlack, SlateDark, White} from '../../../styles/colors';
 import {BaseText, H6, HeaderTitle} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -26,10 +26,8 @@ const SelectWalletTypeListContainer = styled.View`
   margin-top: 30px;
 `;
 
-const SelectWalletTypeList = styled.TouchableOpacity<{
-  isDark: boolean;
-}>`
-  background-color: ${({isDark}) => (isDark ? LightBlack : Feather)};
+const SelectWalletTypeList = styled.TouchableOpacity`
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Feather)};
   height: 100px;
   border-radius: 12px;
   margin-bottom: ${ScreenGutter};
@@ -43,6 +41,7 @@ const ImageContainer = styled.View`
 
 const Title = styled(H6)`
   margin-bottom: 3px;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 const InfoContainer = styled.View`
@@ -51,10 +50,10 @@ const InfoContainer = styled.View`
   flex: 1;
 `;
 
-const Description = styled(BaseText)<{isDark: boolean}>`
+const Description = styled(BaseText)`
   font-size: 14px;
   line-height: 18px;
-  color: ${({isDark}) => (isDark ? White : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
 const Image = styled.Image<{imgHeight: string}>`
@@ -65,8 +64,6 @@ const Image = styled.Image<{imgHeight: string}>`
 `;
 
 const SelectWalletType = () => {
-  const theme = useTheme();
-  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -117,7 +114,6 @@ const SelectWalletType = () => {
               haptic('impactLight');
               type.cta();
             }}
-            isDark={theme.dark}
             key={type.id}>
             <ImageContainer>
               <Image
@@ -127,8 +123,8 @@ const SelectWalletType = () => {
               />
             </ImageContainer>
             <InfoContainer>
-              <Title style={textStyle}>{type.title}</Title>
-              <Description isDark={theme.dark}>{type.description}</Description>
+              <Title>{type.title}</Title>
+              <Description>{type.description}</Description>
             </InfoContainer>
           </SelectWalletTypeList>
         ))}

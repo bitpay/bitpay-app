@@ -3,7 +3,7 @@ import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {StyleProp, TextStyle, View} from 'react-native';
+import {View} from 'react-native';
 import styled from 'styled-components/native';
 import {
   Hr,
@@ -33,6 +33,7 @@ const Title = styled(BaseText)`
   font-weight: bold;
   font-size: 18px;
   margin: 5px 0;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 const WalletNameContainer = styled.TouchableOpacity`
@@ -62,13 +63,10 @@ const AssetSettings = () => {
   const theme = useTheme();
   const navigation = useNavigation();
   const [showInfo, setShowInfo] = useState(false);
-  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
 
   useEffect(() => {
     navigation.setOptions({
-      headerTitle: () => (
-        <HeaderTitle style={textStyle}>Asset Settings</HeaderTitle>
-      ),
+      headerTitle: () => <HeaderTitle>Asset Settings</HeaderTitle>,
     });
   }, [navigation]);
 
@@ -83,7 +81,7 @@ const AssetSettings = () => {
             //    TODO: Redirect me
           }}>
           <View>
-            <Title style={textStyle}>Name</Title>
+            <Title>Name</Title>
             <AssetSettingsTitle isDark={theme.dark}>
               {assetName}
             </AssetSettingsTitle>
@@ -108,8 +106,8 @@ const AssetSettings = () => {
             checked={showInfo}
           />
         </SettingView>
-        <Info isDark={theme.dark}>
-          <InfoTriangle isDark={theme.dark} />
+        <Info>
+          <InfoTriangle />
           <InfoDescription isDark={theme.dark}>
             The asset won’t be removed from this device. You can hide it
             whenever you need.
@@ -134,7 +132,7 @@ const AssetSettings = () => {
         <Hr isDark={theme.dark} />
 
         <VerticalPadding>
-          <Title style={textStyle}>Security</Title>
+          <Title>Security</Title>
           <Setting
             onPress={() => {
               haptic('impactLight');
@@ -163,7 +161,7 @@ const AssetSettings = () => {
         </VerticalPadding>
 
         <VerticalPadding>
-          <Title style={textStyle}>Advanced</Title>
+          <Title>Advanced</Title>
           <Setting
             onPress={() => {
               haptic('impactLight');
