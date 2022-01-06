@@ -52,7 +52,7 @@ export const cardReducer = (
         fetchCardsStatus: 'success',
         cards: {
           ...state.cards,
-          [action.payload.network]: action.payload.cards,
+          [action.payload.network]: action.payload.cards || [],
         },
       };
     case CardActionTypes.FAILED_FETCH_CARDS:
