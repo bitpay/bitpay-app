@@ -19,6 +19,7 @@ import {AppEffects, AppActions} from './store/app';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 import {LogActions} from './store/log';
 import {useDeeplinks} from './utils/hooks';
+import analytics from '@segment/analytics-react-native';
 
 import BitpayIdStack, {
   BitpayIdStackParamList,
@@ -186,13 +187,23 @@ export default () => {
             // storing current route
             if (navEvent) {
               const {routes} = navEvent;
-              const {name, params} = navEvent.routes[routes.length - 1];
+              let {name, params} = navEvent.routes[routes.length - 1];
               dispatch(AppActions.setCurrentRoute([name, params]));
               dispatch(
                 LogActions.info(
                   `Navigation event... ${name} ${JSON.stringify(params)}`,
                 ),
               );
+              if (!__DEV__) {
+                if (name === 'Tabs') {
+                  const {history} = navEvent.routes[routes.length - 1].state;
+                  const tabName = history[history.length - 1].key.split('-')[0];
+                  name = `${tabName} Tab`;
+                }
+                analytics.screen(name, {
+                  screen: params?.screen || '',
+                });
+              }
             }
           }, 300)}>
           <Root.Navigator
