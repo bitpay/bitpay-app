@@ -1,10 +1,12 @@
-import styled, {css} from 'styled-components/native';
 import React, {useEffect, useState} from 'react';
-import {BaseText} from '../styled/Text';
-import {Action, Caution, Slate} from '../../styles/colors';
-import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
+import {TextInputProps} from 'react-native';
+import styled, {css} from 'styled-components/native';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
+import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
 import Search from '../../../assets/img/search.svg';
+import {Action, Caution, Slate} from '../../styles/colors';
+import {BitPayTheme} from '../../themes/bitpay';
+import {BaseText} from '../styled/Text';
 
 type InputType = 'password' | 'search';
 interface ContainerProps {
@@ -55,14 +57,18 @@ const ErrorText = styled(BaseText)`
   padding: 5px 0 0 10px;
 `;
 
-const Label = styled(BaseText)`
+interface LabelProps {
+  theme?: BitPayTheme;
+}
+
+const Label = styled(BaseText)<LabelProps>`
   font-size: 13px;
   font-weight: 500;
   line-height: 18px;
   position: absolute;
   top: 0;
   left: 0;
-  color: #434d5a;
+  color: ${({theme}) => (theme && theme.dark ? theme.colors.text : '#434d5a')};
 `;
 const InputContainer = styled.View`
   position: relative;
@@ -83,15 +89,26 @@ const SearchIconContainer = styled.View`
   border-left-width: 1px;
   padding: 5px 15px;
 `;
-interface Props {
+
+interface Props extends TextInputProps {
+  theme?: BitPayTheme;
   label?: string;
   onFocus?: () => void;
   onBlur?: () => void;
-  errors?: any;
+  error?: any;
   type?: InputType;
   [x: string]: any;
 }
-const BoxInput = ({label, onFocus, onBlur, error, type, ...props}: Props) => {
+
+const BoxInput = ({
+  label,
+  onFocus,
+  onBlur,
+  error,
+  type,
+  theme,
+  ...props
+}: Props) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isSecureTextEntry, setSecureTextEntry] = useState(false);
 
@@ -118,7 +135,7 @@ const BoxInput = ({label, onFocus, onBlur, error, type, ...props}: Props) => {
 
   return (
     <InputContainer>
-      {label && <Label>{label}</Label>}
+      {label && <Label theme={theme}>{label}</Label>}
       <Input
         {...props}
         secureTextEntry={isSecureTextEntry}

@@ -2,22 +2,22 @@ import axios from 'axios';
 import DeviceInfo from 'react-native-device-info';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
 import {Session} from '../../store/bitpay-id/bitpay-id.models';
+import {isAxiosError} from '../../utils/axios';
 import {hashPassword} from '../../utils/password';
 import BitPayApi from '../bitpay';
-import {GeneratePairingCodeResponse, LoginResponse} from './auth.types';
+import {
+  GeneratePairingCodeResponse,
+  LoginErrorResponse,
+  LoginResponse,
+} from './auth.types';
 
 export const AuthApi = {
   async fetchSession(): Promise<Session> {
-    try {
-      const {data: session} = await axios.get<Session>(
-        `${BASE_BITPAY_URLS[APP_NETWORK]}/auth/session`,
-      );
+    const {data: session} = await axios.get<Session>(
+      `${BASE_BITPAY_URLS[APP_NETWORK]}/auth/session`,
+    );
 
-      return session;
-    } catch (err) {
-      console.log('err', err);
-      throw err;
-    }
+    return session;
   },
 
   async login(
@@ -52,14 +52,38 @@ export const AuthApi = {
 
       return data;
     } catch (err: any) {
-      if (err.response?.data?.twoFactorPending) {
-        return {twoFactorPending: true};
-      } else if (err.response?.data?.emailAuthenticationPending) {
-        return {emailAuthenticationPending: true};
+      if (isAxiosError<LoginErrorResponse>(err)) {
+        if (err.response?.data?.twoFactorPending) {
+          return {twoFactorPending: true};
+        } else if (err.response?.data?.emailAuthenticationPending) {
+          return {emailAuthenticationPending: true};
+        }
       }
 
       throw err;
     }
+  },
+
+  async submitTwoFactor(
+    code: string,
+    csrfToken: string,
+  ): Promise<LoginResponse> {
+    const body = {
+      twoFactorCode: code,
+    };
+    const config = {
+      headers: {
+        'x-csrf-token': csrfToken,
+      },
+    };
+
+    const {data} = await axios.post<LoginResponse>(
+      `${BASE_BITPAY_URLS[APP_NETWORK]}/dashboard-api/verify-two-factor-code`,
+      body,
+      config,
+    );
+
+    return data;
   },
 
   /**

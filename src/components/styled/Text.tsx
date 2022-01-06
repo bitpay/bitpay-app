@@ -1,8 +1,7 @@
 import styled, {css} from 'styled-components/native';
-import {StyledComponentBase} from 'styled-components';
-import {Action, White} from '../../styles/colors';
+import {Action, SlateDark, White} from '../../styles/colors';
 
-export const BaseText: StyledComponentBase<any, any> = styled.Text`
+export const BaseText = styled.Text`
   font-family: 'Heebo';
 `;
 
@@ -53,6 +52,10 @@ export const H7 = styled(BaseText)`
   letter-spacing: 0;
 `;
 
+export const SubText = styled(H7)`
+  color: ${SlateDark};
+`;
+
 export const Paragraph = styled(BaseText)`
   font-size: 16px;
   font-style: normal;
@@ -78,6 +81,11 @@ export const HeaderTitle = styled(BaseText)`
   letter-spacing: 0;
 `;
 
+export const HeaderSubtitle = styled(BaseText)`
+  font-size: 16px;
+  line-height: 25px;
+`;
+
 interface TextAlignProps {
   align: 'center' | 'left' | 'right';
 }
@@ -96,6 +104,15 @@ export const Link = styled(BaseText)<{isDark: boolean}>`
   color: ${({isDark}) => (isDark ? White : Action)};
   text-decoration: ${({isDark}) => (isDark ? 'underline' : 'none')};
   text-decoration-color: ${White};
+`;
+
+// WALLET
+export const Balance = styled(BaseText)`
+  font-size: 36px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 53px;
+  letter-spacing: 0;
 `;
 
 // LIST

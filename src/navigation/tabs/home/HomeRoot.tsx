@@ -13,7 +13,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import PortfolioBalance from './components/PortfolioBalance';
 import CardsCarousel from './components/CardsCarousel';
 import LinkingButtons from './components/LinkingButtons';
-import {CurrencyList} from '../../../constants/CurrencySelectionListOptions';
+import {AssetSelectionOptions} from '../../../constants/AssetSelectionOptions';
 import ExchangeRatesSlides, {
   ExchangeRateProps,
 } from '../../../components/exchange-rate/ExchangeRatesSlides';
@@ -71,13 +71,13 @@ const HomeRoot = () => {
   );
   const exchangeRatesItems: Array<ExchangeRateProps> = [];
   priceHistory.forEach((ph: PriceHistory, index: number) => {
-    const currencyInfo = CurrencyList.find(
+    const currencyInfo = AssetSelectionOptions.find(
       ({id}: {id: string | number}) => id === ph.coin,
     );
     exchangeRatesItems.push({
       id: index,
       img: currencyInfo?.roundIcon(20),
-      coinName: currencyInfo?.mainLabel,
+      coinName: currencyInfo?.assetName,
       average: +ph.percentChange,
       theme,
     });
@@ -119,7 +119,7 @@ const HomeRoot = () => {
 
         <CardsCarousel />
 
-        <LinkingButtons />
+        <LinkingButtons receiveCta={() => null} sendCta={() => null} />
 
         <SectionHeaderContainer justifyContent={'space-between'}>
           <Title isDark={theme.dark}>Limited Time Offers</Title>

@@ -1,6 +1,10 @@
-import React, {useState} from 'react';
-import {BaseText, Link} from '../../../components/styled/Text';
-import {useRoute, useTheme} from '@react-navigation/native';
+import React, {useEffect, useState} from 'react';
+import {
+  BaseText,
+  HeaderTitle,
+  Link,
+} from '../../../components/styled/Text';
+import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import {StyleProp, TextStyle, View, TouchableOpacity} from 'react-native';
@@ -50,7 +54,7 @@ const AssetsHeaderContainer = styled.View`
 `;
 
 const WalletNameContainer = styled.TouchableOpacity`
-  padding: 20px 0;
+  padding: 10px 0 20px 0;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
@@ -99,12 +103,20 @@ const WalletSettings = () => {
   const {
     params: {wallet},
   } = useRoute<RouteProp<WalletStackParamList, 'WalletSettings'>>();
-
+  const theme = useTheme();
+  const dispatch = useDispatch();
+  const navigation = useNavigation();
   const assetsList = buildAssetList(wallet.assets);
   const [showInfo, setShowInfo] = useState(false);
-  const theme = useTheme();
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
-  const dispatch = useDispatch();
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => (
+        <HeaderTitle style={textStyle}>Wallet Settings</HeaderTitle>
+      ),
+    });
+  }, [navigation]);
 
   return (
     <WalletSettingsContainer>

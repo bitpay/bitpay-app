@@ -1,26 +1,16 @@
 import React, {ReactElement, useState} from 'react';
 import styled from 'styled-components/native';
-import {FlatList} from 'react-native';
-import {AssetImageContainer} from '../styled/Containers';
-import {
-  ListContainer,
-  RowContainer,
-  RowDetailsContainer,
-} from '../styled/Containers';
-import {MainLabel, SecondaryLabel} from '../styled/Text';
+import {AssetColumn, AssetImageContainer} from '../styled/Containers';
+import {RowContainer} from '../styled/Containers';
+import {H5, SubText} from '../styled/Text';
 import haptic from '../haptic-feedback/haptic';
 import Checkbox from '../checkbox/Checkbox';
-
-interface ListProps {
-  itemList?: Array<ItemProps>;
-  emit: (value: {checked: boolean; asset: string}) => void;
-}
 
 export interface ItemProps {
   id: string | number;
   img: ReactElement;
-  mainLabel: string;
-  secondaryLabel: string;
+  assetName: string;
+  assetAbbreviation: string;
   disabled?: boolean;
   checked?: boolean;
   roundIcon: (size?: number) => ReactElement;
@@ -36,10 +26,10 @@ const CheckBoxContainer = styled.View`
   justify-content: center;
 `;
 
-const CurrencySelectorRow = ({item, emit}: Props) => {
+const AssetSelectorRow = ({item, emit}: Props) => {
   const {
-    mainLabel,
-    secondaryLabel,
+    assetName,
+    assetAbbreviation,
     img,
     checked: initialCheckValue,
     disabled,
@@ -50,7 +40,7 @@ const CurrencySelectorRow = ({item, emit}: Props) => {
     setChecked(!checked);
     haptic('impactLight');
     emit({
-      asset: secondaryLabel,
+      asset: assetAbbreviation,
       checked: !checked,
     });
   };
@@ -58,10 +48,10 @@ const CurrencySelectorRow = ({item, emit}: Props) => {
   return (
     <RowContainer activeOpacity={1} onPress={toggle}>
       <AssetImageContainer>{img}</AssetImageContainer>
-      <RowDetailsContainer>
-        <MainLabel>{mainLabel}</MainLabel>
-        <SecondaryLabel>{secondaryLabel}</SecondaryLabel>
-      </RowDetailsContainer>
+      <AssetColumn>
+        <H5>{assetName}</H5>
+        <SubText>{assetAbbreviation}</SubText>
+      </AssetColumn>
       <CheckBoxContainer>
         <Checkbox checked={checked} disabled={disabled} onPress={toggle} />
       </CheckBoxContainer>
@@ -69,18 +59,4 @@ const CurrencySelectorRow = ({item, emit}: Props) => {
   );
 };
 
-const CurrencySelectorList = ({itemList, emit}: ListProps) => {
-  return (
-    <ListContainer>
-      <FlatList
-        contentContainerStyle={{paddingBottom: 100}}
-        data={itemList}
-        renderItem={({item}) => (
-          <CurrencySelectorRow item={item} emit={emit} key={item.id} />
-        )}
-      />
-    </ListContainer>
-  );
-};
-
-export default CurrencySelectorList;
+export default AssetSelectorRow;

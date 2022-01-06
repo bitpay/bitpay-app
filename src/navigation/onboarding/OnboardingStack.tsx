@@ -7,7 +7,9 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import Button from '../../components/button/Button';
 import haptic from '../../components/haptic-feedback/haptic';
-import OnboardingStartScreen from './screens/OnboardingStart';
+import OnboardingStartScreen, {
+  OnboardingStartParamList,
+} from './screens/OnboardingStart';
 import NotificationsScreen from './screens/Notifications';
 import PinScreen from './screens/Pin';
 import CreateWalletScreen from './screens/CreateWallet';
@@ -22,14 +24,11 @@ import RecoveryPhrase, {
 import VerifyPhrase, {VerifyPhraseProps} from '../wallet/screens/VerifyPhrase';
 import {HeaderRightContainer} from '../../components/styled/Containers';
 import {HeaderTitle} from '../../components/styled/Text';
-import LoginScreen from './screens/Login';
 import ImportWalletScreen, {
-  ImportWalletProps,
+    ImportWalletProps,
 } from '../wallet/screens/ImportWallet';
-
 export type OnboardingStackParamList = {
-  OnboardingStart: undefined;
-  Login: {context: 'login' | 'signup'};
+  OnboardingStart: OnboardingStartParamList;
   Notifications: undefined;
   Pin: undefined;
   CreateWallet: undefined;
@@ -47,7 +46,6 @@ export type OnboardingStackParamList = {
 
 export enum OnboardingScreens {
   ONBOARDING_START = 'OnboardingStart',
-  LOGIN = 'Login',
   NOTIFICATIONS = 'Notifications',
   PIN = 'Pin',
   CREATE_WALLET = 'CreateWallet',
@@ -80,8 +78,8 @@ const OnboardingStack = () => {
                 buttonType={'pill'}
                 onPress={() => {
                   haptic('impactLight');
-                  navigation.navigate('Onboarding', {
-                    screen: 'Login',
+                  navigation.navigate('Auth', {
+                    screen: 'LoginSignup',
                     params: {context: 'login'},
                   });
                 }}>
@@ -92,10 +90,6 @@ const OnboardingStack = () => {
         }}
         name={OnboardingScreens.ONBOARDING_START}
         component={OnboardingStartScreen}
-      />
-      <Onboarding.Screen
-        name={OnboardingScreens.LOGIN}
-        component={LoginScreen}
       />
       <Onboarding.Screen
         options={{
