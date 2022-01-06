@@ -17,7 +17,9 @@ export const cardFields = `
   disabled,
   activationDate,
   cardType,
-  pagingSupport
+  pagingSupport,
+  nickname,
+  lockedByUser,
 `;
 
 export const FETCH_CARDS = (token: string): GqlQueryParams => {
