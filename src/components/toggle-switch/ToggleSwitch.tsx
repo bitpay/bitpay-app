@@ -1,6 +1,6 @@
 import React from 'react';
 import {Switch} from 'react-native';
-import {Action} from '../../styles/colors';
+import {Action, White} from '../../styles/colors';
 interface Props {
   onChange: (value: boolean) => void;
   isEnabled: boolean;
@@ -12,6 +12,8 @@ const ToggleSwitch = ({onChange, isEnabled}: Props) => {
       onValueChange={onChange}
       value={isEnabled}
       trackColor={{true: Action}}
+      thumbColor={White}
+      thumbTintColor={White}
     />
   );
 };
