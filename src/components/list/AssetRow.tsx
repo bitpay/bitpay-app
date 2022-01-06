@@ -1,18 +1,9 @@
 import React, {ReactElement} from 'react';
-import {Column, AssetImageContainer} from '../styled/Containers';
-import {H5, H7} from '../styled/Text';
+import {Column, AssetImageContainer, AssetColumn} from '../styled/Containers';
+import {H5, SubText} from '../styled/Text';
 import {RowContainer} from '../styled/Containers';
 import styled from 'styled-components/native';
-import {SlateDark} from '../../styles/colors';
 import NestedArrow from '../../../assets/img/nested-arrow.svg';
-
-const SubText = styled(H7)`
-  color: ${SlateDark};
-`;
-
-const AssetColumn = styled(Column)`
-  margin-left: 10px;
-`;
 
 const BalanceColumn = styled(Column)`
   align-items: flex-end;
@@ -37,9 +28,10 @@ export interface AssetRowProps {
 interface Props {
   id: string;
   asset: AssetRowProps;
+  onPress: () => void;
 }
 
-const AssetRow = ({asset}: Props) => {
+const AssetRow = ({asset, onPress}: Props) => {
   const {
     assetName,
     assetAbbreviation,
@@ -49,7 +41,7 @@ const AssetRow = ({asset}: Props) => {
     isToken,
   } = asset;
   return (
-    <RowContainer activeOpacity={0.75}>
+    <RowContainer activeOpacity={0.75} onPress={onPress}>
       {isToken && (
         <NestedArrowContainer>
           <NestedArrow />

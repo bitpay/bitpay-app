@@ -4,10 +4,16 @@ import {Network} from '../../constants';
 import {Effect} from '../index';
 import {Card} from './card.models';
 
+interface CardStoreInitParams {
+  cards?: Card[];
+}
+
 export const startCardStoreInit =
-  (network: Network, {cards}: {cards: Card[]}): Effect<Promise<void>> =>
+  (network: Network, {cards}: CardStoreInitParams): Effect<Promise<void>> =>
   async dispatch => {
-    dispatch(CardActions.successFetchCards(network, cards));
+    if (cards) {
+      dispatch(CardActions.successFetchCards(network, cards));
+    }
   };
 
 export const startFetchAll =

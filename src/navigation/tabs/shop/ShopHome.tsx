@@ -1,3 +1,4 @@
+import debounce from 'lodash.debounce';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import styled, {css} from 'styled-components/native';
 import {Platform, ScrollView} from 'react-native';
@@ -120,6 +121,18 @@ const ShopHome = () => {
 
   const insets = useSafeAreaInsets();
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedSetScrollViewHeight = useCallback(
+    debounce(tabTitle => {
+      setScrollViewHeight(
+        tabTitle.includes('Gift Cards')
+          ? giftCardScrollViewHeight
+          : integrationsScrollViewHeight,
+      );
+    }, 600),
+    [],
+  );
+
   return (
     <ShopContainer
       style={{
@@ -139,16 +152,11 @@ const ShopHome = () => {
         <Tab.Navigator
           screenOptions={ScreenOptions(112)}
           screenListeners={{
-            tabPress: tab =>
-              setTimeout(
-                () =>
-                  setScrollViewHeight(
-                    tab.target?.includes('Gift Cards')
-                      ? giftCardScrollViewHeight
-                      : integrationsScrollViewHeight,
-                  ),
-                500,
-              ),
+            tabPress: tab => {
+              if (tab.target) {
+                debouncedSetScrollViewHeight(tab.target);
+              }
+            },
           }}>
           <Tab.Screen name="Gift Cards" component={memoizedGiftCardCatalog} />
           <Tab.Screen name="Shop Online" component={memoizedShopOnline} />

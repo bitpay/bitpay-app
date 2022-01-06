@@ -8,7 +8,7 @@ import CreateWallet from './empty-states/CreateWallet';
 import styled from 'styled-components/native';
 
 import HomeCard from '../../../../components/home-card/HomeCard';
-import {CurrencyList} from '../../../../constants/CurrencySelectionListOptions';
+import {AssetSelectionOptions} from '../../../../constants/AssetSelectionOptions';
 import {useNavigation} from '@react-navigation/native';
 import {WalletObj} from '../../../../store/wallet/wallet.models';
 import {Network} from '../../../../constants';
@@ -48,7 +48,9 @@ const CurrencyCardComponent = ({wallet, network}: CurrencyCardProps) => {
   const currencyInfo = assets
     .map(asset => asset.coin)
     .map(currency =>
-      CurrencyList.find(({id}: {id: string | number}) => id === currency),
+      AssetSelectionOptions.find(
+        ({id}: {id: string | number}) => id === currency,
+      ),
     );
 
   const iconSize = currencyInfo.length > 7 ? 20 : 30;

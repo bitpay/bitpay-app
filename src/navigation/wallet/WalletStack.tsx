@@ -1,5 +1,5 @@
-import React, {useState} from 'react';
-import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
+import React from 'react';
+import {createStackNavigator} from '@react-navigation/stack';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
@@ -9,13 +9,11 @@ import RecoveryPhrase, {RecoveryPhraseProps} from './screens/RecoveryPhrase';
 import VerifyPhrase, {VerifyPhraseProps} from './screens/VerifyPhrase';
 import SelectAssets from './screens/SelectAssets';
 import WalletOverview from './screens/WalletOverview';
-import {WalletObj} from '../../store/wallet/wallet.models';
-import {useRoute, useTheme} from '@react-navigation/native';
-import {Black, Grey, SlateDark, White} from '../../styles/colors';
-import Back from '../../components/back/Back';
-import Settings from '../../components/settings/Settings';
-import WalletOptionsBottomPopupModal from './components/WalletOptionsBottomPopupModal';
+import {Asset, WalletObj} from '../../store/wallet/wallet.models';
 import WalletSettings from './screens/WalletSettings';
+import AssetDetails from './screens/AssetDetails';
+import {AssetRowProps} from '../../components/list/AssetRow';
+import AssetSettings from './screens/AssetSettings';
 
 export type WalletStackParamList = {
   SelectAssets: undefined;
@@ -24,6 +22,8 @@ export type WalletStackParamList = {
   VerifyPhrase: VerifyPhraseProps;
   WalletOverview: {wallet: WalletObj};
   WalletSettings: {wallet: WalletObj};
+  AssetDetails: {asset: AssetRowProps};
+  AssetSettings: {asset: AssetRowProps};
 };
 
 export enum WalletScreens {
@@ -33,15 +33,13 @@ export enum WalletScreens {
   VERIFY_PHRASE = 'VerifyPhrase',
   WALLET_OVERVIEW = 'WalletOverview',
   WALLET_SETTINGS = 'WalletSettings',
+  ASSET_DETAILS = 'AssetDetails',
+  ASSET_SETTINGS = 'AssetSettings',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
 
 const WalletStack = () => {
-  const theme = useTheme();
-  const [showWalletOptions, setShowWalletOptions] = useState(false);
-  const [wallet, setWallet] = useState<WalletObj | null>(null);
-
   return (
     <>
       <Wallet.Navigator
@@ -79,44 +77,22 @@ const WalletStack = () => {
           component={VerifyPhrase}
         />
         <Wallet.Screen
-          options={({route}) => ({
-            headerStyle: {
-              backgroundColor: theme.dark ? Black : Grey,
-            },
-            headerBackImage: () => {
-              const props = {
-                color: theme.dark ? White : SlateDark,
-                background: theme.dark ? SlateDark : White,
-                opacity: 1,
-              };
-              return <Back {...props} />;
-            },
-            headerRight: () => (
-              <Settings
-                onPress={() => {
-                  setWallet(route.params.wallet);
-                  setShowWalletOptions(true);
-                }}
-              />
-            ),
-          })}
           name={WalletScreens.WALLET_OVERVIEW}
           component={WalletOverview}
         />
         <Wallet.Screen
-          options={{
-            headerShown: false,
-            ...TransitionPresets.ModalPresentationIOS,
-          }}
           name={WalletScreens.WALLET_SETTINGS}
           component={WalletSettings}
         />
+        <Wallet.Screen
+          name={WalletScreens.ASSET_DETAILS}
+          component={AssetDetails}
+        />
+        <Wallet.Screen
+          name={WalletScreens.ASSET_SETTINGS}
+          component={AssetSettings}
+        />
       </Wallet.Navigator>
-      <WalletOptionsBottomPopupModal
-        isVisible={showWalletOptions}
-        wallet={wallet}
-        onBackdropPress={() => setShowWalletOptions(false)}
-      />
     </>
   );
 };

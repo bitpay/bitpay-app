@@ -1,27 +1,27 @@
 import React, {useState} from 'react';
 import styled from 'styled-components/native';
 import {CtaContainerAbsolute} from '../../../components/styled/Containers';
-import CurrencySelectorList from '../../../components/list/CurrencySelectorList';
-import {CurrencyList} from '../../../constants/CurrencySelectionListOptions';
+import AssetSelectorRow from '../../../components/list/AssetSelectorRow';
+import {AssetSelectionOptions} from '../../../constants/AssetSelectionOptions';
 import Button from '../../../components/button/Button';
 import {SUPPORTED_TOKENS, SupportedAssets} from '../../../constants/assets';
 import {useDispatch} from 'react-redux';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startCreateWallet} from '../../../store/wallet/effects';
+import {FlatList} from 'react-native';
 
 const AssetSelectionContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const CurrencySelectorListContainer = styled.View`
+const ListContainer = styled.View`
   margin-top: 20px;
-  flex: 1;
 `;
 
 const SelectAssets = () => {
   const dispatch = useDispatch();
 
-  const [currencyList, setCurrencyList] = useState(CurrencyList);
+  const [assetOptions, setAssetOptions] = useState(AssetSelectionOptions);
   const [selectedAssets, setSelectedAssets] = useState<Array<string>>([]);
 
   const checkAndNotifyEthRequired = (asset: string) => {
@@ -57,8 +57,8 @@ const SelectAssets = () => {
     for (const selected of assets) {
       if (SUPPORTED_TOKENS.includes(selected.toLowerCase())) {
         if (!assets.includes('ETH')) {
-          setCurrencyList(
-            CurrencyList.map(coin => {
+          setAssetOptions(
+            AssetSelectionOptions.map(coin => {
               if (coin.id === 'eth') {
                 return {
                   ...coin,
@@ -106,9 +106,15 @@ const SelectAssets = () => {
 
   return (
     <AssetSelectionContainer>
-      <CurrencySelectorListContainer>
-        <CurrencySelectorList emit={assetToggled} itemList={currencyList} />
-      </CurrencySelectorListContainer>
+      <ListContainer>
+        <FlatList
+          contentContainerStyle={{paddingBottom: 100}}
+          data={assetOptions}
+          renderItem={({item}) => (
+            <AssetSelectorRow item={item} emit={assetToggled} key={item.id} />
+          )}
+        />
+      </ListContainer>
 
       <CtaContainerAbsolute
         background={true}
