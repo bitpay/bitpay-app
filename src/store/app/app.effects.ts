@@ -17,7 +17,8 @@ import {startWalletStoreInit} from '../wallet/effects';
 import {AppActions} from './';
 import {AppIdentity} from './app.models';
 import RNBootSplash from 'react-native-bootsplash';
-
+import ReactNative from 'react-native';
+const {Dosh} = ReactNative.NativeModules;
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     dispatch(LogActions.clear());
@@ -40,6 +41,9 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       await dispatch(BitPayIdEffects.startBitPayIdStoreInit(network, {user}));
       await dispatch(CardEffects.startCardStoreInit(network, {cards}));
     }
+
+    // Dosh card rewards
+    Dosh.initializeDosh();
 
     await sleep(500);
     dispatch(AppActions.successAppInit());
