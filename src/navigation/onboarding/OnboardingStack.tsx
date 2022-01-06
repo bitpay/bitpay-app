@@ -25,7 +25,7 @@ import VerifyPhrase, {VerifyPhraseProps} from '../wallet/screens/VerifyPhrase';
 import {HeaderRightContainer} from '../../components/styled/Containers';
 import {HeaderTitle} from '../../components/styled/Text';
 import ImportWalletScreen, {
-    ImportWalletProps,
+  ImportWalletProps,
 } from '../wallet/screens/ImportWallet';
 export type OnboardingStackParamList = {
   OnboardingStart: OnboardingStartParamList;

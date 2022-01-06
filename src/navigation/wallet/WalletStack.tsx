@@ -98,10 +98,14 @@ const WalletStack = () => {
           name={WalletScreens.ASSET_SETTINGS}
           component={AssetSettings}
         />
-        <Wallet.Screen name={WalletScreens.IMPORT_WALLET}
-                       component={ImportWallet}/>
-        <Wallet.Screen name={WalletScreens.SELECT_WALLET_TYPE}
-                       component={SelectWalletType}/>
+        <Wallet.Screen
+          name={WalletScreens.IMPORT_WALLET}
+          component={ImportWallet}
+        />
+        <Wallet.Screen
+          name={WalletScreens.SELECT_WALLET_TYPE}
+          component={SelectWalletType}
+        />
       </Wallet.Navigator>
     </>
   );

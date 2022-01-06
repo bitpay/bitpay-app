@@ -217,7 +217,10 @@ export default () => {
                 gestureEnabled: false,
               }}
             />
-            <Root.Screen name={RootStacks.BITPAY_ID} component={BitpayIdStack} />
+            <Root.Screen
+              name={RootStacks.BITPAY_ID}
+              component={BitpayIdStack}
+            />
             <Root.Screen name={RootStacks.WALLET} component={WalletStack} />
             <Root.Screen name={RootStacks.SCAN} component={ScanStack} />
             {/* SETTINGS */}

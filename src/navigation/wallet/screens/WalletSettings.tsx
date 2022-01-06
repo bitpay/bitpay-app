@@ -1,9 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {
-  BaseText,
-  HeaderTitle,
-  Link,
-} from '../../../components/styled/Text';
+import {BaseText, HeaderTitle, Link} from '../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
