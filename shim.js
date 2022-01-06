@@ -22,7 +22,8 @@ if (typeof Buffer === 'undefined') {
 
 // global.location = global.location || { port: 80 }
 const isDev = typeof __DEV__ === 'boolean' && __DEV__;
-process.env.NODE_ENV = isDev ? 'development' : 'production';
+Object.assign(process.env, {NODE_ENV: isDev ? 'development' : 'production'});
+
 if (typeof localStorage !== 'undefined') {
   // eslint-disable-next-line no-undef
   localStorage.debug = isDev ? '*' : '';
