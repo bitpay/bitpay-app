@@ -4,6 +4,7 @@ import {useSelector} from 'react-redux';
 import {WIDTH} from '../../../../components/styled/Containers';
 import {RootState} from '../../../../store';
 import {Card} from '../../../../store/card/card.models';
+import {VirtualDesignCurrency} from '../../../../store/card/card.types';
 import CardOverviewSlide from './CardOverviewSlide';
 
 interface CardDashboardProps {}
@@ -39,6 +40,7 @@ const CardDashboard: React.FC<CardDashboardProps> = () => {
   const cards = useSelector<RootState, Card[]>(
     ({APP, CARD}) => CARD.cards[APP.network],
   );
+  const virtualDesignCurrency = useSelector<RootState, VirtualDesignCurrency>(({CARD}) => CARD.virtualDesignCurrency);
 
   const memoizedSlides = useMemo(() => {
     // sort galileo before firstView, then virtual before physical
@@ -90,7 +92,7 @@ const CardDashboard: React.FC<CardDashboardProps> = () => {
         renderItem={({item}) => (
           <CardOverviewSlide
             card={item.primaryCard}
-            designCurrency="bitpay-b"
+            designCurrency={virtualDesignCurrency}
           />
         )}
         itemWidth={300 + 20}
