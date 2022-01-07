@@ -175,8 +175,14 @@ const WalletSettings = () => {
             <ToggleSwitch
               onChange={value => {
                 setShowInfo(value);
+                if (!wallet.isPrivKeyEncrypted) {
+                  navigation.navigate('Wallet', {
+                    screen: 'CreateEncryptPassword',
+                    params: {keyId: wallet.id},
+                  });
+                }
               }}
-              isEnabled={showInfo}
+              isEnabled={!!wallet.isPrivKeyEncrypted}
             />
           </SettingView>
 
