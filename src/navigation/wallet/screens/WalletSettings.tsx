@@ -1,9 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {
-  BaseText,
-  HeaderTitle,
-  Link,
-} from '../../../components/styled/Text';
+import {BaseText, HeaderTitle, Link} from '../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
@@ -27,10 +23,10 @@ import AssetSettingsRow, {
 } from '../../../components/list/AssetSettingsRow';
 import Button from '../../../components/button/Button';
 import {Black, SlateDark, White} from '../../../styles/colors';
-import Checkbox from '../../../components/checkbox/Checkbox';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {useDispatch} from 'react-redux';
 import InfoIcon from '../../../components/icons/info/InfoIcon';
+import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -176,13 +172,11 @@ const WalletSettings = () => {
               Request Encrypt Password
             </WalletSettingsTitle>
 
-            <Checkbox
-              onPress={() => {
-                haptic('impactLight');
-                //    TODO: Update me
-                setShowInfo(!showInfo);
+            <ToggleSwitch
+              onChange={value => {
+                setShowInfo(value);
               }}
-              checked={showInfo}
+              isEnabled={showInfo}
             />
           </SettingView>
 
