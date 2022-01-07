@@ -19,6 +19,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 
 import {SlateDark, White} from '../../../styles/colors';
 import Checkbox from '../../../components/checkbox/Checkbox';
+import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 
 const AssetSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -61,7 +62,7 @@ const AssetSettings = () => {
     params: {asset},
   } = useRoute<RouteProp<WalletStackParamList, 'AssetSettings'>>();
   const navigation = useNavigation();
-  const [showInfo, setShowInfo] = useState(false);
+  const [demoToggle, setDemoToggle] = useState(false);
 
   useEffect(() => {
     navigation.setOptions({
@@ -92,13 +93,13 @@ const AssetSettings = () => {
         <SettingView>
           <AssetSettingsTitle>Hide Asset</AssetSettingsTitle>
 
-          <Checkbox
-            onPress={() => {
+          <ToggleSwitch
+            onChange={value => {
               haptic('impactLight');
               //    TODO: Update me
-              setShowInfo(!showInfo);
+              setDemoToggle(value);
             }}
-            checked={showInfo}
+            isEnabled={demoToggle}
           />
         </SettingView>
         <Info>
@@ -112,13 +113,12 @@ const AssetSettings = () => {
         <SettingView>
           <AssetSettingsTitle>Hide Balance</AssetSettingsTitle>
 
-          <Checkbox
-            onPress={() => {
+          <ToggleSwitch
+            onChange={value => {
               haptic('impactLight');
               //    TODO: Update me
-              setShowInfo(!showInfo);
             }}
-            checked={showInfo}
+            isEnabled={false}
           />
         </SettingView>
 
@@ -136,15 +136,15 @@ const AssetSettings = () => {
           <Hr />
 
           <SettingView>
-            <AssetSettingsTitle>Request Encrypt Password</AssetSettingsTitle>
-
-            <Checkbox
-              onPress={() => {
+            <AssetSettingsTitle>
+              Request Encrypt Password
+            </AssetSettingsTitle>
+            <ToggleSwitch
+              onChange={value => {
                 haptic('impactLight');
                 //    TODO: Update me
-                setShowInfo(!showInfo);
               }}
-              checked={showInfo}
+              isEnabled={false}
             />
           </SettingView>
 

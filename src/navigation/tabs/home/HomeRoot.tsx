@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {Image, TouchableOpacity} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {useNavigation} from '@react-navigation/native';
@@ -58,9 +58,12 @@ const HomeRoot = () => {
   const onboardingCompleted = useSelector(
     ({APP}: RootState) => APP.onboardingCompleted,
   );
-  if (!onboardingCompleted) {
-    dispatch(AppActions.showOnboardingFinishModal());
-  }
+
+  useEffect(() => {
+    if (!onboardingCompleted) {
+      dispatch(AppActions.showOnboardingFinishModal());
+    }
+  }, []);
 
   const navigation = useNavigation();
 

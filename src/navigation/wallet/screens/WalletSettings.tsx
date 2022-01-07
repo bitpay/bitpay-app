@@ -23,10 +23,10 @@ import AssetSettingsRow, {
 } from '../../../components/list/AssetSettingsRow';
 import Button from '../../../components/button/Button';
 import {SlateDark, White} from '../../../styles/colors';
-import Checkbox from '../../../components/checkbox/Checkbox';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {useDispatch} from 'react-redux';
 import InfoIcon from '../../../components/icons/info/InfoIcon';
+import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -163,13 +163,11 @@ const WalletSettings = () => {
           <SettingView>
             <WalletSettingsTitle>Request Encrypt Password</WalletSettingsTitle>
 
-            <Checkbox
-              onPress={() => {
-                haptic('impactLight');
-                //    TODO: Update me
-                setShowInfo(!showInfo);
+            <ToggleSwitch
+              onChange={value => {
+                setShowInfo(value);
               }}
-              checked={showInfo}
+              isEnabled={showInfo}
             />
           </SettingView>
 
