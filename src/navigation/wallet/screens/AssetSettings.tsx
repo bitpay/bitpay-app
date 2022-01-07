@@ -18,7 +18,6 @@ import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
 
 import {SlateDark, White} from '../../../styles/colors';
-import Checkbox from '../../../components/checkbox/Checkbox';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 
 const AssetSettingsContainer = styled.SafeAreaView`
@@ -136,9 +135,7 @@ const AssetSettings = () => {
           <Hr />
 
           <SettingView>
-            <AssetSettingsTitle>
-              Request Encrypt Password
-            </AssetSettingsTitle>
+            <AssetSettingsTitle>Request Encrypt Password</AssetSettingsTitle>
             <ToggleSwitch
               onChange={value => {
                 haptic('impactLight');
