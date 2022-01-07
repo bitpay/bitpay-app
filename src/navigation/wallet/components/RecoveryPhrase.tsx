@@ -14,6 +14,7 @@ import {useLogger} from '../../../utils/hooks/useLogger';
 import {WalletOptions} from '../../../store/wallet/wallet.models';
 import {startImportMnemonic} from '../../../store/wallet/effects';
 import {useNavigation} from '@react-navigation/native';
+import {ImportObj} from '../../../store/scan/scan.models';
 
 const Gutter = '10px';
 export const ImportWalletContainer = styled.View`
@@ -43,7 +44,7 @@ export const ImportWalletTitle = styled(BaseText)`
   text-transform: uppercase;
 `;
 
-const ImgContainer = styled.View`
+const ScanContainer = styled.TouchableOpacity`
   height: 25px;
   width: 25px;
   align-items: center;
@@ -78,34 +79,36 @@ const RecoveryPhrase = () => {
   const {
     control,
     handleSubmit,
+    setValue,
     formState: {errors},
   } = useForm({resolver: yupResolver(schema)});
 
+  const invalidPhraseNotification = () =>
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: 'Something went wrong',
+        message: 'The recovery phrase is invalid.',
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'OK',
+            action: () => {},
+            primary: true,
+          },
+        ],
+      }),
+    );
+
+  const isValidPhrase = (words: string) => {
+    return words && words.trim().split(/[\u3000\s]+/).length === 12;
+  };
+
   const onSubmit = (formData: {words: string}) => {
     const {words} = formData;
-    if (!words) {
-      return;
-    }
-
-    const wordList = words.trim().split(/[\u3000\s]+/);
-
-    if (wordList.length % 3 !== 0) {
+    if (!isValidPhrase(words)) {
       logger.info('Incorrect words length');
-      dispatch(
-        showBottomNotificationModal({
-          type: 'warning',
-          title: 'Something went wrong',
-          message: 'The recovery phrase is invalid.',
-          enableBackdropDismiss: true,
-          actions: [
-            {
-              text: 'OK',
-              action: () => {},
-              primary: true,
-            },
-          ],
-        }),
-      );
+      invalidPhraseNotification();
       return;
     }
 
@@ -142,9 +145,36 @@ const RecoveryPhrase = () => {
       <HeaderContainer>
         <ImportWalletTitle>Recovery phrase</ImportWalletTitle>
 
-        <ImgContainer>
+        <ScanContainer
+          activeOpacity={0.75}
+          onPress={() =>
+            navigation.navigate('Scan', {
+              screen: 'Root',
+              params: {
+                contextHandler: data => {
+                  try {
+                    const parsedCode = data.split('|');
+                    const recoveryObj: ImportObj = {
+                      type: parsedCode[0],
+                      data: parsedCode[1],
+                      network: parsedCode[2],
+                      hasPassphrase: !!parsedCode[4],
+                    };
+
+                    if (!isValidPhrase(recoveryObj.data)) {
+                      invalidPhraseNotification();
+                    } else {
+                      setValue('words', recoveryObj.data);
+                    }
+                  } catch (err) {
+                    invalidPhraseNotification();
+                  }
+                },
+              },
+            })
+          }>
           <ScanSvg />
-        </ImgContainer>
+        </ScanContainer>
       </HeaderContainer>
 
       <Controller
