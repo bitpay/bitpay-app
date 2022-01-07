@@ -8,8 +8,6 @@ import {HeaderTitle} from '../../../../components/styled/Text';
 import GeneralRoot from './screens/GeneralRoot';
 import Theme from './screens/Theme';
 import CustomizeHome from './screens/CustomizeHome';
-import {useTheme} from '@react-navigation/native';
-import {StyleProp, TextStyle} from 'react-native';
 
 export type GeneralSettingsStackParamList = {
   Root: undefined;
@@ -26,8 +24,6 @@ export enum GeneralSettingsScreens {
 const GeneralSettings = createStackNavigator<GeneralSettingsStackParamList>();
 
 const GeneralSettingsStack = () => {
-  const theme = useTheme();
-  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
   return (
     <GeneralSettings.Navigator
       initialRouteName={GeneralSettingsScreens.ROOT}
@@ -39,25 +35,21 @@ const GeneralSettingsStack = () => {
         name={GeneralSettingsScreens.ROOT}
         component={GeneralRoot}
         options={{
-          headerTitle: () => (
-            <HeaderTitle style={textStyle}>General</HeaderTitle>
-          ),
+          headerTitle: () => <HeaderTitle>General</HeaderTitle>,
         }}
       />
       <GeneralSettings.Screen
         name={GeneralSettingsScreens.THEME}
         component={Theme}
         options={{
-          headerTitle: () => <HeaderTitle style={textStyle}>Theme</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>Theme</HeaderTitle>,
         }}
       />
       <GeneralSettings.Screen
         name={GeneralSettingsScreens.CUSTOMIZE_HOME}
         component={CustomizeHome}
         options={{
-          headerTitle: () => (
-            <HeaderTitle style={textStyle}>Customize Home</HeaderTitle>
-          ),
+          headerTitle: () => <HeaderTitle>Customize Home</HeaderTitle>,
         }}
       />
     </GeneralSettings.Navigator>
