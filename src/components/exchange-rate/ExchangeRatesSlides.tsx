@@ -4,14 +4,12 @@ import {Carousel} from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
 import haptic from '../haptic-feedback/haptic';
 import ExchangeRateCard from './ExchangeRateCard';
-import {Theme} from '@react-navigation/native';
 
 export interface ExchangeRateProps {
   id: number;
   img: ReactElement | undefined;
   coinName?: string;
   average?: number;
-  theme: Theme;
 }
 
 interface ExchangeRateSlide {

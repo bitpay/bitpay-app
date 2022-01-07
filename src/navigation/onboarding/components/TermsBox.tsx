@@ -4,7 +4,6 @@ import {BaseText, Link, Paragraph} from '../../../components/styled/Text';
 import {Linking} from 'react-native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Checkbox from '../../../components/checkbox/Checkbox';
-import {useTheme} from '@react-navigation/native';
 interface Props {
   emit: (id: number) => void;
   term: {
@@ -57,7 +56,6 @@ const TermsBox = ({term, emit}: Props) => {
       emit(term.id);
     }
   };
-  const theme = useTheme();
   return (
     <TermsBoxContainer activeOpacity={1.0} onPress={acknowledge}>
       <CheckBoxContainer>
@@ -67,9 +65,7 @@ const TermsBox = ({term, emit}: Props) => {
         <TermText>{statement}</TermText>
         {acknowledgement && <Paragraph>{acknowledgement}</Paragraph>}
         {link && (
-          <Link onPress={() => Linking.openURL(link.url)} isDark={theme.dark}>
-            {link.text}
-          </Link>
+          <Link onPress={() => Linking.openURL(link.url)}>{link.text}</Link>
         )}
       </TermTextContainer>
     </TermsBoxContainer>

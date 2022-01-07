@@ -1,7 +1,7 @@
 import React from 'react';
 import {Image, TouchableOpacity} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import {useNavigation, useTheme} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import {RootState} from '../../../store';
 import {PriceHistory} from '../../../store/wallet/wallet.models';
 
@@ -34,17 +34,17 @@ const Home = styled.ScrollView`
   margin-top: 20px;
 `;
 
-const HomeLink = styled(BaseText)<{isDark: boolean}>`
+const HomeLink = styled(BaseText)`
   font-weight: 500;
   font-size: 14px;
-  color: ${({isDark}) => (isDark ? White : Action)};
-  text-decoration: ${({isDark}) => (isDark ? 'underline' : 'none')};
+  color: ${({theme: {dark}}) => (dark ? White : Action)};
+  text-decoration: ${({theme: {dark}}) => (dark ? 'underline' : 'none')};
   text-decoration-color: ${White};
 `;
 
-const Title = styled(BaseText)<{isDark: boolean}>`
+const Title = styled(BaseText)`
   font-size: 14px;
-  color: ${({isDark}) => (isDark ? White : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
 const SectionHeaderContainer = styled.View<{justifyContent?: string}>`
@@ -62,7 +62,6 @@ const HomeRoot = () => {
     dispatch(AppActions.showOnboardingFinishModal());
   }
 
-  const theme = useTheme();
   const navigation = useNavigation();
 
   // Exchange Rates
@@ -79,7 +78,6 @@ const HomeRoot = () => {
       img: currencyInfo?.roundIcon(20),
       coinName: currencyInfo?.assetName,
       average: +ph.percentChange,
-      theme,
     });
   });
 
@@ -95,7 +93,6 @@ const HomeRoot = () => {
         />
       ),
       onPress: () => {},
-      theme,
     },
   ];
 
@@ -113,7 +110,7 @@ const HomeRoot = () => {
                 screen: 'CustomizeHome',
               });
             }}>
-            <HomeLink isDark={theme.dark}>Customize</HomeLink>
+            <HomeLink>Customize</HomeLink>
           </TouchableOpacity>
         </SectionHeaderContainer>
 
@@ -122,16 +119,16 @@ const HomeRoot = () => {
         <LinkingButtons receiveCta={() => null} sendCta={() => null} />
 
         <SectionHeaderContainer justifyContent={'space-between'}>
-          <Title isDark={theme.dark}>Limited Time Offers</Title>
+          <Title>Limited Time Offers</Title>
           <TouchableOpacity onPress={() => console.log('offers')}>
-            <HomeLink isDark={theme.dark}> See all</HomeLink>
+            <HomeLink> See all</HomeLink>
           </TouchableOpacity>
         </SectionHeaderContainer>
 
         <OffersSlides items={OfferItems} />
 
         <SectionHeaderContainer>
-          <Title isDark={theme.dark}>Do More</Title>
+          <Title>Do More</Title>
         </SectionHeaderContainer>
 
         <AdvertisementCard items={AdvertisementList} />
@@ -139,7 +136,7 @@ const HomeRoot = () => {
         {exchangeRatesItems.length > 0 && (
           <>
             <SectionHeaderContainer>
-              <Title isDark={theme.dark}>Exchange Rates</Title>
+              <Title>Exchange Rates</Title>
             </SectionHeaderContainer>
 
             <ExchangeRatesSlides items={exchangeRatesItems} />
@@ -147,7 +144,7 @@ const HomeRoot = () => {
         )}
 
         <SectionHeaderContainer>
-          <Title isDark={theme.dark}>Quick Links</Title>
+          <Title>Quick Links</Title>
         </SectionHeaderContainer>
 
         <QuickLinksSlides items={quickLinksItems} />
