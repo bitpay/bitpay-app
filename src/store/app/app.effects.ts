@@ -20,11 +20,25 @@ import {startWalletStoreInit} from '../wallet/effects';
 import {AppActions} from './';
 import {AppIdentity} from './app.models';
 import RNBootSplash from 'react-native-bootsplash';
+import analytics from '@segment/analytics-react-native';
+import {SEGMENT_API_KEY} from '@env';
 
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     dispatch(LogActions.clear());
     dispatch(LogActions.info('Initializing app...'));
+
+    if (!__DEV__) {
+      try {
+        await analytics.setup(SEGMENT_API_KEY, {
+          recordScreenViews: false,
+          trackAppLifecycleEvents: true,
+        });
+      } catch (err) {
+        dispatch(LogActions.error('Segment setup failed'));
+        dispatch(LogActions.error(JSON.stringify(err)));
+      }
+    }
 
     const {APP, BITPAY_ID} = getState();
     const network = APP.network;
