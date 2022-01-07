@@ -93,7 +93,6 @@ export enum RootStacks {
   ABOUT = 'About',
   BUY_CRYPTO = 'BuyCrypto',
   SWAP_CRYPTO = 'SwapCrypto',
-  // WALLET CONNECT
   WALLET_CONNECT = 'WalletConnect',
 }
 // ROOT NAVIGATION CONFIG

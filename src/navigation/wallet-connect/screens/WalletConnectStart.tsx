@@ -36,6 +36,7 @@ const DescriptionItemContainer = styled.View`
 
 const DescriptionItem = styled(Paragraph)`
   padding-left: 9px;
+  padding-top: 2px;
   color: ${props => props.theme.colors.text};
 `;
 

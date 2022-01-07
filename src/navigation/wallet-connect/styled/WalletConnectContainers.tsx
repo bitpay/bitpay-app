@@ -2,7 +2,7 @@ import styled from 'styled-components/native';
 
 export const WalletConnectContainer = styled.View`
   flex: 1;
-  padding: 0 16px;
+  padding: 0 16px 15px 16px;
 `;
 
 export const ScrollView = styled.ScrollView`
@@ -39,12 +39,10 @@ export const ItemNoteContainer = styled.View`
   flex-direction: row;
   align-items: center;
   justify-content: flex-end;
-  /* padding-right: 10px; */
 `;
 
 export const ItemNoteTouchableContainer = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   justify-content: flex-end;
-  /* padding-right: 10px; */
 `;

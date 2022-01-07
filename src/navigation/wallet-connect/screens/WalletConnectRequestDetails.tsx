@@ -1,4 +1,5 @@
 import React from 'react';
+import {Platform} from 'react-native';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {Hr} from '../../../components/styled/Containers';
@@ -22,7 +23,9 @@ const AddressContainer = styled.TouchableOpacity`
   height: 37px;
   width: 103px;
   justify-content: flex-start;
-  padding: 0 10px;
+  padding-right: 13px;
+  padding-left: 17px;
+  padding-top: ${Platform.OS === 'ios' ? '4px' : 0};
   flex-direction: row;
   align-items: center;
 `;

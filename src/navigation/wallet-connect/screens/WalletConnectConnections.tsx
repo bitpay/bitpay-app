@@ -91,7 +91,9 @@ const WalletConnectConnections = () => {
         </ConnectionsContainer>
         <ItemTitleTouchableContainer>
           <AddConnection />
-          <Paragraph style={{paddingLeft: 16}}>Add Connection</Paragraph>
+          <Paragraph style={{paddingLeft: 16, paddingBottom: 6}}>
+            Add Connection
+          </Paragraph>
         </ItemTitleTouchableContainer>
       </ScrollView>
     </WalletConnectContainer>
