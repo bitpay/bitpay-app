@@ -45,11 +45,13 @@ export const startImportMnemonic =
       dispatch(
         WalletActions.successCreateWallet({
           key: key,
+          keyMethods: key,
           wallet: {
             id: key.id,
             assets: credentials,
             totalBalance: 0,
             show: true,
+            isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
           },
         }),
       );

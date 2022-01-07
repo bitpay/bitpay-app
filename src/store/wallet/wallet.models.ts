@@ -23,6 +23,7 @@ export interface WalletObj {
   backupComplete?: boolean;
   show?: boolean;
   totalBalance?: number;
+  isPrivKeyEncrypted?: boolean;
 }
 
 export interface Key extends IKey {}
@@ -64,4 +65,25 @@ export interface WalletOptions {
   useLegacyPurpose?: boolean;
   useNativeSegwit?: boolean;
   words?: string;
+}
+
+export interface KeyMethods {
+  _checkCoin: Function;
+  _checkNetwork: Function;
+  checkPassword: Function;
+  compliantDerivation: boolean;
+  createAccess: Function;
+  createCredentials: Function;
+  decrypt: Function;
+  derive: Function;
+  encrypt: Function;
+  fingerPrint: string;
+  id: string;
+  get: Function;
+  getBaseAddressDerivationPath: Function;
+  isPrivKeyEncrypted: Function;
+  sign: Function;
+  toObj: Function;
+  use0forBCH: any;
+  use44forMultisig: any;
 }

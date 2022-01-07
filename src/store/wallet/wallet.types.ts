@@ -1,4 +1,10 @@
-import {ExchangeRate, KeyObj, PriceHistory, WalletObj} from './wallet.models';
+import {
+  ExchangeRate,
+  KeyMethods,
+  KeyObj,
+  PriceHistory,
+  WalletObj,
+} from './wallet.models';
 
 export enum WalletActionTypes {
   SUCCESS_WALLET_STORE_INIT = 'WALLET/SUCCESS_WALLET_STORE_INIT',
@@ -26,6 +32,7 @@ interface successCreateWallet {
   payload: {
     key: KeyObj;
     wallet: WalletObj;
+    keyMethods: KeyMethods;
   };
 }
 

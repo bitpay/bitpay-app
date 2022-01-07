@@ -38,11 +38,13 @@ export const startCreateWallet =
       dispatch(
         WalletActions.successCreateWallet({
           key: key.toObj(),
+          keyMethods: key,
           wallet: {
             id: key.id,
             assets: credentials,
             totalBalance: 0,
             show: true,
+            isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
           },
         }),
       );
