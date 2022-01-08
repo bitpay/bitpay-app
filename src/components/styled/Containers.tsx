@@ -6,7 +6,7 @@ import {BaseText} from './Text';
 export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
 
 export const ScreenGutter = '15px';
-
+export const ActiveOpacity = 0.75;
 // Nav
 export const HeaderRightContainer = styled.View`
   height: 50px;
