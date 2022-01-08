@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {Image, TouchableOpacity} from 'react-native';
+import {Image, ScrollView, TouchableOpacity} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {useNavigation} from '@react-navigation/native';
 import {RootState} from '../../../store';
@@ -28,13 +28,21 @@ import {AdvertisementList} from '../../../components/advertisement/advertisement
 import {OfferItems} from '../../../components/offer/offer';
 import {AppActions} from '../../../store/app';
 import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishModal';
+import ScanSvg from '../../../../assets/img/home/scan.svg';
+import ProfileSvg from '../../../../assets/img/home/profile.svg';
+
+const HeaderContainer = styled.View`
+  flex-direction: row;
+  justify-content: flex-end;
+  margin: 10px ${ScreenGutter};
+`;
+
+const ScanImg = styled.View`
+  margin-right: ${ScreenGutter};
+`;
 
 const HomeContainer = styled.SafeAreaView`
   flex: 1;
-`;
-
-const Home = styled.ScrollView`
-  margin-top: 20px;
 `;
 
 const HomeLink = styled(BaseText)`
@@ -104,8 +112,16 @@ const HomeRoot = () => {
 
   return (
     <HomeContainer>
-      <OnboardingFinishModal />
-      <Home>
+      <ScrollView>
+        <HeaderContainer>
+          <ScanImg>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Scan', {screen: 'Root'})}>
+              <ScanSvg />
+            </TouchableOpacity>
+          </ScanImg>
+          <ProfileSvg />
+        </HeaderContainer>
         {/* ////////////////////////////// PORTFOLIO BALANCE */}
         <PortfolioBalance />
 
@@ -160,7 +176,8 @@ const HomeRoot = () => {
           <Title>Quick Links</Title>
         </SectionHeaderContainer>
         <QuickLinksSlides items={quickLinksItems} />
-      </Home>
+      </ScrollView>
+      <OnboardingFinishModal />
     </HomeContainer>
   );
 };
