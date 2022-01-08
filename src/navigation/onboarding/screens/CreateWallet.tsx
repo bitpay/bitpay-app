@@ -55,7 +55,10 @@ const CreateOrImportWallet = () => {
         <Button
           buttonStyle={'secondary'}
           onPress={() =>
-            navigation.navigate('Onboarding', {screen: 'ImportWallet'})
+            navigation.navigate('Onboarding', {
+              screen: 'ImportWallet',
+              params: {isOnboarding: true},
+            })
           }>
           I already have a wallet
         </Button>

@@ -79,6 +79,7 @@ export const HeaderTitle = styled(BaseText)`
   font-weight: 500;
   line-height: 30px;
   letter-spacing: 0;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 export const HeaderSubtitle = styled(BaseText)`
@@ -97,12 +98,12 @@ export const TextAlign = styled.Text<TextAlignProps>`
     `}
 `;
 
-export const Link = styled(BaseText)<{isDark: boolean}>`
+export const Link = styled(BaseText)`
   font-size: 16px;
   line-height: 25px;
   font-weight: 400;
-  color: ${({isDark}) => (isDark ? White : Action)};
-  text-decoration: ${({isDark}) => (isDark ? 'underline' : 'none')};
+  color: ${({theme: {dark}}) => (dark ? White : Action)};
+  text-decoration: ${({theme: {dark}}) => (dark ? 'underline' : 'none')};
   text-decoration-color: ${White};
 `;
 

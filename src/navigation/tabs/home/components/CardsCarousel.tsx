@@ -112,7 +112,7 @@ const CardsCarousel = () => {
         data={cardsList}
         renderItem={_renderItem}
         sliderWidth={WIDTH}
-        itemWidth={225}
+        itemWidth={235}
         inactiveSlideScale={1}
         inactiveSlideOpacity={1}
         onScrollIndexChanged={() => {
