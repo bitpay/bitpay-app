@@ -19,7 +19,10 @@ import ExchangeRatesSlides, {
 } from '../../../components/exchange-rate/ExchangeRatesSlides';
 import QuickLinksSlides from '../../../components/quick-links/QuickLinksSlides';
 import OffersSlides from '../../../components/offer/OfferSlides';
-import {ScreenGutter} from '../../../components/styled/Containers';
+import {
+  ActiveOpacity,
+  ScreenGutter,
+} from '../../../components/styled/Containers';
 import AdvertisementCard from '../../../components/advertisement/AdvertisementCard';
 import {AdvertisementList} from '../../../components/advertisement/advertisement';
 import {OfferItems} from '../../../components/offer/offer';
@@ -103,10 +106,13 @@ const HomeRoot = () => {
     <HomeContainer>
       <OnboardingFinishModal />
       <Home>
+        {/* ////////////////////////////// PORTFOLIO BALANCE */}
         <PortfolioBalance />
 
+        {/* ////////////////////////////// CARDS CAROUSEL */}
         <SectionHeaderContainer justifyContent={'flex-end'}>
           <TouchableOpacity
+            activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
               navigation.navigate('GeneralSettings', {
@@ -116,41 +122,45 @@ const HomeRoot = () => {
             <HomeLink>Customize</HomeLink>
           </TouchableOpacity>
         </SectionHeaderContainer>
-
         <CardsCarousel />
 
+        {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
         <LinkingButtons receiveCta={() => null} sendCta={() => null} />
 
+        {/* ////////////////////////////// LIMITED TIME OFFERS */}
         <SectionHeaderContainer justifyContent={'space-between'}>
           <Title>Limited Time Offers</Title>
-          <TouchableOpacity onPress={() => console.log('offers')}>
+          <TouchableOpacity
+            activeOpacity={ActiveOpacity}
+            onPress={() => console.log('offers')}>
             <HomeLink> See all</HomeLink>
           </TouchableOpacity>
         </SectionHeaderContainer>
-
         <OffersSlides items={OfferItems} />
 
+        {/* ////////////////////////////// ADVERTISEMENTS */}
         <SectionHeaderContainer>
           <Title>Do More</Title>
         </SectionHeaderContainer>
 
         <AdvertisementCard items={AdvertisementList} />
 
+        {/* ////////////////////////////// EXCHANGE RATES */}
         {exchangeRatesItems.length > 0 && (
           <>
             <SectionHeaderContainer>
               <Title>Exchange Rates</Title>
             </SectionHeaderContainer>
-
             <ExchangeRatesSlides items={exchangeRatesItems} />
           </>
         )}
 
+        {/* ////////////////////////////// QUICK LINKS - Leave feedback etc */}
         <SectionHeaderContainer>
           <Title>Quick Links</Title>
         </SectionHeaderContainer>
-
         <QuickLinksSlides items={quickLinksItems} />
+
       </Home>
     </HomeContainer>
   );
