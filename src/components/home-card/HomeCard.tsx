@@ -4,7 +4,7 @@ import styled from 'styled-components/native';
 import {Midnight, NeutralSlate, SlateDark, White} from '../../styles/colors';
 import Arrow from '../../../assets/img/arrow-right.svg';
 import Haptic from '../haptic-feedback/haptic';
-import {CardGutter, ScreenGutter} from '../styled/Containers';
+import {ActiveOpacity, CardGutter, ScreenGutter} from '../styled/Containers';
 import Card from '../card/Card';
 import {View} from 'react-native';
 import {BaseText} from '../styled/Text';
@@ -17,14 +17,10 @@ interface BodyProps {
   pillText?: string;
 }
 
-interface FooterProps {
-  onCTAPress?: () => void;
-}
-
 interface HomeCardProps {
   header?: ReactNode;
   body: BodyProps;
-  footer: FooterProps;
+  onCTAPress?: () => void;
   backgroundImg?: () => ReactElement;
 }
 
@@ -78,11 +74,11 @@ const FooterArrow = styled.TouchableHighlight`
   justify-content: center;
 `;
 
-const CardContainer = styled.View`
+const CardContainer = styled.TouchableOpacity`
   left: ${ScreenGutter};
 `;
 
-const HomeCard = ({backgroundImg, body, footer, header}: HomeCardProps) => {
+const HomeCard = ({backgroundImg, body, onCTAPress, header}: HomeCardProps) => {
   const HeaderComp = <CardHeader>{header}</CardHeader>;
   const theme = useTheme();
   const {title, value, pillText, description} = body;
@@ -101,9 +97,9 @@ const HomeCard = ({backgroundImg, body, footer, header}: HomeCardProps) => {
   );
 
   const _onPress = () => {
-    if (footer && footer.onCTAPress) {
+    if (onCTAPress) {
       Haptic('impactLight');
-      footer.onCTAPress();
+      onCTAPress();
     }
   };
 
@@ -118,7 +114,7 @@ const HomeCard = ({backgroundImg, body, footer, header}: HomeCardProps) => {
   };
 
   return (
-    <CardContainer>
+    <CardContainer activeOpacity={ActiveOpacity} onPress={_onPress}>
       <Card
         backgroundImg={backgroundImg}
         header={HeaderComp}

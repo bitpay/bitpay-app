@@ -76,13 +76,11 @@ const CurrencyCardComponent = ({wallet, network}: CurrencyCardProps) => {
     <HomeCard
       header={HeaderComponent}
       body={{title: 'My Everything Wallet', value: `$${totalBalance}`}}
-      footer={{
-        onCTAPress: () => {
-          navigation.navigate('Wallet', {
-            screen: 'WalletOverview',
-            params: {wallet},
-          });
-        },
+      onCTAPress={() => {
+        navigation.navigate('Wallet', {
+          screen: 'WalletOverview',
+          params: {wallet},
+        });
       }}
     />
   );

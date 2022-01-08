@@ -9,6 +9,7 @@ import Haptic from '../../../../components/haptic-feedback/haptic';
 import {BaseText} from '../../../../components/styled/Text';
 import {navigationRef} from '../../../../Root';
 import {titleCasing} from '../../../../utils/helper-methods';
+import {ActiveOpacity} from '../../../../components/styled/Containers';
 
 const ButtonsRow = styled.View`
   width: 100%;
@@ -82,6 +83,7 @@ const LinkingButtons = ({receiveCta, sendCta}: Props) => {
       {buttonsList.map(({label, cta, img}: ButtonListProps) => (
         <ButtonContainer key={label}>
           <LinkButton
+            activeOpacity={ActiveOpacity}
             onPress={() => {
               Haptic('impactLight');
               cta();
