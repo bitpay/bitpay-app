@@ -160,7 +160,6 @@ const HomeRoot = () => {
           <Title>Quick Links</Title>
         </SectionHeaderContainer>
         <QuickLinksSlides items={quickLinksItems} />
-
       </Home>
     </HomeContainer>
   );

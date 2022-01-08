@@ -8,6 +8,7 @@ import SwapSvg from '../../../../../assets/img/home/linking-buttons/swap.svg';
 import Haptic from '../../../../components/haptic-feedback/haptic';
 import {BaseText} from '../../../../components/styled/Text';
 import {navigationRef} from '../../../../Root';
+import {titleCasing} from '../../../../utils/helper-methods';
 
 const ButtonsRow = styled.View`
   width: 100%;
@@ -87,7 +88,7 @@ const LinkingButtons = ({receiveCta, sendCta}: Props) => {
             }}>
             {img}
           </LinkButton>
-          <ButtonText>{label.toUpperCase()}</ButtonText>
+          <ButtonText>{titleCasing(label)}</ButtonText>
         </ButtonContainer>
       ))}
     </ButtonsRow>
