@@ -12,11 +12,13 @@ export interface KeyObj {
   xPrivKey: string;
 }
 
-export interface Asset extends API {
+export interface Asset extends AssetObj, API {}
+
+export interface AssetObj {
   id: string;
   assetName: string;
   assetAbbreviation: string;
-  balance: number;
+  balance?: number;
   tokens?: [Token];
 }
 
