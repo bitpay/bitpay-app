@@ -15,9 +15,9 @@ import {WalletActions} from '../../index';
 import {navigationRef} from '../../../../Root';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {BwcProvider} from '../../../../lib/bwc';
+import merge from 'lodash.merge';
 
 const BWC = BwcProvider.getInstance();
-const bwcClient = BWC.getClient();
 
 export const startCreateWallet =
   (assets: Array<SupportedAssets>): Effect =>
@@ -79,6 +79,7 @@ export const startCreateWalletCredentials =
     const tokens: Array<SupportedTokens> = assets.filter(asset =>
       SUPPORTED_TOKENS.includes(asset),
     );
+    const bwcClient = BWC.getClient();
 
     for (const coin of coins) {
       await new Promise<void>(resolve => {
@@ -136,5 +137,13 @@ export const startCreateWalletCredentials =
       }
     }
 
-    return credentials.map(credential => ({...credential, balance: 0}));
+    return credentials.map(credential =>
+      merge(BWC.getClient(JSON.stringify(credential)), {
+        id: credential.walletId,
+        assetName: credential.walletName,
+        assetAbbreviation: credential.coin,
+        balance: 0,
+        tokens: credential.tokens,
+      }),
+    );
   };

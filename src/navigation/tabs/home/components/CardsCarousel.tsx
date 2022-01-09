@@ -65,7 +65,7 @@ const WalletCardComponent = (wallet: WalletObj) => {
 
   const currencyInfo = assets
     .slice(0, ASSET_DISPLAY_LIMIT)
-    .map(asset => asset.coin)
+    .map(asset => asset.assetAbbreviation)
     .map(currency =>
       AssetSelectionOptions.find(
         ({id}: {id: string | number}) => id === currency,
