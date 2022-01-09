@@ -112,7 +112,13 @@ const getStore = () => {
   const middlewares = [
     thunkMiddleware,
     createLogger({
-      predicate: (getState, action) => !['LOG/ADD_LOG'].includes(action.type),
+      predicate: (getState, action) =>
+        ![
+          'LOG/ADD_LOG',
+          'APP/SET_CURRENT_ROUTE',
+          'persist/REHYDRATE',
+          'persist/PERSIST',
+        ].includes(action.type),
     }),
   ];
   let middlewareEnhancers = applyMiddleware(...middlewares);
