@@ -1,18 +1,20 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../../store';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../components/styled/Containers';
-import {SlateDark, White} from '../../../styles/colors';
+import {Caution, SlateDark, White} from '../../../styles/colors';
 import * as yup from 'yup';
 import {Controller, useForm} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
+import {KeyMethods} from '../../../store/wallet/wallet.models';
+import {WalletActions} from '../../../store/wallet/index';
 
 const EncryptPasswordContainer = styled.SafeAreaView`
   flex: 1;
@@ -40,11 +42,19 @@ const PasswordInputContainer = styled.View`
 const PasswordActionContainer = styled.View`
   margin-top: 20px;
 `;
+
+const ErrorText = styled(BaseText)`
+  color: ${Caution};
+  font-size: 12px;
+  font-weight: 500;
+  margin: 5px auto;
+`;
+
 const schema = yup.object().shape({
   password: yup.string().required(),
   confirmPassword: yup
     .string()
-    .required()
+    .required('Confirm Password is required field')
     .oneOf([yup.ref('password')], 'Passwords must match'),
 });
 
@@ -56,9 +66,10 @@ interface EncryptPasswordFieldValues {
 const CreateEncryptPassword = () => {
   const navigation = useNavigation();
   const {
-    params: {keyId},
+    params: {wallet},
   } = useRoute<RouteProp<WalletStackParamList, 'CreateEncryptPassword'>>();
 
+  const {id} = wallet;
   const {
     control,
     handleSubmit,
@@ -66,22 +77,30 @@ const CreateEncryptPassword = () => {
   } = useForm<EncryptPasswordFieldValues>({resolver: yupResolver(schema)});
 
   const theme = useTheme();
-
-  const onSubmit = handleSubmit(({password, confirmPassword}) => {
-    console.log(password);
-    console.log(confirmPassword);
-  });
-  const keyMethods = useSelector(({WALLET}: RootState) =>
-    WALLET.keyMethods.find(key => key.id === keyId),
+  const dispatch = useDispatch();
+  const [genericError, setGenericError] = useState<string>('');
+  const keyMethods: KeyMethods | undefined = useSelector(
+    ({WALLET}: RootState) => WALLET.keyMethods.find(key => key.id === id),
   );
-  console.log('--------------->');
-  console.log(keyMethods);
-  // console.log(fullKey.isPrivKeyEncrypted());
-  // fullKey.encrypt('test');
-  // console.log(fullKey.toObj());
-  // console.log(fullKey.isPrivKeyEncrypted());
-  // fullKey.decrypt('test');
-  // console.log(fullKey.isPrivKeyEncrypted());
+  const onSubmit = async ({password}: {password: string}) => {
+    try {
+      if (keyMethods) {
+        keyMethods.encrypt(password);
+        await dispatch(
+          WalletActions.successEncryptPassword({keyMethods: keyMethods}),
+        );
+        wallet.isPrivKeyEncrypted = keyMethods.isPrivKeyEncrypted();
+        navigation.navigate('Wallet', {
+          screen: 'WalletSettings',
+          params: {wallet: wallet},
+        });
+      } else {
+        setGenericError('Something went wrong. Please try again.');
+      }
+    } catch (e) {
+      setGenericError('Something went wrong. Please try again.');
+    }
+  };
 
   useEffect(() => {
     navigation.setOptions({
@@ -99,6 +118,7 @@ const CreateEncryptPassword = () => {
         </Paragraph>
 
         <PasswordFormContainer>
+          {!!genericError && <ErrorText>{genericError}</ErrorText>}
           <PasswordInputContainer>
             <Controller
               control={control}
@@ -115,7 +135,7 @@ const CreateEncryptPassword = () => {
                 />
               )}
               name="password"
-              default=""
+              defaultValue=""
             />
           </PasswordInputContainer>
 
@@ -135,12 +155,14 @@ const CreateEncryptPassword = () => {
                 />
               )}
               name="confirmPassword"
-              default=""
+              defaultValue=""
             />
           </PasswordInputContainer>
 
           <PasswordActionContainer>
-            <Button onPress={onSubmit}>Save Encrypt Password</Button>
+            <Button onPress={handleSubmit(onSubmit)}>
+              Save Encrypt Password
+            </Button>
           </PasswordActionContainer>
         </PasswordFormContainer>
       </ScrollView>

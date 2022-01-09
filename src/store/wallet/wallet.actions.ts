@@ -58,3 +58,10 @@ export const updateAssetBalance = (payload: {
   type: WalletActionTypes.UPDATE_ASSET_BALANCE,
   payload,
 });
+
+export const successEncryptPassword = (payload: {
+  keyMethods: KeyMethods;
+}): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_ENCRYPT_PASSWORD,
+  payload,
+});

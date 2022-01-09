@@ -105,7 +105,6 @@ const WalletSettings = () => {
   const assetsList = buildAssetList(wallet.assets);
   const [showInfo, setShowInfo] = useState(false);
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
-
   useEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
@@ -178,7 +177,7 @@ const WalletSettings = () => {
                 if (!wallet.isPrivKeyEncrypted) {
                   navigation.navigate('Wallet', {
                     screen: 'CreateEncryptPassword',
-                    params: {keyId: wallet.id},
+                    params: {wallet},
                   });
                 }
               }}

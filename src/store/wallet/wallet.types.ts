@@ -17,6 +17,7 @@ export enum WalletActionTypes {
   SUCCESS_GET_PRICE_HISTORY = 'WALLET/SUCCESS_GET_PRICE_HISTORY',
   FAILED_GET_PRICE_HISTORY = 'WALLET/FAILED_GET_PRICE_HISTORY',
   UPDATE_ASSET_BALANCE = 'WALLET/UPDATE_ASSET_BALANCE',
+  SUCCESS_ENCRYPT_PASSWORD = 'WALLET/SUCCESS_ENCRYPT_PASSWORD',
 }
 
 interface successWalletStoreInit {
@@ -74,6 +75,13 @@ interface updateAssetBalance {
   };
 }
 
+interface successEncryptPassword {
+  type: typeof WalletActionTypes.SUCCESS_ENCRYPT_PASSWORD;
+  payload: {
+    keyMethods: KeyMethods;
+  };
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -84,4 +92,5 @@ export type WalletActionType =
   | failedGetRates
   | successGetPriceHistory
   | failedGetPriceHistory
-  | updateAssetBalance;
+  | updateAssetBalance
+  | successEncryptPassword;

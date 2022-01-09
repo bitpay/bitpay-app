@@ -25,7 +25,7 @@ export type WalletStackParamList = {
   WalletSettings: {wallet: WalletObj};
   AssetDetails: {asset: AssetRowProps};
   AssetSettings: {asset: AssetRowProps};
-  CreateEncryptPassword: {keyId: string};
+  CreateEncryptPassword: {wallet: WalletObj};
 };
 
 export enum WalletScreens {
