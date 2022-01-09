@@ -25,9 +25,9 @@ const bindWalletClient = (
   dispatch: Dispatch,
   wallets: {[key in string]: WalletObj},
 ) => {
-  for (const [id, _wallet] of Object.entries(wallets)) {
+  for (const [id, wallet] of Object.entries(wallets)) {
     try {
-      const assets = _wallet.assets.map(asset =>
+      const assets = wallet.assets.map(asset =>
         merge(BWCProvider.getClient(JSON.stringify(asset.credentials)), {
           ...asset,
         }),
@@ -37,7 +37,7 @@ const bindWalletClient = (
         successBindWalletClient({
           id,
           wallet: {
-            ..._wallet,
+            ...wallet,
             assets,
           },
         }),

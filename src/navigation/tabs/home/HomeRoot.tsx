@@ -64,21 +64,6 @@ const SectionHeaderContainer = styled.View<{justifyContent?: string}>`
   justify-content: ${({justifyContent}) => justifyContent || 'flex-start'};
 `;
 
-// Quick Links
-const quickLinksItems = [
-  {
-    id: '1',
-    title: 'Leave Feedback',
-    description: "Let us know how we're doing",
-    img: (
-      <Image
-        source={require('../../../../assets/img/home/quick-links/icon-chat.png')}
-      />
-    ),
-    onPress: () => {},
-  },
-];
-
 const HomeRoot = () => {
   const dispatch = useDispatch();
   const onboardingCompleted = useSelector(
@@ -109,6 +94,21 @@ const HomeRoot = () => {
       average: +ph.percentChange,
     });
   });
+
+  // Quick Links
+  const quickLinksItems = [
+    {
+      id: '1',
+      title: 'Leave Feedback',
+      description: "Let us know how we're doing",
+      img: (
+        <Image
+          source={require('../../../../assets/img/home/quick-links/icon-chat.png')}
+        />
+      ),
+      onPress: () => {},
+    },
+  ];
 
   return (
     <HomeContainer>
