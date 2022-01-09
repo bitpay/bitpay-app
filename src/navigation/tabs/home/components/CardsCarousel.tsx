@@ -52,14 +52,14 @@ const ICON_SIZE = 25;
 
 const WalletCardComponent = (wallet: WalletObj) => {
   const navigation = useNavigation();
-  const [remainingAssetCount, setremainingAssetCount] = useState<null | number>(
+  const [remainingAssetCount, setRemainingAssetCount] = useState<null | number>(
     null,
   );
   const {assets, totalBalance} = wallet;
 
   useEffect(() => {
     if (assets.length > 4) {
-      setremainingAssetCount(assets.length - 4);
+      setRemainingAssetCount(assets.length - 4);
     }
   }, [assets]);
 
