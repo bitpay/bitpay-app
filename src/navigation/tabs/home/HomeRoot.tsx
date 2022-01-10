@@ -1,7 +1,7 @@
 import React, {useEffect} from 'react';
-import {Image, TouchableOpacity} from 'react-native';
+import {Image, ScrollView, TouchableOpacity} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import {useNavigation, useTheme} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import {RootState} from '../../../store';
 import {PriceHistory} from '../../../store/wallet/wallet.models';
 
@@ -19,32 +19,43 @@ import ExchangeRatesSlides, {
 } from '../../../components/exchange-rate/ExchangeRatesSlides';
 import QuickLinksSlides from '../../../components/quick-links/QuickLinksSlides';
 import OffersSlides from '../../../components/offer/OfferSlides';
-import {ScreenGutter} from '../../../components/styled/Containers';
+import {
+  ActiveOpacity,
+  ScreenGutter,
+} from '../../../components/styled/Containers';
 import AdvertisementCard from '../../../components/advertisement/AdvertisementCard';
 import {AdvertisementList} from '../../../components/advertisement/advertisement';
 import {OfferItems} from '../../../components/offer/offer';
 import {AppActions} from '../../../store/app';
 import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishModal';
+import ScanSvg from '../../../../assets/img/home/scan.svg';
+import ProfileSvg from '../../../../assets/img/home/profile.svg';
+
+const HeaderContainer = styled.View`
+  flex-direction: row;
+  justify-content: flex-end;
+  margin: 10px ${ScreenGutter};
+`;
+
+const ScanImg = styled.View`
+  margin-right: ${ScreenGutter};
+`;
 
 const HomeContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const Home = styled.ScrollView`
-  margin-top: 20px;
-`;
-
-const HomeLink = styled(BaseText)<{isDark: boolean}>`
+const HomeLink = styled(BaseText)`
   font-weight: 500;
   font-size: 14px;
-  color: ${({isDark}) => (isDark ? White : Action)};
-  text-decoration: ${({isDark}) => (isDark ? 'underline' : 'none')};
+  color: ${({theme: {dark}}) => (dark ? White : Action)};
+  text-decoration: ${({theme: {dark}}) => (dark ? 'underline' : 'none')};
   text-decoration-color: ${White};
 `;
 
-const Title = styled(BaseText)<{isDark: boolean}>`
+const Title = styled(BaseText)`
   font-size: 14px;
-  color: ${({isDark}) => (isDark ? White : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
 const SectionHeaderContainer = styled.View<{justifyContent?: string}>`
@@ -65,7 +76,6 @@ const HomeRoot = () => {
     }
   }, []);
 
-  const theme = useTheme();
   const navigation = useNavigation();
 
   // Exchange Rates
@@ -82,7 +92,6 @@ const HomeRoot = () => {
       img: currencyInfo?.roundIcon(20),
       coinName: currencyInfo?.assetName,
       average: +ph.percentChange,
-      theme,
     });
   });
 
@@ -98,63 +107,77 @@ const HomeRoot = () => {
         />
       ),
       onPress: () => {},
-      theme,
     },
   ];
 
   return (
     <HomeContainer>
-      <OnboardingFinishModal />
-      <Home>
+      <ScrollView>
+        <HeaderContainer>
+          <ScanImg>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Scan', {screen: 'Root'})}>
+              <ScanSvg />
+            </TouchableOpacity>
+          </ScanImg>
+          <ProfileSvg />
+        </HeaderContainer>
+        {/* ////////////////////////////// PORTFOLIO BALANCE */}
         <PortfolioBalance />
 
+        {/* ////////////////////////////// CARDS CAROUSEL */}
         <SectionHeaderContainer justifyContent={'flex-end'}>
           <TouchableOpacity
+            activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
               navigation.navigate('GeneralSettings', {
                 screen: 'CustomizeHome',
               });
             }}>
-            <HomeLink isDark={theme.dark}>Customize</HomeLink>
+            <HomeLink>Customize</HomeLink>
           </TouchableOpacity>
         </SectionHeaderContainer>
-
         <CardsCarousel />
 
+        {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
         <LinkingButtons receiveCta={() => null} sendCta={() => null} />
 
+        {/* ////////////////////////////// LIMITED TIME OFFERS */}
         <SectionHeaderContainer justifyContent={'space-between'}>
-          <Title isDark={theme.dark}>Limited Time Offers</Title>
-          <TouchableOpacity onPress={() => console.log('offers')}>
-            <HomeLink isDark={theme.dark}> See all</HomeLink>
+          <Title>Limited Time Offers</Title>
+          <TouchableOpacity
+            activeOpacity={ActiveOpacity}
+            onPress={() => console.log('offers')}>
+            <HomeLink> See all</HomeLink>
           </TouchableOpacity>
         </SectionHeaderContainer>
-
         <OffersSlides items={OfferItems} />
 
+        {/* ////////////////////////////// ADVERTISEMENTS */}
         <SectionHeaderContainer>
-          <Title isDark={theme.dark}>Do More</Title>
+          <Title>Do More</Title>
         </SectionHeaderContainer>
 
         <AdvertisementCard items={AdvertisementList} />
 
+        {/* ////////////////////////////// EXCHANGE RATES */}
         {exchangeRatesItems.length > 0 && (
           <>
             <SectionHeaderContainer>
-              <Title isDark={theme.dark}>Exchange Rates</Title>
+              <Title>Exchange Rates</Title>
             </SectionHeaderContainer>
-
             <ExchangeRatesSlides items={exchangeRatesItems} />
           </>
         )}
 
+        {/* ////////////////////////////// QUICK LINKS - Leave feedback etc */}
         <SectionHeaderContainer>
-          <Title isDark={theme.dark}>Quick Links</Title>
+          <Title>Quick Links</Title>
         </SectionHeaderContainer>
-
         <QuickLinksSlides items={quickLinksItems} />
-      </Home>
+      </ScrollView>
+      <OnboardingFinishModal />
     </HomeContainer>
   );
 };

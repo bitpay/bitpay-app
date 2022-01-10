@@ -6,7 +6,7 @@ import {BaseText} from './Text';
 export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
 
 export const ScreenGutter = '15px';
-
+export const ActiveOpacity = 0.75;
 // Nav
 export const HeaderRightContainer = styled.View`
   height: 50px;
@@ -62,8 +62,8 @@ export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
     `};
 `;
 
-export const Hr = styled.View<{isDark: boolean}>`
-  border-bottom-color: ${({isDark}) => (isDark ? SlateDark : '#ebecee')};
+export const Hr = styled.View`
+  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#ebecee')};
   border-bottom-width: 1px;
 `;
 
@@ -148,14 +148,14 @@ export const SettingView = styled.View`
 `;
 
 // Info
-export const Info = styled.View<{isDark: boolean}>`
-  background-color: ${({isDark}) => (isDark ? SlateDark : '#f8f9fe')};
+export const Info = styled.View`
+  background-color: ${({theme: {dark}}) => (dark ? SlateDark : '#f8f9fe')};
   border-radius: 8px;
   padding: 15px;
   margin-bottom: 15px;
 `;
 
-export const InfoTriangle = styled.View<{isDark: boolean}>`
+export const InfoTriangle = styled.View`
   width: 12px;
   height: 12px;
   position: absolute;
@@ -166,5 +166,5 @@ export const InfoTriangle = styled.View<{isDark: boolean}>`
   border-right-width: 12px;
   border-right-color: transparent;
   border-bottom-width: 12px;
-  border-bottom-color: ${({isDark}) => (isDark ? SlateDark : '#f8f9fe')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#f8f9fe')};
 `;

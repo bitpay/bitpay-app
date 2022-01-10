@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
-import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {StyleProp, TextStyle, View} from 'react-native';
+import {View} from 'react-native';
 import styled from 'styled-components/native';
 import {
   Hr,
@@ -18,7 +18,6 @@ import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
 
 import {SlateDark, White} from '../../../styles/colors';
-import Checkbox from '../../../components/checkbox/Checkbox';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 
 const AssetSettingsContainer = styled.SafeAreaView`
@@ -34,6 +33,7 @@ const Title = styled(BaseText)`
   font-weight: bold;
   font-size: 18px;
   margin: 5px 0;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 const WalletNameContainer = styled.TouchableOpacity`
@@ -43,33 +43,29 @@ const WalletNameContainer = styled.TouchableOpacity`
   justify-content: space-between;
 `;
 
-const InfoDescription = styled(BaseText)<{isDark: boolean}>`
+const InfoDescription = styled(BaseText)`
   font-size: 16px;
-  color: ${({isDark}) => (isDark ? White : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
 `;
 
-const AssetSettingsTitle = styled(SettingTitle)<{isDark: boolean}>`
-  color: ${({isDark}) => (isDark ? White : SlateDark)};
+const AssetSettingsTitle = styled(SettingTitle)`
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
 const AssetSettings = () => {
   const {
     params: {asset},
   } = useRoute<RouteProp<WalletStackParamList, 'AssetSettings'>>();
-  const theme = useTheme();
   const navigation = useNavigation();
   const [demoToggle, setDemoToggle] = useState(false);
-  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
 
   useEffect(() => {
     navigation.setOptions({
-      headerTitle: () => (
-        <HeaderTitle style={textStyle}>Asset Settings</HeaderTitle>
-      ),
+      headerTitle: () => <HeaderTitle>Asset Settings</HeaderTitle>,
     });
   }, [navigation]);
 
@@ -84,21 +80,17 @@ const AssetSettings = () => {
             //    TODO: Redirect me
           }}>
           <View>
-            <Title style={textStyle}>Name</Title>
-            <AssetSettingsTitle isDark={theme.dark}>
-              {assetName}
-            </AssetSettingsTitle>
+            <Title>Name</Title>
+            <AssetSettingsTitle>{assetName}</AssetSettingsTitle>
           </View>
 
           <ChevronRightSvg height={16} />
         </WalletNameContainer>
 
-        <Hr isDark={theme.dark} />
+        <Hr />
 
         <SettingView>
-          <AssetSettingsTitle isDark={theme.dark}>
-            Hide Asset
-          </AssetSettingsTitle>
+          <AssetSettingsTitle>Hide Asset</AssetSettingsTitle>
 
           <ToggleSwitch
             onChange={value => {
@@ -109,18 +101,16 @@ const AssetSettings = () => {
             isEnabled={demoToggle}
           />
         </SettingView>
-        <Info isDark={theme.dark}>
-          <InfoTriangle isDark={theme.dark} />
-          <InfoDescription isDark={theme.dark}>
+        <Info>
+          <InfoTriangle />
+          <InfoDescription>
             The asset won’t be removed from this device. You can hide it
             whenever you need.
           </InfoDescription>
         </Info>
 
         <SettingView>
-          <AssetSettingsTitle isDark={theme.dark}>
-            Hide Balance
-          </AssetSettingsTitle>
+          <AssetSettingsTitle>Hide Balance</AssetSettingsTitle>
 
           <ToggleSwitch
             onChange={value => {
@@ -131,23 +121,21 @@ const AssetSettings = () => {
           />
         </SettingView>
 
-        <Hr isDark={theme.dark} />
+        <Hr />
 
         <VerticalPadding>
-          <Title style={textStyle}>Security</Title>
+          <Title>Security</Title>
           <Setting
             onPress={() => {
               haptic('impactLight');
               //    TODO: Redirect me
             }}>
-            <AssetSettingsTitle isDark={theme.dark}>Backup</AssetSettingsTitle>
+            <AssetSettingsTitle>Backup</AssetSettingsTitle>
           </Setting>
-          <Hr isDark={theme.dark} />
+          <Hr />
 
           <SettingView>
-            <AssetSettingsTitle isDark={theme.dark}>
-              Request Encrypt Password
-            </AssetSettingsTitle>
+            <AssetSettingsTitle>Request Encrypt Password</AssetSettingsTitle>
             <ToggleSwitch
               onChange={value => {
                 haptic('impactLight');
@@ -157,50 +145,44 @@ const AssetSettings = () => {
             />
           </SettingView>
 
-          <Hr isDark={theme.dark} />
+          <Hr />
         </VerticalPadding>
 
         <VerticalPadding>
-          <Title style={textStyle}>Advanced</Title>
+          <Title>Advanced</Title>
           <Setting
             onPress={() => {
               haptic('impactLight');
               //    TODO: Redirect me
             }}>
-            <AssetSettingsTitle isDark={theme.dark}>
-              Information
-            </AssetSettingsTitle>
+            <AssetSettingsTitle>Information</AssetSettingsTitle>
           </Setting>
-          <Hr isDark={theme.dark} />
+          <Hr />
 
           <Setting
             onPress={() => {
               haptic('impactLight');
               //    TODO: Redirect me
             }}>
-            <AssetSettingsTitle isDark={theme.dark}>
-              Addresses
-            </AssetSettingsTitle>
+            <AssetSettingsTitle>Addresses</AssetSettingsTitle>
           </Setting>
-          <Hr isDark={theme.dark} />
+          <Hr />
 
           <Setting
             onPress={() => {
               haptic('impactLight');
               //    TODO: Redirect me
             }}>
-            <AssetSettingsTitle isDark={theme.dark}>
-              Export Wallet
-            </AssetSettingsTitle>
+            <AssetSettingsTitle>Export Wallet</AssetSettingsTitle>
           </Setting>
-          <Hr isDark={theme.dark} />
+          <Hr />
 
           <Setting
             onPress={() => {
               haptic('impactLight');
               //    TODO: Redirect me
             }}>
-            <AssetSettingsTitle isDark={theme.dark}>Delete</AssetSettingsTitle>
+            <AssetSettingsTitle>Delete</AssetSettingsTitle>
           </Setting>
         </VerticalPadding>
       </ScrollView>

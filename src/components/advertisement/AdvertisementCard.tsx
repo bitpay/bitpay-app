@@ -4,8 +4,6 @@ import haptic from '../haptic-feedback/haptic';
 import {LightBlack, NeutralSlate, SlateDark, White} from '../../styles/colors';
 import {BaseText} from '../styled/Text';
 import {ScreenGutter} from '../styled/Containers';
-import {useTheme} from '@react-navigation/native';
-import {StyleProp, TextStyle} from 'react-native';
 
 export interface AdvertisementProps {
   id: string;
@@ -15,10 +13,10 @@ export interface AdvertisementProps {
   onPress: () => void;
 }
 
-const AdvertisementCardContainer = styled.TouchableOpacity<{isDark: boolean}>`
+const AdvertisementCardContainer = styled.TouchableOpacity`
   flex-direction: column;
   justify-content: center;
-  background-color: ${({isDark}) => (isDark ? LightBlack : NeutralSlate)};
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   border-radius: 12px;
   padding: 20px 100px 20px 20px;
   position: relative;
@@ -32,12 +30,13 @@ const AdvertisementCardTitle = styled(BaseText)`
   font-size: 16px;
   line-height: 23px;
   margin-bottom: 5px;
+  color: ${({theme}) => theme.colors.text};
 `;
 
-const AdvertisementCardText = styled(BaseText)<{isDark: boolean}>`
+const AdvertisementCardText = styled(BaseText)`
   font-size: 14px;
   line-height: 21px;
-  color: ${({isDark}) => (isDark ? White : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
 const AdvertisementCardImg = styled.View`
@@ -47,8 +46,6 @@ const AdvertisementCardImg = styled.View`
 `;
 
 const AdvertisementCard = ({items}: {items: AdvertisementProps[]}) => {
-  const theme = useTheme();
-  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
   const _onPress = (item: AdvertisementProps) => {
     console.log(`Service option clicked: ${item.title}`);
     haptic('impactLight');
@@ -61,15 +58,10 @@ const AdvertisementCard = ({items}: {items: AdvertisementProps[]}) => {
         items.map(item => (
           <AdvertisementCardContainer
             key={item.id}
-            isDark={theme.dark}
             onPress={() => _onPress(item)}>
-            <AdvertisementCardTitle style={textStyle}>
-              {item.title}
-            </AdvertisementCardTitle>
+            <AdvertisementCardTitle>{item.title}</AdvertisementCardTitle>
 
-            <AdvertisementCardText isDark={theme.dark}>
-              {item.text}
-            </AdvertisementCardText>
+            <AdvertisementCardText>{item.text}</AdvertisementCardText>
             <AdvertisementCardImg>{item.img}</AdvertisementCardImg>
           </AdvertisementCardContainer>
         ))}

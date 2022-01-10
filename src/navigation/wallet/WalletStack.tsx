@@ -9,11 +9,13 @@ import RecoveryPhrase, {RecoveryPhraseProps} from './screens/RecoveryPhrase';
 import VerifyPhrase, {VerifyPhraseProps} from './screens/VerifyPhrase';
 import SelectAssets from './screens/SelectAssets';
 import WalletOverview from './screens/WalletOverview';
-import {Asset, WalletObj} from '../../store/wallet/wallet.models';
+import {WalletObj} from '../../store/wallet/wallet.models';
 import WalletSettings from './screens/WalletSettings';
 import AssetDetails from './screens/AssetDetails';
 import {AssetRowProps} from '../../components/list/AssetRow';
 import AssetSettings from './screens/AssetSettings';
+import ImportWallet, {ImportWalletProps} from './screens/ImportWallet';
+import SelectWalletType from './screens/SelectWalletType';
 import CreateEncryptPassword from './screens/CreateEncryptPassword';
 
 export type WalletStackParamList = {
@@ -25,6 +27,8 @@ export type WalletStackParamList = {
   WalletSettings: {wallet: WalletObj};
   AssetDetails: {asset: AssetRowProps};
   AssetSettings: {asset: AssetRowProps};
+  SelectWalletType: undefined;
+  ImportWallet: ImportWalletProps;
   CreateEncryptPassword: {wallet: WalletObj};
 };
 
@@ -37,6 +41,8 @@ export enum WalletScreens {
   WALLET_SETTINGS = 'WalletSettings',
   ASSET_DETAILS = 'AssetDetails',
   ASSET_SETTINGS = 'AssetSettings',
+  SELECT_WALLET_TYPE = 'SelectWalletType',
+  IMPORT_WALLET = 'ImportWallet',
   CREATE_ENCRYPT_PASSWORD = 'CreateEncryptPassword',
 }
 
@@ -94,6 +100,14 @@ const WalletStack = () => {
         <Wallet.Screen
           name={WalletScreens.ASSET_SETTINGS}
           component={AssetSettings}
+        />
+        <Wallet.Screen
+          name={WalletScreens.IMPORT_WALLET}
+          component={ImportWallet}
+        />
+        <Wallet.Screen
+          name={WalletScreens.SELECT_WALLET_TYPE}
+          component={SelectWalletType}
         />
         <Wallet.Screen
           name={WalletScreens.CREATE_ENCRYPT_PASSWORD}

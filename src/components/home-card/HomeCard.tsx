@@ -4,9 +4,9 @@ import styled from 'styled-components/native';
 import {Midnight, NeutralSlate, SlateDark, White} from '../../styles/colors';
 import Arrow from '../../../assets/img/arrow-right.svg';
 import Haptic from '../haptic-feedback/haptic';
-import {CardGutter, ScreenGutter} from '../styled/Containers';
+import {ActiveOpacity, CardGutter, ScreenGutter} from '../styled/Containers';
 import Card from '../card/Card';
-import {StyleProp, TextStyle, View} from 'react-native';
+import {View} from 'react-native';
 import {BaseText} from '../styled/Text';
 import {useTheme} from '@react-navigation/native';
 
@@ -17,14 +17,10 @@ interface BodyProps {
   pillText?: string;
 }
 
-interface FooterProps {
-  onCTAPress?: () => void;
-}
-
 interface HomeCardProps {
   header?: ReactNode;
   body: BodyProps;
-  footer: FooterProps;
+  onCTAPress?: () => void;
   backgroundImg?: () => ReactElement;
 }
 
@@ -32,18 +28,18 @@ const CardHeader = styled.View`
   min-height: 30px;
 `;
 
-const CardBodyHeader = styled(BaseText)<{isDarkMode: boolean}>`
+const CardBodyHeader = styled(BaseText)`
   font-size: 14px;
   line-height: 21px;
-  color: ${({isDarkMode}) => (isDarkMode ? White : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   margin-top: ${CardGutter};
 `;
 
-const CardBodyDesc = styled(BaseText)<{isDarkMode: boolean}>`
+const CardBodyDesc = styled(BaseText)`
   font-weight: 500;
   font-size: 18px;
   line-height: 25px;
-  color: ${({isDarkMode}) => (isDarkMode ? White : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   margin-top: ${CardGutter};
 `;
 
@@ -51,6 +47,7 @@ const CardPrice = styled(BaseText)`
   font-size: 31px;
   line-height: 46px;
   font-weight: bold;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 const CardPill = styled.View`
@@ -77,37 +74,32 @@ const FooterArrow = styled.TouchableHighlight`
   justify-content: center;
 `;
 
-const CardContainer = styled.View`
+const CardContainer = styled.TouchableOpacity`
   left: ${ScreenGutter};
 `;
 
-const HomeCard = ({backgroundImg, body, footer, header}: HomeCardProps) => {
+const HomeCard = ({backgroundImg, body, onCTAPress, header}: HomeCardProps) => {
   const HeaderComp = <CardHeader>{header}</CardHeader>;
   const theme = useTheme();
-  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
   const {title, value, pillText, description} = body;
 
   const BodyComp = (
     <View>
-      {title && (
-        <CardBodyHeader isDarkMode={theme.dark}>{title}</CardBodyHeader>
-      )}
-      {value && <CardPrice style={textStyle}>{value}</CardPrice>}
+      {title && <CardBodyHeader>{title}</CardBodyHeader>}
+      {value && <CardPrice>{value}</CardPrice>}
       {pillText && (
         <CardPill>
           <CardPillText>{pillText}</CardPillText>
         </CardPill>
       )}
-      {description && (
-        <CardBodyDesc isDarkMode={theme.dark}>{description}</CardBodyDesc>
-      )}
+      {description && <CardBodyDesc>{description}</CardBodyDesc>}
     </View>
   );
 
   const _onPress = () => {
-    if (footer && footer.onCTAPress) {
+    if (onCTAPress) {
       Haptic('impactLight');
-      footer.onCTAPress();
+      onCTAPress();
     }
   };
 
@@ -122,7 +114,7 @@ const HomeCard = ({backgroundImg, body, footer, header}: HomeCardProps) => {
   };
 
   return (
-    <CardContainer>
+    <CardContainer activeOpacity={ActiveOpacity} onPress={_onPress}>
       <Card
         backgroundImg={backgroundImg}
         header={HeaderComp}

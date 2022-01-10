@@ -1,4 +1,4 @@
-import React, {ReactNode} from 'react';
+import React, {ReactNode, useEffect, useState} from 'react';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import Carousel from 'react-native-snap-carousel';
@@ -11,7 +11,8 @@ import HomeCard from '../../../../components/home-card/HomeCard';
 import {AssetSelectionOptions} from '../../../../constants/AssetSelectionOptions';
 import {useNavigation} from '@react-navigation/native';
 import {WalletObj} from '../../../../store/wallet/wallet.models';
-import {Network} from '../../../../constants';
+import {BaseText} from '../../../../components/styled/Text';
+import {Slate} from '../../../../styles/colors';
 
 const HeaderImg = styled.View`
   align-items: center;
@@ -32,28 +33,44 @@ const CarouselContainer = styled.View`
   margin: 10px 0 10px;
 `;
 
+const RemainingAssetsLabel = styled(BaseText)`
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0;
+  color: ${Slate};
+  margin-left: 5px;
+`;
+
 const _renderItem = ({item}: {item: ReactNode}) => {
   return <>{item}</>;
 };
 
-interface CurrencyCardProps {
-  wallet: WalletObj;
-  network: Network;
-}
+const ASSET_DISPLAY_LIMIT = 4;
+const ICON_SIZE = 25;
 
-const CurrencyCardComponent = ({wallet, network}: CurrencyCardProps) => {
+const WalletCardComponent = (wallet: WalletObj) => {
   const navigation = useNavigation();
-
+  const [remainingAssetCount, setremainingAssetCount] = useState<null | number>(
+    null,
+  );
   const {assets, totalBalance} = wallet;
+
+  useEffect(() => {
+    if (assets.length > 4) {
+      setremainingAssetCount(assets.length - 4);
+    }
+  }, [assets]);
+
   const currencyInfo = assets
+    .slice(0, ASSET_DISPLAY_LIMIT)
     .map(asset => asset.coin)
     .map(currency =>
       AssetSelectionOptions.find(
         ({id}: {id: string | number}) => id === currency,
       ),
     );
-
-  const iconSize = currencyInfo.length > 7 ? 20 : 30;
 
   const HeaderComponent = (
     <HeaderImg>
@@ -64,11 +81,16 @@ const CurrencyCardComponent = ({wallet, network}: CurrencyCardProps) => {
               <Img
                 key={index}
                 isFirst={index === 0 || index % 11 === 0}
-                size={iconSize + 'px'}>
-                {currency.roundIcon(iconSize)}
+                size={ICON_SIZE + 'px'}>
+                {currency.roundIcon(ICON_SIZE)}
               </Img>
             ),
         )}
+      {remainingAssetCount && (
+        <RemainingAssetsLabel>
+          + {remainingAssetCount} more
+        </RemainingAssetsLabel>
+      )}
     </HeaderImg>
   );
 
@@ -76,13 +98,11 @@ const CurrencyCardComponent = ({wallet, network}: CurrencyCardProps) => {
     <HomeCard
       header={HeaderComponent}
       body={{title: 'My Everything Wallet', value: `$${totalBalance}`}}
-      footer={{
-        onCTAPress: () => {
-          navigation.navigate('Wallet', {
-            screen: 'WalletOverview',
-            params: {wallet},
-          });
-        },
+      onCTAPress={() => {
+        navigation.navigate('Wallet', {
+          screen: 'WalletOverview',
+          params: {wallet},
+        });
       }}
     />
   );
@@ -91,12 +111,11 @@ const CurrencyCardComponent = ({wallet, network}: CurrencyCardProps) => {
 const CardsCarousel = () => {
   const cardsList: ReactNode[] = [];
   const wallets = useSelector(({WALLET}: RootState) => WALLET.wallets);
-  const network = useSelector(({APP}: RootState) => APP.network);
 
   if (wallets) {
     Object.values(wallets).forEach((wallet: WalletObj) => {
       if (wallet.show) {
-        cardsList.push(CurrencyCardComponent({wallet, network}));
+        cardsList.push(WalletCardComponent(wallet));
       }
     });
 
@@ -112,7 +131,7 @@ const CardsCarousel = () => {
         data={cardsList}
         renderItem={_renderItem}
         sliderWidth={WIDTH}
-        itemWidth={225}
+        itemWidth={235}
         inactiveSlideScale={1}
         inactiveSlideOpacity={1}
         onScrollIndexChanged={() => {

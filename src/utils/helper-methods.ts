@@ -12,3 +12,6 @@ export const coinSupported = (coin: string): boolean => {
 export const formatFiatBalance = (balance = 0) => {
   return `$${balance.toFixed(2)}`;
 };
+
+export const titleCasing = (str: string) =>
+  `${str.charAt(0).toUpperCase()}${str.slice(1)}`;

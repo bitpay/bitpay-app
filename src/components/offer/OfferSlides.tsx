@@ -32,7 +32,7 @@ const OffersSlides = ({items}: OfferSlide) => {
         data={items}
         renderItem={ExchangeRateCard}
         sliderWidth={WIDTH}
-        itemWidth={270}
+        itemWidth={280}
         inactiveSlideScale={1}
         inactiveSlideOpacity={1}
         onScrollIndexChanged={() => {
