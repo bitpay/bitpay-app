@@ -15,6 +15,7 @@ import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
 import {KeyMethods} from '../../../store/wallet/wallet.models';
 import {WalletActions} from '../../../store/wallet/index';
+import {useLogger} from "../../../utils/hooks";
 
 const EncryptPasswordContainer = styled.SafeAreaView`
   flex: 1;
@@ -82,9 +83,13 @@ const CreateEncryptPassword = () => {
   const keyMethods: KeyMethods | undefined = useSelector(
     ({WALLET}: RootState) => WALLET.keyMethods.find(key => key.id === id),
   );
+  const logger = useLogger();
   const onSubmit = async ({password}: {password: string}) => {
     try {
       if (keyMethods) {
+        // TODO: Update wallet name
+        logger.debug(`Encrypting private key for: Wallet 1`);
+
         keyMethods.encrypt(password);
         await dispatch(
           WalletActions.successEncryptPassword({keyMethods: keyMethods}),
@@ -94,11 +99,13 @@ const CreateEncryptPassword = () => {
           screen: 'WalletSettings',
           params: {wallet: wallet},
         });
+        logger.debug('Key encrypted');
       } else {
         setGenericError('Something went wrong. Please try again.');
       }
     } catch (e) {
-      setGenericError('Something went wrong. Please try again.');
+      if(!e) return;
+      setGenericError(`Could not encrypt/decrypt group wallets: ${e}`);
     }
   };
 
