@@ -90,7 +90,6 @@ const AssetDetails = () => {
     },
   ];
 
-  console.log(asset);
   const {cryptoBalance, fiatBalance, assetAbbreviation} = asset;
   return (
     <AssetDetailsContainer>

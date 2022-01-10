@@ -11,6 +11,8 @@ export enum WalletActionTypes {
   FAILED_WALLET_STORE_INIT = 'WALLET/FAILED_WALLET_STORE_INIT',
   SUCCESS_CREATE_WALLET = 'WALLET/SUCCESS_CREATE_WALLET',
   FAILED_CREATE_WALLET = 'WALLET/FAILED_CREATE_WALLET',
+  SUCCESS_BIND_WALLET_CLIENT = 'WALLET/SUCCESS_BIND_WALLET_CLIENT',
+  FAILED_BIND_WALLET_CLIENT = 'WALLET/FAILED_BIND_WALLET_CLIENT',
   SET_BACKUP_COMPLETE = 'WALLET/SET_BACKUP_COMPLETE',
   SUCCESS_GET_RATES = 'WALLET/SUCCESS_GET_RATES',
   FAILED_GET_RATES = 'WALLET/FAILED_GET_RATES',
@@ -39,6 +41,18 @@ interface successCreateWallet {
 
 interface failedCreateWallet {
   type: typeof WalletActionTypes.FAILED_CREATE_WALLET;
+}
+
+interface successBindWalletClient {
+  type: typeof WalletActionTypes.SUCCESS_BIND_WALLET_CLIENT;
+  payload: {
+    id: string;
+    wallet: WalletObj;
+  };
+}
+
+interface failedBindWalletClient {
+  type: typeof WalletActionTypes.FAILED_BIND_WALLET_CLIENT;
 }
 
 interface setBackupComplete {
@@ -87,6 +101,8 @@ export type WalletActionType =
   | failedWalletStoreInit
   | successCreateWallet
   | failedCreateWallet
+  | successBindWalletClient
+  | failedBindWalletClient
   | setBackupComplete
   | successGetRates
   | failedGetRates
