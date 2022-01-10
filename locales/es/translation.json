@@ -1,15 +1,15 @@
 {
-  "About BitPay": "About BitPay",
-  "Contacts": "Contacts",
+  "About BitPay": "Acerca de BitPay",
+  "Contacts": "Contactos",
   "General": "General",
-  "Theme": "Theme",
-  "Customize Home": "Customize Home",
-  "Language": "Language",
-  "Notifications": "Notifications",
-  "Security": "Security",
-  "Help & Support": "Help & Support",
-  "Terms of Use": "Terms of Use",
-  "Privacy": "Privacy",
-  "Accessibility Statement": "Accessibility Statement",
-  "Settings": "Settings"
+  "Theme": "Apariencia",
+  "Customize Home": "Personalizar Inicio",
+  "Language": "Idioma",
+  "Notifications": "Notificationes",
+  "Security": "Seguridad",
+  "Help & Support": "Ayuda & Soporte",
+  "Terms of Use": "Términos de Uso",
+  "Privacy": "Privacidad",
+  "Accessibility Statement": "Declaración de Accesibilidad",
+  "Settings": "Ajustes"
 }
