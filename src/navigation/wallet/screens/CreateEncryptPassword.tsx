@@ -16,12 +16,13 @@ import Button from '../../../components/button/Button';
 import {KeyMethods} from '../../../store/wallet/wallet.models';
 import {WalletActions} from '../../../store/wallet/index';
 import {useLogger} from '../../../utils/hooks';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 const EncryptPasswordContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const ScrollView = styled.ScrollView`
+const ScrollView = styled(KeyboardAwareScrollView)`
   margin-top: 20px;
   padding: 0 ${ScreenGutter};
 `;

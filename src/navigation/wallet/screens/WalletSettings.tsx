@@ -170,7 +170,7 @@ const WalletSettings = () => {
                     params: {wallet},
                   });
                 } else {
-                //  TODO: Decrypt Password
+                  //  TODO: Decrypt Password
                 }
               }}
               isEnabled={!!wallet.isPrivKeyEncrypted}
