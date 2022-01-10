@@ -15,7 +15,7 @@ import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
 import {KeyMethods} from '../../../store/wallet/wallet.models';
 import {WalletActions} from '../../../store/wallet/index';
-import {useLogger} from "../../../utils/hooks";
+import {useLogger} from '../../../utils/hooks';
 
 const EncryptPasswordContainer = styled.SafeAreaView`
   flex: 1;
@@ -74,8 +74,11 @@ const CreateEncryptPassword = () => {
   const {
     control,
     handleSubmit,
-    formState: {errors},
-  } = useForm<EncryptPasswordFieldValues>({resolver: yupResolver(schema)});
+    formState: {errors, isValid},
+  } = useForm<EncryptPasswordFieldValues>({
+    resolver: yupResolver(schema),
+    mode: 'onTouched',
+  });
 
   const theme = useTheme();
   const dispatch = useDispatch();
@@ -88,7 +91,7 @@ const CreateEncryptPassword = () => {
     try {
       if (keyMethods) {
         // TODO: Update wallet name
-        logger.debug(`Encrypting private key for: Wallet 1`);
+        logger.debug('Encrypting private key for: Wallet 1');
 
         keyMethods.encrypt(password);
         await dispatch(
@@ -104,7 +107,9 @@ const CreateEncryptPassword = () => {
         setGenericError('Something went wrong. Please try again.');
       }
     } catch (e) {
-      if(!e) return;
+      if (!e) {
+        return;
+      }
       setGenericError(`Could not encrypt/decrypt group wallets: ${e}`);
     }
   };
@@ -167,7 +172,7 @@ const CreateEncryptPassword = () => {
           </PasswordInputContainer>
 
           <PasswordActionContainer>
-            <Button onPress={handleSubmit(onSubmit)}>
+            <Button onPress={handleSubmit(onSubmit)} disabled={!isValid}>
               Save Encrypt Password
             </Button>
           </PasswordActionContainer>

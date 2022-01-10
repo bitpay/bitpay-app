@@ -118,7 +118,7 @@ export const walletReducer = (
       return {
         ...state,
         keys: state.keys.map(ko =>
-          ko.id === keyToUpdate.id ? keyToUpdate.toObj() : ko,
+          ko.id === keyToUpdate.id ? {...ko, ...keyToUpdate.toObj()} : ko,
         ),
         wallets: {...state.wallets, [keyToUpdate.id]: walletCopy},
       };

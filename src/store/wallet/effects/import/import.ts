@@ -44,7 +44,7 @@ export const startImportMnemonic =
 
       dispatch(
         WalletActions.successCreateWallet({
-          key: key,
+          key: key.toObj(),
           keyMethods: key,
           wallet: {
             id: key.id,
