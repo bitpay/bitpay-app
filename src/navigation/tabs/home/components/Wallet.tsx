@@ -51,7 +51,10 @@ const WalletCardComponent = ({
       ),
     );
 
-  const remainingAssetCount = assets.length > 4 ? assets.length - 4 : undefined;
+  const remainingAssetCount =
+    assets.length > ASSET_DISPLAY_LIMIT
+      ? assets.length - ASSET_DISPLAY_LIMIT
+      : undefined;
 
   const HeaderComponent = (
     <HeaderImg>

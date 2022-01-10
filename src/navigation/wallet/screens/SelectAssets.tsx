@@ -129,7 +129,7 @@ const SelectAssets = () => {
           onPress={createWallet}
           buttonStyle={'primary'}
           disabled={!selectedAssets.length}>
-          Create a Wallet
+          Create Wallet
         </Button>
       </CtaContainerAbsolute>
     </AssetSelectionContainer>

@@ -16,6 +16,7 @@ import {AssetRowProps} from '../../components/list/AssetRow';
 import AssetSettings from './screens/AssetSettings';
 import ImportWallet, {ImportWalletProps} from './screens/ImportWallet';
 import SelectWalletType from './screens/SelectWalletType';
+import {HeaderTitle} from '../../components/styled/Text';
 
 export type WalletStackParamList = {
   SelectAssets: undefined;
@@ -53,6 +54,8 @@ const WalletStack = () => {
         initialRouteName={WalletScreens.BACKUP_WALLET}>
         <Wallet.Screen
           options={{
+            headerTitle: () => <HeaderTitle>Select Assets</HeaderTitle>,
+            headerTitleAlign: 'center',
             gestureEnabled: false,
           }}
           name={WalletScreens.SELECT_ASSETS}
