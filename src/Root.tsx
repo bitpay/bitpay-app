@@ -20,6 +20,7 @@ import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 import {LogActions} from './store/log';
 import {useDeeplinks} from './utils/hooks';
 import analytics from '@segment/analytics-react-native';
+import i18n from 'i18next';
 
 import BitpayIdStack, {
   BitpayIdStackParamList,
@@ -133,11 +134,18 @@ export default () => {
   );
   const appColorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
   const currentRoute = useSelector(({APP}: RootState) => APP.currentRoute);
+  const appLanguage = useSelector(({APP}: RootState) => APP.defaultLanguage);
+
+  // LANGUAGE
+  if (appLanguage && appLanguage !== i18n.language) {
+    i18n.changeLanguage(appLanguage);
+  }
 
   // MAIN APP INIT
   useEffect(() => {
     dispatch(AppEffects.startAppInit());
-  }, [dispatch]);
+    dispatch(AppActions.setDefaultLanguage(appLanguage));
+  }, [dispatch, appLanguage]);
 
   // THEME
   useEffect(() => {

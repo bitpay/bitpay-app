@@ -7,6 +7,7 @@ import {useDispatch} from 'react-redux';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {Hr, Setting, SettingTitle} from '../../../components/styled/Containers';
 import {useTheme} from '@react-navigation/native';
+import {useTranslation} from 'react-i18next';
 
 interface HomeSetting {
   title: string;
@@ -28,49 +29,50 @@ export const Settings = styled.ScrollView`
 `;
 
 const SettingsHomeScreen: React.FC = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const theme = useTheme();
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
   const SETTINGS: HomeSetting[] = [
     {
-      title: 'General',
+      title: t('General'),
       onPress: () => navigation.navigate('GeneralSettings', {screen: 'Root'}),
     },
     {
-      title: 'Security',
+      title: t('Security'),
       onPress: () => navigation.navigate('SecuritySettings', {screen: 'Root'}),
     },
     {
-      title: 'Contacts',
+      title: t('Contacts'),
       onPress: () => navigation.navigate('ContactSettings', {screen: 'Root'}),
     },
     {
-      title: 'Notifications',
+      title: t('Notifications'),
       onPress: () =>
         navigation.navigate('NotificationSettings', {screen: 'Root'}),
     },
     {
-      title: 'About BitPay',
+      title: t('About BitPay'),
       onPress: () => navigation.navigate('About', {screen: 'Root'}),
     },
   ];
 
   const LINKS: LinkSetting[] = [
     {
-      title: 'Help & Support',
+      title: t('Help & Support'),
       link: 'https://support.bitpay.com/hc/en-us',
     },
     {
-      title: 'Terms of Use',
+      title: t('Terms of Use'),
       link: 'https://bitpay.com/legal/terms-of-use/#wallet-terms-of-use',
     },
     {
-      title: 'Privacy',
+      title: t('Privacy'),
       link: 'https://bitpay.com/about/privacy',
     },
     {
-      title: 'Accessibility Statement',
+      title: t('Accessibility Statement'),
       link: 'https://bitpay.com/legal/accessibility/',
     },
   ];
