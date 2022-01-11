@@ -3,7 +3,7 @@ import {BaseText, HeaderTitle, Link} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {View, TouchableOpacity} from 'react-native';
+import {View, TouchableOpacity, FlatList} from 'react-native';
 import styled from 'styled-components/native';
 import {
   Hr,
@@ -32,7 +32,7 @@ import DecryptEnterPasswordModal from '../components/DecryptEnterPasswordModal';
 import {RootState} from '../../../store';
 import {useLogger} from '../../../utils/hooks';
 import {WalletActions} from '../../../store/wallet';
-import {showBottomNotificationModal} from "../../../store/app/app.actions";
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -90,6 +90,10 @@ const WalletSettingsTitle = styled(SettingTitle)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
+const List = styled(BaseText)`
+  margin: 0 0 5px 10px;
+`;
+
 const buildAssetList = (assets: Asset[]) => {
   const assetList = [] as Array<AssetSettingsRowProps>;
   assets.forEach(({id, assetName, assetAbbreviation}) => {
@@ -109,48 +113,108 @@ const WalletSettings = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const assetsList = buildAssetList(wallet.assets);
+  const logger = useLogger();
 
-  const [passwordToggle, setPasswordToggle] = useState(!!wallet.isPrivKeyEncrypted);
+  /** -------------- REQUEST PASSWORD ENCRYPT -------------- */
+  const [passwordToggle, setPasswordToggle] = useState(
+    !!wallet.isPrivKeyEncrypted,
+  );
+
   const keyMethods: KeyMethods | undefined = useSelector(
     ({WALLET}: RootState) =>
       WALLET.keyMethods.find(key => key.id === wallet.id),
   );
-  const logger = useLogger();
+
+  useEffect(() => {
+    setPasswordToggle(!!wallet.isPrivKeyEncrypted);
+  }, [wallet.isPrivKeyEncrypted]);
+
+  const generalError = () => {
+    setTimeout(() => {
+      dispatch(
+        showBottomNotificationModal({
+          type: 'error',
+          title: 'Something went wrong',
+          message: 'Could not decrypt wallet.',
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: 'OK',
+              action: () => {},
+              primary: true,
+            },
+          ],
+        }),
+      );
+    }, 500); // Wait to close Decrypt Password modal
+  };
+
+  const wrongPasswordList = [
+    {key: 'Try entering any passwords you may have set in the past'},
+    {
+      key: 'Remember there are no special requirements for the password (numbers, symbols, etc.)',
+    },
+    {
+      key: 'Keep in mind your encrypt password is not the 12-word recovery phrase',
+    },
+    {
+      key: 'You can always reset your encrypt password on your key settings under the option Clear Encrypt Password using your 12 words recovery phrase',
+    },
+  ];
+
+  const wrongPasswordErr = () => {
+    setTimeout(() => {
+      dispatch(
+        showBottomNotificationModal({
+          type: 'error',
+          title: 'Wrong password',
+          message: 'Forgot Password?',
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: 'GOT IT',
+              action: () => {},
+              primary: true,
+            },
+          ],
+          list: (
+            <FlatList
+              data={wrongPasswordList}
+              renderItem={({item}) => (
+                <List>
+                  {'\u2022'} {item.key}
+                </List>
+              )}
+            />
+          ),
+        }),
+      );
+    }, 500); // Wait to close Decrypt Password modal
+  };
 
   const onSubmitPassword = async (password: string) => {
-    if(keyMethods) {
+    if (keyMethods) {
       try {
         keyMethods.decrypt(password);
         logger.debug('Key Decrypted');
         await dispatch(
-            WalletActions.successEncryptOrDecryptPassword({keyMethods: keyMethods}),
+          WalletActions.successEncryptOrDecryptPassword({
+            keyMethods: keyMethods,
+          }),
         );
         setPasswordToggle(false);
         dispatch(AppActions.dissmissDecryptPasswordModal());
       } catch (e) {
-        console.log(e);
-        dispatch(AppActions.dissmissDecryptPasswordModal());
+        await dispatch(AppActions.dissmissDecryptPasswordModal());
+        wrongPasswordErr();
       }
     } else {
       dispatch(AppActions.dissmissDecryptPasswordModal());
-      dispatch(
-          showBottomNotificationModal({
-            type: 'warning',
-            title: 'Something went wrong',
-            message: 'Could not decrypt wallet.',
-            enableBackdropDismiss: true,
-            actions: [
-              {
-                text: 'OK',
-                action: () => {},
-                primary: true,
-              },
-            ],
-          }),
-      );
+      generalError();
       logger.debug('Key Methods Error');
     }
   };
+  /**---------------------------------------------------------*/
 
   useEffect(() => {
     navigation.setOptions({
@@ -302,8 +366,6 @@ const WalletSettings = () => {
           </Setting>
         </VerticalPadding>
       </ScrollView>
-
-      {/*<DecryptEnterPasswordModal contextHandler={onSubmitPassword}/>*/}
     </WalletSettingsContainer>
   );
 };
