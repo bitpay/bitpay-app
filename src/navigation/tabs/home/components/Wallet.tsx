@@ -62,10 +62,7 @@ const WalletCardComponent = ({
         assetInfo.map(
           (asset, index) =>
             asset && (
-              <Img
-                key={index}
-                isFirst={index === 0}
-                size={ICON_SIZE + 'px'}>
+              <Img key={index} isFirst={index === 0} size={ICON_SIZE + 'px'}>
                 {asset.roundIcon(ICON_SIZE)}
               </Img>
             ),
