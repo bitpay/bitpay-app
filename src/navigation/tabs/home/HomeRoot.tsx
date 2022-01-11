@@ -30,6 +30,7 @@ import {AppActions} from '../../../store/app';
 import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishModal';
 import ScanSvg from '../../../../assets/img/home/scan.svg';
 import ProfileSvg from '../../../../assets/img/home/profile.svg';
+import {sleep} from '../../../utils/helper-methods';
 
 const HeaderContainer = styled.View`
   flex-direction: row;
@@ -70,11 +71,16 @@ const HomeRoot = () => {
     ({APP}: RootState) => APP.onboardingCompleted,
   );
 
+  const showOnboardingFinishModal = async () => {
+    await sleep(500);
+    dispatch(AppActions.showOnboardingFinishModal());
+  };
+
   useEffect(() => {
     if (!onboardingCompleted) {
-      dispatch(AppActions.showOnboardingFinishModal());
+      showOnboardingFinishModal();
     }
-  }, []);
+  }, [onboardingCompleted]);
 
   const navigation = useNavigation();
 

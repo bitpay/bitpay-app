@@ -1,6 +1,9 @@
 import React, {useEffect} from 'react';
 import styled from 'styled-components/native';
-import {ScreenGutter} from '../../../components/styled/Containers';
+import {
+  ActiveOpacity,
+  ScreenGutter,
+} from '../../../components/styled/Containers';
 import {ImageSourcePropType} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {Feather, LightBlack, SlateDark, White} from '../../../styles/colors';
@@ -108,26 +111,25 @@ const SelectWalletType = () => {
   return (
     <SelectWalletTypeContainer>
       <SelectWalletTypeListContainer>
-        {walletTypeList.map((type: WalletType) => (
-          <SelectWalletTypeList
-            onPress={() => {
-              haptic('impactLight');
-              type.cta();
-            }}
-            key={type.id}>
-            <ImageContainer>
-              <Image
-                source={type.img}
-                resizeMode={'contain'}
-                imgHeight={type.height}
-              />
-            </ImageContainer>
-            <InfoContainer>
-              <Title>{type.title}</Title>
-              <Description>{type.description}</Description>
-            </InfoContainer>
-          </SelectWalletTypeList>
-        ))}
+        {walletTypeList.map(
+          ({cta, id, img, height, title, description}: WalletType) => (
+            <SelectWalletTypeList
+              activeOpacity={ActiveOpacity}
+              onPress={() => {
+                haptic('impactLight');
+                cta();
+              }}
+              key={id}>
+              <ImageContainer>
+                <Image source={img} resizeMode={'contain'} imgHeight={height} />
+              </ImageContainer>
+              <InfoContainer>
+                <Title>{title}</Title>
+                <Description>{description}</Description>
+              </InfoContainer>
+            </SelectWalletTypeList>
+          ),
+        )}
       </SelectWalletTypeListContainer>
     </SelectWalletTypeContainer>
   );

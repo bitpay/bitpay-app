@@ -6,121 +6,51 @@ import {WIDTH} from '../../../../components/styled/Containers';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CreateWallet from './empty-states/CreateWallet';
 import styled from 'styled-components/native';
-
-import HomeCard from '../../../../components/home-card/HomeCard';
-import {AssetSelectionOptions} from '../../../../constants/AssetSelectionOptions';
 import {useNavigation} from '@react-navigation/native';
-import {WalletObj} from '../../../../store/wallet/wallet.models';
-import {BaseText} from '../../../../components/styled/Text';
-import {Slate} from '../../../../styles/colors';
-
-const HeaderImg = styled.View`
-  align-items: center;
-  justify-content: flex-start;
-  flex-direction: row;
-  flex: 1;
-  flex-wrap: wrap;
-`;
-
-const Img = styled.View<{isFirst: boolean; size: string}>`
-  width: ${({size}) => size};
-  height: ${({size}) => size};
-  min-height: 22px;
-  margin-left: ${({isFirst}) => (isFirst ? 0 : '-5px')};
-`;
+import BuyGiftCards from './empty-states/BuyGiftCards';
+import GetMastercard from './empty-states/GetMastercard';
+import ConnectCoinbase from './empty-states/ConnectCoinbase';
+import WalletCardComponent from './Wallet';
 
 const CarouselContainer = styled.View`
   margin: 10px 0 10px;
-`;
-
-const RemainingAssetsLabel = styled(BaseText)`
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 18px;
-  letter-spacing: 0;
-  color: ${Slate};
-  margin-left: 5px;
 `;
 
 const _renderItem = ({item}: {item: ReactNode}) => {
   return <>{item}</>;
 };
 
-const ASSET_DISPLAY_LIMIT = 4;
-const ICON_SIZE = 25;
-
-const WalletCardComponent = (wallet: WalletObj) => {
+const CardsCarousel = () => {
+  const wallets = useSelector(({WALLET}: RootState) => WALLET.wallets);
+  const DEFAULTS = [
+    <CreateWallet />,
+    <BuyGiftCards />,
+    <GetMastercard />,
+    <ConnectCoinbase />,
+  ];
+  const [cardsList, setCardsList] = useState([...DEFAULTS]);
   const navigation = useNavigation();
-  const [remainingAssetCount, setRemainingAssetCount] = useState<null | number>(
-    null,
-  );
-  const {assets, totalBalance} = wallet;
 
   useEffect(() => {
-    if (assets.length > 4) {
-      setRemainingAssetCount(assets.length - 4);
-    }
-  }, [assets]);
+    if (wallets) {
+      const list = Object.values(wallets)
+        .filter(wallet => wallet.show)
+        .map(wallet => {
+          const {assets, totalBalance = 0} = wallet;
 
-  const currencyInfo = assets
-    .slice(0, ASSET_DISPLAY_LIMIT)
-    .map(asset => asset.coin)
-    .map(currency =>
-      AssetSelectionOptions.find(
-        ({id}: {id: string | number}) => id === currency,
-      ),
-    );
-
-  const HeaderComponent = (
-    <HeaderImg>
-      {currencyInfo &&
-        currencyInfo.map(
-          (currency, index) =>
-            currency && (
-              <Img
-                key={index}
-                isFirst={index === 0 || index % 11 === 0}
-                size={ICON_SIZE + 'px'}>
-                {currency.roundIcon(ICON_SIZE)}
-              </Img>
-            ),
-        )}
-      {remainingAssetCount && (
-        <RemainingAssetsLabel>
-          + {remainingAssetCount} more
-        </RemainingAssetsLabel>
-      )}
-    </HeaderImg>
-  );
-
-  return (
-    <HomeCard
-      header={HeaderComponent}
-      body={{title: 'My Everything Wallet', value: `$${totalBalance}`}}
-      onCTAPress={() => {
-        navigation.navigate('Wallet', {
-          screen: 'WalletOverview',
-          params: {wallet},
+          return WalletCardComponent({
+            assets,
+            totalBalance,
+            onPress: () =>
+              navigation.navigate('Wallet', {
+                screen: 'WalletOverview',
+                params: {wallet},
+              }),
+          });
         });
-      }}
-    />
-  );
-};
-
-const CardsCarousel = () => {
-  const cardsList: ReactNode[] = [];
-  const wallets = useSelector(({WALLET}: RootState) => WALLET.wallets);
-
-  if (wallets) {
-    Object.values(wallets).forEach((wallet: WalletObj) => {
-      if (wallet.show) {
-        cardsList.push(WalletCardComponent(wallet));
-      }
-    });
-
-    cardsList.push(<CreateWallet />);
-  }
+      setCardsList([...list, ...DEFAULTS]);
+    }
+  }, [wallets]);
 
   return (
     <CarouselContainer>

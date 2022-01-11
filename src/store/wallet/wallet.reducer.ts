@@ -21,9 +21,15 @@ export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
  example -
  wallets: [key.id]: {
       id: key.id,
+      show: true,
+      totalBalance: 0,
       assets: [
        {
-        coin: 'btc'
+        credentials: {...}
+        id: '2ccd1dc9-16ce-4c95-a802-455b295a0a27',
+        assetName: 'Bitcoin'
+        assetAbbreviation: 'btc',
+        balance: 0,
        },
        {
         coin: 'eth',
@@ -94,7 +100,7 @@ export const walletReducer = (
       const walletToUpdate = state.wallets[keyId];
       if (walletToUpdate) {
         walletToUpdate.assets = walletToUpdate.assets.map(asset => {
-          if (asset.walletId === assetId) {
+          if (asset.id === assetId) {
             asset.balance = balance;
           }
           return asset;
