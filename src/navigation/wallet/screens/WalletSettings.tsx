@@ -86,11 +86,11 @@ const WalletSettingsTitle = styled(SettingTitle)`
 
 const buildAssetList = (assets: Asset[]) => {
   const assetList = [] as Array<AssetSettingsRowProps>;
-  assets.forEach(({coin, walletName, walletId}) => {
+  assets.forEach(({id, assetName, assetAbbreviation}) => {
     assetList.push({
-      id: walletId,
-      img: () => AssetListIcons[coin].square,
-      assetName: walletName,
+      id,
+      img: () => AssetListIcons[assetAbbreviation].square,
+      assetName,
     });
   });
   return assetList;

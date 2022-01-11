@@ -64,13 +64,13 @@ const AssetListFooterText = styled(BaseText)`
 const buildAssetList = (assets: Asset[]) => {
   const assetList = [] as Array<AssetRowProps>;
   assets
-    .filter(asset => !asset.token)
-    .forEach(({coin, walletName, walletId, balance = 0, tokens}) => {
+    .filter(asset => !asset.credentials.token)
+    .forEach(({id, assetName, assetAbbreviation, balance = 0, tokens}) => {
       assetList.push({
-        id: walletId,
-        img: () => AssetListIcons[coin].square,
-        assetName: walletName,
-        assetAbbreviation: coin.toUpperCase(),
+        id,
+        img: () => AssetListIcons[assetAbbreviation].square,
+        assetName,
+        assetAbbreviation: assetAbbreviation.toUpperCase(),
         cryptoBalance: balance,
         fiatBalance: formatFiatBalance(balance),
       });
@@ -78,7 +78,7 @@ const buildAssetList = (assets: Asset[]) => {
       if (tokens) {
         tokens.forEach(({name, symbol, balance = 0}) => {
           assetList.push({
-            id: `${walletId}-${symbol}`,
+            id: `${id}-${symbol}`,
             img: () => AssetListIcons[symbol.toLowerCase()].round,
             assetName: name,
             assetAbbreviation: symbol.toUpperCase(),
