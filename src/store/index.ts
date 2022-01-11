@@ -7,6 +7,8 @@ import {persistStore, persistReducer} from 'redux-persist'; // https://github.co
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
 import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
+import {bindWalletClient} from './transforms/transforms';
+
 import {
   appReducer,
   appReduxPersistBlackList,
@@ -98,7 +100,8 @@ const reducers = {
   ),
   WALLET: persistReducer<WalletState, WalletActionType>(
     {
-      ...basePersistConfig,
+      storage: AsyncStorage,
+      transforms: [bindWalletClient],
       key: 'WALLET',
       blacklist: walletReduxPersistBlackList,
     },
