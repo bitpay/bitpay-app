@@ -110,17 +110,17 @@ export const walletReducer = (
         },
       };
 
-    case WalletActionTypes.SUCCESS_ENCRYPT_PASSWORD:
-      const {keyMethods: keyToUpdate} = action.payload;
-      const walletCopy = state.wallets[keyToUpdate.id];
-      walletCopy.isPrivKeyEncrypted = !!keyToUpdate.isPrivKeyEncrypted();
+    case WalletActionTypes.SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD:
+      const {keyMethods: keyToEncrypt} = action.payload;
+      const walletCopy = state.wallets[keyToEncrypt.id];
+      walletCopy.isPrivKeyEncrypted = !!keyToEncrypt.isPrivKeyEncrypted();
 
       return {
         ...state,
         keys: state.keys.map(ko =>
-          ko.id === keyToUpdate.id ? {...ko, ...keyToUpdate.toObj()} : ko,
+          ko.id === keyToEncrypt.id ? keyToEncrypt.toObj() : ko,
         ),
-        wallets: {...state.wallets, [keyToUpdate.id]: walletCopy},
+        wallets: {...state.wallets, [keyToEncrypt.id]: walletCopy},
       };
 
     default:

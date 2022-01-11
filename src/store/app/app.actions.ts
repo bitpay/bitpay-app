@@ -4,6 +4,7 @@ import {AppActionType, AppActionTypes} from './app.types';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
+import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 
 export const successAppInit = (): AppActionType => ({
   type: AppActionTypes.SUCCESS_APP_INIT,
@@ -76,8 +77,11 @@ export const dismissOnboardingFinishModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_ONBOARDING_FINISH_MODAL,
 });
 
-export const showDecryptPasswordModal = (): AppActionType => ({
+export const showDecryptPasswordModal = (
+  decryptPasswordConfig: DecryptPasswordConfig,
+): AppActionType => ({
   type: AppActionTypes.SHOW_DECRYPT_PASSWORD_MODAL,
+  payload: decryptPasswordConfig,
 });
 
 export const dissmissDecryptPasswordModal = (): AppActionType => ({

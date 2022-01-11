@@ -6,6 +6,7 @@ import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/Ong
 import {NavScreenParams, RootStackParamList} from '../../Root';
 import {AppIdentity} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
+import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 
 type AppReduxPersistBlackList = [
   'appIsLoading',
@@ -35,6 +36,7 @@ export interface AppState {
   notificationsAccepted: boolean;
   showOnboardingFinishModal: boolean;
   showDecryptPasswordModal: boolean;
+  decryptPasswordConfig: DecryptPasswordConfig | undefined;
 }
 
 const initialState: AppState = {
@@ -63,6 +65,7 @@ const initialState: AppState = {
   notificationsAccepted: false,
   showOnboardingFinishModal: false,
   showDecryptPasswordModal: false,
+  decryptPasswordConfig: undefined,
 };
 
 export const appReducer = (
@@ -153,12 +156,14 @@ export const appReducer = (
       return {
         ...state,
         showDecryptPasswordModal: true,
+        decryptPasswordConfig: action.payload,
       };
 
     case AppActionTypes.DISMISS_DECRYPT_PASSWORD_MODAL:
       return {
         ...state,
         showDecryptPasswordModal: false,
+        decryptPasswordConfig: undefined,
       };
 
     default:

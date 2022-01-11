@@ -4,6 +4,7 @@ import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/Ong
 import {Network} from '../../constants';
 import {NavScreenParams, RootStackParamList} from '../../Root';
 import {AppIdentity} from './app.models';
+import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 
 export enum AppActionTypes {
   SUCCESS_APP_INIT = 'APP/SUCCESS_APP_INIT',
@@ -88,6 +89,7 @@ interface DismissOnboardingFinishModal {
 
 interface ShowDecryptPasswordModal {
   type: typeof AppActionTypes.SHOW_DECRYPT_PASSWORD_MODAL;
+  payload: DecryptPasswordConfig;
 }
 
 interface DismissDecryptPasswordModal {

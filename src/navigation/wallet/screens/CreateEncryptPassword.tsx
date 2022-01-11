@@ -96,7 +96,9 @@ const CreateEncryptPassword = () => {
 
         keyMethods.encrypt(password);
         await dispatch(
-          WalletActions.successEncryptPassword({keyMethods: keyMethods}),
+          WalletActions.successEncryptOrDecryptPassword({
+            keyMethods: keyMethods,
+          }),
         );
         wallet.isPrivKeyEncrypted = keyMethods.isPrivKeyEncrypted();
         navigation.navigate('Wallet', {

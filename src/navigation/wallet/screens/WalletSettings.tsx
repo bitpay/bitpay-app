@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {BaseText, HeaderTitle, Link} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
@@ -16,7 +16,7 @@ import {
 } from '../../../components/styled/Containers';
 import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {Asset} from '../../../store/wallet/wallet.models';
+import {Asset, KeyMethods} from '../../../store/wallet/wallet.models';
 import {AssetListIcons} from '../../../constants/AssetListIcons';
 import AssetSettingsRow, {
   AssetSettingsRowProps,
@@ -24,11 +24,15 @@ import AssetSettingsRow, {
 import Button from '../../../components/button/Button';
 import {SlateDark, White} from '../../../styles/colors';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
-import {useDispatch} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import InfoIcon from '../../../components/icons/info/InfoIcon';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {AppActions} from '../../../store/app';
 import DecryptEnterPasswordModal from '../components/DecryptEnterPasswordModal';
+import {RootState} from '../../../store';
+import {useLogger} from '../../../utils/hooks';
+import {WalletActions} from '../../../store/wallet';
+import {showBottomNotificationModal} from "../../../store/app/app.actions";
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -106,6 +110,48 @@ const WalletSettings = () => {
   const navigation = useNavigation();
   const assetsList = buildAssetList(wallet.assets);
 
+  const [passwordToggle, setPasswordToggle] = useState(!!wallet.isPrivKeyEncrypted);
+  const keyMethods: KeyMethods | undefined = useSelector(
+    ({WALLET}: RootState) =>
+      WALLET.keyMethods.find(key => key.id === wallet.id),
+  );
+  const logger = useLogger();
+
+  const onSubmitPassword = async (password: string) => {
+    if(keyMethods) {
+      try {
+        keyMethods.decrypt(password);
+        logger.debug('Key Decrypted');
+        await dispatch(
+            WalletActions.successEncryptOrDecryptPassword({keyMethods: keyMethods}),
+        );
+        setPasswordToggle(false);
+        dispatch(AppActions.dissmissDecryptPasswordModal());
+      } catch (e) {
+        console.log(e);
+        dispatch(AppActions.dissmissDecryptPasswordModal());
+      }
+    } else {
+      dispatch(AppActions.dissmissDecryptPasswordModal());
+      dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: 'Something went wrong',
+            message: 'Could not decrypt wallet.',
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: 'OK',
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+      );
+      logger.debug('Key Methods Error');
+    }
+  };
+
   useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>Wallet Settings</HeaderTitle>,
@@ -172,12 +218,14 @@ const WalletSettings = () => {
                     params: {wallet},
                   });
                 } else {
-                  //  TODO: Decrypt Password
-                  console.log('here');
-                  dispatch(AppActions.showDecryptPasswordModal());
+                  dispatch(
+                    AppActions.showDecryptPasswordModal({
+                      contextHandler: onSubmitPassword,
+                    }),
+                  );
                 }
               }}
-              isEnabled={!!wallet.isPrivKeyEncrypted}
+              isEnabled={passwordToggle}
             />
           </SettingView>
 
@@ -253,9 +301,9 @@ const WalletSettings = () => {
             <WalletSettingsTitle>Delete</WalletSettingsTitle>
           </Setting>
         </VerticalPadding>
-
-        <DecryptEnterPasswordModal />
       </ScrollView>
+
+      {/*<DecryptEnterPasswordModal contextHandler={onSubmitPassword}/>*/}
     </WalletSettingsContainer>
   );
 };

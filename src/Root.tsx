@@ -55,6 +55,7 @@ import BuyCryptoStack, {
 import SwapCryptoStack, {
   SwapCryptoStackParamList,
 } from './navigation/services/swap-crypto/SwapCryptoStack';
+import DecryptEnterPasswordModal from './navigation/wallet/components/DecryptEnterPasswordModal';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -263,6 +264,7 @@ export default () => {
           </Root.Navigator>
           <OnGoingProcessModal />
           <BottomNotificationModal />
+          <DecryptEnterPasswordModal />
         </NavigationContainer>
       </ThemeProvider>
     </SafeAreaProvider>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import Modal from 'react-native-modal';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../../store';
@@ -10,10 +10,9 @@ import * as yup from 'yup';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {Controller, useForm} from 'react-hook-form';
 import {useTheme} from '@react-navigation/native';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
-import {View} from 'react-native';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 const DecryptFormContainer = styled.View`
   justify-content: center;
@@ -43,29 +42,41 @@ interface DecryptPasswordFieldValues {
   password: string;
 }
 
+export interface DecryptPasswordConfig {
+  contextHandler: (data: string) => void;
+}
+
 const DecryptEnterPasswordModal = () => {
   const dispatch = useDispatch();
   const isVisible = useSelector(
     ({APP}: RootState) => APP.showDecryptPasswordModal,
+  );
+  const decryptPasswordConfig = useSelector(
+    ({APP}: RootState) => APP.decryptPasswordConfig,
   );
 
   const {
     control,
     handleSubmit,
     reset,
-    formState: {errors, isValid},
+    formState: {errors},
   } = useForm<DecryptPasswordFieldValues>({
     resolver: yupResolver(schema),
   });
 
+  useEffect(() => {
+    if (!isVisible) {
+      reset();
+    }
+  }, [isVisible]);
+
   const dismissModal = () => {
-    reset();
     dispatch(AppActions.dissmissDecryptPasswordModal());
   };
   const theme = useTheme();
 
   const onSubmit = ({password}: {password: string}) => {
-    console.log(password);
+    decryptPasswordConfig?.contextHandler(password);
   };
 
   return (
