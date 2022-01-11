@@ -2,7 +2,7 @@ import React, {useMemo, useState} from 'react';
 import debounce from 'lodash.debounce';
 import styled, {css} from 'styled-components/native';
 import {Cloud} from '../../../../styles/colors';
-import {View} from 'react-native';
+import {Platform, View} from 'react-native';
 import {SvgUri} from 'react-native-svg';
 import {useForm, Controller} from 'react-hook-form';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
@@ -141,8 +141,13 @@ export default ({
                   scrollViewRef.current &&
                   scrollViewRef.current.scrollTo({
                     x: 0,
-                    y: purchasedBrands.length ? purchasedBrandsHeight : 150,
-                    animated: true,
+                    y: purchasedBrands.length
+                      ? purchasedBrandsHeight + 15
+                      : 160,
+                    animated: Platform.select({
+                      ios: true,
+                      android: !purchasedBrands.length,
+                    }),
                   });
               }}
               onChangeText={(text: string) => {
