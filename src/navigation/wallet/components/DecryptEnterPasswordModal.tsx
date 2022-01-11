@@ -12,23 +12,18 @@ import {Controller, useForm} from 'react-hook-form';
 import {useTheme} from '@react-navigation/native';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 const DecryptFormContainer = styled.View`
   justify-content: center;
   width: ${WIDTH - 16}px;
   background-color: ${White};
   border-radius: 10px;
+  padding: ${ScreenGutter};
 `;
 
 const schema = yup.object().shape({
   password: yup.string().required(),
 });
-
-const ScrollView = styled(KeyboardAwareScrollView)`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
 
 const PasswordFormContainer = styled.View`
   margin: 15px 0;
@@ -68,6 +63,7 @@ const DecryptEnterPasswordModal = () => {
     if (!isVisible) {
       reset();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVisible]);
 
   const dismissModal = () => {
@@ -94,31 +90,29 @@ const DecryptEnterPasswordModal = () => {
         alignItems: 'center',
       }}>
       <DecryptFormContainer>
-        <ScrollView>
-          <PasswordFormContainer>
-            <PasswordInputContainer>
-              <Controller
-                control={control}
-                render={({field: {onChange, onBlur, value}}) => (
-                  <BoxInput
-                    theme={theme}
-                    placeholder={'strongPassword123'}
-                    label={'ENTER ENCRYPT PASSWORD'}
-                    type={'password'}
-                    onBlur={onBlur}
-                    onChangeText={(text: string) => onChange(text)}
-                    error={errors.password?.message}
-                    value={value}
-                  />
-                )}
-                name="password"
-                defaultValue=""
-              />
-            </PasswordInputContainer>
+        <PasswordFormContainer>
+          <PasswordInputContainer>
+            <Controller
+              control={control}
+              render={({field: {onChange, onBlur, value}}) => (
+                <BoxInput
+                  theme={theme}
+                  placeholder={'strongPassword123'}
+                  label={'ENTER ENCRYPT PASSWORD'}
+                  type={'password'}
+                  onBlur={onBlur}
+                  onChangeText={(text: string) => onChange(text)}
+                  error={errors.password?.message}
+                  value={value}
+                />
+              )}
+              name="password"
+              defaultValue=""
+            />
+          </PasswordInputContainer>
 
-            <Button onPress={handleSubmit(onSubmit)}>Ok</Button>
-          </PasswordFormContainer>
-        </ScrollView>
+          <Button onPress={handleSubmit(onSubmit)}>Ok</Button>
+        </PasswordFormContainer>
       </DecryptFormContainer>
     </Modal>
   );

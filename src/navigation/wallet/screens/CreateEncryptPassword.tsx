@@ -75,10 +75,9 @@ const CreateEncryptPassword = () => {
   const {
     control,
     handleSubmit,
-    formState: {errors, isValid},
+    formState: {errors},
   } = useForm<EncryptPasswordFieldValues>({
     resolver: yupResolver(schema),
-    mode: 'onTouched',
   });
 
   const theme = useTheme();
@@ -175,7 +174,7 @@ const CreateEncryptPassword = () => {
           </PasswordInputContainer>
 
           <PasswordActionContainer>
-            <Button onPress={handleSubmit(onSubmit)} disabled={!isValid}>
+            <Button onPress={handleSubmit(onSubmit)}>
               Save Encrypt Password
             </Button>
           </PasswordActionContainer>

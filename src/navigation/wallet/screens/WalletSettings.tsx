@@ -28,7 +28,6 @@ import {useDispatch, useSelector} from 'react-redux';
 import InfoIcon from '../../../components/icons/info/InfoIcon';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {AppActions} from '../../../store/app';
-import DecryptEnterPasswordModal from '../components/DecryptEnterPasswordModal';
 import {RootState} from '../../../store';
 import {useLogger} from '../../../utils/hooks';
 import {WalletActions} from '../../../store/wallet';

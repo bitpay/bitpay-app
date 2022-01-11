@@ -92,9 +92,16 @@ const CustomizeHome = () => {
       const {assets, totalBalance = 0, show} = wallet;
       const list = assets
         .map(({assetAbbreviation}) => assetAbbreviation)
-        .map(currency => AssetSelectionOptions.find(({id}: {id: string | number}) => id === currency));
+        .map(currency =>
+          AssetSelectionOptions.find(
+            ({id}: {id: string | number}) => id === currency,
+          ),
+        );
 
-      !!list.length && cardsList.push(CurrencyCardComponent(list as ItemProps[], totalBalance, !!show));
+      !!list.length &&
+        cardsList.push(
+          CurrencyCardComponent(list as ItemProps[], totalBalance, !!show),
+        );
     });
   }
 
