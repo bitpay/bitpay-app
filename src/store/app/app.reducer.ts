@@ -34,6 +34,7 @@ export interface AppState {
   currentRoute: [keyof RootStackParamList, NavScreenParams] | undefined;
   notificationsAccepted: boolean;
   showOnboardingFinishModal: boolean;
+  showDecryptPasswordModal: boolean;
 }
 
 const initialState: AppState = {
@@ -61,6 +62,7 @@ const initialState: AppState = {
   currentRoute: undefined,
   notificationsAccepted: false,
   showOnboardingFinishModal: false,
+  showDecryptPasswordModal: false,
 };
 
 export const appReducer = (
@@ -145,6 +147,18 @@ export const appReducer = (
       return {
         ...state,
         showOnboardingFinishModal: false,
+      };
+
+    case AppActionTypes.SHOW_DECRYPT_PASSWORD_MODAL:
+      return {
+        ...state,
+        showDecryptPasswordModal: true,
+      };
+
+    case AppActionTypes.DISMISS_DECRYPT_PASSWORD_MODAL:
+      return {
+        ...state,
+        showDecryptPasswordModal: false,
       };
 
     default:

@@ -27,6 +27,8 @@ import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {useDispatch} from 'react-redux';
 import InfoIcon from '../../../components/icons/info/InfoIcon';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
+import {AppActions} from '../../../store/app';
+import DecryptEnterPasswordModal from '../components/DecryptEnterPasswordModal';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -171,6 +173,8 @@ const WalletSettings = () => {
                   });
                 } else {
                   //  TODO: Decrypt Password
+                  console.log('here');
+                  dispatch(AppActions.showDecryptPasswordModal());
                 }
               }}
               isEnabled={!!wallet.isPrivKeyEncrypted}
@@ -249,6 +253,8 @@ const WalletSettings = () => {
             <WalletSettingsTitle>Delete</WalletSettingsTitle>
           </Setting>
         </VerticalPadding>
+
+        <DecryptEnterPasswordModal />
       </ScrollView>
     </WalletSettingsContainer>
   );

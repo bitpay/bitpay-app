@@ -20,6 +20,8 @@ export enum AppActionTypes {
   SET_NOTIFICATIONS_ACCEPTED = 'APP/SET_NOTIFICATIONS_ACCEPTED',
   SHOW_ONBOARDING_FINISH_MODAL = 'APP/SHOW_ONBOARDING_FINISH_MODAL',
   DISMISS_ONBOARDING_FINISH_MODAL = 'APP/DISMISS_ONBOARDING_FINISH_MODAL',
+  SHOW_DECRYPT_PASSWORD_MODAL = 'APP/SHOW_DECRYPT_PASSWORD_MODAL',
+  DISMISS_DECRYPT_PASSWORD_MODAL = 'APP/DISMISS_DECRYPT_PASSWORD_MODAL',
 }
 
 interface SuccessAppInit {
@@ -84,6 +86,14 @@ interface DismissOnboardingFinishModal {
   type: typeof AppActionTypes.DISMISS_ONBOARDING_FINISH_MODAL;
 }
 
+interface ShowDecryptPasswordModal {
+  type: typeof AppActionTypes.SHOW_DECRYPT_PASSWORD_MODAL;
+}
+
+interface DismissDecryptPasswordModal {
+  type: typeof AppActionTypes.DISMISS_DECRYPT_PASSWORD_MODAL;
+}
+
 export type AppActionType =
   | SuccessAppInit
   | FailedAppInit
@@ -98,4 +108,6 @@ export type AppActionType =
   | FailedGenerateAppIdentity
   | SetNotificationsAccepted
   | ShowOnboardingFinishModal
-  | DismissOnboardingFinishModal;
+  | DismissOnboardingFinishModal
+  | ShowDecryptPasswordModal
+  | DismissDecryptPasswordModal;

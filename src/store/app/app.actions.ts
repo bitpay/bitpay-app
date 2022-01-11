@@ -75,3 +75,11 @@ export const showOnboardingFinishModal = (): AppActionType => ({
 export const dismissOnboardingFinishModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_ONBOARDING_FINISH_MODAL,
 });
+
+export const showDecryptPasswordModal = (): AppActionType => ({
+  type: AppActionTypes.SHOW_DECRYPT_PASSWORD_MODAL,
+});
+
+export const dissmissDecryptPasswordModal = (): AppActionType => ({
+  type: AppActionTypes.DISMISS_DECRYPT_PASSWORD_MODAL,
+});
