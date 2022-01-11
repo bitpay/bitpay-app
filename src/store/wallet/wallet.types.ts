@@ -43,18 +43,6 @@ interface failedCreateWallet {
   type: typeof WalletActionTypes.FAILED_CREATE_WALLET;
 }
 
-interface successBindWalletClient {
-  type: typeof WalletActionTypes.SUCCESS_BIND_WALLET_CLIENT;
-  payload: {
-    id: string;
-    wallet: WalletObj;
-  };
-}
-
-interface failedBindWalletClient {
-  type: typeof WalletActionTypes.FAILED_BIND_WALLET_CLIENT;
-}
-
 interface setBackupComplete {
   type: typeof WalletActionTypes.SET_BACKUP_COMPLETE;
   payload: string;
@@ -101,8 +89,6 @@ export type WalletActionType =
   | failedWalletStoreInit
   | successCreateWallet
   | failedCreateWallet
-  | successBindWalletClient
-  | failedBindWalletClient
   | setBackupComplete
   | successGetRates
   | failedGetRates

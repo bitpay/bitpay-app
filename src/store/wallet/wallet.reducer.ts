@@ -72,14 +72,6 @@ export const walletReducer = (
         wallets: {...state.wallets, [key.id]: wallet},
       };
 
-    case WalletActionTypes.SUCCESS_BIND_WALLET_CLIENT: {
-      const {id, wallet} = action.payload;
-      return {
-        ...state,
-        wallets: {...state.wallets, [id]: wallet},
-      };
-    }
-
     case WalletActionTypes.SET_BACKUP_COMPLETE:
       const id = action.payload;
       const updatedWallet = {...state.wallets[id], backupComplete: true};
