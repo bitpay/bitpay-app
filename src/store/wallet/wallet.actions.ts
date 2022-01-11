@@ -22,18 +22,6 @@ export const failedCreateWallet = (): WalletActionType => ({
   type: WalletActionTypes.FAILED_CREATE_WALLET,
 });
 
-export const successBindWalletClient = (payload: {
-  id: string;
-  wallet: any;
-}): WalletActionType => ({
-  type: WalletActionTypes.SUCCESS_BIND_WALLET_CLIENT,
-  payload,
-});
-
-export const failedBindWalletClient = (): WalletActionType => ({
-  type: WalletActionTypes.FAILED_BIND_WALLET_CLIENT,
-});
-
 export const setBackupComplete = (keyId: string): WalletActionType => ({
   type: WalletActionTypes.SET_BACKUP_COMPLETE,
   payload: keyId,
