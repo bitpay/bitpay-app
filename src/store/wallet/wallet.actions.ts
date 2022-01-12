@@ -2,7 +2,6 @@ import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {
   ExchangeRate,
   ExtendedKeyValues,
-  KeyMethods,
   PriceHistory,
 } from './wallet.models';
 
@@ -16,7 +15,6 @@ export const failedWalletStoreInit = (): WalletActionType => ({
 
 export const successCreateWallet = (payload: {
   key: ExtendedKeyValues;
-  keyMethods: KeyMethods;
   // TODO type
   wallet: any;
 }): WalletActionType => ({
@@ -65,7 +63,7 @@ export const updateAssetBalance = (payload: {
 });
 
 export const successEncryptPassword = (payload: {
-  keyMethods: KeyMethods;
+  key: ExtendedKeyValues;
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_ENCRYPT_PASSWORD,
   payload,

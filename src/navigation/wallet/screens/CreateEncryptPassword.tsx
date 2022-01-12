@@ -13,7 +13,7 @@ import {Controller, useForm} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
-import {KeyMethods} from '../../../store/wallet/wallet.models';
+import {ExtendedKeyValues} from '../../../store/wallet/wallet.models';
 import {WalletActions} from '../../../store/wallet/index';
 import {useLogger} from '../../../utils/hooks';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
@@ -83,21 +83,21 @@ const CreateEncryptPassword = () => {
   const theme = useTheme();
   const dispatch = useDispatch();
   const [genericError, setGenericError] = useState<string>('');
-  const keyMethods: KeyMethods | undefined = useSelector(
-    ({WALLET}: RootState) => WALLET.keyMethods.find(key => key.id === id),
+  const key: ExtendedKeyValues | undefined = useSelector(
+    ({WALLET}: RootState) => WALLET.keys.find(key => key.id === id),
   );
   const logger = useLogger();
   const onSubmit = async ({password}: {password: string}) => {
     try {
-      if (keyMethods) {
+      if (key) {
         // TODO: Update wallet name
         logger.debug('Encrypting private key for: Wallet 1');
 
-        keyMethods.encrypt(password);
+        key.encrypt(password);
         await dispatch(
-          WalletActions.successEncryptPassword({keyMethods: keyMethods}),
+          WalletActions.successEncryptPassword({key}),
         );
-        wallet.isPrivKeyEncrypted = keyMethods.isPrivKeyEncrypted();
+        wallet.isPrivKeyEncrypted = key.isPrivKeyEncrypted();
         navigation.navigate('Wallet', {
           screen: 'WalletSettings',
           params: {wallet: wallet},

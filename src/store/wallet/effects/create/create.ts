@@ -41,7 +41,6 @@ export const startCreateWallet =
       dispatch(
         successCreateWallet({
           key: merge(key, key.toObj()),
-          keyMethods: key,
           wallet: {
             id: key.id,
             assets: credentials,
