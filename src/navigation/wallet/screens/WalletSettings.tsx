@@ -1,9 +1,9 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect} from 'react';
 import {BaseText, HeaderTitle, Link} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {View, TouchableOpacity, FlatList} from 'react-native';
+import {View, TouchableOpacity} from 'react-native';
 import styled from 'styled-components/native';
 import {
   Hr,
@@ -16,7 +16,7 @@ import {
 } from '../../../components/styled/Containers';
 import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {Asset, KeyMethods} from '../../../store/wallet/wallet.models';
+import {Asset} from '../../../store/wallet/wallet.models';
 import {AssetListIcons} from '../../../constants/AssetListIcons';
 import AssetSettingsRow, {
   AssetSettingsRowProps,
@@ -24,14 +24,9 @@ import AssetSettingsRow, {
 import Button from '../../../components/button/Button';
 import {SlateDark, White} from '../../../styles/colors';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
-import {useDispatch, useSelector} from 'react-redux';
+import {useDispatch} from 'react-redux';
 import InfoIcon from '../../../components/icons/info/InfoIcon';
-import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
-import {AppActions} from '../../../store/app';
-import {RootState} from '../../../store';
-import {useLogger} from '../../../utils/hooks';
-import {WalletActions} from '../../../store/wallet';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -89,10 +84,6 @@ const WalletSettingsTitle = styled(SettingTitle)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const List = styled(BaseText)`
-  margin: 0 0 5px 10px;
-`;
-
 const buildAssetList = (assets: Asset[]) => {
   const assetList = [] as Array<AssetSettingsRowProps>;
   assets.forEach(({id, assetName, assetAbbreviation}) => {
@@ -112,108 +103,6 @@ const WalletSettings = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const assetsList = buildAssetList(wallet.assets);
-  const logger = useLogger();
-
-  /** -------------- REQUEST PASSWORD ENCRYPT -------------- */
-  const [passwordToggle, setPasswordToggle] = useState(
-    !!wallet.isPrivKeyEncrypted,
-  );
-
-  const keyMethods: KeyMethods | undefined = useSelector(
-    ({WALLET}: RootState) =>
-      WALLET.keyMethods.find(key => key.id === wallet.id),
-  );
-
-  useEffect(() => {
-    setPasswordToggle(!!wallet.isPrivKeyEncrypted);
-  }, [wallet.isPrivKeyEncrypted]);
-
-  const generalError = () => {
-    setTimeout(() => {
-      dispatch(
-        showBottomNotificationModal({
-          type: 'error',
-          title: 'Something went wrong',
-          message: 'Could not decrypt wallet.',
-          enableBackdropDismiss: true,
-          actions: [
-            {
-              text: 'OK',
-              action: () => {},
-              primary: true,
-            },
-          ],
-        }),
-      );
-    }, 500); // Wait to close Decrypt Password modal
-  };
-
-  const wrongPasswordList = [
-    {key: 'Try entering any passwords you may have set in the past'},
-    {
-      key: 'Remember there are no special requirements for the password (numbers, symbols, etc.)',
-    },
-    {
-      key: 'Keep in mind your encrypt password is not the 12-word recovery phrase',
-    },
-    {
-      key: 'You can always reset your encrypt password on your key settings under the option Clear Encrypt Password using your 12 words recovery phrase',
-    },
-  ];
-
-  const wrongPasswordErr = () => {
-    setTimeout(() => {
-      dispatch(
-        showBottomNotificationModal({
-          type: 'error',
-          title: 'Wrong password',
-          message: 'Forgot Password?',
-          enableBackdropDismiss: true,
-          actions: [
-            {
-              text: 'GOT IT',
-              action: () => {},
-              primary: true,
-            },
-          ],
-          list: (
-            <FlatList
-              data={wrongPasswordList}
-              renderItem={({item}) => (
-                <List>
-                  {'\u2022'} {item.key}
-                </List>
-              )}
-            />
-          ),
-        }),
-      );
-    }, 500); // Wait to close Decrypt Password modal
-  };
-
-  const onSubmitPassword = async (password: string) => {
-    if (keyMethods) {
-      try {
-        keyMethods.decrypt(password);
-        logger.debug('Key Decrypted');
-        await dispatch(
-          WalletActions.successEncryptOrDecryptPassword({
-            keyMethods: keyMethods,
-          }),
-        );
-        setPasswordToggle(false);
-        dispatch(AppActions.dissmissDecryptPasswordModal());
-      } catch (e) {
-        await dispatch(AppActions.dissmissDecryptPasswordModal());
-        wrongPasswordErr();
-      }
-    } else {
-      dispatch(AppActions.dissmissDecryptPasswordModal());
-      generalError();
-      logger.debug('Key Methods Error');
-    }
-  };
-  /**---------------------------------------------------------*/
 
   useEffect(() => {
     navigation.setOptions({
@@ -272,24 +161,7 @@ const WalletSettings = () => {
 
           <SettingView>
             <WalletSettingsTitle>Request Encrypt Password</WalletSettingsTitle>
-
-            <ToggleSwitch
-              onChange={() => {
-                if (!wallet.isPrivKeyEncrypted) {
-                  navigation.navigate('Wallet', {
-                    screen: 'CreateEncryptPassword',
-                    params: {wallet},
-                  });
-                } else {
-                  dispatch(
-                    AppActions.showDecryptPasswordModal({
-                      contextHandler: onSubmitPassword,
-                    }),
-                  );
-                }
-              }}
-              isEnabled={passwordToggle}
-            />
+            <RequestEncryptPasswordToggle wallet={wallet} />
           </SettingView>
 
           <Info>
