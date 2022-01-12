@@ -84,7 +84,7 @@ const CreateEncryptPassword = () => {
   const dispatch = useDispatch();
   const [genericError, setGenericError] = useState<string>('');
   const key: ExtendedKeyValues | undefined = useSelector(
-    ({WALLET}: RootState) => WALLET.keys.find(key => key.id === id),
+    ({WALLET}: RootState) => WALLET.keys.find(k => k.id === id),
   );
   const logger = useLogger();
   const onSubmit = async ({password}: {password: string}) => {
@@ -94,9 +94,7 @@ const CreateEncryptPassword = () => {
         logger.debug('Encrypting private key for: Wallet 1');
 
         key.encrypt(password);
-        await dispatch(
-          WalletActions.successEncryptPassword({key}),
-        );
+        await dispatch(WalletActions.successEncryptPassword({key}));
         wallet.isPrivKeyEncrypted = key.isPrivKeyEncrypted();
         navigation.navigate('Wallet', {
           screen: 'WalletSettings',

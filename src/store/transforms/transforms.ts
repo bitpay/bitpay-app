@@ -40,6 +40,7 @@ export const bindWalletKeys = createTransform(
     if (k === 'keys') {
       const outboundState: ExtendedKeyValues[] = [];
       for (const key of _outboundState as ExtendedKeyValues[]) {
+        console.log(`bindWalletKey - ${key.id}`);
         const km = BWCProvider.createKey({seedType: 'object', seedData: key});
         outboundState.push(merge(key, km));
       }

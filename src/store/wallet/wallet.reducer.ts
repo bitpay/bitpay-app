@@ -5,7 +5,7 @@ import {
   WalletObj,
 } from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
-import merge from "lodash.merge";
+import merge from 'lodash.merge';
 
 type WalletReduxPersistBlackList = [];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
@@ -121,7 +121,9 @@ export const walletReducer = (
       return {
         ...state,
         keys: state.keys.map(ko =>
-          ko.id === keyToUpdate.id ? merge(keyToUpdate, keyToUpdate.toObj()) : ko,
+          ko.id === keyToUpdate.id
+            ? merge(keyToUpdate, keyToUpdate.toObj())
+            : ko,
         ),
         wallets: {...state.wallets, [keyToUpdate.id]: walletCopy},
       };
