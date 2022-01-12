@@ -1,7 +1,7 @@
 import {
   ExchangeRate,
+  ExtendedKeyValues,
   KeyMethods,
-  KeyObj,
   PriceHistory,
   WalletObj,
 } from './wallet.models';
@@ -33,7 +33,7 @@ interface failedWalletStoreInit {
 interface successCreateWallet {
   type: typeof WalletActionTypes.SUCCESS_CREATE_WALLET;
   payload: {
-    key: KeyObj;
+    key: ExtendedKeyValues;
     wallet: WalletObj;
     keyMethods: KeyMethods;
   };

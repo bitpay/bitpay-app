@@ -1,4 +1,4 @@
-import {Asset, KeyObj, WalletOptions} from '../../wallet.models';
+import {Asset, KeyMethods, WalletOptions} from '../../wallet.models';
 import {Effect} from '../../../index';
 import {startOnGoingProcessModal} from '../../../app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
@@ -41,7 +41,7 @@ export const startImportMnemonic =
 
       dispatch(
         WalletActions.successCreateWallet({
-          key: key.toObj(),
+          key: merge(key, key.toObj()),
           keyMethods: key,
           wallet: {
             id: key.id,
@@ -63,7 +63,7 @@ export const startImportMnemonic =
 
 export const importWalletCredentials = async (
   opts: Partial<WalletOptions>,
-): Promise<{key: KeyObj; assets: Asset[]}> => {
+): Promise<{key: KeyMethods; assets: Asset[]}> => {
   return new Promise(resolve => {
     BwcProvider.API.serverAssistedImport(
       opts,

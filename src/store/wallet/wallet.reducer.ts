@@ -1,7 +1,7 @@
 import {
   ExchangeRate,
+  ExtendedKeyValues,
   KeyMethods,
-  KeyObj,
   PriceHistory,
   WalletObj,
 } from './wallet.models';
@@ -42,7 +42,7 @@ export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
 
 export interface WalletState {
   createdOn: number;
-  keys: KeyObj[];
+  keys: ExtendedKeyValues[];
   keyMethods: KeyMethods[];
   wallets: {[key in string]: WalletObj};
   rates: {[key in string]: Array<ExchangeRate>};
