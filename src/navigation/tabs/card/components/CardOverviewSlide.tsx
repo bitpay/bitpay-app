@@ -8,6 +8,7 @@ import {format} from '../../../../utils/currency';
 import {CardStackParamList} from '../CardStack';
 import {OverviewSlide} from './CardDashboard';
 import MastercardFront from './CardFront.Mastercard';
+import VisaFront from './CardFront.Visa';
 
 export interface CardOverviewSlideProps {
   slide: OverviewSlide;
@@ -27,9 +28,10 @@ const SlideContainer = styled.View`
   padding: 0 10px;
 `;
 
-const BRANDS = {
+const PROVIDERS = {
   default: MastercardFront,
-  Mastercard: MastercardFront,
+  galileo: MastercardFront,
+  firstView: VisaFront,
 };
 
 const CardOverviewSlide: React.FC<CardOverviewSlideProps> = ({
@@ -41,13 +43,14 @@ const CardOverviewSlide: React.FC<CardOverviewSlideProps> = ({
   const balance = useSelector<RootState, number>(
     ({CARD}) => CARD.balances[primaryCard.id],
   );
-  const BrandFront =
-    (primaryCard.brand && BRANDS[primaryCard.brand]) || BRANDS.default;
+  const ProviderFront =
+    (primaryCard.provider && PROVIDERS[primaryCard.provider]) ||
+    PROVIDERS.default;
   const formattedBalance = format(balance, primaryCard.currency.code);
 
   return (
     <SlideContainer onTouchEnd={() => navigation.navigate('Settings', {slide})}>
-      <BrandFront
+      <ProviderFront
         balance={formattedBalance}
         nickname={primaryCard.nickname}
         fiat={primaryCard.currency.code}
