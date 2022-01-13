@@ -94,11 +94,11 @@ const CreateEncryptPassword = () => {
         logger.debug('Encrypting private key for: Wallet 1');
 
         key.encrypt(password);
-          await dispatch(
-              WalletActions.successEncryptOrDecryptPassword({
-                  key
-              }),
-          );
+        await dispatch(
+          WalletActions.successEncryptOrDecryptPassword({
+            key,
+          }),
+        );
         wallet.isPrivKeyEncrypted = key.isPrivKeyEncrypted();
         navigation.navigate('Wallet', {
           screen: 'WalletSettings',

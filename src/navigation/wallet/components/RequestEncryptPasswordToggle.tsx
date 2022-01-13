@@ -1,7 +1,10 @@
 import {AppActions} from '../../../store/app';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import React, {useEffect, useState} from 'react';
-import {KeyMethods, WalletObj} from '../../../store/wallet/wallet.models';
+import {
+  ExtendedKeyValues,
+  WalletObj,
+} from '../../../store/wallet/wallet.models';
 import {useNavigation} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../../store';
@@ -25,9 +28,8 @@ const RequestEncryptPasswordToggle = ({wallet}: {wallet: WalletObj}) => {
     !!wallet.isPrivKeyEncrypted,
   );
 
-  const keyMethods: KeyMethods | undefined = useSelector(
-    ({WALLET}: RootState) =>
-      WALLET.keyMethods.find(key => key.id === wallet.id),
+  const key: ExtendedKeyValues | undefined = useSelector(
+    ({WALLET}: RootState) => WALLET.keys.find(k => k.id === wallet.id),
   );
 
   useEffect(() => {
@@ -98,25 +100,26 @@ const RequestEncryptPasswordToggle = ({wallet}: {wallet: WalletObj}) => {
   };
 
   const onSubmitPassword = async (password: string) => {
-    if (keyMethods) {
+    if (key) {
       try {
-        keyMethods.decrypt(password);
+        key.decrypt(password);
         logger.debug('Key Decrypted');
         await dispatch(
           WalletActions.successEncryptOrDecryptPassword({
-            keyMethods: keyMethods,
+            key,
           }),
         );
         setPasswordToggle(false);
         dispatch(AppActions.dissmissDecryptPasswordModal());
       } catch (e) {
+        console.log(`Decrypt Error: ${e}`);
         await dispatch(AppActions.dissmissDecryptPasswordModal());
         wrongPasswordErr();
       }
     } else {
       dispatch(AppActions.dissmissDecryptPasswordModal());
       generalError();
-      logger.debug('Key Methods Error');
+      logger.debug('Missing Key Error');
     }
   };
 
