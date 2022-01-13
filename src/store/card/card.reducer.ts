@@ -15,12 +15,19 @@ export const cardReduxPersistBlacklist: Array<keyof CardState> = [
 ];
 
 export type FetchCardsStatus = 'success' | 'failed' | null;
+export type FetchOverviewStatus = 'success' | 'failed' | null;
 
 export interface CardState {
   cards: {
     [key in Network]: Card[];
   };
+  balances: {
+    [id: string]: number;
+  };
   fetchCardsStatus: FetchCardsStatus;
+  fetchOverviewStatus: {
+    [id: string]: FetchOverviewStatus;
+  };
   virtualDesignCurrency: VirtualDesignCurrency;
 }
 
@@ -29,7 +36,9 @@ const initialState: CardState = {
     [Network.mainnet]: [],
     [Network.testnet]: [],
   },
+  balances: {},
   fetchCardsStatus: null,
+  fetchOverviewStatus: {},
   virtualDesignCurrency: 'bitpay-b',
 };
 
@@ -69,6 +78,34 @@ export const cardReducer = (
       return {
         ...state,
         virtualDesignCurrency: action.payload,
+      };
+    case CardActionTypes.SUCCESS_FETCH_OVERVIEW:
+      return {
+        ...state,
+        fetchOverviewStatus: {
+          ...state.fetchOverviewStatus,
+          [action.payload.id]: 'success',
+        },
+        balances: {
+          ...state.balances,
+          [action.payload.id]: action.payload.balance,
+        },
+      };
+    case CardActionTypes.FAILED_FETCH_OVERVIEW:
+      return {
+        ...state,
+        fetchOverviewStatus: {
+          ...state.fetchOverviewStatus,
+          [action.payload.id]: 'failed',
+        },
+      };
+    case CardActionTypes.UPDATE_FETCH_OVERVIEW_STATUS:
+      return {
+        ...state,
+        fetchOverviewStatus: {
+          ...state.fetchOverviewStatus,
+          [action.payload.id]: action.payload.status,
+        },
       };
     default:
       return state;

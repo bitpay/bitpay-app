@@ -1,6 +1,6 @@
 import {Network} from '../../constants';
 import {Card} from './card.models';
-import {FetchCardsStatus} from './card.reducer';
+import {FetchCardsStatus, FetchOverviewStatus} from './card.reducer';
 import {
   CardActionType,
   CardActionTypes,
@@ -31,4 +31,28 @@ export const virtualDesignCurrencyUpdated = (
 ): CardActionType => ({
   type: CardActionTypes.VIRTUAL_DESIGN_CURRENCY_UPDATED,
   payload: currency,
+});
+
+export const successFetchOverview = ({
+  id,
+  balance,
+}: {
+  id: string;
+  balance: number;
+}): CardActionType => ({
+  type: CardActionTypes.SUCCESS_FETCH_OVERVIEW,
+  payload: {id, balance},
+});
+
+export const failedFetchOverview = (id: string): CardActionType => ({
+  type: CardActionTypes.FAILED_FETCH_OVERVIEW,
+  payload: {id},
+});
+
+export const updateFetchOverviewStatus = (
+  id: string,
+  status: FetchOverviewStatus,
+): CardActionType => ({
+  type: CardActionTypes.UPDATE_FETCH_OVERVIEW_STATUS,
+  payload: {id, status},
 });

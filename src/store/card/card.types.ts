@@ -1,6 +1,6 @@
 import {Network} from '../../constants';
 import {Card} from './card.models';
-import {FetchCardsStatus} from './card.reducer';
+import {FetchCardsStatus, FetchOverviewStatus} from './card.reducer';
 
 export type SupportedCurrencies =
   | 'BTC'
@@ -22,6 +22,9 @@ export enum CardActionTypes {
   FAILED_FETCH_CARDS = 'CARD/FAILED_FETCH_CARDS',
   UPDATE_FETCH_CARDS_STATUS = 'CARD/UPDATE_FETCH_CARDS_STATUS',
   VIRTUAL_DESIGN_CURRENCY_UPDATED = 'CARD/VIRTUAL_DESIGN_CURRENCY_UPDATED',
+  SUCCESS_FETCH_OVERVIEW = 'CARD/SUCCESS_FETCH_OVERVIEW',
+  FAILED_FETCH_OVERVIEW = 'CARD/FAILED_FETCH_OVERVIEW',
+  UPDATE_FETCH_OVERVIEW_STATUS = 'CARD/UPDATE_FETCH_OVERVIEW_STATUS',
 }
 
 interface SuccessFetchCards {
@@ -43,8 +46,26 @@ interface VirtualDesignCurrencyUpdated {
   payload: VirtualDesignCurrency;
 }
 
+interface SuccessFetchOverview {
+  type: CardActionTypes.SUCCESS_FETCH_OVERVIEW;
+  payload: {id: string; balance: number};
+}
+
+interface FailedFetchOverview {
+  type: CardActionTypes.FAILED_FETCH_OVERVIEW;
+  payload: {id: string};
+}
+
+interface UpdateFetchOverviewStatus {
+  type: CardActionTypes.UPDATE_FETCH_OVERVIEW_STATUS;
+  payload: {id: string; status: FetchOverviewStatus};
+}
+
 export type CardActionType =
   | SuccessFetchCards
   | FailedFetchCards
   | UpdateFetchCardsStatus
-  | VirtualDesignCurrencyUpdated;
+  | VirtualDesignCurrencyUpdated
+  | SuccessFetchOverview
+  | FailedFetchOverview
+  | UpdateFetchOverviewStatus;
