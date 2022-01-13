@@ -92,3 +92,5 @@ export interface KeyMethods {
   use0forBCH: any;
   use44forMultisig: any;
 }
+
+export interface ExtendedKeyValues extends KeyObj, KeyMethods {}

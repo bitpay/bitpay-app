@@ -40,8 +40,7 @@ export const startCreateWallet =
       dispatch(AppActions.dismissOnGoingProcessModal());
       dispatch(
         successCreateWallet({
-          key: key.toObj(),
-          keyMethods: key,
+          key: merge(key, key.toObj()),
           wallet: {
             id: key.id,
             assets: credentials,

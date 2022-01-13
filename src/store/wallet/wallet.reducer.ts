@@ -1,11 +1,11 @@
 import {
   ExchangeRate,
-  KeyMethods,
-  KeyObj,
+  ExtendedKeyValues,
   PriceHistory,
   WalletObj,
 } from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
+import merge from 'lodash.merge';
 
 type WalletReduxPersistBlackList = [];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
@@ -42,8 +42,7 @@ export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
 
 export interface WalletState {
   createdOn: number;
-  keys: KeyObj[];
-  keyMethods: KeyMethods[];
+  keys: ExtendedKeyValues[];
   wallets: {[key in string]: WalletObj};
   rates: {[key in string]: Array<ExchangeRate>};
   priceHistory: Array<PriceHistory>;
@@ -55,7 +54,6 @@ const initialState: WalletState = {
   wallets: {},
   rates: {},
   priceHistory: [],
-  keyMethods: [],
 };
 
 export const walletReducer = (
@@ -64,11 +62,10 @@ export const walletReducer = (
 ): WalletState => {
   switch (action.type) {
     case WalletActionTypes.SUCCESS_CREATE_WALLET:
-      const {key, wallet, keyMethods} = action.payload;
+      const {key, wallet} = action.payload;
       return {
         ...state,
         keys: [...state.keys, key],
-        keyMethods: [...state.keyMethods, keyMethods],
         wallets: {...state.wallets, [key.id]: wallet},
       };
 
@@ -117,14 +114,16 @@ export const walletReducer = (
       };
 
     case WalletActionTypes.SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD:
-      const {keyMethods: keyToUpdate} = action.payload;
+      const {key: keyToUpdate} = action.payload;
       const walletCopy = state.wallets[keyToUpdate.id];
       walletCopy.isPrivKeyEncrypted = !!keyToUpdate.isPrivKeyEncrypted();
 
       return {
         ...state,
         keys: state.keys.map(ko =>
-          ko.id === keyToUpdate.id ? keyToUpdate.toObj() : ko,
+          ko.id === keyToUpdate.id
+            ? merge(keyToUpdate, keyToUpdate.toObj())
+            : ko,
         ),
         wallets: {...state.wallets, [keyToUpdate.id]: walletCopy},
       };
