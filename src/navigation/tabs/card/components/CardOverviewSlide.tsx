@@ -1,7 +1,10 @@
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import React from 'react';
+import {useSelector} from 'react-redux';
 import styled from 'styled-components/native';
+import {RootState} from '../../../../store';
 import {VirtualDesignCurrency} from '../../../../store/card/card.types';
+import {format} from '../../../../utils/currency';
 import {CardStackParamList} from '../CardStack';
 import {OverviewSlide} from './CardDashboard';
 import MastercardFront from './CardFront.Mastercard';
@@ -29,30 +32,26 @@ const BRANDS = {
   Mastercard: MastercardFront,
 };
 
-const DEFAULTS = {
-  balance: '$9999.99',
-};
-
-const CardOverviewSlide: React.FC<CardOverviewSlideProps> = props => {
+const CardOverviewSlide: React.FC<CardOverviewSlideProps> = ({
+  designCurrency,
+  slide,
+}) => {
   const navigation = useNavigation<NavigationProp<CardStackParamList>>();
-
-  const {designCurrency, slide} = props;
   const primaryCard = slide.primaryCard;
-
+  const balance = useSelector<RootState, number>(
+    ({CARD}) => CARD.balances[primaryCard.id],
+  );
   const BrandFront =
     (primaryCard.brand && BRANDS[primaryCard.brand]) || BRANDS.default;
-  const formattedBalance = DEFAULTS.balance;
-  const nickname = primaryCard.nickname;
-  const fiatCurrency = primaryCard.currency.code;
-  const fiatSymbol = primaryCard.currency.symbol;
+  const formattedBalance = format(balance, primaryCard.currency.code);
 
   return (
     <SlideContainer onTouchEnd={() => navigation.navigate('Settings', {slide})}>
       <BrandFront
         balance={formattedBalance}
-        nickname={nickname}
-        fiat={fiatCurrency}
-        fiatSymbol={fiatSymbol}
+        nickname={primaryCard.nickname}
+        fiat={primaryCard.currency.code}
+        fiatSymbol={primaryCard.currency.symbol}
         designCurrency={designCurrency}
       />
     </SlideContainer>

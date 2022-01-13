@@ -1,8 +1,9 @@
-import React, {useMemo} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import Carousel from 'react-native-snap-carousel';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {WIDTH} from '../../../../components/styled/Containers';
 import {RootState} from '../../../../store';
+import {CardEffects} from '../../../../store/card';
 import {Card} from '../../../../store/card/card.models';
 import {VirtualDesignCurrency} from '../../../../store/card/card.types';
 import CardOverviewSlide from './CardOverviewSlide';
@@ -37,12 +38,23 @@ export class OverviewSlide {
 }
 
 const CardDashboard: React.FC<CardDashboardProps> = () => {
+  const dispatch = useDispatch();
   const cards = useSelector<RootState, Card[]>(
     ({APP, CARD}) => CARD.cards[APP.network],
   );
   const virtualDesignCurrency = useSelector<RootState, VirtualDesignCurrency>(
     ({CARD}) => CARD.virtualDesignCurrency,
   );
+
+  // TODO: this is a placeholder just to populate with some data
+  // TODO: build a graph query to initialize everything, then do ad-hoc updates
+  useEffect(() => {
+    const card = cards.find(c => c.provider === 'galileo');
+
+    if (card) {
+      dispatch(CardEffects.startFetchOverview(card.id));
+    }
+  }, [cards, dispatch]);
 
   const memoizedSlides = useMemo(() => {
     // sort galileo before firstView, then virtual before physical
