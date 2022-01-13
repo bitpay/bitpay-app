@@ -9,15 +9,10 @@ import {useNavigation} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../../store';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {FlatList} from 'react-native';
 import {WalletActions} from '../../../store/wallet';
-import styled from 'styled-components/native';
-import {BaseText} from '../../../components/styled/Text';
 import {useLogger} from '../../../utils/hooks/useLogger';
-
-const List = styled(BaseText)`
-  margin: 0 0 5px 10px;
-`;
+import {GeneralError, WrongPasswordError} from './DecryptErrorMessages';
+import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 
 const RequestEncryptPasswordToggle = ({wallet}: {wallet: WalletObj}) => {
   const navigation = useNavigation();
@@ -36,66 +31,9 @@ const RequestEncryptPasswordToggle = ({wallet}: {wallet: WalletObj}) => {
     setPasswordToggle(!!wallet.isPrivKeyEncrypted);
   }, [wallet.isPrivKeyEncrypted]);
 
-  const generalError = () => {
+  const showErrorMessage = (msg: BottomNotificationConfig) => {
     setTimeout(() => {
-      dispatch(
-        showBottomNotificationModal({
-          type: 'error',
-          title: 'Something went wrong',
-          message: 'Could not decrypt wallet.',
-          enableBackdropDismiss: true,
-          actions: [
-            {
-              text: 'OK',
-              action: () => {},
-              primary: true,
-            },
-          ],
-        }),
-      );
-    }, 500); // Wait to close Decrypt Password modal
-  };
-
-  const wrongPasswordList = [
-    {key: 'Try entering any passwords you may have set in the past'},
-    {
-      key: 'Remember there are no special requirements for the password (numbers, symbols, etc.)',
-    },
-    {
-      key: 'Keep in mind your encrypt password is not the 12-word recovery phrase',
-    },
-    {
-      key: 'You can always reset your encrypt password on your key settings under the option Clear Encrypt Password using your 12 words recovery phrase',
-    },
-  ];
-
-  const wrongPasswordErr = () => {
-    setTimeout(() => {
-      dispatch(
-        showBottomNotificationModal({
-          type: 'error',
-          title: 'Wrong password',
-          message: 'Forgot Password?',
-          enableBackdropDismiss: true,
-          actions: [
-            {
-              text: 'GOT IT',
-              action: () => {},
-              primary: true,
-            },
-          ],
-          list: (
-            <FlatList
-              data={wrongPasswordList}
-              renderItem={({item}) => (
-                <List>
-                  {'\u2022'} {item.key}
-                </List>
-              )}
-            />
-          ),
-        }),
-      );
+      dispatch(showBottomNotificationModal(msg));
     }, 500); // Wait to close Decrypt Password modal
   };
 
@@ -114,11 +52,11 @@ const RequestEncryptPasswordToggle = ({wallet}: {wallet: WalletObj}) => {
       } catch (e) {
         console.log(`Decrypt Error: ${e}`);
         await dispatch(AppActions.dissmissDecryptPasswordModal());
-        wrongPasswordErr();
+        showErrorMessage(WrongPasswordError());
       }
     } else {
       dispatch(AppActions.dissmissDecryptPasswordModal());
-      generalError();
+      showErrorMessage(GeneralError);
       logger.debug('Missing Key Error');
     }
   };
