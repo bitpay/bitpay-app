@@ -17,7 +17,7 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import {
   GeneralError,
   WrongPasswordError,
-} from '../components/DecryptErrorMessages';
+} from '../components/DecryptPasswordErrorMessages';
 
 const ExportKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -36,6 +36,14 @@ const ExportKeyParagraph = styled(Paragraph)`
 const QRCodeContainer = styled.View`
   align-items: center;
   margin: 20px 0;
+`;
+
+const QRBackground = styled.View`
+  background-color: ${({theme: {dark}}) => (dark ? '#C4C4C4' : 'transparent')};
+  width: 175px;
+  height: 175px;
+  justify-content: center;
+  align-items: center;
 `;
 
 const ExportKey = () => {
@@ -98,7 +106,12 @@ const ExportKey = () => {
   if (isPrivKeyEncrypted) {
     dispatch(
       AppActions.showDecryptPasswordModal({
-        contextHandler: onSubmitPassword,
+        onSubmitHandler: onSubmitPassword,
+        description:
+          'An encryption password is required when you’re sending crypto or managing settings. If you would like to disable this, go to your wallet settings.',
+        onCancelHandler: () => {
+          navigation.goBack();
+        },
       }),
     );
   }
@@ -120,7 +133,9 @@ const ExportKey = () => {
         </ExportKeyParagraph>
 
         <QRCodeContainer>
-          {code ? <QRCode value={code} size={150} /> : null}
+          <QRBackground>
+            {code ? <QRCode value={code} size={150} /> : null}
+          </QRBackground>
         </QRCodeContainer>
       </ScrollView>
     </ExportKeyContainer>
