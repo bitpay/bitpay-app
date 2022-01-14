@@ -24,15 +24,18 @@ export const GeneralError: BottomNotificationConfig = {
 
 export const WrongPasswordError = (): BottomNotificationConfig => {
   const wrongPasswordList = [
-    {key: 'Try entering any passwords you may have set in the past'},
+    {key: 1, desc: 'Try entering any passwords you may have set in the past'},
     {
-      key: 'Remember there are no special requirements for the password (numbers, symbols, etc.)',
+      key: 2,
+      desc: 'Remember there are no special requirements for the password (numbers, symbols, etc.)',
     },
     {
-      key: 'Keep in mind your encrypt password is not the 12-word recovery phrase',
+      key: 3,
+      desc: 'Keep in mind your encrypt password is not the 12-word recovery phrase',
     },
     {
-      key: 'You can always reset your encrypt password on your key settings under the option Clear Encrypt Password using your 12 words recovery phrase',
+      key: 4,
+      desc: 'You can always reset your encrypt password on your key settings under the option Clear Encrypt Password using your 12 words recovery phrase',
     },
   ];
 
@@ -53,7 +56,7 @@ export const WrongPasswordError = (): BottomNotificationConfig => {
         data={wrongPasswordList}
         renderItem={({item}) => (
           <List>
-            {'\u2022'} {item.key}
+            {'\u2022'} {item.desc}
           </List>
         )}
       />
