@@ -74,7 +74,7 @@ const RequestEncryptPasswordToggle = ({wallet}: {wallet: WalletObj}) => {
             AppActions.showDecryptPasswordModal({
               onSubmitHandler: onSubmitPassword,
               description:
-                'An encryption password is required when you’re sending crypto or managing settings. If you would like to disable this, go to your wallet settings.',
+                'To disable encryption for your wallet, please enter your encryption password below.',
             }),
           );
         }
