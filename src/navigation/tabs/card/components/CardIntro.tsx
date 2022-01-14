@@ -16,9 +16,9 @@ const CardIntro: React.FC = () => {
   const network = useSelector<RootState, Network>(({APP}) => APP.network);
 
   const onGetCardPress = async (context?: 'login' | 'createAccount') => {
-    const host = BASE_BITPAY_URLS[network];
+    const baseUrl = BASE_BITPAY_URLS[network];
     const path = 'wallet-card';
-    let url = `https://${host}/${path}`;
+    let url = `${baseUrl}/${path}`;
 
     if (context) {
       url += `?context=${context}`;
