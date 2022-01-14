@@ -2,7 +2,7 @@ import {StackScreenProps} from '@react-navigation/stack';
 import React from 'react';
 import {Switch, Text, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import {SUPPORTED_DESIGN_CURRENCIES} from '../../../../constants/config';
+import {SUPPORTED_DESIGN_CURRENCIES} from '../../../../constants/config.card';
 import {RootState} from '../../../../store';
 import {CardActions} from '../../../../store/card';
 import {VirtualDesignCurrency} from '../../../../store/card/card.types';
