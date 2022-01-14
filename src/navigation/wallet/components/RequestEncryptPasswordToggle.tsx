@@ -11,7 +11,7 @@ import {RootState} from '../../../store';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {WalletActions} from '../../../store/wallet';
 import {useLogger} from '../../../utils/hooks/useLogger';
-import {GeneralError, WrongPasswordError} from './DecryptErrorMessages';
+import {GeneralError, WrongPasswordError} from './DecryptPasswordErrorMessages';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 
 const RequestEncryptPasswordToggle = ({wallet}: {wallet: WalletObj}) => {
@@ -72,7 +72,9 @@ const RequestEncryptPasswordToggle = ({wallet}: {wallet: WalletObj}) => {
         } else {
           dispatch(
             AppActions.showDecryptPasswordModal({
-              contextHandler: onSubmitPassword,
+              onSubmitHandler: onSubmitPassword,
+              description:
+                'An encryption password is required when you’re sending crypto or managing settings. If you would like to disable this, go to your wallet settings.',
             }),
           );
         }
