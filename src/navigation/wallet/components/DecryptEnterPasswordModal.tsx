@@ -5,18 +5,19 @@ import {RootState} from '../../../store';
 import styled from 'styled-components/native';
 import {AppActions} from '../../../store/app';
 import {ScreenGutter, WIDTH} from '../../../components/styled/Containers';
-import {White} from '../../../styles/colors';
+import {LightBlack, White} from '../../../styles/colors';
 import * as yup from 'yup';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {Controller, useForm} from 'react-hook-form';
 import {useTheme} from '@react-navigation/native';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
+import {HeaderTitle, Paragraph} from '../../../components/styled/Text';
 
 const DecryptFormContainer = styled.View`
   justify-content: center;
   width: ${WIDTH - 16}px;
-  background-color: ${White};
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   border-radius: 10px;
   padding: ${ScreenGutter};
 `;
@@ -33,12 +34,23 @@ const PasswordInputContainer = styled.View`
   margin: 15px 0;
 `;
 
+const PasswordFormDescription = styled(Paragraph)`
+  color: ${({theme}) => theme.colors.text};
+  margin: 10px 0;
+`;
+
+const ActionContainer = styled.View`
+  margin: 5px 0;
+`;
+
 interface DecryptPasswordFieldValues {
   password: string;
 }
 
 export interface DecryptPasswordConfig {
-  contextHandler: (data: string) => void;
+  onSubmitHandler: (data: string) => void;
+  onCancelHandler?: () => void;
+  description?: string;
 }
 
 const DecryptEnterPasswordModal = () => {
@@ -49,6 +61,9 @@ const DecryptEnterPasswordModal = () => {
   const decryptPasswordConfig = useSelector(
     ({APP}: RootState) => APP.decryptPasswordConfig,
   );
+
+  const {onSubmitHandler, onCancelHandler, description} =
+    decryptPasswordConfig || {};
 
   const {
     control,
@@ -68,17 +83,18 @@ const DecryptEnterPasswordModal = () => {
 
   const dismissModal = () => {
     dispatch(AppActions.dissmissDecryptPasswordModal());
+    onCancelHandler && onCancelHandler();
   };
   const theme = useTheme();
 
   const onSubmit = ({password}: {password: string}) => {
-    decryptPasswordConfig?.contextHandler(password);
+    onSubmitHandler && onSubmitHandler(password);
   };
 
   return (
     <Modal
       isVisible={isVisible}
-      backdropOpacity={0.4}
+      backdropOpacity={0.8}
       animationIn={'fadeInUp'}
       animationOut={'fadeOutDown'}
       backdropTransitionOutTiming={0}
@@ -91,6 +107,11 @@ const DecryptEnterPasswordModal = () => {
       }}>
       <DecryptFormContainer>
         <PasswordFormContainer>
+          <HeaderTitle>Enter encryption password</HeaderTitle>
+
+          {description ? (
+            <PasswordFormDescription>{description}</PasswordFormDescription>
+          ) : null}
           <PasswordInputContainer>
             <Controller
               control={control}
@@ -98,7 +119,7 @@ const DecryptEnterPasswordModal = () => {
                 <BoxInput
                   theme={theme}
                   placeholder={'strongPassword123'}
-                  label={'ENTER ENCRYPT PASSWORD'}
+                  label={'PASSWORD'}
                   type={'password'}
                   onBlur={onBlur}
                   onChangeText={(text: string) => onChange(text)}
@@ -111,7 +132,14 @@ const DecryptEnterPasswordModal = () => {
             />
           </PasswordInputContainer>
 
-          <Button onPress={handleSubmit(onSubmit)}>Ok</Button>
+          <ActionContainer>
+            <Button onPress={handleSubmit(onSubmit)}>Continue</Button>
+          </ActionContainer>
+          <ActionContainer>
+            <Button onPress={dismissModal} buttonStyle={'secondary'}>
+              Cancel
+            </Button>
+          </ActionContainer>
         </PasswordFormContainer>
       </DecryptFormContainer>
     </Modal>
