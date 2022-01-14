@@ -40,8 +40,8 @@ const Img = styled.View<{isFirst: boolean}>`
   margin-left: ${({isFirst}) => (isFirst ? 0 : '-3px')};
 `;
 
-const CurrencyCardComponent = (
-  currencyList: ItemProps[],
+const AssetCardComponent = (
+  AssetsList: ItemProps[],
   value: number,
   show: boolean,
 ) => {
@@ -54,12 +54,12 @@ const CurrencyCardComponent = (
 
   const HeaderComponent = (
     <HeaderImg>
-      {currencyList &&
-        currencyList.map(
-          (currency, index) =>
-            currency && (
+      {AssetsList &&
+        AssetsList.map(
+          (asset, index) =>
+            asset && (
               <Img key={index} isFirst={index === 0 || index % 7 === 0}>
-                {currency.roundIcon(20)}
+                {asset.roundIcon(20)}
               </Img>
             ),
         )}
@@ -92,15 +92,15 @@ const CustomizeHome = () => {
       const {assets, totalBalance = 0, show} = wallet;
       const list = assets
         .map(({assetAbbreviation}) => assetAbbreviation)
-        .map(currency =>
+        .map(assetAbbreviation =>
           AssetSelectionOptions.find(
-            ({id}: {id: string | number}) => id === currency,
+            ({id}: {id: string | number}) => id === assetAbbreviation,
           ),
         );
 
       !!list.length &&
         cardsList.push(
-          CurrencyCardComponent(list as ItemProps[], totalBalance, !!show),
+          AssetCardComponent(list as ItemProps[], totalBalance, !!show),
         );
     });
   }
