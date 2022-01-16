@@ -56,6 +56,9 @@ import SwapCryptoStack, {
   SwapCryptoStackParamList,
 } from './navigation/services/swap-crypto/SwapCryptoStack';
 import IntroStack, {IntroStackParamList} from './navigation/intro/IntroStack';
+import WalletConnectStack, {
+  WalletConnectStackParamList,
+} from './navigation/wallet-connect/WalletConnectStack';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -73,6 +76,7 @@ export type RootStackParamList = {
   About: NavigatorScreenParams<AboutStackParamList>;
   BuyCrypto: NavigatorScreenParams<BuyCryptoStackParamList>;
   SwapCrypto: NavigatorScreenParams<SwapCryptoStackParamList>;
+  WalletConnect: NavigatorScreenParams<WalletConnectStackParamList>;
 };
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
@@ -92,6 +96,7 @@ export enum RootStacks {
   ABOUT = 'About',
   BUY_CRYPTO = 'BuyCrypto',
   SWAP_CRYPTO = 'SwapCrypto',
+  WALLET_CONNECT = 'WalletConnect',
 }
 // ROOT NAVIGATION CONFIG
 export type NavScreenParams = NavigatorScreenParams<
@@ -106,7 +111,8 @@ export type NavScreenParams = NavigatorScreenParams<
     AboutStackParamList &
     BuyCryptoStackParamList &
     SwapCryptoStackParamList &
-    ScanStackParamList
+    ScanStackParamList &
+    WalletConnectStackParamList
 >;
 
 declare global {
@@ -266,6 +272,10 @@ export default () => {
             <Root.Screen
               name={RootStacks.SWAP_CRYPTO}
               component={SwapCryptoStack}
+            />
+            <Root.Screen
+              name={RootStacks.WALLET_CONNECT}
+              component={WalletConnectStack}
             />
           </Root.Navigator>
           <OnGoingProcessModal />

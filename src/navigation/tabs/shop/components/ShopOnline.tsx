@@ -1,7 +1,7 @@
 import debounce from 'lodash.debounce';
 import React, {useMemo, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
-import {View} from 'react-native';
+import {Platform, View} from 'react-native';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import {WIDTH} from '../../../../components/styled/Containers';
@@ -37,9 +37,11 @@ interface CategoryWithIntegrations extends Category {
 }
 
 export const ShopOnline = ({
+  scrollViewRef,
   integrations,
   categories,
 }: {
+  scrollViewRef: any;
   integrations: DirectIntegrationApiObject[];
   categories: CategoryWithIntegrations[];
 }) => {
@@ -108,6 +110,15 @@ export const ShopOnline = ({
               }}
               value={value}
               type={'search'}
+              onFocus={() => {
+                scrollViewRef &&
+                  scrollViewRef.current &&
+                  scrollViewRef.current.scrollTo({
+                    x: 0,
+                    y: 170,
+                    animated: true,
+                  });
+              }}
             />
           )}
           name="search"

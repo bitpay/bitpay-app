@@ -3,7 +3,8 @@ import CustomizeHomeCard from '../../../../../components/customize-home-card/Cus
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../../store';
 import styled from 'styled-components/native';
-import {CurrencyList} from '../../../../../constants/AssetSelectionOptions';
+import {AssetSelectionOptions} from '../../../../../constants/AssetSelectionOptions';
+import {ItemProps} from '../../../../../components/list/AssetSelectorRow';
 
 const HeaderImg = styled.View`
   align-items: center;
@@ -39,9 +40,9 @@ const Img = styled.View<{isFirst: boolean}>`
   margin-left: ${({isFirst}) => (isFirst ? 0 : '-3px')};
 `;
 
-const CurrencyCardComponent = (
-  currencyList: string[],
-  price: string,
+const AssetCardComponent = (
+  AssetsList: ItemProps[],
+  value: number,
   show: boolean,
 ) => {
   /** TODO: Assign stored value */
@@ -51,18 +52,14 @@ const CurrencyCardComponent = (
     setChecked(!checked);
   };
 
-  const currencyInfo = currencyList.map(currency =>
-    CurrencyList.find(({id}: {id: string | number}) => id === currency),
-  );
-
   const HeaderComponent = (
     <HeaderImg>
-      {currencyInfo &&
-        currencyInfo.map(
-          (currency, index) =>
-            currency && (
+      {AssetsList &&
+        AssetsList.map(
+          (asset, index) =>
+            asset && (
               <Img key={index} isFirst={index === 0 || index % 7 === 0}>
-                {currency.roundIcon(20)}
+                {asset.roundIcon(20)}
               </Img>
             ),
         )}
@@ -74,8 +71,8 @@ const CurrencyCardComponent = (
       <CustomizeHomeCard
         header={HeaderComponent}
         body={{
-          header: 'My Everything Wallet',
-          price: `$ ${price}`,
+          title: 'My Everything Wallet',
+          value: `$ ${value}`,
         }}
         footer={{
           onCTAPress: _onCTAPress,
@@ -89,26 +86,23 @@ const CurrencyCardComponent = (
 const CustomizeHome = () => {
   const wallets = useSelector(({WALLET}: RootState) => WALLET.wallets);
   const cardsList: Array<ReactNode | null> = [];
-  const network = useSelector(({APP}: RootState) => APP.network);
 
   if (wallets) {
-    if (Object.keys(wallets).length) {
-      Object.values(wallets).forEach((wallet: any) => {
-        const {assets, totalBalance, show} = wallet;
-        if (assets) {
-          const currencyList: string[] = [];
-          assets.forEach(
-            (asset: any) =>
-              asset.network === network && currencyList.push(asset.coin),
-          );
-          if (currencyList.length) {
-            cardsList.push(
-              CurrencyCardComponent(currencyList, totalBalance, show),
-            );
-          }
-        }
-      });
-    }
+    Object.values(wallets).map(wallet => {
+      const {assets, totalBalance = 0, show} = wallet;
+      const list = assets
+        .map(({assetAbbreviation}) => assetAbbreviation)
+        .map(assetAbbreviation =>
+          AssetSelectionOptions.find(
+            ({id}: {id: string | number}) => id === assetAbbreviation,
+          ),
+        );
+
+      !!list.length &&
+        cardsList.push(
+          AssetCardComponent(list as ItemProps[], totalBalance, !!show),
+        );
+    });
   }
 
   return (
