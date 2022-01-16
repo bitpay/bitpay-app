@@ -25,6 +25,7 @@ export interface AppState {
   network: Network;
   baseBitPayURL: string;
   appIsLoading: boolean;
+  introCompleted: boolean;
   onboardingCompleted: boolean;
   showOnGoingProcessModal: boolean;
   onGoingProcessModalMessage: string | undefined;
@@ -52,6 +53,7 @@ const initialState: AppState = {
   network: APP_NETWORK,
   baseBitPayURL: BASE_BITPAY_URLS[Network.mainnet],
   appIsLoading: true,
+  introCompleted: false,
   onboardingCompleted: false,
   showOnGoingProcessModal: false,
   onGoingProcessModalMessage: OnGoingProcessMessages.GENERAL_AWAITING,
@@ -78,6 +80,12 @@ export const appReducer = (
       return {
         ...state,
         onboardingCompleted: true,
+      };
+
+    case AppActionTypes.SET_INTRO_COMPLETED:
+      return {
+        ...state,
+        introCompleted: true,
       };
 
     case AppActionTypes.SHOW_ONGOING_PROCESS_MODAL:

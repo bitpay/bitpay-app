@@ -134,6 +134,7 @@ export default () => {
   const onboardingCompleted = useSelector(
     ({APP}: RootState) => APP.onboardingCompleted,
   );
+  const introCompleted = useSelector(({APP}: RootState) => APP.introCompleted);
   const appColorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
   const currentRoute = useSelector(({APP}: RootState) => APP.currentRoute);
 
@@ -167,7 +168,9 @@ export default () => {
   // ROOT STACKS AND GLOBAL COMPONENTS
   const initialRoute = onboardingCompleted
     ? RootStacks.TABS
-    : RootStacks.ONBOARDING;
+    : introCompleted
+    ? RootStacks.ONBOARDING
+    : RootStacks.INTRO;
 
   return (
     <SafeAreaProvider>
