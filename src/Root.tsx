@@ -55,10 +55,12 @@ import BuyCryptoStack, {
 import SwapCryptoStack, {
   SwapCryptoStackParamList,
 } from './navigation/services/swap-crypto/SwapCryptoStack';
+import IntroStack, {IntroStackParamList} from './navigation/intro/IntroStack';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
   Auth: NavigatorScreenParams<AuthStackParamList>;
+  Intro: NavigatorScreenParams<IntroStackParamList>;
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
   Tabs: NavigatorScreenParams<TabsStackParamList>;
   BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
@@ -76,6 +78,7 @@ export type RootStackParamList = {
 export enum RootStacks {
   HOME = 'Home',
   AUTH = 'Auth',
+  INTRO = 'Intro',
   ONBOARDING = 'Onboarding',
   TABS = 'Tabs',
   BITPAY_ID = 'BitpayId',
@@ -217,6 +220,7 @@ export default () => {
             }}
             initialRouteName={initialRoute}>
             <Root.Screen name={RootStacks.AUTH} component={AuthStack} />
+            <Root.Screen name={RootStacks.INTRO} component={IntroStack} />
             <Root.Screen
               name={RootStacks.ONBOARDING}
               component={OnboardingStack}
