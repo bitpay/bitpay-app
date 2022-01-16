@@ -2,22 +2,23 @@ import {useTheme} from '@react-navigation/native';
 import React from 'react';
 import {Button, StyleProp, Text, TextStyle, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import {RootState} from '../../../store';
-import {AppEffects} from '../../../store/app';
+import {Network} from '../../../../constants';
+import {BASE_BITPAY_URLS} from '../../../../constants/config';
+import {RootState} from '../../../../store';
+import {AppEffects} from '../../../../store/app';
 
-const CardHome: React.FC = () => {
+const CardIntro: React.FC = () => {
   const dispatch = useDispatch();
   const theme = useTheme();
-  const network = useSelector(({APP}: RootState) => APP.network);
-
   const textStyle: StyleProp<TextStyle> = {
     color: theme.colors.text,
   };
+  const network = useSelector<RootState, Network>(({APP}) => APP.network);
 
   const onGetCardPress = async (context?: 'login' | 'createAccount') => {
-    const host = `${network === 'testnet' ? 'test.' : ''}bitpay.com`;
+    const baseUrl = BASE_BITPAY_URLS[network];
     const path = 'wallet-card';
-    let url = `https://${host}/${path}`;
+    let url = `${baseUrl}/${path}`;
 
     if (context) {
       url += `?context=${context}`;
@@ -38,4 +39,4 @@ const CardHome: React.FC = () => {
   );
 };
 
-export default CardHome;
+export default CardIntro;
