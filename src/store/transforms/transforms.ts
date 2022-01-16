@@ -1,5 +1,5 @@
 import {createTransform} from 'redux-persist';
-import {WalletObj} from '../wallet/wallet.models';
+import {ExtendedKeyValues, WalletObj} from '../wallet/wallet.models';
 import merge from 'lodash.merge';
 import {BwcProvider} from '../../lib/bwc';
 const BWCProvider = BwcProvider.getInstance();
@@ -28,6 +28,22 @@ export const bindWalletClient = createTransform(
         };
       }
 
+      return outboundState;
+    }
+    return _outboundState;
+  },
+);
+
+export const bindWalletKeys = createTransform(
+  inboundState => inboundState,
+  (_outboundState, k) => {
+    if (k === 'keys') {
+      const outboundState: ExtendedKeyValues[] = [];
+      for (const key of _outboundState as ExtendedKeyValues[]) {
+        console.log(`bindWalletKey - ${key.id}`);
+        const km = BWCProvider.createKey({seedType: 'object', seedData: key});
+        outboundState.push(merge(km, km.toObj()));
+      }
       return outboundState;
     }
     return _outboundState;

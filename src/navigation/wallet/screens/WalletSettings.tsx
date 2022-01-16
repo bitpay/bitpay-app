@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect} from 'react';
 import {BaseText, HeaderTitle, Link} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
@@ -103,7 +103,6 @@ const WalletSettings = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const assetsList = buildAssetList(wallet.assets);
-  const [showInfo, setShowInfo] = useState(false);
 
   useEffect(() => {
     navigation.setOptions({
@@ -164,10 +163,17 @@ const WalletSettings = () => {
             <WalletSettingsTitle>Request Encrypt Password</WalletSettingsTitle>
 
             <ToggleSwitch
-              onChange={value => {
-                setShowInfo(value);
+              onChange={() => {
+                if (!wallet.isPrivKeyEncrypted) {
+                  navigation.navigate('Wallet', {
+                    screen: 'CreateEncryptPassword',
+                    params: {wallet},
+                  });
+                } else {
+                  //  TODO: Decrypt Password
+                }
               }}
-              isEnabled={showInfo}
+              isEnabled={!!wallet.isPrivKeyEncrypted}
             />
           </SettingView>
 

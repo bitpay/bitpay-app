@@ -17,6 +17,7 @@ import AssetSettings from './screens/AssetSettings';
 import ImportWallet, {ImportWalletProps} from './screens/ImportWallet';
 import SelectWalletType from './screens/SelectWalletType';
 import {HeaderTitle} from '../../components/styled/Text';
+import CreateEncryptPassword from './screens/CreateEncryptPassword';
 
 export type WalletStackParamList = {
   SelectAssets: undefined;
@@ -29,6 +30,7 @@ export type WalletStackParamList = {
   AssetSettings: {asset: AssetRowProps};
   SelectWalletType: undefined;
   ImportWallet: ImportWalletProps;
+  CreateEncryptPassword: {wallet: WalletObj};
 };
 
 export enum WalletScreens {
@@ -42,6 +44,7 @@ export enum WalletScreens {
   ASSET_SETTINGS = 'AssetSettings',
   SELECT_WALLET_TYPE = 'SelectWalletType',
   IMPORT_WALLET = 'ImportWallet',
+  CREATE_ENCRYPT_PASSWORD = 'CreateEncryptPassword',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -108,6 +111,10 @@ const WalletStack = () => {
         <Wallet.Screen
           name={WalletScreens.SELECT_WALLET_TYPE}
           component={SelectWalletType}
+        />
+        <Wallet.Screen
+          name={WalletScreens.CREATE_ENCRYPT_PASSWORD}
+          component={CreateEncryptPassword}
         />
       </Wallet.Navigator>
     </>
