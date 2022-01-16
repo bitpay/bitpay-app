@@ -72,6 +72,8 @@ const OnboardingStack = () => {
       initialRouteName="OnboardingStart">
       <Onboarding.Screen
         options={{
+          headerLeft: () => null,
+          gestureEnabled: false,
           headerRight: () => (
             <HeaderRightContainer>
               <Button
