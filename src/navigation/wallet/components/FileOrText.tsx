@@ -7,43 +7,18 @@ import {
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import styled from 'styled-components/native';
-import {Action, Feather} from '../../../styles/colors';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import Haptic from '../../../components/haptic-feedback/haptic';
-import {BaseText} from '../../../components/styled/Text';
+import {
+  AdvancedOptionsContainer,
+  AdvancedOptionsButton,
+  AdvancedOptionsButtonText,
+  AdvancedOptions,
+} from '../../../components/styled/Containers';
 
 const InputContainer = styled.View`
   margin-top: -10px;
-`;
-
-const AdvancedOptionsButton = styled.TouchableOpacity`
-  height: 60px;
-  background-color: ${Feather};
-  padding: 18px;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  border-radius: 6px;
-`;
-
-const AdvancedOptionsButtonText = styled(BaseText)`
-  font-size: 16px;
-  line-height: 25px;
-  color: ${Action};
-`;
-
-const AdvancedOptionsContainer = styled.View`
-  background-color: ${Feather};
-  border-radius: 6px;
-  margin-bottom: 20px;
-`;
-
-const AdvancedOptions = styled.View`
-  border-style: solid;
-  border-top-width: 1px;
-  border-top-color: #e1e4e7;
-  padding: 18px;
 `;
 
 const FileOrText = () => {

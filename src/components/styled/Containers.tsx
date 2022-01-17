@@ -1,6 +1,6 @@
 import styled, {css} from 'styled-components/native';
 import {Dimensions} from 'react-native';
-import {NeutralSlate, SlateDark} from '../../styles/colors';
+import {Action, NeutralSlate, SlateDark, Feather} from '../../styles/colors';
 import {BaseText} from './Text';
 
 export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
@@ -167,4 +167,33 @@ export const InfoTriangle = styled.View`
   border-right-color: transparent;
   border-bottom-width: 12px;
   border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#f8f9fe')};
+`;
+
+export const AdvancedOptionsContainer = styled.View`
+  background-color: ${Feather};
+  border-radius: 6px;
+  margin-bottom: 20px;
+`;
+
+export const AdvancedOptionsButton = styled.TouchableOpacity`
+  height: 60px;
+  background-color: ${Feather};
+  padding: 18px;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 6px;
+`;
+
+export const AdvancedOptionsButtonText = styled(BaseText)`
+  font-size: 16px;
+  line-height: 25px;
+  color: ${Action};
+`;
+
+export const AdvancedOptions = styled.View`
+  border-style: solid;
+  border-top-width: 1px;
+  border-top-color: #e1e4e7;
+  padding: 18px;
 `;
