@@ -93,7 +93,7 @@ export default ({
               }
               key={listItem.displayName}
               onPress={() => console.log('press', listItem.displayName)}
-              underlayColor={itemUnderlayColor || 'white'}>
+              underlayColor={itemUnderlayColor || 'transparent'}>
               {itemComponent(listItem)}
             </ItemTouchableHighlight>
           ))}

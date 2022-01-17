@@ -12,10 +12,11 @@ import SuccessSvg from '../../../../assets/img/success.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
 import WarningSvg from '../../../../assets/img/warning.svg';
 import ErrorSvg from '../../../../assets/img/error.svg';
+import QuestionSvg from '../../../../assets/img/question.svg';
 import {sleep} from '../../../utils/helper-methods';
 
 export interface BottomNotificationConfig {
-  type: 'success' | 'info' | 'warning' | 'error';
+  type: 'success' | 'info' | 'warning' | 'error' | 'question';
   title: string;
   message: string;
   actions: Array<{
@@ -37,6 +38,7 @@ const notificationType = {
   info: () => <InfoSvg {...svgProps} />,
   warning: () => <WarningSvg {...svgProps} />,
   error: () => <ErrorSvg {...svgProps} />,
+  question: () => <QuestionSvg {...svgProps} />,
 };
 
 const BottomNotificationContainer = styled.View`

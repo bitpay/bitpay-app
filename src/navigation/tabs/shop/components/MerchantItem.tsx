@@ -31,9 +31,10 @@ interface MerchantNameProps {
 }
 
 const MerchantName = styled(H6)<MerchantNameProps>`
-  ${({marginTop}) =>
+  ${({headerMargin}) =>
     css`
-      margin-top: ${marginTop}px;
+      margin-top: ${headerMargin}px;
+      line-height: 18px;
     `}
 `;
 
@@ -67,7 +68,7 @@ export default ({
     <MerchantBox height={height} marginLeft={marginLeft} width={width}>
       <RemoteIcon icon={icon} height={26} />
       <MerchantName
-        marginTop={headerMargin}
+        headerMargin={headerMargin}
         numberOfLines={2}
         onTextLayout={onTextLayout}>
         {displayName}

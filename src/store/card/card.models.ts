@@ -12,6 +12,8 @@ export interface Card {
   disabled: boolean | null;
   id: string;
   lastFourDigits: string;
+  lockedByUser: boolean;
+  nickname: string;
   pagingSupport: boolean | null;
   provider: 'firstView' | 'galileo';
   status: 'active' | 'lost' | 'stolen' | 'canceled' | 'shipped' | string;

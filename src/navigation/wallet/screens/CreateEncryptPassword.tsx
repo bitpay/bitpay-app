@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
-import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import {useDispatch, useSelector} from 'react-redux';
@@ -80,25 +80,20 @@ const CreateEncryptPassword = () => {
     resolver: yupResolver(schema),
   });
 
-  const theme = useTheme();
   const dispatch = useDispatch();
   const [genericError, setGenericError] = useState<string>('');
   const key: ExtendedKeyValues | undefined = useSelector(
     ({WALLET}: RootState) => WALLET.keys.find(k => k.id === id),
   );
   const logger = useLogger();
-  const onSubmit = async ({password}: {password: string}) => {
+  const onSubmit = ({password}: {password: string}) => {
     try {
       if (key) {
         // TODO: Update wallet name
         logger.debug('Encrypting private key for: Wallet 1');
 
         key.encrypt(password);
-        await dispatch(
-          WalletActions.successEncryptOrDecryptPassword({
-            key,
-          }),
-        );
+        dispatch(WalletActions.successEncryptOrDecryptPassword({key}));
         wallet.isPrivKeyEncrypted = key.isPrivKeyEncrypted();
         navigation.navigate('Wallet', {
           screen: 'WalletSettings',
@@ -126,9 +121,9 @@ const CreateEncryptPassword = () => {
     <EncryptPasswordContainer>
       <ScrollView>
         <Paragraph>
-          Your wallet will be encrypted. Whenever you do a transaction, we will
-          ask for the encrypt password. The encrypt password cannot be
-          recovered, so be sure to safely store it.
+          Your wallet will be encrypted. Whenever you make a transaction, we
+          will ask for the password. This cannot be recovered, so be sure to
+          store it safely.
         </Paragraph>
 
         <PasswordFormContainer>
@@ -138,7 +133,6 @@ const CreateEncryptPassword = () => {
               control={control}
               render={({field: {onChange, onBlur, value}}) => (
                 <BoxInput
-                  theme={theme}
                   placeholder={'strongPassword123'}
                   label={'ENCRYPT PASSWORD'}
                   type={'password'}
@@ -158,7 +152,6 @@ const CreateEncryptPassword = () => {
               control={control}
               render={({field: {onChange, onBlur, value}}) => (
                 <BoxInput
-                  theme={theme}
                   placeholder={'strongPassword123'}
                   label={'CONFIRM ENCRYPT PASSWORD'}
                   type={'password'}
