@@ -4,14 +4,17 @@ import {
   baseNavigatorOptions,
   baseScreenOptions,
 } from '../../../constants/NavigationOptions';
-import CardHome from './CardHome';
+import CardHome, {CardHomeScreenParamList} from './screens/CardHome';
+import CardSettings, {CardSettingsParamList} from './screens/CardSettings';
 
 export type CardStackParamList = {
-  Home: undefined;
+  Home: CardHomeScreenParamList;
+  Settings: CardSettingsParamList;
 };
 
 export enum CardScreens {
   HOME = 'Home',
+  SETTINGS = 'Settings',
 }
 
 const Card = createStackNavigator<CardStackParamList>();
@@ -29,6 +32,13 @@ const CardStack = () => {
         component={CardHome}
         options={{
           title: 'Card',
+        }}
+      />
+      <Card.Screen
+        name={CardScreens.SETTINGS}
+        component={CardSettings}
+        options={{
+          title: 'Settings',
         }}
       />
     </Card.Navigator>

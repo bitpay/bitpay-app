@@ -37,12 +37,12 @@ const RequestEncryptPasswordToggle = ({wallet}: {wallet: WalletObj}) => {
     }, 500); // Wait to close Decrypt Password modal
   };
 
-  const onSubmitPassword = async (password: string) => {
+  const onSubmitPassword = (password: string) => {
     if (key) {
       try {
         key.decrypt(password);
         logger.debug('Key Decrypted');
-        await dispatch(
+        dispatch(
           WalletActions.successEncryptOrDecryptPassword({
             key,
           }),
@@ -51,7 +51,7 @@ const RequestEncryptPasswordToggle = ({wallet}: {wallet: WalletObj}) => {
         dispatch(AppActions.dissmissDecryptPasswordModal());
       } catch (e) {
         console.log(`Decrypt Error: ${e}`);
-        await dispatch(AppActions.dissmissDecryptPasswordModal());
+        dispatch(AppActions.dissmissDecryptPasswordModal());
         showErrorMessage(WrongPasswordError());
       }
     } else {
@@ -74,7 +74,7 @@ const RequestEncryptPasswordToggle = ({wallet}: {wallet: WalletObj}) => {
             AppActions.showDecryptPasswordModal({
               onSubmitHandler: onSubmitPassword,
               description:
-                'An encryption password is required when you’re sending crypto or managing settings. If you would like to disable this, go to your wallet settings.',
+                'To disable encryption for your wallet, please enter your encryption password below.',
             }),
           );
         }

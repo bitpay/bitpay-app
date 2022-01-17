@@ -9,7 +9,6 @@ import {LightBlack, White} from '../../../styles/colors';
 import * as yup from 'yup';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {Controller, useForm} from 'react-hook-form';
-import {useTheme} from '@react-navigation/native';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
 import {HeaderTitle, Paragraph} from '../../../components/styled/Text';
@@ -85,7 +84,6 @@ const DecryptEnterPasswordModal = () => {
     dispatch(AppActions.dissmissDecryptPasswordModal());
     onCancelHandler && onCancelHandler();
   };
-  const theme = useTheme();
 
   const onSubmit = ({password}: {password: string}) => {
     onSubmitHandler && onSubmitHandler(password);
@@ -117,7 +115,6 @@ const DecryptEnterPasswordModal = () => {
               control={control}
               render={({field: {onChange, onBlur, value}}) => (
                 <BoxInput
-                  theme={theme}
                   placeholder={'strongPassword123'}
                   label={'PASSWORD'}
                   type={'password'}
