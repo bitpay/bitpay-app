@@ -1,10 +1,17 @@
-import {Asset} from '../../../../store/wallet/wallet.models';
-import {AssetSelectionOptions} from '../../../../constants/AssetSelectionOptions';
-import HomeCard from '../../../../components/home-card/HomeCard';
 import React from 'react';
 import styled from 'styled-components/native';
+import {AssetSelectionOptions} from '../../../../constants/AssetSelectionOptions';
+import HomeCard from '../../../../components/home-card/HomeCard';
 import {BaseText} from '../../../../components/styled/Text';
+import {Asset} from '../../../../store/wallet/wallet.models';
 import {Slate} from '../../../../styles/colors';
+import {format} from '../../../../utils/currency';
+
+interface WalletCardComponentProps {
+  assets: Asset[];
+  totalBalance: number;
+  onPress: () => void;
+}
 
 const HeaderImg = styled.View`
   align-items: center;
@@ -33,14 +40,10 @@ const RemainingAssetsLabel = styled(BaseText)`
 const ASSET_DISPLAY_LIMIT = 4;
 const ICON_SIZE = 25;
 
-const WalletCardComponent = ({
+const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   assets,
   totalBalance,
   onPress,
-}: {
-  assets: Asset[];
-  totalBalance: number;
-  onPress: () => void;
 }) => {
   const assetInfo = assets
     .slice(0, ASSET_DISPLAY_LIMIT)
@@ -58,15 +61,14 @@ const WalletCardComponent = ({
 
   const HeaderComponent = (
     <HeaderImg>
-      {assetInfo &&
-        assetInfo.map(
-          (asset, index) =>
-            asset && (
-              <Img key={index} isFirst={index === 0} size={ICON_SIZE + 'px'}>
-                {asset.roundIcon(ICON_SIZE)}
-              </Img>
-            ),
-        )}
+      {assetInfo.map(
+        (asset, index) =>
+          asset && (
+            <Img key={index} isFirst={index === 0} size={ICON_SIZE + 'px'}>
+              {asset.roundIcon(ICON_SIZE)}
+            </Img>
+          ),
+      )}
       {remainingAssetCount && (
         <RemainingAssetsLabel>
           + {remainingAssetCount} more
@@ -75,13 +77,12 @@ const WalletCardComponent = ({
     </HeaderImg>
   );
 
-  return (
-    <HomeCard
-      header={HeaderComponent}
-      body={{title: 'My Everything Wallet', value: `$${totalBalance}`}}
-      onCTAPress={onPress}
-    />
-  );
+  const body = {
+    title: 'My Everything Wallet',
+    value: format(totalBalance, 'USD'),
+  };
+
+  return <HomeCard header={HeaderComponent} body={body} onCTAPress={onPress} />;
 };
 
 export default WalletCardComponent;

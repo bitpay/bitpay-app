@@ -17,16 +17,15 @@ const HeaderComponent = (
 );
 
 const ConnectCoinbase = () => {
-  const _onCTAPress = () => {
+  const onCTAPress = () => {
     /** TODO: Redirect me */
   };
+
   return (
     <HomeCard
       header={HeaderComponent}
       body={{description: 'Connect your Coinbase account'}}
-      footer={{
-        onCTAPress: _onCTAPress,
-      }}
+      onCTAPress={onCTAPress}
     />
   );
 };

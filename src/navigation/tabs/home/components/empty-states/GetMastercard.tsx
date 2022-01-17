@@ -9,6 +9,8 @@ import {RootState} from '../../../../../store';
 import {Card} from '../../../../../store/card/card.models';
 import {format} from '../../../../../utils/currency';
 
+const BgImage = () => <BitPayBLogoBg />;
+
 const HeaderImg = styled.View`
   width: 60px;
   height: 30px;
@@ -42,18 +44,12 @@ const GetMastercard: React.FC = () => {
         description: 'Get the BitPay prepaid Mastercard®',
       };
 
-  const onCTAPress = () => {
-    navigation.navigate('Card', {
-      screen: 'Home',
-    });
-  };
-
   return (
     <HomeCard
-      backgroundImg={() => <BitPayBLogoBg />}
+      backgroundImg={BgImage}
       header={HeaderComponent}
       body={body}
-      onCTAPress={onCTAPress}
+      onCTAPress={() => navigation.navigate('Card', {screen: 'Home'})}
     />
   );
 };
