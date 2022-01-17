@@ -1,7 +1,7 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useMemo} from 'react';
 import {useSelector} from 'react-redux';
-import {RootState} from '../../../../store';
+import {RootState} from '../../../store';
 import {CardStackParamList} from '../CardStack';
 import CardDashboard from '../components/CardDashboard';
 import CardIntro from '../components/CardIntro';

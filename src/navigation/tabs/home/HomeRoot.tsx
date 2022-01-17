@@ -131,7 +131,6 @@ const HomeRoot = () => {
         {/* ////////////////////////////// PORTFOLIO BALANCE */}
         <PortfolioBalance />
 
-        {/* ////////////////////////////// CARDS CAROUSEL */}
         <SectionHeaderContainer justifyContent={'flex-end'}>
           <TouchableOpacity
             activeOpacity={ActiveOpacity}
@@ -144,6 +143,8 @@ const HomeRoot = () => {
             <HomeLink>Customize</HomeLink>
           </TouchableOpacity>
         </SectionHeaderContainer>
+
+        {/* ////////////////////////////// CARDS CAROUSEL */}
         <CardsCarousel />
 
         {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}

@@ -1,6 +1,6 @@
 import React from 'react';
 import * as Svg from 'react-native-svg';
-import {VirtualDesignCurrency} from '../../../../store/card/card.types';
+import {VirtualDesignCurrency} from '../../../store/card/card.types';
 import BCHShape from '../svgs/currency-shapes/BCH-shape.svg';
 import BitPayBShape from '../svgs/currency-shapes/bitpay-b-shape.svg';
 import BTCShape from '../svgs/currency-shapes/BTC-shape.svg';

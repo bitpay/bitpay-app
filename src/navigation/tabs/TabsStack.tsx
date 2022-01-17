@@ -4,7 +4,6 @@ import {NavigatorScreenParams} from '@react-navigation/native';
 
 import HomeRoot from './home/HomeStack';
 import ShopRoot from './shop/ShopStack';
-import CardRoot from './card/CardStack';
 import SettingsRoot from './settings/SettingsStack';
 import {SettingsStackParamList} from './settings/SettingsStack';
 
@@ -13,8 +12,6 @@ import HomeIcon from '../../../assets/img/tab-icons/home.svg';
 import HomeFocusedIcon from '../../../assets/img/tab-icons/home-focused.svg';
 import ShopIcon from '../../../assets/img/tab-icons/shop.svg';
 import ShopFocusedIcon from '../../../assets/img/tab-icons/shop-focused.svg';
-import CardIcon from '../../../assets/img/tab-icons/card.svg';
-import CardFocusedIcon from '../../../assets/img/tab-icons/card-focused.svg';
 import SettingsIcon from '../../../assets/img/tab-icons/settings.svg';
 import SettingsFocusedIcon from '../../../assets/img/tab-icons/settings-focused.svg';
 import TransactButtonIcon from '../../../assets/img/tab-icons/transact-button.svg';
@@ -27,8 +24,6 @@ const Icons: {[key: string]: React.FC<SvgProps>} = {
   HomeFocused: HomeFocusedIcon,
   Shop: ShopIcon,
   ShopFocused: ShopFocusedIcon,
-  Card: CardIcon,
-  CardFocused: CardFocusedIcon,
   Settings: SettingsIcon,
   SettingsFocused: SettingsFocusedIcon,
   TransactButton: TransactButtonIcon,
@@ -38,7 +33,6 @@ export enum TabsScreens {
   HOME = 'Home',
   SHOP = 'Shop',
   TRANSACT_BUTTON = 'TransactButton',
-  CARD = 'Card',
   SETTINGS = 'Settings',
   CAMERA = 'Camera',
 }
@@ -47,7 +41,6 @@ export type TabsStackParamList = {
   Home: undefined;
   Shop: undefined;
   TransactButton: undefined;
-  Card: undefined;
   Settings: NavigatorScreenParams<SettingsStackParamList> | undefined;
   Camera: undefined;
 };
@@ -82,7 +75,6 @@ const TabsStack = () => {
         component={TransactionButton}
         options={{tabBarButton: () => <TransactModal />}}
       />
-      <Tab.Screen name={TabsScreens.CARD} component={CardRoot} />
       <Tab.Screen name={TabsScreens.SETTINGS} component={SettingsRoot} />
     </Tab.Navigator>
   );

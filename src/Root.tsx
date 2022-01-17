@@ -24,6 +24,7 @@ import analytics from '@segment/analytics-react-native';
 import BitpayIdStack, {
   BitpayIdStackParamList,
 } from './navigation/bitpay-id/BitpayIdStack';
+import CardStack, {CardStackParamList} from './navigation/card/CardStack';
 import OnboardingStack, {
   OnboardingStackParamList,
 } from './navigation/onboarding/OnboardingStack';
@@ -66,6 +67,7 @@ export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabsStackParamList>;
   BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
   Wallet: NavigatorScreenParams<WalletStackParamList>;
+  Card: NavigatorScreenParams<CardStackParamList>;
   Scan: NavigatorScreenParams<ScanStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
   SecuritySettings: NavigatorScreenParams<SecuritySettingsStackParamList>;
@@ -84,7 +86,9 @@ export enum RootStacks {
   TABS = 'Tabs',
   BITPAY_ID = 'BitpayId',
   WALLET = 'Wallet',
+  CARD = 'Card',
   SCAN = 'Scan',
+
   // SETTINGS
   GENERAL_SETTINGS = 'GeneralSettings',
   SECURITY_SETTINGS = 'SecuritySettings',
@@ -95,12 +99,14 @@ export enum RootStacks {
   SWAP_CRYPTO = 'SwapCrypto',
   WALLET_CONNECT = 'WalletConnect',
 }
+
 // ROOT NAVIGATION CONFIG
 export type NavScreenParams = NavigatorScreenParams<
   AuthStackParamList &
     OnboardingStackParamList &
     BitpayIdStackParamList &
     WalletStackParamList &
+    CardStackParamList &
     GeneralSettingsStackParamList &
     SecuritySettingsStackParamList &
     ContactSettingsStackParamList &
@@ -239,7 +245,9 @@ export default () => {
               component={BitpayIdStack}
             />
             <Root.Screen name={RootStacks.WALLET} component={WalletStack} />
+            <Root.Screen name={RootStacks.CARD} component={CardStack} />
             <Root.Screen name={RootStacks.SCAN} component={ScanStack} />
+
             {/* SETTINGS */}
             <Root.Screen
               name={RootStacks.GENERAL_SETTINGS}
