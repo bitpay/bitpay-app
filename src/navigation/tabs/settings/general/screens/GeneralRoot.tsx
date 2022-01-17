@@ -1,7 +1,7 @@
 import React from 'react';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import Button from '../../../../../components/button/Button';
-import {useNavigation, useTheme} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../../store';
 import {
@@ -10,14 +10,11 @@ import {
   SettingTitle,
 } from '../../../../../components/styled/Containers';
 import AngleRight from '../../../../../../assets/img/angle-right.svg';
-import {StyleProp, TextStyle} from 'react-native';
 import {useTranslation} from 'react-i18next';
 
 const GeneralSettingsRoot: React.FC = () => {
   const navigation = useNavigation();
   const colorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
-  const theme = useTheme();
-  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
   const {t} = useTranslation();
 
   return (
@@ -28,15 +25,15 @@ const GeneralSettingsRoot: React.FC = () => {
           onPress={() =>
             navigation.navigate('GeneralSettings', {screen: 'LanguageSettings'})
           }>
-          <SettingTitle style={textStyle}>{t('Language')}</SettingTitle>
+          <SettingTitle>{t('Language')}</SettingTitle>
           <AngleRight />
         </Setting>
-        <Hr isDark={theme.dark} />
+        <Hr />
         <Setting
           onPress={() =>
             navigation.navigate('GeneralSettings', {screen: 'Theme'})
           }>
-          <SettingTitle style={textStyle}>{t('Theme')}</SettingTitle>
+          <SettingTitle>{t('Theme')}</SettingTitle>
           <Button
             buttonType={'pill'}
             onPress={() =>
@@ -54,7 +51,7 @@ const GeneralSettingsRoot: React.FC = () => {
           onPress={() =>
             navigation.navigate('GeneralSettings', {screen: 'CustomizeHome'})
           }>
-          <SettingTitle style={textStyle}>{t('Customize Home')}</SettingTitle>
+          <SettingTitle>{t('Customize Home')}</SettingTitle>
           <AngleRight />
         </Setting>
         <Hr />
