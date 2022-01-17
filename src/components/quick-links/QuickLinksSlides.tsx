@@ -4,7 +4,6 @@ import styled from 'styled-components/native';
 import haptic from '../haptic-feedback/haptic';
 import {ScreenGutter, WIDTH} from '../styled/Containers';
 import QuickLinkCard from './QuickLinksCard';
-import {Theme} from '@react-navigation/native';
 
 export interface QuickLinkProps {
   id: string;
@@ -13,7 +12,6 @@ export interface QuickLinkProps {
   description?: string;
   link?: string;
   onPress: () => void;
-  theme: Theme;
 }
 
 interface QuickLinkSlide {

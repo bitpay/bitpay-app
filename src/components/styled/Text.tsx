@@ -50,6 +50,7 @@ export const H7 = styled(BaseText)`
   font-weight: 400;
   line-height: 18px;
   letter-spacing: 0;
+  color: ${props => props.theme.colors.text};
 `;
 
 export const SubText = styled(H7)`
@@ -62,6 +63,7 @@ export const Paragraph = styled(BaseText)`
   font-weight: 400;
   line-height: 25px;
   letter-spacing: 0;
+  color: ${props => props.theme.colors.text};
 `;
 
 export const Disclaimer = styled(BaseText)`
@@ -76,9 +78,10 @@ export const Disclaimer = styled(BaseText)`
 export const HeaderTitle = styled(BaseText)`
   font-size: 18px;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 30px;
   letter-spacing: 0;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 export const HeaderSubtitle = styled(BaseText)`
@@ -97,12 +100,12 @@ export const TextAlign = styled.Text<TextAlignProps>`
     `}
 `;
 
-export const Link = styled(BaseText)<{isDark: boolean}>`
+export const Link = styled(BaseText)`
   font-size: 16px;
   line-height: 25px;
   font-weight: 400;
-  color: ${({isDark}) => (isDark ? White : Action)};
-  text-decoration: ${({isDark}) => (isDark ? 'underline' : 'none')};
+  color: ${({theme: {dark}}) => (dark ? White : Action)};
+  text-decoration: ${({theme: {dark}}) => (dark ? 'underline' : 'none')};
   text-decoration-color: ${White};
 `;
 

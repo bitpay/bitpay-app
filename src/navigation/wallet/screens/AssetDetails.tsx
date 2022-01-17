@@ -43,7 +43,7 @@ const Chain = styled(BaseText)`
   line-height: 40px;
 `;
 
-const WalletOverview = () => {
+const AssetDetails = () => {
   const route = useRoute<RouteProp<WalletStackParamList, 'AssetDetails'>>();
   const navigation = useNavigation();
   const [showAssetOptions, setShowAssetOptions] = useState(false);
@@ -90,7 +90,6 @@ const WalletOverview = () => {
     },
   ];
 
-  console.log(asset);
   const {cryptoBalance, fiatBalance, assetAbbreviation} = asset;
   return (
     <AssetDetailsContainer>
@@ -116,4 +115,4 @@ const WalletOverview = () => {
   );
 };
 
-export default WalletOverview;
+export default AssetDetails;

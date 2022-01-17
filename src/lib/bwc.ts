@@ -16,16 +16,9 @@ interface KeyOpts {
 export class BwcProvider {
   static instance: BwcProvider;
   static API = BWC;
-  private readonly client;
 
   constructor() {
     console.log('BWC instance created');
-    this.client = new BWC({
-      baseUrl: 'https://bws.bitpay.com/bws/api',
-      verbose: true,
-      timeout: 100000,
-      transports: ['polling'],
-    });
   }
   // creating singleton
   public static getInstance(): BwcProvider {
@@ -35,8 +28,19 @@ export class BwcProvider {
     return BwcProvider.instance;
   }
 
-  public getClient() {
-    return this.client;
+  public getClient(credentials?: string) {
+    const bwc = new BWC({
+      baseUrl: 'https://bws.bitpay.com/bws/api',
+      verbose: true,
+      timeout: 100000,
+      transports: ['polling'],
+    });
+
+    if (credentials) {
+      bwc.fromString(credentials);
+    }
+
+    return bwc;
   }
 
   public createKey(opts: KeyOpts) {

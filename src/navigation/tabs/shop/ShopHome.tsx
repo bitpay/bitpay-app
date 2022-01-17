@@ -82,7 +82,8 @@ const ShopHome = () => {
     categoriesHeight +
     searchBarHeight;
 
-  const integrationsScrollViewHeight = categoriesWitIntegrations.length * 273;
+  const integrationsScrollViewHeight =
+    categoriesWitIntegrations.length * 273 + 350;
 
   const [scrollViewHeight, setScrollViewHeight] = useState(
     giftCardScrollViewHeight,
@@ -104,6 +105,7 @@ const ShopHome = () => {
   const memoizedShopOnline = useCallback(
     () => (
       <ShopOnline
+        scrollViewRef={scrollViewRef}
         integrations={integrations}
         categories={categoriesWitIntegrations}
       />

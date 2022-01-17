@@ -17,7 +17,95 @@ export const cardFields = `
   disabled,
   activationDate,
   cardType,
-  pagingSupport
+  pagingSupport,
+  nickname,
+  lockedByUser,
+`;
+
+const transactionFields = `
+  id
+  dates {
+    auth
+    post
+  }
+  provider
+  amount
+  currency
+  fees {
+    amount
+    currency
+    type
+  }
+  feesTotal
+  status
+  type
+  description
+  merchant {
+    merchantName
+    merchantCity
+    merchantState
+  }
+  displayMerchant
+  displayPrice
+`;
+
+const topUpFields = `
+  id
+  invoice {
+    id
+    status
+    merchantStatus
+    exceptionStatus
+    active
+    buyerEmailAddress
+    currency {
+      name
+      code
+      symbol
+      precision
+      decimals
+    }
+    price
+    confirmed
+    orderId
+    itemDesc
+    itemCode
+    invoiceTime
+    paymentDisplayAmountPaid
+    paymentDisplayTotals
+    paymentDisplaySubTotals
+    paymentDisplayUnderpaidAmount
+    paymentDisplayOverpaidAmount
+    paymentDisplayDeclinedAmount
+    exchangeRate
+    transactionCurrency {
+      name
+      code
+      symbol
+      precision
+      decimals
+    }
+    txId
+    merchant {
+      numericId
+      merchantName
+    }
+    isRefunded
+    refundType
+    networkCost
+  }
+  amount
+  appliedDate
+  debitCard
+  user
+  provider
+  pending
+  displayMerchant {
+    merchantName
+    merchantCity
+    merchantState
+  }
+  referralId
 `;
 
 export const FETCH_CARDS = (token: string): GqlQueryParams => {
@@ -39,7 +127,7 @@ export const FETCH_CARDS = (token: string): GqlQueryParams => {
 export const FETCH_CARD = (token: string, id: string): GqlQueryParams => {
   return {
     query: `
-      query START_GET_CARD($token:String!, $csrf:String, $id:String!) {
+      query FETCH_CARD($token:String!, $csrf:String, $id:String!) {
         user:bitpayUser(token:$token, csrf:$csrf) {
           card:debitCard(cardId:$id) {
             ${cardFields}
@@ -54,9 +142,74 @@ export const FETCH_CARD = (token: string, id: string): GqlQueryParams => {
   };
 };
 
+/**
+ * Warning! This is a heavy operation so call it only when necessary. Particularly
+ * the balance and transaction data since we need to reach out to the provider.
+ * Topups are fetched locally so they are relatively light.
+ * @returns Overview data for the given card ID including balance and
+ * pending/settled transaction and topup activity.
+ */
+const FETCH_OVERVIEW = (
+  token: string,
+  id: string,
+  options: any = {},
+): GqlQueryParams => {
+  const {pageSize, pageNumber, startDate, endDate} = options;
+
+  return {
+    query: `
+      query FETCH_OVERVIEW($token:String!, $csrf:String, $cardId:String!, $pageSize:Int, $pageNumber:Int, $startDate:String, $endDate:String, $credited:Boolean!) {
+        user:bitpayUser(token:$token, csrf:$csrf) {
+          card:debitCard(cardId:$cardId) {
+            id
+            balance:cardBalance
+            overview:activityOverview(pageSize:$pageSize, pageNumber:$pageNumber,startDate: $startDate, endDate:$endDate) {
+              dateAccountOpened
+              pendingTransactions {
+                ${transactionFields}
+              },
+              settledTransactions {
+                currentPageNumber
+                totalPageCount
+                totalRecordCount
+                transactionList {
+                  ${transactionFields}
+                }
+              }
+            }
+          }
+          cards:debitCards {
+            id
+            topUpHistory(startDate:$startDate, endDate:$endDate, credited:$credited) {
+              ${topUpFields}
+            }
+          }
+        }
+      }
+    `,
+    variables: {
+      token,
+      cardId: id,
+      pageSize,
+      pageNumber,
+      startDate,
+      endDate,
+
+      /**
+       * Filter topup records based on whether the topup has only been
+       * submitted or successfully credited. There will be an unavoidable
+       * network delay between when a topup has been credited in our records
+       * vs when it has been applied and will appear in the provider transactions.
+       */
+      credited: false,
+    },
+  };
+};
+
 const CardQueries = {
   FETCH_CARDS,
   FETCH_CARD,
+  FETCH_OVERVIEW,
 };
 
 export default CardQueries;

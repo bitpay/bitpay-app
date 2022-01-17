@@ -1,4 +1,4 @@
-import {WalletOptions} from '../../wallet.models';
+import {Asset, KeyMethods, WalletOptions} from '../../wallet.models';
 import {Effect} from '../../../index';
 import {startOnGoingProcessModal} from '../../../app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
@@ -7,6 +7,8 @@ import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {AppActions} from '../../../app';
 import {WalletActions} from '../../index';
 import {BwcProvider} from '../../../../lib/bwc';
+import merge from 'lodash.merge';
+import {buildAssetObj} from '../../utils/asset';
 
 export const normalizeMnemonic = (words: string): string => {
   if (!words || !words.indexOf) {
@@ -32,24 +34,22 @@ export const startImportMnemonic =
     try {
       words = normalizeMnemonic(words);
       opts.words = words;
-      const credentials: Array<Credentials & {tokens?: any}> = [];
 
-      const {key, walletClients} = await importWalletCredentials(opts);
-      // @ts-ignore
-      walletClients.forEach(walletClient => {
-        credentials.push(walletClient.credentials);
-      });
+      const {key, assets} = await importWalletCredentials(opts);
 
       dispatch(AppActions.dismissOnGoingProcessModal());
 
       dispatch(
         WalletActions.successCreateWallet({
-          key: key,
+          key: merge(key, key.toObj()),
           wallet: {
             id: key.id,
-            assets: credentials,
+            assets: assets.map(asset =>
+              merge(asset, buildAssetObj(asset.credentials)),
+            ),
             totalBalance: 0,
             show: true,
+            isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
           },
         }),
       );
@@ -62,21 +62,21 @@ export const startImportMnemonic =
 
 export const importWalletCredentials = async (
   opts: Partial<WalletOptions>,
-): Promise<{key: any; walletClients: any}> => {
+): Promise<{key: KeyMethods; assets: Asset[]}> => {
   return new Promise(resolve => {
     BwcProvider.API.serverAssistedImport(
       opts,
       {baseUrl: 'https://bws.bitpay.com/bws/api'},
       // @ts-ignore
-      async (err, key, walletClients) => {
+      async (err, key, assets) => {
         if (err) {
           //  TODO: Handle this
         }
-        if (walletClients.length === 0) {
+        if (assets.length === 0) {
           //  TODO: Handle this - WALLET_DOES_NOT_EXIST
         } else {
           let customTokens: Array<Credentials & {tokens?: any}> = [];
-          walletClients.forEach((w: any) => {
+          assets.forEach((w: any) => {
             if (coinSupported(w.credentials.coin) && w.credentials.token) {
               customTokens.push({
                 ...w.credentials.token,
@@ -89,7 +89,7 @@ export const importWalletCredentials = async (
             //  TODO: Create Custom Token
           }
 
-          return resolve({key, walletClients});
+          return resolve({key, assets});
         }
       },
     );

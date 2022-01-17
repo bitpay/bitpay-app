@@ -1,5 +1,11 @@
-import {ExchangeRate, KeyObj, PriceHistory, WalletObj} from './wallet.models';
+import {
+  ExchangeRate,
+  ExtendedKeyValues,
+  PriceHistory,
+  WalletObj,
+} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
+import merge from 'lodash.merge';
 
 type WalletReduxPersistBlackList = [];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
@@ -15,9 +21,15 @@ export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
  example -
  wallets: [key.id]: {
       id: key.id,
+      show: true,
+      totalBalance: 0,
       assets: [
        {
-        coin: 'btc'
+        credentials: {...}
+        id: '2ccd1dc9-16ce-4c95-a802-455b295a0a27',
+        assetName: 'Bitcoin'
+        assetAbbreviation: 'btc',
+        balance: 0,
        },
        {
         coin: 'eth',
@@ -30,7 +42,7 @@ export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
 
 export interface WalletState {
   createdOn: number;
-  keys: KeyObj[];
+  keys: ExtendedKeyValues[];
   wallets: {[key in string]: WalletObj};
   rates: {[key in string]: Array<ExchangeRate>};
   priceHistory: Array<PriceHistory>;
@@ -85,7 +97,7 @@ export const walletReducer = (
       const walletToUpdate = state.wallets[keyId];
       if (walletToUpdate) {
         walletToUpdate.assets = walletToUpdate.assets.map(asset => {
-          if (asset.walletId === assetId) {
+          if (asset.id === assetId) {
             asset.balance = balance;
           }
           return asset;
@@ -99,6 +111,21 @@ export const walletReducer = (
             ...walletToUpdate,
           },
         },
+      };
+
+    case WalletActionTypes.SUCCESS_ENCRYPT_PASSWORD:
+      const {key: keyToUpdate} = action.payload;
+      const walletCopy = state.wallets[keyToUpdate.id];
+      walletCopy.isPrivKeyEncrypted = !!keyToUpdate.isPrivKeyEncrypted();
+
+      return {
+        ...state,
+        keys: state.keys.map(ko =>
+          ko.id === keyToUpdate.id
+            ? merge(keyToUpdate, keyToUpdate.toObj())
+            : ko,
+        ),
+        wallets: {...state.wallets, [keyToUpdate.id]: walletCopy},
       };
 
     default:

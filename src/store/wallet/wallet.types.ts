@@ -1,16 +1,24 @@
-import {ExchangeRate, KeyObj, PriceHistory, WalletObj} from './wallet.models';
+import {
+  ExchangeRate,
+  ExtendedKeyValues,
+  PriceHistory,
+  WalletObj,
+} from './wallet.models';
 
 export enum WalletActionTypes {
   SUCCESS_WALLET_STORE_INIT = 'WALLET/SUCCESS_WALLET_STORE_INIT',
   FAILED_WALLET_STORE_INIT = 'WALLET/FAILED_WALLET_STORE_INIT',
   SUCCESS_CREATE_WALLET = 'WALLET/SUCCESS_CREATE_WALLET',
   FAILED_CREATE_WALLET = 'WALLET/FAILED_CREATE_WALLET',
+  SUCCESS_BIND_WALLET_CLIENT = 'WALLET/SUCCESS_BIND_WALLET_CLIENT',
+  FAILED_BIND_WALLET_CLIENT = 'WALLET/FAILED_BIND_WALLET_CLIENT',
   SET_BACKUP_COMPLETE = 'WALLET/SET_BACKUP_COMPLETE',
   SUCCESS_GET_RATES = 'WALLET/SUCCESS_GET_RATES',
   FAILED_GET_RATES = 'WALLET/FAILED_GET_RATES',
   SUCCESS_GET_PRICE_HISTORY = 'WALLET/SUCCESS_GET_PRICE_HISTORY',
   FAILED_GET_PRICE_HISTORY = 'WALLET/FAILED_GET_PRICE_HISTORY',
   UPDATE_ASSET_BALANCE = 'WALLET/UPDATE_ASSET_BALANCE',
+  SUCCESS_ENCRYPT_PASSWORD = 'WALLET/SUCCESS_ENCRYPT_PASSWORD',
 }
 
 interface successWalletStoreInit {
@@ -24,7 +32,7 @@ interface failedWalletStoreInit {
 interface successCreateWallet {
   type: typeof WalletActionTypes.SUCCESS_CREATE_WALLET;
   payload: {
-    key: KeyObj;
+    key: ExtendedKeyValues;
     wallet: WalletObj;
   };
 }
@@ -67,6 +75,13 @@ interface updateAssetBalance {
   };
 }
 
+interface successEncryptPassword {
+  type: typeof WalletActionTypes.SUCCESS_ENCRYPT_PASSWORD;
+  payload: {
+    key: ExtendedKeyValues;
+  };
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -77,4 +92,5 @@ export type WalletActionType =
   | failedGetRates
   | successGetPriceHistory
   | failedGetPriceHistory
-  | updateAssetBalance;
+  | updateAssetBalance
+  | successEncryptPassword;

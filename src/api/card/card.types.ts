@@ -11,3 +11,28 @@ export interface FetchCardResponse {
     card: Card;
   };
 }
+
+export interface FetchOverviewResponse {
+  user: {
+    card: {
+      id: string;
+      balance: number;
+      overview: {
+        dateAccountOpened: string;
+        pendingTransactions: [];
+        settledTransactions: {
+          currentPageNumber: number;
+          totalPageCount: number;
+          totalRecordCount: number;
+          transactionList: [];
+        };
+      };
+    };
+    cards: [
+      {
+        id: string;
+        topUpHistory: [];
+      },
+    ];
+  };
+}

@@ -7,8 +7,9 @@ import SendSvg from '../../../../../assets/img/home/linking-buttons/send.svg';
 import SwapSvg from '../../../../../assets/img/home/linking-buttons/swap.svg';
 import Haptic from '../../../../components/haptic-feedback/haptic';
 import {BaseText} from '../../../../components/styled/Text';
-import {useTheme} from '@react-navigation/native';
 import {navigationRef} from '../../../../Root';
+import {titleCasing} from '../../../../utils/helper-methods';
+import {ActiveOpacity} from '../../../../components/styled/Containers';
 
 const ButtonsRow = styled.View`
   width: 100%;
@@ -21,20 +22,20 @@ const ButtonContainer = styled.View`
   margin: 20px 0;
 `;
 
-const ButtonText = styled(BaseText)<{isDark: boolean}>`
+const ButtonText = styled(BaseText)`
   font-size: 12px;
   line-height: 18px;
-  color: ${({isDark}) => (isDark ? White : Action)};
+  color: ${({theme: {dark}}) => (dark ? White : Action)};
   margin-top: 5px;
 `;
 
-const LinkButton = styled.TouchableOpacity<{isDark: boolean}>`
+const LinkButton = styled.TouchableOpacity`
   height: 43px;
   width: 43px;
   border-radius: 11px;
   align-items: center;
   justify-content: center;
-  background: ${({isDark}) => (isDark ? '#0C204E' : NeutralSlate)};
+  background: ${({theme: {dark}}) => (dark ? '#0C204E' : NeutralSlate)};
   margin: 10px 0;
 `;
 
@@ -50,7 +51,6 @@ interface Props {
 }
 
 const LinkingButtons = ({receiveCta, sendCta}: Props) => {
-  const theme = useTheme();
   const buttonsList: Array<ButtonListProps> = [
     // TODO: update icons
     {
@@ -83,14 +83,14 @@ const LinkingButtons = ({receiveCta, sendCta}: Props) => {
       {buttonsList.map(({label, cta, img}: ButtonListProps) => (
         <ButtonContainer key={label}>
           <LinkButton
-            isDark={theme.dark}
+            activeOpacity={ActiveOpacity}
             onPress={() => {
               Haptic('impactLight');
               cta();
             }}>
             {img}
           </LinkButton>
-          <ButtonText isDark={theme.dark}>{label.toUpperCase()}</ButtonText>
+          <ButtonText>{titleCasing(label)}</ButtonText>
         </ButtonContainer>
       ))}
     </ButtonsRow>

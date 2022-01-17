@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {BaseText, H5, HeaderTitle} from '../../../components/styled/Text';
-import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import AssetRow, {AssetRowProps} from '../../../components/list/AssetRow';
@@ -64,13 +64,13 @@ const AssetListFooterText = styled(BaseText)`
 const buildAssetList = (assets: Asset[]) => {
   const assetList = [] as Array<AssetRowProps>;
   assets
-    .filter(asset => !asset.token)
-    .forEach(({coin, walletName, walletId, balance = 0, tokens}) => {
+    .filter(asset => !asset.credentials.token)
+    .forEach(({id, assetName, assetAbbreviation, balance = 0, tokens}) => {
       assetList.push({
-        id: walletId,
-        img: () => AssetListIcons[coin].square,
-        assetName: walletName,
-        assetAbbreviation: coin.toUpperCase(),
+        id,
+        img: () => AssetListIcons[assetAbbreviation].square,
+        assetName,
+        assetAbbreviation: assetAbbreviation.toUpperCase(),
         cryptoBalance: balance,
         fiatBalance: formatFiatBalance(balance),
       });
@@ -78,7 +78,7 @@ const buildAssetList = (assets: Asset[]) => {
       if (tokens) {
         tokens.forEach(({name, symbol, balance = 0}) => {
           assetList.push({
-            id: `${walletId}-${symbol}`,
+            id: `${id}-${symbol}`,
             img: () => AssetListIcons[symbol.toLowerCase()].round,
             assetName: name,
             assetAbbreviation: symbol.toUpperCase(),
@@ -96,7 +96,6 @@ const buildAssetList = (assets: Asset[]) => {
 const WalletOverview = () => {
   const route = useRoute<RouteProp<WalletStackParamList, 'WalletOverview'>>();
   const navigation = useNavigation();
-  const theme = useTheme();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
 
   useEffect(() => {
@@ -151,7 +150,7 @@ const WalletOverview = () => {
       <BalanceContainer>
         <Balance>${wallet.totalBalance?.toFixed(2)} USD</Balance>
       </BalanceContainer>
-      <Hr isDark={theme.dark} />
+      <Hr />
       <FlatList
         ListHeaderComponent={() => {
           return (

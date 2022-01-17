@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Action, applyMiddleware, combineReducers, createStore} from 'redux';
 import {composeWithDevTools} from 'redux-devtools-extension';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -8,6 +7,8 @@ import {persistStore, persistReducer} from 'redux-persist'; // https://github.co
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
 import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
+import {bindWalletClient, bindWalletKeys} from './transforms/transforms';
+
 import {
   appReducer,
   appReduxPersistBlackList,
@@ -99,7 +100,8 @@ const reducers = {
   ),
   WALLET: persistReducer<WalletState, WalletActionType>(
     {
-      ...basePersistConfig,
+      storage: AsyncStorage,
+      transforms: [bindWalletClient, bindWalletKeys],
       key: 'WALLET',
       blacklist: walletReduxPersistBlackList,
     },
@@ -113,7 +115,13 @@ const getStore = () => {
   const middlewares = [
     thunkMiddleware,
     createLogger({
-      predicate: (getState, action) => !['LOG/ADD_LOG'].includes(action.type),
+      predicate: (getState, action) =>
+        ![
+          'LOG/ADD_LOG',
+          'APP/SET_CURRENT_ROUTE',
+          'persist/REHYDRATE',
+          'persist/PERSIST',
+        ].includes(action.type),
     }),
   ];
   let middlewareEnhancers = applyMiddleware(...middlewares);
