@@ -24,7 +24,22 @@ const HeaderComponent = (
   </HeaderImg>
 );
 
-const BitPayCard: React.FC = () => {
+export const GetMastercard: React.FC = () => {
+  const navigation = useNavigation();
+
+  return (
+    <HomeCard
+      backgroundImg={BgImage}
+      header={HeaderComponent}
+      body={{
+        description: 'Get the BitPay prepaid Mastercard®',
+      }}
+      onCTAPress={() => navigation.navigate('Card', {screen: 'Home'})}
+    />
+  );
+};
+
+export const BitPayCard: React.FC = () => {
   const navigation = useNavigation();
   const primaryCard = useSelector<RootState, Card | null>(({APP, CARD}) => {
     const cards = CARD.cards[APP.network] || [];
@@ -35,23 +50,15 @@ const BitPayCard: React.FC = () => {
     primaryCard ? CARD.balances[primaryCard.id] : 0,
   );
 
-  const body = primaryCard
-    ? {
-        title: 'BitPayCard',
-        value: format(primaryBalance, 'USD'),
-      }
-    : {
-        description: 'Get the BitPay prepaid Mastercard®',
-      };
-
   return (
     <HomeCard
       backgroundImg={BgImage}
       header={HeaderComponent}
-      body={body}
+      body={{
+        title: 'BitPayCard',
+        value: format(primaryBalance, 'USD'),
+      }}
       onCTAPress={() => navigation.navigate('Card', {screen: 'Home'})}
     />
   );
 };
-
-export default BitPayCard;
