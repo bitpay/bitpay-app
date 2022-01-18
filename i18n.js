@@ -22,7 +22,7 @@ i18n
     compatibilityJSON: 'v3',
     lng: detectedLanguage,
     fallbackLng: 'en',
-    debug: true,
+    debug: (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') ? true : false,
     interpolation: {
       escapeValue: false, // react already safes from xss
     },

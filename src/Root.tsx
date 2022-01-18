@@ -136,15 +136,13 @@ export default () => {
   const currentRoute = useSelector(({APP}: RootState) => APP.currentRoute);
   const appLanguage = useSelector(({APP}: RootState) => APP.defaultLanguage);
 
-  // LANGUAGE
-  if (appLanguage && appLanguage !== i18n.language) {
-    i18n.changeLanguage(appLanguage);
-  }
-
   // MAIN APP INIT
   useEffect(() => {
     dispatch(AppEffects.startAppInit());
     dispatch(AppActions.setDefaultLanguage(appLanguage));
+    if (appLanguage && appLanguage !== i18n.language) {
+      i18n.changeLanguage(appLanguage);
+    }
   }, [dispatch, appLanguage]);
 
   // THEME
