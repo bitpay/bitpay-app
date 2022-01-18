@@ -61,7 +61,7 @@ const AssetListFooterText = styled(BaseText)`
   margin-left: 10px;
 `;
 
-const buildAssetList = (assets: Asset[]) => {
+const buildAssetList = (assets: Asset[], keyId: string) => {
   const assetList = [] as Array<AssetRowProps>;
   assets
     .filter(asset => !asset.credentials.token)
@@ -73,18 +73,20 @@ const buildAssetList = (assets: Asset[]) => {
         assetAbbreviation: assetAbbreviation.toUpperCase(),
         cryptoBalance: balance,
         fiatBalance: formatFiatBalance(balance),
+        keyId,
       });
 
       if (tokens) {
-        tokens.forEach(({name, symbol, balance = 0}) => {
+        tokens.forEach(({name, symbol, balance = 0, address}) => {
           assetList.push({
-            id: `${id}-${symbol}`,
+            id: `${id}-${address}`,
             img: () => AssetListIcons[symbol.toLowerCase()].round,
             assetName: name,
             assetAbbreviation: symbol.toUpperCase(),
             cryptoBalance: balance,
             fiatBalance: formatFiatBalance(balance),
             isToken: true,
+            keyId,
           });
         });
       }
@@ -114,7 +116,7 @@ const WalletOverview = () => {
     wallet: {id},
   } = route.params;
   const wallet = useSelector(({WALLET}: RootState) => WALLET.wallets[id]);
-  const assetList = buildAssetList(wallet.assets);
+  const assetList = buildAssetList(wallet.assets, id);
 
   const walletOptions: Array<Option> = [
     {

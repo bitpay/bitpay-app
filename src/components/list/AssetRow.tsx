@@ -23,6 +23,7 @@ export interface AssetRowProps {
   cryptoBalance: number;
   fiatBalance: string;
   isToken?: boolean;
+  keyId: string;
 }
 
 interface Props {
