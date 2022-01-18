@@ -17,6 +17,9 @@ import RequestAmountSvg from '../../../../assets/img/wallet/request-amount.svg';
 import ShareAddressSvg from '../../../../assets/img/wallet/share-address.svg';
 import SettingsSvg from '../../../../assets/img/wallet/settings.svg';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
+import {useDispatch} from 'react-redux';
+import ReceiveAddress from '../components/ReceiveAddress';
+import {WalletActions} from '../../../store/wallet';
 
 const AssetDetailsContainer = styled.View`
   flex: 1;
@@ -48,6 +51,8 @@ const AssetDetails = () => {
   const navigation = useNavigation();
   const [showAssetOptions, setShowAssetOptions] = useState(false);
   const {asset} = route.params;
+  const dispatch = useDispatch();
+
   useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{asset.assetName}</HeaderTitle>,
@@ -90,6 +95,16 @@ const AssetDetails = () => {
     },
   ];
 
+  const showReceiveAddress = () => {
+    const {keyId, id} = asset;
+    dispatch(
+      WalletActions.showReceiveAddressModal({
+        keyId,
+        id,
+      }),
+    );
+  };
+
   const {cryptoBalance, fiatBalance, assetAbbreviation} = asset;
   return (
     <AssetDetailsContainer>
@@ -103,7 +118,10 @@ const AssetDetails = () => {
         <H5>{fiatBalance} USD</H5>
       </BalanceContainer>
 
-      <LinkingButtons receiveCta={() => null} sendCta={() => null} />
+      <LinkingButtons
+        receiveCta={() => showReceiveAddress()}
+        sendCta={() => null}
+      />
 
       <OptionsBottomPopupModal
         isVisible={showAssetOptions}
@@ -111,6 +129,8 @@ const AssetDetails = () => {
         title={`Receive ${asset.assetName}`}
         options={assetOptions}
       />
+
+      <ReceiveAddress />
     </AssetDetailsContainer>
   );
 };

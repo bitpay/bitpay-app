@@ -6,6 +6,7 @@ import {
 } from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import merge from 'lodash.merge';
+import {ReceiveAddressConfig} from '../../navigation/wallet/components/ReceiveAddress';
 
 type WalletReduxPersistBlackList = [];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
@@ -46,6 +47,8 @@ export interface WalletState {
   wallets: {[key in string]: WalletObj};
   rates: {[key in string]: Array<ExchangeRate>};
   priceHistory: Array<PriceHistory>;
+  showReceiveAddressModal: boolean;
+  receiveAddressConfig: ReceiveAddressConfig | undefined;
 }
 
 const initialState: WalletState = {
@@ -54,6 +57,8 @@ const initialState: WalletState = {
   wallets: {},
   rates: {},
   priceHistory: [],
+  showReceiveAddressModal: false,
+  receiveAddressConfig: undefined,
 };
 
 export const walletReducer = (
@@ -126,6 +131,20 @@ export const walletReducer = (
             : ko,
         ),
         wallets: {...state.wallets, [keyToUpdate.id]: walletCopy},
+      };
+
+    case WalletActionTypes.SHOW_RECEIVE_ADDRESS_MODAL:
+      return {
+        ...state,
+        showReceiveAddressModal: true,
+        receiveAddressConfig: action.payload,
+      };
+
+    case WalletActionTypes.DISMISS_RECEIVE_ADDRESS_MODAL:
+      return {
+        ...state,
+        showReceiveAddressModal: false,
+        receiveAddressConfig: undefined,
       };
 
     default:

@@ -4,6 +4,7 @@ import {
   PriceHistory,
   WalletObj,
 } from './wallet.models';
+import {ReceiveAddressConfig} from '../../navigation/wallet/components/ReceiveAddress';
 
 export enum WalletActionTypes {
   SUCCESS_WALLET_STORE_INIT = 'WALLET/SUCCESS_WALLET_STORE_INIT',
@@ -19,6 +20,8 @@ export enum WalletActionTypes {
   FAILED_GET_PRICE_HISTORY = 'WALLET/FAILED_GET_PRICE_HISTORY',
   UPDATE_ASSET_BALANCE = 'WALLET/UPDATE_ASSET_BALANCE',
   SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD = 'WALLET/SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD',
+  SHOW_RECEIVE_ADDRESS_MODAL = 'WALLET/SHOW_RECEIVE_ADDRESS_MODAL',
+  DISMISS_RECEIVE_ADDRESS_MODAL = 'WALLET/DISMISS_RECEIVE_ADDRESS_MODAL',
 }
 
 interface successWalletStoreInit {
@@ -82,6 +85,15 @@ interface successEncryptOrDecryptPassword {
   };
 }
 
+interface showReceiveAddressModal {
+  type: typeof WalletActionTypes.SHOW_RECEIVE_ADDRESS_MODAL;
+  payload: ReceiveAddressConfig;
+}
+
+interface dismissReceiveAddressModal {
+  type: typeof WalletActionTypes.DISMISS_RECEIVE_ADDRESS_MODAL;
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -93,4 +105,6 @@ export type WalletActionType =
   | successGetPriceHistory
   | failedGetPriceHistory
   | updateAssetBalance
-  | successEncryptOrDecryptPassword;
+  | successEncryptOrDecryptPassword
+  | showReceiveAddressModal
+  | dismissReceiveAddressModal;
