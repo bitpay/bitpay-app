@@ -28,12 +28,16 @@ export class BwcProvider {
     return BwcProvider.instance;
   }
 
-  public getClient(credentials?: string) {
+  public getClient(credentials?: string | undefined, opts?: any) {
+    opts = opts || {};
+
     const bwc = new BWC({
-      baseUrl: 'https://bws.bitpay.com/bws/api',
+      baseUrl: opts.bwsurl || 'https://bws.bitpay.com/bws/api', // 'http://localhost:3232/bws/api', uncomment for local testing,
       verbose: true,
       timeout: 100000,
       transports: ['polling'],
+      bp_partner: opts.bp_partner,
+      bp_partner_version: opts.bp_partner_version,
     });
 
     if (credentials) {
@@ -41,6 +45,22 @@ export class BwcProvider {
     }
 
     return bwc;
+  }
+
+  public getSJCL() {
+    return BWC.sjcl;
+  }
+
+  public getKey() {
+    return BWC.Key;
+  }
+
+  public upgradeCredentialsV1(x: any) {
+    return BWC.upgradeCredentialsV1(x);
+  }
+
+  public upgradeMultipleCredentialsV1(x: any) {
+    return BWC.upgradeMultipleCredentialsV1(x);
   }
 
   public createKey(opts: KeyOpts) {
