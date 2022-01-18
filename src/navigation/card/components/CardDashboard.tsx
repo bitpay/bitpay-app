@@ -91,7 +91,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     ({CARD}) => CARD.virtualDesignCurrency,
   );
   const memoizedSlides = useMemo(() => createOverviewSlides(cards), [cards]);
-  const [firstItem] = useState(() =>
+  const [initialSlideIdx] = useState(() =>
     id
       ? Math.max(
           0,
@@ -99,17 +99,22 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         )
       : 0,
   );
-  const [activeIdx, setActiveIdx] = useState<number>(firstItem);
+  const [activeSlideIdx, setActiveSlideIdx] = useState<number>(initialSlideIdx);
+  const fetchId = useSelector<RootState, string | null>(({CARD}) => {
+    const activeSlideId = memoizedSlides[activeSlideIdx].primaryCard.id;
 
-  // TODO: this is a placeholder just to populate with some data
-  // TODO: build a graph query to initialize everything, then do ad-hoc updates
+    // quick check to see if we've done an initial fetch for this ID before
+    // TODO: a more robust check once we start loading tx activity
+    return typeof CARD.balances[activeSlideId] !== 'number'
+      ? activeSlideId
+      : null;
+  });
+
   useEffect(() => {
-    const card = cards.find(c => c.provider === 'galileo');
-
-    if (card) {
-      dispatch(CardEffects.startFetchOverview(card.id));
+    if (fetchId) {
+      dispatch(CardEffects.startFetchOverview(fetchId));
     }
-  }, [cards, dispatch]);
+  }, [fetchId, dispatch]);
 
   return (
     <>
@@ -118,7 +123,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         vertical={false}
         layout="default"
         activeSlideAlignment="center"
-        firstItem={firstItem}
+        firstItem={initialSlideIdx}
         data={memoizedSlides}
         renderItem={({item}) => (
           <CardOverviewSlide
@@ -126,7 +131,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
             designCurrency={virtualDesignCurrency}
           />
         )}
-        onSnapToItem={setActiveIdx}
+        onSnapToItem={setActiveSlideIdx}
         itemWidth={300 + 20}
         sliderWidth={WIDTH}
         inactiveSlideScale={1}
@@ -137,7 +142,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
       />
       <Pagination
         dotsLength={memoizedSlides.length}
-        activeDotIndex={activeIdx}
+        activeDotIndex={activeSlideIdx}
         carouselRef={carouselRef}
         tappableDots={true}
       />
