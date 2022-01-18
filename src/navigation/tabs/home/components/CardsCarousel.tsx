@@ -8,7 +8,7 @@ import CreateWallet from './empty-states/CreateWallet';
 import styled from 'styled-components/native';
 import {useNavigation} from '@react-navigation/native';
 import BuyGiftCards from './empty-states/BuyGiftCards';
-import GetMastercard from './empty-states/GetMastercard';
+import BitPayCard from './empty-states/BitPayCard';
 import ConnectCoinbase from './empty-states/ConnectCoinbase';
 import WalletCardComponent from './Wallet';
 
@@ -25,7 +25,7 @@ const CardsCarousel = () => {
   const DEFAULTS = [
     <CreateWallet />,
     <BuyGiftCards />,
-    <GetMastercard />,
+    <BitPayCard />,
     <ConnectCoinbase />,
   ];
   const [cardsList, setCardsList] = useState([...DEFAULTS]);

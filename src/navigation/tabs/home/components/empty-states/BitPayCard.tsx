@@ -24,7 +24,7 @@ const HeaderComponent = (
   </HeaderImg>
 );
 
-const GetMastercard: React.FC = () => {
+const BitPayCard: React.FC = () => {
   const navigation = useNavigation();
   const primaryCard = useSelector<RootState, Card | null>(({APP, CARD}) => {
     const cards = CARD.cards[APP.network] || [];
@@ -54,4 +54,4 @@ const GetMastercard: React.FC = () => {
   );
 };
 
-export default GetMastercard;
+export default BitPayCard;
