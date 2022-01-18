@@ -14,10 +14,7 @@ import {AppActions} from '../../../store/app';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
-import {
-  GeneralError,
-  WrongPasswordError,
-} from '../components/DecryptPasswordErrorMessages';
+import {GeneralError, WrongPasswordError} from '../components/ErrorMessages';
 
 const ExportKeyContainer = styled.SafeAreaView`
   flex: 1;

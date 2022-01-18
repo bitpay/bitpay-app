@@ -11,7 +11,7 @@ import {RootState} from '../../../store';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {WalletActions} from '../../../store/wallet';
 import {useLogger} from '../../../utils/hooks/useLogger';
-import {GeneralError, WrongPasswordError} from './DecryptPasswordErrorMessages';
+import {GeneralError, WrongPasswordError} from './ErrorMessages';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 
 const RequestEncryptPasswordToggle = ({wallet}: {wallet: WalletObj}) => {
