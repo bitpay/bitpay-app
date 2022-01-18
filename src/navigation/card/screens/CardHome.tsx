@@ -6,10 +6,15 @@ import {CardStackParamList} from '../CardStack';
 import CardDashboard from '../components/CardDashboard';
 import CardIntro from '../components/CardIntro';
 
-export type CardHomeScreenParamList = undefined;
+export type CardHomeScreenParamList =
+  | {
+      id: string | undefined | null;
+    }
+  | undefined;
 type CardHomeScreenProps = StackScreenProps<CardStackParamList, 'Home'>;
 
-const CardHome: React.FC<CardHomeScreenProps> = () => {
+const CardHome: React.FC<CardHomeScreenProps> = ({route}) => {
+  const {params} = route;
   const isDashboardEnabled = useSelector<RootState, boolean>(
     ({APP, BITPAY_ID, CARD}) => {
       const isPaired = !!BITPAY_ID.apiToken[APP.network];
@@ -25,7 +30,7 @@ const CardHome: React.FC<CardHomeScreenProps> = () => {
 
   return (
     <>
-      <DashboardOrIntro />
+      <DashboardOrIntro id={params?.id} />
     </>
   );
 };
