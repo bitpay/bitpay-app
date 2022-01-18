@@ -63,3 +63,21 @@ export const WrongPasswordError = (): BottomNotificationConfig => {
     ),
   };
 };
+
+export const CustomErrorMessage = (
+  errMsg: string,
+): BottomNotificationConfig => {
+  return {
+    type: 'error',
+    title: 'Something went wrong',
+    message: errMsg,
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: 'OK',
+        action: () => {},
+        primary: true,
+      },
+    ],
+  };
+};
