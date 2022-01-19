@@ -79,7 +79,6 @@ export interface KeyOptions {
   n: any;
   myName: any;
   networkName: string;
-  bwsurl: any;
   singleAddress: any;
   coin: string;
   extendedPrivateKey: any;

@@ -28,18 +28,15 @@ export class BwcProvider {
     return BwcProvider.instance;
   }
 
-  public getClient(credentials?: string | undefined, opts?: any) {
-    opts = opts || {};
-
+  public getClient(credentials?: string) {
     const bwc = new BWC({
-      baseUrl: opts.bwsurl || 'https://bws.bitpay.com/bws/api', // 'http://localhost:3232/bws/api', uncomment for local testing,
+      baseUrl: 'https://bws.bitpay.com/bws/api', // 'http://localhost:3232/bws/api', uncomment for local testing
       verbose: true,
       timeout: 100000,
       transports: ['polling'],
-      bp_partner: opts.bp_partner,
-      bp_partner_version: opts.bp_partner_version,
+      // TODO bp_partner: this.appProvider.info.name
+      // TODO bp_partner_version : this.appProvider.info.version
     });
-
     if (credentials) {
       bwc.fromString(credentials);
     }

@@ -1,6 +1,13 @@
 import styled, {css} from 'styled-components/native';
 import {Dimensions} from 'react-native';
-import {Action, NeutralSlate, SlateDark, Feather} from '../../styles/colors';
+import {
+  Action,
+  NeutralSlate,
+  SlateDark,
+  Feather,
+  White,
+  Slate,
+} from '../../styles/colors';
 import {BaseText} from './Text';
 
 export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
@@ -192,8 +199,20 @@ export const AdvancedOptionsButtonText = styled(BaseText)`
 `;
 
 export const AdvancedOptions = styled.View`
-  border-style: solid;
-  border-top-width: 1px;
-  border-top-color: #e1e4e7;
   padding: 18px;
+`;
+
+const Gutter = '10px';
+export const ImportContainer = styled.View`
+  padding: ${Gutter} 0;
+`;
+
+export const ImportTextInput = styled.TextInput`
+  height: 100px;
+  margin: 0 ${Gutter};
+  padding: ${Gutter};
+  background: ${White};
+  border: 0.75px solid ${Slate};
+  border-top-right-radius: 4px;
+  border-top-left-radius: 4px;
 `;

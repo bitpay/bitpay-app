@@ -1,30 +1,18 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {
-  ImportWalletContainer,
-  ImportWalletTextInput,
-  ImportWalletTitle,
-} from './RecoveryPhrase';
-import {
+  ImportTextInput,
+  ImportContainer,
   CtaContainer,
   HeaderTitleContainer,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import styled from 'styled-components/native';
-import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
-import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
-import Haptic from '../../../components/haptic-feedback/haptic';
-import {
-  AdvancedOptionsContainer,
-  AdvancedOptionsButton,
-  AdvancedOptionsButtonText,
-  AdvancedOptions,
-} from '../../../components/styled/Containers';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import {useForm, Controller} from 'react-hook-form';
-import {WalletOptions} from '../../../store/wallet/wallet.models';
-import {BaseText} from '../../../components/styled/Text';
+import {KeyOptions} from '../../../store/wallet/wallet.models';
+import {BaseText, ImportTitle} from '../../../components/styled/Text';
 import {Caution} from '../../../styles/colors';
 import {BwcProvider} from '../../../lib/bwc';
 import {useLogger} from '../../../utils/hooks/useLogger';
@@ -55,21 +43,16 @@ const FileOrText = () => {
   const logger = useLogger();
   const dispatch = useDispatch();
   const navigation = useNavigation();
-  const [options, setOptions] = useState({
-    bwsurl: 'https://bws.bitpay.com/bws/api',
-  });
-  const [showOptions, setShowOptions] = useState(false);
 
   const {
     control,
     handleSubmit,
-    setValue,
     formState: {errors},
   } = useForm({resolver: yupResolver(schema)});
 
   const importWallet = async (
     decryptBackupText: string,
-    opts: Partial<WalletOptions>,
+    opts: Partial<KeyOptions>,
   ) => {
     try {
       await dispatch(startImportFile(decryptBackupText, opts));
@@ -83,32 +66,30 @@ const FileOrText = () => {
     }
   };
 
-  const showErrorModal = (e: string) =>
-    dispatch(
-      showBottomNotificationModal({
-        type: 'warning',
-        title: 'Something went wrong',
-        message: e,
-        enableBackdropDismiss: true,
-        actions: [
-          {
-            text: 'OK',
-            action: () => {},
-            primary: true,
-          },
-        ],
-      }),
-    );
+  const showErrorModal = (e: string) => {
+    setTimeout(() => {
+      dispatch(
+        showBottomNotificationModal({
+          type: 'warning',
+          title: 'Something went wrong',
+          message: e,
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: 'OK',
+              action: () => {},
+              primary: true,
+            },
+          ],
+        }),
+      );
+    }, 500);
+  };
 
   const onSubmit = (formData: {text: string; password: string}) => {
     const {text, password} = formData;
 
-    console.log('$$$$$$$$$$$$$$$$$$$$$$$$$$text', text);
-    console.log('$$$$$$$$$$$$$$$$$$$$$$$$$$password', password);
-
-    let opts: Partial<WalletOptions> = {};
-    opts.bwsurl = options.bwsurl;
-
+    let opts: Partial<KeyOptions> = {};
     let decryptBackupText: string;
     try {
       decryptBackupText = BWCProvider.getSJCL().decrypt(password, text);
@@ -120,20 +101,15 @@ const FileOrText = () => {
     importWallet(decryptBackupText, opts);
   };
 
-  const _onPressShowOptions = () => {
-    Haptic('impactLight');
-    setShowOptions(!showOptions);
-  };
-
   return (
-    <ImportWalletContainer>
+    <ImportContainer>
       <HeaderTitleContainer>
-        <ImportWalletTitle>Backup plain text code</ImportWalletTitle>
+        <ImportTitle>Backup plain text code</ImportTitle>
       </HeaderTitleContainer>
       <Controller
         control={control}
         render={({field: {onChange, onBlur, value}}) => (
-          <ImportWalletTextInput
+          <ImportTextInput
             multiline
             numberOfLines={5}
             onChangeText={(text: string) => onChange(text)}
@@ -148,7 +124,7 @@ const FileOrText = () => {
       {errors?.text?.message && <ErrorText>Backup text is required.</ErrorText>}
 
       <HeaderTitleContainer>
-        <ImportWalletTitle>Password</ImportWalletTitle>
+        <ImportTitle>Password</ImportTitle>
         <Controller
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
@@ -172,45 +148,11 @@ const FileOrText = () => {
       </HeaderTitleContainer>
 
       <CtaContainer>
-        {__DEV__ && (
-          <AdvancedOptionsContainer>
-            <AdvancedOptionsButton onPress={_onPressShowOptions}>
-              {showOptions ? (
-                <>
-                  <AdvancedOptionsButtonText>
-                    Hide Advanced Options
-                  </AdvancedOptionsButtonText>
-                  <ChevronUpSvg />
-                </>
-              ) : (
-                <>
-                  <AdvancedOptionsButtonText>
-                    Show Advanced Options
-                  </AdvancedOptionsButtonText>
-                  <ChevronDownSvg />
-                </>
-              )}
-            </AdvancedOptionsButton>
-
-            {showOptions && (
-              <AdvancedOptions>
-                <BoxInput
-                  label={'WALLET SERVICE URL'}
-                  onChangeText={(text: string) =>
-                    setOptions({...options, bwsurl: text})
-                  }
-                  value={options.bwsurl}
-                />
-              </AdvancedOptions>
-            )}
-          </AdvancedOptionsContainer>
-        )}
-
         <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
           Import Wallet
         </Button>
       </CtaContainer>
-    </ImportWalletContainer>
+    </ImportContainer>
   );
 };
 
