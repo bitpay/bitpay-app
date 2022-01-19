@@ -3,8 +3,8 @@ import CustomizeHomeCard from '../../../../../components/customize-home-card/Cus
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../../store';
 import styled from 'styled-components/native';
-import {AssetSelectionOptions} from '../../../../../constants/AssetSelectionOptions';
-import {ItemProps} from '../../../../../components/list/AssetSelectorRow';
+import {CurrencySelectionOptions} from '../../../../../constants/CurrencySelectionOptions';
+import {ItemProps} from '../../../../../components/list/CurrencySelectionRow';
 
 const HeaderImg = styled.View`
   align-items: center;
@@ -40,8 +40,8 @@ const Img = styled.View<{isFirst: boolean}>`
   margin-left: ${({isFirst}) => (isFirst ? 0 : '-3px')};
 `;
 
-const AssetCardComponent = (
-  AssetsList: ItemProps[],
+const KeyCardComponent = (
+  walletList: ItemProps[],
   value: number,
   show: boolean,
 ) => {
@@ -54,12 +54,12 @@ const AssetCardComponent = (
 
   const HeaderComponent = (
     <HeaderImg>
-      {AssetsList &&
-        AssetsList.map(
-          (asset, index) =>
-            asset && (
+      {walletList &&
+        walletList.map(
+          (wallet, index) =>
+            wallet && (
               <Img key={index} isFirst={index === 0 || index % 7 === 0}>
-                {asset.roundIcon(20)}
+                {wallet.roundIcon(20)}
               </Img>
             ),
         )}
@@ -71,7 +71,7 @@ const AssetCardComponent = (
       <CustomizeHomeCard
         header={HeaderComponent}
         body={{
-          title: 'My Everything Wallet',
+          title: 'Main Key',
           value: `$ ${value}`,
         }}
         footer={{
@@ -84,23 +84,21 @@ const AssetCardComponent = (
 };
 
 const CustomizeHome = () => {
-  const wallets = useSelector(({WALLET}: RootState) => WALLET.wallets);
+  const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
   const cardsList: Array<ReactNode | null> = [];
 
-  if (wallets) {
-    Object.values(wallets).map(wallet => {
-      const {assets, totalBalance = 0, show} = wallet;
-      const list = assets
-        .map(({assetAbbreviation}) => assetAbbreviation)
-        .map(assetAbbreviation =>
-          AssetSelectionOptions.find(
-            ({id}: {id: string | number}) => id === assetAbbreviation,
-          ),
-        );
+  if (keys) {
+    Object.values(keys).map(key => {
+      const {wallets, totalBalance = 0, show} = key;
+      const list = wallets.map(({currencyAbbreviation}) =>
+        CurrencySelectionOptions.find(
+          ({id}: {id: string | number}) => id === currencyAbbreviation,
+        ),
+      );
 
       !!list.length &&
         cardsList.push(
-          AssetCardComponent(list as ItemProps[], totalBalance, !!show),
+          KeyCardComponent(list as ItemProps[], totalBalance, !!show),
         );
     });
   }

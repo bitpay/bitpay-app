@@ -1,4 +1,4 @@
-import { VirtualDesignCurrency } from "../store/card/card.types";
+import {VirtualDesignCurrency} from '../store/card/card.types';
 
 type SupportedDesignCurrenciesConfig = {
   [k in VirtualDesignCurrency]: {
@@ -6,7 +6,7 @@ type SupportedDesignCurrenciesConfig = {
     enabled: boolean;
     reason?: string;
   };
-}
+};
 
 export const SUPPORTED_DESIGN_CURRENCIES: SupportedDesignCurrenciesConfig = {
   'bitpay-b': {

@@ -1,5 +1,9 @@
 import React, {ReactElement} from 'react';
-import {Column, AssetImageContainer, AssetColumn} from '../styled/Containers';
+import {
+  Column,
+  CurrencyImageContainer,
+  CurrencyColumn,
+} from '../styled/Containers';
 import {H5, SubText} from '../styled/Text';
 import {RowContainer} from '../styled/Containers';
 import styled from 'styled-components/native';
@@ -15,11 +19,11 @@ const NestedArrowContainer = styled.View`
   margin-right: 15px;
 `;
 
-export interface AssetRowProps {
+export interface WalletRowProps {
   id: string;
   img: () => ReactElement;
-  assetName: string;
-  assetAbbreviation: string;
+  currencyName: string;
+  currencyAbbreviation: string;
   cryptoBalance: number;
   fiatBalance: string;
   isToken?: boolean;
@@ -27,19 +31,19 @@ export interface AssetRowProps {
 
 interface Props {
   id: string;
-  asset: AssetRowProps;
+  wallet: WalletRowProps;
   onPress: () => void;
 }
 
-const AssetRow = ({asset, onPress}: Props) => {
+const WalletRow = ({wallet, onPress}: Props) => {
   const {
-    assetName,
-    assetAbbreviation,
+    currencyName,
+    currencyAbbreviation,
     img,
     cryptoBalance,
     fiatBalance,
     isToken,
-  } = asset;
+  } = wallet;
   return (
     <RowContainer activeOpacity={0.75} onPress={onPress}>
       {isToken && (
@@ -47,11 +51,11 @@ const AssetRow = ({asset, onPress}: Props) => {
           <NestedArrow />
         </NestedArrowContainer>
       )}
-      <AssetImageContainer>{img()}</AssetImageContainer>
-      <AssetColumn>
-        <H5>{assetName}</H5>
-        <SubText>{assetAbbreviation}</SubText>
-      </AssetColumn>
+      <CurrencyImageContainer>{img()}</CurrencyImageContainer>
+      <CurrencyColumn>
+        <H5>{currencyName}</H5>
+        <SubText>{currencyAbbreviation}</SubText>
+      </CurrencyColumn>
       <BalanceColumn>
         <H5>{cryptoBalance}</H5>
         <SubText>{fiatBalance}</SubText>
@@ -60,4 +64,4 @@ const AssetRow = ({asset, onPress}: Props) => {
   );
 };
 
-export default AssetRow;
+export default WalletRow;

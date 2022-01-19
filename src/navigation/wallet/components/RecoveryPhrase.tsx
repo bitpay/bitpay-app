@@ -11,17 +11,17 @@ import * as yup from 'yup';
 import {useForm, Controller} from 'react-hook-form';
 import {BaseText} from '../../../components/styled/Text';
 import {useLogger} from '../../../utils/hooks/useLogger';
-import {WalletOptions} from '../../../store/wallet/wallet.models';
+import {KeyProperties} from '../../../store/wallet/wallet.models';
 import {startImportMnemonic} from '../../../store/wallet/effects';
 import {useNavigation} from '@react-navigation/native';
 import {ImportObj} from '../../../store/scan/scan.models';
 
 const Gutter = '10px';
-export const ImportWalletContainer = styled.View`
+export const ImportContainer = styled.View`
   padding: ${Gutter} 0;
 `;
 
-const ImportWalletParagraph = styled(BaseText)`
+const ImportParagraph = styled(BaseText)`
   font-size: 16px;
   line-height: 25px;
   padding: ${Gutter};
@@ -35,7 +35,7 @@ const HeaderContainer = styled.View`
   align-items: center;
 `;
 
-export const ImportWalletTitle = styled(BaseText)`
+export const ImportTitle = styled(BaseText)`
   font-weight: 500;
   font-size: 13px;
   line-height: 18px;
@@ -51,7 +51,7 @@ const ScanContainer = styled.TouchableOpacity`
   justify-content: center;
 `;
 
-export const ImportWalletTextInput = styled.TextInput`
+export const ImportTextInput = styled.TextInput`
   height: 100px;
   margin: 0 ${Gutter};
   padding: ${Gutter};
@@ -104,7 +104,7 @@ const RecoveryPhrase = () => {
     return words && words.trim().split(/[\u3000\s]+/).length === 12;
   };
 
-  const onSubmit = (formData: {words: string}) => {
+  const onSubmit = async (formData: {words: string}) => {
     const {words} = formData;
     if (!isValidPhrase(words)) {
       logger.info('Incorrect words length');
@@ -112,16 +112,9 @@ const RecoveryPhrase = () => {
       return;
     }
 
-    const opts: Partial<WalletOptions> = {};
+    const opts: Partial<KeyProperties> = {};
     opts.mnemonic = words;
 
-    importWallet(words, opts);
-  };
-
-  const importWallet = async (
-    words: string,
-    opts: Partial<WalletOptions>,
-  ): Promise<void> => {
     try {
       await dispatch(startImportMnemonic(words, opts));
       navigation.navigate('Onboarding', {
@@ -133,17 +126,17 @@ const RecoveryPhrase = () => {
   };
 
   return (
-    <ImportWalletContainer>
-      <ImportWalletParagraph>
+    <ImportContainer>
+      <ImportParagraph>
         Enter your recovery phrase (usually 12-words) in the correct order.
         Separate each word with a single space only (no commas or any other
         punctuation). For backup phrases in non-English languages: Some words
         may include special symbols, so be sure to spell all the words
         correctly.
-      </ImportWalletParagraph>
+      </ImportParagraph>
 
       <HeaderContainer>
-        <ImportWalletTitle>Recovery phrase</ImportWalletTitle>
+        <ImportTitle>Recovery phrase</ImportTitle>
 
         <ScanContainer
           activeOpacity={0.75}
@@ -180,7 +173,7 @@ const RecoveryPhrase = () => {
       <Controller
         control={control}
         render={({field: {onChange, onBlur, value}}) => (
-          <ImportWalletTextInput
+          <ImportTextInput
             multiline
             numberOfLines={5}
             onChangeText={(text: string) => onChange(text)}
@@ -198,10 +191,10 @@ const RecoveryPhrase = () => {
 
       <CtaContainer>
         <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
-          Import Wallet
+          Import
         </Button>
       </CtaContainer>
-    </ImportWalletContainer>
+    </ImportContainer>
   );
 };
 

@@ -4,10 +4,10 @@ import {BaseText} from '../styled/Text';
 import {useTheme} from '@react-navigation/native';
 import {StyleProp, TextStyle} from 'react-native';
 
-export interface AssetSettingsRowProps {
+export interface WalletSettingsRowProps {
   id: string;
   img: () => ReactElement;
-  assetName: string;
+  currencyName: string;
 }
 
 const Row = styled.View`
@@ -16,21 +16,21 @@ const Row = styled.View`
   align-items: center;
 `;
 
-const AssetName = styled(BaseText)`
+const CurrencyName = styled(BaseText)`
   font-weight: 500;
   font-size: 18px;
   margin-left: 15px;
 `;
-const AssetSettingsRow = ({asset}: {asset: AssetSettingsRowProps}) => {
+const WalletSettingsRow = ({img, currencyName}: WalletSettingsRowProps) => {
   const theme = useTheme();
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
 
   return (
     <Row>
-      {asset.img()}
-      <AssetName style={textStyle}>{asset.assetName}</AssetName>
+      {img()}
+      <CurrencyName style={textStyle}>{currencyName}</CurrencyName>
     </Row>
   );
 };
 
-export default AssetSettingsRow;
+export default WalletSettingsRow;

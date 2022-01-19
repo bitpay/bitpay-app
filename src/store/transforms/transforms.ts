@@ -1,5 +1,5 @@
 import {createTransform} from 'redux-persist';
-import {ExtendedKeyValues, WalletObj} from '../wallet/wallet.models';
+import {Key} from '../wallet/wallet.models';
 import merge from 'lodash.merge';
 import {BwcProvider} from '../../lib/bwc';
 const BWCProvider = BwcProvider.getInstance();
@@ -9,22 +9,22 @@ export const bindWalletClient = createTransform(
   inboundState => inboundState,
   // transform state being rehydrated
   (_outboundState, key) => {
-    if (key === 'wallets') {
-      const outboundState: {[key in string]: WalletObj} = {};
-      for (const [id, wallet] of Object.entries(
-        _outboundState as {[key in string]: WalletObj},
+    if (key === 'keys') {
+      const outboundState: {[key in string]: Key} = {};
+      for (const [id, key] of Object.entries(
+        _outboundState as {[key in string]: Key},
       )) {
-        const assets = wallet.assets.map(asset => {
-          console.log(`bindWalletClient - ${asset.id}`);
+        const wallets = key.wallets.map(wallet => {
+          console.log(`bindWalletClient - ${wallet.id}`);
           return merge(
-            BWCProvider.getClient(JSON.stringify(asset.credentials)),
-            asset,
+            BWCProvider.getClient(JSON.stringify(wallet.credentials)),
+            wallet,
           );
         });
 
         outboundState[id] = {
-          ...wallet,
-          assets,
+          ...key,
+          wallets,
         };
       }
 
@@ -38,12 +38,19 @@ export const bindWalletKeys = createTransform(
   inboundState => inboundState,
   (_outboundState, k) => {
     if (k === 'keys') {
-      const outboundState: ExtendedKeyValues[] = [];
-      for (const key of _outboundState as ExtendedKeyValues[]) {
-        console.log(`bindWalletKey - ${key.id}`);
-        const km = BWCProvider.createKey({seedType: 'object', seedData: key});
-        outboundState.push(merge(km, km.toObj()));
+      const outboundState: {[key in string]: Key} = {};
+      for (const [id, key] of Object.entries(
+        _outboundState as {[key in string]: Key},
+      )) {
+        outboundState[id] = merge(key, {
+          methods: BWCProvider.createKey({
+            seedType: 'object',
+            seedData: key.properties,
+          }),
+        });
+        console.log(`bindWalletKey - ${id}`);
       }
+
       return outboundState;
     }
     return _outboundState;
