@@ -28,9 +28,9 @@ import {AdvertisementList} from '../../../components/advertisement/advertisement
 import {OfferItems} from '../../../components/offer/offer';
 import {AppActions} from '../../../store/app';
 import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishModal';
-import ScanSvg from '../../../../assets/img/home/scan.svg';
-import ProfileSvg from '../../../../assets/img/home/profile.svg';
 import {sleep} from '../../../utils/helper-methods';
+import ProfileButton from './components/HeaderProfileButton';
+import ScanButton from './components/HeaderScanButton';
 
 const HeaderContainer = styled.View`
   flex-direction: row;
@@ -38,8 +38,8 @@ const HeaderContainer = styled.View`
   margin: 10px ${ScreenGutter};
 `;
 
-const ScanImg = styled.View`
-  margin-right: ${ScreenGutter};
+export const HeaderButtonContainer = styled.View`
+  margin-left: ${ScreenGutter};
 `;
 
 const HomeContainer = styled.SafeAreaView`
@@ -120,13 +120,8 @@ const HomeRoot = () => {
     <HomeContainer>
       <ScrollView>
         <HeaderContainer>
-          <ScanImg>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Scan', {screen: 'Root'})}>
-              <ScanSvg />
-            </TouchableOpacity>
-          </ScanImg>
-          <ProfileSvg />
+          <ScanButton />
+          <ProfileButton />
         </HeaderContainer>
         {/* ////////////////////////////// PORTFOLIO BALANCE */}
         <PortfolioBalance />
