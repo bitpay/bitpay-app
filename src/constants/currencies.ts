@@ -1,8 +1,8 @@
 export type SupportedCoins = 'btc' | 'bch' | 'ltc' | 'doge' | 'eth';
 export type SupportedTokens = 'usdc' | 'gusd' | 'pax' | 'busd' | 'dai' | 'wbtc';
-export type SupportedAssets = SupportedCoins & SupportedTokens;
+export type SupportedCurrencies = SupportedCoins & SupportedTokens;
 
-export interface AssetOpts {
+export interface CurrencyOpts {
   // Bitcore-node
   name: string;
   chain: string;
@@ -47,7 +47,7 @@ export interface AssetOpts {
   };
 }
 
-export const ASSETS: {[key in string]: AssetOpts} = {
+export const Currencies: {[key in string]: CurrencyOpts} = {
   btc: {
     name: 'Bitcoin',
     chain: 'BTC',
@@ -542,5 +542,4 @@ export const TokenOpts: {[key in string]: Token} = {
 };
 
 export const SUPPORTED_TOKENS = ['usdc', 'gusd', 'pax', 'busd', 'dai', 'wbtc'];
-
 export const SUPPORTED_COINS = ['btc', 'bch', 'eth', 'doge', 'ltc'];

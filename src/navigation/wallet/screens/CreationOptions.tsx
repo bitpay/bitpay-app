@@ -10,7 +10,7 @@ import {Feather, LightBlack, SlateDark, White} from '../../../styles/colors';
 import {BaseText, H6, HeaderTitle} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 
-interface WalletType {
+interface Option {
   id: string;
   title: string;
   description: string;
@@ -19,17 +19,17 @@ interface WalletType {
   height: string;
 }
 
-const SelectWalletTypeContainer = styled.SafeAreaView`
+const OptionContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const SelectWalletTypeListContainer = styled.View`
+const OptionListContainer = styled.View`
   flex: 1;
   padding: 0 ${ScreenGutter};
   margin-top: 30px;
 `;
 
-const SelectWalletTypeList = styled.TouchableOpacity`
+const OptionList = styled.TouchableOpacity`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : Feather)};
   height: 100px;
   border-radius: 12px;
@@ -66,7 +66,7 @@ const Image = styled.Image<{imgHeight: string}>`
   bottom: 0;
 `;
 
-const SelectWalletType = () => {
+const CreationOptions = () => {
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -77,13 +77,13 @@ const SelectWalletType = () => {
     });
   }, [navigation]);
 
-  const walletTypeList: WalletType[] = [
+  const optionList: Option[] = [
     {
       id: 'basic',
       title: 'Basic Wallet',
       description:
         'Add coins like Bitcoin and Dogecoin, and also tokens like USDC and PAX',
-      cta: () => navigation.navigate('Wallet', {screen: 'SelectAssets'}),
+      cta: () => navigation.navigate('Wallet', {screen: 'CurrencySelection'}),
       img: require('../../../../assets/img/wallet/wallet-type/create-wallet.png'),
       height: '98px',
     },
@@ -101,7 +101,7 @@ const SelectWalletType = () => {
       description: 'Import your wallet using your backup passphrase',
       cta: () =>
         navigation.navigate('Wallet', {
-          screen: 'ImportWallet',
+          screen: 'Import',
           params: {isOnboarding: false},
         }),
       img: require('../../../../assets/img/wallet/wallet-type/recover.png'),
@@ -109,11 +109,11 @@ const SelectWalletType = () => {
     },
   ];
   return (
-    <SelectWalletTypeContainer>
-      <SelectWalletTypeListContainer>
-        {walletTypeList.map(
-          ({cta, id, img, height, title, description}: WalletType) => (
-            <SelectWalletTypeList
+    <OptionContainer>
+      <OptionListContainer>
+        {optionList.map(
+          ({cta, id, img, height, title, description}: Option) => (
+            <OptionList
               activeOpacity={ActiveOpacity}
               onPress={() => {
                 haptic('impactLight');
@@ -127,12 +127,12 @@ const SelectWalletType = () => {
                 <Title>{title}</Title>
                 <Description>{description}</Description>
               </InfoContainer>
-            </SelectWalletTypeList>
+            </OptionList>
           ),
         )}
-      </SelectWalletTypeListContainer>
-    </SelectWalletTypeContainer>
+      </OptionListContainer>
+    </OptionContainer>
   );
 };
 
-export default SelectWalletType;
+export default CreationOptions;

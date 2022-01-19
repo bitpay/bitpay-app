@@ -9,7 +9,7 @@ const CreateWallet = () => {
     <HomeCard
       body={{description: 'Create, import or join a shared wallet'}}
       onCTAPress={() =>
-        navigation.navigate('Wallet', {screen: 'SelectWalletType'})
+        navigation.navigate('Wallet', {screen: 'CreationOptions'})
       }
     />
   );

@@ -7,7 +7,6 @@ import {incomingData} from '../../../store/scan/scan.effects';
 import debounce from 'lodash.debounce';
 import {useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../../wallet/WalletStack';
 import {ScanStackParamList} from '../ScanStack';
 import {navigationRef} from '../../../Root';
 

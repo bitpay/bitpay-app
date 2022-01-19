@@ -2,7 +2,7 @@ import {Effect} from '../../../index';
 import axios from 'axios';
 import {BASE_BWS_URL} from '../../../../constants/config';
 import {WalletActions} from '../../index';
-import {SUPPORTED_COINS} from '../../../../constants/assets';
+import {SUPPORTED_COINS} from '../../../../constants/currencies';
 import {PriceHistory} from '../../wallet.models';
 
 export const getRates = (): Effect => async dispatch => {
