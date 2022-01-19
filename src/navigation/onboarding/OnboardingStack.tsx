@@ -252,7 +252,7 @@ const OnboardingStack = () => {
                   dispatch(
                     AppActions.showBottomNotificationModal({
                       type: 'warning',
-                      title: 'Don’t risk losing your money',
+                      title: "Don't risk losing your money",
                       message:
                         'Your recovery key is composed of 12 randomly selected words. Take a couple of minutes to carefully write down each word in the order they appear.',
                       enableBackdropDismiss: true,
@@ -291,7 +291,7 @@ const OnboardingStack = () => {
                   dispatch(
                     AppActions.showBottomNotificationModal({
                       type: 'warning',
-                      title: 'Don’t risk losing your money',
+                      title: "Don't risk losing your money",
                       message:
                         'Your recovery key is composed of 12 randomly selected words. Take a couple of minutes to carefully write down each word in order they appear.',
                       enableBackdropDismiss: true,

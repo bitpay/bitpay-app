@@ -28,9 +28,8 @@ const BackupScreen = () => {
   useAndroidBackHandler(() => true);
   const themeType = useThemeType();
   const navigation = useNavigation();
-  const {id, mnemonic} = useSelector(
-    ({WALLET}: RootState) => Object.values(WALLET.keys)[0].properties,
-  );
+  const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
+  const {id, mnemonic} = Object.values(keys)[0].properties;
   const gotoBackup = () =>
     navigation.navigate('Onboarding', {
       screen: 'RecoveryPhrase',
@@ -52,7 +51,7 @@ const BackupScreen = () => {
       <TextContainer>
         <TextAlign align={'center'}>
           <Paragraph>
-            If you delete the BitPay app or lose your device, you’ll need your
+            If you delete the BitPay app or lose your device, you'll need your
             recovery phrase regain access to your funds.
           </Paragraph>
         </TextAlign>
