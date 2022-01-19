@@ -155,10 +155,6 @@ const WalletSettings = () => {
           <Setting
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('Wallet', {
-                screen: 'ExportKey',
-                params: {wallet},
-              });
             }}>
             <WalletSettingsTitle>Addresses</WalletSettingsTitle>
           </Setting>

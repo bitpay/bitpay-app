@@ -33,7 +33,6 @@ export type WalletStackParamList = {
   Import: ImportProps;
   CreateEncryptPassword: {key: Key};
   ExportKey: {key: Key};
-
 };
 
 export enum WalletScreens {

@@ -1,12 +1,10 @@
-import React, {useEffect, useState} from 'react';
-import {Paragraph, HeaderTitle} from '../../../components/styled/Text';
+import React, {useLayoutEffect, useState} from 'react';
+import {Paragraph, HeaderTitle, H6} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {SlateDark, White} from '../../../styles/colors';
-import {ExtendedKeyValues} from '../../../store/wallet/wallet.models';
-import {useDispatch, useSelector} from 'react-redux';
-import {RootState} from '../../../store';
+import {useDispatch} from 'react-redux';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import QRCode from 'react-native-qrcode-svg';
@@ -46,29 +44,28 @@ const QRBackground = styled.View`
   align-items: center;
 `;
 
+const KeyName = styled(H6)`
+  margin-top: 10px;
+  color: ${({theme}) => theme.colors.text};
+`;
+
 const ExportKey = () => {
   const {
-    params: {
-      wallet: {id, isPrivKeyEncrypted},
-    },
+    params: {key},
   } = useRoute<RouteProp<WalletStackParamList, 'ExportKey'>>();
 
   const navigation = useNavigation();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>Export Key</HeaderTitle>,
     });
   }, [navigation]);
 
-  const key: ExtendedKeyValues | undefined = useSelector(
-    ({WALLET}: RootState) => WALLET.keys.find(k => k.id === id),
-  );
-
   const getInitialCode = () => {
-    if (!isPrivKeyEncrypted) {
-      const {mnemonic: getKeyMnemonic} = key?.get();
-      return `1|${getKeyMnemonic}|null|null|${key?.mnemonic}|null`;
+    if (!key.isPrivKeyEncrypted) {
+      const {mnemonic: getKeyMnemonic} = key.methods.get();
+      return `1|${getKeyMnemonic}|null|null|${key.properties.mnemonic}|null`;
     }
     return '';
   };
@@ -84,10 +81,12 @@ const ExportKey = () => {
   };
 
   const onSubmitPassword = async (password: string) => {
-    if (key && password) {
+    if (password) {
       try {
-        const getKey = key.get(password);
-        setCode(`1|${getKey?.mnemonic}|null|null|${key?.mnemonic}|null`);
+        const getKey = key.methods.get(password);
+        setCode(
+          `1|${getKey.mnemonic}|null|null|${key.properties.mnemonic}|null`,
+        );
         dispatch(AppActions.dissmissDecryptPasswordModal());
       } catch (e) {
         console.log(`Decrypt Error: ${e}`);
@@ -103,17 +102,19 @@ const ExportKey = () => {
     }
   };
 
-  if (isPrivKeyEncrypted) {
-    dispatch(
-      AppActions.showDecryptPasswordModal({
-        onSubmitHandler: onSubmitPassword,
-        description:
-          'An encryption password is required when you’re sending crypto or managing settings. If you would like to disable this, go to your wallet settings.',
-        onCancelHandler: () => {
-          navigation.goBack();
-        },
-      }),
-    );
+  if (key.isPrivKeyEncrypted && !code) {
+    setTimeout(() => {
+      dispatch(
+        AppActions.showDecryptPasswordModal({
+          onSubmitHandler: onSubmitPassword,
+          description:
+            'An encryption password is required when you’re sending crypto or managing settings. If you would like to disable this, go to your wallet settings.',
+          onCancelHandler: () => {
+            navigation.goBack();
+          },
+        }),
+      );
+    }, 200); // Wait for screen animation
   }
 
   return (
@@ -134,8 +135,11 @@ const ExportKey = () => {
 
         <QRCodeContainer>
           <QRBackground>
-            {code ? <QRCode value={code} size={150} /> : null}
+            {code ? <QRCode value={code} size={155} /> : null}
           </QRBackground>
+
+          {/*TODO: Update me*/}
+          <KeyName>My Key</KeyName>
         </QRCodeContainer>
       </ScrollView>
     </ExportKeyContainer>
