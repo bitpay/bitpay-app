@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useLayoutEffect, useState} from 'react';
 import {CtaContainerAbsolute} from '../../../components/styled/Containers';
 import TermsBox from '../components/TermsBox';
 import Button from '../../../components/button/Button';
@@ -7,7 +7,15 @@ import {StackScreenProps} from '@react-navigation/stack';
 import {OnboardingStackParamList} from '../OnboardingStack';
 import {useNavigation} from '@react-navigation/native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import {useDispatch} from 'react-redux';
+import {HeaderTitle} from '../../../components/styled/Text';
+
+export interface TermsOfUseProps {
+  params?:
+    | {
+        context?: 'skip' | undefined;
+      }
+    | undefined;
+}
 
 type Props = StackScreenProps<OnboardingStackParamList, 'TermsOfUse'>;
 
@@ -26,12 +34,12 @@ let Terms: Array<Term> = [
     id: 1,
     statement: 'Your funds are in are in your custody',
     acknowledgement:
-      'I understand that my funds are held and controled on this device, not by a company.',
+      'I understand that my funds are held and controlled on this device, not by a company.',
   },
   {
     id: 2,
     statement:
-      'BitPay cannot recover your funds if you don’t set up a recovery wallet or if you lose your wallet',
+      "BitPay cannot recover your funds if you don't set up a recovery wallet or if you lose your wallet",
     acknowledgement:
       'I understand that if this app is moved to another device or deleted, my crypto funds can only be recovered with the recovery phrase.',
   },
@@ -55,8 +63,18 @@ const TermsContainer = styled.View`
 `;
 
 const TermsOfUse = ({navigation: _navigation, route}: Props) => {
-  useAndroidBackHandler(() => true);
   const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      gestureEnabled: false,
+      headerTitle: () => <HeaderTitle>Terms of Use</HeaderTitle>,
+      headerLeft: () => null,
+      headerRight: () => null,
+    });
+  });
+
+  useAndroidBackHandler(() => true);
 
   const [termsList, setTermsList] = useState(Terms);
   _navigation.addListener('transitionStart', () => {

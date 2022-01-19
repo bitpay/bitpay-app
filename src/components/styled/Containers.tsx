@@ -84,11 +84,11 @@ export const RowContainer = styled.TouchableOpacity`
   padding: 0 10px 0 10px;
 `;
 
-export const AssetColumn = styled(Column)`
+export const CurrencyColumn = styled(Column)`
   margin-left: 10px;
 `;
 
-export const AssetImageContainer = styled.View`
+export const CurrencyImageContainer = styled.View`
   height: 50px;
   width: 50px;
   display: flex;

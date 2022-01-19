@@ -1,5 +1,5 @@
 import {NavigationProp, useNavigation} from '@react-navigation/native';
-import React, {ReactNode, useEffect, useRef, useState} from 'react';
+import React, {ReactNode, useEffect, useState} from 'react';
 import {useSelector} from 'react-redux';
 import Carousel from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
@@ -7,7 +7,7 @@ import haptic from '../../../../components/haptic-feedback/haptic';
 import {WIDTH} from '../../../../components/styled/Containers';
 import {RootState} from '../../../../store';
 import {Card} from '../../../../store/card/card.models';
-import {WalletObj} from '../../../../store/wallet/wallet.models';
+import {Key} from '../../../../store/wallet/wallet.models';
 import {BitPayCard, GetMastercard} from './cards/BitPayCard';
 import BuyGiftCards from './cards/BuyGiftCards';
 import ConnectCoinbase from './cards/ConnectCoinbase';
@@ -24,31 +24,31 @@ const _renderItem = ({item}: {item: ReactNode}) => {
 
 const createHomeCardList = (
   navigation: NavigationProp<any>,
-  wallets: WalletObj[],
+  keys: Key[],
   cards: Card[],
 ) => {
   cards = cards.filter((c) => c.provider === 'galileo');
 
   const list: JSX.Element[] = [];
-  const hasWallets = wallets.length;
+  const hasKeys = keys.length;
   const hasCards = cards.length;
   const hasGiftCards = false;
   const hasCoinbase = false;
 
-  if (hasWallets) {
-    const walletCards = wallets
-      .filter(wallet => wallet.show)
-      .map(wallet => {
-        const {assets, totalBalance = 0} = wallet;
+  if (hasKeys) {
+    const walletCards = keys
+      .filter(key => key)
+      .map(key => {
+        const {wallets, totalBalance = 0} = key;
 
         return (
           <WalletCardComponent
-            assets={assets}
+            wallets={wallets}
             totalBalance={totalBalance}
             onPress={() =>
               navigation.navigate('Wallet', {
-                screen: 'WalletOverview',
-                params: {wallet},
+                screen: 'KeyOverview',
+                params: {key},
               })
             }
           />
@@ -84,7 +84,7 @@ const createHomeCardList = (
   }
 
   // if hasWallets, still show CreateWallet at the end
-  if (hasWallets) {
+  if (hasKeys) {
     list.push(<CreateWallet />);
   }
 
@@ -96,18 +96,18 @@ const CardsCarousel = () => {
   const bitPayCards = useSelector<RootState, Card[]>(({APP, CARD}) =>
     CARD.cards[APP.network],
   );
-  const wallets = useSelector<RootState, {[k: string]: WalletObj}>(
-    ({WALLET}) => WALLET.wallets,
+  const keys = useSelector<RootState, {[k: string]: Key}>(
+    ({WALLET}) => WALLET.keys,
   );
   const [cardsList, setCardsList] = useState(
-    createHomeCardList(navigation, Object.values(wallets), bitPayCards),
+    createHomeCardList(navigation, Object.values(keys), bitPayCards),
   );
 
   useEffect(() => {
     setCardsList(
-      createHomeCardList(navigation, Object.values(wallets), bitPayCards),
+      createHomeCardList(navigation, Object.values(keys), bitPayCards),
     );
-  }, [navigation, wallets, bitPayCards]);
+  }, [navigation, keys, bitPayCards]);
 
   return (
     <CarouselContainer>

@@ -5,7 +5,7 @@ import styled from 'styled-components/native';
 import {Action, SlateDark} from '../../../styles/colors';
 import {ModalContainer} from '../../../components/styled/Containers';
 
-const WalletOptionsTitleContainer = styled.View`
+const OptionsTitleContainer = styled.View`
   margin-bottom: 25px;
 `;
 
@@ -65,11 +65,11 @@ const OptionsBottomPopupModal = ({
   return (
     <BottomPopupModal isVisible={isVisible} onBackdropPress={closeModal}>
       <ModalContainer>
-        <WalletOptionsTitleContainer>
+        <OptionsTitleContainer>
           <TextAlign align={'center'}>
             <H4>{title}</H4>
           </TextAlign>
-        </WalletOptionsTitleContainer>
+        </OptionsTitleContainer>
         {options.map(({img, title, description, onPress}, index) => {
           return (
             <OptionContainer
