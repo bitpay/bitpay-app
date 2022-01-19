@@ -1,8 +1,9 @@
-import React from 'react';
+import React, {useLayoutEffect} from 'react';
 import styled from 'styled-components/native';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainer,
+  HeaderRightContainer,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
@@ -11,6 +12,7 @@ import {useNavigation} from '@react-navigation/native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingImage} from '../components/Containers';
+import haptic from '../../../components/haptic-feedback/haptic';
 
 const CreateKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -23,8 +25,33 @@ const CreateKeyImage = {
 };
 
 const CreateOrImportKey = () => {
-  useAndroidBackHandler(() => true);
   const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      gestureEnabled: false,
+      headerLeft: () => null,
+      headerRight: () => (
+        <HeaderRightContainer>
+          <Button
+            buttonType={'pill'}
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('Onboarding', {
+                screen: 'TermsOfUse',
+                params: {
+                  context: 'skip',
+                },
+              });
+            }}>
+            Skip
+          </Button>
+        </HeaderRightContainer>
+      ),
+    });
+  });
+
+  useAndroidBackHandler(() => true);
   const themeType = useThemeType();
 
   return (

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
@@ -63,11 +63,11 @@ const WalletSettings = () => {
   const navigation = useNavigation();
   const [demoToggle, setDemoToggle] = useState(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>Wallet Settings</HeaderTitle>,
     });
-  }, [navigation]);
+  });
 
   const {currencyName} = wallet;
 

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {
   Balance,
@@ -48,7 +48,7 @@ const WalletDetails = () => {
   const navigation = useNavigation();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const {wallet} = route.params;
-  useEffect(() => {
+  useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{wallet.currencyName}</HeaderTitle>,
       headerRight: () => (
@@ -59,7 +59,7 @@ const WalletDetails = () => {
         />
       ),
     });
-  }, [navigation]);
+  });
 
   const assetOptions: Array<Option> = [
     {

@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useLayoutEffect} from 'react';
 import styled from 'styled-components/native';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import RecoveryPhrase from '../components/RecoveryPhrase';
@@ -20,7 +20,7 @@ const Import = () => {
   const Tab = createMaterialTopTabNavigator();
   const navigation = useNavigation();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
       headerTitle: () => <HeaderTitle>Import</HeaderTitle>,

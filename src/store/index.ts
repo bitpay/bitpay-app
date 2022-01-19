@@ -153,7 +153,7 @@ const getStore = () => {
   const persistor = persistStore(store);
 
   if (__DEV__) {
-    // persistor.purge().then(() => console.log('purged persistence'));
+    persistor.purge().then(() => console.log('purged persistence'));
   }
 
   return {

@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useLayoutEffect} from 'react';
 import {BaseText, HeaderTitle, Link} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
@@ -104,11 +104,11 @@ const KeySettings = () => {
   const navigation = useNavigation();
   const wallets = buildWalletList(key.wallets);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>Key Settings</HeaderTitle>,
     });
-  }, [navigation]);
+  });
 
   return (
     <WalletSettingsContainer>

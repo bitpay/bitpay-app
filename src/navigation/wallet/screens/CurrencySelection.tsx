@@ -1,6 +1,9 @@
-import React, {useState} from 'react';
+import React, {useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
-import {CtaContainerAbsolute} from '../../../components/styled/Containers';
+import {
+  CtaContainerAbsolute,
+  HeaderRightContainer,
+} from '../../../components/styled/Containers';
 import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow';
 import {CurrencySelectionOptions} from '../../../constants/CurrencySelectionOptions';
 import Button from '../../../components/button/Button';
@@ -15,6 +18,8 @@ import {FlatList} from 'react-native';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {useNavigation} from '@react-navigation/native';
+import {HeaderTitle} from '../../../components/styled/Text';
+import haptic from '../../../components/haptic-feedback/haptic';
 
 const CurrencySelectionContainer = styled.SafeAreaView`
   flex: 1;
@@ -25,9 +30,34 @@ const ListContainer = styled.View`
 `;
 
 const CurrencySelection = () => {
-  const dispatch = useDispatch();
   const navigation = useNavigation();
 
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      gestureEnabled: false,
+      headerTitle: () => <HeaderTitle>Select Currencies</HeaderTitle>,
+      headerTitleAlign: 'center',
+      headerRight: () => (
+        <HeaderRightContainer>
+          <Button
+            buttonType={'pill'}
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('Onboarding', {
+                screen: 'TermsOfUse',
+                params: {
+                  context: 'skip',
+                },
+              });
+            }}>
+            Skip
+          </Button>
+        </HeaderRightContainer>
+      ),
+    });
+  });
+
+  const dispatch = useDispatch();
   const [currencyOptions, setCurrencyOptions] = useState(
     CurrencySelectionOptions,
   );
