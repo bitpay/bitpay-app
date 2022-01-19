@@ -16,12 +16,12 @@ const ExchangeRateCardContainer = styled.View`
   left: ${ScreenGutter};
 `;
 
-const CoinIconContainer = styled.View`
+const CurrencyIconContainer = styled.View`
   padding-top: 19px;
   padding-bottom: 6px;
 `;
 
-const CoinNameText = styled(BaseText)`
+const CurrencyNameText = styled(BaseText)`
   font-style: normal;
   font-weight: 500;
   font-size: 12px;
@@ -29,7 +29,7 @@ const CoinNameText = styled(BaseText)`
   color: ${({theme}) => theme.colors.text};
 `;
 
-const CoinAverageText = styled(BaseText)<{average?: number}>`
+const CurrencyAverageText = styled(BaseText)<{average?: number}>`
   font-style: normal;
   font-weight: 500;
   font-size: 10px;
@@ -38,7 +38,7 @@ const CoinAverageText = styled(BaseText)<{average?: number}>`
 `;
 
 export default ({item}: {item: ExchangeRateProps}) => {
-  const {img, coinName, average} = item;
+  const {img, currencyName, average} = item;
 
   return (
     <ExchangeRateCardContainer
@@ -54,9 +54,9 @@ export default ({item}: {item: ExchangeRateProps}) => {
           elevation: 3,
         },
       ]}>
-      <CoinIconContainer>{img}</CoinIconContainer>
-      <CoinNameText>{coinName}</CoinNameText>
-      <CoinAverageText average={average}>{average}%</CoinAverageText>
+      <CurrencyIconContainer>{img}</CurrencyIconContainer>
+      <CurrencyNameText>{currencyName}</CurrencyNameText>
+      <CurrencyAverageText average={average}>{average}%</CurrencyAverageText>
     </ExchangeRateCardContainer>
   );
 };

@@ -13,7 +13,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import PortfolioBalance from './components/PortfolioBalance';
 import CardsCarousel from './components/CardsCarousel';
 import LinkingButtons from './components/LinkingButtons';
-import {AssetSelectionOptions} from '../../../constants/AssetSelectionOptions';
+import {CurrencySelectionOptions} from '../../../constants/CurrencySelectionOptions';
 import ExchangeRatesSlides, {
   ExchangeRateProps,
 } from '../../../components/exchange-rate/ExchangeRatesSlides';
@@ -90,13 +90,13 @@ const HomeRoot = () => {
   );
   const exchangeRatesItems: Array<ExchangeRateProps> = [];
   priceHistory.forEach((ph: PriceHistory, index: number) => {
-    const currencyInfo = AssetSelectionOptions.find(
+    const currencyInfo = CurrencySelectionOptions.find(
       ({id}: {id: string | number}) => id === ph.coin,
     );
     exchangeRatesItems.push({
       id: index,
       img: currencyInfo?.roundIcon(20),
-      coinName: currencyInfo?.assetName,
+      currencyName: currencyInfo?.currencyName,
       average: +ph.percentChange,
     });
   });

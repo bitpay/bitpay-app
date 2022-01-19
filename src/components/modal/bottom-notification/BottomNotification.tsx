@@ -1,4 +1,4 @@
-import React, {ReactChild} from 'react';
+import React from 'react';
 import BottomPopupModal from '../base/bottom-popup/BottomPopupModal';
 import {BaseText, H4} from '../../styled/Text';
 import styled, {css} from 'styled-components/native';
@@ -14,6 +14,12 @@ import WarningSvg from '../../../../assets/img/warning.svg';
 import ErrorSvg from '../../../../assets/img/error.svg';
 import QuestionSvg from '../../../../assets/img/question.svg';
 import {sleep} from '../../../utils/helper-methods';
+import {FlatList} from 'react-native';
+
+export interface BottomNotificationListType {
+  key: number;
+  description: string;
+}
 
 export interface BottomNotificationConfig {
   type: 'success' | 'info' | 'warning' | 'error' | 'question';
@@ -24,7 +30,7 @@ export interface BottomNotificationConfig {
     primary?: boolean;
     action: (rootState: RootState) => any;
   }>;
-  list?: ReactChild;
+  list?: BottomNotificationListType[];
   enableBackdropDismiss: boolean;
 }
 
@@ -97,6 +103,10 @@ const Cta = styled.Text`
     props.primary ? NotificationPrimary : 'black'};
 `;
 
+const List = styled(BaseText)`
+  margin: 0 0 5px 10px;
+`;
+
 const BottomNotification = () => {
   const dispatch = useDispatch();
   const rootState = useSelector((state: RootState) => state);
@@ -127,7 +137,16 @@ const BottomNotification = () => {
         <MessageContainer>
           <Message>{message}</Message>
         </MessageContainer>
-        {list ? list : null}
+        {list?.length ? (
+          <FlatList
+            data={list}
+            renderItem={({item}) => (
+              <List>
+                {'\u2022'} {item.description}
+              </List>
+            )}
+          />
+        ) : null}
         <Hr />
         <CtaContainer platform={Platform.OS}>
           {actions?.map(({primary, action, text}, index) => {

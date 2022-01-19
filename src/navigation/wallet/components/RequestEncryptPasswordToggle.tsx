@@ -1,35 +1,27 @@
 import {AppActions} from '../../../store/app';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import React, {useEffect, useState} from 'react';
-import {
-  ExtendedKeyValues,
-  WalletObj,
-} from '../../../store/wallet/wallet.models';
+import {Key} from '../../../store/wallet/wallet.models';
 import {useNavigation} from '@react-navigation/native';
-import {useDispatch, useSelector} from 'react-redux';
-import {RootState} from '../../../store';
+import {useDispatch} from 'react-redux';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {WalletActions} from '../../../store/wallet';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {GeneralError, WrongPasswordError} from './DecryptPasswordErrorMessages';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 
-const RequestEncryptPasswordToggle = ({wallet}: {wallet: WalletObj}) => {
+const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const logger = useLogger();
 
   const [passwordToggle, setPasswordToggle] = useState(
-    !!wallet.isPrivKeyEncrypted,
-  );
-
-  const key: ExtendedKeyValues | undefined = useSelector(
-    ({WALLET}: RootState) => WALLET.keys.find(k => k.id === wallet.id),
+    !!key.isPrivKeyEncrypted,
   );
 
   useEffect(() => {
-    setPasswordToggle(!!wallet.isPrivKeyEncrypted);
-  }, [wallet.isPrivKeyEncrypted]);
+    setPasswordToggle(!!key.isPrivKeyEncrypted);
+  }, [key.isPrivKeyEncrypted]);
 
   const showErrorMessage = (msg: BottomNotificationConfig) => {
     setTimeout(() => {
@@ -40,7 +32,7 @@ const RequestEncryptPasswordToggle = ({wallet}: {wallet: WalletObj}) => {
   const onSubmitPassword = (password: string) => {
     if (key) {
       try {
-        key.decrypt(password);
+        key.methods.decrypt(password);
         logger.debug('Key Decrypted');
         dispatch(
           WalletActions.successEncryptOrDecryptPassword({
@@ -64,10 +56,10 @@ const RequestEncryptPasswordToggle = ({wallet}: {wallet: WalletObj}) => {
   return (
     <ToggleSwitch
       onChange={() => {
-        if (!wallet.isPrivKeyEncrypted) {
+        if (!passwordToggle) {
           navigation.navigate('Wallet', {
             screen: 'CreateEncryptPassword',
-            params: {wallet},
+            params: {key},
           });
         } else {
           dispatch(

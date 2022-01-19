@@ -3,8 +3,7 @@ import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {useDispatch, useSelector} from 'react-redux';
-import {RootState} from '../../../store';
+import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {Caution, SlateDark, White} from '../../../styles/colors';
@@ -13,7 +12,6 @@ import {Controller, useForm} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
-import {ExtendedKeyValues} from '../../../store/wallet/wallet.models';
 import {WalletActions} from '../../../store/wallet/index';
 import {useLogger} from '../../../utils/hooks';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
@@ -68,10 +66,9 @@ interface EncryptPasswordFieldValues {
 const CreateEncryptPassword = () => {
   const navigation = useNavigation();
   const {
-    params: {wallet},
+    params: {key},
   } = useRoute<RouteProp<WalletStackParamList, 'CreateEncryptPassword'>>();
 
-  const {id} = wallet;
   const {
     control,
     handleSubmit,
@@ -82,9 +79,6 @@ const CreateEncryptPassword = () => {
 
   const dispatch = useDispatch();
   const [genericError, setGenericError] = useState<string>('');
-  const key: ExtendedKeyValues | undefined = useSelector(
-    ({WALLET}: RootState) => WALLET.keys.find(k => k.id === id),
-  );
   const logger = useLogger();
   const onSubmit = ({password}: {password: string}) => {
     try {
@@ -92,12 +86,12 @@ const CreateEncryptPassword = () => {
         // TODO: Update wallet name
         logger.debug('Encrypting private key for: Wallet 1');
 
-        key.encrypt(password);
+        key.methods.encrypt(password);
         dispatch(WalletActions.successEncryptOrDecryptPassword({key}));
-        wallet.isPrivKeyEncrypted = key.isPrivKeyEncrypted();
+        key.isPrivKeyEncrypted = key.methods.isPrivKeyEncrypted();
         navigation.navigate('Wallet', {
-          screen: 'WalletSettings',
-          params: {wallet: wallet},
+          screen: 'KeySettings',
+          params: {key},
         });
         logger.debug('Key encrypted');
       } else {
