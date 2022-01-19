@@ -139,11 +139,15 @@ export default () => {
   // MAIN APP INIT
   useEffect(() => {
     dispatch(AppEffects.startAppInit());
-    dispatch(AppActions.setDefaultLanguage(appLanguage));
+  }, [dispatch]);
+
+  // LANGUAGE
+  useEffect(() => {
+    AppActions.setDefaultLanguage(appLanguage);
     if (appLanguage && appLanguage !== i18n.language) {
       i18n.changeLanguage(appLanguage);
     }
-  }, [dispatch, appLanguage]);
+  }, [appLanguage]);
 
   // THEME
   useEffect(() => {
