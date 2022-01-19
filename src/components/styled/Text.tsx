@@ -9,7 +9,6 @@ export const H2 = styled(BaseText)`
   font-size: 38px;
   font-style: normal;
   font-weight: 500;
-  line-height: 42px;
   letter-spacing: 0;
   text-align: center;
 `;
@@ -116,34 +115,4 @@ export const Balance = styled(BaseText)`
   font-weight: 700;
   line-height: 53px;
   letter-spacing: 0;
-`;
-
-// LIST
-export const MainLabel = styled(BaseText)`
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-`;
-
-export const SecondaryLabel = styled(BaseText)`
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 16px;
-  text-align: left;
-`;
-
-export const MainNote = styled(BaseText)`
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 700;
-  text-align: right;
-`;
-
-export const SecondaryNote = styled(BaseText)`
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 300;
-  line-height: 19px;
-  text-align: right;
 `;

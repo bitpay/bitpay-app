@@ -21,7 +21,7 @@ const _renderItem = ({item}: {item: ReactNode}) => {
 };
 
 const CardsCarousel = () => {
-  const wallets = useSelector(({WALLET}: RootState) => WALLET.wallets);
+  const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
   const DEFAULTS = [
     <CreateWallet />,
     <BuyGiftCards />,
@@ -32,25 +32,25 @@ const CardsCarousel = () => {
   const navigation = useNavigation();
 
   useEffect(() => {
-    if (wallets) {
-      const list = Object.values(wallets)
-        .filter(wallet => wallet.show)
-        .map(wallet => {
-          const {assets, totalBalance = 0} = wallet;
+    if (keys) {
+      const list = Object.values(keys)
+        .filter(key => key.show)
+        .map(key => {
+          const {wallets, totalBalance = 0} = key;
 
           return WalletCardComponent({
-            assets,
+            wallets,
             totalBalance,
             onPress: () =>
               navigation.navigate('Wallet', {
-                screen: 'WalletOverview',
-                params: {wallet},
+                screen: 'KeyOverview',
+                params: {key},
               }),
           });
         });
       setCardsList([...list, ...DEFAULTS]);
     }
-  }, [wallets]);
+  }, [keys]);
 
   return (
     <CarouselContainer>

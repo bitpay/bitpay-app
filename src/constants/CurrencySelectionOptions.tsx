@@ -26,17 +26,17 @@ import DaiRoundIcon from '../../assets/img/currencies/round/dai.svg';
 import PaxRoundIcon from '../../assets/img/currencies/round/pax.svg';
 import WbtcRoundIcon from '../../assets/img/currencies/round/wbtc.svg';
 
-import {ItemProps} from '../components/list/AssetSelectorRow';
+import {ItemProps} from '../components/list/CurrencySelectionRow';
 
-export const AssetSelectionOptions: Array<ItemProps> = [
+export const CurrencySelectionOptions: Array<ItemProps> = [
   {
     id: 'btc',
     img: <BtcIcon />,
     roundIcon: (size: number = 30) => (
       <BtcRoundIcon width={size} height={size} />
     ),
-    assetName: 'Bitcoin',
-    assetAbbreviation: 'BTC',
+    currencyName: 'Bitcoin',
+    currencyAbbreviation: 'BTC',
   },
   {
     id: 'bch',
@@ -44,8 +44,8 @@ export const AssetSelectionOptions: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <BchRoundIcon width={size} height={size} />
     ),
-    assetName: 'Bitcoin Cash',
-    assetAbbreviation: 'BCH',
+    currencyName: 'Bitcoin Cash',
+    currencyAbbreviation: 'BCH',
   },
   {
     id: 'eth',
@@ -53,8 +53,8 @@ export const AssetSelectionOptions: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <EthRoundIcon width={size} height={size} />
     ),
-    assetName: 'Ethereum',
-    assetAbbreviation: 'ETH',
+    currencyName: 'Ethereum',
+    currencyAbbreviation: 'ETH',
   },
   {
     id: 'doge',
@@ -62,8 +62,8 @@ export const AssetSelectionOptions: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <DogeRoundIcon width={size} height={size} />
     ),
-    assetName: 'Dogecoin',
-    assetAbbreviation: 'DOGE',
+    currencyName: 'Dogecoin',
+    currencyAbbreviation: 'DOGE',
   },
   {
     id: 'ltc',
@@ -71,8 +71,8 @@ export const AssetSelectionOptions: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <LtcRoundIcon width={size} height={size} />
     ),
-    assetName: 'Litecoin',
-    assetAbbreviation: 'LTC',
+    currencyName: 'Litecoin',
+    currencyAbbreviation: 'LTC',
   },
   {
     id: 'xrp',
@@ -80,8 +80,8 @@ export const AssetSelectionOptions: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <XrpRoundIcon width={size} height={size} />
     ),
-    assetName: 'Xrp',
-    assetAbbreviation: 'XRP',
+    currencyName: 'Xrp',
+    currencyAbbreviation: 'XRP',
   },
   {
     id: 'usdc',
@@ -89,8 +89,8 @@ export const AssetSelectionOptions: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <UsdcRoundIcon width={size} height={size} />
     ),
-    assetName: 'Usdc',
-    assetAbbreviation: 'USDC',
+    currencyName: 'Usdc',
+    currencyAbbreviation: 'USDC',
   },
   {
     id: 'gusd',
@@ -98,8 +98,8 @@ export const AssetSelectionOptions: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <GusdRoundIcon width={size} height={size} />
     ),
-    assetName: 'Gusd',
-    assetAbbreviation: 'GUSD',
+    currencyName: 'Gusd',
+    currencyAbbreviation: 'GUSD',
   },
   {
     id: 'busd',
@@ -107,8 +107,8 @@ export const AssetSelectionOptions: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <BusdRoundIcon width={size} height={size} />
     ),
-    assetName: 'Busd',
-    assetAbbreviation: 'BUSD',
+    currencyName: 'Busd',
+    currencyAbbreviation: 'BUSD',
   },
   {
     id: 'dai',
@@ -116,8 +116,8 @@ export const AssetSelectionOptions: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <DaiRoundIcon width={size} height={size} />
     ),
-    assetName: 'Dai',
-    assetAbbreviation: 'DAI',
+    currencyName: 'Dai',
+    currencyAbbreviation: 'DAI',
   },
   {
     id: 'pax',
@@ -125,8 +125,8 @@ export const AssetSelectionOptions: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <PaxRoundIcon width={size} height={size} />
     ),
-    assetName: 'Pax',
-    assetAbbreviation: 'PAX',
+    currencyName: 'Pax',
+    currencyAbbreviation: 'PAX',
   },
   {
     id: 'wbtc',
@@ -134,7 +134,7 @@ export const AssetSelectionOptions: Array<ItemProps> = [
     roundIcon: (size: number = 30) => (
       <WbtcRoundIcon width={size} height={size} />
     ),
-    assetName: 'Wbtc',
-    assetAbbreviation: 'WBTC',
+    currencyName: 'Wbtc',
+    currencyAbbreviation: 'WBTC',
   },
 ];

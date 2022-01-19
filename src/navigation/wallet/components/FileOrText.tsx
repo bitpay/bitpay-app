@@ -1,9 +1,5 @@
 import React, {useState} from 'react';
-import {
-  ImportWalletContainer,
-  ImportWalletTextInput,
-  ImportWalletTitle,
-} from './RecoveryPhrase';
+import {ImportContainer, ImportTextInput, ImportTitle} from './RecoveryPhrase';
 import {
   CtaContainer,
   HeaderTitleContainer,
@@ -66,18 +62,18 @@ const FileOrText = () => {
   };
 
   return (
-    <ImportWalletContainer>
+    <ImportContainer>
       <HeaderTitleContainer>
-        <ImportWalletTitle>Backup plain text code</ImportWalletTitle>
+        <ImportTitle>Backup plain text code</ImportTitle>
       </HeaderTitleContainer>
-      <ImportWalletTextInput
+      <ImportTextInput
         multiline
         numberOfLines={5}
         onChangeText={(text: string) => setInputValue(text)}
       />
 
       <HeaderTitleContainer>
-        <ImportWalletTitle>Password</ImportWalletTitle>
+        <ImportTitle>Password</ImportTitle>
         <InputContainer>
           <BoxInput
             placeholder={'strongPassword123'}
@@ -128,7 +124,7 @@ const FileOrText = () => {
           Import Wallet
         </Button>
       </CtaContainer>
-    </ImportWalletContainer>
+    </ImportContainer>
   );
 };
 
