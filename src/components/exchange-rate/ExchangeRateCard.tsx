@@ -38,7 +38,7 @@ const CoinAverageText = styled(BaseText)<{average?: number}>`
 `;
 
 export default ({item}: {item: ExchangeRateProps}) => {
-  const {img, coinName, average} = item;
+  const {img, currencyName, average} = item;
 
   return (
     <ExchangeRateCardContainer
@@ -55,7 +55,7 @@ export default ({item}: {item: ExchangeRateProps}) => {
         },
       ]}>
       <CoinIconContainer>{img}</CoinIconContainer>
-      <CoinNameText>{coinName}</CoinNameText>
+      <CoinNameText>{currencyName}</CoinNameText>
       <CoinAverageText average={average}>{average}%</CoinAverageText>
     </ExchangeRateCardContainer>
   );

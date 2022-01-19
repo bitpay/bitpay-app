@@ -7,7 +7,6 @@ import {StackScreenProps} from '@react-navigation/stack';
 import {OnboardingStackParamList} from '../OnboardingStack';
 import {useNavigation} from '@react-navigation/native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import {useDispatch} from 'react-redux';
 
 type Props = StackScreenProps<OnboardingStackParamList, 'TermsOfUse'>;
 

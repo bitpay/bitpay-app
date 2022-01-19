@@ -18,7 +18,7 @@ import ShareAddressSvg from '../../../../assets/img/wallet/share-address.svg';
 import SettingsSvg from '../../../../assets/img/wallet/settings.svg';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 
-const AssetDetailsContainer = styled.View`
+const WalletDetailsContainer = styled.View`
   flex: 1;
 `;
 
@@ -43,18 +43,18 @@ const Chain = styled(BaseText)`
   line-height: 40px;
 `;
 
-const AssetDetails = () => {
-  const route = useRoute<RouteProp<WalletStackParamList, 'AssetDetails'>>();
+const WalletDetails = () => {
+  const route = useRoute<RouteProp<WalletStackParamList, 'WalletDetails'>>();
   const navigation = useNavigation();
-  const [showAssetOptions, setShowAssetOptions] = useState(false);
-  const {asset} = route.params;
+  const [showWalletOptions, setShowWalletOptions] = useState(false);
+  const {wallet} = route.params;
   useEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>{asset.assetName}</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{wallet.currencyName}</HeaderTitle>,
       headerRight: () => (
         <Settings
           onPress={() => {
-            setShowAssetOptions(true);
+            setShowWalletOptions(true);
           }}
         />
       ),
@@ -78,27 +78,28 @@ const AssetDetails = () => {
     },
     {
       img: <SettingsSvg />,
-      title: 'Asset Settings',
-      description: 'View all the ways to manage and configure your asset.',
+      title: 'Wallet Settings',
+      description: 'View all the ways to manage and configure your wallet.',
       onPress: () =>
         navigation.navigate('Wallet', {
-          screen: 'AssetSettings',
+          screen: 'WalletSettings',
           params: {
-            asset,
+            wallet,
           },
         }),
     },
   ];
 
-  const {cryptoBalance, fiatBalance, assetAbbreviation} = asset;
+  const {cryptoBalance, fiatBalance, currencyName, currencyAbbreviation} =
+    wallet;
   return (
-    <AssetDetailsContainer>
+    <WalletDetailsContainer>
       <BalanceContainer>
         <Row>
           <Balance>
-            {cryptoBalance} {assetAbbreviation}
+            {cryptoBalance} {currencyAbbreviation}
           </Balance>
-          <Chain>{assetAbbreviation}</Chain>
+          <Chain>{currencyAbbreviation}</Chain>
         </Row>
         <H5>{fiatBalance} USD</H5>
       </BalanceContainer>
@@ -106,13 +107,13 @@ const AssetDetails = () => {
       <LinkingButtons receiveCta={() => null} sendCta={() => null} />
 
       <OptionsBottomPopupModal
-        isVisible={showAssetOptions}
-        closeModal={() => setShowAssetOptions(false)}
-        title={`Receive ${asset.assetName}`}
+        isVisible={showWalletOptions}
+        closeModal={() => setShowWalletOptions(false)}
+        title={`Receive ${currencyName}`}
         options={assetOptions}
       />
-    </AssetDetailsContainer>
+    </WalletDetailsContainer>
   );
 };
 
-export default AssetDetails;
+export default WalletDetails;

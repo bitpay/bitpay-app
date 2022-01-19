@@ -28,7 +28,9 @@ const BackupScreen = () => {
   useAndroidBackHandler(() => true);
   const themeType = useThemeType();
   const navigation = useNavigation();
-  const {id, mnemonic} = useSelector(({WALLET}: RootState) => WALLET.keys[0]);
+  const {id, mnemonic} = useSelector(
+    ({WALLET}: RootState) => Object.values(WALLET.keys)[0].properties,
+  );
   const gotoBackup = () =>
     navigation.navigate('Onboarding', {
       screen: 'RecoveryPhrase',
@@ -44,7 +46,7 @@ const BackupScreen = () => {
       <OnboardingImage source={BackupImage[themeType]} />
       <TitleContainer>
         <TextAlign align={'center'}>
-          <H3>Would you like to backup your wallet?</H3>
+          <H3>Would you like to backup your key?</H3>
         </TextAlign>
       </TitleContainer>
       <TextContainer>

@@ -65,7 +65,7 @@ const OnboardingFinishModal: React.FC = () => {
     addFunds: {
       id: 'addFunds',
       title: "Let's add funds",
-      description: 'To start using your assets, you will need to have crypto.',
+      description: 'To start using your wallets, you will need to have crypto.',
       buttons: [
         {
           text: 'Buy Crypto',
@@ -83,18 +83,18 @@ const OnboardingFinishModal: React.FC = () => {
     },
     createWallet: {
       id: 'createWallet',
-      title: "Let's create a wallet",
+      title: "Let's create a key",
       description:
-        'To start using the app, you need to have a wallet. You can create or import a wallet.',
+        'To start using the app, you need to have a key. You can create or import a key.',
       buttons: [
         {
-          text: 'Create Wallet',
+          text: 'Create key',
           onPress: () => {
             dismissModal();
           },
         },
         {
-          text: 'Import Wallet',
+          text: 'Import',
           onPress: () => {
             dismissModal();
           },

@@ -12,9 +12,9 @@ import OnboardingStartScreen, {
 } from './screens/OnboardingStart';
 import NotificationsScreen from './screens/Notifications';
 import PinScreen from './screens/Pin';
-import CreateWalletScreen from './screens/CreateWallet';
+import CreateKeyScreen from './screens/CreateKey';
 import TermsOfUseScreen from './screens/TermsOfUse';
-import SelectAssetsScreen from '../wallet/screens/SelectAssets';
+import CurrencySelectionScreen from '../wallet/screens/CurrencySelection';
 import {useDispatch} from 'react-redux';
 import {AppActions} from '../../store/app';
 import Backup from '../wallet/screens/Backup';
@@ -24,37 +24,36 @@ import RecoveryPhrase, {
 import VerifyPhrase, {VerifyPhraseProps} from '../wallet/screens/VerifyPhrase';
 import {HeaderRightContainer} from '../../components/styled/Containers';
 import {HeaderTitle} from '../../components/styled/Text';
-import ImportWalletScreen, {
-  ImportWalletProps,
-} from '../wallet/screens/ImportWallet';
+import ImportScreen, {ImportProps} from '../wallet/screens/Import';
+
 export type OnboardingStackParamList = {
   OnboardingStart: OnboardingStartParamList;
   Notifications: undefined;
   Pin: undefined;
-  CreateWallet: undefined;
+  CreateKey: undefined;
   TermsOfUse:
     | {
         context?: 'skip' | undefined;
       }
     | undefined;
-  SelectAssets: undefined;
-  BackupWallet: undefined;
+  CurrencySelection: undefined;
+  BackupKey: undefined;
   RecoveryPhrase: RecoveryPhraseProps;
   VerifyPhrase: VerifyPhraseProps;
-  ImportWallet: ImportWalletProps;
+  Import: ImportProps;
 };
 
 export enum OnboardingScreens {
   ONBOARDING_START = 'OnboardingStart',
   NOTIFICATIONS = 'Notifications',
   PIN = 'Pin',
-  CREATE_WALLET = 'CreateWallet',
+  CREATE_KEY = 'CreateKey',
   TERMS_OF_USE = 'TermsOfUse',
-  SELECT_ASSETS = 'SelectAssets',
-  BACKUP_WALLET = 'BackupWallet',
+  CURRENCY_SELECTION = 'CurrencySelection',
+  BACKUP_KEY = 'BackupKey',
   RECOVERY_PHRASE = 'RecoveryPhrase',
   VERIFY_PHRASE = 'VerifyPhrase',
-  IMPORT_WALLET = 'ImportWallet',
+  IMPORT = 'Import',
 }
 
 const Onboarding = createStackNavigator<OnboardingStackParamList>();
@@ -124,7 +123,7 @@ const OnboardingStack = () => {
                 onPress={() => {
                   haptic('impactLight');
                   navigation.navigate('Onboarding', {
-                    screen: 'CreateWallet',
+                    screen: 'CreateKey',
                   });
                 }}>
                 Skip
@@ -157,13 +156,13 @@ const OnboardingStack = () => {
             </HeaderRightContainer>
           ),
         }}
-        name={OnboardingScreens.CREATE_WALLET}
-        component={CreateWalletScreen}
+        name={OnboardingScreens.CREATE_KEY}
+        component={CreateKeyScreen}
       />
       <Onboarding.Screen
         options={{
           gestureEnabled: false,
-          headerTitle: () => <HeaderTitle>Select Assets</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>Select Currencies</HeaderTitle>,
           headerTitleAlign: 'center',
           headerRight: () => (
             <HeaderRightContainer>
@@ -183,8 +182,8 @@ const OnboardingStack = () => {
             </HeaderRightContainer>
           ),
         }}
-        name={OnboardingScreens.SELECT_ASSETS}
-        component={SelectAssetsScreen}
+        name={OnboardingScreens.CURRENCY_SELECTION}
+        component={CurrencySelectionScreen}
       />
       <Onboarding.Screen
         options={{
@@ -207,8 +206,8 @@ const OnboardingStack = () => {
                         {
                           text: 'BACKUP YOUR KEY',
                           action: rootState => {
-                            const key = rootState.WALLET.keys[0];
-                            const {id, mnemonic} = key;
+                            const key = Object.values(rootState.WALLET.keys)[0];
+                            const {id, mnemonic} = key.properties;
                             navigation.navigate('Onboarding', {
                               screen: 'RecoveryPhrase',
                               params: {
@@ -236,7 +235,7 @@ const OnboardingStack = () => {
             </HeaderRightContainer>
           ),
         }}
-        name={OnboardingScreens.BACKUP_WALLET}
+        name={OnboardingScreens.BACKUP_KEY}
         component={Backup}
       />
       <Onboarding.Screen
@@ -328,8 +327,8 @@ const OnboardingStack = () => {
         component={TermsOfUseScreen}
       />
       <Onboarding.Screen
-        name={OnboardingScreens.IMPORT_WALLET}
-        component={ImportWalletScreen}
+        name={OnboardingScreens.IMPORT}
+        component={ImportScreen}
       />
     </Onboarding.Navigator>
   );

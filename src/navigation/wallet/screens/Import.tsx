@@ -7,35 +7,35 @@ import {ScreenOptions} from '../../../styles/tabNavigator';
 import {HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
 
-export interface ImportWalletProps {
+export interface ImportProps {
   isOnboarding?: boolean;
 }
 
-const ImportWallerContainer = styled.SafeAreaView`
+const ImportContainer = styled.SafeAreaView`
   flex: 1;
   margin-top: 10px;
 `;
 
-const ImportWallet = () => {
+const Import = () => {
   const Tab = createMaterialTopTabNavigator();
   const navigation = useNavigation();
 
   useEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
-      headerTitle: () => <HeaderTitle>Import Wallet</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>Import</HeaderTitle>,
       headerTitleAlign: 'center',
     });
   }, [navigation]);
 
   return (
-    <ImportWallerContainer>
+    <ImportContainer>
       <Tab.Navigator screenOptions={{...ScreenOptions(150)}}>
         <Tab.Screen name="Recovery Phrase" component={RecoveryPhrase} />
         <Tab.Screen name="File/Text" component={FileOrText} />
       </Tab.Navigator>
-    </ImportWallerContainer>
+    </ImportContainer>
   );
 };
 
-export default ImportWallet;
+export default Import;
