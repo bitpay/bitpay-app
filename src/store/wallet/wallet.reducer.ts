@@ -89,6 +89,7 @@ export const walletReducer = (
           ...state.keys,
           [key.id]: {
             ...keyToUpdate,
+            properties: key.methods.toObj(),
           },
         },
       };
