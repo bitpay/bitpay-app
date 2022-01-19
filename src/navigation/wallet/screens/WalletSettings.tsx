@@ -1,9 +1,9 @@
-import React, {useEffect} from 'react';
-import {BaseText, HeaderTitle, Link} from '../../../components/styled/Text';
+import React, {useLayoutEffect, useState} from 'react';
+import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {View, TouchableOpacity} from 'react-native';
+import {View} from 'react-native';
 import styled from 'styled-components/native';
 import {
   Hr,
@@ -16,17 +16,9 @@ import {
 } from '../../../components/styled/Containers';
 import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {Asset} from '../../../store/wallet/wallet.models';
-import {AssetListIcons} from '../../../constants/AssetListIcons';
-import AssetSettingsRow, {
-  AssetSettingsRowProps,
-} from '../../../components/list/AssetSettingsRow';
-import Button from '../../../components/button/Button';
+
 import {SlateDark, White} from '../../../styles/colors';
-import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
-import {useDispatch} from 'react-redux';
-import InfoIcon from '../../../components/icons/info/InfoIcon';
-import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
+import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -44,31 +36,11 @@ const Title = styled(BaseText)`
   color: ${({theme}) => theme.colors.text};
 `;
 
-const AssetsHeaderContainer = styled.View`
-  padding-top: ${ScreenGutter};
-  flex-direction: row;
-  align-items: center;
-`;
-
 const WalletNameContainer = styled.TouchableOpacity`
   padding: 10px 0 20px 0;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-`;
-
-const InfoImageContainer = styled.View<{infoMargin: string}>`
-  margin: ${({infoMargin}) => infoMargin};
-`;
-
-const InfoTitle = styled(BaseText)`
-  font-size: 16px;
-  color: ${({theme}) => theme.colors.text};
-`;
-
-const InfoHeader = styled.View`
-  flex-direction: row;
-  margin-bottom: 10px;
 `;
 
 const InfoDescription = styled(BaseText)`
@@ -84,31 +56,20 @@ const WalletSettingsTitle = styled(SettingTitle)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const buildAssetList = (assets: Asset[]) => {
-  const assetList = [] as Array<AssetSettingsRowProps>;
-  assets.forEach(({id, assetName, assetAbbreviation}) => {
-    assetList.push({
-      id,
-      img: () => AssetListIcons[assetAbbreviation].square,
-      assetName,
-    });
-  });
-  return assetList;
-};
-
 const WalletSettings = () => {
   const {
     params: {wallet},
   } = useRoute<RouteProp<WalletStackParamList, 'WalletSettings'>>();
-  const dispatch = useDispatch();
   const navigation = useNavigation();
-  const assetsList = buildAssetList(wallet.assets);
+  const [demoToggle, setDemoToggle] = useState(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>Wallet Settings</HeaderTitle>,
     });
-  }, [navigation]);
+  });
+
+  const {currencyName} = wallet;
 
   return (
     <WalletSettingsContainer>
@@ -119,80 +80,63 @@ const WalletSettings = () => {
             //    TODO: Redirect me
           }}>
           <View>
-            <Title>Wallet name</Title>
-            <WalletSettingsTitle>wallet 1</WalletSettingsTitle>
+            <Title>Name</Title>
+            <WalletSettingsTitle>{currencyName}</WalletSettingsTitle>
           </View>
 
           <ChevronRightSvg height={16} />
         </WalletNameContainer>
+
         <Hr />
 
-        <AssetsHeaderContainer>
-          <Title>Assets</Title>
-          <InfoImageContainer infoMargin={'0 0 0 8px'}>
-            <InfoIcon />
-          </InfoImageContainer>
-        </AssetsHeaderContainer>
+        <SettingView>
+          <WalletSettingsTitle>Hide Wallet</WalletSettingsTitle>
 
-        {assetsList.map(asset => (
-          <AssetSettingsRow asset={asset} key={asset.id} />
-        ))}
+          <ToggleSwitch
+            onChange={value => {
+              haptic('impactLight');
+              //    TODO: Update me
+              setDemoToggle(value);
+            }}
+            isEnabled={demoToggle}
+          />
+        </SettingView>
+        <Info>
+          <InfoTriangle />
+          <InfoDescription>
+            This wallet will not be removed from the device.
+          </InfoDescription>
+        </Info>
 
-        <VerticalPadding>
-          <Button
-            buttonType={'link'}
-            onPress={() => {
-              //  TODO: Redirect me
-            }}>
-            Add an Asset
-          </Button>
-        </VerticalPadding>
+        <SettingView>
+          <WalletSettingsTitle>Hide Balance</WalletSettingsTitle>
+
+          <ToggleSwitch
+            onChange={() => {
+              haptic('impactLight');
+              //    TODO: Update me
+            }}
+            isEnabled={false}
+          />
+        </SettingView>
+
+        <Hr />
 
         <VerticalPadding>
           <Title>Security</Title>
-          <Setting
-            onPress={() => {
-              haptic('impactLight');
-              //    TODO: Redirect me
-            }}>
-            <WalletSettingsTitle>Backup</WalletSettingsTitle>
-          </Setting>
-          <Hr />
 
           <SettingView>
-            <WalletSettingsTitle>Request Encrypt Password</WalletSettingsTitle>
-            <RequestEncryptPasswordToggle wallet={wallet} />
+            <WalletSettingsTitle>
+              Request Biometric Authentication
+            </WalletSettingsTitle>
+            <ToggleSwitch
+              onChange={() => {
+                haptic('impactLight');
+                //    TODO: Update me
+              }}
+              isEnabled={false}
+            />
           </SettingView>
-
-          <Info>
-            <InfoTriangle />
-
-            <InfoHeader>
-              <InfoImageContainer infoMargin={'0 8px 0 0'}>
-                <InfoIcon />
-              </InfoImageContainer>
-
-              <InfoTitle>Password Not Recoverable</InfoTitle>
-            </InfoHeader>
-            <InfoDescription>
-              This password cannot be recovered. If this password is lost, funds
-              can only be recovered by reimporting your 12-word recovery phrase.
-            </InfoDescription>
-
-            <VerticalPadding>
-              <TouchableOpacity
-                onPress={() => {
-                  haptic('impactLight');
-                  dispatch(
-                    openUrlWithInAppBrowser(
-                      'https://support.bitpay.com/hc/en-us/articles/360000244506-What-Does-a-Spending-Password-Do-',
-                    ),
-                  );
-                }}>
-                <Link>Learn More</Link>
-              </TouchableOpacity>
-            </VerticalPadding>
-          </Info>
 
           <Hr />
         </VerticalPadding>
@@ -204,21 +148,15 @@ const WalletSettings = () => {
               haptic('impactLight');
               //    TODO: Redirect me
             }}>
-            <WalletSettingsTitle>
-              Sync Wallets Across Devices
-            </WalletSettingsTitle>
+            <WalletSettingsTitle>Information</WalletSettingsTitle>
           </Setting>
           <Hr />
 
           <Setting
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('Wallet', {
-                screen: 'ExportKey',
-                params: {wallet},
-              });
             }}>
-            <WalletSettingsTitle>Export Key</WalletSettingsTitle>
+            <WalletSettingsTitle>Addresses</WalletSettingsTitle>
           </Setting>
           <Hr />
 
@@ -227,7 +165,7 @@ const WalletSettings = () => {
               haptic('impactLight');
               //    TODO: Redirect me
             }}>
-            <WalletSettingsTitle>Extended Private Key</WalletSettingsTitle>
+            <WalletSettingsTitle>Export Wallet</WalletSettingsTitle>
           </Setting>
           <Hr />
 

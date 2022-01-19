@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {
   Balance,
@@ -21,7 +21,7 @@ import {useDispatch} from 'react-redux';
 import ReceiveAddress from '../components/ReceiveAddress';
 import {WalletActions} from '../../../store/wallet';
 
-const AssetDetailsContainer = styled.View`
+const WalletDetailsContainer = styled.View`
   flex: 1;
 `;
 
@@ -46,25 +46,25 @@ const Chain = styled(BaseText)`
   line-height: 40px;
 `;
 
-const AssetDetails = () => {
-  const route = useRoute<RouteProp<WalletStackParamList, 'AssetDetails'>>();
+const WalletDetails = () => {
+  const route = useRoute<RouteProp<WalletStackParamList, 'WalletDetails'>>();
   const navigation = useNavigation();
-  const [showAssetOptions, setShowAssetOptions] = useState(false);
-  const {asset} = route.params;
+  const [showWalletOptions, setShowWalletOptions] = useState(false);
+  const {wallet} = route.params;
   const dispatch = useDispatch();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>{asset.assetName}</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{wallet.currencyName}</HeaderTitle>,
       headerRight: () => (
         <Settings
           onPress={() => {
-            setShowAssetOptions(true);
+            setShowWalletOptions(true);
           }}
         />
       ),
     });
-  }, [navigation]);
+  });
 
   const assetOptions: Array<Option> = [
     {
@@ -83,13 +83,13 @@ const AssetDetails = () => {
     },
     {
       img: <SettingsSvg />,
-      title: 'Asset Settings',
-      description: 'View all the ways to manage and configure your asset.',
+      title: 'Wallet Settings',
+      description: 'View all the ways to manage and configure your wallet.',
       onPress: () =>
         navigation.navigate('Wallet', {
-          screen: 'AssetSettings',
+          screen: 'WalletSettings',
           params: {
-            asset,
+            wallet,
           },
         }),
     },
@@ -98,41 +98,40 @@ const AssetDetails = () => {
   const showReceiveAddress = () => {
     const {keyId, id} = asset;
     dispatch(
-      WalletActions.showReceiveAddressModal({
-        keyId,
-        id,
-      }),
+        WalletActions.showReceiveAddressModal({
+          keyId,
+          id,
+        }),
     );
   };
 
-  const {cryptoBalance, fiatBalance, assetAbbreviation} = asset;
+
+  const {cryptoBalance, fiatBalance, currencyName, currencyAbbreviation} =
+    wallet;
   return (
-    <AssetDetailsContainer>
+    <WalletDetailsContainer>
       <BalanceContainer>
         <Row>
           <Balance>
-            {cryptoBalance} {assetAbbreviation}
+            {cryptoBalance} {currencyAbbreviation}
           </Balance>
-          <Chain>{assetAbbreviation}</Chain>
+          <Chain>{currencyAbbreviation}</Chain>
         </Row>
         <H5>{fiatBalance} USD</H5>
       </BalanceContainer>
 
-      <LinkingButtons
-        receiveCta={() => showReceiveAddress()}
-        sendCta={() => null}
-      />
+      <LinkingButtons receiveCta={() => showReceiveAddress()} sendCta={() => null} />
 
       <OptionsBottomPopupModal
-        isVisible={showAssetOptions}
-        closeModal={() => setShowAssetOptions(false)}
-        title={`Receive ${asset.assetName}`}
+        isVisible={showWalletOptions}
+        closeModal={() => setShowWalletOptions(false)}
+        title={`Receive ${currencyName}`}
         options={assetOptions}
       />
 
       <ReceiveAddress />
-    </AssetDetailsContainer>
+    </WalletDetailsContainer>
   );
 };
 
-export default AssetDetails;
+export default WalletDetails;

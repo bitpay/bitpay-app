@@ -1,60 +1,53 @@
 import {
-  ASSETS,
+  Currencies,
   SUPPORTED_TOKENS,
-  SupportedAssets,
   SupportedCoins,
+  SupportedCurrencies,
   SupportedTokens,
   Token,
   TokenOpts,
-} from '../../../../constants/assets';
+} from '../../../../constants/currencies';
 import {Effect, RootState} from '../../../index';
-import {startOnGoingProcessModal} from '../../../app/app.effects';
-import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {AppActions} from '../../../app';
-import {navigationRef} from '../../../../Root';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
-import {buildAssetObj} from '../../utils/asset';
-import {successCreateWallet} from '../../wallet.actions';
+import {buildWalletObj} from '../../utils/wallet';
+import {successCreateKey} from '../../wallet.actions';
 
 const BWC = BwcProvider.getInstance();
 
-export const startCreateWallet =
-  (assets: Array<SupportedAssets>): Effect =>
+export const startCreateKey =
+  (currencies: Array<SupportedCurrencies>): Effect =>
   async (dispatch, getState) => {
-    try {
-      await dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.CREATING_WALLET),
-      );
+    return new Promise(async resolve => {
+      try {
+        const key = BWC.createKey({
+          seedType: 'new',
+        });
 
-      const key = BWC.createKey({
-        seedType: 'new',
-      });
+        const wallets = await createWallets(key, currencies, getState());
 
-      const credentials = await createWalletCredentials(
-        key,
-        assets,
-        getState(),
-      );
-      dispatch(AppActions.dismissOnGoingProcessModal());
-      dispatch(
-        successCreateWallet({
-          key: merge(key, key.toObj()),
-          wallet: {
-            id: key.id,
-            assets: credentials,
-            totalBalance: 0,
-            show: true,
-            isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
-          },
-        }),
-      );
-      navigationRef.navigate('Onboarding', {screen: 'BackupWallet'});
-    } catch (err) {}
+        dispatch(AppActions.dismissOnGoingProcessModal());
+        dispatch(
+          successCreateKey({
+            key: {
+              id: key.id,
+              wallets,
+              properties: key.toObj(),
+              methods: key,
+              totalBalance: 0,
+              show: true,
+              isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
+            },
+          }),
+        );
+        resolve();
+      } catch (err) {}
+    });
   };
 
-export const createWalletCredentials = async (
+export const createWallets = async (
   key: {
     createCredentials: (
       password: string | undefined,
@@ -67,7 +60,7 @@ export const createWalletCredentials = async (
       },
     ) => any;
   },
-  assets: Array<SupportedAssets>,
+  assets: Array<SupportedCurrencies>,
   state: RootState,
 ) => {
   const {
@@ -97,7 +90,7 @@ export const createWalletCredentials = async (
       );
 
       bwcClient.createWallet(
-        ASSETS[coin].name,
+        Currencies[coin].name,
         'me',
         1,
         1,
@@ -121,7 +114,7 @@ export const createWalletCredentials = async (
     });
   }
 
-  const ethCredentials = credentials.find(asset => asset.coin === 'eth');
+  const ethCredentials = credentials.find(({coin}) => coin === 'eth');
 
   if (ethCredentials && tokens.length) {
     for (const token of tokens) {
@@ -141,6 +134,9 @@ export const createWalletCredentials = async (
   }
 
   return credentials.map(credential =>
-    merge(BWC.getClient(JSON.stringify(credential)), buildAssetObj(credential)),
+    merge(
+      BWC.getClient(JSON.stringify(credential)),
+      buildWalletObj(credential),
+    ),
   );
 };

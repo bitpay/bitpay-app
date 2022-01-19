@@ -1,5 +1,5 @@
-import {Asset} from '../../../../store/wallet/wallet.models';
-import {AssetSelectionOptions} from '../../../../constants/AssetSelectionOptions';
+import {Wallet} from '../../../../store/wallet/wallet.models';
+import {CurrencySelectionOptions} from '../../../../constants/CurrencySelectionOptions';
 import HomeCard from '../../../../components/home-card/HomeCard';
 import React from 'react';
 import styled from 'styled-components/native';
@@ -30,40 +30,40 @@ const RemainingAssetsLabel = styled(BaseText)`
   color: ${Slate};
   margin-left: 5px;
 `;
-const ASSET_DISPLAY_LIMIT = 4;
+const WALLET_DISPLAY_LIMIT = 4;
 const ICON_SIZE = 25;
 
 const WalletCardComponent = ({
-  assets,
+  wallets,
   totalBalance,
   onPress,
 }: {
-  assets: Asset[];
+  wallets: Wallet[];
   totalBalance: number;
   onPress: () => void;
 }) => {
-  const assetInfo = assets
-    .slice(0, ASSET_DISPLAY_LIMIT)
-    .map(asset => asset.assetAbbreviation)
+  const walletInfo = wallets
+    .slice(0, WALLET_DISPLAY_LIMIT)
+    .map(wallet => wallet.currencyAbbreviation)
     .map(currency =>
-      AssetSelectionOptions.find(
+      CurrencySelectionOptions.find(
         ({id}: {id: string | number}) => id === currency,
       ),
     );
 
   const remainingAssetCount =
-    assets.length > ASSET_DISPLAY_LIMIT
-      ? assets.length - ASSET_DISPLAY_LIMIT
+    wallets.length > WALLET_DISPLAY_LIMIT
+      ? wallets.length - WALLET_DISPLAY_LIMIT
       : undefined;
 
   const HeaderComponent = (
     <HeaderImg>
-      {assetInfo &&
-        assetInfo.map(
-          (asset, index) =>
-            asset && (
+      {walletInfo &&
+        walletInfo.map(
+          (wallet, index) =>
+            wallet && (
               <Img key={index} isFirst={index === 0} size={ICON_SIZE + 'px'}>
-                {asset.roundIcon(ICON_SIZE)}
+                {wallet.roundIcon(ICON_SIZE)}
               </Img>
             ),
         )}
