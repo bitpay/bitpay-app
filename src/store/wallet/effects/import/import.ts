@@ -4,26 +4,11 @@ import {startOnGoingProcessModal} from '../../../app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {coinSupported} from '../../../../utils/helper-methods';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
-import {AppActions} from '../../../app';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
 import {buildWalletObj} from '../../utils/wallet';
-import {successCreateKey} from '../../wallet.actions';
-
-export const normalizeMnemonic = (words: string): string => {
-  if (!words || !words.indexOf) {
-    return words;
-  }
-
-  // \u3000: A space of non-variable width: used in Chinese, Japanese, Korean
-  const isJA = words.indexOf('\u3000') > -1;
-  const wordList = words
-    .trim()
-    .toLowerCase()
-    .split(/[\u3000\s]+/);
-
-  return wordList.join(isJA ? '\u3000' : ' ');
-};
+import {failedImport, successImport} from '../../wallet.actions';
+import {dismissOnGoingProcessModal} from '../../../app/app.actions';
 
 export const startImportMnemonic =
   (words: string, opts: Partial<KeyOptions>): Effect =>
@@ -37,10 +22,10 @@ export const startImportMnemonic =
 
       const {key, wallets} = await serverAssistedImport(opts);
 
-      dispatch(AppActions.dismissOnGoingProcessModal());
+      dispatch(dismissOnGoingProcessModal());
 
       dispatch(
-        successCreateKey({
+        successImport({
           key: {
             id: key.id,
             wallets: wallets.map(wallet =>
@@ -56,10 +41,26 @@ export const startImportMnemonic =
       );
     } catch (e) {
       // TODO: Handle me
-      dispatch(AppActions.dismissOnGoingProcessModal());
+      dispatch(dismissOnGoingProcessModal());
+      dispatch(failedImport());
       console.error(e);
     }
   };
+
+export const normalizeMnemonic = (words: string): string => {
+  if (!words || !words.indexOf) {
+    return words;
+  }
+
+  // \u3000: A space of non-variable width: used in Chinese, Japanese, Korean
+  const isJA = words.indexOf('\u3000') > -1;
+  const wordList = words
+    .trim()
+    .toLowerCase()
+    .split(/[\u3000\s]+/);
+
+  return wordList.join(isJA ? '\u3000' : ' ');
+};
 
 export const serverAssistedImport = async (
   opts: Partial<KeyOptions>,

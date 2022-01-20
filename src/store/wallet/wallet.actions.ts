@@ -18,6 +18,15 @@ export const failedCreateKey = (): WalletActionType => ({
   type: WalletActionTypes.FAILED_CREATE_KEY,
 });
 
+export const successImport = (payload: {key: Key}): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_IMPORT,
+  payload,
+});
+
+export const failedImport = (): WalletActionType => ({
+  type: WalletActionTypes.FAILED_IMPORT,
+});
+
 export const setBackupComplete = (keyId: string): WalletActionType => ({
   type: WalletActionTypes.SET_BACKUP_COMPLETE,
   payload: keyId,
