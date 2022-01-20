@@ -247,6 +247,7 @@ const ReceiveAddress = () => {
                 setAddress(addr[0].address);
                 if (coin === 'bch') {
                   setBchAddress(addr[0].address);
+                  setBchAddressType('Segwit');
                 }
               },
             );
@@ -270,6 +271,7 @@ const ReceiveAddress = () => {
           setAddress(addressObj.address);
           if (coin === 'bch') {
             setBchAddress(addressObj.address);
+            setBchAddressType('Segwit');
           }
         }
       });
@@ -324,7 +326,6 @@ const ReceiveAddress = () => {
                 onPress={() => {
                   haptic('impactLight');
                   createAddress();
-                  setBchAddressType('Segwit');
                 }}>
                 <RefreshIcon />
               </Refresh>
