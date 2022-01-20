@@ -1,9 +1,8 @@
 import debounce from 'lodash.debounce';
 import React from 'react';
 import {BaseButtonProps} from 'react-native-gesture-handler';
-import styled, {css} from 'styled-components/native';
+import styled from 'styled-components/native';
 import {Action, Air, Disabled, DisabledDark, White} from '../../styles/colors';
-import {BitPayTheme} from '../../themes/bitpay';
 import Haptic from '../haptic-feedback/haptic';
 import {BaseText} from '../styled/Text';
 
@@ -11,85 +10,113 @@ type ButtonStyle = 'primary' | 'secondary' | undefined;
 type ButtonType = 'link' | 'pill' | undefined;
 
 interface ButtonProps extends BaseButtonProps {
-  theme?: BitPayTheme;
   buttonStyle?: ButtonStyle;
   buttonType?: ButtonType;
   onPress?: () => any;
-  children: string;
   disabled?: boolean;
   debounceTime?: number;
 }
 
-interface ContainerProps {
+interface ButtonOptionProps {
   secondary?: boolean;
-  pill?: boolean;
   disabled?: boolean;
 }
-
-interface TextProps {
-  theme?: BitPayTheme;
-  secondary?: boolean;
-  pill?: boolean;
-  disabled?: boolean;
-}
-
-const ButtonContainer = styled.TouchableOpacity`
-  background: ${Action};
-  border-radius: 6px;
-  padding: 18px;
-  margin: 5px 0;
-  ${({secondary}: ContainerProps) =>
-    secondary &&
-    css`
-      background: transparent;
-      border: 2px solid ${Action};
-      padding: 18px 28px;
-    `}
-
-  ${({pill}: ContainerProps) =>
-    pill &&
-    css`
-      background: ${Air};
-      border-radius: 17.5px;
-      padding: 8px 15px;
-    `}
-
-  ${({disabled}: ContainerProps) =>
-    disabled &&
-    css`
-      background: ${Disabled};
-    `}
-`;
-
-const LinkContainer = styled.TouchableOpacity`
-  padding: 10px;
-`;
-
-const Text = styled(BaseText)<TextProps>`
-  font-weight: ${({pill}) => (pill ? 400 : 500)};
-  font-size: ${({pill}) => (pill ? 15 : 18)}px;
-  line-height: 25px;
-  text-align: center;
-  color: ${({theme, secondary}) =>
-    secondary ? (theme && theme.dark ? theme.colors.text : Action) : White};
-  ${({disabled}) =>
-    disabled &&
-    css`
-      color: ${DisabledDark} !important;
-    `}
-`;
 
 const ACTIVE_OPACITY = 0.8;
 
-const Button = ({
-  theme,
+const ButtonBaseText = styled(BaseText)`
+  line-height: 25px;
+  text-align: center;
+`;
+
+const ButtonContainer = styled.TouchableOpacity<ButtonOptionProps>`
+  background: ${({disabled, secondary}) => {
+    if (disabled) {
+      return Disabled;
+    }
+
+    return secondary ? 'transparent' : Action;
+  }};
+  border: 2px solid ${({disabled, secondary, theme}) => {
+    if (disabled) {
+      return Disabled;
+    }
+
+    if (secondary) {
+      return theme?.dark ? White : Action;
+    }
+
+    return Action;
+  }};
+  border-radius: 6px;
+  padding: 18px;
+`;
+
+const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
+  font-size: 18px;
+  font-weight: 500;
+
+  color: ${({disabled, secondary, theme}) => {
+    if (disabled) {
+      return DisabledDark;
+    }
+
+    if (secondary) {
+      return theme?.dark ? theme.colors.text : Action;
+    }
+
+    return White;
+  }};
+`;
+
+const PillContainer = styled.TouchableOpacity<ButtonOptionProps>`
+  background: ${Air};
+  border: 2px solid ${Air};
+  border-radius: 17.5px;
+  padding: 8px 15px;
+`;
+
+const PillText = styled(ButtonBaseText)<ButtonOptionProps>`
+  font-size: 15px;
+  font-weight: 400;
+
+  color: ${({disabled}) => {
+    if (disabled) {
+      return DisabledDark;
+    }
+
+    return Action;
+  }};
+`;
+
+const LinkContainer = styled.TouchableOpacity<ButtonOptionProps>`
+  padding: 10px;
+`;
+
+const LinkText = styled(ButtonBaseText)<ButtonOptionProps>`
+  color: ${({disabled, theme}) => {
+    if (disabled) {
+      return DisabledDark;
+    }
+
+    if (theme?.dark) {
+      return theme.colors.text;
+    }
+
+    return Action;
+  }};
+`;
+
+const Button: React.FC<ButtonProps> = ({
   onPress,
   buttonStyle,
   buttonType,
   children,
   disabled,
   debounceTime,
-}: ButtonProps) => {
+}) => {
+  const secondary = buttonStyle === 'secondary';
+
   const _onPress = () => {
     if (disabled || !onPress) {
       return;
@@ -110,48 +137,38 @@ const Button = ({
         disabled={disabled}
         onPress={debouncedOnPress}
         activeOpacity={ACTIVE_OPACITY}>
-        <Text theme={theme} secondary>
+        <LinkText disabled={disabled}>
           {children}
-        </Text>
+        </LinkText>
       </LinkContainer>
     );
   }
 
   if (buttonType === 'pill') {
     return (
-      <ButtonContainer
-        pill
+      <PillContainer
         onPress={debouncedOnPress}
         disabled={disabled}
         activeOpacity={ACTIVE_OPACITY}>
-        <Text secondary pill disabled={disabled}>
+        <PillText disabled={disabled}>
           {children}
-        </Text>
-      </ButtonContainer>
-    );
-  }
-
-  if (buttonStyle === 'secondary') {
-    return (
-      <ButtonContainer
-        secondary
-        onPress={debouncedOnPress}
-        disabled={disabled}
-        activeOpacity={ACTIVE_OPACITY}>
-        <Text theme={theme} secondary disabled={disabled}>
-          {children}
-        </Text>
-      </ButtonContainer>
+        </PillText>
+      </PillContainer>
     );
   }
 
   return (
     <ButtonContainer
+      secondary={secondary}
       onPress={debouncedOnPress}
       disabled={disabled}
       activeOpacity={ACTIVE_OPACITY}
       testID={'button'}>
-      <Text disabled={disabled}>{children}</Text>
+      <ButtonText
+        secondary={secondary}
+        disabled={disabled}>
+        {children}
+      </ButtonText>
     </ButtonContainer>
   );
 };
