@@ -9,7 +9,7 @@ import {useLogger} from '../../../utils/hooks';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {BWCErrorMessage} from '../../../constants/BWCError';
-import merge from 'lodash.merge';
+import cloneDeep from 'lodash.clonedeep';
 import {ValidateAddress} from '../../../constants/validateAddress';
 import {CustomErrorMessage} from './ErrorMessages';
 import {ModalContainer} from '../../../components/styled/Containers';
@@ -144,51 +144,53 @@ const ReceiveAddress = () => {
 
   const createAddress = async () => {
     // To avoid altering store value
-    const walletClone = merge(wallet);
+    const walletClone = cloneDeep(wallet);
 
-    const {token, network} = walletClone.credentials;
-    if (token) {
-      walletClone.id.replace(`-${token.address}`, '');
-    }
-
-    await walletClone.createAddress({}, (err: any, addressObj: Address) => {
-      if (err) {
-        let prefix = 'Could not create address';
-        if (err.name && err.name.includes('MAIN_ADDRESS_GAP_REACHED')) {
-          logger.warn(BWCErrorMessage(err, 'Server Error'));
-          walletClone.getMainAddresses(
-            {
-              reverse: true,
-              limit: 1,
-            },
-            (e: any, addr: Address[]) => {
-              if (e) {
-                showErrorMessage(CustomErrorMessage(BWCErrorMessage(e)));
-              }
-              setLoading(false);
-              setAddress(addr[0].address);
-            },
-          );
-        } else {
-          showErrorMessage(CustomErrorMessage(BWCErrorMessage(err, prefix)));
-        }
-        logger.warn(BWCErrorMessage(err, 'Receive'));
-      } else if (
-        addressObj &&
-        !ValidateAddress(addressObj.address, addressObj.coin, network)
-      ) {
-        logger.error(`Invalid address generated: ${addressObj.address}`);
-        if (retryCount < 3) {
-          setRetryCount(retryCount + 1);
-          createAddress();
-        } else {
-          showErrorMessage(CustomErrorMessage(BWCErrorMessage(err)));
-        }
-      } else if (addressObj) {
-        setLoading(false);
-        setAddress(addressObj.address);
+    if (walletClone) {
+      const {token, network} = walletClone.credentials;
+      if (token) {
+        walletClone.id.replace(`-${token.address}`, '');
       }
-    });
+
+      await walletClone.createAddress({}, (err: any, addressObj: Address) => {
+        if (err) {
+          let prefix = 'Could not create address';
+          if (err.name && err.name.includes('MAIN_ADDRESS_GAP_REACHED')) {
+            logger.warn(BWCErrorMessage(err, 'Server Error'));
+            walletClone.getMainAddresses(
+              {
+                reverse: true,
+                limit: 1,
+              },
+              (e: any, addr: Address[]) => {
+                if (e) {
+                  showErrorMessage(CustomErrorMessage(BWCErrorMessage(e)));
+                }
+                setLoading(false);
+                setAddress(addr[0].address);
+              },
+            );
+          } else {
+            showErrorMessage(CustomErrorMessage(BWCErrorMessage(err, prefix)));
+          }
+          logger.warn(BWCErrorMessage(err, 'Receive'));
+        } else if (
+          addressObj &&
+          !ValidateAddress(addressObj.address, addressObj.coin, network)
+        ) {
+          logger.error(`Invalid address generated: ${addressObj.address}`);
+          if (retryCount < 3) {
+            setRetryCount(retryCount + 1);
+            createAddress();
+          } else {
+            showErrorMessage(CustomErrorMessage(BWCErrorMessage(err)));
+          }
+        } else if (addressObj) {
+          setLoading(false);
+          setAddress(addressObj.address);
+        }
+      });
+    }
   };
 
   const init = () => {
