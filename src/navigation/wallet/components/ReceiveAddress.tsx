@@ -1,31 +1,35 @@
 import React, {useEffect, useState} from 'react';
-import {BaseText, H4} from '../../../components/styled/Text';
+import Clipboard from '@react-native-community/clipboard';
 import {useDispatch, useSelector} from 'react-redux';
+import cloneDeep from 'lodash.clonedeep';
+import QRCode from 'react-native-qrcode-svg';
+import styled from 'styled-components/native';
+
+import {useLogger} from '../../../utils/hooks';
 import {RootState} from '../../../store';
-import BottomPopupModal from '../../../components/modal/base/bottom-popup/BottomPopupModal';
 import {WalletActions} from '../../../store/wallet';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {useLogger} from '../../../utils/hooks';
-import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
+
+import {BaseText, H4, Paragraph} from '../../../components/styled/Text';
+import BottomPopupModal from '../../../components/modal/base/bottom-popup/BottomPopupModal';
+import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
+import {ModalContainer} from '../../../components/styled/Containers';
+import haptic from '../../../components/haptic-feedback/haptic';
+
 import {BWCErrorMessage} from '../../../constants/BWCError';
-import cloneDeep from 'lodash.clonedeep';
+import {CustomErrorMessage} from './ErrorMessages';
+
 import {
   getLegacyBchAddressFormat,
   ValidateAddress,
 } from '../../../constants/address';
-import {CustomErrorMessage} from './ErrorMessages';
-import {ModalContainer} from '../../../components/styled/Containers';
-import styled from 'styled-components/native';
+import {CurrencySelectionOptions} from '../../../constants/CurrencySelectionOptions';
+
+import {Action, LightBlack, NeutralSlate, White} from '../../../styles/colors';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
 import CopySvg from '../../../../assets/img/copy.svg';
-import {Action, LightBlack, NeutralSlate, White} from '../../../styles/colors';
-import QRCode from 'react-native-qrcode-svg';
-import Button from '../../../components/button/Button';
-import Clipboard from '@react-native-community/clipboard';
-import haptic from '../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
-import {CurrencySelectionOptions} from '../../../constants/CurrencySelectionOptions';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 
 export interface ReceiveAddressConfig {
@@ -37,8 +41,6 @@ interface Address {
   address: string;
   coin: string;
 }
-
-const BchAddressTypes = ['Segwit', 'Legacy'];
 
 const Header = styled.View`
   margin-bottom: 30px;
@@ -65,44 +67,7 @@ const Refresh = styled.TouchableOpacity<{isBch?: boolean}>`
   margin-top: ${({isBch}) => (isBch ? '10px' : '0')};
 `;
 
-const CopyToClipboard = styled.TouchableOpacity`
-  border: 1px solid #9ba3ae;
-  border-radius: 4px;
-  padding: 15px;
-  min-height: 55px;
-  align-items: center;
-  flex-direction: row;
-`;
-
-const AddressText = styled(BaseText)`
-  font-size: 16px;
-  color: ${({theme: {dark}}) => (dark ? NeutralSlate : '#6F7782')};
-  margin: 0 10px;
-`;
-
-const QRCodeContainer = styled.View`
-  align-items: center;
-  margin: 15px;
-`;
-
-const LoadingContainer = styled.View`
-  min-height: 300px;
-  justify-content: center;
-  align-items: center;
-`;
-
-const QRCodeBackground = styled.View`
-  background-color: ${White};
-  width: 225px;
-  height: 225px;
-  justify-content: center;
-  align-items: center;
-  border-radius: 12px;
-`;
-
-const ReceiveAddressContainer = styled(ModalContainer)`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-`;
+const BchAddressTypes = ['Segwit', 'Legacy'];
 
 const BchHeaderAction = styled.TouchableOpacity<{isActive: boolean}>`
   align-items: center;
@@ -132,20 +97,75 @@ const BchHeader = styled.View`
   justify-content: space-between;
 `;
 
+const CopyToClipboard = styled.TouchableOpacity`
+  border: 1px solid #9ba3ae;
+  border-radius: 4px;
+  padding: 0 10px;
+  min-height: 55px;
+  align-items: center;
+  flex-direction: row;
+`;
+
+const AddressText = styled(BaseText)`
+  font-size: 16px;
+  color: ${({theme: {dark}}) => (dark ? NeutralSlate : '#6F7782')};
+  padding: 0 20px 0 10px;
+`;
+
+const CopyImgContainer = styled.View`
+  border-right-color: ${({theme: {dark}}) => (dark ? '#46494E' : '#ECEFFD')};
+  border-right-width: 1px;
+  padding-right: 10px;
+  height: 25px;
+  justify-content: center;
+`;
+
+const QRCodeContainer = styled.View`
+  align-items: center;
+  margin: 15px;
+`;
+
+const QRCodeBackground = styled.View`
+  background-color: ${White};
+  width: 225px;
+  height: 225px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 12px;
+`;
+
+const LoadingContainer = styled.View`
+  min-height: 300px;
+  justify-content: center;
+  align-items: center;
+`;
+
 const LoadingText = styled(H4)`
   color: ${({theme}) => theme.colors.text};
+`;
+
+const ReceiveAddressContainer = styled(ModalContainer)`
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+`;
+
+const CloseButton = styled.TouchableOpacity`
+  margin: auto;
+`;
+
+const CloseButtonText = styled(Paragraph)`
+  color: ${({theme: {dark}}) => (dark ? White : Action)};
 `;
 
 const ReceiveAddress = () => {
   const dispatch = useDispatch();
   const logger = useLogger();
+
   const isVisible = useSelector(
     ({WALLET}: RootState) => WALLET.showReceiveAddressModal,
   );
   const receiveAddressConfig = useSelector(
     ({WALLET}: RootState) => WALLET.receiveAddressConfig,
   );
-
   const {keyId, id} = receiveAddressConfig || {};
 
   const {wallets} =
@@ -162,7 +182,7 @@ const ReceiveAddress = () => {
   const [bchAddress, setBchAddress] = useState('');
   const {imgSrc} =
     CurrencySelectionOptions.find(
-      ({id: currencyId}) =>  currencyId === wallet?.currencyAbbreviation,
+      ({id: currencyId}) => currencyId === wallet?.currencyAbbreviation,
     ) || {};
 
   const copyToClipboard = () => {
@@ -174,6 +194,16 @@ const ReceiveAddress = () => {
       setTimeout(() => {
         setCopied(false);
       }, 3000);
+    }
+  };
+
+  const onBchAddressTypeChange = (type: string) => {
+    haptic('impactLight');
+    setBchAddressType(type);
+    if (type === 'Legacy') {
+      setAddress(getLegacyBchAddressFormat(address));
+    } else {
+      setAddress(bchAddress);
     }
   };
 
@@ -258,16 +288,6 @@ const ReceiveAddress = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet]);
 
-  const onBchAddressTypeChange = (type: string) => {
-    haptic('impactLight');
-    setBchAddressType(type);
-    if (type === 'Legacy') {
-      setAddress(getLegacyBchAddressFormat(address));
-    } else {
-      setAddress(bchAddress);
-    }
-  };
-
   return (
     <BottomPopupModal isVisible={isVisible} onBackdropPress={dismissModal}>
       <ReceiveAddressContainer>
@@ -287,13 +307,16 @@ const ReceiveAddress = () => {
             <Title>Address</Title>
 
             <BchHeaderActions>
-              {BchAddressTypes.map(type => (<BchHeaderAction
+              {BchAddressTypes.map(type => (
+                <BchHeaderAction
                   onPress={() => onBchAddressTypeChange(type)}
-                  isActive={bchAddressType === type} disabled={!address}>
-                <BchHeaderActionText isActive={bchAddressType === type}>
-                  {type}
-                </BchHeaderActionText>
-              </BchHeaderAction>))}
+                  isActive={bchAddressType === type}
+                  disabled={!address}>
+                  <BchHeaderActionText isActive={bchAddressType === type}>
+                    {type}
+                  </BchHeaderActionText>
+                </BchHeaderAction>
+              ))}
 
               <Refresh
                 isBch={true}
@@ -311,7 +334,9 @@ const ReceiveAddress = () => {
         {address ? (
           <>
             <CopyToClipboard onPress={copyToClipboard} activeOpacity={0.7}>
-              {!copied ? <CopySvg width={17} /> : <CopiedSvg width={17} />}
+              <CopyImgContainer>
+                {!copied ? <CopySvg width={17} /> : <CopiedSvg width={17} />}
+              </CopyImgContainer>
               <AddressText numberOfLines={1} ellipsizeMode={'tail'}>
                 {address}
               </AddressText>
@@ -335,11 +360,15 @@ const ReceiveAddress = () => {
           <LoadingContainer>
             <LoadingText>Generating Address...</LoadingText>
           </LoadingContainer>
-        ) : <LoadingContainer><GhostSvg/></LoadingContainer>}
+        ) : (
+          <LoadingContainer>
+            <GhostSvg />
+          </LoadingContainer>
+        )}
 
-        <Button onPress={dismissModal} buttonType={'link'}>
-          CLOSE
-        </Button>
+        <CloseButton onPress={dismissModal}>
+          <CloseButtonText>CLOSE</CloseButtonText>
+        </CloseButton>
       </ReceiveAddressContainer>
     </BottomPopupModal>
   );
