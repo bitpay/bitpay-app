@@ -24,3 +24,8 @@ export const ValidateAddress = (str: string, coin: string, network: string) => {
       return false;
   }
 };
+
+export const getLegacyBchAddressFormat = (addr: string): string => {
+  const a = BWC.getBitcoreCash().Address(addr).toObject();
+  return BWC.getBitcore().Address.fromObject(a).toString();
+};

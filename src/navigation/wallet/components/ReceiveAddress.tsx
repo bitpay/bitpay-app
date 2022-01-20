@@ -10,18 +10,22 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import cloneDeep from 'lodash.clonedeep';
-import {ValidateAddress} from '../../../constants/validateAddress';
+import {
+  getLegacyBchAddressFormat,
+  ValidateAddress,
+} from '../../../constants/address';
 import {CustomErrorMessage} from './ErrorMessages';
 import {ModalContainer} from '../../../components/styled/Containers';
 import styled from 'styled-components/native';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
 import CopySvg from '../../../../assets/img/copy.svg';
-import {LightBlack, NeutralSlate, White} from '../../../styles/colors';
+import {Action, LightBlack, NeutralSlate, White} from '../../../styles/colors';
 import QRCode from 'react-native-qrcode-svg';
 import Button from '../../../components/button/Button';
 import Clipboard from '@react-native-community/clipboard';
 import haptic from '../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
+import {CurrencySelectionOptions} from '../../../constants/CurrencySelectionOptions';
 
 export interface ReceiveAddressConfig {
   keyId: string;
@@ -45,8 +49,9 @@ const Title = styled(H4)`
   color: ${({theme}) => theme.colors.text};
 `;
 
-const Refresh = styled.TouchableOpacity`
-  position: absolute;
+const Refresh = styled.TouchableOpacity<{isBch?: boolean}>`
+  position: ${({isBch}) => (isBch ? 'relative' : 'absolute')};
+  margin-left: 5px;
   right: 0;
   background-color: ${({theme: {dark}}) => (dark ? '#616161' : '#F5F7F8')};
   width: 40px;
@@ -54,6 +59,7 @@ const Refresh = styled.TouchableOpacity`
   border-radius: 50px;
   align-items: center;
   justify-content: center;
+  margin-top: ${({isBch}) => (isBch ? '10px' : '0')};
 `;
 
 const CopyToClipboard = styled.TouchableOpacity`
@@ -73,19 +79,19 @@ const AddressText = styled(BaseText)`
 
 const QRCodeContainer = styled.View`
   align-items: center;
-  margin: 30px;
+  margin: 15px;
 `;
 
 const LoadingContainer = styled.View`
-  min-height: 240px;
+  min-height: 300px;
   justify-content: center;
   align-items: center;
 `;
 
 const QRCodeBackground = styled.View`
   background-color: ${White};
-  width: 185px;
-  height: 185px;
+  width: 225px;
+  height: 225px;
   justify-content: center;
   align-items: center;
   border-radius: 12px;
@@ -93,6 +99,38 @@ const QRCodeBackground = styled.View`
 
 const ReceiveAddressContainer = styled(ModalContainer)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+`;
+
+const BchHeaderAction = styled.TouchableOpacity<{isActive: boolean}>`
+  align-items: center;
+  justify-content: center;
+  margin: 0 10px -1px;
+  border-bottom-color: ${({isActive}) => (isActive ? Action : 'transparent')};
+  border-bottom-width: 1px;
+  height: 60px;
+`;
+
+const BchHeaderActionText = styled(BaseText)<{isActive: boolean}>`
+  font-size: 16px;
+  opacity: ${({isActive}) => (isActive ? 1 : 0.5)};
+  color: ${({theme}) => theme.colors.text};
+`;
+
+const BchHeaderActions = styled.View`
+  flex-direction: row;
+`;
+
+const BchHeader = styled.View`
+  margin-bottom: 30px;
+  border-bottom-width: 1px;
+  border-bottom-color: #979797;
+  align-items: center;
+  flex-direction: row;
+  justify-content: space-between;
+`;
+
+const LoadingText = styled(H4)`
+  color: ${({theme}) => theme.colors.text};
 `;
 
 const ReceiveAddress = () => {
@@ -117,6 +155,12 @@ const ReceiveAddress = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(true);
+  const [bchAddressType, setBchAddressType] = useState('segwit');
+  const [bchAddress, setBchAddress] = useState('');
+  const {imgSrc} =
+    CurrencySelectionOptions.find(
+      ({id: currencyId}) =>  currencyId === wallet?.currencyAbbreviation,
+    ) || {};
 
   const copyToClipboard = () => {
     haptic('impactLight');
@@ -147,7 +191,8 @@ const ReceiveAddress = () => {
     const walletClone = cloneDeep(wallet);
 
     if (walletClone) {
-      const {token, network} = walletClone.credentials;
+      let {token, network, coin} = walletClone.credentials;
+      console.log(coin);
       if (token) {
         walletClone.id.replace(`-${token.address}`, '');
       }
@@ -168,6 +213,9 @@ const ReceiveAddress = () => {
                 }
                 setLoading(false);
                 setAddress(addr[0].address);
+                if (coin === 'bch') {
+                  setBchAddress(addr[0].address);
+                }
               },
             );
           } else {
@@ -188,6 +236,9 @@ const ReceiveAddress = () => {
         } else if (addressObj) {
           setLoading(false);
           setAddress(addressObj.address);
+          if (coin === 'bch') {
+            setBchAddress(addressObj.address);
+          }
         }
       });
     }
@@ -205,19 +256,63 @@ const ReceiveAddress = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet]);
 
+  const onBchAddressTypeChange = (type: string) => {
+    haptic('impactLight');
+    setBchAddressType(type);
+    if (type === 'legacy') {
+      setAddress(getLegacyBchAddressFormat(address));
+    } else {
+      setAddress(bchAddress);
+    }
+  };
+
   return (
     <BottomPopupModal isVisible={isVisible} onBackdropPress={dismissModal}>
       <ReceiveAddressContainer>
-        <Header>
-          <Title>Address</Title>
-          <Refresh
-            onPress={() => {
-              haptic('impactLight');
-              createAddress();
-            }}>
-            <RefreshIcon />
-          </Refresh>
-        </Header>
+        {wallet?.currencyAbbreviation !== 'bch' ? (
+          <Header>
+            <Title>Address</Title>
+            <Refresh
+              onPress={() => {
+                haptic('impactLight');
+                createAddress();
+              }}>
+              <RefreshIcon />
+            </Refresh>
+          </Header>
+        ) : (
+          <BchHeader>
+            <Title>Address</Title>
+
+            <BchHeaderActions>
+              <BchHeaderAction
+                onPress={() => onBchAddressTypeChange('segwit')}
+                isActive={bchAddressType === 'segwit'}>
+                <BchHeaderActionText isActive={bchAddressType === 'segwit'}>
+                  Segwit
+                </BchHeaderActionText>
+              </BchHeaderAction>
+
+              <BchHeaderAction
+                onPress={() => onBchAddressTypeChange('legacy')}
+                isActive={bchAddressType === 'legacy'}>
+                <BchHeaderActionText isActive={bchAddressType === 'legacy'}>
+                  Legacy
+                </BchHeaderActionText>
+              </BchHeaderAction>
+
+              <Refresh
+                isBch={true}
+                onPress={() => {
+                  haptic('impactLight');
+                  createAddress();
+                  setBchAddressType('segwit');
+                }}>
+                <RefreshIcon />
+              </Refresh>
+            </BchHeaderActions>
+          </BchHeader>
+        )}
 
         {address ? (
           <>
@@ -231,14 +326,20 @@ const ReceiveAddress = () => {
             {/* TODO: Add logos */}
             <QRCodeContainer>
               <QRCodeBackground>
-                <QRCode value={address} size={155} />
+                <QRCode
+                  value={address}
+                  size={200}
+                  logo={imgSrc}
+                  logoSize={30}
+                  logoBackgroundColor="white"
+                  logoMargin={5}
+                />
               </QRCodeBackground>
             </QRCodeContainer>
           </>
         ) : loading ? (
           <LoadingContainer>
-            {/*TODO: Add spinner*/}
-            <BaseText>Loading...</BaseText>
+            <LoadingText>Generating Address...</LoadingText>
           </LoadingContainer>
         ) : null}
 

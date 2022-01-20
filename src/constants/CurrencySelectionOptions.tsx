@@ -37,6 +37,7 @@ export const CurrencySelectionOptions: Array<ItemProps> = [
     ),
     currencyName: 'Bitcoin',
     currencyAbbreviation: 'BTC',
+    imgSrc: require('../../assets/img/currencies/png/BTC.png'),
   },
   {
     id: 'bch',
@@ -46,6 +47,7 @@ export const CurrencySelectionOptions: Array<ItemProps> = [
     ),
     currencyName: 'Bitcoin Cash',
     currencyAbbreviation: 'BCH',
+    imgSrc: require('../../assets/img/currencies/png/BCH.png'),
   },
   {
     id: 'eth',
@@ -55,6 +57,7 @@ export const CurrencySelectionOptions: Array<ItemProps> = [
     ),
     currencyName: 'Ethereum',
     currencyAbbreviation: 'ETH',
+    imgSrc: require('../../assets/img/currencies/png/ETH.png'),
   },
   {
     id: 'doge',
@@ -64,6 +67,7 @@ export const CurrencySelectionOptions: Array<ItemProps> = [
     ),
     currencyName: 'Dogecoin',
     currencyAbbreviation: 'DOGE',
+    imgSrc: require('../../assets/img/currencies/png/DOGE.png'),
   },
   {
     id: 'ltc',
@@ -73,6 +77,7 @@ export const CurrencySelectionOptions: Array<ItemProps> = [
     ),
     currencyName: 'Litecoin',
     currencyAbbreviation: 'LTC',
+    imgSrc: require('../../assets/img/currencies/png/LTC.png'),
   },
   {
     id: 'xrp',
@@ -82,6 +87,7 @@ export const CurrencySelectionOptions: Array<ItemProps> = [
     ),
     currencyName: 'Xrp',
     currencyAbbreviation: 'XRP',
+    imgSrc: require('../../assets/img/currencies/png/XRP.png'),
   },
   {
     id: 'usdc',
@@ -91,6 +97,7 @@ export const CurrencySelectionOptions: Array<ItemProps> = [
     ),
     currencyName: 'Usdc',
     currencyAbbreviation: 'USDC',
+    imgSrc: require('../../assets/img/currencies/png/USDC.png'),
   },
   {
     id: 'gusd',
@@ -100,6 +107,7 @@ export const CurrencySelectionOptions: Array<ItemProps> = [
     ),
     currencyName: 'Gusd',
     currencyAbbreviation: 'GUSD',
+    imgSrc: require('../../assets/img/currencies/png/GUSD.png'),
   },
   {
     id: 'busd',
@@ -109,6 +117,7 @@ export const CurrencySelectionOptions: Array<ItemProps> = [
     ),
     currencyName: 'Busd',
     currencyAbbreviation: 'BUSD',
+    imgSrc: require('../../assets/img/currencies/png/BUSD.png'),
   },
   {
     id: 'dai',
@@ -118,6 +127,7 @@ export const CurrencySelectionOptions: Array<ItemProps> = [
     ),
     currencyName: 'Dai',
     currencyAbbreviation: 'DAI',
+    imgSrc: require('../../assets/img/currencies/png/DAI.png'),
   },
   {
     id: 'pax',
@@ -127,6 +137,7 @@ export const CurrencySelectionOptions: Array<ItemProps> = [
     ),
     currencyName: 'Pax',
     currencyAbbreviation: 'PAX',
+    imgSrc: require('../../assets/img/currencies/png/PAX.png'),
   },
   {
     id: 'wbtc',
@@ -136,5 +147,6 @@ export const CurrencySelectionOptions: Array<ItemProps> = [
     ),
     currencyName: 'Wbtc',
     currencyAbbreviation: 'WBTC',
+    imgSrc: require('../../assets/img/currencies/png/WBTC.png'),
   },
 ];

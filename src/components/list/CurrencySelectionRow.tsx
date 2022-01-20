@@ -5,6 +5,7 @@ import {RowContainer} from '../styled/Containers';
 import {H5, SubText} from '../styled/Text';
 import haptic from '../haptic-feedback/haptic';
 import Checkbox from '../checkbox/Checkbox';
+import {ImageSourcePropType} from 'react-native';
 
 export interface ItemProps {
   id: string | number;
@@ -14,6 +15,7 @@ export interface ItemProps {
   disabled?: boolean;
   checked?: boolean;
   roundIcon: (size?: number) => ReactElement;
+  imgSrc: ImageSourcePropType;
 }
 
 interface Props {
