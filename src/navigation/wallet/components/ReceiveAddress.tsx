@@ -307,8 +307,9 @@ const ReceiveAddress = () => {
             <Title>Address</Title>
 
             <BchHeaderActions>
-              {BchAddressTypes.map(type => (
+              {BchAddressTypes.map((type, index) => (
                 <BchHeaderAction
+                  key={index}
                   onPress={() => onBchAddressTypeChange(type)}
                   isActive={bchAddressType === type}
                   disabled={!address}>
