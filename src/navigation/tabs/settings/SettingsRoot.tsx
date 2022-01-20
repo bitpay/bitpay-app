@@ -3,10 +3,18 @@ import React from 'react';
 import styled from 'styled-components/native';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import {StyleProp, TextStyle, View} from 'react-native';
-import {useDispatch} from 'react-redux';
-import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
-import {Hr, Setting, SettingTitle} from '../../../components/styled/Containers';
+import {useDispatch, useSelector} from 'react-redux';
+import Avatar from '../../../components/avatar/Avatar';
+import {
+  Hr,
+  ScreenGutter,
+  Setting,
+  SettingTitle,
+} from '../../../components/styled/Containers';
 import {useTheme} from '@react-navigation/native';
+import {RootState} from '../../../store';
+import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
+import {User} from '../../../store/bitpay-id/bitpay-id.models';
 
 interface HomeSetting {
   title: string;
@@ -27,10 +35,43 @@ export const Settings = styled.ScrollView`
   padding: 0 15px;
 `;
 
+const BitPayIdSettingsLink = styled(Setting)`
+  height: auto;
+  margin-bottom: 32px;
+`;
+
+const BitPayIdAvatarContainer = styled.View`
+  margin-right: ${ScreenGutter};
+`;
+
+const BitPayIdUserContainer = styled.View`
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+`;
+
+const BitPayIdSettingTitle = styled(SettingTitle)`
+  flex-grow: 1;
+`;
+
+const BitPayIdUserText = styled.Text`
+  display: flex;
+  font-size: 14px;
+  line-height: 19px;
+`;
+
+const BitPayIdUserName = styled(BitPayIdUserText)`
+  font-weight: 700;
+`;
+
 const SettingsHomeScreen: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const theme = useTheme();
+  const user = useSelector<RootState, User | null>(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
+  const isVerified = false; // TODO
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
   const SETTINGS: HomeSetting[] = [
     {
@@ -78,14 +119,40 @@ const SettingsHomeScreen: React.FC = () => {
   return (
     <SettingsContainer>
       <Settings>
-        <Setting
-          onPress={() => navigation.navigate('BitpayId', {screen: 'Profile'})}>
-          <SettingTitle style={textStyle}>
-            TODO: BITPAY ID PLACEHOLDER
-          </SettingTitle>
-        </Setting>
+        <BitPayIdSettingsLink
+          onPress={() => {
+            if (user) {
+              navigation.navigate('BitpayId', {screen: 'Profile'});
+            } else {
+              navigation.navigate('Auth', {
+                screen: 'LoginSignup',
+                params: {context: 'login'},
+              });
+            }
+          }}>
+          <BitPayIdAvatarContainer>
+            <Avatar
+              size={50}
+              firstName={user?.givenName}
+              lastName={user?.familyName}
+              verified={isVerified}
+            />
+          </BitPayIdAvatarContainer>
+          {user ? (
+            <BitPayIdUserContainer>
+              <BitPayIdUserName>
+                {user.givenName} {user.familyName}
+              </BitPayIdUserName>
+              <BitPayIdUserText>{user.email}</BitPayIdUserText>
+            </BitPayIdUserContainer>
+          ) : (
+            <BitPayIdSettingTitle>Log In or Sign Up</BitPayIdSettingTitle>
+          )}
+          <AngleRight />
+        </BitPayIdSettingsLink>
 
         <Hr />
+
         {SETTINGS.map(({title, onPress}) => {
           return (
             <View key={title}>
