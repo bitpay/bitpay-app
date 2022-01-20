@@ -51,17 +51,16 @@ const BitPayIdUserContainer = styled.View`
 `;
 
 const BitPayIdSettingTitle = styled(SettingTitle)`
+  color: ${({theme}) => theme.colors.text};
   flex-grow: 1;
 `;
 
-const BitPayIdUserText = styled.Text`
+const BitPayIdUserText = styled.Text<{bold?: boolean}>`
   display: flex;
   font-size: 14px;
   line-height: 19px;
-`;
-
-const BitPayIdUserName = styled(BitPayIdUserText)`
-  font-weight: 700;
+  font-weight: ${({bold}) => (bold ? 700 : 400)};
+  color: ${({theme}) => theme.colors.text};
 `;
 
 const SettingsHomeScreen: React.FC = () => {
@@ -134,9 +133,9 @@ const SettingsHomeScreen: React.FC = () => {
           </BitPayIdAvatarContainer>
           {user ? (
             <BitPayIdUserContainer>
-              <BitPayIdUserName>
+              <BitPayIdUserText bold>
                 {user.givenName} {user.familyName}
-              </BitPayIdUserName>
+              </BitPayIdUserText>
               <BitPayIdUserText>{user.email}</BitPayIdUserText>
             </BitPayIdUserContainer>
           ) : (

@@ -1,3 +1,4 @@
+import {useTheme} from '@react-navigation/native';
 import React from 'react';
 import * as Svg from 'react-native-svg';
 import {useSelector} from 'react-redux';
@@ -21,7 +22,7 @@ interface AvatarProps {
 }
 
 // not part of BitPay Blocks design system
-const INITIALS_BACKGROUND = '#1a2c57';
+const DARK_BLUE = '#1a2c57';
 const INITIALS_TEXT = '#9faff5';
 
 const AvatarContainer = styled.View`
@@ -36,9 +37,14 @@ const VerifiedCheckContainer = styled.View`
 
 const ProfileIcon: React.FC<AvatarSvgProps> = ({
   size = 35,
-  color = NeutralSlate,
-  background = ProgressBlue,
+  color,
+  background,
 }) => {
+  const theme = useTheme();
+
+  color = color || (theme.dark ? ProgressBlue : NeutralSlate);
+  background = background || (theme.dark ? DARK_BLUE : ProgressBlue);
+
   return (
     <Svg.Svg width={size} height={size} viewBox="0 0 35 35" fill="none">
       <Svg.Circle
@@ -111,7 +117,7 @@ const Initials: React.FC<InitialsProps> = ({size = 24, initials}) => {
     <Svg.Svg height={size} width={size} viewBox="0 0 24 24">
       <Svg.Circle
         id="initials-background"
-        fill={INITIALS_BACKGROUND}
+        fill={DARK_BLUE}
         r="12"
         cx="50%"
         cy="50%"
