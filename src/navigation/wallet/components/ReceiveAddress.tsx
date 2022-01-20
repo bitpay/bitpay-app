@@ -26,6 +26,7 @@ import Clipboard from '@react-native-community/clipboard';
 import haptic from '../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {CurrencySelectionOptions} from '../../../constants/CurrencySelectionOptions';
+import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 
 export interface ReceiveAddressConfig {
   keyId: string;
@@ -36,6 +37,8 @@ interface Address {
   address: string;
   coin: string;
 }
+
+const BchAddressTypes = ['Segwit', 'Legacy'];
 
 const Header = styled.View`
   margin-bottom: 30px;
@@ -112,7 +115,7 @@ const BchHeaderAction = styled.TouchableOpacity<{isActive: boolean}>`
 
 const BchHeaderActionText = styled(BaseText)<{isActive: boolean}>`
   font-size: 16px;
-  opacity: ${({isActive}) => (isActive ? 1 : 0.5)};
+  opacity: ${({isActive}) => (isActive ? 1 : 0.7)};
   color: ${({theme}) => theme.colors.text};
 `;
 
@@ -155,7 +158,7 @@ const ReceiveAddress = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(true);
-  const [bchAddressType, setBchAddressType] = useState('segwit');
+  const [bchAddressType, setBchAddressType] = useState('Segwit');
   const [bchAddress, setBchAddress] = useState('');
   const {imgSrc} =
     CurrencySelectionOptions.find(
@@ -192,7 +195,6 @@ const ReceiveAddress = () => {
 
     if (walletClone) {
       let {token, network, coin} = walletClone.credentials;
-      console.log(coin);
       if (token) {
         walletClone.id.replace(`-${token.address}`, '');
       }
@@ -259,7 +261,7 @@ const ReceiveAddress = () => {
   const onBchAddressTypeChange = (type: string) => {
     haptic('impactLight');
     setBchAddressType(type);
-    if (type === 'legacy') {
+    if (type === 'Legacy') {
       setAddress(getLegacyBchAddressFormat(address));
     } else {
       setAddress(bchAddress);
@@ -285,28 +287,20 @@ const ReceiveAddress = () => {
             <Title>Address</Title>
 
             <BchHeaderActions>
-              <BchHeaderAction
-                onPress={() => onBchAddressTypeChange('segwit')}
-                isActive={bchAddressType === 'segwit'}>
-                <BchHeaderActionText isActive={bchAddressType === 'segwit'}>
-                  Segwit
+              {BchAddressTypes.map(type => (<BchHeaderAction
+                  onPress={() => onBchAddressTypeChange(type)}
+                  isActive={bchAddressType === type} disabled={!address}>
+                <BchHeaderActionText isActive={bchAddressType === type}>
+                  {type}
                 </BchHeaderActionText>
-              </BchHeaderAction>
-
-              <BchHeaderAction
-                onPress={() => onBchAddressTypeChange('legacy')}
-                isActive={bchAddressType === 'legacy'}>
-                <BchHeaderActionText isActive={bchAddressType === 'legacy'}>
-                  Legacy
-                </BchHeaderActionText>
-              </BchHeaderAction>
+              </BchHeaderAction>))}
 
               <Refresh
                 isBch={true}
                 onPress={() => {
                   haptic('impactLight');
                   createAddress();
-                  setBchAddressType('segwit');
+                  setBchAddressType('Segwit');
                 }}>
                 <RefreshIcon />
               </Refresh>
@@ -323,16 +317,16 @@ const ReceiveAddress = () => {
               </AddressText>
             </CopyToClipboard>
 
-            {/* TODO: Add logos */}
             <QRCodeContainer>
               <QRCodeBackground>
                 <QRCode
                   value={address}
                   size={200}
                   logo={imgSrc}
-                  logoSize={30}
-                  logoBackgroundColor="white"
-                  logoMargin={5}
+                  logoSize={38}
+                  logoBackgroundColor={White}
+                  logoMargin={8}
+                  logoBorderRadius={8}
                 />
               </QRCodeBackground>
             </QRCodeContainer>
@@ -341,7 +335,7 @@ const ReceiveAddress = () => {
           <LoadingContainer>
             <LoadingText>Generating Address...</LoadingText>
           </LoadingContainer>
-        ) : null}
+        ) : <LoadingContainer><GhostSvg/></LoadingContainer>}
 
         <Button onPress={dismissModal} buttonType={'link'}>
           CLOSE
