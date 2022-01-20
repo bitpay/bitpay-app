@@ -11,6 +11,7 @@ export const H2 = styled(BaseText)`
   font-weight: 500;
   letter-spacing: 0;
   text-align: center;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 export const H3 = styled(BaseText)`
@@ -19,6 +20,7 @@ export const H3 = styled(BaseText)`
   font-weight: 700;
   line-height: 34px;
   letter-spacing: 0;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 export const H4 = styled(BaseText)`
@@ -27,6 +29,7 @@ export const H4 = styled(BaseText)`
   font-weight: 500;
   line-height: 30px;
   letter-spacing: 0;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 export const H5 = styled(BaseText)`
@@ -35,12 +38,14 @@ export const H5 = styled(BaseText)`
   font-weight: 700;
   line-height: 25px;
   letter-spacing: 0;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 export const H6 = styled(BaseText)`
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 export const H7 = styled(BaseText)`
