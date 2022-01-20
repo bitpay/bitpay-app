@@ -1,8 +1,7 @@
 import React from 'react';
-import {View} from 'react-native';
 import styled from 'styled-components/native';
 import {CardConfig} from '../../../../store/shop/shop.models';
-import RemoteIcon from './RemoteIcon';
+import RemoteImage from './RemoteImage';
 import GiftCardDenoms from './GiftCardDenoms';
 
 const GiftCardCatalogItemContainer = styled.View`
@@ -19,15 +18,20 @@ const GiftCardBrandName = styled.Text`
   margin-bottom: 5px;
 `;
 
+const BrandDetails = styled.View`
+  margin-left: 18px;
+  padding-right: 10px;
+`;
+
 export default ({cardConfig}: {cardConfig: CardConfig}) => {
   const {displayName, icon} = cardConfig;
   return (
     <GiftCardCatalogItemContainer>
-      <RemoteIcon icon={icon} height={50} />
-      <View>
+      <RemoteImage icon={icon} height={50} borderRadius={30} />
+      <BrandDetails>
         <GiftCardBrandName>{displayName}</GiftCardBrandName>
         <GiftCardDenoms cardConfig={cardConfig} />
-      </View>
+      </BrandDetails>
     </GiftCardCatalogItemContainer>
   );
 };

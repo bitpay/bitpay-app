@@ -1,7 +1,7 @@
 import debounce from 'lodash.debounce';
 import React, {useMemo, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
-import {Platform, View} from 'react-native';
+import {View} from 'react-native';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import {WIDTH} from '../../../../components/styled/Containers';
@@ -83,6 +83,7 @@ export const ShopOnline = ({
             itemWidth={146}
             maxItemsPerColumn={1}
             screenWidth={WIDTH}
+            onItemPress={item => console.log('merchant onItemPress', item)}
           />
         </View>
       ))}

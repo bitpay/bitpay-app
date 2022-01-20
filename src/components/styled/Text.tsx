@@ -1,8 +1,10 @@
 import styled, {css} from 'styled-components/native';
 import {Action, SlateDark, White} from '../../styles/colors';
 
+export const fontFamily = 'Heebo';
+
 export const BaseText = styled.Text`
-  font-family: 'Heebo';
+  font-family: '${fontFamily}';
 `;
 
 export const H2 = styled(BaseText)`
