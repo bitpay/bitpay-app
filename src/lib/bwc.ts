@@ -66,4 +66,8 @@ export class BwcProvider {
   public getCore() {
     return BWC.Core;
   }
+
+  public getErrors() {
+    return BWC.errors;
+  }
 }

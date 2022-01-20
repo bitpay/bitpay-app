@@ -19,6 +19,7 @@
     "@freakycoder/react-native-bounceable": "0.2.5",
     "@hookform/resolvers": "2.8.3",
     "@react-native-async-storage/async-storage": "1.15.14",
+    "@react-native-community/clipboard": "1.5.1",
     "@react-native-community/masked-view": "0.1.11",
     "@react-navigation/bottom-tabs": "6.0.9",
     "@react-navigation/material-top-tabs": "6.0.6",

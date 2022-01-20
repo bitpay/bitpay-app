@@ -96,15 +96,14 @@ const WalletDetails = () => {
   ];
 
   const showReceiveAddress = () => {
-    const {keyId, id} = asset;
+    const {keyId, id} = wallet;
     dispatch(
-        WalletActions.showReceiveAddressModal({
-          keyId,
-          id,
-        }),
+      WalletActions.showReceiveAddressModal({
+        keyId,
+        id,
+      }),
     );
   };
-
 
   const {cryptoBalance, fiatBalance, currencyName, currencyAbbreviation} =
     wallet;
@@ -120,7 +119,10 @@ const WalletDetails = () => {
         <H5>{fiatBalance} USD</H5>
       </BalanceContainer>
 
-      <LinkingButtons receiveCta={() => showReceiveAddress()} sendCta={() => null} />
+      <LinkingButtons
+        receiveCta={() => showReceiveAddress()}
+        sendCta={() => null}
+      />
 
       <OptionsBottomPopupModal
         isVisible={showWalletOptions}

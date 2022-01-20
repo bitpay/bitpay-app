@@ -98,5 +98,5 @@ export type WalletActionType =
   | failedGetPriceHistory
   | updateWalletBalance
   | successEncryptOrDecryptPassword
-    | showReceiveAddressModal
-    | dismissReceiveAddressModal;
+  | showReceiveAddressModal
+  | dismissReceiveAddressModal;
