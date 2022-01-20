@@ -37,11 +37,7 @@ export const ProfileSettingsScreen: React.FC<ProfileProps> = () => {
   return (
     <ProfileSettingsScreenContainer>
       <ProfileInfoContainer>
-        <Avatar
-          size={77}
-          firstName={user.givenName}
-          lastName={user.familyName}
-        />
+        <Avatar size={77} />
 
         <UserNameHeading>
           {user.givenName} {user.familyName}

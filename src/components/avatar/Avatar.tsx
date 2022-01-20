@@ -1,6 +1,8 @@
 import React from 'react';
 import * as Svg from 'react-native-svg';
+import {useSelector} from 'react-redux';
 import styled from 'styled-components/native';
+import {RootState} from '../../store';
 import {NeutralSlate, ProgressBlue} from '../../styles/colors';
 
 interface AvatarSvgProps {
@@ -16,10 +18,6 @@ interface InitialsProps {
 
 interface AvatarProps {
   size: number;
-  name?: string;
-  firstName?: string;
-  lastName?: string;
-  verified?: boolean;
 }
 
 // not part of BitPay Blocks design system
@@ -132,15 +130,15 @@ const Initials: React.FC<InitialsProps> = ({size = 24, initials}) => {
   );
 };
 
-const Avatar: React.FC<AvatarProps> = ({
-  size,
-  firstName = '',
-  lastName = '',
-  verified = false,
-}) => {
-  const initials = `${firstName.trim().charAt(0)}${lastName
-    .trim()
-    .charAt(0)}`.toUpperCase();
+const Avatar: React.FC<AvatarProps> = ({size}) => {
+  const initials = useSelector<RootState, string>(({APP, BITPAY_ID}) => {
+    const user = BITPAY_ID.user[APP.network];
+    const firstInitial = (user?.givenName || '').trim().charAt(0);
+    const lastInitial = (user?.familyName || '').trim().charAt(0);
+
+    return `${firstInitial}${lastInitial}`.toUpperCase();
+  });
+  const isVerified = false; // TODO
 
   return (
     <AvatarContainer>
@@ -149,7 +147,7 @@ const Avatar: React.FC<AvatarProps> = ({
       ) : (
         <ProfileIcon size={size} />
       )}
-      {verified ? <VerifiedCheck size={size * 0.35} /> : null}
+      {isVerified ? <VerifiedCheck size={size * 0.35} /> : null}
     </AvatarContainer>
   );
 };

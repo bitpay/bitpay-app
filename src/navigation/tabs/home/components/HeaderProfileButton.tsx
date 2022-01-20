@@ -12,7 +12,6 @@ const ProfileButton: React.FC = () => {
   const user = useSelector<RootState, User | null>(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
-  const verified = false; // TODO
 
   return (
     <HeaderButtonContainer>
@@ -25,12 +24,7 @@ const ProfileButton: React.FC = () => {
                 params: {context: 'login'},
               });
         }}>
-        <Avatar
-          size={35}
-          firstName={user?.givenName}
-          lastName={user?.familyName}
-          verified={verified}
-        />
+        <Avatar size={35} />
       </TouchableOpacity>
     </HeaderButtonContainer>
   );

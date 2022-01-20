@@ -71,7 +71,6 @@ const SettingsHomeScreen: React.FC = () => {
   const user = useSelector<RootState, User | null>(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
-  const isVerified = false; // TODO
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
   const SETTINGS: HomeSetting[] = [
     {
@@ -131,12 +130,7 @@ const SettingsHomeScreen: React.FC = () => {
             }
           }}>
           <BitPayIdAvatarContainer>
-            <Avatar
-              size={50}
-              firstName={user?.givenName}
-              lastName={user?.familyName}
-              verified={isVerified}
-            />
+            <Avatar size={50} />
           </BitPayIdAvatarContainer>
           {user ? (
             <BitPayIdUserContainer>
