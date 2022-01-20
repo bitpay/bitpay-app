@@ -2,7 +2,7 @@ import debounce from 'lodash.debounce';
 import React from 'react';
 import {BaseButtonProps} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
-import {Action, Air, Disabled, DisabledDark, White} from '../../styles/colors';
+import {Action, Air, Disabled, DisabledDark, Midnight, White} from '../../styles/colors';
 import Haptic from '../haptic-feedback/haptic';
 import {BaseText} from '../styled/Text';
 
@@ -70,8 +70,20 @@ const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
 `;
 
 const PillContainer = styled.TouchableOpacity<ButtonOptionProps>`
-  background: ${Air};
-  border: 2px solid ${Air};
+  background: ${({secondary, theme}) => {
+    if (secondary) {
+      return 'transparent';
+    }
+
+    return theme?.dark ? Midnight : Air;
+  }};
+  border: 2px solid ${({secondary, theme}) => {
+    if (secondary) {
+      return theme?.dark ? Midnight : Air;
+    }
+
+    return theme?.dark ? Midnight : Air;
+  }};
   border-radius: 17.5px;
   padding: 8px 15px;
 `;
@@ -80,12 +92,12 @@ const PillText = styled(ButtonBaseText)<ButtonOptionProps>`
   font-size: 15px;
   font-weight: 400;
 
-  color: ${({disabled}) => {
+  color: ${({disabled, theme}) => {
     if (disabled) {
       return DisabledDark;
     }
 
-    return Action;
+    return theme?.dark ? White : Action;
   }};
 `;
 
@@ -147,10 +159,11 @@ const Button: React.FC<ButtonProps> = ({
   if (buttonType === 'pill') {
     return (
       <PillContainer
-        onPress={debouncedOnPress}
+        secondary={secondary}
         disabled={disabled}
+        onPress={debouncedOnPress}
         activeOpacity={ACTIVE_OPACITY}>
-        <PillText disabled={disabled}>
+        <PillText secondary={secondary} disabled={disabled}>
           {children}
         </PillText>
       </PillContainer>
@@ -160,8 +173,8 @@ const Button: React.FC<ButtonProps> = ({
   return (
     <ButtonContainer
       secondary={secondary}
-      onPress={debouncedOnPress}
       disabled={disabled}
+      onPress={debouncedOnPress}
       activeOpacity={ACTIVE_OPACITY}
       testID={'button'}>
       <ButtonText
