@@ -1,16 +1,21 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React from 'react';
 import {Switch, Text, View} from 'react-native';
+import Carousel from 'react-native-snap-carousel';
 import {useDispatch, useSelector} from 'react-redux';
+import {WIDTH} from '../../../components/styled/Containers';
 import {SUPPORTED_DESIGN_CURRENCIES} from '../../../constants/config.card';
 import {RootState} from '../../../store';
 import {CardActions} from '../../../store/card';
+import {Card} from '../../../store/card/card.models';
 import {VirtualDesignCurrency} from '../../../store/card/card.types';
 import {CardStackParamList} from '../CardStack';
 import {OverviewSlide} from '../components/CardDashboard';
+import CardSettingsSlide from '../components/CardSettingsSlide';
 
 export type CardSettingsParamList = {
   slide: OverviewSlide;
+  id?: string;
 };
 type CardSettingsProps = StackScreenProps<CardStackParamList, 'Settings'>;
 
@@ -31,15 +36,17 @@ const CardSettings: React.FC<CardSettingsProps> = ({route}) => {
 
   return (
     <View>
-      <Text>Settings Placeholder</Text>
-
-      {slide.cards.map(card => (
-        <React.Fragment key={card.id}>
-          <Text>
-            {card.cardType}: {card.id}
-          </Text>
-        </React.Fragment>
-      ))}
+      <Carousel<Card>
+        data={slide.cards}
+        vertical={false}
+        firstItem={0}
+        itemWidth={300 + 20}
+        sliderWidth={WIDTH}
+        renderItem={({item}) => {
+          return <CardSettingsSlide parent={slide.primaryCard} card={item} />;
+        }}
+        layout="default"
+      />
 
       <Br />
       <Text>Virtual Card Design Placeholder</Text>
