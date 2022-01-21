@@ -13,11 +13,13 @@ type AppReduxPersistBlackList = [
   'appIsLoading',
   'showOnGoingProcessModal',
   'onGoingProcessModalMessage',
+  'showDecryptPasswordModal',
 ];
 export const appReduxPersistBlackList: AppReduxPersistBlackList = [
   'appIsLoading',
   'showOnGoingProcessModal',
   'onGoingProcessModalMessage',
+  'showDecryptPasswordModal',
 ];
 
 export interface AppState {
