@@ -3,7 +3,7 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {NavigatorScreenParams} from '@react-navigation/native';
 
 import HomeRoot from './home/HomeStack';
-import ShopRoot from './shop/ShopStack';
+import ShopRoot, {ShopStackParamList} from './shop/ShopStack';
 import SettingsRoot from './settings/SettingsStack';
 import {SettingsStackParamList} from './settings/SettingsStack';
 
@@ -39,7 +39,7 @@ export enum TabsScreens {
 
 export type TabsStackParamList = {
   Home: undefined;
-  Shop: undefined;
+  Shop: NavigatorScreenParams<ShopStackParamList> | undefined;
   TransactButton: undefined;
   Settings: NavigatorScreenParams<SettingsStackParamList> | undefined;
   Camera: undefined;

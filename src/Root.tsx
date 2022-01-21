@@ -59,6 +59,10 @@ import SwapCryptoStack, {
 import WalletConnectStack, {
   WalletConnectStackParamList,
 } from './navigation/wallet-connect/WalletConnectStack';
+import {ShopStackParamList} from './navigation/tabs/shop/ShopStack';
+import GiftCardStack, {
+  GiftCardStackParamList,
+} from './navigation/tabs/shop/gift-card/GiftCardStack';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -69,6 +73,8 @@ export type RootStackParamList = {
   Wallet: NavigatorScreenParams<WalletStackParamList>;
   Card: NavigatorScreenParams<CardStackParamList>;
   Scan: NavigatorScreenParams<ScanStackParamList>;
+  Shop: NavigatorScreenParams<ShopStackParamList>;
+  GiftCard: NavigatorScreenParams<GiftCardStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
   SecuritySettings: NavigatorScreenParams<SecuritySettingsStackParamList>;
   ContactSettings: NavigatorScreenParams<ContactSettingsStackParamList>;
@@ -88,7 +94,7 @@ export enum RootStacks {
   WALLET = 'Wallet',
   CARD = 'Card',
   SCAN = 'Scan',
-
+  GIFT_CARD = 'GiftCard',
   // SETTINGS
   GENERAL_SETTINGS = 'GeneralSettings',
   SECURITY_SETTINGS = 'SecuritySettings',
@@ -107,6 +113,7 @@ export type NavScreenParams = NavigatorScreenParams<
     BitpayIdStackParamList &
     WalletStackParamList &
     CardStackParamList &
+    GiftCardStackParamList &
     GeneralSettingsStackParamList &
     SecuritySettingsStackParamList &
     ContactSettingsStackParamList &
@@ -247,7 +254,10 @@ export default () => {
             <Root.Screen name={RootStacks.WALLET} component={WalletStack} />
             <Root.Screen name={RootStacks.CARD} component={CardStack} />
             <Root.Screen name={RootStacks.SCAN} component={ScanStack} />
-
+            <Root.Screen
+              name={RootStacks.GIFT_CARD}
+              component={GiftCardStack}
+            />
             {/* SETTINGS */}
             <Root.Screen
               name={RootStacks.GENERAL_SETTINGS}
