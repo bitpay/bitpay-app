@@ -163,7 +163,6 @@ export default () => {
 
   // LANGUAGE
   useEffect(() => {
-    AppActions.setDefaultLanguage(appLanguage);
     if (appLanguage && appLanguage !== i18n.language) {
       i18n.changeLanguage(appLanguage);
     }
