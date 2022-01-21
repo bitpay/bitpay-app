@@ -1,10 +1,5 @@
 import React, {useLayoutEffect, useState} from 'react';
-import {
-  BaseText,
-  HeaderTitle,
-  H5,
-  Paragraph,
-} from '../../../components/styled/Text';
+import {HeaderTitle, H5, Paragraph} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
@@ -16,6 +11,8 @@ import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import {useDispatch} from 'react-redux';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
+import {WalletActions} from '../../../store/wallet';
+import {AppActions} from '../../../store/app';
 
 const DeleteKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -50,14 +47,17 @@ const DeleteKey = () => {
 
   const [isVisible, setIsVisible] = useState(false);
 
-  const deleteKey = () => {
+  const startDeleteKey = () => {
     setIsVisible(false);
     setTimeout(() => {
       dispatch(startOnGoingProcessModal(OnGoingProcessMessages.DELETING_KEY));
+      dispatch(WalletActions.deleteKey({keyId}));
+      dispatch(AppActions.dismissOnGoingProcessModal());
+
+      navigation.navigate('Tabs', {screen: 'Home'});
     }, 500);
   };
 
-  console.log(keyId);
   return (
     <DeleteKeyContainer>
       <ScrollView>
@@ -74,7 +74,7 @@ const DeleteKey = () => {
         description={
           'Are you sure you want to delete all wallets using this key?'
         }
-        onPressOk={deleteKey}
+        onPressOk={startDeleteKey}
         isVisible={isVisible}
         onPressCancel={() => setIsVisible(false)}
       />
