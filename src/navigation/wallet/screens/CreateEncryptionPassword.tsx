@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useLayoutEffect, useState} from 'react';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
@@ -67,7 +67,7 @@ const CreateEncryptionPassword = () => {
   const navigation = useNavigation();
   const {
     params: {key},
-  } = useRoute<RouteProp<WalletStackParamList, 'CreateEncryptPassword'>>();
+  } = useRoute<RouteProp<WalletStackParamList, 'CreateEncryptionPassword'>>();
 
   const {
     control,
@@ -105,7 +105,7 @@ const CreateEncryptionPassword = () => {
     }
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>Create Encryption Password</HeaderTitle>,
     });

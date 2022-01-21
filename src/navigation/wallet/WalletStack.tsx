@@ -30,7 +30,7 @@ export type WalletStackParamList = {
   WalletSettings: {wallet: WalletRowProps};
   CreationOptions: undefined;
   Import: ImportProps;
-  CreateEncryptPassword: {key: Key};
+  CreateEncryptionPassword: {key: Key};
 };
 
 export enum WalletScreens {
@@ -44,7 +44,7 @@ export enum WalletScreens {
   WALLET_SETTINGS = 'WalletSettings',
   CREATION_OPTIONS = 'CreationOptions',
   IMPORT = 'Import',
-  CREATE_ENCRYPT_PASSWORD = 'CreateEncryptPassword',
+  CREATE_ENCRYPTION_PASSWORD = 'CreateEncryptionPassword',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -110,7 +110,7 @@ const WalletStack = () => {
           component={CreationOptions}
         />
         <Wallet.Screen
-          name={WalletScreens.CREATE_ENCRYPT_PASSWORD}
+          name={WalletScreens.CREATE_ENCRYPTION_PASSWORD}
           component={CreateEncryptionPassword}
         />
       </Wallet.Navigator>

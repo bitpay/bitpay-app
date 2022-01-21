@@ -58,7 +58,7 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
       onChange={() => {
         if (!passwordToggle) {
           navigation.navigate('Wallet', {
-            screen: 'CreateEncryptPassword',
+            screen: 'CreateEncryptionPassword',
             params: {key},
           });
         } else {
