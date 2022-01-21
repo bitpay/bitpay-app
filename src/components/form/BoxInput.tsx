@@ -4,7 +4,7 @@ import styled, {css} from 'styled-components/native';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
 import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
 import Search from '../../../assets/img/search.svg';
-import {Action, Caution, Slate} from '../../styles/colors';
+import {Action, Black, Caution, Slate, White} from '../../styles/colors';
 import {BitPayTheme} from '../../themes/bitpay';
 import {BaseText} from '../styled/Text';
 
@@ -19,7 +19,7 @@ const Input = styled.TextInput`
   height: 55px;
   margin: 10px 0 0 0;
   border: 1px solid #e1e4e7;
-  color: black;
+  color: ${({theme}) => theme.colors.text};
   padding: 10px;
   ${({type}: ContainerProps) =>
     type &&
@@ -35,6 +35,7 @@ const Input = styled.TextInput`
       background: #fafbff;
       border-color: #e6ebff;
       border-bottom-color: ${Action};
+      color: ${({theme: {dark}}) => (dark ? Black : White)};
     `}
 
   ${({isError}: ContainerProps) =>
@@ -73,6 +74,7 @@ const Label = styled(BaseText)<LabelProps>`
 const InputContainer = styled.View`
   position: relative;
   padding: 10px 0;
+  background-color: transparent;
 `;
 
 const ObfuscationToggle = styled.TouchableOpacity`
