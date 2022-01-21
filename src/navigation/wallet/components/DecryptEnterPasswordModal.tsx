@@ -92,7 +92,7 @@ const DecryptEnterPasswordModal = () => {
   return (
     <Modal
       isVisible={isVisible}
-      backdropOpacity={0.8}
+      backdropOpacity={0.4}
       animationIn={'fadeInUp'}
       animationOut={'fadeOutDown'}
       backdropTransitionOutTiming={0}
