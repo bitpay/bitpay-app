@@ -54,7 +54,7 @@ const schema = yup.object().shape({
   password: yup.string().required(),
   confirmPassword: yup
     .string()
-    .required('Confirm Password is required field')
+    .required('Confirm Encryption Password is required field')
     .oneOf([yup.ref('password')], 'Passwords must match'),
 });
 
@@ -63,7 +63,7 @@ interface EncryptPasswordFieldValues {
   confirmPassword: string;
 }
 
-const CreateEncryptPassword = () => {
+const CreateEncryptionPassword = () => {
   const navigation = useNavigation();
   const {
     params: {key},
@@ -107,7 +107,7 @@ const CreateEncryptPassword = () => {
 
   useEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>Create Encrypt Password</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>Create Encryption Password</HeaderTitle>,
     });
   });
 
@@ -128,7 +128,7 @@ const CreateEncryptPassword = () => {
               render={({field: {onChange, onBlur, value}}) => (
                 <BoxInput
                   placeholder={'strongPassword123'}
-                  label={'ENCRYPT PASSWORD'}
+                  label={'ENCRYPTION PASSWORD'}
                   type={'password'}
                   onBlur={onBlur}
                   onChangeText={(text: string) => onChange(text)}
@@ -147,7 +147,7 @@ const CreateEncryptPassword = () => {
               render={({field: {onChange, onBlur, value}}) => (
                 <BoxInput
                   placeholder={'strongPassword123'}
-                  label={'CONFIRM ENCRYPT PASSWORD'}
+                  label={'CONFIRM ENCRYPTION PASSWORD'}
                   type={'password'}
                   onBlur={onBlur}
                   onChangeText={(text: string) => onChange(text)}
@@ -162,7 +162,7 @@ const CreateEncryptPassword = () => {
 
           <PasswordActionContainer>
             <Button onPress={handleSubmit(onSubmit)}>
-              Save Encrypt Password
+              Save Encryption Password
             </Button>
           </PasswordActionContainer>
         </PasswordFormContainer>
@@ -171,4 +171,4 @@ const CreateEncryptPassword = () => {
   );
 };
 
-export default CreateEncryptPassword;
+export default CreateEncryptionPassword;

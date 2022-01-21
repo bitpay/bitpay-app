@@ -82,6 +82,9 @@ const DecryptEnterPasswordModal = () => {
 
   const dismissModal = () => {
     dispatch(AppActions.dismissDecryptPasswordModal());
+    setTimeout(() => {
+      dispatch(AppActions.resetDecryptPasswordConfig());
+    }, 500); // Wait for modal to close
     onCancelHandler && onCancelHandler();
   };
 

@@ -15,7 +15,7 @@ import WalletSettings from './screens/WalletSettings';
 import Import, {ImportProps} from './screens/Import';
 import CreationOptions from './screens/CreationOptions';
 import {HeaderTitle} from '../../components/styled/Text';
-import CreateEncryptPassword from './screens/CreateEncryptPassword';
+import CreateEncryptionPassword from './screens/CreateEncryptionPassword';
 import {Key} from '../../store/wallet/wallet.models';
 import {WalletRowProps} from '../../components/list/WalletRow';
 
@@ -111,7 +111,7 @@ const WalletStack = () => {
         />
         <Wallet.Screen
           name={WalletScreens.CREATE_ENCRYPT_PASSWORD}
-          component={CreateEncryptPassword}
+          component={CreateEncryptionPassword}
         />
       </Wallet.Navigator>
     </>

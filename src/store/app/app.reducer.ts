@@ -174,6 +174,12 @@ export const appReducer = (
         showDecryptPasswordModal: false,
       };
 
+    case AppActionTypes.RESET_DECRYPT_PASSWORD_CONFIG:
+      return {
+        ...state,
+        decryptPasswordConfig: undefined,
+      };
+
     default:
       return state;
   }
