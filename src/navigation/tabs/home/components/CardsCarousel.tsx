@@ -27,7 +27,7 @@ const createHomeCardList = (
   keys: Key[],
   cards: Card[],
 ) => {
-  cards = cards.filter((c) => c.provider === 'galileo');
+  cards = cards.filter(c => c.provider === 'galileo');
 
   const list: JSX.Element[] = [];
   const hasKeys = keys.length;
@@ -93,8 +93,8 @@ const createHomeCardList = (
 
 const CardsCarousel = () => {
   const navigation = useNavigation();
-  const bitPayCards = useSelector<RootState, Card[]>(({APP, CARD}) =>
-    CARD.cards[APP.network],
+  const bitPayCards = useSelector<RootState, Card[]>(
+    ({APP, CARD}) => CARD.cards[APP.network],
   );
   const keys = useSelector<RootState, {[k: string]: Key}>(
     ({WALLET}) => WALLET.keys,

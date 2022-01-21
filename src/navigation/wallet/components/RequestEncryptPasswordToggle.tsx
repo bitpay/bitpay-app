@@ -40,14 +40,14 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
           }),
         );
         setPasswordToggle(false);
-        dispatch(AppActions.dissmissDecryptPasswordModal());
+        dispatch(AppActions.dismissDecryptPasswordModal());
       } catch (e) {
         console.log(`Decrypt Error: ${e}`);
-        dispatch(AppActions.dissmissDecryptPasswordModal());
+        dispatch(AppActions.dismissDecryptPasswordModal());
         showErrorMessage(WrongPasswordError());
       }
     } else {
-      dispatch(AppActions.dissmissDecryptPasswordModal());
+      dispatch(AppActions.dismissDecryptPasswordModal());
       showErrorMessage(GeneralError);
       logger.debug('Missing Key Error');
     }

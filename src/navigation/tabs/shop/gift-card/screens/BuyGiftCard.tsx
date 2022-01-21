@@ -1,4 +1,4 @@
-import React, { useLayoutEffect } from 'react';
+import React, {useLayoutEffect} from 'react';
 import {Platform, ScrollView} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import LinearGradient from 'react-native-linear-gradient';

@@ -81,7 +81,7 @@ const DecryptEnterPasswordModal = () => {
   }, [isVisible]);
 
   const dismissModal = () => {
-    dispatch(AppActions.dissmissDecryptPasswordModal());
+    dispatch(AppActions.dismissDecryptPasswordModal());
     onCancelHandler && onCancelHandler();
   };
 
