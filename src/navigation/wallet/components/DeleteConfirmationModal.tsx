@@ -3,9 +3,10 @@ import styled from 'styled-components/native';
 import {ModalContainer} from '../../../components/styled/Containers';
 import BottomPopupModal from '../../../components/modal/base/bottom-popup/BottomPopupModal';
 import CautionSvg from '../../../../assets/img/error.svg';
-import {H4, Paragraph} from '../../../components/styled/Text';
-import {SlateDark, White} from '../../../styles/colors';
+import {H4, Link, Paragraph} from '../../../components/styled/Text';
+import {LightBlack, SlateDark, White} from '../../../styles/colors';
 import haptic from '../../../components/haptic-feedback/haptic';
+import {TouchableOpacity} from 'react-native';
 
 interface ConfirmationModalProps {
   description: string;
@@ -28,6 +29,11 @@ const DeleteModalParagraph = styled(Paragraph)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
+const DeleteModalContainer = styled(ModalContainer)`
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+  min-height: 250px;
+`;
+
 const ActionsContainer = styled.View`
   flex-direction: row;
   justify-content: space-between;
@@ -36,11 +42,10 @@ const ActionsContainer = styled.View`
   padding-top: 20px;
 `;
 
-const Action = styled.TouchableOpacity``;
+const SecondaryActionText = styled(Link)`
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+`;
 
-const PrimaryActionText = styled(Paragraph)``;
-
-const SecondaryActionText = styled(Paragraph)``;
 const DeleteConfirmationModal = ({
   description,
   onPressOk,
@@ -49,7 +54,7 @@ const DeleteConfirmationModal = ({
 }: ConfirmationModalProps) => {
   return (
     <BottomPopupModal isVisible={isVisible} onBackdropPress={onPressCancel}>
-      <ModalContainer>
+      <DeleteModalContainer>
         <Header>
           <CautionSvg />
           <Title>Warning!</Title>
@@ -58,22 +63,22 @@ const DeleteConfirmationModal = ({
         <DeleteModalParagraph>{description}</DeleteModalParagraph>
 
         <ActionsContainer>
-          <Action
+          <TouchableOpacity
             onPress={() => {
               haptic('impactLight');
               onPressOk();
             }}>
-            <PrimaryActionText>DELETE</PrimaryActionText>
-          </Action>
-          <Action
+            <Link>DELETE</Link>
+          </TouchableOpacity>
+          <TouchableOpacity
             onPress={() => {
               haptic('impactLight');
               onPressCancel();
             }}>
             <SecondaryActionText>NEVERMIND</SecondaryActionText>
-          </Action>
+          </TouchableOpacity>
         </ActionsContainer>
-      </ModalContainer>
+      </DeleteModalContainer>
     </BottomPopupModal>
   );
 };
