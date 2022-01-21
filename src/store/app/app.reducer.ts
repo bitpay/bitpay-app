@@ -1,4 +1,5 @@
 import {ColorSchemeName} from 'react-native';
+import i18n from 'i18next';
 import {Network} from '../../constants';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
@@ -35,6 +36,7 @@ export interface AppState {
   currentRoute: [keyof RootStackParamList, NavScreenParams] | undefined;
   notificationsAccepted: boolean;
   showOnboardingFinishModal: boolean;
+  defaultLanguage: string;
   showDecryptPasswordModal: boolean;
   decryptPasswordConfig: DecryptPasswordConfig | undefined;
 }
@@ -64,6 +66,7 @@ const initialState: AppState = {
   currentRoute: undefined,
   notificationsAccepted: false,
   showOnboardingFinishModal: false,
+  defaultLanguage: i18n.language || 'en',
   showDecryptPasswordModal: false,
   decryptPasswordConfig: undefined,
 };
@@ -150,6 +153,12 @@ export const appReducer = (
       return {
         ...state,
         showOnboardingFinishModal: false,
+      };
+
+    case AppActionTypes.SET_DEFAULT_LANGUAGE:
+      return {
+        ...state,
+        defaultLanguage: action.payload,
       };
 
     case AppActionTypes.SHOW_DECRYPT_PASSWORD_MODAL:

@@ -23,6 +23,7 @@ export enum AppActionTypes {
   DISMISS_ONBOARDING_FINISH_MODAL = 'APP/DISMISS_ONBOARDING_FINISH_MODAL',
   SHOW_DECRYPT_PASSWORD_MODAL = 'APP/SHOW_DECRYPT_PASSWORD_MODAL',
   DISMISS_DECRYPT_PASSWORD_MODAL = 'APP/DISMISS_DECRYPT_PASSWORD_MODAL',
+  SET_DEFAULT_LANGUAGE = 'APP/SET_DEFAULT_LANGUAGE',
 }
 
 interface SuccessAppInit {
@@ -87,6 +88,11 @@ interface DismissOnboardingFinishModal {
   type: typeof AppActionTypes.DISMISS_ONBOARDING_FINISH_MODAL;
 }
 
+interface SetDefaultLanguage {
+  type: typeof AppActionTypes.SET_DEFAULT_LANGUAGE;
+  payload: string;
+}
+
 interface ShowDecryptPasswordModal {
   type: typeof AppActionTypes.SHOW_DECRYPT_PASSWORD_MODAL;
   payload: DecryptPasswordConfig;
@@ -111,5 +117,6 @@ export type AppActionType =
   | SetNotificationsAccepted
   | ShowOnboardingFinishModal
   | DismissOnboardingFinishModal
+  | SetDefaultLanguage
   | ShowDecryptPasswordModal
   | DismissDecryptPasswordModal;

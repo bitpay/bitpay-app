@@ -2,6 +2,7 @@ import './shim';
 import {AppRegistry} from 'react-native';
 import Root from './src/Root';
 import React from 'react';
+import './i18n';
 import {name as appName} from './app.json';
 import getStore from './src/store';
 import {Provider} from 'react-redux';

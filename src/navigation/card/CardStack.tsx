@@ -3,7 +3,7 @@ import React from 'react';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
-} from '../../../constants/NavigationOptions';
+} from '../../constants/NavigationOptions';
 import CardHome, {CardHomeScreenParamList} from './screens/CardHome';
 import CardSettings, {CardSettingsParamList} from './screens/CardSettings';
 
