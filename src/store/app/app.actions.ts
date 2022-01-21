@@ -75,3 +75,8 @@ export const showOnboardingFinishModal = (): AppActionType => ({
 export const dismissOnboardingFinishModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_ONBOARDING_FINISH_MODAL,
 });
+
+export const setDefaultLanguage = (lng: string): AppActionType => ({
+  type: AppActionTypes.SET_DEFAULT_LANGUAGE,
+  payload: lng,
+});

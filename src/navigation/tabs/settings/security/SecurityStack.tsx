@@ -7,6 +7,8 @@ import {
 import {HeaderTitle} from '../../../../components/styled/Text';
 import SecurityRoot from './screens/SecurityRoot';
 
+import {useTranslation} from 'react-i18next';
+
 export type SecuritySettingsStackParamList = {
   Root: undefined;
 };
@@ -18,6 +20,7 @@ export enum SecuritySettingsScreens {
 const SecuritySettings = createStackNavigator<SecuritySettingsStackParamList>();
 
 const SecuritySettingsStack = () => {
+  const {t} = useTranslation();
   return (
     <SecuritySettings.Navigator
       initialRouteName={SecuritySettingsScreens.ROOT}
@@ -29,7 +32,7 @@ const SecuritySettingsStack = () => {
         name={SecuritySettingsScreens.ROOT}
         component={SecurityRoot}
         options={{
-          headerTitle: () => <HeaderTitle>Security</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Security')}</HeaderTitle>,
         }}
       />
     </SecuritySettings.Navigator>

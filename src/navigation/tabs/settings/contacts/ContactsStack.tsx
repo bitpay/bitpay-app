@@ -7,6 +7,8 @@ import {
 import {HeaderTitle} from '../../../../components/styled/Text';
 import ContactsRoot from './screens/ContactsRoot';
 
+import {useTranslation} from 'react-i18next';
+
 export type ContactSettingsStackParamList = {
   Root: undefined;
 };
@@ -18,6 +20,7 @@ export enum ContactSettingsScreens {
 const ContactSettings = createStackNavigator<ContactSettingsStackParamList>();
 
 const ContactSettingsStack = () => {
+  const {t} = useTranslation();
   return (
     <ContactSettings.Navigator
       initialRouteName={ContactSettingsScreens.ROOT}
@@ -29,7 +32,7 @@ const ContactSettingsStack = () => {
         name={ContactSettingsScreens.ROOT}
         component={ContactsRoot}
         options={{
-          headerTitle: () => <HeaderTitle>Contacts</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Contacts')}</HeaderTitle>,
         }}
       />
     </ContactSettings.Navigator>

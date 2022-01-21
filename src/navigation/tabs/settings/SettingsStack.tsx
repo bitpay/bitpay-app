@@ -7,6 +7,8 @@ import {
 import SettingsRoot from './SettingsRoot';
 import {HeaderTitle} from '../../../components/styled/Text';
 
+import {useTranslation} from 'react-i18next';
+
 export type SettingsStackParamList = {
   Root: undefined;
 };
@@ -18,6 +20,7 @@ export enum SettingsScreens {
 const Settings = createStackNavigator<SettingsStackParamList>();
 
 const SettingsStack = () => {
+  const {t} = useTranslation();
   return (
     <Settings.Navigator
       initialRouteName={SettingsScreens.Root}
@@ -30,7 +33,7 @@ const SettingsStack = () => {
         component={SettingsRoot}
         options={{
           headerLeft: () => null,
-          headerTitle: () => <HeaderTitle>Settings</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Settings')}</HeaderTitle>,
         }}
       />
     </Settings.Navigator>

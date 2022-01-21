@@ -8,15 +8,20 @@ import {HeaderTitle} from '../../../../components/styled/Text';
 import GeneralRoot from './screens/GeneralRoot';
 import Theme from './screens/Theme';
 import CustomizeHome from './screens/CustomizeHome';
+import LanguageSettings from './screens/LanguageSettings';
+
+import {useTranslation} from 'react-i18next';
 
 export type GeneralSettingsStackParamList = {
   Root: undefined;
+  LanguageSettings: undefined;
   Theme: undefined;
   CustomizeHome: undefined;
 };
 
 export enum GeneralSettingsScreens {
   ROOT = 'Root',
+  LANGUAGE_SETTINGS = 'LanguageSettings',
   THEME = 'Theme',
   CUSTOMIZE_HOME = 'CustomizeHome',
 }
@@ -24,6 +29,7 @@ export enum GeneralSettingsScreens {
 const GeneralSettings = createStackNavigator<GeneralSettingsStackParamList>();
 
 const GeneralSettingsStack = () => {
+  const {t} = useTranslation();
   return (
     <GeneralSettings.Navigator
       initialRouteName={GeneralSettingsScreens.ROOT}
@@ -35,21 +41,28 @@ const GeneralSettingsStack = () => {
         name={GeneralSettingsScreens.ROOT}
         component={GeneralRoot}
         options={{
-          headerTitle: () => <HeaderTitle>General</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('General')}</HeaderTitle>,
         }}
       />
       <GeneralSettings.Screen
         name={GeneralSettingsScreens.THEME}
         component={Theme}
         options={{
-          headerTitle: () => <HeaderTitle>Theme</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Theme')}</HeaderTitle>,
         }}
       />
       <GeneralSettings.Screen
         name={GeneralSettingsScreens.CUSTOMIZE_HOME}
         component={CustomizeHome}
         options={{
-          headerTitle: () => <HeaderTitle>Customize Home</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Customize Home')}</HeaderTitle>,
+        }}
+      />
+      <GeneralSettings.Screen
+        name={GeneralSettingsScreens.LANGUAGE_SETTINGS}
+        component={LanguageSettings}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Language')}</HeaderTitle>,
         }}
       />
     </GeneralSettings.Navigator>

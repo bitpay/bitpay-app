@@ -7,6 +7,8 @@ import {
 import {HeaderTitle} from '../../../../components/styled/Text';
 import NotificationRoot from './screens/NotificationsRoot';
 
+import {useTranslation} from 'react-i18next';
+
 export type NotificationSettingsStackParamList = {
   Root: undefined;
 };
@@ -19,6 +21,7 @@ const NotificationSettings =
   createStackNavigator<NotificationSettingsStackParamList>();
 
 const NotificationSettingsStack = () => {
+  const {t} = useTranslation();
   return (
     <NotificationSettings.Navigator
       initialRouteName={NotificationSettingsScreens.ROOT}
@@ -30,7 +33,7 @@ const NotificationSettingsStack = () => {
         name={NotificationSettingsScreens.ROOT}
         component={NotificationRoot}
         options={{
-          headerTitle: () => <HeaderTitle>Notifications</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Notifications')}</HeaderTitle>,
         }}
       />
     </NotificationSettings.Navigator>
