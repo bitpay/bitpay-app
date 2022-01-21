@@ -14,8 +14,8 @@ import {
 } from '../components/DecryptPasswordErrorMessages';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {set} from 'react-hook-form';
 import {useLogger} from '../../../utils/hooks';
+import Clipboard from '@react-native-community/clipboard';
 
 const ExtendedPrivateKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -43,7 +43,6 @@ const ExtendedPrivateKey = () => {
     params: {key},
   } = useRoute<RouteProp<WalletStackParamList, 'CreateEncryptPassword'>>();
 
-  console.log(key);
   const getInitKey = () => {
     if (!key.isPrivKeyEncrypted) {
       return key.properties.xPrivKey;
@@ -51,6 +50,7 @@ const ExtendedPrivateKey = () => {
     return '';
   };
 
+  const [copied, setCopied] = useState(false);
   let [xPrivKey, setXPrivKey] = useState(getInitKey());
 
   const showErrorMessage = (msg: BottomNotificationConfig) => {
@@ -101,7 +101,14 @@ const ExtendedPrivateKey = () => {
   });
 
   const copyXPrivKey = () => {
-    console.log(xPrivKey);
+    if (!xPrivKey || copied) {
+      return;
+    }
+    Clipboard.setString(xPrivKey);
+    setCopied(true);
+    setTimeout(() => {
+      setCopied(false);
+    }, 3000);
   };
 
   return (
@@ -118,7 +125,9 @@ const ExtendedPrivateKey = () => {
           directly.
         </ExtendedPrivateKeyParagraph>
 
-        <Button onPress={copyXPrivKey}>Copy to Clipboard</Button>
+        <Button onPress={copyXPrivKey}>
+          {!copied ? 'Copy to Clipboard' : 'Copied!'}
+        </Button>
       </ScrollView>
     </ExtendedPrivateKeyContainer>
   );
