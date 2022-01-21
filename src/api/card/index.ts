@@ -1,5 +1,9 @@
 import GraphQlApi from '../graphql';
-import {FetchAllCardsResponse, FetchCardResponse} from './card.types';
+import {
+  FetchAllCardsResponse,
+  FetchCardResponse,
+  FetchOverviewResponse,
+} from './card.types';
 import CardQueries from './card.queries';
 
 const fetchAll = async (token: string) => {
@@ -28,9 +32,23 @@ const fetchOne = async (token: string, id: string) => {
   return data.data.user.card;
 };
 
+const fetchOverview = async (token: string, id: string) => {
+  const query = CardQueries.FETCH_OVERVIEW(token, id);
+  const {data} = await GraphQlApi.getInstance().request<FetchOverviewResponse>(
+    query,
+  );
+
+  if (data.errors) {
+    throw new Error(data.errors);
+  }
+
+  return data.data.user;
+};
+
 const CardApi = {
   fetchAll,
   fetchOne,
+  fetchOverview,
 };
 
 export default CardApi;

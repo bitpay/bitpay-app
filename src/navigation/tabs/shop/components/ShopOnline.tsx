@@ -37,9 +37,11 @@ interface CategoryWithIntegrations extends Category {
 }
 
 export const ShopOnline = ({
+  scrollViewRef,
   integrations,
   categories,
 }: {
+  scrollViewRef: any;
   integrations: DirectIntegrationApiObject[];
   categories: CategoryWithIntegrations[];
 }) => {
@@ -81,6 +83,7 @@ export const ShopOnline = ({
             itemWidth={146}
             maxItemsPerColumn={1}
             screenWidth={WIDTH}
+            onItemPress={item => console.log('merchant onItemPress', item)}
           />
         </View>
       ))}
@@ -108,6 +111,15 @@ export const ShopOnline = ({
               }}
               value={value}
               type={'search'}
+              onFocus={() => {
+                scrollViewRef &&
+                  scrollViewRef.current &&
+                  scrollViewRef.current.scrollTo({
+                    x: 0,
+                    y: 170,
+                    animated: true,
+                  });
+              }}
             />
           )}
           name="search"

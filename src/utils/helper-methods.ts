@@ -1,10 +1,10 @@
-import {ASSETS} from '../constants/assets';
+import {Currencies} from '../constants/currencies';
 
 export const sleep = async (duration: number) =>
   await new Promise(resolve => setTimeout(resolve, duration));
 
 export const coinSupported = (coin: string): boolean => {
-  return Object.keys(ASSETS).some(
+  return Object.keys(Currencies).some(
     availableCoin => availableCoin === coin.toLowerCase(),
   );
 };

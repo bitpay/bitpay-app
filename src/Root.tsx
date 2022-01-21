@@ -25,6 +25,7 @@ import i18n from 'i18next';
 import BitpayIdStack, {
   BitpayIdStackParamList,
 } from './navigation/bitpay-id/BitpayIdStack';
+import CardStack, {CardStackParamList} from './navigation/card/CardStack';
 import OnboardingStack, {
   OnboardingStackParamList,
 } from './navigation/onboarding/OnboardingStack';
@@ -56,6 +57,13 @@ import BuyCryptoStack, {
 import SwapCryptoStack, {
   SwapCryptoStackParamList,
 } from './navigation/services/swap-crypto/SwapCryptoStack';
+import WalletConnectStack, {
+  WalletConnectStackParamList,
+} from './navigation/wallet-connect/WalletConnectStack';
+import {ShopStackParamList} from './navigation/tabs/shop/ShopStack';
+import GiftCardStack, {
+  GiftCardStackParamList,
+} from './navigation/tabs/shop/gift-card/GiftCardStack';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -64,7 +72,10 @@ export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabsStackParamList>;
   BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
   Wallet: NavigatorScreenParams<WalletStackParamList>;
+  Card: NavigatorScreenParams<CardStackParamList>;
   Scan: NavigatorScreenParams<ScanStackParamList>;
+  Shop: NavigatorScreenParams<ShopStackParamList>;
+  GiftCard: NavigatorScreenParams<GiftCardStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
   SecuritySettings: NavigatorScreenParams<SecuritySettingsStackParamList>;
   ContactSettings: NavigatorScreenParams<ContactSettingsStackParamList>;
@@ -72,6 +83,7 @@ export type RootStackParamList = {
   About: NavigatorScreenParams<AboutStackParamList>;
   BuyCrypto: NavigatorScreenParams<BuyCryptoStackParamList>;
   SwapCrypto: NavigatorScreenParams<SwapCryptoStackParamList>;
+  WalletConnect: NavigatorScreenParams<WalletConnectStackParamList>;
 };
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
@@ -81,7 +93,9 @@ export enum RootStacks {
   TABS = 'Tabs',
   BITPAY_ID = 'BitpayId',
   WALLET = 'Wallet',
+  CARD = 'Card',
   SCAN = 'Scan',
+  GIFT_CARD = 'GiftCard',
   // SETTINGS
   GENERAL_SETTINGS = 'GeneralSettings',
   SECURITY_SETTINGS = 'SecuritySettings',
@@ -90,13 +104,17 @@ export enum RootStacks {
   ABOUT = 'About',
   BUY_CRYPTO = 'BuyCrypto',
   SWAP_CRYPTO = 'SwapCrypto',
+  WALLET_CONNECT = 'WalletConnect',
 }
+
 // ROOT NAVIGATION CONFIG
 export type NavScreenParams = NavigatorScreenParams<
   AuthStackParamList &
     OnboardingStackParamList &
     BitpayIdStackParamList &
     WalletStackParamList &
+    CardStackParamList &
+    GiftCardStackParamList &
     GeneralSettingsStackParamList &
     SecuritySettingsStackParamList &
     ContactSettingsStackParamList &
@@ -104,7 +122,8 @@ export type NavScreenParams = NavigatorScreenParams<
     AboutStackParamList &
     BuyCryptoStackParamList &
     SwapCryptoStackParamList &
-    ScanStackParamList
+    ScanStackParamList &
+    WalletConnectStackParamList
 >;
 
 declare global {
@@ -243,7 +262,12 @@ export default () => {
               component={BitpayIdStack}
             />
             <Root.Screen name={RootStacks.WALLET} component={WalletStack} />
+            <Root.Screen name={RootStacks.CARD} component={CardStack} />
             <Root.Screen name={RootStacks.SCAN} component={ScanStack} />
+            <Root.Screen
+              name={RootStacks.GIFT_CARD}
+              component={GiftCardStack}
+            />
             {/* SETTINGS */}
             <Root.Screen
               name={RootStacks.GENERAL_SETTINGS}
@@ -269,6 +293,10 @@ export default () => {
             <Root.Screen
               name={RootStacks.SWAP_CRYPTO}
               component={SwapCryptoStack}
+            />
+            <Root.Screen
+              name={RootStacks.WALLET_CONNECT}
+              component={WalletConnectStack}
             />
           </Root.Navigator>
           <OnGoingProcessModal />

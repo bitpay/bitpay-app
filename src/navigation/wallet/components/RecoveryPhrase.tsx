@@ -11,16 +11,17 @@ import * as yup from 'yup';
 import {useForm, Controller} from 'react-hook-form';
 import {BaseText} from '../../../components/styled/Text';
 import {useLogger} from '../../../utils/hooks/useLogger';
-import {WalletOptions} from '../../../store/wallet/wallet.models';
+import {KeyProperties} from '../../../store/wallet/wallet.models';
 import {startImportMnemonic} from '../../../store/wallet/effects';
 import {useNavigation} from '@react-navigation/native';
+import {ImportObj} from '../../../store/scan/scan.models';
 
 const Gutter = '10px';
-export const ImportWalletContainer = styled.View`
+export const ImportContainer = styled.View`
   padding: ${Gutter} 0;
 `;
 
-const ImportWalletParagraph = styled(BaseText)`
+const ImportParagraph = styled(BaseText)`
   font-size: 16px;
   line-height: 25px;
   padding: ${Gutter};
@@ -34,7 +35,7 @@ const HeaderContainer = styled.View`
   align-items: center;
 `;
 
-export const ImportWalletTitle = styled(BaseText)`
+export const ImportTitle = styled(BaseText)`
   font-weight: 500;
   font-size: 13px;
   line-height: 18px;
@@ -43,14 +44,14 @@ export const ImportWalletTitle = styled(BaseText)`
   text-transform: uppercase;
 `;
 
-const ImgContainer = styled.View`
+const ScanContainer = styled.TouchableOpacity`
   height: 25px;
   width: 25px;
   align-items: center;
   justify-content: center;
 `;
 
-export const ImportWalletTextInput = styled.TextInput`
+export const ImportTextInput = styled.TextInput`
   height: 100px;
   margin: 0 ${Gutter};
   padding: ${Gutter};
@@ -78,47 +79,42 @@ const RecoveryPhrase = () => {
   const {
     control,
     handleSubmit,
+    setValue,
     formState: {errors},
   } = useForm({resolver: yupResolver(schema)});
 
-  const onSubmit = (formData: {words: string}) => {
-    const {words} = formData;
-    if (!words) {
-      return;
-    }
+  const invalidPhraseNotification = () =>
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: 'Something went wrong',
+        message: 'The recovery phrase is invalid.',
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'OK',
+            action: () => {},
+            primary: true,
+          },
+        ],
+      }),
+    );
 
-    const wordList = words.trim().split(/[\u3000\s]+/);
-
-    if (wordList.length % 3 !== 0) {
-      logger.info('Incorrect words length');
-      dispatch(
-        showBottomNotificationModal({
-          type: 'warning',
-          title: 'Something went wrong',
-          message: 'The recovery phrase is invalid.',
-          enableBackdropDismiss: true,
-          actions: [
-            {
-              text: 'OK',
-              action: () => {},
-              primary: true,
-            },
-          ],
-        }),
-      );
-      return;
-    }
-
-    const opts: Partial<WalletOptions> = {};
-    opts.mnemonic = words;
-
-    importWallet(words, opts);
+  const isValidPhrase = (words: string) => {
+    return words && words.trim().split(/[\u3000\s]+/).length === 12;
   };
 
-  const importWallet = async (
-    words: string,
-    opts: Partial<WalletOptions>,
-  ): Promise<void> => {
+  const onSubmit = async (formData: {words: string}) => {
+    const {words} = formData;
+    if (!isValidPhrase(words)) {
+      logger.info('Incorrect words length');
+      invalidPhraseNotification();
+      return;
+    }
+
+    const opts: Partial<KeyProperties> = {};
+    opts.mnemonic = words;
+
     try {
       await dispatch(startImportMnemonic(words, opts));
       navigation.navigate('Onboarding', {
@@ -130,27 +126,54 @@ const RecoveryPhrase = () => {
   };
 
   return (
-    <ImportWalletContainer>
-      <ImportWalletParagraph>
+    <ImportContainer>
+      <ImportParagraph>
         Enter your recovery phrase (usually 12-words) in the correct order.
         Separate each word with a single space only (no commas or any other
         punctuation). For backup phrases in non-English languages: Some words
         may include special symbols, so be sure to spell all the words
         correctly.
-      </ImportWalletParagraph>
+      </ImportParagraph>
 
       <HeaderContainer>
-        <ImportWalletTitle>Recovery phrase</ImportWalletTitle>
+        <ImportTitle>Recovery phrase</ImportTitle>
 
-        <ImgContainer>
+        <ScanContainer
+          activeOpacity={0.75}
+          onPress={() =>
+            navigation.navigate('Scan', {
+              screen: 'Root',
+              params: {
+                contextHandler: data => {
+                  try {
+                    const parsedCode = data.split('|');
+                    const recoveryObj: ImportObj = {
+                      type: parsedCode[0],
+                      data: parsedCode[1],
+                      network: parsedCode[2],
+                      hasPassphrase: !!parsedCode[4],
+                    };
+
+                    if (!isValidPhrase(recoveryObj.data)) {
+                      invalidPhraseNotification();
+                    } else {
+                      setValue('words', recoveryObj.data);
+                    }
+                  } catch (err) {
+                    invalidPhraseNotification();
+                  }
+                },
+              },
+            })
+          }>
           <ScanSvg />
-        </ImgContainer>
+        </ScanContainer>
       </HeaderContainer>
 
       <Controller
         control={control}
         render={({field: {onChange, onBlur, value}}) => (
-          <ImportWalletTextInput
+          <ImportTextInput
             multiline
             numberOfLines={5}
             onChangeText={(text: string) => onChange(text)}
@@ -168,10 +191,10 @@ const RecoveryPhrase = () => {
 
       <CtaContainer>
         <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
-          Import Wallet
+          Import
         </Button>
       </CtaContainer>
-    </ImportWalletContainer>
+    </ImportContainer>
   );
 };
 

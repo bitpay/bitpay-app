@@ -5,7 +5,6 @@ import {
   CardConfig,
   DirectIntegrationApiObject,
 } from '../../../../store/shop/shop.models';
-
 interface SlideContainerParams {
   inLastSlide: boolean;
   isSingleSlide: boolean;
@@ -42,6 +41,7 @@ export default ({
   itemUnderlayColor,
   maxItemsPerColumn,
   screenWidth,
+  onItemPress,
 }: {
   items: ShopCarouselItem[];
   itemComponent: (item: ShopCarouselItem) => JSX.Element;
@@ -50,6 +50,7 @@ export default ({
   itemUnderlayColor?: string;
   maxItemsPerColumn: number;
   screenWidth: number;
+  onItemPress: (item: ShopCarouselItem) => any;
 }) => {
   const nextColumnVisiblePixels = 100;
   const carouselItemWidth =
@@ -92,8 +93,11 @@ export default ({
                   : carouselItemWidth
               }
               key={listItem.displayName}
-              onPress={() => console.log('press', listItem.displayName)}
-              underlayColor={itemUnderlayColor || 'white'}>
+              onPress={() => {
+                console.log('press', listItem.displayName);
+                onItemPress(listItem);
+              }}
+              underlayColor={itemUnderlayColor || 'transparent'}>
               {itemComponent(listItem)}
             </ItemTouchableHighlight>
           ))}

@@ -1,45 +1,18 @@
-import {ExchangeRate, KeyObj, PriceHistory, WalletObj} from './wallet.models';
+import {ExchangeRate, Key, PriceHistory} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
-
 type WalletReduxPersistBlackList = [];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
 
-/*
- * NOTE - Structure change
-
- wallet: {
-      id: key.id,
-      assets: credentials,
-    }
-
- example -
- wallets: [key.id]: {
-      id: key.id,
-      assets: [
-       {
-        coin: 'btc'
-       },
-       {
-        coin: 'eth',
-        tokens: ...tokens
-        ....
-       }
-      ],
-    }
- * */
-
 export interface WalletState {
   createdOn: number;
-  keys: KeyObj[];
-  wallets: {[key in string]: WalletObj};
+  keys: {[key in string]: Key};
   rates: {[key in string]: Array<ExchangeRate>};
   priceHistory: Array<PriceHistory>;
 }
 
 const initialState: WalletState = {
   createdOn: Date.now(),
-  keys: [],
-  wallets: {},
+  keys: {},
   rates: {},
   priceHistory: [],
 };
@@ -49,57 +22,77 @@ export const walletReducer = (
   action: WalletActionType,
 ): WalletState => {
   switch (action.type) {
-    case WalletActionTypes.SUCCESS_CREATE_WALLET:
-      const {key, wallet} = action.payload;
+    case WalletActionTypes.SUCCESS_CREATE_KEY: {
+      const {key} = action.payload;
       return {
         ...state,
-        keys: [...state.keys, key],
-        wallets: {...state.wallets, [key.id]: wallet},
+        keys: {...state.keys, [key.id]: key},
       };
+    }
 
-    case WalletActionTypes.SET_BACKUP_COMPLETE:
+    case WalletActionTypes.SET_BACKUP_COMPLETE: {
       const id = action.payload;
-      const updatedWallet = {...state.wallets[id], backupComplete: true};
+      const updatedKey = {...state.keys[id], backupComplete: true};
 
       return {
         ...state,
-        wallets: {...state.wallets, [id]: updatedWallet},
+        keys: {...state.keys, [id]: updatedKey},
       };
+    }
 
-    case WalletActionTypes.SUCCESS_GET_RATES:
+    case WalletActionTypes.SUCCESS_GET_RATES: {
       const {rates} = action.payload;
 
       return {
         ...state,
         rates: {...state.rates, ...rates},
       };
+    }
 
-    case WalletActionTypes.SUCCESS_GET_PRICE_HISTORY:
+    case WalletActionTypes.SUCCESS_GET_PRICE_HISTORY: {
       return {
         ...state,
         priceHistory: action.payload,
       };
+    }
 
-    case WalletActionTypes.UPDATE_ASSET_BALANCE:
-      const {keyId, assetId, balance} = action.payload;
-      const walletToUpdate = state.wallets[keyId];
-      if (walletToUpdate) {
-        walletToUpdate.assets = walletToUpdate.assets.map(asset => {
-          if (asset.walletId === assetId) {
-            asset.balance = balance;
+    case WalletActionTypes.UPDATE_WALLET_BALANCE: {
+      const {keyId, walletId, balance} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      if (keyToUpdate) {
+        keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
+          if (wallet.id === walletId) {
+            wallet.balance = balance;
           }
-          return asset;
+          return wallet;
         });
       }
       return {
         ...state,
-        wallets: {
-          ...state.wallets,
+        keys: {
+          ...state.keys,
           [keyId]: {
-            ...walletToUpdate,
+            ...keyToUpdate,
           },
         },
       };
+    }
+
+    case WalletActionTypes.SUCCESS_ENCRYPT_PASSWORD: {
+      const {key} = action.payload;
+      const keyToUpdate = state.keys[key.id];
+      keyToUpdate.isPrivKeyEncrypted = !!key.methods.isPrivKeyEncrypted();
+
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [key.id]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
 
     default:
       return state;

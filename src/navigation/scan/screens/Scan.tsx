@@ -2,6 +2,13 @@ import React from 'react';
 import {RNCamera} from 'react-native-camera';
 import styled from 'styled-components/native';
 import ScanGuideSvg from '../../../../assets/img/qr-scan-guides.svg';
+import {useDispatch} from 'react-redux';
+import {incomingData} from '../../../store/scan/scan.effects';
+import debounce from 'lodash.debounce';
+import {useRoute} from '@react-navigation/native';
+import {RouteProp} from '@react-navigation/core';
+import {ScanStackParamList} from '../ScanStack';
+import {navigationRef} from '../../../Root';
 
 const ScanContainer = styled.SafeAreaView`
   flex: 1;
@@ -15,7 +22,15 @@ const ScanGuide = styled.View`
   opacity: 0.7;
 `;
 
+interface Props {
+  contextHandler?: (data: string) => void;
+}
+
 const Scan = () => {
+  const dispatch = useDispatch();
+  const route = useRoute<RouteProp<ScanStackParamList, 'Root'>>();
+  const {contextHandler} = route.params || {};
+
   return (
     <RNCamera
       style={{
@@ -30,12 +45,22 @@ const Scan = () => {
         buttonPositive: 'Ok',
         buttonNegative: 'Cancel',
       }}
-      onGoogleVisionBarcodesDetected={({barcodes}) => {
-        if (barcodes.length && barcodes[0].data) {
-          //  TODO: Handle me
-          console.log(barcodes);
-        }
-      }}>
+      onBarCodeRead={debounce(
+        ({data}) => {
+          // if specific handler is passed use that else use generic self deriving handler
+          if (contextHandler) {
+            contextHandler(data);
+          } else {
+            dispatch(incomingData(data));
+          }
+          navigationRef.goBack();
+        },
+        500,
+        {
+          leading: true,
+          trailing: false,
+        },
+      )}>
       <ScanContainer>
         <ScanGuide>
           <ScanGuideSvg />

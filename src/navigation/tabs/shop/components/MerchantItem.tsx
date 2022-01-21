@@ -2,7 +2,7 @@ import React, {useCallback, useState} from 'react';
 import styled, {css} from 'styled-components/native';
 import {DirectIntegrationApiObject} from '../../../../store/shop/shop.models';
 import {NeutralSlate, SlateDark} from '../../../../styles/colors';
-import RemoteIcon from './RemoteIcon';
+import RemoteImage from './RemoteImage';
 import {H6, Paragraph} from '../../../../components/styled/Text';
 import {WIDTH} from '../../../../components/styled/Containers';
 import {horizontalPadding} from './styled/ShopTabComponents';
@@ -31,9 +31,10 @@ interface MerchantNameProps {
 }
 
 const MerchantName = styled(H6)<MerchantNameProps>`
-  ${({marginTop}) =>
+  ${({headerMargin}) =>
     css`
-      margin-top: ${marginTop}px;
+      margin-top: ${headerMargin}px;
+      line-height: 18px;
     `}
 `;
 
@@ -65,9 +66,9 @@ export default ({
   );
   return (
     <MerchantBox height={height} marginLeft={marginLeft} width={width}>
-      <RemoteIcon icon={icon} height={26} />
+      <RemoteImage icon={icon} height={26} borderRadius={30} />
       <MerchantName
-        marginTop={headerMargin}
+        headerMargin={headerMargin}
         numberOfLines={2}
         onTextLayout={onTextLayout}>
         {displayName}

@@ -1,6 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useRef, useState} from 'react';
+import React, {useLayoutEffect, useRef, useState} from 'react';
 import {StatusBar} from 'react-native';
 import Carousel, {Pagination} from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
@@ -8,6 +8,7 @@ import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   CtaContainerAbsolute,
+  HeaderRightContainer,
   WIDTH,
 } from '../../../components/styled/Containers';
 import {Action} from '../../../styles/colors';
@@ -16,7 +17,6 @@ import {OnboardingImage} from '../components/Containers';
 import OnboardingSlide from '../components/OnboardingSlide';
 import {OnboardingStackParamList} from '../OnboardingStack';
 
-export type OnboardingStartParamList = {} | undefined;
 type OnboardingStartScreenProps = StackScreenProps<
   OnboardingStackParamList,
   'OnboardingStart'
@@ -61,6 +61,28 @@ const Column = styled.View`
 
 const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
   const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => null,
+      headerRight: () => (
+        <HeaderRightContainer>
+          <Button
+            buttonType={'pill'}
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('Auth', {
+                screen: 'LoginSignup',
+                params: {context: 'login'},
+              });
+            }}>
+            Log In
+          </Button>
+        </HeaderRightContainer>
+      ),
+    });
+  });
+
   const themeType = useThemeType();
   const ref = useRef(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);

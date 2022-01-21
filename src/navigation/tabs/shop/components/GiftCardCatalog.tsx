@@ -2,7 +2,7 @@ import React, {useMemo, useState} from 'react';
 import debounce from 'lodash.debounce';
 import styled, {css} from 'styled-components/native';
 import {Cloud} from '../../../../styles/colors';
-import {View} from 'react-native';
+import {Platform, View} from 'react-native';
 import {SvgUri} from 'react-native-svg';
 import {useForm, Controller} from 'react-hook-form';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
@@ -32,6 +32,8 @@ import {
   SectionHeaderContainer,
   SectionSpacer,
 } from './styled/ShopTabComponents';
+import {useNavigation} from '@react-navigation/native';
+import {GiftCardScreens} from '../gift-card/GiftCardStack';
 
 interface CategoryItemProps {
   isLast: boolean;
@@ -54,27 +56,36 @@ const CategoryText = styled.Text`
   font-size: 14px;
 `;
 
-const Curations = ({curations}: {curations: GiftCardCuration[]}) => (
-  <>
-    {curations.map(curation => (
-      <View key={curation.displayName}>
-        <SectionContainer>
-          <SectionHeader>{curation.displayName}</SectionHeader>
-        </SectionContainer>
-        <ShopCarouselList
-          items={curation.giftCards}
-          itemComponent={(item: ShopCarouselItem) => (
-            <GiftCardCatalogItem cardConfig={item as CardConfig} />
-          )}
-          itemUnderlayColor={'#fbfbff'}
-          itemWidthInLastSlide={WIDTH}
-          maxItemsPerColumn={3}
-          screenWidth={WIDTH}
-        />
-      </View>
-    ))}
-  </>
-);
+const Curations = ({curations}: {curations: GiftCardCuration[]}) => {
+  const navigation = useNavigation();
+  return (
+    <>
+      {curations.map(curation => (
+        <View key={curation.displayName}>
+          <SectionContainer>
+            <SectionHeader>{curation.displayName}</SectionHeader>
+          </SectionContainer>
+          <ShopCarouselList
+            items={curation.giftCards}
+            itemComponent={(item: ShopCarouselItem) => (
+              <GiftCardCatalogItem cardConfig={item as CardConfig} />
+            )}
+            itemUnderlayColor={'#fbfbff'}
+            itemWidthInLastSlide={WIDTH}
+            maxItemsPerColumn={3}
+            screenWidth={WIDTH}
+            onItemPress={item => {
+              navigation.navigate('GiftCard', {
+                screen: GiftCardScreens.BUY_GIFT_CARD,
+                params: {cardConfig: item as CardConfig},
+              });
+            }}
+          />
+        </View>
+      ))}
+    </>
+  );
+};
 
 export default ({
   scrollViewRef,
@@ -87,6 +98,7 @@ export default ({
   curations: GiftCardCuration[];
   categories: Category[];
 }) => {
+  const navigation = useNavigation();
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as CardConfig[]);
   const {control} = useForm();
@@ -141,8 +153,13 @@ export default ({
                   scrollViewRef.current &&
                   scrollViewRef.current.scrollTo({
                     x: 0,
-                    y: purchasedBrands.length ? purchasedBrandsHeight : 150,
-                    animated: true,
+                    y: purchasedBrands.length
+                      ? purchasedBrandsHeight + 15
+                      : 160,
+                    animated: Platform.select({
+                      ios: true,
+                      android: !purchasedBrands.length,
+                    }),
                   });
               }}
               onChangeText={(text: string) => {
@@ -162,7 +179,12 @@ export default ({
             {searchResults.map((cardConfig: CardConfig) => (
               <ListItemTouchableHighlight
                 key={cardConfig.name}
-                onPress={() => console.log('press', cardConfig.displayName)}
+                onPress={() => {
+                  navigation.navigate('GiftCard', {
+                    screen: GiftCardScreens.BUY_GIFT_CARD,
+                    params: {cardConfig},
+                  });
+                }}
                 underlayColor={'#fbfbff'}>
                 <GiftCardCatalogItem cardConfig={cardConfig} />
               </ListItemTouchableHighlight>

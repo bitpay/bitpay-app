@@ -9,8 +9,8 @@ import {BaseText} from '../styled/Text';
 import {useTheme} from '@react-navigation/native';
 
 interface BodyProps {
-  header?: string;
-  price?: string;
+  title?: string;
+  value?: string;
 }
 
 interface FooterProps {
@@ -52,17 +52,17 @@ const CustomizeHomeCard = ({body, footer, header}: CustomizeHomeCardProps) => {
 
   const BodyComp = (
     <View>
-      {body.header && (
+      {body.title && (
         <CardBodyHeader
           style={textStyle}
           numberOfLines={1}
           ellipsizeMode={'tail'}>
-          {body.header}
+          {body.title}
         </CardBodyHeader>
       )}
-      {body.price && (
+      {body.value && (
         <CardPrice style={textStyle} numberOfLines={1} ellipsizeMode={'tail'}>
-          {body.price}
+          {body.value}
         </CardPrice>
       )}
     </View>

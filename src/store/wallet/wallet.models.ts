@@ -1,8 +1,28 @@
-import {Key as IKey} from 'bitcore-wallet-client/src/lib/key';
-import {Credentials} from 'bitcore-wallet-client/src/lib/credentials';
-import {Token} from '../../constants/assets';
+import {Token} from '../../constants/currencies';
+import API from 'bitcore-wallet-client/ts_build';
 
-export interface KeyObj {
+export interface KeyMethods {
+  _checkCoin: Function;
+  _checkNetwork: Function;
+  checkPassword: Function;
+  compliantDerivation: boolean;
+  createAccess: Function;
+  createCredentials: Function;
+  decrypt: Function;
+  derive: Function;
+  encrypt: Function;
+  fingerPrint: string;
+  id: string;
+  get: Function;
+  getBaseAddressDerivationPath: Function;
+  isPrivKeyEncrypted: Function;
+  sign: Function;
+  toObj: Function;
+  use0forBCH: any;
+  use44forMultisig: any;
+}
+
+export interface KeyProperties {
   compliantDerivation: boolean;
   fingerPrint: string;
   id: string;
@@ -12,20 +32,26 @@ export interface KeyObj {
   xPrivKey: string;
 }
 
-export interface Asset extends Credentials {
-  balance: number;
-  tokens?: [Token];
-}
-
-export interface WalletObj {
+export interface Key {
   id: string;
-  assets: Asset[];
+  wallets: Wallet[];
+  properties: KeyProperties;
+  methods: KeyMethods;
   backupComplete?: boolean;
   show?: boolean;
   totalBalance?: number;
+  isPrivKeyEncrypted?: boolean;
 }
 
-export interface Key extends IKey {}
+export interface Wallet extends WalletObj, API {}
+
+export interface WalletObj {
+  id: string;
+  currencyName: string;
+  currencyAbbreviation: string;
+  balance?: number;
+  tokens?: [Token];
+}
 
 export interface ExchangeRate {
   ts?: number;
@@ -42,7 +68,7 @@ export interface PriceHistory {
   currencyPair: string;
 }
 
-export interface WalletOptions {
+export interface KeyOptions {
   keyId: any;
   name: any;
   m: any;

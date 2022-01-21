@@ -1,20 +1,28 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import styled from 'styled-components/native';
 import {
   BaseText,
   H2,
+  HeaderTitle,
   Paragraph,
   TextAlign,
 } from '../../../components/styled/Text';
 import Button from '../../../components/button/Button';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
-import {CtaContainer, WIDTH} from '../../../components/styled/Containers';
+import {
+  CtaContainer,
+  HeaderRightContainer,
+  WIDTH,
+} from '../../../components/styled/Containers';
 import * as Progress from 'react-native-progress';
 import {Air, ProgressBlue} from '../../../styles/colors';
 import Carousel from 'react-native-snap-carousel';
 import {sleep} from '../../../utils/helper-methods';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {Platform} from 'react-native';
+import haptic from '../../../components/haptic-feedback/haptic';
+import {useDispatch} from 'react-redux';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
 export interface RecoveryPhraseProps {
   keyId: string;
@@ -61,9 +69,49 @@ export const CountText = styled(BaseText)`
 `;
 
 const RecoveryPhrase = () => {
+  const navigation = useNavigation();
+  const dispatch = useDispatch();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      gestureEnabled: false,
+      headerTitle: () => <HeaderTitle>Recovery Phrase</HeaderTitle>,
+      headerLeft: () => null,
+      headerRight: () => (
+        <HeaderRightContainer>
+          <Button
+            buttonType={'pill'}
+            onPress={() => {
+              haptic('impactLight');
+              dispatch(
+                showBottomNotificationModal({
+                  type: 'warning',
+                  title: "Don't risk losing your money",
+                  message:
+                    'Your recovery key is composed of 12 randomly selected words. Take a couple of minutes to carefully write down each word in the order they appear.',
+                  enableBackdropDismiss: true,
+                  actions: [
+                    {
+                      text: "I'M SURE",
+                      action: () =>
+                        navigation.navigate('Onboarding', {
+                          screen: 'TermsOfUse',
+                        }),
+                      primary: true,
+                    },
+                  ],
+                }),
+              );
+            }}>
+            Cancel
+          </Button>
+        </HeaderRightContainer>
+      ),
+    });
+  });
+
   useAndroidBackHandler(() => true);
   const ref = useRef(null);
-  const navigation = useNavigation();
   const {
     params: {keyId, words, isOnboarding},
   } = useRoute<RouteProp<{params: RecoveryPhraseProps}>>();
