@@ -78,7 +78,12 @@ const CardContainer = styled.TouchableOpacity`
   left: ${ScreenGutter};
 `;
 
-const HomeCard = ({backgroundImg, body, onCTAPress, header}: HomeCardProps) => {
+const HomeCard: React.FC<HomeCardProps> = ({
+  backgroundImg,
+  body,
+  onCTAPress,
+  header,
+}) => {
   const HeaderComp = <CardHeader>{header}</CardHeader>;
   const theme = useTheme();
   const {title, value, pillText, description} = body;

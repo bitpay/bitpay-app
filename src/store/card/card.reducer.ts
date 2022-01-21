@@ -12,6 +12,7 @@ import {
 
 export const cardReduxPersistBlacklist: Array<keyof CardState> = [
   'fetchCardsStatus',
+  'balances',
 ];
 
 export type FetchCardsStatus = 'success' | 'failed' | null;
@@ -54,6 +55,7 @@ export const cardReducer = (
           ...state.cards,
           [action.payload.network]: [],
         },
+        balances: {},
       };
     case CardActionTypes.SUCCESS_FETCH_CARDS:
       return {

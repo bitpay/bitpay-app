@@ -20,10 +20,12 @@ import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 import {LogActions} from './store/log';
 import {useDeeplinks} from './utils/hooks';
 import analytics from '@segment/analytics-react-native';
+import i18n from 'i18next';
 
 import BitpayIdStack, {
   BitpayIdStackParamList,
 } from './navigation/bitpay-id/BitpayIdStack';
+import CardStack, {CardStackParamList} from './navigation/card/CardStack';
 import OnboardingStack, {
   OnboardingStackParamList,
 } from './navigation/onboarding/OnboardingStack';
@@ -58,6 +60,10 @@ import SwapCryptoStack, {
 import WalletConnectStack, {
   WalletConnectStackParamList,
 } from './navigation/wallet-connect/WalletConnectStack';
+import {ShopStackParamList} from './navigation/tabs/shop/ShopStack';
+import GiftCardStack, {
+  GiftCardStackParamList,
+} from './navigation/tabs/shop/gift-card/GiftCardStack';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -66,7 +72,10 @@ export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabsStackParamList>;
   BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
   Wallet: NavigatorScreenParams<WalletStackParamList>;
+  Card: NavigatorScreenParams<CardStackParamList>;
   Scan: NavigatorScreenParams<ScanStackParamList>;
+  Shop: NavigatorScreenParams<ShopStackParamList>;
+  GiftCard: NavigatorScreenParams<GiftCardStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
   SecuritySettings: NavigatorScreenParams<SecuritySettingsStackParamList>;
   ContactSettings: NavigatorScreenParams<ContactSettingsStackParamList>;
@@ -84,7 +93,9 @@ export enum RootStacks {
   TABS = 'Tabs',
   BITPAY_ID = 'BitpayId',
   WALLET = 'Wallet',
+  CARD = 'Card',
   SCAN = 'Scan',
+  GIFT_CARD = 'GiftCard',
   // SETTINGS
   GENERAL_SETTINGS = 'GeneralSettings',
   SECURITY_SETTINGS = 'SecuritySettings',
@@ -95,12 +106,15 @@ export enum RootStacks {
   SWAP_CRYPTO = 'SwapCrypto',
   WALLET_CONNECT = 'WalletConnect',
 }
+
 // ROOT NAVIGATION CONFIG
 export type NavScreenParams = NavigatorScreenParams<
   AuthStackParamList &
     OnboardingStackParamList &
     BitpayIdStackParamList &
     WalletStackParamList &
+    CardStackParamList &
+    GiftCardStackParamList &
     GeneralSettingsStackParamList &
     SecuritySettingsStackParamList &
     ContactSettingsStackParamList &
@@ -139,11 +153,19 @@ export default () => {
   );
   const appColorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
   const currentRoute = useSelector(({APP}: RootState) => APP.currentRoute);
+  const appLanguage = useSelector(({APP}: RootState) => APP.defaultLanguage);
 
   // MAIN APP INIT
   useEffect(() => {
     dispatch(AppEffects.startAppInit());
   }, [dispatch]);
+
+  // LANGUAGE
+  useEffect(() => {
+    if (appLanguage && appLanguage !== i18n.language) {
+      i18n.changeLanguage(appLanguage);
+    }
+  }, [appLanguage]);
 
   // THEME
   useEffect(() => {
@@ -239,7 +261,12 @@ export default () => {
               component={BitpayIdStack}
             />
             <Root.Screen name={RootStacks.WALLET} component={WalletStack} />
+            <Root.Screen name={RootStacks.CARD} component={CardStack} />
             <Root.Screen name={RootStacks.SCAN} component={ScanStack} />
+            <Root.Screen
+              name={RootStacks.GIFT_CARD}
+              component={GiftCardStack}
+            />
             {/* SETTINGS */}
             <Root.Screen
               name={RootStacks.GENERAL_SETTINGS}
