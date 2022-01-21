@@ -20,6 +20,7 @@ export enum AppActionTypes {
   SET_NOTIFICATIONS_ACCEPTED = 'APP/SET_NOTIFICATIONS_ACCEPTED',
   SHOW_ONBOARDING_FINISH_MODAL = 'APP/SHOW_ONBOARDING_FINISH_MODAL',
   DISMISS_ONBOARDING_FINISH_MODAL = 'APP/DISMISS_ONBOARDING_FINISH_MODAL',
+  SET_DEFAULT_LANGUAGE = 'APP/SET_DEFAULT_LANGUAGE',
 }
 
 interface SuccessAppInit {
@@ -84,6 +85,11 @@ interface DismissOnboardingFinishModal {
   type: typeof AppActionTypes.DISMISS_ONBOARDING_FINISH_MODAL;
 }
 
+interface SetDefaultLanguage {
+  type: typeof AppActionTypes.SET_DEFAULT_LANGUAGE;
+  payload: string;
+}
+
 export type AppActionType =
   | SuccessAppInit
   | FailedAppInit
@@ -98,4 +104,5 @@ export type AppActionType =
   | FailedGenerateAppIdentity
   | SetNotificationsAccepted
   | ShowOnboardingFinishModal
-  | DismissOnboardingFinishModal;
+  | DismissOnboardingFinishModal
+  | SetDefaultLanguage;
