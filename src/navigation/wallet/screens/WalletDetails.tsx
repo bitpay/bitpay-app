@@ -477,6 +477,14 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
               {fullWalletObj ? (
                 <LinkingButtons
+                  buy={{
+                    cta: () => {
+                      navigation.navigate('BuyCrypto', {
+                        screen: 'Root',
+                        params: {fromWallet: fullWalletObj},
+                      });
+                    },
+                  }}
                   receive={{cta: () => setShowReceiveAddressBottomModal(true)}}
                   send={{
                     hide: !fullWalletObj.balance.sat,

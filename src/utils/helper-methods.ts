@@ -11,6 +11,10 @@ export const coinSupported = (coin: string): boolean => {
   );
 };
 
+export const getPrecision = (coin: string): any => {
+  return Currencies[coin].unitInfo;
+};
+
 export const titleCasing = (str: string) =>
   `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
 
