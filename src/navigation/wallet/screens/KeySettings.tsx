@@ -228,7 +228,10 @@ const KeySettings = () => {
           <Setting
             onPress={() => {
               haptic('impactLight');
-              //    TODO: Redirect me
+              navigation.navigate('Wallet', {
+                screen: 'ExtendedPrivateKey',
+                params: {key},
+              });
             }}>
             <WalletSettingsTitle>Extended Private Key</WalletSettingsTitle>
           </Setting>
