@@ -16,12 +16,12 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
   const logger = useLogger();
 
   const [passwordToggle, setPasswordToggle] = useState(
-    !!key.isPrivKeyEncrypted,
+    !!key.methods.isPrivKeyEncrypted(),
   );
 
   useEffect(() => {
-    setPasswordToggle(!!key.isPrivKeyEncrypted);
-  }, [key.isPrivKeyEncrypted]);
+    setPasswordToggle(!!key.methods.isPrivKeyEncrypted());
+  });
 
   const showErrorMessage = (msg: BottomNotificationConfig) => {
     setTimeout(() => {

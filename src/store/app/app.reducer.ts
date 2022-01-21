@@ -163,7 +163,6 @@ export const appReducer = (
       return {
         ...state,
         showDecryptPasswordModal: false,
-        decryptPasswordConfig: undefined,
       };
 
     default:
