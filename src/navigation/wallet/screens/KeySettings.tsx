@@ -249,7 +249,10 @@ const KeySettings = () => {
           <Setting
             onPress={() => {
               haptic('impactLight');
-              //    TODO: Redirect me
+              navigation.navigate('Wallet', {
+                screen: 'DeleteKey',
+                params: {keyId: key.id},
+              });
             }}>
             <WalletSettingsTitle>Delete</WalletSettingsTitle>
           </Setting>
