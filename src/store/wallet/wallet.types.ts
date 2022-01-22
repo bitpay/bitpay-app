@@ -13,6 +13,7 @@ export enum WalletActionTypes {
   UPDATE_WALLET_BALANCE = 'WALLET/UPDATE_WALLET_BALANCE',
   SUCCESS_ENCRYPT_PASSWORD = 'WALLET/SUCCESS_ENCRYPT_PASSWORD',
   DELETE_KEY = 'WALLET/DELETE_KEY',
+  SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD = 'WALLET/SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD',
 }
 
 interface successWalletStoreInit {
@@ -68,8 +69,8 @@ interface updateWalletBalance {
   };
 }
 
-interface successEncryptPassword {
-  type: typeof WalletActionTypes.SUCCESS_ENCRYPT_PASSWORD;
+interface successEncryptOrDecryptPassword {
+  type: typeof WalletActionTypes.SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD;
   payload: {
     key: Key;
   };
@@ -95,3 +96,4 @@ export type WalletActionType =
   | updateWalletBalance
   | successEncryptPassword
   | deleteKey;
+  | successEncryptOrDecryptPassword;

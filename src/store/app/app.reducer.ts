@@ -7,16 +7,19 @@ import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/Ong
 import {NavScreenParams, RootStackParamList} from '../../Root';
 import {AppIdentity} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
+import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 
 type AppReduxPersistBlackList = [
   'appIsLoading',
   'showOnGoingProcessModal',
   'onGoingProcessModalMessage',
+  'showDecryptPasswordModal',
 ];
 export const appReduxPersistBlackList: AppReduxPersistBlackList = [
   'appIsLoading',
   'showOnGoingProcessModal',
   'onGoingProcessModalMessage',
+  'showDecryptPasswordModal',
 ];
 
 export interface AppState {
@@ -36,6 +39,8 @@ export interface AppState {
   notificationsAccepted: boolean;
   showOnboardingFinishModal: boolean;
   defaultLanguage: string;
+  showDecryptPasswordModal: boolean;
+  decryptPasswordConfig: DecryptPasswordConfig | undefined;
 }
 
 const initialState: AppState = {
@@ -64,6 +69,8 @@ const initialState: AppState = {
   notificationsAccepted: false,
   showOnboardingFinishModal: false,
   defaultLanguage: i18n.language || 'en',
+  showDecryptPasswordModal: false,
+  decryptPasswordConfig: undefined,
 };
 
 export const appReducer = (
@@ -107,6 +114,7 @@ export const appReducer = (
       return {
         ...state,
         showBottomNotificationModal: false,
+        bottomNotificationModalConfig: undefined,
       };
 
     case AppActionTypes.SET_COLOR_SCHEME:
@@ -154,6 +162,25 @@ export const appReducer = (
       return {
         ...state,
         defaultLanguage: action.payload,
+      };
+
+    case AppActionTypes.SHOW_DECRYPT_PASSWORD_MODAL:
+      return {
+        ...state,
+        showDecryptPasswordModal: true,
+        decryptPasswordConfig: action.payload,
+      };
+
+    case AppActionTypes.DISMISS_DECRYPT_PASSWORD_MODAL:
+      return {
+        ...state,
+        showDecryptPasswordModal: false,
+      };
+
+    case AppActionTypes.RESET_DECRYPT_PASSWORD_CONFIG:
+      return {
+        ...state,
+        decryptPasswordConfig: undefined,
       };
 
     default:

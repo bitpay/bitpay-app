@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect} from 'react';
+import React, {useLayoutEffect} from 'react';
 import {BaseText, HeaderTitle, Link} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
@@ -28,6 +28,7 @@ import {useDispatch} from 'react-redux';
 import InfoIcon from '../../../components/icons/info/InfoIcon';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {formatFiatBalance} from '../../../utils/helper-methods';
+import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -183,19 +184,7 @@ const KeySettings = () => {
           <SettingView>
             <WalletSettingsTitle>Request Encrypt Password</WalletSettingsTitle>
 
-            <ToggleSwitch
-              onChange={() => {
-                if (!key.isPrivKeyEncrypted) {
-                  navigation.navigate('Wallet', {
-                    screen: 'CreateEncryptPassword',
-                    params: {key},
-                  });
-                } else {
-                  //  TODO: Decrypt Password
-                }
-              }}
-              isEnabled={!!key.isPrivKeyEncrypted}
-            />
+            <RequestEncryptPasswordToggle currentKey={key} />
           </SettingView>
 
           <Info>
@@ -247,7 +236,10 @@ const KeySettings = () => {
           <Setting
             onPress={() => {
               haptic('impactLight');
-              //    TODO: Redirect me
+              navigation.navigate('Wallet', {
+                screen: 'ExportKey',
+                params: {key},
+              });
             }}>
             <WalletSettingsTitle>Export Key</WalletSettingsTitle>
           </Setting>
