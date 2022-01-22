@@ -63,7 +63,7 @@ const DeleteKey = () => {
       <ScrollView>
         <Title>Warning!</Title>
         <DeleteKeyParagraph>
-          Permanently delete all wallets using this key. {'\n'}
+          Permanently deletes all wallets using this key. {'\n'}
           THIS ACTION CANNOT BE REVERSED.
         </DeleteKeyParagraph>
 
