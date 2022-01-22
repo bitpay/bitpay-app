@@ -13,6 +13,7 @@ import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {WalletActions} from '../../../store/wallet';
 import {AppActions} from '../../../store/app';
+import {sleep} from '../../../utils/helper-methods';
 
 const DeleteKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -47,16 +48,16 @@ const DeleteKey = () => {
 
   const [isVisible, setIsVisible] = useState(false);
 
-  const startDeleteKey = () => {
+  const startDeleteKey = async () => {
     setIsVisible(false);
-    setTimeout(() => {
-      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.DELETING_KEY));
-      dispatch(WalletActions.deleteKey({keyId}));
-      dispatch(AppActions.dismissOnGoingProcessModal());
-
-      navigation.navigate('Tabs', {screen: 'Home'});
-    }, 500);
+    await sleep(500);
+    dispatch(startOnGoingProcessModal(OnGoingProcessMessages.DELETING_KEY));
+    await sleep(300);
+    dispatch(WalletActions.deleteKey({keyId}));
+    dispatch(AppActions.dismissOnGoingProcessModal());
+    navigation.navigate('Tabs', {screen: 'Home'});
   };
+
 
   return (
     <DeleteKeyContainer>
