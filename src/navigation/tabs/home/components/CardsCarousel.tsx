@@ -1,15 +1,17 @@
+import {NavigationProp, useNavigation} from '@react-navigation/native';
 import React, {ReactNode, useEffect, useState} from 'react';
 import {useSelector} from 'react-redux';
-import {RootState} from '../../../../store';
 import Carousel from 'react-native-snap-carousel';
-import {WIDTH} from '../../../../components/styled/Containers';
-import haptic from '../../../../components/haptic-feedback/haptic';
-import CreateWallet from './empty-states/CreateWallet';
 import styled from 'styled-components/native';
-import {useNavigation} from '@react-navigation/native';
-import BuyGiftCards from './empty-states/BuyGiftCards';
-import GetMastercard from './empty-states/GetMastercard';
-import ConnectCoinbase from './empty-states/ConnectCoinbase';
+import haptic from '../../../../components/haptic-feedback/haptic';
+import {WIDTH} from '../../../../components/styled/Containers';
+import {RootState} from '../../../../store';
+import {Card} from '../../../../store/card/card.models';
+import {Key} from '../../../../store/wallet/wallet.models';
+import {BitPayCard, GetMastercard} from './cards/BitPayCard';
+import BuyGiftCards from './cards/BuyGiftCards';
+import ConnectCoinbase from './cards/ConnectCoinbase';
+import CreateWallet from './cards/CreateWallet';
 import WalletCardComponent from './Wallet';
 
 const CarouselContainer = styled.View`
@@ -20,37 +22,92 @@ const _renderItem = ({item}: {item: ReactNode}) => {
   return <>{item}</>;
 };
 
-const CardsCarousel = () => {
-  const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
-  const DEFAULTS = [
-    <CreateWallet />,
-    <BuyGiftCards />,
-    <GetMastercard />,
-    <ConnectCoinbase />,
-  ];
-  const [cardsList, setCardsList] = useState([...DEFAULTS]);
-  const navigation = useNavigation();
+const createHomeCardList = (
+  navigation: NavigationProp<any>,
+  keys: Key[],
+  cards: Card[],
+) => {
+  cards = cards.filter(c => c.provider === 'galileo');
 
-  useEffect(() => {
-    if (keys) {
-      const list = Object.values(keys)
-        .filter(key => key.show)
-        .map(key => {
-          const {wallets, totalBalance = 0} = key;
+  const list: JSX.Element[] = [];
+  const hasKeys = keys.length;
+  const hasCards = cards.length;
+  const hasGiftCards = false;
+  const hasCoinbase = false;
 
-          return WalletCardComponent({
-            wallets,
-            totalBalance,
-            onPress: () =>
+  if (hasKeys) {
+    const walletCards = keys
+      .filter(key => key)
+      .map(key => {
+        const {wallets, totalBalance = 0} = key;
+
+        return (
+          <WalletCardComponent
+            wallets={wallets}
+            totalBalance={totalBalance}
+            onPress={() =>
               navigation.navigate('Wallet', {
                 screen: 'KeyOverview',
                 params: {key},
-              }),
-          });
-        });
-      setCardsList([...list, ...DEFAULTS]);
-    }
-  }, [keys]);
+              })
+            }
+          />
+        );
+      });
+
+    list.push(...walletCards);
+  } else {
+    list.push(<CreateWallet />);
+  }
+
+  if (hasCards) {
+    list.push(<BitPayCard />);
+  } else {
+    list.push(<GetMastercard />);
+  }
+
+  if (hasCoinbase) {
+    // TODO
+  } else {
+    list.push(<ConnectCoinbase />);
+  }
+
+  if (hasGiftCards) {
+    // TODO
+  } else {
+    list.push(<BuyGiftCards />);
+  }
+
+  // if hasGiftCards, still show BuyGiftCards at the end before CreateWallet
+  if (hasGiftCards) {
+    list.push(<BuyGiftCards />);
+  }
+
+  // if hasWallets, still show CreateWallet at the end
+  if (hasKeys) {
+    list.push(<CreateWallet />);
+  }
+
+  return list;
+};
+
+const CardsCarousel = () => {
+  const navigation = useNavigation();
+  const bitPayCards = useSelector<RootState, Card[]>(
+    ({APP, CARD}) => CARD.cards[APP.network],
+  );
+  const keys = useSelector<RootState, {[k: string]: Key}>(
+    ({WALLET}) => WALLET.keys,
+  );
+  const [cardsList, setCardsList] = useState(
+    createHomeCardList(navigation, Object.values(keys), bitPayCards),
+  );
+
+  useEffect(() => {
+    setCardsList(
+      createHomeCardList(navigation, Object.values(keys), bitPayCards),
+    );
+  }, [navigation, keys, bitPayCards]);
 
   return (
     <CarouselContainer>

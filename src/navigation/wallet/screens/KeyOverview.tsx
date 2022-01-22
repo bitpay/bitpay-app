@@ -114,7 +114,6 @@ const KeyOverview = () => {
   });
   const {key} = route.params;
   const {wallets} = useSelector(({WALLET}: RootState) => WALLET.keys[key.id]);
-  console.log(wallets);
   const walletList = buildWalletList(wallets);
 
   const keyOptions: Array<Option> = [

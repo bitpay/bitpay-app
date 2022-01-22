@@ -77,6 +77,11 @@ export const dismissOnboardingFinishModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_ONBOARDING_FINISH_MODAL,
 });
 
+export const setDefaultLanguage = (lng: string): AppActionType => ({
+  type: AppActionTypes.SET_DEFAULT_LANGUAGE,
+  payload: lng,
+});
+
 export const showDecryptPasswordModal = (
   decryptPasswordConfig: DecryptPasswordConfig,
 ): AppActionType => ({
@@ -84,6 +89,10 @@ export const showDecryptPasswordModal = (
   payload: decryptPasswordConfig,
 });
 
-export const dissmissDecryptPasswordModal = (): AppActionType => ({
+export const dismissDecryptPasswordModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_DECRYPT_PASSWORD_MODAL,
+});
+
+export const resetDecryptPasswordConfig = (): AppActionType => ({
+  type: AppActionTypes.RESET_DECRYPT_PASSWORD_CONFIG,
 });

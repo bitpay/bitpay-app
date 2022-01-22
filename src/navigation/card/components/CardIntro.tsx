@@ -2,10 +2,10 @@ import {useTheme} from '@react-navigation/native';
 import React from 'react';
 import {Button, StyleProp, Text, TextStyle, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import {Network} from '../../../../constants';
-import {BASE_BITPAY_URLS} from '../../../../constants/config';
-import {RootState} from '../../../../store';
-import {AppEffects} from '../../../../store/app';
+import {Network} from '../../../constants';
+import {BASE_BITPAY_URLS} from '../../../constants/config';
+import {RootState} from '../../../store';
+import {AppEffects} from '../../../store/app';
 
 const CardIntro: React.FC = () => {
   const dispatch = useDispatch();
