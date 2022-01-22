@@ -26,8 +26,6 @@ import {SlateDark, White} from '../../../styles/colors';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {useDispatch} from 'react-redux';
 import InfoIcon from '../../../components/icons/info/InfoIcon';
-import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
-import {formatFiatBalance} from '../../../utils/helper-methods';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
 
 const WalletSettingsContainer = styled.SafeAreaView`

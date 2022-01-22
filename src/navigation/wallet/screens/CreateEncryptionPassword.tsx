@@ -67,7 +67,7 @@ const CreateEncryptionPassword = () => {
   const navigation = useNavigation();
   const {
     params: {key},
-  } = useRoute<RouteProp<WalletStackParamList, 'CreateEncryptionPassword'>>();
+  } = useRoute<RouteProp<WalletStackParamList, 'CreateEncryptPassword'>>();
 
   const {
     control,
