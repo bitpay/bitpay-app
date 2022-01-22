@@ -92,3 +92,7 @@ export const showDecryptPasswordModal = (
 export const dismissDecryptPasswordModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_DECRYPT_PASSWORD_MODAL,
 });
+
+export const resetDecryptPasswordConfig = (): AppActionType => ({
+  type: AppActionTypes.RESET_DECRYPT_PASSWORD_CONFIG,
+});

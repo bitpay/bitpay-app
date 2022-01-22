@@ -13,11 +13,13 @@ type AppReduxPersistBlackList = [
   'appIsLoading',
   'showOnGoingProcessModal',
   'onGoingProcessModalMessage',
+  'showDecryptPasswordModal',
 ];
 export const appReduxPersistBlackList: AppReduxPersistBlackList = [
   'appIsLoading',
   'showOnGoingProcessModal',
   'onGoingProcessModalMessage',
+  'showDecryptPasswordModal',
 ];
 
 export interface AppState {
@@ -112,6 +114,7 @@ export const appReducer = (
       return {
         ...state,
         showBottomNotificationModal: false,
+        bottomNotificationModalConfig: undefined,
       };
 
     case AppActionTypes.SET_COLOR_SCHEME:
@@ -172,6 +175,12 @@ export const appReducer = (
       return {
         ...state,
         showDecryptPasswordModal: false,
+      };
+
+    case AppActionTypes.RESET_DECRYPT_PASSWORD_CONFIG:
+      return {
+        ...state,
+        decryptPasswordConfig: undefined,
       };
 
     default:
