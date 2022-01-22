@@ -20,8 +20,10 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
   );
 
   useEffect(() => {
-    setPasswordToggle(!!key.methods.isPrivKeyEncrypted());
-  });
+    return navigation.addListener('focus', () => {
+      setPasswordToggle(!!key.methods.isPrivKeyEncrypted());
+    });
+  }, [navigation]);
 
   const showErrorMessage = (msg: BottomNotificationConfig) => {
     setTimeout(() => {
