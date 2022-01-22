@@ -155,7 +155,6 @@ const WalletSettings = () => {
           <Setting
             onPress={() => {
               haptic('impactLight');
-              //    TODO: Redirect me
             }}>
             <WalletSettingsTitle>Addresses</WalletSettingsTitle>
           </Setting>

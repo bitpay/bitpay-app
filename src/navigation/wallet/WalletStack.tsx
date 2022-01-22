@@ -18,6 +18,7 @@ import {HeaderTitle} from '../../components/styled/Text';
 import CreateEncryptionPassword from './screens/CreateEncryptionPassword';
 import {Key} from '../../store/wallet/wallet.models';
 import {WalletRowProps} from '../../components/list/WalletRow';
+import ExportKey from './screens/ExportKey';
 
 export type WalletStackParamList = {
   CurrencySelection: undefined;
@@ -30,7 +31,8 @@ export type WalletStackParamList = {
   WalletSettings: {wallet: WalletRowProps};
   CreationOptions: undefined;
   Import: ImportProps;
-  CreateEncryptionPassword: {key: Key};
+  CreateEncryptPassword: {key: Key};
+  ExportKey: {key: Key};
 };
 
 export enum WalletScreens {
@@ -44,7 +46,8 @@ export enum WalletScreens {
   WALLET_SETTINGS = 'WalletSettings',
   CREATION_OPTIONS = 'CreationOptions',
   IMPORT = 'Import',
-  CREATE_ENCRYPTION_PASSWORD = 'CreateEncryptionPassword',
+  CREATE_ENCRYPT_PASSWORD = 'CreateEncryptPassword',
+  EXPORT_KEY = 'ExportKey',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -110,9 +113,10 @@ const WalletStack = () => {
           component={CreationOptions}
         />
         <Wallet.Screen
-          name={WalletScreens.CREATE_ENCRYPTION_PASSWORD}
+          name={WalletScreens.CREATE_ENCRYPT_PASSWORD}
           component={CreateEncryptionPassword}
         />
+        <Wallet.Screen name={WalletScreens.EXPORT_KEY} component={ExportKey} />
       </Wallet.Navigator>
     </>
   );
