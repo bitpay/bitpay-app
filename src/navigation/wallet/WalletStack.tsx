@@ -113,7 +113,7 @@ const WalletStack = () => {
           component={CreationOptions}
         />
         <Wallet.Screen
-          name={WalletScreens.CREATE_ENCRYPTION_PASSWORD}
+          name={WalletScreens.CREATE_ENCRYPT_PASSWORD}
           component={CreateEncryptionPassword}
         />
         <Wallet.Screen name={WalletScreens.EXPORT_KEY} component={ExportKey} />
