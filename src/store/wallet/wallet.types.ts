@@ -94,6 +94,5 @@ export type WalletActionType =
   | successGetPriceHistory
   | failedGetPriceHistory
   | updateWalletBalance
-  | successEncryptPassword
   | deleteKey
   | successEncryptOrDecryptPassword;
