@@ -78,7 +78,7 @@ export const walletReducer = (
       };
     }
 
-    case WalletActionTypes.SUCCESS_ENCRYPT_PASSWORD: {
+    case WalletActionTypes.SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD: {
       const {key} = action.payload;
       const keyToUpdate = state.keys[key.id];
       keyToUpdate.isPrivKeyEncrypted = !!key.methods.isPrivKeyEncrypted();
@@ -89,6 +89,7 @@ export const walletReducer = (
           ...state.keys,
           [key.id]: {
             ...keyToUpdate,
+            properties: key.methods.toObj(),
           },
         },
       };

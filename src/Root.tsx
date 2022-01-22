@@ -64,6 +64,7 @@ import {ShopStackParamList} from './navigation/tabs/shop/ShopStack';
 import GiftCardStack, {
   GiftCardStackParamList,
 } from './navigation/tabs/shop/gift-card/GiftCardStack';
+import DecryptEnterPasswordModal from './navigation/wallet/components/DecryptEnterPasswordModal';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -300,6 +301,7 @@ export default () => {
           </Root.Navigator>
           <OnGoingProcessModal />
           <BottomNotificationModal />
+          <DecryptEnterPasswordModal />
         </NavigationContainer>
       </ThemeProvider>
     </SafeAreaProvider>
