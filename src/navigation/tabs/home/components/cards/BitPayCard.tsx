@@ -2,14 +2,14 @@ import {useNavigation} from '@react-navigation/native';
 import React from 'react';
 import {useSelector} from 'react-redux';
 import styled from 'styled-components/native';
-import BitPayBLogoBg from '../../../../../../assets/img/logos/bitpay-b-background.svg';
 import McLogo from '../../../../../../assets/img/logos/mc-logo.svg';
 import HomeCard from '../../../../../components/home-card/HomeCard';
 import {RootState} from '../../../../../store';
 import {Card} from '../../../../../store/card/card.models';
 import {format} from '../../../../../utils/currency';
+import BitpayBBackgroundIcon from '../../../../../components/icons/bitpay-b-background/BitpayBBackground';
 
-const BgImage = () => <BitPayBLogoBg />;
+const BgImage = () => <BitpayBBackgroundIcon />;
 
 const HeaderImg = styled.View`
   width: 60px;

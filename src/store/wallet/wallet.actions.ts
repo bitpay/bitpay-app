@@ -60,3 +60,8 @@ export const successEncryptOrDecryptPassword = (payload: {
   type: WalletActionTypes.SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD,
   payload,
 });
+
+export const deleteKey = (payload: {keyId: string}): WalletActionType => ({
+  type: WalletActionTypes.DELETE_KEY,
+  payload,
+});

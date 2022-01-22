@@ -1,5 +1,6 @@
 import {ExchangeRate, Key, PriceHistory} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
+
 type WalletReduxPersistBlackList = [];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
 
@@ -91,6 +92,19 @@ export const walletReducer = (
             ...keyToUpdate,
             properties: key.methods.toObj(),
           },
+        },
+      };
+    }
+
+    case WalletActionTypes.DELETE_KEY: {
+      const {keyId} = action.payload;
+      const keyList = {...state.keys};
+      delete keyList[keyId];
+
+      return {
+        ...state,
+        keys: {
+          ...keyList,
         },
       };
     }

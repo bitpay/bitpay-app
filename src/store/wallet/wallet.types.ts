@@ -11,6 +11,8 @@ export enum WalletActionTypes {
   SUCCESS_GET_PRICE_HISTORY = 'WALLET/SUCCESS_GET_PRICE_HISTORY',
   FAILED_GET_PRICE_HISTORY = 'WALLET/FAILED_GET_PRICE_HISTORY',
   UPDATE_WALLET_BALANCE = 'WALLET/UPDATE_WALLET_BALANCE',
+  SUCCESS_ENCRYPT_PASSWORD = 'WALLET/SUCCESS_ENCRYPT_PASSWORD',
+  DELETE_KEY = 'WALLET/DELETE_KEY',
   SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD = 'WALLET/SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD',
 }
 
@@ -74,6 +76,13 @@ interface successEncryptOrDecryptPassword {
   };
 }
 
+interface deleteKey {
+  type: typeof WalletActionTypes.DELETE_KEY;
+  payload: {
+    keyId: string;
+  };
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -85,4 +94,6 @@ export type WalletActionType =
   | successGetPriceHistory
   | failedGetPriceHistory
   | updateWalletBalance
+  | successEncryptPassword
+  | deleteKey;
   | successEncryptOrDecryptPassword;
