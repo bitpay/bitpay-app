@@ -1,4 +1,5 @@
 import {ColorSchemeName} from 'react-native';
+import i18n from 'i18next';
 import {Network} from '../../constants';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
@@ -6,16 +7,19 @@ import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/Ong
 import {NavScreenParams, RootStackParamList} from '../../Root';
 import {AppIdentity} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
+import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 
 type AppReduxPersistBlackList = [
   'appIsLoading',
   'showOnGoingProcessModal',
   'onGoingProcessModalMessage',
+  'showDecryptPasswordModal',
 ];
 export const appReduxPersistBlackList: AppReduxPersistBlackList = [
   'appIsLoading',
   'showOnGoingProcessModal',
   'onGoingProcessModalMessage',
+  'showDecryptPasswordModal',
 ];
 
 export interface AppState {
@@ -34,6 +38,9 @@ export interface AppState {
   currentRoute: [keyof RootStackParamList, NavScreenParams] | undefined;
   notificationsAccepted: boolean;
   showOnboardingFinishModal: boolean;
+  defaultLanguage: string;
+  showDecryptPasswordModal: boolean;
+  decryptPasswordConfig: DecryptPasswordConfig | undefined;
 }
 
 const initialState: AppState = {
@@ -61,6 +68,9 @@ const initialState: AppState = {
   currentRoute: undefined,
   notificationsAccepted: false,
   showOnboardingFinishModal: false,
+  defaultLanguage: i18n.language || 'en',
+  showDecryptPasswordModal: false,
+  decryptPasswordConfig: undefined,
 };
 
 export const appReducer = (
@@ -104,6 +114,7 @@ export const appReducer = (
       return {
         ...state,
         showBottomNotificationModal: false,
+        bottomNotificationModalConfig: undefined,
       };
 
     case AppActionTypes.SET_COLOR_SCHEME:
@@ -145,6 +156,31 @@ export const appReducer = (
       return {
         ...state,
         showOnboardingFinishModal: false,
+      };
+
+    case AppActionTypes.SET_DEFAULT_LANGUAGE:
+      return {
+        ...state,
+        defaultLanguage: action.payload,
+      };
+
+    case AppActionTypes.SHOW_DECRYPT_PASSWORD_MODAL:
+      return {
+        ...state,
+        showDecryptPasswordModal: true,
+        decryptPasswordConfig: action.payload,
+      };
+
+    case AppActionTypes.DISMISS_DECRYPT_PASSWORD_MODAL:
+      return {
+        ...state,
+        showDecryptPasswordModal: false,
+      };
+
+    case AppActionTypes.RESET_DECRYPT_PASSWORD_CONFIG:
+      return {
+        ...state,
+        decryptPasswordConfig: undefined,
       };
 
     default:

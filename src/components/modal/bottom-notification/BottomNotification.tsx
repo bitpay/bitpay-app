@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {ReactChild} from 'react';
 import BottomPopupModal from '../base/bottom-popup/BottomPopupModal';
 import {BaseText, H4} from '../../styled/Text';
 import styled, {css} from 'styled-components/native';
@@ -24,6 +24,7 @@ export interface BottomNotificationConfig {
     primary?: boolean;
     action: (rootState: RootState) => any;
   }>;
+  message2?: ReactChild;
   enableBackdropDismiss: boolean;
 }
 
@@ -106,7 +107,8 @@ const BottomNotification = () => {
     ({APP}: RootState) => APP.bottomNotificationModalConfig,
   );
 
-  const {type, title, message, actions, enableBackdropDismiss} = config || {};
+  const {type, title, message, actions, enableBackdropDismiss, message2} =
+    config || {};
 
   return (
     <BottomPopupModal
@@ -125,6 +127,7 @@ const BottomNotification = () => {
         <MessageContainer>
           <Message>{message}</Message>
         </MessageContainer>
+        {message2 ? message2 : null}
         <Hr />
         <CtaContainer platform={Platform.OS}>
           {actions?.map(({primary, action, text}, index) => {

@@ -13,6 +13,7 @@ export enum OnGoingProcessMessages {
   LOGGING_IN = 'Logging In',
   CREATING_ACCOUNT = 'Creating Account',
   IMPORTING = 'Importing',
+  DELETING_KEY = 'Deleting Key',
 }
 
 const OnGoingProcessContainer = styled.View`

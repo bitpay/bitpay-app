@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {BaseText, H5, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -113,8 +113,9 @@ const KeyOverview = () => {
     });
   });
   const {key} = route.params;
-  const {wallets} = useSelector(({WALLET}: RootState) => WALLET.keys[key.id]);
-  console.log(wallets);
+  const {wallets} = useSelector(
+    ({WALLET}: RootState) => WALLET.keys[key.id],
+  ) || {wallets: []};
   const walletList = buildWalletList(wallets);
 
   const keyOptions: Array<Option> = [
