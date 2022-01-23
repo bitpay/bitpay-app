@@ -80,7 +80,7 @@ const buildWalletList = (wallets: Wallet[]) => {
           tokens.forEach(({name, symbol, balance = 0}) => {
             walletList.push({
               id: `${id}-${symbol}`,
-              img: () => CurrencyListIcons[symbol.toLowerCase()].round,
+              img: () => CurrencyListIcons[symbol.toLowerCase()]?.round,
               currencyName: name,
               currencyAbbreviation: symbol.toUpperCase(),
               cryptoBalance: balance,

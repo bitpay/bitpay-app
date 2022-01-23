@@ -5,6 +5,8 @@ export enum WalletActionTypes {
   FAILED_WALLET_STORE_INIT = 'WALLET/FAILED_WALLET_STORE_INIT',
   SUCCESS_CREATE_KEY = 'WALLET/SUCCESS_CREATE_KEY',
   FAILED_CREATE_KEY = 'WALLET/FAILED_CREATE_KEY',
+  SUCCESS_IMPORT = 'WALLET/SUCCESS_IMPORT',
+  FAILED_IMPORT = 'WALLET/FAILED_IMPORT',
   SET_BACKUP_COMPLETE = 'WALLET/SET_BACKUP_COMPLETE',
   SUCCESS_GET_RATES = 'WALLET/SUCCESS_GET_RATES',
   FAILED_GET_RATES = 'WALLET/FAILED_GET_RATES',
@@ -33,6 +35,17 @@ interface successCreateKey {
 
 interface failedCreateKey {
   type: typeof WalletActionTypes.FAILED_CREATE_KEY;
+}
+
+interface successImport {
+  type: typeof WalletActionTypes.SUCCESS_IMPORT;
+  payload: {
+    key: Key;
+  };
+}
+
+interface failedImport {
+  type: typeof WalletActionTypes.FAILED_IMPORT;
 }
 
 interface setBackupComplete {
@@ -88,6 +101,8 @@ export type WalletActionType =
   | failedWalletStoreInit
   | successCreateKey
   | failedCreateKey
+  | successImport
+  | failedImport
   | setBackupComplete
   | successGetRates
   | failedGetRates

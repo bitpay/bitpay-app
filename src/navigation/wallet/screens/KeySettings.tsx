@@ -27,6 +27,7 @@ import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {useDispatch} from 'react-redux';
 import InfoIcon from '../../../components/icons/info/InfoIcon';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
+import Default from '../../../../assets/img/currencies/default.svg';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -88,11 +89,11 @@ const buildWalletList = (wallets: Wallet[]) => {
   const walletList = [] as Array<WalletSettingsRowProps>;
   wallets
     .filter(wallet => !wallet.credentials.token)
-
     .forEach(({id, currencyName, currencyAbbreviation, tokens}) => {
       walletList.push({
         id,
-        img: () => CurrencyListIcons[currencyAbbreviation].square,
+        img: () =>
+          CurrencyListIcons[currencyAbbreviation]?.square || <Default />,
         currencyName,
       });
 

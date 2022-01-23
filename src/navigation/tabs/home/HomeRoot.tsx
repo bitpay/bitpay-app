@@ -72,7 +72,7 @@ const HomeRoot = () => {
   );
 
   const showOnboardingFinishModal = async () => {
-    await sleep(500);
+    await sleep(300);
     dispatch(AppActions.showOnboardingFinishModal());
   };
 
@@ -80,7 +80,7 @@ const HomeRoot = () => {
     if (!onboardingCompleted) {
       showOnboardingFinishModal();
     }
-  }, [onboardingCompleted]);
+  }, []);
 
   const navigation = useNavigation();
 

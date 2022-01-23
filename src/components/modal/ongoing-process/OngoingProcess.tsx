@@ -12,7 +12,7 @@ export enum OnGoingProcessMessages {
   CREATING_KEY = 'Creating Key',
   LOGGING_IN = 'Logging In',
   CREATING_ACCOUNT = 'Creating Account',
-  IMPORTING_KEY = 'Importing Key',
+  IMPORTING = 'Importing',
   DELETING_KEY = 'Deleting Key',
 }
 

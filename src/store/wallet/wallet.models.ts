@@ -50,7 +50,10 @@ export interface WalletObj {
   currencyName: string;
   currencyAbbreviation: string;
   balance?: number;
-  tokens?: [Token];
+  tokens?: Token[];
+  preferences?: {
+    tokenAddresses?: [];
+  };
 }
 
 export interface ExchangeRate {
