@@ -14,9 +14,9 @@ const MastercardBack: React.FC<ProviderBackProps> = props => {
       <Svg.G
         id="MASTERCARD-back"
         stroke="none"
-        stroke-width="1"
+        strokeWidth="1"
         fill="none"
-        fill-rule="evenodd">
+        fillRule="evenodd">
         <Svg.Rect
           id="Rectangle"
           fill="#012351"
@@ -29,10 +29,10 @@ const MastercardBack: React.FC<ProviderBackProps> = props => {
 
         <Svg.Text
           id="CARD-NUMBER-LABEL"
-          font-family="Heebo-Medium, Heebo"
-          font-size="10.3395062"
-          font-weight="400"
-          line-spacing="10.3395062"
+          fontFamily="Heebo-Medium, Heebo"
+          fontSize="10.3395062"
+          fontWeight="400"
+          data-lineSpacing="10.3395062"
           fill="#96A8EF">
           <Svg.TSpan x="20.6790123" y="95.7839506">
             CARD NUMBER
@@ -52,10 +52,10 @@ const MastercardBack: React.FC<ProviderBackProps> = props => {
 
         <Svg.Text
           id="CARD-HOLDER-LABEL"
-          font-family="Heebo-Medium, Heebo"
-          font-size="10.3395062"
-          font-weight="400"
-          line-spacing="10.3395062"
+          fontFamily="Heebo-Medium, Heebo"
+          fontSize="10.3395062"
+          fontWeight="400"
+          data-lineSpacing="10.3395062"
           fill="#96A8EF">
           <Svg.TSpan x="20.6790123" y="170.228395">
             CARD HOLDER
@@ -64,10 +64,10 @@ const MastercardBack: React.FC<ProviderBackProps> = props => {
 
         <Svg.Text
           id="nickname"
-          font-family="Heebo-Medium, Heebo"
-          font-size="16.5432099"
-          font-weight="400"
-          line-spacing="16.5432099"
+          fontFamily="Heebo-Medium, Heebo"
+          fontSize="16.5432099"
+          fontWeight="400"
+          data-lineSpacing="16.5432099"
           fill="#FFFFFF">
           <Svg.TSpan x="19.6450617" y="191.737654">
             {nickname || ''}
@@ -76,10 +76,10 @@ const MastercardBack: React.FC<ProviderBackProps> = props => {
 
         <Svg.Text
           id="CVV-LABEL"
-          font-family="Heebo-Medium, Heebo"
-          font-size="10.3395062"
-          font-weight="400"
-          line-spacing="10.3395062"
+          fontFamily="Heebo-Medium, Heebo"
+          fontSize="10.3395062"
+          fontWeight="400"
+          data-lineSpacing="10.3395062"
           fill="#96A8EF">
           <Svg.TSpan x="286.404321" y="170.228395">
             CVV
@@ -88,10 +88,10 @@ const MastercardBack: React.FC<ProviderBackProps> = props => {
 
         <Svg.Text
           id="cvv"
-          font-family="Heebo-Medium, Heebo"
-          font-size="16.5432099"
-          font-weight="400"
-          line-spacing="16.5432099"
+          fontFamily="Heebo-Medium, Heebo"
+          fontSize="16.5432099"
+          fontWeight="400"
+          data-lineSpacing="16.5432099"
           fill="#FFFFFF">
           <Svg.TSpan x="286.404321" y="191.737654">
             {cvv || ''}
@@ -100,10 +100,10 @@ const MastercardBack: React.FC<ProviderBackProps> = props => {
 
         <Svg.Text
           id="EXPIRATION-LABEL"
-          font-family="Heebo-Medium, Heebo"
-          font-size="10.3395062"
-          font-weight="400"
-          line-spacing="10.3395062"
+          fontFamily="Heebo-Medium, Heebo"
+          fontSize="10.3395062"
+          fontWeight="400"
+          data-lineSpacing="10.3395062"
           fill="#96A8EF">
           <Svg.TSpan x="214.027778" y="170.228395">
             EXPIRES
@@ -112,10 +112,10 @@ const MastercardBack: React.FC<ProviderBackProps> = props => {
 
         <Svg.Text
           id="expiration"
-          font-family="Heebo-Medium, Heebo"
-          font-size="16.5432099"
-          font-weight="400"
-          line-spacing="16.5432099"
+          fontFamily="Heebo-Medium, Heebo"
+          fontSize="16.5432099"
+          fontWeight="400"
+          data-lineSpacing="16.5432099"
           fill="#FFFFFF">
           <Svg.TSpan x="214.027778" y="191.737654">
             {expiration || ''}
@@ -160,7 +160,7 @@ const MastercardBack: React.FC<ProviderBackProps> = props => {
         <Svg.G
           id="mc-logo"
           transform="translate(263.000000, 22.000000)"
-          fill-rule="nonzero">
+          fillRule="nonzero">
           <Svg.Path
             id="Path"
             fill="#FF5F00"
