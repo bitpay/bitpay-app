@@ -84,15 +84,15 @@ const ExportKey = () => {
         setCode(
           `1|${getKey.mnemonic}|null|null|${key.properties.mnemonic}|null`,
         );
-        dispatch(AppActions.dissmissDecryptPasswordModal());
+        dispatch(AppActions.dismissDecryptPasswordModal());
       } catch (e) {
         console.log(`Decrypt Error: ${e}`);
-        await dispatch(AppActions.dissmissDecryptPasswordModal());
+        await dispatch(AppActions.dismissDecryptPasswordModal());
         navigation.goBack();
         showErrorMessage(WrongPasswordError());
       }
     } else {
-      dispatch(AppActions.dissmissDecryptPasswordModal());
+      dispatch(AppActions.dismissDecryptPasswordModal());
       navigation.goBack();
       showErrorMessage(GeneralError);
       logger.debug('Missing Key Error');

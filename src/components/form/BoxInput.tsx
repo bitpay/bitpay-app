@@ -35,7 +35,7 @@ const Input = styled.TextInput<ContainerProps>`
       background: #fafbff;
       border-color: #e6ebff;
       border-bottom-color: ${Action};
-      color: ${({theme: {dark}}) => (dark ? Black : White)};
+      color: ${Black};
     `}
 
   ${({isError}) =>
