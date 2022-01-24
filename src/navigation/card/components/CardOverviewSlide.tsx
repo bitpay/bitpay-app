@@ -31,7 +31,10 @@ const CardOverviewSlide: React.FC<CardOverviewSlideProps> = ({
   const formattedBalance = format(balance, primaryCard.currency.code);
 
   return (
-    <SlideContainer onTouchEnd={() => navigation.navigate('Settings', {slide})}>
+    <SlideContainer
+      onTouchEnd={() =>
+        navigation.navigate('Settings', {slide, id: primaryCard.id})
+      }>
       <CardFront
         brand={primaryCard.brand || 'Visa'}
         provider={primaryCard.provider}

@@ -43,7 +43,7 @@ export class OverviewSlide {
   }
 }
 
-const createOverviewSlides = (cards: Card[]) => {
+const buildOverviewSlides = (cards: Card[]) => {
   // sort galileo before firstView, then virtual before physical
   const sortedCards = cards.sort((a, b) => {
     if (a.provider === 'galileo' && b.provider === 'firstView') {
@@ -93,15 +93,15 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const virtualDesignCurrency = useSelector<RootState, VirtualDesignCurrency>(
     ({CARD}) => CARD.virtualDesignCurrency,
   );
-  const memoizedSlides = useMemo(() => createOverviewSlides(cards), [cards]);
-  const [initialSlideIdx] = useState(() =>
-    id
+  const memoizedSlides = useMemo(() => buildOverviewSlides(cards), [cards]);
+  const [initialSlideIdx] = useState(() => {
+    return id
       ? Math.max(
           0,
           memoizedSlides.findIndex(s => s.cards.some(c => c.id === id)),
         )
-      : 0,
-  );
+      : 0;
+  });
   const [activeSlideIdx, setActiveSlideIdx] = useState<number>(initialSlideIdx);
   const fetchId = useSelector<RootState, string | null>(({CARD}) => {
     const activeSlideId = memoizedSlides[activeSlideIdx].primaryCard.id;
