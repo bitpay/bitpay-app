@@ -1,21 +1,17 @@
 import React, {useState} from 'react';
 import * as Svg from 'react-native-svg';
-import {VirtualDesignCurrency} from '../../../store/card/card.types';
-import BCHShape from '../assets/currency-shapes/BCH-shape.svg';
-import BitPayBShape from '../assets/currency-shapes/bitpay-b-shape.svg';
-import BTCShape from '../assets/currency-shapes/BTC-shape.svg';
-import BUSDShape from '../assets/currency-shapes/BUSD-shape.svg';
-import DAIShape from '../assets/currency-shapes/DAI-shape.svg';
-import DOGEShape from '../assets/currency-shapes/DOGE-shape.svg';
-import ETHShape from '../assets/currency-shapes/ETH-shape.svg';
-import GUSDShape from '../assets/currency-shapes/GUSD-shape.svg';
-import PAXShape from '../assets/currency-shapes/PAX-shape.svg';
-import USDCShape from '../assets/currency-shapes/USDC-shape.svg';
-import XRPShape from '../assets/currency-shapes/XRP-shape.svg';
+import {
+  CardProvider,
+  VirtualDesignCurrency,
+} from '../../../store/card/card.types';
+import {
+  getCardCurrencyColorPalette,
+  isVirtualDesignSupported,
+} from '../../../utils/card';
 
 interface CardFrontProps {
   brand: string;
-  provider: string;
+  provider: CardProvider;
   basic?: boolean;
   balance: string;
   nickname: string;
@@ -23,116 +19,6 @@ interface CardFrontProps {
   fiat: string;
   designCurrency: VirtualDesignCurrency;
 }
-
-export const CURRENCY_LOGOS: {
-  [k in VirtualDesignCurrency]: React.FC<Svg.SvgProps>;
-} = {
-  BCH: BCHShape,
-  BTC: BTCShape,
-  BUSD: BUSDShape,
-  DAI: DAIShape,
-  DOGE: DOGEShape,
-  ETH: ETHShape,
-  GUSD: GUSDShape,
-  PAX: PAXShape,
-  USDC: USDCShape,
-  WBTC: BitPayBShape,
-  XRP: XRPShape,
-  'bitpay-b': BitPayBShape,
-};
-
-export const getVirtualCardCustomColor = (currency: string) => {
-  switch (currency) {
-    case 'BTC':
-      return {
-        stopColor1: '#F7931A',
-        stopColor2: '#A25F0E',
-        pillColor: '#FFF',
-        pillBackground: '#B66400',
-        pillCircleBackground: '#FFF',
-      };
-    case 'BCH':
-      return {
-        stopColor1: '#2FCF6E',
-        stopColor2: '#0C6630',
-        pillColor: '#FFF',
-        pillBackground: '#20924F',
-        pillCircleBackground: '#FFF',
-      };
-    case 'ETH':
-      return {
-        stopColor1: '#9A9FF1',
-        stopColor2: '#575DC2',
-        pillColor: '#FFF',
-        pillBackground: '#595FC6',
-        pillCircleBackground: '#FFF',
-      };
-    case 'DOGE':
-      return {
-        stopColor1: '#E5C66B',
-        stopColor2: '#80641B',
-        pillColor: '#5C4731',
-        pillBackground: '#F1DBA0',
-        pillCircleBackground: '#000',
-      };
-    case 'XRP':
-      return {
-        stopColor1: '#4D4D4D',
-        stopColor2: '#000',
-        pillColor: '#FFF',
-        pillBackground: '#3F3F3F',
-        pillCircleBackground: '#FFF',
-      };
-    case 'DAI':
-      return {
-        stopColor1: '#F5AC37',
-        stopColor2: '#895605',
-        pillColor: '#FFF',
-        pillBackground: '#A36A10',
-        pillCircleBackground: '#FFF',
-      };
-    case 'USDC':
-      return {
-        stopColor1: '#2775CA',
-        stopColor2: '#03366D',
-        pillColor: '#FFF',
-        pillBackground: '#024085',
-        pillCircleBackground: '#FFF',
-      };
-    case 'PAX':
-      return {
-        stopColor1: '#B3D234',
-        stopColor2: '#00845D',
-        pillColor: '#FFF',
-        pillBackground: '#2BA023',
-        pillCircleBackground: '#FFF',
-      };
-    case 'BUSD':
-      return {
-        stopColor1: '#F3BA2D',
-        stopColor2: '#936903',
-        pillColor: '#FFF',
-        pillBackground: '#A47708',
-        pillCircleBackground: '#FFF',
-      };
-    case 'GUSD':
-      return {
-        stopColor1: '#00DFFE',
-        stopColor2: '#006F7E',
-        pillColor: '#FFF',
-        pillBackground: '#007B8C',
-        pillCircleBackground: '#FFF',
-      };
-    default:
-      return {
-        stopColor1: '#1A3B8B',
-        stopColor2: '#1A3B8B',
-        pillColor: '#FFF',
-        pillBackground: '#3C4E9E',
-        pillCircleBackground: '#FFF',
-      };
-  }
-};
 
 const BRAND_LOGOS: {[k: string]: JSX.Element} = {
   Mastercard: (
@@ -171,11 +57,6 @@ const BRAND_LOGOS: {[k: string]: JSX.Element} = {
   ),
 };
 
-const VIRTUAL_DESIGN_SUPPORTED: {[k: string]: boolean} = {
-  galileo: true,
-  firstView: false,
-};
-
 const CardFront: React.FC<CardFrontProps> = props => {
   const {
     brand,
@@ -193,15 +74,13 @@ const CardFront: React.FC<CardFrontProps> = props => {
     path: 'path-' + Math.floor(Math.random() * 10000) + 1,
   });
 
-  const BrandLogo = BRAND_LOGOS[brand] || <></>;
-  let customColor = getVirtualCardCustomColor('bitpay-b');
-  let BackgroundCurrencyShape = CURRENCY_LOGOS['bitpay-b'];
-
-  if (VIRTUAL_DESIGN_SUPPORTED[provider]) {
-    customColor = getVirtualCardCustomColor(designCurrency);
-    BackgroundCurrencyShape =
-      CURRENCY_LOGOS[designCurrency] || CURRENCY_LOGOS['bitpay-b'];
-  }
+  const BrandLogo = BRAND_LOGOS[brand] || null;
+  const virtualDesignCurrency = isVirtualDesignSupported(provider)
+    ? designCurrency
+    : 'bitpay-b';
+  const {BackgroundShape, ...colorPalette} = getCardCurrencyColorPalette(
+    virtualDesignCurrency,
+  );
 
   return (
     <Svg.Svg
@@ -218,8 +97,8 @@ const CardFront: React.FC<CardFrontProps> = props => {
           fy="50%"
           r="162.896056%"
           gradientTransform="translate(0.088067,0.500000),scale(0.632716,1.000000),rotate(46.470003),translate(-0.088067,-0.500000)">
-          <Svg.Stop offset="0%" stopColor={customColor.stopColor1} />
-          <Svg.Stop offset="100%" stopColor={customColor.stopColor2} />
+          <Svg.Stop offset="0%" stopColor={colorPalette.stopColor1} />
+          <Svg.Stop offset="100%" stopColor={colorPalette.stopColor2} />
         </Svg.RadialGradient>
 
         <Svg.Rect
@@ -247,7 +126,7 @@ const CardFront: React.FC<CardFrontProps> = props => {
 
           <Svg.Use id="Mask" xlinkHref={`#${IDS.path}`} />
 
-          <BackgroundCurrencyShape />
+          <BackgroundShape />
         </Svg.G>
 
         <Svg.G
@@ -331,7 +210,7 @@ const CardFront: React.FC<CardFrontProps> = props => {
               transform="translate(172.000000, 98.000000)">
               <Svg.Rect
                 id="Rectangle"
-                fill={customColor.pillBackground}
+                fill={colorPalette.pillBackground}
                 x="0"
                 y="0"
                 width="67"
@@ -340,7 +219,7 @@ const CardFront: React.FC<CardFrontProps> = props => {
               />
               <Svg.Circle
                 id="Oval"
-                fill={customColor.pillCircleBackground}
+                fill={colorPalette.pillCircleBackground}
                 opacity="0.1"
                 cx="16"
                 cy="15"
@@ -349,7 +228,7 @@ const CardFront: React.FC<CardFrontProps> = props => {
               <Svg.G
                 id="Group-3"
                 transform="translate(16.000000, 18.000000)"
-                stroke={customColor.pillColor}
+                stroke={colorPalette.pillColor}
                 strokeLinecap="round"
                 strokeLinejoin="round">
                 <Svg.Text
@@ -358,7 +237,7 @@ const CardFront: React.FC<CardFrontProps> = props => {
                   fontFamily="ArialMT, Arial"
                   fontSize="11"
                   fontWeight="normal"
-                  fill={customColor.pillColor}>
+                  fill={colorPalette.pillColor}>
                   {fiatSymbol}
                 </Svg.Text>
               </Svg.G>
@@ -367,7 +246,7 @@ const CardFront: React.FC<CardFrontProps> = props => {
                 fontFamily="ArialMT, Arial"
                 fontSize="11"
                 fontWeight="normal"
-                fill={customColor.pillColor}>
+                fill={colorPalette.pillColor}>
                 <Svg.TSpan x="31" y="19">
                   {fiat}
                 </Svg.TSpan>

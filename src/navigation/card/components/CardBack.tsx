@@ -48,7 +48,7 @@ const BRAND_LOGOS: {[k: string]: JSX.Element} = {
 
 const CardBack: React.FC<CardBackProps> = props => {
   const {brand, cardNumber, nickname, cvv, expiration} = props;
-  const brandLogo = BRAND_LOGOS[brand || ''] || null;
+  const BrandLogo = BRAND_LOGOS[brand || ''] || null;
 
   return (
     <Svg.Svg
@@ -202,7 +202,7 @@ const CardBack: React.FC<CardBackProps> = props => {
           />
         </Svg.G>
 
-        {brandLogo}
+        {BrandLogo}
       </Svg.G>
     </Svg.Svg>
   );

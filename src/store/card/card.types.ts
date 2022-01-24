@@ -2,6 +2,9 @@ import {Network} from '../../constants';
 import {Card} from './card.models';
 import {FetchCardsStatus, FetchOverviewStatus} from './card.reducer';
 
+export type CardBrand = 'Mastercard' | 'Visa';
+export type CardProvider = 'galileo' | 'firstView';
+
 export type SupportedCurrencies =
   | 'BTC'
   | 'BCH'

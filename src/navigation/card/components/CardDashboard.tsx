@@ -6,7 +6,10 @@ import {WIDTH} from '../../../components/styled/Containers';
 import {RootState} from '../../../store';
 import {CardEffects} from '../../../store/card';
 import {Card} from '../../../store/card/card.models';
-import {VirtualDesignCurrency} from '../../../store/card/card.types';
+import {
+  CardProvider,
+  VirtualDesignCurrency,
+} from '../../../store/card/card.types';
 import CardOverviewSlide from './CardOverviewSlide';
 
 interface CardDashboardProps {
@@ -19,7 +22,7 @@ const GroupEnabled = {
 };
 
 export class OverviewSlide {
-  readonly provider: string;
+  readonly provider: CardProvider;
   private readonly _cards: Card[] = [];
 
   get cards() {
