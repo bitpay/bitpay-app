@@ -89,9 +89,7 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
   const designCurrency = useSelector<RootState, VirtualDesignCurrency>(
     ({CARD}) => CARD.virtualDesignCurrency,
   );
-  const activeCard = carouselRef.current
-    ? memoizedSlides[carouselRef.current.currentIndex]
-    : null;
+  const activeCard = memoizedSlides[carouselRef.current ? carouselRef.current.currentIndex : initialSlideIdx];
 
   const onCardChange = (idx: number) => {
     const id = memoizedSlides[idx].id;
