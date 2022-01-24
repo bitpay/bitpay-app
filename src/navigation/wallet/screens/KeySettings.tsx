@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect} from 'react';
+import React, {useLayoutEffect} from 'react';
 import {BaseText, HeaderTitle, Link} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
@@ -26,7 +26,8 @@ import {SlateDark, White} from '../../../styles/colors';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {useDispatch} from 'react-redux';
 import InfoIcon from '../../../components/icons/info/InfoIcon';
-import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
+import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
+import Default from '../../../../assets/img/currencies/default.svg';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -86,13 +87,27 @@ const WalletSettingsTitle = styled(SettingTitle)`
 
 const buildWalletList = (wallets: Wallet[]) => {
   const walletList = [] as Array<WalletSettingsRowProps>;
-  wallets.forEach(({id, currencyName, currencyAbbreviation}) => {
-    walletList.push({
-      id,
-      img: () => CurrencyListIcons[currencyAbbreviation].square,
-      currencyName,
+  wallets
+    .filter(wallet => !wallet.credentials.token)
+    .forEach(({id, currencyName, currencyAbbreviation, tokens}) => {
+      walletList.push({
+        id,
+        img: () =>
+          CurrencyListIcons[currencyAbbreviation]?.square || <Default />,
+        currencyName,
+      });
+
+      if (tokens) {
+        tokens.forEach(({name, symbol, address}) => {
+          walletList.push({
+            id: `${id}-${address}`,
+            img: () => CurrencyListIcons[symbol.toLowerCase()].round,
+            currencyName: name,
+            isToken: true,
+          });
+        });
+      }
     });
-  });
   return walletList;
 };
 
@@ -134,12 +149,13 @@ const KeySettings = () => {
           </InfoImageContainer>
         </WalletHeaderContainer>
 
-        {wallets.map(({id, currencyName, img}) => (
+        {wallets.map(({id, currencyName, img, isToken}) => (
           <WalletSettingsRow
             id={id}
             img={img}
             currencyName={currencyName}
             key={id}
+            isToken={isToken}
           />
         ))}
 
@@ -167,19 +183,7 @@ const KeySettings = () => {
           <SettingView>
             <WalletSettingsTitle>Request Encrypt Password</WalletSettingsTitle>
 
-            <ToggleSwitch
-              onChange={() => {
-                if (!key.isPrivKeyEncrypted) {
-                  navigation.navigate('Wallet', {
-                    screen: 'CreateEncryptPassword',
-                    params: {key},
-                  });
-                } else {
-                  //  TODO: Decrypt Password
-                }
-              }}
-              isEnabled={!!key.isPrivKeyEncrypted}
-            />
+            <RequestEncryptPasswordToggle currentKey={key} />
           </SettingView>
 
           <Info>
@@ -231,7 +235,10 @@ const KeySettings = () => {
           <Setting
             onPress={() => {
               haptic('impactLight');
-              //    TODO: Redirect me
+              navigation.navigate('Wallet', {
+                screen: 'ExportKey',
+                params: {key},
+              });
             }}>
             <WalletSettingsTitle>Export Key</WalletSettingsTitle>
           </Setting>
@@ -240,7 +247,10 @@ const KeySettings = () => {
           <Setting
             onPress={() => {
               haptic('impactLight');
-              //    TODO: Redirect me
+              navigation.navigate('Wallet', {
+                screen: 'ExtendedPrivateKey',
+                params: {key},
+              });
             }}>
             <WalletSettingsTitle>Extended Private Key</WalletSettingsTitle>
           </Setting>
@@ -249,7 +259,10 @@ const KeySettings = () => {
           <Setting
             onPress={() => {
               haptic('impactLight');
-              //    TODO: Redirect me
+              navigation.navigate('Wallet', {
+                screen: 'DeleteKey',
+                params: {keyId: key.id},
+              });
             }}>
             <WalletSettingsTitle>Delete</WalletSettingsTitle>
           </Setting>

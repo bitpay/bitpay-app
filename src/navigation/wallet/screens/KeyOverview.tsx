@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {BaseText, H5, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -80,7 +80,7 @@ const buildWalletList = (wallets: Wallet[]) => {
           tokens.forEach(({name, symbol, balance = 0}) => {
             walletList.push({
               id: `${id}-${symbol}`,
-              img: () => CurrencyListIcons[symbol.toLowerCase()].round,
+              img: () => CurrencyListIcons[symbol.toLowerCase()]?.round,
               currencyName: name,
               currencyAbbreviation: symbol.toUpperCase(),
               cryptoBalance: balance,
@@ -113,8 +113,9 @@ const KeyOverview = () => {
     });
   });
   const {key} = route.params;
-  const {wallets} = useSelector(({WALLET}: RootState) => WALLET.keys[key.id]);
-  console.log(wallets);
+  const {wallets} = useSelector(
+    ({WALLET}: RootState) => WALLET.keys[key.id],
+  ) || {wallets: []};
   const walletList = buildWalletList(wallets);
 
   const keyOptions: Array<Option> = [
