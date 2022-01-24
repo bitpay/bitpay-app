@@ -1,5 +1,6 @@
 import {ExchangeRate, Key, PriceHistory} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
+
 type WalletReduxPersistBlackList = [];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
 import {ReceiveAddressConfig} from '../../navigation/wallet/components/ReceiveAddress';
@@ -27,7 +28,8 @@ export const walletReducer = (
   action: WalletActionType,
 ): WalletState => {
   switch (action.type) {
-    case WalletActionTypes.SUCCESS_CREATE_KEY: {
+    case WalletActionTypes.SUCCESS_CREATE_KEY:
+    case WalletActionTypes.SUCCESS_IMPORT: {
       const {key} = action.payload;
       return {
         ...state,
@@ -96,6 +98,19 @@ export const walletReducer = (
             ...keyToUpdate,
             properties: key.methods.toObj(),
           },
+        },
+      };
+    }
+
+    case WalletActionTypes.DELETE_KEY: {
+      const {keyId} = action.payload;
+      const keyList = {...state.keys};
+      delete keyList[keyId];
+
+      return {
+        ...state,
+        keys: {
+          ...keyList,
         },
       };
     }

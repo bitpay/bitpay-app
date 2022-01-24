@@ -6,12 +6,15 @@ export enum WalletActionTypes {
   FAILED_WALLET_STORE_INIT = 'WALLET/FAILED_WALLET_STORE_INIT',
   SUCCESS_CREATE_KEY = 'WALLET/SUCCESS_CREATE_KEY',
   FAILED_CREATE_KEY = 'WALLET/FAILED_CREATE_KEY',
+  SUCCESS_IMPORT = 'WALLET/SUCCESS_IMPORT',
+  FAILED_IMPORT = 'WALLET/FAILED_IMPORT',
   SET_BACKUP_COMPLETE = 'WALLET/SET_BACKUP_COMPLETE',
   SUCCESS_GET_RATES = 'WALLET/SUCCESS_GET_RATES',
   FAILED_GET_RATES = 'WALLET/FAILED_GET_RATES',
   SUCCESS_GET_PRICE_HISTORY = 'WALLET/SUCCESS_GET_PRICE_HISTORY',
   FAILED_GET_PRICE_HISTORY = 'WALLET/FAILED_GET_PRICE_HISTORY',
   UPDATE_WALLET_BALANCE = 'WALLET/UPDATE_WALLET_BALANCE',
+  DELETE_KEY = 'WALLET/DELETE_KEY',
   SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD = 'WALLET/SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD',
   SHOW_RECEIVE_ADDRESS_MODAL = 'WALLET/SHOW_RECEIVE_ADDRESS_MODAL',
   DISMISS_RECEIVE_ADDRESS_MODAL = 'WALLET/DISMISS_RECEIVE_ADDRESS_MODAL',
@@ -34,6 +37,17 @@ interface successCreateKey {
 
 interface failedCreateKey {
   type: typeof WalletActionTypes.FAILED_CREATE_KEY;
+}
+
+interface successImport {
+  type: typeof WalletActionTypes.SUCCESS_IMPORT;
+  payload: {
+    key: Key;
+  };
+}
+
+interface failedImport {
+  type: typeof WalletActionTypes.FAILED_IMPORT;
 }
 
 interface setBackupComplete {
@@ -77,6 +91,13 @@ interface successEncryptOrDecryptPassword {
   };
 }
 
+interface deleteKey {
+  type: typeof WalletActionTypes.DELETE_KEY;
+  payload: {
+    keyId: string;
+  };
+}
+
 interface showReceiveAddressModal {
   type: typeof WalletActionTypes.SHOW_RECEIVE_ADDRESS_MODAL;
   payload: ReceiveAddressConfig;
@@ -91,12 +112,15 @@ export type WalletActionType =
   | failedWalletStoreInit
   | successCreateKey
   | failedCreateKey
+  | successImport
+  | failedImport
   | setBackupComplete
   | successGetRates
   | failedGetRates
   | successGetPriceHistory
   | failedGetPriceHistory
   | updateWalletBalance
+  | deleteKey
   | successEncryptOrDecryptPassword
   | showReceiveAddressModal
   | dismissReceiveAddressModal;

@@ -1,7 +1,17 @@
-import {
-  BottomNotificationConfig,
-  BottomNotificationListType,
-} from '../../../components/modal/bottom-notification/BottomNotification';
+import React from 'react';
+import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
+import styled from 'styled-components/native';
+import {BaseText} from '../../../components/styled/Text';
+import {FlatList} from 'react-native';
+
+interface BottomNotificationListType {
+  key: number;
+  description: string;
+}
+
+const List = styled(BaseText)`
+  margin: 0 0 5px 10px;
+`;
 
 export const GeneralError: BottomNotificationConfig = {
   type: 'error',
@@ -31,12 +41,12 @@ export const WrongPasswordError = (): BottomNotificationConfig => {
     {
       key: 3,
       description:
-        'Keep in mind your encrypt password is not the 12-word recovery phrase',
+        'Keep in mind your encryption password is not the 12-word recovery phrase',
     },
     {
       key: 4,
       description:
-        'You can always reset your encrypt password on your key settings under the option Clear Encrypt Password using your 12 words recovery phrase',
+        'You can always reset your encryption password on your key settings under the option Clear Encryption Password using your 12-word recovery phrase',
     },
   ];
 
@@ -52,7 +62,16 @@ export const WrongPasswordError = (): BottomNotificationConfig => {
         primary: true,
       },
     ],
-    list: wrongPasswordList,
+    message2: (
+      <FlatList
+        data={wrongPasswordList}
+        renderItem={({item}) => (
+          <List>
+            {'\u2022'} {item.description}
+          </List>
+        )}
+      />
+    ),
   };
 };
 

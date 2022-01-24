@@ -115,7 +115,9 @@ const KeyOverview = () => {
     });
   });
   const {key} = route.params;
-  const {wallets} = useSelector(({WALLET}: RootState) => WALLET.keys[key.id]);
+  const {wallets} = useSelector(
+    ({WALLET}: RootState) => WALLET.keys[key.id],
+  ) || {wallets: []};
   const walletList = buildWalletList(wallets, key.id);
 
   const keyOptions: Array<Option> = [

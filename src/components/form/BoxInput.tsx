@@ -1,10 +1,10 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {TextInputProps} from 'react-native';
 import styled, {css} from 'styled-components/native';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
 import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
 import Search from '../../../assets/img/search.svg';
-import {Action, Caution, Slate} from '../../styles/colors';
+import {Action, Black, Caution, Slate, White} from '../../styles/colors';
 import {BitPayTheme} from '../../themes/bitpay';
 import {BaseText} from '../styled/Text';
 
@@ -15,13 +15,13 @@ interface ContainerProps {
   type?: InputType;
 }
 
-const Input = styled.TextInput`
+const Input = styled.TextInput<ContainerProps>`
   height: 55px;
   margin: 10px 0 0 0;
   border: 1px solid #e1e4e7;
-  color: black;
+  color: ${({theme}) => theme.colors.text};
   padding: 10px;
-  ${({type}: ContainerProps) =>
+  ${({type}) =>
     type &&
     css`
       padding-right: ${type === 'search' ? 65 : 40}px;
@@ -29,15 +29,16 @@ const Input = styled.TextInput`
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
   font-weight: 500;
-  ${({isFocused}: ContainerProps) =>
+  ${({isFocused}) =>
     isFocused &&
     css`
       background: #fafbff;
       border-color: #e6ebff;
       border-bottom-color: ${Action};
+      color: ${({theme: {dark}}) => (dark ? Black : White)};
     `}
 
-  ${({isError}: ContainerProps) =>
+  ${({isError}) =>
     isError &&
     css`
       background: #fbf5f6;
@@ -73,6 +74,7 @@ const Label = styled(BaseText)<LabelProps>`
 const InputContainer = styled.View`
   position: relative;
   padding: 10px 0;
+  background-color: transparent;
 `;
 
 const ObfuscationToggle = styled.TouchableOpacity`
@@ -109,14 +111,10 @@ const BoxInput = ({
   theme,
   ...props
 }: Props) => {
+  const isPassword = type === 'password';
+  const isSearch = type === 'search';
   const [isFocused, setIsFocused] = useState(false);
-  const [isSecureTextEntry, setSecureTextEntry] = useState(false);
-
-  useEffect(() => {
-    if (type === 'password') {
-      setSecureTextEntry(true);
-    }
-  }, [type]);
+  const [isSecureTextEntry, setSecureTextEntry] = useState(isPassword);
 
   const _onFocus = () => {
     setIsFocused(true);
@@ -128,17 +126,14 @@ const BoxInput = ({
     onBlur && onBlur();
   };
 
-  const errorMessage =
-    error &&
-    typeof error === 'string' &&
-    error.charAt(0).toUpperCase() + error.slice(1);
+  const errorMessage = typeof error === 'string' && error.charAt(0).toUpperCase() + error.slice(1);
 
   return (
     <InputContainer>
       {label && <Label theme={theme}>{label}</Label>}
       <Input
         {...props}
-        secureTextEntry={isSecureTextEntry}
+        secureTextEntry={isPassword && isSecureTextEntry}
         placeholderTextColor={Slate}
         onFocus={_onFocus}
         onBlur={_onBlur}
@@ -147,13 +142,13 @@ const BoxInput = ({
         autoCapitalize={'none'}
         type={type}
       />
-      {type === 'password' && (
+      {isPassword && (
         <ObfuscationToggle
           onPress={() => setSecureTextEntry(!isSecureTextEntry)}>
           {isSecureTextEntry ? <ObfuscationHide /> : <ObfuscationShow />}
         </ObfuscationToggle>
       )}
-      {type === 'search' && (
+      {isSearch && (
         <SearchIconContainer>
           <Search />
         </SearchIconContainer>

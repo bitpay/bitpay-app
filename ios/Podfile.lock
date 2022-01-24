@@ -428,6 +428,8 @@ PODS:
     - React-Core
   - RNInAppBrowser (3.6.3):
     - React-Core
+  - RNLocalize (2.1.7):
+    - React-Core
   - RNOS (1.2.6):
     - React
   - RNReactNativeHapticFeedback (1.13.0):
@@ -535,6 +537,7 @@ DEPENDENCIES:
   - RNDeviceInfo (from `../node_modules/react-native-device-info`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNInAppBrowser (from `../node_modules/react-native-inappbrowser-reborn`)
+  - RNLocalize (from `../node_modules/react-native-localize`)
   - RNOS (from `../node_modules/react-native-os`)
   - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
@@ -655,6 +658,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-gesture-handler"
   RNInAppBrowser:
     :path: "../node_modules/react-native-inappbrowser-reborn"
+  RNLocalize:
+    :path: "../node_modules/react-native-localize"
   RNOS:
     :path: "../node_modules/react-native-os"
   RNReactNativeHapticFeedback:
@@ -675,7 +680,7 @@ SPEC CHECKSUMS:
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   DoubleConversion: cf9b38bf0b2d048436d9a82ad2abe1404f11e7de
   FBLazyVector: 7b423f9e248eae65987838148c36eec1dbfe0b53
-  FBReactNativeSpec: c8006e4ebfe01118294943a07896d0871f71c2a7
+  FBReactNativeSpec: 75824cb6f249248c8f12047ae100343158b19edb
   Flipper: d3da1aa199aad94455ae725e9f3aa43f3ec17021
   Flipper-DoubleConversion: 38631e41ef4f9b12861c67d17cb5518d06badc41
   Flipper-Folly: 755929a4f851b2fb2c347d533a23f191b008554c
@@ -736,6 +741,7 @@ SPEC CHECKSUMS:
   RNDeviceInfo: b32d24c84e40d54b736e62a7d2abd15e1225258d
   RNGestureHandler: a479ebd5ed4221a810967000735517df0d2db211
   RNInAppBrowser: 3ff3a3b8f458aaf25aaee879d057352862edf357
+  RNLocalize: f567ea0e35116a641cdffe6683b0d212d568f32a
   RNOS: 6f2f9a70895bbbfbdad7196abd952e7b01d45027
   RNReactNativeHapticFeedback: b83bfb4b537bdd78eb4f6ffe63c6884f7b049ead
   RNReanimated: 024eff8202342abf4b24e11575a16afc441dabfe

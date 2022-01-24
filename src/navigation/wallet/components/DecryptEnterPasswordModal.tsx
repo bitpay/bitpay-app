@@ -12,6 +12,8 @@ import {Controller, useForm} from 'react-hook-form';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
 import {HeaderTitle, Paragraph} from '../../../components/styled/Text';
+import {Keyboard} from 'react-native';
+import {sleep} from '../../../utils/helper-methods';
 
 const DecryptFormContainer = styled.View`
   justify-content: center;
@@ -81,18 +83,23 @@ const DecryptEnterPasswordModal = () => {
   }, [isVisible]);
 
   const dismissModal = () => {
-    dispatch(AppActions.dissmissDecryptPasswordModal());
+    dispatch(AppActions.dismissDecryptPasswordModal());
+    setTimeout(() => {
+      dispatch(AppActions.resetDecryptPasswordConfig());
+    }, 500); // Wait for modal to close
     onCancelHandler && onCancelHandler();
   };
 
-  const onSubmit = ({password}: {password: string}) => {
+  const onSubmit = async ({password}: {password: string}) => {
+    Keyboard.dismiss();
+    await sleep(0);
     onSubmitHandler && onSubmitHandler(password);
   };
 
   return (
     <Modal
       isVisible={isVisible}
-      backdropOpacity={0.8}
+      backdropOpacity={0.4}
       animationIn={'fadeInUp'}
       animationOut={'fadeOutDown'}
       backdropTransitionOutTiming={0}
@@ -116,7 +123,7 @@ const DecryptEnterPasswordModal = () => {
               render={({field: {onChange, onBlur, value}}) => (
                 <BoxInput
                   placeholder={'strongPassword123'}
-                  label={'PASSWORD'}
+                  label={'ENCRYPTION PASSWORD'}
                   type={'password'}
                   onBlur={onBlur}
                   onChangeText={(text: string) => onChange(text)}
