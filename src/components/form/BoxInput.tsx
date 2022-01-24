@@ -4,7 +4,7 @@ import styled, {css} from 'styled-components/native';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
 import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
 import Search from '../../../assets/img/search.svg';
-import {Action, Black, Caution, Slate, White} from '../../styles/colors';
+import {Action, Black, Caution, Slate} from '../../styles/colors';
 import {BitPayTheme} from '../../themes/bitpay';
 import {BaseText} from '../styled/Text';
 
@@ -126,7 +126,8 @@ const BoxInput = ({
     onBlur && onBlur();
   };
 
-  const errorMessage = typeof error === 'string' && error.charAt(0).toUpperCase() + error.slice(1);
+  const errorMessage =
+    typeof error === 'string' && error.charAt(0).toUpperCase() + error.slice(1);
 
   return (
     <InputContainer>

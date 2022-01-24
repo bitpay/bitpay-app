@@ -31,6 +31,7 @@ import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
 import CopySvg from '../../../../assets/img/copy.svg';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
+import {sleep} from '../../../utils/helper-methods';
 
 export interface ReceiveAddressConfig {
   keyId: string;
@@ -211,12 +212,10 @@ const ReceiveAddress = () => {
     dispatch(WalletActions.dismissReceiveAddressModal());
   };
 
-  const showErrorMessage = (msg: BottomNotificationConfig) => {
+  const showErrorMessage = async (msg: BottomNotificationConfig) => {
     dispatch(WalletActions.dismissReceiveAddressModal());
-
-    setTimeout(() => {
-      dispatch(showBottomNotificationModal(msg));
-    }, 500); // Wait to close Decrypt Password modal
+    await sleep(500);
+    dispatch(showBottomNotificationModal(msg));
   };
 
   const createAddress = async () => {

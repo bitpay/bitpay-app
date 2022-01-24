@@ -8,7 +8,7 @@ import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {WalletActions} from '../../../store/wallet';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {GeneralError, WrongPasswordError} from './ErrorMessages';
-import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
+import {sleep} from '../../../utils/helper-methods';
 
 const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
   const navigation = useNavigation();
@@ -25,13 +25,7 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
     });
   }, [navigation]);
 
-  const showErrorMessage = (msg: BottomNotificationConfig) => {
-    setTimeout(() => {
-      dispatch(showBottomNotificationModal(msg));
-    }, 500); // Wait to close Decrypt Password modal
-  };
-
-  const onSubmitPassword = (password: string) => {
+  const onSubmitPassword = async (password: string) => {
     if (key) {
       try {
         key.methods.decrypt(password);
@@ -46,11 +40,13 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
       } catch (e) {
         console.log(`Decrypt Error: ${e}`);
         dispatch(AppActions.dismissDecryptPasswordModal());
-        showErrorMessage(WrongPasswordError());
+        await sleep(500); // Wait to close Decrypt Password modal
+        dispatch(showBottomNotificationModal(WrongPasswordError()));
       }
     } else {
       dispatch(AppActions.dismissDecryptPasswordModal());
-      showErrorMessage(GeneralError);
+      await sleep(500); // Wait to close Decrypt Password modal
+      dispatch(showBottomNotificationModal(GeneralError));
       logger.debug('Missing Key Error');
     }
   };
