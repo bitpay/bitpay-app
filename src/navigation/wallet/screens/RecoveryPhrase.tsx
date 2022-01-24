@@ -15,7 +15,7 @@ import {
   WIDTH,
 } from '../../../components/styled/Containers';
 import * as Progress from 'react-native-progress';
-import {Air, ProgressBlue} from '../../../styles/colors';
+import {Air, BitPay, ProgressBlue} from '../../../styles/colors';
 import Carousel from 'react-native-snap-carousel';
 import {sleep} from '../../../utils/helper-methods';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
@@ -47,7 +47,7 @@ export const DirectionsContainer = styled.View`
 `;
 
 export const WordContainer = styled.View`
-  background: ${Air};
+  background: ${({theme: {dark}}) => (dark ? BitPay : Air)};
   justify-content: center;
   align-items: center;
   height: 200px;

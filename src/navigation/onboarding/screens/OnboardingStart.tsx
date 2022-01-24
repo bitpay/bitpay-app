@@ -7,6 +7,7 @@ import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
+  ActionContainer,
   CtaContainerAbsolute,
   HeaderRightContainer,
   WIDTH,
@@ -16,6 +17,7 @@ import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingImage} from '../components/Containers';
 import OnboardingSlide from '../components/OnboardingSlide';
 import {OnboardingStackParamList} from '../OnboardingStack';
+import {Link} from '../../../components/styled/Text';
 
 type OnboardingStartScreenProps = StackScreenProps<
   OnboardingStackParamList,
@@ -57,6 +59,11 @@ const Column = styled.View`
   justify-content: center;
   margin: 0 5px;
   flex: 1;
+`;
+
+const LinkText = styled(Link)`
+  font-weight: 500;
+  font-size: 18px;
 `;
 
 const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
@@ -169,16 +176,18 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
           </Column>
         </Row>
         <Row>
-          <Button
-            buttonType={'link'}
-            onPress={() => {
-              haptic('impactLight');
-              navigation.navigate('Onboarding', {
-                screen: 'Notifications',
-              });
-            }}>
-            Continue without an account
-          </Button>
+          <ActionContainer>
+            <Button
+              buttonType={'link'}
+              onPress={() => {
+                haptic('impactLight');
+                navigation.navigate('Onboarding', {
+                  screen: 'Notifications',
+                });
+              }}>
+              <LinkText>Continue without an account</LinkText>
+            </Button>
+          </ActionContainer>
         </Row>
       </CtaContainerAbsolute>
     </OnboardingContainer>

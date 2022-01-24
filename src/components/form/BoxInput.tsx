@@ -126,7 +126,8 @@ const BoxInput = ({
     onBlur && onBlur();
   };
 
-  const errorMessage = typeof error === 'string' && error.charAt(0).toUpperCase() + error.slice(1);
+  const errorMessage =
+    typeof error === 'string' && error.charAt(0).toUpperCase() + error.slice(1);
 
   return (
     <InputContainer>

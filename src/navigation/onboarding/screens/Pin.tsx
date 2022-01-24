@@ -2,6 +2,7 @@ import React, {useLayoutEffect} from 'react';
 import styled from 'styled-components/native';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
+  ActionContainer,
   CtaContainer,
   HeaderRightContainer,
   TextContainer,
@@ -66,8 +67,12 @@ const PinScreen = () => {
         </TextAlign>
       </TextContainer>
       <CtaContainer>
-        <Button buttonStyle={'primary'}>PIN</Button>
-        <Button buttonStyle={'secondary'}>Fingerprint</Button>
+        <ActionContainer>
+          <Button buttonStyle={'primary'}>PIN</Button>
+        </ActionContainer>
+        <ActionContainer>
+          <Button buttonStyle={'secondary'}>Fingerprint</Button>
+        </ActionContainer>
       </CtaContainer>
     </PinContainer>
   );
