@@ -1,4 +1,4 @@
-import {ExchangeRate, Key, PriceHistory} from './wallet.models';
+import {ExchangeRate, Key, PriceHistory, Token} from './wallet.models';
 
 export enum WalletActionTypes {
   SUCCESS_WALLET_STORE_INIT = 'WALLET/SUCCESS_WALLET_STORE_INIT',
@@ -16,6 +16,8 @@ export enum WalletActionTypes {
   SUCCESS_ENCRYPT_PASSWORD = 'WALLET/SUCCESS_ENCRYPT_PASSWORD',
   DELETE_KEY = 'WALLET/DELETE_KEY',
   SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD = 'WALLET/SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD',
+  SUCCESS_GET_TOKEN_OPTIONS = 'WALLET/SUCCESS_GET_TOKEN_OPTIONS',
+  FAILED_GET_TOKEN_OPTIONS = 'WALLET/FAILED_GET_TOKEN_OPTIONS',
 }
 
 interface successWalletStoreInit {
@@ -96,6 +98,15 @@ interface deleteKey {
   };
 }
 
+interface successGetTokenOptions {
+  type: typeof WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS;
+  payload: {[key in string]: Token};
+}
+
+interface failedGetTokenOptions {
+  type: typeof WalletActionTypes.FAILED_GET_TOKEN_OPTIONS;
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -110,4 +121,6 @@ export type WalletActionType =
   | failedGetPriceHistory
   | updateWalletBalance
   | deleteKey
-  | successEncryptOrDecryptPassword;
+  | successEncryptOrDecryptPassword
+  | successGetTokenOptions
+  | failedGetTokenOptions;
