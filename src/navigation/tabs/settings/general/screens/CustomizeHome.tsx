@@ -3,7 +3,7 @@ import CustomizeHomeCard from '../../../../../components/customize-home-card/Cus
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../../store';
 import styled from 'styled-components/native';
-import {CurrencySelectionOptions} from '../../../../../constants/CurrencySelectionOptions';
+import {SupportedCurrencyOptions} from '../../../../../constants/SupportedCurrencyOptions';
 import {ItemProps} from '../../../../../components/list/CurrencySelectionRow';
 
 const HeaderImg = styled.View`
@@ -59,7 +59,7 @@ const KeyCardComponent = (
           (wallet, index) =>
             wallet && (
               <Img key={index} isFirst={index === 0 || index % 7 === 0}>
-                {wallet.roundIcon(20)}
+                {wallet.img}
               </Img>
             ),
         )}
@@ -91,7 +91,7 @@ const CustomizeHome = () => {
     Object.values(keys).map(key => {
       const {wallets, totalBalance = 0, show} = key;
       const list = wallets.map(({currencyAbbreviation}) =>
-        CurrencySelectionOptions.find(
+        SupportedCurrencyOptions.find(
           ({id}: {id: string | number}) => id === currencyAbbreviation,
         ),
       );

@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import {CurrencySelectionOptions} from '../../../../constants/CurrencySelectionOptions';
+import {renderCurrencyImage} from '../../../../constants/SupportedCurrencyOptions';
 import HomeCard from '../../../../components/home-card/HomeCard';
 import {BaseText} from '../../../../components/styled/Text';
 import {Wallet} from '../../../../store/wallet/wallet.models';
@@ -21,9 +21,7 @@ const HeaderImg = styled.View`
   flex-wrap: wrap;
 `;
 
-const Img = styled.View<{isFirst: boolean; size: string}>`
-  width: ${({size}) => size};
-  height: ${({size}) => size};
+const Img = styled.View<{isFirst: boolean}>`
   min-height: 22px;
   margin-left: ${({isFirst}) => (isFirst ? 0 : '-5px')};
 `;
@@ -49,15 +47,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   totalBalance: number;
   onPress: () => void;
 }) => {
-  const walletInfo = wallets
-    .slice(0, WALLET_DISPLAY_LIMIT)
-    .map(wallet => wallet.currencyAbbreviation)
-    .map(currency =>
-      CurrencySelectionOptions.find(
-        ({id}: {id: string | number}) => id === currency,
-      ),
-    );
-
+  const walletInfo = wallets.slice(0, WALLET_DISPLAY_LIMIT);
   const remainingAssetCount =
     wallets.length > WALLET_DISPLAY_LIMIT
       ? wallets.length - WALLET_DISPLAY_LIMIT
@@ -65,14 +55,15 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
 
   const HeaderComponent = (
     <HeaderImg>
-      {walletInfo.map(
-        (wallet, index) =>
+      {walletInfo.map((wallet, index) => {
+        return (
           wallet && (
-            <Img key={index} isFirst={index === 0} size={ICON_SIZE + 'px'}>
-              {wallet.roundIcon(ICON_SIZE)}
+            <Img key={index} isFirst={index === 0}>
+              {renderCurrencyImage(wallet.img, ICON_SIZE)}
             </Img>
-          ),
-      )}
+          )
+        );
+      })}
       {remainingAssetCount && (
         <RemainingAssetsLabel>
           + {remainingAssetCount} more

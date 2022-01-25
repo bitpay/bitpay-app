@@ -1,13 +1,14 @@
-import React, {ReactElement} from 'react';
+import React, {memo, ReactElement} from 'react';
 import styled from 'styled-components/native';
 import {BaseText} from '../styled/Text';
 import {useTheme} from '@react-navigation/native';
 import {StyleProp, TextStyle} from 'react-native';
 import NestedArrow from '../../../assets/img/nested-arrow.svg';
+import {renderCurrencyImage} from '../../constants/SupportedCurrencyOptions';
 
 export interface WalletSettingsRowProps {
   id: string;
-  img: () => ReactElement;
+  img: string | ((props: any) => ReactElement);
   currencyName: string;
   isToken?: boolean;
 }
@@ -44,7 +45,7 @@ const WalletSettingsRow = ({
           <NestedArrow />
         </NestedArrowContainer>
       )}
-      {img()}
+      {renderCurrencyImage(img, 45)}
       <CurrencyName style={textStyle}>
         {currencyName} {isToken}
       </CurrencyName>
@@ -52,4 +53,4 @@ const WalletSettingsRow = ({
   );
 };
 
-export default WalletSettingsRow;
+export default memo(WalletSettingsRow);

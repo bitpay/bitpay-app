@@ -1,19 +1,18 @@
-import React, {ReactElement, useState} from 'react';
+import React, {memo, useState} from 'react';
 import styled from 'styled-components/native';
 import {CurrencyColumn, CurrencyImageContainer} from '../styled/Containers';
 import {RowContainer} from '../styled/Containers';
 import {H5, SubText} from '../styled/Text';
 import haptic from '../haptic-feedback/haptic';
 import Checkbox from '../checkbox/Checkbox';
+import {
+  renderCurrencyImage,
+  SupportedCurrencyOption,
+} from '../../constants/SupportedCurrencyOptions';
 
-export interface ItemProps {
-  id: string | number;
-  img: ReactElement;
-  currencyName: string;
-  currencyAbbreviation: string;
+export interface ItemProps extends SupportedCurrencyOption {
   disabled?: boolean;
   checked?: boolean;
-  roundIcon: (size?: number) => ReactElement;
 }
 
 interface Props {
@@ -47,7 +46,9 @@ const CurrencySelectionRow = ({item, emit}: Props) => {
 
   return (
     <RowContainer activeOpacity={1} onPress={toggle}>
-      <CurrencyImageContainer>{img}</CurrencyImageContainer>
+      <CurrencyImageContainer>
+        {renderCurrencyImage(img)}
+      </CurrencyImageContainer>
       <CurrencyColumn>
         <H5>{currencyName}</H5>
         <SubText>{currencyAbbreviation}</SubText>
@@ -59,4 +60,4 @@ const CurrencySelectionRow = ({item, emit}: Props) => {
   );
 };
 
-export default CurrencySelectionRow;
+export default memo(CurrencySelectionRow);
