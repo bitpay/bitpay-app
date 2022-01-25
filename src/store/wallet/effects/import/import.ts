@@ -78,7 +78,6 @@ export const serverAssistedImport = async (
           if (wallets.length === 0) {
             //  TODO: Handle this - WALLET_DOES_NOT_EXIST
           } else {
-            console.log(wallets);
             const tokens: Wallet[] = wallets.filter(
               (wallet: Wallet) => !!wallet.credentials.token,
             );
@@ -99,11 +98,13 @@ export const serverAssistedImport = async (
 
 const linkTokenToWallet = (tokens: Wallet[], wallets: Wallet[]) => {
   tokens.forEach(token => {
+    // find the associated wallet to add tokens too
     const associatedWalletId = token.credentials.walletId.split('-0x')[0];
     wallets = wallets.map((wallet: Wallet) => {
       if (wallet.credentials.walletId === associatedWalletId) {
+        // push token walletId as reference - this is used later to build out nested overview lists
         wallet.tokens = wallet.tokens || [];
-        wallet.tokens.push(token.id);
+        wallet.tokens.push(token.credentials.walletId);
       }
       return wallet;
     });

@@ -83,13 +83,13 @@ export const buildNestedWalletList = (wallets: Wallet[]) => {
 
   _coins.forEach(coin => {
     walletList.push(buildRow(coin));
-
+    // eth wallet with tokens -> for every token wallet ID grab full wallet from _tokens and add it to the list
     if (coin.tokens) {
       coin.tokens.forEach(id => {
         // eslint-disable-next-line no-shadow
-        const token = _tokens.find(token => token.id === id);
-        if (token) {
-          walletList.push({...buildRow(token), isToken: true});
+        const tokenWallet = _tokens.find(token => token.id === id);
+        if (tokenWallet) {
+          walletList.push({...buildRow(tokenWallet), isToken: true});
         }
       });
     }

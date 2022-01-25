@@ -166,9 +166,10 @@ const createTokenWallet = (
       const tokenCredentials: Credentials =
         wallet.credentials.getTokenCredentials(tokenOpts[token]);
       bwcClient.fromObj(tokenCredentials);
-      // Add the token info to the ethWallet.
+      // push walletId as reference - this is used later to build out nested overview lists
       wallet.tokens = wallet.tokens || [];
       wallet.tokens.push(tokenCredentials.walletId);
+      // Add the token info to the ethWallet for BWC/BWS
       wallet.preferences?.tokenAddresses?.push(
         // @ts-ignore
         tokenCredentials.token.address,
