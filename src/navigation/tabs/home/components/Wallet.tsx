@@ -1,11 +1,11 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import {renderCurrencyImage} from '../../../../constants/SupportedCurrencyOptions';
 import HomeCard from '../../../../components/home-card/HomeCard';
 import {BaseText} from '../../../../components/styled/Text';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {Slate} from '../../../../styles/colors';
 import {format} from '../../../../utils/currency';
+import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 
 interface WalletCardComponentProps {
   wallets: Wallet[];
@@ -59,7 +59,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
         return (
           wallet && (
             <Img key={index} isFirst={index === 0}>
-              {renderCurrencyImage(wallet.img, ICON_SIZE)}
+              <CurrencyImage img={wallet.img} size={ICON_SIZE} />
             </Img>
           )
         );

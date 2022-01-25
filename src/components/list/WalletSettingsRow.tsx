@@ -4,7 +4,7 @@ import {BaseText} from '../styled/Text';
 import {useTheme} from '@react-navigation/native';
 import {StyleProp, TextStyle} from 'react-native';
 import NestedArrow from '../../../assets/img/nested-arrow.svg';
-import {renderCurrencyImage} from '../../constants/SupportedCurrencyOptions';
+import {CurrencyImage} from '../currency-image/CurrencyImage';
 
 export interface WalletSettingsRowProps {
   id: string;
@@ -45,7 +45,7 @@ const WalletSettingsRow = ({
           <NestedArrow />
         </NestedArrowContainer>
       )}
-      {renderCurrencyImage(img, 45)}
+      <CurrencyImage img={img} size={45} />
       <CurrencyName style={textStyle}>
         {currencyName} {isToken}
       </CurrencyName>

@@ -8,7 +8,7 @@ import {H5, SubText} from '../styled/Text';
 import {RowContainer} from '../styled/Containers';
 import styled from 'styled-components/native';
 import NestedArrow from '../../../assets/img/nested-arrow.svg';
-import {renderCurrencyImage} from '../../constants/SupportedCurrencyOptions';
+import {CurrencyImage} from '../currency-image/CurrencyImage';
 
 const BalanceColumn = styled(Column)`
   align-items: flex-end;
@@ -53,7 +53,7 @@ const WalletRow = ({wallet, onPress}: Props) => {
         </NestedArrowContainer>
       )}
       <CurrencyImageContainer>
-        {renderCurrencyImage(img, 45)}
+        <CurrencyImage img={img} size={45} />
       </CurrencyImageContainer>
       <CurrencyColumn>
         <H5 ellipsizeMode="tail" numberOfLines={1}>

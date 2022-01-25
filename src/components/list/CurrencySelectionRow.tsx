@@ -5,10 +5,8 @@ import {RowContainer} from '../styled/Containers';
 import {H5, SubText} from '../styled/Text';
 import haptic from '../haptic-feedback/haptic';
 import Checkbox from '../checkbox/Checkbox';
-import {
-  renderCurrencyImage,
-  SupportedCurrencyOption,
-} from '../../constants/SupportedCurrencyOptions';
+import {SupportedCurrencyOption} from '../../constants/SupportedCurrencyOptions';
+import {CurrencyImage} from '../currency-image/CurrencyImage';
 
 export interface ItemProps extends SupportedCurrencyOption {
   disabled?: boolean;
@@ -47,7 +45,7 @@ const CurrencySelectionRow = ({item, emit}: Props) => {
   return (
     <RowContainer activeOpacity={1} onPress={toggle}>
       <CurrencyImageContainer>
-        {renderCurrencyImage(img)}
+        <CurrencyImage img={img} />
       </CurrencyImageContainer>
       <CurrencyColumn>
         <H5>{currencyName}</H5>

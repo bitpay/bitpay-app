@@ -29,4 +29,3 @@ export const buildWalletObj = (
       : tokenOpts[coin]?.logoURI,
   });
 };
-

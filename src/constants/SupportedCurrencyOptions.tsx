@@ -1,6 +1,4 @@
 import React, {ReactElement} from 'react';
-import FastImage from 'react-native-fast-image';
-import DefaultImage from '../../assets/img/currencies/default.svg';
 import BtcIcon from '../../assets/img/currencies/btc.svg';
 import BchIcon from '../../assets/img/currencies/bch.svg';
 import EthIcon from '../../assets/img/currencies/eth.svg';
@@ -112,30 +110,3 @@ export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
     currencyAbbreviation: 'WBTC',
   },
 ];
-
-// renders svg if supported currency or cached png if custom token
-export const renderCurrencyImage = (
-  img: string | ((props?: any) => ReactElement),
-  size = 40,
-) => {
-  const style = {width: size, height: size};
-
-  if (!img) {
-    return <DefaultImage style={style} />;
-  }
-
-  if (typeof img === 'string') {
-    return (
-      <FastImage
-        style={style}
-        source={{
-          uri: img,
-          priority: FastImage.priority.normal,
-        }}
-        resizeMode={FastImage.resizeMode.contain}
-      />
-    );
-  }
-
-  return img(style);
-};
