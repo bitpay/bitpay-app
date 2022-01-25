@@ -1,10 +1,9 @@
 import {
   Currencies,
-  SUPPORTED_TOKENS,
+  SUPPORTED_COINS,
   SupportedCoins,
   SupportedCurrencies,
   SupportedTokens,
-  TokenOpts,
 } from '../../../../constants/currencies';
 import {Effect, RootState} from '../../../index';
 import {AppActions} from '../../../app';
@@ -14,7 +13,7 @@ import merge from 'lodash.merge';
 import {buildWalletObj} from '../../utils/wallet';
 import {successCreateKey} from '../../wallet.actions';
 import API from 'bitcore-wallet-client/ts_build';
-import {Wallet} from '../../wallet.models';
+import {Token, Wallet} from '../../wallet.models';
 import {Network} from '../../../../constants';
 
 const BWC = BwcProvider.getInstance();
@@ -49,7 +48,9 @@ export const startCreateKey =
           }),
         );
         resolve();
-      } catch (err) {}
+      } catch (err) {
+        console.error(err);
+      }
     });
   };
 
@@ -72,12 +73,12 @@ const createMultipleWallets = async (
   const {
     APP: {network},
   } = state;
-
-  const coins: Array<SupportedCoins> = currencies.filter(
-    asset => !SUPPORTED_TOKENS.includes(asset),
+  const tokenOpts = state.WALLET.tokenOptions;
+  const coins: Array<SupportedCoins> = currencies.filter(currency =>
+    SUPPORTED_COINS.includes(currency),
   );
-  const tokens: Array<SupportedTokens> = currencies.filter(asset =>
-    SUPPORTED_TOKENS.includes(asset),
+  const tokens: Array<SupportedTokens> = currencies.filter(
+    currency => !SUPPORTED_COINS.includes(currency),
   );
 
   const wallets: API[] = [];
@@ -86,21 +87,20 @@ const createMultipleWallets = async (
     const wallet = (await createWallet(key, coin, network)) as Wallet;
     wallets.push(wallet);
 
-    if (coin === 'eth' && tokens.length) {
+    if (coin === 'eth') {
       wallet.preferences = wallet.preferences || {
         tokenAddresses: [],
       };
-
       for (const token of tokens) {
-        const tokenWallet = await createTokenWallet(wallet, token);
+        const tokenWallet = await createTokenWallet(wallet, token, tokenOpts);
         wallets.push(tokenWallet);
       }
     }
   }
-
-  return wallets.map(wallet =>
-    merge(wallet, buildWalletObj(wallet.credentials)),
-  );
+  // build out app specific props
+  return wallets.map(wallet => {
+    return merge(wallet, buildWalletObj(wallet.credentials, tokenOpts));
+  });
 };
 
 const createWallet = (
@@ -158,25 +158,30 @@ const createWallet = (
 const createTokenWallet = (
   wallet: Wallet,
   token: SupportedTokens,
+  tokenOpts: {[key in string]: Token},
 ): Promise<API> => {
   return new Promise(resolve => {
-    const bwcClient = BWC.getClient();
-    const tokenCredentials: Credentials =
-      wallet.credentials.getTokenCredentials(TokenOpts[token]);
-    bwcClient.fromObj(tokenCredentials);
-    // Add the token info to the ethWallet.
-    wallet.tokens = wallet.tokens || [];
-    wallet.tokens.push({...TokenOpts[token]});
-    wallet.preferences?.tokenAddresses?.push(
-      // @ts-ignore
-      tokenCredentials.token.address,
-    );
-    wallet.savePreferences(wallet.preferences, (err: any) => {
-      if (err) {
-        console.error(`Error saving token: ${token}`);
-      }
-      console.log('added token', token);
-      resolve(bwcClient);
-    });
+    try {
+      const bwcClient = BWC.getClient();
+      const tokenCredentials: Credentials =
+        wallet.credentials.getTokenCredentials(tokenOpts[token]);
+      bwcClient.fromObj(tokenCredentials);
+      // Add the token info to the ethWallet.
+      wallet.tokens = wallet.tokens || [];
+      wallet.tokens.push(tokenCredentials.walletId);
+      wallet.preferences?.tokenAddresses?.push(
+        // @ts-ignore
+        tokenCredentials.token.address,
+      );
+      wallet.savePreferences(wallet.preferences, (err: any) => {
+        if (err) {
+          console.error(`Error saving token: ${token}`);
+        }
+        console.log('added token', token);
+        resolve(bwcClient);
+      });
+    } catch (err) {
+      console.error(err);
+    }
   });
 };

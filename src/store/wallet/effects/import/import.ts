@@ -7,13 +7,16 @@ import merge from 'lodash.merge';
 import {buildWalletObj} from '../../utils/wallet';
 import {failedImport, successImport} from '../../wallet.actions';
 import {dismissOnGoingProcessModal} from '../../../app/app.actions';
-import {TokenOpts} from '../../../../constants/currencies';
 
 export const startImportMnemonic =
   (words: string, opts: Partial<KeyOptions>): Effect =>
-  async dispatch => {
-    await dispatch(startOnGoingProcessModal(OnGoingProcessMessages.IMPORTING));
+  async (dispatch, getState) => {
     try {
+      const state = getState();
+      const tokenOpts = state.WALLET.tokenOptions;
+      await dispatch(
+        startOnGoingProcessModal(OnGoingProcessMessages.IMPORTING),
+      );
       words = normalizeMnemonic(words);
       opts.words = words;
 
@@ -24,10 +27,11 @@ export const startImportMnemonic =
           key: {
             id: key.id,
             wallets: wallets.map(wallet =>
-              merge(wallet, buildWalletObj(wallet.credentials)),
+              merge(wallet, buildWalletObj(wallet.credentials, tokenOpts)),
             ),
             properties: key.toObj(),
             methods: key,
+            // TODO total balance
             totalBalance: 0,
             show: true,
             isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
@@ -99,8 +103,7 @@ const linkTokenToWallet = (tokens: Wallet[], wallets: Wallet[]) => {
     wallets = wallets.map((wallet: Wallet) => {
       if (wallet.credentials.walletId === associatedWalletId) {
         wallet.tokens = wallet.tokens || [];
-        const tokenOpt = TokenOpts[token.credentials.coin];
-        tokenOpt && wallet.tokens.push(tokenOpt);
+        wallet.tokens.push(token.id);
       }
       return wallet;
     });
