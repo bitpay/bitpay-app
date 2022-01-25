@@ -26,8 +26,11 @@ const SwipeButton = ({title, onSwipeComplete}: SwipeButtonConfig) => {
       title={title}
       titleColor={White}
       titleStyles={{fontWeight: '500'}}
-      shouldResetAfterSuccess={true} // Button resets automatically after swipe success
-      resetAfterSuccessAnimDelay={3000} // Reset after 3s
+      // shouldResetAfterSuccess={true} // Button resets automatically after swipe success
+      // resetAfterSuccessAnimDelay={3000} // Reset after 3s
+      // forceReset={ reset => {
+      //   forceResetLastButton = reset // Calling "reset" will reset the swipe thumb.
+      // }}
     />
   );
 };
