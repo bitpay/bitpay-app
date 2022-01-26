@@ -9,7 +9,7 @@ import UsdcIcon from '../../assets/img/currencies/usdc.svg';
 import GusdIcon from '../../assets/img/currencies/gusd.svg';
 import BusdIcon from '../../assets/img/currencies/busd.svg';
 import DaiIcon from '../../assets/img/currencies/dai.svg';
-import PaxIcon from '../../assets/img/currencies/pax.svg';
+import UsdpIcon from '../../assets/img/currencies/usdp.svg';
 import WbtcIcon from '../../assets/img/currencies/wbtc.svg';
 
 export interface SupportedCurrencyOption {
@@ -32,7 +32,7 @@ export const CurrencyListIcons: {
   gusd: props => <GusdIcon {...props} />,
   busd: props => <BusdIcon {...props} />,
   dai: props => <DaiIcon {...props} />,
-  pax: props => <PaxIcon {...props} />,
+  usdp: props => <UsdpIcon {...props} />,
   wbtc: props => <WbtcIcon {...props} />,
 };
 
@@ -99,7 +99,7 @@ export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
   },
   {
     id: 'usdp',
-    img: CurrencyListIcons.pax,
+    img: CurrencyListIcons.usdp,
     currencyName: 'Pax Dollar',
     currencyAbbreviation: 'USDP',
   },
