@@ -1,4 +1,4 @@
-import React, {ReactElement} from 'react';
+import React, {memo, ReactElement} from 'react';
 import {
   Column,
   CurrencyImageContainer,
@@ -8,6 +8,7 @@ import {H5, SubText} from '../styled/Text';
 import {RowContainer} from '../styled/Containers';
 import styled from 'styled-components/native';
 import NestedArrow from '../../../assets/img/nested-arrow.svg';
+import {CurrencyImage} from '../currency-image/CurrencyImage';
 
 const BalanceColumn = styled(Column)`
   align-items: flex-end;
@@ -21,7 +22,7 @@ const NestedArrowContainer = styled.View`
 
 export interface WalletRowProps {
   id: string;
-  img: () => ReactElement;
+  img: string | ((props: any) => ReactElement);
   currencyName: string;
   currencyAbbreviation: string;
   cryptoBalance: number;
@@ -51,9 +52,13 @@ const WalletRow = ({wallet, onPress}: Props) => {
           <NestedArrow />
         </NestedArrowContainer>
       )}
-      <CurrencyImageContainer>{img()}</CurrencyImageContainer>
+      <CurrencyImageContainer>
+        <CurrencyImage img={img} size={45} />
+      </CurrencyImageContainer>
       <CurrencyColumn>
-        <H5>{currencyName}</H5>
+        <H5 ellipsizeMode="tail" numberOfLines={1}>
+          {currencyName}
+        </H5>
         <SubText>{currencyAbbreviation}</SubText>
       </CurrencyColumn>
       <BalanceColumn>
@@ -64,4 +69,4 @@ const WalletRow = ({wallet, onPress}: Props) => {
   );
 };
 
-export default WalletRow;
+export default memo(WalletRow);
