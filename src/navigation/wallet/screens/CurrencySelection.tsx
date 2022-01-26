@@ -59,7 +59,7 @@ const CurrencySelection = () => {
         </HeaderRightContainer>
       ),
     });
-  });
+  }, [navigation]);
 
   const dispatch = useDispatch();
   const [selectedCurrencies, setSelectedCurrencies] = useState<Array<string>>(

@@ -1,6 +1,8 @@
 import {
   Currencies,
   SUPPORTED_COINS,
+  SUPPORTED_CURRENCIES,
+  SUPPORTED_TOKENS,
   SupportedCoins,
   SupportedCurrencies,
   SupportedTokens,
@@ -21,7 +23,7 @@ const BWC = BwcProvider.getInstance();
 export const startCreateKey =
   (currencies: Array<SupportedCurrencies>): Effect =>
   async (dispatch, getState) => {
-    return new Promise(async resolve => {
+    return new Promise(async (resolve, reject) => {
       try {
         const key = BWC.createKey({
           seedType: 'new',
@@ -33,7 +35,6 @@ export const startCreateKey =
           getState(),
         );
 
-        dispatch(AppActions.dismissOnGoingProcessModal());
         dispatch(
           successCreateKey({
             key: {
@@ -50,6 +51,9 @@ export const startCreateKey =
         resolve();
       } catch (err) {
         console.error(err);
+        reject();
+      } finally {
+        dispatch(AppActions.dismissOnGoingProcessModal());
       }
     });
   };
@@ -67,24 +71,28 @@ const createMultipleWallets = async (
       },
     ) => any;
   },
-  currencies: Array<SupportedCurrencies>,
+  currencies: Array<string>,
   state: RootState,
-) => {
+): Promise<Wallet[]> => {
   const {
     APP: {network},
   } = state;
   const tokenOpts = state.WALLET.tokenOptions;
-  const coins = currencies.filter((currency): currency is SupportedCoins =>
-    SUPPORTED_COINS.includes(currency),
+  const supportedCoins = currencies.filter(
+    (currency): currency is SupportedCoins =>
+      SUPPORTED_COINS.includes(currency),
   );
-  const tokens = currencies.filter(
+  const supportedTokens = currencies.filter(
     (currency): currency is SupportedTokens =>
-      !SUPPORTED_COINS.includes(currency),
+      SUPPORTED_TOKENS.includes(currency),
   );
-
+  const customTokens = currencies.filter(
+    currency => !SUPPORTED_CURRENCIES.includes(currency),
+  );
+  const tokens = [...supportedTokens, ...customTokens];
   const wallets: API[] = [];
 
-  for (const coin of coins) {
+  for (const coin of supportedCoins) {
     const wallet = (await createWallet(key, coin, network)) as Wallet;
     wallets.push(wallet);
 
@@ -159,7 +167,7 @@ const createWallet = (
 
 const createTokenWallet = (
   wallet: Wallet,
-  token: SupportedTokens,
+  token: string,
   tokenOpts: {[key in string]: Token},
 ): Promise<API> => {
   return new Promise((resolve, reject) => {
