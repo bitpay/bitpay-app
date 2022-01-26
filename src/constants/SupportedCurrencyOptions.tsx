@@ -98,10 +98,10 @@ export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
     currencyAbbreviation: 'DAI',
   },
   {
-    id: 'pax',
+    id: 'usdp',
     img: CurrencyListIcons.pax,
-    currencyName: 'Pax',
-    currencyAbbreviation: 'PAX',
+    currencyName: 'Pax Dollar',
+    currencyAbbreviation: 'USDP',
   },
   {
     id: 'wbtc',
