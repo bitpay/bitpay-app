@@ -1,6 +1,6 @@
 export type SupportedCoins = 'btc' | 'bch' | 'ltc' | 'doge' | 'eth';
 export type SupportedTokens = 'usdc' | 'gusd' | 'pax' | 'busd' | 'dai' | 'wbtc';
-export type SupportedCurrencies = SupportedCoins & SupportedTokens;
+export type SupportedCurrencies = SupportedCoins | SupportedTokens;
 
 export interface CurrencyOpts {
   // Bitcore-node

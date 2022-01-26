@@ -56,10 +56,11 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   const HeaderComponent = (
     <HeaderImg>
       {walletInfo.map((wallet, index) => {
+        const {id, img} = wallet;
         return (
           wallet && (
-            <Img key={index} isFirst={index === 0}>
-              <CurrencyImage img={wallet.img} size={ICON_SIZE} />
+            <Img key={id} isFirst={index === 0}>
+              <CurrencyImage img={img} size={ICON_SIZE} />
             </Img>
           )
         );

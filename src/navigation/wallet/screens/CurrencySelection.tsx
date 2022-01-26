@@ -31,6 +31,8 @@ const ListContainer = styled.View`
   margin-top: 20px;
 `;
 
+const keyExtractor = (item: {id: string}) => item.id;
+
 const CurrencySelection = () => {
   const navigation = useNavigation();
   // Configuring Header
@@ -174,8 +176,6 @@ const CurrencySelection = () => {
     ),
     [],
   );
-
-  const keyExtractor = useCallback(item => item.id, []);
 
   return (
     <CurrencySelectionContainer>

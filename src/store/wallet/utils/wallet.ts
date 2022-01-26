@@ -1,6 +1,5 @@
 import {Token, WalletObj} from '../wallet.models';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
-import merge from 'lodash.merge';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 
@@ -18,7 +17,7 @@ export const buildWalletObj = (
   },
   tokenOpts: {[key in string]: Token},
 ): WalletObj => {
-  return merge({
+  return {
     id: walletId,
     currencyName: walletName,
     currencyAbbreviation: coin,
@@ -27,5 +26,5 @@ export const buildWalletObj = (
     img: SUPPORTED_CURRENCIES.includes(coin)
       ? CurrencyListIcons[coin]
       : tokenOpts[coin]?.logoURI,
-  });
+  };
 };

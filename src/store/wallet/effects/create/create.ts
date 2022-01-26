@@ -74,11 +74,12 @@ const createMultipleWallets = async (
     APP: {network},
   } = state;
   const tokenOpts = state.WALLET.tokenOptions;
-  const coins: Array<SupportedCoins> = currencies.filter(currency =>
+  const coins = currencies.filter((currency): currency is SupportedCoins =>
     SUPPORTED_COINS.includes(currency),
   );
-  const tokens: Array<SupportedTokens> = currencies.filter(
-    currency => !SUPPORTED_COINS.includes(currency),
+  const tokens = currencies.filter(
+    (currency): currency is SupportedTokens =>
+      !SUPPORTED_COINS.includes(currency),
   );
 
   const wallets: API[] = [];
@@ -119,7 +120,7 @@ const createWallet = (
   coin: SupportedCoins,
   network: Network,
 ): Promise<API> => {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     const bwcClient = BWC.getClient();
     bwcClient.fromString(
       key.createCredentials(undefined, {
@@ -146,6 +147,7 @@ const createWallet = (
         // TODO handle this
         if (err) {
           console.error(err);
+          reject();
         } else {
           console.log('added coin', coin);
           resolve(bwcClient);
@@ -160,7 +162,7 @@ const createTokenWallet = (
   token: SupportedTokens,
   tokenOpts: {[key in string]: Token},
 ): Promise<API> => {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     try {
       const bwcClient = BWC.getClient();
       const tokenCredentials: Credentials =
@@ -183,6 +185,7 @@ const createTokenWallet = (
       });
     } catch (err) {
       console.error(err);
+      reject();
     }
   });
 };
