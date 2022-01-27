@@ -2,6 +2,8 @@ import {createTransform} from 'redux-persist';
 import {Key} from '../wallet/wallet.models';
 import merge from 'lodash.merge';
 import {BwcProvider} from '../../lib/bwc';
+import {SUPPORTED_CURRENCIES} from '../../constants/currencies';
+import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
 const BWCProvider = BwcProvider.getInstance();
 
 export const bindWalletClient = createTransform(
@@ -11,10 +13,15 @@ export const bindWalletClient = createTransform(
   (_outboundState, key) => {
     if (key === 'keys') {
       const outboundState: {[key in string]: Key} = {};
+      // eslint-disable-next-line no-shadow
       for (const [id, key] of Object.entries(
         _outboundState as {[key in string]: Key},
       )) {
         const wallets = key.wallets.map(wallet => {
+          const {img, currencyAbbreviation} = wallet;
+          if (!img && SUPPORTED_CURRENCIES.includes(currencyAbbreviation)) {
+            wallet.img = CurrencyListIcons[currencyAbbreviation];
+          }
           console.log(`bindWalletClient - ${wallet.id}`);
           return merge(
             BWCProvider.getClient(JSON.stringify(wallet.credentials)),

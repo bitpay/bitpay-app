@@ -1,4 +1,4 @@
-import {ExchangeRate, Key, PriceHistory} from './wallet.models';
+import {ExchangeRate, Key, PriceHistory, Token} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 
 type WalletReduxPersistBlackList = [];
@@ -10,6 +10,7 @@ export interface WalletState {
   keys: {[key in string]: Key};
   rates: {[key in string]: Array<ExchangeRate>};
   priceHistory: Array<PriceHistory>;
+  tokenOptions: {[key in string]: Token};
   showReceiveAddressModal: boolean;
   receiveAddressConfig: ReceiveAddressConfig | undefined;
 }
@@ -19,6 +20,7 @@ const initialState: WalletState = {
   keys: {},
   rates: {},
   priceHistory: [],
+  tokenOptions: {},
   showReceiveAddressModal: false,
   receiveAddressConfig: undefined,
 };
@@ -112,6 +114,13 @@ export const walletReducer = (
         keys: {
           ...keyList,
         },
+      };
+    }
+
+    case WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS: {
+      return {
+        ...state,
+        tokenOptions: action.payload,
       };
     }
 

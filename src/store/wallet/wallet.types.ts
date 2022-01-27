@@ -1,4 +1,4 @@
-import {ExchangeRate, Key, PriceHistory} from './wallet.models';
+import {ExchangeRate, Key, PriceHistory, Token} from './wallet.models';
 import {ReceiveAddressConfig} from '../../navigation/wallet/components/ReceiveAddress';
 
 export enum WalletActionTypes {
@@ -16,6 +16,8 @@ export enum WalletActionTypes {
   UPDATE_WALLET_BALANCE = 'WALLET/UPDATE_WALLET_BALANCE',
   DELETE_KEY = 'WALLET/DELETE_KEY',
   SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD = 'WALLET/SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD',
+  SUCCESS_GET_TOKEN_OPTIONS = 'WALLET/SUCCESS_GET_TOKEN_OPTIONS',
+  FAILED_GET_TOKEN_OPTIONS = 'WALLET/FAILED_GET_TOKEN_OPTIONS',
   SHOW_RECEIVE_ADDRESS_MODAL = 'WALLET/SHOW_RECEIVE_ADDRESS_MODAL',
   DISMISS_RECEIVE_ADDRESS_MODAL = 'WALLET/DISMISS_RECEIVE_ADDRESS_MODAL',
 }
@@ -98,6 +100,15 @@ interface deleteKey {
   };
 }
 
+interface successGetTokenOptions {
+  type: typeof WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS;
+  payload: {[key in string]: Token};
+}
+
+interface failedGetTokenOptions {
+  type: typeof WalletActionTypes.FAILED_GET_TOKEN_OPTIONS;
+}
+
 interface showReceiveAddressModal {
   type: typeof WalletActionTypes.SHOW_RECEIVE_ADDRESS_MODAL;
   payload: ReceiveAddressConfig;
@@ -121,6 +132,9 @@ export type WalletActionType =
   | failedGetPriceHistory
   | updateWalletBalance
   | deleteKey
+  | successEncryptOrDecryptPassword
+  | successGetTokenOptions
+  | failedGetTokenOptions
   | successEncryptOrDecryptPassword
   | showReceiveAddressModal
   | dismissReceiveAddressModal;
