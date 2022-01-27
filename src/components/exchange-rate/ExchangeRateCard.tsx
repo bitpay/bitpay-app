@@ -4,6 +4,7 @@ import {Caution, LightBlack, White} from '../../styles/colors';
 import {BaseText} from '../styled/Text';
 import {ExchangeRateProps} from './ExchangeRatesSlides';
 import {ScreenGutter} from '../styled/Containers';
+import {CurrencyImage} from '../currency-image/CurrencyImage';
 
 const ExchangeRateCardContainer = styled.View`
   justify-content: flex-start;
@@ -54,7 +55,9 @@ export default ({item}: {item: ExchangeRateProps}) => {
           elevation: 3,
         },
       ]}>
-      <CurrencyIconContainer>{img}</CurrencyIconContainer>
+      <CurrencyIconContainer>
+        <CurrencyImage img={img} size={25} />
+      </CurrencyIconContainer>
       <CurrencyNameText>{currencyName}</CurrencyNameText>
       <CurrencyAverageText average={average}>{average}%</CurrencyAverageText>
     </ExchangeRateCardContainer>
