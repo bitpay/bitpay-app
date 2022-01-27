@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {BaseText} from '../styled/Text';
 import DeleteSvg from '../../../assets/img/delete.svg';
+import haptic from '../haptic-feedback/haptic';
 
 const KeyboardContainer = styled.View`
   margin: 10px 0;
@@ -24,15 +25,16 @@ const CellText = styled(BaseText)`
   line-height: 65px;
 `;
 
-interface VirtualKeyboardConfig {
-  setValue: (value: string) => void;
-  resetValue: string | undefined;
+export interface VirtualKeyboardProps {
+  onChange: (value: string) => void;
+  reset: string | undefined;
 }
 
-const VirtualKeyboard = ({setValue, resetValue}: VirtualKeyboardConfig) => {
+const VirtualKeyboard = ({onChange, reset}: VirtualKeyboardProps) => {
   const [curVal, setCurVal] = useState('');
 
   const onCellPress = (val: string) => {
+    haptic('impactLight');
     let currentValue;
     if (val === 'reset') {
       currentValue = '';
@@ -42,14 +44,14 @@ const VirtualKeyboard = ({setValue, resetValue}: VirtualKeyboardConfig) => {
       currentValue = curVal + val;
     }
     setCurVal(currentValue);
-    setValue(currentValue);
+    onChange(currentValue);
   };
 
   useEffect(() => {
-    if (resetValue) {
+    if (reset) {
       onCellPress('reset');
     }
-  }, [resetValue]);
+  }, [reset]);
 
   const Cell = ({val}: {val: string}) => {
     return (
