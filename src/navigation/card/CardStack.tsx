@@ -39,7 +39,6 @@ const CardStack = () => {
         component={CardSettings}
         options={{
           title: 'Settings',
-          headerLeft: () => null,
         }}
       />
     </Card.Navigator>

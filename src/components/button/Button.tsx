@@ -2,7 +2,14 @@ import debounce from 'lodash.debounce';
 import React from 'react';
 import {BaseButtonProps} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
-import {Action, Air, Disabled, DisabledDark, Midnight, White} from '../../styles/colors';
+import {
+  Action,
+  Air,
+  Disabled,
+  DisabledDark,
+  Midnight,
+  White,
+} from '../../styles/colors';
 import Haptic from '../haptic-feedback/haptic';
 import {BaseText} from '../styled/Text';
 
@@ -37,17 +44,18 @@ const ButtonContainer = styled.TouchableOpacity<ButtonOptionProps>`
 
     return secondary ? 'transparent' : Action;
   }};
-  border: 2px solid ${({disabled, secondary, theme}) => {
-    if (disabled) {
-      return Disabled;
-    }
+  border: 2px solid
+    ${({disabled, secondary, theme}) => {
+      if (disabled) {
+        return Disabled;
+      }
 
-    if (secondary) {
-      return theme?.dark ? White : Action;
-    }
+      if (secondary) {
+        return theme?.dark ? White : Action;
+      }
 
-    return Action;
-  }};
+      return Action;
+    }};
   border-radius: 6px;
   padding: 18px;
 `;
@@ -77,13 +85,14 @@ const PillContainer = styled.TouchableOpacity<ButtonOptionProps>`
 
     return theme?.dark ? Midnight : Air;
   }};
-  border: 2px solid ${({secondary, theme}) => {
-    if (secondary) {
-      return 'transparent';
-    }
+  border: 2px solid
+    ${({secondary, theme}) => {
+      if (secondary) {
+        return 'transparent';
+      }
 
-    return theme?.dark ? Midnight : Air;
-  }};
+      return theme?.dark ? Midnight : Air;
+    }};
   border-radius: 17.5px;
   padding: 8px 15px;
 `;
@@ -149,9 +158,7 @@ const Button: React.FC<ButtonProps> = ({
         disabled={disabled}
         onPress={debouncedOnPress}
         activeOpacity={ACTIVE_OPACITY}>
-        <LinkText disabled={disabled}>
-          {children}
-        </LinkText>
+        <LinkText disabled={disabled}>{children}</LinkText>
       </LinkContainer>
     );
   }
@@ -177,9 +184,7 @@ const Button: React.FC<ButtonProps> = ({
       onPress={debouncedOnPress}
       activeOpacity={ACTIVE_OPACITY}
       testID={'button'}>
-      <ButtonText
-        secondary={secondary}
-        disabled={disabled}>
+      <ButtonText secondary={secondary} disabled={disabled}>
         {children}
       </ButtonText>
     </ButtonContainer>

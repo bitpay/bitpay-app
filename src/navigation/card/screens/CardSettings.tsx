@@ -1,29 +1,25 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Switch, Text, View} from 'react-native';
 import Carousel from 'react-native-snap-carousel';
-import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {ScreenGutter, WIDTH} from '../../../components/styled/Containers';
 import {H3} from '../../../components/styled/Text';
-import {SUPPORTED_DESIGN_CURRENCIES} from '../../../constants/config.card';
-import {RootState} from '../../../store';
-import {CardActions} from '../../../store/card';
 import {Card} from '../../../store/card/card.models';
-import {VirtualDesignCurrency} from '../../../store/card/card.types';
 import {CardStackParamList} from '../CardStack';
 import {OverviewSlide} from '../components/CardDashboard';
+import SettingsList from '../components/CardSettingsList';
 import CardSettingsSlide from '../components/CardSettingsSlide';
 
 export type CardSettingsParamList = {
   slide: OverviewSlide;
   id?: string | null | undefined;
 };
+
 type CardSettingsProps = StackScreenProps<CardStackParamList, 'Settings'>;
 
-const CardSettingsContainer = styled.View`
+const CardSettingsContainer = styled.ScrollView`
   padding: ${ScreenGutter};
 `;
 
@@ -44,8 +40,6 @@ const CardTypeButtons = styled.View`
   flex-direction: row;
   flex-grow: 0;
 `;
-
-const Br = () => <Text />;
 
 /**
  * Builds an array of 1-2 cards to display in the settings screen. Settings will display at most 1 virtual and 1 physical card at a time.
@@ -70,7 +64,6 @@ const buildSettingsSlides = (cards: Card[]) => {
 };
 
 const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
-  const dispatch = useDispatch();
   const {t} = useTranslation();
   const carouselRef = useRef<Carousel<Card>>(null);
   const {slide, id} = route.params;
@@ -86,21 +79,15 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
         )
       : 0;
   });
-  const designCurrency = useSelector<RootState, VirtualDesignCurrency>(
-    ({CARD}) => CARD.virtualDesignCurrency,
-  );
-  const activeCard = memoizedSlides[carouselRef.current ? carouselRef.current.currentIndex : initialSlideIdx];
+  const activeCard =
+    memoizedSlides[
+      carouselRef.current ? carouselRef.current.currentIndex : initialSlideIdx
+    ];
 
   const onCardChange = (idx: number) => {
-    const id = memoizedSlides[idx].id;
+    const nextId = memoizedSlides[idx].id;
 
-    navigation.setParams({id});
-  };
-
-  const onDesignToggle = (c: VirtualDesignCurrency, enabled: boolean) => {
-    dispatch(
-      CardActions.virtualDesignCurrencyUpdated(enabled ? c : 'bitpay-b'),
-    );
+    navigation.setParams({id: nextId});
   };
 
   return (
@@ -145,22 +132,7 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
         layout="default"
       />
 
-      <Br />
-      <Text>Virtual Card Design Placeholder</Text>
-
-      {Object.values(SUPPORTED_DESIGN_CURRENCIES).map(c => {
-        return (
-          <View
-            style={{flexDirection: 'row', justifyContent: 'space-between'}}
-            key={c.currency}>
-            <Text>{c.currency}</Text>
-            <Switch
-              onValueChange={enabled => onDesignToggle(c.currency, enabled)}
-              value={c.currency === designCurrency}
-            />
-          </View>
-        );
-      })}
+      <SettingsList card={activeCard} />
     </CardSettingsContainer>
   );
 };

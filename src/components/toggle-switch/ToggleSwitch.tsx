@@ -2,7 +2,7 @@ import React from 'react';
 import {Switch} from 'react-native';
 import {Action, NeutralSlate, White} from '../../styles/colors';
 interface Props {
-  onChange: (value: boolean) => void;
+  onChange: ((value: boolean) => any) | undefined;
   isEnabled: boolean;
 }
 
