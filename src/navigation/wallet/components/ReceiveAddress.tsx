@@ -25,7 +25,13 @@ import {
   ValidateAddress,
 } from '../../../constants/address';
 
-import {Action, LightBlack, NeutralSlate, White} from '../../../styles/colors';
+import {
+  Action,
+  LightBlack,
+  NeutralSlate,
+  SlateDark,
+  White,
+} from '../../../styles/colors';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
 import CopySvg from '../../../../assets/img/copy.svg';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
@@ -68,7 +74,7 @@ const Refresh = styled.TouchableOpacity<{isBch?: boolean}>`
   margin-top: ${({isBch}) => (isBch ? '10px' : '0')};
 `;
 
-const BchAddressTypes = ['Segwit', 'Legacy'];
+const BchAddressTypes = ['Cash Address', 'Legacy'];
 
 const BchHeaderAction = styled.TouchableOpacity<{isActive: boolean}>`
   align-items: center;
@@ -81,8 +87,7 @@ const BchHeaderAction = styled.TouchableOpacity<{isActive: boolean}>`
 
 const BchHeaderActionText = styled(BaseText)<{isActive: boolean}>`
   font-size: 16px;
-  opacity: ${({isActive}) => (isActive ? 1 : 0.7)};
-  color: ${({theme}) => theme.colors.text};
+  color: ${({theme, isActive}) => (isActive ? theme.colors.text : SlateDark)};
 `;
 
 const BchHeaderActions = styled.View`
@@ -179,7 +184,7 @@ const ReceiveAddress = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(true);
-  const [bchAddressType, setBchAddressType] = useState('Segwit');
+  const [bchAddressType, setBchAddressType] = useState('Cash Address');
   const [bchAddress, setBchAddress] = useState('');
   const {imgSrc} =
     SupportedCurrencyOptions.find(
@@ -246,7 +251,7 @@ const ReceiveAddress = () => {
                 setAddress(addr[0].address);
                 if (coin === 'bch') {
                   setBchAddress(addr[0].address);
-                  setBchAddressType('Segwit');
+                  setBchAddressType('Cash Address');
                 }
               },
             );
@@ -270,7 +275,7 @@ const ReceiveAddress = () => {
           setAddress(addressObj.address);
           if (coin === 'bch') {
             setBchAddress(addressObj.address);
-            setBchAddressType('Segwit');
+            setBchAddressType('Cash Address');
           }
         }
       });
