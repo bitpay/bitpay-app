@@ -24,7 +24,6 @@ import {
   getLegacyBchAddressFormat,
   ValidateAddress,
 } from '../../../constants/address';
-import {CurrencySelectionOptions} from '../../../constants/CurrencySelectionOptions';
 
 import {Action, LightBlack, NeutralSlate, White} from '../../../styles/colors';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
@@ -32,6 +31,7 @@ import CopySvg from '../../../../assets/img/copy.svg';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import {sleep} from '../../../utils/helper-methods';
+import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 
 export interface ReceiveAddressConfig {
   keyId: string;
@@ -182,7 +182,7 @@ const ReceiveAddress = () => {
   const [bchAddressType, setBchAddressType] = useState('Segwit');
   const [bchAddress, setBchAddress] = useState('');
   const {imgSrc} =
-    CurrencySelectionOptions.find(
+    SupportedCurrencyOptions.find(
       ({id: currencyId}) => currencyId === wallet?.currencyAbbreviation,
     ) || {};
 

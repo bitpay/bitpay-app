@@ -1,10 +1,5 @@
 import {WalletActionType, WalletActionTypes} from './wallet.types';
-import {
-  ExchangeRate,
-  Key,
-  PriceHistory,
-  Token,
-} from './wallet.models';
+import {ExchangeRate, Key, PriceHistory, Token} from './wallet.models';
 import {ReceiveAddressConfig} from '../../navigation/wallet/components/ReceiveAddress';
 
 export const successWalletStoreInit = (): WalletActionType => ({
