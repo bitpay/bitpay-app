@@ -36,12 +36,18 @@ const VirtualKeyboard = ({onChange, reset}: VirtualKeyboardProps) => {
   const onCellPress = (val: string) => {
     haptic('impactLight');
     let currentValue;
-    if (val === 'reset') {
-      currentValue = '';
-    } else if (val === 'backspace') {
-      currentValue = curVal.slice(0, -1);
-    } else {
-      currentValue = curVal + val;
+    switch (val) {
+      case 'reset':
+        currentValue = '';
+        break;
+      case 'backspace':
+        currentValue = curVal.slice(0, -1);
+        break;
+      case '.':
+        currentValue = curVal.includes('.') ? curVal : curVal + val;
+        break;
+      default:
+        currentValue = curVal + val;
     }
     setCurVal(currentValue);
     onChange(currentValue);

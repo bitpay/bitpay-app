@@ -21,6 +21,7 @@ import {WalletRowProps} from '../../components/list/WalletRow';
 import ExtendedPrivateKey from './screens/ExtendedPrivateKey';
 import DeleteKey from './screens/DeleteKey';
 import ExportKey from './screens/ExportKey';
+import Amount from './screens/Amount';
 
 export type WalletStackParamList = {
   CurrencySelection: undefined;
@@ -37,6 +38,7 @@ export type WalletStackParamList = {
   ExtendedPrivateKey: {key: Key};
   DeleteKey: {keyId: string};
   ExportKey: {key: Key};
+  Amount: undefined;
 };
 
 export enum WalletScreens {
@@ -54,6 +56,7 @@ export enum WalletScreens {
   EXTENDED_PRIVATE_KEY = 'ExtendedPrivateKey',
   DELETE_KEY = 'DeleteKey',
   EXPORT_KEY = 'ExportKey',
+  AMOUNT = 'Amount',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -128,6 +131,7 @@ const WalletStack = () => {
         />
         <Wallet.Screen name={WalletScreens.DELETE_KEY} component={DeleteKey} />
         <Wallet.Screen name={WalletScreens.EXPORT_KEY} component={ExportKey} />
+        <Wallet.Screen name={WalletScreens.AMOUNT} component={Amount} />
       </Wallet.Navigator>
     </>
   );

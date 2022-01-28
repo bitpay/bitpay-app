@@ -1,17 +1,17 @@
 import React, {useState} from 'react';
 import styled from 'styled-components/native';
-import SwapHorizontalSvg from '../../../assets/img/swap-horizontal.svg';
 import {BaseText} from '../styled/Text';
 import {LightBlack, NotificationPrimary, White} from '../../styles/colors';
 import haptic from '../haptic-feedback/haptic';
+import SwapHorizontal from '../icons/swap-horizontal/swap-horizontal';
 
 const SwapButtonContainer = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#edf1fe')};
-  flex-grow: 0;
-  padding: 10px 20px;
-  border-radius: 50px;
+  height: 39px;
+  padding: 0 15px;
+  border-radius: 19.09px;
 `;
 
 const ButtonText = styled(BaseText)`
@@ -39,7 +39,7 @@ const SwapButton = ({swapList, onChange}: SwapButtonProps) => {
 
   return (
     <SwapButtonContainer onPress={() => swapText(text)}>
-      <SwapHorizontalSvg />
+      <SwapHorizontal />
       <ButtonText>{text}</ButtonText>
     </SwapButtonContainer>
   );
