@@ -1,6 +1,7 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
+import {ScrollView} from 'react-native';
 import Carousel from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
@@ -19,7 +20,7 @@ export type CardSettingsParamList = {
 
 type CardSettingsProps = StackScreenProps<CardStackParamList, 'Settings'>;
 
-const CardSettingsContainer = styled.ScrollView`
+const CardSettingsContainer = styled.View`
   padding: ${ScreenGutter};
 `;
 
@@ -91,49 +92,51 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
   };
 
   return (
-    <CardSettingsContainer>
-      <CardSettingsHeader>
-        <CardSettingsTitle>{t('Card Details')}</CardSettingsTitle>
+    <ScrollView>
+      <CardSettingsContainer>
+        <CardSettingsHeader>
+          <CardSettingsTitle>{t('Card Details')}</CardSettingsTitle>
 
-        {memoizedSlides.length === 2 ? (
-          <CardTypeButtons>
-            <Button
-              onPress={() => carouselRef.current?.snapToItem(0)}
-              buttonType="pill"
-              buttonStyle={
-                activeCard?.cardType === 'virtual' ? 'primary' : 'secondary'
-              }>
-              {t('Virtual')}
-            </Button>
+          {memoizedSlides.length === 2 ? (
+            <CardTypeButtons>
+              <Button
+                onPress={() => carouselRef.current?.snapToItem(0)}
+                buttonType="pill"
+                buttonStyle={
+                  activeCard?.cardType === 'virtual' ? 'primary' : 'secondary'
+                }>
+                {t('Virtual')}
+              </Button>
 
-            <Button
-              onPress={() => carouselRef.current?.snapToItem(1)}
-              buttonType="pill"
-              buttonStyle={
-                activeCard?.cardType === 'physical' ? 'primary' : 'secondary'
-              }>
-              {t('Physical')}
-            </Button>
-          </CardTypeButtons>
-        ) : null}
-      </CardSettingsHeader>
+              <Button
+                onPress={() => carouselRef.current?.snapToItem(1)}
+                buttonType="pill"
+                buttonStyle={
+                  activeCard?.cardType === 'physical' ? 'primary' : 'secondary'
+                }>
+                {t('Physical')}
+              </Button>
+            </CardTypeButtons>
+          ) : null}
+        </CardSettingsHeader>
 
-      <Carousel<Card>
-        ref={carouselRef}
-        data={memoizedSlides}
-        vertical={false}
-        firstItem={initialSlideIdx}
-        itemWidth={300 + 20}
-        sliderWidth={WIDTH}
-        renderItem={({item}) => {
-          return <CardSettingsSlide parent={slide.primaryCard} card={item} />;
-        }}
-        onSnapToItem={idx => onCardChange(idx)}
-        layout="default"
-      />
+        <Carousel<Card>
+          ref={carouselRef}
+          data={memoizedSlides}
+          vertical={false}
+          firstItem={initialSlideIdx}
+          itemWidth={300 + 20}
+          sliderWidth={WIDTH}
+          renderItem={({item}) => {
+            return <CardSettingsSlide parent={slide.primaryCard} card={item} />;
+          }}
+          onSnapToItem={idx => onCardChange(idx)}
+          layout="default"
+        />
 
-      <SettingsList card={activeCard} navigation={navigation} />
-    </CardSettingsContainer>
+        <SettingsList card={activeCard} navigation={navigation} />
+      </CardSettingsContainer>
+    </ScrollView>
   );
 };
 
