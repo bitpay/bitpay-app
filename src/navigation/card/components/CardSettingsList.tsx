@@ -1,3 +1,4 @@
+import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {View} from 'react-native';
@@ -9,9 +10,11 @@ import {H4} from '../../../components/styled/Text';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {AppEffects} from '../../../store/app';
 import {Card} from '../../../store/card/card.models';
+import {CardStackParamList} from '../CardStack';
 
 interface SettingsListProps {
   card: Card;
+  navigation: StackNavigationProp<CardStackParamList, 'Settings'>;
 }
 
 interface SettingsLinkProps {
@@ -68,7 +71,7 @@ const SettingsToggle: React.FC<SettingsToggleProps> = props => {
 const SettingsList: React.FC<SettingsListProps> = props => {
   const dispatch = useDispatch();
   const {t} = useTranslation();
-  const {card} = props;
+  const {card, navigation} = props;
   const [lockPlaceholder, setLockPlaceholder] = useState(false);
 
   const openUrl = (url: string) => {
@@ -103,7 +106,8 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
       {card.provider === 'galileo' ? (
         <>
-          <SettingsLink onPress={() => 0}>
+          <SettingsLink
+            onPress={() => navigation.navigate('CustomizeVirtualCard', {card})}>
             {t('Customize Virtual Card')}
           </SettingsLink>
 

@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import * as Svg from 'react-native-svg';
 import {
+  CardBrand,
   CardProvider,
   VirtualDesignCurrency,
 } from '../../../store/card/card.types';
@@ -10,7 +11,7 @@ import {
 } from '../../../utils/card';
 
 interface CardFrontProps {
-  brand: string;
+  brand: CardBrand;
   provider: CardProvider;
   basic?: boolean;
   balance: string;

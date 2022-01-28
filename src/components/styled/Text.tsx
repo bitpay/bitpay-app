@@ -78,6 +78,7 @@ export const Disclaimer = styled(BaseText)`
   font-weight: 400;
   line-height: 19px;
   letter-spacing: 0;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 // Nav

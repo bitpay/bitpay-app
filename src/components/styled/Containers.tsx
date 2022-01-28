@@ -1,5 +1,6 @@
+import React from 'react';
+import {Dimensions, Text} from 'react-native';
 import styled, {css} from 'styled-components/native';
-import {Dimensions} from 'react-native';
 import {NeutralSlate, SlateDark} from '../../styles/colors';
 import {BaseText} from './Text';
 
@@ -61,6 +62,8 @@ export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
       background: white;
     `};
 `;
+
+export const Br: React.FC = () => <Text />;
 
 export const Hr = styled.View`
   border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#ebecee')};

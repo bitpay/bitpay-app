@@ -132,7 +132,7 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
         layout="default"
       />
 
-      <SettingsList card={activeCard} />
+      <SettingsList card={activeCard} navigation={navigation} />
     </CardSettingsContainer>
   );
 };
