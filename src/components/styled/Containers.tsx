@@ -129,13 +129,16 @@ export const ModalContainer = styled.View`
 
 // Settings List
 export const Setting = styled.TouchableOpacity`
-  flex-direction: row;
-  justify-content: space-between;
   align-items: center;
+  flex-direction: row;
+  flex-wrap: nowrap;
   height: 58px;
 `;
 
 export const SettingTitle = styled(BaseText)`
+  color: ${({theme}) => theme.colors.text};
+  flex-grow: 1;
+  flex-shrink: 1;
   font-size: 16px;
   font-style: normal;
   font-weight: 400;
