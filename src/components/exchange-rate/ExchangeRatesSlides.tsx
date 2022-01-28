@@ -6,8 +6,8 @@ import haptic from '../haptic-feedback/haptic';
 import ExchangeRateCard from './ExchangeRateCard';
 
 export interface ExchangeRateProps {
-  id: number;
-  img: ReactElement | undefined;
+  id: string;
+  img: string | ((props: any) => ReactElement);
   currencyName?: string;
   average?: number;
 }

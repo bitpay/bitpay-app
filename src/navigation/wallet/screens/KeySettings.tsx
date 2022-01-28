@@ -16,18 +16,14 @@ import {
 } from '../../../components/styled/Containers';
 import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {Wallet} from '../../../store/wallet/wallet.models';
-import {CurrencyListIcons} from '../../../constants/CurrencyListIcons';
-import WalletSettingsRow, {
-  WalletSettingsRowProps,
-} from '../../../components/list/WalletSettingsRow';
+import WalletSettingsRow from '../../../components/list/WalletSettingsRow';
 import Button from '../../../components/button/Button';
 import {SlateDark, White} from '../../../styles/colors';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {useDispatch} from 'react-redux';
 import InfoIcon from '../../../components/icons/info/InfoIcon';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
-import Default from '../../../../assets/img/currencies/default.svg';
+import {buildNestedWalletList} from './KeyOverview';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -85,39 +81,13 @@ const WalletSettingsTitle = styled(SettingTitle)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const buildWalletList = (wallets: Wallet[]) => {
-  const walletList = [] as Array<WalletSettingsRowProps>;
-  wallets
-    .filter(wallet => !wallet.credentials.token)
-    .forEach(({id, currencyName, currencyAbbreviation, tokens}) => {
-      walletList.push({
-        id,
-        img: () =>
-          CurrencyListIcons[currencyAbbreviation]?.square || <Default />,
-        currencyName,
-      });
-
-      if (tokens) {
-        tokens.forEach(({name, symbol, address}) => {
-          walletList.push({
-            id: `${id}-${address}`,
-            img: () => CurrencyListIcons[symbol.toLowerCase()].round,
-            currencyName: name,
-            isToken: true,
-          });
-        });
-      }
-    });
-  return walletList;
-};
-
 const KeySettings = () => {
   const {
     params: {key},
   } = useRoute<RouteProp<WalletStackParamList, 'KeySettings'>>();
   const dispatch = useDispatch();
   const navigation = useNavigation();
-  const wallets = buildWalletList(key.wallets);
+  const wallets = buildNestedWalletList(key.wallets);
 
   useLayoutEffect(() => {
     navigation.setOptions({

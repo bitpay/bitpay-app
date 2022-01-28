@@ -1,6 +1,6 @@
 export type SupportedCoins = 'btc' | 'bch' | 'ltc' | 'doge' | 'eth';
 export type SupportedTokens = 'usdc' | 'gusd' | 'pax' | 'busd' | 'dai' | 'wbtc';
-export type SupportedCurrencies = SupportedCoins & SupportedTokens;
+export type SupportedCurrencies = SupportedCoins | SupportedTokens;
 
 export interface CurrencyOpts {
   // Bitcore-node
@@ -494,52 +494,29 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
   },
 };
 
-export interface Token {
-  name: string;
-  symbol: string;
-  decimal: number;
-  address: string;
-  balance?: number;
-}
-
-export const TokenOpts: {[key in string]: Token} = {
-  usdc: {
-    name: 'USD Coin',
-    symbol: 'USDC',
-    decimal: 6,
-    address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-  },
-  pax: {
-    name: 'Paxos Standard',
-    symbol: 'PAX',
-    decimal: 18,
-    address: '0x8e870d67f660d95d5be530380d0ec0bd388289e1',
-  },
-  gusd: {
-    name: 'Gemini Dollar',
-    symbol: 'GUSD',
-    decimal: 2,
-    address: '0x056fd409e1d7a124bd7017459dfea2f387b6d5cd',
-  },
-  busd: {
-    name: 'Binance USD Coin',
-    symbol: 'BUSD',
-    decimal: 18,
-    address: '0x4fabb145d64652a948d72533023f6e7a623c7c53',
-  },
-  dai: {
-    name: 'Dai',
-    symbol: 'DAI',
-    decimal: 18,
-    address: '0x6b175474e89094c44da98b954eedeac495271d0f',
-  },
-  wbtc: {
-    name: 'Wrapped Bitcoin',
-    symbol: 'WBTC',
-    decimal: 9,
-    address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
-  },
-};
-
 export const SUPPORTED_TOKENS = ['usdc', 'gusd', 'pax', 'busd', 'dai', 'wbtc'];
-export const SUPPORTED_COINS = ['btc', 'bch', 'eth', 'doge', 'ltc'];
+export const SUPPORTED_COINS = ['btc', 'bch', 'eth', 'doge', 'ltc', 'xrp'];
+export const SUPPORTED_CURRENCIES = [...SUPPORTED_COINS, ...SUPPORTED_TOKENS];
+export const POPULAR_TOKENS = [
+  'UNI',
+  'SUSHI',
+  'BAT',
+  'MATIC',
+  '1INCH',
+  'USDT',
+  'LINK',
+  'COMP',
+  'MKR',
+  'DYDX',
+  'WDOGE',
+  'renBTC',
+  'WETH',
+  'EURT',
+  'YGG',
+  'CRO',
+  'AAVE',
+  'GRT',
+  'YFI',
+  'CRV',
+  'RUNE',
+];
