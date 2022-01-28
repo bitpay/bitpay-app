@@ -6,12 +6,9 @@ import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
 import {FlatList, LogBox} from 'react-native';
-import {Wallet} from '../../../store/wallet/wallet.models';
-import {CurrencyListIcons} from '../../../constants/CurrencyListIcons';
 import AddWallet from '../../../../assets/img/add-asset.svg';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../store';
-import {formatFiatBalance} from '../../../utils/helper-methods';
 import OptionsBottomPopupModal, {
   Option,
 } from '../components/OptionsBottomPopupModal';
@@ -20,6 +17,8 @@ import BackupSvg from '../../../../assets/img/wallet/backup.svg';
 import EncryptSvg from '../../../../assets/img/wallet/encrypt.svg';
 import SettingsSvg from '../../../../assets/img/wallet/settings.svg';
 import {Hr} from '../../../components/styled/Containers';
+import {Wallet} from '../../../store/wallet/wallet.models';
+import {formatFiatBalance} from '../../../utils/helper-methods';
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
 ]);
@@ -61,36 +60,40 @@ const WalletListFooterText = styled(BaseText)`
   margin-left: 10px;
 `;
 
-const buildWalletList = (wallets: Wallet[]) => {
+// Key overview and Key settings list builder
+export const buildNestedWalletList = (wallets: Wallet[]) => {
   const walletList = [] as Array<WalletRowProps>;
-  wallets
-    .filter(wallet => !wallet.credentials.token)
-    .forEach(
-      ({id, currencyName, currencyAbbreviation, balance = 0, tokens}) => {
-        walletList.push({
-          id,
-          img: () => CurrencyListIcons[currencyAbbreviation].square,
-          currencyName,
-          currencyAbbreviation: currencyAbbreviation.toUpperCase(),
-          cryptoBalance: balance,
-          fiatBalance: formatFiatBalance(balance),
-        });
+  const _coins = wallets.filter(wallet => !wallet.credentials.token);
+  const _tokens = wallets.filter(wallet => wallet.credentials.token);
 
-        if (tokens) {
-          tokens.forEach(({name, symbol, balance = 0}) => {
-            walletList.push({
-              id: `${id}-${symbol}`,
-              img: () => CurrencyListIcons[symbol.toLowerCase()]?.round,
-              currencyName: name,
-              currencyAbbreviation: symbol.toUpperCase(),
-              cryptoBalance: balance,
-              fiatBalance: formatFiatBalance(balance),
-              isToken: true,
-            });
-          });
+  const buildRow: (wallet: Wallet) => WalletRowProps = ({
+    id,
+    img,
+    currencyName,
+    currencyAbbreviation,
+    balance = 0,
+  }) => ({
+    id,
+    img,
+    currencyName,
+    currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+    cryptoBalance: balance,
+    fiatBalance: formatFiatBalance(balance),
+  });
+
+  _coins.forEach(coin => {
+    walletList.push(buildRow(coin));
+    // eth wallet with tokens -> for every token wallet ID grab full wallet from _tokens and add it to the list
+    if (coin.tokens) {
+      coin.tokens.forEach(id => {
+        // eslint-disable-next-line no-shadow
+        const tokenWallet = _tokens.find(token => token.id === id);
+        if (tokenWallet) {
+          walletList.push({...buildRow(tokenWallet), isToken: true});
         }
-      },
-    );
+      });
+    }
+  });
 
   return walletList;
 };
@@ -116,7 +119,7 @@ const KeyOverview = () => {
   const {wallets} = useSelector(
     ({WALLET}: RootState) => WALLET.keys[key.id],
   ) || {wallets: []};
-  const walletList = buildWalletList(wallets);
+  const walletList = buildNestedWalletList(wallets);
 
   const keyOptions: Array<Option> = [
     {

@@ -1,5 +1,5 @@
-import {Token} from '../../constants/currencies';
 import API from 'bitcore-wallet-client/ts_build';
+import {ReactElement} from 'react';
 
 export interface KeyMethods {
   _checkCoin: Function;
@@ -50,10 +50,11 @@ export interface WalletObj {
   currencyName: string;
   currencyAbbreviation: string;
   balance?: number;
-  tokens?: Token[];
+  tokens?: string[];
   preferences?: {
     tokenAddresses?: [];
   };
+  img: string | ((props?: any) => ReactElement);
 }
 
 export interface ExchangeRate {
@@ -93,4 +94,12 @@ export interface KeyOptions {
   useLegacyPurpose?: boolean;
   useNativeSegwit?: boolean;
   words?: string;
+}
+
+export interface Token {
+  symbol: string;
+  name: string;
+  address: string;
+  decimals: number;
+  logoURI: string;
 }
