@@ -146,6 +146,24 @@ export const SettingTitle = styled(BaseText)`
   text-align: left;
 `;
 
+interface SettingIconProps {
+  prefix?: boolean;
+  suffix?: boolean;
+}
+
+export const SettingIcon = styled.View<SettingIconProps>`
+  ${({prefix = false}) =>
+    prefix &&
+    css`
+      margin-right: ${ScreenGutter};
+    `}
+  ${({suffix = false}) =>
+    suffix &&
+    css`
+      margin-left: ${ScreenGutter};
+    `}
+`;
+
 export const SettingView = styled.View`
   flex-direction: row;
   justify-content: space-between;

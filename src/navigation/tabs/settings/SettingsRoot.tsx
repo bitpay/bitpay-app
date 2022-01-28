@@ -9,6 +9,7 @@ import {
   Hr,
   ScreenGutter,
   Setting,
+  SettingIcon,
   SettingTitle,
 } from '../../../components/styled/Containers';
 import {useTheme} from '@react-navigation/native';
@@ -143,7 +144,9 @@ const SettingsHomeScreen: React.FC = () => {
           ) : (
             <BitPayIdSettingTitle>Log In or Sign Up</BitPayIdSettingTitle>
           )}
-          <AngleRight />
+          <SettingIcon suffix>
+            <AngleRight />
+          </SettingIcon>
         </BitPayIdSettingsLink>
 
         <Hr />
@@ -153,7 +156,9 @@ const SettingsHomeScreen: React.FC = () => {
             <View key={title}>
               <Setting onPress={onPress}>
                 <SettingTitle style={textStyle}>{title}</SettingTitle>
-                <AngleRight />
+                <SettingIcon suffix>
+                  <AngleRight />
+                </SettingIcon>
               </Setting>
               <Hr />
             </View>
