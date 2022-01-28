@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {memo, useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {BaseText} from '../styled/Text';
 import DeleteSvg from '../../../assets/img/delete.svg';
@@ -98,4 +98,4 @@ const VirtualKeyboard = ({onChange, reset}: VirtualKeyboardProps) => {
   );
 };
 
-export default VirtualKeyboard;
+export default memo(VirtualKeyboard);
