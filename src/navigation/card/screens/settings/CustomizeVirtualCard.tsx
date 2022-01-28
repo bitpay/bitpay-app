@@ -1,8 +1,8 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {ScrollView, TouchableOpacity, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import styled from 'styled-components/native';
 import BitPayBIcon from '../../../../../assets/img/logos/bitpay-b-blue.svg';
 import BtcIcon from '../../../../../assets/img/currencies/btc.svg';
 import BchIcon from '../../../../../assets/img/currencies/bch.svg';
@@ -19,7 +19,6 @@ import Button from '../../../../components/button/Button';
 import {
   ActiveOpacity,
   Br,
-  ScreenGutter,
 } from '../../../../components/styled/Containers';
 import {SUPPORTED_DESIGN_CURRENCIES} from '../../../../constants/config.card';
 import {RootState} from '../../../../store';
@@ -28,128 +27,84 @@ import {Card} from '../../../../store/card/card.models';
 import {VirtualDesignCurrency} from '../../../../store/card/card.types';
 import {CardStackParamList} from '../../CardStack';
 import CardFront from '../../components/CardFront';
-import {Disclaimer, H3, Paragraph} from '../../../../components/styled/Text';
-import {useTranslation} from 'react-i18next';
+import * as Styled from './CustomizeVirtualCard.styled';
 
 export interface CustomizeVirtualCardParamList {
   card: Card;
 }
 
-const ContentContainer = styled.View`
-  padding: ${ScreenGutter};
-`;
-
-const CustomizeVirtualCardHeading = styled(H3)`
-  margin-bottom: 24px;
-`;
-
-const CustomizeVirtualCardDescription = styled(Paragraph)`
-  margin-bottom: 24px;
-`;
-
-const CustomizeVirtualCardDisclaimer = styled(Disclaimer)`
-  margin-bottom: 24px;
-`;
-
-const PreviewContainer = styled.View`
-  align-items: center;
-`;
-
-const CtaContainer = styled.View`
-  margin-bottom: 64px;
-`;
-
-const TermsAndConditionsContainer = styled.Text`
-  color: ${({theme}) => theme.colors.text};
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 15px;
-`;
-
-const ICON_SIZE = 30;
-const IconContainer = styled.View`
-  align-items: center;
-  background-color: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 25px;
-  display: flex;
-  height: 50px;
-  justify-content: center;
-  shadow-color: #000;
-  shadow-offset: 0px 4px;
-  shadow-opacity: 0.1;
-  shadow-radius: 20px;
-  width: 50px;
-`;
-
-const supportedDesignCurrencies = Object.values(SUPPORTED_DESIGN_CURRENCIES)
-  .filter(c => c.enabled)
-  .map(c => c.currency);
-
 type IconMap = {
   [k in VirtualDesignCurrency]: JSX.Element;
 };
 
+const ICON_SIZE = 30;
+
+const enabledDesignCurrencies = Object.values(SUPPORTED_DESIGN_CURRENCIES)
+  .filter(c => c.enabled)
+  .map(c => c.currency);
+
+const spacer = <View style={{width: 8}} />
+
 const Icons: IconMap = {
   'bitpay-b': (
-    <IconContainer>
+    <Styled.IconContainer>
       <BitPayBIcon height={ICON_SIZE} width={ICON_SIZE} />
-    </IconContainer>
+    </Styled.IconContainer>
   ),
   BTC: (
-    <IconContainer>
+    <Styled.IconContainer>
       <BtcIcon height={ICON_SIZE} width={ICON_SIZE} />
-    </IconContainer>
+    </Styled.IconContainer>
   ),
   BCH: (
-    <IconContainer>
+    <Styled.IconContainer>
       <BchIcon height={ICON_SIZE} width={ICON_SIZE} />
-    </IconContainer>
+    </Styled.IconContainer>
   ),
   ETH: (
-    <IconContainer>
+    <Styled.IconContainer>
       <EthIcon height={ICON_SIZE} width={ICON_SIZE} />
-    </IconContainer>
+    </Styled.IconContainer>
   ),
   DOGE: (
-    <IconContainer>
+    <Styled.IconContainer>
       <DogeIcon height={ICON_SIZE} width={ICON_SIZE} />
-    </IconContainer>
+    </Styled.IconContainer>
   ),
   GUSD: (
-    <IconContainer>
+    <Styled.IconContainer>
       <GusdIcon height={ICON_SIZE} width={ICON_SIZE} />
-    </IconContainer>
+    </Styled.IconContainer>
   ),
   USDP: (
-    <IconContainer>
+    <Styled.IconContainer>
       <UsdpIcon height={ICON_SIZE} width={ICON_SIZE} />
-    </IconContainer>
+    </Styled.IconContainer>
   ),
   BUSD: (
-    <IconContainer>
+    <Styled.IconContainer>
       <BusdIcon height={ICON_SIZE} width={ICON_SIZE} />
-    </IconContainer>
+    </Styled.IconContainer>
   ),
   USDC: (
-    <IconContainer>
+    <Styled.IconContainer>
       <UsdcIcon height={ICON_SIZE} width={ICON_SIZE} />
-    </IconContainer>
+    </Styled.IconContainer>
   ),
   XRP: (
-    <IconContainer>
+    <Styled.IconContainer>
       <XrpIcon height={ICON_SIZE} width={ICON_SIZE} />
-    </IconContainer>
+    </Styled.IconContainer>
   ),
   DAI: (
-    <IconContainer>
+    <Styled.IconContainer>
       <DaiIcon height={ICON_SIZE} width={ICON_SIZE} />
-    </IconContainer>
+    </Styled.IconContainer>
   ),
   WBTC: (
-    <IconContainer>
+    <Styled.IconContainer>
       <WbtcIcon height={ICON_SIZE} width={ICON_SIZE} />
-    </IconContainer>
+    </Styled.IconContainer>
   ),
 };
 
@@ -176,20 +131,20 @@ const CustomizeVirtualCard: React.FC<
 
   return (
     <ScrollView>
-      <ContentContainer>
-        <CustomizeVirtualCardHeading>
+      <Styled.ContentContainer>
+        <Styled.CustomizeVirtualCardHeading>
           {t('Customize Virtual Card')}
-        </CustomizeVirtualCardHeading>
+        </Styled.CustomizeVirtualCardHeading>
 
-        <CustomizeVirtualCardDescription>
+        <Styled.CustomizeVirtualCardDescription>
           {t('CustomizeVirtualCardDescription')}
-        </CustomizeVirtualCardDescription>
+        </Styled.CustomizeVirtualCardDescription>
 
-        <CustomizeVirtualCardDisclaimer>
+        <Styled.CustomizeVirtualCardDisclaimer>
           {t('CustomizeVirtualCardDisclaimer')}
-        </CustomizeVirtualCardDisclaimer>
+        </Styled.CustomizeVirtualCardDisclaimer>
 
-        <PreviewContainer>
+        <Styled.PreviewContainer>
           <CardFront
             brand={card.brand || 'Visa'}
             provider={card.provider}
@@ -199,20 +154,14 @@ const CustomizeVirtualCard: React.FC<
             nickname={card.nickname}
             designCurrency={selectedDesign}
           />
-        </PreviewContainer>
+        </Styled.PreviewContainer>
 
-        <View
-          style={{
-            flexDirection: 'column',
-            alignItems: 'center',
-            marginTop: 24,
-            marginBottom: 24,
-          }}>
+        <Styled.CurrencyListContainer>
           <ScrollView
             horizontal={true}
             showsHorizontalScrollIndicator={false}
             style={{width: 300}}>
-            {supportedDesignCurrencies.map((currency, idx) => {
+            {enabledDesignCurrencies.map((currency, idx) => {
               return (
                 <React.Fragment key={currency}>
                   <TouchableOpacity
@@ -223,31 +172,30 @@ const CustomizeVirtualCard: React.FC<
                     }}>
                     {Icons[currency]}
                   </TouchableOpacity>
-                  {idx >= supportedDesignCurrencies.length ? null : (
-                    <View style={{width: 8}} />
-                  )}
+
+                  {idx < enabledDesignCurrencies.length ? spacer : null}
                 </React.Fragment>
               );
             })}
           </ScrollView>
-        </View>
+        </Styled.CurrencyListContainer>
 
-        <CtaContainer>
+        <Styled.CtaContainer>
           <Button onPress={() => onSavePress()} style={{marginBottom: 24}}>
             {t('Save Customization')}
           </Button>
-        </CtaContainer>
+        </Styled.CtaContainer>
 
-        <TermsAndConditionsContainer>
+        <Styled.TermsAndConditionsContainer>
           {t('TermsAndConditionsMastercard')}
-        </TermsAndConditionsContainer>
+        </Styled.TermsAndConditionsContainer>
 
         <Br />
 
-        <TermsAndConditionsContainer>
+        <Styled.TermsAndConditionsContainer>
           {t('TermsAndConditionsMastercard2')}
-        </TermsAndConditionsContainer>
-      </ContentContainer>
+        </Styled.TermsAndConditionsContainer>
+      </Styled.ContentContainer>
     </ScrollView>
   );
 };
