@@ -10,7 +10,7 @@ export type SupportedCurrencies =
   | 'BCH'
   | 'ETH'
   | 'GUSD'
-  | 'PAX'
+  | 'USDP'
   | 'BUSD'
   | 'USDC'
   | 'XRP'
