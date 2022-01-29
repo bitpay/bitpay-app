@@ -76,11 +76,11 @@ const HomeRoot = () => {
     dispatch(AppActions.showOnboardingFinishModal());
   };
 
-  useEffect(() => {
-    if (!onboardingCompleted) {
-      showOnboardingFinishModal();
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (!onboardingCompleted) {
+  //     showOnboardingFinishModal();
+  //   }
+  // }, []);
 
   const navigation = useNavigation();
 
