@@ -20,6 +20,8 @@ interface SettingsListProps {
   navigation: StackNavigationProp<CardStackParamList, 'Settings'>;
 }
 
+const FAQ_VISA_URL =
+  'https://support.bitpay.com/hc/en-us/categories/360004308991-BitPay-Prepaid-Debit-Visa-Card-US-';
 const FAQ_MASTERCARD_URL =
   'https://support.bitpay.com/hc/en-us/categories/115000745966-BitPay-Card';
 const HELP_WIZARD_URL = 'https://bitpay.com/request-help';
@@ -57,35 +59,53 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
   return (
     <View>
-      <Styled.CategoryRow>
-        <Styled.CategoryHeading>Security</Styled.CategoryHeading>
-      </Styled.CategoryRow>
+      {card.provider === 'firstView' ? (
+        <>
+          <Styled.CategoryRow>
+            <Styled.CategoryHeading>Account</Styled.CategoryHeading>
+          </Styled.CategoryRow>
 
-      <Hr />
+          <Hr />
 
-      <Styled.SettingsToggle
-        Icon={LockIcon}
-        value={lockPlaceholder}
-        onChange={() => setLockPlaceholder(!lockPlaceholder)}>
-        LOCK CARD PLACEHOLDER
-      </Styled.SettingsToggle>
+          <Styled.SettingsLink
+            Icon={HelpIcon}
+            onPress={() => openUrl(FAQ_VISA_URL)}>
+            {t('FAQs')}
+          </Styled.SettingsLink>
 
-      <Hr />
-
-      <Styled.CategoryRow>
-        <Styled.CategoryHeading>Account</Styled.CategoryHeading>
-      </Styled.CategoryRow>
-
-      <Hr />
-
-      <Styled.SettingsLink Icon={HelpIcon} onPress={() => 0}>
-        DOSH PLACEHOLDER
-      </Styled.SettingsLink>
-
-      <Hr />
+          <Hr />
+        </>
+      ) : null}
 
       {card.provider === 'galileo' ? (
         <>
+          <Styled.CategoryRow>
+            <Styled.CategoryHeading>Security</Styled.CategoryHeading>
+          </Styled.CategoryRow>
+
+          <Hr />
+
+          <Styled.SettingsToggle
+            Icon={LockIcon}
+            value={lockPlaceholder}
+            onChange={() => setLockPlaceholder(!lockPlaceholder)}>
+            LOCK CARD PLACEHOLDER
+          </Styled.SettingsToggle>
+
+          <Hr />
+
+          <Styled.CategoryRow>
+            <Styled.CategoryHeading>Account</Styled.CategoryHeading>
+          </Styled.CategoryRow>
+
+          <Hr />
+
+          <Styled.SettingsLink Icon={HelpIcon} onPress={() => 0}>
+            DOSH PLACEHOLDER
+          </Styled.SettingsLink>
+
+          <Hr />
+
           <Styled.SettingsLink
             Icon={CustomizeCardIcon}
             onPress={() => navigation.navigate('CustomizeVirtualCard', {card})}>
