@@ -11,6 +11,7 @@ import {HeaderTitle} from '../../../components/styled/Text';
 import {useDispatch} from 'react-redux';
 import {setWalletTermsAccepted} from '../../../store/wallet/wallet.actions';
 import {Key} from '../../../store/wallet/wallet.models';
+import {setOnboardingCompleted} from '../../../store/app/app.actions';
 
 type TermsOfUseScreenProps = StackScreenProps<
   OnboardingStackParamList,
@@ -121,6 +122,7 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
             } else {
               navigation.navigate('Tabs', {screen: 'Home'});
             }
+            dispatch(setOnboardingCompleted());
           }}
           buttonStyle={'primary'}
           disabled={agreed.length !== termsList.length}>
