@@ -2,7 +2,7 @@ import {Key, KeyMethods, KeyOptions, Wallet} from '../../wallet.models';
 import {Effect} from '../../../index';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
-import {buildWalletObj} from '../../utils/wallet';
+import {buildKeyObj, buildWalletObj} from '../../utils/wallet';
 import {failedImport, successImport} from '../../wallet.actions';
 
 export const startImportMnemonic =
@@ -16,18 +16,13 @@ export const startImportMnemonic =
         opts.words = words;
 
         const {key: _key, wallets} = await serverAssistedImport(opts);
-        const key = {
-          id: _key.id,
+        const key = buildKeyObj({
+          key: _key,
           wallets: wallets.map(wallet =>
             merge(wallet, buildWalletObj(wallet.credentials, tokenOpts)),
           ),
-          properties: _key.toObj(),
-          methods: _key,
-          // TODO total balance
-          totalBalance: 0,
-          show: true,
-          isPrivKeyEncrypted: _key.isPrivKeyEncrypted(),
-        };
+        });
+
         dispatch(
           successImport({
             key,

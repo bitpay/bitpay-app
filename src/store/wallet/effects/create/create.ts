@@ -11,7 +11,7 @@ import {Effect, RootState} from '../../../index';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
-import {buildWalletObj} from '../../utils/wallet';
+import {buildKeyObj, buildWalletObj} from '../../utils/wallet';
 import {successCreateKey} from '../../wallet.actions';
 import API from 'bitcore-wallet-client/ts_build';
 import {Key, Token, Wallet} from '../../wallet.models';
@@ -34,15 +34,7 @@ export const startCreateKey =
           getState(),
         );
 
-        const key = {
-          id: _key.id,
-          wallets,
-          properties: _key.toObj(),
-          methods: _key,
-          totalBalance: 0,
-          show: true,
-          isPrivKeyEncrypted: _key.isPrivKeyEncrypted(),
-        };
+        const key = buildKeyObj({key: _key, wallets});
 
         dispatch(
           successCreateKey({
