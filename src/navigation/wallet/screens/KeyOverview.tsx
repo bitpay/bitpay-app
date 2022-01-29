@@ -1,8 +1,7 @@
 import React, {useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {BaseText, H5, HeaderTitle} from '../../../components/styled/Text';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import {RouteProp} from '@react-navigation/core';
+import {useNavigation} from '@react-navigation/native';
 import {WalletStackParamList} from '../WalletStack';
 import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
 import {FlatList, LogBox} from 'react-native';
@@ -19,9 +18,16 @@ import SettingsSvg from '../../../../assets/img/wallet/settings.svg';
 import {Hr} from '../../../components/styled/Containers';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {formatFiatBalance} from '../../../utils/helper-methods';
+import {StackScreenProps} from '@react-navigation/stack';
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
 ]);
+
+type KeyOverviewScreenProps = StackScreenProps<
+  WalletStackParamList,
+  'KeyOverview'
+>;
+
 const OverviewContainer = styled.View`
   flex: 1;
 `;
@@ -72,6 +78,7 @@ export const buildNestedWalletList = (wallets: Wallet[]) => {
     currencyName,
     currencyAbbreviation,
     balance = 0,
+    credentials,
   }) => ({
     id,
     img,
@@ -79,6 +86,7 @@ export const buildNestedWalletList = (wallets: Wallet[]) => {
     currencyAbbreviation: currencyAbbreviation.toUpperCase(),
     cryptoBalance: balance,
     fiatBalance: formatFiatBalance(balance),
+    network: credentials.network,
   });
 
   _coins.forEach(coin => {
@@ -86,7 +94,6 @@ export const buildNestedWalletList = (wallets: Wallet[]) => {
     // eth wallet with tokens -> for every token wallet ID grab full wallet from _tokens and add it to the list
     if (coin.tokens) {
       coin.tokens.forEach(id => {
-        // eslint-disable-next-line no-shadow
         const tokenWallet = _tokens.find(token => token.id === id);
         if (tokenWallet) {
           walletList.push({...buildRow(tokenWallet), isToken: true});
@@ -98,8 +105,7 @@ export const buildNestedWalletList = (wallets: Wallet[]) => {
   return walletList;
 };
 
-const KeyOverview = () => {
-  const route = useRoute<RouteProp<WalletStackParamList, 'KeyOverview'>>();
+const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
 
@@ -114,7 +120,8 @@ const KeyOverview = () => {
         />
       ),
     });
-  });
+  }, [navigation]);
+
   const {key} = route.params;
   const {wallets} = useSelector(
     ({WALLET}: RootState) => WALLET.keys[key.id],
