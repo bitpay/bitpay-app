@@ -33,13 +33,6 @@ export const CtaContainer = styled.View`
   margin-bottom: 64px;
 `;
 
-export const TermsAndConditionsContainer = styled.Text`
-  color: ${({theme}) => theme.colors.text};
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 15px;
-`;
-
 export const IconContainer = styled.View`
   align-items: center;
   background-color: #fff;

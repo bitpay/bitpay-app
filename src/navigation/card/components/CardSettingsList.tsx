@@ -7,9 +7,11 @@ import CustomizeCardIcon from '../../../../assets/img/customize-card.svg';
 import GetHelpIcon from '../../../../assets/img/get-help.svg';
 import HelpIcon from '../../../../assets/img/help.svg';
 import LockIcon from '../../../../assets/img/lock.svg';
-import {Hr} from '../../../components/styled/Containers';
+import {Br, Hr} from '../../../components/styled/Containers';
+import {Link, Smallest} from '../../../components/styled/Text';
 import {AppEffects} from '../../../store/app';
 import {Card} from '../../../store/card/card.models';
+import {CardBrand} from '../../../store/card/card.types';
 import {CardStackParamList} from '../CardStack';
 import * as Styled from './CardSettingsList.styled';
 
@@ -22,6 +24,25 @@ const FAQ_MASTERCARD_URL =
   'https://support.bitpay.com/hc/en-us/categories/115000745966-BitPay-Card';
 const HELP_WIZARD_URL = 'https://bitpay.com/request-help';
 
+const LINKS: {
+  [k in CardBrand]: {
+    labelKey: string;
+    url: string;
+  }[];
+} = {
+  Visa: [],
+  Mastercard: [
+    {
+      labelKey: 'Cardholder Agreement',
+      url: 'https://bitpay.com/assets/pdfs/mcb-mastercard-cha-09-21.pdf',
+    },
+    {
+      labelKey: 'Fees Disclosure',
+      url: 'https://bitpay.com/assets/pdfs/gpr-mastercard-short-form.pdf',
+    },
+  ],
+};
+
 const SettingsList: React.FC<SettingsListProps> = props => {
   const dispatch = useDispatch();
   const {t} = useTranslation();
@@ -31,6 +52,8 @@ const SettingsList: React.FC<SettingsListProps> = props => {
   const openUrl = (url: string) => {
     dispatch(AppEffects.openUrlWithInAppBrowser(url));
   };
+
+  const links = LINKS[card.brand || 'Visa'];
 
   return (
     <View>
@@ -70,16 +93,16 @@ const SettingsList: React.FC<SettingsListProps> = props => {
           </Styled.SettingsLink>
 
           <Hr />
+
+          <Styled.SettingsLink
+            Icon={HelpIcon}
+            onPress={() => openUrl(FAQ_MASTERCARD_URL)}>
+            {t('FAQs')}
+          </Styled.SettingsLink>
+
+          <Hr />
         </>
       ) : null}
-
-      <Styled.SettingsLink
-        Icon={HelpIcon}
-        onPress={() => openUrl(FAQ_MASTERCARD_URL)}>
-        {t('FAQs')}
-      </Styled.SettingsLink>
-
-      <Hr />
 
       <Styled.SettingsLink
         Icon={GetHelpIcon}
@@ -88,6 +111,38 @@ const SettingsList: React.FC<SettingsListProps> = props => {
       </Styled.SettingsLink>
 
       <Hr />
+
+      {links.length ? (
+        <>
+          <Br />
+          <Br />
+
+          {links.map((link, idx) => {
+            return (
+              <React.Fragment key={link.labelKey}>
+                <Link onPress={() => openUrl(link.url)}>
+                  {t(link.labelKey)}
+                </Link>
+
+                {idx < links.length - 1 ? <Br /> : null}
+              </React.Fragment>
+            );
+          })}
+        </>
+      ) : null}
+
+      {card.brand === 'Mastercard' ? (
+        <>
+          <Br />
+          <Br />
+
+          <Smallest>{t('TermsAndConditionsMastercard')}</Smallest>
+
+          <Br />
+
+          <Smallest>{t('TermsAndConditionsMastercard2')}</Smallest>
+        </>
+      ) : null}
     </View>
   );
 };

@@ -5,19 +5,20 @@ import {ScrollView, TouchableOpacity, View} from 'react-native';
 import {Color, SvgProps} from 'react-native-svg';
 import {useDispatch, useSelector} from 'react-redux';
 import BitPayBIcon from '../../../../../assets/img/logos/bitpay-b-blue.svg';
-import BtcIcon from '../../../../../assets/img/currencies/btc.svg';
 import BchIcon from '../../../../../assets/img/currencies/bch.svg';
-import EthIcon from '../../../../../assets/img/currencies/eth.svg';
-import DogeIcon from '../../../../../assets/img/currencies/doge.svg';
-import XrpIcon from '../../../../../assets/img/currencies/xrp.svg';
-import UsdcIcon from '../../../../../assets/img/currencies/usdc.svg';
-import GusdIcon from '../../../../../assets/img/currencies/gusd.svg';
+import BtcIcon from '../../../../../assets/img/currencies/btc.svg';
 import BusdIcon from '../../../../../assets/img/currencies/busd.svg';
 import DaiIcon from '../../../../../assets/img/currencies/dai.svg';
+import DogeIcon from '../../../../../assets/img/currencies/doge.svg';
+import EthIcon from '../../../../../assets/img/currencies/eth.svg';
+import GusdIcon from '../../../../../assets/img/currencies/gusd.svg';
+import UsdcIcon from '../../../../../assets/img/currencies/usdc.svg';
 import UsdpIcon from '../../../../../assets/img/currencies/usdp.svg';
 import WbtcIcon from '../../../../../assets/img/currencies/wbtc.svg';
+import XrpIcon from '../../../../../assets/img/currencies/xrp.svg';
 import Button from '../../../../components/button/Button';
 import {ActiveOpacity, Br} from '../../../../components/styled/Containers';
+import {Smallest} from '../../../../components/styled/Text';
 import {SUPPORTED_DESIGN_CURRENCIES} from '../../../../constants/config.card';
 import {RootState} from '../../../../store';
 import {CardActions} from '../../../../store/card';
@@ -219,15 +220,11 @@ const CustomizeVirtualCard: React.FC<
           </Button>
         </Styled.CtaContainer>
 
-        <Styled.TermsAndConditionsContainer>
-          {t('TermsAndConditionsMastercard')}
-        </Styled.TermsAndConditionsContainer>
+        <Smallest>{t('TermsAndConditionsMastercard')}</Smallest>
 
         <Br />
 
-        <Styled.TermsAndConditionsContainer>
-          {t('TermsAndConditionsMastercard2')}
-        </Styled.TermsAndConditionsContainer>
+        <Smallest>{t('TermsAndConditionsMastercard2')}</Smallest>
       </Styled.ContentContainer>
     </ScrollView>
   );

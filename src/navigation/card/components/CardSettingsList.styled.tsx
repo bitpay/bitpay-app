@@ -45,7 +45,7 @@ export const SettingsLink: React.FC<SettingsLinkProps> = props => {
   const {Icon, onPress, children} = props;
 
   return (
-    <Setting onPressOut={onPress}>
+    <Setting onPress={onPress}>
       <SettingIcon prefix>
         <Icon height={ICON_SIZE} width={ICON_SIZE} />
       </SettingIcon>
