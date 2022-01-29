@@ -17,11 +17,34 @@ import {startCreateKey} from '../../../store/wallet/effects';
 import {FlatList} from 'react-native';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
-import {useNavigation} from '@react-navigation/native';
+import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {HeaderTitle} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {RootState} from '../../../store';
+import {WalletStackParamList} from '../WalletStack';
+import {Dispatch} from 'redux';
+import {RootStackParamList} from '../../../Root';
+import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
+import {Key} from '../../../store/wallet/wallet.models';
+import {StackScreenProps} from '@react-navigation/stack';
+
+type CurrencySelectionScreenProps = StackScreenProps<
+  WalletStackParamList,
+  'CurrencySelection'
+>;
+
+type CurrencySelectionContext = 'onboarding' | 'createNewKey';
+
+export type CurrencySelectionParamList = {
+  context: CurrencySelectionContext;
+};
+
+interface CtaProps {
+  selectedCurrencies: string[];
+  dispatch: Dispatch<any>;
+  navigation: NavigationProp<RootStackParamList>;
+}
 
 const CurrencySelectionContainer = styled.SafeAreaView`
   flex: 1;
@@ -33,31 +56,71 @@ const ListContainer = styled.View`
 
 const keyExtractor = (item: {id: string}) => item.id;
 
-const CurrencySelection = () => {
+const contextHandler = (
+  context: CurrencySelectionContext,
+): {ctaTitle: string; cta: (props: CtaProps) => void} => {
+  switch (context) {
+    case 'onboarding':
+    case 'createNewKey':
+      return {
+        ctaTitle: 'Create Key',
+        cta: async ({selectedCurrencies, dispatch, navigation}) => {
+          try {
+            const currencies = selectedCurrencies.map(selected =>
+              selected.toLowerCase(),
+            ) as Array<SupportedCurrencies>;
+            await dispatch(
+              startOnGoingProcessModal(OnGoingProcessMessages.CREATING_KEY),
+            );
+            // @ts-ignore
+            const key = await dispatch<Key>(startCreateKey(currencies));
+            navigation.navigate(
+              context === 'onboarding' ? 'Onboarding' : 'Wallet',
+              {
+                screen: 'BackupKey',
+                params: {context, key},
+              },
+            );
+          } catch (err) {
+            // TODO
+          } finally {
+            dispatch(dismissOnGoingProcessModal());
+          }
+        },
+      };
+  }
+};
+
+const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
+  // setting context
   const navigation = useNavigation();
+  const {context} = route.params;
+  const {cta, ctaTitle} = contextHandler(context);
+
   // Configuring Header
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
       headerTitle: () => <HeaderTitle>Select Currencies</HeaderTitle>,
       headerTitleAlign: 'center',
-      headerRight: () => (
-        <HeaderRightContainer>
-          <Button
-            buttonType={'pill'}
-            onPress={() => {
-              haptic('impactLight');
-              navigation.navigate('Onboarding', {
-                screen: 'TermsOfUse',
-                params: {
-                  context: 'skip',
-                },
-              });
-            }}>
-            Skip
-          </Button>
-        </HeaderRightContainer>
-      ),
+      headerRight: () =>
+        context === 'onboarding' && (
+          <HeaderRightContainer>
+            <Button
+              buttonType={'pill'}
+              onPress={() => {
+                haptic('impactLight');
+                navigation.navigate('Onboarding', {
+                  screen: 'TermsOfUse',
+                  params: {
+                    context: 'TOUOnly',
+                  },
+                });
+              }}>
+              Skip
+            </Button>
+          </HeaderRightContainer>
+        ),
     });
   }, [navigation]);
 
@@ -156,19 +219,6 @@ const CurrencySelection = () => {
       return checkAndToggleEthIfTokenSelected(currencies);
     });
   };
-
-  const createWallet = async () => {
-    const currencies = selectedCurrencies.map(selected =>
-      selected.toLowerCase(),
-    ) as Array<SupportedCurrencies>;
-    console.log(currencies);
-    await dispatch(
-      startOnGoingProcessModal(OnGoingProcessMessages.CREATING_KEY),
-    );
-    await dispatch(startCreateKey(currencies));
-    navigation.navigate('Onboarding', {screen: 'BackupKey'});
-  };
-
   // Flat list
   const renderItem = useCallback(
     ({item}) => (
@@ -198,10 +248,10 @@ const CurrencySelection = () => {
           elevation: 5,
         }}>
         <Button
-          onPress={createWallet}
+          onPress={() => cta({selectedCurrencies, dispatch, navigation})}
           buttonStyle={'primary'}
           disabled={!selectedCurrencies.length}>
-          Create Key
+          {ctaTitle}
         </Button>
       </CtaContainerAbsolute>
     </CurrencySelectionContainer>

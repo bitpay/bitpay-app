@@ -4,17 +4,26 @@ import {Caution, Slate, SlateDark, White} from '../../../styles/colors';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
 import {CtaContainer} from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
-import {useDispatch} from 'react-redux';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {useDispatch, useSelector} from 'react-redux';
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+} from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import {useForm, Controller} from 'react-hook-form';
 import {BaseText} from '../../../components/styled/Text';
 import {useLogger} from '../../../utils/hooks/useLogger';
-import {KeyProperties} from '../../../store/wallet/wallet.models';
+import {Key, KeyProperties} from '../../../store/wallet/wallet.models';
 import {startImportMnemonic} from '../../../store/wallet/effects';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {ImportObj} from '../../../store/scan/scan.models';
+import {RouteProp} from '@react-navigation/core';
+import {WalletStackParamList} from '../WalletStack';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
+import {navigateToTermsOrOverview} from '../screens/Backup';
+import {Effect, RootState} from '../../../store';
 
 const Gutter = '10px';
 export const ImportContainer = styled.View`
@@ -76,6 +85,10 @@ const RecoveryPhrase = () => {
   const dispatch = useDispatch();
   const logger = useLogger();
   const navigation = useNavigation();
+  const route = useRoute<RouteProp<WalletStackParamList, 'Import'>>();
+  const walletTermsAccepted = useSelector(
+    ({WALLET}: RootState) => WALLET.walletTermsAccepted,
+  );
   const {
     control,
     handleSubmit,
@@ -116,12 +129,21 @@ const RecoveryPhrase = () => {
     opts.mnemonic = words;
 
     try {
-      await dispatch(startImportMnemonic(words, opts));
-      navigation.navigate('Onboarding', {
-        screen: 'TermsOfUse',
+      await dispatch(
+        startOnGoingProcessModal(OnGoingProcessMessages.IMPORTING),
+      );
+      // @ts-ignore
+      const key = await dispatch<Key>(startImportMnemonic(words, opts));
+      navigateToTermsOrOverview({
+        context: route.params?.context,
+        navigation,
+        walletTermsAccepted,
+        key,
       });
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 

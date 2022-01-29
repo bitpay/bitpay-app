@@ -4,15 +4,19 @@ import {
   baseNavigatorOptions,
   baseScreenOptions,
 } from '../../constants/NavigationOptions';
-import Backup from './screens/Backup';
-import RecoveryPhrase, {RecoveryPhraseProps} from './screens/RecoveryPhrase';
-import VerifyPhrase, {VerifyPhraseProps} from './screens/VerifyPhrase';
-import CurrencySelection from './screens/CurrencySelection';
+import Backup, {BackupParamList} from './screens/Backup';
+import RecoveryPhrase, {
+  RecoveryPhraseParamList,
+} from './screens/RecoveryPhrase';
+import VerifyPhrase, {VerifyPhraseParamList} from './screens/VerifyPhrase';
+import CurrencySelection, {
+  CurrencySelectionParamList,
+} from './screens/CurrencySelection';
 import KeyOverview from './screens/KeyOverview';
 import KeySettings from './screens/KeySettings';
 import WalletDetails from './screens/WalletDetails';
 import WalletSettings from './screens/WalletSettings';
-import Import, {ImportProps} from './screens/Import';
+import Import, {ImportParamList} from './screens/Import';
 import CreationOptions from './screens/CreationOptions';
 import {HeaderTitle} from '../../components/styled/Text';
 import CreateEncryptionPassword from './screens/CreateEncryptionPassword';
@@ -21,18 +25,22 @@ import {WalletRowProps} from '../../components/list/WalletRow';
 import ExtendedPrivateKey from './screens/ExtendedPrivateKey';
 import DeleteKey from './screens/DeleteKey';
 import ExportKey from './screens/ExportKey';
+import TermsOfUse, {
+  TermsOfUseParamList,
+} from '../onboarding/screens/TermsOfUse';
 
 export type WalletStackParamList = {
-  CurrencySelection: undefined;
-  BackupKey: {keyId: string};
-  RecoveryPhrase: RecoveryPhraseProps;
-  VerifyPhrase: VerifyPhraseProps;
+  CurrencySelection: CurrencySelectionParamList;
+  BackupKey: BackupParamList;
+  RecoveryPhrase: RecoveryPhraseParamList;
+  VerifyPhrase: VerifyPhraseParamList;
+  TermsOfUse: TermsOfUseParamList;
   KeyOverview: {key: Key};
   KeySettings: {key: Key};
   WalletDetails: {wallet: WalletRowProps};
   WalletSettings: {wallet: WalletRowProps};
   CreationOptions: undefined;
-  Import: ImportProps;
+  Import: ImportParamList | undefined;
   CreateEncryptPassword: {key: Key};
   ExtendedPrivateKey: {key: Key};
   DeleteKey: {keyId: string};
@@ -44,6 +52,7 @@ export enum WalletScreens {
   BACKUP_KEY = 'BackupKey',
   RECOVERY_PHRASE = 'RecoveryPhrase',
   VERIFY_PHRASE = 'VerifyPhrase',
+  TERMS_OF_USE = 'TermsOfUse',
   KEY_OVERVIEW = 'KeyOverview',
   KEY_SETTINGS = 'KeySettings',
   WALLET_DETAILS = 'WalletDetails',
@@ -128,6 +137,10 @@ const WalletStack = () => {
         />
         <Wallet.Screen name={WalletScreens.DELETE_KEY} component={DeleteKey} />
         <Wallet.Screen name={WalletScreens.EXPORT_KEY} component={ExportKey} />
+        <Wallet.Screen
+          name={WalletScreens.TERMS_OF_USE}
+          component={TermsOfUse}
+        />
       </Wallet.Navigator>
     </>
   );
