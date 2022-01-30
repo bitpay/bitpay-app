@@ -13,9 +13,20 @@ export interface ItemProps extends SupportedCurrencyOption {
   checked?: boolean;
 }
 
+export interface CurrencySelectionToggleProps {
+  checked: boolean;
+  currencyAbbreviation: string;
+  currencyName: string;
+}
+
 interface Props {
   item: ItemProps;
-  emit: ({checked, currency}: {checked: boolean; currency: string}) => void;
+  emit: ({
+    checked,
+    currencyAbbreviation,
+    currencyName,
+  }: CurrencySelectionToggleProps) => void;
+  removeCheckbox?: boolean;
 }
 
 const CheckBoxContainer = styled.View`
@@ -23,7 +34,7 @@ const CheckBoxContainer = styled.View`
   justify-content: center;
 `;
 
-const CurrencySelectionRow = ({item, emit}: Props) => {
+const CurrencySelectionRow = ({item, emit, removeCheckbox}: Props) => {
   const {
     currencyName,
     currencyAbbreviation,
@@ -37,13 +48,14 @@ const CurrencySelectionRow = ({item, emit}: Props) => {
     setChecked(!checked);
     haptic('impactLight');
     emit({
-      currency: currencyAbbreviation,
+      currencyAbbreviation,
+      currencyName,
       checked: !checked,
     });
   };
 
   return (
-    <RowContainer activeOpacity={1} onPress={toggle}>
+    <RowContainer activeOpacity={0.75} onPress={toggle}>
       <CurrencyImageContainer>
         <CurrencyImage img={img} />
       </CurrencyImageContainer>
@@ -51,9 +63,11 @@ const CurrencySelectionRow = ({item, emit}: Props) => {
         <H5>{currencyName}</H5>
         <SubText>{currencyAbbreviation}</SubText>
       </CurrencyColumn>
-      <CheckBoxContainer>
-        <Checkbox checked={checked} disabled={disabled} onPress={toggle} />
-      </CheckBoxContainer>
+      {!removeCheckbox && (
+        <CheckBoxContainer>
+          <Checkbox checked={checked} disabled={disabled} onPress={toggle} />
+        </CheckBoxContainer>
+      )}
     </RowContainer>
   );
 };
