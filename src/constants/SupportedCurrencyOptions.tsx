@@ -11,6 +11,7 @@ import BusdIcon from '../../assets/img/currencies/busd.svg';
 import DaiIcon from '../../assets/img/currencies/dai.svg';
 import UsdpIcon from '../../assets/img/currencies/usdp.svg';
 import WbtcIcon from '../../assets/img/currencies/wbtc.svg';
+import ShibIcon from '../../assets/img/currencies/shib.svg';
 
 export interface SupportedCurrencyOption {
   id: string;
@@ -34,6 +35,7 @@ export const CurrencyListIcons: {
   dai: props => <DaiIcon {...props} />,
   usdp: props => <UsdpIcon {...props} />,
   wbtc: props => <WbtcIcon {...props} />,
+  shib: props => <ShibIcon {...props} />,
 };
 
 export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
@@ -70,25 +72,31 @@ export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
   {
     id: 'xrp',
     img: CurrencyListIcons.xrp,
-    currencyName: 'Xrp',
+    currencyName: 'XRP',
     currencyAbbreviation: 'XRP',
+  },
+  {
+    id: 'shib',
+    img: CurrencyListIcons.shib,
+    currencyName: 'Shiba Inu',
+    currencyAbbreviation: 'SHIB',
   },
   {
     id: 'usdc',
     img: CurrencyListIcons.usdc,
-    currencyName: 'Usdc',
+    currencyName: 'USD Coin',
     currencyAbbreviation: 'USDC',
   },
   {
     id: 'gusd',
     img: CurrencyListIcons.gusd,
-    currencyName: 'Gusd',
+    currencyName: 'Gemini Dollar',
     currencyAbbreviation: 'GUSD',
   },
   {
     id: 'busd',
     img: CurrencyListIcons.busd,
-    currencyName: 'Busd',
+    currencyName: 'Binance USD Coin',
     currencyAbbreviation: 'BUSD',
   },
   {
@@ -106,7 +114,7 @@ export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
   {
     id: 'wbtc',
     img: CurrencyListIcons.wbtc,
-    currencyName: 'Wbtc',
+    currencyName: 'Wrapped Bitcoin',
     currencyAbbreviation: 'WBTC',
   },
 ];
