@@ -1,49 +1,41 @@
-import {KeyMethods, KeyOptions, Wallet} from '../../wallet.models';
+import {Key, KeyMethods, KeyOptions, Wallet} from '../../wallet.models';
 import {Effect} from '../../../index';
-import {startOnGoingProcessModal} from '../../../app/app.effects';
-import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
-import {buildWalletObj} from '../../utils/wallet';
+import {buildKeyObj, buildWalletObj} from '../../utils/wallet';
 import {failedImport, successImport} from '../../wallet.actions';
-import {dismissOnGoingProcessModal} from '../../../app/app.actions';
 
 export const startImportMnemonic =
   (words: string, opts: Partial<KeyOptions>): Effect =>
-  async (dispatch, getState) => {
-    try {
-      const state = getState();
-      const tokenOpts = state.WALLET.tokenOptions;
-      await dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.IMPORTING),
-      );
-      words = normalizeMnemonic(words);
-      opts.words = words;
+  async (dispatch, getState): Promise<Key> => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const state = getState();
+        const tokenOpts = state.WALLET.tokenOptions;
+        words = normalizeMnemonic(words);
+        opts.words = words;
 
-      const {key, wallets} = await serverAssistedImport(opts);
+        const {key: _key, wallets} = await serverAssistedImport(opts);
+        const key = buildKeyObj({
+          key: _key,
+          wallets: wallets.map(wallet =>
+            merge(wallet, buildWalletObj(wallet.credentials, tokenOpts)),
+          ),
+        });
 
-      dispatch(
-        successImport({
-          key: {
-            id: key.id,
-            wallets: wallets.map(wallet =>
-              merge(wallet, buildWalletObj(wallet.credentials, tokenOpts)),
-            ),
-            properties: key.toObj(),
-            methods: key,
-            // TODO total balance
-            totalBalance: 0,
-            show: true,
-            isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
-          },
-        }),
-      );
-    } catch (e) {
-      // TODO: Handle me
-      dispatch(failedImport());
-      console.error(e);
-    }
-    dispatch(dismissOnGoingProcessModal());
+        dispatch(
+          successImport({
+            key,
+          }),
+        );
+        resolve(key);
+      } catch (err) {
+        // TODO: Handle me
+        dispatch(failedImport());
+        console.error(err);
+        reject();
+      }
+    });
   };
 
 export const normalizeMnemonic = (words: string): string => {
