@@ -28,9 +28,11 @@ import ExportKey from './screens/ExportKey';
 import TermsOfUse, {
   TermsOfUseParamList,
 } from '../onboarding/screens/TermsOfUse';
+import AddWallet, {AddWalletParamList} from './screens/AddWallet';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
+  AddWallet: AddWalletParamList;
   BackupKey: BackupParamList;
   RecoveryPhrase: RecoveryPhraseParamList;
   VerifyPhrase: VerifyPhraseParamList;
@@ -49,6 +51,7 @@ export type WalletStackParamList = {
 
 export enum WalletScreens {
   CURRENCY_SELECTION = 'CurrencySelection',
+  ADD_WALLET = 'AddWallet',
   BACKUP_KEY = 'BackupKey',
   RECOVERY_PHRASE = 'RecoveryPhrase',
   VERIFY_PHRASE = 'VerifyPhrase',
@@ -81,6 +84,13 @@ const WalletStack = () => {
           }}
           name={WalletScreens.CURRENCY_SELECTION}
           component={CurrencySelection}
+        />
+        <Wallet.Screen
+          options={{
+            gestureEnabled: false,
+          }}
+          name={WalletScreens.ADD_WALLET}
+          component={AddWallet}
         />
         <Wallet.Screen
           options={{

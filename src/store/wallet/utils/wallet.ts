@@ -16,11 +16,15 @@ export const buildWalletObj = (
     tokens?: any;
   },
   tokenOpts: {[key in string]: Token},
+  otherOpts?: {
+    customName?: string;
+  },
 ): WalletObj => {
   return {
     id: walletId,
     currencyName: walletName,
     currencyAbbreviation: coin,
+    customName: otherOpts?.customName,
     balance,
     tokens,
     img: SUPPORTED_CURRENCIES.includes(coin)

@@ -30,6 +30,7 @@ export interface WalletRowProps {
   img: string | ((props: any) => ReactElement);
   currencyName: string;
   currencyAbbreviation: string;
+  customName?: string;
   cryptoBalance: number;
   fiatBalance: string;
   isToken?: boolean;
@@ -64,6 +65,7 @@ const WalletRow = ({wallet, onPress}: Props) => {
   const {
     currencyName,
     currencyAbbreviation,
+    customName,
     img,
     cryptoBalance,
     fiatBalance,
@@ -83,7 +85,7 @@ const WalletRow = ({wallet, onPress}: Props) => {
       <CurrencyColumn>
         <Row>
           <H5 ellipsizeMode="tail" numberOfLines={1}>
-            {currencyName}
+            {customName || currencyName}
           </H5>
           {buildTestBadge(network, currencyName, isToken)}
         </Row>
