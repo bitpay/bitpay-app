@@ -67,37 +67,42 @@ const WalletListFooterText = styled(BaseText)`
   margin-left: 10px;
 `;
 
+export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
+  id,
+  img,
+  currencyName,
+  currencyAbbreviation,
+  customName,
+  balance = 0,
+  credentials,
+}) => ({
+  id,
+  img,
+  currencyName,
+  currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+  customName,
+  cryptoBalance: balance,
+  fiatBalance: formatFiatBalance(balance),
+  network: credentials.network,
+});
+
 // Key overview and Key settings list builder
 export const buildNestedWalletList = (wallets: Wallet[]) => {
   const walletList = [] as Array<WalletRowProps>;
   const _coins = wallets.filter(wallet => !wallet.credentials.token);
   const _tokens = wallets.filter(wallet => wallet.credentials.token);
 
-  const buildRow: (wallet: Wallet) => WalletRowProps = ({
-    id,
-    img,
-    currencyName,
-    currencyAbbreviation,
-    balance = 0,
-    credentials,
-  }) => ({
-    id,
-    img,
-    currencyName,
-    currencyAbbreviation: currencyAbbreviation.toUpperCase(),
-    cryptoBalance: balance,
-    fiatBalance: formatFiatBalance(balance),
-    network: credentials.network,
-  });
-
   _coins.forEach(coin => {
-    walletList.push(buildRow(coin));
+    walletList.push(buildUIFormattedWallet(coin));
     // eth wallet with tokens -> for every token wallet ID grab full wallet from _tokens and add it to the list
     if (coin.tokens) {
       coin.tokens.forEach(id => {
         const tokenWallet = _tokens.find(token => token.id === id);
         if (tokenWallet) {
-          walletList.push({...buildRow(tokenWallet), isToken: true});
+          walletList.push({
+            ...buildUIFormattedWallet(tokenWallet),
+            isToken: true,
+          });
         }
       });
     }
