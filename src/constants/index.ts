@@ -1,4 +1,4 @@
 export enum Network {
-  mainnet = 'mainnet',
+  mainnet = 'livenet',
   testnet = 'testnet',
 }
