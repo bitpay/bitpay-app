@@ -19,6 +19,7 @@ import {Hr} from '../../../components/styled/Containers';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {formatFiatBalance} from '../../../utils/helper-methods';
 import {StackScreenProps} from '@react-navigation/stack';
+import haptic from '../../../components/haptic-feedback/haptic';
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
 ]);
@@ -173,7 +174,15 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
         }}
         ListFooterComponent={() => {
           return (
-            <WalletListFooter activeOpacity={0.75} onPress={() => null}>
+            <WalletListFooter
+              activeOpacity={0.75}
+              onPress={() => {
+                haptic('impactLight');
+                navigation.navigate('Wallet', {
+                  screen: 'CurrencySelection',
+                  params: {context: 'addWallet', key},
+                });
+              }}>
               <AddWallet />
               <WalletListFooterText>Add Wallet</WalletListFooterText>
             </WalletListFooter>
