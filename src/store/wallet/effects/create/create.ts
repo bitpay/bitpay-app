@@ -4,7 +4,6 @@ import {
   SUPPORTED_CURRENCIES,
   SUPPORTED_TOKENS,
   SupportedCoins,
-  SupportedCurrencies,
   SupportedTokens,
 } from '../../../../constants/currencies';
 import {Effect, RootState} from '../../../index';
@@ -14,25 +13,37 @@ import merge from 'lodash.merge';
 import {buildKeyObj, buildWalletObj} from '../../utils/wallet';
 import {successCreateKey} from '../../wallet.actions';
 import API from 'bitcore-wallet-client/ts_build';
-import {Key, Token, Wallet} from '../../wallet.models';
+import {Key, KeyMethods, Token, Wallet} from '../../wallet.models';
 import {Network} from '../../../../constants';
+
+interface CreateOptions {
+  network?: Network;
+  account?: number;
+  customName?: string;
+}
 
 const BWC = BwcProvider.getInstance();
 
 export const startCreateKey =
-  (currencies: Array<SupportedCurrencies>): Effect =>
+  (currencies: string[]): Effect =>
   async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
       try {
+        const state = getState();
+        const network = state.APP.network;
+
         const _key = BWC.createKey({
           seedType: 'new',
         });
 
-        const wallets = await createMultipleWallets(
-          _key,
+        const wallets = await createMultipleWallets({
+          key: _key,
           currencies,
-          getState(),
-        );
+          state,
+          options: {
+            network,
+          },
+        });
 
         const key = buildKeyObj({key: _key, wallets});
 
@@ -49,25 +60,63 @@ export const startCreateKey =
     });
   };
 
-const createMultipleWallets = async (
-  key: {
-    createCredentials: (
-      password: string | undefined,
-      opts: {
-        coin: string;
-        network: string;
-        account: number;
-        n: number;
-        m: number;
-      },
-    ) => any;
-  },
-  currencies: Array<string>,
-  state: RootState,
-): Promise<Wallet[]> => {
-  const {
-    APP: {network},
-  } = state;
+/////////////////////////////////////////////////////////////
+
+export const addWallet =
+  ({
+    key,
+    currency,
+    options,
+  }: {
+    key: Key;
+    currency: string;
+    options: CreateOptions;
+  }): Effect =>
+  async (dispatch, getState): Promise<Wallet> => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const state = getState();
+        if (!key) {
+          // TODO handle key not found
+          return;
+        }
+
+        const newWallet = await createMultipleWallets({
+          key: key.methods,
+          currencies: [currency],
+          state,
+          options,
+        });
+
+        const wallets = [...key.wallets, ...newWallet];
+
+        dispatch(
+          successCreateKey({
+            key: buildKeyObj({key: key.methods, wallets}),
+          }),
+        );
+        console.log('Added Wallet', currency);
+        resolve(newWallet[0]);
+      } catch (err) {
+        console.error(err);
+        reject();
+      }
+    });
+  };
+
+/////////////////////////////////////////////////////////////
+
+const createMultipleWallets = async ({
+  key,
+  currencies,
+  state,
+  options,
+}: {
+  key: KeyMethods;
+  currencies: string[];
+  state: RootState;
+  options: CreateOptions;
+}): Promise<Wallet[]> => {
   const tokenOpts = state.WALLET.tokenOptions;
   const supportedCoins = currencies.filter(
     (currency): currency is SupportedCoins =>
@@ -84,7 +133,7 @@ const createMultipleWallets = async (
   const wallets: API[] = [];
 
   for (const coin of supportedCoins) {
-    const wallet = (await createWallet(key, coin, network)) as Wallet;
+    const wallet = (await createWallet({key, coin, options})) as Wallet;
     wallets.push(wallet);
 
     if (coin === 'eth') {
@@ -97,35 +146,44 @@ const createMultipleWallets = async (
       }
     }
   }
+
+  const {customName} = options;
+
   // build out app specific props
   return wallets.map(wallet => {
-    return merge(wallet, buildWalletObj(wallet.credentials, tokenOpts));
+    return merge(
+      wallet,
+      buildWalletObj(wallet.credentials, tokenOpts, {
+        customName,
+      }),
+    );
   });
 };
 
-const createWallet = (
-  key: {
-    createCredentials: (
-      password: string | undefined,
-      opts: {
-        coin: string;
-        network: string;
-        account: number;
-        n: number;
-        m: number;
-      },
-    ) => any;
-  },
-  coin: SupportedCoins,
-  network: Network,
-): Promise<API> => {
+/////////////////////////////////////////////////////////////
+
+const DEFAULT_CREATION_OPTIONS: CreateOptions = {
+  network: Network.mainnet,
+  account: 0,
+};
+
+const createWallet = (params: {
+  key: KeyMethods;
+  coin: SupportedCoins;
+  options: CreateOptions;
+}): Promise<API> => {
   return new Promise((resolve, reject) => {
     const bwcClient = BWC.getClient();
+    const {key, coin, options} = params;
+
+    // set defaults
+    const {account, network} = {...DEFAULT_CREATION_OPTIONS, ...options};
+
     bwcClient.fromString(
       key.createCredentials(undefined, {
         coin,
         network,
-        account: 0,
+        account,
         n: 1,
         m: 1,
       }),
@@ -142,11 +200,29 @@ const createWallet = (
         coin,
         useNativeSegwit: ['btc', 'ltc'].includes(coin),
       },
-      (err: Error) => {
-        // TODO handle this
+      (err: any) => {
         if (err) {
-          console.error(err);
-          reject();
+          console.log(err);
+          switch (err.name) {
+            case 'bwc.ErrorCOPAYER_REGISTERED': {
+              // eslint-disable-next-line no-shadow
+              const account = options.account || 0;
+              if (account >= 20) {
+                reject(
+                  '20 Wallet limit from the same coin and network has been reached.',
+                );
+              }
+              resolve(
+                createWallet({
+                  key,
+                  coin,
+                  options: {...options, account: account + 1},
+                }),
+              );
+            }
+          }
+
+          reject(err);
         } else {
           console.log('added coin', coin);
           resolve(bwcClient);
@@ -155,6 +231,8 @@ const createWallet = (
     );
   });
 };
+
+/////////////////////////////////////////////////////////////
 
 const createTokenWallet = (
   wallet: Wallet,
