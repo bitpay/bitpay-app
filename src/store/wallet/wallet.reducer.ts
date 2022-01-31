@@ -11,6 +11,7 @@ export interface WalletState {
   rates: {[key in string]: Array<ExchangeRate>};
   priceHistory: Array<PriceHistory>;
   tokenOptions: {[key in string]: Token};
+  walletTermsAccepted: boolean;
   showReceiveAddressModal: boolean;
   receiveAddressConfig: ReceiveAddressConfig | undefined;
 }
@@ -21,6 +22,7 @@ const initialState: WalletState = {
   rates: {},
   priceHistory: [],
   tokenOptions: {},
+  walletTermsAccepted: false,
   showReceiveAddressModal: false,
   receiveAddressConfig: undefined,
 };
@@ -121,6 +123,13 @@ export const walletReducer = (
       return {
         ...state,
         tokenOptions: action.payload,
+      };
+    }
+
+    case WalletActionTypes.SET_WALLET_TERMS_ACCEPTED: {
+      return {
+        ...state,
+        walletTermsAccepted: true,
       };
     }
 

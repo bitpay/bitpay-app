@@ -8,52 +8,43 @@ import {
   SupportedTokens,
 } from '../../../../constants/currencies';
 import {Effect, RootState} from '../../../index';
-import {AppActions} from '../../../app';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
-import {buildWalletObj} from '../../utils/wallet';
+import {buildKeyObj, buildWalletObj} from '../../utils/wallet';
 import {successCreateKey} from '../../wallet.actions';
 import API from 'bitcore-wallet-client/ts_build';
-import {Token, Wallet} from '../../wallet.models';
+import {Key, Token, Wallet} from '../../wallet.models';
 import {Network} from '../../../../constants';
 
 const BWC = BwcProvider.getInstance();
 
 export const startCreateKey =
   (currencies: Array<SupportedCurrencies>): Effect =>
-  async (dispatch, getState) => {
+  async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
       try {
-        const key = BWC.createKey({
+        const _key = BWC.createKey({
           seedType: 'new',
         });
 
         const wallets = await createMultipleWallets(
-          key,
+          _key,
           currencies,
           getState(),
         );
 
+        const key = buildKeyObj({key: _key, wallets});
+
         dispatch(
           successCreateKey({
-            key: {
-              id: key.id,
-              wallets,
-              properties: key.toObj(),
-              methods: key,
-              totalBalance: 0,
-              show: true,
-              isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
-            },
+            key,
           }),
         );
-        resolve();
+        resolve(key);
       } catch (err) {
         console.error(err);
         reject();
-      } finally {
-        dispatch(AppActions.dismissOnGoingProcessModal());
       }
     });
   };

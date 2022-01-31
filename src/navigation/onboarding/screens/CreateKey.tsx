@@ -40,7 +40,7 @@ const CreateOrImportKey = () => {
               navigation.navigate('Onboarding', {
                 screen: 'TermsOfUse',
                 params: {
-                  context: 'skip',
+                  context: 'TOUOnly',
                 },
               });
             }}>
@@ -75,7 +75,10 @@ const CreateOrImportKey = () => {
         <Button
           buttonStyle={'primary'}
           onPress={() =>
-            navigation.navigate('Onboarding', {screen: 'CurrencySelection'})
+            navigation.navigate('Onboarding', {
+              screen: 'CurrencySelection',
+              params: {context: 'onboarding'},
+            })
           }>
           Create a Key
         </Button>
@@ -84,7 +87,7 @@ const CreateOrImportKey = () => {
           onPress={() =>
             navigation.navigate('Onboarding', {
               screen: 'Import',
-              params: {isOnboarding: true},
+              params: {context: 'onboarding'},
             })
           }>
           I already have a Key

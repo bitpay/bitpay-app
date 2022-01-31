@@ -2,6 +2,7 @@ import {ExchangeRate, Key, PriceHistory, Token} from './wallet.models';
 import {ReceiveAddressConfig} from '../../navigation/wallet/components/ReceiveAddress';
 
 export enum WalletActionTypes {
+  SET_WALLET_TERMS_ACCEPTED = 'WALLET/SET_WALLET_TERMS_ACCEPTED',
   SUCCESS_WALLET_STORE_INIT = 'WALLET/SUCCESS_WALLET_STORE_INIT',
   FAILED_WALLET_STORE_INIT = 'WALLET/FAILED_WALLET_STORE_INIT',
   SUCCESS_CREATE_KEY = 'WALLET/SUCCESS_CREATE_KEY',
@@ -109,6 +110,10 @@ interface failedGetTokenOptions {
   type: typeof WalletActionTypes.FAILED_GET_TOKEN_OPTIONS;
 }
 
+interface setWalletTermsAccepted {
+  type: typeof WalletActionTypes.SET_WALLET_TERMS_ACCEPTED;
+}
+
 interface showReceiveAddressModal {
   type: typeof WalletActionTypes.SHOW_RECEIVE_ADDRESS_MODAL;
   payload: ReceiveAddressConfig;
@@ -135,6 +140,6 @@ export type WalletActionType =
   | successEncryptOrDecryptPassword
   | successGetTokenOptions
   | failedGetTokenOptions
-  | successEncryptOrDecryptPassword
+  | setWalletTermsAccepte
   | showReceiveAddressModal
   | dismissReceiveAddressModal;

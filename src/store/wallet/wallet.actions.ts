@@ -87,6 +87,10 @@ export const failedGetTokenOptions = (): WalletActionType => ({
   type: WalletActionTypes.FAILED_GET_TOKEN_OPTIONS,
 });
 
+export const setWalletTermsAccepted = (): WalletActionType => ({
+  type: WalletActionTypes.SET_WALLET_TERMS_ACCEPTED,
+});
+
 export const showReceiveAddressModal = (
   payload: ReceiveAddressConfig,
 ): WalletActionType => ({
