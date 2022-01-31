@@ -20,7 +20,7 @@ import {
   Row,
   ScreenGutter,
 } from '../../../components/styled/Containers';
-import {useDispatch} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {StackScreenProps} from '@react-navigation/stack';
 import {WalletStackParamList} from '../WalletStack';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
@@ -33,7 +33,6 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {addWallet} from '../../../store/wallet/effects';
-import {Network} from '../../../constants';
 import {Controller, useForm} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -47,6 +46,7 @@ import WalletRow from '../../../components/list/WalletRow';
 import {FlatList} from 'react-native';
 import {keyExtractor} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
+import {RootState} from '../../../store';
 
 type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
 
@@ -67,7 +67,7 @@ const ScrollView = styled(KeyboardAwareScrollView)`
 `;
 
 const ButtonContainer = styled.View`
-  margin: 20% 0;
+  margin-top: 40px;
 `;
 
 const AssociatedWalletContainer = styled.View`
@@ -113,6 +113,8 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {currencyAbbreviation, currencyName, key, isToken} = route.params;
+  // temporary until advanced settings is finished
+  const network = useSelector(({APP}: RootState) => APP.network);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -126,7 +128,6 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
   const ethWallets = key.wallets.filter(
     wallet => wallet.currencyAbbreviation === 'eth',
   );
-
   // formatting for the bottom modal
   const UIFormattedEthWallets = useMemo(
     () => ethWallets.map(wallet => buildUIFormattedWallet(wallet)),
@@ -138,13 +139,16 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
     UIFormattedEthWallets[0],
   );
 
-  const [showAssociatedWalletSelection, setShowAssociatedWalletSelection] =
-    useState<boolean | undefined>(false);
+  const [
+    showAssociatedWalletSelectionDropdown,
+    setShowAssociatedWalletSelectionDropdown,
+  ] = useState<boolean | undefined>(false);
 
-  const [modalVisible, setModalVisible] = useState(false);
+  const [associatedWalletModalVisible, setAssociatedWalletModalVisible] =
+    useState(false);
 
   useEffect(() => {
-    setShowAssociatedWalletSelection(ethWallets.length > 1 && isToken);
+    setShowAssociatedWalletSelectionDropdown(ethWallets.length > 1 && isToken);
   }, []);
 
   const theme = useTheme();
@@ -165,13 +169,13 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
           wallet => wallet.id === associatedWallet.id,
         );
 
-        if (_associatedWallet) {
+        if (_associatedWallet?.tokens) {
           // check tokens within associated wallet and see if token already exist
           const {tokens} = _associatedWallet;
 
           for (const token of tokens) {
             if (
-              key.wallets
+              key?.wallets
                 .find(wallet => wallet.id === token)
                 ?.currencyAbbreviation.toLowerCase() === currency
             ) {
@@ -200,7 +204,6 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
       await dispatch(
         startOnGoingProcessModal(OnGoingProcessMessages.ADDING_WALLET),
       );
-
       // adds wallet and binds to key obj - creates eth wallet if needed
       const wallet = (await dispatch<any>(
         addWallet({
@@ -209,7 +212,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
           isToken,
           currency,
           options: {
-            network: Network.testnet,
+            network,
             customName: customName === currencyName ? undefined : customName,
           },
         }),
@@ -252,7 +255,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
         onPress={() => {
           haptic('impactLight');
           setAssociatedWallet(item);
-          setModalVisible(false);
+          setAssociatedWalletModalVisible(false);
         }}
         wallet={item}
       />
@@ -280,13 +283,13 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
           defaultValue={`${currencyName}`}
         />
 
-        {showAssociatedWalletSelection && (
+        {showAssociatedWalletSelectionDropdown && (
           <AssociatedWalletContainer>
             <Label>ASSOCIATED WALLET</Label>
             <AssociatedWallet
               activeOpacity={ActiveOpacity}
               onPress={() => {
-                setModalVisible(true);
+                setAssociatedWalletModalVisible(true);
               }}>
               <Row
                 style={{alignItems: 'center', justifyContent: 'space-between'}}>
@@ -304,15 +307,15 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
         )}
 
         <BottomPopupModal
-          isVisible={modalVisible}
-          onBackdropPress={() => setModalVisible(false)}>
+          isVisible={associatedWalletModalVisible}
+          onBackdropPress={() => setAssociatedWalletModalVisible(false)}>
           <AssociatedWalletSelectionModalContainer>
             <TextAlign align={'center'}>
               <H4>Select a Wallet</H4>
             </TextAlign>
             <FlatList
               contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
-              data={ethWallets}
+              data={UIFormattedEthWallets}
               keyExtractor={keyExtractor}
               renderItem={renderItem}
             />
