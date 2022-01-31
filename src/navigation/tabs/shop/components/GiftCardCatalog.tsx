@@ -8,10 +8,9 @@ import {useForm, Controller} from 'react-hook-form';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {WIDTH} from '../../../../components/styled/Containers';
 import ShopCarouselList, {ShopCarouselItem} from './ShopCarouselList';
-import {purchasedBrands} from '../stubs/gift-cards';
-import {Paragraph} from '../../../../components/styled/Text';
-import GiftCardCatalogItem from './GiftCardCatalogItem';
-import GiftCardCreditsItem from './GiftCardCreditsItem';
+import {purchasedGiftCards} from '../stubs/gift-cards';
+import {BaseText, Paragraph} from '../../../../components/styled/Text';
+import GiftCardItem from './GiftCardItem';
 import {
   CardConfig,
   Category,
@@ -32,9 +31,9 @@ import {
   SectionHeaderContainer,
   SectionSpacer,
 } from './styled/ShopTabComponents';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import {GiftCardScreens} from '../gift-card/GiftCardStack';
-
+import MyGiftCards from './MyGiftCards';
 interface CategoryItemProps {
   isLast: boolean;
 }
@@ -51,7 +50,7 @@ const CategoryItem = styled.View<CategoryItemProps>`
     `}
 `;
 
-const CategoryText = styled.Text`
+const CategoryText = styled(BaseText)`
   margin-left: 15px;
   font-size: 14px;
 `;
@@ -68,7 +67,7 @@ const Curations = ({curations}: {curations: GiftCardCuration[]}) => {
           <ShopCarouselList
             items={curation.giftCards}
             itemComponent={(item: ShopCarouselItem) => (
-              <GiftCardCatalogItem cardConfig={item as CardConfig} />
+              <GiftCardItem cardConfig={item as CardConfig} />
             )}
             itemUnderlayColor={'#fbfbff'}
             itemWidthInLastSlide={WIDTH}
@@ -99,10 +98,15 @@ export default ({
   categories: Category[];
 }) => {
   const navigation = useNavigation();
+  const theme = useTheme();
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as CardConfig[]);
   const {control} = useForm();
-  const purchasedBrandsHeight = purchasedBrands.length * 68 + 260;
+  const activeGiftCards = purchasedGiftCards.filter(
+    giftCard => !giftCard.archived,
+  );
+  const numActiveGiftCards = activeGiftCards.length;
+  const activeGiftCardsHeight = numActiveGiftCards * 60 + 260;
 
   const updateSearchResults = debounce((text: string) => {
     setSearchVal(text);
@@ -119,23 +123,12 @@ export default ({
 
   return (
     <View>
-      {purchasedBrands.length ? (
+      {purchasedGiftCards.length ? (
         <>
-          <SectionContainer>
-            <SectionHeader>My Gift Cards</SectionHeader>
-            {purchasedBrands.map(purchasedBrand => {
-              const brandConfig = availableGiftCards.find(
-                cardConfig => cardConfig.name === purchasedBrand.name,
-              ) as CardConfig;
-              return (
-                <GiftCardCreditsItem
-                  key={purchasedBrand.name}
-                  cardConfig={brandConfig}
-                  amount={purchasedBrand.amount}
-                />
-              );
-            })}
-          </SectionContainer>
+          <MyGiftCards
+            giftCards={purchasedGiftCards}
+            supportedGiftCards={availableGiftCards}
+          />
           <SectionDivider />
         </>
       ) : (
@@ -147,18 +140,21 @@ export default ({
           render={({field: {onChange, onBlur, value}}) => (
             <SearchBox
               placeholder={'Search Gift Cards'}
+              theme={theme}
               onBlur={onBlur}
               onFocus={() => {
                 scrollViewRef &&
                   scrollViewRef.current &&
                   scrollViewRef.current.scrollTo({
                     x: 0,
-                    y: purchasedBrands.length
-                      ? purchasedBrandsHeight + 15
+                    y: numActiveGiftCards
+                      ? activeGiftCardsHeight + 15
+                      : purchasedGiftCards.length
+                      ? 300
                       : 160,
                     animated: Platform.select({
                       ios: true,
-                      android: !purchasedBrands.length,
+                      android: !numActiveGiftCards,
                     }),
                   });
               }}
@@ -186,7 +182,7 @@ export default ({
                   });
                 }}
                 underlayColor={'#fbfbff'}>
-                <GiftCardCatalogItem cardConfig={cardConfig} />
+                <GiftCardItem cardConfig={cardConfig} />
               </ListItemTouchableHighlight>
             ))}
           </SearchResults>
