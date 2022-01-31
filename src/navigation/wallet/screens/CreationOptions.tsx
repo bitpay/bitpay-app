@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useLayoutEffect} from 'react';
 import styled from 'styled-components/native';
 import {
   ActiveOpacity,
@@ -66,13 +66,13 @@ const Image = styled.Image<{imgHeight: string}>`
   bottom: 0;
 `;
 
-const CreationOptions = () => {
+const CreationOptions: React.FC = () => {
   const navigation = useNavigation();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
-      headerTitle: () => <HeaderTitle>Select Wallet Type</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>Create</HeaderTitle>,
       headerTitleAlign: 'center',
     });
   }, [navigation]);
@@ -80,10 +80,14 @@ const CreationOptions = () => {
   const optionList: Option[] = [
     {
       id: 'basic',
-      title: 'Basic Wallet',
+      title: 'New Key',
       description:
         'Add coins like Bitcoin and Dogecoin, and also tokens like USDC and PAX',
-      cta: () => navigation.navigate('Wallet', {screen: 'CurrencySelection'}),
+      cta: () =>
+        navigation.navigate('Wallet', {
+          screen: 'CurrencySelection',
+          params: {context: 'createNewKey'},
+        }),
       img: require('../../../../assets/img/wallet/wallet-type/create-wallet.png'),
       height: '98px',
     },
@@ -97,12 +101,11 @@ const CreationOptions = () => {
     },
     {
       id: 'recover',
-      title: 'Recover Wallet',
+      title: 'Recover Key',
       description: 'Import your wallet using your backup passphrase',
       cta: () =>
         navigation.navigate('Wallet', {
           screen: 'Import',
-          params: {isOnboarding: false},
         }),
       img: require('../../../../assets/img/wallet/wallet-type/recover.png'),
       height: '80px',

@@ -1,6 +1,7 @@
 import {ExchangeRate, Key, PriceHistory, Token} from './wallet.models';
 
 export enum WalletActionTypes {
+  SET_WALLET_TERMS_ACCEPTED = 'WALLET/SET_WALLET_TERMS_ACCEPTED',
   SUCCESS_WALLET_STORE_INIT = 'WALLET/SUCCESS_WALLET_STORE_INIT',
   FAILED_WALLET_STORE_INIT = 'WALLET/FAILED_WALLET_STORE_INIT',
   SUCCESS_CREATE_KEY = 'WALLET/SUCCESS_CREATE_KEY',
@@ -107,6 +108,10 @@ interface failedGetTokenOptions {
   type: typeof WalletActionTypes.FAILED_GET_TOKEN_OPTIONS;
 }
 
+interface setWalletTermsAccepted {
+  type: typeof WalletActionTypes.SET_WALLET_TERMS_ACCEPTED;
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -123,4 +128,5 @@ export type WalletActionType =
   | deleteKey
   | successEncryptOrDecryptPassword
   | successGetTokenOptions
-  | failedGetTokenOptions;
+  | failedGetTokenOptions
+  | setWalletTermsAccepted;

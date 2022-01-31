@@ -76,11 +76,11 @@ const HomeRoot = () => {
     dispatch(AppActions.showOnboardingFinishModal());
   };
 
-  useEffect(() => {
-    if (!onboardingCompleted) {
-      showOnboardingFinishModal();
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (!onboardingCompleted) {
+  //     showOnboardingFinishModal();
+  //   }
+  // }, []);
 
   const navigation = useNavigation();
 
@@ -90,7 +90,6 @@ const HomeRoot = () => {
   );
   const exchangeRatesItems: Array<ExchangeRateProps> = [];
   priceHistory.forEach((ph: PriceHistory) => {
-    console.log(ph);
     const option = SupportedCurrencyOptions.find(
       ({id}: {id: string | number}) => id === ph.coin,
     );
