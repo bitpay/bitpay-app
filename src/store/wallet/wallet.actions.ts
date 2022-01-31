@@ -1,5 +1,6 @@
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {ExchangeRate, Key, PriceHistory, Token} from './wallet.models';
+import {ReceiveAddressConfig} from '../../navigation/wallet/components/ReceiveAddress';
 
 export const successWalletStoreInit = (): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_WALLET_STORE_INIT,
@@ -88,4 +89,15 @@ export const failedGetTokenOptions = (): WalletActionType => ({
 
 export const setWalletTermsAccepted = (): WalletActionType => ({
   type: WalletActionTypes.SET_WALLET_TERMS_ACCEPTED,
+});
+
+export const showReceiveAddressModal = (
+  payload: ReceiveAddressConfig,
+): WalletActionType => ({
+  type: WalletActionTypes.SHOW_RECEIVE_ADDRESS_MODAL,
+  payload,
+});
+
+export const dismissReceiveAddressModal = (): WalletActionType => ({
+  type: WalletActionTypes.DISMISS_RECEIVE_ADDRESS_MODAL,
 });

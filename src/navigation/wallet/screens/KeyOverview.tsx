@@ -61,7 +61,7 @@ const WalletListFooterText = styled(BaseText)`
 `;
 
 // Key overview and Key settings list builder
-export const buildNestedWalletList = (wallets: Wallet[]) => {
+export const buildNestedWalletList = (wallets: Wallet[], keyId: string) => {
   const walletList = [] as Array<WalletRowProps>;
   const _coins = wallets.filter(wallet => !wallet.credentials.token);
   const _tokens = wallets.filter(wallet => wallet.credentials.token);
@@ -79,6 +79,7 @@ export const buildNestedWalletList = (wallets: Wallet[]) => {
     currencyAbbreviation: currencyAbbreviation.toUpperCase(),
     cryptoBalance: balance,
     fiatBalance: formatFiatBalance(balance),
+    keyId,
   });
 
   _coins.forEach(coin => {
@@ -119,7 +120,7 @@ const KeyOverview = () => {
   const {wallets} = useSelector(
     ({WALLET}: RootState) => WALLET.keys[key.id],
   ) || {wallets: []};
-  const walletList = buildNestedWalletList(wallets);
+  const walletList = buildNestedWalletList(wallets, key.id);
 
   const keyOptions: Array<Option> = [
     {
