@@ -80,7 +80,6 @@ export interface KeyOptions {
   n: any;
   myName: any;
   networkName: string;
-  bwsurl: any;
   singleAddress: any;
   coin: string;
   extendedPrivateKey: any;
@@ -95,6 +94,7 @@ export interface KeyOptions {
   useLegacyPurpose?: boolean;
   useNativeSegwit?: boolean;
   words?: string;
+  xPrivKey?: string;
 }
 
 export interface Token {
