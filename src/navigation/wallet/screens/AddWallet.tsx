@@ -22,10 +22,7 @@ import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
 import {addWallet} from '../../../store/wallet/effects';
 import {Network} from '../../../constants';
 import {Controller, useForm} from 'react-hook-form';
@@ -96,6 +93,7 @@ const AssociateWalletName = styled(BaseText)`
 
 const AssociatedWalletSelectionModalContainer = styled(ModalContainer)`
   padding: 15px;
+  min-height: 200px;
 `;
 
 const schema = yup.object().shape({
@@ -131,12 +129,12 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
   );
 
   const [showAssociatedWalletSelection, setShowAssociatedWalletSelection] =
-    useState<boolean>(false);
+    useState<boolean | undefined>(false);
 
   const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
-    setShowAssociatedWalletSelection(!!ethWallets.length && isToken);
+    setShowAssociatedWalletSelection(ethWallets.length > 1 && isToken);
   }, []);
 
   const theme = useTheme();
@@ -191,7 +189,6 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
           ],
         }),
       );
-
     } catch (err) {
       // TODO
       console.error(err);

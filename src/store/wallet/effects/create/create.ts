@@ -11,7 +11,7 @@ import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
 import {buildKeyObj, buildWalletObj} from '../../utils/wallet';
-import {successCreateKey} from '../../wallet.actions';
+import {failedAddWallet, successAddWallet, successCreateKey} from '../../wallet.actions';
 import API from 'bitcore-wallet-client/ts_build';
 import {Key, KeyMethods, Token, Wallet} from '../../wallet.models';
 import {Network} from '../../../../constants';
@@ -80,7 +80,6 @@ export const addWallet =
     return new Promise(async (resolve, reject) => {
       try {
         let newWallet;
-        const wallets = [];
         const state = getState();
         const tokenOpts = state.WALLET.tokenOptions;
         const {customName} = options;
@@ -93,7 +92,12 @@ export const addWallet =
               options,
             })) as Wallet;
 
-            wallets.push(associatedWallet);
+            key.wallets.push(
+              merge(
+                associatedWallet,
+                buildWalletObj(associatedWallet.credentials, tokenOpts),
+              ),
+            );
           }
 
           newWallet = (await createTokenWallet(
@@ -113,27 +117,20 @@ export const addWallet =
           return reject();
         }
 
-        wallets.push(newWallet);
-
         key.wallets.push(
-          ...wallets.map(newWallet =>
-            merge(
-              newWallet,
-              buildWalletObj(newWallet.credentials, tokenOpts, {
-                customName,
-              }),
-            ),
+          merge(
+            newWallet,
+            buildWalletObj(newWallet.credentials, tokenOpts, {
+              customName,
+            }),
           ),
         );
 
-        dispatch(
-          successCreateKey({
-            key: buildKeyObj({key: key.methods, wallets: key.wallets}),
-          }),
-        );
+        dispatch(successAddWallet({key}));
         console.log('Added Wallet', currency);
         resolve(newWallet);
       } catch (err) {
+        dispatch(failedAddWallet());
         console.error(err);
         reject();
       }

@@ -18,6 +18,15 @@ export const failedCreateKey = (): WalletActionType => ({
   type: WalletActionTypes.FAILED_CREATE_KEY,
 });
 
+export const successAddWallet = (payload: {key: Key}): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_ADD_WALLET,
+  payload,
+});
+
+export const failedAddWallet = (): WalletActionType => ({
+  type: WalletActionTypes.FAILED_ADD_WALLET,
+});
+
 export const successImport = (payload: {key: Key}): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_IMPORT,
   payload,
