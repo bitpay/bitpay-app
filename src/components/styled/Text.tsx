@@ -123,3 +123,12 @@ export const Balance = styled(BaseText)`
   line-height: 53px;
   letter-spacing: 0;
 `;
+
+export const ImportTitle = styled(BaseText)`
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 18px;
+  color: ${SlateDark};
+  opacity: 0.75;
+  text-transform: uppercase;
+`;
