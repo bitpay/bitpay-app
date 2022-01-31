@@ -106,7 +106,7 @@ const AssociatedWalletSelectionModalContainer = styled(ModalContainer)`
 `;
 
 const schema = yup.object().shape({
-  customName: yup.string(),
+  walletName: yup.string(),
 });
 
 const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
@@ -157,9 +157,9 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
     control,
     handleSubmit,
     formState: {errors},
-  } = useForm<{customName: string}>({resolver: yupResolver(schema)});
+  } = useForm<{walletName: string}>({resolver: yupResolver(schema)});
 
-  const add = handleSubmit(async ({customName}) => {
+  const add = handleSubmit(async ({walletName}) => {
     try {
       const currency = currencyAbbreviation.toLowerCase();
       let _associatedWallet: Wallet | undefined;
@@ -213,7 +213,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
           currency,
           options: {
             network,
-            customName: customName === currencyName ? undefined : customName,
+            walletName: walletName === currencyName ? undefined : walletName,
           },
         }),
       )) as Wallet;
@@ -275,11 +275,11 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
               label={'WALLET NAME'}
               onBlur={onBlur}
               onChangeText={(text: string) => onChange(text)}
-              error={errors.customName?.message}
+              error={errors.walletName?.message}
               value={value}
             />
           )}
-          name="customName"
+          name="walletName"
           defaultValue={`${currencyName}`}
         />
 
@@ -296,7 +296,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
                 <Row style={{alignItems: 'center'}}>
                   <CurrencyImage img={CurrencyListIcons.eth} size={30} />
                   <AssociateWalletName>
-                    {associatedWallet?.customName ||
+                    {associatedWallet?.walletName ||
                       `${associatedWallet.currencyAbbreviation.toUpperCase()} Wallet`}
                   </AssociateWalletName>
                 </Row>

@@ -72,7 +72,7 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   img,
   currencyName,
   currencyAbbreviation,
-  customName,
+  walletName,
   balance = 0,
   credentials,
 }) => ({
@@ -80,7 +80,7 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   img,
   currencyName,
   currencyAbbreviation: currencyAbbreviation.toUpperCase(),
-  customName,
+  walletName,
   cryptoBalance: balance,
   fiatBalance: formatFiatBalance(balance),
   network: credentials.network,

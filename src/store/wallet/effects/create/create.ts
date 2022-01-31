@@ -19,7 +19,7 @@ import {Network} from '../../../../constants';
 interface CreateOptions {
   network?: Network;
   account?: number;
-  customName?: string;
+  walletName?: string;
 }
 
 const BWC = BwcProvider.getInstance();
@@ -82,7 +82,7 @@ export const addWallet =
         let newWallet;
         const state = getState();
         const tokenOpts = state.WALLET.tokenOptions;
-        const {customName} = options;
+        const {walletName} = options;
 
         if (isToken) {
           if (!associatedWallet) {
@@ -121,7 +121,7 @@ export const addWallet =
           merge(
             newWallet,
             buildWalletObj(newWallet.credentials, tokenOpts, {
-              customName,
+              walletName,
             }),
           ),
         );

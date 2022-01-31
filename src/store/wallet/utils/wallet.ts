@@ -17,14 +17,14 @@ export const buildWalletObj = (
   },
   tokenOpts: {[key in string]: Token},
   otherOpts?: {
-    customName?: string;
+    walletName?: string;
   },
 ): WalletObj => {
   return {
     id: walletId,
     currencyName: walletName,
     currencyAbbreviation: coin,
-    customName: otherOpts?.customName,
+    walletName: otherOpts?.walletName,
     balance,
     tokens,
     img: SUPPORTED_CURRENCIES.includes(coin)

@@ -51,7 +51,7 @@ export interface WalletObj {
   currencyAbbreviation: string;
   balance?: number;
   tokens?: string[];
-  customName?: string;
+  walletName?: string;
   preferences?: {
     tokenAddresses?: [];
   };
