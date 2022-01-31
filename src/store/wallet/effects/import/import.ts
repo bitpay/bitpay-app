@@ -1,11 +1,8 @@
-import {KeyMethods, KeyOptions, Wallet} from '../../wallet.models';
+import {Key, KeyMethods, KeyOptions, Wallet} from '../../wallet.models';
 import {Effect} from '../../../index';
-import {startOnGoingProcessModal} from '../../../app/app.effects';
-import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
-import {AppActions} from '../../../app';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
-import {buildWalletObj} from '../../utils/wallet';
+import {buildKeyObj, buildWalletObj} from '../../utils/wallet';
 import {LogActions} from '../../../../store/log';
 import {failedImport, successImport} from '../../wallet.actions';
 
@@ -31,76 +28,65 @@ export const startImportMnemonic =
     importData: {words?: string; xPrivKey?: string},
     opts: Partial<KeyOptions>,
   ): Effect =>
-  async (dispatch, getState) => {
-    const state = getState();
-    const tokenOpts = state.WALLET.tokenOptions;
-    await dispatch(startOnGoingProcessModal(OnGoingProcessMessages.IMPORTING));
-    try {
-      const {words, xPrivKey} = importData;
-      opts.words = normalizeMnemonic(words);
-      opts.xPrivKey = xPrivKey;
+  async (dispatch, getState): Promise<Key> => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const state = getState();
+        const tokenOpts = state.WALLET.tokenOptions;
+        const {words, xPrivKey} = importData;
+        opts.words = normalizeMnemonic(words);
+        opts.xPrivKey = xPrivKey;
 
-      const {key, wallets} = await serverAssistedImport(opts);
+        const {key: _key, wallets} = await serverAssistedImport(opts);
+        const key = buildKeyObj({
+          key: _key,
+          wallets: wallets.map(wallet =>
+            merge(wallet, buildWalletObj(wallet.credentials, tokenOpts)),
+          ),
+        });
 
-      dispatch(AppActions.dismissOnGoingProcessModal());
-
-      dispatch(
-        successImport({
-          key: {
-            id: key.id,
-            wallets: wallets.map(wallet =>
-              merge(wallet, buildWalletObj(wallet.credentials, tokenOpts)),
-            ),
-            properties: key.toObj(),
-            methods: key,
-            // TODO total balance
-            totalBalance: 0,
-            show: true,
-            isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
-          },
-        }),
-      );
-    } catch (e) {
-      dispatch(AppActions.dismissOnGoingProcessModal());
-      dispatch(failedImport());
-      throw e;
-    }
+        dispatch(
+          successImport({
+            key,
+          }),
+        );
+        resolve(key);
+      } catch (e) {
+        dispatch(failedImport());
+        reject(e);
+      }
+    });
   };
 
 export const startImportFile =
   (decryptBackupText: string, opts: Partial<KeyOptions>): Effect =>
-  async (dispatch, getState) => {
-    const state = getState();
-    const tokenOpts = state.WALLET.tokenOptions;
-    await dispatch(startOnGoingProcessModal(OnGoingProcessMessages.IMPORTING));
-    try {
-      const {key, wallet} = await createKeyAndCredentialsWithFile(
-        decryptBackupText,
-        opts,
-      );
+  async (dispatch, getState): Promise<Key> => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const state = getState();
+        const tokenOpts = state.WALLET.tokenOptions;
+        const {key: _key, wallet} = await createKeyAndCredentialsWithFile(
+          decryptBackupText,
+          opts,
+        );
+        const key = buildKeyObj({
+          key: _key,
+          wallets: [
+            merge(wallet, buildWalletObj(wallet.credentials, tokenOpts)),
+          ],
+        });
 
-      dispatch(AppActions.dismissOnGoingProcessModal());
-
-      dispatch(
-        successImport({
-          key: {
-            id: key.id,
-            wallets: [
-              merge(wallet, buildWalletObj(wallet.credentials, tokenOpts)),
-            ],
-            properties: key.toObj(),
-            methods: key,
-            totalBalance: 0,
-            show: true,
-            isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
-          },
-        }),
-      );
-    } catch (e) {
-      dispatch(AppActions.dismissOnGoingProcessModal());
-      dispatch(failedImport());
-      throw e;
-    }
+        dispatch(
+          successImport({
+            key,
+          }),
+        );
+        resolve(key);
+      } catch (e) {
+        dispatch(failedImport());
+        reject(e);
+      }
+    });
   };
 
 // Server assisted import will not find any third party wallet only the ones already created in bws.
@@ -109,49 +95,47 @@ export const startImportWithDerivationPath =
     importData: {words?: string; xPrivKey?: string},
     opts: Partial<KeyOptions>,
   ): Effect =>
-  async (dispatch, getState) => {
-    const state = getState();
-    const tokenOpts = state.WALLET.tokenOptions;
-    await dispatch(startOnGoingProcessModal(OnGoingProcessMessages.IMPORTING));
-    try {
-      const {words, xPrivKey} = importData;
-      opts.mnemonic = words;
-      opts.extendedPrivateKey = xPrivKey;
-      const showOpts = Object.assign({}, opts);
-      if (showOpts.extendedPrivateKey) {
-        showOpts.extendedPrivateKey = '[hidden]';
+  async (dispatch, getState): Promise<Key> => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const state = getState();
+        const tokenOpts = state.WALLET.tokenOptions;
+        const {words, xPrivKey} = importData;
+        opts.mnemonic = words;
+        opts.extendedPrivateKey = xPrivKey;
+        const showOpts = Object.assign({}, opts);
+        if (showOpts.extendedPrivateKey) {
+          showOpts.extendedPrivateKey = '[hidden]';
+        }
+        if (showOpts.mnemonic) {
+          showOpts.mnemonic = '[hidden]';
+        }
+        dispatch(
+          LogActions.info(
+            `Importing Wallet with derivation path: ${JSON.stringify(
+              showOpts,
+            )}`,
+          ),
+        );
+        const data = await createKeyAndCredentials(opts);
+        const {wallet, key: _key} = data;
+        const key = buildKeyObj({
+          key: _key,
+          wallets: [
+            merge(wallet, buildWalletObj(wallet.credentials, tokenOpts)),
+          ],
+        });
+        dispatch(
+          successImport({
+            key,
+          }),
+        );
+        resolve(key);
+      } catch (e) {
+        dispatch(failedImport());
+        reject(e);
       }
-      if (showOpts.mnemonic) {
-        showOpts.mnemonic = '[hidden]';
-      }
-      dispatch(
-        LogActions.info(
-          `Importing Wallet with derivation path: ${JSON.stringify(showOpts)}`,
-        ),
-      );
-      const data = await createKeyAndCredentials(opts);
-      const {wallet, key} = data;
-      dispatch(AppActions.dismissOnGoingProcessModal());
-      dispatch(
-        successImport({
-          key: {
-            id: key.id,
-            wallets: [
-              merge(wallet, buildWalletObj(wallet.credentials, tokenOpts)),
-            ],
-            properties: key.toObj(),
-            methods: key,
-            totalBalance: 0,
-            show: true,
-            isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
-          },
-        }),
-      );
-    } catch (e) {
-      dispatch(AppActions.dismissOnGoingProcessModal());
-      dispatch(failedImport());
-      throw e;
-    }
+    });
   };
 
 const createKeyAndCredentials = async (

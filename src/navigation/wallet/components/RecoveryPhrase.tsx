@@ -4,21 +4,30 @@ import {Caution, SlateDark, White} from '../../../styles/colors';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
 import {CtaContainer} from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
-import {useDispatch} from 'react-redux';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {useDispatch, useSelector} from 'react-redux';
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+} from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import {useForm, Controller} from 'react-hook-form';
 import {BaseText, ImportTitle} from '../../../components/styled/Text';
 import BoxInput from '../../../components/form/BoxInput';
 import {useLogger} from '../../../utils/hooks/useLogger';
-import {KeyOptions} from '../../../store/wallet/wallet.models';
+import {Key, KeyOptions} from '../../../store/wallet/wallet.models';
 import {
   startImportMnemonic,
   startImportWithDerivationPath,
 } from '../../../store/wallet/effects';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {ImportObj} from '../../../store/scan/scan.models';
+import {RouteProp} from '@react-navigation/core';
+import {WalletStackParamList} from '../WalletStack';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
+import {navigateToTermsOrOverview} from '../screens/Backup';
+import {Effect, RootState} from '../../../store';
 import {
   ImportTextInput,
   ImportContainer,
@@ -116,6 +125,10 @@ const RecoveryPhrase = () => {
   const dispatch = useDispatch();
   const logger = useLogger();
   const navigation = useNavigation();
+  const route = useRoute<RouteProp<WalletStackParamList, 'Import'>>();
+  const walletTermsAccepted = useSelector(
+    ({WALLET}: RootState) => WALLET.walletTermsAccepted,
+  );
   const [showOptions, setShowOptions] = useState(false);
   const [derivationPathEnabled, setDerivationPathEnabled] = useState(false);
   const supportedCurrencies: {label: string; value: string}[] = [];
@@ -246,17 +259,27 @@ const RecoveryPhrase = () => {
     opts: Partial<KeyOptions>,
   ): Promise<void> => {
     try {
-      !derivationPathEnabled
-        ? await dispatch(startImportMnemonic(importData, opts))
-        : await dispatch(startImportWithDerivationPath(importData, opts));
+      await dispatch(
+        startOnGoingProcessModal(OnGoingProcessMessages.IMPORTING),
+      );
+      const key = !derivationPathEnabled
+        ? // @ts-ignore
+          await dispatch<Key>(startImportMnemonic(importData, opts))
+        : // @ts-ignore
+          await dispatch<Key>(startImportWithDerivationPath(importData, opts));
 
-      navigation.navigate('Onboarding', {
-        screen: 'TermsOfUse',
+      navigateToTermsOrOverview({
+        context: route.params?.context,
+        navigation,
+        walletTermsAccepted,
+        key,
       });
     } catch (e: any) {
       logger.error(e.message);
       showErrorModal(e.message);
       return;
+    } finally {
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 

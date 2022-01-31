@@ -40,7 +40,11 @@ const Import: React.FC<ImportScreenProps> = ({route}) => {
           component={RecoveryPhrase}
           initialParams={route.params}
         />
-        <Tab.Screen name="File/Text" component={FileOrText} />
+        <Tab.Screen
+          name="File/Text"
+          component={FileOrText}
+          initialParams={route.params}
+        />
       </Tab.Navigator>
     </ImportContainer>
   );

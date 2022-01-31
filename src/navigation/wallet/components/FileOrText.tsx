@@ -11,15 +11,24 @@ import styled from 'styled-components/native';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import {useForm, Controller} from 'react-hook-form';
-import {KeyOptions} from '../../../store/wallet/wallet.models';
+import {Key, KeyOptions} from '../../../store/wallet/wallet.models';
 import {BaseText, ImportTitle} from '../../../components/styled/Text';
 import {Caution} from '../../../styles/colors';
 import {BwcProvider} from '../../../lib/bwc';
 import {useLogger} from '../../../utils/hooks/useLogger';
-import {useDispatch} from 'react-redux';
-import {useNavigation} from '@react-navigation/native';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {useDispatch, useSelector} from 'react-redux';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {startImportFile} from '../../../store/wallet/effects';
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+} from '../../../store/app/app.actions';
+import {RouteProp} from '@react-navigation/core';
+import {WalletStackParamList} from '../WalletStack';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
+import {navigateToTermsOrOverview} from '../screens/Backup';
+import {RootState} from '../../../store';
 
 const BWCProvider = BwcProvider.getInstance();
 
@@ -43,6 +52,10 @@ const FileOrText = () => {
   const logger = useLogger();
   const dispatch = useDispatch();
   const navigation = useNavigation();
+  const route = useRoute<RouteProp<WalletStackParamList, 'Import'>>();
+  const walletTermsAccepted = useSelector(
+    ({WALLET}: RootState) => WALLET.walletTermsAccepted,
+  );
 
   const {
     control,
@@ -55,14 +68,23 @@ const FileOrText = () => {
     opts: Partial<KeyOptions>,
   ) => {
     try {
-      await dispatch(startImportFile(decryptBackupText, opts));
-      navigation.navigate('Onboarding', {
-        screen: 'TermsOfUse',
+      await dispatch(
+        startOnGoingProcessModal(OnGoingProcessMessages.IMPORTING),
+      );
+      // @ts-ignore
+      const key = await dispatch<Key>(startImportFile(decryptBackupText, opts));
+      navigateToTermsOrOverview({
+        context: route.params?.context,
+        navigation,
+        walletTermsAccepted,
+        key,
       });
     } catch (e: any) {
       logger.error(e.message);
       showErrorModal(e.message);
       return;
+    } finally {
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
