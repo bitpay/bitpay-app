@@ -200,6 +200,5 @@ export const BWCErrorMessage = (err: any, prefix?: string): string => {
       break;
   }
 
-  const msg = prefix + (prefix ? ': ' : '') + body;
-  return msg;
+  return prefix + (prefix ? ': ' : '') + body;
 };
