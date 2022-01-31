@@ -87,7 +87,8 @@ const BchHeaderAction = styled.TouchableOpacity<{isActive: boolean}>`
 
 const BchHeaderActionText = styled(BaseText)<{isActive: boolean}>`
   font-size: 16px;
-  color: ${({theme, isActive}) => (isActive ? theme.colors.text : SlateDark)};
+  color: ${({theme, isActive}) =>
+    isActive ? theme.colors.text : theme.dark ? NeutralSlate : SlateDark};
 `;
 
 const BchHeaderActions = styled.View`
@@ -228,7 +229,13 @@ const ReceiveAddress = () => {
     const walletClone = cloneDeep(wallet);
 
     if (walletClone) {
-      let {token, network, coin} = walletClone.credentials;
+      let {token, network, coin, multisigEthInfo} = walletClone.credentials;
+      if (multisigEthInfo?.multisigContractAddress) {
+        setLoading(false);
+        setAddress(multisigEthInfo.multisigContractAddress);
+        return;
+      }
+
       if (token) {
         walletClone.id.replace(`-${token.address}`, '');
       }
