@@ -21,8 +21,6 @@ export enum WalletActionTypes {
   FAILED_GET_TOKEN_OPTIONS = 'WALLET/FAILED_GET_TOKEN_OPTIONS',
   SUCCESS_ADD_WALLET = 'WALLET/SUCCESS_ADD_WALLET',
   FAILED_ADD_WALLET = 'WALLET/FAILED_ADD_WALLET',
-  SHOW_RECEIVE_ADDRESS_MODAL = 'WALLET/SHOW_RECEIVE_ADDRESS_MODAL',
-  DISMISS_RECEIVE_ADDRESS_MODAL = 'WALLET/DISMISS_RECEIVE_ADDRESS_MODAL',
 }
 
 interface successWalletStoreInit {
@@ -127,15 +125,6 @@ interface setWalletTermsAccepted {
   type: typeof WalletActionTypes.SET_WALLET_TERMS_ACCEPTED;
 }
 
-interface showReceiveAddressModal {
-  type: typeof WalletActionTypes.SHOW_RECEIVE_ADDRESS_MODAL;
-  payload: ReceiveAddressConfig;
-}
-
-interface dismissReceiveAddressModal {
-  type: typeof WalletActionTypes.DISMISS_RECEIVE_ADDRESS_MODAL;
-}
-
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -155,6 +144,4 @@ export type WalletActionType =
   | successEncryptOrDecryptPassword
   | successGetTokenOptions
   | failedGetTokenOptions
-  | setWalletTermsAccepted
-  | showReceiveAddressModal
-  | dismissReceiveAddressModal;
+  | setWalletTermsAccepted;

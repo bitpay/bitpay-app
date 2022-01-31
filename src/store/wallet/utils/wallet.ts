@@ -11,6 +11,7 @@ export const buildWalletObj = (
     coin,
     balance = 0,
     tokens,
+    keyId,
   }: Credentials & {
     balance?: number;
     tokens?: any;
@@ -27,6 +28,7 @@ export const buildWalletObj = (
     walletName: otherOpts?.walletName,
     balance,
     tokens,
+    keyId,
     img: SUPPORTED_CURRENCIES.includes(coin)
       ? CurrencyListIcons[coin]
       : tokenOpts[coin]?.logoURI,
