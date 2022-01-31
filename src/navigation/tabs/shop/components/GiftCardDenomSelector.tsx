@@ -4,6 +4,7 @@ import styled from 'styled-components/native';
 import MinusSvg from '../../../../../assets/img/minus.svg';
 import PlusSvg from '../../../../../assets/img/plus.svg';
 import {BaseText} from '../../../../components/styled/Text';
+import {formatAmount} from '../../../../lib/gift-cards/gift-card';
 import {CardConfig} from '../../../../store/shop/shop.models';
 import {BitPay} from '../../../../styles/colors';
 
@@ -49,7 +50,11 @@ export default ({cardConfig}: {cardConfig: CardConfig}) => {
           <MinusSvg />
         </PlusButton>
       </TouchableWithoutFeedback>
-      <SelectedAmount>${amounts[selectedIndex]}</SelectedAmount>
+      <SelectedAmount>
+        {formatAmount(amounts[selectedIndex], cardConfig.currency, {
+          customPrecision: 'minimal',
+        })}
+      </SelectedAmount>
       <TouchableWithoutFeedback
         onPress={() =>
           setSelectedIndex(
