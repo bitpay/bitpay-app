@@ -47,5 +47,6 @@ export const buildKeyObj = ({
     totalBalance,
     show: true,
     isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
+    keyName: 'My Key'
   };
 };
