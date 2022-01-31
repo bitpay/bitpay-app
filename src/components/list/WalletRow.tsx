@@ -28,6 +28,7 @@ export interface WalletRowProps {
   cryptoBalance: number;
   fiatBalance: string;
   isToken?: boolean;
+  keyId: string;
 }
 
 interface Props {

@@ -17,6 +17,9 @@ import RequestAmountSvg from '../../../../assets/img/wallet/request-amount.svg';
 import ShareAddressSvg from '../../../../assets/img/wallet/share-address.svg';
 import SettingsSvg from '../../../../assets/img/wallet/settings.svg';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
+import {useDispatch} from 'react-redux';
+import ReceiveAddress from '../components/ReceiveAddress';
+import {WalletActions} from '../../../store/wallet';
 
 const WalletDetailsContainer = styled.View`
   flex: 1;
@@ -48,6 +51,8 @@ const WalletDetails = () => {
   const navigation = useNavigation();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const {wallet} = route.params;
+  const dispatch = useDispatch();
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{wallet.currencyName}</HeaderTitle>,
@@ -90,6 +95,16 @@ const WalletDetails = () => {
     },
   ];
 
+  const showReceiveAddress = () => {
+    const {keyId, id} = wallet;
+    dispatch(
+      WalletActions.showReceiveAddressModal({
+        keyId,
+        id,
+      }),
+    );
+  };
+
   const {cryptoBalance, fiatBalance, currencyName, currencyAbbreviation} =
     wallet;
   return (
@@ -105,9 +120,9 @@ const WalletDetails = () => {
       </BalanceContainer>
 
       <LinkingButtons
-        receiveCta={() => null}
+        receiveCta={() => showReceiveAddress()}
         sendCta={() =>
-          navigation.navigate('Wallet', {screen: 'SendTo', params: {wallet}})
+            navigation.navigate('Wallet', {screen: 'SendTo', params: {wallet}})
         }
       />
 
@@ -117,6 +132,8 @@ const WalletDetails = () => {
         title={`Receive ${currencyName}`}
         options={assetOptions}
       />
+
+      <ReceiveAddress />
     </WalletDetailsContainer>
   );
 };

@@ -11,11 +11,8 @@ import QRCode from 'react-native-qrcode-svg';
 import {AppActions} from '../../../store/app';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {useLogger} from '../../../utils/hooks/useLogger';
-import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
-import {
-  GeneralError,
-  WrongPasswordError,
-} from '../components/DecryptPasswordErrorMessages';
+import {GeneralError, WrongPasswordError} from '../components/ErrorMessages';
+import {sleep} from '../../../utils/helper-methods';
 
 const ExportKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -74,12 +71,6 @@ const ExportKey = () => {
   const logger = useLogger();
   const dispatch = useDispatch();
 
-  const showErrorMessage = (msg: BottomNotificationConfig) => {
-    setTimeout(() => {
-      dispatch(showBottomNotificationModal(msg));
-    }, 500); // Wait to close Decrypt Password modal
-  };
-
   const onSubmitPassword = async (password: string) => {
     if (password) {
       try {
@@ -87,17 +78,19 @@ const ExportKey = () => {
         setCode(
           `1|${getKey.mnemonic}|null|null|${key.properties.mnemonic}|null`,
         );
-        dispatch(AppActions.dissmissDecryptPasswordModal());
+        dispatch(AppActions.dismissDecryptPasswordModal());
       } catch (e) {
         console.log(`Decrypt Error: ${e}`);
-        await dispatch(AppActions.dissmissDecryptPasswordModal());
+        await dispatch(AppActions.dismissDecryptPasswordModal());
         navigation.goBack();
-        showErrorMessage(WrongPasswordError());
+        await sleep(500); // Wait to close Decrypt Password modal
+        dispatch(showBottomNotificationModal(WrongPasswordError()));
       }
     } else {
-      dispatch(AppActions.dissmissDecryptPasswordModal());
+      dispatch(AppActions.dismissDecryptPasswordModal());
       navigation.goBack();
-      showErrorMessage(GeneralError);
+      await sleep(500); // Wait to close Decrypt Password modal
+      dispatch(showBottomNotificationModal(GeneralError));
       logger.debug('Missing Key Error');
     }
   };
