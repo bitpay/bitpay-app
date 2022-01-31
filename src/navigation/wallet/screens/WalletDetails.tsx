@@ -122,7 +122,7 @@ const WalletDetails = () => {
       <LinkingButtons
         receiveCta={() => showReceiveAddress()}
         sendCta={() =>
-            navigation.navigate('Wallet', {screen: 'SendTo', params: {wallet}})
+          navigation.navigate('Wallet', {screen: 'SendTo', params: {wallet}})
         }
       />
 
