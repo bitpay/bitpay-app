@@ -11,21 +11,19 @@ import {CurrencyImage} from '../currency-image/CurrencyImage';
 export interface ItemProps extends SupportedCurrencyOption {
   disabled?: boolean;
   checked?: boolean;
+  isToken?: boolean;
 }
 
 export interface CurrencySelectionToggleProps {
   checked: boolean;
   currencyAbbreviation: string;
   currencyName: string;
+  isToken?: boolean;
 }
 
 interface Props {
   item: ItemProps;
-  emit: ({
-    checked,
-    currencyAbbreviation,
-    currencyName,
-  }: CurrencySelectionToggleProps) => void;
+  emit: (props: CurrencySelectionToggleProps) => void;
   removeCheckbox?: boolean;
 }
 
@@ -41,9 +39,10 @@ const CurrencySelectionRow = ({item, emit, removeCheckbox}: Props) => {
     img,
     checked: initialCheckValue,
     disabled,
+    isToken,
   } = item;
-  const [checked, setChecked] = useState(!!initialCheckValue);
 
+  const [checked, setChecked] = useState(!!initialCheckValue);
   const toggle = (): void => {
     setChecked(!checked);
     haptic('impactLight');
@@ -51,6 +50,7 @@ const CurrencySelectionRow = ({item, emit, removeCheckbox}: Props) => {
       currencyAbbreviation,
       currencyName,
       checked: !checked,
+      isToken,
     });
   };
 

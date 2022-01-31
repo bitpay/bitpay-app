@@ -89,7 +89,7 @@ const WalletRow = ({wallet, onPress}: Props) => {
           </H5>
           {buildTestBadge(network, currencyName, isToken)}
         </Row>
-        <SubText>{currencyAbbreviation}</SubText>
+        <SubText>{currencyAbbreviation.toUpperCase()}</SubText>
       </CurrencyColumn>
       <BalanceColumn>
         <H5>{cryptoBalance}</H5>

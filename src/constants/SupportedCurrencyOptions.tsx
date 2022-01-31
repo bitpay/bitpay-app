@@ -18,6 +18,7 @@ export interface SupportedCurrencyOption {
   img: string | ((props?: any) => ReactElement);
   currencyName: string;
   currencyAbbreviation: string;
+  isToken?: boolean;
 }
 
 export const CurrencyListIcons: {
@@ -80,41 +81,48 @@ export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
     img: CurrencyListIcons.shib,
     currencyName: 'Shiba Inu',
     currencyAbbreviation: 'SHIB',
+    isToken: true,
   },
   {
     id: 'usdc',
     img: CurrencyListIcons.usdc,
     currencyName: 'USD Coin',
     currencyAbbreviation: 'USDC',
+    isToken: true,
   },
   {
     id: 'gusd',
     img: CurrencyListIcons.gusd,
     currencyName: 'Gemini Dollar',
     currencyAbbreviation: 'GUSD',
+    isToken: true,
   },
   {
     id: 'busd',
     img: CurrencyListIcons.busd,
     currencyName: 'Binance USD Coin',
     currencyAbbreviation: 'BUSD',
+    isToken: true,
   },
   {
     id: 'dai',
     img: CurrencyListIcons.dai,
     currencyName: 'Dai',
     currencyAbbreviation: 'DAI',
+    isToken: true,
   },
   {
     id: 'usdp',
     img: CurrencyListIcons.usdp,
     currencyName: 'Pax Dollar',
     currencyAbbreviation: 'USDP',
+    isToken: true,
   },
   {
     id: 'wbtc',
     img: CurrencyListIcons.wbtc,
     currencyName: 'Wrapped Bitcoin',
     currencyAbbreviation: 'WBTC',
+    isToken: true,
   },
 ];

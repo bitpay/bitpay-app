@@ -15,3 +15,5 @@ export const formatFiatBalance = (balance = 0) => {
 
 export const titleCasing = (str: string) =>
   `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
+
+export const keyExtractor = (item: {id: string}) => item.id;

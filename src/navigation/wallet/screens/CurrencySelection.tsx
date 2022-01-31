@@ -30,6 +30,7 @@ import {RootStackParamList} from '../../../Root';
 import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
 import {Key} from '../../../store/wallet/wallet.models';
 import {StackScreenProps} from '@react-navigation/stack';
+import {keyExtractor} from '../../../utils/helper-methods';
 
 type CurrencySelectionScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -54,6 +55,7 @@ interface ContextHandler {
   selectionCta?: (props: {
     currencyAbbreviation: string;
     currencyName: string;
+    isToken?: boolean;
     navigation: NavigationProp<RootStackParamList>;
   }) => void;
   hideBottomCta?: boolean;
@@ -67,8 +69,6 @@ const CurrencySelectionContainer = styled.SafeAreaView`
 const ListContainer = styled.View`
   margin-top: 20px;
 `;
-
-const keyExtractor = (item: {id: string}) => item.id;
 
 const contextHandler = (
   context: CurrencySelectionContext,
@@ -113,6 +113,7 @@ const contextHandler = (
         selectionCta: async ({
           currencyAbbreviation,
           currencyName,
+          isToken,
           navigation,
         }) => {
           if (!key) {
@@ -121,7 +122,7 @@ const contextHandler = (
           } else {
             navigation.navigate('Wallet', {
               screen: 'AddWallet',
-              params: {key, currencyAbbreviation, currencyName},
+              params: {key, currencyAbbreviation, currencyName, isToken},
             });
           }
         },
@@ -191,6 +192,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
             currencyAbbreviation: symbol,
             currencyName: name,
             img: logoURI,
+            isToken: true,
           };
         }),
     [],
@@ -254,9 +256,10 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     currencyAbbreviation,
     currencyName,
     checked,
+    isToken,
   }: CurrencySelectionToggleProps) => {
     if (selectionCta) {
-      selectionCta({currencyAbbreviation, currencyName, navigation});
+      selectionCta({currencyAbbreviation, currencyName, isToken, navigation});
     } else {
       setSelectedCurrencies(currencies => {
         // reset asset in list

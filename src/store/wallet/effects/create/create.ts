@@ -66,37 +66,73 @@ export const addWallet =
   ({
     key,
     currency,
+    associatedWallet,
+    isToken,
     options,
   }: {
     key: Key;
     currency: string;
+    associatedWallet?: Wallet;
+    isToken?: boolean;
     options: CreateOptions;
   }): Effect =>
   async (dispatch, getState): Promise<Wallet> => {
     return new Promise(async (resolve, reject) => {
       try {
+        let newWallet;
+        const wallets = [];
         const state = getState();
-        if (!key) {
-          // TODO handle key not found
-          return;
+        const tokenOpts = state.WALLET.tokenOptions;
+        const {customName} = options;
+
+        if (isToken) {
+          if (!associatedWallet) {
+            associatedWallet = (await createWallet({
+              key: key.methods,
+              coin: 'eth',
+              options,
+            })) as Wallet;
+
+            wallets.push(associatedWallet);
+          }
+
+          newWallet = (await createTokenWallet(
+            associatedWallet,
+            currency,
+            tokenOpts,
+          )) as Wallet;
+        } else {
+          newWallet = (await createWallet({
+            key: key.methods,
+            coin: currency as SupportedCoins,
+            options,
+          })) as Wallet;
         }
 
-        const newWallet = await createMultipleWallets({
-          key: key.methods,
-          currencies: [currency],
-          state,
-          options,
-        });
+        if (!newWallet) {
+          return reject();
+        }
 
-        const wallets = [...key.wallets, ...newWallet];
+        wallets.push(newWallet);
+
+        key.wallets.push(
+          ...wallets.map(newWallet =>
+            merge(
+              newWallet,
+              buildWalletObj(newWallet.credentials, tokenOpts, {
+                customName,
+              }),
+            ),
+          ),
+        );
 
         dispatch(
           successCreateKey({
-            key: buildKeyObj({key: key.methods, wallets}),
+            key: buildKeyObj({key: key.methods, wallets: key.wallets}),
           }),
         );
         console.log('Added Wallet', currency);
-        resolve(newWallet[0]);
+        resolve(newWallet);
       } catch (err) {
         console.error(err);
         reject();
@@ -147,16 +183,9 @@ const createMultipleWallets = async ({
     }
   }
 
-  const {customName} = options;
-
   // build out app specific props
   return wallets.map(wallet => {
-    return merge(
-      wallet,
-      buildWalletObj(wallet.credentials, tokenOpts, {
-        customName,
-      }),
-    );
+    return merge(wallet, buildWalletObj(wallet.credentials, tokenOpts));
   });
 };
 
