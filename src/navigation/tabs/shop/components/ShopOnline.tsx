@@ -1,3 +1,4 @@
+import { useTheme } from '@react-navigation/native';
 import debounce from 'lodash.debounce';
 import React, {useMemo, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
@@ -45,6 +46,7 @@ export const ShopOnline = ({
   integrations: DirectIntegrationApiObject[];
   categories: CategoryWithIntegrations[];
 }) => {
+  const theme = useTheme();
   const {control} = useForm();
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as typeof integrations);
@@ -111,6 +113,7 @@ export const ShopOnline = ({
               }}
               value={value}
               type={'search'}
+              theme={theme}
               onFocus={() => {
                 scrollViewRef &&
                   scrollViewRef.current &&

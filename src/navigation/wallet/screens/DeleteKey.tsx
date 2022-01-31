@@ -58,7 +58,6 @@ const DeleteKey = () => {
     navigation.navigate('Tabs', {screen: 'Home'});
   };
 
-
   return (
     <DeleteKeyContainer>
       <ScrollView>

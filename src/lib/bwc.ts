@@ -63,4 +63,28 @@ export class BwcProvider {
   public createKey(opts: KeyOpts) {
     return new BWC.Key(opts);
   }
+
+  public getBitcore() {
+    return BWC.Bitcore;
+  }
+
+  public getBitcoreCash() {
+    return BWC.BitcoreCash;
+  }
+
+  public getBitcoreDoge() {
+    return BWC.BitcoreDoge;
+  }
+
+  public getBitcoreLtc() {
+    return BWC.BitcoreLtc;
+  }
+
+  public getCore() {
+    return BWC.Core;
+  }
+
+  public getErrors() {
+    return BWC.errors;
+  }
 }

@@ -24,11 +24,11 @@ const RemoteImage = styled.Image<ImageParams>`
 `;
 
 export default ({
-  icon,
+  uri,
   height,
   width,
   borderRadius,
-}: ImageParams & {icon: string}) => {
+}: ImageParams & {uri: string}) => {
   const imageWidth = width || height;
   const imageBorderRadius = borderRadius || 0;
   return (
@@ -36,14 +36,14 @@ export default ({
       height={height}
       width={imageWidth}
       borderRadius={imageBorderRadius}>
-      {icon.endsWith('.svg') ? (
-        <SvgUri height={`${height}px`} width={`${imageWidth}px`} uri={icon} />
+      {uri.endsWith('.svg') ? (
+        <SvgUri height={`${height}px`} width={`${imageWidth}px`} uri={uri} />
       ) : (
         <RemoteImage
           height={height}
           width={imageWidth}
           borderRadius={imageBorderRadius}
-          source={{uri: icon}}
+          source={{uri}}
         />
       )}
     </ImageContainer>
