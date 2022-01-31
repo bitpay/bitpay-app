@@ -1,15 +1,15 @@
 import React, {useLayoutEffect, useState} from 'react';
-import {BaseText} from '../../../components/styled/Text';
+import {BaseText} from '../../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
 import styled from 'styled-components/native';
-import {LightBlack, NeutralSlate, White} from '../../../styles/colors';
+import {LightBlack, NeutralSlate, White} from '../../../../styles/colors';
 import {
   HeaderRightContainer,
   ScreenGutter,
-} from '../../../components/styled/Containers';
-import VirtualKeyboard from '../../../components/virtual-keyboard/VirtualKeyboard';
-import SwapButton from '../../../components/swap-button/SwapButton';
-import Button from '../../../components/button/Button';
+} from '../../../../components/styled/Containers';
+import VirtualKeyboard from '../../../../components/virtual-keyboard/VirtualKeyboard';
+import SwapButton from '../../../../components/swap-button/SwapButton';
+import Button from '../../../../components/button/Button';
 import {View} from 'react-native';
 
 const SendMax = styled.TouchableOpacity`

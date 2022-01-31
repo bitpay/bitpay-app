@@ -21,7 +21,8 @@ import {WalletRowProps} from '../../components/list/WalletRow';
 import ExtendedPrivateKey from './screens/ExtendedPrivateKey';
 import DeleteKey from './screens/DeleteKey';
 import ExportKey from './screens/ExportKey';
-import Amount from './screens/Amount';
+import Amount from './screens/send/Amount';
+import SendTo from './screens/send/SendTo';
 
 export type WalletStackParamList = {
   CurrencySelection: undefined;
@@ -39,6 +40,7 @@ export type WalletStackParamList = {
   DeleteKey: {keyId: string};
   ExportKey: {key: Key};
   Amount: undefined;
+  SendTo: {wallet: WalletRowProps};
 };
 
 export enum WalletScreens {
@@ -57,6 +59,7 @@ export enum WalletScreens {
   DELETE_KEY = 'DeleteKey',
   EXPORT_KEY = 'ExportKey',
   AMOUNT = 'Amount',
+  SEND_TO = 'SendTo',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -132,6 +135,7 @@ const WalletStack = () => {
         <Wallet.Screen name={WalletScreens.DELETE_KEY} component={DeleteKey} />
         <Wallet.Screen name={WalletScreens.EXPORT_KEY} component={ExportKey} />
         <Wallet.Screen name={WalletScreens.AMOUNT} component={Amount} />
+        <Wallet.Screen name={WalletScreens.SEND_TO} component={SendTo} />
       </Wallet.Navigator>
     </>
   );

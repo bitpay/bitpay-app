@@ -104,7 +104,12 @@ const WalletDetails = () => {
         <H5>{fiatBalance} USD</H5>
       </BalanceContainer>
 
-      <LinkingButtons receiveCta={() => null} sendCta={() => null} />
+      <LinkingButtons
+        receiveCta={() => null}
+        sendCta={() =>
+          navigation.navigate('Wallet', {screen: 'SendTo', params: {wallet}})
+        }
+      />
 
       <OptionsBottomPopupModal
         isVisible={showWalletOptions}

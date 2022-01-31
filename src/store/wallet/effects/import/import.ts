@@ -35,6 +35,7 @@ export const startImportMnemonic =
             totalBalance: 0,
             show: true,
             isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
+            keyName: 'My Key',
           },
         }),
       );

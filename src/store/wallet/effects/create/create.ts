@@ -45,6 +45,7 @@ export const startCreateKey =
               totalBalance: 0,
               show: true,
               isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
+              keyName: 'My Key',
             },
           }),
         );
