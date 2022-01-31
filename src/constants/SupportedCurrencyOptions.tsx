@@ -90,7 +90,7 @@ export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
     currencyName: 'Shiba Inu',
     currencyAbbreviation: 'SHIB',
     isToken: true,
-    imgSrc: require('../../assets/img/currencies/png/USDC.png'),
+    imgSrc: require('../../assets/img/currencies/png/SHIB.png'),
   },
   {
     id: 'usdc',
