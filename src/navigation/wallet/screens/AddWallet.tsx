@@ -1,4 +1,10 @@
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   BaseText,
   H4,
@@ -22,7 +28,10 @@ import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
-import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+} from '../../../store/app/app.actions';
 import {addWallet} from '../../../store/wallet/effects';
 import {Network} from '../../../constants';
 import {Controller, useForm} from 'react-hook-form';
@@ -119,8 +128,9 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
   );
 
   // formatting for the bottom modal
-  const UIFormattedEthWallets = ethWallets.map(wallet =>
-    buildUIFormattedWallet(wallet),
+  const UIFormattedEthWallets = useMemo(
+    () => ethWallets.map(wallet => buildUIFormattedWallet(wallet)),
+    [],
   );
 
   // associatedWallet
@@ -147,6 +157,46 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
 
   const add = handleSubmit(async ({customName}) => {
     try {
+      const currency = currencyAbbreviation.toLowerCase();
+      let _associatedWallet: Wallet | undefined;
+
+      if (isToken) {
+        _associatedWallet = ethWallets.find(
+          wallet => wallet.id === associatedWallet.id,
+        );
+
+        if (_associatedWallet) {
+          // check tokens within associated wallet and see if token already exist
+          const {tokens} = _associatedWallet;
+
+          for (const token of tokens) {
+            if (
+              key.wallets
+                .find(wallet => wallet.id === token)
+                ?.currencyAbbreviation.toLowerCase() === currency
+            ) {
+              dispatch(
+                showBottomNotificationModal({
+                  type: 'warning',
+                  title: 'Currency already added',
+                  message:
+                    'This currency is already associated with the selected wallet',
+                  enableBackdropDismiss: true,
+                  actions: [
+                    {
+                      text: 'OK',
+                      action: () => {},
+                      primary: true,
+                    },
+                  ],
+                }),
+              );
+              return;
+            }
+          }
+        }
+      }
+
       await dispatch(
         startOnGoingProcessModal(OnGoingProcessMessages.ADDING_WALLET),
       );
@@ -155,11 +205,9 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
       const wallet = (await dispatch<any>(
         addWallet({
           key,
-          associatedWallet: isToken
-            ? ethWallets.find(wallet => wallet.id === associatedWallet.id)
-            : undefined,
+          associatedWallet: _associatedWallet,
           isToken,
-          currency: currencyAbbreviation.toLowerCase(),
+          currency,
           options: {
             network: Network.testnet,
             customName: customName === currencyName ? undefined : customName,
