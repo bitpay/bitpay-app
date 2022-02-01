@@ -14,8 +14,21 @@ export interface CaptchaRef {
 
 interface RecaptchaModalProps {
   isVisible: boolean;
+
+  /**
+   * The public nocaptcha sitekey. The provided baseUrl must be one of the allowed domains for sitekey in order to function correctly.
+   */
   sitekey: string;
+
+  /**
+   * The base URL to be used for any relative links in the HTML. This is also used for the origin header with CORS requests made from the WebView.
+   * This URL must be one of the allowed domains for the sitekey in order to function correctly.
+   */
   baseUrl: string;
+
+  /**
+   * Ref to the captcha WebView, giving the parent component access to grecaptcha functions.
+   */
   captchaRef?: React.RefObject<CaptchaRef>;
   onSubmit?: (gCaptchaResponse: string) => any;
   onCancel?: () => any;
@@ -39,6 +52,10 @@ const styles = StyleSheet.create({
   },
 });
 
+/**
+ * Fullscreen modal that hosts a nocaptcha element in a WebView.
+ * Required params: sitekey, baseUrl. Pass a ref to get access to grecaptcha functions from the parent component.
+ */
 export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
   (props, ref) => {
     const {isVisible} = props;
