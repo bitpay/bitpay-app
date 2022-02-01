@@ -75,8 +75,10 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   walletName,
   balance = 0,
   credentials,
+  keyId,
 }) => ({
   id,
+  keyId,
   img,
   currencyName,
   currencyAbbreviation: currencyAbbreviation.toUpperCase(),
@@ -202,7 +204,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
               onPress={() =>
                 navigation.navigate('Wallet', {
                   screen: 'WalletDetails',
-                  params: {wallet: item},
+                  params: {wallet: item, key},
                 })
               }
             />

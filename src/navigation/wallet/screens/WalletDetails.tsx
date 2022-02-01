@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useLayoutEffect, useMemo, useState} from 'react';
 import styled from 'styled-components/native';
 import {
   Balance,
@@ -6,8 +6,7 @@ import {
   H5,
   HeaderTitle,
 } from '../../../components/styled/Text';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import {RouteProp} from '@react-navigation/core';
+import {useNavigation} from '@react-navigation/native';
 import {WalletStackParamList} from '../WalletStack';
 import OptionsBottomPopupModal, {
   Option,
@@ -17,9 +16,13 @@ import RequestAmountSvg from '../../../../assets/img/wallet/request-amount.svg';
 import ShareAddressSvg from '../../../../assets/img/wallet/share-address.svg';
 import SettingsSvg from '../../../../assets/img/wallet/settings.svg';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
-import {useDispatch} from 'react-redux';
 import ReceiveAddress from '../components/ReceiveAddress';
-import {WalletActions} from '../../../store/wallet';
+import {StackScreenProps} from '@react-navigation/stack';
+
+type WalletDetailsScreenProps = StackScreenProps<
+  WalletStackParamList,
+  'WalletDetails'
+>;
 
 const WalletDetailsContainer = styled.View`
   flex: 1;
@@ -46,12 +49,17 @@ const Chain = styled(BaseText)`
   line-height: 40px;
 `;
 
-const WalletDetails = () => {
-  const route = useRoute<RouteProp<WalletStackParamList, 'WalletDetails'>>();
+const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
-  const {wallet} = route.params;
-  const dispatch = useDispatch();
+  const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
+    useState(false);
+  const {wallet, key} = route.params;
+
+  const fullWalletObj = useMemo(
+    () => key.wallets.find(({id}) => id === wallet.id),
+    [],
+  );
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -64,7 +72,7 @@ const WalletDetails = () => {
         />
       ),
     });
-  });
+  }, [navigation]);
 
   const assetOptions: Array<Option> = [
     {
@@ -96,13 +104,7 @@ const WalletDetails = () => {
   ];
 
   const showReceiveAddress = () => {
-    const {keyId, id} = wallet;
-    dispatch(
-      WalletActions.showReceiveAddressModal({
-        keyId,
-        id,
-      }),
-    );
+    setShowReceiveAddressBottomModal(true);
   };
 
   const {cryptoBalance, fiatBalance, currencyName, currencyAbbreviation} =
@@ -133,7 +135,11 @@ const WalletDetails = () => {
         options={assetOptions}
       />
 
-      <ReceiveAddress />
+      <ReceiveAddress
+        isVisible={showReceiveAddressBottomModal}
+        closeModal={() => setShowReceiveAddressBottomModal(false)}
+        wallet={fullWalletObj}
+      />
     </WalletDetailsContainer>
   );
 };

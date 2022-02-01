@@ -3,7 +3,6 @@ import {WalletActionType, WalletActionTypes} from './wallet.types';
 
 type WalletReduxPersistBlackList = [];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
-import {ReceiveAddressConfig} from '../../navigation/wallet/components/ReceiveAddress';
 
 export interface WalletState {
   createdOn: number;
@@ -12,8 +11,6 @@ export interface WalletState {
   priceHistory: Array<PriceHistory>;
   tokenOptions: {[key in string]: Token};
   walletTermsAccepted: boolean;
-  showReceiveAddressModal: boolean;
-  receiveAddressConfig: ReceiveAddressConfig | undefined;
 }
 
 const initialState: WalletState = {
@@ -23,8 +20,6 @@ const initialState: WalletState = {
   priceHistory: [],
   tokenOptions: {},
   walletTermsAccepted: false,
-  showReceiveAddressModal: false,
-  receiveAddressConfig: undefined,
 };
 
 export const walletReducer = (
@@ -133,20 +128,6 @@ export const walletReducer = (
         walletTermsAccepted: true,
       };
     }
-
-    case WalletActionTypes.SHOW_RECEIVE_ADDRESS_MODAL:
-      return {
-        ...state,
-        showReceiveAddressModal: true,
-        receiveAddressConfig: action.payload,
-      };
-
-    case WalletActionTypes.DISMISS_RECEIVE_ADDRESS_MODAL:
-      return {
-        ...state,
-        showReceiveAddressModal: false,
-        receiveAddressConfig: undefined,
-      };
 
     default:
       return state;
