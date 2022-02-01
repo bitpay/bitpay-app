@@ -5,8 +5,9 @@ import styled from 'styled-components/native';
 import KeySvg from '../../../assets/img/key.svg';
 import {LightBlack, SlateDark, White} from '../../styles/colors';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
-import {Column} from '../styled/Containers';
+import {Column, Row} from '../styled/Containers';
 import haptic from '../haptic-feedback/haptic';
+import {buildTestBadge} from './WalletRow';
 
 const RowContainer = styled.View`
   margin: 20px 0;
@@ -56,11 +57,12 @@ const SubText = styled(H7)`
 const SendToWalletRow = ({wallet, onPress}: Props) => {
   const {
     img,
-    cryptoBalance,
     currencyAbbreviation,
     currencyName,
     keyName,
     fiatBalance,
+    cryptoBalance,
+    credentials: {network, token},
   } = wallet;
 
   return (
@@ -79,16 +81,21 @@ const SendToWalletRow = ({wallet, onPress}: Props) => {
           <CurrencyImage img={img} size={50} />
 
           <CurrencyColumn>
-            <H5 ellipsizeMode="tail" numberOfLines={1}>
-              {currencyName}
-            </H5>
+            <Row>
+              <H5 ellipsizeMode="tail" numberOfLines={1}>
+                {currencyName}
+              </H5>
+              {buildTestBadge(network, currencyName, !!token)}
+            </Row>
             <SubText>{currencyAbbreviation}</SubText>
           </CurrencyColumn>
         </CurrencyRow>
 
         <BalanceColumn>
           <H5>{cryptoBalance}</H5>
-          <SubText>{fiatBalance}</SubText>
+          <SubText>
+            {network === 'testnet' ? 'Test - No Value' : fiatBalance}
+          </SubText>
         </BalanceColumn>
       </DetailsRow>
     </RowContainer>

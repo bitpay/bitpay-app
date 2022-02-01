@@ -121,12 +121,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         <H5>{fiatBalance} USD</H5>
       </BalanceContainer>
 
-      <LinkingButtons
-        receiveCta={() => showReceiveAddress()}
-        sendCta={() =>
-          navigation.navigate('Wallet', {screen: 'SendTo', params: {wallet}})
-        }
-      />
+      {fullWalletObj ? (
+        <LinkingButtons
+          receiveCta={() => showReceiveAddress()}
+          sendCta={() =>
+            navigation.navigate('Wallet', {
+              screen: 'SendTo',
+              params: {wallet: fullWalletObj},
+            })
+          }
+        />
+      ) : null}
 
       <OptionsBottomPopupModal
         isVisible={showWalletOptions}
@@ -135,11 +140,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         options={assetOptions}
       />
 
-      <ReceiveAddress
-        isVisible={showReceiveAddressBottomModal}
-        closeModal={() => setShowReceiveAddressBottomModal(false)}
-        wallet={fullWalletObj}
-      />
+      {fullWalletObj ? (
+        <ReceiveAddress
+          isVisible={showReceiveAddressBottomModal}
+          closeModal={() => setShowReceiveAddressBottomModal(false)}
+          wallet={fullWalletObj}
+        />
+      ) : null}
     </WalletDetailsContainer>
   );
 };

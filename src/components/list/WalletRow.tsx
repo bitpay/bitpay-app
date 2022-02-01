@@ -43,7 +43,7 @@ interface Props {
   onPress: () => void;
 }
 
-const buildTestBadge = (
+export const buildTestBadge = (
   network: string,
   currencyName: string,
   isToken: boolean | undefined,

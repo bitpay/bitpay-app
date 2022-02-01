@@ -1,5 +1,4 @@
 import {ExchangeRate, Key, PriceHistory, Token} from './wallet.models';
-import {ReceiveAddressConfig} from '../../navigation/wallet/components/ReceiveAddress';
 
 export enum WalletActionTypes {
   SET_WALLET_TERMS_ACCEPTED = 'WALLET/SET_WALLET_TERMS_ACCEPTED',

@@ -1,4 +1,4 @@
-import React, {ReactElement, useLayoutEffect} from 'react';
+import React, {useLayoutEffect} from 'react';
 import {HeaderTitle} from '../../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
@@ -11,7 +11,7 @@ import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import {formatFiatBalance} from '../../../../utils/helper-methods';
 import SendToWalletRow from '../../../../components/list/SendToWalletRow';
-import {Key} from '../../../../store/wallet/wallet.models';
+import {Key, Wallet} from '../../../../store/wallet/wallet.models';
 import debounce from 'lodash.debounce';
 import {ValidateURI} from '../../../../store/wallet/utils/validations';
 import {
@@ -20,6 +20,8 @@ import {
 } from '../../../../store/wallet/utils/address';
 import {TouchableOpacity, View} from 'react-native';
 import haptic from '../../../../components/haptic-feedback/haptic';
+import merge from 'lodash.merge';
+import cloneDeep from 'lodash.clonedeep';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -37,11 +39,7 @@ const ValidDataTypes: string[] = [
   'BitPayUri',
 ];
 
-export interface SendToWalletRowProps {
-  id: string;
-  img: string | ((props: any) => ReactElement);
-  currencyName: string;
-  currencyAbbreviation: string;
+export interface SendToWalletRowProps extends Wallet {
   cryptoBalance: number;
   fiatBalance: string;
   keyId: string;
@@ -81,31 +79,33 @@ const SearchInput = styled.TextInput`
 const BuildSendWalletRow = (
   keys: {[key in string]: Key},
   currentWalletId: string,
-  currentCurrencyAbbrevation: string,
+  currentCurrencyAbbreviation: string,
+  currentNetwork: string,
 ) => {
   let walletList: SendToWalletRowProps[] = [];
 
   Object.entries(keys).forEach(([key, value]) => {
-    const wallets = value.wallets
+    value.wallets
       .filter(
-        ({currencyAbbreviation, id}) =>
-          currencyAbbreviation === currentCurrencyAbbrevation &&
-          id !== currentWalletId,
+        ({currencyAbbreviation, id, credentials: {network}}) =>
+          currencyAbbreviation === currentCurrencyAbbreviation &&
+          id !== currentWalletId &&
+          network === currentNetwork,
       )
-      .map(({balance = 0, id, img, currencyName, currencyAbbreviation}) => ({
-        id,
-        img,
-        currencyName,
-        currencyAbbreviation: currencyAbbreviation.toUpperCase(),
-        cryptoBalance: balance,
-        fiatBalance: formatFiatBalance(balance),
-        keyId: key,
-        keyName: value.keyName || 'My Key',
-      }));
+      .map(wallet => {
+        const {balance = 0, currencyAbbreviation} = wallet;
+        // To avoid altering store values
+        const _wallet = cloneDeep(wallet);
+        const cloneWallet: SendToWalletRowProps = merge(_wallet, {
+          cryptoBalance: balance,
+          fiatBalance: formatFiatBalance(balance),
+          keyId: key,
+          keyName: value.keyName || 'My Key',
+          currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+        });
 
-    wallets.forEach((_wallet: SendToWalletRowProps) =>
-      walletList.push(_wallet),
-    );
+        walletList.push(cloneWallet);
+      });
   });
 
   return walletList;
@@ -113,15 +113,20 @@ const BuildSendWalletRow = (
 
 const SendTo = () => {
   const navigation = useNavigation();
-  const route = useRoute<RouteProp<WalletStackParamList, 'WalletDetails'>>();
+  const route = useRoute<RouteProp<WalletStackParamList, 'SendTo'>>();
   const {wallet} = route.params;
-  const {currencyAbbreviation, id} = wallet;
+  const {
+    currencyAbbreviation,
+    id,
+    credentials: {network},
+  } = wallet;
 
   const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
   let walletList: SendToWalletRowProps[] = BuildSendWalletRow(
     keys,
     id,
-    currencyAbbreviation.toLowerCase(),
+    currencyAbbreviation,
+    network,
   );
 
   useLayoutEffect(() => {
@@ -161,20 +166,17 @@ const SendTo = () => {
     }, 300);
   };
 
-  const onPressWallet = async ({
-    id: walletId,
-    keyId,
-    currencyAbbreviation: ca,
-  }: SendToWalletRowProps) => {
-    const selectedWallet = keys[keyId].wallets.find(
-      ({id: wid}) => wid === walletId,
-    );
-
+  const onPressWallet = async (selectedWallet: SendToWalletRowProps) => {
     try {
       const address = await GetWalletAddress(selectedWallet);
       navigation.navigate('Wallet', {
         screen: 'Amount',
-        params: {id, keyId, address, currencyAbbreviation: ca},
+        params: {
+          id: selectedWallet.id,
+          keyId: selectedWallet.keyId,
+          address,
+          currencyAbbreviation: selectedWallet.currencyAbbreviation,
+        },
       });
     } catch (e) {}
   };
@@ -217,7 +219,7 @@ const SendTo = () => {
           {walletList.map(w => (
             <SendToWalletRow
               wallet={w}
-              key={w.keyId}
+              key={w.id}
               onPress={selectedWallet => {
                 onPressWallet(selectedWallet);
               }}

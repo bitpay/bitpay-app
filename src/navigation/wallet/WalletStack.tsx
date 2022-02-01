@@ -20,7 +20,7 @@ import Import, {ImportParamList} from './screens/Import';
 import CreationOptions from './screens/CreationOptions';
 import {HeaderTitle} from '../../components/styled/Text';
 import CreateEncryptionPassword from './screens/CreateEncryptionPassword';
-import {Key} from '../../store/wallet/wallet.models';
+import {Key, Wallet as WalletModel} from '../../store/wallet/wallet.models';
 import {WalletRowProps} from '../../components/list/WalletRow';
 import ExtendedPrivateKey from './screens/ExtendedPrivateKey';
 import DeleteKey from './screens/DeleteKey';
@@ -50,7 +50,7 @@ export type WalletStackParamList = {
   DeleteKey: {keyId: string};
   ExportKey: {key: Key};
   Amount: AmountParamList;
-  SendTo: {wallet: WalletRowProps};
+  SendTo: {wallet: WalletModel};
 };
 
 export enum WalletScreens {
