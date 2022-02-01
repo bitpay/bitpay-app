@@ -68,7 +68,7 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
   const {t} = useTranslation();
   const carouselRef = useRef<Carousel<Card>>(null);
   const {slide, id} = route.params;
-  const memoizedSlides = useMemo(
+  const memoizedCards = useMemo(
     () => buildSettingsSlides(slide.cards),
     [slide.cards],
   );
@@ -76,17 +76,17 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
     return id
       ? Math.max(
           0,
-          memoizedSlides.findIndex(c => c.id === id),
+          memoizedCards.findIndex(c => c.id === id),
         )
       : 0;
   });
+
   const activeCard =
-    memoizedSlides[
-      carouselRef.current ? carouselRef.current.currentIndex : initialSlideIdx
-    ];
+    (id && memoizedCards.find(c => c.id === id)) ||
+    memoizedCards[initialSlideIdx];
 
   const onCardChange = (idx: number) => {
-    const nextId = memoizedSlides[idx].id;
+    const nextId = memoizedCards[idx].id;
 
     navigation.setParams({id: nextId});
   };
@@ -97,10 +97,13 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
         <CardSettingsHeader>
           <CardSettingsTitle>{t('Card Details')}</CardSettingsTitle>
 
-          {memoizedSlides.length === 2 ? (
+          {memoizedCards.length === 2 ? (
             <CardTypeButtons>
               <Button
-                onPress={() => carouselRef.current?.snapToItem(0)}
+                onPress={() => {
+                  navigation.setParams({id: memoizedCards[0].id});
+                  carouselRef.current?.snapToItem(0);
+                }}
                 buttonType="pill"
                 buttonStyle={
                   activeCard?.cardType === 'virtual' ? 'primary' : 'secondary'
@@ -109,7 +112,10 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
               </Button>
 
               <Button
-                onPress={() => carouselRef.current?.snapToItem(1)}
+                onPress={() => {
+                  navigation.setParams({id: memoizedCards[1].id});
+                  carouselRef.current?.snapToItem(1);
+                }}
                 buttonType="pill"
                 buttonStyle={
                   activeCard?.cardType === 'physical' ? 'primary' : 'secondary'
@@ -122,7 +128,7 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
 
         <Carousel<Card>
           ref={carouselRef}
-          data={memoizedSlides}
+          data={memoizedCards}
           vertical={false}
           firstItem={initialSlideIdx}
           itemWidth={300 + 20}
@@ -130,7 +136,7 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
           renderItem={({item}) => {
             return <CardSettingsSlide parent={slide.primaryCard} card={item} />;
           }}
-          onSnapToItem={idx => onCardChange(idx)}
+          onScrollIndexChanged={idx => onCardChange(idx)}
           layout="default"
         />
 
