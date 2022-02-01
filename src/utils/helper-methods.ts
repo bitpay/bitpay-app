@@ -128,3 +128,5 @@ export const isValidDerivationPathCoin = (
 
   return isValid;
 };
+
+export const keyExtractor = (item: {id: string}) => item.id;

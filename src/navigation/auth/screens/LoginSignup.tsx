@@ -128,10 +128,7 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
   if (context === 'login') {
     header = 'Welcome back!';
     secondaryAction = (
-      <Button
-        theme={theme}
-        buttonType={'link'}
-        onPress={() => onTroubleLoggingIn()}>
+      <Button buttonType={'link'} onPress={() => onTroubleLoggingIn()}>
         Trouble logging in?
       </Button>
     );
@@ -140,10 +137,7 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
     secondaryAction = (
       <Row>
         <LoginText>Already have an account?</LoginText>
-        <Button
-          theme={theme}
-          buttonType={'link'}
-          onPress={() => onAlreadyHaveAccount()}>
+        <Button buttonType={'link'} onPress={() => onAlreadyHaveAccount()}>
           Log in
         </Button>
       </Row>

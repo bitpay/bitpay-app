@@ -1,8 +1,7 @@
 import React, {useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {BaseText, H5, HeaderTitle} from '../../../components/styled/Text';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import {RouteProp} from '@react-navigation/core';
+import {useNavigation} from '@react-navigation/native';
 import {WalletStackParamList} from '../WalletStack';
 import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
 import {FlatList, LogBox} from 'react-native';
@@ -19,9 +18,17 @@ import SettingsSvg from '../../../../assets/img/wallet/settings.svg';
 import {Hr} from '../../../components/styled/Containers';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {formatFiatBalance} from '../../../utils/helper-methods';
+import {StackScreenProps} from '@react-navigation/stack';
+import haptic from '../../../components/haptic-feedback/haptic';
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
 ]);
+
+type KeyOverviewScreenProps = StackScreenProps<
+  WalletStackParamList,
+  'KeyOverview'
+>;
+
 const OverviewContainer = styled.View`
   flex: 1;
 `;
@@ -60,37 +67,42 @@ const WalletListFooterText = styled(BaseText)`
   margin-left: 10px;
 `;
 
+export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
+  id,
+  img,
+  currencyName,
+  currencyAbbreviation,
+  walletName,
+  balance = 0,
+  credentials,
+}) => ({
+  id,
+  img,
+  currencyName,
+  currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+  walletName,
+  cryptoBalance: balance,
+  fiatBalance: formatFiatBalance(balance),
+  network: credentials.network,
+});
+
 // Key overview and Key settings list builder
-export const buildNestedWalletList = (wallets: Wallet[], keyId: string) => {
+export const buildNestedWalletList = (wallets: Wallet[]) => {
   const walletList = [] as Array<WalletRowProps>;
   const _coins = wallets.filter(wallet => !wallet.credentials.token);
   const _tokens = wallets.filter(wallet => wallet.credentials.token);
 
-  const buildRow: (wallet: Wallet) => WalletRowProps = ({
-    id,
-    img,
-    currencyName,
-    currencyAbbreviation,
-    balance = 0,
-  }) => ({
-    id,
-    img,
-    currencyName,
-    currencyAbbreviation: currencyAbbreviation.toUpperCase(),
-    cryptoBalance: balance,
-    fiatBalance: formatFiatBalance(balance),
-    keyId,
-  });
-
   _coins.forEach(coin => {
-    walletList.push(buildRow(coin));
+    walletList.push(buildUIFormattedWallet(coin));
     // eth wallet with tokens -> for every token wallet ID grab full wallet from _tokens and add it to the list
     if (coin.tokens) {
       coin.tokens.forEach(id => {
-        // eslint-disable-next-line no-shadow
         const tokenWallet = _tokens.find(token => token.id === id);
         if (tokenWallet) {
-          walletList.push({...buildRow(tokenWallet), isToken: true});
+          walletList.push({
+            ...buildUIFormattedWallet(tokenWallet),
+            isToken: true,
+          });
         }
       });
     }
@@ -99,8 +111,7 @@ export const buildNestedWalletList = (wallets: Wallet[], keyId: string) => {
   return walletList;
 };
 
-const KeyOverview = () => {
-  const route = useRoute<RouteProp<WalletStackParamList, 'KeyOverview'>>();
+const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
 
@@ -115,12 +126,13 @@ const KeyOverview = () => {
         />
       ),
     });
-  });
+  }, [navigation]);
+
   const {key} = route.params;
   const {wallets} = useSelector(
     ({WALLET}: RootState) => WALLET.keys[key.id],
   ) || {wallets: []};
-  const walletList = buildNestedWalletList(wallets, key.id);
+  const walletList = buildNestedWalletList(wallets);
 
   const keyOptions: Array<Option> = [
     {
@@ -167,7 +179,15 @@ const KeyOverview = () => {
         }}
         ListFooterComponent={() => {
           return (
-            <WalletListFooter activeOpacity={0.75} onPress={() => null}>
+            <WalletListFooter
+              activeOpacity={0.75}
+              onPress={() => {
+                haptic('impactLight');
+                navigation.navigate('Wallet', {
+                  screen: 'CurrencySelection',
+                  params: {context: 'addWallet', key},
+                });
+              }}>
               <AddWallet />
               <WalletListFooterText>Add Wallet</WalletListFooterText>
             </WalletListFooter>

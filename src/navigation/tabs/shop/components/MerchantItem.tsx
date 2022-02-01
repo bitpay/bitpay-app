@@ -66,7 +66,7 @@ export default ({
   );
   return (
     <MerchantBox height={height} marginLeft={marginLeft} width={width}>
-      <RemoteImage icon={icon} height={26} borderRadius={30} />
+      <RemoteImage uri={icon} height={26} borderRadius={30} />
       <MerchantName
         headerMargin={headerMargin}
         numberOfLines={2}

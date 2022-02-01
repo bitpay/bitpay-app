@@ -2,7 +2,8 @@ import React from 'react';
 import styled, {css} from 'styled-components/native';
 import {SvgUri} from 'react-native-svg';
 import {CardConfig} from '../../../../store/shop/shop.models';
-import {H4} from '../../../../components/styled/Text';
+import {BaseText, H4} from '../../../../components/styled/Text';
+import {formatAmount} from '../../../../lib/gift-cards/gift-card';
 
 interface GiftCardCreditsItemProps {
   logoBackgroundColor: string;
@@ -17,8 +18,6 @@ const GiftCardItem = styled.View<GiftCardCreditsItemProps>`
       overflow: hidden;
       border-radius: 30px;
       border: 1.5px solid black;
-      padding: 0;
-      padding-left: 0;
       padding-right: 20px;
       margin-top: 10px;
       margin-bottom: 0px;
@@ -29,6 +28,7 @@ const GiftCardItem = styled.View<GiftCardCreditsItemProps>`
       border-color: ${hasWhiteBg(logoBackgroundColor)
         ? '#d3d6da'
         : logoBackgroundColor};
+      ${!hasWhiteBg(logoBackgroundColor) ? 'border: none;' : ''};
     `}
 `;
 
@@ -42,7 +42,7 @@ const Logo = styled.Image`
   height: ${logoHeight}px;
 `;
 
-const GiftCardAmount = styled.Text<GiftCardCreditsItemProps>`
+const GiftCardAmount = styled(BaseText)<GiftCardCreditsItemProps>`
   ${({logoBackgroundColor}) =>
     css`
       font-size: 18px;
@@ -78,7 +78,9 @@ export default (props: {cardConfig: CardConfig; amount: number}) => {
         )}
       </LogoContainer>
       <GiftCardAmount logoBackgroundColor={logoBackgroundColor}>
-        ${amount}
+        {formatAmount(amount, cardConfig.currency, {
+          customPrecision: 'minimal',
+        })}
       </GiftCardAmount>
     </GiftCardItem>
   );

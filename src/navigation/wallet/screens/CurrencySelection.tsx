@@ -4,7 +4,9 @@ import {
   CtaContainerAbsolute,
   HeaderRightContainer,
 } from '../../../components/styled/Containers';
-import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow';
+import CurrencySelectionRow, {
+  CurrencySelectionToggleProps,
+} from '../../../components/list/CurrencySelectionRow';
 
 import Button from '../../../components/button/Button';
 import {
@@ -28,22 +30,36 @@ import {RootStackParamList} from '../../../Root';
 import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
 import {Key} from '../../../store/wallet/wallet.models';
 import {StackScreenProps} from '@react-navigation/stack';
+import {keyExtractor} from '../../../utils/helper-methods';
 
 type CurrencySelectionScreenProps = StackScreenProps<
   WalletStackParamList,
   'CurrencySelection'
 >;
 
-type CurrencySelectionContext = 'onboarding' | 'createNewKey';
+type CurrencySelectionContext = 'onboarding' | 'createNewKey' | 'addWallet';
 
 export type CurrencySelectionParamList = {
   context: CurrencySelectionContext;
+  key?: Key;
 };
 
-interface CtaProps {
-  selectedCurrencies: string[];
-  dispatch: Dispatch<any>;
-  navigation: NavigationProp<RootStackParamList>;
+interface ContextHandler {
+  headerTitle?: string;
+  ctaTitle?: string;
+  bottomCta?: (props: {
+    selectedCurrencies: string[];
+    dispatch: Dispatch<any>;
+    navigation: NavigationProp<RootStackParamList>;
+  }) => void;
+  selectionCta?: (props: {
+    currencyAbbreviation: string;
+    currencyName: string;
+    isToken?: boolean;
+    navigation: NavigationProp<RootStackParamList>;
+  }) => void;
+  hideBottomCta?: boolean;
+  removeCheckbox?: boolean;
 }
 
 const CurrencySelectionContainer = styled.SafeAreaView`
@@ -54,19 +70,18 @@ const ListContainer = styled.View`
   margin-top: 20px;
 `;
 
-const keyExtractor = (item: {id: string}) => item.id;
-
 const contextHandler = (
   context: CurrencySelectionContext,
-): {ctaTitle: string; cta: (props: CtaProps) => void} => {
+  key?: Key,
+): ContextHandler => {
   switch (context) {
     case 'onboarding':
-    case 'createNewKey':
+    case 'createNewKey': {
       return {
         ctaTitle: 'Create Key',
-        cta: async ({selectedCurrencies, dispatch, navigation}) => {
+        bottomCta: async ({selectedCurrencies, dispatch, navigation}) => {
           try {
-            const currencies = selectedCurrencies.map(selected =>
+            const currencies = selectedCurrencies?.map(selected =>
               selected.toLowerCase(),
             ) as Array<SupportedCurrencies>;
             await dispatch(
@@ -88,20 +103,54 @@ const contextHandler = (
           }
         },
       };
+    }
+
+    case 'addWallet': {
+      return {
+        headerTitle: 'Select Currency',
+        hideBottomCta: true,
+        removeCheckbox: true,
+        selectionCta: async ({
+          currencyAbbreviation,
+          currencyName,
+          isToken,
+          navigation,
+        }) => {
+          if (!key) {
+            // TODO
+            console.error('add wallet - key not found');
+          } else {
+            navigation.navigate('Wallet', {
+              screen: 'AddWallet',
+              params: {key, currencyAbbreviation, currencyName, isToken},
+            });
+          }
+        },
+      };
+    }
   }
 };
 
 const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
   // setting context
   const navigation = useNavigation();
-  const {context} = route.params;
-  const {cta, ctaTitle} = contextHandler(context);
+  const {context, key} = route.params;
+  const {
+    bottomCta,
+    ctaTitle,
+    headerTitle,
+    hideBottomCta,
+    selectionCta,
+    removeCheckbox,
+  } = contextHandler(context, key) || {};
 
   // Configuring Header
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
-      headerTitle: () => <HeaderTitle>Select Currencies</HeaderTitle>,
+      headerTitle: () => (
+        <HeaderTitle>{headerTitle || 'Select Currencies'}</HeaderTitle>
+      ),
       headerTitleAlign: 'center',
       headerRight: () =>
         context === 'onboarding' && (
@@ -128,6 +177,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
   const [selectedCurrencies, setSelectedCurrencies] = useState<Array<string>>(
     [],
   );
+
   const tokenOptions = useSelector(
     ({WALLET}: RootState) => WALLET.tokenOptions,
   );
@@ -142,6 +192,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
             currencyAbbreviation: symbol,
             currencyName: name,
             img: logoURI,
+            isToken: true,
           };
         }),
     [],
@@ -202,27 +253,38 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
   };
 
   const currencyToggled = ({
-    currency,
+    currencyAbbreviation,
+    currencyName,
     checked,
-  }: {
-    currency: string;
-    checked: boolean;
-  }) => {
-    setSelectedCurrencies(currencies => {
-      // reset asset in list
-      currencies = currencies.filter(selected => selected !== currency);
-      // add if checked
-      if (checked) {
-        currencies = [...currencies, currency];
-      }
-      // if token selected set eth asset selected
-      return checkAndToggleEthIfTokenSelected(currencies);
-    });
+    isToken,
+  }: CurrencySelectionToggleProps) => {
+    if (selectionCta) {
+      selectionCta({currencyAbbreviation, currencyName, isToken, navigation});
+    } else {
+      setSelectedCurrencies(currencies => {
+        // reset asset in list
+        currencies = currencies.filter(
+          selected => selected !== currencyAbbreviation,
+        );
+        // add if checked
+        if (checked) {
+          currencies = [...currencies, currencyAbbreviation];
+        }
+
+        // if token selected set eth asset selected
+        return checkAndToggleEthIfTokenSelected(currencies);
+      });
+    }
   };
   // Flat list
   const renderItem = useCallback(
     ({item}) => (
-      <CurrencySelectionRow item={item} emit={currencyToggled} key={item.id} />
+      <CurrencySelectionRow
+        item={item}
+        emit={currencyToggled}
+        key={item.id}
+        removeCheckbox={removeCheckbox}
+      />
     ),
     [],
   );
@@ -238,22 +300,26 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
         />
       </ListContainer>
 
-      <CtaContainerAbsolute
-        background={true}
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 4},
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
-          elevation: 5,
-        }}>
-        <Button
-          onPress={() => cta({selectedCurrencies, dispatch, navigation})}
-          buttonStyle={'primary'}
-          disabled={!selectedCurrencies.length}>
-          {ctaTitle}
-        </Button>
-      </CtaContainerAbsolute>
+      {bottomCta && !hideBottomCta && (
+        <CtaContainerAbsolute
+          background={true}
+          style={{
+            shadowColor: '#000',
+            shadowOffset: {width: 0, height: 4},
+            shadowOpacity: 0.1,
+            shadowRadius: 12,
+            elevation: 5,
+          }}>
+          <Button
+            onPress={() =>
+              bottomCta({selectedCurrencies, dispatch, navigation})
+            }
+            buttonStyle={'primary'}
+            disabled={!selectedCurrencies.length}>
+            {ctaTitle}
+          </Button>
+        </CtaContainerAbsolute>
+      )}
     </CurrencySelectionContainer>
   );
 };

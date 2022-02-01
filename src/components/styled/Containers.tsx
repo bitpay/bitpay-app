@@ -79,6 +79,11 @@ export const Column = styled.View`
   flex-direction: column;
 `;
 
+export const Row = styled.View`
+  flex: 1;
+  flex-direction: row;
+`;
+
 // LIST
 export const ListContainer = styled.View`
   flex: 1;

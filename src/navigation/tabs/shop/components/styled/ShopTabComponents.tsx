@@ -1,8 +1,13 @@
 import styled, {css} from 'styled-components/native';
 import BoxInput from '../../../../../components/form/BoxInput';
 import {HEIGHT, WIDTH} from '../../../../../components/styled/Containers';
-import {H4} from '../../../../../components/styled/Text';
-import {Action, Cloud, SlateDark} from '../../../../../styles/colors';
+import {BaseText, H4} from '../../../../../components/styled/Text';
+import {
+  Action,
+  Cloud,
+  NeutralSlate,
+  SlateDark,
+} from '../../../../../styles/colors';
 
 export const horizontalPadding = 20;
 
@@ -31,14 +36,14 @@ export const SectionHeaderContainer = styled.View`
   align-items: center;
 `;
 
-export const SectionHeaderButton = styled.Text`
-  margin-top: 32px;
+export const SectionHeaderButton = styled(BaseText)`
+  margin-top: 38px;
   margin-bottom: 16px;
   color: ${Action};
   font-weight: 500;
 `;
 
-export const SectionHeader = styled.Text`
+export const SectionHeader = styled(BaseText)`
   color: ${SlateDark};
   font-size: 14px;
   text-align: left;
@@ -75,6 +80,17 @@ export const NoResultsContainer = styled.View`
 
 export const NoResultsHeader = styled(H4)`
   font-size: 17px;
+`;
+
+export const NavIconButtonContainer = styled.View`
+  align-items: center;
+  justify-content: center;
+  background-color: ${NeutralSlate};
+  border-radius: 50px;
+  height: 45px;
+  width: 45px;
+  margin-top: 5px;
+  overflow: hidden;
 `;
 
 export interface HideableViewProps {
