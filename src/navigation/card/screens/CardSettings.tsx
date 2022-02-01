@@ -8,10 +8,11 @@ import Button from '../../../components/button/Button';
 import {ScreenGutter, WIDTH} from '../../../components/styled/Containers';
 import {H3} from '../../../components/styled/Text';
 import {Card} from '../../../store/card/card.models';
+import {buildCardNumber} from '../../../utils/card';
 import {CardStackParamList} from '../CardStack';
+import CardBack from '../components/CardBack';
 import {OverviewSlide} from '../components/CardDashboard';
 import SettingsList from '../components/CardSettingsList';
-import CardSettingsSlide from '../components/CardSettingsSlide';
 
 export type CardSettingsParamList = {
   slide: OverviewSlide;
@@ -134,7 +135,15 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
           itemWidth={300 + 20}
           sliderWidth={WIDTH}
           renderItem={({item}) => {
-            return <CardSettingsSlide parent={slide.primaryCard} card={item} />;
+            return (
+              <CardBack
+                brand={item.brand || 'Visa'}
+                cardNumber={buildCardNumber(item.lastFourDigits)}
+                cvv={''}
+                nickname={item.nickname}
+                expiration={''}
+              />
+            );
           }}
           onScrollIndexChanged={idx => onCardChange(idx)}
           layout="default"
