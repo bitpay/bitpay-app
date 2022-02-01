@@ -3,6 +3,7 @@ import {SvgProps} from 'react-native-svg';
 import styled from 'styled-components/native';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import {
+  ActiveOpacity,
   Setting,
   SettingIcon,
   SettingTitle,
@@ -45,7 +46,7 @@ export const SettingsLink: React.FC<SettingsLinkProps> = props => {
   const {Icon, onPress, children} = props;
 
   return (
-    <Setting onPress={onPress}>
+    <Setting onPress={onPress} activeOpacity={ActiveOpacity}>
       <SettingIcon prefix>
         <Icon height={ICON_SIZE} width={ICON_SIZE} />
       </SettingIcon>
@@ -63,7 +64,7 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = props => {
   const {Icon, onChange, value, children} = props;
 
   return (
-    <Setting>
+    <Setting activeOpacity={ActiveOpacity}>
       <SettingIcon prefix>
         <Icon height={ICON_SIZE} width={ICON_SIZE} />
       </SettingIcon>
