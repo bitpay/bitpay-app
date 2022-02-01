@@ -10,7 +10,6 @@ import {WalletStackParamList} from '../../WalletStack';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import {formatFiatBalance} from '../../../../utils/helper-methods';
-import SendToWalletRow from '../../../../components/list/SendToWalletRow';
 import {Key, Wallet} from '../../../../store/wallet/wallet.models';
 import debounce from 'lodash.debounce';
 import {ValidateURI} from '../../../../store/wallet/utils/validations';
@@ -20,6 +19,10 @@ import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {GetPayProUrl} from '../../../../store/wallet/utils/decode-uri';
 import {CreateWalletAddress} from '../../../../store/wallet/effects/send/address';
+import KeyWalletsRow, {
+  KeyWallets,
+  KeyWalletsRowProps,
+} from '../../../../components/list/KeyWalletsRow';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -38,10 +41,8 @@ const ValidDataTypes: string[] = [
 ];
 
 export interface SendToWalletRowProps extends Wallet {
-  cryptoBalance: number;
   fiatBalance: string;
-  keyId: string;
-  keyName: string;
+  cryptoBalance: number;
 }
 
 const SafeAreaView = styled.SafeAreaView`
@@ -74,15 +75,15 @@ const SearchInput = styled.TextInput`
   background-color: transparent;
 `;
 
-const BuildSendWalletRow = (
+const BuildKeyWalletRow = (
   keys: {[key in string]: Key},
   currentWalletId: string,
   currentCurrencyAbbreviation: string,
   currentNetwork: string,
 ) => {
-  let walletList: SendToWalletRowProps[] = [];
-
+  let filteredKeys: KeyWalletsRowProps[] = [];
   Object.entries(keys).forEach(([key, value]) => {
+    const wallets: KeyWallets[] = [];
     value.wallets
       .filter(
         ({currencyAbbreviation, id, credentials: {network}}) =>
@@ -91,22 +92,26 @@ const BuildSendWalletRow = (
           network === currentNetwork,
       )
       .map(wallet => {
-        const {balance = 0, currencyAbbreviation} = wallet;
-        // To avoid altering store values
-        const _wallet = cloneDeep(wallet);
-        const cloneWallet: SendToWalletRowProps = merge(_wallet, {
+        const {
+          balance = 0,
+          currencyAbbreviation,
+          credentials: {network},
+        } = wallet;
+        // Clone wallet to avoid altering store values
+        const _wallet = merge(cloneDeep(wallet), {
           cryptoBalance: balance,
           fiatBalance: formatFiatBalance(balance),
-          keyId: key,
-          keyName: value.keyName || 'My Key',
           currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+          network,
         });
-
-        walletList.push(cloneWallet);
+        wallets.push(_wallet);
       });
+    if (wallets.length) {
+      const {keyName = 'My Key'} = value;
+      filteredKeys.push({key, keyName, wallets});
+    }
   });
-
-  return walletList;
+  return filteredKeys;
 };
 
 const SendTo = () => {
@@ -120,7 +125,7 @@ const SendTo = () => {
   } = wallet;
 
   const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
-  let walletList: SendToWalletRowProps[] = BuildSendWalletRow(
+  let keyWallets: KeyWalletsRowProps[] = BuildKeyWalletRow(
     keys,
     id,
     currencyAbbreviation,
@@ -171,7 +176,6 @@ const SendTo = () => {
         screen: 'Amount',
         params: {
           id: selectedWallet.id,
-          keyId: selectedWallet.keyId,
           address,
           currencyAbbreviation: selectedWallet.currencyAbbreviation,
         },
@@ -214,15 +218,12 @@ const SendTo = () => {
         </SearchContainer>
 
         <View>
-          {walletList.map(w => (
-            <SendToWalletRow
-              wallet={w}
-              key={w.id}
-              onPress={selectedWallet => {
-                onPressWallet(selectedWallet);
-              }}
-            />
-          ))}
+          <KeyWalletsRow
+            keyWallets={keyWallets}
+            onPress={(selectedWallet: SendToWalletRowProps) => {
+              onPressWallet(selectedWallet);
+            }}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
