@@ -141,6 +141,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         inactiveSlideOpacity={1}
         containerCustomStyle={{
           flexGrow: 0,
+          marginTop: 32,
         }}
       />
       <Pagination

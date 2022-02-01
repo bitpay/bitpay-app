@@ -1,5 +1,6 @@
 import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
@@ -25,6 +26,8 @@ export enum CardScreens {
 const Card = createStackNavigator<CardStackParamList>();
 
 const CardStack = () => {
+  const {t} = useTranslation();
+
   return (
     <Card.Navigator
       initialRouteName={CardScreens.HOME}
@@ -43,6 +46,7 @@ const CardStack = () => {
         name={CardScreens.SETTINGS}
         component={CardSettings}
         options={{
+          headerTitle: t('Card Details'),
           title: 'Settings',
         }}
       />
@@ -50,6 +54,9 @@ const CardStack = () => {
         <Card.Screen
           name={CardScreens.CUSTOMIZE_VIRTUAL_CARD}
           component={CustomizeVirtualCard}
+          options={{
+            headerTitle: t('Customize Virtual Card'),
+          }}
         />
       </Card.Group>
     </Card.Navigator>

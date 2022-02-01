@@ -164,10 +164,6 @@ const CustomizeVirtualCard: React.FC<
   return (
     <ScrollView>
       <Styled.ContentContainer>
-        <Styled.CustomizeVirtualCardHeading>
-          {t('Customize Virtual Card')}
-        </Styled.CustomizeVirtualCardHeading>
-
         <Styled.CustomizeVirtualCardDescription>
           {t('CustomizeVirtualCardDescription')}
         </Styled.CustomizeVirtualCardDescription>

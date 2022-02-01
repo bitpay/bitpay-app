@@ -6,7 +6,6 @@ import Carousel from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {ScreenGutter, WIDTH} from '../../../components/styled/Containers';
-import {H3} from '../../../components/styled/Text';
 import {Card} from '../../../store/card/card.models';
 import {buildCardNumber} from '../../../utils/card';
 import {CardStackParamList} from '../CardStack';
@@ -30,11 +29,8 @@ const CardSettingsHeader = styled.View`
   align-items: center;
   display: flex;
   flex-direction: row;
+  justify-content: flex-end;
   margin-bottom: 16px;
-`;
-
-const CardSettingsTitle = styled(H3)`
-  flex-grow: 1;
 `;
 
 const CardTypeButtons = styled.View`
@@ -96,8 +92,6 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
     <ScrollView>
       <CardSettingsContainer>
         <CardSettingsHeader>
-          <CardSettingsTitle>{t('Card Details')}</CardSettingsTitle>
-
           {memoizedCards.length === 2 ? (
             <CardTypeButtons>
               <Button
