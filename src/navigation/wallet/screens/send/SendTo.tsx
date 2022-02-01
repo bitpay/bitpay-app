@@ -7,22 +7,37 @@ import ScanSvg from '../../../../../assets/img/onboarding/scan.svg';
 import {NeutralSlate} from '../../../../styles/colors';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import {formatFiatBalance} from '../../../../utils/helper-methods';
 import {Key, Wallet} from '../../../../store/wallet/wallet.models';
 import debounce from 'lodash.debounce';
-import {ValidateURI} from '../../../../store/wallet/utils/validations';
+import {
+  CheckIfLegacyBCH,
+  ValidateURI,
+} from '../../../../store/wallet/utils/validations';
 import {TouchableOpacity, View} from 'react-native';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {GetPayProUrl} from '../../../../store/wallet/utils/decode-uri';
-import {CreateWalletAddress} from '../../../../store/wallet/effects/send/address';
+import {
+  CoinNetwork,
+  CreateWalletAddress,
+  GetCoinAndNetwork,
+} from '../../../../store/wallet/effects/send/address';
 import KeyWalletsRow, {
   KeyWallets,
   KeyWalletsRowProps,
 } from '../../../../components/list/KeyWalletsRow';
+import {
+  GetPayProOptions,
+  PayProOptions,
+} from '../../../../store/wallet/effects/send/paypro';
+import {BWCErrorMessage} from '../../../../constants/BWCError';
+import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
+import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
+import {dismissOnGoingProcessModal} from '../../../../store/app/app.actions';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -148,11 +163,75 @@ const SendTo = () => {
   const theme = useTheme();
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
 
-  const validateSearchText = (text: string) => {
-    const data = ValidateURI(text);
+  const checkCoinAndNetwork = (
+    data: any,
+    isPayPro?: boolean,
+    searchText?: string,
+  ): boolean => {
+    let isValid, addrData: CoinNetwork | null;
+    if (isPayPro) {
+      isValid =
+        data?.chain == currencyAbbreviation.toUpperCase() &&
+        data?.network == network;
+    } else {
+      addrData = GetCoinAndNetwork(data, network);
+      isValid =
+        currencyAbbreviation == addrData?.coin && addrData?.network == network;
+    }
 
+    if (isValid) {
+      return true;
+    } else {
+      let network = isPayPro ? data.network : addrData?.network;
+
+      if (currencyAbbreviation === 'bch' && network === network && searchText) {
+        const isLegacy = CheckIfLegacyBCH(searchText);
+        // isLegacy ? showLegacyAddrMessage() : showErrorMessage();
+      } else {
+        // showErrorMessage();
+      }
+    }
+
+    return false;
+  };
+
+  const dispatch = useDispatch();
+
+  const validateSearchText = async (text: string) => {
+    const data = ValidateURI(text);
     if (data?.type === 'PayPro' || data?.type === 'InvoiceUri') {
-      const invoiceUrl = GetPayProUrl(text);
+      try {
+        const invoiceUrl = GetPayProUrl(text);
+        dispatch(
+          startOnGoingProcessModal(
+            OnGoingProcessMessages.FETCHING_PAYMENT_OPTIONS,
+          ),
+        );
+
+        const payProOptions = await GetPayProOptions(invoiceUrl);
+        dispatch(dismissOnGoingProcessModal());
+
+        const selected = payProOptions.paymentOptions.find(
+          (option: PayProOptions) =>
+            option.selected &&
+            currencyAbbreviation.toUpperCase() === option.currency,
+        );
+        if (selected) {
+          const isValid = checkCoinAndNetwork(selected, true, text);
+          console.log(isValid);
+        }
+      } catch (err) {
+        console.log(err);
+        console.log(BWCErrorMessage(err));
+        dispatch(dismissOnGoingProcessModal());
+
+        // onGoingProcessProvider.clear();
+        // this.invalidAddress = true;
+        // logger.warn(this.bwcErrorProvider.msg(err));
+        // this.errorsProvider.showDefaultError(
+        //     this.bwcErrorProvider.msg(err),
+        // );
+      }
       // TODO: Handle me
       return;
     }
@@ -163,11 +242,9 @@ const SendTo = () => {
     }
   };
 
-  const onSearchInputChange = (text: string) => {
-    debounce(() => {
-      validateSearchText(text);
-    }, 300);
-  };
+  const onSearchInputChange = debounce((text: string) => {
+    validateSearchText(text);
+  }, 300);
 
   const onPressWallet = async (selectedWallet: SendToWalletRowProps) => {
     try {

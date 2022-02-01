@@ -125,6 +125,20 @@ const IsValidBitPayUri = (data: string): boolean => {
   return true;
 };
 
+const IsValidBitcoinCashLegacyAddress = (data: string): boolean => {
+  return !!(
+    BWC.getBitcore().Address.isValid(data, 'livenet') ||
+    BWC.getBitcore().Address.isValid(data, 'testnet')
+  );
+};
+
+export const CheckIfLegacyBCH = (address: string): boolean => {
+  return (
+    IsValidBitcoinCashLegacyAddress(address) ||
+    IsValidBitcoinCashUriWithLegacyAddress(address)
+  );
+};
+
 export const ValidateURI = (data: string): any => {
   if (!data) {
     return;

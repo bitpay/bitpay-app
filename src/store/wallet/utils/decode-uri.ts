@@ -13,3 +13,8 @@ export const GetPayProUrl = (data: string): string => {
     ),
   );
 };
+
+export const ExtractCoinNetworkAddress = (str: string): string => {
+  const extractedAddress = str.replace(/^[a-z]+:/i, '').replace(/\?.*/, '');
+  return extractedAddress;
+};

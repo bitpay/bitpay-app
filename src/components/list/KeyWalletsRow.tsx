@@ -56,10 +56,9 @@ const KeyWalletsRow = ({keyWallets, onPress}: KeyWalletProps) => {
           </KeyNameContainer>
 
           {key.wallets.map(w => (
-            <NoGutter>
+            <NoGutter key={w.id}>
               <WalletRow
                 wallet={w}
-                key={w.id}
                 id={w.id}
                 onPress={() => {
                   onPress(w);
