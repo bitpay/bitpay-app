@@ -1,33 +1,19 @@
-import {Wallet} from '../wallet.models';
+import {Wallet} from '../../wallet.models';
 import cloneDeep from 'lodash.clonedeep';
-import {BwcProvider} from '../../../lib/bwc';
-import {ValidateCoinAddress} from './validations';
+import {ValidateCoinAddress} from '../../utils/validations';
+import {BwcProvider} from '../../../../lib/bwc';
 
 const BWC = BwcProvider.getInstance();
+
 interface Address {
   address: string;
   coin: string;
 }
 
-export const ExtractBitPayUriAddress = (data: string): string => {
-  const address = data.replace(/^[a-z]+:/i, '').replace(/\?.*/, '');
-  // eslint-disable-next-line no-useless-escape
-  const params = /([\?\&]+[a-z]+=(\d+([\,\.]\d+)?))+/i;
-  return address.replace(params, '');
-};
-
-export const GetPayProUrl = (data: string): string => {
-  return decodeURIComponent(
-    data.replace(
-      /(bitcoin|bitcoincash|ethereum|ripple|dogecoin|litecoin)?:\?r=/,
-      '',
-    ),
-  );
-};
-
-export const GetWalletAddress = (
+export const CreateWalletAddress = (
   wallet: Wallet | undefined,
 ): Promise<string> => {
+  //  TODO: store the address to reuse
   return new Promise((resolve, reject) => {
     const walletClone = cloneDeep(wallet);
     if (walletClone) {
@@ -43,6 +29,7 @@ export const GetWalletAddress = (
 
       walletClone.createAddress({}, (err: any, addressObj: Address) => {
         if (err) {
+          //  Rate limits after 20 consecutive addresses
           if (err.name && err.name.includes('MAIN_ADDRESS_GAP_REACHED')) {
             walletClone.getMainAddresses(
               {

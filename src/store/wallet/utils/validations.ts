@@ -1,5 +1,5 @@
 import {BwcProvider} from '../../../lib/bwc';
-import {ExtractBitPayUriAddress} from './address';
+import {ExtractBitPayUriAddress} from './decode-uri';
 
 const BWC = BwcProvider.getInstance();
 

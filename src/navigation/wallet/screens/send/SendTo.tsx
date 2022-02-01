@@ -14,14 +14,12 @@ import SendToWalletRow from '../../../../components/list/SendToWalletRow';
 import {Key, Wallet} from '../../../../store/wallet/wallet.models';
 import debounce from 'lodash.debounce';
 import {ValidateURI} from '../../../../store/wallet/utils/validations';
-import {
-  GetPayProUrl,
-  GetWalletAddress,
-} from '../../../../store/wallet/utils/address';
 import {TouchableOpacity, View} from 'react-native';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
+import {GetPayProUrl} from '../../../../store/wallet/utils/decode-uri';
+import {CreateWalletAddress} from '../../../../store/wallet/effects/send/address';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -168,7 +166,7 @@ const SendTo = () => {
 
   const onPressWallet = async (selectedWallet: SendToWalletRowProps) => {
     try {
-      const address = await GetWalletAddress(selectedWallet);
+      const address = await CreateWalletAddress(selectedWallet);
       navigation.navigate('Wallet', {
         screen: 'Amount',
         params: {

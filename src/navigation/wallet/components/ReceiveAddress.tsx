@@ -31,7 +31,7 @@ import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import {sleep} from '../../../utils/helper-methods';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {ValidateCoinAddress} from '../../../store/wallet/utils/validations';
-import {GetLegacyBchAddressFormat} from '../../../store/wallet/utils/address';
+import {GetLegacyBchAddressFormat} from '../../../store/wallet/effects/send/address';
 
 export interface ReceiveAddressConfig {
   keyId: string;
@@ -217,6 +217,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
         walletClone.id.replace(`-${token.address}`, '');
       }
 
+      // Todo: Refactor this to use wallet/effects/send/create-address
       await walletClone.createAddress({}, (err: any, addressObj: Address) => {
         if (err) {
           let prefix = 'Could not create address';
