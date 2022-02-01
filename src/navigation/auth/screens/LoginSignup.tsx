@@ -107,7 +107,6 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
 
     if (loginStatus === 'failed') {
       // TODO
-      console.log('oh man login failed');
       captchaRef.current?.reset();
       return;
     }
