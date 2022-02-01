@@ -28,7 +28,7 @@ import ExportKey from './screens/ExportKey';
 import TermsOfUse, {
   TermsOfUseParamList,
 } from '../onboarding/screens/TermsOfUse';
-import Amount from './screens/send/Amount';
+import Amount, {AmountParamList} from './screens/send/Amount';
 import SendTo from './screens/send/SendTo';
 
 export type WalletStackParamList = {
@@ -47,7 +47,7 @@ export type WalletStackParamList = {
   ExtendedPrivateKey: {key: Key};
   DeleteKey: {keyId: string};
   ExportKey: {key: Key};
-  Amount: undefined;
+  Amount: AmountParamList;
   SendTo: {wallet: WalletRowProps};
 };
 

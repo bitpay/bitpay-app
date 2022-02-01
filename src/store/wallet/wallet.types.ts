@@ -140,6 +140,6 @@ export type WalletActionType =
   | successEncryptOrDecryptPassword
   | successGetTokenOptions
   | failedGetTokenOptions
-  | setWalletTermsAccepte
+  | setWalletTermsAccepted
   | showReceiveAddressModal
   | dismissReceiveAddressModal;

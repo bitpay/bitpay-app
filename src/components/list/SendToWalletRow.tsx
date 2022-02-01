@@ -6,6 +6,7 @@ import KeySvg from '../../../assets/img/key.svg';
 import {LightBlack, SlateDark, White} from '../../styles/colors';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {Column} from '../styled/Containers';
+import haptic from '../haptic-feedback/haptic';
 
 const RowContainer = styled.View`
   margin: 20px 0;
@@ -27,7 +28,7 @@ const KeyName = styled(BaseText)`
 
 interface Props {
   wallet: SendToWalletRowProps;
-  onPress: () => void;
+  onPress: (wallet: SendToWalletRowProps) => void;
 }
 
 const CurrencyRow = styled.View`
@@ -39,7 +40,7 @@ const CurrencyColumn = styled.View`
   justify-content: center;
 `;
 
-const DetailsRow = styled.View`
+const DetailsRow = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
 `;
@@ -69,7 +70,11 @@ const SendToWalletRow = ({wallet, onPress}: Props) => {
         <KeyName>{keyName}</KeyName>
       </KeyNameContainer>
 
-      <DetailsRow>
+      <DetailsRow
+        onPress={() => {
+          haptic('impactLight');
+          onPress(wallet);
+        }}>
         <CurrencyRow>
           <CurrencyImage img={img} size={50} />
 

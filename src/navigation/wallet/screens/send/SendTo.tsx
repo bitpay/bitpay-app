@@ -11,6 +11,31 @@ import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import {formatFiatBalance} from '../../../../utils/helper-methods';
 import SendToWalletRow from '../../../../components/list/SendToWalletRow';
+import {Key} from '../../../../store/wallet/wallet.models';
+import debounce from 'lodash.debounce';
+import {ValidateURI} from '../../../../store/wallet/utils/validations';
+import {
+  GetPayProUrl,
+  GetWalletAddress,
+} from '../../../../store/wallet/utils/address';
+import {TouchableOpacity, View} from 'react-native';
+import haptic from '../../../../components/haptic-feedback/haptic';
+
+const ValidDataTypes: string[] = [
+  'BitcoinAddress',
+  'BitcoinCashAddress',
+  'EthereumAddress',
+  'EthereumUri',
+  'RippleAddress',
+  'DogecoinAddress',
+  'LitecoinAddress',
+  'RippleUri',
+  'BitcoinUri',
+  'BitcoinCashUri',
+  'DogecoinUri',
+  'LitecoinUri',
+  'BitPayUri',
+];
 
 export interface SendToWalletRowProps {
   id: string;
@@ -53,9 +78,38 @@ const SearchInput = styled.TextInput`
   background-color: transparent;
 `;
 
-const ScanContainer = styled.TouchableOpacity``;
+const BuildSendWalletRow = (
+  keys: {[key in string]: Key},
+  currentWalletId: string,
+  currentCurrencyAbbrevation: string,
+) => {
+  let walletList: SendToWalletRowProps[] = [];
 
-const WalletListContainer = styled.View``;
+  Object.entries(keys).forEach(([key, value]) => {
+    const wallets = value.wallets
+      .filter(
+        ({currencyAbbreviation, id}) =>
+          currencyAbbreviation === currentCurrencyAbbrevation &&
+          id !== currentWalletId,
+      )
+      .map(({balance = 0, id, img, currencyName, currencyAbbreviation}) => ({
+        id,
+        img,
+        currencyName,
+        currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+        cryptoBalance: balance,
+        fiatBalance: formatFiatBalance(balance),
+        keyId: key,
+        keyName: value.keyName || 'My Key',
+      }));
+
+    wallets.forEach((_wallet: SendToWalletRowProps) =>
+      walletList.push(_wallet),
+    );
+  });
+
+  return walletList;
+};
 
 const SendTo = () => {
   const navigation = useNavigation();
@@ -64,26 +118,11 @@ const SendTo = () => {
   const {currencyAbbreviation, id} = wallet;
 
   const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
-  let walletList: SendToWalletRowProps[] = [];
-  Object.entries(keys).forEach(([key, value]) => {
-    const _wallets = value.wallets
-      .filter(
-        ({currencyAbbreviation: ca, id: wid}) =>
-          ca == currencyAbbreviation.toLowerCase() && id !== wid,
-      )
-      .map(({balance = 0, id, img, currencyName}) => ({
-        id,
-        img,
-        currencyName,
-        currencyAbbreviation,
-        cryptoBalance: balance,
-        fiatBalance: formatFiatBalance(balance),
-        keyId: key,
-        keyName: value.keyName || 'My Key',
-      }));
-
-    _wallets.forEach((wallet: SendToWalletRowProps) => walletList.push(wallet));
-  });
+  let walletList: SendToWalletRowProps[] = BuildSendWalletRow(
+    keys,
+    id,
+    currencyAbbreviation.toLowerCase(),
+  );
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -101,8 +140,43 @@ const SendTo = () => {
   const theme = useTheme();
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
 
-  const parseInput = (data: string) => {
-    console.log(data);
+  const validateSearchText = (text: string) => {
+    const data = ValidateURI(text);
+
+    if (data?.type === 'PayPro' || data?.type === 'InvoiceUri') {
+      const invoiceUrl = GetPayProUrl(text);
+      // TODO: Handle me
+      return;
+    }
+
+    if (ValidDataTypes.includes(data?.type)) {
+      //  TODO: Handle me
+      return;
+    }
+  };
+
+  const onSearchInputChange = (text: string) => {
+    debounce(() => {
+      validateSearchText(text);
+    }, 300);
+  };
+
+  const onPressWallet = async ({
+    id: walletId,
+    keyId,
+    currencyAbbreviation: ca,
+  }: SendToWalletRowProps) => {
+    const selectedWallet = keys[keyId].wallets.find(
+      ({id: wid}) => wid === walletId,
+    );
+
+    try {
+      const address = await GetWalletAddress(selectedWallet);
+      navigation.navigate('Wallet', {
+        screen: 'Amount',
+        params: {id, keyId, address, currencyAbbreviation: ca},
+      });
+    } catch (e) {}
   };
 
   return (
@@ -112,33 +186,44 @@ const SendTo = () => {
           <SearchInput
             placeholder={'Search contact or enter address'}
             placeholderTextColor={placeHolderTextColor}
-            onChangeText={(text: string) => parseInput(text)}
+            onChangeText={(text: string) => {
+              onSearchInputChange(text);
+            }}
           />
-          <ScanContainer
+          <TouchableOpacity
             activeOpacity={0.75}
-            onPress={() =>
+            onPress={() => {
+              haptic('impactLight');
               navigation.navigate('Scan', {
                 screen: 'Root',
                 params: {
                   contextHandler: data => {
                     try {
-                      console.log(data);
+                      if (data) {
+                        validateSearchText(data);
+                      }
                     } catch (err) {
                       console.log(err);
                     }
                   },
                 },
-              })
-            }>
+              });
+            }}>
             <ScanSvg />
-          </ScanContainer>
+          </TouchableOpacity>
         </SearchContainer>
 
-        <WalletListContainer>
+        <View>
           {walletList.map(w => (
-            <SendToWalletRow wallet={w} key={w.keyId} onPress={() => {}} />
+            <SendToWalletRow
+              wallet={w}
+              key={w.keyId}
+              onPress={selectedWallet => {
+                onPressWallet(selectedWallet);
+              }}
+            />
           ))}
-        </WalletListContainer>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

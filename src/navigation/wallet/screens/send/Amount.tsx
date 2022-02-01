@@ -1,6 +1,6 @@
 import React, {useLayoutEffect, useState} from 'react';
 import {BaseText} from '../../../../components/styled/Text';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {LightBlack, NeutralSlate, White} from '../../../../styles/colors';
 import {
@@ -11,6 +11,8 @@ import VirtualKeyboard from '../../../../components/virtual-keyboard/VirtualKeyb
 import SwapButton from '../../../../components/swap-button/SwapButton';
 import Button from '../../../../components/button/Button';
 import {View} from 'react-native';
+import {RouteProp} from '@react-navigation/core';
+import {WalletStackParamList} from '../../WalletStack';
 
 const SendMax = styled.TouchableOpacity`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
@@ -73,12 +75,23 @@ const AmountContainer = styled.View`
   padding: 0 ${ScreenGutter};
 `;
 
+export interface AmountParamList {
+  id?: string;
+  keyId?: string;
+  address: string;
+  currencyAbbreviation: string;
+  amount?: string;
+}
+
 const Amount = () => {
+  const route = useRoute<RouteProp<WalletStackParamList, 'Amount'>>();
+  const {currencyAbbreviation, amount: initialAmt = 0} = route.params;
   const navigation = useNavigation();
   const sendMax = () => {};
-  const swapList = ['USD', 'ETH'];
-  const [amount, setAmount] = useState('');
-  const [currency, setCurrency] = useState('USD');
+  const swapList = ['USD'];
+  swapList.unshift(currencyAbbreviation);
+  const [amount, setAmount] = useState(initialAmt);
+  const [currency, setCurrency] = useState(currencyAbbreviation);
 
   useLayoutEffect(() => {
     navigation.setOptions({
