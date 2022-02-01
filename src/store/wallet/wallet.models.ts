@@ -47,6 +47,7 @@ export interface Wallet extends WalletObj, API {}
 
 export interface WalletObj {
   id: string;
+  keyId: string;
   currencyName: string;
   currencyAbbreviation: string;
   balance?: number;

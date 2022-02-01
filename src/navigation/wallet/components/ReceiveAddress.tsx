@@ -1,14 +1,12 @@
 import React, {useEffect, useState} from 'react';
 import Clipboard from '@react-native-community/clipboard';
-import {useDispatch, useSelector} from 'react-redux';
+import {useDispatch} from 'react-redux';
 import cloneDeep from 'lodash.clonedeep';
 import QRCode from 'react-native-qrcode-svg';
 import styled from 'styled-components/native';
 
 import {useLogger} from '../../../utils/hooks';
-import {RootState} from '../../../store';
 import {WalletActions} from '../../../store/wallet';
-import {Wallet} from '../../../store/wallet/wallet.models';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
 import {BaseText, H4, Paragraph} from '../../../components/styled/Text';
@@ -37,7 +35,7 @@ import CopySvg from '../../../../assets/img/copy.svg';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import {sleep} from '../../../utils/helper-methods';
-import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
+import {Wallet} from '../../../store/wallet/wallet.models';
 
 export interface ReceiveAddressConfig {
   keyId: string;
@@ -163,34 +161,21 @@ const CloseButtonText = styled(Paragraph)`
   color: ${({theme: {dark}}) => (dark ? White : Action)};
 `;
 
-const ReceiveAddress = () => {
+interface Props {
+  isVisible: boolean;
+  closeModal: () => void;
+  wallet: Wallet;
+}
+
+const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
   const dispatch = useDispatch();
   const logger = useLogger();
-
-  const isVisible = useSelector(
-    ({WALLET}: RootState) => WALLET.showReceiveAddressModal,
-  );
-  const receiveAddressConfig = useSelector(
-    ({WALLET}: RootState) => WALLET.receiveAddressConfig,
-  );
-  const {keyId, id} = receiveAddressConfig || {};
-
-  const {wallets} =
-    useSelector(({WALLET}: RootState) => keyId && WALLET.keys[keyId]) || {};
-  const wallet: Wallet | undefined = wallets?.find(
-    ({id: walletId}) => walletId === id,
-  );
-
   const [copied, setCopied] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(true);
   const [bchAddressType, setBchAddressType] = useState('Cash Address');
   const [bchAddress, setBchAddress] = useState('');
-  const {imgSrc} =
-    SupportedCurrencyOptions.find(
-      ({id: currencyId}) => currencyId === wallet?.currencyAbbreviation,
-    ) || {};
 
   const copyToClipboard = () => {
     haptic('impactLight');
@@ -214,12 +199,8 @@ const ReceiveAddress = () => {
     }
   };
 
-  const dismissModal = () => {
-    dispatch(WalletActions.dismissReceiveAddressModal());
-  };
-
   const showErrorMessage = async (msg: BottomNotificationConfig) => {
-    dispatch(WalletActions.dismissReceiveAddressModal());
+    closeModal();
     await sleep(500);
     dispatch(showBottomNotificationModal(msg));
   };
@@ -291,8 +272,10 @@ const ReceiveAddress = () => {
 
   const init = () => {
     if (wallet?.isComplete()) {
-      logger.info(`Creating address for wallet: ${id}`);
+      logger.info(`Creating address for wallet: ${wallet.id}`);
       createAddress();
+    } else {
+      // TODO
     }
   };
 
@@ -302,7 +285,7 @@ const ReceiveAddress = () => {
   }, [wallet]);
 
   return (
-    <BottomPopupModal isVisible={isVisible} onBackdropPress={dismissModal}>
+    <BottomPopupModal isVisible={isVisible} onBackdropPress={closeModal}>
       <ReceiveAddressContainer>
         {wallet?.currencyAbbreviation !== 'bch' ? (
           <Header>
@@ -357,15 +340,7 @@ const ReceiveAddress = () => {
 
             <QRCodeContainer>
               <QRCodeBackground>
-                <QRCode
-                  value={address}
-                  size={200}
-                  logo={imgSrc}
-                  logoSize={38}
-                  logoBackgroundColor={White}
-                  logoMargin={8}
-                  logoBorderRadius={8}
-                />
+                <QRCode value={address} size={200} />
               </QRCodeBackground>
             </QRCodeContainer>
           </>
@@ -379,7 +354,7 @@ const ReceiveAddress = () => {
           </LoadingContainer>
         )}
 
-        <CloseButton onPress={dismissModal}>
+        <CloseButton onPress={closeModal}>
           <CloseButtonText>CLOSE</CloseButtonText>
         </CloseButton>
       </ReceiveAddressContainer>
