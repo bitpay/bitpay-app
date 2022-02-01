@@ -41,7 +41,7 @@ const CreateOrImportKey = () => {
               navigation.navigate('Onboarding', {
                 screen: 'TermsOfUse',
                 params: {
-                  context: 'skip',
+                  context: 'TOUOnly',
                 },
               });
             }}>
@@ -73,27 +73,32 @@ const CreateOrImportKey = () => {
         </TextAlign>
       </TextContainer>
       <CtaContainer>
-        <ActionContainer>
+          <ActionContainer>
+
           <Button
-            buttonStyle={'primary'}
-            onPress={() =>
-              navigation.navigate('Onboarding', {screen: 'CurrencySelection'})
-            }>
-            Create a Key
-          </Button>
-        </ActionContainer>
-        <ActionContainer>
+          buttonStyle={'primary'}
+          onPress={() =>
+            navigation.navigate('Onboarding', {
+              screen: 'CurrencySelection',
+              params: {context: 'onboarding'},
+            })
+          }>
+          Create a Key
+        </Button>
+          </ActionContainer>
+          <ActionContainer>
+
           <Button
-            buttonStyle={'secondary'}
-            onPress={() =>
-              navigation.navigate('Onboarding', {
-                screen: 'Import',
-                params: {isOnboarding: true},
-              })
-            }>
-            I already have a Key
-          </Button>
-        </ActionContainer>
+          buttonStyle={'secondary'}
+          onPress={() =>
+            navigation.navigate('Onboarding', {
+              screen: 'Import',
+              params: {context: 'onboarding'},
+            })
+          }>
+          I already have a Key
+        </Button>
+          </ActionContainer>
       </CtaContainer>
     </CreateKeyContainer>
   );

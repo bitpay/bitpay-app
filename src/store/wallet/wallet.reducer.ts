@@ -3,6 +3,7 @@ import {WalletActionType, WalletActionTypes} from './wallet.types';
 
 type WalletReduxPersistBlackList = [];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
+import {ReceiveAddressConfig} from '../../navigation/wallet/components/ReceiveAddress';
 
 export interface WalletState {
   createdOn: number;
@@ -10,6 +11,9 @@ export interface WalletState {
   rates: {[key in string]: Array<ExchangeRate>};
   priceHistory: Array<PriceHistory>;
   tokenOptions: {[key in string]: Token};
+  walletTermsAccepted: boolean;
+  showReceiveAddressModal: boolean;
+  receiveAddressConfig: ReceiveAddressConfig | undefined;
 }
 
 const initialState: WalletState = {
@@ -18,6 +22,9 @@ const initialState: WalletState = {
   rates: {},
   priceHistory: [],
   tokenOptions: {},
+  walletTermsAccepted: false,
+  showReceiveAddressModal: false,
+  receiveAddressConfig: undefined,
 };
 
 export const walletReducer = (
@@ -25,6 +32,7 @@ export const walletReducer = (
   action: WalletActionType,
 ): WalletState => {
   switch (action.type) {
+    case WalletActionTypes.SUCCESS_ADD_WALLET:
     case WalletActionTypes.SUCCESS_CREATE_KEY:
     case WalletActionTypes.SUCCESS_IMPORT: {
       const {key} = action.payload;
@@ -118,6 +126,27 @@ export const walletReducer = (
         tokenOptions: action.payload,
       };
     }
+
+    case WalletActionTypes.SET_WALLET_TERMS_ACCEPTED: {
+      return {
+        ...state,
+        walletTermsAccepted: true,
+      };
+    }
+
+    case WalletActionTypes.SHOW_RECEIVE_ADDRESS_MODAL:
+      return {
+        ...state,
+        showReceiveAddressModal: true,
+        receiveAddressConfig: action.payload,
+      };
+
+    case WalletActionTypes.DISMISS_RECEIVE_ADDRESS_MODAL:
+      return {
+        ...state,
+        showReceiveAddressModal: false,
+        receiveAddressConfig: undefined,
+      };
 
     default:
       return state;

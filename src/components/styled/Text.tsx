@@ -123,3 +123,23 @@ export const Balance = styled(BaseText)`
   line-height: 53px;
   letter-spacing: 0;
 `;
+
+export const Badge = styled(BaseText)`
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  text-align: center;
+  line-height: 19px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  border: 1px solid #e1e4e7;
+`;
+
+export const ImportTitle = styled(BaseText)`
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 18px;
+  color: ${SlateDark};
+  opacity: 0.75;
+  text-transform: uppercase;
+`;
