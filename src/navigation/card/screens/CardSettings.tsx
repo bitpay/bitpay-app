@@ -21,7 +21,7 @@ export type CardSettingsParamList = {
 type CardSettingsProps = StackScreenProps<CardStackParamList, 'Settings'>;
 
 const CardSettingsContainer = styled.View`
-  padding: ${ScreenGutter};
+  padding: 0 ${ScreenGutter} ${ScreenGutter};
 `;
 
 const CardSettingsHeader = styled.View`
@@ -30,7 +30,7 @@ const CardSettingsHeader = styled.View`
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
-  margin-bottom: 16px;
+  margin-bottom: ${ScreenGutter};
 `;
 
 const CardTypeButtons = styled.View`
@@ -120,29 +120,31 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
             </CardTypeButtons>
           ) : null}
         </CardSettingsHeader>
+      </CardSettingsContainer>
 
-        <Carousel<Card>
-          ref={carouselRef}
-          data={memoizedCards}
-          vertical={false}
-          firstItem={initialSlideIdx}
-          itemWidth={300 + 20}
-          sliderWidth={WIDTH}
-          renderItem={({item}) => {
-            return (
-              <CardBack
-                brand={item.brand || 'Visa'}
-                cardNumber={buildCardNumber(item.lastFourDigits)}
-                cvv={''}
-                nickname={item.nickname}
-                expiration={''}
-              />
-            );
-          }}
-          onScrollIndexChanged={idx => onCardChange(idx)}
-          layout="default"
-        />
+      <Carousel<Card>
+        ref={carouselRef}
+        data={memoizedCards}
+        vertical={false}
+        firstItem={initialSlideIdx}
+        itemWidth={300 + 20}
+        sliderWidth={WIDTH}
+        renderItem={({item}) => {
+          return (
+            <CardBack
+              brand={item.brand || 'Visa'}
+              cardNumber={buildCardNumber(item.lastFourDigits)}
+              cvv={''}
+              nickname={item.nickname}
+              expiration={''}
+            />
+          );
+        }}
+        onScrollIndexChanged={idx => onCardChange(idx)}
+        layout="default"
+      />
 
+      <CardSettingsContainer>
         <SettingsList card={activeCard} navigation={navigation} />
       </CardSettingsContainer>
     </ScrollView>
