@@ -5,7 +5,12 @@ import styled, {css} from 'styled-components/native';
 import {useDispatch, useSelector} from 'react-redux';
 import {AppActions} from '../../../store/app';
 import {RootState} from '../../../store';
-import {NotificationPrimary} from '../../../styles/colors';
+import {
+  Black,
+  LightBlack,
+  NotificationPrimary,
+  White,
+} from '../../../styles/colors';
 import haptic from '../../haptic-feedback/haptic';
 import {Platform} from 'react-native';
 import SuccessSvg from '../../../../assets/img/success.svg';
@@ -14,6 +19,7 @@ import WarningSvg from '../../../../assets/img/warning.svg';
 import ErrorSvg from '../../../../assets/img/error.svg';
 import QuestionSvg from '../../../../assets/img/question.svg';
 import {sleep} from '../../../utils/helper-methods';
+import {Theme} from '@react-navigation/native';
 
 export interface BottomNotificationConfig {
   type: 'success' | 'info' | 'warning' | 'error' | 'question';
@@ -42,7 +48,7 @@ const notificationType = {
 };
 
 const BottomNotificationContainer = styled.View`
-  background: white;
+  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   padding: 25px;
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
@@ -68,6 +74,7 @@ const Message = styled(BaseText)`
   line-height: 24px;
   letter-spacing: 0.5px;
   text-align: left;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 const Hr = styled.View`
@@ -86,15 +93,17 @@ const CtaContainer = styled.View`
     `}
 `;
 
-const Cta = styled.Text`
+const Cta = styled(BaseText)`
   font-size: 16px;
   font-style: normal;
   font-weight: 400;
   line-height: 24px;
   letter-spacing: 0.5px;
   text-align: left;
-  color: ${(props: {primary?: boolean}) =>
-    props.primary ? NotificationPrimary : 'black'};
+  color: ${({primary, theme: {dark}}: {primary?: boolean; theme: Theme}) =>
+    dark ? White : primary ? NotificationPrimary : Black};
+  text-decoration: ${({theme: {dark}}) => (dark ? 'underline' : 'none')};
+  text-decoration-color: ${White};
 `;
 
 const BottomNotification = () => {

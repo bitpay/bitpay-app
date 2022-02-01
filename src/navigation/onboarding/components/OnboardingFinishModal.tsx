@@ -3,6 +3,7 @@ import React from 'react';
 import styled from 'styled-components/native';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
+  ActionContainer,
   CtaContainer,
   TextContainer,
   TitleContainer,
@@ -134,13 +135,15 @@ const OnboardingFinishModal: React.FC = () => {
           <CtaContainer style={{marginTop: 10}}>
             {buttons.map(({onPress, text}, index) => {
               return (
-                <Button
-                  key={index}
-                  buttonStyle={'primary'}
-                  buttonType={'pill'}
-                  onPress={onPress}>
-                  {text}
-                </Button>
+                <ActionContainer>
+                  <Button
+                    key={index}
+                    buttonStyle={'primary'}
+                    buttonType={'pill'}
+                    onPress={onPress}>
+                    {text}
+                  </Button>
+                </ActionContainer>
               );
             })}
           </CtaContainer>

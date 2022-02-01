@@ -57,6 +57,7 @@ export const CtaContainer = styled.View`
 export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
   padding: 15px;
   position: absolute;
+  margin: 5px 0;
   bottom: 0;
   left: 0;
   right: 0;
@@ -65,7 +66,7 @@ export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
   ${({background}) =>
     background &&
     css`
-      background: white;
+      background: ${({theme}) => theme.colors.background};
     `};
 `;
 
@@ -157,6 +158,10 @@ export const SettingView = styled.View`
   justify-content: space-between;
   align-items: center;
   height: 58px;
+`;
+
+export const ActionContainer = styled.View`
+  margin: 5px 0; ;
 `;
 
 // Info
