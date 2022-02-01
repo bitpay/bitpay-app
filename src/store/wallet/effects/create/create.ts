@@ -11,7 +11,11 @@ import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
 import {buildKeyObj, buildWalletObj} from '../../utils/wallet';
-import {failedAddWallet, successAddWallet, successCreateKey} from '../../wallet.actions';
+import {
+  failedAddWallet,
+  successAddWallet,
+  successCreateKey,
+} from '../../wallet.actions';
 import API from 'bitcore-wallet-client/ts_build';
 import {Key, KeyMethods, Token, Wallet} from '../../wallet.models';
 import {Network} from '../../../../constants';

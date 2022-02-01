@@ -6,7 +6,6 @@ import QRCode from 'react-native-qrcode-svg';
 import styled from 'styled-components/native';
 
 import {useLogger} from '../../../utils/hooks';
-import {WalletActions} from '../../../store/wallet';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
 import {BaseText, H4, Paragraph} from '../../../components/styled/Text';
@@ -17,11 +16,6 @@ import haptic from '../../../components/haptic-feedback/haptic';
 
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {CustomErrorMessage} from './ErrorMessages';
-
-import {
-  getLegacyBchAddressFormat,
-  ValidateAddress,
-} from '../../../constants/address';
 
 import {
   Action,
@@ -36,6 +30,8 @@ import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import {sleep} from '../../../utils/helper-methods';
 import {Wallet} from '../../../store/wallet/wallet.models';
+import {ValidateCoinAddress} from '../../../store/wallet/utils/validations';
+import {GetLegacyBchAddressFormat} from '../../../store/wallet/utils/address';
 
 export interface ReceiveAddressConfig {
   keyId: string;
@@ -193,7 +189,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
     haptic('impactLight');
     setBchAddressType(type);
     if (type === 'Legacy') {
-      setAddress(getLegacyBchAddressFormat(address));
+      setAddress(GetLegacyBchAddressFormat(address));
     } else {
       setAddress(bchAddress);
     }
@@ -249,7 +245,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
           logger.warn(BWCErrorMessage(err, 'Receive'));
         } else if (
           addressObj &&
-          !ValidateAddress(addressObj.address, addressObj.coin, network)
+          !ValidateCoinAddress(addressObj.address, addressObj.coin, network)
         ) {
           logger.error(`Invalid address generated: ${addressObj.address}`);
           if (retryCount < 3) {

@@ -1,7 +1,9 @@
 import {Wallet} from '../wallet.models';
 import cloneDeep from 'lodash.clonedeep';
-import {ValidateAddress} from '../../../constants/address';
+import {BwcProvider} from '../../../lib/bwc';
+import {ValidateCoinAddress} from './validations';
 
+const BWC = BwcProvider.getInstance();
 interface Address {
   address: string;
   coin: string;
@@ -56,7 +58,7 @@ export const GetWalletAddress = (
           }
         } else if (
           addressObj &&
-          !ValidateAddress(addressObj.address, addressObj.coin, network)
+          !ValidateCoinAddress(addressObj.address, addressObj.coin, network)
         ) {
           reject(`Invalid address generated: ${addressObj.address}`);
         } else if (addressObj) {
@@ -65,4 +67,9 @@ export const GetWalletAddress = (
       });
     }
   });
+};
+
+export const GetLegacyBchAddressFormat = (addr: string): string => {
+  const a = BWC.getBitcoreCash().Address(addr).toObject();
+  return BWC.getBitcore().Address.fromObject(a).toString();
 };

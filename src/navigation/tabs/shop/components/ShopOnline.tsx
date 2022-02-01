@@ -1,4 +1,4 @@
-import { useTheme } from '@react-navigation/native';
+import {useTheme} from '@react-navigation/native';
 import debounce from 'lodash.debounce';
 import React, {useMemo, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
