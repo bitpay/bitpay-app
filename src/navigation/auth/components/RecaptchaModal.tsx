@@ -58,8 +58,15 @@ const styles = StyleSheet.create({
  */
 export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
   (props, ref) => {
-    const {isVisible} = props;
-    const {baseUrl, sitekey, onSubmit, onCancel, onExpired, onError} = props;
+    const {
+      isVisible,
+      baseUrl,
+      sitekey,
+      onSubmit,
+      onCancel,
+      onExpired,
+      onError,
+    } = props;
     const [gCaptchaResponse, setGCaptchaResponse] = useState<string>('');
     const webviewRef = useRef<WebView>(null);
 
