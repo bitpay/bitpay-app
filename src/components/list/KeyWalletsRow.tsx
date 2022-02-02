@@ -30,19 +30,19 @@ const NoGutter = styled(View)`
   margin: 0 -10px;
 `;
 
-export interface KeyWallets extends Wallet, WalletRowProps {
+export interface KeyWallet extends Wallet, WalletRowProps {
   img: string | ((props: any) => ReactElement);
 }
 
 export interface KeyWalletsRowProps {
   key: string;
   keyName: string;
-  wallets: KeyWallets[];
+  wallets: KeyWallet[];
 }
 
 interface KeyWalletProps {
   keyWallets: KeyWalletsRowProps[];
-  onPress: (wallet: KeyWallets) => void;
+  onPress: (wallet: KeyWallet) => void;
 }
 
 const KeyWalletsRow = ({keyWallets, onPress}: KeyWalletProps) => {

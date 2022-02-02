@@ -97,8 +97,7 @@ export const HandlePayPro = async (
     const {estimatedAmount, minerFee} = paymentOptions.find(
       (option: PayProOptions) => option.currency.toLowerCase() === coin,
     );
-    const instructions = payProDetails.instructions[0];
-    const {outputs, toAddress, data} = instructions;
+    const {outputs, toAddress, data} = payProDetails.instructions[0];
     if (coin === 'xrp' && outputs) {
       invoiceID = outputs[0].invoiceID;
     }
@@ -108,12 +107,12 @@ export const HandlePayPro = async (
       description: memo,
       data,
       invoiceID,
-      paypro: payProDetails,
+      payPro: payProDetails,
       coin,
       network,
       payProUrl: url,
       requiredFeeRate,
-      minerFee, // needed for payments with Coinbase accounts
+      minerFee, // For payments with Coinbase accounts
     };
     return confirmScreenParams;
   } catch (err) {

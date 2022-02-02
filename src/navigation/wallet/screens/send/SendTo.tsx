@@ -10,7 +10,7 @@ import {WalletStackParamList} from '../../WalletStack';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import {formatFiatBalance} from '../../../../utils/helper-methods';
-import {Key, Wallet} from '../../../../store/wallet/wallet.models';
+import {Key} from '../../../../store/wallet/wallet.models';
 import debounce from 'lodash.debounce';
 import {
   CheckIfLegacyBCH,
@@ -25,9 +25,10 @@ import {
   CoinNetwork,
   CreateWalletAddress,
   GetCoinAndNetwork,
+  TranslateToBchCashAddress,
 } from '../../../../store/wallet/effects/send/address';
 import KeyWalletsRow, {
-  KeyWallets,
+  KeyWallet,
   KeyWalletsRowProps,
 } from '../../../../components/list/KeyWalletsRow';
 import {
@@ -39,8 +40,17 @@ import {
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
-import {dismissOnGoingProcessModal} from '../../../../store/app/app.actions';
-import {Currencies} from "../../../../constants/currencies";
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+} from '../../../../store/app/app.actions';
+import {Currencies} from '../../../../constants/currencies';
+import {useLogger} from '../../../../utils/hooks';
+import {
+  BchLegacyAddressInfo,
+  CustomErrorMessage,
+  SendGeneralErrorMessage,
+} from '../../components/ErrorMessages';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -57,11 +67,6 @@ const ValidDataTypes: string[] = [
   'LitecoinUri',
   'BitPayUri',
 ];
-
-export interface SendToWalletRowProps extends Wallet {
-  fiatBalance: string;
-  cryptoBalance: number;
-}
 
 const SafeAreaView = styled.SafeAreaView`
   flex: 1;
@@ -101,7 +106,7 @@ const BuildKeyWalletRow = (
 ) => {
   let filteredKeys: KeyWalletsRowProps[] = [];
   Object.entries(keys).forEach(([key, value]) => {
-    const wallets: KeyWallets[] = [];
+    const wallets: KeyWallet[] = [];
     value.wallets
       .filter(
         ({currencyAbbreviation, id, credentials: {network}}) =>
@@ -134,21 +139,13 @@ const BuildKeyWalletRow = (
 
 const SendTo = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
+  const logger = useLogger();
   const route = useRoute<RouteProp<WalletStackParamList, 'SendTo'>>();
-  const {wallet} = route.params;
-  const {
-    currencyAbbreviation,
-    id,
-    credentials: {network},
-  } = wallet;
 
   const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
-  let keyWallets: KeyWalletsRowProps[] = BuildKeyWalletRow(
-    keys,
-    id,
-    currencyAbbreviation,
-    network,
-  );
+  const theme = useTheme();
+  const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -163,8 +160,25 @@ const SendTo = () => {
     });
   });
 
-  const theme = useTheme();
-  const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
+  const {wallet} = route.params;
+  const {
+    currencyAbbreviation,
+    id,
+    credentials: {network},
+  } = wallet;
+  const keyWallets: KeyWalletsRowProps[] = BuildKeyWalletRow(
+    keys,
+    id,
+    currencyAbbreviation,
+    network,
+  );
+
+  const onErrorMessageDismiss = () => {};
+
+  const BchLegacyAddressInfoDismiss = (searchText: string) => {
+    const cashAddr = TranslateToBchCashAddress(searchText);
+    validateSearchText(cashAddr);
+  };
 
   const checkCoinAndNetwork = (
     data: any,
@@ -179,26 +193,41 @@ const SendTo = () => {
     } else {
       addrData = GetCoinAndNetwork(data, network);
       isValid =
-        currencyAbbreviation == addrData?.coin && addrData?.network === network;
+        currencyAbbreviation === addrData?.coin && addrData?.network === network;
     }
 
     if (isValid) {
       return true;
     } else {
       // @ts-ignore
-      let network = isPayPro ? data.network : addrData?.network;
-
-      if (currencyAbbreviation === 'bch' && network === network && searchText) {
-        const isLegacy = CheckIfLegacyBCH(searchText);
-        // isLegacy ? showLegacyAddrMessage() : showErrorMessage();
+      let addrNetwork = isPayPro ? data.network : addrData?.network;
+      if (currencyAbbreviation === 'bch' && network === addrNetwork) {
+        const isLegacy = CheckIfLegacyBCH(data);
+        if (isLegacy) {
+          dispatch(
+            showBottomNotificationModal(
+              BchLegacyAddressInfo('bitpay', () => {
+                BchLegacyAddressInfoDismiss(data);
+              }),
+            ),
+          );
+        } else {
+          dispatch(
+            showBottomNotificationModal(
+              SendGeneralErrorMessage(onErrorMessageDismiss),
+            ),
+          );
+        }
       } else {
-        // showErrorMessage();
+        dispatch(
+          showBottomNotificationModal(
+            SendGeneralErrorMessage(onErrorMessageDismiss),
+          ),
+        );
       }
     }
     return false;
   };
-
-  const dispatch = useDispatch();
 
   const validateSearchText = async (text: string) => {
     const data = ValidateURI(text);
@@ -246,16 +275,14 @@ const SendTo = () => {
           // TODO: handle me
         }
       } catch (err) {
-        console.log(err);
-        console.log(BWCErrorMessage(err));
+        const formattedErrMsg = BWCErrorMessage(err);
         dispatch(dismissOnGoingProcessModal());
-
-        // onGoingProcessProvider.clear();
-        // this.invalidAddress = true;
-        // logger.warn(this.bwcErrorProvider.msg(err));
-        // this.errorsProvider.showDefaultError(
-        //     this.bwcErrorProvider.msg(err),
-        // );
+        logger.warn(formattedErrMsg);
+        dispatch(
+          showBottomNotificationModal(
+            CustomErrorMessage(formattedErrMsg, 'Error'),
+          ),
+        );
       }
       // TODO: Handle me
       return;
@@ -273,7 +300,7 @@ const SendTo = () => {
     validateSearchText(text);
   }, 300);
 
-  const onPressWallet = async (selectedWallet: SendToWalletRowProps) => {
+  const onPressWallet = async (selectedWallet: KeyWallet) => {
     try {
       const address = await CreateWalletAddress(selectedWallet);
       navigation.navigate('Wallet', {
@@ -324,7 +351,7 @@ const SendTo = () => {
         <View>
           <KeyWalletsRow
             keyWallets={keyWallets}
-            onPress={(selectedWallet: SendToWalletRowProps) => {
+            onPress={(selectedWallet: KeyWallet) => {
               onPressWallet(selectedWallet);
             }}
           />

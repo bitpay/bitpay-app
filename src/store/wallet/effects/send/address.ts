@@ -85,7 +85,7 @@ export const GetCoinAndNetwork = (
     try {
       network = BitcoreCash.Address(address).network.name;
       return {coin: 'bch', network};
-    } catch (e) {
+    } catch (bchErr) {
       try {
         const isValidEthAddress = Core.Validation.validateAddress(
           'ETH',
@@ -97,7 +97,7 @@ export const GetCoinAndNetwork = (
         } else {
           throw isValidEthAddress;
         }
-      } catch (e) {
+      } catch (ethErr) {
         try {
           const isValidXrpAddress = Core.Validation.validateAddress(
             'XRP',
@@ -109,15 +109,15 @@ export const GetCoinAndNetwork = (
           } else {
             throw isValidXrpAddress;
           }
-        } catch (e) {
+        } catch (xrpErr) {
           try {
             network = BitcoreDoge.Address(address).network.name;
             return {coin: 'doge', network};
-          } catch (e) {
+          } catch (dogeErr) {
             try {
               network = BitcoreLtc.Address(address).network.name;
               return {coin: 'ltc', network};
-            } catch (e) {
+            } catch (ltcErr) {
               return null;
             }
           }
@@ -125,4 +125,12 @@ export const GetCoinAndNetwork = (
       }
     }
   }
+};
+
+export const TranslateToBchCashAddress = (
+  addressToTranslate: string,
+): string => {
+  const addressObj = Bitcore.Address(addressToTranslate).toObject();
+  const cashAdrr = BitcoreCash.Address.fromObject(addressObj).toCashAddress();
+  return cashAdrr;
 };
