@@ -221,7 +221,6 @@ const SendTo = () => {
         );
         if (selected) {
           const isValid = checkCoinAndNetwork(selected, true, text);
-          console.log(isValid);
 
           if (isValid) {
             dispatch(
@@ -263,6 +262,8 @@ const SendTo = () => {
     }
 
     if (ValidDataTypes.includes(data?.type)) {
+      const isValid = checkCoinAndNetwork(text);
+      console.log(isValid);
       //  TODO: Handle me
       return;
     }
