@@ -13,7 +13,13 @@ import {
   WIDTH,
 } from '../../../components/styled/Containers';
 import * as Progress from 'react-native-progress';
-import {Action, Air, NeutralSlate, ProgressBlue} from '../../../styles/colors';
+import {
+  Action,
+  Air,
+  LightBlack,
+  NeutralSlate,
+  ProgressBlue,
+} from '../../../styles/colors';
 import Carousel from 'react-native-snap-carousel';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
@@ -74,7 +80,7 @@ const DottedBorder = styled.View`
 `;
 
 const WordSelector = styled.TouchableOpacity`
-  background: ${NeutralSlate};
+  background: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   padding: 10px 15px;
   margin: 5px;
   border-radius: 5px;
@@ -88,6 +94,7 @@ const WordSelectorText = styled(BaseText)`
   line-height: 19px;
   letter-spacing: 0;
   text-align: center;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
