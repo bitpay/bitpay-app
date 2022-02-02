@@ -17,9 +17,7 @@ interface Address {
   coin: string;
 }
 
-export const CreateWalletAddress = (
-  wallet: Wallet,
-): Promise<string> => {
+export const CreateWalletAddress = (wallet: Wallet): Promise<string> => {
   //  TODO: store the address to reuse
   return new Promise((resolve, reject) => {
     if (!wallet) {
