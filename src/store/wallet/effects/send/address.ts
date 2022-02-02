@@ -44,17 +44,23 @@ export const CreateWalletAddress = (
                 limit: 1,
               },
               (e: any, addr: Address[]) => {
+                if (e) {
+                  reject({type: 'MAIN_ADDRESS_GAP_REACHED', error: e});
+                }
                 resolve(addr[0].address);
               },
             );
           } else {
-            reject(err);
+            reject({type: 'GENERAL_ERROR', error: err});
           }
         } else if (
           addressObj &&
           !ValidateCoinAddress(addressObj.address, addressObj.coin, network)
         ) {
-          reject(`Invalid address generated: ${addressObj.address}`);
+          reject({
+            type: 'INVALID_ADDRESS_GENERATED',
+            error: addressObj.address,
+          });
         } else if (addressObj) {
           resolve(addressObj.address);
         }

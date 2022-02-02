@@ -184,10 +184,7 @@ const SendTo = () => {
     validateSearchText(cashAddr);
   };
 
-  const checkCoinAndNetwork = (
-    data: any,
-    isPayPro?: boolean
-  ): boolean => {
+  const checkCoinAndNetwork = (data: any, isPayPro?: boolean): boolean => {
     let isValid, addrData: CoinNetwork | null;
     if (isPayPro) {
       isValid =

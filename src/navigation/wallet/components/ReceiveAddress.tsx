@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import Clipboard from '@react-native-community/clipboard';
 import {useDispatch} from 'react-redux';
-import cloneDeep from 'lodash.clonedeep';
 import QRCode from 'react-native-qrcode-svg';
 import styled from 'styled-components/native';
 
@@ -30,17 +29,14 @@ import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import {sleep} from '../../../utils/helper-methods';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {ValidateCoinAddress} from '../../../store/wallet/utils/validations';
-import {GetLegacyBchAddressFormat} from '../../../store/wallet/effects/send/address';
+import {
+  CreateWalletAddress,
+  GetLegacyBchAddressFormat,
+} from '../../../store/wallet/effects/send/address';
 
 export interface ReceiveAddressConfig {
   keyId: string;
   id: string;
-}
-
-interface Address {
-  address: string;
-  coin: string;
 }
 
 const Header = styled.View`
@@ -202,68 +198,40 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
   };
 
   const createAddress = async () => {
-    // To avoid altering store value
-    const walletClone = cloneDeep(wallet);
+    let {coin} = wallet.credentials;
+    const prefix = 'Could not create address';
 
-    if (walletClone) {
-      let {token, network, coin, multisigEthInfo} = walletClone.credentials;
-      if (multisigEthInfo?.multisigContractAddress) {
-        setLoading(false);
-        setAddress(multisigEthInfo.multisigContractAddress);
-        return;
+    try {
+      const address = await CreateWalletAddress(wallet);
+      setLoading(false);
+      setAddress(address);
+      if (coin === 'bch') {
+        setBchAddress(address);
+        setBchAddressType('Cash Address');
       }
+    } catch (createAddressErr: any) {
+      if (createAddressErr?.type === 'INVALID_ADDRESS_GENERATED') {
+        logger.error(createAddressErr.error);
 
-      if (token) {
-        walletClone.id.replace(`-${token.address}`, '');
-      }
-
-      // Todo: Refactor this to use wallet/effects/send/create-address
-      await walletClone.createAddress({}, (err: any, addressObj: Address) => {
-        if (err) {
-          let prefix = 'Could not create address';
-          if (err.name && err.name.includes('MAIN_ADDRESS_GAP_REACHED')) {
-            logger.warn(BWCErrorMessage(err, 'Server Error'));
-            walletClone.getMainAddresses(
-              {
-                reverse: true,
-                limit: 1,
-              },
-              (e: any, addr: Address[]) => {
-                if (e) {
-                  showErrorMessage(CustomErrorMessage(BWCErrorMessage(e)));
-                }
-                setLoading(false);
-                setAddress(addr[0].address);
-                if (coin === 'bch') {
-                  setBchAddress(addr[0].address);
-                  setBchAddressType('Cash Address');
-                }
-              },
-            );
-          } else {
-            showErrorMessage(CustomErrorMessage(BWCErrorMessage(err, prefix)));
-          }
-          logger.warn(BWCErrorMessage(err, 'Receive'));
-        } else if (
-          addressObj &&
-          !ValidateCoinAddress(addressObj.address, addressObj.coin, network)
-        ) {
-          logger.error(`Invalid address generated: ${addressObj.address}`);
-          if (retryCount < 3) {
-            setRetryCount(retryCount + 1);
-            createAddress();
-          } else {
-            showErrorMessage(CustomErrorMessage(BWCErrorMessage(err)));
-          }
-        } else if (addressObj) {
-          setLoading(false);
-          setAddress(addressObj.address);
-          if (coin === 'bch') {
-            setBchAddress(addressObj.address);
-            setBchAddressType('Cash Address');
-          }
+        if (retryCount < 3) {
+          setRetryCount(retryCount + 1);
+          createAddress();
+          return;
+        } else {
+          showErrorMessage(
+            CustomErrorMessage(BWCErrorMessage(createAddressErr.error)),
+          );
         }
-      });
+      } else if (createAddressErr?.type === 'MAIN_ADDRESS_GAP_REACHED') {
+        showErrorMessage(
+          CustomErrorMessage(BWCErrorMessage(createAddressErr.error)),
+        );
+      } else {
+        showErrorMessage(
+          CustomErrorMessage(BWCErrorMessage(createAddressErr.error, prefix)),
+        );
+      }
+      logger.warn(BWCErrorMessage(createAddressErr.error, 'Receive'));
     }
   };
 
