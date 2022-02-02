@@ -34,7 +34,6 @@ const PortfolioBalanceAmount = styled(H2)`
   text-align: left;
   color: white;
   margin-left: 10px;
-  line-height: 0;
 `;
 
 const ArrowSvgContainer = styled.View`
