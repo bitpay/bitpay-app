@@ -10,6 +10,7 @@ import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, H7} from '../../../components/styled/Text';
 import {Card, Transaction} from '../../../store/card/card.models';
 import {Air, SlateDark} from '../../../styles/colors';
+import {format} from '../../../utils/currency';
 
 interface TransactionRowProps {
   tx: Transaction;
@@ -130,14 +131,6 @@ const getTxSubtitle = (tx: Transaction, settled: boolean) => {
   return location.toUpperCase();
 };
 
-const getTxAmount = (tx: Transaction, card: Card) => {
-  const sign = tx.displayPrice < 0 ? '-' : '';
-  const symbol = card.currency ? card.currency.symbol : '';
-  const amount = Math.abs(tx.displayPrice).toFixed(2); // TODO: use currency formatter
-
-  return `${sign}${symbol}${amount}`;
-};
-
 const TransactionRow: React.FC<TransactionRowProps> = props => {
   const {tx, settled, card} = props;
 
@@ -145,7 +138,7 @@ const TransactionRow: React.FC<TransactionRowProps> = props => {
   const formattedTimestamp = getTxTimestamp(tx, settled);
   const formattedTitle = getTxTitle(tx);
   const formattedSubtitle = getTxSubtitle(tx, settled);
-  const formattedAmount = getTxAmount(tx, card);
+  const formattedAmount = format(+tx.displayPrice, card.currency.code);
 
   return (
     <TxRowContainer>
