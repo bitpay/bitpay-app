@@ -1,4 +1,4 @@
-import React, {useLayoutEffect} from 'react';
+import React, {useLayoutEffect, useState} from 'react';
 import {HeaderTitle} from '../../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
@@ -146,6 +146,7 @@ const SendTo = () => {
   const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
   const theme = useTheme();
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
+  const [searchInput, setSearchInput] = useState('');
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -173,17 +174,19 @@ const SendTo = () => {
     network,
   );
 
-  const onErrorMessageDismiss = () => {};
+  const onErrorMessageDismiss = () => {
+    setSearchInput('');
+  };
 
   const BchLegacyAddressInfoDismiss = (searchText: string) => {
     const cashAddr = TranslateToBchCashAddress(searchText);
+    setSearchInput(cashAddr);
     validateSearchText(cashAddr);
   };
 
   const checkCoinAndNetwork = (
     data: any,
-    isPayPro?: boolean,
-    searchText?: string,
+    isPayPro?: boolean
   ): boolean => {
     let isValid, addrData: CoinNetwork | null;
     if (isPayPro) {
@@ -193,7 +196,8 @@ const SendTo = () => {
     } else {
       addrData = GetCoinAndNetwork(data, network);
       isValid =
-        currencyAbbreviation === addrData?.coin && addrData?.network === network;
+        currencyAbbreviation === addrData?.coin &&
+        addrData?.network === network;
     }
 
     if (isValid) {
@@ -249,7 +253,7 @@ const SendTo = () => {
             currencyAbbreviation.toUpperCase() === option.currency,
         );
         if (selected) {
-          const isValid = checkCoinAndNetwork(selected, true, text);
+          const isValid = checkCoinAndNetwork(selected, true);
 
           if (isValid) {
             dispatch(
@@ -284,7 +288,6 @@ const SendTo = () => {
           ),
         );
       }
-      // TODO: Handle me
       return;
     }
 
@@ -321,7 +324,9 @@ const SendTo = () => {
           <SearchInput
             placeholder={'Search contact or enter address'}
             placeholderTextColor={placeHolderTextColor}
+            value={searchInput}
             onChangeText={(text: string) => {
+              setSearchInput(text);
               onSearchInputChange(text);
             }}
           />

@@ -44,9 +44,7 @@ export interface Key {
   keyName?: string;
 }
 
-export interface Wallet extends WalletObj, API {
-  keyName: string;
-}
+export interface Wallet extends WalletObj, API {}
 
 export interface WalletObj {
   id: string;
