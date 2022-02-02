@@ -31,13 +31,16 @@ import KeyWalletsRow, {
   KeyWalletsRowProps,
 } from '../../../../components/list/KeyWalletsRow';
 import {
+  GetPayProDetails,
   GetPayProOptions,
+  HandlePayPro,
   PayProOptions,
 } from '../../../../store/wallet/effects/send/paypro';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {dismissOnGoingProcessModal} from '../../../../store/app/app.actions';
+import {Currencies} from "../../../../constants/currencies";
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -171,17 +174,18 @@ const SendTo = () => {
     let isValid, addrData: CoinNetwork | null;
     if (isPayPro) {
       isValid =
-        data?.chain == currencyAbbreviation.toUpperCase() &&
-        data?.network == network;
+        data?.chain === Currencies[currencyAbbreviation].chain &&
+        data?.network === network;
     } else {
       addrData = GetCoinAndNetwork(data, network);
       isValid =
-        currencyAbbreviation == addrData?.coin && addrData?.network == network;
+        currencyAbbreviation == addrData?.coin && addrData?.network === network;
     }
 
     if (isValid) {
       return true;
     } else {
+      // @ts-ignore
       let network = isPayPro ? data.network : addrData?.network;
 
       if (currencyAbbreviation === 'bch' && network === network && searchText) {
@@ -191,7 +195,6 @@ const SendTo = () => {
         // showErrorMessage();
       }
     }
-
     return false;
   };
 
@@ -219,6 +222,29 @@ const SendTo = () => {
         if (selected) {
           const isValid = checkCoinAndNetwork(selected, true, text);
           console.log(isValid);
+
+          if (isValid) {
+            dispatch(
+              startOnGoingProcessModal(
+                OnGoingProcessMessages.FETCHING_PAYMENT_OPTIONS,
+              ),
+            );
+            const payProDetails = await GetPayProDetails({
+              paymentUrl: payProOptions.payProUrl,
+              coin: currencyAbbreviation,
+            });
+            dispatch(dismissOnGoingProcessModal());
+            const confirmScreenParams = await HandlePayPro(
+              payProDetails,
+              undefined,
+              payProOptions.payProUrl,
+              currencyAbbreviation,
+            );
+            //TODO: Redirect me
+            console.log(confirmScreenParams);
+          }
+        } else {
+          // TODO: handle me
         }
       } catch (err) {
         console.log(err);
