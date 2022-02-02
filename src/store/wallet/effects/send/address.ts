@@ -22,6 +22,10 @@ export const CreateWalletAddress = (
 ): Promise<string> => {
   //  TODO: store the address to reuse
   return new Promise((resolve, reject) => {
+    if (!wallet) {
+      reject();
+    }
+
     const walletClone = cloneDeep(wallet);
     if (walletClone) {
       let {token, network, multisigEthInfo} = walletClone.credentials;
