@@ -1,76 +1,5 @@
-import {Key as IKey} from 'bitcore-wallet-client/src/lib/key';
-import {Token} from '../../constants/assets';
 import API from 'bitcore-wallet-client/ts_build';
-
-export interface KeyObj {
-  compliantDerivation: boolean;
-  fingerPrint: string;
-  id: string;
-  mnemonic: string;
-  mnemonicHasPassphrase: boolean;
-  version: number;
-  xPrivKey: string;
-}
-
-export interface Asset extends AssetObj, API {}
-
-export interface AssetObj {
-  id: string;
-  assetName: string;
-  assetAbbreviation: string;
-  balance?: number;
-  tokens?: [Token];
-}
-
-export interface WalletObj {
-  id: string;
-  assets: Asset[];
-  backupComplete?: boolean;
-  show?: boolean;
-  totalBalance?: number;
-  isPrivKeyEncrypted?: boolean;
-}
-
-export interface Key extends IKey {}
-
-export interface ExchangeRate {
-  ts?: number;
-  rate?: number;
-  fetchedOn?: number;
-  code?: string;
-  name?: string;
-}
-
-export interface PriceHistory {
-  coin: string;
-  priceDisplay: Array<number>;
-  percentChange: string;
-  currencyPair: string;
-}
-
-export interface WalletOptions {
-  keyId: any;
-  name: any;
-  m: any;
-  n: any;
-  myName: any;
-  networkName: string;
-  bwsurl: any;
-  singleAddress: any;
-  coin: string;
-  extendedPrivateKey: any;
-  mnemonic: any;
-  derivationStrategy: any;
-  secret: any;
-  account: any;
-  passphrase: any;
-  walletPrivKey: any;
-  compliantDerivation: any;
-  useLegacyCoinType?: boolean;
-  useLegacyPurpose?: boolean;
-  useNativeSegwit?: boolean;
-  words?: string;
-}
+import {ReactElement} from 'react';
 
 export interface KeyMethods {
   _checkCoin: Function;
@@ -93,4 +22,86 @@ export interface KeyMethods {
   use44forMultisig: any;
 }
 
-export interface ExtendedKeyValues extends KeyObj, KeyMethods {}
+export interface KeyProperties {
+  compliantDerivation: boolean;
+  fingerPrint: string;
+  id: string;
+  mnemonic: string;
+  mnemonicHasPassphrase: boolean;
+  version: number;
+  xPrivKey: string;
+}
+
+export interface Key {
+  id: string;
+  wallets: Wallet[];
+  properties: KeyProperties;
+  methods: KeyMethods;
+  backupComplete?: boolean;
+  show?: boolean;
+  totalBalance?: number;
+  isPrivKeyEncrypted?: boolean;
+}
+
+export interface Wallet extends WalletObj, API {}
+
+export interface WalletObj {
+  id: string;
+  keyId: string;
+  currencyName: string;
+  currencyAbbreviation: string;
+  balance?: number;
+  tokens?: string[];
+  walletName?: string;
+  preferences?: {
+    tokenAddresses?: [];
+  };
+  img: string | ((props?: any) => ReactElement);
+}
+
+export interface ExchangeRate {
+  ts?: number;
+  rate?: number;
+  fetchedOn?: number;
+  code?: string;
+  name?: string;
+}
+
+export interface PriceHistory {
+  coin: string;
+  priceDisplay: Array<number>;
+  percentChange: string;
+  currencyPair: string;
+}
+
+export interface KeyOptions {
+  keyId: any;
+  name: any;
+  m: any;
+  n: any;
+  myName: any;
+  networkName: string;
+  singleAddress: any;
+  coin: string;
+  extendedPrivateKey: any;
+  mnemonic: any;
+  derivationStrategy: any;
+  secret: any;
+  account: any;
+  passphrase: any;
+  walletPrivKey: any;
+  compliantDerivation: any;
+  useLegacyCoinType?: boolean;
+  useLegacyPurpose?: boolean;
+  useNativeSegwit?: boolean;
+  words?: string;
+  xPrivKey?: string;
+}
+
+export interface Token {
+  symbol: string;
+  name: string;
+  address: string;
+  decimals: number;
+  logoURI: string;
+}

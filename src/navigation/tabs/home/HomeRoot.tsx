@@ -13,7 +13,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import PortfolioBalance from './components/PortfolioBalance';
 import CardsCarousel from './components/CardsCarousel';
 import LinkingButtons from './components/LinkingButtons';
-import {AssetSelectionOptions} from '../../../constants/AssetSelectionOptions';
+import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import ExchangeRatesSlides, {
   ExchangeRateProps,
 } from '../../../components/exchange-rate/ExchangeRatesSlides';
@@ -28,9 +28,9 @@ import {AdvertisementList} from '../../../components/advertisement/advertisement
 import {OfferItems} from '../../../components/offer/offer';
 import {AppActions} from '../../../store/app';
 import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishModal';
-import ScanSvg from '../../../../assets/img/home/scan.svg';
-import ProfileSvg from '../../../../assets/img/home/profile.svg';
 import {sleep} from '../../../utils/helper-methods';
+import ProfileButton from './components/HeaderProfileButton';
+import ScanButton from './components/HeaderScanButton';
 
 const HeaderContainer = styled.View`
   flex-direction: row;
@@ -38,8 +38,8 @@ const HeaderContainer = styled.View`
   margin: 10px ${ScreenGutter};
 `;
 
-const ScanImg = styled.View`
-  margin-right: ${ScreenGutter};
+export const HeaderButtonContainer = styled.View`
+  margin-left: ${ScreenGutter};
 `;
 
 const HomeContainer = styled.SafeAreaView`
@@ -72,15 +72,15 @@ const HomeRoot = () => {
   );
 
   const showOnboardingFinishModal = async () => {
-    await sleep(500);
+    await sleep(300);
     dispatch(AppActions.showOnboardingFinishModal());
   };
 
-  useEffect(() => {
-    if (!onboardingCompleted) {
-      showOnboardingFinishModal();
-    }
-  }, [onboardingCompleted]);
+  // useEffect(() => {
+  //   if (!onboardingCompleted) {
+  //     showOnboardingFinishModal();
+  //   }
+  // }, []);
 
   const navigation = useNavigation();
 
@@ -89,16 +89,20 @@ const HomeRoot = () => {
     ({WALLET}: RootState) => WALLET.priceHistory,
   );
   const exchangeRatesItems: Array<ExchangeRateProps> = [];
-  priceHistory.forEach((ph: PriceHistory, index: number) => {
-    const currencyInfo = AssetSelectionOptions.find(
+  priceHistory.forEach((ph: PriceHistory) => {
+    const option = SupportedCurrencyOptions.find(
       ({id}: {id: string | number}) => id === ph.coin,
     );
-    exchangeRatesItems.push({
-      id: index,
-      img: currencyInfo?.roundIcon(20),
-      coinName: currencyInfo?.assetName,
-      average: +ph.percentChange,
-    });
+
+    if (option) {
+      const {id, img, currencyName} = option;
+      exchangeRatesItems.push({
+        id,
+        img,
+        currencyName,
+        average: +ph.percentChange,
+      });
+    }
   });
 
   // Quick Links
@@ -120,18 +124,12 @@ const HomeRoot = () => {
     <HomeContainer>
       <ScrollView>
         <HeaderContainer>
-          <ScanImg>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Scan', {screen: 'Root'})}>
-              <ScanSvg />
-            </TouchableOpacity>
-          </ScanImg>
-          <ProfileSvg />
+          <ScanButton />
+          <ProfileButton />
         </HeaderContainer>
         {/* ////////////////////////////// PORTFOLIO BALANCE */}
         <PortfolioBalance />
 
-        {/* ////////////////////////////// CARDS CAROUSEL */}
         <SectionHeaderContainer justifyContent={'flex-end'}>
           <TouchableOpacity
             activeOpacity={ActiveOpacity}
@@ -144,6 +142,8 @@ const HomeRoot = () => {
             <HomeLink>Customize</HomeLink>
           </TouchableOpacity>
         </SectionHeaderContainer>
+
+        {/* ////////////////////////////// CARDS CAROUSEL */}
         <CardsCarousel />
 
         {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}

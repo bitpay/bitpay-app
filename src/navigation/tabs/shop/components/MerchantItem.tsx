@@ -2,7 +2,7 @@ import React, {useCallback, useState} from 'react';
 import styled, {css} from 'styled-components/native';
 import {DirectIntegrationApiObject} from '../../../../store/shop/shop.models';
 import {NeutralSlate, SlateDark} from '../../../../styles/colors';
-import RemoteIcon from './RemoteIcon';
+import RemoteImage from './RemoteImage';
 import {H6, Paragraph} from '../../../../components/styled/Text';
 import {WIDTH} from '../../../../components/styled/Containers';
 import {horizontalPadding} from './styled/ShopTabComponents';
@@ -66,7 +66,7 @@ export default ({
   );
   return (
     <MerchantBox height={height} marginLeft={marginLeft} width={width}>
-      <RemoteIcon icon={icon} height={26} />
+      <RemoteImage uri={icon} height={26} borderRadius={30} />
       <MerchantName
         headerMargin={headerMargin}
         numberOfLines={2}

@@ -9,10 +9,12 @@ import {SlateDark} from '../../../styles/colors';
 
 export enum OnGoingProcessMessages {
   GENERAL_AWAITING = "Just a second, we're setting a few things up",
-  CREATING_WALLET = 'Creating Wallet',
+  CREATING_KEY = 'Creating Key',
   LOGGING_IN = 'Logging In',
   CREATING_ACCOUNT = 'Creating Account',
-  IMPORTING_WALLET = 'Importing Wallet',
+  IMPORTING = 'Importing',
+  DELETING_KEY = 'Deleting Key',
+  ADDING_WALLET = 'Adding Wallet',
 }
 
 const OnGoingProcessContainer = styled.View`

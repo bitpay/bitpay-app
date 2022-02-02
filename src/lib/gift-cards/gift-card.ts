@@ -1,3 +1,6 @@
+import 'intl';
+import 'intl/locale-data/jsonp/en';
+
 import {
   ApiCard,
   ApiCardConfig,
@@ -85,24 +88,11 @@ export function sortByDisplayName(
   return aSortValue > bSortValue ? 1 : -1;
 }
 
-export const currencySymbols = {
-  BRL: 'R$',
-  CAD: 'C$',
-  EUR: '€',
-  GBP: '£',
-  INR: '₹',
-  JPY: '¥',
-  PHP: '₱',
-  USD: '$',
-} as {[currency: string]: string};
-
 export function spreadAmounts(values: Array<number>, currency: string): string {
-  const currencySymbol = currencySymbols[currency];
   let caption = '';
   values.forEach((value: number, index: number) => {
-    caption = currencySymbol
-      ? caption + currencySymbol + value.toString()
-      : `${caption + value.toString()} ${currency}`;
+    caption =
+      caption + formatAmount(value, currency, {customPrecision: 'minimal'});
     if (values.length - index >= 2) {
       caption += ', ';
     }
@@ -134,3 +124,20 @@ export function getGiftCardCurations(
     })
     .filter(curation => curation.giftCards.length);
 }
+
+export const formatAmount = (
+  amount: number,
+  currency: string,
+  opts: {
+    customPrecision?: 'minimal';
+  } = {},
+) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    ...(opts.customPrecision === 'minimal' &&
+      Number.isInteger(amount) && {
+        maximumFractionDigits: 0,
+        minimumFractionDigits: 0,
+      }),
+  }).format(amount);

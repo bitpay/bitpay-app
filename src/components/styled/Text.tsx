@@ -1,17 +1,19 @@
 import styled, {css} from 'styled-components/native';
 import {Action, SlateDark, White} from '../../styles/colors';
 
+export const fontFamily = 'Heebo';
+
 export const BaseText = styled.Text`
-  font-family: 'Heebo';
+  font-family: '${fontFamily}';
 `;
 
 export const H2 = styled(BaseText)`
   font-size: 38px;
   font-style: normal;
   font-weight: 500;
-  line-height: 42px;
   letter-spacing: 0;
   text-align: center;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 export const H3 = styled(BaseText)`
@@ -20,6 +22,7 @@ export const H3 = styled(BaseText)`
   font-weight: 700;
   line-height: 34px;
   letter-spacing: 0;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 export const H4 = styled(BaseText)`
@@ -28,6 +31,7 @@ export const H4 = styled(BaseText)`
   font-weight: 500;
   line-height: 30px;
   letter-spacing: 0;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 export const H5 = styled(BaseText)`
@@ -36,12 +40,14 @@ export const H5 = styled(BaseText)`
   font-weight: 700;
   line-height: 25px;
   letter-spacing: 0;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 export const H6 = styled(BaseText)`
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 export const H7 = styled(BaseText)`
@@ -118,32 +124,22 @@ export const Balance = styled(BaseText)`
   letter-spacing: 0;
 `;
 
-// LIST
-export const MainLabel = styled(BaseText)`
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-`;
-
-export const SecondaryLabel = styled(BaseText)`
-  font-size: 14px;
+export const Badge = styled(BaseText)`
+  font-size: 12px;
   font-style: normal;
   font-weight: 400;
-  line-height: 16px;
-  text-align: left;
-`;
-
-export const MainNote = styled(BaseText)`
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 700;
-  text-align: right;
-`;
-
-export const SecondaryNote = styled(BaseText)`
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 300;
+  text-align: center;
   line-height: 19px;
-  text-align: right;
+  padding: 2px 5px;
+  border-radius: 3px;
+  border: 1px solid #e1e4e7;
+`;
+
+export const ImportTitle = styled(BaseText)`
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 18px;
+  color: ${SlateDark};
+  opacity: 0.75;
+  text-transform: uppercase;
 `;

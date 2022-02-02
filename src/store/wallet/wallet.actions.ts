@@ -1,5 +1,5 @@
 import {WalletActionType, WalletActionTypes} from './wallet.types';
-import {ExchangeRate, ExtendedKeyValues, PriceHistory} from './wallet.models';
+import {ExchangeRate, Key, PriceHistory, Token} from './wallet.models';
 
 export const successWalletStoreInit = (): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_WALLET_STORE_INIT,
@@ -9,17 +9,31 @@ export const failedWalletStoreInit = (): WalletActionType => ({
   type: WalletActionTypes.FAILED_WALLET_STORE_INIT,
 });
 
-export const successCreateWallet = (payload: {
-  key: ExtendedKeyValues;
-  // TODO type
-  wallet: any;
-}): WalletActionType => ({
-  type: WalletActionTypes.SUCCESS_CREATE_WALLET,
+export const successCreateKey = (payload: {key: Key}): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_CREATE_KEY,
   payload,
 });
 
-export const failedCreateWallet = (): WalletActionType => ({
-  type: WalletActionTypes.FAILED_CREATE_WALLET,
+export const failedCreateKey = (): WalletActionType => ({
+  type: WalletActionTypes.FAILED_CREATE_KEY,
+});
+
+export const successAddWallet = (payload: {key: Key}): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_ADD_WALLET,
+  payload,
+});
+
+export const failedAddWallet = (): WalletActionType => ({
+  type: WalletActionTypes.FAILED_ADD_WALLET,
+});
+
+export const successImport = (payload: {key: Key}): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_IMPORT,
+  payload,
+});
+
+export const failedImport = (): WalletActionType => ({
+  type: WalletActionTypes.FAILED_IMPORT,
 });
 
 export const setBackupComplete = (keyId: string): WalletActionType => ({
@@ -49,18 +63,38 @@ export const failedGetPriceHistory = (): WalletActionType => ({
   type: WalletActionTypes.FAILED_GET_PRICE_HISTORY,
 });
 
-export const updateAssetBalance = (payload: {
+export const updateWalletBalance = (payload: {
   keyId: string;
-  assetId: string;
+  walletId: string;
   balance: number;
 }): WalletActionType => ({
-  type: WalletActionTypes.UPDATE_ASSET_BALANCE,
+  type: WalletActionTypes.UPDATE_WALLET_BALANCE,
   payload,
 });
 
-export const successEncryptPassword = (payload: {
-  key: ExtendedKeyValues;
+export const successEncryptOrDecryptPassword = (payload: {
+  key: Key;
 }): WalletActionType => ({
-  type: WalletActionTypes.SUCCESS_ENCRYPT_PASSWORD,
+  type: WalletActionTypes.SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD,
   payload,
+});
+
+export const deleteKey = (payload: {keyId: string}): WalletActionType => ({
+  type: WalletActionTypes.DELETE_KEY,
+  payload,
+});
+
+export const successGetTokenOptions = (payload: {
+  [key in string]: Token;
+}): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS,
+  payload,
+});
+
+export const failedGetTokenOptions = (): WalletActionType => ({
+  type: WalletActionTypes.FAILED_GET_TOKEN_OPTIONS,
+});
+
+export const setWalletTermsAccepted = (): WalletActionType => ({
+  type: WalletActionTypes.SET_WALLET_TERMS_ACCEPTED,
 });
