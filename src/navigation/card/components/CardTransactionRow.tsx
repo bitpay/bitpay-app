@@ -1,5 +1,5 @@
 import React from 'react';
-import styled from 'styled-components/native';
+import styled, {css} from 'styled-components/native';
 import ArrowDownIcon from '../../../../assets/img/card/icons/arrow-down.svg';
 import ArrowUpIcon from '../../../../assets/img/card/icons/arrow-up.svg';
 import FeeIcon from '../../../../assets/img/card/icons/fee.svg';
@@ -25,18 +25,13 @@ const TxRowContainer = styled.View`
   min-height: 72px;
 `;
 
-const TxIconContainer = styled.View`
-  flex-grow: 0;
+const TxColumn = styled.View<{stretch?: boolean}>`
+  flex-grow: ${({stretch}) => (stretch ? 1 : 0)};
+  padding: ${ScreenGutter};
   justify-content: center;
-  padding: ${ScreenGutter};
 `;
 
-const TxContentContainer = styled.View`
-  flex-grow: 1;
-  padding: ${ScreenGutter};
-`;
-
-const TxContentRow = styled.View`
+const FlexRow = styled.View`
   flex-direction: row;
 `;
 
@@ -44,18 +39,22 @@ const TxTitle = styled(H7)`
   flex-grow: 1;
 `;
 
-const TxPrice = styled(BaseText)`
-  flex-grow: 0;
-  font-weight: bold;
-`;
-
-const TxSubtitle = styled(BaseText)`
-  color: ${SlateDark};
-  flex-grow: 1;
-`;
-
-const TxTimestamp = styled(BaseText)`
-  color: ${SlateDark};
+const TxText = styled(BaseText)<{
+  bold?: boolean;
+  stretch?: boolean;
+  light?: boolean;
+}>`
+  ${({bold}) =>
+    bold &&
+    css`
+      font-weight: 700;
+    `}
+  ${({light}) =>
+    light &&
+    css`
+      color: ${SlateDark};
+    `}
+  flex-grow: ${({stretch}) => (stretch ? 1 : 0)};
 `;
 
 const isTopUp = (tx: Transaction) => tx.displayMerchant === 'BitPay Load';
@@ -134,28 +133,30 @@ const TransactionRow: React.FC<TransactionRowProps> = props => {
   const {tx, settled, card} = props;
 
   const Icon = getTxIcon(tx, settled, card.provider);
-  const formattedTimestamp = getTxTimestamp(tx, settled);
-  const formattedTitle = getTxTitle(tx);
-  const formattedSubtitle = getTxSubtitle(tx, settled);
-  const formattedAmount = format(+tx.displayPrice, card.currency.code);
+  const amount = format(+tx.displayPrice, card.currency.code);
+  const title = getTxTitle(tx);
+  const subtitle = getTxSubtitle(tx, settled);
+  const timestamp = getTxTimestamp(tx, settled);
 
   return (
     <TxRowContainer>
-      <TxIconContainer>
+      <TxColumn>
         <Icon />
-      </TxIconContainer>
+      </TxColumn>
 
-      <TxContentContainer>
-        <TxContentRow>
-          <TxTitle>{formattedTitle}</TxTitle>
-          <TxPrice>{formattedAmount}</TxPrice>
-        </TxContentRow>
+      <TxColumn stretch>
+        <FlexRow>
+          <TxTitle>{title}</TxTitle>
+          <TxText bold>{amount}</TxText>
+        </FlexRow>
 
-        <TxContentRow>
-          <TxSubtitle>{formattedSubtitle}</TxSubtitle>
-          <TxTimestamp>{formattedTimestamp}</TxTimestamp>
-        </TxContentRow>
-      </TxContentContainer>
+        <FlexRow>
+          <TxText light stretch>
+            {subtitle}
+          </TxText>
+          <TxText light>{timestamp}</TxText>
+        </FlexRow>
+      </TxColumn>
     </TxRowContainer>
   );
 };
