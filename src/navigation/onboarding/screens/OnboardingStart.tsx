@@ -88,7 +88,7 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
         </HeaderRightContainer>
       ),
     });
-  });
+  }, [navigation]);
 
   const themeType = useThemeType();
   const ref = useRef(null);
