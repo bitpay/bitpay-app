@@ -1,8 +1,14 @@
-import React, {useEffect, useMemo} from 'react';
+import {StackNavigationProp} from '@react-navigation/stack';
+import React, {useEffect, useLayoutEffect, useMemo} from 'react';
 import {useRef, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import Carousel, {Pagination} from 'react-native-snap-carousel';
 import {useDispatch, useSelector} from 'react-redux';
-import {WIDTH} from '../../../components/styled/Containers';
+import Button from '../../../components/button/Button';
+import {
+  HeaderRightContainer,
+  WIDTH,
+} from '../../../components/styled/Containers';
 import {RootState} from '../../../store';
 import {CardEffects} from '../../../store/card';
 import {Card} from '../../../store/card/card.models';
@@ -10,10 +16,12 @@ import {
   CardProvider,
   VirtualDesignCurrency,
 } from '../../../store/card/card.types';
+import {CardStackParamList} from '../CardStack';
 import CardOverviewSlide from './CardOverviewSlide';
 
 interface CardDashboardProps {
   id: string | undefined | null;
+  navigation: StackNavigationProp<CardStackParamList, 'Home'>;
 }
 
 const GroupEnabled = {
@@ -85,7 +93,8 @@ const buildOverviewSlides = (cards: Card[]) => {
 
 const CardDashboard: React.FC<CardDashboardProps> = props => {
   const dispatch = useDispatch();
-  const {id} = props;
+  const {t} = useTranslation();
+  const {id, navigation} = props;
   const carouselRef = useRef<Carousel<OverviewSlide>>(null);
   const cards = useSelector<RootState, Card[]>(
     ({APP, CARD}) => CARD.cards[APP.network],
@@ -112,6 +121,28 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
       ? activeSlideId
       : null;
   });
+
+  useLayoutEffect(() => {
+    const activeSlide = memoizedSlides[activeSlideIdx];
+
+    navigation.setOptions({
+      headerRight: () => (
+        <HeaderRightContainer>
+          <Button
+            onPress={() =>
+              navigation.navigate('Settings', {
+                slide: activeSlide,
+                id: activeSlide.primaryCard.id,
+              })
+            }
+            buttonType="pill"
+            buttonStyle="primary">
+            {t('View Card Details')}
+          </Button>
+        </HeaderRightContainer>
+      ),
+    });
+  }, [memoizedSlides, activeSlideIdx, navigation]);
 
   useEffect(() => {
     if (fetchId) {
