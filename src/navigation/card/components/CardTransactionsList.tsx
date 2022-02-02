@@ -45,9 +45,11 @@ const TransactionsList: React.FC<TransactionsListProps> = props => {
       <TransactionsHeader>
         <TransactionsHeading>Recent Activity</TransactionsHeading>
 
-        <TransactionsHeaderIcon onPress={() => onRefresh()}>
-          <RefreshIcon />
-        </TransactionsHeaderIcon>
+        {false && (
+          <TransactionsHeaderIcon onPress={() => onRefresh()}>
+            <RefreshIcon />
+          </TransactionsHeaderIcon>
+        )}
       </TransactionsHeader>
 
       {pendingTxList.map(tx => (

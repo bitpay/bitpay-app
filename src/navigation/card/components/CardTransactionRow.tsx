@@ -42,7 +42,6 @@ const TxContentRow = styled.View`
 
 const TxTitle = styled(H7)`
   flex-grow: 1;
-  font-weight: bold;
 `;
 
 const TxPrice = styled(BaseText)`

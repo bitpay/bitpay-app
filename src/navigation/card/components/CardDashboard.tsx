@@ -1,7 +1,7 @@
 import React, {useEffect, useMemo} from 'react';
 import {useRef, useState} from 'react';
 import {ScrollView} from 'react-native';
-import Carousel, {Pagination} from 'react-native-snap-carousel';
+import Carousel from 'react-native-snap-carousel';
 import {useDispatch, useSelector} from 'react-redux';
 import {WIDTH} from '../../../components/styled/Containers';
 import {RootState} from '../../../store';
@@ -152,13 +152,8 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         inactiveSlideOpacity={1}
         containerCustomStyle={{
           flexGrow: 0,
+          marginBottom: 32,
         }}
-      />
-      <Pagination
-        dotsLength={memoizedSlides.length}
-        activeDotIndex={activeSlideIdx}
-        carouselRef={carouselRef}
-        tappableDots={true}
       />
 
       <TransactionsList
