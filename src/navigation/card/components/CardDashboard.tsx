@@ -162,7 +162,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
       />
 
       <TransactionsList
-        currency={activeCard.currency}
+        card={activeCard}
         pendingTxList={pendingTxList}
         settledTxList={settledTxList}
       />

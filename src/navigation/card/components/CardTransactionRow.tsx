@@ -1,15 +1,20 @@
 import React from 'react';
 import styled from 'styled-components/native';
+import ArrowDownIcon from '../../../../assets/img/card/icons/arrow-down.svg';
+import ArrowUpIcon from '../../../../assets/img/card/icons/arrow-up.svg';
+import FeeIcon from '../../../../assets/img/card/icons/fee.svg';
+import PendingIcon from '../../../../assets/img/card/icons/pending.svg';
+import RewardIcon from '../../../../assets/img/card/icons/reward.svg';
+import TopUpIcon from '../../../../assets/img/card/icons/topup.svg';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, H7} from '../../../components/styled/Text';
-import {Currency, Transaction} from '../../../store/card/card.models';
+import {Card, Transaction} from '../../../store/card/card.models';
 import {Air, SlateDark} from '../../../styles/colors';
 
 interface TransactionRowProps {
   tx: Transaction;
   settled: boolean;
-  topUp?: boolean;
-  currency: Currency;
+  card: Card;
 }
 
 const TxRowContainer = styled.View`
@@ -53,6 +58,48 @@ const TxTimestamp = styled(BaseText)`
   color: ${SlateDark};
 `;
 
+const isTopUp = (tx: Transaction) => tx.displayMerchant === 'BitPay Load';
+
+const isBitPayReward = (tx: Transaction) =>
+  tx.displayMerchant === 'Referral Reward';
+
+const isFee = (tx: Transaction, provider: string) => {
+  switch (provider) {
+    case 'firstView':
+      return ['10036 = INACTIVITY'].includes(tx.type);
+
+    case 'galileo':
+      return ['FE'].includes(tx.type);
+
+    default:
+      return false;
+  }
+};
+
+const getTxIcon = (tx: Transaction, settled: boolean, provider: string) => {
+  if (isFee(tx, provider)) {
+    return FeeIcon;
+  }
+
+  if (!settled) {
+    return PendingIcon;
+  }
+
+  if (isTopUp(tx)) {
+    return TopUpIcon;
+  }
+
+  if (tx.displayPrice < 0) {
+    return ArrowUpIcon;
+  }
+
+  if (isBitPayReward(tx)) {
+    return RewardIcon;
+  }
+
+  return ArrowDownIcon;
+};
+
 // TODO: update when moment.js gets merged
 const getTxTimestamp = (tx: Transaction, settled: boolean) => {
   const datestring = settled ? tx.dates.post : tx.dates.auth;
@@ -64,8 +111,8 @@ const getTxTitle = (tx: Transaction) => {
   return tx.displayMerchant || tx.description || '--';
 };
 
-const getTxSubtitle = (tx: Transaction, settled: boolean, topUp?: boolean) => {
-  if (!settled && topUp) {
+const getTxSubtitle = (tx: Transaction, settled: boolean) => {
+  if (!settled && isTopUp(tx)) {
     return 'Waiting for confirmation';
   }
 
@@ -83,25 +130,28 @@ const getTxSubtitle = (tx: Transaction, settled: boolean, topUp?: boolean) => {
   return location.toUpperCase();
 };
 
-const getTxAmount = (tx: Transaction, currency: Currency) => {
+const getTxAmount = (tx: Transaction, card: Card) => {
   const sign = tx.displayPrice < 0 ? '-' : '';
-  const symbol = currency ? currency.symbol : '';
+  const symbol = card.currency ? card.currency.symbol : '';
   const amount = Math.abs(tx.displayPrice).toFixed(2); // TODO: use currency formatter
 
   return `${sign}${symbol}${amount}`;
 };
 
 const TransactionRow: React.FC<TransactionRowProps> = props => {
-  const {tx, settled, topUp, currency} = props;
+  const {tx, settled, card} = props;
 
+  const Icon = getTxIcon(tx, settled, card.provider);
   const formattedTimestamp = getTxTimestamp(tx, settled);
   const formattedTitle = getTxTitle(tx);
-  const formattedSubtitle = getTxSubtitle(tx, settled, topUp);
-  const formattedAmount = getTxAmount(tx, currency);
+  const formattedSubtitle = getTxSubtitle(tx, settled);
+  const formattedAmount = getTxAmount(tx, card);
 
   return (
     <TxRowContainer>
-      <TxIconContainer />
+      <TxIconContainer>
+        <Icon />
+      </TxIconContainer>
 
       <TxContentContainer>
         <TxContentRow>
