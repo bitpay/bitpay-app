@@ -37,7 +37,7 @@ interface Term {
 const Terms: Array<Term> = [
   {
     id: 1,
-    statement: 'Your funds are in are in your custody',
+    statement: 'Your funds are in your custody',
     acknowledgement:
       'I understand that my funds are held and controlled on this device, not by a company.',
   },
@@ -53,7 +53,7 @@ const Terms: Array<Term> = [
     statement: 'I have read, understood, and agree with the Terms of Use',
     link: {
       text: 'View the complete Terms of Use',
-      url: 'https://bitpay.com', // TODO
+      url: 'https://bitpay.com/legal/terms-of-use/#wallet-terms-of-use',
     },
   },
 ];
