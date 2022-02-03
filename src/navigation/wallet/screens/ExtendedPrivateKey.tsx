@@ -8,14 +8,11 @@ import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import {useDispatch} from 'react-redux';
 import {AppActions} from '../../../store/app';
-import {
-  GeneralError,
-  WrongPasswordError,
-} from '../components/DecryptPasswordErrorMessages';
-import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
+import {GeneralError, WrongPasswordError} from '../components/ErrorMessages';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {useLogger} from '../../../utils/hooks';
 import Clipboard from '@react-native-community/clipboard';
+import {sleep} from '../../../utils/helper-methods';
 
 const ExtendedPrivateKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -53,12 +50,6 @@ const ExtendedPrivateKey = () => {
   const [copied, setCopied] = useState(false);
   let [xPrivKey, setXPrivKey] = useState(getInitKey());
 
-  const showErrorMessage = (msg: BottomNotificationConfig) => {
-    setTimeout(() => {
-      dispatch(showBottomNotificationModal(msg));
-    }, 500); // Wait to close Decrypt Password modal
-  };
-
   const onSubmitPassword = async (password: string) => {
     if (password) {
       try {
@@ -69,12 +60,14 @@ const ExtendedPrivateKey = () => {
         console.log(`Decrypt Error: ${e}`);
         await dispatch(AppActions.dismissDecryptPasswordModal());
         navigation.goBack();
-        showErrorMessage(WrongPasswordError());
+        await sleep(500); // Wait to close Decrypt Password modal
+        dispatch(showBottomNotificationModal(WrongPasswordError()));
       }
     } else {
       dispatch(AppActions.dismissDecryptPasswordModal());
       navigation.goBack();
-      showErrorMessage(GeneralError);
+      await sleep(500); // Wait to close Decrypt Password modal
+      dispatch(showBottomNotificationModal(GeneralError));
       logger.debug('Missing Key Error');
     }
   };

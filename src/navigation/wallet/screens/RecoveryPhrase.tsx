@@ -8,14 +8,14 @@ import {
   TextAlign,
 } from '../../../components/styled/Text';
 import Button from '../../../components/button/Button';
-import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import {
   CtaContainer,
   HeaderRightContainer,
   WIDTH,
 } from '../../../components/styled/Containers';
 import * as Progress from 'react-native-progress';
-import {Air, ProgressBlue} from '../../../styles/colors';
+import {Air, BitPay, ProgressBlue} from '../../../styles/colors';
 import Carousel from 'react-native-snap-carousel';
 import {sleep} from '../../../utils/helper-methods';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
@@ -23,11 +23,22 @@ import {Platform} from 'react-native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useDispatch} from 'react-redux';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {Key} from '../../../store/wallet/wallet.models';
+import {WalletStackParamList} from '../WalletStack';
+import {navigateToTermsOrOverview} from './Backup';
+import {StackScreenProps} from '@react-navigation/stack';
 
-export interface RecoveryPhraseProps {
+type RecoveryPhraseScreenProps = StackScreenProps<
+  WalletStackParamList,
+  'RecoveryPhrase'
+>;
+
+export interface RecoveryPhraseParamList {
   keyId: string;
   words: string[];
-  isOnboarding?: boolean;
+  context: string;
+  key: Key;
+  walletTermsAccepted: boolean;
 }
 
 const RecoveryPhraseContainer = styled.View`
@@ -47,7 +58,7 @@ export const DirectionsContainer = styled.View`
 `;
 
 export const WordContainer = styled.View`
-  background: ${Air};
+  background: ${({theme: {dark}}) => (dark ? BitPay : Air)};
   justify-content: center;
   align-items: center;
   height: 200px;
@@ -68,9 +79,11 @@ export const CountText = styled(BaseText)`
   text-align: center;
 `;
 
-const RecoveryPhrase = () => {
+const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const {params} = route;
+  const {words, context, key, walletTermsAccepted} = params;
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -94,8 +107,11 @@ const RecoveryPhrase = () => {
                     {
                       text: "I'M SURE",
                       action: () =>
-                        navigation.navigate('Onboarding', {
-                          screen: 'TermsOfUse',
+                        navigateToTermsOrOverview({
+                          context,
+                          navigation,
+                          walletTermsAccepted,
+                          key,
                         }),
                       primary: true,
                     },
@@ -112,10 +128,6 @@ const RecoveryPhrase = () => {
 
   useAndroidBackHandler(() => true);
   const ref = useRef(null);
-  const {
-    params: {keyId, words, isOnboarding},
-  } = useRoute<RouteProp<{params: RecoveryPhraseProps}>>();
-
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
   useEffect(() => {
@@ -129,9 +141,9 @@ const RecoveryPhrase = () => {
 
   const next = () => {
     if (activeSlideIndex === 11) {
-      navigation.navigate(isOnboarding ? 'Onboarding' : 'Wallet', {
+      navigation.navigate(context === 'onboarding' ? 'Onboarding' : 'Wallet', {
         screen: 'VerifyPhrase',
-        params: {keyId, words, isOnboarding},
+        params,
       });
     } else {
       // @ts-ignore

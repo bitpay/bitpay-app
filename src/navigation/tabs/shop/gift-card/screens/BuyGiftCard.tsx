@@ -19,6 +19,7 @@ import GiftCardDenomSelector from '../../components/GiftCardDenomSelector';
 import GiftCardDenoms, {
   GiftCardDenomText,
 } from '../../components/GiftCardDenoms';
+import {formatAmount} from '../../../../../lib/gift-cards/gift-card';
 
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;
@@ -92,7 +93,7 @@ const BuyGiftCard = ({
         }}>
         <GradientBox colors={['rgba(245, 247, 248, 0)', '#F5F7F8']}>
           <RemoteImage
-            icon={cardConfig.cardImage}
+            uri={cardConfig.cardImage}
             height={169}
             width={270}
             borderRadius={10}
@@ -109,7 +110,7 @@ const BuyGiftCard = ({
                 </SupportedAmounts>
               </DenomSelectionContainer>
             ) : (
-              <Amount>$0.00</Amount>
+              <Amount>{formatAmount(0, cardConfig.currency)}</Amount>
             )}
           </AmountContainer>
         </GradientBox>
@@ -122,7 +123,15 @@ const BuyGiftCard = ({
           </Markdown>
         </DescriptionBox>
       </ScrollView>
-      <FooterButton background={true}>
+      <FooterButton
+        background={true}
+        style={{
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 4},
+          shadowOpacity: 0.1,
+          shadowRadius: 12,
+          elevation: 5,
+        }}>
         <Button
           onPress={() => {
             console.log('enter amount');

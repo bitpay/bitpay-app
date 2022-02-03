@@ -1,6 +1,8 @@
 import {ExchangeRate, Key, PriceHistory, Token} from './wallet.models';
+import {ReceiveAddressConfig} from '../../navigation/wallet/components/ReceiveAddress';
 
 export enum WalletActionTypes {
+  SET_WALLET_TERMS_ACCEPTED = 'WALLET/SET_WALLET_TERMS_ACCEPTED',
   SUCCESS_WALLET_STORE_INIT = 'WALLET/SUCCESS_WALLET_STORE_INIT',
   FAILED_WALLET_STORE_INIT = 'WALLET/FAILED_WALLET_STORE_INIT',
   SUCCESS_CREATE_KEY = 'WALLET/SUCCESS_CREATE_KEY',
@@ -13,11 +15,12 @@ export enum WalletActionTypes {
   SUCCESS_GET_PRICE_HISTORY = 'WALLET/SUCCESS_GET_PRICE_HISTORY',
   FAILED_GET_PRICE_HISTORY = 'WALLET/FAILED_GET_PRICE_HISTORY',
   UPDATE_WALLET_BALANCE = 'WALLET/UPDATE_WALLET_BALANCE',
-  SUCCESS_ENCRYPT_PASSWORD = 'WALLET/SUCCESS_ENCRYPT_PASSWORD',
   DELETE_KEY = 'WALLET/DELETE_KEY',
   SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD = 'WALLET/SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD',
   SUCCESS_GET_TOKEN_OPTIONS = 'WALLET/SUCCESS_GET_TOKEN_OPTIONS',
   FAILED_GET_TOKEN_OPTIONS = 'WALLET/FAILED_GET_TOKEN_OPTIONS',
+  SUCCESS_ADD_WALLET = 'WALLET/SUCCESS_ADD_WALLET',
+  FAILED_ADD_WALLET = 'WALLET/FAILED_ADD_WALLET',
 }
 
 interface successWalletStoreInit {
@@ -37,6 +40,17 @@ interface successCreateKey {
 
 interface failedCreateKey {
   type: typeof WalletActionTypes.FAILED_CREATE_KEY;
+}
+
+interface successAddWallet {
+  type: typeof WalletActionTypes.SUCCESS_ADD_WALLET;
+  payload: {
+    key: Key;
+  };
+}
+
+interface failedAddWallet {
+  type: typeof WalletActionTypes.FAILED_ADD_WALLET;
 }
 
 interface successImport {
@@ -107,11 +121,17 @@ interface failedGetTokenOptions {
   type: typeof WalletActionTypes.FAILED_GET_TOKEN_OPTIONS;
 }
 
+interface setWalletTermsAccepted {
+  type: typeof WalletActionTypes.SET_WALLET_TERMS_ACCEPTED;
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
   | successCreateKey
   | failedCreateKey
+  | successAddWallet
+  | failedAddWallet
   | successImport
   | failedImport
   | setBackupComplete
@@ -123,4 +143,5 @@ export type WalletActionType =
   | deleteKey
   | successEncryptOrDecryptPassword
   | successGetTokenOptions
-  | failedGetTokenOptions;
+  | failedGetTokenOptions
+  | setWalletTermsAccepted;

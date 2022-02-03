@@ -1,23 +1,27 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {CtaContainerAbsolute} from '../../../components/styled/Containers';
 import TermsBox from '../components/TermsBox';
 import Button from '../../../components/button/Button';
 import styled from 'styled-components/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import {OnboardingStackParamList} from '../OnboardingStack';
-import {useNavigation} from '@react-navigation/native';
+import {StackActions, useNavigation} from '@react-navigation/native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {HeaderTitle} from '../../../components/styled/Text';
+import {useDispatch} from 'react-redux';
+import {setWalletTermsAccepted} from '../../../store/wallet/wallet.actions';
+import {Key} from '../../../store/wallet/wallet.models';
+import {setOnboardingCompleted} from '../../../store/app/app.actions';
 
-export interface TermsOfUseProps {
-  params?:
-    | {
-        context?: 'skip' | undefined;
-      }
-    | undefined;
+type TermsOfUseScreenProps = StackScreenProps<
+  OnboardingStackParamList,
+  'TermsOfUse'
+>;
+
+export interface TermsOfUseParamList {
+  context?: 'TOUOnly';
+  key?: Key;
 }
-
-type Props = StackScreenProps<OnboardingStackParamList, 'TermsOfUse'>;
 
 interface Term {
   id: number;
@@ -62,8 +66,10 @@ const TermsContainer = styled.View`
   padding: 0 10px;
 `;
 
-const TermsOfUse = ({navigation: _navigation, route}: Props) => {
+const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
+  const {key, context} = route?.params || {};
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -72,16 +78,21 @@ const TermsOfUse = ({navigation: _navigation, route}: Props) => {
       headerLeft: () => null,
       headerRight: () => null,
     });
-  });
+  }, [navigation]);
 
   useAndroidBackHandler(() => true);
 
   const [termsList, setTermsList] = useState(Terms);
-  _navigation.addListener('transitionStart', () => {
-    if (route?.params?.context === 'skip') {
+  useEffect(() => {
+    // terms of use only - if user skipped key creation during onboarding
+    if (context === 'TOUOnly') {
       setTermsList(termsList.filter(term => term.id === 3));
     }
-  });
+    // post onboarding
+    if (key) {
+      setTermsList(termsList.filter(term => term.id !== 3));
+    }
+  }, []);
 
   const [agreed, setAgreed] = useState<number[]>([]);
   const setChecked = (id: number) => {
@@ -91,14 +102,27 @@ const TermsOfUse = ({navigation: _navigation, route}: Props) => {
   return (
     <TermsOfUseContainer>
       <TermsContainer>
-        {termsList.map((term: Term, index: number) => {
-          return <TermsBox term={term} emit={setChecked} key={index} />;
+        {termsList.map((term: Term) => {
+          return <TermsBox term={term} emit={setChecked} key={term.id} />;
         })}
       </TermsContainer>
       <CtaContainerAbsolute>
         <Button
           onPress={() => {
-            navigation.navigate('Tabs', {screen: 'Home'});
+            if (agreed.length >= 2) {
+              dispatch(setWalletTermsAccepted());
+            }
+            if (key) {
+              navigation.dispatch(
+                StackActions.replace('Wallet', {
+                  screen: 'KeyOverview',
+                  params: {key},
+                }),
+              );
+            } else {
+              navigation.navigate('Tabs', {screen: 'Home'});
+            }
+            dispatch(setOnboardingCompleted());
           }}
           buttonStyle={'primary'}
           disabled={agreed.length !== termsList.length}>

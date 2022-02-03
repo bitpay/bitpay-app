@@ -11,12 +11,16 @@ import BusdIcon from '../../assets/img/currencies/busd.svg';
 import DaiIcon from '../../assets/img/currencies/dai.svg';
 import UsdpIcon from '../../assets/img/currencies/usdp.svg';
 import WbtcIcon from '../../assets/img/currencies/wbtc.svg';
+import ShibIcon from '../../assets/img/currencies/shib.svg';
+import {ImageSourcePropType} from 'react-native';
 
 export interface SupportedCurrencyOption {
   id: string;
   img: string | ((props?: any) => ReactElement);
   currencyName: string;
   currencyAbbreviation: string;
+  isToken?: boolean;
+  imgSrc: ImageSourcePropType;
 }
 
 export const CurrencyListIcons: {
@@ -34,6 +38,7 @@ export const CurrencyListIcons: {
   dai: props => <DaiIcon {...props} />,
   usdp: props => <UsdpIcon {...props} />,
   wbtc: props => <WbtcIcon {...props} />,
+  shib: props => <ShibIcon {...props} />,
 };
 
 export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
@@ -42,71 +47,97 @@ export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
     img: CurrencyListIcons.btc,
     currencyName: 'Bitcoin',
     currencyAbbreviation: 'BTC',
+    imgSrc: require('../../assets/img/currencies/png/BTC.png'),
   },
   {
     id: 'bch',
     img: CurrencyListIcons.bch,
     currencyName: 'Bitcoin Cash',
     currencyAbbreviation: 'BCH',
+    imgSrc: require('../../assets/img/currencies/png/BCH.png'),
   },
   {
     id: 'eth',
     img: CurrencyListIcons.eth,
     currencyName: 'Ethereum',
     currencyAbbreviation: 'ETH',
+    imgSrc: require('../../assets/img/currencies/png/ETH.png'),
   },
   {
     id: 'doge',
     img: CurrencyListIcons.doge,
     currencyName: 'Dogecoin',
     currencyAbbreviation: 'DOGE',
+    imgSrc: require('../../assets/img/currencies/png/DOGE.png'),
   },
   {
     id: 'ltc',
     img: CurrencyListIcons.ltc,
     currencyName: 'Litecoin',
     currencyAbbreviation: 'LTC',
+    imgSrc: require('../../assets/img/currencies/png/LTC.png'),
   },
   {
     id: 'xrp',
     img: CurrencyListIcons.xrp,
-    currencyName: 'Xrp',
+    currencyName: 'XRP',
     currencyAbbreviation: 'XRP',
+    imgSrc: require('../../assets/img/currencies/png/XRP.png'),
+  },
+  {
+    id: 'shib',
+    img: CurrencyListIcons.shib,
+    currencyName: 'Shiba Inu',
+    currencyAbbreviation: 'SHIB',
+    isToken: true,
+    imgSrc: require('../../assets/img/currencies/png/SHIB.png'),
   },
   {
     id: 'usdc',
     img: CurrencyListIcons.usdc,
-    currencyName: 'Usdc',
+    currencyName: 'USD Coin',
     currencyAbbreviation: 'USDC',
+    isToken: true,
+    imgSrc: require('../../assets/img/currencies/png/USDC.png'),
   },
   {
     id: 'gusd',
     img: CurrencyListIcons.gusd,
-    currencyName: 'Gusd',
+    currencyName: 'Gemini Dollar',
     currencyAbbreviation: 'GUSD',
+    isToken: true,
+    imgSrc: require('../../assets/img/currencies/png/GUSD.png'),
   },
   {
     id: 'busd',
     img: CurrencyListIcons.busd,
-    currencyName: 'Busd',
+    currencyName: 'Binance USD Coin',
     currencyAbbreviation: 'BUSD',
+    isToken: true,
+    imgSrc: require('../../assets/img/currencies/png/BUSD.png'),
   },
   {
     id: 'dai',
     img: CurrencyListIcons.dai,
     currencyName: 'Dai',
     currencyAbbreviation: 'DAI',
+    isToken: true,
+    imgSrc: require('../../assets/img/currencies/png/DAI.png'),
   },
   {
     id: 'usdp',
     img: CurrencyListIcons.usdp,
     currencyName: 'Pax Dollar',
     currencyAbbreviation: 'USDP',
+    isToken: true,
+    imgSrc: require('../../assets/img/currencies/png/USDP.png'),
   },
   {
     id: 'wbtc',
     img: CurrencyListIcons.wbtc,
-    currencyName: 'Wbtc',
+    currencyName: 'Wrapped Bitcoin',
     currencyAbbreviation: 'WBTC',
+    isToken: true,
+    imgSrc: require('../../assets/img/currencies/png/WBTC.png'),
   },
 ];

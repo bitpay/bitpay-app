@@ -2,6 +2,7 @@ import React, {useLayoutEffect} from 'react';
 import styled from 'styled-components/native';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
+  ActionContainer,
   CtaContainer,
   HeaderRightContainer,
   TextContainer,
@@ -40,7 +41,7 @@ const CreateOrImportKey = () => {
               navigation.navigate('Onboarding', {
                 screen: 'TermsOfUse',
                 params: {
-                  context: 'skip',
+                  context: 'TOUOnly',
                 },
               });
             }}>
@@ -72,23 +73,30 @@ const CreateOrImportKey = () => {
         </TextAlign>
       </TextContainer>
       <CtaContainer>
-        <Button
-          buttonStyle={'primary'}
-          onPress={() =>
-            navigation.navigate('Onboarding', {screen: 'CurrencySelection'})
-          }>
-          Create a Key
-        </Button>
-        <Button
-          buttonStyle={'secondary'}
-          onPress={() =>
-            navigation.navigate('Onboarding', {
-              screen: 'Import',
-              params: {isOnboarding: true},
-            })
-          }>
-          I already have a Key
-        </Button>
+        <ActionContainer>
+          <Button
+            buttonStyle={'primary'}
+            onPress={() =>
+              navigation.navigate('Onboarding', {
+                screen: 'CurrencySelection',
+                params: {context: 'onboarding'},
+              })
+            }>
+            Create a Key
+          </Button>
+        </ActionContainer>
+        <ActionContainer>
+          <Button
+            buttonStyle={'secondary'}
+            onPress={() =>
+              navigation.navigate('Onboarding', {
+                screen: 'Import',
+                params: {context: 'onboarding'},
+              })
+            }>
+            I already have a Key
+          </Button>
+        </ActionContainer>
       </CtaContainer>
     </CreateKeyContainer>
   );

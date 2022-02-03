@@ -14,6 +14,7 @@ export enum OnGoingProcessMessages {
   CREATING_ACCOUNT = 'Creating Account',
   IMPORTING = 'Importing',
   DELETING_KEY = 'Deleting Key',
+  ADDING_WALLET = 'Adding Wallet',
 }
 
 const OnGoingProcessContainer = styled.View`

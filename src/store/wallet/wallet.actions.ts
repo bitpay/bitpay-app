@@ -1,10 +1,5 @@
 import {WalletActionType, WalletActionTypes} from './wallet.types';
-import {
-  ExchangeRate,
-  Key,
-  PriceHistory,
-  Token,
-} from './wallet.models';
+import {ExchangeRate, Key, PriceHistory, Token} from './wallet.models';
 
 export const successWalletStoreInit = (): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_WALLET_STORE_INIT,
@@ -21,6 +16,15 @@ export const successCreateKey = (payload: {key: Key}): WalletActionType => ({
 
 export const failedCreateKey = (): WalletActionType => ({
   type: WalletActionTypes.FAILED_CREATE_KEY,
+});
+
+export const successAddWallet = (payload: {key: Key}): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_ADD_WALLET,
+  payload,
+});
+
+export const failedAddWallet = (): WalletActionType => ({
+  type: WalletActionTypes.FAILED_ADD_WALLET,
 });
 
 export const successImport = (payload: {key: Key}): WalletActionType => ({
@@ -89,4 +93,8 @@ export const successGetTokenOptions = (payload: {
 
 export const failedGetTokenOptions = (): WalletActionType => ({
   type: WalletActionTypes.FAILED_GET_TOKEN_OPTIONS,
+});
+
+export const setWalletTermsAccepted = (): WalletActionType => ({
+  type: WalletActionTypes.SET_WALLET_TERMS_ACCEPTED,
 });
