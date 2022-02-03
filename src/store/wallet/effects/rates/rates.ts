@@ -5,14 +5,20 @@ import {WalletActions} from '../../index';
 import {SUPPORTED_COINS} from '../../../../constants/currencies';
 import {PriceHistory} from '../../wallet.models';
 
+//EFFECTS///////////////////////////////////////////////////////////////////////////////////
+
 export const getRates = (): Effect => async dispatch => {
-  try {
-    const {data: rates} = await axios.get(`${BASE_BWS_URL}/v3/fiatrates/`);
-    dispatch(WalletActions.successGetRates({rates}));
-  } catch (err) {
-    console.error(err);
-    dispatch(WalletActions.failedGetRates());
-  }
+  return new Promise(async (resolve, reject) => {
+    try {
+      const {data: rates} = await axios.get(`${BASE_BWS_URL}/v3/fiatrates/`);
+      dispatch(WalletActions.successGetRates({rates}));
+      resolve(rates);
+    } catch (err) {
+      console.error(err);
+      dispatch(WalletActions.failedGetRates());
+      reject();
+    }
+  });
 };
 
 export const getPriceHistory = (): Effect => async dispatch => {
@@ -39,4 +45,18 @@ export const getPriceHistory = (): Effect => async dispatch => {
     console.error(err);
     dispatch(WalletActions.failedGetPriceHistory());
   }
+};
+
+export const startGetRates = (): Effect => async dispatch => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const {data: rates} = await axios.get(`${BASE_BWS_URL}/v3/fiatrates/`);
+      dispatch(WalletActions.successGetRates({rates}));
+      resolve(rates);
+    } catch (err) {
+      console.error(err);
+      dispatch(WalletActions.failedGetRates());
+      reject();
+    }
+  });
 };
