@@ -2,8 +2,8 @@ import {Image} from 'react-native';
 import React from 'react';
 import {OfferProps} from './OfferSlides';
 
-const HEIGHT = 182;
-const WIDTH = 260;
+export const OFFER_HEIGHT = 182;
+export const OFFER_WIDTH = 260;
 
 export const OfferItems: OfferProps[] = [
   {
@@ -22,11 +22,11 @@ export const OfferItems: OfferProps[] = [
     img: (
       <Image
         style={{
-          height: HEIGHT,
-          width: WIDTH
+          height: OFFER_HEIGHT,
+          width: OFFER_WIDTH,
         }}
-        height={HEIGHT}
-        width={WIDTH}
+        height={OFFER_HEIGHT}
+        width={OFFER_WIDTH}
         source={require('../../../assets/img/home/offers/airbnb.png')}
       />
     ),
