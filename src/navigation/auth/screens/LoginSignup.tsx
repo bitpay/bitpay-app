@@ -23,6 +23,7 @@ import AuthFormContainer, {
 
 export type LoginSignupParamList = {
   context: 'login' | 'signup';
+  onLoginSuccess?: ((...args: any[]) => any) | undefined;
 };
 
 type LoginSignupScreenProps = StackScreenProps<
@@ -71,7 +72,7 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
   const loginStatus = useSelector<RootState, LoginStatus>(
     ({BITPAY_ID}) => BITPAY_ID.loginStatus,
   );
-  const {context} = route.params;
+  const {context, onLoginSuccess} = route.params;
 
   useEffect(() => {
     dispatch(BitPayIdEffects.startFetchSession());
@@ -80,6 +81,11 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
   useEffect(() => {
     if (loginStatus === 'success') {
       dispatch(BitPayIdActions.completedPairing());
+
+      if (onLoginSuccess) {
+        onLoginSuccess();
+        return;
+      }
 
       const parentNav = navigation.getParent();
 
