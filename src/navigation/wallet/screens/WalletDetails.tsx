@@ -80,7 +80,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       title: 'Request a specific amount',
       description:
         'This will generate an invoice, which the person you send it to can pay using any wallet.',
-      onPress: () => null,
+      onPress: () => {
+        navigation.navigate('Wallet', {
+          screen: 'RequestSpecificAmount',
+          params: {wallet: fullWalletObj},
+        });
+      },
     },
     {
       img: <ShareAddressSvg />,

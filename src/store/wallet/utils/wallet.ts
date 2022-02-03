@@ -1,7 +1,8 @@
 import {Key, KeyMethods, Token, Wallet, WalletObj} from '../wallet.models';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
-import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
+import {Currencies, SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
+import {BwcProvider} from '../../../lib/bwc';
 
 // Formatted wallet obj - this is merged with BWC client
 export const buildWalletObj = (
@@ -55,4 +56,28 @@ export const buildKeyObj = ({
     isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
     keyName: 'My Key',
   };
+};
+
+export const GetProtocolPrefix = (
+  currency: string,
+  network: string = 'livenet',
+) => {
+  // @ts-ignore
+  return Currencies[currency].paymentInfo.protocolPrefix[network];
+};
+
+const GetPrecision = (currencyAbbreviation: string) => {
+  return Currencies[currencyAbbreviation].unitInfo;
+};
+
+export const IsUtxoCoin = (currencyAbbreviation: string): boolean => {
+  return Currencies[currencyAbbreviation].properties.isUtxo;
+};
+
+export const FormatCryptoAmount = (
+  amount: number,
+  currencyAbbreviation: string,
+) => {
+  //TODO: format amount
+  return amount;
 };

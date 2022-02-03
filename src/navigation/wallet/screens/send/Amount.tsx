@@ -39,7 +39,7 @@ const SwapButtonContainer = styled.View`
   margin-bottom: 20px;
 `;
 
-const AmountHeroContainer = styled.View`
+export const AmountHeroContainer = styled.View`
   flex-direction: row;
   align-items: center;
   justify-content: center;
@@ -50,25 +50,25 @@ const ActionContainer = styled.View`
   margin: 20px 0;
 `;
 
-const AmountText = styled(BaseText)`
+export const AmountText = styled(BaseText)`
   font-size: 50px;
   font-weight: 500;
   color: ${({theme}) => theme.colors.text};
   margin-right: 5px;
 `;
 
-const CurrencySuperScript = styled.View`
+export const CurrencySuperScript = styled.View`
   align-items: flex-start;
   justify-content: flex-start;
   height: 50px;
 `;
 
-const CurrencyText = styled(BaseText)`
+export const CurrencyText = styled(BaseText)`
   font-size: 20px;
   color: ${({theme}) => theme.colors.text};
 `;
 
-const AmountContainer = styled.View`
+export const AmountContainer = styled.View`
   flex: 1;
   justify-content: space-between;
   margin-top: 20px;

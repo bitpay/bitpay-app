@@ -29,6 +29,7 @@ import {
 import ReceiveAddressHeader, {
   HeaderContextHandler,
 } from './ReceiveAddressHeader';
+import {GetProtocolPrefix} from '../../../store/wallet/utils/wallet';
 
 export interface ReceiveAddressConfig {
   keyId: string;
@@ -148,16 +149,20 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
   };
 
   const createAddress = async () => {
-    let {coin} = wallet.credentials;
+    let {coin, network} = wallet.credentials;
     const prefix = 'Could not create address';
 
     try {
       const walletAddress = await CreateWalletAddress(wallet);
       setLoading(false);
-      setAddress(walletAddress);
       if (coin === 'bch') {
-        setBchAddress(walletAddress);
+        const protocolPrefix = GetProtocolPrefix(coin, network);
+        const formattedAddr = protocolPrefix + ':' + walletAddress;
+        setAddress(formattedAddr);
+        setBchAddress(formattedAddr);
         setBchAddressType('Cash Address');
+      } else {
+        setAddress(walletAddress);
       }
     } catch (createAddressErr: any) {
       switch (createAddressErr?.type) {
