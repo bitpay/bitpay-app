@@ -13,11 +13,12 @@ const OfferCardContainer = styled.View`
   flex-direction: column;
   width: 260px;
   height: 182px;
-  border-radius: 12px;
   left: ${ScreenGutter};
 `;
 
 const ImgBackground = styled.View`
+  border-radius: 12px;
+  overflow: hidden;
   position: absolute;
 `;
 
