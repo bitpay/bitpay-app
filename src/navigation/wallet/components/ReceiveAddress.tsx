@@ -174,12 +174,19 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
     if (!copied) {
       Clipboard.setString(address);
       setCopied(true);
-
-      setTimeout(() => {
-        setCopied(false);
-      }, 3000);
     }
   };
+
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setCopied(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [copied]);
 
   const onBchAddressTypeChange = (type: string) => {
     haptic('impactLight');

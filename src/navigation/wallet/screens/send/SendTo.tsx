@@ -205,9 +205,12 @@ const SendTo = () => {
       if (currencyAbbreviation === 'bch' && network === addrNetwork) {
         const isLegacy = CheckIfLegacyBCH(data);
         if (isLegacy) {
+          //  TODO: Get app name
+          const appName = 'BitPay';
+
           dispatch(
             showBottomNotificationModal(
-              BchLegacyAddressInfo('bitpay', () => {
+              BchLegacyAddressInfo(appName, () => {
                 BchLegacyAddressInfoDismiss(data);
               }),
             ),
