@@ -1,5 +1,11 @@
 import {WalletActionType, WalletActionTypes} from './wallet.types';
-import {ExchangeRate, Key, PriceHistory, Token} from './wallet.models';
+import {
+  ExchangeRate,
+  Key,
+  PriceHistory,
+  Token,
+  WalletBalance,
+} from './wallet.models';
 
 export const successWalletStoreInit = (): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_WALLET_STORE_INIT,
@@ -63,15 +69,6 @@ export const failedGetPriceHistory = (): WalletActionType => ({
   type: WalletActionTypes.FAILED_GET_PRICE_HISTORY,
 });
 
-export const updateWalletBalance = (payload: {
-  keyId: string;
-  walletId: string;
-  balance: number;
-}): WalletActionType => ({
-  type: WalletActionTypes.UPDATE_WALLET_BALANCE,
-  payload,
-});
-
 export const successEncryptOrDecryptPassword = (payload: {
   key: Key;
 }): WalletActionType => ({
@@ -97,4 +94,41 @@ export const failedGetTokenOptions = (): WalletActionType => ({
 
 export const setWalletTermsAccepted = (): WalletActionType => ({
   type: WalletActionTypes.SET_WALLET_TERMS_ACCEPTED,
+});
+
+export const successUpdateWalletBalance = (payload: {
+  keyId: string;
+  walletId: string;
+  balance: WalletBalance;
+}): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCE,
+  payload,
+});
+
+export const failedUpdateWalletBalance = (): WalletActionType => ({
+  type: WalletActionTypes.FAILED_UPDATE_WALLET_BALANCE,
+});
+
+export const successUpdateKeyTotalBalance = (payload: {
+  keyId: string;
+  totalBalance: number;
+}): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_UPDATE_KEY_TOTAL_BALANCE,
+  payload,
+});
+
+export const failedUpdateKeyTotalBalance = (): WalletActionType => ({
+  type: WalletActionTypes.FAILED_UPDATE_KEY_TOTAL_BALANCE,
+});
+
+export const successUpdateAllKeysAndBalances = (): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_UPDATE_ALL_KEYS_AND_BALANCES,
+});
+
+export const failedUpdateAllKeysAndBalances = (): WalletActionType => ({
+  type: WalletActionTypes.FAILED_UPDATE_ALL_KEYS_AND_BALANCES,
+});
+
+export const updatePortfolioBalance = (): WalletActionType => ({
+  type: WalletActionTypes.UPDATE_PORTFOLIO_BALANCE,
 });

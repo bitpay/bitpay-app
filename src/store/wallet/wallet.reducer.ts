@@ -11,6 +11,11 @@ export interface WalletState {
   priceHistory: Array<PriceHistory>;
   tokenOptions: {[key in string]: Token};
   walletTermsAccepted: boolean;
+  portfolioBalance: {
+    current: number;
+    previous: number;
+  };
+  balanceCacheKey: {[key in string]: number | undefined};
 }
 
 const initialState: WalletState = {
@@ -20,6 +25,11 @@ const initialState: WalletState = {
   priceHistory: [],
   tokenOptions: {},
   walletTermsAccepted: false,
+  portfolioBalance: {
+    current: 0,
+    previous: 0,
+  },
+  balanceCacheKey: {},
 };
 
 export const walletReducer = (
@@ -63,7 +73,7 @@ export const walletReducer = (
       };
     }
 
-    case WalletActionTypes.UPDATE_WALLET_BALANCE: {
+    case WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCE: {
       const {keyId, walletId, balance} = action.payload;
       const keyToUpdate = state.keys[keyId];
       if (keyToUpdate) {
@@ -81,6 +91,51 @@ export const walletReducer = (
           [keyId]: {
             ...keyToUpdate,
           },
+        },
+        balanceCacheKey: {
+          ...state.balanceCacheKey,
+          [walletId]: Date.now(),
+        },
+      };
+    }
+
+    case WalletActionTypes.SUCCESS_UPDATE_KEY_TOTAL_BALANCE: {
+      const {keyId, totalBalance} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      keyToUpdate.totalBalance = totalBalance;
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+        balanceCacheKey: {
+          ...state.balanceCacheKey,
+          [keyId]: Date.now(),
+        },
+      };
+    }
+
+    case WalletActionTypes.SUCCESS_UPDATE_ALL_KEYS_AND_BALANCES: {
+      return {
+        ...state,
+        balanceCacheKey: {
+          ...state.balanceCacheKey,
+          all: Date.now(),
+        },
+      };
+    }
+
+    case WalletActionTypes.UPDATE_PORTFOLIO_BALANCE: {
+      let current = 0;
+      Object.values(state.keys).forEach(key => (current += key.totalBalance));
+      return {
+        ...state,
+        portfolioBalance: {
+          current,
+          previous: 0,
         },
       };
     }
