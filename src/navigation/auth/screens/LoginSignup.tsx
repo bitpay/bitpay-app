@@ -47,7 +47,7 @@ const Row = styled.View`
 `;
 
 const LoginText = styled(BaseText)`
-  color: ${SlateDark};
+  color: ${({theme}) => theme.colors.description};
   font-size: 18px;
 `;
 
@@ -151,13 +151,12 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
   }
 
   return (
-    <AuthFormContainer theme={theme} header={header}>
+    <AuthFormContainer header={header}>
       <AuthInputContainer>
         <Controller
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
-              theme={theme}
               placeholder={'satoshi@example.com'}
               label={'EMAIL'}
               onBlur={onBlur}
@@ -175,7 +174,6 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
-              theme={theme}
               placeholder={'strongPassword123'}
               label={'PASSWORD'}
               type={'password'}
