@@ -59,7 +59,7 @@ const IntroBalance = () => {
       <Overlay />
       <Body>
         <PortfolioBalanceHeader>Portfolio Balance</PortfolioBalanceHeader>
-        <PortfolioBalanceAmount>$44,603.01 USD</PortfolioBalanceAmount>
+        <PortfolioBalanceAmount>$98,140.12 USD</PortfolioBalanceAmount>
         <ArrowSvgContainer>
           <ArrowSvg />
         </ArrowSvgContainer>
