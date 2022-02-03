@@ -1,6 +1,7 @@
 import {StackActions, useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useState} from 'react';
+import {ScrollView} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
@@ -62,8 +63,9 @@ const TermsOfUseContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
+// need padding-bottom for the CTA
 const TermsContainer = styled.View`
-  padding: 0 10px;
+  padding: 0 10px 100px;
 `;
 
 const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
@@ -97,11 +99,14 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
 
   return (
     <TermsOfUseContainer>
-      <TermsContainer>
-        {termsList.map((term: Term) => {
-          return <TermsBox term={term} emit={setChecked} key={term.id} />;
-        })}
-      </TermsContainer>
+      <ScrollView>
+        <TermsContainer>
+          {termsList.map((term: Term) => {
+            return <TermsBox term={term} emit={setChecked} key={term.id} />;
+          })}
+        </TermsContainer>
+      </ScrollView>
+
       <CtaContainerAbsolute>
         <Button
           onPress={() => {
