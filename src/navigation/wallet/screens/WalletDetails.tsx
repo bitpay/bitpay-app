@@ -38,6 +38,7 @@ import {Wallet} from '../../../store/wallet/wallet.models';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {sleep} from '../../../utils/helper-methods';
+import {Network} from '../../../constants';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -158,6 +159,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     currencyAbbreviation,
     network,
   } = uiFormattedWallet;
+
+  const showFiatBalance =
+    SUPPORTED_CURRENCIES.includes(currencyAbbreviation.toLowerCase()) &&
+    network !== Network.testnet;
+
   return (
     <WalletDetailsContainer>
       <FlatList
@@ -180,15 +186,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                   </Balance>
                   <Chain>{currencyAbbreviation}</Chain>
                 </Row>
-                {SUPPORTED_CURRENCIES.includes(
-                  currencyAbbreviation.toLowerCase(),
-                ) && (
-                  <H5>
-                    {network === 'testnet'
-                      ? fiatBalance || 'Test - No Value'
-                      : fiatBalance}
-                  </H5>
-                )}
+                {showFiatBalance && <H5>{fiatBalance}</H5>}
               </BalanceContainer>
 
               <LinkingButtons

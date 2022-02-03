@@ -32,7 +32,7 @@ export interface WalletRowProps {
   currencyName: string;
   currencyAbbreviation: string;
   walletName?: string;
-  cryptoBalance: number;
+  cryptoBalance: string;
   fiatBalance: string;
   isToken?: boolean;
   network: string;
@@ -73,6 +73,11 @@ const WalletRow = ({wallet, onPress}: Props) => {
     isToken,
     network,
   } = wallet;
+
+  const showFiatBalance =
+    Number(cryptoBalance) > 0 &&
+    SUPPORTED_CURRENCIES.includes(currencyAbbreviation.toLowerCase());
+
   return (
     <RowContainer activeOpacity={0.75} onPress={onPress}>
       {isToken && (
@@ -94,7 +99,7 @@ const WalletRow = ({wallet, onPress}: Props) => {
       </CurrencyColumn>
       <BalanceColumn>
         <H5>{cryptoBalance}</H5>
-        {SUPPORTED_CURRENCIES.includes(currencyAbbreviation.toLowerCase()) && (
+        {showFiatBalance && (
           <SubText>
             {network === 'testnet' ? 'Test - No Value' : fiatBalance}
           </SubText>

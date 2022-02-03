@@ -12,6 +12,7 @@ import {Currencies, SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {BwcProvider} from '../../../lib/bwc';
 import {BALANCE_CACHE_DURATION} from '../../../constants/wallet';
+import {Network} from '../../../constants';
 
 // Formatted wallet obj - this is merged with BWC client
 export const buildWalletObj = (
@@ -19,7 +20,7 @@ export const buildWalletObj = (
     walletId,
     walletName,
     coin,
-    balance = {crypto: 0, fiat: 0},
+    balance = {crypto: '0', fiat: 0},
     tokens,
     keyId,
   }: Credentials & {
@@ -69,12 +70,12 @@ export const buildKeyObj = ({
 export const formatCryptoAmount = (
   totalAmount: number,
   currencyAbbreviation: string,
-): number => {
+): string => {
   return totalAmount
     ? BwcProvider.getInstance()
         .getUtils()
         .formatAmount(totalAmount, currencyAbbreviation)
-    : 0;
+    : '0';
 };
 
 export const toFiat = (

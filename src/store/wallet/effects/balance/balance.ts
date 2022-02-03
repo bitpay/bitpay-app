@@ -1,5 +1,11 @@
 import {Effect} from '../../../index';
-import {Wallet, Balance, Rates, Key, WalletBalance} from '../../wallet.models';
+import {
+  Wallet,
+  Rates,
+  Key,
+  WalletBalance,
+  WalletStatus,
+} from '../../wallet.models';
 import {startGetRates} from '../rates/rates';
 import {
   failedUpdateAllKeysAndBalances,
@@ -71,7 +77,19 @@ export const startUpdateAllWalletBalancesForKey =
         const rates = (await dispatch<any>(startGetRates())) as Rates;
 
         const balances = await Promise.all(
-          key.wallets.map(wallet => updateWalletBalance({wallet, rates})),
+          key.wallets.map(wallet => {
+            return new Promise<WalletBalance>(async resolve => {
+              const balance = await updateWalletBalance({wallet, rates});
+              dispatch(
+                successUpdateWalletBalance({
+                  keyId: key.id,
+                  walletId: wallet.id,
+                  balance,
+                }),
+              );
+              resolve(balance);
+            });
+          }),
         );
 
         const totalKeyFiatBalance = balances.reduce(
@@ -121,18 +139,26 @@ const updateWalletBalance = ({
   wallet: Wallet;
   rates: Rates;
 }): Promise<WalletBalance> => {
-  return new Promise(async (resolve, reject) => {
-    const {currencyAbbreviation, balance: lastKnownBalance} = wallet;
-    wallet.getBalance({}, (err: Error, balance: Balance) => {
+  return new Promise(async resolve => {
+    wallet.getStatus({}, (err: Error, status: WalletStatus) => {
+      const {
+        currencyAbbreviation,
+        balance: lastKnownBalance,
+        credentials: {network},
+      } = wallet;
+
       if (err) {
-        return reject(err);
+        return resolve(lastKnownBalance);
       }
 
       try {
-        const {totalAmount} = balance;
+        const {totalAmount} = status.balance;
         const newBalance = {
-          crypto: formatCryptoAmount(balance.totalAmount, currencyAbbreviation),
-          fiat: toFiat(totalAmount, 'USD', currencyAbbreviation, rates),
+          crypto: formatCryptoAmount(totalAmount, currencyAbbreviation),
+          fiat:
+            network === Network.testnet
+              ? toFiat(totalAmount, 'USD', currencyAbbreviation, rates)
+              : 0,
         };
 
         resolve(newBalance);
