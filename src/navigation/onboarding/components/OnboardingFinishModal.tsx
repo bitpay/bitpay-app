@@ -135,9 +135,8 @@ const OnboardingFinishModal: React.FC = () => {
           <CtaContainer style={{marginTop: 10}}>
             {buttons.map(({onPress, text}, index) => {
               return (
-                <ActionContainer>
+                <ActionContainer key={index}>
                   <Button
-                    key={index}
                     buttonStyle={'primary'}
                     buttonType={'pill'}
                     onPress={onPress}>
