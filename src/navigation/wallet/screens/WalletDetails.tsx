@@ -18,10 +18,7 @@ import SettingsSvg from '../../../../assets/img/wallet/settings.svg';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import ReceiveAddress from '../components/ReceiveAddress';
 import {StackScreenProps} from '@react-navigation/stack';
-import {
-  startUpdateAllWalletBalancesForKey,
-  startUpdateWalletBalance,
-} from '../../../store/wallet/effects/balance/balance';
+import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/balance';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {BalanceUpdateError} from '../components/ErrorMessages';
@@ -35,7 +32,6 @@ import {
   isBalanceCacheKeyStale,
 } from '../../../store/wallet/utils/wallet';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {sleep} from '../../../utils/helper-methods';
 import {Network} from '../../../constants';
@@ -135,13 +131,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-
-    if (!isBalanceCacheKeyStale(balanceCacheKey[walletId])) {
-      console.log('skipping balance update');
-      await sleep(1000);
-      setRefreshing(false);
-      return;
-    }
+    await sleep(1000);
 
     try {
       await dispatch(startUpdateWalletBalance({key, wallet: fullWalletObj}));

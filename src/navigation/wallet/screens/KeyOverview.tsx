@@ -25,7 +25,6 @@ import {startUpdateAllWalletBalancesForKey} from '../../../store/wallet/effects/
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {BalanceUpdateError} from '../components/ErrorMessages';
-import {isBalanceCacheKeyStale} from '../../../store/wallet/utils/wallet';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -140,9 +139,6 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   }, [navigation]);
 
   const {key} = route.params;
-  const balanceCacheKey = useSelector(
-    ({WALLET}: RootState) => WALLET.balanceCacheKey,
-  );
   const {wallets, totalBalance} = useSelector(
     ({WALLET}: RootState) => WALLET.keys[key.id],
   );
@@ -179,14 +175,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-
-    if (!isBalanceCacheKeyStale(balanceCacheKey[key.id])) {
-      console.log('skipping balance update');
-      await sleep(500);
-      setRefreshing(false);
-      return;
-    }
-
+    await sleep(1000);
     try {
       await dispatch(startUpdateAllWalletBalancesForKey(key));
       dispatch(updatePortfolioBalance());

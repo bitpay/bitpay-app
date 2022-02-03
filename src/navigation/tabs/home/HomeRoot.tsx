@@ -39,10 +39,7 @@ import ScanButton from './components/HeaderScanButton';
 import {startUpdateAllKeyAndWalletBalances} from '../../../store/wallet/effects/balance/balance';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
-import throttle from 'lodash.throttle';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
-import {BALANCE_REFRESH_THROTTLE} from '../../../constants/wallet';
-import {isBalanceCacheKeyStale} from '../../../store/wallet/utils/wallet';
 
 const HeaderContainer = styled.View`
   flex-direction: row;
@@ -94,23 +91,12 @@ const HomeRoot = () => {
   //   }
   // }, []);
 
-  const balanceCacheKey = useSelector(
-    ({WALLET}: RootState) => WALLET.balanceCacheKey,
-  );
-
   const navigation = useNavigation();
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = async () => {
     setRefreshing(true);
-
-    if (!isBalanceCacheKeyStale(balanceCacheKey.all)) {
-      console.log('skipping balance update');
-      await sleep(500);
-      setRefreshing(false);
-      return;
-    }
-
+    await sleep(1000);
     try {
       await dispatch(startUpdateAllKeyAndWalletBalances());
       dispatch(updatePortfolioBalance());
