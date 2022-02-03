@@ -10,6 +10,7 @@ import {RowContainer} from '../styled/Containers';
 import styled from 'styled-components/native';
 import NestedArrow from '../../../assets/img/nested-arrow.svg';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
+import {SUPPORTED_CURRENCIES} from '../../constants/currencies';
 
 const BadgeContainer = styled.View`
   margin-left: 5px;
@@ -89,13 +90,15 @@ const WalletRow = ({wallet, onPress}: Props) => {
           </H5>
           {buildTestBadge(network, currencyName, isToken)}
         </Row>
-        <SubText>{currencyAbbreviation.toUpperCase()}</SubText>
+        <SubText>{currencyAbbreviation}</SubText>
       </CurrencyColumn>
       <BalanceColumn>
         <H5>{cryptoBalance}</H5>
-        <SubText>
-          {network === 'testnet' ? 'Test - No Value' : fiatBalance}
-        </SubText>
+        {SUPPORTED_CURRENCIES.includes(currencyAbbreviation.toLowerCase()) && (
+          <SubText>
+            {network === 'testnet' ? 'Test - No Value' : fiatBalance}
+          </SubText>
+        )}
       </BalanceColumn>
     </RowContainer>
   );
