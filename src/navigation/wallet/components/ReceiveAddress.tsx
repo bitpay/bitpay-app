@@ -210,26 +210,30 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
         setBchAddressType('Cash Address');
       }
     } catch (createAddressErr: any) {
-      if (createAddressErr?.type === 'INVALID_ADDRESS_GENERATED') {
-        logger.error(createAddressErr.error);
+      switch (createAddressErr?.type) {
+        case 'INVALID_ADDRESS_GENERATED':
+          logger.error(createAddressErr.error);
 
-        if (retryCount < 3) {
-          setRetryCount(retryCount + 1);
-          createAddress();
-          return;
-        } else {
+          if (retryCount < 3) {
+            setRetryCount(retryCount + 1);
+            createAddress();
+            return;
+          } else {
+            showErrorMessage(
+              CustomErrorMessage(BWCErrorMessage(createAddressErr.error)),
+            );
+          }
+          break;
+        case 'MAIN_ADDRESS_GAP_REACHED':
           showErrorMessage(
             CustomErrorMessage(BWCErrorMessage(createAddressErr.error)),
           );
-        }
-      } else if (createAddressErr?.type === 'MAIN_ADDRESS_GAP_REACHED') {
-        showErrorMessage(
-          CustomErrorMessage(BWCErrorMessage(createAddressErr.error)),
-        );
-      } else {
-        showErrorMessage(
-          CustomErrorMessage(BWCErrorMessage(createAddressErr.error, prefix)),
-        );
+          break;
+        default:
+          showErrorMessage(
+            CustomErrorMessage(BWCErrorMessage(createAddressErr.error, prefix)),
+          );
+          break;
       }
       logger.warn(BWCErrorMessage(createAddressErr.error, 'Receive'));
     }
