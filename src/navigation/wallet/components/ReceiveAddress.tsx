@@ -16,14 +16,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {CustomErrorMessage} from './ErrorMessages';
 
-import {
-  Action,
-  LightBlack,
-  NeutralSlate,
-  SlateDark,
-  White,
-} from '../../../styles/colors';
-import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
+import {Action, LightBlack, NeutralSlate, White} from '../../../styles/colors';
 import CopySvg from '../../../../assets/img/copy.svg';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
@@ -33,66 +26,16 @@ import {
   CreateWalletAddress,
   GetLegacyBchAddressFormat,
 } from '../../../store/wallet/effects/send/address';
+import ReceiveAddressHeader, {
+  HeaderContextHandler,
+} from './ReceiveAddressHeader';
 
 export interface ReceiveAddressConfig {
   keyId: string;
   id: string;
 }
 
-const Header = styled.View`
-  margin-bottom: 30px;
-  flex-direction: row;
-  justify-content: center;
-  position: relative;
-  align-items: center;
-`;
-
-const Title = styled(H4)`
-  color: ${({theme}) => theme.colors.text};
-`;
-
-const Refresh = styled.TouchableOpacity<{isBch?: boolean}>`
-  position: ${({isBch}) => (isBch ? 'relative' : 'absolute')};
-  margin-left: 5px;
-  right: 0;
-  background-color: ${({theme: {dark}}) => (dark ? '#616161' : '#F5F7F8')};
-  width: 40px;
-  height: 40px;
-  border-radius: 50px;
-  align-items: center;
-  justify-content: center;
-  margin-top: ${({isBch}) => (isBch ? '10px' : '0')};
-`;
-
-const BchAddressTypes = ['Cash Address', 'Legacy'];
-
-const BchHeaderAction = styled.TouchableOpacity<{isActive: boolean}>`
-  align-items: center;
-  justify-content: center;
-  margin: 0 10px -1px;
-  border-bottom-color: ${({isActive}) => (isActive ? Action : 'transparent')};
-  border-bottom-width: 1px;
-  height: 60px;
-`;
-
-const BchHeaderActionText = styled(BaseText)<{isActive: boolean}>`
-  font-size: 16px;
-  color: ${({theme, isActive}) =>
-    isActive ? theme.colors.text : theme.dark ? NeutralSlate : SlateDark};
-`;
-
-const BchHeaderActions = styled.View`
-  flex-direction: row;
-`;
-
-const BchHeader = styled.View`
-  margin-bottom: 30px;
-  border-bottom-width: 1px;
-  border-bottom-color: #979797;
-  align-items: center;
-  flex-direction: row;
-  justify-content: space-between;
-`;
+export const BchAddressTypes = ['Cash Address', 'Legacy'];
 
 const CopyToClipboard = styled.TouchableOpacity`
   border: 1px solid #9ba3ae;
@@ -209,11 +152,11 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
     const prefix = 'Could not create address';
 
     try {
-      const address = await CreateWalletAddress(wallet);
+      const walletAddress = await CreateWalletAddress(wallet);
       setLoading(false);
-      setAddress(address);
+      setAddress(walletAddress);
       if (coin === 'bch') {
-        setBchAddress(address);
+        setBchAddress(walletAddress);
         setBchAddressType('Cash Address');
       }
     } catch (createAddressErr: any) {
@@ -260,48 +203,25 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet]);
 
+  let headerContextHandlers: HeaderContextHandler | null = null;
+
+  if (wallet?.currencyAbbreviation === 'bch') {
+    headerContextHandlers = {
+      currency: wallet?.currencyAbbreviation,
+      disabled: !address,
+      activeItem: bchAddressType,
+      onPressChange: (item: string) => onBchAddressTypeChange(item),
+      items: BchAddressTypes,
+    };
+  }
+
   return (
     <BottomPopupModal isVisible={isVisible} onBackdropPress={closeModal}>
       <ReceiveAddressContainer>
-        {wallet?.currencyAbbreviation !== 'bch' ? (
-          <Header>
-            <Title>Address</Title>
-            <Refresh
-              onPress={() => {
-                haptic('impactLight');
-                createAddress();
-              }}>
-              <RefreshIcon />
-            </Refresh>
-          </Header>
-        ) : (
-          <BchHeader>
-            <Title>Address</Title>
-
-            <BchHeaderActions>
-              {BchAddressTypes.map((type, index) => (
-                <BchHeaderAction
-                  key={index}
-                  onPress={() => onBchAddressTypeChange(type)}
-                  isActive={bchAddressType === type}
-                  disabled={!address}>
-                  <BchHeaderActionText isActive={bchAddressType === type}>
-                    {type}
-                  </BchHeaderActionText>
-                </BchHeaderAction>
-              ))}
-
-              <Refresh
-                isBch={true}
-                onPress={() => {
-                  haptic('impactLight');
-                  createAddress();
-                }}>
-                <RefreshIcon />
-              </Refresh>
-            </BchHeaderActions>
-          </BchHeader>
-        )}
+        <ReceiveAddressHeader
+          onPressRefresh={createAddress}
+          contextHandlers={headerContextHandlers}
+        />
 
         {address ? (
           <>
