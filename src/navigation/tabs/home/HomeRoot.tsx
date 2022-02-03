@@ -1,5 +1,10 @@
-import React, {useEffect} from 'react';
-import {Image, ScrollView, TouchableOpacity} from 'react-native';
+import React, {useCallback, useState} from 'react';
+import {
+  Image,
+  RefreshControl,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {useNavigation} from '@react-navigation/native';
 import {RootState} from '../../../store';
@@ -31,6 +36,13 @@ import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishM
 import {sleep} from '../../../utils/helper-methods';
 import ProfileButton from './components/HeaderProfileButton';
 import ScanButton from './components/HeaderScanButton';
+import {startUpdateAllKeyAndWalletBalances} from '../../../store/wallet/effects/balance/balance';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
+import throttle from 'lodash.throttle';
+import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
+import {BALANCE_REFRESH_THROTTLE} from '../../../constants/wallet';
+import {isBalanceCacheKeyStale} from '../../../store/wallet/utils/wallet';
 
 const HeaderContainer = styled.View`
   flex-direction: row;
@@ -82,7 +94,31 @@ const HomeRoot = () => {
   //   }
   // }, []);
 
+  const balanceCacheKey = useSelector(
+    ({WALLET}: RootState) => WALLET.balanceCacheKey,
+  );
+
   const navigation = useNavigation();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+
+    if (!isBalanceCacheKeyStale(balanceCacheKey.all)) {
+      console.log('skipping balance update');
+      await sleep(500);
+      setRefreshing(false);
+      return;
+    }
+
+    try {
+      await dispatch(startUpdateAllKeyAndWalletBalances());
+      dispatch(updatePortfolioBalance());
+    } catch (err) {
+      dispatch(showBottomNotificationModal(BalanceUpdateError));
+    }
+    setRefreshing(false);
+  };
 
   // Exchange Rates
   const priceHistory = useSelector(
@@ -122,7 +158,14 @@ const HomeRoot = () => {
 
   return (
     <HomeContainer>
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            tintColor={SlateDark}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        }>
         <HeaderContainer>
           <ScanButton />
           <ProfileButton />

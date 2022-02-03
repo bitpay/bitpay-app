@@ -4,9 +4,9 @@ import {BaseText, H5, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
 import {WalletStackParamList} from '../WalletStack';
 import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
-import {FlatList, LogBox} from 'react-native';
+import {FlatList, LogBox, RefreshControl} from 'react-native';
 import AddWallet from '../../../../assets/img/add-asset.svg';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../../store';
 import OptionsBottomPopupModal, {
   Option,
@@ -17,9 +17,16 @@ import EncryptSvg from '../../../../assets/img/wallet/encrypt.svg';
 import SettingsSvg from '../../../../assets/img/wallet/settings.svg';
 import {Hr} from '../../../components/styled/Containers';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {formatFiatBalance} from '../../../utils/helper-methods';
+import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
 import {StackScreenProps} from '@react-navigation/stack';
 import haptic from '../../../components/haptic-feedback/haptic';
+import {SlateDark} from '../../../styles/colors';
+import {startUpdateAllWalletBalancesForKey} from '../../../store/wallet/effects/balance/balance';
+import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {BalanceUpdateError} from '../components/ErrorMessages';
+import {isBalanceCacheKeyStale} from '../../../store/wallet/utils/wallet';
+
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
 ]);
@@ -73,7 +80,7 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   currencyName,
   currencyAbbreviation,
   walletName,
-  balance = 0,
+  balance,
   credentials,
   keyId,
 }) => ({
@@ -83,8 +90,8 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   currencyName,
   currencyAbbreviation: currencyAbbreviation.toUpperCase(),
   walletName,
-  cryptoBalance: balance,
-  fiatBalance: formatFiatBalance(balance),
+  cryptoBalance: balance.crypto,
+  fiatBalance: formatFiatAmount(balance.fiat, 'usd'),
   network: credentials.network,
 });
 
@@ -115,7 +122,9 @@ export const buildNestedWalletList = (wallets: Wallet[]) => {
 
 const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -131,9 +140,12 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   }, [navigation]);
 
   const {key} = route.params;
-  const {wallets} = useSelector(
+  const balanceCacheKey = useSelector(
+    ({WALLET}: RootState) => WALLET.balanceCacheKey,
+  );
+  const {wallets, totalBalance} = useSelector(
     ({WALLET}: RootState) => WALLET.keys[key.id],
-  ) || {wallets: []};
+  );
   const walletList = buildNestedWalletList(wallets);
 
   const keyOptions: Array<Option> = [
@@ -165,13 +177,39 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
     },
   ];
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+
+    if (!isBalanceCacheKeyStale(balanceCacheKey[key.id])) {
+      console.log('skipping balance update');
+      await sleep(500);
+      setRefreshing(false);
+      return;
+    }
+
+    try {
+      await dispatch(startUpdateAllWalletBalancesForKey(key));
+      dispatch(updatePortfolioBalance());
+    } catch (err) {
+      dispatch(showBottomNotificationModal(BalanceUpdateError));
+    }
+    setRefreshing(false);
+  };
+
   return (
     <OverviewContainer>
       <BalanceContainer>
-        <Balance>${key.totalBalance?.toFixed(2)} USD</Balance>
+        <Balance>${totalBalance?.toFixed(2)} USD</Balance>
       </BalanceContainer>
       <Hr />
       <FlatList
+        refreshControl={
+          <RefreshControl
+            tintColor={SlateDark}
+            refreshing={refreshing}
+            onRefresh={() => onRefresh()}
+          />
+        }
         ListHeaderComponent={() => {
           return (
             <WalletListHeader>
@@ -204,7 +242,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
               onPress={() =>
                 navigation.navigate('Wallet', {
                   screen: 'WalletDetails',
-                  params: {wallet: item, key},
+                  params: {walletId: item.id, key},
                 })
               }
             />
