@@ -21,7 +21,11 @@ export const startUpdateWalletBalance =
       }
 
       try {
-        const {id, currencyAbbreviation} = wallet;
+        const {
+          id,
+          currencyAbbreviation,
+          credentials: {network},
+        } = wallet;
         const rates = (await dispatch<any>(startGetRates())) as Rates;
         const lastKnownBalance = wallet.balance.fiat;
         const balance = await updateWalletBalance({wallet, rates});
@@ -34,13 +38,14 @@ export const startUpdateWalletBalance =
           }),
         );
         // if balance has changed update key totalBalance
-        if (
-          wallet.credentials.network === Network.mainnet &&
-          balance.fiat !== lastKnownBalance
-        ) {
+        if (network === Network.mainnet && balance.fiat !== lastKnownBalance) {
           const wallets = getState().WALLET.keys[key.id].wallets;
-          let totalFiatBalance = 0;
-          wallets.forEach(wallet => (totalFiatBalance += wallet.balance.fiat));
+
+          const totalFiatBalance = wallets.reduce(
+            (acc, {balance: {fiat}}) => acc + fiat,
+            0,
+          );
+
           dispatch(
             successUpdateKeyTotalBalance({
               keyId: key.id,
@@ -63,20 +68,16 @@ export const startUpdateAllWalletBalancesForKey =
   async dispatch => {
     return new Promise(async (resolve, reject) => {
       try {
-        let totalKeyFiatBalance = 0;
-
         const rates = (await dispatch<any>(startGetRates())) as Rates;
 
-        for (const wallet of key.wallets) {
-          const {fiat} = await updateWalletBalance({
-            wallet,
-            rates,
-          });
+        const balances = await Promise.all(
+          key.wallets.map(wallet => updateWalletBalance({wallet, rates})),
+        );
 
-          if (wallet.credentials.network === Network.mainnet) {
-            totalKeyFiatBalance += fiat;
-          }
-        }
+        const totalKeyFiatBalance = balances.reduce(
+          (acc, {fiat}) => acc + fiat,
+          0,
+        );
 
         dispatch(
           successUpdateKeyTotalBalance({
@@ -98,9 +99,11 @@ export const startUpdateAllKeyAndWalletBalances =
     return new Promise(async (resolve, reject) => {
       try {
         const {WALLET} = getState();
-        for (const key of Object.values(WALLET.keys)) {
-          await dispatch(startUpdateAllWalletBalancesForKey(key));
-        }
+        await Promise.all(
+          Object.values(WALLET.keys).map(key =>
+            dispatch(startUpdateAllWalletBalancesForKey(key)),
+          ),
+        );
         dispatch(successUpdateAllKeysAndBalances());
         resolve();
       } catch (err) {
