@@ -61,7 +61,7 @@ export const H7 = styled(BaseText)`
 `;
 
 export const SubText = styled(H7)`
-  color: ${SlateDark};
+  color: ${({theme}) => theme.colors.description};
 `;
 
 export const Paragraph = styled(BaseText)`
