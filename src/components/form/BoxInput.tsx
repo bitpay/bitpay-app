@@ -1,3 +1,4 @@
+import {useTheme} from '@react-navigation/native';
 import React, {useState} from 'react';
 import {TextInputProps} from 'react-native';
 import styled, {css} from 'styled-components/native';
@@ -102,15 +103,8 @@ interface Props extends TextInputProps {
   [x: string]: any;
 }
 
-const BoxInput = ({
-  label,
-  onFocus,
-  onBlur,
-  error,
-  type,
-  theme,
-  ...props
-}: Props) => {
+const BoxInput = ({label, onFocus, onBlur, error, type, ...props}: Props) => {
+  const theme = useTheme();
   const isPassword = type === 'password';
   const isSearch = type === 'search';
   const [isFocused, setIsFocused] = useState(false);
@@ -131,7 +125,7 @@ const BoxInput = ({
 
   return (
     <InputContainer>
-      {label && <Label theme={theme}>{label}</Label>}
+      {label && <Label>{label}</Label>}
       <Input
         {...props}
         secureTextEntry={isPassword && isSecureTextEntry}
@@ -142,6 +136,10 @@ const BoxInput = ({
         isError={error}
         autoCapitalize={'none'}
         type={type}
+        style={{
+          backgroundColor: theme.colors.background,
+          color: theme.colors.text,
+        }}
       />
       {isPassword && (
         <ObfuscationToggle

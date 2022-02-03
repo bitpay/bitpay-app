@@ -4,6 +4,7 @@ import {Action, SlateDark, White} from '../../styles/colors';
 export const fontFamily = 'Heebo';
 
 export const BaseText = styled.Text`
+  color: ${({theme}) => theme.colors.text};
   font-family: '${fontFamily}';
 `;
 
@@ -139,7 +140,6 @@ export const ImportTitle = styled(BaseText)`
   font-weight: 500;
   font-size: 13px;
   line-height: 18px;
-  color: ${SlateDark};
   opacity: 0.75;
   text-transform: uppercase;
 `;
