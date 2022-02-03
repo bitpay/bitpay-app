@@ -5,22 +5,6 @@ import {WalletActions} from '../../index';
 import {SUPPORTED_COINS} from '../../../../constants/currencies';
 import {PriceHistory} from '../../wallet.models';
 
-//EFFECTS///////////////////////////////////////////////////////////////////////////////////
-
-export const getRates = (): Effect => async dispatch => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const {data: rates} = await axios.get(`${BASE_BWS_URL}/v3/fiatrates/`);
-      dispatch(WalletActions.successGetRates({rates}));
-      resolve(rates);
-    } catch (err) {
-      console.error(err);
-      dispatch(WalletActions.failedGetRates());
-      reject();
-    }
-  });
-};
-
 export const getPriceHistory = (): Effect => async dispatch => {
   try {
     //TODO: update exchange currency
