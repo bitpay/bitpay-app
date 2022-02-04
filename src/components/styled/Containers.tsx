@@ -2,13 +2,11 @@ import React from 'react';
 import {Dimensions, Text} from 'react-native';
 import styled, {css} from 'styled-components/native';
 import {
-  Action,
   Feather,
   LightBlack,
   NeutralSlate,
   Slate,
   SlateDark,
-  White,
 } from '../../styles/colors';
 import {BaseText} from './Text';
 
