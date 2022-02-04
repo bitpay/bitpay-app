@@ -1,8 +1,9 @@
 import React from 'react';
 import {RoundedCheckbox} from 'react-native-rounded-checkbox';
 import Check from '../../../assets/img/check.svg';
-import {Action, SlateDark, White} from '../../styles/colors';
+import {Action, LightBlack, SlateDark, White} from '../../styles/colors';
 import styled from 'styled-components/native';
+import {useTheme} from '@react-navigation/native';
 
 interface Props {
   onPress: () => any;
@@ -17,14 +18,14 @@ interface BorderProps {
   radio?: boolean;
 }
 
-const Border = styled.View`
+const Border = styled.View<BorderProps>`
   border: 1px solid
-    ${({checked, disabled}: BorderProps) => {
+    ${({checked, disabled, theme}) => {
       if (disabled) {
         return 'transparent';
       }
 
-      return checked ? Action : SlateDark;
+      return checked ? Action : theme?.dark ? '#E1E4E7' : SlateDark;
     }};
   position: absolute;
   top: 0;
@@ -47,12 +48,12 @@ const baseRadioStyles = {
 
 const Checkbox: React.FC<Props> = ({onPress, checked, disabled, radio}) => {
   const baseStyles = radio ? baseRadioStyles : baseCheckboxStyles;
-
+  const theme = useTheme();
   return (
     <RoundedCheckbox
       onPress={() => !disabled && onPress()}
       active={checked}
-      uncheckedColor={!disabled ? White : undefined}
+      uncheckedColor={!disabled ? (theme.dark ? LightBlack : White) : undefined}
       checkedColor={Action}
       innerStyle={{
         ...baseStyles,
@@ -69,7 +70,7 @@ const Checkbox: React.FC<Props> = ({onPress, checked, disabled, radio}) => {
         radio={radio}
         testID="checkboxBorder"
       />
-      <Check />
+      {checked && <Check />}
     </RoundedCheckbox>
   );
 };

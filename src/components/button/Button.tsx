@@ -45,13 +45,13 @@ const ButtonContainer = styled.TouchableOpacity<ButtonOptionProps>`
     return secondary ? 'transparent' : Action;
   }};
   border: 2px solid
-    ${({disabled, secondary, theme}) => {
+    ${({disabled, secondary}) => {
       if (disabled) {
         return Disabled;
       }
 
       if (secondary) {
-        return theme?.dark ? White : Action;
+        return Action;
       }
 
       return Action;
