@@ -55,7 +55,7 @@ export const H7 = styled(BaseText)`
 `;
 
 export const SubText = styled(H7)`
-  color: ${SlateDark};
+  color: ${({theme}) => theme.colors.description};
 `;
 
 export const Small = styled(BaseText)`
@@ -144,7 +144,6 @@ export const ImportTitle = styled(BaseText)`
   font-weight: 500;
   font-size: 13px;
   line-height: 18px;
-  color: ${SlateDark};
   opacity: 0.75;
   text-transform: uppercase;
 `;

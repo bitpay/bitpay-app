@@ -2,7 +2,10 @@ import React, {useState} from 'react';
 import styled from 'styled-components/native';
 import {Caution, SlateDark, White} from '../../../styles/colors';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
-import {CtaContainer} from '../../../components/styled/Containers';
+import {
+  ActiveOpacity,
+  CtaContainer,
+} from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {useDispatch, useSelector} from 'react-redux';
 import {
@@ -20,14 +23,14 @@ import {
   startImportMnemonic,
   startImportWithDerivationPath,
 } from '../../../store/wallet/effects';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import {ImportObj} from '../../../store/scan/scan.models';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {navigateToTermsOrOverview} from '../screens/Backup';
-import {Effect, RootState} from '../../../store';
+import {RootState} from '../../../store';
 import {
   ImportTextInput,
   ImportContainer,
@@ -64,12 +67,12 @@ const ImportParagraph = styled(BaseText)`
   font-size: 16px;
   line-height: 25px;
   padding: ${Gutter};
-  color: ${SlateDark};
+  color: ${({theme}) => theme.colors.description};
 `;
 
 const PasswordParagraph = styled(BaseText)`
   margin: 0px 20px 20px 20px;
-  color: ${SlateDark};
+  color: ${({theme}) => theme.colors.description};
 `;
 
 const HeaderContainer = styled.View`
@@ -124,6 +127,7 @@ const Label = styled(BaseText)`
 
 const RecoveryPhrase = () => {
   const dispatch = useDispatch();
+  const theme = useTheme();
   const logger = useLogger();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'Import'>>();
@@ -301,7 +305,7 @@ const RecoveryPhrase = () => {
           <ImportTitle>Recovery phrase</ImportTitle>
 
           <ScanContainer
-            activeOpacity={0.75}
+            activeOpacity={ActiveOpacity}
             onPress={() =>
               navigation.navigate('Scan', {
                 screen: 'Root',
@@ -408,6 +412,10 @@ const RecoveryPhrase = () => {
                     borderRadius: 4,
                     paddingHorizontal: 10,
                     borderColor: dropdownOpen ? 'blue' : '#e1e4e7',
+                    backgroundColor: theme.colors.background,
+                  }}
+                  selectedTextStyle={{
+                    color: theme.colors.text,
                   }}
                   inputSearchStyle={{height: 55, fontSize: 16}}
                   data={supportedCurrencies}

@@ -27,6 +27,7 @@ import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
 
 export type LoginSignupParamList = {
   context: 'login' | 'signup';
+  onLoginSuccess?: ((...args: any[]) => any) | undefined;
 };
 
 type LoginSignupScreenProps = StackScreenProps<
@@ -50,7 +51,7 @@ const Row = styled.View`
 `;
 
 const LoginText = styled(BaseText)`
-  color: ${SlateDark};
+  color: ${({theme}) => theme.colors.description};
   font-size: 18px;
 `;
 
@@ -82,7 +83,7 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
   );
   const [isCaptchaModalVisible, setCaptchaModalVisible] = useState(false);
   const captchaRef = useRef<CaptchaRef>(null);
-  const {context} = route.params;
+  const {context, onLoginSuccess} = route.params;
 
   useEffect(() => {
     dispatch(BitPayIdEffects.startFetchSession());
@@ -91,6 +92,11 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
   useEffect(() => {
     if (loginStatus === 'success') {
       dispatch(BitPayIdActions.completedPairing());
+
+      if (onLoginSuccess) {
+        onLoginSuccess();
+        return;
+      }
 
       const parentNav = navigation.getParent();
 
@@ -174,13 +180,12 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
   };
 
   return (
-    <AuthFormContainer theme={theme} header={header}>
+    <AuthFormContainer header={header}>
       <AuthInputContainer>
         <Controller
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
-              theme={theme}
               placeholder={'satoshi@example.com'}
               label={'EMAIL'}
               onBlur={onBlur}
@@ -199,7 +204,6 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
-              theme={theme}
               placeholder={'strongPassword123'}
               label={'PASSWORD'}
               type={'password'}

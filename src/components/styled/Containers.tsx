@@ -4,6 +4,7 @@ import styled, {css} from 'styled-components/native';
 import {
   Action,
   Feather,
+  LightBlack,
   NeutralSlate,
   Slate,
   SlateDark,
@@ -211,14 +212,14 @@ export const InfoTriangle = styled.View`
 `;
 
 export const AdvancedOptionsContainer = styled.View`
-  background-color: ${Feather};
+  background-color: ${({theme}) => (theme.dark ? LightBlack : Feather)};
   border-radius: 6px;
   margin-bottom: 20px;
 `;
 
 export const AdvancedOptionsButton = styled.TouchableOpacity`
   height: 60px;
-  background-color: ${Feather};
+  background-color: ${({theme}) => (theme.dark ? LightBlack : Feather)};
   padding: 18px;
   flex-direction: row;
   justify-content: space-between;
@@ -229,7 +230,7 @@ export const AdvancedOptionsButton = styled.TouchableOpacity`
 export const AdvancedOptionsButtonText = styled(BaseText)`
   font-size: 16px;
   line-height: 25px;
-  color: ${Action};
+  color: ${({theme}) => theme.colors.text};
 `;
 
 export const AdvancedOptions = styled.View`
@@ -245,8 +246,10 @@ export const ImportTextInput = styled.TextInput`
   height: 100px;
   margin: 0 ${Gutter};
   padding: ${Gutter};
-  background: ${White};
+  color: ${({theme}) => theme.colors.text};
+  background: ${({theme}) => theme.colors.background};
   border: 0.75px solid ${Slate};
   border-top-right-radius: 4px;
   border-top-left-radius: 4px;
+  text-align-vertical: top;
 `;
