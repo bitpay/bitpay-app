@@ -1,9 +1,10 @@
 import {DarkTheme, DefaultTheme, Theme} from '@react-navigation/native';
-import {BitPay, Black, White} from '../styles/colors';
+import {Air, BitPay, Black, SlateDark, White} from '../styles/colors';
 
 export type BitPayTheme = Theme & {
   colors: {
     // TODO: add additional color use cases
+    description: string;
   };
 };
 
@@ -16,6 +17,7 @@ export const BitPayLightTheme: BitPayTheme = {
     background: White,
     card: DefaultTheme.colors.card,
     text: Black,
+    description: SlateDark,
     border: DefaultTheme.colors.border,
     notification: DefaultTheme.colors.notification,
   },
@@ -30,6 +32,7 @@ export const BitPayDarkTheme: BitPayTheme = {
     background: '#000000',
     card: DarkTheme.colors.card,
     text: White,
+    description: Air,
     border: DarkTheme.colors.border,
     notification: DarkTheme.colors.notification,
   },

@@ -1,12 +1,14 @@
+import React from 'react';
+import {Dimensions, Text} from 'react-native';
 import styled, {css} from 'styled-components/native';
-import {Dimensions} from 'react-native';
 import {
   Action,
-  NeutralSlate,
-  SlateDark,
   Feather,
-  White,
+  LightBlack,
+  NeutralSlate,
   Slate,
+  SlateDark,
+  White,
 } from '../../styles/colors';
 import {BaseText} from './Text';
 
@@ -69,6 +71,8 @@ export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
       background: ${({theme}) => theme.colors.background};
     `};
 `;
+
+export const Br: React.FC = () => <Text />;
 
 export const Hr = styled.View`
   border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#ebecee')};
@@ -139,18 +143,39 @@ export const ModalContainer = styled.View`
 
 // Settings List
 export const Setting = styled.TouchableOpacity`
-  flex-direction: row;
-  justify-content: space-between;
   align-items: center;
+  flex-direction: row;
+  flex-wrap: nowrap;
   height: 58px;
 `;
 
 export const SettingTitle = styled(BaseText)`
+  color: ${({theme}) => theme.colors.text};
+  flex-grow: 1;
+  flex-shrink: 1;
   font-size: 16px;
   font-style: normal;
   font-weight: 400;
   letter-spacing: 0;
   text-align: left;
+`;
+
+interface SettingIconProps {
+  prefix?: boolean;
+  suffix?: boolean;
+}
+
+export const SettingIcon = styled.View<SettingIconProps>`
+  ${({prefix = false}) =>
+    prefix &&
+    css`
+      margin-right: ${ScreenGutter};
+    `}
+  ${({suffix = false}) =>
+    suffix &&
+    css`
+      margin-left: ${ScreenGutter};
+    `}
 `;
 
 export const SettingView = styled.View`
@@ -187,14 +212,14 @@ export const InfoTriangle = styled.View`
 `;
 
 export const AdvancedOptionsContainer = styled.View`
-  background-color: ${Feather};
+  background-color: ${({theme}) => (theme.dark ? LightBlack : Feather)};
   border-radius: 6px;
   margin-bottom: 20px;
 `;
 
 export const AdvancedOptionsButton = styled.TouchableOpacity`
   height: 60px;
-  background-color: ${Feather};
+  background-color: ${({theme}) => (theme.dark ? LightBlack : Feather)};
   padding: 18px;
   flex-direction: row;
   justify-content: space-between;
@@ -205,7 +230,7 @@ export const AdvancedOptionsButton = styled.TouchableOpacity`
 export const AdvancedOptionsButtonText = styled(BaseText)`
   font-size: 16px;
   line-height: 25px;
-  color: ${Action};
+  color: ${({theme}) => theme.colors.text};
 `;
 
 export const AdvancedOptions = styled.View`
@@ -221,8 +246,10 @@ export const ImportTextInput = styled.TextInput`
   height: 100px;
   margin: 0 ${Gutter};
   padding: ${Gutter};
-  background: ${White};
+  color: ${({theme}) => theme.colors.text};
+  background: ${({theme}) => theme.colors.background};
   border: 0.75px solid ${Slate};
   border-top-right-radius: 4px;
   border-top-left-radius: 4px;
+  text-align-vertical: top;
 `;

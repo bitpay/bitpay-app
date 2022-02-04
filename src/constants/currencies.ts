@@ -494,7 +494,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
   },
 };
 
-export const SUPPORTED_TOKENS = ['usdc', 'gusd', 'pax', 'busd', 'dai', 'wbtc'];
+export const SUPPORTED_TOKENS = ['usdc', 'gusd', 'usdp', 'busd', 'dai', 'wbtc'];
 export const SUPPORTED_COINS = ['btc', 'bch', 'eth', 'doge', 'ltc', 'xrp'];
 export const SUPPORTED_CURRENCIES = [...SUPPORTED_COINS, ...SUPPORTED_TOKENS];
 export const POPULAR_TOKENS = [

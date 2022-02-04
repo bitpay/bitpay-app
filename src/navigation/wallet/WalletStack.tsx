@@ -43,7 +43,7 @@ export type WalletStackParamList = {
   TermsOfUse: TermsOfUseParamList;
   KeyOverview: {key: Key};
   KeySettings: {key: Key};
-  WalletDetails: {wallet: WalletRowProps; key: Key};
+  WalletDetails: {walletId: string; key: Key};
   WalletSettings: {wallet: WalletRowProps};
   CreationOptions: undefined;
   Import: ImportParamList | undefined;

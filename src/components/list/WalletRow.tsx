@@ -10,6 +10,7 @@ import {RowContainer} from '../styled/Containers';
 import styled from 'styled-components/native';
 import NestedArrow from '../../../assets/img/nested-arrow.svg';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
+import {SUPPORTED_CURRENCIES} from '../../constants/currencies';
 
 const BadgeContainer = styled.View`
   margin-left: 5px;
@@ -31,7 +32,7 @@ export interface WalletRowProps {
   currencyName: string;
   currencyAbbreviation: string;
   walletName?: string;
-  cryptoBalance: number;
+  cryptoBalance: string;
   fiatBalance: string;
   isToken?: boolean;
   network: string;
@@ -72,6 +73,11 @@ const WalletRow = ({wallet, onPress}: Props) => {
     isToken,
     network,
   } = wallet;
+
+  const showFiatBalance =
+    Number(cryptoBalance) > 0 &&
+    SUPPORTED_CURRENCIES.includes(currencyAbbreviation.toLowerCase());
+
   return (
     <RowContainer activeOpacity={0.75} onPress={onPress}>
       {isToken && (
@@ -89,13 +95,15 @@ const WalletRow = ({wallet, onPress}: Props) => {
           </H5>
           {buildTestBadge(network, currencyName, isToken)}
         </Row>
-        <SubText>{currencyAbbreviation.toUpperCase()}</SubText>
+        <SubText>{currencyAbbreviation}</SubText>
       </CurrencyColumn>
       <BalanceColumn>
         <H5>{cryptoBalance}</H5>
-        <SubText>
-          {network === 'testnet' ? 'Test - No Value' : fiatBalance}
-        </SubText>
+        {showFiatBalance && (
+          <SubText>
+            {network === 'testnet' ? 'Test - No Value' : fiatBalance}
+          </SubText>
+        )}
       </BalanceColumn>
     </RowContainer>
   );

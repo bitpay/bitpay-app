@@ -5,7 +5,6 @@ import {SlateDark} from '../../../styles/colors';
 import {BitPayTheme} from '../../../themes/bitpay';
 
 interface LoginContainerProps {
-  theme?: BitPayTheme;
   header?: string;
 }
 
@@ -20,12 +19,7 @@ const HeaderContainer = styled.View`
   margin: 25px 0;
 `;
 
-interface HeaderTextProps {
-  theme?: BitPayTheme;
-}
-
-const HeaderText = styled(BaseText)<HeaderTextProps>`
-  color: ${({theme}) => theme && theme.colors.text};
+const HeaderText = styled(BaseText)`
   font-size: 25px;
   font-weight: 700;
   line-height: 34px;
@@ -52,11 +46,11 @@ export const AuthActionsContainer = styled.View`
 `;
 
 const AuthContainer: React.FC<LoginContainerProps> = props => {
-  const {children, theme, header} = props;
+  const {children, header} = props;
   return (
     <LoginContainer>
       <HeaderContainer>
-        <HeaderText theme={theme}>{header}</HeaderText>
+        <HeaderText>{header}</HeaderText>
       </HeaderContainer>
       <FormContainer>{children}</FormContainer>
     </LoginContainer>

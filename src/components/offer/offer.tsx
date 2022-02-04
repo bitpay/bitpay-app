@@ -2,6 +2,9 @@ import {Image} from 'react-native';
 import React from 'react';
 import {OfferProps} from './OfferSlides';
 
+export const OFFER_HEIGHT = 182;
+export const OFFER_WIDTH = 260;
+
 export const OfferItems: OfferProps[] = [
   {
     id: 1,
@@ -17,7 +20,15 @@ export const OfferItems: OfferProps[] = [
     title: 'AIRBNB',
     description: '20% off select products for BitPay customers.',
     img: (
-      <Image source={require('../../../assets/img/home/offers/airbnb.png')} />
+      <Image
+        style={{
+          height: OFFER_HEIGHT,
+          width: OFFER_WIDTH,
+        }}
+        height={OFFER_HEIGHT}
+        width={OFFER_WIDTH}
+        source={require('../../../assets/img/home/offers/airbnb.png')}
+      />
     ),
     onPress: () => {},
   },
