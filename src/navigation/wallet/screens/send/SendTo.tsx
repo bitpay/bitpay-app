@@ -116,7 +116,7 @@ const BuildKeyWalletRow = (
       )
       .map(wallet => {
         const {
-          balance = 0,
+          balance,
           currencyAbbreviation,
           credentials: {network},
         } = wallet;
