@@ -3,6 +3,9 @@ import styled from 'styled-components/native';
 import {BaseText} from '../../../../components/styled/Text';
 import {Feather, SlateDark} from '../../../../styles/colors';
 import {ScreenGutter} from '../../../../components/styled/Containers';
+import {useSelector} from 'react-redux';
+import {RootState} from '../../../../store';
+import {formatFiatAmount} from '../../../../utils/helper-methods';
 
 const ProfileContainer = styled.View`
   margin: 0 ${ScreenGutter};
@@ -41,20 +44,23 @@ const SubTitle = styled(BaseText)`
 `;
 
 const PortfolioBalance = () => {
-  //  TODO: update me
-  const portfolioBalance = '$98,140.12 USD ';
-  const percentageDifference = '+2.5%';
+  const portfolioBalance = useSelector(
+    ({WALLET}: RootState) => WALLET.portfolioBalance,
+  );
+  // const percentageDifference = '+2.5%';
 
   return (
     <ProfileContainer>
       <Title>Portfolio Balance</Title>
-      <PortfolioBalanceText>{portfolioBalance}</PortfolioBalanceText>
-      <Row>
-        <PercentagePill>
-          <PercentagePillText>{percentageDifference}</PercentagePillText>
-        </PercentagePill>
-        <SubTitle>Last day</SubTitle>
-      </Row>
+      <PortfolioBalanceText>
+        {formatFiatAmount(portfolioBalance.current, 'usd')}
+      </PortfolioBalanceText>
+      {/*<Row>*/}
+      {/*  <PercentagePill>*/}
+      {/*    <PercentagePillText>{percentageDifference}</PercentagePillText>*/}
+      {/*  </PercentagePill>*/}
+      {/*  <SubTitle>Last day</SubTitle>*/}
+      {/*</Row>*/}
     </ProfileContainer>
   );
 };
