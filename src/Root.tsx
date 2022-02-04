@@ -65,6 +65,9 @@ import GiftCardStack, {
   GiftCardStackParamList,
 } from './navigation/tabs/shop/gift-card/GiftCardStack';
 import DecryptEnterPasswordModal from './navigation/wallet/components/DecryptEnterPasswordModal';
+import MerchantStack, {
+  MerchantStackParamList,
+} from './navigation/tabs/shop/merchant/MerchantStack';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -77,6 +80,7 @@ export type RootStackParamList = {
   Scan: NavigatorScreenParams<ScanStackParamList>;
   Shop: NavigatorScreenParams<ShopStackParamList>;
   GiftCard: NavigatorScreenParams<GiftCardStackParamList>;
+  Merchant: NavigatorScreenParams<MerchantStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
   SecuritySettings: NavigatorScreenParams<SecuritySettingsStackParamList>;
   ContactSettings: NavigatorScreenParams<ContactSettingsStackParamList>;
@@ -97,6 +101,7 @@ export enum RootStacks {
   CARD = 'Card',
   SCAN = 'Scan',
   GIFT_CARD = 'GiftCard',
+  MERCHANT = 'Merchant',
   // SETTINGS
   GENERAL_SETTINGS = 'GeneralSettings',
   SECURITY_SETTINGS = 'SecuritySettings',
@@ -116,6 +121,7 @@ export type NavScreenParams = NavigatorScreenParams<
     WalletStackParamList &
     CardStackParamList &
     GiftCardStackParamList &
+    MerchantStackParamList &
     GeneralSettingsStackParamList &
     SecuritySettingsStackParamList &
     ContactSettingsStackParamList &
@@ -276,6 +282,7 @@ export default () => {
               name={RootStacks.GIFT_CARD}
               component={GiftCardStack}
             />
+            <Root.Screen name={RootStacks.MERCHANT} component={MerchantStack} />
             {/* SETTINGS */}
             <Root.Screen
               name={RootStacks.GENERAL_SETTINGS}

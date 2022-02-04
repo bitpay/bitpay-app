@@ -12,14 +12,18 @@ import {
   HEIGHT,
   WIDTH,
 } from '../../../../../components/styled/Containers';
-import {horizontalPadding} from '../../components/styled/ShopTabComponents';
-import {SlateDark} from '../../../../../styles/colors';
+import {
+  getMastheadGradient,
+  horizontalPadding,
+} from '../../components/styled/ShopTabComponents';
+import {SlateDark, White} from '../../../../../styles/colors';
 import Button from '../../../../../components/button/Button';
 import GiftCardDenomSelector from '../../components/GiftCardDenomSelector';
 import GiftCardDenoms, {
   GiftCardDenomText,
 } from '../../components/GiftCardDenoms';
 import {formatAmount} from '../../../../../lib/gift-cards/gift-card';
+import {useTheme} from '@react-navigation/native';
 
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;
@@ -44,7 +48,8 @@ const Amount = styled(BaseText)`
 
 const DescriptionBox = styled.View`
   width: ${WIDTH}px;
-  background-color: transparent;
+  background-color: ${({theme}) =>
+    theme.dark ? theme.colors.background : 'transparent'};
   padding: 20px ${horizontalPadding}px 110px;
 `;
 
@@ -78,6 +83,7 @@ const BuyGiftCard = ({
   route,
   navigation,
 }: StackScreenProps<GiftCardStackParamList, 'BuyGiftCard'>) => {
+  const theme = useTheme();
   const {cardConfig} = route.params;
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -91,7 +97,7 @@ const BuyGiftCard = ({
           alignItems: 'center',
           minHeight: HEIGHT - (Platform.OS === 'android' ? 80 : 110),
         }}>
-        <GradientBox colors={['rgba(245, 247, 248, 0)', '#F5F7F8']}>
+        <GradientBox colors={getMastheadGradient(theme)}>
           <RemoteImage
             uri={cardConfig.cardImage}
             height={169}
@@ -117,7 +123,11 @@ const BuyGiftCard = ({
         <DescriptionBox>
           <Markdown
             style={{
-              body: {color: SlateDark, fontFamily, fontSize: 16},
+              body: {
+                color: theme.dark ? White : SlateDark,
+                fontFamily,
+                fontSize: 16,
+              },
             }}>
             {cardConfig.description}
           </Markdown>
