@@ -9,7 +9,6 @@ import Button from '../../../components/button/Button';
 import {
   ActionContainer,
   Br,
-  CtaContainerAbsolute,
   ScreenGutter,
 } from '../../../components/styled/Containers';
 import {
@@ -139,32 +138,22 @@ const CardIntro: React.FC = () => {
           </TextAlign>
         </ContentContainer>
 
-        <Spacer height={200} />
+        <ContentContainer>
+          <ActionContainer>
+            <Button onPress={() => onGetCardPress('createAccount')}>
+              Sign Up
+            </Button>
+          </ActionContainer>
+
+          <ActionContainer>
+            <Button
+              buttonStyle="secondary"
+              onPress={() => onGetCardPress('login')}>
+              I already have an account
+            </Button>
+          </ActionContainer>
+        </ContentContainer>
       </ScrollView>
-
-      <CtaContainerAbsolute
-        background={true}
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 4},
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
-          elevation: 5,
-        }}>
-        <ActionContainer>
-          <Button onPress={() => onGetCardPress('createAccount')}>
-            Sign Up
-          </Button>
-        </ActionContainer>
-
-        <ActionContainer>
-          <Button
-            buttonStyle="secondary"
-            onPress={() => onGetCardPress('login')}>
-            I already have an account
-          </Button>
-        </ActionContainer>
-      </CtaContainerAbsolute>
     </>
   );
 };
