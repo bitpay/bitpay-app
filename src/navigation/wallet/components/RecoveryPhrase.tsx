@@ -52,6 +52,7 @@ import {
   getNetworkName,
 } from '../../../utils/helper-methods';
 import {DefaultDerivationPath} from '../../../constants/defaultDerivationPath';
+import {startUpdateAllWalletBalancesForKey} from '../../../store/wallet/effects/balance/balance';
 
 const Gutter = '10px';
 const ScrollViewContainer = styled.ScrollView`
@@ -267,6 +268,8 @@ const RecoveryPhrase = () => {
           await dispatch<Key>(startImportMnemonic(importData, opts))
         : // @ts-ignore
           await dispatch<Key>(startImportWithDerivationPath(importData, opts));
+
+      await dispatch(startUpdateAllWalletBalancesForKey(key));
 
       navigateToTermsOrOverview({
         context: route.params?.context,

@@ -167,31 +167,41 @@ const updateWalletBalance = ({
   rates: Rates;
 }): Promise<WalletBalance> => {
   return new Promise(async resolve => {
-    wallet.getStatus({}, (err: Error, status: WalletStatus) => {
-      const {
-        currencyAbbreviation,
-        balance: lastKnownBalance,
-        credentials: {network},
-      } = wallet;
+    const {
+      currencyAbbreviation,
+      balance: lastKnownBalance,
+      credentials: {network, token, multisigEthInfo},
+    } = wallet;
 
-      if (err) {
-        return resolve(lastKnownBalance);
-      }
+    wallet.getStatus(
+      {
+        tokenAddress: token ? token.address : null,
+        multisigContractAddress: multisigEthInfo
+          ? multisigEthInfo.multisigContractAddress
+          : null,
+      },
+      (err: Error, status: WalletStatus) => {
+        if (err) {
+          return resolve(lastKnownBalance);
+        }
+        try {
+          const {totalAmount} = status.balance;
 
-      try {
-        const {totalAmount} = status.balance;
-        const newBalance = {
-          crypto: formatCryptoAmount(totalAmount, currencyAbbreviation),
-          fiat:
-            network === Network.testnet
-              ? toFiat(totalAmount, 'USD', currencyAbbreviation, rates)
-              : 0,
-        };
+          const newBalance = {
+            crypto: formatCryptoAmount(totalAmount, currencyAbbreviation),
+            fiat:
+              network === Network.mainnet
+                ? toFiat(totalAmount, 'USD', currencyAbbreviation, rates)
+                : 0,
+          };
 
-        resolve(newBalance);
-      } catch (err) {
-        resolve(lastKnownBalance);
-      }
-    });
+          console.log(newBalance);
+
+          resolve(newBalance);
+        } catch (err) {
+          resolve(lastKnownBalance);
+        }
+      },
+    );
   });
 };
