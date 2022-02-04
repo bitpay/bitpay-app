@@ -1,6 +1,8 @@
 export interface Session {
   isAuthenticated: boolean;
   csrfToken: string;
+  noCaptchaKey: string;
+  captchaDisabled?: boolean;
 }
 
 export interface User {

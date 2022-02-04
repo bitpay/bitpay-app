@@ -27,6 +27,20 @@ export const GeneralError: BottomNotificationConfig = {
   ],
 };
 
+export const BalanceUpdateError: BottomNotificationConfig = {
+  type: 'error',
+  title: 'Something went wrong',
+  message: 'Failed to update balance, please try again later.',
+  enableBackdropDismiss: true,
+  actions: [
+    {
+      text: 'OK',
+      action: () => {},
+      primary: true,
+    },
+  ],
+};
+
 export const WrongPasswordError = (): BottomNotificationConfig => {
   const wrongPasswordList: BottomNotificationListType[] = [
     {

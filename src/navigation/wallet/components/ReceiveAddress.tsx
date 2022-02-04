@@ -6,7 +6,6 @@ import QRCode from 'react-native-qrcode-svg';
 import styled from 'styled-components/native';
 
 import {useLogger} from '../../../utils/hooks';
-import {WalletActions} from '../../../store/wallet';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
 import {BaseText, H4, Paragraph} from '../../../components/styled/Text';
@@ -164,7 +163,7 @@ const CloseButtonText = styled(Paragraph)`
 interface Props {
   isVisible: boolean;
   closeModal: () => void;
-  wallet: Wallet;
+  wallet: Wallet | undefined;
 }
 
 const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
