@@ -58,7 +58,7 @@ const HomeContainer = styled.SafeAreaView`
 const HomeLink = styled(BaseText)`
   font-weight: 500;
   font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? White : Action)};
+  color: ${({theme}) => theme.colors.link};
   text-decoration: ${({theme: {dark}}) => (dark ? 'underline' : 'none')};
   text-decoration-color: ${White};
 `;

@@ -88,13 +88,13 @@ export const Disclaimer = styled(BaseText)`
   letter-spacing: 0;
 `;
 
-type ExponentValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-
 interface ExponentProps {
-  i: ExponentValue;
+  i: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 }
 
-const EXPONENT_UNICODE_MAP: {[k in ExponentValue]: string} = {
+const EXPONENT_UNICODE_MAP: {
+  [k in 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9]: string;
+} = {
   0: '\u2070',
   1: '\u00B9',
   2: '\u00B2',
