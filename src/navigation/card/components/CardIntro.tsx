@@ -9,6 +9,7 @@ import Button from '../../../components/button/Button';
 import {
   ActionContainer,
   Br,
+  CtaContainerAbsolute,
   ScreenGutter,
 } from '../../../components/styled/Containers';
 import {
@@ -130,30 +131,38 @@ const CardIntro: React.FC = () => {
           <Smallest>{t('TermsAndConditionsMastercard2')}</Smallest>
         </ContentContainer>
 
-        <ContentContainer>
+        <ContentContainer style={{marginBottom: 200}}>
           <TextAlign align="center">
             <A href={URL.MASTERCARD_CARDHOLDER_AGREEMENT}>
               Cardholder Agreement
             </A>
           </TextAlign>
         </ContentContainer>
-
-        <ContentContainer>
-          <ActionContainer>
-            <Button onPress={() => onGetCardPress('createAccount')}>
-              Sign Up
-            </Button>
-          </ActionContainer>
-
-          <ActionContainer>
-            <Button
-              buttonStyle="secondary"
-              onPress={() => onGetCardPress('login')}>
-              I already have an account
-            </Button>
-          </ActionContainer>
-        </ContentContainer>
       </ScrollView>
+
+      <CtaContainerAbsolute
+        background={true}
+        style={{
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 4},
+          shadowOpacity: 0.1,
+          shadowRadius: 12,
+          elevation: 5,
+        }}>
+        <ActionContainer>
+          <Button onPress={() => onGetCardPress('createAccount')}>
+            Sign Up
+          </Button>
+        </ActionContainer>
+
+        <ActionContainer>
+          <Button
+            buttonStyle="secondary"
+            onPress={() => onGetCardPress('login')}>
+            I already have an account
+          </Button>
+        </ActionContainer>
+      </CtaContainerAbsolute>
     </>
   );
 };
