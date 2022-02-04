@@ -1,15 +1,24 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {ScrollView, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import MastercardAngledImg from '../../../../assets/img/card/bitpay-card-mc-angled.svg';
+import A from '../../../components/anchor/Anchor';
 import Button from '../../../components/button/Button';
 import {
   ActionContainer,
+  Br,
   CtaContainerAbsolute,
   ScreenGutter,
 } from '../../../components/styled/Containers';
-import {H3, Paragraph} from '../../../components/styled/Text';
+import {
+  Exp,
+  H3,
+  Paragraph,
+  Smallest,
+  TextAlign,
+} from '../../../components/styled/Text';
 import {Network} from '../../../constants';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {RootState} from '../../../store';
@@ -54,6 +63,7 @@ const IntroHero = () => {
 
 const CardIntro: React.FC = () => {
   const dispatch = useDispatch();
+  const {t} = useTranslation();
   const network = useSelector<RootState, Network>(({APP}) => APP.network);
 
   const onGetCardPress = async (context?: 'login' | 'createAccount') => {
@@ -96,6 +106,38 @@ const CardIntro: React.FC = () => {
         <Spacer height={56} />
 
         {CardFeatureTabs}
+
+        <ContentContainer>
+          <Paragraph>
+            <A href="https://bitpay.com/about/privacy">{t('Privacy Policy')}</A>
+          </Paragraph>
+        </ContentContainer>
+
+        <ContentContainer>
+          <Smallest>
+            <Exp i={1} /> Network fees and miner fees may apply.
+          </Smallest>
+
+          <Smallest>
+            <Exp i={2} /> Third party fees may apply.
+          </Smallest>
+
+          <Br />
+
+          <Smallest>{t('TermsAndConditionsMastercard')}</Smallest>
+
+          <Br />
+
+          <Smallest>{t('TermsAndConditionsMastercard2')}</Smallest>
+        </ContentContainer>
+
+        <ContentContainer>
+          <TextAlign align="center">
+            <A href="https://bitpay.com/assets/pdfs/mcb-mastercard-cha-09-21.pdf">
+              Cardholder Agreement
+            </A>
+          </TextAlign>
+        </ContentContainer>
 
         <Spacer height={200} />
       </ScrollView>
