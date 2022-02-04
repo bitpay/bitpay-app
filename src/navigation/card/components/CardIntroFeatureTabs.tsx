@@ -3,9 +3,9 @@ import {View} from 'react-native';
 import styled from 'styled-components/native';
 import A from '../../../components/anchor/Anchor';
 import {ScreenGutter} from '../../../components/styled/Containers';
-import {TextAlign} from '../../../components/styled/Text';
+import {BaseText, TextAlign} from '../../../components/styled/Text';
 import Tabs from '../../../components/tabs/Tabs';
-import {NeutralSlate, White} from '../../../styles/colors';
+import {LightBlack, NeutralSlate} from '../../../styles/colors';
 
 interface TableRowProps {
   index?: number;
@@ -16,21 +16,25 @@ const MINER_FEES_URL =
 
 const TableRow = styled.View<TableRowProps>`
   align-items: center;
-  background-color: ${({index}) => ((index || 0) % 2 ? White : NeutralSlate)};
+  background-color: ${({index, theme}) => {
+    const stripeColor = theme.dark ? LightBlack : NeutralSlate;
+
+    return (index || 0) % 2 ? 'transparent' : stripeColor;
+  }};
   flex-direction: row;
   flex-wrap: nowrap;
   min-height: 80px;
   padding: ${ScreenGutter};
 `;
 
-const TableCellTitle = styled.Text`
+const TableCellTitle = styled(BaseText)`
   flex: 1;
   font-weight: bold;
   padding-right: 8px;
   text-align: left;
 `;
 
-const TableCellDescription = styled.Text`
+const TableCellDescription = styled(BaseText)`
   flex: 1;
   padding-left: 8px;
   text-align: right;
@@ -108,7 +112,7 @@ const CARD_INTRO_TABS = [
   {
     title: 'Limits',
     content: (
-      <View>
+      <>
         {LIMITS.map((row, idx) => {
           return (
             <TableRow key={idx} index={idx}>
@@ -117,13 +121,13 @@ const CARD_INTRO_TABS = [
             </TableRow>
           );
         })}
-      </View>
+      </>
     ),
   },
   {
     title: 'Fees',
     content: (
-      <View>
+      <>
         {FEES.map((row, idx) => {
           return (
             <TableRow key={idx} index={idx}>
@@ -132,7 +136,7 @@ const CARD_INTRO_TABS = [
             </TableRow>
           );
         })}
-      </View>
+      </>
     ),
   },
 ];

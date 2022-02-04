@@ -25,8 +25,6 @@ const ContentContainer = styled.View`
   padding: ${ScreenGutter};
 `;
 
-const HeroText = styled(H3)``;
-
 const IntroHero = () => {
   return (
     <View style={{flexDirection: 'row'}}>
@@ -38,11 +36,11 @@ const IntroHero = () => {
           paddingRight: 40,
         }}>
         <View>
-          <HeroText>Fund it.</HeroText>
+          <H3>Fund it.</H3>
 
-          <HeroText>Spend it.</HeroText>
+          <H3>Spend it.</H3>
 
-          <HeroText>Live on crypto.</HeroText>
+          <H3>Live on crypto.</H3>
         </View>
       </View>
       <View>
@@ -99,7 +97,7 @@ const CardIntro: React.FC = () => {
 
         {CardFeatureTabs}
 
-        <Spacer height={100} />
+        <Spacer height={200} />
       </ScrollView>
 
       <CtaContainerAbsolute

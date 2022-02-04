@@ -132,7 +132,7 @@ interface TextAlignProps {
   align: 'center' | 'left' | 'right';
 }
 
-export const TextAlign = styled.Text<TextAlignProps>`
+export const TextAlign = styled(BaseText)<TextAlignProps>`
   ${props =>
     css`
       text-align: ${props.align};
