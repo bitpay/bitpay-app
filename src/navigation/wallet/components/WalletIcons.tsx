@@ -54,6 +54,63 @@ const Encrypt = () => {
   );
 };
 
+const RequestAmount = () => {
+  const theme = useTheme();
+  const fill = theme.dark ? White : Action;
+
+  return (
+    <Svg.Svg width="19" height="20" viewBox="0 0 19 20" fill="none">
+      <Svg.Path
+        fill={fill}
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M1.58334 2.12128H8.70834V9.24628H1.58334V2.12128ZM7.41289 7.95082V3.41673H2.8788V7.95082H7.41289Z"
+      />
+      <Svg.Path
+        fill={fill}
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M1.58334 10.8296H8.70834V17.9546H1.58334V10.8296ZM7.41289 16.6592V12.1251H2.8788V16.6592H7.41289Z"
+      />
+      <Svg.Path
+        fill={fill}
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M10.2917 2.12128H17.4167V9.24628H10.2917V2.12128ZM16.1212 7.95082V3.41673H11.5871V7.95082H16.1212Z"
+      />
+      <Svg.Rect
+        fill={fill}
+        x="3.95834"
+        y="4.49628"
+        width="2.375"
+        height="2.375"
+      />
+      <Svg.Rect
+        fill={fill}
+        x="12.6667"
+        y="4.49628"
+        width="2.375"
+        height="2.375"
+      />
+      <Svg.Rect
+        fill={fill}
+        x="3.95834"
+        y="13.2046"
+        width="2.375"
+        height="2.375"
+      />
+      <Svg.Path
+        fill={fill}
+        d="M17.4167 10.8296V14.788H16.1212V12.1491H14.8258V14.1282H10.2917V11.4893H11.5871V12.8088H13.5303V10.8296H17.4167Z"
+      />
+      <Svg.Path
+        fill={fill}
+        d="M11.5584 15.5796V16.7671H16.625V17.9546H10.2917V15.5796H11.5584Z"
+      />
+    </Svg.Svg>
+  );
+};
+
 const Settings = () => {
   const theme = useTheme();
 
@@ -69,9 +126,26 @@ const Settings = () => {
   );
 };
 
+const ShareAddress = () => {
+  const theme = useTheme();
+
+  return (
+    <Svg.Svg width="19" height="20" viewBox="0 0 19 20" fill="none">
+      <Svg.Path
+        fill={theme.dark ? White : Action}
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M9.5 0.537933L13.4583 5.28793H10.2917V8.4546H8.70833V5.28793H5.54167L9.5 0.537933ZM8.70833 8.4546L3.16667 8.4546C2.72944 8.4546 2.375 8.80904 2.375 9.24627V18.7463C2.375 19.1835 2.72944 19.5379 3.16667 19.5379H15.8333C16.2706 19.5379 16.625 19.1835 16.625 18.7463V9.24627C16.625 8.80904 16.2706 8.4546 15.8333 8.4546H10.2917V13.9963H8.70833L8.70833 8.4546Z"
+      />
+    </Svg.Svg>
+  );
+};
+
 export default {
   Add,
   Backup,
   Encrypt,
+  RequestAmount,
+  ShareAddress,
   Settings,
 };
