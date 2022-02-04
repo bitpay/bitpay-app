@@ -23,6 +23,9 @@ import haptic from '../../../../components/haptic-feedback/haptic';
 import Clipboard from '@react-native-community/clipboard';
 import QRCode from 'react-native-qrcode-svg';
 import {Black, White} from '../../../../styles/colors';
+import ShareIcon from '../../../../components/icons/share/Share';
+import {Share} from 'react-native';
+import GhostSvg from '../../../../../assets/img/ghost-straight-face.svg';
 
 const SpecificAmtQRContainer = styled.SafeAreaView`
   flex: 1;
@@ -44,6 +47,8 @@ const QRContainer = styled.View`
   padding: 25px;
   border-radius: 12px;
   background-color: ${White};
+  min-height: 390px;
+  justify-content: center;
 `;
 
 const QRCodeContainer = styled.View`
@@ -53,11 +58,11 @@ const QRCodeContainer = styled.View`
 
 const QRHeader = styled(H4)`
   text-align: center;
-  margin-bottom: 20px;
+  margin: 10px 0 20px;
   color: ${Black};
 `;
 
-export const CopyToClipboard = styled.TouchableOpacity`
+const CopyToClipboard = styled.TouchableOpacity`
   border: 1px solid #9ba3ae;
   border-radius: 4px;
   padding: 0 10px;
@@ -66,18 +71,24 @@ export const CopyToClipboard = styled.TouchableOpacity`
   flex-direction: row;
 `;
 
-export const AddressText = styled(BaseText)`
+const AddressText = styled(BaseText)`
   font-size: 16px;
   color: #6f7782;
   padding: 0 20px 0 10px;
 `;
 
-export const CopyImgContainer = styled.View`
+const CopyImgContainer = styled.View`
   border-right-color: #eceffd;
   border-right-width: 1px;
   padding-right: 10px;
   height: 25px;
   justify-content: center;
+`;
+
+const ShareIconContainer = styled.TouchableOpacity`
+  padding-top: 10px;
+  transform: scale(1.1);
+  padding-right: 15px;
 `;
 
 const RequestSpecificAmountQR = () => {
@@ -92,40 +103,57 @@ const RequestSpecificAmountQR = () => {
   const [formattedAmount, setFormattedAmount] = useState<number>();
   const [address, setAddress] = useState<string>();
   const [receiveAddressAmt, setReceiveAddressAmt] = useState<string>();
+  const [loading, setLoading] = useState(true);
 
   useLayoutEffect(() => {
+    const onPressShare = async () => {
+      if (receiveAddressAmt) {
+        await Share.share({
+          message: receiveAddressAmt,
+        });
+      }
+    };
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{walletName}</HeaderTitle>,
+      headerRight: () => (
+        <ShareIconContainer activeOpacity={0.75} onPress={onPressShare}>
+          <ShareIcon />
+        </ShareIconContainer>
+      ),
     });
-  }, [navigation]);
+  }, [navigation, walletName]);
 
-  CreateWalletAddress(wallet).then(addr => {
-    setAddress(addr);
-    let qrAddress = addr;
-    if (currencyAbbreviation === 'bch') {
-      qrAddress = GetProtocolPrefix(currencyAbbreviation, network) + ':' + addr;
-    }
+  CreateWalletAddress(wallet)
+    .then(addr => {
+      let qrAddress = addr;
+      if (currencyAbbreviation === 'bch') {
+        qrAddress =
+          GetProtocolPrefix(currencyAbbreviation, network) + ':' + addr;
+      }
+      setAddress(qrAddress);
 
-    const _formattedAmount = FormatCryptoAmount(
-      +requestAmount,
-      currencyAbbreviation,
-    );
+      const _formattedAmount = FormatCryptoAmount(
+        requestAmount,
+        currencyAbbreviation,
+      );
 
-    setFormattedAmount(_formattedAmount);
-    if (IsUtxoCoin(currencyAbbreviation) || currencyAbbreviation === 'xrp') {
-      qrAddress = qrAddress + '?address=' + _formattedAmount;
-    } else {
-      qrAddress = qrAddress + '?value=' + _formattedAmount;
-    }
+      setFormattedAmount(_formattedAmount);
+      if (IsUtxoCoin(currencyAbbreviation) || currencyAbbreviation === 'xrp') {
+        qrAddress = qrAddress + '?address=' + _formattedAmount;
+      } else {
+        qrAddress = qrAddress + '?value=' + _formattedAmount;
+      }
 
-    setReceiveAddressAmt(qrAddress);
-  });
+      setReceiveAddressAmt(qrAddress);
+      setLoading(false);
+    })
+    .catch(() => setLoading(false));
 
   const [copied, setCopied] = useState(false);
 
   const copyToClipboard = () => {
     haptic('impactLight');
-    if (!copied) {
+    if (!copied && address) {
       Clipboard.setString(address);
       setCopied(true);
     }
@@ -148,7 +176,7 @@ const RequestSpecificAmountQR = () => {
         <H5>Payment Request</H5>
         <ParagraphContainer>
           <Paragraph>
-            Share this QR code to receive {formattedAmount}{' '}
+            Share this QR code to receive {formattedAmount}
             {currencyAbbreviation.toUpperCase()} in your wallet Ethereum.
           </Paragraph>
         </ParagraphContainer>
@@ -161,25 +189,35 @@ const RequestSpecificAmountQR = () => {
               shadowOpacity: 0.1,
               shadowRadius: 5,
               borderRadius: 12,
-
               elevation: 3,
             },
           ]}>
-          <QRHeader>
-            Receive {formattedAmount} {currencyAbbreviation.toUpperCase()}
-          </QRHeader>
-          <CopyToClipboard onPress={copyToClipboard} activeOpacity={0.7}>
-            <CopyImgContainer>
-              {!copied ? <CopySvg width={17} /> : <CopiedSvg width={17} />}
-            </CopyImgContainer>
-            <AddressText numberOfLines={1} ellipsizeMode={'tail'}>
-              {address}
-            </AddressText>
-          </CopyToClipboard>
+          {address ? (
+            <>
+              <QRHeader>
+                Receive {formattedAmount} {currencyAbbreviation.toUpperCase()}
+              </QRHeader>
+              <CopyToClipboard onPress={copyToClipboard} activeOpacity={0.7}>
+                <CopyImgContainer>
+                  {!copied ? <CopySvg width={17} /> : <CopiedSvg width={17} />}
+                </CopyImgContainer>
+                <AddressText numberOfLines={1} ellipsizeMode={'tail'}>
+                  {address}
+                </AddressText>
+              </CopyToClipboard>
 
-          <QRCodeContainer>
-            <QRCode value={receiveAddressAmt} size={200} />
-          </QRCodeContainer>
+              <QRCodeContainer>
+                <QRCode value={receiveAddressAmt} size={200} />
+              </QRCodeContainer>
+            </>
+          ) : loading ? (
+            <QRHeader>Generating Address...</QRHeader>
+          ) : (
+            <>
+              <GhostSvg />
+              <QRHeader>Something went wrong. Please try again.</QRHeader>
+            </>
+          )}
         </QRContainer>
       </ScrollView>
     </SpecificAmtQRContainer>

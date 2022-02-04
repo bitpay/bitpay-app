@@ -49,7 +49,7 @@ const RequestSpecificAmount = () => {
               onPress={() => {
                 navigation.navigate('Wallet', {
                   screen: 'RequestSpecificAmountQR',
-                  params: {wallet, requestAmount: amount},
+                  params: {wallet, requestAmount: +amount},
                 });
               }}
               disabled={!+amount}>

@@ -83,6 +83,8 @@ const LoadingContainer = styled.View`
 
 const LoadingText = styled(H4)`
   color: ${({theme}) => theme.colors.text};
+  margin: 10px 0;
+  text-align: center;
 `;
 
 const ReceiveAddressContainer = styled(ModalContainer)`
@@ -252,6 +254,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
         ) : (
           <LoadingContainer>
             <GhostSvg />
+            <LoadingText>Something went wrong. Please try again.</LoadingText>
           </LoadingContainer>
         )}
 

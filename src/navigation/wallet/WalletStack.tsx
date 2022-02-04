@@ -54,7 +54,7 @@ export type WalletStackParamList = {
   Amount: AmountParamList;
   SendTo: {wallet: WalletModel};
   RequestSpecificAmount: {wallet: WalletModel};
-  RequestSpecificAmountQR: {wallet: WalletModel; requestAmount: string};
+  RequestSpecificAmountQR: {wallet: WalletModel; requestAmount: number};
 };
 
 export enum WalletScreens {
