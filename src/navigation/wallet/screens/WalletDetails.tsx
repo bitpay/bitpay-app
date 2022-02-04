@@ -18,7 +18,10 @@ import SettingsSvg from '../../../../assets/img/wallet/settings.svg';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import ReceiveAddress from '../components/ReceiveAddress';
 import {StackScreenProps} from '@react-navigation/stack';
-import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/balance';
+import {
+  startUpdateAllKeyAndWalletBalances,
+  startUpdateWalletBalance
+} from '../../../store/wallet/effects/balance/balance';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {BalanceUpdateError} from '../components/ErrorMessages';
@@ -27,10 +30,7 @@ import {FlatList, RefreshControl} from 'react-native';
 import {SlateDark} from '../../../styles/colors';
 import {RootState} from '../../../store';
 import {buildUIFormattedWallet} from './KeyOverview';
-import {
-  findWalletById,
-  isBalanceCacheKeyStale,
-} from '../../../store/wallet/utils/wallet';
+import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {sleep} from '../../../utils/helper-methods';
@@ -71,9 +71,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const {walletId, key} = route.params;
-  const balanceCacheKey = useSelector(
-    ({WALLET}: RootState) => WALLET.balanceCacheKey,
-  );
   const fullWalletObj = useSelector(({WALLET}: RootState) =>
     findWalletById(WALLET.keys[key.id].wallets, walletId),
   ) as Wallet;
@@ -134,7 +131,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     await sleep(1000);
 
     try {
-      await dispatch(startUpdateWalletBalance({key, wallet: fullWalletObj}));
+      await Promise.all([
+        await dispatch(startUpdateWalletBalance({key, wallet: fullWalletObj})),
+        sleep(1000),
+      ]);
       dispatch(updatePortfolioBalance());
     } catch (err) {
       dispatch(showBottomNotificationModal(BalanceUpdateError));

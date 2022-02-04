@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {BaseText, H5, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
@@ -139,9 +139,10 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   }, [navigation]);
 
   const {key} = route.params;
-  const {wallets, totalBalance} = useSelector(
-    ({WALLET}: RootState) => WALLET.keys[key.id],
+  const {wallets = [], totalBalance} = useSelector(
+    ({WALLET}: RootState) => WALLET.keys[key.id] || {},
   );
+
   const walletList = buildNestedWalletList(wallets);
 
   const keyOptions: Array<Option> = [
@@ -175,9 +176,11 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await sleep(1000);
     try {
-      await dispatch(startUpdateAllWalletBalancesForKey(key));
+      await Promise.all([
+        dispatch(startUpdateAllWalletBalancesForKey(key)),
+        sleep(1000),
+      ]);
       dispatch(updatePortfolioBalance());
     } catch (err) {
       dispatch(showBottomNotificationModal(BalanceUpdateError));

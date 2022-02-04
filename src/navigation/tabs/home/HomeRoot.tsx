@@ -96,9 +96,11 @@ const HomeRoot = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await sleep(1000);
     try {
-      await dispatch(startUpdateAllKeyAndWalletBalances());
+      await Promise.all([
+        dispatch(startUpdateAllKeyAndWalletBalances()),
+        sleep(1000),
+      ]);
       dispatch(updatePortfolioBalance());
     } catch (err) {
       dispatch(showBottomNotificationModal(BalanceUpdateError));
