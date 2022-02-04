@@ -88,7 +88,7 @@ const PillContainer = styled.TouchableOpacity<ButtonOptionProps>`
   border: 2px solid
     ${({secondary, theme}) => {
       if (secondary) {
-        return theme?.dark ? Midnight : Air;
+        return 'transparent';
       }
 
       return theme?.dark ? Midnight : Air;

@@ -264,7 +264,13 @@ export default () => {
               name={RootStacks.WALLET}
               component={WalletStack}
             />
-            <Root.Screen name={RootStacks.CARD} component={CardStack} />
+            <Root.Screen
+              name={RootStacks.CARD}
+              component={CardStack}
+              options={{
+                gestureEnabled: false,
+              }}
+            />
             <Root.Screen name={RootStacks.SCAN} component={ScanStack} />
             <Root.Screen
               name={RootStacks.GIFT_CARD}
