@@ -1,18 +1,60 @@
-import {useTheme} from '@react-navigation/native';
 import React from 'react';
-import {Button, StyleProp, Text, TextStyle, View} from 'react-native';
+import {ScrollView, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
+import styled from 'styled-components/native';
+import MastercardAngledImg from '../../../../assets/img/card/bitpay-card-mc-angled.svg';
+import Button from '../../../components/button/Button';
+import {
+  CtaContainerAbsolute,
+  ScreenGutter,
+} from '../../../components/styled/Containers';
+import {H3, Paragraph} from '../../../components/styled/Text';
 import {Network} from '../../../constants';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {RootState} from '../../../store';
 import {AppEffects} from '../../../store/app';
+import CardFeatureTabs from './CardIntroFeatureTabs';
+import CardHighlights from './CardIntroHighlights';
+
+const Spacer = styled.View<{height: number}>`
+  height: ${({height}) => height}px;
+`;
+
+const ContentContainer = styled.View`
+  padding: ${ScreenGutter};
+`;
+
+const HeroText = styled(H3)``;
+
+const IntroHero = () => {
+  return (
+    <View style={{flexDirection: 'row'}}>
+      <View
+        style={{
+          flexBasis: '40%',
+          marginTop: 40,
+          alignItems: 'flex-end',
+          paddingRight: 40,
+        }}>
+        <View>
+          <HeroText>Fund it.</HeroText>
+
+          <HeroText>Spend it.</HeroText>
+
+          <HeroText>Live on crypto.</HeroText>
+        </View>
+      </View>
+      <View>
+        <View style={{alignItems: 'flex-start'}}>
+          <MastercardAngledImg />
+        </View>
+      </View>
+    </View>
+  );
+};
 
 const CardIntro: React.FC = () => {
   const dispatch = useDispatch();
-  const theme = useTheme();
-  const textStyle: StyleProp<TextStyle> = {
-    color: theme.colors.text,
-  };
   const network = useSelector<RootState, Network>(({APP}) => APP.network);
 
   const onGetCardPress = async (context?: 'login' | 'createAccount') => {
@@ -28,14 +70,55 @@ const CardIntro: React.FC = () => {
   };
 
   return (
-    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-      <Text style={textStyle}>Get the BitPay Card! {network}</Text>
-      <Button title="Sign up" onPress={() => onGetCardPress('createAccount')} />
-      <Button
-        title="I already have an account"
-        onPress={() => onGetCardPress('login')}
-      />
-    </View>
+    <>
+      <ScrollView>
+        <ContentContainer>
+          <IntroHero />
+
+          <Spacer height={32} />
+
+          <Paragraph>
+            The fastest, easiest way to turn your crypto into dollars for
+            shopping. Load funds in the BitPay App and spend in minutes.
+          </Paragraph>
+
+          <Spacer height={24} />
+
+          {CardHighlights}
+
+          <Spacer height={24} />
+
+          <Paragraph>
+            Shop online or in stores instantly with the virtual BitPay Prepaid
+            Mastercard©, or order your physical card for free today.
+          </Paragraph>
+        </ContentContainer>
+
+        <Spacer height={56} />
+
+        {CardFeatureTabs}
+
+        <Spacer height={100} />
+      </ScrollView>
+
+      <CtaContainerAbsolute
+        background={true}
+        style={{
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 4},
+          shadowOpacity: 0.1,
+          shadowRadius: 12,
+          elevation: 5,
+        }}>
+        <Button onPress={() => onGetCardPress('createAccount')}>Sign Up</Button>
+
+        <Spacer height={16} />
+
+        <Button buttonStyle="secondary" onPress={() => onGetCardPress('login')}>
+          I already have an account
+        </Button>
+      </CtaContainerAbsolute>
+    </>
   );
 };
 
