@@ -24,12 +24,14 @@ export const AuthApi = {
     email: string,
     password: string,
     csrfToken: string,
+    gCaptchaResponse?: string,
   ): Promise<LoginResponse> {
     const hashedPassword = hashPassword(password);
 
     const body = {
       email,
       hashedPassword,
+      gCaptchaResponse,
       authSource: '',
     };
 
