@@ -9,6 +9,7 @@ import WorldwideIcon from '../../../../assets/img/card/icons/intro-worldwide.svg
 import A from '../../../components/anchor/Anchor';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, Exp, H4} from '../../../components/styled/Text';
+import {URL} from '../../../constants';
 
 interface CardHighlight {
   icon: React.FC<SvgProps>;
@@ -50,10 +51,7 @@ const CARD_HIGHLIGHTS: CardHighlight[] = [
     description: (
       <BaseText>
         Reload your balance with no conversion fees. Powered by our{' '}
-        <A href="https://bitpay.com/exchange-rates">
-          competitive exchange rates
-        </A>
-        .
+        <A href={URL.EXCHANGE_RATES}>competitive exchange rates</A>.
       </BaseText>
     ),
   },

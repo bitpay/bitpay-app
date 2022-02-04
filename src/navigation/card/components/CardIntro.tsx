@@ -18,7 +18,7 @@ import {
   Smallest,
   TextAlign,
 } from '../../../components/styled/Text';
-import {Network} from '../../../constants';
+import {Network, URL} from '../../../constants';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {RootState} from '../../../store';
 import {AppEffects} from '../../../store/app';
@@ -108,7 +108,7 @@ const CardIntro: React.FC = () => {
 
         <ContentContainer>
           <Paragraph>
-            <A href="https://bitpay.com/about/privacy">{t('Privacy Policy')}</A>
+            <A href={URL.PRIVACY_POLICY}>{t('Privacy Policy')}</A>
           </Paragraph>
         </ContentContainer>
 
@@ -132,7 +132,7 @@ const CardIntro: React.FC = () => {
 
         <ContentContainer>
           <TextAlign align="center">
-            <A href="https://bitpay.com/assets/pdfs/mcb-mastercard-cha-09-21.pdf">
+            <A href={URL.MASTERCARD_CARDHOLDER_AGREEMENT}>
               Cardholder Agreement
             </A>
           </TextAlign>

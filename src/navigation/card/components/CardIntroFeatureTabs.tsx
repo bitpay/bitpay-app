@@ -5,14 +5,12 @@ import A from '../../../components/anchor/Anchor';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, TextAlign} from '../../../components/styled/Text';
 import Tabs from '../../../components/tabs/Tabs';
+import {URL} from '../../../constants';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
 
 interface TableRowProps {
   index?: number;
 }
-
-const MINER_FEES_URL =
-  'https://support.bitpay.com/hc/en-us/articles/115003393863-What-are-bitcoin-miner-fees-';
 
 const TableRow = styled.View<TableRowProps>`
   align-items: center;
@@ -93,7 +91,7 @@ const FEES: CardTableData[] = [
       <View>
         <TextAlign align="right">No conversion fee</TextAlign>
         <TextAlign align="right">
-          <A href={MINER_FEES_URL}>Network and miner fees may apply</A>
+          <A href={URL.HELP_MINER_FEES}>Network and miner fees may apply</A>
         </TextAlign>
       </View>
     ),
