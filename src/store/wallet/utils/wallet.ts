@@ -12,7 +12,24 @@ import {Currencies, SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {BwcProvider} from '../../../lib/bwc';
 import {BALANCE_CACHE_DURATION} from '../../../constants/wallet';
-import {Network} from '../../../constants';
+
+const mapAbbreviationAndName = (
+  walletName: string,
+  coin: string,
+): {currencyAbbreviation: string; currencyName: string} => {
+  switch (coin) {
+    case 'pax':
+      return {
+        currencyAbbreviation: 'usdp',
+        currencyName: 'Pax Dollar',
+      };
+    default:
+      return {
+        currencyAbbreviation: coin,
+        currencyName: walletName,
+      };
+  }
+};
 
 // Formatted wallet obj - this is merged with BWC client
 export const buildWalletObj = (
@@ -32,17 +49,21 @@ export const buildWalletObj = (
     walletName?: string;
   },
 ): WalletObj => {
+  const {currencyName, currencyAbbreviation} = mapAbbreviationAndName(
+    walletName,
+    coin,
+  );
   return {
     id: walletId,
-    currencyName: walletName,
-    currencyAbbreviation: coin,
+    currencyName,
+    currencyAbbreviation,
     walletName: otherOpts?.walletName,
     balance,
     tokens,
     keyId,
-    img: SUPPORTED_CURRENCIES.includes(coin)
-      ? CurrencyListIcons[coin]
-      : tokenOpts[coin]?.logoURI,
+    img: SUPPORTED_CURRENCIES.includes(currencyAbbreviation)
+      ? CurrencyListIcons[currencyAbbreviation]
+      : tokenOpts[currencyAbbreviation]?.logoURI,
   };
 };
 
