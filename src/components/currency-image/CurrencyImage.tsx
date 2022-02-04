@@ -10,7 +10,7 @@ export const CurrencyImage = ({img, size = 40}: Props) => {
   const style = {width: size, height: size};
 
   if (!img) {
-    return <DefaultImage style={style} />;
+    return <DefaultImage {...style} />;
   }
 
   if (typeof img === 'string') {
