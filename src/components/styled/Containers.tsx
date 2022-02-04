@@ -184,7 +184,7 @@ export const SettingView = styled.View`
 `;
 
 export const ActionContainer = styled.View`
-  margin: 5px 0; ;
+  margin: 5px 0;
 `;
 
 // Info

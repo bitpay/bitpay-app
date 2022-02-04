@@ -5,6 +5,7 @@ import styled from 'styled-components/native';
 import MastercardAngledImg from '../../../../assets/img/card/bitpay-card-mc-angled.svg';
 import Button from '../../../components/button/Button';
 import {
+  ActionContainer,
   CtaContainerAbsolute,
   ScreenGutter,
 } from '../../../components/styled/Containers';
@@ -110,13 +111,19 @@ const CardIntro: React.FC = () => {
           shadowRadius: 12,
           elevation: 5,
         }}>
-        <Button onPress={() => onGetCardPress('createAccount')}>Sign Up</Button>
+        <ActionContainer>
+          <Button onPress={() => onGetCardPress('createAccount')}>
+            Sign Up
+          </Button>
+        </ActionContainer>
 
-        <Spacer height={16} />
-
-        <Button buttonStyle="secondary" onPress={() => onGetCardPress('login')}>
-          I already have an account
-        </Button>
+        <ActionContainer>
+          <Button
+            buttonStyle="secondary"
+            onPress={() => onGetCardPress('login')}>
+            I already have an account
+          </Button>
+        </ActionContainer>
       </CtaContainerAbsolute>
     </>
   );

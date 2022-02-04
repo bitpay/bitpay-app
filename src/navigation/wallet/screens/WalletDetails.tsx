@@ -18,10 +18,7 @@ import SettingsSvg from '../../../../assets/img/wallet/settings.svg';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import ReceiveAddress from '../components/ReceiveAddress';
 import {StackScreenProps} from '@react-navigation/stack';
-import {
-  startUpdateAllKeyAndWalletBalances,
-  startUpdateWalletBalance
-} from '../../../store/wallet/effects/balance/balance';
+import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/balance';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {BalanceUpdateError} from '../components/ErrorMessages';
@@ -91,7 +88,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         />
       ),
     });
-  }, [navigation]);
+  }, [navigation, uiFormattedWallet.currencyName]);
 
   const assetOptions: Array<Option> = [
     {
