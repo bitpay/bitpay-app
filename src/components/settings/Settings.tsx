@@ -2,7 +2,7 @@ import {useTheme} from '@react-navigation/native';
 import React from 'react';
 import {Color, Rect, Svg, Ellipse, Circle} from 'react-native-svg';
 import styled from 'styled-components/native';
-import {NeutralSlate, SlateDark, White} from '../../styles/colors';
+import {LightBlack, NeutralSlate, SlateDark, White} from '../../styles/colors';
 
 interface SettingsSvgProps {
   color: Color | undefined;
@@ -29,7 +29,7 @@ const SettingsSvgContainer = styled.TouchableOpacity`
 const Settings = ({onPress}: {onPress: () => void}) => {
   const theme = useTheme();
   const color = theme.dark ? White : SlateDark;
-  const background = theme.dark ? SlateDark : NeutralSlate;
+  const background = theme.dark ? LightBlack : NeutralSlate;
 
   return (
     <SettingsSvgContainer activeOpacity={0.75} onPress={onPress}>

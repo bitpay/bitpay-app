@@ -4,7 +4,7 @@ import {ModalContainer} from '../../../components/styled/Containers';
 import BottomPopupModal from '../../../components/modal/base/bottom-popup/BottomPopupModal';
 import CautionSvg from '../../../../assets/img/error.svg';
 import {H4, Link, Paragraph} from '../../../components/styled/Text';
-import {LightBlack, SlateDark, White} from '../../../styles/colors';
+import {SlateDark, White} from '../../../styles/colors';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {TouchableOpacity} from 'react-native';
 
@@ -26,11 +26,10 @@ const Title = styled(H4)`
 
 const DeleteModalParagraph = styled(Paragraph)`
   margin: 15px 0 20px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  color: ${({theme}) => (theme.dark ? White : SlateDark)};
 `;
 
 const DeleteModalContainer = styled(ModalContainer)`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   min-height: 250px;
 `;
 

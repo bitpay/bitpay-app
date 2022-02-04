@@ -1,18 +1,68 @@
-import {useTheme} from '@react-navigation/native';
 import React from 'react';
-import {Button, StyleProp, Text, TextStyle, View} from 'react-native';
+import {useTranslation} from 'react-i18next';
+import {ScrollView, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import {Network} from '../../../constants';
+import styled from 'styled-components/native';
+import MastercardAngledImg from '../../../../assets/img/card/bitpay-card-mc-angled.svg';
+import A from '../../../components/anchor/Anchor';
+import Button from '../../../components/button/Button';
+import {
+  ActionContainer,
+  Br,
+  ScreenGutter,
+} from '../../../components/styled/Containers';
+import {
+  Exp,
+  H3,
+  Paragraph,
+  Smallest,
+  TextAlign,
+} from '../../../components/styled/Text';
+import {Network, URL} from '../../../constants';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {RootState} from '../../../store';
 import {AppEffects} from '../../../store/app';
+import CardFeatureTabs from './CardIntroFeatureTabs';
+import CardHighlights from './CardIntroHighlights';
+
+const Spacer = styled.View<{height: number}>`
+  height: ${({height}) => height}px;
+`;
+
+const ContentContainer = styled.View`
+  padding: ${ScreenGutter};
+`;
+
+const IntroHero = () => {
+  return (
+    <View style={{flexDirection: 'row'}}>
+      <View
+        style={{
+          flexBasis: '40%',
+          marginTop: 40,
+          alignItems: 'flex-end',
+          paddingRight: 40,
+        }}>
+        <View>
+          <H3>Fund it.</H3>
+
+          <H3>Spend it.</H3>
+
+          <H3>Live on crypto.</H3>
+        </View>
+      </View>
+      <View>
+        <View style={{alignItems: 'flex-start'}}>
+          <MastercardAngledImg />
+        </View>
+      </View>
+    </View>
+  );
+};
 
 const CardIntro: React.FC = () => {
   const dispatch = useDispatch();
-  const theme = useTheme();
-  const textStyle: StyleProp<TextStyle> = {
-    color: theme.colors.text,
-  };
+  const {t} = useTranslation();
   const network = useSelector<RootState, Network>(({APP}) => APP.network);
 
   const onGetCardPress = async (context?: 'login' | 'createAccount') => {
@@ -28,14 +78,83 @@ const CardIntro: React.FC = () => {
   };
 
   return (
-    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-      <Text style={textStyle}>Get the BitPay Card! {network}</Text>
-      <Button title="Sign up" onPress={() => onGetCardPress('createAccount')} />
-      <Button
-        title="I already have an account"
-        onPress={() => onGetCardPress('login')}
-      />
-    </View>
+    <>
+      <ScrollView>
+        <ContentContainer>
+          <IntroHero />
+
+          <Spacer height={32} />
+
+          <Paragraph>
+            The fastest, easiest way to turn your crypto into dollars for
+            shopping. Load funds in the BitPay App and spend in minutes.
+          </Paragraph>
+
+          <Spacer height={24} />
+
+          {CardHighlights}
+
+          <Spacer height={24} />
+
+          <Paragraph>
+            Shop online or in stores instantly with the virtual BitPay Prepaid
+            Mastercard©, or order your physical card for free today.
+          </Paragraph>
+        </ContentContainer>
+
+        <Spacer height={56} />
+
+        {CardFeatureTabs}
+
+        <ContentContainer>
+          <Paragraph>
+            <A href={URL.PRIVACY_POLICY}>{t('Privacy Policy')}</A>
+          </Paragraph>
+        </ContentContainer>
+
+        <ContentContainer>
+          <Smallest>
+            <Exp i={1} /> Network fees and miner fees may apply.
+          </Smallest>
+
+          <Smallest>
+            <Exp i={2} /> Third party fees may apply.
+          </Smallest>
+
+          <Br />
+
+          <Smallest>{t('TermsAndConditionsMastercard')}</Smallest>
+
+          <Br />
+
+          <Smallest>{t('TermsAndConditionsMastercard2')}</Smallest>
+        </ContentContainer>
+
+        <ContentContainer>
+          <TextAlign align="center">
+            <A href={URL.MASTERCARD_CARDHOLDER_AGREEMENT}>
+              Cardholder Agreement
+            </A>
+          </TextAlign>
+        </ContentContainer>
+
+        <ContentContainer>
+          <ActionContainer>
+            <Button onPress={() => onGetCardPress('createAccount')}>
+              Sign Up
+            </Button>
+          </ActionContainer>
+
+          <ActionContainer>
+            <Button
+              buttonStyle="secondary"
+              onPress={() => onGetCardPress('login')}>
+              I already have an account
+            </Button>
+          </ActionContainer>
+        </ContentContainer>
+      </ScrollView>
+    </>
   );
 };
 

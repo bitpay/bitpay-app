@@ -9,6 +9,7 @@ import HelpIcon from '../../../../assets/img/help.svg';
 import LockIcon from '../../../../assets/img/lock.svg';
 import {Br, Hr} from '../../../components/styled/Containers';
 import {Link, Smallest} from '../../../components/styled/Text';
+import {URL} from '../../../constants';
 import {AppEffects} from '../../../store/app';
 import {Card} from '../../../store/card/card.models';
 import {CardBrand} from '../../../store/card/card.types';
@@ -20,12 +21,6 @@ interface SettingsListProps {
   navigation: StackNavigationProp<CardStackParamList, 'Settings'>;
 }
 
-const FAQ_VISA_URL =
-  'https://support.bitpay.com/hc/en-us/categories/360004308991-BitPay-Prepaid-Debit-Visa-Card-US-';
-const FAQ_MASTERCARD_URL =
-  'https://support.bitpay.com/hc/en-us/categories/115000745966-BitPay-Card';
-const HELP_WIZARD_URL = 'https://bitpay.com/request-help';
-
 const LINKS: {
   [k in CardBrand]: {
     labelKey: string;
@@ -36,11 +31,11 @@ const LINKS: {
   Mastercard: [
     {
       labelKey: 'Cardholder Agreement',
-      url: 'https://bitpay.com/assets/pdfs/mcb-mastercard-cha-09-21.pdf',
+      url: URL.MASTERCARD_CARDHOLDER_AGREEMENT,
     },
     {
       labelKey: 'Fees Disclosure',
-      url: 'https://bitpay.com/assets/pdfs/gpr-mastercard-short-form.pdf',
+      url: URL.MASTERCARD_FEES_DISCLOSURE,
     },
   ],
 };
@@ -69,7 +64,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
           <Styled.SettingsLink
             Icon={HelpIcon}
-            onPress={() => openUrl(FAQ_VISA_URL)}>
+            onPress={() => openUrl(URL.VISA_FAQ)}>
             {t('FAQs')}
           </Styled.SettingsLink>
 
@@ -116,7 +111,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
           <Styled.SettingsLink
             Icon={HelpIcon}
-            onPress={() => openUrl(FAQ_MASTERCARD_URL)}>
+            onPress={() => openUrl(URL.MASTERCARD_FAQ)}>
             {t('FAQs')}
           </Styled.SettingsLink>
 
@@ -126,7 +121,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
       <Styled.SettingsLink
         Icon={GetHelpIcon}
-        onPress={() => openUrl(HELP_WIZARD_URL)}>
+        onPress={() => openUrl(URL.HELP_WIZARD)}>
         {t('Get Help')}
       </Styled.SettingsLink>
 

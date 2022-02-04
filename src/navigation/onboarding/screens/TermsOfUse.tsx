@@ -8,6 +8,7 @@ import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {CtaContainerAbsolute} from '../../../components/styled/Containers';
 import {HeaderTitle} from '../../../components/styled/Text';
+import {URL} from '../../../constants';
 import {setOnboardingCompleted} from '../../../store/app/app.actions';
 import {setWalletTermsAccepted} from '../../../store/wallet/wallet.actions';
 import {Key} from '../../../store/wallet/wallet.models';
@@ -53,7 +54,7 @@ const Terms: Array<Term> = [
     statement: 'I have read, understood, and agree with the Terms of Use',
     link: {
       text: 'View the complete Terms of Use',
-      url: 'https://bitpay.com/legal/terms-of-use/#wallet-terms-of-use',
+      url: URL.TOU_WALLET,
     },
   },
 ];
