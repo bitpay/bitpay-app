@@ -160,12 +160,17 @@ export const walletReducer = (
     case WalletActionTypes.DELETE_KEY: {
       const {keyId} = action.payload;
       const keyList = {...state.keys};
+      const balanceToRemove = state.keys[keyId].totalBalance;
       delete keyList[keyId];
 
       return {
         ...state,
         keys: {
           ...keyList,
+        },
+        portfolioBalance: {
+          current: state.portfolioBalance.current - balanceToRemove,
+          previous: 0,
         },
       };
     }
