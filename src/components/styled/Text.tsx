@@ -45,6 +45,7 @@ export const H6 = styled(BaseText)`
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
+  line-height: 18px;
 `;
 
 export const H7 = styled(BaseText)`

@@ -7,6 +7,7 @@ import {
   NeutralSlate,
   Slate,
   SlateDark,
+  White,
 } from '../../styles/colors';
 import {BaseText} from './Text';
 
@@ -130,9 +131,9 @@ export const CardContainer = styled.View<CardContainerProps>`
 
 // Bottom Modal
 export const ModalContainer = styled.View`
+  background-color: ${({theme}) => (theme.dark ? '#101010' : White)};
   padding: 30px;
   min-height: 300px;
-  background: white;
   justify-content: center;
   align-content: center;
   border-top-left-radius: 17px;

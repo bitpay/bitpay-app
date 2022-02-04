@@ -1,19 +1,13 @@
-import BuyCryptoIcon from '../../../../assets/img/tab-icons/transact-menu/buy-crypto.svg';
-import BuyGiftCardIcon from '../../../../assets/img/tab-icons/transact-menu/buy-gift-card.svg';
-import ExchangeIcon from '../../../../assets/img/tab-icons/transact-menu/exchange.svg';
-import ReceiveIcon from '../../../../assets/img/tab-icons/transact-menu/receive.svg';
-import SendIcon from '../../../../assets/img/tab-icons/transact-menu/send.svg';
-import ScanIcon from '../../../../assets/img/tab-icons/transact-menu/scan.svg';
-import CloseIcon from '../../../../assets/img/tab-icons/transact-menu/close.svg';
-import TransactButtonIcon from '../../../../assets/img/tab-icons/transact-button.svg';
-import styled from 'styled-components/native';
-import {BaseText} from '../../styled/Text';
-import React, {ReactElement, useState} from 'react';
-import BottomPopupModal from '../base/bottom-popup/BottomPopupModal';
-import {FlatList, TouchableOpacity, View} from 'react-native';
-import {SlateDark} from '../../../styles/colors';
 import {useNavigation} from '@react-navigation/native';
-import {ModalContainer} from '../../styled/Containers';
+import React, {ReactElement, useState} from 'react';
+import {FlatList, TouchableOpacity, View} from 'react-native';
+import styled from 'styled-components/native';
+import TransactButtonIcon from '../../../../assets/img/tab-icons/transact-button.svg';
+import {Action, Midnight, NeutralSlate, White} from '../../../styles/colors';
+import {ActiveOpacity, ModalContainer} from '../../styled/Containers';
+import {BaseText, H6} from '../../styled/Text';
+import BottomPopupModal from '../base/bottom-popup/BottomPopupModal';
+import Icons from './TransactMenuIcons';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -28,7 +22,7 @@ const TransactItemContainer = styled.TouchableOpacity`
 `;
 
 const ItemIconContainer = styled.View`
-  background-color: #edf0fe;
+  background-color: ${({theme}) => (theme.dark ? Midnight : NeutralSlate)};
   border-radius: 11px;
 `;
 
@@ -39,23 +33,16 @@ const ItemTextContainer = styled.View`
   padding-left: 19px;
 `;
 
-const ItemTitleText = styled(BaseText)`
-  font-style: normal;
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 18px;
-`;
-
 const ItemDescriptionText = styled(BaseText)`
+  color: ${({theme}) => theme.colors.description};
   font-style: normal;
   font-weight: 300;
   font-size: 14px;
   line-height: 19px;
-  color: ${SlateDark};
 `;
 
 const ScanButtonContainer = styled.TouchableOpacity`
-  background-color: #edf0fe;
+  background-color: ${({theme}) => (theme.dark ? Action : NeutralSlate)};
   flex-direction: row;
   align-self: center;
   align-items: center;
@@ -65,6 +52,10 @@ const ScanButtonContainer = styled.TouchableOpacity`
   padding-left: 11px;
   padding-right: 26px;
   margin-bottom: 20px;
+`;
+
+const ScanButtonText = styled(BaseText)`
+  color: ${({theme}) => (theme.dark ? White : '#000')};
 `;
 
 const CloseButtonContainer = styled.TouchableOpacity`
@@ -88,7 +79,7 @@ const TransactModal = () => {
   const TransactMenuList: Array<TransactMenuItemProps> = [
     {
       id: 'buyCrypto',
-      img: () => <BuyCryptoIcon />,
+      img: () => <Icons.BuyCrypto />,
       title: 'Buy Crypto',
       description: 'Buy crypto with cash',
       onPress: () => {
@@ -97,7 +88,7 @@ const TransactModal = () => {
     },
     {
       id: 'exchange',
-      img: () => <ExchangeIcon />,
+      img: () => <Icons.Exchange />,
       title: 'Exchange',
       description: 'Swap crypto for another',
       onPress: () => {
@@ -106,21 +97,21 @@ const TransactModal = () => {
     },
     {
       id: 'receive',
-      img: () => <ReceiveIcon />,
+      img: () => <Icons.Receive />,
       title: 'Receive',
       description: 'Get crypto from another wallet',
       onPress: () => {},
     },
     {
       id: 'send',
-      img: () => <SendIcon />,
+      img: () => <Icons.Send />,
       title: 'Send',
       description: 'Send crypto to another wallet',
       onPress: () => {},
     },
     {
       id: 'buyGiftCard',
-      img: () => <BuyGiftCardIcon />,
+      img: () => <Icons.BuyGiftCard />,
       title: 'Buy Gift Cards',
       description: 'Buy gift cards with crypto',
       onPress: () => {},
@@ -129,17 +120,11 @@ const TransactModal = () => {
 
   const ScanButton: TransactMenuItemProps = {
     id: 'scan',
-    img: () => <ScanIcon />,
+    img: () => <Icons.Scan />,
     title: 'Scan',
     onPress: () => {
       navigation.navigate('Scan', {screen: 'Root'});
     },
-  };
-
-  const CloseButton: TransactMenuItemProps = {
-    id: 'close',
-    img: () => <CloseIcon />,
-    onPress: () => {},
   };
 
   return (
@@ -149,43 +134,45 @@ const TransactModal = () => {
           <TransactButtonIcon />
         </TouchableOpacity>
       </TransactButton>
-      <>
-        <BottomPopupModal isVisible={modalVisible} onBackdropPress={hideModal}>
-          <ModalContainer>
-            <FlatList
-              data={TransactMenuList}
-              scrollEnabled={false}
-              renderItem={({item}) => (
-                <TransactItemContainer
-                  activeOpacity={0.7}
-                  onPress={() => {
-                    item.onPress();
-                    hideModal();
-                  }}>
-                  <ItemIconContainer>{item.img()}</ItemIconContainer>
-                  <ItemTextContainer>
-                    <ItemTitleText>{item.title}</ItemTitleText>
-                    <ItemDescriptionText>
-                      {item.description}
-                    </ItemDescriptionText>
-                  </ItemTextContainer>
-                </TransactItemContainer>
-              )}
-            />
-            <ScanButtonContainer
-              onPress={() => {
-                ScanButton.onPress();
-                hideModal();
-              }}>
-              <View>{ScanButton.img()}</View>
-              <ItemTitleText>{ScanButton.title}</ItemTitleText>
-            </ScanButtonContainer>
-            <CloseButtonContainer onPress={hideModal}>
-              <View>{CloseButton.img()}</View>
-            </CloseButtonContainer>
-          </ModalContainer>
-        </BottomPopupModal>
-      </>
+      <BottomPopupModal isVisible={modalVisible} onBackdropPress={hideModal}>
+        <ModalContainer>
+          <FlatList
+            data={TransactMenuList}
+            scrollEnabled={false}
+            renderItem={({item}) => (
+              <TransactItemContainer
+                activeOpacity={ActiveOpacity}
+                onPress={() => {
+                  item.onPress();
+                  hideModal();
+                }}>
+                <ItemIconContainer>{item.img()}</ItemIconContainer>
+                <ItemTextContainer>
+                  <H6>{item.title}</H6>
+                  <ItemDescriptionText>{item.description}</ItemDescriptionText>
+                </ItemTextContainer>
+              </TransactItemContainer>
+            )}
+          />
+
+          <ScanButtonContainer
+            onPress={() => {
+              ScanButton.onPress();
+              hideModal();
+            }}>
+            <View>
+              <Icons.Scan />
+            </View>
+            <ScanButtonText>{ScanButton.title}</ScanButtonText>
+          </ScanButtonContainer>
+
+          <CloseButtonContainer onPress={hideModal}>
+            <View>
+              <Icons.Close />
+            </View>
+          </CloseButtonContainer>
+        </ModalContainer>
+      </BottomPopupModal>
     </>
   );
 };
