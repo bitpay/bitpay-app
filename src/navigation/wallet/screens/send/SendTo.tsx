@@ -9,7 +9,7 @@ import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
-import {formatFiatBalance} from '../../../../utils/helper-methods';
+import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {Key} from '../../../../store/wallet/wallet.models';
 import debounce from 'lodash.debounce';
 import {
@@ -122,8 +122,8 @@ const BuildKeyWalletRow = (
         } = wallet;
         // Clone wallet to avoid altering store values
         const _wallet = merge(cloneDeep(wallet), {
-          cryptoBalance: balance,
-          fiatBalance: formatFiatBalance(balance),
+          cryptoBalance: balance.crypto,
+          fiatBalance: formatFiatAmount(balance.fiat, 'usd'),
           currencyAbbreviation: currencyAbbreviation.toUpperCase(),
           network,
         });
@@ -162,6 +162,7 @@ const SendTo = () => {
   });
 
   const {wallet} = route.params;
+  console.log(wallet);
   const {
     currencyAbbreviation,
     id,
