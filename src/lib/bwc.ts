@@ -87,4 +87,8 @@ export class BwcProvider {
   public getErrors() {
     return BWC.errors;
   }
+
+  public getUtils() {
+    return BWC.Utils;
+  }
 }

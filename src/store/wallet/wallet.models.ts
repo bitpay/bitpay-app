@@ -1,5 +1,6 @@
 import API from 'bitcore-wallet-client/ts_build';
 import {ReactElement} from 'react';
+import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 
 export interface KeyMethods {
   _checkCoin: Function;
@@ -39,18 +40,23 @@ export interface Key {
   methods: KeyMethods;
   backupComplete?: boolean;
   show?: boolean;
-  totalBalance?: number;
+  totalBalance: number;
   isPrivKeyEncrypted?: boolean;
 }
 
 export interface Wallet extends WalletObj, API {}
+
+export interface WalletBalance {
+  crypto: string;
+  fiat: number;
+}
 
 export interface WalletObj {
   id: string;
   keyId: string;
   currencyName: string;
   currencyAbbreviation: string;
-  balance?: number;
+  balance: WalletBalance;
   tokens?: string[];
   walletName?: string;
   preferences?: {
@@ -104,4 +110,34 @@ export interface Token {
   address: string;
   decimals: number;
   logoURI: string;
+}
+
+export interface Rate {
+  code: string;
+  fetchedOn: number;
+  name: string;
+  rate: number;
+  ts: number;
+}
+
+export type Rates = {
+  [key in string]: Rate[];
+};
+
+export interface Balance {
+  availableAmount: number;
+  availableConfirmedAmount: number;
+  byAddress: {address: string; path: string; amount: number}[];
+  lockedAmount: number;
+  lockedConfirmedAmount: number;
+  totalAmount: number;
+  totalConfirmedAmount: number;
+}
+
+export interface WalletStatus {
+  balance: Balance;
+  pendingTxps: any[];
+  preferences: any;
+  serverMessages: any[];
+  wallet: Credentials;
 }

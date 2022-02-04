@@ -1,11 +1,14 @@
+import React from 'react';
+import {Dimensions, Text} from 'react-native';
 import styled, {css} from 'styled-components/native';
-import {Dimensions} from 'react-native';
 import {
+  Action,
   Feather,
   LightBlack,
   NeutralSlate,
   Slate,
   SlateDark,
+  White,
 } from '../../styles/colors';
 import {BaseText} from './Text';
 
@@ -68,6 +71,8 @@ export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
       background: ${({theme}) => theme.colors.background};
     `};
 `;
+
+export const Br: React.FC = () => <Text />;
 
 export const Hr = styled.View`
   border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#ebecee')};
@@ -138,18 +143,39 @@ export const ModalContainer = styled.View`
 
 // Settings List
 export const Setting = styled.TouchableOpacity`
-  flex-direction: row;
-  justify-content: space-between;
   align-items: center;
+  flex-direction: row;
+  flex-wrap: nowrap;
   height: 58px;
 `;
 
 export const SettingTitle = styled(BaseText)`
+  color: ${({theme}) => theme.colors.text};
+  flex-grow: 1;
+  flex-shrink: 1;
   font-size: 16px;
   font-style: normal;
   font-weight: 400;
   letter-spacing: 0;
   text-align: left;
+`;
+
+interface SettingIconProps {
+  prefix?: boolean;
+  suffix?: boolean;
+}
+
+export const SettingIcon = styled.View<SettingIconProps>`
+  ${({prefix = false}) =>
+    prefix &&
+    css`
+      margin-right: ${ScreenGutter};
+    `}
+  ${({suffix = false}) =>
+    suffix &&
+    css`
+      margin-left: ${ScreenGutter};
+    `}
 `;
 
 export const SettingView = styled.View`

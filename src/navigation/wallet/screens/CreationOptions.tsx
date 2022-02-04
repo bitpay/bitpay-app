@@ -9,6 +9,7 @@ import {useNavigation} from '@react-navigation/native';
 import {Feather, LightBlack, SlateDark, White} from '../../../styles/colors';
 import {BaseText, H6, HeaderTitle} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
+import FastImage from 'react-native-fast-image';
 
 interface Option {
   id: string;
@@ -59,7 +60,7 @@ const Description = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const Image = styled.Image<{imgHeight: string}>`
+const Image = styled(FastImage)<{imgHeight: string}>`
   width: 80px;
   height: ${({imgHeight}) => imgHeight};
   position: absolute;
@@ -124,7 +125,7 @@ const CreationOptions: React.FC = () => {
               }}
               key={id}>
               <ImageContainer>
-                <Image source={img} resizeMode={'contain'} imgHeight={height} />
+                <Image source={img} imgHeight={height} />
               </ImageContainer>
               <InfoContainer>
                 <Title>{title}</Title>

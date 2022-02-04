@@ -234,7 +234,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
               name: 'Wallet',
               params: {
                 screen: 'WalletDetails',
-                params: {wallet: buildUIFormattedWallet(wallet), key},
+                params: {walletId: wallet.id, key},
               },
             },
           ],

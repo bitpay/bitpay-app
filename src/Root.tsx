@@ -222,11 +222,7 @@ export default () => {
               const {routes} = navEvent;
               let {name, params} = navEvent.routes[routes.length - 1];
               dispatch(AppActions.setCurrentRoute([name, params]));
-              dispatch(
-                LogActions.info(
-                  `Navigation event... ${name} ${JSON.stringify(params)}`,
-                ),
-              );
+              dispatch(LogActions.info(`Navigation event... ${name}`));
               if (!__DEV__) {
                 if (name === 'Tabs') {
                   const {history} = navEvent.routes[routes.length - 1].state;
@@ -268,7 +264,13 @@ export default () => {
               name={RootStacks.WALLET}
               component={WalletStack}
             />
-            <Root.Screen name={RootStacks.CARD} component={CardStack} />
+            <Root.Screen
+              name={RootStacks.CARD}
+              component={CardStack}
+              options={{
+                gestureEnabled: false,
+              }}
+            />
             <Root.Screen name={RootStacks.SCAN} component={ScanStack} />
             <Root.Screen
               name={RootStacks.GIFT_CARD}

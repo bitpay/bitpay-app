@@ -122,6 +122,15 @@ const getStore = () => {
           'persist/REHYDRATE',
           'persist/PERSIST',
         ].includes(action.type),
+      stateTransformer: state => {
+        return {
+          ...state,
+          WALLET: {
+            ...state.WALLET,
+            rates: !!state.WALLET.rates,
+          },
+        };
+      },
     }),
   ];
   let middlewareEnhancers = applyMiddleware(...middlewares);

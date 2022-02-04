@@ -9,10 +9,6 @@ export const coinSupported = (coin: string): boolean => {
   );
 };
 
-export const formatFiatBalance = (balance = 0) => {
-  return `$${balance.toFixed(2)}`;
-};
-
 export const titleCasing = (str: string) =>
   `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
 
@@ -130,3 +126,20 @@ export const isValidDerivationPathCoin = (
 };
 
 export const keyExtractor = (item: {id: string}) => item.id;
+
+export const formatFiatAmount = (
+  amount: number,
+  currency: string,
+  opts: {
+    customPrecision?: 'minimal';
+  } = {},
+) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    ...(opts.customPrecision === 'minimal' &&
+      Number.isInteger(amount) && {
+        maximumFractionDigits: 0,
+        minimumFractionDigits: 0,
+      }),
+  }).format(amount);
