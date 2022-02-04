@@ -24,6 +24,7 @@ import {useDispatch} from 'react-redux';
 import InfoIcon from '../../../components/icons/info/InfoIcon';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
 import {buildNestedWalletList} from './KeyOverview';
+import {URL} from '../../../constants';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -175,11 +176,7 @@ const KeySettings = () => {
               <TouchableOpacity
                 onPress={() => {
                   haptic('impactLight');
-                  dispatch(
-                    openUrlWithInAppBrowser(
-                      'https://support.bitpay.com/hc/en-us/articles/360000244506-What-Does-a-Spending-Password-Do-',
-                    ),
-                  );
+                  dispatch(openUrlWithInAppBrowser(URL.HELP_SPENDING_PASSWORD));
                 }}>
                 <Link>Learn More</Link>
               </TouchableOpacity>

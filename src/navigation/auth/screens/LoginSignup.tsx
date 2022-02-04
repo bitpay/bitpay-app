@@ -1,5 +1,4 @@
 import {yupResolver} from '@hookform/resolvers/yup';
-import {useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
@@ -16,7 +15,6 @@ import {RootState} from '../../../store';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {Session} from '../../../store/bitpay-id/bitpay-id.models';
 import {LoginStatus} from '../../../store/bitpay-id/bitpay-id.reducer';
-import {SlateDark} from '../../../styles/colors';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
 import {AuthStackParamList} from '../AuthStack';
 import AuthFormContainer, {
@@ -67,7 +65,6 @@ interface LoginFormFieldValues {
 
 const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
   const dispatch = useDispatch();
-  const theme = useTheme();
   const {
     control,
     handleSubmit,
@@ -126,7 +123,7 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
       navigation.navigate('EmailAuthentication');
       return;
     }
-  }, [loginStatus, navigation, dispatch]);
+  }, [loginStatus, navigation, dispatch, onLoginSuccess]);
 
   const onSubmit = handleSubmit(({email, password}) => {
     if (session.captchaDisabled) {

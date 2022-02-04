@@ -34,7 +34,6 @@ const QRCodeContainer = styled.View`
 `;
 
 const QRBackground = styled.View`
-  background-color: ${({theme: {dark}}) => (dark ? '#C4C4C4' : 'transparent')};
   width: 175px;
   height: 175px;
   justify-content: center;
@@ -43,7 +42,6 @@ const QRBackground = styled.View`
 
 const KeyName = styled(H6)`
   margin-top: 10px;
-  color: ${({theme}) => theme.colors.text};
 `;
 
 const ExportKey = () => {
