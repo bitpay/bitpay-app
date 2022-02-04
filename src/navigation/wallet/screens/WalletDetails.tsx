@@ -183,7 +183,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                   <LinkingButtons
                       receive={{cta: () => showReceiveAddress()}}
                       send={{
-                        hide: __DEV__ ? false : !wallet.cryptoBalance,
+                        hide: __DEV__ ? false : !fullWalletObj.balance.fiat,
                         cta: () =>
                             navigation.navigate('Wallet', {
                               screen: 'SendTo',
