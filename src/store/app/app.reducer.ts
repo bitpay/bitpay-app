@@ -64,7 +64,7 @@ const initialState: AppState = {
   onGoingProcessModalMessage: OnGoingProcessMessages.GENERAL_AWAITING,
   showBottomNotificationModal: false,
   bottomNotificationModalConfig: undefined,
-  colorScheme: 'light',
+  colorScheme: null,
   currentRoute: undefined,
   notificationsAccepted: false,
   showOnboardingFinishModal: false,

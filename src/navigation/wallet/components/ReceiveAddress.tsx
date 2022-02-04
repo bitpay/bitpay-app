@@ -99,7 +99,7 @@ const CloseButtonText = styled(Paragraph)`
 interface Props {
   isVisible: boolean;
   closeModal: () => void;
-  wallet: Wallet;
+  wallet: Wallet | undefined;
 }
 
 const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {

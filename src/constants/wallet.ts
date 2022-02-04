@@ -1,0 +1,1 @@
+export const BALANCE_CACHE_DURATION = 10;

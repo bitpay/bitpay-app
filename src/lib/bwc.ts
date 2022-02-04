@@ -88,6 +88,10 @@ export class BwcProvider {
     return BWC.errors;
   }
 
+  public getUtils() {
+    return BWC.Utils;
+  }
+
   public getPayProV2() {
     return BWC.PayProV2;
   }

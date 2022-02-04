@@ -1,11 +1,13 @@
 import React from 'react';
+import * as Svg from 'react-native-svg';
 import styled from 'styled-components/native';
-import {BaseText} from '../styled/Text';
-import {OfferProps} from './OfferSlides';
 import ArrowRight from '../../../assets/img/arrow-right.svg';
 import {White} from '../../styles/colors';
+import {BaseText} from '../styled/Text';
 import Haptic from '../haptic-feedback/haptic';
 import {ScreenGutter} from '../styled/Containers';
+import {OFFER_HEIGHT, OFFER_WIDTH} from './offer';
+import {OfferProps} from './OfferSlides';
 
 const OfferCardContainer = styled.View`
   justify-content: flex-start;
@@ -13,11 +15,12 @@ const OfferCardContainer = styled.View`
   flex-direction: column;
   width: 260px;
   height: 182px;
-  border-radius: 12px;
   left: ${ScreenGutter};
 `;
 
-const ImgBackground = styled.View`
+const OfferBackgroundContainer = styled.View`
+  border-radius: 12px;
+  overflow: hidden;
   position: absolute;
 `;
 
@@ -71,6 +74,29 @@ const FooterArrow = styled.TouchableHighlight`
   justify-content: center;
 `;
 
+export const OfferBackgroundOverlay = () => {
+  return (
+    <Svg.Svg
+      height={OFFER_HEIGHT}
+      width={OFFER_WIDTH}
+      viewBox="0 0 260 182"
+      style={{position: 'absolute', top: 0, right: 0, bottom: 0, left: 0}}>
+      <Svg.Defs>
+        <Svg.LinearGradient id="offer-gradient" x1={0} y1={0} x2={0} y2={1}>
+          <Svg.Stop offset="0%" stopColor="#000" stopOpacity={0} />
+          <Svg.Stop offset="100%" stopColor="#000" stopOpacity={0.8} />
+        </Svg.LinearGradient>
+      </Svg.Defs>
+      <Svg.Rect
+        id="gradient-rect"
+        width={260}
+        height={182}
+        fill="url(#offer-gradient)"
+      />
+    </Svg.Svg>
+  );
+};
+
 export default ({item}: {item: OfferProps}) => {
   const {img, title, description, onPress} = item;
   const _onPress = () => {
@@ -80,7 +106,10 @@ export default ({item}: {item: OfferProps}) => {
 
   return (
     <OfferCardContainer>
-      <ImgBackground>{img}</ImgBackground>
+      <OfferBackgroundContainer>
+        {img}
+        <OfferBackgroundOverlay />
+      </OfferBackgroundContainer>
       <OfferTitleText>{title}</OfferTitleText>
       <DescriptionContainer>
         <DescriptionText>{description}</DescriptionText>
