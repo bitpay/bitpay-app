@@ -1,5 +1,6 @@
 import React from 'react';
 import styled, {css} from 'styled-components/native';
+import ErrorBoundary from 'react-native-error-boundary';
 import {SvgUri} from 'react-native-svg';
 import {CardConfig} from '../../../../store/shop/shop.models';
 import {BaseText, H4} from '../../../../components/styled/Text';
@@ -36,6 +37,7 @@ const logoHeight = 55;
 
 const LogoContainer = styled.View`
   flex-grow: 1;
+  height: ${logoHeight}px;
 `;
 
 const Logo = styled.Image`
@@ -55,22 +57,26 @@ const GiftCardAmount = styled(BaseText)<GiftCardCreditsItemProps>`
 
 const PlaceholderText = styled(H4)`
   color: white;
-  padding: 12px 20px;
+  padding: 12px 30px;
 `;
 
 export default (props: {cardConfig: CardConfig; amount: number}) => {
   const {cardConfig, amount} = props;
-  const logo = cardConfig?.logo;
   const logoBackgroundColor = cardConfig?.logoBackgroundColor || 'black';
   return (
     <GiftCardItem logoBackgroundColor={logoBackgroundColor}>
       <LogoContainer>
-        {logo ? (
+        {cardConfig ? (
           <>
-            {logo.endsWith('.svg') ? (
-              <SvgUri height={`${logoHeight}px`} uri={logo} />
+            {cardConfig.logo.endsWith('.svg') ? (
+              <ErrorBoundary
+                FallbackComponent={() => (
+                  <PlaceholderText>{cardConfig.displayName}</PlaceholderText>
+                )}>
+                <SvgUri height={`${logoHeight}px`} uri={cardConfig.logo} />
+              </ErrorBoundary>
             ) : (
-              <Logo resizeMode={'contain'} source={{uri: logo}} />
+              <Logo resizeMode={'contain'} source={{uri: cardConfig.logo}} />
             )}
           </>
         ) : (

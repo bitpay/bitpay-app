@@ -53,6 +53,7 @@
     "react-native-crypto": "2.2.0",
     "react-native-device-info": "8.4.7",
     "react-native-element-dropdown": "1.5.9",
+    "react-native-error-boundary": "1.1.12",
     "react-native-fast-image": "8.5.11",
     "react-native-gesture-handler": "1.10.3",
     "react-native-haptic-feedback": "1.13.0",

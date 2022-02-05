@@ -1,11 +1,13 @@
+import React from 'react';
+import {Text} from 'react-native';
 import styled, {css} from 'styled-components/native';
-import {Action, SlateDark, White} from '../../styles/colors';
 
 export const fontFamily = 'Heebo';
 
 export const BaseText = styled.Text`
   color: ${({theme}) => theme.colors.text};
   font-family: '${fontFamily}';
+  color: ${({theme}) => theme.colors.text};
 `;
 
 export const H2 = styled(BaseText)`
@@ -44,6 +46,7 @@ export const H6 = styled(BaseText)`
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
+  line-height: 18px;
 `;
 
 export const H7 = styled(BaseText)`
@@ -86,6 +89,33 @@ export const Disclaimer = styled(BaseText)`
   letter-spacing: 0;
 `;
 
+interface ExponentProps {
+  i: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+}
+
+const EXPONENT_UNICODE_MAP: {
+  [k in 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9]: string;
+} = {
+  0: '\u2070',
+  1: '\u00B9',
+  2: '\u00B2',
+  3: '\u00B3',
+  4: '\u2074',
+  5: '\u2075',
+  6: '\u2076',
+  7: '\u2077',
+  8: '\u2078',
+  9: '\u2079',
+};
+
+/**
+ * Renders a number 0-9 as a unicode exponent in a Text element.
+ * @param i The number 0-9 to use as the exponent.
+ */
+export const Exp = (props: ExponentProps) => {
+  return <Text>{EXPONENT_UNICODE_MAP[props.i]}</Text>;
+};
+
 // Nav
 export const HeaderTitle = styled(BaseText)`
   font-size: 18px;
@@ -104,7 +134,7 @@ interface TextAlignProps {
   align: 'center' | 'left' | 'right';
 }
 
-export const TextAlign = styled.Text<TextAlignProps>`
+export const TextAlign = styled(BaseText)<TextAlignProps>`
   ${props =>
     css`
       text-align: ${props.align};
@@ -112,12 +142,10 @@ export const TextAlign = styled.Text<TextAlignProps>`
 `;
 
 export const Link = styled(BaseText)`
-  font-size: 16px;
-  line-height: 25px;
   font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? White : Action)};
-  text-decoration: ${({theme: {dark}}) => (dark ? 'underline' : 'none')};
-  text-decoration-color: ${White};
+  color: ${({theme}) => theme.colors.link};
+  text-decoration: ${({theme}) => (theme.dark ? 'underline' : 'none')};
+  text-decoration-color: ${({theme}) => theme.colors.link};
 `;
 
 // WALLET

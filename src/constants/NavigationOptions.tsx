@@ -6,7 +6,7 @@ import {
 import Back from '../components/back/Back';
 
 export const baseNavigatorOptions: StackNavigationOptions = {
-  headerBackImage: () => <Back />,
+  headerBackImage: () => <Back opacity={1} />,
   headerTitle: '',
   headerBackTitleVisible: false,
   headerTitleAlign: 'center',

@@ -10621,6 +10621,11 @@ react-native-element-dropdown@1.5.9:
   resolved "https://registry.yarnpkg.com/react-native-element-dropdown/-/react-native-element-dropdown-1.5.9.tgz#3bb28ec810b1c71151dd24097b3c82f70aa158e0"
   integrity sha512-C4xWBv+wpWOA/SOmGbn9ZC52NDInDn31uapFFQE720S3v8E0bqblhiHi+UrOkihTA+E9/+dVqhOA3DpCdj5plg==
 
+react-native-error-boundary@1.1.12:
+  version "1.1.12"
+  resolved "https://registry.yarnpkg.com/react-native-error-boundary/-/react-native-error-boundary-1.1.12.tgz#80773d8f52bf7354f9776b022a57081a7ecafb8c"
+  integrity sha512-YVM7DOY6TbCrtYc87CqABGntnxQRMWSkzcF6+tB9QBUs4sWOWIfeeN4yJGF2eYJAGVnaym5ys9GqcYDu8mjE2g==
+
 react-native-fast-image@8.5.11:
   version "8.5.11"
   resolved "https://registry.yarnpkg.com/react-native-fast-image/-/react-native-fast-image-8.5.11.tgz#e3dc969d0e4e8df026646bf18194465aa55cbc2b"
