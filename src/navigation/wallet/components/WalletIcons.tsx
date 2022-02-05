@@ -142,6 +142,21 @@ const ShareAddress = () => {
   );
 };
 
+const DownToggle = () => {
+  const theme = useTheme() as BitPayTheme;
+
+  return (
+    <Svg.Svg width="10" height="7" viewBox="0 0 10 7" fill="none">
+      <Svg.Path
+        fill={theme.dark ? White : '#1a051d'}
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M1.17422 0C0.319868 0 -0.141042 1.00212 0.414964 1.65079L4.24074 6.1142C4.63984 6.57981 5.36016 6.57981 5.75926 6.1142L9.58504 1.65079C10.141 1.00212 9.68013 0 8.82578 0H1.17422Z"
+      />
+    </Svg.Svg>
+  );
+};
+
 export default {
   Add,
   Backup,
@@ -149,4 +164,5 @@ export default {
   RequestAmount,
   ShareAddress,
   Settings,
+  DownToggle,
 };

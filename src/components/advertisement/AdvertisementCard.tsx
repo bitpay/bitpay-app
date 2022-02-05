@@ -3,7 +3,7 @@ import styled from 'styled-components/native';
 import haptic from '../haptic-feedback/haptic';
 import {LightBlack, NeutralSlate, SlateDark, White} from '../../styles/colors';
 import {BaseText} from '../styled/Text';
-import {ScreenGutter} from '../styled/Containers';
+import {ActiveOpacity, ScreenGutter} from '../styled/Containers';
 
 export interface AdvertisementProps {
   id: string;
@@ -57,6 +57,7 @@ const AdvertisementCard = ({items}: {items: AdvertisementProps[]}) => {
       {items &&
         items.map(item => (
           <AdvertisementCardContainer
+            activeOpacity={ActiveOpacity}
             key={item.id}
             onPress={() => _onPress(item)}>
             <AdvertisementCardTitle>{item.title}</AdvertisementCardTitle>
