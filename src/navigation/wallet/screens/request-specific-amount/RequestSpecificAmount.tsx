@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
@@ -31,12 +31,18 @@ const RequestSpecificAmount = () => {
   const [amount, setAmount] = useState('0');
   const [reset, setReset] = useState<string>();
 
+  useEffect(() => {
+    return navigation.addListener('focus', () => {
+      setReset(currencyAbbreviation + Math.random());
+    });
+  }, [navigation]);
+
   return (
     <SafeAreaView>
       <AmountContainer>
         <View>
           <AmountHeroContainer>
-            <AmountText>{amount || 0}</AmountText>
+            <AmountText>{Number(amount) || 0}</AmountText>
             <CurrencySuperScript>
               <CurrencyText>{currencyAbbreviation.toUpperCase()}</CurrencyText>
             </CurrencySuperScript>
@@ -52,7 +58,6 @@ const RequestSpecificAmount = () => {
                   screen: 'RequestSpecificAmountQR',
                   params: {wallet, requestAmount: Number(amount)},
                 });
-                setReset(currencyAbbreviation + Math.random());
               }}
               disabled={!Number(amount)}>
               Continue
