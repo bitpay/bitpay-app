@@ -6,7 +6,6 @@ import {
   Midnight,
   NeutralSlate,
   ProgressBlue,
-  White,
 } from '../../../styles/colors';
 import {BitPayTheme} from '../../../themes/bitpay';
 

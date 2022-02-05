@@ -37,16 +37,16 @@ import {Controller, useForm} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import {buildUIFormattedWallet} from './KeyOverview';
-import {NeutralSlate} from '../../../styles/colors';
+import {LightBlack, NeutralSlate} from '../../../styles/colors';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
-import DownToggle from '../../../../assets/img/down-toggle.svg';
 import BottomPopupModal from '../../../components/modal/base/bottom-popup/BottomPopupModal';
 import WalletRow from '../../../components/list/WalletRow';
 import {FlatList} from 'react-native';
 import {keyExtractor} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {RootState} from '../../../store';
+import Icons from '../components/WalletIcons';
 
 type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
 
@@ -76,10 +76,10 @@ const AssociatedWalletContainer = styled.View`
 `;
 
 const AssociatedWallet = styled.TouchableOpacity`
-  background: ${NeutralSlate};
+  background: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
   padding: 0 20px;
   height: 55px;
-  border: 1px solid #e1e4e7;
+  border: 1px solid ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
 `;
@@ -150,8 +150,6 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
   useEffect(() => {
     setShowAssociatedWalletSelectionDropdown(ethWallets.length > 1 && isToken);
   }, []);
-
-  const theme = useTheme();
 
   const {
     control,
@@ -270,7 +268,6 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
-              theme={theme}
               placeholder={`${currencyAbbreviation} Wallet`}
               label={'WALLET NAME'}
               onBlur={onBlur}
@@ -300,7 +297,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
                       `${associatedWallet.currencyAbbreviation.toUpperCase()} Wallet`}
                   </AssociateWalletName>
                 </Row>
-                <DownToggle />
+                <Icons.DownToggle />
               </Row>
             </AssociatedWallet>
           </AssociatedWalletContainer>

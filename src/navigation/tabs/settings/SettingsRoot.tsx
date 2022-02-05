@@ -6,6 +6,7 @@ import {StyleProp, TextStyle, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import Avatar from '../../../components/avatar/Avatar';
 import {
+  ActiveOpacity,
   Hr,
   ScreenGutter,
   Setting,
@@ -155,7 +156,7 @@ const SettingsHomeScreen: React.FC = () => {
         {SETTINGS.map(({title, onPress}) => {
           return (
             <View key={title}>
-              <Setting onPress={onPress}>
+              <Setting activeOpacity={ActiveOpacity} onPress={onPress}>
                 <SettingTitle style={textStyle}>{title}</SettingTitle>
                 <SettingIcon suffix>
                   <AngleRight />
@@ -169,7 +170,7 @@ const SettingsHomeScreen: React.FC = () => {
           return (
             <View key={title}>
               <Setting
-                activeOpacity={1}
+                activeOpacity={ActiveOpacity}
                 onPress={() => dispatch(openUrlWithInAppBrowser(link))}>
                 <SettingTitle style={textStyle}>{title}</SettingTitle>
               </Setting>

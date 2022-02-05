@@ -19,7 +19,7 @@ interface ContainerProps {
 const Input = styled.TextInput<ContainerProps>`
   height: 55px;
   margin: 10px 0 0 0;
-  border: 1px solid #e1e4e7;
+  border: 0.75px solid ${Slate};
   color: ${({theme}) => theme.colors.text};
   padding: 10px;
   ${({type}) =>
