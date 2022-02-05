@@ -69,6 +69,8 @@ import DecryptEnterPasswordModal from './navigation/wallet/components/DecryptEnt
 import MerchantStack, {
   MerchantStackParamList,
 } from './navigation/tabs/shop/merchant/MerchantStack';
+import BpDevtools from './components/bp-devtools/BpDevtools';
+import {DEVTOOLS_ENABLED} from './constants/config';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -207,9 +209,13 @@ export default () => {
     ? RootStacks.ONBOARDING
     : RootStacks.INTRO;
 
+  const showDevtools = __DEV__ && DEVTOOLS_ENABLED;
+
   return (
     <SafeAreaProvider>
       <ThemeProvider theme={theme}>
+        {showDevtools ? <BpDevtools /> : null}
+
         <NavigationContainer
           ref={navigationRef}
           theme={theme}
