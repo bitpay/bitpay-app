@@ -3,7 +3,6 @@ import {useTranslation} from 'react-i18next';
 import {ScrollView, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
-import MastercardAngledImg from '../../../../assets/img/card/bitpay-card-mc-angled.svg';
 import A from '../../../components/anchor/Anchor';
 import Button from '../../../components/button/Button';
 import {
@@ -24,6 +23,7 @@ import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {RootState} from '../../../store';
 import {AppEffects} from '../../../store/app';
 import CardFeatureTabs from './CardIntroFeatureTabs';
+import CardIntroHeroImg from './CardIntroHeroImage';
 import CardHighlights from './CardIntroHighlights';
 
 const Spacer = styled.View<{height: number}>`
@@ -54,7 +54,7 @@ const IntroHero = () => {
       </View>
       <View>
         <View style={{alignItems: 'flex-start'}}>
-          <MastercardAngledImg />
+          <CardIntroHeroImg />
         </View>
       </View>
     </View>
