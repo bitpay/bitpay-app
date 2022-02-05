@@ -14,6 +14,7 @@ import {ScreenGutter} from '../../../../components/styled/Containers';
 import {CreateWalletAddress} from '../../../../store/wallet/effects/send/address';
 import {
   FormatCryptoAmount,
+  FormattedAmountObj,
   GetProtocolPrefix,
   IsUtxoCoin,
 } from '../../../../store/wallet/utils/wallet';
@@ -100,19 +101,21 @@ const RequestSpecificAmountQR = () => {
     currencyAbbreviation,
   } = wallet;
   const navigation = useNavigation();
-  const [formattedAmount, setFormattedAmount] = useState<number>();
-  const [address, setAddress] = useState<string>();
-  const [receiveAddressAmt, setReceiveAddressAmt] = useState<string>();
+  const [formattedAmountObj, setFormattedAmountObj] =
+    useState<FormattedAmountObj>();
   const [loading, setLoading] = useState(true);
+
+  const [qrValue, setQrValue] = useState<string>();
 
   useLayoutEffect(() => {
     const onPressShare = async () => {
-      if (receiveAddressAmt) {
+      if (qrValue) {
         await Share.share({
-          message: receiveAddressAmt,
+          message: qrValue,
         });
       }
     };
+
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{walletName}</HeaderTitle>,
       headerRight: () => (
@@ -121,40 +124,44 @@ const RequestSpecificAmountQR = () => {
         </ShareIconContainer>
       ),
     });
-  }, [navigation, walletName]);
+  }, [navigation, walletName, qrValue]);
 
-  CreateWalletAddress(wallet)
-    .then(addr => {
-      let qrAddress = addr;
-      if (currencyAbbreviation === 'bch') {
-        qrAddress =
-          GetProtocolPrefix(currencyAbbreviation, network) + ':' + addr;
-      }
-      setAddress(qrAddress);
+  const init = async () => {
+    try {
+      const address = await CreateWalletAddress(wallet);
+      let _qrValue;
+      _qrValue =
+        GetProtocolPrefix(currencyAbbreviation, network) + ':' + address;
 
-      const _formattedAmount = FormatCryptoAmount(
+      const _formattedAmountObj: FormattedAmountObj = FormatCryptoAmount(
         requestAmount,
         currencyAbbreviation,
       );
 
-      setFormattedAmount(_formattedAmount);
       if (IsUtxoCoin(currencyAbbreviation) || currencyAbbreviation === 'xrp') {
-        qrAddress = qrAddress + '?address=' + _formattedAmount;
+        _qrValue = _qrValue + '?amount=' + _formattedAmountObj.amount;
       } else {
-        qrAddress = qrAddress + '?value=' + _formattedAmount;
+        _qrValue = _qrValue + '?value=' + _formattedAmountObj.amountSat;
       }
 
-      setReceiveAddressAmt(qrAddress);
+      setFormattedAmountObj(_formattedAmountObj);
+      setQrValue(_qrValue);
       setLoading(false);
-    })
-    .catch(() => setLoading(false));
+    } catch (e) {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    init();
+  }, [wallet]);
 
   const [copied, setCopied] = useState(false);
 
   const copyToClipboard = () => {
     haptic('impactLight');
-    if (!copied && address) {
-      Clipboard.setString(address);
+    if (!copied && qrValue) {
+      Clipboard.setString(qrValue);
       setCopied(true);
     }
   };
@@ -176,8 +183,8 @@ const RequestSpecificAmountQR = () => {
         <H5>Payment Request</H5>
         <ParagraphContainer>
           <Paragraph>
-            Share this QR code to receive {formattedAmount}
-            {currencyAbbreviation.toUpperCase()} in your wallet Ethereum.
+            Share this QR code to receive {formattedAmountObj?.amountUnitStr} in
+            your wallet Ethereum.
           </Paragraph>
         </ParagraphContainer>
 
@@ -192,22 +199,20 @@ const RequestSpecificAmountQR = () => {
               elevation: 3,
             },
           ]}>
-          {address ? (
+          {qrValue ? (
             <>
-              <QRHeader>
-                Receive {formattedAmount} {currencyAbbreviation.toUpperCase()}
-              </QRHeader>
+              <QRHeader>Receive {formattedAmountObj?.amountUnitStr}</QRHeader>
               <CopyToClipboard onPress={copyToClipboard} activeOpacity={0.7}>
                 <CopyImgContainer>
                   {!copied ? <CopySvg width={17} /> : <CopiedSvg width={17} />}
                 </CopyImgContainer>
                 <AddressText numberOfLines={1} ellipsizeMode={'tail'}>
-                  {address}
+                  {qrValue}
                 </AddressText>
               </CopyToClipboard>
 
               <QRCodeContainer>
-                <QRCode value={receiveAddressAmt} size={200} />
+                <QRCode value={qrValue} size={200} />
               </QRCodeContainer>
             </>
           ) : loading ? (

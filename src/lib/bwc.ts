@@ -95,4 +95,8 @@ export class BwcProvider {
   public getPayProV2() {
     return BWC.PayProV2;
   }
+
+  public getUtils() {
+    return BWC.Utils;
+  }
 }

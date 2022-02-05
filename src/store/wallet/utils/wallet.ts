@@ -8,7 +8,11 @@ import {
   WalletObj,
 } from '../wallet.models';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
-import {Currencies, SUPPORTED_CURRENCIES} from '../../../constants/currencies';
+import {
+  Currencies,
+  SUPPORTED_CURRENCIES,
+  SUPPORTED_TOKENS,
+} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {BwcProvider} from '../../../lib/bwc';
 import {BALANCE_CACHE_DURATION} from '../../../constants/wallet';
@@ -150,8 +154,8 @@ export const isBalanceCacheKeyStale = (timestamp: number | undefined) => {
 };
 
 export const GetProtocolPrefix = (
-    currency: string,
-    network: string = 'livenet',
+  currency: string,
+  network: string = 'livenet',
 ) => {
   // @ts-ignore
   return Currencies[currency].paymentInfo.protocolPrefix[network];
@@ -165,10 +169,65 @@ export const IsUtxoCoin = (currencyAbbreviation: string): boolean => {
   return Currencies[currencyAbbreviation].properties.isUtxo;
 };
 
+const IsCustomERCToken = (currencyAbbreviation: string) => {
+  return (
+    Currencies[currencyAbbreviation]?.properties.isCustom &&
+    !SUPPORTED_TOKENS.includes(currencyAbbreviation)
+  );
+};
+
+export interface FormattedAmountObj {
+  amount: string;
+  currency: string;
+  amountSat: number;
+  amountUnitStr: string;
+}
+
 export const FormatCryptoAmount = (
-    amount: number,
-    currencyAbbreviation: string,
-) => {
-  //TODO: format amount
-  return amount;
+  amount: number,
+  currencyAbbreviation: string,
+): FormattedAmountObj => {
+  // @ts-ignore
+  const {unitToSatoshi, unitDecimals} = GetPrecision(currencyAbbreviation);
+  const satToUnit = 1 / unitToSatoshi;
+  let amountUnitStr;
+  let amountSat;
+  let _amount;
+  amountSat = parseInt((amount * unitToSatoshi).toFixed(0), 10);
+
+  let opts;
+  // Custom tokens
+  if (currencyAbbreviation && IsCustomERCToken(currencyAbbreviation)) {
+    opts = {
+      // @ts-ignore
+      toSatoshis: GetPrecision(currencyAbbreviation).unitToSatoshi,
+      decimals: {
+        full: {
+          maxDecimals: 8,
+          minDecimals: 8,
+        },
+        short: {
+          maxDecimals: 6,
+          minDecimals: 2,
+        },
+      },
+    };
+  }
+
+  try {
+    amountUnitStr = BwcProvider.getInstance()
+      .getUtils()
+      .formatAmount(amountSat, currencyAbbreviation, opts);
+    amountUnitStr = `${amountUnitStr} ${currencyAbbreviation.toUpperCase()}`;
+  } catch (e) {}
+
+  _amount = (amountSat * satToUnit).toFixed(unitDecimals);
+  const currency = currencyAbbreviation.toUpperCase();
+
+  return {
+    amount: _amount,
+    currency,
+    amountSat,
+    amountUnitStr,
+  };
 };

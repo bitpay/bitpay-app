@@ -29,6 +29,7 @@ const RequestSpecificAmount = () => {
   const {currencyAbbreviation} = wallet;
   const navigation = useNavigation();
   const [amount, setAmount] = useState('0');
+  const [reset, setReset] = useState<string>();
 
   return (
     <SafeAreaView>
@@ -43,16 +44,17 @@ const RequestSpecificAmount = () => {
         </View>
 
         <View>
-          <VirtualKeyboard onChange={setAmount} reset={currencyAbbreviation} />
+          <VirtualKeyboard onChange={setAmount} reset={reset} />
           <ActionContainer>
             <Button
               onPress={() => {
                 navigation.navigate('Wallet', {
                   screen: 'RequestSpecificAmountQR',
-                  params: {wallet, requestAmount: +amount},
+                  params: {wallet, requestAmount: Number(amount)},
                 });
+                setReset(currencyAbbreviation + Math.random());
               }}
-              disabled={!+amount}>
+              disabled={!Number(amount)}>
               Continue
             </Button>
           </ActionContainer>

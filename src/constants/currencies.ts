@@ -9,7 +9,6 @@ export type SupportedTokens =
   | 'shib';
 export type SupportedCurrencies = SupportedCoins | SupportedTokens;
 
-// TODO: Add SHIB info ??
 export interface CurrencyOpts {
   // Bitcore-node
   name: string;

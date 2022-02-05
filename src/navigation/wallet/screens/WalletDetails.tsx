@@ -20,7 +20,7 @@ import ReceiveAddress from '../components/ReceiveAddress';
 import {StackScreenProps} from '@react-navigation/stack';
 import {
   startUpdateAllKeyAndWalletBalances,
-  startUpdateWalletBalance
+  startUpdateWalletBalance,
 } from '../../../store/wallet/effects/balance/balance';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -185,17 +185,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
               </BalanceContainer>
 
               {fullWalletObj ? (
-                  <LinkingButtons
-                      receive={{cta: () => showReceiveAddress()}}
-                      send={{
-                        hide: __DEV__ ? false : !fullWalletObj.balance.fiat,
-                        cta: () =>
-                            navigation.navigate('Wallet', {
-                              screen: 'SendTo',
-                              params: {wallet: fullWalletObj},
-                            }),
-                      }}
-                  />
+                <LinkingButtons
+                  receive={{cta: () => showReceiveAddress()}}
+                  send={{
+                    hide: __DEV__ ? false : !fullWalletObj.balance.fiat,
+                    cta: () =>
+                      navigation.navigate('Wallet', {
+                        screen: 'SendTo',
+                        params: {wallet: fullWalletObj},
+                      }),
+                  }}
+                />
               ) : null}
             </>
           );
