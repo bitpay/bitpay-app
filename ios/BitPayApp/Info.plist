@@ -73,5 +73,10 @@
 				</array>
 			</dict>
 		</array>
+		<key>Braze</key>
+      <dict>
+        <key>Endpoint</key>
+        <string>sdk.iad-05.braze.com</string>
+      </dict>
   </dict>
 </plist>
