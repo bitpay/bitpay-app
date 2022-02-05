@@ -1,5 +1,4 @@
 import styled from 'styled-components/native';
-import {Action, White} from '../../styles/colors';
 
 interface TabButtonProps {
   active?: boolean;
@@ -8,10 +7,10 @@ interface TabButtonProps {
 const TabButton = styled.Text<TabButtonProps>`
   border-bottom-width: 1px;
   border-color: ${({active, theme}) =>
-    active ? (theme.dark ? White : Action) : 'transparent'};
+    active ? theme.colors.link : 'transparent'};
   padding: 12px;
   color: ${({active, theme}) =>
-    active ? (theme.dark ? White : Action) : theme.colors.text};
+    active ? theme.colors.link : theme.colors.text};
   font-weight: bold;
 `;
 

@@ -1,4 +1,11 @@
-import {Action, LightBlack, NeutralSlate, SlateDark, White} from './colors';
+import {
+  Action,
+  Black,
+  LightBlack,
+  NeutralSlate,
+  SlateDark,
+  White,
+} from './colors';
 import {Platform} from 'react-native';
 import {MaterialTopTabNavigationOptions} from '@react-navigation/material-top-tabs';
 import {useTheme} from '@react-navigation/native';
@@ -21,7 +28,7 @@ export const ScreenOptions = (
     },
     tabBarActiveTintColor: White,
     tabBarInactiveTintColor: dark ? White : SlateDark,
-    tabBarPressColor: NeutralSlate,
+    tabBarPressColor: dark ? Black : NeutralSlate,
     tabBarLabelStyle: {
       fontSize: 16,
       textTransform: 'none',

@@ -8,6 +8,7 @@ import {
   ProgressBlue,
   White,
 } from '../../../styles/colors';
+import {BitPayTheme} from '../../../themes/bitpay';
 
 const BuyCrypto = () => {
   const theme = useTheme();
@@ -131,12 +132,12 @@ const Receive = () => {
 };
 
 const Scan = () => {
-  const theme = useTheme();
+  const theme = useTheme() as BitPayTheme;
 
   return (
     <Svg.Svg width="52" height="52" viewBox="0 0 46 46" fill="none">
       <Svg.Path
-        fill={theme.dark ? White : Action}
+        fill={theme.colors.link}
         fillRule="evenodd"
         clipRule="evenodd"
         d="M16.1534 15.0967H15.2853V20.2295H17.0214V16.8076H20.4937V15.0967H17.0214H16.1534ZM29.8687 15.0967H30.9103V20.2295H28.827V17.1498H25.702V15.0967H28.827H29.8687ZM30.9103 29.6398H29.8687H28.827H25.702V27.5866H28.827V24.5069H30.9103V29.6398ZM16.327 29.6398H15.2853V24.5069H17.3687V27.5866H20.4937V29.6398H17.3687H16.327ZM33.5145 21.9405H12.6812V22.796H33.5145V21.9405Z"
