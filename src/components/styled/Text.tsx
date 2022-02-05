@@ -1,10 +1,13 @@
+import React from 'react';
+import {Text} from 'react-native';
 import styled, {css} from 'styled-components/native';
-import {Action, SlateDark, White} from '../../styles/colors';
 
 export const fontFamily = 'Heebo';
 
 export const BaseText = styled.Text`
+  color: ${({theme}) => theme.colors.text};
   font-family: '${fontFamily}';
+  color: ${({theme}) => theme.colors.text};
 `;
 
 export const H2 = styled(BaseText)`
@@ -13,7 +16,6 @@ export const H2 = styled(BaseText)`
   font-weight: 500;
   letter-spacing: 0;
   text-align: center;
-  color: ${({theme}) => theme.colors.text};
 `;
 
 export const H3 = styled(BaseText)`
@@ -22,7 +24,6 @@ export const H3 = styled(BaseText)`
   font-weight: 700;
   line-height: 34px;
   letter-spacing: 0;
-  color: ${({theme}) => theme.colors.text};
 `;
 
 export const H4 = styled(BaseText)`
@@ -31,7 +32,6 @@ export const H4 = styled(BaseText)`
   font-weight: 500;
   line-height: 30px;
   letter-spacing: 0;
-  color: ${({theme}) => theme.colors.text};
 `;
 
 export const H5 = styled(BaseText)`
@@ -40,14 +40,13 @@ export const H5 = styled(BaseText)`
   font-weight: 700;
   line-height: 25px;
   letter-spacing: 0;
-  color: ${({theme}) => theme.colors.text};
 `;
 
 export const H6 = styled(BaseText)`
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  color: ${({theme}) => theme.colors.text};
+  line-height: 18px;
 `;
 
 export const H7 = styled(BaseText)`
@@ -56,11 +55,22 @@ export const H7 = styled(BaseText)`
   font-weight: 400;
   line-height: 18px;
   letter-spacing: 0;
-  color: ${props => props.theme.colors.text};
 `;
 
 export const SubText = styled(H7)`
-  color: ${SlateDark};
+  color: ${({theme}) => theme.colors.description};
+`;
+
+export const Small = styled(BaseText)`
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 18px;
+`;
+
+export const Smallest = styled(BaseText)`
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 15px;
 `;
 
 export const Paragraph = styled(BaseText)`
@@ -69,7 +79,6 @@ export const Paragraph = styled(BaseText)`
   font-weight: 400;
   line-height: 25px;
   letter-spacing: 0;
-  color: ${props => props.theme.colors.text};
 `;
 
 export const Disclaimer = styled(BaseText)`
@@ -80,6 +89,33 @@ export const Disclaimer = styled(BaseText)`
   letter-spacing: 0;
 `;
 
+interface ExponentProps {
+  i: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+}
+
+const EXPONENT_UNICODE_MAP: {
+  [k in 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9]: string;
+} = {
+  0: '\u2070',
+  1: '\u00B9',
+  2: '\u00B2',
+  3: '\u00B3',
+  4: '\u2074',
+  5: '\u2075',
+  6: '\u2076',
+  7: '\u2077',
+  8: '\u2078',
+  9: '\u2079',
+};
+
+/**
+ * Renders a number 0-9 as a unicode exponent in a Text element.
+ * @param i The number 0-9 to use as the exponent.
+ */
+export const Exp = (props: ExponentProps) => {
+  return <Text>{EXPONENT_UNICODE_MAP[props.i]}</Text>;
+};
+
 // Nav
 export const HeaderTitle = styled(BaseText)`
   font-size: 18px;
@@ -87,7 +123,6 @@ export const HeaderTitle = styled(BaseText)`
   font-weight: 700;
   line-height: 30px;
   letter-spacing: 0;
-  color: ${({theme}) => theme.colors.text};
 `;
 
 export const HeaderSubtitle = styled(BaseText)`
@@ -99,7 +134,7 @@ interface TextAlignProps {
   align: 'center' | 'left' | 'right';
 }
 
-export const TextAlign = styled.Text<TextAlignProps>`
+export const TextAlign = styled(BaseText)<TextAlignProps>`
   ${props =>
     css`
       text-align: ${props.align};
@@ -107,12 +142,10 @@ export const TextAlign = styled.Text<TextAlignProps>`
 `;
 
 export const Link = styled(BaseText)`
-  font-size: 16px;
-  line-height: 25px;
   font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? White : Action)};
-  text-decoration: ${({theme: {dark}}) => (dark ? 'underline' : 'none')};
-  text-decoration-color: ${White};
+  color: ${({theme}) => theme.colors.link};
+  text-decoration: ${({theme}) => (theme.dark ? 'underline' : 'none')};
+  text-decoration-color: ${({theme}) => theme.colors.link};
 `;
 
 // WALLET
@@ -139,7 +172,6 @@ export const ImportTitle = styled(BaseText)`
   font-weight: 500;
   font-size: 13px;
   line-height: 18px;
-  color: ${SlateDark};
   opacity: 0.75;
   text-transform: uppercase;
 `;

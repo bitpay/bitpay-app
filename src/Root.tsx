@@ -66,6 +66,9 @@ import GiftCardStack, {
   GiftCardStackParamList,
 } from './navigation/tabs/shop/gift-card/GiftCardStack';
 import DecryptEnterPasswordModal from './navigation/wallet/components/DecryptEnterPasswordModal';
+import MerchantStack, {
+  MerchantStackParamList,
+} from './navigation/tabs/shop/merchant/MerchantStack';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -79,6 +82,7 @@ export type RootStackParamList = {
   Scan: NavigatorScreenParams<ScanStackParamList>;
   Shop: NavigatorScreenParams<ShopStackParamList>;
   GiftCard: NavigatorScreenParams<GiftCardStackParamList>;
+  Merchant: NavigatorScreenParams<MerchantStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
   SecuritySettings: NavigatorScreenParams<SecuritySettingsStackParamList>;
   ContactSettings: NavigatorScreenParams<ContactSettingsStackParamList>;
@@ -100,6 +104,7 @@ export enum RootStacks {
   CARD = 'Card',
   SCAN = 'Scan',
   GIFT_CARD = 'GiftCard',
+  MERCHANT = 'Merchant',
   // SETTINGS
   GENERAL_SETTINGS = 'GeneralSettings',
   SECURITY_SETTINGS = 'SecuritySettings',
@@ -119,6 +124,7 @@ export type NavScreenParams = NavigatorScreenParams<
     WalletStackParamList &
     CardStackParamList &
     GiftCardStackParamList &
+    MerchantStackParamList &
     GeneralSettingsStackParamList &
     SecuritySettingsStackParamList &
     ContactSettingsStackParamList &
@@ -228,11 +234,7 @@ export default () => {
               const {routes} = navEvent;
               let {name, params} = navEvent.routes[routes.length - 1];
               dispatch(AppActions.setCurrentRoute([name, params]));
-              dispatch(
-                LogActions.info(
-                  `Navigation event... ${name} ${JSON.stringify(params)}`,
-                ),
-              );
+              dispatch(LogActions.info(`Navigation event... ${name}`));
               if (!__DEV__) {
                 if (name === 'Tabs') {
                   const {history} = navEvent.routes[routes.length - 1].state;
@@ -275,12 +277,19 @@ export default () => {
               name={RootStacks.WALLET}
               component={WalletStack}
             />
-            <Root.Screen name={RootStacks.CARD} component={CardStack} />
+            <Root.Screen
+              name={RootStacks.CARD}
+              component={CardStack}
+              options={{
+                gestureEnabled: false,
+              }}
+            />
             <Root.Screen name={RootStacks.SCAN} component={ScanStack} />
             <Root.Screen
               name={RootStacks.GIFT_CARD}
               component={GiftCardStack}
             />
+            <Root.Screen name={RootStacks.MERCHANT} component={MerchantStack} />
             {/* SETTINGS */}
             <Root.Screen
               name={RootStacks.GENERAL_SETTINGS}

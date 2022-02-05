@@ -1,7 +1,6 @@
 import {yupResolver} from '@hookform/resolvers/yup';
-import {useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useEffect} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
@@ -9,20 +8,24 @@ import * as yup from 'yup';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import {BaseText} from '../../../components/styled/Text';
+import {Network} from '../../../constants';
+import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {navigationRef, RootStacks} from '../../../Root';
 import {RootState} from '../../../store';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
+import {Session} from '../../../store/bitpay-id/bitpay-id.models';
 import {LoginStatus} from '../../../store/bitpay-id/bitpay-id.reducer';
-import {SlateDark} from '../../../styles/colors';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
 import {AuthStackParamList} from '../AuthStack';
 import AuthFormContainer, {
   AuthActionsContainer,
   AuthInputContainer,
 } from '../components/AuthFormContainer';
+import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
 
 export type LoginSignupParamList = {
   context: 'login' | 'signup';
+  onLoginSuccess?: ((...args: any[]) => any) | undefined;
 };
 
 type LoginSignupScreenProps = StackScreenProps<
@@ -46,7 +49,7 @@ const Row = styled.View`
 `;
 
 const LoginText = styled(BaseText)`
-  color: ${SlateDark};
+  color: ${({theme}) => theme.colors.description};
   font-size: 18px;
 `;
 
@@ -62,16 +65,22 @@ interface LoginFormFieldValues {
 
 const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
   const dispatch = useDispatch();
-  const theme = useTheme();
   const {
     control,
     handleSubmit,
+    getValues,
     formState: {errors},
   } = useForm<LoginFormFieldValues>({resolver: yupResolver(schema)});
+  const network = useSelector<RootState, Network>(({APP}) => APP.network);
+  const session = useSelector<RootState, Session>(
+    ({BITPAY_ID}) => BITPAY_ID.session,
+  );
   const loginStatus = useSelector<RootState, LoginStatus>(
     ({BITPAY_ID}) => BITPAY_ID.loginStatus,
   );
-  const {context} = route.params;
+  const [isCaptchaModalVisible, setCaptchaModalVisible] = useState(false);
+  const captchaRef = useRef<CaptchaRef>(null);
+  const {context, onLoginSuccess} = route.params;
 
   useEffect(() => {
     dispatch(BitPayIdEffects.startFetchSession());
@@ -80,6 +89,11 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
   useEffect(() => {
     if (loginStatus === 'success') {
       dispatch(BitPayIdActions.completedPairing());
+
+      if (onLoginSuccess) {
+        onLoginSuccess();
+        return;
+      }
 
       const parentNav = navigation.getParent();
 
@@ -95,7 +109,8 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
     }
 
     if (loginStatus === 'failed') {
-      console.log('oh man login failed');
+      // TODO
+      captchaRef.current?.reset();
       return;
     }
 
@@ -108,10 +123,14 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
       navigation.navigate('EmailAuthentication');
       return;
     }
-  }, [loginStatus, navigation, dispatch]);
+  }, [loginStatus, navigation, dispatch, onLoginSuccess]);
 
   const onSubmit = handleSubmit(({email, password}) => {
-    dispatch(BitPayIdEffects.startLogin({email, password}));
+    if (session.captchaDisabled) {
+      dispatch(BitPayIdEffects.startLogin({email, password}));
+    } else {
+      setCaptchaModalVisible(true);
+    }
   });
 
   const onAlreadyHaveAccount = () => {
@@ -119,6 +138,7 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
   };
 
   const onTroubleLoggingIn = () => {
+    // TODO
     console.log('trouble logging in');
   };
 
@@ -144,14 +164,25 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
     );
   }
 
+  const onCaptchaSubmit = (gCaptchaResponse: string) => {
+    const {email, password} = getValues();
+
+    setCaptchaModalVisible(false);
+    dispatch(BitPayIdEffects.startLogin({email, password, gCaptchaResponse}));
+  };
+
+  const onCaptchaCancel = () => {
+    setCaptchaModalVisible(false);
+    captchaRef.current?.reset();
+  };
+
   return (
-    <AuthFormContainer theme={theme} header={header}>
+    <AuthFormContainer header={header}>
       <AuthInputContainer>
         <Controller
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
-              theme={theme}
               placeholder={'satoshi@example.com'}
               label={'EMAIL'}
               onBlur={onBlur}
@@ -164,12 +195,12 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
           defaultValue=""
         />
       </AuthInputContainer>
+
       <AuthInputContainer>
         <Controller
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
-              theme={theme}
               placeholder={'strongPassword123'}
               label={'PASSWORD'}
               type={'password'}
@@ -183,12 +214,22 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
           defaultValue=""
         />
       </AuthInputContainer>
+
       <AuthActionsContainer>
         <PrimaryActionContainer>
           <Button onPress={onSubmit}>Log In</Button>
         </PrimaryActionContainer>
         <SecondaryActionContainer>{secondaryAction}</SecondaryActionContainer>
       </AuthActionsContainer>
+
+      <RecaptchaModal
+        isVisible={isCaptchaModalVisible}
+        ref={captchaRef}
+        sitekey={session.noCaptchaKey}
+        baseUrl={BASE_BITPAY_URLS[network]}
+        onSubmit={onCaptchaSubmit}
+        onCancel={onCaptchaCancel}
+      />
     </AuthFormContainer>
   );
 };

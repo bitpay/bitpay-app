@@ -6,7 +6,12 @@ import styled from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
 import {CtaContainer} from '../../../../../components/styled/Containers';
 import {BaseText, Paragraph} from '../../../../../components/styled/Text';
-import {Grey, NeutralSlate, SlateDark} from '../../../../../styles/colors';
+import {
+  Grey,
+  LightBlack,
+  NeutralSlate,
+  SlateDark,
+} from '../../../../../styles/colors';
 import RemoteImage from '../../components/RemoteImage';
 import {GiftCardStackParamList} from '../GiftCardStack';
 import {
@@ -24,8 +29,9 @@ const Amount = styled(BaseText)`
 `;
 
 const ClaimCodeBox = styled.View`
-  background-color: ${NeutralSlate};
+  background-color: ${({theme}) => (theme.dark ? '#121212' : NeutralSlate)};
   border: 1px solid #e1e4e7;
+  ${({theme}) => (theme.dark ? 'border: none;' : '')}
   border-radius: 12px;
   margin-top: -80px;
   padding-top: 110px;
@@ -60,7 +66,7 @@ const Terms = styled(BaseText)`
 `;
 
 const Divider = styled.View`
-  background-color: ${Grey};
+  background-color: ${({theme}) => (theme.dark ? LightBlack : Grey)};
   height: 1px;
   width: 80%;
   margin-bottom: 20px;

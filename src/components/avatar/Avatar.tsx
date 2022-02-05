@@ -4,7 +4,7 @@ import * as Svg from 'react-native-svg';
 import {useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import {RootState} from '../../store';
-import {NeutralSlate, ProgressBlue} from '../../styles/colors';
+import {Midnight, NeutralSlate, ProgressBlue} from '../../styles/colors';
 
 interface AvatarSvgProps {
   size?: number;
@@ -43,7 +43,7 @@ const ProfileIcon: React.FC<AvatarSvgProps> = ({
   const theme = useTheme();
 
   color = color || (theme.dark ? ProgressBlue : NeutralSlate);
-  background = background || (theme.dark ? DARK_BLUE : ProgressBlue);
+  background = background || (theme.dark ? Midnight : ProgressBlue);
 
   return (
     <Svg.Svg width={size} height={size} viewBox="0 0 35 35" fill="none">

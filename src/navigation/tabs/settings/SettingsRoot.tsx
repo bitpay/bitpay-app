@@ -9,6 +9,7 @@ import {
   Hr,
   ScreenGutter,
   Setting,
+  SettingIcon,
   SettingTitle,
 } from '../../../components/styled/Containers';
 import {useTheme} from '@react-navigation/native';
@@ -16,6 +17,7 @@ import {useTranslation} from 'react-i18next';
 import {RootState} from '../../../store';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
+import {URL} from '../../../constants';
 
 interface HomeSetting {
   title: string;
@@ -100,19 +102,19 @@ const SettingsHomeScreen: React.FC = () => {
   const LINKS: LinkSetting[] = [
     {
       title: t('Help & Support'),
-      link: 'https://support.bitpay.com/hc/en-us',
+      link: URL.HELP_AND_SUPPORT,
     },
     {
       title: t('Terms of Use'),
-      link: 'https://bitpay.com/legal/terms-of-use/#wallet-terms-of-use',
+      link: URL.TOU_WALLET,
     },
     {
       title: t('Privacy'),
-      link: 'https://bitpay.com/about/privacy',
+      link: URL.PRIVACY_POLICY,
     },
     {
       title: t('Accessibility Statement'),
-      link: 'https://bitpay.com/legal/accessibility/',
+      link: URL.ACCESSIBILITY_STATEMENT,
     },
   ];
 
@@ -143,7 +145,9 @@ const SettingsHomeScreen: React.FC = () => {
           ) : (
             <BitPayIdSettingTitle>Log In or Sign Up</BitPayIdSettingTitle>
           )}
-          <AngleRight />
+          <SettingIcon suffix>
+            <AngleRight />
+          </SettingIcon>
         </BitPayIdSettingsLink>
 
         <Hr />
@@ -153,7 +157,9 @@ const SettingsHomeScreen: React.FC = () => {
             <View key={title}>
               <Setting onPress={onPress}>
                 <SettingTitle style={textStyle}>{title}</SettingTitle>
-                <AngleRight />
+                <SettingIcon suffix>
+                  <AngleRight />
+                </SettingIcon>
               </Setting>
               <Hr />
             </View>

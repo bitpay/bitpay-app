@@ -4,8 +4,8 @@ import HomeCard from '../../../../components/home-card/HomeCard';
 import {BaseText} from '../../../../components/styled/Text';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {Slate} from '../../../../styles/colors';
-import {format} from '../../../../utils/currency';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
+import {formatFiatAmount} from '../../../../utils/helper-methods';
 
 interface WalletCardComponentProps {
   wallets: Wallet[];
@@ -74,8 +74,8 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   );
 
   const body = {
-    title: 'My Everything Wallet',
-    value: format(totalBalance, 'USD'),
+    title: 'My Key',
+    value: formatFiatAmount(totalBalance, 'USD'),
   };
 
   return <HomeCard header={HeaderComponent} body={body} onCTAPress={onPress} />;

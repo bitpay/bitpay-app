@@ -227,7 +227,7 @@ const createKeyAndCredentialsWithFile = async (
       }
       addressBook = data.addressBook;
     } catch (err: any) {
-      if (err && err.message == 'Bad Key version') {
+      if (err && err.message === 'Bad Key version') {
         // Workaround for bad generated files. Fixed: https://github.com/bitpay/wallet/pull/11872
         data.key.version = '1';
         data.key.mnemonicHasPassphrase = false;
