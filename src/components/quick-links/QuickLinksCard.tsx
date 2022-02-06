@@ -10,6 +10,7 @@ import {
 import haptic from '../haptic-feedback/haptic';
 import {BaseText} from '../styled/Text';
 import {QuickLinkProps} from './QuickLinksSlides';
+import {ActiveOpacity} from '../styled/Containers';
 
 const QuickLinkCardContainer = styled.TouchableOpacity`
   justify-content: center;
@@ -57,6 +58,7 @@ export default ({item}: {item: QuickLinkProps}) => {
 
   return (
     <QuickLinkCardContainer
+      activeOpacity={ActiveOpacity}
       onPress={() => {
         haptic('impactLight');
         onPress();

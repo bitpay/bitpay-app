@@ -42,7 +42,7 @@ const ItemDescriptionText = styled(BaseText)`
 `;
 
 const ScanButtonContainer = styled.TouchableOpacity`
-  background-color: ${({theme}) => (theme.dark ? Action : NeutralSlate)};
+  background-color: ${({theme}) => (theme.dark ? Midnight : NeutralSlate)};
   flex-direction: row;
   align-self: center;
   align-items: center;

@@ -23,7 +23,7 @@ export const Success = '#2fcfa4';
 export const Warning = '#fdb455';
 
 export const Disabled = '#edeef0';
-export const DisabledDark = '#bebec0';
+export const DisabledDark = '#3c3c3c';
 
 export const NotificationPrimary = '#1F3AB3';
 export const ProgressBlue = '#4F6EF7';
