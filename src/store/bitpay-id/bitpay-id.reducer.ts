@@ -48,6 +48,7 @@ const initialState: BitPayIdState = {
   session: {
     csrfToken: '',
     isAuthenticated: false,
+    noCaptchaKey: '',
   },
   apiToken: {
     [Network.mainnet]: '',
