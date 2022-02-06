@@ -17,10 +17,10 @@ const Start = () => {
         image={require('../../../../assets/img/intro/light/whats-new.png')}
         descriptionTitle={'Explore the new BitPay App'}
         descriptionText={
-          'Your home tab is now your launchpad. View all your assets and check out new offerings from BitPay.'
+          'Your home tab is now your launchpad. View all your keys and check out new offerings from BitPay.'
         }
         ctaText={'Check it out'}
-        cta={() => navigation.navigate('Intro', {screen: 'Balance'})}
+        cta={() => navigation.navigate('Intro', {screen: 'Wallet'})}
       />
     </IntroStartContainer>
   );

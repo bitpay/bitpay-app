@@ -1,8 +1,10 @@
 import React from 'react';
 import styled, {css} from 'styled-components/native';
+import ErrorBoundary from 'react-native-error-boundary';
 import {SvgUri} from 'react-native-svg';
 import {CardConfig} from '../../../../store/shop/shop.models';
-import {H4} from '../../../../components/styled/Text';
+import {BaseText, H4} from '../../../../components/styled/Text';
+import {formatAmount} from '../../../../lib/gift-cards/gift-card';
 
 interface GiftCardCreditsItemProps {
   logoBackgroundColor: string;
@@ -17,8 +19,6 @@ const GiftCardItem = styled.View<GiftCardCreditsItemProps>`
       overflow: hidden;
       border-radius: 30px;
       border: 1.5px solid black;
-      padding: 0;
-      padding-left: 0;
       padding-right: 20px;
       margin-top: 10px;
       margin-bottom: 0px;
@@ -29,6 +29,7 @@ const GiftCardItem = styled.View<GiftCardCreditsItemProps>`
       border-color: ${hasWhiteBg(logoBackgroundColor)
         ? '#d3d6da'
         : logoBackgroundColor};
+      ${!hasWhiteBg(logoBackgroundColor) ? 'border: none;' : ''};
     `}
 `;
 
@@ -36,13 +37,14 @@ const logoHeight = 55;
 
 const LogoContainer = styled.View`
   flex-grow: 1;
+  height: ${logoHeight}px;
 `;
 
 const Logo = styled.Image`
   height: ${logoHeight}px;
 `;
 
-const GiftCardAmount = styled.Text<GiftCardCreditsItemProps>`
+const GiftCardAmount = styled(BaseText)<GiftCardCreditsItemProps>`
   ${({logoBackgroundColor}) =>
     css`
       font-size: 18px;
@@ -55,22 +57,26 @@ const GiftCardAmount = styled.Text<GiftCardCreditsItemProps>`
 
 const PlaceholderText = styled(H4)`
   color: white;
-  padding: 12px 20px;
+  padding: 12px 30px;
 `;
 
 export default (props: {cardConfig: CardConfig; amount: number}) => {
   const {cardConfig, amount} = props;
-  const logo = cardConfig?.logo;
   const logoBackgroundColor = cardConfig?.logoBackgroundColor || 'black';
   return (
     <GiftCardItem logoBackgroundColor={logoBackgroundColor}>
       <LogoContainer>
-        {logo ? (
+        {cardConfig ? (
           <>
-            {logo.endsWith('.svg') ? (
-              <SvgUri height={`${logoHeight}px`} uri={logo} />
+            {cardConfig.logo.endsWith('.svg') ? (
+              <ErrorBoundary
+                FallbackComponent={() => (
+                  <PlaceholderText>{cardConfig.displayName}</PlaceholderText>
+                )}>
+                <SvgUri height={`${logoHeight}px`} uri={cardConfig.logo} />
+              </ErrorBoundary>
             ) : (
-              <Logo resizeMode={'contain'} source={{uri: logo}} />
+              <Logo resizeMode={'contain'} source={{uri: cardConfig.logo}} />
             )}
           </>
         ) : (
@@ -78,7 +84,9 @@ export default (props: {cardConfig: CardConfig; amount: number}) => {
         )}
       </LogoContainer>
       <GiftCardAmount logoBackgroundColor={logoBackgroundColor}>
-        ${amount}
+        {formatAmount(amount, cardConfig.currency, {
+          customPrecision: 'minimal',
+        })}
       </GiftCardAmount>
     </GiftCardItem>
   );

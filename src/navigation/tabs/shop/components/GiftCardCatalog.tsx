@@ -1,17 +1,15 @@
 import React, {useMemo, useState} from 'react';
 import debounce from 'lodash.debounce';
 import styled, {css} from 'styled-components/native';
-import {Cloud} from '../../../../styles/colors';
+import {Cloud, LightBlack} from '../../../../styles/colors';
 import {Platform, View} from 'react-native';
-import {SvgUri} from 'react-native-svg';
 import {useForm, Controller} from 'react-hook-form';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {WIDTH} from '../../../../components/styled/Containers';
 import ShopCarouselList, {ShopCarouselItem} from './ShopCarouselList';
-import {purchasedBrands} from '../stubs/gift-cards';
-import {Paragraph} from '../../../../components/styled/Text';
-import GiftCardCatalogItem from './GiftCardCatalogItem';
-import GiftCardCreditsItem from './GiftCardCreditsItem';
+import {purchasedGiftCards} from '../stubs/gift-cards';
+import {BaseText, Paragraph} from '../../../../components/styled/Text';
+import GiftCardItem from './GiftCardItem';
 import {
   CardConfig,
   Category,
@@ -32,14 +30,17 @@ import {
   SectionHeaderContainer,
   SectionSpacer,
 } from './styled/ShopTabComponents';
-
+import {useNavigation, useTheme} from '@react-navigation/native';
+import {GiftCardScreens} from '../gift-card/GiftCardStack';
+import MyGiftCards from './MyGiftCards';
+import RemoteImage from './RemoteImage';
 interface CategoryItemProps {
   isLast: boolean;
 }
 const CategoryItem = styled.View<CategoryItemProps>`
   ${({isLast}) =>
     css`
-      border-bottom-color: ${Cloud};
+      border-bottom-color: ${({theme}) => (theme.dark ? LightBlack : Cloud)};
       width: 100%;
       border-bottom-width: ${isLast ? 0 : 1}px;
       display: flex;
@@ -49,32 +50,51 @@ const CategoryItem = styled.View<CategoryItemProps>`
     `}
 `;
 
-const CategoryText = styled.Text`
+const CategoryText = styled(BaseText)`
   margin-left: 15px;
   font-size: 14px;
 `;
 
-const Curations = ({curations}: {curations: GiftCardCuration[]}) => (
-  <>
-    {curations.map(curation => (
-      <View key={curation.displayName}>
-        <SectionContainer>
-          <SectionHeader>{curation.displayName}</SectionHeader>
-        </SectionContainer>
-        <ShopCarouselList
-          items={curation.giftCards}
-          itemComponent={(item: ShopCarouselItem) => (
-            <GiftCardCatalogItem cardConfig={item as CardConfig} />
-          )}
-          itemUnderlayColor={'#fbfbff'}
-          itemWidthInLastSlide={WIDTH}
-          maxItemsPerColumn={3}
-          screenWidth={WIDTH}
-        />
-      </View>
-    ))}
-  </>
-);
+const CategoryEmoji = styled(BaseText)`
+  margin-top: -2px;
+`;
+
+const Curations = ({
+  curations,
+  underlayColor,
+}: {
+  curations: GiftCardCuration[];
+  underlayColor: string;
+}) => {
+  const navigation = useNavigation();
+  return (
+    <>
+      {curations.map(curation => (
+        <View key={curation.displayName}>
+          <SectionContainer>
+            <SectionHeader>{curation.displayName}</SectionHeader>
+          </SectionContainer>
+          <ShopCarouselList
+            items={curation.giftCards}
+            itemComponent={(item: ShopCarouselItem) => (
+              <GiftCardItem cardConfig={item as CardConfig} />
+            )}
+            itemUnderlayColor={underlayColor}
+            itemWidthInLastSlide={WIDTH}
+            maxItemsPerColumn={3}
+            screenWidth={WIDTH}
+            onItemPress={item => {
+              navigation.navigate('GiftCard', {
+                screen: GiftCardScreens.BUY_GIFT_CARD,
+                params: {cardConfig: item as CardConfig},
+              });
+            }}
+          />
+        </View>
+      ))}
+    </>
+  );
+};
 
 export default ({
   scrollViewRef,
@@ -87,10 +107,16 @@ export default ({
   curations: GiftCardCuration[];
   categories: Category[];
 }) => {
+  const navigation = useNavigation();
+  const theme = useTheme();
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as CardConfig[]);
   const {control} = useForm();
-  const purchasedBrandsHeight = purchasedBrands.length * 68 + 260;
+  const activeGiftCards = purchasedGiftCards.filter(
+    giftCard => !giftCard.archived,
+  );
+  const numActiveGiftCards = activeGiftCards.length;
+  const activeGiftCardsHeight = numActiveGiftCards * 60 + 260;
 
   const updateSearchResults = debounce((text: string) => {
     setSearchVal(text);
@@ -100,30 +126,21 @@ export default ({
     setSearchResults(newSearchResults);
   }, 300);
 
+  const underlayColor = theme.dark ? '#121212' : '#fbfbff';
+
   const memoizedCurations = useMemo(
-    () => <Curations curations={curations} />,
-    [curations],
+    () => <Curations curations={curations} underlayColor={underlayColor} />,
+    [curations, underlayColor],
   );
 
   return (
     <View>
-      {purchasedBrands.length ? (
+      {purchasedGiftCards.length ? (
         <>
-          <SectionContainer>
-            <SectionHeader>My Gift Cards</SectionHeader>
-            {purchasedBrands.map(purchasedBrand => {
-              const brandConfig = availableGiftCards.find(
-                cardConfig => cardConfig.name === purchasedBrand.name,
-              ) as CardConfig;
-              return (
-                <GiftCardCreditsItem
-                  key={purchasedBrand.name}
-                  cardConfig={brandConfig}
-                  amount={purchasedBrand.amount}
-                />
-              );
-            })}
-          </SectionContainer>
+          <MyGiftCards
+            giftCards={purchasedGiftCards}
+            supportedGiftCards={availableGiftCards}
+          />
           <SectionDivider />
         </>
       ) : (
@@ -135,18 +152,21 @@ export default ({
           render={({field: {onChange, onBlur, value}}) => (
             <SearchBox
               placeholder={'Search Gift Cards'}
+              theme={theme}
               onBlur={onBlur}
               onFocus={() => {
                 scrollViewRef &&
                   scrollViewRef.current &&
                   scrollViewRef.current.scrollTo({
                     x: 0,
-                    y: purchasedBrands.length
-                      ? purchasedBrandsHeight + 15
+                    y: numActiveGiftCards
+                      ? activeGiftCardsHeight + 15
+                      : purchasedGiftCards.length
+                      ? 300
                       : 160,
                     animated: Platform.select({
                       ios: true,
-                      android: !purchasedBrands.length,
+                      android: !numActiveGiftCards,
                     }),
                   });
               }}
@@ -167,9 +187,14 @@ export default ({
             {searchResults.map((cardConfig: CardConfig) => (
               <ListItemTouchableHighlight
                 key={cardConfig.name}
-                onPress={() => console.log('press', cardConfig.displayName)}
-                underlayColor={'#fbfbff'}>
-                <GiftCardCatalogItem cardConfig={cardConfig} />
+                onPress={() => {
+                  navigation.navigate('GiftCard', {
+                    screen: GiftCardScreens.BUY_GIFT_CARD,
+                    params: {cardConfig},
+                  });
+                }}
+                underlayColor={underlayColor}>
+                <GiftCardItem cardConfig={cardConfig} />
               </ListItemTouchableHighlight>
             ))}
           </SearchResults>
@@ -194,9 +219,15 @@ export default ({
           <CategoryItemTouchableHighlight
             key={category.displayName}
             onPress={() => console.log('press', category.displayName)}
-            underlayColor={'#fbfbff'}>
+            underlayColor={underlayColor}>
             <CategoryItem isLast={index === categories.length - 1}>
-              <SvgUri height="21px" uri={category.icon} />
+              <RemoteImage
+                height={21}
+                uri={category.icon}
+                fallbackComponent={() => (
+                  <CategoryEmoji>{category.emoji}</CategoryEmoji>
+                )}
+              />
               <CategoryText>{category.displayName}</CategoryText>
             </CategoryItem>
           </CategoryItemTouchableHighlight>

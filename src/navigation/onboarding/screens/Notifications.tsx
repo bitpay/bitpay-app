@@ -1,8 +1,10 @@
-import React from 'react';
+import React, {useLayoutEffect} from 'react';
 import styled from 'styled-components/native';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
+  ActionContainer,
   CtaContainer,
+  HeaderRightContainer,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
@@ -26,10 +28,32 @@ const NotificationImage = {
 };
 
 const NotificationsScreen = () => {
+  const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      gestureEnabled: false,
+      headerLeft: () => null,
+      headerRight: () => (
+        <HeaderRightContainer>
+          <Button
+            buttonType={'pill'}
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('Onboarding', {
+                screen: 'Pin',
+              });
+            }}>
+            Skip
+          </Button>
+        </HeaderRightContainer>
+      ),
+    });
+  }, [navigation]);
+
   useAndroidBackHandler(() => true);
   const themeType = useThemeType();
   const dispatch = useDispatch();
-  const navigation = useNavigation();
   const onSetNotificationsPress = (notificationsAccepted: boolean) => {
     haptic('impactLight');
     dispatch(AppActions.setNotificationsAccepted(notificationsAccepted));
@@ -55,16 +79,20 @@ const NotificationsScreen = () => {
         </TextAlign>
       </TextContainer>
       <CtaContainer>
-        <Button
-          buttonStyle={'primary'}
-          onPress={() => onSetNotificationsPress(true)}>
-          Allow
-        </Button>
-        <Button
-          buttonStyle={'secondary'}
-          onPress={() => onSetNotificationsPress(false)}>
-          Deny
-        </Button>
+        <ActionContainer>
+          <Button
+            buttonStyle={'primary'}
+            onPress={() => onSetNotificationsPress(true)}>
+            Allow
+          </Button>
+        </ActionContainer>
+        <ActionContainer>
+          <Button
+            buttonStyle={'secondary'}
+            onPress={() => onSetNotificationsPress(false)}>
+            Deny
+          </Button>
+        </ActionContainer>
       </CtaContainer>
     </NotificationsContainer>
   );

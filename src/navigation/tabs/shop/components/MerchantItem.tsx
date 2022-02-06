@@ -1,8 +1,13 @@
 import React, {useCallback, useState} from 'react';
 import styled, {css} from 'styled-components/native';
 import {DirectIntegrationApiObject} from '../../../../store/shop/shop.models';
-import {NeutralSlate, SlateDark} from '../../../../styles/colors';
-import RemoteIcon from './RemoteIcon';
+import {
+  LightBlack,
+  NeutralSlate,
+  SlateDark,
+  White,
+} from '../../../../styles/colors';
+import RemoteImage from './RemoteImage';
 import {H6, Paragraph} from '../../../../components/styled/Text';
 import {WIDTH} from '../../../../components/styled/Containers';
 import {horizontalPadding} from './styled/ShopTabComponents';
@@ -15,10 +20,11 @@ interface MerchantBoxProps {
 const MerchantBox = styled.View<MerchantBoxProps>`
   ${({height, marginLeft, width}) =>
     css`
-      background-color: ${NeutralSlate};
+      background-color: ${({theme}) =>
+        theme.dark ? LightBlack : NeutralSlate};
       border-radius: 21px;
       height: ${height}px;
-      margin: 16px 6px;
+      margin: 6px;
       ${marginLeft && `margin-left: ${marginLeft}px;`};
       padding: 16px;
       overflow: hidden;
@@ -39,7 +45,7 @@ const MerchantName = styled(H6)<MerchantNameProps>`
 `;
 
 const MerchantDescription = styled(Paragraph)`
-  color: ${SlateDark};
+  color: ${({theme}) => (theme.dark ? White : SlateDark)};
   font-size: 12px;
   font-weight: 400;
   line-height: 16px;
@@ -66,7 +72,7 @@ export default ({
   );
   return (
     <MerchantBox height={height} marginLeft={marginLeft} width={width}>
-      <RemoteIcon icon={icon} height={26} />
+      <RemoteImage uri={icon} height={26} borderRadius={30} />
       <MerchantName
         headerMargin={headerMargin}
         numberOfLines={2}

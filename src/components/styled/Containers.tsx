@@ -1,6 +1,14 @@
+import React from 'react';
+import {Dimensions, Text} from 'react-native';
 import styled, {css} from 'styled-components/native';
-import {Dimensions} from 'react-native';
-import {NeutralSlate, SlateDark} from '../../styles/colors';
+import {
+  Feather,
+  LightBlack,
+  NeutralSlate,
+  Slate,
+  SlateDark,
+  White,
+} from '../../styles/colors';
 import {BaseText} from './Text';
 
 export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
@@ -50,6 +58,7 @@ export const CtaContainer = styled.View`
 export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
   padding: 15px;
   position: absolute;
+  margin: 5px 0;
   bottom: 0;
   left: 0;
   right: 0;
@@ -58,9 +67,11 @@ export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
   ${({background}) =>
     background &&
     css`
-      background: white;
+      background: ${({theme}) => theme.colors.background};
     `};
 `;
+
+export const Br: React.FC = () => <Text />;
 
 export const Hr = styled.View`
   border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#ebecee')};
@@ -70,6 +81,11 @@ export const Hr = styled.View`
 export const Column = styled.View`
   flex: 1;
   flex-direction: column;
+`;
+
+export const Row = styled.View`
+  flex: 1;
+  flex-direction: row;
 `;
 
 // LIST
@@ -84,11 +100,11 @@ export const RowContainer = styled.TouchableOpacity`
   padding: 0 10px 0 10px;
 `;
 
-export const AssetColumn = styled(Column)`
+export const CurrencyColumn = styled(Column)`
   margin-left: 10px;
 `;
 
-export const AssetImageContainer = styled.View`
+export const CurrencyImageContainer = styled.View`
   height: 50px;
   width: 50px;
   display: flex;
@@ -115,9 +131,9 @@ export const CardContainer = styled.View<CardContainerProps>`
 
 // Bottom Modal
 export const ModalContainer = styled.View`
+  background-color: ${({theme}) => (theme.dark ? '#101010' : White)};
   padding: 30px;
   min-height: 300px;
-  background: white;
   justify-content: center;
   align-content: center;
   border-top-left-radius: 17px;
@@ -126,13 +142,16 @@ export const ModalContainer = styled.View`
 
 // Settings List
 export const Setting = styled.TouchableOpacity`
-  flex-direction: row;
-  justify-content: space-between;
   align-items: center;
+  flex-direction: row;
+  flex-wrap: nowrap;
   height: 58px;
 `;
 
 export const SettingTitle = styled(BaseText)`
+  color: ${({theme}) => theme.colors.text};
+  flex-grow: 1;
+  flex-shrink: 1;
   font-size: 16px;
   font-style: normal;
   font-weight: 400;
@@ -140,11 +159,33 @@ export const SettingTitle = styled(BaseText)`
   text-align: left;
 `;
 
+interface SettingIconProps {
+  prefix?: boolean;
+  suffix?: boolean;
+}
+
+export const SettingIcon = styled.View<SettingIconProps>`
+  ${({prefix = false}) =>
+    prefix &&
+    css`
+      margin-right: ${ScreenGutter};
+    `}
+  ${({suffix = false}) =>
+    suffix &&
+    css`
+      margin-left: ${ScreenGutter};
+    `}
+`;
+
 export const SettingView = styled.View`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
   height: 58px;
+`;
+
+export const ActionContainer = styled.View`
+  margin: 5px 0;
 `;
 
 // Info
@@ -167,4 +208,47 @@ export const InfoTriangle = styled.View`
   border-right-color: transparent;
   border-bottom-width: 12px;
   border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#f8f9fe')};
+`;
+
+export const AdvancedOptionsContainer = styled.View`
+  background-color: ${({theme}) => (theme.dark ? LightBlack : Feather)};
+  border-radius: 6px;
+  margin-bottom: 20px;
+`;
+
+export const AdvancedOptionsButton = styled.TouchableOpacity`
+  height: 60px;
+  background-color: ${({theme}) => (theme.dark ? LightBlack : Feather)};
+  padding: 18px;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 6px;
+`;
+
+export const AdvancedOptionsButtonText = styled(BaseText)`
+  font-size: 16px;
+  line-height: 25px;
+  color: ${({theme}) => theme.colors.text};
+`;
+
+export const AdvancedOptions = styled.View`
+  padding: 18px;
+`;
+
+const Gutter = '10px';
+export const ImportContainer = styled.View`
+  padding: ${Gutter} 0;
+`;
+
+export const ImportTextInput = styled.TextInput`
+  height: 100px;
+  margin: 0 ${Gutter};
+  padding: ${Gutter};
+  color: ${({theme}) => theme.colors.text};
+  background: ${({theme}) => theme.colors.background};
+  border: 0.75px solid ${Slate};
+  border-top-right-radius: 4px;
+  border-top-left-radius: 4px;
+  text-align-vertical: top;
 `;

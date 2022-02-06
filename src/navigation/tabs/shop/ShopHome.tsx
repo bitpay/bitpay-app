@@ -3,7 +3,6 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import styled, {css} from 'styled-components/native';
 import {Platform, ScrollView} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {purchasedBrands} from './stubs/gift-cards';
 import {HEIGHT} from '../../../components/styled/Containers';
 import GiftCardCatalog from './components/GiftCardCatalog';
 import {
@@ -20,6 +19,8 @@ import {
   Category,
   DirectIntegrationApiObject,
 } from '../../../store/shop/shop.models';
+import {BaseText} from '../../../components/styled/Text';
+import {purchasedGiftCards} from './stubs/gift-cards';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -27,7 +28,7 @@ const ShopContainer = styled.View`
   flex: 1;
 `;
 
-const ShopHeader = styled.Text`
+const ShopHeader = styled(BaseText)`
   font-size: 18px;
   font-weight: 700;
   margin-top: ${Platform.select({
@@ -39,7 +40,7 @@ const ShopHeader = styled.Text`
     `,
   })};
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 `;
 
 const ShopHome = () => {
@@ -71,8 +72,11 @@ const ShopHome = () => {
       ),
     }))
     .filter(category => category.integrations.length);
+  const activeGiftCards = purchasedGiftCards.filter(
+    giftCard => !giftCard.archived,
+  );
 
-  const purchasedBrandsHeight = purchasedBrands.length * 68 + 260;
+  const purchasedBrandsHeight = activeGiftCards.length * 68 + 260;
   const curationsHeight = curations.length * 320;
   const categoriesHeight = categories.length * 70;
   const searchBarHeight = 150;

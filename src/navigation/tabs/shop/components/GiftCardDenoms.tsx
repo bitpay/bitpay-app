@@ -1,39 +1,34 @@
 import React from 'react';
 import styled from 'styled-components/native';
+import {BaseText} from '../../../../components/styled/Text';
 import {
-  currencySymbols,
+  formatAmount,
   spreadAmounts,
 } from '../../../../lib/gift-cards/gift-card';
 import {CardConfig} from '../../../../store/shop/shop.models';
 
-const GiftCardDenoms = styled.Text`
+export const GiftCardDenomText = styled(BaseText)`
   font-size: 14px;
   font-weight: 300;
-  padding-right: 50px;
 `;
 
 export default ({cardConfig}: {cardConfig: CardConfig}) => {
   return (
-    <GiftCardDenoms>
+    <GiftCardDenomText>
       {cardConfig.minAmount && cardConfig.maxAmount && (
         <>
-          {currencySymbols[cardConfig.currency] ? (
-            <>
-              {currencySymbols[cardConfig.currency]}
-              {cardConfig.minAmount} - {currencySymbols[cardConfig.currency]}
-              {cardConfig.maxAmount}
-            </>
-          ) : (
-            <>
-              {cardConfig.minAmount} {cardConfig.currency} -{' '}
-              {cardConfig.maxAmount} {cardConfig.currency}
-            </>
-          )}
+          {formatAmount(cardConfig.minAmount, cardConfig.currency, {
+            customPrecision: 'minimal',
+          })}
+          &nbsp;—&nbsp;
+          {formatAmount(cardConfig.maxAmount, cardConfig.currency, {
+            customPrecision: 'minimal',
+          })}
         </>
       )}
       {cardConfig.supportedAmounts && (
         <>{spreadAmounts(cardConfig.supportedAmounts, cardConfig.currency)}</>
       )}
-    </GiftCardDenoms>
+    </GiftCardDenomText>
   );
 };

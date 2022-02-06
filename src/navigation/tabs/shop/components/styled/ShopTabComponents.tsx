@@ -1,10 +1,24 @@
+import {Theme} from '@react-navigation/native';
 import styled, {css} from 'styled-components/native';
 import BoxInput from '../../../../../components/form/BoxInput';
 import {HEIGHT, WIDTH} from '../../../../../components/styled/Containers';
-import {H4} from '../../../../../components/styled/Text';
-import {Action, Cloud, SlateDark} from '../../../../../styles/colors';
+import {BaseText, H4} from '../../../../../components/styled/Text';
+import {
+  Action,
+  Cloud,
+  LightBlack,
+  NeutralSlate,
+  SlateDark,
+  White,
+} from '../../../../../styles/colors';
 
 export const horizontalPadding = 20;
+
+export const getMastheadGradient = (theme: Theme) => {
+  return theme.dark
+    ? [theme.colors.background, '#151515']
+    : ['rgba(245, 247, 248, 0)', '#F5F7F8'];
+};
 
 export const ListItemTouchableHighlight = styled.TouchableHighlight`
   padding-right: ${horizontalPadding}px;
@@ -31,24 +45,26 @@ export const SectionHeaderContainer = styled.View`
   align-items: center;
 `;
 
-export const SectionHeaderButton = styled.Text`
-  margin-top: 32px;
+export const SectionHeaderButton = styled(BaseText)`
+  margin-top: 38px;
   margin-bottom: 16px;
-  color: ${Action};
+  color: ${({theme}) => (theme.dark ? White : Action)};
   font-weight: 500;
 `;
 
-export const SectionHeader = styled.Text`
-  color: ${SlateDark};
+export const SectionHeader = styled(BaseText)`
+  color: ${({theme}) => (theme.dark ? White : SlateDark)};
   font-size: 14px;
   text-align: left;
   margin-bottom: 16px;
   margin-top: 40px;
   flex-grow: 1;
+  font-weight: 400;
 `;
 
 export const SectionDivider = styled.View`
-  border-bottom-color: ${Cloud};
+  align-self: center;
+  border-bottom-color: ${({theme}) => (theme.dark ? LightBlack : Cloud)};
   border-bottom-width: 1px;
   margin: 20px ${horizontalPadding}px;
   margin-top: 40px;
@@ -75,6 +91,17 @@ export const NoResultsContainer = styled.View`
 
 export const NoResultsHeader = styled(H4)`
   font-size: 17px;
+`;
+
+export const NavIconButtonContainer = styled.View`
+  align-items: center;
+  justify-content: center;
+  background-color: ${({theme}) => (theme.dark ? '#252525' : NeutralSlate)};
+  border-radius: 50px;
+  height: 45px;
+  width: 45px;
+  margin-top: 5px;
+  overflow: hidden;
 `;
 
 export interface HideableViewProps {

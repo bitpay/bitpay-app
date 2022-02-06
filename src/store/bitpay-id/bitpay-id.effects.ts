@@ -18,6 +18,7 @@ interface BitPayIdStoreInitParams {
 interface StartLoginParams {
   email: string;
   password: string;
+  gCaptchaResponse?: string;
 }
 
 export const startBitPayIdStoreInit =
@@ -41,7 +42,7 @@ export const startFetchSession = (): Effect => async dispatch => {
 };
 
 export const startLogin =
-  ({email, password}: StartLoginParams): Effect =>
+  ({email, password, gCaptchaResponse}: StartLoginParams): Effect =>
   async (dispatch, getState) => {
     try {
       dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
@@ -52,7 +53,12 @@ export const startLogin =
       // authenticate
       dispatch(LogActions.info('Authenticating BitPayID credentials...'));
       const {twoFactorPending, emailAuthenticationPending} =
-        await AuthApi.login(email, password, BITPAY_ID.session.csrfToken);
+        await AuthApi.login(
+          email,
+          password,
+          BITPAY_ID.session.csrfToken,
+          gCaptchaResponse,
+        );
 
       // refresh session
       const session = await AuthApi.fetchSession();

@@ -5,14 +5,16 @@ import styled from 'styled-components/native';
 import {ActivityIndicator} from 'react-native';
 import {RootState} from '../../../store';
 import {useSelector} from 'react-redux';
-import {SlateDark} from '../../../styles/colors';
+import {LightBlack, SlateDark, White} from '../../../styles/colors';
 
 export enum OnGoingProcessMessages {
   GENERAL_AWAITING = "Just a second, we're setting a few things up",
-  CREATING_WALLET = 'Creating Wallet',
+  CREATING_KEY = 'Creating Key',
   LOGGING_IN = 'Logging In',
   CREATING_ACCOUNT = 'Creating Account',
-  IMPORTING_WALLET = 'Importing Wallet',
+  IMPORTING = 'Importing',
+  DELETING_KEY = 'Deleting Key',
+  ADDING_WALLET = 'Adding Wallet',
 }
 
 const OnGoingProcessContainer = styled.View`
@@ -22,10 +24,10 @@ const OnGoingProcessContainer = styled.View`
 `;
 
 const Row = styled.View`
+  background-color: ${({theme}) => (theme.dark ? LightBlack : White)};
   border-radius: 10px;
-  background: white;
-  padding: 20px;
   flex-direction: row;
+  padding: 20px;
 `;
 
 const ActivityIndicatorContainer = styled.View`

@@ -2,13 +2,26 @@ import * as React from 'react';
 import {ReactElement, ReactNode} from 'react';
 import styled from 'styled-components/native';
 import {Midnight, NeutralSlate, SlateDark, White} from '../../styles/colors';
-import Arrow from '../../../assets/img/arrow-right.svg';
 import Haptic from '../haptic-feedback/haptic';
 import {ActiveOpacity, CardGutter, ScreenGutter} from '../styled/Containers';
 import Card from '../card/Card';
 import {View} from 'react-native';
 import {BaseText} from '../styled/Text';
 import {useTheme} from '@react-navigation/native';
+import * as Svg from 'react-native-svg';
+
+const Arrow = ({isDark}: {isDark: boolean}) => {
+  return (
+    <Svg.Svg width="17" height="17" viewBox="0 0 17 17" fill="none">
+      <Svg.Path
+        fill={isDark ? White : '#434D5A'}
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M9.65108 2.83329L8.4115 4.01737L12.2188 7.65419L1.41671 7.65419V9.34573L12.2188 9.34573L8.4115 12.9825L9.65108 14.1666L15.5834 8.49996L9.65108 2.83329Z"
+      />
+    </Svg.Svg>
+  );
+};
 
 interface BodyProps {
   title?: string;
@@ -64,12 +77,12 @@ const CardPillText = styled(BaseText)`
   color: ${SlateDark};
 `;
 
-const FooterArrow = styled.TouchableHighlight`
+const FooterArrow = styled.TouchableOpacity`
   width: 30px;
   height: 30px;
   align-self: flex-end;
   border-radius: 50px;
-  background-color: ${White};
+  background-color: ${({theme}) => (theme.dark ? SlateDark : White)}
   align-items: center;
   justify-content: center;
 `;
@@ -78,7 +91,12 @@ const CardContainer = styled.TouchableOpacity`
   left: ${ScreenGutter};
 `;
 
-const HomeCard = ({backgroundImg, body, onCTAPress, header}: HomeCardProps) => {
+const HomeCard: React.FC<HomeCardProps> = ({
+  backgroundImg,
+  body,
+  onCTAPress,
+  header,
+}) => {
   const HeaderComp = <CardHeader>{header}</CardHeader>;
   const theme = useTheme();
   const {title, value, pillText, description} = body;
@@ -104,8 +122,8 @@ const HomeCard = ({backgroundImg, body, onCTAPress, header}: HomeCardProps) => {
   };
 
   const FooterComp = (
-    <FooterArrow onPress={_onPress} underlayColor="white">
-      <Arrow />
+    <FooterArrow activeOpacity={ActiveOpacity} onPress={_onPress}>
+      <Arrow isDark={theme.dark} />
     </FooterArrow>
   );
 

@@ -4,47 +4,68 @@ import {
   baseNavigatorOptions,
   baseScreenOptions,
 } from '../../constants/NavigationOptions';
-import Backup from './screens/Backup';
-import RecoveryPhrase, {RecoveryPhraseProps} from './screens/RecoveryPhrase';
-import VerifyPhrase, {VerifyPhraseProps} from './screens/VerifyPhrase';
-import SelectAssets from './screens/SelectAssets';
-import WalletOverview from './screens/WalletOverview';
-import {WalletObj} from '../../store/wallet/wallet.models';
+import Backup, {BackupParamList} from './screens/Backup';
+import RecoveryPhrase, {
+  RecoveryPhraseParamList,
+} from './screens/RecoveryPhrase';
+import VerifyPhrase, {VerifyPhraseParamList} from './screens/VerifyPhrase';
+import CurrencySelection, {
+  CurrencySelectionParamList,
+} from './screens/CurrencySelection';
+import KeyOverview from './screens/KeyOverview';
+import KeySettings from './screens/KeySettings';
+import WalletDetails from './screens/WalletDetails';
 import WalletSettings from './screens/WalletSettings';
-import AssetDetails from './screens/AssetDetails';
-import {AssetRowProps} from '../../components/list/AssetRow';
-import AssetSettings from './screens/AssetSettings';
-import ImportWallet, {ImportWalletProps} from './screens/ImportWallet';
-import SelectWalletType from './screens/SelectWalletType';
+import Import, {ImportParamList} from './screens/Import';
+import CreationOptions from './screens/CreationOptions';
 import {HeaderTitle} from '../../components/styled/Text';
-import CreateEncryptPassword from './screens/CreateEncryptPassword';
+import CreateEncryptionPassword from './screens/CreateEncryptionPassword';
+import {Key} from '../../store/wallet/wallet.models';
+import {WalletRowProps} from '../../components/list/WalletRow';
+import ExtendedPrivateKey from './screens/ExtendedPrivateKey';
+import DeleteKey from './screens/DeleteKey';
+import ExportKey from './screens/ExportKey';
+import TermsOfUse, {
+  TermsOfUseParamList,
+} from '../onboarding/screens/TermsOfUse';
+import AddWallet, {AddWalletParamList} from './screens/AddWallet';
 
 export type WalletStackParamList = {
-  SelectAssets: undefined;
-  BackupWallet: {keyId: string};
-  RecoveryPhrase: RecoveryPhraseProps;
-  VerifyPhrase: VerifyPhraseProps;
-  WalletOverview: {wallet: WalletObj};
-  WalletSettings: {wallet: WalletObj};
-  AssetDetails: {asset: AssetRowProps};
-  AssetSettings: {asset: AssetRowProps};
-  SelectWalletType: undefined;
-  ImportWallet: ImportWalletProps;
-  CreateEncryptPassword: {wallet: WalletObj};
+  CurrencySelection: CurrencySelectionParamList;
+  AddWallet: AddWalletParamList;
+  BackupKey: BackupParamList;
+  RecoveryPhrase: RecoveryPhraseParamList;
+  VerifyPhrase: VerifyPhraseParamList;
+  TermsOfUse: TermsOfUseParamList;
+  KeyOverview: {key: Key};
+  KeySettings: {key: Key};
+  WalletDetails: {walletId: string; key: Key};
+  WalletSettings: {wallet: WalletRowProps};
+  CreationOptions: undefined;
+  Import: ImportParamList | undefined;
+  CreateEncryptPassword: {key: Key};
+  ExtendedPrivateKey: {key: Key};
+  DeleteKey: {keyId: string};
+  ExportKey: {key: Key};
 };
 
 export enum WalletScreens {
-  SELECT_ASSETS = 'SelectAssets',
-  BACKUP_WALLET = 'BackupWallet',
+  CURRENCY_SELECTION = 'CurrencySelection',
+  ADD_WALLET = 'AddWallet',
+  BACKUP_KEY = 'BackupKey',
   RECOVERY_PHRASE = 'RecoveryPhrase',
   VERIFY_PHRASE = 'VerifyPhrase',
-  WALLET_OVERVIEW = 'WalletOverview',
+  TERMS_OF_USE = 'TermsOfUse',
+  KEY_OVERVIEW = 'KeyOverview',
+  KEY_SETTINGS = 'KeySettings',
+  WALLET_DETAILS = 'WalletDetails',
   WALLET_SETTINGS = 'WalletSettings',
-  ASSET_DETAILS = 'AssetDetails',
-  ASSET_SETTINGS = 'AssetSettings',
-  SELECT_WALLET_TYPE = 'SelectWalletType',
-  IMPORT_WALLET = 'ImportWallet',
+  CREATION_OPTIONS = 'CreationOptions',
+  IMPORT = 'Import',
   CREATE_ENCRYPT_PASSWORD = 'CreateEncryptPassword',
+  EXTENDED_PRIVATE_KEY = 'ExtendedPrivateKey',
+  DELETE_KEY = 'DeleteKey',
+  EXPORT_KEY = 'ExportKey',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -54,22 +75,29 @@ const WalletStack = () => {
     <>
       <Wallet.Navigator
         screenOptions={{...baseNavigatorOptions, ...baseScreenOptions}}
-        initialRouteName={WalletScreens.BACKUP_WALLET}>
+        initialRouteName={WalletScreens.BACKUP_KEY}>
         <Wallet.Screen
           options={{
-            headerTitle: () => <HeaderTitle>Select Assets</HeaderTitle>,
+            headerTitle: () => <HeaderTitle>Select Currencies</HeaderTitle>,
             headerTitleAlign: 'center',
             gestureEnabled: false,
           }}
-          name={WalletScreens.SELECT_ASSETS}
-          component={SelectAssets}
+          name={WalletScreens.CURRENCY_SELECTION}
+          component={CurrencySelection}
+        />
+        <Wallet.Screen
+          options={{
+            gestureEnabled: false,
+          }}
+          name={WalletScreens.ADD_WALLET}
+          component={AddWallet}
         />
         <Wallet.Screen
           options={{
             gestureEnabled: false,
             headerLeft: () => null,
           }}
-          name={WalletScreens.BACKUP_WALLET}
+          name={WalletScreens.BACKUP_KEY}
           component={Backup}
         />
         <Wallet.Screen
@@ -89,32 +117,39 @@ const WalletStack = () => {
           component={VerifyPhrase}
         />
         <Wallet.Screen
-          name={WalletScreens.WALLET_OVERVIEW}
-          component={WalletOverview}
+          name={WalletScreens.KEY_OVERVIEW}
+          component={KeyOverview}
+        />
+        <Wallet.Screen
+          name={WalletScreens.KEY_SETTINGS}
+          component={KeySettings}
+        />
+        <Wallet.Screen
+          name={WalletScreens.WALLET_DETAILS}
+          component={WalletDetails}
         />
         <Wallet.Screen
           name={WalletScreens.WALLET_SETTINGS}
           component={WalletSettings}
         />
+        <Wallet.Screen name={WalletScreens.IMPORT} component={Import} />
         <Wallet.Screen
-          name={WalletScreens.ASSET_DETAILS}
-          component={AssetDetails}
-        />
-        <Wallet.Screen
-          name={WalletScreens.ASSET_SETTINGS}
-          component={AssetSettings}
-        />
-        <Wallet.Screen
-          name={WalletScreens.IMPORT_WALLET}
-          component={ImportWallet}
-        />
-        <Wallet.Screen
-          name={WalletScreens.SELECT_WALLET_TYPE}
-          component={SelectWalletType}
+          name={WalletScreens.CREATION_OPTIONS}
+          component={CreationOptions}
         />
         <Wallet.Screen
           name={WalletScreens.CREATE_ENCRYPT_PASSWORD}
-          component={CreateEncryptPassword}
+          component={CreateEncryptionPassword}
+        />
+        <Wallet.Screen
+          name={WalletScreens.EXTENDED_PRIVATE_KEY}
+          component={ExtendedPrivateKey}
+        />
+        <Wallet.Screen name={WalletScreens.DELETE_KEY} component={DeleteKey} />
+        <Wallet.Screen name={WalletScreens.EXPORT_KEY} component={ExportKey} />
+        <Wallet.Screen
+          name={WalletScreens.TERMS_OF_USE}
+          component={TermsOfUse}
         />
       </Wallet.Navigator>
     </>

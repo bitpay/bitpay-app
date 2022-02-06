@@ -4,6 +4,7 @@ import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/Ong
 import {Network} from '../../constants';
 import {NavScreenParams, RootStackParamList} from '../../Root';
 import {AppIdentity} from './app.models';
+import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 
 export enum AppActionTypes {
   SUCCESS_APP_INIT = 'APP/SUCCESS_APP_INIT',
@@ -21,6 +22,10 @@ export enum AppActionTypes {
   SET_NOTIFICATIONS_ACCEPTED = 'APP/SET_NOTIFICATIONS_ACCEPTED',
   SHOW_ONBOARDING_FINISH_MODAL = 'APP/SHOW_ONBOARDING_FINISH_MODAL',
   DISMISS_ONBOARDING_FINISH_MODAL = 'APP/DISMISS_ONBOARDING_FINISH_MODAL',
+  SHOW_DECRYPT_PASSWORD_MODAL = 'APP/SHOW_DECRYPT_PASSWORD_MODAL',
+  DISMISS_DECRYPT_PASSWORD_MODAL = 'APP/DISMISS_DECRYPT_PASSWORD_MODAL',
+  SET_DEFAULT_LANGUAGE = 'APP/SET_DEFAULT_LANGUAGE',
+  RESET_DECRYPT_PASSWORD_CONFIG = 'APP/RESET_DECRYPT_PASSWORD_CONFIG',
 }
 
 interface SuccessAppInit {
@@ -89,6 +94,24 @@ interface DismissOnboardingFinishModal {
   type: typeof AppActionTypes.DISMISS_ONBOARDING_FINISH_MODAL;
 }
 
+interface SetDefaultLanguage {
+  type: typeof AppActionTypes.SET_DEFAULT_LANGUAGE;
+  payload: string;
+}
+
+interface ShowDecryptPasswordModal {
+  type: typeof AppActionTypes.SHOW_DECRYPT_PASSWORD_MODAL;
+  payload: DecryptPasswordConfig;
+}
+
+interface DismissDecryptPasswordModal {
+  type: typeof AppActionTypes.DISMISS_DECRYPT_PASSWORD_MODAL;
+}
+
+interface resetDecryptPasswordConfig {
+  type: typeof AppActionTypes.RESET_DECRYPT_PASSWORD_CONFIG;
+}
+
 export type AppActionType =
   | SuccessAppInit
   | FailedAppInit
@@ -104,4 +127,8 @@ export type AppActionType =
   | FailedGenerateAppIdentity
   | SetNotificationsAccepted
   | ShowOnboardingFinishModal
-  | DismissOnboardingFinishModal;
+  | DismissOnboardingFinishModal
+  | SetDefaultLanguage
+  | ShowDecryptPasswordModal
+  | DismissDecryptPasswordModal
+  | resetDecryptPasswordConfig;

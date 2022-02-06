@@ -1,19 +1,24 @@
-import React, {useEffect} from 'react';
-import {Image, ScrollView, TouchableOpacity} from 'react-native';
+import React, {useState} from 'react';
+import {
+  Image,
+  RefreshControl,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import {RootState} from '../../../store';
 import {PriceHistory} from '../../../store/wallet/wallet.models';
 
 import styled from 'styled-components/native';
 import {BaseText} from '../../../components/styled/Text';
-import {SlateDark, White, Action} from '../../../styles/colors';
+import {SlateDark, White} from '../../../styles/colors';
 
 import haptic from '../../../components/haptic-feedback/haptic';
 import PortfolioBalance from './components/PortfolioBalance';
 import CardsCarousel from './components/CardsCarousel';
 import LinkingButtons from './components/LinkingButtons';
-import {AssetSelectionOptions} from '../../../constants/AssetSelectionOptions';
+import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import ExchangeRatesSlides, {
   ExchangeRateProps,
 } from '../../../components/exchange-rate/ExchangeRatesSlides';
@@ -28,9 +33,13 @@ import {AdvertisementList} from '../../../components/advertisement/advertisement
 import {OfferItems} from '../../../components/offer/offer';
 import {AppActions} from '../../../store/app';
 import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishModal';
-import ScanSvg from '../../../../assets/img/home/scan.svg';
-import ProfileSvg from '../../../../assets/img/home/profile.svg';
 import {sleep} from '../../../utils/helper-methods';
+import ProfileButton from './components/HeaderProfileButton';
+import ScanButton from './components/HeaderScanButton';
+import {startUpdateAllKeyAndWalletBalances} from '../../../store/wallet/effects/balance/balance';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
+import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 
 const HeaderContainer = styled.View`
   flex-direction: row;
@@ -38,8 +47,8 @@ const HeaderContainer = styled.View`
   margin: 10px ${ScreenGutter};
 `;
 
-const ScanImg = styled.View`
-  margin-right: ${ScreenGutter};
+export const HeaderButtonContainer = styled.View`
+  margin-left: ${ScreenGutter};
 `;
 
 const HomeContainer = styled.SafeAreaView`
@@ -49,7 +58,7 @@ const HomeContainer = styled.SafeAreaView`
 const HomeLink = styled(BaseText)`
   font-weight: 500;
   font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? White : Action)};
+  color: ${({theme}) => theme.colors.link};
   text-decoration: ${({theme: {dark}}) => (dark ? 'underline' : 'none')};
   text-decoration-color: ${White};
 `;
@@ -72,33 +81,53 @@ const HomeRoot = () => {
   );
 
   const showOnboardingFinishModal = async () => {
-    await sleep(500);
+    await sleep(300);
     dispatch(AppActions.showOnboardingFinishModal());
   };
 
-  useEffect(() => {
-    if (!onboardingCompleted) {
-      showOnboardingFinishModal();
-    }
-  }, [onboardingCompleted]);
+  // useEffect(() => {
+  //   if (!onboardingCompleted) {
+  //     showOnboardingFinishModal();
+  //   }
+  // }, []);
 
   const navigation = useNavigation();
+  const theme = useTheme();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        dispatch(startUpdateAllKeyAndWalletBalances()),
+        sleep(1000),
+      ]);
+      dispatch(updatePortfolioBalance());
+    } catch (err) {
+      dispatch(showBottomNotificationModal(BalanceUpdateError));
+    }
+    setRefreshing(false);
+  };
 
   // Exchange Rates
   const priceHistory = useSelector(
     ({WALLET}: RootState) => WALLET.priceHistory,
   );
   const exchangeRatesItems: Array<ExchangeRateProps> = [];
-  priceHistory.forEach((ph: PriceHistory, index: number) => {
-    const currencyInfo = AssetSelectionOptions.find(
+  priceHistory.forEach((ph: PriceHistory) => {
+    const option = SupportedCurrencyOptions.find(
       ({id}: {id: string | number}) => id === ph.coin,
     );
-    exchangeRatesItems.push({
-      id: index,
-      img: currencyInfo?.roundIcon(20),
-      coinName: currencyInfo?.assetName,
-      average: +ph.percentChange,
-    });
+
+    if (option) {
+      const {id, img, currencyName} = option;
+      exchangeRatesItems.push({
+        id,
+        img,
+        currencyName,
+        average: +ph.percentChange,
+      });
+    }
   });
 
   // Quick Links
@@ -118,20 +147,21 @@ const HomeRoot = () => {
 
   return (
     <HomeContainer>
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            tintColor={theme.dark ? White : SlateDark}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        }>
         <HeaderContainer>
-          <ScanImg>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Scan', {screen: 'Root'})}>
-              <ScanSvg />
-            </TouchableOpacity>
-          </ScanImg>
-          <ProfileSvg />
+          <ScanButton />
+          <ProfileButton />
         </HeaderContainer>
         {/* ////////////////////////////// PORTFOLIO BALANCE */}
         <PortfolioBalance />
 
-        {/* ////////////////////////////// CARDS CAROUSEL */}
         <SectionHeaderContainer justifyContent={'flex-end'}>
           <TouchableOpacity
             activeOpacity={ActiveOpacity}
@@ -144,6 +174,8 @@ const HomeRoot = () => {
             <HomeLink>Customize</HomeLink>
           </TouchableOpacity>
         </SectionHeaderContainer>
+
+        {/* ////////////////////////////// CARDS CAROUSEL */}
         <CardsCarousel />
 
         {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}

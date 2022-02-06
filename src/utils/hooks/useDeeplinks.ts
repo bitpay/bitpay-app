@@ -5,6 +5,7 @@ import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {useDispatch} from 'react-redux';
 import {DEEPLINK_PREFIX} from '../../constants/config';
 import {BitpayIdScreens} from '../../navigation/bitpay-id/BitpayIdStack';
+import {CardScreens} from '../../navigation/card/CardStack';
 import {RootStackParamList, RootStacks} from '../../Root';
 import {useLogger} from '.';
 
@@ -45,6 +46,11 @@ export const useDeeplinks = () => {
         [RootStacks.BITPAY_ID]: {
           screens: {
             [BitpayIdScreens.PAIR]: 'wallet-card/pairing',
+          },
+        },
+        [RootStacks.CARD]: {
+          screens: {
+            [CardScreens.HOME]: 'wallet-card/dashboard/:id',
           },
         },
       },

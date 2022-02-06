@@ -7,6 +7,8 @@ import {
 import {HeaderTitle} from '../../../../components/styled/Text';
 import AboutRoot from './screens/AboutRoot';
 
+import {useTranslation} from 'react-i18next';
+
 export type AboutStackParamList = {
   Root: undefined;
 };
@@ -18,6 +20,7 @@ export enum AboutScreens {
 const About = createStackNavigator<AboutStackParamList>();
 
 const AboutStack = () => {
+  const {t} = useTranslation();
   return (
     <About.Navigator
       initialRouteName={AboutScreens.ROOT}
@@ -29,7 +32,7 @@ const AboutStack = () => {
         name={AboutScreens.ROOT}
         component={AboutRoot}
         options={{
-          headerTitle: () => <HeaderTitle>About BitPay</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('About BitPay')}</HeaderTitle>,
         }}
       />
     </About.Navigator>

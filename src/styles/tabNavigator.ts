@@ -1,12 +1,21 @@
-import {Action, NeutralSlate, SlateDark, White} from './colors';
+import {
+  Action,
+  Black,
+  LightBlack,
+  NeutralSlate,
+  SlateDark,
+  White,
+} from './colors';
 import {Platform} from 'react-native';
 import {MaterialTopTabNavigationOptions} from '@react-navigation/material-top-tabs';
+import {useTheme} from '@react-navigation/native';
 
 export const ScreenOptions = (
   width: number,
 ): MaterialTopTabNavigationOptions => {
   const gutter = 8;
   const totalWidth = width * 2 + gutter * 4;
+  const {dark} = useTheme();
 
   return {
     swipeEnabled: false,
@@ -18,8 +27,8 @@ export const ScreenOptions = (
       margin: gutter,
     },
     tabBarActiveTintColor: White,
-    tabBarInactiveTintColor: SlateDark,
-    tabBarPressColor: NeutralSlate,
+    tabBarInactiveTintColor: dark ? White : SlateDark,
+    tabBarPressColor: dark ? Black : NeutralSlate,
     tabBarLabelStyle: {
       fontSize: 16,
       textTransform: 'none',
@@ -33,7 +42,7 @@ export const ScreenOptions = (
       width: totalWidth,
       alignSelf: 'center',
       borderRadius: 50,
-      backgroundColor: NeutralSlate,
+      backgroundColor: dark ? LightBlack : NeutralSlate,
       elevation: 0,
       height: 56,
     },

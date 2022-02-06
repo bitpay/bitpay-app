@@ -2,7 +2,6 @@ import React, {useEffect, useRef, useState} from 'react';
 import styled from 'styled-components/native';
 import IntroButton from '../components/intro-button/IntroButton';
 import WalletSvg from '../../../../assets/img/intro/wallet.svg';
-import EthWalletSvg from '../../../../assets/img/intro/eth-wallet.svg';
 import CreateWalletSvg from '../../../../assets/img/intro/create-wallet.svg';
 import CardSvg from '../../../../assets/img/intro/card.svg';
 import {
@@ -33,7 +32,7 @@ const CarouselContainer = styled.View`
 `;
 
 const BodyTextContainer = styled.View`
-  margin-top: 20px;
+  margin: 20px 10px;
   justify-content: center;
   align-items: center;
 `;
@@ -44,12 +43,9 @@ const Steps = [
     focus: 'Home Tab',
   },
   {
-    description: 'Also, your Keys have been renamed to',
-    focus: 'Wallets',
-  },
-  {
-    description: 'Add assets on your',
-    focus: 'Home Tab',
+    description:
+      'You can also view your BitPay card, gift cards, and create new keys.',
+    focus: '',
   },
 ];
 
@@ -72,12 +68,7 @@ const IntroWallet = () => {
 
   const navigation = useNavigation();
 
-  const cardsList = [
-    <WalletSvg />,
-    <EthWalletSvg />,
-    <CreateWalletSvg />,
-    <CardSvg />,
-  ];
+  const cardsList = [<WalletSvg />, <CardSvg />, <CreateWalletSvg />];
   return (
     <IntroWalletContainer>
       <BackgroundImage
@@ -117,7 +108,7 @@ const IntroWallet = () => {
         <ButtonContainer>
           <IntroButton
             onPress={debounce(async () => {
-              if (step < 2) {
+              if (step < 1) {
                 x.value = withTiming(50, {duration: 300});
                 fade.value = withTiming(0, {duration: 300});
                 await sleep(300);
