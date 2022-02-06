@@ -54,12 +54,7 @@ static void InitializeFlipper(UIApplication *application) {
   [Appboy startWithApiKey:@"BRAZE_API_KEY_REPLACE_ME"
            inApplication:application
        withLaunchOptions:launchOptions];
-  
-  
-  UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeBadge | UIUserNotificationTypeAlert | UIUserNotificationTypeSound) categories:nil];
-  [[UIApplication sharedApplication] registerForRemoteNotifications];
-  [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
-  
+
   return YES;
 }
 
