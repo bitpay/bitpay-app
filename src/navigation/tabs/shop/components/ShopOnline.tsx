@@ -1,10 +1,10 @@
-import {useNavigation, useTheme} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import debounce from 'lodash.debounce';
 import React, {useMemo, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {View} from 'react-native';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import {WIDTH} from '../../../../components/styled/Containers';
 import {Paragraph} from '../../../../components/styled/Text';
 import {

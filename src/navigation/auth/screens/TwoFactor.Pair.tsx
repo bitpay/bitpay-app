@@ -1,9 +1,9 @@
 import {yupResolver} from '@hookform/resolvers/yup';
-import {useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useDispatch, useSelector} from 'react-redux';
+import {useTheme} from 'styled-components/native';
 import * as yup from 'yup';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';

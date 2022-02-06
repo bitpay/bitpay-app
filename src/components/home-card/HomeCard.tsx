@@ -1,13 +1,12 @@
 import * as React from 'react';
 import {ReactElement, ReactNode} from 'react';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import {Midnight, NeutralSlate, SlateDark, White} from '../../styles/colors';
 import Haptic from '../haptic-feedback/haptic';
 import {ActiveOpacity, CardGutter, ScreenGutter} from '../styled/Containers';
 import Card from '../card/Card';
 import {View} from 'react-native';
 import {BaseText} from '../styled/Text';
-import {useTheme} from '@react-navigation/native';
 import * as Svg from 'react-native-svg';
 
 const Arrow = ({isDark}: {isDark: boolean}) => {

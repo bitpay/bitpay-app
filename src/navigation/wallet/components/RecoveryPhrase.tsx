@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import {Caution, SlateDark, White} from '../../../styles/colors';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
 import {
@@ -23,7 +23,7 @@ import {
   startImportMnemonic,
   startImportWithDerivationPath,
 } from '../../../store/wallet/effects';
-import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {ImportObj} from '../../../store/scan/scan.models';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';

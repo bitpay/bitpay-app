@@ -1,6 +1,6 @@
-import {useTheme} from '@react-navigation/native';
 import React from 'react';
 import * as Svg from 'react-native-svg';
+import {useTheme} from 'styled-components/native';
 import {NeutralSlate, SlateDark, White} from '../../../styles/colors';
 import {BitPayTheme} from '../../../themes/bitpay';
 

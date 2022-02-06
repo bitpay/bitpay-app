@@ -1,8 +1,8 @@
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/core';
-import {useTheme} from '@react-navigation/native';
 import React, {useEffect} from 'react';
 import {Button, StyleProp, Text, TextStyle, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
+import {useTheme} from 'styled-components/native';
 import {RootStacks} from '../../../Root';
 import {RootState} from '../../../store';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';

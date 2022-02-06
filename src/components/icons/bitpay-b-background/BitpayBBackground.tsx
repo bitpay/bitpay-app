@@ -1,6 +1,6 @@
 import React from 'react';
 import {Path, Svg} from 'react-native-svg';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from 'styled-components/native';
 
 interface BBackgroundSvgProps {
   isDark: boolean;

@@ -11,8 +11,8 @@ import {
   HeaderTitle,
   TextAlign,
 } from '../../../components/styled/Text';
-import {CommonActions, useNavigation, useTheme} from '@react-navigation/native';
-import styled from 'styled-components/native';
+import {CommonActions, useNavigation} from '@react-navigation/native';
+import styled, {useTheme} from 'styled-components/native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
   ActiveOpacity,

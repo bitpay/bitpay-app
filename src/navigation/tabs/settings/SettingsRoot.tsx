@@ -1,6 +1,6 @@
 import {useNavigation} from '@react-navigation/core';
 import React from 'react';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import {StyleProp, TextStyle, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
@@ -13,7 +13,6 @@ import {
   SettingIcon,
   SettingTitle,
 } from '../../../components/styled/Containers';
-import {useTheme} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 import {RootState} from '../../../store';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';

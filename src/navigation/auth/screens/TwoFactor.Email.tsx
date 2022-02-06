@@ -1,7 +1,7 @@
-import {useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
+import {useTheme} from 'styled-components/native';
 import {Network} from '../../../constants';
 import {navigationRef} from '../../../Root';
 import {RootState} from '../../../store';
