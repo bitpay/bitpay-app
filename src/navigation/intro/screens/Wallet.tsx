@@ -1,9 +1,31 @@
 import React, {useEffect, useRef, useState} from 'react';
 import styled from 'styled-components/native';
 import IntroButton from '../components/intro-button/IntroButton';
-import WalletSvg from '../../../../assets/img/intro/wallet.svg';
-import CreateWalletSvg from '../../../../assets/img/intro/create-wallet.svg';
-import CardSvg from '../../../../assets/img/intro/card.svg';
+// light
+import LightKeySvg from '../../../../assets/img/intro/light/key.svg';
+import LightEthSvg from '../../../../assets/img/intro/light/eth-wallet.svg';
+import LightCreateKeySvg from '../../../../assets/img/intro/light/create-key.svg';
+import LightCardSvg from '../../../../assets/img/intro/light/card.svg';
+const lightBackground = require('../../../../assets/img/intro/light/home-background.png');
+const lightCardsList = [
+  <LightKeySvg />,
+  <LightEthSvg />,
+  <LightCardSvg />,
+  <LightCreateKeySvg />,
+];
+// dark
+import DarkKeySvg from '../../../../assets/img/intro/dark/key.svg';
+import DarkEthSvg from '../../../../assets/img/intro/dark/eth-key.svg';
+import DarkCreateKeySvg from '../../../../assets/img/intro/dark/create-key.svg';
+import DarkCardSvg from '../../../../assets/img/intro/dark/card.svg';
+const darkBackground = require('../../../../assets/img/intro/dark/home-background.png');
+const darkCardsList = [
+  <DarkKeySvg />,
+  <DarkEthSvg />,
+  <DarkCardSvg />,
+  <DarkCreateKeySvg />,
+];
+
 import {
   BackgroundImage,
   Body,
@@ -20,19 +42,21 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import {sleep} from '../../../utils/helper-methods';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import debounce from 'lodash.debounce';
 
 const IntroWalletContainer = styled.View`
   flex: 1;
+  background: ${({theme}) => theme.colors.background};
 `;
 
 const CarouselContainer = styled.View`
-  margin-top: 25%;
+  margin-top: 100px;
 `;
 
 const BodyTextContainer = styled.View`
-  margin: 20px 10px;
+  margin: 20px 0;
+  padding: 0 30px;
   justify-content: center;
   align-items: center;
 `;
@@ -42,6 +66,7 @@ const Steps = [
     description: 'All of your assets will \n now live on your',
     focus: 'Home Tab',
   },
+  {},
   {
     description:
       'You can also view your BitPay card, gift cards, and create new keys.',
@@ -51,6 +76,7 @@ const Steps = [
 
 const IntroWallet = () => {
   const ref = useRef(null);
+  const theme = useTheme();
   const [step, setStep] = useState(0);
   const fade = useSharedValue(1);
   const x = useSharedValue(0);
@@ -67,23 +93,19 @@ const IntroWallet = () => {
   }, []);
 
   const navigation = useNavigation();
-
-  const cardsList = [<WalletSvg />, <CardSvg />, <CreateWalletSvg />];
   return (
     <IntroWalletContainer>
-      <BackgroundImage
-        source={require('../../../../assets/img/intro/light/wallet-background.png')}
-      />
+      <BackgroundImage source={theme.dark ? darkBackground : lightBackground} />
       <Overlay />
       <Body>
         <CarouselContainer>
           <Carousel
-            contentContainerCustomStyle={{marginLeft: '25%'}}
+            contentContainerCustomStyle={{marginLeft: '10%'}}
             vertical={false}
             layout={'default'}
             useExperimentalSnap={true}
             ref={ref}
-            data={cardsList}
+            data={theme.dark ? darkCardsList : lightCardsList}
             renderItem={({item}) => item}
             sliderWidth={WIDTH}
             itemWidth={235}
@@ -101,8 +123,8 @@ const IntroWallet = () => {
         </CarouselContainer>
         <Animated.View style={fadeAndTranslateXStyle}>
           <BodyTextContainer>
-            <IntroText>{Steps[step].description}</IntroText>
-            <IntroTextBold>{Steps[step].focus}</IntroTextBold>
+            <IntroText>{Steps[step]?.description}</IntroText>
+            <IntroTextBold>{Steps[step]?.focus}</IntroTextBold>
           </BodyTextContainer>
         </Animated.View>
         <ButtonContainer>
@@ -114,7 +136,7 @@ const IntroWallet = () => {
                 await sleep(300);
                 x.value = -50;
                 // @ts-ignore
-                ref.current.snapToNext();
+                ref.current.snapToItem(2);
               } else {
                 navigation.navigate('Intro', {screen: 'Shop'});
               }

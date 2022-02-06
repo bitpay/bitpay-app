@@ -8,10 +8,13 @@ import {
   ButtonContainer,
   Overlay,
 } from '../components/styled/Styled';
-import BottomTabBarShopSvg from '../../../../assets/img/intro/bottom-tabbar-shop.svg';
 import {WIDTH} from '../../../components/styled/Containers';
 import IntroButton from '../components/intro-button/IntroButton';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useTheme} from '@react-navigation/native';
+import LightBottomTabBarShopSvg from '../../../../assets/img/intro/light/bottom-tabbar-shop.svg';
+import DarkBottomTabBarShopSvg from '../../../../assets/img/intro/dark/bottom-tabbar-shop.svg';
+const lightBackground = require('../../../../assets/img/intro/light/shop-background.png');
+const darkBackground = require('../../../../assets/img/intro/dark/shop-background.png');
 
 const IntroShopContainer = styled.View`
   flex: 1;
@@ -27,7 +30,7 @@ const BottomTabContainer = styled.View`
 `;
 
 const BottomTabFill = styled.View`
-  background: white;
+  background: ${({theme}) => theme.colors.background};
   position: absolute;
   bottom: 0;
   left: 0;
@@ -43,11 +46,10 @@ const TextContainer = styled.View`
 
 const IntroShop = () => {
   const navigation = useNavigation();
+  const theme = useTheme();
   return (
     <IntroShopContainer>
-      <BackgroundImage
-        source={require('../../../../assets/img/intro/light/balance-background.png')}
-      />
+      <BackgroundImage source={theme.dark ? darkBackground : lightBackground} />
       <Overlay />
       <Body>
         <ButtonContainer>
@@ -66,7 +68,11 @@ const IntroShop = () => {
           <IntroTextBold>Shop Tab.</IntroTextBold>
         </TextContainer>
         <BottomTabFill />
-        <BottomTabBarShopSvg width={WIDTH} />
+        {theme.dark ? (
+          <DarkBottomTabBarShopSvg width={WIDTH} />
+        ) : (
+          <LightBottomTabBarShopSvg width={WIDTH} />
+        )}
       </BottomTabContainer>
     </IntroShopContainer>
   );
