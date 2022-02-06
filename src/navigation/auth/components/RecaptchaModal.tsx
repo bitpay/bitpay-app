@@ -1,4 +1,4 @@
-import React, {useImperativeHandle, useRef} from 'react';
+import React, {useImperativeHandle, useRef, useState} from 'react';
 import {StyleSheet} from 'react-native';
 import {View} from 'react-native';
 import Modal from 'react-native-modal';
@@ -68,7 +68,8 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
       onError,
     } = props;
     const webviewRef = useRef<WebView>(null);
-
+    const [hideModalContentWhileAnimating, setHideModalContentWhileAnimating] =
+      useState(false);
     useImperativeHandle(ref, () => {
       return {
         reset: () => {
@@ -85,6 +86,7 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
 
         switch (message) {
           case 'response':
+            setHideModalContentWhileAnimating(true);
             onResponse?.(data);
             break;
           case 'expired':
@@ -94,6 +96,7 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
           `);
             break;
           case 'cancel':
+            setHideModalContentWhileAnimating(true);
             onCancel?.();
             break;
           case 'error':
@@ -110,7 +113,7 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
         deviceHeight={HEIGHT}
         deviceWidth={WIDTH}
         backdropTransitionOutTiming={0}
-        hideModalContentWhileAnimating={true}
+        hideModalContentWhileAnimating={hideModalContentWhileAnimating}
         useNativeDriverForBackdrop={true}
         useNativeDriver={true}
         animationIn={'fadeInUp'}
@@ -179,7 +182,7 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
                     #${RECAPTCHA_ID} {
                       margin-bottom: 16px;
                       opacity: 0;
-                      animation: fadeIn 1s 200ms forwards;
+                      animation: fadeIn 0.75s 200ms forwards;
                     }
                     
                     @keyframes fadeIn {
