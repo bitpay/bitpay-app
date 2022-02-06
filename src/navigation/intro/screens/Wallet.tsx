@@ -32,7 +32,7 @@ const CarouselContainer = styled.View`
 `;
 
 const BodyTextContainer = styled.View`
-  margin-top: 20px;
+  margin: 20px 10px;
   justify-content: center;
   align-items: center;
 `;
@@ -43,8 +43,9 @@ const Steps = [
     focus: 'Home Tab',
   },
   {
-    description: 'Add assets on your',
-    focus: 'Home Tab',
+    description:
+      'You can also view your BitPay card, gift cards, and create new keys.',
+    focus: '',
   },
 ];
 
@@ -67,11 +68,7 @@ const IntroWallet = () => {
 
   const navigation = useNavigation();
 
-  const cardsList = [
-    <WalletSvg />,
-    <CreateWalletSvg />,
-    <CardSvg />,
-  ];
+  const cardsList = [<WalletSvg />, <CardSvg />, <CreateWalletSvg />];
   return (
     <IntroWalletContainer>
       <BackgroundImage
