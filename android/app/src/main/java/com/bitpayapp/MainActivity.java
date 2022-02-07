@@ -1,6 +1,7 @@
 package com.bitpayapp;
 
 import com.facebook.react.ReactActivity;
+import android.content.Intent;
 import android.os.Bundle;
 import com.zoontek.rnbootsplash.RNBootSplash;
 public class MainActivity extends ReactActivity {
@@ -19,4 +20,10 @@ public class MainActivity extends ReactActivity {
       super.onCreate(savedInstanceState);
       RNBootSplash.init(R.drawable.bootsplash, MainActivity.this);
     }
+
+  @Override
+  public void onNewIntent(Intent intent) {
+    super.onNewIntent(intent);
+    setIntent(intent);
+  }
 }

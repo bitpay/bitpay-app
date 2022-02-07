@@ -14,6 +14,9 @@ import java.util.List;
 import com.facebook.react.bridge.JSIModulePackage;
 import com.swmansion.reanimated.ReanimatedJSIModulePackage;
 
+// Braze
+import com.appboy.AppboyLifecycleCallbackListener;
+
 public class MainApplication extends Application implements ReactApplication {
 
   private final ReactNativeHost mReactNativeHost =
@@ -53,6 +56,9 @@ public class MainApplication extends Application implements ReactApplication {
     super.onCreate();
     SoLoader.init(this, /* native exopackage */ false);
     initializeFlipper(this, getReactNativeHost().getReactInstanceManager());
+
+    // Braze
+    registerActivityLifecycleCallbacks(new AppboyLifecycleCallbackListener());
   }
 
   /**
