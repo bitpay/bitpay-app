@@ -4,7 +4,7 @@ import {View} from 'react-native';
 import Modal from 'react-native-modal';
 import WebView, {WebViewMessageEvent} from 'react-native-webview';
 import {HEIGHT, WIDTH} from '../../../components/styled/Containers';
-import {Action, NeutralSlate} from '../../../styles/colors';
+import {Action, White} from '../../../styles/colors';
 
 const RECAPTCHA_ID = 'bp-recaptcha';
 
@@ -113,6 +113,7 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
         deviceHeight={HEIGHT}
         deviceWidth={WIDTH}
         backdropTransitionOutTiming={0}
+        backdropOpacity={0.85}
         hideModalContentWhileAnimating={hideModalContentWhileAnimating}
         useNativeDriverForBackdrop={true}
         useNativeDriver={true}
@@ -154,7 +155,7 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
                     button {
                       border: 0;
                       border-radius: 4px;
-                      margin-bottom: 12px;
+                      margin-top: 15px;
                       padding: 16px;
                       width: 100%;
                       font-weight: 500;
@@ -166,8 +167,9 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
                     }
 
                     button.secondary {
-                      background: ${NeutralSlate};
-                      color: ${Action}; 
+                      background: transparent;
+                      color: ${White}; 
+                      border: 1px solid ${Action};
                     }
 
                     #flex-container {
@@ -177,18 +179,14 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
 
                     #captcha-form {
                       margin: auto;
+                      opacity: 0;
+                      transition: all 500ms ease;
                     }
 
                     #${RECAPTCHA_ID} {
                       margin-bottom: 16px;
-                      opacity: 0;
-                      animation: fadeIn 0.75s 200ms forwards;
                     }
-                    
-                    @keyframes fadeIn {
-                      0% {opacity:0;}
-                      100% {opacity:1;}
-                    }
+
                   </style>
                   <script src="https://www.google.com/recaptcha/api.js?render=explicit&onload=onCaptchaLoad"></script>
                   <script type="text/javascript"> 
@@ -223,6 +221,11 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
                         message: 'cancel',
                       }));
                     };
+                    
+                    window.onload = () => {
+                      document.getElementById('captcha-form').style.opacity = '1';
+                    }
+                    
                   </script> 
                 </head>
                 <body>
