@@ -1,6 +1,6 @@
 import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {NavigatorScreenParams} from '@react-navigation/native';
+import {NavigatorScreenParams, useTheme} from '@react-navigation/native';
 
 import HomeRoot from './home/HomeStack';
 import ShopRoot, {ShopStackParamList} from './shop/ShopStack';
@@ -48,6 +48,7 @@ export type TabsStackParamList = {
 const Tab = createBottomTabNavigator<TabsStackParamList>();
 
 const TabsStack = () => {
+  const theme = useTheme();
   useAndroidBackHandler(() => true);
   const TransactionButton = () => null;
   return (
@@ -55,6 +56,7 @@ const TabsStack = () => {
       initialRouteName={TabsScreens.HOME}
       screenOptions={({route}) => ({
         headerShown: false,
+        tabBarStyle: {backgroundColor: theme.colors.background, paddingTop: 10},
         tabBarShowLabel: false,
         lazy: false,
         tabBarIcon: ({focused}) => {

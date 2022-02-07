@@ -1,4 +1,4 @@
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useState} from 'react';
 import {FlatList, LogBox, RefreshControl} from 'react-native';
@@ -14,7 +14,7 @@ import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateAllWalletBalancesForKey} from '../../../store/wallet/effects/balance/balance';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {SlateDark} from '../../../styles/colors';
+import {SlateDark, White} from '../../../styles/colors';
 import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
 import {BalanceUpdateError} from '../components/ErrorMessages';
 import OptionsBottomPopupModal, {
@@ -119,6 +119,7 @@ export const buildNestedWalletList = (wallets: Wallet[]) => {
 const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const theme = useTheme();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -194,7 +195,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
       <FlatList
         refreshControl={
           <RefreshControl
-            tintColor={SlateDark}
+            tintColor={theme.dark ? White : SlateDark}
             refreshing={refreshing}
             onRefresh={() => onRefresh()}
           />

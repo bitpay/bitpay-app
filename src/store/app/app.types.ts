@@ -9,6 +9,7 @@ import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptE
 export enum AppActionTypes {
   SUCCESS_APP_INIT = 'APP/SUCCESS_APP_INIT',
   FAILED_APP_INIT = 'APP/FAILED_APP_INIT',
+  SET_INTRO_COMPLETED = 'APP/SET_INTRO_COMPLETED',
   SET_ONBOARDING_COMPLETED = 'APP/SET_ONBOARDING_COMPLETED',
   SHOW_ONGOING_PROCESS_MODAL = 'APP/SHOW_ONGOING_PROCESS_MODAL',
   DISMISS_ONGOING_PROCESS_MODAL = 'APP/DISMISS_ONGOING_PROCESS_MODAL',
@@ -33,6 +34,10 @@ interface SuccessAppInit {
 
 interface FailedAppInit {
   type: typeof AppActionTypes.FAILED_APP_INIT;
+}
+
+interface SetIntroCompleted {
+  type: typeof AppActionTypes.SET_INTRO_COMPLETED;
 }
 
 interface SetOnboardingCompleted {
@@ -110,6 +115,7 @@ interface resetDecryptPasswordConfig {
 export type AppActionType =
   | SuccessAppInit
   | FailedAppInit
+  | SetIntroCompleted
   | SetOnboardingCompleted
   | ShowOnGoingProcessModal
   | DismissOnGoingProcessModal

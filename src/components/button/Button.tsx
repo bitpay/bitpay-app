@@ -37,21 +37,25 @@ const ButtonBaseText = styled(BaseText)`
 `;
 
 const ButtonContainer = styled.TouchableOpacity<ButtonOptionProps>`
-  background: ${({disabled, secondary}) => {
-    if (disabled) {
-      return Disabled;
+  background: ${({disabled, theme, secondary}) => {
+    if (secondary) {
+      return 'transparent';
     }
 
-    return secondary ? 'transparent' : Action;
+    if (disabled) {
+      return theme.dark ? DisabledDark : Disabled;
+    }
+
+    return Action;
   }};
   border: 2px solid
     ${({disabled, secondary, theme}) => {
       if (disabled) {
-        return Disabled;
+        return theme.dark ? DisabledDark : Disabled;
       }
 
       if (secondary) {
-        return theme?.dark ? White : Action;
+        return Action;
       }
 
       return Action;
@@ -66,7 +70,7 @@ const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
 
   color: ${({disabled, secondary, theme}) => {
     if (disabled) {
-      return DisabledDark;
+      return theme.dark ? '#656565' : '#bebec0';
     }
 
     if (secondary) {

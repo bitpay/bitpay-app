@@ -6,13 +6,13 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import {RootState} from '../../../store';
 import {PriceHistory} from '../../../store/wallet/wallet.models';
 
 import styled from 'styled-components/native';
 import {BaseText} from '../../../components/styled/Text';
-import {SlateDark, White, Action} from '../../../styles/colors';
+import {SlateDark, White} from '../../../styles/colors';
 
 import haptic from '../../../components/haptic-feedback/haptic';
 import PortfolioBalance from './components/PortfolioBalance';
@@ -92,6 +92,7 @@ const HomeRoot = () => {
   // }, []);
 
   const navigation = useNavigation();
+  const theme = useTheme();
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = async () => {
@@ -149,7 +150,7 @@ const HomeRoot = () => {
       <ScrollView
         refreshControl={
           <RefreshControl
-            tintColor={SlateDark}
+            tintColor={theme.dark ? White : SlateDark}
             refreshing={refreshing}
             onRefresh={onRefresh}
           />

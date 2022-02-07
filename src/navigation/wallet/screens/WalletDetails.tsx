@@ -1,4 +1,4 @@
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
@@ -20,7 +20,7 @@ import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/ba
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {SlateDark} from '../../../styles/colors';
+import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {BalanceUpdateError} from '../components/ErrorMessages';
@@ -64,6 +64,7 @@ const Chain = styled(BaseText)`
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const theme = useTheme();
   const {t} = useTranslation();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -161,7 +162,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       <FlatList
         refreshControl={
           <RefreshControl
-            tintColor={SlateDark}
+            tintColor={theme.dark ? White : SlateDark}
             refreshing={refreshing}
             onRefresh={onRefresh}
           />
