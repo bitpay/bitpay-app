@@ -1,4 +1,4 @@
-import {useNavigation, useTheme} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import React from 'react';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import * as Svg from 'react-native-svg';
@@ -9,6 +9,7 @@ import {
   NeutralSlate,
   ProgressBlue,
 } from '../../../../styles/colors';
+import {useTheme} from 'styled-components/native';
 
 const ScanIcon = () => {
   const theme = useTheme();

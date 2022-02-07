@@ -1,7 +1,6 @@
-import {useTheme} from '@react-navigation/native';
 import React from 'react';
 import {Color, Rect, Svg, Ellipse, Circle} from 'react-native-svg';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import {LightBlack, NeutralSlate, SlateDark, White} from '../../styles/colors';
 
 interface SettingsSvgProps {

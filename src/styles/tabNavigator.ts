@@ -8,7 +8,7 @@ import {
 } from './colors';
 import {Platform} from 'react-native';
 import {MaterialTopTabNavigationOptions} from '@react-navigation/material-top-tabs';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from 'styled-components/native';
 
 export const ScreenOptions = (
   width: number,

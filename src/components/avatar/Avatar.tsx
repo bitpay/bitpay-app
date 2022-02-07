@@ -1,8 +1,7 @@
-import {useTheme} from '@react-navigation/native';
 import React from 'react';
 import * as Svg from 'react-native-svg';
 import {useSelector} from 'react-redux';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import {RootState} from '../../store';
 import {Midnight, NeutralSlate, ProgressBlue} from '../../styles/colors';
 

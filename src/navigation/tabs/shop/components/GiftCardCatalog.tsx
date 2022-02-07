@@ -1,6 +1,6 @@
 import React, {useMemo, useState} from 'react';
 import debounce from 'lodash.debounce';
-import styled, {css} from 'styled-components/native';
+import styled, {css, useTheme} from 'styled-components/native';
 import {Cloud, LightBlack} from '../../../../styles/colors';
 import {Platform, View} from 'react-native';
 import {useForm, Controller} from 'react-hook-form';
@@ -30,7 +30,7 @@ import {
   SectionHeaderContainer,
   SectionSpacer,
 } from './styled/ShopTabComponents';
-import {useNavigation, useTheme} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import {GiftCardScreens} from '../gift-card/GiftCardStack';
 import MyGiftCards from './MyGiftCards';
 import RemoteImage from './RemoteImage';

@@ -116,7 +116,7 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
         </HeaderRightContainer>
       ),
     });
-  }, [navigation, isPaired, network]);
+  }, [navigation, isPaired, network, dispatch]);
 
   const themeType = useThemeType();
   const ref = useRef(null);
