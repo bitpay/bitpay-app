@@ -3,10 +3,10 @@ import React, {ReactElement, useState} from 'react';
 import {FlatList, TouchableOpacity, View} from 'react-native';
 import styled from 'styled-components/native';
 import TransactButtonIcon from '../../../../assets/img/tab-icons/transact-button.svg';
-import {Action, Midnight, NeutralSlate, White} from '../../../styles/colors';
-import {ActiveOpacity, ModalContainer} from '../../styled/Containers';
+import {Midnight, NeutralSlate, White} from '../../../styles/colors';
+import {ActiveOpacity, SheetContainer} from '../../styled/Containers';
 import {BaseText, H6} from '../../styled/Text';
-import BottomPopupModal from '../base/bottom-popup/BottomPopupModal';
+import SheetModal from '../base/sheet/SheetModal';
 import Icons from './TransactMenuIcons';
 
 const TransactButton = styled.View`
@@ -134,8 +134,8 @@ const TransactModal = () => {
           <TransactButtonIcon />
         </TouchableOpacity>
       </TransactButton>
-      <BottomPopupModal isVisible={modalVisible} onBackdropPress={hideModal}>
-        <ModalContainer>
+      <SheetModal isVisible={modalVisible} onBackdropPress={hideModal}>
+        <SheetContainer>
           <FlatList
             data={TransactMenuList}
             scrollEnabled={false}
@@ -171,8 +171,8 @@ const TransactModal = () => {
               <Icons.Close />
             </View>
           </CloseButtonContainer>
-        </ModalContainer>
-      </BottomPopupModal>
+        </SheetContainer>
+      </SheetModal>
     </>
   );
 };
