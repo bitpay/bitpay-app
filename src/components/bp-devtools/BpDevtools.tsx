@@ -6,7 +6,7 @@ import {RootState} from '../../store';
 import {AppActions} from '../../store/app';
 import haptic from '../haptic-feedback/haptic';
 
-const Container = styled.View`
+const Container = styled.SafeAreaView`
   align-items: center;
   border: 1px solid red;
   flex-direction: row;
