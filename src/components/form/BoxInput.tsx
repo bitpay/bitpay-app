@@ -1,10 +1,11 @@
+import {useTheme} from '@react-navigation/native';
 import React, {useState} from 'react';
 import {TextInputProps} from 'react-native';
 import styled, {css} from 'styled-components/native';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
 import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
 import Search from '../../../assets/img/search.svg';
-import {Action, Black, Caution, Slate, White} from '../../styles/colors';
+import {Action, Black, Caution, Slate} from '../../styles/colors';
 import {BitPayTheme} from '../../themes/bitpay';
 import {BaseText} from '../styled/Text';
 
@@ -18,7 +19,7 @@ interface ContainerProps {
 const Input = styled.TextInput<ContainerProps>`
   height: 55px;
   margin: 10px 0 0 0;
-  border: 1px solid #e1e4e7;
+  border: 0.75px solid ${Slate};
   color: ${({theme}) => theme.colors.text};
   padding: 10px;
   ${({type}) =>
@@ -35,7 +36,7 @@ const Input = styled.TextInput<ContainerProps>`
       background: #fafbff;
       border-color: #e6ebff;
       border-bottom-color: ${Action};
-      color: ${({theme: {dark}}) => (dark ? Black : White)};
+      color: ${Black};
     `}
 
   ${({isError}) =>
@@ -102,15 +103,8 @@ interface Props extends TextInputProps {
   [x: string]: any;
 }
 
-const BoxInput = ({
-  label,
-  onFocus,
-  onBlur,
-  error,
-  type,
-  theme,
-  ...props
-}: Props) => {
+const BoxInput = ({label, onFocus, onBlur, error, type, ...props}: Props) => {
+  const theme = useTheme();
   const isPassword = type === 'password';
   const isSearch = type === 'search';
   const [isFocused, setIsFocused] = useState(false);
@@ -126,11 +120,12 @@ const BoxInput = ({
     onBlur && onBlur();
   };
 
-  const errorMessage = typeof error === 'string' && error.charAt(0).toUpperCase() + error.slice(1);
+  const errorMessage =
+    typeof error === 'string' && error.charAt(0).toUpperCase() + error.slice(1);
 
   return (
     <InputContainer>
-      {label && <Label theme={theme}>{label}</Label>}
+      {label && <Label>{label}</Label>}
       <Input
         {...props}
         secureTextEntry={isPassword && isSecureTextEntry}
@@ -141,6 +136,10 @@ const BoxInput = ({
         isError={error}
         autoCapitalize={'none'}
         type={type}
+        style={{
+          backgroundColor: theme.colors.background,
+          color: theme.colors.text,
+        }}
       />
       {isPassword && (
         <ObfuscationToggle

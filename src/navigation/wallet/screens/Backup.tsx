@@ -9,27 +9,85 @@ import {
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import {useNavigation} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
-import {RootState} from '../../../store';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingImage} from '../../onboarding/components/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {WalletStackParamList} from '../WalletStack';
+import {Key} from '../../../store/wallet/wallet.models';
+import {NavigationProp, useNavigation} from '@react-navigation/native';
+import {StackActions} from '@react-navigation/native';
+import {RootState} from '../../../store';
+import {StackScreenProps} from '@react-navigation/stack';
+const BackupImage = {
+  light: require('../../../../assets/img/onboarding/light/backup.png'),
+  dark: require('../../../../assets/img/onboarding/dark/backup.png'),
+};
+
+type BackupScreenProps = StackScreenProps<WalletStackParamList, 'BackupKey'>;
+
+export type BackupParamList = {
+  context: 'onboarding' | 'createNewKey';
+  key: Key;
+};
 
 const BackupContainer = styled.SafeAreaView`
   flex: 1;
   align-items: center;
 `;
 
-const BackupImage = {
-  light: require('../../../../assets/img/onboarding/light/backup.png'),
-  dark: require('../../../../assets/img/onboarding/dark/backup.png'),
+export const navigateToTermsOrOverview = ({
+  context,
+  navigation,
+  walletTermsAccepted,
+  key,
+}: {
+  context: string | undefined;
+  navigation: NavigationProp<any>;
+  walletTermsAccepted: boolean;
+  key?: Key;
+}) => {
+  if (context === 'onboarding') {
+    navigation.navigate('Onboarding', {
+      screen: 'TermsOfUse',
+    });
+  } else if (!walletTermsAccepted) {
+    navigation.navigate('Wallet', {
+      screen: 'TermsOfUse',
+      params: {key},
+    });
+  } else {
+    navigation.dispatch(
+      StackActions.replace('Wallet', {
+        screen: 'KeyOverview',
+        params: {key},
+      }),
+    );
+  }
 };
 
-const BackupScreen = () => {
-  const navigation = useNavigation();
+const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
   const dispatch = useDispatch();
+  const navigation = useNavigation();
+  const walletTermsAccepted = useSelector(
+    ({WALLET}: RootState) => WALLET.walletTermsAccepted,
+  );
+
+  const {context, key} = route.params;
+
+  const gotoBackup = () => {
+    const {id, mnemonic} = key.properties;
+    navigation.navigate(context === 'onboarding' ? 'Onboarding' : 'Wallet', {
+      screen: 'RecoveryPhrase',
+      params: {
+        keyId: id,
+        words: mnemonic.trim().split(' '),
+        walletTermsAccepted,
+        ...route.params,
+      },
+    });
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -51,25 +109,17 @@ const BackupScreen = () => {
                   actions: [
                     {
                       text: 'BACKUP YOUR KEY',
-                      action: rootState => {
-                        const key = Object.values(rootState.WALLET.keys)[0];
-                        const {id, mnemonic} = key.properties;
-                        navigation.navigate('Onboarding', {
-                          screen: 'RecoveryPhrase',
-                          params: {
-                            keyId: id,
-                            words: mnemonic.trim().split(' '),
-                            isOnboarding: true,
-                          },
-                        });
-                      },
+                      action: gotoBackup,
                       primary: true,
                     },
                     {
                       text: 'LATER',
                       action: () =>
-                        navigation.navigate('Onboarding', {
-                          screen: 'TermsOfUse',
+                        navigateToTermsOrOverview({
+                          context,
+                          navigation,
+                          walletTermsAccepted,
+                          key,
                         }),
                     },
                   ],
@@ -81,21 +131,10 @@ const BackupScreen = () => {
         </HeaderRightContainer>
       ),
     });
-  });
+  }, [navigation]);
 
   useAndroidBackHandler(() => true);
   const themeType = useThemeType();
-  const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
-  const {id, mnemonic} = Object.values(keys)[0].properties;
-  const gotoBackup = () =>
-    navigation.navigate('Onboarding', {
-      screen: 'RecoveryPhrase',
-      params: {
-        keyId: id,
-        words: mnemonic.trim().split(' '),
-        isOnboarding: true,
-      },
-    });
 
   return (
     <BackupContainer>

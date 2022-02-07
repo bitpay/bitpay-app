@@ -11,9 +11,12 @@ import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import {useDispatch} from 'react-redux';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
-import {WalletActions} from '../../../store/wallet';
 import {AppActions} from '../../../store/app';
 import {sleep} from '../../../utils/helper-methods';
+import {
+  deleteKey,
+  updatePortfolioBalance,
+} from '../../../store/wallet/wallet.actions';
 
 const DeleteKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -47,17 +50,16 @@ const DeleteKey = () => {
   });
 
   const [isVisible, setIsVisible] = useState(false);
-
   const startDeleteKey = async () => {
     setIsVisible(false);
     await sleep(500);
     dispatch(startOnGoingProcessModal(OnGoingProcessMessages.DELETING_KEY));
     await sleep(300);
-    dispatch(WalletActions.deleteKey({keyId}));
+    dispatch(deleteKey({keyId}));
+    dispatch(updatePortfolioBalance());
     dispatch(AppActions.dismissOnGoingProcessModal());
     navigation.navigate('Tabs', {screen: 'Home'});
   };
-
 
   return (
     <DeleteKeyContainer>

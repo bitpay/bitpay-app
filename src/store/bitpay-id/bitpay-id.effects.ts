@@ -10,6 +10,7 @@ import {Effect} from '../index';
 import {LogActions} from '../log';
 import {User} from './bitpay-id.models';
 import {BitPayIdActions} from './index';
+import ReactAppboy from 'react-native-appboy-sdk';
 
 interface BitPayIdStoreInitParams {
   user?: User;
@@ -18,6 +19,7 @@ interface BitPayIdStoreInitParams {
 interface StartLoginParams {
   email: string;
   password: string;
+  gCaptchaResponse?: string;
 }
 
 export const startBitPayIdStoreInit =
@@ -25,6 +27,7 @@ export const startBitPayIdStoreInit =
   async dispatch => {
     if (user) {
       dispatch(BitPayIdActions.successFetchBasicInfo(network, user));
+      dispatch(startSetBrazeUser(user));
     }
   };
 
@@ -41,7 +44,7 @@ export const startFetchSession = (): Effect => async dispatch => {
 };
 
 export const startLogin =
-  ({email, password}: StartLoginParams): Effect =>
+  ({email, password, gCaptchaResponse}: StartLoginParams): Effect =>
   async (dispatch, getState) => {
     try {
       dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
@@ -52,7 +55,12 @@ export const startLogin =
       // authenticate
       dispatch(LogActions.info('Authenticating BitPayID credentials...'));
       const {twoFactorPending, emailAuthenticationPending} =
-        await AuthApi.login(email, password, BITPAY_ID.session.csrfToken);
+        await AuthApi.login(
+          email,
+          password,
+          BITPAY_ID.session.csrfToken,
+          gCaptchaResponse,
+        );
 
       // refresh session
       const session = await AuthApi.fetchSession();
@@ -210,6 +218,7 @@ const startPairAndLoadUser =
       batch(() => {
         dispatch(LogActions.info('Successfully paired with BitPayID.'));
         dispatch(BitPayIdActions.successFetchBasicInfo(network, basicInfo));
+        dispatch(startSetBrazeUser(basicInfo));
         dispatch(CardActions.successFetchCards(network, cards));
         dispatch(BitPayIdActions.successPairingBitPayId(network, token));
       });
@@ -235,5 +244,17 @@ export const startFetchBasicInfo =
       dispatch(LogActions.error('Failed to fetch basic user info'));
       dispatch(LogActions.error(JSON.stringify(err)));
       dispatch(BitPayIdActions.failedFetchBasicInfo());
+    }
+  };
+
+export const startSetBrazeUser =
+  ({eid, email}: User): Effect =>
+  async dispatch => {
+    try {
+      ReactAppboy.changeUser(eid);
+      ReactAppboy.setEmail(email);
+      dispatch(LogActions.info('Braze user session created'));
+    } catch (err) {
+      dispatch(LogActions.error('Error creating Braze user session'));
     }
   };

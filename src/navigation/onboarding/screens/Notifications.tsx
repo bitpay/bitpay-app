@@ -2,6 +2,7 @@ import React, {useLayoutEffect} from 'react';
 import styled from 'styled-components/native';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
+  ActionContainer,
   CtaContainer,
   HeaderRightContainer,
   TextContainer,
@@ -15,6 +16,8 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import {useNavigation} from '@react-navigation/native';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingImage} from '../components/Containers';
+import {requestNotifications, RESULTS} from 'react-native-permissions';
+import {Platform} from 'react-native';
 
 const NotificationsContainer = styled.SafeAreaView`
   flex: 1;
@@ -53,12 +56,36 @@ const NotificationsScreen = () => {
   useAndroidBackHandler(() => true);
   const themeType = useThemeType();
   const dispatch = useDispatch();
-  const onSetNotificationsPress = (notificationsAccepted: boolean) => {
-    haptic('impactLight');
-    dispatch(AppActions.setNotificationsAccepted(notificationsAccepted));
-    navigation.navigate('Onboarding', {
-      screen: 'Pin',
-    });
+
+  const onSetNotificationsPress = async (notificationsAccepted: boolean) => {
+    const setAndNavigate = (accepted: boolean) => {
+      haptic('impactLight');
+      dispatch(AppActions.setNotificationsAccepted(accepted));
+      navigation.navigate('Onboarding', {
+        screen: 'Pin',
+      });
+    };
+
+    if (!notificationsAccepted) {
+      setAndNavigate(false);
+      return;
+    }
+
+    if (Platform.OS === 'ios') {
+      try {
+        const {status: updatedStatus} = await requestNotifications([
+          'alert',
+          'badge',
+          'sound',
+        ]);
+        setAndNavigate(updatedStatus === RESULTS.GRANTED);
+        return;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    setAndNavigate(true);
   };
 
   return (
@@ -78,16 +105,20 @@ const NotificationsScreen = () => {
         </TextAlign>
       </TextContainer>
       <CtaContainer>
-        <Button
-          buttonStyle={'primary'}
-          onPress={() => onSetNotificationsPress(true)}>
-          Allow
-        </Button>
-        <Button
-          buttonStyle={'secondary'}
-          onPress={() => onSetNotificationsPress(false)}>
-          Deny
-        </Button>
+        <ActionContainer>
+          <Button
+            buttonStyle={'primary'}
+            onPress={() => onSetNotificationsPress(true)}>
+            Allow
+          </Button>
+        </ActionContainer>
+        <ActionContainer>
+          <Button
+            buttonStyle={'secondary'}
+            onPress={() => onSetNotificationsPress(false)}>
+            Deny
+          </Button>
+        </ActionContainer>
       </CtaContainer>
     </NotificationsContainer>
   );

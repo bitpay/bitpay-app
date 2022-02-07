@@ -4,6 +4,7 @@ import {
   Key,
   PriceHistory,
   Token,
+  WalletBalance,
 } from './wallet.models';
 
 export const successWalletStoreInit = (): WalletActionType => ({
@@ -21,6 +22,15 @@ export const successCreateKey = (payload: {key: Key}): WalletActionType => ({
 
 export const failedCreateKey = (): WalletActionType => ({
   type: WalletActionTypes.FAILED_CREATE_KEY,
+});
+
+export const successAddWallet = (payload: {key: Key}): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_ADD_WALLET,
+  payload,
+});
+
+export const failedAddWallet = (): WalletActionType => ({
+  type: WalletActionTypes.FAILED_ADD_WALLET,
 });
 
 export const successImport = (payload: {key: Key}): WalletActionType => ({
@@ -59,15 +69,6 @@ export const failedGetPriceHistory = (): WalletActionType => ({
   type: WalletActionTypes.FAILED_GET_PRICE_HISTORY,
 });
 
-export const updateWalletBalance = (payload: {
-  keyId: string;
-  walletId: string;
-  balance: number;
-}): WalletActionType => ({
-  type: WalletActionTypes.UPDATE_WALLET_BALANCE,
-  payload,
-});
-
 export const successEncryptOrDecryptPassword = (payload: {
   key: Key;
 }): WalletActionType => ({
@@ -89,4 +90,45 @@ export const successGetTokenOptions = (payload: {
 
 export const failedGetTokenOptions = (): WalletActionType => ({
   type: WalletActionTypes.FAILED_GET_TOKEN_OPTIONS,
+});
+
+export const setWalletTermsAccepted = (): WalletActionType => ({
+  type: WalletActionTypes.SET_WALLET_TERMS_ACCEPTED,
+});
+
+export const successUpdateWalletBalance = (payload: {
+  keyId: string;
+  walletId: string;
+  balance: WalletBalance;
+}): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCE,
+  payload,
+});
+
+export const failedUpdateWalletBalance = (): WalletActionType => ({
+  type: WalletActionTypes.FAILED_UPDATE_WALLET_BALANCE,
+});
+
+export const successUpdateKeyTotalBalance = (payload: {
+  keyId: string;
+  totalBalance: number;
+}): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_UPDATE_KEY_TOTAL_BALANCE,
+  payload,
+});
+
+export const failedUpdateKeyTotalBalance = (): WalletActionType => ({
+  type: WalletActionTypes.FAILED_UPDATE_KEY_TOTAL_BALANCE,
+});
+
+export const successUpdateAllKeysAndBalances = (): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_UPDATE_ALL_KEYS_AND_BALANCES,
+});
+
+export const failedUpdateAllKeysAndBalances = (): WalletActionType => ({
+  type: WalletActionTypes.FAILED_UPDATE_ALL_KEYS_AND_BALANCES,
+});
+
+export const updatePortfolioBalance = (): WalletActionType => ({
+  type: WalletActionTypes.UPDATE_PORTFOLIO_BALANCE,
 });

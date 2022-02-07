@@ -1,5 +1,6 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useMemo} from 'react';
+import {SafeAreaView} from 'react-native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../store';
 import {CardStackParamList} from '../CardStack';
@@ -13,7 +14,7 @@ export type CardHomeScreenParamList =
   | undefined;
 type CardHomeScreenProps = StackScreenProps<CardStackParamList, 'Home'>;
 
-const CardHome: React.FC<CardHomeScreenProps> = ({route}) => {
+const CardHome: React.FC<CardHomeScreenProps> = ({navigation, route}) => {
   const {params} = route;
   const isDashboardEnabled = useSelector<RootState, boolean>(
     ({APP, BITPAY_ID, CARD}) => {
@@ -29,9 +30,9 @@ const CardHome: React.FC<CardHomeScreenProps> = ({route}) => {
   }, [isDashboardEnabled]);
 
   return (
-    <>
-      <DashboardOrIntro id={params?.id} />
-    </>
+    <SafeAreaView>
+      <DashboardOrIntro id={params?.id} navigation={navigation} />
+    </SafeAreaView>
   );
 };
 

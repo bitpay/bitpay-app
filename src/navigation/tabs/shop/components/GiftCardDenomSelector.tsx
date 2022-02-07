@@ -4,8 +4,9 @@ import styled from 'styled-components/native';
 import MinusSvg from '../../../../../assets/img/minus.svg';
 import PlusSvg from '../../../../../assets/img/plus.svg';
 import {BaseText} from '../../../../components/styled/Text';
+import {formatAmount} from '../../../../lib/gift-cards/gift-card';
 import {CardConfig} from '../../../../store/shop/shop.models';
-import {BitPay} from '../../../../styles/colors';
+import {Action, BitPay} from '../../../../styles/colors';
 
 const Selector = styled.View`
   display: flex;
@@ -14,7 +15,7 @@ const Selector = styled.View`
   justify-content: center;
 `;
 
-const PlusButton = styled.View`
+const ChangeDenomButton = styled.View`
   height: 39px;
   width: 39px;
   border: 1px solid black;
@@ -22,14 +23,14 @@ const PlusButton = styled.View`
   align-items: center;
   justify-content: center;
   border-radius: 30px;
-  border: 1px solid ${BitPay};
+  border: 1px solid ${({theme}) => (theme.dark ? Action : BitPay)};
 `;
 
 const SelectedAmount = styled(BaseText)`
-  color: ${BitPay};
+  color: ${({theme}) => (theme.dark ? Action : BitPay)};
   font-size: 50px;
   font-weight: 500;
-  min-width: 160px;
+  min-width: 185px;
   padding: 0 15px;
   text-align: center;
 `;
@@ -45,11 +46,15 @@ export default ({cardConfig}: {cardConfig: CardConfig}) => {
         onPress={() =>
           setSelectedIndex(selectedIndex > 1 ? selectedIndex - 1 : 0)
         }>
-        <PlusButton>
+        <ChangeDenomButton style={{opacity: selectedIndex > 0 ? 1 : 0}}>
           <MinusSvg />
-        </PlusButton>
+        </ChangeDenomButton>
       </TouchableWithoutFeedback>
-      <SelectedAmount>${amounts[selectedIndex]}</SelectedAmount>
+      <SelectedAmount>
+        {formatAmount(amounts[selectedIndex], cardConfig.currency, {
+          customPrecision: 'minimal',
+        })}
+      </SelectedAmount>
       <TouchableWithoutFeedback
         onPress={() =>
           setSelectedIndex(
@@ -58,9 +63,10 @@ export default ({cardConfig}: {cardConfig: CardConfig}) => {
               : amounts.length - 1,
           )
         }>
-        <PlusButton>
+        <ChangeDenomButton
+          style={{opacity: selectedIndex < amounts.length - 1 ? 1 : 0}}>
           <PlusSvg />
-        </PlusButton>
+        </ChangeDenomButton>
       </TouchableWithoutFeedback>
     </Selector>
   );

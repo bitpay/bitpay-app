@@ -10,6 +10,12 @@ export interface WalletState {
   rates: {[key in string]: Array<ExchangeRate>};
   priceHistory: Array<PriceHistory>;
   tokenOptions: {[key in string]: Token};
+  walletTermsAccepted: boolean;
+  portfolioBalance: {
+    current: number;
+    previous: number;
+  };
+  balanceCacheKey: {[key in string]: number | undefined};
 }
 
 const initialState: WalletState = {
@@ -18,6 +24,12 @@ const initialState: WalletState = {
   rates: {},
   priceHistory: [],
   tokenOptions: {},
+  walletTermsAccepted: false,
+  portfolioBalance: {
+    current: 0,
+    previous: 0,
+  },
+  balanceCacheKey: {},
 };
 
 export const walletReducer = (
@@ -25,6 +37,7 @@ export const walletReducer = (
   action: WalletActionType,
 ): WalletState => {
   switch (action.type) {
+    case WalletActionTypes.SUCCESS_ADD_WALLET:
     case WalletActionTypes.SUCCESS_CREATE_KEY:
     case WalletActionTypes.SUCCESS_IMPORT: {
       const {key} = action.payload;
@@ -60,7 +73,7 @@ export const walletReducer = (
       };
     }
 
-    case WalletActionTypes.UPDATE_WALLET_BALANCE: {
+    case WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCE: {
       const {keyId, walletId, balance} = action.payload;
       const keyToUpdate = state.keys[keyId];
       if (keyToUpdate) {
@@ -78,6 +91,51 @@ export const walletReducer = (
           [keyId]: {
             ...keyToUpdate,
           },
+        },
+        balanceCacheKey: {
+          ...state.balanceCacheKey,
+          [walletId]: Date.now(),
+        },
+      };
+    }
+
+    case WalletActionTypes.SUCCESS_UPDATE_KEY_TOTAL_BALANCE: {
+      const {keyId, totalBalance} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      keyToUpdate.totalBalance = totalBalance;
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+        balanceCacheKey: {
+          ...state.balanceCacheKey,
+          [keyId]: Date.now(),
+        },
+      };
+    }
+
+    case WalletActionTypes.SUCCESS_UPDATE_ALL_KEYS_AND_BALANCES: {
+      return {
+        ...state,
+        balanceCacheKey: {
+          ...state.balanceCacheKey,
+          all: Date.now(),
+        },
+      };
+    }
+
+    case WalletActionTypes.UPDATE_PORTFOLIO_BALANCE: {
+      let current = 0;
+      Object.values(state.keys).forEach(key => (current += key.totalBalance));
+      return {
+        ...state,
+        portfolioBalance: {
+          current,
+          previous: 0,
         },
       };
     }
@@ -102,12 +160,17 @@ export const walletReducer = (
     case WalletActionTypes.DELETE_KEY: {
       const {keyId} = action.payload;
       const keyList = {...state.keys};
+      const balanceToRemove = state.keys[keyId].totalBalance;
       delete keyList[keyId];
 
       return {
         ...state,
         keys: {
           ...keyList,
+        },
+        portfolioBalance: {
+          current: state.portfolioBalance.current - balanceToRemove,
+          previous: 0,
         },
       };
     }
@@ -116,6 +179,13 @@ export const walletReducer = (
       return {
         ...state,
         tokenOptions: action.payload,
+      };
+    }
+
+    case WalletActionTypes.SET_WALLET_TERMS_ACCEPTED: {
+      return {
+        ...state,
+        walletTermsAccepted: true,
       };
     }
 

@@ -4,6 +4,7 @@ import {BaseText, Link, Paragraph} from '../../../components/styled/Text';
 import {Linking} from 'react-native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Checkbox from '../../../components/checkbox/Checkbox';
+import {LightBlack, NeutralSlate} from '../../../styles/colors';
 interface Props {
   emit: (id: number) => void;
   term: {
@@ -21,7 +22,7 @@ const TermsBoxContainer = styled.TouchableOpacity`
   padding: 20px;
   flex-direction: row;
   justify-content: flex-start;
-  background: #f5f7f8;
+  background: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   border-radius: 11px;
   margin: 10px 0;
 `;
@@ -34,6 +35,7 @@ const TermText = styled(BaseText)`
   letter-spacing: 0;
   text-align: left;
   margin: 5px 0;
+  color: ${({theme}) => theme.colors.text};
 `;
 
 const CheckBoxContainer = styled.View`

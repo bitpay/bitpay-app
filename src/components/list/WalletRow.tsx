@@ -3,12 +3,18 @@ import {
   Column,
   CurrencyImageContainer,
   CurrencyColumn,
+  Row,
 } from '../styled/Containers';
-import {H5, SubText} from '../styled/Text';
+import {Badge, H5, SubText} from '../styled/Text';
 import {RowContainer} from '../styled/Containers';
 import styled from 'styled-components/native';
 import NestedArrow from '../../../assets/img/nested-arrow.svg';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
+import {SUPPORTED_CURRENCIES} from '../../constants/currencies';
+
+const BadgeContainer = styled.View`
+  margin-left: 5px;
+`;
 
 const BalanceColumn = styled(Column)`
   align-items: flex-end;
@@ -25,9 +31,11 @@ export interface WalletRowProps {
   img: string | ((props: any) => ReactElement);
   currencyName: string;
   currencyAbbreviation: string;
-  cryptoBalance: number;
+  walletName?: string;
+  cryptoBalance: string;
   fiatBalance: string;
   isToken?: boolean;
+  network: string;
 }
 
 interface Props {
@@ -36,15 +44,40 @@ interface Props {
   onPress: () => void;
 }
 
+const buildTestBadge = (
+  network: string,
+  currencyName: string,
+  isToken: boolean | undefined,
+): ReactElement | undefined => {
+  if (isToken || ['livenet', 'mainnet'].includes(network)) {
+    return;
+  }
+  // logic for mapping test networks to chain
+  const badgeLabel = currencyName === 'Ethereum' ? 'Kovan' : 'Testnet';
+
+  return (
+    <BadgeContainer>
+      <Badge>{badgeLabel}</Badge>
+    </BadgeContainer>
+  );
+};
+
 const WalletRow = ({wallet, onPress}: Props) => {
   const {
     currencyName,
     currencyAbbreviation,
+    walletName,
     img,
     cryptoBalance,
     fiatBalance,
     isToken,
+    network,
   } = wallet;
+
+  const showFiatBalance =
+    Number(cryptoBalance) > 0 &&
+    SUPPORTED_CURRENCIES.includes(currencyAbbreviation.toLowerCase());
+
   return (
     <RowContainer activeOpacity={0.75} onPress={onPress}>
       {isToken && (
@@ -56,14 +89,21 @@ const WalletRow = ({wallet, onPress}: Props) => {
         <CurrencyImage img={img} size={45} />
       </CurrencyImageContainer>
       <CurrencyColumn>
-        <H5 ellipsizeMode="tail" numberOfLines={1}>
-          {currencyName}
-        </H5>
+        <Row>
+          <H5 ellipsizeMode="tail" numberOfLines={1}>
+            {walletName || currencyName}
+          </H5>
+          {buildTestBadge(network, currencyName, isToken)}
+        </Row>
         <SubText>{currencyAbbreviation}</SubText>
       </CurrencyColumn>
       <BalanceColumn>
         <H5>{cryptoBalance}</H5>
-        <SubText>{fiatBalance}</SubText>
+        {showFiatBalance && (
+          <SubText>
+            {network === 'testnet' ? 'Test - No Value' : fiatBalance}
+          </SubText>
+        )}
       </BalanceColumn>
     </RowContainer>
   );

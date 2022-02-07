@@ -1,7 +1,7 @@
 import {Network} from '.';
 
 // GENERAL
-export const APP_NETWORK = Network.testnet;
+export const APP_NETWORK = Network.mainnet;
 export const BASE_BITPAY_URLS = {
   [Network.mainnet]: 'https://bitpay.com',
   [Network.testnet]: 'https://test.bitpay.com',

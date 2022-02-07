@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useLayoutEffect} from 'react';
 import styled from 'styled-components/native';
 import {
   ActiveOpacity,
@@ -9,6 +9,7 @@ import {useNavigation} from '@react-navigation/native';
 import {Feather, LightBlack, SlateDark, White} from '../../../styles/colors';
 import {BaseText, H6, HeaderTitle} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
+import FastImage from 'react-native-fast-image';
 
 interface Option {
   id: string;
@@ -59,20 +60,20 @@ const Description = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const Image = styled.Image<{imgHeight: string}>`
+const Image = styled(FastImage)<{imgHeight: string}>`
   width: 80px;
   height: ${({imgHeight}) => imgHeight};
   position: absolute;
   bottom: 0;
 `;
 
-const CreationOptions = () => {
+const CreationOptions: React.FC = () => {
   const navigation = useNavigation();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
-      headerTitle: () => <HeaderTitle>Select Wallet Type</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>Create</HeaderTitle>,
       headerTitleAlign: 'center',
     });
   }, [navigation]);
@@ -80,10 +81,14 @@ const CreationOptions = () => {
   const optionList: Option[] = [
     {
       id: 'basic',
-      title: 'Basic Wallet',
+      title: 'New Key',
       description:
         'Add coins like Bitcoin and Dogecoin, and also tokens like USDC and PAX',
-      cta: () => navigation.navigate('Wallet', {screen: 'CurrencySelection'}),
+      cta: () =>
+        navigation.navigate('Wallet', {
+          screen: 'CurrencySelection',
+          params: {context: 'createNewKey'},
+        }),
       img: require('../../../../assets/img/wallet/wallet-type/create-wallet.png'),
       height: '98px',
     },
@@ -97,12 +102,11 @@ const CreationOptions = () => {
     },
     {
       id: 'recover',
-      title: 'Recover Wallet',
+      title: 'Recover Key',
       description: 'Import your wallet using your backup passphrase',
       cta: () =>
         navigation.navigate('Wallet', {
           screen: 'Import',
-          params: {isOnboarding: false},
         }),
       img: require('../../../../assets/img/wallet/wallet-type/recover.png'),
       height: '80px',
@@ -121,7 +125,7 @@ const CreationOptions = () => {
               }}
               key={id}>
               <ImageContainer>
-                <Image source={img} resizeMode={'contain'} imgHeight={height} />
+                <Image source={img} imgHeight={height} />
               </ImageContainer>
               <InfoContainer>
                 <Title>{title}</Title>

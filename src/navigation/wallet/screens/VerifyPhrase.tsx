@@ -7,13 +7,19 @@ import {
   Paragraph,
   TextAlign,
 } from '../../../components/styled/Text';
-import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {StackActions, useNavigation} from '@react-navigation/native';
 import {
   HeaderRightContainer,
   WIDTH,
 } from '../../../components/styled/Containers';
 import * as Progress from 'react-native-progress';
-import {Action, Air, NeutralSlate, ProgressBlue} from '../../../styles/colors';
+import {
+  Action,
+  Air,
+  LightBlack,
+  NeutralSlate,
+  ProgressBlue,
+} from '../../../styles/colors';
 import Carousel from 'react-native-snap-carousel';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
@@ -29,10 +35,22 @@ import {AppActions} from '../../../store/app';
 import {useDispatch} from 'react-redux';
 import {WalletActions} from '../../../store/wallet';
 import Button from '../../../components/button/Button';
-export interface VerifyPhraseProps {
+import {Key} from '../../../store/wallet/wallet.models';
+import {WalletStackParamList} from '../WalletStack';
+import {navigateToTermsOrOverview} from './Backup';
+import {StackScreenProps} from '@react-navigation/stack';
+
+type VerifyPhraseScreenProps = StackScreenProps<
+  WalletStackParamList,
+  'VerifyPhrase'
+>;
+
+export interface VerifyPhraseParamList {
   keyId: string;
   words: string[];
-  isOnboarding?: boolean;
+  context: string;
+  key: Key;
+  walletTermsAccepted: boolean;
 }
 
 const VerifyPhraseContainer = styled.View`
@@ -62,7 +80,7 @@ const DottedBorder = styled.View`
 `;
 
 const WordSelector = styled.TouchableOpacity`
-  background: ${NeutralSlate};
+  background: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   padding: 10px 15px;
   margin: 5px;
   border-radius: 5px;
@@ -76,11 +94,14 @@ const WordSelectorText = styled(BaseText)`
   line-height: 19px;
   letter-spacing: 0;
   text-align: center;
+  color: ${({theme}) => theme.colors.text};
 `;
 
-const VerifyPhrase = () => {
+const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const {params} = route;
+  const {keyId, words, context, key, walletTermsAccepted} = params;
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -104,8 +125,11 @@ const VerifyPhrase = () => {
                     {
                       text: "I'M SURE",
                       action: () =>
-                        navigation.navigate('Onboarding', {
-                          screen: 'TermsOfUse',
+                        navigateToTermsOrOverview({
+                          context,
+                          navigation,
+                          walletTermsAccepted,
+                          key,
                         }),
                       primary: true,
                     },
@@ -118,13 +142,9 @@ const VerifyPhrase = () => {
         </HeaderRightContainer>
       ),
     });
-  });
+  }, [navigation]);
 
   const ref = useRef(null);
-  const {
-    params: {keyId, words, isOnboarding},
-  } = useRoute<RouteProp<{params: VerifyPhraseProps}>>();
-
   const shuffledWords = useRef<Array<string>>(
     [...words].sort(() => Math.random() - 0.5),
   );
@@ -176,15 +196,19 @@ const VerifyPhrase = () => {
               {
                 text: 'OK',
                 action: () => {
-                  if (isOnboarding) {
+                  if (context === 'onboarding') {
                     navigation.navigate('Onboarding', {
                       screen: 'TermsOfUse',
                     });
                   } else {
-                    // TODO wallet stack redirection
+                    navigation.dispatch(
+                      StackActions.replace('Wallet', {
+                        screen: 'KeyOverview',
+                        params: {key},
+                      }),
+                    );
                   }
                 },
-
                 primary: true,
               },
             ],
@@ -201,14 +225,13 @@ const VerifyPhrase = () => {
               {
                 text: 'TRY AGAIN',
                 action: async () => {
-                  navigation.navigate('Onboarding', {
-                    screen: 'RecoveryPhrase',
-                    params: {
-                      keyId,
-                      words,
-                      isOnboarding,
+                  navigation.navigate(
+                    context === 'onboarding' ? 'Onboarding' : 'Wallet',
+                    {
+                      screen: 'RecoveryPhrase',
+                      params,
                     },
-                  });
+                  );
                 },
                 primary: true,
               },
