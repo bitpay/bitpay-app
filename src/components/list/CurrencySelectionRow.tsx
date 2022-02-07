@@ -15,6 +15,7 @@ export interface ItemProps extends SupportedCurrencyOption {
 }
 
 export interface CurrencySelectionToggleProps {
+  id: string;
   checked: boolean;
   currencyAbbreviation: string;
   currencyName: string;
@@ -34,6 +35,7 @@ const CheckBoxContainer = styled.View`
 
 const CurrencySelectionRow = ({item, emit, removeCheckbox}: Props) => {
   const {
+    id,
     currencyName,
     currencyAbbreviation,
     img,
@@ -47,6 +49,7 @@ const CurrencySelectionRow = ({item, emit, removeCheckbox}: Props) => {
     setChecked(!checked);
     haptic('impactLight');
     emit({
+      id,
       currencyAbbreviation,
       currencyName,
       checked: !checked,
