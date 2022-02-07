@@ -32,6 +32,7 @@ const Tabs: React.FC<TabsProps> = props => {
 
   const TabButtons = tabs.map((d, idx) => (
     <TabButton
+      bold
       key={d.key}
       active={activeTabIdx === idx}
       onPress={() => setActiveIdx(idx)}>

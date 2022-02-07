@@ -35,7 +35,6 @@ const HighlightContentContainer = styled.View`
 `;
 
 const HighlightTitle = styled(H4)`
-  font-weight: bold;
   margin-bottom: 4px;
 `;
 

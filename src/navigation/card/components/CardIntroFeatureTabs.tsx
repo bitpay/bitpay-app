@@ -27,7 +27,7 @@ const TableRow = styled.View<TableRowProps>`
 
 const TableCellTitle = styled(BaseText)`
   flex: 1;
-  font-weight: bold;
+  font-weight: 500;
   padding-right: 8px;
   text-align: left;
 `;

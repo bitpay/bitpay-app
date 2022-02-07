@@ -93,7 +93,7 @@ const FeatureCard = ({
       </HeaderTitleContainer>
       <FeatureImage source={image} />
       <BottomDescriptionContainer>
-        <DescriptionTitle>{descriptionTitle}</DescriptionTitle>
+        <DescriptionTitle bold>{descriptionTitle}</DescriptionTitle>
         <DescriptionText>{descriptionText}</DescriptionText>
         <CtaContainer>
           <Button buttonType={'link'} onPress={cta}>
