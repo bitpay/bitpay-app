@@ -93,7 +93,6 @@ const SearchIconContainer = styled.View`
 `;
 
 interface Props extends TextInputProps {
-  theme?: BitPayTheme;
   label?: string;
   onFocus?: () => void;
   onBlur?: () => void;

@@ -12,7 +12,7 @@ import {
   TextAlign,
 } from '../../../components/styled/Text';
 import {CommonActions, useNavigation} from '@react-navigation/native';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
   ActiveOpacity,
