@@ -77,5 +77,7 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-</dict>
+		<key>NSUserTrackingUsageDescription</key>
+		<string>Tracking is used to identify source of traffic, optimize campaigns, and improve user experiences in the app.</string>
+  </dict>
 </plist>

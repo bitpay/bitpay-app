@@ -102,6 +102,7 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
                   params: {
                     context: 'login',
                     onLoginSuccess: () => {
+                      haptic('impactLight');
                       navigation.navigate('Onboarding', {
                         screen: 'Notifications',
                       });
