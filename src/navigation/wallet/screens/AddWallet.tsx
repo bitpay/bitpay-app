@@ -369,7 +369,11 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
                   setIsTestnet(!isTestnet);
                 }}>
                 <Column>
-                  <OptionTitle>Testnet</OptionTitle>
+                  <OptionTitle>
+                    {isToken || currencyAbbreviation === 'ETH'
+                      ? 'Kovan'
+                      : 'Testnet'}
+                  </OptionTitle>
                 </Column>
                 <CheckBoxContainer>
                   <Checkbox

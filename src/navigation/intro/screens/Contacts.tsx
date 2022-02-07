@@ -52,9 +52,7 @@ const IntroContacts = ({navigation}: IntroContactsScreenProps) => {
 
   return (
     <IntroContactsContainer>
-      <BackgroundImage
-        source={theme.dark ? darkBackground : lightBackground}
-      />
+      <BackgroundImage source={theme.dark ? darkBackground : lightBackground} />
       <Overlay />
       <Body>
         <ButtonContainer>
