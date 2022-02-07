@@ -363,7 +363,11 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
             </AdvancedOptionsButton>
 
             {showOptions && (
-              <RowContainer activeOpacity={1} onPress={() => {setIsTestnet(!isTestnet);}}>
+              <RowContainer
+                activeOpacity={1}
+                onPress={() => {
+                  setIsTestnet(!isTestnet);
+                }}>
                 <Column>
                   <OptionTitle>Testnet</OptionTitle>
                 </Column>

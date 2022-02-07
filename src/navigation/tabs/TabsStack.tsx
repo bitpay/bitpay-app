@@ -15,9 +15,12 @@ import ShopFocusedIcon from '../../../assets/img/tab-icons/shop-focused.svg';
 import SettingsIcon from '../../../assets/img/tab-icons/settings.svg';
 import SettingsFocusedIcon from '../../../assets/img/tab-icons/settings-focused.svg';
 import TransactButtonIcon from '../../../assets/img/tab-icons/transact-button.svg';
+import ContactsIcon from '../../../assets/img/tab-icons/contacts.svg';
+import ContactsFocusedIcon from '../../../assets/img/tab-icons/contacts-focused.svg';
 
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import TransactModal from '../../components/modal/transact-menu/TransactMenu';
+import ContactsRoot from './contacts/ContactsRoot';
 
 const Icons: {[key: string]: React.FC<SvgProps>} = {
   Home: HomeIcon,
@@ -27,6 +30,8 @@ const Icons: {[key: string]: React.FC<SvgProps>} = {
   Settings: SettingsIcon,
   SettingsFocused: SettingsFocusedIcon,
   TransactButton: TransactButtonIcon,
+  Contacts: ContactsIcon,
+  ContactsFocused: ContactsFocusedIcon,
 };
 
 export enum TabsScreens {
@@ -35,6 +40,7 @@ export enum TabsScreens {
   TRANSACT_BUTTON = 'TransactButton',
   SETTINGS = 'Settings',
   CAMERA = 'Camera',
+  CONTACTS = 'Contacts',
 }
 
 export type TabsStackParamList = {
@@ -43,6 +49,7 @@ export type TabsStackParamList = {
   TransactButton: undefined;
   Settings: NavigatorScreenParams<SettingsStackParamList> | undefined;
   Camera: undefined;
+  Contacts: undefined;
 };
 
 const Tab = createBottomTabNavigator<TabsStackParamList>();
@@ -77,6 +84,8 @@ const TabsStack = () => {
         component={TransactionButton}
         options={{tabBarButton: () => <TransactModal />}}
       />
+      <Tab.Screen name={TabsScreens.CONTACTS} component={ContactsRoot} />
+
       <Tab.Screen name={TabsScreens.SETTINGS} component={SettingsRoot} />
     </Tab.Navigator>
   );
