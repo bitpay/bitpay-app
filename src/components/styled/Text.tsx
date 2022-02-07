@@ -7,53 +7,58 @@ export const fontFamily = 'Heebo';
 export const BaseText = styled.Text`
   color: ${({theme}) => theme.colors.text};
   font-family: '${fontFamily}';
-  color: ${({theme}) => theme.colors.text};
 `;
 
-export const H2 = styled(BaseText)`
+interface HeadingProps {
+  bold?: boolean;
+  medium?: boolean;
+}
+
+export const H1 = styled(BaseText)<HeadingProps>`
+  font-size: 50px;
+  font-style: normal;
+  font-weight: ${({medium = false}) => (medium ? 500 : 700)};
+  letter-spacing: 0;
+`;
+
+export const H2 = styled(BaseText)<HeadingProps>`
   font-size: 38px;
   font-style: normal;
-  font-weight: 500;
+  font-weight: ${({medium = false}) => (medium ? 500 : 700)};
   letter-spacing: 0;
-  text-align: center;
 `;
 
-export const H3 = styled(BaseText)`
+export const H3 = styled(BaseText)<HeadingProps>`
   font-size: 25px;
   font-style: normal;
   font-weight: 700;
-  line-height: 34px;
   letter-spacing: 0;
 `;
 
-export const H4 = styled(BaseText)`
+export const H4 = styled(BaseText)<HeadingProps>`
   font-size: 20px;
   font-style: normal;
   font-weight: 500;
-  line-height: 30px;
   letter-spacing: 0;
 `;
 
-export const H5 = styled(BaseText)`
+export const H5 = styled(BaseText)<HeadingProps>`
   font-size: 18px;
   font-style: normal;
-  font-weight: 700;
-  line-height: 25px;
+  font-weight: ${({bold = false}) => (bold ? 700 : 500)};
   letter-spacing: 0;
 `;
 
-export const H6 = styled(BaseText)`
+export const H6 = styled(BaseText)<HeadingProps>`
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  line-height: 18px;
 `;
 
-export const H7 = styled(BaseText)`
+export const H7 = styled(BaseText)<HeadingProps>`
   font-size: 14px;
   font-style: normal;
   font-weight: 400;
-  line-height: 18px;
   letter-spacing: 0;
 `;
 
@@ -76,7 +81,6 @@ export const Smallest = styled(BaseText)`
 export const Paragraph = styled(BaseText)`
   font-size: 16px;
   font-style: normal;
-  font-weight: 400;
   line-height: 25px;
   letter-spacing: 0;
 `;
@@ -142,7 +146,6 @@ export const TextAlign = styled(BaseText)<TextAlignProps>`
 `;
 
 export const Link = styled(BaseText)`
-  font-weight: 400;
   color: ${({theme}) => theme.colors.link};
   text-decoration: ${({theme}) => (theme.dark ? 'underline' : 'none')};
   text-decoration-color: ${({theme}) => theme.colors.link};
