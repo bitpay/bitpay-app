@@ -1,16 +1,17 @@
-import {useTheme} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import debounce from 'lodash.debounce';
 import React, {useMemo, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {View} from 'react-native';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import {WIDTH} from '../../../../components/styled/Containers';
 import {Paragraph} from '../../../../components/styled/Text';
 import {
   Category,
   DirectIntegrationApiObject,
 } from '../../../../store/shop/shop.models';
+import {MerchantScreens} from '../merchant/MerchantStack';
 import MerchantItem from './MerchantItem';
 import ShopCarouselList, {ShopCarouselItem} from './ShopCarouselList';
 import {
@@ -46,6 +47,7 @@ export const ShopOnline = ({
   integrations: DirectIntegrationApiObject[];
   categories: CategoryWithIntegrations[];
 }) => {
+  const navigation = useNavigation();
   const theme = useTheme();
   const {control} = useForm();
   const [searchVal, setSearchVal] = useState('');
@@ -66,7 +68,16 @@ export const ShopOnline = ({
           <SectionContainer>
             <SectionHeaderContainer>
               <SectionHeader>{category.displayName}</SectionHeader>
-              <TouchableWithoutFeedback>
+              <TouchableWithoutFeedback
+                onPress={() => {
+                  navigation.navigate('Merchant', {
+                    screen: MerchantScreens.MERCHANT_CATEGORY,
+                    params: {
+                      category,
+                      integrations: category.integrations,
+                    },
+                  });
+                }}>
                 <SectionHeaderButton>See all</SectionHeaderButton>
               </TouchableWithoutFeedback>
             </SectionHeaderContainer>
@@ -85,7 +96,14 @@ export const ShopOnline = ({
             itemWidth={146}
             maxItemsPerColumn={1}
             screenWidth={WIDTH}
-            onItemPress={item => console.log('merchant onItemPress', item)}
+            onItemPress={item =>
+              navigation.navigate('Merchant', {
+                screen: MerchantScreens.MERCHANT_DETAILS,
+                params: {
+                  directIntegration: item as DirectIntegrationApiObject,
+                },
+              })
+            }
           />
         </View>
       ))}
@@ -137,12 +155,23 @@ export const ShopOnline = ({
       <HideableView show={!!(searchVal && searchResults.length)}>
         <SearchResults>
           {searchResults.map(integration => (
-            <MerchantItem
-              merchant={integration}
-              height={200}
-              headerMargin={60}
+            <TouchableWithoutFeedback
               key={integration.displayName}
-            />
+              onPress={() =>
+                navigation.navigate('Merchant', {
+                  screen: MerchantScreens.MERCHANT_DETAILS,
+                  params: {
+                    directIntegration: integration,
+                  },
+                })
+              }>
+              <MerchantItem
+                merchant={integration}
+                height={200}
+                headerMargin={60}
+                key={integration.displayName}
+              />
+            </TouchableWithoutFeedback>
           ))}
         </SearchResults>
       </HideableView>

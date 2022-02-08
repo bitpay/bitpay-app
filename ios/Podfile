@@ -7,6 +7,9 @@ target 'BitPayApp' do
   pod 'react-native-camera', path: '../node_modules/react-native-camera', subspecs: [
     'BarcodeDetectorMLKit'
   ]
+  permissions_path = '../node_modules/react-native-permissions/ios'
+  pod 'Permission-Notifications', :path => "#{permissions_path}/Notifications/Permission-Notifications.podspec"
+
   config = use_native_modules!
 
   use_react_native!(

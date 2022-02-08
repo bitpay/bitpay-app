@@ -1,5 +1,6 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useMemo} from 'react';
+import {SafeAreaView} from 'react-native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../store';
 import {CardStackParamList} from '../CardStack';
@@ -29,9 +30,9 @@ const CardHome: React.FC<CardHomeScreenProps> = ({navigation, route}) => {
   }, [isDashboardEnabled]);
 
   return (
-    <>
+    <SafeAreaView>
       <DashboardOrIntro id={params?.id} navigation={navigation} />
-    </>
+    </SafeAreaView>
   );
 };
 

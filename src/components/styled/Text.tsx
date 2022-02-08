@@ -1,5 +1,6 @@
+import React from 'react';
+import {Text} from 'react-native';
 import styled, {css} from 'styled-components/native';
-import {Action, SlateDark, White} from '../../styles/colors';
 
 export const fontFamily = 'Heebo';
 
@@ -8,49 +9,56 @@ export const BaseText = styled.Text`
   font-family: '${fontFamily}';
 `;
 
-export const H2 = styled(BaseText)`
-  font-size: 38px;
+interface HeadingProps {
+  bold?: boolean;
+  medium?: boolean;
+}
+
+export const H1 = styled(BaseText)<HeadingProps>`
+  font-size: 50px;
   font-style: normal;
-  font-weight: 500;
+  font-weight: ${({medium = false}) => (medium ? 500 : 700)};
   letter-spacing: 0;
-  text-align: center;
 `;
 
-export const H3 = styled(BaseText)`
+export const H2 = styled(BaseText)<HeadingProps>`
+  font-size: 38px;
+  font-style: normal;
+  font-weight: ${({medium = false}) => (medium ? 500 : 700)};
+  letter-spacing: 0;
+`;
+
+export const H3 = styled(BaseText)<HeadingProps>`
   font-size: 25px;
   font-style: normal;
   font-weight: 700;
-  line-height: 34px;
   letter-spacing: 0;
 `;
 
-export const H4 = styled(BaseText)`
+export const H4 = styled(BaseText)<HeadingProps>`
   font-size: 20px;
   font-style: normal;
   font-weight: 500;
-  line-height: 30px;
   letter-spacing: 0;
 `;
 
-export const H5 = styled(BaseText)`
+export const H5 = styled(BaseText)<HeadingProps>`
   font-size: 18px;
   font-style: normal;
-  font-weight: 700;
-  line-height: 25px;
+  font-weight: ${({bold = false}) => (bold ? 700 : 500)};
   letter-spacing: 0;
 `;
 
-export const H6 = styled(BaseText)`
+export const H6 = styled(BaseText)<HeadingProps>`
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
 `;
 
-export const H7 = styled(BaseText)`
+export const H7 = styled(BaseText)<HeadingProps>`
   font-size: 14px;
   font-style: normal;
   font-weight: 400;
-  line-height: 18px;
   letter-spacing: 0;
 `;
 
@@ -73,7 +81,6 @@ export const Smallest = styled(BaseText)`
 export const Paragraph = styled(BaseText)`
   font-size: 16px;
   font-style: normal;
-  font-weight: 400;
   line-height: 25px;
   letter-spacing: 0;
 `;
@@ -85,6 +92,33 @@ export const Disclaimer = styled(BaseText)`
   line-height: 19px;
   letter-spacing: 0;
 `;
+
+interface ExponentProps {
+  i: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+}
+
+const EXPONENT_UNICODE_MAP: {
+  [k in 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9]: string;
+} = {
+  0: '\u2070',
+  1: '\u00B9',
+  2: '\u00B2',
+  3: '\u00B3',
+  4: '\u2074',
+  5: '\u2075',
+  6: '\u2076',
+  7: '\u2077',
+  8: '\u2078',
+  9: '\u2079',
+};
+
+/**
+ * Renders a number 0-9 as a unicode exponent in a Text element.
+ * @param i The number 0-9 to use as the exponent.
+ */
+export const Exp = (props: ExponentProps) => {
+  return <Text>{EXPONENT_UNICODE_MAP[props.i]}</Text>;
+};
 
 // Nav
 export const HeaderTitle = styled(BaseText)`
@@ -104,7 +138,7 @@ interface TextAlignProps {
   align: 'center' | 'left' | 'right';
 }
 
-export const TextAlign = styled.Text<TextAlignProps>`
+export const TextAlign = styled(BaseText)<TextAlignProps>`
   ${props =>
     css`
       text-align: ${props.align};
@@ -112,12 +146,9 @@ export const TextAlign = styled.Text<TextAlignProps>`
 `;
 
 export const Link = styled(BaseText)`
-  font-size: 16px;
-  line-height: 25px;
-  font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? White : Action)};
-  text-decoration: ${({theme: {dark}}) => (dark ? 'underline' : 'none')};
-  text-decoration-color: ${White};
+  color: ${({theme}) => theme.colors.link};
+  text-decoration: ${({theme}) => (theme.dark ? 'underline' : 'none')};
+  text-decoration-color: ${({theme}) => theme.colors.link};
 `;
 
 // WALLET

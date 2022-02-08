@@ -6,12 +6,21 @@ import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/Ong
 import {Network} from '../../constants';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 
+export const networkChanged = (network: Network): AppActionType => ({
+  type: AppActionTypes.NETWORK_CHANGED,
+  payload: network,
+});
+
 export const successAppInit = (): AppActionType => ({
   type: AppActionTypes.SUCCESS_APP_INIT,
 });
 
 export const failedAppInit = (): AppActionType => ({
   type: AppActionTypes.FAILED_APP_INIT,
+});
+
+export const setIntroCompleted = (): AppActionType => ({
+  type: AppActionTypes.SET_INTRO_COMPLETED,
 });
 
 export const setOnboardingCompleted = (): AppActionType => ({

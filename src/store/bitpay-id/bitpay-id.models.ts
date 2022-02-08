@@ -7,7 +7,7 @@ export interface Session {
 
 export interface User {
   email: string;
-  eid?: string;
+  eid: string;
   familyName?: string;
   givenName?: string;
   userSettings: {

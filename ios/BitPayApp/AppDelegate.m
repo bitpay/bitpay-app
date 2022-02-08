@@ -12,6 +12,7 @@
 #import <FlipperKitNetworkPlugin/FlipperKitNetworkPlugin.h>
 #import <SKIOSNetworkPlugin/SKIOSNetworkAdapter.h>
 #import <FlipperKitReactPlugin/FlipperKitReactPlugin.h>
+#import "Appboy-iOS-SDK/AppboyKit.h"
 
 static void InitializeFlipper(UIApplication *application) {
   FlipperClient *client = [FlipperClient sharedClient];
@@ -49,7 +50,40 @@ static void InitializeFlipper(UIApplication *application) {
   self.window.rootViewController = rootViewController;
   [self.window makeKeyAndVisible];
   [RNBootSplash initWithStoryboard:@"BootSplash" rootView:rootView];
+  
+  [Appboy startWithApiKey:@"BRAZE_API_KEY_REPLACE_ME"
+           inApplication:application
+       withLaunchOptions:launchOptions];
+
   return YES;
+}
+
+- (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
+{
+  [[Appboy sharedInstance] registerDeviceToken:deviceToken];
+}
+
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo                                                      fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
+{
+  [[Appboy sharedInstance] registerApplication:application
+                  didReceiveRemoteNotification:userInfo
+                        fetchCompletionHandler:completionHandler];
+}
+
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(UNNotificationResponse *)response  withCompletionHandler:(void (^)(void))completionHandler   {
+  [[Appboy sharedInstance] userNotificationCenter:center
+                   didReceiveNotificationResponse:response
+                            withCompletionHandler:completionHandler];
+}
+
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center
+       willPresentNotification:(UNNotification *)notification
+         withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler {
+  if (@available(iOS 14.0, *)) {
+    completionHandler(UNNotificationPresentationOptionList | UNNotificationPresentationOptionBanner);
+  } else {
+    completionHandler(UNNotificationPresentationOptionAlert);
+  }
 }
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge

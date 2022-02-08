@@ -1,7 +1,6 @@
 import React, {memo, ReactElement} from 'react';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import {BaseText} from '../styled/Text';
-import {useTheme} from '@react-navigation/native';
 import {StyleProp, TextStyle} from 'react-native';
 import NestedArrow from '../../../assets/img/nested-arrow.svg';
 import {CurrencyImage} from '../currency-image/CurrencyImage';

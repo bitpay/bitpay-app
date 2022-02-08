@@ -7,8 +7,10 @@ import {AppIdentity} from './app.models';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 
 export enum AppActionTypes {
+  NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
   SUCCESS_APP_INIT = 'APP/SUCCESS_APP_INIT',
   FAILED_APP_INIT = 'APP/FAILED_APP_INIT',
+  SET_INTRO_COMPLETED = 'APP/SET_INTRO_COMPLETED',
   SET_ONBOARDING_COMPLETED = 'APP/SET_ONBOARDING_COMPLETED',
   SHOW_ONGOING_PROCESS_MODAL = 'APP/SHOW_ONGOING_PROCESS_MODAL',
   DISMISS_ONGOING_PROCESS_MODAL = 'APP/DISMISS_ONGOING_PROCESS_MODAL',
@@ -27,12 +29,21 @@ export enum AppActionTypes {
   RESET_DECRYPT_PASSWORD_CONFIG = 'APP/RESET_DECRYPT_PASSWORD_CONFIG',
 }
 
+interface NetworkChanged {
+  type: typeof AppActionTypes.NETWORK_CHANGED;
+  payload: Network;
+}
+
 interface SuccessAppInit {
   type: typeof AppActionTypes.SUCCESS_APP_INIT;
 }
 
 interface FailedAppInit {
   type: typeof AppActionTypes.FAILED_APP_INIT;
+}
+
+interface SetIntroCompleted {
+  type: typeof AppActionTypes.SET_INTRO_COMPLETED;
 }
 
 interface SetOnboardingCompleted {
@@ -108,8 +119,10 @@ interface resetDecryptPasswordConfig {
 }
 
 export type AppActionType =
+  | NetworkChanged
   | SuccessAppInit
   | FailedAppInit
+  | SetIntroCompleted
   | SetOnboardingCompleted
   | ShowOnGoingProcessModal
   | DismissOnGoingProcessModal

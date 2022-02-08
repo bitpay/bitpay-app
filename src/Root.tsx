@@ -57,6 +57,7 @@ import BuyCryptoStack, {
 import SwapCryptoStack, {
   SwapCryptoStackParamList,
 } from './navigation/services/swap-crypto/SwapCryptoStack';
+import IntroStack, {IntroStackParamList} from './navigation/intro/IntroStack';
 import WalletConnectStack, {
   WalletConnectStackParamList,
 } from './navigation/wallet-connect/WalletConnectStack';
@@ -65,10 +66,16 @@ import GiftCardStack, {
   GiftCardStackParamList,
 } from './navigation/tabs/shop/gift-card/GiftCardStack';
 import DecryptEnterPasswordModal from './navigation/wallet/components/DecryptEnterPasswordModal';
+import MerchantStack, {
+  MerchantStackParamList,
+} from './navigation/tabs/shop/merchant/MerchantStack';
+import BpDevtools from './components/bp-devtools/BpDevtools';
+import {DEVTOOLS_ENABLED} from './constants/config';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
   Auth: NavigatorScreenParams<AuthStackParamList>;
+  Intro: NavigatorScreenParams<IntroStackParamList>;
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
   Tabs: NavigatorScreenParams<TabsStackParamList>;
   BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
@@ -77,6 +84,7 @@ export type RootStackParamList = {
   Scan: NavigatorScreenParams<ScanStackParamList>;
   Shop: NavigatorScreenParams<ShopStackParamList>;
   GiftCard: NavigatorScreenParams<GiftCardStackParamList>;
+  Merchant: NavigatorScreenParams<MerchantStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
   SecuritySettings: NavigatorScreenParams<SecuritySettingsStackParamList>;
   ContactSettings: NavigatorScreenParams<ContactSettingsStackParamList>;
@@ -90,6 +98,7 @@ export type RootStackParamList = {
 export enum RootStacks {
   HOME = 'Home',
   AUTH = 'Auth',
+  INTRO = 'Intro',
   ONBOARDING = 'Onboarding',
   TABS = 'Tabs',
   BITPAY_ID = 'BitpayId',
@@ -97,6 +106,7 @@ export enum RootStacks {
   CARD = 'Card',
   SCAN = 'Scan',
   GIFT_CARD = 'GiftCard',
+  MERCHANT = 'Merchant',
   // SETTINGS
   GENERAL_SETTINGS = 'GeneralSettings',
   SECURITY_SETTINGS = 'SecuritySettings',
@@ -116,6 +126,7 @@ export type NavScreenParams = NavigatorScreenParams<
     WalletStackParamList &
     CardStackParamList &
     GiftCardStackParamList &
+    MerchantStackParamList &
     GeneralSettingsStackParamList &
     SecuritySettingsStackParamList &
     ContactSettingsStackParamList &
@@ -152,6 +163,7 @@ export default () => {
   const onboardingCompleted = useSelector(
     ({APP}: RootState) => APP.onboardingCompleted,
   );
+  const introCompleted = useSelector(({APP}: RootState) => APP.introCompleted);
   const appColorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
   const currentRoute = useSelector(({APP}: RootState) => APP.currentRoute);
   const appLanguage = useSelector(({APP}: RootState) => APP.defaultLanguage);
@@ -193,11 +205,17 @@ export default () => {
   // ROOT STACKS AND GLOBAL COMPONENTS
   const initialRoute = onboardingCompleted
     ? RootStacks.TABS
-    : RootStacks.ONBOARDING;
+    : introCompleted
+    ? RootStacks.ONBOARDING
+    : RootStacks.INTRO;
+
+  const showDevtools = __DEV__ && DEVTOOLS_ENABLED;
 
   return (
     <SafeAreaProvider>
       <ThemeProvider theme={theme}>
+        {showDevtools ? <BpDevtools /> : null}
+
         <NavigationContainer
           ref={navigationRef}
           theme={theme}
@@ -242,6 +260,7 @@ export default () => {
             }}
             initialRouteName={initialRoute}>
             <Root.Screen name={RootStacks.AUTH} component={AuthStack} />
+            <Root.Screen name={RootStacks.INTRO} component={IntroStack} />
             <Root.Screen
               name={RootStacks.ONBOARDING}
               component={OnboardingStack}
@@ -276,6 +295,7 @@ export default () => {
               name={RootStacks.GIFT_CARD}
               component={GiftCardStack}
             />
+            <Root.Screen name={RootStacks.MERCHANT} component={MerchantStack} />
             {/* SETTINGS */}
             <Root.Screen
               name={RootStacks.GENERAL_SETTINGS}

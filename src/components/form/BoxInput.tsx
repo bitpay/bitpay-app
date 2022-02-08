@@ -1,7 +1,6 @@
-import {useTheme} from '@react-navigation/native';
 import React, {useState} from 'react';
 import {TextInputProps} from 'react-native';
-import styled, {css} from 'styled-components/native';
+import styled, {css, useTheme} from 'styled-components/native';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
 import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
 import Search from '../../../assets/img/search.svg';
@@ -19,7 +18,7 @@ interface ContainerProps {
 const Input = styled.TextInput<ContainerProps>`
   height: 55px;
   margin: 10px 0 0 0;
-  border: 1px solid #e1e4e7;
+  border: 0.75px solid ${Slate};
   color: ${({theme}) => theme.colors.text};
   padding: 10px;
   ${({type}) =>
@@ -94,7 +93,6 @@ const SearchIconContainer = styled.View`
 `;
 
 interface Props extends TextInputProps {
-  theme?: BitPayTheme;
   label?: string;
   onFocus?: () => void;
   onBlur?: () => void;

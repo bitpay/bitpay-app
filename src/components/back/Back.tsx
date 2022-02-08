@@ -1,8 +1,8 @@
-import {useTheme} from '@react-navigation/native';
 import React from 'react';
 import {Platform} from 'react-native';
 import {Circle, Color, G, Path, Svg} from 'react-native-svg';
-import styled, {css} from 'styled-components/native';
+import styled, {css, useTheme} from 'styled-components/native';
+import {LightBlack, NeutralSlate, White} from '../../styles/colors';
 
 interface BackSvgProps {
   color: Color | null | undefined;
@@ -74,13 +74,14 @@ const BackContainer = styled.View<{platform: string}>`
 
 const Back = ({color, background, opacity}: Props) => {
   const theme = useTheme();
-  const backColor = theme.dark ? '#fff' : null;
+  const themedColor = theme.dark ? White : null;
+  const themedBackground = theme.dark ? LightBlack : NeutralSlate;
 
   return (
     <BackContainer platform={Platform.OS}>
       <BackSvg
-        color={color || backColor}
-        background={background}
+        color={color || themedColor}
+        background={background || themedBackground}
         opacity={opacity}
       />
     </BackContainer>

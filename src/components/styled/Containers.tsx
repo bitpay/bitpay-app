@@ -2,13 +2,12 @@ import React from 'react';
 import {Dimensions, Text} from 'react-native';
 import styled, {css} from 'styled-components/native';
 import {
-  Action,
   Feather,
   LightBlack,
   NeutralSlate,
-  Slate,
   SlateDark,
   White,
+  Slate,
 } from '../../styles/colors';
 import {BaseText} from './Text';
 
@@ -59,7 +58,6 @@ export const CtaContainer = styled.View`
 export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
   padding: 15px;
   position: absolute;
-  margin: 5px 0;
   bottom: 0;
   left: 0;
   right: 0;
@@ -130,15 +128,19 @@ export const CardContainer = styled.View<CardContainerProps>`
   border-radius: 21px;
 `;
 
-// Bottom Modal
-export const ModalContainer = styled.View`
+export interface SheetParams {
+  placement?: 'top' | 'bottom';
+}
+
+export const SheetContainer = styled.View<SheetParams>`
   padding: 30px;
-  min-height: 300px;
-  background: white;
+  background-color: ${({theme}) => (theme.dark ? LightBlack : White)};
   justify-content: center;
   align-content: center;
-  border-top-left-radius: 17px;
-  border-top-right-radius: 17px;
+  border-${({placement}: SheetParams) =>
+    placement === 'top' ? 'bottom' : 'top'}-left-radius: 17px;
+  border-${({placement}: SheetParams) =>
+    placement === 'top' ? 'bottom' : 'top'}-right-radius: 17px;
 `;
 
 // Settings List
@@ -186,7 +188,7 @@ export const SettingView = styled.View`
 `;
 
 export const ActionContainer = styled.View`
-  margin: 5px 0; ;
+  margin: 5px 0;
 `;
 
 // Info

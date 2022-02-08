@@ -4,7 +4,7 @@ import {View} from 'react-native';
 import Modal from 'react-native-modal';
 import WebView, {WebViewMessageEvent} from 'react-native-webview';
 import {HEIGHT, WIDTH} from '../../../components/styled/Containers';
-import {Action, NeutralSlate, Slate} from '../../../styles/colors';
+import {Action, White} from '../../../styles/colors';
 
 const RECAPTCHA_ID = 'bp-recaptcha';
 
@@ -30,7 +30,7 @@ interface RecaptchaModalProps {
    * Ref to the captcha WebView, giving the parent component access to grecaptcha functions.
    */
   captchaRef?: React.RefObject<CaptchaRef>;
-  onSubmit?: (gCaptchaResponse: string) => any;
+  onResponse?: (gCaptchaResponse: string) => any;
   onCancel?: () => any;
   onExpired?: () => any;
   onError?: (error: any) => any;
@@ -62,20 +62,20 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
       isVisible,
       baseUrl,
       sitekey,
-      onSubmit,
+      onResponse,
       onCancel,
       onExpired,
       onError,
     } = props;
-    const [gCaptchaResponse, setGCaptchaResponse] = useState<string>('');
     const webviewRef = useRef<WebView>(null);
-
+    const [hideModalContentWhileAnimating, setHideModalContentWhileAnimating] =
+      useState(false);
     useImperativeHandle(ref, () => {
       return {
         reset: () => {
           webviewRef.current?.injectJavaScript(`
-        window.grecaptcha.reset('${RECAPTCHA_ID}');
-      `);
+            window.grecaptcha.reset('${RECAPTCHA_ID}');
+          `);
         },
       };
     });
@@ -86,10 +86,8 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
 
         switch (message) {
           case 'response':
-            setGCaptchaResponse(data);
-            webviewRef.current?.injectJavaScript(`
-            document.querySelector('#submit-captcha').disabled = false;
-          `);
+            setHideModalContentWhileAnimating(true);
+            onResponse?.(data);
             break;
           case 'expired':
             onExpired?.();
@@ -97,10 +95,8 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
             document.querySelector('#submit-captcha').disabled = true;
           `);
             break;
-          case 'submit':
-            onSubmit?.(gCaptchaResponse);
-            break;
           case 'cancel':
+            setHideModalContentWhileAnimating(true);
             onCancel?.();
             break;
           case 'error':
@@ -114,9 +110,15 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
 
     return (
       <Modal
-        useNativeDriver
         deviceHeight={HEIGHT}
         deviceWidth={WIDTH}
+        backdropTransitionOutTiming={0}
+        backdropOpacity={0.85}
+        hideModalContentWhileAnimating={hideModalContentWhileAnimating}
+        useNativeDriverForBackdrop={true}
+        useNativeDriver={true}
+        animationIn={'fadeInUp'}
+        animationOut={'fadeOutDown'}
         isVisible={isVisible}
         style={styles.modal}>
         <View style={styles.wrapper}>
@@ -153,27 +155,21 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
                     button {
                       border: 0;
                       border-radius: 4px;
-                      margin-bottom: 12px;
+                      margin-top: 15px;
                       padding: 16px;
                       width: 100%;
+                      font-weight: 500;
+                      font-size: 16px;
                     }
 
                     button:focus {
                       outline: 0;
                     }
 
-                    button.primary {
-                      background: ${Action};
-                      color: white; 
-                    }
-
                     button.secondary {
-                      background: ${NeutralSlate};
-                      color: ${Action}; 
-                    }
-
-                    button:disabled {
-                      background: ${Slate};
+                      background: transparent;
+                      color: ${White}; 
+                      border: 1px solid ${Action};
                     }
 
                     #flex-container {
@@ -183,11 +179,14 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
 
                     #captcha-form {
                       margin: auto;
+                      opacity: 0;
+                      transition: all 500ms ease;
                     }
 
                     #${RECAPTCHA_ID} {
                       margin-bottom: 16px;
                     }
+
                   </style>
                   <script src="https://www.google.com/recaptcha/api.js?render=explicit&onload=onCaptchaLoad"></script>
                   <script type="text/javascript"> 
@@ -215,34 +214,24 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
                           }));
                         },
                       });
-                    };
-
-                    window.onCaptchaSubmit = () => {
-                      window.ReactNativeWebView.postMessage(JSON.stringify({
-                        message: 'submit',
-                      }));
-                    };
+                    };        
 
                     window.onCaptchaCancel = () => {
                       window.ReactNativeWebView.postMessage(JSON.stringify({
                         message: 'cancel',
                       }));
                     };
+                    
+                    window.onload = () => {
+                      document.getElementById('captcha-form').style.opacity = '1';
+                    }
+                    
                   </script> 
                 </head>
                 <body>
                   <div id="flex-container">
                     <form id="captcha-form">
                       <div id="${RECAPTCHA_ID}"></div>
-
-                      <button id="submit-captcha"
-                        class="primary"
-                        onclick="onCaptchaSubmit()"
-                        type="button"
-                        disabled>
-                        Submit
-                      </button>
-
                       <button id="cancel-captcha"
                         class="secondary"
                         onclick="onCaptchaCancel()"

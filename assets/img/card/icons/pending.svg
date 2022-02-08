@@ -1,0 +1,22 @@
+<svg
+    width="40px"
+    height="40px"
+    viewBox="0 0 40 40"
+    version="1.1"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+  >
+    <g id="Dashboard-(Desktop)" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+      <g id="Personal-Dashboard---Activity/Payments--Pending" >
+        <g id="icons/pending">
+          <g id="Pending" transform="translate(19.395406, 19.907192) scale(-1, 1) rotate(-45.000000) translate(-19.395406, -19.907192) translate(5.795406, 6.307192)" />
+        </g>
+        <path id="Oval-204" d="M20,40 C31.045695,40 40,31.045695 40,20 C40,8.954305 31.045695,0 20,0 C8.954305,0 0,8.954305 0,20 C0,31.045695 8.954305,40 20,40 Z" fill="#9BA3AE" opacity="0.1" />
+        <path id="Shape" d="M9.6,20.4 C9.6,14.46 14.2610644,9.6 19.9579209,9.6 C23.9975101,9.6 27.5192032,11.976 29.1764706,15.54" stroke="#9BA3AE" stroke-width="2" />
+        <path id="Shape" d="M30.4,20.4 C30.4,26.34 25.7389356,31.2 20.0420791,31.2 C16.0024899,31.2 12.4807968,28.824 10.8235294,25.26"  stroke="#9BA3AE" stroke-width="2" />
+        <polyline id="Shape" stroke="#9BA3AE" stroke-width="2" points="30.4 9.6 29.5363322 15.6 23.0588235 14.7864407" />
+        <polyline id="Shape" stroke="#9BA3AE" stroke-width="2" points="9.6 31.2 10.4636678 25.2 16.9411765 26.0135593" />
+      </g>
+    </g>
+  </svg>
+  

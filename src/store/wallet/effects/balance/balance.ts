@@ -97,7 +97,7 @@ export const startUpdateAllWalletBalancesForKey =
 
         const balances = await Promise.all(
           key.wallets.map(wallet => {
-            return new Promise<WalletBalance>(async resolve => {
+            return new Promise<WalletBalance>(async resolve2 => {
               const balance = await updateWalletBalance({wallet, rates});
               dispatch(
                 successUpdateWalletBalance({
@@ -109,7 +109,7 @@ export const startUpdateAllWalletBalancesForKey =
               console.log(
                 `Wallet: ${wallet.currencyAbbreviation} ${wallet.id} - balance updated`,
               );
-              resolve(balance);
+              resolve2(balance);
             });
           }),
         );
@@ -198,7 +198,7 @@ const updateWalletBalance = ({
           console.log(newBalance);
 
           resolve(newBalance);
-        } catch (err) {
+        } catch (err2) {
           resolve(lastKnownBalance);
         }
       },

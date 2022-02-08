@@ -1,5 +1,4 @@
 import {yupResolver} from '@hookform/resolvers/yup';
-import {useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
@@ -16,7 +15,6 @@ import {RootState} from '../../../store';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {Session} from '../../../store/bitpay-id/bitpay-id.models';
 import {LoginStatus} from '../../../store/bitpay-id/bitpay-id.reducer';
-import {SlateDark} from '../../../styles/colors';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
 import {AuthStackParamList} from '../AuthStack';
 import AuthFormContainer, {
@@ -24,6 +22,9 @@ import AuthFormContainer, {
   AuthInputContainer,
 } from '../components/AuthFormContainer';
 import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
+import haptic from '../../../components/haptic-feedback/haptic';
+import {Keyboard} from 'react-native';
+import {sleep} from '../../../utils/helper-methods';
 
 export type LoginSignupParamList = {
   context: 'login' | 'signup';
@@ -67,7 +68,6 @@ interface LoginFormFieldValues {
 
 const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
   const dispatch = useDispatch();
-  const theme = useTheme();
   const {
     control,
     handleSubmit,
@@ -126,9 +126,10 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
       navigation.navigate('EmailAuthentication');
       return;
     }
-  }, [loginStatus, navigation, dispatch]);
+  }, [loginStatus, navigation, dispatch, onLoginSuccess]);
 
   const onSubmit = handleSubmit(({email, password}) => {
+    Keyboard.dismiss();
     if (session.captchaDisabled) {
       dispatch(BitPayIdEffects.startLogin({email, password}));
     } else {
@@ -161,22 +162,22 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
       <Row>
         <LoginText>Already have an account?</LoginText>
         <Button buttonType={'link'} onPress={() => onAlreadyHaveAccount()}>
-          Log in
+          Log In
         </Button>
       </Row>
     );
   }
 
-  const onCaptchaSubmit = (gCaptchaResponse: string) => {
+  const onCaptchaResponse = async (gCaptchaResponse: string) => {
     const {email, password} = getValues();
-
     setCaptchaModalVisible(false);
+    await sleep(500);
     dispatch(BitPayIdEffects.startLogin({email, password, gCaptchaResponse}));
   };
 
   const onCaptchaCancel = () => {
+    haptic('notificationWarning');
     setCaptchaModalVisible(false);
-    captchaRef.current?.reset();
   };
 
   return (
@@ -220,7 +221,9 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
 
       <AuthActionsContainer>
         <PrimaryActionContainer>
-          <Button onPress={onSubmit}>Log In</Button>
+          <Button onPress={onSubmit}>
+            {context === 'login' ? 'Log In' : 'Create Account'}
+          </Button>
         </PrimaryActionContainer>
         <SecondaryActionContainer>{secondaryAction}</SecondaryActionContainer>
       </AuthActionsContainer>
@@ -230,7 +233,7 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
         ref={captchaRef}
         sitekey={session.noCaptchaKey}
         baseUrl={BASE_BITPAY_URLS[network]}
-        onSubmit={onCaptchaSubmit}
+        onResponse={onCaptchaResponse}
         onCancel={onCaptchaCancel}
       />
     </AuthFormContainer>

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {TouchableWithoutFeedback} from 'react-native';
 import styled from 'styled-components/native';
 import MinusSvg from '../../../../../assets/img/minus.svg';
@@ -6,7 +6,7 @@ import PlusSvg from '../../../../../assets/img/plus.svg';
 import {BaseText} from '../../../../components/styled/Text';
 import {formatAmount} from '../../../../lib/gift-cards/gift-card';
 import {CardConfig} from '../../../../store/shop/shop.models';
-import {BitPay} from '../../../../styles/colors';
+import {Action, BitPay} from '../../../../styles/colors';
 
 const Selector = styled.View`
   display: flex;
@@ -15,7 +15,7 @@ const Selector = styled.View`
   justify-content: center;
 `;
 
-const PlusButton = styled.View`
+const ChangeDenomButton = styled.View`
   height: 39px;
   width: 39px;
   border: 1px solid black;
@@ -23,32 +23,38 @@ const PlusButton = styled.View`
   align-items: center;
   justify-content: center;
   border-radius: 30px;
-  border: 1px solid ${BitPay};
+  border: 1px solid ${({theme}) => (theme.dark ? Action : BitPay)};
 `;
 
 const SelectedAmount = styled(BaseText)`
-  color: ${BitPay};
+  color: ${({theme}) => (theme.dark ? Action : BitPay)};
   font-size: 50px;
   font-weight: 500;
-  min-width: 160px;
+  min-width: 185px;
   padding: 0 15px;
   text-align: center;
 `;
 
-const getMiddleIndex = (arr: number[]) => arr && Math.floor(arr.length / 2);
-
-export default ({cardConfig}: {cardConfig: CardConfig}) => {
+export default ({
+  cardConfig,
+  selectedIndex,
+  onChange,
+}: {
+  cardConfig: CardConfig;
+  selectedIndex: number;
+  onChange: (value: number) => void;
+}) => {
   const amounts = cardConfig.supportedAmounts as number[];
-  const [selectedIndex, setSelectedIndex] = useState(getMiddleIndex(amounts));
   return (
     <Selector>
       <TouchableWithoutFeedback
-        onPress={() =>
-          setSelectedIndex(selectedIndex > 1 ? selectedIndex - 1 : 0)
-        }>
-        <PlusButton>
+        onPress={() => {
+          const newSelectedIndex = selectedIndex > 1 ? selectedIndex - 1 : 0;
+          onChange(newSelectedIndex);
+        }}>
+        <ChangeDenomButton style={{opacity: selectedIndex > 0 ? 1 : 0}}>
           <MinusSvg />
-        </PlusButton>
+        </ChangeDenomButton>
       </TouchableWithoutFeedback>
       <SelectedAmount>
         {formatAmount(amounts[selectedIndex], cardConfig.currency, {
@@ -56,16 +62,17 @@ export default ({cardConfig}: {cardConfig: CardConfig}) => {
         })}
       </SelectedAmount>
       <TouchableWithoutFeedback
-        onPress={() =>
-          setSelectedIndex(
+        onPress={() => {
+          const newSelectedIndex =
             selectedIndex < amounts.length - 1
               ? selectedIndex + 1
-              : amounts.length - 1,
-          )
-        }>
-        <PlusButton>
+              : amounts.length - 1;
+          onChange(newSelectedIndex);
+        }}>
+        <ChangeDenomButton
+          style={{opacity: selectedIndex < amounts.length - 1 ? 1 : 0}}>
           <PlusSvg />
-        </PlusButton>
+        </ChangeDenomButton>
       </TouchableWithoutFeedback>
     </Selector>
   );

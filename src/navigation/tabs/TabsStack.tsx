@@ -1,6 +1,6 @@
 import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {NavigatorScreenParams} from '@react-navigation/native';
+import {NavigatorScreenParams, useTheme} from '@react-navigation/native';
 
 import HomeRoot from './home/HomeStack';
 import ShopRoot, {ShopStackParamList} from './shop/ShopStack';
@@ -12,18 +12,23 @@ import HomeIcon from '../../../assets/img/tab-icons/home.svg';
 import HomeFocusedIcon from '../../../assets/img/tab-icons/home-focused.svg';
 import ShopIcon from '../../../assets/img/tab-icons/shop.svg';
 import ShopFocusedIcon from '../../../assets/img/tab-icons/shop-focused.svg';
+import ContactsIcon from '../../../assets/img/tab-icons/contacts.svg';
+import ContactsFocusedIcon from '../../../assets/img/tab-icons/contacts-focused.svg';
 import SettingsIcon from '../../../assets/img/tab-icons/settings.svg';
 import SettingsFocusedIcon from '../../../assets/img/tab-icons/settings-focused.svg';
 import TransactButtonIcon from '../../../assets/img/tab-icons/transact-button.svg';
 
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import TransactModal from '../../components/modal/transact-menu/TransactMenu';
+import {SafeAreaView} from 'react-native';
 
 const Icons: {[key: string]: React.FC<SvgProps>} = {
   Home: HomeIcon,
   HomeFocused: HomeFocusedIcon,
   Shop: ShopIcon,
   ShopFocused: ShopFocusedIcon,
+  Contacts: ContactsIcon,
+  ContactsFocused: ContactsFocusedIcon,
   Settings: SettingsIcon,
   SettingsFocused: SettingsFocusedIcon,
   TransactButton: TransactButtonIcon,
@@ -33,6 +38,7 @@ export enum TabsScreens {
   HOME = 'Home',
   SHOP = 'Shop',
   TRANSACT_BUTTON = 'TransactButton',
+  CONTACTS = 'Contacts',
   SETTINGS = 'Settings',
   CAMERA = 'Camera',
 }
@@ -41,13 +47,19 @@ export type TabsStackParamList = {
   Home: undefined;
   Shop: NavigatorScreenParams<ShopStackParamList> | undefined;
   TransactButton: undefined;
+  Contacts: undefined;
   Settings: NavigatorScreenParams<SettingsStackParamList> | undefined;
   Camera: undefined;
 };
 
 const Tab = createBottomTabNavigator<TabsStackParamList>();
 
+const TemporaryContactsPlaceholder = () => {
+  return <SafeAreaView style={{flex: 1}} />;
+};
+
 const TabsStack = () => {
+  const theme = useTheme();
   useAndroidBackHandler(() => true);
   const TransactionButton = () => null;
   return (
@@ -55,6 +67,7 @@ const TabsStack = () => {
       initialRouteName={TabsScreens.HOME}
       screenOptions={({route}) => ({
         headerShown: false,
+        tabBarStyle: {backgroundColor: theme.colors.background, paddingTop: 10},
         tabBarShowLabel: false,
         lazy: false,
         tabBarIcon: ({focused}) => {
@@ -74,6 +87,10 @@ const TabsStack = () => {
         name={TabsScreens.TRANSACT_BUTTON}
         component={TransactionButton}
         options={{tabBarButton: () => <TransactModal />}}
+      />
+      <Tab.Screen
+        name={TabsScreens.CONTACTS}
+        component={TemporaryContactsPlaceholder}
       />
       <Tab.Screen name={TabsScreens.SETTINGS} component={SettingsRoot} />
     </Tab.Navigator>

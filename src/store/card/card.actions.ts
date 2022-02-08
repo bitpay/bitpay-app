@@ -1,5 +1,5 @@
 import {Network} from '../../constants';
-import {Card} from './card.models';
+import {Card, PagedTransactionData, Transaction} from './card.models';
 import {FetchCardsStatus, FetchOverviewStatus} from './card.reducer';
 import {
   CardActionType,
@@ -36,12 +36,16 @@ export const virtualDesignCurrencyUpdated = (
 export const successFetchOverview = ({
   id,
   balance,
+  settledTransactions,
+  pendingTransactions,
 }: {
   id: string;
   balance: number;
+  settledTransactions: PagedTransactionData;
+  pendingTransactions: Transaction[];
 }): CardActionType => ({
   type: CardActionTypes.SUCCESS_FETCH_OVERVIEW,
-  payload: {id, balance},
+  payload: {id, balance, settledTransactions, pendingTransactions},
 });
 
 export const failedFetchOverview = (id: string): CardActionType => ({

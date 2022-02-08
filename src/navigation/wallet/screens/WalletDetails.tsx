@@ -1,40 +1,34 @@
+import {useNavigation, useTheme} from '@react-navigation/native';
+import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useState} from 'react';
+import {useTranslation} from 'react-i18next';
+import {FlatList, RefreshControl} from 'react-native';
+import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
+import Settings from '../../../components/settings/Settings';
 import {
   Balance,
   BaseText,
   H5,
   HeaderTitle,
 } from '../../../components/styled/Text';
-import {useNavigation} from '@react-navigation/native';
-import {WalletStackParamList} from '../WalletStack';
-import OptionsBottomPopupModal, {
-  Option,
-} from '../components/OptionsBottomPopupModal';
-import Settings from '../../../components/settings/Settings';
-import RequestAmountSvg from '../../../../assets/img/wallet/request-amount.svg';
-import ShareAddressSvg from '../../../../assets/img/wallet/share-address.svg';
-import SettingsSvg from '../../../../assets/img/wallet/settings.svg';
-import LinkingButtons from '../../tabs/home/components/LinkingButtons';
-import ReceiveAddress from '../components/ReceiveAddress';
-import {StackScreenProps} from '@react-navigation/stack';
-import {
-  startUpdateAllKeyAndWalletBalances,
-  startUpdateWalletBalance
-} from '../../../store/wallet/effects/balance/balance';
-import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {BalanceUpdateError} from '../components/ErrorMessages';
-import {useDispatch, useSelector} from 'react-redux';
-import {FlatList, RefreshControl} from 'react-native';
-import {SlateDark} from '../../../styles/colors';
-import {RootState} from '../../../store';
-import {buildUIFormattedWallet} from './KeyOverview';
-import {findWalletById} from '../../../store/wallet/utils/wallet';
-import {Wallet} from '../../../store/wallet/wallet.models';
-import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
-import {sleep} from '../../../utils/helper-methods';
 import {Network} from '../../../constants';
+import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
+import {RootState} from '../../../store';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/balance';
+import {findWalletById} from '../../../store/wallet/utils/wallet';
+import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
+import {Wallet} from '../../../store/wallet/wallet.models';
+import {SlateDark, White} from '../../../styles/colors';
+import {sleep} from '../../../utils/helper-methods';
+import LinkingButtons from '../../tabs/home/components/LinkingButtons';
+import {BalanceUpdateError} from '../components/ErrorMessages';
+import OptionsSheet, {Option} from '../components/OptionsSheet';
+import ReceiveAddress from '../components/ReceiveAddress';
+import Icons from '../components/WalletIcons';
+import {WalletStackParamList} from '../WalletStack';
+import {buildUIFormattedWallet} from './KeyOverview';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -68,6 +62,8 @@ const Chain = styled(BaseText)`
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const theme = useTheme();
+  const {t} = useTranslation();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const {walletId, key} = route.params;
@@ -91,25 +87,25 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         />
       ),
     });
-  }, [navigation]);
+  }, [navigation, uiFormattedWallet.currencyName]);
 
   const assetOptions: Array<Option> = [
     {
-      img: <RequestAmountSvg />,
+      img: <Icons.RequestAmount />,
       title: 'Request a specific amount',
       description:
         'This will generate an invoice, which the person you send it to can pay using any wallet.',
       onPress: () => null,
     },
     {
-      img: <ShareAddressSvg />,
+      img: <Icons.ShareAddress />,
       title: 'Share Address',
       description:
         'Share your wallet address to someone in your contacts so they can send you funds.',
       onPress: () => null,
     },
     {
-      img: <SettingsSvg />,
+      img: <Icons.Settings />,
       title: 'Wallet Settings',
       description: 'View all the ways to manage and configure your wallet.',
       onPress: () =>
@@ -159,7 +155,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       <FlatList
         refreshControl={
           <RefreshControl
-            tintColor={SlateDark}
+            tintColor={theme.dark ? White : SlateDark}
             refreshing={refreshing}
             onRefresh={onRefresh}
           />
@@ -197,10 +193,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         }}
       />
 
-      <OptionsBottomPopupModal
+      <OptionsSheet
         isVisible={showWalletOptions}
         closeModal={() => setShowWalletOptions(false)}
-        title={`Receive ${currencyName}`}
+        title={t('ReceiveCurrency', {currency: currencyName})}
         options={assetOptions}
       />
 

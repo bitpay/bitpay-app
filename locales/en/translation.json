@@ -10,6 +10,7 @@
   "Help & Support": "Help & Support",
   "Terms of Use": "Terms of Use",
   "Privacy": "Privacy",
+  "Privacy Policy": "Privacy Policy",
   "Accessibility Statement": "Accessibility Statement",
   "Settings": "Settings",
   "Card Details": "Card Details",
@@ -24,5 +25,6 @@
   "TermsAndConditionsMastercard": "BY USING THIS CARD YOU AGREE WITH THE TERMS AND CONDITIONS OF THE CARDHOLDER AGREEMENT AND FEE SCHEDULE, IF ANY.  The BitPay Prepaid Mastercard is issued by Metropolitan Commercial Bank (Member FDIC) pursuant to a license from Mastercard International. “Metropolitan Commercial Bank” and “Metropolitan” are registered trademarks of Metropolitan Commercial Bank ©2014.  For customer service call BitPay at 1-855-398-1373.",
   "TermsAndConditionsMastercard2": "Mastercard is a registered trademark and the circles design is a trademark of Mastercard International Incorporated.",
   "Cardholder Agreement": "Cardholder Agreement",
-  "Fees Disclosure":  "Fees Disclosure"
+  "Fees Disclosure":  "Fees Disclosure",
+  "ReceiveCurrency": "Receive {{currency}}"
 }

@@ -2,7 +2,6 @@ import React from 'react';
 import styled from 'styled-components/native';
 import {BaseText} from '../../../components/styled/Text';
 import {SlateDark} from '../../../styles/colors';
-import {BitPayTheme} from '../../../themes/bitpay';
 
 interface LoginContainerProps {
   header?: string;

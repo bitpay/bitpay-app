@@ -1,10 +1,10 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import {ModalContainer} from '../../../components/styled/Containers';
-import BottomPopupModal from '../../../components/modal/base/bottom-popup/BottomPopupModal';
+import {SheetContainer} from '../../../components/styled/Containers';
+import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import CautionSvg from '../../../../assets/img/error.svg';
 import {H4, Link, Paragraph} from '../../../components/styled/Text';
-import {LightBlack, SlateDark, White} from '../../../styles/colors';
+import {SlateDark, White} from '../../../styles/colors';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {TouchableOpacity} from 'react-native';
 
@@ -26,11 +26,10 @@ const Title = styled(H4)`
 
 const DeleteModalParagraph = styled(Paragraph)`
   margin: 15px 0 20px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  color: ${({theme}) => (theme.dark ? White : SlateDark)};
 `;
 
-const DeleteModalContainer = styled(ModalContainer)`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+const DeleteModalContainer = styled(SheetContainer)`
   min-height: 250px;
 `;
 
@@ -53,7 +52,7 @@ const DeleteConfirmationModal = ({
   onPressCancel,
 }: ConfirmationModalProps) => {
   return (
-    <BottomPopupModal isVisible={isVisible} onBackdropPress={onPressCancel}>
+    <SheetModal isVisible={isVisible} onBackdropPress={onPressCancel}>
       <DeleteModalContainer>
         <Header>
           <CautionSvg />
@@ -79,7 +78,7 @@ const DeleteConfirmationModal = ({
           </TouchableOpacity>
         </ActionsContainer>
       </DeleteModalContainer>
-    </BottomPopupModal>
+    </SheetModal>
   );
 };
 

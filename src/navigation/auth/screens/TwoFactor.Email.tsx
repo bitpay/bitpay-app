@@ -1,8 +1,6 @@
-import {useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
-import {Network} from '../../../constants';
 import {navigationRef} from '../../../Root';
 import {RootState} from '../../../store';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
@@ -26,10 +24,8 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
   navigation,
 }) => {
   const dispatch = useDispatch();
-  const theme = useTheme();
   const pollId = useRef<ReturnType<typeof setInterval>>();
   const pollCountdown = useRef(POLL_TIMEOUT);
-  const network = useSelector<RootState, Network>(({APP}) => APP.network);
   const isAuthenticated = useSelector<RootState, boolean>(
     ({BITPAY_ID}) => BITPAY_ID.session.isAuthenticated,
   );
@@ -70,9 +66,9 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
         clearInterval(pollId.current);
       }
 
-      dispatch(BitPayIdEffects.startEmailPairing(network, csrfToken));
+      dispatch(BitPayIdEffects.startEmailPairing(csrfToken));
     }
-  }, [isAuthenticated, csrfToken, navigation, network, dispatch]);
+  }, [isAuthenticated, csrfToken, navigation, dispatch]);
 
   useEffect(() => {
     switch (emailPairingStatus) {
@@ -98,7 +94,7 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
   }, [emailPairingStatus, navigation, dispatch]);
 
   return (
-    <AuthFormContainer theme={theme} header="Check Your Inbox">
+    <AuthFormContainer header="Check Your Inbox">
       {isTimedOut && (
         <>
           <AuthFormParagraph>

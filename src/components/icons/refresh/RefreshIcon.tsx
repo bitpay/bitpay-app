@@ -1,7 +1,7 @@
 import React from 'react';
 import {Path, Svg} from 'react-native-svg';
+import {useTheme} from 'styled-components/native';
 import {SlateDark, White} from '../../../styles/colors';
-import {useTheme} from '@react-navigation/native';
 
 interface RefreshSvgProps {
   isDark: boolean;

@@ -102,6 +102,7 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
                   params: {
                     context: 'login',
                     onLoginSuccess: () => {
+                      haptic('impactLight');
                       navigation.navigate('Onboarding', {
                         screen: 'Notifications',
                       });
@@ -115,7 +116,7 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
         </HeaderRightContainer>
       ),
     });
-  }, [navigation, isPaired, network]);
+  }, [navigation, isPaired, network, dispatch]);
 
   const themeType = useThemeType();
   const ref = useRef(null);

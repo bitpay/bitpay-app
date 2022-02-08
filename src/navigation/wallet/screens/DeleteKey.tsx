@@ -1,6 +1,6 @@
 import React, {useLayoutEffect, useState} from 'react';
 import {HeaderTitle, H5, Paragraph} from '../../../components/styled/Text';
-import {CommonActions, useNavigation, useRoute} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import styled from 'styled-components/native';

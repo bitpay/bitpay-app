@@ -1,6 +1,7 @@
 import axios from 'axios';
 import DeviceInfo from 'react-native-device-info';
-import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
+import {Network} from '../../constants';
+import {BASE_BITPAY_URLS} from '../../constants/config';
 import {Session} from '../../store/bitpay-id/bitpay-id.models';
 import {isAxiosError} from '../../utils/axios';
 import {hashPassword} from '../../utils/password';
@@ -12,15 +13,16 @@ import {
 } from './auth.types';
 
 export const AuthApi = {
-  async fetchSession(): Promise<Session> {
+  async fetchSession(network: Network): Promise<Session> {
     const {data: session} = await axios.get<Session>(
-      `${BASE_BITPAY_URLS[APP_NETWORK]}/auth/session`,
+      `${BASE_BITPAY_URLS[network]}/auth/session`,
     );
 
     return session;
   },
 
   async login(
+    network: Network,
     email: string,
     password: string,
     csrfToken: string,
@@ -47,7 +49,7 @@ export const AuthApi = {
 
     try {
       const {data} = await axios.post<LoginResponse>(
-        `${BASE_BITPAY_URLS[APP_NETWORK]}/auth/login`,
+        `${BASE_BITPAY_URLS[network]}/auth/login`,
         body,
         config,
       );
@@ -67,6 +69,7 @@ export const AuthApi = {
   },
 
   async submitTwoFactor(
+    network: Network,
     code: string,
     csrfToken: string,
   ): Promise<LoginResponse> {
@@ -80,7 +83,7 @@ export const AuthApi = {
     };
 
     const {data} = await axios.post<LoginResponse>(
-      `${BASE_BITPAY_URLS[APP_NETWORK]}/dashboard-api/verify-two-factor-code`,
+      `${BASE_BITPAY_URLS[network]}/dashboard-api/verify-two-factor-code`,
       body,
       config,
     );
@@ -90,10 +93,14 @@ export const AuthApi = {
 
   /**
    * Requests a pairing code for an authenticated user.
+   * @param network Network to determine the environment to authenticate against.
    * @param csrfToken CSRF token.
    * @returns A secret pairing code.
    */
-  async generatePairingCode(csrfToken: string): Promise<string> {
+  async generatePairingCode(
+    network: Network,
+    csrfToken: string,
+  ): Promise<string> {
     try {
       const config = {
         headers: {
@@ -102,7 +109,7 @@ export const AuthApi = {
       };
 
       const {data} = await axios.post<GeneratePairingCodeResponse>(
-        `${BASE_BITPAY_URLS[APP_NETWORK]}/auth/generateBitAuthPairingCode`,
+        `${BASE_BITPAY_URLS[network]}/auth/generateBitAuthPairingCode`,
         null,
         config,
       );

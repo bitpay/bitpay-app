@@ -1,8 +1,5 @@
 import React from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
-import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
-import CogSvg from '../../../../../assets/img/cog.svg';
-import {HeaderRightContainer} from '../../../../components/styled/Containers';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
@@ -11,7 +8,6 @@ import {CardConfig, GiftCard} from '../../../../store/shop/shop.models';
 import BuyGiftCard from './screens/BuyGiftCard';
 import GiftCardDetails from './screens/GiftCardDetails';
 import ArchivedGiftCards from './screens/ArchivedGiftCards';
-import {NavIconButtonContainer} from '../components/styled/ShopTabComponents';
 
 export type GiftCardStackParamList = {
   BuyGiftCard: {cardConfig: CardConfig};
@@ -44,18 +40,6 @@ const GiftCardStack = () => {
         component={GiftCardDetails}
         options={{
           gestureEnabled: false,
-          headerRight: () => (
-            <HeaderRightContainer>
-              <TouchableWithoutFeedback
-                onPress={() => {
-                  console.log('gift card settings');
-                }}>
-                <NavIconButtonContainer>
-                  <CogSvg />
-                </NavIconButtonContainer>
-              </TouchableWithoutFeedback>
-            </HeaderRightContainer>
-          ),
         }}
       />
       <GiftCards.Screen

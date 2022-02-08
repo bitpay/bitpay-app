@@ -34,16 +34,16 @@ const QRCodeContainer = styled.View`
 `;
 
 const QRBackground = styled.View`
-  background-color: ${({theme: {dark}}) => (dark ? '#C4C4C4' : 'transparent')};
-  width: 175px;
-  height: 175px;
+  width: 225px;
+  height: 225px;
   justify-content: center;
   align-items: center;
+  background-color: ${White};
+  border-radius: 12px;
 `;
 
 const KeyName = styled(H6)`
   margin-top: 10px;
-  color: ${({theme}) => theme.colors.text};
 `;
 
 const ExportKey = () => {
@@ -128,7 +128,7 @@ const ExportKey = () => {
 
         <QRCodeContainer>
           <QRBackground>
-            {code ? <QRCode value={code} size={155} /> : null}
+            {code ? <QRCode value={code} size={200} /> : null}
           </QRBackground>
 
           {/*TODO: Update me*/}
