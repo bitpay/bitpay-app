@@ -58,6 +58,7 @@ interface Props extends SheetParams {
   closeModal: () => void;
   title?: string;
   options: Array<Option>;
+  placement?: 'top' | 'bottom';
 }
 
 const OptionsSheet = ({
@@ -68,6 +69,9 @@ const OptionsSheet = ({
   options,
 }: Props) => {
   const sheetPlacement = placement || 'bottom';
+  const topStyles = {
+    paddingTop: Platform.OS === 'android' ? 0 : 31,
+  };
   return (
     <SheetModal
       isVisible={isVisible}
@@ -85,14 +89,7 @@ const OptionsSheet = ({
           ({img, title: optionTitle, description, onPress}, index) => {
             return (
               <OptionContainer
-                style={{
-                  paddingTop:
-                    index === 0 &&
-                    placement === 'top' &&
-                    Platform.OS === 'android'
-                      ? 0
-                      : 31,
-                }}
+                style={index === 0 && placement === 'top' && topStyles}
                 placement={sheetPlacement}
                 key={index}
                 activeOpacity={ActiveOpacity}
