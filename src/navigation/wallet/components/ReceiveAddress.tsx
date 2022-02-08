@@ -23,6 +23,7 @@ import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import {sleep} from '../../../utils/helper-methods';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {
+  createWalletAddress,
   CreateWalletAddress,
   GetLegacyBchAddressFormat,
 } from '../../../store/wallet/effects/send/address';
@@ -30,6 +31,7 @@ import ReceiveAddressHeader, {
   HeaderContextHandler,
 } from './ReceiveAddressHeader';
 import {GetProtocolPrefix} from '../../../store/wallet/utils/wallet';
+import {addWallet} from "../../../store/wallet/effects";
 
 export interface ReceiveAddressConfig {
   keyId: string;
@@ -103,9 +105,10 @@ interface Props {
   isVisible: boolean;
   closeModal: () => void;
   wallet: Wallet;
+  keyId: string;
 }
 
-const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
+const ReceiveAddress = ({isVisible, closeModal, wallet, keyId}: Props) => {
   const dispatch = useDispatch();
   const logger = useLogger();
   const [copied, setCopied] = useState(false);
@@ -155,7 +158,10 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
     const prefix = 'Could not create address';
 
     try {
-      const walletAddress = await CreateWalletAddress(wallet);
+      const walletAddress = (await dispatch<any>(
+          createWalletAddress({keyId, wallet}),
+      )) as string;
+      // createWalletAddress({keyId, wallet});
       setLoading(false);
       if (coin === 'bch') {
         const protocolPrefix = GetProtocolPrefix(coin, network);

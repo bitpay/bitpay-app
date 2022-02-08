@@ -3,6 +3,7 @@ import cloneDeep from 'lodash.clonedeep';
 import {ValidateCoinAddress} from '../../utils/validations';
 import {BwcProvider} from '../../../../lib/bwc';
 import {ExtractCoinNetworkAddress} from '../../utils/decode-uri';
+import {Effect} from "../../../index";
 
 const BWC = BwcProvider.getInstance();
 
@@ -16,6 +17,62 @@ interface Address {
   address: string;
   coin: string;
 }
+
+
+export const createWalletAddress = ({keyId, wallet, newAddress = true}: {keyId: string, wallet: Wallet, newAddress?: boolean}): Effect =>
+    async (dispatch, getState): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        if (!wallet) {
+          reject();
+        }
+
+        const walletClone = cloneDeep(wallet);
+        if (walletClone) {
+          let {token, network, multisigEthInfo} = walletClone.credentials;
+
+          if (multisigEthInfo?.multisigContractAddress) {
+            return resolve(multisigEthInfo.multisigContractAddress);
+          }
+
+          if (token) {
+            walletClone.id.replace(`-${token.address}`, '');
+          }
+
+          walletClone.createAddress({}, (err: any, addressObj: Address) => {
+            if (err) {
+              //  Rate limits after 20 consecutive addresses
+              if (err.name && err.name.includes('MAIN_ADDRESS_GAP_REACHED')) {
+                walletClone.getMainAddresses(
+                    {
+                      reverse: true,
+                      limit: 1,
+                    },
+                    (e: any, addr: Address[]) => {
+                      if (e) {
+                        reject({type: 'MAIN_ADDRESS_GAP_REACHED', error: e});
+                      }
+                      resolve(addr[0].address);
+                    },
+                );
+              } else {
+                reject({type: 'GENERAL_ERROR', error: err});
+              }
+            } else if (
+                addressObj &&
+                !ValidateCoinAddress(addressObj.address, addressObj.coin, network)
+            ) {
+              reject({
+                type: 'INVALID_ADDRESS_GENERATED',
+                error: addressObj.address,
+              });
+            } else if (addressObj) {
+              resolve(addressObj.address);
+            }
+          });
+        }
+      });
+
+    }
 
 export const CreateWalletAddress = (wallet: Wallet): Promise<string> => {
   //  TODO: store the address to reuse

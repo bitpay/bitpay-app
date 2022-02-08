@@ -212,6 +212,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           isVisible={showReceiveAddressBottomModal}
           closeModal={() => setShowReceiveAddressBottomModal(false)}
           wallet={fullWalletObj}
+          keyId={key.id}
         />
       ) : null}
     </WalletDetailsContainer>
