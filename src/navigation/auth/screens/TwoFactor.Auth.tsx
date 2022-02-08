@@ -90,6 +90,7 @@ const TwoFactorAuthentication: React.FC<
               error={errors.code?.message}
               value={value}
               keyboardType="numeric"
+              onSubmitEditing={onSubmit}
             />
           )}
           name="code"

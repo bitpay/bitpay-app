@@ -115,6 +115,7 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
               error={errors.code?.message}
               value={value}
               keyboardType="numeric"
+              onSubmitEditing={onSubmit}
             />
           )}
           name="code"

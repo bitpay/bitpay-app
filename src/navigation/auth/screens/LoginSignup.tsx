@@ -23,7 +23,7 @@ import AuthFormContainer, {
 } from '../components/AuthFormContainer';
 import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {Keyboard} from 'react-native';
+import {Keyboard, TextInput} from 'react-native';
 import {sleep} from '../../../utils/helper-methods';
 
 export type LoginSignupParamList = {
@@ -82,6 +82,7 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
     ({BITPAY_ID}) => BITPAY_ID.loginStatus,
   );
   const [isCaptchaModalVisible, setCaptchaModalVisible] = useState(false);
+  const passwordRef = useRef<TextInput>(null);
   const captchaRef = useRef<CaptchaRef>(null);
   const {context, onLoginSuccess} = route.params;
 
@@ -193,6 +194,9 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
               onChangeText={(text: string) => onChange(text)}
               error={errors.email?.message}
               value={value}
+              returnKeyType="next"
+              onSubmitEditing={() => passwordRef.current?.focus()}
+              blurOnSubmit={false}
             />
           )}
           name="email"
@@ -205,6 +209,7 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
+              ref={passwordRef}
               placeholder={'strongPassword123'}
               label={'PASSWORD'}
               type={'password'}
@@ -212,6 +217,7 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
               onChangeText={(text: string) => onChange(text)}
               error={errors.password?.message}
               value={value}
+              onSubmitEditing={onSubmit}
             />
           )}
           name="password"
