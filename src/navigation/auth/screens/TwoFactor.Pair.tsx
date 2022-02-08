@@ -4,6 +4,7 @@ import React, {useEffect, useMemo} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useDispatch, useSelector} from 'react-redux';
 import * as yup from 'yup';
+import AlertBox from '../../../components/alert-box/AlertBox';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import {navigationRef, RootStacks} from '../../../Root';
@@ -15,7 +16,7 @@ import {AuthStackParamList} from '../AuthStack';
 import AuthFormContainer, {
   AuthActionsContainer,
   AuthFormParagraph,
-  AuthInputContainer,
+  AuthRowContainer,
 } from '../components/AuthFormContainer';
 
 export type TwoFactorPairingParamList = {
@@ -96,6 +97,12 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
 
   return (
     <AuthFormContainer header="Additional Verification">
+      {twoFactorPairingStatus === 'failed' ? (
+        <AuthRowContainer>
+          <AlertBox type="warning">Something went wrong.</AlertBox>
+        </AuthRowContainer>
+      ) : null}
+
       <AuthFormParagraph>
         This additional verification will allow your device to be marked as a
         verified device. You will be securely connected to your BitPay ID
@@ -103,7 +110,7 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
         the new verification code generated.
       </AuthFormParagraph>
 
-      <AuthInputContainer>
+      <AuthRowContainer>
         <Controller
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
@@ -121,7 +128,7 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
           name="code"
           defaultValue=""
         />
-      </AuthInputContainer>
+      </AuthRowContainer>
 
       <AuthActionsContainer>
         <Button onPress={onSubmit} disabled={!isValid}>

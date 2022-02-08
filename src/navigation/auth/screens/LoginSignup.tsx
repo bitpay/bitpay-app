@@ -19,12 +19,13 @@ import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
 import {AuthStackParamList} from '../AuthStack';
 import AuthFormContainer, {
   AuthActionsContainer,
-  AuthInputContainer,
+  AuthRowContainer,
 } from '../components/AuthFormContainer';
 import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {Keyboard, TextInput} from 'react-native';
+import {Keyboard, TextInput, View} from 'react-native';
 import {sleep} from '../../../utils/helper-methods';
+import AlertBox from '../../../components/alert-box/AlertBox';
 
 export type LoginSignupParamList = {
   context: 'login' | 'signup';
@@ -183,7 +184,15 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
 
   return (
     <AuthFormContainer header={header}>
-      <AuthInputContainer>
+      {loginStatus === 'failed' ? (
+        <AuthRowContainer>
+          <AlertBox type="warning">
+            Could not log in. Please review your information and try again.
+          </AlertBox>
+        </AuthRowContainer>
+      ) : null}
+
+      <AuthRowContainer>
         <Controller
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
@@ -202,9 +211,9 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
           name="email"
           defaultValue=""
         />
-      </AuthInputContainer>
+      </AuthRowContainer>
 
-      <AuthInputContainer>
+      <AuthRowContainer>
         <Controller
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
@@ -223,7 +232,7 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
           name="password"
           defaultValue=""
         />
-      </AuthInputContainer>
+      </AuthRowContainer>
 
       <AuthActionsContainer>
         <PrimaryActionContainer>
