@@ -1,10 +1,9 @@
-import {useTheme} from '@react-navigation/native';
 import React from 'react';
 import * as Svg from 'react-native-svg';
 import {useSelector} from 'react-redux';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import {RootState} from '../../store';
-import {NeutralSlate, ProgressBlue} from '../../styles/colors';
+import {Midnight, NeutralSlate, ProgressBlue} from '../../styles/colors';
 
 interface AvatarSvgProps {
   size?: number;
@@ -20,10 +19,6 @@ interface InitialsProps {
 interface AvatarProps {
   size: number;
 }
-
-// not part of BitPay Blocks design system
-const DARK_BLUE = '#1a2c57';
-const INITIALS_TEXT = '#9faff5';
 
 const AvatarContainer = styled.View`
   position: relative;
@@ -43,7 +38,7 @@ const ProfileIcon: React.FC<AvatarSvgProps> = ({
   const theme = useTheme();
 
   color = color || (theme.dark ? ProgressBlue : NeutralSlate);
-  background = background || (theme.dark ? DARK_BLUE : ProgressBlue);
+  background = background || (theme.dark ? Midnight : ProgressBlue);
 
   return (
     <Svg.Svg width={size} height={size} viewBox="0 0 35 35" fill="none">
@@ -117,14 +112,14 @@ const Initials: React.FC<InitialsProps> = ({size = 24, initials}) => {
     <Svg.Svg height={size} width={size} viewBox="0 0 24 24">
       <Svg.Circle
         id="initials-background"
-        fill={DARK_BLUE}
+        fill={Midnight}
         r="12"
         cx="50%"
         cy="50%"
       />
       <Svg.Text
         id="initials-text"
-        fill={INITIALS_TEXT}
+        fill={ProgressBlue}
         fontSize="11"
         fontWeight="500"
         x="12"

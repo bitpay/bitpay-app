@@ -3,6 +3,7 @@ import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import {StatusBar} from 'react-native';
 import Carousel, {Pagination} from 'react-native-snap-carousel';
+import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -12,12 +13,15 @@ import {
   HeaderRightContainer,
   WIDTH,
 } from '../../../components/styled/Containers';
+import {Link} from '../../../components/styled/Text';
+import {Network} from '../../../constants';
+import {RootState} from '../../../store';
+import {BitPayIdActions} from '../../../store/bitpay-id';
 import {Action} from '../../../styles/colors';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingImage} from '../components/Containers';
 import OnboardingSlide from '../components/OnboardingSlide';
 import {OnboardingStackParamList} from '../OnboardingStack';
-import {Link} from '../../../components/styled/Text';
 
 type OnboardingStartScreenProps = StackScreenProps<
   OnboardingStackParamList,
@@ -67,28 +71,52 @@ const LinkText = styled(Link)`
 `;
 
 const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
+  const dispatch = useDispatch();
   const navigation = useNavigation();
+  const network = useSelector<RootState, Network>(({APP}) => APP.network);
+  const isPaired = useSelector<RootState, boolean>(({APP, BITPAY_ID}) => {
+    return !!BITPAY_ID.apiToken[APP.network];
+  });
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => null,
       headerRight: () => (
         <HeaderRightContainer>
-          <Button
-            buttonType={'pill'}
-            onPress={() => {
-              haptic('impactLight');
-              navigation.navigate('Auth', {
-                screen: 'LoginSignup',
-                params: {context: 'login'},
-              });
-            }}>
-            Log In
-          </Button>
+          {isPaired ? (
+            <Button
+              buttonType="pill"
+              onPress={() => {
+                haptic('impactLight');
+                dispatch(BitPayIdActions.bitPayIdDisconnected(network));
+              }}>
+              Log Out
+            </Button>
+          ) : (
+            <Button
+              buttonType={'pill'}
+              onPress={() => {
+                haptic('impactLight');
+                navigation.navigate('Auth', {
+                  screen: 'LoginSignup',
+                  params: {
+                    context: 'login',
+                    onLoginSuccess: () => {
+                      haptic('impactLight');
+                      navigation.navigate('Onboarding', {
+                        screen: 'Notifications',
+                      });
+                    },
+                  },
+                });
+              }}>
+              Log In
+            </Button>
+          )}
         </HeaderRightContainer>
       ),
     });
-  });
+  }, [navigation, isPaired, network, dispatch]);
 
   const themeType = useThemeType();
   const ref = useRef(null);
@@ -162,33 +190,48 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
             />
           </Column>
           <Column>
-            <Button
-              buttonStyle={'primary'}
-              onPress={() => {
-                haptic('impactLight');
-                navigation.navigate('Auth', {
-                  screen: 'LoginSignup',
-                  params: {context: 'signup'},
-                });
-              }}>
-              Get Started
-            </Button>
+            {!isPaired ? (
+              <Button
+                buttonStyle={'primary'}
+                onPress={() => {
+                  haptic('impactLight');
+                  navigation.navigate('Auth', {
+                    screen: 'LoginSignup',
+                    params: {context: 'signup'},
+                  });
+                }}>
+                Get Started
+              </Button>
+            ) : (
+              <Button
+                buttonStyle={'primary'}
+                onPress={() => {
+                  haptic('impactLight');
+                  navigation.navigate('Onboarding', {
+                    screen: 'Notifications',
+                  });
+                }}>
+                Continue
+              </Button>
+            )}
           </Column>
         </Row>
-        <Row>
-          <ActionContainer>
-            <Button
-              buttonType={'link'}
-              onPress={() => {
-                haptic('impactLight');
-                navigation.navigate('Onboarding', {
-                  screen: 'Notifications',
-                });
-              }}>
-              <LinkText>Continue without an account</LinkText>
-            </Button>
-          </ActionContainer>
-        </Row>
+        {!isPaired ? (
+          <Row>
+            <ActionContainer>
+              <Button
+                buttonType={'link'}
+                onPress={() => {
+                  haptic('impactLight');
+                  navigation.navigate('Onboarding', {
+                    screen: 'Notifications',
+                  });
+                }}>
+                <LinkText>Continue without an account</LinkText>
+              </Button>
+            </ActionContainer>
+          </Row>
+        ) : null}
       </CtaContainerAbsolute>
     </OnboardingContainer>
   );

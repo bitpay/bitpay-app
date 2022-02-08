@@ -1,18 +1,29 @@
-import React, {useEffect, useMemo} from 'react';
+import {StackNavigationProp} from '@react-navigation/stack';
+import React, {useEffect, useLayoutEffect, useMemo} from 'react';
 import {useRef, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {ScrollView} from 'react-native';
-import Carousel from 'react-native-snap-carousel';
+import Carousel, {Pagination} from 'react-native-snap-carousel';
 import {useDispatch, useSelector} from 'react-redux';
-import {WIDTH} from '../../../components/styled/Containers';
+import Button from '../../../components/button/Button';
+import {
+  HeaderRightContainer,
+  WIDTH,
+} from '../../../components/styled/Containers';
 import {RootState} from '../../../store';
 import {CardEffects} from '../../../store/card';
 import {Card, Transaction} from '../../../store/card/card.models';
-import {VirtualDesignCurrency} from '../../../store/card/card.types';
+import {
+  CardProvider,
+  VirtualDesignCurrency,
+} from '../../../store/card/card.types';
+import {CardStackParamList} from '../CardStack';
 import CardOverviewSlide from './CardOverviewSlide';
 import TransactionsList from './CardTransactionsList';
 
 interface CardDashboardProps {
   id: string | undefined | null;
+  navigation: StackNavigationProp<CardStackParamList, 'Home'>;
 }
 
 const GroupEnabled = {
@@ -21,7 +32,7 @@ const GroupEnabled = {
 };
 
 export class OverviewSlide {
-  readonly provider: string;
+  readonly provider: CardProvider;
   private readonly _cards: Card[] = [];
 
   get cards() {
@@ -42,7 +53,7 @@ export class OverviewSlide {
   }
 }
 
-const createOverviewSlides = (cards: Card[]) => {
+const buildOverviewSlides = (cards: Card[]) => {
   // sort galileo before firstView, then virtual before physical
   const sortedCards = cards.sort((a, b) => {
     if (a.provider === 'galileo' && b.provider === 'firstView') {
@@ -84,7 +95,8 @@ const createOverviewSlides = (cards: Card[]) => {
 
 const CardDashboard: React.FC<CardDashboardProps> = props => {
   const dispatch = useDispatch();
-  const {id} = props;
+  const {t} = useTranslation();
+  const {id, navigation} = props;
   const carouselRef = useRef<Carousel<OverviewSlide>>(null);
   const cards = useSelector<RootState, Card[]>(
     ({APP, CARD}) => CARD.cards[APP.network],
@@ -92,15 +104,15 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const virtualDesignCurrency = useSelector<RootState, VirtualDesignCurrency>(
     ({CARD}) => CARD.virtualDesignCurrency,
   );
-  const memoizedSlides = useMemo(() => createOverviewSlides(cards), [cards]);
-  const [initialSlideIdx] = useState(() =>
-    id
+  const memoizedSlides = useMemo(() => buildOverviewSlides(cards), [cards]);
+  const [initialSlideIdx] = useState(() => {
+    return id
       ? Math.max(
           0,
           memoizedSlides.findIndex(s => s.cards.some(c => c.id === id)),
         )
-      : 0,
-  );
+      : 0;
+  });
   const [activeSlideIdx, setActiveSlideIdx] = useState<number>(initialSlideIdx);
   const fetchId = useSelector<RootState, string | null>(({CARD}) => {
     const activeSlideId = memoizedSlides[activeSlideIdx].primaryCard.id;
@@ -111,6 +123,28 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
       ? activeSlideId
       : null;
   });
+
+  useLayoutEffect(() => {
+    const activeSlide = memoizedSlides[activeSlideIdx];
+
+    navigation.setOptions({
+      headerRight: () => (
+        <HeaderRightContainer>
+          <Button
+            onPress={() =>
+              navigation.navigate('Settings', {
+                slide: activeSlide,
+                id: activeSlide.primaryCard.id,
+              })
+            }
+            buttonType="pill"
+            buttonStyle="primary">
+            {t('View Card Details')}
+          </Button>
+        </HeaderRightContainer>
+      ),
+    });
+  }, [memoizedSlides, activeSlideIdx, navigation, t]);
 
   const activeCard = memoizedSlides[activeSlideIdx].primaryCard;
   const settledTxList = (
@@ -153,6 +187,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         containerCustomStyle={{
           flexGrow: 0,
           marginBottom: 32,
+          marginTop: 32,
         }}
       />
 

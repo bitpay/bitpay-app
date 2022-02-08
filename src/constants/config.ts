@@ -1,5 +1,7 @@
 import {Network} from '.';
 
+export const DEVTOOLS_ENABLED = false;
+
 // GENERAL
 export const APP_NETWORK = Network.mainnet;
 export const BASE_BITPAY_URLS = {

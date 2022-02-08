@@ -11,6 +11,7 @@ const GiftCardItemContainer = styled.View`
   display: flex;
   flex-direction: row;
   align-items: center;
+  height: 55px;
   margin: 16px 0;
   margin-left: 20px;
 `;

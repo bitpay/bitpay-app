@@ -1,17 +1,19 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {CtaContainerAbsolute} from '../../../components/styled/Containers';
-import TermsBox from '../components/TermsBox';
-import Button from '../../../components/button/Button';
-import styled from 'styled-components/native';
-import {StackScreenProps} from '@react-navigation/stack';
-import {OnboardingStackParamList} from '../OnboardingStack';
 import {StackActions, useNavigation} from '@react-navigation/native';
+import {StackScreenProps} from '@react-navigation/stack';
+import React, {useLayoutEffect, useState} from 'react';
+import {ScrollView} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import {HeaderTitle} from '../../../components/styled/Text';
 import {useDispatch} from 'react-redux';
+import styled from 'styled-components/native';
+import Button from '../../../components/button/Button';
+import {CtaContainerAbsolute} from '../../../components/styled/Containers';
+import {HeaderTitle} from '../../../components/styled/Text';
+import {URL} from '../../../constants';
+import {setOnboardingCompleted} from '../../../store/app/app.actions';
 import {setWalletTermsAccepted} from '../../../store/wallet/wallet.actions';
 import {Key} from '../../../store/wallet/wallet.models';
-import {setOnboardingCompleted} from '../../../store/app/app.actions';
+import TermsBox from '../components/TermsBox';
+import {OnboardingStackParamList} from '../OnboardingStack';
 
 type TermsOfUseScreenProps = StackScreenProps<
   OnboardingStackParamList,
@@ -33,10 +35,10 @@ interface Term {
   };
 }
 
-let Terms: Array<Term> = [
+const Terms: Array<Term> = [
   {
     id: 1,
-    statement: 'Your funds are in are in your custody',
+    statement: 'Your funds are in your custody',
     acknowledgement:
       'I understand that my funds are held and controlled on this device, not by a company.',
   },
@@ -52,7 +54,7 @@ let Terms: Array<Term> = [
     statement: 'I have read, understood, and agree with the Terms of Use',
     link: {
       text: 'View the complete Terms of Use',
-      url: 'https://bitpay.com',
+      url: URL.TOU_WALLET,
     },
   },
 ];
@@ -62,14 +64,25 @@ const TermsOfUseContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
+// need padding-bottom for the CTA
 const TermsContainer = styled.View`
-  padding: 0 10px;
+  padding: 0 10px 100px;
 `;
 
 const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const {key, context} = route?.params || {};
+  const {key, context} = route.params || {};
+  const [agreed, setAgreed] = useState<number[]>([]);
+  const [termsList] = useState(() => {
+    if (context === 'TOUOnly') {
+      return Terms.filter(term => term.id === 3);
+    } else if (key) {
+      return Terms.filter(term => term.id !== 3);
+    }
+
+    return Terms;
+  });
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -81,31 +94,20 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
   }, [navigation]);
 
   useAndroidBackHandler(() => true);
-
-  const [termsList, setTermsList] = useState(Terms);
-  useEffect(() => {
-    // terms of use only - if user skipped key creation during onboarding
-    if (context === 'TOUOnly') {
-      setTermsList(termsList.filter(term => term.id === 3));
-    }
-    // post onboarding
-    if (key) {
-      setTermsList(termsList.filter(term => term.id !== 3));
-    }
-  }, []);
-
-  const [agreed, setAgreed] = useState<number[]>([]);
   const setChecked = (id: number) => {
     setAgreed([...agreed, id]);
   };
 
   return (
     <TermsOfUseContainer>
-      <TermsContainer>
-        {termsList.map((term: Term) => {
-          return <TermsBox term={term} emit={setChecked} key={term.id} />;
-        })}
-      </TermsContainer>
+      <ScrollView>
+        <TermsContainer>
+          {termsList.map((term: Term) => {
+            return <TermsBox term={term} emit={setChecked} key={term.id} />;
+          })}
+        </TermsContainer>
+      </ScrollView>
+
       <CtaContainerAbsolute>
         <Button
           onPress={() => {

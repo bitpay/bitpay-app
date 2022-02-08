@@ -2,11 +2,10 @@ import React, {ReactNode} from 'react';
 import {StyleProp, TextStyle, View} from 'react-native';
 import Card from '../card/Card';
 import Haptic from '../haptic-feedback/haptic';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import {LightBlack, NeutralSlate} from '../../styles/colors';
 import Checkbox from '../checkbox/Checkbox';
 import {BaseText} from '../styled/Text';
-import {useTheme} from '@react-navigation/native';
 
 interface BodyProps {
   title?: string;

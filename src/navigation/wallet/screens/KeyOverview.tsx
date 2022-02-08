@@ -1,25 +1,28 @@
+import {useNavigation, useTheme} from '@react-navigation/native';
+import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useState} from 'react';
+import {FlatList, LogBox, RefreshControl} from 'react-native';
+import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
-import {BaseText, H5, HeaderTitle} from '../../../components/styled/Text';
-import {useNavigation} from '@react-navigation/native';
-import {WalletStackParamList} from '../WalletStack';
+import haptic from '../../../components/haptic-feedback/haptic';
 import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
-import {FlatList, LogBox} from 'react-native';
-import AddWallet from '../../../../assets/img/add-asset.svg';
-import {useSelector} from 'react-redux';
+import {BaseText, H5, HeaderTitle} from '../../../components/styled/Text';
+import Settings from '../../../components/settings/Settings';
+import {Hr} from '../../../components/styled/Containers';
 import {RootState} from '../../../store';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {startUpdateAllWalletBalancesForKey} from '../../../store/wallet/effects/balance/balance';
+import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
+import {Wallet} from '../../../store/wallet/wallet.models';
+import {SlateDark, White} from '../../../styles/colors';
+import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
+import {BalanceUpdateError} from '../components/ErrorMessages';
 import OptionsBottomPopupModal, {
   Option,
 } from '../components/OptionsBottomPopupModal';
-import Settings from '../../../components/settings/Settings';
-import BackupSvg from '../../../../assets/img/wallet/backup.svg';
-import EncryptSvg from '../../../../assets/img/wallet/encrypt.svg';
-import SettingsSvg from '../../../../assets/img/wallet/settings.svg';
-import {Hr} from '../../../components/styled/Containers';
-import {Wallet} from '../../../store/wallet/wallet.models';
-import {formatFiatBalance} from '../../../utils/helper-methods';
-import {StackScreenProps} from '@react-navigation/stack';
-import haptic from '../../../components/haptic-feedback/haptic';
+import Icons from '../components/WalletIcons';
+import {WalletStackParamList} from '../WalletStack';
+
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
 ]);
@@ -73,7 +76,7 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   currencyName,
   currencyAbbreviation,
   walletName,
-  balance = 0,
+  balance,
   credentials,
   keyId,
 }) => ({
@@ -83,8 +86,8 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   currencyName,
   currencyAbbreviation: currencyAbbreviation.toUpperCase(),
   walletName,
-  cryptoBalance: balance,
-  fiatBalance: formatFiatBalance(balance),
+  cryptoBalance: balance.crypto,
+  fiatBalance: formatFiatAmount(balance.fiat, 'usd'),
   network: credentials.network,
 });
 
@@ -115,7 +118,10 @@ export const buildNestedWalletList = (wallets: Wallet[]) => {
 
 const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
+  const theme = useTheme();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -131,28 +137,29 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   }, [navigation]);
 
   const {key} = route.params;
-  const {wallets} = useSelector(
-    ({WALLET}: RootState) => WALLET.keys[key.id],
-  ) || {wallets: []};
+  const {wallets = [], totalBalance} = useSelector(
+    ({WALLET}: RootState) => WALLET.keys[key.id] || {},
+  );
+
   const walletList = buildNestedWalletList(wallets);
 
   const keyOptions: Array<Option> = [
     {
-      img: <BackupSvg />,
+      img: <Icons.Backup />,
       title: 'Create a Backup Phrase',
       description:
         'The only way to recover a key if your phone is lost or stolen.',
       onPress: () => null,
     },
     {
-      img: <EncryptSvg />,
+      img: <Icons.Encrypt />,
       title: 'Encrypt your Key',
       description:
         'Prevent an unauthorized used from sending funds out of your wallet.',
       onPress: () => null,
     },
     {
-      img: <SettingsSvg />,
+      img: <Icons.Settings />,
       title: 'Key Settings',
       description: 'View all the ways to manage and configure your key.',
       onPress: () =>
@@ -165,13 +172,34 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
     },
   ];
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        dispatch(startUpdateAllWalletBalancesForKey(key)),
+        sleep(1000),
+      ]);
+      dispatch(updatePortfolioBalance());
+    } catch (err) {
+      dispatch(showBottomNotificationModal(BalanceUpdateError));
+    }
+    setRefreshing(false);
+  };
+
   return (
     <OverviewContainer>
       <BalanceContainer>
-        <Balance>${key.totalBalance?.toFixed(2)} USD</Balance>
+        <Balance>${totalBalance?.toFixed(2)} USD</Balance>
       </BalanceContainer>
       <Hr />
       <FlatList
+        refreshControl={
+          <RefreshControl
+            tintColor={theme.dark ? White : SlateDark}
+            refreshing={refreshing}
+            onRefresh={() => onRefresh()}
+          />
+        }
         ListHeaderComponent={() => {
           return (
             <WalletListHeader>
@@ -190,7 +218,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
                   params: {context: 'addWallet', key},
                 });
               }}>
-              <AddWallet />
+              <Icons.Add />
               <WalletListFooterText>Add Wallet</WalletListFooterText>
             </WalletListFooter>
           );
@@ -204,7 +232,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
               onPress={() =>
                 navigation.navigate('Wallet', {
                   screen: 'WalletDetails',
-                  params: {wallet: item, key},
+                  params: {walletId: item.id, key},
                 })
               }
             />

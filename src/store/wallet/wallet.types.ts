@@ -1,5 +1,10 @@
-import {ExchangeRate, Key, PriceHistory, Token} from './wallet.models';
-import {ReceiveAddressConfig} from '../../navigation/wallet/components/ReceiveAddress';
+import {
+  ExchangeRate,
+  Key,
+  PriceHistory,
+  Token,
+  WalletBalance,
+} from './wallet.models';
 
 export enum WalletActionTypes {
   SET_WALLET_TERMS_ACCEPTED = 'WALLET/SET_WALLET_TERMS_ACCEPTED',
@@ -14,13 +19,19 @@ export enum WalletActionTypes {
   FAILED_GET_RATES = 'WALLET/FAILED_GET_RATES',
   SUCCESS_GET_PRICE_HISTORY = 'WALLET/SUCCESS_GET_PRICE_HISTORY',
   FAILED_GET_PRICE_HISTORY = 'WALLET/FAILED_GET_PRICE_HISTORY',
-  UPDATE_WALLET_BALANCE = 'WALLET/UPDATE_WALLET_BALANCE',
   DELETE_KEY = 'WALLET/DELETE_KEY',
   SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD = 'WALLET/SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD',
   SUCCESS_GET_TOKEN_OPTIONS = 'WALLET/SUCCESS_GET_TOKEN_OPTIONS',
   FAILED_GET_TOKEN_OPTIONS = 'WALLET/FAILED_GET_TOKEN_OPTIONS',
   SUCCESS_ADD_WALLET = 'WALLET/SUCCESS_ADD_WALLET',
   FAILED_ADD_WALLET = 'WALLET/FAILED_ADD_WALLET',
+  SUCCESS_UPDATE_WALLET_BALANCE = 'WALLET/SUCCESS_UPDATE_WALLET_BALANCE',
+  FAILED_UPDATE_WALLET_BALANCE = 'WALLET/FAILED_UPDATE_WALLET_BALANCE',
+  SUCCESS_UPDATE_KEY_TOTAL_BALANCE = 'WALLET/SUCCESS_UPDATE_KEY_TOTAL_BALANCE',
+  FAILED_UPDATE_KEY_TOTAL_BALANCE = 'WALLET/FAILED_UPDATE_KEY_TOTAL_BALANCE',
+  SUCCESS_UPDATE_ALL_KEYS_AND_BALANCES = 'WALLET/SUCCESS_UPDATE_ALL_KEYS_AND_BALANCES',
+  FAILED_UPDATE_ALL_KEYS_AND_BALANCES = 'WALLET/FAILED_UPDATE_ALL_KEYS_AND_BALANCES',
+  UPDATE_PORTFOLIO_BALANCE = 'WALLET/UPDATE_PORTFOLIO_BALANCE',
 }
 
 interface successWalletStoreInit {
@@ -89,15 +100,6 @@ interface failedGetPriceHistory {
   type: typeof WalletActionTypes.FAILED_GET_PRICE_HISTORY;
 }
 
-interface updateWalletBalance {
-  type: typeof WalletActionTypes.UPDATE_WALLET_BALANCE;
-  payload: {
-    keyId: string;
-    walletId: string;
-    balance: number;
-  };
-}
-
 interface successEncryptOrDecryptPassword {
   type: typeof WalletActionTypes.SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD;
   payload: {
@@ -125,6 +127,43 @@ interface setWalletTermsAccepted {
   type: typeof WalletActionTypes.SET_WALLET_TERMS_ACCEPTED;
 }
 
+interface successUpdateWalletBalance {
+  type: typeof WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCE;
+  payload: {
+    keyId: string;
+    walletId: string;
+    balance: WalletBalance;
+  };
+}
+
+interface failedUpdateWalletBalance {
+  type: typeof WalletActionTypes.FAILED_UPDATE_WALLET_BALANCE;
+}
+
+interface successUpdateKeyTotalBalance {
+  type: typeof WalletActionTypes.SUCCESS_UPDATE_KEY_TOTAL_BALANCE;
+  payload: {
+    keyId: string;
+    totalBalance: number;
+  };
+}
+
+interface failedUpdateKeyTotalBalance {
+  type: typeof WalletActionTypes.FAILED_UPDATE_KEY_TOTAL_BALANCE;
+}
+
+interface successUpdateAllKeysAndBalances {
+  type: typeof WalletActionTypes.SUCCESS_UPDATE_ALL_KEYS_AND_BALANCES;
+}
+
+interface failedUpdateAllKeysAndBalances {
+  type: typeof WalletActionTypes.FAILED_UPDATE_ALL_KEYS_AND_BALANCES;
+}
+
+interface updatePortfolioBalance {
+  type: typeof WalletActionTypes.UPDATE_PORTFOLIO_BALANCE;
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -139,9 +178,15 @@ export type WalletActionType =
   | failedGetRates
   | successGetPriceHistory
   | failedGetPriceHistory
-  | updateWalletBalance
   | deleteKey
   | successEncryptOrDecryptPassword
   | successGetTokenOptions
   | failedGetTokenOptions
-  | setWalletTermsAccepted;
+  | setWalletTermsAccepted
+  | successUpdateWalletBalance
+  | failedUpdateWalletBalance
+  | successUpdateKeyTotalBalance
+  | failedUpdateKeyTotalBalance
+  | updatePortfolioBalance
+  | successUpdateAllKeysAndBalances
+  | failedUpdateAllKeysAndBalances;

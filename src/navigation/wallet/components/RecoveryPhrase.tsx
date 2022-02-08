@@ -1,8 +1,17 @@
-import React, {useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import styled from 'styled-components/native';
-import {Caution, SlateDark, White} from '../../../styles/colors';
+import {
+  Caution,
+  SlateDark,
+  White,
+  LightBlack,
+  NeutralSlate,
+} from '../../../styles/colors';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
-import {CtaContainer} from '../../../components/styled/Containers';
+import {
+  ActiveOpacity,
+  CtaContainer,
+} from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {useDispatch, useSelector} from 'react-redux';
 import {
@@ -12,7 +21,12 @@ import {
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import {useForm, Controller} from 'react-hook-form';
-import {BaseText, ImportTitle} from '../../../components/styled/Text';
+import {
+  BaseText,
+  ImportTitle,
+  TextAlign,
+  H4,
+} from '../../../components/styled/Text';
 import BoxInput from '../../../components/form/BoxInput';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {Key, KeyOptions} from '../../../store/wallet/wallet.models';
@@ -27,7 +41,7 @@ import {WalletStackParamList} from '../WalletStack';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {navigateToTermsOrOverview} from '../screens/Backup';
-import {Effect, RootState} from '../../../store';
+import {RootState} from '../../../store';
 import {
   ImportTextInput,
   ImportContainer,
@@ -37,12 +51,12 @@ import {
   AdvancedOptions,
   RowContainer,
   Column,
+  Row,
+  ModalContainer,
 } from '../../../components/styled/Containers';
 import Haptic from '../../../components/haptic-feedback/haptic';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
-import {Dropdown} from 'react-native-element-dropdown';
-import {SUPPORTED_TOKENS, Currencies} from '../../../constants/currencies';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {
   getDerivationStrategy,
@@ -52,6 +66,16 @@ import {
   getNetworkName,
 } from '../../../utils/helper-methods';
 import {DefaultDerivationPath} from '../../../constants/defaultDerivationPath';
+import {startUpdateAllWalletBalancesForKey} from '../../../store/wallet/effects/balance/balance';
+import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
+import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
+import Icons from '../components/WalletIcons';
+import BottomPopupModal from '../../../components/modal/base/bottom-popup/BottomPopupModal';
+import {FlatList} from 'react-native';
+import {keyExtractor} from '../../../utils/helper-methods';
+import CurrencySelectionRow, {
+  CurrencySelectionToggleProps,
+} from '../../../components/list/CurrencySelectionRow';
 
 const Gutter = '10px';
 const ScrollViewContainer = styled.ScrollView`
@@ -63,12 +87,12 @@ const ImportParagraph = styled(BaseText)`
   font-size: 16px;
   line-height: 25px;
   padding: ${Gutter};
-  color: ${SlateDark};
+  color: ${({theme}) => theme.colors.description};
 `;
 
 const PasswordParagraph = styled(BaseText)`
   margin: 0px 20px 20px 20px;
-  color: ${SlateDark};
+  color: ${({theme}) => theme.colors.description};
 `;
 
 const HeaderContainer = styled.View`
@@ -106,19 +130,40 @@ const OptionTitle = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const DropDownContainer = styled.View`
-  position: relative;
-  padding: 10px 0;
-`;
-
 const Label = styled(BaseText)`
   font-size: 13px;
   font-weight: 500;
   line-height: 18px;
-  position: absolute;
   top: 0;
-  left: 0;
+  left: 20px;
   color: ${({theme}) => (theme && theme.dark ? theme.colors.text : '#434d5a')};
+`;
+
+const CurrencySelectorContainer = styled.View`
+  margin: 20px 0;
+  position: relative;
+`;
+
+const CurrencyContainer = styled.TouchableOpacity`
+  background: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
+  padding: 0 20px;
+  height: 55px;
+  border: 1px solid ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+`;
+
+const CurrencyName = styled(BaseText)`
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  margin-left: 10px;
+  color: #9ba3ae;
+`;
+
+const CurrencySelectionModalContainer = styled(ModalContainer)`
+  padding: 15px;
+  min-height: 200px;
 `;
 
 const RecoveryPhrase = () => {
@@ -131,22 +176,18 @@ const RecoveryPhrase = () => {
   );
   const [showOptions, setShowOptions] = useState(false);
   const [derivationPathEnabled, setDerivationPathEnabled] = useState(false);
-  const supportedCurrencies: {label: string; value: string}[] = [];
-  for (let key in Currencies) {
-    if (Currencies.hasOwnProperty(key) && !SUPPORTED_TOKENS.includes(key)) {
-      supportedCurrencies.push({
-        label: Currencies[key].name,
-        value: Currencies[key].chain,
-      });
-    }
-  }
+  const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
+  const currencyOptions = SupportedCurrencyOptions.filter(
+    currency => !currency.isToken,
+  );
+  const [selectedCurrency, setSelectedCurrency] = useState(currencyOptions[0]);
+
   const [options, setOptions] = useState({
     derivationPath: DefaultDerivationPath.defaultBTC as string,
-    coin: supportedCurrencies[0].value,
+    coin: currencyOptions[0].currencyAbbreviation,
     passphrase: undefined as string | undefined,
     isMultisig: false,
   });
-  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const {
     control,
@@ -268,6 +309,8 @@ const RecoveryPhrase = () => {
         : // @ts-ignore
           await dispatch<Key>(startImportWithDerivationPath(importData, opts));
 
+      await dispatch(startUpdateAllWalletBalancesForKey(key));
+
       navigateToTermsOrOverview({
         context: route.params?.context,
         navigation,
@@ -283,6 +326,26 @@ const RecoveryPhrase = () => {
     }
   };
 
+  const currencySelected = ({id}: CurrencySelectionToggleProps) => {
+    const _selectedCurrency = currencyOptions.filter(
+      currency => currency.id === id,
+    );
+    setSelectedCurrency(_selectedCurrency[0]);
+    setCurrencyModalVisible(false);
+    setOptions({...options, coin: _selectedCurrency[0].currencyAbbreviation});
+  };
+
+  const renderItem = useCallback(
+    ({item}) => (
+      <CurrencySelectionRow
+        item={item}
+        emit={currencySelected}
+        key={item.id}
+        removeCheckbox={true}
+      />
+    ),
+    [],
+  );
   return (
     <ScrollViewContainer>
       <ImportContainer>
@@ -298,7 +361,7 @@ const RecoveryPhrase = () => {
           <ImportTitle>Recovery phrase</ImportTitle>
 
           <ScanContainer
-            activeOpacity={0.75}
+            activeOpacity={ActiveOpacity}
             onPress={() =>
               navigation.navigate('Scan', {
                 screen: 'Root',
@@ -394,36 +457,45 @@ const RecoveryPhrase = () => {
             )}
 
             {showOptions && derivationPathEnabled && (
-              <AdvancedOptions>
-                <DropDownContainer>
-                  <Label>COIN</Label>
-                </DropDownContainer>
-                <Dropdown
-                  style={{
-                    height: 50,
-                    borderWidth: 1,
-                    borderRadius: 4,
-                    paddingHorizontal: 10,
-                    borderColor: dropdownOpen ? 'blue' : '#e1e4e7',
-                  }}
-                  inputSearchStyle={{height: 55, fontSize: 16}}
-                  data={supportedCurrencies}
-                  search
-                  maxHeight={300}
-                  labelField="label"
-                  valueField="value"
-                  placeholder={!dropdownOpen ? 'Select a coin' : '...'}
-                  searchPlaceholder="Search..."
-                  value={options.coin}
-                  onFocus={() => setDropdownOpen(true)}
-                  onBlur={() => setDropdownOpen(false)}
-                  onChange={item => {
-                    setOptions({...options, coin: item.value});
-                    setDropdownOpen(false);
-                  }}
-                />
-              </AdvancedOptions>
+              <CurrencySelectorContainer>
+                <Label>CURRENCY</Label>
+                <CurrencyContainer
+                  activeOpacity={ActiveOpacity}
+                  onPress={() => {
+                    setCurrencyModalVisible(true);
+                  }}>
+                  <Row
+                    style={{
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}>
+                    <Row style={{alignItems: 'center'}}>
+                      <CurrencyImage img={selectedCurrency.img} size={30} />
+                      <CurrencyName>
+                        {selectedCurrency?.currencyAbbreviation}
+                      </CurrencyName>
+                    </Row>
+                    <Icons.DownToggle />
+                  </Row>
+                </CurrencyContainer>
+              </CurrencySelectorContainer>
             )}
+
+            <BottomPopupModal
+              isVisible={currencyModalVisible}
+              onBackdropPress={() => setCurrencyModalVisible(false)}>
+              <CurrencySelectionModalContainer>
+                <TextAlign align={'center'}>
+                  <H4>Select a Coin</H4>
+                </TextAlign>
+                <FlatList
+                  contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
+                  data={currencyOptions}
+                  keyExtractor={keyExtractor}
+                  renderItem={renderItem}
+                />
+              </CurrencySelectionModalContainer>
+            </BottomPopupModal>
 
             {showOptions && derivationPathEnabled && (
               <AdvancedOptions>

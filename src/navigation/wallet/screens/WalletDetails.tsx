@@ -1,23 +1,36 @@
-import React, {useLayoutEffect, useMemo, useState} from 'react';
+import {useNavigation, useTheme} from '@react-navigation/native';
+import {StackScreenProps} from '@react-navigation/stack';
+import React, {useLayoutEffect, useState} from 'react';
+import {useTranslation} from 'react-i18next';
+import {FlatList, RefreshControl} from 'react-native';
+import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
+import Settings from '../../../components/settings/Settings';
 import {
   Balance,
   BaseText,
   H5,
   HeaderTitle,
 } from '../../../components/styled/Text';
-import {useNavigation} from '@react-navigation/native';
-import {WalletStackParamList} from '../WalletStack';
+import {Network} from '../../../constants';
+import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
+import {RootState} from '../../../store';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/balance';
+import {findWalletById} from '../../../store/wallet/utils/wallet';
+import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
+import {Wallet} from '../../../store/wallet/wallet.models';
+import {SlateDark, White} from '../../../styles/colors';
+import {sleep} from '../../../utils/helper-methods';
+import LinkingButtons from '../../tabs/home/components/LinkingButtons';
+import {BalanceUpdateError} from '../components/ErrorMessages';
 import OptionsBottomPopupModal, {
   Option,
 } from '../components/OptionsBottomPopupModal';
-import Settings from '../../../components/settings/Settings';
-import RequestAmountSvg from '../../../../assets/img/wallet/request-amount.svg';
-import ShareAddressSvg from '../../../../assets/img/wallet/share-address.svg';
-import SettingsSvg from '../../../../assets/img/wallet/settings.svg';
-import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import ReceiveAddress from '../components/ReceiveAddress';
-import {StackScreenProps} from '@react-navigation/stack';
+import Icons from '../components/WalletIcons';
+import {WalletStackParamList} from '../WalletStack';
+import {buildUIFormattedWallet} from './KeyOverview';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -35,7 +48,6 @@ const Row = styled.View`
 `;
 
 const BalanceContainer = styled.View`
-  height: 15%;
   margin-top: 20px;
   padding: 10px 15px;
   flex-direction: column;
@@ -51,19 +63,24 @@ const Chain = styled(BaseText)`
 
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
+  const theme = useTheme();
+  const {t} = useTranslation();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const {walletId, key} = route.params;
+  const fullWalletObj = useSelector(({WALLET}: RootState) =>
+    findWalletById(WALLET.keys[key.id].wallets, walletId),
+  ) as Wallet;
+  const uiFormattedWallet = buildUIFormattedWallet(fullWalletObj);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
-  const {wallet, key} = route.params;
-
-  const fullWalletObj = useMemo(
-    () => key.wallets.find(({id}) => id === wallet.id),
-    [],
-  );
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>{wallet.currencyName}</HeaderTitle>,
+      headerTitle: () => (
+        <HeaderTitle>{uiFormattedWallet.currencyName}</HeaderTitle>
+      ),
       headerRight: () => (
         <Settings
           onPress={() => {
@@ -72,32 +89,32 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         />
       ),
     });
-  }, [navigation]);
+  }, [navigation, uiFormattedWallet.currencyName]);
 
   const assetOptions: Array<Option> = [
     {
-      img: <RequestAmountSvg />,
+      img: <Icons.RequestAmount />,
       title: 'Request a specific amount',
       description:
         'This will generate an invoice, which the person you send it to can pay using any wallet.',
       onPress: () => null,
     },
     {
-      img: <ShareAddressSvg />,
+      img: <Icons.ShareAddress />,
       title: 'Share Address',
       description:
         'Share your wallet address to someone in your contacts so they can send you funds.',
       onPress: () => null,
     },
     {
-      img: <SettingsSvg />,
+      img: <Icons.Settings />,
       title: 'Wallet Settings',
       description: 'View all the ways to manage and configure your wallet.',
       onPress: () =>
         navigation.navigate('Wallet', {
           screen: 'WalletSettings',
           params: {
-            wallet,
+            wallet: uiFormattedWallet,
           },
         }),
     },
@@ -107,29 +124,72 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     setShowReceiveAddressBottomModal(true);
   };
 
-  const {cryptoBalance, fiatBalance, currencyName, currencyAbbreviation} =
-    wallet;
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await sleep(1000);
+
+    try {
+      await Promise.all([
+        await dispatch(startUpdateWalletBalance({key, wallet: fullWalletObj})),
+        sleep(1000),
+      ]);
+      dispatch(updatePortfolioBalance());
+    } catch (err) {
+      dispatch(showBottomNotificationModal(BalanceUpdateError));
+    }
+    setRefreshing(false);
+  };
+
+  const {
+    cryptoBalance,
+    fiatBalance,
+    currencyName,
+    currencyAbbreviation,
+    network,
+  } = uiFormattedWallet;
+
+  const showFiatBalance =
+    SUPPORTED_CURRENCIES.includes(currencyAbbreviation.toLowerCase()) &&
+    network !== Network.testnet;
+
   return (
     <WalletDetailsContainer>
-      <BalanceContainer>
-        <Row>
-          <Balance>
-            {cryptoBalance} {currencyAbbreviation}
-          </Balance>
-          <Chain>{currencyAbbreviation}</Chain>
-        </Row>
-        <H5>{fiatBalance} USD</H5>
-      </BalanceContainer>
+      <FlatList
+        refreshControl={
+          <RefreshControl
+            tintColor={theme.dark ? White : SlateDark}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        }
+        data={[]}
+        renderItem={() => null}
+        ListHeaderComponent={() => {
+          return (
+            <>
+              <BalanceContainer>
+                <Row>
+                  <Balance>
+                    {cryptoBalance} {currencyAbbreviation}
+                  </Balance>
+                  <Chain>{currencyAbbreviation}</Chain>
+                </Row>
+                {showFiatBalance && <H5>{fiatBalance}</H5>}
+              </BalanceContainer>
 
-      <LinkingButtons
-        receiveCta={() => showReceiveAddress()}
-        sendCta={() => null}
+              <LinkingButtons
+                receiveCta={() => showReceiveAddress()}
+                sendCta={() => null}
+              />
+            </>
+          );
+        }}
       />
 
       <OptionsBottomPopupModal
         isVisible={showWalletOptions}
         closeModal={() => setShowWalletOptions(false)}
-        title={`Receive ${currencyName}`}
+        title={t('ReceiveCurrency', {currency: currencyName})}
         options={assetOptions}
       />
 

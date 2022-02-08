@@ -1,7 +1,7 @@
-import {useTheme} from '@react-navigation/native';
 import React, {useState} from 'react';
 import {StyleProp, Text, TextStyle} from 'react-native';
 import {useSelector} from 'react-redux';
+import {useTheme} from 'styled-components/native';
 import {RootState} from '../../../../../store';
 import {LogLevel} from '../../../../../store/log/log.models';
 

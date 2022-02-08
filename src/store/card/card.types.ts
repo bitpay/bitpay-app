@@ -2,12 +2,15 @@ import {Network} from '../../constants';
 import {Card, PagedTransactionData, Transaction} from './card.models';
 import {FetchCardsStatus, FetchOverviewStatus} from './card.reducer';
 
+export type CardBrand = 'Mastercard' | 'Visa';
+export type CardProvider = 'galileo' | 'firstView';
+
 export type SupportedCurrencies =
   | 'BTC'
   | 'BCH'
   | 'ETH'
   | 'GUSD'
-  | 'PAX'
+  | 'USDP'
   | 'BUSD'
   | 'USDC'
   | 'XRP'

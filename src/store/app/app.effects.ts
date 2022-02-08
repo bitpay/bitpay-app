@@ -21,24 +21,14 @@ import {AppActions} from './';
 import {AppIdentity} from './app.models';
 import RNBootSplash from 'react-native-bootsplash';
 import analytics from '@segment/analytics-react-native';
-import {SEGMENT_API_KEY} from '@env';
+import {SEGMENT_API_KEY, APPSFLYER_API_KEY, APP_ID} from '@env';
+import appsFlyer from 'react-native-appsflyer';
+import {requestTrackingPermission} from 'react-native-tracking-transparency';
 
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     dispatch(LogActions.clear());
     dispatch(LogActions.info('Initializing app...'));
-
-    if (!__DEV__) {
-      try {
-        await analytics.setup(SEGMENT_API_KEY, {
-          recordScreenViews: false,
-          trackAppLifecycleEvents: true,
-        });
-      } catch (err) {
-        dispatch(LogActions.error('Segment setup failed'));
-        dispatch(LogActions.error(JSON.stringify(err)));
-      }
-    }
 
     const {APP, BITPAY_ID} = getState();
     const network = APP.network;
@@ -210,4 +200,47 @@ export const openUrlWithInAppBrowser =
 
       dispatch(LogActions.error(logMsg));
     }
+  };
+
+export const askForTrackingPermissionAndEnableSdks =
+  (): Effect => async dispatch => {
+    return new Promise(async resolve => {
+      const trackingStatus = await requestTrackingPermission();
+      if (['authorized', 'unavailable'].includes(trackingStatus) && !__DEV__) {
+        try {
+          await new Promise<void>((resolve, reject) => {
+            appsFlyer.initSdk(
+              {
+                devKey: APPSFLYER_API_KEY,
+                isDebug: __DEV__,
+                appId: APP_ID, // iOS app id
+              },
+              result => {
+                console.log(result);
+                resolve();
+              },
+              error => {
+                console.log(error);
+                reject(error);
+              },
+            );
+          });
+        } catch (err) {
+          dispatch(LogActions.error('Appsflyer setup failed'));
+          dispatch(LogActions.error(JSON.stringify(err)));
+        }
+
+        try {
+          await analytics.setup(SEGMENT_API_KEY, {
+            recordScreenViews: false,
+            trackAppLifecycleEvents: true,
+          });
+        } catch (err) {
+          dispatch(LogActions.error('Segment setup failed'));
+          dispatch(LogActions.error(JSON.stringify(err)));
+        }
+      }
+
+      resolve();
+    });
   };

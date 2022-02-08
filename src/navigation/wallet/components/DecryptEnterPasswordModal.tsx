@@ -4,7 +4,11 @@ import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../../store';
 import styled from 'styled-components/native';
 import {AppActions} from '../../../store/app';
-import {ScreenGutter, WIDTH} from '../../../components/styled/Containers';
+import {
+  ActionContainer,
+  ScreenGutter,
+  WIDTH,
+} from '../../../components/styled/Containers';
 import {LightBlack, White} from '../../../styles/colors';
 import * as yup from 'yup';
 import {yupResolver} from '@hookform/resolvers/yup';
@@ -38,10 +42,6 @@ const PasswordInputContainer = styled.View`
 const PasswordFormDescription = styled(Paragraph)`
   color: ${({theme}) => theme.colors.text};
   margin: 10px 0;
-`;
-
-const ActionContainer = styled.View`
-  margin: 5px 0;
 `;
 
 interface DecryptPasswordFieldValues {

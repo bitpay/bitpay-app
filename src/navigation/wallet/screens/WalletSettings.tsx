@@ -6,6 +6,7 @@ import {WalletStackParamList} from '../WalletStack';
 import {View} from 'react-native';
 import styled from 'styled-components/native';
 import {
+  ActiveOpacity,
   Hr,
   Info,
   InfoTriangle,
@@ -75,6 +76,7 @@ const WalletSettings = () => {
     <WalletSettingsContainer>
       <ScrollView>
         <WalletNameContainer
+          activeOpacity={ActiveOpacity}
           onPress={() => {
             haptic('impactLight');
             //    TODO: Redirect me
@@ -144,6 +146,7 @@ const WalletSettings = () => {
         <VerticalPadding>
           <Title>Advanced</Title>
           <Setting
+            activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
               //    TODO: Redirect me
@@ -153,6 +156,7 @@ const WalletSettings = () => {
           <Hr />
 
           <Setting
+            activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
             }}>
@@ -161,6 +165,7 @@ const WalletSettings = () => {
           <Hr />
 
           <Setting
+            activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
               //    TODO: Redirect me
@@ -170,6 +175,7 @@ const WalletSettings = () => {
           <Hr />
 
           <Setting
+            activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
               //    TODO: Redirect me

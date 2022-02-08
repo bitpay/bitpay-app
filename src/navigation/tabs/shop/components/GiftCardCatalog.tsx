@@ -1,9 +1,8 @@
 import React, {useMemo, useState} from 'react';
 import debounce from 'lodash.debounce';
-import styled, {css} from 'styled-components/native';
-import {Cloud} from '../../../../styles/colors';
+import styled, {css, useTheme} from 'styled-components/native';
+import {Cloud, LightBlack} from '../../../../styles/colors';
 import {Platform, View} from 'react-native';
-import {SvgUri} from 'react-native-svg';
 import {useForm, Controller} from 'react-hook-form';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {WIDTH} from '../../../../components/styled/Containers';
@@ -31,16 +30,17 @@ import {
   SectionHeaderContainer,
   SectionSpacer,
 } from './styled/ShopTabComponents';
-import {useNavigation, useTheme} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import {GiftCardScreens} from '../gift-card/GiftCardStack';
 import MyGiftCards from './MyGiftCards';
+import RemoteImage from './RemoteImage';
 interface CategoryItemProps {
   isLast: boolean;
 }
 const CategoryItem = styled.View<CategoryItemProps>`
   ${({isLast}) =>
     css`
-      border-bottom-color: ${Cloud};
+      border-bottom-color: ${({theme}) => (theme.dark ? LightBlack : Cloud)};
       width: 100%;
       border-bottom-width: ${isLast ? 0 : 1}px;
       display: flex;
@@ -55,7 +55,17 @@ const CategoryText = styled(BaseText)`
   font-size: 14px;
 `;
 
-const Curations = ({curations}: {curations: GiftCardCuration[]}) => {
+const CategoryEmoji = styled(BaseText)`
+  margin-top: -2px;
+`;
+
+const Curations = ({
+  curations,
+  underlayColor,
+}: {
+  curations: GiftCardCuration[];
+  underlayColor: string;
+}) => {
   const navigation = useNavigation();
   return (
     <>
@@ -69,7 +79,7 @@ const Curations = ({curations}: {curations: GiftCardCuration[]}) => {
             itemComponent={(item: ShopCarouselItem) => (
               <GiftCardItem cardConfig={item as CardConfig} />
             )}
-            itemUnderlayColor={'#fbfbff'}
+            itemUnderlayColor={underlayColor}
             itemWidthInLastSlide={WIDTH}
             maxItemsPerColumn={3}
             screenWidth={WIDTH}
@@ -116,9 +126,11 @@ export default ({
     setSearchResults(newSearchResults);
   }, 300);
 
+  const underlayColor = theme.dark ? '#121212' : '#fbfbff';
+
   const memoizedCurations = useMemo(
-    () => <Curations curations={curations} />,
-    [curations],
+    () => <Curations curations={curations} underlayColor={underlayColor} />,
+    [curations, underlayColor],
   );
 
   return (
@@ -181,7 +193,7 @@ export default ({
                     params: {cardConfig},
                   });
                 }}
-                underlayColor={'#fbfbff'}>
+                underlayColor={underlayColor}>
                 <GiftCardItem cardConfig={cardConfig} />
               </ListItemTouchableHighlight>
             ))}
@@ -207,9 +219,15 @@ export default ({
           <CategoryItemTouchableHighlight
             key={category.displayName}
             onPress={() => console.log('press', category.displayName)}
-            underlayColor={'#fbfbff'}>
+            underlayColor={underlayColor}>
             <CategoryItem isLast={index === categories.length - 1}>
-              <SvgUri height="21px" uri={category.icon} />
+              <RemoteImage
+                height={21}
+                uri={category.icon}
+                fallbackComponent={() => (
+                  <CategoryEmoji>{category.emoji}</CategoryEmoji>
+                )}
+              />
               <CategoryText>{category.displayName}</CategoryText>
             </CategoryItem>
           </CategoryItemTouchableHighlight>

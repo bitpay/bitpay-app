@@ -50,7 +50,7 @@ const CreateOrImportKey = () => {
         </HeaderRightContainer>
       ),
     });
-  });
+  }, [navigation]);
 
   useAndroidBackHandler(() => true);
   const themeType = useThemeType();

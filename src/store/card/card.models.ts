@@ -1,3 +1,5 @@
+import {CardBrand, CardProvider} from './card.types';
+
 export interface Currency {
   code: string;
   decimals: number;
@@ -8,7 +10,7 @@ export interface Currency {
 
 export interface Card {
   activationDate: string;
-  brand: 'Mastercard' | null;
+  brand: CardBrand | null;
   cardType: 'virtual' | 'physical' | null;
   currency: Currency;
   disabled: boolean | null;
@@ -17,7 +19,7 @@ export interface Card {
   lockedByUser: boolean;
   nickname: string;
   pagingSupport: boolean | null;
-  provider: 'firstView' | 'galileo';
+  provider: CardProvider;
   status: 'active' | 'lost' | 'stolen' | 'canceled' | 'shipped' | string;
   token: string;
 }
