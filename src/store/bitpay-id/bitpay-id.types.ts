@@ -3,6 +3,7 @@ import {Session, User} from './bitpay-id.models';
 import {
   EmailPairingStatus,
   FetchBasicInfoStatus,
+  FetchDoshTokenStatus,
   FetchSessionStatus,
   LoginStatus,
   PairingBitPayIdStatus,
@@ -38,6 +39,9 @@ export enum BitPayIdActionTypes {
   FAILED_FETCH_BASIC_INFO = 'BitPayId/FAILED_FETCH_BASIC_INFO',
   UPDATE_FETCH_BASIC_INFO_STATUS = 'BitPayId/UPDATE_FETCH_BASIC_INFO_STATUS',
   BITPAY_ID_DISCONNECTED = 'BitPayId/BITPAY_ID_DISCONNECTED',
+  SUCCESS_FETCH_DOSH_TOKEN = 'BitPayId/SUCCESS_FETCH_DOSH_TOKEN',
+  FAILED_FETCH_DOSH_TOKEN = 'BitPayId/FAILED_FETCH_DOSH_TOKEN',
+  UPDATE_FETCH_DOSH_TOKEN_STATUS = 'BitPayId/UPDATE_FETCH_DOSH_TOKEN_STATUS',
 }
 
 interface SuccessFetchSession {
@@ -159,6 +163,20 @@ interface BitPayIdDisconnected {
   payload: {network: Network};
 }
 
+interface SuccessFetchDoshToken {
+  type: typeof BitPayIdActionTypes.SUCCESS_FETCH_DOSH_TOKEN;
+  payload: {network: Network; token: string};
+}
+
+interface FailedFetchDoshToken {
+  type: typeof BitPayIdActionTypes.FAILED_FETCH_DOSH_TOKEN;
+}
+
+interface UpdateFetchDoshTokenStatus {
+  type: typeof BitPayIdActionTypes.UPDATE_FETCH_DOSH_TOKEN_STATUS;
+  payload: FetchDoshTokenStatus;
+}
+
 export type BitPayIdActionType =
   | SuccessFetchSession
   | FailedFetchSession
@@ -195,4 +213,7 @@ export type BitPayIdActionType =
   | SuccessFetchBasicInfo
   | FailedFetchBasicInfo
   | UpdateFetchBasicInfoStatus
-  | BitPayIdDisconnected;
+  | BitPayIdDisconnected
+  | SuccessFetchDoshToken
+  | FailedFetchDoshToken
+  | UpdateFetchDoshTokenStatus;

@@ -271,6 +271,23 @@ export const startFetchBasicInfo =
     }
   };
 
+export const startFetchDoshToken = (): Effect => async (dispatch, getState) => {
+  try {
+    const {APP, BITPAY_ID} = getState();
+    const doshToken = await UserApi.fetchDoshToken(
+      BITPAY_ID.apiToken[APP.network],
+    );
+
+    dispatch(BitPayIdActions.successFetchDoshToken(APP.network, doshToken));
+  } catch (err) {
+    batch(() => {
+      dispatch(LogActions.error('Failed to fetch dosh token.'));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(BitPayIdActions.failedFetchDoshToken());
+    });
+  }
+};
+
 export const startSetBrazeUser =
   ({eid, email}: User): Effect =>
   async dispatch => {

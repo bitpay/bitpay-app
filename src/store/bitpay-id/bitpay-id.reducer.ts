@@ -9,6 +9,7 @@ export const bitPayIdReduxPersistBlackList: (keyof BitPayIdState)[] = [
   'pairingBitPayIdStatus',
   'fetchBasicInfoStatus',
   'doshToken',
+  'fetchDoshTokenStatus',
 ];
 
 export type FetchSessionStatus = 'loading' | 'success' | 'failed' | null;
@@ -27,6 +28,7 @@ export type TwoFactorPairingStatus = 'success' | 'failed' | null;
 export type EmailPairingStatus = 'success' | 'failed' | null;
 export type PairingBitPayIdStatus = 'success' | 'failed' | null;
 export type FetchBasicInfoStatus = 'success' | 'failed' | null;
+export type FetchDoshTokenStatus = 'success' | 'failed' | null;
 
 export interface BitPayIdState {
   session: Session;
@@ -46,6 +48,7 @@ export interface BitPayIdState {
   emailPairingStatus: EmailPairingStatus;
   pairingBitPayIdStatus: PairingBitPayIdStatus;
   fetchBasicInfoStatus: FetchBasicInfoStatus;
+  fetchDoshTokenStatus: FetchDoshTokenStatus;
 }
 
 const initialState: BitPayIdState = {
@@ -73,6 +76,7 @@ const initialState: BitPayIdState = {
   emailPairingStatus: null,
   pairingBitPayIdStatus: null,
   fetchBasicInfoStatus: null,
+  fetchDoshTokenStatus: null,
 };
 
 export const bitPayIdReducer = (
@@ -266,6 +270,28 @@ export const bitPayIdReducer = (
           ...state.doshToken,
           [action.payload.network]: null,
         },
+      };
+
+    case BitPayIdActionTypes.SUCCESS_FETCH_DOSH_TOKEN:
+      return {
+        ...state,
+        fetchDoshTokenStatus: 'success',
+        doshToken: {
+          ...state.doshToken,
+          [action.payload.network]: action.payload.token,
+        },
+      };
+
+    case BitPayIdActionTypes.FAILED_FETCH_DOSH_TOKEN:
+      return {
+        ...state,
+        fetchDoshTokenStatus: 'failed',
+      };
+
+    case BitPayIdActionTypes.UPDATE_FETCH_DOSH_TOKEN_STATUS:
+      return {
+        ...state,
+        fetchDoshTokenStatus: action.payload,
       };
 
     default:
