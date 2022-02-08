@@ -5,6 +5,7 @@ import styled from 'styled-components/native';
 import {Key} from '../../../../../store/wallet/wallet.models';
 import CustomizeWalletCardComponent from '../components/CustomizeWalletCardComponent';
 import {toggleHomeKeyCard} from '../../../../../store/wallet/wallet.actions';
+import {Dispatch} from 'redux';
 
 const CardListContainer = styled.View`
   flex-direction: row;
@@ -21,7 +22,7 @@ const ScrollViewContainer = styled.ScrollView`
   padding: 0 15px;
 `;
 
-const createCustomizeCardList = (dispatch, keys: Key[]) => {
+const createCustomizeCardList = (dispatch: Dispatch, keys: Key[]) => {
   const list: JSX.Element[] = [];
   const hasKeys = keys.length;
   const hasGiftCards = false;
