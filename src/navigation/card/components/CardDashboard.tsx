@@ -142,7 +142,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         </HeaderRightContainer>
       ),
     });
-  }, [memoizedSlides, activeSlideIdx, navigation]);
+  }, [memoizedSlides, activeSlideIdx, navigation, t]);
 
   useEffect(() => {
     if (fetchId) {

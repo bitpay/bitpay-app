@@ -15,6 +15,8 @@ import {RootStackParamList} from '../../../Root';
 import {useTheme} from '@react-navigation/native';
 import LightBottomTabBarContactsSvg from '../../../../assets/img/intro/light/bottom-tabbar-contacts.svg';
 import DarkBottomTabBarContactsSvg from '../../../../assets/img/intro/dark/bottom-tabbar-contacts.svg';
+import {askForTrackingPermissionAndEnableSdks} from '../../../store/app/app.effects';
+import {useDispatch} from 'react-redux';
 const lightBackground = require('../../../../assets/img/intro/light/contacts-background.png');
 const darkBackground = require('../../../../assets/img/intro/dark/contacts-background.png');
 
@@ -49,7 +51,7 @@ const TextContainer = styled.View`
 
 const IntroContacts = ({navigation}: IntroContactsScreenProps) => {
   const theme = useTheme();
-
+  const dispatch = useDispatch();
   return (
     <IntroContactsContainer>
       <BackgroundImage source={theme.dark ? darkBackground : lightBackground} />
@@ -57,7 +59,8 @@ const IntroContacts = ({navigation}: IntroContactsScreenProps) => {
       <Body>
         <ButtonContainer>
           <IntroButton
-            onPress={() => {
+            onPress={async () => {
+              await dispatch(askForTrackingPermissionAndEnableSdks());
               navigation.replace('Onboarding', {screen: 'OnboardingStart'});
             }}>
             Finish

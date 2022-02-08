@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="com_braze_api_key">REPLACE_ME</string>
-  <string translatable="false" name="com_braze_custom_endpoint">http://sdk.iad-05.braze.com/</string>
+  <string translatable="false" name="com_braze_custom_endpoint">sdk.iad-05.braze.com/</string>
 </resources>

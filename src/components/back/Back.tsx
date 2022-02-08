@@ -1,8 +1,7 @@
-import {useTheme} from '@react-navigation/native';
 import React from 'react';
 import {Platform} from 'react-native';
 import {Circle, Color, G, Path, Svg} from 'react-native-svg';
-import styled, {css} from 'styled-components/native';
+import styled, {css, useTheme} from 'styled-components/native';
 import {LightBlack, NeutralSlate, White} from '../../styles/colors';
 
 interface BackSvgProps {

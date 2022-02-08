@@ -11,11 +11,15 @@ import {
   HeaderTitle,
   TextAlign,
 } from '../../../components/styled/Text';
-import {CommonActions, useNavigation, useTheme} from '@react-navigation/native';
+import {CommonActions, useNavigation} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
   ActiveOpacity,
+  AdvancedOptionsButton,
+  AdvancedOptionsButtonText,
+  AdvancedOptionsContainer,
+  Column,
   ModalContainer,
   Row,
   ScreenGutter,
@@ -37,7 +41,12 @@ import {Controller, useForm} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import {buildUIFormattedWallet} from './KeyOverview';
-import {LightBlack, NeutralSlate} from '../../../styles/colors';
+import {
+  LightBlack,
+  NeutralSlate,
+  SlateDark,
+  White,
+} from '../../../styles/colors';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import BottomPopupModal from '../../../components/modal/base/bottom-popup/BottomPopupModal';
@@ -45,8 +54,13 @@ import WalletRow from '../../../components/list/WalletRow';
 import {FlatList} from 'react-native';
 import {keyExtractor} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
+import Haptic from '../../../components/haptic-feedback/haptic';
 import {RootState} from '../../../store';
 import Icons from '../components/WalletIcons';
+import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
+import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
+import Checkbox from '../../../components/checkbox/Checkbox';
+import {Network} from '../../../constants';
 
 type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
 
@@ -109,12 +123,34 @@ const schema = yup.object().shape({
   walletName: yup.string(),
 });
 
+const CheckBoxContainer = styled.View`
+  flex-direction: column;
+  justify-content: center;
+`;
+
+const OptionTitle = styled(BaseText)`
+  font-size: 16px;
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+`;
+
+const RowContainer = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  padding: 18px;
+`;
+
+const WalletAdvancedOptionsContainer = styled(AdvancedOptionsContainer)`
+  margin-top: 20px;
+`;
+
 const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {currencyAbbreviation, currencyName, key, isToken} = route.params;
   // temporary until advanced settings is finished
   const network = useSelector(({APP}: RootState) => APP.network);
+  const [showOptions, setShowOptions] = useState(false);
+  const [isTestnet, setIsTestnet] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -128,6 +164,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
   const ethWallets = key.wallets.filter(
     wallet => wallet.currencyAbbreviation === 'eth',
   );
+
   // formatting for the bottom modal
   const UIFormattedEthWallets = useMemo(
     () => ethWallets.map(wallet => buildUIFormattedWallet(wallet)),
@@ -148,7 +185,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
     useState(false);
 
   useEffect(() => {
-    setShowAssociatedWalletSelectionDropdown(ethWallets.length > 1 && isToken);
+    setShowAssociatedWalletSelectionDropdown(ethWallets.length > 0 && isToken);
   }, []);
 
   const {
@@ -210,7 +247,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
           isToken,
           currency,
           options: {
-            network,
+            network: isTestnet ? Network.testnet : network,
             walletName: walletName === currencyName ? undefined : walletName,
           },
         }),
@@ -280,7 +317,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
           defaultValue={`${currencyName}`}
         />
 
-        {showAssociatedWalletSelectionDropdown && (
+        {showAssociatedWalletSelectionDropdown ? (
           <AssociatedWalletContainer>
             <Label>ASSOCIATED WALLET</Label>
             <AssociatedWallet
@@ -301,6 +338,54 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
               </Row>
             </AssociatedWallet>
           </AssociatedWalletContainer>
+        ) : (
+          <WalletAdvancedOptionsContainer>
+            <AdvancedOptionsButton
+              onPress={() => {
+                Haptic('impactLight');
+                setShowOptions(!showOptions);
+              }}>
+              {showOptions ? (
+                <>
+                  <AdvancedOptionsButtonText>
+                    Hide Advanced Options
+                  </AdvancedOptionsButtonText>
+                  <ChevronUpSvg />
+                </>
+              ) : (
+                <>
+                  <AdvancedOptionsButtonText>
+                    Show Advanced Options
+                  </AdvancedOptionsButtonText>
+                  <ChevronDownSvg />
+                </>
+              )}
+            </AdvancedOptionsButton>
+
+            {showOptions && (
+              <RowContainer
+                activeOpacity={1}
+                onPress={() => {
+                  setIsTestnet(!isTestnet);
+                }}>
+                <Column>
+                  <OptionTitle>
+                    {isToken || currencyAbbreviation === 'ETH'
+                      ? 'Kovan'
+                      : 'Testnet'}
+                  </OptionTitle>
+                </Column>
+                <CheckBoxContainer>
+                  <Checkbox
+                    checked={isTestnet}
+                    onPress={() => {
+                      setIsTestnet(!isTestnet);
+                    }}
+                  />
+                </CheckBoxContainer>
+              </RowContainer>
+            )}
+          </WalletAdvancedOptionsContainer>
         )}
 
         <BottomPopupModal
