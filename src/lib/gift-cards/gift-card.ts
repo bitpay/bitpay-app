@@ -141,3 +141,17 @@ export const formatAmount = (
         minimumFractionDigits: 0,
       }),
   }).format(amount);
+
+export function getActivationFee(
+  amount: number,
+  cardConfig: CardConfig,
+): number {
+  const activationFees = (cardConfig && cardConfig.activationFees) || [];
+  const fixedFee = activationFees.find(
+    fee =>
+      fee.type === 'fixed' &&
+      amount >= fee.amountRange.min &&
+      amount <= fee.amountRange.max,
+  );
+  return (fixedFee && fixedFee.fee) || 0;
+}

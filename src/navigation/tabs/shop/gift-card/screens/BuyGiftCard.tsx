@@ -1,4 +1,4 @@
-import React, {useLayoutEffect} from 'react';
+import React, {useLayoutEffect, useState} from 'react';
 import {Platform, ScrollView} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import LinearGradient from 'react-native-linear-gradient';
@@ -22,8 +22,13 @@ import GiftCardDenomSelector from '../../components/GiftCardDenomSelector';
 import GiftCardDenoms, {
   GiftCardDenomText,
 } from '../../components/GiftCardDenoms';
-import {formatAmount} from '../../../../../lib/gift-cards/gift-card';
+import {
+  formatAmount,
+  getActivationFee,
+} from '../../../../../lib/gift-cards/gift-card';
 import {useTheme} from '@react-navigation/native';
+import {useDispatch} from 'react-redux';
+import {AppActions} from '../../../../../store/app';
 
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;
@@ -79,12 +84,18 @@ const getHeaderTitle = (displayName: string) => {
     : fullTitle;
 };
 
+const getMiddleIndex = (arr: number[]) => arr && Math.floor(arr.length / 2);
+
 const BuyGiftCard = ({
   route,
   navigation,
 }: StackScreenProps<GiftCardStackParamList, 'BuyGiftCard'>) => {
+  const dispatch = useDispatch();
   const theme = useTheme();
   const {cardConfig} = route.params;
+  const [selectedAmountIndex, setSelectedAmountIndex] = useState(
+    getMiddleIndex(cardConfig.supportedAmounts || []),
+  );
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: getHeaderTitle(cardConfig.displayName),
@@ -107,7 +118,13 @@ const BuyGiftCard = ({
           <AmountContainer>
             {cardConfig.supportedAmounts ? (
               <DenomSelectionContainer>
-                <GiftCardDenomSelector cardConfig={cardConfig} />
+                <GiftCardDenomSelector
+                  cardConfig={cardConfig}
+                  selectedIndex={selectedAmountIndex}
+                  onChange={(newIndex: number) =>
+                    setSelectedAmountIndex(newIndex)
+                  }
+                />
                 <SupportedAmounts>
                   <SupportedAmountsLabel>
                     Purchase Amounts:
@@ -144,7 +161,37 @@ const BuyGiftCard = ({
         }}>
         <Button
           onPress={() => {
-            console.log('enter amount');
+            const activationFee = getActivationFee(
+              (cardConfig.supportedAmounts || [])[selectedAmountIndex],
+              cardConfig,
+            );
+            if (activationFee) {
+              dispatch(
+                AppActions.showBottomNotificationModal({
+                  type: 'info',
+                  title: 'Activation Fee',
+                  message: `${
+                    cardConfig.displayName
+                  } gift cards contain an additional activation fee of ${formatAmount(
+                    activationFee,
+                    cardConfig.currency,
+                  )}.`,
+                  enableBackdropDismiss: true,
+                  actions: [
+                    {
+                      text: 'GOT IT',
+                      action: () => {
+                        // Go to phone/email screen if required or confirm screen if not
+                      },
+                      primary: true,
+                    },
+                  ],
+                }),
+              );
+              console.log('show activation fee sheet', activationFee);
+            } else {
+              // Go to amount screen;
+            }
           }}
           buttonStyle={'primary'}>
           {cardConfig.supportedAmounts ? 'Continue' : 'Enter Amount'}

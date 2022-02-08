@@ -20,7 +20,7 @@ import {
   AdvancedOptionsButtonText,
   AdvancedOptionsContainer,
   Column,
-  ModalContainer,
+  SheetContainer,
   Row,
   ScreenGutter,
 } from '../../../components/styled/Containers';
@@ -49,7 +49,7 @@ import {
 } from '../../../styles/colors';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
-import BottomPopupModal from '../../../components/modal/base/bottom-popup/BottomPopupModal';
+import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import WalletRow from '../../../components/list/WalletRow';
 import {FlatList} from 'react-native';
 import {keyExtractor} from '../../../utils/helper-methods';
@@ -114,7 +114,7 @@ const AssociateWalletName = styled(BaseText)`
   color: #9ba3ae;
 `;
 
-const AssociatedWalletSelectionModalContainer = styled(ModalContainer)`
+const AssociatedWalletSelectionModalContainer = styled(SheetContainer)`
   padding: 15px;
   min-height: 200px;
 `;
@@ -184,8 +184,14 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
   const [associatedWalletModalVisible, setAssociatedWalletModalVisible] =
     useState(false);
 
+  const [showWalletAdvancedOptions, setShowWalletAdvancedOptions] =
+    useState(true);
+
   useEffect(() => {
-    setShowAssociatedWalletSelectionDropdown(ethWallets.length > 0 && isToken);
+    setShowAssociatedWalletSelectionDropdown(ethWallets.length > 1 && isToken);
+    if (isToken && ethWallets.length > 0) {
+      setShowWalletAdvancedOptions(false);
+    }
   }, []);
 
   const {
@@ -317,7 +323,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
           defaultValue={`${currencyName}`}
         />
 
-        {showAssociatedWalletSelectionDropdown ? (
+        {showAssociatedWalletSelectionDropdown && (
           <AssociatedWalletContainer>
             <Label>ASSOCIATED WALLET</Label>
             <AssociatedWallet
@@ -338,7 +344,9 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
               </Row>
             </AssociatedWallet>
           </AssociatedWalletContainer>
-        ) : (
+        )}
+
+        {showWalletAdvancedOptions && (
           <WalletAdvancedOptionsContainer>
             <AdvancedOptionsButton
               onPress={() => {
@@ -388,7 +396,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
           </WalletAdvancedOptionsContainer>
         )}
 
-        <BottomPopupModal
+        <SheetModal
           isVisible={associatedWalletModalVisible}
           onBackdropPress={() => setAssociatedWalletModalVisible(false)}>
           <AssociatedWalletSelectionModalContainer>
@@ -402,7 +410,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
               renderItem={renderItem}
             />
           </AssociatedWalletSelectionModalContainer>
-        </BottomPopupModal>
+        </SheetModal>
 
         <ButtonContainer>
           <Button onPress={add} buttonStyle={'primary'}>
