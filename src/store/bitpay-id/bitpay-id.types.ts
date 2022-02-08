@@ -12,7 +12,6 @@ import {
 } from './bitpay-id.reducer';
 
 export enum BitPayIdActionTypes {
-  SUCCESS_STORE_INIT = 'BitPayId/SUCCESS_STORE_INIT',
   SUCCESS_FETCH_SESSION = 'BitPayId/SUCCESS_FETCH_SESSION',
   FAILED_FETCH_SESSION = 'BitPayId/FAILED_FETCH_SESSION',
   UPDATE_FETCH_SESSION_STATUS = 'BitPayId/UPDATE_FETCH_SESSION_STATUS',
@@ -34,15 +33,11 @@ export enum BitPayIdActionTypes {
   FAILED_PAIRING_BITPAY_ID = 'BitPayId/FAILED_PAIRING_BITPAY_ID',
   UPDATE_PAIRING_BITPAY_ID_STATUS = 'BitPayId/UPDATE_PAIRING_BITPAY_ID_STATUS',
   COMPLETED_PAIRING = 'BitPayId/COMPLETED_PAIRING',
+  SUCCESS_FETCH_ALL_USER_DATA = 'BitPayId/SUCCESS_FETCH_ALL_USER_DATA',
   SUCCESS_FETCH_BASIC_INFO = 'BitPayId/SUCCCESS_FETCH_BASIC_INFO',
   FAILED_FETCH_BASIC_INFO = 'BitPayId/FAILED_FETCH_BASIC_INFO',
   UPDATE_FETCH_BASIC_INFO_STATUS = 'BitPayId/UPDATE_FETCH_BASIC_INFO_STATUS',
   BITPAY_ID_DISCONNECTED = 'BitPayId/BITPAY_ID_DISCONNECTED',
-}
-
-interface SuccessStoreInit {
-  type: typeof BitPayIdActionTypes.SUCCESS_STORE_INIT;
-  payload: {network: Network; user: User; doshToken?: string};
 }
 
 interface SuccessFetchSession {
@@ -140,6 +135,11 @@ interface CompletedPairing {
   type: typeof BitPayIdActionTypes.COMPLETED_PAIRING;
 }
 
+interface SuccessFetchAllUserData {
+  type: typeof BitPayIdActionTypes.SUCCESS_FETCH_ALL_USER_DATA;
+  payload: {network: Network; user: User; doshToken?: string};
+}
+
 interface SuccessFetchBasicInfo {
   type: typeof BitPayIdActionTypes.SUCCESS_FETCH_BASIC_INFO;
   payload: {network: Network; user: User};
@@ -160,7 +160,6 @@ interface BitPayIdDisconnected {
 }
 
 export type BitPayIdActionType =
-  | SuccessStoreInit
   | SuccessFetchSession
   | FailedFetchSession
   | UpdateFetchSessionStatus
@@ -192,6 +191,7 @@ export type BitPayIdActionType =
   | CompletedPairing
 
   // user info
+  | SuccessFetchAllUserData
   | SuccessFetchBasicInfo
   | FailedFetchBasicInfo
   | UpdateFetchBasicInfoStatus

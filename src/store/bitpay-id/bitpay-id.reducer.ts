@@ -80,18 +80,6 @@ export const bitPayIdReducer = (
   action: BitPayIdActionType,
 ): BitPayIdState => {
   switch (action.type) {
-    case BitPayIdActionTypes.SUCCESS_STORE_INIT:
-      return {
-        ...state,
-        user: {
-          ...state.user,
-          [action.payload.network]: action.payload.user,
-        },
-        doshToken: {
-          ...state.doshToken,
-          [action.payload.network]: action.payload.doshToken,
-        },
-      };
     case BitPayIdActionTypes.SUCCESS_FETCH_SESSION:
       return {
         ...state,
@@ -228,6 +216,19 @@ export const bitPayIdReducer = (
         pairingBitPayIdStatus: null,
       };
 
+    case BitPayIdActionTypes.SUCCESS_FETCH_ALL_USER_DATA:
+      return {
+        ...state,
+        user: {
+          ...state.user,
+          [action.payload.network]: action.payload.user,
+        },
+        doshToken: {
+          ...state.doshToken,
+          [action.payload.network]: action.payload.doshToken,
+        },
+      };
+
     case BitPayIdActionTypes.SUCCESS_FETCH_BASIC_INFO:
       return {
         ...state,
@@ -264,7 +265,7 @@ export const bitPayIdReducer = (
         doshToken: {
           ...state.doshToken,
           [action.payload.network]: null,
-        }
+        },
       };
 
     default:

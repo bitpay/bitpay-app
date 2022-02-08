@@ -30,7 +30,9 @@ export const startBitPayIdStoreInit =
   ): Effect<Promise<void>> =>
   async dispatch => {
     if (user) {
-      dispatch(BitPayIdActions.successStoreInit(network, {user, doshToken}));
+      dispatch(
+        BitPayIdActions.successFetchAllUserData(network, {user, doshToken}),
+      );
       dispatch(startSetBrazeUser(user));
     }
   };
@@ -228,11 +230,18 @@ const startPairAndLoadUser =
   async dispatch => {
     try {
       const token = await AuthApi.pair(secret, code);
-      const {basicInfo, cards} = await UserApi.fetchAllUserData(token);
+      const {basicInfo, cards, doshToken} = await UserApi.fetchAllUserData(
+        token,
+      );
 
       batch(() => {
         dispatch(LogActions.info('Successfully paired with BitPayID.'));
-        dispatch(BitPayIdActions.successFetchBasicInfo(network, basicInfo));
+        dispatch(
+          BitPayIdActions.successFetchAllUserData(network, {
+            user: basicInfo,
+            doshToken,
+          }),
+        );
         dispatch(startSetBrazeUser(basicInfo));
         dispatch(CardActions.successFetchCards(network, cards));
         dispatch(BitPayIdActions.successPairingBitPayId(network, token));
