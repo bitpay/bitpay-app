@@ -24,9 +24,7 @@ import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {BalanceUpdateError} from '../components/ErrorMessages';
-import OptionsBottomPopupModal, {
-  Option,
-} from '../components/OptionsBottomPopupModal';
+import OptionsSheet, {Option} from '../components/OptionsSheet';
 import ReceiveAddress from '../components/ReceiveAddress';
 import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
@@ -186,7 +184,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         }}
       />
 
-      <OptionsBottomPopupModal
+      <OptionsSheet
         isVisible={showWalletOptions}
         closeModal={() => setShowWalletOptions(false)}
         title={t('ReceiveCurrency', {currency: currencyName})}

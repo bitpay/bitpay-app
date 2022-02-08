@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import {ModalContainer} from '../../../components/styled/Containers';
-import BottomPopupModal from '../../../components/modal/base/bottom-popup/BottomPopupModal';
+import {SheetContainer} from '../../../components/styled/Containers';
+import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import CautionSvg from '../../../../assets/img/error.svg';
 import {H4, Link, Paragraph} from '../../../components/styled/Text';
 import {SlateDark, White} from '../../../styles/colors';
@@ -29,7 +29,7 @@ const DeleteModalParagraph = styled(Paragraph)`
   color: ${({theme}) => (theme.dark ? White : SlateDark)};
 `;
 
-const DeleteModalContainer = styled(ModalContainer)`
+const DeleteModalContainer = styled(SheetContainer)`
   min-height: 250px;
 `;
 
@@ -52,7 +52,7 @@ const DeleteConfirmationModal = ({
   onPressCancel,
 }: ConfirmationModalProps) => {
   return (
-    <BottomPopupModal isVisible={isVisible} onBackdropPress={onPressCancel}>
+    <SheetModal isVisible={isVisible} onBackdropPress={onPressCancel}>
       <DeleteModalContainer>
         <Header>
           <CautionSvg />
@@ -78,7 +78,7 @@ const DeleteConfirmationModal = ({
           </TouchableOpacity>
         </ActionsContainer>
       </DeleteModalContainer>
-    </BottomPopupModal>
+    </SheetModal>
   );
 };
 
