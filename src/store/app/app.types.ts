@@ -7,6 +7,7 @@ import {AppIdentity} from './app.models';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 
 export enum AppActionTypes {
+  NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
   SUCCESS_APP_INIT = 'APP/SUCCESS_APP_INIT',
   FAILED_APP_INIT = 'APP/FAILED_APP_INIT',
   SET_INTRO_COMPLETED = 'APP/SET_INTRO_COMPLETED',
@@ -26,6 +27,11 @@ export enum AppActionTypes {
   DISMISS_DECRYPT_PASSWORD_MODAL = 'APP/DISMISS_DECRYPT_PASSWORD_MODAL',
   SET_DEFAULT_LANGUAGE = 'APP/SET_DEFAULT_LANGUAGE',
   RESET_DECRYPT_PASSWORD_CONFIG = 'APP/RESET_DECRYPT_PASSWORD_CONFIG',
+}
+
+interface NetworkChanged {
+  type: typeof AppActionTypes.NETWORK_CHANGED;
+  payload: Network;
 }
 
 interface SuccessAppInit {
@@ -113,6 +119,7 @@ interface resetDecryptPasswordConfig {
 }
 
 export type AppActionType =
+  | NetworkChanged
   | SuccessAppInit
   | FailedAppInit
   | SetIntroCompleted
