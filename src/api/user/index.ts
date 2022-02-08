@@ -7,7 +7,13 @@ const fetchAllUserData = async (token: string) => {
   const response =
     await GraphQlApi.getInstance().request<FetchAllUserDataResponse>(query);
 
-  const {data} = response.data;
+  const {errors, data} = response.data;
+
+  if (errors) {
+    const msg = errors.map(e => e.message).join(', ');
+
+    throw new Error(msg);
+  }
 
   return data.user;
 };
@@ -19,7 +25,9 @@ const fetchBasicInfo = async (token: string) => {
   );
 
   if (data.errors) {
-    throw new Error(data.errors);
+    const msg = data.errors.map(e => e.message).join(', ');
+
+    throw new Error(msg);
   }
 
   return data.data.user.basicInfo;
