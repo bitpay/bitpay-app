@@ -28,10 +28,14 @@ import {requestTrackingPermission} from 'react-native-tracking-transparency';
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     dispatch(LogActions.clear());
-    dispatch(LogActions.info('Initializing app...'));
 
     const {APP, BITPAY_ID} = getState();
     const network = APP.network;
+
+    dispatch(LogActions.info('Initializing app...'));
+    dispatch(LogActions.debug(`Network: ${network}`));
+    dispatch(LogActions.debug(`Theme: ${APP.colorScheme || 'system'}`));
+
     const token = BITPAY_ID.apiToken[network];
     const isPaired = !!token;
     const identity = dispatch(initializeAppIdentity());

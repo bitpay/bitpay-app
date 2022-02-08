@@ -1,16 +1,17 @@
 import React, {useState} from 'react';
 import {ColorSchemeName, StyleProp, TextStyle, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import {AppActions} from '../../../../../store/app';
-import {Settings, SettingsContainer} from '../../SettingsRoot';
+import {useTheme} from 'styled-components/native';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
-import {RootState} from '../../../../../store';
 import {
   Hr,
   Setting,
   SettingTitle,
 } from '../../../../../components/styled/Containers';
-import {useTheme} from 'styled-components/native';
+import {RootState} from '../../../../../store';
+import {AppActions} from '../../../../../store/app';
+import {LogActions} from '../../../../../store/log';
+import {Settings, SettingsContainer} from '../../SettingsRoot';
 
 const ThemeSettings: React.FC = () => {
   const dispatch = useDispatch();
@@ -18,6 +19,9 @@ const ThemeSettings: React.FC = () => {
   const onSetThemePress = (setScheme: ColorSchemeName) => {
     setSelected(setScheme);
     dispatch(AppActions.setColorScheme(setScheme));
+    dispatch(
+      LogActions.info('Theme updated to ' + (setScheme || 'system default')),
+    );
   };
   const [selected, setSelected] = useState(currentTheme);
   const selectedTheme = useTheme();
