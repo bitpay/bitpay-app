@@ -1,3 +1,4 @@
+import {upperFirst} from 'lodash';
 import ReactAppboy from 'react-native-appboy-sdk';
 import {batch} from 'react-redux';
 import AuthApi from '../../api/auth';
@@ -96,10 +97,11 @@ export const startLogin =
         let errMsg;
 
         if (isAxiosError<LoginErrorResponse>(err)) {
-          errMsg =
+          errMsg = upperFirst(
             err.response?.data.message ||
-            err.message ||
-            'An unexpected error occurred.';
+              err.message ||
+              'An unexpected error occurred.',
+          );
           console.error(errMsg);
         } else {
           console.error(err);
@@ -136,10 +138,11 @@ export const startTwoFactorAuth =
         let errMsg;
 
         if (isAxiosError<string>(err)) {
-          errMsg =
+          errMsg = upperFirst(
             err.response?.data ||
-            err.message ||
-            'An unexpected error occurred.';
+              err.message ||
+              'An unexpected error occurred.',
+          );
           console.error(errMsg);
         } else {
           console.error(err);
@@ -173,13 +176,14 @@ export const startTwoFactorPairing =
         let errMsg;
 
         if (isAxiosError<any>(err)) {
-          errMsg =
+          errMsg = upperFirst(
             err.response?.data ||
-            err.message ||
-            'An unexpected error occurred.';
+              err.message ||
+              'An unexpected error occurred.',
+          );
           console.error(errMsg);
         } else if (err instanceof Error) {
-          errMsg = err.message;
+          errMsg = upperFirst(err.message);
           console.error(errMsg);
         } else {
           console.error(err);
