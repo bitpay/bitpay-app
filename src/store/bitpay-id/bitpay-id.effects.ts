@@ -1,8 +1,11 @@
+import ReactAppboy from 'react-native-appboy-sdk';
 import {batch} from 'react-redux';
 import AuthApi from '../../api/auth';
+import {LoginErrorResponse} from '../../api/auth/auth.types';
 import UserApi from '../../api/user';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
+import {isAxiosError} from '../../utils/axios';
 import {AppActions} from '../app/';
 import {startOnGoingProcessModal} from '../app/app.effects';
 import {CardActions} from '../card';
@@ -10,7 +13,6 @@ import {Effect} from '../index';
 import {LogActions} from '../log';
 import {User} from './bitpay-id.models';
 import {BitPayIdActions} from './index';
-import ReactAppboy from 'react-native-appboy-sdk';
 
 interface BitPayIdStoreInitParams {
   user?: User;
@@ -91,10 +93,21 @@ export const startLogin =
       dispatch(BitPayIdActions.successLogin(APP.network, session));
     } catch (err) {
       batch(() => {
-        console.error(err);
+        let errMsg;
+
+        if (isAxiosError<LoginErrorResponse>(err)) {
+          errMsg =
+            err.response?.data.message ||
+            err.message ||
+            'An unexpected error occurred.';
+          console.error(errMsg);
+        } else {
+          console.error(err);
+        }
+
         dispatch(LogActions.error('Login failed.'));
         dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(BitPayIdActions.failedLogin());
+        dispatch(BitPayIdActions.failedLogin(errMsg));
       });
     } finally {
       dispatch(AppActions.dismissOnGoingProcessModal());
@@ -120,10 +133,21 @@ export const startTwoFactorAuth =
       );
     } catch (err) {
       batch(() => {
-        console.error(err);
+        let errMsg;
+
+        if (isAxiosError<string>(err)) {
+          errMsg =
+            err.response?.data ||
+            err.message ||
+            'An unexpected error occurred.';
+          console.error(errMsg);
+        } else {
+          console.error(err);
+        }
+
         dispatch(LogActions.error('Two factor authentication failed.'));
         dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(BitPayIdActions.failedSubmitTwoFactorAuth());
+        dispatch(BitPayIdActions.failedSubmitTwoFactorAuth(errMsg));
       });
     } finally {
       dispatch(AppActions.dismissOnGoingProcessModal());
@@ -146,10 +170,26 @@ export const startTwoFactorPairing =
       dispatch(BitPayIdActions.successSubmitTwoFactorPairing());
     } catch (err) {
       batch(() => {
-        console.error(err);
+        let errMsg;
+
+        if (isAxiosError<any>(err)) {
+          errMsg =
+            err.response?.data ||
+            err.message ||
+            'An unexpected error occurred.';
+          console.error(errMsg);
+        } else if (err instanceof Error) {
+          errMsg = err.message;
+          console.error(errMsg);
+        } else {
+          console.error(err);
+        }
+
         dispatch(LogActions.error('Pairing with two factor failed.'));
         dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(BitPayIdActions.failedSubmitTwoFactorPairing());
+        dispatch(
+          BitPayIdActions.failedSubmitTwoFactorPairing(JSON.stringify(errMsg)),
+        );
       });
     } finally {
       dispatch(AppActions.dismissOnGoingProcessModal());

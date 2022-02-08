@@ -4,8 +4,11 @@ import {Network} from '../../constants';
 
 export const bitPayIdReduxPersistBlackList: (keyof BitPayIdState)[] = [
   'loginStatus',
+  'loginError',
   'twoFactorAuthStatus',
+  'twoFactorAuthError',
   'twoFactorPairingStatus',
+  'twoFactorPairingError',
   'pairingBitPayIdStatus',
   'fetchBasicInfoStatus',
 ];
@@ -37,8 +40,11 @@ export interface BitPayIdState {
   };
   fetchSessionStatus: FetchSessionStatus;
   loginStatus: LoginStatus;
+  loginError: string | null;
   twoFactorAuthStatus: TwoFactorAuthStatus;
+  twoFactorAuthError: string | null;
   twoFactorPairingStatus: TwoFactorPairingStatus;
+  twoFactorPairingError: string | null;
   emailPairingStatus: EmailPairingStatus;
   pairingBitPayIdStatus: PairingBitPayIdStatus;
   fetchBasicInfoStatus: FetchBasicInfoStatus;
@@ -60,8 +66,11 @@ const initialState: BitPayIdState = {
   },
   fetchSessionStatus: null,
   loginStatus: null,
+  loginError: null,
   twoFactorAuthStatus: null,
+  twoFactorAuthError: null,
   twoFactorPairingStatus: null,
+  twoFactorPairingError: null,
   emailPairingStatus: null,
   pairingBitPayIdStatus: null,
   fetchBasicInfoStatus: null,
@@ -109,6 +118,7 @@ export const bitPayIdReducer = (
       return {
         ...state,
         loginStatus: 'failed',
+        loginError: action.payload.error || null,
       };
 
     case BitPayIdActionTypes.UPDATE_LOGIN_STATUS:
@@ -137,12 +147,14 @@ export const bitPayIdReducer = (
       return {
         ...state,
         twoFactorAuthStatus: 'failed',
+        twoFactorAuthError: action.payload.error || null,
       };
 
     case BitPayIdActionTypes.FAILED_SUBMIT_TWO_FACTOR_PAIRING:
       return {
         ...state,
         twoFactorPairingStatus: 'failed',
+        twoFactorPairingError: action.payload.error || null,
       };
 
     case BitPayIdActionTypes.UPDATE_TWO_FACTOR_AUTH_STATUS:
