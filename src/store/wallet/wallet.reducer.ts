@@ -210,7 +210,7 @@ export const walletReducer = (
       const {keyId, id} = action.payload.wallet;
       const keyList = {...state.keys};
       const keyToUpdate = keyList[keyId];
-      keyList[keyId].wallets = keyToUpdate.wallets.map(wallet => {
+      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
         if (wallet.id === id) {
           return merge(wallet, action.payload.wallet);
         }
@@ -219,7 +219,12 @@ export const walletReducer = (
 
       return {
         ...state,
-        keys: {...state.keys, ...keyList},
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
       };
     }
 
