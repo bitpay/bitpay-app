@@ -34,10 +34,12 @@ const QRCodeContainer = styled.View`
 `;
 
 const QRBackground = styled.View`
-  width: 175px;
-  height: 175px;
+  width: 225px;
+  height: 225px;
   justify-content: center;
   align-items: center;
+  background-color: ${White};
+  border-radius: 12px;
 `;
 
 const KeyName = styled(H6)`
@@ -126,7 +128,7 @@ const ExportKey = () => {
 
         <QRCodeContainer>
           <QRBackground>
-            {code ? <QRCode value={code} size={155} /> : null}
+            {code ? <QRCode value={code} size={200} /> : null}
           </QRBackground>
 
           {/*TODO: Update me*/}
