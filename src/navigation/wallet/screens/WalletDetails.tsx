@@ -2,7 +2,7 @@ import {useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {FlatList, RefreshControl} from 'react-native';
+import {FlatList, RefreshControl, Share} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import Settings from '../../../components/settings/Settings';
@@ -31,6 +31,7 @@ import ReceiveAddress from '../components/ReceiveAddress';
 import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
+import {createWalletAddress} from '../../../store/wallet/effects/send/address';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -91,6 +92,20 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     });
   }, [navigation, uiFormattedWallet.currencyName]);
 
+  const ShareAddress = async () => {
+    try {
+      setShowWalletOptions(false);
+      await sleep(500);
+      const address = (await dispatch<any>(
+        createWalletAddress({wallet: fullWalletObj, newAddress: false}),
+      )) as string;
+
+      await Share.share({
+        message: address,
+      });
+    } catch (e) {}
+  };
+
   const assetOptions: Array<Option> = [
     {
       img: <Icons.RequestAmount />,
@@ -109,7 +124,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       title: 'Share Address',
       description:
         'Share your wallet address to someone in your contacts so they can send you funds.',
-      onPress: () => null,
+      onPress: ShareAddress,
     },
     {
       img: <Icons.Settings />,

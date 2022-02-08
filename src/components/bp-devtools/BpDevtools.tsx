@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  Appearance,
-  ColorSchemeName,
-  Switch,
-  Text,
-  View,
-} from 'react-native';
+import {Appearance, ColorSchemeName, Switch, Text, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import {navigationRef} from '../../Root';
