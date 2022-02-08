@@ -33,6 +33,7 @@ export const FETCH_ALL_USER_DATA = (token: string): GqlQueryParams => {
           cards:debitCards {
             ${cardFields}
           }
+          doshToken:getDoshToken
         }
       }
     `,
