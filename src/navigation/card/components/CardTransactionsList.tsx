@@ -1,11 +1,10 @@
 import React from 'react';
-import {View} from 'react-native';
 import styled from 'styled-components/native';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {H5} from '../../../components/styled/Text';
 import {Card, Transaction} from '../../../store/card/card.models';
-import {Air, NeutralSlate} from '../../../styles/colors';
+import {Air, LightBlack, NeutralSlate} from '../../../styles/colors';
 import TransactionRow from './CardTransactionRow';
 
 interface TransactionsListProps {
@@ -14,14 +13,18 @@ interface TransactionsListProps {
   card: Card;
 }
 
+const TransactionstContainer = styled.View`
+  background-color: ${({theme}) => theme.colors.background};
+`;
+
 const TransactionsHeader = styled.View`
-  background-color: ${NeutralSlate};
+  background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
   flex-direction: row;
   min-height: 50px;
   align-items: center;
   padding: ${ScreenGutter}
   border-bottom-width: 1px;
-  border-color: ${Air};
+  border-color: ${({theme}) => (theme.dark ? LightBlack : Air)};
 `;
 
 const TransactionsHeading = styled(H5)`
@@ -41,7 +44,7 @@ const TransactionsList: React.FC<TransactionsListProps> = props => {
   };
 
   return (
-    <View>
+    <TransactionstContainer>
       <TransactionsHeader>
         <TransactionsHeading>Recent Activity</TransactionsHeading>
 
@@ -59,7 +62,7 @@ const TransactionsList: React.FC<TransactionsListProps> = props => {
       {settledTxList.map(tx => (
         <TransactionRow key={tx.id} tx={tx} card={card} settled={true} />
       ))}
-    </View>
+    </TransactionstContainer>
   );
 };
 

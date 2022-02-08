@@ -9,7 +9,7 @@ import TopUpIcon from '../../../../assets/img/card/icons/topup.svg';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, H7} from '../../../components/styled/Text';
 import {Card, Transaction} from '../../../store/card/card.models';
-import {Air, SlateDark} from '../../../styles/colors';
+import {Air, LightBlack, SlateDark} from '../../../styles/colors';
 import {format} from '../../../utils/currency';
 
 interface TransactionRowProps {
@@ -19,7 +19,7 @@ interface TransactionRowProps {
 }
 
 const TxRowContainer = styled.View`
-  border-color: ${Air};
+  border-color: ${({theme}) => (theme.dark ? LightBlack : Air)};
   border-bottom-width: 1px;
   flex-direction: row;
   min-height: 72px;
