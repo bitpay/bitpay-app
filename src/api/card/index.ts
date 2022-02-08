@@ -33,7 +33,16 @@ const fetchOne = async (token: string, id: string) => {
 };
 
 const fetchOverview = async (token: string, id: string) => {
-  const query = CardQueries.FETCH_OVERVIEW(token, id);
+  const pageNumber = 1;
+  const pageSize = 100;
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - (1095 || 60));
+
+  const query = CardQueries.FETCH_OVERVIEW(token, id, {
+    pageNumber,
+    pageSize,
+    startDate,
+  });
   const {data} = await GraphQlApi.getInstance().request<FetchOverviewResponse>(
     query,
   );

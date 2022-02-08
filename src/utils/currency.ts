@@ -1,20 +1,19 @@
-const usdDelimeter = (n: string) => n.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+import 'intl';
+import 'intl/locale-data/jsonp/en-US';
 
-export const format = (value: number, currency: string) => {
-  if (!value) {
-    value = 0;
+const formatterCache: {[k: string]: Intl.NumberFormat} = {};
+
+export const format = (amount: number, currency: string) => {
+  if (!amount) {
+    amount = 0;
   }
 
-  // temporary until we upgrade react-native to 0.65.0+ and can take advantage
-  // of the built in toLocaleString formatting
-  switch (currency) {
-    case 'USD':
-      const [integer, decimal] = value.toFixed(2).split('.');
-      const withCommas = usdDelimeter(integer);
-
-      return `$${withCommas}.${decimal}`;
-
-    default:
-      return value.toString();
+  if (!formatterCache[currency]) {
+    formatterCache[currency] = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+    });
   }
+
+  return formatterCache[currency].format(amount);
 };

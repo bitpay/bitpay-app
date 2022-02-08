@@ -2,6 +2,7 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useEffect, useLayoutEffect, useMemo} from 'react';
 import {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
+import {ScrollView} from 'react-native';
 import Carousel, {Pagination} from 'react-native-snap-carousel';
 import {useDispatch, useSelector} from 'react-redux';
 import Button from '../../../components/button/Button';
@@ -11,13 +12,14 @@ import {
 } from '../../../components/styled/Containers';
 import {RootState} from '../../../store';
 import {CardEffects} from '../../../store/card';
-import {Card} from '../../../store/card/card.models';
+import {Card, Transaction} from '../../../store/card/card.models';
 import {
   CardProvider,
   VirtualDesignCurrency,
 } from '../../../store/card/card.types';
 import {CardStackParamList} from '../CardStack';
 import CardOverviewSlide from './CardOverviewSlide';
+import TransactionsList from './CardTransactionsList';
 
 interface CardDashboardProps {
   id: string | undefined | null;
@@ -144,6 +146,18 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     });
   }, [memoizedSlides, activeSlideIdx, navigation, t]);
 
+  const activeCard = memoizedSlides[activeSlideIdx].primaryCard;
+  const settledTxList = (
+    useSelector<RootState, Transaction[]>(
+      ({CARD}) => CARD.settledTransactions[activeCard.id]?.transactionList,
+    ) || []
+  ).slice(0, 30);
+  const pendingTxList = (
+    useSelector<RootState, Transaction[]>(
+      ({CARD}) => CARD.pendingTransactions[activeCard.id],
+    ) || []
+  ).slice(0, 30);
+
   useEffect(() => {
     if (fetchId) {
       dispatch(CardEffects.startFetchOverview(fetchId));
@@ -151,7 +165,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   }, [fetchId, dispatch]);
 
   return (
-    <>
+    <ScrollView>
       <Carousel<OverviewSlide>
         ref={carouselRef}
         vertical={false}
@@ -172,16 +186,17 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         inactiveSlideOpacity={1}
         containerCustomStyle={{
           flexGrow: 0,
+          marginBottom: 32,
           marginTop: 32,
         }}
       />
-      <Pagination
-        dotsLength={memoizedSlides.length}
-        activeDotIndex={activeSlideIdx}
-        carouselRef={carouselRef}
-        tappableDots={true}
+
+      <TransactionsList
+        card={activeCard}
+        pendingTxList={pendingTxList}
+        settledTxList={settledTxList}
       />
-    </>
+    </ScrollView>
   );
 };
 
