@@ -80,6 +80,12 @@ export const appReducer = (
   action: AppActionType,
 ): AppState => {
   switch (action.type) {
+    case AppActionTypes.NETWORK_CHANGED:
+      return {
+        ...state,
+        network: action.payload,
+      };
+
     case AppActionTypes.SUCCESS_APP_INIT:
       return {
         ...state,

@@ -1,5 +1,5 @@
 import {Network} from '../../constants';
-import {Card} from './card.models';
+import {Card, PagedTransactionData, Transaction} from './card.models';
 import {FetchCardsStatus, FetchOverviewStatus} from './card.reducer';
 
 export type CardBrand = 'Mastercard' | 'Visa';
@@ -51,7 +51,12 @@ interface VirtualDesignCurrencyUpdated {
 
 interface SuccessFetchOverview {
   type: CardActionTypes.SUCCESS_FETCH_OVERVIEW;
-  payload: {id: string; balance: number};
+  payload: {
+    id: string;
+    balance: number;
+    settledTransactions: PagedTransactionData;
+    pendingTransactions: Transaction[];
+  };
 }
 
 interface FailedFetchOverview {

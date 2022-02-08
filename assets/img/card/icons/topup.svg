@@ -1,0 +1,27 @@
+<svg
+    width="40px"
+    height="40px"
+    viewBox="0 0 40 40"
+    version="1.1"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+  >
+    <!-- Generator: Sketch 64 (93537) - https://sketch.com -->
+    <title>Group 19</title>
+    <desc>Created with Sketch.</desc>
+    <g id="Dashboard-(Desktop)" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+      <g id="Personal-Dashboard---Activity/Payments---Add-Funds---Error-State---Top-Ups-Disabled">
+        <circle id="Oval-204" fill="#2FCFA4" opacity="0.101872" cx="20" cy="20" r="20" />
+        <polygon
+          id="Shape"
+          stroke="#2FCFA4"
+          fill="#5B5B5B"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          transform="translate(20.314286, 20.314286) rotate(-45.000000) translate(-20.314286, -20.314286) "
+          points="25.8524405 14 20.301131 19.5447321 14.776131 14.0263095 14 14.8024405 19.525 20.3142857 14 25.8327083 14.776131 26.6022619 20.301131 21.0904167 25.8524405 26.6285714 26.6285714 25.8590179 21.0772619 20.3142857 26.6285714 14.776131"
+        />
+      </g>
+    </g>
+  </svg>
+  

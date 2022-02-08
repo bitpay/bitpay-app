@@ -1,4 +1,8 @@
-import {Card} from '../../store/card/card.models';
+import {
+  Card,
+  PagedTransactionData,
+  Transaction,
+} from '../../store/card/card.models';
 
 export interface FetchAllCardsResponse {
   user: {
@@ -19,13 +23,8 @@ export interface FetchOverviewResponse {
       balance: number;
       overview: {
         dateAccountOpened: string;
-        pendingTransactions: [];
-        settledTransactions: {
-          currentPageNumber: number;
-          totalPageCount: number;
-          totalRecordCount: number;
-          transactionList: [];
-        };
+        pendingTransactions: Transaction[];
+        settledTransactions: PagedTransactionData;
       };
     };
     cards: [
