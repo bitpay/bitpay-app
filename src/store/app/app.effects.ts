@@ -40,6 +40,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     let user: User | undefined;
     let cards: Card[] | undefined;
+    let doshToken: string | undefined;
 
     if (isPaired) {
       try {
@@ -51,6 +52,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
         const response = await UserApi.fetchAllUserData(token);
         user = response.basicInfo;
         cards = response.cards;
+        doshToken = response.doshToken;
       } catch (err: any) {
         if (isAxiosError(err)) {
           dispatch(LogActions.error(`${err.name}: ${err.message}`));
@@ -72,7 +74,9 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here
     await dispatch(startWalletStoreInit());
-    await dispatch(BitPayIdEffects.startBitPayIdStoreInit(network, {user}));
+    await dispatch(
+      BitPayIdEffects.startBitPayIdStoreInit(network, {user, doshToken}),
+    );
     await dispatch(CardEffects.startCardStoreInit(network, {cards}));
 
     await sleep(500);

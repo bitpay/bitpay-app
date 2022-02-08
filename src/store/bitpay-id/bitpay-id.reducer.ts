@@ -8,6 +8,7 @@ export const bitPayIdReduxPersistBlackList: (keyof BitPayIdState)[] = [
   'twoFactorPairingStatus',
   'pairingBitPayIdStatus',
   'fetchBasicInfoStatus',
+  'doshToken',
 ];
 
 export type FetchSessionStatus = 'loading' | 'success' | 'failed' | null;
@@ -32,6 +33,9 @@ export interface BitPayIdState {
   apiToken: {
     [key in Network]: string;
   };
+  doshToken: {
+    [key in Network]: string;
+  };
   user: {
     [key in Network]: User | null;
   };
@@ -54,6 +58,10 @@ const initialState: BitPayIdState = {
     [Network.mainnet]: '',
     [Network.testnet]: '',
   },
+  doshToken: {
+    [Network.mainnet]: '',
+    [Network.testnet]: '',
+  },
   user: {
     [Network.mainnet]: null,
     [Network.testnet]: null,
@@ -72,6 +80,18 @@ export const bitPayIdReducer = (
   action: BitPayIdActionType,
 ): BitPayIdState => {
   switch (action.type) {
+    case BitPayIdActionTypes.SUCCESS_STORE_INIT:
+      return {
+        ...state,
+        user: {
+          ...state.user,
+          [action.payload.network]: action.payload.user,
+        },
+        doshToken: {
+          ...state.doshToken,
+          [action.payload.network]: action.payload.doshToken,
+        },
+      };
     case BitPayIdActionTypes.SUCCESS_FETCH_SESSION:
       return {
         ...state,

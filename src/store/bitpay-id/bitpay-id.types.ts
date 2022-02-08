@@ -12,6 +12,7 @@ import {
 } from './bitpay-id.reducer';
 
 export enum BitPayIdActionTypes {
+  SUCCESS_STORE_INIT = 'BitPayId/SUCCESS_STORE_INIT',
   SUCCESS_FETCH_SESSION = 'BitPayId/SUCCESS_FETCH_SESSION',
   FAILED_FETCH_SESSION = 'BitPayId/FAILED_FETCH_SESSION',
   UPDATE_FETCH_SESSION_STATUS = 'BitPayId/UPDATE_FETCH_SESSION_STATUS',
@@ -37,6 +38,11 @@ export enum BitPayIdActionTypes {
   FAILED_FETCH_BASIC_INFO = 'BitPayId/FAILED_FETCH_BASIC_INFO',
   UPDATE_FETCH_BASIC_INFO_STATUS = 'BitPayId/UPDATE_FETCH_BASIC_INFO_STATUS',
   BITPAY_ID_DISCONNECTED = 'BitPayId/BITPAY_ID_DISCONNECTED',
+}
+
+interface SuccessStoreInit {
+  type: typeof BitPayIdActionTypes.SUCCESS_STORE_INIT;
+  payload: {network: Network; user: User; doshToken?: string};
 }
 
 interface SuccessFetchSession {
@@ -154,6 +160,7 @@ interface BitPayIdDisconnected {
 }
 
 export type BitPayIdActionType =
+  | SuccessStoreInit
   | SuccessFetchSession
   | FailedFetchSession
   | UpdateFetchSessionStatus

@@ -14,6 +14,7 @@ import ReactAppboy from 'react-native-appboy-sdk';
 
 interface BitPayIdStoreInitParams {
   user?: User;
+  doshToken?: string;
 }
 
 interface StartLoginParams {
@@ -23,10 +24,13 @@ interface StartLoginParams {
 }
 
 export const startBitPayIdStoreInit =
-  (network: Network, {user}: BitPayIdStoreInitParams): Effect<Promise<void>> =>
+  (
+    network: Network,
+    {user, doshToken}: BitPayIdStoreInitParams,
+  ): Effect<Promise<void>> =>
   async dispatch => {
     if (user) {
-      dispatch(BitPayIdActions.successFetchBasicInfo(network, user));
+      dispatch(BitPayIdActions.successStoreInit(network, {user, doshToken}));
       dispatch(startSetBrazeUser(user));
     }
   };

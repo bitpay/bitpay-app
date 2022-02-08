@@ -12,6 +12,14 @@ import {
   PendingLoginStatus,
 } from './bitpay-id.reducer';
 
+export const successStoreInit = (
+  network: Network,
+  {user, doshToken}: {user: User; doshToken?: string},
+): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.SUCCESS_STORE_INIT,
+  payload: {network, user, doshToken},
+});
+
 export const successFetchSession = (session: Session): BitPayIdActionType => ({
   type: BitPayIdActionTypes.SUCCESS_FETCH_SESSION,
   payload: {session},
