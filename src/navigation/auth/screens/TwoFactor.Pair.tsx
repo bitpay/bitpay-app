@@ -1,6 +1,6 @@
 import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useEffect} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useDispatch, useSelector} from 'react-redux';
 import * as yup from 'yup';
@@ -18,25 +18,37 @@ import AuthFormContainer, {
   AuthInputContainer,
 } from '../components/AuthFormContainer';
 
-export type TwoFactorPairingParamList = {} | undefined;
+export type TwoFactorPairingParamList = {
+  prevCode: string;
+};
 
 type TwoFactorPairingScreenProps = StackScreenProps<
   AuthStackParamList,
-  'TwoFactorAuthentication'
+  'TwoFactorPairing'
 >;
 
 interface TwoFactorPairingFieldValues {
   code: string;
 }
 
-const schema = yup.object().shape({
-  code: yup.string().required('Required'),
-});
-
 const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
   navigation,
+  route,
 }) => {
   const dispatch = useDispatch();
+  const {prevCode} = route.params;
+  const schema = useMemo(() => {
+    return yup.object().shape({
+      code: yup
+        .string()
+        .required('Required')
+        .test(
+          'NoSameCode',
+          'Cannot use the same code twice.',
+          value => value !== prevCode,
+        ),
+    });
+  }, [prevCode]);
   const twoFactorPairingStatus = useSelector<RootState, TwoFactorPairingStatus>(
     ({BITPAY_ID}) => BITPAY_ID.twoFactorPairingStatus,
   );

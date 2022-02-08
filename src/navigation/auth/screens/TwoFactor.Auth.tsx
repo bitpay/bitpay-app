@@ -43,6 +43,7 @@ const TwoFactorAuthentication: React.FC<
     control,
     formState: {errors, isValid},
     handleSubmit,
+    getValues,
     resetField,
   } = useForm<TwoFactorAuthFieldValues>({
     resolver: yupResolver(schema),
@@ -52,15 +53,16 @@ const TwoFactorAuthentication: React.FC<
   useEffect(() => {
     switch (twoFactorAuthStatus) {
       case 'success':
+        const {code} = getValues();
         resetField('code');
-        navigation.navigate('TwoFactorPairing');
+        navigation.navigate('TwoFactorPairing', {prevCode: code});
         return;
 
       case 'failed':
         console.log('Authentication with two factor failed');
         return;
     }
-  }, [twoFactorAuthStatus, resetField, navigation]);
+  }, [twoFactorAuthStatus, resetField, navigation, getValues]);
 
   const onSubmit = handleSubmit(({code}) => {
     if (!code) {
