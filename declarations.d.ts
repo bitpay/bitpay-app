@@ -6,4 +6,6 @@ declare module '*.svg' {
 
 declare module '@env' {
   export const SEGMENT_API_KEY: string;
+  export const APPSFLYER_API_KEY: string;
+  export const APP_ID: string;
 }

@@ -1,5 +1,4 @@
 import {yupResolver} from '@hookform/resolvers/yup';
-import {useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect} from 'react';
 import {Controller, useForm} from 'react-hook-form';
@@ -38,7 +37,6 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
   navigation,
 }) => {
   const dispatch = useDispatch();
-  const theme = useTheme();
   const twoFactorPairingStatus = useSelector<RootState, TwoFactorPairingStatus>(
     ({BITPAY_ID}) => BITPAY_ID.twoFactorPairingStatus,
   );
@@ -85,7 +83,7 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
   });
 
   return (
-    <AuthFormContainer theme={theme} header="Additional Verification">
+    <AuthFormContainer header="Additional Verification">
       <AuthFormParagraph>
         This additional verification will allow your device to be marked as a
         verified device. You will be securely connected to your BitPay ID
@@ -98,7 +96,6 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
-              theme={theme}
               placeholder={'eg. 123456'}
               label={'Code'}
               onBlur={onBlur}

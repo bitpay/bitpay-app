@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import {View} from 'react-native';
-import {Row} from '../styled/Containers';
+import styled from 'styled-components/native';
+import {ScreenGutter} from '../styled/Containers';
 import TabButton from './TabButton';
 
 interface TabsProps {
@@ -9,6 +10,13 @@ interface TabsProps {
     content: React.ReactNode;
   }[];
 }
+
+const TabsHeader = styled.View`
+  flex-direction: row;
+  flex-wrap: nowrap;
+  padding-left: ${ScreenGutter};
+  padding-right: ${ScreenGutter};
+`;
 
 const Tabs: React.FC<TabsProps> = props => {
   const [activeTabIdx, setActiveIdx] = useState(0);
@@ -24,6 +32,7 @@ const Tabs: React.FC<TabsProps> = props => {
 
   const TabButtons = tabs.map((d, idx) => (
     <TabButton
+      bold
       key={d.key}
       active={activeTabIdx === idx}
       onPress={() => setActiveIdx(idx)}>
@@ -33,7 +42,7 @@ const Tabs: React.FC<TabsProps> = props => {
 
   return (
     <View>
-      <Row>{TabButtons}</Row>
+      <TabsHeader>{TabButtons}</TabsHeader>
 
       <View>{tabs[activeTabIdx].content}</View>
     </View>

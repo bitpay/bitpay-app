@@ -10,7 +10,7 @@ import {
   Setting,
   SettingTitle,
 } from '../../../../../components/styled/Containers';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from 'styled-components/native';
 
 const ThemeSettings: React.FC = () => {
   const dispatch = useDispatch();

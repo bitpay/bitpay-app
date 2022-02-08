@@ -3,12 +3,12 @@ import {useTranslation} from 'react-i18next';
 import {ScrollView, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
-import MastercardAngledImg from '../../../../assets/img/card/bitpay-card-mc-angled.svg';
 import A from '../../../components/anchor/Anchor';
 import Button from '../../../components/button/Button';
 import {
   ActionContainer,
   Br,
+  CtaContainerAbsolute,
   ScreenGutter,
 } from '../../../components/styled/Containers';
 import {
@@ -23,6 +23,7 @@ import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {RootState} from '../../../store';
 import {AppEffects} from '../../../store/app';
 import CardFeatureTabs from './CardIntroFeatureTabs';
+import CardIntroHeroImg from './CardIntroHeroImage';
 import CardHighlights from './CardIntroHighlights';
 
 const Spacer = styled.View<{height: number}>`
@@ -53,7 +54,7 @@ const IntroHero = () => {
       </View>
       <View>
         <View style={{alignItems: 'flex-start'}}>
-          <MastercardAngledImg />
+          <CardIntroHeroImg />
         </View>
       </View>
     </View>
@@ -130,30 +131,38 @@ const CardIntro: React.FC = () => {
           <Smallest>{t('TermsAndConditionsMastercard2')}</Smallest>
         </ContentContainer>
 
-        <ContentContainer>
+        <ContentContainer style={{marginBottom: 200}}>
           <TextAlign align="center">
             <A href={URL.MASTERCARD_CARDHOLDER_AGREEMENT}>
               Cardholder Agreement
             </A>
           </TextAlign>
         </ContentContainer>
-
-        <ContentContainer>
-          <ActionContainer>
-            <Button onPress={() => onGetCardPress('createAccount')}>
-              Sign Up
-            </Button>
-          </ActionContainer>
-
-          <ActionContainer>
-            <Button
-              buttonStyle="secondary"
-              onPress={() => onGetCardPress('login')}>
-              I already have an account
-            </Button>
-          </ActionContainer>
-        </ContentContainer>
       </ScrollView>
+
+      <CtaContainerAbsolute
+        background={true}
+        style={{
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 4},
+          shadowOpacity: 0.1,
+          shadowRadius: 12,
+          elevation: 5,
+        }}>
+        <ActionContainer>
+          <Button onPress={() => onGetCardPress('createAccount')}>
+            Sign Up
+          </Button>
+        </ActionContainer>
+
+        <ActionContainer>
+          <Button
+            buttonStyle="secondary"
+            onPress={() => onGetCardPress('login')}>
+            I already have an account
+          </Button>
+        </ActionContainer>
+      </CtaContainerAbsolute>
     </>
   );
 };

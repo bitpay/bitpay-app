@@ -51,7 +51,7 @@ const IntroWalletContainer = styled.View`
 `;
 
 const CarouselContainer = styled.View`
-  margin-top: 100px;
+  margin-top: 75px;
 `;
 
 const BodyTextContainer = styled.View`
@@ -95,7 +95,10 @@ const IntroWallet = () => {
   const navigation = useNavigation();
   return (
     <IntroWalletContainer>
-      <BackgroundImage source={theme.dark ? darkBackground : lightBackground} />
+      <BackgroundImage
+        source={theme.dark ? darkBackground : lightBackground}
+        style={{position: 'absolute', bottom: 0}}
+      />
       <Overlay />
       <Body>
         <CarouselContainer>

@@ -14,6 +14,9 @@ import java.util.List;
 import com.facebook.react.bridge.JSIModulePackage;
 import com.swmansion.reanimated.ReanimatedJSIModulePackage;
 
+// Register custom font
+import com.facebook.react.views.text.ReactFontManager;
+
 // Braze
 import com.appboy.AppboyLifecycleCallbackListener;
 
@@ -56,6 +59,9 @@ public class MainApplication extends Application implements ReactApplication {
     super.onCreate();
     SoLoader.init(this, /* native exopackage */ false);
     initializeFlipper(this, getReactNativeHost().getReactInstanceManager());
+
+    // Register custom font
+    ReactFontManager.getInstance().addCustomFont(this, "Heebo", R.font.heebo);
 
     // Braze
     registerActivityLifecycleCallbacks(new AppboyLifecycleCallbackListener());
