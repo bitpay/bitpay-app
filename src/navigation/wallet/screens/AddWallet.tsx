@@ -184,8 +184,14 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
   const [associatedWalletModalVisible, setAssociatedWalletModalVisible] =
     useState(false);
 
+  const [showWalletAdvancedOptions, setShowWalletAdvancedOptions] =
+    useState(true);
+
   useEffect(() => {
-    setShowAssociatedWalletSelectionDropdown(ethWallets.length > 0 && isToken);
+    setShowAssociatedWalletSelectionDropdown(ethWallets.length > 1 && isToken);
+    if (isToken && ethWallets.length > 0) {
+      setShowWalletAdvancedOptions(false);
+    }
   }, []);
 
   const {
@@ -317,7 +323,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
           defaultValue={`${currencyName}`}
         />
 
-        {showAssociatedWalletSelectionDropdown ? (
+        {showAssociatedWalletSelectionDropdown && (
           <AssociatedWalletContainer>
             <Label>ASSOCIATED WALLET</Label>
             <AssociatedWallet
@@ -338,7 +344,9 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
               </Row>
             </AssociatedWallet>
           </AssociatedWalletContainer>
-        ) : (
+        )}
+
+        {showWalletAdvancedOptions && (
           <WalletAdvancedOptionsContainer>
             <AdvancedOptionsButton
               onPress={() => {
