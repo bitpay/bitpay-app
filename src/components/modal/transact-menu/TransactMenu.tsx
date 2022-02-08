@@ -15,6 +15,10 @@ const TransactButton = styled.View`
   flex: 1;
 `;
 
+const ModalContainer = styled(SheetContainer)`
+  background: ${({theme}) => (theme.dark ? '#101010' : White)};
+`;
+
 const TransactItemContainer = styled.TouchableOpacity`
   flex-direction: row;
   padding-bottom: 31px;
@@ -135,7 +139,7 @@ const TransactModal = () => {
         </TouchableOpacity>
       </TransactButton>
       <SheetModal isVisible={modalVisible} onBackdropPress={hideModal}>
-        <SheetContainer>
+        <ModalContainer>
           <FlatList
             data={TransactMenuList}
             scrollEnabled={false}
@@ -171,7 +175,7 @@ const TransactModal = () => {
               <Icons.Close />
             </View>
           </CloseButtonContainer>
-        </SheetContainer>
+        </ModalContainer>
       </SheetModal>
     </>
   );
