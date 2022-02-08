@@ -1,5 +1,6 @@
 import {ExchangeRate, Key, PriceHistory, Token} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
+import merge from 'lodash.merge';
 
 type WalletReduxPersistBlackList = [];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
@@ -186,6 +187,23 @@ export const walletReducer = (
       return {
         ...state,
         walletTermsAccepted: true,
+      };
+    }
+
+    case WalletActionTypes.SUCCESS_GET_RECEIVE_ADDRESS: {
+      const {keyId, id} = action.payload.wallet;
+      const keyList = {...state.keys};
+      const keyToUpdate = keyList[keyId];
+      keyList[keyId].wallets = keyToUpdate.wallets.map(wallet => {
+        if (wallet.id === id) {
+          return merge(wallet, action.payload.wallet);
+        }
+        return wallet;
+      });
+
+      return {
+        ...state,
+        keys: {...state.keys, ...keyList},
       };
     }
 

@@ -11,7 +11,7 @@ import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../../components/styled/Containers';
-import {CreateWalletAddress} from '../../../../store/wallet/effects/send/address';
+import {createWalletAddress} from '../../../../store/wallet/effects/send/address';
 import {
   FormatCryptoAmount,
   FormattedAmountObj,
@@ -27,6 +27,7 @@ import {Black, White} from '../../../../styles/colors';
 import ShareIcon from '../../../../components/icons/share/Share';
 import {Share} from 'react-native';
 import GhostSvg from '../../../../../assets/img/ghost-straight-face.svg';
+import {useDispatch} from 'react-redux';
 
 const SpecificAmtQRContainer = styled.SafeAreaView`
   flex: 1;
@@ -101,6 +102,7 @@ const RequestSpecificAmountQR = () => {
     currencyAbbreviation,
   } = wallet;
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   const [formattedAmountObj, setFormattedAmountObj] =
     useState<FormattedAmountObj>();
   const [loading, setLoading] = useState(true);
@@ -128,7 +130,10 @@ const RequestSpecificAmountQR = () => {
 
   const init = async () => {
     try {
-      const address = await CreateWalletAddress(wallet);
+      const address = (await dispatch<any>(
+        createWalletAddress({wallet, newAddress: false}),
+      )) as string;
+
       let _qrValue;
       _qrValue =
         GetProtocolPrefix(currencyAbbreviation, network) + ':' + address;

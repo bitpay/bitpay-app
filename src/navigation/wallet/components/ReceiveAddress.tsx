@@ -24,19 +24,12 @@ import {sleep} from '../../../utils/helper-methods';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {
   createWalletAddress,
-  CreateWalletAddress,
   GetLegacyBchAddressFormat,
 } from '../../../store/wallet/effects/send/address';
 import ReceiveAddressHeader, {
   HeaderContextHandler,
 } from './ReceiveAddressHeader';
 import {GetProtocolPrefix} from '../../../store/wallet/utils/wallet';
-import {addWallet} from "../../../store/wallet/effects";
-
-export interface ReceiveAddressConfig {
-  keyId: string;
-  id: string;
-}
 
 export const BchAddressTypes = ['Cash Address', 'Legacy'];
 
@@ -105,10 +98,9 @@ interface Props {
   isVisible: boolean;
   closeModal: () => void;
   wallet: Wallet;
-  keyId: string;
 }
 
-const ReceiveAddress = ({isVisible, closeModal, wallet, keyId}: Props) => {
+const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
   const dispatch = useDispatch();
   const logger = useLogger();
   const [copied, setCopied] = useState(false);
@@ -159,9 +151,8 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, keyId}: Props) => {
 
     try {
       const walletAddress = (await dispatch<any>(
-          createWalletAddress({keyId, wallet}),
+        createWalletAddress({wallet}),
       )) as string;
-      // createWalletAddress({keyId, wallet});
       setLoading(false);
       if (coin === 'bch') {
         const protocolPrefix = GetProtocolPrefix(coin, network);

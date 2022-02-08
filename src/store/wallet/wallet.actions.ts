@@ -5,6 +5,7 @@ import {
   PriceHistory,
   Token,
   WalletBalance,
+  Wallet,
 } from './wallet.models';
 
 export const successWalletStoreInit = (): WalletActionType => ({
@@ -131,4 +132,11 @@ export const failedUpdateAllKeysAndBalances = (): WalletActionType => ({
 
 export const updatePortfolioBalance = (): WalletActionType => ({
   type: WalletActionTypes.UPDATE_PORTFOLIO_BALANCE,
+});
+
+export const successGetReceiveAddress = (payload: {
+  wallet: Wallet;
+}): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_GET_RECEIVE_ADDRESS,
+  payload,
 });
