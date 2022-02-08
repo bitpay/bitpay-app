@@ -1,20 +1,23 @@
 import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
 } from '../../../../constants/NavigationOptions';
 import {HeaderTitle} from '../../../../components/styled/Text';
-import AboutRoot from './screens/AboutRoot';
+import AboutRoot, {AboutRootParamList} from './screens/AboutRoot';
 
-import {useTranslation} from 'react-i18next';
+import SessionLogsScreen, {SessionLogsParamList} from './screens/SessionLog';
 
 export type AboutStackParamList = {
-  Root: undefined;
+  Root: AboutRootParamList | undefined;
+  SessionLogs: SessionLogsParamList | undefined;
 };
 
 export enum AboutScreens {
   ROOT = 'Root',
+  SESSION_LOGS = 'SessionLogs',
 }
 
 const About = createStackNavigator<AboutStackParamList>();
@@ -33,6 +36,13 @@ const AboutStack = () => {
         component={AboutRoot}
         options={{
           headerTitle: () => <HeaderTitle>{t('About BitPay')}</HeaderTitle>,
+        }}
+      />
+      <About.Screen
+        name={AboutScreens.SESSION_LOGS}
+        component={SessionLogsScreen}
+        options={{
+          headerTitle: 'Session Logs',
         }}
       />
     </About.Navigator>
