@@ -44,7 +44,7 @@ export const buildWalletObj = (
     balance?: WalletBalance;
     tokens?: any;
   },
-  tokenOpts: {[key in string]: Token},
+  tokenOpts?: {[key in string]: Token},
   otherOpts?: {
     walletName?: string;
   },
@@ -63,7 +63,9 @@ export const buildWalletObj = (
     keyId,
     img: SUPPORTED_CURRENCIES.includes(currencyAbbreviation)
       ? CurrencyListIcons[currencyAbbreviation]
-      : tokenOpts[currencyAbbreviation]?.logoURI,
+      : tokenOpts
+      ? tokenOpts[currencyAbbreviation]?.logoURI
+      : '',
   };
 };
 

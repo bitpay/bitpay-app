@@ -1,5 +1,12 @@
 import React, {useLayoutEffect} from 'react';
-import {BaseText, HeaderTitle, Link} from '../../../components/styled/Text';
+import {
+  BaseText,
+  HeaderTitle,
+  Link,
+  InfoTitle,
+  InfoHeader,
+  InfoDescription,
+} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
@@ -13,6 +20,7 @@ import {
   Setting,
   SettingTitle,
   SettingView,
+  InfoImageContainer,
 } from '../../../components/styled/Containers';
 import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -21,7 +29,7 @@ import Button from '../../../components/button/Button';
 import {SlateDark, White} from '../../../styles/colors';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {useDispatch} from 'react-redux';
-import InfoIcon from '../../../components/icons/info/InfoIcon';
+import InfoSvg from '../../../../assets/img/info.svg';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
 import {buildNestedWalletList} from './KeyOverview';
 import {URL} from '../../../constants';
@@ -53,25 +61,6 @@ const WalletNameContainer = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-`;
-
-const InfoImageContainer = styled.View<{infoMargin: string}>`
-  margin: ${({infoMargin}) => infoMargin};
-`;
-
-const InfoTitle = styled(BaseText)`
-  font-size: 16px;
-  color: ${({theme}) => theme.colors.text};
-`;
-
-const InfoHeader = styled.View`
-  flex-direction: row;
-  margin-bottom: 10px;
-`;
-
-const InfoDescription = styled(BaseText)`
-  font-size: 16px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
 const VerticalPadding = styled.View`
@@ -116,7 +105,7 @@ const KeySettings = () => {
         <WalletHeaderContainer>
           <Title>Wallets</Title>
           <InfoImageContainer infoMargin={'0 0 0 8px'}>
-            <InfoIcon />
+            <InfoSvg />
           </InfoImageContainer>
         </WalletHeaderContainer>
 
@@ -162,7 +151,7 @@ const KeySettings = () => {
 
             <InfoHeader>
               <InfoImageContainer infoMargin={'0 8px 0 0'}>
-                <InfoIcon />
+                <InfoSvg />
               </InfoImageContainer>
 
               <InfoTitle>Password Not Recoverable</InfoTitle>

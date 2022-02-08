@@ -1,0 +1,595 @@
+import React, {useState} from 'react';
+import {TouchableOpacity} from 'react-native';
+import styled from 'styled-components/native';
+import {Caution, SlateDark, White, Action, Slate} from '../../../styles/colors';
+import {
+  BaseText,
+  Link,
+  InfoTitle,
+  InfoHeader,
+  InfoDescription,
+} from '../../../components/styled/Text';
+import Button from '../../../components/button/Button';
+import {useDispatch} from 'react-redux';
+import {
+  showBottomNotificationModal,
+  dismissOnGoingProcessModal,
+} from '../../../store/app/app.actions';
+import {yupResolver} from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import {useForm, Controller} from 'react-hook-form';
+import BoxInput from '../../../components/form/BoxInput';
+import {useLogger} from '../../../utils/hooks/useLogger';
+import {KeyOptions} from '../../../store/wallet/wallet.models';
+import {
+  RouteProp,
+  useNavigation,
+  useRoute,
+  CommonActions,
+} from '@react-navigation/native';
+import {
+  Info,
+  InfoTriangle,
+  AdvancedOptionsContainer,
+  AdvancedOptionsButton,
+  AdvancedOptionsButtonText,
+  AdvancedOptions,
+  RowContainer,
+  Column,
+  ScreenGutter,
+  CtaContainer,
+  InfoImageContainer,
+} from '../../../components/styled/Containers';
+import Haptic from '../../../components/haptic-feedback/haptic';
+import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
+import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
+import {SUPPORTED_TOKENS, Currencies} from '../../../constants/currencies';
+import Checkbox from '../../../components/checkbox/Checkbox';
+import {WalletStackParamList} from '../WalletStack';
+import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
+import {
+  startCreateKeyMultisig,
+  addWalletMultisig,
+} from '../../../store/wallet/effects';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
+import InfoSvg from '../../../../assets/img/info.svg';
+import WarningSvg from '../../../../assets/img/warning.svg';
+import {sleep} from '../../../utils/helper-methods';
+import {Key, Wallet} from '../../../store/wallet/wallet.models';
+
+export interface CreateMultisigProps {
+  currency?: string;
+  key?: Key;
+}
+
+const schema = yup.object().shape({
+  name: yup.string().required(),
+  myName: yup.string().required(),
+  requiredSignatures: yup
+    .number()
+    .required()
+    .positive()
+    .integer()
+    .min(1)
+    .max(3), // m
+  totalCopayers: yup.number().required().positive().integer().min(2).max(6), // n
+});
+
+const Gutter = '10px';
+export const MultisigContainer = styled.View`
+  padding: ${Gutter} 0;
+`;
+
+const ScrollViewContainer = styled.ScrollView`
+  margin-top: 20px;
+  padding: 0 15px;
+`;
+
+const MultisigParagraph = styled(BaseText)`
+  font-size: 16px;
+  line-height: 25px;
+  padding: ${Gutter};
+  color: ${({theme}) => theme.colors.description};
+`;
+
+const ErrorText = styled(BaseText)`
+  color: ${Caution};
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 0 0 10px;
+`;
+
+const CheckBoxContainer = styled.View`
+  flex-direction: column;
+  justify-content: center;
+`;
+
+const OptionTitle = styled(BaseText)`
+  font-size: 16px;
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+`;
+
+const VerticalPadding = styled.View`
+  padding: ${ScreenGutter} 0;
+`;
+
+const CounterContainer = styled.View`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+`;
+
+const RoundButton = styled.View`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  margin: 10px;
+  border-radius: 30px;
+  border: 1px solid ${({theme: {dark}}) => (dark ? White : Action)};
+`;
+
+const RemoveButton = styled.TouchableOpacity`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 30px;
+  border: 1px solid ${Slate};
+`;
+
+const AddButton = styled.TouchableOpacity`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  width: 20px;
+  border: 1px solid black;
+  border-radius: 30px;
+  border: 1px solid ${({theme: {dark}}) => (dark ? White : Action)};
+`;
+
+const CounterNumber = styled.Text`
+  color: ${({theme: {dark}}) => (dark ? White : Action)};
+  font-size: 16px;
+`;
+
+const CounterPlusSymbol = styled.Text`
+  color: ${({theme: {dark}}) => (dark ? White : Action)};
+  font-size: 20px;
+  bottom: 4px;
+`;
+
+const CounterMinusSymbol = styled.Text`
+  font-size: 20px;
+  color: ${({theme: {dark}}) => (dark ? Slate : '#c4c4c4')};
+  bottom: 4px;
+`;
+
+const CreateMultisig = () => {
+  const dispatch = useDispatch();
+  const logger = useLogger();
+  const navigation = useNavigation();
+  const [showOptions, setShowOptions] = useState(false);
+  const [testnetEnabled, setTestnetEnabled] = useState(false);
+  const [options, setOptions] = useState({
+    useNativeSegwit: true,
+    networkName: 'testnet',
+    singleAddress: false,
+  });
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    formState: {errors},
+  } = useForm({resolver: yupResolver(schema)});
+
+  const route = useRoute<RouteProp<WalletStackParamList, 'CreateMultisig'>>();
+  const {currency, key} = route.params || {};
+  const singleAddressCurrency =
+    Currencies[currency?.toLowerCase() as string].properties.singleAddress;
+
+  const showErrorModal = (e: string) => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: 'Something went wrong',
+        message: e,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'OK',
+            action: () => {},
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
+
+  const onSubmit = (formData: {
+    name: string;
+    myName: string;
+    requiredSignatures: number;
+    totalCopayers: number;
+  }) => {
+    const {name, myName, requiredSignatures, totalCopayers} = formData;
+
+    let opts: Partial<KeyOptions> = {};
+    opts.name = name;
+    opts.myName = myName;
+    opts.m = requiredSignatures;
+    opts.n = totalCopayers;
+    opts.useNativeSegwit = options.useNativeSegwit;
+    opts.networkName = options.networkName;
+    opts.singleAddress = options.singleAddress;
+    opts.coin = currency?.toLowerCase();
+
+    CreateMultisigWallet(opts);
+  };
+
+  const CreateMultisigWallet = async (
+    opts: Partial<KeyOptions>,
+  ): Promise<void> => {
+    try {
+      await dispatch(
+        startOnGoingProcessModal(OnGoingProcessMessages.CREATING_KEY),
+      );
+
+      if (key) {
+        const wallet = (await dispatch<any>(
+          addWalletMultisig({
+            key,
+            opts,
+          }),
+        )) as Wallet;
+
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 2,
+            routes: [
+              {
+                name: 'Tabs',
+                params: {screen: 'Home'},
+              },
+              {
+                name: 'Wallet',
+                params: {screen: 'KeyOverview', params: {key}},
+              },
+              {
+                name: 'Wallet',
+                params: {
+                  screen: 'Copayers',
+                  params: {walletId: wallet},
+                },
+              },
+            ],
+          }),
+        );
+      } else {
+        const key = (await dispatch<any>(startCreateKeyMultisig(opts))) as Key;
+
+        navigation.navigate('Wallet', {
+          screen: 'BackupKey',
+          params: {context: 'createNewKey', key},
+        });
+      }
+      dispatch(dismissOnGoingProcessModal());
+    } catch (e: any) {
+      logger.error(e.message);
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      showErrorModal(e.message);
+      return;
+    }
+  };
+
+  return (
+    <ScrollViewContainer>
+      <MultisigContainer>
+        <MultisigParagraph>
+          Multi-sig wallets require multisig devices to set up. It's takes
+          longer to complete but it's recommended security configuration for
+          long term storage.
+        </MultisigParagraph>
+
+        <AdvancedOptions>
+          <Controller
+            control={control}
+            render={({field: {onChange, onBlur, value}}) => (
+              <BoxInput
+                label={'WALLET NAME'}
+                onChangeText={(text: string) => onChange(text)}
+                onBlur={onBlur}
+                value={value}
+              />
+            )}
+            name="name"
+            defaultValue=""
+          />
+
+          {errors?.name?.message && (
+            <ErrorText>{errors?.name?.message}</ErrorText>
+          )}
+        </AdvancedOptions>
+
+        <AdvancedOptions>
+          <Controller
+            control={control}
+            render={({field: {onChange, onBlur, value}}) => (
+              <BoxInput
+                label={'YOUR NAME'}
+                onChangeText={(text: string) => onChange(text)}
+                onBlur={onBlur}
+                value={value}
+              />
+            )}
+            name="myName"
+            defaultValue=""
+          />
+
+          {errors?.myName?.message && (
+            <ErrorText>{errors?.myName?.message}</ErrorText>
+          )}
+        </AdvancedOptions>
+
+        <Controller
+          control={control}
+          render={({field: {value}}) => (
+            <RowContainer activeOpacity={1}>
+              <Column>
+                <OptionTitle>Required number of signatures</OptionTitle>
+              </Column>
+              <CounterContainer>
+                <RemoveButton
+                  onPress={() => {
+                    setValue('requiredSignatures', value - 1, {
+                      shouldValidate: true,
+                    });
+                  }}>
+                  <CounterMinusSymbol>-</CounterMinusSymbol>
+                </RemoveButton>
+                <RoundButton>
+                  <CounterNumber>{value}</CounterNumber>
+                </RoundButton>
+                <AddButton
+                  onPress={() => {
+                    setValue('requiredSignatures', value + 1, {
+                      shouldValidate: true,
+                    });
+                  }}>
+                  <CounterPlusSymbol>+</CounterPlusSymbol>
+                </AddButton>
+              </CounterContainer>
+            </RowContainer>
+          )}
+          name="requiredSignatures"
+          defaultValue={2}
+        />
+
+        {errors?.requiredSignatures?.message && (
+          <ErrorText>{errors?.requiredSignatures?.message}</ErrorText>
+        )}
+
+        <Controller
+          control={control}
+          render={({field: {value}}) => (
+            <RowContainer activeOpacity={1}>
+              <Column>
+                <OptionTitle>Total number of copayers</OptionTitle>
+              </Column>
+              <CounterContainer>
+                <RemoveButton
+                  onPress={() => {
+                    setValue('totalCopayers', value - 1, {
+                      shouldValidate: true,
+                    });
+                  }}>
+                  <CounterMinusSymbol>-</CounterMinusSymbol>
+                </RemoveButton>
+                <RoundButton>
+                  <CounterNumber>{value}</CounterNumber>
+                </RoundButton>
+                <AddButton
+                  onPress={() => {
+                    setValue('totalCopayers', value + 1, {
+                      shouldValidate: true,
+                    });
+                  }}>
+                  <CounterPlusSymbol>+</CounterPlusSymbol>
+                </AddButton>
+              </CounterContainer>
+            </RowContainer>
+          )}
+          name="totalCopayers"
+          defaultValue={3}
+        />
+
+        {errors?.totalCopayers?.message && (
+          <ErrorText>{errors?.totalCopayers?.message}</ErrorText>
+        )}
+
+        <CtaContainer>
+          <AdvancedOptionsContainer>
+            <AdvancedOptionsButton
+              onPress={() => {
+                Haptic('impactLight');
+                setShowOptions(!showOptions);
+              }}>
+              {showOptions ? (
+                <>
+                  <AdvancedOptionsButtonText>
+                    Hide Advanced Options
+                  </AdvancedOptionsButtonText>
+                  <ChevronUpSvg />
+                </>
+              ) : (
+                <>
+                  <AdvancedOptionsButtonText>
+                    Show Advanced Options
+                  </AdvancedOptionsButtonText>
+                  <ChevronDownSvg />
+                </>
+              )}
+            </AdvancedOptionsButton>
+
+            {showOptions && (
+              <RowContainer
+                style={{marginLeft: 10, marginRight: 10}}
+                activeOpacity={1}
+                onPress={() => {
+                  setOptions({
+                    ...options,
+                    useNativeSegwit: !options.useNativeSegwit,
+                  });
+                }}>
+                <Column>
+                  <OptionTitle>Segwit</OptionTitle>
+                </Column>
+                <CheckBoxContainer>
+                  <Checkbox
+                    checked={options.useNativeSegwit}
+                    onPress={() => {
+                      setOptions({
+                        ...options,
+                        useNativeSegwit: !options.useNativeSegwit,
+                      });
+                    }}
+                  />
+                </CheckBoxContainer>
+              </RowContainer>
+            )}
+            {showOptions && (
+              <>
+                <RowContainer
+                  style={{marginLeft: 10, marginRight: 10}}
+                  activeOpacity={1}
+                  onPress={() => {
+                    setTestnetEnabled(!testnetEnabled);
+                    setOptions({
+                      ...options,
+                      networkName: testnetEnabled ? 'testnet' : 'livenet',
+                    });
+                  }}>
+                  <Column>
+                    <OptionTitle>Testnet</OptionTitle>
+                  </Column>
+                  <CheckBoxContainer>
+                    <Checkbox
+                      checked={testnetEnabled}
+                      onPress={() => {
+                        setTestnetEnabled(!testnetEnabled);
+                        setOptions({
+                          ...options,
+                          networkName: testnetEnabled ? 'testnet' : 'livenet',
+                        });
+                      }}
+                    />
+                  </CheckBoxContainer>
+                </RowContainer>
+
+                {testnetEnabled && (
+                  <>
+                    <Info>
+                      <InfoTriangle />
+
+                      <InfoHeader>
+                        <InfoImageContainer infoMargin={'0 8px 0 0'}>
+                          <WarningSvg />
+                        </InfoImageContainer>
+
+                        <InfoTitle>
+                          Someone asked you to create this wallet?
+                        </InfoTitle>
+                      </InfoHeader>
+                      <InfoDescription>
+                        Testnet coins have no value and cannot be converted into
+                        "actual" coins. If you are purchasing cryptocurrency
+                        through a third party, and they have requested you to
+                        create this type of wallet, they are scamming you.
+                      </InfoDescription>
+                    </Info>
+                  </>
+                )}
+              </>
+            )}
+
+            {showOptions && !singleAddressCurrency && (
+              <>
+                <RowContainer
+                  style={{marginLeft: 10, marginRight: 10}}
+                  activeOpacity={1}
+                  onPress={() => {
+                    setOptions({
+                      ...options,
+                      singleAddress: !options.singleAddress,
+                    });
+                  }}>
+                  <Column>
+                    <OptionTitle>Single Address</OptionTitle>
+                  </Column>
+                  <CheckBoxContainer>
+                    <Checkbox
+                      checked={options.singleAddress}
+                      onPress={() => {
+                        setOptions({
+                          ...options,
+                          singleAddress: !options.singleAddress,
+                        });
+                      }}
+                    />
+                  </CheckBoxContainer>
+                </RowContainer>
+
+                {options.singleAddress && (
+                  <>
+                    <Info>
+                      <InfoTriangle />
+
+                      <InfoHeader>
+                        <InfoImageContainer infoMargin={'0 8px 0 0'}>
+                          <InfoSvg />
+                        </InfoImageContainer>
+
+                        <InfoTitle>Single Address Wallet</InfoTitle>
+                      </InfoHeader>
+                      <InfoDescription>
+                        The single address feature will force the wallet to only
+                        use one address than generating new addresses
+                      </InfoDescription>
+
+                      <VerticalPadding>
+                        <TouchableOpacity
+                          onPress={() => {
+                            Haptic('impactLight');
+                            dispatch(
+                              openUrlWithInAppBrowser(
+                                'https://support.bitpay.com/hc/en-us/articles/360015920572-Setting-up-the-Single-Address-Feature-for-your-BitPay-Wallet',
+                              ),
+                            );
+                          }}>
+                          <Link>Learn More</Link>
+                        </TouchableOpacity>
+                      </VerticalPadding>
+                    </Info>
+                  </>
+                )}
+              </>
+            )}
+          </AdvancedOptionsContainer>
+        </CtaContainer>
+
+        <CtaContainer>
+          <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
+            Create Wallet
+          </Button>
+        </CtaContainer>
+      </MultisigContainer>
+    </ScrollViewContainer>
+  );
+};
+
+export default CreateMultisig;

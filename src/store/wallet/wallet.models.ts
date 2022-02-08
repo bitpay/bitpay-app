@@ -103,6 +103,7 @@ export interface KeyOptions {
   useNativeSegwit?: boolean;
   words?: string;
   xPrivKey?: string;
+  invitationCode?: string;
 }
 
 export interface Token {

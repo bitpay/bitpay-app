@@ -29,6 +29,7 @@ import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {navigateToTermsOrOverview} from '../screens/Backup';
 import {RootState} from '../../../store';
+import {sleep} from '../../../utils/helper-methods';
 
 const BWCProvider = BwcProvider.getInstance();
 
@@ -71,41 +72,41 @@ const FileOrText = () => {
       await dispatch(
         startOnGoingProcessModal(OnGoingProcessMessages.IMPORTING),
       );
-      // @ts-ignore
-      const key = await dispatch<Key>(startImportFile(decryptBackupText, opts));
+      const key = (await dispatch<any>(
+        startImportFile(decryptBackupText, opts),
+      )) as Key;
       navigateToTermsOrOverview({
         context: route.params?.context,
         navigation,
         walletTermsAccepted,
         key,
       });
+      dispatch(dismissOnGoingProcessModal());
     } catch (e: any) {
       logger.error(e.message);
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
       showErrorModal(e.message);
       return;
-    } finally {
-      dispatch(dismissOnGoingProcessModal());
     }
   };
 
   const showErrorModal = (e: string) => {
-    setTimeout(() => {
-      dispatch(
-        showBottomNotificationModal({
-          type: 'warning',
-          title: 'Something went wrong',
-          message: e,
-          enableBackdropDismiss: true,
-          actions: [
-            {
-              text: 'OK',
-              action: () => {},
-              primary: true,
-            },
-          ],
-        }),
-      );
-    }, 500);
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: 'Something went wrong',
+        message: e,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'OK',
+            action: () => {},
+            primary: true,
+          },
+        ],
+      }),
+    );
   };
 
   const onSubmit = (formData: {text: string; password: string}) => {

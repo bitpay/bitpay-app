@@ -255,3 +255,21 @@ export const ImportTextInput = styled.TextInput`
   border-top-left-radius: 4px;
   text-align-vertical: top;
 `;
+
+export const InfoImageContainer = styled.View<{infoMargin: string}>`
+  margin: ${({infoMargin}) => infoMargin};
+`;
+
+export const ScanContainer = styled.TouchableOpacity`
+  height: 25px;
+  width: 25px;
+  align-items: center;
+  justify-content: center;
+`;
+
+export const HeaderContainer = styled.View`
+  padding: ${Gutter};
+  justify-content: space-between;
+  flex-direction: row;
+  align-items: center;
+`;

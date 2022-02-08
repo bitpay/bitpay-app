@@ -36,6 +36,7 @@ export interface WalletRowProps {
   fiatBalance: string;
   isToken?: boolean;
   network: string;
+  isComplete?: boolean;
 }
 
 interface Props {

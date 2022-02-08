@@ -53,6 +53,8 @@ import {
   Column,
   Row,
   SheetContainer,
+  ScanContainer,
+  HeaderContainer,
 } from '../../../components/styled/Containers';
 import Haptic from '../../../components/haptic-feedback/haptic';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
@@ -77,6 +79,7 @@ import CurrencySelectionRow, {
   CurrencySelectionToggleProps,
 } from '../../../components/list/CurrencySelectionRow';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
+import {sleep} from '../../../utils/helper-methods';
 
 const Gutter = '10px';
 const ScrollViewContainer = styled.ScrollView`
@@ -94,20 +97,6 @@ const ImportParagraph = styled(BaseText)`
 const PasswordParagraph = styled(BaseText)`
   margin: 0px 20px 20px 20px;
   color: ${({theme}) => theme.colors.description};
-`;
-
-const HeaderContainer = styled.View`
-  padding: ${Gutter};
-  justify-content: space-between;
-  flex-direction: row;
-  align-items: center;
-`;
-
-const ScanContainer = styled.TouchableOpacity`
-  height: 25px;
-  width: 25px;
-  align-items: center;
-  justify-content: center;
 `;
 
 const ErrorText = styled(BaseText)`
@@ -199,23 +188,21 @@ const RecoveryPhrase = () => {
   } = useForm({resolver: yupResolver(schema)});
 
   const showErrorModal = (e: string) => {
-    setTimeout(() => {
-      dispatch(
-        showBottomNotificationModal({
-          type: 'warning',
-          title: 'Something went wrong',
-          message: e,
-          enableBackdropDismiss: true,
-          actions: [
-            {
-              text: 'OK',
-              action: () => {},
-              primary: true,
-            },
-          ],
-        }),
-      );
-    }, 500);
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: 'Something went wrong',
+        message: e,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'OK',
+            action: () => {},
+            primary: true,
+          },
+        ],
+      }),
+    );
   };
 
   const isValidPhrase = (words: string) => {
@@ -306,10 +293,10 @@ const RecoveryPhrase = () => {
         startOnGoingProcessModal(OnGoingProcessMessages.IMPORTING),
       );
       const key = !derivationPathEnabled
-        ? // @ts-ignore
-          await dispatch<Key>(startImportMnemonic(importData, opts))
-        : // @ts-ignore
-          await dispatch<Key>(startImportWithDerivationPath(importData, opts));
+        ? ((await dispatch<any>(startImportMnemonic(importData, opts))) as Key)
+        : ((await dispatch<any>(
+            startImportWithDerivationPath(importData, opts),
+          )) as Key);
 
       await dispatch(startUpdateAllWalletBalancesForKey(key));
       await dispatch(updatePortfolioBalance());
@@ -319,12 +306,13 @@ const RecoveryPhrase = () => {
         walletTermsAccepted,
         key,
       });
+      dispatch(dismissOnGoingProcessModal());
     } catch (e: any) {
       logger.error(e.message);
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
       showErrorModal(e.message);
       return;
-    } finally {
-      dispatch(dismissOnGoingProcessModal());
     }
   };
 

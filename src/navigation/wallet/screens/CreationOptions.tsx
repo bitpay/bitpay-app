@@ -91,7 +91,10 @@ const CreationOptions: React.FC = () => {
       id: 'multisig',
       title: 'Multisig Wallet',
       description: 'Requires multiple people or devices and is the most secure',
-      cta: () => {},
+      cta: () =>
+        navigation.navigate('Wallet', {
+          screen: 'MultisigOptions',
+        }),
       height: '80px',
     },
   ];

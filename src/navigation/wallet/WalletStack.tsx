@@ -31,6 +31,13 @@ import TermsOfUse, {
 import AddWallet, {AddWalletParamList} from './screens/AddWallet';
 import Amount, {AmountParamList} from './screens/send/Amount';
 import SendTo from './screens/send/SendTo';
+import MultisigOptions, {
+  MultisigOptionsParamList,
+} from './screens/MultisigOptions';
+import CreateMultisig, {CreateMultisigProps} from './screens/CreateMultisig';
+import JoinMultisig, {JoinMultisigParamList} from './screens/JoinMultisig';
+import Copayers from './screens/Copayers';
+import AddingOptions, {AddingOptionsParamList} from './screens/AddingOptions';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -51,6 +58,11 @@ export type WalletStackParamList = {
   ExportKey: {key: Key};
   Amount: AmountParamList;
   SendTo: {wallet: WalletModel};
+  MultisigOptions: MultisigOptionsParamList | undefined;
+  CreateMultisig: CreateMultisigProps;
+  JoinMultisig: JoinMultisigParamList;
+  Copayers: {wallet: WalletModel};
+  AddingOptions: AddingOptionsParamList;
 };
 
 export enum WalletScreens {
@@ -72,6 +84,11 @@ export enum WalletScreens {
   EXPORT_KEY = 'ExportKey',
   AMOUNT = 'Amount',
   SEND_TO = 'SendTo',
+  MULTISIG_OPTIONS = 'MultisigOptions',
+  CREATE_MULTISIG = 'CreateMultisig',
+  JOIN_MULTISIG = 'JoinMultisig',
+  COPAYERS = 'Copayers',
+  ADDING_OPTIONS = 'AddingOptions',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -159,6 +176,37 @@ const WalletStack = () => {
         />
         <Wallet.Screen name={WalletScreens.AMOUNT} component={Amount} />
         <Wallet.Screen name={WalletScreens.SEND_TO} component={SendTo} />
+        <Wallet.Screen
+          name={WalletScreens.MULTISIG_OPTIONS}
+          component={MultisigOptions}
+        />
+        <Wallet.Screen
+          options={{
+            headerTitle: () => (
+              <HeaderTitle>Create Multi-sig Wallet</HeaderTitle>
+            ),
+          }}
+          name={WalletScreens.CREATE_MULTISIG}
+          component={CreateMultisig}
+        />
+        <Wallet.Screen
+          options={{
+            headerTitle: () => <HeaderTitle>Join Shared Wallet</HeaderTitle>,
+          }}
+          name={WalletScreens.JOIN_MULTISIG}
+          component={JoinMultisig}
+        />
+        <Wallet.Screen
+          options={{
+            headerTitle: () => <HeaderTitle>Invitation</HeaderTitle>,
+          }}
+          name={WalletScreens.COPAYERS}
+          component={Copayers}
+        />
+        <Wallet.Screen
+          name={WalletScreens.ADDING_OPTIONS}
+          component={AddingOptions}
+        />
       </Wallet.Navigator>
     </>
   );

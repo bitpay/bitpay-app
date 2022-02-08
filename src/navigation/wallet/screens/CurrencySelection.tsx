@@ -22,22 +22,35 @@ import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {HeaderTitle} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
+import {
+  SupportedCurrencyOptions,
+  SupportedCurrencyOption,
+} from '../../../constants/SupportedCurrencyOptions';
 import {RootState} from '../../../store';
 import {WalletStackParamList} from '../WalletStack';
 import {Dispatch} from 'redux';
 import {RootStackParamList} from '../../../Root';
-import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+} from '../../../store/app/app.actions';
 import {Key} from '../../../store/wallet/wallet.models';
 import {StackScreenProps} from '@react-navigation/stack';
 import {keyExtractor} from '../../../utils/helper-methods';
+import {sleep} from '../../../utils/helper-methods';
+import {useLogger} from '../../../utils/hooks/useLogger';
 
 type CurrencySelectionScreenProps = StackScreenProps<
   WalletStackParamList,
   'CurrencySelection'
 >;
 
-type CurrencySelectionContext = 'onboarding' | 'createNewKey' | 'addWallet';
+type CurrencySelectionContext =
+  | 'onboarding'
+  | 'createNewKey'
+  | 'addWallet'
+  | 'addWalletMultisig'
+  | 'joinWalletMultisig';
 
 export type CurrencySelectionParamList = {
   context: CurrencySelectionContext;
@@ -45,6 +58,16 @@ export type CurrencySelectionParamList = {
 };
 
 interface ContextHandler {
+  currencies: (
+    | SupportedCurrencyOption
+    | {
+        id: number;
+        currencyAbbreviation: string;
+        currencyName: string;
+        img: string;
+        isToken: boolean;
+      }
+  )[];
   headerTitle?: string;
   ctaTitle?: string;
   bottomCta?: (props: {
@@ -70,79 +93,159 @@ const ListContainer = styled.View`
   margin-top: 20px;
 `;
 
-const contextHandler = (
-  context: CurrencySelectionContext,
-  key?: Key,
-): ContextHandler => {
-  switch (context) {
-    case 'onboarding':
-    case 'createNewKey': {
-      return {
-        ctaTitle: 'Create Key',
-        bottomCta: async ({selectedCurrencies, dispatch, navigation}) => {
-          try {
-            const currencies = selectedCurrencies?.map(selected =>
-              selected.toLowerCase(),
-            ) as Array<SupportedCurrencies>;
-            await dispatch(
-              startOnGoingProcessModal(OnGoingProcessMessages.CREATING_KEY),
-            );
-            // @ts-ignore
-            const key = await dispatch<Key>(startCreateKey(currencies));
-            navigation.navigate(
-              context === 'onboarding' ? 'Onboarding' : 'Wallet',
-              {
-                screen: 'BackupKey',
-                params: {context, key},
-              },
-            );
-          } catch (err) {
-            // TODO
-          } finally {
-            dispatch(dismissOnGoingProcessModal());
-          }
-        },
-      };
-    }
-
-    case 'addWallet': {
-      return {
-        headerTitle: 'Select Currency',
-        hideBottomCta: true,
-        removeCheckbox: true,
-        selectionCta: async ({
-          currencyAbbreviation,
-          currencyName,
-          isToken,
-          navigation,
-        }) => {
-          if (!key) {
-            // TODO
-            console.error('add wallet - key not found');
-          } else {
-            navigation.navigate('Wallet', {
-              screen: 'AddWallet',
-              params: {key, currencyAbbreviation, currencyName, isToken},
-            });
-          }
-        },
-      };
-    }
-  }
-};
-
 const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
   // setting context
   const navigation = useNavigation();
   const {context, key} = route.params;
+  const logger = useLogger();
+  const dispatch = useDispatch();
+
+  const tokenOptions = useSelector(
+    ({WALLET}: RootState) => WALLET.tokenOptions,
+  );
+
+  const ALL_CUSTOM_TOKENS = useMemo(
+    () =>
+      Object.values(tokenOptions)
+        .filter(token => !SUPPORTED_TOKENS.includes(token.symbol.toLowerCase()))
+        .map(({symbol, name, logoURI}) => {
+          return {
+            id: Math.random(),
+            currencyAbbreviation: symbol,
+            currencyName: name,
+            img: logoURI,
+            isToken: true,
+          };
+        }),
+    [],
+  );
+
+  const CURATED_TOKENS = useMemo(
+    () =>
+      ALL_CUSTOM_TOKENS.filter(token =>
+        POPULAR_TOKENS.includes(token.currencyAbbreviation),
+      ),
+    [],
+  );
+
+  const showErrorModal = (e: string) => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: 'Something went wrong',
+        message: e,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'OK',
+            action: () => {},
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
+
+  const contextHandler = (
+    context: CurrencySelectionContext,
+    key?: Key,
+    CURATED_TOKENS?: {
+      id: number;
+      currencyAbbreviation: string;
+      currencyName: string;
+      img: string;
+      isToken: boolean;
+    }[],
+  ): ContextHandler => {
+    switch (context) {
+      case 'onboarding':
+      case 'createNewKey': {
+        return {
+          // @ts-ignore
+          currencies: [...SupportedCurrencyOptions, ...CURATED_TOKENS],
+          ctaTitle: 'Create Key',
+          bottomCta: async ({selectedCurrencies, dispatch, navigation}) => {
+            try {
+              const currencies = selectedCurrencies?.map(selected =>
+                selected.toLowerCase(),
+              ) as Array<SupportedCurrencies>;
+              await dispatch(
+                startOnGoingProcessModal(OnGoingProcessMessages.CREATING_KEY),
+              );
+              const key = (await dispatch<any>(
+                startCreateKey(currencies),
+              )) as Key;
+
+              navigation.navigate(
+                context === 'onboarding' ? 'Onboarding' : 'Wallet',
+                {
+                  screen: 'BackupKey',
+                  params: {context, key},
+                },
+              );
+              dispatch(dismissOnGoingProcessModal());
+            } catch (e: any) {
+              logger.error(e.message);
+              dispatch(dismissOnGoingProcessModal());
+              await sleep(500);
+              showErrorModal(e.message);
+            }
+          },
+        };
+      }
+
+      case 'addWallet': {
+        return {
+          currencies: [...SupportedCurrencyOptions, ...CURATED_TOKENS],
+          headerTitle: 'Select Currency',
+          hideBottomCta: true,
+          removeCheckbox: true,
+          selectionCta: async ({
+            currencyAbbreviation,
+            currencyName,
+            isToken,
+            navigation,
+          }) => {
+            if (!key) {
+              // TODO
+              console.error('add wallet - key not found');
+            } else {
+              navigation.navigate('Wallet', {
+                screen: 'AddWallet',
+                params: {key, currencyAbbreviation, currencyName, isToken},
+              });
+            }
+          },
+        };
+      }
+      case 'addWalletMultisig': {
+        return {
+          currencies: SupportedCurrencyOptions.filter(
+            currency => currency.hasMultisig,
+          ),
+          headerTitle: 'Select Currency',
+          hideBottomCta: true,
+          removeCheckbox: true,
+          selectionCta: async ({currencyAbbreviation, navigation}) => {
+            navigation.navigate('Wallet', {
+              screen: 'CreateMultisig',
+              params: {currency: currencyAbbreviation, key},
+            });
+          },
+        };
+      }
+    }
+  };
+
   const {
+    currencies,
     bottomCta,
     ctaTitle,
     headerTitle,
     hideBottomCta,
     selectionCta,
     removeCheckbox,
-  } = contextHandler(context, key) || {};
+  } = contextHandler(context, key, CURATED_TOKENS) || {};
 
   // Configuring Header
   useLayoutEffect(() => {
@@ -173,49 +276,17 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     });
   }, [navigation]);
 
-  const dispatch = useDispatch();
   const [selectedCurrencies, setSelectedCurrencies] = useState<Array<string>>(
     [],
   );
 
-  const tokenOptions = useSelector(
-    ({WALLET}: RootState) => WALLET.tokenOptions,
-  );
-
-  const ALL_CUSTOM_TOKENS = useMemo(
-    () =>
-      Object.values(tokenOptions)
-        .filter(token => !SUPPORTED_TOKENS.includes(token.symbol.toLowerCase()))
-        .map(({symbol, name, logoURI}) => {
-          return {
-            id: Math.random(),
-            currencyAbbreviation: symbol,
-            currencyName: name,
-            img: logoURI,
-            isToken: true,
-          };
-        }),
-    [],
-  );
-
-  const CURATED_TOKENS = useMemo(
-    () =>
-      ALL_CUSTOM_TOKENS.filter(token =>
-        POPULAR_TOKENS.includes(token.currencyAbbreviation),
-      ),
-    [],
-  );
-
-  const DEFAULT_CURRENCY_OPTIONS = useMemo(
-    () => [...SupportedCurrencyOptions, ...CURATED_TOKENS],
-    [],
-  );
+  const DEFAULT_CURRENCY_OPTIONS = useMemo(() => currencies, []);
 
   // TODO search
-  const ALL_CURRENCY_OPTIONS = useMemo(
-    () => [...SupportedCurrencyOptions, ...ALL_CUSTOM_TOKENS],
-    [],
-  );
+  // const ALL_CURRENCY_OPTIONS = useMemo(
+  //   () => [...SupportedCurrencyOptions, ...ALL_CUSTOM_TOKENS],
+  //   [],
+  // );
 
   const [currencyOptions, setCurrencyOptions] = useState<Array<any>>([
     ...DEFAULT_CURRENCY_OPTIONS,
