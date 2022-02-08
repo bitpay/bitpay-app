@@ -1,7 +1,6 @@
 import React from 'react';
 import styled from 'styled-components/native';
 import {BaseText} from '../../../components/styled/Text';
-import {SlateDark} from '../../../styles/colors';
 
 interface LoginContainerProps {
   header?: string;
@@ -30,7 +29,7 @@ const FormContainer = styled.View`
 `;
 
 export const AuthFormParagraph = styled.Text`
-  color: ${SlateDark}
+  color: ${({theme}) => theme.colors.description};
   font-size: 16px;
   font-weight: 400;
   line-height: 25px;
