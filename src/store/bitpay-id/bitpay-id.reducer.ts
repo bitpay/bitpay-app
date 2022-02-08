@@ -261,6 +261,10 @@ export const bitPayIdReducer = (
           ...state.user,
           [action.payload.network]: null,
         },
+        doshToken: {
+          ...state.doshToken,
+          [action.payload.network]: null,
+        }
       };
 
     default:
