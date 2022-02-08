@@ -23,8 +23,16 @@ export const White = '#FFFFFF';
 
 /* Interface */
 export const Caution = '#ef476f';
+export const Caution50 = '#FDAFBB';
+export const Caution25 = '#FFD8DE';
+
 export const Success = '#2fcfa4';
+export const Success50 = '#97E7D1';
+export const Success25 = '#CBF3E8';
+
 export const Warning = '#fdb455';
+export const Warning75 = '#FDC67F';
+export const Warning25 = '#FEECD4';
 
 export const Disabled = '#edeef0';
 export const DisabledDark = '#3c3c3c';
