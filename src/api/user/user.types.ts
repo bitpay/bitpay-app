@@ -28,3 +28,9 @@ export interface FetchAllUserDataResponse {
     doshToken: string;
   };
 }
+
+export interface FetchDoshTokenResponse {
+  user: {
+    doshToken: string;
+  };
+}

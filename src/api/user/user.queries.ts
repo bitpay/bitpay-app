@@ -60,9 +60,25 @@ export const FETCH_BASIC_INFO = (token: string): GqlQueryParams => {
   };
 };
 
+const FETCH_DOSH_TOKEN = (token: string): GqlQueryParams => {
+  return {
+    query: `
+      query FETCH_DOSH_TOKEN ($token:String!) {
+        user:bitpayUser(token:$token) {
+          doshToken:getDoshToken
+        }
+      }
+    `,
+    variables: {
+      token,
+    },
+  };
+};
+
 const UserQueries = {
   FETCH_ALL_USER_DATA,
   FETCH_BASIC_INFO,
+  FETCH_DOSH_TOKEN,
 };
 
 export default UserQueries;
