@@ -32,6 +32,7 @@ export enum WalletActionTypes {
   SUCCESS_UPDATE_ALL_KEYS_AND_BALANCES = 'WALLET/SUCCESS_UPDATE_ALL_KEYS_AND_BALANCES',
   FAILED_UPDATE_ALL_KEYS_AND_BALANCES = 'WALLET/FAILED_UPDATE_ALL_KEYS_AND_BALANCES',
   UPDATE_PORTFOLIO_BALANCE = 'WALLET/UPDATE_PORTFOLIO_BALANCE',
+  TOGGLE_HOME_KEY_CARD = 'WALLET/TOGGLE_HOME_KEY_CARD',
 }
 
 interface successWalletStoreInit {
@@ -164,6 +165,14 @@ interface updatePortfolioBalance {
   type: typeof WalletActionTypes.UPDATE_PORTFOLIO_BALANCE;
 }
 
+interface toggleHomeKeyCard {
+  type: typeof WalletActionTypes.TOGGLE_HOME_KEY_CARD;
+  payload: {
+    keyId: string;
+    show: boolean;
+  };
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -189,4 +198,5 @@ export type WalletActionType =
   | failedUpdateKeyTotalBalance
   | updatePortfolioBalance
   | successUpdateAllKeysAndBalances
-  | failedUpdateAllKeysAndBalances;
+  | failedUpdateAllKeysAndBalances
+  | toggleHomeKeyCard;
