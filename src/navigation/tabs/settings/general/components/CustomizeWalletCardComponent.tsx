@@ -40,6 +40,10 @@ const HeaderImg = styled.View`
   flex-wrap: wrap;
 `;
 
+const CustomizeHomeCardContainer = styled.View`
+  margin-bottom: 25px;
+`;
+
 const CustomizeWalletCardComponent: React.FC<
   CustomizeWalletCardComponentProps
 > = ({
@@ -85,11 +89,13 @@ const CustomizeWalletCardComponent: React.FC<
   };
 
   return (
-    <CustomizeHomeCard
-      header={HeaderComponent}
-      body={body}
-      footer={{onCTAPress: onPress, checked: checked}}
-    />
+    <CustomizeHomeCardContainer>
+      <CustomizeHomeCard
+        header={HeaderComponent}
+        body={body}
+        footer={{onCTAPress: onPress, checked: checked}}
+      />
+    </CustomizeHomeCardContainer>
   );
 };
 
