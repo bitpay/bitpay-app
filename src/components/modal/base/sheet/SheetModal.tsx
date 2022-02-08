@@ -1,15 +1,17 @@
 import Modal from 'react-native-modal';
 import React from 'react';
+import {SheetParams} from '../../../styled/Containers';
 
-interface Props {
+interface Props extends SheetParams {
   isVisible: boolean;
   onBackdropPress: () => void;
 }
 
-const BottomPopupModal: React.FC<Props> = ({
+const SheetModal: React.FC<Props> = ({
   children,
   isVisible,
   onBackdropPress,
+  placement,
 }) => {
   return (
     <Modal
@@ -21,10 +23,12 @@ const BottomPopupModal: React.FC<Props> = ({
       useNativeDriver={true}
       testID="modalBackdrop"
       onBackdropPress={onBackdropPress}
+      animationIn={placement === 'top' ? 'slideInDown' : 'slideInUp'}
+      animationOut={placement === 'top' ? 'slideOutUp' : 'slideOutDown'}
       // swipeDirection={'down'}
       // onSwipeComplete={hideModal}
       style={{
-        justifyContent: 'flex-end',
+        justifyContent: placement === 'top' ? 'flex-start' : 'flex-end',
         margin: 0,
       }}>
       {children}
@@ -32,4 +36,4 @@ const BottomPopupModal: React.FC<Props> = ({
   );
 };
 
-export default BottomPopupModal;
+export default SheetModal;

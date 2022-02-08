@@ -134,6 +134,14 @@ export const updatePortfolioBalance = (): WalletActionType => ({
   type: WalletActionTypes.UPDATE_PORTFOLIO_BALANCE,
 });
 
+export const toggleHomeKeyCard = (payload: {
+  keyId: string;
+  show: boolean;
+}): WalletActionType => ({
+  type: WalletActionTypes.TOGGLE_HOME_KEY_CARD,
+  payload,
+});
+
 export const successGetReceiveAddress = (payload: {
   wallet: Wallet;
 }): WalletActionType => ({

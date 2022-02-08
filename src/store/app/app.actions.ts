@@ -6,6 +6,11 @@ import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/Ong
 import {Network} from '../../constants';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 
+export const networkChanged = (network: Network): AppActionType => ({
+  type: AppActionTypes.NETWORK_CHANGED,
+  payload: network,
+});
+
 export const successAppInit = (): AppActionType => ({
   type: AppActionTypes.SUCCESS_APP_INIT,
 });

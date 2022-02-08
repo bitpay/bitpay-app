@@ -3,7 +3,7 @@ import {
   BitPayIdActionType,
   BitPayIdActionTypes,
 } from '../bitpay-id/bitpay-id.types';
-import {Card} from './card.models';
+import {Card, PagedTransactionData, Transaction} from './card.models';
 import {
   CardActionType,
   CardActionTypes,
@@ -13,6 +13,8 @@ import {
 export const cardReduxPersistBlacklist: Array<keyof CardState> = [
   'fetchCardsStatus',
   'balances',
+  'settledTransactions',
+  'pendingTransactions',
 ];
 
 export type FetchCardsStatus = 'success' | 'failed' | null;
@@ -30,6 +32,13 @@ export interface CardState {
     [id: string]: FetchOverviewStatus;
   };
   virtualDesignCurrency: VirtualDesignCurrency;
+  overview: any;
+  settledTransactions: {
+    [id: string]: PagedTransactionData;
+  };
+  pendingTransactions: {
+    [id: string]: Transaction[];
+  };
 }
 
 const initialState: CardState = {
@@ -41,6 +50,9 @@ const initialState: CardState = {
   fetchCardsStatus: null,
   fetchOverviewStatus: {},
   virtualDesignCurrency: 'bitpay-b',
+  overview: null,
+  settledTransactions: {},
+  pendingTransactions: {},
 };
 
 export const cardReducer = (
@@ -91,6 +103,14 @@ export const cardReducer = (
         balances: {
           ...state.balances,
           [action.payload.id]: action.payload.balance,
+        },
+        settledTransactions: {
+          ...state.settledTransactions,
+          [action.payload.id]: action.payload.settledTransactions,
+        },
+        pendingTransactions: {
+          ...state.pendingTransactions,
+          [action.payload.id]: action.payload.pendingTransactions,
         },
       };
     case CardActionTypes.FAILED_FETCH_OVERVIEW:

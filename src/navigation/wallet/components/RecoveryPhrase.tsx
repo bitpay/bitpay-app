@@ -52,7 +52,7 @@ import {
   RowContainer,
   Column,
   Row,
-  ModalContainer,
+  SheetContainer,
 } from '../../../components/styled/Containers';
 import Haptic from '../../../components/haptic-feedback/haptic';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
@@ -70,7 +70,7 @@ import {startUpdateAllWalletBalancesForKey} from '../../../store/wallet/effects/
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import Icons from '../components/WalletIcons';
-import BottomPopupModal from '../../../components/modal/base/bottom-popup/BottomPopupModal';
+import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {FlatList} from 'react-native';
 import {keyExtractor} from '../../../utils/helper-methods';
 import CurrencySelectionRow, {
@@ -161,7 +161,7 @@ const CurrencyName = styled(BaseText)`
   color: #9ba3ae;
 `;
 
-const CurrencySelectionModalContainer = styled(ModalContainer)`
+const CurrencySelectionModalContainer = styled(SheetContainer)`
   padding: 15px;
   min-height: 200px;
 `;
@@ -481,7 +481,7 @@ const RecoveryPhrase = () => {
               </CurrencySelectorContainer>
             )}
 
-            <BottomPopupModal
+            <SheetModal
               isVisible={currencyModalVisible}
               onBackdropPress={() => setCurrencyModalVisible(false)}>
               <CurrencySelectionModalContainer>
@@ -495,7 +495,7 @@ const RecoveryPhrase = () => {
                   renderItem={renderItem}
                 />
               </CurrencySelectionModalContainer>
-            </BottomPopupModal>
+            </SheetModal>
 
             {showOptions && derivationPathEnabled && (
               <AdvancedOptions>

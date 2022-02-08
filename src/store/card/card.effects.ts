@@ -40,9 +40,15 @@ export const startFetchOverview =
         BITPAY_ID.apiToken[APP.network],
         id,
       );
+      const {settledTransactions, pendingTransactions} = res.card.overview;
 
       dispatch(
-        CardActions.successFetchOverview({id, balance: res.card.balance}),
+        CardActions.successFetchOverview({
+          id,
+          balance: res.card.balance,
+          settledTransactions,
+          pendingTransactions,
+        }),
       );
     } catch (err) {
       console.log(`Failed to fetch overview for card ${id}`);

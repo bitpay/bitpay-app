@@ -37,7 +37,7 @@ const createHomeCardList = (
 
   if (hasKeys) {
     const walletCards = keys
-      .filter(key => key)
+      .filter(key => key.show)
       .map(key => {
         const {wallets, totalBalance = 0} = key;
 

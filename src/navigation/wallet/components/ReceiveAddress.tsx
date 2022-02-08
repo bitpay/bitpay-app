@@ -8,9 +8,9 @@ import {useLogger} from '../../../utils/hooks';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
 import {BaseText, H4, Paragraph} from '../../../components/styled/Text';
-import BottomPopupModal from '../../../components/modal/base/bottom-popup/BottomPopupModal';
+import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
-import {ModalContainer} from '../../../components/styled/Containers';
+import {SheetContainer} from '../../../components/styled/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
 
 import {BWCErrorMessage} from '../../../constants/BWCError';
@@ -82,7 +82,7 @@ const LoadingText = styled(H4)`
   text-align: center;
 `;
 
-const ReceiveAddressContainer = styled(ModalContainer)`
+const ReceiveAddressContainer = styled(SheetContainer)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
 `;
 
@@ -220,7 +220,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
   }
 
   return (
-    <BottomPopupModal isVisible={isVisible} onBackdropPress={closeModal}>
+    <SheetModal isVisible={isVisible} onBackdropPress={closeModal}>
       <ReceiveAddressContainer>
         <ReceiveAddressHeader
           onPressRefresh={createAddress}
@@ -259,7 +259,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
           <CloseButtonText>CLOSE</CloseButtonText>
         </CloseButton>
       </ReceiveAddressContainer>
-    </BottomPopupModal>
+    </SheetModal>
   );
 };
 

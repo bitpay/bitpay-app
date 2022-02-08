@@ -1,11 +1,19 @@
 import React from 'react';
-import {Appearance, ColorSchemeName, Switch, Text, View} from 'react-native';
+import {
+  Appearance,
+  ColorSchemeName,
+  ScrollView,
+  Switch,
+  Text,
+  View,
+} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
+import {Network} from '../../constants';
 import {navigationRef} from '../../Root';
 import {RootState} from '../../store';
 import {AppActions} from '../../store/app';
-import {Action, NeutralSlate, White} from '../../styles/colors';
+import {Action, NeutralSlate, SlateDark, White} from '../../styles/colors';
 import haptic from '../haptic-feedback/haptic';
 
 const Container = styled.View`
@@ -26,6 +34,27 @@ const DebugButton = styled.TouchableOpacity<{disabled?: boolean}>`
 const DebugButtonText = styled.Text`
   color: ${White};
 `;
+
+const NetworkToggle = () => {
+  const dispatch = useDispatch();
+  const isTestnet = useSelector<RootState, boolean>(({APP}) => {
+    return APP.network === Network.testnet;
+  });
+
+  const toggleNetwork = () => {
+    haptic('impactLight');
+    dispatch(
+      AppActions.networkChanged(isTestnet ? Network.mainnet : Network.testnet),
+    );
+  };
+
+  return (
+    <Container>
+      <Text>Testnet</Text>
+      <Switch value={isTestnet} onChange={() => toggleNetwork()} />
+    </Container>
+  );
+};
 
 const ThemeToggle = () => {
   const dispatch = useDispatch();
@@ -92,17 +121,21 @@ const SkipIntroButton = () => {
 
 const BpDevtools = () => {
   return (
-    <View
-      style={{
-        backgroundColor: '#444',
-        borderWidth: 2,
-        borderColor: 'red',
-        flexDirection: 'row',
-      }}>
-      <ThemeToggle />
-      <LanguageToggle />
-      <SkipIntroButton />
-      {/* add more stuff */}
+    <View>
+      <ScrollView
+        horizontal={true}
+        style={{
+          flexDirection: 'row',
+          backgroundColor: SlateDark,
+          borderColor: 'red',
+          borderWidth: 2,
+        }}>
+        <NetworkToggle />
+        <ThemeToggle />
+        <LanguageToggle />
+        <SkipIntroButton />
+        {/* add more stuff */}
+      </ScrollView>
     </View>
   );
 };
