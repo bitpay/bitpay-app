@@ -53,6 +53,9 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
   const twoFactorPairingStatus = useSelector<RootState, TwoFactorPairingStatus>(
     ({BITPAY_ID}) => BITPAY_ID.twoFactorPairingStatus,
   );
+  const twoFactorPairingError = useSelector<RootState, string>(
+    ({BITPAY_ID}) => BITPAY_ID.twoFactorPairingError || '',
+  );
   const {
     control,
     formState: {errors, isValid},
@@ -99,7 +102,9 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
     <AuthFormContainer header="Additional Verification">
       {twoFactorPairingStatus === 'failed' ? (
         <AuthRowContainer>
-          <AlertBox type="warning">Something went wrong.</AlertBox>
+          <AlertBox type="warning">
+            {twoFactorPairingError || 'An unexpected error occurred.'}
+          </AlertBox>
         </AuthRowContainer>
       ) : null}
 

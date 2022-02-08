@@ -82,6 +82,9 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
   const loginStatus = useSelector<RootState, LoginStatus>(
     ({BITPAY_ID}) => BITPAY_ID.loginStatus,
   );
+  const loginError = useSelector<RootState, string>(
+    ({BITPAY_ID}) => BITPAY_ID.loginError || '',
+  );
   const [isCaptchaModalVisible, setCaptchaModalVisible] = useState(false);
   const passwordRef = useRef<TextInput>(null);
   const captchaRef = useRef<CaptchaRef>(null);
@@ -187,7 +190,8 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
       {loginStatus === 'failed' ? (
         <AuthRowContainer>
           <AlertBox type="warning">
-            Could not log in. Please review your information and try again.
+            {loginError ||
+              'Could not log in. Please review your information and try again.'}
           </AlertBox>
         </AuthRowContainer>
       ) : null}

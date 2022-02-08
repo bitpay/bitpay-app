@@ -40,6 +40,9 @@ const TwoFactorAuthentication: React.FC<
   const twoFactorAuthStatus = useSelector<RootState, TwoFactorAuthStatus>(
     ({BITPAY_ID}) => BITPAY_ID.twoFactorAuthStatus,
   );
+  const twoFactorAuthError = useSelector<RootState, string>(
+    ({BITPAY_ID}) => BITPAY_ID.twoFactorAuthError || '',
+  );
   const {
     control,
     formState: {errors, isValid},
@@ -77,7 +80,9 @@ const TwoFactorAuthentication: React.FC<
     <AuthFormContainer header="2-Step Verification">
       {twoFactorAuthStatus === 'failed' ? (
         <AuthRowContainer>
-          <AlertBox type="warning">Something went wrong.</AlertBox>
+          <AlertBox type="warning">
+            {twoFactorAuthError || 'An unexpected error occurred.'}
+          </AlertBox>
         </AuthRowContainer>
       ) : null}
 

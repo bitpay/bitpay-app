@@ -40,10 +40,6 @@ export const AuthFormParagraph = styled.Text`
   margin-bottom: 15px;
 `;
 
-export const AuthInputContainer = styled.View`
-  margin-bottom: 15px;
-`;
-
 export const AuthActionsContainer = styled.View`
   margin-top: 20px;
 `;
