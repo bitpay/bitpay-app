@@ -69,6 +69,7 @@ interface SuccessLogin {
 
 interface FailedLogin {
   type: typeof BitPayIdActionTypes.FAILED_LOGIN;
+  payload: {error?: string};
 }
 
 interface PendingLogin {
@@ -88,6 +89,7 @@ interface SuccessSubmitTwoFactorAuth {
 
 interface FailedSubmitTwoFactorAuth {
   type: typeof BitPayIdActionTypes.FAILED_SUBMIT_TWO_FACTOR_AUTH;
+  payload: {error?: string};
 }
 
 interface SuccessSubmitTwoFactorPairing {
@@ -96,6 +98,7 @@ interface SuccessSubmitTwoFactorPairing {
 
 interface FailedSubmitTwoFactorPairing {
   type: typeof BitPayIdActionTypes.FAILED_SUBMIT_TWO_FACTOR_PAIRING;
+  payload: {error?: string};
 }
 
 interface UpdateTwoFactorAuthStatus {

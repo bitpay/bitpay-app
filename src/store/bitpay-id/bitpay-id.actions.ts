@@ -41,8 +41,9 @@ export const successLogin = (
   payload: {network, session},
 });
 
-export const failedLogin = (): BitPayIdActionType => ({
+export const failedLogin = (error?: string): BitPayIdActionType => ({
   type: BitPayIdActionTypes.FAILED_LOGIN,
+  payload: {error},
 });
 
 export const pendingLogin = (
@@ -66,16 +67,22 @@ export const successSubmitTwoFactorAuth = (
   payload: {network, session},
 });
 
-export const failedSubmitTwoFactorAuth = (): BitPayIdActionType => ({
+export const failedSubmitTwoFactorAuth = (
+  error?: string,
+): BitPayIdActionType => ({
   type: BitPayIdActionTypes.FAILED_SUBMIT_TWO_FACTOR_AUTH,
+  payload: {error},
 });
 
 export const successSubmitTwoFactorPairing = (): BitPayIdActionType => ({
   type: BitPayIdActionTypes.SUCCESS_SUBMIT_TWO_FACTOR_PAIRING,
 });
 
-export const failedSubmitTwoFactorPairing = (): BitPayIdActionType => ({
+export const failedSubmitTwoFactorPairing = (
+  error?: string,
+): BitPayIdActionType => ({
   type: BitPayIdActionTypes.FAILED_SUBMIT_TWO_FACTOR_PAIRING,
+  payload: {error},
 });
 
 export const updateTwoFactorAuthStatus = (
