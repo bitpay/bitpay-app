@@ -128,7 +128,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>My Key</HeaderTitle>,
       headerRight: () => {
-        return isPrivKeyEncrypted && backupComplete ? (
+        return isPrivKeyEncrypted ? (
           <SettingsIcon
             onPress={() =>
               navigation.navigate('Wallet', {
@@ -159,30 +159,6 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   const walletList = buildNestedWalletList(wallets);
 
   const keyOptions: Array<Option> = [];
-
-  if (!backupComplete) {
-    const walletTermsAccepted = useSelector(
-      ({WALLET}: RootState) => WALLET.walletTermsAccepted,
-    );
-    keyOptions.push({
-      img: <Icons.Backup />,
-      title: 'Create a Backup Phrase',
-      description:
-        'The only way to recover a key if your phone is lost or stolen.',
-      onPress: () => {
-        navigation.navigate('Wallet', {
-          screen: 'RecoveryPhrase',
-          params: {
-            keyId: key.id,
-            words: key.properties.mnemonic.trim().split(' '),
-            walletTermsAccepted,
-            context: '',
-            key,
-          },
-        });
-      },
-    });
-  }
 
   if (!isPrivKeyEncrypted) {
     keyOptions.push({
