@@ -1,35 +1,24 @@
-import React, {ReactElement} from 'react';
+import React, {memo} from 'react';
 import {Carousel} from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
 import haptic from '../haptic-feedback/haptic';
 import {WIDTH} from '../styled/Containers';
+import {OfferItems, OfferProps} from './offer';
 import OfferCard from './OfferCard';
-
-export interface OfferProps {
-  id: number;
-  img: ReactElement;
-  title?: string;
-  description?: string;
-  onPress: () => void;
-}
-
-interface OfferSlide {
-  items: Array<OfferProps>;
-}
 
 const OffersContainer = styled.View`
   flex: 1;
   margin: 10px 0 20px;
 `;
 
-const OffersSlides = ({items}: OfferSlide) => {
+const OffersSlides = () => {
   return (
     <OffersContainer>
-      <Carousel
+      <Carousel<OfferProps>
         vertical={false}
         layout={'default'}
         useExperimentalSnap={true}
-        data={items}
+        data={OfferItems}
         renderItem={OfferCard}
         sliderWidth={WIDTH}
         itemWidth={280}
@@ -43,4 +32,4 @@ const OffersSlides = ({items}: OfferSlide) => {
   );
 };
 
-export default OffersSlides;
+export default memo(OffersSlides);
