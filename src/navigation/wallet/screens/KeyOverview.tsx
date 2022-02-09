@@ -17,9 +17,7 @@ import {Wallet} from '../../../store/wallet/wallet.models';
 import {SlateDark, White} from '../../../styles/colors';
 import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
 import {BalanceUpdateError} from '../components/ErrorMessages';
-import OptionsBottomPopupModal, {
-  Option,
-} from '../components/OptionsBottomPopupModal';
+import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 
@@ -239,7 +237,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
           );
         }}
       />
-      <OptionsBottomPopupModal
+      <OptionsSheet
         isVisible={showKeyOptions}
         title={'Key Options'}
         options={keyOptions}

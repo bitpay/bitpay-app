@@ -72,19 +72,32 @@ const ShopHome = () => {
       ),
     }))
     .filter(category => category.integrations.length);
+  const categoriesWithGiftCards = categories
+    .map(category => ({
+      ...category,
+      giftCards: availableGiftCards.filter(cardConfig =>
+        category.tags.some((tag: string) =>
+          (cardConfig.tags || []).includes(tag),
+        ),
+      ),
+    }))
+    .filter(category => category.giftCards.length);
   const activeGiftCards = purchasedGiftCards.filter(
     giftCard => !giftCard.archived,
   );
 
   const purchasedBrandsHeight = activeGiftCards.length * 68 + 260;
   const curationsHeight = curations.length * 320;
-  const categoriesHeight = categories.length * 70;
+  const giftCardItemHeight = 87;
+  const giftCardsBottomPadding = 100;
   const searchBarHeight = 150;
+  const availableGiftCardsHeight =
+    availableGiftCards.length * giftCardItemHeight + giftCardsBottomPadding;
+  const staticGiftCardScrollViewHeight =
+    purchasedBrandsHeight + curationsHeight + searchBarHeight;
+
   const giftCardScrollViewHeight =
-    purchasedBrandsHeight +
-    curationsHeight +
-    categoriesHeight +
-    searchBarHeight;
+    staticGiftCardScrollViewHeight + availableGiftCardsHeight;
 
   const integrationsScrollViewHeight =
     categoriesWitIntegrations.length * 273 + 350;
@@ -99,7 +112,14 @@ const ShopHome = () => {
         scrollViewRef={scrollViewRef}
         availableGiftCards={availableGiftCards}
         curations={curations}
-        categories={categories}
+        categories={categoriesWithGiftCards}
+        onSelectedGiftCardsChange={newNumSelectedGiftCards =>
+          setScrollViewHeight(
+            staticGiftCardScrollViewHeight +
+              newNumSelectedGiftCards * giftCardItemHeight +
+              giftCardsBottomPadding,
+          )
+        }
       />
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps

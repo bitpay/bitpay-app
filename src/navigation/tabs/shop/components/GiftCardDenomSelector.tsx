@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {TouchableWithoutFeedback} from 'react-native';
 import styled from 'styled-components/native';
 import MinusSvg from '../../../../../assets/img/minus.svg';
@@ -35,17 +35,23 @@ const SelectedAmount = styled(BaseText)`
   text-align: center;
 `;
 
-const getMiddleIndex = (arr: number[]) => arr && Math.floor(arr.length / 2);
-
-export default ({cardConfig}: {cardConfig: CardConfig}) => {
+export default ({
+  cardConfig,
+  selectedIndex,
+  onChange,
+}: {
+  cardConfig: CardConfig;
+  selectedIndex: number;
+  onChange: (value: number) => void;
+}) => {
   const amounts = cardConfig.supportedAmounts as number[];
-  const [selectedIndex, setSelectedIndex] = useState(getMiddleIndex(amounts));
   return (
     <Selector>
       <TouchableWithoutFeedback
-        onPress={() =>
-          setSelectedIndex(selectedIndex > 1 ? selectedIndex - 1 : 0)
-        }>
+        onPress={() => {
+          const newSelectedIndex = selectedIndex > 1 ? selectedIndex - 1 : 0;
+          onChange(newSelectedIndex);
+        }}>
         <ChangeDenomButton style={{opacity: selectedIndex > 0 ? 1 : 0}}>
           <MinusSvg />
         </ChangeDenomButton>
@@ -56,13 +62,13 @@ export default ({cardConfig}: {cardConfig: CardConfig}) => {
         })}
       </SelectedAmount>
       <TouchableWithoutFeedback
-        onPress={() =>
-          setSelectedIndex(
+        onPress={() => {
+          const newSelectedIndex =
             selectedIndex < amounts.length - 1
               ? selectedIndex + 1
-              : amounts.length - 1,
-          )
-        }>
+              : amounts.length - 1;
+          onChange(newSelectedIndex);
+        }}>
         <ChangeDenomButton
           style={{opacity: selectedIndex < amounts.length - 1 ? 1 : 0}}>
           <PlusSvg />

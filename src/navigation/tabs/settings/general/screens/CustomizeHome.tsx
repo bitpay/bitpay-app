@@ -1,18 +1,11 @@
-import React, {ReactNode, useState} from 'react';
-import CustomizeHomeCard from '../../../../../components/customize-home-card/CustomizeHomeCard';
-import {useSelector} from 'react-redux';
+import React from 'react';
+import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../../../../store';
 import styled from 'styled-components/native';
-import {SupportedCurrencyOptions} from '../../../../../constants/SupportedCurrencyOptions';
-import {ItemProps} from '../../../../../components/list/CurrencySelectionRow';
-
-const HeaderImg = styled.View`
-  align-items: center;
-  justify-content: flex-start;
-  flex-direction: row;
-  flex: 1;
-  flex-wrap: wrap;
-`;
+import {Key} from '../../../../../store/wallet/wallet.models';
+import CustomizeWalletCardComponent from '../components/CustomizeWalletCardComponent';
+import {toggleHomeKeyCard} from '../../../../../store/wallet/wallet.actions';
+import {Dispatch} from 'redux';
 
 const CardListContainer = styled.View`
   flex-direction: row;
@@ -24,84 +17,56 @@ const CustomizeHomeContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const CustomizeHomeCardContainer = styled.View`
-  margin: 10px 0;
-`;
-
 const ScrollViewContainer = styled.ScrollView`
   margin-top: 20px;
   padding: 0 15px;
 `;
 
-const Img = styled.View<{isFirst: boolean}>`
-  width: 20px;
-  height: 20px;
-  min-height: 22px;
-  margin-left: ${({isFirst}) => (isFirst ? 0 : '-3px')};
-`;
+const createCustomizeCardList = (dispatch: Dispatch, keys: Key[]) => {
+  const list: JSX.Element[] = [];
+  const hasKeys = keys.length;
+  const hasGiftCards = false;
+  const hasCoinbase = false;
 
-const KeyCardComponent = (
-  walletList: ItemProps[],
-  value: number,
-  show: boolean,
-) => {
-  /** TODO: Assign stored value */
-  const [checked, setChecked] = useState(show);
-  const _onCTAPress = () => {
-    /** TODO: Store the value and Redirect me */
-    setChecked(!checked);
-  };
+  if (hasKeys) {
+    const walletCards = keys
+      .filter(key => key)
+      .map(key => {
+        const {wallets, totalBalance = 0} = key;
 
-  const HeaderComponent = (
-    <HeaderImg>
-      {walletList &&
-        walletList.map(
-          (wallet, index) =>
-            wallet && (
-              <Img key={index} isFirst={index === 0 || index % 7 === 0}>
-                {wallet.img}
-              </Img>
-            ),
-        )}
-    </HeaderImg>
-  );
+        return (
+          <CustomizeWalletCardComponent
+            key={key.id}
+            checked={!!key.show}
+            wallets={wallets}
+            totalBalance={totalBalance}
+            onPress={() => {
+              dispatch(toggleHomeKeyCard({keyId: key.id, show: !key.show}));
+            }}
+          />
+        );
+      });
 
-  return (
-    <CustomizeHomeCardContainer>
-      <CustomizeHomeCard
-        header={HeaderComponent}
-        body={{
-          title: 'Main Key',
-          value: `$ ${value}`,
-        }}
-        footer={{
-          onCTAPress: _onCTAPress,
-          checked: checked,
-        }}
-      />
-    </CustomizeHomeCardContainer>
-  );
+    list.push(...walletCards);
+  }
+
+  if (hasCoinbase) {
+    // TODO
+  }
+
+  if (hasGiftCards) {
+    // TODO
+  }
+
+  return list;
 };
 
 const CustomizeHome = () => {
-  const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
-  const cardsList: Array<ReactNode | null> = [];
-
-  if (keys) {
-    Object.values(keys).map(key => {
-      const {wallets, totalBalance = 0, show} = key;
-      const list = wallets.map(({currencyAbbreviation}) =>
-        SupportedCurrencyOptions.find(
-          ({id}: {id: string | number}) => id === currencyAbbreviation,
-        ),
-      );
-
-      !!list.length &&
-        cardsList.push(
-          KeyCardComponent(list as ItemProps[], totalBalance, !!show),
-        );
-    });
-  }
+  const dispatch = useDispatch();
+  const keys = useSelector<RootState, {[k: string]: Key}>(
+    ({WALLET}) => WALLET.keys,
+  );
+  const cardsList = createCustomizeCardList(dispatch, Object.values(keys));
 
   return (
     <CustomizeHomeContainer>

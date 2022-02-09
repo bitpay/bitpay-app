@@ -5,6 +5,7 @@ export interface LoginResponse {
 }
 
 export interface LoginErrorResponse {
+  message?: string;
   twoFactorPending?: boolean;
   emailAuthenticationPending?: boolean;
 }

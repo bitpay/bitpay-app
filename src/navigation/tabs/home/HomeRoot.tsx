@@ -40,6 +40,8 @@ import {startUpdateAllKeyAndWalletBalances} from '../../../store/wallet/effects/
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
+import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
+import {URL} from '../../../constants';
 
 const HeaderContainer = styled.View`
   flex-direction: row;
@@ -141,7 +143,9 @@ const HomeRoot = () => {
           source={require('../../../../assets/img/home/quick-links/icon-chat.png')}
         />
       ),
-      onPress: () => {},
+      onPress: () => {
+        dispatch(openUrlWithInAppBrowser(URL.LEAVE_FEEDBACK));
+      },
     },
   ];
 

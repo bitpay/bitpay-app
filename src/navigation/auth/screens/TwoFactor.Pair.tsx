@@ -1,9 +1,10 @@
 import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useEffect} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useDispatch, useSelector} from 'react-redux';
 import * as yup from 'yup';
+import AlertBox from '../../../components/alert-box/AlertBox';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import {navigationRef, RootStacks} from '../../../Root';
@@ -15,30 +16,45 @@ import {AuthStackParamList} from '../AuthStack';
 import AuthFormContainer, {
   AuthActionsContainer,
   AuthFormParagraph,
-  AuthInputContainer,
+  AuthRowContainer,
 } from '../components/AuthFormContainer';
 
-export type TwoFactorPairingParamList = {} | undefined;
+export type TwoFactorPairingParamList = {
+  prevCode: string;
+};
 
 type TwoFactorPairingScreenProps = StackScreenProps<
   AuthStackParamList,
-  'TwoFactorAuthentication'
+  'TwoFactorPairing'
 >;
 
 interface TwoFactorPairingFieldValues {
   code: string;
 }
 
-const schema = yup.object().shape({
-  code: yup.string().required('Required'),
-});
-
 const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
   navigation,
+  route,
 }) => {
   const dispatch = useDispatch();
+  const {prevCode} = route.params;
+  const schema = useMemo(() => {
+    return yup.object().shape({
+      code: yup
+        .string()
+        .required('Required')
+        .test(
+          'NoSameCode',
+          'Cannot use the same code twice.',
+          value => value !== prevCode,
+        ),
+    });
+  }, [prevCode]);
   const twoFactorPairingStatus = useSelector<RootState, TwoFactorPairingStatus>(
     ({BITPAY_ID}) => BITPAY_ID.twoFactorPairingStatus,
+  );
+  const twoFactorPairingError = useSelector<RootState, string>(
+    ({BITPAY_ID}) => BITPAY_ID.twoFactorPairingError || '',
   );
   const {
     control,
@@ -84,6 +100,14 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
 
   return (
     <AuthFormContainer header="Additional Verification">
+      {twoFactorPairingStatus === 'failed' ? (
+        <AuthRowContainer>
+          <AlertBox type="warning">
+            {twoFactorPairingError || 'An unexpected error occurred.'}
+          </AlertBox>
+        </AuthRowContainer>
+      ) : null}
+
       <AuthFormParagraph>
         This additional verification will allow your device to be marked as a
         verified device. You will be securely connected to your BitPay ID
@@ -91,7 +115,7 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
         the new verification code generated.
       </AuthFormParagraph>
 
-      <AuthInputContainer>
+      <AuthRowContainer>
         <Controller
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
@@ -103,12 +127,13 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
               error={errors.code?.message}
               value={value}
               keyboardType="numeric"
+              onSubmitEditing={onSubmit}
             />
           )}
           name="code"
           defaultValue=""
         />
-      </AuthInputContainer>
+      </AuthRowContainer>
 
       <AuthActionsContainer>
         <Button onPress={onSubmit} disabled={!isValid}>

@@ -10,6 +10,7 @@ import {
   TwoFactorPairingStatus,
   FetchSessionStatus,
   PendingLoginStatus,
+  FetchDoshTokenStatus,
 } from './bitpay-id.reducer';
 
 export const successFetchSession = (session: Session): BitPayIdActionType => ({
@@ -40,8 +41,9 @@ export const successLogin = (
   payload: {network, session},
 });
 
-export const failedLogin = (): BitPayIdActionType => ({
+export const failedLogin = (error?: string): BitPayIdActionType => ({
   type: BitPayIdActionTypes.FAILED_LOGIN,
+  payload: {error},
 });
 
 export const pendingLogin = (
@@ -65,16 +67,22 @@ export const successSubmitTwoFactorAuth = (
   payload: {network, session},
 });
 
-export const failedSubmitTwoFactorAuth = (): BitPayIdActionType => ({
+export const failedSubmitTwoFactorAuth = (
+  error?: string,
+): BitPayIdActionType => ({
   type: BitPayIdActionTypes.FAILED_SUBMIT_TWO_FACTOR_AUTH,
+  payload: {error},
 });
 
 export const successSubmitTwoFactorPairing = (): BitPayIdActionType => ({
   type: BitPayIdActionTypes.SUCCESS_SUBMIT_TWO_FACTOR_PAIRING,
 });
 
-export const failedSubmitTwoFactorPairing = (): BitPayIdActionType => ({
+export const failedSubmitTwoFactorPairing = (
+  error?: string,
+): BitPayIdActionType => ({
   type: BitPayIdActionTypes.FAILED_SUBMIT_TWO_FACTOR_PAIRING,
+  payload: {error},
 });
 
 export const updateTwoFactorAuthStatus = (
@@ -129,6 +137,14 @@ export const completedPairing = (): BitPayIdActionType => ({
   type: BitPayIdActionTypes.COMPLETED_PAIRING,
 });
 
+export const successFetchAllUserData = (
+  network: Network,
+  {user, doshToken}: {user: User; doshToken?: string},
+): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.SUCCESS_FETCH_ALL_USER_DATA,
+  payload: {network, user, doshToken},
+});
+
 export const successFetchBasicInfo = (
   network: Network,
   user: User,
@@ -151,4 +167,23 @@ export const updateFetchBasicInfoStatus = (
 export const bitPayIdDisconnected = (network: Network): BitPayIdActionType => ({
   type: BitPayIdActionTypes.BITPAY_ID_DISCONNECTED,
   payload: {network},
+});
+
+export const successFetchDoshToken = (
+  network: Network,
+  token: string,
+): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.SUCCESS_FETCH_DOSH_TOKEN,
+  payload: {network, token},
+});
+
+export const failedFetchDoshToken = (): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.FAILED_FETCH_DOSH_TOKEN,
+});
+
+export const updateFetchDoshTokenStatus = (
+  status: FetchDoshTokenStatus,
+): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.UPDATE_FETCH_DOSH_TOKEN_STATUS,
+  payload: status,
 });
