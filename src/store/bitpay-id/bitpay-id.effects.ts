@@ -7,7 +7,7 @@ import UserApi from '../../api/user';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
 import {isAxiosError} from '../../utils/axios';
-import {AppActions} from '../app/';
+import {AppActions, AppEffects} from '../app/';
 import {startOnGoingProcessModal} from '../app/app.effects';
 import {CardActions} from '../card';
 import {Effect} from '../index';
@@ -260,12 +260,27 @@ export const startDeeplinkPairing =
     const network = state.APP.network;
 
     try {
+      dispatch(
+        AppEffects.startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN),
+      );
       await dispatch(startPairAndLoadUser(network, secret, code));
     } catch (err) {
-      console.error(err);
+      let errMsg;
+
+      if (isAxiosError(err)) {
+        errMsg = JSON.stringify(err.response?.data || err.message);
+      } else if (err instanceof Error) {
+        errMsg = err.message;
+      } else {
+        errMsg = JSON.stringify(err);
+      }
+
+      console.error(errMsg);
       dispatch(LogActions.error('Pairing failed.'));
       dispatch(LogActions.error(JSON.stringify(err)));
-      dispatch(BitPayIdActions.failedPairingBitPayId());
+      dispatch(BitPayIdActions.failedPairingBitPayId(errMsg));
+    } finally {
+      dispatch(AppActions.dismissOnGoingProcessModal());
     }
   };
 

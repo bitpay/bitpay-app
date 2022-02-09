@@ -1,26 +1,49 @@
-import {RouteProp, useNavigation, useRoute} from '@react-navigation/core';
+import {RouteProp, useRoute} from '@react-navigation/core';
+import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect} from 'react';
-import {Button, StyleProp, Text, TextStyle, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import {useTheme} from 'styled-components/native';
-import {RootStacks} from '../../../Root';
+import styled from 'styled-components/native';
+import AlertBox from '../../../components/alert-box/AlertBox';
+import {ScreenGutter} from '../../../components/styled/Containers';
+import {BaseText} from '../../../components/styled/Text';
+import {navigationRef} from '../../../Root';
 import {RootState} from '../../../store';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
-import {TabsScreens} from '../../tabs/TabsStack';
+import {PairingBitPayIdStatus} from '../../../store/bitpay-id/bitpay-id.reducer';
+import {CardActions} from '../../../store/card';
+import {VirtualDesignCurrency} from '../../../store/card/card.types';
 import {BitpayIdStackParamList} from '../BitpayIdStack';
 
-const Pair: React.FC = () => {
-  const theme = useTheme();
+export type PairScreenParamList =
+  | {
+      secret?: string;
+      code?: string;
+      dashboardRedirect?: string;
+      vcd?: VirtualDesignCurrency;
+    }
+  | undefined;
+
+type PairScreenProps = StackScreenProps<BitpayIdStackParamList, 'Pair'>;
+
+const PairingContainer = styled.View`
+  padding: ${ScreenGutter};
+`;
+
+const Pair: React.FC<PairScreenProps> = ({navigation}) => {
   const dispatch = useDispatch();
-  const navigator = useNavigation();
   const route = useRoute<RouteProp<BitpayIdStackParamList, 'Pair'>>();
-  const pairingStatus = useSelector(
-    ({BITPAY_ID}: RootState) => BITPAY_ID.pairingBitPayIdStatus,
+  const pairingStatus = useSelector<RootState, PairingBitPayIdStatus>(
+    ({BITPAY_ID}) => BITPAY_ID.pairingBitPayIdStatus,
+  );
+  const pairingError = useSelector<RootState, string>(
+    ({BITPAY_ID}) => BITPAY_ID.pairingBitPayIdError || '',
   );
 
-  const baseTextStyle: StyleProp<TextStyle> = {color: theme.colors.text};
-  const {secret, code, dashboardRedirect, vcd} = route.params || {};
-  const isPairing = !!secret;
+  const {secret, code} = route.params || {};
+  const virtualDesignCurrency = route.params?.vcd as
+    | VirtualDesignCurrency
+    | undefined;
+  const dashboardRedirect = Boolean(route.params?.dashboardRedirect);
 
   useEffect(() => {
     if (secret) {
@@ -30,36 +53,37 @@ const Pair: React.FC = () => {
 
   useEffect(() => {
     if (pairingStatus === 'success') {
-      navigator.navigate('BitpayId', {screen: 'Profile'});
+      if (dashboardRedirect) {
+        navigationRef.navigate('Card', {screen: 'Home'});
+      } else {
+        navigation.navigate('Profile');
+      }
+
+      dispatch(
+        CardActions.virtualDesignCurrencyUpdated(
+          virtualDesignCurrency || 'bitpay-b',
+        ),
+      );
       dispatch(BitPayIdActions.updatePairingBitPayIdStatus(null));
     }
-  }, [navigator, dispatch, pairingStatus]);
+  }, [
+    navigation,
+    dispatch,
+    pairingStatus,
+    dashboardRedirect,
+    virtualDesignCurrency,
+  ]);
 
   return (
-    <View>
-      {!secret && <Text style={baseTextStyle}>No pairing data received.</Text>}
-
-      {isPairing && (
-        <>
-          <Text style={baseTextStyle}>Pairing...</Text>
-          <Text style={baseTextStyle}>Secret: {secret}</Text>
-          <Text style={baseTextStyle}>
-            Dashboard redirect: {(!!dashboardRedirect).toString()}
-          </Text>
-          <Text style={baseTextStyle}>
-            Virtual Card Design: {vcd || 'not sent'}
-          </Text>
-          <Button
-            title="GeneralRoot"
-            onPress={() =>
-              navigator.navigate(RootStacks.TABS, {
-                screen: TabsScreens.HOME,
-              })
-            }
-          />
-        </>
-      )}
-    </View>
+    <PairingContainer>
+      {!secret ? (
+        <AlertBox type="warning">No pairing data received.</AlertBox>
+      ) : pairingStatus === 'failed' ? (
+        <AlertBox type="warning">
+          Pairing failed: {pairingError || 'An unexpected error occurred.'}
+        </AlertBox>
+      ) : null}
+    </PairingContainer>
   );
 };
 

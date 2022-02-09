@@ -122,8 +122,9 @@ export const successPairingBitPayId = (
   payload: {network, token},
 });
 
-export const failedPairingBitPayId = (): BitPayIdActionType => ({
+export const failedPairingBitPayId = (error?: string): BitPayIdActionType => ({
   type: BitPayIdActionTypes.FAILED_PAIRING_BITPAY_ID,
+  payload: {error},
 });
 
 export const updatePairingBitPayIdStatus = (
