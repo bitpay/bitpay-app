@@ -16,11 +16,18 @@ import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs
 import {ScreenOptions} from '../../../styles/tabNavigator';
 import {ShopOnline} from './components/ShopOnline';
 import {
+  CardConfig,
   Category,
   DirectIntegrationApiObject,
+  GiftCard,
 } from '../../../store/shop/shop.models';
 import {BaseText} from '../../../components/styled/Text';
 import {purchasedGiftCards} from './stubs/gift-cards';
+
+enum ShopTabs {
+  GIFT_CARDS = 'Gift Cards',
+  SHOP_ONLINE = 'Shop Online',
+}
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -43,6 +50,48 @@ const ShopHeader = styled(BaseText)`
   margin-bottom: 30px;
 `;
 
+const getGiftCardsScrollViewHeight = (
+  availableGiftCards: CardConfig[],
+  numSelectedGiftCards: number,
+  purchasedCards: GiftCard[],
+  curations: any,
+) => {
+  const activeGiftCards = purchasedCards.filter(giftCard => !giftCard.archived);
+  const purchasedBrandsHeight = activeGiftCards.length * 68 + 260;
+  const curationsHeight = curations.length * 320;
+  const giftCardItemHeight = 87;
+  const giftCardsBottomPadding = 100;
+  const searchBarHeight = 150;
+  const staticGiftCardScrollViewHeight =
+    purchasedBrandsHeight + curationsHeight + searchBarHeight;
+  const giftCardListHeight =
+    (numSelectedGiftCards || availableGiftCards.length) * giftCardItemHeight +
+    giftCardsBottomPadding;
+  return staticGiftCardScrollViewHeight + giftCardListHeight;
+};
+
+const getShopOnlineScrollViewHeight = (categories: Category[]) => {
+  return categories.length * 273 + 350;
+};
+
+const getScrollViewHeight = (
+  activeTab: string,
+  integrationsCategories: Category[],
+  availableGiftCards: CardConfig[],
+  numSelectedGiftCards: number,
+  purchasedCards: GiftCard[],
+  curations: any,
+) => {
+  return activeTab === ShopTabs.GIFT_CARDS
+    ? getGiftCardsScrollViewHeight(
+        availableGiftCards,
+        numSelectedGiftCards,
+        purchasedCards,
+        curations,
+      )
+    : getShopOnlineScrollViewHeight(integrationsCategories);
+};
+
 const ShopHome = () => {
   const availableCardMap = useSelector(
     ({SHOP}: RootState) => SHOP.availableCardMap,
@@ -52,7 +101,6 @@ const ShopHome = () => {
     ({SHOP}: RootState) => SHOP.categoriesAndCurations,
   );
   const scrollViewRef = useRef<ScrollView>(null);
-
   const availableGiftCards = getCardConfigFromApiConfigMap(availableCardMap);
   const curations = getGiftCardCurations(
     availableGiftCards,
@@ -82,29 +130,20 @@ const ShopHome = () => {
       ),
     }))
     .filter(category => category.giftCards.length);
-  const activeGiftCards = purchasedGiftCards.filter(
-    giftCard => !giftCard.archived,
-  );
 
-  const purchasedBrandsHeight = activeGiftCards.length * 68 + 260;
-  const curationsHeight = curations.length * 320;
-  const giftCardItemHeight = 87;
-  const giftCardsBottomPadding = 100;
-  const searchBarHeight = 150;
-  const availableGiftCardsHeight =
-    availableGiftCards.length * giftCardItemHeight + giftCardsBottomPadding;
-  const staticGiftCardScrollViewHeight =
-    purchasedBrandsHeight + curationsHeight + searchBarHeight;
-
-  const giftCardScrollViewHeight =
-    staticGiftCardScrollViewHeight + availableGiftCardsHeight;
-
-  const integrationsScrollViewHeight =
-    categoriesWitIntegrations.length * 273 + 350;
-
+  const [numSelectedGiftCards, setNumSelectedGiftCards] = useState(0);
   const [scrollViewHeight, setScrollViewHeight] = useState(
-    giftCardScrollViewHeight,
+    getScrollViewHeight(
+      ShopTabs.GIFT_CARDS,
+      categoriesWitIntegrations,
+      availableGiftCards,
+      0,
+      purchasedGiftCards,
+      curations,
+    ),
   );
+
+  const [activeTab, setActiveTab] = useState(ShopTabs.GIFT_CARDS);
 
   const memoizedGiftCardCatalog = useCallback(
     () => (
@@ -114,11 +153,7 @@ const ShopHome = () => {
         curations={curations}
         categories={categoriesWithGiftCards}
         onSelectedGiftCardsChange={newNumSelectedGiftCards =>
-          setScrollViewHeight(
-            staticGiftCardScrollViewHeight +
-              newNumSelectedGiftCards * giftCardItemHeight +
-              giftCardsBottomPadding,
-          )
+          setNumSelectedGiftCards(newNumSelectedGiftCards)
         }
       />
     ),
@@ -149,15 +184,31 @@ const ShopHome = () => {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSetScrollViewHeight = useCallback(
-    debounce(tabTitle => {
-      setScrollViewHeight(
-        tabTitle.includes('Gift Cards')
-          ? giftCardScrollViewHeight
-          : integrationsScrollViewHeight,
-      );
+    debounce(newScrollViewHeight => {
+      setScrollViewHeight(newScrollViewHeight);
     }, 600),
     [],
   );
+
+  useEffect(() => {
+    debouncedSetScrollViewHeight(
+      getScrollViewHeight(
+        activeTab,
+        categoriesWitIntegrations,
+        availableGiftCards,
+        numSelectedGiftCards,
+        purchasedGiftCards,
+        curations,
+      ),
+    );
+  }, [
+    numSelectedGiftCards,
+    debouncedSetScrollViewHeight,
+    activeTab,
+    categoriesWitIntegrations,
+    availableGiftCards,
+    curations,
+  ]);
 
   return (
     <ShopContainer
@@ -180,12 +231,22 @@ const ShopHome = () => {
           screenListeners={{
             tabPress: tab => {
               if (tab.target) {
-                debouncedSetScrollViewHeight(tab.target);
+                setActiveTab(
+                  tab.target.includes(ShopTabs.GIFT_CARDS)
+                    ? ShopTabs.GIFT_CARDS
+                    : ShopTabs.SHOP_ONLINE,
+                );
               }
             },
           }}>
-          <Tab.Screen name="Gift Cards" component={memoizedGiftCardCatalog} />
-          <Tab.Screen name="Shop Online" component={memoizedShopOnline} />
+          <Tab.Screen
+            name={ShopTabs.GIFT_CARDS}
+            component={memoizedGiftCardCatalog}
+          />
+          <Tab.Screen
+            name={ShopTabs.SHOP_ONLINE}
+            component={memoizedShopOnline}
+          />
         </Tab.Navigator>
       </ScrollView>
     </ShopContainer>
