@@ -19,8 +19,13 @@ import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/balance';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
-import {Wallet} from '../../../store/wallet/wallet.models';
-import {SlateDark, White} from '../../../styles/colors';
+import {Key, Wallet} from '../../../store/wallet/wallet.models';
+import {
+  LightBlack,
+  NeutralSlate,
+  SlateDark,
+  White,
+} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {BalanceUpdateError} from '../components/ErrorMessages';
@@ -54,12 +59,36 @@ const BalanceContainer = styled.View`
 `;
 
 const Chain = styled(BaseText)`
-  font-size: 14px;
+  font-size: 16px;
   font-style: normal;
-  font-weight: 300;
   letter-spacing: 0;
   line-height: 40px;
+  color: ${({theme: {dark}}) => (dark ? White : LightBlack)};
 `;
+
+const Type = styled(BaseText)`
+  font-size: 12px;
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  border: 1px solid ${({theme: {dark}}) => (dark ? '#252525' : '#E1E4E7')};
+  padding: 2px 4px;
+  border-radius: 3px;
+  margin-left: auto;
+`;
+
+const getWalletType = (key: Key, wallet: Wallet) => {
+  const {
+    credentials: {token, walletId},
+  } = wallet;
+  if (token) {
+    const linkedWallet = key.wallets.find(({tokens}) =>
+      tokens?.includes(walletId),
+    );
+    const walletName =
+      linkedWallet?.walletName || linkedWallet?.credentials.walletName;
+    return `Linked to ${walletName}`;
+  }
+  return;
+};
 
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
@@ -75,6 +104,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const uiFormattedWallet = buildUIFormattedWallet(fullWalletObj);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
+  const walletType = getWalletType(key, fullWalletObj);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -174,7 +204,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                   </Balance>
                   <Chain>{currencyAbbreviation}</Chain>
                 </Row>
-                {showFiatBalance && <H5>{fiatBalance}</H5>}
+                <Row>
+                  {showFiatBalance && <H5>{fiatBalance}</H5>}
+                  {walletType && <Type>{walletType}</Type>}
+                </Row>
               </BalanceContainer>
 
               <LinkingButtons
