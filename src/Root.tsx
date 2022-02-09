@@ -6,7 +6,13 @@ import {
 import {createStackNavigator} from '@react-navigation/stack';
 import debounce from 'lodash.debounce';
 import React, {useEffect, useState} from 'react';
-import {Appearance, AppState, AppStateStatus, StatusBar} from 'react-native';
+import {
+  Appearance,
+  AppState,
+  AppStateStatus,
+  Platform,
+  StatusBar,
+} from 'react-native';
 import 'react-native-gesture-handler';
 import {ThemeProvider} from 'styled-components/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
@@ -197,10 +203,14 @@ export default () => {
 
   const scheme = appColorScheme || Appearance.getColorScheme();
   const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
-  StatusBar.setBarStyle(
-    scheme === 'light' ? 'dark-content' : 'light-content',
-    true,
-  );
+  const statusBarStyle =
+    Platform.OS === 'ios'
+      ? theme.dark
+        ? 'dark-content'
+        : 'light-content'
+      : theme.dark
+      ? 'light-content'
+      : 'dark-content';
 
   // ROOT STACKS AND GLOBAL COMPONENTS
   const initialRoute = onboardingCompleted
@@ -213,6 +223,12 @@ export default () => {
 
   return (
     <SafeAreaProvider>
+      <StatusBar
+        animated={true}
+        barStyle={statusBarStyle}
+        backgroundColor={theme.colors.background}
+      />
+
       <ThemeProvider theme={theme}>
         {showDevtools ? <BpDevtools /> : null}
 
