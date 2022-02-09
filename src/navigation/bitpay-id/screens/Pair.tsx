@@ -5,7 +5,6 @@ import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import AlertBox from '../../../components/alert-box/AlertBox';
 import {ScreenGutter} from '../../../components/styled/Containers';
-import {BaseText} from '../../../components/styled/Text';
 import {navigationRef} from '../../../Root';
 import {RootState} from '../../../store';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
