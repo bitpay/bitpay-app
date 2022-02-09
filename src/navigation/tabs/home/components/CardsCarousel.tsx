@@ -39,8 +39,14 @@ const keyBackupRequired = (
         text: 'Backup Key',
         action: () => {
           navigation.navigate('Wallet', {
-            screen: 'BackupKey',
-            params: {context: 'Wallet', key},
+            screen: 'RecoveryPhrase',
+            params: {
+              keyId: key.id,
+              words: key.properties.mnemonic.trim().split(' '),
+              walletTermsAccepted: true,
+              context: '',
+              key,
+            },
           });
         },
         primary: true,
