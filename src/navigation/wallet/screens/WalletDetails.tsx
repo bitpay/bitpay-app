@@ -107,7 +107,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
-        <HeaderTitle>{uiFormattedWallet.currencyName}</HeaderTitle>
+        <HeaderTitle>{uiFormattedWallet.walletName}</HeaderTitle>
       ),
       headerRight: () => (
         <Settings
