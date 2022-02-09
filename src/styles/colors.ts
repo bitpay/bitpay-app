@@ -12,15 +12,27 @@ export const Cloud = '#F2F2F2';
 export const Feather = '#F6F7FC';
 
 /* Neutrals */
+/**
+ * Use this value instead of true black to minimize black smearing on OLED devices.
+ */
+export const OledBlack = '#050505';
+export const LightBlack = '#252525';
 export const Black = '#303133';
 export const Grey = '#E7E7E7';
 export const White = '#FFFFFF';
-export const LightBlack = '#252525';
 
 /* Interface */
 export const Caution = '#ef476f';
+export const Caution50 = '#FDAFBB';
+export const Caution25 = '#FFD8DE';
+
 export const Success = '#2fcfa4';
+export const Success50 = '#97E7D1';
+export const Success25 = '#CBF3E8';
+
 export const Warning = '#fdb455';
+export const Warning75 = '#FDC67F';
+export const Warning25 = '#FEECD4';
 
 export const Disabled = '#edeef0';
 export const DisabledDark = '#3c3c3c';

@@ -28,10 +28,14 @@ import {requestTrackingPermission} from 'react-native-tracking-transparency';
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     dispatch(LogActions.clear());
-    dispatch(LogActions.info('Initializing app...'));
 
     const {APP, BITPAY_ID} = getState();
     const network = APP.network;
+
+    dispatch(LogActions.info('Initializing app...'));
+    dispatch(LogActions.debug(`Network: ${network}`));
+    dispatch(LogActions.debug(`Theme: ${APP.colorScheme || 'system'}`));
+
     const token = BITPAY_ID.apiToken[network];
     const isPaired = !!token;
     const identity = dispatch(initializeAppIdentity());
@@ -40,6 +44,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     let user: User | undefined;
     let cards: Card[] | undefined;
+    let doshToken: string | undefined;
 
     if (isPaired) {
       try {
@@ -51,6 +56,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
         const response = await UserApi.fetchAllUserData(token);
         user = response.basicInfo;
         cards = response.cards;
+        doshToken = response.doshToken;
       } catch (err: any) {
         if (isAxiosError(err)) {
           dispatch(LogActions.error(`${err.name}: ${err.message}`));
@@ -72,7 +78,9 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here
     await dispatch(startWalletStoreInit());
-    await dispatch(BitPayIdEffects.startBitPayIdStoreInit(network, {user}));
+    await dispatch(
+      BitPayIdEffects.startBitPayIdStoreInit(network, {user, doshToken}),
+    );
     await dispatch(CardEffects.startCardStoreInit(network, {cards}));
 
     await sleep(500);

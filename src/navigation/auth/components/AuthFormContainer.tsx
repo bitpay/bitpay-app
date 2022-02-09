@@ -1,7 +1,6 @@
 import React from 'react';
 import styled from 'styled-components/native';
 import {BaseText} from '../../../components/styled/Text';
-import {SlateDark} from '../../../styles/colors';
 
 interface LoginContainerProps {
   header?: string;
@@ -29,15 +28,16 @@ const FormContainer = styled.View`
   padding: 0 20px;
 `;
 
+export const AuthRowContainer = styled.View`
+  margin-bottom: 15px;
+`;
+
 export const AuthFormParagraph = styled.Text`
-  color: ${SlateDark}
+  color: ${({theme}) => theme.colors.description};
   font-size: 16px;
   font-weight: 400;
   line-height: 25px;
-`;
-
-export const AuthInputContainer = styled.View`
-  margin: 15px 0;
+  margin-bottom: 15px;
 `;
 
 export const AuthActionsContainer = styled.View`

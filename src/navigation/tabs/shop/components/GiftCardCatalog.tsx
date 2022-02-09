@@ -1,14 +1,15 @@
 import React, {useMemo, useState} from 'react';
 import debounce from 'lodash.debounce';
-import styled, {css, useTheme} from 'styled-components/native';
-import {Cloud, LightBlack} from '../../../../styles/colors';
+import {useTheme} from 'styled-components/native';
+import pickBy from 'lodash.pickby';
+import uniqBy from 'lodash.uniqby';
 import {Platform, View} from 'react-native';
 import {useForm, Controller} from 'react-hook-form';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {WIDTH} from '../../../../components/styled/Containers';
 import ShopCarouselList, {ShopCarouselItem} from './ShopCarouselList';
 import {purchasedGiftCards} from '../stubs/gift-cards';
-import {BaseText, Paragraph} from '../../../../components/styled/Text';
+import {Paragraph} from '../../../../components/styled/Text';
 import GiftCardItem from './GiftCardItem';
 import {
   CardConfig,
@@ -16,7 +17,6 @@ import {
   GiftCardCuration,
 } from '../../../../store/shop/shop.models';
 import {
-  CategoryItemTouchableHighlight,
   HideableView,
   ListItemTouchableHighlight,
   NoResultsContainer,
@@ -33,31 +33,7 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import {GiftCardScreens} from '../gift-card/GiftCardStack';
 import MyGiftCards from './MyGiftCards';
-import RemoteImage from './RemoteImage';
-interface CategoryItemProps {
-  isLast: boolean;
-}
-const CategoryItem = styled.View<CategoryItemProps>`
-  ${({isLast}) =>
-    css`
-      border-bottom-color: ${({theme}) => (theme.dark ? LightBlack : Cloud)};
-      width: 100%;
-      border-bottom-width: ${isLast ? 0 : 1}px;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      padding: 20px 0;
-    `}
-`;
-
-const CategoryText = styled(BaseText)`
-  margin-left: 15px;
-  font-size: 14px;
-`;
-
-const CategoryEmoji = styled(BaseText)`
-  margin-top: -2px;
-`;
+import FilterSheet, {initializeCategoryMap} from './FilterSheet';
 
 const Curations = ({
   curations,
@@ -95,22 +71,61 @@ const Curations = ({
     </>
   );
 };
+interface CategoryWithGiftCards extends Category {
+  giftCards: CardConfig[];
+}
+
+const getNumSelectedCategories = (
+  selectedCategoryMap: ReturnType<typeof initializeCategoryMap>,
+) => {
+  return Object.values(selectedCategoryMap).filter(selected => selected).length;
+};
+
+const getSelectedGiftCards = (
+  availableGiftCards: CardConfig[],
+  categories: CategoryWithGiftCards[],
+  selectedCategoryMap: ReturnType<typeof initializeCategoryMap>,
+) => {
+  return getNumSelectedCategories(selectedCategoryMap)
+    ? uniqBy(
+        Object.keys(pickBy(selectedCategoryMap, selected => selected)).reduce(
+          (giftCards, categoryName) => {
+            const categoryObj = categories.find(
+              category => category.displayName === categoryName,
+            ) as CategoryWithGiftCards;
+            return [...giftCards, ...categoryObj.giftCards];
+          },
+          [] as CardConfig[],
+        ),
+        'name',
+      )
+    : availableGiftCards;
+};
 
 export default ({
   scrollViewRef,
   availableGiftCards,
   curations,
   categories,
+  onSelectedGiftCardsChange,
 }: {
   scrollViewRef: any;
   availableGiftCards: CardConfig[];
   curations: GiftCardCuration[];
-  categories: Category[];
+  categories: CategoryWithGiftCards[];
+  onSelectedGiftCardsChange: (newNumSelectedGiftCards: number) => void;
 }) => {
   const navigation = useNavigation();
   const theme = useTheme();
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as CardConfig[]);
+  const [isFilterSheetShown, setIsFilterSheetShown] = useState(false);
+  const [selectedCategoryMap, setSelectedCategoryMap] = useState(
+    initializeCategoryMap(categories.map(category => category.displayName)),
+  );
+  const [selectedGiftCards, setSelectedGiftCards] =
+    useState(availableGiftCards);
+  const numSelectedCategories = getNumSelectedCategories(selectedCategoryMap);
   const {control} = useForm();
   const activeGiftCards = purchasedGiftCards.filter(
     giftCard => !giftCard.archived,
@@ -134,57 +149,109 @@ export default ({
   );
 
   return (
-    <View>
-      {purchasedGiftCards.length ? (
-        <>
-          <MyGiftCards
-            giftCards={purchasedGiftCards}
-            supportedGiftCards={availableGiftCards}
-          />
-          <SectionDivider />
-        </>
-      ) : (
-        <SectionSpacer />
-      )}
-      <SectionContainer>
-        <Controller
-          control={control}
-          render={({field: {onChange, onBlur, value}}) => (
-            <SearchBox
-              placeholder={'Search Gift Cards'}
-              theme={theme}
-              onBlur={onBlur}
-              onFocus={() => {
-                scrollViewRef &&
-                  scrollViewRef.current &&
-                  scrollViewRef.current.scrollTo({
-                    x: 0,
-                    y: numActiveGiftCards
-                      ? activeGiftCardsHeight + 15
-                      : purchasedGiftCards.length
-                      ? 300
-                      : 160,
-                    animated: Platform.select({
-                      ios: true,
-                      android: !numActiveGiftCards,
-                    }),
-                  });
-              }}
-              onChangeText={(text: string) => {
-                onChange(text);
-                updateSearchResults(text);
-              }}
-              value={value}
-              type={'search'}
+    <>
+      <FilterSheet
+        isVisible={isFilterSheetShown}
+        closeModal={() => setIsFilterSheetShown(false)}
+        categories={selectedCategoryMap}
+        onSelectionChange={newCategoryMap => {
+          setSelectedCategoryMap(newCategoryMap);
+          const newSelectedGiftCards = getSelectedGiftCards(
+            availableGiftCards,
+            categories,
+            newCategoryMap,
+          );
+          setSelectedGiftCards(newSelectedGiftCards);
+          onSelectedGiftCardsChange(newSelectedGiftCards.length);
+        }}
+      />
+      <View>
+        {purchasedGiftCards.length ? (
+          <>
+            <MyGiftCards
+              giftCards={purchasedGiftCards}
+              supportedGiftCards={availableGiftCards}
             />
+            <SectionDivider />
+          </>
+        ) : (
+          <SectionSpacer />
+        )}
+        <SectionContainer>
+          <Controller
+            control={control}
+            render={({field: {onChange, onBlur, value}}) => (
+              <SearchBox
+                placeholder={'Search Gift Cards'}
+                theme={theme}
+                onBlur={onBlur}
+                onFocus={() => {
+                  scrollViewRef &&
+                    scrollViewRef.current &&
+                    scrollViewRef.current.scrollTo({
+                      x: 0,
+                      y: numActiveGiftCards
+                        ? activeGiftCardsHeight + 15
+                        : purchasedGiftCards.length
+                        ? 300
+                        : 160,
+                      animated: Platform.select({
+                        ios: true,
+                        android: !numActiveGiftCards,
+                      }),
+                    });
+                }}
+                onChangeText={(text: string) => {
+                  onChange(text);
+                  updateSearchResults(text);
+                }}
+                value={value}
+                type={'search'}
+              />
+            )}
+            name="search"
+          />
+        </SectionContainer>
+        <HideableView show={!!searchVal}>
+          {searchResults.length ? (
+            <SearchResults>
+              {searchResults.map((cardConfig: CardConfig) => (
+                <ListItemTouchableHighlight
+                  key={cardConfig.name}
+                  onPress={() => {
+                    navigation.navigate('GiftCard', {
+                      screen: GiftCardScreens.BUY_GIFT_CARD,
+                      params: {cardConfig},
+                    });
+                  }}
+                  underlayColor={underlayColor}>
+                  <GiftCardItem cardConfig={cardConfig} />
+                </ListItemTouchableHighlight>
+              ))}
+            </SearchResults>
+          ) : (
+            <NoResultsContainer>
+              <NoResultsHeader>No Results</NoResultsHeader>
+              <Paragraph>Please try searching something else.</Paragraph>
+            </NoResultsContainer>
           )}
-          name="search"
-        />
-      </SectionContainer>
-      <HideableView show={!!searchVal}>
-        {searchResults.length ? (
+        </HideableView>
+        <HideableView show={!searchVal}>
+          {memoizedCurations}
+          <SectionContainer>
+            <SectionHeaderContainer>
+              <SectionHeader>All Gift Cards</SectionHeader>
+              <TouchableWithoutFeedback
+                onPress={() => setIsFilterSheetShown(!isFilterSheetShown)}>
+                <SectionHeaderButton>
+                  Filter
+                  {numSelectedCategories ? ` (${numSelectedCategories})` : null}
+                </SectionHeaderButton>
+              </TouchableWithoutFeedback>
+            </SectionHeaderContainer>
+          </SectionContainer>
           <SearchResults>
-            {searchResults.map((cardConfig: CardConfig) => (
+            {selectedGiftCards.map((cardConfig: CardConfig) => (
               <ListItemTouchableHighlight
                 key={cardConfig.name}
                 onPress={() => {
@@ -198,41 +265,8 @@ export default ({
               </ListItemTouchableHighlight>
             ))}
           </SearchResults>
-        ) : (
-          <NoResultsContainer>
-            <NoResultsHeader>No Results</NoResultsHeader>
-            <Paragraph>Please try searching something else.</Paragraph>
-          </NoResultsContainer>
-        )}
-      </HideableView>
-      <HideableView show={!searchVal}>
-        {memoizedCurations}
-        <SectionContainer>
-          <SectionHeaderContainer>
-            <SectionHeader>Categories</SectionHeader>
-            <TouchableWithoutFeedback>
-              <SectionHeaderButton>See all</SectionHeaderButton>
-            </TouchableWithoutFeedback>
-          </SectionHeaderContainer>
-        </SectionContainer>
-        {categories.map((category, index) => (
-          <CategoryItemTouchableHighlight
-            key={category.displayName}
-            onPress={() => console.log('press', category.displayName)}
-            underlayColor={underlayColor}>
-            <CategoryItem isLast={index === categories.length - 1}>
-              <RemoteImage
-                height={21}
-                uri={category.icon}
-                fallbackComponent={() => (
-                  <CategoryEmoji>{category.emoji}</CategoryEmoji>
-                )}
-              />
-              <CategoryText>{category.displayName}</CategoryText>
-            </CategoryItem>
-          </CategoryItemTouchableHighlight>
-        ))}
-      </HideableView>
-    </View>
+        </HideableView>
+      </View>
+    </>
   );
 };

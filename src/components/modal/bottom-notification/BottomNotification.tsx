@@ -1,6 +1,6 @@
 import React, {ReactChild} from 'react';
-import BottomPopupModal from '../base/bottom-popup/BottomPopupModal';
-import {BaseText, H4} from '../../styled/Text';
+import SheetModal from '../base/sheet/SheetModal';
+import {BaseText, fontFamily, H4} from '../../styled/Text';
 import styled, {css} from 'styled-components/native';
 import {useDispatch, useSelector} from 'react-redux';
 import {AppActions} from '../../../store/app';
@@ -19,7 +19,8 @@ import WarningSvg from '../../../../assets/img/warning.svg';
 import ErrorSvg from '../../../../assets/img/error.svg';
 import QuestionSvg from '../../../../assets/img/question.svg';
 import {sleep} from '../../../utils/helper-methods';
-import {Theme} from '@react-navigation/native';
+import {Theme, useTheme} from '@react-navigation/native';
+import Markdown from 'react-native-markdown-display';
 
 export interface BottomNotificationConfig {
   type: 'success' | 'info' | 'warning' | 'error' | 'question';
@@ -67,16 +68,6 @@ const MessageContainer = styled.View`
   margin: 15px 0 20px 0;
 `;
 
-const Message = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 24px;
-  letter-spacing: 0.5px;
-  text-align: left;
-  color: ${({theme}) => theme.colors.text};
-`;
-
 const Hr = styled.View`
   border-bottom-color: #ebebeb;
   border-bottom-width: 1px;
@@ -107,6 +98,7 @@ const Cta = styled(BaseText)`
 `;
 
 const BottomNotification = () => {
+  const theme = useTheme();
   const dispatch = useDispatch();
   const rootState = useSelector((state: RootState) => state);
   const isVisible = useSelector(
@@ -120,7 +112,7 @@ const BottomNotification = () => {
     config || {};
 
   return (
-    <BottomPopupModal
+    <SheetModal
       isVisible={isVisible}
       onBackdropPress={() => {
         if (enableBackdropDismiss) {
@@ -134,7 +126,19 @@ const BottomNotification = () => {
           <H4>{title}</H4>
         </Row>
         <MessageContainer>
-          <Message>{message}</Message>
+          {message ? (
+            <Markdown
+              style={{
+                body: {
+                  color: theme.colors.text,
+                  fontFamily,
+                  fontSize: 16,
+                  lineHeight: 24,
+                },
+              }}>
+              {message}
+            </Markdown>
+          ) : null}
         </MessageContainer>
         {message2 ? message2 : null}
         <Hr />
@@ -157,7 +161,7 @@ const BottomNotification = () => {
           })}
         </CtaContainer>
       </BottomNotificationContainer>
-    </BottomPopupModal>
+    </SheetModal>
   );
 };
 
