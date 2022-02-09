@@ -89,8 +89,8 @@ export const OfferBackgroundOverlay = () => {
       </Svg.Defs>
       <Svg.Rect
         id="gradient-rect"
-        width={260}
-        height={182}
+        width={OFFER_WIDTH}
+        height={OFFER_HEIGHT}
         fill="url(#offer-gradient)"
       />
     </Svg.Svg>
