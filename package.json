@@ -14,7 +14,8 @@
     "postinstall": "./scripts/postinstall.sh",
     "clean": "react-native-clean-project",
     "pod:install": "command -v pod && (cd ios/ && pod install && cd ..) || echo \"pod command not found\"",
-    "extract": "yarn run i18next 'src/**/*.{js,jsx,ts,tsx}'"
+    "extract": "yarn run i18next 'src/**/*.{js,jsx,ts,tsx}'",
+    "postversion": "react-native-version"
   },
   "dependencies": {
     "@freakycoder/react-native-bounceable": "0.2.5",
@@ -138,6 +139,7 @@
     "react-native-clean-project": "3.6.7",
     "react-native-codegen": "0.0.7",
     "react-native-dotenv": "3.3.0",
+    "react-native-version": "4.0.0",
     "react-test-renderer": "17.0.1",
     "redux-devtools-extension": "2.13.9",
     "ts-jest": "^26.0.7",
