@@ -14,6 +14,7 @@ import ReactAppboy from 'react-native-appboy-sdk';
 
 interface BitPayIdStoreInitParams {
   user?: User;
+  doshToken?: string;
 }
 
 interface StartLoginParams {
@@ -23,10 +24,15 @@ interface StartLoginParams {
 }
 
 export const startBitPayIdStoreInit =
-  (network: Network, {user}: BitPayIdStoreInitParams): Effect<Promise<void>> =>
+  (
+    network: Network,
+    {user, doshToken}: BitPayIdStoreInitParams,
+  ): Effect<Promise<void>> =>
   async dispatch => {
     if (user) {
-      dispatch(BitPayIdActions.successFetchBasicInfo(network, user));
+      dispatch(
+        BitPayIdActions.successFetchAllUserData(network, {user, doshToken}),
+      );
       dispatch(startSetBrazeUser(user));
     }
   };
@@ -224,11 +230,18 @@ const startPairAndLoadUser =
   async dispatch => {
     try {
       const token = await AuthApi.pair(secret, code);
-      const {basicInfo, cards} = await UserApi.fetchAllUserData(token);
+      const {basicInfo, cards, doshToken} = await UserApi.fetchAllUserData(
+        token,
+      );
 
       batch(() => {
         dispatch(LogActions.info('Successfully paired with BitPayID.'));
-        dispatch(BitPayIdActions.successFetchBasicInfo(network, basicInfo));
+        dispatch(
+          BitPayIdActions.successFetchAllUserData(network, {
+            user: basicInfo,
+            doshToken,
+          }),
+        );
         dispatch(startSetBrazeUser(basicInfo));
         dispatch(CardActions.successFetchCards(network, cards));
         dispatch(BitPayIdActions.successPairingBitPayId(network, token));
@@ -257,6 +270,23 @@ export const startFetchBasicInfo =
       dispatch(BitPayIdActions.failedFetchBasicInfo());
     }
   };
+
+export const startFetchDoshToken = (): Effect => async (dispatch, getState) => {
+  try {
+    const {APP, BITPAY_ID} = getState();
+    const doshToken = await UserApi.fetchDoshToken(
+      BITPAY_ID.apiToken[APP.network],
+    );
+
+    dispatch(BitPayIdActions.successFetchDoshToken(APP.network, doshToken));
+  } catch (err) {
+    batch(() => {
+      dispatch(LogActions.error('Failed to fetch dosh token.'));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(BitPayIdActions.failedFetchDoshToken());
+    });
+  }
+};
 
 export const startSetBrazeUser =
   ({eid, email}: User): Effect =>

@@ -25,5 +25,12 @@ export interface FetchAllUserDataResponse {
   user: {
     basicInfo: BasicUserInfo;
     cards: Card[];
+    doshToken: string;
+  };
+}
+
+export interface FetchDoshTokenResponse {
+  user: {
+    doshToken: string;
   };
 }

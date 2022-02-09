@@ -8,6 +8,8 @@ export const bitPayIdReduxPersistBlackList: (keyof BitPayIdState)[] = [
   'twoFactorPairingStatus',
   'pairingBitPayIdStatus',
   'fetchBasicInfoStatus',
+  'doshToken',
+  'fetchDoshTokenStatus',
 ];
 
 export type FetchSessionStatus = 'loading' | 'success' | 'failed' | null;
@@ -26,10 +28,14 @@ export type TwoFactorPairingStatus = 'success' | 'failed' | null;
 export type EmailPairingStatus = 'success' | 'failed' | null;
 export type PairingBitPayIdStatus = 'success' | 'failed' | null;
 export type FetchBasicInfoStatus = 'success' | 'failed' | null;
+export type FetchDoshTokenStatus = 'success' | 'failed' | null;
 
 export interface BitPayIdState {
   session: Session;
   apiToken: {
+    [key in Network]: string;
+  };
+  doshToken: {
     [key in Network]: string;
   };
   user: {
@@ -42,6 +48,7 @@ export interface BitPayIdState {
   emailPairingStatus: EmailPairingStatus;
   pairingBitPayIdStatus: PairingBitPayIdStatus;
   fetchBasicInfoStatus: FetchBasicInfoStatus;
+  fetchDoshTokenStatus: FetchDoshTokenStatus;
 }
 
 const initialState: BitPayIdState = {
@@ -51,6 +58,10 @@ const initialState: BitPayIdState = {
     noCaptchaKey: '',
   },
   apiToken: {
+    [Network.mainnet]: '',
+    [Network.testnet]: '',
+  },
+  doshToken: {
     [Network.mainnet]: '',
     [Network.testnet]: '',
   },
@@ -65,6 +76,7 @@ const initialState: BitPayIdState = {
   emailPairingStatus: null,
   pairingBitPayIdStatus: null,
   fetchBasicInfoStatus: null,
+  fetchDoshTokenStatus: null,
 };
 
 export const bitPayIdReducer = (
@@ -208,6 +220,19 @@ export const bitPayIdReducer = (
         pairingBitPayIdStatus: null,
       };
 
+    case BitPayIdActionTypes.SUCCESS_FETCH_ALL_USER_DATA:
+      return {
+        ...state,
+        user: {
+          ...state.user,
+          [action.payload.network]: action.payload.user,
+        },
+        doshToken: {
+          ...state.doshToken,
+          [action.payload.network]: action.payload.doshToken,
+        },
+      };
+
     case BitPayIdActionTypes.SUCCESS_FETCH_BASIC_INFO:
       return {
         ...state,
@@ -241,6 +266,32 @@ export const bitPayIdReducer = (
           ...state.user,
           [action.payload.network]: null,
         },
+        doshToken: {
+          ...state.doshToken,
+          [action.payload.network]: null,
+        },
+      };
+
+    case BitPayIdActionTypes.SUCCESS_FETCH_DOSH_TOKEN:
+      return {
+        ...state,
+        fetchDoshTokenStatus: 'success',
+        doshToken: {
+          ...state.doshToken,
+          [action.payload.network]: action.payload.token,
+        },
+      };
+
+    case BitPayIdActionTypes.FAILED_FETCH_DOSH_TOKEN:
+      return {
+        ...state,
+        fetchDoshTokenStatus: 'failed',
+      };
+
+    case BitPayIdActionTypes.UPDATE_FETCH_DOSH_TOKEN_STATUS:
+      return {
+        ...state,
+        fetchDoshTokenStatus: action.payload,
       };
 
     default:
