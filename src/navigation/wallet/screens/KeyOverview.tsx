@@ -153,7 +153,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
       img: <Icons.Encrypt />,
       title: 'Encrypt your Key',
       description:
-        'Prevent an unauthorized used from sending funds out of your wallet.',
+        'Prevent an unauthorized user from sending funds out of your wallet.',
       onPress: () => null,
     },
     {
