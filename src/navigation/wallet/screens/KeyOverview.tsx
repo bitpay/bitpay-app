@@ -8,18 +8,19 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
 import {BaseText, H5, HeaderTitle} from '../../../components/styled/Text';
 import Settings from '../../../components/settings/Settings';
-import {Hr} from '../../../components/styled/Containers';
+import {Hr, SettingIcon} from '../../../components/styled/Containers';
 import {RootState} from '../../../store';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateAllWalletBalancesForKey} from '../../../store/wallet/effects/balance/balance';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
-import {Wallet} from '../../../store/wallet/wallet.models';
+import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {SlateDark, White} from '../../../styles/colors';
 import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
 import {BalanceUpdateError} from '../components/ErrorMessages';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
+import SettingsIcon from '../../../components/icons/settings/SettingsIcon';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -120,43 +121,81 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   const theme = useTheme();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const {key} = route.params;
+  const {isPrivKeyEncrypted, backupComplete} = key;
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>My Key</HeaderTitle>,
-      headerRight: () => (
-        <Settings
-          onPress={() => {
-            setShowKeyOptions(true);
-          }}
-        />
-      ),
+      headerRight: () => {
+        return isPrivKeyEncrypted && backupComplete ? (
+          <SettingsIcon
+            onPress={() =>
+              navigation.navigate('Wallet', {
+                screen: 'KeySettings',
+                params: {
+                  key,
+                },
+              })
+            }
+          />
+        ) : (
+          <>
+            <Settings
+              onPress={() => {
+                setShowKeyOptions(true);
+              }}
+            />
+          </>
+        );
+      },
     });
   }, [navigation]);
 
-  const {key} = route.params;
   const {wallets = [], totalBalance} = useSelector(
     ({WALLET}: RootState) => WALLET.keys[key.id] || {},
   );
 
   const walletList = buildNestedWalletList(wallets);
 
-  const keyOptions: Array<Option> = [
-    {
+  const keyOptions: Array<Option> = [];
+
+  if (!backupComplete) {
+    const walletTermsAccepted = useSelector(
+      ({WALLET}: RootState) => WALLET.walletTermsAccepted,
+    );
+    keyOptions.push({
       img: <Icons.Backup />,
       title: 'Create a Backup Phrase',
       description:
         'The only way to recover a key if your phone is lost or stolen.',
-      onPress: () => null,
-    },
-    {
+      onPress: () => {
+        navigation.navigate('Wallet', {
+          screen: 'RecoveryPhrase',
+          params: {
+            keyId: key.id,
+            words: key.properties.mnemonic.trim().split(' '),
+            walletTermsAccepted,
+            context: '',
+            key,
+          },
+        });
+      },
+    });
+  }
+
+  if (!isPrivKeyEncrypted) {
+    keyOptions.push({
       img: <Icons.Encrypt />,
       title: 'Encrypt your Key',
       description:
         'Prevent an unauthorized used from sending funds out of your wallet.',
       onPress: () => null,
-    },
-    {
+    });
+  }
+
+  if (keyOptions.length) {
+    keyOptions.push({
       img: <Icons.Settings />,
       title: 'Key Settings',
       description: 'View all the ways to manage and configure your key.',
@@ -167,8 +206,8 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
             key,
           },
         }),
-    },
-  ];
+    });
+  }
 
   const onRefresh = async () => {
     setRefreshing(true);
