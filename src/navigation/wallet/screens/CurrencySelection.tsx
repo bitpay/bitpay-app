@@ -1,8 +1,10 @@
 import React, {useCallback, useLayoutEffect, useMemo, useState} from 'react';
 import styled from 'styled-components/native';
 import {
+  ActiveOpacity,
   CtaContainerAbsolute,
   HeaderRightContainer,
+  SearchInput,
 } from '../../../components/styled/Containers';
 import CurrencySelectionRow, {
   CurrencySelectionToggleProps,
@@ -16,10 +18,14 @@ import {
 } from '../../../constants/currencies';
 import {useDispatch, useSelector} from 'react-redux';
 import {startCreateKey} from '../../../store/wallet/effects';
-import {FlatList} from 'react-native';
+import {FlatList, TouchableOpacity} from 'react-native';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
-import {NavigationProp, useNavigation} from '@react-navigation/native';
+import {
+  NavigationProp,
+  useNavigation,
+  useTheme,
+} from '@react-navigation/native';
 import {HeaderTitle} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
@@ -31,6 +37,10 @@ import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
 import {Key} from '../../../store/wallet/wallet.models';
 import {StackScreenProps} from '@react-navigation/stack';
 import {keyExtractor} from '../../../utils/helper-methods';
+import {NeutralSlate} from '../../../styles/colors';
+import debounce from 'lodash.debounce';
+import SearchSvg from '../../../../assets/img/search.svg';
+import Icons from '../components/WalletIcons';
 
 type CurrencySelectionScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -68,6 +78,22 @@ const CurrencySelectionContainer = styled.SafeAreaView`
 
 const ListContainer = styled.View`
   margin-top: 20px;
+`;
+
+const SearchContainer = styled.View`
+  flex-direction: row;
+  border: 1px solid #9ba3ae;
+  align-items: center;
+  border-top-right-radius: 4px;
+  border-top-left-radius: 4px;
+  padding: 4px 0;
+  margin: 20px 15px 0;
+  height: 60px;
+`;
+
+const SearchImageContainer = styled.View`
+  width: 50px;
+  align-items: center;
 `;
 
 const contextHandler = (
@@ -173,6 +199,10 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     });
   }, [navigation]);
 
+  const theme = useTheme();
+  const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
+  const [searchInput, setSearchInput] = useState('');
+
   const dispatch = useDispatch();
   const [selectedCurrencies, setSelectedCurrencies] = useState<Array<string>>(
     [],
@@ -211,7 +241,6 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     [],
   );
 
-  // TODO search
   const ALL_CURRENCY_OPTIONS = useMemo(
     () => [...SupportedCurrencyOptions, ...ALL_CUSTOM_TOKENS],
     [],
@@ -258,6 +287,9 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     checked,
     isToken,
   }: CurrencySelectionToggleProps) => {
+    // Reset search input
+    setSearchInput('');
+
     if (selectionCta) {
       selectionCta({currencyAbbreviation, currencyName, isToken, navigation});
     } else {
@@ -289,8 +321,45 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     [],
   );
 
+  const onSearchInputChange = debounce((search: string) => {
+    if (search) {
+      search = search.toLowerCase();
+      const filteredList = ALL_CURRENCY_OPTIONS.filter(
+        ({currencyAbbreviation, currencyName}) =>
+          currencyAbbreviation.toLowerCase().includes(search) ||
+          currencyName.toLowerCase().includes(search),
+      );
+      setCurrencyOptions([...filteredList]);
+    } else {
+      setCurrencyOptions([...DEFAULT_CURRENCY_OPTIONS]);
+    }
+  }, 300);
+
   return (
     <CurrencySelectionContainer>
+      <SearchContainer>
+        <SearchInput
+          placeholder={'Search Currency'}
+          placeholderTextColor={placeHolderTextColor}
+          value={searchInput}
+          onChangeText={(text: string) => {
+            setSearchInput(text);
+            onSearchInputChange(text);
+          }}
+        />
+        <SearchImageContainer>
+          {!searchInput ? (
+            <SearchSvg />
+          ) : (
+            <TouchableOpacity
+              activeOpacity={ActiveOpacity}
+              onPress={() => setSearchInput('')}>
+              <Icons.Delete />
+            </TouchableOpacity>
+          )}
+        </SearchImageContainer>
+      </SearchContainer>
+
       <ListContainer>
         <FlatList
           contentContainerStyle={{paddingBottom: 100}}

@@ -1,7 +1,13 @@
 import React from 'react';
 import * as Svg from 'react-native-svg';
 import {useTheme} from 'styled-components/native';
-import {NeutralSlate, SlateDark, White} from '../../../styles/colors';
+import {
+  Black,
+  NeutralSlate,
+  Slate,
+  SlateDark,
+  White,
+} from '../../../styles/colors';
 import {BitPayTheme} from '../../../themes/bitpay';
 
 const Add = () => {
@@ -157,6 +163,38 @@ const DownToggle = () => {
   );
 };
 
+const Delete = () => {
+  const theme = useTheme() as BitPayTheme;
+  return (
+    <Svg.Svg width="21" height="21" viewBox="0 0 21 21" fill="none">
+      <Svg.Rect
+        width="21"
+        height="21"
+        rx="6"
+        fill={theme.dark ? Slate : NeutralSlate}
+      />
+      <Svg.Rect
+        x="7.37384"
+        y="14.4077"
+        width="1.10526"
+        height="9.94737"
+        rx="0.552632"
+        transform="rotate(-135 7.37384 14.4077)"
+        fill={theme.dark ? Black : Slate}
+      />
+      <Svg.Rect
+        x="14.4077"
+        y="13.6261"
+        width="1.10526"
+        height="9.94737"
+        rx="0.552632"
+        transform="rotate(135 14.4077 13.6261)"
+        fill={theme.dark ? Black : Slate}
+      />
+    </Svg.Svg>
+  );
+};
+
 export default {
   Add,
   Backup,
@@ -165,4 +203,5 @@ export default {
   ShareAddress,
   Settings,
   DownToggle,
+  Delete,
 };
