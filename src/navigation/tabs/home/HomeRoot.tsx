@@ -30,7 +30,6 @@ import {
 } from '../../../components/styled/Containers';
 import AdvertisementCard from '../../../components/advertisement/AdvertisementCard';
 import {AdvertisementList} from '../../../components/advertisement/advertisement';
-import {OfferItems} from '../../../components/offer/offer';
 import {AppActions} from '../../../store/app';
 import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishModal';
 import {sleep} from '../../../utils/helper-methods';
@@ -194,7 +193,7 @@ const HomeRoot = () => {
             <HomeLink> See all</HomeLink>
           </TouchableOpacity>
         </SectionHeaderContainer>
-        <OffersSlides items={OfferItems} />
+        <OffersSlides />
 
         {/* ////////////////////////////// ADVERTISEMENTS */}
         <SectionHeaderContainer>

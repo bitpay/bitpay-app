@@ -1,13 +1,16 @@
 import React from 'react';
+import {Image, ImageProps} from 'react-native';
 import * as Svg from 'react-native-svg';
 import styled from 'styled-components/native';
 import ArrowRight from '../../../assets/img/arrow-right.svg';
 import {White} from '../../styles/colors';
-import {BaseText} from '../styled/Text';
 import Haptic from '../haptic-feedback/haptic';
 import {ScreenGutter} from '../styled/Containers';
-import {OFFER_HEIGHT, OFFER_WIDTH} from './offer';
-import {OfferProps} from './OfferSlides';
+import {BaseText} from '../styled/Text';
+import {OfferProps} from './offer';
+
+const OFFER_HEIGHT = 182;
+const OFFER_WIDTH = 260;
 
 const OfferCardContainer = styled.View`
   justify-content: flex-start;
@@ -74,11 +77,23 @@ const FooterArrow = styled.TouchableHighlight`
   justify-content: center;
 `;
 
-export const OfferBackgroundOverlay = () => {
+const OfferBackground: React.FC<Pick<ImageProps, 'source'>> = props => {
   return (
-    <Svg.Svg
+    <Image
+      style={{
+        height: OFFER_HEIGHT,
+        width: OFFER_WIDTH,
+      }}
       height={OFFER_HEIGHT}
       width={OFFER_WIDTH}
+      {...props}
+    />
+  );
+};
+
+const OfferBackgroundOverlay = () => {
+  return (
+    <Svg.Svg
       viewBox="0 0 260 182"
       style={{position: 'absolute', top: 0, right: 0, bottom: 0, left: 0}}>
       <Svg.Defs>
@@ -89,8 +104,8 @@ export const OfferBackgroundOverlay = () => {
       </Svg.Defs>
       <Svg.Rect
         id="gradient-rect"
-        width={260}
-        height={182}
+        width={OFFER_WIDTH}
+        height={OFFER_HEIGHT}
         fill="url(#offer-gradient)"
       />
     </Svg.Svg>
@@ -107,12 +122,15 @@ export default ({item}: {item: OfferProps}) => {
   return (
     <OfferCardContainer>
       <OfferBackgroundContainer>
-        {img}
+        <OfferBackground source={img} />
         <OfferBackgroundOverlay />
       </OfferBackgroundContainer>
+
       <OfferTitleText>{title}</OfferTitleText>
+
       <DescriptionContainer>
         <DescriptionText>{description}</DescriptionText>
+
         <ArrowContainer>
           <FooterArrow onPress={_onPress} underlayColor="white">
             <ArrowRight />

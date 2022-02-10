@@ -3,7 +3,7 @@ import axios from 'axios';
 import {BASE_BWS_URL} from '../../../../constants/config';
 import {WalletActions} from '../../index';
 import {SUPPORTED_COINS} from '../../../../constants/currencies';
-import {PriceHistory} from '../../wallet.models';
+import {PriceHistory, Rates} from '../../wallet.models';
 
 export const getPriceHistory = (): Effect => async dispatch => {
   try {
@@ -31,7 +31,7 @@ export const getPriceHistory = (): Effect => async dispatch => {
   }
 };
 
-export const startGetRates = (): Effect => async dispatch => {
+export const startGetRates = (): Effect<Promise<Rates>> => async dispatch => {
   return new Promise(async (resolve, reject) => {
     try {
       const {data: rates} = await axios.get(`${BASE_BWS_URL}/v3/fiatrates/`);

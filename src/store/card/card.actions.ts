@@ -7,6 +7,15 @@ import {
   VirtualDesignCurrency,
 } from './card.types';
 
+export const successInitializeStore = (
+  network: Network,
+  cards?: Card[],
+  balances?: {id: string; balance: number}[],
+): CardActionType => ({
+  type: CardActionTypes.SUCCESS_INITIALIZE_STORE,
+  payload: {network, cards: cards || [], balances: balances || []},
+});
+
 export const successFetchCards = (
   network: Network,
   cards: Card[],
