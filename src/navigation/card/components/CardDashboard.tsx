@@ -1,6 +1,6 @@
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useEffect, useLayoutEffect, useMemo} from 'react';
-import {useRef, useState} from 'react';
+import {useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView} from 'react-native';
 import Carousel from 'react-native-snap-carousel';
@@ -10,6 +10,7 @@ import {
   HeaderRightContainer,
   WIDTH,
 } from '../../../components/styled/Containers';
+import {ProviderConfig} from '../../../constants/config.card';
 import {RootState} from '../../../store';
 import {CardEffects} from '../../../store/card';
 import {Card, Transaction} from '../../../store/card/card.models';
@@ -149,15 +150,23 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     }
   }, [uninitializedId, dispatch]);
 
-  const settledTxList = (
-    useSelector<RootState, Transaction[]>(
-      ({CARD}) => CARD.settledTransactions[activeCard.id]?.transactionList,
-    ) || []
+  const {filters} = ProviderConfig[activeCard.provider];
+  const settledTxList = useSelector<RootState, Transaction[]>(
+    ({CARD}) => CARD.settledTransactions[activeCard.id]?.transactionList,
+  );
+
+  const filteredSettledTx = useMemo(
+    () => (settledTxList || []).filter(filters.settledTx),
+    [settledTxList, filters],
   ).slice(0, 30);
-  const pendingTxList = (
-    useSelector<RootState, Transaction[]>(
-      ({CARD}) => CARD.pendingTransactions[activeCard.id],
-    ) || []
+
+  const pendingTxList = useSelector<RootState, Transaction[]>(
+    ({CARD}) => CARD.pendingTransactions[activeCard.id],
+  );
+
+  const filteredPendingTx = useMemo(
+    () => pendingTxList || [],
+    [pendingTxList],
   ).slice(0, 30);
 
   return (
@@ -193,8 +202,8 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
 
       <TransactionsList
         card={activeCard}
-        pendingTxList={pendingTxList}
-        settledTxList={settledTxList}
+        pendingTxList={filteredPendingTx}
+        settledTxList={filteredSettledTx}
       />
     </ScrollView>
   );
