@@ -21,6 +21,7 @@ export type SupportedCurrencies =
 export type VirtualDesignCurrency = SupportedCurrencies | 'bitpay-b';
 
 export enum CardActionTypes {
+  SUCCESS_INITIALIZE_STORE = 'CARD/SUCCESS_INITIALIZE_STORE',
   SUCCESS_FETCH_CARDS = 'CARD/SUCCESS_FETCH_CARDS',
   FAILED_FETCH_CARDS = 'CARD/FAILED_FETCH_CARDS',
   UPDATE_FETCH_CARDS_STATUS = 'CARD/UPDATE_FETCH_CARDS_STATUS',
@@ -28,6 +29,15 @@ export enum CardActionTypes {
   SUCCESS_FETCH_OVERVIEW = 'CARD/SUCCESS_FETCH_OVERVIEW',
   FAILED_FETCH_OVERVIEW = 'CARD/FAILED_FETCH_OVERVIEW',
   UPDATE_FETCH_OVERVIEW_STATUS = 'CARD/UPDATE_FETCH_OVERVIEW_STATUS',
+}
+
+interface SuccessInitializeStore {
+  type: CardActionTypes.SUCCESS_INITIALIZE_STORE;
+  payload: {
+    network: Network;
+    cards: Card[];
+    balances: {id: string; balance: number}[];
+  };
 }
 
 interface SuccessFetchCards {
@@ -70,6 +80,7 @@ interface UpdateFetchOverviewStatus {
 }
 
 export type CardActionType =
+  | SuccessInitializeStore
   | SuccessFetchCards
   | FailedFetchCards
   | UpdateFetchCardsStatus

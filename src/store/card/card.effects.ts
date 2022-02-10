@@ -8,14 +8,19 @@ import {Card} from './card.models';
 
 interface CardStoreInitParams {
   cards?: Card[];
+  cardBalances?: {
+    id: string;
+    balance: number;
+  }[];
 }
 
 export const startCardStoreInit =
-  (network: Network, {cards}: CardStoreInitParams): Effect<Promise<void>> =>
+  (
+    network: Network,
+    {cards, cardBalances}: CardStoreInitParams,
+  ): Effect<Promise<void>> =>
   async dispatch => {
-    if (cards) {
-      dispatch(CardActions.successFetchCards(network, cards));
-    }
+    dispatch(CardActions.successInitializeStore(network, cards, cardBalances));
   };
 
 export const startFetchAll =

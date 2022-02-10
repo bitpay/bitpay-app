@@ -69,6 +69,27 @@ export const cardReducer = (
         },
         balances: {},
       };
+    case CardActionTypes.SUCCESS_INITIALIZE_STORE:
+      const payloadBalances = action.payload.balances.reduce(
+        (list, {id, balance}) => {
+          list[id] = balance;
+
+          return list;
+        },
+        {} as {[id: string]: number},
+      );
+
+      return {
+        ...state,
+        cards: {
+          ...state.cards,
+          [action.payload.network]: action.payload.cards || [],
+        },
+        balances: {
+          ...state.balances,
+          ...payloadBalances,
+        },
+      };
     case CardActionTypes.SUCCESS_FETCH_CARDS:
       return {
         ...state,
