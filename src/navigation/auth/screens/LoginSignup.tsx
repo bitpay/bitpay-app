@@ -2,11 +2,14 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
+import {Keyboard, TextInput} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import * as yup from 'yup';
+import AlertBox from '../../../components/alert-box/AlertBox';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
+import haptic from '../../../components/haptic-feedback/haptic';
 import {BaseText} from '../../../components/styled/Text';
 import {Network} from '../../../constants';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
@@ -15,6 +18,7 @@ import {RootState} from '../../../store';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {Session} from '../../../store/bitpay-id/bitpay-id.models';
 import {LoginStatus} from '../../../store/bitpay-id/bitpay-id.reducer';
+import {sleep} from '../../../utils/helper-methods';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
 import {AuthStackParamList} from '../AuthStack';
 import AuthFormContainer, {
@@ -22,10 +26,6 @@ import AuthFormContainer, {
   AuthRowContainer,
 } from '../components/AuthFormContainer';
 import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
-import haptic from '../../../components/haptic-feedback/haptic';
-import {Keyboard, TextInput, View} from 'react-native';
-import {sleep} from '../../../utils/helper-methods';
-import AlertBox from '../../../components/alert-box/AlertBox';
 
 export type LoginSignupParamList = {
   context: 'login' | 'signup';

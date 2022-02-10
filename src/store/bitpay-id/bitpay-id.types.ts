@@ -131,6 +131,7 @@ interface SuccessPairingBitPayId {
 
 interface FailedPairingBitPayId {
   type: typeof BitPayIdActionTypes.FAILED_PAIRING_BITPAY_ID;
+  payload: {error?: string};
 }
 
 interface UpdatePairingBitPayIdStatus {
