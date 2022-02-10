@@ -87,7 +87,7 @@ const SearchContainer = styled.View`
   border-top-right-radius: 4px;
   border-top-left-radius: 4px;
   padding: 4px 0;
-  margin: 20px 15px 0;
+  margin: 20px 10px 0;
   height: 60px;
 `;
 
@@ -287,10 +287,10 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     checked,
     isToken,
   }: CurrencySelectionToggleProps) => {
-    // Reset search input
-    setSearchInput('');
-
     if (selectionCta) {
+      // Reset search input
+      setSearchInput('');
+
       selectionCta({currencyAbbreviation, currencyName, isToken, navigation});
     } else {
       setSelectedCurrencies(currencies => {
