@@ -65,7 +65,7 @@ export const ProviderConfig: ProviderConfigType = {
     groupEnabled: false,
     virtualDesignSupport: false,
     filters: {
-      settledTx: tx => {
+      settledTx: () => {
         return true;
       },
     },

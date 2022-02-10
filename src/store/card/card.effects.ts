@@ -1,10 +1,14 @@
 import {batch} from 'react-redux';
 import {CardActions} from '.';
 import CardApi from '../../api/card';
+import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
+import {sleep} from '../../utils/helper-methods';
+import {AppActions} from '../app';
 import {Effect} from '../index';
 import {LogActions} from '../log';
 import {Card} from './card.models';
+import {TTL} from './card.types';
 
 interface CardStoreInitParams {
   cards?: Card[];
@@ -40,7 +44,18 @@ export const startFetchOverview =
   (id: string): Effect =>
   async (dispatch, getState) => {
     try {
-      const {APP, BITPAY_ID} = getState();
+      dispatch(
+        AppActions.showOnGoingProcessModal(OnGoingProcessMessages.LOADING),
+      );
+
+      const {APP, BITPAY_ID, CARD} = getState();
+
+      // throttle
+      if (Date.now() - CARD.lastUpdates.fetchOverview < TTL.fetchOverview) {
+        await sleep(3000);
+        return;
+      }
+
       const res = await CardApi.fetchOverview(
         BITPAY_ID.apiToken[APP.network],
         id,
@@ -62,5 +77,7 @@ export const startFetchOverview =
         dispatch(LogActions.error(JSON.stringify(err)));
         dispatch(CardActions.failedFetchOverview(id));
       });
+    } finally {
+      dispatch(AppActions.dismissOnGoingProcessModal());
     }
   };

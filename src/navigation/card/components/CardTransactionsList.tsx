@@ -1,8 +1,10 @@
 import React from 'react';
+import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {H5} from '../../../components/styled/Text';
+import {CardEffects} from '../../../store/card';
 import {Card, Transaction} from '../../../store/card/card.models';
 import {Air, LightBlack, NeutralSlate} from '../../../styles/colors';
 import TransactionRow from './CardTransactionRow';
@@ -38,9 +40,10 @@ const TransactionsHeaderIcon = styled.TouchableOpacity`
 
 const TransactionsList: React.FC<TransactionsListProps> = props => {
   const {card, pendingTxList, settledTxList} = props;
+  const dispatch = useDispatch();
 
   const onRefresh = () => {
-    // TODO
+    dispatch(CardEffects.startFetchOverview(card.id));
   };
 
   return (
@@ -48,11 +51,9 @@ const TransactionsList: React.FC<TransactionsListProps> = props => {
       <TransactionsHeader>
         <TransactionsHeading>Recent Activity</TransactionsHeading>
 
-        {false && (
-          <TransactionsHeaderIcon onPress={() => onRefresh()}>
-            <RefreshIcon />
-          </TransactionsHeaderIcon>
-        )}
+        <TransactionsHeaderIcon onPress={() => onRefresh()}>
+          <RefreshIcon />
+        </TransactionsHeaderIcon>
       </TransactionsHeader>
 
       {pendingTxList.map(tx => (
