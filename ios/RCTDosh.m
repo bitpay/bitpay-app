@@ -28,7 +28,7 @@ RCT_EXPORT_METHOD(present)
 RCT_EXPORT_METHOD(setDoshToken:(NSString *)token)
 {
   [DoshAdapter setDoshTokenWithToken:token];
-  RCTLogInfo(@"Dosh present");
+  RCTLogInfo(@"Dosh set token");
 }
 
 @end

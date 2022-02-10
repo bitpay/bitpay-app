@@ -15,6 +15,8 @@ import {Card} from '../../../store/card/card.models';
 import {CardBrand} from '../../../store/card/card.types';
 import {CardStackParamList} from '../CardStack';
 import * as Styled from './CardSettingsList.styled';
+import ReactNative from 'react-native';
+const {Dosh} = ReactNative.NativeModules;
 
 interface SettingsListProps {
   card: Card;
@@ -95,7 +97,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
           <Hr />
 
-          <Styled.SettingsLink Icon={HelpIcon} onPress={() => 0}>
+          <Styled.SettingsLink Icon={HelpIcon} onPress={() => Dosh.present()}>
             DOSH PLACEHOLDER
           </Styled.SettingsLink>
 
