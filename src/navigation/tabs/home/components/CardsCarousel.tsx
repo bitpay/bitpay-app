@@ -44,7 +44,7 @@ const keyBackupRequired = (
               keyId: key.id,
               words: key.properties.mnemonic.trim().split(' '),
               walletTermsAccepted: true,
-              context: '',
+              context: 'home',
               key,
             },
           });
@@ -53,12 +53,7 @@ const keyBackupRequired = (
       },
       {
         text: 'maybe later',
-        action: () => {
-          navigation.navigate('Wallet', {
-            screen: 'KeyOverview',
-            params: {key},
-          });
-        },
+        action: () => {},
         primary: false,
       },
     ],
