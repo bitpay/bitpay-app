@@ -27,6 +27,7 @@ import {Key} from '../../../store/wallet/wallet.models';
 import {WalletStackParamList} from '../WalletStack';
 import {navigateToTermsOrOverview} from './Backup';
 import {StackScreenProps} from '@react-navigation/stack';
+import {useAppSelector} from '../../../utils/hooks';
 
 type RecoveryPhraseScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -83,7 +84,10 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {params} = route;
-  const {words, context, key, walletTermsAccepted} = params;
+  const walletTermsAccepted = useAppSelector(
+    ({WALLET}) => WALLET.walletTermsAccepted,
+  );
+  const {words, context, key} = params;
 
   useLayoutEffect(() => {
     navigation.setOptions({

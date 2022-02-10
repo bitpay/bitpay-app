@@ -98,10 +98,12 @@ const CardContainer = styled.TouchableOpacity`
 
 const NeedBackupText = styled(BaseText)`
   font-size: 12px;
+  text-align: center;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   padding: 2px 4px;
   border: 1px solid ${({theme: {dark}}) => (dark ? White : '#E1E4E7')};
   border-radius: 3px;
+  position: absolute;
 `;
 
 const HomeCard: React.FC<HomeCardProps> = ({
