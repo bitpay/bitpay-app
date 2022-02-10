@@ -8,19 +8,23 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
 import {BaseText, H5, HeaderTitle} from '../../../components/styled/Text';
 import Settings from '../../../components/settings/Settings';
-import {Hr} from '../../../components/styled/Containers';
+import {ActiveOpacity, Hr} from '../../../components/styled/Containers';
 import {RootState} from '../../../store';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateAllWalletBalancesForKey} from '../../../store/wallet/effects/balance/balance';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {SlateDark, White} from '../../../styles/colors';
+import {
+  LightBlack,
+  NeutralSlate,
+  SlateDark,
+  White,
+} from '../../../styles/colors';
 import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
 import {BalanceUpdateError} from '../components/ErrorMessages';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
-import SettingsIcon from '../../../components/icons/settings/SettingsIcon';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -67,6 +71,17 @@ const WalletListFooterText = styled(BaseText)`
   font-weight: 400;
   letter-spacing: 0;
   margin-left: 10px;
+`;
+
+const ClogIconContainer = styled.TouchableOpacity`
+  margin-top: 10px;
+  margin-right: 10px;
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
+  border-radius: 50px;
+  justify-content: center;
+  align-items: center;
+  height: 45px;
+  width: 45px;
 `;
 
 export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
@@ -131,7 +146,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
       headerTitle: () => <HeaderTitle>My Key</HeaderTitle>,
       headerRight: () => {
         return isPrivKeyEncrypted ? (
-          <SettingsIcon
+          <ClogIconContainer
             onPress={() =>
               navigation.navigate('Wallet', {
                 screen: 'KeySettings',
@@ -140,7 +155,9 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
                 },
               })
             }
-          />
+            activeOpacity={ActiveOpacity}>
+            <Icons.Clog />
+          </ClogIconContainer>
         ) : (
           <>
             <Settings
