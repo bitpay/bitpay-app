@@ -7,5 +7,11 @@ export interface GqlQueryParams {
 
 export interface GqlResponse<T> {
   data: T;
-  errors?: any;
+  errors?: {
+    locations: {
+      column: number;
+      line: number;
+    };
+    message: string;
+  }[];
 }

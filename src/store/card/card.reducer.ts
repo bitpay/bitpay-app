@@ -7,6 +7,7 @@ import {Card, PagedTransactionData, Transaction} from './card.models';
 import {
   CardActionType,
   CardActionTypes,
+  TTL,
   VirtualDesignCurrency,
 } from './card.types';
 
@@ -19,8 +20,10 @@ export const cardReduxPersistBlacklist: Array<keyof CardState> = [
 
 export type FetchCardsStatus = 'success' | 'failed' | null;
 export type FetchOverviewStatus = 'success' | 'failed' | null;
-
 export interface CardState {
+  lastUpdates: {
+    [key in keyof typeof TTL]: number;
+  };
   cards: {
     [key in Network]: Card[];
   };
@@ -42,6 +45,9 @@ export interface CardState {
 }
 
 const initialState: CardState = {
+  lastUpdates: {
+    fetchOverview: Date.now(),
+  },
   cards: {
     [Network.mainnet]: [],
     [Network.testnet]: [],
@@ -68,6 +74,27 @@ export const cardReducer = (
           [action.payload.network]: [],
         },
         balances: {},
+      };
+    case CardActionTypes.SUCCESS_INITIALIZE_STORE:
+      const payloadBalances = action.payload.balances.reduce(
+        (list, {id, balance}) => {
+          list[id] = balance;
+
+          return list;
+        },
+        {} as {[id: string]: number},
+      );
+
+      return {
+        ...state,
+        cards: {
+          ...state.cards,
+          [action.payload.network]: action.payload.cards || [],
+        },
+        balances: {
+          ...state.balances,
+          ...payloadBalances,
+        },
       };
     case CardActionTypes.SUCCESS_FETCH_CARDS:
       return {
@@ -99,6 +126,10 @@ export const cardReducer = (
         fetchOverviewStatus: {
           ...state.fetchOverviewStatus,
           [action.payload.id]: 'success',
+        },
+        lastUpdates: {
+          ...state.lastUpdates,
+          fetchOverview: Date.now(),
         },
         balances: {
           ...state.balances,

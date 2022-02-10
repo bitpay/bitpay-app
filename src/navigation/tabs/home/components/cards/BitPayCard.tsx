@@ -55,7 +55,7 @@ export const BitPayCard: React.FC = () => {
       backgroundImg={BgImage}
       header={HeaderComponent}
       body={{
-        title: 'BitPayCard',
+        title: 'BitPay Card',
         value: format(primaryBalance, 'USD'),
       }}
       onCTAPress={() => navigation.navigate('Card', {screen: 'Home'})}

@@ -12,6 +12,7 @@ import GUSDShape from '../navigation/card/assets/currency-shapes/GUSD-shape.svg'
 import USDPShape from '../navigation/card/assets/currency-shapes/USDP-shape.svg';
 import USDCShape from '../navigation/card/assets/currency-shapes/USDC-shape.svg';
 import XRPShape from '../navigation/card/assets/currency-shapes/XRP-shape.svg';
+import {Transaction} from '../store/card/card.models';
 
 type ProviderConfigType = {
   [k in CardProvider]: {
@@ -20,6 +21,12 @@ type ProviderConfigType = {
      */
     groupEnabled: boolean;
     virtualDesignSupport: boolean;
+    filters: {
+      /**
+       * Filter function to determine whether or not a settled transaction should be displayed.
+       */
+      settledTx: (tx: Transaction) => boolean;
+    };
   };
 };
 
@@ -27,10 +34,41 @@ export const ProviderConfig: ProviderConfigType = {
   galileo: {
     groupEnabled: true,
     virtualDesignSupport: true,
+    filters: {
+      settledTx: tx => {
+        /**
+         * Types we never want to show
+         *
+         * For reference:
+         * Always show [PM, SE] // PM = Payment, SE = Mastercard Credit Settlement
+         * Probably show [FE] // FE = Fee
+         */
+        const TX_TYPE_BLACKLIST: {[k: string]: boolean} = {
+          AU: true, // Authorization (ie. pending)
+          BD: true, // Mastercard Debit Backout
+          BK: true, // ??? Undocumented, but showed up during a "cancellation of [a] pre-auth hold at the gas pump". Probably another kind of backout?
+          BO: true, // Mastercard Credit Backout
+          BV: true, // Visa Authorization Backout
+          DA: true, // ??? Seems to be non-financial (eg. balance inquiry)
+          DB: true, // Debit Authorization
+          DD: true, // ???
+          EX: true, // Expired Credit Authorization
+          PB: true, // Pre-auth Backout
+          VI: true, // Visa Authorization (interesting...)
+        };
+
+        return !TX_TYPE_BLACKLIST[tx.type];
+      },
+    },
   },
   firstView: {
     groupEnabled: false,
     virtualDesignSupport: false,
+    filters: {
+      settledTx: () => {
+        return true;
+      },
+    },
   },
 };
 

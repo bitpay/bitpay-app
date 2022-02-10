@@ -1,19 +1,23 @@
+import {upperFirst} from 'lodash';
+import ReactAppboy from 'react-native-appboy-sdk';
 import {batch} from 'react-redux';
 import AuthApi from '../../api/auth';
+import {LoginErrorResponse} from '../../api/auth/auth.types';
 import UserApi from '../../api/user';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
-import {AppActions} from '../app/';
+import {isAxiosError} from '../../utils/axios';
+import {AppActions, AppEffects} from '../app/';
 import {startOnGoingProcessModal} from '../app/app.effects';
 import {CardActions} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
 import {User} from './bitpay-id.models';
 import {BitPayIdActions} from './index';
-import ReactAppboy from 'react-native-appboy-sdk';
 
 interface BitPayIdStoreInitParams {
   user?: User;
+  doshToken?: string;
 }
 
 interface StartLoginParams {
@@ -23,10 +27,15 @@ interface StartLoginParams {
 }
 
 export const startBitPayIdStoreInit =
-  (network: Network, {user}: BitPayIdStoreInitParams): Effect<Promise<void>> =>
+  (
+    network: Network,
+    {user, doshToken}: BitPayIdStoreInitParams,
+  ): Effect<Promise<void>> =>
   async dispatch => {
     if (user) {
-      dispatch(BitPayIdActions.successFetchBasicInfo(network, user));
+      dispatch(
+        BitPayIdActions.successFetchAllUserData(network, {user, doshToken}),
+      );
       dispatch(startSetBrazeUser(user));
     }
   };
@@ -96,10 +105,22 @@ export const startLogin =
       dispatch(BitPayIdActions.successLogin(APP.network, session));
     } catch (err) {
       batch(() => {
-        console.error(err);
+        let errMsg;
+
+        if (isAxiosError<LoginErrorResponse>(err)) {
+          errMsg = upperFirst(
+            err.response?.data.message ||
+              err.message ||
+              'An unexpected error occurred.',
+          );
+          console.error(errMsg);
+        } else {
+          console.error(err);
+        }
+
         dispatch(LogActions.error('Login failed.'));
         dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(BitPayIdActions.failedLogin());
+        dispatch(BitPayIdActions.failedLogin(errMsg));
       });
     } finally {
       dispatch(AppActions.dismissOnGoingProcessModal());
@@ -129,10 +150,22 @@ export const startTwoFactorAuth =
       );
     } catch (err) {
       batch(() => {
-        console.error(err);
+        let errMsg;
+
+        if (isAxiosError<string>(err)) {
+          errMsg = upperFirst(
+            err.response?.data ||
+              err.message ||
+              'An unexpected error occurred.',
+          );
+          console.error(errMsg);
+        } else {
+          console.error(err);
+        }
+
         dispatch(LogActions.error('Two factor authentication failed.'));
         dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(BitPayIdActions.failedSubmitTwoFactorAuth());
+        dispatch(BitPayIdActions.failedSubmitTwoFactorAuth(errMsg));
       });
     } finally {
       dispatch(AppActions.dismissOnGoingProcessModal());
@@ -156,10 +189,27 @@ export const startTwoFactorPairing =
       dispatch(BitPayIdActions.successSubmitTwoFactorPairing());
     } catch (err) {
       batch(() => {
-        console.error(err);
+        let errMsg;
+
+        if (isAxiosError<any>(err)) {
+          errMsg = upperFirst(
+            err.response?.data ||
+              err.message ||
+              'An unexpected error occurred.',
+          );
+          console.error(errMsg);
+        } else if (err instanceof Error) {
+          errMsg = upperFirst(err.message);
+          console.error(errMsg);
+        } else {
+          console.error(err);
+        }
+
         dispatch(LogActions.error('Pairing with two factor failed.'));
         dispatch(LogActions.error(JSON.stringify(err)));
-        dispatch(BitPayIdActions.failedSubmitTwoFactorPairing());
+        dispatch(
+          BitPayIdActions.failedSubmitTwoFactorPairing(JSON.stringify(errMsg)),
+        );
       });
     } finally {
       dispatch(AppActions.dismissOnGoingProcessModal());
@@ -210,12 +260,27 @@ export const startDeeplinkPairing =
     const network = state.APP.network;
 
     try {
+      dispatch(
+        AppEffects.startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN),
+      );
       await dispatch(startPairAndLoadUser(network, secret, code));
     } catch (err) {
-      console.error(err);
+      let errMsg;
+
+      if (isAxiosError(err)) {
+        errMsg = JSON.stringify(err.response?.data || err.message);
+      } else if (err instanceof Error) {
+        errMsg = err.message;
+      } else {
+        errMsg = JSON.stringify(err);
+      }
+
+      console.error(errMsg);
       dispatch(LogActions.error('Pairing failed.'));
       dispatch(LogActions.error(JSON.stringify(err)));
-      dispatch(BitPayIdActions.failedPairingBitPayId());
+      dispatch(BitPayIdActions.failedPairingBitPayId(errMsg));
+    } finally {
+      dispatch(AppActions.dismissOnGoingProcessModal());
     }
   };
 
@@ -224,11 +289,18 @@ const startPairAndLoadUser =
   async dispatch => {
     try {
       const token = await AuthApi.pair(secret, code);
-      const {basicInfo, cards} = await UserApi.fetchAllUserData(token);
+      const {basicInfo, cards, doshToken} = await UserApi.fetchAllUserData(
+        token,
+      );
 
       batch(() => {
         dispatch(LogActions.info('Successfully paired with BitPayID.'));
-        dispatch(BitPayIdActions.successFetchBasicInfo(network, basicInfo));
+        dispatch(
+          BitPayIdActions.successFetchAllUserData(network, {
+            user: basicInfo,
+            doshToken,
+          }),
+        );
         dispatch(startSetBrazeUser(basicInfo));
         dispatch(CardActions.successFetchCards(network, cards));
         dispatch(BitPayIdActions.successPairingBitPayId(network, token));
@@ -257,6 +329,23 @@ export const startFetchBasicInfo =
       dispatch(BitPayIdActions.failedFetchBasicInfo());
     }
   };
+
+export const startFetchDoshToken = (): Effect => async (dispatch, getState) => {
+  try {
+    const {APP, BITPAY_ID} = getState();
+    const doshToken = await UserApi.fetchDoshToken(
+      BITPAY_ID.apiToken[APP.network],
+    );
+
+    dispatch(BitPayIdActions.successFetchDoshToken(APP.network, doshToken));
+  } catch (err) {
+    batch(() => {
+      dispatch(LogActions.error('Failed to fetch dosh token.'));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(BitPayIdActions.failedFetchDoshToken());
+    });
+  }
+};
 
 export const startSetBrazeUser =
   ({eid, email}: User): Effect =>

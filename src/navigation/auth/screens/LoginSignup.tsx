@@ -2,11 +2,14 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
+import {Keyboard, TextInput} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import * as yup from 'yup';
+import AlertBox from '../../../components/alert-box/AlertBox';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
+import haptic from '../../../components/haptic-feedback/haptic';
 import {BaseText} from '../../../components/styled/Text';
 import {Network} from '../../../constants';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
@@ -15,16 +18,14 @@ import {RootState} from '../../../store';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {Session} from '../../../store/bitpay-id/bitpay-id.models';
 import {LoginStatus} from '../../../store/bitpay-id/bitpay-id.reducer';
+import {sleep} from '../../../utils/helper-methods';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
 import {AuthStackParamList} from '../AuthStack';
 import AuthFormContainer, {
   AuthActionsContainer,
-  AuthInputContainer,
+  AuthRowContainer,
 } from '../components/AuthFormContainer';
 import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
-import haptic from '../../../components/haptic-feedback/haptic';
-import {Keyboard} from 'react-native';
-import {sleep} from '../../../utils/helper-methods';
 
 export type LoginSignupParamList = {
   context: 'login' | 'signup';
@@ -81,7 +82,11 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
   const loginStatus = useSelector<RootState, LoginStatus>(
     ({BITPAY_ID}) => BITPAY_ID.loginStatus,
   );
+  const loginError = useSelector<RootState, string>(
+    ({BITPAY_ID}) => BITPAY_ID.loginError || '',
+  );
   const [isCaptchaModalVisible, setCaptchaModalVisible] = useState(false);
+  const passwordRef = useRef<TextInput>(null);
   const captchaRef = useRef<CaptchaRef>(null);
   const {context, onLoginSuccess} = route.params;
 
@@ -182,7 +187,16 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
 
   return (
     <AuthFormContainer header={header}>
-      <AuthInputContainer>
+      {loginStatus === 'failed' ? (
+        <AuthRowContainer>
+          <AlertBox type="warning">
+            {loginError ||
+              'Could not log in. Please review your information and try again.'}
+          </AlertBox>
+        </AuthRowContainer>
+      ) : null}
+
+      <AuthRowContainer>
         <Controller
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
@@ -193,18 +207,22 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
               onChangeText={(text: string) => onChange(text)}
               error={errors.email?.message}
               value={value}
+              returnKeyType="next"
+              onSubmitEditing={() => passwordRef.current?.focus()}
+              blurOnSubmit={false}
             />
           )}
           name="email"
           defaultValue=""
         />
-      </AuthInputContainer>
+      </AuthRowContainer>
 
-      <AuthInputContainer>
+      <AuthRowContainer>
         <Controller
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
+              ref={passwordRef}
               placeholder={'strongPassword123'}
               label={'PASSWORD'}
               type={'password'}
@@ -212,12 +230,13 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
               onChangeText={(text: string) => onChange(text)}
               error={errors.password?.message}
               value={value}
+              onSubmitEditing={onSubmit}
             />
           )}
           name="password"
           defaultValue=""
         />
-      </AuthInputContainer>
+      </AuthRowContainer>
 
       <AuthActionsContainer>
         <PrimaryActionContainer>

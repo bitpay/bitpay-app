@@ -43,13 +43,13 @@ This project uses `react-redux` https://react-redux.js.org/ for state management
 2. Run `yarn <platform>` ex: `yarn ios`. Since we set `APP_LOAD_STORY_BOOK=true`, this runs Storybook instead of your actual app.
 
 ## Deeplinking
-Test deeplinking via command line with these commands: 
+Test deeplinking via command line with these commands (note: ampersand must be escaped for multiple params): 
 
 #### iOS
-`npx uri-scheme open bitpay://your/deeplink/path?with=param --ios`
+`npx uri-scheme open "bitpay://your/deeplink/path?params1=foo1\&param2=foo2" --ios`
 
 #### Android
-`npx uri-scheme open bitpay://your/deeplink/path?with=param --android`
+`npx uri-scheme open "bitpay://your/deeplink/path?param1=foo1\&param2=foo2" --android`
 
 ### Modifying the intent prefix
 If you want to associate the app with a different intent prefix eg. `myapp://`:

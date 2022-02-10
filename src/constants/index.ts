@@ -31,6 +31,11 @@ export const URL = {
     'https://support.bitpay.com/hc/en-us/articles/360000244506-What-Does-a-Spending-Password-Do-',
 
   /**
+   * Quick Links
+   */
+  LEAVE_FEEDBACK: 'https://payux.typeform.com/to/DWIC0Kky',
+
+  /**
    * Card resources
    */
   VISA_FAQ:
