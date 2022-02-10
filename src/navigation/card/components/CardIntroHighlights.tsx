@@ -59,7 +59,7 @@ const CARD_HIGHLIGHTS: CardHighlight[] = [
     title: <HighlightTitle>Flexibility</HighlightTitle>,
     description: (
       <BaseText>
-        View your balance, request a new PIN, and reload instantly all within
+        View your balance, request a new PIN and reload instantly all within
         the BitPay App.
       </BaseText>
     ),

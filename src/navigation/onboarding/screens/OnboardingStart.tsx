@@ -131,12 +131,12 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
     },
     {
       title: 'Spend crypto at your favorite places',
-      text: 'Discover a curated list of places you can spend your crypto. Purchase, manage, and spend store credits instantly.',
+      text: 'Discover a curated list of places you can spend your crypto. Purchase, manage and spend store credits instantly.',
       img: () => <OnboardingImage source={OnboardingImages.spend[themeType]} />,
     },
     {
       title: 'Keep your funds safe & secure',
-      text: 'Websites and exchanges get hacked. BitPay allows you to privately store, manage, and use your crypto funds without having to trust a centralized bank or exchange.',
+      text: 'Websites and exchanges get hacked. BitPay allows you to privately store, manage and use your crypto funds without having to trust a centralized bank or exchange.',
       img: () => (
         <OnboardingImage source={OnboardingImages.wallet[themeType]} />
       ),

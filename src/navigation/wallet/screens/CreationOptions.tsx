@@ -83,7 +83,7 @@ const CreationOptions: React.FC = () => {
       id: 'basic',
       title: 'New Key',
       description:
-        'Add coins like Bitcoin and Dogecoin, and also tokens like USDC and PAX',
+        'Add coins like Bitcoin and Dogecoin and also tokens like USDC and PAX',
       cta: () =>
         navigation.navigate('Wallet', {
           screen: 'CurrencySelection',

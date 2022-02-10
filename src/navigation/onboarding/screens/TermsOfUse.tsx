@@ -51,7 +51,7 @@ const Terms: Array<Term> = [
   },
   {
     id: 3,
-    statement: 'I have read, understood, and agree with the Terms of Use',
+    statement: 'I have read, understood and agree with the Terms of Use',
     link: {
       text: 'View the complete Terms of Use',
       url: URL.TOU_WALLET,

@@ -69,7 +69,7 @@ const Steps = [
   {},
   {
     description:
-      'You can also view your BitPay Card, gift cards, and create new keys.',
+      'You can also view your BitPay Card, gift cards and create new keys.',
     focus: '',
   },
 ];
