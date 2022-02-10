@@ -6,19 +6,23 @@ import {
 import {createStackNavigator} from '@react-navigation/stack';
 import debounce from 'lodash.debounce';
 import React, {useEffect, useState} from 'react';
-import {Appearance, AppState, AppStateStatus, StatusBar} from 'react-native';
+import {
+  Appearance,
+  AppState,
+  AppStateStatus,
+  Platform,
+  StatusBar,
+} from 'react-native';
 import 'react-native-gesture-handler';
 import {ThemeProvider} from 'styled-components/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
 import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
 import {baseScreenOptions} from './constants/NavigationOptions';
-import {useDispatch, useSelector} from 'react-redux';
-import {RootState} from './store';
 import {AppEffects, AppActions} from './store/app';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 import {LogActions} from './store/log';
-import {useDeeplinks} from './utils/hooks';
+import {useAppDispatch, useAppSelector, useDeeplinks} from './utils/hooks';
 import analytics from '@segment/analytics-react-native';
 import i18n from 'i18next';
 
@@ -157,16 +161,16 @@ export const navigate = (
 const Root = createStackNavigator<RootStackParamList>();
 
 export default () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [, rerender] = useState({});
   const linking = useDeeplinks();
-  const onboardingCompleted = useSelector(
-    ({APP}: RootState) => APP.onboardingCompleted,
+  const onboardingCompleted = useAppSelector(
+    ({APP}) => APP.onboardingCompleted,
   );
-  const introCompleted = useSelector(({APP}: RootState) => APP.introCompleted);
-  const appColorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
-  const currentRoute = useSelector(({APP}: RootState) => APP.currentRoute);
-  const appLanguage = useSelector(({APP}: RootState) => APP.defaultLanguage);
+  const introCompleted = useAppSelector(({APP}) => APP.introCompleted);
+  const appColorScheme = useAppSelector(({APP}) => APP.colorScheme);
+  const currentRoute = useAppSelector(({APP}) => APP.currentRoute);
+  const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
 
   // MAIN APP INIT
   useEffect(() => {
@@ -197,10 +201,6 @@ export default () => {
 
   const scheme = appColorScheme || Appearance.getColorScheme();
   const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
-  StatusBar.setBarStyle(
-    scheme === 'light' ? 'dark-content' : 'light-content',
-    true,
-  );
 
   // ROOT STACKS AND GLOBAL COMPONENTS
   const initialRoute = onboardingCompleted
@@ -213,6 +213,12 @@ export default () => {
 
   return (
     <SafeAreaProvider>
+      <StatusBar
+        animated={true}
+        barStyle={theme.dark ? 'light-content' : 'dark-content'}
+        backgroundColor={theme.colors.background}
+      />
+
       <ThemeProvider theme={theme}>
         {showDevtools ? <BpDevtools /> : null}
 

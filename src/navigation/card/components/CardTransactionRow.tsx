@@ -1,3 +1,4 @@
+import moment from 'moment';
 import React from 'react';
 import styled, {css} from 'styled-components/native';
 import ArrowDownIcon from '../../../../assets/img/card/icons/arrow-down.svg';
@@ -9,7 +10,7 @@ import TopUpIcon from '../../../../assets/img/card/icons/topup.svg';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, H7} from '../../../components/styled/Text';
 import {Card, Transaction} from '../../../store/card/card.models';
-import {Air, LightBlack, SlateDark} from '../../../styles/colors';
+import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
 import {format} from '../../../utils/currency';
 
 interface TransactionRowProps {
@@ -52,7 +53,7 @@ const TxText = styled(BaseText)<{
   ${({light}) =>
     light &&
     css`
-      color: ${SlateDark};
+      color: ${({theme}) => (theme.dark ? White : SlateDark)};
     `}
   flex-grow: ${({stretch}) => (stretch ? 1 : 0)};
 `;
@@ -99,11 +100,27 @@ const getTxIcon = (tx: Transaction, settled: boolean, provider: string) => {
   return ArrowDownIcon;
 };
 
-// TODO: update when moment.js gets merged
-const getTxTimestamp = (tx: Transaction, settled: boolean) => {
-  const datestring = settled ? tx.dates.post : tx.dates.auth;
+const withinPastDay = (timeMs: number) => {
+  const date = new Date(timeMs);
 
-  return new Date(+datestring).toLocaleDateString();
+  return Date.now() - date.getTime() < 1000 * 60 * 60 * 24;
+};
+
+const getTxTimestamp = (tx: Transaction, settled: boolean) => {
+  const {dates, status} = tx;
+  const timestamp = Number(settled ? dates.post : dates.auth);
+
+  if (status === 'paid') {
+    return 'Pending...';
+  } else if (status === 'invalid') {
+    return 'Invalid';
+  }
+
+  if (withinPastDay(timestamp)) {
+    return moment(timestamp).fromNow();
+  }
+
+  return moment(timestamp).format('MMM D, YYYY');
 };
 
 const getTxTitle = (tx: Transaction) => {

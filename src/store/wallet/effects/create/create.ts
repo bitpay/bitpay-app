@@ -80,7 +80,7 @@ export const addWallet =
     associatedWallet?: Wallet;
     isToken?: boolean;
     options: CreateOptions;
-  }): Effect =>
+  }): Effect<Promise<Wallet>> =>
   async (dispatch, getState): Promise<Wallet> => {
     return new Promise(async (resolve, reject) => {
       try {

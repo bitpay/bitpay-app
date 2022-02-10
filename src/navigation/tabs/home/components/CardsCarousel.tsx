@@ -3,7 +3,6 @@ import React, {ReactNode, useEffect, useState} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import Carousel from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
-import haptic from '../../../../components/haptic-feedback/haptic';
 import {WIDTH} from '../../../../components/styled/Containers';
 import {RootState} from '../../../../store';
 import {Card} from '../../../../store/card/card.models';
@@ -39,20 +38,21 @@ const keyBackupRequired = (
         text: 'Backup Key',
         action: () => {
           navigation.navigate('Wallet', {
-            screen: 'BackupKey',
-            params: {context: 'Wallet', key},
+            screen: 'RecoveryPhrase',
+            params: {
+              keyId: key.id,
+              words: key.properties.mnemonic.trim().split(' '),
+              walletTermsAccepted: true,
+              context: 'home',
+              key,
+            },
           });
         },
         primary: true,
       },
       {
         text: 'maybe later',
-        action: () => {
-          navigation.navigate('Wallet', {
-            screen: 'KeyOverview',
-            params: {key},
-          });
-        },
+        action: () => {},
         primary: false,
       },
     ],
@@ -172,9 +172,6 @@ const CardsCarousel = () => {
         itemWidth={235}
         inactiveSlideScale={1}
         inactiveSlideOpacity={1}
-        onScrollIndexChanged={() => {
-          haptic('impactLight');
-        }}
       />
     </CarouselContainer>
   );
