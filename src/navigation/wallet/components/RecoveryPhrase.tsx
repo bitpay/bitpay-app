@@ -26,6 +26,7 @@ import {
   ImportTitle,
   TextAlign,
   H4,
+  Paragraph,
 } from '../../../components/styled/Text';
 import BoxInput from '../../../components/form/BoxInput';
 import {useLogger} from '../../../utils/hooks/useLogger';
@@ -85,13 +86,6 @@ const Gutter = '10px';
 const ScrollViewContainer = styled.ScrollView`
   margin-top: 20px;
   padding: 0 15px;
-`;
-
-const ImportParagraph = styled(BaseText)`
-  font-size: 16px;
-  line-height: 25px;
-  padding: ${Gutter};
-  color: ${({theme}) => theme.colors.description};
 `;
 
 const PasswordParagraph = styled(BaseText)`
@@ -345,13 +339,13 @@ const RecoveryPhrase = () => {
   return (
     <ScrollViewContainer>
       <ImportContainer>
-        <ImportParagraph>
+        <Paragraph>
           Enter your recovery phrase (usually 12-words) in the correct order.
           Separate each word with a single space only (no commas or any other
           punctuation). For backup phrases in non-English languages: Some words
           may include special symbols, so be sure to spell all the words
           correctly.
-        </ImportParagraph>
+        </Paragraph>
 
         <HeaderContainer>
           <ImportTitle>Recovery phrase</ImportTitle>

@@ -7,7 +7,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
 import {BaseText, H5, HeaderTitle} from '../../../components/styled/Text';
 import Settings from '../../../components/settings/Settings';
-import {Hr} from '../../../components/styled/Containers';
+import {Hr, ActiveOpacity} from '../../../components/styled/Containers';
 import {RootState} from '../../../store';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateAllWalletBalancesForKey} from '../../../store/wallet/effects/balance/balance';
@@ -212,7 +212,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
         ListFooterComponent={() => {
           return (
             <WalletListFooter
-              activeOpacity={0.75}
+              activeOpacity={ActiveOpacity}
               onPress={() => {
                 haptic('impactLight');
                 navigation.navigate('Wallet', {
@@ -235,10 +235,10 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
                 if (!item.isComplete) {
                   const fullWalletObj = key.wallets.find(
                     ({id}) => id === item.id,
-                  );
+                  )!;
                   navigation.navigate('Wallet', {
                     screen: 'Copayers',
-                    params: {wallet: fullWalletObj as any},
+                    params: {wallet: fullWalletObj},
                   });
                   return;
                 }

@@ -1,32 +1,40 @@
-import React, {useState, useCallback, useEffect} from 'react';
+import React, {useState, useLayoutEffect, useEffect} from 'react';
+import {StackNavigationProp} from '@react-navigation/stack';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import Clipboard from '@react-native-community/clipboard';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import QRCode from 'react-native-qrcode-svg';
 import styled from 'styled-components/native';
-
-import {FlatList} from 'react-native';
-
-import {BaseText, H6, H4, TextAlign} from '../../../components/styled/Text';
+import {FlatList, Image} from 'react-native';
+import {
+  Paragraph,
+  BaseText,
+  H6,
+  H4,
+  TextAlign,
+  HeaderTitle,
+} from '../../../components/styled/Text';
 import {
   TitleContainer,
   RowContainer,
-  Column,
+  ActiveOpacity,
 } from '../../../components/styled/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {WalletStackParamList} from '../WalletStack';
+import {White} from '../../../styles/colors';
 
-import {SlateDark, White} from '../../../styles/colors';
+const CircleCheckIcon = require('../../../../assets/img/circle-check.png');
+interface CopayersProps {
+  navigation: StackNavigationProp<WalletStackParamList, 'Copayers'>;
+}
 
 const Gutter = '10px';
 const CopayersContainer = styled.View`
   padding: ${Gutter};
 `;
 
-const CopayersParagraph = styled(BaseText)`
-  font-size: 16px;
-  line-height: 25px;
-  color: ${SlateDark};
+const AuthorizedContainer = styled(BaseText)`
+  margin: 0 20px;
 `;
 
 const QRCodeContainer = styled.View`
@@ -43,11 +51,30 @@ const QRCodeBackground = styled.View`
   border-radius: 12px;
 `;
 
-const Copayers = () => {
+const LoadingContainer = styled.View`
+  min-height: 300px;
+  justify-content: center;
+  align-items: center;
+`;
+
+const LoadingText = styled(H4)`
+  color: ${({theme}) => theme.colors.text};
+`;
+
+const Copayers: React.FC<CopayersProps> = props => {
   const route = useRoute<RouteProp<WalletStackParamList, 'Copayers'>>();
   const {wallet} = route.params || {};
   const [walletStatus, setWalletStatus] = useState(undefined as any);
   const [copied, setCopied] = useState(false);
+  const {navigation} = props;
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => (
+        <HeaderTitle>{`${wallet?.currencyName} multisig [${wallet?.m}-${wallet?.n}]`}</HeaderTitle>
+      ),
+    });
+  }, [navigation]);
 
   useEffect(() => {
     // TODO GET STATUS
@@ -71,40 +98,31 @@ const Copayers = () => {
     }
   };
 
-  // Flat list
-  const renderItem = useCallback(
-    ({item}) => (
-      <RowContainer activeOpacity={0.75}>
-        <Column>
-          <BaseText>{item?.name}</BaseText>
-        </Column>
-      </RowContainer>
-    ),
-    [],
-  );
-
   return (
     <CopayersContainer>
-      <TitleContainer>
-        <TextAlign align={'left'}>
-          <H4>Bitcoin multisig [2-3]</H4>
-        </TextAlign>
-      </TitleContainer>
-      <CopayersParagraph>
+      <Paragraph>
         Share this invitation with the devices joining this account. Each
         copayer has their own recovery phrase. To recover funds stored in a
         Shared Wallet you will need the recovery phrase from each copayer.
-      </CopayersParagraph>
+      </Paragraph>
 
-      <TouchableOpacity onPress={copyToClipboard} activeOpacity={0.7}>
-        <QRCodeContainer>
-          <QRCodeBackground>
-            {walletStatus?.secret ? (
-              <QRCode value={walletStatus?.secret} size={200} />
-            ) : null}
-          </QRCodeBackground>
-        </QRCodeContainer>
-      </TouchableOpacity>
+      {walletStatus && walletStatus.secret ? (
+        <>
+          <TouchableOpacity
+            onPress={copyToClipboard}
+            activeOpacity={ActiveOpacity}>
+            <QRCodeContainer>
+              <QRCodeBackground>
+                <QRCode value={walletStatus.secret} size={200} />
+              </QRCodeBackground>
+            </QRCodeContainer>
+          </TouchableOpacity>
+        </>
+      ) : (
+        <LoadingContainer>
+          <LoadingText>Generating Invitation code...</LoadingText>
+        </LoadingContainer>
+      )}
 
       {walletStatus && (
         <>
@@ -116,7 +134,12 @@ const Copayers = () => {
           <FlatList
             contentContainerStyle={{paddingBottom: 100}}
             data={walletStatus?.copayers}
-            renderItem={renderItem}
+            renderItem={({item}) => (
+              <RowContainer activeOpacity={ActiveOpacity}>
+                <Image source={CircleCheckIcon} />
+                <AuthorizedContainer>{item?.name}</AuthorizedContainer>
+              </RowContainer>
+            )}
           />
         </>
       )}

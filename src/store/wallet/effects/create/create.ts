@@ -244,7 +244,7 @@ const createWallet = (params: {
                   ),
                 );
               }
-              resolve(
+              return resolve(
                 createWallet({
                   key,
                   coin,

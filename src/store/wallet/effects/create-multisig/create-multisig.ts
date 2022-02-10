@@ -109,7 +109,7 @@ const createMultisigWallet = (params: {
                   ),
                 );
               }
-              resolve(
+              return resolve(
                 createMultisigWallet({
                   key,
                   opts: {...opts, account: account + 1},

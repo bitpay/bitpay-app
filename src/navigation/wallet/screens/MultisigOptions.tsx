@@ -12,6 +12,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import {WalletStackParamList} from '../WalletStack';
 import {Key} from '../../../store/wallet/wallet.models';
 import {RouteProp} from '@react-navigation/core';
+import {useThemeType} from '../../../utils/hooks/useThemeType';
 
 export type MultisigOptionsParamList = {
   key?: Key;
@@ -25,6 +26,16 @@ interface Option {
   img: ImageSourcePropType;
   height: string;
 }
+
+const MultisigSharedOptionImage = {
+  light: require('../../../../assets/img/wallet/wallet-type/add-multisig.png'),
+  dark: require('../../../../assets/img/wallet/wallet-type/add-multisig-dark.png'),
+};
+
+const MultisigJoinOptionImage = {
+  light: require('../../../../assets/img/wallet/wallet-type/add-join.png'),
+  dark: require('../../../../assets/img/wallet/wallet-type/add-join-dark.png'),
+};
 
 const OptionContainer = styled.SafeAreaView`
   flex: 1;
@@ -74,6 +85,7 @@ const Image = styled.Image<{imgHeight: string}>`
 
 const MultisigOptions = () => {
   const navigation = useNavigation();
+  const themeType = useThemeType();
   const route = useRoute<RouteProp<WalletStackParamList, 'AddingOptions'>>();
   const {key} = route.params || {};
 
@@ -87,7 +99,7 @@ const MultisigOptions = () => {
 
   const optionList: Option[] = [
     {
-      id: 'basic',
+      id: 'shared',
       title: 'Create a Shared Wallet',
       description: 'Use more than one device to create a multisig wallet',
       cta: () =>
@@ -95,11 +107,11 @@ const MultisigOptions = () => {
           screen: 'CurrencySelection',
           params: {context: 'addWalletMultisig', key},
         }),
-      img: require('../../../../assets/img/wallet/wallet-type/add-multisig.png'),
+      img: MultisigSharedOptionImage[themeType],
       height: '14px',
     },
     {
-      id: 'multisig',
+      id: 'join',
       title: 'Join a Shared Wallet',
       description:
         "Joining another user's multisig wallet requires an invitation to join",
@@ -108,7 +120,7 @@ const MultisigOptions = () => {
           screen: 'JoinMultisig',
           params: {key},
         }),
-      img: require('../../../../assets/img/wallet/wallet-type/add-join.png'),
+      img: MultisigJoinOptionImage[themeType],
       height: '17px',
     },
   ];

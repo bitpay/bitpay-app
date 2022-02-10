@@ -79,7 +79,6 @@ const AddingOptions: React.FC = () => {
   const route = useRoute<RouteProp<WalletStackParamList, 'AddingOptions'>>();
   const {key} = route.params;
 
-  console.log('$$$$$$$$$$$$$$$$$$$$$$$route', route);
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,

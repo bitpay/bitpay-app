@@ -58,16 +58,7 @@ export type CurrencySelectionParamList = {
 };
 
 interface ContextHandler {
-  currencies: (
-    | SupportedCurrencyOption
-    | {
-        id: number;
-        currencyAbbreviation: string;
-        currencyName: string;
-        img: string;
-        isToken: boolean;
-      }
-  )[];
+  currencies: SupportedCurrencyOption[];
   headerTitle?: string;
   ctaTitle?: string;
   bottomCta?: (props: {
@@ -156,7 +147,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
       img: string;
       isToken: boolean;
     }[],
-  ): ContextHandler => {
+  ): ContextHandler | undefined => {
     switch (context) {
       case 'onboarding':
       case 'createNewKey': {
@@ -280,7 +271,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     [],
   );
 
-  const DEFAULT_CURRENCY_OPTIONS = useMemo(() => currencies, []);
+  const DEFAULT_CURRENCY_OPTIONS = useMemo(() => currencies || [], []);
 
   // TODO search
   // const ALL_CURRENCY_OPTIONS = useMemo(

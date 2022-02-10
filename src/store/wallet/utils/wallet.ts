@@ -40,6 +40,8 @@ export const buildWalletObj = (
     balance = {crypto: '0', fiat: 0},
     tokens,
     keyId,
+    n,
+    m,
   }: Credentials & {
     balance?: WalletBalance;
     tokens?: any;
@@ -66,6 +68,8 @@ export const buildWalletObj = (
       : tokenOpts
       ? tokenOpts[currencyAbbreviation]?.logoURI
       : '',
+    n,
+    m,
   };
 };
 

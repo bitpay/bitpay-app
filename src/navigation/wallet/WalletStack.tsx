@@ -183,7 +183,7 @@ const WalletStack = () => {
         <Wallet.Screen
           options={{
             headerTitle: () => (
-              <HeaderTitle>Create Multi-sig Wallet</HeaderTitle>
+              <HeaderTitle>Create Multisig Wallet</HeaderTitle>
             ),
           }}
           name={WalletScreens.CREATE_MULTISIG}

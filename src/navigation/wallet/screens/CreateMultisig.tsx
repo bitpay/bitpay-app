@@ -3,6 +3,7 @@ import {TouchableOpacity} from 'react-native';
 import styled from 'styled-components/native';
 import {Caution, SlateDark, White, Action, Slate} from '../../../styles/colors';
 import {
+  Paragraph,
   BaseText,
   Link,
   InfoTitle,
@@ -55,9 +56,10 @@ import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import InfoSvg from '../../../../assets/img/info.svg';
 import WarningSvg from '../../../../assets/img/warning.svg';
+import PlusIcon from '../../../components/plus/Plus';
+import MinusIcon from '../../../components/minus/Minus';
 import {sleep} from '../../../utils/helper-methods';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
-
 export interface CreateMultisigProps {
   currency?: string;
   key?: Key;
@@ -84,13 +86,6 @@ export const MultisigContainer = styled.View`
 const ScrollViewContainer = styled.ScrollView`
   margin-top: 20px;
   padding: 0 15px;
-`;
-
-const MultisigParagraph = styled(BaseText)`
-  font-size: 16px;
-  line-height: 25px;
-  padding: ${Gutter};
-  color: ${({theme}) => theme.colors.description};
 `;
 
 const ErrorText = styled(BaseText)`
@@ -157,18 +152,6 @@ const CounterNumber = styled.Text`
   font-size: 16px;
 `;
 
-const CounterPlusSymbol = styled.Text`
-  color: ${({theme: {dark}}) => (dark ? White : Action)};
-  font-size: 20px;
-  bottom: 4px;
-`;
-
-const CounterMinusSymbol = styled.Text`
-  font-size: 20px;
-  color: ${({theme: {dark}}) => (dark ? Slate : '#c4c4c4')};
-  bottom: 4px;
-`;
-
 const CreateMultisig = () => {
   const dispatch = useDispatch();
   const logger = useLogger();
@@ -177,7 +160,7 @@ const CreateMultisig = () => {
   const [testnetEnabled, setTestnetEnabled] = useState(false);
   const [options, setOptions] = useState({
     useNativeSegwit: true,
-    networkName: 'testnet',
+    networkName: 'livenet',
     singleAddress: false,
   });
   const {
@@ -235,11 +218,10 @@ const CreateMultisig = () => {
     opts: Partial<KeyOptions>,
   ): Promise<void> => {
     try {
-      await dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.CREATING_KEY),
-      );
-
       if (key) {
+        await dispatch(
+          startOnGoingProcessModal(OnGoingProcessMessages.ADDING_WALLET),
+        );
         const wallet = (await dispatch<any>(
           addWalletMultisig({
             key,
@@ -263,13 +245,16 @@ const CreateMultisig = () => {
                 name: 'Wallet',
                 params: {
                   screen: 'Copayers',
-                  params: {walletId: wallet},
+                  params: {wallet: wallet},
                 },
               },
             ],
           }),
         );
       } else {
+        await dispatch(
+          startOnGoingProcessModal(OnGoingProcessMessages.CREATING_KEY),
+        );
         const key = (await dispatch<any>(startCreateKeyMultisig(opts))) as Key;
 
         navigation.navigate('Wallet', {
@@ -290,11 +275,11 @@ const CreateMultisig = () => {
   return (
     <ScrollViewContainer>
       <MultisigContainer>
-        <MultisigParagraph>
-          Multi-sig wallets require multisig devices to set up. It's takes
-          longer to complete but it's recommended security configuration for
-          long term storage.
-        </MultisigParagraph>
+        <Paragraph>
+          Multisig wallets require multisig devices to set up. It takes longer
+          to complete but it's the recommended security configuration for long
+          term storage.
+        </Paragraph>
 
         <AdvancedOptions>
           <Controller
@@ -346,22 +331,28 @@ const CreateMultisig = () => {
               <CounterContainer>
                 <RemoveButton
                   onPress={() => {
-                    setValue('requiredSignatures', value - 1, {
-                      shouldValidate: true,
-                    });
+                    const newValue = value - 1;
+                    if (newValue >= 1) {
+                      setValue('requiredSignatures', newValue, {
+                        shouldValidate: true,
+                      });
+                    }
                   }}>
-                  <CounterMinusSymbol>-</CounterMinusSymbol>
+                  <MinusIcon />
                 </RemoveButton>
                 <RoundButton>
                   <CounterNumber>{value}</CounterNumber>
                 </RoundButton>
                 <AddButton
                   onPress={() => {
-                    setValue('requiredSignatures', value + 1, {
-                      shouldValidate: true,
-                    });
+                    const newValue = value + 1;
+                    if (newValue <= 3) {
+                      setValue('requiredSignatures', newValue, {
+                        shouldValidate: true,
+                      });
+                    }
                   }}>
-                  <CounterPlusSymbol>+</CounterPlusSymbol>
+                  <PlusIcon />
                 </AddButton>
               </CounterContainer>
             </RowContainer>
@@ -384,22 +375,28 @@ const CreateMultisig = () => {
               <CounterContainer>
                 <RemoveButton
                   onPress={() => {
-                    setValue('totalCopayers', value - 1, {
-                      shouldValidate: true,
-                    });
+                    const newValue = value - 1;
+                    if (newValue >= 2) {
+                      setValue('totalCopayers', newValue, {
+                        shouldValidate: true,
+                      });
+                    }
                   }}>
-                  <CounterMinusSymbol>-</CounterMinusSymbol>
+                  <MinusIcon />
                 </RemoveButton>
                 <RoundButton>
                   <CounterNumber>{value}</CounterNumber>
                 </RoundButton>
                 <AddButton
                   onPress={() => {
-                    setValue('totalCopayers', value + 1, {
-                      shouldValidate: true,
-                    });
+                    const newValue = value + 1;
+                    if (newValue <= 6) {
+                      setValue('totalCopayers', newValue, {
+                        shouldValidate: true,
+                      });
+                    }
                   }}>
-                  <CounterPlusSymbol>+</CounterPlusSymbol>
+                  <PlusIcon />
                 </AddButton>
               </CounterContainer>
             </RowContainer>
@@ -502,7 +499,7 @@ const CreateMultisig = () => {
                         </InfoImageContainer>
 
                         <InfoTitle>
-                          Someone asked you to create this wallet?
+                          Did someone asked you to create this wallet?
                         </InfoTitle>
                       </InfoHeader>
                       <InfoDescription>
@@ -558,7 +555,7 @@ const CreateMultisig = () => {
                       </InfoHeader>
                       <InfoDescription>
                         The single address feature will force the wallet to only
-                        use one address than generating new addresses
+                        use one address rather than generating new addresses.
                       </InfoDescription>
 
                       <VerticalPadding>
