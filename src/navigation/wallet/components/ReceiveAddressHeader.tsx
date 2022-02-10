@@ -4,6 +4,7 @@ import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
 import styled from 'styled-components/native';
 import {BaseText, H4} from '../../../components/styled/Text';
 import {Action, NeutralSlate, SlateDark} from '../../../styles/colors';
+import {IsUtxoCoin} from '../../../store/wallet/utils/wallet';
 
 const Header = styled.View`
   margin-bottom: 30px;
@@ -69,9 +70,14 @@ export interface HeaderContextHandler {
 interface Props {
   onPressRefresh: () => void;
   contextHandlers?: HeaderContextHandler | null;
+  showRefresh: boolean;
 }
 
-const ReceiveAddressHeader = ({onPressRefresh, contextHandlers}: Props) => {
+const ReceiveAddressHeader = ({
+  onPressRefresh,
+  contextHandlers,
+  showRefresh,
+}: Props) => {
   const {currency} = contextHandlers || {};
   switch (currency) {
     case 'bch':
@@ -110,13 +116,15 @@ const ReceiveAddressHeader = ({onPressRefresh, contextHandlers}: Props) => {
       return (
         <Header>
           <Title>Address</Title>
-          <Refresh
-            onPress={() => {
-              haptic('impactLight');
-              onPressRefresh();
-            }}>
-            <RefreshIcon />
-          </Refresh>
+          {showRefresh ? (
+            <Refresh
+              onPress={() => {
+                haptic('impactLight');
+                onPressRefresh();
+              }}>
+              <RefreshIcon />
+            </Refresh>
+          ) : null}
         </Header>
       );
   }

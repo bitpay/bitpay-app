@@ -29,7 +29,10 @@ import {
 import ReceiveAddressHeader, {
   HeaderContextHandler,
 } from './ReceiveAddressHeader';
-import {GetProtocolPrefix} from '../../../store/wallet/utils/wallet';
+import {
+  GetProtocolPrefix,
+  IsUtxoCoin,
+} from '../../../store/wallet/utils/wallet';
 
 export const BchAddressTypes = ['Cash Address', 'Legacy'];
 
@@ -219,12 +222,15 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
     };
   }
 
+  const isUtxo = IsUtxoCoin(wallet.currencyAbbreviation);
+
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={closeModal}>
       <ReceiveAddressContainer>
         <ReceiveAddressHeader
           onPressRefresh={createAddress}
           contextHandlers={headerContextHandlers}
+          showRefresh={isUtxo}
         />
 
         {address ? (
