@@ -14,6 +14,8 @@ import {Effect} from '../index';
 import {LogActions} from '../log';
 import {User} from './bitpay-id.models';
 import {BitPayIdActions} from './index';
+import ReactNative from 'react-native';
+const {Dosh} = ReactNative.NativeModules;
 
 interface BitPayIdStoreInitParams {
   user?: User;
@@ -277,6 +279,10 @@ const startPairAndLoadUser =
       const {basicInfo, cards, doshToken} = await UserApi.fetchAllUserData(
         token,
       );
+
+      if (Dosh && doshToken) {
+        Dosh.setDoshToken(doshToken);
+      }
 
       batch(() => {
         dispatch(LogActions.info('Successfully paired with BitPayID.'));
