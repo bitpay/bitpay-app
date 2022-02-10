@@ -104,29 +104,21 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const virtualDesignCurrency = useSelector<RootState, VirtualDesignCurrency>(
     ({CARD}) => CARD.virtualDesignCurrency,
   );
-  const memoizedSlides = useMemo(() => buildOverviewSlides(cards), [cards]);
-  const [initialSlideIdx] = useState(() => {
-    return id
-      ? Math.max(
-          0,
-          memoizedSlides.findIndex(s => s.cards.some(c => c.id === id)),
-        )
-      : 0;
-  });
-  const [activeSlideIdx, setActiveSlideIdx] = useState<number>(initialSlideIdx);
-  const fetchId = useSelector<RootState, string | null>(({CARD}) => {
-    const activeSlideId = memoizedSlides[activeSlideIdx].primaryCard.id;
 
-    // quick check to see if we've done an initial fetch for this ID before
-    // TODO: a more robust check once we start loading tx activity
-    return typeof CARD.balances[activeSlideId] !== 'number'
-      ? activeSlideId
-      : null;
-  });
+  const memoizedSlides = useMemo(() => buildOverviewSlides(cards), [cards]);
+
+  // if id was passed in, try to find the slide that contains that id
+  // if not, default to 0
+  const activeSlideIdx = id
+    ? Math.max(
+        0,
+        memoizedSlides.findIndex(s => s.cards.some(c => c.id === id)),
+      )
+    : 0;
+  const activeSlide = memoizedSlides[activeSlideIdx];
+  const activeCard = activeSlide.primaryCard;
 
   useLayoutEffect(() => {
-    const activeSlide = memoizedSlides[activeSlideIdx];
-
     navigation.setOptions({
       headerRight: () => (
         <HeaderRightContainer>
@@ -144,9 +136,19 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         </HeaderRightContainer>
       ),
     });
-  }, [memoizedSlides, activeSlideIdx, navigation, t]);
+  }, [activeSlide, navigation, t]);
 
-  const activeCard = memoizedSlides[activeSlideIdx].primaryCard;
+  // if id does not exist as a key, tx for this card has not been initialized
+  const uninitializedId = useSelector<RootState, string | null>(({CARD}) =>
+    CARD.settledTransactions[activeCard.id] ? null : activeCard.id,
+  );
+
+  useEffect(() => {
+    if (uninitializedId) {
+      dispatch(CardEffects.startFetchOverview(uninitializedId));
+    }
+  }, [uninitializedId, dispatch]);
+
   const settledTxList = (
     useSelector<RootState, Transaction[]>(
       ({CARD}) => CARD.settledTransactions[activeCard.id]?.transactionList,
@@ -158,12 +160,6 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     ) || []
   ).slice(0, 30);
 
-  useEffect(() => {
-    if (fetchId) {
-      dispatch(CardEffects.startFetchOverview(fetchId));
-    }
-  }, [fetchId, dispatch]);
-
   return (
     <ScrollView>
       <Carousel<OverviewSlide>
@@ -171,7 +167,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         vertical={false}
         layout="default"
         activeSlideAlignment="center"
-        firstItem={initialSlideIdx}
+        firstItem={activeSlideIdx}
         data={memoizedSlides}
         renderItem={({item}) => (
           <CardOverviewSlide
@@ -179,7 +175,11 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
             designCurrency={virtualDesignCurrency}
           />
         )}
-        onSnapToItem={setActiveSlideIdx}
+        onSnapToItem={idx => {
+          navigation.setParams({
+            id: memoizedSlides[idx].primaryCard.id,
+          });
+        }}
         itemWidth={300 + 20}
         sliderWidth={WIDTH}
         inactiveSlideScale={1}
