@@ -122,7 +122,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const {key} = route.params;
-  const {isPrivKeyEncrypted, backupComplete} = key;
+  const {isPrivKeyEncrypted} = key;
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -166,11 +166,16 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
       title: 'Encrypt your Key',
       description:
         'Prevent an unauthorized used from sending funds out of your wallet.',
-      onPress: () => null,
+      onPress: () => {
+        navigation.navigate('Wallet', {
+          screen: 'CreateEncryptPassword',
+          params: {
+            key,
+          },
+        });
+      },
     });
-  }
 
-  if (keyOptions.length) {
     keyOptions.push({
       img: <Icons.Settings />,
       title: 'Key Settings',
@@ -252,12 +257,14 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
           );
         }}
       />
-      <OptionsSheet
-        isVisible={showKeyOptions}
-        title={'Key Options'}
-        options={keyOptions}
-        closeModal={() => setShowKeyOptions(false)}
-      />
+      {keyOptions.length > 0 ? (
+        <OptionsSheet
+          isVisible={showKeyOptions}
+          title={'Key Options'}
+          options={keyOptions}
+          closeModal={() => setShowKeyOptions(false)}
+        />
+      ) : null}
     </OverviewContainer>
   );
 };
