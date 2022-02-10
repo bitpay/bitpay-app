@@ -11,9 +11,9 @@ import UIKit
 
 public class DoshAdapter: NSObject {
   
-  @objc static func initDosh() {
-    Dosh.initialize(applicationId: "btpay:c8593e9a-dbe0-4d69-8536-edaa54180876")
-    Dosh.instance?.debugLoggingEnabled = true
+  @objc static func initDosh(enableDebug: Bool) {
+    Dosh.initialize(applicationId: "REPLACE_ME")
+    Dosh.instance?.debugLoggingEnabled = enableDebug
     print("dosh initialized")
   }
 

@@ -97,7 +97,9 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
           <Hr />
 
-          <Styled.SettingsLink Icon={HelpIcon} onPress={() => Dosh.present()}>
+          <Styled.SettingsLink
+            Icon={HelpIcon}
+            onPress={() => Dosh && Dosh.present()}>
             DOSH PLACEHOLDER
           </Styled.SettingsLink>
 

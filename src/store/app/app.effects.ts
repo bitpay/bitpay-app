@@ -85,11 +85,13 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     );
     await dispatch(CardEffects.startCardStoreInit(network, {cards}));
 
-    // Dosh card rewards
-    Dosh.initializeDosh();
+    if (Dosh) {
+      // Dosh card rewards
+      Dosh.initializeDosh(__DEV__);
 
-    if (doshToken) {
-      Dosh.setDoshToken(doshToken);
+      if (doshToken) {
+        Dosh.setDoshToken(doshToken);
+      }
     }
 
     await sleep(500);
