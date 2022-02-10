@@ -3,7 +3,7 @@ import React, {useEffect, useLayoutEffect, useMemo} from 'react';
 import {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView} from 'react-native';
-import Carousel, {Pagination} from 'react-native-snap-carousel';
+import Carousel from 'react-native-snap-carousel';
 import {useDispatch, useSelector} from 'react-redux';
 import Button from '../../../components/button/Button';
 import {
@@ -175,7 +175,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         data={memoizedSlides}
         renderItem={({item}) => (
           <CardOverviewSlide
-            slide={item}
+            card={item.primaryCard}
             designCurrency={virtualDesignCurrency}
           />
         )}
