@@ -216,7 +216,7 @@ export const askForTrackingPermissionAndEnableSdks =
       const trackingStatus = await requestTrackingPermission();
       if (['authorized', 'unavailable'].includes(trackingStatus) && !__DEV__) {
         try {
-          await new Promise<void>((resolve, reject) => {
+          await new Promise<void>((resolve2, reject2) => {
             appsFlyer.initSdk(
               {
                 devKey: APPSFLYER_API_KEY,
@@ -225,11 +225,11 @@ export const askForTrackingPermissionAndEnableSdks =
               },
               result => {
                 console.log(result);
-                resolve();
+                resolve2();
               },
               error => {
                 console.log(error);
-                reject(error);
+                reject2(error);
               },
             );
           });

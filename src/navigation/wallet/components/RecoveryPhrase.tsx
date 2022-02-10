@@ -166,6 +166,10 @@ const CurrencySelectionModalContainer = styled(SheetContainer)`
   min-height: 200px;
 `;
 
+const CurrencyOptions = SupportedCurrencyOptions.filter(
+  currency => !currency.isToken,
+);
+
 const RecoveryPhrase = () => {
   const dispatch = useDispatch();
   const logger = useLogger();
@@ -177,14 +181,11 @@ const RecoveryPhrase = () => {
   const [showOptions, setShowOptions] = useState(false);
   const [derivationPathEnabled, setDerivationPathEnabled] = useState(false);
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
-  const currencyOptions = SupportedCurrencyOptions.filter(
-    currency => !currency.isToken,
-  );
-  const [selectedCurrency, setSelectedCurrency] = useState(currencyOptions[0]);
+  const [selectedCurrency, setSelectedCurrency] = useState(CurrencyOptions[0]);
 
   const [options, setOptions] = useState({
     derivationPath: DefaultDerivationPath.defaultBTC as string,
-    coin: currencyOptions[0].currencyAbbreviation,
+    coin: CurrencyOptions[0].currencyAbbreviation,
     passphrase: undefined as string | undefined,
     isMultisig: false,
   });
@@ -236,20 +237,20 @@ const RecoveryPhrase = () => {
       */
       opts.n = options.isMultisig
         ? 2
-        : opts.derivationStrategy == 'BIP48'
+        : opts.derivationStrategy === 'BIP48'
         ? 2
         : 1;
 
       opts.coin = options.coin.toLowerCase();
 
       // set opts.useLegacyPurpose
-      if (parsePath(derivationPath).purpose == "44'" && opts.n > 1) {
+      if (parsePath(derivationPath).purpose === "44'" && opts.n > 1) {
         opts.useLegacyPurpose = true;
         logger.debug('Using 44 for Multisig');
       }
 
       // set opts.useLegacyCoinType
-      if (opts.coin == 'bch' && parsePath(derivationPath).coinCode == "0'") {
+      if (opts.coin === 'bch' && parsePath(derivationPath).coinCode === "0'") {
         opts.useLegacyCoinType = true;
         logger.debug('Using 0 for BCH creation');
       }
@@ -326,26 +327,32 @@ const RecoveryPhrase = () => {
     }
   };
 
-  const currencySelected = ({id}: CurrencySelectionToggleProps) => {
-    const _selectedCurrency = currencyOptions.filter(
-      currency => currency.id === id,
-    );
-    setSelectedCurrency(_selectedCurrency[0]);
-    setCurrencyModalVisible(false);
-    setOptions({...options, coin: _selectedCurrency[0].currencyAbbreviation});
-  };
-
   const renderItem = useCallback(
-    ({item}) => (
-      <CurrencySelectionRow
-        item={item}
-        emit={currencySelected}
-        key={item.id}
-        removeCheckbox={true}
-      />
-    ),
-    [],
+    ({item}) => {
+      const currencySelected = ({id}: CurrencySelectionToggleProps) => {
+        const _selectedCurrency = CurrencyOptions.filter(
+          currency => currency.id === id,
+        );
+        setSelectedCurrency(_selectedCurrency[0]);
+        setCurrencyModalVisible(false);
+        setOptions({
+          ...options,
+          coin: _selectedCurrency[0].currencyAbbreviation,
+        });
+      };
+
+      return (
+        <CurrencySelectionRow
+          item={item}
+          emit={currencySelected}
+          key={item.id}
+          removeCheckbox={true}
+        />
+      );
+    },
+    [setSelectedCurrency, setCurrencyModalVisible, setOptions, options],
   );
+
   return (
     <ScrollViewContainer>
       <ImportContainer>
@@ -490,7 +497,7 @@ const RecoveryPhrase = () => {
                 </TextAlign>
                 <FlatList
                   contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
-                  data={currencyOptions}
+                  data={CurrencyOptions}
                   keyExtractor={keyExtractor}
                   renderItem={renderItem}
                 />
