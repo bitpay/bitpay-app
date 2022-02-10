@@ -201,14 +201,6 @@ export default () => {
 
   const scheme = appColorScheme || Appearance.getColorScheme();
   const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
-  const statusBarStyle =
-    Platform.OS === 'ios'
-      ? theme.dark
-        ? 'dark-content'
-        : 'light-content'
-      : theme.dark
-      ? 'light-content'
-      : 'dark-content';
 
   // ROOT STACKS AND GLOBAL COMPONENTS
   const initialRoute = onboardingCompleted
@@ -223,7 +215,7 @@ export default () => {
     <SafeAreaProvider>
       <StatusBar
         animated={true}
-        barStyle={statusBarStyle}
+        barStyle={theme.dark ? 'light-content' : 'dark-content'}
         backgroundColor={theme.colors.background}
       />
 
