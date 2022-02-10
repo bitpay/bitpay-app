@@ -4,7 +4,7 @@ import {useSelector} from 'react-redux';
 import Carousel from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {WIDTH} from '../../../../components/styled/Containers';
+import {ActiveOpacity, WIDTH} from '../../../../components/styled/Containers';
 import {RootState} from '../../../../store';
 import {Card} from '../../../../store/card/card.models';
 import {Key} from '../../../../store/wallet/wallet.models';
@@ -13,6 +13,8 @@ import BuyGiftCards from './cards/BuyGiftCards';
 import ConnectCoinbase from './cards/ConnectCoinbase';
 import CreateWallet from './cards/CreateWallet';
 import WalletCardComponent from './Wallet';
+import {TouchableOpacity} from 'react-native';
+import {HomeLink, SectionHeaderContainer} from '../HomeRoot';
 
 const CarouselContainer = styled.View`
   margin: 10px 0 10px;
@@ -110,22 +112,39 @@ const CardsCarousel = () => {
   }, [navigation, keys, bitPayCards]);
 
   return (
-    <CarouselContainer>
-      <Carousel
-        vertical={false}
-        layout={'default'}
-        useExperimentalSnap={true}
-        data={cardsList}
-        renderItem={_renderItem}
-        sliderWidth={WIDTH}
-        itemWidth={235}
-        inactiveSlideScale={1}
-        inactiveSlideOpacity={1}
-        onScrollIndexChanged={() => {
-          haptic('impactLight');
-        }}
-      />
-    </CarouselContainer>
+    <>
+      {Object.keys(keys).length > 0 ? (
+        <SectionHeaderContainer justifyContent={'flex-end'}>
+          <TouchableOpacity
+            activeOpacity={ActiveOpacity}
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('GeneralSettings', {
+                screen: 'CustomizeHome',
+              });
+            }}>
+            <HomeLink>Customize</HomeLink>
+          </TouchableOpacity>
+        </SectionHeaderContainer>
+      ) : null}
+
+      <CarouselContainer>
+        <Carousel
+          vertical={false}
+          layout={'default'}
+          useExperimentalSnap={true}
+          data={cardsList}
+          renderItem={_renderItem}
+          sliderWidth={WIDTH}
+          itemWidth={235}
+          inactiveSlideScale={1}
+          inactiveSlideOpacity={1}
+          onScrollIndexChanged={() => {
+            haptic('impactLight');
+          }}
+        />
+      </CarouselContainer>
+    </>
   );
 };
 
