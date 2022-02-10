@@ -15,6 +15,7 @@ import WalletCardComponent from './Wallet';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {Dispatch} from 'redux';
+import {getMnemonic} from '../../../../utils/helper-methods';
 
 const CarouselContainer = styled.View`
   margin: 10px 0 10px;
@@ -35,15 +36,13 @@ const keyBackupRequired = (
     enableBackdropDismiss: true,
     actions: [
       {
-        text: 'Backup Key',
+        text: 'Back up Key',
         action: () => {
           navigation.navigate('Wallet', {
             screen: 'RecoveryPhrase',
             params: {
               keyId: key.id,
-              words: key.properties.mnemonic.trim().split(' '),
-              walletTermsAccepted: true,
-              context: 'home',
+              words: getMnemonic(key),
               key,
             },
           });
@@ -90,11 +89,13 @@ const createHomeCardList = (
                   screen: 'KeyOverview',
                   params: {key},
                 });
-                return;
+              } else {
+                dispatch(
+                  showBottomNotificationModal(
+                    keyBackupRequired(key, navigation),
+                  ),
+                );
               }
-              dispatch(
-                showBottomNotificationModal(keyBackupRequired(key, navigation)),
-              );
             }}
           />
         );
