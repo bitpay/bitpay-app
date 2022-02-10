@@ -44,7 +44,7 @@ export const startUpdateWalletBalance =
           return resolve();
         }
 
-        const rates = (await dispatch<any>(startGetRates())) as Rates;
+        const rates = await dispatch<Promise<Rates>>(startGetRates());
         const lastKnownBalance = wallet.balance.fiat;
         const balance = await updateWalletBalance({wallet, rates});
 
@@ -93,7 +93,7 @@ export const startUpdateAllWalletBalancesForKey =
           return resolve();
         }
 
-        const rates = (await dispatch<any>(startGetRates())) as Rates;
+        const rates = await dispatch<Promise<Rates>>(startGetRates());
 
         const balances = await Promise.all(
           key.wallets.map(wallet => {

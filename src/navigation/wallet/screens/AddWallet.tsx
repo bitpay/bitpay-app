@@ -24,7 +24,6 @@ import {
   Row,
   ScreenGutter,
 } from '../../../components/styled/Containers';
-import {useDispatch, useSelector} from 'react-redux';
 import {StackScreenProps} from '@react-navigation/stack';
 import {WalletStackParamList} from '../WalletStack';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
@@ -55,12 +54,12 @@ import {FlatList} from 'react-native';
 import {keyExtractor} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Haptic from '../../../components/haptic-feedback/haptic';
-import {RootState} from '../../../store';
 import Icons from '../components/WalletIcons';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {Network} from '../../../constants';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 
 type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
 
@@ -145,10 +144,10 @@ const WalletAdvancedOptionsContainer = styled(AdvancedOptionsContainer)`
 
 const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const {currencyAbbreviation, currencyName, key, isToken} = route.params;
   // temporary until advanced settings is finished
-  const network = useSelector(({APP}: RootState) => APP.network);
+  const network = useAppSelector(({APP}) => APP.network);
   const [showOptions, setShowOptions] = useState(false);
   const [isTestnet, setIsTestnet] = useState(false);
 
@@ -246,7 +245,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
         startOnGoingProcessModal(OnGoingProcessMessages.ADDING_WALLET),
       );
       // adds wallet and binds to key obj - creates eth wallet if needed
-      const wallet = (await dispatch<any>(
+      const wallet = await dispatch(
         addWallet({
           key,
           associatedWallet: _associatedWallet,
@@ -257,7 +256,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
             walletName: walletName === currencyName ? undefined : walletName,
           },
         }),
-      )) as Wallet;
+      );
 
       navigation.dispatch(
         CommonActions.reset({
