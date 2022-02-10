@@ -25,6 +25,11 @@ import InfoIcon from '../../../components/icons/info/InfoIcon';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
 import {buildNestedWalletList} from './KeyOverview';
 import {URL} from '../../../constants';
+import {AppActions} from '../../../store/app';
+import {sleep} from '../../../utils/helper-methods';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {GeneralError, WrongPasswordError} from '../components/ErrorMessages';
+import {useLogger} from '../../../utils/hooks';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -89,12 +94,44 @@ const KeySettings = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const wallets = buildNestedWalletList(key.wallets);
+  const {isPrivKeyEncrypted} = key;
+  const logger = useLogger();
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>Key Settings</HeaderTitle>,
     });
   });
+
+  const onSubmitPassword = async (password: string) => {
+    if (password) {
+      try {
+        const getKey = key.methods.get(password);
+        navigation.navigate('Wallet', {
+          screen: 'RecoveryPhrase',
+          params: {
+            keyId: key.id,
+            words: getKey.mnemonic.trim().split(' '),
+            walletTermsAccepted: true,
+            context: 'keySettings',
+            key,
+          },
+        });
+        dispatch(AppActions.dismissDecryptPasswordModal());
+      } catch (e) {
+        console.log(`Decrypt Error: ${e}`);
+        await dispatch(AppActions.dismissDecryptPasswordModal());
+        await sleep(500); // Wait to close Decrypt Password modal
+        dispatch(showBottomNotificationModal(WrongPasswordError()));
+      }
+    } else {
+      dispatch(AppActions.dismissDecryptPasswordModal());
+      navigation.goBack();
+      await sleep(500); // Wait to close Decrypt Password modal
+      dispatch(showBottomNotificationModal(GeneralError));
+      logger.debug('Missing Key Error');
+    }
+  };
 
   return (
     <WalletSettingsContainer>
@@ -145,7 +182,29 @@ const KeySettings = () => {
           <Setting
             onPress={() => {
               haptic('impactLight');
-              //    TODO: Redirect me
+              if (!isPrivKeyEncrypted) {
+                navigation.navigate('Wallet', {
+                  screen: 'RecoveryPhrase',
+                  params: {
+                    keyId: key.id,
+                    words: key.properties.mnemonic.trim().split(' '),
+                    walletTermsAccepted: true,
+                    context: 'keySettings',
+                    key,
+                  },
+                });
+              } else {
+                dispatch(
+                  AppActions.showDecryptPasswordModal({
+                    onSubmitHandler: onSubmitPassword,
+                    description:
+                      'An encryption password is required when you’re sending crypto or managing settings. If you would like to disable this, go to your wallet settings.',
+                    onCancelHandler: () => {
+                      navigation.goBack();
+                    },
+                  }),
+                );
+              }
             }}>
             <WalletSettingsTitle>Backup</WalletSettingsTitle>
           </Setting>

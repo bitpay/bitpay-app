@@ -200,6 +200,13 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
                     navigation.navigate('Onboarding', {
                       screen: 'TermsOfUse',
                     });
+                  } else if (context === 'keySettings') {
+                    navigation.dispatch(
+                      StackActions.replace('Wallet', {
+                        screen: 'KeySettings',
+                        params: {key},
+                      }),
+                    );
                   } else {
                     navigation.dispatch(
                       StackActions.replace('Wallet', {

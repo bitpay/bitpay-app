@@ -52,6 +52,13 @@ export const navigateToTermsOrOverview = ({
     navigation.navigate('Onboarding', {
       screen: 'TermsOfUse',
     });
+  } else if (context === 'keySettings') {
+    navigation.dispatch(
+      StackActions.replace('Wallet', {
+        screen: 'KeySettings',
+        params: {key},
+      }),
+    );
   } else if (!walletTermsAccepted) {
     navigation.navigate('Wallet', {
       screen: 'TermsOfUse',

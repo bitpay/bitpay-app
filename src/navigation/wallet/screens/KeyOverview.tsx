@@ -121,7 +121,9 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   const theme = useTheme();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {key} = route.params;
+  const {key: currentKey} = route.params;
+
+  const key = useSelector(({WALLET}: RootState) => WALLET.keys[currentKey.id]);
   const {isPrivKeyEncrypted} = key;
 
   useLayoutEffect(() => {
@@ -150,7 +152,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
         );
       },
     });
-  }, [navigation]);
+  }, [navigation, isPrivKeyEncrypted]);
 
   const {wallets = [], totalBalance} = useSelector(
     ({WALLET}: RootState) => WALLET.keys[key.id] || {},
