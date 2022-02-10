@@ -124,14 +124,14 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
 
   const onboardingSlides = [
     {
-      title: 'Turn crypto into dollars with our BitPay card',
+      title: 'Turn crypto into dollars with our BitPay Card',
       text: 'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
       subText: '*Currently available in the USA. More countries coming soon.',
       img: () => <OnboardingImage source={OnboardingImages.card[themeType]} />,
     },
     {
       title: 'Spend crypto at your favorite places',
-      text: 'Discover a curated list of places you can spend your crypto. Purchase, manage, & spend store credits instantly.',
+      text: 'Discover a curated list of places you can spend your crypto. Purchase, manage, and spend store credits instantly.',
       img: () => <OnboardingImage source={OnboardingImages.spend[themeType]} />,
     },
     {
