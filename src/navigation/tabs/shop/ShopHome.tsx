@@ -1,3 +1,4 @@
+import debounce from 'lodash.debounce';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import styled, {css} from 'styled-components/native';
 import {Platform, ScrollView} from 'react-native';
@@ -194,8 +195,16 @@ const ShopHome = () => {
 
   const insets = useSafeAreaInsets();
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedSetScrollViewHeight = useCallback(
+    debounce(newScrollViewHeight => {
+      setScrollViewHeight(newScrollViewHeight);
+    }, 600),
+    [],
+  );
+
   useEffect(() => {
-    setScrollViewHeight(
+    debouncedSetScrollViewHeight(
       getScrollViewHeight(
         activeTab,
         categoriesWitIntegrations,
@@ -207,6 +216,7 @@ const ShopHome = () => {
     );
   }, [
     numSelectedGiftCards,
+    debouncedSetScrollViewHeight,
     activeTab,
     categoriesWitIntegrations,
     availableGiftCards,
