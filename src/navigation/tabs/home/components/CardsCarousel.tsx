@@ -159,7 +159,7 @@ const CardsCarousel = () => {
         dispatch,
       ),
     );
-  }, [navigation, keys, bitPayCards]);
+  }, [navigation, keys, bitPayCards, dispatch]);
 
   return (
     <CarouselContainer>
