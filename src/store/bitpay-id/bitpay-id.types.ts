@@ -3,6 +3,7 @@ import {Session, User} from './bitpay-id.models';
 import {
   EmailPairingStatus,
   FetchBasicInfoStatus,
+  FetchDoshTokenStatus,
   FetchSessionStatus,
   LoginStatus,
   PairingBitPayIdStatus,
@@ -33,10 +34,14 @@ export enum BitPayIdActionTypes {
   FAILED_PAIRING_BITPAY_ID = 'BitPayId/FAILED_PAIRING_BITPAY_ID',
   UPDATE_PAIRING_BITPAY_ID_STATUS = 'BitPayId/UPDATE_PAIRING_BITPAY_ID_STATUS',
   COMPLETED_PAIRING = 'BitPayId/COMPLETED_PAIRING',
+  SUCCESS_FETCH_ALL_USER_DATA = 'BitPayId/SUCCESS_FETCH_ALL_USER_DATA',
   SUCCESS_FETCH_BASIC_INFO = 'BitPayId/SUCCCESS_FETCH_BASIC_INFO',
   FAILED_FETCH_BASIC_INFO = 'BitPayId/FAILED_FETCH_BASIC_INFO',
   UPDATE_FETCH_BASIC_INFO_STATUS = 'BitPayId/UPDATE_FETCH_BASIC_INFO_STATUS',
   BITPAY_ID_DISCONNECTED = 'BitPayId/BITPAY_ID_DISCONNECTED',
+  SUCCESS_FETCH_DOSH_TOKEN = 'BitPayId/SUCCESS_FETCH_DOSH_TOKEN',
+  FAILED_FETCH_DOSH_TOKEN = 'BitPayId/FAILED_FETCH_DOSH_TOKEN',
+  UPDATE_FETCH_DOSH_TOKEN_STATUS = 'BitPayId/UPDATE_FETCH_DOSH_TOKEN_STATUS',
 }
 
 interface SuccessFetchSession {
@@ -64,6 +69,7 @@ interface SuccessLogin {
 
 interface FailedLogin {
   type: typeof BitPayIdActionTypes.FAILED_LOGIN;
+  payload: {error?: string};
 }
 
 interface PendingLogin {
@@ -83,6 +89,7 @@ interface SuccessSubmitTwoFactorAuth {
 
 interface FailedSubmitTwoFactorAuth {
   type: typeof BitPayIdActionTypes.FAILED_SUBMIT_TWO_FACTOR_AUTH;
+  payload: {error?: string};
 }
 
 interface SuccessSubmitTwoFactorPairing {
@@ -91,6 +98,7 @@ interface SuccessSubmitTwoFactorPairing {
 
 interface FailedSubmitTwoFactorPairing {
   type: typeof BitPayIdActionTypes.FAILED_SUBMIT_TWO_FACTOR_PAIRING;
+  payload: {error?: string};
 }
 
 interface UpdateTwoFactorAuthStatus {
@@ -123,6 +131,7 @@ interface SuccessPairingBitPayId {
 
 interface FailedPairingBitPayId {
   type: typeof BitPayIdActionTypes.FAILED_PAIRING_BITPAY_ID;
+  payload: {error?: string};
 }
 
 interface UpdatePairingBitPayIdStatus {
@@ -132,6 +141,11 @@ interface UpdatePairingBitPayIdStatus {
 
 interface CompletedPairing {
   type: typeof BitPayIdActionTypes.COMPLETED_PAIRING;
+}
+
+interface SuccessFetchAllUserData {
+  type: typeof BitPayIdActionTypes.SUCCESS_FETCH_ALL_USER_DATA;
+  payload: {network: Network; user: User; doshToken?: string};
 }
 
 interface SuccessFetchBasicInfo {
@@ -151,6 +165,20 @@ interface UpdateFetchBasicInfoStatus {
 interface BitPayIdDisconnected {
   type: typeof BitPayIdActionTypes.BITPAY_ID_DISCONNECTED;
   payload: {network: Network};
+}
+
+interface SuccessFetchDoshToken {
+  type: typeof BitPayIdActionTypes.SUCCESS_FETCH_DOSH_TOKEN;
+  payload: {network: Network; token: string};
+}
+
+interface FailedFetchDoshToken {
+  type: typeof BitPayIdActionTypes.FAILED_FETCH_DOSH_TOKEN;
+}
+
+interface UpdateFetchDoshTokenStatus {
+  type: typeof BitPayIdActionTypes.UPDATE_FETCH_DOSH_TOKEN_STATUS;
+  payload: FetchDoshTokenStatus;
 }
 
 export type BitPayIdActionType =
@@ -185,7 +213,11 @@ export type BitPayIdActionType =
   | CompletedPairing
 
   // user info
+  | SuccessFetchAllUserData
   | SuccessFetchBasicInfo
   | FailedFetchBasicInfo
   | UpdateFetchBasicInfoStatus
-  | BitPayIdDisconnected;
+  | BitPayIdDisconnected
+  | SuccessFetchDoshToken
+  | FailedFetchDoshToken
+  | UpdateFetchDoshTokenStatus;

@@ -83,7 +83,7 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   img,
   currencyName,
   currencyAbbreviation: currencyAbbreviation.toUpperCase(),
-  walletName,
+  walletName: walletName || credentials.walletName,
   cryptoBalance: balance.crypto,
   fiatBalance: formatFiatAmount(balance.fiat, 'usd'),
   network: credentials.network,
@@ -153,7 +153,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
       img: <Icons.Encrypt />,
       title: 'Encrypt your Key',
       description:
-        'Prevent an unauthorized used from sending funds out of your wallet.',
+        'Prevent an unauthorized user from sending funds out of your wallet.',
       onPress: () => null,
     },
     {

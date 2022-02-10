@@ -1,6 +1,6 @@
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import React, {ReactNode, useEffect, useState} from 'react';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import Carousel from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
 import haptic from '../../../../components/haptic-feedback/haptic';
@@ -13,6 +13,9 @@ import BuyGiftCards from './cards/BuyGiftCards';
 import ConnectCoinbase from './cards/ConnectCoinbase';
 import CreateWallet from './cards/CreateWallet';
 import WalletCardComponent from './Wallet';
+import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
+import {showBottomNotificationModal} from '../../../../store/app/app.actions';
+import {Dispatch} from 'redux';
 
 const CarouselContainer = styled.View`
   margin: 10px 0 10px;
@@ -22,10 +25,46 @@ const _renderItem = ({item}: {item: ReactNode}) => {
   return <>{item}</>;
 };
 
+const keyBackupRequired = (
+  key: Key,
+  navigation: NavigationProp<any>,
+): BottomNotificationConfig => {
+  return {
+    type: 'error',
+    title: 'Key Backup Required',
+    message: 'To continue you will need to back up your key.',
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: 'Backup Key',
+        action: () => {
+          navigation.navigate('Wallet', {
+            screen: 'RecoveryPhrase',
+            params: {
+              keyId: key.id,
+              words: key.properties.mnemonic.trim().split(' '),
+              walletTermsAccepted: true,
+              context: 'home',
+              key,
+            },
+          });
+        },
+        primary: true,
+      },
+      {
+        text: 'maybe later',
+        action: () => {},
+        primary: false,
+      },
+    ],
+  };
+};
+
 const createHomeCardList = (
   navigation: NavigationProp<any>,
   keys: Key[],
   cards: Card[],
+  dispatch: Dispatch,
 ) => {
   cards = cards.filter(c => c.provider === 'galileo');
 
@@ -39,18 +78,25 @@ const createHomeCardList = (
     const walletCards = keys
       .filter(key => key.show)
       .map(key => {
-        const {wallets, totalBalance = 0} = key;
+        const {wallets, totalBalance = 0, backupComplete} = key;
 
         return (
           <WalletCardComponent
             wallets={wallets}
             totalBalance={totalBalance}
-            onPress={() =>
-              navigation.navigate('Wallet', {
-                screen: 'KeyOverview',
-                params: {key},
-              })
-            }
+            needsBackup={!backupComplete}
+            onPress={() => {
+              if (backupComplete) {
+                navigation.navigate('Wallet', {
+                  screen: 'KeyOverview',
+                  params: {key},
+                });
+                return;
+              }
+              dispatch(
+                showBottomNotificationModal(keyBackupRequired(key, navigation)),
+              );
+            }}
           />
         );
       });
@@ -93,6 +139,7 @@ const createHomeCardList = (
 
 const CardsCarousel = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   const bitPayCards = useSelector<RootState, Card[]>(
     ({APP, CARD}) => CARD.cards[APP.network],
   );
@@ -100,12 +147,17 @@ const CardsCarousel = () => {
     ({WALLET}) => WALLET.keys,
   );
   const [cardsList, setCardsList] = useState(
-    createHomeCardList(navigation, Object.values(keys), bitPayCards),
+    createHomeCardList(navigation, Object.values(keys), bitPayCards, dispatch),
   );
 
   useEffect(() => {
     setCardsList(
-      createHomeCardList(navigation, Object.values(keys), bitPayCards),
+      createHomeCardList(
+        navigation,
+        Object.values(keys),
+        bitPayCards,
+        dispatch,
+      ),
     );
   }, [navigation, keys, bitPayCards]);
 

@@ -1,15 +1,16 @@
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useEffect, useLayoutEffect, useMemo} from 'react';
-import {useRef, useState} from 'react';
+import {useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView} from 'react-native';
-import Carousel, {Pagination} from 'react-native-snap-carousel';
+import Carousel from 'react-native-snap-carousel';
 import {useDispatch, useSelector} from 'react-redux';
 import Button from '../../../components/button/Button';
 import {
   HeaderRightContainer,
   WIDTH,
 } from '../../../components/styled/Containers';
+import {ProviderConfig} from '../../../constants/config.card';
 import {RootState} from '../../../store';
 import {CardEffects} from '../../../store/card';
 import {Card, Transaction} from '../../../store/card/card.models';
@@ -104,29 +105,21 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const virtualDesignCurrency = useSelector<RootState, VirtualDesignCurrency>(
     ({CARD}) => CARD.virtualDesignCurrency,
   );
-  const memoizedSlides = useMemo(() => buildOverviewSlides(cards), [cards]);
-  const [initialSlideIdx] = useState(() => {
-    return id
-      ? Math.max(
-          0,
-          memoizedSlides.findIndex(s => s.cards.some(c => c.id === id)),
-        )
-      : 0;
-  });
-  const [activeSlideIdx, setActiveSlideIdx] = useState<number>(initialSlideIdx);
-  const fetchId = useSelector<RootState, string | null>(({CARD}) => {
-    const activeSlideId = memoizedSlides[activeSlideIdx].primaryCard.id;
 
-    // quick check to see if we've done an initial fetch for this ID before
-    // TODO: a more robust check once we start loading tx activity
-    return typeof CARD.balances[activeSlideId] !== 'number'
-      ? activeSlideId
-      : null;
-  });
+  const memoizedSlides = useMemo(() => buildOverviewSlides(cards), [cards]);
+
+  // if id was passed in, try to find the slide that contains that id
+  // if not, default to 0
+  const activeSlideIdx = id
+    ? Math.max(
+        0,
+        memoizedSlides.findIndex(s => s.cards.some(c => c.id === id)),
+      )
+    : 0;
+  const activeSlide = memoizedSlides[activeSlideIdx];
+  const activeCard = activeSlide.primaryCard;
 
   useLayoutEffect(() => {
-    const activeSlide = memoizedSlides[activeSlideIdx];
-
     navigation.setOptions({
       headerRight: () => (
         <HeaderRightContainer>
@@ -144,25 +137,37 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         </HeaderRightContainer>
       ),
     });
-  }, [memoizedSlides, activeSlideIdx, navigation, t]);
+  }, [activeSlide, navigation, t]);
 
-  const activeCard = memoizedSlides[activeSlideIdx].primaryCard;
-  const settledTxList = (
-    useSelector<RootState, Transaction[]>(
-      ({CARD}) => CARD.settledTransactions[activeCard.id]?.transactionList,
-    ) || []
-  ).slice(0, 30);
-  const pendingTxList = (
-    useSelector<RootState, Transaction[]>(
-      ({CARD}) => CARD.pendingTransactions[activeCard.id],
-    ) || []
-  ).slice(0, 30);
+  // if id does not exist as a key, tx for this card has not been initialized
+  const uninitializedId = useSelector<RootState, string | null>(({CARD}) =>
+    CARD.settledTransactions[activeCard.id] ? null : activeCard.id,
+  );
 
   useEffect(() => {
-    if (fetchId) {
-      dispatch(CardEffects.startFetchOverview(fetchId));
+    if (uninitializedId) {
+      dispatch(CardEffects.startFetchOverview(uninitializedId));
     }
-  }, [fetchId, dispatch]);
+  }, [uninitializedId, dispatch]);
+
+  const {filters} = ProviderConfig[activeCard.provider];
+  const settledTxList = useSelector<RootState, Transaction[]>(
+    ({CARD}) => CARD.settledTransactions[activeCard.id]?.transactionList,
+  );
+
+  const filteredSettledTx = useMemo(
+    () => (settledTxList || []).filter(filters.settledTx),
+    [settledTxList, filters],
+  ).slice(0, 30);
+
+  const pendingTxList = useSelector<RootState, Transaction[]>(
+    ({CARD}) => CARD.pendingTransactions[activeCard.id],
+  );
+
+  const filteredPendingTx = useMemo(
+    () => pendingTxList || [],
+    [pendingTxList],
+  ).slice(0, 30);
 
   return (
     <ScrollView>
@@ -171,15 +176,19 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         vertical={false}
         layout="default"
         activeSlideAlignment="center"
-        firstItem={initialSlideIdx}
+        firstItem={activeSlideIdx}
         data={memoizedSlides}
         renderItem={({item}) => (
           <CardOverviewSlide
-            slide={item}
+            card={item.primaryCard}
             designCurrency={virtualDesignCurrency}
           />
         )}
-        onSnapToItem={setActiveSlideIdx}
+        onSnapToItem={idx => {
+          navigation.setParams({
+            id: memoizedSlides[idx].primaryCard.id,
+          });
+        }}
         itemWidth={300 + 20}
         sliderWidth={WIDTH}
         inactiveSlideScale={1}
@@ -193,8 +202,8 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
 
       <TransactionsList
         card={activeCard}
-        pendingTxList={pendingTxList}
-        settledTxList={settledTxList}
+        pendingTxList={filteredPendingTx}
+        settledTxList={filteredSettledTx}
       />
     </ScrollView>
   );

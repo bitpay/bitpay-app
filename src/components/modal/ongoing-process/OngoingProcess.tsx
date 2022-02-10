@@ -15,6 +15,7 @@ export enum OnGoingProcessMessages {
   IMPORTING = 'Importing',
   DELETING_KEY = 'Deleting Key',
   ADDING_WALLET = 'Adding Wallet',
+  LOADING = 'Loading',
   FETCHING_PAYMENT_OPTIONS = 'Fetching payment options...',
   FETCHING_PAYMENT_INFO = 'Fetching payment information...',
 }

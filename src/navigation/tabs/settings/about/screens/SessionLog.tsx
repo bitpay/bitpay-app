@@ -1,11 +1,20 @@
+import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useState} from 'react';
 import {StyleProp, Text, TextStyle} from 'react-native';
 import {useSelector} from 'react-redux';
 import {useTheme} from 'styled-components/native';
 import {RootState} from '../../../../../store';
 import {LogLevel} from '../../../../../store/log/log.models';
+import {AboutStackParamList} from '../AboutStack';
 
-const SessionLogs: React.FC = () => {
+export interface SessionLogsParamList {}
+
+type SessionLogsScreenProps = StackNavigationProp<
+  AboutStackParamList,
+  'SessionLogs'
+>;
+
+const SessionLogs: React.FC<SessionLogsScreenProps> = () => {
   const theme = useTheme();
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
   const logs = useSelector(({LOG}: RootState) => LOG.logs);
