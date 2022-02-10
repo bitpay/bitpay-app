@@ -4,7 +4,6 @@ import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
 import styled from 'styled-components/native';
 import {BaseText, H4} from '../../../components/styled/Text';
 import {Action, NeutralSlate, SlateDark} from '../../../styles/colors';
-import {IsUtxoCoin} from '../../../store/wallet/utils/wallet';
 
 const Header = styled.View`
   margin-bottom: 30px;
