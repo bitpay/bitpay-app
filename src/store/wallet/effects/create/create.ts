@@ -50,6 +50,7 @@ export const startCreateKey =
         });
 
         const key = buildKeyObj({key: _key, wallets});
+        key.backupComplete = false;
 
         dispatch(
           successCreateKey({
