@@ -130,7 +130,7 @@ const BuildKeyWalletRow = (
         wallets.push(_wallet);
       });
     if (wallets.length) {
-      const {keyName} = value || 'My Key';
+      const {keyName = 'My Key'} = value;
       filteredKeys.push({key, keyName, wallets});
     }
   });
