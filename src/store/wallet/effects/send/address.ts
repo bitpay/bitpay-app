@@ -37,23 +37,23 @@ export const createWalletAddress =
         resolve(wallet.receiveAddress);
       }
 
-      const walletClone = cloneDeep(wallet);
-      if (walletClone) {
-        let {token, network, multisigEthInfo} = walletClone.credentials;
+      const _wallet = cloneDeep(wallet);
+      if (_wallet) {
+        let {token, network, multisigEthInfo} = _wallet.credentials;
 
         if (multisigEthInfo?.multisigContractAddress) {
           return resolve(multisigEthInfo.multisigContractAddress);
         }
 
         if (token) {
-          walletClone.id.replace(`-${token.address}`, '');
+          _wallet.id.replace(`-${token.address}`, '');
         }
 
-        walletClone.createAddress({}, (err: any, addressObj: Address) => {
+        _wallet.createAddress({}, (err: any, addressObj: Address) => {
           if (err) {
             //  Rate limits after 20 consecutive addresses
             if (err.name && err.name.includes('MAIN_ADDRESS_GAP_REACHED')) {
-              walletClone.getMainAddresses(
+              _wallet.getMainAddresses(
                 {
                   reverse: true,
                   limit: 1,
@@ -62,8 +62,8 @@ export const createWalletAddress =
                   if (e) {
                     reject({type: 'MAIN_ADDRESS_GAP_REACHED', error: e});
                   }
-                  walletClone.receiveAddress = addr[0].address;
-                  dispatch(successGetReceiveAddress({wallet: walletClone}));
+                  _wallet.receiveAddress = addr[0].address;
+                  dispatch(successGetReceiveAddress({wallet: _wallet}));
                   resolve(addr[0].address);
                 },
               );
@@ -79,8 +79,8 @@ export const createWalletAddress =
               error: addressObj.address,
             });
           } else if (addressObj) {
-            walletClone.receiveAddress = addressObj.address;
-            dispatch(successGetReceiveAddress({wallet: walletClone}));
+            _wallet.receiveAddress = addressObj.address;
+            dispatch(successGetReceiveAddress({wallet: _wallet}));
             resolve(addressObj.address);
           }
         });

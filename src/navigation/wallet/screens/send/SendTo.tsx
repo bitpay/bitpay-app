@@ -162,7 +162,6 @@ const SendTo = () => {
   });
 
   const {wallet} = route.params;
-  console.log(wallet);
   const {
     currencyAbbreviation,
     id,
