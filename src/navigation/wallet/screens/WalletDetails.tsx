@@ -30,6 +30,7 @@ import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
 import {createWalletAddress} from '../../../store/wallet/effects/send/address';
+import WalletTransactionList from '../components/WalletTransactionList';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -117,8 +118,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const ShareAddress = async () => {
     try {
-      setShowWalletOptions(false);
-      await sleep(500);
+      await sleep(1000);
       const address = (await dispatch<any>(
         createWalletAddress({wallet: fullWalletObj, newAddress: false}),
       )) as string;
@@ -236,6 +236,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                   }}
                 />
               ) : null}
+
+              <WalletTransactionList wallet={fullWalletObj} currentKey={key} />
             </>
           );
         }}

@@ -154,81 +154,14 @@ export const isBalanceCacheKeyStale = (timestamp: number | undefined) => {
   return Date.now() - timestamp > TTL;
 };
 
-export const GetProtocolPrefix = (
-  currency: string,
-  network: string = 'livenet',
-) => {
-  // @ts-ignore
-  return Currencies[currency].paymentInfo.protocolPrefix[network];
-};
-
-const GetPrecision = (currencyAbbreviation: string) => {
-  return Currencies[currencyAbbreviation].unitInfo;
-};
-
-export const IsUtxoCoin = (currencyAbbreviation: string): boolean => {
-  return Currencies[currencyAbbreviation].properties.isUtxo;
-};
-
-const IsCustomERCToken = (currencyAbbreviation: string) => {
+export const IsZceCompatible = (wallet: Wallet): boolean => {
+  const {
+    credentials: {coin, network, addressType},
+  } = wallet;
+  const isSingleSigBch = coin === 'bch' && addressType === 'P2PKH';
+  const isNotDuplicatedFromAnotherChain =
+    wallet.credentials.rootPath.split('/')[2] === "145'";
   return (
-    Currencies[currencyAbbreviation]?.properties.isCustom &&
-    !SUPPORTED_TOKENS.includes(currencyAbbreviation)
+    isSingleSigBch && (isNotDuplicatedFromAnotherChain || network === 'testnet')
   );
-};
-
-export interface FormattedAmountObj {
-  amount: string;
-  currency: string;
-  amountSat: number;
-  amountUnitStr: string;
-}
-
-export const FormatCryptoAmount = (
-  amount: number,
-  currencyAbbreviation: string,
-): FormattedAmountObj => {
-  // @ts-ignore
-  const {unitToSatoshi, unitDecimals} = GetPrecision(currencyAbbreviation);
-  const satToUnit = 1 / unitToSatoshi;
-  let amountUnitStr;
-  let amountSat;
-  let _amount;
-  amountSat = parseInt((amount * unitToSatoshi).toFixed(0), 10);
-
-  let opts;
-  // Custom tokens
-  if (currencyAbbreviation && IsCustomERCToken(currencyAbbreviation)) {
-    opts = {
-      // @ts-ignore
-      toSatoshis: GetPrecision(currencyAbbreviation).unitToSatoshi,
-      decimals: {
-        full: {
-          maxDecimals: 8,
-          minDecimals: 8,
-        },
-        short: {
-          maxDecimals: 6,
-          minDecimals: 2,
-        },
-      },
-    };
-  }
-
-  try {
-    amountUnitStr = BwcProvider.getInstance()
-      .getUtils()
-      .formatAmount(amountSat, currencyAbbreviation, opts);
-    amountUnitStr = `${amountUnitStr} ${currencyAbbreviation.toUpperCase()}`;
-  } catch (e) {}
-
-  _amount = (amountSat * satToUnit).toFixed(unitDecimals);
-  const currency = currencyAbbreviation.toUpperCase();
-
-  return {
-    amount: _amount,
-    currency,
-    amountSat,
-    amountUnitStr,
-  };
 };

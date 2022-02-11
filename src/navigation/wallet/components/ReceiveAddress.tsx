@@ -32,7 +32,7 @@ import ReceiveAddressHeader, {
 import {
   GetProtocolPrefix,
   IsUtxoCoin,
-} from '../../../store/wallet/utils/wallet';
+} from '../../../store/wallet/utils/currency';
 
 export const BchAddressTypes = ['Cash Address', 'Legacy'];
 
