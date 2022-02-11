@@ -182,7 +182,7 @@ const HomeRoot = () => {
         <CardsCarousel />
 
         {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
-        <LinkingButtons receiveCta={() => null} sendCta={() => null} />
+        <LinkingButtons receive={{cta: () => null}} send={{cta: () => null}} />
 
         {/* ////////////////////////////// LIMITED TIME OFFERS */}
         <SectionHeaderContainer justifyContent={'space-between'}>
