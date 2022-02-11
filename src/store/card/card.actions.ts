@@ -1,3 +1,4 @@
+import {InitialUserData} from '../../api/user/user.types';
 import {Network} from '../../constants';
 import {Card, PagedTransactionData, Transaction} from './card.models';
 import {
@@ -13,16 +14,13 @@ import {
 
 export const successInitializeStore = (
   network: Network,
-  cards?: Card[],
-  balances?: {id: string; balance: number}[],
-  virtualCardImageUrls?: {id: string; virtualCardImage: string}[],
+  data: InitialUserData,
 ): CardActionType => ({
   type: CardActionTypes.SUCCESS_INITIALIZE_STORE,
   payload: {
     network,
-    cards: cards || [],
-    balances: balances || [],
-    virtualCardImageUrls: virtualCardImageUrls || [],
+    cards: data.cards || [],
+    balances: data.cardBalances || [],
   },
 });
 

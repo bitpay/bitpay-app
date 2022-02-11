@@ -5,16 +5,13 @@ import InAppBrowser, {
 } from 'react-native-inappbrowser-reborn';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import BitPayApi from '../../api/bitpay';
-import CardApi from '../../api/card';
 import GraphQlApi from '../../api/graphql';
 import UserApi from '../../api/user';
 import {Network} from '../../constants';
 import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
 import {BitPayIdEffects} from '../bitpay-id';
-import {User} from '../bitpay-id/bitpay-id.models';
 import {CardEffects} from '../card';
-import {Card} from '../card/card.models';
 import {RootState, Effect} from '../index';
 import {LogActions} from '../log';
 import {startWalletStoreInit} from '../wallet/effects';
@@ -43,14 +40,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     await dispatch(initializeApi(APP.network, identity));
 
-    let user: User | undefined;
-    let cards: Card[] | undefined;
-    let cardBalances: {id: string; balance: number}[] | undefined;
-    let virtualCardImageUrls:
-      | {id: string; virtualCardImage: string}[]
-      | undefined;
-    let doshToken: string | undefined;
-
     if (isPaired) {
       try {
         dispatch(
@@ -58,19 +47,11 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
             'App is paired with BitPayID, refreshing user data...',
           ),
         );
-        const response = await UserApi.fetchAllUserData(token);
-        user = response.basicInfo;
-        cards = response.cards;
-        cardBalances = response.cardBalances;
-        doshToken = response.doshToken;
 
-        const galileoCards = (cards || [])
-          .filter(c => c.provider === 'galileo' && c.cardType === 'virtual')
-          .map(c => c.id);
-        virtualCardImageUrls = await CardApi.fetchVirtualCardImageUrls(
-          token,
-          galileoCards,
-        );
+        const initialData = await UserApi.fetchInitialUserData(token);
+
+        await dispatch(BitPayIdEffects.startBitPayIdStoreInit(initialData));
+        await dispatch(CardEffects.startCardStoreInit(initialData));
       } catch (err: any) {
         if (isAxiosError(err)) {
           dispatch(LogActions.error(`${err.name}: ${err.message}`));
@@ -92,17 +73,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here
     await dispatch(startWalletStoreInit());
-    await dispatch(
-      BitPayIdEffects.startBitPayIdStoreInit(network, {user, doshToken}),
-    );
-    await dispatch(
-      CardEffects.startCardStoreInit(network, {
-        cards,
-        cardBalances,
-        virtualCardImageUrls,
-      }),
-    );
-
     await sleep(500);
     dispatch(AppActions.successAppInit());
     dispatch(LogActions.info('Initialized app successfully.'));

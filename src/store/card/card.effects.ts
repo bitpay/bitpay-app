@@ -1,41 +1,32 @@
 import {batch} from 'react-redux';
 import {CardActions} from '.';
 import CardApi from '../../api/card';
+import {InitialUserData} from '../../api/user/user.types';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
-import {Network} from '../../constants';
 import {sleep} from '../../utils/helper-methods';
 import {AppActions} from '../app';
 import {Effect} from '../index';
 import {LogActions} from '../log';
-import {Card} from './card.models';
 import {TTL} from './card.types';
 
-interface CardStoreInitParams {
-  cards?: Card[];
-  cardBalances?: {
-    id: string;
-    balance: number;
-  }[];
-  virtualCardImageUrls?: {
-    id: string;
-    virtualCardImage: string;
-  }[];
-}
-
 export const startCardStoreInit =
-  (
-    network: Network,
-    {cards, cardBalances, virtualCardImageUrls}: CardStoreInitParams,
-  ): Effect<Promise<void>> =>
-  async dispatch => {
-    dispatch(
-      CardActions.successInitializeStore(
-        network,
-        cards,
-        cardBalances,
-        virtualCardImageUrls,
-      ),
-    );
+  (initialData: InitialUserData): Effect<Promise<void>> =>
+  async (dispatch, getState) => {
+    const {APP} = getState();
+
+    dispatch(CardActions.successInitializeStore(APP.network, initialData));
+
+    try {
+      const virtualCardIds = (initialData.cards || [])
+        .filter(c => c.provider === 'galileo' && c.cardType === 'virtual')
+        .map(c => c.id);
+
+      if (virtualCardIds.length) {
+        dispatch(startFetchVirtualCardImageUrls(virtualCardIds));
+      }
+    } catch (err) {
+      // swallow error so initialize is uninterrupted
+    }
   };
 
 export const startFetchAll =

@@ -48,7 +48,6 @@ interface SuccessInitializeStore {
     network: Network;
     cards: Card[];
     balances: {id: string; balance: number}[];
-    virtualCardImageUrls: {id: string; virtualCardImage: string}[];
   };
 }
 

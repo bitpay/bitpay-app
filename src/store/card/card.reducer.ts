@@ -91,13 +91,6 @@ export const cardReducer = (
         },
         {} as {[id: string]: number},
       );
-      const initUrls = action.payload.virtualCardImageUrls.reduce(
-        (urls, {id, virtualCardImage}) => {
-          urls[id] = virtualCardImage;
-          return urls;
-        },
-        {} as {[id: string]: string},
-      );
 
       return {
         ...state,
@@ -108,10 +101,6 @@ export const cardReducer = (
         balances: {
           ...state.balances,
           ...payloadBalances,
-        },
-        virtualCardImages: {
-          ...state.virtualCardImages,
-          ...initUrls,
         },
       };
     case CardActionTypes.SUCCESS_FETCH_CARDS:
