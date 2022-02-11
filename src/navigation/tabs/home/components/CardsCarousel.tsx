@@ -165,35 +165,35 @@ const CardsCarousel = () => {
   }, [navigation, keys, bitPayCards, dispatch]);
 
   return (
-      <>
-        {Object.keys(keys).length > 0 ? (
-            <SectionHeaderContainer justifyContent={'flex-end'}>
-              <TouchableOpacity
-                  activeOpacity={ActiveOpacity}
-                  onPress={() => {
-                    haptic('impactLight');
-                    navigation.navigate('GeneralSettings', {
-                      screen: 'CustomizeHome',
-                    });
-                  }}>
-                <HomeLink>Customize</HomeLink>
-              </TouchableOpacity>
-            </SectionHeaderContainer>
-        ) : null}
-    <CarouselContainer>
-      <Carousel
-        vertical={false}
-        layout={'default'}
-        useExperimentalSnap={true}
-        data={cardsList}
-        renderItem={_renderItem}
-        sliderWidth={WIDTH}
-        itemWidth={235}
-        inactiveSlideScale={1}
-        inactiveSlideOpacity={1}
-      />
-    </CarouselContainer>
-        </>
+    <>
+      {Object.keys(keys).length > 0 ? (
+        <SectionHeaderContainer justifyContent={'flex-end'}>
+          <TouchableOpacity
+            activeOpacity={ActiveOpacity}
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('GeneralSettings', {
+                screen: 'CustomizeHome',
+              });
+            }}>
+            <HomeLink>Customize</HomeLink>
+          </TouchableOpacity>
+        </SectionHeaderContainer>
+      ) : null}
+      <CarouselContainer>
+        <Carousel
+          vertical={false}
+          layout={'default'}
+          useExperimentalSnap={true}
+          data={cardsList}
+          renderItem={_renderItem}
+          sliderWidth={WIDTH}
+          itemWidth={235}
+          inactiveSlideScale={1}
+          inactiveSlideOpacity={1}
+        />
+      </CarouselContainer>
+    </>
   );
 };
 
