@@ -76,6 +76,7 @@ import {keyExtractor} from '../../../utils/helper-methods';
 import CurrencySelectionRow, {
   CurrencySelectionToggleProps,
 } from '../../../components/list/CurrencySelectionRow';
+import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 
 const Gutter = '10px';
 const ScrollViewContainer = styled.ScrollView`
@@ -311,7 +312,7 @@ const RecoveryPhrase = () => {
           await dispatch<Key>(startImportWithDerivationPath(importData, opts));
 
       await dispatch(startUpdateAllWalletBalancesForKey(key));
-
+      await dispatch(updatePortfolioBalance());
       navigateToTermsOrOverview({
         context: route.params?.context,
         navigation,
@@ -404,6 +405,7 @@ const RecoveryPhrase = () => {
           render={({field: {onChange, onBlur, value}}) => (
             <ImportTextInput
               multiline
+              autoCapitalize={'none'}
               numberOfLines={5}
               onChangeText={(text: string) => onChange(text)}
               onBlur={onBlur}
