@@ -5,6 +5,7 @@ import {
   PriceHistory,
   Token,
   WalletBalance,
+  Wallet,
 } from './wallet.models';
 
 export const successWalletStoreInit = (): WalletActionType => ({
@@ -138,5 +139,12 @@ export const toggleHomeKeyCard = (payload: {
   show: boolean;
 }): WalletActionType => ({
   type: WalletActionTypes.TOGGLE_HOME_KEY_CARD,
+  payload,
+});
+
+export const successGetReceiveAddress = (payload: {
+  wallet: Wallet;
+}): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_GET_RECEIVE_ADDRESS,
   payload,
 });

@@ -2,7 +2,7 @@ import {useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {FlatList, RefreshControl} from 'react-native';
+import {FlatList, RefreshControl, Share} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import Settings from '../../../components/settings/Settings';
@@ -29,6 +29,7 @@ import ReceiveAddress from '../components/ReceiveAddress';
 import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
+import {createWalletAddress} from '../../../store/wallet/effects/send/address';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -114,20 +115,39 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     });
   }, [navigation, uiFormattedWallet.currencyName]);
 
+  const ShareAddress = async () => {
+    try {
+      setShowWalletOptions(false);
+      await sleep(500);
+      const address = (await dispatch<any>(
+        createWalletAddress({wallet: fullWalletObj, newAddress: false}),
+      )) as string;
+
+      await Share.share({
+        message: address,
+      });
+    } catch (e) {}
+  };
+
   const assetOptions: Array<Option> = [
     {
       img: <Icons.RequestAmount />,
       title: 'Request a specific amount',
       description:
         'This will generate an invoice, which the person you send it to can pay using any wallet.',
-      onPress: () => null,
+      onPress: () => {
+        navigation.navigate('Wallet', {
+          screen: 'RequestSpecificAmount',
+          params: {wallet: fullWalletObj},
+        });
+      },
     },
     {
       img: <Icons.ShareAddress />,
       title: 'Share Address',
       description:
         'Share your wallet address to someone in your contacts so they can send you funds.',
-      onPress: () => null,
+      onPress: ShareAddress,
     },
     {
       img: <Icons.Settings />,
@@ -204,17 +224,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
               </BalanceContainer>
 
               {fullWalletObj ? (
-                  <LinkingButtons
-                      receive={{cta: () => showReceiveAddress()}}
-                      send={{
-                        hide: __DEV__ ? false : !fullWalletObj.balance.fiat,
-                        cta: () =>
-                            navigation.navigate('Wallet', {
-                              screen: 'SendTo',
-                              params: {wallet: fullWalletObj},
-                            }),
-                      }}
-                  />
+                <LinkingButtons
+                  receive={{cta: () => showReceiveAddress()}}
+                  send={{
+                    hide: __DEV__ ? false : !fullWalletObj.balance.fiat,
+                    cta: () =>
+                      navigation.navigate('Wallet', {
+                        screen: 'SendTo',
+                        params: {wallet: fullWalletObj},
+                      }),
+                  }}
+                />
               ) : null}
             </>
           );

@@ -31,6 +31,8 @@ import TermsOfUse, {
 import AddWallet, {AddWalletParamList} from './screens/AddWallet';
 import Amount, {AmountParamList} from './screens/send/Amount';
 import SendTo from './screens/send/SendTo';
+import RequestSpecificAmount from './screens/request-specific-amount/RequestSpecificAmount';
+import RequestSpecificAmountQR from './screens/request-specific-amount/RequestSpecificAmountQR';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -51,6 +53,8 @@ export type WalletStackParamList = {
   ExportKey: {key: Key};
   Amount: AmountParamList;
   SendTo: {wallet: WalletModel};
+  RequestSpecificAmount: {wallet: WalletModel};
+  RequestSpecificAmountQR: {wallet: WalletModel; requestAmount: number};
 };
 
 export enum WalletScreens {
@@ -72,6 +76,8 @@ export enum WalletScreens {
   EXPORT_KEY = 'ExportKey',
   AMOUNT = 'Amount',
   SEND_TO = 'SendTo',
+  REQUEST_SPECIFIC_AMOUNT = 'RequestSpecificAmount',
+  REQUEST_SPECIFIC_AMOUNT_QR = 'RequestSpecificAmountQR',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -159,6 +165,14 @@ const WalletStack = () => {
         />
         <Wallet.Screen name={WalletScreens.AMOUNT} component={Amount} />
         <Wallet.Screen name={WalletScreens.SEND_TO} component={SendTo} />
+        <Wallet.Screen
+          name={WalletScreens.REQUEST_SPECIFIC_AMOUNT}
+          component={RequestSpecificAmount}
+        />
+        <Wallet.Screen
+          name={WalletScreens.REQUEST_SPECIFIC_AMOUNT_QR}
+          component={RequestSpecificAmountQR}
+        />
       </Wallet.Navigator>
     </>
   );

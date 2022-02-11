@@ -64,6 +64,7 @@ export interface WalletObj {
     tokenAddresses?: [];
   };
   img: string | ((props?: any) => ReactElement);
+  receiveAddress?: string;
 }
 
 export interface ExchangeRate {
