@@ -1,5 +1,6 @@
 import React from 'react';
 import * as Svg from 'react-native-svg';
+import {CARD_HEIGHT, CARD_WIDTH} from '../../../constants/config.card';
 
 interface CardBackProps {
   brand: string;
@@ -52,8 +53,8 @@ const CardBack: React.FC<CardBackProps> = props => {
 
   return (
     <Svg.Svg
-      width="324px"
-      height="190px"
+      width={`${CARD_WIDTH}px`}
+      height={`${CARD_HEIGHT}px`}
       viewBox="0 0 335 212"
       style={{borderRadius: 10}}>
       <Svg.G
