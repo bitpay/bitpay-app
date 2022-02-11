@@ -6,20 +6,6 @@ import {Image, ImageSourcePropType} from 'react-native';
 import Button from '../button/Button';
 import {useTheme} from '@react-navigation/native';
 
-const HeaderTitle = styled(BaseText)`
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 30px;
-  letter-spacing: 0;
-`;
-
-const HeaderTitleContainer = styled.View`
-  margin-top: 15%;
-  justify-content: center;
-  align-items: center;
-`;
-
 const FeatureImage = styled(Image)`
   height: 100%;
   width: 100%;
@@ -59,7 +45,6 @@ const CtaContainer = styled.View`
 `;
 
 interface Props {
-  headerTitle: string;
   image: ImageSourcePropType;
   descriptionTitle: string;
   descriptionText: string;
@@ -68,7 +53,6 @@ interface Props {
 }
 
 const FeatureCard = ({
-  headerTitle,
   image,
   descriptionTitle,
   descriptionText,
@@ -88,9 +72,6 @@ const FeatureCard = ({
 
   return (
     <FeatureCardContainer>
-      <HeaderTitleContainer>
-        <HeaderTitle>{headerTitle}</HeaderTitle>
-      </HeaderTitleContainer>
       <FeatureImage source={image} />
       <BottomDescriptionContainer>
         <DescriptionTitle bold>{descriptionTitle}</DescriptionTitle>
