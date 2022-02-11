@@ -20,7 +20,7 @@ import Import, {ImportParamList} from './screens/Import';
 import CreationOptions from './screens/CreationOptions';
 import {HeaderTitle} from '../../components/styled/Text';
 import CreateEncryptionPassword from './screens/CreateEncryptionPassword';
-import {Key} from '../../store/wallet/wallet.models';
+import {Key, Wallet as WalletModel} from '../../store/wallet/wallet.models';
 import {WalletRowProps} from '../../components/list/WalletRow';
 import ExtendedPrivateKey from './screens/ExtendedPrivateKey';
 import DeleteKey from './screens/DeleteKey';
@@ -29,6 +29,8 @@ import TermsOfUse, {
   TermsOfUseParamList,
 } from '../onboarding/screens/TermsOfUse';
 import AddWallet, {AddWalletParamList} from './screens/AddWallet';
+import Amount, {AmountParamList} from './screens/send/Amount';
+import SendTo from './screens/send/SendTo';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -47,6 +49,8 @@ export type WalletStackParamList = {
   ExtendedPrivateKey: {key: Key};
   DeleteKey: {keyId: string};
   ExportKey: {key: Key};
+  Amount: AmountParamList;
+  SendTo: {wallet: WalletModel};
 };
 
 export enum WalletScreens {
@@ -66,6 +70,8 @@ export enum WalletScreens {
   EXTENDED_PRIVATE_KEY = 'ExtendedPrivateKey',
   DELETE_KEY = 'DeleteKey',
   EXPORT_KEY = 'ExportKey',
+  AMOUNT = 'Amount',
+  SEND_TO = 'SendTo',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -151,6 +157,8 @@ const WalletStack = () => {
           name={WalletScreens.TERMS_OF_USE}
           component={TermsOfUse}
         />
+        <Wallet.Screen name={WalletScreens.AMOUNT} component={Amount} />
+        <Wallet.Screen name={WalletScreens.SEND_TO} component={SendTo} />
       </Wallet.Navigator>
     </>
   );

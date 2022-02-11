@@ -16,6 +16,7 @@ import WalletCardComponent from './Wallet';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {Dispatch} from 'redux';
+import {getMnemonic} from '../../../../utils/helper-methods';
 import {TouchableOpacity} from 'react-native';
 import {HomeLink, SectionHeaderContainer} from '../HomeRoot';
 
@@ -38,15 +39,13 @@ const keyBackupRequired = (
     enableBackdropDismiss: true,
     actions: [
       {
-        text: 'Backup Key',
+        text: 'Back up Key',
         action: () => {
           navigation.navigate('Wallet', {
             screen: 'RecoveryPhrase',
             params: {
               keyId: key.id,
-              words: key.properties.mnemonic.trim().split(' '),
-              walletTermsAccepted: true,
-              context: 'home',
+              words: getMnemonic(key),
               key,
             },
           });
@@ -93,11 +92,13 @@ const createHomeCardList = (
                   screen: 'KeyOverview',
                   params: {key},
                 });
-                return;
+              } else {
+                dispatch(
+                  showBottomNotificationModal(
+                    keyBackupRequired(key, navigation),
+                  ),
+                );
               }
-              dispatch(
-                showBottomNotificationModal(keyBackupRequired(key, navigation)),
-              );
             }}
           />
         );
@@ -161,42 +162,38 @@ const CardsCarousel = () => {
         dispatch,
       ),
     );
-  }, [navigation, keys, bitPayCards]);
+  }, [navigation, keys, bitPayCards, dispatch]);
 
   return (
-    <>
-      {Object.keys(keys).length > 0 ? (
-        <SectionHeaderContainer justifyContent={'flex-end'}>
-          <TouchableOpacity
-            activeOpacity={ActiveOpacity}
-            onPress={() => {
-              haptic('impactLight');
-              navigation.navigate('GeneralSettings', {
-                screen: 'CustomizeHome',
-              });
-            }}>
-            <HomeLink>Customize</HomeLink>
-          </TouchableOpacity>
-        </SectionHeaderContainer>
-      ) : null}
-
-      <CarouselContainer>
-        <Carousel
-          vertical={false}
-          layout={'default'}
-          useExperimentalSnap={true}
-          data={cardsList}
-          renderItem={_renderItem}
-          sliderWidth={WIDTH}
-          itemWidth={235}
-          inactiveSlideScale={1}
-          inactiveSlideOpacity={1}
-          onScrollIndexChanged={() => {
-            haptic('impactLight');
-          }}
-        />
-      </CarouselContainer>
-    </>
+      <>
+        {Object.keys(keys).length > 0 ? (
+            <SectionHeaderContainer justifyContent={'flex-end'}>
+              <TouchableOpacity
+                  activeOpacity={ActiveOpacity}
+                  onPress={() => {
+                    haptic('impactLight');
+                    navigation.navigate('GeneralSettings', {
+                      screen: 'CustomizeHome',
+                    });
+                  }}>
+                <HomeLink>Customize</HomeLink>
+              </TouchableOpacity>
+            </SectionHeaderContainer>
+        ) : null}
+    <CarouselContainer>
+      <Carousel
+        vertical={false}
+        layout={'default'}
+        useExperimentalSnap={true}
+        data={cardsList}
+        renderItem={_renderItem}
+        sliderWidth={WIDTH}
+        itemWidth={235}
+        inactiveSlideScale={1}
+        inactiveSlideOpacity={1}
+      />
+    </CarouselContainer>
+        </>
   );
 };
 

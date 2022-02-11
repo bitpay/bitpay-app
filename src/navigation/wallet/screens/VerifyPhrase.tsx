@@ -195,27 +195,13 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
             actions: [
               {
                 text: 'OK',
-                action: () => {
-                  if (context === 'onboarding') {
-                    navigation.navigate('Onboarding', {
-                      screen: 'TermsOfUse',
-                    });
-                  } else if (context === 'keySettings') {
-                    navigation.dispatch(
-                      StackActions.replace('Wallet', {
-                        screen: 'KeySettings',
-                        params: {key},
-                      }),
-                    );
-                  } else {
-                    navigation.dispatch(
-                      StackActions.replace('Wallet', {
-                        screen: 'KeyOverview',
-                        params: {key},
-                      }),
-                    );
-                  }
-                },
+                action: () =>
+                  navigateToTermsOrOverview({
+                    context,
+                    navigation,
+                    walletTermsAccepted,
+                    key: {...key, backupComplete: true},
+                  }),
                 primary: true,
               },
             ],
