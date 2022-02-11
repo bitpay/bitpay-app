@@ -1,13 +1,10 @@
 import React from 'react';
 import * as Svg from 'react-native-svg';
 import {CARD_HEIGHT, CARD_WIDTH} from '../../../constants/config.card';
+import {Card} from '../../../store/card/card.models';
 
 interface CardBackProps {
-  brand: string;
-  cardNumber: string;
-  nickname: string;
-  cvv: string;
-  expiration: string;
+  card: Card;
 }
 
 const BRAND_LOGOS: {[k: string]: JSX.Element} = {
@@ -48,8 +45,8 @@ const BRAND_LOGOS: {[k: string]: JSX.Element} = {
 };
 
 const CardBack: React.FC<CardBackProps> = props => {
-  const {brand, cardNumber, nickname, cvv, expiration} = props;
-  const BrandLogo = BRAND_LOGOS[brand || ''] || null;
+  const {card} = props;
+  const BrandLogo = BRAND_LOGOS[card.brand || 'Visa'] || null;
 
   return (
     <Svg.Svg
@@ -92,7 +89,7 @@ const CardBack: React.FC<CardBackProps> = props => {
           fontSize="26.882716"
           fontWeight="400">
           <Svg.TSpan x="19.6450617" y="128.29321">
-            {cardNumber || '**** **** **** ****'}
+            {`**** **** **** ${card.lastFourDigits || '****'}`}
           </Svg.TSpan>
         </Svg.Text>
 
@@ -116,7 +113,7 @@ const CardBack: React.FC<CardBackProps> = props => {
           data-lineSpacing="16.5432099"
           fill="#FFFFFF">
           <Svg.TSpan x="19.6450617" y="191.737654">
-            {nickname || ''}
+            {card.nickname || ''}
           </Svg.TSpan>
         </Svg.Text>
 
@@ -140,7 +137,7 @@ const CardBack: React.FC<CardBackProps> = props => {
           data-lineSpacing="16.5432099"
           fill="#FFFFFF">
           <Svg.TSpan x="286.404321" y="191.737654">
-            {cvv || ''}
+            {'***'}
           </Svg.TSpan>
         </Svg.Text>
 
@@ -164,7 +161,7 @@ const CardBack: React.FC<CardBackProps> = props => {
           data-lineSpacing="16.5432099"
           fill="#FFFFFF">
           <Svg.TSpan x="214.027778" y="191.737654">
-            {expiration || ''}
+            {'**/**'}
           </Svg.TSpan>
         </Svg.Text>
 

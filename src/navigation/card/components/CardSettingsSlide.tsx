@@ -3,8 +3,7 @@ import FastImage from 'react-native-fast-image';
 import styled from 'styled-components/native';
 import {CARD_HEIGHT, CARD_WIDTH} from '../../../constants/config.card';
 import {Card} from '../../../store/card/card.models';
-import { LogActions } from '../../../store/log';
-import {buildCardNumber} from '../../../utils/card';
+import {LogActions} from '../../../store/log';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import CardBack from './CardBack';
 
@@ -43,26 +42,28 @@ const SettingsSlide: React.FC<SettingsSlideProps> = props => {
 
   const onLoad = () => {
     setLoading(false);
-    dispatch(LogActions.debug(`Successfully loaded virtual card image for card ${card.id}`));
+    dispatch(
+      LogActions.debug(
+        `Successfully loaded virtual card image for card ${card.id}`,
+      ),
+    );
   };
 
   const onError = () => {
     setError(true);
     setLoading(false);
-    dispatch(LogActions.error(`An error occurred while loading virtual card image for card ${card.id}`));
+    dispatch(
+      LogActions.error(
+        `An error occurred while loading virtual card image for card ${card.id}`,
+      ),
+    );
   };
 
   return (
     <SettingsSlideContainer>
       {isLoading ? (
         <PlaceholderContainer>
-          <CardBack
-            brand={card.brand || 'Visa'}
-            cardNumber={''}
-            cvv={''}
-            nickname={''}
-            expiration={''}
-          />
+          <CardBack card={card} />
         </PlaceholderContainer>
       ) : null}
 
@@ -73,13 +74,7 @@ const SettingsSlide: React.FC<SettingsSlideProps> = props => {
           onError={() => onError()}
         />
       ) : (
-        <CardBack
-          brand={card.brand || 'Visa'}
-          cardNumber={buildCardNumber(card.lastFourDigits)}
-          cvv={''}
-          nickname={card.nickname}
-          expiration={''}
-        />
+        <CardBack card={card} />
       )}
     </SettingsSlideContainer>
   );
