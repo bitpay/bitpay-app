@@ -16,15 +16,26 @@ interface CardStoreInitParams {
     id: string;
     balance: number;
   }[];
+  virtualCardImageUrls?: {
+    id: string;
+    virtualCardImage: string;
+  }[];
 }
 
 export const startCardStoreInit =
   (
     network: Network,
-    {cards, cardBalances}: CardStoreInitParams,
+    {cards, cardBalances, virtualCardImageUrls}: CardStoreInitParams,
   ): Effect<Promise<void>> =>
   async dispatch => {
-    dispatch(CardActions.successInitializeStore(network, cards, cardBalances));
+    dispatch(
+      CardActions.successInitializeStore(
+        network,
+        cards,
+        cardBalances,
+        virtualCardImageUrls,
+      ),
+    );
   };
 
 export const startFetchAll =
@@ -79,5 +90,31 @@ export const startFetchOverview =
       });
     } finally {
       dispatch(AppActions.dismissOnGoingProcessModal());
+    }
+  };
+
+export const startFetchVirtualCardImageUrls =
+  (ids: string[]): Effect =>
+  async (dispatch, getState) => {
+    try {
+      const {APP, BITPAY_ID} = getState();
+
+      const urlsPayload = await CardApi.fetchVirtualCardImageUrls(
+        BITPAY_ID.apiToken[APP.network],
+        ids,
+      );
+
+      dispatch(CardActions.successFetchVirtualImageUrls(urlsPayload));
+    } catch (err) {
+      batch(() => {
+        console.error('Failed to fetch virtual card URLs for', ids.join(', '));
+        dispatch(
+          LogActions.error(
+            `Failed to fetch virtual card image URLs for ${ids.join(', ')}`,
+          ),
+        );
+        dispatch(LogActions.error(JSON.stringify(err)));
+        dispatch(CardActions.failedFetchVirtualImageUrls());
+      });
     }
   };

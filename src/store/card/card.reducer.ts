@@ -20,6 +20,7 @@ export const cardReduxPersistBlacklist: Array<keyof CardState> = [
 
 export type FetchCardsStatus = 'success' | 'failed' | null;
 export type FetchOverviewStatus = 'success' | 'failed' | null;
+export type FetchVirtualCardImageUrlsStatus = 'success' | 'failed' | null;
 export interface CardState {
   lastUpdates: {
     [key in keyof typeof TTL]: number;
@@ -30,10 +31,14 @@ export interface CardState {
   balances: {
     [id: string]: number;
   };
+  virtualCardImages: {
+    [id: string]: string;
+  };
   fetchCardsStatus: FetchCardsStatus;
   fetchOverviewStatus: {
     [id: string]: FetchOverviewStatus;
   };
+  fetchVirtualCardImageUrlsStatus: FetchVirtualCardImageUrlsStatus;
   virtualDesignCurrency: VirtualDesignCurrency;
   overview: any;
   settledTransactions: {
@@ -53,8 +58,10 @@ const initialState: CardState = {
     [Network.testnet]: [],
   },
   balances: {},
+  virtualCardImages: {},
   fetchCardsStatus: null,
   fetchOverviewStatus: {},
+  fetchVirtualCardImageUrlsStatus: null,
   virtualDesignCurrency: 'bitpay-b',
   overview: null,
   settledTransactions: {},
@@ -84,6 +91,13 @@ export const cardReducer = (
         },
         {} as {[id: string]: number},
       );
+      const initUrls = action.payload.virtualCardImageUrls.reduce(
+        (urls, {id, virtualCardImage}) => {
+          urls[id] = virtualCardImage;
+          return urls;
+        },
+        {} as {[id: string]: string},
+      );
 
       return {
         ...state,
@@ -94,6 +108,10 @@ export const cardReducer = (
         balances: {
           ...state.balances,
           ...payloadBalances,
+        },
+        virtualCardImages: {
+          ...state.virtualCardImages,
+          ...initUrls,
         },
       };
     case CardActionTypes.SUCCESS_FETCH_CARDS:
@@ -159,6 +177,33 @@ export const cardReducer = (
           ...state.fetchOverviewStatus,
           [action.payload.id]: action.payload.status,
         },
+      };
+    case CardActionTypes.SUCCESS_FETCH_VIRTUAL_IMAGE_URLS:
+      const fetchedUrls = action.payload.reduce(
+        (urls, {id, virtualCardImage}) => {
+          urls[id] = virtualCardImage;
+          return urls;
+        },
+        {} as {[id: string]: string},
+      );
+
+      return {
+        ...state,
+        fetchVirtualCardImageUrlsStatus: 'success',
+        virtualCardImages: {
+          ...state.virtualCardImages,
+          ...fetchedUrls,
+        },
+      };
+    case CardActionTypes.FAILED_FETCH_VIRTUAL_IMAGE_URLS:
+      return {
+        ...state,
+        fetchVirtualCardImageUrlsStatus: 'failed',
+      };
+    case CardActionTypes.UPDATE_FETCH_VIRTUAL_IMAGE_URLS_STATUS:
+      return {
+        ...state,
+        fetchVirtualCardImageUrlsStatus: action.payload,
       };
     default:
       return state;

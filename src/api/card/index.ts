@@ -3,6 +3,7 @@ import {
   FetchAllCardsResponse,
   FetchCardResponse,
   FetchOverviewResponse,
+  FetchVirtualCardImageUrlsResponse,
 } from './card.types';
 import CardQueries from './card.queries';
 
@@ -13,7 +14,7 @@ const fetchAll = async (token: string) => {
   );
 
   if (data.errors) {
-    throw new Error(data.errors);
+    throw new Error(data.errors.join(', '));
   }
 
   return data.data.user.cards;
@@ -26,7 +27,7 @@ const fetchOne = async (token: string, id: string) => {
   );
 
   if (data.errors) {
-    throw new Error(data.errors);
+    throw new Error(data.errors.join(', '));
   }
 
   return data.data.user.card;
@@ -48,16 +49,36 @@ const fetchOverview = async (token: string, id: string) => {
   );
 
   if (data.errors) {
-    throw new Error(data.errors);
+    throw new Error(data.errors.join(', '));
   }
 
   return data.data.user;
+};
+
+const fetchVirtualCardImageUrls = async (token: string, ids: string[]) => {
+  if (!ids.length) {
+    return [];
+  }
+
+  const query = CardQueries.FETCH_VIRTUAL_CARD_IMAGE_URLS(token, ids);
+
+  const {data} =
+    await GraphQlApi.getInstance().request<FetchVirtualCardImageUrlsResponse>(
+      query,
+    );
+
+  if (data.errors) {
+    throw new Error(data.errors.map(e => e.message).join(', '));
+  }
+
+  return Object.values(data.data.user);
 };
 
 const CardApi = {
   fetchAll,
   fetchOne,
   fetchOverview,
+  fetchVirtualCardImageUrls,
 };
 
 export default CardApi;

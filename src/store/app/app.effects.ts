@@ -5,6 +5,7 @@ import InAppBrowser, {
 } from 'react-native-inappbrowser-reborn';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import BitPayApi from '../../api/bitpay';
+import CardApi from '../../api/card';
 import GraphQlApi from '../../api/graphql';
 import UserApi from '../../api/user';
 import {Network} from '../../constants';
@@ -45,6 +46,9 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     let user: User | undefined;
     let cards: Card[] | undefined;
     let cardBalances: {id: string; balance: number}[] | undefined;
+    let virtualCardImageUrls:
+      | {id: string; virtualCardImage: string}[]
+      | undefined;
     let doshToken: string | undefined;
 
     if (isPaired) {
@@ -59,6 +63,14 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
         cards = response.cards;
         cardBalances = response.cardBalances;
         doshToken = response.doshToken;
+
+        const galileoCards = (cards || [])
+          .filter(c => c.provider === 'galileo' && c.cardType === 'virtual')
+          .map(c => c.id);
+        virtualCardImageUrls = await CardApi.fetchVirtualCardImageUrls(
+          token,
+          galileoCards,
+        );
       } catch (err: any) {
         if (isAxiosError(err)) {
           dispatch(LogActions.error(`${err.name}: ${err.message}`));
@@ -84,7 +96,11 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       BitPayIdEffects.startBitPayIdStoreInit(network, {user, doshToken}),
     );
     await dispatch(
-      CardEffects.startCardStoreInit(network, {cards, cardBalances}),
+      CardEffects.startCardStoreInit(network, {
+        cards,
+        cardBalances,
+        virtualCardImageUrls,
+      }),
     );
 
     await sleep(500);
