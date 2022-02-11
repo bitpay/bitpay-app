@@ -86,6 +86,7 @@ export const buildKeyObj = ({
     show: true,
     isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
     backupComplete: true,
+    keyName: 'My Key',
   };
 };
 

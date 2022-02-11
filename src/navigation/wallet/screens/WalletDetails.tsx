@@ -203,10 +203,19 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                 </Row>
               </BalanceContainer>
 
-              <LinkingButtons
-                receiveCta={() => showReceiveAddress()}
-                sendCta={() => null}
-              />
+              {fullWalletObj ? (
+                  <LinkingButtons
+                      receive={{cta: () => showReceiveAddress()}}
+                      send={{
+                        hide: __DEV__ ? false : !fullWalletObj.balance.fiat,
+                        cta: () =>
+                            navigation.navigate('Wallet', {
+                              screen: 'SendTo',
+                              params: {wallet: fullWalletObj},
+                            }),
+                      }}
+                  />
+              ) : null}
             </>
           );
         }}
@@ -219,11 +228,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         options={assetOptions}
       />
 
-      <ReceiveAddress
-        isVisible={showReceiveAddressBottomModal}
-        closeModal={() => setShowReceiveAddressBottomModal(false)}
-        wallet={fullWalletObj}
-      />
+      {fullWalletObj ? (
+        <ReceiveAddress
+          isVisible={showReceiveAddressBottomModal}
+          closeModal={() => setShowReceiveAddressBottomModal(false)}
+          wallet={fullWalletObj}
+        />
+      ) : null}
     </WalletDetailsContainer>
   );
 };
