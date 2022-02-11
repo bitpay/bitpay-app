@@ -1,3 +1,4 @@
+import FastImage from 'react-native-fast-image';
 import {batch} from 'react-redux';
 import {CardActions} from '.';
 import CardApi from '../../api/card';
@@ -96,6 +97,17 @@ export const startFetchVirtualCardImageUrls =
       );
 
       dispatch(CardActions.successFetchVirtualImageUrls(urlsPayload));
+
+      try {
+        const sources = urlsPayload.map(({virtualCardImage}) => {
+          return {uri: virtualCardImage};
+        });
+
+        FastImage.preload(sources);
+      } catch (err) {
+        dispatch(LogActions.error('Failed to preload virtual card images.'));
+        dispatch(LogActions.error(JSON.stringify(err)));
+      }
     } catch (err) {
       batch(() => {
         console.error('Failed to fetch virtual card URLs for', ids.join(', '));
