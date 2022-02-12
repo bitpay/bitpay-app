@@ -43,14 +43,29 @@ interface ButtonListProps {
   label: string;
   img: ReactNode;
   cta: () => void;
+  hide: boolean;
 }
 
 interface Props {
-  receiveCta: () => void;
-  sendCta: () => void;
+  send: {
+    hide?: boolean;
+    cta: () => void;
+  };
+  receive: {
+    hide?: boolean;
+    cta: () => void;
+  };
+  buy?: {
+    hide?: boolean;
+    cta: () => void;
+  };
+  swap?: {
+    hide?: boolean;
+    cta: () => void;
+  };
 }
 
-const LinkingButtons = ({receiveCta, sendCta}: Props) => {
+const LinkingButtons = ({receive, send}: Props) => {
   const buttonsList: Array<ButtonListProps> = [
     // TODO: update icons
     {
@@ -59,6 +74,7 @@ const LinkingButtons = ({receiveCta, sendCta}: Props) => {
       cta: () => {
         navigationRef.navigate('BuyCrypto', {screen: 'Root'});
       },
+      hide: false,
     },
     {
       label: 'swap',
@@ -66,33 +82,38 @@ const LinkingButtons = ({receiveCta, sendCta}: Props) => {
       cta: () => {
         navigationRef.navigate('SwapCrypto', {screen: 'Root'});
       },
+      hide: false,
     },
     {
       label: 'receive',
       img: <ReceiveSvg />,
-      cta: receiveCta,
+      cta: receive.cta,
+      hide: false,
     },
     {
       label: 'send',
       img: <SendSvg />,
-      cta: sendCta,
+      cta: send.cta,
+      hide: !!send?.hide,
     },
   ];
   return (
     <ButtonsRow>
-      {buttonsList.map(({label, cta, img}: ButtonListProps) => (
-        <ButtonContainer key={label}>
-          <LinkButton
-            activeOpacity={ActiveOpacity}
-            onPress={() => {
-              Haptic('impactLight');
-              cta();
-            }}>
-            {img}
-          </LinkButton>
-          <ButtonText>{titleCasing(label)}</ButtonText>
-        </ButtonContainer>
-      ))}
+      {buttonsList.map(({label, cta, img, hide}: ButtonListProps) =>
+        hide ? null : (
+          <ButtonContainer key={label}>
+            <LinkButton
+              activeOpacity={ActiveOpacity}
+              onPress={() => {
+                Haptic('impactLight');
+                cta();
+              }}>
+              {img}
+            </LinkButton>
+            <ButtonText>{titleCasing(label)}</ButtonText>
+          </ButtonContainer>
+        ),
+      )}
     </ButtonsRow>
   );
 };

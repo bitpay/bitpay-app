@@ -42,6 +42,7 @@ export interface Key {
   show?: boolean;
   totalBalance: number;
   isPrivKeyEncrypted?: boolean;
+  keyName?: string;
 }
 
 export interface Wallet extends WalletObj, API {}

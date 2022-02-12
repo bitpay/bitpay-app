@@ -20,12 +20,7 @@ import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/ba
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
-import {
-  LightBlack,
-  NeutralSlate,
-  SlateDark,
-  White,
-} from '../../../styles/colors';
+import {LightBlack, SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {BalanceUpdateError} from '../components/ErrorMessages';
@@ -208,10 +203,19 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                 </Row>
               </BalanceContainer>
 
-              <LinkingButtons
-                receiveCta={() => showReceiveAddress()}
-                sendCta={() => null}
-              />
+              {fullWalletObj ? (
+                  <LinkingButtons
+                      receive={{cta: () => showReceiveAddress()}}
+                      send={{
+                        hide: __DEV__ ? false : !fullWalletObj.balance.fiat,
+                        cta: () =>
+                            navigation.navigate('Wallet', {
+                              screen: 'SendTo',
+                              params: {wallet: fullWalletObj},
+                            }),
+                      }}
+                  />
+              ) : null}
             </>
           );
         }}
@@ -224,11 +228,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         options={assetOptions}
       />
 
-      <ReceiveAddress
-        isVisible={showReceiveAddressBottomModal}
-        closeModal={() => setShowReceiveAddressBottomModal(false)}
-        wallet={fullWalletObj}
-      />
+      {fullWalletObj ? (
+        <ReceiveAddress
+          isVisible={showReceiveAddressBottomModal}
+          closeModal={() => setShowReceiveAddressBottomModal(false)}
+          wallet={fullWalletObj}
+        />
+      ) : null}
     </WalletDetailsContainer>
   );
 };

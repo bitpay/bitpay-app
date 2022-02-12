@@ -1,4 +1,5 @@
 import {Currencies} from '../constants/currencies';
+import {Key} from '../store/wallet/wallet.models';
 
 export const sleep = async (duration: number) =>
   await new Promise(resolve => setTimeout(resolve, duration));
@@ -143,3 +144,6 @@ export const formatFiatAmount = (
         minimumFractionDigits: 0,
       }),
   }).format(amount);
+
+export const getMnemonic = (key: Key) =>
+  key.properties.mnemonic.trim().split(' ');

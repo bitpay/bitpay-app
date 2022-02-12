@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import Clipboard from '@react-native-community/clipboard';
 import {useDispatch} from 'react-redux';
-import cloneDeep from 'lodash.clonedeep';
 import QRCode from 'react-native-qrcode-svg';
 import styled from 'styled-components/native';
 
@@ -17,89 +16,26 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {CustomErrorMessage} from './ErrorMessages';
 
-import {
-  getLegacyBchAddressFormat,
-  ValidateAddress,
-} from '../../../constants/address';
-
-import {
-  Action,
-  LightBlack,
-  NeutralSlate,
-  SlateDark,
-  White,
-} from '../../../styles/colors';
-import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
+import {Action, LightBlack, NeutralSlate, White} from '../../../styles/colors';
 import CopySvg from '../../../../assets/img/copy.svg';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import {sleep} from '../../../utils/helper-methods';
 import {Wallet} from '../../../store/wallet/wallet.models';
+import {
+  CreateWalletAddress,
+  GetLegacyBchAddressFormat,
+} from '../../../store/wallet/effects/send/address';
+import ReceiveAddressHeader, {
+  HeaderContextHandler,
+} from './ReceiveAddressHeader';
 
 export interface ReceiveAddressConfig {
   keyId: string;
   id: string;
 }
 
-interface Address {
-  address: string;
-  coin: string;
-}
-
-const Header = styled.View`
-  margin-bottom: 30px;
-  flex-direction: row;
-  justify-content: center;
-  position: relative;
-  align-items: center;
-`;
-
-const Title = styled(H4)`
-  color: ${({theme}) => theme.colors.text};
-`;
-
-const Refresh = styled.TouchableOpacity<{isBch?: boolean}>`
-  position: ${({isBch}) => (isBch ? 'relative' : 'absolute')};
-  margin-left: 5px;
-  right: 0;
-  background-color: ${({theme: {dark}}) => (dark ? '#616161' : '#F5F7F8')};
-  width: 40px;
-  height: 40px;
-  border-radius: 50px;
-  align-items: center;
-  justify-content: center;
-  margin-top: ${({isBch}) => (isBch ? '10px' : '0')};
-`;
-
-const BchAddressTypes = ['Cash Address', 'Legacy'];
-
-const BchHeaderAction = styled.TouchableOpacity<{isActive: boolean}>`
-  align-items: center;
-  justify-content: center;
-  margin: 0 10px -1px;
-  border-bottom-color: ${({isActive}) => (isActive ? Action : 'transparent')};
-  border-bottom-width: 1px;
-  height: 60px;
-`;
-
-const BchHeaderActionText = styled(BaseText)<{isActive: boolean}>`
-  font-size: 16px;
-  color: ${({theme, isActive}) =>
-    isActive ? theme.colors.text : theme.dark ? NeutralSlate : SlateDark};
-`;
-
-const BchHeaderActions = styled.View`
-  flex-direction: row;
-`;
-
-const BchHeader = styled.View`
-  margin-bottom: 30px;
-  border-bottom-width: 1px;
-  border-bottom-color: #979797;
-  align-items: center;
-  flex-direction: row;
-  justify-content: space-between;
-`;
+export const BchAddressTypes = ['Cash Address', 'Legacy'];
 
 const CopyToClipboard = styled.TouchableOpacity`
   border: 1px solid #9ba3ae;
@@ -163,7 +99,7 @@ const CloseButtonText = styled(Paragraph)`
 interface Props {
   isVisible: boolean;
   closeModal: () => void;
-  wallet: Wallet | undefined;
+  wallet: Wallet;
 }
 
 const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
@@ -181,18 +117,25 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
     if (!copied) {
       Clipboard.setString(address);
       setCopied(true);
-
-      setTimeout(() => {
-        setCopied(false);
-      }, 3000);
     }
   };
+
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setCopied(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [copied]);
 
   const onBchAddressTypeChange = (type: string) => {
     haptic('impactLight');
     setBchAddressType(type);
     if (type === 'Legacy') {
-      setAddress(getLegacyBchAddressFormat(address));
+      setAddress(GetLegacyBchAddressFormat(address));
     } else {
       setAddress(bchAddress);
     }
@@ -205,67 +148,44 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
   };
 
   const createAddress = async () => {
-    // To avoid altering store value
-    const walletClone = cloneDeep(wallet);
+    let {coin} = wallet.credentials;
+    const prefix = 'Could not create address';
 
-    if (walletClone) {
-      let {token, network, coin, multisigEthInfo} = walletClone.credentials;
-      if (multisigEthInfo?.multisigContractAddress) {
-        setLoading(false);
-        setAddress(multisigEthInfo.multisigContractAddress);
-        return;
+    try {
+      const walletAddress = await CreateWalletAddress(wallet);
+      setLoading(false);
+      setAddress(walletAddress);
+      if (coin === 'bch') {
+        setBchAddress(walletAddress);
+        setBchAddressType('Cash Address');
       }
+    } catch (createAddressErr: any) {
+      switch (createAddressErr?.type) {
+        case 'INVALID_ADDRESS_GENERATED':
+          logger.error(createAddressErr.error);
 
-      if (token) {
-        walletClone.id.replace(`-${token.address}`, '');
-      }
-
-      await walletClone.createAddress({}, (err: any, addressObj: Address) => {
-        if (err) {
-          let prefix = 'Could not create address';
-          if (err.name && err.name.includes('MAIN_ADDRESS_GAP_REACHED')) {
-            logger.warn(BWCErrorMessage(err, 'Server Error'));
-            walletClone.getMainAddresses(
-              {
-                reverse: true,
-                limit: 1,
-              },
-              (e: any, addr: Address[]) => {
-                if (e) {
-                  showErrorMessage(CustomErrorMessage(BWCErrorMessage(e)));
-                }
-                setLoading(false);
-                setAddress(addr[0].address);
-                if (coin === 'bch') {
-                  setBchAddress(addr[0].address);
-                  setBchAddressType('Cash Address');
-                }
-              },
-            );
-          } else {
-            showErrorMessage(CustomErrorMessage(BWCErrorMessage(err, prefix)));
-          }
-          logger.warn(BWCErrorMessage(err, 'Receive'));
-        } else if (
-          addressObj &&
-          !ValidateAddress(addressObj.address, addressObj.coin, network)
-        ) {
-          logger.error(`Invalid address generated: ${addressObj.address}`);
           if (retryCount < 3) {
             setRetryCount(retryCount + 1);
             createAddress();
+            return;
           } else {
-            showErrorMessage(CustomErrorMessage(BWCErrorMessage(err)));
+            showErrorMessage(
+              CustomErrorMessage(BWCErrorMessage(createAddressErr.error)),
+            );
           }
-        } else if (addressObj) {
-          setLoading(false);
-          setAddress(addressObj.address);
-          if (coin === 'bch') {
-            setBchAddress(addressObj.address);
-            setBchAddressType('Cash Address');
-          }
-        }
-      });
+          break;
+        case 'MAIN_ADDRESS_GAP_REACHED':
+          showErrorMessage(
+            CustomErrorMessage(BWCErrorMessage(createAddressErr.error)),
+          );
+          break;
+        default:
+          showErrorMessage(
+            CustomErrorMessage(BWCErrorMessage(createAddressErr.error, prefix)),
+          );
+          break;
+      }
+      logger.warn(BWCErrorMessage(createAddressErr.error, 'Receive'));
     }
   };
 
@@ -283,48 +203,25 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet]);
 
+  let headerContextHandlers: HeaderContextHandler | null = null;
+
+  if (wallet?.currencyAbbreviation === 'bch') {
+    headerContextHandlers = {
+      currency: wallet?.currencyAbbreviation,
+      disabled: !address,
+      activeItem: bchAddressType,
+      onPressChange: (item: string) => onBchAddressTypeChange(item),
+      items: BchAddressTypes,
+    };
+  }
+
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={closeModal}>
       <ReceiveAddressContainer>
-        {wallet?.currencyAbbreviation !== 'bch' ? (
-          <Header>
-            <Title>Address</Title>
-            <Refresh
-              onPress={() => {
-                haptic('impactLight');
-                createAddress();
-              }}>
-              <RefreshIcon />
-            </Refresh>
-          </Header>
-        ) : (
-          <BchHeader>
-            <Title>Address</Title>
-
-            <BchHeaderActions>
-              {BchAddressTypes.map((type, index) => (
-                <BchHeaderAction
-                  key={index}
-                  onPress={() => onBchAddressTypeChange(type)}
-                  isActive={bchAddressType === type}
-                  disabled={!address}>
-                  <BchHeaderActionText isActive={bchAddressType === type}>
-                    {type}
-                  </BchHeaderActionText>
-                </BchHeaderAction>
-              ))}
-
-              <Refresh
-                isBch={true}
-                onPress={() => {
-                  haptic('impactLight');
-                  createAddress();
-                }}>
-                <RefreshIcon />
-              </Refresh>
-            </BchHeaderActions>
-          </BchHeader>
-        )}
+        <ReceiveAddressHeader
+          onPressRefresh={createAddress}
+          contextHandlers={headerContextHandlers}
+        />
 
         {address ? (
           <>
