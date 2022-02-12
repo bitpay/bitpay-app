@@ -11,7 +11,7 @@ import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../../components/styled/Containers';
-import {createWalletAddress} from '../../../../store/wallet/effects/send/address';
+import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import CopySvg from '../../../../../assets/img/copy.svg';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import haptic from '../../../../components/haptic-feedback/haptic';

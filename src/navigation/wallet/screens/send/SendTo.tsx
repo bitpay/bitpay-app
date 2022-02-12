@@ -26,7 +26,7 @@ import {
   createWalletAddress,
   GetCoinAndNetwork,
   TranslateToBchCashAddress,
-} from '../../../../store/wallet/effects/send/address';
+} from '../../../../store/wallet/effects/address/address';
 import KeyWalletsRow, {
   KeyWallet,
   KeyWalletsRowProps,
@@ -36,7 +36,7 @@ import {
   GetPayProOptions,
   HandlePayPro,
   PayProOptions,
-} from '../../../../store/wallet/effects/send/paypro';
+} from '../../../../store/wallet/effects/paypro/paypro';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';

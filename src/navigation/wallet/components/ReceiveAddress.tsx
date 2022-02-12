@@ -25,7 +25,7 @@ import {Wallet} from '../../../store/wallet/wallet.models';
 import {
   createWalletAddress,
   GetLegacyBchAddressFormat,
-} from '../../../store/wallet/effects/send/address';
+} from '../../../store/wallet/effects/address/address';
 import ReceiveAddressHeader, {
   HeaderContextHandler,
 } from './ReceiveAddressHeader';

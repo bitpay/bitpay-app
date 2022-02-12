@@ -9,7 +9,7 @@ import {
   SOFT_CONFIRMATION_LIMIT,
 } from '../../../../constants/wallet';
 import {GetChain, IsUtxoCoin} from '../../utils/currency';
-import {ToCashAddress, ToLtcAddress} from '../send/address';
+import {ToAddress, ToCashAddress, ToLtcAddress} from '../address/address';
 
 const BWC = BwcProvider.getInstance();
 
@@ -136,9 +136,8 @@ const ProcessTx = (currencyAbbreviation: string, tx: any) => {
       }
     }
 
-    // toDo: translate all tx.outputs[x].toAddress ?
-    if (tx.toAddress && currencyAbbreviation == 'bch') {
-      tx.toAddress = ToCashAddress(tx.toAddress);
+    if (tx.toAddress) {
+      tx.toAddress = ToAddress(tx.toAddress, currencyAbbreviation);
     }
   }
 
@@ -173,10 +172,8 @@ const ProcessTx = (currencyAbbreviation: string, tx: any) => {
     tx.feeRate = `${((tx.fee || tx.fees) / tx.size).toFixed(0)} sat/byte`;
   }
 
-  if (tx.addressTo && currencyAbbreviation == 'bch') {
-    tx.addressTo = ToCashAddress(tx.addressTo);
-  } else if (tx.addressTo && currencyAbbreviation == 'ltc') {
-    tx.addressTo = ToLtcAddress(tx.addressTo);
+  if (tx.addressTo) {
+    tx.addressTo = ToAddress(tx.addressTo, currencyAbbreviation);
   }
 
   return tx;
@@ -200,15 +197,14 @@ const ProcessNewTxs = async (wallet: Wallet, txs: any[]): Promise<any> => {
 
     if (tx.confirmations === 0 && currencyAbbreviation === 'btc') {
       const {inputs} = await GetCoinsForTx(wallet, tx.txid);
-      tx.isRBF = inputs.some((input: any) => {
-        return (
+      tx.isRBF = inputs.some(
+        (input: any) =>
           input.sequenceNumber &&
-          input.sequenceNumber < DEFAULT_RBF_SEQ_NUMBER - 1
-        );
-      });
-      tx.hasUnconfirmedInputs = inputs.some((input: any) => {
-        return input.mintHeight < 0;
-      });
+          input.sequenceNumber < DEFAULT_RBF_SEQ_NUMBER - 1,
+      );
+      tx.hasUnconfirmedInputs = inputs.some(
+        (input: any) => input.mintHeight < 0,
+      );
     }
 
     if (tx.confirmations >= SAFE_CONFIRMATIONS) {
@@ -388,9 +384,9 @@ export const UpdateLocalTxHistory = (
                   // this.logger.warn('Could not get TxNotes: ', err);
                   return rej(err);
                 }
-                notes.forEach(notes, note => {
+                notes.forEach(note => {
                   // this.logger.debug('Note for ' + note.txid);
-                  newHistory.forEach(newHistory, (tx: any) => {
+                  newHistory.forEach((tx: any) => {
                     if (tx.txid == note.txid) {
                       // this.logger.debug(
                       //  '...updating note for ' + note.txid
@@ -447,7 +443,7 @@ export const UpdateLocalTxHistory = (
               );
             }
 
-            // TOSD: dispatch to store history
+            // TODO: dispatch to store history
             resolve(historyToSave);
           })
           .catch(err => {
