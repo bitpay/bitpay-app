@@ -13,13 +13,15 @@ const fetchInitialUserData = async (token: string) => {
 
   const {errors, data} = response.data;
 
-  if (errors) {
-    const msg = errors.map(e => e.message).join(', ');
+  if (!data) {
+    const msg = errors
+      ? errors.map(e => e.message).join(', ')
+      : 'An error occurred while fetching initial user data.';
 
     throw new Error(msg);
   }
 
-  return data.user;
+  return response.data;
 };
 
 const fetchBasicInfo = async (token: string) => {

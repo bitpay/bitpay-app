@@ -48,10 +48,28 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
           ),
         );
 
-        const initialData = await UserApi.fetchInitialUserData(token);
+        const {errors, data} = await UserApi.fetchInitialUserData(token);
 
-        await dispatch(BitPayIdEffects.startBitPayIdStoreInit(initialData));
-        await dispatch(CardEffects.startCardStoreInit(initialData));
+        // handle partial errors
+        if (errors) {
+          const msg = errors
+            .map(e => `${e.path.join('.')}: ${e.message}`)
+            .join(',\n');
+
+          console.error(
+            'One or more errors occurred while fetching initial user data:\n' +
+              msg,
+          );
+          dispatch(
+            LogActions.error(
+              'One or more errors occurred while fetching initial user data:\n' +
+                msg,
+            ),
+          );
+        }
+
+        await dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
+        await dispatch(CardEffects.startCardStoreInit(data.user));
       } catch (err: any) {
         if (isAxiosError(err)) {
           dispatch(LogActions.error(`${err.name}: ${err.message}`));
