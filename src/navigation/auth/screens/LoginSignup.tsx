@@ -2,7 +2,7 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
-import {Keyboard, TextInput} from 'react-native';
+import {Keyboard, ScrollView, TextInput} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import * as yup from 'yup';
@@ -10,7 +10,7 @@ import AlertBox from '../../../components/alert-box/AlertBox';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {BaseText} from '../../../components/styled/Text';
+import {BaseText, Link} from '../../../components/styled/Text';
 import {Network} from '../../../constants';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {navigationRef, RootStacks} from '../../../Root';
@@ -37,12 +37,8 @@ type LoginSignupScreenProps = StackScreenProps<
   'LoginSignup'
 >;
 
-const PrimaryActionContainer = styled.View`
-  margin-bottom: 20px;
-`;
-
-const SecondaryActionContainer = styled.View`
-  width: 100%;
+const ActionRowContainer = styled.View`
+  margin-bottom: 32px;
 `;
 
 const Row = styled.View`
@@ -52,7 +48,8 @@ const Row = styled.View`
   align-items: center;
 `;
 
-const LoginText = styled(BaseText)`
+const ActionText = styled(BaseText)`
+  align-self: center;
   color: ${({theme}) => theme.colors.description};
   font-size: 18px;
 `;
@@ -142,33 +139,10 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
     }
   });
 
-  const onAlreadyHaveAccount = () => {
-    navigation.setParams({context: 'login'});
-  };
-
   const onTroubleLoggingIn = () => {
     // TODO
     console.log('trouble logging in');
   };
-
-  let secondaryAction: React.ReactElement;
-
-  if (context === 'login') {
-    secondaryAction = (
-      <Button buttonType={'link'} onPress={() => onTroubleLoggingIn()}>
-        Trouble logging in?
-      </Button>
-    );
-  } else {
-    secondaryAction = (
-      <Row>
-        <LoginText>Already have an account?</LoginText>
-        <Button buttonType={'link'} onPress={() => onAlreadyHaveAccount()}>
-          Log In
-        </Button>
-      </Row>
-    );
-  }
 
   const onCaptchaResponse = async (gCaptchaResponse: string) => {
     const {email, password} = getValues();
@@ -184,74 +158,111 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
 
   return (
     <AuthFormContainer>
-      {loginStatus === 'failed' ? (
+      <ScrollView>
+        {loginStatus === 'failed' ? (
+          <AuthRowContainer>
+            <AlertBox type="warning">
+              {loginError ||
+                'Could not log in. Please review your information and try again.'}
+            </AlertBox>
+          </AuthRowContainer>
+        ) : null}
+
         <AuthRowContainer>
-          <AlertBox type="warning">
-            {loginError ||
-              'Could not log in. Please review your information and try again.'}
-          </AlertBox>
+          <Controller
+            control={control}
+            render={({field: {onChange, onBlur, value}}) => (
+              <BoxInput
+                placeholder={'satoshi@example.com'}
+                label={'EMAIL'}
+                onBlur={onBlur}
+                onChangeText={(text: string) => onChange(text)}
+                error={errors.email?.message}
+                value={value}
+                returnKeyType="next"
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                blurOnSubmit={false}
+              />
+            )}
+            name="email"
+            defaultValue=""
+          />
         </AuthRowContainer>
-      ) : null}
 
-      <AuthRowContainer>
-        <Controller
-          control={control}
-          render={({field: {onChange, onBlur, value}}) => (
-            <BoxInput
-              placeholder={'satoshi@example.com'}
-              label={'EMAIL'}
-              onBlur={onBlur}
-              onChangeText={(text: string) => onChange(text)}
-              error={errors.email?.message}
-              value={value}
-              returnKeyType="next"
-              onSubmitEditing={() => passwordRef.current?.focus()}
-              blurOnSubmit={false}
-            />
+        <AuthRowContainer>
+          <Controller
+            control={control}
+            render={({field: {onChange, onBlur, value}}) => (
+              <BoxInput
+                ref={passwordRef}
+                placeholder={'strongPassword123'}
+                label={'PASSWORD'}
+                type={'password'}
+                onBlur={onBlur}
+                onChangeText={(text: string) => onChange(text)}
+                error={errors.password?.message}
+                value={value}
+                onSubmitEditing={onSubmit}
+              />
+            )}
+            name="password"
+            defaultValue=""
+          />
+        </AuthRowContainer>
+
+        <AuthActionsContainer>
+          <ActionRowContainer>
+            <Button onPress={onSubmit}>
+              {context === 'login' ? 'Log In' : 'Create Account'}
+            </Button>
+          </ActionRowContainer>
+
+          {context === 'login' ? (
+            <>
+              <ActionRowContainer>
+                <ActionText>
+                  Don't have an account?{' '}
+                  <Link
+                    onPress={() => navigation.setParams({context: 'signup'})}>
+                    Create Account
+                  </Link>
+                </ActionText>
+              </ActionRowContainer>
+
+              <ActionRowContainer>
+                <ActionText>
+                  <Link onPress={() => onTroubleLoggingIn()}>
+                    Trouble logging in?
+                  </Link>
+                </ActionText>
+              </ActionRowContainer>
+            </>
+          ) : (
+            <>
+              <ActionRowContainer>
+                <Row>
+                  <ActionText>
+                    Already have an account?{' '}
+                    <Link
+                      onPress={() => navigation.setParams({context: 'login'})}>
+                      Log In
+                    </Link>
+                  </ActionText>
+                </Row>
+              </ActionRowContainer>
+            </>
           )}
-          name="email"
-          defaultValue=""
+        </AuthActionsContainer>
+
+        <RecaptchaModal
+          isVisible={isCaptchaModalVisible}
+          ref={captchaRef}
+          sitekey={session.noCaptchaKey}
+          baseUrl={BASE_BITPAY_URLS[network]}
+          onResponse={onCaptchaResponse}
+          onCancel={onCaptchaCancel}
         />
-      </AuthRowContainer>
-
-      <AuthRowContainer>
-        <Controller
-          control={control}
-          render={({field: {onChange, onBlur, value}}) => (
-            <BoxInput
-              ref={passwordRef}
-              placeholder={'strongPassword123'}
-              label={'PASSWORD'}
-              type={'password'}
-              onBlur={onBlur}
-              onChangeText={(text: string) => onChange(text)}
-              error={errors.password?.message}
-              value={value}
-              onSubmitEditing={onSubmit}
-            />
-          )}
-          name="password"
-          defaultValue=""
-        />
-      </AuthRowContainer>
-
-      <AuthActionsContainer>
-        <PrimaryActionContainer>
-          <Button onPress={onSubmit}>
-            {context === 'login' ? 'Log In' : 'Create Account'}
-          </Button>
-        </PrimaryActionContainer>
-        <SecondaryActionContainer>{secondaryAction}</SecondaryActionContainer>
-      </AuthActionsContainer>
-
-      <RecaptchaModal
-        isVisible={isCaptchaModalVisible}
-        ref={captchaRef}
-        sitekey={session.noCaptchaKey}
-        baseUrl={BASE_BITPAY_URLS[network]}
-        onResponse={onCaptchaResponse}
-        onCancel={onCaptchaCancel}
-      />
+      </ScrollView>
     </AuthFormContainer>
   );
 };
