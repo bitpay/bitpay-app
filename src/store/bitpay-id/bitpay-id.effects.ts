@@ -16,11 +16,6 @@ import {LogActions} from '../log';
 import {User} from './bitpay-id.models';
 import {BitPayIdActions} from './index';
 
-interface BitPayIdStoreInitParams {
-  user?: User;
-  doshToken?: string;
-}
-
 interface StartLoginParams {
   email: string;
   password: string;
