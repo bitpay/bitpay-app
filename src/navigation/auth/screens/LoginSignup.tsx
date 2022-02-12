@@ -151,18 +151,15 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
     console.log('trouble logging in');
   };
 
-  let header: string;
   let secondaryAction: React.ReactElement;
 
   if (context === 'login') {
-    header = 'Welcome back!';
     secondaryAction = (
       <Button buttonType={'link'} onPress={() => onTroubleLoggingIn()}>
         Trouble logging in?
       </Button>
     );
   } else {
-    header = 'Create Account';
     secondaryAction = (
       <Row>
         <LoginText>Already have an account?</LoginText>
@@ -186,7 +183,7 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
   };
 
   return (
-    <AuthFormContainer header={header}>
+    <AuthFormContainer>
       {loginStatus === 'failed' ? (
         <AuthRowContainer>
           <AlertBox type="warning">
