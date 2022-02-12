@@ -1,9 +1,9 @@
-import React, {useLayoutEffect} from 'react';
+import React, {useLayoutEffect, useRef} from 'react';
 import {BaseText, HeaderTitle, Link} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {View, TouchableOpacity} from 'react-native';
+import {View, TouchableOpacity, ScrollView} from 'react-native';
 import styled from 'styled-components/native';
 import {
   Hr,
@@ -30,7 +30,7 @@ const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const ScrollView = styled.ScrollView`
+const ScrollContainer = styled.ScrollView`
   margin-top: 20px;
   padding: 0 ${ScreenGutter};
 `;
@@ -84,8 +84,9 @@ const WalletSettingsTitle = styled(SettingTitle)`
 
 const KeySettings = () => {
   const {
-    params: {key},
+    params: {key, context},
   } = useRoute<RouteProp<WalletStackParamList, 'KeySettings'>>();
+  const scrollViewRef = useRef<ScrollView>(null);
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const wallets = buildNestedWalletList(key.wallets);
@@ -94,11 +95,18 @@ const KeySettings = () => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>Key Settings</HeaderTitle>,
     });
+    if (context === 'createEncryptPassword') {
+      navigation.navigate('Wallet', {
+        screen: 'CreateEncryptPassword',
+        params: {key},
+      });
+      scrollViewRef?.current?.scrollToEnd({animated: false});
+    }
   });
 
   return (
     <WalletSettingsContainer>
-      <ScrollView>
+      <ScrollContainer ref={scrollViewRef}>
         <WalletNameContainer
           onPress={() => {
             haptic('impactLight');
@@ -134,7 +142,11 @@ const KeySettings = () => {
           <Button
             buttonType={'link'}
             onPress={() => {
-              //  TODO: Redirect me
+              haptic('impactLight');
+              navigation.navigate('Wallet', {
+                screen: 'CurrencySelection',
+                params: {context: 'addWallet', key},
+              });
             }}>
             Add a wallet
           </Button>
@@ -234,7 +246,7 @@ const KeySettings = () => {
             <WalletSettingsTitle>Delete</WalletSettingsTitle>
           </Setting>
         </VerticalPadding>
-      </ScrollView>
+      </ScrollContainer>
     </WalletSettingsContainer>
   );
 };

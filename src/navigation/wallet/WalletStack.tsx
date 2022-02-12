@@ -40,7 +40,7 @@ export type WalletStackParamList = {
   VerifyPhrase: VerifyPhraseParamList;
   TermsOfUse: TermsOfUseParamList;
   KeyOverview: {key: Key};
-  KeySettings: {key: Key};
+  KeySettings: {key: Key, context?: 'createEncryptPassword'};
   WalletDetails: {walletId: string; key: Key};
   WalletSettings: {wallet: WalletRowProps};
   CreationOptions: undefined;

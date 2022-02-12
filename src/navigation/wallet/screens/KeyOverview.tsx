@@ -1,4 +1,4 @@
-import {useNavigation, useTheme} from '@react-navigation/native';
+import {CommonActions, useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useState} from 'react';
 import {FlatList, LogBox, RefreshControl} from 'react-native';
@@ -120,6 +120,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   const theme = useTheme();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const {key} = route.params;
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -127,14 +128,22 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
       headerRight: () => (
         <Settings
           onPress={() => {
-            setShowKeyOptions(true);
+            if (key.isPrivKeyEncrypted) {
+              navigation.navigate('Wallet', {
+                screen: 'KeySettings',
+                params: {
+                  key,
+                },
+              });
+            } else {
+              setShowKeyOptions(true);
+            }
           }}
         />
       ),
     });
   }, [navigation]);
 
-  const {key} = route.params;
   const {wallets = [], totalBalance} = useSelector(
     ({WALLET}: RootState) => WALLET.keys[key.id] || {},
   );
@@ -143,18 +152,18 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
 
   const keyOptions: Array<Option> = [
     {
-      img: <Icons.Backup />,
-      title: 'Create a Backup Phrase',
-      description:
-        'The only way to recover a key if your phone is lost or stolen.',
-      onPress: () => null,
-    },
-    {
       img: <Icons.Encrypt />,
       title: 'Encrypt your Key',
       description:
         'Prevent an unauthorized user from sending funds out of your wallet.',
-      onPress: () => null,
+      onPress: () =>
+        navigation.navigate('Wallet', {
+          screen: 'KeySettings',
+          params: {
+            key,
+            context: 'createEncryptPassword',
+          },
+        }),
     },
     {
       img: <Icons.Settings />,
