@@ -110,7 +110,6 @@ export const startFetchVirtualCardImageUrls =
       }
     } catch (err) {
       batch(() => {
-        console.error('Failed to fetch virtual card URLs for', ids.join(', '));
         dispatch(
           LogActions.error(
             `Failed to fetch virtual card image URLs for ${ids.join(', ')}`,

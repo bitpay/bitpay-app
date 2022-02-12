@@ -56,10 +56,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
             .map(e => `${e.path.join('.')}: ${e.message}`)
             .join(',\n');
 
-          console.error(
-            'One or more errors occurred while fetching initial user data:\n' +
-              msg,
-          );
           dispatch(
             LogActions.error(
               'One or more errors occurred while fetching initial user data:\n' +
