@@ -1,6 +1,6 @@
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useState} from 'react';
-import {StyleProp, Text, TextStyle} from 'react-native';
+import {ScrollView, StyleProp, Text, TextStyle} from 'react-native';
 import {useSelector} from 'react-redux';
 import {useTheme} from 'styled-components/native';
 import {RootState} from '../../../../../store';
@@ -28,7 +28,11 @@ const SessionLogs: React.FC<SessionLogsScreenProps> = () => {
       return `[${log.timestamp}] [${formattedLevel}] ${log.message}\n`;
     });
 
-  return <Text style={textStyle}>{filteredLogs}</Text>;
+  return (
+    <ScrollView>
+      <Text style={textStyle}>{filteredLogs}</Text>
+    </ScrollView>
+  );
 };
 
 export default SessionLogs;

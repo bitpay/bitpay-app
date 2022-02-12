@@ -235,7 +235,7 @@ export const bitPayIdReducer = (
         pairingBitPayIdStatus: null,
       };
 
-    case BitPayIdActionTypes.SUCCESS_FETCH_ALL_USER_DATA:
+    case BitPayIdActionTypes.SUCCESS_INITIALIZE_STORE:
       return {
         ...state,
         user: {
