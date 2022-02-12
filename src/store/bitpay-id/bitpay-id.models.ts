@@ -1,7 +1,16 @@
 export interface Session {
   isAuthenticated: boolean;
   csrfToken: string;
+
+  /**
+   * Nocaptcha (checkbox) site key.
+   */
   noCaptchaKey: string;
+
+  /**
+   * Invisible recaptcha site key.
+   */
+  captchaKey: string;
   captchaDisabled?: boolean;
 }
 
