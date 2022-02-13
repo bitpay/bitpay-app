@@ -20,6 +20,9 @@ import haptic from '../../../components/haptic-feedback/haptic';
 
 import {SlateDark, White} from '../../../styles/colors';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
+import {useAppSelector} from '../../../utils/hooks';
+import {findWalletById} from '../../../store/wallet/utils/wallet';
+import {Wallet} from '../../../store/wallet/wallet.models';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -59,19 +62,18 @@ const WalletSettingsTitle = styled(SettingTitle)`
 
 const WalletSettings = () => {
   const {
-    params: {wallet},
+    params: {walletId, key},
   } = useRoute<RouteProp<WalletStackParamList, 'WalletSettings'>>();
   const navigation = useNavigation();
   const [demoToggle, setDemoToggle] = useState(false);
+  const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
+  const {walletName} = findWalletById(wallets, walletId) as Wallet;
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>Wallet Settings</HeaderTitle>,
     });
   });
-
-  const {currencyName} = wallet;
-
   return (
     <WalletSettingsContainer>
       <ScrollView>
@@ -79,11 +81,14 @@ const WalletSettings = () => {
           activeOpacity={ActiveOpacity}
           onPress={() => {
             haptic('impactLight');
-            //    TODO: Redirect me
+            navigation.navigate('Wallet', {
+              screen: 'UpdateKeyOrWalletName',
+              params: {key, wallet: {walletId, walletName}, context: 'wallet'},
+            });
           }}>
           <View>
             <Title>Name</Title>
-            <WalletSettingsTitle>{currencyName}</WalletSettingsTitle>
+            <WalletSettingsTitle>{walletName}</WalletSettingsTitle>
           </View>
 
           <ChevronRightSvg height={16} />

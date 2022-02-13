@@ -3,7 +3,7 @@ import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {FlatList, RefreshControl} from 'react-native';
-import {useDispatch, useSelector} from 'react-redux';
+import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
 import Settings from '../../../components/settings/Settings';
 import {
@@ -14,7 +14,6 @@ import {
 } from '../../../components/styled/Text';
 import {Network} from '../../../constants';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
-import {RootState} from '../../../store';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/balance';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
@@ -29,6 +28,7 @@ import ReceiveAddress from '../components/ReceiveAddress';
 import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
+import {useAppSelector} from '../../../utils/hooks';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -91,9 +91,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const {walletId, key} = route.params;
-  const fullWalletObj = useSelector(({WALLET}: RootState) =>
-    findWalletById(WALLET.keys[key.id].wallets, walletId),
-  ) as Wallet;
+  const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
+  const fullWalletObj = findWalletById(wallets, walletId) as Wallet;
   const uiFormattedWallet = buildUIFormattedWallet(fullWalletObj);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
@@ -112,7 +111,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         />
       ),
     });
-  }, [navigation, uiFormattedWallet.currencyName]);
+  }, [navigation, uiFormattedWallet]);
 
   const assetOptions: Array<Option> = [
     {
@@ -137,7 +136,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         navigation.navigate('Wallet', {
           screen: 'WalletSettings',
           params: {
-            wallet: uiFormattedWallet,
+            key,
+            walletId,
           },
         }),
     },
@@ -204,17 +204,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
               </BalanceContainer>
 
               {fullWalletObj ? (
-                  <LinkingButtons
-                      receive={{cta: () => showReceiveAddress()}}
-                      send={{
-                        hide: __DEV__ ? false : !fullWalletObj.balance.fiat,
-                        cta: () =>
-                            navigation.navigate('Wallet', {
-                              screen: 'SendTo',
-                              params: {wallet: fullWalletObj},
-                            }),
-                      }}
-                  />
+                <LinkingButtons
+                  receive={{cta: () => showReceiveAddress()}}
+                  send={{
+                    hide: __DEV__ ? false : !fullWalletObj.balance.fiat,
+                    cta: () =>
+                      navigation.navigate('Wallet', {
+                        screen: 'SendTo',
+                        params: {wallet: fullWalletObj},
+                      }),
+                  }}
+                />
               ) : null}
             </>
           );

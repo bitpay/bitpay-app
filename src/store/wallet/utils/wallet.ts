@@ -140,8 +140,10 @@ export const toFiat = (
   return totalAmount * (1 / currencyOpt.unitInfo.unitToSatoshi) * fiatRate;
 };
 
-export const findWalletById = (wallets: Wallet[], id: string) =>
-  wallets.find(wallet => wallet.id === id);
+export const findWalletById = (
+  wallets: Wallet[],
+  id: string,
+): Wallet | undefined => wallets.find(wallet => wallet.id === id);
 
 export const isBalanceCacheKeyStale = (timestamp: number | undefined) => {
   if (!timestamp) {

@@ -80,6 +80,7 @@ const createHomeCardList = (
 
         return (
           <WalletCardComponent
+            keyName={key.keyName}
             wallets={wallets}
             totalBalance={totalBalance}
             needsBackup={!backupComplete}

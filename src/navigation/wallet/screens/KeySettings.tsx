@@ -13,8 +13,8 @@ import {
   ScreenGutter,
   Setting,
   SettingTitle,
-  SettingView
-} from "../../../components/styled/Containers";
+  SettingView,
+} from '../../../components/styled/Containers';
 import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
 import WalletSettingsRow from '../../../components/list/WalletSettingsRow';
@@ -27,6 +27,7 @@ import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordTo
 import {buildNestedWalletList} from './KeyOverview';
 import {URL} from '../../../constants';
 import {getMnemonic} from '../../../utils/helper-methods';
+import {useAppSelector} from '../../../utils/hooks';
 
 const WalletSettingsContainer = styled.View`
   flex: 1;
@@ -92,6 +93,7 @@ const KeySettings = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const wallets = buildNestedWalletList(key.wallets);
+  const keyName = useAppSelector(({WALLET}) => WALLET.keys[key.id]?.keyName);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -113,11 +115,14 @@ const KeySettings = () => {
           activeOpacity={ActiveOpacity}
           onPress={() => {
             haptic('impactLight');
-            //    TODO: Redirect me
+            navigation.navigate('Wallet', {
+              screen: 'UpdateKeyOrWalletName',
+              params: {key, context: 'key'},
+            });
           }}>
           <View>
             <Title>Key Name</Title>
-            <WalletSettingsTitle>key 1</WalletSettingsTitle>
+            <WalletSettingsTitle>{keyName}</WalletSettingsTitle>
           </View>
 
           <ChevronRightSvg height={16} />

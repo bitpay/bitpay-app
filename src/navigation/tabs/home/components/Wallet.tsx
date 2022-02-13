@@ -12,6 +12,7 @@ interface WalletCardComponentProps {
   totalBalance: number;
   onPress: () => void;
   needsBackup: boolean;
+  keyName: string | undefined;
 }
 
 const HeaderImg = styled.View`
@@ -44,11 +45,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   totalBalance,
   onPress,
   needsBackup,
-}: {
-  wallets: Wallet[];
-  totalBalance: number;
-  onPress: () => void;
-  needsBackup: boolean;
+  keyName = 'My Key',
 }) => {
   const walletInfo = wallets.slice(0, WALLET_DISPLAY_LIMIT);
   const remainingAssetCount =
@@ -77,7 +74,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   );
 
   const body = {
-    title: 'My Key',
+    title: keyName,
     value: formatFiatAmount(totalBalance, 'USD'),
     needsBackup,
   };

@@ -1,4 +1,4 @@
-import {CommonActions, useNavigation, useTheme} from '@react-navigation/native';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useState} from 'react';
 import {FlatList, LogBox, RefreshControl} from 'react-native';
@@ -124,7 +124,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>My Key</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{key?.keyName}</HeaderTitle>,
       headerRight: () => (
         <Settings
           onPress={() => {
@@ -143,7 +143,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
         />
       ),
     });
-  }, [navigation]);
+  }, [navigation, key]);
 
   const {wallets = [], totalBalance} = useSelector(
     ({WALLET}: RootState) => WALLET.keys[key.id] || {},
