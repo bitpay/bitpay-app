@@ -153,7 +153,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
     if (activeSlideIndex === 11) {
       navigation.navigate(context === 'onboarding' ? 'Onboarding' : 'Wallet', {
         screen: 'VerifyPhrase',
-        params,
+        params: {...params, walletTermsAccepted},
       });
     } else {
       // @ts-ignore
