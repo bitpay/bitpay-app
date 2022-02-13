@@ -6,14 +6,15 @@ import {WalletStackParamList} from '../WalletStack';
 import {View, TouchableOpacity, ScrollView} from 'react-native';
 import styled from 'styled-components/native';
 import {
+  ActiveOpacity,
   Hr,
   Info,
   InfoTriangle,
   ScreenGutter,
   Setting,
   SettingTitle,
-  SettingView,
-} from '../../../components/styled/Containers';
+  SettingView
+} from "../../../components/styled/Containers";
 import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
 import WalletSettingsRow from '../../../components/list/WalletSettingsRow';
@@ -25,8 +26,9 @@ import InfoIcon from '../../../components/icons/info/InfoIcon';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
 import {buildNestedWalletList} from './KeyOverview';
 import {URL} from '../../../constants';
+import {getMnemonic} from '../../../utils/helper-methods';
 
-const WalletSettingsContainer = styled.SafeAreaView`
+const WalletSettingsContainer = styled.View`
   flex: 1;
 `;
 
@@ -108,6 +110,7 @@ const KeySettings = () => {
     <WalletSettingsContainer>
       <ScrollContainer ref={scrollViewRef}>
         <WalletNameContainer
+          activeOpacity={ActiveOpacity}
           onPress={() => {
             haptic('impactLight');
             //    TODO: Redirect me
@@ -155,9 +158,19 @@ const KeySettings = () => {
         <VerticalPadding>
           <Title>Security</Title>
           <Setting
+            activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              //    TODO: Redirect me
+              navigation.navigate('Wallet', {
+                screen: 'RecoveryPhrase',
+                params: {
+                  keyId: key.id,
+                  words: getMnemonic(key),
+                  key,
+                  context: 'settings',
+                  walletTermsAccepted: true,
+                },
+              });
             }}>
             <WalletSettingsTitle>Backup</WalletSettingsTitle>
           </Setting>
@@ -186,6 +199,7 @@ const KeySettings = () => {
 
             <VerticalPadding>
               <TouchableOpacity
+                activeOpacity={ActiveOpacity}
                 onPress={() => {
                   haptic('impactLight');
                   dispatch(openUrlWithInAppBrowser(URL.HELP_SPENDING_PASSWORD));
@@ -201,6 +215,7 @@ const KeySettings = () => {
         <VerticalPadding>
           <Title>Advanced</Title>
           <Setting
+            activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
               //    TODO: Redirect me
@@ -212,6 +227,7 @@ const KeySettings = () => {
           <Hr />
 
           <Setting
+            activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
               navigation.navigate('Wallet', {
@@ -224,6 +240,7 @@ const KeySettings = () => {
           <Hr />
 
           <Setting
+            activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
               navigation.navigate('Wallet', {
@@ -236,6 +253,8 @@ const KeySettings = () => {
           <Hr />
 
           <Setting
+            activeOpacity={ActiveOpacity}
+            style={{marginBottom: 50}}
             onPress={() => {
               haptic('impactLight');
               navigation.navigate('Wallet', {
