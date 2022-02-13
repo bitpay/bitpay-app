@@ -151,3 +151,6 @@ export const isBalanceCacheKeyStale = (timestamp: number | undefined) => {
   const TTL = BALANCE_CACHE_DURATION * 1000;
   return Date.now() - timestamp > TTL;
 };
+
+export const checkEncryptPassword = (key: Key, password: string) =>
+  key.methods.checkPassword(password);
