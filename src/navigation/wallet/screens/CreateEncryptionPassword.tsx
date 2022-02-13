@@ -15,6 +15,10 @@ import Button from '../../../components/button/Button';
 import {WalletActions} from '../../../store/wallet/index';
 import {useLogger} from '../../../utils/hooks';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {
+  dismissBottomNotificationModal,
+  showBottomNotificationModal,
+} from '../../../store/app/app.actions';
 
 const EncryptPasswordContainer = styled.SafeAreaView`
   flex: 1;
@@ -93,6 +97,24 @@ const CreateEncryptionPassword = () => {
           screen: 'KeySettings',
           params: {key},
         });
+        dispatch(
+          showBottomNotificationModal({
+            type: 'success',
+            title: 'Password Set',
+            message:
+              'Your encryption password has been set. This key is now encrypted.',
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: 'GOT IT',
+                action: () => {
+                  dispatch(dismissBottomNotificationModal());
+                },
+                primary: true,
+              },
+            ],
+          }),
+        );
         logger.debug('Key encrypted');
       } else {
         setGenericError('Something went wrong. Please try again.');
