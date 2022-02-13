@@ -128,6 +128,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
       headerRight: () => (
         <Settings
           onPress={() => {
+            haptic('impactLight');
             if (key.isPrivKeyEncrypted) {
               navigation.navigate('Wallet', {
                 screen: 'KeySettings',
@@ -156,26 +157,30 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
       title: 'Encrypt your Key',
       description:
         'Prevent an unauthorized user from sending funds out of your wallet.',
-      onPress: () =>
+      onPress: () => {
+        haptic('impactLight');
         navigation.navigate('Wallet', {
           screen: 'KeySettings',
           params: {
             key,
             context: 'createEncryptPassword',
           },
-        }),
+        });
+      },
     },
     {
       img: <Icons.Settings />,
       title: 'Key Settings',
       description: 'View all the ways to manage and configure your key.',
-      onPress: () =>
+      onPress: () => {
+        haptic('impactLight');
         navigation.navigate('Wallet', {
           screen: 'KeySettings',
           params: {
             key,
           },
-        }),
+        });
+      },
     },
   ];
 
@@ -236,12 +241,13 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
             <WalletRow
               id={item.id}
               wallet={item}
-              onPress={() =>
+              onPress={() => {
+                haptic('impactLight');
                 navigation.navigate('Wallet', {
                   screen: 'WalletDetails',
                   params: {walletId: item.id, key},
-                })
-              }
+                });
+              }}
             />
           );
         }}
