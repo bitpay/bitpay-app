@@ -50,7 +50,6 @@ import {
   AdvancedOptionsButton,
   AdvancedOptionsButtonText,
   AdvancedOptions,
-  RowContainer,
   Column,
   Row,
   SheetContainer,
@@ -153,6 +152,16 @@ const CurrencySelectionModalContainer = styled(SheetContainer)`
 const CurrencyOptions = SupportedCurrencyOptions.filter(
   currency => !currency.isToken,
 );
+
+const RowContainer = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  padding: 18px;
+`;
+
+const InputContainer = styled.View`
+  padding: 18px;
+`;
 
 const RecoveryPhrase = () => {
   const dispatch = useDispatch();
@@ -427,49 +436,52 @@ const RecoveryPhrase = () => {
             </AdvancedOptionsButton>
 
             {showOptions && (
-              <RowContainer
-                style={{marginLeft: 10, marginRight: 10}}
-                activeOpacity={1}
-                onPress={() => {
-                  setDerivationPathEnabled(!derivationPathEnabled);
-                }}>
-                <Column>
-                  <OptionTitle>Specify Derivation Path</OptionTitle>
-                </Column>
-                <CheckBoxContainer>
-                  <Checkbox
-                    checked={derivationPathEnabled}
-                    onPress={() => {
-                      setDerivationPathEnabled(!derivationPathEnabled);
-                    }}
-                  />
-                </CheckBoxContainer>
-              </RowContainer>
+              <AdvancedOptions>
+                <RowContainer
+                  activeOpacity={1}
+                  onPress={() => {
+                    setDerivationPathEnabled(!derivationPathEnabled);
+                  }}>
+                  <Column>
+                    <OptionTitle>Specify Derivation Path</OptionTitle>
+                  </Column>
+                  <CheckBoxContainer>
+                    <Checkbox
+                      checked={derivationPathEnabled}
+                      onPress={() => {
+                        setDerivationPathEnabled(!derivationPathEnabled);
+                      }}
+                    />
+                  </CheckBoxContainer>
+                </RowContainer>
+              </AdvancedOptions>
             )}
 
             {showOptions && derivationPathEnabled && (
-              <CurrencySelectorContainer>
-                <Label>CURRENCY</Label>
-                <CurrencyContainer
-                  activeOpacity={ActiveOpacity}
-                  onPress={() => {
-                    setCurrencyModalVisible(true);
-                  }}>
-                  <Row
-                    style={{
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
+              <AdvancedOptions>
+                <CurrencySelectorContainer>
+                  <Label>CURRENCY</Label>
+                  <CurrencyContainer
+                    activeOpacity={ActiveOpacity}
+                    onPress={() => {
+                      setCurrencyModalVisible(true);
                     }}>
-                    <Row style={{alignItems: 'center'}}>
-                      <CurrencyImage img={selectedCurrency.img} size={30} />
-                      <CurrencyName>
-                        {selectedCurrency?.currencyAbbreviation}
-                      </CurrencyName>
+                    <Row
+                      style={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}>
+                      <Row style={{alignItems: 'center'}}>
+                        <CurrencyImage img={selectedCurrency.img} size={30} />
+                        <CurrencyName>
+                          {selectedCurrency?.currencyAbbreviation}
+                        </CurrencyName>
+                      </Row>
+                      <Icons.DownToggle />
                     </Row>
-                    <Icons.DownToggle />
-                  </Row>
-                </CurrencyContainer>
-              </CurrencySelectorContainer>
+                  </CurrencyContainer>
+                </CurrencySelectorContainer>
+              </AdvancedOptions>
             )}
 
             <SheetModal
@@ -490,45 +502,48 @@ const RecoveryPhrase = () => {
 
             {showOptions && derivationPathEnabled && (
               <AdvancedOptions>
-                <BoxInput
-                  label={'DERIVATION PATH'}
-                  onChangeText={(text: string) =>
-                    setOptions({...options, derivationPath: text})
-                  }
-                  value={options.derivationPath}
-                />
+                <InputContainer>
+                  <BoxInput
+                    label={'DERIVATION PATH'}
+                    onChangeText={(text: string) =>
+                      setOptions({...options, derivationPath: text})
+                    }
+                    value={options.derivationPath}
+                  />
+                </InputContainer>
               </AdvancedOptions>
             )}
 
             {showOptions &&
               derivationPathEnabled &&
               options.derivationPath === DefaultDerivationPath.defaultBTC && (
-                <RowContainer
-                  style={{marginLeft: 10, marginRight: 10}}
-                  activeOpacity={1}
-                  onPress={() => {
-                    setOptions({...options, isMultisig: !options.isMultisig});
-                  }}>
-                  <Column>
-                    <OptionTitle>Shared Wallet</OptionTitle>
-                  </Column>
-                  <CheckBoxContainer>
-                    <Checkbox
-                      checked={options.isMultisig}
-                      onPress={() => {
-                        setOptions({
-                          ...options,
-                          isMultisig: !options.isMultisig,
-                        });
-                      }}
-                    />
-                  </CheckBoxContainer>
-                </RowContainer>
+                <AdvancedOptions>
+                  <RowContainer
+                    activeOpacity={1}
+                    onPress={() => {
+                      setOptions({...options, isMultisig: !options.isMultisig});
+                    }}>
+                    <Column>
+                      <OptionTitle>Shared Wallet</OptionTitle>
+                    </Column>
+                    <CheckBoxContainer>
+                      <Checkbox
+                        checked={options.isMultisig}
+                        onPress={() => {
+                          setOptions({
+                            ...options,
+                            isMultisig: !options.isMultisig,
+                          });
+                        }}
+                      />
+                    </CheckBoxContainer>
+                  </RowContainer>
+                </AdvancedOptions>
               )}
 
             {showOptions && (
-              <>
-                <AdvancedOptions>
+              <AdvancedOptions>
+                <InputContainer>
                   <BoxInput
                     placeholder={'strongPassword123'}
                     type={'password'}
@@ -537,13 +552,13 @@ const RecoveryPhrase = () => {
                     }
                     value={options.passphrase}
                   />
-                </AdvancedOptions>
+                </InputContainer>
                 <PasswordParagraph>
                   This field is only for users who, in previous versions (it's
                   not supported anymore), set a password to protect their
                   recovery phrase. This field is not for your encrypt password.
                 </PasswordParagraph>
-              </>
+              </AdvancedOptions>
             )}
           </AdvancedOptionsContainer>
         </CtaContainer>

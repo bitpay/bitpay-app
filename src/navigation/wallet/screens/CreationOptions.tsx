@@ -80,7 +80,8 @@ const CreationOptions: React.FC = () => {
     {
       id: 'import',
       title: 'Import Key',
-      description: 'Use an existing recovery phrase to import an existing wallet',
+      description:
+        'Use an existing recovery phrase to import an existing wallet',
       cta: () =>
         navigation.navigate('Wallet', {
           screen: 'Import',

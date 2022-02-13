@@ -204,17 +204,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
               </BalanceContainer>
 
               {fullWalletObj ? (
-                  <LinkingButtons
-                      receive={{cta: () => showReceiveAddress()}}
-                      send={{
-                        hide: __DEV__ ? false : !fullWalletObj.balance.fiat,
-                        cta: () =>
-                            navigation.navigate('Wallet', {
-                              screen: 'SendTo',
-                              params: {wallet: fullWalletObj},
-                            }),
-                      }}
-                  />
+                <LinkingButtons
+                  receive={{cta: () => showReceiveAddress()}}
+                  send={{
+                    hide: __DEV__ ? false : !fullWalletObj.balance.fiat,
+                    cta: () =>
+                      navigation.navigate('Wallet', {
+                        screen: 'SendTo',
+                        params: {wallet: fullWalletObj},
+                      }),
+                  }}
+                />
               ) : null}
             </>
           );

@@ -236,7 +236,9 @@ export const AdvancedOptionsButtonText = styled(BaseText)`
 `;
 
 export const AdvancedOptions = styled.View`
-  padding: 18px;
+  border-style: solid;
+  border-top-width: 1px;
+  border-top-color: ${({theme}) => (theme.dark ? '#434D5A' : '#E1E4E7')};
 `;
 
 const Gutter = '10px';

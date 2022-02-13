@@ -35,7 +35,6 @@ import {
   AdvancedOptionsButton,
   AdvancedOptionsButtonText,
   AdvancedOptions,
-  RowContainer,
   Column,
   ScreenGutter,
   CtaContainer,
@@ -150,6 +149,16 @@ const AddButton = styled.TouchableOpacity`
 const CounterNumber = styled.Text`
   color: ${({theme: {dark}}) => (dark ? White : Action)};
   font-size: 16px;
+`;
+
+const RowContainer = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  padding: 18px;
+`;
+
+const InputContainer = styled.View`
+  margin-top: 20px;
 `;
 
 const CreateMultisig = () => {
@@ -281,7 +290,7 @@ const CreateMultisig = () => {
           term storage.
         </Paragraph>
 
-        <AdvancedOptions>
+        <InputContainer>
           <Controller
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
@@ -299,9 +308,9 @@ const CreateMultisig = () => {
           {errors?.name?.message && (
             <ErrorText>{errors?.name?.message}</ErrorText>
           )}
-        </AdvancedOptions>
+        </InputContainer>
 
-        <AdvancedOptions>
+        <InputContainer>
           <Controller
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
@@ -319,7 +328,7 @@ const CreateMultisig = () => {
           {errors?.myName?.message && (
             <ErrorText>{errors?.myName?.message}</ErrorText>
           )}
-        </AdvancedOptions>
+        </InputContainer>
 
         <Controller
           control={control}
@@ -434,36 +443,34 @@ const CreateMultisig = () => {
             </AdvancedOptionsButton>
 
             {showOptions && (
-              <RowContainer
-                style={{marginLeft: 10, marginRight: 10}}
-                activeOpacity={1}
-                onPress={() => {
-                  setOptions({
-                    ...options,
-                    useNativeSegwit: !options.useNativeSegwit,
-                  });
-                }}>
-                <Column>
-                  <OptionTitle>Segwit</OptionTitle>
-                </Column>
-                <CheckBoxContainer>
-                  <Checkbox
-                    checked={options.useNativeSegwit}
-                    onPress={() => {
-                      setOptions({
-                        ...options,
-                        useNativeSegwit: !options.useNativeSegwit,
-                      });
-                    }}
-                  />
-                </CheckBoxContainer>
-              </RowContainer>
+              <AdvancedOptions>
+                <RowContainer
+                  onPress={() => {
+                    setOptions({
+                      ...options,
+                      useNativeSegwit: !options.useNativeSegwit,
+                    });
+                  }}>
+                  <Column>
+                    <OptionTitle>Segwit</OptionTitle>
+                  </Column>
+                  <CheckBoxContainer>
+                    <Checkbox
+                      checked={options.useNativeSegwit}
+                      onPress={() => {
+                        setOptions({
+                          ...options,
+                          useNativeSegwit: !options.useNativeSegwit,
+                        });
+                      }}
+                    />
+                  </CheckBoxContainer>
+                </RowContainer>
+              </AdvancedOptions>
             )}
             {showOptions && (
-              <>
+              <AdvancedOptions>
                 <RowContainer
-                  style={{marginLeft: 10, marginRight: 10}}
-                  activeOpacity={1}
                   onPress={() => {
                     setTestnetEnabled(!testnetEnabled);
                     setOptions({
@@ -511,13 +518,12 @@ const CreateMultisig = () => {
                     </Info>
                   </>
                 )}
-              </>
+              </AdvancedOptions>
             )}
 
             {showOptions && !singleAddressCurrency && (
-              <>
+              <AdvancedOptions>
                 <RowContainer
-                  style={{marginLeft: 10, marginRight: 10}}
                   activeOpacity={1}
                   onPress={() => {
                     setOptions({
@@ -574,7 +580,7 @@ const CreateMultisig = () => {
                     </Info>
                   </>
                 )}
-              </>
+              </AdvancedOptions>
             )}
           </AdvancedOptionsContainer>
         </CtaContainer>

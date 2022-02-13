@@ -19,6 +19,7 @@ import {
   AdvancedOptionsButton,
   AdvancedOptionsButtonText,
   AdvancedOptionsContainer,
+  AdvancedOptions,
   Column,
   SheetContainer,
   Row,
@@ -390,27 +391,29 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
             </AdvancedOptionsButton>
 
             {showOptions && (
-              <RowContainer
-                activeOpacity={1}
-                onPress={() => {
-                  setIsTestnet(!isTestnet);
-                }}>
-                <Column>
-                  <OptionTitle>
-                    {isToken || currencyAbbreviation === 'ETH'
-                      ? 'Kovan'
-                      : 'Testnet'}
-                  </OptionTitle>
-                </Column>
-                <CheckBoxContainer>
-                  <Checkbox
-                    checked={isTestnet}
-                    onPress={() => {
-                      setIsTestnet(!isTestnet);
-                    }}
-                  />
-                </CheckBoxContainer>
-              </RowContainer>
+              <AdvancedOptions>
+                <RowContainer
+                  activeOpacity={1}
+                  onPress={() => {
+                    setIsTestnet(!isTestnet);
+                  }}>
+                  <Column>
+                    <OptionTitle>
+                      {isToken || currencyAbbreviation === 'ETH'
+                        ? 'Kovan'
+                        : 'Testnet'}
+                    </OptionTitle>
+                  </Column>
+                  <CheckBoxContainer>
+                    <Checkbox
+                      checked={isTestnet}
+                      onPress={() => {
+                        setIsTestnet(!isTestnet);
+                      }}
+                    />
+                  </CheckBoxContainer>
+                </RowContainer>
+              </AdvancedOptions>
             )}
           </WalletAdvancedOptionsContainer>
         )}
