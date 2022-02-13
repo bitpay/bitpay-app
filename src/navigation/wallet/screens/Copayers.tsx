@@ -29,7 +29,7 @@ interface CopayersProps {
 }
 
 const Gutter = '10px';
-const CopayersContainer = styled.View`
+const JoinCopayersContainer = styled.View`
   padding: ${Gutter};
 `;
 
@@ -59,6 +59,13 @@ const LoadingContainer = styled.View`
 
 const LoadingText = styled(H4)`
   color: ${({theme}) => theme.colors.text};
+`;
+
+const CopayersContainer = styled(RowContainer)`
+  padding: 18px;
+  border-style: solid;
+  border-top-width: 1px;
+  border-top-color: ${({theme}) => (theme.dark ? '#434D5A' : '#E1E4E7')};
 `;
 
 const Copayers: React.FC<CopayersProps> = props => {
@@ -99,7 +106,7 @@ const Copayers: React.FC<CopayersProps> = props => {
   };
 
   return (
-    <CopayersContainer>
+    <JoinCopayersContainer>
       <Paragraph>
         Share this invitation with the devices joining this account. Each
         copayer has their own recovery phrase. To recover funds stored in a
@@ -135,15 +142,15 @@ const Copayers: React.FC<CopayersProps> = props => {
             contentContainerStyle={{paddingBottom: 100}}
             data={walletStatus?.copayers}
             renderItem={({item}) => (
-              <RowContainer activeOpacity={ActiveOpacity}>
+              <CopayersContainer activeOpacity={ActiveOpacity}>
                 <Image source={CircleCheckIcon} />
                 <AuthorizedContainer>{item?.name}</AuthorizedContainer>
-              </RowContainer>
+              </CopayersContainer>
             )}
           />
         </>
       )}
-    </CopayersContainer>
+    </JoinCopayersContainer>
   );
 };
 
