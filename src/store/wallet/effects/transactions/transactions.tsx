@@ -238,31 +238,105 @@ const GetLowAmount = (wallet: Wallet): Promise<any> => {
   });
 };
 
+const GetNewTransactions = (
+    newTxs: any[],
+    skip: number,
+    wallet: Wallet,
+    requestLimit: number,
+    lastTransactionId: string,
+    tries: number = 0,
+): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    GetTransactionHistoryFromServer(
+        wallet,
+        skip,
+        lastTransactionId,
+        requestLimit,
+    )
+        .then(async result => {
+          const {transactions, loadMore = false} = result;
+
+          const _transactions = transactions.filter(txs => txs);
+          const _newTxs = await ProcessNewTxs(wallet, _transactions);
+          newTxs = newTxs.concat(_newTxs);
+          skip = skip + requestLimit;
+
+          if (!loadMore) {
+            return resolve(newTxs);
+          }
+
+          requestLimit = LIMIT;
+          return GetNewTransactions(newTxs, skip, wallet, requestLimit, lastTransactionId).then(txs => {
+            resolve(txs);
+          });
+        })
+        .catch(err => {
+          if (
+              err instanceof Errors.CONNECTION_ERROR ||
+              (err.message && err.message.match(/5../))
+          ) {
+            if (tries > 1) {
+              return reject(err);
+            }
+
+            return setTimeout(() => {
+              return resolve(GetNewTransactions(newTxs, skip, wallet, requestLimit, lastTransactionId, ++tries));
+            }, 2000 + 3000 * tries);
+          } else {
+            return reject(err);
+          }
+        });
+  });
+};
+
+const UpdateLowAmount = (transactions: any[] = [], opts: TransactionsHistoryInterface = {}) => {
+  if (!opts.lowAmount) {
+    return;
+  }
+
+  transactions.forEach(tx => {
+    tx.lowAmount = tx.amount < opts?.lowAmount;
+  });
+
+  return transactions;
+};
+
+const UpdateNotes = (wallet: Wallet, transactions: any[] = [], lastTransactionTime: any): Promise<any> => {
+  return new Promise((res, rej) => {
+    if (!lastTransactionTime) {
+      return res(transactions);
+    }
+
+    wallet.getTxNotes(
+        {
+          minTs: lastTransactionTime,
+        },
+        (err, notes) => {
+          if (err) {
+            return rej(err);
+          }
+          notes.forEach(note => {
+            transactions.forEach((tx: any) => {
+              if (tx.txid == note.txid) {
+                tx.note = note;
+              }
+            });
+          });
+          return res(transactions);
+        },
+    );
+  });
+}
+
+
 export const UpdateLocalTxHistory = (
   wallet: Wallet,
   opts: TransactionsHistoryInterface = {},
 ): Promise<any> => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     opts = opts || {};
     let requestLimit = FIRST_LIMIT;
     const {walletId, coin} = wallet.credentials;
-    // WalletProvider.progressFn[walletId] = progressFn || (() => {});
-    let foundLimitTx: any = [];
-
-    // if (WalletProvider.historyUpdateOnProgress[wallet.id]) {
-    //     this.logger.debug(
-    //         '!! History update already on progress for: ' + wallet.id
-    //     );
-    //
-    //     if (progressFn) {
-    //         WalletProvider.progressFn[walletId] = progressFn;
-    //     }
-    //     return reject('HISTORY_IN_PROGRESS'); // no callback call yet.
-    // }
-    //
-    // this.logger.debug(
-    //     'Updating Transaction History for ' + wallet.credentials.walletName
-    // );
 
     // WalletProvider.historyUpdateOnProgress[wallet.id] = true;
     let storedTransactionHistory: any[] = GetStoredTransactionHistory(wallet);
@@ -281,178 +355,47 @@ export const UpdateLocalTxHistory = (
     // TODO: dispatch store txs history
     // (nonEscrowReclaimTxs)
 
-    const GetNewTransactions = (
-      newTxs: any[],
-      skip: number,
-      tries: number = 0,
-    ): Promise<any> => {
-      return new Promise((resolve, reject) => {
-        GetTransactionHistoryFromServer(
-          wallet,
-          skip,
-          lastTransactionId,
-          requestLimit,
-        )
-          .then(async result => {
-            const {res, loadMore = false} = result;
-
-            const _res = res.filter(txs => txs);
-            const _newTxs = await ProcessNewTxs(wallet, _res);
-            newTxs = newTxs.concat(_newTxs);
-            // WalletProvider.progressFn[walletId](
-            //     newTxs.concat(txsFromLocal),
-            //     newTxs.length
-            // );
-            skip = skip + requestLimit;
-            // this.logger.debug(
-            //     'Syncing TXs for:' +
-            //     walletId +
-            //     '. Got:' +
-            //     newTxs.length +
-            //     ' Skip:' +
-            //     skip,
-            //     ' EndingTxid:',
-            //     endingTxid,
-            //     ' Continue:',
-            //     shouldContinue
-            // );
-
-            // TODO Dirty <HACK>
-            // do not sync all history, just looking for a single TX.
-            // if (opts.limitTx) {
-            //     foundLimitTx = _.find(newTxs.concat(txsFromLocal), {
-            //         txid: opts.limitTx as any
-            //     });
-            //     if (!_.isEmpty(foundLimitTx)) {
-            //         this.logger.debug('Found limitTX: ' + opts.limitTx);
-            //         return resolve([foundLimitTx]);
-            //     }
-            // }
-            // </HACK>
-            if (!loadMore) {
-              // this.logger.debug(
-              //     'Finished Sync: New / soft confirmed Txs: ' +
-              //     newTxs.length
-              // );
-              return resolve(newTxs);
-            }
-
-            requestLimit = LIMIT;
-            return GetNewTransactions(newTxs, skip).then(txs => {
-              resolve(txs);
-            });
-          })
-          .catch(err => {
-            if (
-              err instanceof Errors.CONNECTION_ERROR ||
-              (err.message && err.message.match(/5../))
-            ) {
-              if (tries > 1) {
-                return reject(err);
-              }
-
-              return setTimeout(() => {
-                return resolve(GetNewTransactions(newTxs, skip, ++tries));
-              }, 2000 + 3000 * tries);
-            } else {
-              return reject(err);
-            }
-          });
+    try {
+      let transactions = await GetNewTransactions([], 0, wallet, requestLimit, lastTransactionId);
+      const array = transactions.concat(confirmedTxs).filter(txs => txs);
+      const newHistory = uniqBy(array, x => {
+        return (x as any).txid;
       });
-    };
 
-    GetNewTransactions([], 0)
-      .then(txs => {
-        const array = txs.concat(confirmedTxs).filter(txs => txs);
-        const newHistory = uniqBy(array, x => {
-          return (x as any).txid;
+      if (IsUtxoCoin(coin)) {
+        try {
+          const _lowAmount = await GetLowAmount(wallet);
+          opts.lowAmount = _lowAmount;
+          transactions = UpdateLowAmount(transactions, opts);
+        } catch (getLowAmountErr) {
+          console.error('getLowAmountErr', getLowAmountErr)
+        }
+      }
+
+      try {
+        transactions = await UpdateNotes(wallet, newHistory, lastTransactionTime);
+        transactions.forEach(txs => {
+          txs.recent = true;
         });
-
-        const updateNotes = (): Promise<any> => {
-          return new Promise((res, rej) => {
-            if (!lastTransactionTime) {
-              return res();
-            }
-
-            // this.logger.debug('Syncing notes from: ' + endingTs);
-            wallet.getTxNotes(
-              {
-                minTs: lastTransactionTime,
-              },
-              (err, notes) => {
-                if (err) {
-                  // this.logger.warn('Could not get TxNotes: ', err);
-                  return rej(err);
-                }
-                notes.forEach(note => {
-                  // this.logger.debug('Note for ' + note.txid);
-                  newHistory.forEach((tx: any) => {
-                    if (tx.txid == note.txid) {
-                      // this.logger.debug(
-                      //  '...updating note for ' + note.txid
-                      // );
-                      tx.note = note;
-                    }
-                  });
-                });
-                return res();
-              },
-            );
-          });
-        };
-
-        const updateLowAmount = txs => {
-          if (!opts.lowAmount) {
-            return;
-          }
-
-          txs.forEach(tx => {
-            tx.lowAmount = tx.amount < opts.lowAmount;
-          });
-        };
-
-        if (IsUtxoCoin(coin)) {
-          GetLowAmount(wallet).then(fee => {
-            opts.lowAmount = fee;
-            updateLowAmount(txs);
-          });
+        // Final update
+        if (walletId == wallet.credentials.walletId) {
+          // TODO: dispatch store txs history
+          // (nonEscrowReclaimTxs)
+          const nonEscrowReclaimTxsStatus = RemoveEscrowReclaimTransactions(
+              wallet,
+              newHistory,
+          );
         }
 
-        updateNotes()
-          .then(() => {
-            // <HACK>
-            if (!foundLimitTx.length) {
-              // this.logger.debug(
-              //     'Tx history read until limitTx: ' + opts.limitTx
-              // );
-              return resolve(newHistory);
-            }
-            // </HACK>
-
-            const historyToSave = JSON.stringify(newHistory);
-            txs.forEach(tx => {
-              tx.recent = true;
-            });
-            // Final update
-            if (walletId == wallet.credentials.walletId) {
-              // TODO: dispatch store txs history
-              // (nonEscrowReclaimTxs)
-              const nonEscrowReclaimTxsStatus = RemoveEscrowReclaimTransactions(
-                wallet,
-                newHistory,
-              );
-            }
-
-            // TODO: dispatch to store history
-            resolve(historyToSave);
-          })
-          .catch(err => {
-            return reject(err);
-          });
-      })
-      .catch(err => {
-        return reject(err);
-      });
+        // TODO: dispatch to store history
+        resolve(newHistory);
+      } catch(updateNotesErr) {
+        console.error('updateNotesErr', updateNotesErr)
+        return reject(updateNotesErr);
+      }
+    }catch (err) {
+      return reject(err);
+    }
   });
 };
 
@@ -461,13 +404,12 @@ export const GetTransactionHistoryFromServer = (
   skip: number,
   lastTransactionId: string | null,
   limit: number,
-): Promise<{res: any[]; loadMore: boolean}> => {
+): Promise<{transactions: any[]; loadMore: boolean}> => {
   return new Promise((resolve, reject) => {
-    let res: any[] = [];
-
+    let transactions: any[] = [];
     const result = {
-      res,
-      loadMore: res.length >= limit,
+      transactions,
+      loadMore: transactions.length >= limit,
     };
 
     const {token, multisigEthInfo} = wallet.credentials;
@@ -480,25 +422,24 @@ export const GetTransactionHistoryFromServer = (
           ? multisigEthInfo.multisigContractAddress
           : '',
       },
-      (err: Error, txsFromServer: any) => {
+      (err: Error, _transactions: any) => {
         if (err) {
           return reject(err);
         }
 
-        if (!txsFromServer?.length) {
+        if (!_transactions?.length) {
           resolve(result);
         }
 
-        txsFromServer.some((tx: any) => {
+        _transactions.some((tx: any) => {
           if (tx.txid !== lastTransactionId) {
-            res.push(tx);
+            transactions.push(tx);
           }
           return tx.txid === lastTransactionId;
         });
 
-        result.res = res;
-
-        result.loadMore = res.length >= limit;
+        result.transactions = transactions;
+        result.loadMore = transactions.length >= limit;
 
         return resolve(result);
       },
