@@ -1,4 +1,4 @@
-import React, {useLayoutEffect} from 'react';
+import React, {useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {
   ActiveOpacity,
@@ -8,6 +8,7 @@ import {useNavigation} from '@react-navigation/native';
 import {Feather, LightBlack, SlateDark, White} from '../../../styles/colors';
 import {BaseText, H6, HeaderTitle} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
+import MultisigOptions from './MultisigOptions';
 
 interface Option {
   id: string;
@@ -55,6 +56,7 @@ const Description = styled(BaseText)`
 `;
 const CreationOptions: React.FC = () => {
   const navigation = useNavigation();
+  const [showMultisigOptions, setShowMultisigOptions] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -92,32 +94,35 @@ const CreationOptions: React.FC = () => {
       id: 'multisig',
       title: 'Multisig Wallet',
       description: 'Requires multiple people or devices and is the most secure',
-      cta: () =>
-        navigation.navigate('Wallet', {
-          screen: 'MultisigOptions',
-        }),
+      cta: () => setShowMultisigOptions(true),
       height: '80px',
     },
   ];
   return (
-    <OptionContainer>
-      <OptionListContainer>
-        {optionList.map(({cta, id, title, description}: Option) => (
-          <OptionList
-            activeOpacity={ActiveOpacity}
-            onPress={() => {
-              haptic('impactLight');
-              cta();
-            }}
-            key={id}>
-            <InfoContainer>
-              <Title>{title}</Title>
-              <Description>{description}</Description>
-            </InfoContainer>
-          </OptionList>
-        ))}
-      </OptionListContainer>
-    </OptionContainer>
+    <>
+      <OptionContainer>
+        <OptionListContainer>
+          {optionList.map(({cta, id, title, description}: Option) => (
+            <OptionList
+              activeOpacity={ActiveOpacity}
+              onPress={() => {
+                haptic('impactLight');
+                cta();
+              }}
+              key={id}>
+              <InfoContainer>
+                <Title>{title}</Title>
+                <Description>{description}</Description>
+              </InfoContainer>
+            </OptionList>
+          ))}
+        </OptionListContainer>
+      </OptionContainer>
+      <MultisigOptions
+        isVisible={showMultisigOptions}
+        setShowMultisigOptions={setShowMultisigOptions}
+      />
+    </>
   );
 };
 

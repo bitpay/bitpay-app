@@ -1,4 +1,4 @@
-import React, {useLayoutEffect} from 'react';
+import React, {useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {
   ActiveOpacity,
@@ -13,6 +13,7 @@ import FastImage from 'react-native-fast-image';
 import {Key} from '../../../store/wallet/wallet.models';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
+import MultisigOptions from './MultisigOptions';
 
 export type AddingOptionsParamList = {
   key: Key;
@@ -78,6 +79,7 @@ const AddingOptions: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'AddingOptions'>>();
   const {key} = route.params;
+  const [showMultisigOptions, setShowMultisigOptions] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -105,39 +107,42 @@ const AddingOptions: React.FC = () => {
       id: 'multisig',
       title: 'Multisig Wallet',
       description: 'Requires multiple devices and is the most secure',
-      cta: () =>
-        navigation.navigate('Wallet', {
-          screen: 'MultisigOptions',
-          params: {key},
-        }),
+      cta: () => setShowMultisigOptions(true),
       img: require('../../../../assets/img/wallet/wallet-type/multisig.png'),
       height: '80px',
     },
   ];
   return (
-    <OptionContainer>
-      <OptionListContainer>
-        {optionList.map(
-          ({cta, id, img, height, title, description}: Option) => (
-            <OptionList
-              activeOpacity={ActiveOpacity}
-              onPress={() => {
-                haptic('impactLight');
-                cta();
-              }}
-              key={id}>
-              <ImageContainer>
-                <Image source={img} imgHeight={height} />
-              </ImageContainer>
-              <InfoContainer>
-                <Title>{title}</Title>
-                <Description>{description}</Description>
-              </InfoContainer>
-            </OptionList>
-          ),
-        )}
-      </OptionListContainer>
-    </OptionContainer>
+    <>
+      <OptionContainer>
+        <OptionListContainer>
+          {optionList.map(
+            ({cta, id, img, height, title, description}: Option) => (
+              <OptionList
+                activeOpacity={ActiveOpacity}
+                onPress={() => {
+                  haptic('impactLight');
+                  cta();
+                }}
+                key={id}>
+                <ImageContainer>
+                  <Image source={img} imgHeight={height} />
+                </ImageContainer>
+                <InfoContainer>
+                  <Title>{title}</Title>
+                  <Description>{description}</Description>
+                </InfoContainer>
+              </OptionList>
+            ),
+          )}
+        </OptionListContainer>
+      </OptionContainer>
+      <MultisigOptions
+        isVisible={showMultisigOptions}
+        setShowMultisigOptions={setShowMultisigOptions}
+        walletKey={key}
+      />
+    </>
   );
 };
 

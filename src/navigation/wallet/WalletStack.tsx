@@ -31,9 +31,6 @@ import TermsOfUse, {
 import AddWallet, {AddWalletParamList} from './screens/AddWallet';
 import Amount, {AmountParamList} from './screens/send/Amount';
 import SendTo from './screens/send/SendTo';
-import MultisigOptions, {
-  MultisigOptionsParamList,
-} from './screens/MultisigOptions';
 import CreateMultisig, {CreateMultisigProps} from './screens/CreateMultisig';
 import JoinMultisig, {JoinMultisigParamList} from './screens/JoinMultisig';
 import Copayers from './screens/Copayers';
@@ -58,9 +55,8 @@ export type WalletStackParamList = {
   ExportKey: {key: Key};
   Amount: AmountParamList;
   SendTo: {wallet: WalletModel};
-  MultisigOptions: MultisigOptionsParamList | undefined;
   CreateMultisig: CreateMultisigProps;
-  JoinMultisig: JoinMultisigParamList;
+  JoinMultisig: JoinMultisigParamList | undefined;
   Copayers: {wallet: WalletModel};
   AddingOptions: AddingOptionsParamList;
 };
@@ -84,7 +80,6 @@ export enum WalletScreens {
   EXPORT_KEY = 'ExportKey',
   AMOUNT = 'Amount',
   SEND_TO = 'SendTo',
-  MULTISIG_OPTIONS = 'MultisigOptions',
   CREATE_MULTISIG = 'CreateMultisig',
   JOIN_MULTISIG = 'JoinMultisig',
   COPAYERS = 'Copayers',
@@ -176,10 +171,6 @@ const WalletStack = () => {
         />
         <Wallet.Screen name={WalletScreens.AMOUNT} component={Amount} />
         <Wallet.Screen name={WalletScreens.SEND_TO} component={SendTo} />
-        <Wallet.Screen
-          name={WalletScreens.MULTISIG_OPTIONS}
-          component={MultisigOptions}
-        />
         <Wallet.Screen
           options={{
             headerTitle: () => (

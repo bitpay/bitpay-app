@@ -33,7 +33,7 @@ import {WalletStackParamList} from '../WalletStack';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
 
 export type JoinMultisigParamList = {
-  key: Key;
+  key?: Key;
 };
 
 const schema = yup.object().shape({
@@ -74,7 +74,7 @@ const JoinMultisig = () => {
   const logger = useLogger();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'JoinMultisig'>>();
-  const {key} = route.params;
+  const {key} = route.params || {};
 
   const {
     control,

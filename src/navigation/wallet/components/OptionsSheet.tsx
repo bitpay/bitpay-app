@@ -7,7 +7,7 @@ import {
   SheetContainer,
   SheetParams,
 } from '../../../components/styled/Containers';
-import {Platform} from 'react-native';
+import {Platform, Image, ImageSourcePropType} from 'react-native';
 
 const OptionsTitleContainer = styled.View`
   margin-bottom: 25px;
@@ -47,7 +47,8 @@ const OptionDescriptionText = styled(BaseText)`
 `;
 
 export interface Option {
-  img: ReactElement;
+  img?: ReactElement;
+  imgSrc?: ImageSourcePropType;
   title?: string;
   description: string;
   onPress: () => void;
@@ -86,7 +87,7 @@ const OptionsSheet = ({
           </OptionsTitleContainer>
         ) : null}
         {options.map(
-          ({img, title: optionTitle, description, onPress}, index) => {
+          ({img, imgSrc, title: optionTitle, description, onPress}, index) => {
             return (
               <OptionContainer
                 style={index === 0 && placement === 'top' && topStyles}
@@ -97,7 +98,12 @@ const OptionsSheet = ({
                   closeModal();
                   onPress();
                 }}>
-                <OptionIconContainer>{img}</OptionIconContainer>
+                {img && <OptionIconContainer>{img}</OptionIconContainer>}
+                {imgSrc && (
+                  <OptionIconContainer>
+                    <Image source={imgSrc} />
+                  </OptionIconContainer>
+                )}
                 <OptionTextContainer>
                   {optionTitle ? (
                     <OptionTitleText>{optionTitle}</OptionTitleText>
