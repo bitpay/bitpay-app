@@ -10,6 +10,8 @@ import {
 } from '../../../../constants/wallet';
 import {GetChain, IsUtxoCoin} from '../../utils/currency';
 import {ToAddress, ToCashAddress, ToLtcAddress} from '../address/address';
+import {Effect} from '../../../index';
+import {updateTransactionHistory} from '../../wallet.actions';
 
 const BWC = BwcProvider.getInstance();
 
@@ -239,57 +241,75 @@ const GetLowAmount = (wallet: Wallet): Promise<any> => {
 };
 
 const GetNewTransactions = (
-    newTxs: any[],
-    skip: number,
-    wallet: Wallet,
-    requestLimit: number,
-    lastTransactionId: string,
-    tries: number = 0,
+  newTxs: any[],
+  skip: number,
+  wallet: Wallet,
+  requestLimit: number,
+  lastTransactionId: string,
+  tries: number = 0,
 ): Promise<any> => {
   return new Promise((resolve, reject) => {
     GetTransactionHistoryFromServer(
-        wallet,
-        skip,
-        lastTransactionId,
-        requestLimit,
+      wallet,
+      skip,
+      lastTransactionId,
+      requestLimit,
     )
-        .then(async result => {
-          const {transactions, loadMore = false} = result;
+      .then(async result => {
+        const {transactions, loadMore = false} = result;
 
-          const _transactions = transactions.filter(txs => txs);
-          const _newTxs = await ProcessNewTxs(wallet, _transactions);
-          newTxs = newTxs.concat(_newTxs);
-          skip = skip + requestLimit;
+        const _transactions = transactions.filter(txs => txs);
+        const _newTxs = await ProcessNewTxs(wallet, _transactions);
+        newTxs = newTxs.concat(_newTxs);
+        skip = skip + requestLimit;
 
-          if (!loadMore) {
-            return resolve(newTxs);
-          }
+        if (!loadMore) {
+          return resolve(newTxs);
+        }
 
-          requestLimit = LIMIT;
-          return GetNewTransactions(newTxs, skip, wallet, requestLimit, lastTransactionId).then(txs => {
-            resolve(txs);
-          });
-        })
-        .catch(err => {
-          if (
-              err instanceof Errors.CONNECTION_ERROR ||
-              (err.message && err.message.match(/5../))
-          ) {
-            if (tries > 1) {
-              return reject(err);
-            }
-
-            return setTimeout(() => {
-              return resolve(GetNewTransactions(newTxs, skip, wallet, requestLimit, lastTransactionId, ++tries));
-            }, 2000 + 3000 * tries);
-          } else {
+        requestLimit = LIMIT;
+        return GetNewTransactions(
+          newTxs,
+          skip,
+          wallet,
+          requestLimit,
+          lastTransactionId,
+        ).then(txs => {
+          resolve(txs);
+        });
+      })
+      .catch(err => {
+        if (
+          err instanceof Errors.CONNECTION_ERROR ||
+          (err.message && err.message.match(/5../))
+        ) {
+          if (tries > 1) {
             return reject(err);
           }
-        });
+
+          return setTimeout(() => {
+            return resolve(
+              GetNewTransactions(
+                newTxs,
+                skip,
+                wallet,
+                requestLimit,
+                lastTransactionId,
+                ++tries,
+              ),
+            );
+          }, 2000 + 3000 * tries);
+        } else {
+          return reject(err);
+        }
+      });
   });
 };
 
-const UpdateLowAmount = (transactions: any[] = [], opts: TransactionsHistoryInterface = {}) => {
+const UpdateLowAmount = (
+  transactions: any[] = [],
+  opts: TransactionsHistoryInterface = {},
+) => {
   if (!opts.lowAmount) {
     return;
   }
@@ -301,103 +321,123 @@ const UpdateLowAmount = (transactions: any[] = [], opts: TransactionsHistoryInte
   return transactions;
 };
 
-const UpdateNotes = (wallet: Wallet, transactions: any[] = [], lastTransactionTime: any): Promise<any> => {
+const UpdateNotes = (
+  wallet: Wallet,
+  transactions: any[] = [],
+  lastTransactionTime: any,
+): Promise<any> => {
   return new Promise((res, rej) => {
     if (!lastTransactionTime) {
       return res(transactions);
     }
 
     wallet.getTxNotes(
-        {
-          minTs: lastTransactionTime,
-        },
-        (err, notes) => {
-          if (err) {
-            return rej(err);
-          }
-          notes.forEach(note => {
-            transactions.forEach((tx: any) => {
-              if (tx.txid == note.txid) {
-                tx.note = note;
-              }
-            });
+      {
+        minTs: lastTransactionTime,
+      },
+      (err, notes) => {
+        if (err) {
+          return rej(err);
+        }
+
+        notes.forEach(note => {
+          transactions.forEach((tx: any) => {
+            if (tx.txid == note.txid) {
+              tx.note = note;
+            }
           });
-          return res(transactions);
-        },
-    );
-  });
-}
-
-
-export const UpdateLocalTxHistory = (
-  wallet: Wallet,
-  opts: TransactionsHistoryInterface = {},
-): Promise<any> => {
-  return new Promise(async (resolve, reject) => {
-    opts = opts || {};
-    let requestLimit = FIRST_LIMIT;
-    const {walletId, coin} = wallet.credentials;
-
-    // WalletProvider.historyUpdateOnProgress[wallet.id] = true;
-    let storedTransactionHistory: any[] = GetStoredTransactionHistory(wallet);
-    storedTransactionHistory = FixTransactionsUnit(
-      coin,
-      storedTransactionHistory,
-    );
-    const nonEscrowReclaimTxs = RemoveEscrowReclaimTransactions(
-      wallet,
-      storedTransactionHistory,
-    );
-    const confirmedTxs = RemoveAndMarkSoftConfirmedTx(nonEscrowReclaimTxs);
-    const lastTransactionId = confirmedTxs[0] ? confirmedTxs[0].txid : null;
-    const lastTransactionTime = confirmedTxs[0] ? confirmedTxs[0].time : null;
-
-    // TODO: dispatch store txs history
-    // (nonEscrowReclaimTxs)
-
-    try {
-      let transactions = await GetNewTransactions([], 0, wallet, requestLimit, lastTransactionId);
-      const array = transactions.concat(confirmedTxs).filter(txs => txs);
-      const newHistory = uniqBy(array, x => {
-        return (x as any).txid;
-      });
-
-      if (IsUtxoCoin(coin)) {
-        try {
-          const _lowAmount = await GetLowAmount(wallet);
-          opts.lowAmount = _lowAmount;
-          transactions = UpdateLowAmount(transactions, opts);
-        } catch (getLowAmountErr) {
-          console.error('getLowAmountErr', getLowAmountErr)
-        }
-      }
-
-      try {
-        transactions = await UpdateNotes(wallet, newHistory, lastTransactionTime);
-        transactions.forEach(txs => {
-          txs.recent = true;
         });
-        // Final update
-        if (walletId == wallet.credentials.walletId) {
-          // TODO: dispatch store txs history
-          // (nonEscrowReclaimTxs)
-          const nonEscrowReclaimTxsStatus = RemoveEscrowReclaimTransactions(
-              wallet,
-              newHistory,
-          );
-        }
-
-        // TODO: dispatch to store history
-        resolve(newHistory);
-      } catch(updateNotesErr) {
-        console.error('updateNotesErr', updateNotesErr)
-        return reject(updateNotesErr);
-      }
-    }catch (err) {
-      return reject(err);
-    }
+        return res(transactions);
+      },
+    );
   });
 };
+
+export const getTransactionsHistory =
+  ({
+    wallet,
+    opts = {},
+  }: {
+    wallet: Wallet;
+    opts?: TransactionsHistoryInterface;
+  }): Effect =>
+  async (dispatch, getState): Promise<any> => {
+    return new Promise(async (resolve, reject) => {
+      opts = opts || {};
+      let requestLimit = FIRST_LIMIT;
+      const {walletId, coin} = wallet.credentials;
+
+      // WalletProvider.historyUpdateOnProgress[wallet.id] = true;
+      let storedTransactionHistory: any[] = GetStoredTransactionHistory(wallet);
+      storedTransactionHistory = FixTransactionsUnit(
+        coin,
+        storedTransactionHistory,
+      );
+      const nonEscrowReclaimTxs = RemoveEscrowReclaimTransactions(
+        wallet,
+        storedTransactionHistory,
+      );
+      const confirmedTxs = RemoveAndMarkSoftConfirmedTx(nonEscrowReclaimTxs);
+      const lastTransactionId = confirmedTxs[0] ? confirmedTxs[0].txid : null;
+      const lastTransactionTime = confirmedTxs[0] ? confirmedTxs[0].time : null;
+
+      // TODO: dispatch store txs history
+      // (nonEscrowReclaimTxs)
+
+      try {
+        let transactions = await GetNewTransactions(
+          [],
+          0,
+          wallet,
+          requestLimit,
+          lastTransactionId,
+        );
+        console.log(transactions);
+        const array = transactions.concat(confirmedTxs).filter(txs => txs);
+        const newHistory = uniqBy(array, x => {
+          return (x as any).txid;
+        });
+
+        if (IsUtxoCoin(coin)) {
+          try {
+            const _lowAmount = await GetLowAmount(wallet);
+            opts.lowAmount = _lowAmount;
+            transactions = UpdateLowAmount(transactions, opts);
+          } catch (getLowAmountErr) {
+            console.error('getLowAmountErr', getLowAmountErr);
+          }
+        }
+
+        try {
+          transactions = await UpdateNotes(
+            wallet,
+            newHistory,
+            lastTransactionTime,
+          );
+          transactions.forEach(txs => {
+            txs.recent = true;
+          });
+
+          // Update Store
+          if (walletId == wallet.credentials.walletId) {
+            dispatch(
+              updateTransactionHistory({
+                wallet: wallet,
+                transactions: newHistory,
+              }),
+            );
+          }
+
+          resolve(newHistory);
+        } catch (updateNotesErr) {
+          console.error('updateNotesErr', updateNotesErr);
+          return reject(updateNotesErr);
+        }
+      } catch (err) {
+        return reject(err);
+      }
+    });
+  };
 
 export const GetTransactionHistoryFromServer = (
   wallet: Wallet,

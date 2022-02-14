@@ -228,6 +228,28 @@ export const walletReducer = (
       };
     }
 
+    case WalletActionTypes.UPDATE_TRANSACTION_HISTORY: {
+      const {keyId, id} = action.payload.wallet;
+      const keyList = {...state.keys};
+      const keyToUpdate = keyList[keyId];
+      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
+        if (wallet.id === id) {
+          wallet.transactionHistory = action.payload.transactions;
+        }
+        return wallet;
+      });
+
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
     default:
       return state;
   }

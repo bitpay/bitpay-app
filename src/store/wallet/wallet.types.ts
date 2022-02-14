@@ -35,6 +35,7 @@ export enum WalletActionTypes {
   UPDATE_PORTFOLIO_BALANCE = 'WALLET/UPDATE_PORTFOLIO_BALANCE',
   TOGGLE_HOME_KEY_CARD = 'WALLET/TOGGLE_HOME_KEY_CARD',
   SUCCESS_GET_RECEIVE_ADDRESS = 'WALLET/SUCCESS_GET_RECEIVE_ADDRESS',
+  UPDATE_TRANSACTION_HISTORY = 'WALLET/UPDATE_TRANSACTION_HISTORY',
 }
 
 interface successWalletStoreInit {
@@ -182,6 +183,14 @@ interface successGetReceiveAddress {
   };
 }
 
+interface updateTransactionHistory {
+  type: typeof WalletActionTypes.UPDATE_TRANSACTION_HISTORY;
+  payload: {
+    wallet: Wallet;
+    transactions: any[];
+  };
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -209,4 +218,5 @@ export type WalletActionType =
   | successUpdateAllKeysAndBalances
   | failedUpdateAllKeysAndBalances
   | toggleHomeKeyCard
-  | successGetReceiveAddress;
+  | successGetReceiveAddress
+  | updateTransactionHistory;
