@@ -12,7 +12,6 @@ import CurrencySelectionRow, {
 
 import Button from '../../../components/button/Button';
 import {
-  POPULAR_TOKENS,
   SUPPORTED_TOKENS,
   SupportedCurrencies,
 } from '../../../constants/currencies';
@@ -228,26 +227,13 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     [],
   );
 
-  const CURATED_TOKENS = useMemo(
-    () =>
-      ALL_CUSTOM_TOKENS.filter(token =>
-        POPULAR_TOKENS.includes(token.currencyAbbreviation),
-      ),
-    [],
-  );
-
-  const DEFAULT_CURRENCY_OPTIONS = useMemo(
-    () => [...SupportedCurrencyOptions, ...CURATED_TOKENS],
-    [],
-  );
-
   const ALL_CURRENCY_OPTIONS = useMemo(
     () => [...SupportedCurrencyOptions, ...ALL_CUSTOM_TOKENS],
     [],
   );
 
   const [currencyOptions, setCurrencyOptions] = useState<Array<any>>([
-    ...DEFAULT_CURRENCY_OPTIONS,
+    ...ALL_CURRENCY_OPTIONS,
   ]);
 
   const checkAndToggleEthIfTokenSelected = (
@@ -261,7 +247,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
       ) {
         if (!currencies.includes('ETH')) {
           setCurrencyOptions(
-            DEFAULT_CURRENCY_OPTIONS.map(currency => {
+            ALL_CURRENCY_OPTIONS.map(currency => {
               if (currency.id === 'eth') {
                 return {
                   ...currency,
@@ -331,7 +317,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
       );
       setCurrencyOptions([...filteredList]);
     } else {
-      setCurrencyOptions([...DEFAULT_CURRENCY_OPTIONS]);
+      setCurrencyOptions([...ALL_CURRENCY_OPTIONS]);
     }
   }, 300);
 
