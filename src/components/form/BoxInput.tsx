@@ -4,20 +4,31 @@ import styled, {css, useTheme} from 'styled-components/native';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
 import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
 import Search from '../../../assets/img/search.svg';
-import {Action, Black, Caution, Slate} from '../../styles/colors';
-import {BitPayTheme} from '../../themes/bitpay';
+import {
+  Action,
+  Black,
+  Caution,
+  LightBlack,
+  Slate,
+  White,
+} from '../../styles/colors';
 import {BaseText} from '../styled/Text';
 
 type InputType = 'password' | 'search';
-interface ContainerProps {
+
+interface InputProps {
   isFocused: boolean;
   isError?: boolean;
   type?: InputType;
 }
 
-const Input = styled.TextInput<ContainerProps>`
+const InputContainer = styled.View`
+  justify-content: center;
+  position: relative;
+`;
+
+const Input = styled.TextInput<InputProps>`
   height: 55px;
-  margin: 10px 0 0 0;
   border: 0.75px solid ${Slate};
   color: ${({theme}) => theme.colors.text};
   padding: 10px;
@@ -48,39 +59,24 @@ const Input = styled.TextInput<ContainerProps>`
     `}
 `;
 
+const Label = styled(BaseText)`
+  color: ${({theme}) => (theme.dark ? White : LightBlack)};
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.75;
+  margin-bottom: 6px;
+`;
+
 const ErrorText = styled(BaseText)`
   color: ${Caution};
   font-size: 12px;
   font-weight: 500;
-  position: absolute;
-  bottom: -12px;
-  left: 0;
-  padding: 5px 0 0 10px;
-`;
-
-interface LabelProps {
-  theme?: BitPayTheme;
-}
-
-const Label = styled(BaseText)<LabelProps>`
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 18px;
-  position: absolute;
-  top: 0;
-  left: 0;
-  color: ${({theme}) => (theme && theme.dark ? theme.colors.text : '#434d5a')};
-`;
-const InputContainer = styled.View`
-  position: relative;
-  padding: 10px 0;
-  background-color: transparent;
+  margin-top: 6px;
 `;
 
 const ObfuscationToggle = styled.TouchableOpacity`
   position: absolute;
   right: 10px;
-  top: 40px;
 `;
 
 const SearchIconContainer = styled.View`
@@ -92,16 +88,15 @@ const SearchIconContainer = styled.View`
   padding: 5px 15px;
 `;
 
-interface Props extends TextInputProps {
+interface BoxInputProps extends TextInputProps {
   label?: string;
   onFocus?: () => void;
   onBlur?: () => void;
   error?: any;
   type?: InputType;
-  [x: string]: any;
 }
 
-const BoxInput = React.forwardRef<TextInput, Props>(
+const BoxInput = React.forwardRef<TextInput, BoxInputProps>(
   ({label, onFocus, onBlur, error, type, ...props}, ref) => {
     const theme = useTheme();
     const isPassword = type === 'password';
@@ -124,37 +119,41 @@ const BoxInput = React.forwardRef<TextInput, Props>(
       error.charAt(0).toUpperCase() + error.slice(1);
 
     return (
-      <InputContainer>
-        {label && <Label>{label}</Label>}
-        <Input
-          {...props}
-          ref={ref}
-          secureTextEntry={isPassword && isSecureTextEntry}
-          placeholderTextColor={Slate}
-          onFocus={_onFocus}
-          onBlur={_onBlur}
-          isFocused={isFocused}
-          isError={error}
-          autoCapitalize={'none'}
-          type={type}
-          style={{
-            backgroundColor: theme.colors.background,
-            color: theme.colors.text,
-          }}
-        />
-        {isPassword && (
-          <ObfuscationToggle
-            onPress={() => setSecureTextEntry(!isSecureTextEntry)}>
-            {isSecureTextEntry ? <ObfuscationHide /> : <ObfuscationShow />}
-          </ObfuscationToggle>
-        )}
-        {isSearch && (
-          <SearchIconContainer>
-            <Search />
-          </SearchIconContainer>
-        )}
-        {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
-      </InputContainer>
+      <>
+        {label ? <Label>{label}</Label> : null}
+
+        <InputContainer>
+          <Input
+            {...props}
+            ref={ref}
+            secureTextEntry={isPassword && isSecureTextEntry}
+            placeholderTextColor={Slate}
+            onFocus={_onFocus}
+            onBlur={_onBlur}
+            isFocused={isFocused}
+            isError={error}
+            autoCapitalize={'none'}
+            type={type}
+            style={{
+              backgroundColor: theme.colors.background,
+              color: theme.colors.text,
+            }}
+          />
+          {isPassword && (
+            <ObfuscationToggle
+              onPress={() => setSecureTextEntry(!isSecureTextEntry)}>
+              {isSecureTextEntry ? <ObfuscationHide /> : <ObfuscationShow />}
+            </ObfuscationToggle>
+          )}
+          {isSearch && (
+            <SearchIconContainer>
+              <Search />
+            </SearchIconContainer>
+          )}
+        </InputContainer>
+
+        {errorMessage ? <ErrorText>{errorMessage}</ErrorText> : null}
+      </>
     );
   },
 );
