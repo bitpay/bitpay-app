@@ -10,7 +10,8 @@ import {
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
 import {
   ActiveOpacity,
-  CtaContainer,
+  CtaContainer as _CtaContainer,
+  HeaderContainer,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {useDispatch, useSelector} from 'react-redux';
@@ -54,7 +55,6 @@ import {
   Row,
   SheetContainer,
   ScanContainer,
-  HeaderContainer,
 } from '../../../components/styled/Containers';
 import Haptic from '../../../components/haptic-feedback/haptic';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
@@ -81,7 +81,6 @@ import CurrencySelectionRow, {
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {sleep} from '../../../utils/helper-methods';
 
-const Gutter = '10px';
 const ScrollViewContainer = styled.ScrollView`
   margin-top: 20px;
   padding: 0 15px;
@@ -161,6 +160,10 @@ const RowContainer = styled.TouchableOpacity`
 
 const InputContainer = styled.View`
   padding: 18px;
+`;
+
+const CtaContainer = styled(_CtaContainer)`
+  padding: 10px 0;
 `;
 
 const RecoveryPhrase = () => {

@@ -16,7 +16,7 @@ import {useLogger} from '../../../utils/hooks/useLogger';
 import {KeyOptions} from '../../../store/wallet/wallet.models';
 import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
 import {
-  CtaContainer,
+  CtaContainer as _CtaContainer,
   ScanContainer as _ScanContainer,
   ActiveOpacity,
 } from '../../../components/styled/Containers';
@@ -67,6 +67,10 @@ const ScanContainer = styled(_ScanContainer)`
   right: 10px;
   bottom: 23px;
   z-index: 1;
+`;
+
+const CtaContainer = styled(_CtaContainer)`
+  padding: 10px 0;
 `;
 
 const JoinMultisig = () => {

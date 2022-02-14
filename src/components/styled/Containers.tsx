@@ -248,8 +248,6 @@ export const ImportContainer = styled.View`
 
 export const ImportTextInput = styled.TextInput`
   height: 100px;
-  margin: 0 ${Gutter};
-  padding: ${Gutter};
   color: ${({theme}) => theme.colors.text};
   background: ${({theme}) => theme.colors.background};
   border: 0.75px solid ${Slate};
@@ -270,7 +268,7 @@ export const ScanContainer = styled.TouchableOpacity`
 `;
 
 export const HeaderContainer = styled.View`
-  padding: ${Gutter};
+  padding: 20px 0px 10px 0px;
   justify-content: space-between;
   flex-direction: row;
   align-items: center;

@@ -37,7 +37,7 @@ import {
   AdvancedOptions,
   Column,
   ScreenGutter,
-  CtaContainer,
+  CtaContainer as _CtaContainer,
   InfoImageContainer,
 } from '../../../components/styled/Containers';
 import Haptic from '../../../components/haptic-feedback/haptic';
@@ -108,6 +108,13 @@ const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
 `;
 
+const OptionContainer = styled.View`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+`;
+
 const CounterContainer = styled.View`
   display: flex;
   flex-direction: row;
@@ -159,6 +166,10 @@ const RowContainer = styled.TouchableOpacity`
 
 const InputContainer = styled.View`
   margin-top: 20px;
+`;
+
+const CtaContainer = styled(_CtaContainer)`
+  padding: 10px 0;
 `;
 
 const CreateMultisig = () => {
@@ -333,38 +344,38 @@ const CreateMultisig = () => {
         <Controller
           control={control}
           render={({field: {value}}) => (
-            <RowContainer activeOpacity={1}>
-              <Column>
+            <>
+              <OptionContainer>
                 <OptionTitle>Required number of signatures</OptionTitle>
-              </Column>
-              <CounterContainer>
-                <RemoveButton
-                  onPress={() => {
-                    const newValue = value - 1;
-                    if (newValue >= 1) {
-                      setValue('requiredSignatures', newValue, {
-                        shouldValidate: true,
-                      });
-                    }
-                  }}>
-                  <MinusIcon />
-                </RemoveButton>
-                <RoundButton>
-                  <CounterNumber>{value}</CounterNumber>
-                </RoundButton>
-                <AddButton
-                  onPress={() => {
-                    const newValue = value + 1;
-                    if (newValue <= 3) {
-                      setValue('requiredSignatures', newValue, {
-                        shouldValidate: true,
-                      });
-                    }
-                  }}>
-                  <PlusIcon />
-                </AddButton>
-              </CounterContainer>
-            </RowContainer>
+                <CounterContainer>
+                  <RemoveButton
+                    onPress={() => {
+                      const newValue = value - 1;
+                      if (newValue >= 1) {
+                        setValue('requiredSignatures', newValue, {
+                          shouldValidate: true,
+                        });
+                      }
+                    }}>
+                    <MinusIcon />
+                  </RemoveButton>
+                  <RoundButton>
+                    <CounterNumber>{value}</CounterNumber>
+                  </RoundButton>
+                  <AddButton
+                    onPress={() => {
+                      const newValue = value + 1;
+                      if (newValue <= 3) {
+                        setValue('requiredSignatures', newValue, {
+                          shouldValidate: true,
+                        });
+                      }
+                    }}>
+                    <PlusIcon />
+                  </AddButton>
+                </CounterContainer>
+              </OptionContainer>
+            </>
           )}
           name="requiredSignatures"
           defaultValue={2}
@@ -377,7 +388,7 @@ const CreateMultisig = () => {
         <Controller
           control={control}
           render={({field: {value}}) => (
-            <RowContainer activeOpacity={1}>
+            <OptionContainer>
               <Column>
                 <OptionTitle>Total number of copayers</OptionTitle>
               </Column>
@@ -408,7 +419,7 @@ const CreateMultisig = () => {
                   <PlusIcon />
                 </AddButton>
               </CounterContainer>
-            </RowContainer>
+            </OptionContainer>
           )}
           name="totalCopayers"
           defaultValue={3}
