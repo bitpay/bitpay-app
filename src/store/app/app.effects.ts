@@ -11,9 +11,7 @@ import {Network} from '../../constants';
 import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
 import {BitPayIdEffects} from '../bitpay-id';
-import {User} from '../bitpay-id/bitpay-id.models';
 import {CardEffects} from '../card';
-import {Card} from '../card/card.models';
 import {RootState, Effect} from '../index';
 import {LogActions} from '../log';
 import {startWalletStoreInit} from '../wallet/effects';
@@ -42,11 +40,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     await dispatch(initializeApi(APP.network, identity));
 
-    let user: User | undefined;
-    let cards: Card[] | undefined;
-    let cardBalances: {id: string; balance: number}[] | undefined;
-    let doshToken: string | undefined;
-
     if (isPaired) {
       try {
         dispatch(
@@ -54,11 +47,25 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
             'App is paired with BitPayID, refreshing user data...',
           ),
         );
-        const response = await UserApi.fetchAllUserData(token);
-        user = response.basicInfo;
-        cards = response.cards;
-        cardBalances = response.cardBalances;
-        doshToken = response.doshToken;
+
+        const {errors, data} = await UserApi.fetchInitialUserData(token);
+
+        // handle partial errors
+        if (errors) {
+          const msg = errors
+            .map(e => `${e.path.join('.')}: ${e.message}`)
+            .join(',\n');
+
+          dispatch(
+            LogActions.error(
+              'One or more errors occurred while fetching initial user data:\n' +
+                msg,
+            ),
+          );
+        }
+
+        await dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
+        await dispatch(CardEffects.startCardStoreInit(data.user));
       } catch (err: any) {
         if (isAxiosError(err)) {
           dispatch(LogActions.error(`${err.name}: ${err.message}`));
@@ -80,13 +87,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here
     await dispatch(startWalletStoreInit());
-    await dispatch(
-      BitPayIdEffects.startBitPayIdStoreInit(network, {user, doshToken}),
-    );
-    await dispatch(
-      CardEffects.startCardStoreInit(network, {cards, cardBalances}),
-    );
-
     await sleep(500);
     dispatch(AppActions.successAppInit());
     dispatch(LogActions.info('Initialized app successfully.'));

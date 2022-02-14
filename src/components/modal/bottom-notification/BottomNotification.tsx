@@ -58,6 +58,7 @@ const BottomNotificationContainer = styled.View`
 const Row = styled.View`
   flex-direction: row;
   align-items: center;
+  padding-right: 25px;
 `;
 
 const ImageContainer = styled.View`

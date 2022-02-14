@@ -6,13 +6,7 @@ import {
 import {createStackNavigator} from '@react-navigation/stack';
 import debounce from 'lodash.debounce';
 import React, {useEffect, useState} from 'react';
-import {
-  Appearance,
-  AppState,
-  AppStateStatus,
-  Platform,
-  StatusBar,
-} from 'react-native';
+import {Appearance, AppState, AppStateStatus, StatusBar} from 'react-native';
 import 'react-native-gesture-handler';
 import {ThemeProvider} from 'styled-components/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';

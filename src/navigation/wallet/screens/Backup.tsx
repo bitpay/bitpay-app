@@ -52,7 +52,7 @@ export const navigateToTermsOrOverview = ({
     navigation.navigate('Onboarding', {
       screen: 'TermsOfUse',
     });
-  } else if (context === 'home') {
+  } else if (!key?.backupComplete) {
     navigation.navigate('Tabs', {screen: 'Home'});
   } else if (!walletTermsAccepted) {
     navigation.navigate('Wallet', {

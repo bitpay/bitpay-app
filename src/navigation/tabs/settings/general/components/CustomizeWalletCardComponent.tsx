@@ -6,7 +6,7 @@ import CustomizeHomeCard from '../../../../../components/customize-home-card/Cus
 import styled from 'styled-components/native';
 import {BaseText} from '../../../../../components/styled/Text';
 import {Slate} from '../../../../../styles/colors';
-import {ActiveOpacity} from "../../../../../components/styled/Containers";
+import {ActiveOpacity} from '../../../../../components/styled/Containers';
 
 interface CustomizeWalletCardComponentProps {
   wallets: Wallet[];

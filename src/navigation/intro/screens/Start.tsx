@@ -14,7 +14,6 @@ const Start = () => {
   return (
     <IntroStartContainer>
       <FeatureCard
-        headerTitle={'New Everything'}
         image={theme.dark ? darkImage : lightImage}
         descriptionTitle={'Explore the new BitPay App'}
         descriptionText={
