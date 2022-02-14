@@ -67,7 +67,10 @@ const WalletSettings = () => {
   const navigation = useNavigation();
   const [demoToggle, setDemoToggle] = useState(false);
   const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
-  const {walletName} = findWalletById(wallets, walletId) as Wallet;
+  const {
+    walletName,
+    credentials: {walletName: credentialsWalletName},
+  } = findWalletById(wallets, walletId) as Wallet;
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -83,12 +86,21 @@ const WalletSettings = () => {
             haptic('impactLight');
             navigation.navigate('Wallet', {
               screen: 'UpdateKeyOrWalletName',
-              params: {key, wallet: {walletId, walletName}, context: 'wallet'},
+              params: {
+                key,
+                wallet: {
+                  walletId,
+                  walletName: walletName || credentialsWalletName,
+                },
+                context: 'wallet',
+              },
             });
           }}>
           <View>
             <Title>Name</Title>
-            <WalletSettingsTitle>{walletName}</WalletSettingsTitle>
+            <WalletSettingsTitle>
+              {walletName || credentialsWalletName}
+            </WalletSettingsTitle>
           </View>
 
           <ChevronRightSvg height={16} />

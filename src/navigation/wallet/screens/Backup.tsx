@@ -56,13 +56,6 @@ export const backupRedirect = ({
     navigation.navigate('Wallet', {screen: 'KeySettings', params: {key}});
   } else if (!key?.backupComplete) {
     navigation.navigate('Tabs', {screen: 'Home'});
-  } else if (context === 'keySettings') {
-    navigation.dispatch(
-      StackActions.replace('Wallet', {
-        screen: 'KeySettings',
-        params: {key},
-      }),
-    );
   } else if (!walletTermsAccepted) {
     navigation.navigate('Wallet', {
       screen: 'TermsOfUse',

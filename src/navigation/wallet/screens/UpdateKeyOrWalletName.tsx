@@ -83,7 +83,7 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
-              placeholder={'My Key'}
+              placeholder={context === 'key' ? 'My Key' : 'My Wallet'}
               label={`${context.toUpperCase()} NAME`}
               onBlur={onBlur}
               onChangeText={(text: string) => onChange(text)}

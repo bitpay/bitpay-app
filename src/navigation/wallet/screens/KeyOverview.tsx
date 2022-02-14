@@ -162,8 +162,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   const [refreshing, setRefreshing] = useState(false);
   const {key: currentKey} = route.params;
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
-  const key = keys[currentKey.id]
-  const {isPrivKeyEncrypted} = key;
+  const key = keys[currentKey.id];
 
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
   useLayoutEffect(() => {
@@ -181,31 +180,31 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
         );
       },
       headerRight: () => {
-        return isPrivKeyEncrypted ? (
-            <ClogIconContainer
-                onPress={() =>
-                    navigation.navigate('Wallet', {
-                      screen: 'KeySettings',
-                      params: {
-                        key,
-                      },
-                    })
-                }
-                activeOpacity={ActiveOpacity}>
-              <Icons.Clog/>
-            </ClogIconContainer>
+        return key.isPrivKeyEncrypted ? (
+          <ClogIconContainer
+            onPress={() =>
+              navigation.navigate('Wallet', {
+                screen: 'KeySettings',
+                params: {
+                  key,
+                },
+              })
+            }
+            activeOpacity={ActiveOpacity}>
+            <Icons.Clog />
+          </ClogIconContainer>
         ) : (
-            <>
-              <Settings
-                  onPress={() => {
-                    setShowKeyOptions(true);
-                  }}
-              />
-            </>
+          <>
+            <Settings
+              onPress={() => {
+                setShowKeyOptions(true);
+              }}
+            />
+          </>
         );
       },
     });
-  }, [navigation, key, isPrivKeyEncrypted]);
+  }, [navigation, key]);
 
   const {wallets = [], totalBalance} = useSelector(
     ({WALLET}: RootState) => WALLET.keys[key.id] || {},
@@ -215,12 +214,12 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
 
   const keyOptions: Array<Option> = [];
 
-  if (!isPrivKeyEncrypted) {
+  if (!key.isPrivKeyEncrypted) {
     keyOptions.push({
       img: <Icons.Encrypt />,
       title: 'Encrypt your Key',
       description:
-          'Prevent an unauthorized user from sending funds out of your wallet.',
+        'Prevent an unauthorized user from sending funds out of your wallet.',
       onPress: () => {
         haptic('impactLight');
         navigation.navigate('Wallet', {
@@ -318,12 +317,12 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
         }}
       />
       {keyOptions.length > 0 ? (
-          <OptionsSheet
-              isVisible={showKeyOptions}
-              title={'Key Options'}
-              options={keyOptions}
-              closeModal={() => setShowKeyOptions(false)}
-          />
+        <OptionsSheet
+          isVisible={showKeyOptions}
+          title={'Key Options'}
+          options={keyOptions}
+          closeModal={() => setShowKeyOptions(false)}
+        />
       ) : null}
       <SheetModal
         isVisible={showKeyDropdown}

@@ -200,32 +200,32 @@ const KeySettings = () => {
         <VerticalPadding>
           <Title>Security</Title>
           <Setting
-              onPress={() => {
-                haptic('impactLight');
-                if (!isPrivKeyEncrypted) {
-                  navigation.navigate('Wallet', {
-                    screen: 'RecoveryPhrase',
-                    params: {
-                      keyId: key.id,
-                      words: getMnemonic(key),
-                      walletTermsAccepted: true,
-                      context: 'settings',
-                      key,
+            onPress={() => {
+              haptic('impactLight');
+              if (!isPrivKeyEncrypted) {
+                navigation.navigate('Wallet', {
+                  screen: 'RecoveryPhrase',
+                  params: {
+                    keyId: key.id,
+                    words: getMnemonic(key),
+                    walletTermsAccepted: true,
+                    context: 'settings',
+                    key,
+                  },
+                });
+              } else {
+                dispatch(
+                  AppActions.showDecryptPasswordModal({
+                    onSubmitHandler: onSubmitPassword,
+                    description:
+                      'An encryption password is required when you’re sending crypto or managing settings. If you would like to disable this, go to your wallet settings.',
+                    onCancelHandler: () => {
+                      navigation.goBack();
                     },
-                  });
-                } else {
-                  dispatch(
-                      AppActions.showDecryptPasswordModal({
-                        onSubmitHandler: onSubmitPassword,
-                        description:
-                            'An encryption password is required when you’re sending crypto or managing settings. If you would like to disable this, go to your wallet settings.',
-                        onCancelHandler: () => {
-                          navigation.goBack();
-                        },
-                      }),
-                  );
-                }
-              }}>
+                  }),
+                );
+              }
+            }}>
             <WalletSettingsTitle>Backup</WalletSettingsTitle>
           </Setting>
 
