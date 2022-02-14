@@ -11,7 +11,10 @@ import {
 import {GetChain, IsUtxoCoin} from '../../utils/currency';
 import {ToAddress, ToCashAddress, ToLtcAddress} from '../address/address';
 import {Effect} from '../../../index';
-import {updateTransactionHistory} from '../../wallet.actions';
+import {
+  setUpdateTransactionHistoryStatus,
+  updateTransactionHistory,
+} from '../../wallet.actions';
 
 const BWC = BwcProvider.getInstance();
 
@@ -97,7 +100,7 @@ const GetCoinsForTx = (wallet: Wallet, txId: string): Promise<any> => {
         network,
         txId,
       },
-      (err, response) => {
+      (err: Error, response: any) => {
         if (err) {
           return reject(err);
         }
@@ -122,7 +125,7 @@ const ProcessTx = (currencyAbbreviation: string, tx: any) => {
         tx.recipientCount = outputsNr;
         tx.hasMultiplesOutputs = true;
       }
-      tx.amount = tx.outputs.reduce((total, o) => {
+      tx.amount = tx.outputs.reduce((total: number, o: any) => {
         o.amountStr = FormatAmountStr(currencyAbbreviation, o.amount);
         //TODO: get Alternative amount str
         // o.alternativeAmountStr = FormatAlternativeStr(o.amount, currencyAbbreviation);
@@ -183,11 +186,9 @@ const ProcessTx = (currencyAbbreviation: string, tx: any) => {
 
 const ProcessNewTxs = async (wallet: Wallet, txs: any[]): Promise<any> => {
   const now = Math.floor(Date.now() / 1000);
-  const txHistoryUnique = {};
+  const txHistoryUnique: any = {};
   const ret = [];
   const {currencyAbbreviation} = wallet;
-  // TODO: dispatch
-  // wallet.hasUnsafeConfirmed = false;
 
   for (let tx of txs) {
     tx = ProcessTx(currencyAbbreviation, tx);
@@ -213,8 +214,6 @@ const ProcessNewTxs = async (wallet: Wallet, txs: any[]): Promise<any> => {
       tx.safeConfirmed = SAFE_CONFIRMATIONS + '+';
     } else {
       tx.safeConfirmed = false;
-      // TODO: dispatch
-      // wallet.hasUnsafeConfirmed = true;
     }
 
     if (tx.note) {
@@ -315,7 +314,8 @@ const UpdateLowAmount = (
   }
 
   transactions.forEach(tx => {
-    tx.lowAmount = tx.amount < opts?.lowAmount;
+    // @ts-ignore
+    tx.lowAmount = tx.amount < opts.lowAmount;
   });
 
   return transactions;
@@ -335,12 +335,12 @@ const UpdateNotes = (
       {
         minTs: lastTransactionTime,
       },
-      (err, notes) => {
+      (err: Error, notes: any) => {
         if (err) {
           return rej(err);
         }
 
-        notes.forEach(note => {
+        notes.forEach((note: any) => {
           transactions.forEach((tx: any) => {
             if (tx.txid == note.txid) {
               tx.note = note;
@@ -367,6 +367,9 @@ export const getTransactionsHistory =
       let requestLimit = FIRST_LIMIT;
       const {walletId, coin} = wallet.credentials;
 
+      if (wallet.transactionHistoryOnProgress) {
+        return;
+      }
       // WalletProvider.historyUpdateOnProgress[wallet.id] = true;
       let storedTransactionHistory: any[] = GetStoredTransactionHistory(wallet);
       storedTransactionHistory = FixTransactionsUnit(
@@ -381,8 +384,7 @@ export const getTransactionsHistory =
       const lastTransactionId = confirmedTxs[0] ? confirmedTxs[0].txid : null;
       const lastTransactionTime = confirmedTxs[0] ? confirmedTxs[0].time : null;
 
-      // TODO: dispatch store txs history
-      // (nonEscrowReclaimTxs)
+      dispatch(setUpdateTransactionHistoryStatus({wallet, status: true}));
 
       try {
         let transactions = await GetNewTransactions(
@@ -393,7 +395,9 @@ export const getTransactionsHistory =
           lastTransactionId,
         );
         console.log(transactions);
-        const array = transactions.concat(confirmedTxs).filter(txs => txs);
+        const array = transactions
+          .concat(confirmedTxs)
+          .filter((txs: any) => txs);
         const newHistory = uniqBy(array, x => {
           return (x as any).txid;
         });
@@ -414,7 +418,7 @@ export const getTransactionsHistory =
             newHistory,
             lastTransactionTime,
           );
-          transactions.forEach(txs => {
+          transactions.forEach((txs: any) => {
             txs.recent = true;
           });
 

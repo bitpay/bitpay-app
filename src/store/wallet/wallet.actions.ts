@@ -156,3 +156,11 @@ export const updateTransactionHistory = (payload: {
   type: WalletActionTypes.UPDATE_TRANSACTION_HISTORY,
   payload,
 });
+
+export const setUpdateTransactionHistoryStatus = (payload: {
+  wallet: Wallet;
+  status: boolean;
+}): WalletActionType => ({
+  type: WalletActionTypes.SET_TRANSACTION_HISTORY_STATUS,
+  payload,
+});

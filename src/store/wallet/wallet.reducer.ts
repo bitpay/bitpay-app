@@ -250,6 +250,29 @@ export const walletReducer = (
       };
     }
 
+    case WalletActionTypes.SET_TRANSACTION_HISTORY_STATUS: {
+      const {keyId, id} = action.payload.wallet;
+      const keyList = {...state.keys};
+      const keyToUpdate = keyList[keyId];
+      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
+        if (wallet.id === id) {
+          wallet.transactionHistoryOnProgress = action.payload.status;
+          wallet.transactionHistoryOnProgress = false;
+        }
+        return wallet;
+      });
+
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
     default:
       return state;
   }
