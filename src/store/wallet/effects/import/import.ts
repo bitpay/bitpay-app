@@ -43,6 +43,7 @@ export const startImportMnemonic =
           wallets: wallets.map(wallet =>
             merge(wallet, buildWalletObj(wallet.credentials, tokenOpts)),
           ),
+          backupComplete: true,
         });
 
         dispatch(
@@ -74,6 +75,7 @@ export const startImportFile =
           wallets: [
             merge(wallet, buildWalletObj(wallet.credentials, tokenOpts)),
           ],
+          backupComplete: true,
         });
 
         dispatch(
@@ -124,6 +126,7 @@ export const startImportWithDerivationPath =
           wallets: [
             merge(wallet, buildWalletObj(wallet.credentials, tokenOpts)),
           ],
+          backupComplete: true,
         });
         dispatch(
           successImport({

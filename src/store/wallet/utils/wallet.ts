@@ -76,10 +76,12 @@ export const buildKeyObj = ({
   key,
   wallets,
   totalBalance = 0,
+  backupComplete = false,
 }: {
   key: KeyMethods;
   wallets: Wallet[];
   totalBalance?: number;
+  backupComplete?: boolean;
 }): Key => {
   return {
     id: key.id,
@@ -89,7 +91,7 @@ export const buildKeyObj = ({
     totalBalance,
     show: true,
     isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
-    backupComplete: true,
+    backupComplete,
     keyName: 'My Key',
   };
 };
