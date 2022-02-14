@@ -49,6 +49,10 @@ export const dismissBottomNotificationModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_BOTTOM_NOTIFICATION_MODAL,
 });
 
+export const resetBottomNotificationModalConfig = (): AppActionType => ({
+  type: AppActionTypes.RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG,
+});
+
 export const setColorScheme = (scheme: ColorSchemeName): AppActionType => ({
   type: AppActionTypes.SET_COLOR_SCHEME,
   payload: scheme,

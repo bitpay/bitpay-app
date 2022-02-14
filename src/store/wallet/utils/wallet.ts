@@ -72,10 +72,12 @@ export const buildKeyObj = ({
   key,
   wallets,
   totalBalance = 0,
+  backupComplete = false,
 }: {
   key: KeyMethods;
   wallets: Wallet[];
   totalBalance?: number;
+  backupComplete?: boolean;
 }): Key => {
   return {
     id: key.id,
@@ -85,7 +87,7 @@ export const buildKeyObj = ({
     totalBalance,
     show: true,
     isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
-    backupComplete: true,
+    backupComplete,
     keyName: 'My Key',
   };
 };
@@ -138,8 +140,10 @@ export const toFiat = (
   return totalAmount * (1 / currencyOpt.unitInfo.unitToSatoshi) * fiatRate;
 };
 
-export const findWalletById = (wallets: Wallet[], id: string) =>
-  wallets.find(wallet => wallet.id === id);
+export const findWalletById = (
+  wallets: Wallet[],
+  id: string,
+): Wallet | undefined => wallets.find(wallet => wallet.id === id);
 
 export const isBalanceCacheKeyStale = (timestamp: number | undefined) => {
   if (!timestamp) {
@@ -149,3 +153,6 @@ export const isBalanceCacheKeyStale = (timestamp: number | undefined) => {
   const TTL = BALANCE_CACHE_DURATION * 1000;
   return Date.now() - timestamp > TTL;
 };
+
+export const checkEncryptPassword = (key: Key, password: string) =>
+  key.methods.checkPassword(password);

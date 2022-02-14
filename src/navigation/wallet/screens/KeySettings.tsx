@@ -1,11 +1,12 @@
-import React, {useLayoutEffect} from 'react';
+import React, {useLayoutEffect, useRef} from 'react';
 import {BaseText, HeaderTitle, Link} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {View, TouchableOpacity} from 'react-native';
+import {View, TouchableOpacity, ScrollView} from 'react-native';
 import styled from 'styled-components/native';
 import {
+  ActiveOpacity,
   Hr,
   Info,
   InfoTriangle,
@@ -25,17 +26,19 @@ import InfoIcon from '../../../components/icons/info/InfoIcon';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
 import {buildNestedWalletList} from './KeyOverview';
 import {URL} from '../../../constants';
+import {getMnemonic} from '../../../utils/helper-methods';
+import {useAppSelector} from '../../../utils/hooks';
 import {AppActions} from '../../../store/app';
 import {sleep} from '../../../utils/helper-methods';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {GeneralError, WrongPasswordError} from '../components/ErrorMessages';
 import {useLogger} from '../../../utils/hooks';
 
-const WalletSettingsContainer = styled.SafeAreaView`
+const WalletSettingsContainer = styled.View`
   flex: 1;
 `;
 
-const ScrollView = styled.ScrollView`
+const ScrollContainer = styled.ScrollView`
   margin-top: 20px;
   padding: 0 ${ScreenGutter};
 `;
@@ -89,11 +92,13 @@ const WalletSettingsTitle = styled(SettingTitle)`
 
 const KeySettings = () => {
   const {
-    params: {key},
+    params: {key, context},
   } = useRoute<RouteProp<WalletStackParamList, 'KeySettings'>>();
+  const scrollViewRef = useRef<ScrollView>(null);
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const wallets = buildNestedWalletList(key.wallets);
+  const keyName = useAppSelector(({WALLET}) => WALLET.keys[key.id]?.keyName);
   const {isPrivKeyEncrypted} = key;
   const logger = useLogger();
 
@@ -101,6 +106,13 @@ const KeySettings = () => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>Key Settings</HeaderTitle>,
     });
+    if (context === 'createEncryptPassword') {
+      navigation.navigate('Wallet', {
+        screen: 'CreateEncryptPassword',
+        params: {key},
+      });
+      scrollViewRef?.current?.scrollToEnd({animated: false});
+    }
   });
 
   const onSubmitPassword = async (password: string) => {
@@ -135,15 +147,19 @@ const KeySettings = () => {
 
   return (
     <WalletSettingsContainer>
-      <ScrollView>
+      <ScrollContainer ref={scrollViewRef}>
         <WalletNameContainer
+          activeOpacity={ActiveOpacity}
           onPress={() => {
             haptic('impactLight');
-            //    TODO: Redirect me
+            navigation.navigate('Wallet', {
+              screen: 'UpdateKeyOrWalletName',
+              params: {key, context: 'key'},
+            });
           }}>
           <View>
             <Title>Key Name</Title>
-            <WalletSettingsTitle>key 1</WalletSettingsTitle>
+            <WalletSettingsTitle>{keyName}</WalletSettingsTitle>
           </View>
 
           <ChevronRightSvg height={16} />
@@ -171,7 +187,11 @@ const KeySettings = () => {
           <Button
             buttonType={'link'}
             onPress={() => {
-              //  TODO: Redirect me
+              haptic('impactLight');
+              navigation.navigate('Wallet', {
+                screen: 'CurrencySelection',
+                params: {context: 'addWallet', key},
+              });
             }}>
             Add a wallet
           </Button>
@@ -180,34 +200,35 @@ const KeySettings = () => {
         <VerticalPadding>
           <Title>Security</Title>
           <Setting
-            onPress={() => {
-              haptic('impactLight');
-              if (!isPrivKeyEncrypted) {
-                navigation.navigate('Wallet', {
-                  screen: 'RecoveryPhrase',
-                  params: {
-                    keyId: key.id,
-                    words: key.properties.mnemonic.trim().split(' '),
-                    walletTermsAccepted: true,
-                    context: 'keySettings',
-                    key,
-                  },
-                });
-              } else {
-                dispatch(
-                  AppActions.showDecryptPasswordModal({
-                    onSubmitHandler: onSubmitPassword,
-                    description:
-                      'An encryption password is required when you’re sending crypto or managing settings. If you would like to disable this, go to your wallet settings.',
-                    onCancelHandler: () => {
-                      navigation.goBack();
+              onPress={() => {
+                haptic('impactLight');
+                if (!isPrivKeyEncrypted) {
+                  navigation.navigate('Wallet', {
+                    screen: 'RecoveryPhrase',
+                    params: {
+                      keyId: key.id,
+                      words: getMnemonic(key),
+                      walletTermsAccepted: true,
+                      context: 'settings',
+                      key,
                     },
-                  }),
-                );
-              }
-            }}>
+                  });
+                } else {
+                  dispatch(
+                      AppActions.showDecryptPasswordModal({
+                        onSubmitHandler: onSubmitPassword,
+                        description:
+                            'An encryption password is required when you’re sending crypto or managing settings. If you would like to disable this, go to your wallet settings.',
+                        onCancelHandler: () => {
+                          navigation.goBack();
+                        },
+                      }),
+                  );
+                }
+              }}>
             <WalletSettingsTitle>Backup</WalletSettingsTitle>
           </Setting>
+
           <Hr />
 
           <SettingView>
@@ -233,6 +254,7 @@ const KeySettings = () => {
 
             <VerticalPadding>
               <TouchableOpacity
+                activeOpacity={ActiveOpacity}
                 onPress={() => {
                   haptic('impactLight');
                   dispatch(openUrlWithInAppBrowser(URL.HELP_SPENDING_PASSWORD));
@@ -248,6 +270,7 @@ const KeySettings = () => {
         <VerticalPadding>
           <Title>Advanced</Title>
           <Setting
+            activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
               //    TODO: Redirect me
@@ -259,6 +282,7 @@ const KeySettings = () => {
           <Hr />
 
           <Setting
+            activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
               navigation.navigate('Wallet', {
@@ -271,6 +295,7 @@ const KeySettings = () => {
           <Hr />
 
           <Setting
+            activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
               navigation.navigate('Wallet', {
@@ -283,6 +308,8 @@ const KeySettings = () => {
           <Hr />
 
           <Setting
+            activeOpacity={ActiveOpacity}
+            style={{marginBottom: 50}}
             onPress={() => {
               haptic('impactLight');
               navigation.navigate('Wallet', {
@@ -293,7 +320,7 @@ const KeySettings = () => {
             <WalletSettingsTitle>Delete</WalletSettingsTitle>
           </Setting>
         </VerticalPadding>
-      </ScrollView>
+      </ScrollContainer>
     </WalletSettingsContainer>
   );
 };

@@ -35,3 +35,12 @@ export interface FetchOverviewResponse {
     ];
   };
 }
+
+export interface FetchVirtualCardImageUrlsResponse {
+  user: {
+    [k: `card${number}`]: {
+      id: string;
+      virtualCardImage: string;
+    };
+  };
+}

@@ -37,7 +37,7 @@ const BackupContainer = styled.SafeAreaView`
   align-items: center;
 `;
 
-export const navigateToTermsOrOverview = ({
+export const backupRedirect = ({
   context,
   navigation,
   walletTermsAccepted,
@@ -52,6 +52,8 @@ export const navigateToTermsOrOverview = ({
     navigation.navigate('Onboarding', {
       screen: 'TermsOfUse',
     });
+  } else if (context === 'settings') {
+    navigation.navigate('Wallet', {screen: 'KeySettings', params: {key}});
   } else if (!key?.backupComplete) {
     navigation.navigate('Tabs', {screen: 'Home'});
   } else if (context === 'keySettings') {
@@ -124,7 +126,7 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
                     {
                       text: 'LATER',
                       action: () =>
-                        navigateToTermsOrOverview({
+                        backupRedirect({
                           context,
                           navigation,
                           walletTermsAccepted,

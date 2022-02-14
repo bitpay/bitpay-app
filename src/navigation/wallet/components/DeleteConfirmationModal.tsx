@@ -29,10 +29,6 @@ const DeleteModalParagraph = styled(Paragraph)`
   color: ${({theme}) => (theme.dark ? White : SlateDark)};
 `;
 
-const DeleteModalContainer = styled(SheetContainer)`
-  min-height: 250px;
-`;
-
 const ActionsContainer = styled.View`
   flex-direction: row;
   justify-content: space-between;
@@ -53,7 +49,7 @@ const DeleteConfirmationModal = ({
 }: ConfirmationModalProps) => {
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onPressCancel}>
-      <DeleteModalContainer>
+      <SheetContainer>
         <Header>
           <CautionSvg />
           <Title>Warning!</Title>
@@ -77,7 +73,7 @@ const DeleteConfirmationModal = ({
             <SecondaryActionText>NEVERMIND</SecondaryActionText>
           </TouchableOpacity>
         </ActionsContainer>
-      </DeleteModalContainer>
+      </SheetContainer>
     </SheetModal>
   );
 };

@@ -4,21 +4,17 @@ import {batch} from 'react-redux';
 import AuthApi from '../../api/auth';
 import {LoginErrorResponse} from '../../api/auth/auth.types';
 import UserApi from '../../api/user';
+import {InitialUserData} from '../../api/user/user.types';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
 import {isAxiosError} from '../../utils/axios';
 import {AppActions, AppEffects} from '../app/';
 import {startOnGoingProcessModal} from '../app/app.effects';
-import {CardActions} from '../card';
+import {CardEffects} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
 import {User} from './bitpay-id.models';
 import {BitPayIdActions} from './index';
-
-interface BitPayIdStoreInitParams {
-  user?: User;
-  doshToken?: string;
-}
 
 interface StartLoginParams {
   email: string;
@@ -27,14 +23,14 @@ interface StartLoginParams {
 }
 
 export const startBitPayIdStoreInit =
-  (
-    network: Network,
-    {user, doshToken}: BitPayIdStoreInitParams,
-  ): Effect<Promise<void>> =>
-  async dispatch => {
+  (initialData: InitialUserData): Effect<Promise<void>> =>
+  async (dispatch, getState) => {
+    const {APP} = getState();
+    const {basicInfo: user} = initialData;
+
     if (user) {
       dispatch(
-        BitPayIdActions.successFetchAllUserData(network, {user, doshToken}),
+        BitPayIdActions.successInitializeStore(APP.network, initialData),
       );
       dispatch(startSetBrazeUser(user));
     }
@@ -286,32 +282,44 @@ export const startDeeplinkPairing =
 
 const startPairAndLoadUser =
   (network: Network, secret: string, code?: string): Effect<Promise<void>> =>
-  async dispatch => {
+  async (dispatch, getState) => {
     try {
       const token = await AuthApi.pair(secret, code);
-      const {basicInfo, cards, doshToken} = await UserApi.fetchAllUserData(
-        token,
-      );
 
-      batch(() => {
-        dispatch(LogActions.info('Successfully paired with BitPayID.'));
-        dispatch(
-          BitPayIdActions.successFetchAllUserData(network, {
-            user: basicInfo,
-            doshToken,
-          }),
-        );
-        dispatch(startSetBrazeUser(basicInfo));
-        dispatch(CardActions.successFetchCards(network, cards));
-        dispatch(BitPayIdActions.successPairingBitPayId(network, token));
-      });
+      dispatch(BitPayIdActions.successPairingBitPayId(network, token));
+      dispatch(LogActions.info('Successfully paired with BitPayID.'));
     } catch (err) {
-      dispatch(
-        LogActions.error(
-          'An error occurred while pairing and loading user data.',
-        ),
-      );
+      dispatch(LogActions.error('An error occurred while pairing.'));
+      dispatch(LogActions.error(JSON.stringify(err)));
+
       throw err;
+    }
+
+    try {
+      const {APP, BITPAY_ID} = getState();
+      const token = BITPAY_ID.apiToken[APP.network];
+
+      const {errors, data} = await UserApi.fetchInitialUserData(token);
+
+      // handle partial errors
+      if (errors) {
+        const msg = errors
+          .map(e => `${e.path.join('.')}: ${e.message}`)
+          .join(',\n');
+
+        dispatch(
+          LogActions.error(
+            'One or more errors occurred while fetching initial user data:\n' +
+              msg,
+          ),
+        );
+      }
+
+      dispatch(startBitPayIdStoreInit(data.user));
+      dispatch(CardEffects.startCardStoreInit(data.user));
+    } catch (err) {
+      dispatch(LogActions.error('An error occurred while fetching user data.'));
+      dispatch(LogActions.error(JSON.stringify(err)));
     }
   };
 

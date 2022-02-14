@@ -1,25 +1,27 @@
 import GraphQlApi from '../graphql';
 import UserQueries from './user.queries';
 import {
-  FetchAllUserDataResponse,
   FetchBasicInfoResponse,
   FetchDoshTokenResponse,
+  FetchInitialUserDataResponse,
 } from './user.types';
 
-const fetchAllUserData = async (token: string) => {
+const fetchInitialUserData = async (token: string) => {
   const query = UserQueries.FETCH_ALL_USER_DATA(token);
   const response =
-    await GraphQlApi.getInstance().request<FetchAllUserDataResponse>(query);
+    await GraphQlApi.getInstance().request<FetchInitialUserDataResponse>(query);
 
   const {errors, data} = response.data;
 
-  if (errors) {
-    const msg = errors.map(e => e.message).join(', ');
+  if (!data) {
+    const msg = errors
+      ? errors.map(e => e.message).join(', ')
+      : 'An error occurred while fetching initial user data.';
 
     throw new Error(msg);
   }
 
-  return data.user;
+  return response.data;
 };
 
 const fetchBasicInfo = async (token: string) => {
@@ -53,9 +55,9 @@ const fetchDoshToken = async (token: string) => {
 };
 
 const UserApi = {
-  fetchAllUserData,
   fetchBasicInfo,
   fetchDoshToken,
+  fetchInitialUserData,
 };
 
 export default UserApi;

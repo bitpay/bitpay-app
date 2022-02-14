@@ -25,7 +25,7 @@ import {useDispatch} from 'react-redux';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {Key} from '../../../store/wallet/wallet.models';
 import {WalletStackParamList} from '../WalletStack';
-import {navigateToTermsOrOverview} from './Backup';
+import {backupRedirect} from './Backup';
 import {StackScreenProps} from '@react-navigation/stack';
 import {useAppSelector} from '../../../utils/hooks';
 
@@ -100,6 +100,12 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
             buttonType={'pill'}
             onPress={() => {
               haptic('impactLight');
+
+              if (context === 'settings') {
+                navigation.goBack();
+                return;
+              }
+
               dispatch(
                 showBottomNotificationModal({
                   type: 'warning',
@@ -111,7 +117,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
                     {
                       text: "I'M SURE",
                       action: () =>
-                        navigateToTermsOrOverview({
+                        backupRedirect({
                           context,
                           navigation,
                           walletTermsAccepted,
@@ -147,7 +153,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
     if (activeSlideIndex === 11) {
       navigation.navigate(context === 'onboarding' ? 'Onboarding' : 'Wallet', {
         screen: 'VerifyPhrase',
-        params,
+        params: {...params, walletTermsAccepted},
       });
     } else {
       // @ts-ignore

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   Image,
   RefreshControl,
@@ -94,6 +94,12 @@ const HomeRoot = () => {
   const navigation = useNavigation();
   const theme = useTheme();
   const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    return navigation.addListener('focus', () => {
+      dispatch(updatePortfolioBalance());
+    });
+  }, [dispatch, navigation]);
 
   const onRefresh = async () => {
     setRefreshing(true);

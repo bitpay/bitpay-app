@@ -1,14 +1,18 @@
-import {useNavigation, useTheme} from '@react-navigation/native';
+import {StackActions, useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useState} from 'react';
-import {FlatList, LogBox, RefreshControl} from 'react-native';
+import {FlatList, LogBox, RefreshControl, TouchableOpacity} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
 import {BaseText, H5, HeaderTitle} from '../../../components/styled/Text';
 import Settings from '../../../components/settings/Settings';
-import {ActiveOpacity, Hr} from '../../../components/styled/Containers';
+import {
+  ActiveOpacity,
+  Hr,
+  ScreenGutter,
+} from '../../../components/styled/Containers';
 import {RootState} from '../../../store';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateAllWalletBalancesForKey} from '../../../store/wallet/effects/balance/balance';
@@ -25,6 +29,10 @@ import {BalanceUpdateError} from '../components/ErrorMessages';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
+import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
+import {useAppSelector} from '../../../utils/hooks';
+import SheetModal from '../../../components/modal/base/sheet/SheetModal';
+import KeyDropdownOption from '../components/KeyDropdownOption';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -71,6 +79,22 @@ const WalletListFooterText = styled(BaseText)`
   font-weight: 400;
   letter-spacing: 0;
   margin-left: 10px;
+`;
+
+const KeyToggle = styled(TouchableOpacity)`
+  align-items: center;
+  flex-direction: row;
+`;
+
+const KeyDropdown = styled.SafeAreaView`
+  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  max-height: 75%;
+`;
+
+const KeyDropdownOptionsContainer = styled.ScrollView`
+  padding: 0 ${ScreenGutter};
 `;
 
 const ClogIconContainer = styled.TouchableOpacity`
@@ -137,39 +161,51 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const {key: currentKey} = route.params;
-
-  const key = useSelector(({WALLET}: RootState) => WALLET.keys[currentKey.id]);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const key = keys[currentKey.id]
   const {isPrivKeyEncrypted} = key;
 
+  const [showKeyDropdown, setShowKeyDropdown] = useState(false);
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>My Key</HeaderTitle>,
+      headerTitle: () => {
+        const hasMultipleKeys = Object.keys(keys).length > 1;
+        return (
+          <KeyToggle
+            activeOpacity={ActiveOpacity}
+            disabled={!hasMultipleKeys}
+            onPress={() => setShowKeyDropdown(true)}>
+            <HeaderTitle>{key?.keyName}</HeaderTitle>
+            {hasMultipleKeys && <ChevronDownSvg style={{marginLeft: 10}} />}
+          </KeyToggle>
+        );
+      },
       headerRight: () => {
         return isPrivKeyEncrypted ? (
-          <ClogIconContainer
-            onPress={() =>
-              navigation.navigate('Wallet', {
-                screen: 'KeySettings',
-                params: {
-                  key,
-                },
-              })
-            }
-            activeOpacity={ActiveOpacity}>
-            <Icons.Clog />
-          </ClogIconContainer>
+            <ClogIconContainer
+                onPress={() =>
+                    navigation.navigate('Wallet', {
+                      screen: 'KeySettings',
+                      params: {
+                        key,
+                      },
+                    })
+                }
+                activeOpacity={ActiveOpacity}>
+              <Icons.Clog/>
+            </ClogIconContainer>
         ) : (
-          <>
-            <Settings
-              onPress={() => {
-                setShowKeyOptions(true);
-              }}
-            />
-          </>
+            <>
+              <Settings
+                  onPress={() => {
+                    setShowKeyOptions(true);
+                  }}
+              />
+            </>
         );
       },
     });
-  }, [navigation, isPrivKeyEncrypted]);
+  }, [navigation, key, isPrivKeyEncrypted]);
 
   const {wallets = [], totalBalance} = useSelector(
     ({WALLET}: RootState) => WALLET.keys[key.id] || {},
@@ -184,12 +220,14 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
       img: <Icons.Encrypt />,
       title: 'Encrypt your Key',
       description:
-        'Prevent an unauthorized user from sending funds out of your wallet.',
+          'Prevent an unauthorized user from sending funds out of your wallet.',
       onPress: () => {
+        haptic('impactLight');
         navigation.navigate('Wallet', {
-          screen: 'CreateEncryptPassword',
+          screen: 'KeySettings',
           params: {
             key,
+            context: 'createEncryptPassword',
           },
         });
       },
@@ -199,13 +237,15 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
       img: <Icons.Settings />,
       title: 'Key Settings',
       description: 'View all the ways to manage and configure your key.',
-      onPress: () =>
+      onPress: () => {
+        haptic('impactLight');
         navigation.navigate('Wallet', {
           screen: 'KeySettings',
           params: {
             key,
           },
-        }),
+        });
+      },
     });
   }
 
@@ -266,24 +306,56 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
             <WalletRow
               id={item.id}
               wallet={item}
-              onPress={() =>
+              onPress={() => {
+                haptic('impactLight');
                 navigation.navigate('Wallet', {
                   screen: 'WalletDetails',
                   params: {walletId: item.id, key},
-                })
-              }
+                });
+              }}
             />
           );
         }}
       />
       {keyOptions.length > 0 ? (
-        <OptionsSheet
-          isVisible={showKeyOptions}
-          title={'Key Options'}
-          options={keyOptions}
-          closeModal={() => setShowKeyOptions(false)}
-        />
+          <OptionsSheet
+              isVisible={showKeyOptions}
+              title={'Key Options'}
+              options={keyOptions}
+              closeModal={() => setShowKeyOptions(false)}
+          />
       ) : null}
+      <SheetModal
+        isVisible={showKeyDropdown}
+        placement={'top'}
+        onBackdropPress={() => setShowKeyDropdown(false)}>
+        <KeyDropdown>
+          <HeaderTitle style={{margin: 15}}>Other Keys</HeaderTitle>
+          <KeyDropdownOptionsContainer>
+            {Object.values(keys)
+              .filter(_key => _key.id !== key.id)
+              .filter(_key => _key.backupComplete)
+              .map(({id, keyName, wallets, totalBalance}) => (
+                <KeyDropdownOption
+                  key={id}
+                  keyId={id}
+                  keyName={keyName}
+                  wallets={wallets}
+                  totalBalance={totalBalance}
+                  onPress={keyId => {
+                    setShowKeyDropdown(false);
+                    navigation.dispatch(
+                      StackActions.replace('Wallet', {
+                        screen: 'KeyOverview',
+                        params: {key: keys[keyId]},
+                      }),
+                    );
+                  }}
+                />
+              ))}
+          </KeyDropdownOptionsContainer>
+        </KeyDropdown>
+      </SheetModal>
     </OverviewContainer>
   );
 };
