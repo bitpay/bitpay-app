@@ -160,15 +160,15 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   const theme = useTheme();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {key: currentKey} = route.params;
+  const {key} = route.params;
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
-  const key = keys[currentKey.id];
 
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => {
-        const hasMultipleKeys = Object.keys(keys).length > 1;
+        const hasMultipleKeys =
+          Object.values(keys).filter(key => key.backupComplete).length > 1;
         return (
           <KeyToggle
             activeOpacity={ActiveOpacity}
@@ -180,7 +180,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
         );
       },
       headerRight: () => {
-        return key.isPrivKeyEncrypted ? (
+        return key.methods.isPrivKeyEncrypted() ? (
           <ClogIconContainer
             onPress={() =>
               navigation.navigate('Wallet', {
@@ -214,7 +214,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
 
   const keyOptions: Array<Option> = [];
 
-  if (!key.isPrivKeyEncrypted) {
+  if (!key.methods.isPrivKeyEncrypted()) {
     keyOptions.push({
       img: <Icons.Encrypt />,
       title: 'Encrypt your Key',
