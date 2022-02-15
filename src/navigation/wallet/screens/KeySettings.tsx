@@ -201,7 +201,7 @@ const KeySettings = () => {
                           keyId: id,
                           words: mnemonic.trim().split(' '),
                           walletTermsAccepted: true,
-                          context: 'keySettings',
+                          context: 'settings',
                           key,
                         },
                       });
