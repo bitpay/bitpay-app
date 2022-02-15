@@ -21,7 +21,6 @@ import CreationOptions from './screens/CreationOptions';
 import {HeaderTitle} from '../../components/styled/Text';
 import CreateEncryptionPassword from './screens/CreateEncryptionPassword';
 import {Key, Wallet as WalletModel} from '../../store/wallet/wallet.models';
-import {WalletRowProps} from '../../components/list/WalletRow';
 import ExtendedPrivateKey from './screens/ExtendedPrivateKey';
 import DeleteKey from './screens/DeleteKey';
 import ExportKey from './screens/ExportKey';
@@ -31,6 +30,11 @@ import TermsOfUse, {
 import AddWallet, {AddWalletParamList} from './screens/AddWallet';
 import Amount, {AmountParamList} from './screens/send/Amount';
 import SendTo from './screens/send/SendTo';
+import CreateMultisig, {CreateMultisigProps} from './screens/CreateMultisig';
+import JoinMultisig, {JoinMultisigParamList} from './screens/JoinMultisig';
+import Copayers from './screens/Copayers';
+import AddingOptions, {AddingOptionsParamList} from './screens/AddingOptions';
+import UpdateKeyOrWalletName from './screens/UpdateKeyOrWalletName';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -40,17 +44,26 @@ export type WalletStackParamList = {
   VerifyPhrase: VerifyPhraseParamList;
   TermsOfUse: TermsOfUseParamList;
   KeyOverview: {key: Key};
-  KeySettings: {key: Key};
+  KeySettings: {key: Key; context?: 'createEncryptPassword'};
+  UpdateKeyOrWalletName: {
+    key: Key;
+    wallet?: {walletId: string; walletName: string | undefined};
+    context: 'key' | 'wallet';
+  };
   WalletDetails: {walletId: string; key: Key};
-  WalletSettings: {wallet: WalletRowProps};
+  WalletSettings: {walletId: string; key: Key};
   CreationOptions: undefined;
   Import: ImportParamList | undefined;
   CreateEncryptPassword: {key: Key};
-  ExtendedPrivateKey: {key: Key};
+  ExtendedPrivateKey: {xPrivKey: string};
   DeleteKey: {keyId: string};
-  ExportKey: {key: Key};
+  ExportKey: {code: string; keyName: string | undefined};
   Amount: AmountParamList;
   SendTo: {wallet: WalletModel};
+  CreateMultisig: CreateMultisigProps;
+  JoinMultisig: JoinMultisigParamList | undefined;
+  Copayers: {wallet: WalletModel};
+  AddingOptions: AddingOptionsParamList;
 };
 
 export enum WalletScreens {
@@ -62,6 +75,7 @@ export enum WalletScreens {
   TERMS_OF_USE = 'TermsOfUse',
   KEY_OVERVIEW = 'KeyOverview',
   KEY_SETTINGS = 'KeySettings',
+  UPDATE_KEY_OR_WALLET_NAME = 'UpdateKeyOrWalletName',
   WALLET_DETAILS = 'WalletDetails',
   WALLET_SETTINGS = 'WalletSettings',
   CREATION_OPTIONS = 'CreationOptions',
@@ -72,6 +86,10 @@ export enum WalletScreens {
   EXPORT_KEY = 'ExportKey',
   AMOUNT = 'Amount',
   SEND_TO = 'SendTo',
+  CREATE_MULTISIG = 'CreateMultisig',
+  JOIN_MULTISIG = 'JoinMultisig',
+  COPAYERS = 'Copayers',
+  ADDING_OPTIONS = 'AddingOptions',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -131,6 +149,10 @@ const WalletStack = () => {
           component={KeySettings}
         />
         <Wallet.Screen
+          name={WalletScreens.UPDATE_KEY_OR_WALLET_NAME}
+          component={UpdateKeyOrWalletName}
+        />
+        <Wallet.Screen
           name={WalletScreens.WALLET_DETAILS}
           component={WalletDetails}
         />
@@ -159,6 +181,33 @@ const WalletStack = () => {
         />
         <Wallet.Screen name={WalletScreens.AMOUNT} component={Amount} />
         <Wallet.Screen name={WalletScreens.SEND_TO} component={SendTo} />
+        <Wallet.Screen
+          options={{
+            headerTitle: () => (
+              <HeaderTitle>Create Multisig Wallet</HeaderTitle>
+            ),
+          }}
+          name={WalletScreens.CREATE_MULTISIG}
+          component={CreateMultisig}
+        />
+        <Wallet.Screen
+          options={{
+            headerTitle: () => <HeaderTitle>Join Shared Wallet</HeaderTitle>,
+          }}
+          name={WalletScreens.JOIN_MULTISIG}
+          component={JoinMultisig}
+        />
+        <Wallet.Screen
+          options={{
+            headerTitle: () => <HeaderTitle>Invitation</HeaderTitle>,
+          }}
+          name={WalletScreens.COPAYERS}
+          component={Copayers}
+        />
+        <Wallet.Screen
+          name={WalletScreens.ADDING_OPTIONS}
+          component={AddingOptions}
+        />
       </Wallet.Navigator>
     </>
   );

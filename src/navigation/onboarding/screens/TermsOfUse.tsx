@@ -45,7 +45,7 @@ const Terms: Array<Term> = [
   {
     id: 2,
     statement:
-      "BitPay cannot recover your funds if you don't set up a recovery wallet or if you lose your wallet",
+      "BitPay cannot recover your funds if you don't set up a recovery phrase or if you lose your key",
     acknowledgement:
       'I understand that if this app is moved to another device or deleted, my crypto funds can only be recovered with the recovery phrase.',
   },

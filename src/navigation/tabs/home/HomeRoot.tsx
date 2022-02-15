@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   Image,
   RefreshControl,
@@ -14,7 +14,6 @@ import styled from 'styled-components/native';
 import {BaseText} from '../../../components/styled/Text';
 import {SlateDark, White} from '../../../styles/colors';
 
-import haptic from '../../../components/haptic-feedback/haptic';
 import PortfolioBalance from './components/PortfolioBalance';
 import CardsCarousel from './components/CardsCarousel';
 import LinkingButtons from './components/LinkingButtons';
@@ -56,7 +55,7 @@ const HomeContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const HomeLink = styled(BaseText)`
+export const HomeLink = styled(BaseText)`
   font-weight: 500;
   font-size: 14px;
   color: ${({theme}) => theme.colors.link};
@@ -69,7 +68,7 @@ const Title = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const SectionHeaderContainer = styled.View<{justifyContent?: string}>`
+export const SectionHeaderContainer = styled.View<{justifyContent?: string}>`
   flex-direction: row;
   margin: 10px ${ScreenGutter} 0;
   justify-content: ${({justifyContent}) => justifyContent || 'flex-start'};
@@ -95,6 +94,12 @@ const HomeRoot = () => {
   const navigation = useNavigation();
   const theme = useTheme();
   const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    return navigation.addListener('focus', () => {
+      dispatch(updatePortfolioBalance());
+    });
+  }, [dispatch, navigation]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -164,19 +169,6 @@ const HomeRoot = () => {
         </HeaderContainer>
         {/* ////////////////////////////// PORTFOLIO BALANCE */}
         <PortfolioBalance />
-
-        <SectionHeaderContainer justifyContent={'flex-end'}>
-          <TouchableOpacity
-            activeOpacity={ActiveOpacity}
-            onPress={() => {
-              haptic('impactLight');
-              navigation.navigate('GeneralSettings', {
-                screen: 'CustomizeHome',
-              });
-            }}>
-            <HomeLink>Customize</HomeLink>
-          </TouchableOpacity>
-        </SectionHeaderContainer>
 
         {/* ////////////////////////////// CARDS CAROUSEL */}
         <CardsCarousel />

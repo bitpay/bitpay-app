@@ -10,7 +10,7 @@ interface BottomNotificationListType {
 }
 
 const List = styled(BaseText)`
-  margin: 0 0 5px 10px;
+  margin-bottom: 10px;
 `;
 
 export const GeneralError: BottomNotificationConfig = {

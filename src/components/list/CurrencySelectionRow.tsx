@@ -1,6 +1,10 @@
 import React, {memo, useState} from 'react';
 import styled from 'styled-components/native';
-import {CurrencyColumn, CurrencyImageContainer} from '../styled/Containers';
+import {
+  CurrencyColumn,
+  CurrencyImageContainer,
+  ActiveOpacity,
+} from '../styled/Containers';
 import {RowContainer} from '../styled/Containers';
 import {H5, SubText} from '../styled/Text';
 import haptic from '../haptic-feedback/haptic';
@@ -58,7 +62,7 @@ const CurrencySelectionRow = ({item, emit, removeCheckbox}: Props) => {
   };
 
   return (
-    <RowContainer activeOpacity={0.75} onPress={toggle}>
+    <RowContainer activeOpacity={ActiveOpacity} onPress={toggle}>
       <CurrencyImageContainer>
         <CurrencyImage img={img} />
       </CurrencyImageContainer>

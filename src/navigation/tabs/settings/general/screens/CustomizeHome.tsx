@@ -13,7 +13,7 @@ const CardListContainer = styled.View`
   flex-wrap: wrap;
 `;
 
-const CustomizeHomeContainer = styled.SafeAreaView`
+const CustomizeHomeContainer = styled.View`
   flex: 1;
 `;
 

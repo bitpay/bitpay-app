@@ -1,30 +1,44 @@
+import FastImage from 'react-native-fast-image';
 import {batch} from 'react-redux';
 import {CardActions} from '.';
 import CardApi from '../../api/card';
+import {InitialUserData} from '../../api/user/user.types';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
-import {Network} from '../../constants';
 import {sleep} from '../../utils/helper-methods';
 import {AppActions} from '../app';
 import {Effect} from '../index';
 import {LogActions} from '../log';
-import {Card} from './card.models';
 import {TTL} from './card.types';
-
-interface CardStoreInitParams {
-  cards?: Card[];
-  cardBalances?: {
-    id: string;
-    balance: number;
-  }[];
-}
+import ReactNative from 'react-native';
+const {Dosh} = ReactNative.NativeModules;
 
 export const startCardStoreInit =
-  (
-    network: Network,
-    {cards, cardBalances}: CardStoreInitParams,
-  ): Effect<Promise<void>> =>
-  async dispatch => {
-    dispatch(CardActions.successInitializeStore(network, cards, cardBalances));
+  (initialData: InitialUserData): Effect<Promise<void>> =>
+  async (dispatch, getState) => {
+    const {APP} = getState();
+
+    dispatch(CardActions.successInitializeStore(APP.network, initialData));
+    try {
+      const virtualCardIds = (initialData.cards || [])
+        .filter(c => c.provider === 'galileo' && c.cardType === 'virtual')
+        .map(c => c.id);
+
+      if (virtualCardIds.length) {
+        dispatch(startFetchVirtualCardImageUrls(virtualCardIds));
+      }
+
+      // Dosh card rewards
+      if (Dosh) {
+        const {doshToken} = initialData;
+        Dosh.initializeDosh();
+
+        if (doshToken) {
+          Dosh.setDoshToken(doshToken);
+        }
+      }
+    } catch (err) {
+      // swallow error so initialize is uninterrupted
+    }
   };
 
 export const startFetchAll =
@@ -79,5 +93,41 @@ export const startFetchOverview =
       });
     } finally {
       dispatch(AppActions.dismissOnGoingProcessModal());
+    }
+  };
+
+export const startFetchVirtualCardImageUrls =
+  (ids: string[]): Effect =>
+  async (dispatch, getState) => {
+    try {
+      const {APP, BITPAY_ID} = getState();
+
+      const urlsPayload = await CardApi.fetchVirtualCardImageUrls(
+        BITPAY_ID.apiToken[APP.network],
+        ids,
+      );
+
+      dispatch(CardActions.successFetchVirtualImageUrls(urlsPayload));
+
+      try {
+        const sources = urlsPayload.map(({virtualCardImage}) => {
+          return {uri: virtualCardImage};
+        });
+
+        FastImage.preload(sources);
+      } catch (err) {
+        dispatch(LogActions.error('Failed to preload virtual card images.'));
+        dispatch(LogActions.error(JSON.stringify(err)));
+      }
+    } catch (err) {
+      batch(() => {
+        dispatch(
+          LogActions.error(
+            `Failed to fetch virtual card image URLs for ${ids.join(', ')}`,
+          ),
+        );
+        dispatch(LogActions.error(JSON.stringify(err)));
+        dispatch(CardActions.failedFetchVirtualImageUrls());
+      });
     }
   };
