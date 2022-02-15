@@ -9,6 +9,9 @@ import {
 import {RootState} from '../../store';
 import {BitPayIdActions} from '../../store/bitpay-id';
 import {LoginStatus} from '../../store/bitpay-id/bitpay-id.reducer';
+import CreateAccountScreen, {
+  CreateAccountScreenParamList,
+} from './screens/CreateAccount';
 import LoginSignup, {LoginSignupParamList} from './screens/LoginSignup';
 import TwoFactorAuthentication, {
   TwoFactorAuthenticationParamList,
@@ -19,9 +22,14 @@ import EmailAuthentication, {
 import TwoFactorPairing, {
   TwoFactorPairingParamList,
 } from './screens/TwoFactor.Pair';
+import VerifyEmailScreen, {
+  VerifyEmailScreenParamList,
+} from './screens/VerifyEmail';
 
 export enum AuthScreens {
   LOGIN_SIGNUP = 'LoginSignup',
+  CREATE_ACCOUNT = 'CreateAccount',
+  VERIFY_EMAIL = 'VerifyEmail',
   EMAIL_AUTH = 'EmailAuthentication',
   TWO_FACTOR_AUTH = 'TwoFactorAuthentication',
   TWO_FACTOR_PAIR = 'TwoFactorPairing',
@@ -29,6 +37,8 @@ export enum AuthScreens {
 
 export type AuthStackParamList = {
   LoginSignup: LoginSignupParamList;
+  CreateAccount: CreateAccountScreenParamList;
+  VerifyEmail: VerifyEmailScreenParamList;
   EmailAuthentication: EmailAuthenticationParamList;
   TwoFactorAuthentication: TwoFactorAuthenticationParamList;
   TwoFactorPairing: TwoFactorPairingParamList;
@@ -59,18 +69,23 @@ const AuthStack: React.FC = () => {
       <Auth.Screen
         name={AuthScreens.LOGIN_SIGNUP}
         component={LoginSignup}
-        options={({route}) => ({
-          headerTitle: () => {
-            // making a const cause inline is crashing for some reason
-            const isLogin = route.params.context === 'login';
-
-            return (
-              <HeaderTitle>
-                {isLogin ? 'Welcome Back!' : 'Create Account'}
-              </HeaderTitle>
-            );
-          },
-        })}
+        options={{
+          headerTitle: () => <HeaderTitle>Welcome Back!</HeaderTitle>,
+        }}
+      />
+      <Auth.Screen
+        name={AuthScreens.CREATE_ACCOUNT}
+        component={CreateAccountScreen}
+        options={{
+          headerTitle: () => <HeaderTitle>Create Account</HeaderTitle>,
+        }}
+      />
+      <Auth.Screen
+        name={AuthScreens.VERIFY_EMAIL}
+        component={VerifyEmailScreen}
+        options={{
+          headerTitle: () => <HeaderTitle>Check Your Inbox</HeaderTitle>,
+        }}
       />
       {isTwoFactorPending && (
         <>
@@ -78,14 +93,16 @@ const AuthStack: React.FC = () => {
             name={AuthScreens.TWO_FACTOR_AUTH}
             component={TwoFactorAuthentication}
             options={{
-              headerTitle: '2-Step Verification',
+              headerTitle: () => <HeaderTitle>2-Step Verification</HeaderTitle>,
             }}
           />
           <Auth.Screen
             name={AuthScreens.TWO_FACTOR_PAIR}
             component={TwoFactorPairing}
             options={{
-              headerTitle: 'Additional Verification',
+              headerTitle: () => (
+                <HeaderTitle>Additional Verification</HeaderTitle>
+              ),
             }}
           />
         </>
@@ -95,7 +112,7 @@ const AuthStack: React.FC = () => {
           name={AuthScreens.EMAIL_AUTH}
           component={EmailAuthentication}
           options={{
-            headerTitle: 'Check Your Inbox',
+            headerTitle: () => <HeaderTitle>Check Your Inbox</HeaderTitle>,
           }}
         />
       )}

@@ -2,7 +2,7 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
-import {Keyboard, ScrollView, TextInput} from 'react-native';
+import {Keyboard, SafeAreaView, TextInput} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import * as yup from 'yup';
@@ -10,7 +10,7 @@ import AlertBox from '../../../components/alert-box/AlertBox';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {BaseText, Link} from '../../../components/styled/Text';
+import {Link} from '../../../components/styled/Text';
 import {Network} from '../../../constants';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {navigationRef, RootStacks} from '../../../Root';
@@ -22,7 +22,9 @@ import {sleep} from '../../../utils/helper-methods';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
 import {AuthStackParamList} from '../AuthStack';
 import AuthFormContainer, {
+  AuthActionRow,
   AuthActionsContainer,
+  AuthActionText,
   AuthRowContainer,
 } from '../components/AuthFormContainer';
 import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
@@ -37,21 +39,11 @@ type LoginSignupScreenProps = StackScreenProps<
   'LoginSignup'
 >;
 
-const ActionRowContainer = styled.View`
-  margin-bottom: 32px;
-`;
-
 const Row = styled.View`
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
-`;
-
-const ActionText = styled(BaseText)`
-  align-self: center;
-  color: ${({theme}) => theme.colors.description};
-  font-size: 18px;
 `;
 
 const schema = yup.object().shape({
@@ -157,8 +149,8 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
   };
 
   return (
-    <AuthFormContainer>
-      <ScrollView>
+    <SafeAreaView>
+      <AuthFormContainer>
         {loginStatus === 'failed' ? (
           <AuthRowContainer>
             <AlertBox type="warning">
@@ -211,45 +203,49 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
         </AuthRowContainer>
 
         <AuthActionsContainer>
-          <ActionRowContainer>
+          <AuthActionRow>
             <Button onPress={onSubmit}>
               {context === 'login' ? 'Log In' : 'Create Account'}
             </Button>
-          </ActionRowContainer>
+          </AuthActionRow>
 
           {context === 'login' ? (
             <>
-              <ActionRowContainer>
-                <ActionText>
+              <AuthActionRow>
+                <AuthActionText>
                   Don't have an account?{' '}
                   <Link
-                    onPress={() => navigation.setParams({context: 'signup'})}>
+                    onPress={() => {
+                      navigation.navigate('CreateAccount');
+                    }}>
                     Create Account
                   </Link>
-                </ActionText>
-              </ActionRowContainer>
+                </AuthActionText>
+              </AuthActionRow>
 
-              <ActionRowContainer>
-                <ActionText>
+              <AuthActionRow>
+                <AuthActionText>
                   <Link onPress={() => onTroubleLoggingIn()}>
                     Trouble logging in?
                   </Link>
-                </ActionText>
-              </ActionRowContainer>
+                </AuthActionText>
+              </AuthActionRow>
             </>
           ) : (
             <>
-              <ActionRowContainer>
+              <AuthActionRow>
                 <Row>
-                  <ActionText>
+                  <AuthActionText>
                     Already have an account?{' '}
                     <Link
-                      onPress={() => navigation.setParams({context: 'login'})}>
+                      onPress={() => {
+                        navigation.setParams({context: 'login'});
+                      }}>
                       Log In
                     </Link>
-                  </ActionText>
+                  </AuthActionText>
                 </Row>
-              </ActionRowContainer>
+              </AuthActionRow>
             </>
           )}
         </AuthActionsContainer>
@@ -262,8 +258,8 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
           onResponse={onCaptchaResponse}
           onCancel={onCaptchaCancel}
         />
-      </ScrollView>
-    </AuthFormContainer>
+      </AuthFormContainer>
+    </SafeAreaView>
   );
 };
 
