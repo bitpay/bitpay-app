@@ -4,10 +4,6 @@ import {
 } from '../constants/config.card';
 import {CardProvider, VirtualDesignCurrency} from '../store/card/card.types';
 
-export const buildCardNumber = (lastFour: string) => {
-  return `**** **** **** ${lastFour}`;
-};
-
 export const isVirtualDesignSupported = (provider: CardProvider) => {
   return ProviderConfig[provider].virtualDesignSupport || false;
 };

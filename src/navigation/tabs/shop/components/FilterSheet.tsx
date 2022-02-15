@@ -71,7 +71,6 @@ const Pill = styled.View<PillParams>`
   justify-content: center;
   border: 2px solid ${({theme}) => (theme.dark ? White : Action)};
   border-radius: 20px;
-  padding: 0 12px;
   margin-right: 10px;
   margin-bottom: 12px;
   ${({selected, theme}) =>
@@ -82,6 +81,7 @@ const PillText = styled(BaseText)<PillParams>`
   color: ${({selected, theme}) =>
     selected ? (theme.dark ? LightBlack : White) : theme.dark ? White : Action};
   font-weight: 500;
+  padding: 8px 12px;
 `;
 
 export type CategoryMap = {[category: string]: boolean};
@@ -123,18 +123,18 @@ const FilterSheet = ({
         </SheetTitleContainer>
         <Pills>
           {Object.keys(categoryMap).map(category => (
-            <TouchableWithoutFeedback
-              key={category}
-              onPress={() => {
-                setCategoryMap({
-                  ...categoryMap,
-                  [category]: !categoryMap[category],
-                });
-              }}>
-              <Pill selected={categoryMap[category]}>
-                <PillText selected={categoryMap[category]}>{category}</PillText>
-              </Pill>
-            </TouchableWithoutFeedback>
+            <Pill key={category} selected={categoryMap[category]}>
+              <PillText
+                selected={categoryMap[category]}
+                onPress={() =>
+                  setCategoryMap({
+                    ...categoryMap,
+                    [category]: !categoryMap[category],
+                  })
+                }>
+                {category}
+              </PillText>
+            </Pill>
           ))}
         </Pills>
         <Hr />

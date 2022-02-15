@@ -10,7 +10,8 @@ import {
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
 import {
   ActiveOpacity,
-  CtaContainer,
+  CtaContainer as _CtaContainer,
+  HeaderContainer,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {useDispatch, useSelector} from 'react-redux';
@@ -26,6 +27,7 @@ import {
   ImportTitle,
   TextAlign,
   H4,
+  Paragraph,
 } from '../../../components/styled/Text';
 import BoxInput from '../../../components/form/BoxInput';
 import {useLogger} from '../../../utils/hooks/useLogger';
@@ -40,7 +42,7 @@ import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
-import {navigateToTermsOrOverview} from '../screens/Backup';
+import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
 import {
   ImportTextInput,
@@ -49,10 +51,10 @@ import {
   AdvancedOptionsButton,
   AdvancedOptionsButtonText,
   AdvancedOptions,
-  RowContainer,
   Column,
   Row,
   SheetContainer,
+  ScanContainer,
 } from '../../../components/styled/Containers';
 import Haptic from '../../../components/haptic-feedback/haptic';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
@@ -77,37 +79,16 @@ import CurrencySelectionRow, {
   CurrencySelectionToggleProps,
 } from '../../../components/list/CurrencySelectionRow';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
+import {sleep} from '../../../utils/helper-methods';
 
-const Gutter = '10px';
 const ScrollViewContainer = styled.ScrollView`
   margin-top: 20px;
   padding: 0 15px;
 `;
 
-const ImportParagraph = styled(BaseText)`
-  font-size: 16px;
-  line-height: 25px;
-  padding: ${Gutter};
-  color: ${({theme}) => theme.colors.description};
-`;
-
 const PasswordParagraph = styled(BaseText)`
   margin: 0px 20px 20px 20px;
   color: ${({theme}) => theme.colors.description};
-`;
-
-const HeaderContainer = styled.View`
-  padding: ${Gutter};
-  justify-content: space-between;
-  flex-direction: row;
-  align-items: center;
-`;
-
-const ScanContainer = styled.TouchableOpacity`
-  height: 25px;
-  width: 25px;
-  align-items: center;
-  justify-content: center;
 `;
 
 const ErrorText = styled(BaseText)`
@@ -171,6 +152,20 @@ const CurrencyOptions = SupportedCurrencyOptions.filter(
   currency => !currency.isToken,
 );
 
+const RowContainer = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  padding: 18px;
+`;
+
+const InputContainer = styled.View`
+  padding: 18px;
+`;
+
+const CtaContainer = styled(_CtaContainer)`
+  padding: 10px 0;
+`;
+
 const RecoveryPhrase = () => {
   const dispatch = useDispatch();
   const logger = useLogger();
@@ -199,23 +194,21 @@ const RecoveryPhrase = () => {
   } = useForm({resolver: yupResolver(schema)});
 
   const showErrorModal = (e: string) => {
-    setTimeout(() => {
-      dispatch(
-        showBottomNotificationModal({
-          type: 'warning',
-          title: 'Something went wrong',
-          message: e,
-          enableBackdropDismiss: true,
-          actions: [
-            {
-              text: 'OK',
-              action: () => {},
-              primary: true,
-            },
-          ],
-        }),
-      );
-    }, 500);
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: 'Something went wrong',
+        message: e,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'OK',
+            action: () => {},
+            primary: true,
+          },
+        ],
+      }),
+    );
   };
 
   const isValidPhrase = (words: string) => {
@@ -306,25 +299,26 @@ const RecoveryPhrase = () => {
         startOnGoingProcessModal(OnGoingProcessMessages.IMPORTING),
       );
       const key = !derivationPathEnabled
-        ? // @ts-ignore
-          await dispatch<Key>(startImportMnemonic(importData, opts))
-        : // @ts-ignore
-          await dispatch<Key>(startImportWithDerivationPath(importData, opts));
+        ? ((await dispatch<any>(startImportMnemonic(importData, opts))) as Key)
+        : ((await dispatch<any>(
+            startImportWithDerivationPath(importData, opts),
+          )) as Key);
 
       await dispatch(startUpdateAllWalletBalancesForKey(key));
       await dispatch(updatePortfolioBalance());
-      navigateToTermsOrOverview({
+      backupRedirect({
         context: route.params?.context,
         navigation,
         walletTermsAccepted,
         key,
       });
+      dispatch(dismissOnGoingProcessModal());
     } catch (e: any) {
       logger.error(e.message);
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
       showErrorModal(e.message);
       return;
-    } finally {
-      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -357,13 +351,13 @@ const RecoveryPhrase = () => {
   return (
     <ScrollViewContainer>
       <ImportContainer>
-        <ImportParagraph>
+        <Paragraph>
           Enter your recovery phrase (usually 12-words) in the correct order.
           Separate each word with a single space only (no commas or any other
           punctuation). For backup phrases in non-English languages: Some words
           may include special symbols, so be sure to spell all the words
           correctly.
-        </ImportParagraph>
+        </Paragraph>
 
         <HeaderContainer>
           <ImportTitle>Recovery phrase</ImportTitle>
@@ -445,49 +439,52 @@ const RecoveryPhrase = () => {
             </AdvancedOptionsButton>
 
             {showOptions && (
-              <RowContainer
-                style={{marginLeft: 10, marginRight: 10}}
-                activeOpacity={1}
-                onPress={() => {
-                  setDerivationPathEnabled(!derivationPathEnabled);
-                }}>
-                <Column>
-                  <OptionTitle>Specify Derivation Path</OptionTitle>
-                </Column>
-                <CheckBoxContainer>
-                  <Checkbox
-                    checked={derivationPathEnabled}
-                    onPress={() => {
-                      setDerivationPathEnabled(!derivationPathEnabled);
-                    }}
-                  />
-                </CheckBoxContainer>
-              </RowContainer>
+              <AdvancedOptions>
+                <RowContainer
+                  activeOpacity={1}
+                  onPress={() => {
+                    setDerivationPathEnabled(!derivationPathEnabled);
+                  }}>
+                  <Column>
+                    <OptionTitle>Specify Derivation Path</OptionTitle>
+                  </Column>
+                  <CheckBoxContainer>
+                    <Checkbox
+                      checked={derivationPathEnabled}
+                      onPress={() => {
+                        setDerivationPathEnabled(!derivationPathEnabled);
+                      }}
+                    />
+                  </CheckBoxContainer>
+                </RowContainer>
+              </AdvancedOptions>
             )}
 
             {showOptions && derivationPathEnabled && (
-              <CurrencySelectorContainer>
-                <Label>CURRENCY</Label>
-                <CurrencyContainer
-                  activeOpacity={ActiveOpacity}
-                  onPress={() => {
-                    setCurrencyModalVisible(true);
-                  }}>
-                  <Row
-                    style={{
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
+              <AdvancedOptions>
+                <CurrencySelectorContainer>
+                  <Label>CURRENCY</Label>
+                  <CurrencyContainer
+                    activeOpacity={ActiveOpacity}
+                    onPress={() => {
+                      setCurrencyModalVisible(true);
                     }}>
-                    <Row style={{alignItems: 'center'}}>
-                      <CurrencyImage img={selectedCurrency.img} size={30} />
-                      <CurrencyName>
-                        {selectedCurrency?.currencyAbbreviation}
-                      </CurrencyName>
+                    <Row
+                      style={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}>
+                      <Row style={{alignItems: 'center'}}>
+                        <CurrencyImage img={selectedCurrency.img} size={30} />
+                        <CurrencyName>
+                          {selectedCurrency?.currencyAbbreviation}
+                        </CurrencyName>
+                      </Row>
+                      <Icons.DownToggle />
                     </Row>
-                    <Icons.DownToggle />
-                  </Row>
-                </CurrencyContainer>
-              </CurrencySelectorContainer>
+                  </CurrencyContainer>
+                </CurrencySelectorContainer>
+              </AdvancedOptions>
             )}
 
             <SheetModal
@@ -508,45 +505,48 @@ const RecoveryPhrase = () => {
 
             {showOptions && derivationPathEnabled && (
               <AdvancedOptions>
-                <BoxInput
-                  label={'DERIVATION PATH'}
-                  onChangeText={(text: string) =>
-                    setOptions({...options, derivationPath: text})
-                  }
-                  value={options.derivationPath}
-                />
+                <InputContainer>
+                  <BoxInput
+                    label={'DERIVATION PATH'}
+                    onChangeText={(text: string) =>
+                      setOptions({...options, derivationPath: text})
+                    }
+                    value={options.derivationPath}
+                  />
+                </InputContainer>
               </AdvancedOptions>
             )}
 
             {showOptions &&
               derivationPathEnabled &&
               options.derivationPath === DefaultDerivationPath.defaultBTC && (
-                <RowContainer
-                  style={{marginLeft: 10, marginRight: 10}}
-                  activeOpacity={1}
-                  onPress={() => {
-                    setOptions({...options, isMultisig: !options.isMultisig});
-                  }}>
-                  <Column>
-                    <OptionTitle>Shared Wallet</OptionTitle>
-                  </Column>
-                  <CheckBoxContainer>
-                    <Checkbox
-                      checked={options.isMultisig}
-                      onPress={() => {
-                        setOptions({
-                          ...options,
-                          isMultisig: !options.isMultisig,
-                        });
-                      }}
-                    />
-                  </CheckBoxContainer>
-                </RowContainer>
+                <AdvancedOptions>
+                  <RowContainer
+                    activeOpacity={1}
+                    onPress={() => {
+                      setOptions({...options, isMultisig: !options.isMultisig});
+                    }}>
+                    <Column>
+                      <OptionTitle>Shared Wallet</OptionTitle>
+                    </Column>
+                    <CheckBoxContainer>
+                      <Checkbox
+                        checked={options.isMultisig}
+                        onPress={() => {
+                          setOptions({
+                            ...options,
+                            isMultisig: !options.isMultisig,
+                          });
+                        }}
+                      />
+                    </CheckBoxContainer>
+                  </RowContainer>
+                </AdvancedOptions>
               )}
 
             {showOptions && (
-              <>
-                <AdvancedOptions>
+              <AdvancedOptions>
+                <InputContainer>
                   <BoxInput
                     placeholder={'strongPassword123'}
                     type={'password'}
@@ -555,13 +555,13 @@ const RecoveryPhrase = () => {
                     }
                     value={options.passphrase}
                   />
-                </AdvancedOptions>
+                </InputContainer>
                 <PasswordParagraph>
                   This field is only for users who, in previous versions (it's
                   not supported anymore), set a password to protect their
                   recovery phrase. This field is not for your encrypt password.
                 </PasswordParagraph>
-              </>
+              </AdvancedOptions>
             )}
           </AdvancedOptionsContainer>
         </CtaContainer>

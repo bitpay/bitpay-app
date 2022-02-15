@@ -228,6 +228,43 @@ export const walletReducer = (
       };
     }
 
+    case WalletActionTypes.UPDATE_KEY_NAME: {
+      const {keyId, name} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      keyToUpdate.keyName = name;
+
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
+    case WalletActionTypes.UPDATE_WALLET_NAME: {
+      const {keyId, walletId, name} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
+        if (wallet.id === walletId) {
+          wallet.walletName = name;
+        }
+        return wallet;
+      });
+
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
     default:
       return state;
   }

@@ -14,7 +14,6 @@ import {
 } from '../../../components/styled/Text';
 import {Network} from '../../../constants';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
-import {RootState} from '../../../store';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/balance';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
@@ -29,6 +28,7 @@ import ReceiveAddress from '../components/ReceiveAddress';
 import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
+import {useAppSelector} from '../../../utils/hooks';
 import {createWalletAddress} from '../../../store/wallet/effects/send/address';
 
 type WalletDetailsScreenProps = StackScreenProps<
@@ -92,9 +92,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const {walletId, key} = route.params;
-  const fullWalletObj = useSelector(({WALLET}: RootState) =>
-    findWalletById(WALLET.keys[key.id].wallets, walletId),
-  ) as Wallet;
+  const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
+  const fullWalletObj = findWalletById(wallets, walletId) as Wallet;
   const uiFormattedWallet = buildUIFormattedWallet(fullWalletObj);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
@@ -113,7 +112,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         />
       ),
     });
-  }, [navigation, uiFormattedWallet.currencyName]);
+  }, [navigation, uiFormattedWallet]);
 
   const ShareAddress = async () => {
     try {
@@ -157,7 +156,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         navigation.navigate('Wallet', {
           screen: 'WalletSettings',
           params: {
-            wallet: uiFormattedWallet,
+            key,
+            walletId,
           },
         }),
     },

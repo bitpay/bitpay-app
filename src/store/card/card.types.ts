@@ -1,6 +1,10 @@
 import {Network} from '../../constants';
 import {Card, PagedTransactionData, Transaction} from './card.models';
-import {FetchCardsStatus, FetchOverviewStatus} from './card.reducer';
+import {
+  FetchCardsStatus,
+  FetchOverviewStatus,
+  FetchVirtualCardImageUrlsStatus,
+} from './card.reducer';
 
 export type CardBrand = 'Mastercard' | 'Visa';
 export type CardProvider = 'galileo' | 'firstView';
@@ -33,6 +37,9 @@ export enum CardActionTypes {
   SUCCESS_FETCH_OVERVIEW = 'CARD/SUCCESS_FETCH_OVERVIEW',
   FAILED_FETCH_OVERVIEW = 'CARD/FAILED_FETCH_OVERVIEW',
   UPDATE_FETCH_OVERVIEW_STATUS = 'CARD/UPDATE_FETCH_OVERVIEW_STATUS',
+  SUCCESS_FETCH_VIRTUAL_IMAGE_URLS = 'CARD/SUCCESS_FETCH_VIRTUAL_IMAGE_URLS',
+  FAILED_FETCH_VIRTUAL_IMAGE_URLS = 'CARD/FAILED_FETCH_VIRTUAL_IMAGE_URLS',
+  UPDATE_FETCH_VIRTUAL_IMAGE_URLS_STATUS = 'CARD/UPDATE_FETCH_VIRTUAL_IMAGE_URLS_STATUS',
 }
 
 interface SuccessInitializeStore {
@@ -83,6 +90,20 @@ interface UpdateFetchOverviewStatus {
   payload: {id: string; status: FetchOverviewStatus};
 }
 
+interface SuccessFetchVirtualImageUrls {
+  type: CardActionTypes.SUCCESS_FETCH_VIRTUAL_IMAGE_URLS;
+  payload: {id: string; virtualCardImage: string}[];
+}
+
+interface FailedFetchVirtualImageUrls {
+  type: CardActionTypes.FAILED_FETCH_VIRTUAL_IMAGE_URLS;
+}
+
+interface UpdateFetchVirtualImageUrlsStatus {
+  type: CardActionTypes.UPDATE_FETCH_VIRTUAL_IMAGE_URLS_STATUS;
+  payload: FetchVirtualCardImageUrlsStatus;
+}
+
 export type CardActionType =
   | SuccessInitializeStore
   | SuccessFetchCards
@@ -91,4 +112,7 @@ export type CardActionType =
   | VirtualDesignCurrencyUpdated
   | SuccessFetchOverview
   | FailedFetchOverview
-  | UpdateFetchOverviewStatus;
+  | UpdateFetchOverviewStatus
+  | SuccessFetchVirtualImageUrls
+  | FailedFetchVirtualImageUrls
+  | UpdateFetchVirtualImageUrlsStatus;

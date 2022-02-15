@@ -12,6 +12,7 @@ import {
   PendingLoginStatus,
   FetchDoshTokenStatus,
 } from './bitpay-id.reducer';
+import {InitialUserData} from '../../api/user/user.types';
 
 export const successFetchSession = (session: Session): BitPayIdActionType => ({
   type: BitPayIdActionTypes.SUCCESS_FETCH_SESSION,
@@ -138,12 +139,12 @@ export const completedPairing = (): BitPayIdActionType => ({
   type: BitPayIdActionTypes.COMPLETED_PAIRING,
 });
 
-export const successFetchAllUserData = (
+export const successInitializeStore = (
   network: Network,
-  {user, doshToken}: {user: User; doshToken?: string},
+  data: InitialUserData,
 ): BitPayIdActionType => ({
-  type: BitPayIdActionTypes.SUCCESS_FETCH_ALL_USER_DATA,
-  payload: {network, user, doshToken},
+  type: BitPayIdActionTypes.SUCCESS_INITIALIZE_STORE,
+  payload: {network, user: data.basicInfo, doshToken: data.doshToken},
 });
 
 export const successFetchBasicInfo = (
