@@ -12,10 +12,8 @@ import {
   Row,
   ActiveOpacity,
 } from '../../../../components/styled/Containers';
-import {
-  getCoinAndNetwork,
-  ValidateAddress,
-} from '../../../../constants/address';
+import {ValidateAddress} from '../../../../constants/address';
+import {GetCoinAndNetwork} from '../../../../store/wallet/effects/send/address';
 import {ContactRowProps} from '../../../../components/list/ContactRow';
 import {useNavigation} from '@react-navigation/core';
 import {useDispatch, useSelector} from 'react-redux';
@@ -186,7 +184,7 @@ const ContactsAdd = () => {
 
   const processAddress = (address?: string) => {
     if (address) {
-      const coinAndNetwork = getCoinAndNetwork(address);
+      const coinAndNetwork = GetCoinAndNetwork(address);
       if (coinAndNetwork) {
         const isValid = ValidateAddress(
           address,
