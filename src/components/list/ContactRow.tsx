@@ -50,7 +50,7 @@ const ContactRow = ({contact, onPress}: Props) => {
     <ContactContainer underlayColor={underlayColor} onPress={onPress}>
       <RowContainer>
         <ContactImageContainer>
-          <ContactIcon coin={coin} />
+          <ContactIcon coin={coin} name={name} />
         </ContactImageContainer>
         <ContactColumn>
           <H5>{name}</H5>

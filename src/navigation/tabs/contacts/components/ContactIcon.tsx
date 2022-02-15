@@ -36,10 +36,10 @@ const CoinBadge: React.FC<BadgeProps> = ({coin, size = 20}) => {
   );
 };
 
-const ContactIcon: React.FC<ContactSvgProps> = ({coin, size = 50}) => {
+const ContactIcon: React.FC<ContactSvgProps> = ({name, coin, size = 50}) => {
   return (
     <ContactIconContainer>
-      <ProfileIcon size={size} />
+      <ProfileIcon size={size} name={name} />
       {coin ? <CoinBadge coin={coin} size={size / 2.5} /> : null}
     </ContactIconContainer>
   );

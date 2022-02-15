@@ -157,6 +157,7 @@ const Avatar: React.FC<AvatarProps> = ({size, name}) => {
   // Use name to display icon with initials
   if (name) {
     initials = getInitials(name);
+    initials = ''; // Show generic icon for now
   }
 
   const isVerified = false; // TODO
