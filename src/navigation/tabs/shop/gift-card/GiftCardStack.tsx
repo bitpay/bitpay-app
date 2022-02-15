@@ -9,10 +9,12 @@ import BuyGiftCard from './screens/BuyGiftCard';
 import GiftCardDetails from './screens/GiftCardDetails';
 import ArchivedGiftCards from './screens/ArchivedGiftCards';
 import EnterPhone from './screens/EnterPhone';
+import EnterEmail from './screens/EnterEmail';
 
 export type GiftCardStackParamList = {
   ArchivedGiftCards: {giftCards: GiftCard[]; supportedGiftCards: CardConfig[]};
   BuyGiftCard: {cardConfig: CardConfig};
+  EnterEmail: {cardConfig: CardConfig};
   EnterPhone: {cardConfig: CardConfig};
   GiftCardDetails: {cardConfig: CardConfig; giftCard: GiftCard};
 };
@@ -20,6 +22,7 @@ export type GiftCardStackParamList = {
 export enum GiftCardScreens {
   ARCHIVED_GIFT_CARDS = 'ArchivedGiftCards',
   BUY_GIFT_CARD = 'BuyGiftCard',
+  ENTER_EMAIL = 'EnterEmail',
   ENTER_PHONE = 'EnterPhone',
   GIFT_CARD_DETAILS = 'GiftCardDetails',
 }
@@ -45,6 +48,10 @@ const GiftCardStack = () => {
       <GiftCards.Screen
         name={GiftCardScreens.BUY_GIFT_CARD}
         component={BuyGiftCard}
+      />
+      <GiftCards.Screen
+        name={GiftCardScreens.ENTER_EMAIL}
+        component={EnterEmail}
       />
       <GiftCards.Screen
         name={GiftCardScreens.ENTER_PHONE}
