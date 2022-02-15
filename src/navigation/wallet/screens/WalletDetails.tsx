@@ -29,7 +29,7 @@ import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
 import {useAppSelector} from '../../../utils/hooks';
-import {createWalletAddress} from '../../../store/wallet/effects/send/address';
+import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import WalletTransactionList from '../components/WalletTransactionList';
 
 type WalletDetailsScreenProps = StackScreenProps<
