@@ -29,6 +29,7 @@ import {
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {useDispatch} from 'react-redux';
 import {AppActions} from '../../../../../store/app';
+import {cardReduxPersistBlacklist} from '../../../../../store/card/card.reducer';
 
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;
@@ -76,14 +77,6 @@ const SupportedAmountsLabel = styled(GiftCardDenomText)`
   margin-bottom: 2px;
 `;
 
-const getHeaderTitle = (displayName: string) => {
-  const fullTitle = `Buy ${displayName} Gift Card`;
-  const maxTitleLength = 25;
-  return fullTitle.length > maxTitleLength
-    ? fullTitle.replace('Gift Card', '')
-    : fullTitle;
-};
-
 const getMiddleIndex = (arr: number[]) => arr && Math.floor(arr.length / 2);
 
 const BuyGiftCard = ({
@@ -99,7 +92,7 @@ const BuyGiftCard = ({
   );
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: getHeaderTitle(cardConfig.displayName),
+      headerTitle: `Buy ${cardConfig.displayName} Gift Card`,
     });
   });
 
@@ -107,6 +100,11 @@ const BuyGiftCard = ({
     cardConfig.phoneRequired
       ? navigator.navigate('GiftCard', {
           screen: GiftCardScreens.ENTER_PHONE,
+          params: {cardConfig},
+        })
+      : cardConfig.emailRequired
+      ? navigator.navigate('GiftCard', {
+          screen: GiftCardScreens.ENTER_EMAIL,
           params: {cardConfig},
         })
       : undefined;
@@ -202,6 +200,7 @@ const BuyGiftCard = ({
               );
               console.log('show activation fee sheet', activationFee);
             } else {
+              next();
               // Go to amount screen;
             }
           }}
