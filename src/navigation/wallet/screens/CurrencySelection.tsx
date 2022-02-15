@@ -62,7 +62,7 @@ interface ContextHandler {
   removeCheckbox?: boolean;
 }
 
-const CurrencySelectionContainer = styled.SafeAreaView`
+const CurrencySelectionContainer = styled.View`
   flex: 1;
 `;
 

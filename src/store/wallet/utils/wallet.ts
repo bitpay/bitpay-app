@@ -140,8 +140,10 @@ export const toFiat = (
   return totalAmount * (1 / currencyOpt.unitInfo.unitToSatoshi) * fiatRate;
 };
 
-export const findWalletById = (wallets: Wallet[], id: string) =>
-  wallets.find(wallet => wallet.id === id);
+export const findWalletById = (
+  wallets: Wallet[],
+  id: string,
+): Wallet | undefined => wallets.find(wallet => wallet.id === id);
 
 export const isBalanceCacheKeyStale = (timestamp: number | undefined) => {
   if (!timestamp) {
@@ -150,4 +152,15 @@ export const isBalanceCacheKeyStale = (timestamp: number | undefined) => {
 
   const TTL = BALANCE_CACHE_DURATION * 1000;
   return Date.now() - timestamp > TTL;
+};
+
+export const checkEncryptPassword = (key: Key, password: string) =>
+  key.methods.checkPassword(password);
+
+export const generateKeyExportCode = (
+  key: Key,
+  encryptPassword?: string | undefined,
+): string => {
+  const {mnemonic: getKeyMnemonic} = key.methods.get(encryptPassword);
+  return `1|${getKeyMnemonic}|null|null|${key.properties.mnemonic}|null`;
 };

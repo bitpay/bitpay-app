@@ -4,7 +4,10 @@ import React, {useEffect, useState} from 'react';
 import {Key} from '../../../store/wallet/wallet.models';
 import {useNavigation} from '@react-navigation/native';
 import {useDispatch} from 'react-redux';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {
+  dismissBottomNotificationModal,
+  showBottomNotificationModal,
+} from '../../../store/app/app.actions';
 import {WalletActions} from '../../../store/wallet';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {GeneralError, WrongPasswordError} from './ErrorMessages';
@@ -37,6 +40,25 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
         );
         setPasswordToggle(false);
         dispatch(AppActions.dismissDecryptPasswordModal());
+        await sleep(500);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'success',
+            title: 'Password Removed',
+            message:
+              'Your encryption password has been removed. This key is now decrypted.',
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: 'GOT IT',
+                action: () => {
+                  dispatch(dismissBottomNotificationModal());
+                },
+                primary: true,
+              },
+            ],
+          }),
+        );
       } catch (e) {
         console.log(`Decrypt Error: ${e}`);
         dispatch(AppActions.dismissDecryptPasswordModal());

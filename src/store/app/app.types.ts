@@ -16,6 +16,7 @@ export enum AppActionTypes {
   DISMISS_ONGOING_PROCESS_MODAL = 'APP/DISMISS_ONGOING_PROCESS_MODAL',
   SHOW_BOTTOM_NOTIFICATION_MODAL = 'APP/SHOW_BOTTOM_NOTIFICATION_MODAL',
   DISMISS_BOTTOM_NOTIFICATION_MODAL = 'APP/DISMISS_BOTTOM_NOTIFICATION_MODAL',
+  RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG = 'APP/RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG',
   SET_COLOR_SCHEME = 'APP/SET_COLOR_SCHEME',
   SET_CURRENT_ROUTE = 'APP/SET_CURRENT_ROUTE',
   SUCCESS_GENERATE_APP_IDENTITY = 'APP/SUCCESS_GENERATE_APP_IDENTITY',
@@ -68,6 +69,10 @@ interface DismissBottomNotificationModal {
   type: typeof AppActionTypes.DISMISS_BOTTOM_NOTIFICATION_MODAL;
 }
 
+interface ResetBottomNotificationModalConfig {
+  type: typeof AppActionTypes.RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG;
+}
+
 interface SetColorScheme {
   type: typeof AppActionTypes.SET_COLOR_SCHEME;
   payload: ColorSchemeName;
@@ -114,7 +119,7 @@ interface DismissDecryptPasswordModal {
   type: typeof AppActionTypes.DISMISS_DECRYPT_PASSWORD_MODAL;
 }
 
-interface resetDecryptPasswordConfig {
+interface ResetDecryptPasswordConfig {
   type: typeof AppActionTypes.RESET_DECRYPT_PASSWORD_CONFIG;
 }
 
@@ -128,6 +133,7 @@ export type AppActionType =
   | DismissOnGoingProcessModal
   | ShowBottomNotificationModal
   | DismissBottomNotificationModal
+  | ResetBottomNotificationModalConfig
   | SetColorScheme
   | SetCurrentRoute
   | SuccessGenerateAppIdentity
@@ -138,4 +144,4 @@ export type AppActionType =
   | SetDefaultLanguage
   | ShowDecryptPasswordModal
   | DismissDecryptPasswordModal
-  | resetDecryptPasswordConfig;
+  | ResetDecryptPasswordConfig;

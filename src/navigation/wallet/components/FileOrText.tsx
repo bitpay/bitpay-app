@@ -27,7 +27,7 @@ import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
-import {navigateToTermsOrOverview} from '../screens/Backup';
+import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
 
 const BWCProvider = BwcProvider.getInstance();
@@ -73,7 +73,7 @@ const FileOrText = () => {
       );
       // @ts-ignore
       const key = await dispatch<Key>(startImportFile(decryptBackupText, opts));
-      navigateToTermsOrOverview({
+      backupRedirect({
         context: route.params?.context,
         navigation,
         walletTermsAccepted,

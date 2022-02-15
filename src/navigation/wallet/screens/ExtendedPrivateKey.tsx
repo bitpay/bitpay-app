@@ -6,13 +6,7 @@ import {ScreenGutter} from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {useDispatch} from 'react-redux';
-import {AppActions} from '../../../store/app';
-import {GeneralError, WrongPasswordError} from '../components/ErrorMessages';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {useLogger} from '../../../utils/hooks';
 import Clipboard from '@react-native-community/clipboard';
-import {sleep} from '../../../utils/helper-methods';
 
 const ExtendedPrivateKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -33,59 +27,12 @@ const ExtendedPrivateKeyParagraph = styled(Paragraph)`
 
 const ExtendedPrivateKey = () => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
-  const logger = useLogger();
 
   const {
-    params: {key},
-  } = useRoute<RouteProp<WalletStackParamList, 'CreateEncryptPassword'>>();
-
-  const getInitKey = () => {
-    if (!key.isPrivKeyEncrypted) {
-      return key.properties.xPrivKey;
-    }
-    return '';
-  };
+    params: {xPrivKey},
+  } = useRoute<RouteProp<WalletStackParamList, 'ExtendedPrivateKey'>>();
 
   const [copied, setCopied] = useState(false);
-  let [xPrivKey, setXPrivKey] = useState(getInitKey());
-
-  const onSubmitPassword = async (password: string) => {
-    if (password) {
-      try {
-        const getKey = key.methods.get(password);
-        setXPrivKey(getKey.xPrivKey);
-        dispatch(AppActions.dismissDecryptPasswordModal());
-      } catch (e) {
-        console.log(`Decrypt Error: ${e}`);
-        await dispatch(AppActions.dismissDecryptPasswordModal());
-        navigation.goBack();
-        await sleep(500); // Wait to close Decrypt Password modal
-        dispatch(showBottomNotificationModal(WrongPasswordError()));
-      }
-    } else {
-      dispatch(AppActions.dismissDecryptPasswordModal());
-      navigation.goBack();
-      await sleep(500); // Wait to close Decrypt Password modal
-      dispatch(showBottomNotificationModal(GeneralError));
-      logger.debug('Missing Key Error');
-    }
-  };
-
-  if (key.isPrivKeyEncrypted && !xPrivKey) {
-    setTimeout(() => {
-      dispatch(
-        AppActions.showDecryptPasswordModal({
-          onSubmitHandler: onSubmitPassword,
-          description:
-            'An encryption password is required when you’re sending crypto or managing settings. If you would like to disable this, go to your wallet settings.',
-          onCancelHandler: () => {
-            navigation.goBack();
-          },
-        }),
-      );
-    }, 200); // Wait for screen animation
-  }
 
   useLayoutEffect(() => {
     navigation.setOptions({
