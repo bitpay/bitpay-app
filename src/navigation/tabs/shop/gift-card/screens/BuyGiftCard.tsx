@@ -3,7 +3,7 @@ import {Platform, ScrollView} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import LinearGradient from 'react-native-linear-gradient';
 import Markdown from 'react-native-markdown-display';
-import {GiftCardStackParamList} from '../GiftCardStack';
+import {GiftCardScreens, GiftCardStackParamList} from '../GiftCardStack';
 import RemoteImage from '../../components/RemoteImage';
 import {BaseText, fontFamily} from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
@@ -26,7 +26,7 @@ import {
   formatAmount,
   getActivationFee,
 } from '../../../../../lib/gift-cards/gift-card';
-import {useTheme} from '@react-navigation/native';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import {useDispatch} from 'react-redux';
 import {AppActions} from '../../../../../store/app';
 
@@ -90,6 +90,7 @@ const BuyGiftCard = ({
   route,
   navigation,
 }: StackScreenProps<GiftCardStackParamList, 'BuyGiftCard'>) => {
+  const navigator = useNavigation();
   const dispatch = useDispatch();
   const theme = useTheme();
   const {cardConfig} = route.params;
@@ -101,6 +102,16 @@ const BuyGiftCard = ({
       headerTitle: getHeaderTitle(cardConfig.displayName),
     });
   });
+
+  const next = () => {
+    cardConfig.phoneRequired
+      ? navigator.navigate('GiftCard', {
+          screen: GiftCardScreens.ENTER_PHONE,
+          params: {cardConfig},
+        })
+      : undefined;
+  };
+
   return (
     <>
       <ScrollView
@@ -181,6 +192,7 @@ const BuyGiftCard = ({
                     {
                       text: 'GOT IT',
                       action: () => {
+                        next();
                         // Go to phone/email screen if required or confirm screen if not
                       },
                       primary: true,

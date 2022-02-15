@@ -111,6 +111,7 @@ PODS:
     - GoogleUtilities/Logger
   - GTMSessionFetcher/Core (1.7.0)
   - hermes-engine (0.7.2)
+  - InputMask (6.1.0)
   - libevent (2.1.12)
   - libwebp (1.2.1):
     - libwebp/demux (= 1.2.1)
@@ -387,6 +388,10 @@ PODS:
     - React-Core
   - react-native-safe-area-context (3.3.2):
     - React-Core
+  - react-native-text-input-mask (3.1.4):
+    - InputMask (~> 6.1.0)
+    - React-Core
+    - React-RCTText
   - react-native-tracking-transparency (0.1.1):
     - React
   - react-native-webview (11.17.1):
@@ -577,6 +582,7 @@ DEPENDENCIES:
   - react-native-pager-view (from `../node_modules/react-native-pager-view`)
   - react-native-randombytes (from `../node_modules/react-native-randombytes`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
+  - react-native-text-input-mask (from `../node_modules/react-native-text-input-mask`)
   - react-native-tracking-transparency (from `../node_modules/react-native-tracking-transparency`)
   - react-native-webview (from `../node_modules/react-native-webview`)
   - React-perflogger (from `../node_modules/react-native/ReactCommon/reactperflogger`)
@@ -630,6 +636,7 @@ SPEC REPOS:
     - GoogleUtilitiesComponents
     - GTMSessionFetcher
     - hermes-engine
+    - InputMask
     - libevent
     - libwebp
     - MLImage
@@ -694,6 +701,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-randombytes"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
+  react-native-text-input-mask:
+    :path: "../node_modules/react-native-text-input-mask"
   react-native-tracking-transparency:
     :path: "../node_modules/react-native-tracking-transparency"
   react-native-webview:
@@ -766,7 +775,7 @@ SPEC CHECKSUMS:
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   DoubleConversion: cf9b38bf0b2d048436d9a82ad2abe1404f11e7de
   FBLazyVector: 7b423f9e248eae65987838148c36eec1dbfe0b53
-  FBReactNativeSpec: dd46d4e146208387b271b7500a66f67bfab74b52
+  FBReactNativeSpec: c2df733ab5d344861b17c2f2bbd8c4cacd3fd90d
   Flipper: d3da1aa199aad94455ae725e9f3aa43f3ec17021
   Flipper-DoubleConversion: 38631e41ef4f9b12861c67d17cb5518d06badc41
   Flipper-Folly: 755929a4f851b2fb2c347d533a23f191b008554c
@@ -782,6 +791,7 @@ SPEC CHECKSUMS:
   GoogleUtilitiesComponents: 679b2c881db3b615a2777504623df6122dd20afe
   GTMSessionFetcher: 43748f93435c2aa068b1cbe39655aaf600652e91
   hermes-engine: 7d97ba46a1e29bacf3e3c61ecb2804a5ddd02d4f
+  InputMask: 71d291dc54d2deaeac6512afb6ec2304228c0bb7
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
   libwebp: 98a37e597e40bfdb4c911fc98f2c53d0b12d05fc
   MLImage: a454f9f8ecfd537783a12f9488f5be1a68820829
@@ -812,6 +822,7 @@ SPEC CHECKSUMS:
   react-native-pager-view: 3ee7d4c7697fb3ef788346e834a60cca97ed8540
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
   react-native-safe-area-context: 584dc04881deb49474363f3be89e4ca0e854c057
+  react-native-text-input-mask: 36a546b378fadd2efe1b7484a859d34bc2c80395
   react-native-tracking-transparency: b2029ff756f1128b1f2c7c7c7f3003bc3c950f9f
   react-native-webview: 162b6453d074e0b1c7025242bb7a939b6f72b9e7
   React-perflogger: aad6d4b4a267936b3667260d1f649b6f6069a675
@@ -847,6 +858,6 @@ SPEC CHECKSUMS:
   Yoga: a7de31c64fe738607e7a3803e3f591a4b1df7393
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
 
-PODFILE CHECKSUM: d382803ffbb5f95d616c30d5f0ada58e098ba93f
+PODFILE CHECKSUM: ca8c5c63da7550220f322edd5b3716bd0343e768
 
 COCOAPODS: 1.11.2
