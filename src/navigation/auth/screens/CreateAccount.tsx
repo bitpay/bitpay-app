@@ -73,6 +73,12 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
   const [isRecaptchaVisible, setRecaptchaVisible] = useState(false);
 
   useEffect(() => {
+    return () => {
+      dispatch(BitPayIdActions.updateCreateAccountStatus(null));
+    };
+  }, [dispatch]);
+
+  useEffect(() => {
     if (createAccountStatus === 'success') {
       if (!isVerified) {
         navigation.navigate('VerifyEmail');
@@ -91,10 +97,6 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
         });
       }
     }
-
-    return () => {
-      dispatch(BitPayIdActions.updateCreateAccountStatus(null));
-    };
   }, [createAccountStatus, isVerified, navigation, dispatch]);
 
   const onSubmit = handleSubmit(formData => {
