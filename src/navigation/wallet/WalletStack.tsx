@@ -51,9 +51,9 @@ export type WalletStackParamList = {
   CreationOptions: undefined;
   Import: ImportParamList | undefined;
   CreateEncryptPassword: {key: Key};
-  ExtendedPrivateKey: {key: Key};
+  ExtendedPrivateKey: {xPrivKey: string};
   DeleteKey: {keyId: string};
-  ExportKey: {key: Key};
+  ExportKey: {code: string; keyName: string | undefined};
   Amount: AmountParamList;
   SendTo: {wallet: WalletModel};
 };

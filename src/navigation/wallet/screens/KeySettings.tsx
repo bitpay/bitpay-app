@@ -31,8 +31,8 @@ import {useAppSelector} from '../../../utils/hooks';
 import {AppActions} from '../../../store/app';
 import {sleep} from '../../../utils/helper-methods';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {GeneralError, WrongPasswordError} from '../components/ErrorMessages';
-import {useLogger} from '../../../utils/hooks';
+import {WrongPasswordError} from '../components/ErrorMessages';
+import {generateKeyExportCode} from '../../../store/wallet/utils/wallet';
 
 const WalletSettingsContainer = styled.View`
   flex: 1;
@@ -100,7 +100,6 @@ const KeySettings = () => {
   const wallets = buildNestedWalletList(key.wallets);
   const keyName = useAppSelector(({WALLET}) => WALLET.keys[key.id]?.keyName);
   const {isPrivKeyEncrypted} = key;
-  const logger = useLogger();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -115,34 +114,21 @@ const KeySettings = () => {
     }
   });
 
-  const onSubmitPassword = async (password: string) => {
-    if (password) {
-      try {
-        const getKey = key.methods.get(password);
-        navigation.navigate('Wallet', {
-          screen: 'RecoveryPhrase',
-          params: {
-            keyId: key.id,
-            words: getKey.mnemonic.trim().split(' '),
-            walletTermsAccepted: true,
-            context: 'keySettings',
-            key,
-          },
-        });
-        dispatch(AppActions.dismissDecryptPasswordModal());
-      } catch (e) {
-        console.log(`Decrypt Error: ${e}`);
-        await dispatch(AppActions.dismissDecryptPasswordModal());
-        await sleep(500); // Wait to close Decrypt Password modal
-        dispatch(showBottomNotificationModal(WrongPasswordError()));
-      }
-    } else {
-      dispatch(AppActions.dismissDecryptPasswordModal());
-      navigation.goBack();
-      await sleep(500); // Wait to close Decrypt Password modal
-      dispatch(showBottomNotificationModal(GeneralError));
-      logger.debug('Missing Key Error');
-    }
+  const buildEncryptModalConfig = (cta: (encryptPassword: string) => void) => {
+    return {
+      onSubmitHandler: async (encryptPassword: string) => {
+        try {
+          cta(encryptPassword);
+        } catch (e) {
+          console.log(`Decrypt Error: ${e}`);
+          await dispatch(AppActions.dismissDecryptPasswordModal());
+          await sleep(500); // Wait to close Decrypt Password modal
+          dispatch(showBottomNotificationModal(WrongPasswordError()));
+        }
+      },
+      description: 'To continue please enter your encryption password.',
+      onCancelHandler: () => null,
+    };
   };
 
   return (
@@ -215,14 +201,23 @@ const KeySettings = () => {
                 });
               } else {
                 dispatch(
-                  AppActions.showDecryptPasswordModal({
-                    onSubmitHandler: onSubmitPassword,
-                    description:
-                      'An encryption password is required when you’re sending crypto or managing settings. If you would like to disable this, go to your wallet settings.',
-                    onCancelHandler: () => {
-                      navigation.goBack();
-                    },
-                  }),
+                  AppActions.showDecryptPasswordModal(
+                    buildEncryptModalConfig(async encryptPassword => {
+                      const {id, mnemonic} = key.methods.get(encryptPassword);
+                      await dispatch(AppActions.dismissDecryptPasswordModal());
+                      await sleep(300);
+                      navigation.navigate('Wallet', {
+                        screen: 'RecoveryPhrase',
+                        params: {
+                          keyId: id,
+                          words: mnemonic.trim().split(' '),
+                          walletTermsAccepted: true,
+                          context: 'keySettings',
+                          key,
+                        },
+                      });
+                    }),
+                  ),
                 );
               }
             }}>
@@ -285,10 +280,29 @@ const KeySettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('Wallet', {
-                screen: 'ExportKey',
-                params: {key},
-              });
+              if (!isPrivKeyEncrypted) {
+                navigation.navigate('Wallet', {
+                  screen: 'ExportKey',
+                  params: {
+                    code: generateKeyExportCode(key),
+                    keyName,
+                  },
+                });
+              } else {
+                dispatch(
+                  AppActions.showDecryptPasswordModal(
+                    buildEncryptModalConfig(async encryptPassword => {
+                      const code = generateKeyExportCode(key, encryptPassword);
+                      dispatch(AppActions.dismissDecryptPasswordModal());
+                      await sleep(300);
+                      navigation.navigate('Wallet', {
+                        screen: 'ExportKey',
+                        params: {code, keyName},
+                      });
+                    }),
+                  ),
+                );
+              }
             }}>
             <WalletSettingsTitle>Export Key</WalletSettingsTitle>
           </Setting>
@@ -298,10 +312,28 @@ const KeySettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('Wallet', {
-                screen: 'ExtendedPrivateKey',
-                params: {key},
-              });
+              if (!isPrivKeyEncrypted) {
+                navigation.navigate('Wallet', {
+                  screen: 'ExtendedPrivateKey',
+                  params: {
+                    xPrivKey: key.properties.xPrivKey,
+                  },
+                });
+              } else {
+                dispatch(
+                  AppActions.showDecryptPasswordModal(
+                    buildEncryptModalConfig(async encryptPassword => {
+                      const {xPrivKey} = key.methods.get(encryptPassword);
+                      dispatch(AppActions.dismissDecryptPasswordModal());
+                      await sleep(300);
+                      navigation.navigate('Wallet', {
+                        screen: 'ExtendedPrivateKey',
+                        params: {xPrivKey},
+                      });
+                    }),
+                  ),
+                );
+              }
             }}>
             <WalletSettingsTitle>Extended Private Key</WalletSettingsTitle>
           </Setting>
