@@ -78,7 +78,7 @@ export const buildKeyObj = ({
   key,
   wallets,
   totalBalance = 0,
-  backupComplete = true,
+  backupComplete = false,
 }: {
   key: KeyMethods;
   wallets: Wallet[];
