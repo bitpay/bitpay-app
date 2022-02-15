@@ -18,6 +18,7 @@ interface InitialsProps {
 
 interface AvatarProps {
   size: number;
+  name?: string;
 }
 
 const AvatarContainer = styled.View`
@@ -30,7 +31,7 @@ const VerifiedCheckContainer = styled.View`
   bottom: 0;
 `;
 
-const ProfileIcon: React.FC<AvatarSvgProps> = ({
+export const ProfileIcon: React.FC<AvatarSvgProps> = ({
   size = 35,
   color,
   background,
@@ -131,14 +132,33 @@ const Initials: React.FC<InitialsProps> = ({size = 24, initials}) => {
   );
 };
 
-const Avatar: React.FC<AvatarProps> = ({size}) => {
-  const initials = useSelector<RootState, string>(({APP, BITPAY_ID}) => {
+const getInitials = (name: string) => {
+  var n = '';
+  const nameArray = name.split(/(\s+)/);
+  for (var i = 0; i < nameArray.length; i++) {
+    const initial = nameArray[i].trim().charAt(0);
+    if (initial && n.length < 2) {
+      n = n + initial;
+    }
+  }
+  return n.toUpperCase();
+};
+
+const Avatar: React.FC<AvatarProps> = ({size, name}) => {
+  var initials: string = '';
+  initials = useSelector<RootState, string>(({APP, BITPAY_ID}) => {
     const user = BITPAY_ID.user[APP.network];
     const firstInitial = (user?.givenName || '').trim().charAt(0);
     const lastInitial = (user?.familyName || '').trim().charAt(0);
 
     return `${firstInitial}${lastInitial}`.toUpperCase();
   });
+
+  // Use name to display icon with initials
+  if (name) {
+    initials = getInitials(name);
+  }
+
   const isVerified = false; // TODO
 
   return (

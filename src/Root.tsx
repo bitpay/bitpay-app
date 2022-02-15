@@ -40,7 +40,7 @@ import SecuritySettingsStack, {
 } from './navigation/tabs/settings/security/SecurityStack';
 import ContactSettingsStack, {
   ContactSettingsStackParamList,
-} from './navigation/tabs/settings/contacts/ContactsStack';
+} from './navigation/tabs/contacts/ContactsStack';
 import NotificationSettingsStack, {
   NotificationSettingsStackParamList,
 } from './navigation/tabs/settings/notifications/NotificationsStack';
