@@ -2,8 +2,8 @@ import React from 'react';
 import {
   ImportTextInput,
   ImportContainer,
-  CtaContainer,
-  HeaderTitleContainer,
+  CtaContainer as _CtaContainer,
+  HeaderContainer,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
@@ -27,10 +27,16 @@ import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
-import {navigateToTermsOrOverview} from '../screens/Backup';
+import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
+import {sleep} from '../../../utils/helper-methods';
 
 const BWCProvider = BwcProvider.getInstance();
+
+const ScrollViewContainer = styled.ScrollView`
+  margin-top: 20px;
+  padding: 0 15px;
+`;
 
 const ErrorText = styled(BaseText)`
   color: ${Caution};
@@ -39,13 +45,17 @@ const ErrorText = styled(BaseText)`
   padding: 5px 0 0 10px;
 `;
 
+const CtaContainer = styled(_CtaContainer)`
+  padding: 10px 0;
+`;
+
 const schema = yup.object().shape({
   text: yup.string().required(),
   password: yup.string().required(),
 });
 
 const InputContainer = styled.View`
-  margin-top: -10px;
+  margin-top: -20px;
 `;
 
 const FileOrText = () => {
@@ -73,39 +83,38 @@ const FileOrText = () => {
       );
       // @ts-ignore
       const key = await dispatch<Key>(startImportFile(decryptBackupText, opts));
-      navigateToTermsOrOverview({
+      backupRedirect({
         context: route.params?.context,
         navigation,
         walletTermsAccepted,
         key,
       });
+      dispatch(dismissOnGoingProcessModal());
     } catch (e: any) {
       logger.error(e.message);
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
       showErrorModal(e.message);
       return;
-    } finally {
-      dispatch(dismissOnGoingProcessModal());
     }
   };
 
   const showErrorModal = (e: string) => {
-    setTimeout(() => {
-      dispatch(
-        showBottomNotificationModal({
-          type: 'warning',
-          title: 'Something went wrong',
-          message: e,
-          enableBackdropDismiss: true,
-          actions: [
-            {
-              text: 'OK',
-              action: () => {},
-              primary: true,
-            },
-          ],
-        }),
-      );
-    }, 500);
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: 'Something went wrong',
+        message: e,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'OK',
+            action: () => {},
+            primary: true,
+          },
+        ],
+      }),
+    );
   };
 
   const onSubmit = (formData: {text: string; password: string}) => {
@@ -124,29 +133,33 @@ const FileOrText = () => {
   };
 
   return (
-    <ImportContainer>
-      <HeaderTitleContainer>
-        <ImportTitle>Backup plain text code</ImportTitle>
-      </HeaderTitleContainer>
-      <Controller
-        control={control}
-        render={({field: {onChange, onBlur, value}}) => (
-          <ImportTextInput
-            multiline
-            numberOfLines={5}
-            onChangeText={(text: string) => onChange(text)}
-            onBlur={onBlur}
-            value={value}
-          />
+    <ScrollViewContainer>
+      <ImportContainer>
+        <HeaderContainer>
+          <ImportTitle>Backup plain text code</ImportTitle>
+        </HeaderContainer>
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur, value}}) => (
+            <ImportTextInput
+              multiline
+              numberOfLines={5}
+              onChangeText={(text: string) => onChange(text)}
+              onBlur={onBlur}
+              value={value}
+            />
+          )}
+          name="text"
+          defaultValue=""
+        />
+
+        {errors?.text?.message && (
+          <ErrorText>Backup text is required.</ErrorText>
         )}
-        name="text"
-        defaultValue=""
-      />
 
-      {errors?.text?.message && <ErrorText>Backup text is required.</ErrorText>}
-
-      <HeaderTitleContainer>
-        <ImportTitle>Password</ImportTitle>
+        <HeaderContainer>
+          <ImportTitle>Password</ImportTitle>
+        </HeaderContainer>
         <Controller
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
@@ -167,14 +180,14 @@ const FileOrText = () => {
         {errors?.password?.message && (
           <ErrorText>Password is required.</ErrorText>
         )}
-      </HeaderTitleContainer>
 
-      <CtaContainer>
-        <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
-          Import Wallet
-        </Button>
-      </CtaContainer>
-    </ImportContainer>
+        <CtaContainer>
+          <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
+            Import Wallet
+          </Button>
+        </CtaContainer>
+      </ImportContainer>
+    </ScrollViewContainer>
   );
 };
 

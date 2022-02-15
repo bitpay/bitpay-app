@@ -6,30 +6,33 @@ import {
   OptionList,
   OptionListContainer,
 } from '../../../components/styled/Containers';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {
   HeaderTitle,
   OptionDescription,
   OptionTitle,
 } from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
+import {Key} from '../../../store/wallet/wallet.models';
+import {RouteProp} from '@react-navigation/core';
+import {WalletStackParamList} from '../WalletStack';
 import MultisigOptions from './MultisigOptions';
+import {Option} from './CreationOptions';
 
-export interface Option {
-  id: string;
-  title: string;
-  description: string;
-  cta: () => void;
-}
+export type AddingOptionsParamList = {
+  key: Key;
+};
 
-const CreationOptions: React.FC = () => {
+const AddingOptions: React.FC = () => {
   const navigation = useNavigation();
+  const route = useRoute<RouteProp<WalletStackParamList, 'AddingOptions'>>();
+  const {key} = route.params;
   const [showMultisigOptions, setShowMultisigOptions] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
-      headerTitle: () => <HeaderTitle>Select an option</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>Select Wallet Type</HeaderTitle>,
       headerTitleAlign: 'center',
     });
   }, [navigation]);
@@ -37,23 +40,13 @@ const CreationOptions: React.FC = () => {
   const optionList: Option[] = [
     {
       id: 'basic',
-      title: 'New Key',
+      title: 'Basic wallet',
       description:
-        'Add coins like Bitcoin and Dogecoin and also tokens like USDC and PAX',
+        'Add coins like Bitcoin and Dogecoin, and also tokens like USDC and PAX',
       cta: () =>
         navigation.navigate('Wallet', {
           screen: 'CurrencySelection',
-          params: {context: 'createNewKey'},
-        }),
-    },
-    {
-      id: 'import',
-      title: 'Import Key',
-      description:
-        'Use an existing recovery phrase to import an existing wallet',
-      cta: () =>
-        navigation.navigate('Wallet', {
-          screen: 'Import',
+          params: {context: 'addWallet', key},
         }),
     },
     {
@@ -86,9 +79,10 @@ const CreationOptions: React.FC = () => {
       <MultisigOptions
         isVisible={showMultisigOptions}
         setShowMultisigOptions={setShowMultisigOptions}
+        walletKey={key}
       />
     </>
   );
 };
 
-export default CreationOptions;
+export default AddingOptions;

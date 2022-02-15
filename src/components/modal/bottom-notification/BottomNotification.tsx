@@ -1,4 +1,4 @@
-import React, {ReactChild} from 'react';
+import React, {ReactChild, useEffect} from 'react';
 import SheetModal from '../base/sheet/SheetModal';
 import {BaseText, fontFamily, H4} from '../../styled/Text';
 import styled, {css} from 'styled-components/native';
@@ -19,8 +19,9 @@ import WarningSvg from '../../../../assets/img/warning.svg';
 import ErrorSvg from '../../../../assets/img/error.svg';
 import QuestionSvg from '../../../../assets/img/question.svg';
 import {sleep} from '../../../utils/helper-methods';
-import {Theme, useTheme} from '@react-navigation/native';
+import {Theme, useNavigation, useTheme} from '@react-navigation/native';
 import Markdown from 'react-native-markdown-display';
+import {resetBottomNotificationModalConfig} from '../../../store/app/app.actions';
 
 export interface BottomNotificationConfig {
   type: 'success' | 'info' | 'warning' | 'error' | 'question';
@@ -41,11 +42,11 @@ const svgProps = {
 };
 
 const notificationType = {
-  success: () => <SuccessSvg {...svgProps} />,
-  info: () => <InfoSvg {...svgProps} />,
-  warning: () => <WarningSvg {...svgProps} />,
-  error: () => <ErrorSvg {...svgProps} />,
-  question: () => <QuestionSvg {...svgProps} />,
+  success: <SuccessSvg {...svgProps} />,
+  info: <InfoSvg {...svgProps} />,
+  warning: <WarningSvg {...svgProps} />,
+  error: <ErrorSvg {...svgProps} />,
+  question: <QuestionSvg {...svgProps} />,
 };
 
 const BottomNotificationContainer = styled.View`
@@ -101,6 +102,7 @@ const Cta = styled(BaseText)`
 const BottomNotification = () => {
   const theme = useTheme();
   const dispatch = useDispatch();
+  const navigation = useNavigation();
   const rootState = useSelector((state: RootState) => state);
   const isVisible = useSelector(
     ({APP}: RootState) => APP.showBottomNotificationModal,
@@ -108,6 +110,12 @@ const BottomNotification = () => {
   const config = useSelector(
     ({APP}: RootState) => APP.bottomNotificationModalConfig,
   );
+
+  useEffect(() => {
+    return navigation.addListener('blur', () =>
+      dispatch(resetBottomNotificationModalConfig()),
+    );
+  }, [navigation]);
 
   const {type, title, message, actions, enableBackdropDismiss, message2} =
     config || {};
@@ -123,7 +131,7 @@ const BottomNotification = () => {
       }}>
       <BottomNotificationContainer>
         <Row>
-          <ImageContainer>{notificationType[type || 'info']()}</ImageContainer>
+          <ImageContainer>{notificationType[type || 'info']}</ImageContainer>
           <H4>{title}</H4>
         </Row>
         <MessageContainer>

@@ -10,7 +10,10 @@ import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {BaseText, H4, Paragraph} from '../../../components/styled/Text';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
-import {SheetContainer} from '../../../components/styled/Containers';
+import {
+  SheetContainer,
+  ActiveOpacity,
+} from '../../../components/styled/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
 
 import {BWCErrorMessage} from '../../../constants/BWCError';
@@ -225,7 +228,9 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
 
         {address ? (
           <>
-            <CopyToClipboard onPress={copyToClipboard} activeOpacity={0.7}>
+            <CopyToClipboard
+              onPress={copyToClipboard}
+              activeOpacity={ActiveOpacity}>
               <CopyImgContainer>
                 {!copied ? <CopySvg width={17} /> : <CopiedSvg width={17} />}
               </CopyImgContainer>
