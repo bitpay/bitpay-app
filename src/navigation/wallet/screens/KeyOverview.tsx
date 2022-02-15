@@ -97,7 +97,7 @@ const KeyDropdownOptionsContainer = styled.ScrollView`
   padding: 0 ${ScreenGutter};
 `;
 
-const ClogIconContainer = styled.TouchableOpacity`
+const CogIconContainer = styled.TouchableOpacity`
   margin-top: 10px;
   margin-right: 10px;
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
@@ -181,7 +181,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
       },
       headerRight: () => {
         return key.methods.isPrivKeyEncrypted() ? (
-          <ClogIconContainer
+          <CogIconContainer
             onPress={() =>
               navigation.navigate('Wallet', {
                 screen: 'KeySettings',
@@ -191,8 +191,8 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
               })
             }
             activeOpacity={ActiveOpacity}>
-            <Icons.Clog />
-          </ClogIconContainer>
+            <Icons.Cog />
+          </CogIconContainer>
         ) : (
           <>
             <Settings

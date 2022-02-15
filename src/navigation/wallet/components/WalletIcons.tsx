@@ -158,11 +158,11 @@ const DownToggle = () => {
   );
 };
 
-const Clog = () => {
+const Cog = () => {
   const theme = useTheme() as BitPayTheme;
 
   return (
-    <Svg.Svg width="24px" height="24px" viewBox="0 0 24 24">
+    <Svg.Svg width="20px" height="20px" viewBox="0 0 24 24">
       <Svg.G
         id="Page-1"
         stroke="none"
@@ -201,5 +201,5 @@ export default {
   ShareAddress,
   Settings,
   DownToggle,
-  Clog,
+  Cog,
 };
