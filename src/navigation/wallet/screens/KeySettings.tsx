@@ -103,11 +103,18 @@ const KeySettings = () => {
     }
   });
 
-  const buildEncryptModalConfig = (cta: (encryptPassword: string) => void) => {
+  const buildEncryptModalConfig = (
+    cta: (getKey: {
+      mnemonic: string;
+      mnemonicHasPassphrase: boolean;
+      xPrivKey: string;
+    }) => void,
+  ) => {
     return {
       onSubmitHandler: async (encryptPassword: string) => {
         try {
-          cta(encryptPassword);
+          const getKey = key.methods.get(encryptPassword);
+          cta(getKey);
         } catch (e) {
           console.log(`Decrypt Error: ${e}`);
           await dispatch(AppActions.dismissDecryptPasswordModal());
@@ -191,14 +198,13 @@ const KeySettings = () => {
               } else {
                 dispatch(
                   AppActions.showDecryptPasswordModal(
-                    buildEncryptModalConfig(async encryptPassword => {
-                      const {id, mnemonic} = key.methods.get(encryptPassword);
+                    buildEncryptModalConfig(async ({mnemonic}) => {
                       await dispatch(AppActions.dismissDecryptPasswordModal());
                       await sleep(300);
                       navigation.navigate('Wallet', {
                         screen: 'RecoveryPhrase',
                         params: {
-                          keyId: id,
+                          keyId: key.id,
                           words: mnemonic.trim().split(' '),
                           walletTermsAccepted: true,
                           context: 'settings',
@@ -280,8 +286,8 @@ const KeySettings = () => {
               } else {
                 dispatch(
                   AppActions.showDecryptPasswordModal(
-                    buildEncryptModalConfig(async encryptPassword => {
-                      const code = generateKeyExportCode(key, encryptPassword);
+                    buildEncryptModalConfig(async ({mnemonic}) => {
+                      const code = generateKeyExportCode(key, mnemonic);
                       dispatch(AppActions.dismissDecryptPasswordModal());
                       await sleep(300);
                       navigation.navigate('Wallet', {
@@ -311,8 +317,7 @@ const KeySettings = () => {
               } else {
                 dispatch(
                   AppActions.showDecryptPasswordModal(
-                    buildEncryptModalConfig(async encryptPassword => {
-                      const {xPrivKey} = key.methods.get(encryptPassword);
+                    buildEncryptModalConfig(async ({xPrivKey}) => {
                       dispatch(AppActions.dismissDecryptPasswordModal());
                       await sleep(300);
                       navigation.navigate('Wallet', {
