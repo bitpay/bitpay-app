@@ -13,33 +13,12 @@ import AuthFormContainer, {
   AuthRowContainer,
 } from '../../../../auth/components/AuthFormContainer';
 import {GiftCardStackParamList} from '../GiftCardStack';
-import {AppActions} from '../../../../../store/app';
-import {PhoneCountryCode} from '../../../../../lib/gift-cards/gift-card';
 
 const PrimaryActionContainer = styled.View`
   margin-bottom: 20px;
 `;
 
-export const showCountryCodeRequiredSheet = (
-  phoneCountryCode: PhoneCountryCode,
-) => {
-  const {countryCode, name} = phoneCountryCode;
-  return AppActions.showBottomNotificationModal({
-    type: 'info',
-    title: `${countryCode === 'US' ? 'U.S.' : countryCode} Phone Required`,
-    message: `Only a ${name} phone number can be used for this purchase.`,
-    enableBackdropDismiss: true,
-    actions: [
-      {
-        text: 'GOT IT',
-        action: () => undefined,
-        primary: true,
-      },
-    ],
-  });
-};
-
-interface PhoneFormFieldValues {
+interface EmailFormFieldValues {
   email: string;
 }
 
@@ -57,7 +36,7 @@ const EnterEmail = ({
     control,
     handleSubmit,
     formState: {errors},
-  } = useForm<PhoneFormFieldValues>({
+  } = useForm<EmailFormFieldValues>({
     resolver: yupResolver(schema),
   });
 
