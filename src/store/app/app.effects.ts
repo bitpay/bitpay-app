@@ -22,8 +22,6 @@ import analytics from '@segment/analytics-react-native';
 import {SEGMENT_API_KEY, APPSFLYER_API_KEY, APP_ID} from '@env';
 import appsFlyer from 'react-native-appsflyer';
 import {requestTrackingPermission} from 'react-native-tracking-transparency';
-import ReactNative from 'react-native';
-const {Dosh} = ReactNative.NativeModules;
 
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
@@ -68,15 +66,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
         await dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
         await dispatch(CardEffects.startCardStoreInit(data.user));
-
-        if (Dosh) {
-          // Dosh card rewards
-          Dosh.initializeDosh(__DEV__);
-
-          if (data.user.doshToken) {
-            Dosh.setDoshToken(data.user?.doshToken);
-          }
-        }
       } catch (err: any) {
         if (isAxiosError(err)) {
           dispatch(LogActions.error(`${err.name}: ${err.message}`));

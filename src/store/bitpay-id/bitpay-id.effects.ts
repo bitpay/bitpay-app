@@ -15,8 +15,6 @@ import {Effect} from '../index';
 import {LogActions} from '../log';
 import {User} from './bitpay-id.models';
 import {BitPayIdActions} from './index';
-import ReactNative from 'react-native';
-const {Dosh} = ReactNative.NativeModules;
 
 interface StartLoginParams {
   email: string;
@@ -319,10 +317,6 @@ const startPairAndLoadUser =
 
       dispatch(startBitPayIdStoreInit(data.user));
       dispatch(CardEffects.startCardStoreInit(data.user));
-
-      if (Dosh && data.user.doshToken) {
-        Dosh.setDoshToken(data.user.doshToken);
-      }
     } catch (err) {
       dispatch(LogActions.error('An error occurred while fetching user data.'));
       dispatch(LogActions.error(JSON.stringify(err)));
