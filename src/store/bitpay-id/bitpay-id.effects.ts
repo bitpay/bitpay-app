@@ -8,6 +8,7 @@ import {InitialUserData} from '../../api/user/user.types';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
 import {isAxiosError} from '../../utils/axios';
+import {generateSalt, hashPassword} from '../../utils/password';
 import {AppActions, AppEffects} from '../app/';
 import {startOnGoingProcessModal} from '../app/app.effects';
 import {CardEffects} from '../card';
@@ -48,6 +49,65 @@ export const startFetchSession = (): Effect => async (dispatch, getState) => {
     dispatch(BitPayIdActions.failedFetchSession());
   }
 };
+
+interface CreateAccountParams {
+  givenName: string;
+  familyName: string;
+  email: string;
+  password: string;
+  agreedToTOSandPP: boolean;
+  gCaptchaResponse?: string;
+}
+
+export const startCreateAccount =
+  (params: CreateAccountParams): Effect =>
+  async (dispatch, getState) => {
+    try {
+      const {APP, BITPAY_ID} = getState();
+      const salt = generateSalt();
+      const hashedPassword = hashPassword(params.password);
+
+      await AuthApi.register(APP.network, BITPAY_ID.session.csrfToken, {
+        givenName: params.givenName,
+        familyName: params.familyName,
+        email: params.email,
+        hashedPassword: hashedPassword,
+        salt: salt,
+        agreedToTOSandPP: params.agreedToTOSandPP,
+        gCaptchaResponse: params.gCaptchaResponse,
+      });
+
+      // refresh session
+      const session = await AuthApi.fetchSession(APP.network);
+
+      // start pairing
+      const secret = await AuthApi.generatePairingCode(
+        APP.network,
+        session.csrfToken,
+      );
+      await dispatch(startPairAndLoadUser(APP.network, secret));
+
+      dispatch(BitPayIdActions.successCreateAccount());
+    } catch (err) {
+      dispatch(BitPayIdActions.failedCreateAccount());
+      dispatch(LogActions.error('Failed to create account.'));
+      dispatch(LogActions.error(JSON.stringify(err)));
+    }
+  };
+
+export const startSendVerificationEmail =
+  (): Effect => async (dispatch, getState) => {
+    try {
+      const {APP, BITPAY_ID} = getState();
+
+      AuthApi.sendVerificationEmail(APP.network, BITPAY_ID.session.csrfToken);
+    } catch (err) {
+      dispatch(
+        LogActions.error('An error occurred sending verification email.'),
+      );
+      dispatch(LogActions.error(JSON.stringify(err)));
+    }
+  };
 
 export const startLogin =
   ({email, password, gCaptchaResponse}: StartLoginParams): Effect =>
@@ -233,19 +293,6 @@ export const startEmailPairing =
       });
     } finally {
       dispatch(AppActions.dismissOnGoingProcessModal());
-    }
-  };
-
-export const startCreateAccount =
-  ({email, password}: {email: string; password: string}): Effect =>
-  async dispatch => {
-    try {
-      console.log(email, password);
-
-      dispatch(AppActions.setOnboardingCompleted());
-    } catch (err) {
-      console.error(err);
-      dispatch(BitPayIdActions.failedLogin());
     }
   };
 

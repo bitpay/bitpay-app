@@ -12,6 +12,11 @@ export interface Session {
    */
   captchaKey: string;
   captchaDisabled?: boolean;
+
+  /**
+   * True if user is authenticated and has verified their email.
+   */
+  verified?: true | undefined;
 }
 
 export interface User {

@@ -8,6 +8,7 @@ import {
   LoginStatus,
   PairingBitPayIdStatus,
   PendingLoginStatus,
+  CreateAccountStatus,
   TwoFactorAuthStatus,
   TwoFactorPairingStatus,
 } from './bitpay-id.reducer';
@@ -17,6 +18,9 @@ export enum BitPayIdActionTypes {
   FAILED_FETCH_SESSION = 'BitPayId/FAILED_FETCH_SESSION',
   UPDATE_FETCH_SESSION_STATUS = 'BitPayId/UPDATE_FETCH_SESSION_STATUS',
   RESET_AUTH_STACK = 'BitPayId/RESET_AUTH_STACK',
+  SUCCESS_CREATE_ACCOUNT = 'BitPayId/SUCCESS_CREATE_ACCOUNT',
+  FAILED_CREATE_ACCOUNT = 'BitPayId/FAILED_CREATE_ACCOUNT',
+  UPDATE_CREATE_ACCOUNT_STATUS = 'BitPayId/UPDATE_CREATE_ACCOUNT_STATUS',
   SUCCESS_LOGIN = 'BitPayId/SUCCESS_LOGIN',
   FAILED_LOGIN = 'BitPayId/FAILED_LOGIN',
   PENDING_LOGIN = 'BitPayId/PENDING_LOGIN',
@@ -60,6 +64,19 @@ interface UpdateFetchSessionStatus {
 
 interface ResetAuthStack {
   type: typeof BitPayIdActionTypes.RESET_AUTH_STACK;
+}
+
+interface SuccessCreateAccount {
+  type: typeof BitPayIdActionTypes.SUCCESS_CREATE_ACCOUNT;
+}
+
+interface FailedCreateAccount {
+  type: typeof BitPayIdActionTypes.FAILED_CREATE_ACCOUNT;
+}
+
+interface UpdateCreateAccountStatus {
+  type: typeof BitPayIdActionTypes.UPDATE_CREATE_ACCOUNT_STATUS;
+  payload: CreateAccountStatus;
 }
 
 interface SuccessLogin {
@@ -185,6 +202,11 @@ export type BitPayIdActionType =
   | SuccessFetchSession
   | FailedFetchSession
   | UpdateFetchSessionStatus
+
+  // create account
+  | SuccessCreateAccount
+  | FailedCreateAccount
+  | UpdateCreateAccountStatus
 
   // auth
   | ResetAuthStack

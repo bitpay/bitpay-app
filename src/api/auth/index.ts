@@ -10,6 +10,8 @@ import {
   GeneratePairingCodeResponse,
   LoginErrorResponse,
   LoginResponse,
+  RegisterParams,
+  RegisterResponse,
 } from './auth.types';
 
 export const AuthApi = {
@@ -19,6 +21,50 @@ export const AuthApi = {
     );
 
     return session;
+  },
+
+  async register(network: Network, csrfToken: string, params: RegisterParams) {
+    try {
+      const config = {
+        headers: {
+          'x-csrf-token': csrfToken,
+        },
+      };
+
+      const {data} = await axios.post<RegisterResponse>(
+        `${BASE_BITPAY_URLS[network]}/auth/register`,
+        params,
+        config,
+      );
+
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  async sendVerificationEmail(
+    network: Network,
+    csrfToken: string,
+    returnUrl?: string,
+  ) {
+    try {
+      const config = {
+        headers: {
+          'x-csrf-token': csrfToken,
+        },
+      };
+
+      await axios.post(
+        `${BASE_BITPAY_URLS[network]}/auth/sendVerificationEmail`,
+        {
+          returnUrl: returnUrl || '/id/verify?dest=id',
+        },
+        config,
+      );
+    } catch (err) {
+      throw err;
+    }
   },
 
   async login(
@@ -128,7 +174,6 @@ export const AuthApi = {
 
       return pairingParams.secret;
     } catch (err) {
-      console.log('err:', err);
       throw err;
     }
   },
