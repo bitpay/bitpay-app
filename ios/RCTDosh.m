@@ -13,9 +13,9 @@
 
 RCT_EXPORT_MODULE();
 
-RCT_EXPORT_METHOD(initializeDosh:(bool)enableDebug)
+RCT_EXPORT_METHOD(initializeDosh)
 {
-  [DoshAdapter initDoshWithEnableDebug:enableDebug];
+  [DoshAdapter initDosh];
   RCTLogInfo(@"Initialized Dosh");
 }
 

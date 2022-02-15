@@ -18,7 +18,6 @@ export const startCardStoreInit =
     const {APP} = getState();
 
     dispatch(CardActions.successInitializeStore(APP.network, initialData));
-
     try {
       const virtualCardIds = (initialData.cards || [])
         .filter(c => c.provider === 'galileo' && c.cardType === 'virtual')
@@ -31,7 +30,7 @@ export const startCardStoreInit =
       // Dosh card rewards
       if (Dosh) {
         const {doshToken} = initialData;
-        Dosh.initializeDosh(__DEV__);
+        Dosh.initializeDosh();
 
         if (doshToken) {
           Dosh.setDoshToken(doshToken);

@@ -11,9 +11,9 @@ import UIKit
 
 public class DoshAdapter: NSObject {
   
-  @objc static func initDosh(enableDebug: Bool) {
+  @objc static func initDosh() {
     Dosh.initialize(applicationId: "REPLACE_ME")
-    Dosh.instance?.debugLoggingEnabled = enableDebug
+    Dosh.instance?.debugLoggingEnabled = true
     print("dosh initialized")
   }
 
@@ -25,6 +25,7 @@ public class DoshAdapter: NSObject {
   }
   
   @objc static func setDoshToken(token: String) {
+    print(token)
     Dosh.instance?.userAuthorization = {completion in completion(token)}
     print("dosh set token")
   }
