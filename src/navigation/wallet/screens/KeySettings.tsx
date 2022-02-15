@@ -105,7 +105,7 @@ const KeySettings = () => {
   });
 
   const buildEncryptModalConfig = (
-    cta: (getKey: {
+    cta: (decryptedKey: {
       mnemonic: string;
       mnemonicHasPassphrase: boolean;
       xPrivKey: string;
@@ -114,10 +114,10 @@ const KeySettings = () => {
     return {
       onSubmitHandler: async (encryptPassword: string) => {
         try {
-          const getKey = key.methods.get(encryptPassword);
+          const decryptedKey = key.methods.get(encryptPassword);
           dispatch(AppActions.dismissDecryptPasswordModal());
           await sleep(300);
-          cta(getKey);
+          cta(decryptedKey);
         } catch (e) {
           console.log(`Decrypt Error: ${e}`);
           await dispatch(AppActions.dismissDecryptPasswordModal());
