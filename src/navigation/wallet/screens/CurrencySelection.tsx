@@ -12,6 +12,7 @@ import CurrencySelectionRow, {
 
 import Button from '../../../components/button/Button';
 import {
+  POPULAR_TOKENS,
   SUPPORTED_TOKENS,
   SupportedCurrencies,
 } from '../../../constants/currencies';
@@ -159,23 +160,24 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     );
   };
 
+  const CURATED_TOKENS = useMemo(
+    () =>
+      ALL_CUSTOM_TOKENS.filter(token =>
+        POPULAR_TOKENS.includes(token.currencyAbbreviation),
+      ),
+    [],
+  );
+
   const contextHandler = (
     context: CurrencySelectionContext,
     key?: Key,
-    ALL_CUSTOM_TOKENS?: {
-      id: number;
-      currencyAbbreviation: string;
-      currencyName: string;
-      img: string;
-      isToken: boolean;
-    }[],
   ): ContextHandler | undefined => {
     switch (context) {
       case 'onboarding':
       case 'createNewKey': {
         return {
           // @ts-ignore
-          currencies: [...SupportedCurrencyOptions, ...ALL_CUSTOM_TOKENS],
+          currencies: [...SupportedCurrencyOptions, ...CURATED_TOKENS],
           ctaTitle: 'Create Key',
           bottomCta: async ({selectedCurrencies, dispatch, navigation}) => {
             try {
@@ -258,7 +260,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     hideBottomCta,
     selectionCta,
     removeCheckbox,
-  } = contextHandler(context, key, ALL_CUSTOM_TOKENS) || {};
+  } = contextHandler(context, key) || {};
 
   // Configuring Header
   useLayoutEffect(() => {
@@ -338,10 +340,9 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     checked,
     isToken,
   }: CurrencySelectionToggleProps) => {
-    setSearchInput('');
-    onSearchInputChange('');
-
     if (selectionCta) {
+      setSearchInput('');
+      onSearchInputChange('');
       selectionCta({currencyAbbreviation, currencyName, isToken, navigation});
     } else {
       setSelectedCurrencies(currencies => {
@@ -384,7 +385,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
 
       setCurrencyOptions([...filteredList]);
     } else {
-      const _searchList: Array<any> = cloneDeep(DEFAULT_CURRENCY_OPTIONS);
+      const _searchList: Array<any> = cloneDeep(currencies);
       selectedCurrencies.length
         ? _searchList
             .filter(({currencyAbbreviation}) =>
