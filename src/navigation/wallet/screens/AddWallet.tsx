@@ -33,8 +33,10 @@ import Button from '../../../components/button/Button';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {
+  dismissDecryptPasswordModal,
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
+  showDecryptPasswordModal,
 } from '../../../store/app/app.actions';
 import {addWallet} from '../../../store/wallet/effects';
 import {Controller, useForm} from 'react-hook-form';
@@ -52,7 +54,7 @@ import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import WalletRow from '../../../components/list/WalletRow';
 import {FlatList} from 'react-native';
-import {keyExtractor} from '../../../utils/helper-methods';
+import {keyExtractor, sleep} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Haptic from '../../../components/haptic-feedback/haptic';
 import Icons from '../components/WalletIcons';
@@ -62,6 +64,8 @@ import Checkbox from '../../../components/checkbox/Checkbox';
 import {Network} from '../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {sleep} from '../../../utils/helper-methods';
+import {WrongPasswordError} from '../components/ErrorMessages';
+import {checkEncryptPassword} from '../../../store/wallet/utils/wallet';
 
 type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
 
@@ -243,6 +247,29 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
         }
       }
 
+      let password: string | undefined;
+
+      if (key.isPrivKeyEncrypted) {
+        password = await new Promise<string>((resolve, reject) => {
+          dispatch(
+            showDecryptPasswordModal({
+              onSubmitHandler: async (_password: string) => {
+                if (checkEncryptPassword(key, _password)) {
+                  dispatch(dismissDecryptPasswordModal());
+                  await sleep(500);
+                  resolve(_password);
+                } else {
+                  dispatch(dismissDecryptPasswordModal());
+                  await sleep(500);
+                  dispatch(showBottomNotificationModal(WrongPasswordError()));
+                  return reject('invalid password');
+                }
+              },
+            }),
+          );
+        });
+      }
+
       await dispatch(
         startOnGoingProcessModal(OnGoingProcessMessages.ADDING_WALLET),
       );
@@ -254,6 +281,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
           isToken,
           currency,
           options: {
+            password,
             network: isTestnet ? Network.testnet : network,
             walletName: walletName === currencyName ? undefined : walletName,
           },

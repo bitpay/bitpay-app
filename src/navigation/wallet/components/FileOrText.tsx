@@ -27,7 +27,7 @@ import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
-import {navigateToTermsOrOverview} from '../screens/Backup';
+import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
 import {sleep} from '../../../utils/helper-methods';
 
@@ -81,10 +81,9 @@ const FileOrText = () => {
       await dispatch(
         startOnGoingProcessModal(OnGoingProcessMessages.IMPORTING),
       );
-      const key = (await dispatch<any>(
-        startImportFile(decryptBackupText, opts),
-      )) as Key;
-      navigateToTermsOrOverview({
+      // @ts-ignore
+      const key = await dispatch<Key>(startImportFile(decryptBackupText, opts));
+      backupRedirect({
         context: route.params?.context,
         navigation,
         walletTermsAccepted,

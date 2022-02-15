@@ -42,7 +42,7 @@ import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
-import {navigateToTermsOrOverview} from '../screens/Backup';
+import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
 import {
   ImportTextInput,
@@ -306,7 +306,7 @@ const RecoveryPhrase = () => {
 
       await dispatch(startUpdateAllWalletBalancesForKey(key));
       await dispatch(updatePortfolioBalance());
-      navigateToTermsOrOverview({
+      backupRedirect({
         context: route.params?.context,
         navigation,
         walletTermsAccepted,

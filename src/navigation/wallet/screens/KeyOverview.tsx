@@ -1,6 +1,8 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
+import {StackActions, useNavigation, useTheme} from '@react-navigation/native';
+import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useState} from 'react';
-import {FlatList, LogBox, RefreshControl} from 'react-native';
+import {FlatList, LogBox, RefreshControl, TouchableOpacity} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -8,18 +10,32 @@ import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
 import {BaseText, H5, HeaderTitle} from '../../../components/styled/Text';
 import Settings from '../../../components/settings/Settings';
 import {Hr, ActiveOpacity} from '../../../components/styled/Containers';
+import {
+  ActiveOpacity,
+  Hr,
+  ScreenGutter,
+} from '../../../components/styled/Containers';
 import {RootState} from '../../../store';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateAllWalletBalancesForKey} from '../../../store/wallet/effects/balance/balance';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {SlateDark, White} from '../../../styles/colors';
+import {
+  LightBlack,
+  NeutralSlate,
+  SlateDark,
+  White,
+} from '../../../styles/colors';
 import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
 import {BalanceUpdateError} from '../components/ErrorMessages';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 import {StackScreenProps} from '@react-navigation/stack';
+import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
+import {useAppSelector} from '../../../utils/hooks';
+import SheetModal from '../../../components/modal/base/sheet/SheetModal';
+import KeyDropdownOption from '../components/KeyDropdownOption';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -66,6 +82,33 @@ const WalletListFooterText = styled(BaseText)`
   font-weight: 400;
   letter-spacing: 0;
   margin-left: 10px;
+`;
+
+const KeyToggle = styled(TouchableOpacity)`
+  align-items: center;
+  flex-direction: row;
+`;
+
+const KeyDropdown = styled.SafeAreaView`
+  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  max-height: 75%;
+`;
+
+const KeyDropdownOptionsContainer = styled.ScrollView`
+  padding: 0 ${ScreenGutter};
+`;
+
+const CogIconContainer = styled.TouchableOpacity`
+  margin-top: 10px;
+  margin-right: 10px;
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
+  border-radius: 50px;
+  justify-content: center;
+  align-items: center;
+  height: 45px;
+  width: 45px;
 `;
 
 export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
@@ -124,55 +167,93 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   const theme = useTheme();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const {key} = route.params;
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
 
+  const [showKeyDropdown, setShowKeyDropdown] = useState(false);
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>My Key</HeaderTitle>,
-      headerRight: () => (
-        <Settings
-          onPress={() => {
-            setShowKeyOptions(true);
-          }}
-        />
-      ),
+      headerTitle: () => {
+        const hasMultipleKeys =
+          Object.values(keys).filter(key => key.backupComplete).length > 1;
+        return (
+          <KeyToggle
+            activeOpacity={ActiveOpacity}
+            disabled={!hasMultipleKeys}
+            onPress={() => setShowKeyDropdown(true)}>
+            <HeaderTitle>{key?.keyName}</HeaderTitle>
+            {hasMultipleKeys && <ChevronDownSvg style={{marginLeft: 10}} />}
+          </KeyToggle>
+        );
+      },
+      headerRight: () => {
+        return key.methods.isPrivKeyEncrypted() ? (
+          <CogIconContainer
+            onPress={() =>
+              navigation.navigate('Wallet', {
+                screen: 'KeySettings',
+                params: {
+                  key,
+                },
+              })
+            }
+            activeOpacity={ActiveOpacity}>
+            <Icons.Cog />
+          </CogIconContainer>
+        ) : (
+          <>
+            <Settings
+              onPress={() => {
+                setShowKeyOptions(true);
+              }}
+            />
+          </>
+        );
+      },
     });
-  }, [navigation]);
+  }, [navigation, key]);
 
-  const {key} = route.params;
   const {wallets = [], totalBalance} = useSelector(
     ({WALLET}: RootState) => WALLET.keys[key.id] || {},
   );
 
   const walletList = buildNestedWalletList(wallets);
 
-  const keyOptions: Array<Option> = [
-    {
-      img: <Icons.Backup />,
-      title: 'Create a Backup Phrase',
-      description:
-        'The only way to recover a key if your phone is lost or stolen.',
-      onPress: () => null,
-    },
-    {
+  const keyOptions: Array<Option> = [];
+
+  if (!key.methods.isPrivKeyEncrypted()) {
+    keyOptions.push({
       img: <Icons.Encrypt />,
       title: 'Encrypt your Key',
       description:
         'Prevent an unauthorized user from sending funds out of your wallet.',
-      onPress: () => null,
-    },
-    {
+      onPress: () => {
+        haptic('impactLight');
+        navigation.navigate('Wallet', {
+          screen: 'KeySettings',
+          params: {
+            key,
+            context: 'createEncryptPassword',
+          },
+        });
+      },
+    });
+
+    keyOptions.push({
       img: <Icons.Settings />,
       title: 'Key Settings',
       description: 'View all the ways to manage and configure your key.',
-      onPress: () =>
+      onPress: () => {
+        haptic('impactLight');
         navigation.navigate('Wallet', {
           screen: 'KeySettings',
           params: {
             key,
           },
-        }),
-    },
-  ];
+        });
+      },
+    });
+  }
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -232,6 +313,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
               id={item.id}
               wallet={item}
               onPress={() => {
+                haptic('impactLight');
                 if (!item.isComplete) {
                   const fullWalletObj = key.wallets.find(
                     ({id}) => id === item.id,
@@ -240,23 +322,56 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
                     screen: 'Copayers',
                     params: {wallet: fullWalletObj},
                   });
-                  return;
+                } else {
+                  navigation.navigate('Wallet', {
+                    screen: 'WalletDetails',
+                    params: {walletId: item.id, key},
+                  });
                 }
-                navigation.navigate('Wallet', {
-                  screen: 'WalletDetails',
-                  params: {walletId: item.id, key},
-                });
               }}
             />
           );
         }}
       />
-      <OptionsSheet
-        isVisible={showKeyOptions}
-        title={'Key Options'}
-        options={keyOptions}
-        closeModal={() => setShowKeyOptions(false)}
-      />
+      {keyOptions.length > 0 ? (
+        <OptionsSheet
+          isVisible={showKeyOptions}
+          title={'Key Options'}
+          options={keyOptions}
+          closeModal={() => setShowKeyOptions(false)}
+        />
+      ) : null}
+      <SheetModal
+        isVisible={showKeyDropdown}
+        placement={'top'}
+        onBackdropPress={() => setShowKeyDropdown(false)}>
+        <KeyDropdown>
+          <HeaderTitle style={{margin: 15}}>Other Keys</HeaderTitle>
+          <KeyDropdownOptionsContainer>
+            {Object.values(keys)
+              .filter(_key => _key.id !== key.id)
+              .filter(_key => _key.backupComplete)
+              .map(({id, keyName, wallets, totalBalance}) => (
+                <KeyDropdownOption
+                  key={id}
+                  keyId={id}
+                  keyName={keyName}
+                  wallets={wallets}
+                  totalBalance={totalBalance}
+                  onPress={keyId => {
+                    setShowKeyDropdown(false);
+                    navigation.dispatch(
+                      StackActions.replace('Wallet', {
+                        screen: 'KeyOverview',
+                        params: {key: keys[keyId]},
+                      }),
+                    );
+                  }}
+                />
+              ))}
+          </KeyDropdownOptionsContainer>
+        </KeyDropdown>
+      </SheetModal>
     </OverviewContainer>
   );
 };
