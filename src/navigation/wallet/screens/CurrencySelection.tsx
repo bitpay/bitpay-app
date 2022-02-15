@@ -12,7 +12,6 @@ import CurrencySelectionRow, {
 
 import Button from '../../../components/button/Button';
 import {
-  POPULAR_TOKENS,
   SUPPORTED_TOKENS,
   SupportedCurrencies,
 } from '../../../constants/currencies';
@@ -160,14 +159,6 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     );
   };
 
-  const CURATED_TOKENS = useMemo(
-    () =>
-      ALL_CUSTOM_TOKENS.filter(token =>
-        POPULAR_TOKENS.includes(token.currencyAbbreviation),
-      ),
-    [],
-  );
-
   const contextHandler = (
     context: CurrencySelectionContext,
     key?: Key,
@@ -177,7 +168,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
       case 'createNewKey': {
         return {
           // @ts-ignore
-          currencies: [...SupportedCurrencyOptions, ...CURATED_TOKENS],
+          currencies: [...SupportedCurrencyOptions, ...ALL_CUSTOM_TOKENS],
           ctaTitle: 'Create Key',
           bottomCta: async ({selectedCurrencies, dispatch, navigation}) => {
             try {
@@ -211,6 +202,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
 
       case 'addWallet': {
         return {
+          // @ts-ignore
           currencies: [...SupportedCurrencyOptions, ...ALL_CUSTOM_TOKENS],
           headerTitle: 'Select Currency',
           hideBottomCta: true,
@@ -300,8 +292,6 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
   const [currencyOptions, setCurrencyOptions] = useState<Array<any>>([
     ...DEFAULT_CURRENCY_OPTIONS,
   ]);
-
-  const [searchList] = useState<Array<any>>([...DEFAULT_CURRENCY_OPTIONS]);
 
   const checkAndToggleEthIfTokenSelected = (
     currencies: Array<string>,
