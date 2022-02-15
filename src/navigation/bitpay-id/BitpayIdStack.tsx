@@ -67,10 +67,7 @@ const BitpayIdStack = () => {
 
                       dispatch(BitPayIdActions.bitPayIdDisconnected(network));
                     } else {
-                      navigation.navigate('Auth', {
-                        screen: 'LoginSignup',
-                        params: {context: 'login'},
-                      });
+                      navigation.navigate('Auth', {screen: 'Login'});
                     }
                   }}>
                   {user ? 'Log Out' : 'Log In'}

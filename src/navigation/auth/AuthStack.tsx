@@ -12,7 +12,7 @@ import {LoginStatus} from '../../store/bitpay-id/bitpay-id.reducer';
 import CreateAccountScreen, {
   CreateAccountScreenParamList,
 } from './screens/CreateAccount';
-import LoginSignup, {LoginSignupParamList} from './screens/LoginSignup';
+import LoginScreen, {LoginScreenParamList} from './screens/Login';
 import TwoFactorAuthentication, {
   TwoFactorAuthenticationParamList,
 } from './screens/TwoFactor.Auth';
@@ -27,7 +27,7 @@ import VerifyEmailScreen, {
 } from './screens/VerifyEmail';
 
 export enum AuthScreens {
-  LOGIN_SIGNUP = 'LoginSignup',
+  LOGIN = 'Login',
   CREATE_ACCOUNT = 'CreateAccount',
   VERIFY_EMAIL = 'VerifyEmail',
   EMAIL_AUTH = 'EmailAuthentication',
@@ -36,7 +36,7 @@ export enum AuthScreens {
 }
 
 export type AuthStackParamList = {
-  LoginSignup: LoginSignupParamList;
+  Login: LoginScreenParamList;
   CreateAccount: CreateAccountScreenParamList;
   VerifyEmail: VerifyEmailScreenParamList;
   EmailAuthentication: EmailAuthenticationParamList;
@@ -61,14 +61,14 @@ const AuthStack: React.FC = () => {
 
   return (
     <Auth.Navigator
-      initialRouteName={AuthScreens.LOGIN_SIGNUP}
+      initialRouteName={AuthScreens.LOGIN}
       screenOptions={{
         ...baseNavigatorOptions,
         ...baseScreenOptions,
       }}>
       <Auth.Screen
-        name={AuthScreens.LOGIN_SIGNUP}
-        component={LoginSignup}
+        name={AuthScreens.LOGIN}
+        component={LoginScreen}
         options={{
           headerTitle: () => <HeaderTitle>Welcome Back!</HeaderTitle>,
         }}

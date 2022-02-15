@@ -40,7 +40,7 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
 
   useEffect(() => {
     if (!email || !csrfToken) {
-      navigation.navigate('LoginSignup', {context: 'login'});
+      navigation.navigate('Login');
     } else {
       dispatch(BitPayIdEffects.startSendVerificationEmail());
     }

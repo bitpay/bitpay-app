@@ -4,7 +4,6 @@ import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {Keyboard, SafeAreaView, TextInput} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import styled from 'styled-components/native';
 import * as yup from 'yup';
 import AlertBox from '../../../components/alert-box/AlertBox';
 import Button from '../../../components/button/Button';
@@ -29,22 +28,13 @@ import AuthFormContainer, {
 } from '../components/AuthFormContainer';
 import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
 
-export type LoginSignupParamList = {
-  context: 'login' | 'signup';
-  onLoginSuccess?: ((...args: any[]) => any) | undefined;
-};
+export type LoginScreenParamList =
+  | {
+      onLoginSuccess?: ((...args: any[]) => any) | undefined;
+    }
+  | undefined;
 
-type LoginSignupScreenProps = StackScreenProps<
-  AuthStackParamList,
-  'LoginSignup'
->;
-
-const Row = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-`;
+type LoginScreenProps = StackScreenProps<AuthStackParamList, 'Login'>;
 
 const schema = yup.object().shape({
   email: yup.string().email().required(),
@@ -56,7 +46,7 @@ interface LoginFormFieldValues {
   password: string;
 }
 
-const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
+const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   const dispatch = useDispatch();
   const {
     control,
@@ -77,7 +67,7 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
   const [isCaptchaModalVisible, setCaptchaModalVisible] = useState(false);
   const passwordRef = useRef<TextInput>(null);
   const captchaRef = useRef<CaptchaRef>(null);
-  const {context, onLoginSuccess} = route.params;
+  const {onLoginSuccess} = route.params || {};
 
   useEffect(() => {
     dispatch(BitPayIdEffects.startFetchSession());
@@ -204,50 +194,28 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
 
         <AuthActionsContainer>
           <AuthActionRow>
-            <Button onPress={onSubmit}>
-              {context === 'login' ? 'Log In' : 'Create Account'}
-            </Button>
+            <Button onPress={onSubmit}>Log In</Button>
           </AuthActionRow>
 
-          {context === 'login' ? (
-            <>
-              <AuthActionRow>
-                <AuthActionText>
-                  Don't have an account?{' '}
-                  <Link
-                    onPress={() => {
-                      navigation.navigate('CreateAccount');
-                    }}>
-                    Create Account
-                  </Link>
-                </AuthActionText>
-              </AuthActionRow>
+          <AuthActionRow>
+            <AuthActionText>
+              Don't have an account?{' '}
+              <Link
+                onPress={() => {
+                  navigation.navigate('CreateAccount');
+                }}>
+                Create Account
+              </Link>
+            </AuthActionText>
+          </AuthActionRow>
 
-              <AuthActionRow>
-                <AuthActionText>
-                  <Link onPress={() => onTroubleLoggingIn()}>
-                    Trouble logging in?
-                  </Link>
-                </AuthActionText>
-              </AuthActionRow>
-            </>
-          ) : (
-            <>
-              <AuthActionRow>
-                <Row>
-                  <AuthActionText>
-                    Already have an account?{' '}
-                    <Link
-                      onPress={() => {
-                        navigation.setParams({context: 'login'});
-                      }}>
-                      Log In
-                    </Link>
-                  </AuthActionText>
-                </Row>
-              </AuthActionRow>
-            </>
-          )}
+          <AuthActionRow>
+            <AuthActionText>
+              <Link onPress={() => onTroubleLoggingIn()}>
+                Trouble logging in?
+              </Link>
+            </AuthActionText>
+          </AuthActionRow>
         </AuthActionsContainer>
 
         <RecaptchaModal
@@ -263,4 +231,4 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
   );
 };
 
-export default LoginSignup;
+export default LoginScreen;

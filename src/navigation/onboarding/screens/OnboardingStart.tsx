@@ -98,9 +98,8 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
               onPress={() => {
                 haptic('impactLight');
                 navigation.navigate('Auth', {
-                  screen: 'LoginSignup',
+                  screen: 'Login',
                   params: {
-                    context: 'login',
                     onLoginSuccess: () => {
                       haptic('impactLight');
                       navigation.navigate('Onboarding', {
@@ -196,8 +195,7 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
                 onPress={() => {
                   haptic('impactLight');
                   navigation.navigate('Auth', {
-                    screen: 'LoginSignup',
-                    params: {context: 'signup'},
+                    screen: 'CreateAccount',
                   });
                 }}>
                 Get Started

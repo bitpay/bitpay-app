@@ -19,10 +19,7 @@ const ProfileButton: React.FC = () => {
         onPress={() => {
           user
             ? navigation.navigate('BitpayId', {screen: 'Profile'})
-            : navigation.navigate('Auth', {
-                screen: 'LoginSignup',
-                params: {context: 'login'},
-              });
+            : navigation.navigate('Auth', {screen: 'Login'});
         }}>
         <Avatar size={35} />
       </TouchableOpacity>

@@ -263,7 +263,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
               Already have an account?{' '}
               <Link
                 onPress={() => {
-                  navigation.navigate('LoginSignup', {context: 'login'});
+                  navigation.navigate('Login');
                 }}>
                 Log In
               </Link>
