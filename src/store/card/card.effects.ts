@@ -9,6 +9,8 @@ import {AppActions} from '../app';
 import {Effect} from '../index';
 import {LogActions} from '../log';
 import {TTL} from './card.types';
+import ReactNative from 'react-native';
+const {Dosh} = ReactNative.NativeModules;
 
 export const startCardStoreInit =
   (initialData: InitialUserData): Effect<Promise<void>> =>
@@ -16,7 +18,6 @@ export const startCardStoreInit =
     const {APP} = getState();
 
     dispatch(CardActions.successInitializeStore(APP.network, initialData));
-
     try {
       const virtualCardIds = (initialData.cards || [])
         .filter(c => c.provider === 'galileo' && c.cardType === 'virtual')
@@ -24,6 +25,16 @@ export const startCardStoreInit =
 
       if (virtualCardIds.length) {
         dispatch(startFetchVirtualCardImageUrls(virtualCardIds));
+      }
+
+      // Dosh card rewards
+      if (Dosh) {
+        const {doshToken} = initialData;
+        Dosh.initializeDosh();
+
+        if (doshToken) {
+          Dosh.setDoshToken(doshToken);
+        }
       }
     } catch (err) {
       // swallow error so initialize is uninterrupted

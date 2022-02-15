@@ -57,6 +57,8 @@ export interface WalletObj {
   keyId: string;
   currencyName: string;
   currencyAbbreviation: string;
+  m: number;
+  n: number;
   balance: WalletBalance;
   tokens?: string[];
   walletName?: string;
@@ -106,6 +108,7 @@ export interface KeyOptions {
   useNativeSegwit?: boolean;
   words?: string;
   xPrivKey?: string;
+  invitationCode?: string;
 }
 
 export interface Token {

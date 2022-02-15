@@ -236,7 +236,9 @@ export const AdvancedOptionsButtonText = styled(BaseText)`
 `;
 
 export const AdvancedOptions = styled.View`
-  padding: 18px;
+  border-style: solid;
+  border-top-width: 1px;
+  border-top-color: ${({theme}) => (theme.dark ? '#434D5A' : '#E1E4E7')};
 `;
 
 const Gutter = '10px';
@@ -246,12 +248,54 @@ export const ImportContainer = styled.View`
 
 export const ImportTextInput = styled.TextInput`
   height: 100px;
-  margin: 0 ${Gutter};
-  padding: ${Gutter};
   color: ${({theme}) => theme.colors.text};
   background: ${({theme}) => theme.colors.background};
   border: 0.75px solid ${Slate};
   border-top-right-radius: 4px;
   border-top-left-radius: 4px;
   text-align-vertical: top;
+`;
+
+export const InfoImageContainer = styled.View<{infoMargin: string}>`
+  margin: ${({infoMargin}) => infoMargin};
+`;
+
+export const ScanContainer = styled.TouchableOpacity`
+  height: 25px;
+  width: 25px;
+  align-items: center;
+  justify-content: center;
+`;
+
+export const HeaderContainer = styled.View`
+  padding: 20px 0px 10px 0px;
+  justify-content: space-between;
+  flex-direction: row;
+  align-items: center;
+`;
+
+// creation and add wallet
+export const OptionContainer = styled.SafeAreaView`
+  flex: 1;
+`;
+
+export const OptionListContainer = styled.View`
+  flex: 1;
+  padding: 0 ${ScreenGutter};
+  margin-top: 30px;
+`;
+
+export const OptionList = styled.TouchableOpacity`
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Feather)};
+  height: 100px;
+  border-radius: 12px;
+  margin-bottom: ${ScreenGutter};
+  flex-direction: row;
+  overflow: hidden;
+`;
+
+export const OptionInfoContainer = styled.View`
+  padding: 20px;
+  justify-content: center;
+  flex: 1;
 `;

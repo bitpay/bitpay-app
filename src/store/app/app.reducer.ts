@@ -128,6 +128,11 @@ export const appReducer = (
       return {
         ...state,
         showBottomNotificationModal: false,
+      };
+
+    case AppActionTypes.RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG:
+      return {
+        ...state,
         bottomNotificationModalConfig: undefined,
       };
 
