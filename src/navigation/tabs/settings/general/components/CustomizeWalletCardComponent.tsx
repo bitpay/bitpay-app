@@ -6,6 +6,7 @@ import CustomizeHomeCard from '../../../../../components/customize-home-card/Cus
 import styled from 'styled-components/native';
 import {BaseText} from '../../../../../components/styled/Text';
 import {Slate} from '../../../../../styles/colors';
+import {ActiveOpacity} from '../../../../../components/styled/Containers';
 
 interface CustomizeWalletCardComponentProps {
   wallets: Wallet[];
@@ -40,7 +41,7 @@ const HeaderImg = styled.View`
   flex-wrap: wrap;
 `;
 
-const CustomizeHomeCardContainer = styled.View`
+const CustomizeHomeCardContainer = styled.TouchableOpacity`
   margin-bottom: 25px;
 `;
 
@@ -89,7 +90,7 @@ const CustomizeWalletCardComponent: React.FC<
   };
 
   return (
-    <CustomizeHomeCardContainer>
+    <CustomizeHomeCardContainer onPress={onPress} activeOpacity={ActiveOpacity}>
       <CustomizeHomeCard
         header={HeaderComponent}
         body={body}

@@ -153,7 +153,7 @@ PODS:
     - PoweredByDosh/PoweredByDosh (= 2.7.1)
   - PoweredByDosh/PoweredByDosh (2.7.1)
   - PromisesObjC (2.0.0)
-  - Protobuf (3.19.4)
+  - Protobuf (3.19.1)
   - RCT-Folly (2020.01.13.00):
     - boost-for-react-native
     - DoubleConversion
@@ -793,7 +793,7 @@ SPEC CHECKSUMS:
   Permission-Notifications: bb420c3d28328df24de1b476b41ed8249ccf2537
   PoweredByDosh: c0c1d8247938521a90ed7f1499a6f00eb800d3ad
   PromisesObjC: 68159ce6952d93e17b2dfe273b8c40907db5ba58
-  Protobuf: 235750e4696ff59fb07d949a9dbbc92b3c0700fe
+  Protobuf: 3724efa50cb2846d7ccebc8691c574e85fd74471
   RCT-Folly: ec7a233ccc97cc556cf7237f0db1ff65b986f27c
   RCTRequired: ec2ebc96b7bfba3ca5c32740f5a0c6a014a274d2
   RCTTypeSafety: 22567f31e67c3e088c7ac23ea46ab6d4779c0ea5

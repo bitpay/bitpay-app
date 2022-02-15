@@ -24,6 +24,7 @@ interface CreateOptions {
   network?: Network;
   account?: number;
   walletName?: string;
+  password?: string;
 }
 
 const BWC = BwcProvider.getInstance();
@@ -79,7 +80,7 @@ export const addWallet =
     associatedWallet?: Wallet;
     isToken?: boolean;
     options: CreateOptions;
-  }): Effect =>
+  }): Effect<Promise<Wallet>> =>
   async (dispatch, getState): Promise<Wallet> => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -207,10 +208,13 @@ const createWallet = (params: {
     const {key, coin, options} = params;
 
     // set defaults
-    const {account, network} = {...DEFAULT_CREATION_OPTIONS, ...options};
+    const {account, network, password} = {
+      ...DEFAULT_CREATION_OPTIONS,
+      ...options,
+    };
 
     bwcClient.fromString(
-      key.createCredentials(undefined, {
+      key.createCredentials(password, {
         coin,
         network,
         account,
@@ -238,11 +242,13 @@ const createWallet = (params: {
               // eslint-disable-next-line no-shadow
               const account = options.account || 0;
               if (account >= 20) {
-                reject(
-                  '20 Wallet limit from the same coin and network has been reached.',
+                return reject(
+                  new Error(
+                    '20 Wallet limit from the same coin and network has been reached.',
+                  ),
                 );
               }
-              resolve(
+              return resolve(
                 createWallet({
                   key,
                   coin,

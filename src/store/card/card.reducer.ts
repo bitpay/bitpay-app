@@ -7,6 +7,7 @@ import {Card, PagedTransactionData, Transaction} from './card.models';
 import {
   CardActionType,
   CardActionTypes,
+  TTL,
   VirtualDesignCurrency,
 } from './card.types';
 
@@ -19,18 +20,25 @@ export const cardReduxPersistBlacklist: Array<keyof CardState> = [
 
 export type FetchCardsStatus = 'success' | 'failed' | null;
 export type FetchOverviewStatus = 'success' | 'failed' | null;
-
+export type FetchVirtualCardImageUrlsStatus = 'success' | 'failed' | null;
 export interface CardState {
+  lastUpdates: {
+    [key in keyof typeof TTL]: number;
+  };
   cards: {
     [key in Network]: Card[];
   };
   balances: {
     [id: string]: number;
   };
+  virtualCardImages: {
+    [id: string]: string;
+  };
   fetchCardsStatus: FetchCardsStatus;
   fetchOverviewStatus: {
     [id: string]: FetchOverviewStatus;
   };
+  fetchVirtualCardImageUrlsStatus: FetchVirtualCardImageUrlsStatus;
   virtualDesignCurrency: VirtualDesignCurrency;
   overview: any;
   settledTransactions: {
@@ -42,13 +50,18 @@ export interface CardState {
 }
 
 const initialState: CardState = {
+  lastUpdates: {
+    fetchOverview: Date.now(),
+  },
   cards: {
     [Network.mainnet]: [],
     [Network.testnet]: [],
   },
   balances: {},
+  virtualCardImages: {},
   fetchCardsStatus: null,
   fetchOverviewStatus: {},
+  fetchVirtualCardImageUrlsStatus: null,
   virtualDesignCurrency: 'bitpay-b',
   overview: null,
   settledTransactions: {},
@@ -68,6 +81,27 @@ export const cardReducer = (
           [action.payload.network]: [],
         },
         balances: {},
+      };
+    case CardActionTypes.SUCCESS_INITIALIZE_STORE:
+      const payloadBalances = action.payload.balances.reduce(
+        (list, {id, balance}) => {
+          list[id] = balance;
+
+          return list;
+        },
+        {} as {[id: string]: number},
+      );
+
+      return {
+        ...state,
+        cards: {
+          ...state.cards,
+          [action.payload.network]: action.payload.cards || [],
+        },
+        balances: {
+          ...state.balances,
+          ...payloadBalances,
+        },
       };
     case CardActionTypes.SUCCESS_FETCH_CARDS:
       return {
@@ -100,6 +134,10 @@ export const cardReducer = (
           ...state.fetchOverviewStatus,
           [action.payload.id]: 'success',
         },
+        lastUpdates: {
+          ...state.lastUpdates,
+          fetchOverview: Date.now(),
+        },
         balances: {
           ...state.balances,
           [action.payload.id]: action.payload.balance,
@@ -128,6 +166,33 @@ export const cardReducer = (
           ...state.fetchOverviewStatus,
           [action.payload.id]: action.payload.status,
         },
+      };
+    case CardActionTypes.SUCCESS_FETCH_VIRTUAL_IMAGE_URLS:
+      const fetchedUrls = action.payload.reduce(
+        (urls, {id, virtualCardImage}) => {
+          urls[id] = virtualCardImage;
+          return urls;
+        },
+        {} as {[id: string]: string},
+      );
+
+      return {
+        ...state,
+        fetchVirtualCardImageUrlsStatus: 'success',
+        virtualCardImages: {
+          ...state.virtualCardImages,
+          ...fetchedUrls,
+        },
+      };
+    case CardActionTypes.FAILED_FETCH_VIRTUAL_IMAGE_URLS:
+      return {
+        ...state,
+        fetchVirtualCardImageUrlsStatus: 'failed',
+      };
+    case CardActionTypes.UPDATE_FETCH_VIRTUAL_IMAGE_URLS_STATUS:
+      return {
+        ...state,
+        fetchVirtualCardImageUrlsStatus: action.payload,
       };
     default:
       return state;

@@ -11,9 +11,11 @@ interface WalletCardComponentProps {
   wallets: Wallet[];
   totalBalance: number;
   onPress: () => void;
+  needsBackup: boolean;
+  keyName: string | undefined;
 }
 
-const HeaderImg = styled.View`
+export const HeaderImg = styled.View`
   align-items: center;
   justify-content: flex-start;
   flex-direction: row;
@@ -21,12 +23,12 @@ const HeaderImg = styled.View`
   flex-wrap: wrap;
 `;
 
-const Img = styled.View<{isFirst: boolean}>`
+export const Img = styled.View<{isFirst: boolean}>`
   min-height: 22px;
   margin-left: ${({isFirst}) => (isFirst ? 0 : '-5px')};
 `;
 
-const RemainingAssetsLabel = styled(BaseText)`
+export const RemainingAssetsLabel = styled(BaseText)`
   font-size: 12px;
   font-style: normal;
   font-weight: 500;
@@ -35,17 +37,15 @@ const RemainingAssetsLabel = styled(BaseText)`
   color: ${Slate};
   margin-left: 5px;
 `;
-const WALLET_DISPLAY_LIMIT = 4;
-const ICON_SIZE = 25;
+export const WALLET_DISPLAY_LIMIT = 4;
+export const ICON_SIZE = 25;
 
 const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   wallets,
   totalBalance,
   onPress,
-}: {
-  wallets: Wallet[];
-  totalBalance: number;
-  onPress: () => void;
+  needsBackup,
+  keyName = 'My Key',
 }) => {
   const walletInfo = wallets.slice(0, WALLET_DISPLAY_LIMIT);
   const remainingAssetCount =
@@ -74,8 +74,9 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   );
 
   const body = {
-    title: 'My Key',
+    title: keyName,
     value: formatFiatAmount(totalBalance, 'USD'),
+    needsBackup,
   };
 
   return <HomeCard header={HeaderComponent} body={body} onCTAPress={onPress} />;

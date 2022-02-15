@@ -19,12 +19,12 @@ import {
   AdvancedOptionsButton,
   AdvancedOptionsButtonText,
   AdvancedOptionsContainer,
+  AdvancedOptions,
   Column,
   SheetContainer,
   Row,
   ScreenGutter,
 } from '../../../components/styled/Containers';
-import {useDispatch, useSelector} from 'react-redux';
 import {StackScreenProps} from '@react-navigation/stack';
 import {WalletStackParamList} from '../WalletStack';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
@@ -33,8 +33,10 @@ import Button from '../../../components/button/Button';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {
+  dismissDecryptPasswordModal,
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
+  showDecryptPasswordModal,
 } from '../../../store/app/app.actions';
 import {addWallet} from '../../../store/wallet/effects';
 import {Controller, useForm} from 'react-hook-form';
@@ -52,15 +54,17 @@ import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import WalletRow from '../../../components/list/WalletRow';
 import {FlatList} from 'react-native';
-import {keyExtractor} from '../../../utils/helper-methods';
+import {keyExtractor, sleep} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Haptic from '../../../components/haptic-feedback/haptic';
-import {RootState} from '../../../store';
 import Icons from '../components/WalletIcons';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {Network} from '../../../constants';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {WrongPasswordError} from '../components/ErrorMessages';
+import {checkEncryptPassword} from '../../../store/wallet/utils/wallet';
 
 type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
 
@@ -145,10 +149,10 @@ const WalletAdvancedOptionsContainer = styled(AdvancedOptionsContainer)`
 
 const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const {currencyAbbreviation, currencyName, key, isToken} = route.params;
   // temporary until advanced settings is finished
-  const network = useSelector(({APP}: RootState) => APP.network);
+  const network = useAppSelector(({APP}) => APP.network);
   const [showOptions, setShowOptions] = useState(false);
   const [isTestnet, setIsTestnet] = useState(false);
 
@@ -242,22 +246,46 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
         }
       }
 
+      let password: string | undefined;
+
+      if (key.isPrivKeyEncrypted) {
+        password = await new Promise<string>((resolve, reject) => {
+          dispatch(
+            showDecryptPasswordModal({
+              onSubmitHandler: async (_password: string) => {
+                if (checkEncryptPassword(key, _password)) {
+                  dispatch(dismissDecryptPasswordModal());
+                  await sleep(500);
+                  resolve(_password);
+                } else {
+                  dispatch(dismissDecryptPasswordModal());
+                  await sleep(500);
+                  dispatch(showBottomNotificationModal(WrongPasswordError()));
+                  return reject('invalid password');
+                }
+              },
+            }),
+          );
+        });
+      }
+
       await dispatch(
         startOnGoingProcessModal(OnGoingProcessMessages.ADDING_WALLET),
       );
       // adds wallet and binds to key obj - creates eth wallet if needed
-      const wallet = (await dispatch<any>(
+      const wallet = await dispatch(
         addWallet({
           key,
           associatedWallet: _associatedWallet,
           isToken,
           currency,
           options: {
+            password,
             network: isTestnet ? Network.testnet : network,
             walletName: walletName === currencyName ? undefined : walletName,
           },
         }),
-      )) as Wallet;
+      );
 
       navigation.dispatch(
         CommonActions.reset({
@@ -281,13 +309,32 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
           ],
         }),
       );
-    } catch (err) {
-      // TODO
-      console.error(err);
-    } finally {
       dispatch(dismissOnGoingProcessModal());
+    } catch (err: any) {
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      console.error(err);
+      showErrorModal(err.message);
     }
   });
+
+  const showErrorModal = (e: string) => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: 'Something went wrong',
+        message: e,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'OK',
+            action: () => {},
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
 
   const renderItem = useCallback(
     ({item}) => (
@@ -371,27 +418,29 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
             </AdvancedOptionsButton>
 
             {showOptions && (
-              <RowContainer
-                activeOpacity={1}
-                onPress={() => {
-                  setIsTestnet(!isTestnet);
-                }}>
-                <Column>
-                  <OptionTitle>
-                    {isToken || currencyAbbreviation === 'ETH'
-                      ? 'Kovan'
-                      : 'Testnet'}
-                  </OptionTitle>
-                </Column>
-                <CheckBoxContainer>
-                  <Checkbox
-                    checked={isTestnet}
-                    onPress={() => {
-                      setIsTestnet(!isTestnet);
-                    }}
-                  />
-                </CheckBoxContainer>
-              </RowContainer>
+              <AdvancedOptions>
+                <RowContainer
+                  activeOpacity={1}
+                  onPress={() => {
+                    setIsTestnet(!isTestnet);
+                  }}>
+                  <Column>
+                    <OptionTitle>
+                      {isToken || currencyAbbreviation === 'ETH'
+                        ? 'Kovan'
+                        : 'Testnet'}
+                    </OptionTitle>
+                  </Column>
+                  <CheckBoxContainer>
+                    <Checkbox
+                      checked={isTestnet}
+                      onPress={() => {
+                        setIsTestnet(!isTestnet);
+                      }}
+                    />
+                  </CheckBoxContainer>
+                </RowContainer>
+              </AdvancedOptions>
             )}
           </WalletAdvancedOptionsContainer>
         )}

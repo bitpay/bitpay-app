@@ -140,3 +140,20 @@ export const toggleHomeKeyCard = (payload: {
   type: WalletActionTypes.TOGGLE_HOME_KEY_CARD,
   payload,
 });
+
+export const updateKeyName = (payload: {
+  keyId: string;
+  name: string;
+}): WalletActionType => ({
+  type: WalletActionTypes.UPDATE_KEY_NAME,
+  payload,
+});
+
+export const updateWalletName = (payload: {
+  keyId: string;
+  walletId: string;
+  name: string;
+}): WalletActionType => ({
+  type: WalletActionTypes.UPDATE_WALLET_NAME,
+  payload,
+});

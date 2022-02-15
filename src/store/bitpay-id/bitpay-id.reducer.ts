@@ -53,6 +53,7 @@ export interface BitPayIdState {
   twoFactorPairingError: string | null;
   emailPairingStatus: EmailPairingStatus;
   pairingBitPayIdStatus: PairingBitPayIdStatus;
+  pairingBitPayIdError: string | null;
   fetchBasicInfoStatus: FetchBasicInfoStatus;
   fetchDoshTokenStatus: FetchDoshTokenStatus;
 }
@@ -84,6 +85,7 @@ const initialState: BitPayIdState = {
   twoFactorPairingError: null,
   emailPairingStatus: null,
   pairingBitPayIdStatus: null,
+  pairingBitPayIdError: null,
   fetchBasicInfoStatus: null,
   fetchDoshTokenStatus: null,
 };
@@ -213,6 +215,7 @@ export const bitPayIdReducer = (
       return {
         ...state,
         pairingBitPayIdStatus: 'failed',
+        pairingBitPayIdError: action.payload.error || null,
       };
 
     case BitPayIdActionTypes.UPDATE_PAIRING_BITPAY_ID_STATUS:
@@ -232,7 +235,7 @@ export const bitPayIdReducer = (
         pairingBitPayIdStatus: null,
       };
 
-    case BitPayIdActionTypes.SUCCESS_FETCH_ALL_USER_DATA:
+    case BitPayIdActionTypes.SUCCESS_INITIALIZE_STORE:
       return {
         ...state,
         user: {

@@ -21,12 +21,18 @@ export interface FetchBasicInfoResponse {
   };
 }
 
-export interface FetchAllUserDataResponse {
-  user: {
-    basicInfo: BasicUserInfo;
-    cards: Card[];
-    doshToken: string;
-  };
+export interface InitialUserData {
+  basicInfo: BasicUserInfo;
+  cards: Card[];
+  cardBalances: {
+    id: string;
+    balance: number;
+  }[];
+  doshToken: string;
+}
+
+export interface FetchInitialUserDataResponse {
+  user: InitialUserData;
 }
 
 export interface FetchDoshTokenResponse {

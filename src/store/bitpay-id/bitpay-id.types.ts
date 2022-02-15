@@ -34,7 +34,7 @@ export enum BitPayIdActionTypes {
   FAILED_PAIRING_BITPAY_ID = 'BitPayId/FAILED_PAIRING_BITPAY_ID',
   UPDATE_PAIRING_BITPAY_ID_STATUS = 'BitPayId/UPDATE_PAIRING_BITPAY_ID_STATUS',
   COMPLETED_PAIRING = 'BitPayId/COMPLETED_PAIRING',
-  SUCCESS_FETCH_ALL_USER_DATA = 'BitPayId/SUCCESS_FETCH_ALL_USER_DATA',
+  SUCCESS_INITIALIZE_STORE = 'BitPayId/SUCCESS_INITIALIZE_STORE',
   SUCCESS_FETCH_BASIC_INFO = 'BitPayId/SUCCCESS_FETCH_BASIC_INFO',
   FAILED_FETCH_BASIC_INFO = 'BitPayId/FAILED_FETCH_BASIC_INFO',
   UPDATE_FETCH_BASIC_INFO_STATUS = 'BitPayId/UPDATE_FETCH_BASIC_INFO_STATUS',
@@ -131,6 +131,7 @@ interface SuccessPairingBitPayId {
 
 interface FailedPairingBitPayId {
   type: typeof BitPayIdActionTypes.FAILED_PAIRING_BITPAY_ID;
+  payload: {error?: string};
 }
 
 interface UpdatePairingBitPayIdStatus {
@@ -142,9 +143,9 @@ interface CompletedPairing {
   type: typeof BitPayIdActionTypes.COMPLETED_PAIRING;
 }
 
-interface SuccessFetchAllUserData {
-  type: typeof BitPayIdActionTypes.SUCCESS_FETCH_ALL_USER_DATA;
-  payload: {network: Network; user: User; doshToken?: string};
+interface SuccessInitializeStore {
+  type: typeof BitPayIdActionTypes.SUCCESS_INITIALIZE_STORE;
+  payload: {network: Network; user: User; doshToken: string};
 }
 
 interface SuccessFetchBasicInfo {
@@ -212,7 +213,7 @@ export type BitPayIdActionType =
   | CompletedPairing
 
   // user info
-  | SuccessFetchAllUserData
+  | SuccessInitializeStore
   | SuccessFetchBasicInfo
   | FailedFetchBasicInfo
   | UpdateFetchBasicInfoStatus

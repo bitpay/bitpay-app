@@ -206,10 +206,38 @@ const FETCH_OVERVIEW = (
   };
 };
 
+const FETCH_VIRTUAL_CARD_IMAGE_URLS = (
+  token: string,
+  ids: string[],
+): GqlQueryParams => {
+  const queryFragments = ids.map((id, idx) => {
+    return `
+      card${idx}:debitCard(cardId:"${id}") {
+        id
+        virtualCardImage
+      }
+    `;
+  });
+
+  return {
+    query: `
+      query FETCH_VIRTUAL_CARD_IMAGE_URL($token:String!) {
+        user:bitpayUser(token:$token) {
+          ${queryFragments.join('\n')}
+        }
+      }
+    `,
+    variables: {
+      token,
+    },
+  };
+};
+
 const CardQueries = {
   FETCH_CARDS,
   FETCH_CARD,
   FETCH_OVERVIEW,
+  FETCH_VIRTUAL_CARD_IMAGE_URLS,
 };
 
 export default CardQueries;

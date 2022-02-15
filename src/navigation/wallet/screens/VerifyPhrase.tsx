@@ -7,7 +7,7 @@ import {
   Paragraph,
   TextAlign,
 } from '../../../components/styled/Text';
-import {StackActions, useNavigation} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import {
   HeaderRightContainer,
   WIDTH,
@@ -37,7 +37,7 @@ import {WalletActions} from '../../../store/wallet';
 import Button from '../../../components/button/Button';
 import {Key} from '../../../store/wallet/wallet.models';
 import {WalletStackParamList} from '../WalletStack';
-import {navigateToTermsOrOverview} from './Backup';
+import {backupRedirect} from './Backup';
 import {StackScreenProps} from '@react-navigation/stack';
 
 type VerifyPhraseScreenProps = StackScreenProps<
@@ -114,6 +114,17 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
             buttonType={'pill'}
             onPress={() => {
               haptic('impactLight');
+
+              if (context === 'settings') {
+                backupRedirect({
+                  context,
+                  navigation,
+                  walletTermsAccepted,
+                  key,
+                });
+                return;
+              }
+
               dispatch(
                 AppActions.showBottomNotificationModal({
                   type: 'warning',
@@ -125,7 +136,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
                     {
                       text: "I'M SURE",
                       action: () =>
-                        navigateToTermsOrOverview({
+                        backupRedirect({
                           context,
                           navigation,
                           walletTermsAccepted,
@@ -195,20 +206,13 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
             actions: [
               {
                 text: 'OK',
-                action: () => {
-                  if (context === 'onboarding') {
-                    navigation.navigate('Onboarding', {
-                      screen: 'TermsOfUse',
-                    });
-                  } else {
-                    navigation.dispatch(
-                      StackActions.replace('Wallet', {
-                        screen: 'KeyOverview',
-                        params: {key},
-                      }),
-                    );
-                  }
-                },
+                action: () =>
+                  backupRedirect({
+                    context,
+                    navigation,
+                    walletTermsAccepted,
+                    key: {...key, backupComplete: true},
+                  }),
                 primary: true,
               },
             ],

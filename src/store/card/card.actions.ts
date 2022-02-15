@@ -1,11 +1,28 @@
+import {InitialUserData} from '../../api/user/user.types';
 import {Network} from '../../constants';
 import {Card, PagedTransactionData, Transaction} from './card.models';
-import {FetchCardsStatus, FetchOverviewStatus} from './card.reducer';
+import {
+  FetchCardsStatus,
+  FetchOverviewStatus,
+  FetchVirtualCardImageUrlsStatus,
+} from './card.reducer';
 import {
   CardActionType,
   CardActionTypes,
   VirtualDesignCurrency,
 } from './card.types';
+
+export const successInitializeStore = (
+  network: Network,
+  data: InitialUserData,
+): CardActionType => ({
+  type: CardActionTypes.SUCCESS_INITIALIZE_STORE,
+  payload: {
+    network,
+    cards: data.cards || [],
+    balances: data.cardBalances || [],
+  },
+});
 
 export const successFetchCards = (
   network: Network,
@@ -59,4 +76,22 @@ export const updateFetchOverviewStatus = (
 ): CardActionType => ({
   type: CardActionTypes.UPDATE_FETCH_OVERVIEW_STATUS,
   payload: {id, status},
+});
+
+export const successFetchVirtualImageUrls = (
+  payload: {id: string; virtualCardImage: string}[],
+): CardActionType => ({
+  type: CardActionTypes.SUCCESS_FETCH_VIRTUAL_IMAGE_URLS,
+  payload,
+});
+
+export const failedFetchVirtualImageUrls = (): CardActionType => ({
+  type: CardActionTypes.FAILED_FETCH_VIRTUAL_IMAGE_URLS,
+});
+
+export const updateFetchVirtualImageUrlsStatus = (
+  status: FetchVirtualCardImageUrlsStatus,
+): CardActionType => ({
+  type: CardActionTypes.UPDATE_FETCH_VIRTUAL_IMAGE_URLS_STATUS,
+  payload: status,
 });

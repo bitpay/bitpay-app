@@ -3,7 +3,12 @@ import {ReactElement, ReactNode} from 'react';
 import styled, {useTheme} from 'styled-components/native';
 import {Midnight, NeutralSlate, SlateDark, White} from '../../styles/colors';
 import Haptic from '../haptic-feedback/haptic';
-import {ActiveOpacity, CardGutter, ScreenGutter} from '../styled/Containers';
+import {
+  ActiveOpacity,
+  CardGutter,
+  Row,
+  ScreenGutter,
+} from '../styled/Containers';
 import Card from '../card/Card';
 import {View} from 'react-native';
 import {BaseText} from '../styled/Text';
@@ -27,6 +32,7 @@ interface BodyProps {
   description?: string;
   value?: string;
   pillText?: string;
+  needsBackup?: boolean;
 }
 
 interface HomeCardProps {
@@ -90,6 +96,16 @@ const CardContainer = styled.TouchableOpacity`
   left: ${ScreenGutter};
 `;
 
+const NeedBackupText = styled(BaseText)`
+  font-size: 12px;
+  text-align: center;
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  padding: 2px 4px;
+  border: 1px solid ${({theme: {dark}}) => (dark ? White : '#E1E4E7')};
+  border-radius: 3px;
+  position: absolute;
+`;
+
 const HomeCard: React.FC<HomeCardProps> = ({
   backgroundImg,
   body,
@@ -98,7 +114,7 @@ const HomeCard: React.FC<HomeCardProps> = ({
 }) => {
   const HeaderComp = <CardHeader>{header}</CardHeader>;
   const theme = useTheme();
-  const {title, value, pillText, description} = body;
+  const {title, value, pillText, description, needsBackup} = body;
 
   const BodyComp = (
     <View>
@@ -108,6 +124,11 @@ const HomeCard: React.FC<HomeCardProps> = ({
         <CardPill>
           <CardPillText>{pillText}</CardPillText>
         </CardPill>
+      )}
+      {needsBackup && (
+        <Row>
+          <NeedBackupText>Needs Backup</NeedBackupText>
+        </Row>
       )}
       {description && <CardBodyDesc>{description}</CardBodyDesc>}
     </View>

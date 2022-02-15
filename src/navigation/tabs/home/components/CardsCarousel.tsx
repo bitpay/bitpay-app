@@ -1,10 +1,10 @@
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import React, {ReactNode, useEffect, useState} from 'react';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import Carousel from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {WIDTH} from '../../../../components/styled/Containers';
+import {ActiveOpacity, WIDTH} from '../../../../components/styled/Containers';
 import {RootState} from '../../../../store';
 import {Card} from '../../../../store/card/card.models';
 import {Key} from '../../../../store/wallet/wallet.models';
@@ -13,6 +13,12 @@ import BuyGiftCards from './cards/BuyGiftCards';
 import ConnectCoinbase from './cards/ConnectCoinbase';
 import CreateWallet from './cards/CreateWallet';
 import WalletCardComponent from './Wallet';
+import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
+import {showBottomNotificationModal} from '../../../../store/app/app.actions';
+import {Dispatch} from 'redux';
+import {getMnemonic} from '../../../../utils/helper-methods';
+import {TouchableOpacity} from 'react-native';
+import {HomeLink, SectionHeaderContainer} from '../HomeRoot';
 
 const CarouselContainer = styled.View`
   margin: 10px 0 10px;
@@ -22,10 +28,44 @@ const _renderItem = ({item}: {item: ReactNode}) => {
   return <>{item}</>;
 };
 
+const keyBackupRequired = (
+  key: Key,
+  navigation: NavigationProp<any>,
+): BottomNotificationConfig => {
+  return {
+    type: 'error',
+    title: 'Key Backup Required',
+    message: 'To continue you will need to back up your key.',
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: 'Back up Key',
+        action: () => {
+          navigation.navigate('Wallet', {
+            screen: 'RecoveryPhrase',
+            params: {
+              keyId: key.id,
+              words: getMnemonic(key),
+              key,
+            },
+          });
+        },
+        primary: true,
+      },
+      {
+        text: 'maybe later',
+        action: () => {},
+        primary: false,
+      },
+    ],
+  };
+};
+
 const createHomeCardList = (
   navigation: NavigationProp<any>,
   keys: Key[],
   cards: Card[],
+  dispatch: Dispatch,
 ) => {
   cards = cards.filter(c => c.provider === 'galileo');
 
@@ -39,18 +79,28 @@ const createHomeCardList = (
     const walletCards = keys
       .filter(key => key.show)
       .map(key => {
-        const {wallets, totalBalance = 0} = key;
+        const {wallets, totalBalance = 0, backupComplete} = key;
 
         return (
           <WalletCardComponent
+            keyName={key.keyName}
             wallets={wallets}
             totalBalance={totalBalance}
-            onPress={() =>
-              navigation.navigate('Wallet', {
-                screen: 'KeyOverview',
-                params: {key},
-              })
-            }
+            needsBackup={!backupComplete}
+            onPress={() => {
+              if (backupComplete) {
+                navigation.navigate('Wallet', {
+                  screen: 'KeyOverview',
+                  params: {key},
+                });
+              } else {
+                dispatch(
+                  showBottomNotificationModal(
+                    keyBackupRequired(key, navigation),
+                  ),
+                );
+              }
+            }}
           />
         );
       });
@@ -93,6 +143,7 @@ const createHomeCardList = (
 
 const CardsCarousel = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   const bitPayCards = useSelector<RootState, Card[]>(
     ({APP, CARD}) => CARD.cards[APP.network],
   );
@@ -100,32 +151,50 @@ const CardsCarousel = () => {
     ({WALLET}) => WALLET.keys,
   );
   const [cardsList, setCardsList] = useState(
-    createHomeCardList(navigation, Object.values(keys), bitPayCards),
+    createHomeCardList(navigation, Object.values(keys), bitPayCards, dispatch),
   );
 
   useEffect(() => {
     setCardsList(
-      createHomeCardList(navigation, Object.values(keys), bitPayCards),
+      createHomeCardList(
+        navigation,
+        Object.values(keys),
+        bitPayCards,
+        dispatch,
+      ),
     );
-  }, [navigation, keys, bitPayCards]);
+  }, [navigation, keys, bitPayCards, dispatch]);
 
   return (
-    <CarouselContainer>
-      <Carousel
-        vertical={false}
-        layout={'default'}
-        useExperimentalSnap={true}
-        data={cardsList}
-        renderItem={_renderItem}
-        sliderWidth={WIDTH}
-        itemWidth={235}
-        inactiveSlideScale={1}
-        inactiveSlideOpacity={1}
-        onScrollIndexChanged={() => {
-          haptic('impactLight');
-        }}
-      />
-    </CarouselContainer>
+    <>
+      {Object.keys(keys).length > 0 ? (
+        <SectionHeaderContainer justifyContent={'flex-end'}>
+          <TouchableOpacity
+            activeOpacity={ActiveOpacity}
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('GeneralSettings', {
+                screen: 'CustomizeHome',
+              });
+            }}>
+            <HomeLink>Customize</HomeLink>
+          </TouchableOpacity>
+        </SectionHeaderContainer>
+      ) : null}
+      <CarouselContainer>
+        <Carousel
+          vertical={false}
+          layout={'default'}
+          useExperimentalSnap={true}
+          data={cardsList}
+          renderItem={_renderItem}
+          sliderWidth={WIDTH}
+          itemWidth={235}
+          inactiveSlideScale={1}
+          inactiveSlideOpacity={1}
+        />
+      </CarouselContainer>
+    </>
   );
 };
 

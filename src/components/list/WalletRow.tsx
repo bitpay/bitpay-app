@@ -4,9 +4,10 @@ import {
   CurrencyImageContainer,
   CurrencyColumn,
   Row,
+  ActiveOpacity,
+  RowContainer,
 } from '../styled/Containers';
 import {Badge, H5, SubText} from '../styled/Text';
-import {RowContainer} from '../styled/Containers';
 import styled from 'styled-components/native';
 import NestedArrow from '../../../assets/img/nested-arrow.svg';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
@@ -36,6 +37,7 @@ export interface WalletRowProps {
   fiatBalance: string;
   isToken?: boolean;
   network: string;
+  isComplete?: boolean;
 }
 
 interface Props {
@@ -44,7 +46,7 @@ interface Props {
   onPress: () => void;
 }
 
-const buildTestBadge = (
+export const buildTestBadge = (
   network: string,
   currencyName: string,
   isToken: boolean | undefined,
@@ -79,7 +81,7 @@ const WalletRow = ({wallet, onPress}: Props) => {
     SUPPORTED_CURRENCIES.includes(currencyAbbreviation.toLowerCase());
 
   return (
-    <RowContainer activeOpacity={0.75} onPress={onPress}>
+    <RowContainer activeOpacity={ActiveOpacity} onPress={onPress}>
       {isToken && (
         <NestedArrowContainer>
           <NestedArrow />

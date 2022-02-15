@@ -25,8 +25,9 @@ import {useDispatch} from 'react-redux';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {Key} from '../../../store/wallet/wallet.models';
 import {WalletStackParamList} from '../WalletStack';
-import {navigateToTermsOrOverview} from './Backup';
+import {backupRedirect} from './Backup';
 import {StackScreenProps} from '@react-navigation/stack';
+import {useAppSelector} from '../../../utils/hooks';
 
 type RecoveryPhraseScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -83,7 +84,10 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {params} = route;
-  const {words, context, key, walletTermsAccepted} = params;
+  const walletTermsAccepted = useAppSelector(
+    ({WALLET}) => WALLET.walletTermsAccepted,
+  );
+  const {words, context, key} = params;
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -96,6 +100,12 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
             buttonType={'pill'}
             onPress={() => {
               haptic('impactLight');
+
+              if (context === 'settings') {
+                navigation.goBack();
+                return;
+              }
+
               dispatch(
                 showBottomNotificationModal({
                   type: 'warning',
@@ -107,7 +117,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
                     {
                       text: "I'M SURE",
                       action: () =>
-                        navigateToTermsOrOverview({
+                        backupRedirect({
                           context,
                           navigation,
                           walletTermsAccepted,
@@ -143,7 +153,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
     if (activeSlideIndex === 11) {
       navigation.navigate(context === 'onboarding' ? 'Onboarding' : 'Wallet', {
         screen: 'VerifyPhrase',
-        params,
+        params: {...params, walletTermsAccepted},
       });
     } else {
       // @ts-ignore

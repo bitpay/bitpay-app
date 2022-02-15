@@ -10,7 +10,7 @@ interface BottomNotificationListType {
 }
 
 const List = styled(BaseText)`
-  margin: 0 0 5px 10px;
+  margin-bottom: 10px;
 `;
 
 export const GeneralError: BottomNotificationConfig = {
@@ -91,16 +91,65 @@ export const WrongPasswordError = (): BottomNotificationConfig => {
 
 export const CustomErrorMessage = (
   errMsg: string,
+  title?: string,
 ): BottomNotificationConfig => {
   return {
     type: 'error',
-    title: 'Something went wrong',
+    title: title || 'Something went wrong',
     message: errMsg,
     enableBackdropDismiss: true,
     actions: [
       {
         text: 'OK',
         action: () => {},
+        primary: true,
+      },
+    ],
+  };
+};
+
+export const BchLegacyAddressInfo = (
+  appName: string,
+  action: () => void,
+): BottomNotificationConfig => {
+  return {
+    type: 'warning',
+    title: `${appName} BCH wallets use the CashAddr format by default`,
+    message:
+      'If you need to send to "old" addresses (like the one you just pasted), and you are SURE those are BCH addresses, you can "translate" them to the corresponding address in CashAddr format.',
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: 'Translate address',
+        action: () => {
+          action();
+        },
+        primary: true,
+      },
+      {
+        text: 'GOT IT',
+        action: () => {},
+        primary: false,
+      },
+    ],
+  };
+};
+
+export const SendGeneralErrorMessage = (
+  action: () => void,
+): BottomNotificationConfig => {
+  return {
+    type: 'error',
+    title: 'Error',
+    message:
+      'The wallet you are using does not match the network and/or the currency of the address provided',
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: 'OK',
+        action: () => {
+          action();
+        },
         primary: true,
       },
     ],

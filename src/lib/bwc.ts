@@ -91,4 +91,12 @@ export class BwcProvider {
   public getUtils() {
     return BWC.Utils;
   }
+
+  public getPayProV2() {
+    return BWC.PayProV2;
+  }
+
+  public parseSecret(invitationCode: string) {
+    return BWC.parseSecret(invitationCode);
+  }
 }

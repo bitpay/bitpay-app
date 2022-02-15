@@ -13,16 +13,11 @@ import {
 import {RootState} from '../../store';
 import {BitPayIdActions} from '../../store/bitpay-id';
 import {User} from '../../store/bitpay-id/bitpay-id.models';
-import Pair from './screens/Pair';
+import Pair, {PairScreenParamList} from './screens/Pair';
 import Profile from './screens/ProfileSettings';
 
 export type BitpayIdStackParamList = {
-  Pair: {
-    secret?: string;
-    code?: string;
-    dashboardRedirect?: boolean;
-    vcd?: string;
-  };
+  Pair: PairScreenParamList;
   Profile: undefined;
 };
 

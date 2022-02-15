@@ -3,7 +3,7 @@ import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {FlatList, RefreshControl} from 'react-native';
-import {useDispatch, useSelector} from 'react-redux';
+import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
 import Settings from '../../../components/settings/Settings';
 import {
@@ -14,13 +14,12 @@ import {
 } from '../../../components/styled/Text';
 import {Network} from '../../../constants';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
-import {RootState} from '../../../store';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/balance';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
-import {Wallet} from '../../../store/wallet/wallet.models';
-import {SlateDark, White} from '../../../styles/colors';
+import {Key, Wallet} from '../../../store/wallet/wallet.models';
+import {LightBlack, SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {BalanceUpdateError} from '../components/ErrorMessages';
@@ -29,6 +28,7 @@ import ReceiveAddress from '../components/ReceiveAddress';
 import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
+import {useAppSelector} from '../../../utils/hooks';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -52,12 +52,36 @@ const BalanceContainer = styled.View`
 `;
 
 const Chain = styled(BaseText)`
-  font-size: 14px;
+  font-size: 16px;
   font-style: normal;
-  font-weight: 300;
   letter-spacing: 0;
   line-height: 40px;
+  color: ${({theme: {dark}}) => (dark ? White : LightBlack)};
 `;
+
+const Type = styled(BaseText)`
+  font-size: 12px;
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  border: 1px solid ${({theme: {dark}}) => (dark ? '#252525' : '#E1E4E7')};
+  padding: 2px 4px;
+  border-radius: 3px;
+  margin-left: auto;
+`;
+
+const getWalletType = (key: Key, wallet: Wallet) => {
+  const {
+    credentials: {token, walletId},
+  } = wallet;
+  if (token) {
+    const linkedWallet = key.wallets.find(({tokens}) =>
+      tokens?.includes(walletId),
+    );
+    const walletName =
+      linkedWallet?.walletName || linkedWallet?.credentials.walletName;
+    return `Linked to ${walletName}`;
+  }
+  return;
+};
 
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
@@ -67,17 +91,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const {walletId, key} = route.params;
-  const fullWalletObj = useSelector(({WALLET}: RootState) =>
-    findWalletById(WALLET.keys[key.id].wallets, walletId),
-  ) as Wallet;
+  const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
+  const fullWalletObj = findWalletById(wallets, walletId) as Wallet;
   const uiFormattedWallet = buildUIFormattedWallet(fullWalletObj);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
+  const walletType = getWalletType(key, fullWalletObj);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
-        <HeaderTitle>{uiFormattedWallet.currencyName}</HeaderTitle>
+        <HeaderTitle>{uiFormattedWallet.walletName}</HeaderTitle>
       ),
       headerRight: () => (
         <Settings
@@ -87,7 +111,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         />
       ),
     });
-  }, [navigation, uiFormattedWallet.currencyName]);
+  }, [navigation, uiFormattedWallet]);
 
   const assetOptions: Array<Option> = [
     {
@@ -112,7 +136,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         navigation.navigate('Wallet', {
           screen: 'WalletSettings',
           params: {
-            wallet: uiFormattedWallet,
+            key,
+            walletId,
           },
         }),
     },
@@ -172,13 +197,25 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                   </Balance>
                   <Chain>{currencyAbbreviation}</Chain>
                 </Row>
-                {showFiatBalance && <H5>{fiatBalance}</H5>}
+                <Row>
+                  {showFiatBalance && <H5>{fiatBalance}</H5>}
+                  {walletType && <Type>{walletType}</Type>}
+                </Row>
               </BalanceContainer>
 
-              <LinkingButtons
-                receiveCta={() => showReceiveAddress()}
-                sendCta={() => null}
-              />
+              {fullWalletObj ? (
+                <LinkingButtons
+                  receive={{cta: () => showReceiveAddress()}}
+                  send={{
+                    hide: __DEV__ ? false : !fullWalletObj.balance.fiat,
+                    cta: () =>
+                      navigation.navigate('Wallet', {
+                        screen: 'SendTo',
+                        params: {wallet: fullWalletObj},
+                      }),
+                  }}
+                />
+              ) : null}
             </>
           );
         }}
@@ -191,11 +228,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         options={assetOptions}
       />
 
-      <ReceiveAddress
-        isVisible={showReceiveAddressBottomModal}
-        closeModal={() => setShowReceiveAddressBottomModal(false)}
-        wallet={fullWalletObj}
-      />
+      {fullWalletObj ? (
+        <ReceiveAddress
+          isVisible={showReceiveAddressBottomModal}
+          closeModal={() => setShowReceiveAddressBottomModal(false)}
+          wallet={fullWalletObj}
+        />
+      ) : null}
     </WalletDetailsContainer>
   );
 };
