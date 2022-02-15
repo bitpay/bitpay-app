@@ -194,7 +194,9 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
       // filter out empty string and compare words against real order
       const compareWords = update.filter(w => w);
       if (words.every((_word, index) => _word === compareWords[index])) {
-        dispatch(WalletActions.setBackupComplete(keyId));
+        if (context !== 'settings') {
+          dispatch(WalletActions.setBackupComplete(keyId));
+        }
         setProgress(1);
         dispatch(
           AppActions.showBottomNotificationModal({

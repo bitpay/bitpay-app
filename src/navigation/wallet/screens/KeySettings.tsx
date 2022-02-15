@@ -41,6 +41,7 @@ import {sleep} from '../../../utils/helper-methods';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {WrongPasswordError} from '../components/ErrorMessages';
 import {generateKeyExportCode} from '../../../store/wallet/utils/wallet';
+import {Key} from '../../../store/wallet/wallet.models';
 
 const WalletSettingsContainer = styled.View`
   flex: 1;
@@ -87,8 +88,8 @@ const KeySettings = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const wallets = buildNestedWalletList(key.wallets);
-  const keyName = useAppSelector(({WALLET}) => WALLET.keys[key.id]?.keyName);
-  const {isPrivKeyEncrypted} = key;
+  const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
+  const {keyName} = _key || {};
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -103,11 +104,20 @@ const KeySettings = () => {
     }
   });
 
-  const buildEncryptModalConfig = (cta: (encryptPassword: string) => void) => {
+  const buildEncryptModalConfig = (
+    cta: (getKey: {
+      mnemonic: string;
+      mnemonicHasPassphrase: boolean;
+      xPrivKey: string;
+    }) => void,
+  ) => {
     return {
       onSubmitHandler: async (encryptPassword: string) => {
         try {
-          cta(encryptPassword);
+          const getKey = key.methods.get(encryptPassword);
+          dispatch(AppActions.dismissDecryptPasswordModal());
+          await sleep(300);
+          cta(getKey);
         } catch (e) {
           console.log(`Decrypt Error: ${e}`);
           await dispatch(AppActions.dismissDecryptPasswordModal());
@@ -177,12 +187,12 @@ const KeySettings = () => {
           <Setting
             onPress={() => {
               haptic('impactLight');
-              if (!isPrivKeyEncrypted) {
+              if (!_key.isPrivKeyEncrypted) {
                 navigation.navigate('Wallet', {
                   screen: 'RecoveryPhrase',
                   params: {
                     keyId: key.id,
-                    words: getMnemonic(key),
+                    words: getMnemonic(_key),
                     walletTermsAccepted: true,
                     context: 'settings',
                     key,
@@ -191,14 +201,11 @@ const KeySettings = () => {
               } else {
                 dispatch(
                   AppActions.showDecryptPasswordModal(
-                    buildEncryptModalConfig(async encryptPassword => {
-                      const {id, mnemonic} = key.methods.get(encryptPassword);
-                      await dispatch(AppActions.dismissDecryptPasswordModal());
-                      await sleep(300);
+                    buildEncryptModalConfig(async ({mnemonic}) => {
                       navigation.navigate('Wallet', {
                         screen: 'RecoveryPhrase',
                         params: {
-                          keyId: id,
+                          keyId: key.id,
                           words: mnemonic.trim().split(' '),
                           walletTermsAccepted: true,
                           context: 'settings',
@@ -269,21 +276,19 @@ const KeySettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              if (!isPrivKeyEncrypted) {
+              if (!_key.isPrivKeyEncrypted) {
                 navigation.navigate('Wallet', {
                   screen: 'ExportKey',
                   params: {
-                    code: generateKeyExportCode(key),
+                    code: generateKeyExportCode(_key),
                     keyName,
                   },
                 });
               } else {
                 dispatch(
                   AppActions.showDecryptPasswordModal(
-                    buildEncryptModalConfig(async encryptPassword => {
-                      const code = generateKeyExportCode(key, encryptPassword);
-                      dispatch(AppActions.dismissDecryptPasswordModal());
-                      await sleep(300);
+                    buildEncryptModalConfig(async ({mnemonic}) => {
+                      const code = generateKeyExportCode(key, mnemonic);
                       navigation.navigate('Wallet', {
                         screen: 'ExportKey',
                         params: {code, keyName},
@@ -301,20 +306,17 @@ const KeySettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              if (!isPrivKeyEncrypted) {
+              if (!_key.isPrivKeyEncrypted) {
                 navigation.navigate('Wallet', {
                   screen: 'ExtendedPrivateKey',
                   params: {
-                    xPrivKey: key.properties.xPrivKey,
+                    xPrivKey: _key.properties.xPrivKey,
                   },
                 });
               } else {
                 dispatch(
                   AppActions.showDecryptPasswordModal(
-                    buildEncryptModalConfig(async encryptPassword => {
-                      const {xPrivKey} = key.methods.get(encryptPassword);
-                      dispatch(AppActions.dismissDecryptPasswordModal());
-                      await sleep(300);
+                    buildEncryptModalConfig(async ({xPrivKey}) => {
                       navigation.navigate('Wallet', {
                         screen: 'ExtendedPrivateKey',
                         params: {xPrivKey},
