@@ -506,29 +506,29 @@ const CreateMultisig = () => {
                   </CheckBoxContainer>
                 </RowContainer>
 
-                {testnetEnabled && (
-                  <>
-                    <Info>
-                      <InfoTriangle />
+                {/*{testnetEnabled && (*/}
+                {/*  <>*/}
+                {/*    <Info>*/}
+                {/*      <InfoTriangle />*/}
 
-                      <InfoHeader>
-                        <InfoImageContainer infoMargin={'0 8px 0 0'}>
-                          <WarningSvg />
-                        </InfoImageContainer>
+                {/*      <InfoHeader>*/}
+                {/*        <InfoImageContainer infoMargin={'0 10px 0 0'}>*/}
+                {/*          <WarningSvg />*/}
+                {/*        </InfoImageContainer>*/}
 
-                        <InfoTitle>
-                          Did someone asked you to create this wallet?
-                        </InfoTitle>
-                      </InfoHeader>
-                      <InfoDescription>
-                        Testnet coins have no value and cannot be converted into
-                        "actual" coins. If you are purchasing cryptocurrency
-                        through a third party, and they have requested you to
-                        create this type of wallet, they are scamming you.
-                      </InfoDescription>
-                    </Info>
-                  </>
-                )}
+                {/*        <InfoTitle>*/}
+                {/*          Did someone asked you to create this wallet?*/}
+                {/*        </InfoTitle>*/}
+                {/*      </InfoHeader>*/}
+                {/*      <InfoDescription>*/}
+                {/*        Testnet coins have no value and cannot be converted into*/}
+                {/*        "actual" coins. If you are purchasing cryptocurrency*/}
+                {/*        through a third party, and they have requested you to*/}
+                {/*        create this type of wallet, they are scamming you.*/}
+                {/*      </InfoDescription>*/}
+                {/*    </Info>*/}
+                {/*  </>*/}
+                {/*)}*/}
               </AdvancedOptions>
             )}
 

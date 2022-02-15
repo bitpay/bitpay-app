@@ -273,3 +273,29 @@ export const HeaderContainer = styled.View`
   flex-direction: row;
   align-items: center;
 `;
+
+// creation and add wallet
+export const OptionContainer = styled.SafeAreaView`
+  flex: 1;
+`;
+
+export const OptionListContainer = styled.View`
+  flex: 1;
+  padding: 0 ${ScreenGutter};
+  margin-top: 30px;
+`;
+
+export const OptionList = styled.TouchableOpacity`
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Feather)};
+  height: 100px;
+  border-radius: 12px;
+  margin-bottom: ${ScreenGutter};
+  flex-direction: row;
+  overflow: hidden;
+`;
+
+export const OptionInfoContainer = styled.View`
+  padding: 20px;
+  justify-content: center;
+  flex: 1;
+`;

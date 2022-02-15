@@ -194,3 +194,16 @@ export const InfoDescription = styled(BaseText)`
   font-size: 16px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
+
+// creation and add wallet
+export const OptionTitle = styled(H6)`
+  font-weight: 700;
+  margin-bottom: 5px;
+  color: ${({theme}) => theme.colors.text};
+`;
+
+export const OptionDescription = styled(BaseText)`
+  font-size: 14px;
+  line-height: 18px;
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+`;

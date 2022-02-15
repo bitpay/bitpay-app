@@ -1,7 +1,5 @@
-import {useNavigation, useTheme} from '@react-navigation/native';
-import {StackActions, useNavigation, useTheme} from '@react-navigation/native';
-import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useState} from 'react';
+import {StackActions, useNavigation, useTheme} from '@react-navigation/native';
 import {FlatList, LogBox, RefreshControl, TouchableOpacity} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
@@ -9,10 +7,9 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
 import {BaseText, H5, HeaderTitle} from '../../../components/styled/Text';
 import Settings from '../../../components/settings/Settings';
-import {Hr, ActiveOpacity} from '../../../components/styled/Containers';
 import {
-  ActiveOpacity,
   Hr,
+  ActiveOpacity,
   ScreenGutter,
 } from '../../../components/styled/Containers';
 import {RootState} from '../../../store';
