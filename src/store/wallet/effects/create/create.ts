@@ -242,11 +242,13 @@ const createWallet = (params: {
               // eslint-disable-next-line no-shadow
               const account = options.account || 0;
               if (account >= 20) {
-                reject(
-                  '20 Wallet limit from the same coin and network has been reached.',
+                return reject(
+                  new Error(
+                    '20 Wallet limit from the same coin and network has been reached.',
+                  ),
                 );
               }
-              resolve(
+              return resolve(
                 createWallet({
                   key,
                   coin,

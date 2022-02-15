@@ -40,11 +40,13 @@ export const buildWalletObj = (
     balance = {crypto: '0', fiat: 0},
     tokens,
     keyId,
+    n,
+    m,
   }: Credentials & {
     balance?: WalletBalance;
     tokens?: any;
   },
-  tokenOpts: {[key in string]: Token},
+  tokenOpts?: {[key in string]: Token},
   otherOpts?: {
     walletName?: string;
   },
@@ -63,7 +65,11 @@ export const buildWalletObj = (
     keyId,
     img: SUPPORTED_CURRENCIES.includes(currencyAbbreviation)
       ? CurrencyListIcons[currencyAbbreviation]
-      : tokenOpts[currencyAbbreviation]?.logoURI,
+      : tokenOpts
+      ? tokenOpts[currencyAbbreviation]?.logoURI
+      : '',
+    n,
+    m,
   };
 };
 

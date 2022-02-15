@@ -19,6 +19,7 @@ import {
   AdvancedOptionsButton,
   AdvancedOptionsButtonText,
   AdvancedOptionsContainer,
+  AdvancedOptions,
   Column,
   SheetContainer,
   Row,
@@ -62,6 +63,7 @@ import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {Network} from '../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {sleep} from '../../../utils/helper-methods';
 import {WrongPasswordError} from '../components/ErrorMessages';
 import {checkEncryptPassword} from '../../../store/wallet/utils/wallet';
 
@@ -308,13 +310,32 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
           ],
         }),
       );
-    } catch (err) {
-      // TODO
-      console.error(err);
-    } finally {
       dispatch(dismissOnGoingProcessModal());
+    } catch (err: any) {
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      console.error(err);
+      showErrorModal(err.message);
     }
   });
+
+  const showErrorModal = (e: string) => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: 'Something went wrong',
+        message: e,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'OK',
+            action: () => {},
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
 
   const renderItem = useCallback(
     ({item}) => (
@@ -398,27 +419,29 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
             </AdvancedOptionsButton>
 
             {showOptions && (
-              <RowContainer
-                activeOpacity={1}
-                onPress={() => {
-                  setIsTestnet(!isTestnet);
-                }}>
-                <Column>
-                  <OptionTitle>
-                    {isToken || currencyAbbreviation === 'ETH'
-                      ? 'Kovan'
-                      : 'Testnet'}
-                  </OptionTitle>
-                </Column>
-                <CheckBoxContainer>
-                  <Checkbox
-                    checked={isTestnet}
-                    onPress={() => {
-                      setIsTestnet(!isTestnet);
-                    }}
-                  />
-                </CheckBoxContainer>
-              </RowContainer>
+              <AdvancedOptions>
+                <RowContainer
+                  activeOpacity={1}
+                  onPress={() => {
+                    setIsTestnet(!isTestnet);
+                  }}>
+                  <Column>
+                    <OptionTitle>
+                      {isToken || currencyAbbreviation === 'ETH'
+                        ? 'Kovan'
+                        : 'Testnet'}
+                    </OptionTitle>
+                  </Column>
+                  <CheckBoxContainer>
+                    <Checkbox
+                      checked={isTestnet}
+                      onPress={() => {
+                        setIsTestnet(!isTestnet);
+                      }}
+                    />
+                  </CheckBoxContainer>
+                </RowContainer>
+              </AdvancedOptions>
             )}
           </WalletAdvancedOptionsContainer>
         )}

@@ -4,17 +4,27 @@ import {
   ActiveOpacity,
   ScreenGutter,
 } from '../../../components/styled/Containers';
-import {useNavigation} from '@react-navigation/native';
+import {ImageSourcePropType} from 'react-native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {Feather, LightBlack, SlateDark, White} from '../../../styles/colors';
 import {BaseText, H6, HeaderTitle} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
+import FastImage from 'react-native-fast-image';
+import {Key} from '../../../store/wallet/wallet.models';
+import {RouteProp} from '@react-navigation/core';
+import {WalletStackParamList} from '../WalletStack';
 import MultisigOptions from './MultisigOptions';
+
+export type AddingOptionsParamList = {
+  key: Key;
+};
 
 interface Option {
   id: string;
   title: string;
   description: string;
   cta: () => void;
+  img: ImageSourcePropType;
   height: string;
 }
 
@@ -37,14 +47,17 @@ const OptionList = styled.TouchableOpacity`
   overflow: hidden;
 `;
 
+const ImageContainer = styled.View`
+  width: 100px;
+`;
+
 const Title = styled(H6)`
-  font-weight: 700;
-  margin-bottom: 5px;
+  margin-bottom: 3px;
   color: ${({theme}) => theme.colors.text};
 `;
 
 const InfoContainer = styled.View`
-  padding: 20px;
+  padding: ${ScreenGutter} ${ScreenGutter} ${ScreenGutter} 0;
   justify-content: center;
   flex: 1;
 `;
@@ -54,14 +67,24 @@ const Description = styled(BaseText)`
   line-height: 18px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
-const CreationOptions: React.FC = () => {
+
+const Image = styled(FastImage)<{imgHeight: string}>`
+  width: 80px;
+  height: ${({imgHeight}) => imgHeight};
+  position: absolute;
+  bottom: 0;
+`;
+
+const AddingOptions: React.FC = () => {
   const navigation = useNavigation();
+  const route = useRoute<RouteProp<WalletStackParamList, 'AddingOptions'>>();
+  const {key} = route.params;
   const [showMultisigOptions, setShowMultisigOptions] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
-      headerTitle: () => <HeaderTitle>Select an option</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>Select Wallet Type</HeaderTitle>,
       headerTitleAlign: 'center',
     });
   }, [navigation]);
@@ -69,32 +92,23 @@ const CreationOptions: React.FC = () => {
   const optionList: Option[] = [
     {
       id: 'basic',
-      title: 'New Key',
+      title: 'Basic wallet',
       description:
-        'Add coins like Bitcoin and Dogecoin and also tokens like USDC and PAX',
+        'Add coins like Bitcoin and Dogecoin, and also tokens like USDC and PAX',
       cta: () =>
         navigation.navigate('Wallet', {
           screen: 'CurrencySelection',
-          params: {context: 'createNewKey'},
+          params: {context: 'addWallet', key},
         }),
+      img: require('../../../../assets/img/wallet/wallet-type/create-wallet.png'),
       height: '98px',
-    },
-    {
-      id: 'import',
-      title: 'Import Key',
-      description:
-        'Use an existing recovery phrase to import an existing wallet',
-      cta: () =>
-        navigation.navigate('Wallet', {
-          screen: 'Import',
-        }),
-      height: '80px',
     },
     {
       id: 'multisig',
       title: 'Multisig Wallet',
-      description: 'Requires multiple people or devices and is the most secure',
+      description: 'Requires multiple devices and is the most secure',
       cta: () => setShowMultisigOptions(true),
+      img: require('../../../../assets/img/wallet/wallet-type/multisig.png'),
       height: '80px',
     },
   ];
@@ -102,28 +116,34 @@ const CreationOptions: React.FC = () => {
     <>
       <OptionContainer>
         <OptionListContainer>
-          {optionList.map(({cta, id, title, description}: Option) => (
-            <OptionList
-              activeOpacity={ActiveOpacity}
-              onPress={() => {
-                haptic('impactLight');
-                cta();
-              }}
-              key={id}>
-              <InfoContainer>
-                <Title>{title}</Title>
-                <Description>{description}</Description>
-              </InfoContainer>
-            </OptionList>
-          ))}
+          {optionList.map(
+            ({cta, id, img, height, title, description}: Option) => (
+              <OptionList
+                activeOpacity={ActiveOpacity}
+                onPress={() => {
+                  haptic('impactLight');
+                  cta();
+                }}
+                key={id}>
+                <ImageContainer>
+                  <Image source={img} imgHeight={height} />
+                </ImageContainer>
+                <InfoContainer>
+                  <Title>{title}</Title>
+                  <Description>{description}</Description>
+                </InfoContainer>
+              </OptionList>
+            ),
+          )}
         </OptionListContainer>
       </OptionContainer>
       <MultisigOptions
         isVisible={showMultisigOptions}
         setShowMultisigOptions={setShowMultisigOptions}
+        walletKey={key}
       />
     </>
   );
 };
 
-export default CreationOptions;
+export default AddingOptions;

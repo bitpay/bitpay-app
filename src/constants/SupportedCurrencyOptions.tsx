@@ -18,6 +18,7 @@ export interface SupportedCurrencyOption {
   id: string;
   img: string | ((props?: any) => ReactElement);
   currencyName: string;
+  hasMultisig?: boolean;
   currencyAbbreviation: string;
   isToken?: boolean;
   imgSrc: ImageSourcePropType;
@@ -47,6 +48,7 @@ export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
     img: CurrencyListIcons.btc,
     currencyName: 'Bitcoin',
     currencyAbbreviation: 'BTC',
+    hasMultisig: true,
     imgSrc: require('../../assets/img/currencies/png/BTC.png'),
   },
   {
@@ -54,6 +56,7 @@ export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
     img: CurrencyListIcons.bch,
     currencyName: 'Bitcoin Cash',
     currencyAbbreviation: 'BCH',
+    hasMultisig: true,
     imgSrc: require('../../assets/img/currencies/png/BCH.png'),
   },
   {
@@ -61,6 +64,7 @@ export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
     img: CurrencyListIcons.eth,
     currencyName: 'Ethereum',
     currencyAbbreviation: 'ETH',
+    hasMultisig: false, // TODO
     imgSrc: require('../../assets/img/currencies/png/ETH.png'),
   },
   {
@@ -68,6 +72,7 @@ export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
     img: CurrencyListIcons.doge,
     currencyName: 'Dogecoin',
     currencyAbbreviation: 'DOGE',
+    hasMultisig: true,
     imgSrc: require('../../assets/img/currencies/png/DOGE.png'),
   },
   {
@@ -75,6 +80,7 @@ export const SupportedCurrencyOptions: Array<SupportedCurrencyOption> = [
     img: CurrencyListIcons.ltc,
     currencyName: 'Litecoin',
     currencyAbbreviation: 'LTC',
+    hasMultisig: true,
     imgSrc: require('../../assets/img/currencies/png/LTC.png'),
   },
   {

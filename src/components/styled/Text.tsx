@@ -1,6 +1,7 @@
 import React from 'react';
 import {Text} from 'react-native';
 import styled, {css} from 'styled-components/native';
+import {SlateDark, White} from '../../styles/colors';
 
 export const fontFamily = 'Heebo';
 
@@ -177,4 +178,19 @@ export const ImportTitle = styled(BaseText)`
   line-height: 18px;
   opacity: 0.75;
   text-transform: uppercase;
+`;
+
+export const InfoTitle = styled(BaseText)`
+  font-size: 16px;
+  color: ${({theme}) => theme.colors.text};
+`;
+
+export const InfoHeader = styled.View`
+  flex-direction: row;
+  margin-bottom: 10px;
+`;
+
+export const InfoDescription = styled(BaseText)`
+  font-size: 16px;
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
