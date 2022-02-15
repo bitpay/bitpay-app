@@ -3,6 +3,8 @@ import {Session, User} from './bitpay-id.models';
 import {Network} from '../../constants';
 
 export const bitPayIdReduxPersistBlackList: (keyof BitPayIdState)[] = [
+  'session',
+  'fetchSessionStatus',
   'loginStatus',
   'loginError',
   'twoFactorAuthStatus',

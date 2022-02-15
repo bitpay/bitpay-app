@@ -114,6 +114,20 @@ export const AuthApi = {
     }
   },
 
+  async logout(network: Network, csrfToken: string) {
+    try {
+      const config = {
+        headers: {
+          'x-csrf-token': csrfToken,
+        },
+      };
+
+      await axios.post(`${BASE_BITPAY_URLS[network]}/auth/logout`, {}, config);
+    } catch (err) {
+      throw err;
+    }
+  },
+
   async submitTwoFactor(
     network: Network,
     code: string,

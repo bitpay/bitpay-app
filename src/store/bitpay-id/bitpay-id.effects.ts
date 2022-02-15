@@ -370,6 +370,24 @@ const startPairAndLoadUser =
     }
   };
 
+export const startDisconnectBitPayId =
+  (): Effect => async (dispatch, getState) => {
+    try {
+      const {APP, BITPAY_ID} = getState();
+      const {isAuthenticated, csrfToken} = BITPAY_ID.session;
+
+      if (isAuthenticated && csrfToken) {
+        AuthApi.logout(APP.network, csrfToken);
+      }
+
+      dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
+    } catch (err) {
+      // log but swallow this error
+      dispatch(LogActions.error('An error occurred while logging out.'));
+      dispatch(LogActions.error(JSON.stringify(err)));
+    }
+  };
+
 export const startFetchBasicInfo =
   (token: string): Effect =>
   async (dispatch, getState) => {
