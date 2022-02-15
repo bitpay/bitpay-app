@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1041941447386",
+    "project_id": "bitpayappv2",
+    "storage_bucket": "bitpayappv2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1041941447386:android:43c12bde9bc02433701be3",
+        "android_client_info": {
+          "package_name": "com.bitpayapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1041941447386-qtuhm738gidrksfc0695gbrgtp88ijek.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBmiGy53eLHuZ1ogHaCcAtGSvToIdunXlc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1041941447386-qtuhm738gidrksfc0695gbrgtp88ijek.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
