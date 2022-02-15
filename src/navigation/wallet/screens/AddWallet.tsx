@@ -63,7 +63,6 @@ import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {Network} from '../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {sleep} from '../../../utils/helper-methods';
 import {WrongPasswordError} from '../components/ErrorMessages';
 import {checkEncryptPassword} from '../../../store/wallet/utils/wallet';
 
