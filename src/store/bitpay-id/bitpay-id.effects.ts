@@ -2,12 +2,15 @@ import {upperFirst} from 'lodash';
 import ReactAppboy from 'react-native-appboy-sdk';
 import {batch} from 'react-redux';
 import AuthApi from '../../api/auth';
-import {LoginErrorResponse} from '../../api/auth/auth.types';
+import {
+  LoginErrorResponse,
+  RegisterErrorResponse,
+} from '../../api/auth/auth.types';
 import UserApi from '../../api/user';
 import {InitialUserData} from '../../api/user/user.types';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
-import {isAxiosError} from '../../utils/axios';
+import {isAxiosError, isRateLimitError} from '../../utils/axios';
 import {generateSalt, hashPassword} from '../../utils/password';
 import {AppActions, AppEffects} from '../app/';
 import {startOnGoingProcessModal} from '../app/app.effects';
@@ -89,7 +92,22 @@ export const startCreateAccount =
 
       dispatch(BitPayIdActions.successCreateAccount());
     } catch (err) {
-      dispatch(BitPayIdActions.failedCreateAccount());
+      let errMsg;
+
+      if (isRateLimitError(err)) {
+        errMsg = err.response?.data.error || 'Rate limited';
+      } else if (isAxiosError<RegisterErrorResponse>(err)) {
+        errMsg =
+          err.response?.data.message ||
+          err.message ||
+          'An unexpected error occurred.';
+      } else if (err instanceof Error) {
+        errMsg = err.message || 'An unexpected error occurred.';
+      } else {
+        errMsg = JSON.stringify(err);
+      }
+
+      dispatch(BitPayIdActions.failedCreateAccount(upperFirst(errMsg)));
       dispatch(LogActions.error('Failed to create account.'));
       dispatch(LogActions.error(JSON.stringify(err)));
     }

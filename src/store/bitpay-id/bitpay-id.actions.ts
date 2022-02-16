@@ -39,8 +39,9 @@ export const successCreateAccount = (): BitPayIdActionType => ({
   type: BitPayIdActionTypes.SUCCESS_CREATE_ACCOUNT,
 });
 
-export const failedCreateAccount = (): BitPayIdActionType => ({
+export const failedCreateAccount = (error?: string): BitPayIdActionType => ({
   type: BitPayIdActionTypes.FAILED_CREATE_ACCOUNT,
+  payload: {error},
 });
 
 export const updateCreateAccountStatus = (

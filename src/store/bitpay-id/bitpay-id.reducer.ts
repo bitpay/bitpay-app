@@ -5,6 +5,8 @@ import {Network} from '../../constants';
 export const bitPayIdReduxPersistBlackList: (keyof BitPayIdState)[] = [
   'session',
   'fetchSessionStatus',
+  'createAccountStatus',
+  'createAccountError',
   'loginStatus',
   'loginError',
   'twoFactorAuthStatus',
@@ -49,6 +51,7 @@ export interface BitPayIdState {
   };
   fetchSessionStatus: FetchSessionStatus;
   createAccountStatus: CreateAccountStatus;
+  createAccountError: string | null;
   loginStatus: LoginStatus;
   loginError: string | null;
   twoFactorAuthStatus: TwoFactorAuthStatus;
@@ -83,6 +86,7 @@ const initialState: BitPayIdState = {
   },
   fetchSessionStatus: null,
   createAccountStatus: null,
+  createAccountError: null,
   loginStatus: null,
   loginError: null,
   twoFactorAuthStatus: null,
@@ -130,6 +134,7 @@ export const bitPayIdReducer = (
       return {
         ...state,
         createAccountStatus: 'failed',
+        createAccountError: action.payload.error || null,
       };
 
     case BitPayIdActionTypes.UPDATE_CREATE_ACCOUNT_STATUS:

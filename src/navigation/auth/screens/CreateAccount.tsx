@@ -4,6 +4,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {SafeAreaView, TextInput} from 'react-native';
 import * as yup from 'yup';
+import AlertBox from '../../../components/alert-box/AlertBox';
 import A from '../../../components/anchor/Anchor';
 import Button from '../../../components/button/Button';
 import Checkbox from '../../../components/checkbox/Checkbox';
@@ -24,7 +25,7 @@ import AuthFormContainer, {
   CheckboxError,
   CheckboxLabel,
 } from '../components/AuthFormContainer';
-import RecaptchaModal from '../components/RecaptchaModal';
+import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
 
 export type CreateAccountScreenParamList = {} | undefined;
 type CreateAccountScreenProps = StackScreenProps<
@@ -66,11 +67,15 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
   const createAccountStatus = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.createAccountStatus,
   );
+  const createAccountError = useAppSelector(
+    ({BITPAY_ID}) => BITPAY_ID.createAccountError,
+  );
   const isVerified = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.session.verified,
   );
   const dispatch = useAppDispatch();
   const [isRecaptchaVisible, setRecaptchaVisible] = useState(false);
+  const captchaRef = useRef<CaptchaRef>(null);
 
   useEffect(() => {
     return () => {
@@ -96,6 +101,9 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
           screen: 'Profile',
         });
       }
+    } else if (createAccountStatus === 'failed') {
+      captchaRef.current?.reset();
+      return;
     }
   }, [createAccountStatus, isVerified, navigation, dispatch]);
 
@@ -139,6 +147,14 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
   return (
     <SafeAreaView>
       <AuthFormContainer>
+        {createAccountStatus === 'failed' ? (
+          <AuthRowContainer>
+            <AlertBox type="warning">
+              {createAccountError || 'An unexpected error occurred.'}
+            </AlertBox>
+          </AuthRowContainer>
+        ) : null}
+
         <AuthRowContainer>
           <Controller
             control={control}
@@ -275,6 +291,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
       </AuthFormContainer>
 
       <RecaptchaModal
+        ref={captchaRef}
         baseUrl={BASE_BITPAY_URLS[network]}
         sitekey={session.noCaptchaKey}
         isVisible={isRecaptchaVisible}

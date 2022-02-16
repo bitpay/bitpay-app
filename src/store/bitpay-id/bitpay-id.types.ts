@@ -72,6 +72,7 @@ interface SuccessCreateAccount {
 
 interface FailedCreateAccount {
   type: typeof BitPayIdActionTypes.FAILED_CREATE_ACCOUNT;
+  payload: {error?: string};
 }
 
 interface UpdateCreateAccountStatus {

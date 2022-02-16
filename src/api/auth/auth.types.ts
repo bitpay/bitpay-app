@@ -13,6 +13,10 @@ export interface RegisterResponse {
   userId: string;
 }
 
+export interface RegisterErrorResponse {
+  message: string;
+}
+
 export interface LoginResponse {
   accessTypes?: 'merchant' | 'visaCard' | 'visaManagement'[];
   twoFactorPending?: boolean;
