@@ -6,7 +6,6 @@ import {
   WalletBalance,
   WalletStatus,
 } from '../../wallet.models';
-import {startGetRates} from '../rates/rates';
 import {
   failedUpdateAllKeysAndBalances,
   failedUpdateKeyTotalBalance,
@@ -28,7 +27,9 @@ export const startUpdateWalletBalance =
       }
 
       try {
-        const {WALLET} = getState();
+        const {
+          WALLET: {rates, balanceCacheKey},
+        } = getState();
 
         const {
           id,
@@ -36,14 +37,11 @@ export const startUpdateWalletBalance =
           credentials: {network},
         } = wallet;
 
-        if (
-          !isCacheKeyStale(WALLET.balanceCacheKey[id], BALANCE_CACHE_DURATION)
-        ) {
+        if (!isCacheKeyStale(balanceCacheKey[id], BALANCE_CACHE_DURATION)) {
           console.log(`Wallet: ${id} - skipping balance update`);
           return resolve();
         }
 
-        const rates = await dispatch<Promise<Rates>>(startGetRates());
         const lastKnownBalance = wallet.balance.fiat;
         const balance = await updateWalletBalance({wallet, rates});
 
@@ -85,23 +83,18 @@ export const startUpdateAllWalletBalancesForKey =
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
-        const {WALLET} = getState();
+        const {
+          WALLET: {rates, balanceCacheKey},
+        } = getState();
 
-        if (
-          !isCacheKeyStale(
-            WALLET.balanceCacheKey[key.id],
-            BALANCE_CACHE_DURATION,
-          )
-        ) {
+        if (!isCacheKeyStale(balanceCacheKey[key.id], BALANCE_CACHE_DURATION)) {
           console.log(`Key: ${key.id} - skipping balance update`);
           return resolve();
         }
-        const rates = await dispatch<Promise<Rates>>(startGetRates());
 
         const balances = await Promise.all(
           key.wallets.map(async wallet => {
             return new Promise<WalletBalance>(async resolve2 => {
-
               const balance = await updateWalletBalance({wallet, rates});
               dispatch(
                 successUpdateWalletBalance({
@@ -142,17 +135,17 @@ export const startUpdateAllKeyAndWalletBalances =
   (): Effect => async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
-        const {WALLET} = getState();
+        const {
+          WALLET: {keys, balanceCacheKey},
+        } = getState();
 
-        if (
-          !isCacheKeyStale(WALLET.balanceCacheKey.all, BALANCE_CACHE_DURATION)
-        ) {
+        if (!isCacheKeyStale(balanceCacheKey.all, BALANCE_CACHE_DURATION)) {
           console.log('All: skipping balance update');
           return resolve();
         }
 
         await Promise.all(
-          Object.values(WALLET.keys).map(key => {
+          Object.values(keys).map(key => {
             dispatch(startUpdateAllWalletBalancesForKey(key));
           }),
         );
@@ -181,6 +174,7 @@ const updateWalletBalance = ({
 
     wallet.getStatus(
       {
+        twoStep: true,
         tokenAddress: token ? token.address : null,
         multisigContractAddress: multisigEthInfo
           ? multisigEthInfo.multisigContractAddress

@@ -38,8 +38,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     const isPaired = !!token;
     const identity = dispatch(initializeAppIdentity());
 
-    await dispatch(initializeApi(APP.network, identity));
     dispatch(startWalletStoreInit());
+    await dispatch(initializeApi(APP.network, identity));
     if (isPaired) {
       try {
         dispatch(
