@@ -12,7 +12,7 @@ import {
   Row,
   ActiveOpacity,
 } from '../../../../components/styled/Containers';
-import {ValidateAddress} from '../../../../constants/address';
+import {ValidateCoinAddress} from '../../../../store/wallet/utils/validations';
 import {GetCoinAndNetwork} from '../../../../store/wallet/effects/send/address';
 import {ContactRowProps} from '../../../../components/list/ContactRow';
 import {useNavigation} from '@react-navigation/core';
@@ -186,7 +186,7 @@ const ContactsAdd = () => {
     if (address) {
       const coinAndNetwork = GetCoinAndNetwork(address);
       if (coinAndNetwork) {
-        const isValid = ValidateAddress(
+        const isValid = ValidateCoinAddress(
           address,
           coinAndNetwork.coin,
           coinAndNetwork.network,
@@ -195,7 +195,7 @@ const ContactsAdd = () => {
           setValidValues(address, coinAndNetwork.coin, coinAndNetwork.network);
         } else {
           // try testnet
-          const isValidTest = ValidateAddress(
+          const isValidTest = ValidateCoinAddress(
             address,
             coinAndNetwork.coin,
             'testnet',
