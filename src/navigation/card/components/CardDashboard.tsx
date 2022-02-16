@@ -102,6 +102,10 @@ const DashboardContentContainer = styled.View`
   padding: ${ScreenGutter};
 `;
 
+const TransactionListContainer = styled.View`
+  margin-bottom: 64px;
+`;
+
 const CardDashboard: React.FC<CardDashboardProps> = props => {
   const dispatch = useDispatch();
   const {t} = useTranslation();
@@ -208,11 +212,13 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         }}
       />
 
-      <TransactionsList
-        card={activeCard}
-        pendingTxList={filteredPendingTx}
-        settledTxList={filteredSettledTx}
-      />
+      <TransactionListContainer>
+        <TransactionsList
+          card={activeCard}
+          pendingTxList={filteredPendingTx}
+          settledTxList={filteredSettledTx}
+        />
+      </TransactionListContainer>
 
       {activeCard.provider === 'galileo' ? (
         <DashboardContentContainer>
