@@ -318,8 +318,16 @@ const startPairAndLoadUser =
       dispatch(startBitPayIdStoreInit(data.user));
       dispatch(CardEffects.startCardStoreInit(data.user));
     } catch (err) {
+      let errMsg;
+
+      if (err instanceof Error) {
+        errMsg = `${err.name}: ${err.message}`;
+      } else {
+        errMsg = JSON.stringify(err);
+      }
+
       dispatch(LogActions.error('An error occurred while fetching user data.'));
-      dispatch(LogActions.error(JSON.stringify(err)));
+      dispatch(LogActions.error(errMsg));
     }
   };
 
