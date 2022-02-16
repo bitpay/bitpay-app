@@ -15,6 +15,7 @@ import {
   setUpdateTransactionHistoryStatus,
   updateTransactionHistory,
 } from '../../wallet.actions';
+import {WithinSameMonth} from '../../utils/time';
 
 const BWC = BwcProvider.getInstance();
 
@@ -55,6 +56,7 @@ const FixTransactionsUnit = (
   const cacheCoin: string = txs[0].amountStr.split(' ')[1];
 
   if (cacheCoin == 'bits') {
+    console.debug('Fixing Tx Cache Unit to: ' + currencyAbbreviation);
     txs.forEach(tx => {
       tx.amountStr = FormatAmountStr(currencyAbbreviation, tx.amount);
       tx.feeStr = FormatAmountStr(currencyAbbreviation, tx.fees);
@@ -262,7 +264,14 @@ const GetNewTransactions = (
         newTxs = newTxs.concat(_newTxs);
         skip = skip + requestLimit;
 
+        console.debug(
+          `Syncing TXs for: ${wallet.id}. Got: ${newTxs.length} Skip: ${skip} lastTransactionId: ${lastTransactionId} Continue: ${loadMore}`,
+        );
+
         if (!loadMore) {
+          console.debug(
+            'Finished Sync: New / soft confirmed Txs: ' + newTxs.length,
+          );
           return resolve(newTxs);
         }
 
@@ -337,6 +346,7 @@ const UpdateNotes = (
       },
       (err: Error, notes: any) => {
         if (err) {
+          console.warn('Could not get TxNotes: ', err);
           return rej(err);
         }
 
@@ -353,7 +363,13 @@ const UpdateNotes = (
   });
 };
 
-export const getTransactionsHistory =
+// export const GetTransactionsHistory =
+
+const IsHistoryCached = (wallet: Wallet): boolean => {
+  return !!wallet.transactionHistory && !!wallet.isTransactionHistoryValid;
+};
+
+export const UpdateTransactionsHistory =
   ({
     wallet,
     opts = {},
@@ -363,14 +379,29 @@ export const getTransactionsHistory =
   }): Effect =>
   async (dispatch, getState): Promise<any> => {
     return new Promise(async (resolve, reject) => {
-      opts = opts || {};
       let requestLimit = FIRST_LIMIT;
       const {walletId, coin} = wallet.credentials;
 
-      if (wallet.transactionHistoryOnProgress) {
-        return;
+      if (!walletId || !wallet.isComplete()) {
+        resolve([]);
       }
-      // WalletProvider.historyUpdateOnProgress[wallet.id] = true;
+
+      if (wallet.transactionHistoryOnProgress) {
+        console.debug(
+          '!! History update already on progress for: ' + wallet.id,
+        );
+        return reject('HISTORY_IN_PROGRESS');
+      }
+
+      if (IsHistoryCached(wallet) && !opts.force) {
+        console.debug('Returning cached history for ' + wallet.id);
+        return resolve(wallet.transactionHistory);
+      }
+
+      console.debug(
+        'Updating Transaction History for ' + wallet.credentials.walletName,
+      );
+
       let storedTransactionHistory: any[] = GetStoredTransactionHistory(wallet);
       storedTransactionHistory = FixTransactionsUnit(
         coin,
@@ -394,7 +425,13 @@ export const getTransactionsHistory =
           requestLimit,
           lastTransactionId,
         );
-        console.log(transactions);
+
+        if (IsUtxoCoin(coin)) {
+          const _lowAmount = await GetLowAmount(wallet);
+          opts.lowAmount = _lowAmount;
+          transactions = UpdateLowAmount(transactions, opts);
+        }
+
         const array = transactions
           .concat(confirmedTxs)
           .filter((txs: any) => txs);
@@ -402,42 +439,37 @@ export const getTransactionsHistory =
           return (x as any).txid;
         });
 
-        if (IsUtxoCoin(coin)) {
-          try {
-            const _lowAmount = await GetLowAmount(wallet);
-            opts.lowAmount = _lowAmount;
-            transactions = UpdateLowAmount(transactions, opts);
-          } catch (getLowAmountErr) {
-            console.error('getLowAmountErr', getLowAmountErr);
-          }
-        }
+        transactions = await UpdateNotes(
+          wallet,
+          newHistory,
+          lastTransactionTime,
+        );
+        transactions.forEach((txs: any) => {
+          txs.recent = true;
+        });
 
-        try {
-          transactions = await UpdateNotes(
-            wallet,
-            newHistory,
-            lastTransactionTime,
+        // Update Store
+        if (walletId == wallet.credentials.walletId) {
+          dispatch(
+            updateTransactionHistory({
+              wallet: wallet,
+              transactions: newHistory,
+            }),
           );
-          transactions.forEach((txs: any) => {
-            txs.recent = true;
-          });
 
-          // Update Store
-          if (walletId == wallet.credentials.walletId) {
-            dispatch(
-              updateTransactionHistory({
-                wallet: wallet,
-                transactions: newHistory,
-              }),
-            );
-          }
-
-          resolve(newHistory);
-        } catch (updateNotesErr) {
-          console.error('updateNotesErr', updateNotesErr);
-          return reject(updateNotesErr);
+          console.debug(
+            `Transaction History sync & saved for ${wallet.id} TransactionLength: ${newHistory.length}`,
+          );
         }
+
+        resolve(newHistory);
       } catch (err) {
+        console.warn(
+          '!! Could not update transaction history for ',
+          wallet.id,
+          err,
+        );
+        dispatch(setUpdateTransactionHistoryStatus({wallet, status: false}));
         return reject(err);
       }
     });
@@ -489,4 +521,28 @@ export const GetTransactionHistoryFromServer = (
       },
     );
   });
+};
+
+const IsFirstInGroup = (index: number, history: any[]) => {
+  if (index === 0) {
+    return true;
+  }
+  const curTx = history[index];
+  const prevTx = history[index - 1];
+  return !WithinSameMonth(curTx.time * 1000, prevTx.time * 1000);
+};
+
+export const GroupTransactionHistory = (history: any[]) => {
+  let groups = history.reduce((groups, tx, txInd) => {
+    IsFirstInGroup(txInd, history)
+      ? groups.push([tx])
+      : groups[groups.length - 1].push(tx);
+    return groups;
+  }, []);
+
+  groups = groups.map((group: any[]) => {
+    return {title: group[0].time, data: group};
+  });
+
+  return groups;
 };

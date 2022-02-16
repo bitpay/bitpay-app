@@ -272,6 +272,8 @@ export const walletReducer = (
       keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
         if (wallet.id === id) {
           wallet.transactionHistory = action.payload.transactions;
+          wallet.transactionHistoryOnProgress = false;
+          wallet.isTransactionHistoryValid = true;
         }
         return wallet;
       });
@@ -294,7 +296,6 @@ export const walletReducer = (
       keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
         if (wallet.id === id) {
           wallet.transactionHistoryOnProgress = action.payload.status;
-          wallet.transactionHistoryOnProgress = false;
         }
         return wallet;
       });

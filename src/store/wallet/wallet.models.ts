@@ -69,6 +69,7 @@ export interface WalletObj {
   receiveAddress?: string;
   transactionHistory?: any[];
   transactionHistoryOnProgress?: boolean;
+  isTransactionHistoryValid?: boolean;
 }
 
 export interface ExchangeRate {
