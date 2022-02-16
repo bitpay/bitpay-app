@@ -5,11 +5,15 @@ import {useTranslation} from 'react-i18next';
 import {ScrollView} from 'react-native';
 import Carousel from 'react-native-snap-carousel';
 import {useDispatch, useSelector} from 'react-redux';
+import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {
+  Br,
   HeaderRightContainer,
+  ScreenGutter,
   WIDTH,
 } from '../../../components/styled/Containers';
+import {Smallest} from '../../../components/styled/Text';
 import {ProviderConfig} from '../../../constants/config.card';
 import {RootState} from '../../../store';
 import {CardEffects} from '../../../store/card';
@@ -93,6 +97,10 @@ const buildOverviewSlides = (cards: Card[]) => {
 
   return slides;
 };
+
+const DashboardContentContainer = styled.View`
+  padding: ${ScreenGutter};
+`;
 
 const CardDashboard: React.FC<CardDashboardProps> = props => {
   const dispatch = useDispatch();
@@ -205,6 +213,16 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         pendingTxList={filteredPendingTx}
         settledTxList={filteredSettledTx}
       />
+
+      {activeCard.provider === 'galileo' ? (
+        <DashboardContentContainer>
+          <Smallest>{t('TermsAndConditionsMastercard')}</Smallest>
+
+          <Br />
+
+          <Smallest>{t('TermsAndConditionsMastercard2')}</Smallest>
+        </DashboardContentContainer>
+      ) : null}
     </ScrollView>
   );
 };

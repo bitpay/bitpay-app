@@ -29,7 +29,7 @@ const TransactionsContainer = styled.View`
 const EmptyListContainer = styled.View`
   align-items: center;
   padding: ${ScreenGutter};
-  margin: ${ScreenGutter};
+  margin: 40px ${ScreenGutter} 108px;
 `;
 
 const EmptyGhostContainer = styled.View`
