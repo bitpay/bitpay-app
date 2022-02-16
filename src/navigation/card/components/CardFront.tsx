@@ -253,28 +253,6 @@ const CardFront: React.FC<CardFrontProps> = props => {
                 </Svg.TSpan>
               </Svg.Text>
             </Svg.G>
-
-            <Svg.G
-              id="menu-icon"
-              transform="translate(271.000000, 20.000000)"
-              fill="#FFFFFF"
-              data-className="settings">
-              <Svg.Rect
-                id="Rectangle"
-                opacity="0.1"
-                x="0"
-                y="0"
-                width="33"
-                height="32"
-                rx="5"
-                data-class="settings"
-              />
-              <Svg.G id="Group-5" transform="translate(15.000000, 9.000000)">
-                <Svg.Circle id="Oval" cx="1.5" cy="1.5" r="1.5" />
-                <Svg.Circle id="Oval" cx="1.5" cy="7.5" r="1.5" />
-                <Svg.Circle id="Oval" cx="1.5" cy="13.5" r="1.5" />
-              </Svg.G>
-            </Svg.G>
           </>
         )}
 
