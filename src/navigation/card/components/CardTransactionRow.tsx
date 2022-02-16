@@ -26,18 +26,17 @@ const TxRowContainer = styled.View`
   min-height: 72px;
 `;
 
-const TxColumn = styled.View<{stretch?: boolean}>`
-  flex-grow: ${({stretch}) => (stretch ? 1 : 0)};
+const TxColumn = styled.View`
   padding: ${ScreenGutter};
   justify-content: center;
 `;
 
-const FlexRow = styled.View`
-  flex-direction: row;
+const DescriptionColumn = styled(TxColumn)`
+  flex: 1;
 `;
 
-const TxTitle = styled(H7)`
-  flex-grow: 1;
+const PriceColumn = styled(TxColumn)`
+  align-items: flex-end;
 `;
 
 const TxText = styled(BaseText)<{
@@ -54,8 +53,8 @@ const TxText = styled(BaseText)<{
     light &&
     css`
       color: ${({theme}) => (theme.dark ? White : SlateDark)};
+      font-size: 12px;
     `}
-  flex-grow: ${({stretch}) => (stretch ? 1 : 0)};
 `;
 
 const isTopUp = (tx: Transaction) => tx.displayMerchant === 'BitPay Load';
@@ -133,13 +132,12 @@ const getTxSubtitle = (tx: Transaction, settled: boolean) => {
   }
 
   const {merchantCity, merchantState} = tx.merchant || {};
-  const zwsp = '\u200b'; // using a zero-width space as a default to avoid weird spacing if location is empty
   let location;
 
   if (merchantCity && merchantState) {
     location = `${merchantCity}, ${merchantState}`;
   } else {
-    location = merchantCity || merchantState || zwsp;
+    location = merchantCity || merchantState || '';
   }
 
   // Provided casing is inconsistent, just normalize it
@@ -161,19 +159,20 @@ const TransactionRow: React.FC<TransactionRowProps> = props => {
         <Icon />
       </TxColumn>
 
-      <TxColumn stretch>
-        <FlexRow>
-          <TxTitle>{title}</TxTitle>
-          <TxText bold>{amount}</TxText>
-        </FlexRow>
+      <DescriptionColumn>
+        <H7>{title}</H7>
 
-        <FlexRow>
+        {subtitle ? (
           <TxText light stretch>
             {subtitle}
           </TxText>
-          <TxText light>{timestamp}</TxText>
-        </FlexRow>
-      </TxColumn>
+        ) : null}
+      </DescriptionColumn>
+
+      <PriceColumn>
+        <TxText bold>{amount}</TxText>
+        <TxText light>{timestamp}</TxText>
+      </PriceColumn>
     </TxRowContainer>
   );
 };
