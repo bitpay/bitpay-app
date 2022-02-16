@@ -4,7 +4,7 @@ import styled from 'styled-components/native';
 import GhostImg from '../../../../assets/img/ghost-cheeky.svg';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
 import {ScreenGutter} from '../../../components/styled/Containers';
-import {H5, H7} from '../../../components/styled/Text';
+import {BaseText, H5} from '../../../components/styled/Text';
 import {CardEffects} from '../../../store/card';
 import {Card, Transaction} from '../../../store/card/card.models';
 import {
@@ -33,15 +33,14 @@ const EmptyListContainer = styled.View`
 `;
 
 const EmptyGhostContainer = styled.View`
-  margin-bottom: 28px;
+  margin-bottom: 32px;
 `;
 
-const EmptyListTitle = styled(H5)`
-  margin-bottom: 16px;
-`;
-
-const EmptyListDescription = styled(H7)`
+const EmptyListDescription = styled(BaseText)`
   color: ${({theme}) => (theme.dark ? Slate : SlateDark)};
+  font-size: 16px;
+  line-height: 25px;
+  text-align: center;
 `;
 
 const TransactionsHeader = styled.View`
@@ -89,10 +88,9 @@ const TransactionsList: React.FC<TransactionsListProps> = props => {
           <EmptyGhostContainer>
             <GhostImg />
           </EmptyGhostContainer>
-          <EmptyListTitle>Uh oh, it's a ghost town in here!</EmptyListTitle>
           <EmptyListDescription>
-            Looks like you don't have any transactions. Check back here when you
-            make a transaction to see your history.
+            Load your cash account and get instant access to spending at
+            thousands of merchants.
           </EmptyListDescription>
         </EmptyListContainer>
       ) : null}
