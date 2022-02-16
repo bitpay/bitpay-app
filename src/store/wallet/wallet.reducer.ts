@@ -1,4 +1,4 @@
-import {ExchangeRate, Key, PriceHistory, Token} from './wallet.models';
+import {Key, PriceHistory, Rates, Token} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 
 type WalletReduxPersistBlackList = [];
@@ -7,7 +7,7 @@ export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
 export interface WalletState {
   createdOn: number;
   keys: {[key in string]: Key};
-  rates: {[key in string]: Array<ExchangeRate>};
+  rates: Rates;
   priceHistory: Array<PriceHistory>;
   tokenOptions: {[key in string]: Token};
   walletTermsAccepted: boolean;
@@ -16,6 +16,7 @@ export interface WalletState {
     previous: number;
   };
   balanceCacheKey: {[key in string]: number | undefined};
+  ratesCacheKey: number | undefined;
 }
 
 const initialState: WalletState = {
@@ -30,6 +31,7 @@ const initialState: WalletState = {
     previous: 0,
   },
   balanceCacheKey: {},
+  ratesCacheKey: undefined,
 };
 
 export const walletReducer = (
@@ -63,6 +65,15 @@ export const walletReducer = (
       return {
         ...state,
         rates: {...state.rates, ...rates},
+        ratesCacheKey: Date.now(),
+      };
+    }
+
+    case WalletActionTypes.UPDATE_CACHE_KEY: {
+      const cacheKey = action.payload;
+      return {
+        ...state,
+        [cacheKey]: Date.now(),
       };
     }
 

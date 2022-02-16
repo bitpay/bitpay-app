@@ -68,14 +68,6 @@ export interface WalletObj {
   img: string | ((props?: any) => ReactElement);
 }
 
-export interface ExchangeRate {
-  ts?: number;
-  rate?: number;
-  fetchedOn?: number;
-  code?: string;
-  name?: string;
-}
-
 export interface PriceHistory {
   coin: string;
   priceDisplay: Array<number>;
@@ -144,4 +136,9 @@ export interface WalletStatus {
   preferences: any;
   serverMessages: any[];
   wallet: Credentials;
+}
+
+export enum CacheKeys {
+  RATES = 'ratesCacheKey',
+  BALANCE = 'balanceCacheKey',
 }

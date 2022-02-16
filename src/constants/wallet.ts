@@ -1,1 +1,2 @@
 export const BALANCE_CACHE_DURATION = 10;
+export const RATES_CACHE_DURATION = 10;

@@ -1,11 +1,5 @@
 import {WalletActionType, WalletActionTypes} from './wallet.types';
-import {
-  ExchangeRate,
-  Key,
-  PriceHistory,
-  Token,
-  WalletBalance,
-} from './wallet.models';
+import {Key, PriceHistory, Rates, Token, WalletBalance} from './wallet.models';
 
 export const successWalletStoreInit = (): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_WALLET_STORE_INIT,
@@ -47,15 +41,18 @@ export const setBackupComplete = (keyId: string): WalletActionType => ({
   payload: keyId,
 });
 
-export const successGetRates = (payload: {
-  rates: {[key in string]: Array<ExchangeRate>};
-}): WalletActionType => ({
+export const successGetRates = (payload: {rates: Rates}): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_GET_RATES,
   payload,
 });
 
 export const failedGetRates = (): WalletActionType => ({
   type: WalletActionTypes.FAILED_GET_RATES,
+});
+
+export const updateCacheKey = (payload: string): WalletActionType => ({
+  type: WalletActionTypes.UPDATE_CACHE_KEY,
+  payload,
 });
 
 export const successGetPriceHistory = (
