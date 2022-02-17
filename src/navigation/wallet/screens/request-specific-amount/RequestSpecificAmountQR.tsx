@@ -194,7 +194,7 @@ const RequestSpecificAmountQR = () => {
         <ParagraphContainer>
           <Paragraph>
             Share this QR code to receive {formattedAmountObj?.amountUnitStr} in
-            your wallet Ethereum.
+            your wallet {wallet.walletName || wallet.credentials.walletName}.
           </Paragraph>
         </ParagraphContainer>
 
