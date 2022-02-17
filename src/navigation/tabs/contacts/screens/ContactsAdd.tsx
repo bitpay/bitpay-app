@@ -21,7 +21,7 @@ import {RootState} from '../../../../store';
 import {createContact} from '../../../../store/contact/contact.actions';
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
 import SuccessIcon from '../../../../../assets/img/success.svg';
-import ScanIcon from '../../../../../assets/img/home/scan.svg';
+import Icons from '../../../../components/modal/transact-menu/TransactMenuIcons';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import {keyExtractor} from '../../../../utils/helper-methods';
 import CurrencySelectionRow, {
@@ -30,9 +30,14 @@ import CurrencySelectionRow, {
 import NetworkSelectionRow, {
   NetworkSelectionProps,
 } from '../../../../components/list/NetworkSelectionRow';
-import {LightBlack, NeutralSlate, Slate} from '../../../../styles/colors';
+import {
+  LightBlack,
+  NeutralSlate,
+  Black,
+  Slate,
+} from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
-import Icons from '../../../wallet/components/WalletIcons';
+import WalletIcons from '../../../wallet/components/WalletIcons';
 
 const InputContainer = styled.View<{hideInput?: boolean}>`
   display: ${({hideInput}) => (!hideInput ? 'flex' : 'none')};
@@ -43,26 +48,24 @@ const ActionContainer = styled.View`
   margin-top: 30px;
 `;
 
-const Container = styled.SafeAreaView`
-  justify-content: center;
-  align-items: center;
-`;
-
-const FormContainer = styled.View`
-  width: 100%;
+const Container = styled.ScrollView`
+  flex: 1;
   padding: 0 20px;
+  margin-top: 20px;
 `;
 
 const AddressBadge = styled.View`
+  background: ${({theme}) => (theme && theme.dark ? '#000' : NeutralSlate)};
   position: absolute;
-  right: 10px;
-  top: 35px;
+  padding: 5px 10px;
+  right: 1px;
+  top: 30px;
 `;
 
 const ScanButtonContainer = styled.TouchableOpacity`
   position: absolute;
-  right: 10px;
-  top: 30px;
+  right: 3px;
+  top: 23px;
 `;
 
 const CurrencySelectionModalContainer = styled(SheetContainer)`
@@ -305,139 +308,136 @@ const ContactsAdd = () => {
   };
 
   return (
-    <Container>
-      <FormContainer>
-        <InputContainer>
-          <Controller
-            control={control}
-            render={({field: {onChange, onBlur, value}}) => (
-              <BoxInput
-                placeholder={'Satoshi Nakamoto'}
-                label={'NAME'}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                error={errors.name?.message}
-                value={value}
-              />
-            )}
-            name="name"
-            defaultValue=""
-          />
-        </InputContainer>
-        <InputContainer>
-          <Controller
-            control={control}
-            render={({field: {onChange, onBlur, value}}) => (
-              <BoxInput
-                placeholder={'satoshi@example.com'}
-                label={'EMAIL (OPTIONAL)'}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                error={errors.email?.message}
-                value={value}
-              />
-            )}
-            name="email"
-            defaultValue=""
-          />
-        </InputContainer>
-        <InputContainer>
-          <Controller
-            control={control}
-            render={({field: {onChange, onBlur, value}}) => (
-              <BoxInput
-                placeholder={'Crypto address'}
-                label={'ADDRESS'}
-                onBlur={onBlur}
-                onChangeText={(newValue: string) => {
-                  onChange(newValue);
-                  processAddress(newValue);
-                }}
-                error={errors.address?.message}
-                value={value}
-              />
-            )}
-            name="address"
-            defaultValue=""
-          />
-          {addressValue && dirtyFields.address ? (
-            <AddressBadge>
-              <SuccessIcon />
-            </AddressBadge>
-          ) : (
-            <ScanButtonContainer onPress={goToScan}>
-              <ScanIcon />
-            </ScanButtonContainer>
+    <Container keyboardShouldPersistTaps="handled">
+      <InputContainer>
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur, value}}) => (
+            <BoxInput
+              placeholder={'Satoshi Nakamoto'}
+              label={'NAME'}
+              onBlur={onBlur}
+              onChangeText={onChange}
+              error={errors.name?.message}
+              value={value}
+            />
           )}
-        </InputContainer>
+          name="name"
+          defaultValue=""
+        />
+      </InputContainer>
+      <InputContainer>
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur, value}}) => (
+            <BoxInput
+              placeholder={'satoshi@example.com'}
+              label={'EMAIL (OPTIONAL)'}
+              onBlur={onBlur}
+              onChangeText={onChange}
+              error={errors.email?.message}
+              value={value}
+            />
+          )}
+          name="email"
+          defaultValue=""
+        />
+      </InputContainer>
+      <InputContainer>
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur, value}}) => (
+            <BoxInput
+              placeholder={'Crypto address'}
+              label={'ADDRESS'}
+              onBlur={onBlur}
+              onChangeText={(newValue: string) => {
+                onChange(newValue);
+                processAddress(newValue);
+              }}
+              error={errors.address?.message}
+              value={value}
+            />
+          )}
+          name="address"
+          defaultValue=""
+        />
+        {addressValue && dirtyFields.address ? (
+          <AddressBadge>
+            <SuccessIcon />
+          </AddressBadge>
+        ) : (
+          <ScanButtonContainer onPress={goToScan}>
+            <Icons.Scan />
+          </ScanButtonContainer>
+        )}
+      </InputContainer>
 
-        <InputContainer hideInput={!xrpValidAddress}>
-          <Controller
-            control={control}
-            render={({field: {onChange, onBlur}}) => (
-              <BoxInput
-                placeholder={'Tag'}
-                label={'TAG'}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                error={errors.tag?.message}
-                keyboardType={'number-pad'}
-                type={'number'}
-                maxLength={9}
-              />
-            )}
-            name="tag"
-          />
-        </InputContainer>
+      <InputContainer hideInput={!xrpValidAddress}>
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur}}) => (
+            <BoxInput
+              placeholder={'Tag'}
+              label={'TAG'}
+              onBlur={onBlur}
+              onChangeText={onChange}
+              error={errors.tag?.message}
+              keyboardType={'number-pad'}
+              type={'number'}
+              maxLength={9}
+            />
+          )}
+          name="tag"
+        />
+      </InputContainer>
 
-        <CurrencySelectorContainer hideSelector={!ethValidAddress}>
-          <Label>CURRENCY</Label>
-          <CurrencyContainer
-            activeOpacity={ActiveOpacity}
-            onPress={() => {
-              setCurrencyModalVisible(true);
+      <CurrencySelectorContainer hideSelector={true}>
+        <Label>CURRENCY</Label>
+        <CurrencyContainer
+          activeOpacity={ActiveOpacity}
+          onPress={() => {
+            setCurrencyModalVisible(true);
+          }}>
+          <Row
+            style={{
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}>
-            <Row
-              style={{
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}>
-              <Row style={{alignItems: 'center'}}>
-                <CurrencyImage img={selectedCurrency.img} size={30} />
-                <CurrencyName>
-                  {selectedCurrency?.currencyAbbreviation}
-                </CurrencyName>
-              </Row>
-              <Icons.DownToggle />
+            <Row style={{alignItems: 'center'}}>
+              <CurrencyImage img={selectedCurrency.img} size={30} />
+              <CurrencyName>
+                {selectedCurrency?.currencyAbbreviation}
+              </CurrencyName>
             </Row>
-          </CurrencyContainer>
-        </CurrencySelectorContainer>
+            <WalletIcons.DownToggle />
+          </Row>
+        </CurrencyContainer>
+      </CurrencySelectorContainer>
 
-        <CurrencySelectorContainer
-          hideSelector={!xrpValidAddress && !ethValidAddress}>
-          <Label>NETWORK</Label>
-          <CurrencyContainer
-            activeOpacity={ActiveOpacity}
-            onPress={() => {
-              setNetworkModalVisible(true);
+      <CurrencySelectorContainer hideSelector={true}>
+        <Label>NETWORK</Label>
+        <CurrencyContainer
+          activeOpacity={ActiveOpacity}
+          onPress={() => {
+            setNetworkModalVisible(true);
+          }}>
+          <Row
+            style={{
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}>
-            <Row
-              style={{
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}>
-              <Row style={{alignItems: 'center'}}>
-                <NetworkName>{networkValue}</NetworkName>
-              </Row>
-              <Icons.DownToggle />
+            <Row style={{alignItems: 'center'}}>
+              <NetworkName>{networkValue}</NetworkName>
             </Row>
-          </CurrencyContainer>
-        </CurrencySelectorContainer>
+            <WalletIcons.DownToggle />
+          </Row>
+        </CurrencyContainer>
+      </CurrencySelectorContainer>
 
-        <ActionContainer>
-          <Button onPress={onSubmit}>Add Contact</Button>
-        </ActionContainer>
-      </FormContainer>
+      <ActionContainer>
+        <Button onPress={onSubmit}>Add Contact</Button>
+      </ActionContainer>
       <SheetModal
         isVisible={currencyModalVisible}
         onBackdropPress={() => setCurrencyModalVisible(false)}>
