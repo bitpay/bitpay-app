@@ -1,5 +1,5 @@
 import React from 'react';
-import {createStackNavigator} from '@react-navigation/stack';
+import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
@@ -219,6 +219,9 @@ const WalletStack = () => {
           component={RequestSpecificAmount}
         />
         <Wallet.Screen
+          options={{
+            ...TransitionPresets.ModalPresentationIOS,
+          }}
           name={WalletScreens.REQUEST_SPECIFIC_AMOUNT_QR}
           component={RequestSpecificAmountQR}
         />

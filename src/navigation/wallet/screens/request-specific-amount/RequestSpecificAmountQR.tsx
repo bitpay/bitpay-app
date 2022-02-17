@@ -23,7 +23,7 @@ import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import Clipboard from '@react-native-community/clipboard';
 import QRCode from 'react-native-qrcode-svg';
-import {Black, White} from '../../../../styles/colors';
+import {Black, LightBlack, White} from '../../../../styles/colors';
 import ShareIcon from '../../../../components/icons/share/Share';
 import {Share} from 'react-native';
 import GhostSvg from '../../../../../assets/img/ghost-straight-face.svg';
@@ -48,20 +48,25 @@ const QRContainer = styled.View`
   flex-direction: column;
   padding: 25px;
   border-radius: 12px;
-  background-color: ${White};
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   min-height: 390px;
   justify-content: center;
 `;
 
 const QRCodeContainer = styled.View`
   margin: 20px;
+  width: 225px;
+  height: 225px;
+  justify-content: center;
   align-items: center;
+  background-color: ${White};
+  border-radius: 12px;
 `;
 
 const QRHeader = styled(H4)`
   text-align: center;
   margin: 10px 0 20px;
-  color: ${Black};
+  color: ${({theme}) => theme.colors.text};
 `;
 
 const CopyToClipboard = styled.TouchableOpacity`
@@ -75,7 +80,7 @@ const CopyToClipboard = styled.TouchableOpacity`
 
 const AddressText = styled(BaseText)`
   font-size: 16px;
-  color: #6f7782;
+  color: ${({theme: {dark}}) => (dark ? White : '#6f7782')};
   padding: 0 20px 0 10px;
 `;
 
