@@ -363,33 +363,36 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     [],
   );
 
+  // To avoid altering the currencies list
+  const searchList = cloneDeep(currencies);
   const onSearchInputChange = debounce((search: string) => {
+    let _searchList: Array<any> = [];
+
     if (search) {
       search = search.toLowerCase();
-      const filteredList = [...currencies].filter(
+
+      _searchList = [...searchList].filter(
         ({currencyAbbreviation, currencyName}) =>
-          !selectedCurrencies.includes(currencyAbbreviation) &&
-          (currencyAbbreviation.toLowerCase().includes(search) ||
-            currencyName.toLowerCase().includes(search)),
+          currencyAbbreviation.toLowerCase().includes(search) ||
+          currencyName.toLowerCase().includes(search),
       );
-
-      setCurrencyOptions([...filteredList]);
     } else {
-      const _searchList: Array<any> = cloneDeep(currencies);
-      selectedCurrencies.length
-        ? _searchList
-            .filter(({currencyAbbreviation}) =>
-              selectedCurrencies.includes(currencyAbbreviation),
-            )
-            .map(currency => {
-              currency.checked = true;
-              currency.id = Math.random();
-              return currency;
-            })
-        : [];
-
-      setCurrencyOptions([..._searchList]);
+      _searchList = searchList;
     }
+
+    selectedCurrencies.length
+      ? _searchList
+          .filter(({currencyAbbreviation}) =>
+            selectedCurrencies.includes(currencyAbbreviation),
+          )
+          .map(currency => {
+            currency.checked = true;
+            currency.id = Math.random();
+            return currency;
+          })
+      : [];
+
+    setCurrencyOptions([..._searchList]);
   }, 300);
 
   return (
