@@ -69,9 +69,14 @@ export interface HeaderContextHandler {
 interface Props {
   onPressRefresh: () => void;
   contextHandlers?: HeaderContextHandler | null;
+  showRefresh: boolean;
 }
 
-const ReceiveAddressHeader = ({onPressRefresh, contextHandlers}: Props) => {
+const ReceiveAddressHeader = ({
+  onPressRefresh,
+  contextHandlers,
+  showRefresh,
+}: Props) => {
   const {currency} = contextHandlers || {};
   switch (currency) {
     case 'bch':
@@ -110,13 +115,15 @@ const ReceiveAddressHeader = ({onPressRefresh, contextHandlers}: Props) => {
       return (
         <Header>
           <Title>Address</Title>
-          <Refresh
-            onPress={() => {
-              haptic('impactLight');
-              onPressRefresh();
-            }}>
-            <RefreshIcon />
-          </Refresh>
+          {showRefresh ? (
+            <Refresh
+              onPress={() => {
+                haptic('impactLight');
+                onPressRefresh();
+              }}>
+              <RefreshIcon />
+            </Refresh>
+          ) : null}
         </Header>
       );
   }

@@ -14,6 +14,10 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		4A28C9FE104F6E0A4BE35300 /* libPods-BitPayApp-BitPayAppTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AC97D07A9C8650B1D63AB7CB /* libPods-BitPayApp-BitPayAppTests.a */; };
+		5B31AAFE2786387B002765E1 /* RCTDosh.m in Sources */ = {isa = PBXBuildFile; fileRef = 5B31AAFD2786387B002765E1 /* RCTDosh.m */; };
+		5B31AAFF2786387B002765E1 /* RCTDosh.m in Sources */ = {isa = PBXBuildFile; fileRef = 5B31AAFD2786387B002765E1 /* RCTDosh.m */; };
+		5B31AB5F2786515A002765E1 /* Dosh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B31AB5E2786515A002765E1 /* Dosh.swift */; };
+		5B31AB602786515A002765E1 /* Dosh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B31AB5E2786515A002765E1 /* Dosh.swift */; };
 		5BCF1C352740B8B2006D872E /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5BCF1C342740B8B2006D872E /* BootSplash.storyboard */; };
 		66FFDC8F0B063607A7715F70 /* libPods-BitPayApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C6D2B83099A369CC71732940 /* libPods-BitPayApp.a */; };
 		71BABDA4524A43E98A190C87 /* Heebo-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6D649751C2644FDCA18A5547 /* Heebo-Light.ttf */; };
@@ -47,6 +51,11 @@
 		4DCF32F2D2364E70AD2F1E68 /* Heebo-Thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Thin.ttf"; path = "../assets/fonts/Heebo-Thin.ttf"; sourceTree = "<group>"; };
 		539121FA0B57AEB9CC2A75E2 /* Pods-BitPayApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp.debug.xcconfig"; path = "Target Support Files/Pods-BitPayApp/Pods-BitPayApp.debug.xcconfig"; sourceTree = "<group>"; };
 		53F30A480504B51D0EB1920A /* Pods-BitPayApp-BitPayAppTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp-BitPayAppTests.debug.xcconfig"; path = "Target Support Files/Pods-BitPayApp-BitPayAppTests/Pods-BitPayApp-BitPayAppTests.debug.xcconfig"; sourceTree = "<group>"; };
+		5B31AAFC2786381C002765E1 /* RCTDosh.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTDosh.h; sourceTree = "<group>"; };
+		5B31AAFD2786387B002765E1 /* RCTDosh.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RCTDosh.m; sourceTree = "<group>"; };
+		5B31AB5E2786515A002765E1 /* Dosh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dosh.swift; sourceTree = "<group>"; };
+		5BC1477B27B490E5004A8EEA /* BitPayApp-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "BitPayApp-Bridging-Header.h"; sourceTree = "<group>"; };
+		5BC1477C27B490FA004A8EEA /* BitPayAppTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "BitPayAppTests-Bridging-Header.h"; sourceTree = "<group>"; };
 		5BC9567927AF3C6A00ACED07 /* BitPayAppDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = BitPayAppDebug.entitlements; path = BitPayApp/BitPayAppDebug.entitlements; sourceTree = "<group>"; };
 		5BCF1C342740B8B2006D872E /* BootSplash.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = BootSplash.storyboard; path = BitPayApp/BootSplash.storyboard; sourceTree = "<group>"; };
 		6D649751C2644FDCA18A5547 /* Heebo-Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Light.ttf"; path = "../assets/fonts/Heebo-Light.ttf"; sourceTree = "<group>"; };
@@ -108,6 +117,11 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				13B07FB71A68108700A75B9A /* main.m */,
+				5B31AAFC2786381C002765E1 /* RCTDosh.h */,
+				5B31AAFD2786387B002765E1 /* RCTDosh.m */,
+				5B31AB5E2786515A002765E1 /* Dosh.swift */,
+				5BC1477B27B490E5004A8EEA /* BitPayApp-Bridging-Header.h */,
+				5BC1477C27B490FA004A8EEA /* BitPayAppTests-Bridging-Header.h */,
 			);
 			name = BitPayApp;
 			sourceTree = "<group>";
@@ -235,10 +249,11 @@
 				TargetAttributes = {
 					00E356ED1AD99517003FC87E = {
 						CreatedOnToolsVersion = 6.2;
+						LastSwiftMigration = 1240;
 						TestTargetID = 13B07F861A680F5B00A75B9A;
 					};
 					13B07F861A680F5B00A75B9A = {
-						LastSwiftMigration = 1120;
+						LastSwiftMigration = 1240;
 					};
 				};
 			};
@@ -440,7 +455,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5B31AB602786515A002765E1 /* Dosh.swift in Sources */,
 				00E356F31AD99517003FC87E /* BitPayAppTests.m in Sources */,
+				5B31AAFF2786387B002765E1 /* RCTDosh.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -448,8 +465,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5B31AAFE2786387B002765E1 /* RCTDosh.m in Sources */,
 				13B07FBC1A68108700A75B9A /* AppDelegate.m in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
+				5B31AB5F2786515A002765E1 /* Dosh.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -468,7 +487,9 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 53F30A480504B51D0EB1920A /* Pods-BitPayApp-BitPayAppTests.debug.xcconfig */;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "$(inherited)";
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -487,6 +508,9 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "BitPayAppTests-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BitPayApp.app/BitPayApp";
 			};
 			name = Debug;
@@ -495,7 +519,9 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 9B89A10904D2515DC9F23D8C /* Pods-BitPayApp-BitPayAppTests.release.xcconfig */;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "$(inherited)";
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
 				COPY_PHASE_STRIP = NO;
 				INFOPLIST_FILE = BitPayAppTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
@@ -511,6 +537,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "BitPayAppTests-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BitPayApp.app/BitPayApp";
 			};
 			name = Release;
@@ -519,10 +547,13 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 539121FA0B57AEB9CC2A75E2 /* Pods-BitPayApp.debug.xcconfig */;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "$(inherited)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = BitPayApp/BitPayAppDebug.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = 884JRH5R93;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = BitPayApp/Info.plist;
@@ -539,6 +570,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.bitpay.app.v2;
 				PRODUCT_NAME = BitPayApp;
+				SWIFT_OBJC_BRIDGING_HEADER = "BitPayApp-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -549,9 +581,12 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 6EEF4B2FDB87531BFD34B491 /* Pods-BitPayApp.release.xcconfig */;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "$(inherited)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = 884JRH5R93;
 				INFOPLIST_FILE = BitPayApp/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.4;
@@ -567,6 +602,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.bitpay.app.v2;
 				PRODUCT_NAME = BitPayApp;
+				SWIFT_OBJC_BRIDGING_HEADER = "BitPayApp-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
@@ -605,7 +641,7 @@
 				COPY_PHASE_STRIP = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = i386;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "arm64 i386";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -626,11 +662,7 @@
 					/usr/lib/swift,
 					"$(inherited)",
 				);
-				LIBRARY_SEARCH_PATHS = (
-					"\"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)\"",
-					"\"$(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)\"",
-					"\"$(inherited)\"",
-				);
+				LIBRARY_SEARCH_PATHS = "\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -670,7 +702,7 @@
 				COPY_PHASE_STRIP = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = i386;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "arm64 i386";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -684,11 +716,7 @@
 					/usr/lib/swift,
 					"$(inherited)",
 				);
-				LIBRARY_SEARCH_PATHS = (
-					"\"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)\"",
-					"\"$(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)\"",
-					"\"$(inherited)\"",
-				);
+				LIBRARY_SEARCH_PATHS = "\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;

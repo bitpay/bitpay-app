@@ -1,5 +1,5 @@
 apply plugin: "com.android.application"
-
+apply plugin: 'com.google.gms.google-services'
 import com.android.build.OutputFile
 
 /**
@@ -134,8 +134,8 @@ android {
         applicationId "com.bitpayapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 5
-        versionName "1.3.0"
+        versionCode 7
+        versionName "1.4.0"
         missingDimensionStrategy 'react-native-camera', 'mlkit'
     }
     splits {
@@ -185,6 +185,9 @@ android {
 }
 
 dependencies {
+    implementation platform('com.google.firebase:firebase-bom:29.1.0')
+    implementation "com.google.firebase:firebase-core"
+    implementation "com.google.firebase:firebase-messaging"
     implementation fileTree(dir: "libs", include: ["*.jar"])
     //noinspection GradleDynamicVersion
     implementation "com.facebook.react:react-native:+"  // From node_modules

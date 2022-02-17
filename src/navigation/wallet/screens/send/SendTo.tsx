@@ -23,7 +23,7 @@ import cloneDeep from 'lodash.clonedeep';
 import {GetPayProUrl} from '../../../../store/wallet/utils/decode-uri';
 import {
   CoinNetwork,
-  CreateWalletAddress,
+  createWalletAddress,
   GetCoinAndNetwork,
   TranslateToBchCashAddress,
 } from '../../../../store/wallet/effects/send/address';
@@ -162,7 +162,6 @@ const SendTo = () => {
   });
 
   const {wallet} = route.params;
-  console.log(wallet);
   const {
     currencyAbbreviation,
     id,
@@ -306,7 +305,10 @@ const SendTo = () => {
 
   const onPressWallet = async (selectedWallet: KeyWallet) => {
     try {
-      const address = await CreateWalletAddress(selectedWallet);
+      const address = (await dispatch<any>(
+        createWalletAddress({wallet, newAddress: false}),
+      )) as string;
+
       navigation.navigate('Wallet', {
         screen: 'Amount',
         params: {

@@ -37,6 +37,7 @@ export const FETCH_ALL_USER_DATA = (token: string): GqlQueryParams => {
             id
             balance:cardBalance
           }
+          doshToken:getDoshToken
         }
       }
     `,
