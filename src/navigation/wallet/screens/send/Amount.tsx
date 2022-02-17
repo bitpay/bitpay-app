@@ -50,8 +50,8 @@ const ActionContainer = styled.View`
   margin: 20px 0;
 `;
 
-export const AmountText = styled(BaseText)`
-  font-size: 50px;
+export const AmountText = styled(BaseText)<{bigAmount?: boolean}>`
+  font-size: ${({bigAmount}) => (bigAmount ? '35px' : '50px')};
   font-weight: 500;
   color: ${({theme}) => theme.colors.text};
   margin-right: 5px;

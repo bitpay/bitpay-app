@@ -42,7 +42,12 @@ const RequestSpecificAmount = () => {
       <AmountContainer>
         <View>
           <AmountHeroContainer>
-            <AmountText>{Number(amount) || 0}</AmountText>
+            <AmountText
+              numberOfLines={1}
+              ellipsizeMode={'tail'}
+              bigAmount={amount?.length > 8}>
+              {Number(amount) || 0}
+            </AmountText>
             <CurrencySuperScript>
               <CurrencyText>{currencyAbbreviation.toUpperCase()}</CurrencyText>
             </CurrencySuperScript>
