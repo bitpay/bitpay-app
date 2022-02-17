@@ -46,7 +46,7 @@ const RequestSpecificAmount = () => {
               numberOfLines={1}
               ellipsizeMode={'tail'}
               bigAmount={amount?.length > 8}>
-              {Number(amount) || 0}
+              {amount || 0}
             </AmountText>
             <CurrencySuperScript>
               <CurrencyText>{currencyAbbreviation.toUpperCase()}</CurrencyText>
