@@ -3,6 +3,7 @@ import {
   Key,
   PriceHistory,
   Token,
+  Wallet,
   WalletBalance,
 } from './wallet.models';
 
@@ -35,6 +36,7 @@ export enum WalletActionTypes {
   TOGGLE_HOME_KEY_CARD = 'WALLET/TOGGLE_HOME_KEY_CARD',
   UPDATE_KEY_NAME = 'WALLET/UPDATE_KEY_NAME',
   UPDATE_WALLET_NAME = 'WALLET/UPDATE_WALLET_NAME',
+  SUCCESS_GET_RECEIVE_ADDRESS = 'WALLET/SUCCESS_GET_RECEIVE_ADDRESS',
 }
 
 interface successWalletStoreInit {
@@ -175,6 +177,13 @@ interface toggleHomeKeyCard {
   };
 }
 
+interface successGetReceiveAddress {
+  type: typeof WalletActionTypes.SUCCESS_GET_RECEIVE_ADDRESS;
+  payload: {
+    wallet: Wallet;
+  };
+}
+
 interface updateKeyName {
   type: typeof WalletActionTypes.UPDATE_KEY_NAME;
   payload: {
@@ -220,4 +229,5 @@ export type WalletActionType =
   | failedUpdateAllKeysAndBalances
   | toggleHomeKeyCard
   | updateKeyName
-  | updateWalletName;
+  | updateWalletName
+  | successGetReceiveAddress;
