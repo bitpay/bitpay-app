@@ -1,4 +1,5 @@
 import React, {useState, useCallback} from 'react';
+import {useTranslation} from 'react-i18next';
 import debounce from 'lodash.debounce';
 import styled, {css} from 'styled-components/native';
 import {TouchableOpacity, FlatList, Platform} from 'react-native';
@@ -42,19 +43,19 @@ const ContactsHeader = styled(BaseText)`
   margin-bottom: 30px;
 `;
 
-const ZeroState = styled.View`
+const NoContacts = styled.View`
+  padding: 0 20px;
   height: 100%;
-  padding: 0 30px;
   display: flex;
   justify-content: center;
 `;
 
-const ZeroStateIcon = styled.View`
+const NoContactsIcon = styled.View`
   display: flex;
   align-items: center;
 `;
 
-const ZeroStateTitle = styled(BaseText)`
+const NoContactsTitle = styled(BaseText)`
   text-align: center;
   font-size: 18px;
   font-weight: bold;
@@ -66,7 +67,7 @@ const ButtonContainer = styled.View`
   margin-top: 40px;
 `;
 
-const ZeroStateSubTitle = styled(BaseText)`
+const NoContactsSubTitle = styled(BaseText)`
   text-align: center;
   font-size: 12px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
@@ -131,7 +132,8 @@ const HideableView = styled.View<HideableViewProps>`
   display: ${({show}) => (show ? 'flex' : 'none')};
 `;
 
-const ContactSettingsRoot: React.FC = () => {
+const ContactsRoot: React.FC = () => {
+  const {t} = useTranslation();
   const contacts = useSelector(({CONTACT}: RootState) => CONTACT.list);
   const navigation = useNavigation();
   const {control} = useForm();
@@ -155,12 +157,16 @@ const ContactSettingsRoot: React.FC = () => {
     setSearchResults(results);
   }, 300);
 
+  const keyExtractor = (item: ContactRowProps) => {
+    return item.address + item.coin + item.network;
+  };
+
   const renderItem = useCallback(
     ({item}) => (
       <ContactRow
         contact={item}
         onPress={() => {
-          navigation.navigate('ContactSettings', {
+          navigation.navigate('Contacts', {
             screen: 'ContactsDetails',
             params: item,
           });
@@ -171,16 +177,16 @@ const ContactSettingsRoot: React.FC = () => {
   );
 
   const goToCreateContact = () => {
-    navigation.navigate('ContactSettings', {
+    navigation.navigate('Contacts', {
       screen: 'ContactsAdd',
     });
   };
 
   return (
     <ContactsContainer>
-      <ContactsHeader>My Contacts</ContactsHeader>
       {contactList.length ? (
         <>
+          <ContactsHeader>{t('My Contacts')}</ContactsHeader>
           <SearchContainer>
             <Controller
               control={control}
@@ -205,7 +211,7 @@ const ContactSettingsRoot: React.FC = () => {
           <SectionHeaderContainer justifyContent={'space-between'}>
             <ContentTitle>
               <AddressBookIcon />
-              <Title>Contacts</Title>
+              <Title>{t('Contacts')}</Title>
             </ContentTitle>
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
@@ -216,49 +222,49 @@ const ContactSettingsRoot: React.FC = () => {
             </TouchableOpacity>
           </SectionHeaderContainer>
           <Hr />
+          <HideableView show={!!searchVal}>
+            {searchResults.length ? (
+              <SearchResults>
+                <FlatList
+                  contentContainerStyle={{paddingBottom: 250, marginTop: 5}}
+                  data={searchResults}
+                  renderItem={renderItem}
+                  keyExtractor={keyExtractor}
+                />
+              </SearchResults>
+            ) : (
+              <NoResultsContainer>
+                <NoResultsHeader>{t('No Results')}</NoResultsHeader>
+              </NoResultsContainer>
+            )}
+          </HideableView>
+          <HideableView show={!searchVal}>
+            <SearchResults>
+              <FlatList
+                contentContainerStyle={{paddingBottom: 250, marginTop: 5}}
+                data={contactList}
+                renderItem={renderItem}
+                keyExtractor={keyExtractor}
+              />
+            </SearchResults>
+          </HideableView>
         </>
       ) : (
-        <ZeroState>
-          <ZeroStateIcon>
+        <NoContacts>
+          <NoContactsIcon>
             <AddressBookIcon width={60} height={100} />
-          </ZeroStateIcon>
-          <ZeroStateTitle>No contacts yet</ZeroStateTitle>
-          <ZeroStateSubTitle>
-            Get started by adding your first one.
-          </ZeroStateSubTitle>
+          </NoContactsIcon>
+          <NoContactsTitle>{t('No contacts yet')}</NoContactsTitle>
+          <NoContactsSubTitle>
+            {t('Get started by adding your first one.')}
+          </NoContactsSubTitle>
           <ButtonContainer>
             <Button onPress={goToCreateContact} children="New Contact" />
           </ButtonContainer>
-        </ZeroState>
+        </NoContacts>
       )}
-      <HideableView show={!!searchVal}>
-        {searchResults.length ? (
-          <SearchResults>
-            <FlatList
-              contentContainerStyle={{paddingBottom: 250, marginTop: 5}}
-              data={searchResults}
-              renderItem={renderItem}
-              keyExtractor={(item, index) => item.address + index.toString()}
-            />
-          </SearchResults>
-        ) : (
-          <NoResultsContainer>
-            <NoResultsHeader>No Results</NoResultsHeader>
-          </NoResultsContainer>
-        )}
-      </HideableView>
-      <HideableView show={!searchVal}>
-        <SearchResults>
-          <FlatList
-            contentContainerStyle={{paddingBottom: 250, marginTop: 5}}
-            data={contactList}
-            renderItem={renderItem}
-            keyExtractor={(item, index) => item.address + index.toString()}
-          />
-        </SearchResults>
-      </HideableView>
     </ContactsContainer>
   );
 };
 
-export default ContactSettingsRoot;
+export default ContactsRoot;

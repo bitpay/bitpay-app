@@ -6,7 +6,7 @@ import HomeRoot from './home/HomeStack';
 import ShopRoot, {ShopStackParamList} from './shop/ShopStack';
 import SettingsRoot from './settings/SettingsStack';
 import {SettingsStackParamList} from './settings/SettingsStack';
-import ContactsRoot from './contacts/screens/ContactsRoot';
+import ContactsRoot from './contacts/ContactsStack';
 
 import {SvgProps} from 'react-native-svg';
 import HomeIcon from '../../../assets/img/tab-icons/home.svg';

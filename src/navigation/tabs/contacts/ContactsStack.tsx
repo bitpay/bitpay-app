@@ -12,53 +12,52 @@ import {ContactRowProps} from '../../../components/list/ContactRow';
 
 import {useTranslation} from 'react-i18next';
 
-export type ContactSettingsStackParamList = {
+export type ContactsStackParamList = {
   Root: undefined;
   ContactsDetails: ContactRowProps;
   ContactsAdd: undefined;
 };
 
-export enum ContactSettingsScreens {
+export enum ContactsScreens {
   ROOT = 'Root',
-  CONTACTS_DETAILS = 'ContactsDetails',
-  CONTACTS_ADD = 'ContactsAdd',
+  DETAILS = 'ContactsDetails',
+  ADD = 'ContactsAdd',
 }
 
-const ContactSettings = createStackNavigator<ContactSettingsStackParamList>();
+const Contacts = createStackNavigator<ContactsStackParamList>();
 
-const ContactSettingsStack = () => {
+const ContactsStack = () => {
   const {t} = useTranslation();
   return (
-    <ContactSettings.Navigator
-      initialRouteName={ContactSettingsScreens.ROOT}
+    <Contacts.Navigator
+      initialRouteName={ContactsScreens.ROOT}
       screenOptions={{
         ...baseNavigatorOptions,
         ...baseScreenOptions,
       }}>
-      <ContactSettings.Screen
-        name={ContactSettingsScreens.ROOT}
+      <Contacts.Screen
+        name={ContactsScreens.ROOT}
         component={ContactsRoot}
         options={{
-          headerLeft: () => null,
-          headerTitle: () => <HeaderTitle>{t('Contacts')}</HeaderTitle>,
+          headerShown: false,
         }}
       />
-      <ContactSettings.Screen
-        name={ContactSettingsScreens.CONTACTS_DETAILS}
+      <Contacts.Screen
+        name={ContactsScreens.DETAILS}
         component={ContactsDetails}
         options={{
           headerTitle: () => <HeaderTitle>{t('Details')}</HeaderTitle>,
         }}
       />
-      <ContactSettings.Screen
-        name={ContactSettingsScreens.CONTACTS_ADD}
+      <Contacts.Screen
+        name={ContactsScreens.ADD}
         component={ContactsAdd}
         options={{
           headerTitle: () => <HeaderTitle>{t('New Contact')}</HeaderTitle>,
         }}
       />
-    </ContactSettings.Navigator>
+    </Contacts.Navigator>
   );
 };
 
-export default ContactSettingsStack;
+export default ContactsStack;

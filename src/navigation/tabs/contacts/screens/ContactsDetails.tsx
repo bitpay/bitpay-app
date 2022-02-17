@@ -4,7 +4,7 @@ import {useNavigation} from '@react-navigation/core';
 import {StackScreenProps} from '@react-navigation/stack';
 import Clipboard from '@react-native-community/clipboard';
 import {useDispatch} from 'react-redux';
-import {ContactSettingsStackParamList} from '../ContactsStack';
+import {ContactsStackParamList} from '../ContactsStack';
 import {sleep} from '../../../../utils/helper-methods';
 import {
   BaseText,
@@ -74,7 +74,7 @@ const AddressContainer = styled.TouchableOpacity`
 
 const ContactsDetails = ({
   route,
-}: StackScreenProps<ContactSettingsStackParamList, 'ContactsDetails'>) => {
+}: StackScreenProps<ContactsStackParamList, 'ContactsDetails'>) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {address, coin, network, name, tag, email} = route.params;

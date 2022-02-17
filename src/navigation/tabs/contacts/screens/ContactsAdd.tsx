@@ -30,12 +30,7 @@ import CurrencySelectionRow, {
 import NetworkSelectionRow, {
   NetworkSelectionProps,
 } from '../../../../components/list/NetworkSelectionRow';
-import {
-  LightBlack,
-  NeutralSlate,
-  Black,
-  Slate,
-} from '../../../../styles/colors';
+import {LightBlack, NeutralSlate, Slate} from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import WalletIcons from '../../../wallet/components/WalletIcons';
 
@@ -121,7 +116,7 @@ const schema = yup.object().shape({
   address: yup.string().required(),
 });
 
-const ContactsAdd = () => {
+const ContactsAdd: React.FC = () => {
   const {
     control,
     handleSubmit,
