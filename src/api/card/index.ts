@@ -3,6 +3,7 @@ import {
   FetchAllCardsResponse,
   FetchCardResponse,
   FetchOverviewResponse,
+  FetchSettledTransactionsResponse,
   FetchVirtualCardImageUrlsResponse,
 } from './card.types';
 import CardQueries from './card.queries';
@@ -33,16 +34,28 @@ const fetchOne = async (token: string, id: string) => {
   return data.data.user.card;
 };
 
-const fetchOverview = async (token: string, id: string) => {
-  const pageNumber = 1;
-  const pageSize = 100;
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - (1095 || 60));
+const fetchOverview = async (
+  token: string,
+  id: string,
+  options?: {
+    pageNumber?: number;
+    pageSize?: number;
+    startDate?: Date;
+    endDate?: Date;
+  },
+) => {
+  let {pageNumber = 1, pageSize = 100, startDate, endDate} = options || {};
+
+  if (!startDate) {
+    startDate = new Date();
+    startDate.setDate(startDate.getDate() - 60);
+  }
 
   const query = CardQueries.FETCH_OVERVIEW(token, id, {
     pageNumber,
     pageSize,
     startDate,
+    endDate,
   });
   const {data} = await GraphQlApi.getInstance().request<FetchOverviewResponse>(
     query,
@@ -53,6 +66,46 @@ const fetchOverview = async (token: string, id: string) => {
   }
 
   return data.data.user;
+};
+
+const fetchSettledTransactions = async (
+  token: string,
+  id: string,
+  options?: {
+    pageSize?: number;
+    pageNumber?: number;
+    startDate?: Date;
+    endDate?: Date;
+  },
+) => {
+  let {pageSize = 100, pageNumber = 1, startDate, endDate} = options || {};
+
+  if (!startDate) {
+    startDate = new Date();
+    startDate.setDate(startDate.getDate() - 60);
+  }
+
+  const query = CardQueries.FETCH_SETTLED_TRANSACTIONS(token, id, {
+    pageSize,
+    pageNumber,
+    startDate: startDate?.toISOString(),
+    endDate: endDate?.toISOString(),
+  });
+
+  const response =
+    await GraphQlApi.getInstance().request<FetchSettledTransactionsResponse>(
+      query,
+    );
+  const {data, errors} = response.data;
+
+  if (!data) {
+    throw new Error(
+      errors?.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') ||
+        `Failed to fetch settled transactions for ${id}`,
+    );
+  }
+
+  return data.user.card.overview.settledTransactions;
 };
 
 const fetchVirtualCardImageUrls = async (token: string, ids: string[]) => {
@@ -78,6 +131,7 @@ const CardApi = {
   fetchAll,
   fetchOne,
   fetchOverview,
+  fetchSettledTransactions,
   fetchVirtualCardImageUrls,
 };
 

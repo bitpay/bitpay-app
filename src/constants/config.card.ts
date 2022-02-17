@@ -16,6 +16,11 @@ import {Transaction} from '../store/card/card.models';
 
 type ProviderConfigType = {
   [k in CardProvider]: {
+    programStartYear: number;
+    /**
+     * Maximum number of days ago that we can query for transaction history.
+     */
+    maxHistoryDateRange: number;
     /**
      * Whether or not cards from this provider are part of the same account and should be grouped together.
      */
@@ -35,6 +40,8 @@ export const CARD_WIDTH = 324;
 
 export const ProviderConfig: ProviderConfigType = {
   galileo: {
+    programStartYear: 2020,
+    maxHistoryDateRange: 1095,
     groupEnabled: true,
     virtualDesignSupport: true,
     filters: {
@@ -65,6 +72,8 @@ export const ProviderConfig: ProviderConfigType = {
     },
   },
   firstView: {
+    programStartYear: 2016,
+    maxHistoryDateRange: 30,
     groupEnabled: false,
     virtualDesignSupport: false,
     filters: {

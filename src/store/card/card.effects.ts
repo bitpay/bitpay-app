@@ -10,6 +10,7 @@ import {Effect} from '../index';
 import {LogActions} from '../log';
 import {TTL} from './card.types';
 import ReactNative from 'react-native';
+import {ProviderConfig} from '../../constants/config.card';
 const {Dosh} = ReactNative.NativeModules;
 
 export const startCardStoreInit =
@@ -55,7 +56,15 @@ export const startFetchAll =
   };
 
 export const startFetchOverview =
-  (id: string): Effect =>
+  (
+    id: string,
+    options?: {
+      pageSize?: number;
+      pageNumber?: number;
+      startDate?: Date;
+      endDate?: Date;
+    },
+  ): Effect =>
   async (dispatch, getState) => {
     try {
       dispatch(
@@ -63,6 +72,7 @@ export const startFetchOverview =
       );
 
       const {APP, BITPAY_ID, CARD} = getState();
+      let {pageSize, pageNumber, startDate, endDate} = options || {};
 
       // throttle
       if (Date.now() - CARD.lastUpdates.fetchOverview < TTL.fetchOverview) {
@@ -70,9 +80,25 @@ export const startFetchOverview =
         return;
       }
 
+      if (!startDate) {
+        const card = CARD.cards[APP.network].find(c => c.id === id);
+        const dateRange = card
+          ? ProviderConfig[card.provider].maxHistoryDateRange
+          : 60;
+
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - dateRange);
+      }
+
       const res = await CardApi.fetchOverview(
         BITPAY_ID.apiToken[APP.network],
         id,
+        {
+          pageNumber,
+          pageSize,
+          startDate,
+          endDate,
+        },
       );
       const {settledTransactions, pendingTransactions} = res.card.overview;
 
@@ -91,6 +117,56 @@ export const startFetchOverview =
         dispatch(LogActions.error(JSON.stringify(err)));
         dispatch(CardActions.failedFetchOverview(id));
       });
+    } finally {
+      dispatch(AppActions.dismissOnGoingProcessModal());
+    }
+  };
+
+export const startFetchSettledTransactions =
+  (
+    id: string,
+    options?: {
+      pageSize?: number;
+      pageNumber?: number;
+      startDate?: Date;
+      endDate?: Date;
+    },
+  ): Effect =>
+  async (dispatch, getState) => {
+    try {
+      dispatch(
+        AppActions.showOnGoingProcessModal(OnGoingProcessMessages.LOADING),
+      );
+
+      const {APP, BITPAY_ID, CARD} = getState();
+      const token = BITPAY_ID.apiToken[APP.network];
+      let {pageSize, pageNumber, startDate, endDate} = options || {};
+
+      if (!startDate) {
+        const card = CARD.cards[APP.network].find(c => c.id === id);
+        const dateRange = card
+          ? ProviderConfig[card.provider].maxHistoryDateRange
+          : 60;
+
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - dateRange);
+      }
+
+      const transactionPageData = await CardApi.fetchSettledTransactions(
+        token,
+        id,
+        {
+          pageSize,
+          pageNumber,
+          startDate,
+          endDate,
+        },
+      );
+
+      dispatch(
+        CardActions.successFetchSettledTransactions(id, transactionPageData),
+      );
+    } catch (err) {
     } finally {
       dispatch(AppActions.dismissOnGoingProcessModal());
     }
