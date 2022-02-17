@@ -3,7 +3,7 @@ import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {FlatList, RefreshControl, Share} from 'react-native';
-import {useDispatch, useSelector} from 'react-redux';
+import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
 import Settings from '../../../components/settings/Settings';
 import {
@@ -29,7 +29,7 @@ import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
 import {useAppSelector} from '../../../utils/hooks';
-import {createWalletAddress} from '../../../store/wallet/effects/send/address';
+import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
