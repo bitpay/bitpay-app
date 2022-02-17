@@ -215,7 +215,7 @@ export const FormatCryptoAmount = (
   let amountUnitStr;
   let amountSat;
   let _amount;
-  amountSat = parseInt((amount * unitToSatoshi).toFixed(0), 10);
+  amountSat = Number((amount * unitToSatoshi).toFixed(0));
 
   let opts;
   // Custom tokens
