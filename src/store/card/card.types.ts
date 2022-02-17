@@ -7,9 +7,6 @@ import {
   FetchVirtualCardImageUrlsStatus,
 } from './card.reducer';
 
-export type CardBrand = 'Mastercard' | 'Visa';
-export type CardProvider = 'galileo' | 'firstView';
-
 export const TTL = {
   fetchOverview: 1000 * 10,
 };

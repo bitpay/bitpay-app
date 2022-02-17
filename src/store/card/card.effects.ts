@@ -11,6 +11,7 @@ import {LogActions} from '../log';
 import {TTL} from './card.types';
 import ReactNative from 'react-native';
 import {ProviderConfig} from '../../constants/config.card';
+import {CardProvider} from '../../constants/card';
 const {Dosh} = ReactNative.NativeModules;
 
 export const startCardStoreInit =
@@ -21,7 +22,9 @@ export const startCardStoreInit =
     dispatch(CardActions.successInitializeStore(APP.network, initialData));
     try {
       const virtualCardIds = (initialData.cards || [])
-        .filter(c => c.provider === 'galileo' && c.cardType === 'virtual')
+        .filter(
+          c => c.provider === CardProvider.galileo && c.cardType === 'virtual',
+        )
         .map(c => c.id);
 
       if (virtualCardIds.length) {

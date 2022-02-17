@@ -13,6 +13,7 @@ import {
   WIDTH,
 } from '../../../components/styled/Containers';
 import {Smallest} from '../../../components/styled/Text';
+import {CardProvider} from '../../../constants/card';
 import {ProviderConfig} from '../../../constants/config.card';
 import {CardEffects} from '../../../store/card';
 import {
@@ -20,7 +21,6 @@ import {
   Transaction,
   UiTransaction,
 } from '../../../store/card/card.models';
-import {CardProvider} from '../../../store/card/card.types';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {CardStackParamList} from '../CardStack';
 import {
@@ -39,11 +39,6 @@ interface CardDashboardProps {
   id: string | undefined | null;
   navigation: StackNavigationProp<CardStackParamList, 'Home'>;
 }
-
-const GroupEnabled = {
-  firstView: false,
-  galileo: true,
-};
 
 export class OverviewSlide {
   readonly provider: CardProvider;
@@ -70,10 +65,16 @@ export class OverviewSlide {
 const buildOverviewSlides = (cards: Card[]) => {
   // sort galileo before firstView, then virtual before physical
   const sortedCards = cards.sort((a, b) => {
-    if (a.provider === 'galileo' && b.provider === 'firstView') {
+    if (
+      a.provider === CardProvider.galileo &&
+      b.provider === CardProvider.firstView
+    ) {
       return -1;
     }
-    if (a.provider === 'firstView' && b.provider === 'galileo') {
+    if (
+      a.provider === CardProvider.firstView &&
+      b.provider === CardProvider.galileo
+    ) {
       return 1;
     }
 
@@ -87,7 +88,7 @@ const buildOverviewSlides = (cards: Card[]) => {
   });
 
   const slides = sortedCards.reduce((slideList, card) => {
-    if (!GroupEnabled[card.provider]) {
+    if (!ProviderConfig[card.provider].groupEnabled) {
       slideList.push(new OverviewSlide(card));
 
       return slideList;
@@ -190,7 +191,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const listFooterComponent = useMemo(
     () => (
       <TransactionListFooter>
-        {activeCard.provider === 'galileo' ? (
+        {activeCard.provider === CardProvider.galileo ? (
           <>
             <Smallest>{t('TermsAndConditionsMastercard')}</Smallest>
 

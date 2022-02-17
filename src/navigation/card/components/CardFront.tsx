@@ -1,10 +1,7 @@
 import React, {useState} from 'react';
 import * as Svg from 'react-native-svg';
-import {
-  CardBrand,
-  CardProvider,
-  VirtualDesignCurrency,
-} from '../../../store/card/card.types';
+import {CardBrand, CardProvider} from '../../../constants/card';
+import {VirtualDesignCurrency} from '../../../store/card/card.types';
 import {
   getCardCurrencyColorPalette,
   isVirtualDesignSupported,

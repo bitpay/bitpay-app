@@ -1,6 +1,6 @@
 import React from 'react';
 import * as Svg from 'react-native-svg';
-import {CardProvider, VirtualDesignCurrency} from '../store/card/card.types';
+import {VirtualDesignCurrency} from '../store/card/card.types';
 import BCHShape from '../navigation/card/assets/currency-shapes/BCH-shape.svg';
 import BitPayBShape from '../navigation/card/assets/currency-shapes/bitpay-b-shape.svg';
 import BTCShape from '../navigation/card/assets/currency-shapes/BTC-shape.svg';
@@ -13,6 +13,7 @@ import USDPShape from '../navigation/card/assets/currency-shapes/USDP-shape.svg'
 import USDCShape from '../navigation/card/assets/currency-shapes/USDC-shape.svg';
 import XRPShape from '../navigation/card/assets/currency-shapes/XRP-shape.svg';
 import {Transaction} from '../store/card/card.models';
+import {CardProvider} from './card';
 
 type ProviderConfigType = {
   [k in CardProvider]: {

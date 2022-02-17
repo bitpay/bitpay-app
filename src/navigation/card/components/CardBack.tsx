@@ -1,5 +1,6 @@
 import React from 'react';
 import * as Svg from 'react-native-svg';
+import {CardBrand} from '../../../constants/card';
 import {CARD_HEIGHT, CARD_WIDTH} from '../../../constants/config.card';
 import {Card} from '../../../store/card/card.models';
 
@@ -46,7 +47,7 @@ const BRAND_LOGOS: {[k: string]: JSX.Element} = {
 
 const CardBack: React.FC<CardBackProps> = props => {
   const {card} = props;
-  const BrandLogo = BRAND_LOGOS[card.brand || 'Visa'] || null;
+  const BrandLogo = BRAND_LOGOS[card.brand || CardBrand.Visa] || null;
 
   return (
     <Svg.Svg

@@ -1,4 +1,4 @@
-import {CardBrand, CardProvider} from './card.types';
+import {CardBrand, CardProvider} from '../../constants/card';
 
 export interface Currency {
   code: string;

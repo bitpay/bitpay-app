@@ -9,6 +9,7 @@ import RewardIcon from '../../../../assets/img/card/icons/reward.svg';
 import TopUpIcon from '../../../../assets/img/card/icons/topup.svg';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, H7} from '../../../components/styled/Text';
+import {CardProvider} from '../../../constants/card';
 import {Card, UiTransaction} from '../../../store/card/card.models';
 import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
 import {format} from '../../../utils/currency';
@@ -61,12 +62,12 @@ const isTopUp = (tx: UiTransaction) => tx.displayMerchant === 'BitPay Load';
 const isBitPayReward = (tx: UiTransaction) =>
   tx.displayMerchant === 'Referral Reward';
 
-const isFee = (tx: UiTransaction, provider: string) => {
+const isFee = (tx: UiTransaction, provider: CardProvider) => {
   switch (provider) {
-    case 'firstView':
+    case CardProvider.firstView:
       return ['10036 = INACTIVITY'].includes(tx.type);
 
-    case 'galileo':
+    case CardProvider.galileo:
       return ['FE'].includes(tx.type);
 
     default:
@@ -74,7 +75,7 @@ const isFee = (tx: UiTransaction, provider: string) => {
   }
 };
 
-const getTxIcon = (tx: UiTransaction, provider: string) => {
+const getTxIcon = (tx: UiTransaction, provider: CardProvider) => {
   if (isFee(tx, provider)) {
     return FeeIcon;
   }
