@@ -15,7 +15,11 @@ import {
 import {Smallest} from '../../../components/styled/Text';
 import {ProviderConfig} from '../../../constants/config.card';
 import {CardEffects} from '../../../store/card';
-import {Card} from '../../../store/card/card.models';
+import {
+  Card,
+  Transaction,
+  UiTransaction,
+} from '../../../store/card/card.models';
 import {CardProvider} from '../../../store/card/card.types';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {CardStackParamList} from '../CardStack';
@@ -103,6 +107,14 @@ const buildOverviewSlides = (cards: Card[]) => {
   return slides;
 };
 
+const toUiTransaction = (tx: Transaction, settled: boolean) => {
+  const uiTx = tx as UiTransaction;
+
+  uiTx.settled = settled;
+
+  return uiTx;
+};
+
 const CardDashboard: React.FC<CardDashboardProps> = props => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
@@ -146,9 +158,10 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   }, [activeSlide, navigation, t]);
 
   // if id does not exist as a key, tx for this card has not been initialized
-  const uninitializedId = useAppSelector(({CARD}) =>
-    CARD.settledTransactions[activeCard.id] ? null : activeCard.id,
+  const pageData = useAppSelector(
+    ({CARD}) => CARD.settledTransactions[activeCard.id],
   );
+  const uninitializedId = pageData ? null : activeCard.id;
 
   useEffect(() => {
     if (uninitializedId) {
@@ -166,8 +179,10 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
 
   const filteredTransactions = useMemo(
     () => [
-      ...(pendingTxList || []),
-      ...(settledTxList || []).filter(filters.settledTx),
+      ...(pendingTxList || []).map(tx => toUiTransaction(tx, false)),
+      ...(settledTxList || [])
+        .filter(filters.settledTx)
+        .map(tx => toUiTransaction(tx, true)),
     ],
     [settledTxList, pendingTxList, filters],
   );
@@ -215,15 +230,8 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   );
 
   const renderTransaction = useCallback(
-    ({item}) => {
-      return (
-        <TransactionRow
-          key={item.id}
-          tx={item}
-          card={activeCard}
-          settled={true}
-        />
-      );
+    ({item}: {item: UiTransaction}) => {
+      return <TransactionRow key={item.id} tx={item} card={activeCard} />;
     },
     [activeCard],
   );
@@ -232,11 +240,28 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     dispatch(CardEffects.startFetchOverview(activeCard.id));
   };
 
+  const fetchNextPage = () => {
+    if (pageData) {
+      const {currentPageNumber, totalPageCount} = pageData;
+      const hasMorePages = currentPageNumber < totalPageCount;
+
+      if (hasMorePages) {
+        dispatch(
+          CardEffects.startFetchSettledTransactions(activeCard.id, {
+            pageNumber: currentPageNumber + 1,
+          }),
+        );
+      }
+    }
+  };
+
   return (
     <FlatList
       data={filteredTransactions}
       renderItem={renderTransaction}
       initialNumToRender={30}
+      onEndReachedThreshold={0.1}
+      onEndReached={() => fetchNextPage()}
       ListHeaderComponent={
         <>
           <Carousel<OverviewSlide>

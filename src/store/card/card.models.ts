@@ -62,6 +62,10 @@ export interface Transaction {
   type: string;
 }
 
+export interface UiTransaction extends Transaction {
+  settled: boolean;
+}
+
 export interface PagedTransactionData {
   totalPageCount: number;
   currentPageNumber: number;
