@@ -1,5 +1,5 @@
 import React from 'react';
-import {createStackNavigator} from '@react-navigation/stack';
+import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
@@ -35,6 +35,8 @@ import JoinMultisig, {JoinMultisigParamList} from './screens/JoinMultisig';
 import Copayers from './screens/Copayers';
 import AddingOptions, {AddingOptionsParamList} from './screens/AddingOptions';
 import UpdateKeyOrWalletName from './screens/UpdateKeyOrWalletName';
+import RequestSpecificAmount from './screens/request-specific-amount/RequestSpecificAmount';
+import RequestSpecificAmountQR from './screens/request-specific-amount/RequestSpecificAmountQR';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -64,6 +66,8 @@ export type WalletStackParamList = {
   JoinMultisig: JoinMultisigParamList | undefined;
   Copayers: {wallet: WalletModel};
   AddingOptions: AddingOptionsParamList;
+  RequestSpecificAmount: {wallet: WalletModel};
+  RequestSpecificAmountQR: {wallet: WalletModel; requestAmount: number};
 };
 
 export enum WalletScreens {
@@ -90,6 +94,8 @@ export enum WalletScreens {
   JOIN_MULTISIG = 'JoinMultisig',
   COPAYERS = 'Copayers',
   ADDING_OPTIONS = 'AddingOptions',
+  REQUEST_SPECIFIC_AMOUNT = 'RequestSpecificAmount',
+  REQUEST_SPECIFIC_AMOUNT_QR = 'RequestSpecificAmountQR',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -207,6 +213,17 @@ const WalletStack = () => {
         <Wallet.Screen
           name={WalletScreens.ADDING_OPTIONS}
           component={AddingOptions}
+        />
+        <Wallet.Screen
+          name={WalletScreens.REQUEST_SPECIFIC_AMOUNT}
+          component={RequestSpecificAmount}
+        />
+        <Wallet.Screen
+          options={{
+            ...TransitionPresets.ModalPresentationIOS,
+          }}
+          name={WalletScreens.REQUEST_SPECIFIC_AMOUNT_QR}
+          component={RequestSpecificAmountQR}
         />
       </Wallet.Navigator>
     </>

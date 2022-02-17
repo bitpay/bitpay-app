@@ -35,7 +35,7 @@
     "asyncstorage-down": "4.2.0",
     "axios": "0.21.1",
     "bitauth": "0.4.1",
-    "bitcore-wallet-client": "8.25.24",
+    "bitcore-wallet-client": "8.25.27",
     "buffer": "4.9.2",
     "events": "1.1.1",
     "https-browserify": "1.0.0",

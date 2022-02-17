@@ -26,17 +26,16 @@ import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import {sleep} from '../../../utils/helper-methods';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {
-  CreateWalletAddress,
+  createWalletAddress,
   GetLegacyBchAddressFormat,
 } from '../../../store/wallet/effects/send/address';
 import ReceiveAddressHeader, {
   HeaderContextHandler,
 } from './ReceiveAddressHeader';
-
-export interface ReceiveAddressConfig {
-  keyId: string;
-  id: string;
-}
+import {
+  GetProtocolPrefix,
+  IsUtxoCoin,
+} from '../../../store/wallet/utils/wallet';
 
 export const BchAddressTypes = ['Cash Address', 'Legacy'];
 
@@ -85,6 +84,8 @@ const LoadingContainer = styled.View`
 
 const LoadingText = styled(H4)`
   color: ${({theme}) => theme.colors.text};
+  margin: 10px 0;
+  text-align: center;
 `;
 
 const ReceiveAddressContainer = styled(SheetContainer)`
@@ -151,16 +152,22 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
   };
 
   const createAddress = async () => {
-    let {coin} = wallet.credentials;
+    let {coin, network} = wallet.credentials;
     const prefix = 'Could not create address';
 
     try {
-      const walletAddress = await CreateWalletAddress(wallet);
+      const walletAddress = (await dispatch<any>(
+        createWalletAddress({wallet}),
+      )) as string;
       setLoading(false);
-      setAddress(walletAddress);
       if (coin === 'bch') {
-        setBchAddress(walletAddress);
+        const protocolPrefix = GetProtocolPrefix(coin, network);
+        const formattedAddr = protocolPrefix + ':' + walletAddress;
+        setAddress(formattedAddr);
+        setBchAddress(formattedAddr);
         setBchAddressType('Cash Address');
+      } else {
+        setAddress(walletAddress);
       }
     } catch (createAddressErr: any) {
       switch (createAddressErr?.type) {
@@ -218,12 +225,15 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
     };
   }
 
+  const isUtxo = IsUtxoCoin(wallet.currencyAbbreviation);
+
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={closeModal}>
       <ReceiveAddressContainer>
         <ReceiveAddressHeader
           onPressRefresh={createAddress}
           contextHandlers={headerContextHandlers}
+          showRefresh={isUtxo}
         />
 
         {address ? (
@@ -252,6 +262,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
         ) : (
           <LoadingContainer>
             <GhostSvg />
+            <LoadingText>Something went wrong. Please try again.</LoadingText>
           </LoadingContainer>
         )}
 
