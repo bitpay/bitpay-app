@@ -100,8 +100,9 @@ const fetchSettledTransactions = async (
 
   if (!data) {
     throw new Error(
-      errors?.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') ||
-        `Failed to fetch settled transactions for ${id}`,
+      errors
+        ?.map(e => `${e.path ? e.path.join('.') + ': ' : ''}${e.message}`)
+        .join(', ') || `Failed to fetch settled transactions for ${id}`,
     );
   }
 

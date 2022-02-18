@@ -12,6 +12,7 @@ import {TTL} from './card.types';
 import ReactNative from 'react-native';
 import {ProviderConfig} from '../../constants/config.card';
 import {CardProvider} from '../../constants/card';
+import {isAxiosError} from '../../utils/axios';
 const {Dosh} = ReactNative.NativeModules;
 
 export const startCardStoreInit =
@@ -170,6 +171,21 @@ export const startFetchSettledTransactions =
         CardActions.successFetchSettledTransactions(id, transactionPageData),
       );
     } catch (err) {
+      let errMsg;
+
+      if (isAxiosError(err)) {
+        errMsg = err.response?.data || err.message;
+      } else if (err instanceof Error) {
+        errMsg = err.message;
+      } else {
+        errMsg = JSON.stringify(err);
+      }
+
+      dispatch(
+        LogActions.error(`Failed to fetch settled transactions for ${id}`),
+      );
+      dispatch(LogActions.error(errMsg || JSON.stringify(err)));
+      dispatch(CardActions.failedFetchSettledTransactions(id));
     } finally {
       dispatch(AppActions.dismissOnGoingProcessModal());
     }
