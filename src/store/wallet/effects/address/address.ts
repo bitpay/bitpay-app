@@ -192,37 +192,3 @@ export const ToAddress = (address: string, currencyAbbreviation: string) => {
       return address;
   }
 };
-
-export const ToLtcAddress = (address: string): string => {
-  return BitcoreLtc.Address(address).toString();
-};
-
-export const ToDogeAddress = (address: string): string => {
-  return BitcoreDoge.Address(address).toString();
-};
-
-export const ToBtcAddress = (address: string): string => {
-  return Bitcore.Address(address).toString();
-};
-
-export const ToCashAddress = (
-  address: string,
-  withPrefix?: boolean,
-): string => {
-  return BitcoreCash.Address(address).toString(!withPrefix);
-};
-
-export const ToAddress = (address: string, currencyAbbreviation: string) => {
-  switch (currencyAbbreviation) {
-    case 'bch':
-      return ToCashAddress(address);
-    case 'ltc':
-      return ToLtcAddress(address);
-    case 'btc':
-      return ToBtcAddress(address);
-    case 'doge':
-      return ToDogeAddress(address);
-    default:
-      return address;
-  }
-};
