@@ -1,9 +1,9 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {FlatList, RefreshControl, Share} from 'react-native';
-import {useDispatch, useSelector} from 'react-redux';
+import {RefreshControl, SectionList, Share} from 'react-native';
+import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
 import Settings from '../../../components/settings/Settings';
 import {
@@ -30,14 +30,21 @@ import {WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
 import {useAppSelector} from '../../../utils/hooks';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
-import WalletTransactionList from '../components/WalletTransactionList';
+import {
+  GroupTransactionHistory,
+  UpdateTransactionsHistory,
+} from '../../../store/wallet/effects/transactions/transactions';
+import WalletTransactionRow from '../components/WalletTransactionRow';
+import {ScreenGutter} from '../../../components/styled/Containers';
+
+const HISTORY_SHOW_LIMIT = 10;
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
   'WalletDetails'
 >;
 
-const WalletDetailsContainer = styled.View`
+const WalletDetailsContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
@@ -68,6 +75,16 @@ const Type = styled(BaseText)`
   padding: 2px 4px;
   border-radius: 3px;
   margin-left: auto;
+`;
+
+const TransactionSectionHeader = styled(H5)`
+  padding: ${ScreenGutter};
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
+`;
+
+const BorderBottom = styled.View`
+  border-bottom-width: 1px;
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#EBEDF8')};
 `;
 
 const getWalletType = (key: Key, wallet: Wallet) => {
@@ -195,9 +212,45 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     SUPPORTED_CURRENCIES.includes(currencyAbbreviation.toLowerCase()) &&
     network !== Network.testnet;
 
+  useEffect(() => {
+    if (!fullWalletObj.transactionHistoryOnProgress) {
+      dispatch(UpdateTransactionsHistory({wallet: fullWalletObj}));
+    }
+  }, [fullWalletObj]);
+
+  const [history, setHistory] = useState<any[]>();
+  const [currentPage, setCurrentPage] = useState(0);
+  const [groupedHistory, setGroupedHistory] = useState<
+    {title: string; data: any[]}[]
+  >([]);
+
+  const showHistory = (loading?: boolean) => {
+    if (!fullWalletObj.transactionHistory) {
+      return;
+    }
+
+    const _history = fullWalletObj.transactionHistory.slice(
+      0,
+      (currentPage + 1) * HISTORY_SHOW_LIMIT,
+    );
+    setHistory(_history);
+
+    const grouped = GroupTransactionHistory(_history);
+
+    setGroupedHistory(grouped);
+
+    if (loading) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  useEffect(() => {
+    showHistory();
+  }, [fullWalletObj?.transactionHistory]);
+
   return (
     <WalletDetailsContainer>
-      <FlatList
+      <SectionList
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
@@ -205,8 +258,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             onRefresh={onRefresh}
           />
         }
-        data={[]}
-        renderItem={() => null}
         ListHeaderComponent={() => {
           return (
             <>
@@ -236,11 +287,19 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                   }}
                 />
               ) : null}
-
-              <WalletTransactionList wallet={fullWalletObj} currentKey={key} />
             </>
           );
         }}
+        sections={groupedHistory}
+        stickyHeaderIndices={[groupedHistory.length]}
+        keyExtractor={(item, index) => item + index}
+        renderItem={({item}) => (
+          <WalletTransactionRow transaction={item} wallet={fullWalletObj} />
+        )}
+        renderSectionHeader={({section: {title}}) => (
+          <TransactionSectionHeader>{title}</TransactionSectionHeader>
+        )}
+        ItemSeparatorComponent={() => <BorderBottom/>}
       />
 
       <OptionsSheet

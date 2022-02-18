@@ -15,7 +15,8 @@ import {
   setUpdateTransactionHistoryStatus,
   updateTransactionHistory,
 } from '../../wallet.actions';
-import {WithinSameMonth} from '../../utils/time';
+import {IsDateInCurrentMonth, WithinSameMonth} from '../../utils/time';
+import moment from 'moment';
 
 const BWC = BwcProvider.getInstance();
 
@@ -541,7 +542,11 @@ export const GroupTransactionHistory = (history: any[]) => {
   }, []);
 
   groups = groups.map((group: any[]) => {
-    return {title: group[0].time, data: group};
+    const time = group[0].time * 1000;
+    const title = IsDateInCurrentMonth(time)
+      ? 'Recent'
+      : moment(time).format('MMMM');
+    return {title, data: group};
   });
 
   return groups;
