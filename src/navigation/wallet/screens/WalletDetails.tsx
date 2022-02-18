@@ -34,8 +34,8 @@ import {
   GroupTransactionHistory,
   UpdateTransactionsHistory,
 } from '../../../store/wallet/effects/transactions/transactions';
-import WalletTransactionRow from '../components/WalletTransactionRow';
 import {ScreenGutter} from '../../../components/styled/Containers';
+import WalletTransactionRow from '../../../components/list/WalletTransactionRow';
 
 const HISTORY_SHOW_LIMIT = 10;
 
@@ -294,12 +294,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         stickyHeaderIndices={[groupedHistory.length]}
         keyExtractor={(item, index) => item + index}
         renderItem={({item}) => (
-          <WalletTransactionRow transaction={item} wallet={fullWalletObj} />
+          <WalletTransactionRow
+            transaction={item}
+            wallet={fullWalletObj}
+            contactsList={[]}
+          />
         )}
         renderSectionHeader={({section: {title}}) => (
           <TransactionSectionHeader>{title}</TransactionSectionHeader>
         )}
-        ItemSeparatorComponent={() => <BorderBottom/>}
+        ItemSeparatorComponent={() => <BorderBottom />}
+        ListFooterComponent={() => <BorderBottom />}
       />
 
       <OptionsSheet
