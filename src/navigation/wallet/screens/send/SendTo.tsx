@@ -21,12 +21,6 @@ import haptic from '../../../../components/haptic-feedback/haptic';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {GetPayProUrl} from '../../../../store/wallet/utils/decode-uri';
-import {
-  CoinNetwork,
-  createWalletAddress,
-  GetCoinAndNetwork,
-  TranslateToBchCashAddress,
-} from '../../../../store/wallet/effects/address/address';
 import KeyWalletsRow, {
   KeyWallet,
   KeyWalletsRowProps,
@@ -51,6 +45,12 @@ import {
   CustomErrorMessage,
   SendGeneralErrorMessage,
 } from '../../components/ErrorMessages';
+import {
+  CoinNetwork,
+  createWalletAddress,
+  GetCoinAndNetwork,
+  TranslateToBchCashAddress,
+} from '../../../../store/wallet/effects/address/address';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',

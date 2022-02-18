@@ -1,6 +1,6 @@
 {
   "name": "bitpayapp",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -10,6 +10,7 @@
     "test:coverage": "jest --coverage",
     "test:unit": "jest --watch",
     "android:build:debug": "./scripts/android-debug.sh",
+    "android:build:release": "./scripts/android-release.sh",
     "lint": "eslint --fix . --ext .js,.jsx,.ts,.tsx",
     "postinstall": "./scripts/postinstall.sh",
     "clean": "react-native-clean-project",

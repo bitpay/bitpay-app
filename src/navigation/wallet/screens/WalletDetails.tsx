@@ -44,7 +44,7 @@ type WalletDetailsScreenProps = StackScreenProps<
   'WalletDetails'
 >;
 
-const WalletDetailsContainer = styled.SafeAreaView`
+const WalletDetailsContainer = styled.View`
   flex: 1;
 `;
 

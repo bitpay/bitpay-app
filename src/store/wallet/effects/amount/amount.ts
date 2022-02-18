@@ -19,7 +19,7 @@ export const ParseAmount = (
   let amountUnitStr;
   let amountSat;
   let _amount;
-  amountSat = parseInt((amount * unitToSatoshi).toFixed(0), 10);
+  amountSat = Number((amount * unitToSatoshi).toFixed(0));
   amountUnitStr =
     FormatAmountStr(currencyAbbreviation, amountSat, fullPrecision) || '';
 
@@ -56,10 +56,6 @@ export const FormatAmount = (
   satoshis: number,
   fullPrecision?: boolean,
 ): string => {
-  if (currencyAbbreviation == 'sat') {
-    return satoshis.toString();
-  }
-
   // TODO : now only works for english, specify opts to change thousand separator and decimal separator
   let opts: any = {
     fullPrecision: !!fullPrecision,

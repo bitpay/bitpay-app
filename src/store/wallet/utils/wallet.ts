@@ -165,9 +165,8 @@ export const checkEncryptPassword = (key: Key, password: string) =>
 
 export const generateKeyExportCode = (
   key: Key,
-  encryptPassword?: string | undefined,
+  getKeyMnemonic?: string | undefined,
 ): string => {
-  const {mnemonic: getKeyMnemonic} = key.methods.get(encryptPassword);
   return `1|${getKeyMnemonic}|null|null|${key.properties.mnemonic}|null`;
 };
 

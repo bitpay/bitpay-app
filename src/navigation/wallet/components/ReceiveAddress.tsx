@@ -25,13 +25,13 @@ import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import {sleep} from '../../../utils/helper-methods';
 import {Wallet} from '../../../store/wallet/wallet.models';
+import ReceiveAddressHeader, {
+  HeaderContextHandler,
+} from './ReceiveAddressHeader';
 import {
   createWalletAddress,
   GetLegacyBchAddressFormat,
 } from '../../../store/wallet/effects/address/address';
-import ReceiveAddressHeader, {
-  HeaderContextHandler,
-} from './ReceiveAddressHeader';
 import {
   GetProtocolPrefix,
   IsUtxoCoin,
