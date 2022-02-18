@@ -8,7 +8,7 @@ const AuthFormContainer = styled.ScrollView`
 `;
 
 export const AuthRowContainer = styled.View`
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 `;
 
 export const CheckboxControl = styled.View`

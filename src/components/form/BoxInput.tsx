@@ -67,7 +67,7 @@ const ErrorText = styled(BaseText)`
   color: ${Caution};
   font-size: 12px;
   font-weight: 500;
-  margin-top: 6px;
+  margin-top: 4px;
 `;
 
 const ObfuscationToggle = styled.TouchableOpacity`
@@ -143,7 +143,7 @@ const BoxInput = React.forwardRef<TextInput, BoxInputProps>(
           )}
         </InputContainer>
 
-        {errorMessage ? <ErrorText>{errorMessage}</ErrorText> : null}
+        <ErrorText>{errorMessage || ' '}</ErrorText>
       </>
     );
   },
