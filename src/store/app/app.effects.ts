@@ -93,6 +93,9 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     await sleep(500);
     dispatch(AppActions.successAppInit());
     dispatch(LogActions.info('Initialized app successfully.'));
+    if (APP.pinLockActive) {
+      dispatch(AppActions.showPinModal({type: 'check'}));
+    }
     RNBootSplash.hide({fade: true});
   } catch (err) {
     console.error(err);

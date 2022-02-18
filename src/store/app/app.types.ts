@@ -1,5 +1,6 @@
 import {ColorSchemeName} from 'react-native';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
+import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
 import {NavScreenParams, RootStackParamList} from '../../Root';
@@ -28,6 +29,11 @@ export enum AppActionTypes {
   DISMISS_DECRYPT_PASSWORD_MODAL = 'APP/DISMISS_DECRYPT_PASSWORD_MODAL',
   SET_DEFAULT_LANGUAGE = 'APP/SET_DEFAULT_LANGUAGE',
   RESET_DECRYPT_PASSWORD_CONFIG = 'APP/RESET_DECRYPT_PASSWORD_CONFIG',
+  SHOW_PIN_MODAL = 'APP/SHOW_PIN_MODAL',
+  DISMISS_PIN_MODAL = 'APP/DISMISS_PIN_MODAL',
+  PIN_LOCK_ACTIVE = 'APP/PIN_LOCK_ACTIVE',
+  CURRENT_PIN = 'APP/CURRENT_PIN',
+  PIN_BANNED_UNTIL = 'APP/PIN_BANNED_UNTIL',
 }
 
 interface NetworkChanged {
@@ -123,6 +129,33 @@ interface ResetDecryptPasswordConfig {
   type: typeof AppActionTypes.RESET_DECRYPT_PASSWORD_CONFIG;
 }
 
+interface ShowPinModal {
+  type: typeof AppActionTypes.SHOW_PIN_MODAL;
+  payload: PinModalConfig;
+}
+interface ShowBottomNotificationModal {
+  type: typeof AppActionTypes.SHOW_BOTTOM_NOTIFICATION_MODAL;
+  payload: BottomNotificationConfig;
+}
+interface DismissPinModal {
+  type: typeof AppActionTypes.DISMISS_PIN_MODAL;
+}
+
+interface PinLockActive {
+  type: typeof AppActionTypes.PIN_LOCK_ACTIVE;
+  payload: boolean;
+}
+
+interface CurrentPin {
+  type: typeof AppActionTypes.CURRENT_PIN;
+  payload: string | undefined;
+}
+
+interface PinBannedUntil {
+  type: typeof AppActionTypes.PIN_BANNED_UNTIL;
+  payload: number | undefined;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
@@ -144,4 +177,9 @@ export type AppActionType =
   | SetDefaultLanguage
   | ShowDecryptPasswordModal
   | DismissDecryptPasswordModal
-  | ResetDecryptPasswordConfig;
+  | ResetDecryptPasswordConfig
+  | ShowPinModal
+  | DismissPinModal
+  | PinLockActive
+  | CurrentPin
+  | PinBannedUntil;
