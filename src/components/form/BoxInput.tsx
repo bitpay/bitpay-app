@@ -1,14 +1,13 @@
 import React, {useState} from 'react';
 import {TextInput, TextInputProps} from 'react-native';
-import styled, {css, useTheme} from 'styled-components/native';
+import styled, {css} from 'styled-components/native';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
 import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
 import Search from '../../../assets/img/search.svg';
 import {
-  Action,
-  Black,
   Caution,
   LightBlack,
+  ProgressBlue,
   Slate,
   White,
 } from '../../styles/colors';
@@ -28,31 +27,28 @@ const InputContainer = styled.View`
 `;
 
 const Input = styled.TextInput<InputProps>`
-  height: 55px;
+  background-color: ${({theme}) => theme.colors.background};
   border: 0.75px solid ${Slate};
-  color: ${({theme}) => theme.colors.text};
-  padding: 10px;
-  ${({type}) =>
-    type &&
-    css`
-      padding-right: ${type === 'search' ? 65 : 40}px;
-    `};
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
+  color: ${({theme}) => theme.colors.text};
+  height: 55px;
+  padding: 10px;
+  padding-right: ${({type}) => (type === 'search' ? 65 : 40)}px;
+
   font-weight: 500;
   ${({isFocused}) =>
     isFocused &&
     css`
-      background: #fafbff;
-      border-color: #e6ebff;
-      border-bottom-color: ${Action};
-      color: ${Black};
+      background: ${({theme}) => (theme.dark ? 'transparent' : '#fafbff')};
+      border-color: ${Slate};
+      border-bottom-color: ${ProgressBlue};
     `}
 
   ${({isError}) =>
     isError &&
     css`
-      background: #fbf5f6;
+      background: ${({theme}) => (theme.dark ? '#090304' : '#EF476F0A')};
       border-color: #fbc7d1;
       border-bottom-color: ${Caution};
       color: ${Caution};
@@ -98,7 +94,6 @@ interface BoxInputProps extends TextInputProps {
 
 const BoxInput = React.forwardRef<TextInput, BoxInputProps>(
   ({label, onFocus, onBlur, error, type, ...props}, ref) => {
-    const theme = useTheme();
     const isPassword = type === 'password';
     const isSearch = type === 'search';
     const [isFocused, setIsFocused] = useState(false);
@@ -134,10 +129,6 @@ const BoxInput = React.forwardRef<TextInput, BoxInputProps>(
             isError={error}
             autoCapitalize={'none'}
             type={type}
-            style={{
-              backgroundColor: theme.colors.background,
-              color: theme.colors.text,
-            }}
           />
           {isPassword && (
             <ObfuscationToggle
