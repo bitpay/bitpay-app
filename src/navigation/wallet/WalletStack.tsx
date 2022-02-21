@@ -30,6 +30,7 @@ import TermsOfUse, {
 import AddWallet, {AddWalletParamList} from './screens/AddWallet';
 import Amount, {AmountParamList} from './screens/send/Amount';
 import SendTo from './screens/send/SendTo';
+import Confirm, {ConfirmParamList} from './screens/send/Confirm';
 import CreateMultisig, {CreateMultisigProps} from './screens/CreateMultisig';
 import JoinMultisig, {JoinMultisigParamList} from './screens/JoinMultisig';
 import Copayers from './screens/Copayers';
@@ -37,6 +38,8 @@ import AddingOptions, {AddingOptionsParamList} from './screens/AddingOptions';
 import UpdateKeyOrWalletName from './screens/UpdateKeyOrWalletName';
 import RequestSpecificAmount from './screens/request-specific-amount/RequestSpecificAmount';
 import RequestSpecificAmountQR from './screens/request-specific-amount/RequestSpecificAmountQR';
+import haptic from '../../components/haptic-feedback/haptic';
+import Button from '../../components/button/Button';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -62,6 +65,7 @@ export type WalletStackParamList = {
   ExportKey: {code: string; keyName: string | undefined};
   Amount: AmountParamList;
   SendTo: {wallet: WalletModel};
+  Confirm: ConfirmParamList;
   CreateMultisig: CreateMultisigProps;
   JoinMultisig: JoinMultisigParamList | undefined;
   Copayers: {wallet: WalletModel};
@@ -90,6 +94,7 @@ export enum WalletScreens {
   EXPORT_KEY = 'ExportKey',
   AMOUNT = 'Amount',
   SEND_TO = 'SendTo',
+  CONFIRM = 'Confirm',
   CREATE_MULTISIG = 'CreateMultisig',
   JOIN_MULTISIG = 'JoinMultisig',
   COPAYERS = 'Copayers',
@@ -187,6 +192,23 @@ const WalletStack = () => {
         />
         <Wallet.Screen name={WalletScreens.AMOUNT} component={Amount} />
         <Wallet.Screen name={WalletScreens.SEND_TO} component={SendTo} />
+        <Wallet.Screen
+          options={{
+            headerTitle: () => <HeaderTitle>Confirm Payment</HeaderTitle>,
+            // headerRight: () => (
+            //   <Button
+            //     buttonType={'pill'}
+            //     onPress={() => {
+            //       haptic('impactLight');
+            //     }}>
+            //     Cancel
+            //   </Button>
+            // ),
+            ...TransitionPresets.ModalPresentationIOS,
+          }}
+          name={WalletScreens.CONFIRM}
+          component={Confirm}
+        />
         <Wallet.Screen
           options={{
             headerTitle: () => (

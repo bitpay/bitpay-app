@@ -13,6 +13,12 @@ import Button from '../../../../components/button/Button';
 import {View} from 'react-native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
+import {Recipient, Wallet} from '../../../../store/wallet/wallet.models';
+import {createProposalAndBuildTxDetails} from '../../../../store/wallet/effects/send/send';
+import {useAppDispatch} from '../../../../utils/hooks';
+import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
+import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
+import {dismissOnGoingProcessModal} from '../../../../store/app/app.actions';
 
 const SendMax = styled.TouchableOpacity`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
@@ -76,22 +82,20 @@ export const AmountContainer = styled.View`
 `;
 
 export interface AmountParamList {
-  id?: string;
-  keyId?: string;
-  address: string;
-  currencyAbbreviation: string;
-  amount?: string;
+  wallet: Wallet;
+  recipient: Recipient;
 }
 
 const Amount = () => {
   const route = useRoute<RouteProp<WalletStackParamList, 'Amount'>>();
-  const {currencyAbbreviation, amount: initialAmt = 0} = route.params;
+  const {wallet, recipient} = route.params;
   const navigation = useNavigation();
-  const sendMax = () => {};
-  const swapList = ['USD'];
-  swapList.unshift(currencyAbbreviation);
-  const [amount, setAmount] = useState(initialAmt);
+  const dispatch = useAppDispatch();
+  const [amount, setAmount] = useState('0');
+  const currencyAbbreviation = wallet.currencyAbbreviation.toUpperCase();
   const [currency, setCurrency] = useState(currencyAbbreviation);
+  const sendMax = () => {};
+  const swapList = [currencyAbbreviation, 'USD'];
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -104,6 +108,30 @@ const Amount = () => {
       ),
     });
   });
+
+  const goToConfirm = async () => {
+    try {
+      dispatch(
+        startOnGoingProcessModal(OnGoingProcessMessages.GENERAL_AWAITING),
+      );
+      const {txDetails, txp} = await dispatch(
+        createProposalAndBuildTxDetails({
+          wallet,
+          recipient,
+          amount: Number(amount),
+        }),
+      );
+
+      navigation.navigate('Wallet', {
+        screen: 'Confirm',
+        params: {wallet, recipient, txp, txDetails},
+      });
+      dispatch(dismissOnGoingProcessModal());
+    } catch (err) {
+      console.error(err);
+      dispatch(dismissOnGoingProcessModal());
+    }
+  };
 
   return (
     <SafeAreaView>
@@ -120,9 +148,11 @@ const Amount = () => {
           </SwapButtonContainer>
         </View>
         <View>
-          <VirtualKeyboard onChange={setAmount} reset={currency} />
+          <VirtualKeyboard onChange={val => setAmount(val)} reset={currency} />
           <ActionContainer>
-            <Button>Continue</Button>
+            <Button disabled={!amount} onPress={goToConfirm}>
+              Continue
+            </Button>
           </ActionContainer>
         </View>
       </AmountContainer>

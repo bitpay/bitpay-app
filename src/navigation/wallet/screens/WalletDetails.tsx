@@ -1,6 +1,6 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {FlatList, RefreshControl, Share} from 'react-native';
 import {useDispatch} from 'react-redux';
@@ -113,6 +113,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       ),
     });
   }, [navigation, uiFormattedWallet]);
+
+  useEffect(() => {
+    setRefreshing(!!fullWalletObj.isRefreshing);
+  }, [fullWalletObj.isRefreshing]);
 
   const ShareAddress = async () => {
     try {

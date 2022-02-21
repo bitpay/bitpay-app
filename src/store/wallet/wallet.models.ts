@@ -1,6 +1,7 @@
 import API from 'bitcore-wallet-client/ts_build';
 import {ReactElement} from 'react';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
+import {FeeLevels} from './effects/fee/fee';
 
 export interface KeyMethods {
   _checkCoin: Function;
@@ -50,6 +51,7 @@ export interface Wallet extends WalletObj, API {}
 export interface WalletBalance {
   crypto: string;
   fiat: number;
+  sat: number;
 }
 
 export interface WalletObj {
@@ -67,6 +69,7 @@ export interface WalletObj {
   };
   img: string | ((props?: any) => ReactElement);
   receiveAddress?: string;
+  isRefreshing?: boolean;
 }
 
 export interface ExchangeRate {
@@ -145,4 +148,113 @@ export interface WalletStatus {
   preferences: any;
   serverMessages: any[];
   wallet: Credentials;
+}
+
+export interface Recipient {
+  type?: string;
+  name?: string;
+  walletId?: string;
+  keyId?: string;
+  address: string;
+}
+
+export interface TransactionOptions {
+  wallet: Wallet;
+  recipient: Recipient;
+  amount: number;
+  context?: 'multisend' | 'paypro' | 'selectInputs';
+  currency?: string;
+  toAddress?: string;
+  network?: string;
+  feeLevel?: string;
+  dryRun?: boolean;
+  description?: string;
+  message?: string;
+  // btc
+  enableRBF?: boolean;
+  replaceTxByFee?: boolean;
+  // eth
+  gasPrice?: number;
+  from?: string;
+  nonce?: number;
+  gasLimit?: number;
+  data?: any;
+  tokenAddress?: string;
+  isTokenSwap?: boolean;
+  multisigContractAddress?: string;
+  // xrp
+  destinationTag?: string;
+  invoiceID?: string;
+}
+
+export interface TransactionProposal {
+  coin: string;
+  chain: string;
+  amount: any;
+  from: string;
+  nonce?: number;
+  enableRBF?: boolean;
+  replaceTxByFee?: boolean;
+  toAddress: any;
+  outputs: Array<{
+    toAddress: any;
+    amount: any;
+    message?: string;
+    data?: string;
+    gasLimit?: number;
+  }>;
+  inputs: any;
+  fee: any;
+  message: string;
+  customData?: {
+    service?: string;
+    giftCardName?: string;
+    changelly?: string;
+    oneInch?: string;
+    shapeShift?: string;
+    toWalletName?: any;
+  };
+  payProUrl: any;
+  excludeUnconfirmedUtxos: boolean;
+  feePerKb: number;
+  feeLevel: string;
+  dryRun: boolean;
+  tokenAddress?: string;
+  destinationTag?: string;
+  invoiceID?: string;
+  multisigGnosisContractAddress?: string;
+  multisigContractAddress?: string;
+  instantAcceptanceEscrow?: number;
+  isTokenSwap?: boolean;
+}
+
+// UI details
+export interface TxDetails {
+  currency: string;
+  sendingTo: {
+    recipientType?: string | undefined;
+    recipientName?: string;
+    recipientAddress?: string;
+  };
+  fee: {
+    feeLevel: string;
+    cryptoAmount: string;
+    fiatAmount: string;
+    percentageOfTotalAmount: string;
+  };
+  // eth
+  gasPrice?: number;
+  gasLimit?: number;
+  //
+  sendingFrom: {
+    walletName: string;
+  };
+  subTotal: {
+    cryptoAmount: string;
+    fiatAmount: string;
+  };
+  total: {
+    cryptoAmount: string;
+    fiatAmount: string;
+  };
 }
