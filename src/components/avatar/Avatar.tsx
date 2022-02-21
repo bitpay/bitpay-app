@@ -19,6 +19,7 @@ interface InitialsProps {
 interface AvatarProps {
   size: number;
   name?: string;
+  isContact?: boolean;
 }
 
 const AvatarContainer = styled.View`
@@ -132,33 +133,18 @@ const Initials: React.FC<InitialsProps> = ({size = 24, initials}) => {
   );
 };
 
-const getInitials = (name: string) => {
-  var n = '';
-  const nameArray = name.split(/(\s+)/);
-  for (var i = 0; i < nameArray.length; i++) {
-    const initial = nameArray[i].trim().charAt(0);
-    if (initial && n.length < 2) {
-      n = n + initial;
+const Avatar: React.FC<AvatarProps> = ({size, isContact}) => {
+  const initials = useSelector<RootState, string>(({APP, BITPAY_ID}) => {
+    if (!isContact) {
+      const user = BITPAY_ID.user[APP.network];
+      const firstInitial = (user?.givenName || '').trim().charAt(0);
+      const lastInitial = (user?.familyName || '').trim().charAt(0);
+
+      return `${firstInitial}${lastInitial}`.toUpperCase();
+    } else {
+      return ''; // Contacts no verified will use generic icon
     }
-  }
-  return n.toUpperCase();
-};
-
-const Avatar: React.FC<AvatarProps> = ({size, name}) => {
-  var initials: string = '';
-  initials = useSelector<RootState, string>(({APP, BITPAY_ID}) => {
-    const user = BITPAY_ID.user[APP.network];
-    const firstInitial = (user?.givenName || '').trim().charAt(0);
-    const lastInitial = (user?.familyName || '').trim().charAt(0);
-
-    return `${firstInitial}${lastInitial}`.toUpperCase();
   });
-
-  // Use name to display icon with initials
-  if (name) {
-    initials = getInitials(name);
-    initials = ''; // Show generic icon for now
-  }
 
   const isVerified = false; // TODO
 

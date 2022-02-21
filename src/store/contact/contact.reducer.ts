@@ -1,6 +1,7 @@
 import {ContactActionType, ContactActionTypes} from './contact.types';
 
 import {ContactRowProps} from '../../components/list/ContactRow';
+import {findContact} from '../../utils/helper-methods';
 
 export const ContactReduxPersistBlackList = [];
 export interface ContactState {
@@ -17,13 +18,14 @@ export const contactReducer = (
 ) => {
   switch (action.type) {
     case ContactActionTypes.CREATE_CONTACT:
-      const _matchesContact = state.list.filter(
-        (c: ContactRowProps) =>
-          c.address === action.contact.address &&
-          c.coin === action.contact.coin &&
-          c.network === action.contact.network,
-      );
-      if (!_matchesContact[0]) {
+      if (
+        !findContact(
+          state.list,
+          action.contact.address,
+          action.contact.coin,
+          action.contact.network,
+        )
+      ) {
         return {
           ...state,
           list: [...state.list, {...action.contact}],

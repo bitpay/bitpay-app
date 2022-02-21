@@ -23,7 +23,7 @@ import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyO
 import SuccessIcon from '../../../../../assets/img/success.svg';
 import Icons from '../../../../components/modal/transact-menu/TransactMenuIcons';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
-import {keyExtractor} from '../../../../utils/helper-methods';
+import {keyExtractor, findContact} from '../../../../utils/helper-methods';
 import CurrencySelectionRow, {
   CurrencySelectionToggleProps,
 } from '../../../../components/list/CurrencySelectionRow';
@@ -241,14 +241,7 @@ const ContactsAdd: React.FC = () => {
       return;
     }
 
-    const _matchesContact = contacts.filter(
-      (c: ContactRowProps) =>
-        c.address === addressValue &&
-        c.coin === coinValue &&
-        c.network === networkValue,
-    );
-
-    if (_matchesContact[0]) {
+    if (!findContact(contacts, addressValue, coinValue, networkValue)) {
       setError('address', {
         type: 'manual',
         message: 'Contact already exists',
