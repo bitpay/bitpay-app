@@ -48,14 +48,14 @@ const WalletDetailsContainer = styled.View`
   flex: 1;
 `;
 
-const Row = styled.View`
+const Row = styled.View<{emptyList?: boolean}>`
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: ${({emptyList}) => (emptyList ? 'center' : 'space-between')};
   align-items: flex-end;
 `;
 
-const BalanceContainer = styled.View`
-  margin-top: 20px;
+const BalanceContainer = styled.View<{emptyList?: boolean}>`
+  margin-top: ${({emptyList}) => (emptyList ? '-100px' : '20px')};
   padding: 10px 15px;
   flex-direction: column;
 `;
@@ -68,13 +68,15 @@ const Chain = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : LightBlack)};
 `;
 
-const Type = styled(BaseText)`
+const Type = styled(BaseText)<{emptyList?: boolean}>`
   font-size: 12px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   border: 1px solid ${({theme: {dark}}) => (dark ? '#252525' : '#E1E4E7')};
   padding: 2px 4px;
   border-radius: 3px;
   margin-left: auto;
+  margin-right: ${({emptyList}) => (emptyList ? 'auto' : 0)};
+  margin-top: ${({emptyList}) => (emptyList ? '10px' : 0)};
 `;
 
 const TransactionSectionHeader = styled(H5)`
@@ -261,17 +263,26 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         ListHeaderComponent={() => {
           return (
             <>
-              <BalanceContainer>
-                <Row>
+              <BalanceContainer emptyList={!groupedHistory.length}>
+                <Row emptyList={!groupedHistory.length}>
                   <Balance>
                     {cryptoBalance} {currencyAbbreviation}
                   </Balance>
-                  <Chain>{currencyAbbreviation}</Chain>
+                  {groupedHistory.length ? (
+                    <Chain>{currencyAbbreviation}</Chain>
+                  ) : null}
                 </Row>
-                <Row>
+                <Row emptyList={!groupedHistory.length}>
                   {showFiatBalance && <H5>{fiatBalance}</H5>}
-                  {walletType && <Type>{walletType}</Type>}
+                  {walletType && !!groupedHistory.length ? (
+                    <Type>{walletType}</Type>
+                  ) : null}
                 </Row>
+                {!groupedHistory.length && walletType ? (
+                  <Row>
+                    <Type emptyList={true}>{walletType}</Type>
+                  </Row>
+                ) : null}
               </BalanceContainer>
 
               {fullWalletObj ? (
@@ -304,7 +315,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           <TransactionSectionHeader>{title}</TransactionSectionHeader>
         )}
         ItemSeparatorComponent={() => <BorderBottom />}
-        ListFooterComponent={() => <BorderBottom />}
+        ListFooterComponent={() =>
+          !groupedHistory.length ? null : <BorderBottom />
+        }
+        centerContent={!groupedHistory.length}
       />
 
       <OptionsSheet

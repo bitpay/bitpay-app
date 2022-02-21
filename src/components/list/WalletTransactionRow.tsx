@@ -243,7 +243,7 @@ const WalletTransactionRow = ({
 
           {confirmations > 0 && isMoved() ? (
             <>
-              {!message && !noteBody ? 'Sent to selt' : ''}
+              {!message && !noteBody ? 'Sent to self' : ''}
               {!noteBody && message ? message : null}
               {noteBody ? noteBody : null}
             </>
