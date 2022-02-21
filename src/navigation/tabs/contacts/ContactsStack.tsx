@@ -46,6 +46,7 @@ const ContactsStack = () => {
         name={ContactsScreens.DETAILS}
         component={ContactsDetails}
         options={{
+          headerMode: 'screen',
           headerTitle: () => <HeaderTitle>{t('Details')}</HeaderTitle>,
         }}
       />
@@ -53,6 +54,7 @@ const ContactsStack = () => {
         name={ContactsScreens.ADD}
         component={ContactsAdd}
         options={{
+          headerMode: 'screen',
           headerTitle: () => <HeaderTitle>{t('New Contact')}</HeaderTitle>,
         }}
       />

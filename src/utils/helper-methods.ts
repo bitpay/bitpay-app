@@ -152,12 +152,13 @@ export const findContact = (
   coin: string,
   network: string,
 ) => {
-  return !!contactList.filter(
+  const foundContacts = contactList.filter(
     (contact: ContactRowProps) =>
       contact.address === address &&
       contact.coin === coin &&
       contact.network === network,
-  )[0];
+  );
+  return !!foundContacts.length;
 };
 
 export const getMnemonic = (key: Key) =>

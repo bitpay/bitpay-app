@@ -1,27 +1,30 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
-import styled from 'styled-components/native';
+import React, {useEffect, useLayoutEffect, useState, ReactElement} from 'react';
+import styled, {useTheme} from 'styled-components/native';
 import {useNavigation} from '@react-navigation/core';
 import {StackScreenProps} from '@react-navigation/stack';
 import Clipboard from '@react-native-community/clipboard';
 import {useDispatch} from 'react-redux';
 import {ContactsStackParamList} from '../ContactsStack';
 import {sleep} from '../../../../utils/helper-methods';
-import {
-  BaseText,
-  TextAlign,
-  HeaderTitle,
-} from '../../../../components/styled/Text';
+import {BaseText, TextAlign} from '../../../../components/styled/Text';
 import {Hr} from '../../../../components/styled/Containers';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {NeutralSlate} from '../../../../styles/colors';
+import {
+  NeutralSlate,
+  SlateDark,
+  LightBlack,
+  White,
+} from '../../../../styles/colors';
 import {deleteContact} from '../../../../store/contact/contact.actions';
 import Settings from '../../../../components/settings/Settings';
-import ContactOptionsModal, {Option} from '../components/ContactOptions';
-import ContactDeleteModal from '../components/ContactDeleteModal';
+import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 
 import ContactIcon from '../components/ContactIcon';
 import SendIcon from '../../../../../assets/img/send-icon.svg';
+import SendIconWhite from '../../../../../assets/img/send-icon-white.svg';
 import DeleteIcon from '../../../../../assets/img/delete-icon.svg';
+import DeleteIconWhite from '../../../../../assets/img/delete-icon-white.svg';
+import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 
 const ContactsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -69,23 +72,62 @@ const AddressText = styled(BaseText)`
 `;
 
 const AddressContainer = styled.TouchableOpacity`
-  max-width: 200px;
+  align-items: flex-end;
+  max-width: 250px;
 `;
+
+const OptionContainer = styled.TouchableOpacity<{lastElement?: string}>`
+  flex-direction: row;
+  padding: 30px 25px;
+  align-items: stretch;
+  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#ebecee')};
+  border-bottom-width: ${({lastElement}) => lastElement || '1px'};
+`;
+
+const OptionIconContainer = styled.View`
+  justify-content: center;
+`;
+
+const OptionTextContainer = styled.View`
+  align-items: flex-start;
+  justify-content: space-around;
+  flex-direction: column;
+  padding-left: 19px;
+`;
+
+const OptionTitleText = styled(BaseText)`
+  font-style: normal;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 19px;
+`;
+
+const ModalContainer = styled.View`
+  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  padding: 30px 0 0 0;
+`;
+
+interface ModalOpt {
+  img?: ReactElement;
+  title: string;
+  onPress: () => void;
+}
 
 const ContactsDetails = ({
   route,
 }: StackScreenProps<ContactsStackParamList, 'ContactsDetails'>) => {
+  const theme = useTheme();
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {address, coin, network, name, tag, email} = route.params;
 
   const [copied, setCopied] = useState(false);
-  const [isConfirmModalVisible, setConfirmModalIsVisible] = useState(false);
   const [showContactOptions, setShowContactOptions] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>Contact</HeaderTitle>,
       headerRight: () => (
         <Settings
           onPress={() => {
@@ -114,22 +156,50 @@ const ContactsDetails = ({
   };
 
   const deleteContactView = async () => {
-    setConfirmModalIsVisible(false);
     await sleep(500);
     dispatch(deleteContact(address, coin, network));
     navigation.goBack();
   };
 
-  const contactOptions: Array<Option> = [
+  const deleteModal = () => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'question',
+        title: 'Are you sure?',
+        message: 'Deleting this contact will remove them from your contacts.',
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'Delete Contact',
+            action: () => {
+              deleteContactView();
+            },
+            primary: true,
+          },
+          {
+            text: 'Nevermind',
+            action: () => {},
+            primary: false,
+          },
+        ],
+      }),
+    );
+  };
+
+  const contactOptions: Array<ModalOpt> = [
     {
-      img: <SendIcon />,
+      img: theme.dark ? <SendIconWhite /> : <SendIcon />,
       title: 'Send ' + coin.toUpperCase(),
       onPress: () => null,
     },
     {
-      img: <DeleteIcon />,
+      img: theme.dark ? <DeleteIconWhite /> : <DeleteIcon />,
       title: 'Delete Contact',
-      onPress: () => setConfirmModalIsVisible(true),
+      onPress: async () => {
+        setShowContactOptions(false);
+        await sleep(500);
+        deleteModal();
+      },
     },
   ];
 
@@ -193,20 +263,25 @@ const ContactsDetails = ({
           ) : null}
         </Details>
       </DetailsScrollContainer>
-      <ContactOptionsModal
+
+      <SheetModal
+        placement={'top'}
         isVisible={showContactOptions}
-        title={'Contact Options'}
-        options={contactOptions}
-        closeModal={() => setShowContactOptions(false)}
-      />
-      <ContactDeleteModal
-        description={
-          'Deleting this contact will remove them from your contacts.'
-        }
-        onPressOk={deleteContactView}
-        isVisible={isConfirmModalVisible}
-        onPressCancel={() => setConfirmModalIsVisible(false)}
-      />
+        onBackdropPress={() => setShowContactOptions(false)}>
+        <ModalContainer>
+          {contactOptions.map(({img, title: optionTitle, onPress}, index) => (
+            <OptionContainer
+              key={index}
+              onPress={onPress}
+              lastElement={contactOptions.length - 1 === index ? '0' : '1px'}>
+              <OptionIconContainer>{img}</OptionIconContainer>
+              <OptionTextContainer>
+                <OptionTitleText>{optionTitle}</OptionTitleText>
+              </OptionTextContainer>
+            </OptionContainer>
+          ))}
+        </ModalContainer>
+      </SheetModal>
     </ContactsDetailsContainer>
   );
 };

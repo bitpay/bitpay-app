@@ -1,6 +1,7 @@
-import React, {useState, useCallback} from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
 import {useTranslation} from 'react-i18next';
 import debounce from 'lodash.debounce';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import styled, {css} from 'styled-components/native';
 import {TouchableOpacity, FlatList, Platform} from 'react-native';
 import {useSelector} from 'react-redux';
@@ -24,7 +25,7 @@ import ContactRow, {
   ContactRowProps,
 } from '../../../../components/list/ContactRow';
 
-const ContactsContainer = styled.SafeAreaView`
+const ContactsContainer = styled.View`
   flex: 1;
 `;
 
@@ -32,12 +33,8 @@ const ContactsHeader = styled(BaseText)`
   font-size: 18px;
   font-weight: 700;
   margin-top: ${Platform.select({
-    ios: css`
-      20px
-    `,
-    android: css`
-      40px
-    `,
+    ios: css`20px`,
+    android: css`40px`,
   })};
   text-align: center;
   margin-bottom: 30px;
@@ -134,18 +131,21 @@ const HideableView = styled.View<HideableViewProps>`
 
 const ContactsRoot: React.FC = () => {
   const {t} = useTranslation();
+  const insets = useSafeAreaInsets();
   const contacts = useSelector(({CONTACT}: RootState) => CONTACT.list);
   const navigation = useNavigation();
   const {control} = useForm();
   const [searchResults, setSearchResults] = useState([] as ContactRowProps[]);
   const [searchVal, setSearchVal] = useState('');
 
-  // Sort list
-  contacts.sort((x, y) => {
-    let a = x.name.toUpperCase(),
-      b = y.name.toUpperCase();
-    return a === b ? 0 : a > b ? 1 : -1;
-  });
+  useEffect(() => {
+    // Sort list
+    contacts.sort((x, y) => {
+      let a = x.name.toUpperCase(),
+        b = y.name.toUpperCase();
+      return a === b ? 0 : a > b ? 1 : -1;
+    });
+  }, [contacts]);
 
   const contactList = contacts as Array<ContactRowProps>;
 
@@ -183,7 +183,7 @@ const ContactsRoot: React.FC = () => {
   };
 
   return (
-    <ContactsContainer>
+    <ContactsContainer style={{paddingTop: insets.top}}>
       {contactList.length ? (
         <>
           <ContactsHeader>{t('My Contacts')}</ContactsHeader>

@@ -50,7 +50,7 @@ const Container = styled.ScrollView`
 `;
 
 const AddressBadge = styled.View`
-  background: ${({theme}) => (theme && theme.dark ? '#000' : NeutralSlate)};
+  background: ${({theme}) => (theme && theme.dark ? '#000' : '#fff')};
   position: absolute;
   padding: 5px 10px;
   right: 1px;
@@ -241,7 +241,7 @@ const ContactsAdd: React.FC = () => {
       return;
     }
 
-    if (!findContact(contacts, addressValue, coinValue, networkValue)) {
+    if (findContact(contacts, addressValue, coinValue, networkValue)) {
       setError('address', {
         type: 'manual',
         message: 'Contact already exists',
