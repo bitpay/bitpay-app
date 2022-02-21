@@ -15,7 +15,6 @@ import {
   SUPPORTED_TOKENS,
   SupportedCurrencies,
 } from '../../../constants/currencies';
-import {useDispatch, useSelector} from 'react-redux';
 import {startCreateKey} from '../../../store/wallet/effects';
 import {FlatList, TouchableOpacity} from 'react-native';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
@@ -44,6 +43,7 @@ import {NeutralSlate} from '../../../styles/colors';
 import debounce from 'lodash.debounce';
 import Icons from '../components/WalletIcons';
 import SearchSvg from '../../../../assets/img/search.svg';
+import useAppSelector, {useAppDispatch} from '../../../utils/hooks';
 
 type CurrencySelectionScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -110,13 +110,13 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const {context, key} = route.params;
   const logger = useLogger();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const theme = useTheme();
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
   const [searchInput, setSearchInput] = useState('');
 
-  const tokenOptions = useSelector(
+  const tokenOptions = useAppSelector(
     ({WALLET}: RootState) => WALLET.tokenOptions,
   );
 
