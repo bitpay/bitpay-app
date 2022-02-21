@@ -1,5 +1,5 @@
 import React, {useCallback, useLayoutEffect, useMemo, useState} from 'react';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import {
   ActiveOpacity,
   CtaContainerAbsolute,
@@ -20,11 +20,7 @@ import {startCreateKey} from '../../../store/wallet/effects';
 import {FlatList, TouchableOpacity} from 'react-native';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
-import {
-  NavigationProp,
-  useNavigation,
-  useTheme,
-} from '@react-navigation/native';
+import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {HeaderTitle} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
@@ -48,7 +44,6 @@ import {NeutralSlate} from '../../../styles/colors';
 import debounce from 'lodash.debounce';
 import Icons from '../components/WalletIcons';
 import SearchSvg from '../../../../assets/img/search.svg';
-import cloneDeep from 'lodash.clonedeep';
 
 type CurrencySelectionScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -136,9 +131,10 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
             currencyName: name,
             img: logoURI,
             isToken: true,
+            checked: false,
           };
         }),
-    [],
+    [tokenOptions],
   );
 
   const showErrorModal = (e: string) => {
@@ -159,16 +155,25 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     );
   };
 
-  const contextHandler = (
-    context: CurrencySelectionContext,
-    key?: Key,
-  ): ContextHandler | undefined => {
+  const _SupportedCurrencyOptions = SupportedCurrencyOptions.map(currency => {
+    return {
+      ...currency,
+      checked: false,
+    };
+  });
+
+  const _currencies = useMemo(
+    () => [..._SupportedCurrencyOptions, ...ALL_CUSTOM_TOKENS],
+    [_SupportedCurrencyOptions, ALL_CUSTOM_TOKENS],
+  );
+
+  const contextHandler = (): ContextHandler | undefined => {
     switch (context) {
       case 'onboarding':
       case 'createNewKey': {
         return {
           // @ts-ignore
-          currencies: [...SupportedCurrencyOptions, ...ALL_CUSTOM_TOKENS],
+          currencies: _currencies,
           ctaTitle: 'Create Key',
           bottomCta: async ({selectedCurrencies, dispatch, navigation}) => {
             try {
@@ -203,7 +208,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
       case 'addWallet': {
         return {
           // @ts-ignore
-          currencies: [...SupportedCurrencyOptions, ...ALL_CUSTOM_TOKENS],
+          currencies: _currencies,
           headerTitle: 'Select Currency',
           hideBottomCta: true,
           removeCheckbox: true,
@@ -252,7 +257,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     hideBottomCta,
     selectionCta,
     removeCheckbox,
-  } = contextHandler(context, key) || {};
+  } = contextHandler() || {};
 
   // Configuring Header
   useLayoutEffect(() => {
@@ -287,7 +292,10 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     [],
   );
 
-  const DEFAULT_CURRENCY_OPTIONS = useMemo(() => currencies || [], []);
+  const DEFAULT_CURRENCY_OPTIONS = useMemo(
+    () => currencies || [],
+    [currencies],
+  );
 
   const [currencyOptions, setCurrencyOptions] = useState<Array<any>>([
     ...DEFAULT_CURRENCY_OPTIONS,
@@ -363,37 +371,39 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     [],
   );
 
-  // To avoid altering the currencies list
-  const searchList = cloneDeep(currencies);
-  const onSearchInputChange = debounce((search: string) => {
-    let _searchList: Array<any> = [];
+  const onSearchInputChange = useMemo(
+    () =>
+      debounce((search: string) => {
+        let _searchList: Array<any> = [];
 
-    if (search) {
-      search = search.toLowerCase();
+        if (search) {
+          search = search.toLowerCase();
 
-      _searchList = [...searchList].filter(
-        ({currencyAbbreviation, currencyName}) =>
-          currencyAbbreviation.toLowerCase().includes(search) ||
-          currencyName.toLowerCase().includes(search),
-      );
-    } else {
-      _searchList = searchList;
-    }
+          _searchList = DEFAULT_CURRENCY_OPTIONS.filter(
+            ({currencyAbbreviation, currencyName}) =>
+              currencyAbbreviation.toLowerCase().includes(search) ||
+              currencyName.toLowerCase().includes(search),
+          );
+        } else {
+          _searchList = DEFAULT_CURRENCY_OPTIONS;
+        }
 
-    selectedCurrencies.length
-      ? _searchList
-          .filter(({currencyAbbreviation}) =>
-            selectedCurrencies.includes(currencyAbbreviation),
-          )
-          .map(currency => {
-            currency.checked = true;
-            currency.id = Math.random();
-            return currency;
-          })
-      : [];
+        selectedCurrencies.length
+          ? _searchList
+              .filter(({currencyAbbreviation}) =>
+                selectedCurrencies.includes(currencyAbbreviation),
+              )
+              .map(currency => {
+                currency.checked = true;
+                currency.id = Math.random();
+                return currency;
+              })
+          : [];
 
-    setCurrencyOptions([..._searchList]);
-  }, 300);
+        setCurrencyOptions(_searchList);
+      }, 300),
+    [currencies],
+  );
 
   return (
     <CurrencySelectionContainer>

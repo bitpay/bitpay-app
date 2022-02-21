@@ -9,7 +9,6 @@ import {
   White,
 } from '../../../styles/colors';
 import {BitPayTheme} from '../../../themes/bitpay';
-import {G, Path} from 'react-native-svg';
 
 const Add = () => {
   const theme = useTheme();

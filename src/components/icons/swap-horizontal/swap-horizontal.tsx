@@ -1,5 +1,5 @@
 import React from 'react';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from 'styled-components/native';
 import {Path, Svg, G} from 'react-native-svg';
 import {NotificationPrimary, White} from '../../../styles/colors';
 
