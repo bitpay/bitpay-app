@@ -169,4 +169,3 @@ export const generateKeyExportCode = (
 ): string => {
   return `1|${getKeyMnemonic}|null|null|${key.properties.mnemonic}|null`;
 };
-

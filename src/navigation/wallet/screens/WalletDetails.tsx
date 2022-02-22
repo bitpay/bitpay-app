@@ -2,7 +2,13 @@ import {useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {RefreshControl, SectionList, Share, View} from 'react-native';
+import {
+  ActivityIndicator,
+  RefreshControl,
+  SectionList,
+  Share,
+  View,
+} from 'react-native';
 import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
 import Settings from '../../../components/settings/Settings';
@@ -19,7 +25,12 @@ import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/ba
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
-import {LightBlack, SlateDark, White} from '../../../styles/colors';
+import {
+  LightBlack,
+  NotificationPrimary,
+  SlateDark,
+  White,
+} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {BalanceUpdateError} from '../components/ErrorMessages';
@@ -36,6 +47,7 @@ import {
 } from '../../../store/wallet/effects/transactions/transactions';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import WalletTransactionRow from '../../../components/list/WalletTransactionRow';
+import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 
 const HISTORY_SHOW_LIMIT = 15;
 
@@ -89,6 +101,10 @@ const BorderBottom = styled.View`
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#EBEDF8')};
 `;
 
+const SpinnerContainer = styled.View`
+  padding: ${ScreenGutter};
+`;
+
 const getWalletType = (key: Key, wallet: Wallet) => {
   const {
     credentials: {token, walletId},
@@ -103,6 +119,12 @@ const getWalletType = (key: Key, wallet: Wallet) => {
   }
   return;
 };
+
+const EmptyListContainer = styled.View`
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+`;
 
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
@@ -219,12 +241,14 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     {title: string; data: any[]}[]
   >([]);
   const [loadMore, setLoadMore] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>();
 
   const loadHistory = async () => {
     if (!loadMore) {
       return;
     }
     try {
+      setIsLoading(true);
       let {transactions: _history, loadMore: _loadMore} =
         await GetTransactionHistory({
           wallet: fullWalletObj,
@@ -237,9 +261,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         const grouped = GroupTransactionHistory(_history);
         setGroupedHistory(grouped);
       }
+      setIsLoading(false);
       setLoadMore(_loadMore);
     } catch (e) {
       setLoadMore(false);
+      setIsLoading(false);
       console.log(e);
     }
   };
@@ -248,6 +274,36 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     loadHistory();
     console.log(fullWalletObj);
   }, []);
+
+  const listFooterComponent = () => {
+    return (
+      <>
+        {!groupedHistory?.length ? null : (
+          <View style={{marginBottom: 20}}>
+            <BorderBottom />
+          </View>
+        )}
+        {isLoading ? (
+          <SpinnerContainer>
+            <ActivityIndicator size={'large'} color={NotificationPrimary} />
+          </SpinnerContainer>
+        ) : null}
+      </>
+    );
+  };
+
+  const listEmptyComponent = () => {
+    return (
+      <>
+        {!isLoading && (
+          <EmptyListContainer>
+            <H5>It's a ghost town in here</H5>
+            <GhostSvg style={{marginTop: 20}} />
+          </EmptyListContainer>
+        )}
+      </>
+    );
+  };
 
   return (
     <WalletDetailsContainer>
@@ -292,7 +348,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           );
         }}
         sections={groupedHistory}
-        stickyHeaderIndices={[groupedHistory.length]}
+        stickyHeaderIndices={[groupedHistory?.length]}
         keyExtractor={(item, index) => item + index}
         renderItem={({item}) => (
           <WalletTransactionRow
@@ -305,15 +361,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           <TransactionSectionHeader>{title}</TransactionSectionHeader>
         )}
         ItemSeparatorComponent={() => <BorderBottom />}
-        ListFooterComponent={() =>
-          !groupedHistory.length ? null : (
-            <View style={{marginBottom: 20}}>
-              <BorderBottom />
-            </View>
-          )
-        }
+        ListFooterComponent={listFooterComponent}
         onEndReached={loadHistory}
         onEndReachedThreshold={0.6}
+        ListEmptyComponent={listEmptyComponent}
       />
 
       <OptionsSheet
