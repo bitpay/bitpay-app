@@ -120,7 +120,7 @@ const WalletTransactionRow = ({
   } = transaction;
   const {service: customDataService, toWalletName} = customData || {};
   const {body: noteBody} = note || {};
-  console.log(transaction);
+  // console.log(transaction);
   const {currencyAbbreviation} = wallet;
 
   const getContactName = (address: string | undefined) => {

@@ -170,14 +170,3 @@ export const generateKeyExportCode = (
   return `1|${getKeyMnemonic}|null|null|${key.properties.mnemonic}|null`;
 };
 
-export const IsZceCompatible = (wallet: Wallet): boolean => {
-  const {
-    credentials: {coin, network, addressType},
-  } = wallet;
-  const isSingleSigBch = coin === 'bch' && addressType === 'P2PKH';
-  const isNotDuplicatedFromAnotherChain =
-    wallet.credentials.rootPath.split('/')[2] === "145'";
-  return (
-    isSingleSigBch && (isNotDuplicatedFromAnotherChain || network === 'testnet')
-  );
-};

@@ -31,13 +31,13 @@ import {buildUIFormattedWallet} from './KeyOverview';
 import {useAppSelector} from '../../../utils/hooks';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {
+  GetTransactionHistory,
   GroupTransactionHistory,
-  UpdateTransactionsHistory,
 } from '../../../store/wallet/effects/transactions/transactions';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import WalletTransactionRow from '../../../components/list/WalletTransactionRow';
 
-const HISTORY_SHOW_LIMIT = 10;
+const HISTORY_SHOW_LIMIT = 15;
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -214,41 +214,40 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     SUPPORTED_CURRENCIES.includes(currencyAbbreviation.toLowerCase()) &&
     network !== Network.testnet;
 
-  useEffect(() => {
-    if (!fullWalletObj.transactionHistoryOnProgress) {
-      dispatch(UpdateTransactionsHistory({wallet: fullWalletObj}));
-    }
-  }, [fullWalletObj]);
-
-  const [history, setHistory] = useState<any[]>();
-  const [currentPage, setCurrentPage] = useState(0);
+  const [history, setHistory] = useState<any[]>([]);
   const [groupedHistory, setGroupedHistory] = useState<
     {title: string; data: any[]}[]
   >([]);
+  const [loadMore, setLoadMore] = useState(true);
 
-  const showHistory = (loading?: boolean) => {
-    if (!fullWalletObj.transactionHistory) {
+  const loadHistory = async () => {
+    if (!loadMore) {
       return;
     }
+    try {
+      let {transactions: _history, loadMore: _loadMore} =
+        await GetTransactionHistory({
+          wallet: fullWalletObj,
+          transactionsHistory: history,
+          limit: HISTORY_SHOW_LIMIT,
+        });
 
-    const _history = fullWalletObj.transactionHistory.slice(
-      0,
-      (currentPage + 1) * HISTORY_SHOW_LIMIT,
-    );
-    setHistory(_history);
-
-    const grouped = GroupTransactionHistory(_history);
-
-    setGroupedHistory(grouped);
-
-    if (loading) {
-      setCurrentPage(currentPage + 1);
+      if (_history?.length) {
+        setHistory(_history);
+        const grouped = GroupTransactionHistory(_history);
+        setGroupedHistory(grouped);
+      }
+      setLoadMore(_loadMore);
+    } catch (e) {
+      setLoadMore(false);
+      console.log(e);
     }
   };
 
   useEffect(() => {
-    showHistory();
-  }, [fullWalletObj?.transactionHistory]);
+    loadHistory();
+    console.log(fullWalletObj);
+  }, []);
 
   return (
     <WalletDetailsContainer>
@@ -263,26 +262,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         ListHeaderComponent={() => {
           return (
             <>
-              <BalanceContainer emptyList={!groupedHistory.length}>
-                <Row emptyList={!groupedHistory.length}>
+              <BalanceContainer>
+                <Row>
                   <Balance>
                     {cryptoBalance} {currencyAbbreviation}
                   </Balance>
-                  {groupedHistory.length ? (
-                    <Chain>{currencyAbbreviation}</Chain>
-                  ) : null}
+                  <Chain>{currencyAbbreviation}</Chain>
                 </Row>
-                <Row emptyList={!groupedHistory.length}>
+                <Row>
                   {showFiatBalance && <H5>{fiatBalance}</H5>}
-                  {walletType && !!groupedHistory.length ? (
-                    <Type>{walletType}</Type>
-                  ) : null}
+                  {walletType ? <Type>{walletType}</Type> : null}
                 </Row>
-                {!groupedHistory.length && walletType ? (
-                  <Row>
-                    <Type emptyList={true}>{walletType}</Type>
-                  </Row>
-                ) : null}
               </BalanceContainer>
 
               {fullWalletObj ? (
@@ -316,9 +306,14 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         )}
         ItemSeparatorComponent={() => <BorderBottom />}
         ListFooterComponent={() =>
-            !groupedHistory.length ? null : <View style={{marginBottom: 20}}><BorderBottom /></View>
+          !groupedHistory.length ? null : (
+            <View style={{marginBottom: 20}}>
+              <BorderBottom />
+            </View>
+          )
         }
-        centerContent={!groupedHistory.length}
+        onEndReached={loadHistory}
+        onEndReachedThreshold={0.6}
       />
 
       <OptionsSheet

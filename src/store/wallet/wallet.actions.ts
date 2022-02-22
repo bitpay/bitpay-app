@@ -165,19 +165,3 @@ export const successGetReceiveAddress = (payload: {
   type: WalletActionTypes.SUCCESS_GET_RECEIVE_ADDRESS,
   payload,
 });
-
-export const updateTransactionHistory = (payload: {
-  wallet: Wallet;
-  transactions: any[];
-}): WalletActionType => ({
-  type: WalletActionTypes.UPDATE_TRANSACTION_HISTORY,
-  payload,
-});
-
-export const setUpdateTransactionHistoryStatus = (payload: {
-  wallet: Wallet;
-  status: boolean;
-}): WalletActionType => ({
-  type: WalletActionTypes.SET_TRANSACTION_HISTORY_STATUS,
-  payload,
-});
