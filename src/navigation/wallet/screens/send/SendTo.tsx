@@ -46,7 +46,7 @@ import {
 import {
   BchLegacyAddressInfo,
   CustomErrorMessage,
-  SendGeneralErrorMessage,
+  Mismatch,
 } from '../../components/ErrorMessages';
 import {
   CoinNetwork,
@@ -220,17 +220,11 @@ const SendTo = () => {
           );
         } else {
           dispatch(
-            showBottomNotificationModal(
-              SendGeneralErrorMessage(onErrorMessageDismiss),
-            ),
+            showBottomNotificationModal(Mismatch(onErrorMessageDismiss)),
           );
         }
       } else {
-        dispatch(
-          showBottomNotificationModal(
-            SendGeneralErrorMessage(onErrorMessageDismiss),
-          ),
-        );
+        dispatch(showBottomNotificationModal(Mismatch(onErrorMessageDismiss)));
       }
     }
     return false;
@@ -287,7 +281,7 @@ const SendTo = () => {
         logger.warn(formattedErrMsg);
         dispatch(
           showBottomNotificationModal(
-            CustomErrorMessage(formattedErrMsg, 'Error'),
+            CustomErrorMessage({errMsg: formattedErrMsg, title: 'Error'}),
           ),
         );
       }

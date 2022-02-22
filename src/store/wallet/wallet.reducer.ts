@@ -19,6 +19,7 @@ export interface WalletState {
   };
   balanceCacheKey: {[key in string]: number | undefined};
   feeLevel: {[key in string]: FeeLevels};
+  useUnconfirmedFunds: boolean;
 }
 
 const initialState: WalletState = {
@@ -37,6 +38,7 @@ const initialState: WalletState = {
     btc: FeeLevels.NORMAL,
     eth: FeeLevels.NORMAL,
   },
+  useUnconfirmedFunds: false,
 };
 
 export const walletReducer = (

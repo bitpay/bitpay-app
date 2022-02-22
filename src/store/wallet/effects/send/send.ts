@@ -1,6 +1,7 @@
 import {Effect} from '../../../index';
 import {
   Key,
+  ProposalErrorHandlerProps,
   Rates,
   Recipient,
   TransactionOptions,
@@ -14,8 +15,12 @@ import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {toFiat} from '../../utils/wallet';
 import {startGetRates} from '../rates/rates';
 import {waitForTargetAmountAndUpdateWallet} from '../balance/balance';
-import {DeviceEventEmitter} from 'react-native';
-import {setWalletRefreshing} from '../../wallet.actions';
+import {
+  CustomErrorMessage,
+  GeneralError,
+} from '../../../../navigation/wallet/components/ErrorMessages';
+import {BWCErrorMessage, getErrorName} from '../../../../constants/BWCError';
+import {insufficientFundsHandler} from './errors';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -38,15 +43,17 @@ export const createProposalAndBuildTxDetails =
           feeLevel,
           dryRun = true,
         } = tx;
+
         const {credentials, currencyAbbreviation} = wallet;
         const formattedAmount = ParseAmount(amount, currencyAbbreviation);
         const {
-          WALLET: {feeLevel: _feeLevel},
+          WALLET: {feeLevel: _feeLevel, useUnconfirmedFunds},
         } = getState();
 
         // build transaction proposal options then create full proposal
         const txp = {
           ...(await buildTransactionProposal({
+            ...tx,
             context,
             currency: currencyAbbreviation,
             toAddress: recipient.address,
@@ -54,6 +61,7 @@ export const createProposalAndBuildTxDetails =
             network: credentials.network,
             feeLevel:
               feeLevel || _feeLevel[currencyAbbreviation] || FeeLevels.NORMAL,
+            useUnconfirmedFunds,
           })),
           dryRun,
         } as Partial<TransactionProposal>;
@@ -62,7 +70,7 @@ export const createProposalAndBuildTxDetails =
           txp,
           async (err: Error, proposal: TransactionProposal) => {
             if (err) {
-              return reject(err);
+              return reject({err, tx, txp, getState});
             }
 
             try {
@@ -75,16 +83,15 @@ export const createProposalAndBuildTxDetails =
                 wallet,
                 recipient,
               });
-              console.log(txDetails);
               resolve({txDetails, txp});
             } catch (err) {
-              reject(err);
+              reject({err});
             }
           },
           null,
         );
       } catch (err) {
-        reject(err);
+        reject({err});
       }
     });
   };
@@ -174,6 +181,8 @@ const buildTransactionProposal = (
         txp.invoiceID = tx.invoiceID;
         break;
     }
+    // unconfirmed funds
+    txp.excludeUnconfirmedUtxos = !tx.useUnconfirmedFunds;
 
     const {context} = tx;
     // outputs
@@ -197,6 +206,27 @@ const buildTransactionProposal = (
 
     resolve(txp);
   });
+};
+
+export const handlerCreateTxProposalError = async (
+  proposalErrorProps: ProposalErrorHandlerProps,
+) => {
+  try {
+    const {err} = proposalErrorProps;
+
+    switch (getErrorName(err)) {
+      case 'INSUFFICIENT_FUNDS':
+        return insufficientFundsHandler(proposalErrorProps);
+
+      default:
+        return CustomErrorMessage({
+          title: 'Error',
+          errMsg: BWCErrorMessage(err),
+        });
+    }
+  } catch (err2) {
+    return GeneralError;
+  }
 };
 
 export const startSendPayment =

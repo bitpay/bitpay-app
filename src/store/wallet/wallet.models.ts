@@ -2,6 +2,7 @@ import API from 'bitcore-wallet-client/ts_build';
 import {ReactElement} from 'react';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {FeeLevels} from './effects/fee/fee';
+import {RootState} from '../index';
 
 export interface KeyMethods {
   _checkCoin: Function;
@@ -185,6 +186,7 @@ export interface TransactionOptions {
   // xrp
   destinationTag?: string;
   invoiceID?: string;
+  useUnconfirmedFunds?: boolean;
 }
 
 export interface TransactionProposal {
@@ -226,6 +228,13 @@ export interface TransactionProposal {
   multisigContractAddress?: string;
   instantAcceptanceEscrow?: number;
   isTokenSwap?: boolean;
+}
+
+export interface ProposalErrorHandlerProps {
+  err: Error;
+  getState: () => RootState;
+  tx: TransactionOptions;
+  txp: Partial<TransactionProposal>;
 }
 
 // UI details

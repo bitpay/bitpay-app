@@ -13,12 +13,23 @@ import Button from '../../../../components/button/Button';
 import {View} from 'react-native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
-import {Recipient, Wallet} from '../../../../store/wallet/wallet.models';
-import {createProposalAndBuildTxDetails} from '../../../../store/wallet/effects/send/send';
+import {
+  ProposalErrorHandlerProps,
+  Recipient,
+  Wallet,
+} from '../../../../store/wallet/wallet.models';
+import {
+  createProposalAndBuildTxDetails,
+  handlerCreateTxProposalError,
+} from '../../../../store/wallet/effects/send/send';
 import {useAppDispatch} from '../../../../utils/hooks';
 import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
-import {dismissOnGoingProcessModal} from '../../../../store/app/app.actions';
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+} from '../../../../store/app/app.actions';
+import {sleep} from '../../../../utils/helper-methods';
 
 const SendMax = styled.TouchableOpacity`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
@@ -127,9 +138,12 @@ const Amount = () => {
         params: {wallet, recipient, txp, txDetails},
       });
       dispatch(dismissOnGoingProcessModal());
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
       dispatch(dismissOnGoingProcessModal());
+      const errorMessageConfig = (
+        await Promise.all([handlerCreateTxProposalError(err), sleep(400)])
+      )[0];
+      dispatch(showBottomNotificationModal(errorMessageConfig));
     }
   };
 

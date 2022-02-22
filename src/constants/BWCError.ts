@@ -1,13 +1,16 @@
+export const getErrorName = (err: Error) =>
+  err.name
+    ? err.name === 'Error'
+      ? err.message
+      : err.name.replace(/^bwc.Error/g, '')
+    : err;
+
 export const BWCErrorMessage = (err: any, prefix?: string): string => {
   if (!err) {
     return 'Unknown error';
   }
 
-  const name = err.name
-    ? err.name === 'Error'
-      ? err.message
-      : err.name.replace(/^bwc.Error/g, '')
-    : err;
+  const name = getErrorName(err);
 
   let body = '';
   prefix = prefix || '';
@@ -78,7 +81,8 @@ export const BWCErrorMessage = (err: any, prefix?: string): string => {
       body = 'Could not build transaction';
       break;
     case 'INSUFFICIENT_FUNDS':
-      body = 'Insufficient funds';
+      body =
+        'You are trying to send more funds than you have available. Make sure you do not have funds locked by pending transaction proposals.';
       break;
     case 'MAINTENANCE_ERROR':
       body =
