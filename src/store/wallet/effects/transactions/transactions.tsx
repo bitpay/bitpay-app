@@ -6,13 +6,17 @@ import {
   DEFAULT_RBF_SEQ_NUMBER,
   SAFE_CONFIRMATIONS,
 } from '../../../../constants/wallet';
-import {GetChain, IsUtxoCoin} from '../../utils/currency';
+import {GetChain, IsCustomERCToken, IsUtxoCoin} from '../../utils/currency';
 import {ToAddress, ToLtcAddress} from '../address/address';
-import {IsDateInCurrentMonth, WithinSameMonth} from '../../utils/time';
+import {
+  IsDateInCurrentMonth,
+  WithinPastDay,
+  WithinSameMonth,
+} from '../../utils/time';
 import moment from 'moment';
+import {TransactionIcons} from '../../../../constants/TransactionIcons';
 
 const BWC = BwcProvider.getInstance();
-
 const Errors = BWC.getErrors();
 
 const LIMIT = 15;
@@ -194,7 +198,7 @@ const GetNewTransactions = (
       .then(async result => {
         const {transactions, loadMore = false} = result;
 
-        const _transactions = transactions.filter(txs => txs);
+        let _transactions = transactions.filter(txs => txs);
         const _newTxs = await ProcessNewTxs(wallet, _transactions);
         newTxs = newTxs.concat(_newTxs);
         skip = skip + requestLimit;
@@ -331,11 +335,13 @@ export const GetTransactionHistory = ({
   transactionsHistory = [],
   limit = LIMIT,
   opts = {},
+  contactsList = [],
 }: {
   wallet: Wallet;
   transactionsHistory: any[];
   limit: number;
   opts?: TransactionsHistoryInterface;
+  contactsList?: any[];
 }): Promise<{transactions: any[]; loadMore: boolean}> => {
   return new Promise(async (resolve, reject) => {
     let requestLimit = limit;
@@ -366,6 +372,11 @@ export const GetTransactionHistory = ({
         transactions = UpdateLowAmount(transactions, opts);
       }
 
+      transactions = BuildUiFriendlyList(
+        transactions,
+        wallet.currencyAbbreviation,
+        contactsList,
+      );
       const array = transactionsHistory
         .concat(transactions)
         .filter((txs: any) => txs);
@@ -383,5 +394,172 @@ export const GetTransactionHistory = ({
       );
       return reject(err);
     }
+  });
+};
+
+////////////////////////////////////////////////////////////
+
+const getContactName = (address: string | undefined) => {
+  //   TODO: Get name from contacts list
+  return;
+};
+
+const hasContactName = (contactsList: any[] = [], outputs?: any[]) => {
+  return !!(
+    contactsList &&
+    outputs?.length &&
+    getContactName(outputs[0]?.address)
+  );
+};
+
+const getFormattedDate = (time: number) => {
+  return WithinPastDay(time)
+    ? moment(time).fromNow()
+    : moment(time).format('MMM D, YYYY');
+};
+
+const notZeroAmountEth = (amount: number, currencyAbbreviation: string) => {
+  return !(amount === 0 && currencyAbbreviation === 'eth');
+};
+
+const isSent = (action: string) => {
+  return action === 'sent';
+};
+
+const isMoved = (action: string) => {
+  return action === 'moved';
+};
+
+const isReceived = (action: string) => {
+  return action === 'received';
+};
+
+const isInvalid = (action: string) => {
+  return action === 'invalid';
+};
+
+export const TRANSACTION_ICON_SIZE = 35;
+
+export const BuildUiFriendlyList = (
+  transactionList: any[] = [],
+  currencyAbbreviation: string,
+  contactsList: any[] = [],
+): any[] => {
+  return transactionList.map(transaction => {
+    const {
+      confirmations,
+      error,
+      customData,
+      action,
+      time,
+      amount,
+      amountStr,
+      feeStr,
+      outputs,
+      note,
+      message,
+    } = transaction || {};
+    const {service: customDataService, toWalletName} = customData || {};
+    const {body: noteBody} = note || {};
+
+    if (confirmations <= 0) {
+      transaction.uiIcon = TransactionIcons.confirming;
+
+      if (notZeroAmountEth(amount, currencyAbbreviation)) {
+        if (hasContactName(contactsList, outputs)) {
+          if (isSent(action) || isMoved(action)) {
+            transaction.uiDescription = getContactName(outputs[0]?.address);
+          }
+        } else {
+          if (isSent(action)) {
+            transaction.uiDescription = 'Sending';
+          }
+
+          if (isMoved(action)) {
+            transaction.uiDescription = 'Moving';
+          }
+        }
+
+        if (isReceived(action)) {
+          transaction.uiDescription = 'Receiving';
+        }
+      }
+    }
+
+    if (confirmations > 0) {
+      if (
+        (currencyAbbreviation === 'eth' ||
+          IsCustomERCToken(currencyAbbreviation)) &&
+        error
+      ) {
+        transaction.uiIcon = TransactionIcons.error;
+      } else {
+        if (isSent(action)) {
+          // TODO: Get giftCard images
+          transaction.uiIcon = customDataService
+            ? TransactionIcons[customDataService]
+            : TransactionIcons.sent;
+
+          if (notZeroAmountEth(amount, currencyAbbreviation)) {
+            if (noteBody) {
+              transaction.uiDescription = noteBody;
+            } else if (message) {
+              transaction.uiDescription = message;
+            } else if (hasContactName(contactsList, outputs)) {
+              transaction.uiDescription = getContactName(outputs[0]?.address);
+            } else if (toWalletName) {
+              transaction.uiDescription = toWalletName;
+            } else {
+              transaction.uiDescription = 'Sent';
+            }
+          }
+        }
+
+        if (isReceived(action)) {
+          transaction.uiIcon = TransactionIcons.received;
+
+          if (noteBody) {
+            transaction.uiDescription = noteBody;
+          } else if (hasContactName(contactsList, outputs)) {
+            transaction.uiDescription = getContactName(outputs[0]?.address);
+          } else {
+            transaction.uiDescription = 'Received';
+          }
+        }
+
+        if (isMoved(action)) {
+          transaction.uiIcon = TransactionIcons.moved;
+
+          if (noteBody) {
+            transaction.uiDescription = noteBody;
+          } else if (message) {
+            transaction.uiDescription = message;
+          } else {
+            transaction.uiDescription = 'Sent to self';
+          }
+        }
+
+        if (isInvalid(action)) {
+          transaction.uiDescription = 'Invalid';
+        }
+      }
+    }
+
+    if (!notZeroAmountEth(amount, currencyAbbreviation)) {
+      transaction.uiDescription = 'Interaction with contract';
+      transaction.uiValue = feeStr;
+    }
+
+    if (isInvalid(action)) {
+      transaction.uiValue = '(possible double spend)';
+    } else {
+      if (notZeroAmountEth(amount, currencyAbbreviation)) {
+        transaction.uiValue = amountStr;
+      }
+    }
+
+    transaction.uiTime = getFormattedDate(time * 1000);
+
+    return transaction;
   });
 };

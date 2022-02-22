@@ -1,7 +1,7 @@
 import React from 'react';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {View} from 'react-native';
-import {TRANSACTION_ICON_SIZE} from './WalletTransactionRow';
+import {TRANSACTION_ICON_SIZE} from '../../store/wallet/effects/transactions/transactions';
 
 const WalletTransactionSkeletonRow = () => {
   return (

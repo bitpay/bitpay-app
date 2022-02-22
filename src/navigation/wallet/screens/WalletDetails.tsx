@@ -36,7 +36,6 @@ import {
 } from '../../../store/wallet/effects/transactions/transactions';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import WalletTransactionRow, {
-  TRANSACTION_ICON_SIZE,
   TRANSACTION_ROW_HEIGHT,
 } from '../../../components/list/WalletTransactionRow';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
@@ -316,9 +315,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const _renderItem = useCallback(
     ({item}) => (
       <WalletTransactionRow
-        transaction={item}
-        wallet={fullWalletObj}
-        contactsList={[]}
+        icon={item.uiIcon}
+        description={item.uiDescription}
+        time={item.uiTime}
+        value={item.uiValue}
+        onPressTransaction={() => {}}
       />
     ),
     [],
