@@ -2,13 +2,14 @@ import React, {useState, useCallback, useEffect} from 'react';
 import {useTranslation} from 'react-i18next';
 import debounce from 'lodash.debounce';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import styled, {css} from 'styled-components/native';
+import styled, {css, useTheme} from 'styled-components/native';
 import {TouchableOpacity, FlatList, Platform} from 'react-native';
 import {useSelector} from 'react-redux';
 import {useForm, Controller} from 'react-hook-form';
 import {useNavigation} from '@react-navigation/core';
 import AddressBookIcon from '../../../../../assets/img/tab-icons/contacts.svg';
-import AddIcon from '../../../../../assets/img/plus-gray.svg';
+import AddContactIcon from '../../../../../assets/img/addcontact-icon.svg';
+import AddContactIconWhite from '../../../../../assets/img/addcontact-icon-white.svg';
 import Button from '../../../../components/button/Button';
 import {
   ActiveOpacity,
@@ -131,6 +132,7 @@ const HideableView = styled.View<HideableViewProps>`
 
 const ContactsRoot: React.FC = () => {
   const {t} = useTranslation();
+  const theme = useTheme();
   const insets = useSafeAreaInsets();
   const contacts = useSelector(({CONTACT}: RootState) => CONTACT.list);
   const navigation = useNavigation();
@@ -217,7 +219,7 @@ const ContactsRoot: React.FC = () => {
               activeOpacity={ActiveOpacity}
               onPress={goToCreateContact}>
               <ContentIcon>
-                <AddIcon />
+                {theme.dark ? <AddContactIconWhite /> : <AddContactIcon />}
               </ContentIcon>
             </TouchableOpacity>
           </SectionHeaderContainer>
