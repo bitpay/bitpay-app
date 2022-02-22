@@ -2,13 +2,7 @@ import {useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {
-  ActivityIndicator,
-  RefreshControl,
-  SectionList,
-  Share,
-  View,
-} from 'react-native';
+import {RefreshControl, SectionList, Share, View} from 'react-native';
 import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
 import Settings from '../../../components/settings/Settings';
@@ -25,12 +19,7 @@ import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/ba
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
-import {
-  LightBlack,
-  NotificationPrimary,
-  SlateDark,
-  White,
-} from '../../../styles/colors';
+import {LightBlack, SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {BalanceUpdateError} from '../components/ErrorMessages';
@@ -48,6 +37,7 @@ import {
 import {ScreenGutter} from '../../../components/styled/Containers';
 import WalletTransactionRow from '../../../components/list/WalletTransactionRow';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
+import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 
 const HISTORY_SHOW_LIMIT = 15;
 
@@ -101,8 +91,8 @@ const BorderBottom = styled.View`
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#EBEDF8')};
 `;
 
-const SpinnerContainer = styled.View`
-  padding: ${ScreenGutter};
+const SkeletonContainer = styled.View`
+  padding: 0 ${ScreenGutter} 30px;
 `;
 
 const getWalletType = (key: Key, wallet: Wallet) => {
@@ -263,6 +253,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         const grouped = GroupTransactionHistory(_history);
         setGroupedHistory(grouped);
       }
+      await sleep(1000);
       setIsLoading(false);
       setLoadMore(_loadMore);
     } catch (e) {
@@ -276,7 +267,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   useEffect(() => {
     loadHistory();
-    console.log(fullWalletObj);
   }, []);
 
   const listFooterComponent = () => {
@@ -288,9 +278,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           </View>
         )}
         {isLoading ? (
-          <SpinnerContainer>
-            <ActivityIndicator size={'large'} color={NotificationPrimary} />
-          </SpinnerContainer>
+          <SkeletonContainer>
+            <WalletTransactionSkeletonRow />
+          </SkeletonContainer>
         ) : null}
       </>
     );
