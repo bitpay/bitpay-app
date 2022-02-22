@@ -92,7 +92,8 @@ const BorderBottom = styled.View`
 `;
 
 const SkeletonContainer = styled.View`
-  padding: 0 ${ScreenGutter} 30px;
+  padding: 0 ${ScreenGutter};
+  margin-bottom: 20px;
 `;
 
 const getWalletType = (key: Key, wallet: Wallet) => {
@@ -205,6 +206,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     try {
       await Promise.all([
         await dispatch(startUpdateWalletBalance({key, wallet: fullWalletObj})),
+        await loadHistory(true),
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
@@ -234,17 +236,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [isLoading, setIsLoading] = useState<boolean>();
   const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
 
-  const loadHistory = async () => {
-    if (!loadMore) {
+  const loadHistory = async (refresh?: boolean) => {
+    if (!loadMore && !refresh) {
       return;
     }
     try {
-      setIsLoading(true);
+      setIsLoading(!refresh);
       setErrorLoadingTxs(false);
       let {transactions: _history, loadMore: _loadMore} =
         await GetTransactionHistory({
           wallet: fullWalletObj,
-          transactionsHistory: history,
+          transactionsHistory: refresh ? [] : history,
           limit: HISTORY_SHOW_LIMIT,
         });
 
@@ -363,8 +365,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         )}
         ItemSeparatorComponent={() => <BorderBottom />}
         ListFooterComponent={listFooterComponent}
-        onEndReached={loadHistory}
-        onEndReachedThreshold={0.6}
+        onEndReached={() => loadHistory()}
+        onEndReachedThreshold={0.5}
         ListEmptyComponent={listEmptyComponent}
       />
 

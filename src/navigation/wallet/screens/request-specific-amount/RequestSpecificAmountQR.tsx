@@ -16,7 +16,7 @@ import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import Clipboard from '@react-native-community/clipboard';
 import QRCode from 'react-native-qrcode-svg';
-import {Black, LightBlack, White} from '../../../../styles/colors';
+import {LightBlack, White} from '../../../../styles/colors';
 import ShareIcon from '../../../../components/icons/share/Share';
 import {Share} from 'react-native';
 import GhostSvg from '../../../../../assets/img/ghost-straight-face.svg';
