@@ -30,6 +30,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     const {APP, BITPAY_ID} = getState();
     const network = APP.network;
+    const pinLockActive = APP.pinLockActive;
 
     dispatch(LogActions.info('Initializing app...'));
     dispatch(LogActions.debug(`Network: ${network}`));
@@ -93,7 +94,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     await sleep(500);
     dispatch(AppActions.successAppInit());
     dispatch(LogActions.info('Initialized app successfully.'));
-    if (APP.pinLockActive) {
+    dispatch(LogActions.debug(`Pin Lock Active: ${pinLockActive}`));
+    if (pinLockActive) {
       dispatch(AppActions.showPinModal({type: 'check'}));
     }
     RNBootSplash.hide({fade: true});

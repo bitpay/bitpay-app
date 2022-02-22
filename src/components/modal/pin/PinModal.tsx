@@ -175,7 +175,7 @@ const PinModal: React.FC = () => {
       return () => {
         clearInterval(timer);
       };
-    } else {
+    } else if (pinBannedUntil) {
       dispatch(AppActions.pinBannedUntil(undefined));
     }
   }, [pinBannedUntil]);
