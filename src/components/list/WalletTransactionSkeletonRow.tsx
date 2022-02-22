@@ -1,15 +1,8 @@
 import React from 'react';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {View} from 'react-native';
-import {Row, ScreenGutter} from '../styled/Containers';
-import styled from 'styled-components/native';
+import {TRANSACTION_ICON_SIZE} from './WalletTransactionRow';
 
-const SkeletonRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-  flex: 1;
-  background-color: teal;
-`;
 const WalletTransactionSkeletonRow = () => {
   return (
     <SkeletonPlaceholder>
@@ -20,7 +13,12 @@ const WalletTransactionSkeletonRow = () => {
           justifyContent: 'center',
         }}>
         <View
-          style={{width: 35, height: 35, borderRadius: 50, marginRight: 10}}
+          style={{
+            width: TRANSACTION_ICON_SIZE,
+            height: TRANSACTION_ICON_SIZE,
+            borderRadius: 50,
+            marginRight: 10,
+          }}
         />
         <View style={{width: 150, height: 18, borderRadius: 4}} />
         <View style={{marginLeft: 'auto', alignItems: 'flex-end'}}>

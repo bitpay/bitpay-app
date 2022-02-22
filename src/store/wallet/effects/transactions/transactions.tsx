@@ -376,7 +376,7 @@ export const GetTransactionHistory = ({
 
       return resolve({transactions: newHistory, loadMore});
     } catch (err) {
-      console.warn(
+      console.log(
         '!! Could not update transaction history for ',
         wallet.id,
         err,

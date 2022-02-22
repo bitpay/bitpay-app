@@ -1,4 +1,4 @@
-import React, {ReactElement} from 'react';
+import React, {ReactElement, memo} from 'react';
 import {BaseText} from '../styled/Text';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../styled/Containers';
@@ -14,7 +14,6 @@ import MercadolivreSvg from '../../../assets/img/wallet/transactions/mercadolivr
 import CoinbaseSvg from '../../../assets/img/wallet/transactions/coinbase.svg';
 import BitPaySvg from '../../../assets/img/wallet/transactions/bitpay.svg';
 import GiftCardSvg from '../../../assets/img/wallet/transactions/giftcard.svg';
-import WalletReverseSvg from '../../../assets/img/wallet/transactions/wallet-reverse.svg';
 import SentSvg from '../../../assets/img/wallet/transactions/sent.svg';
 import ReceivedSvg from '../../../assets/img/wallet/transactions/received.svg';
 import MovedSvg from '../../../assets/img/wallet/transactions/moved.svg';
@@ -24,13 +23,15 @@ import {IsCustomERCToken} from '../../store/wallet/utils/currency';
 import {WithinPastDay} from '../../store/wallet/utils/time';
 import moment from 'moment';
 import {SlateDark, White} from '../../styles/colors';
-const ICON_SIZE = 35;
+export const TRANSACTION_ICON_SIZE = 35;
+export const TRANSACTION_ROW_HEIGHT = 75;
 
 const TransactionRow = styled.TouchableOpacity`
   flex-direction: row;
   padding: ${ScreenGutter};
   justify-content: center;
   align-items: center;
+  height: ${TRANSACTION_ROW_HEIGHT}px;
 `;
 
 const IconContainer = styled.View`
@@ -64,19 +65,54 @@ const CreatedTime = styled(BaseText)`
 `;
 
 const TransactionsIcons: {[key in string]: ReactElement} = {
-  amazon: <AmazonSvg width={ICON_SIZE} height={ICON_SIZE} />,
-  walletConnect: <WalletConnectSvg width={ICON_SIZE} height={ICON_SIZE} />,
-  shapeshift: <ShapeShiftSvg width={ICON_SIZE} height={ICON_SIZE} />,
-  changelly: <ChangellySvg width={ICON_SIZE} height={ICON_SIZE} />,
-  oneInch: <OneInchSvg width={ICON_SIZE} height={ICON_SIZE} />,
-  mercadolibre: <MercadolivreSvg width={ICON_SIZE} height={ICON_SIZE} />,
-  coinbase: <CoinbaseSvg width={ICON_SIZE} height={ICON_SIZE} />,
-  debitcard: <BitPaySvg width={ICON_SIZE} height={ICON_SIZE} />,
-  giftcards: <GiftCardSvg width={ICON_SIZE} height={ICON_SIZE} />,
-  toWalletName: <WalletReverseSvg width={ICON_SIZE} height={ICON_SIZE} />,
-  sent: <SentSvg width={ICON_SIZE} height={ICON_SIZE} />,
-  received: <ReceivedSvg width={ICON_SIZE} height={ICON_SIZE} />,
-  moved: <MovedSvg width={ICON_SIZE} height={ICON_SIZE} />,
+  amazon: (
+    <AmazonSvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
+  ),
+  walletConnect: (
+    <WalletConnectSvg
+      width={TRANSACTION_ICON_SIZE}
+      height={TRANSACTION_ICON_SIZE}
+    />
+  ),
+  shapeshift: (
+    <ShapeShiftSvg
+      width={TRANSACTION_ICON_SIZE}
+      height={TRANSACTION_ICON_SIZE}
+    />
+  ),
+  changelly: (
+    <ChangellySvg
+      width={TRANSACTION_ICON_SIZE}
+      height={TRANSACTION_ICON_SIZE}
+    />
+  ),
+  oneInch: (
+    <OneInchSvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
+  ),
+  mercadolibre: (
+    <MercadolivreSvg
+      width={TRANSACTION_ICON_SIZE}
+      height={TRANSACTION_ICON_SIZE}
+    />
+  ),
+  coinbase: (
+    <CoinbaseSvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
+  ),
+  debitcard: (
+    <BitPaySvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
+  ),
+  giftcards: (
+    <GiftCardSvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
+  ),
+  sent: (
+    <SentSvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
+  ),
+  received: (
+    <ReceivedSvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
+  ),
+  moved: (
+    <MovedSvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
+  ),
 };
 
 interface Transaction {
@@ -120,7 +156,6 @@ const WalletTransactionRow = ({
   } = transaction;
   const {service: customDataService, toWalletName} = customData || {};
   const {body: noteBody} = note || {};
-  // console.log(transaction);
   const {currencyAbbreviation} = wallet;
 
   const getContactName = (address: string | undefined) => {
@@ -138,7 +173,7 @@ const WalletTransactionRow = ({
 
   const getFormattedDate = (time: number) => {
     return WithinPastDay(time)
-      ? moment(time).fromNow() + ' ago'
+      ? moment(time).fromNow()
       : moment(time).format('MMM D, YYYY');
   };
 
@@ -165,13 +200,13 @@ const WalletTransactionRow = ({
   return (
     <TransactionRow onPress={_onPress}>
       <IconContainer>
-        {confirmations <= 0 && <ConfirmingSvg width={ICON_SIZE} />}
+        {confirmations <= 0 && <ConfirmingSvg width={TRANSACTION_ICON_SIZE} />}
 
         {confirmations > 0 ? (
           (currencyAbbreviation === 'eth' ||
             IsCustomERCToken(currencyAbbreviation)) &&
           error ? (
-            <ErrorSvg width={ICON_SIZE} />
+            <ErrorSvg width={TRANSACTION_ICON_SIZE} />
           ) : (
             <>
               {isSent() && (
@@ -179,15 +214,7 @@ const WalletTransactionRow = ({
                   {/*// TODO: Gift cards config*/}
                   {customDataService
                     ? TransactionsIcons[customDataService]
-                    : null}
-
-                  {toWalletName && !customDataService
-                    ? TransactionsIcons.toWalletName
-                    : null}
-
-                  {!customData && !customDataService && !toWalletName
-                    ? TransactionsIcons.sent
-                    : null}
+                    : TransactionsIcons.sent}
                 </>
               )}
               {isReceived() && TransactionsIcons.received}
@@ -270,4 +297,4 @@ const WalletTransactionRow = ({
   );
 };
 
-export default WalletTransactionRow;
+export default memo(WalletTransactionRow);

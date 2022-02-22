@@ -1,6 +1,6 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {RefreshControl, SectionList, Share, View} from 'react-native';
 import {useDispatch} from 'react-redux';
@@ -35,7 +35,10 @@ import {
   GroupTransactionHistory,
 } from '../../../store/wallet/effects/transactions/transactions';
 import {ScreenGutter} from '../../../components/styled/Containers';
-import WalletTransactionRow from '../../../components/list/WalletTransactionRow';
+import WalletTransactionRow, {
+  TRANSACTION_ICON_SIZE,
+  TRANSACTION_ROW_HEIGHT,
+} from '../../../components/list/WalletTransactionRow';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 
@@ -48,6 +51,7 @@ type WalletDetailsScreenProps = StackScreenProps<
 
 const WalletDetailsContainer = styled.View`
   flex: 1;
+  padding-top: 10px;
 `;
 
 const Row = styled.View<{emptyList?: boolean}>`
@@ -58,7 +62,7 @@ const Row = styled.View<{emptyList?: boolean}>`
 
 const BalanceContainer = styled.View<{emptyList?: boolean}>`
   margin-top: ${({emptyList}) => (emptyList ? '-100px' : '20px')};
-  padding: 10px 15px;
+  padding: 0 15px 10px;
   flex-direction: column;
 `;
 
@@ -130,6 +134,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const uiFormattedWallet = buildUIFormattedWallet(fullWalletObj);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
+  const [loadReceiveAddressModal, setLoadReceiveAddressModal] = useState(false);
   const walletType = getWalletType(key, fullWalletObj);
 
   useLayoutEffect(() => {
@@ -197,6 +202,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const showReceiveAddress = () => {
     setShowReceiveAddressBottomModal(true);
+    setLoadReceiveAddressModal(true);
   };
 
   const onRefresh = async () => {
@@ -255,7 +261,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         const grouped = GroupTransactionHistory(_history);
         setGroupedHistory(grouped);
       }
-      await sleep(1000);
       setIsLoading(false);
       setLoadMore(_loadMore);
     } catch (e) {
@@ -308,6 +313,27 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     );
   };
 
+  const _renderItem = useCallback(
+    ({item}) => (
+      <WalletTransactionRow
+        transaction={item}
+        wallet={fullWalletObj}
+        contactsList={[]}
+      />
+    ),
+    [],
+  );
+
+  const _keyExtractor = useCallback(item => item.txid, []);
+
+  const _getItemLayout = useCallback(
+    (data, index) => ({
+      length: TRANSACTION_ROW_HEIGHT,
+      offset: TRANSACTION_ROW_HEIGHT * index,
+      index,
+    }),
+    [],
+  );
   return (
     <WalletDetailsContainer>
       <SectionList
@@ -352,14 +378,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         }}
         sections={groupedHistory}
         stickyHeaderIndices={[groupedHistory?.length]}
-        keyExtractor={(item, index) => item + index}
-        renderItem={({item}) => (
-          <WalletTransactionRow
-            transaction={item}
-            wallet={fullWalletObj}
-            contactsList={[]}
-          />
-        )}
+        keyExtractor={_keyExtractor}
+        renderItem={_renderItem}
         renderSectionHeader={({section: {title}}) => (
           <TransactionSectionHeader>{title}</TransactionSectionHeader>
         )}
@@ -368,6 +388,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         onEndReached={() => loadHistory()}
         onEndReachedThreshold={0.5}
         ListEmptyComponent={listEmptyComponent}
+        maxToRenderPerBatch={15}
+        getItemLayout={_getItemLayout}
       />
 
       <OptionsSheet
@@ -377,7 +399,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         options={assetOptions}
       />
 
-      {fullWalletObj ? (
+      {fullWalletObj && loadReceiveAddressModal ? (
         <ReceiveAddress
           isVisible={showReceiveAddressBottomModal}
           closeModal={() => setShowReceiveAddressBottomModal(false)}
