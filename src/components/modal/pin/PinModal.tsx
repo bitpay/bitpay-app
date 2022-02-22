@@ -4,15 +4,23 @@ import {RootState} from '../../../store';
 import {AppActions} from '../../../store/app';
 import {useDispatch, useSelector} from 'react-redux';
 import PinDots from '../../pin-dots/PinDots';
-import PinPad from '../../../components/pin-pad/PinPad';
 import PinMessages from '../../../components/pin-messages/PinMessages';
 import haptic from '../../haptic-feedback/haptic';
 import {BwcProvider} from '../../../lib/bwc';
 import isEqual from 'lodash.isequal';
 import {sleep} from '../../../utils/helper-methods';
+import VirtualKeyboard from '../../../components/virtual-keyboard/VirtualKeyboard';
+import {LightBlack, White} from '../../../styles/colors';
+import styled, {useTheme} from 'styled-components/native';
+
 export interface PinModalConfig {
   type: 'set' | 'check';
 }
+
+const PinContainer = styled.View`
+  flex: 1;
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+`;
 
 const BWCProvider = BwcProvider.getInstance();
 const sjcl = BWCProvider.getSJCL();
@@ -29,6 +37,7 @@ const PinModal: React.FC = () => {
   const [pin, setPin] = useState<Array<string | undefined>>([]);
   const [message, setMessage] = useState<string>('Please enter your PIN');
   const [shakeDots, setShakeDots] = useState<boolean>(false);
+  const theme = useTheme();
 
   // checkPin
   const currentPin = useSelector(({APP}: RootState) => APP.currentPin);
@@ -174,19 +183,27 @@ const PinModal: React.FC = () => {
   return (
     <Modal
       isVisible={isVisible}
+      coverScreen={true}
       backdropOpacity={1}
-      backdropTransitionOutTiming={0}
-      hideModalContentWhileAnimating={true}
+      backdropColor={theme.dark ? LightBlack : White}
+      animationIn={'fadeInUp'}
+      animationOut={'fadeOutDown'}
       useNativeDriverForBackdrop={true}
       useNativeDriver={true}>
-      <PinMessages message={message} />
-      <PinDots
-        shakeDots={shakeDots}
-        setShakeDots={setShakeDots}
-        pinLength={PIN_LENGTH}
-        pin={pin}
-      />
-      <PinPad onCellPress={onCellPress} />
+      <PinContainer>
+        <PinMessages message={message} />
+        <PinDots
+          shakeDots={shakeDots}
+          setShakeDots={setShakeDots}
+          pinLength={PIN_LENGTH}
+          pin={pin}
+        />
+        <VirtualKeyboard
+          showDot={false}
+          showLetters={true}
+          onCellPress={onCellPress}
+        />
+      </PinContainer>
     </Modal>
   );
 };

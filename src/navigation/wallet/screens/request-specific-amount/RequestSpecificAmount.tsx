@@ -13,6 +13,7 @@ import {
   CurrencySuperScript,
   AmountContainer,
 } from '../send/Amount';
+import haptic from '../../../../components/haptic-feedback/haptic';
 
 const SafeAreaView = styled.SafeAreaView`
   flex: 1;
@@ -34,12 +35,33 @@ const RequestSpecificAmount = () => {
   const navigation = useNavigation();
   const [amount, setAmount] = useState('0');
   const [reset, setReset] = useState<string>();
+  const [curVal, setCurVal] = useState('');
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
       setReset(currencyAbbreviation + Math.random());
     });
   }, [navigation]);
+
+  const onCellPress = (val: string) => {
+    haptic('impactLight');
+    let currentValue;
+    switch (val) {
+      case 'reset':
+        currentValue = '';
+        break;
+      case 'backspace':
+        currentValue = curVal.slice(0, -1);
+        break;
+      case '.':
+        currentValue = curVal.includes('.') ? curVal : curVal + val;
+        break;
+      default:
+        currentValue = curVal + val;
+    }
+    setCurVal(currentValue);
+    setAmount(currentValue);
+  };
 
   return (
     <SafeAreaView>
@@ -59,7 +81,7 @@ const RequestSpecificAmount = () => {
         </AmountHeroContainer>
 
         <View>
-          <VirtualKeyboard onChange={setAmount} reset={reset} />
+          <VirtualKeyboard onCellPress={onCellPress} />
           <ActionContainer>
             <Button
               onPress={() => {
