@@ -123,7 +123,7 @@ const getWalletType = (key: Key, wallet: Wallet) => {
 const EmptyListContainer = styled.View`
   justify-content: space-between;
   align-items: center;
-  margin-top: 20px;
+  margin-top: 50px;
 `;
 
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
@@ -242,6 +242,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   >([]);
   const [loadMore, setLoadMore] = useState(true);
   const [isLoading, setIsLoading] = useState<boolean>();
+  const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
 
   const loadHistory = async () => {
     if (!loadMore) {
@@ -249,6 +250,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     }
     try {
       setIsLoading(true);
+      setErrorLoadingTxs(false);
       let {transactions: _history, loadMore: _loadMore} =
         await GetTransactionHistory({
           wallet: fullWalletObj,
@@ -266,7 +268,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     } catch (e) {
       setLoadMore(false);
       setIsLoading(false);
-      console.log(e);
+      setErrorLoadingTxs(true);
+
+      console.log('Transaction Update: ', e);
     }
   };
 
@@ -295,9 +299,16 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const listEmptyComponent = () => {
     return (
       <>
-        {!isLoading && (
+        {!isLoading && !errorLoadingTxs && (
           <EmptyListContainer>
             <H5>It's a ghost town in here</H5>
+            <GhostSvg style={{marginTop: 20}} />
+          </EmptyListContainer>
+        )}
+
+        {!isLoading && errorLoadingTxs && (
+          <EmptyListContainer>
+            <H5>Could not update transaction history</H5>
             <GhostSvg style={{marginTop: 20}} />
           </EmptyListContainer>
         )}

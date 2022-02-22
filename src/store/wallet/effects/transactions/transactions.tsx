@@ -2,19 +2,12 @@ import {Wallet} from '../../wallet.models';
 import {FormatAmountStr} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
 import uniqBy from 'lodash.uniqby';
-import {IsZceCompatible} from '../../utils/wallet';
 import {
   DEFAULT_RBF_SEQ_NUMBER,
   SAFE_CONFIRMATIONS,
-  SOFT_CONFIRMATION_LIMIT,
 } from '../../../../constants/wallet';
 import {GetChain, IsUtxoCoin} from '../../utils/currency';
-import {ToAddress, ToCashAddress, ToLtcAddress} from '../address/address';
-import {Effect} from '../../../index';
-import {
-  setUpdateTransactionHistoryStatus,
-  updateTransactionHistory,
-} from '../../wallet.actions';
+import {ToAddress, ToLtcAddress} from '../address/address';
 import {IsDateInCurrentMonth, WithinSameMonth} from '../../utils/time';
 import moment from 'moment';
 
@@ -55,7 +48,7 @@ const GetCoinsForTx = (wallet: Wallet, txId: string): Promise<any> => {
 };
 
 const ProcessTx = (currencyAbbreviation: string, tx: any) => {
-  if (!tx || tx.action == 'invalid') {
+  if (!tx || tx.action === 'invalid') {
     return tx;
   }
 
@@ -64,7 +57,7 @@ const ProcessTx = (currencyAbbreviation: string, tx: any) => {
   if (tx.outputs?.length) {
     const outputsNr = tx.outputs.length;
 
-    if (tx.action != 'received') {
+    if (tx.action !== 'received') {
       if (outputsNr > 1) {
         tx.recipientCount = outputsNr;
         tx.hasMultiplesOutputs = true;
@@ -79,7 +72,7 @@ const ProcessTx = (currencyAbbreviation: string, tx: any) => {
     tx.toAddress = tx.outputs[0].toAddress;
 
     // translate legacy addresses
-    if (tx.addressTo && currencyAbbreviation == 'ltc') {
+    if (tx.addressTo && currencyAbbreviation === 'ltc') {
       for (let o of tx.outputs) {
         o.address = o.addressToShow = ToLtcAddress(tx.addressTo);
       }
@@ -317,22 +310,20 @@ const IsFirstInGroup = (index: number, history: any[]) => {
 };
 
 export const GroupTransactionHistory = (history: any[]) => {
-  let groups = history.reduce((groups, tx, txInd) => {
-    IsFirstInGroup(txInd, history)
-      ? groups.push([tx])
-      : groups[groups.length - 1].push(tx);
-    return groups;
-  }, []);
-
-  groups = groups.map((group: any[]) => {
-    const time = group[0].time * 1000;
-    const title = IsDateInCurrentMonth(time)
-      ? 'Recent'
-      : moment(time).format('MMMM');
-    return {title, data: group};
-  });
-
-  return groups;
+  return history
+    .reduce((groups, tx, txInd) => {
+      IsFirstInGroup(txInd, history)
+        ? groups.push([tx])
+        : groups[groups.length - 1].push(tx);
+      return groups;
+    }, [])
+    .map((group: any[]) => {
+      const time = group[0].time * 1000;
+      const title = IsDateInCurrentMonth(time)
+        ? 'Recent'
+        : moment(time).format('MMMM');
+      return {title, data: group};
+    });
 };
 
 export const GetTransactionHistory = ({
