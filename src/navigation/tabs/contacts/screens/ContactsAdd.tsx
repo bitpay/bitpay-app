@@ -13,7 +13,7 @@ import {
   ActiveOpacity,
 } from '../../../../components/styled/Containers';
 import {ValidateCoinAddress} from '../../../../store/wallet/utils/validations';
-import {GetCoinAndNetwork} from '../../../../store/wallet/effects/send/address';
+import {GetCoinAndNetwork} from '../../../../store/wallet/effects/address/address';
 import {ContactRowProps} from '../../../../components/list/ContactRow';
 import {useNavigation} from '@react-navigation/core';
 import {useDispatch, useSelector} from 'react-redux';
