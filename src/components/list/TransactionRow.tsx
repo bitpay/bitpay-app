@@ -5,7 +5,7 @@ import {ScreenGutter} from '../styled/Containers';
 import {SlateDark, White} from '../../styles/colors';
 export const TRANSACTION_ROW_HEIGHT = 75;
 
-const TransactionRow = styled.TouchableOpacity`
+const TransactionContainer = styled.TouchableOpacity`
   flex-direction: row;
   padding: ${ScreenGutter};
   justify-content: center;
@@ -47,7 +47,7 @@ interface Props {
   onPressTransaction?: () => void;
 }
 
-const WalletTransactionRow = ({
+const TransactionRow = ({
   icon,
   description,
   value,
@@ -55,7 +55,7 @@ const WalletTransactionRow = ({
   onPressTransaction,
 }: Props) => {
   return (
-    <TransactionRow onPress={onPressTransaction}>
+    <TransactionContainer onPress={onPressTransaction}>
       {icon && <IconContainer>{icon}</IconContainer>}
 
       {description && (
@@ -68,8 +68,8 @@ const WalletTransactionRow = ({
         {value && <Value>{value}</Value>}
         {time && <Time>{time}</Time>}
       </TailContainer>
-    </TransactionRow>
+    </TransactionContainer>
   );
 };
 
-export default memo(WalletTransactionRow);
+export default memo(TransactionRow);

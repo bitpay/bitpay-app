@@ -166,7 +166,7 @@ const ProcessNewTxs = async (wallet: Wallet, txs: any[]): Promise<any> => {
       ret.push(tx);
       txHistoryUnique[tx.txid] = true;
     } else {
-      console.debug('Ignoring duplicate TX in history: ' + tx.txid);
+      console.log('Ignoring duplicate TX in history: ' + tx.txid);
     }
   }
   return Promise.resolve(ret);
@@ -203,8 +203,8 @@ const GetNewTransactions = (
         newTxs = newTxs.concat(_newTxs);
         skip = skip + requestLimit;
 
-        console.debug(
-          `Syncing TXs for: ${wallet.id}. Got: ${newTxs.length} Skip: ${skip} lastTransactionId: ${lastTransactionId} Continue: ${loadMore}`,
+        console.log(
+          `Merging TXs for: ${wallet.id}. Got: ${newTxs.length} Skip: ${skip} lastTransactionId: ${lastTransactionId} Load more: ${loadMore}`,
         );
 
         return resolve({

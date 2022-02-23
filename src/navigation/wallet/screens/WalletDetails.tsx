@@ -35,9 +35,9 @@ import {
   GroupTransactionHistory,
 } from '../../../store/wallet/effects/transactions/transactions';
 import {ScreenGutter} from '../../../components/styled/Containers';
-import WalletTransactionRow, {
+import TransactionRow, {
   TRANSACTION_ROW_HEIGHT,
-} from '../../../components/list/WalletTransactionRow';
+} from '../../../components/list/TransactionRow';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 
@@ -99,6 +99,12 @@ const SkeletonContainer = styled.View`
   margin-bottom: 20px;
 `;
 
+const EmptyListContainer = styled.View`
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 50px;
+`;
+
 const getWalletType = (key: Key, wallet: Wallet) => {
   const {
     credentials: {token, walletId},
@@ -113,12 +119,6 @@ const getWalletType = (key: Key, wallet: Wallet) => {
   }
   return;
 };
-
-const EmptyListContainer = styled.View`
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 50px;
-`;
 
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
@@ -312,9 +312,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     );
   };
 
-  const _renderItem = useCallback(
+  const renderItem = useCallback(
     ({item}) => (
-      <WalletTransactionRow
+      <TransactionRow
         icon={item.uiIcon}
         description={item.uiDescription}
         time={item.uiTime}
@@ -325,9 +325,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     [],
   );
 
-  const _keyExtractor = useCallback(item => item.txid, []);
+  const keyExtractor = useCallback(item => item.txid, []);
 
-  const _getItemLayout = useCallback(
+  const getItemLayout = useCallback(
     (data, index) => ({
       length: TRANSACTION_ROW_HEIGHT,
       offset: TRANSACTION_ROW_HEIGHT * index,
@@ -379,8 +379,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         }}
         sections={groupedHistory}
         stickyHeaderIndices={[groupedHistory?.length]}
-        keyExtractor={_keyExtractor}
-        renderItem={_renderItem}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
         renderSectionHeader={({section: {title}}) => (
           <TransactionSectionHeader>{title}</TransactionSectionHeader>
         )}
@@ -390,7 +390,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         onEndReachedThreshold={0.5}
         ListEmptyComponent={listEmptyComponent}
         maxToRenderPerBatch={15}
-        getItemLayout={_getItemLayout}
+        getItemLayout={getItemLayout}
       />
 
       <OptionsSheet
