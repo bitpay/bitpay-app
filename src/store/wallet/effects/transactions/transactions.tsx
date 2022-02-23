@@ -175,7 +175,7 @@ const ProcessNewTxs = async (wallet: Wallet, txs: any[]): Promise<any> => {
 // Approx utxo amount, from which the uxto is economically redeemable
 const GetLowAmount = (wallet: Wallet): Promise<any> => {
   return new Promise((resolve, reject) => {
-    //TODO: Get min fee rates
+    //TODO: Get min fee rates. used in transaction details
     resolve(1);
   });
 };
@@ -372,11 +372,13 @@ export const GetTransactionHistory = ({
         transactions = UpdateLowAmount(transactions, opts);
       }
 
+      // To get transaction list details: icon, description, amount and date
       transactions = BuildUiFriendlyList(
         transactions,
         wallet.currencyAbbreviation,
         contactsList,
       );
+
       const array = transactionsHistory
         .concat(transactions)
         .filter((txs: any) => txs);
@@ -397,14 +399,14 @@ export const GetTransactionHistory = ({
   });
 };
 
-////////////////////////////////////////////////////////////
+/////////////////////// Transaction list /////////////////////////////////////
 
 const getContactName = (address: string | undefined) => {
   //   TODO: Get name from contacts list
   return;
 };
 
-const hasContactName = (contactsList: any[] = [], outputs?: any[]) => {
+const hasContactName = (contactsList: any[] = [], outputs?: any[]): boolean => {
   return !!(
     contactsList &&
     outputs?.length &&
@@ -412,29 +414,32 @@ const hasContactName = (contactsList: any[] = [], outputs?: any[]) => {
   );
 };
 
-const getFormattedDate = (time: number) => {
+const getFormattedDate = (time: number): string => {
   return WithinPastDay(time)
     ? moment(time).fromNow()
     : moment(time).format('MMM D, YYYY');
 };
 
-const notZeroAmountEth = (amount: number, currencyAbbreviation: string) => {
+const notZeroAmountEth = (
+  amount: number,
+  currencyAbbreviation: string,
+): boolean => {
   return !(amount === 0 && currencyAbbreviation === 'eth');
 };
 
-const isSent = (action: string) => {
+const isSent = (action: string): boolean => {
   return action === 'sent';
 };
 
-const isMoved = (action: string) => {
+const isMoved = (action: string): boolean => {
   return action === 'moved';
 };
 
-const isReceived = (action: string) => {
+const isReceived = (action: string): boolean => {
   return action === 'received';
 };
 
-const isInvalid = (action: string) => {
+const isInvalid = (action: string): boolean => {
   return action === 'invalid';
 };
 
@@ -462,25 +467,33 @@ export const BuildUiFriendlyList = (
     const {service: customDataService, toWalletName} = customData || {};
     const {body: noteBody} = note || {};
 
+    const _notZeroAmountEth = notZeroAmountEth(amount, currencyAbbreviation);
+    const _hasContactName = hasContactName(contactsList, outputs);
+
+    const _isSent = isSent(action);
+    const _isMoved = isMoved(action);
+    const _isReceived = isReceived(action);
+    const _isInvalid = isInvalid(action);
+
     if (confirmations <= 0) {
       transaction.uiIcon = TransactionIcons.confirming;
 
-      if (notZeroAmountEth(amount, currencyAbbreviation)) {
-        if (hasContactName(contactsList, outputs)) {
-          if (isSent(action) || isMoved(action)) {
+      if (_notZeroAmountEth) {
+        if (_hasContactName) {
+          if (_isSent || _isMoved) {
             transaction.uiDescription = getContactName(outputs[0]?.address);
           }
         } else {
-          if (isSent(action)) {
+          if (_isSent) {
             transaction.uiDescription = 'Sending';
           }
 
-          if (isMoved(action)) {
+          if (_isMoved) {
             transaction.uiDescription = 'Moving';
           }
         }
 
-        if (isReceived(action)) {
+        if (_isReceived) {
           transaction.uiDescription = 'Receiving';
         }
       }
@@ -494,18 +507,18 @@ export const BuildUiFriendlyList = (
       ) {
         transaction.uiIcon = TransactionIcons.error;
       } else {
-        if (isSent(action)) {
+        if (_isSent) {
           // TODO: Get giftCard images
           transaction.uiIcon = customDataService
             ? TransactionIcons[customDataService]
             : TransactionIcons.sent;
 
-          if (notZeroAmountEth(amount, currencyAbbreviation)) {
+          if (_notZeroAmountEth) {
             if (noteBody) {
               transaction.uiDescription = noteBody;
             } else if (message) {
               transaction.uiDescription = message;
-            } else if (hasContactName(contactsList, outputs)) {
+            } else if (_hasContactName) {
               transaction.uiDescription = getContactName(outputs[0]?.address);
             } else if (toWalletName) {
               transaction.uiDescription = toWalletName;
@@ -515,7 +528,7 @@ export const BuildUiFriendlyList = (
           }
         }
 
-        if (isReceived(action)) {
+        if (_isReceived) {
           transaction.uiIcon = TransactionIcons.received;
 
           if (noteBody) {
@@ -527,7 +540,7 @@ export const BuildUiFriendlyList = (
           }
         }
 
-        if (isMoved(action)) {
+        if (_isMoved) {
           transaction.uiIcon = TransactionIcons.moved;
 
           if (noteBody) {
@@ -539,21 +552,21 @@ export const BuildUiFriendlyList = (
           }
         }
 
-        if (isInvalid(action)) {
+        if (_isInvalid) {
           transaction.uiDescription = 'Invalid';
         }
       }
     }
 
-    if (!notZeroAmountEth(amount, currencyAbbreviation)) {
+    if (!_notZeroAmountEth) {
       transaction.uiDescription = 'Interaction with contract';
       transaction.uiValue = feeStr;
     }
 
-    if (isInvalid(action)) {
+    if (_isInvalid) {
       transaction.uiValue = '(possible double spend)';
     } else {
-      if (notZeroAmountEth(amount, currencyAbbreviation)) {
+      if (_notZeroAmountEth) {
         transaction.uiValue = amountStr;
       }
     }
