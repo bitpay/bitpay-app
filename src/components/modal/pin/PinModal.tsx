@@ -184,6 +184,8 @@ const PinModal: React.FC = () => {
     <Modal
       isVisible={isVisible}
       coverScreen={true}
+      backdropTransitionOutTiming={0}
+      hideModalContentWhileAnimating
       backdropOpacity={1}
       backdropColor={theme.dark ? LightBlack : White}
       animationIn={'fadeInUp'}
