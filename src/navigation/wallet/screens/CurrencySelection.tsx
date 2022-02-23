@@ -43,7 +43,7 @@ import {NeutralSlate} from '../../../styles/colors';
 import debounce from 'lodash.debounce';
 import Icons from '../components/WalletIcons';
 import SearchSvg from '../../../../assets/img/search.svg';
-import useAppSelector, {useAppDispatch} from '../../../utils/hooks';
+import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
 
 type CurrencySelectionScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -155,17 +155,21 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     );
   };
 
-  const _SupportedCurrencyOptions = SupportedCurrencyOptions.map(currency => {
+  const _SupportedCurrencyOptions = useMemo(() => SupportedCurrencyOptions.map(currency => {
     return {
       ...currency,
       checked: false,
     };
-  });
+  }), [SupportedCurrencyOptions]);
 
   const _currencies = useMemo(
     () => [..._SupportedCurrencyOptions, ...ALL_CUSTOM_TOKENS],
     [_SupportedCurrencyOptions, ALL_CUSTOM_TOKENS],
   );
+
+  const _multiSigCurrencies = useMemo(() => SupportedCurrencyOptions.filter(
+      currency => currency.hasMultisig,
+  ), [SupportedCurrencyOptions])
 
   const contextHandler = (): ContextHandler | undefined => {
     switch (context) {
@@ -232,9 +236,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
       }
       case 'addWalletMultisig': {
         return {
-          currencies: SupportedCurrencyOptions.filter(
-            currency => currency.hasMultisig,
-          ),
+          currencies: _multiSigCurrencies,
           headerTitle: 'Select Currency',
           hideBottomCta: true,
           removeCheckbox: true,
@@ -310,6 +312,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
         SUPPORTED_TOKENS.includes(selected.toLowerCase()) ||
         ALL_CUSTOM_TOKENS.some(token => token.currencyAbbreviation === selected)
       ) {
+
         if (!currencies.includes('ETH')) {
           setCurrencyOptions(
             DEFAULT_CURRENCY_OPTIONS.map(currency => {
@@ -339,8 +342,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     isToken,
   }: CurrencySelectionToggleProps) => {
     if (selectionCta) {
-      setSearchInput('');
-      onSearchInputChange('');
+      resetSearch();
       selectionCta({currencyAbbreviation, currencyName, isToken, navigation});
     } else {
       setSelectedCurrencies(currencies => {
@@ -356,6 +358,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
         // if token selected set eth asset selected
         return checkAndToggleEthIfTokenSelected(currencies);
       });
+
     }
   };
   // Flat list
@@ -371,6 +374,11 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     [],
   );
 
+  const resetSearch = () => {
+    setSearchInput(undefined);
+    onSearchInputChange('');
+  }
+
   const onSearchInputChange = useMemo(
     () =>
       debounce((search: string) => {
@@ -385,24 +393,24 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
               currencyName.toLowerCase().includes(search),
           );
         } else {
+
           _searchList = DEFAULT_CURRENCY_OPTIONS;
         }
 
-        selectedCurrencies.length
-          ? _searchList
-              .filter(({currencyAbbreviation}) =>
-                selectedCurrencies.includes(currencyAbbreviation),
-              )
-              .map(currency => {
-                currency.checked = true;
-                currency.id = Math.random();
-                return currency;
-              })
-          : [];
+
+        if (selectedCurrencies.length) {
+          _searchList.forEach(currency => {
+            if(selectedCurrencies.includes(currency.currencyAbbreviation)) {
+              currency.checked = true;
+              currency.id = Math.random();
+            }
+            return currency
+          })
+        }
 
         setCurrencyOptions(_searchList);
       }, 300),
-    [currencies],
+    [currencies, selectedCurrencies],
   );
 
   return (
