@@ -10,6 +10,8 @@ target 'BitPayApp' do
   permissions_path = '../node_modules/react-native-permissions/ios'
   pod 'Permission-Notifications', :path => "#{permissions_path}/Notifications/Permission-Notifications.podspec"
   pod 'PoweredByDosh'
+  pod 'React-RCTText', :path => '../node_modules/react-native/Libraries/Text', :modular_headers => true
+
   config = use_native_modules!
 
   use_react_native!(

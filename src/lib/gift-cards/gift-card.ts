@@ -1,5 +1,6 @@
 import 'intl';
 import 'intl/locale-data/jsonp/en';
+import {countries} from 'countries-list';
 
 import {
   ApiCard,
@@ -154,4 +155,42 @@ export function getActivationFee(
       amount <= fee.amountRange.max,
   );
   return (fixedFee && fixedFee.fee) || 0;
+}
+
+export interface PhoneCountryCode {
+  emoji: string;
+  phone: string;
+  name: string;
+  countryCode: string;
+}
+
+export function getPhoneCountryCodes(
+  allowedPhoneCountries?: string[],
+): PhoneCountryCode[] {
+  const countryCodes = Object.keys(countries);
+  const countryList = Object.values(countries);
+  const countryListWithCodes = countryList
+    .map((country, index) => ({
+      ...country,
+      countryCode: countryCodes[index],
+    }))
+    .filter(country =>
+      allowedPhoneCountries
+        ? allowedPhoneCountries.includes(country.countryCode)
+        : true,
+    );
+  const countriesWithMultiplePhoneCodes = countryListWithCodes
+    .filter(country => country.phone.includes(','))
+    .map(country => {
+      const codes = country.phone.split(',');
+      return codes.map(code => ({...country, phone: code}));
+    });
+  const countriesWithSinglePhoneCode = countryListWithCodes.filter(
+    country => !country.phone.includes(','),
+  );
+  const multiplePhoneCodesFlattened = countriesWithMultiplePhoneCodes.flat();
+  return countriesWithSinglePhoneCode
+    .concat(multiplePhoneCodesFlattened)
+    .sort((a, b) => (a.name < b.name ? -1 : 1))
+    .filter(country => country.name !== 'Antarctica');
 }
