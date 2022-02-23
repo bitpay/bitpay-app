@@ -1,6 +1,7 @@
 import React from 'react';
 import {useSelector} from 'react-redux';
 import styled from 'styled-components/native';
+import {CardBrand} from '../../../constants/card';
 import {RootState} from '../../../store';
 import {Card} from '../../../store/card/card.models';
 import {VirtualDesignCurrency} from '../../../store/card/card.types';
@@ -29,7 +30,7 @@ const CardOverviewSlide: React.FC<CardOverviewSlideProps> = ({
   return (
     <SlideContainer>
       <CardFront
-        brand={card.brand || 'Visa'}
+        brand={card.brand || CardBrand.Visa}
         provider={card.provider}
         balance={formattedBalance}
         nickname={card.nickname}

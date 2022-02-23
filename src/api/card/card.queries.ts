@@ -206,6 +206,50 @@ const FETCH_OVERVIEW = (
   };
 };
 
+const FETCH_SETTLED_TRANSACTIONS = (
+  token: string,
+  id: string,
+  options?: {
+    pageSize?: number;
+    pageNumber?: number;
+    startDate?: string;
+    endDate?: string;
+  },
+): GqlQueryParams => {
+  const {pageSize, pageNumber, startDate, endDate} = options || {};
+
+  return {
+    query: `
+      query FETCH_SETTLED_TRANSACTIONS($token:String!, $csrf:String, $cardId:String!, $pageSize:Int, $pageNumber:Int, $startDate:String, $endDate:String) {
+        user:bitpayUser(token:$token, csrf:$csrf) {
+          card:debitCard(cardId:$cardId) {
+            id
+            overview:activityOverview(pageSize:$pageSize, pageNumber:$pageNumber,startDate: $startDate, endDate:$endDate) {
+              dateAccountOpened
+              settledTransactions {
+                currentPageNumber
+                totalPageCount
+                totalRecordCount
+                transactionList {
+                  ${transactionFields}
+                }
+              }
+            }
+          }
+        }
+      }
+    `,
+    variables: {
+      token,
+      cardId: id,
+      pageSize,
+      pageNumber,
+      startDate,
+      endDate,
+    },
+  };
+};
+
 const FETCH_VIRTUAL_CARD_IMAGE_URLS = (
   token: string,
   ids: string[],
@@ -237,6 +281,7 @@ const CardQueries = {
   FETCH_CARDS,
   FETCH_CARD,
   FETCH_OVERVIEW,
+  FETCH_SETTLED_TRANSACTIONS,
   FETCH_VIRTUAL_CARD_IMAGE_URLS,
 };
 

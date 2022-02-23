@@ -4,6 +4,7 @@ import {Card, PagedTransactionData, Transaction} from './card.models';
 import {
   FetchCardsStatus,
   FetchOverviewStatus,
+  FetchSettledTransactionsStatus,
   FetchVirtualCardImageUrlsStatus,
 } from './card.reducer';
 import {
@@ -75,6 +76,27 @@ export const updateFetchOverviewStatus = (
   status: FetchOverviewStatus,
 ): CardActionType => ({
   type: CardActionTypes.UPDATE_FETCH_OVERVIEW_STATUS,
+  payload: {id, status},
+});
+
+export const successFetchSettledTransactions = (
+  id: string,
+  transactions: PagedTransactionData,
+): CardActionType => ({
+  type: CardActionTypes.SUCCESS_FETCH_SETTLED_TRANSACTIONS,
+  payload: {id, transactions},
+});
+
+export const failedFetchSettledTransactions = (id: string): CardActionType => ({
+  type: CardActionTypes.FAILED_FETCH_SETTLED_TRANSACTIONS,
+  payload: {id},
+});
+
+export const updateFetchSettledTransactionsStatus = (
+  id: string,
+  status: FetchSettledTransactionsStatus,
+): CardActionType => ({
+  type: CardActionTypes.UPDATE_FETCH_SETTLED_TRANSACTIONS_STATUS,
   payload: {id, status},
 });
 

@@ -1,7 +1,7 @@
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {View} from 'react-native';
+import ReactNative, {View} from 'react-native';
 import {useDispatch} from 'react-redux';
 import CustomizeCardIcon from '../../../../assets/img/customize-card.svg';
 import GetHelpIcon from '../../../../assets/img/get-help.svg';
@@ -10,12 +10,12 @@ import LockIcon from '../../../../assets/img/lock.svg';
 import {Br, Hr} from '../../../components/styled/Containers';
 import {Link, Smallest} from '../../../components/styled/Text';
 import {URL} from '../../../constants';
+import {CardBrand, CardProvider} from '../../../constants/card';
 import {AppEffects} from '../../../store/app';
 import {Card} from '../../../store/card/card.models';
-import {CardBrand} from '../../../store/card/card.types';
 import {CardStackParamList} from '../CardStack';
 import * as Styled from './CardSettingsList.styled';
-import ReactNative from 'react-native';
+
 const {Dosh} = ReactNative.NativeModules;
 
 interface SettingsListProps {
@@ -52,7 +52,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
     dispatch(AppEffects.openUrlWithInAppBrowser(url));
   };
 
-  const links = LINKS[card.brand || 'Visa'];
+  const links = LINKS[card.brand || CardBrand.Visa];
 
   return (
     <View>
@@ -74,7 +74,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
         </>
       ) : null}
 
-      {card.provider === 'galileo' ? (
+      {card.provider === CardProvider.galileo ? (
         <>
           <Styled.CategoryRow>
             <Styled.CategoryHeading>Security</Styled.CategoryHeading>
@@ -150,7 +150,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
         </>
       ) : null}
 
-      {card.brand === 'Mastercard' ? (
+      {card.brand === CardBrand.Mastercard ? (
         <>
           <Br />
           <Br />

@@ -1,4 +1,4 @@
-import {CardBrand, CardProvider} from './card.types';
+import {CardBrand, CardProvider} from '../../constants/card';
 
 export interface Currency {
   code: string;
@@ -60,6 +60,10 @@ export interface Transaction {
   provider: string;
   status: any;
   type: string;
+}
+
+export interface UiTransaction extends Transaction {
+  settled: boolean;
 }
 
 export interface PagedTransactionData {
