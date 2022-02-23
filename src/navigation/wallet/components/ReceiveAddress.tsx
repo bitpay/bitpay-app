@@ -181,7 +181,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
           } else {
             showErrorMessage(
               CustomErrorMessage({
-                errMsg: BWCErrorMessage(createAddressErr.error)
+                errMsg: BWCErrorMessage(createAddressErr.error),
               }),
             );
           }
@@ -195,7 +195,9 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
           break;
         default:
           showErrorMessage(
-            CustomErrorMessage({errMsg: BWCErrorMessage(createAddressErr.error, prefix)}),
+            CustomErrorMessage({
+              errMsg: BWCErrorMessage(createAddressErr.error, prefix),
+            }),
           );
           break;
       }
