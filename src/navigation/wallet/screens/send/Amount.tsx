@@ -1,6 +1,6 @@
 import React, {useLayoutEffect, useState} from 'react';
 import {BaseText} from '../../../../components/styled/Text';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {StackActions, useNavigation, useRoute} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {LightBlack, NeutralSlate, White} from '../../../../styles/colors';
 import {
@@ -13,14 +13,10 @@ import Button from '../../../../components/button/Button';
 import {View} from 'react-native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
-import {
-  ProposalErrorHandlerProps,
-  Recipient,
-  Wallet,
-} from '../../../../store/wallet/wallet.models';
+import {Recipient, Wallet} from '../../../../store/wallet/wallet.models';
 import {
   createProposalAndBuildTxDetails,
-  handlerCreateTxProposalError,
+  handleCreateTxProposalError,
 } from '../../../../store/wallet/effects/send/send';
 import {useAppDispatch} from '../../../../utils/hooks';
 import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
@@ -30,6 +26,7 @@ import {
   showBottomNotificationModal,
 } from '../../../../store/app/app.actions';
 import {sleep} from '../../../../utils/helper-methods';
+import {navigationRef} from '../../../../Root';
 
 const SendMax = styled.TouchableOpacity`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
@@ -141,9 +138,20 @@ const Amount = () => {
     } catch (err: any) {
       dispatch(dismissOnGoingProcessModal());
       const errorMessageConfig = (
-        await Promise.all([handlerCreateTxProposalError(err), sleep(400)])
+        await Promise.all([handleCreateTxProposalError(err), sleep(400)])
       )[0];
-      dispatch(showBottomNotificationModal(errorMessageConfig));
+      dispatch(
+        showBottomNotificationModal({
+          ...errorMessageConfig,
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: 'OK',
+              action: () => navigationRef.dispatch(StackActions.pop(1)),
+            },
+          ],
+        }),
+      );
     }
   };
 

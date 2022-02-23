@@ -232,9 +232,9 @@ export interface TransactionProposal {
 
 export interface ProposalErrorHandlerProps {
   err: Error;
-  getState: () => RootState;
-  tx: TransactionOptions;
-  txp: Partial<TransactionProposal>;
+  getState?: () => RootState;
+  tx?: TransactionOptions;
+  txp?: Partial<TransactionProposal>;
 }
 
 // UI details

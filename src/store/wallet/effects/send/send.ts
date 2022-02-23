@@ -10,7 +10,7 @@ import {
   Wallet,
 } from '../../wallet.models';
 import {FormatAmountStr, ParseAmount} from '../amount/amount';
-import {FeeLevels} from '../fee/fee';
+import {FeeLevels, getFeeRatePerKb} from '../fee/fee';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {toFiat} from '../../utils/wallet';
 import {startGetRates} from '../rates/rates';
@@ -20,7 +20,6 @@ import {
   GeneralError,
 } from '../../../../navigation/wallet/components/ErrorMessages';
 import {BWCErrorMessage, getErrorName} from '../../../../constants/BWCError';
-import {insufficientFundsHandler} from './errors';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -208,27 +207,6 @@ const buildTransactionProposal = (
   });
 };
 
-export const handlerCreateTxProposalError = async (
-  proposalErrorProps: ProposalErrorHandlerProps,
-) => {
-  try {
-    const {err} = proposalErrorProps;
-
-    switch (getErrorName(err)) {
-      case 'INSUFFICIENT_FUNDS':
-        return insufficientFundsHandler(proposalErrorProps);
-
-      default:
-        return CustomErrorMessage({
-          title: 'Error',
-          errMsg: BWCErrorMessage(err),
-        });
-    }
-  } catch (err2) {
-    return GeneralError;
-  }
-};
-
 export const startSendPayment =
   ({
     txp,
@@ -328,4 +306,55 @@ export const broadcastTx = (wallet: Wallet, txp: any) => {
       resolve(broadcastedTxp);
     });
   });
+};
+
+export const handleCreateTxProposalError = async (
+  proposalErrorProps: ProposalErrorHandlerProps,
+) => {
+  try {
+    const {err} = proposalErrorProps;
+
+    switch (getErrorName(err)) {
+      case 'INSUFFICIENT_FUNDS':
+        const {tx, txp, getState} = proposalErrorProps;
+
+        if (!tx || !txp || !getState) {
+          return GeneralError;
+        }
+
+        const {wallet, amount} = tx;
+        const {feeLevel} = txp;
+
+        const feeRatePerKb = await getFeeRatePerKb({
+          wallet,
+          feeLevel: feeLevel || FeeLevels.NORMAL,
+        });
+
+        if (
+          !getState().WALLET.useUnconfirmedFunds &&
+          wallet.balance.sat >=
+            ParseAmount(amount, wallet.currencyAbbreviation).amountSat +
+              feeRatePerKb
+        ) {
+          return CustomErrorMessage({
+            title: 'Insufficient confirmed funds',
+            errMsg:
+              'You do not have enough confirmed funds to make this payment. Wait for your pending transactions to confirm or enable "Use unconfirmed funds" in Advanced Settings.',
+          });
+        } else {
+          return CustomErrorMessage({
+            title: 'Insufficient funds',
+            errMsg: BWCErrorMessage(err),
+          });
+        }
+
+      default:
+        return CustomErrorMessage({
+          title: 'Error',
+          errMsg: BWCErrorMessage(err),
+        });
+    }
+  } catch (err2) {
+    return GeneralError;
+  }
 };
