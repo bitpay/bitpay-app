@@ -180,18 +180,24 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
             return;
           } else {
             showErrorMessage(
-              CustomErrorMessage(BWCErrorMessage(createAddressErr.error)),
+              CustomErrorMessage({
+                errMsg: BWCErrorMessage(createAddressErr.error),
+              }),
             );
           }
           break;
         case 'MAIN_ADDRESS_GAP_REACHED':
           showErrorMessage(
-            CustomErrorMessage(BWCErrorMessage(createAddressErr.error)),
+            CustomErrorMessage({
+              errMsg: BWCErrorMessage(createAddressErr.error),
+            }),
           );
           break;
         default:
           showErrorMessage(
-            CustomErrorMessage(BWCErrorMessage(createAddressErr.error, prefix)),
+            CustomErrorMessage({
+              errMsg: BWCErrorMessage(createAddressErr.error, prefix),
+            }),
           );
           break;
       }
