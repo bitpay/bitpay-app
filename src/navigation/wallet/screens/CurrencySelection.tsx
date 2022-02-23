@@ -12,6 +12,7 @@ import CurrencySelectionRow, {
 
 import Button from '../../../components/button/Button';
 import {
+  SUPPORTED_CURRENCIES,
   SUPPORTED_TOKENS,
   SupportedCurrencies,
 } from '../../../constants/currencies';
@@ -123,7 +124,9 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
   const ALL_CUSTOM_TOKENS = useMemo(
     () =>
       Object.values(tokenOptions)
-        .filter(token => !SUPPORTED_TOKENS.includes(token.symbol.toLowerCase()))
+        .filter(
+          token => !SUPPORTED_CURRENCIES.includes(token.symbol.toLowerCase()),
+        )
         .map(({symbol, name, logoURI}) => {
           return {
             id: Math.random(),
@@ -155,21 +158,26 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     );
   };
 
-  const _SupportedCurrencyOptions = useMemo(() => SupportedCurrencyOptions.map(currency => {
-    return {
-      ...currency,
-      checked: false,
-    };
-  }), [SupportedCurrencyOptions]);
+  const _SupportedCurrencyOptions = useMemo(
+    () =>
+      SupportedCurrencyOptions.map(currency => {
+        return {
+          ...currency,
+          checked: false,
+        };
+      }),
+    [SupportedCurrencyOptions],
+  );
 
   const _currencies = useMemo(
     () => [..._SupportedCurrencyOptions, ...ALL_CUSTOM_TOKENS],
     [_SupportedCurrencyOptions, ALL_CUSTOM_TOKENS],
   );
 
-  const _multiSigCurrencies = useMemo(() => SupportedCurrencyOptions.filter(
-      currency => currency.hasMultisig,
-  ), [SupportedCurrencyOptions])
+  const _multiSigCurrencies = useMemo(
+    () => SupportedCurrencyOptions.filter(currency => currency.hasMultisig),
+    [SupportedCurrencyOptions],
+  );
 
   const contextHandler = (): ContextHandler | undefined => {
     switch (context) {
@@ -312,7 +320,6 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
         SUPPORTED_TOKENS.includes(selected.toLowerCase()) ||
         ALL_CUSTOM_TOKENS.some(token => token.currencyAbbreviation === selected)
       ) {
-
         if (!currencies.includes('ETH')) {
           setCurrencyOptions(
             DEFAULT_CURRENCY_OPTIONS.map(currency => {
@@ -358,7 +365,6 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
         // if token selected set eth asset selected
         return checkAndToggleEthIfTokenSelected(currencies);
       });
-
     }
   };
   // Flat list
@@ -375,9 +381,9 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
   );
 
   const resetSearch = () => {
-    setSearchInput(undefined);
+    setSearchInput('');
     onSearchInputChange('');
-  }
+  };
 
   const onSearchInputChange = useMemo(
     () =>
@@ -386,27 +392,24 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
 
         if (search) {
           search = search.toLowerCase();
-
           _searchList = DEFAULT_CURRENCY_OPTIONS.filter(
             ({currencyAbbreviation, currencyName}) =>
               currencyAbbreviation.toLowerCase().includes(search) ||
               currencyName.toLowerCase().includes(search),
           );
         } else {
-
           _searchList = DEFAULT_CURRENCY_OPTIONS;
         }
 
-
-        if (selectedCurrencies.length) {
-          _searchList.forEach(currency => {
-            if(selectedCurrencies.includes(currency.currencyAbbreviation)) {
-              currency.checked = true;
-              currency.id = Math.random();
-            }
-            return currency
-          })
-        }
+        _searchList.forEach(currency => {
+          if (selectedCurrencies.includes(currency.currencyAbbreviation)) {
+            currency.checked = true;
+            currency.id = Math.random();
+          } else {
+            currency.checked = false;
+          }
+          return currency;
+        });
 
         setCurrencyOptions(_searchList);
       }, 300),
