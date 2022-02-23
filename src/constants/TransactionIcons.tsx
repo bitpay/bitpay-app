@@ -13,7 +13,7 @@ import ReceivedSvg from '../../assets/img/wallet/transactions/received.svg';
 import MovedSvg from '../../assets/img/wallet/transactions/moved.svg';
 import ConfirmingSvg from '../../assets/img/wallet/transactions/confirming.svg';
 import ErrorSvg from '../../assets/img/wallet/transactions/failed.svg';
-import {TRANSACTION_ICON_SIZE} from '../store/wallet/effects/transactions/transactions';
+export const TRANSACTION_ICON_SIZE = 35;
 
 export const TransactionIcons: {[key in string]: ReactElement} = {
   amazon: (

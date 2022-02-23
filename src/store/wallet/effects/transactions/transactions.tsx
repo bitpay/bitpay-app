@@ -406,44 +406,11 @@ const getContactName = (address: string | undefined) => {
   return;
 };
 
-const hasContactName = (contactsList: any[] = [], outputs?: any[]): boolean => {
-  return !!(
-    contactsList &&
-    outputs?.length &&
-    getContactName(outputs[0]?.address)
-  );
-};
-
 const getFormattedDate = (time: number): string => {
   return WithinPastDay(time)
     ? moment(time).fromNow()
     : moment(time).format('MMM D, YYYY');
 };
-
-const notZeroAmountEth = (
-  amount: number,
-  currencyAbbreviation: string,
-): boolean => {
-  return !(amount === 0 && currencyAbbreviation === 'eth');
-};
-
-const isSent = (action: string): boolean => {
-  return action === 'sent';
-};
-
-const isMoved = (action: string): boolean => {
-  return action === 'moved';
-};
-
-const isReceived = (action: string): boolean => {
-  return action === 'received';
-};
-
-const isInvalid = (action: string): boolean => {
-  return action === 'invalid';
-};
-
-export const TRANSACTION_ICON_SIZE = 35;
 
 export const BuildUiFriendlyList = (
   transactionList: any[] = [],
@@ -467,33 +434,37 @@ export const BuildUiFriendlyList = (
     const {service: customDataService, toWalletName} = customData || {};
     const {body: noteBody} = note || {};
 
-    const _notZeroAmountEth = notZeroAmountEth(amount, currencyAbbreviation);
-    const _hasContactName = hasContactName(contactsList, outputs);
+    const notZeroAmountEth = !(amount === 0 && currencyAbbreviation === 'eth');
+    const hasContactName = !!(
+      contactsList?.length &&
+      outputs?.length &&
+      getContactName(outputs[0]?.address)
+    );
 
-    const _isSent = isSent(action);
-    const _isMoved = isMoved(action);
-    const _isReceived = isReceived(action);
-    const _isInvalid = isInvalid(action);
+    const isSent = action === 'sent';
+    const isMoved = action === 'moved';
+    const isReceived = action === 'received';
+    const isInvalid = action === 'invalid';
 
     if (confirmations <= 0) {
       transaction.uiIcon = TransactionIcons.confirming;
 
-      if (_notZeroAmountEth) {
-        if (_hasContactName) {
-          if (_isSent || _isMoved) {
+      if (notZeroAmountEth) {
+        if (hasContactName) {
+          if (isSent || isMoved) {
             transaction.uiDescription = getContactName(outputs[0]?.address);
           }
         } else {
-          if (_isSent) {
+          if (isSent) {
             transaction.uiDescription = 'Sending';
           }
 
-          if (_isMoved) {
+          if (isMoved) {
             transaction.uiDescription = 'Moving';
           }
         }
 
-        if (_isReceived) {
+        if (isReceived) {
           transaction.uiDescription = 'Receiving';
         }
       }
@@ -507,18 +478,18 @@ export const BuildUiFriendlyList = (
       ) {
         transaction.uiIcon = TransactionIcons.error;
       } else {
-        if (_isSent) {
+        if (isSent) {
           // TODO: Get giftCard images
           transaction.uiIcon = customDataService
             ? TransactionIcons[customDataService]
             : TransactionIcons.sent;
 
-          if (_notZeroAmountEth) {
+          if (notZeroAmountEth) {
             if (noteBody) {
               transaction.uiDescription = noteBody;
             } else if (message) {
               transaction.uiDescription = message;
-            } else if (_hasContactName) {
+            } else if (hasContactName) {
               transaction.uiDescription = getContactName(outputs[0]?.address);
             } else if (toWalletName) {
               transaction.uiDescription = toWalletName;
@@ -528,19 +499,19 @@ export const BuildUiFriendlyList = (
           }
         }
 
-        if (_isReceived) {
+        if (isReceived) {
           transaction.uiIcon = TransactionIcons.received;
 
           if (noteBody) {
             transaction.uiDescription = noteBody;
-          } else if (hasContactName(contactsList, outputs)) {
+          } else if (hasContactName) {
             transaction.uiDescription = getContactName(outputs[0]?.address);
           } else {
             transaction.uiDescription = 'Received';
           }
         }
 
-        if (_isMoved) {
+        if (isMoved) {
           transaction.uiIcon = TransactionIcons.moved;
 
           if (noteBody) {
@@ -552,21 +523,21 @@ export const BuildUiFriendlyList = (
           }
         }
 
-        if (_isInvalid) {
+        if (isInvalid) {
           transaction.uiDescription = 'Invalid';
         }
       }
     }
 
-    if (!_notZeroAmountEth) {
+    if (!notZeroAmountEth) {
       transaction.uiDescription = 'Interaction with contract';
       transaction.uiValue = feeStr;
     }
 
-    if (_isInvalid) {
+    if (isInvalid) {
       transaction.uiValue = '(possible double spend)';
     } else {
-      if (_notZeroAmountEth) {
+      if (notZeroAmountEth) {
         transaction.uiValue = amountStr;
       }
     }
