@@ -137,7 +137,7 @@ export const formatFiatAmount = (
 ) =>
   new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency,
+    currency: currency.toLowerCase(),
     ...(opts.customPrecision === 'minimal' &&
       Number.isInteger(amount) && {
         maximumFractionDigits: 0,

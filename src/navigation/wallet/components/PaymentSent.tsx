@@ -10,7 +10,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 const PaymentSentContainer = styled.View`
   flex: 1;
   background-color: ${Success};
-  width: ${WIDTH};
+  width: ${WIDTH}px;
 `;
 
 const PaymentSentHero = styled.View`

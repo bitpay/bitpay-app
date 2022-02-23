@@ -2,6 +2,7 @@ import React from 'react';
 import RNSwipeButton from 'rn-swipe-button';
 import {NotificationPrimary, White} from '../../styles/colors';
 import BitpayBSvg from '../../../assets/img/logos/bitpay-b.svg';
+import haptic from '../haptic-feedback/haptic';
 
 export interface SwipeButtonConfig {
   title: string;
@@ -13,13 +14,15 @@ const SwipeButton = ({title, onSwipeComplete}: SwipeButtonConfig) => {
     <RNSwipeButton
       containerStyles={{borderRadius: 50}}
       height={77}
+      onSwipeStart={() => haptic('longPress')}
       onSwipeSuccess={onSwipeComplete}
+      swipeSuccessThreshold={90}
       railBackgroundColor={NotificationPrimary}
-      railFillBorderColor={'#1f3ab3'}
-      railFillBackgroundColor={'#1f3ab3'}
+      railFillBorderColor={'#0E258D'}
+      railFillBackgroundColor={'#0E258D'}
       thumbIconStyles={{borderRadius: 50}}
-      thumbIconBackgroundColor={'#1f3ab3'}
-      thumbIconBorderColor={'#1f3ab3'}
+      thumbIconBackgroundColor={'#0E258D'}
+      thumbIconBorderColor={'#0E258D'}
       // @ts-ignore
       thumbIconComponent={() => <BitpayBSvg />}
       thumbIconWidth={81}

@@ -17,7 +17,7 @@ export const Feather = '#F6F7FC';
  */
 export const OledBlack = '#050505';
 export const LightBlack = '#252525';
-export const Black = '#303133';
+export const Black = '#000000';
 export const Grey = '#E7E7E7';
 export const White = '#FFFFFF';
 

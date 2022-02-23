@@ -7,7 +7,6 @@ import ScanSvg from '../../../../../assets/img/onboarding/scan.svg';
 import {NeutralSlate} from '../../../../styles/colors';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
-import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {Key} from '../../../../store/wallet/wallet.models';
@@ -39,11 +38,15 @@ import {
   showBottomNotificationModal,
 } from '../../../../store/app/app.actions';
 import {Currencies} from '../../../../constants/currencies';
-import {useLogger} from '../../../../utils/hooks';
+import {
+  useAppDispatch,
+  useLogger,
+  useAppSelector,
+} from '../../../../utils/hooks';
 import {
   BchLegacyAddressInfo,
   CustomErrorMessage,
-  SendGeneralErrorMessage,
+  Mismatch,
 } from '../../components/ErrorMessages';
 import {
   CoinNetwork,
@@ -139,11 +142,11 @@ const BuildKeyWalletRow = (
 
 const SendTo = () => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const logger = useLogger();
   const route = useRoute<RouteProp<WalletStackParamList, 'SendTo'>>();
 
-  const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
+  const keys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
   const theme = useTheme();
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
   const [searchInput, setSearchInput] = useState('');
@@ -217,17 +220,11 @@ const SendTo = () => {
           );
         } else {
           dispatch(
-            showBottomNotificationModal(
-              SendGeneralErrorMessage(onErrorMessageDismiss),
-            ),
+            showBottomNotificationModal(Mismatch(onErrorMessageDismiss)),
           );
         }
       } else {
-        dispatch(
-          showBottomNotificationModal(
-            SendGeneralErrorMessage(onErrorMessageDismiss),
-          ),
-        );
+        dispatch(showBottomNotificationModal(Mismatch(onErrorMessageDismiss)));
       }
     }
     return false;
@@ -284,7 +281,7 @@ const SendTo = () => {
         logger.warn(formattedErrMsg);
         dispatch(
           showBottomNotificationModal(
-            CustomErrorMessage(formattedErrMsg, 'Error'),
+            CustomErrorMessage({errMsg: formattedErrMsg, title: 'Error'}),
           ),
         );
       }
@@ -303,21 +300,30 @@ const SendTo = () => {
     validateSearchText(text);
   }, 300);
 
-  const onPressWallet = async (selectedWallet: KeyWallet) => {
+  const onSendToWallet = async (selectedWallet: KeyWallet) => {
     try {
-      const address = (await dispatch<any>(
-        createWalletAddress({wallet, newAddress: false}),
-      )) as string;
+      const address = await dispatch<Promise<string>>(
+        createWalletAddress({wallet: selectedWallet, newAddress: false}),
+      );
+
+      const {credentials, id: walletId, keyId, walletName} = selectedWallet;
 
       navigation.navigate('Wallet', {
         screen: 'Amount',
         params: {
-          id: selectedWallet.id,
-          address,
-          currencyAbbreviation: selectedWallet.currencyAbbreviation,
+          wallet,
+          recipient: {
+            type: 'wallet',
+            name: walletName || credentials.walletName,
+            walletId,
+            keyId,
+            address,
+          },
         },
       });
-    } catch (e) {}
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -360,7 +366,7 @@ const SendTo = () => {
           <KeyWalletsRow
             keyWallets={keyWallets}
             onPress={(selectedWallet: KeyWallet) => {
-              onPressWallet(selectedWallet);
+              onSendToWallet(selectedWallet);
             }}
           />
         </View>
