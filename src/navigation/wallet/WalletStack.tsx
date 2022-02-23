@@ -20,7 +20,11 @@ import Import, {ImportParamList} from './screens/Import';
 import CreationOptions from './screens/CreationOptions';
 import {HeaderTitle} from '../../components/styled/Text';
 import CreateEncryptionPassword from './screens/CreateEncryptionPassword';
-import {Key, Wallet as WalletModel} from '../../store/wallet/wallet.models';
+import {
+  Key,
+  Wallet as WalletModel,
+  _Credentials,
+} from '../../store/wallet/wallet.models';
 import ExtendedPrivateKey from './screens/ExtendedPrivateKey';
 import DeleteKey from './screens/DeleteKey';
 import ExportKey from './screens/ExportKey';
@@ -64,7 +68,7 @@ export type WalletStackParamList = {
   SendTo: {wallet: WalletModel};
   CreateMultisig: CreateMultisigProps;
   JoinMultisig: JoinMultisigParamList | undefined;
-  Copayers: {wallet: WalletModel};
+  Copayers: {wallet: WalletModel; status: _Credentials};
   AddingOptions: AddingOptionsParamList;
   RequestSpecificAmount: {wallet: WalletModel};
   RequestSpecificAmountQR: {wallet: WalletModel; requestAmount: number};

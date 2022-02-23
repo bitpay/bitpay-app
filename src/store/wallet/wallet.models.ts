@@ -139,10 +139,13 @@ export interface Balance {
   totalConfirmedAmount: number;
 }
 
+export interface _Credentials extends Credentials {
+  secret?: string;
+}
 export interface WalletStatus {
   balance: Balance;
   pendingTxps: any[];
   preferences: any;
   serverMessages: any[];
-  wallet: Credentials;
+  wallet: _Credentials;
 }
