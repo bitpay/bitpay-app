@@ -21,9 +21,6 @@ const Errors = BWC.getErrors();
 
 const LIMIT = 15;
 
-// Ratio low amount warning (fee/amount) in incoming TX
-const LOW_AMOUNT_RATIO: number = 0.15;
-
 interface TransactionsHistoryInterface {
   limitTx?: string;
   lowAmount?: number;
