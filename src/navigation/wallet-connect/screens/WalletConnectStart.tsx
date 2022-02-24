@@ -110,7 +110,7 @@ const WalletConnectStart = () => {
         ),
       );
       dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
+      await sleep(800);
       dispatch(
         showBottomNotificationModal({
           type: 'success',

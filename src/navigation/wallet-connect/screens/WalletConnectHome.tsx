@@ -45,7 +45,7 @@ const NoteContainer = styled.TouchableOpacity<{isDappUri?: boolean}>`
   background-color: ${props => (props.theme.dark ? LightBlack : NeutralSlate)};
   border-radius: 40px;
   height: 37px;
-  width: ${({isDappUri}) => (isDappUri ? '175px' : '126px')};
+  max-width: ${({isDappUri}) => (isDappUri ? '175px' : '126px')};
   justify-content: flex-start;
   padding: 0 10px;
   flex-direction: row;
