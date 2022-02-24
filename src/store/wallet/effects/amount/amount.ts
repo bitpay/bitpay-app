@@ -38,17 +38,20 @@ export const FormatAmountStr = (
   currencyAbbreviation: string,
   satoshis: number,
   fullPrecision?: boolean,
-): string | undefined => {
+): string => {
   if (isNaN(satoshis)) {
-    return;
+    throw Error('Nan');
   }
+
   try {
     return (
       FormatAmount(currencyAbbreviation, satoshis, fullPrecision) +
       ' ' +
       currencyAbbreviation.toUpperCase()
     );
-  } catch (e) {}
+  } catch (e) {
+    throw e;
+  }
 };
 
 export const FormatAmount = (

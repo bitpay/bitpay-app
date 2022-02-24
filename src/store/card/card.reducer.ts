@@ -20,6 +20,7 @@ export const cardReduxPersistBlacklist: Array<keyof CardState> = [
 
 export type FetchCardsStatus = 'success' | 'failed' | null;
 export type FetchOverviewStatus = 'success' | 'failed' | null;
+export type FetchSettledTransactionsStatus = 'success' | 'failed' | null;
 export type FetchVirtualCardImageUrlsStatus = 'success' | 'failed' | null;
 export interface CardState {
   lastUpdates: {
@@ -38,14 +39,17 @@ export interface CardState {
   fetchOverviewStatus: {
     [id: string]: FetchOverviewStatus;
   };
+  fetchSettledTransactionsStatus: {
+    [id: string]: FetchSettledTransactionsStatus;
+  };
   fetchVirtualCardImageUrlsStatus: FetchVirtualCardImageUrlsStatus;
   virtualDesignCurrency: VirtualDesignCurrency;
   overview: any;
   settledTransactions: {
-    [id: string]: PagedTransactionData;
+    [id: string]: PagedTransactionData | undefined;
   };
   pendingTransactions: {
-    [id: string]: Transaction[];
+    [id: string]: Transaction[] | undefined;
   };
 }
 
@@ -61,6 +65,7 @@ const initialState: CardState = {
   virtualCardImages: {},
   fetchCardsStatus: null,
   fetchOverviewStatus: {},
+  fetchSettledTransactionsStatus: {},
   fetchVirtualCardImageUrlsStatus: null,
   virtualDesignCurrency: 'bitpay-b',
   overview: null,
@@ -164,6 +169,54 @@ export const cardReducer = (
         ...state,
         fetchOverviewStatus: {
           ...state.fetchOverviewStatus,
+          [action.payload.id]: action.payload.status,
+        },
+      };
+    case CardActionTypes.SUCCESS_FETCH_SETTLED_TRANSACTIONS:
+      const currentTransactions = state.settledTransactions[action.payload.id];
+      let newTransactionList = action.payload.transactions.transactionList;
+      let append = false;
+
+      if (currentTransactions) {
+        append =
+          action.payload.transactions.currentPageNumber >
+          currentTransactions.currentPageNumber;
+
+        if (append) {
+          newTransactionList = [
+            ...currentTransactions.transactionList,
+            ...action.payload.transactions.transactionList,
+          ];
+        }
+      }
+
+      return {
+        ...state,
+        fetchSettledTransactionsStatus: {
+          ...state.fetchSettledTransactionsStatus,
+          [action.payload.id]: 'success',
+        },
+        settledTransactions: {
+          ...state.settledTransactions,
+          [action.payload.id]: {
+            ...action.payload.transactions,
+            transactionList: newTransactionList,
+          },
+        },
+      };
+    case CardActionTypes.FAILED_FETCH_SETTLED_TRANSACTIONS:
+      return {
+        ...state,
+        fetchSettledTransactionsStatus: {
+          ...state.fetchSettledTransactionsStatus,
+          [action.payload.id]: 'failed',
+        },
+      };
+    case CardActionTypes.UPDATE_FETCH_SETTLED_TRANSACTIONS_STATUS:
+      return {
+        ...state,
+        fetchSettledTransactionsStatus: {
+          ...state.fetchSettledTransactionsStatus,
           [action.payload.id]: action.payload.status,
         },
       };

@@ -29,6 +29,7 @@ import {CardStackParamList} from '../../CardStack';
 import CardFront from '../../components/CardFront';
 import CheckIcon from './CheckIcon';
 import * as Styled from './CustomizeVirtualCard.styled';
+import {CardBrand} from '../../../../constants/card';
 
 export interface CustomizeVirtualCardParamList {
   card: Card;
@@ -174,7 +175,7 @@ const CustomizeVirtualCard: React.FC<
 
         <Styled.PreviewContainer>
           <CardFront
-            brand={card.brand || 'Visa'}
+            brand={card.brand || CardBrand.Visa}
             provider={card.provider}
             fiat={card.currency.code}
             fiatSymbol={card.currency.symbol}

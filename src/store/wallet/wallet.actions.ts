@@ -4,8 +4,10 @@ import {
   Key,
   PriceHistory,
   Token,
-  Wallet,
   WalletBalance,
+  Wallet,
+  Rates,
+  Rate,
 } from './wallet.models';
 
 export const successWalletStoreInit = (): WalletActionType => ({
@@ -49,7 +51,7 @@ export const setBackupComplete = (keyId: string): WalletActionType => ({
 });
 
 export const successGetRates = (payload: {
-  rates: {[key in string]: Array<ExchangeRate>};
+  rates: {[key in string]: Array<Rate>};
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_GET_RATES,
   payload,
@@ -106,8 +108,12 @@ export const successUpdateWalletBalance = (payload: {
   payload,
 });
 
-export const failedUpdateWalletBalance = (): WalletActionType => ({
+export const failedUpdateWalletBalance = (payload: {
+  keyId: string;
+  walletId: string;
+}): WalletActionType => ({
   type: WalletActionTypes.FAILED_UPDATE_WALLET_BALANCE,
+  payload,
 });
 
 export const successUpdateKeyTotalBalance = (payload: {
@@ -156,6 +162,15 @@ export const updateWalletName = (payload: {
   name: string;
 }): WalletActionType => ({
   type: WalletActionTypes.UPDATE_WALLET_NAME,
+  payload,
+});
+
+export const setWalletRefreshing = (payload: {
+  keyId: string;
+  walletId: string;
+  isRefreshing: boolean;
+}): WalletActionType => ({
+  type: WalletActionTypes.SET_WALLET_REFRESHING,
   payload,
 });
 

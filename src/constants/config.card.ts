@@ -1,6 +1,6 @@
 import React from 'react';
 import * as Svg from 'react-native-svg';
-import {CardProvider, VirtualDesignCurrency} from '../store/card/card.types';
+import {VirtualDesignCurrency} from '../store/card/card.types';
 import BCHShape from '../navigation/card/assets/currency-shapes/BCH-shape.svg';
 import BitPayBShape from '../navigation/card/assets/currency-shapes/bitpay-b-shape.svg';
 import BTCShape from '../navigation/card/assets/currency-shapes/BTC-shape.svg';
@@ -13,9 +13,15 @@ import USDPShape from '../navigation/card/assets/currency-shapes/USDP-shape.svg'
 import USDCShape from '../navigation/card/assets/currency-shapes/USDC-shape.svg';
 import XRPShape from '../navigation/card/assets/currency-shapes/XRP-shape.svg';
 import {Transaction} from '../store/card/card.models';
+import {CardProvider} from './card';
 
 type ProviderConfigType = {
   [k in CardProvider]: {
+    programStartYear: number;
+    /**
+     * Maximum number of days ago that we can query for transaction history.
+     */
+    maxHistoryDateRange: number;
     /**
      * Whether or not cards from this provider are part of the same account and should be grouped together.
      */
@@ -35,6 +41,8 @@ export const CARD_WIDTH = 324;
 
 export const ProviderConfig: ProviderConfigType = {
   galileo: {
+    programStartYear: 2020,
+    maxHistoryDateRange: 1095,
     groupEnabled: true,
     virtualDesignSupport: true,
     filters: {
@@ -65,6 +73,8 @@ export const ProviderConfig: ProviderConfigType = {
     },
   },
   firstView: {
+    programStartYear: 2016,
+    maxHistoryDateRange: 30,
     groupEnabled: false,
     virtualDesignSupport: false,
     filters: {
