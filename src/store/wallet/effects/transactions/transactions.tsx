@@ -6,7 +6,12 @@ import {
   DEFAULT_RBF_SEQ_NUMBER,
   SAFE_CONFIRMATIONS,
 } from '../../../../constants/wallet';
-import {GetChain, IsCustomERCToken, IsUtxoCoin} from '../../utils/currency';
+import {
+  GetChain,
+  IsCustomERCToken,
+  IsERCToken,
+  IsUtxoCoin,
+} from '../../utils/currency';
 import {ToAddress, ToLtcAddress} from '../address/address';
 import {
   IsDateInCurrentMonth,
@@ -546,4 +551,36 @@ export const BuildUiFriendlyList = (
 
     return transaction;
   });
+};
+
+export const CanSpeedUpTx = (
+  tx: any,
+  currencyAbbreviation: string,
+): boolean => {
+  const isERC20Wallet = IsERCToken(currencyAbbreviation);
+  const isEthWallet = currencyAbbreviation === 'eth';
+
+  if (currencyAbbreviation !== 'btc' && isEthWallet && isERC20Wallet) {
+    return false;
+  }
+
+  const {action, abiType, confirmations} = tx || {};
+  const isERC20Transfer = abiType?.name === 'transfer';
+  const isUnconfirmed = !confirmations || confirmations === 0;
+
+  if ((isEthWallet && !isERC20Transfer) || (isERC20Wallet && isERC20Transfer)) {
+    // Can speed up the eth/erc20 tx instantly
+    return isUnconfirmed && (action === 'sent' || action === 'moved');
+  } else {
+    const currentTime = moment();
+    const txTime = moment(tx.time * 1000);
+
+    // Can speed up the btc tx after 1 hours without confirming
+    return (
+      currentTime.diff(txTime, 'hours') >= 1 &&
+      isUnconfirmed &&
+      action === 'received' &&
+      currencyAbbreviation == 'btc'
+    );
+  }
 };

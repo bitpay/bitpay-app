@@ -40,6 +40,7 @@ import RequestSpecificAmount from './screens/request-specific-amount/RequestSpec
 import RequestSpecificAmountQR from './screens/request-specific-amount/RequestSpecificAmountQR';
 import haptic from '../../components/haptic-feedback/haptic';
 import Button from '../../components/button/Button';
+import TransactionDetails from './screens/TransactionDetails';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -72,6 +73,7 @@ export type WalletStackParamList = {
   AddingOptions: AddingOptionsParamList;
   RequestSpecificAmount: {wallet: WalletModel};
   RequestSpecificAmountQR: {wallet: WalletModel; requestAmount: number};
+  TransactionDetails: {wallet: WalletModel; transaction: any};
 };
 
 export enum WalletScreens {
@@ -101,6 +103,7 @@ export enum WalletScreens {
   ADDING_OPTIONS = 'AddingOptions',
   REQUEST_SPECIFIC_AMOUNT = 'RequestSpecificAmount',
   REQUEST_SPECIFIC_AMOUNT_QR = 'RequestSpecificAmountQR',
+  TRANSACTION_DETAILS = 'TransactionDetails',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -246,6 +249,10 @@ const WalletStack = () => {
           }}
           name={WalletScreens.REQUEST_SPECIFIC_AMOUNT_QR}
           component={RequestSpecificAmountQR}
+        />
+        <Wallet.Screen
+          name={WalletScreens.TRANSACTION_DETAILS}
+          component={TransactionDetails}
         />
       </Wallet.Navigator>
     </>

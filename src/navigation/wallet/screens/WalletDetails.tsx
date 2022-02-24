@@ -22,7 +22,13 @@ import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {LightBlack, SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
-import {BalanceUpdateError} from '../components/ErrorMessages';
+import {
+  BalanceUpdateError,
+  RbfTransaction,
+  SpeedUpEthTransaction,
+  SpeedUpTransaction,
+  UnconfirmedInputs,
+} from '../components/ErrorMessages';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import ReceiveAddress from '../components/ReceiveAddress';
 import Icons from '../components/WalletIcons';
@@ -32,6 +38,7 @@ import {useAppSelector} from '../../../utils/hooks';
 import {startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {
+  CanSpeedUpTx,
   GetTransactionHistory,
   GroupTransactionHistory,
 } from '../../../store/wallet/effects/transactions/transactions';
@@ -41,6 +48,7 @@ import TransactionRow, {
 } from '../../../components/list/TransactionRow';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
+import {IsERCToken} from '../../../store/wallet/utils/currency';
 
 const HISTORY_SHOW_LIMIT = 15;
 
@@ -320,6 +328,63 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     );
   };
 
+  const goToTransactionDetails = (transaction: any) => {
+    navigation.navigate('Wallet', {
+      screen: 'TransactionDetails',
+      params: {wallet: fullWalletObj, transaction},
+    });
+  };
+
+  const speedUpTransaction = (transaction: any) => {
+    //   TODO: Speed up Transaction
+  };
+
+  const onPressTransaction = (transaction: any) => {
+    const {hasUnconfirmedInputs, action, isRBF} = transaction;
+    const isReceived = action === 'received';
+    const isMoved = action === 'moved';
+    const currency = currencyAbbreviation.toLowerCase();
+
+    if (hasUnconfirmedInputs && (isReceived || isMoved) && currency === 'btc') {
+      dispatch(
+        showBottomNotificationModal(
+          UnconfirmedInputs(() => goToTransactionDetails(transaction)),
+        ),
+      );
+    } else if (isRBF && isReceived && currency === 'btc') {
+      dispatch(
+        showBottomNotificationModal(
+          RbfTransaction(
+            () => speedUpTransaction(transaction),
+            () => goToTransactionDetails(transaction),
+          ),
+        ),
+      );
+    } else if (CanSpeedUpTx(transaction, currency)) {
+      if (currency === 'eth' || IsERCToken(currency)) {
+        dispatch(
+          showBottomNotificationModal(
+            SpeedUpEthTransaction(
+              () => speedUpTransaction(transaction),
+              () => goToTransactionDetails(transaction),
+            ),
+          ),
+        );
+      } else {
+        dispatch(
+          showBottomNotificationModal(
+            SpeedUpTransaction(
+              () => speedUpTransaction(transaction),
+              () => goToTransactionDetails(transaction),
+            ),
+          ),
+        );
+      }
+    } else {
+      goToTransactionDetails(transaction);
+    }
+  };
+
   const renderItem = useCallback(
     ({item}) => (
       <TransactionRow
@@ -327,7 +392,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         description={item.uiDescription}
         time={item.uiTime}
         value={item.uiValue}
-        onPressTransaction={() => {}}
+        onPressTransaction={() => {
+          onPressTransaction(item);
+        }}
       />
     ),
     [],
