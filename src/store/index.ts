@@ -45,6 +45,12 @@ import {
   WalletState,
 } from './wallet/wallet.reducer';
 import {WalletActionType} from './wallet/wallet.types';
+import {
+  contactReducer,
+  ContactReduxPersistBlackList,
+  ContactState,
+} from './contact/contact.reducer';
+import {ContactActionType} from './contact/contact.types';
 
 const basePersistConfig = {
   storage: AsyncStorage,
@@ -106,6 +112,14 @@ const reducers = {
       blacklist: walletReduxPersistBlackList,
     },
     walletReducer,
+  ),
+  CONTACT: persistReducer<ContactState, ContactActionType>(
+    {
+      ...basePersistConfig,
+      key: 'CONTACT',
+      blacklist: ContactReduxPersistBlackList,
+    },
+    contactReducer,
   ),
 };
 

@@ -1,6 +1,6 @@
 import {Effect, RootState} from '../../../index';
 import {WalletActions} from '../../index';
-import {getPriceHistory} from '../rates/rates';
+import {getPriceHistory, startGetRates} from '../rates/rates';
 import {startGetTokenOptions} from '../currencies/currencies';
 import {startUpdateAllKeyAndWalletBalances} from '../balance/balance';
 
@@ -13,6 +13,7 @@ export const startWalletStoreInit =
         dispatch(startGetTokenOptions());
       }
       if (Object.keys(WALLET.keys).length) {
+        await dispatch(startGetRates());
         dispatch(startUpdateAllKeyAndWalletBalances());
       }
 

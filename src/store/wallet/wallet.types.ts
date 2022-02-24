@@ -1,7 +1,8 @@
 import {
+  CacheKeys,
   Key,
   PriceHistory,
-  Rate,
+  Rates,
   Token,
   Wallet,
   WalletBalance,
@@ -18,6 +19,7 @@ export enum WalletActionTypes {
   SET_BACKUP_COMPLETE = 'WALLET/SET_BACKUP_COMPLETE',
   SUCCESS_GET_RATES = 'WALLET/SUCCESS_GET_RATES',
   FAILED_GET_RATES = 'WALLET/FAILED_GET_RATES',
+  UPDATE_CACHE_KEY = 'WALLET/UPDATE_CACHE_KEY',
   SUCCESS_GET_PRICE_HISTORY = 'WALLET/SUCCESS_GET_PRICE_HISTORY',
   FAILED_GET_PRICE_HISTORY = 'WALLET/FAILED_GET_PRICE_HISTORY',
   DELETE_KEY = 'WALLET/DELETE_KEY',
@@ -89,12 +91,17 @@ interface setBackupComplete {
 interface successGetRates {
   type: typeof WalletActionTypes.SUCCESS_GET_RATES;
   payload: {
-    rates: {[key in string]: Array<Rate>};
+    rates: Rates;
   };
 }
 
 interface failedGetRates {
   type: typeof WalletActionTypes.FAILED_GET_RATES;
+}
+
+interface updateCacheKey {
+  type: typeof WalletActionTypes.UPDATE_CACHE_KEY;
+  payload: CacheKeys;
 }
 
 interface successGetPriceHistory {
@@ -227,6 +234,7 @@ export type WalletActionType =
   | setBackupComplete
   | successGetRates
   | failedGetRates
+  | updateCacheKey
   | successGetPriceHistory
   | failedGetPriceHistory
   | deleteKey
