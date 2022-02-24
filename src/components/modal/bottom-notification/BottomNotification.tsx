@@ -8,7 +8,7 @@ import {RootState} from '../../../store';
 import {
   Black,
   LightBlack,
-  NotificationPrimary,
+  NotificationPrimary, SlateDark,
   White,
 } from '../../../styles/colors';
 import haptic from '../../haptic-feedback/haptic';
@@ -71,7 +71,7 @@ const MessageContainer = styled.View`
 `;
 
 const Hr = styled.View`
-  border-bottom-color: #ebebeb;
+  border-bottom-color: ${({theme: {dark}}) => dark ? SlateDark: '#ebebeb'};
   border-bottom-width: 1px;
   margin: 20px 0;
 `;
