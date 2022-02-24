@@ -1,5 +1,6 @@
 import {Currencies} from '../constants/currencies';
 import {Key} from '../store/wallet/wallet.models';
+import {ContactRowProps} from '../components/list/ContactRow';
 
 export const sleep = async (duration: number) =>
   await new Promise(resolve => setTimeout(resolve, duration));
@@ -137,13 +138,28 @@ export const formatFiatAmount = (
 ) =>
   new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency,
+    currency: currency.toLowerCase(),
     ...(opts.customPrecision === 'minimal' &&
       Number.isInteger(amount) && {
         maximumFractionDigits: 0,
         minimumFractionDigits: 0,
       }),
   }).format(amount);
+
+export const findContact = (
+  contactList: ContactRowProps[],
+  address: string,
+  coin: string,
+  network: string,
+) => {
+  const foundContacts = contactList.filter(
+    (contact: ContactRowProps) =>
+      contact.address === address &&
+      contact.coin === coin &&
+      contact.network === network,
+  );
+  return !!foundContacts.length;
+};
 
 export const getMnemonic = (key: Key) =>
   key.properties.mnemonic.trim().split(' ');

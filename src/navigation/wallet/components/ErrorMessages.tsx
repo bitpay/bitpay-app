@@ -13,10 +13,24 @@ const List = styled(BaseText)`
   margin-bottom: 10px;
 `;
 
-export const GeneralError: BottomNotificationConfig = {
+export const DecryptError: BottomNotificationConfig = {
   type: 'error',
   title: 'Something went wrong',
   message: 'Could not decrypt wallet.',
+  enableBackdropDismiss: true,
+  actions: [
+    {
+      text: 'OK',
+      action: () => {},
+      primary: true,
+    },
+  ],
+};
+
+export const GeneralError: BottomNotificationConfig = {
+  type: 'error',
+  title: 'Uh oh, Something went wrong',
+  message: 'Please try again later.',
   enableBackdropDismiss: true,
   actions: [
     {
@@ -89,10 +103,15 @@ export const WrongPasswordError = (): BottomNotificationConfig => {
   };
 };
 
-export const CustomErrorMessage = (
-  errMsg: string,
-  title?: string,
-): BottomNotificationConfig => {
+export const CustomErrorMessage = ({
+  errMsg,
+  action = () => null,
+  title,
+}: {
+  errMsg: string;
+  title?: string;
+  action?: () => void;
+}): BottomNotificationConfig => {
   return {
     type: 'error',
     title: title || 'Something went wrong',
@@ -101,7 +120,7 @@ export const CustomErrorMessage = (
     actions: [
       {
         text: 'OK',
-        action: () => {},
+        action,
         primary: true,
       },
     ],
@@ -135,9 +154,7 @@ export const BchLegacyAddressInfo = (
   };
 };
 
-export const SendGeneralErrorMessage = (
-  action: () => void,
-): BottomNotificationConfig => {
+export const Mismatch = (action: () => void): BottomNotificationConfig => {
   return {
     type: 'error',
     title: 'Error',

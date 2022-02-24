@@ -33,6 +33,7 @@ import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import {useAppSelector} from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import KeyDropdownOption from '../components/KeyDropdownOption';
+import {startGetRates} from '../../../store/wallet/effects';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -117,6 +118,7 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   balance,
   credentials,
   keyId,
+  isRefreshing,
 }) => ({
   id,
   keyId,
@@ -127,6 +129,7 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   cryptoBalance: balance.crypto,
   fiatBalance: formatFiatAmount(balance.fiat, 'usd'),
   network: credentials.network,
+  isRefreshing,
 });
 
 // Key overview and Key settings list builder
@@ -255,6 +258,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
+      await dispatch(startGetRates());
       await Promise.all([
         dispatch(startUpdateAllWalletBalancesForKey(key)),
         sleep(1000),

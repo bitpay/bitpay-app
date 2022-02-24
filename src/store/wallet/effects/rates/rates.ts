@@ -4,6 +4,10 @@ import {BASE_BWS_URL} from '../../../../constants/config';
 import {WalletActions} from '../../index';
 import {SUPPORTED_COINS} from '../../../../constants/currencies';
 import {PriceHistory, Rates} from '../../wallet.models';
+import {isCacheKeyStale} from '../../utils/wallet';
+import {RATES_CACHE_DURATION} from '../../../../constants/wallet';
+import {updateCacheKey} from '../../wallet.actions';
+import {CacheKeys} from '../../wallet.models';
 
 export const getPriceHistory = (): Effect => async dispatch => {
   try {
@@ -31,16 +35,28 @@ export const getPriceHistory = (): Effect => async dispatch => {
   }
 };
 
-export const startGetRates = (): Effect<Promise<Rates>> => async dispatch => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const {data: rates} = await axios.get(`${BASE_BWS_URL}/v3/fiatrates/`);
-      dispatch(WalletActions.successGetRates({rates}));
-      resolve(rates);
-    } catch (err) {
-      console.error(err);
-      dispatch(WalletActions.failedGetRates());
-      reject();
-    }
-  });
-};
+export const startGetRates =
+  (): Effect<Promise<Rates>> => async (dispatch, getState) => {
+    return new Promise(async (resolve, reject) => {
+      const {
+        WALLET: {ratesCacheKey, rates: cachedRates},
+      } = getState();
+      if (!isCacheKeyStale(ratesCacheKey, RATES_CACHE_DURATION)) {
+        console.log('Rates - using cached rates');
+        return resolve(cachedRates);
+      }
+
+      dispatch(updateCacheKey(CacheKeys.RATES));
+
+      try {
+        console.log('Rates - fetching new rates');
+        const {data: rates} = await axios.get(`${BASE_BWS_URL}/v3/fiatrates/`);
+        dispatch(WalletActions.successGetRates({rates}));
+        resolve(rates);
+      } catch (err) {
+        console.error(err);
+        dispatch(WalletActions.failedGetRates());
+        reject();
+      }
+    });
+  };

@@ -10,13 +10,11 @@ import {Platform} from 'react-native';
 import {
   Action,
   Black,
-  LightBlack,
   NotificationPrimary,
   White,
 } from '../../../../styles/colors';
 import {Theme} from '@react-navigation/native';
 import {horizontalPadding} from './styled/ShopTabComponents';
-import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {sleep} from '../../../../utils/helper-methods';
 
 const SheetTitleContainer = styled.View`
@@ -69,17 +67,16 @@ const Pill = styled.View<PillParams>`
   height: 40px;
   align-items: center;
   justify-content: center;
-  border: 2px solid ${({theme}) => (theme.dark ? White : Action)};
+  border: 2px solid ${Action};
   border-radius: 20px;
   margin-right: 10px;
   margin-bottom: 12px;
-  ${({selected, theme}) =>
-    selected ? `background-color: ${theme.dark ? White : Action};` : ''};
+  ${({selected}) => (selected ? `background-color: ${Action};` : '')};
 `;
 
 const PillText = styled(BaseText)<PillParams>`
   color: ${({selected, theme}) =>
-    selected ? (theme.dark ? LightBlack : White) : theme.dark ? White : Action};
+    selected ? White : theme.dark ? White : Action};
   font-weight: 500;
   padding: 8px 12px;
 `;

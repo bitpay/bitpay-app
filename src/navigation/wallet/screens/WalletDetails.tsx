@@ -1,9 +1,9 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {FlatList, RefreshControl, Share} from 'react-native';
-import {useDispatch, useSelector} from 'react-redux';
+import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
 import Settings from '../../../components/settings/Settings';
 import {
@@ -29,7 +29,8 @@ import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
 import {useAppSelector} from '../../../utils/hooks';
-import {createWalletAddress} from '../../../store/wallet/effects/send/address';
+import {startGetRates} from '../../../store/wallet/effects';
+import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -114,6 +115,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     });
   }, [navigation, uiFormattedWallet]);
 
+  useEffect(() => {
+    setRefreshing(!!fullWalletObj.isRefreshing);
+  }, [fullWalletObj.isRefreshing]);
+
   const ShareAddress = async () => {
     try {
       setShowWalletOptions(false);
@@ -172,6 +177,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     await sleep(1000);
 
     try {
+      await dispatch(startGetRates());
       await Promise.all([
         await dispatch(startUpdateWalletBalance({key, wallet: fullWalletObj})),
         sleep(1000),

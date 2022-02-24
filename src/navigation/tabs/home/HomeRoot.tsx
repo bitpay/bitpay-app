@@ -40,6 +40,7 @@ import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {URL} from '../../../constants';
+import {startGetRates} from '../../../store/wallet/effects';
 
 const HeaderContainer = styled.View`
   flex-direction: row;
@@ -104,6 +105,7 @@ const HomeRoot = () => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
+      await dispatch(startGetRates());
       await Promise.all([
         dispatch(startUpdateAllKeyAndWalletBalances()),
         sleep(1000),

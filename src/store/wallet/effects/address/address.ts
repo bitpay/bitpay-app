@@ -26,15 +26,16 @@ export const createWalletAddress =
   }: {
     wallet: Wallet;
     newAddress?: boolean;
-  }): Effect =>
-  async (dispatch): Promise<string> => {
+  }): Effect<Promise<string>> =>
+  async dispatch => {
     return new Promise((resolve, reject) => {
       if (!wallet) {
-        reject();
+        return reject();
       }
 
       if (!newAddress && wallet.receiveAddress) {
-        resolve(wallet.receiveAddress);
+        console.log('returned cached address');
+        return resolve(wallet.receiveAddress);
       }
 
       const _wallet = cloneDeep(wallet);
@@ -64,11 +65,11 @@ export const createWalletAddress =
                   }
                   _wallet.receiveAddress = addr[0].address;
                   dispatch(successGetReceiveAddress({wallet: _wallet}));
-                  resolve(addr[0].address);
+                  return resolve(addr[0].address);
                 },
               );
             } else {
-              reject({type: 'GENERAL_ERROR', error: err});
+              return reject({type: 'GENERAL_ERROR', error: err});
             }
           } else if (
             addressObj &&
@@ -81,7 +82,7 @@ export const createWalletAddress =
           } else if (addressObj) {
             _wallet.receiveAddress = addressObj.address;
             dispatch(successGetReceiveAddress({wallet: _wallet}));
-            resolve(addressObj.address);
+            return resolve(addressObj.address);
           }
         });
       }
@@ -158,4 +159,38 @@ export const TranslateToBchCashAddress = (
   const addressObj = Bitcore.Address(addressToTranslate).toObject();
   const cashAdrr = BitcoreCash.Address.fromObject(addressObj).toCashAddress();
   return cashAdrr;
+};
+
+export const ToLtcAddress = (address: string): string => {
+  return BitcoreLtc.Address(address).toString();
+};
+
+export const ToDogeAddress = (address: string): string => {
+  return BitcoreDoge.Address(address).toString();
+};
+
+export const ToBtcAddress = (address: string): string => {
+  return Bitcore.Address(address).toString();
+};
+
+export const ToCashAddress = (
+  address: string,
+  withPrefix?: boolean,
+): string => {
+  return BitcoreCash.Address(address).toString(!withPrefix);
+};
+
+export const ToAddress = (address: string, currencyAbbreviation: string) => {
+  switch (currencyAbbreviation) {
+    case 'bch':
+      return ToCashAddress(address);
+    case 'ltc':
+      return ToLtcAddress(address);
+    case 'btc':
+      return ToBtcAddress(address);
+    case 'doge':
+      return ToDogeAddress(address);
+    default:
+      return address;
+  }
 };
