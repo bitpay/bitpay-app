@@ -13,12 +13,11 @@ import AddContactIconWhite from '../../../../../assets/img/addcontact-icon-white
 import Button from '../../../../components/button/Button';
 import {
   ActiveOpacity,
-  Hr,
   HEIGHT,
   WIDTH,
 } from '../../../../components/styled/Containers';
 import {BaseText, H4} from '../../../../components/styled/Text';
-import {SlateDark, White} from '../../../../styles/colors';
+import {SlateDark, White, LightBlack, Cloud} from '../../../../styles/colors';
 import BoxInput from '../../../../components/form/BoxInput';
 import {RootState} from '../../../../store';
 
@@ -120,6 +119,14 @@ const NoResultsContainer = styled.View`
 
 const NoResultsHeader = styled(H4)`
   font-size: 17px;
+`;
+
+const Hr = styled.View`
+  align-self: center;
+  border-bottom-color: ${({theme}) => (theme.dark ? LightBlack : Cloud)};
+  border-bottom-width: 1px;
+  margin: 0 ${horizontalPadding}px;
+  width: ${WIDTH - horizontalPadding * 2}px;
 `;
 
 interface HideableViewProps {
