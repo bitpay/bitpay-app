@@ -26,7 +26,10 @@ import {RootState} from '../../../store';
 import {isValidWalletConnectUri, sleep} from '../../../utils/helper-methods';
 import _ from 'lodash';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
-import {wcConnector} from '../../../store/wallet-connect/wallet-connect.models';
+import {
+  IWCConnector,
+  IWCCustomData,
+} from '../../../store/wallet-connect/wallet-connect.models';
 import {
   walletConnectKillSession,
   walletConnectOnSessionRequest,
@@ -102,7 +105,7 @@ const WalletConnectConnections = () => {
   const dispatch = useDispatch();
 
   const [groupedConnectors, setGroupedConnectors] = useState({});
-  const connectors: wcConnector[] = useSelector(
+  const connectors: IWCConnector[] = useSelector(
     ({WALLET_CONNECT}: RootState) => WALLET_CONNECT.connectors,
   );
 
@@ -142,7 +145,7 @@ const WalletConnectConnections = () => {
 
   const allKeys = useSelector(({WALLET}: RootState) => WALLET.keys);
 
-  const getWalletData = (customData?: {keyId: string; walletId: string}) => {
+  const getWalletData = (customData?: IWCCustomData) => {
     const wallet =
       customData &&
       findWalletById(allKeys[customData.keyId].wallets, customData.walletId);
@@ -156,14 +159,9 @@ const WalletConnectConnections = () => {
       <ScrollView>
         <HeaderTitle>Connections</HeaderTitle>
         {Object.entries(groupedConnectors).map(([key, connectorsByKey]) => {
-          let customData:
-            | {
-                keyId: string;
-                walletId: string;
-              }
-            | undefined;
+          let customData: IWCCustomData | undefined;
           for (const [, value] of Object.entries(connectorsByKey as any)) {
-            customData = (value as wcConnector[])[0].customData;
+            customData = (value as IWCConnector[])[0].customData;
           }
           return (
             <ConnectionsContainer key={key}>
@@ -225,7 +223,7 @@ const WalletConnectConnections = () => {
               </ChainContainer>
               {Object.entries(connectorsByKey as any).map(
                 ([, wcConnectors]) => {
-                  return (wcConnectors as wcConnector[]).map(c => {
+                  return (wcConnectors as IWCConnector[]).map(c => {
                     const session = c.connector.session;
                     return (
                       <ItemContainer

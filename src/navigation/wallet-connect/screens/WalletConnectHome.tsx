@@ -27,6 +27,11 @@ import {
 } from '../../../store/app/app.actions';
 import Clipboard from '@react-native-community/clipboard';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
+import {
+  IWCConnector,
+  IWCRequest,
+} from '../../../store/wallet-connect/wallet-connect.models';
+import WalletConnect from '@walletconnect/client';
 
 export type WalletConnectHomeParamList = {
   peerId: string;
@@ -66,11 +71,13 @@ const WalletConnectHome = () => {
     params: {peerId},
   } = useRoute<RouteProp<{params: WalletConnectHomeParamList}>>();
 
-  const wcConnector = useSelector(({WALLET_CONNECT}: RootState) => {
-    return WALLET_CONNECT.connectors.find(c => c.connector.peerId === peerId);
-  });
-  const session = wcConnector?.connector;
-  const requests = useSelector(({WALLET_CONNECT}: RootState) => {
+  const wcConnector: IWCConnector | undefined = useSelector(
+    ({WALLET_CONNECT}: RootState) => {
+      return WALLET_CONNECT.connectors.find(c => c.connector.peerId === peerId);
+    },
+  );
+  const session: WalletConnect | undefined = wcConnector?.connector;
+  const requests: IWCRequest[] = useSelector(({WALLET_CONNECT}: RootState) => {
     return WALLET_CONNECT.requests.filter(request => request.peerId === peerId);
   });
 

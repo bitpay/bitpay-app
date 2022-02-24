@@ -26,6 +26,7 @@ import {
 import haptic from '../../../components/haptic-feedback/haptic';
 import Clipboard from '@react-native-community/clipboard';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
+import {IWCRequest} from '../../../store/wallet-connect/wallet-connect.models';
 
 export type WalletConnectRequestDetailsParamList = {
   peerId: string;
@@ -86,7 +87,7 @@ const WalletConnectRequestDetails = () => {
   const [message, setMessage] = useState('');
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
   const navigation = useNavigation();
-  const request = useSelector(({WALLET_CONNECT}: RootState) => {
+  const request: IWCRequest = useSelector(({WALLET_CONNECT}: RootState) => {
     return WALLET_CONNECT.requests.find(req => req.payload.id === requestId);
   });
 

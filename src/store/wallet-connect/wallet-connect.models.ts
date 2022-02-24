@@ -1,15 +1,23 @@
 import WalletConnect from '@walletconnect/client';
 import {IWalletConnectSession} from '@walletconnect/types';
+import {IJsonRpcRequest} from '@walletconnect/types';
 
-export interface wcConnector {
-  connector: WalletConnect;
-  customData: {keyId: string; walletId: string};
+export interface IWCRequest {
+  peerId: string;
+  payload: IJsonRpcRequest;
 }
 
-export interface IWalletConnectSessionDict {
+export interface IWCCustomData {
+  keyId: string;
+  walletId: string;
+}
+
+export interface IWCConnector {
+  connector: WalletConnect;
+  customData: IWCCustomData;
+}
+
+export interface IWCSession {
   session: IWalletConnectSession;
-  customData: {
-    keyId: string;
-    walletId: string;
-  };
+  customData: IWCCustomData;
 }

@@ -4,22 +4,16 @@ import {
 } from './wallet-connect.types';
 import WalletConnect from '@walletconnect/client';
 
-import {IJsonRpcRequest} from '@walletconnect/types';
-import {IWalletConnectSessionDict, wcConnector} from './wallet-connect.models';
+import {IWCSession, IWCConnector, IWCRequest} from './wallet-connect.models';
 
 export const walletConnectReduxPersistBlackList: (keyof WalletConnectState)[] =
   [];
 
-export interface IWalletConnectRequest {
-  peerId: string;
-  payload: IJsonRpcRequest;
-}
-
 export interface WalletConnectState {
-  connectors: wcConnector[];
+  connectors: IWCConnector[];
   pending: WalletConnect[];
-  requests: IWalletConnectRequest[];
-  sessions: IWalletConnectSessionDict[];
+  requests: IWCRequest[];
+  sessions: IWCSession[];
 }
 
 const initialState: WalletConnectState = {

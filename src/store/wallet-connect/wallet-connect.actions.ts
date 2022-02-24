@@ -1,3 +1,10 @@
+import WalletConnect from '@walletconnect/client';
+import {
+  IWCRequest,
+  IWCConnector,
+  IWCCustomData,
+  IWCSession,
+} from './wallet-connect.models';
 import {
   WalletConnectActionType,
   WalletConnectActionTypes,
@@ -8,7 +15,7 @@ export const initRequest = (): WalletConnectActionType => ({
 });
 
 export const successInitRequest = (
-  connectors: any,
+  connectors: IWCConnector[],
 ): WalletConnectActionType => ({
   type: WalletConnectActionTypes.INIT_SUCCESS,
   payload: {connectors},
@@ -24,9 +31,9 @@ export const killSession = (peerId: string): WalletConnectActionType => ({
 });
 
 export const sessionDisconnected = (
-  connectors: any,
-  sessions: any,
-  requests: any,
+  connectors: IWCConnector[],
+  sessions: IWCSession[],
+  requests: IWCRequest[],
 ): WalletConnectActionType => ({
   type: WalletConnectActionTypes.SESSION_DISCONNECTED,
   payload: {connectors, sessions, requests},
@@ -36,44 +43,52 @@ export const handleSessionUserApproval = (
   approved: boolean,
   peerId: string,
   response: {accounts: string[] | undefined; chainId: number},
-  customData: {keyId: string; walletId: string},
+  customData: IWCCustomData,
 ): WalletConnectActionType => ({
   type: WalletConnectActionTypes.HANDLE_SESSION_USER_APPROVAL,
   payload: {approved, peerId, response, customData},
 });
 
-export const sessionRequest = (pending: any): WalletConnectActionType => ({
+export const sessionRequest = (
+  pending: WalletConnect[],
+): WalletConnectActionType => ({
   type: WalletConnectActionTypes.SESSION_REQUEST,
   payload: {pending},
 });
 
 export const approveSessionRequest = (
-  connectors: any,
-  pending: any,
-  sessions: any,
+  connectors: IWCConnector[],
+  pending: WalletConnect[],
+  sessions: IWCSession[],
 ): WalletConnectActionType => ({
   type: WalletConnectActionTypes.SESSION_APPROVAL,
   payload: {connectors, pending, sessions},
 });
 
 export const rejectSessionRequest = (
-  pending: any,
+  pending: WalletConnect[],
 ): WalletConnectActionType => ({
   type: WalletConnectActionTypes.SESSION_REJECTION,
   payload: {pending},
 });
 
-export const callRequest = (requests: any): WalletConnectActionType => ({
+export const callRequest = (
+  requests: IWCRequest[],
+): WalletConnectActionType => ({
   type: WalletConnectActionTypes.CALL_REQUEST,
   payload: {requests},
 });
 
-export const approveCallRequest = (requests: any): WalletConnectActionType => ({
+export const approveCallRequest = (
+  requests: IWCRequest[],
+): WalletConnectActionType => ({
   type: WalletConnectActionTypes.CALL_APPROVAL,
   payload: {requests},
 });
 
-export const rejectCallRequest = (requests: any): WalletConnectActionType => ({
+export const rejectCallRequest = (
+  requests: IWCRequest[],
+): WalletConnectActionType => ({
   type: WalletConnectActionTypes.CALL_REJECTION,
   payload: {requests},
 });

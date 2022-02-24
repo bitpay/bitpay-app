@@ -28,6 +28,7 @@ import {
 import {Network} from '../../../constants';
 import {Currencies} from '../../../constants/currencies';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
+import {IWCCustomData} from '../../../store/wallet-connect/wallet-connect.models';
 
 export type WalletConnectStartParamList = {
   keyId: string | undefined;
@@ -93,7 +94,7 @@ const WalletConnectStart = () => {
       const {chain} = Currencies[wallet.currencyAbbreviation];
       const chainId = CHAIN_ID[chain][wallet.credentials.network];
       const accounts = [wallet.receiveAddress];
-      const customData = {
+      const customData: IWCCustomData = {
         keyId: wallet.keyId,
         walletId: wallet.id,
       };

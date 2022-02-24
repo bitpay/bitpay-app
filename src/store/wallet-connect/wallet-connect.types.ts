@@ -1,3 +1,11 @@
+import WalletConnect from '@walletconnect/client';
+import {
+  IWCConnector,
+  IWCCustomData,
+  IWCRequest,
+  IWCSession,
+} from './wallet-connect.models';
+
 export enum WalletConnectActionTypes {
   INIT_REQUEST = 'WALLET_CONNECT/INIT_REQUEST',
   INIT_SUCCESS = 'WALLET_CONNECT/INIT_SUCCESS',
@@ -21,7 +29,7 @@ interface InitRequest {
 interface SuccessInitRequest {
   type: typeof WalletConnectActionTypes.INIT_SUCCESS;
   payload: {
-    connectors: any;
+    connectors: IWCConnector[];
   };
 }
 
@@ -31,7 +39,11 @@ interface FailedInitRquest {
 
 interface SessionDisconnected {
   type: typeof WalletConnectActionTypes.SESSION_DISCONNECTED;
-  payload: {connectors: any; sessions: any; requests: any};
+  payload: {
+    connectors: IWCConnector[];
+    sessions: IWCSession[];
+    requests: IWCRequest[];
+  };
 }
 
 interface KillSession {
@@ -45,45 +57,45 @@ interface HandleSessionUserApproval {
     approved: boolean;
     peerId: string;
     response: {accounts: string[] | undefined; chainId: number};
-    customData: {keyId: string; walletId: string};
+    customData: IWCCustomData;
   };
 }
 
 interface SessionRequest {
   type: typeof WalletConnectActionTypes.SESSION_REQUEST;
   payload: {
-    pending: any;
+    pending: WalletConnect[];
   };
 }
 
 interface ApproveSessionRequest {
   type: typeof WalletConnectActionTypes.SESSION_APPROVAL;
   payload: {
-    connectors: any;
-    pending: any;
-    sessions: any;
+    connectors: IWCConnector[];
+    pending: WalletConnect[];
+    sessions: IWCSession[];
   };
 }
 
 interface RejectSessionRequest {
   type: typeof WalletConnectActionTypes.SESSION_REJECTION;
   payload: {
-    pending: any;
+    pending: WalletConnect[];
   };
 }
 interface CallRequest {
   type: typeof WalletConnectActionTypes.CALL_REQUEST;
-  payload: {requests: any};
+  payload: {requests: IWCRequest[]};
 }
 
 interface ApproveCallRequest {
   type: typeof WalletConnectActionTypes.CALL_APPROVAL;
-  payload: {requests: any};
+  payload: {requests: IWCRequest[]};
 }
 
 interface RejectCallRequest {
   type: typeof WalletConnectActionTypes.CALL_REJECTION;
-  payload: {requests: any};
+  payload: {requests: IWCRequest[]};
 }
 interface HandleRequestUserApproval {
   type: typeof WalletConnectActionTypes.HANDLE_REQUEST_USER_APPROVAL;

@@ -1,13 +1,17 @@
 import WalletConnect from '@walletconnect/client';
 import {WalletConnectActions} from '.';
-import {IWalletConnectRequest} from './wallet-connect.reducer';
-import {IWalletConnectSessionDict, wcConnector} from './wallet-connect.models';
+import {
+  IWCConnector,
+  IWCRequest,
+  IWCSession,
+  IWCCustomData,
+} from './wallet-connect.models';
 import {Effect} from '..';
 
 export const walletConnectInit = (): Effect => async (dispatch, getState) => {
   try {
     const {sessions} = getState().WALLET_CONNECT;
-    const connectors =
+    const connectors: IWCConnector[] =
       sessions &&
       (await Promise.all(
         Object.values(sessions).map(s => {
@@ -45,15 +49,15 @@ export const walletConnectApproveSessionRequest =
   (
     peerId: string,
     response: {accounts: string[]; chainId: number},
-    customData: {keyId: string; walletId: string},
+    customData: IWCCustomData,
   ): Effect =>
   (dispatch, getState): Promise<void> => {
     return new Promise((resolve, reject) => {
       try {
         const {connectors, pending, sessions} = getState().WALLET_CONNECT;
-        let updatedConnectors = [...connectors];
+        let updatedConnectors: IWCConnector[] = [...connectors];
         let updatedPending: WalletConnect[] = [];
-        let updatedSessions = [...sessions];
+        let updatedSessions: IWCSession[] = [...sessions];
 
         pending.forEach((connector: WalletConnect) => {
           if (connector.peerId === peerId) {
@@ -88,13 +92,13 @@ export const walletConnectRejectSessionRequest =
   async (dispatch, getState) => {
     const {pending} = getState().WALLET_CONNECT;
 
-    const connector = pending.filter(
+    const connector: WalletConnect = pending.filter(
       (pendingConnector: WalletConnect) => pendingConnector.peerId === peerId,
     )[0];
 
     connector.rejectSession();
 
-    const updatedPending = pending.filter(
+    const updatedPending: WalletConnect[] = pending.filter(
       (connector: WalletConnect) => connector.peerId !== peerId,
     );
 
@@ -106,20 +110,22 @@ export const walletConnectSubscribeToEvents =
   (dispatch, getState) => {
     if (!peerId) {
       const {connectors} = getState().WALLET_CONNECT;
-      connectors.forEach((c: wcConnector) => {
+      connectors.forEach((c: IWCConnector) => {
         return dispatch(walletConnectSubscribeToEvents(c.connector.peerId));
       });
     } else {
       const {connectors} = getState().WALLET_CONNECT;
-      const wcConnector = connectors.filter(
-        (c: wcConnector) => c.connector.peerId === peerId,
+      const wcConnector: IWCConnector = connectors.filter(
+        (c: IWCConnector) => c.connector.peerId === peerId,
       )[0];
 
       wcConnector.connector.on('call_request', (error: any, payload: any) => {
         if (error) {
           throw error;
         }
-        const updatedRequests = [...getState().WALLET_CONNECT.requests];
+        const updatedRequests: IWCRequest[] = [
+          ...getState().WALLET_CONNECT.requests,
+        ];
 
         updatedRequests.push({
           peerId,
@@ -136,11 +142,15 @@ export const walletConnectSubscribeToEvents =
 
         const {connectors, sessions, requests} = getState().WALLET_CONNECT;
         if (sessions.find(s => s.session.peerId === peerId)) {
-          const updatedSessions = sessions.filter(
+          const updatedSessions: IWCSession[] = sessions.filter(
             s => s.session.peerId !== peerId,
           );
-          const updatedConnectors = connectors.filter(c => c.connector.peerId);
-          const updatedRequests = requests.filter(r => r.peerId !== peerId);
+          const updatedConnectors: IWCConnector[] = connectors.filter(
+            c => c.connector.peerId,
+          );
+          const updatedRequests: IWCRequest[] = requests.filter(
+            r => r.peerId !== peerId,
+          );
           dispatch(
             WalletConnectActions.sessionDisconnected(
               updatedConnectors,
@@ -174,17 +184,17 @@ export const walletConnectApproveCallRequest =
   (peerId: string, response: {id: number | undefined; result: any}): Effect =>
   async (dispatch, getState) => {
     try {
-      const wcConnector = getState().WALLET_CONNECT.connectors.filter(
-        (c: wcConnector) => {
+      const wcConnector: IWCConnector =
+        getState().WALLET_CONNECT.connectors.filter((c: IWCConnector) => {
           c.connector.peerId === peerId;
-        },
-      )[0];
+        })[0];
 
       await wcConnector.connector.approveRequest(response);
 
-      const updatedRequests = getState().WALLET_CONNECT.requests.filter(
-        (request: IWalletConnectRequest) => request.payload.id !== response.id,
-      );
+      const updatedRequests: IWCRequest[] =
+        getState().WALLET_CONNECT.requests.filter(
+          (request: IWCRequest) => request.payload.id !== response.id,
+        );
       await dispatch(WalletConnectActions.approveCallRequest(updatedRequests));
     } catch (e) {
       console.log(e);
@@ -198,15 +208,17 @@ export const walletConnectRejectCallRequest =
   ): Effect =>
   async (dispatch, getState) => {
     try {
-      const wcConnector = getState().WALLET_CONNECT.connectors.filter(
-        (c: wcConnector) => c.connector.peerId === peerId,
-      )[0];
+      const wcConnector: IWCConnector =
+        getState().WALLET_CONNECT.connectors.filter(
+          (c: IWCConnector) => c.connector.peerId === peerId,
+        )[0];
       await wcConnector.connector.rejectRequest(response);
 
-      const updatedRequests = getState().WALLET_CONNECT.requests.filter(
-        (request: IWalletConnectRequest) =>
-          request.payload && request.payload.id !== response.id,
-      );
+      const updatedRequests: IWCRequest[] =
+        getState().WALLET_CONNECT.requests.filter(
+          (request: IWCRequest) =>
+            request.payload && request.payload.id !== response.id,
+        );
       await dispatch(WalletConnectActions.rejectCallRequest(updatedRequests));
     } catch (e) {
       console.log(e);
