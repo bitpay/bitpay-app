@@ -6,6 +6,7 @@ import {
   WalletBalance,
   Wallet,
   Rates,
+  CacheKeys,
 } from './wallet.models';
 
 export const successWalletStoreInit = (): WalletActionType => ({
@@ -57,7 +58,7 @@ export const failedGetRates = (): WalletActionType => ({
   type: WalletActionTypes.FAILED_GET_RATES,
 });
 
-export const updateCacheKey = (payload: string): WalletActionType => ({
+export const updateCacheKey = (payload: CacheKeys): WalletActionType => ({
   type: WalletActionTypes.UPDATE_CACHE_KEY,
   payload,
 });

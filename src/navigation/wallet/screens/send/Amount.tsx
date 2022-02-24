@@ -147,7 +147,7 @@ const Amount = () => {
           actions: [
             {
               text: 'OK',
-              action: () => navigationRef.dispatch(StackActions.pop(1)),
+              action: () => navigationRef.dispatch(StackActions.pop(2)),
             },
           ],
         }),
