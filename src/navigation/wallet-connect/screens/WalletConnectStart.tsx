@@ -121,12 +121,6 @@ const WalletConnectStart = () => {
             {
               text: 'GOT IT',
               action: async () => {
-                dispatch(dismissBottomNotificationModal());
-                await sleep(500);
-                dispatch(
-                  showOnGoingProcessModal(OnGoingProcessMessages.LOADING),
-                );
-                await sleep(500);
                 navigation.reset({
                   index: 2,
                   routes: [
@@ -148,7 +142,7 @@ const WalletConnectStart = () => {
                     },
                   ],
                 });
-                dispatch(dismissOnGoingProcessModal());
+                dispatch(dismissBottomNotificationModal());
               },
               primary: true,
             },

@@ -131,6 +131,12 @@ const WalletConnectHome = () => {
     return () => clearTimeout(timer);
   }, [clipboardObj]);
 
+  useEffect(() => {
+    if (!wcConnector) {
+      navigation.goBack();
+    }
+  }, [wcConnector]);
+
   return (
     <WalletConnectContainer>
       <ScrollView>

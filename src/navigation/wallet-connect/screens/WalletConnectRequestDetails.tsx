@@ -87,9 +87,11 @@ const WalletConnectRequestDetails = () => {
   const [message, setMessage] = useState('');
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
   const navigation = useNavigation();
-  const request: IWCRequest = useSelector(({WALLET_CONNECT}: RootState) => {
-    return WALLET_CONNECT.requests.find(req => req.payload.id === requestId);
-  });
+  const request: IWCRequest | undefined = useSelector(
+    ({WALLET_CONNECT}: RootState) => {
+      return WALLET_CONNECT.requests.find(req => req.payload.id === requestId);
+    },
+  );
 
   useEffect(() => {
     if (!request) {
