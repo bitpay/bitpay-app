@@ -29,6 +29,7 @@ import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
 import {useAppSelector} from '../../../utils/hooks';
+import {startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 
 type WalletDetailsScreenProps = StackScreenProps<
@@ -176,6 +177,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     await sleep(1000);
 
     try {
+      await dispatch(startGetRates());
       await Promise.all([
         await dispatch(startUpdateWalletBalance({key, wallet: fullWalletObj})),
         sleep(1000),

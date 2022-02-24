@@ -1,7 +1,6 @@
 import API from 'bitcore-wallet-client/ts_build';
 import {ReactElement} from 'react';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
-import {FeeLevels} from './effects/fee/fee';
 import {RootState} from '../index';
 
 export interface KeyMethods {
@@ -73,14 +72,6 @@ export interface WalletObj {
   isRefreshing?: boolean;
 }
 
-export interface ExchangeRate {
-  ts?: number;
-  rate?: number;
-  fetchedOn?: number;
-  code?: string;
-  name?: string;
-}
-
 export interface PriceHistory {
   coin: string;
   priceDisplay: Array<number>;
@@ -149,6 +140,11 @@ export interface WalletStatus {
   preferences: any;
   serverMessages: any[];
   wallet: Credentials;
+}
+
+export enum CacheKeys {
+  RATES = 'ratesCacheKey',
+  BALANCE = 'balanceCacheKey',
 }
 
 export interface Recipient {

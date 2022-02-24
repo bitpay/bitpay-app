@@ -152,12 +152,15 @@ export const findWalletById = (
   id: string,
 ): Wallet | undefined => wallets.find(wallet => wallet.id === id);
 
-export const isBalanceCacheKeyStale = (timestamp: number | undefined) => {
+export const isCacheKeyStale = (
+  timestamp: number | undefined,
+  duration: number,
+) => {
   if (!timestamp) {
     return true;
   }
 
-  const TTL = BALANCE_CACHE_DURATION * 1000;
+  const TTL = duration * 1000;
   return Date.now() - timestamp > TTL;
 };
 

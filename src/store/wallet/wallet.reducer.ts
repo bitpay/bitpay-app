@@ -1,4 +1,4 @@
-import {Key, PriceHistory, Rate, Token} from './wallet.models';
+import {Key, PriceHistory, Rates, Token} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import merge from 'lodash.merge';
 import {FeeLevels} from './effects/fee/fee';
@@ -9,7 +9,7 @@ export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
 export interface WalletState {
   createdOn: number;
   keys: {[key in string]: Key};
-  rates: {[key in string]: Array<Rate>};
+  rates: Rates;
   priceHistory: Array<PriceHistory>;
   tokenOptions: {[key in string]: Token};
   walletTermsAccepted: boolean;
@@ -18,6 +18,7 @@ export interface WalletState {
     previous: number;
   };
   balanceCacheKey: {[key in string]: number | undefined};
+  ratesCacheKey: number | undefined;
   feeLevel: {[key in string]: FeeLevels};
   useUnconfirmedFunds: boolean;
 }
@@ -34,6 +35,7 @@ const initialState: WalletState = {
     previous: 0,
   },
   balanceCacheKey: {},
+  ratesCacheKey: undefined,
   feeLevel: {
     btc: FeeLevels.NORMAL,
     eth: FeeLevels.NORMAL,
@@ -72,6 +74,15 @@ export const walletReducer = (
       return {
         ...state,
         rates: {...state.rates, ...rates},
+        ratesCacheKey: Date.now(),
+      };
+    }
+
+    case WalletActionTypes.UPDATE_CACHE_KEY: {
+      const cacheKey = action.payload;
+      return {
+        ...state,
+        [cacheKey]: Date.now(),
       };
     }
 
