@@ -103,7 +103,7 @@ const Copayers: React.FC<CopayersProps> = props => {
   const copyToClipboard = () => {
     haptic('impactLight');
     if (!copied) {
-      Clipboard.setString(walletStatus?.secret);
+      Clipboard.setString(walletStatus.secret);
       setCopied(true);
 
       setTimeout(() => {

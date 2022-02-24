@@ -144,7 +144,8 @@ export interface Balance {
 }
 
 export interface _Credentials extends Credentials {
-  secret?: string;
+  secret: string;
+  copayers: string[];
 }
 export interface WalletStatus {
   balance: Balance;
