@@ -151,6 +151,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   }, [navigation, uiFormattedWallet]);
 
   useEffect(() => {
+    if (fullWalletObj.isRefreshing) {
+      loadHistory(true);
+    }
     setRefreshing(!!fullWalletObj.isRefreshing);
   }, [fullWalletObj.isRefreshing]);
 
