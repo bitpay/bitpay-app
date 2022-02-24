@@ -4,6 +4,7 @@ import {
   PriceHistory,
   Rates,
   Token,
+  Wallet,
   WalletBalance,
 } from './wallet.models';
 
@@ -37,6 +38,8 @@ export enum WalletActionTypes {
   TOGGLE_HOME_KEY_CARD = 'WALLET/TOGGLE_HOME_KEY_CARD',
   UPDATE_KEY_NAME = 'WALLET/UPDATE_KEY_NAME',
   UPDATE_WALLET_NAME = 'WALLET/UPDATE_WALLET_NAME',
+  SET_WALLET_REFRESHING = 'WALLET/SET_WALLET_REFRESHING',
+  SUCCESS_GET_RECEIVE_ADDRESS = 'WALLET/SUCCESS_GET_RECEIVE_ADDRESS',
 }
 
 interface successWalletStoreInit {
@@ -148,6 +151,10 @@ interface successUpdateWalletBalance {
 
 interface failedUpdateWalletBalance {
   type: typeof WalletActionTypes.FAILED_UPDATE_WALLET_BALANCE;
+  payload: {
+    keyId: string;
+    walletId: string;
+  };
 }
 
 interface successUpdateKeyTotalBalance {
@@ -182,6 +189,13 @@ interface toggleHomeKeyCard {
   };
 }
 
+interface successGetReceiveAddress {
+  type: typeof WalletActionTypes.SUCCESS_GET_RECEIVE_ADDRESS;
+  payload: {
+    wallet: Wallet;
+  };
+}
+
 interface updateKeyName {
   type: typeof WalletActionTypes.UPDATE_KEY_NAME;
   payload: {
@@ -196,6 +210,15 @@ interface updateWalletName {
     keyId: string;
     walletId: string;
     name: string;
+  };
+}
+
+interface setWalletRefreshing {
+  type: typeof WalletActionTypes.SET_WALLET_REFRESHING;
+  payload: {
+    keyId: string;
+    walletId: string;
+    isRefreshing: boolean;
   };
 }
 
@@ -228,4 +251,6 @@ export type WalletActionType =
   | failedUpdateAllKeysAndBalances
   | toggleHomeKeyCard
   | updateKeyName
-  | updateWalletName;
+  | updateWalletName
+  | setWalletRefreshing
+  | successGetReceiveAddress;

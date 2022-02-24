@@ -37,7 +37,7 @@ export const buildWalletObj = (
     walletId,
     walletName,
     coin,
-    balance = {crypto: '0', fiat: 0},
+    balance = {crypto: '0', fiat: 0, sat: 0},
     tokens,
     keyId,
     n,
@@ -70,6 +70,7 @@ export const buildWalletObj = (
       : '',
     n,
     m,
+    isRefreshing: false,
   };
 };
 

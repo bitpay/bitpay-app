@@ -38,9 +38,9 @@ import GeneralSettingsStack, {
 import SecuritySettingsStack, {
   SecuritySettingsStackParamList,
 } from './navigation/tabs/settings/security/SecurityStack';
-import ContactSettingsStack, {
-  ContactSettingsStackParamList,
-} from './navigation/tabs/settings/contacts/ContactsStack';
+import ContactsStack, {
+  ContactsStackParamList,
+} from './navigation/tabs/contacts/ContactsStack';
 import NotificationSettingsStack, {
   NotificationSettingsStackParamList,
 } from './navigation/tabs/settings/notifications/NotificationsStack';
@@ -85,7 +85,7 @@ export type RootStackParamList = {
   Merchant: NavigatorScreenParams<MerchantStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
   SecuritySettings: NavigatorScreenParams<SecuritySettingsStackParamList>;
-  ContactSettings: NavigatorScreenParams<ContactSettingsStackParamList>;
+  Contacts: NavigatorScreenParams<ContactsStackParamList>;
   NotificationSettings: NavigatorScreenParams<NotificationSettingsStackParamList>;
   About: NavigatorScreenParams<AboutStackParamList>;
   BuyCrypto: NavigatorScreenParams<BuyCryptoStackParamList>;
@@ -103,12 +103,12 @@ export enum RootStacks {
   WALLET = 'Wallet',
   CARD = 'Card',
   SCAN = 'Scan',
+  CONTACTS = 'Contacts',
   GIFT_CARD = 'GiftCard',
   MERCHANT = 'Merchant',
   // SETTINGS
   GENERAL_SETTINGS = 'GeneralSettings',
   SECURITY_SETTINGS = 'SecuritySettings',
-  CONTACT_SETTINGS = 'ContactSettings',
   NOTIFICATION_SETTINGS = 'NotificationSettings',
   ABOUT = 'About',
   BUY_CRYPTO = 'BuyCrypto',
@@ -127,7 +127,7 @@ export type NavScreenParams = NavigatorScreenParams<
     MerchantStackParamList &
     GeneralSettingsStackParamList &
     SecuritySettingsStackParamList &
-    ContactSettingsStackParamList &
+    ContactsStackParamList &
     NotificationSettingsStackParamList &
     AboutStackParamList &
     BuyCryptoStackParamList &
@@ -305,10 +305,7 @@ export default () => {
               name={RootStacks.SECURITY_SETTINGS}
               component={SecuritySettingsStack}
             />
-            <Root.Screen
-              name={RootStacks.CONTACT_SETTINGS}
-              component={ContactSettingsStack}
-            />
+            <Root.Screen name={RootStacks.CONTACTS} component={ContactsStack} />
             <Root.Screen
               name={RootStacks.NOTIFICATION_SETTINGS}
               component={NotificationSettingsStack}

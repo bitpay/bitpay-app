@@ -18,6 +18,8 @@ interface InitialsProps {
 
 interface AvatarProps {
   size: number;
+  name?: string;
+  isContact?: boolean;
 }
 
 const AvatarContainer = styled.View`
@@ -30,7 +32,7 @@ const VerifiedCheckContainer = styled.View`
   bottom: 0;
 `;
 
-const ProfileIcon: React.FC<AvatarSvgProps> = ({
+export const ProfileIcon: React.FC<AvatarSvgProps> = ({
   size = 35,
   color,
   background,
@@ -131,14 +133,19 @@ const Initials: React.FC<InitialsProps> = ({size = 24, initials}) => {
   );
 };
 
-const Avatar: React.FC<AvatarProps> = ({size}) => {
+const Avatar: React.FC<AvatarProps> = ({size, isContact}) => {
   const initials = useSelector<RootState, string>(({APP, BITPAY_ID}) => {
-    const user = BITPAY_ID.user[APP.network];
-    const firstInitial = (user?.givenName || '').trim().charAt(0);
-    const lastInitial = (user?.familyName || '').trim().charAt(0);
+    if (!isContact) {
+      const user = BITPAY_ID.user[APP.network];
+      const firstInitial = (user?.givenName || '').trim().charAt(0);
+      const lastInitial = (user?.familyName || '').trim().charAt(0);
 
-    return `${firstInitial}${lastInitial}`.toUpperCase();
+      return `${firstInitial}${lastInitial}`.toUpperCase();
+    } else {
+      return ''; // Contacts no verified will use generic icon
+    }
   });
+
   const isVerified = false; // TODO
 
   return (

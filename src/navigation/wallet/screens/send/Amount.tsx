@@ -1,6 +1,6 @@
 import React, {useLayoutEffect, useState} from 'react';
 import {BaseText} from '../../../../components/styled/Text';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {StackActions, useNavigation, useRoute} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {LightBlack, NeutralSlate, White} from '../../../../styles/colors';
 import {
@@ -13,6 +13,20 @@ import Button from '../../../../components/button/Button';
 import {View} from 'react-native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
+import {Recipient, Wallet} from '../../../../store/wallet/wallet.models';
+import {
+  createProposalAndBuildTxDetails,
+  handleCreateTxProposalError,
+} from '../../../../store/wallet/effects/send/send';
+import {useAppDispatch} from '../../../../utils/hooks';
+import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
+import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+} from '../../../../store/app/app.actions';
+import {sleep} from '../../../../utils/helper-methods';
+import {navigationRef} from '../../../../Root';
 
 const SendMax = styled.TouchableOpacity`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
@@ -39,7 +53,7 @@ const SwapButtonContainer = styled.View`
   margin-bottom: 20px;
 `;
 
-const AmountHeroContainer = styled.View`
+export const AmountHeroContainer = styled.View`
   flex-direction: row;
   align-items: center;
   justify-content: center;
@@ -50,25 +64,25 @@ const ActionContainer = styled.View`
   margin: 20px 0;
 `;
 
-const AmountText = styled(BaseText)`
-  font-size: 50px;
+export const AmountText = styled(BaseText)<{bigAmount?: boolean}>`
+  font-size: ${({bigAmount}) => (bigAmount ? '35px' : '50px')};
   font-weight: 500;
   color: ${({theme}) => theme.colors.text};
   margin-right: 5px;
 `;
 
-const CurrencySuperScript = styled.View`
+export const CurrencySuperScript = styled.View`
   align-items: flex-start;
   justify-content: flex-start;
   height: 50px;
 `;
 
-const CurrencyText = styled(BaseText)`
+export const CurrencyText = styled(BaseText)`
   font-size: 20px;
   color: ${({theme}) => theme.colors.text};
 `;
 
-const AmountContainer = styled.View`
+export const AmountContainer = styled.View`
   flex: 1;
   justify-content: space-between;
   margin-top: 20px;
@@ -76,22 +90,20 @@ const AmountContainer = styled.View`
 `;
 
 export interface AmountParamList {
-  id?: string;
-  keyId?: string;
-  address: string;
-  currencyAbbreviation: string;
-  amount?: string;
+  wallet: Wallet;
+  recipient: Recipient;
 }
 
 const Amount = () => {
   const route = useRoute<RouteProp<WalletStackParamList, 'Amount'>>();
-  const {currencyAbbreviation, amount: initialAmt = 0} = route.params;
+  const {wallet, recipient} = route.params;
   const navigation = useNavigation();
-  const sendMax = () => {};
-  const swapList = ['USD'];
-  swapList.unshift(currencyAbbreviation);
-  const [amount, setAmount] = useState(initialAmt);
+  const dispatch = useAppDispatch();
+  const [amount, setAmount] = useState('0');
+  const currencyAbbreviation = wallet.currencyAbbreviation.toUpperCase();
   const [currency, setCurrency] = useState(currencyAbbreviation);
+  const sendMax = () => {};
+  const swapList = [currencyAbbreviation, 'USD'];
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -104,6 +116,44 @@ const Amount = () => {
       ),
     });
   });
+
+  const goToConfirm = async () => {
+    try {
+      dispatch(
+        startOnGoingProcessModal(OnGoingProcessMessages.GENERAL_AWAITING),
+      );
+      const {txDetails, txp} = await dispatch(
+        createProposalAndBuildTxDetails({
+          wallet,
+          recipient,
+          amount: Number(amount),
+        }),
+      );
+
+      navigation.navigate('Wallet', {
+        screen: 'Confirm',
+        params: {wallet, recipient, txp, txDetails},
+      });
+      dispatch(dismissOnGoingProcessModal());
+    } catch (err: any) {
+      dispatch(dismissOnGoingProcessModal());
+      const errorMessageConfig = (
+        await Promise.all([handleCreateTxProposalError(err), sleep(400)])
+      )[0];
+      dispatch(
+        showBottomNotificationModal({
+          ...errorMessageConfig,
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: 'OK',
+              action: () => navigationRef.dispatch(StackActions.pop(1)),
+            },
+          ],
+        }),
+      );
+    }
+  };
 
   return (
     <SafeAreaView>
@@ -120,9 +170,11 @@ const Amount = () => {
           </SwapButtonContainer>
         </View>
         <View>
-          <VirtualKeyboard onChange={setAmount} reset={currency} />
+          <VirtualKeyboard onChange={val => setAmount(val)} reset={currency} />
           <ActionContainer>
-            <Button>Continue</Button>
+            <Button disabled={!amount} onPress={goToConfirm}>
+              Continue
+            </Button>
           </ActionContainer>
         </View>
       </AmountContainer>

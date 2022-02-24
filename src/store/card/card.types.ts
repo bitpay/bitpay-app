@@ -3,11 +3,9 @@ import {Card, PagedTransactionData, Transaction} from './card.models';
 import {
   FetchCardsStatus,
   FetchOverviewStatus,
+  FetchSettledTransactionsStatus,
   FetchVirtualCardImageUrlsStatus,
 } from './card.reducer';
-
-export type CardBrand = 'Mastercard' | 'Visa';
-export type CardProvider = 'galileo' | 'firstView';
 
 export const TTL = {
   fetchOverview: 1000 * 10,
@@ -37,6 +35,9 @@ export enum CardActionTypes {
   SUCCESS_FETCH_OVERVIEW = 'CARD/SUCCESS_FETCH_OVERVIEW',
   FAILED_FETCH_OVERVIEW = 'CARD/FAILED_FETCH_OVERVIEW',
   UPDATE_FETCH_OVERVIEW_STATUS = 'CARD/UPDATE_FETCH_OVERVIEW_STATUS',
+  SUCCESS_FETCH_SETTLED_TRANSACTIONS = 'CARD/SUCCESS_FETCH_SETTLED_TRANSACTIONS',
+  FAILED_FETCH_SETTLED_TRANSACTIONS = 'CARD/FAILED_FETCH_SETTLED_TRANSACTIONS',
+  UPDATE_FETCH_SETTLED_TRANSACTIONS_STATUS = 'CARD/UPDATE_FETCH_SETTLED_TRANSACTIONS_STATUS',
   SUCCESS_FETCH_VIRTUAL_IMAGE_URLS = 'CARD/SUCCESS_FETCH_VIRTUAL_IMAGE_URLS',
   FAILED_FETCH_VIRTUAL_IMAGE_URLS = 'CARD/FAILED_FETCH_VIRTUAL_IMAGE_URLS',
   UPDATE_FETCH_VIRTUAL_IMAGE_URLS_STATUS = 'CARD/UPDATE_FETCH_VIRTUAL_IMAGE_URLS_STATUS',
@@ -90,6 +91,21 @@ interface UpdateFetchOverviewStatus {
   payload: {id: string; status: FetchOverviewStatus};
 }
 
+interface SuccessFetchSettledTransactions {
+  type: CardActionTypes.SUCCESS_FETCH_SETTLED_TRANSACTIONS;
+  payload: {id: string; transactions: PagedTransactionData};
+}
+
+interface FailedFetchSettledTransactions {
+  type: CardActionTypes.FAILED_FETCH_SETTLED_TRANSACTIONS;
+  payload: {id: string};
+}
+
+interface UpdateFetchSettledTransactionsStatus {
+  type: CardActionTypes.UPDATE_FETCH_SETTLED_TRANSACTIONS_STATUS;
+  payload: {id: string; status: FetchSettledTransactionsStatus};
+}
+
 interface SuccessFetchVirtualImageUrls {
   type: CardActionTypes.SUCCESS_FETCH_VIRTUAL_IMAGE_URLS;
   payload: {id: string; virtualCardImage: string}[];
@@ -113,6 +129,9 @@ export type CardActionType =
   | SuccessFetchOverview
   | FailedFetchOverview
   | UpdateFetchOverviewStatus
+  | SuccessFetchSettledTransactions
+  | FailedFetchSettledTransactions
+  | UpdateFetchSettledTransactionsStatus
   | SuccessFetchVirtualImageUrls
   | FailedFetchVirtualImageUrls
   | UpdateFetchVirtualImageUrlsStatus;

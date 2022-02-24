@@ -19,6 +19,7 @@ import {Dispatch} from 'redux';
 import {getMnemonic} from '../../../../utils/helper-methods';
 import {TouchableOpacity} from 'react-native';
 import {HomeLink, SectionHeaderContainer} from '../HomeRoot';
+import {CardProvider} from '../../../../constants/card';
 
 const CarouselContainer = styled.View`
   margin: 10px 0 10px;
@@ -67,7 +68,7 @@ const createHomeCardList = (
   cards: Card[],
   dispatch: Dispatch,
 ) => {
-  cards = cards.filter(c => c.provider === 'galileo');
+  cards = cards.filter(c => c.provider === CardProvider.galileo);
 
   const list: JSX.Element[] = [];
   const hasKeys = keys.length;

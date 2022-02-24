@@ -36,6 +36,18 @@ export interface FetchOverviewResponse {
   };
 }
 
+export interface FetchSettledTransactionsResponse {
+  user: {
+    card: {
+      id: string;
+      overview: {
+        dateAccountOpened: string;
+        settledTransactions: PagedTransactionData;
+      };
+    };
+  };
+}
+
 export interface FetchVirtualCardImageUrlsResponse {
   user: {
     [k: `card${number}`]: {

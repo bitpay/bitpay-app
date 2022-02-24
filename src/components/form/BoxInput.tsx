@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import {TextInput, TextInputProps} from 'react-native';
+import TextInputMask from 'react-native-text-input-mask';
 import styled, {css, useTheme} from 'styled-components/native';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
 import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
@@ -8,14 +9,14 @@ import {Action, Black, Caution, Slate} from '../../styles/colors';
 import {BitPayTheme} from '../../themes/bitpay';
 import {BaseText} from '../styled/Text';
 
-type InputType = 'password' | 'search';
+type InputType = 'password' | 'phone' | 'search';
 interface ContainerProps {
   isFocused: boolean;
   isError?: boolean;
   type?: InputType;
 }
 
-const Input = styled.TextInput<ContainerProps>`
+const Input = styled(TextInputMask)<ContainerProps>`
   height: 55px;
   margin: 10px 0 0 0;
   border: 0.75px solid ${Slate};
@@ -26,6 +27,7 @@ const Input = styled.TextInput<ContainerProps>`
     css`
       padding-right: ${type === 'search' ? 65 : 40}px;
     `};
+  ${({type}) => (type === 'phone' ? 'padding: 0 10px 2px 95px' : '')};
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
   font-weight: 500;
@@ -87,7 +89,7 @@ const SearchIconContainer = styled.View`
   position: absolute;
   right: 0;
   top: 31px;
-  border-left-color: #eceffd;
+  border-left-color: ${({theme}) => (theme.dark ? '#45484E' : '#eceffd')};
   border-left-width: 1px;
   padding: 5px 15px;
 `;
@@ -96,13 +98,14 @@ interface Props extends TextInputProps {
   label?: string;
   onFocus?: () => void;
   onBlur?: () => void;
+  icon?: () => JSX.Element;
   error?: any;
   type?: InputType;
   [x: string]: any;
 }
 
 const BoxInput = React.forwardRef<TextInput, Props>(
-  ({label, onFocus, onBlur, error, type, ...props}, ref) => {
+  ({label, onFocus, onBlur, icon, error, type, ...props}, ref) => {
     const theme = useTheme();
     const isPassword = type === 'password';
     const isSearch = type === 'search';
@@ -142,6 +145,7 @@ const BoxInput = React.forwardRef<TextInput, Props>(
             color: theme.colors.text,
           }}
         />
+        {icon ? icon() : null}
         {isPassword && (
           <ObfuscationToggle
             onPress={() => setSecureTextEntry(!isSecureTextEntry)}>

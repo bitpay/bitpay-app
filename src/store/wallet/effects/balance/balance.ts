@@ -5,18 +5,123 @@ import {
   Key,
   WalletBalance,
   WalletStatus,
+  Recipient,
 } from '../../wallet.models';
 import {
   failedUpdateAllKeysAndBalances,
   failedUpdateKeyTotalBalance,
   failedUpdateWalletBalance,
+  setWalletRefreshing,
   successUpdateAllKeysAndBalances,
   successUpdateKeyTotalBalance,
   successUpdateWalletBalance,
+  updatePortfolioBalance,
 } from '../../wallet.actions';
-import {formatCryptoAmount, isCacheKeyStale, toFiat} from '../../utils/wallet';
+import {
+  findWalletById,
+  formatCryptoAmount,
+  isCacheKeyStale,
+  toFiat,
+} from '../../utils/wallet';
 import {Network} from '../../../../constants';
 import {BALANCE_CACHE_DURATION} from '../../../../constants/wallet';
+
+/*
+ * post broadcasting of payment
+ * poll for updated balance -> update balance for: wallet, key, portfolio and local recipient wallet if applicable
+ * */
+export const waitForTargetAmountAndUpdateWallet =
+  ({
+    key,
+    wallet,
+    targetAmount,
+    recipient,
+  }: {
+    key: Key;
+    wallet: Wallet;
+    targetAmount: number;
+    recipient: Recipient;
+  }): Effect =>
+  async (dispatch, getState) => {
+    try {
+      // set loading (for UI spinner on wallet details as well as keyOverview
+      dispatch(
+        setWalletRefreshing({
+          keyId: key.id,
+          walletId: wallet.id,
+          isRefreshing: true,
+        }),
+      );
+
+      let retry = 0;
+
+      // wait for expected balance
+      const interval = setInterval(() => {
+        console.log('waiting for target balance', retry);
+        retry++;
+
+        if (retry > 5) {
+          // balance not met - todo handle this
+          dispatch(
+            setWalletRefreshing({
+              keyId: key.id,
+              walletId: wallet.id,
+              isRefreshing: false,
+            }),
+          );
+          clearInterval(interval);
+          return;
+        }
+
+        const {
+          credentials: {token, multisigEthInfo},
+        } = wallet;
+
+        wallet.getStatus(
+          {
+            tokenAddress: token ? token.address : null,
+            multisigContractAddress: multisigEthInfo
+              ? multisigEthInfo.multisigContractAddress
+              : null,
+          },
+          async (err: Error, status: WalletStatus) => {
+            if (err) {
+              console.error(err);
+            }
+            const {totalAmount} = status.balance;
+            // expected amount - update balance
+            if (totalAmount === targetAmount) {
+              dispatch(startUpdateWalletBalance({key, wallet}));
+
+              // update recipient balance if local
+              const {walletId, keyId} = recipient;
+              if (walletId && keyId) {
+                const {
+                  WALLET: {keys},
+                } = getState();
+                const recipientKey = keys[keyId];
+                const recipientWallet = findWalletById(key.wallets, walletId);
+                if (recipientKey && recipientWallet) {
+                  await dispatch(
+                    startUpdateWalletBalance({
+                      key: recipientKey,
+                      wallet: recipientWallet,
+                    }),
+                  );
+                  console.log('updated recipient wallet');
+                }
+              }
+              await dispatch(updatePortfolioBalance());
+
+              clearInterval(interval);
+            }
+          },
+        );
+      }, 5000);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
 export const startUpdateWalletBalance =
   ({key, wallet}: {key: Key; wallet: Wallet}): Effect =>
@@ -72,7 +177,12 @@ export const startUpdateWalletBalance =
         console.log(`Updated balance: ${currencyAbbreviation} ${id}`);
         resolve();
       } catch (err) {
-        dispatch(failedUpdateWalletBalance());
+        dispatch(
+          failedUpdateWalletBalance({
+            keyId: key.id,
+            walletId: wallet.id,
+          }),
+        );
         reject(err);
       }
     });
@@ -188,6 +298,7 @@ const updateWalletBalance = ({
           const {totalAmount} = status.balance;
 
           const newBalance = {
+            sat: totalAmount,
             crypto: formatCryptoAmount(totalAmount, currencyAbbreviation),
             fiat:
               network === Network.mainnet

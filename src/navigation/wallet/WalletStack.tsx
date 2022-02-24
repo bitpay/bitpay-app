@@ -1,5 +1,5 @@
 import React from 'react';
-import {createStackNavigator} from '@react-navigation/stack';
+import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
@@ -30,11 +30,16 @@ import TermsOfUse, {
 import AddWallet, {AddWalletParamList} from './screens/AddWallet';
 import Amount, {AmountParamList} from './screens/send/Amount';
 import SendTo from './screens/send/SendTo';
+import Confirm, {ConfirmParamList} from './screens/send/Confirm';
 import CreateMultisig, {CreateMultisigProps} from './screens/CreateMultisig';
 import JoinMultisig, {JoinMultisigParamList} from './screens/JoinMultisig';
 import Copayers from './screens/Copayers';
 import AddingOptions, {AddingOptionsParamList} from './screens/AddingOptions';
 import UpdateKeyOrWalletName from './screens/UpdateKeyOrWalletName';
+import RequestSpecificAmount from './screens/request-specific-amount/RequestSpecificAmount';
+import RequestSpecificAmountQR from './screens/request-specific-amount/RequestSpecificAmountQR';
+import haptic from '../../components/haptic-feedback/haptic';
+import Button from '../../components/button/Button';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -60,10 +65,13 @@ export type WalletStackParamList = {
   ExportKey: {code: string; keyName: string | undefined};
   Amount: AmountParamList;
   SendTo: {wallet: WalletModel};
+  Confirm: ConfirmParamList;
   CreateMultisig: CreateMultisigProps;
   JoinMultisig: JoinMultisigParamList | undefined;
   Copayers: {wallet: WalletModel};
   AddingOptions: AddingOptionsParamList;
+  RequestSpecificAmount: {wallet: WalletModel};
+  RequestSpecificAmountQR: {wallet: WalletModel; requestAmount: number};
 };
 
 export enum WalletScreens {
@@ -86,10 +94,13 @@ export enum WalletScreens {
   EXPORT_KEY = 'ExportKey',
   AMOUNT = 'Amount',
   SEND_TO = 'SendTo',
+  CONFIRM = 'Confirm',
   CREATE_MULTISIG = 'CreateMultisig',
   JOIN_MULTISIG = 'JoinMultisig',
   COPAYERS = 'Copayers',
   ADDING_OPTIONS = 'AddingOptions',
+  REQUEST_SPECIFIC_AMOUNT = 'RequestSpecificAmount',
+  REQUEST_SPECIFIC_AMOUNT_QR = 'RequestSpecificAmountQR',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -183,6 +194,23 @@ const WalletStack = () => {
         <Wallet.Screen name={WalletScreens.SEND_TO} component={SendTo} />
         <Wallet.Screen
           options={{
+            headerTitle: () => <HeaderTitle>Confirm Payment</HeaderTitle>,
+            // headerRight: () => (
+            //   <Button
+            //     buttonType={'pill'}
+            //     onPress={() => {
+            //       haptic('impactLight');
+            //     }}>
+            //     Cancel
+            //   </Button>
+            // ),
+            ...TransitionPresets.ModalPresentationIOS,
+          }}
+          name={WalletScreens.CONFIRM}
+          component={Confirm}
+        />
+        <Wallet.Screen
+          options={{
             headerTitle: () => (
               <HeaderTitle>Create Multisig Wallet</HeaderTitle>
             ),
@@ -207,6 +235,17 @@ const WalletStack = () => {
         <Wallet.Screen
           name={WalletScreens.ADDING_OPTIONS}
           component={AddingOptions}
+        />
+        <Wallet.Screen
+          name={WalletScreens.REQUEST_SPECIFIC_AMOUNT}
+          component={RequestSpecificAmount}
+        />
+        <Wallet.Screen
+          options={{
+            ...TransitionPresets.ModalPresentationIOS,
+          }}
+          name={WalletScreens.REQUEST_SPECIFIC_AMOUNT_QR}
+          component={RequestSpecificAmountQR}
         />
       </Wallet.Navigator>
     </>

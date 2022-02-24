@@ -1,5 +1,12 @@
 import {WalletActionType, WalletActionTypes} from './wallet.types';
-import {Key, PriceHistory, Rates, Token, WalletBalance} from './wallet.models';
+import {
+  Key,
+  PriceHistory,
+  Token,
+  WalletBalance,
+  Wallet,
+  Rates,
+} from './wallet.models';
 
 export const successWalletStoreInit = (): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_WALLET_STORE_INIT,
@@ -102,8 +109,12 @@ export const successUpdateWalletBalance = (payload: {
   payload,
 });
 
-export const failedUpdateWalletBalance = (): WalletActionType => ({
+export const failedUpdateWalletBalance = (payload: {
+  keyId: string;
+  walletId: string;
+}): WalletActionType => ({
   type: WalletActionTypes.FAILED_UPDATE_WALLET_BALANCE,
+  payload,
 });
 
 export const successUpdateKeyTotalBalance = (payload: {
@@ -152,5 +163,21 @@ export const updateWalletName = (payload: {
   name: string;
 }): WalletActionType => ({
   type: WalletActionTypes.UPDATE_WALLET_NAME,
+  payload,
+});
+
+export const setWalletRefreshing = (payload: {
+  keyId: string;
+  walletId: string;
+  isRefreshing: boolean;
+}): WalletActionType => ({
+  type: WalletActionTypes.SET_WALLET_REFRESHING,
+  payload,
+});
+
+export const successGetReceiveAddress = (payload: {
+  wallet: Wallet;
+}): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_GET_RECEIVE_ADDRESS,
   payload,
 });

@@ -1,8 +1,9 @@
+import {CardProvider} from '../constants/card';
 import {
   ProviderConfig,
   SUPPORTED_DESIGN_CURRENCIES,
 } from '../constants/config.card';
-import {CardProvider, VirtualDesignCurrency} from '../store/card/card.types';
+import {VirtualDesignCurrency} from '../store/card/card.types';
 
 export const isVirtualDesignSupported = (provider: CardProvider) => {
   return ProviderConfig[provider].virtualDesignSupport || false;

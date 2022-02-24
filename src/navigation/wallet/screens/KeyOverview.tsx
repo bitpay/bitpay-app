@@ -118,6 +118,7 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   balance,
   credentials,
   keyId,
+  isRefreshing,
 }) => ({
   id,
   keyId,
@@ -128,6 +129,7 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   cryptoBalance: balance.crypto,
   fiatBalance: formatFiatAmount(balance.fiat, 'usd'),
   network: credentials.network,
+  isRefreshing,
 });
 
 // Key overview and Key settings list builder

@@ -38,6 +38,7 @@ export interface WalletRowProps {
   isToken?: boolean;
   network: string;
   isComplete?: boolean;
+  isRefreshing?: boolean;
 }
 
 interface Props {

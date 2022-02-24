@@ -85,10 +85,6 @@ const SettingsHomeScreen: React.FC = () => {
       onPress: () => navigation.navigate('SecuritySettings', {screen: 'Root'}),
     },
     {
-      title: t('Contacts'),
-      onPress: () => navigation.navigate('ContactSettings', {screen: 'Root'}),
-    },
-    {
       title: t('Notifications'),
       onPress: () =>
         navigation.navigate('NotificationSettings', {screen: 'Root'}),
