@@ -179,6 +179,25 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     [SupportedCurrencyOptions],
   );
 
+  const checkEthIfTokenSelected = (
+    currencies: Array<string>,
+  ): Array<string> => {
+    if (!currencies.includes('ETH')) {
+      for (const selected of currencies) {
+        if (
+          SUPPORTED_TOKENS.includes(selected.toLowerCase()) ||
+          ALL_CUSTOM_TOKENS.some(
+            token => token.currencyAbbreviation === selected,
+          )
+        ) {
+          currencies = [...currencies, 'ETH'];
+          break;
+        }
+      }
+    }
+    return currencies;
+  };
+
   const contextHandler = (): ContextHandler | undefined => {
     switch (context) {
       case 'onboarding':
@@ -189,9 +208,12 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
           ctaTitle: 'Create Key',
           bottomCta: async ({selectedCurrencies, dispatch, navigation}) => {
             try {
-              const currencies = selectedCurrencies?.map(selected =>
+              const currencies = checkEthIfTokenSelected(
+                selectedCurrencies,
+              )?.map(selected =>
                 selected.toLowerCase(),
               ) as Array<SupportedCurrencies>;
+
               await dispatch(
                 startOnGoingProcessModal(OnGoingProcessMessages.CREATING_KEY),
               );
@@ -311,37 +333,6 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     ...DEFAULT_CURRENCY_OPTIONS,
   ]);
 
-  const checkAndToggleEthIfTokenSelected = (
-    currencies: Array<string>,
-  ): Array<string> => {
-    // if selecting token force eth wallet
-    for (const selected of currencies) {
-      if (
-        SUPPORTED_TOKENS.includes(selected.toLowerCase()) ||
-        ALL_CUSTOM_TOKENS.some(token => token.currencyAbbreviation === selected)
-      ) {
-        if (!currencies.includes('ETH')) {
-          setCurrencyOptions(
-            DEFAULT_CURRENCY_OPTIONS.map(currency => {
-              if (currency.id === 'eth') {
-                return {
-                  ...currency,
-                  // to force rerender
-                  id: Math.random(),
-                  checked: true,
-                };
-              }
-              return currency;
-            }),
-          );
-          currencies = [...currencies, 'ETH'];
-        }
-        break;
-      }
-    }
-    return currencies;
-  };
-
   const currencyToggled = ({
     currencyAbbreviation,
     currencyName,
@@ -362,8 +353,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
           currencies = [...currencies, currencyAbbreviation];
         }
 
-        // if token selected set eth asset selected
-        return checkAndToggleEthIfTokenSelected(currencies);
+        return currencies;
       });
     }
   };
