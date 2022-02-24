@@ -2,10 +2,16 @@ import React from 'react';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {View} from 'react-native';
 import {TRANSACTION_ICON_SIZE} from '../../constants/TransactionIcons';
+import {useTheme} from 'styled-components/native';
+import {LightBlack} from '../../styles/colors';
 
 const WalletTransactionSkeletonRow = () => {
+  const theme = useTheme();
+
   return (
-    <SkeletonPlaceholder>
+    <SkeletonPlaceholder
+      backgroundColor={theme.dark ? LightBlack : '#E1E9EE'}
+      highlightColor={theme.dark ? '#333333' : '#F2F8FC'}>
       <View
         style={{
           flexDirection: 'row',
