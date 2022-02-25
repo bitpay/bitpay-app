@@ -92,6 +92,7 @@ const Type = styled(BaseText)`
 const TransactionSectionHeader = styled(H5)`
   padding: ${ScreenGutter};
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
+  height: 55px;
 `;
 
 const BorderBottom = styled.View`
@@ -100,7 +101,6 @@ const BorderBottom = styled.View`
 `;
 
 const SkeletonContainer = styled.View`
-  padding: 0 ${ScreenGutter};
   margin-bottom: 20px;
   height: ${TRANSACTION_ROW_HEIGHT}px;
 `;

@@ -528,7 +528,7 @@ export const BuildUiFriendlyList = (
       }
     }
 
-    if (notZeroAmountEth) {
+    if (!notZeroAmountEth) {
       const {uiDescription} = transaction;
 
       transaction.uiDescription = uiDescription
