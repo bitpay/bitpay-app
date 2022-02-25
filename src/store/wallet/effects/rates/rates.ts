@@ -60,3 +60,19 @@ export const startGetRates =
       }
     });
   };
+
+export const getHistoricFiatRate = (
+  fiatCode: string,
+  currencyAbbreviation: string,
+  ts: string,
+): Promise<any> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const url = `${BASE_BWS_URL}/v1/fiatrates/${fiatCode}?coin=${currencyAbbreviation}&ts=${ts}`;
+      const {data} = await axios.get(url);
+      resolve(data);
+    } catch (e) {
+      reject(e);
+    }
+  });
+};

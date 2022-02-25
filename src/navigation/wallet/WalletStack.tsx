@@ -251,6 +251,9 @@ const WalletStack = () => {
           component={RequestSpecificAmountQR}
         />
         <Wallet.Screen
+          options={{
+            ...TransitionPresets.ModalPresentationIOS,
+          }}
           name={WalletScreens.TRANSACTION_DETAILS}
           component={TransactionDetails}
         />

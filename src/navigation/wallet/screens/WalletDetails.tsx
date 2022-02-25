@@ -41,6 +41,8 @@ import {
   CanSpeedUpTx,
   GetTransactionHistory,
   GroupTransactionHistory,
+  IsMoved,
+  IsReceived,
 } from '../../../store/wallet/effects/transactions/transactions';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import TransactionRow, {
@@ -341,8 +343,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const onPressTransaction = (transaction: any) => {
     const {hasUnconfirmedInputs, action, isRBF} = transaction;
-    const isReceived = action === 'received';
-    const isMoved = action === 'moved';
+    const isReceived = IsReceived(action);
+    const isMoved = IsMoved(action);
     const currency = currencyAbbreviation.toLowerCase();
 
     if (hasUnconfirmedInputs && (isReceived || isMoved) && currency === 'btc') {
