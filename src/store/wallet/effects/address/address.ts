@@ -157,8 +157,7 @@ export const TranslateToBchCashAddress = (
   addressToTranslate: string,
 ): string => {
   const addressObj = Bitcore.Address(addressToTranslate).toObject();
-  const cashAdrr = BitcoreCash.Address.fromObject(addressObj).toCashAddress();
-  return cashAdrr;
+  return BitcoreCash.Address.fromObject(addressObj).toCashAddress();
 };
 
 export const ToLtcAddress = (address: string): string => {
