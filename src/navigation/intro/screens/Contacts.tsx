@@ -12,7 +12,7 @@ import {WIDTH} from '../../../components/styled/Containers';
 import IntroButton from '../components/intro-button/IntroButton';
 import {StackScreenProps} from '@react-navigation/stack';
 import {RootStackParamList} from '../../../Root';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from 'styled-components/native';
 import LightBottomTabBarContactsSvg from '../../../../assets/img/intro/light/bottom-tabbar-contacts.svg';
 import DarkBottomTabBarContactsSvg from '../../../../assets/img/intro/dark/bottom-tabbar-contacts.svg';
 import {askForTrackingPermissionAndEnableSdks} from '../../../store/app/app.effects';

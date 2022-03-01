@@ -3,7 +3,7 @@ import {RoundedCheckbox} from 'react-native-rounded-checkbox';
 import Check from '../../../assets/img/check.svg';
 import {Action, LightBlack, SlateDark, White} from '../../styles/colors';
 import styled from 'styled-components/native';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from 'styled-components/native';
 
 interface Props {
   onPress: () => any;

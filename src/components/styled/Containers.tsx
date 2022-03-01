@@ -300,3 +300,15 @@ export const OptionInfoContainer = styled.View`
   justify-content: center;
   flex: 1;
 `;
+
+// Search
+
+export const SearchInput = styled.TextInput`
+  flex: 1;
+  padding: 0 10px;
+  border-right-width: 1px;
+  border-right-color: ${({theme: {dark}}) => (dark ? '#45484E' : '#ECEFFD')};
+  height: 32px;
+  color: ${({theme}) => theme.colors.text};
+  background-color: transparent;
+`;
