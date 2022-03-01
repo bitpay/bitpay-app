@@ -36,6 +36,7 @@ export const walletConnectReducer = (
       return {
         ...state,
         connectors: action.payload.connectors,
+        pending: [],
       };
     case WalletConnectActionTypes.INIT_FAILURE:
       return {

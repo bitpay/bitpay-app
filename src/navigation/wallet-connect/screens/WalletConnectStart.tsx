@@ -4,7 +4,12 @@ import Button from '../../../components/button/Button';
 import {Paragraph} from '../../../components/styled/Text';
 import VerifiedIcon from '../../../../assets/img/wallet-connect/verified-icon.svg';
 import WalletIcon from '../../../../assets/img/wallet-connect/wallet-icon.svg';
-import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {
+  CommonActions,
+  RouteProp,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useDispatch, useSelector} from 'react-redux';
@@ -34,6 +39,7 @@ export type WalletConnectStartParamList = {
   keyId: string | undefined;
   walletId: string | undefined;
   peer: any;
+  fromConnectionsView?: boolean;
 };
 
 const CHAIN_ID: {[key in string]: any} = {
@@ -73,7 +79,7 @@ const WalletConnectStart = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const {
-    params: {walletId, keyId, peer},
+    params: {walletId, keyId, peer, fromConnectionsView},
   } = useRoute<RouteProp<{params: WalletConnectStartParamList}>>();
   const {peerId, peerMeta} = peer;
 
@@ -110,7 +116,7 @@ const WalletConnectStart = () => {
         ),
       );
       dispatch(dismissOnGoingProcessModal());
-      await sleep(800);
+      await sleep(500);
       dispatch(
         showBottomNotificationModal({
           type: 'success',
@@ -120,28 +126,32 @@ const WalletConnectStart = () => {
           actions: [
             {
               text: 'GOT IT',
-              action: async () => {
-                navigation.reset({
-                  index: 2,
-                  routes: [
-                    {
-                      name: 'Tabs',
-                      params: {screen: 'Settings'},
-                    },
-                    {
-                      name: 'ConnectionSettings',
-                      params: {
-                        screen: 'Root',
-                      },
-                    },
-                    {
-                      name: 'WalletConnect',
-                      params: {
-                        screen: 'WalletConnectConnections',
-                      },
-                    },
-                  ],
-                });
+              action: () => {
+                fromConnectionsView
+                  ? navigation.goBack()
+                  : navigation.dispatch(
+                      CommonActions.reset({
+                        index: 2,
+                        routes: [
+                          {
+                            name: 'Tabs',
+                            params: {screen: 'Settings'},
+                          },
+                          {
+                            name: 'ConnectionSettings',
+                            params: {
+                              screen: 'Root',
+                            },
+                          },
+                          {
+                            name: 'WalletConnect',
+                            params: {
+                              screen: 'WalletConnectConnections',
+                            },
+                          },
+                        ],
+                      }),
+                    );
                 dispatch(dismissBottomNotificationModal());
               },
               primary: true,

@@ -135,7 +135,7 @@ const WalletConnectHome = () => {
     if (!wcConnector) {
       navigation.goBack();
     }
-  }, [wcConnector]);
+  }, [wcConnector, navigation]);
 
   return (
     <WalletConnectContainer>
