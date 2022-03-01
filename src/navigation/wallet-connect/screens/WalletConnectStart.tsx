@@ -5,8 +5,8 @@ import {Paragraph} from '../../../components/styled/Text';
 import VerifiedIcon from '../../../../assets/img/wallet-connect/verified-icon.svg';
 import WalletIcon from '../../../../assets/img/wallet-connect/wallet-icon.svg';
 import {
-  CommonActions,
   RouteProp,
+  StackActions,
   useNavigation,
   useRoute,
 } from '@react-navigation/native';
@@ -116,7 +116,7 @@ const WalletConnectStart = () => {
         ),
       );
       dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
+      await sleep(800);
       dispatch(
         showBottomNotificationModal({
           type: 'success',
@@ -130,26 +130,8 @@ const WalletConnectStart = () => {
                 fromConnectionsView
                   ? navigation.goBack()
                   : navigation.dispatch(
-                      CommonActions.reset({
-                        index: 2,
-                        routes: [
-                          {
-                            name: 'Tabs',
-                            params: {screen: 'Settings'},
-                          },
-                          {
-                            name: 'ConnectionSettings',
-                            params: {
-                              screen: 'Root',
-                            },
-                          },
-                          {
-                            name: 'WalletConnect',
-                            params: {
-                              screen: 'WalletConnectConnections',
-                            },
-                          },
-                        ],
+                      StackActions.replace('WalletConnect', {
+                        screen: 'WalletConnectConnections',
                       }),
                     );
                 dispatch(dismissBottomNotificationModal());
