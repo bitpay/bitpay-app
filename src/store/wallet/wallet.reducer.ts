@@ -2,7 +2,6 @@ import {Key, PriceHistory, Rates, Token} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import merge from 'lodash.merge';
 import {FeeLevels} from './effects/fee/fee';
-import cloneDeep from 'lodash.clonedeep';
 
 type WalletReduxPersistBlackList = [];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
@@ -203,14 +202,13 @@ export const walletReducer = (
 
     case WalletActionTypes.DELETE_KEY: {
       const {keyId} = action.payload;
-      const keyList = cloneDeep(state.keys);
       const balanceToRemove = state.keys[keyId].totalBalance;
-      delete keyList[keyId];
+      delete state.keys[keyId];
 
       return {
         ...state,
         keys: {
-          ...keyList,
+          ...state.keys,
         },
         portfolioBalance: {
           current: state.portfolioBalance.current - balanceToRemove,
