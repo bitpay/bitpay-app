@@ -495,11 +495,6 @@ export const BuildUiFriendlyList = (
       }
     }
 
-    if (!notZeroAmountEth) {
-      transaction.uiDescription = 'Interaction with contract';
-      transaction.uiValue = feeStr;
-    }
-
     if (confirmations > 0) {
       if (
         (currencyAbbreviation === 'eth' ||
@@ -522,7 +517,7 @@ export const BuildUiFriendlyList = (
             } else if (hasContactName) {
               transaction.uiDescription = getContactName(outputs[0]?.address);
             } else if (toWalletName) {
-              transaction.uiDescription = toWalletName;
+              transaction.uiDescription = `Sent to ${toWalletName}`;
             } else {
               transaction.uiDescription = 'Sent';
             }
@@ -549,17 +544,25 @@ export const BuildUiFriendlyList = (
           } else if (message) {
             transaction.uiDescription = message;
           } else {
-            const {uiDescription} = transaction;
-            transaction.uiDescription = uiDescription
-              ? `${uiDescription} Sent to self`
-              : 'Sent to self';
+            transaction.uiDescription = 'Sent to self';
           }
         }
 
         if (isInvalid) {
+          transaction.uiIcon = TransactionIcons.error;
+
           transaction.uiDescription = 'Invalid';
         }
       }
+    }
+
+    if (!notZeroAmountEth) {
+      const {uiDescription} = transaction;
+
+      transaction.uiDescription = uiDescription
+        ? `Interaction with contract ${uiDescription}`
+        : 'Interaction with contract';
+      transaction.uiValue = feeStr;
     }
 
     if (isInvalid) {

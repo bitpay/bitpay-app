@@ -1,6 +1,12 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {useTranslation} from 'react-i18next';
 import {RefreshControl, SectionList, Share, View} from 'react-native';
 import {useDispatch} from 'react-redux';
@@ -19,7 +25,7 @@ import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/ba
 import {findWalletById, isSegwit} from '../../../store/wallet/utils/wallet';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
-import {LightBlack, SlateDark, White} from '../../../styles/colors';
+import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {
@@ -87,7 +93,7 @@ const Chain = styled(BaseText)`
 const Type = styled(BaseText)`
   font-size: 12px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  border: 1px solid ${({theme: {dark}}) => (dark ? '#252525' : '#E1E4E7')};
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
   padding: 2px 4px;
   border-radius: 3px;
   margin-left: auto;
@@ -96,15 +102,15 @@ const Type = styled(BaseText)`
 const TransactionSectionHeader = styled(H5)`
   padding: ${ScreenGutter};
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
+  height: 55px;
 `;
 
 const BorderBottom = styled.View`
   border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#EBEDF8')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Air)};
 `;
 
 const SkeletonContainer = styled.View`
-  padding: 0 ${ScreenGutter};
   margin-bottom: 20px;
   height: ${TRANSACTION_ROW_HEIGHT}px;
 `;
@@ -163,7 +169,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         />
       ),
     });
-  }, [navigation, uiFormattedWallet]);
+  }, [navigation, uiFormattedWallet.walletName]);
 
   useEffect(() => {
     if (fullWalletObj.isRefreshing) {
@@ -345,7 +351,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     //   TODO: Speed up Transaction
   };
 
-  const onPressTransaction = (transaction: any) => {
+  const onPressTransaction = useMemo(
+      () => (transaction: any) => {
     const {hasUnconfirmedInputs, action, isRBF} = transaction;
     const isReceived = IsReceived(action);
     const isMoved = IsMoved(action);
@@ -389,7 +396,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     } else {
       goToTransactionDetails(transaction);
     }
-  };
+  }, []);
 
   const renderItem = useCallback(
     ({item}) => (
@@ -398,9 +405,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         description={item.uiDescription}
         time={item.uiTime}
         value={item.uiValue}
-        onPressTransaction={() => {
-          onPressTransaction(item);
-        }}
+        onPressTransaction={() => onPressTransaction(item)}
       />
     ),
     [],
@@ -460,6 +465,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         }}
         sections={groupedHistory}
         stickyHeaderIndices={[groupedHistory?.length]}
+        stickySectionHeadersEnabled={true}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         renderSectionHeader={({section: {title}}) => (
