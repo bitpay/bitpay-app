@@ -79,7 +79,6 @@ const ObfuscationToggle = styled.TouchableOpacity`
 const SearchIconContainer = styled.View`
   position: absolute;
   right: 0;
-  top: 31px;
   border-left-color: ${({theme}) => (theme.dark ? '#45484E' : '#eceffd')};
   border-left-width: 1px;
   padding: 5px 15px;
