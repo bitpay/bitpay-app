@@ -248,11 +248,11 @@ export const walletReducer = (
     }
 
     case WalletActionTypes.SUCCESS_GET_RECEIVE_ADDRESS: {
-      const {keyId, id} = action.payload.wallet;
+      const {keyId, walletId, receiveAddress} = action.payload;
       const keyToUpdate = state.keys[keyId];
       keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
-        if (wallet.id === id) {
-          return merge(wallet, action.payload.wallet);
+        if (wallet.id === walletId) {
+          wallet.receiveAddress = receiveAddress;
         }
         return wallet;
       });
