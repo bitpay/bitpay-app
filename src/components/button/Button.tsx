@@ -1,5 +1,5 @@
 import debounce from 'lodash.debounce';
-import React, {useMemo} from 'react';
+import React, {memo, useMemo, useRef} from 'react';
 import {BaseButtonProps} from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -172,16 +172,21 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
   } = props;
   const secondary = buttonStyle === 'secondary';
 
+  // most common use case is to pass an anonymous function
+  // useRef to preserve memoized debounce
+  const onPressRef = useRef(onPress);
+  onPressRef.current = onPress;
+
   const debouncedOnPress = useMemo(
     () =>
       debounce(
         () => {
-          if (disabled || !onPress) {
+          if (disabled || !onPressRef.current) {
             return;
           }
 
           Haptic('impactLight');
-          onPress();
+          onPressRef.current();
         },
         debounceTime || 0,
         {
@@ -189,7 +194,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
           trailing: false,
         },
       ),
-    [debounceTime, disabled, onPress],
+    [debounceTime, disabled],
   );
 
   const isLoading = state === 'loading';
@@ -263,4 +268,4 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
   );
 };
 
-export default Button;
+export default memo(Button);
