@@ -16,7 +16,7 @@ import {RootState} from '../../../store';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateAllWalletBalancesForKey} from '../../../store/wallet/effects/balance/balance';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
-import {Wallet} from '../../../store/wallet/wallet.models';
+import {Wallet, WalletStatus} from '../../../store/wallet/wallet.models';
 import {
   LightBlack,
   NeutralSlate,
@@ -33,6 +33,7 @@ import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import {useAppSelector} from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import KeyDropdownOption from '../components/KeyDropdownOption';
+import {startGetRates} from '../../../store/wallet/effects';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -117,6 +118,7 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   balance,
   credentials,
   keyId,
+  isRefreshing,
 }) => ({
   id,
   keyId,
@@ -127,6 +129,7 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   cryptoBalance: balance.crypto,
   fiatBalance: formatFiatAmount(balance.fiat, 'usd'),
   network: credentials.network,
+  isRefreshing,
 });
 
 // Key overview and Key settings list builder
@@ -138,7 +141,6 @@ export const buildNestedWalletList = (wallets: Wallet[]) => {
   _coins.forEach(coin => {
     walletList.push({
       ...buildUIFormattedWallet(coin),
-      isComplete: coin.isComplete(),
     });
     // eth wallet with tokens -> for every token wallet ID grab full wallet from _tokens and add it to the list
     if (coin.tokens) {
@@ -148,7 +150,6 @@ export const buildNestedWalletList = (wallets: Wallet[]) => {
           walletList.push({
             ...buildUIFormattedWallet(tokenWallet),
             isToken: true,
-            isComplete: true,
           });
         }
       });
@@ -255,6 +256,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
+      await dispatch(startGetRates());
       await Promise.all([
         dispatch(startUpdateAllWalletBalancesForKey(key)),
         sleep(1000),
@@ -311,14 +313,23 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
               wallet={item}
               onPress={() => {
                 haptic('impactLight');
-                if (!item.isComplete) {
-                  const fullWalletObj = key.wallets.find(
-                    ({id}) => id === item.id,
-                  )!;
-                  navigation.navigate('Wallet', {
-                    screen: 'Copayers',
-                    params: {wallet: fullWalletObj},
-                  });
+                const fullWalletObj = key.wallets.find(
+                  ({id}) => id === item.id,
+                )!;
+                if (!fullWalletObj.isComplete()) {
+                  fullWalletObj.getStatus(
+                    {network: 'livenet'},
+                    (err: any, status: WalletStatus) => {
+                      if (err) {
+                        // TODO
+                        console.log(err);
+                      }
+                      navigation.navigate('Wallet', {
+                        screen: 'Copayers',
+                        params: {wallet: fullWalletObj, status: status.wallet},
+                      });
+                    },
+                  );
                 } else {
                   navigation.navigate('Wallet', {
                     screen: 'WalletDetails',

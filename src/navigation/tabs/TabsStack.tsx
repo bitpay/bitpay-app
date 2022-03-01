@@ -6,6 +6,7 @@ import HomeRoot from './home/HomeStack';
 import ShopRoot, {ShopStackParamList} from './shop/ShopStack';
 import SettingsRoot from './settings/SettingsStack';
 import {SettingsStackParamList} from './settings/SettingsStack';
+import ContactsRoot from './contacts/ContactsStack';
 
 import {SvgProps} from 'react-native-svg';
 import HomeIcon from '../../../assets/img/tab-icons/home.svg';
@@ -54,10 +55,6 @@ export type TabsStackParamList = {
 
 const Tab = createBottomTabNavigator<TabsStackParamList>();
 
-const TemporaryContactsPlaceholder = () => {
-  return <SafeAreaView style={{flex: 1}} />;
-};
-
 const TabsStack = () => {
   const theme = useTheme();
   useAndroidBackHandler(() => true);
@@ -88,10 +85,7 @@ const TabsStack = () => {
         component={TransactionButton}
         options={{tabBarButton: () => <TransactModal />}}
       />
-      <Tab.Screen
-        name={TabsScreens.CONTACTS}
-        component={TemporaryContactsPlaceholder}
-      />
+      <Tab.Screen name={TabsScreens.CONTACTS} component={ContactsRoot} />
       <Tab.Screen name={TabsScreens.SETTINGS} component={SettingsRoot} />
     </Tab.Navigator>
   );

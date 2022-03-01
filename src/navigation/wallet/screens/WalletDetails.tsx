@@ -1,9 +1,15 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useLayoutEffect, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {useTranslation} from 'react-i18next';
-import {FlatList, RefreshControl, Share} from 'react-native';
-import {useDispatch, useSelector} from 'react-redux';
+import {RefreshControl, SectionList, Share, View} from 'react-native';
+import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
 import Settings from '../../../components/settings/Settings';
 import {
@@ -19,7 +25,7 @@ import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/ba
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
-import {LightBlack, SlateDark, White} from '../../../styles/colors';
+import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {BalanceUpdateError} from '../components/ErrorMessages';
@@ -29,7 +35,20 @@ import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
 import {useAppSelector} from '../../../utils/hooks';
-import {createWalletAddress} from '../../../store/wallet/effects/send/address';
+import {startGetRates} from '../../../store/wallet/effects';
+import {createWalletAddress} from '../../../store/wallet/effects/address/address';
+import {
+  GetTransactionHistory,
+  GroupTransactionHistory,
+} from '../../../store/wallet/effects/transactions/transactions';
+import {ScreenGutter} from '../../../components/styled/Containers';
+import TransactionRow, {
+  TRANSACTION_ROW_HEIGHT,
+} from '../../../components/list/TransactionRow';
+import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
+import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
+
+const HISTORY_SHOW_LIMIT = 15;
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -38,6 +57,7 @@ type WalletDetailsScreenProps = StackScreenProps<
 
 const WalletDetailsContainer = styled.View`
   flex: 1;
+  padding-top: 10px;
 `;
 
 const Row = styled.View`
@@ -48,7 +68,7 @@ const Row = styled.View`
 
 const BalanceContainer = styled.View`
   margin-top: 20px;
-  padding: 10px 15px;
+  padding: 0 15px 10px;
   flex-direction: column;
 `;
 
@@ -63,10 +83,32 @@ const Chain = styled(BaseText)`
 const Type = styled(BaseText)`
   font-size: 12px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  border: 1px solid ${({theme: {dark}}) => (dark ? '#252525' : '#E1E4E7')};
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
   padding: 2px 4px;
   border-radius: 3px;
   margin-left: auto;
+`;
+
+const TransactionSectionHeader = styled(H5)`
+  padding: ${ScreenGutter};
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
+  height: 55px;
+`;
+
+const BorderBottom = styled.View`
+  border-bottom-width: 1px;
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Air)};
+`;
+
+const SkeletonContainer = styled.View`
+  margin-bottom: 20px;
+  height: ${TRANSACTION_ROW_HEIGHT}px;
+`;
+
+const EmptyListContainer = styled.View`
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 50px;
 `;
 
 const getWalletType = (key: Key, wallet: Wallet) => {
@@ -97,6 +139,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const uiFormattedWallet = buildUIFormattedWallet(fullWalletObj);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
+  const [loadReceiveAddressModal, setLoadReceiveAddressModal] = useState(false);
   const walletType = getWalletType(key, fullWalletObj);
 
   useLayoutEffect(() => {
@@ -112,12 +155,18 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         />
       ),
     });
-  }, [navigation, uiFormattedWallet]);
+  }, [navigation, uiFormattedWallet.walletName]);
+
+  useEffect(() => {
+    if (fullWalletObj.isRefreshing) {
+      loadHistory(true);
+    }
+    setRefreshing(!!fullWalletObj.isRefreshing);
+  }, [fullWalletObj.isRefreshing]);
 
   const ShareAddress = async () => {
     try {
-      setShowWalletOptions(false);
-      await sleep(500);
+      await sleep(1000);
       const address = (await dispatch<any>(
         createWalletAddress({wallet: fullWalletObj, newAddress: false}),
       )) as string;
@@ -165,6 +214,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const showReceiveAddress = () => {
     setShowReceiveAddressBottomModal(true);
+    setLoadReceiveAddressModal(true);
   };
 
   const onRefresh = async () => {
@@ -172,8 +222,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     await sleep(1000);
 
     try {
+      await dispatch(startGetRates());
       await Promise.all([
         await dispatch(startUpdateWalletBalance({key, wallet: fullWalletObj})),
+        await loadHistory(true),
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
@@ -195,9 +247,119 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     SUPPORTED_CURRENCIES.includes(currencyAbbreviation.toLowerCase()) &&
     network !== Network.testnet;
 
+  const [history, setHistory] = useState<any[]>([]);
+  const [groupedHistory, setGroupedHistory] = useState<
+    {title: string; data: any[]}[]
+  >([]);
+  const [loadMore, setLoadMore] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>();
+  const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
+
+  const loadHistory = async (refresh?: boolean) => {
+    if (!loadMore && !refresh) {
+      return;
+    }
+    try {
+      setIsLoading(!refresh);
+      setErrorLoadingTxs(false);
+      let {transactions: _history, loadMore: _loadMore} =
+        await GetTransactionHistory({
+          wallet: fullWalletObj,
+          transactionsHistory: refresh ? [] : history,
+          limit: HISTORY_SHOW_LIMIT,
+        });
+
+      if (_history?.length) {
+        setHistory(_history);
+        const grouped = GroupTransactionHistory(_history);
+        setGroupedHistory(grouped);
+      }
+      setIsLoading(false);
+      setLoadMore(_loadMore);
+    } catch (e) {
+      setLoadMore(false);
+      setIsLoading(false);
+      setErrorLoadingTxs(true);
+
+      console.log('Transaction Update: ', e);
+    }
+  };
+
+  useEffect(() => {
+    loadHistory();
+  }, []);
+
+  const listFooterComponent = () => {
+    return (
+      <>
+        {!groupedHistory?.length ? null : (
+          <View style={{marginBottom: 20}}>
+            <BorderBottom />
+          </View>
+        )}
+        {isLoading ? (
+          <SkeletonContainer>
+            <WalletTransactionSkeletonRow />
+          </SkeletonContainer>
+        ) : null}
+      </>
+    );
+  };
+
+  const listEmptyComponent = () => {
+    return (
+      <>
+        {!isLoading && !errorLoadingTxs && (
+          <EmptyListContainer>
+            <H5>It's a ghost town in here</H5>
+            <GhostSvg style={{marginTop: 20}} />
+          </EmptyListContainer>
+        )}
+
+        {!isLoading && errorLoadingTxs && (
+          <EmptyListContainer>
+            <H5>Could not update transaction history</H5>
+            <GhostSvg style={{marginTop: 20}} />
+          </EmptyListContainer>
+        )}
+      </>
+    );
+  };
+
+  const onPressTransaction = useMemo(
+    () => (transaction: any) => {
+      // TODO: Transaction Details
+      console.log(transaction);
+    },
+    [],
+  );
+
+  const renderItem = useCallback(
+    ({item}) => (
+      <TransactionRow
+        icon={item.uiIcon}
+        description={item.uiDescription}
+        time={item.uiTime}
+        value={item.uiValue}
+        onPressTransaction={() => onPressTransaction(item)}
+      />
+    ),
+    [],
+  );
+
+  const keyExtractor = useCallback(item => item.txid, []);
+
+  const getItemLayout = useCallback(
+    (data, index) => ({
+      length: TRANSACTION_ROW_HEIGHT,
+      offset: TRANSACTION_ROW_HEIGHT * index,
+      index,
+    }),
+    [],
+  );
   return (
     <WalletDetailsContainer>
-      <FlatList
+      <SectionList
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
@@ -205,8 +367,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             onRefresh={onRefresh}
           />
         }
-        data={[]}
-        renderItem={() => null}
         ListHeaderComponent={() => {
           return (
             <>
@@ -239,6 +399,21 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             </>
           );
         }}
+        sections={groupedHistory}
+        stickyHeaderIndices={[groupedHistory?.length]}
+        stickySectionHeadersEnabled={true}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        renderSectionHeader={({section: {title}}) => (
+          <TransactionSectionHeader>{title}</TransactionSectionHeader>
+        )}
+        ItemSeparatorComponent={() => <BorderBottom />}
+        ListFooterComponent={listFooterComponent}
+        onEndReached={() => loadHistory()}
+        onEndReachedThreshold={0.5}
+        ListEmptyComponent={listEmptyComponent}
+        maxToRenderPerBatch={15}
+        getItemLayout={getItemLayout}
       />
 
       <OptionsSheet
@@ -248,7 +423,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         options={assetOptions}
       />
 
-      {fullWalletObj ? (
+      {fullWalletObj && loadReceiveAddressModal ? (
         <ReceiveAddress
           isVisible={showReceiveAddressBottomModal}
           closeModal={() => setShowReceiveAddressBottomModal(false)}

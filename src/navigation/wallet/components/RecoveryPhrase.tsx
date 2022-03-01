@@ -33,6 +33,7 @@ import BoxInput from '../../../components/form/BoxInput';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {Key, KeyOptions} from '../../../store/wallet/wallet.models';
 import {
+  startGetRates,
   startImportMnemonic,
   startImportWithDerivationPath,
 } from '../../../store/wallet/effects';
@@ -303,7 +304,7 @@ const RecoveryPhrase = () => {
         : ((await dispatch<any>(
             startImportWithDerivationPath(importData, opts),
           )) as Key);
-
+      await dispatch(startGetRates());
       await dispatch(startUpdateAllWalletBalancesForKey(key));
       await dispatch(updatePortfolioBalance());
       backupRedirect({

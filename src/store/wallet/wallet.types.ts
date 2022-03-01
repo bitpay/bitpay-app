@@ -1,7 +1,8 @@
 import {
-  ExchangeRate,
+  CacheKeys,
   Key,
   PriceHistory,
+  Rates,
   Token,
   Wallet,
   WalletBalance,
@@ -18,6 +19,7 @@ export enum WalletActionTypes {
   SET_BACKUP_COMPLETE = 'WALLET/SET_BACKUP_COMPLETE',
   SUCCESS_GET_RATES = 'WALLET/SUCCESS_GET_RATES',
   FAILED_GET_RATES = 'WALLET/FAILED_GET_RATES',
+  UPDATE_CACHE_KEY = 'WALLET/UPDATE_CACHE_KEY',
   SUCCESS_GET_PRICE_HISTORY = 'WALLET/SUCCESS_GET_PRICE_HISTORY',
   FAILED_GET_PRICE_HISTORY = 'WALLET/FAILED_GET_PRICE_HISTORY',
   DELETE_KEY = 'WALLET/DELETE_KEY',
@@ -36,6 +38,7 @@ export enum WalletActionTypes {
   TOGGLE_HOME_KEY_CARD = 'WALLET/TOGGLE_HOME_KEY_CARD',
   UPDATE_KEY_NAME = 'WALLET/UPDATE_KEY_NAME',
   UPDATE_WALLET_NAME = 'WALLET/UPDATE_WALLET_NAME',
+  SET_WALLET_REFRESHING = 'WALLET/SET_WALLET_REFRESHING',
   SUCCESS_GET_RECEIVE_ADDRESS = 'WALLET/SUCCESS_GET_RECEIVE_ADDRESS',
 }
 
@@ -88,12 +91,17 @@ interface setBackupComplete {
 interface successGetRates {
   type: typeof WalletActionTypes.SUCCESS_GET_RATES;
   payload: {
-    rates: {[key in string]: Array<ExchangeRate>};
+    rates: Rates;
   };
 }
 
 interface failedGetRates {
   type: typeof WalletActionTypes.FAILED_GET_RATES;
+}
+
+interface updateCacheKey {
+  type: typeof WalletActionTypes.UPDATE_CACHE_KEY;
+  payload: CacheKeys;
 }
 
 interface successGetPriceHistory {
@@ -143,6 +151,10 @@ interface successUpdateWalletBalance {
 
 interface failedUpdateWalletBalance {
   type: typeof WalletActionTypes.FAILED_UPDATE_WALLET_BALANCE;
+  payload: {
+    keyId: string;
+    walletId: string;
+  };
 }
 
 interface successUpdateKeyTotalBalance {
@@ -201,6 +213,15 @@ interface updateWalletName {
   };
 }
 
+interface setWalletRefreshing {
+  type: typeof WalletActionTypes.SET_WALLET_REFRESHING;
+  payload: {
+    keyId: string;
+    walletId: string;
+    isRefreshing: boolean;
+  };
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -213,6 +234,7 @@ export type WalletActionType =
   | setBackupComplete
   | successGetRates
   | failedGetRates
+  | updateCacheKey
   | successGetPriceHistory
   | failedGetPriceHistory
   | deleteKey
@@ -230,4 +252,5 @@ export type WalletActionType =
   | toggleHomeKeyCard
   | updateKeyName
   | updateWalletName
+  | setWalletRefreshing
   | successGetReceiveAddress;

@@ -25,17 +25,17 @@ import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import {sleep} from '../../../utils/helper-methods';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {
-  createWalletAddress,
-  GetLegacyBchAddressFormat,
-} from '../../../store/wallet/effects/send/address';
 import ReceiveAddressHeader, {
   HeaderContextHandler,
 } from './ReceiveAddressHeader';
 import {
+  createWalletAddress,
+  GetLegacyBchAddressFormat,
+} from '../../../store/wallet/effects/address/address';
+import {
   GetProtocolPrefix,
   IsUtxoCoin,
-} from '../../../store/wallet/utils/wallet';
+} from '../../../store/wallet/utils/currency';
 
 export const BchAddressTypes = ['Cash Address', 'Legacy'];
 
@@ -180,18 +180,24 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
             return;
           } else {
             showErrorMessage(
-              CustomErrorMessage(BWCErrorMessage(createAddressErr.error)),
+              CustomErrorMessage({
+                errMsg: BWCErrorMessage(createAddressErr.error),
+              }),
             );
           }
           break;
         case 'MAIN_ADDRESS_GAP_REACHED':
           showErrorMessage(
-            CustomErrorMessage(BWCErrorMessage(createAddressErr.error)),
+            CustomErrorMessage({
+              errMsg: BWCErrorMessage(createAddressErr.error),
+            }),
           );
           break;
         default:
           showErrorMessage(
-            CustomErrorMessage(BWCErrorMessage(createAddressErr.error, prefix)),
+            CustomErrorMessage({
+              errMsg: BWCErrorMessage(createAddressErr.error, prefix),
+            }),
           );
           break;
       }

@@ -1,0 +1,18 @@
+import {ContactActionType, ContactActionTypes} from './contact.types';
+import {ContactRowProps} from '../../components/list/ContactRow';
+
+export const createContact = (contact: ContactRowProps): ContactActionType => ({
+  type: ContactActionTypes.CREATE_CONTACT,
+  contact: contact,
+});
+
+export const deleteContact = (
+  address: string,
+  coin: string,
+  network: string,
+): ContactActionType => ({
+  type: ContactActionTypes.DELETE_CONTACT,
+  address: address,
+  coin: coin,
+  network: network,
+});

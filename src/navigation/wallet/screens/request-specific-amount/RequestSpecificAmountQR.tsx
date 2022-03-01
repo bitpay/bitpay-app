@@ -11,23 +11,25 @@ import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../../components/styled/Containers';
-import {createWalletAddress} from '../../../../store/wallet/effects/send/address';
-import {
-  FormatCryptoAmount,
-  FormattedAmountObj,
-  GetProtocolPrefix,
-  IsUtxoCoin,
-} from '../../../../store/wallet/utils/wallet';
 import CopySvg from '../../../../../assets/img/copy.svg';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import Clipboard from '@react-native-community/clipboard';
 import QRCode from 'react-native-qrcode-svg';
-import {Black, LightBlack, White} from '../../../../styles/colors';
+import {LightBlack, White} from '../../../../styles/colors';
 import ShareIcon from '../../../../components/icons/share/Share';
 import {Share} from 'react-native';
 import GhostSvg from '../../../../../assets/img/ghost-straight-face.svg';
 import {useDispatch} from 'react-redux';
+import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
+import {
+  GetProtocolPrefix,
+  IsUtxoCoin,
+} from '../../../../store/wallet/utils/currency';
+import {
+  FormattedAmountObj,
+  ParseAmount,
+} from '../../../../store/wallet/effects/amount/amount';
 
 const SpecificAmtQRContainer = styled.SafeAreaView`
   flex: 1;
@@ -143,7 +145,7 @@ const RequestSpecificAmountQR = () => {
       _qrValue =
         GetProtocolPrefix(currencyAbbreviation, network) + ':' + address;
 
-      const _formattedAmountObj: FormattedAmountObj = FormatCryptoAmount(
+      const _formattedAmountObj: FormattedAmountObj = ParseAmount(
         requestAmount,
         currencyAbbreviation,
       );
