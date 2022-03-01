@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {TextInput, TextInputProps} from 'react-native';
-import TextInputMask from 'react-native-text-input-mask';
+import TextInputMask, {TextInputMaskProps} from 'react-native-text-input-mask';
 import styled, {css} from 'styled-components/native';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
 import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
@@ -93,64 +93,64 @@ interface BoxInputProps extends TextInputProps {
   type?: InputType;
 }
 
-const BoxInput = React.forwardRef<TextInput, BoxInputProps>(
-  ({label, onFocus, onBlur, icon, error, type, ...props}, ref) => {
-    const isPassword = type === 'password';
-    const isSearch = type === 'search';
-    const [isFocused, setIsFocused] = useState(false);
-    const [isSecureTextEntry, setSecureTextEntry] = useState(isPassword);
+const BoxInput = React.forwardRef<
+  TextInput,
+  BoxInputProps & TextInputMaskProps
+>(({label, onFocus, onBlur, icon, error, type, ...props}, ref) => {
+  const isPassword = type === 'password';
+  const isSearch = type === 'search';
+  const [isFocused, setIsFocused] = useState(false);
+  const [isSecureTextEntry, setSecureTextEntry] = useState(isPassword);
 
-    const _onFocus = () => {
-      setIsFocused(true);
-      onFocus && onFocus();
-    };
+  const _onFocus = () => {
+    setIsFocused(true);
+    onFocus && onFocus();
+  };
 
-    const _onBlur = () => {
-      setIsFocused(false);
-      onBlur && onBlur();
-    };
+  const _onBlur = () => {
+    setIsFocused(false);
+    onBlur && onBlur();
+  };
 
-    const errorMessage =
-      typeof error === 'string' &&
-      error.charAt(0).toUpperCase() + error.slice(1);
+  const errorMessage =
+    typeof error === 'string' && error.charAt(0).toUpperCase() + error.slice(1);
 
-    return (
-      <>
-        {label ? <Label>{label}</Label> : null}
+  return (
+    <>
+      {label ? <Label>{label}</Label> : null}
 
-        <InputContainer>
-          <Input
-            {...props}
-            ref={ref}
-            secureTextEntry={isPassword && isSecureTextEntry}
-            placeholderTextColor={Slate}
-            onFocus={_onFocus}
-            onBlur={_onBlur}
-            isFocused={isFocused}
-            isError={error}
-            autoCapitalize={'none'}
-            type={type}
-          />
+      <InputContainer>
+        <Input
+          {...props}
+          ref={ref}
+          secureTextEntry={isPassword && isSecureTextEntry}
+          placeholderTextColor={Slate}
+          onFocus={_onFocus}
+          onBlur={_onBlur}
+          isFocused={isFocused}
+          isError={error}
+          autoCapitalize={'none'}
+          type={type}
+        />
 
-          {icon ? icon() : null}
+        {icon ? icon() : null}
 
-          {isPassword && (
-            <ObfuscationToggle
-              onPress={() => setSecureTextEntry(!isSecureTextEntry)}>
-              {isSecureTextEntry ? <ObfuscationHide /> : <ObfuscationShow />}
-            </ObfuscationToggle>
-          )}
-          {isSearch && (
-            <SearchIconContainer>
-              <Search />
-            </SearchIconContainer>
-          )}
-        </InputContainer>
+        {isPassword && (
+          <ObfuscationToggle
+            onPress={() => setSecureTextEntry(!isSecureTextEntry)}>
+            {isSecureTextEntry ? <ObfuscationHide /> : <ObfuscationShow />}
+          </ObfuscationToggle>
+        )}
+        {isSearch && (
+          <SearchIconContainer>
+            <Search />
+          </SearchIconContainer>
+        )}
+      </InputContainer>
 
-        <ErrorText>{errorMessage || ' '}</ErrorText>
-      </>
-    );
-  },
-);
+      <ErrorText>{errorMessage || ' '}</ErrorText>
+    </>
+  );
+});
 
 export default BoxInput;
