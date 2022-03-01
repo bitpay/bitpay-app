@@ -8,6 +8,7 @@ import {
   SlateDark,
   White,
   Slate,
+  Cloud,
 } from '../../styles/colors';
 import {BaseText} from './Text';
 
@@ -73,7 +74,7 @@ export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
 export const Br: React.FC = () => <Text />;
 
 export const Hr = styled.View`
-  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#ebecee')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Cloud)};
   border-bottom-width: 1px;
 `;
 
