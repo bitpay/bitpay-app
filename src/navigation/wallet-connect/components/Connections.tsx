@@ -112,7 +112,6 @@ export default ({
                           keyId: customData.keyId,
                           walletId: customData.walletId,
                           peer,
-                          fromConnectionsView: true,
                         },
                       });
                     }

@@ -7,6 +7,7 @@ import {
   IWCCustomData,
 } from './wallet-connect.models';
 import {Effect} from '..';
+import {sleep} from '../../utils/helper-methods';
 
 export const walletConnectInit = (): Effect => async (dispatch, getState) => {
   try {
@@ -32,9 +33,11 @@ export const walletConnectInit = (): Effect => async (dispatch, getState) => {
 export const walletConnectOnSessionRequest =
   (uri: string): Effect =>
   (dispatch, getState): Promise<{peer: any; peerId: any}> => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       const connector = new WalletConnect({uri});
+      let isWaitingForEvent: boolean = true;
       connector.on('session_request', (error: any, payload: any) => {
+        isWaitingForEvent = false;
         if (error) {
           reject(error);
         }
@@ -42,6 +45,14 @@ export const walletConnectOnSessionRequest =
         dispatch(WalletConnectActions.sessionRequest([...pending, connector]));
         resolve(payload.params[0]);
       });
+
+      await sleep(5000);
+      if (isWaitingForEvent) {
+        // reject promise if Dapp doesn't respond
+        reject(
+          'Failed or rejected session request. Please, try again refreshing the QR code.',
+        );
+      }
     });
   };
 

@@ -50,7 +50,7 @@ export default ({session}: {session: IWalletConnectSession}) => {
           <ArrowContainer>
             <DownRightArrow />
           </ArrowContainer>
-          {peerMeta ? (
+          {peerMeta && peerMeta.icons[0] ? (
             <>
               <IconContainer>
                 <Image

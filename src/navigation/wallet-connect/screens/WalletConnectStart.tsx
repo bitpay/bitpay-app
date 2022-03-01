@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {Paragraph} from '../../../components/styled/Text';
@@ -22,7 +22,10 @@ import {View} from 'react-native';
 import {sleep} from '../../../utils/helper-methods';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {walletConnectApproveSessionRequest} from '../../../store/wallet-connect/wallet-connect.effects';
+import {
+  walletConnectApproveSessionRequest,
+  walletConnectRejectSessionRequest,
+} from '../../../store/wallet-connect/wallet-connect.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissBottomNotificationModal,
@@ -39,7 +42,6 @@ export type WalletConnectStartParamList = {
   keyId: string | undefined;
   walletId: string | undefined;
   peer: any;
-  fromConnectionsView?: boolean;
 };
 
 const CHAIN_ID: {[key in string]: any} = {
@@ -79,7 +81,7 @@ const WalletConnectStart = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const {
-    params: {walletId, keyId, peer, fromConnectionsView},
+    params: {walletId, keyId, peer},
   } = useRoute<RouteProp<{params: WalletConnectStartParamList}>>();
   const {peerId, peerMeta} = peer;
 
@@ -127,13 +129,11 @@ const WalletConnectStart = () => {
             {
               text: 'GOT IT',
               action: () => {
-                fromConnectionsView
-                  ? navigation.goBack()
-                  : navigation.dispatch(
-                      StackActions.replace('WalletConnect', {
-                        screen: 'WalletConnectConnections',
-                      }),
-                    );
+                navigation.dispatch(
+                  StackActions.replace('WalletConnect', {
+                    screen: 'WalletConnectConnections',
+                  }),
+                );
                 dispatch(dismissBottomNotificationModal());
               },
               primary: true,
@@ -156,6 +156,14 @@ const WalletConnectStart = () => {
       }
     }
   };
+
+  useEffect(() => {
+    return navigation.addListener('beforeRemove', e => {
+      if (e.data.action.type === 'POP') {
+        dispatch(walletConnectRejectSessionRequest(peerId));
+      }
+    });
+  }, [navigation, dispatch, peerId]);
 
   return (
     <WalletConnectContainer>
