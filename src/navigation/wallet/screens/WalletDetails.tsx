@@ -352,51 +352,57 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   };
 
   const onPressTransaction = useMemo(
-      () => (transaction: any) => {
-    const {hasUnconfirmedInputs, action, isRBF} = transaction;
-    const isReceived = IsReceived(action);
-    const isMoved = IsMoved(action);
-    const currency = currencyAbbreviation.toLowerCase();
+    () => (transaction: any) => {
+      const {hasUnconfirmedInputs, action, isRBF} = transaction;
+      const isReceived = IsReceived(action);
+      const isMoved = IsMoved(action);
+      const currency = currencyAbbreviation.toLowerCase();
 
-    if (hasUnconfirmedInputs && (isReceived || isMoved) && currency === 'btc') {
-      dispatch(
-        showBottomNotificationModal(
-          UnconfirmedInputs(() => goToTransactionDetails(transaction)),
-        ),
-      );
-    } else if (isRBF && isReceived && currency === 'btc') {
-      dispatch(
-        showBottomNotificationModal(
-          RbfTransaction(
-            () => speedUpTransaction(transaction),
-            () => goToTransactionDetails(transaction),
-          ),
-        ),
-      );
-    } else if (CanSpeedUpTx(transaction, currency)) {
-      if (currency === 'eth' || IsERCToken(currency)) {
+      if (
+        hasUnconfirmedInputs &&
+        (isReceived || isMoved) &&
+        currency === 'btc'
+      ) {
         dispatch(
           showBottomNotificationModal(
-            SpeedUpEthTransaction(
+            UnconfirmedInputs(() => goToTransactionDetails(transaction)),
+          ),
+        );
+      } else if (isRBF && isReceived && currency === 'btc') {
+        dispatch(
+          showBottomNotificationModal(
+            RbfTransaction(
               () => speedUpTransaction(transaction),
               () => goToTransactionDetails(transaction),
             ),
           ),
         );
+      } else if (CanSpeedUpTx(transaction, currency)) {
+        if (currency === 'eth' || IsERCToken(currency)) {
+          dispatch(
+            showBottomNotificationModal(
+              SpeedUpEthTransaction(
+                () => speedUpTransaction(transaction),
+                () => goToTransactionDetails(transaction),
+              ),
+            ),
+          );
+        } else {
+          dispatch(
+            showBottomNotificationModal(
+              SpeedUpTransaction(
+                () => speedUpTransaction(transaction),
+                () => goToTransactionDetails(transaction),
+              ),
+            ),
+          );
+        }
       } else {
-        dispatch(
-          showBottomNotificationModal(
-            SpeedUpTransaction(
-              () => speedUpTransaction(transaction),
-              () => goToTransactionDetails(transaction),
-            ),
-          ),
-        );
+        goToTransactionDetails(transaction);
       }
-    } else {
-      goToTransactionDetails(transaction);
-    }
-  }, []);
+    },
+    [],
+  );
 
   const renderItem = useCallback(
     ({item}) => (
