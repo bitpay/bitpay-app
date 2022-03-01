@@ -1,11 +1,11 @@
-import React, {useState, useLayoutEffect, useEffect} from 'react';
+import React, {useState, useLayoutEffect} from 'react';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import Clipboard from '@react-native-community/clipboard';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import QRCode from 'react-native-qrcode-svg';
-import styled from 'styled-components/native';
-import {FlatList, Image} from 'react-native';
+import styled, {useTheme} from 'styled-components/native';
+import {Image, ScrollView, RefreshControl} from 'react-native';
 import {
   Paragraph,
   BaseText,
@@ -21,7 +21,8 @@ import {
 } from '../../../components/styled/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {WalletStackParamList} from '../WalletStack';
-import {White} from '../../../styles/colors';
+import {White, SlateDark} from '../../../styles/colors';
+import {useNavigation} from '@react-navigation/native';
 
 const CircleCheckIcon = require('../../../../assets/img/circle-check.png');
 interface CopayersProps {
@@ -51,16 +52,6 @@ const QRCodeBackground = styled.View`
   border-radius: 12px;
 `;
 
-const LoadingContainer = styled.View`
-  min-height: 300px;
-  justify-content: center;
-  align-items: center;
-`;
-
-const LoadingText = styled(H4)`
-  color: ${({theme}) => theme.colors.text};
-`;
-
 const CopayersContainer = styled(RowContainer)`
   padding: 18px;
   border-style: solid;
@@ -70,10 +61,13 @@ const CopayersContainer = styled(RowContainer)`
 
 const Copayers: React.FC<CopayersProps> = props => {
   const route = useRoute<RouteProp<WalletStackParamList, 'Copayers'>>();
-  const {wallet} = route.params || {};
-  const [walletStatus, setWalletStatus] = useState(undefined as any);
+  const {wallet, status} = route.params || {};
+  const [walletStatus, setWalletStatus] = useState(status);
   const [copied, setCopied] = useState(false);
   const {navigation} = props;
+  const navigationRef = useNavigation();
+  const theme = useTheme();
+  const [refreshing, setRefreshing] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -83,20 +77,33 @@ const Copayers: React.FC<CopayersProps> = props => {
     });
   }, [navigation]);
 
-  useEffect(() => {
-    // TODO GET STATUS
-    wallet?.getStatus({network: 'livenet'}, (err: any, status: any) => {
-      if (err) {
-        console.log(err);
-      }
-      setWalletStatus(status.wallet);
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await updateWalletStatus();
+    setRefreshing(false);
+  };
+
+  const updateWalletStatus = () => {
+    return new Promise<void>(resolve => {
+      wallet?.getStatus({network: 'livenet'}, (err: any, status: any) => {
+        if (err) {
+          console.log(err);
+        }
+        setWalletStatus(status.wallet);
+        if (status.wallet && status.wallet.status === 'complete') {
+          wallet.openWallet({}, () => {
+            navigationRef.goBack();
+          });
+        }
+        return resolve();
+      });
     });
-  }, [wallet, setWalletStatus]);
+  };
 
   const copyToClipboard = () => {
     haptic('impactLight');
     if (!copied) {
-      Clipboard.setString(walletStatus?.secret);
+      Clipboard.setString(walletStatus.secret);
       setCopied(true);
 
       setTimeout(() => {
@@ -106,51 +113,44 @@ const Copayers: React.FC<CopayersProps> = props => {
   };
 
   return (
-    <JoinCopayersContainer>
-      <Paragraph>
-        Share this invitation with the devices joining this account. Each
-        copayer has their own recovery phrase. To recover funds stored in a
-        Shared Wallet you will need the recovery phrase from each copayer.
-      </Paragraph>
-
-      {walletStatus && walletStatus.secret ? (
-        <>
-          <TouchableOpacity
-            onPress={copyToClipboard}
-            activeOpacity={ActiveOpacity}>
-            <QRCodeContainer>
-              <QRCodeBackground>
-                <QRCode value={walletStatus.secret} size={200} />
-              </QRCodeBackground>
-            </QRCodeContainer>
-          </TouchableOpacity>
-        </>
-      ) : (
-        <LoadingContainer>
-          <LoadingText>Generating Invitation code...</LoadingText>
-        </LoadingContainer>
-      )}
-
-      {walletStatus && (
-        <>
-          <TitleContainer>
-            <TextAlign align={'left'}>
-              <H6>Waiting for authorized copayers to join</H6>
-            </TextAlign>
-          </TitleContainer>
-          <FlatList
-            contentContainerStyle={{paddingBottom: 100}}
-            data={walletStatus?.copayers}
-            renderItem={({item}) => (
-              <CopayersContainer activeOpacity={ActiveOpacity}>
-                <Image source={CircleCheckIcon} />
-                <AuthorizedContainer>{item?.name}</AuthorizedContainer>
-              </CopayersContainer>
-            )}
-          />
-        </>
-      )}
-    </JoinCopayersContainer>
+    <ScrollView
+      refreshControl={
+        <RefreshControl
+          tintColor={theme.dark ? White : SlateDark}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+        />
+      }>
+      <JoinCopayersContainer>
+        <Paragraph>
+          Share this invitation with the devices joining this account. Each
+          copayer has their own recovery phrase. To recover funds stored in a
+          Shared Wallet you will need the recovery phrase from each copayer.
+        </Paragraph>
+        <TouchableOpacity
+          onPress={copyToClipboard}
+          activeOpacity={ActiveOpacity}>
+          <QRCodeContainer>
+            <QRCodeBackground>
+              <QRCode value={walletStatus.secret} size={200} />
+            </QRCodeBackground>
+          </QRCodeContainer>
+        </TouchableOpacity>
+        <TitleContainer>
+          <TextAlign align={'left'}>
+            <H6>Waiting for authorized copayers to join</H6>
+          </TextAlign>
+        </TitleContainer>
+        {walletStatus.copayers.map((item: any, index: any) => {
+          return (
+            <CopayersContainer key={index} activeOpacity={ActiveOpacity}>
+              <Image source={CircleCheckIcon} />
+              <AuthorizedContainer>{item.name}</AuthorizedContainer>
+            </CopayersContainer>
+          );
+        })}
+      </JoinCopayersContainer>
+    </ScrollView>
   );
 };
 

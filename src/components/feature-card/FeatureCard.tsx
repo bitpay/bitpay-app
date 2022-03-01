@@ -4,7 +4,7 @@ import styled from 'styled-components/native';
 import LinearGradient from 'react-native-linear-gradient';
 import {Image, ImageSourcePropType} from 'react-native';
 import Button from '../button/Button';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from 'styled-components/native';
 
 const FeatureImage = styled(Image)`
   height: 100%;
