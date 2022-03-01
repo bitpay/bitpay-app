@@ -313,13 +313,13 @@ export const GetTransactionHistory = ({
   transactionsHistory = [],
   limit = LIMIT,
   opts = {},
-  contactsList = [],
+  contactList = [],
 }: {
   wallet: Wallet;
   transactionsHistory: any[];
   limit: number;
   opts?: TransactionsHistoryInterface;
-  contactsList?: any[];
+  contactList?: any[];
 }): Promise<{transactions: any[]; loadMore: boolean}> => {
   return new Promise(async (resolve, reject) => {
     let requestLimit = limit;
@@ -348,7 +348,7 @@ export const GetTransactionHistory = ({
       transactions = BuildUiFriendlyList(
         transactions,
         wallet.currencyAbbreviation,
-        contactsList,
+        contactList,
       );
 
       const array = transactionsHistory
@@ -391,9 +391,20 @@ const EditTxNote = (wallet: Wallet, args: NoteArgs): Promise<any> => {
 
 /////////////////////// Transaction Helper Methods /////////////////////////////////////
 
-const getContactName = (address: string | undefined) => {
-  //   TODO: Get name from contacts list
-  return;
+const getContactName = (
+  address: string | undefined,
+  contactList: any[] = [],
+) => {
+  if (!address || !contactList.length) {
+    return null;
+  }
+  const existsContact = contactList.find(
+    contact => contact.address === address,
+  );
+  if (existsContact) {
+    return existsContact.name;
+  }
+  return null;
 };
 
 const getFormattedDate = (time: number): string => {
@@ -440,7 +451,7 @@ export const IsMultisigEthInfo = (wallet: Wallet): boolean => {
 export const BuildUiFriendlyList = (
   transactionList: any[] = [],
   currencyAbbreviation: string,
-  contactsList: any[] = [],
+  contactList: any[] = [],
 ): any[] => {
   return transactionList.map(transaction => {
     const {
@@ -461,9 +472,9 @@ export const BuildUiFriendlyList = (
 
     const notZeroAmountEth = NotZeroAmountEth(amount, currencyAbbreviation);
     const hasContactName = !!(
-      contactsList?.length &&
+      contactList?.length &&
       outputs?.length &&
-      getContactName(outputs[0]?.address)
+      getContactName(outputs[0]?.address, contactList)
     );
 
     const isSent = IsSent(action);
@@ -477,7 +488,10 @@ export const BuildUiFriendlyList = (
       if (notZeroAmountEth) {
         if (hasContactName) {
           if (isSent || isMoved) {
-            transaction.uiDescription = getContactName(outputs[0]?.address);
+            transaction.uiDescription = getContactName(
+              outputs[0]?.address,
+              contactList,
+            );
           }
         } else {
           if (isSent) {
@@ -515,7 +529,10 @@ export const BuildUiFriendlyList = (
             } else if (message) {
               transaction.uiDescription = message;
             } else if (hasContactName) {
-              transaction.uiDescription = getContactName(outputs[0]?.address);
+              transaction.uiDescription = getContactName(
+                outputs[0]?.address,
+                contactList,
+              );
             } else if (toWalletName) {
               transaction.uiDescription = `Sent to ${toWalletName}`;
             } else {
@@ -530,7 +547,10 @@ export const BuildUiFriendlyList = (
           if (noteBody) {
             transaction.uiDescription = noteBody;
           } else if (hasContactName) {
-            transaction.uiDescription = getContactName(outputs[0]?.address);
+            transaction.uiDescription = getContactName(
+              outputs[0]?.address,
+              contactList,
+            );
           } else {
             transaction.uiDescription = 'Received';
           }
@@ -730,7 +750,7 @@ const UpdateFiatRate = (
 };
 
 // These 2 functions were taken from
-// https://github.com/bitpay/bitcore-wallet-service/blob/master/lib/model/txproposal.js#L243
+// https://github.com/bitpay/bitcore-wallet-service/blob/master/lib/model/txproposal.js#L235
 const getEstimatedSizeForSingleInput = (wallet: Wallet): number => {
   switch (wallet.credentials.addressType) {
     case 'P2PKH':

@@ -149,6 +149,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [refreshing, setRefreshing] = useState(false);
   const {walletId, key} = route.params;
   const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
+  const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const fullWalletObj = findWalletById(wallets, walletId) as Wallet;
   const uiFormattedWallet = buildUIFormattedWallet(fullWalletObj);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
@@ -281,6 +282,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           wallet: fullWalletObj,
           transactionsHistory: refresh ? [] : history,
           limit: HISTORY_SHOW_LIMIT,
+          contactList,
         });
 
       if (_history?.length) {
@@ -427,6 +429,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     }),
     [],
   );
+
   return (
     <WalletDetailsContainer>
       <SectionList
