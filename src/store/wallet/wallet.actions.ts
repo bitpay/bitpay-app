@@ -177,7 +177,9 @@ export const setWalletRefreshing = (payload: {
 });
 
 export const successGetReceiveAddress = (payload: {
-  wallet: Wallet;
+  keyId: string;
+  walletId: string;
+  receiveAddress: string;
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_GET_RECEIVE_ADDRESS,
   payload,
