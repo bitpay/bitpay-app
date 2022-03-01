@@ -16,7 +16,7 @@ import {Network} from '../../../constants';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/balance';
-import {findWalletById} from '../../../store/wallet/utils/wallet';
+import {findWalletById, isSegwit} from '../../../store/wallet/utils/wallet';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {LightBlack, SlateDark, White} from '../../../styles/colors';
@@ -117,7 +117,7 @@ const EmptyListContainer = styled.View`
 
 const getWalletType = (key: Key, wallet: Wallet) => {
   const {
-    credentials: {token, walletId},
+    credentials: {token, walletId, addressType},
   } = wallet;
   if (token) {
     const linkedWallet = key.wallets.find(({tokens}) =>
@@ -126,6 +126,10 @@ const getWalletType = (key: Key, wallet: Wallet) => {
     const walletName =
       linkedWallet?.walletName || linkedWallet?.credentials.walletName;
     return `Linked to ${walletName}`;
+  }
+
+  if (isSegwit(addressType)) {
+    return 'Segwit';
   }
   return;
 };

@@ -120,6 +120,12 @@ export interface Rate {
   ts: number;
 }
 
+export interface HistoricRate {
+  fetchedOn: number;
+  rate: number;
+  ts: number;
+}
+
 export type Rates = {
   [key in string]: Rate[];
 };

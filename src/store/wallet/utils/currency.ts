@@ -30,3 +30,12 @@ export const GetChain = (currencyAbbreviation: string): string => {
 export const IsERCToken = (currencyAbbreviation: string): boolean => {
   return Currencies[currencyAbbreviation]?.properties.isERCToken;
 };
+
+export const GetBlockExplorerUrl = (
+  currencyAbbreviation: string,
+  network: string = 'livenet',
+): string => {
+  return network === 'livenet'
+    ? Currencies[currencyAbbreviation]?.paymentInfo.blockExplorerUrls
+    : Currencies[currencyAbbreviation]?.paymentInfo.blockExplorerUrlsTestnet;
+};

@@ -3,7 +3,7 @@ import axios from 'axios';
 import {BASE_BWS_URL} from '../../../../constants/config';
 import {WalletActions} from '../../index';
 import {SUPPORTED_COINS} from '../../../../constants/currencies';
-import {PriceHistory, Rates} from '../../wallet.models';
+import {HistoricRate, PriceHistory, Rates} from '../../wallet.models';
 import {isCacheKeyStale} from '../../utils/wallet';
 import {RATES_CACHE_DURATION} from '../../../../constants/wallet';
 import {updateCacheKey} from '../../wallet.actions';
@@ -65,7 +65,7 @@ export const getHistoricFiatRate = (
   fiatCode: string,
   currencyAbbreviation: string,
   ts: string,
-): Promise<any> => {
+): Promise<HistoricRate> => {
   return new Promise(async (resolve, reject) => {
     try {
       const url = `${BASE_BWS_URL}/v1/fiatrates/${fiatCode}?coin=${currencyAbbreviation}&ts=${ts}`;

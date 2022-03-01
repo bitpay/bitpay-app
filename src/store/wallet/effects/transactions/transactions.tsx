@@ -1,4 +1,4 @@
-import {Key, Wallet} from '../../wallet.models';
+import {HistoricRate, Key, Rates, Wallet} from '../../wallet.models';
 import {FormatAmountStr} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
 import uniqBy from 'lodash.uniqby';
@@ -23,7 +23,6 @@ import {TransactionIcons} from '../../../../constants/TransactionIcons';
 import {Effect} from '../../../index';
 import {getHistoricFiatRate, startGetRates} from '../rates/rates';
 import {toFiat} from '../../utils/wallet';
-import {action} from '@storybook/addon-actions';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {getFeeRatePerKb} from '../fee/fee';
 
@@ -31,9 +30,6 @@ const BWC = BwcProvider.getInstance();
 const Errors = BWC.getErrors();
 
 const LIMIT = 15;
-
-// Ratio low amount warning (fee/amount) in incoming TX
-const LOW_AMOUNT_RATIO: number = 0.15;
 
 interface TransactionsHistoryInterface {
   limitTx?: string;
@@ -393,7 +389,7 @@ const EditTxNote = (wallet: Wallet, args: NoteArgs): Promise<any> => {
   });
 };
 
-/////////////////////// Transaction list /////////////////////////////////////
+/////////////////////// Transaction Helper Methods /////////////////////////////////////
 
 const getContactName = (address: string | undefined) => {
   //   TODO: Get name from contacts list
@@ -428,6 +424,18 @@ export const NotZeroAmountEth = (
 ): boolean => {
   return !(amount === 0 && currencyAbbreviation === 'eth');
 };
+
+export const IsShared = (wallet: Wallet): boolean => {
+  const {credentials} = wallet;
+  return credentials.n > 1;
+};
+
+export const IsMultisigEthInfo = (wallet: Wallet): boolean => {
+  const {credentials} = wallet;
+  return !!credentials.multisigEthInfo;
+};
+
+/////////////////////// Transaction List /////////////////////////////////////
 
 export const BuildUiFriendlyList = (
   transactionList: any[] = [],
@@ -602,6 +610,23 @@ export const CanSpeedUpTx = (
 
 ///////////////////////////////////////// Transaction Details ////////////////////////////////////////////////
 
+export const getDetailsTitle = (transaction: any, wallet: Wallet) => {
+  const {action, error} = transaction;
+  const {currencyAbbreviation} = wallet;
+
+  if (!IsInvalid(action)) {
+    if (currencyAbbreviation === 'ETH' && error) {
+      return 'Failed';
+    } else if (IsSent(action)) {
+      return 'Sent';
+    } else if (IsReceived(action)) {
+      return 'Received';
+    } else if (IsMoved(action)) {
+      return 'Sent to self';
+    }
+  }
+};
+
 export const buildTransactionDetails =
   ({
     transaction,
@@ -614,29 +639,24 @@ export const buildTransactionDetails =
     return new Promise(async (resolve, reject) => {
       try {
         const _transaction = {...transaction};
-        const {fees, amount, note, message, action, error, time} = transaction;
-        const {currencyAbbreviation, credentials} = wallet;
-        const isShared = credentials.n > 1;
+        const {fees, amount, note, message, action, time} = transaction;
+        const {currencyAbbreviation} = wallet;
+        const isShared = IsShared(wallet);
         const currency = currencyAbbreviation.toLowerCase();
 
         // TODO: update alternative currency
         const alternativeCurrency = 'USD';
 
-        const isSent = IsSent(action);
-        const isMoved = IsMoved(action);
-
         const rates = await dispatch(startGetRates());
 
-        _transaction.feeFiatStr = toFiat(
-          fees,
+        _transaction.feeFiatStr = formatFiatAmount(
+          toFiat(fees, alternativeCurrency, currency, rates),
           alternativeCurrency,
-          currency,
-          rates,
         );
 
         if (IsUtxoCoin(currency)) {
           _transaction.feeRateStr =
-            ((fees / (amount + fees)) * 100).toFixed() + '%';
+            ((fees / (amount + fees)) * 100).toFixed(2) + '%';
           try {
             const minFee = getMinFee(wallet);
             _transaction.lowAmount = amount < minFee;
@@ -653,21 +673,7 @@ export const buildTransactionDetails =
           _transaction.detailsMemo = note.body;
         }
 
-        if (!IsInvalid(action)) {
-          if (currency === 'eth' && error) {
-            _transaction.detailsTitle = 'Failed';
-          } else if (isSent) {
-            _transaction.detailsTitle = 'Sent';
-          } else if (IsReceived(action)) {
-            _transaction.detailsTitle = 'Received';
-          } else if (isMoved) {
-            _transaction.detailsTitle = 'Sent to self';
-          }
-        }
-
-        if (isSent || isMoved || isShared) {
-          _transaction.actionsList = GetActionsList(transaction);
-        }
+        _transaction.actionsList = GetActionsList(transaction, wallet);
 
         const historicFiatRate = await getHistoricFiatRate(
           alternativeCurrency,
@@ -690,9 +696,9 @@ export const buildTransactionDetails =
   };
 
 const UpdateFiatRate = (
-  historicFiatRate: {rate: number} | undefined,
+  historicFiatRate: HistoricRate,
   transaction: any,
-  rates,
+  rates: Rates = {},
   currency: string,
   alternativeCurrency: string,
 ) => {
@@ -758,8 +764,12 @@ const getMinFee = (wallet: Wallet): Promise<any> => {
   });
 };
 
-const GetActionsList = (transaction: any) => {
-  const {actions, createdOn, creatorName, time} = transaction;
+const GetActionsList = (transaction: any, wallet: Wallet) => {
+  const {actions, createdOn, creatorName, time, action} = transaction;
+  if ((!IsSent(action) && !IsMoved(action)) || !IsShared(wallet)) {
+    return;
+  }
+
   const actionList: any[] = [];
 
   let actionDescriptions: {[key in string]: string} = {
