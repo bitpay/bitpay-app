@@ -391,7 +391,7 @@ const EditTxNote = (wallet: Wallet, args: NoteArgs): Promise<any> => {
 
 /////////////////////// Transaction Helper Methods /////////////////////////////////////
 
-const getContactName = (
+export const GetContactName = (
   address: string | undefined,
   contactList: any[] = [],
 ) => {
@@ -474,7 +474,7 @@ export const BuildUiFriendlyList = (
     const hasContactName = !!(
       contactList?.length &&
       outputs?.length &&
-      getContactName(outputs[0]?.address, contactList)
+      GetContactName(outputs[0]?.address, contactList)
     );
 
     const isSent = IsSent(action);
@@ -488,7 +488,7 @@ export const BuildUiFriendlyList = (
       if (notZeroAmountEth) {
         if (hasContactName) {
           if (isSent || isMoved) {
-            transaction.uiDescription = getContactName(
+            transaction.uiDescription = GetContactName(
               outputs[0]?.address,
               contactList,
             );
@@ -529,7 +529,7 @@ export const BuildUiFriendlyList = (
             } else if (message) {
               transaction.uiDescription = message;
             } else if (hasContactName) {
-              transaction.uiDescription = getContactName(
+              transaction.uiDescription = GetContactName(
                 outputs[0]?.address,
                 contactList,
               );
@@ -547,7 +547,7 @@ export const BuildUiFriendlyList = (
           if (noteBody) {
             transaction.uiDescription = noteBody;
           } else if (hasContactName) {
-            transaction.uiDescription = getContactName(
+            transaction.uiDescription = GetContactName(
               outputs[0]?.address,
               contactList,
             );
@@ -662,9 +662,17 @@ export const buildTransactionDetails =
     return new Promise(async (resolve, reject) => {
       try {
         const _transaction = {...transaction};
-        const {fees, amount, note, message, action, time} = transaction;
+        const {
+          fees,
+          amount,
+          note,
+          message,
+          action,
+          time,
+          outputs,
+          hasMultiplesOutputs,
+        } = transaction;
         const {currencyAbbreviation} = wallet;
-        const isShared = IsShared(wallet);
         const currency = currencyAbbreviation.toLowerCase();
 
         // TODO: update alternative currency
@@ -676,6 +684,18 @@ export const buildTransactionDetails =
           toFiat(fees, alternativeCurrency, currency, rates),
           alternativeCurrency,
         );
+
+        if (hasMultiplesOutputs) {
+          if (action !== 'received') {
+            _transaction.outputs = _transaction.outputs.map((o: any) => {
+              o.alternativeAmountStr = formatFiatAmount(
+                toFiat(o.amount, alternativeCurrency, currency, rates),
+                alternativeCurrency,
+              );
+              return o;
+            });
+          }
+        }
 
         if (IsUtxoCoin(currency)) {
           _transaction.feeRateStr =
