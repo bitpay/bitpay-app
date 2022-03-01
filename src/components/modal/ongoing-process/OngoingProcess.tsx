@@ -19,6 +19,7 @@ export enum OnGoingProcessMessages {
   FETCHING_PAYMENT_OPTIONS = 'Fetching payment options...',
   FETCHING_PAYMENT_INFO = 'Fetching payment information...',
   JOIN_WALLET = 'Joining Wallet',
+  SENDING_PAYMENT = 'Sending Payment',
 }
 
 const OnGoingProcessContainer = styled.View`

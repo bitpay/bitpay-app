@@ -1,5 +1,5 @@
 import moment from 'moment';
-import React from 'react';
+import React, {memo} from 'react';
 import styled, {css} from 'styled-components/native';
 import ArrowDownIcon from '../../../../assets/img/card/icons/arrow-down.svg';
 import ArrowUpIcon from '../../../../assets/img/card/icons/arrow-up.svg';
@@ -9,13 +9,13 @@ import RewardIcon from '../../../../assets/img/card/icons/reward.svg';
 import TopUpIcon from '../../../../assets/img/card/icons/topup.svg';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, H7} from '../../../components/styled/Text';
-import {Card, Transaction} from '../../../store/card/card.models';
+import {CardProvider} from '../../../constants/card';
+import {Card, UiTransaction} from '../../../store/card/card.models';
 import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
 import {format} from '../../../utils/currency';
 
 interface TransactionRowProps {
-  tx: Transaction;
-  settled: boolean;
+  tx: UiTransaction;
   card: Card;
 }
 
@@ -26,18 +26,17 @@ const TxRowContainer = styled.View`
   min-height: 72px;
 `;
 
-const TxColumn = styled.View<{stretch?: boolean}>`
-  flex-grow: ${({stretch}) => (stretch ? 1 : 0)};
+const TxColumn = styled.View`
   padding: ${ScreenGutter};
   justify-content: center;
 `;
 
-const FlexRow = styled.View`
-  flex-direction: row;
+const DescriptionColumn = styled(TxColumn)`
+  flex: 1;
 `;
 
-const TxTitle = styled(H7)`
-  flex-grow: 1;
+const PriceColumn = styled(TxColumn)`
+  align-items: flex-end;
 `;
 
 const TxText = styled(BaseText)<{
@@ -54,21 +53,21 @@ const TxText = styled(BaseText)<{
     light &&
     css`
       color: ${({theme}) => (theme.dark ? White : SlateDark)};
+      font-size: 12px;
     `}
-  flex-grow: ${({stretch}) => (stretch ? 1 : 0)};
 `;
 
-const isTopUp = (tx: Transaction) => tx.displayMerchant === 'BitPay Load';
+const isTopUp = (tx: UiTransaction) => tx.displayMerchant === 'BitPay Load';
 
-const isBitPayReward = (tx: Transaction) =>
+const isBitPayReward = (tx: UiTransaction) =>
   tx.displayMerchant === 'Referral Reward';
 
-const isFee = (tx: Transaction, provider: string) => {
+const isFee = (tx: UiTransaction, provider: CardProvider) => {
   switch (provider) {
-    case 'firstView':
+    case CardProvider.firstView:
       return ['10036 = INACTIVITY'].includes(tx.type);
 
-    case 'galileo':
+    case CardProvider.galileo:
       return ['FE'].includes(tx.type);
 
     default:
@@ -76,12 +75,12 @@ const isFee = (tx: Transaction, provider: string) => {
   }
 };
 
-const getTxIcon = (tx: Transaction, settled: boolean, provider: string) => {
+const getTxIcon = (tx: UiTransaction, provider: CardProvider) => {
   if (isFee(tx, provider)) {
     return FeeIcon;
   }
 
-  if (!settled) {
+  if (!tx.settled) {
     return PendingIcon;
   }
 
@@ -106,9 +105,9 @@ const withinPastDay = (timeMs: number) => {
   return Date.now() - date.getTime() < 1000 * 60 * 60 * 24;
 };
 
-const getTxTimestamp = (tx: Transaction, settled: boolean) => {
+const getTxTimestamp = (tx: UiTransaction) => {
   const {dates, status} = tx;
-  const timestamp = Number(settled ? dates.post : dates.auth);
+  const timestamp = Number(tx.settled ? dates.post : dates.auth);
 
   if (status === 'paid') {
     return 'Pending...';
@@ -123,23 +122,22 @@ const getTxTimestamp = (tx: Transaction, settled: boolean) => {
   return moment(timestamp).format('MMM D, YYYY');
 };
 
-const getTxTitle = (tx: Transaction) => {
+const getTxTitle = (tx: UiTransaction) => {
   return tx.displayMerchant || tx.description || '--';
 };
 
-const getTxSubtitle = (tx: Transaction, settled: boolean) => {
-  if (!settled && isTopUp(tx)) {
+const getTxSubtitle = (tx: UiTransaction) => {
+  if (!tx.settled && isTopUp(tx)) {
     return 'Waiting for confirmation';
   }
 
   const {merchantCity, merchantState} = tx.merchant || {};
-  const zwsp = '\u200b'; // using a zero-width space as a default to avoid weird spacing if location is empty
   let location;
 
   if (merchantCity && merchantState) {
     location = `${merchantCity}, ${merchantState}`;
   } else {
-    location = merchantCity || merchantState || zwsp;
+    location = merchantCity || merchantState || '';
   }
 
   // Provided casing is inconsistent, just normalize it
@@ -147,13 +145,13 @@ const getTxSubtitle = (tx: Transaction, settled: boolean) => {
 };
 
 const TransactionRow: React.FC<TransactionRowProps> = props => {
-  const {tx, settled, card} = props;
+  const {tx, card} = props;
 
-  const Icon = getTxIcon(tx, settled, card.provider);
+  const Icon = getTxIcon(tx, card.provider);
   const amount = format(+tx.displayPrice, card.currency.code);
   const title = getTxTitle(tx);
-  const subtitle = getTxSubtitle(tx, settled);
-  const timestamp = getTxTimestamp(tx, settled);
+  const subtitle = getTxSubtitle(tx);
+  const timestamp = getTxTimestamp(tx);
 
   return (
     <TxRowContainer>
@@ -161,21 +159,27 @@ const TransactionRow: React.FC<TransactionRowProps> = props => {
         <Icon />
       </TxColumn>
 
-      <TxColumn stretch>
-        <FlexRow>
-          <TxTitle>{title}</TxTitle>
-          <TxText bold>{amount}</TxText>
-        </FlexRow>
+      <DescriptionColumn>
+        <H7>{title}</H7>
 
-        <FlexRow>
+        {subtitle ? (
           <TxText light stretch>
             {subtitle}
           </TxText>
-          <TxText light>{timestamp}</TxText>
-        </FlexRow>
-      </TxColumn>
+        ) : null}
+      </DescriptionColumn>
+
+      <PriceColumn>
+        <TxText bold>{amount}</TxText>
+        <TxText light>{timestamp}</TxText>
+      </PriceColumn>
     </TxRowContainer>
   );
 };
 
-export default TransactionRow;
+export default memo(TransactionRow, (prevProps, nextProps) => {
+  const differentCard = prevProps.card.id !== nextProps.card.id;
+  const differentTx = prevProps.tx.id !== nextProps.tx.id;
+
+  return differentCard || differentTx;
+});

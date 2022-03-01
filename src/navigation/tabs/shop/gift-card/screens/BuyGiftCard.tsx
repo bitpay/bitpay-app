@@ -3,7 +3,7 @@ import {Platform, ScrollView} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import LinearGradient from 'react-native-linear-gradient';
 import Markdown from 'react-native-markdown-display';
-import {GiftCardStackParamList} from '../GiftCardStack';
+import {GiftCardScreens, GiftCardStackParamList} from '../GiftCardStack';
 import RemoteImage from '../../components/RemoteImage';
 import {BaseText, fontFamily} from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
@@ -26,9 +26,10 @@ import {
   formatAmount,
   getActivationFee,
 } from '../../../../../lib/gift-cards/gift-card';
-import {useTheme} from '@react-navigation/native';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import {useDispatch} from 'react-redux';
 import {AppActions} from '../../../../../store/app';
+import {cardReduxPersistBlacklist} from '../../../../../store/card/card.reducer';
 
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;
@@ -76,20 +77,13 @@ const SupportedAmountsLabel = styled(GiftCardDenomText)`
   margin-bottom: 2px;
 `;
 
-const getHeaderTitle = (displayName: string) => {
-  const fullTitle = `Buy ${displayName} Gift Card`;
-  const maxTitleLength = 25;
-  return fullTitle.length > maxTitleLength
-    ? fullTitle.replace('Gift Card', '')
-    : fullTitle;
-};
-
 const getMiddleIndex = (arr: number[]) => arr && Math.floor(arr.length / 2);
 
 const BuyGiftCard = ({
   route,
   navigation,
 }: StackScreenProps<GiftCardStackParamList, 'BuyGiftCard'>) => {
+  const navigator = useNavigation();
   const dispatch = useDispatch();
   const theme = useTheme();
   const {cardConfig} = route.params;
@@ -98,9 +92,24 @@ const BuyGiftCard = ({
   );
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: getHeaderTitle(cardConfig.displayName),
+      headerTitle: `Buy ${cardConfig.displayName} Gift Card`,
     });
   });
+
+  const next = () => {
+    cardConfig.phoneRequired
+      ? navigator.navigate('GiftCard', {
+          screen: GiftCardScreens.ENTER_PHONE,
+          params: {cardConfig},
+        })
+      : cardConfig.emailRequired
+      ? navigator.navigate('GiftCard', {
+          screen: GiftCardScreens.ENTER_EMAIL,
+          params: {cardConfig},
+        })
+      : undefined;
+  };
+
   return (
     <>
       <ScrollView
@@ -181,6 +190,7 @@ const BuyGiftCard = ({
                     {
                       text: 'GOT IT',
                       action: () => {
+                        next();
                         // Go to phone/email screen if required or confirm screen if not
                       },
                       primary: true,
@@ -190,6 +200,7 @@ const BuyGiftCard = ({
               );
               console.log('show activation fee sheet', activationFee);
             } else {
+              next();
               // Go to amount screen;
             }
           }}

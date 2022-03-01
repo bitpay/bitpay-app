@@ -8,6 +8,7 @@ import {RootState} from '../../../../../store';
 import {Card} from '../../../../../store/card/card.models';
 import {format} from '../../../../../utils/currency';
 import BitpayBBackgroundIcon from '../../../../../components/icons/bitpay-b-background/BitpayBBackground';
+import {CardProvider} from '../../../../../constants/card';
 
 const BgImage = () => <BitpayBBackgroundIcon />;
 
@@ -44,7 +45,7 @@ export const BitPayCard: React.FC = () => {
   const primaryCard = useSelector<RootState, Card | null>(({APP, CARD}) => {
     const cards = CARD.cards[APP.network] || [];
 
-    return cards.find(c => c.provider === 'galileo') || null;
+    return cards.find(c => c.provider === CardProvider.galileo) || null;
   });
   const primaryBalance = useSelector<RootState, number>(({CARD}) =>
     primaryCard ? CARD.balances[primaryCard.id] : 0,

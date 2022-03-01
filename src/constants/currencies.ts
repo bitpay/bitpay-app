@@ -1,5 +1,12 @@
 export type SupportedCoins = 'btc' | 'bch' | 'ltc' | 'doge' | 'eth';
-export type SupportedTokens = 'usdc' | 'gusd' | 'pax' | 'busd' | 'dai' | 'wbtc';
+export type SupportedTokens =
+  | 'usdc'
+  | 'gusd'
+  | 'pax'
+  | 'busd'
+  | 'dai'
+  | 'wbtc'
+  | 'shib';
 export type SupportedCurrencies = SupportedCoins | SupportedTokens;
 
 export interface CurrencyOpts {
@@ -27,7 +34,7 @@ export interface CurrencyOpts {
   };
   paymentInfo: {
     paymentCode: string;
-    protocolPrefix: {mainnet: string; testnet: string};
+    protocolPrefix: {livenet: string; testnet: string};
     // Urls
     ratesApi: string;
     blockExplorerUrls: string;
@@ -68,7 +75,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'BIP73',
-      protocolPrefix: {mainnet: 'bitcoin', testnet: 'bitcoin'},
+      protocolPrefix: {livenet: 'bitcoin', testnet: 'bitcoin'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/btc',
       blockExplorerUrls: 'bitpay.com/insight/#/BTC/mainnet/',
       blockExplorerUrlsTestnet: 'bitpay.com/insight/#/BTC/testnet/',
@@ -105,7 +112,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'BIP73',
-      protocolPrefix: {mainnet: 'bitcoincash', testnet: 'bchtest'},
+      protocolPrefix: {livenet: 'bitcoincash', testnet: 'bchtest'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/bch',
       blockExplorerUrls: 'bitpay.com/insight/#/BCH/mainnet/',
       blockExplorerUrlsTestnet: 'bitpay.com/insight/#/BCH/testnet/',
@@ -142,7 +149,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681',
-      protocolPrefix: {mainnet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/eth',
       blockExplorerUrls: 'etherscan.io/',
       blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
@@ -179,7 +186,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'BIP73',
-      protocolPrefix: {mainnet: 'ripple', testnet: 'ripple'},
+      protocolPrefix: {livenet: 'ripple', testnet: 'ripple'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/xrp',
       blockExplorerUrls: 'xrpscan.com/',
       blockExplorerUrlsTestnet: 'test.bithomp.com/explorer/',
@@ -216,7 +223,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {mainnet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/busd',
       blockExplorerUrls: 'etherscan.io/',
       blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
@@ -253,7 +260,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {mainnet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/pax',
       blockExplorerUrls: 'etherscan.io/',
       blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
@@ -290,7 +297,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {mainnet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/usdc',
       blockExplorerUrls: 'etherscan.io/',
       blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
@@ -327,7 +334,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {mainnet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/gusd',
       blockExplorerUrls: 'etherscan.io/',
       blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
@@ -364,7 +371,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {mainnet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/gusd',
       blockExplorerUrls: 'etherscan.io/',
       blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
@@ -401,7 +408,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {mainnet: 'ethereum', testnet: 'ethereum'},
+      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/btc',
       blockExplorerUrls: 'etherscan.io/',
       blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
@@ -438,7 +445,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'BIP73',
-      protocolPrefix: {mainnet: 'dogecoin', testnet: 'dogecoin'},
+      protocolPrefix: {livenet: 'dogecoin', testnet: 'dogecoin'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/doge',
       blockExplorerUrls: 'blockchair.com/',
       blockExplorerUrlsTestnet: 'sochain.com/',
@@ -475,7 +482,7 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'BIP73',
-      protocolPrefix: {mainnet: 'litecoin', testnet: 'litecoin'},
+      protocolPrefix: {livenet: 'litecoin', testnet: 'litecoin'},
       ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/ltc',
       blockExplorerUrls: 'bitpay.com/insight/#/LTC/mainnet/',
       blockExplorerUrlsTestnet: 'bitpay.com/insight/#/LTC/testnet/',
@@ -492,9 +499,55 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
       gradientBackgroundColor: '#f7921a',
     },
   },
+  shib: {
+    name: 'SHIBA INU',
+    chain: 'ETH',
+    coin: 'shib',
+    unitInfo: {
+      unitName: 'SHIB',
+      unitToSatoshi: 1e18,
+      unitDecimals: 18,
+      unitCode: 'shib',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: false,
+      singleAddress: true,
+      isCustom: false,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'ethereum', testnet: 'ethereum'},
+      ratesApi: 'https://bws.bitpay.com/bws/api/v3/fiatrates/shib',
+      blockExplorerUrls: 'etherscan.io/',
+      blockExplorerUrlsTestnet: 'kovan.etherscan.io/',
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1000000000,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+    theme: {
+      coinColor: '#2775ca',
+      backgroundColor: '#2775c9',
+      gradientBackgroundColor: '#2775c9',
+    },
+  },
 };
 
-export const SUPPORTED_TOKENS = ['usdc', 'gusd', 'usdp', 'busd', 'dai', 'wbtc'];
+export const SUPPORTED_TOKENS = [
+  'usdc',
+  'gusd',
+  'usdp',
+  'busd',
+  'dai',
+  'wbtc',
+  'shib',
+];
 export const SUPPORTED_COINS = ['btc', 'bch', 'eth', 'doge', 'ltc', 'xrp'];
 export const SUPPORTED_CURRENCIES = [...SUPPORTED_COINS, ...SUPPORTED_TOKENS];
 export const POPULAR_TOKENS = [

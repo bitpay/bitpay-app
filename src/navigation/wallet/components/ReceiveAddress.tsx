@@ -25,18 +25,17 @@ import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import {sleep} from '../../../utils/helper-methods';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {
-  CreateWalletAddress,
-  GetLegacyBchAddressFormat,
-} from '../../../store/wallet/effects/send/address';
 import ReceiveAddressHeader, {
   HeaderContextHandler,
 } from './ReceiveAddressHeader';
-
-export interface ReceiveAddressConfig {
-  keyId: string;
-  id: string;
-}
+import {
+  createWalletAddress,
+  GetLegacyBchAddressFormat,
+} from '../../../store/wallet/effects/address/address';
+import {
+  GetProtocolPrefix,
+  IsUtxoCoin,
+} from '../../../store/wallet/utils/currency';
 
 export const BchAddressTypes = ['Cash Address', 'Legacy'];
 
@@ -85,6 +84,8 @@ const LoadingContainer = styled.View`
 
 const LoadingText = styled(H4)`
   color: ${({theme}) => theme.colors.text};
+  margin: 10px 0;
+  text-align: center;
 `;
 
 const ReceiveAddressContainer = styled(SheetContainer)`
@@ -151,16 +152,22 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
   };
 
   const createAddress = async () => {
-    let {coin} = wallet.credentials;
+    let {coin, network} = wallet.credentials;
     const prefix = 'Could not create address';
 
     try {
-      const walletAddress = await CreateWalletAddress(wallet);
+      const walletAddress = (await dispatch<any>(
+        createWalletAddress({wallet}),
+      )) as string;
       setLoading(false);
-      setAddress(walletAddress);
       if (coin === 'bch') {
-        setBchAddress(walletAddress);
+        const protocolPrefix = GetProtocolPrefix(coin, network);
+        const formattedAddr = protocolPrefix + ':' + walletAddress;
+        setAddress(formattedAddr);
+        setBchAddress(formattedAddr);
         setBchAddressType('Cash Address');
+      } else {
+        setAddress(walletAddress);
       }
     } catch (createAddressErr: any) {
       switch (createAddressErr?.type) {
@@ -173,18 +180,24 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
             return;
           } else {
             showErrorMessage(
-              CustomErrorMessage(BWCErrorMessage(createAddressErr.error)),
+              CustomErrorMessage({
+                errMsg: BWCErrorMessage(createAddressErr.error),
+              }),
             );
           }
           break;
         case 'MAIN_ADDRESS_GAP_REACHED':
           showErrorMessage(
-            CustomErrorMessage(BWCErrorMessage(createAddressErr.error)),
+            CustomErrorMessage({
+              errMsg: BWCErrorMessage(createAddressErr.error),
+            }),
           );
           break;
         default:
           showErrorMessage(
-            CustomErrorMessage(BWCErrorMessage(createAddressErr.error, prefix)),
+            CustomErrorMessage({
+              errMsg: BWCErrorMessage(createAddressErr.error, prefix),
+            }),
           );
           break;
       }
@@ -218,12 +231,15 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
     };
   }
 
+  const isUtxo = IsUtxoCoin(wallet.currencyAbbreviation);
+
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={closeModal}>
       <ReceiveAddressContainer>
         <ReceiveAddressHeader
           onPressRefresh={createAddress}
           contextHandlers={headerContextHandlers}
+          showRefresh={isUtxo}
         />
 
         {address ? (
@@ -252,6 +268,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
         ) : (
           <LoadingContainer>
             <GhostSvg />
+            <LoadingText>Something went wrong. Please try again.</LoadingText>
           </LoadingContainer>
         )}
 

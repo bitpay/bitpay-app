@@ -1,36 +1,44 @@
 import {StackNavigationProp} from '@react-navigation/stack';
-import React, {useEffect, useLayoutEffect, useMemo} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useMemo} from 'react';
 import {useRef} from 'react';
 import {useTranslation} from 'react-i18next';
-import {ScrollView} from 'react-native';
+import {FlatList} from 'react-native';
 import Carousel from 'react-native-snap-carousel';
-import {useDispatch, useSelector} from 'react-redux';
+import GhostImg from '../../../../assets/img/ghost-cheeky.svg';
 import Button from '../../../components/button/Button';
+import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
 import {
+  Br,
   HeaderRightContainer,
   WIDTH,
 } from '../../../components/styled/Containers';
+import {Smallest} from '../../../components/styled/Text';
+import {CardProvider} from '../../../constants/card';
 import {ProviderConfig} from '../../../constants/config.card';
-import {RootState} from '../../../store';
 import {CardEffects} from '../../../store/card';
-import {Card, Transaction} from '../../../store/card/card.models';
 import {
-  CardProvider,
-  VirtualDesignCurrency,
-} from '../../../store/card/card.types';
+  Card,
+  Transaction,
+  UiTransaction,
+} from '../../../store/card/card.models';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {CardStackParamList} from '../CardStack';
+import {
+  EmptyGhostContainer,
+  EmptyListContainer,
+  EmptyListDescription,
+  TransactionListFooter,
+  TransactionListHeader,
+  TransactionListHeaderIcon,
+  TransactionListHeaderTitle,
+} from './CardDashboard.styled';
 import CardOverviewSlide from './CardOverviewSlide';
-import TransactionsList from './CardTransactionsList';
+import TransactionRow from './CardTransactionRow';
 
 interface CardDashboardProps {
   id: string | undefined | null;
   navigation: StackNavigationProp<CardStackParamList, 'Home'>;
 }
-
-const GroupEnabled = {
-  firstView: false,
-  galileo: true,
-};
 
 export class OverviewSlide {
   readonly provider: CardProvider;
@@ -57,10 +65,16 @@ export class OverviewSlide {
 const buildOverviewSlides = (cards: Card[]) => {
   // sort galileo before firstView, then virtual before physical
   const sortedCards = cards.sort((a, b) => {
-    if (a.provider === 'galileo' && b.provider === 'firstView') {
+    if (
+      a.provider === CardProvider.galileo &&
+      b.provider === CardProvider.firstView
+    ) {
       return -1;
     }
-    if (a.provider === 'firstView' && b.provider === 'galileo') {
+    if (
+      a.provider === CardProvider.firstView &&
+      b.provider === CardProvider.galileo
+    ) {
       return 1;
     }
 
@@ -74,7 +88,7 @@ const buildOverviewSlides = (cards: Card[]) => {
   });
 
   const slides = sortedCards.reduce((slideList, card) => {
-    if (!GroupEnabled[card.provider]) {
+    if (!ProviderConfig[card.provider].groupEnabled) {
       slideList.push(new OverviewSlide(card));
 
       return slideList;
@@ -94,18 +108,23 @@ const buildOverviewSlides = (cards: Card[]) => {
   return slides;
 };
 
+const toUiTransaction = (tx: Transaction, settled: boolean) => {
+  const uiTx = tx as UiTransaction;
+
+  uiTx.settled = settled;
+
+  return uiTx;
+};
+
 const CardDashboard: React.FC<CardDashboardProps> = props => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const {id, navigation} = props;
   const carouselRef = useRef<Carousel<OverviewSlide>>(null);
-  const cards = useSelector<RootState, Card[]>(
-    ({APP, CARD}) => CARD.cards[APP.network],
-  );
-  const virtualDesignCurrency = useSelector<RootState, VirtualDesignCurrency>(
+  const cards = useAppSelector(({APP, CARD}) => CARD.cards[APP.network]);
+  const virtualDesignCurrency = useAppSelector(
     ({CARD}) => CARD.virtualDesignCurrency,
   );
-
   const memoizedSlides = useMemo(() => buildOverviewSlides(cards), [cards]);
 
   // if id was passed in, try to find the slide that contains that id
@@ -140,9 +159,10 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   }, [activeSlide, navigation, t]);
 
   // if id does not exist as a key, tx for this card has not been initialized
-  const uninitializedId = useSelector<RootState, string | null>(({CARD}) =>
-    CARD.settledTransactions[activeCard.id] ? null : activeCard.id,
+  const pageData = useAppSelector(
+    ({CARD}) => CARD.settledTransactions[activeCard.id],
   );
+  const uninitializedId = pageData ? null : activeCard.id;
 
   useEffect(() => {
     if (uninitializedId) {
@@ -151,61 +171,138 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   }, [uninitializedId, dispatch]);
 
   const {filters} = ProviderConfig[activeCard.provider];
-  const settledTxList = useSelector<RootState, Transaction[]>(
+  const settledTxList = useAppSelector(
     ({CARD}) => CARD.settledTransactions[activeCard.id]?.transactionList,
   );
-
-  const filteredSettledTx = useMemo(
-    () => (settledTxList || []).filter(filters.settledTx),
-    [settledTxList, filters],
-  ).slice(0, 30);
-
-  const pendingTxList = useSelector<RootState, Transaction[]>(
+  const pendingTxList = useAppSelector(
     ({CARD}) => CARD.pendingTransactions[activeCard.id],
   );
 
-  const filteredPendingTx = useMemo(
-    () => pendingTxList || [],
-    [pendingTxList],
-  ).slice(0, 30);
+  const filteredTransactions = useMemo(
+    () => [
+      ...(pendingTxList || []).map(tx => toUiTransaction(tx, false)),
+      ...(settledTxList || [])
+        .filter(filters.settledTx)
+        .map(tx => toUiTransaction(tx, true)),
+    ],
+    [settledTxList, pendingTxList, filters],
+  );
+
+  const listFooterComponent = useMemo(
+    () => (
+      <TransactionListFooter>
+        {activeCard.provider === CardProvider.galileo ? (
+          <>
+            <Smallest>{t('TermsAndConditionsMastercard')}</Smallest>
+
+            <Br />
+
+            <Smallest>{t('TermsAndConditionsMastercard2')}</Smallest>
+          </>
+        ) : null}
+      </TransactionListFooter>
+    ),
+    [activeCard.provider, t],
+  );
+
+  const listEmptyComponent = useMemo(
+    () => (
+      <EmptyListContainer>
+        <EmptyGhostContainer>
+          <GhostImg />
+        </EmptyGhostContainer>
+        <EmptyListDescription>
+          Load your cash account and get instant access to spending at thousands
+          of merchants.
+        </EmptyListDescription>
+      </EmptyListContainer>
+    ),
+    [],
+  );
+
+  const renderSlide = useCallback(
+    ({item}) => (
+      <CardOverviewSlide
+        card={item.primaryCard}
+        designCurrency={virtualDesignCurrency}
+      />
+    ),
+    [virtualDesignCurrency],
+  );
+
+  const renderTransaction = useCallback(
+    ({item}: {item: UiTransaction}) => {
+      return <TransactionRow key={item.id} tx={item} card={activeCard} />;
+    },
+    [activeCard],
+  );
+
+  const onRefresh = () => {
+    dispatch(CardEffects.startFetchOverview(activeCard.id));
+  };
+
+  const fetchNextPage = () => {
+    if (pageData) {
+      const {currentPageNumber, totalPageCount} = pageData;
+      const hasMorePages = currentPageNumber < totalPageCount;
+
+      if (hasMorePages) {
+        dispatch(
+          CardEffects.startFetchSettledTransactions(activeCard.id, {
+            pageNumber: currentPageNumber + 1,
+          }),
+        );
+      }
+    }
+  };
 
   return (
-    <ScrollView>
-      <Carousel<OverviewSlide>
-        ref={carouselRef}
-        vertical={false}
-        layout="default"
-        activeSlideAlignment="center"
-        firstItem={activeSlideIdx}
-        data={memoizedSlides}
-        renderItem={({item}) => (
-          <CardOverviewSlide
-            card={item.primaryCard}
-            designCurrency={virtualDesignCurrency}
+    <FlatList
+      data={filteredTransactions}
+      renderItem={renderTransaction}
+      initialNumToRender={30}
+      onEndReachedThreshold={0.1}
+      onEndReached={() => fetchNextPage()}
+      ListHeaderComponent={
+        <>
+          <Carousel<OverviewSlide>
+            ref={carouselRef}
+            vertical={false}
+            layout="default"
+            activeSlideAlignment="center"
+            firstItem={activeSlideIdx}
+            data={memoizedSlides}
+            renderItem={renderSlide}
+            onSnapToItem={idx => {
+              navigation.setParams({
+                id: memoizedSlides[idx].primaryCard.id,
+              });
+            }}
+            itemWidth={300 + 20}
+            sliderWidth={WIDTH}
+            inactiveSlideScale={1}
+            inactiveSlideOpacity={1}
+            containerCustomStyle={{
+              flexGrow: 0,
+              marginBottom: 32,
+              marginTop: 32,
+            }}
           />
-        )}
-        onSnapToItem={idx => {
-          navigation.setParams({
-            id: memoizedSlides[idx].primaryCard.id,
-          });
-        }}
-        itemWidth={300 + 20}
-        sliderWidth={WIDTH}
-        inactiveSlideScale={1}
-        inactiveSlideOpacity={1}
-        containerCustomStyle={{
-          flexGrow: 0,
-          marginBottom: 32,
-          marginTop: 32,
-        }}
-      />
 
-      <TransactionsList
-        card={activeCard}
-        pendingTxList={filteredPendingTx}
-        settledTxList={filteredSettledTx}
-      />
-    </ScrollView>
+          <TransactionListHeader>
+            <TransactionListHeaderTitle>
+              {filteredTransactions.length <= 0 ? null : 'Recent Activity'}
+            </TransactionListHeaderTitle>
+
+            <TransactionListHeaderIcon onPress={() => onRefresh()}>
+              <RefreshIcon />
+            </TransactionListHeaderIcon>
+          </TransactionListHeader>
+        </>
+      }
+      ListFooterComponent={listFooterComponent}
+      ListEmptyComponent={listEmptyComponent}
+    />
   );
 };
 

@@ -8,6 +8,7 @@ import {
   SlateDark,
   White,
   Slate,
+  Cloud,
 } from '../../styles/colors';
 import {BaseText} from './Text';
 
@@ -73,7 +74,7 @@ export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
 export const Br: React.FC = () => <Text />;
 
 export const Hr = styled.View`
-  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#ebecee')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Cloud)};
   border-bottom-width: 1px;
 `;
 
@@ -298,4 +299,16 @@ export const OptionInfoContainer = styled.View`
   padding: 20px;
   justify-content: center;
   flex: 1;
+`;
+
+// Search
+
+export const SearchInput = styled.TextInput`
+  flex: 1;
+  padding: 0 10px;
+  border-right-width: 1px;
+  border-right-color: ${({theme: {dark}}) => (dark ? '#45484E' : '#ECEFFD')};
+  height: 32px;
+  color: ${({theme}) => theme.colors.text};
+  background-color: transparent;
 `;

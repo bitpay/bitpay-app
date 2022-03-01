@@ -1,5 +1,7 @@
-import {ExchangeRate, Key, PriceHistory, Token} from './wallet.models';
+import {Key, PriceHistory, Rates, Token} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
+import merge from 'lodash.merge';
+import {FeeLevels} from './effects/fee/fee';
 
 type WalletReduxPersistBlackList = [];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
@@ -7,7 +9,7 @@ export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
 export interface WalletState {
   createdOn: number;
   keys: {[key in string]: Key};
-  rates: {[key in string]: Array<ExchangeRate>};
+  rates: Rates;
   priceHistory: Array<PriceHistory>;
   tokenOptions: {[key in string]: Token};
   walletTermsAccepted: boolean;
@@ -16,6 +18,9 @@ export interface WalletState {
     previous: number;
   };
   balanceCacheKey: {[key in string]: number | undefined};
+  ratesCacheKey: number | undefined;
+  feeLevel: {[key in string]: FeeLevels};
+  useUnconfirmedFunds: boolean;
 }
 
 const initialState: WalletState = {
@@ -30,6 +35,12 @@ const initialState: WalletState = {
     previous: 0,
   },
   balanceCacheKey: {},
+  ratesCacheKey: undefined,
+  feeLevel: {
+    btc: FeeLevels.NORMAL,
+    eth: FeeLevels.NORMAL,
+  },
+  useUnconfirmedFunds: false,
 };
 
 export const walletReducer = (
@@ -63,6 +74,15 @@ export const walletReducer = (
       return {
         ...state,
         rates: {...state.rates, ...rates},
+        ratesCacheKey: Date.now(),
+      };
+    }
+
+    case WalletActionTypes.UPDATE_CACHE_KEY: {
+      const cacheKey = action.payload;
+      return {
+        ...state,
+        [cacheKey]: Date.now(),
       };
     }
 
@@ -80,6 +100,7 @@ export const walletReducer = (
         keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
           if (wallet.id === walletId) {
             wallet.balance = balance;
+            wallet.isRefreshing = false;
           }
           return wallet;
         });
@@ -95,6 +116,28 @@ export const walletReducer = (
         balanceCacheKey: {
           ...state.balanceCacheKey,
           [walletId]: Date.now(),
+        },
+      };
+    }
+
+    case WalletActionTypes.FAILED_UPDATE_WALLET_BALANCE: {
+      const {keyId, walletId} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      if (keyToUpdate) {
+        keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
+          if (wallet.id === walletId) {
+            wallet.isRefreshing = false;
+          }
+          return wallet;
+        });
+      }
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
         },
       };
     }
@@ -159,14 +202,13 @@ export const walletReducer = (
 
     case WalletActionTypes.DELETE_KEY: {
       const {keyId} = action.payload;
-      const keyList = {...state.keys};
       const balanceToRemove = state.keys[keyId].totalBalance;
-      delete keyList[keyId];
+      delete state.keys[keyId];
 
       return {
         ...state,
         keys: {
-          ...keyList,
+          ...state.keys,
         },
         portfolioBalance: {
           current: state.portfolioBalance.current - balanceToRemove,
@@ -205,6 +247,27 @@ export const walletReducer = (
       };
     }
 
+    case WalletActionTypes.SUCCESS_GET_RECEIVE_ADDRESS: {
+      const {keyId, id} = action.payload.wallet;
+      const keyToUpdate = state.keys[keyId];
+      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
+        if (wallet.id === id) {
+          return merge(wallet, action.payload.wallet);
+        }
+        return wallet;
+      });
+
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
     case WalletActionTypes.UPDATE_KEY_NAME: {
       const {keyId, name} = action.payload;
       const keyToUpdate = state.keys[keyId];
@@ -227,6 +290,27 @@ export const walletReducer = (
       keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
         if (wallet.id === walletId) {
           wallet.walletName = name;
+        }
+        return wallet;
+      });
+
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
+    case WalletActionTypes.SET_WALLET_REFRESHING: {
+      const {keyId, walletId, isRefreshing} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
+        if (wallet.id === walletId) {
+          wallet.isRefreshing = isRefreshing;
         }
         return wallet;
       });

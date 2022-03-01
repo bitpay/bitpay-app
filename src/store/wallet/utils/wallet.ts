@@ -37,7 +37,7 @@ export const buildWalletObj = (
     walletId,
     walletName,
     coin,
-    balance = {crypto: '0', fiat: 0},
+    balance = {crypto: '0', fiat: 0, sat: 0},
     tokens,
     keyId,
     n,
@@ -70,6 +70,7 @@ export const buildWalletObj = (
       : '',
     n,
     m,
+    isRefreshing: false,
   };
 };
 
@@ -151,12 +152,15 @@ export const findWalletById = (
   id: string,
 ): Wallet | undefined => wallets.find(wallet => wallet.id === id);
 
-export const isBalanceCacheKeyStale = (timestamp: number | undefined) => {
+export const isCacheKeyStale = (
+  timestamp: number | undefined,
+  duration: number,
+) => {
   if (!timestamp) {
     return true;
   }
 
-  const TTL = BALANCE_CACHE_DURATION * 1000;
+  const TTL = duration * 1000;
   return Date.now() - timestamp > TTL;
 };
 
