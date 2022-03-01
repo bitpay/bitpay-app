@@ -148,7 +148,7 @@ const BoxInput = React.forwardRef<
         )}
       </InputContainer>
 
-      <ErrorText>{errorMessage || ' '}</ErrorText>
+      {errorMessage ? <ErrorText>{errorMessage}</ErrorText> : null}
     </>
   );
 });
