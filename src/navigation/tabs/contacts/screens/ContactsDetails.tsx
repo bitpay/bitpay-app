@@ -234,7 +234,7 @@ const ContactsDetails = ({
               </AddressContainer>
             </DetailInfo>
           </Detail>
-          {network ? (
+          {network !== 'livenet' ? (
             <>
               <Hr />
               <Detail>
