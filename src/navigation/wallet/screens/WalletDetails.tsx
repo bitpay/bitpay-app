@@ -274,9 +274,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         const grouped = GroupTransactionHistory(_history);
         setGroupedHistory(grouped);
       }
+      await sleep(1000);
       setIsLoading(false);
       setLoadMore(_loadMore);
     } catch (e) {
+      await sleep(1000);
       setLoadMore(false);
       setIsLoading(false);
       setErrorLoadingTxs(true);
