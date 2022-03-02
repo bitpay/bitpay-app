@@ -21,10 +21,10 @@ import {
 import TrashIcon from '../../../../assets/img/wallet-connect/trash-icon.svg';
 import {Image} from 'react-native';
 import {IconLabel} from '../styled/WalletConnectText';
-import DownRightArrow from '../../../../assets/img/wallet-connect/down-right-arrow.svg';
+import NestedArrow from '../../../../assets/img/nested-arrow.svg';
 import styled from 'styled-components/native';
 
-const ArrowContainer = styled.View`
+const NestedArrowContainer = styled.View`
   padding-right: 11px;
   padding-left: 7px;
 `;
@@ -47,9 +47,9 @@ export default ({session}: {session: IWalletConnectSession}) => {
               },
             });
           }}>
-          <ArrowContainer>
-            <DownRightArrow />
-          </ArrowContainer>
+          <NestedArrowContainer>
+            <NestedArrow />
+          </NestedArrowContainer>
           {peerMeta && peerMeta.icons[0] ? (
             <>
               <IconContainer>
