@@ -115,7 +115,7 @@ const Amount = () => {
         </HeaderContainer>
       ),
     });
-  });
+  }, [navigation]);
 
   const goToConfirm = async () => {
     try {
@@ -166,11 +166,17 @@ const Amount = () => {
             </CurrencySuperScript>
           </AmountHeroContainer>
           <SwapButtonContainer>
-            <SwapButton swapList={swapList} onChange={setCurrency} />
+            <SwapButton
+              swapList={swapList}
+              onChange={val => {
+                setCurrency(val);
+                setAmount('0');
+              }}
+            />
           </SwapButtonContainer>
         </View>
         <View>
-          <VirtualKeyboard onChange={val => setAmount(val)} reset={currency} />
+          <VirtualKeyboard value={amount} onChange={setAmount} />
           <ActionContainer>
             <Button disabled={!amount} onPress={goToConfirm}>
               Continue

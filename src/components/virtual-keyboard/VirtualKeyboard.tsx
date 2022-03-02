@@ -1,4 +1,4 @@
-import React, {memo, useEffect, useState} from 'react';
+import React from 'react';
 import styled from 'styled-components/native';
 import {BaseText} from '../styled/Text';
 import DeleteSvg from '../../../assets/img/delete.svg';
@@ -26,13 +26,41 @@ const CellText = styled(BaseText)`
 `;
 
 export interface VirtualKeyboardProps {
+  value: string;
   onChange: (value: string) => void;
-  reset: string | undefined;
 }
 
-const VirtualKeyboard = ({onChange, reset}: VirtualKeyboardProps) => {
-  const [curVal, setCurVal] = useState('');
+interface CellProps {
+  onPress: (value: string) => void;
+  value: string;
+}
 
+const Cell: React.FC<CellProps> = ({value, onPress}) => {
+  return (
+    <CellContainer onPress={() => onPress(value)}>
+      <CellText>{value}</CellText>
+    </CellContainer>
+  );
+};
+
+interface RowProps {
+  numArray: string[];
+  onCellPress: (value: string) => void;
+}
+
+const Row: React.FC<RowProps> = ({numArray, onCellPress}) => {
+  return (
+    <RowContainer>
+      {numArray
+        ? numArray.map(val => (
+            <Cell onPress={onCellPress} value={val} key={val} />
+          ))
+        : null}
+    </RowContainer>
+  );
+};
+
+const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({value, onChange}) => {
   const onCellPress = (val: string) => {
     haptic('impactLight');
     let currentValue;
@@ -41,53 +69,26 @@ const VirtualKeyboard = ({onChange, reset}: VirtualKeyboardProps) => {
         currentValue = '';
         break;
       case 'backspace':
-        currentValue = curVal.slice(0, -1);
+        currentValue = value.slice(0, -1);
         break;
       case '.':
-        currentValue = curVal.includes('.') ? curVal : curVal + val;
+        currentValue = value.includes('.') ? value : value + val;
         break;
       default:
-        currentValue = curVal + val;
+        currentValue = value === '0' ? val : value + val;
     }
-    setCurVal(currentValue);
     onChange(currentValue);
-  };
-
-  useEffect(() => {
-    if (reset) {
-      onCellPress('reset');
-    }
-  }, [reset]);
-
-  const Cell = ({val}: {val: string}) => {
-    return (
-      <CellContainer onPress={() => onCellPress(val)}>
-        <CellText>{val}</CellText>
-      </CellContainer>
-    );
-  };
-
-  const Row = ({numArray}: {numArray: Array<string>}) => {
-    return (
-      <RowContainer>
-        {numArray ? numArray.map(val => <Cell val={val} key={val} />) : null}
-      </RowContainer>
-    );
   };
 
   return (
     <KeyboardContainer>
-      <Row numArray={['1', '2', '3']} />
-      <Row numArray={['4', '5', '6']} />
-      <Row numArray={['7', '8', '9']} />
+      <Row numArray={['1', '2', '3']} onCellPress={onCellPress} />
+      <Row numArray={['4', '5', '6']} onCellPress={onCellPress} />
+      <Row numArray={['7', '8', '9']} onCellPress={onCellPress} />
 
       <RowContainer>
-        <CellContainer onPress={() => onCellPress('.')}>
-          <Cell val={'.'} />
-        </CellContainer>
-        <CellContainer onPress={() => onCellPress('0')}>
-          <Cell val={'0'} />
-        </CellContainer>
+        <Cell onPress={onCellPress} value={'.'} />
+        <Cell onPress={onCellPress} value={'0'} />
         <CellContainer
           onPress={() => onCellPress('backspace')}
           onLongPress={() => onCellPress('reset')}>
@@ -98,4 +99,4 @@ const VirtualKeyboard = ({onChange, reset}: VirtualKeyboardProps) => {
   );
 };
 
-export default memo(VirtualKeyboard);
+export default VirtualKeyboard;

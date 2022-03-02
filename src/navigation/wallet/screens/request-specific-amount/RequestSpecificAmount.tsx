@@ -29,11 +29,10 @@ const RequestSpecificAmount = () => {
   const {currencyAbbreviation} = wallet;
   const navigation = useNavigation();
   const [amount, setAmount] = useState('0');
-  const [reset, setReset] = useState<string>();
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
-      setReset(currencyAbbreviation + Math.random());
+      setAmount('0');
     });
   }, [navigation]);
 
@@ -55,7 +54,7 @@ const RequestSpecificAmount = () => {
         </View>
 
         <View>
-          <VirtualKeyboard onChange={setAmount} reset={reset} />
+          <VirtualKeyboard value={amount} onChange={setAmount} />
           <ActionContainer>
             <Button
               onPress={() => {
