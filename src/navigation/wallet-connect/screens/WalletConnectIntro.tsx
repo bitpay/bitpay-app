@@ -24,10 +24,14 @@ import {walletConnectOnSessionRequest} from '../../../store/wallet-connect/walle
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissOnGoingProcessModal,
+  showBottomNotificationModal,
   showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {LightBlack, White} from '../../../styles/colors';
+import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
+import {BWCErrorMessage} from '../../../constants/BWCError';
+import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 
 export type WalletConnectIntroParamList = {
   uri?: string;
@@ -58,7 +62,7 @@ const WalletConnectIntro = () => {
   const dispatch = useDispatch();
   const route = useRoute<RouteProp<{params: WalletConnectIntroParamList}>>();
   const {uri} = route.params || {};
-
+  const [, setUri] = useState(uri);
   const [walletSelectorModalVisible, setWalletSelectorModalVisible] =
     useState(false);
 
@@ -78,6 +82,14 @@ const WalletConnectIntro = () => {
     allEthWallets = [...allEthWallets, ...UIFormattedEthWallets];
   });
 
+  const showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
+
   const goToStartView = useCallback(
     async (wallet: Wallet, wcUri: string) => {
       try {
@@ -95,11 +107,18 @@ const WalletConnectIntro = () => {
         });
       } catch (e) {
         console.log(e);
+        setUri(undefined);
+        await showErrorMessage(
+          CustomErrorMessage({
+            errMsg: BWCErrorMessage(e),
+            title: 'Uh oh, something went wrong',
+          }),
+        );
       } finally {
         dispatch(dismissOnGoingProcessModal());
       }
     },
-    [dispatch, navigation],
+    [dispatch, navigation, showErrorMessage],
   );
 
   const goToScanView = useCallback(

@@ -50,7 +50,7 @@ export const walletConnectOnSessionRequest =
       if (isWaitingForEvent) {
         // reject promise if Dapp doesn't respond
         reject(
-          'Failed or rejected session request. Please, try again refreshing the QR code.',
+          'Session request failed or rejected. Please try again by refreshing the QR code.',
         );
       }
     });
