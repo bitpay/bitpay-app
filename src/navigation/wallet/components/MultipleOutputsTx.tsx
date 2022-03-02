@@ -4,19 +4,40 @@ import {GetCoinAndNetwork} from '../../../store/wallet/effects/address/address';
 import {GetProtocolPrefixAddress} from '../../../store/wallet/utils/wallet';
 import {GetContactName} from '../../../store/wallet/effects/transactions/transactions';
 import styled from 'styled-components/native';
-import {Hr} from '../../../components/styled/Containers';
+import {ActiveOpacity, Hr, Row} from '../../../components/styled/Containers';
 import {H7} from '../../../components/styled/Text';
 import CardSvg from '../../../../assets/img/wallet/transactions/card.svg';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
-import {View} from 'react-native';
 import DefaultSvg from '../../../../assets/img/currencies/default.svg';
 import SendToPill from './SendToPill';
-import {DetailContainer, DetailRow, DetailColumn} from "../screens/TransactionDetails";
+import {
+  DetailContainer,
+  DetailRow,
+  DetailColumn,
+} from '../screens/TransactionDetails';
+import {LightBlack, NeutralSlate} from '../../../styles/colors';
+import Clipboard from '@react-native-community/clipboard';
 
 const MisunderstoodOutputsText = styled(H7)`
   margin-bottom: 5px;
-`
+`;
+
+const MultiOptionsContainer = styled.TouchableOpacity`
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
+  border-radius: 10px;
+  margin-bottom: 5px;
+  padding: 10px;
+`;
+
+const MultiOptionsText = styled(H7)`
+  width: 55%;
+  margin: 0 5px;
+`;
+
+const MultiOptionsMessage = styled.View`
+  margin: 5px 0;
+`;
 
 const MultipleOutputsTx = ({tx}: {tx: any}) => {
   let {coin, network} = tx;
@@ -48,11 +69,17 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
 
   const getIcon = () => {
     return tx.customData?.service == 'debitcard' ? (
-        <CardSvg width={18} height={18} />
+      <CardSvg width={18} height={18} />
     ) : SUPPORTED_CURRENCIES.includes(coin) ? (
-        CurrencyListIcons[coin]({width: 18, height: 18})
-    ) : <DefaultSvg width={18} height={18}  />
-  }
+      CurrencyListIcons[coin]({width: 18, height: 18})
+    ) : (
+      <DefaultSvg width={18} height={18} />
+    );
+  };
+
+  const copyText = (text: string) => {
+    Clipboard.setString(text);
+  };
 
   return (
     <>
@@ -65,19 +92,16 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
 
             {!tx.hasMultiplesOutputs ? (
               <DetailRow>
-                <SendToPill
-                  icon={getIcon()}
-                  description={getDesc()}
-                />
+                <SendToPill icon={getIcon()} description={getDesc()} />
               </DetailRow>
             ) : null}
 
             {tx.hasMultiplesOutputs ? (
               <DetailRow>
                 <SendToPill
-                    icon={getIcon()}
-                    description={`${tx.recipientCount} Recipients`}
-                    onPress={() => setShowMultiOptions(!showMultiOptions)}
+                  icon={getIcon()}
+                  description={`${tx.recipientCount} Recipients`}
+                  onPress={() => setShowMultiOptions(!showMultiOptions)}
                 />
               </DetailRow>
             ) : null}
@@ -88,19 +112,34 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
       {tx.hasMultiplesOutputs &&
         showMultiOptions &&
         tx.outputs.map((output: any, i: number) => (
-          <View key={i}>
-            <H7>
-              {output.contactName ||
-                output.addressToShow ||
-                output.toAddress ||
-                output.address}
-            </H7>
-            <H7>
-              {output.amountStr}{' '}
-              {output.alternativeAmountStr ? output.alternativeAmountStr : null}
-            </H7>
-            {output.message ? <H7>{output.message}</H7> : null}
-          </View>
+          <MultiOptionsContainer
+            key={i}
+            activeOpacity={ActiveOpacity}
+            onPress={() => copyText(output.toAddress || output.address)}>
+            <DetailRow>
+              {getIcon()}
+              <MultiOptionsText numberOfLines={1} ellipsizeMode={'tail'}>
+                {output.contactName ||
+                  output.addressToShow ||
+                  output.toAddress ||
+                  output.address}
+              </MultiOptionsText>
+              <DetailColumn>
+                <H7 medium={true}>{output.amountStr}</H7>
+                {output.alternativeAmountStr ? (
+                  <H7>{output.alternativeAmountStr}</H7>
+                ) : null}
+              </DetailColumn>
+            </DetailRow>
+
+            {output.message ? (
+              <MultiOptionsMessage>
+                <H7 numberOfLines={2} ellipsizeMode={'tail'}>
+                  {output.message}
+                </H7>
+              </MultiOptionsMessage>
+            ) : null}
+          </MultiOptionsContainer>
         ))}
 
       {tx.misunderstoodOutputs ? (

@@ -1,8 +1,9 @@
-import React, {ReactElement} from 'react';
+import React, {ReactElement, useState} from 'react';
 import styled from 'styled-components/native';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
 import {H7} from '../../../components/styled/Text';
 import ArrowDownSvg from '../../../../assets/img/chevron-down.svg';
+import ArrowUpSvg from '../../../../assets/img/chevron-up.svg';
 
 interface Props {
   icon: ReactElement;
@@ -26,14 +27,27 @@ const PillText = styled(H7)`
 `;
 
 const SendToPill = ({icon, description, onPress}: Props) => {
+  const [toggleArrow, setToggleArrow] = useState(false);
+  const _onPress = () => {
+    setToggleArrow(!toggleArrow);
+    if (onPress) {
+      onPress();
+    }
+  };
   return (
-    <PillContainer disabled={!onPress} onPress={onPress}>
+    <PillContainer disabled={!onPress} onPress={_onPress}>
       {icon}
       <PillText numberOfLines={1} ellipsizeMode={'tail'}>
         {description}
       </PillText>
 
-      {onPress ? <ArrowDownSvg width={12} height={12} /> : null}
+      {onPress ? (
+        toggleArrow ? (
+          <ArrowUpSvg width={12} height={12} />
+        ) : (
+          <ArrowDownSvg width={12} height={12} />
+        )
+      ) : null}
     </PillContainer>
   );
 };

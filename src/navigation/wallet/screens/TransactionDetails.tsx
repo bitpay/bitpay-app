@@ -24,6 +24,7 @@ import {
 } from '../../../store/wallet/effects/transactions/transactions';
 import styled from 'styled-components/native';
 import {
+  ActionContainer,
   Column,
   Hr,
   ImportTextInput,
@@ -402,6 +403,8 @@ const TransactionDetails = () => {
             </DetailRow>
           </DetailContainer>
 
+          <Hr />
+
           {/*  TODO: Add Notify unconfirmed transaction */}
 
           {!IsMultisigEthInfo(wallet) && txs.actionsList?.length ? (
@@ -441,9 +444,11 @@ const TransactionDetails = () => {
             </DetailContainer>
           ) : null}
 
-          <Button buttonStyle={'secondary'} onPress={goToBlockchain}>
-            View On Blockchain
-          </Button>
+          <ActionContainer>
+            <Button buttonStyle={'secondary'} onPress={goToBlockchain}>
+              View On Blockchain
+            </Button>
+          </ActionContainer>
         </ScrollView>
       ) : null}
     </TxsDetailsContainer>

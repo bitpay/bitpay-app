@@ -59,7 +59,7 @@ export const H6 = styled(BaseText)<HeadingProps>`
 export const H7 = styled(BaseText)<HeadingProps>`
   font-size: 14px;
   font-style: normal;
-  font-weight: 400;
+  font-weight: ${({medium = false}) => (medium ? 500 : 400)};
   letter-spacing: 0;
 `;
 
