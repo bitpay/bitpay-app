@@ -13,7 +13,7 @@ interface Props {
   opacity?: number | undefined;
 }
 
-const Minus: React.FC<MinusProps> = ({color, opacity}) => {
+const Minus: React.FC<MinusProps> = ({color}) => {
   const fill = color || '#434D5A';
   return (
     <Svg width="10px" height="1px" viewBox="0 0 16 2">

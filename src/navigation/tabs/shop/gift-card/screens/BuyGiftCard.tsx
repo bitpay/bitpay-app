@@ -29,7 +29,6 @@ import {
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {useDispatch} from 'react-redux';
 import {AppActions} from '../../../../../store/app';
-import {cardReduxPersistBlacklist} from '../../../../../store/card/card.reducer';
 
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;

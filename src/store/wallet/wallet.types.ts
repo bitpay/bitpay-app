@@ -4,7 +4,6 @@ import {
   PriceHistory,
   Rates,
   Token,
-  Wallet,
   WalletBalance,
 } from './wallet.models';
 

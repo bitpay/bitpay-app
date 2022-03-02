@@ -1,7 +1,7 @@
 import React from 'react';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import styled from 'styled-components/native';
-import {Feather, SlateDark} from '../../../styles/colors';
+import {Feather} from '../../../styles/colors';
 import {
   ActiveOpacity,
   Column,

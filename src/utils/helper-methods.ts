@@ -43,7 +43,7 @@ export const getDerivationStrategy = (path: string): string => {
 export const getNetworkName = (path: string): string => {
   // BIP45
   const purpose = parsePath(path).purpose;
-  if (purpose == "45'") {
+  if (purpose === "45'") {
     return 'livenet';
   }
 
@@ -79,7 +79,7 @@ export const getNetworkName = (path: string): string => {
 export const getAccount = (path: string): number | undefined => {
   // BIP45
   const purpose = parsePath(path).purpose;
-  if (purpose == "45'") {
+  if (purpose === "45'") {
     return 0;
   }
 
@@ -99,7 +99,7 @@ export const isValidDerivationPathCoin = (
   const coinCode = parsePath(path).coinCode;
 
   // BIP45
-  if (path == "m/45'") {
+  if (path === "m/45'") {
     return true;
   }
 

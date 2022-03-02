@@ -172,8 +172,13 @@ const ProcessNewTxs = async (wallet: Wallet, txs: any[]): Promise<any> => {
 // Approx utxo amount, from which the uxto is economically redeemable
 const GetLowAmount = (wallet: Wallet): Promise<any> => {
   return new Promise((resolve, reject) => {
-    //TODO: Get min fee rates. used in transaction details
-    resolve(1);
+    try {
+      //TODO: Get min fee rates. used in transaction details
+      console.log('TODO: GetLowAmount', wallet.walletName);
+      resolve(1);
+    } catch (err) {
+      reject(err);
+    }
   });
 };
 
@@ -400,6 +405,7 @@ export const GetTransactionHistory = ({
 
 const getContactName = (address: string | undefined) => {
   //   TODO: Get name from contacts list
+  console.log('TODO: getContactName', address);
   return;
 };
 

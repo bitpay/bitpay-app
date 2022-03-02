@@ -83,8 +83,8 @@ export const createProposalAndBuildTxDetails =
                 recipient,
               });
               resolve({txDetails, txp});
-            } catch (err) {
-              reject({err});
+            } catch (err2) {
+              reject({err: err2});
             }
           },
           null,
@@ -155,7 +155,7 @@ const buildTxDetails = ({
 const buildTransactionProposal = (
   tx: Partial<TransactionOptions>,
 ): Promise<object> => {
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     const {currency, feeLevel} = tx;
     // base tx
     const txp: Partial<TransactionProposal> = {
