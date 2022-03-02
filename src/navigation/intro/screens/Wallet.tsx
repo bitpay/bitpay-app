@@ -90,7 +90,7 @@ const IntroWallet = () => {
   useEffect(() => {
     x.value = withTiming(0, {duration: 300});
     fade.value = withTiming(1, {duration: 300});
-  }, []);
+  }, [fade, x]);
 
   const navigation = useNavigation();
   return (

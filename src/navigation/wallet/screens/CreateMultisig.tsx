@@ -43,7 +43,7 @@ import {
 import Haptic from '../../../components/haptic-feedback/haptic';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
-import {SUPPORTED_TOKENS, Currencies} from '../../../constants/currencies';
+import {Currencies} from '../../../constants/currencies';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {WalletStackParamList} from '../WalletStack';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
@@ -285,11 +285,13 @@ const CreateMultisig = () => {
         await dispatch(
           startOnGoingProcessModal(OnGoingProcessMessages.CREATING_KEY),
         );
-        const key = (await dispatch<any>(startCreateKeyMultisig(opts))) as Key;
+        const multisigKey = (await dispatch<any>(
+          startCreateKeyMultisig(opts),
+        )) as Key;
 
         navigation.navigate('Wallet', {
           screen: 'BackupKey',
-          params: {context: 'createNewKey', key},
+          params: {context: 'createNewKey', key: multisigKey},
         });
         dispatch(dismissOnGoingProcessModal());
       }

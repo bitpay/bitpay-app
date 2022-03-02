@@ -9,11 +9,7 @@ import {
 } from '../../../../components/styled/Containers';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
-import {
-  useAppDispatch,
-  useAppSelector,
-  useLogger,
-} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {ScrollView, View} from 'react-native';
 import {H4, H5, H6, H7} from '../../../../components/styled/Text';
 import {
@@ -23,10 +19,7 @@ import {
   Wallet,
 } from '../../../../store/wallet/wallet.models';
 import SwipeButton from '../../../../components/swipe-button/SwipeButton';
-import {
-  createProposalAndBuildTxDetails,
-  startSendPayment,
-} from '../../../../store/wallet/effects/send/send';
+import {startSendPayment} from '../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../components/PaymentSent';
 import {sleep} from '../../../../utils/helper-methods';
 import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
@@ -72,17 +65,16 @@ export interface ConfirmParamList {
 
 const Confirm = () => {
   const dispatch = useAppDispatch();
-  const logger = useLogger();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'Confirm'>>();
   const {wallet, recipient, txDetails: _txDetails, txp: _txp} = route.params;
   const key = useAppSelector(({WALLET}) => WALLET.keys[wallet.keyId]);
 
-  const [txDetails, updateTxDetails] = useState(_txDetails);
-  const [txp, updateTxp] = useState(_txp);
+  const [txDetails] = useState(_txDetails);
+  const [txp] = useState(_txp);
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
 
-  const {currency, fee, sendingFrom, sendingTo, subTotal, total} = txDetails;
+  const {fee, sendingFrom, sendingTo, subTotal, total} = txDetails;
 
   console.log(txp);
   return (

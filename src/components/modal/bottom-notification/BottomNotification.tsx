@@ -116,7 +116,7 @@ const BottomNotification = () => {
     return navigation.addListener('blur', () =>
       dispatch(resetBottomNotificationModalConfig()),
     );
-  }, [navigation]);
+  }, [navigation, dispatch]);
 
   const {type, title, message, actions, enableBackdropDismiss, message2} =
     config || {};
