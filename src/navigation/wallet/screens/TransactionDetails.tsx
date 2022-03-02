@@ -6,7 +6,7 @@ import {
   Link,
   H2,
 } from '../../../components/styled/Text';
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
@@ -24,7 +24,6 @@ import {
 } from '../../../store/wallet/effects/transactions/transactions';
 import styled from 'styled-components/native';
 import {
-  ActionContainer,
   ActiveOpacity,
   Column,
   Hr,
@@ -47,15 +46,15 @@ import MultipleOutputsTx from '../components/MultipleOutputsTx';
 import {URL} from '../../../constants';
 import {
   Black,
+  Caution,
   LightBlack,
   NeutralSlate,
   SlateDark,
   White,
 } from '../../../styles/colors';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import ErrorSvg from '../../../../assets/img/error-round.svg';
-import WarningSvg from '../../../../assets/img/warning.svg';
-import InfoSvg from '../../../../assets/img/info-blue.svg';
+import Banner from '../../../components/banner/Banner';
+import Info from '../../../components/icons/info/Info';
 
 const TxsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -77,7 +76,7 @@ export const DetailContainer = styled.View`
   margin: 5px 0;
 `;
 
-const MemoContainer = styled.View`
+const VerticalSpace = styled.View`
   margin: 10px 0;
 `;
 
@@ -137,17 +136,6 @@ const NumberIcon = styled(IconBackground)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
 `;
 
-const InfoContainer = styled.View`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  border-radius: 10px;
-  margin: 15px 0;
-  padding: 10px;
-`;
-
-const Info = styled.View`
-  margin-left: 10px;
-`;
-
 const DetailLink = styled(Link)`
   font-size: 16px;
   font-style: normal;
@@ -156,43 +144,7 @@ const DetailLink = styled(Link)`
 
 const InputText = styled(ImportTextInput)`
   height: 75px;
-`
-
-const TxsDetailsLabel = ({
-  title,
-  description,
-  type,
-  link,
-}: {
-  title: string;
-  description: string;
-  type: string;
-  link?: {onPress: () => void; text: string};
-}) => {
-  return (
-    <InfoContainer>
-      <DetailRow>
-        {type === 'error' && <ErrorSvg width={20} height={20} />}
-        {type === 'warning' && <WarningSvg width={20} height={20} />}
-        {type === 'info' && <InfoSvg width={20} height={20} />}
-
-        <Info>
-          <H7 medium={true}>{title}</H7>
-          <H7>{description}</H7>
-          {link ? (
-            <ActionContainer>
-              <TouchableOpacity
-                activeOpacity={ActiveOpacity}
-                onPress={link?.onPress}>
-                <Link>{link?.text}</Link>
-              </TouchableOpacity>
-            </ActionContainer>
-          ) : null}
-        </Info>
-      </DetailRow>
-    </InfoContainer>
-  );
-};
+`;
 
 const TransactionDetails = () => {
   const {
@@ -209,7 +161,7 @@ const TransactionDetails = () => {
     credentials: {network},
   } = wallet;
   currencyAbbreviation = currencyAbbreviation.toLowerCase();
-  const isTestnet = network !== 'testnet';
+  const isTestnet = network === 'testnet';
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -300,10 +252,11 @@ const TransactionDetails = () => {
             ) : null}
           </>
 
+          {/* --------- Info ----------------*/}
           {(currencyAbbreviation === 'eth' ||
             IsERCToken(currencyAbbreviation)) &&
           txs.error ? (
-            <TxsDetailsLabel
+            <Banner
               type={'error'}
               title={'Waning!'}
               description={`Error encountered during contract execution (${txs.error})`}
@@ -313,7 +266,7 @@ const TransactionDetails = () => {
           {currencyAbbreviation === 'btc' &&
           IsReceived(txs.action) &&
           txs.lowAmount ? (
-            <TxsDetailsLabel
+            <Banner
               type={'warning'}
               title={'Amount Too Low To Spend'}
               description={
@@ -331,7 +284,7 @@ const TransactionDetails = () => {
           {currencyAbbreviation === 'btc' &&
           txs.isRBF &&
           (IsSent(txs.action) || IsMoved(txs.action)) ? (
-            <TxsDetailsLabel
+            <Banner
               type={'info'}
               title={'RBF transaction'}
               description={
@@ -343,6 +296,17 @@ const TransactionDetails = () => {
               }}
             />
           ) : null}
+
+          {IsReceived(txs.action) && txs.lowFee ? (
+            <Banner
+              type={'error'}
+              title={'Low Fee'}
+              description={
+                'This transaction may take time to confirm or be dropped due to the low fee set by the sender.'
+              }
+            />
+          ) : null}
+          {/* ------------------------------------------- */}
 
           <DetailContainer>
             <H6>DETAILS</H6>
@@ -363,21 +327,10 @@ const TransactionDetails = () => {
                           ? '(' + txs.feeRateStr + ' of total amount)'
                           : null}
                       </H7>
-                    ) : null}
-                    {isTestnet ? (
+                    ) : (
                       <SubTitle>Test Only - No Value</SubTitle>
-                    ) : null}
+                    )}
                   </DetailColumn>
-
-                  {IsReceived(txs.action) && txs.lowFee ? (
-                    <TxsDetailsLabel
-                      type={'error'}
-                      title={'Low Fee'}
-                      description={
-                        'This transaction could take a long time to confirm or could be dropped due to the low fees set by the sender.'
-                      }
-                    />
-                  ) : null}
                 </DetailRow>
               </DetailContainer>
               <Hr />
@@ -426,13 +379,17 @@ const TransactionDetails = () => {
             <DetailRow>
               <H7>Confirmations</H7>
               <DetailColumn>
-                {!txs.confirmations ? <TouchableOpacity activeOpacity={ActiveOpacity} onPress={() => {
-                  dispatch(openUrlWithInAppBrowser(URL.HELP_TXS_UNCONFIRMED))
-                }}>
-                  <DetailLink>
-                   Unconfirmed?
-                  </DetailLink>
-                </TouchableOpacity> : null}
+                {!txs.confirmations ? (
+                  <TouchableOpacity
+                    activeOpacity={ActiveOpacity}
+                    onPress={() => {
+                      dispatch(
+                        openUrlWithInAppBrowser(URL.HELP_TXS_UNCONFIRMED),
+                      );
+                    }}>
+                    <DetailLink>Unconfirmed?</DetailLink>
+                  </TouchableOpacity>
+                ) : null}
                 {txs.feeRate ? (
                   <SubTitle>Fee rate: {txs.feeRate}</SubTitle>
                 ) : null}
@@ -446,7 +403,7 @@ const TransactionDetails = () => {
 
           <Hr />
 
-          <MemoContainer>
+          <VerticalSpace>
             <MemoHeader>MEMO</MemoHeader>
 
             <InputText
@@ -456,7 +413,7 @@ const TransactionDetails = () => {
               onChangeText={text => setMemo(text)}
               onEndEditing={saveMemo}
             />
-          </MemoContainer>
+          </VerticalSpace>
 
           <Hr />
 
@@ -492,7 +449,7 @@ const TransactionDetails = () => {
                         <DetailRow>
                           {a.type === 'rejected' ? (
                             <IconBackground>
-                              <ErrorSvg width={35} height={35} />
+                              <Info size={35} bgColor={Caution} />
                             </IconBackground>
                           ) : null}
 
@@ -527,11 +484,11 @@ const TransactionDetails = () => {
             </>
           ) : null}
 
-          <ActionContainer>
+          <VerticalSpace>
             <Button buttonStyle={'secondary'} onPress={goToBlockchain}>
               View On Blockchain
             </Button>
-          </ActionContainer>
+          </VerticalSpace>
         </ScrollView>
       ) : null}
     </TxsDetailsContainer>
