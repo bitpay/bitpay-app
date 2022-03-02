@@ -45,7 +45,7 @@ const Initials: React.FC<InitialsProps> = ({size = 24, initials}) => {
         x="12"
         y="16"
         textAnchor="middle">
-        {initials}
+        {(initials || '').substring(0, 2)}
       </Svg.Text>
     </Svg.Svg>
   );
