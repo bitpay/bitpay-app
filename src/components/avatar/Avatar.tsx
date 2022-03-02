@@ -1,15 +1,13 @@
 import React from 'react';
 import * as Svg from 'react-native-svg';
-import {useSelector} from 'react-redux';
 import styled from 'styled-components/native';
-import {RootState} from '../../store';
 import {Midnight, ProgressBlue} from '../../styles/colors';
 import ProfileIcon from './ProfileIcon';
 
-interface AvatarSvgProps {
-  size?: number;
-  color?: string;
-  background?: string;
+export interface AvatarProps {
+  size: number;
+  initials?: string;
+  badge?: () => JSX.Element | null;
 }
 
 interface InitialsProps {
@@ -17,48 +15,17 @@ interface InitialsProps {
   initials: string;
 }
 
-interface AvatarProps {
-  size: number;
-  name?: string;
-  isContact?: boolean;
-}
-
 const AvatarContainer = styled.View`
   position: relative;
 `;
 
-const VerifiedCheckContainer = styled.View`
+const BadgeContainer = styled.View<{size: number}>`
   position: absolute;
+  height: ${({size}) => size}px;
+  width: ${({size}) => size}px;
   right: 0;
   bottom: 0;
 `;
-
-const CheckIcon: React.FC<AvatarSvgProps> = ({
-  size = 24,
-  color = '#fff',
-  background = '#00a184',
-}) => {
-  return (
-    <Svg.Svg height={size} width={size} viewBox="0 0 24 24" fill="none">
-      <Svg.Circle id="verified-bg" fill={color} r="12" cx="50%" cy="50%" />
-      <Svg.Path
-        id="verified-checkmark"
-        fill={background}
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M0 12C0 5.37258 5.37258 0 12 0C18.6194 0.0192227 23.9808 5.38056 24 12C24 18.6274 18.6274 24 12 24C5.37258 24 0 18.6274 0 12ZM4.586 12L10 17.414L19.414 8L18 6.586L10 14.586L6 10.586L4.586 12Z"
-      />
-    </Svg.Svg>
-  );
-};
-
-const VerifiedCheck: React.FC<AvatarProps> = ({size}) => {
-  return (
-    <VerifiedCheckContainer>
-      <CheckIcon size={size} />
-    </VerifiedCheckContainer>
-  );
-};
 
 const Initials: React.FC<InitialsProps> = ({size = 24, initials}) => {
   return (
@@ -84,20 +51,8 @@ const Initials: React.FC<InitialsProps> = ({size = 24, initials}) => {
   );
 };
 
-const Avatar: React.FC<AvatarProps> = ({size, isContact}) => {
-  const initials = useSelector<RootState, string>(({APP, BITPAY_ID}) => {
-    if (!isContact) {
-      const user = BITPAY_ID.user[APP.network];
-      const firstInitial = (user?.givenName || '').trim().charAt(0);
-      const lastInitial = (user?.familyName || '').trim().charAt(0);
-
-      return `${firstInitial}${lastInitial}`.toUpperCase();
-    } else {
-      return ''; // Contacts no verified will use generic icon
-    }
-  });
-
-  const isVerified = false; // TODO
+export const Avatar: React.FC<AvatarProps> = props => {
+  const {initials = '', size = 35, badge} = props;
 
   return (
     <AvatarContainer>
@@ -106,7 +61,10 @@ const Avatar: React.FC<AvatarProps> = ({size, isContact}) => {
       ) : (
         <ProfileIcon size={size} />
       )}
-      {isVerified ? <VerifiedCheck size={size * 0.35} /> : null}
+
+      {badge ? (
+        <BadgeContainer size={size * 0.35}>{badge()}</BadgeContainer>
+      ) : null}
     </AvatarContainer>
   );
 };

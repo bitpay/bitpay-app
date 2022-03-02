@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components/native';
 
-import ProfileIcon from '../../../../components/avatar/Avatar';
+import Avatar from '../../../../components/avatar/Avatar';
 
 import {CurrencyListIcons} from '../../../../constants/SupportedCurrencyOptions';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
@@ -37,10 +37,11 @@ const CoinBadge: React.FC<BadgeProps> = ({coin, size = 20}) => {
 };
 
 const ContactIcon: React.FC<ContactSvgProps> = ({coin, size = 50}) => {
+  const badge = coin ? <CoinBadge coin={coin} size={size / 2.5} /> : null;
+
   return (
     <ContactIconContainer>
-      <ProfileIcon size={size} isContact={true} />
-      {coin ? <CoinBadge coin={coin} size={size / 2.5} /> : null}
+      <Avatar size={size} badge={() => badge} />
     </ContactIconContainer>
   );
 };

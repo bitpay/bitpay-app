@@ -2,7 +2,7 @@ import {StackScreenProps} from '@react-navigation/stack';
 import React from 'react';
 import {useSelector} from 'react-redux';
 import styled from 'styled-components/native';
-import Avatar from '../../../components/avatar/Avatar';
+import Avatar from '../../../components/avatar/BitPayIdAvatar';
 import {Hr, ScreenGutter} from '../../../components/styled/Containers';
 import {H3, Paragraph} from '../../../components/styled/Text';
 import {RootState} from '../../../store';
