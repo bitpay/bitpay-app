@@ -1,9 +1,10 @@
 import React from 'react';
 import * as Svg from 'react-native-svg';
 import {useSelector} from 'react-redux';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
 import {RootState} from '../../store';
-import {Midnight, NeutralSlate, ProgressBlue} from '../../styles/colors';
+import {Midnight, ProgressBlue} from '../../styles/colors';
+import ProfileIcon from './ProfileIcon';
 
 interface AvatarSvgProps {
   size?: number;
@@ -31,56 +32,6 @@ const VerifiedCheckContainer = styled.View`
   right: 0;
   bottom: 0;
 `;
-
-export const ProfileIcon: React.FC<AvatarSvgProps> = ({
-  size = 35,
-  color,
-  background,
-}) => {
-  const theme = useTheme();
-
-  color = color || (theme.dark ? ProgressBlue : NeutralSlate);
-  background = background || (theme.dark ? Midnight : ProgressBlue);
-
-  return (
-    <Svg.Svg width={size} height={size} viewBox="0 0 35 35" fill="none">
-      <Svg.Circle
-        id="profile-background"
-        cx="17.5"
-        cy="17.5"
-        r="17.5"
-        fill={background}
-      />
-
-      <Svg.Mask
-        id="mask0_175_9616"
-        maskUnits={'userSpaceOnUse' as any}
-        x="0"
-        y="0"
-        width="35"
-        height="35">
-        <Svg.Circle cx="17.5" cy="17.5" r="17.5" fill="white" />
-      </Svg.Mask>
-
-      <Svg.G mask="url(#mask0_175_9616)">
-        <Svg.Path
-          id="profile-head"
-          fill={color}
-          fillRule="evenodd"
-          clipRule="evenodd"
-          d="M17.7284 10.4517C14.3234 10.4517 11.5519 13.2223 11.5519 16.6282C11.5519 20.0341 14.3234 22.8047 17.7284 22.8047C21.1334 22.8047 23.9049 20.0341 23.9049 16.6282C23.9049 13.2223 21.1334 10.4517 17.7284 10.4517Z"
-        />
-        <Svg.Path
-          id="profile-body"
-          fill={color}
-          fillRule="evenodd"
-          clipRule="evenodd"
-          d="M21.5622 24.7542H13.3284C9.91672 24.7542 7.15118 26.7001 7.15118 29.1164V35.4484C10.2639 36.5109 13.7559 37.1071 17.4453 37.1071C21.1347 37.1071 24.6267 36.5109 27.7394 35.4484V29.1164C27.7394 26.7072 24.9842 24.7542 21.5622 24.7542Z"
-        />
-      </Svg.G>
-    </Svg.Svg>
-  );
-};
 
 const CheckIcon: React.FC<AvatarSvgProps> = ({
   size = 24,
