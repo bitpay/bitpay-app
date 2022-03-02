@@ -217,17 +217,17 @@ const WalletConnectHome = () => {
                         : goToConfirmView();
                     }}>
                     <ItemTitleContainer>
-                      {session && session.peerMeta && (
+                      {session && session.peerMeta ? (
                         <>
                           <IconContainer>
                             <Image
-                              source={{uri: session?.peerMeta.icons[0]}}
+                              source={{uri: session.peerMeta.icons[0]}}
                               style={{width: 25, height: 25}}
                             />
                           </IconContainer>
-                          <IconLabel>{session?.peerMeta.name}</IconLabel>
+                          <IconLabel>{session.peerMeta.name}</IconLabel>
                         </>
-                      )}
+                      ) : null}
                     </ItemTitleContainer>
                     <ItemNoteContainer>
                       {request.payload.method === 'eth_signTransaction' ||
