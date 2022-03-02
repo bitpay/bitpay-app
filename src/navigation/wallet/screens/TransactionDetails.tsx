@@ -25,6 +25,7 @@ import {
 import styled from 'styled-components/native';
 import {
   ActionContainer,
+  ActiveOpacity,
   Column,
   Hr,
   ImportTextInput,
@@ -37,20 +38,24 @@ import {
   IsERCToken,
 } from '../../../store/wallet/utils/currency';
 import moment from 'moment';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity, View} from 'react-native';
 import {TransactionIcons} from '../../../constants/TransactionIcons';
 import Button from '../../../components/button/Button';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import Clipboard from '@react-native-community/clipboard';
 import MultipleOutputsTx from '../components/MultipleOutputsTx';
+import {URL} from '../../../constants';
 import {
-  Caution,
+  Black,
   LightBlack,
   NeutralSlate,
   SlateDark,
   White,
 } from '../../../styles/colors';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import ErrorSvg from '../../../../assets/img/error-round.svg';
+import WarningSvg from '../../../../assets/img/warning.svg';
+import InfoSvg from '../../../../assets/img/info-blue.svg';
 
 const TxsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -123,42 +128,63 @@ const TimelineTime = styled(H7)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const RejectedIcon = styled.View`
+const IconBackground = styled.View`
   height: 35px;
   width: 35px;
   border-radius: 50px;
-  background-color: ${Caution};
   align-items: center;
   justify-content: center;
+  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
 `;
 
-const RejectIconText = styled(BaseText)`
-  color: ${White};
-  font-size: 18px;
-  font-weight: bold;
-`;
-
-const NumberIcon = styled(RejectedIcon)`
+const NumberIcon = styled(IconBackground)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
+`;
+
+const InfoContainer = styled.View`
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
+  border-radius: 10px;
+  margin: 15px 0;
+  padding: 10px;
+`;
+
+const Info = styled.View`
+  margin-left: 10px;
 `;
 
 const TxsDetailsLabel = ({
   title,
   description,
   type,
-  onPressLink,
+  link,
 }: {
   title: string;
   description: string;
   type: string;
-  onPressLink?: () => void;
+  link?: {onPress: () => void; text: string};
 }) => {
   return (
-    <>
-      <BaseText>{title}</BaseText>
-      <BaseText>{description}</BaseText>
-      <BaseText>{type}</BaseText>
-    </>
+    <InfoContainer>
+      <DetailRow>
+        {type === 'error' && <ErrorSvg width={20} height={20} />}
+        {type === 'warning' && <WarningSvg width={20} height={20} />}
+        {type === 'info' && <InfoSvg width={20} height={20} />}
+
+        <Info>
+          <H7 medium={true}>{title}</H7>
+          <H7>{description}</H7>
+          {link ? (
+            <ActionContainer>
+              <TouchableOpacity
+                activeOpacity={ActiveOpacity}
+                onPress={link?.onPress}>
+                <Link>{link?.text}</Link>
+              </TouchableOpacity>
+            </ActionContainer>
+          ) : null}
+        </Info>
+      </DetailRow>
+    </InfoContainer>
   );
 };
 
@@ -204,7 +230,9 @@ const TransactionDetails = () => {
 
   const lowAmount = useCallback(() => {}, []);
 
-  const speedUp = () => {};
+  const speedUp = () => {
+    //  TODO: speed up transaction
+  };
 
   const getFormattedDate = (time: number) => {
     return moment(time).format('MM/DD/YYYY hh:mm a');
@@ -268,7 +296,6 @@ const TransactionDetails = () => {
             ) : null}
           </>
 
-          {/*TODO: Style me*/}
           {(currencyAbbreviation === 'eth' ||
             IsERCToken(currencyAbbreviation)) &&
           txs.error ? (
@@ -286,9 +313,14 @@ const TransactionDetails = () => {
               type={'warning'}
               title={'Amount Too Low To Spend'}
               description={
-                'This transaction amount is too small compared to current Bitcoin network fees. Spending these funds will need a Bitcoin network fee cost comparable to the funds itself.'
+                'This transaction amount is too small compared to current Bitcoin network fees.'
               }
-              onPressLink={lowAmount}
+              link={{
+                text: 'Learn More',
+                onPress: () => {
+                  dispatch(openUrlWithInAppBrowser(URL.HELP_LOW_AMOUNT));
+                },
+              }}
             />
           ) : null}
 
@@ -301,10 +333,12 @@ const TransactionDetails = () => {
               description={
                 'This transaction can be accelerated using a higher fee.'
               }
-              onPressLink={speedUp}
+              link={{
+                text: 'Speed Up',
+                onPress: speedUp,
+              }}
             />
           ) : null}
-          {/* ---------------------------- */}
 
           <DetailContainer>
             <H6>DETAILS</H6>
@@ -456,14 +490,16 @@ const TransactionDetails = () => {
                       <TimelineItem>
                         <DetailRow>
                           {a.type === 'rejected' ? (
-                            <RejectedIcon>
-                              <RejectIconText>!</RejectIconText>
-                            </RejectedIcon>
+                            <IconBackground>
+                              <ErrorSvg width={35} height={35} />
+                            </IconBackground>
                           ) : null}
 
-                          {a.type === 'broadcasted'
-                            ? TransactionIcons.broadcast
-                            : null}
+                          {a.type === 'broadcasted' ? (
+                            <IconBackground>
+                              {TransactionIcons.broadcast}
+                            </IconBackground>
+                          ) : null}
 
                           {a.type !== 'broadcasted' && a.type !== 'rejected' ? (
                             <NumberIcon>
@@ -475,11 +511,12 @@ const TransactionDetails = () => {
                             <H7>{a.description}</H7>
                             {a.by ? <H7>{a.by}</H7> : null}
                           </TimelineDescription>
-
                         </DetailRow>
                       </TimelineItem>
 
-                      <TimelineTime>{getFormattedDate(a.time * 1000)}</TimelineTime>
+                      <TimelineTime>
+                        {getFormattedDate(a.time * 1000)}
+                      </TimelineTime>
                     </DetailRow>
                   );
                 })}
