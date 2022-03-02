@@ -72,7 +72,7 @@ const SubTitle = styled(BaseText)`
 `;
 
 export const DetailContainer = styled.View`
-  min-height: 60px;
+  min-height: 55px;
   justify-content: center;
   margin: 5px 0;
 `;
@@ -98,10 +98,6 @@ const TransactionIdText = styled(H7)`
 export const DetailColumn = styled(Column)`
   align-items: flex-end;
 `;
-
-const DetailLinkText = styled(Link)``;
-
-const DetailLink = styled.TouchableOpacity``;
 
 const TimelineContainer = styled.View`
   padding: 15px 0;
@@ -151,6 +147,16 @@ const InfoContainer = styled.View`
 const Info = styled.View`
   margin-left: 10px;
 `;
+
+const DetailLink = styled(Link)`
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+`;
+
+const InputText = styled(ImportTextInput)`
+  height: 75px;
+`
 
 const TxsDetailsLabel = ({
   title,
@@ -203,7 +209,7 @@ const TransactionDetails = () => {
     credentials: {network},
   } = wallet;
   currencyAbbreviation = currencyAbbreviation.toLowerCase();
-  const isTestnet = network === 'testnet';
+  const isTestnet = network !== 'testnet';
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -227,8 +233,6 @@ const TransactionDetails = () => {
   useEffect(() => {
     init();
   }, []);
-
-  const lowAmount = useCallback(() => {}, []);
 
   const speedUp = () => {
     //  TODO: speed up transaction
@@ -422,7 +426,13 @@ const TransactionDetails = () => {
             <DetailRow>
               <H7>Confirmations</H7>
               <DetailColumn>
-                {!txs.confirmations ? <H6>Unconfirmed</H6> : null}
+                {!txs.confirmations ? <TouchableOpacity activeOpacity={ActiveOpacity} onPress={() => {
+                  dispatch(openUrlWithInAppBrowser(URL.HELP_TXS_UNCONFIRMED))
+                }}>
+                  <DetailLink>
+                   Unconfirmed?
+                  </DetailLink>
+                </TouchableOpacity> : null}
                 {txs.feeRate ? (
                   <SubTitle>Fee rate: {txs.feeRate}</SubTitle>
                 ) : null}
@@ -432,15 +442,6 @@ const TransactionDetails = () => {
                 {txs.safeConfirmed ? <H7>{txs.safeConfirmed}</H7> : null}
               </DetailColumn>
             </DetailRow>
-
-            {/* TODO: Link me*/}
-            {!txs.confirmations ? (
-              <DetailLink>
-                <DetailLinkText>
-                  Why is my transaction unconfirmed?
-                </DetailLinkText>
-              </DetailLink>
-            ) : null}
           </DetailContainer>
 
           <Hr />
@@ -448,9 +449,9 @@ const TransactionDetails = () => {
           <MemoContainer>
             <MemoHeader>MEMO</MemoHeader>
 
-            <ImportTextInput
+            <InputText
               multiline
-              numberOfLines={5}
+              numberOfLines={3}
               value={memo}
               onChangeText={text => setMemo(text)}
               onEndEditing={saveMemo}
