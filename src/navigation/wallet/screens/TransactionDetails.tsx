@@ -37,13 +37,19 @@ import {
   IsERCToken,
 } from '../../../store/wallet/utils/currency';
 import moment from 'moment';
-import {TouchableOpacity, View} from 'react-native';
+import {TouchableOpacity} from 'react-native';
 import {TransactionIcons} from '../../../constants/TransactionIcons';
 import Button from '../../../components/button/Button';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import Clipboard from '@react-native-community/clipboard';
 import MultipleOutputsTx from '../components/MultipleOutputsTx';
-import {SlateDark, White} from '../../../styles/colors';
+import {
+  Caution,
+  LightBlack,
+  NeutralSlate,
+  SlateDark,
+  White,
+} from '../../../styles/colors';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 const TxsDetailsContainer = styled.SafeAreaView`
@@ -54,8 +60,6 @@ const ScrollView = styled(KeyboardAwareScrollView)`
   margin-top: 20px;
   padding: 0 ${ScreenGutter};
 `;
-
-const HeaderContainer = styled.View``;
 
 const SubTitle = styled(BaseText)`
   font-size: 14px;
@@ -94,17 +98,49 @@ const DetailLinkText = styled(Link)``;
 
 const DetailLink = styled.TouchableOpacity``;
 
-const TimelineIconContainer = styled.View``;
+const TimelineContainer = styled.View`
+  padding: 15px 0;
+`;
 
-const TimelineDescription = styled.View``;
+const TimelineItem = styled.View`
+  padding: 10px 0;
+`;
 
-const TimelineTime = styled.View``;
+const TimelineDescription = styled.View`
+  margin: 0 10px;
+`;
 
-const RejectedIcon = styled.View``;
+const TimelineBorderLeft = styled.View<{isFirst: boolean; isLast: boolean}>`
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
+  position: absolute;
+  top: ${({isFirst}) => (isFirst ? '45px' : 0)};
+  bottom: ${({isLast}) => (isLast ? '15px' : 0)};
+  left: 18px;
+  width: 1px;
+  z-index: -1;
+`;
+const TimelineTime = styled(H7)`
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+`;
 
-const NumberIcon = styled.View``;
+const RejectedIcon = styled.View`
+  height: 35px;
+  width: 35px;
+  border-radius: 50px;
+  background-color: ${Caution};
+  align-items: center;
+  justify-content: center;
+`;
 
-const ActionsNumber = styled(BaseText)``;
+const RejectIconText = styled(BaseText)`
+  color: ${White};
+  font-size: 18px;
+  font-weight: bold;
+`;
+
+const NumberIcon = styled(RejectedIcon)`
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
+`;
 
 const TxsDetailsLabel = ({
   title,
@@ -150,8 +186,6 @@ const TransactionDetails = () => {
     });
   }, [title]);
 
-  console.log(wallet);
-
   const init = async () => {
     try {
       const _transaction = await dispatch(
@@ -159,8 +193,6 @@ const TransactionDetails = () => {
       );
       setTxs(_transaction);
       setMemo(_transaction.detailsMemo);
-      console.log('---------------->');
-      console.log(_transaction);
     } catch (e) {
       console.log(e);
     }
@@ -216,7 +248,7 @@ const TransactionDetails = () => {
     <TxsDetailsContainer>
       {txs ? (
         <ScrollView>
-          <HeaderContainer>
+          <>
             {NotZeroAmountEth(txs.amount, currencyAbbreviation) ? (
               <H2 medium={true}>{txs.amountStr}</H2>
             ) : null}
@@ -234,7 +266,7 @@ const TransactionDetails = () => {
             {!NotZeroAmountEth(txs.amount, currencyAbbreviation) ? (
               <SubTitle>Interaction with contract</SubTitle>
             ) : null}
-          </HeaderContainer>
+          </>
 
           {/*TODO: Style me*/}
           {(currencyAbbreviation === 'eth' ||
@@ -366,6 +398,8 @@ const TransactionDetails = () => {
                 {txs.safeConfirmed ? <H7>{txs.safeConfirmed}</H7> : null}
               </DetailColumn>
             </DetailRow>
+
+            {/* TODO: Link me*/}
             {!txs.confirmations ? (
               <DetailLink>
                 <DetailLinkText>
@@ -405,43 +439,54 @@ const TransactionDetails = () => {
 
           <Hr />
 
-          {/*  TODO: Add Notify unconfirmed transaction */}
+          {/*  TODO: Add Notify unconfirmed transaction  row*/}
 
           {!IsMultisigEthInfo(wallet) && txs.actionsList?.length ? (
-            <DetailContainer>
-              <H7>Timeline</H7>
+            <>
+              <TimelineContainer>
+                <H7>Timeline</H7>
 
-              {txs.actionsList.map((a: any, index: number) => {
-                return (
-                  <View key={index}>
-                    <TimelineIconContainer>
-                      {a.type === 'rejected' ? (
-                        <RejectedIcon>!</RejectedIcon>
-                      ) : null}
-                      {a.type === 'broadcasted'
-                        ? TransactionIcons.broadcast
-                        : null}
-                      {a.type !== 'broadcasted' && a.type !== 'rejected' ? (
-                        <NumberIcon>
-                          <ActionsNumber>
-                            {txs.actionsList.length - index}
-                          </ActionsNumber>
-                        </NumberIcon>
-                      ) : null}
-                    </TimelineIconContainer>
-                    <TimelineDescription>
-                      <DetailRow>
-                        <H7>{a.description}</H7>
-                        <H7>{a.by}</H7>
-                      </DetailRow>
-                    </TimelineDescription>
-                    <TimelineTime>
-                      <H7>{getFormattedDate(a.time * 1000)}</H7>
-                    </TimelineTime>
-                  </View>
-                );
-              })}
-            </DetailContainer>
+                {txs.actionsList.map((a: any, index: number) => {
+                  return (
+                    <DetailRow key={index}>
+                      <TimelineBorderLeft
+                        isFirst={index === 0}
+                        isLast={index === txs.actionsList.length - 1}
+                      />
+                      <TimelineItem>
+                        <DetailRow>
+                          {a.type === 'rejected' ? (
+                            <RejectedIcon>
+                              <RejectIconText>!</RejectIconText>
+                            </RejectedIcon>
+                          ) : null}
+
+                          {a.type === 'broadcasted'
+                            ? TransactionIcons.broadcast
+                            : null}
+
+                          {a.type !== 'broadcasted' && a.type !== 'rejected' ? (
+                            <NumberIcon>
+                              <H7>{txs.actionsList.length - index}</H7>
+                            </NumberIcon>
+                          ) : null}
+
+                          <TimelineDescription>
+                            <H7>{a.description}</H7>
+                            {a.by ? <H7>{a.by}</H7> : null}
+                          </TimelineDescription>
+
+                        </DetailRow>
+                      </TimelineItem>
+
+                      <TimelineTime>{getFormattedDate(a.time * 1000)}</TimelineTime>
+                    </DetailRow>
+                  );
+                })}
+              </TimelineContainer>
+
+              <Hr />
+            </>
           ) : null}
 
           <ActionContainer>
