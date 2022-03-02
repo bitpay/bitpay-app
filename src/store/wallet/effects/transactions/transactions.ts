@@ -378,7 +378,7 @@ export interface NoteArgs {
   body: string;
 }
 
-const EditTxNote = (wallet: Wallet, args: NoteArgs): Promise<any> => {
+export const EditTxNote = (wallet: Wallet, args: NoteArgs): Promise<any> => {
   return new Promise((resolve, reject) => {
     wallet.editTxNote(args, (err: Error, res: any) => {
       if (err) {
@@ -754,11 +754,9 @@ const UpdateFiatRate = (
         parseFloat((rate * amountValueStr).toFixed(2)),
         alternativeCurrency,
       ) +
-      ' ' +
-      alternativeCurrency +
       ' @ ' +
       formatFiatAmount(rate, alternativeCurrency) +
-      ` ${alternativeCurrency} per ` +
+      ' per ' +
       currency.toUpperCase();
   } else {
     // Get current fiat value when historic rates are unavailable

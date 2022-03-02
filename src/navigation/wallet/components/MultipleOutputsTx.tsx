@@ -4,33 +4,19 @@ import {GetCoinAndNetwork} from '../../../store/wallet/effects/address/address';
 import {GetProtocolPrefixAddress} from '../../../store/wallet/utils/wallet';
 import {GetContactName} from '../../../store/wallet/effects/transactions/transactions';
 import styled from 'styled-components/native';
-import {Column, Hr, Row} from '../../../components/styled/Containers';
-import {H7, H6} from '../../../components/styled/Text';
+import {Hr} from '../../../components/styled/Containers';
+import {H7} from '../../../components/styled/Text';
 import CardSvg from '../../../../assets/img/wallet/transactions/card.svg';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
-import {TouchableOpacity, View} from 'react-native';
-import ArrowDown from '../../../../assets/img/chevron-down.svg';
-const DetailContainer = styled.View`
-  min-height: 80px;
-  margin: 5px 0;
-  justify-content: center;
-`;
+import {View} from 'react-native';
+import DefaultSvg from '../../../../assets/img/currencies/default.svg';
+import SendToPill from './SendToPill';
+import {DetailContainer, DetailRow, DetailColumn} from "../screens/TransactionDetails";
 
-const DetailRow = styled(Row)`
-  align-items: center;
-  justify-content: space-between;
-`;
-
-const DetailColumn = styled(Column)`
-  align-items: flex-end;
-`;
-
-const MultiOptionsContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
+const MisunderstoodOutputsText = styled(H7)`
+  margin-bottom: 5px;
+`
 
 const MultipleOutputsTx = ({tx}: {tx: any}) => {
   let {coin, network} = tx;
@@ -60,7 +46,13 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
 
   const [showMultiOptions, setShowMultiOptions] = useState(false);
 
-  console.log(tx.outputs);
+  const getIcon = () => {
+    return tx.customData?.service == 'debitcard' ? (
+        <CardSvg width={18} height={18} />
+    ) : SUPPORTED_CURRENCIES.includes(coin) ? (
+        CurrencyListIcons[coin]({width: 18, height: 18})
+    ) : <DefaultSvg width={18} height={18}  />
+  }
 
   return (
     <>
@@ -69,30 +61,24 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
           <H7>Sending to</H7>
 
           <DetailColumn>
-            {tx.misunderstoodOutputs ? <H6>Multiple recipients</H6> : null}
+            {tx.misunderstoodOutputs ? <H7>Multiple recipients</H7> : null}
 
             {!tx.hasMultiplesOutputs ? (
               <DetailRow>
-                {tx.customData?.service == 'debitcard' ? (
-                  <CardSvg width={18} height={18} />
-                ) : SUPPORTED_CURRENCIES.includes(coin) ? (
-                  CurrencyListIcons[coin]({width: 18, height: 18})
-                ) : null}
-
-                <H7>{getDesc()}</H7>
+                <SendToPill
+                  icon={getIcon()}
+                  description={getDesc()}
+                />
               </DetailRow>
             ) : null}
 
             {tx.hasMultiplesOutputs ? (
               <DetailRow>
-                {CurrencyListIcons[coin]({width: 18, height: 18})}
-
-                <H7>Multiple recipients {tx.recipientCount}</H7>
-
-                <TouchableOpacity
-                  onPress={() => setShowMultiOptions(!showMultiOptions)}>
-                  <ArrowDown />
-                </TouchableOpacity>
+                <SendToPill
+                    icon={getIcon()}
+                    description={`${tx.recipientCount} Recipients`}
+                    onPress={() => setShowMultiOptions(!showMultiOptions)}
+                />
               </DetailRow>
             ) : null}
           </DetailColumn>
@@ -118,9 +104,9 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
         ))}
 
       {tx.misunderstoodOutputs ? (
-        <H7>
+        <MisunderstoodOutputsText>
           There are some misunderstood outputs, please view on blockchain.
-        </H7>
+        </MisunderstoodOutputsText>
       ) : null}
 
       <Hr />

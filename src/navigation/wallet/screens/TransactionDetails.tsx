@@ -4,6 +4,7 @@ import {
   H6,
   HeaderTitle,
   Link,
+  H2,
 } from '../../../components/styled/Text';
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -12,6 +13,7 @@ import {WalletStackParamList} from '../WalletStack';
 import {useAppDispatch} from '../../../utils/hooks';
 import {
   buildTransactionDetails,
+  EditTxNote,
   getDetailsTitle,
   IsMoved,
   IsMultisigEthInfo,
@@ -24,6 +26,7 @@ import styled from 'styled-components/native';
 import {
   Column,
   Hr,
+  ImportTextInput,
   Row,
   ScreenGutter,
 } from '../../../components/styled/Containers';
@@ -39,30 +42,50 @@ import Button from '../../../components/button/Button';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import Clipboard from '@react-native-community/clipboard';
 import MultipleOutputsTx from '../components/MultipleOutputsTx';
+import {SlateDark, White} from '../../../styles/colors';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 const TxsDetailsContainer = styled.SafeAreaView`
   flex: 1;
-  margin: ${ScreenGutter};
+`;
+
+const ScrollView = styled(KeyboardAwareScrollView)`
+  margin-top: 20px;
+  padding: 0 ${ScreenGutter};
 `;
 
 const HeaderContainer = styled.View``;
 
-const Title = styled(BaseText)``;
-
-const SubTitle = styled(BaseText)``;
-
-const DetailContainer = styled.View`
-  min-height: 80px;
-  margin: 5px 0;
-  justify-content: center;
+const SubTitle = styled(BaseText)`
+  font-size: 14px;
+  font-weight: 300;
 `;
 
-const DetailRow = styled(Row)`
+export const DetailContainer = styled.View`
+  min-height: 60px;
+  justify-content: center;
+  margin: 5px 0;
+`;
+
+const MemoContainer = styled.View`
+  margin: 10px 0;
+`;
+
+const MemoHeader = styled(H7)`
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)}
+  margin: 10px 0;
+`;
+
+export const DetailRow = styled(Row)`
   align-items: center;
   justify-content: space-between;
 `;
 
-const DetailColumn = styled(Column)`
+const TransactionIdText = styled(H7)`
+  max-width: 150px;
+`;
+
+export const DetailColumn = styled(Column)`
   align-items: flex-end;
 `;
 
@@ -81,8 +104,6 @@ const RejectedIcon = styled.View``;
 const NumberIcon = styled.View``;
 
 const ActionsNumber = styled(BaseText)``;
-
-const MemoTextInput = styled.TextInput``;
 
 const TxsDetailsLabel = ({
   title,
@@ -112,6 +133,7 @@ const TransactionDetails = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const [txs, setTxs] = useState<any>();
+  const [memo, setMemo] = useState<string>();
   const title = getDetailsTitle(transaction, wallet);
   let {
     currencyAbbreviation,
@@ -135,6 +157,7 @@ const TransactionDetails = () => {
         buildTransactionDetails({transaction, wallet}),
       );
       setTxs(_transaction);
+      setMemo(_transaction.detailsMemo);
       console.log('---------------->');
       console.log(_transaction);
     } catch (e) {
@@ -174,13 +197,27 @@ const TransactionDetails = () => {
     dispatch(openUrlWithInAppBrowser(url));
   };
 
+  const saveMemo = async () => {
+    if (memo) {
+      try {
+        await EditTxNote(wallet, {txid: txs.txid, body: memo});
+        transaction.note = {
+          body: memo,
+        };
+        transaction.uiDescription = memo;
+      } catch (e) {
+        console.log('Edit note err: ', e);
+      }
+    }
+  };
+
   return (
     <TxsDetailsContainer>
       {txs ? (
-        <>
+        <ScrollView>
           <HeaderContainer>
             {NotZeroAmountEth(txs.amount, currencyAbbreviation) ? (
-              <Title>{txs.amountStr}</Title>
+              <H2 medium={true}>{txs.amountStr}</H2>
             ) : null}
 
             {!IsCustomERCToken(currencyAbbreviation) ? (
@@ -198,6 +235,7 @@ const TransactionDetails = () => {
             ) : null}
           </HeaderContainer>
 
+          {/*TODO: Style me*/}
           {(currencyAbbreviation === 'eth' ||
             IsERCToken(currencyAbbreviation)) &&
           txs.error ? (
@@ -233,8 +271,12 @@ const TransactionDetails = () => {
               onPressLink={speedUp}
             />
           ) : null}
+          {/* ---------------------------- */}
 
-          <SubTitle>DETAILS</SubTitle>
+          <DetailContainer>
+            <H6>DETAILS</H6>
+          </DetailContainer>
+          <Hr />
 
           {txs.feeStr && !IsReceived(txs.action) ? (
             <>
@@ -247,11 +289,13 @@ const TransactionDetails = () => {
                       <H7>
                         {txs.feeFiatStr}{' '}
                         {txs.feeRateStr
-                          ? txs.feeRateStr + ' of total amount'
+                          ? '(' + txs.feeRateStr + ' of total amount)'
                           : null}
                       </H7>
                     ) : null}
-                    {isTestnet ? <H7>Test Only - No Value</H7> : null}
+                    {isTestnet ? (
+                      <SubTitle>Test Only - No Value</SubTitle>
+                    ) : null}
                   </DetailColumn>
 
                   {IsReceived(txs.action) && txs.lowFee ? (
@@ -269,7 +313,6 @@ const TransactionDetails = () => {
             </>
           ) : null}
 
-          {/*  TODO: multiple outputs*/}
           {IsSent(txs.action) ? <MultipleOutputsTx tx={txs} /> : null}
 
           {txs.creatorName && IsShared(wallet) ? (
@@ -278,7 +321,7 @@ const TransactionDetails = () => {
                 <DetailRow>
                   <H7>Created by</H7>
 
-                  <H6>{txs.creatorName}</H6>
+                  <H7>{txs.creatorName}</H7>
                 </DetailRow>
               </DetailContainer>
               <Hr />
@@ -288,9 +331,9 @@ const TransactionDetails = () => {
           <DetailContainer>
             <DetailRow>
               <H7>Date</H7>
-              <H6>
+              <H7>
                 {getFormattedDate((txs.ts || txs.createdOn || txs.time) * 1000)}
-              </H6>
+              </H7>
             </DetailRow>
           </DetailContainer>
 
@@ -301,7 +344,7 @@ const TransactionDetails = () => {
               <DetailContainer>
                 <DetailRow>
                   <H7>Nonce</H7>
-                  <H6>{txs.nonce}</H6>
+                  <H7>{txs.nonce}</H7>
                 </DetailRow>
               </DetailContainer>
               <Hr />
@@ -313,11 +356,13 @@ const TransactionDetails = () => {
               <H7>Confirmations</H7>
               <DetailColumn>
                 {!txs.confirmations ? <H6>Unconfirmed</H6> : null}
-                {txs.feeRate ? <H7>Fee rate: {txs.feeRate}</H7> : null}
-                {!!txs.confirmations && !txs.safeConfirmed ? (
-                  <H6>{txs.conformations}</H6>
+                {txs.feeRate ? (
+                  <SubTitle>Fee rate: {txs.feeRate}</SubTitle>
                 ) : null}
-                {txs.safeConfirmed ? <H6>{txs.safeConfirmed}</H6> : null}
+                {!!txs.confirmations && !txs.safeConfirmed ? (
+                  <H7>{txs.conformations}</H7>
+                ) : null}
+                {txs.safeConfirmed ? <H7>{txs.safeConfirmed}</H7> : null}
               </DetailColumn>
             </DetailRow>
             {!txs.confirmations ? (
@@ -331,29 +376,33 @@ const TransactionDetails = () => {
 
           <Hr />
 
-          <DetailContainer>
-            <H7>MEMO</H7>
+          <MemoContainer>
+            <MemoHeader>MEMO</MemoHeader>
 
-            <MemoTextInput
-              numberOfLines={3}
-              placeholder={'Enter a transaction memo'}
-              value={txs.detailsMemo}
+            <ImportTextInput
+              multiline
+              numberOfLines={5}
+              value={memo}
+              onChangeText={text => setMemo(text)}
+              onEndEditing={saveMemo}
             />
-          </DetailContainer>
+          </MemoContainer>
+
+          <Hr />
 
           <DetailContainer>
             <DetailRow>
               <H7>Transaction ID</H7>
 
               <TouchableOpacity onPress={() => copyText(txs.txid)}>
-                <H7 numberOfLines={1} ellipsizeMode={'tail'}>
+                <TransactionIdText numberOfLines={1} ellipsizeMode={'tail'}>
                   {txs.txid}
-                </H7>
+                </TransactionIdText>
               </TouchableOpacity>
             </DetailRow>
           </DetailContainer>
 
-          {/*  TODO: Notify unconfirmed transaction*/}
+          {/*  TODO: Add Notify unconfirmed transaction */}
 
           {!IsMultisigEthInfo(wallet) && txs.actionsList?.length ? (
             <DetailContainer>
@@ -395,7 +444,7 @@ const TransactionDetails = () => {
           <Button buttonStyle={'secondary'} onPress={goToBlockchain}>
             View On Blockchain
           </Button>
-        </>
+        </ScrollView>
       ) : null}
     </TxsDetailsContainer>
   );
