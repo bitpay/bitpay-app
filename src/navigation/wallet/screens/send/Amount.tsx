@@ -9,7 +9,7 @@ import {
 } from '../../../../components/styled/Containers';
 import VirtualKeyboard from '../../../../components/virtual-keyboard/VirtualKeyboard';
 import SwapButton from '../../../../components/swap-button/SwapButton';
-import Button from '../../../../components/button/Button';
+import Button, {ButtonState} from '../../../../components/button/Button';
 import {View} from 'react-native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
@@ -19,12 +19,7 @@ import {
   handleCreateTxProposalError,
 } from '../../../../store/wallet/effects/send/send';
 import {useAppDispatch} from '../../../../utils/hooks';
-import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {formatFiatAmount, sleep} from '../../../../utils/helper-methods';
 import useAppSelector from '../../../../utils/hooks/useAppSelector';
 import {ParseAmount} from '../../../../store/wallet/effects/amount/amount';
@@ -63,11 +58,7 @@ const ActionContainer = styled.View`
   margin: 20px 0;
 `;
 
-const PrimaryAmountContainer = styled.View`
-  flex-direction: row;
-`;
-
-const EquivAmountContainer = styled.View`
+const Row = styled.View`
   flex-direction: row;
 `;
 
@@ -110,10 +101,11 @@ const Amount = () => {
   const {wallet, recipient} = route.params;
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const [buttonState, setButtonState] = useState<ButtonState>();
   // display amount fiat/crypto
   const [displayAmount, setDisplayAmount] = useState('0');
   const [displayEquivalentAmount, setDisplayEquivalentAmount] = useState('0');
-  // amount to be sent to proposal creation
+  // amount to be sent to proposal creation (sats)
   const [amount, setAmount] = useState('0');
   const currencyAbbreviation = wallet.currencyAbbreviation.toUpperCase();
   const [currency, setCurrency] = useState(currencyAbbreviation);
@@ -132,6 +124,12 @@ const Amount = () => {
       setRate(fiatRate);
     }
   }, []);
+
+  useEffect(() => {
+    return navigation.addListener('blur', async () => {
+      setButtonState(undefined);
+    });
+  }, [navigation]);
 
   const updateAmount = (_val: string) => {
     setDisplayAmount(_val);
@@ -170,9 +168,7 @@ const Amount = () => {
 
   const goToConfirm = async () => {
     try {
-      dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.GENERAL_AWAITING),
-      );
+      setButtonState('loading');
       const {txDetails, txp} = await dispatch(
         createProposalAndBuildTxDetails({
           wallet,
@@ -181,13 +177,14 @@ const Amount = () => {
         }),
       );
 
+      setButtonState('success');
+      await sleep(300);
       navigation.navigate('Wallet', {
         screen: 'Confirm',
         params: {wallet, recipient, txp, txDetails},
       });
-      dispatch(dismissOnGoingProcessModal());
     } catch (err: any) {
-      dispatch(dismissOnGoingProcessModal());
+      setButtonState('failed');
       const errorMessageConfig = (
         await Promise.all([handleCreateTxProposalError(err), sleep(400)])
       )[0];
@@ -198,7 +195,9 @@ const Amount = () => {
           actions: [
             {
               text: 'OK',
-              action: () => null,
+              action: () => {
+                setButtonState(undefined);
+              },
             },
           ],
         }),
@@ -210,17 +209,17 @@ const Amount = () => {
     <SafeAreaView>
       <AmountContainer>
         <AmountHeroContainer>
-          <PrimaryAmountContainer>
+          <Row>
             <AmountText>{displayAmount || 0}</AmountText>
             <CurrencySuperScript>
               <CurrencyText>{currency}</CurrencyText>
             </CurrencySuperScript>
-          </PrimaryAmountContainer>
-          <EquivAmountContainer>
+          </Row>
+          <Row>
             <AmountEquivText>
               {displayEquivalentAmount || 0} {isFiat && currencyAbbreviation}
             </AmountEquivText>
-          </EquivAmountContainer>
+          </Row>
           <SwapButtonContainer>
             <SwapButton
               swapList={swapList}
@@ -237,7 +236,10 @@ const Amount = () => {
             reset={currency}
           />
           <ActionContainer>
-            <Button disabled={!amount} onPress={goToConfirm}>
+            <Button
+              state={buttonState}
+              disabled={!amount}
+              onPress={goToConfirm}>
               Continue
             </Button>
           </ActionContainer>
