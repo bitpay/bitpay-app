@@ -471,11 +471,15 @@ export const BuildUiFriendlyList = (
     const {body: noteBody} = note || {};
 
     const notZeroAmountEth = NotZeroAmountEth(amount, currencyAbbreviation);
-    const hasContactName = !!(
+    let contactName;
+
+    if (
       contactList?.length &&
       outputs?.length &&
       GetContactName(outputs[0]?.address, contactList)
-    );
+    ) {
+      contactName = GetContactName(outputs[0]?.address, contactList);
+    }
 
     const isSent = IsSent(action);
     const isMoved = IsMoved(action);
@@ -486,12 +490,9 @@ export const BuildUiFriendlyList = (
       transaction.uiIcon = TransactionIcons.confirming;
 
       if (notZeroAmountEth) {
-        if (hasContactName) {
+        if (contactName) {
           if (isSent || isMoved) {
-            transaction.uiDescription = GetContactName(
-              outputs[0]?.address,
-              contactList,
-            );
+            transaction.uiDescription = contactName;
           }
         } else {
           if (isSent) {
@@ -528,11 +529,8 @@ export const BuildUiFriendlyList = (
               transaction.uiDescription = noteBody;
             } else if (message) {
               transaction.uiDescription = message;
-            } else if (hasContactName) {
-              transaction.uiDescription = GetContactName(
-                outputs[0]?.address,
-                contactList,
-              );
+            } else if (contactName) {
+              transaction.uiDescription = contactName;
             } else if (toWalletName) {
               transaction.uiDescription = `Sent to ${toWalletName}`;
             } else {
@@ -546,11 +544,8 @@ export const BuildUiFriendlyList = (
 
           if (noteBody) {
             transaction.uiDescription = noteBody;
-          } else if (hasContactName) {
-            transaction.uiDescription = GetContactName(
-              outputs[0]?.address,
-              contactList,
-            );
+          } else if (contactName) {
+            transaction.uiDescription = contactName;
           } else {
             transaction.uiDescription = 'Received';
           }
@@ -662,16 +657,8 @@ export const buildTransactionDetails =
     return new Promise(async (resolve, reject) => {
       try {
         const _transaction = {...transaction};
-        const {
-          fees,
-          amount,
-          note,
-          message,
-          action,
-          time,
-          outputs,
-          hasMultiplesOutputs,
-        } = transaction;
+        const {fees, amount, note, message, action, time, hasMultiplesOutputs} =
+          transaction;
         const {currencyAbbreviation} = wallet;
         const currency = currencyAbbreviation.toLowerCase();
 
@@ -754,10 +741,10 @@ const UpdateFiatRate = (
         parseFloat((rate * amountValueStr).toFixed(2)),
         alternativeCurrency,
       ) +
-      ' @ ' +
-      formatFiatAmount(rate, alternativeCurrency) +
-      ' per ' +
-      currency.toUpperCase();
+      ` @ ${formatFiatAmount(
+        rate,
+        alternativeCurrency,
+      )} per ${currency.toUpperCase()}`;
   } else {
     // Get current fiat value when historic rates are unavailable
     fiatRateStr = toFiat(amount, alternativeCurrency, currency, rates);

@@ -37,7 +37,7 @@ import {
   IsERCToken,
 } from '../../../store/wallet/utils/currency';
 import moment from 'moment';
-import {TouchableOpacity, View} from 'react-native';
+import {TouchableOpacity} from 'react-native';
 import {TransactionIcons} from '../../../constants/TransactionIcons';
 import Button from '../../../components/button/Button';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
@@ -55,6 +55,8 @@ import {
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import Banner from '../../../components/banner/Banner';
 import Info from '../../../components/icons/info/Info';
+import TransactionDetailSkeleton from '../components/TransactionDetailSkeleton';
+import {sleep} from '../../../utils/helper-methods';
 
 const TxsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -155,6 +157,7 @@ const TransactionDetails = () => {
   const navigation = useNavigation();
   const [txs, setTxs] = useState<any>();
   const [memo, setMemo] = useState<string>();
+  const [isLoading, setIsLoading] = useState(true);
   const title = getDetailsTitle(transaction, wallet);
   let {
     currencyAbbreviation,
@@ -168,7 +171,7 @@ const TransactionDetails = () => {
       gestureEnabled: false,
       headerTitle: () => <HeaderTitle>{title}</HeaderTitle>,
     });
-  }, [title]);
+  }, [navigation, title]);
 
   const init = async () => {
     try {
@@ -177,7 +180,11 @@ const TransactionDetails = () => {
       );
       setTxs(_transaction);
       setMemo(_transaction.detailsMemo);
+      await sleep(1000);
+      setIsLoading(false);
     } catch (e) {
+      await sleep(1000);
+      setIsLoading(false);
       console.log(e);
     }
   };
@@ -230,7 +237,9 @@ const TransactionDetails = () => {
 
   return (
     <TxsDetailsContainer>
-      {txs ? (
+      {isLoading ? (
+        <TransactionDetailSkeleton />
+      ) : txs ? (
         <ScrollView>
           <>
             {NotZeroAmountEth(txs.amount, currencyAbbreviation) ? (
