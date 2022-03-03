@@ -98,7 +98,10 @@ const WalletConnectRequestDetails = () => {
       navigation.goBack();
     } else {
       request.payload.method === 'eth_signTypedData' ||
-      request.payload.method === 'eth_sign'
+      request.payload.method === 'eth_sign' ||
+      request.payload.method === 'eth_signTypedData_v1' ||
+      request.payload.method === 'eth_signTypedData_v3' ||
+      request.payload.method === 'eth_signTypedData_v4'
         ? setAddress(request.payload.params[0])
         : setAddress(request.payload.params[1]);
 

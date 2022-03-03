@@ -31,8 +31,8 @@ export const walletConnectInit = (): Effect => async (dispatch, getState) => {
 };
 
 export const walletConnectOnSessionRequest =
-  (uri: string): Effect =>
-  (dispatch, getState): Promise<{peer: any; peerId: any}> => {
+  (uri: string): Effect<Promise<{peer: any; peerId: any}>> =>
+  (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       const connector = new WalletConnect({uri});
       let isWaitingForEvent: boolean = true;
@@ -61,8 +61,8 @@ export const walletConnectApproveSessionRequest =
     peerId: string,
     response: {accounts: string[]; chainId: number},
     customData: IWCCustomData,
-  ): Effect =>
-  (dispatch, getState): Promise<void> => {
+  ): Effect<Promise<void>> =>
+  (dispatch, getState) => {
     return new Promise((resolve, reject) => {
       try {
         const {connectors, pending, sessions} = getState().WALLET_CONNECT;
@@ -175,63 +175,80 @@ export const walletConnectSubscribeToEvents =
   };
 
 export const walletConnectKillSession =
-  (peerId: string): Effect =>
-  async (_dispatch, getState) => {
-    const {connectors} = getState().WALLET_CONNECT;
-    await Promise.all(
-      connectors.map(async c => {
-        try {
-          if (c.connector.peerId === peerId) {
-            await c.connector.killSession();
+  (peerId: string): Effect<Promise<void>> =>
+  (_dispatch, getState) => {
+    return new Promise(async (resolve, reject) => {
+      const {connectors} = getState().WALLET_CONNECT;
+      await Promise.all(
+        connectors.map(async c => {
+          try {
+            if (c.connector.peerId === peerId) {
+              await c.connector.killSession();
+              resolve();
+            }
+          } catch (e) {
+            console.log(e);
+            reject(e);
           }
-        } catch (e) {
-          console.log(e);
-        }
-      }),
-    );
+        }),
+      );
+    });
   };
 
 export const walletConnectApproveCallRequest =
-  (peerId: string, response: {id: number | undefined; result: any}): Effect =>
-  async (dispatch, getState) => {
-    try {
-      const wcConnector: IWCConnector =
-        getState().WALLET_CONNECT.connectors.filter((c: IWCConnector) => {
-          c.connector.peerId === peerId;
-        })[0];
+  (
+    peerId: string,
+    response: {id: number | undefined; result: any},
+  ): Effect<Promise<void>> =>
+  (dispatch, getState) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const wcConnector: IWCConnector =
+          getState().WALLET_CONNECT.connectors.filter((c: IWCConnector) => {
+            c.connector.peerId === peerId;
+          })[0];
 
-      await wcConnector.connector.approveRequest(response);
+        await wcConnector.connector.approveRequest(response);
 
-      const updatedRequests: IWCRequest[] =
-        getState().WALLET_CONNECT.requests.filter(
-          (request: IWCRequest) => request.payload.id !== response.id,
+        const updatedRequests: IWCRequest[] =
+          getState().WALLET_CONNECT.requests.filter(
+            (request: IWCRequest) => request.payload.id !== response.id,
+          );
+        await dispatch(
+          WalletConnectActions.approveCallRequest(updatedRequests),
         );
-      await dispatch(WalletConnectActions.approveCallRequest(updatedRequests));
-    } catch (e) {
-      console.log(e);
-    }
+        resolve();
+      } catch (e) {
+        console.log(e);
+        reject(e);
+      }
+    });
   };
 
 export const walletConnectRejectCallRequest =
   (
     peerId: string,
     response: {id: number | undefined; error: {message: string}},
-  ): Effect =>
-  async (dispatch, getState) => {
-    try {
-      const wcConnector: IWCConnector =
-        getState().WALLET_CONNECT.connectors.filter(
-          (c: IWCConnector) => c.connector.peerId === peerId,
-        )[0];
-      await wcConnector.connector.rejectRequest(response);
+  ): Effect<Promise<void>> =>
+  (dispatch, getState) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const wcConnector: IWCConnector =
+          getState().WALLET_CONNECT.connectors.filter(
+            (c: IWCConnector) => c.connector.peerId === peerId,
+          )[0];
+        await wcConnector.connector.rejectRequest(response);
 
-      const updatedRequests: IWCRequest[] =
-        getState().WALLET_CONNECT.requests.filter(
-          (request: IWCRequest) =>
-            request.payload && request.payload.id !== response.id,
-        );
-      await dispatch(WalletConnectActions.rejectCallRequest(updatedRequests));
-    } catch (e) {
-      console.log(e);
-    }
+        const updatedRequests: IWCRequest[] =
+          getState().WALLET_CONNECT.requests.filter(
+            (request: IWCRequest) =>
+              request.payload && request.payload.id !== response.id,
+          );
+        await dispatch(WalletConnectActions.rejectCallRequest(updatedRequests));
+        resolve();
+      } catch (e) {
+        console.log(e);
+        reject(e);
+      }
+    });
   };

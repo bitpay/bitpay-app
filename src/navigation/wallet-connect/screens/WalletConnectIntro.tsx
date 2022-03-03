@@ -62,7 +62,7 @@ const WalletConnectIntro = () => {
   const dispatch = useDispatch();
   const route = useRoute<RouteProp<{params: WalletConnectIntroParamList}>>();
   const {uri} = route.params || {};
-  const [, setUri] = useState(uri);
+  const [dappUri, setDappUri] = useState(uri);
   const [walletSelectorModalVisible, setWalletSelectorModalVisible] =
     useState(false);
 
@@ -106,8 +106,7 @@ const WalletConnectIntro = () => {
           },
         });
       } catch (e) {
-        console.log(e);
-        setUri(undefined);
+        setDappUri(undefined);
         await showErrorMessage(
           CustomErrorMessage({
             errMsg: BWCErrorMessage(e),
@@ -145,12 +144,12 @@ const WalletConnectIntro = () => {
           haptic('impactLight');
           setWalletSelectorModalVisible(false);
           await sleep(500);
-          uri ? goToStartView(item, uri) : goToScanView(item);
+          dappUri ? goToStartView(item, dappUri) : goToScanView(item);
         }}
         wallet={item}
       />
     ),
-    [setWalletSelectorModalVisible, goToStartView, goToScanView, uri],
+    [setWalletSelectorModalVisible, goToStartView, goToScanView, dappUri],
   );
 
   return (

@@ -1,16 +1,17 @@
 import {useNavigation} from '@react-navigation/native';
 import {useDispatch} from 'react-redux';
-import React from 'react';
+import React, {useCallback} from 'react';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissOnGoingProcessModal,
+  showBottomNotificationModal,
   showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import WalletConnectIcon from '../../../../assets/img/wallet-connect/wallet-connect-icon.svg';
 import AddIcon from '../../../../assets/img/add.svg';
 import EthIcon from '../../../../assets/img/currencies/eth.svg';
-import {isValidWalletConnectUri} from '../../../utils/helper-methods';
+import {isValidWalletConnectUri, sleep} from '../../../utils/helper-methods';
 import {H5, H7} from '../../../components/styled/Text';
 import styled from 'styled-components/native';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
@@ -21,6 +22,9 @@ import {
   IWCCustomData,
 } from '../../../store/wallet-connect/wallet-connect.models';
 import ConnectionItem from './ConnectionItem';
+import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
+import {BWCErrorMessage} from '../../../constants/BWCError';
+import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 
 const ConnectionsContainer = styled.View`
   padding-bottom: 32px;
@@ -79,6 +83,14 @@ export default ({
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
+  const showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
+
   return (
     <ConnectionsContainer>
       <ChainContainer>
@@ -116,7 +128,12 @@ export default ({
                       });
                     }
                   } catch (e) {
-                    console.log(e);
+                    await showErrorMessage(
+                      CustomErrorMessage({
+                        errMsg: BWCErrorMessage(e),
+                        title: 'Uh oh, something went wrong',
+                      }),
+                    );
                   } finally {
                     dispatch(dismissOnGoingProcessModal());
                   }

@@ -32,6 +32,7 @@ import {
   IWCRequest,
 } from '../../../store/wallet-connect/wallet-connect.models';
 import WalletConnect from '@walletconnect/client';
+import {FormatAmountStr} from '../../../store/wallet/effects/amount/amount';
 
 export type WalletConnectHomeParamList = {
   peerId: string;
@@ -86,8 +87,7 @@ const WalletConnectHome = () => {
       showBottomNotificationModal({
         type: 'question',
         title: 'Confirm Request',
-        message:
-          'Please check on WalletConnect Example that the request is still waiting for confirmation and the swap amount is correct before proceeding to the confirmation step.',
+        message: `Please check on ${session?.peerMeta?.name} that the request is still waiting for confirmation and the swap amount is correct before proceeding to the confirmation step.`,
         enableBackdropDismiss: true,
         actions: [
           {
@@ -206,7 +206,8 @@ const WalletConnectHome = () => {
                   <ItemTouchableContainer
                     onPress={() => {
                       haptic('impactLight');
-                      request.payload.method !== 'eth_sendTransaction'
+                      request.payload.method !== 'eth_sendTransaction' &&
+                      request.payload.method !== 'eth_signTransaction'
                         ? navigation.navigate('WalletConnect', {
                             screen: 'WalletConnectRequestDetails',
                             params: {
@@ -233,7 +234,10 @@ const WalletConnectHome = () => {
                       {request.payload.method === 'eth_signTransaction' ||
                       request.payload.method === 'eth_sendTransaction' ? (
                         <IconLabel>
-                          {parseInt(request.payload.params[0].value, 16)} ETH
+                          {FormatAmountStr(
+                            'eth',
+                            parseInt(request.payload.params[0].value, 16),
+                          )}
                         </IconLabel>
                       ) : (
                         <IconLabel>0.00 ETH</IconLabel>

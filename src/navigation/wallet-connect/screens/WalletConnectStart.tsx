@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useCallback, useEffect} from 'react';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {Paragraph} from '../../../components/styled/Text';
@@ -37,6 +37,9 @@ import {Network} from '../../../constants';
 import {Currencies} from '../../../constants/currencies';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {IWCCustomData} from '../../../store/wallet-connect/wallet-connect.models';
+import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
+import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
+import {BWCErrorMessage} from '../../../constants/BWCError';
 
 export type WalletConnectStartParamList = {
   keyId: string | undefined;
@@ -89,6 +92,14 @@ const WalletConnectStart = () => {
     ({WALLET}: RootState) =>
       keyId && walletId && findWalletById(WALLET.keys[keyId].wallets, walletId),
   ) as Wallet;
+
+  const showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
 
   const approveSessionRequest = async () => {
     try {
@@ -147,13 +158,23 @@ const WalletConnectStart = () => {
           await dispatch<any>(createWalletAddress({wallet}));
           approveSessionRequest();
         } catch (error) {
-          console.log(error);
+          await showErrorMessage(
+            CustomErrorMessage({
+              errMsg: BWCErrorMessage(error),
+              title: 'Uh oh, something went wrong',
+            }),
+          );
         }
       } else {
-        dispatch(dismissOnGoingProcessModal());
-        // TODO: show error msg
-        console.log(e);
+        await showErrorMessage(
+          CustomErrorMessage({
+            errMsg: BWCErrorMessage(e),
+            title: 'Uh oh, something went wrong',
+          }),
+        );
       }
+    } finally {
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 

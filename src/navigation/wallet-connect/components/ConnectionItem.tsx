@@ -1,6 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import {IWalletConnectSession} from '@walletconnect/types';
-import React from 'react';
+import React, {useCallback} from 'react';
 import {useDispatch} from 'react-redux';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
@@ -23,6 +23,9 @@ import {Image} from 'react-native';
 import {IconLabel} from '../styled/WalletConnectText';
 import NestedArrow from '../../../../assets/img/nested-arrow.svg';
 import styled from 'styled-components/native';
+import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
+import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
+import {BWCErrorMessage} from '../../../constants/BWCError';
 
 const NestedArrowContainer = styled.View`
   padding-right: 11px;
@@ -33,6 +36,14 @@ export default ({session}: {session: IWalletConnectSession}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {peerId, peerMeta, key} = session;
+
+  const showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
 
   return (
     <>
@@ -86,7 +97,12 @@ export default ({session}: {session: IWalletConnectSession}) => {
                         );
                         dispatch(walletConnectKillSession(peerId));
                       } catch (e) {
-                        console.log(e);
+                        await showErrorMessage(
+                          CustomErrorMessage({
+                            errMsg: BWCErrorMessage(e),
+                            title: 'Uh oh, something went wrong',
+                          }),
+                        );
                       } finally {
                         dispatch(dismissOnGoingProcessModal());
                       }
