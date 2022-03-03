@@ -7,6 +7,7 @@ import CustomizeCardIcon from '../../../../assets/img/customize-card.svg';
 import GetHelpIcon from '../../../../assets/img/get-help.svg';
 import HelpIcon from '../../../../assets/img/help.svg';
 import LockIcon from '../../../../assets/img/lock.svg';
+import UpdateIcon from '../../../../assets/img/update.svg';
 import {Br, Hr} from '../../../components/styled/Containers';
 import {Link, Smallest} from '../../../components/styled/Text';
 import {URL} from '../../../constants';
@@ -109,6 +110,14 @@ const SettingsList: React.FC<SettingsListProps> = props => {
             Icon={CustomizeCardIcon}
             onPress={() => navigation.navigate('CustomizeVirtualCard', {card})}>
             {t('Customize Virtual Card')}
+          </Styled.SettingsLink>
+
+          <Hr />
+
+          <Styled.SettingsLink
+            Icon={UpdateIcon}
+            onPress={() => navigation.navigate('UpdateCardName', {card})}>
+            {t('Update Card Name')}
           </Styled.SettingsLink>
 
           <Hr />
