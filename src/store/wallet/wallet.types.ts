@@ -192,7 +192,9 @@ interface toggleHomeKeyCard {
 interface successGetReceiveAddress {
   type: typeof WalletActionTypes.SUCCESS_GET_RECEIVE_ADDRESS;
   payload: {
-    wallet: Wallet;
+    keyId: string;
+    walletId: string;
+    receiveAddress: string;
   };
 }
 

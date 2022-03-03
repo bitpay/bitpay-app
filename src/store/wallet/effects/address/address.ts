@@ -1,5 +1,4 @@
 import {Wallet} from '../../wallet.models';
-import cloneDeep from 'lodash.clonedeep';
 import {ValidateCoinAddress} from '../../utils/validations';
 import {BwcProvider} from '../../../../lib/bwc';
 import {ExtractCoinNetworkAddress} from '../../utils/decode-uri';
@@ -38,23 +37,23 @@ export const createWalletAddress =
         return resolve(wallet.receiveAddress);
       }
 
-      const _wallet = cloneDeep(wallet);
-      if (_wallet) {
-        let {token, network, multisigEthInfo} = _wallet.credentials;
+      if (wallet) {
+        const {keyId, id} = wallet;
+        let {token, network, multisigEthInfo} = wallet.credentials;
 
         if (multisigEthInfo?.multisigContractAddress) {
           return resolve(multisigEthInfo.multisigContractAddress);
         }
 
         if (token) {
-          _wallet.id.replace(`-${token.address}`, '');
+          wallet.id.replace(`-${token.address}`, '');
         }
 
-        _wallet.createAddress({}, (err: any, addressObj: Address) => {
+        wallet.createAddress({}, (err: any, addressObj: Address) => {
           if (err) {
             //  Rate limits after 20 consecutive addresses
             if (err.name && err.name.includes('MAIN_ADDRESS_GAP_REACHED')) {
-              _wallet.getMainAddresses(
+              wallet.getMainAddresses(
                 {
                   reverse: true,
                   limit: 1,
@@ -63,9 +62,17 @@ export const createWalletAddress =
                   if (e) {
                     reject({type: 'MAIN_ADDRESS_GAP_REACHED', error: e});
                   }
-                  _wallet.receiveAddress = addr[0].address;
-                  dispatch(successGetReceiveAddress({wallet: _wallet}));
-                  return resolve(addr[0].address);
+
+                  const receiveAddress = addr[0].address;
+                  dispatch(
+                    successGetReceiveAddress({
+                      keyId,
+                      walletId: id,
+                      receiveAddress,
+                    }),
+                  );
+
+                  return resolve(receiveAddress);
                 },
               );
             } else {
@@ -80,9 +87,15 @@ export const createWalletAddress =
               error: addressObj.address,
             });
           } else if (addressObj) {
-            _wallet.receiveAddress = addressObj.address;
-            dispatch(successGetReceiveAddress({wallet: _wallet}));
-            return resolve(addressObj.address);
+            const receiveAddress = addressObj.address;
+            dispatch(
+              successGetReceiveAddress({
+                keyId,
+                walletId: id,
+                receiveAddress,
+              }),
+            );
+            return resolve(receiveAddress);
           }
         });
       }
