@@ -1,4 +1,4 @@
-import {HistoricRate, Key, Rates, Wallet} from '../../wallet.models';
+import {HistoricRate, Rates, Wallet} from '../../wallet.models';
 import {FormatAmountStr} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
 import uniqBy from 'lodash.uniqby';
@@ -621,7 +621,7 @@ export const CanSpeedUpTx = (
       currentTime.diff(txTime, 'hours') >= 1 &&
       isUnconfirmed &&
       IsReceived(action) &&
-      currencyAbbreviation == 'btc'
+      currencyAbbreviation === 'btc'
     );
   }
 };
@@ -792,13 +792,19 @@ const getMinFee = (wallet: Wallet): Promise<any> => {
   });
 };
 
+export interface TxActions {
+  type: string;
+  time: number;
+  description: string;
+  by?: string;
+}
 const GetActionsList = (transaction: any, wallet: Wallet) => {
   const {actions, createdOn, creatorName, time, action} = transaction;
   if ((!IsSent(action) && !IsMoved(action)) || !IsShared(wallet)) {
     return;
   }
 
-  const actionList: any[] = [];
+  const actionList: TxActions[] = [];
 
   let actionDescriptions: {[key in string]: string} = {
     created: 'Proposal Created',

@@ -21,6 +21,7 @@ import {
   IsSent,
   IsShared,
   NotZeroAmountEth,
+  TxActions,
 } from '../../../store/wallet/effects/transactions/transactions';
 import styled from 'styled-components/native';
 import {
@@ -36,7 +37,6 @@ import {
   IsCustomERCToken,
   IsERCToken,
 } from '../../../store/wallet/utils/currency';
-import moment from 'moment';
 import {TouchableOpacity} from 'react-native';
 import {TransactionIcons} from '../../../constants/TransactionIcons';
 import Button from '../../../components/button/Button';
@@ -57,6 +57,7 @@ import Banner from '../../../components/banner/Banner';
 import Info from '../../../components/icons/info/Info';
 import TransactionDetailSkeleton from '../components/TransactionDetailSkeleton';
 import {sleep} from '../../../utils/helper-methods';
+import {GetAmFormatDate} from '../../../store/wallet/utils/time';
 
 const TxsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -148,6 +149,57 @@ const InputText = styled(ImportTextInput)`
   height: 75px;
 `;
 
+const TimelineList = ({actions}: {actions: TxActions[]}) => {
+  return (
+    <>
+      {actions.map(
+        (
+          {type, time, description, by}: TxActions,
+          index: number,
+          {length}: {length: number},
+        ) => {
+          return (
+            <DetailRow key={index}>
+              <TimelineBorderLeft
+                isFirst={index === 0}
+                isLast={index === length - 1}
+              />
+              <TimelineItem>
+                <DetailRow>
+                  {type === 'rejected' ? (
+                    <IconBackground>
+                      <Info size={35} bgColor={Caution} />
+                    </IconBackground>
+                  ) : null}
+
+                  {type === 'broadcasted' ? (
+                    <IconBackground>
+                      {TransactionIcons.broadcast}
+                    </IconBackground>
+                  ) : null}
+
+                  {type !== 'broadcasted' && type !== 'rejected' ? (
+                    <NumberIcon>
+                      <H7>{length - index}</H7>
+                    </NumberIcon>
+                  ) : null}
+
+                  <TimelineDescription>
+                    <H7>{description}</H7>
+                    {by ? <H7>{by}</H7> : null}
+                  </TimelineDescription>
+                </DetailRow>
+              </TimelineItem>
+
+              <TimelineTime>{GetAmFormatDate(time * 1000)}</TimelineTime>
+            </DetailRow>
+          );
+        },
+      )}
+    </>
+  );
+};
+
 const TransactionDetails = () => {
   const {
     params: {transaction, wallet},
@@ -180,10 +232,10 @@ const TransactionDetails = () => {
       );
       setTxs(_transaction);
       setMemo(_transaction.detailsMemo);
-      await sleep(1000);
+      await sleep(500);
       setIsLoading(false);
     } catch (e) {
-      await sleep(1000);
+      await sleep(500);
       setIsLoading(false);
       console.log(e);
     }
@@ -195,10 +247,6 @@ const TransactionDetails = () => {
 
   const speedUp = () => {
     //  TODO: speed up transaction
-  };
-
-  const getFormattedDate = (time: number) => {
-    return moment(time).format('MM/DD/YYYY hh:mm a');
   };
 
   const copyText = (text: string) => {
@@ -365,7 +413,9 @@ const TransactionDetails = () => {
             <DetailRow>
               <H7>Date</H7>
               <H7>
-                {getFormattedDate((txs.ts || txs.createdOn || txs.time) * 1000)}
+                {GetAmFormatDate(
+                  (txs.ts || txs.createdOn || txs.time) * 1000,
+                )}
               </H7>
             </DetailRow>
           </DetailContainer>
@@ -440,53 +490,14 @@ const TransactionDetails = () => {
 
           <Hr />
 
-          {/*  TODO: Add Notify unconfirmed transaction  row*/}
+          {/*  TODO: Add Notify unconfirmed transaction  row */}
 
           {!IsMultisigEthInfo(wallet) && txs.actionsList?.length ? (
             <>
               <TimelineContainer>
                 <H7>Timeline</H7>
 
-                {txs.actionsList.map((a: any, index: number) => {
-                  return (
-                    <DetailRow key={index}>
-                      <TimelineBorderLeft
-                        isFirst={index === 0}
-                        isLast={index === txs.actionsList.length - 1}
-                      />
-                      <TimelineItem>
-                        <DetailRow>
-                          {a.type === 'rejected' ? (
-                            <IconBackground>
-                              <Info size={35} bgColor={Caution} />
-                            </IconBackground>
-                          ) : null}
-
-                          {a.type === 'broadcasted' ? (
-                            <IconBackground>
-                              {TransactionIcons.broadcast}
-                            </IconBackground>
-                          ) : null}
-
-                          {a.type !== 'broadcasted' && a.type !== 'rejected' ? (
-                            <NumberIcon>
-                              <H7>{txs.actionsList.length - index}</H7>
-                            </NumberIcon>
-                          ) : null}
-
-                          <TimelineDescription>
-                            <H7>{a.description}</H7>
-                            {a.by ? <H7>{a.by}</H7> : null}
-                          </TimelineDescription>
-                        </DetailRow>
-                      </TimelineItem>
-
-                      <TimelineTime>
-                        {getFormattedDate(a.time * 1000)}
-                      </TimelineTime>
-                    </DetailRow>
-                  );
-                })}
+                <TimelineList actions={txs.actionsList} />
               </TimelineContainer>
 
               <Hr />
