@@ -5,7 +5,9 @@ import {ScrollView} from 'react-native';
 import styled from 'styled-components/native';
 import Button, {ButtonState} from '../../../../components/button/Button';
 import BoxInput from '../../../../components/form/BoxInput';
+import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 import {ScreenGutter} from '../../../../components/styled/Containers';
+import {AppActions} from '../../../../store/app';
 import {CardActions, CardEffects} from '../../../../store/card';
 import {Card} from '../../../../store/card/card.models';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
@@ -22,6 +24,23 @@ const ContentContainer = styled.View`
 const FormContainer = styled.View`
   margin-bottom: 24px;
 `;
+
+const createErrorConfig = (
+  message: string,
+  action: () => any,
+): BottomNotificationConfig => ({
+  type: 'error',
+  title: 'Something went wrong',
+  message,
+  enableBackdropDismiss: true,
+  actions: [
+    {
+      text: 'OK',
+      action,
+      primary: true,
+    },
+  ],
+});
 
 const UpdateCardNameScreen: React.FC<
   StackScreenProps<CardStackParamList, 'UpdateCardName'>
@@ -44,19 +63,24 @@ const UpdateCardNameScreen: React.FC<
   useEffect(() => {
     if (updateNameStatus === 'success') {
       setButtonState('success');
+      dispatch(CardActions.updateUpdateCardNameStatus(card.id, null));
       setTimeout(() => {
         if (navigation.canGoBack()) {
           navigation.goBack();
         } else {
           // TODO: go to settings, need to refactor settings params to take an id, then compute card group
         }
-        dispatch(CardActions.updateUpdateCardNameStatus(card.id, null));
         setButtonState(undefined);
       }, 1500);
     } else if (updateNameStatus === 'failed') {
-      // TODO: display error
       setButtonState('failed');
-      setTimeout(() => setButtonState(undefined), 1500);
+      dispatch(CardActions.updateUpdateCardNameStatus(card.id, null));
+
+      const notificationConfig = createErrorConfig(
+        'Failed to update card name. Please try again later.',
+        () => setButtonState(undefined),
+      );
+      dispatch(AppActions.showBottomNotificationModal(notificationConfig));
     }
   }, [updateNameStatus, card.id, dispatch, navigation]);
 
