@@ -413,9 +413,7 @@ const TransactionDetails = () => {
             <DetailRow>
               <H7>Date</H7>
               <H7>
-                {GetAmFormatDate(
-                  (txs.ts || txs.createdOn || txs.time) * 1000,
-                )}
+                {GetAmFormatDate((txs.ts || txs.createdOn || txs.time) * 1000)}
               </H7>
             </DetailRow>
           </DetailContainer>

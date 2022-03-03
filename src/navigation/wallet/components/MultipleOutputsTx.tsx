@@ -4,7 +4,7 @@ import {GetCoinAndNetwork} from '../../../store/wallet/effects/address/address';
 import {GetProtocolPrefixAddress} from '../../../store/wallet/utils/wallet';
 import {GetContactName} from '../../../store/wallet/effects/transactions/transactions';
 import styled from 'styled-components/native';
-import {ActiveOpacity, Hr, Row} from '../../../components/styled/Containers';
+import {ActiveOpacity, Hr} from '../../../components/styled/Containers';
 import {H7} from '../../../components/styled/Text';
 import CardSvg from '../../../../assets/img/wallet/transactions/card.svg';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
@@ -16,7 +16,12 @@ import {
   DetailRow,
   DetailColumn,
 } from '../screens/TransactionDetails';
-import {LightBlack, NeutralSlate} from '../../../styles/colors';
+import {
+  LightBlack,
+  NeutralSlate,
+  SlateDark,
+  White,
+} from '../../../styles/colors';
 import Clipboard from '@react-native-community/clipboard';
 
 const MisunderstoodOutputsText = styled(H7)`
@@ -35,8 +40,12 @@ const MultiOptionsText = styled(H7)`
   margin: 0 5px;
 `;
 
-const MultiOptionsMessage = styled.View`
+const MultiOptionsMessageContainer = styled.View`
   margin: 5px 0;
+`;
+
+const MultiOptionsMessage = styled(H7)`
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
 const MultipleOutputsTx = ({tx}: {tx: any}) => {
@@ -133,11 +142,11 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
             </DetailRow>
 
             {output.message ? (
-              <MultiOptionsMessage>
-                <H7 numberOfLines={2} ellipsizeMode={'tail'}>
+              <MultiOptionsMessageContainer>
+                <MultiOptionsMessage numberOfLines={2} ellipsizeMode={'tail'}>
                   {output.message}
-                </H7>
-              </MultiOptionsMessage>
+                </MultiOptionsMessage>
+              </MultiOptionsMessageContainer>
             ) : null}
           </MultiOptionsContainer>
         ))}
