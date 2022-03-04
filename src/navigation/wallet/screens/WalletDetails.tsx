@@ -262,23 +262,25 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     try {
       setIsLoading(!refresh);
       setErrorLoadingTxs(false);
-      let {transactions: _history, loadMore: _loadMore} =
-        await GetTransactionHistory({
+      const [transactionHistory] = await Promise.all([
+        GetTransactionHistory({
           wallet: fullWalletObj,
           transactionsHistory: refresh ? [] : history,
           limit: HISTORY_SHOW_LIMIT,
-        });
+        }),
+        sleep(500),
+      ]);
+
+      let {transactions: _history, loadMore: _loadMore} = transactionHistory;
 
       if (_history?.length) {
         setHistory(_history);
         const grouped = GroupTransactionHistory(_history);
         setGroupedHistory(grouped);
       }
-      await sleep(1000);
       setIsLoading(false);
       setLoadMore(_loadMore);
     } catch (e) {
-      await sleep(1000);
       setLoadMore(false);
       setIsLoading(false);
       setErrorLoadingTxs(true);
