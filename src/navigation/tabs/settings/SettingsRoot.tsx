@@ -90,6 +90,11 @@ const SettingsHomeScreen: React.FC = () => {
         navigation.navigate('NotificationSettings', {screen: 'Root'}),
     },
     {
+      title: t('Connections'),
+      onPress: () =>
+        navigation.navigate('ConnectionSettings', {screen: 'Root'}),
+    },
+    {
       title: t('About BitPay'),
       onPress: () => navigation.navigate('About', {screen: 'Root'}),
     },
