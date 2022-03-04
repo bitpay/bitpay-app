@@ -21,7 +21,7 @@ const PillContainer = styled.Pressable`
 `;
 
 const PillText = styled(H7)`
-  padding: 0 5px;
+  margin-left: 5px;
 `;
 
 const SendToPill = ({icon, description, onPress}: Props) => {
