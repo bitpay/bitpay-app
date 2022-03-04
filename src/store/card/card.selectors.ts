@@ -17,6 +17,9 @@ class CardGroup {
 export const selectCards: AppSelector<Card[]> = ({APP, CARD}) =>
   CARD.cards[APP.network];
 
+/**
+ * Sort order is determined by galileo before firstView, then virtual before physical.
+ */
 export const selectSortedCards = createSelector([selectCards], cards => {
   const sortedCards = cards.sort((a, b) => {
     if (
