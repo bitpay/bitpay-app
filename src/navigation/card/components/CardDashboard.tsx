@@ -145,7 +145,6 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
           <Button
             onPress={() =>
               navigation.navigate('Settings', {
-                slide: activeSlide,
                 id: activeSlide.primaryCard.id,
               })
             }
