@@ -42,21 +42,26 @@ const ErrorText = styled(BaseText)`
   color: ${Caution};
   font-size: 12px;
   font-weight: 500;
-  padding: 5px 0 0 10px;
+  padding: 5px 0 0 0;
 `;
 
 const CtaContainer = styled(_CtaContainer)`
   padding: 10px 0;
 `;
 
+const FormRow = styled.View`
+  margin-bottom: 24px;
+`;
+
+interface FileOrTextFieldValues {
+  text: string;
+  password: string;
+}
+
 const schema = yup.object().shape({
   text: yup.string().required(),
   password: yup.string().required(),
 });
-
-const InputContainer = styled.View`
-  margin-top: -20px;
-`;
 
 const FileOrText = () => {
   const logger = useLogger();
@@ -71,7 +76,7 @@ const FileOrText = () => {
     control,
     handleSubmit,
     formState: {errors},
-  } = useForm({resolver: yupResolver(schema)});
+  } = useForm<FileOrTextFieldValues>({resolver: yupResolver(schema)});
 
   const importWallet = async (
     decryptBackupText: string,
@@ -117,7 +122,7 @@ const FileOrText = () => {
     );
   };
 
-  const onSubmit = (formData: {text: string; password: string}) => {
+  const onSubmit = handleSubmit(formData => {
     const {text, password} = formData;
 
     let opts: Partial<KeyOptions> = {};
@@ -130,59 +135,56 @@ const FileOrText = () => {
       return;
     }
     importWallet(decryptBackupText, opts);
-  };
+  });
 
   return (
     <ScrollViewContainer>
       <ImportContainer>
-        <HeaderContainer>
-          <ImportTitle>Backup plain text code</ImportTitle>
-        </HeaderContainer>
-        <Controller
-          control={control}
-          render={({field: {onChange, onBlur, value}}) => (
-            <ImportTextInput
-              multiline
-              numberOfLines={5}
-              onChangeText={(text: string) => onChange(text)}
-              onBlur={onBlur}
-              value={value}
-            />
-          )}
-          name="text"
-          defaultValue=""
-        />
-
-        {errors?.text?.message && (
-          <ErrorText>Backup text is required.</ErrorText>
-        )}
-
-        <HeaderContainer>
-          <ImportTitle>Password</ImportTitle>
-        </HeaderContainer>
-        <Controller
-          control={control}
-          render={({field: {onChange, onBlur, value}}) => (
-            <InputContainer>
-              <BoxInput
-                placeholder={'strongPassword123'}
-                type={'password'}
-                onChangeText={(password: string) => onChange(password)}
+        <FormRow>
+          <HeaderContainer>
+            <ImportTitle>Backup plain text code</ImportTitle>
+          </HeaderContainer>
+          <Controller
+            control={control}
+            render={({field: {onChange, onBlur, value}}) => (
+              <ImportTextInput
+                multiline
+                numberOfLines={5}
+                onChangeText={onChange}
                 onBlur={onBlur}
                 value={value}
               />
-            </InputContainer>
-          )}
-          name="password"
-          defaultValue=""
-        />
+            )}
+            name="text"
+            defaultValue=""
+          />
 
-        {errors?.password?.message && (
-          <ErrorText>Password is required.</ErrorText>
-        )}
+          {errors?.text?.message && (
+            <ErrorText>Backup text is required.</ErrorText>
+          )}
+        </FormRow>
+
+        <FormRow>
+          <Controller
+            control={control}
+            render={({field: {onChange, onBlur, value}}) => (
+              <BoxInput
+                label="PASSWORD"
+                placeholder={'strongPassword123'}
+                type={'password'}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                value={value}
+                error={errors?.password?.message && 'Password is required.'}
+              />
+            )}
+            name="password"
+            defaultValue=""
+          />
+        </FormRow>
 
         <CtaContainer>
-          <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
+          <Button buttonStyle={'primary'} onPress={onSubmit}>
             Import Wallet
           </Button>
         </CtaContainer>
