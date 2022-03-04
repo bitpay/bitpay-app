@@ -31,6 +31,10 @@ export const URL = {
     'https://support.bitpay.com/hc/en-us/articles/115003393863-What-are-bitcoin-miner-fees-',
   HELP_SPENDING_PASSWORD:
     'https://support.bitpay.com/hc/en-us/articles/360000244506-What-Does-a-Spending-Password-Do-',
+  HELP_LOW_AMOUNT:
+    'https://support.bitpay.com/hc/en-us/articles/115004497783-What-does-the-BitPay-wallet-s-warning-amount-too-low-to-spend-mean-',
+  HELP_TXS_UNCONFIRMED:
+    'https://support.bitpay.com/hc/en-us/articles/360025484512-Missing-transactions-Why-is-my-transaction-unconfirmed-',
 
   /**
    * Quick Links
