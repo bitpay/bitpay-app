@@ -42,7 +42,7 @@ const ErrorText = styled(BaseText)`
   color: ${Caution};
   font-size: 12px;
   font-weight: 500;
-  padding: 5px 0 0 10px;
+  padding: 5px 0 0 0;
 `;
 
 const CtaContainer = styled(_CtaContainer)`
@@ -54,8 +54,8 @@ const schema = yup.object().shape({
   password: yup.string().required(),
 });
 
-const InputContainer = styled.View`
-  margin-top: -20px;
+const FormRow = styled.View`
+  margin-bottom: 24px;
 `;
 
 const FileOrText = () => {
@@ -135,51 +135,48 @@ const FileOrText = () => {
   return (
     <ScrollViewContainer>
       <ImportContainer>
-        <HeaderContainer>
-          <ImportTitle>Backup plain text code</ImportTitle>
-        </HeaderContainer>
-        <Controller
-          control={control}
-          render={({field: {onChange, onBlur, value}}) => (
-            <ImportTextInput
-              multiline
-              numberOfLines={5}
-              onChangeText={(text: string) => onChange(text)}
-              onBlur={onBlur}
-              value={value}
-            />
+        <FormRow>
+          <HeaderContainer>
+            <ImportTitle>Backup plain text code</ImportTitle>
+          </HeaderContainer>
+          <Controller
+            control={control}
+            render={({field: {onChange, onBlur, value}}) => (
+              <ImportTextInput
+                multiline
+                numberOfLines={5}
+                onChangeText={(text: string) => onChange(text)}
+                onBlur={onBlur}
+                value={value}
+              />
+            )}
+            name="text"
+            defaultValue=""
+          />
+
+          {errors?.text?.message && (
+            <ErrorText>Backup text is required.</ErrorText>
           )}
-          name="text"
-          defaultValue=""
-        />
+        </FormRow>
 
-        {errors?.text?.message && (
-          <ErrorText>Backup text is required.</ErrorText>
-        )}
-
-        <HeaderContainer>
-          <ImportTitle>Password</ImportTitle>
-        </HeaderContainer>
-        <Controller
-          control={control}
-          render={({field: {onChange, onBlur, value}}) => (
-            <InputContainer>
+        <FormRow>
+          <Controller
+            control={control}
+            render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
+                label="PASSWORD"
                 placeholder={'strongPassword123'}
                 type={'password'}
                 onChangeText={(password: string) => onChange(password)}
                 onBlur={onBlur}
                 value={value}
+                error={errors?.password?.message && 'Password is required.'}
               />
-            </InputContainer>
-          )}
-          name="password"
-          defaultValue=""
-        />
-
-        {errors?.password?.message && (
-          <ErrorText>Password is required.</ErrorText>
-        )}
+            )}
+            name="password"
+            defaultValue=""
+          />
+        </FormRow>
 
         <CtaContainer>
           <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
