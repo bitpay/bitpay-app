@@ -127,10 +127,7 @@ const SettingsHomeScreen: React.FC = () => {
             if (user) {
               navigation.navigate('BitpayId', {screen: 'Profile'});
             } else {
-              navigation.navigate('Auth', {
-                screen: 'LoginSignup',
-                params: {context: 'login'},
-              });
+              navigation.navigate('Auth', {screen: 'Login'});
             }
           }}>
           <BitPayIdAvatarContainer>

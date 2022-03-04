@@ -11,7 +11,7 @@ import {
   baseScreenOptions,
 } from '../../constants/NavigationOptions';
 import {RootState} from '../../store';
-import {BitPayIdActions} from '../../store/bitpay-id';
+import {BitPayIdEffects} from '../../store/bitpay-id';
 import {User} from '../../store/bitpay-id/bitpay-id.models';
 import Pair, {PairScreenParamList} from './screens/Pair';
 import Profile from './screens/ProfileSettings';
@@ -31,7 +31,6 @@ const BitpayId = createStackNavigator<BitpayIdStackParamList>();
 const BitpayIdStack = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
-  const network = useSelector<RootState, Network>(({APP}) => APP.network);
   const user = useSelector<RootState, User | null>(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
@@ -65,12 +64,9 @@ const BitpayIdStack = () => {
                         screen: 'Settings',
                       });
 
-                      dispatch(BitPayIdActions.bitPayIdDisconnected(network));
+                      dispatch(BitPayIdEffects.startDisconnectBitPayId());
                     } else {
-                      navigation.navigate('Auth', {
-                        screen: 'LoginSignup',
-                        params: {context: 'login'},
-                      });
+                      navigation.navigate('Auth', {screen: 'Login'});
                     }
                   }}>
                   {user ? 'Log Out' : 'Log In'}

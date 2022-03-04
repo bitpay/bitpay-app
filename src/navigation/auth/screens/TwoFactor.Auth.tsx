@@ -77,7 +77,7 @@ const TwoFactorAuthentication: React.FC<
   });
 
   return (
-    <AuthFormContainer header="2-Step Verification">
+    <AuthFormContainer>
       {twoFactorAuthStatus === 'failed' ? (
         <AuthRowContainer>
           <AlertBox type="warning">

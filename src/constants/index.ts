@@ -19,6 +19,8 @@ export const URL = {
   EXCHANGE_RATES: 'https://bitpay.com/exchange-rates',
   HELP_WIZARD: 'https://bitpay.com/request-help',
   TOU_GENERAL: 'https://bitpay.com/legal/terms-of-use',
+  TOU_BITPAY_ID:
+    'https://bitpay.com/legal/terms-of-use/#bitpay-id-terms-of-use',
   TOU_WALLET: 'https://bitpay.com/legal/terms-of-use/#wallet-terms-of-use',
 
   /**

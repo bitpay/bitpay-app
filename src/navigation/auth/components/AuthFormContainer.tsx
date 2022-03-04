@@ -1,35 +1,31 @@
-import React from 'react';
 import styled from 'styled-components/native';
+import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText} from '../../../components/styled/Text';
+import {Caution} from '../../../styles/colors';
 
-interface LoginContainerProps {
-  header?: string;
-}
-
-const LoginContainer = styled.SafeAreaView`
-  justify-content: center;
-  align-items: center;
-`;
-
-const HeaderContainer = styled.View`
-  width: 100%;
-  padding: 0 20px;
-  margin: 25px 0;
-`;
-
-const HeaderText = styled(BaseText)`
-  font-size: 25px;
-  font-weight: 700;
-  line-height: 34px;
-`;
-
-const FormContainer = styled.View`
-  width: 100%;
-  padding: 0 20px;
+const AuthFormContainer = styled.ScrollView`
+  padding: 24px ${ScreenGutter};
 `;
 
 export const AuthRowContainer = styled.View`
-  margin-bottom: 15px;
+  margin-bottom: 12px;
+`;
+
+export const CheckboxControl = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+
+export const CheckboxLabel = styled(BaseText)`
+  font-size: 16px;
+  margin-left: ${ScreenGutter};
+`;
+
+export const CheckboxError = styled(BaseText)`
+  color: ${Caution};
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 6px;
 `;
 
 export const AuthFormParagraph = styled.Text`
@@ -44,16 +40,14 @@ export const AuthActionsContainer = styled.View`
   margin-top: 20px;
 `;
 
-const AuthContainer: React.FC<LoginContainerProps> = props => {
-  const {children, header} = props;
-  return (
-    <LoginContainer>
-      <HeaderContainer>
-        <HeaderText>{header}</HeaderText>
-      </HeaderContainer>
-      <FormContainer>{children}</FormContainer>
-    </LoginContainer>
-  );
-};
+export const AuthActionRow = styled.View`
+  margin-bottom: 32px;
+`;
 
-export default AuthContainer;
+export const AuthActionText = styled(BaseText)`
+  align-self: center;
+  color: ${({theme}) => theme.colors.description};
+  font-size: 18px;
+`;
+
+export default AuthFormContainer;
