@@ -2,7 +2,7 @@ import {useNavigation} from '@react-navigation/native';
 import React from 'react';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useSelector} from 'react-redux';
-import Avatar from '../../../../components/avatar/Avatar';
+import Avatar from '../../../../components/avatar/BitPayIdAvatar';
 import {RootState} from '../../../../store';
 import {User} from '../../../../store/bitpay-id/bitpay-id.models';
 import {HeaderButtonContainer} from '../HomeRoot';

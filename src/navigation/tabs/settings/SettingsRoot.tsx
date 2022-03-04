@@ -4,7 +4,7 @@ import styled, {useTheme} from 'styled-components/native';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import {StyleProp, TextStyle, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import Avatar from '../../../components/avatar/Avatar';
+import Avatar from '../../../components/avatar/BitPayIdAvatar';
 import {
   ActiveOpacity,
   Hr,
