@@ -135,9 +135,11 @@ const SettingsHomeScreen: React.FC = () => {
           </BitPayIdAvatarContainer>
           {user ? (
             <BitPayIdUserContainer>
-              <BitPayIdUserText bold>
-                {user.givenName} {user.familyName}
-              </BitPayIdUserText>
+              {user.givenName || user.familyName ? (
+                <BitPayIdUserText bold>
+                  {user.givenName} {user.familyName}
+                </BitPayIdUserText>
+              ) : null}
               <BitPayIdUserText>{user.email}</BitPayIdUserText>
             </BitPayIdUserContainer>
           ) : (

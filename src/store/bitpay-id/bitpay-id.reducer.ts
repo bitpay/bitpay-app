@@ -338,6 +338,23 @@ export const bitPayIdReducer = (
         fetchDoshTokenStatus: action.payload,
       };
 
+    case BitPayIdActionTypes.TOGGLE_SYNC_GIFT_CARD_PURCHASES: {
+      return {
+        ...state,
+        user: {
+          ...state.user,
+          [action.payload.network]: {
+            ...state.user[action.payload.network],
+            localSettings: {
+              syncGiftCardPurchases:
+                !state.user[action.payload.network]?.localSettings
+                  .syncGiftCardPurchases,
+            },
+          },
+        },
+      };
+    }
+
     default:
       return state;
   }

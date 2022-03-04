@@ -5,7 +5,9 @@ import {CardConfig, GiftCard} from '../../../../store/shop/shop.models';
 import RemoteImage from './RemoteImage';
 import GiftCardDenoms, {GiftCardDenomText} from './GiftCardDenoms';
 import {BaseText} from '../../../../components/styled/Text';
-import {formatAmount} from '../../../../lib/gift-cards/gift-card';
+import GiftCardDiscountText from './GiftCardDiscountText';
+import {formatFiatAmount} from '../../../../utils/helper-methods';
+import {isSupportedDiscountType} from '../../../../lib/gift-cards/gift-card';
 
 const GiftCardItemContainer = styled.View`
   display: flex;
@@ -41,7 +43,7 @@ export default ({
       <BrandDetails>
         <GiftCardBrandName>
           {giftCard
-            ? formatAmount(giftCard.amount, giftCard.currency)
+            ? formatFiatAmount(giftCard.amount, giftCard.currency)
             : displayName}
         </GiftCardBrandName>
         {giftCard ? (
@@ -49,7 +51,14 @@ export default ({
             <TimeAgo time={parseInt(giftCard.date, 10)} />
           </GiftCardDenomText>
         ) : (
-          <GiftCardDenoms cardConfig={cardConfig} />
+          <>
+            {cardConfig.discounts &&
+            isSupportedDiscountType(cardConfig.discounts[0].type) ? (
+              <GiftCardDiscountText cardConfig={cardConfig} short={true} />
+            ) : (
+              <GiftCardDenoms cardConfig={cardConfig} />
+            )}
+          </>
         )}
       </BrandDetails>
     </GiftCardItemContainer>

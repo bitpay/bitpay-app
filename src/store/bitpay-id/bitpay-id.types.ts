@@ -46,6 +46,7 @@ export enum BitPayIdActionTypes {
   SUCCESS_FETCH_DOSH_TOKEN = 'BitPayId/SUCCESS_FETCH_DOSH_TOKEN',
   FAILED_FETCH_DOSH_TOKEN = 'BitPayId/FAILED_FETCH_DOSH_TOKEN',
   UPDATE_FETCH_DOSH_TOKEN_STATUS = 'BitPayId/UPDATE_FETCH_DOSH_TOKEN_STATUS',
+  TOGGLE_SYNC_GIFT_CARD_PURCHASES = 'BitPayId/TOGGLE_SYNC_GIFT_CARD_PURCHASES',
 }
 
 interface SuccessFetchSession {
@@ -199,6 +200,13 @@ interface UpdateFetchDoshTokenStatus {
   payload: FetchDoshTokenStatus;
 }
 
+interface ToggleSyncGiftCardPurchases {
+  type: typeof BitPayIdActionTypes.TOGGLE_SYNC_GIFT_CARD_PURCHASES;
+  payload: {
+    network: Network;
+  };
+}
+
 export type BitPayIdActionType =
   | SuccessFetchSession
   | FailedFetchSession
@@ -243,4 +251,5 @@ export type BitPayIdActionType =
   | BitPayIdDisconnected
   | SuccessFetchDoshToken
   | FailedFetchDoshToken
-  | UpdateFetchDoshTokenStatus;
+  | UpdateFetchDoshTokenStatus
+  | ToggleSyncGiftCardPurchases;

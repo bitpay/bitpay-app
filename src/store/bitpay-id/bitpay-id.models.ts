@@ -24,9 +24,14 @@ export interface User {
   eid: string;
   familyName?: string;
   givenName?: string;
+  incentiveLevel?: string;
+  incentiveLevelId?: string;
   userSettings: {
     acknowledgePrivacyNotice?: boolean;
     agreedCardholderAgreement?: boolean;
     optInEmailMarketing?: boolean;
+  };
+  localSettings: {
+    syncGiftCardPurchases: boolean;
   };
 }

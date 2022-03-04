@@ -6,6 +6,8 @@ export const basicInfoFields = `
   familyName
   email
   eid
+  incentiveLevel
+  incentiveLevelId
   name
   userSettings {
     agreedCardholderAgreement
