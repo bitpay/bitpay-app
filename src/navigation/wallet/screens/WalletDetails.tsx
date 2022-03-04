@@ -154,7 +154,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const uiFormattedWallet = buildUIFormattedWallet(fullWalletObj);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
-  const [loadReceiveAddressModal, setLoadReceiveAddressModal] = useState(false);
   const walletType = getWalletType(key, fullWalletObj);
 
   useLayoutEffect(() => {
@@ -226,11 +225,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         }),
     },
   ];
-
-  const showReceiveAddress = () => {
-    setShowReceiveAddressBottomModal(true);
-    setLoadReceiveAddressModal(true);
-  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -445,6 +439,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           />
         }
         ListHeaderComponent={() => {
+          console.log(fullWalletObj)
           return (
             <>
               <BalanceContainer>
@@ -462,9 +457,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
               {fullWalletObj ? (
                 <LinkingButtons
-                  receive={{cta: () => showReceiveAddress()}}
+                  receive={{cta: () => setShowReceiveAddressBottomModal(true)}}
                   send={{
-                    hide: __DEV__ ? false : !fullWalletObj.balance.fiat,
+                    hide: !fullWalletObj.balance.sat,
                     cta: () =>
                       navigation.navigate('Wallet', {
                         screen: 'SendTo',
@@ -500,7 +495,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         options={assetOptions}
       />
 
-      {fullWalletObj && loadReceiveAddressModal ? (
+      {fullWalletObj ? (
         <ReceiveAddress
           isVisible={showReceiveAddressBottomModal}
           closeModal={() => setShowReceiveAddressBottomModal(false)}
