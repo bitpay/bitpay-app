@@ -439,7 +439,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           />
         }
         ListHeaderComponent={() => {
-          console.log(fullWalletObj)
           return (
             <>
               <BalanceContainer>

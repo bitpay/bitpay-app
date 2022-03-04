@@ -49,14 +49,19 @@ const CtaContainer = styled(_CtaContainer)`
   padding: 10px 0;
 `;
 
+const FormRow = styled.View`
+  margin-bottom: 24px;
+`;
+
+interface FileOrTextFieldValues {
+  text: string;
+  password: string;
+}
+
 const schema = yup.object().shape({
   text: yup.string().required(),
   password: yup.string().required(),
 });
-
-const FormRow = styled.View`
-  margin-bottom: 24px;
-`;
 
 const FileOrText = () => {
   const logger = useLogger();
@@ -71,7 +76,7 @@ const FileOrText = () => {
     control,
     handleSubmit,
     formState: {errors},
-  } = useForm({resolver: yupResolver(schema)});
+  } = useForm<FileOrTextFieldValues>({resolver: yupResolver(schema)});
 
   const importWallet = async (
     decryptBackupText: string,
@@ -117,7 +122,7 @@ const FileOrText = () => {
     );
   };
 
-  const onSubmit = (formData: {text: string; password: string}) => {
+  const onSubmit = handleSubmit(formData => {
     const {text, password} = formData;
 
     let opts: Partial<KeyOptions> = {};
@@ -130,7 +135,7 @@ const FileOrText = () => {
       return;
     }
     importWallet(decryptBackupText, opts);
-  };
+  });
 
   return (
     <ScrollViewContainer>
@@ -145,7 +150,7 @@ const FileOrText = () => {
               <ImportTextInput
                 multiline
                 numberOfLines={5}
-                onChangeText={(text: string) => onChange(text)}
+                onChangeText={onChange}
                 onBlur={onBlur}
                 value={value}
               />
@@ -167,7 +172,7 @@ const FileOrText = () => {
                 label="PASSWORD"
                 placeholder={'strongPassword123'}
                 type={'password'}
-                onChangeText={(password: string) => onChange(password)}
+                onChangeText={onChange}
                 onBlur={onBlur}
                 value={value}
                 error={errors?.password?.message && 'Password is required.'}
@@ -179,7 +184,7 @@ const FileOrText = () => {
         </FormRow>
 
         <CtaContainer>
-          <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
+          <Button buttonStyle={'primary'} onPress={onSubmit}>
             Import Wallet
           </Button>
         </CtaContainer>
