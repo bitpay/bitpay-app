@@ -238,7 +238,7 @@ const Amount = () => {
           <ActionContainer>
             <Button
               state={buttonState}
-              disabled={!amount}
+              disabled={!+amount}
               onPress={goToConfirm}>
               Continue
             </Button>
