@@ -68,7 +68,7 @@ const UpdateCardNameScreen: React.FC<
         if (navigation.canGoBack()) {
           navigation.goBack();
         } else {
-          // TODO: go to settings, need to refactor settings params to take an id, then compute card group
+          navigation.navigate('Settings', {id: card.id});
         }
         setButtonState(undefined);
       }, 1500);
