@@ -1,12 +1,13 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Action, applyMiddleware, combineReducers, createStore} from 'redux';
 import {composeWithDevTools} from 'redux-devtools-extension';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {createLogger} from 'redux-logger'; // https://github.com/LogRocket/redux-logger
 import {getUniqueId} from 'react-native-device-info';
 import {persistStore, persistReducer} from 'redux-persist'; // https://github.com/rt2zz/redux-persist
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
 import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
+import {Selector} from 'reselect';
 import {bindWalletClient, bindWalletKeys} from './transforms/transforms';
 
 import {
@@ -129,7 +130,7 @@ const getStore = () => {
   const middlewares = [
     thunkMiddleware,
     createLogger({
-      predicate: (getState, action) =>
+      predicate: (_getState, action) =>
         ![
           'LOG/ADD_LOG',
           'APP/SET_CURRENT_ROUTE',
@@ -186,6 +187,8 @@ const getStore = () => {
 };
 
 export type RootState = ReturnType<typeof rootReducer>;
+
+export type AppSelector<T = any> = Selector<RootState, T>;
 
 export type Effect<ReturnType = void> = ThunkAction<
   ReturnType,
