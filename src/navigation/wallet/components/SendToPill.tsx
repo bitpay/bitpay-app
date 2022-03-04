@@ -12,7 +12,6 @@ interface Props {
 }
 
 const PillContainer = styled.Pressable`
-  width: 150px;
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   flex-direction: row;
   border-radius: 40px;
@@ -22,7 +21,6 @@ const PillContainer = styled.Pressable`
 `;
 
 const PillText = styled(H7)`
-  width: 95px;
   padding: 0 5px;
 `;
 
