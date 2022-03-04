@@ -15,6 +15,6 @@ export const HeaderTitle = styled(BaseText)`
 export const IconLabel = styled(H7)`
   padding-right: 12px;
   padding-left: 6px;
-  padding-top: ${Platform.OS === 'ios' ? '4px' : 0};
+  padding-top: ${Platform.OS === 'ios' ? '2px' : 0};
   color: ${props => props.theme.colors.text};
 `;

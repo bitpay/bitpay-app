@@ -28,14 +28,14 @@ import ButtonSpinner from './ButtonSpinner';
 
 export type ButtonStyle = 'primary' | 'secondary' | undefined;
 export type ButtonType = 'button' | 'link' | 'pill' | undefined;
-
+export type ButtonState = 'loading' | 'success' | 'failed' | null | undefined;
 interface ButtonProps extends BaseButtonProps {
   buttonStyle?: ButtonStyle;
   buttonType?: ButtonType;
   onPress?: () => any;
   disabled?: boolean;
   debounceTime?: number;
-  state?: 'loading' | 'success' | 'failed' | null | undefined;
+  state?: ButtonState;
 }
 
 interface ButtonOptionProps {

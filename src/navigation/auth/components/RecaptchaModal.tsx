@@ -15,6 +15,10 @@ export interface CaptchaRef {
 interface RecaptchaModalProps {
   isVisible: boolean;
 
+  theme?: 'light' | 'dark';
+
+  size?: 'normal' | 'compact' | 'invisible';
+
   /**
    * The public nocaptcha sitekey. The provided baseUrl must be one of the allowed domains for sitekey in order to function correctly.
    */
@@ -60,6 +64,8 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
   (props, ref) => {
     const {
       isVisible,
+      theme,
+      size,
       baseUrl,
       sitekey,
       onResponse,
@@ -193,6 +199,10 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
                     window.onCaptchaLoad = () => {
                       window.grecaptcha.render('${RECAPTCHA_ID}', {
                         sitekey: '${sitekey}',
+
+                        ${theme ? `theme: '${theme}',` : ''}
+
+                        ${size ? `size: '${size}',` : ''}
 
                         callback: (gCaptchaResponse) => {
                           window.ReactNativeWebView.postMessage(JSON.stringify({

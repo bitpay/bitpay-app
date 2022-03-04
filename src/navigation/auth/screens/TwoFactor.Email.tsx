@@ -94,7 +94,7 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
   }, [emailPairingStatus, navigation, dispatch]);
 
   return (
-    <AuthFormContainer header="Check Your Inbox">
+    <AuthFormContainer>
       {isTimedOut && (
         <>
           <AuthFormParagraph>

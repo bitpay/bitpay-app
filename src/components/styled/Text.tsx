@@ -122,13 +122,9 @@ export const Exp = (props: ExponentProps) => {
 };
 
 // Nav
-export const HeaderTitle = styled(BaseText)`
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 30px;
-  letter-spacing: 0;
-`;
+export const HeaderTitle = styled(H5).attrs(() => ({
+  bold: true,
+}))``;
 
 export const HeaderSubtitle = styled(BaseText)`
   font-size: 16px;
