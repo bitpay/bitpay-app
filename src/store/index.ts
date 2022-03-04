@@ -8,7 +8,11 @@ import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
 import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
 import {Selector} from 'reselect';
-import {bindWalletClient, bindWalletKeys} from './transforms/transforms';
+import {
+  bindWalletClient,
+  bindWalletKeys,
+  transformCircular,
+} from './transforms/transforms';
 
 import {
   appReducer,
@@ -52,6 +56,12 @@ import {
   ContactState,
 } from './contact/contact.reducer';
 import {ContactActionType} from './contact/contact.types';
+import {
+  walletConnectReducer,
+  walletConnectReduxPersistBlackList,
+  WalletConnectState,
+} from './wallet-connect/wallet-connect.reducer';
+import {WalletConnectActionType} from './wallet-connect/wallet-connect.types';
 
 const basePersistConfig = {
   storage: AsyncStorage,
@@ -121,6 +131,15 @@ const reducers = {
       blacklist: ContactReduxPersistBlackList,
     },
     contactReducer,
+  ),
+  WALLET_CONNECT: persistReducer<WalletConnectState, WalletConnectActionType>(
+    {
+      storage: AsyncStorage,
+      key: 'WALLET_CONNECT',
+      transforms: [transformCircular],
+      blacklist: walletConnectReduxPersistBlackList,
+    },
+    walletConnectReducer,
   ),
 };
 

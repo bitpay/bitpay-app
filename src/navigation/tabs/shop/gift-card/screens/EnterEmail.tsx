@@ -46,7 +46,7 @@ const EnterEmail = ({
   });
 
   return (
-    <AuthFormContainer header={'Enter your email address'}>
+    <AuthFormContainer>
       <AuthFormParagraph>
         Your email address will be used for payment notifications and receipts.
       </AuthFormParagraph>

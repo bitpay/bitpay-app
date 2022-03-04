@@ -47,13 +47,13 @@ const Scan = () => {
       }}
       onBarCodeRead={debounce(
         ({data}) => {
+          navigationRef.goBack();
           // if specific handler is passed use that else use generic self deriving handler
           if (contextHandler) {
             contextHandler(data);
           } else {
             dispatch(incomingData(data));
           }
-          navigationRef.goBack();
         },
         500,
         {

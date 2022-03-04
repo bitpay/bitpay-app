@@ -2,15 +2,14 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
-import {Keyboard, TextInput} from 'react-native';
+import {Keyboard, SafeAreaView, TextInput} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import styled from 'styled-components/native';
 import * as yup from 'yup';
 import AlertBox from '../../../components/alert-box/AlertBox';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {BaseText} from '../../../components/styled/Text';
+import {Link} from '../../../components/styled/Text';
 import {Network} from '../../../constants';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {navigationRef, RootStacks} from '../../../Root';
@@ -22,40 +21,20 @@ import {sleep} from '../../../utils/helper-methods';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
 import {AuthStackParamList} from '../AuthStack';
 import AuthFormContainer, {
+  AuthActionRow,
   AuthActionsContainer,
+  AuthActionText,
   AuthRowContainer,
 } from '../components/AuthFormContainer';
 import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
 
-export type LoginSignupParamList = {
-  context: 'login' | 'signup';
-  onLoginSuccess?: ((...args: any[]) => any) | undefined;
-};
+export type LoginScreenParamList =
+  | {
+      onLoginSuccess?: ((...args: any[]) => any) | undefined;
+    }
+  | undefined;
 
-type LoginSignupScreenProps = StackScreenProps<
-  AuthStackParamList,
-  'LoginSignup'
->;
-
-const PrimaryActionContainer = styled.View`
-  margin-bottom: 20px;
-`;
-
-const SecondaryActionContainer = styled.View`
-  width: 100%;
-`;
-
-const Row = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-`;
-
-const LoginText = styled(BaseText)`
-  color: ${({theme}) => theme.colors.description};
-  font-size: 18px;
-`;
+type LoginScreenProps = StackScreenProps<AuthStackParamList, 'Login'>;
 
 const schema = yup.object().shape({
   email: yup.string().email().required(),
@@ -67,7 +46,7 @@ interface LoginFormFieldValues {
   password: string;
 }
 
-const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
+const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   const dispatch = useDispatch();
   const {
     control,
@@ -88,7 +67,7 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
   const [isCaptchaModalVisible, setCaptchaModalVisible] = useState(false);
   const passwordRef = useRef<TextInput>(null);
   const captchaRef = useRef<CaptchaRef>(null);
-  const {context, onLoginSuccess} = route.params;
+  const {onLoginSuccess} = route.params || {};
 
   useEffect(() => {
     dispatch(BitPayIdEffects.startFetchSession());
@@ -142,36 +121,10 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
     }
   });
 
-  const onAlreadyHaveAccount = () => {
-    navigation.setParams({context: 'login'});
-  };
-
   const onTroubleLoggingIn = () => {
     // TODO
     console.log('trouble logging in');
   };
-
-  let header: string;
-  let secondaryAction: React.ReactElement;
-
-  if (context === 'login') {
-    header = 'Welcome back!';
-    secondaryAction = (
-      <Button buttonType={'link'} onPress={() => onTroubleLoggingIn()}>
-        Trouble logging in?
-      </Button>
-    );
-  } else {
-    header = 'Create Account';
-    secondaryAction = (
-      <Row>
-        <LoginText>Already have an account?</LoginText>
-        <Button buttonType={'link'} onPress={() => onAlreadyHaveAccount()}>
-          Log In
-        </Button>
-      </Row>
-    );
-  }
 
   const onCaptchaResponse = async (gCaptchaResponse: string) => {
     const {email, password} = getValues();
@@ -186,77 +139,96 @@ const LoginSignup: React.FC<LoginSignupScreenProps> = ({navigation, route}) => {
   };
 
   return (
-    <AuthFormContainer header={header}>
-      {loginStatus === 'failed' ? (
+    <SafeAreaView>
+      <AuthFormContainer>
+        {loginStatus === 'failed' ? (
+          <AuthRowContainer>
+            <AlertBox type="warning">
+              {loginError ||
+                'Could not log in. Please review your information and try again.'}
+            </AlertBox>
+          </AuthRowContainer>
+        ) : null}
+
         <AuthRowContainer>
-          <AlertBox type="warning">
-            {loginError ||
-              'Could not log in. Please review your information and try again.'}
-          </AlertBox>
+          <Controller
+            control={control}
+            render={({field: {onChange, onBlur, value}}) => (
+              <BoxInput
+                placeholder={'satoshi@example.com'}
+                label={'EMAIL'}
+                onBlur={onBlur}
+                onChangeText={(text: string) => onChange(text)}
+                error={errors.email?.message}
+                value={value}
+                returnKeyType="next"
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                blurOnSubmit={false}
+              />
+            )}
+            name="email"
+            defaultValue=""
+          />
         </AuthRowContainer>
-      ) : null}
 
-      <AuthRowContainer>
-        <Controller
-          control={control}
-          render={({field: {onChange, onBlur, value}}) => (
-            <BoxInput
-              placeholder={'satoshi@example.com'}
-              label={'EMAIL'}
-              onBlur={onBlur}
-              onChangeText={(text: string) => onChange(text)}
-              error={errors.email?.message}
-              value={value}
-              returnKeyType="next"
-              onSubmitEditing={() => passwordRef.current?.focus()}
-              blurOnSubmit={false}
-            />
-          )}
-          name="email"
-          defaultValue=""
+        <AuthRowContainer>
+          <Controller
+            control={control}
+            render={({field: {onChange, onBlur, value}}) => (
+              <BoxInput
+                ref={passwordRef}
+                placeholder={'strongPassword123'}
+                label={'PASSWORD'}
+                type={'password'}
+                onBlur={onBlur}
+                onChangeText={(text: string) => onChange(text)}
+                error={errors.password?.message}
+                value={value}
+                onSubmitEditing={onSubmit}
+              />
+            )}
+            name="password"
+            defaultValue=""
+          />
+        </AuthRowContainer>
+
+        <AuthActionsContainer>
+          <AuthActionRow>
+            <Button onPress={onSubmit}>Log In</Button>
+          </AuthActionRow>
+
+          <AuthActionRow>
+            <AuthActionText>
+              Don't have an account?{' '}
+              <Link
+                onPress={() => {
+                  navigation.navigate('CreateAccount');
+                }}>
+                Create Account
+              </Link>
+            </AuthActionText>
+          </AuthActionRow>
+
+          <AuthActionRow>
+            <AuthActionText>
+              <Link onPress={() => onTroubleLoggingIn()}>
+                Trouble logging in?
+              </Link>
+            </AuthActionText>
+          </AuthActionRow>
+        </AuthActionsContainer>
+
+        <RecaptchaModal
+          isVisible={isCaptchaModalVisible}
+          ref={captchaRef}
+          sitekey={session.noCaptchaKey}
+          baseUrl={BASE_BITPAY_URLS[network]}
+          onResponse={onCaptchaResponse}
+          onCancel={onCaptchaCancel}
         />
-      </AuthRowContainer>
-
-      <AuthRowContainer>
-        <Controller
-          control={control}
-          render={({field: {onChange, onBlur, value}}) => (
-            <BoxInput
-              ref={passwordRef}
-              placeholder={'strongPassword123'}
-              label={'PASSWORD'}
-              type={'password'}
-              onBlur={onBlur}
-              onChangeText={(text: string) => onChange(text)}
-              error={errors.password?.message}
-              value={value}
-              onSubmitEditing={onSubmit}
-            />
-          )}
-          name="password"
-          defaultValue=""
-        />
-      </AuthRowContainer>
-
-      <AuthActionsContainer>
-        <PrimaryActionContainer>
-          <Button onPress={onSubmit}>
-            {context === 'login' ? 'Log In' : 'Create Account'}
-          </Button>
-        </PrimaryActionContainer>
-        <SecondaryActionContainer>{secondaryAction}</SecondaryActionContainer>
-      </AuthActionsContainer>
-
-      <RecaptchaModal
-        isVisible={isCaptchaModalVisible}
-        ref={captchaRef}
-        sitekey={session.noCaptchaKey}
-        baseUrl={BASE_BITPAY_URLS[network]}
-        onResponse={onCaptchaResponse}
-        onCancel={onCaptchaCancel}
-      />
-    </AuthFormContainer>
+      </AuthFormContainer>
+    </SafeAreaView>
   );
 };
 
-export default LoginSignup;
+export default LoginScreen;

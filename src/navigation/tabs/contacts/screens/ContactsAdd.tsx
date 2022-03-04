@@ -308,6 +308,7 @@ const ContactsAdd: React.FC = () => {
               onChangeText={onChange}
               error={errors.name?.message}
               value={value}
+              autoCorrect={false}
             />
           )}
           name="name"

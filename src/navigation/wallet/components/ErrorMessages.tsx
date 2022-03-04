@@ -172,3 +172,110 @@ export const Mismatch = (action: () => void): BottomNotificationConfig => {
     ],
   };
 };
+
+export const UnconfirmedInputs = (
+  action: () => void,
+): BottomNotificationConfig => {
+  return {
+    type: 'error',
+    title: 'Unconfirmed inputs',
+    message:
+      ' Be careful. Some inputs of this transaction have no confirmations. Please wait until they are confirmed.',
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: 'View Details',
+        action: () => {
+          action();
+        },
+        primary: true,
+      },
+    ],
+  };
+};
+
+export const RbfTransaction = (
+  speedUp: () => void,
+  viewDetails: () => void,
+): BottomNotificationConfig => {
+  return {
+    type: 'error',
+    title: 'RBF transaction',
+    message:
+      'Be careful. Until it confirms, the transaction could be replaced/redirected by the sender. You can try to speed it up by using a higher fee',
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: 'Speed up transaction',
+        action: () => {
+          speedUp();
+        },
+        primary: true,
+      },
+      {
+        text: 'View details',
+        action: () => {
+          viewDetails();
+        },
+        primary: false,
+      },
+    ],
+  };
+};
+
+export const SpeedUpTransaction = (
+  speedUp: () => void,
+  viewDetails: () => void,
+): BottomNotificationConfig => {
+  return {
+    type: 'warning',
+    title: 'Transaction still unconfirmed',
+    message:
+      'This transaction is taking longer than usual to confirm. You can try to speed it up by using a higher fee.',
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: 'Speed up transaction',
+        action: () => {
+          speedUp();
+        },
+        primary: true,
+      },
+      {
+        text: 'View details',
+        action: () => {
+          viewDetails();
+        },
+        primary: false,
+      },
+    ],
+  };
+};
+
+export const SpeedUpEthTransaction = (
+  speedUp: () => void,
+  viewDetails: () => void,
+): BottomNotificationConfig => {
+  return {
+    type: 'warning',
+    title: 'Transaction unconfirmed',
+    message: 'You can try to speed it up by using a higher fee',
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: 'Speed up transaction',
+        action: () => {
+          speedUp();
+        },
+        primary: true,
+      },
+      {
+        text: 'View details',
+        action: () => {
+          viewDetails();
+        },
+        primary: false,
+      },
+    ],
+  };
+};

@@ -1,6 +1,6 @@
 import Pbkdf2 from 'pbkdf2';
 
-export const generateSalt = async () => {
+export const generateSalt = () => {
   const salt = Pbkdf2.pbkdf2Sync(
     Math.random().toString(),
     Math.random().toString(),

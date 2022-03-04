@@ -69,6 +69,9 @@ import MerchantStack, {
 } from './navigation/tabs/shop/merchant/MerchantStack';
 import BpDevtools from './components/bp-devtools/BpDevtools';
 import {DEVTOOLS_ENABLED} from './constants/config';
+import ConnectionsSettingsStack, {
+  ConnectionsSettingsStackParamList,
+} from './navigation/tabs/settings/connections/ConnectionsStack';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -85,6 +88,7 @@ export type RootStackParamList = {
   Merchant: NavigatorScreenParams<MerchantStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
   SecuritySettings: NavigatorScreenParams<SecuritySettingsStackParamList>;
+  ConnectionSettings: NavigatorScreenParams<ConnectionsSettingsStackParamList>;
   Contacts: NavigatorScreenParams<ContactsStackParamList>;
   NotificationSettings: NavigatorScreenParams<NotificationSettingsStackParamList>;
   About: NavigatorScreenParams<AboutStackParamList>;
@@ -109,6 +113,7 @@ export enum RootStacks {
   // SETTINGS
   GENERAL_SETTINGS = 'GeneralSettings',
   SECURITY_SETTINGS = 'SecuritySettings',
+  CONNECTION_SETTINGS = 'ConnectionSettings',
   NOTIFICATION_SETTINGS = 'NotificationSettings',
   ABOUT = 'About',
   BUY_CRYPTO = 'BuyCrypto',
@@ -127,6 +132,7 @@ export type NavScreenParams = NavigatorScreenParams<
     MerchantStackParamList &
     GeneralSettingsStackParamList &
     SecuritySettingsStackParamList &
+    ConnectionsSettingsStackParamList &
     ContactsStackParamList &
     NotificationSettingsStackParamList &
     AboutStackParamList &
@@ -306,6 +312,10 @@ export default () => {
               component={SecuritySettingsStack}
             />
             <Root.Screen name={RootStacks.CONTACTS} component={ContactsStack} />
+            <Root.Screen
+              name={RootStacks.CONNECTION_SETTINGS}
+              component={ConnectionsSettingsStack}
+            />
             <Root.Screen
               name={RootStacks.NOTIFICATION_SETTINGS}
               component={NotificationSettingsStack}
