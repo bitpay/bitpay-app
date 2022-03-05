@@ -168,9 +168,8 @@ const KeySettings = () => {
           />
         ))}
 
-        <VerticalPadding>
-          <Button
-            buttonType={'link'}
+        <VerticalPadding style={{alignItems: 'center'}}>
+          <Link
             onPress={() => {
               haptic('impactLight');
               navigation.navigate('Wallet', {
@@ -178,8 +177,8 @@ const KeySettings = () => {
                 params: {context: 'addWallet', key},
               });
             }}>
-            Add a wallet
-          </Button>
+            Create Account
+          </Link>
         </VerticalPadding>
 
         <VerticalPadding>
