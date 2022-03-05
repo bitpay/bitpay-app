@@ -22,6 +22,10 @@ const ActionContainer = styled.View`
   margin: 20px 0;
 `;
 
+const Row = styled.View`
+  flex-direction: row;
+`;
+
 const RequestSpecificAmount = () => {
   const route =
     useRoute<RouteProp<WalletStackParamList, 'RequestSpecificAmount'>>();
@@ -40,8 +44,8 @@ const RequestSpecificAmount = () => {
   return (
     <SafeAreaView>
       <AmountContainer>
-        <View>
-          <AmountHeroContainer>
+        <AmountHeroContainer>
+          <Row>
             <AmountText
               numberOfLines={1}
               ellipsizeMode={'tail'}
@@ -51,8 +55,8 @@ const RequestSpecificAmount = () => {
             <CurrencySuperScript>
               <CurrencyText>{currencyAbbreviation.toUpperCase()}</CurrencyText>
             </CurrencySuperScript>
-          </AmountHeroContainer>
-        </View>
+          </Row>
+        </AmountHeroContainer>
 
         <View>
           <VirtualKeyboard onChange={setAmount} reset={reset} />

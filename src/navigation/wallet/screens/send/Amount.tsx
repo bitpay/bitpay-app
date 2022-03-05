@@ -75,13 +75,14 @@ export const AmountEquivText = styled(AmountText)`
 
 export const CurrencySuperScript = styled.View`
   position: absolute;
-  right: -15%;
   top: 10px;
+  right: -20px;
 `;
 
 export const CurrencyText = styled(BaseText)`
   font-size: 20px;
   color: ${({theme}) => theme.colors.text};
+  position: absolute;
 `;
 
 export const AmountContainer = styled.View`
@@ -210,7 +211,12 @@ const Amount = () => {
       <AmountContainer>
         <AmountHeroContainer>
           <Row>
-            <AmountText>{displayAmount || 0}</AmountText>
+            <AmountText
+              numberOfLines={1}
+              ellipsizeMode={'tail'}
+              bigAmount={displayAmount?.length > 8}>
+              {displayAmount || 0}
+            </AmountText>
             <CurrencySuperScript>
               <CurrencyText>{currency}</CurrencyText>
             </CurrencySuperScript>
