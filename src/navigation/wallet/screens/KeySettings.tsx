@@ -26,7 +26,6 @@ import {
 import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
 import WalletSettingsRow from '../../../components/list/WalletSettingsRow';
-import Button from '../../../components/button/Button';
 import {SlateDark, White} from '../../../styles/colors';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {useDispatch} from 'react-redux';
