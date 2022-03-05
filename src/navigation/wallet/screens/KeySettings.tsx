@@ -177,7 +177,7 @@ const KeySettings = () => {
                 params: {context: 'addWallet', key},
               });
             }}>
-            Create Account
+            Add a wallet
           </Link>
         </VerticalPadding>
 
