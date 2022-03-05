@@ -8,7 +8,7 @@ import {NeutralSlate} from '../../../../styles/colors';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
 import {RootState} from '../../../../store';
-import {formatFiatAmount} from '../../../../utils/helper-methods';
+import {formatFiatAmount, sleep} from '../../../../utils/helper-methods';
 import {Key} from '../../../../store/wallet/wallet.models';
 import debounce from 'lodash.debounce';
 import {
@@ -40,8 +40,8 @@ import {
 import {Currencies} from '../../../../constants/currencies';
 import {
   useAppDispatch,
-  useLogger,
   useAppSelector,
+  useLogger,
 } from '../../../../utils/hooks';
 import {
   BchLegacyAddressInfo,
@@ -54,6 +54,10 @@ import {
   GetCoinAndNetwork,
   TranslateToBchCashAddress,
 } from '../../../../store/wallet/effects/address/address';
+import {
+  createProposalAndBuildTxDetails,
+  handleCreateTxProposalError,
+} from '../../../../store/wallet/effects/send/send';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -302,22 +306,75 @@ const SendTo = () => {
 
   const onSendToWallet = async (selectedWallet: KeyWallet) => {
     try {
-      const address = await dispatch<Promise<string>>(
-        createWalletAddress({wallet: selectedWallet, newAddress: false}),
-      );
+      const {
+        credentials,
+        id: walletId,
+        keyId,
+        walletName,
+        receiveAddress,
+      } = selectedWallet;
 
-      const {credentials, id: walletId, keyId, walletName} = selectedWallet;
+      let address = receiveAddress;
+
+      if (!address) {
+        dispatch(
+          startOnGoingProcessModal(OnGoingProcessMessages.GENERATING_ADDRESS),
+        );
+        address = await dispatch<Promise<string>>(
+          createWalletAddress({wallet: selectedWallet, newAddress: false}),
+        );
+        dispatch(dismissOnGoingProcessModal());
+      }
+
+      const recipient = {
+        type: 'wallet',
+        name: walletName || credentials.walletName,
+        walletId,
+        keyId,
+        address,
+      };
 
       navigation.navigate('Wallet', {
         screen: 'Amount',
         params: {
-          wallet,
-          recipient: {
-            type: 'wallet',
-            name: walletName || credentials.walletName,
-            walletId,
-            keyId,
-            address,
+          currencyAbbreviation: wallet.currencyAbbreviation.toUpperCase(),
+          contextHandler: async (amount, setButtonState, opts) => {
+            try {
+              setButtonState('loading');
+              const {txDetails, txp} = await dispatch(
+                createProposalAndBuildTxDetails({
+                  wallet,
+                  recipient,
+                  amount: Number(amount),
+                }),
+              );
+              setButtonState('success');
+              await sleep(300);
+              navigation.navigate('Wallet', {
+                screen: 'Confirm',
+                params: {wallet, recipient, txp, txDetails},
+              });
+            } catch (err: any) {
+              setButtonState('failed');
+              const [errorMessageConfig] = await Promise.all([
+                handleCreateTxProposalError(err),
+                sleep(400),
+              ]);
+              dispatch(
+                showBottomNotificationModal({
+                  ...errorMessageConfig,
+                  enableBackdropDismiss: false,
+                  actions: [
+                    {
+                      text: 'OK',
+                      action: () => {
+                        setButtonState(undefined);
+                      },
+                    },
+                  ],
+                }),
+              );
+            }
           },
         },
       });

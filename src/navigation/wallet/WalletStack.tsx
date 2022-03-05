@@ -32,7 +32,7 @@ import TermsOfUse, {
   TermsOfUseParamList,
 } from '../onboarding/screens/TermsOfUse';
 import AddWallet, {AddWalletParamList} from './screens/AddWallet';
-import Amount, {AmountParamList} from './screens/send/Amount';
+import Amount, {AmountParamList} from './screens/Amount';
 import SendTo from './screens/send/SendTo';
 import Confirm, {ConfirmParamList} from './screens/send/Confirm';
 import CreateMultisig, {CreateMultisigProps} from './screens/CreateMultisig';
@@ -40,10 +40,7 @@ import JoinMultisig, {JoinMultisigParamList} from './screens/JoinMultisig';
 import Copayers from './screens/Copayers';
 import AddingOptions, {AddingOptionsParamList} from './screens/AddingOptions';
 import UpdateKeyOrWalletName from './screens/UpdateKeyOrWalletName';
-import RequestSpecificAmount from './screens/request-specific-amount/RequestSpecificAmount';
 import RequestSpecificAmountQR from './screens/request-specific-amount/RequestSpecificAmountQR';
-import haptic from '../../components/haptic-feedback/haptic';
-import Button from '../../components/button/Button';
 import TransactionDetails from './screens/TransactionDetails';
 
 export type WalletStackParamList = {
@@ -75,7 +72,6 @@ export type WalletStackParamList = {
   JoinMultisig: JoinMultisigParamList | undefined;
   Copayers: {wallet: WalletModel; status: _Credentials};
   AddingOptions: AddingOptionsParamList;
-  RequestSpecificAmount: {wallet: WalletModel};
   RequestSpecificAmountQR: {wallet: WalletModel; requestAmount: number};
   TransactionDetails: {wallet: WalletModel; transaction: any};
 };
@@ -105,7 +101,6 @@ export enum WalletScreens {
   JOIN_MULTISIG = 'JoinMultisig',
   COPAYERS = 'Copayers',
   ADDING_OPTIONS = 'AddingOptions',
-  REQUEST_SPECIFIC_AMOUNT = 'RequestSpecificAmount',
   REQUEST_SPECIFIC_AMOUNT_QR = 'RequestSpecificAmountQR',
   TRANSACTION_DETAILS = 'TransactionDetails',
 }
@@ -242,10 +237,6 @@ const WalletStack = () => {
         <Wallet.Screen
           name={WalletScreens.ADDING_OPTIONS}
           component={AddingOptions}
-        />
-        <Wallet.Screen
-          name={WalletScreens.REQUEST_SPECIFIC_AMOUNT}
-          component={RequestSpecificAmount}
         />
         <Wallet.Screen
           options={{
