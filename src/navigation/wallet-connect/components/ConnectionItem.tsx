@@ -19,7 +19,7 @@ import {
   IconContainer,
 } from '../styled/WalletConnectContainers';
 import TrashIcon from '../../../../assets/img/wallet-connect/trash-icon.svg';
-import {Image} from 'react-native';
+import FastImage from 'react-native-fast-image';
 import {IconLabel} from '../styled/WalletConnectText';
 import NestedArrow from '../../../../assets/img/nested-arrow.svg';
 import styled from 'styled-components/native';
@@ -64,7 +64,7 @@ export default ({session}: {session: IWalletConnectSession}) => {
           {peerMeta && peerMeta.icons[0] ? (
             <>
               <IconContainer>
-                <Image
+                <FastImage
                   source={{uri: peerMeta.icons[0]}}
                   style={{width: 37, height: 37}}
                 />

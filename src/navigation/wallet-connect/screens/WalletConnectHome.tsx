@@ -18,7 +18,8 @@ import {
   WalletConnectContainer,
 } from '../styled/WalletConnectContainers';
 import {RootState} from '../../../store';
-import {Image, View} from 'react-native';
+import {View} from 'react-native';
+import FastImage from 'react-native-fast-image';
 import {sleep} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
@@ -45,13 +46,15 @@ const SummaryContainer = styled.View`
 const NoteContainer = styled.TouchableOpacity<{isDappUri?: boolean}>`
   background-color: ${props => (props.theme.dark ? LightBlack : NeutralSlate)};
   border-radius: 40px;
-  height: 37px;
   max-width: ${({isDappUri}) => (isDappUri ? '175px' : '126px')};
-  justify-content: flex-start;
-  padding: 0 10px;
+  justify-content: center;
   flex-direction: row;
   align-items: center;
-  margin-left: 2px;
+  padding: 10px 20px;
+`;
+
+const NoteLabel = styled(H7)`
+  margin-left: 5px;
 `;
 
 const PRContainer = styled.View`
@@ -159,14 +162,14 @@ const WalletConnectHome = () => {
                       : null
                   }>
                   <IconContainer>
-                    <Image
+                    <FastImage
                       source={{uri: session.peerMeta.icons[0]}}
                       style={{width: 18, height: 18}}
                     />
                   </IconContainer>
-                  <IconLabel numberOfLines={1} ellipsizeMode={'tail'}>
+                  <NoteLabel numberOfLines={1} ellipsizeMode={'tail'}>
                     {session.peerMeta.url.replace('https://', '')}
-                  </IconLabel>
+                  </NoteLabel>
                 </NoteContainer>
               </ClipboardContainer>
             ) : null}
@@ -187,9 +190,9 @@ const WalletConnectHome = () => {
                   <IconContainer>
                     <EthIcon width={18} height={18} />
                   </IconContainer>
-                  <IconLabel numberOfLines={1} ellipsizeMode={'middle'}>
+                  <NoteLabel numberOfLines={1} ellipsizeMode={'middle'}>
                     {session.accounts[0]}
-                  </IconLabel>
+                  </NoteLabel>
                 </NoteContainer>
               </ClipboardContainer>
             ) : null}
@@ -221,7 +224,7 @@ const WalletConnectHome = () => {
                       {session && session.peerMeta ? (
                         <>
                           <IconContainer>
-                            <Image
+                            <FastImage
                               source={{uri: session.peerMeta.icons[0]}}
                               style={{width: 25, height: 25}}
                             />
