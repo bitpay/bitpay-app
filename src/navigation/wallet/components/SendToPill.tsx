@@ -16,8 +16,9 @@ const PillContainer = styled.Pressable`
   flex-direction: row;
   border-radius: 40px;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 15px;
+  justify-content: center;
+  padding: 10px 20px;
+  max-width: 100px;
 `;
 
 const PillText = styled(H7)`

@@ -13,7 +13,7 @@ export const GetPrecision = (currencyAbbreviation: string) => {
 };
 
 export const IsUtxoCoin = (currencyAbbreviation: string): boolean => {
-  return Currencies[currencyAbbreviation].properties.isUtxo;
+  return ['btc', 'bch', 'doge', 'ltc'].includes(currencyAbbreviation);
 };
 
 export const IsCustomERCToken = (currencyAbbreviation: string) => {
