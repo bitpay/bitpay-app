@@ -59,7 +59,7 @@ import TransactionDetailSkeleton from '../components/TransactionDetailSkeleton';
 import {sleep} from '../../../utils/helper-methods';
 import {GetAmFormatDate} from '../../../store/wallet/utils/time';
 
-const TxsDetailsContainer = styled.SafeAreaView`
+const TxsDetailsContainer = styled.View`
   flex: 1;
 `;
 

@@ -91,11 +91,11 @@ export interface AmountParamList {
     amount: string,
     // for toggling sync button 'loading' | 'success' | 'failed' | null | undefined;
     setButtonState: (state: ButtonState) => void,
-    opts?: {sendMax: boolean},
+    opts?: {sendMax?: boolean},
   ) => void;
   currencyAbbreviation: string;
   opts?: {
-    hideSendMax: boolean;
+    hideSendMax?: boolean;
   };
 }
 
