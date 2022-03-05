@@ -112,7 +112,6 @@ const BorderBottom = styled.View`
 
 const SkeletonContainer = styled.View`
   margin-bottom: 20px;
-  height: ${TRANSACTION_ROW_HEIGHT}px;
 `;
 
 const EmptyListContainer = styled.View`
