@@ -19,6 +19,7 @@ const ConnectionItemContainer = styled.View`
   justify-content: flex-start;
   align-items: center;
   flex-direction: row;
+  flex: 1;
 `;
 
 const ConnectionSettingsRoot: React.FC = () => {
