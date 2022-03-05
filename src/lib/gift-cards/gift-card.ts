@@ -9,6 +9,7 @@ import {
   CardConfig,
   GiftCardActivationFee,
 } from '../../store/shop/shop.models';
+import {formatFiatAmount} from '../../utils/helper-methods';
 
 export function getCardConfigFromApiConfigMap(
   availableCardMap: AvailableCardMap,
@@ -93,7 +94,7 @@ export function spreadAmounts(values: Array<number>, currency: string): string {
   let caption = '';
   values.forEach((value: number, index: number) => {
     caption =
-      caption + formatAmount(value, currency, {customPrecision: 'minimal'});
+      caption + formatFiatAmount(value, currency, {customPrecision: 'minimal'});
     if (values.length - index >= 2) {
       caption += ', ';
     }
@@ -125,23 +126,6 @@ export function getGiftCardCurations(
     })
     .filter(curation => curation.giftCards.length);
 }
-
-export const formatAmount = (
-  amount: number,
-  currency: string,
-  opts: {
-    customPrecision?: 'minimal';
-  } = {},
-) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    ...(opts.customPrecision === 'minimal' &&
-      Number.isInteger(amount) && {
-        maximumFractionDigits: 0,
-        minimumFractionDigits: 0,
-      }),
-  }).format(amount);
 
 export function getActivationFee(
   amount: number,
@@ -193,4 +177,8 @@ export function getPhoneCountryCodes(
     .concat(multiplePhoneCodesFlattened)
     .sort((a, b) => (a.name < b.name ? -1 : 1))
     .filter(country => country.name !== 'Antarctica');
+}
+
+export function isSupportedDiscountType(discountType: string) {
+  return ['percentage', 'flatrate'].includes(discountType);
 }
