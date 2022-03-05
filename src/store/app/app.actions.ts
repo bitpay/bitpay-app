@@ -1,11 +1,12 @@
 import {ColorSchemeName} from 'react-native';
-import {AppIdentity} from './app.models';
-import {AppActionType, AppActionTypes} from './app.types';
+import {ContentCard} from 'react-native-appboy-sdk';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
+import {AppIdentity} from './app.models';
+import {AppActionType, AppActionTypes} from './app.types';
 
 export const networkChanged = (network: Network): AppActionType => ({
   type: AppActionTypes.NETWORK_CHANGED,
@@ -135,4 +136,11 @@ export const pinBannedUntil = (
 export const currentPin = (pin: string | undefined): AppActionType => ({
   type: AppActionTypes.CURRENT_PIN,
   payload: pin,
+});
+
+export const brazeContentCardsFetched = (
+  contentCards: ContentCard[],
+): AppActionType => ({
+  type: AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED,
+  payload: {contentCards},
 });

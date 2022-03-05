@@ -1,11 +1,12 @@
 import {ColorSchemeName} from 'react-native';
+import {ContentCard} from 'react-native-appboy-sdk';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
+import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {NavScreenParams, RootStackParamList} from '../../Root';
 import {AppIdentity} from './app.models';
-import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 
 export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
@@ -34,6 +35,7 @@ export enum AppActionTypes {
   PIN_LOCK_ACTIVE = 'APP/PIN_LOCK_ACTIVE',
   CURRENT_PIN = 'APP/CURRENT_PIN',
   PIN_BANNED_UNTIL = 'APP/PIN_BANNED_UNTIL',
+  BRAZE_CONTENT_CARDS_FETCHED = 'APP/BRAZE_CONTENT_CARDS_FETCH',
 }
 
 interface NetworkChanged {
@@ -156,6 +158,11 @@ interface PinBannedUntil {
   payload: number | undefined;
 }
 
+interface BrazeContentCardsFetched {
+  type: typeof AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED;
+  payload: {contentCards: ContentCard[]};
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
@@ -182,4 +189,5 @@ export type AppActionType =
   | DismissPinModal
   | PinLockActive
   | CurrentPin
-  | PinBannedUntil;
+  | PinBannedUntil
+  | BrazeContentCardsFetched;

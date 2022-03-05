@@ -1,14 +1,15 @@
-import {ColorSchemeName} from 'react-native';
 import i18n from 'i18next';
+import {ColorSchemeName} from 'react-native';
+import {ContentCard} from 'react-native-appboy-sdk';
 import {Network} from '../../constants';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {NavScreenParams, RootStackParamList} from '../../Root';
 import {AppIdentity} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
-import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 
 type AppReduxPersistBlackList = [
   'appIsLoading',
@@ -52,6 +53,7 @@ export interface AppState {
   pinLockActive: boolean;
   currentPin: string | undefined;
   pinBannedUntil: number | undefined;
+  brazeContentCards: ContentCard[];
 }
 
 const initialState: AppState = {
@@ -88,6 +90,7 @@ const initialState: AppState = {
   pinLockActive: false,
   currentPin: undefined,
   pinBannedUntil: undefined,
+  brazeContentCards: [],
 };
 
 export const appReducer = (
@@ -248,6 +251,12 @@ export const appReducer = (
         ...state,
         pinBannedUntil: action.payload,
       };
+    case AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED:
+      return {
+        ...state,
+        brazeContentCards: action.payload.contentCards,
+      };
+
     default:
       return state;
   }
