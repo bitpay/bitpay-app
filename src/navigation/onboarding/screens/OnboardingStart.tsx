@@ -1,7 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useRef, useState} from 'react';
-import {StatusBar} from 'react-native';
 import Carousel, {Pagination} from 'react-native-snap-carousel';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
@@ -147,7 +146,6 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
 
   return (
     <OnboardingContainer>
-      <StatusBar barStyle="dark-content" />
       <Carousel
         vertical={false}
         layout={'default'}

@@ -1,13 +1,13 @@
-import React from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
+import React from 'react';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
 } from '../../constants/NavigationOptions';
+import ContactsScreen from './screens/Contacts';
+import ShopScreen from './screens/Shop';
 import StartScreen from './screens/Start';
 import WalletScreen from './screens/Wallet';
-import ShopScreen from './screens/Shop';
-import ContactsScreen from './screens/Contacts';
 
 export type IntroStackParamList = {
   Start: undefined;

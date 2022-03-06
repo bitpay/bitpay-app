@@ -216,7 +216,8 @@ export default () => {
       <StatusBar
         animated={true}
         barStyle={theme.dark ? 'light-content' : 'dark-content'}
-        backgroundColor={theme.colors.background}
+        backgroundColor={'transparent'}
+        translucent={true}
       />
 
       <ThemeProvider theme={theme}>

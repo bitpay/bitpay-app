@@ -1,5 +1,6 @@
-import React from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
+import React from 'react';
+import {ZeroHeightHeader} from '../../../components/styled/Text';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
@@ -28,7 +29,7 @@ const HomeStack = () => {
         name={HomeScreens.Root}
         component={HomeRoot}
         options={{
-          headerShown: false,
+          header: () => <ZeroHeightHeader />,
         }}
       />
     </Home.Navigator>
