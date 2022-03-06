@@ -1,5 +1,5 @@
 import React from 'react';
-import {Text} from 'react-native';
+import {StatusBar, Text} from 'react-native';
 import styled, {css} from 'styled-components/native';
 import {SlateDark, White} from '../../styles/colors';
 
@@ -122,6 +122,14 @@ export const Exp = (props: ExponentProps) => {
 };
 
 // Nav
+/**
+ * Intended to be used with translucent StatusBar (Android) when no header is desired but still want to clear the StatusBar height.
+ */
+export const ZeroHeightHeader = styled.View`
+  background-color: ${({theme}) => theme.colors.background};
+  height: ${StatusBar.currentHeight || 0}px;
+`;
+
 export const HeaderTitle = styled(H5).attrs(() => ({
   bold: true,
 }))``;
