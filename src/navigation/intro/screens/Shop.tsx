@@ -13,6 +13,7 @@ import IntroButton from '../components/intro-button/IntroButton';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import LightBottomTabBarShopSvg from '../../../../assets/img/intro/light/bottom-tabbar-shop.svg';
 import DarkBottomTabBarShopSvg from '../../../../assets/img/intro/dark/bottom-tabbar-shop.svg';
+import FocusedStatusBar from '../../../components/focused-status-bar/FocusedStatusBar';
 const lightBackground = require('../../../../assets/img/intro/light/shop-background.png');
 const darkBackground = require('../../../../assets/img/intro/dark/shop-background.png');
 
@@ -49,6 +50,7 @@ const IntroShop = () => {
   const theme = useTheme();
   return (
     <IntroShopContainer>
+      <FocusedStatusBar barStyle={'light-content'} />
       <BackgroundImage source={theme.dark ? darkBackground : lightBackground} />
       <Overlay />
       <Body>
