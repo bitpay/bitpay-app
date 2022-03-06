@@ -34,8 +34,7 @@ export const SettingsContainer = styled.SafeAreaView`
 `;
 
 export const Settings = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 15px;
+  padding: 10px ${ScreenGutter};
 `;
 
 const BitPayIdSettingsLink = styled(Setting)`
