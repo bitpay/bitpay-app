@@ -104,21 +104,31 @@ const Amount = () => {
   const {contextHandler, currencyAbbreviation, opts} = route.params;
   const navigation = useNavigation();
   const [buttonState, setButtonState] = useState<ButtonState>();
-  // display amount fiat/crypto
-  const [displayAmount, setDisplayAmount] = useState('0');
-  const [displayEquivalentAmount, setDisplayEquivalentAmount] = useState('0');
-  // amount to be sent to proposal creation (sats)
-  const [amount, setAmount] = useState('0');
-  const [currency, setCurrency] = useState(currencyAbbreviation);
   // flag for primary selector type
-  const [isFiat, setIsFiat] = useState(false);
   const [rate, setRate] = useState(0);
+  const [amountConfig, updateAmountConfig] = useState({
+    // display amount fiat/crypto
+    displayAmount: '0',
+    displayEquivalentAmount: '0',
+    // amount to be sent to proposal creation (sats)
+    amount: '0',
+    currency: currencyAbbreviation,
+    primaryIsFiat: false,
+  });
   const swapList = [currencyAbbreviation, 'USD'];
   const allRates = useAppSelector(({WALLET}) => WALLET.rates);
 
+  const {
+    displayAmount,
+    displayEquivalentAmount,
+    amount,
+    currency,
+    primaryIsFiat,
+  } = amountConfig;
+
   useEffect(() => {
     // if added for dev (hot reload)
-    if (!isFiat) {
+    if (!primaryIsFiat) {
       const fiatRate = allRates[currency.toLowerCase()].find(
         r => r.code === 'USD',
       )!.rate;
@@ -134,7 +144,10 @@ const Amount = () => {
   }, [navigation]);
 
   const updateAmount = (_val: string) => {
-    setDisplayAmount(_val);
+    updateAmountConfig(current => ({
+      ...current,
+      displayAmount: _val,
+    }));
 
     const val = Number(_val);
     if (isNaN(val)) {
@@ -145,13 +158,16 @@ const Amount = () => {
       val === 0
         ? '0'
         : ParseAmount(
-            isFiat ? val / rate : val,
+            primaryIsFiat ? val / rate : val,
             currencyAbbreviation.toLowerCase(),
           ).amount;
     const fiatAmount = formatFiatAmount(val * rate, 'USD');
 
-    setDisplayEquivalentAmount(isFiat ? cryptoAmount : fiatAmount);
-    setAmount(cryptoAmount);
+    updateAmountConfig(current => ({
+      ...current,
+      displayEquivalentAmount: primaryIsFiat ? cryptoAmount : fiatAmount,
+      amount: cryptoAmount,
+    }));
   };
 
   useLayoutEffect(() => {
@@ -188,15 +204,22 @@ const Amount = () => {
           </Row>
           <Row>
             <AmountEquivText>
-              {displayEquivalentAmount || 0} {isFiat && currencyAbbreviation}
+              {displayEquivalentAmount || 0}{' '}
+              {primaryIsFiat && currencyAbbreviation}
             </AmountEquivText>
           </Row>
           <SwapButtonContainer>
             <SwapButton
               swapList={swapList}
               onChange={(currency: string) => {
-                setCurrency(currency);
-                setIsFiat(!isFiat);
+                updateAmountConfig(current => ({
+                  ...current,
+                  currency,
+                  primaryIsFiat: !primaryIsFiat,
+                  displayEquivalentAmount: primaryIsFiat
+                    ? formatFiatAmount(0, 'USD')
+                    : '0',
+                }));
               }}
             />
           </SwapButtonContainer>
