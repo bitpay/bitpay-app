@@ -154,3 +154,23 @@ export const brazeContentCardsFetched = (
   type: AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED,
   payload: {contentCards},
 });
+
+export const showBiometricModal = (): AppActionType => ({
+  type: AppActionTypes.SHOW_BIOMETRIC_MODAL,
+});
+
+export const dismissBiometricModal = (): AppActionType => ({
+  type: AppActionTypes.DISMISS_BIOMETRIC_MODAL,
+});
+
+export const biometricLockActive = (active: boolean): AppActionType => ({
+  type: AppActionTypes.BIOMETRIC_LOCK_ACTIVE,
+  payload: active,
+});
+
+export const lockAuthorizedUntil = (
+  authorizedUntil: number | undefined,
+): AppActionType => ({
+  type: AppActionTypes.LOCK_AUTHORIZED_UNTIL,
+  payload: authorizedUntil,
+});

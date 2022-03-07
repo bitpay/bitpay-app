@@ -19,6 +19,9 @@ type AppReduxPersistBlackList = [
   'showPinModal',
   'pinModalConfig',
   'showBottomNotificationModal',
+  'showBiometricModal',
+  'dismissBiometricModal',
+  'checkingBiometric',
 ];
 export const appReduxPersistBlackList: AppReduxPersistBlackList = [
   'appIsLoading',
@@ -28,6 +31,9 @@ export const appReduxPersistBlackList: AppReduxPersistBlackList = [
   'showPinModal',
   'pinModalConfig',
   'showBottomNotificationModal',
+  'showBiometricModal',
+  'dismissBiometricModal',
+  'checkingBiometric',
 ];
 
 export interface AppState {
@@ -58,6 +64,9 @@ export interface AppState {
   defaultLanguage: string;
   showPortfolioValue: boolean;
   brazeContentCards: ContentCard[];
+  showBiometricModal: boolean;
+  biometricLockActive: boolean;
+  lockAuthorizedUntil: number | undefined;
 }
 
 const initialState: AppState = {
@@ -97,6 +106,9 @@ const initialState: AppState = {
   defaultLanguage: i18n.language || 'en',
   showPortfolioValue: true,
   brazeContentCards: [],
+  showBiometricModal: false,
+  biometricLockActive: false,
+  lockAuthorizedUntil: undefined,
 };
 
 export const appReducer = (
@@ -281,6 +293,30 @@ export const appReducer = (
       return {
         ...state,
         brazeContentCards: action.payload.contentCards,
+      };
+
+    case AppActionTypes.SHOW_BIOMETRIC_MODAL:
+      return {
+        ...state,
+        showBiometricModal: true,
+      };
+
+    case AppActionTypes.DISMISS_BIOMETRIC_MODAL:
+      return {
+        ...state,
+        showBiometricModal: false,
+      };
+
+    case AppActionTypes.BIOMETRIC_LOCK_ACTIVE:
+      return {
+        ...state,
+        biometricLockActive: action.payload,
+      };
+
+    case AppActionTypes.LOCK_AUTHORIZED_UNTIL:
+      return {
+        ...state,
+        lockAuthorizedUntil: action.payload,
       };
 
     default:

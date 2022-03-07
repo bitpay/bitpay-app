@@ -16,6 +16,8 @@ import {
   baseNavigatorOptions,
   baseScreenOptions,
 } from './constants/NavigationOptions';
+import {LOCK_AUTHORIZED_TIME} from './constants/Lock';
+import BiometricModal from './components/modal/biometric/BiometricModal';
 import {AppEffects, AppActions} from './store/app';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 import {LogActions} from './store/log';
@@ -193,6 +195,12 @@ export default () => {
   const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
   const pinLockActive = useAppSelector(({APP}) => APP.pinLockActive);
   const showBlur = useAppSelector(({APP}) => APP.showBlur);
+  const biometricLockActive = useAppSelector(
+    ({APP}) => APP.biometricLockActive,
+  );
+  const lockAuthorizedUntil = useAppSelector(
+    ({APP}) => APP.lockAuthorizedUntil,
+  );
 
   // MAIN APP INIT
   useEffect(() => {
@@ -205,19 +213,38 @@ export default () => {
       i18n.changeLanguage(appLanguage);
     }
   }, [appLanguage]);
-
-  // CHECK PIN
+  
+  // CHECK PIN || BIOMETRIC
   useEffect(() => {
     function onAppStateChange(status: AppStateStatus) {
       // status === 'active' when the app goes from background to foreground,
-      // if no app scheme set, rerender in case the system theme has changed
+
+      const showLockOption = () => {
+        if (biometricLockActive) {
+          dispatch(AppActions.showBiometricModal());
+        } else if (pinLockActive) {
+          dispatch(AppActions.showPinModal({type: 'check'}));
+        } else {
+          dispatch(AppActions.showBlur(false));
+        }
+      }
 
       if (onboardingCompleted) {
         if (status === 'active') {
-          if (pinLockActive) {
-            dispatch(AppActions.showPinModal({type: 'check'}));
+          if (lockAuthorizedUntil) {
+            const now = Math.floor(Date.now() / 1000);
+            const totalSecs = lockAuthorizedUntil - now;
+            if (totalSecs < 0) {
+              dispatch(AppActions.lockAuthorizedUntil(undefined));
+              showLockOption();
+            } else {
+              const authorizedUntil =
+                Math.floor(Date.now() / 1000) + LOCK_AUTHORIZED_TIME;
+              dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
+              dispatch(AppActions.showBlur(false));
+            }
           } else {
-            dispatch(AppActions.showBlur(false));
+            showLockOption();
           }
         } else {
           dispatch(AppActions.showBlur(true));
@@ -226,7 +253,7 @@ export default () => {
     }
     AppState.addEventListener('change', onAppStateChange);
     return () => AppState.removeEventListener('change', onAppStateChange);
-  }, [dispatch, onboardingCompleted, pinLockActive]);
+  }, [dispatch, onboardingCompleted, pinLockActive, lockAuthorizedUntil, biometricLockActive]);
 
   // THEME
   useEffect(() => {
@@ -401,6 +428,7 @@ export default () => {
           <DecryptEnterPasswordModal />
           {showBlur && <Blur />}
           <PinModal />
+          <BiometricModal />
         </NavigationContainer>
       </ThemeProvider>
     </SafeAreaProvider>
