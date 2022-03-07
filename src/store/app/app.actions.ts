@@ -2,6 +2,7 @@ import {ColorSchemeName} from 'react-native';
 import {AppIdentity} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
+import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
@@ -108,4 +109,30 @@ export const dismissDecryptPasswordModal = (): AppActionType => ({
 
 export const resetDecryptPasswordConfig = (): AppActionType => ({
   type: AppActionTypes.RESET_DECRYPT_PASSWORD_CONFIG,
+});
+
+export const showPinModal = (config: PinModalConfig): AppActionType => ({
+  type: AppActionTypes.SHOW_PIN_MODAL,
+  payload: config,
+});
+
+export const dismissPinModal = (): AppActionType => ({
+  type: AppActionTypes.DISMISS_PIN_MODAL,
+});
+
+export const pinLockActive = (active: boolean): AppActionType => ({
+  type: AppActionTypes.PIN_LOCK_ACTIVE,
+  payload: active,
+});
+
+export const pinBannedUntil = (
+  bannedUntil: number | undefined,
+): AppActionType => ({
+  type: AppActionTypes.PIN_BANNED_UNTIL,
+  payload: bannedUntil,
+});
+
+export const currentPin = (pin: string | undefined): AppActionType => ({
+  type: AppActionTypes.CURRENT_PIN,
+  payload: pin,
 });

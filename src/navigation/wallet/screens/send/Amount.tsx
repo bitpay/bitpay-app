@@ -23,6 +23,7 @@ import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {formatFiatAmount, sleep} from '../../../../utils/helper-methods';
 import useAppSelector from '../../../../utils/hooks/useAppSelector';
 import {ParseAmount} from '../../../../store/wallet/effects/amount/amount';
+import haptic from '../../../../components/haptic-feedback/haptic';
 
 const SendMax = styled.TouchableOpacity`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
@@ -115,6 +116,7 @@ const Amount = () => {
   const [rate, setRate] = useState(0);
   const swapList = [currencyAbbreviation, 'USD'];
   const allRates = useAppSelector(({WALLET}) => WALLET.rates);
+  const [curVal, setCurVal] = useState('');
 
   useEffect(() => {
     // if added for dev (hot reload)
@@ -204,6 +206,26 @@ const Amount = () => {
         }),
       );
     }
+  }
+
+  const onCellPress = (val: string) => {
+    haptic('impactLight');
+    let currentValue;
+    switch (val) {
+      case 'reset':
+        currentValue = '';
+        break;
+      case 'backspace':
+        currentValue = curVal.slice(0, -1);
+        break;
+      case '.':
+        currentValue = curVal.includes('.') ? curVal : curVal + val;
+        break;
+      default:
+        currentValue = curVal + val;
+    }
+    setCurVal(currentValue);
+    setAmount(currentValue);
   };
 
   return (
@@ -237,10 +259,7 @@ const Amount = () => {
           </SwapButtonContainer>
         </AmountHeroContainer>
         <View>
-          <VirtualKeyboard
-            onChange={val => updateAmount(val)}
-            reset={currency}
-          />
+          <VirtualKeyboard onCellPress={onCellPress} />
           <ActionContainer>
             <Button
               state={buttonState}
