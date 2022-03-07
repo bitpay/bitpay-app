@@ -55,11 +55,12 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
   tx.outputs.forEach((output: any) => {
     const outputAddr = output.toAddress ? output.toAddress : output.address;
     coin = coin || GetCoinAndNetwork(outputAddr, network)?.coin;
+    network = network || GetCoinAndNetwork(outputAddr, network)?.network;
 
     const addressToShow = GetProtocolPrefixAddress(coin, network, outputAddr);
 
     output.addressToShow =
-      addressToShow == 'false' ? 'Unparsed address' : addressToShow;
+      addressToShow === 'false' ? 'Unparsed address' : addressToShow;
 
     output.contactName = GetContactName(outputAddr, contactList);
   });

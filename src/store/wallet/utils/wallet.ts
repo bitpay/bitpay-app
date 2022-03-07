@@ -189,7 +189,7 @@ export const GetProtocolPrefixAddress = (
   address: string,
 ): string | undefined => {
   if (coin !== 'bch') {
-    return;
+    return address;
   }
   const proto: string = GetProtocolPrefix(coin, network);
   const protoAddr: string = proto + ':' + address;
