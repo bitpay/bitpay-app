@@ -1,13 +1,24 @@
 import React from 'react';
-import {Image, ImageProps} from 'react-native';
+import {Image, ImageProps, ImageSourcePropType} from 'react-native';
 import * as Svg from 'react-native-svg';
 import styled from 'styled-components/native';
-import ArrowRight from '../../../assets/img/arrow-right.svg';
-import {White} from '../../styles/colors';
-import Haptic from '../haptic-feedback/haptic';
-import {ScreenGutter} from '../styled/Containers';
-import {BaseText} from '../styled/Text';
-import {OfferProps} from './offer';
+import haptic from '../../../../../components/haptic-feedback/haptic';
+import {ScreenGutter} from '../../../../../components/styled/Containers';
+import {BaseText} from '../../../../../components/styled/Text';
+import {White} from '../../../../../styles/colors';
+import ArrowRight from '../../../../../../assets/img/arrow-right.svg';
+
+export interface Offer {
+  id: number | string;
+  img: ImageSourcePropType;
+  title?: string;
+  description?: string;
+  onPress: () => void;
+}
+
+interface OfferCardProps {
+  offer: Offer;
+}
 
 const OFFER_HEIGHT = 182;
 const OFFER_WIDTH = 260;
@@ -112,10 +123,11 @@ const OfferBackgroundOverlay = () => {
   );
 };
 
-export default ({item}: {item: OfferProps}) => {
-  const {img, title, description, onPress} = item;
+const OfferCard: React.FC<OfferCardProps> = props => {
+  const {offer} = props;
+  const {img, title, description, onPress} = offer;
   const _onPress = () => {
-    Haptic('impactLight');
+    haptic('impactLight');
     onPress();
   };
 
@@ -140,3 +152,5 @@ export default ({item}: {item: OfferProps}) => {
     </OfferCardContainer>
   );
 };
+
+export default OfferCard;

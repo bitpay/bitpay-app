@@ -1,10 +1,11 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
   Image,
   RefreshControl,
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
+import {ContentCard} from 'react-native-appboy-sdk';
 import {useDispatch, useSelector} from 'react-redux';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {RootState} from '../../../store';
@@ -22,7 +23,9 @@ import ExchangeRatesSlides, {
   ExchangeRateProps,
 } from '../../../components/exchange-rate/ExchangeRatesSlides';
 import QuickLinksSlides from '../../../components/quick-links/QuickLinksSlides';
-import OffersSlides from '../../../components/offer/OfferSlides';
+import MockOffers from './components/offers/MockOffers';
+import {Offer} from './components/offers/OfferCard';
+import OffersCarousel from './components/offers/OffersCarousel';
 import {
   ActiveOpacity,
   ScreenGutter,
@@ -31,7 +34,13 @@ import AdvertisementCard from '../../../components/advertisement/AdvertisementCa
 import {AdvertisementList} from '../../../components/advertisement/advertisement';
 import {AppActions} from '../../../store/app';
 import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishModal';
+import {
+  isCaptionedContentCard,
+  isClassicContentCard,
+  isFeaturedMerchant,
+} from '../../../utils/braze';
 import {sleep} from '../../../utils/helper-methods';
+import {useAppSelector} from '../../../utils/hooks';
 import ProfileButton from './components/HeaderProfileButton';
 import ScanButton from './components/HeaderScanButton';
 import {startUpdateAllKeyAndWalletBalances} from '../../../store/wallet/effects/balance/balance';
@@ -75,6 +84,29 @@ export const SectionHeaderContainer = styled.View<{justifyContent?: string}>`
   justify-content: ${({justifyContent}) => justifyContent || 'flex-start'};
 `;
 
+const contentCardToOffer = (contentCard: ContentCard): Offer => {
+  const id = contentCard.id;
+  const uri = contentCard.image;
+  let title = '';
+  let description = '';
+
+  if (
+    isClassicContentCard(contentCard) ||
+    isCaptionedContentCard(contentCard)
+  ) {
+    title = contentCard.title;
+    description = contentCard.cardDescription;
+  }
+
+  return {
+    id,
+    img: {uri},
+    title,
+    description,
+    onPress: () => {}, // TODO: go to merchant card in ShopOnline
+  };
+};
+
 const HomeRoot = () => {
   const dispatch = useDispatch();
   const onboardingCompleted = useSelector(
@@ -95,6 +127,17 @@ const HomeRoot = () => {
   const navigation = useNavigation();
   const theme = useTheme();
   const [refreshing, setRefreshing] = useState(false);
+
+  const allContentCards = useAppSelector(({APP}) => APP.brazeContentCards);
+  const memoizedOffers = useMemo(() => {
+    const featuredMerchants = allContentCards.filter(isFeaturedMerchant);
+
+    if (__DEV__ && !featuredMerchants.length) {
+      return MockOffers;
+    }
+
+    return featuredMerchants.map(contentCardToOffer);
+  }, [allContentCards]);
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
@@ -179,15 +222,19 @@ const HomeRoot = () => {
         <LinkingButtons receive={{cta: () => null}} send={{cta: () => null}} />
 
         {/* ////////////////////////////// LIMITED TIME OFFERS */}
-        <SectionHeaderContainer justifyContent={'space-between'}>
-          <Title>Limited Time Offers</Title>
-          <TouchableOpacity
-            activeOpacity={ActiveOpacity}
-            onPress={() => console.log('offers')}>
-            <HomeLink> See all</HomeLink>
-          </TouchableOpacity>
-        </SectionHeaderContainer>
-        <OffersSlides />
+        {memoizedOffers.length ? (
+          <>
+            <SectionHeaderContainer justifyContent={'space-between'}>
+              <Title>Limited Time Offers</Title>
+              <TouchableOpacity
+                activeOpacity={ActiveOpacity}
+                onPress={() => console.log('offers')}>
+                <HomeLink>See all</HomeLink>
+              </TouchableOpacity>
+            </SectionHeaderContainer>
+            <OffersCarousel offers={memoizedOffers} />
+          </>
+        ) : null}
 
         {/* ////////////////////////////// ADVERTISEMENTS */}
         <SectionHeaderContainer>
