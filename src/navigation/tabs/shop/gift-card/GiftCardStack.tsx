@@ -10,6 +10,7 @@ import GiftCardDetails from './screens/GiftCardDetails';
 import ArchivedGiftCards from './screens/ArchivedGiftCards';
 import EnterPhone from './screens/EnterPhone';
 import EnterEmail from './screens/EnterEmail';
+import {HeaderTitle} from '../../../../components/styled/Text';
 
 export type GiftCardStackParamList = {
   ArchivedGiftCards: {giftCards: GiftCard[]; supportedGiftCards: CardConfig[]};
@@ -52,10 +53,18 @@ const GiftCardStack = () => {
       <GiftCards.Screen
         name={GiftCardScreens.ENTER_EMAIL}
         component={EnterEmail}
+        options={{
+          headerTitle: () => (
+            <HeaderTitle>Enter your email address</HeaderTitle>
+          ),
+        }}
       />
       <GiftCards.Screen
         name={GiftCardScreens.ENTER_PHONE}
         component={EnterPhone}
+        options={{
+          headerTitle: () => <HeaderTitle>Enter your phone number</HeaderTitle>,
+        }}
       />
       <GiftCards.Screen
         name={GiftCardScreens.GIFT_CARD_DETAILS}

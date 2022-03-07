@@ -84,15 +84,21 @@ export const ShopOnline = ({
           </SectionContainer>
           <ShopCarouselList
             items={category.integrations}
-            itemComponent={(item: ShopCarouselItem) => (
-              <MerchantItem
-                merchant={item as DirectIntegrationApiObject}
-                marginLeft={horizontalPadding}
-                height={168}
-                width={133}
-                headerMargin={37}
-              />
-            )}
+            itemComponent={(item: ShopCarouselItem) => {
+              const categoryHasDiscount = category.integrations.some(
+                merchant => !!merchant.discount,
+              );
+              const merchantItem = item as DirectIntegrationApiObject;
+              return (
+                <MerchantItem
+                  merchant={merchantItem}
+                  marginLeft={horizontalPadding}
+                  height={categoryHasDiscount ? 200 : 168}
+                  width={133}
+                  headerMargin={categoryHasDiscount ? 18 : 37}
+                />
+              );
+            }}
             itemWidth={146}
             maxItemsPerColumn={1}
             screenWidth={WIDTH}
@@ -154,25 +160,30 @@ export const ShopOnline = ({
       </HideableView>
       <HideableView show={!!(searchVal && searchResults.length)}>
         <SearchResults>
-          {searchResults.map(integration => (
-            <TouchableWithoutFeedback
-              key={integration.displayName}
-              onPress={() =>
-                navigation.navigate('Merchant', {
-                  screen: MerchantScreens.MERCHANT_DETAILS,
-                  params: {
-                    directIntegration: integration,
-                  },
-                })
-              }>
-              <MerchantItem
-                merchant={integration}
-                height={200}
-                headerMargin={60}
+          {searchResults.map(integration => {
+            const searchResultsHaveDiscount = searchResults.some(
+              merchant => merchant.discount,
+            );
+            return (
+              <TouchableWithoutFeedback
                 key={integration.displayName}
-              />
-            </TouchableWithoutFeedback>
-          ))}
+                onPress={() =>
+                  navigation.navigate('Merchant', {
+                    screen: MerchantScreens.MERCHANT_DETAILS,
+                    params: {
+                      directIntegration: integration,
+                    },
+                  })
+                }>
+                <MerchantItem
+                  merchant={integration}
+                  height={200}
+                  headerMargin={searchResultsHaveDiscount ? 30 : 60}
+                  key={integration.displayName}
+                />
+              </TouchableWithoutFeedback>
+            );
+          })}
         </SearchResults>
       </HideableView>
       <HideableView show={!searchVal}>

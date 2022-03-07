@@ -22,6 +22,7 @@ import analytics from '@segment/analytics-react-native';
 import {SEGMENT_API_KEY, APPSFLYER_API_KEY, APP_ID} from '@env';
 import appsFlyer from 'react-native-appsflyer';
 import {requestTrackingPermission} from 'react-native-tracking-transparency';
+import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
 
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
@@ -29,6 +30,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     const {APP, BITPAY_ID} = getState();
     const network = APP.network;
+    const pinLockActive = APP.pinLockActive;
 
     dispatch(LogActions.info('Initializing app...'));
     dispatch(LogActions.debug(`Network: ${network}`));
@@ -84,10 +86,22 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
         );
       }
     }
+
+    // splitting inits into store specific ones as to keep it cleaner in the main init here
+    await dispatch(startWalletStoreInit());
+    await dispatch(walletConnectInit());
+
     await sleep(500);
     dispatch(AppActions.successAppInit());
     dispatch(LogActions.info('Initialized app successfully.'));
-    RNBootSplash.hide({fade: true});
+    dispatch(LogActions.debug(`Pin Lock Active: ${pinLockActive}`));
+    RNBootSplash.hide({fade: true}).then(() => {
+      // avoid splash conflicting with modal in iOS
+      // https://stackoverflow.com/questions/65359539/showing-a-react-native-modal-right-after-app-startup-freezes-the-screen-in-ios
+      if (pinLockActive) {
+        dispatch(AppActions.showPinModal({type: 'check'}));
+      }
+    });
   } catch (err) {
     console.error(err);
     dispatch(AppActions.failedAppInit());

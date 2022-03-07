@@ -1,10 +1,10 @@
 import React from 'react';
-import {BaseText, H5, Link} from '../styled/Text';
-import styled from 'styled-components/native';
-import LinearGradient from 'react-native-linear-gradient';
 import {Image, ImageSourcePropType} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import styled from 'styled-components/native';
 import Button from '../button/Button';
-import {useTheme} from '@react-navigation/native';
+import {BaseText, H5, Link} from '../styled/Text';
 
 const FeatureImage = styled(Image)`
   height: 100%;
@@ -52,6 +52,16 @@ interface Props {
   cta: () => void;
 }
 
+const FeatureCardContainer = styled(LinearGradient).attrs(({theme}) => ({
+  colors: theme.dark ? ['#606060', '#26272A'] : ['#FFFFFF', '#EBEDF8'],
+  start: {x: 0, y: 0},
+  end: {x: 0, y: 0},
+  useAngle: true,
+  angle: 225,
+}))`
+  flex: 1;
+`;
+
 const FeatureCard = ({
   image,
   descriptionTitle,
@@ -59,20 +69,15 @@ const FeatureCard = ({
   ctaText,
   cta,
 }: Props) => {
-  const theme = useTheme();
-  const FeatureCardContainer = styled(LinearGradient).attrs({
-    colors: theme.dark ? ['#606060', '#26272A'] : ['#FFFFFF', '#EBEDF8'],
-    start: {x: 0, y: 0},
-    end: {x: 0, y: 0},
-    useAngle: true,
-    angle: 225,
-  })`
-    flex: 1;
-  `;
+  const insets = useSafeAreaInsets();
 
   return (
     <FeatureCardContainer>
-      <FeatureImage source={image} />
+      <FeatureImage
+        resizeMode={'contain'}
+        style={{marginTop: insets.top}}
+        source={image}
+      />
       <BottomDescriptionContainer>
         <DescriptionTitle bold>{descriptionTitle}</DescriptionTitle>
         <DescriptionText>{descriptionText}</DescriptionText>

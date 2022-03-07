@@ -4,7 +4,7 @@ import styled, {useTheme} from 'styled-components/native';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import {StyleProp, TextStyle, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import Avatar from '../../../components/avatar/Avatar';
+import Avatar from '../../../components/avatar/BitPayIdAvatar';
 import {
   ActiveOpacity,
   Hr,
@@ -34,8 +34,7 @@ export const SettingsContainer = styled.SafeAreaView`
 `;
 
 export const Settings = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 15px;
+  padding: 10px ${ScreenGutter};
 `;
 
 const BitPayIdSettingsLink = styled(Setting)`
@@ -90,6 +89,11 @@ const SettingsHomeScreen: React.FC = () => {
         navigation.navigate('NotificationSettings', {screen: 'Root'}),
     },
     {
+      title: t('Connections'),
+      onPress: () =>
+        navigation.navigate('ConnectionSettings', {screen: 'Root'}),
+    },
+    {
       title: t('About BitPay'),
       onPress: () => navigation.navigate('About', {screen: 'Root'}),
     },
@@ -122,10 +126,7 @@ const SettingsHomeScreen: React.FC = () => {
             if (user) {
               navigation.navigate('BitpayId', {screen: 'Profile'});
             } else {
-              navigation.navigate('Auth', {
-                screen: 'LoginSignup',
-                params: {context: 'login'},
-              });
+              navigation.navigate('Auth', {screen: 'Login'});
             }
           }}>
           <BitPayIdAvatarContainer>
@@ -133,9 +134,11 @@ const SettingsHomeScreen: React.FC = () => {
           </BitPayIdAvatarContainer>
           {user ? (
             <BitPayIdUserContainer>
-              <BitPayIdUserText bold>
-                {user.givenName} {user.familyName}
-              </BitPayIdUserText>
+              {user.givenName || user.familyName ? (
+                <BitPayIdUserText bold>
+                  {user.givenName} {user.familyName}
+                </BitPayIdUserText>
+              ) : null}
               <BitPayIdUserText>{user.email}</BitPayIdUserText>
             </BitPayIdUserContainer>
           ) : (

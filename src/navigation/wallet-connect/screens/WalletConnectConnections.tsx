@@ -1,100 +1,110 @@
 import {useNavigation} from '@react-navigation/native';
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import styled from 'styled-components/native';
-import {Paragraph} from '../../../components/styled/Text';
-import {LightBlack, NeutralSlate} from '../../../styles/colors';
-import WalletConnectIcon from '../../../../assets/img/wallet-connect/wallet-connect-icon.svg';
-import TrashIcon from '../../../../assets/img/wallet-connect/trash-icon.svg';
-import AddConnection from '../../../../assets/img/add-asset.svg';
-import haptic from '../../../components/haptic-feedback/haptic';
-import {useDispatch} from 'react-redux';
-import {AppActions} from '../../../store/app';
+import {BaseText} from '../../../components/styled/Text';
+import {SlateDark} from '../../../styles/colors';
+import KeyIcon from '../../../../assets/img/key.svg';
 import {Hr} from '../../../components/styled/Containers';
-import {IconLabel, HeaderTitle} from '../styled/WalletConnectText';
+import {useSelector} from 'react-redux';
+import {HeaderTitle} from '../styled/WalletConnectText';
 import {
-  ItemContainer,
-  ItemNoteTouchableContainer,
-  ItemTitleTouchableContainer,
   ScrollView,
   WalletConnectContainer,
 } from '../styled/WalletConnectContainers';
+import {Platform} from 'react-native';
+import {RootState} from '../../../store';
+import _ from 'lodash';
+import {findWalletById} from '../../../store/wallet/utils/wallet';
+import {
+  IWCConnector,
+  IWCCustomData,
+} from '../../../store/wallet-connect/wallet-connect.models';
+import Connections from '../components/Connections';
 
-const ConnectionsContainer = styled.View`
-  padding-bottom: 33px;
+const KeyConnectionsContainer = styled.View`
+  margin-top: 26px;
+  padding-bottom: 32px;
 `;
 
-const IconContainer = styled.View`
-  height: 37px;
-  width: 37px;
-  border-radius: 40px;
-  overflow: hidden;
-  background-color: ${props => (props.theme.dark ? LightBlack : NeutralSlate)};
+const KeyTitleContainer = styled.View`
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
+  margin-bottom: 12px;
+`;
+
+const KeyTitleText = styled(BaseText)`
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 14px;
+  color: ${SlateDark};
+  padding-right: 12px;
+  padding-left: 6px;
+  padding-top: ${Platform.OS === 'ios' ? '4px' : '8px'};
 `;
 
 const WalletConnectConnections = () => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const [groupedConnectors, setGroupedConnectors] = useState({});
+  const connectors: IWCConnector[] = useSelector(
+    ({WALLET_CONNECT}: RootState) => WALLET_CONNECT.connectors,
+  );
+
+  useEffect(() => {
+    if (!Object.keys(connectors).length) {
+      navigation.goBack();
+    } else {
+      const _groupedConnectors = _.mapValues(
+        _.groupBy(connectors, connector => connector.customData.keyId),
+        connector => _.groupBy(connector, c => c.customData.walletId),
+      );
+      setGroupedConnectors(_groupedConnectors);
+    }
+  }, [connectors, navigation, setGroupedConnectors]);
+
+  const allKeys = useSelector(({WALLET}: RootState) => WALLET.keys);
+
+  const getWalletData = (customData?: IWCCustomData) => {
+    const wallet =
+      customData &&
+      findWalletById(allKeys[customData.keyId].wallets, customData.walletId);
+    return {
+      name: wallet?.walletName || wallet?.currencyName || '',
+      network:
+        wallet && wallet.credentials && wallet.credentials.network === 'testnet'
+          ? 'kovan'
+          : '',
+    };
+  };
 
   return (
     <WalletConnectContainer>
       <ScrollView>
-        <ConnectionsContainer>
-          <HeaderTitle>Connections</HeaderTitle>
-          <Hr />
-          <ItemContainer>
-            <ItemTitleTouchableContainer
-              onPress={() => {
-                navigation.navigate('WalletConnect', {
-                  screen: 'WalletConnectHome',
-                });
-              }}>
-              <IconContainer>
-                <WalletConnectIcon width={17} />
-              </IconContainer>
-              <IconLabel>https://example.walletconnect.org</IconLabel>
-            </ItemTitleTouchableContainer>
-            <ItemNoteTouchableContainer
-              style={{paddingRight: 10}}
-              onPress={async () => {
-                haptic('impactLight');
-                dispatch(
-                  AppActions.showBottomNotificationModal({
-                    type: 'question',
-                    title: 'Confirm Delete',
-                    message: 'Are you sure you want to delete this connection?',
-                    enableBackdropDismiss: true,
-                    actions: [
-                      {
-                        text: 'DELETE',
-                        action: () => {
-                          dispatch(AppActions.dismissBottomNotificationModal());
-                          navigation.navigate('WalletConnect', {
-                            screen: 'WalletConnectConnections',
-                          });
-                        },
-                        primary: true,
-                      },
-                      {
-                        text: 'GO BACK',
-                        action: () => {},
-                      },
-                    ],
-                  }),
-                );
-              }}>
-              <TrashIcon />
-            </ItemNoteTouchableContainer>
-          </ItemContainer>
-          <Hr />
-        </ConnectionsContainer>
-        <ItemTitleTouchableContainer>
-          <AddConnection />
-          <Paragraph style={{paddingLeft: 16, paddingBottom: 6}}>
-            Add Connection
-          </Paragraph>
-        </ItemTitleTouchableContainer>
+        <HeaderTitle>Connections</HeaderTitle>
+        {Object.entries(groupedConnectors).map(([keyId, connectorsByKey]) => {
+          return (
+            <KeyConnectionsContainer key={keyId}>
+              <KeyTitleContainer>
+                <KeyIcon />
+                <KeyTitleText>{allKeys[keyId].keyName}</KeyTitleText>
+              </KeyTitleContainer>
+              <Hr />
+              {Object.entries(connectorsByKey as any).map(
+                ([walletId, _connectors]) => {
+                  return (
+                    <Connections
+                      key={walletId}
+                      customData={{walletId, keyId}}
+                      connectors={_connectors as IWCConnector[]}
+                      walletData={getWalletData(
+                        (_connectors as IWCConnector[])[0].customData,
+                      )}
+                    />
+                  );
+                },
+              )}
+            </KeyConnectionsContainer>
+          );
+        })}
       </ScrollView>
     </WalletConnectContainer>
   );

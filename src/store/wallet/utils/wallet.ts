@@ -12,6 +12,7 @@ import {Currencies, SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {BwcProvider} from '../../../lib/bwc';
 import {BALANCE_CACHE_DURATION} from '../../../constants/wallet';
+import {GetProtocolPrefix} from './currency';
 
 const mapAbbreviationAndName = (
   walletName: string,
@@ -172,4 +173,25 @@ export const generateKeyExportCode = (
   getKeyMnemonic?: string | undefined,
 ): string => {
   return `1|${getKeyMnemonic}|null|null|${key.properties.mnemonic}|null`;
+};
+
+export const isSegwit = (addressType: string) => {
+  if (!addressType) {
+    return false;
+  }
+
+  return addressType == 'P2WPKH' || addressType == 'P2WSH';
+};
+
+export const GetProtocolPrefixAddress = (
+  coin: string,
+  network: string,
+  address: string,
+): string | undefined => {
+  if (coin !== 'bch') {
+    return;
+  }
+  const proto: string = GetProtocolPrefix(coin, network);
+  const protoAddr: string = proto + ':' + address;
+  return protoAddr;
 };

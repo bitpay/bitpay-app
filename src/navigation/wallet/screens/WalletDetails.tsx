@@ -22,13 +22,19 @@ import {Network} from '../../../constants';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/balance';
-import {findWalletById} from '../../../store/wallet/utils/wallet';
+import {findWalletById, isSegwit} from '../../../store/wallet/utils/wallet';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
-import {BalanceUpdateError} from '../components/ErrorMessages';
+import {
+  BalanceUpdateError,
+  RbfTransaction,
+  SpeedUpEthTransaction,
+  SpeedUpTransaction,
+  UnconfirmedInputs,
+} from '../components/ErrorMessages';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import ReceiveAddress from '../components/ReceiveAddress';
 import Icons from '../components/WalletIcons';
@@ -38,8 +44,11 @@ import {useAppSelector} from '../../../utils/hooks';
 import {startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {
+  CanSpeedUpTx,
   GetTransactionHistory,
   GroupTransactionHistory,
+  IsMoved,
+  IsReceived,
 } from '../../../store/wallet/effects/transactions/transactions';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import TransactionRow, {
@@ -47,6 +56,7 @@ import TransactionRow, {
 } from '../../../components/list/TransactionRow';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
+import {IsERCToken} from '../../../store/wallet/utils/currency';
 
 const HISTORY_SHOW_LIMIT = 15;
 
@@ -102,7 +112,6 @@ const BorderBottom = styled.View`
 
 const SkeletonContainer = styled.View`
   margin-bottom: 20px;
-  height: ${TRANSACTION_ROW_HEIGHT}px;
 `;
 
 const EmptyListContainer = styled.View`
@@ -113,7 +122,7 @@ const EmptyListContainer = styled.View`
 
 const getWalletType = (key: Key, wallet: Wallet) => {
   const {
-    credentials: {token, walletId},
+    credentials: {token, walletId, addressType},
   } = wallet;
   if (token) {
     const linkedWallet = key.wallets.find(({tokens}) =>
@@ -122,6 +131,10 @@ const getWalletType = (key: Key, wallet: Wallet) => {
     const walletName =
       linkedWallet?.walletName || linkedWallet?.credentials.walletName;
     return `Linked to ${walletName}`;
+  }
+
+  if (isSegwit(addressType)) {
+    return 'Segwit';
   }
   return;
 };
@@ -135,11 +148,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [refreshing, setRefreshing] = useState(false);
   const {walletId, key} = route.params;
   const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
+  const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const fullWalletObj = findWalletById(wallets, walletId) as Wallet;
   const uiFormattedWallet = buildUIFormattedWallet(fullWalletObj);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
-  const [loadReceiveAddressModal, setLoadReceiveAddressModal] = useState(false);
   const walletType = getWalletType(key, fullWalletObj);
 
   useLayoutEffect(() => {
@@ -212,11 +225,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     },
   ];
 
-  const showReceiveAddress = () => {
-    setShowReceiveAddressBottomModal(true);
-    setLoadReceiveAddressModal(true);
-  };
-
   const onRefresh = async () => {
     setRefreshing(true);
     await sleep(1000);
@@ -262,12 +270,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     try {
       setIsLoading(!refresh);
       setErrorLoadingTxs(false);
-      let {transactions: _history, loadMore: _loadMore} =
-        await GetTransactionHistory({
+      const [transactionHistory] = await Promise.all([
+        GetTransactionHistory({
           wallet: fullWalletObj,
           transactionsHistory: refresh ? [] : history,
           limit: HISTORY_SHOW_LIMIT,
-        });
+          contactList,
+        }),
+        sleep(500),
+      ]);
+
+      let {transactions: _history, loadMore: _loadMore} = transactionHistory;
 
       if (_history?.length) {
         setHistory(_history);
@@ -326,10 +339,66 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     );
   };
 
+  const goToTransactionDetails = (transaction: any) => {
+    navigation.navigate('Wallet', {
+      screen: 'TransactionDetails',
+      params: {wallet: fullWalletObj, transaction},
+    });
+  };
+
+  const speedUpTransaction = (transaction: any) => {
+    //   TODO: Speed up Transaction
+  };
+
   const onPressTransaction = useMemo(
     () => (transaction: any) => {
-      // TODO: Transaction Details
-      console.log(transaction);
+      const {hasUnconfirmedInputs, action, isRBF} = transaction;
+      const isReceived = IsReceived(action);
+      const isMoved = IsMoved(action);
+      const currency = currencyAbbreviation.toLowerCase();
+
+      if (
+        hasUnconfirmedInputs &&
+        (isReceived || isMoved) &&
+        currency === 'btc'
+      ) {
+        dispatch(
+          showBottomNotificationModal(
+            UnconfirmedInputs(() => goToTransactionDetails(transaction)),
+          ),
+        );
+      } else if (isRBF && isReceived && currency === 'btc') {
+        dispatch(
+          showBottomNotificationModal(
+            RbfTransaction(
+              () => speedUpTransaction(transaction),
+              () => goToTransactionDetails(transaction),
+            ),
+          ),
+        );
+      } else if (CanSpeedUpTx(transaction, currency)) {
+        if (currency === 'eth' || IsERCToken(currency)) {
+          dispatch(
+            showBottomNotificationModal(
+              SpeedUpEthTransaction(
+                () => speedUpTransaction(transaction),
+                () => goToTransactionDetails(transaction),
+              ),
+            ),
+          );
+        } else {
+          dispatch(
+            showBottomNotificationModal(
+              SpeedUpTransaction(
+                () => speedUpTransaction(transaction),
+                () => goToTransactionDetails(transaction),
+              ),
+            ),
+          );
+        }
+      } else {
+        goToTransactionDetails(transaction);
+      }
     },
     [],
   );
@@ -357,6 +426,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     }),
     [],
   );
+
   return (
     <WalletDetailsContainer>
       <SectionList
@@ -385,9 +455,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
               {fullWalletObj ? (
                 <LinkingButtons
-                  receive={{cta: () => showReceiveAddress()}}
+                  receive={{cta: () => setShowReceiveAddressBottomModal(true)}}
                   send={{
-                    hide: __DEV__ ? false : !fullWalletObj.balance.fiat,
+                    hide: !fullWalletObj.balance.sat,
                     cta: () =>
                       navigation.navigate('Wallet', {
                         screen: 'SendTo',
@@ -423,7 +493,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         options={assetOptions}
       />
 
-      {fullWalletObj && loadReceiveAddressModal ? (
+      {fullWalletObj ? (
         <ReceiveAddress
           isVisible={showReceiveAddressBottomModal}
           closeModal={() => setShowReceiveAddressBottomModal(false)}

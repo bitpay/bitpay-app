@@ -5,14 +5,14 @@ import {useDispatch, useSelector} from 'react-redux';
 import Button from '../../components/button/Button';
 import haptic from '../../components/haptic-feedback/haptic';
 import {HeaderRightContainer} from '../../components/styled/Containers';
-import {Network} from '../../constants';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
 } from '../../constants/NavigationOptions';
 import {RootState} from '../../store';
-import {BitPayIdActions} from '../../store/bitpay-id';
+import {BitPayIdEffects} from '../../store/bitpay-id';
 import {User} from '../../store/bitpay-id/bitpay-id.models';
+import {ShopEffects} from '../../store/shop';
 import Pair, {PairScreenParamList} from './screens/Pair';
 import Profile from './screens/ProfileSettings';
 
@@ -31,7 +31,6 @@ const BitpayId = createStackNavigator<BitpayIdStackParamList>();
 const BitpayIdStack = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
-  const network = useSelector<RootState, Network>(({APP}) => APP.network);
   const user = useSelector<RootState, User | null>(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
@@ -65,12 +64,10 @@ const BitpayIdStack = () => {
                         screen: 'Settings',
                       });
 
-                      dispatch(BitPayIdActions.bitPayIdDisconnected(network));
+                      dispatch(BitPayIdEffects.startDisconnectBitPayId());
+                      dispatch(ShopEffects.startFetchCatalog());
                     } else {
-                      navigation.navigate('Auth', {
-                        screen: 'LoginSignup',
-                        params: {context: 'login'},
-                      });
+                      navigation.navigate('Auth', {screen: 'Login'});
                     }
                   }}>
                   {user ? 'Log Out' : 'Log In'}

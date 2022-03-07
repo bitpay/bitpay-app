@@ -1,4 +1,5 @@
 import React, {useCallback, useState} from 'react';
+import TagSvg from '../../../../../assets/img/tag.svg';
 import styled, {css} from 'styled-components/native';
 import {DirectIntegrationApiObject} from '../../../../store/shop/shop.models';
 import {
@@ -8,7 +9,7 @@ import {
   White,
 } from '../../../../styles/colors';
 import RemoteImage from './RemoteImage';
-import {H6, Paragraph} from '../../../../components/styled/Text';
+import {BaseText, H6, Paragraph} from '../../../../components/styled/Text';
 import {WIDTH} from '../../../../components/styled/Containers';
 import {horizontalPadding} from './styled/ShopTabComponents';
 interface MerchantBoxProps {
@@ -23,13 +24,20 @@ const MerchantBox = styled.View<MerchantBoxProps>`
       background-color: ${({theme}) =>
         theme.dark ? LightBlack : NeutralSlate};
       border-radius: 21px;
+      border-width: 1px;
+      border-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
       height: ${height}px;
       margin: 6px;
       ${marginLeft && `margin-left: ${marginLeft}px;`};
-      padding: 16px;
       overflow: hidden;
       width: ${width || (WIDTH - horizontalPadding * 2 - 24) / 2}px;
     `}
+`;
+
+const MerchantBoxBody = styled.View`
+  padding: 16px;
+  padding-bottom: 16px;
+  flex-grow: 1;
 `;
 
 interface MerchantNameProps {
@@ -52,6 +60,21 @@ const MerchantDescription = styled(Paragraph)`
   margin-top: 8px;
 `;
 
+const PromoFooter = styled.View`
+  background-color: ${({theme}) => theme.colors.background};
+  height: 48px;
+  padding-left: 10px;
+  padding-right: 20px;
+  flex-direction: row;
+  align-items: center;
+`;
+
+const PromoText = styled(BaseText)`
+  font-size: 10px;
+  font-weight: 500;
+  margin-left: 8px;
+`;
+
 interface MerchantItemProps extends MerchantBoxProps, MerchantNameProps {
   merchant: DirectIntegrationApiObject;
   headerMargin: number;
@@ -64,7 +87,7 @@ export default ({
   width,
   headerMargin,
 }: MerchantItemProps) => {
-  const {caption, displayName, icon} = merchant;
+  const {caption, displayName, icon, discount} = merchant;
   const [descriptionNumLines, setDescriptionNumLines] = useState(3);
   const onTextLayout = useCallback(
     e => setDescriptionNumLines(e.nativeEvent.lines.length > 1 ? 2 : 3),
@@ -72,16 +95,24 @@ export default ({
   );
   return (
     <MerchantBox height={height} marginLeft={marginLeft} width={width}>
-      <RemoteImage uri={icon} height={26} borderRadius={30} />
-      <MerchantName
-        headerMargin={headerMargin}
-        numberOfLines={2}
-        onTextLayout={onTextLayout}>
-        {displayName}
-      </MerchantName>
-      <MerchantDescription numberOfLines={descriptionNumLines}>
-        {caption}
-      </MerchantDescription>
+      <MerchantBoxBody>
+        <RemoteImage uri={icon} height={26} borderRadius={30} />
+        <MerchantName
+          headerMargin={headerMargin}
+          numberOfLines={2}
+          onTextLayout={onTextLayout}>
+          {displayName}
+        </MerchantName>
+        <MerchantDescription numberOfLines={descriptionNumLines}>
+          {caption}
+        </MerchantDescription>
+      </MerchantBoxBody>
+      {discount ? (
+        <PromoFooter>
+          <TagSvg />
+          <PromoText>{discount.value}</PromoText>
+        </PromoFooter>
+      ) : null}
     </MerchantBox>
   );
 };

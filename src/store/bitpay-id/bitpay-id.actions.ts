@@ -1,18 +1,19 @@
-import {BitPayIdActionTypes, BitPayIdActionType} from './bitpay-id.types';
-import {Session, User} from './bitpay-id.models';
+import {InitialUserData} from '../../api/user/user.types';
 import {Network} from '../../constants';
+import {Session, User} from './bitpay-id.models';
 import {
-  FetchBasicInfoStatus,
+  CreateAccountStatus,
   EmailPairingStatus,
+  FetchBasicInfoStatus,
+  FetchDoshTokenStatus,
+  FetchSessionStatus,
   LoginStatus,
   PairingBitPayIdStatus,
+  PendingLoginStatus,
   TwoFactorAuthStatus,
   TwoFactorPairingStatus,
-  FetchSessionStatus,
-  PendingLoginStatus,
-  FetchDoshTokenStatus,
 } from './bitpay-id.reducer';
-import {InitialUserData} from '../../api/user/user.types';
+import {BitPayIdActionTypes, BitPayIdActionType} from './bitpay-id.types';
 
 export const successFetchSession = (session: Session): BitPayIdActionType => ({
   type: BitPayIdActionTypes.SUCCESS_FETCH_SESSION,
@@ -32,6 +33,22 @@ export const updateFetchSessionStatus = (
 
 export const resetAuthStack = (): BitPayIdActionType => ({
   type: BitPayIdActionTypes.RESET_AUTH_STACK,
+});
+
+export const successCreateAccount = (): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.SUCCESS_CREATE_ACCOUNT,
+});
+
+export const failedCreateAccount = (error?: string): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.FAILED_CREATE_ACCOUNT,
+  payload: {error},
+});
+
+export const updateCreateAccountStatus = (
+  status: CreateAccountStatus,
+): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.UPDATE_CREATE_ACCOUNT_STATUS,
+  payload: status,
 });
 
 export const successLogin = (
@@ -144,7 +161,11 @@ export const successInitializeStore = (
   data: InitialUserData,
 ): BitPayIdActionType => ({
   type: BitPayIdActionTypes.SUCCESS_INITIALIZE_STORE,
-  payload: {network, user: data.basicInfo, doshToken: data.doshToken},
+  payload: {
+    network,
+    user: {...data.basicInfo, localSettings: {syncGiftCardPurchases: true}},
+    doshToken: data.doshToken,
+  },
 });
 
 export const successFetchBasicInfo = (
@@ -188,4 +209,11 @@ export const updateFetchDoshTokenStatus = (
 ): BitPayIdActionType => ({
   type: BitPayIdActionTypes.UPDATE_FETCH_DOSH_TOKEN_STATUS,
   payload: status,
+});
+
+export const toggleSyncGiftCardPurchases = (
+  network: Network,
+): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.TOGGLE_SYNC_GIFT_CARD_PURCHASES,
+  payload: {network},
 });

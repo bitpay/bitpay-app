@@ -202,14 +202,13 @@ export const walletReducer = (
 
     case WalletActionTypes.DELETE_KEY: {
       const {keyId} = action.payload;
-      const keyList = {...state.keys};
       const balanceToRemove = state.keys[keyId].totalBalance;
-      delete keyList[keyId];
+      delete state.keys[keyId];
 
       return {
         ...state,
         keys: {
-          ...keyList,
+          ...state.keys,
         },
         portfolioBalance: {
           current: state.portfolioBalance.current - balanceToRemove,
@@ -249,12 +248,11 @@ export const walletReducer = (
     }
 
     case WalletActionTypes.SUCCESS_GET_RECEIVE_ADDRESS: {
-      const {keyId, id} = action.payload.wallet;
-      const keyList = {...state.keys};
-      const keyToUpdate = keyList[keyId];
+      const {keyId, walletId, receiveAddress} = action.payload;
+      const keyToUpdate = state.keys[keyId];
       keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
-        if (wallet.id === id) {
-          return merge(wallet, action.payload.wallet);
+        if (wallet.id === walletId) {
+          wallet.receiveAddress = receiveAddress;
         }
         return wallet;
       });

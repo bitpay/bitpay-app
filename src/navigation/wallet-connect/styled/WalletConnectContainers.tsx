@@ -1,3 +1,4 @@
+import {Platform} from 'react-native';
 import styled from 'styled-components/native';
 
 export const WalletConnectContainer = styled.View`
@@ -45,4 +46,16 @@ export const ItemNoteTouchableContainer = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   justify-content: flex-end;
+`;
+
+export const WalletConnectIconContainer = styled.View`
+  margin-right: 5px;
+  margin-bottom: ${Platform.OS === 'ios' ? '2px' : 0};
+`;
+
+export const IconContainer = styled.View`
+  height: auto;
+  width: auto;
+  border-radius: 9px;
+  overflow: hidden;
 `;

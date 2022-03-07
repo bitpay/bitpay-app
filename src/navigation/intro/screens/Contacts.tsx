@@ -12,11 +12,12 @@ import {WIDTH} from '../../../components/styled/Containers';
 import IntroButton from '../components/intro-button/IntroButton';
 import {StackScreenProps} from '@react-navigation/stack';
 import {RootStackParamList} from '../../../Root';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from 'styled-components/native';
 import LightBottomTabBarContactsSvg from '../../../../assets/img/intro/light/bottom-tabbar-contacts.svg';
 import DarkBottomTabBarContactsSvg from '../../../../assets/img/intro/dark/bottom-tabbar-contacts.svg';
 import {askForTrackingPermissionAndEnableSdks} from '../../../store/app/app.effects';
 import {useDispatch} from 'react-redux';
+import FocusedStatusBar from '../../../components/focused-status-bar/FocusedStatusBar';
 const lightBackground = require('../../../../assets/img/intro/light/contacts-background.png');
 const darkBackground = require('../../../../assets/img/intro/dark/contacts-background.png');
 
@@ -54,6 +55,7 @@ const IntroContacts = ({navigation}: IntroContactsScreenProps) => {
   const dispatch = useDispatch();
   return (
     <IntroContactsContainer>
+      <FocusedStatusBar barStyle={'light-content'} />
       <BackgroundImage source={theme.dark ? darkBackground : lightBackground} />
       <Overlay />
       <Body>

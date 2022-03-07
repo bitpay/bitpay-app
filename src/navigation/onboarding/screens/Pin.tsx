@@ -14,6 +14,8 @@ import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingImage} from '../components/Containers';
 import {useNavigation} from '@react-navigation/native';
 import haptic from '../../../components/haptic-feedback/haptic';
+import {useDispatch} from 'react-redux';
+import {AppActions} from '../../../store/app';
 
 const PinImage = {
   light: require('../../../../assets/img/onboarding/light/pin.png'),
@@ -27,6 +29,7 @@ const PinContainer = styled.SafeAreaView`
 
 const PinScreen = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -49,6 +52,14 @@ const PinScreen = () => {
     });
   }, [navigation]);
 
+  const onSetPinPress = () => {
+    haptic('impactLight');
+    dispatch(AppActions.showPinModal({type: 'set'}));
+    navigation.navigate('Onboarding', {
+      screen: 'CreateKey',
+    });
+  };
+
   useAndroidBackHandler(() => true);
   const themeType = useThemeType();
   return (
@@ -68,7 +79,9 @@ const PinScreen = () => {
       </TextContainer>
       <CtaContainer>
         <ActionContainer>
-          <Button buttonStyle={'primary'}>PIN</Button>
+          <Button onPress={() => onSetPinPress()} buttonStyle={'primary'}>
+            PIN
+          </Button>
         </ActionContainer>
         <ActionContainer>
           <Button buttonStyle={'secondary'}>Fingerprint</Button>

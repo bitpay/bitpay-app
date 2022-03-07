@@ -24,6 +24,9 @@ const MerchantCategory = ({
 }: StackScreenProps<MerchantStackParamList, 'MerchantCategory'>) => {
   const navigator = useNavigation();
   const {integrations, category} = route.params;
+  const categoryHasDiscount = integrations.some(
+    merchant => !!merchant.discount,
+  );
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: category.displayName,
@@ -47,7 +50,7 @@ const MerchantCategory = ({
             <MerchantItem
               merchant={integration}
               height={200}
-              headerMargin={60}
+              headerMargin={categoryHasDiscount ? 30 : 60}
               key={integration.displayName}
             />
           </TouchableWithoutFeedback>

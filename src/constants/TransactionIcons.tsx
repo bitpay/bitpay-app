@@ -13,6 +13,7 @@ import ReceivedSvg from '../../assets/img/wallet/transactions/received.svg';
 import MovedSvg from '../../assets/img/wallet/transactions/moved.svg';
 import ConfirmingSvg from '../../assets/img/wallet/transactions/confirming.svg';
 import ErrorSvg from '../../assets/img/wallet/transactions/failed.svg';
+import BroadcastSvg from '../../assets/img/wallet/transactions/broadcasted.svg';
 export const TRANSACTION_ICON_SIZE = 35;
 
 export const TransactionIcons: {[key in string]: ReactElement} = {
@@ -72,5 +73,11 @@ export const TransactionIcons: {[key in string]: ReactElement} = {
   ),
   error: (
     <ErrorSvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
+  ),
+  broadcast: (
+    <BroadcastSvg
+      width={TRANSACTION_ICON_SIZE}
+      height={TRANSACTION_ICON_SIZE}
+    />
   ),
 };

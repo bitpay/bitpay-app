@@ -255,6 +255,7 @@ export const ImportTextInput = styled.TextInput`
   border-top-right-radius: 4px;
   border-top-left-radius: 4px;
   text-align-vertical: top;
+  padding: 5px;
 `;
 
 export const InfoImageContainer = styled.View<{infoMargin: string}>`
@@ -299,4 +300,16 @@ export const OptionInfoContainer = styled.View`
   padding: 20px;
   justify-content: center;
   flex: 1;
+`;
+
+// Search
+
+export const SearchInput = styled.TextInput`
+  flex: 1;
+  padding: 0 10px;
+  border-right-width: 1px;
+  border-right-color: ${({theme: {dark}}) => (dark ? '#45484E' : '#ECEFFD')};
+  height: 32px;
+  color: ${({theme}) => theme.colors.text};
+  background-color: transparent;
 `;

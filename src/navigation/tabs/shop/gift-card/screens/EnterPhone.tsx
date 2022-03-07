@@ -38,7 +38,6 @@ const AreaCodeContainer = styled.View`
   flex-direction: row;
   position: absolute;
   left: 0;
-  top: 29px;
   align-items: center;
   justify-content: center;
   padding-left: 15px;
@@ -135,7 +134,7 @@ const EnterPhone = ({
 
   return (
     <>
-      <AuthFormContainer header={'Enter your phone number'}>
+      <AuthFormContainer>
         <AuthFormParagraph>
           Your phone number will be used to secure your gift card with 2-factor
           authentication.

@@ -13,7 +13,7 @@ export const GetPrecision = (currencyAbbreviation: string) => {
 };
 
 export const IsUtxoCoin = (currencyAbbreviation: string): boolean => {
-  return Currencies[currencyAbbreviation].properties.isUtxo;
+  return ['btc', 'bch', 'doge', 'ltc'].includes(currencyAbbreviation);
 };
 
 export const IsCustomERCToken = (currencyAbbreviation: string) => {
@@ -25,4 +25,17 @@ export const IsCustomERCToken = (currencyAbbreviation: string) => {
 
 export const GetChain = (currencyAbbreviation: string): string => {
   return Currencies[currencyAbbreviation].chain;
+};
+
+export const IsERCToken = (currencyAbbreviation: string): boolean => {
+  return Currencies[currencyAbbreviation]?.properties.isERCToken;
+};
+
+export const GetBlockExplorerUrl = (
+  currencyAbbreviation: string,
+  network: string = 'livenet',
+): string => {
+  return network === 'livenet'
+    ? Currencies[currencyAbbreviation]?.paymentInfo.blockExplorerUrls
+    : Currencies[currencyAbbreviation]?.paymentInfo.blockExplorerUrlsTestnet;
 };

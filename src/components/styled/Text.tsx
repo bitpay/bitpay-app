@@ -1,5 +1,5 @@
 import React from 'react';
-import {Text} from 'react-native';
+import {StatusBar, Text} from 'react-native';
 import styled, {css} from 'styled-components/native';
 import {SlateDark, White} from '../../styles/colors';
 
@@ -59,7 +59,7 @@ export const H6 = styled(BaseText)<HeadingProps>`
 export const H7 = styled(BaseText)<HeadingProps>`
   font-size: 14px;
   font-style: normal;
-  font-weight: 400;
+  font-weight: ${({medium = false}) => (medium ? 500 : 400)};
   letter-spacing: 0;
 `;
 
@@ -122,13 +122,17 @@ export const Exp = (props: ExponentProps) => {
 };
 
 // Nav
-export const HeaderTitle = styled(BaseText)`
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 30px;
-  letter-spacing: 0;
+/**
+ * Intended to be used with translucent StatusBar (Android) when no header is desired but still want to clear the StatusBar height.
+ */
+export const ZeroHeightHeader = styled.View`
+  background-color: ${({theme}) => theme.colors.background};
+  height: ${StatusBar.currentHeight || 0}px;
 `;
+
+export const HeaderTitle = styled(H5).attrs(() => ({
+  bold: true,
+}))``;
 
 export const HeaderSubtitle = styled(BaseText)`
   font-size: 16px;

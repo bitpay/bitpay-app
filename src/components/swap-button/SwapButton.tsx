@@ -3,7 +3,7 @@ import styled from 'styled-components/native';
 import {BaseText} from '../styled/Text';
 import {LightBlack, NotificationPrimary, White} from '../../styles/colors';
 import haptic from '../haptic-feedback/haptic';
-import SwapHorizontal from '../icons/swap-horizontal/swap-horizontal';
+import SwapHorizontal from '../icons/swap-horizontal/SwapHorizontal';
 
 const SwapButtonContainer = styled.TouchableOpacity`
   flex-direction: row;

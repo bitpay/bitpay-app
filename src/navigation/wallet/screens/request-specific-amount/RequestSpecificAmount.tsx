@@ -13,6 +13,7 @@ import {
   CurrencySuperScript,
   AmountContainer,
 } from '../send/Amount';
+import haptic from '../../../../components/haptic-feedback/haptic';
 
 const SafeAreaView = styled.SafeAreaView`
   flex: 1;
@@ -20,6 +21,10 @@ const SafeAreaView = styled.SafeAreaView`
 
 const ActionContainer = styled.View`
   margin: 20px 0;
+`;
+
+const Row = styled.View`
+  flex-direction: row;
 `;
 
 const RequestSpecificAmount = () => {
@@ -30,6 +35,7 @@ const RequestSpecificAmount = () => {
   const navigation = useNavigation();
   const [amount, setAmount] = useState('0');
   const [reset, setReset] = useState<string>();
+  const [curVal, setCurVal] = useState('');
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
@@ -37,11 +43,31 @@ const RequestSpecificAmount = () => {
     });
   }, [navigation]);
 
+  const onCellPress = (val: string) => {
+    haptic('impactLight');
+    let currentValue;
+    switch (val) {
+      case 'reset':
+        currentValue = '';
+        break;
+      case 'backspace':
+        currentValue = curVal.slice(0, -1);
+        break;
+      case '.':
+        currentValue = curVal.includes('.') ? curVal : curVal + val;
+        break;
+      default:
+        currentValue = curVal + val;
+    }
+    setCurVal(currentValue);
+    setAmount(currentValue);
+  };
+
   return (
     <SafeAreaView>
       <AmountContainer>
-        <View>
-          <AmountHeroContainer>
+        <AmountHeroContainer>
+          <Row>
             <AmountText
               numberOfLines={1}
               ellipsizeMode={'tail'}
@@ -51,11 +77,11 @@ const RequestSpecificAmount = () => {
             <CurrencySuperScript>
               <CurrencyText>{currencyAbbreviation.toUpperCase()}</CurrencyText>
             </CurrencySuperScript>
-          </AmountHeroContainer>
-        </View>
+          </Row>
+        </AmountHeroContainer>
 
         <View>
-          <VirtualKeyboard onChange={setAmount} reset={reset} />
+          <VirtualKeyboard onCellPress={onCellPress} />
           <ActionContainer>
             <Button
               onPress={() => {

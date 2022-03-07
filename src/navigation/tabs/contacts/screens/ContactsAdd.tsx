@@ -52,15 +52,14 @@ const Container = styled.ScrollView`
 const AddressBadge = styled.View`
   background: ${({theme}) => (theme && theme.dark ? '#000' : '#fff')};
   position: absolute;
-  padding: 5px 10px;
-  right: 1px;
-  top: 30px;
+  right: 5px;
+  top: 50%;
 `;
 
 const ScanButtonContainer = styled.TouchableOpacity`
   position: absolute;
-  right: 3px;
-  top: 23px;
+  right: 5px;
+  top: 27.5px;
 `;
 
 const CurrencySelectionModalContainer = styled(SheetContainer)`
@@ -121,6 +120,7 @@ const ContactsAdd: React.FC = () => {
     control,
     handleSubmit,
     setError,
+    setValue,
     formState: {errors, dirtyFields},
   } = useForm<ContactRowProps>({resolver: yupResolver(schema)});
 
@@ -292,7 +292,15 @@ const ContactsAdd: React.FC = () => {
   );
 
   const goToScan = () => {
-    navigation.navigate('Scan', {screen: 'Root'});
+    navigation.navigate('Scan', {
+      screen: 'Root',
+      params: {
+        contextHandler: address => {
+          setValue('address', address, {shouldDirty: true});
+          processAddress(address);
+        },
+      },
+    });
   };
 
   return (
@@ -308,6 +316,7 @@ const ContactsAdd: React.FC = () => {
               onChangeText={onChange}
               error={errors.name?.message}
               value={value}
+              autoCorrect={false}
             />
           )}
           name="name"

@@ -4,6 +4,7 @@ import merge from 'lodash.merge';
 import {BwcProvider} from '../../lib/bwc';
 import {SUPPORTED_CURRENCIES} from '../../constants/currencies';
 import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
+import Flatted from 'flatted';
 const BWCProvider = BwcProvider.getInstance();
 
 export const bindWalletClient = createTransform(
@@ -62,4 +63,9 @@ export const bindWalletKeys = createTransform(
     }
     return _outboundState;
   },
+);
+
+export const transformCircular = createTransform(
+  inboundState => Flatted.stringify(inboundState),
+  outboundState => Flatted.parse(outboundState),
 );
