@@ -187,7 +187,7 @@ export const GetProtocolPrefixAddress = (
   coin: string,
   network: string,
   address: string,
-): string | undefined => {
+): string => {
   if (coin !== 'bch') {
     return address;
   }
