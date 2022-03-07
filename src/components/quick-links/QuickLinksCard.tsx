@@ -10,7 +10,7 @@ import {
 import haptic from '../haptic-feedback/haptic';
 import {BaseText} from '../styled/Text';
 import {QuickLinkProps} from './QuickLinksSlides';
-import {ActiveOpacity} from '../styled/Containers';
+import {ActiveOpacity, ScreenGutter} from '../styled/Containers';
 
 const QuickLinkCardContainer = styled.TouchableOpacity`
   justify-content: center;
@@ -21,6 +21,7 @@ const QuickLinkCardContainer = styled.TouchableOpacity`
   border-radius: 12px;
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   overflow: hidden;
+  left: ${ScreenGutter};
 `;
 
 const ImgContainer = styled.View`

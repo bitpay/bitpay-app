@@ -2,9 +2,8 @@ import {NavigationProp, useNavigation} from '@react-navigation/native';
 import React, {ReactNode, useEffect, useState} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import Carousel from 'react-native-snap-carousel';
-import styled from 'styled-components/native';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {ActiveOpacity, WIDTH} from '../../../../components/styled/Containers';
+import {WIDTH} from '../../../../components/styled/Containers';
 import {RootState} from '../../../../store';
 import {Card} from '../../../../store/card/card.models';
 import {Key} from '../../../../store/wallet/wallet.models';
@@ -17,13 +16,8 @@ import {BottomNotificationConfig} from '../../../../components/modal/bottom-noti
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {Dispatch} from 'redux';
 import {getMnemonic} from '../../../../utils/helper-methods';
-import {TouchableOpacity} from 'react-native';
-import {HomeLink, SectionHeaderContainer} from '../HomeRoot';
 import {CardProvider} from '../../../../constants/card';
-
-const CarouselContainer = styled.View`
-  margin: 10px 0 10px;
-`;
+import HomeRow from './HomeRow';
 
 const _renderItem = ({item}: {item: ReactNode}) => {
   return <>{item}</>;
@@ -167,35 +161,26 @@ const CardsCarousel = () => {
   }, [navigation, keys, bitPayCards, dispatch]);
 
   return (
-    <>
-      {Object.keys(keys).length > 0 ? (
-        <SectionHeaderContainer justifyContent={'flex-end'}>
-          <TouchableOpacity
-            activeOpacity={ActiveOpacity}
-            onPress={() => {
-              haptic('impactLight');
-              navigation.navigate('GeneralSettings', {
-                screen: 'CustomizeHome',
-              });
-            }}>
-            <HomeLink>Customize</HomeLink>
-          </TouchableOpacity>
-        </SectionHeaderContainer>
-      ) : null}
-      <CarouselContainer>
-        <Carousel
-          vertical={false}
-          layout={'default'}
-          useExperimentalSnap={true}
-          data={cardsList}
-          renderItem={_renderItem}
-          sliderWidth={WIDTH}
-          itemWidth={235}
-          inactiveSlideScale={1}
-          inactiveSlideOpacity={1}
-        />
-      </CarouselContainer>
-    </>
+    <HomeRow
+      action={Object.keys(keys).length ? 'Customize' : ''}
+      onActionPress={() => {
+        haptic('impactLight');
+        navigation.navigate('GeneralSettings', {
+          screen: 'CustomizeHome',
+        });
+      }}>
+      <Carousel
+        vertical={false}
+        layout={'default'}
+        useExperimentalSnap={true}
+        data={cardsList}
+        renderItem={_renderItem}
+        sliderWidth={WIDTH}
+        itemWidth={235}
+        inactiveSlideScale={1}
+        inactiveSlideOpacity={1}
+      />
+    </HomeRow>
   );
 };
 

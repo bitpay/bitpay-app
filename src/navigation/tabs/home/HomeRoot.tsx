@@ -1,18 +1,11 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import {
-  Image,
-  RefreshControl,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import {Image, RefreshControl, ScrollView} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import {useDispatch, useSelector} from 'react-redux';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {RootState} from '../../../store';
-import {PriceHistory} from '../../../store/wallet/wallet.models';
 
 import styled from 'styled-components/native';
-import {BaseText} from '../../../components/styled/Text';
 import {SlateDark, White} from '../../../styles/colors';
 
 import PortfolioBalance from './components/PortfolioBalance';
@@ -26,10 +19,7 @@ import QuickLinksSlides from '../../../components/quick-links/QuickLinksSlides';
 import MockOffers from './components/offers/MockOffers';
 import {Offer} from './components/offers/OfferCard';
 import OffersCarousel from './components/offers/OffersCarousel';
-import {
-  ActiveOpacity,
-  ScreenGutter,
-} from '../../../components/styled/Containers';
+import {ScreenGutter} from '../../../components/styled/Containers';
 import AdvertisementCard from '../../../components/advertisement/AdvertisementCard';
 import {AdvertisementList} from '../../../components/advertisement/advertisement';
 import {AppActions} from '../../../store/app';
@@ -50,6 +40,9 @@ import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {URL} from '../../../constants';
 import {startGetRates} from '../../../store/wallet/effects';
+import HomeRow from './components/HomeRow';
+
+const LeaveFeedbackIcon = require('../../../../assets/img/home/quick-links/icon-chat.png');
 
 const HeaderContainer = styled.View`
   flex-direction: row;
@@ -63,19 +56,6 @@ export const HeaderButtonContainer = styled.View`
 
 const HomeContainer = styled.SafeAreaView`
   flex: 1;
-`;
-
-export const HomeLink = styled(BaseText)`
-  font-weight: 500;
-  font-size: 14px;
-  color: ${({theme}) => theme.colors.link};
-  text-decoration: ${({theme: {dark}}) => (dark ? 'underline' : 'none')};
-  text-decoration-color: ${White};
-`;
-
-const Title = styled(BaseText)`
-  font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
 export const SectionHeaderContainer = styled.View<{justifyContent?: string}>`
@@ -128,6 +108,7 @@ const HomeRoot = () => {
   const theme = useTheme();
   const [refreshing, setRefreshing] = useState(false);
 
+  // Offers
   const allContentCards = useAppSelector(({APP}) => APP.brazeContentCards);
   const memoizedOffers = useMemo(() => {
     const featuredMerchants = allContentCards.filter(isFeaturedMerchant);
@@ -161,25 +142,29 @@ const HomeRoot = () => {
   };
 
   // Exchange Rates
-  const priceHistory = useSelector(
-    ({WALLET}: RootState) => WALLET.priceHistory,
-  );
-  const exchangeRatesItems: Array<ExchangeRateProps> = [];
-  priceHistory.forEach((ph: PriceHistory) => {
-    const option = SupportedCurrencyOptions.find(
-      ({id}: {id: string | number}) => id === ph.coin,
-    );
+  const priceHistory = useAppSelector(({WALLET}) => WALLET.priceHistory);
+  const memoizedExchangeRates: Array<ExchangeRateProps> = useMemo(
+    () =>
+      priceHistory.reduce((ratesList, history) => {
+        const option = SupportedCurrencyOptions.find(
+          ({id}) => id === history.coin,
+        );
 
-    if (option) {
-      const {id, img, currencyName} = option;
-      exchangeRatesItems.push({
-        id,
-        img,
-        currencyName,
-        average: +ph.percentChange,
-      });
-    }
-  });
+        if (option) {
+          const {id, img, currencyName} = option;
+
+          ratesList.push({
+            id,
+            img,
+            currencyName,
+            average: +history.percentChange,
+          });
+        }
+
+        return ratesList;
+      }, [] as ExchangeRateProps[]),
+    [priceHistory],
+  );
 
   // Quick Links
   const quickLinksItems = [
@@ -187,11 +172,7 @@ const HomeRoot = () => {
       id: '1',
       title: 'Leave Feedback',
       description: "Let us know how we're doing",
-      img: (
-        <Image
-          source={require('../../../../assets/img/home/quick-links/icon-chat.png')}
-        />
-      ),
+      img: <Image source={LeaveFeedbackIcon} />,
       onPress: () => {
         dispatch(openUrlWithInAppBrowser(URL.LEAVE_FEEDBACK));
       },
@@ -212,53 +193,51 @@ const HomeRoot = () => {
           <ScanButton />
           <ProfileButton />
         </HeaderContainer>
+
         {/* ////////////////////////////// PORTFOLIO BALANCE */}
-        <PortfolioBalance />
+        <HomeRow title="Portfolio Balance" slimHeader>
+          <PortfolioBalance />
+        </HomeRow>
 
         {/* ////////////////////////////// CARDS CAROUSEL */}
         <CardsCarousel />
 
         {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
-        <LinkingButtons receive={{cta: () => null}} send={{cta: () => null}} />
+        <HomeRow>
+          <LinkingButtons
+            receive={{cta: () => null}}
+            send={{cta: () => null}}
+          />
+        </HomeRow>
 
         {/* ////////////////////////////// LIMITED TIME OFFERS */}
         {memoizedOffers.length ? (
-          <>
-            <SectionHeaderContainer justifyContent={'space-between'}>
-              <Title>Limited Time Offers</Title>
-              <TouchableOpacity
-                activeOpacity={ActiveOpacity}
-                onPress={() => console.log('offers')}>
-                <HomeLink>See all</HomeLink>
-              </TouchableOpacity>
-            </SectionHeaderContainer>
+          <HomeRow
+            title="Limited Time Offers"
+            action="See all"
+            onActionPress={() => console.log('TODO: see all offers')}>
             <OffersCarousel offers={memoizedOffers} />
-          </>
+          </HomeRow>
         ) : null}
 
         {/* ////////////////////////////// ADVERTISEMENTS */}
-        <SectionHeaderContainer>
-          <Title>Do More</Title>
-        </SectionHeaderContainer>
-
-        <AdvertisementCard items={AdvertisementList} />
+        <HomeRow title="Do More">
+          <AdvertisementCard items={AdvertisementList} />
+        </HomeRow>
 
         {/* ////////////////////////////// EXCHANGE RATES */}
-        {exchangeRatesItems.length > 0 && (
-          <>
-            <SectionHeaderContainer>
-              <Title>Exchange Rates</Title>
-            </SectionHeaderContainer>
-            <ExchangeRatesSlides items={exchangeRatesItems} />
-          </>
-        )}
+        {memoizedExchangeRates.length ? (
+          <HomeRow title="Exchange Rates">
+            <ExchangeRatesSlides items={memoizedExchangeRates} />
+          </HomeRow>
+        ) : null}
 
         {/* ////////////////////////////// QUICK LINKS - Leave feedback etc */}
-        <SectionHeaderContainer>
-          <Title>Quick Links</Title>
-        </SectionHeaderContainer>
-        <QuickLinksSlides items={quickLinksItems} />
+        <HomeRow title="Quick Links">
+          <QuickLinksSlides items={quickLinksItems} />
+        </HomeRow>
       </ScrollView>
+
       <OnboardingFinishModal />
     </HomeContainer>
   );

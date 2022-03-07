@@ -13,7 +13,7 @@ export interface AdvertisementProps {
   onPress: () => void;
 }
 
-const AdvertisementCardContainer = styled.TouchableOpacity`
+const AdvertisementCardContainer = styled.TouchableOpacity<{isLast: boolean}>`
   flex-direction: column;
   justify-content: center;
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
@@ -21,7 +21,7 @@ const AdvertisementCardContainer = styled.TouchableOpacity`
   padding: 20px 100px 20px 20px;
   position: relative;
   min-height: 112px;
-  margin: 10px ${ScreenGutter};
+  margin: 0 ${ScreenGutter} ${({isLast}) => (isLast ? 0 : 16)}px;
 `;
 
 const AdvertisementCardTitle = styled(BaseText)`
@@ -55,11 +55,12 @@ const AdvertisementCard = ({items}: {items: AdvertisementProps[]}) => {
   return (
     <>
       {items &&
-        items.map(item => (
+        items.map((item, idx) => (
           <AdvertisementCardContainer
             activeOpacity={ActiveOpacity}
             key={item.id}
-            onPress={() => _onPress(item)}>
+            onPress={() => _onPress(item)}
+            isLast={idx === items.length - 1}>
             <AdvertisementCardTitle>{item.title}</AdvertisementCardTitle>
 
             <AdvertisementCardText>{item.text}</AdvertisementCardText>

@@ -19,7 +19,6 @@ const ButtonsRow = styled.View`
 
 const ButtonContainer = styled.View`
   align-items: center;
-  margin: 20px 0;
 `;
 
 const ButtonText = styled(BaseText)`
