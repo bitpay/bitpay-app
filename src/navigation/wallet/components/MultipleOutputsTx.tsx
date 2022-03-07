@@ -54,8 +54,11 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
 
   tx.outputs.forEach((output: any) => {
     const outputAddr = output.toAddress ? output.toAddress : output.address;
-    coin = coin || GetCoinAndNetwork(outputAddr, network)?.coin;
-    network = network || GetCoinAndNetwork(outputAddr, network)?.network;
+    if (!coin || !network) {
+      const coinAndNetwork = GetCoinAndNetwork(outputAddr, network);
+      coin = coin || coinAndNetwork?.coin;
+      network = network || coinAndNetwork?.network;
+    }
 
     const addressToShow = GetProtocolPrefixAddress(coin, network, outputAddr);
 
