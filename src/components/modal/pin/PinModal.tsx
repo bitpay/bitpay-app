@@ -140,7 +140,7 @@ const PinModal: React.FC = () => {
     }
 
     // Give some time for dot to fill
-    await sleep(200);
+    await sleep(0);
 
     if (!fistPinEntered.length && config?.type === 'set') {
       setMessage('Confirm your PIN');
