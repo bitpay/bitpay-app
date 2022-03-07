@@ -87,7 +87,12 @@ const TransactModal = () => {
       title: 'Buy Crypto',
       description: 'Buy crypto with cash',
       onPress: () => {
-        navigation.navigate('BuyCrypto', {screen: 'Root'});
+        navigation.navigate('Wallet', {
+          screen: 'Amount',
+          params: {
+            nextView: 'buyCrypto',
+          },
+        });
       },
     },
     {

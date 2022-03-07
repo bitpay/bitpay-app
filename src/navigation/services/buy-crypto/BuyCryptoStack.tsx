@@ -1,5 +1,6 @@
-import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
+import {createStackNavigator} from '@react-navigation/stack';
+import {useNavigation, StackActions} from '@react-navigation/native';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
@@ -9,11 +10,12 @@ import BuyCryptoRoot from './screens/BuyCryptoRoot';
 import BuyCryptoOffers from './screens/BuyCryptoOffers';
 import {HeaderRightContainer} from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
-import {useNavigation} from '@react-navigation/native';
 
 export type BuyCryptoStackParamList = {
   Root?: {
+    amount: number;
     fromWallet?: any;
+    buyCryptoOpts?: any;
   };
   BuyCryptoOffers: {
     amount: number;
@@ -52,7 +54,7 @@ const BuyCryptoStack = () => {
               <Button
                 buttonType={'pill'}
                 onPress={() => {
-                  navigation.goBack();
+                  navigation.dispatch(StackActions.pop(2));
                 }}>
                 Cancel
               </Button>
@@ -71,7 +73,7 @@ const BuyCryptoStack = () => {
               <Button
                 buttonType={'pill'}
                 onPress={() => {
-                  navigation.goBack();
+                  navigation.dispatch(StackActions.pop(2));
                 }}>
                 Cancel
               </Button>

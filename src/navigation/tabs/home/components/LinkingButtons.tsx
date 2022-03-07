@@ -76,7 +76,12 @@ const LinkingButtons = ({buy, receive, send}: Props) => {
         buy && buy.cta
           ? buy.cta
           : () => {
-              navigation.navigate('BuyCrypto', {screen: 'Root'});
+              navigation.navigate('Wallet', {
+                screen: 'Amount',
+                params: {
+                  nextView: 'buyCrypto',
+                },
+              });
             },
       hide: false,
     },

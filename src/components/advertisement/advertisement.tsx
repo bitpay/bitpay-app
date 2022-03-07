@@ -11,7 +11,12 @@ export const AdvertisementList: AdvertisementProps[] = [
     text: 'Buy direct using your debit or credit card',
     img: <AdvBuyImg />,
     onPress: () => {
-      navigationRef.navigate('BuyCrypto', {screen: 'Root'});
+      navigationRef.navigate('Wallet', {
+        screen: 'Amount',
+        params: {
+          nextView: 'buyCrypto',
+        },
+      });
     },
   },
   {

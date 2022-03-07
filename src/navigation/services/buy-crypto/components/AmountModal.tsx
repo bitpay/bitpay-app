@@ -1,77 +1,47 @@
+import Modal from 'react-native-modal';
 import React from 'react';
-import {ScrollView, SafeAreaView} from 'react-native';
-import styled from 'styled-components/native';
-import {
-  ModalContainer,
-  ModalHeader,
-  ModalHeaderText,
-  ModalHeaderRight,
-} from '../styled/BuyCryptoModals';
-import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
-import Button from '../../../../components/button/Button';
+import Amount from '../../../../navigation/wallet/screens/send/Amount';
+import {Black, White} from '../../../../styles/colors';
+import styled, {useTheme} from 'styled-components/native';
 
-// TODO: This component is for testing purposes only. It will be replaced when we finally have the "Amount view" implemented
+const AmountContainer = styled.View`
+  flex: 1;
+  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
+`;
 
 interface AmountModalProps {
   isVisible: boolean;
-  amount: string;
-  onBackdropPress?: () => void;
-  onChanged?: (text: any) => any;
+  onDismiss?: (amount?: number) => any;
+  openedFrom: 'buyCrypto' | undefined;
 }
 
-const AmountInput = styled.TextInput`
-  height: 55px;
-  margin: 10px 0 0 0;
-  border: 1px solid #e1e4e7;
-  color: black;
-  padding: 10px;
-`;
-
-const CtaContainer = styled.View`
-  margin: 20px 15px;
-`;
-
-const AmountModal = ({
+const AmountModal: React.FC<AmountModalProps> = ({
   isVisible,
-  onChanged,
-  onBackdropPress,
-  amount,
-}: AmountModalProps) => {
+  onDismiss,
+  openedFrom,
+}) => {
+  const theme = useTheme();
+
   return (
-    <SheetModal
+    <Modal
       isVisible={isVisible}
-      onBackdropPress={onBackdropPress ? onBackdropPress : () => {}}>
-      <ModalContainer>
-        <SafeAreaView>
-          <ModalHeader>
-            <ModalHeaderText>Enter Amount</ModalHeaderText>
-            <ModalHeaderRight>
-              <Button
-                buttonType={'pill'}
-                onPress={onBackdropPress ? onBackdropPress : () => {}}>
-                Close
-              </Button>
-            </ModalHeaderRight>
-          </ModalHeader>
-          <ScrollView>
-            <AmountInput
-              keyboardType="numeric"
-              onChangeText={text => (onChanged ? onChanged(text) : () => {})}
-              value={amount}
-              placeholder="Enter Amount"
-              maxLength={10}
-            />
-            <CtaContainer>
-              <Button
-                buttonStyle={'primary'}
-                onPress={onBackdropPress ? onBackdropPress : () => {}}>
-                Accept
-              </Button>
-            </CtaContainer>
-          </ScrollView>
-        </SafeAreaView>
-      </ModalContainer>
-    </SheetModal>
+      coverScreen={true}
+      backdropTransitionOutTiming={0}
+      hideModalContentWhileAnimating
+      backdropOpacity={1}
+      backdropColor={theme.dark ? Black : White}
+      animationIn={'fadeInUp'}
+      animationOut={'fadeOutDown'}
+      useNativeDriverForBackdrop={true}
+      useNativeDriver={true}>
+      <AmountContainer>
+        <Amount
+          useAsModal={true}
+          onDismiss={onDismiss}
+          openedFrom={openedFrom}
+        />
+      </AmountContainer>
+    </Modal>
   );
 };
 

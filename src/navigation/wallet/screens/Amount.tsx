@@ -18,6 +18,9 @@ import useAppSelector from '../../../utils/hooks/useAppSelector';
 import {ParseAmount} from '../../../store/wallet/effects/amount/amount';
 import haptic from '../../../components/haptic-feedback/haptic';
 
+import {navigationRef} from '../../../Root';
+import CloseModal from '../../../../assets/img/close-modal-icon.svg';
+
 const SendMax = styled.TouchableOpacity`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   border-radius: 17.5px;
@@ -32,6 +35,23 @@ const SendMaxText = styled(BaseText)`
 
 const HeaderContainer = styled(HeaderRightContainer)`
   justify-content: center;
+`;
+
+const ModalHeader = styled.View`
+  height: 50px;
+  margin-right: 10px;
+`;
+
+const CloseModalButton = styled.TouchableOpacity`
+  margin: 15px 0;
+  padding: 5px;
+  height: 41px;
+  width: 41px;
+  border-radius: 50px;
+  background-color: #9ba3ae33;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
 const SafeAreaView = styled.SafeAreaView`
@@ -98,13 +118,23 @@ export interface AmountParamList {
   opts?: {
     hideSendMax?: boolean;
   };
+  nextView?: string;
+  buyCryptoOpts?: any;
 }
 
-const Amount = () => {
+interface AmountProps {
+  useAsModal: any;
+  onDismiss?: (amount?: number) => void;
+  openedFrom?: 'buyCrypto' | undefined;
+}
+
+const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss, openedFrom}) => {
   const route = useRoute<RouteProp<WalletStackParamList, 'Amount'>>();
-  const {onAmountSelected, currencyAbbreviation, opts} = route.params;
+  const {onAmountSelected, currencyAbbreviation, opts, nextView, buyCryptoOpts} = route.params;
   const navigation = useNavigation();
   const [buttonState, setButtonState] = useState<ButtonState>();
+
+  
   // flag for primary selector type
   const [rate, setRate] = useState(0);
   const [amountConfig, updateAmountConfig] = useState({
@@ -119,6 +149,27 @@ const Amount = () => {
   const swapList = currencyAbbreviation
     ? [currencyAbbreviation, 'USD']
     : ['USD'];
+
+  // display amount fiat/crypto
+  // const [displayAmount, setDisplayAmount] = useState('0');
+  // const [displayEquivalentAmount, setDisplayEquivalentAmount] = useState('0');
+  // amount to be sent to proposal creation (sats)
+  // const [amount, setAmount] = useState('0');
+  // const currencyAbbreviation = wallet
+  //   ? wallet.currencyAbbreviation.toUpperCase()
+  //   : undefined;
+  // const [currency, setCurrency] = useState(
+  //   currencyAbbreviation ? currencyAbbreviation : 'USD',
+  // );
+  // flag for primary selector type
+  // const [isFiat, setIsFiat] = useState(wallet ? false : true);
+  // const [rate, setRate] = useState(0);
+  // const swapList = currencyAbbreviation
+  //   ? [currencyAbbreviation, 'USD']
+  //   : ['USD'];
+  
+
+
   const allRates = useAppSelector(({WALLET}) => WALLET.rates);
   const [curVal, setCurVal] = useState('');
 
@@ -162,8 +213,13 @@ const Amount = () => {
       return;
     }
 
+    // if (nextView == 'buyCrypto' || openedFrom == 'buyCrypto') {
+    //   setAmount(val.toString());
+    //   return;
+    // }
+
     const cryptoAmount =
-      val === 0
+      val === 0 || !currencyAbbreviation
         ? '0'
         : ParseAmount(
             primaryIsFiat ? val / rate : val,
@@ -179,6 +235,7 @@ const Amount = () => {
   };
 
   useLayoutEffect(() => {
+    // if (!useAsModal) {
     if (!opts?.hideSendMax) {
       navigation.setOptions({
         headerRight: () => (
@@ -194,6 +251,49 @@ const Amount = () => {
       });
     }
   }, []);
+
+  // const goToNextView = () => {
+  //   if (useAsModal && onDismiss) {
+  //     onDismiss(Number(amount));
+  //     return;
+  //   }
+  //   switch (nextView) {
+  //     case 'confirm':
+  //       goToConfirm();
+  //       break;
+
+  //     case 'buyCrypto':
+  //       goToBuyCrypto();
+  //       break;
+
+  //     default:
+  //       break;
+  //   }
+  // };
+
+  // const goToConfirm = async () => {
+  //   if (!wallet || !recipient) {
+  //     console.log(`Missing parameters for nextView: ${nextView}`);
+  //     return;
+  //   }
+  //   try {
+  //     setButtonState('loading');
+  //     const {txDetails, txp} = await dispatch(
+  //       createProposalAndBuildTxDetails({
+  //         wallet,
+  //         recipient,
+  //         amount: Number(amount),
+  //       }),
+  //     );
+
+  //     setButtonState('success');
+  //     await sleep(300);
+  //     navigation.navigate('Wallet', {
+  //       screen: 'Confirm',
+  //       params: {wallet, recipient, txp, txDetails},
+  //     });
+  //   }
+  // };
 
   const onCellPress = (val: string) => {
     haptic('impactLight');
@@ -215,8 +315,30 @@ const Amount = () => {
     updateAmount(currentValue);
   };
 
+  const goToBuyCrypto = () => {
+    navigationRef.navigate('BuyCrypto', {
+      screen: 'Root',
+      params: {
+        amount: Number(amount),
+        fromWallet: buyCryptoOpts ? buyCryptoOpts.fromWallet : undefined,
+      },
+    });
+  };
+
   return (
     <SafeAreaView>
+      {useAsModal && (
+        <ModalHeader>
+          <CloseModalButton
+            onPress={() => {
+              if (onDismiss) {
+                onDismiss();
+              }
+            }}>
+            <CloseModal {...{width: 20, height: 20, color: '#000'}} />
+          </CloseModalButton>
+        </ModalHeader>
+      )}
       <AmountContainer>
         <AmountHeroContainer>
           <Row>
@@ -265,6 +387,7 @@ const Amount = () => {
               state={buttonState}
               disabled={!+amount}
               onPress={() => onAmountSelected(amount, setButtonState)}>
+              {/* onPress={goToNextView}> */}
               Continue
             </Button>
           </ActionContainer>

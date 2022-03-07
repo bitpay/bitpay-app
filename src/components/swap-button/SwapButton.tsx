@@ -32,7 +32,8 @@ const SwapButton = ({swapList, onChange}: SwapButtonProps) => {
 
   const swapText = (val: string) => {
     haptic('impactLight');
-    const curVal = val === swapList[0] ? swapList[1] : swapList[0];
+    const curVal =
+      val === swapList[0] && swapList.length > 1 ? swapList[1] : swapList[0];
     setText(curVal);
     onChange(curVal);
   };

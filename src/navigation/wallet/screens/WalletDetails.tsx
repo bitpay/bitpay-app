@@ -479,9 +479,14 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                 <LinkingButtons
                   buy={{
                     cta: () => {
-                      navigation.navigate('BuyCrypto', {
-                        screen: 'Root',
-                        params: {fromWallet: fullWalletObj},
+                      navigation.navigate('Wallet', {
+                        screen: 'Amount',
+                        params: {
+                          nextView: 'buyCrypto',
+                          buyCryptoOpts: {
+                            fromWallet: fullWalletObj,
+                          },
+                        },
                       });
                     },
                   }}

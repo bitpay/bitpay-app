@@ -27,14 +27,28 @@ import {RootState} from '../../../../store';
 import {AppActions} from '../../../../store/app';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
+import {Action, White} from '../../../../styles/colors';
+import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
+import {getCountry} from '../../../../lib/location/location';
 
 const CtaContainer = styled.View`
   margin: 20px 15px;
 `;
 
+const ArrowContainer = styled.View`
+  margin-right: 5px;
+`;
+
 const BuyCryptoRoot: React.FC = () => {
   const dispatch = useDispatch();
-  const [amount, setAmount] = useState<number>(0);
+  const navigation = useNavigation();
+  const route = useRoute<RouteProp<BuyCryptoStackParamList, 'Root'>>();
+  const allKeys: any = useSelector(({WALLET}: RootState) => WALLET.keys);
+
+  const fromWallet = route.params?.fromWallet;
+  const fromAmount = route.params?.amount;
+
+  const [amount, setAmount] = useState<number>(fromAmount ? fromAmount : 0);
   const [selectedWallet, setSelectedWallet] = useState<Wallet>();
   const [walletData, setWalletData] = useState<ItemProps>();
   const [amountModalVisible, setAmountModalVisible] = useState(false);
@@ -45,11 +59,7 @@ const BuyCryptoRoot: React.FC = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(
     PaymentMethodsAvailable.debitCard,
   );
-  const navigation = useNavigation();
-  const route = useRoute<RouteProp<BuyCryptoStackParamList, 'Root'>>();
-  const allKeys: any = useSelector(({WALLET}: RootState) => WALLET.keys);
-
-  const fromWallet = route.params?.fromWallet;
+  const [country, setCountry] = useState('US');
 
   const showModal = (id: string) => {
     switch (id) {
@@ -95,6 +105,11 @@ const BuyCryptoRoot: React.FC = () => {
   useEffect(() => {
     dispatch(startOnGoingProcessModal(OnGoingProcessMessages.GENERAL_AWAITING));
 
+    const getCountryData = async () => {
+      const countryData = await getCountry();
+      setCountry(countryData);
+    };
+
     const keysList = Object.values(allKeys).filter((key: any) => key.show);
 
     if (fromWallet && fromWallet.id) {
@@ -116,10 +131,12 @@ const BuyCryptoRoot: React.FC = () => {
         const allowedWallets = firstKeyAllWallets.filter(
           wallet =>
             wallet.credentials && wallet.credentials.network == 'livenet',
-        ); // TODO: wallets should be livenet
+        );
         setSelectedWallet(allowedWallets[0]);
       }
     }
+
+    getCountryData().catch(console.error);
 
     setTimeout(() => {
       dispatch(AppActions.dismissOnGoingProcessModal());
@@ -137,6 +154,7 @@ const BuyCryptoRoot: React.FC = () => {
           <BuyCryptoItemTitle>Amount</BuyCryptoItemTitle>
           <ActionsContainer
             onPress={() => {
+              // navigation.goBack();
               showModal('amount');
             }}>
             <SelectedOptionContainer>
@@ -150,6 +168,26 @@ const BuyCryptoRoot: React.FC = () => {
 
         <BuyCryptoItemCard>
           <BuyCryptoItemTitle>Deposit to</BuyCryptoItemTitle>
+          {!selectedWallet && (
+            <ActionsContainer
+              onPress={() => {
+                showModal('walletSelector');
+              }}>
+              <SelectedOptionContainer style={{backgroundColor: Action}}>
+                <SelectedOptionText
+                  style={{color: White}}
+                  numberOfLines={1}
+                  ellipsizeMode={'tail'}>
+                  Select Destination
+                </SelectedOptionText>
+                <ArrowContainer>
+                  <SelectorArrowDown
+                    {...{width: 20, height: 20, color: 'white'}}
+                  />
+                </ArrowContainer>
+              </SelectedOptionContainer>
+            </ActionsContainer>
+          )}
           {selectedWallet && (
             <ActionsContainer
               onPress={() => {
@@ -164,6 +202,11 @@ const BuyCryptoRoot: React.FC = () => {
                 <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
                   {selectedWallet.credentials.coin.toUpperCase()}
                 </SelectedOptionText>
+                <ArrowContainer>
+                  <SelectorArrowDown
+                    {...{width: 20, height: 20, color: 'white'}}
+                  />
+                </ArrowContainer>
               </SelectedOptionContainer>
               <DataText>{selectedWallet.currencyName}</DataText>
             </ActionsContainer>
@@ -172,13 +215,35 @@ const BuyCryptoRoot: React.FC = () => {
 
         <BuyCryptoItemCard>
           <BuyCryptoItemTitle>Payment Method</BuyCryptoItemTitle>
-          <ActionsContainer
-            onPress={() => {
-              showModal('paymentMethod');
-            }}>
-            <DataText>{selectedPaymentMethod.label}</DataText>
-            {selectedPaymentMethod && selectedPaymentMethod.imgSrc}
-          </ActionsContainer>
+          {!selectedPaymentMethod && (
+            <ActionsContainer
+              onPress={() => {
+                showModal('paymentMethod');
+              }}>
+              <SelectedOptionContainer style={{backgroundColor: Action}}>
+                <SelectedOptionText
+                  style={{color: White}}
+                  numberOfLines={1}
+                  ellipsizeMode={'tail'}>
+                  Select Payment Method
+                </SelectedOptionText>
+                <ArrowContainer>
+                  <SelectorArrowDown
+                    {...{width: 20, height: 20, color: 'white'}}
+                  />
+                </ArrowContainer>
+              </SelectedOptionContainer>
+            </ActionsContainer>
+          )}
+          {selectedPaymentMethod && (
+            <ActionsContainer
+              onPress={() => {
+                showModal('paymentMethod');
+              }}>
+              <DataText>{selectedPaymentMethod.label}</DataText>
+              {selectedPaymentMethod && selectedPaymentMethod.imgSrc}
+            </ActionsContainer>
+          )}
         </BuyCryptoItemCard>
 
         <CtaContainer>
@@ -192,7 +257,7 @@ const BuyCryptoRoot: React.FC = () => {
                   amount,
                   fiatCurrency: 'USD',
                   coin: selectedWallet?.currencyAbbreviation || '',
-                  country: 'US',
+                  country,
                   selectedWallet,
                   paymentMethod: selectedPaymentMethod,
                 },
@@ -204,23 +269,18 @@ const BuyCryptoRoot: React.FC = () => {
       </ScrollView>
 
       <AmountModal
-        onChanged={amount => {
-          let newAmount = '';
-          let numbers = '0123456789';
-
-          for (var i = 0; i < amount.length; i++) {
-            if (numbers.indexOf(amount[i]) > -1) {
-              newAmount = newAmount + amount[i];
-            } else {
-              // your call back function
-              console.log('please enter numbers only');
-            }
-          }
-          setAmount(+newAmount);
-        }}
-        amount={amount.toString()}
+        openedFrom={'buyCrypto'}
         isVisible={amountModalVisible}
-        onBackdropPress={() => hideModal('amount')}
+        onDismiss={(newAmount?: number) => {
+          console.log(
+            'Dismissing Amount Modal and setting new amount: ',
+            newAmount,
+          );
+          if (newAmount) {
+            setAmount(newAmount);
+          }
+          setAmountModalVisible(false);
+        }}
       />
 
       <WalletSelectorModal

@@ -1,4 +1,6 @@
 import React from 'react';
+import {useTheme} from '@react-navigation/native';
+import FastImage from 'react-native-fast-image';
 import {
   ModalContainer,
   ModalHeader,
@@ -11,12 +13,14 @@ import {PaymentMethodsAvailable} from '../constants/BuyCryptoConstants';
 import styled from 'styled-components/native';
 import {BaseText} from '../../../../components/styled/Text';
 import Button from '../../../../components/button/Button';
-import {Action, SlateDark} from '../../../../styles/colors';
+import {Action, LightBlack, SlateDark, White} from '../../../../styles/colors';
 import {ScrollView, SafeAreaView} from 'react-native';
 
 // Images
 import SimplexLogo from '../../../../../assets/img/services/simplex/logo-simplex-color.svg';
+const SimplexLogoDm = require('../../../../../assets/img/services/simplex/logo-simplex-dm.png');
 import WyreLogo from '../../../../../assets/img/services/wyre/logo-wyre.svg';
+import WyreLogoDm from '../../../../../assets/img/services/wyre/logo-wyre-dm.svg';
 
 interface PaymentMethodsModalProps {
   isVisible: boolean;
@@ -30,7 +34,7 @@ const PaymentMethodCard = styled.View`
   margin-bottom: 20px;
   padding: 14px;
   height: 105px;
-  background-color: #fbfbff;
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#fbfbff')};
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -51,7 +55,7 @@ const PaymentMethodCheckboxTexts = styled.View`
 
 const PaymentMethodLabel = styled(BaseText)`
   font-weight: 500;
-  color: ${Action};
+  color: ${({theme: {dark}}) => (dark ? White : Action)};
   margin-bottom: 5px;
 `;
 
@@ -62,8 +66,13 @@ const PaymentMethodProvider = styled.View`
 `;
 
 const PaymentMethodProviderText = styled(BaseText)`
-  color: ${SlateDark};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   margin-right: 6px;
+`;
+
+const SimplexLogoContainer = styled(FastImage)`
+  height: 18px;
+  width: 60px;
 `;
 
 const PaymentMethodsModal = ({
@@ -72,6 +81,7 @@ const PaymentMethodsModal = ({
   onBackdropPress,
   selectedPaymentMethod,
 }: PaymentMethodsModalProps) => {
+  const theme = useTheme();
   return (
     <SheetModal
       isVisible={isVisible}
@@ -110,12 +120,20 @@ const PaymentMethodsModal = ({
                         <PaymentMethodProviderText>
                           Provided by
                         </PaymentMethodProviderText>
-                        {paymentMethod.supportedExchanges.simplex && (
-                          <SimplexLogo width={60} height={20} />
-                        )}
-                        {paymentMethod.supportedExchanges.wyre && (
-                          <WyreLogo width={60} height={15} />
-                        )}
+                        {paymentMethod.supportedExchanges.simplex &&
+                          ((!theme.dark && (
+                            <SimplexLogo width={60} height={20} />
+                          )) ||
+                            (theme.dark && (
+                              <SimplexLogoContainer source={SimplexLogoDm} />
+                            )))}
+                        {paymentMethod.supportedExchanges.wyre &&
+                          ((!theme.dark && (
+                            <WyreLogo width={60} height={15} />
+                          )) ||
+                            (theme.dark && (
+                              <WyreLogoDm width={60} height={15} />
+                            )))}
                       </PaymentMethodProvider>
                     </PaymentMethodCheckboxTexts>
                   </PaymentMethodCardContainer>

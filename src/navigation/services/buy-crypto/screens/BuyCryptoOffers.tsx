@@ -1,27 +1,46 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, ScrollView, Linking} from 'react-native';
+import {
+  ActivityIndicator,
+  ScrollView,
+  TouchableOpacity,
+  Linking,
+} from 'react-native';
+import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
+import FastImage from 'react-native-fast-image';
+import {
+  useTheme,
+  RouteProp,
+  useRoute,
+  useNavigation,
+} from '@react-navigation/native';
+import cloneDeep from 'lodash.clonedeep';
 import Button from '../../../../components/button/Button';
+import haptic from '../../../../components/haptic-feedback/haptic';
+import {BaseText, Link} from '../../../../components/styled/Text';
+import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {useLogger} from '../../../../utils/hooks/useLogger';
-import {RouteProp, useRoute} from '@react-navigation/native';
-import {BaseText} from '../../../../components/styled/Text';
-import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
-import {BuyCryptoExpandibleCard, ItemDivisor} from '../styled/BuyCryptoCard';
-import {useNavigation} from '@react-navigation/native';
-import {SlateDark, ProgressBlue} from '../../../../styles/colors';
 import {getPrecision} from '../../../../utils/helper-methods';
+import {Currencies} from '../../../../constants/currencies';
+import {BuyCryptoExpandibleCard, ItemDivisor} from '../styled/BuyCryptoCard';
+import {Black, SlateDark, ProgressBlue, White} from '../../../../styles/colors';
 import {
   getPaymentUrl,
   simplexFiatAmountLimits,
   simplexPaymentRequest,
 } from '../utils/simplex-utils';
 import {wyreFiatAmountLimits} from '../utils/wyre-utils';
-import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
+import {AppActions} from '../../../../store/app';
+import {BuyCryptoActions} from '../../../../store/buy-crypto';
+import {simplexPaymentData} from '../../../../store/buy-crypto/buy-crypto.models';
+import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 
 // Images
 import SimplexLogo from '../../../../../assets/img/services/simplex/logo-simplex-color.svg';
+const SimplexLogoDm = require('../../../../../assets/img/services/simplex/logo-simplex-dm.png');
 import WyreLogo from '../../../../../assets/img/services/wyre/logo-wyre.svg';
+import WyreLogoDm from '../../../../../assets/img/services/wyre/logo-wyre-dm.svg';
 
 export interface BuyCryptoOffersProps {
   amount: number;
@@ -68,13 +87,13 @@ const SummaryItemContainer = styled.View`
 `;
 
 const SummaryTitle = styled(BaseText)`
-  color: ${SlateDark};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   font-size: 14px;
   margin-bottom: 5px;
 `;
 
 const SummaryData = styled(BaseText)`
-  color: #000000;
+  color: ${({theme: {dark}}) => (dark ? White : Black)};
   font-weight: 500;
   font-size: 16px;
 `;
@@ -115,12 +134,12 @@ const OfferDataCryptoAmount = styled(BaseText)`
   font-weight: 500;
   font-size: 18px;
   line-height: 20px;
-  color: black;
+  color: ${({theme: {dark}}) => (dark ? White : Black)};
 `;
 
 const OfferDataRate = styled(BaseText)`
   font-size: 14px;
-  color: ${SlateDark};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   font-weight: 400;
 `;
 
@@ -128,29 +147,30 @@ const OfferDataInfoContainer = styled.View`
   display: flex;
   flex-direction: row;
   align-items: center;
+  margin: ${({theme: {dark}}) => (dark ? '10px 0px' : '0px')};
 `;
 
 const OfferDataInfoLabel = styled(BaseText)`
   font-size: 14px;
-  color: ${SlateDark};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   font-weight: 400;
   margin-right: 10px;
 `;
 
 const OfferDataInfoText = styled(BaseText)`
   font-size: 16px;
-  color: ${SlateDark};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
 const OfferDataInfoTextSec = styled(BaseText)`
   font-size: 14px;
-  color: ${SlateDark};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   margin-top: 10px;
 `;
 
 const OfferDataInfoTotal = styled(BaseText)`
   font-size: 18px;
-  color: ${SlateDark};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   font-weight: bold;
 `;
 
@@ -181,13 +201,18 @@ const ExchangeTermsContainer = styled.View`
 const TermsText = styled(BaseText)`
   font-size: 13px;
   line-height: 20px;
-  color: ${SlateDark};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
 const ExchangeTermsText = styled(BaseText)`
   font-size: 11px;
   line-height: 20px;
   color: #757575;
+`;
+
+const SimplexLogoContainer = styled(FastImage)`
+  height: 18px;
+  width: 60px;
 `;
 
 const offersDefault: {
@@ -198,8 +223,8 @@ const offersDefault: {
     key: 'simplex',
     amountReceiving: '0',
     showOffer: true, // TODO: check isPaymentMethodSupported
-    logoLight: <SimplexLogo width={70} height={40} />,
-    logoDark: <SimplexLogo width={70} height={40} />,
+    logoLight: <SimplexLogo width={70} height={20} />,
+    logoDark: <SimplexLogoContainer source={SimplexLogoDm} />,
     expanded: false,
     fiatMoney: undefined,
     errorMsg: undefined,
@@ -209,8 +234,8 @@ const offersDefault: {
     key: 'wyre',
     amountReceiving: '0',
     showOffer: true, // TODO: check isPaymentMethodSupported
-    logoLight: <WyreLogo width={70} height={40} />,
-    logoDark: <WyreLogo width={70} height={40} />,
+    logoLight: <WyreLogo width={70} height={20} />,
+    logoDark: <WyreLogoDm width={70} height={20} />,
     expanded: false,
     fiatMoney: undefined,
     errorMsg: undefined,
@@ -232,7 +257,9 @@ const BuyCryptoOffers: React.FC = () => {
 
   const logger = useLogger();
   const navigation = useNavigation();
-  const [offers, setOffers] = useState(offersDefault);
+  const dispatch = useDispatch();
+  const theme = useTheme();
+  const [offers, setOffers] = useState(cloneDeep(offersDefault));
   const [finishedSimplex, setFinishedSimplex] = useState(false);
   const [finishedWyre, setFinishedWyre] = useState(false);
   const [updateView, setUpdateView] = useState(false);
@@ -336,8 +363,34 @@ const BuyCryptoOffers: React.FC = () => {
     setUpdateView(!updateView);
   };
 
-  const getWyreQuote = (): void => {
-    // TODO: wyre
+  const showWyreError = (err?: any) => {
+    let msg = 'Could not get crypto offer. Please, try again later.';
+    if (err) {
+      if (typeof err === 'string') {
+        msg = err;
+      } else if (err.exceptionId && err.message) {
+        logger.error('Wyre error: ' + err.message);
+        if (err.errorCode) {
+          switch (err.errorCode) {
+            case 'validation.unsupportedCountry':
+              msg = 'Country not supported: ' + country;
+              break;
+            default:
+              msg = err.message;
+              break;
+          }
+        } else {
+          msg = err.message;
+        }
+      }
+    }
+
+    logger.error('Crypto offer error: ' + msg);
+    offers.wyre.errorMsg = msg;
+    setUpdateView(!updateView);
+  };
+
+  const getWyreQuote = async () => {
     logger.debug('Wyre getting quote');
 
     offers.wyre.amountLimits = wyreFiatAmountLimits;
@@ -348,46 +401,95 @@ const BuyCryptoOffers: React.FC = () => {
     ) {
       offers.wyre.outOfLimitMsg = `There are no Wyre offers available, as the current purchase limits for this exchange must be between ${offers.wyre.amountLimits.min} ${fiatCurrency} and ${offers.wyre.amountLimits.max} ${fiatCurrency}`;
     } else {
-      offers.wyre = {
-        ...offersDefault.wyre,
-        ...{
-          buyAmount: 475,
-          fee: 25,
-          fiatMoney: '38492.70',
-          amountReceiving: '0.01234',
-          amountCost: 500,
-          outOfLimitMsg: undefined,
-          errorMsg: undefined,
-        },
+      let address: string = '';
+      try {
+        address = (await dispatch<any>(
+          createWalletAddress({wallet: selectedWallet, newAddress: false}),
+        )) as string;
+      } catch (err) {
+        console.error(err);
+        showSimplexError(err);
+      }
+
+      const dest = setPrefix(address, coin, selectedWallet.credentials.network);
+
+      let walletType: string;
+      switch (paymentMethod.method) {
+        case 'applePay':
+          walletType = 'APPLE_PAY';
+          break;
+        default:
+          walletType = 'DEBIT_CARD';
+          break;
+      }
+
+      const requestData = {
+        sourceAmount: amount.toString(),
+        sourceCurrency: fiatCurrency.toUpperCase(),
+        destCurrency: coin.toUpperCase(),
+        dest,
+        country,
+        amountIncludeFees: true, // If amountIncludeFees is true, use sourceAmount instead of amount
+        walletType,
+        env: 'sandbox', // TODO: send the correct environment: sandbox/production
       };
+
+      selectedWallet
+        .wyreWalletOrderQuotation(requestData)
+        .then((data: any) => {
+          if (data && (data.exceptionId || data.error)) {
+            showWyreError(data);
+            return;
+          }
+
+          offers.wyre.amountCost = data.sourceAmount; // sourceAmount = Total amount (including fees)
+          offers.wyre.buyAmount = data.sourceAmountWithoutFees;
+          offers.wyre.fee = data.sourceAmount - data.sourceAmountWithoutFees;
+
+          if (offers.wyre.fee < 0) {
+            const err = `Wyre has returned a wrong value for the fee. Fee: ${offers.wyre.fee}`;
+            showWyreError(err);
+            return;
+          }
+
+          offers.wyre.fiatMoney =
+            offers.wyre.buyAmount && data.destAmount
+              ? Number(offers.wyre.buyAmount / data.destAmount).toFixed(8)
+              : undefined;
+
+          offers.wyre.amountReceiving = data.destAmount.toFixed(8);
+
+          logger.debug('Wyre getting quote: SUCCESS');
+          setFinishedWyre(!finishedWyre);
+        })
+        .catch((err: any) => {
+          console.log('Wyre getting quote: FAILED', err);
+        });
     }
-    setFinishedWyre(!finishedWyre);
   };
 
-  const getAddress = (coin: string): string => {
-    // TODO: implement a getAddress function properly
-
-    switch (coin.toLowerCase()) {
-      case 'btc':
-        return '1CVuVALD6Zo7ms24n3iUXv162kvUzsHr69';
-      case 'bch':
-        return 'qz8ds306px5n65gffn8u69vvnksfw6huwyjczrvkh3';
-      case 'eth':
-        return '0x32ed5be73f5c395621287f5cbe1da96caf3c5dec';
-      case 'doge':
-        return 'D7g9fkUi9VdvPCHQGPSLsVHrsmY2atiH1G';
-      case 'ltc':
-        return 'ltc1qf7udgl5m62vdml8xjvh0efd7kxfwf4rh5sa4d9';
-      case 'xrp':
-        return 'rEqj9WKSH7wEkPvWf6b4gCi26Y3F7HbKUF';
-
-      default:
-        return '0x32ed5be73f5c395621287f5cbe1da96caf3c5dec'; // ETH tokens
-    }
+  const setPrefix = (
+    address: string,
+    coin: string,
+    network: 'livenet' | 'testnet',
+  ): string => {
+    const prefix =
+      Currencies[coin.toLocaleLowerCase()].paymentInfo.protocolPrefix[network];
+    const addr = `${prefix}:${address}`;
+    return addr;
   };
 
-  const continueToSimplex = (): void => {
-    const address = getAddress(coin);
+  const continueToSimplex = async () => {
+    let address: string = '';
+    try {
+      address = (await dispatch<any>(
+        createWalletAddress({wallet: selectedWallet, newAddress: false}),
+      )) as string;
+    } catch (err) {
+      console.error(err);
+      showWyreError(err);
+    }
+
     const quoteData = {
       quoteId: offers.simplex.quoteData.quote_id,
       currency: fiatCurrency,
@@ -412,19 +514,26 @@ const BuyCryptoOffers: React.FC = () => {
           payment_id: req.payment_id,
         };
 
-        // const newData = {
-        //   address,
-        //   created_on: Date.now(),
-        //   crypto_amount: offers.simplex.quoteData.digital_money.amount,
-        //   coin: coin.toUpperCase(),
-        //   fiat_base_amount: offers.simplex.quoteData.fiat_money.base_amount,
-        //   fiat_total_amount: offers.simplex.quoteData.fiat_money.total_amount,
-        //   fiat_total_amount_currency: fiatCurrency,
-        //   order_id: req.order_id,
-        //   payment_id: req.payment_id,
-        //   status: 'paymentRequestSent',
-        //   user_id: selectedWallet.id,
-        // };
+        const newData: simplexPaymentData = {
+          address,
+          created_on: Date.now(),
+          crypto_amount: offers.simplex.quoteData.digital_money.amount,
+          coin: coin.toUpperCase(),
+          env: 'dev',
+          fiat_base_amount: offers.simplex.quoteData.fiat_money.base_amount,
+          fiat_total_amount: offers.simplex.quoteData.fiat_money.total_amount,
+          fiat_total_amount_currency: fiatCurrency,
+          order_id: req.order_id,
+          payment_id: req.payment_id,
+          status: 'paymentRequestSent',
+          user_id: selectedWallet.id,
+        };
+
+        dispatch(
+          BuyCryptoActions.successPaymentRequestSimplex({
+            simplexPaymentData: newData,
+          }),
+        );
 
         const paymentUrl: string = getPaymentUrl(
           selectedWallet,
@@ -443,20 +552,155 @@ const BuyCryptoOffers: React.FC = () => {
       });
   };
 
-  const continueToWyre = (): void => {
-    console.log('Continue to Wyre clicked');
+  const goToWyreBuyPage = async () => {
+    let address: string = '';
+    try {
+      address = (await dispatch<any>(
+        createWalletAddress({wallet: selectedWallet, newAddress: false}),
+      )) as string;
+    } catch (err) {
+      console.error(err);
+      showWyreError(err);
+    }
+    let _paymentMethod: string;
+    switch (paymentMethod.method) {
+      case 'applePay':
+        _paymentMethod = 'apple-pay';
+        break;
+      default:
+        _paymentMethod = 'debit-card';
+        break;
+    }
+    const appName = 'bitpayapp';
+    const redirectUrl =
+      appName +
+      '://wyre?walletId=' +
+      selectedWallet.id +
+      '&destAmount=' +
+      offers.wyre.amountReceiving;
+    const failureRedirectUrl = appName + '://wyreError';
+    const dest = setPrefix(address, coin, selectedWallet.credentials.network);
+    const requestData = {
+      sourceAmount: amount.toString(),
+      dest,
+      destCurrency: coin.toUpperCase(),
+      lockFields: ['dest', 'destCurrency', 'country'],
+      paymentMethod: _paymentMethod,
+      sourceCurrency: fiatCurrency.toUpperCase(),
+      country,
+      amountIncludeFees: true, // If amountIncludeFees is true, use sourceAmount instead of amount
+      redirectUrl,
+      failureRedirectUrl,
+      env: 'sandbox', // TODO: send the correct environment: sandbox/production
+    };
+
+    selectedWallet
+      .wyreWalletOrderReservation(requestData)
+      .then((data: any) => {
+        if (data && (data.exceptionId || data.error)) {
+          showWyreError(data);
+          return;
+        }
+
+        const paymentUrl = data.url;
+        openPopUpConfirmation('wyre', paymentUrl);
+      })
+      .catch((err: any) => {
+        showWyreError(err);
+      });
+  };
+
+  const continueToWyre = (paymentUrl: string) => {
+    Linking.openURL(paymentUrl)
+      .then(() => {
+        navigation.goBack();
+      })
+      .catch(err => console.error("Couldn't load page", err));
   };
 
   const goTo = (key: string): void => {
     switch (key) {
       case 'simplex':
-        continueToSimplex();
+        goToSimplexBuyPage();
         break;
 
       case 'wyre':
-        continueToWyre();
+        goToWyreBuyPage();
         break;
     }
+  };
+
+  const goToSimplexBuyPage = () => {
+    if (offers.simplex.errorMsg || offers.simplex.outOfLimitMsg) {
+      return;
+    }
+    openPopUpConfirmation('simplex');
+  };
+
+  const openPopUpConfirmation = (exchange: string, url?: string): void => {
+    let title, message;
+
+    switch (exchange) {
+      case 'simplex':
+        title = 'Continue to Simplex';
+        message =
+          "In order to finish the payment process you will be redirected to Simplex's page";
+        break;
+
+      case 'wyre':
+        title = 'Continue to Wyre';
+        message =
+          "In order to finish the payment process you will be redirected to Wyre's page";
+        break;
+
+      default:
+        title = 'Continue to the exchange page';
+        message =
+          'In order to finish the payment process you will be redirected to the exchange page';
+        break;
+    }
+
+    dispatch(
+      AppActions.showBottomNotificationModal({
+        type: 'question',
+        title,
+        message,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'CONTINUE',
+            action: () => {
+              dispatch(AppActions.dismissBottomNotificationModal());
+              switch (exchange) {
+                case 'simplex':
+                  continueToSimplex();
+                  break;
+                case 'wyre':
+                  url ? continueToWyre(url) : () => {};
+                  break;
+
+                default:
+                  if (url) {
+                    Linking.openURL(url)
+                      .then(() => {
+                        navigation.goBack();
+                      })
+                      .catch(err => console.error("Couldn't load page", err));
+                  }
+                  break;
+              }
+            },
+            primary: true,
+          },
+          {
+            text: 'GO BACK',
+            action: () => {
+              console.log('Continue to the exchange website CANCELED');
+            },
+          },
+        ],
+      }),
+    );
   };
 
   const expandCard = (offer: any) => {
@@ -494,7 +738,7 @@ const BuyCryptoOffers: React.FC = () => {
           <SummaryTitle>Crypto</SummaryTitle>
           <CoinContainer>
             <CoinIconContainer>
-              {SupportedCurrencyOptions.find(wallet => wallet.id == coin)?.img}
+              <CurrencyImage img={selectedWallet.img} size={20} />
             </CoinIconContainer>
             <SummaryData>{coin.toUpperCase()}</SummaryData>
           </CoinContainer>
@@ -515,142 +759,190 @@ const BuyCryptoOffers: React.FC = () => {
         </SummaryCtaContainer>
       </SummaryRow>
 
-      {Object.values(offers).map(offer => {
-        return (
-          <BuyCryptoExpandibleCard
-            key={offer.key}
-            onPress={() => {
-              expandCard(offer);
-            }}>
-            {!offer.fiatMoney && !offer.errorMsg && !offer.outOfLimitMsg && (
-              <CoinContainer>
-                <ActivityIndicator color={ProgressBlue} />
-              </CoinContainer>
-            )}
-            {!offer.fiatMoney && offer.outOfLimitMsg && (
-              <OfferDataContainer>
-                <OfferDataInfoLabel>{offer.outOfLimitMsg}</OfferDataInfoLabel>
-              </OfferDataContainer>
-            )}
-            {!offer.fiatMoney && offer.errorMsg && (
-              <OfferDataContainer>
-                <OfferDataInfoLabel>Error: {offer.errorMsg}</OfferDataInfoLabel>
-              </OfferDataContainer>
-            )}
-            <OfferRow>
-              <OfferDataContainer>
-                {offer.fiatMoney && !offer.errorMsg && !offer.outOfLimitMsg && (
-                  <>
-                    <OfferDataCryptoAmount>
-                      {offer.amountReceiving} {coin.toUpperCase()}
-                    </OfferDataCryptoAmount>
-                    <OfferDataRate>
-                      1 {coin.toUpperCase()} = ${offer.fiatMoney}
-                    </OfferDataRate>
-                  </>
-                )}
-                <OfferDataInfoContainer>
-                  <OfferDataInfoLabel>Provided By</OfferDataInfoLabel>
-                  {offer && offer.logoLight}
-                </OfferDataInfoContainer>
-              </OfferDataContainer>
-              {offer.fiatMoney && (
-                <SummaryCtaContainer>
-                  <Button
-                    buttonType={'pill'}
-                    onPress={() => {
-                      goTo(offer.key);
-                    }}>
-                    Buy
-                  </Button>
-                </SummaryCtaContainer>
+      {Object.values(offers)
+        .sort(
+          (a, b) =>
+            parseFloat(b.amountReceiving || '0') -
+            parseFloat(a.amountReceiving || '0'),
+        )
+        .map(offer => {
+          return (
+            <BuyCryptoExpandibleCard
+              key={offer.key}
+              onPress={() => {
+                expandCard(offer);
+              }}>
+              {!offer.fiatMoney && !offer.errorMsg && !offer.outOfLimitMsg && (
+                <CoinContainer>
+                  <ActivityIndicator color={ProgressBlue} />
+                </CoinContainer>
               )}
-            </OfferRow>
+              {!offer.fiatMoney && offer.outOfLimitMsg && (
+                <OfferDataContainer>
+                  <OfferDataInfoLabel>{offer.outOfLimitMsg}</OfferDataInfoLabel>
+                </OfferDataContainer>
+              )}
+              {!offer.fiatMoney && offer.errorMsg && (
+                <OfferDataContainer>
+                  <OfferDataInfoLabel>
+                    Error: {offer.errorMsg}
+                  </OfferDataInfoLabel>
+                </OfferDataContainer>
+              )}
+              <OfferRow>
+                <OfferDataContainer>
+                  {offer.fiatMoney && !offer.errorMsg && !offer.outOfLimitMsg && (
+                    <>
+                      <OfferDataCryptoAmount>
+                        {offer.amountReceiving} {coin.toUpperCase()}
+                      </OfferDataCryptoAmount>
+                      <OfferDataRate>
+                        1 {coin.toUpperCase()} = ${offer.fiatMoney}
+                      </OfferDataRate>
+                    </>
+                  )}
+                  <OfferDataInfoContainer>
+                    <OfferDataInfoLabel>Provided By</OfferDataInfoLabel>
+                    {offer && theme.dark ? offer.logoDark : offer.logoLight}
+                  </OfferDataInfoContainer>
+                </OfferDataContainer>
+                {offer.fiatMoney && (
+                  <SummaryCtaContainer>
+                    <Button
+                      buttonType={'pill'}
+                      onPress={() => {
+                        haptic('impactLight');
+                        goTo(offer.key);
+                      }}>
+                      Buy
+                    </Button>
+                  </SummaryCtaContainer>
+                )}
+              </OfferRow>
 
-            {offer.expanded && (
-              <>
-                <ItemDivisor />
-                <OfferExpandibleItem>
-                  <OfferDataInfoLabel>Buy Amount</OfferDataInfoLabel>
-                  <OfferDataRightContainer>
+              {offer.expanded && (
+                <>
+                  <ItemDivisor />
+                  <OfferExpandibleItem>
+                    <OfferDataInfoLabel>Buy Amount</OfferDataInfoLabel>
+                    <OfferDataRightContainer>
+                      <OfferDataInfoText>
+                        {offer.buyAmount} {fiatCurrency}
+                      </OfferDataInfoText>
+                      <OfferDataInfoTextSec>
+                        {offer.amountReceiving} {coin.toUpperCase()}
+                      </OfferDataInfoTextSec>
+                    </OfferDataRightContainer>
+                  </OfferExpandibleItem>
+                  <ItemDivisor />
+                  <OfferExpandibleItem>
+                    <OfferDataInfoLabel>Fee</OfferDataInfoLabel>
                     <OfferDataInfoText>
-                      {offer.buyAmount} {fiatCurrency}
+                      {offer.fee} {fiatCurrency}
                     </OfferDataInfoText>
-                    <OfferDataInfoTextSec>
-                      {offer.amountReceiving} {coin.toUpperCase()}
-                    </OfferDataInfoTextSec>
-                  </OfferDataRightContainer>
-                </OfferExpandibleItem>
-                <ItemDivisor />
-                <OfferExpandibleItem>
-                  <OfferDataInfoLabel>Fee</OfferDataInfoLabel>
-                  <OfferDataInfoText>
-                    {offer.fee} {fiatCurrency}
-                  </OfferDataInfoText>
-                </OfferExpandibleItem>
-                <ItemDivisor />
-                <OfferExpandibleItem>
-                  <OfferDataInfoTotal>TOTAL</OfferDataInfoTotal>
-                  <OfferDataInfoTotal>
-                    {offer.amountCost} {fiatCurrency}
-                  </OfferDataInfoTotal>
-                </OfferExpandibleItem>
-                {offer.key == 'simplex' && (
-                  <ExchangeTermsContainer>
-                    <ExchangeTermsText>
-                      What service fees am I paying?
-                    </ExchangeTermsText>
-                    {paymentMethod.method == 'sepaBankTransfer' && (
-                      <ExchangeTermsText>1.5% of the amount.</ExchangeTermsText>
-                    )}
-                    {paymentMethod.method != 'sepaBankTransfer' && (
+                  </OfferExpandibleItem>
+                  <ItemDivisor />
+                  <OfferExpandibleItem>
+                    <OfferDataInfoTotal>TOTAL</OfferDataInfoTotal>
+                    <OfferDataInfoTotal>
+                      {offer.amountCost} {fiatCurrency}
+                    </OfferDataInfoTotal>
+                  </OfferExpandibleItem>
+                  {offer.key == 'simplex' && (
+                    <ExchangeTermsContainer>
                       <ExchangeTermsText>
-                        Can range from 2.5% to 5% of the transaction, depending
-                        on the volume of traffic (with a minimum of 10 USD or
-                        its equivalent in any other fiat currency) + 1% of the
-                        transaction. Read more
+                        What service fees am I paying?
                       </ExchangeTermsText>
-                    )}
-                    <ExchangeTermsText>
-                      This service is provided by a third party, and you are
-                      subject to their Terms of use
-                    </ExchangeTermsText>
-                  </ExchangeTermsContainer>
-                )}
-                {offer.key == 'wyre' && (
-                  <ExchangeTermsContainer>
-                    <ExchangeTermsText>
-                      What service fees am I paying?
-                    </ExchangeTermsText>
-                    {country == 'US' && (
+                      {paymentMethod.method == 'sepaBankTransfer' && (
+                        <ExchangeTermsText>
+                          1.5% of the amount.
+                        </ExchangeTermsText>
+                      )}
+                      {paymentMethod.method != 'sepaBankTransfer' && (
+                        <ExchangeTermsText>
+                          Can range from 3.5% to 5% of the transaction,
+                          depending on the volume of traffic (with a minimum of
+                          10 USD or its equivalent in any other fiat currency) +
+                          1% of the transaction.
+                          <TouchableOpacity
+                            onPress={() => {
+                              haptic('impactLight');
+                              Linking.openURL(
+                                'https://support.simplex.com/hc/en-gb/articles/360014078420-What-fees-am-I-paying-',
+                              );
+                            }}>
+                            <Link style={{marginLeft: 2, marginBottom: -2}}>
+                              Read more
+                            </Link>
+                          </TouchableOpacity>
+                        </ExchangeTermsText>
+                      )}
                       <ExchangeTermsText>
-                        5 USD minimum fee or 2.9% of the amount + 0.30 USD,
-                        whichever is greater + Required miners fee.
+                        This service is provided by a third party, and you are
+                        subject to their
+                        <TouchableOpacity
+                          onPress={() => {
+                            haptic('impactLight');
+                            Linking.openURL(
+                              'https://www.simplex.com/terms-of-use/',
+                            );
+                          }}>
+                          <Link style={{marginBottom: -2}}>Terms of use</Link>
+                        </TouchableOpacity>
                       </ExchangeTermsText>
-                    )}
-                    {country != 'US' && (
+                    </ExchangeTermsContainer>
+                  )}
+                  {offer.key == 'wyre' && (
+                    <ExchangeTermsContainer>
                       <ExchangeTermsText>
-                        5 USD minimum fee or 3.9% of the amount + 0.30 USD,
-                        whichever is greater + Required miners fee.
+                        What service fees am I paying?
                       </ExchangeTermsText>
-                    )}
-                    {fiatCurrency.toUpperCase() != 'USD' && (
+                      {country == 'US' && (
+                        <ExchangeTermsText>
+                          5 USD minimum fee or 2.9% of the amount + 0.30 USD,
+                          whichever is greater + Required miners fee.
+                        </ExchangeTermsText>
+                      )}
+                      {country != 'US' && (
+                        <ExchangeTermsText>
+                          5 USD minimum fee or 3.9% of the amount + 0.30 USD,
+                          whichever is greater + Required miners fee.
+                        </ExchangeTermsText>
+                      )}
+                      {fiatCurrency.toUpperCase() != 'USD' && (
+                        <ExchangeTermsText>
+                          Or its equivalent in {fiatCurrency.toUpperCase()}.
+                        </ExchangeTermsText>
+                      )}
+                      <TouchableOpacity
+                        onPress={() => {
+                          haptic('impactLight');
+                          Linking.openURL(
+                            'https://support.sendwyre.com/hc/en-us/articles/360059565013-Wyre-card-processing-fees',
+                          );
+                        }}>
+                        <Link style={{marginBottom: -2}}>Read more</Link>
+                      </TouchableOpacity>
                       <ExchangeTermsText>
-                        Or its equivalent in {fiatCurrency.toUpperCase()}.
+                        This service is provided by a third party, and you are
+                        subject to their
+                        <TouchableOpacity
+                          onPress={() => {
+                            haptic('impactLight');
+                            Linking.openURL(
+                              'https://www.sendwyre.com/user-agreement/',
+                            );
+                          }}>
+                          <Link style={{marginBottom: -2}}>User Agreement</Link>
+                        </TouchableOpacity>
                       </ExchangeTermsText>
-                    )}
-                    <ExchangeTermsText>Read more</ExchangeTermsText>
-                    <ExchangeTermsText>
-                      This service is provided by a third party, and you are
-                      subject to their Terms of use
-                    </ExchangeTermsText>
-                  </ExchangeTermsContainer>
-                )}
-              </>
-            )}
-          </BuyCryptoExpandibleCard>
-        );
-      })}
+                    </ExchangeTermsContainer>
+                  )}
+                </>
+              )}
+            </BuyCryptoExpandibleCard>
+          );
+        })}
 
       <TermsContainer>
         <TermsText>
