@@ -86,7 +86,7 @@ const Confirm = () => {
   const [txp, updateTxp] = useState(_txp);
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
 
-  const {currency, fee, sendingFrom, sendingTo, subTotal, total} = txDetails;
+  const {currency, fee, sendingFrom, sendingTo: {recipientName, recipientAddress}, subTotal, total} = txDetails;
 
   const getIcon = () => {
     return SUPPORTED_CURRENCIES.includes(currency) ? (
@@ -109,7 +109,7 @@ const Confirm = () => {
 
             <SendToPill
               icon={getIcon()}
-              description={sendingTo.recipientName || ''}
+              description={recipientName || recipientAddress || ''}
             />
           </DetailRow>
         </DetailContainer>

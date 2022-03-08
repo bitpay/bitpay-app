@@ -11,7 +11,7 @@ import {
 } from '../../wallet.models';
 import {FormatAmountStr, ParseAmount} from '../amount/amount';
 import {FeeLevels, getFeeRatePerKb} from '../fee/fee';
-import {formatFiatAmount} from '../../../../utils/helper-methods';
+import {formatCryptoAddress, formatFiatAmount} from '../../../../utils/helper-methods';
 import {toFiat} from '../../utils/wallet';
 import {startGetRates} from '../rates/rates';
 import {waitForTargetAmountAndUpdateWallet} from '../balance/balance';
@@ -113,12 +113,13 @@ const buildTxDetails = ({
 }): TxDetails => {
   const {coin, feeLevel, fee, amount} = proposal;
   const total = amount + fee;
-  const {type, name} = recipient;
+  const {type, name, address} = recipient;
   return {
     currency: coin,
     sendingTo: {
       recipientType: type,
       recipientName: name,
+      recipientAddress: formatCryptoAddress(address),
     },
     fee: {
       feeLevel,

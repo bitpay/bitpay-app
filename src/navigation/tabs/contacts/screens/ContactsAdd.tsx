@@ -295,7 +295,7 @@ const ContactsAdd: React.FC = () => {
     navigation.navigate('Scan', {
       screen: 'Root',
       params: {
-        contextHandler: address => {
+        onScanComplete: address => {
           setValue('address', address, {shouldDirty: true});
           processAddress(address);
         },

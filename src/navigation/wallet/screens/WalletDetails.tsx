@@ -57,6 +57,8 @@ import TransactionRow, {
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
+import {DeviceEventEmitter} from 'react-native';
+import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 
 const HISTORY_SHOW_LIMIT = 15;
 
@@ -125,7 +127,7 @@ const getWalletType = (key: Key, wallet: Wallet) => {
     credentials: {token, walletId, addressType},
   } = wallet;
   if (token) {
-    const linkedWallet = key.wallets.find(({ tokens }) =>
+    const linkedWallet = key.wallets.find(({tokens}) =>
       tokens?.includes(walletId),
     );
     const walletName =
@@ -171,11 +173,18 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   }, [navigation, uiFormattedWallet.walletName]);
 
   useEffect(() => {
-    if (fullWalletObj.isRefreshing) {
-      loadHistory(true);
-    }
     setRefreshing(!!fullWalletObj.isRefreshing);
   }, [fullWalletObj.isRefreshing]);
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      DeviceEmitterEvents.WALLET_UPDATE_COMPLETE,
+      () => {
+        loadHistory(true);
+      },
+    );
+    return subscription.remove;
+  }, []);
 
   const ShareAddress = async () => {
     try {
@@ -215,8 +224,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             },
           },
         });
-
-
       },
     },
     {

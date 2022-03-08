@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {HeaderTitle} from '../../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
@@ -9,7 +9,7 @@ import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
 import {RootState} from '../../../../store';
 import {formatFiatAmount, sleep} from '../../../../utils/helper-methods';
-import {Key} from '../../../../store/wallet/wallet.models';
+import {Key, Recipient} from '../../../../store/wallet/wallet.models';
 import debounce from 'lodash.debounce';
 import {
   CheckIfLegacyBCH,
@@ -169,6 +169,12 @@ const SendTo = () => {
     });
   });
 
+  useEffect(() => {
+    return navigation.addListener('blur', () =>
+      setTimeout(() => setSearchInput(''), 300),
+    );
+  }, [navigation]);
+
   const {wallet} = route.params;
   const {
     currencyAbbreviation,
@@ -189,7 +195,7 @@ const SendTo = () => {
   const BchLegacyAddressInfoDismiss = (searchText: string) => {
     const cashAddr = TranslateToBchCashAddress(searchText);
     setSearchInput(cashAddr);
-    validateSearchText(cashAddr);
+    validateAndNavigateToConfirm(cashAddr);
   };
 
   const checkCoinAndNetwork = (data: any, isPayPro?: boolean): boolean => {
@@ -235,7 +241,7 @@ const SendTo = () => {
     return false;
   };
 
-  const validateSearchText = async (text: string) => {
+  const validateAndNavigateToConfirm = async (text: string) => {
     const data = ValidateURI(text);
     if (data?.type === 'PayPro' || data?.type === 'InvoiceUri') {
       try {
@@ -290,19 +296,21 @@ const SendTo = () => {
           ),
         );
       }
-      return;
-    }
-
-    if (ValidDataTypes.includes(data?.type)) {
-      const isValid = checkCoinAndNetwork(text);
-      console.log(isValid);
-      //  TODO: Handle me
-      return;
+    } else if (ValidDataTypes.includes(data?.type)) {
+      if (checkCoinAndNetwork(text)) {
+        const recipient = {
+          type: 'address',
+          address: text,
+        };
+        setSearchInput(text);
+        await sleep(0);
+        goToConfirm(recipient);
+      }
     }
   };
 
   const onSearchInputChange = debounce((text: string) => {
-    validateSearchText(text);
+    validateAndNavigateToConfirm(text);
   }, 300);
 
   const onSendToWallet = async (selectedWallet: KeyWallet) => {
@@ -335,55 +343,58 @@ const SendTo = () => {
         address,
       };
 
-      navigation.navigate('Wallet', {
-        screen: 'Amount',
-        params: {
-          currencyAbbreviation: wallet.currencyAbbreviation.toUpperCase(),
-          onAmountSelected: async (amount, setButtonState, opts) => {
-            try {
-              setButtonState('loading');
-              const {txDetails, txp} = await dispatch(
-                createProposalAndBuildTxDetails({
-                  wallet,
-                  recipient,
-                  amount: Number(amount),
-                }),
-              );
-              setButtonState('success');
-              await sleep(300);
-              navigation.navigate('Wallet', {
-                screen: 'Confirm',
-                params: {wallet, recipient, txp, txDetails},
-              });
-            } catch (err: any) {
-              setButtonState('failed');
-              const [errorMessageConfig] = await Promise.all([
-                handleCreateTxProposalError(err),
-                sleep(400),
-              ]);
-              dispatch(
-                showBottomNotificationModal({
-                  ...errorMessageConfig,
-                  enableBackdropDismiss: false,
-                  actions: [
-                    {
-                      text: 'OK',
-                      action: () => {
-                        setButtonState(undefined);
-                      },
-                    },
-                  ],
-                }),
-              );
-            }
-          },
-        },
-      });
+      goToConfirm(recipient);
     } catch (err) {
       console.error(err);
     }
   };
 
+  const goToConfirm = (recipient: Recipient) => {
+    navigation.navigate('Wallet', {
+      screen: 'Amount',
+      params: {
+        currencyAbbreviation: wallet.currencyAbbreviation.toUpperCase(),
+        onAmountSelected: async (amount, setButtonState, opts) => {
+          try {
+            setButtonState('loading');
+            const {txDetails, txp} = await dispatch(
+              createProposalAndBuildTxDetails({
+                wallet,
+                recipient,
+                amount: Number(amount),
+              }),
+            );
+            setButtonState('success');
+            await sleep(300);
+            navigation.navigate('Wallet', {
+              screen: 'Confirm',
+              params: {wallet, recipient, txp, txDetails},
+            });
+          } catch (err: any) {
+            setButtonState('failed');
+            const [errorMessageConfig] = await Promise.all([
+              handleCreateTxProposalError(err),
+              sleep(400),
+            ]);
+            dispatch(
+              showBottomNotificationModal({
+                ...errorMessageConfig,
+                enableBackdropDismiss: false,
+                actions: [
+                  {
+                    text: 'OK',
+                    action: () => {
+                      setButtonState(undefined);
+                    },
+                  },
+                ],
+              }),
+            );
+          }
+        },
+      },
+    });
+  };
   return (
     <SafeAreaView>
       <ScrollView>
@@ -404,10 +415,10 @@ const SendTo = () => {
               navigation.navigate('Scan', {
                 screen: 'Root',
                 params: {
-                  contextHandler: data => {
+                  onScanComplete: data => {
                     try {
                       if (data) {
-                        validateSearchText(data);
+                        validateAndNavigateToConfirm(data);
                       }
                     } catch (err) {
                       console.log(err);
