@@ -338,7 +338,7 @@ const SendTo = () => {
         screen: 'Amount',
         params: {
           currencyAbbreviation: wallet.currencyAbbreviation.toUpperCase(),
-          contextHandler: async (amount, setButtonState, opts) => {
+          onAmountSelected: async (amount, setButtonState, opts) => {
             try {
               setButtonState('loading');
               const {txDetails, txp} = await dispatch(

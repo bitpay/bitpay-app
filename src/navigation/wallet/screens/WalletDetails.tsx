@@ -202,7 +202,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           params: {
             currencyAbbreviation:
               fullWalletObj.currencyAbbreviation.toUpperCase(),
-            contextHandler: async (amount, setButtonState) => {
+            onAmountSelected: async (amount, setButtonState) => {
               setButtonState('success');
               await sleep(500);
               navigation.navigate('Wallet', {

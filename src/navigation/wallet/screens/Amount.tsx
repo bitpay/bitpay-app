@@ -87,7 +87,7 @@ export const AmountContainer = styled.View`
 `;
 
 export interface AmountParamList {
-  contextHandler: (
+  onAmountSelected: (
     // crypto amount
     amount: string,
     // for toggling sync button 'loading' | 'success' | 'failed' | null | undefined;
@@ -102,7 +102,7 @@ export interface AmountParamList {
 
 const Amount = () => {
   const route = useRoute<RouteProp<WalletStackParamList, 'Amount'>>();
-  const {contextHandler, currencyAbbreviation, opts} = route.params;
+  const {onAmountSelected, currencyAbbreviation, opts} = route.params;
   const navigation = useNavigation();
   const [buttonState, setButtonState] = useState<ButtonState>();
   // flag for primary selector type
@@ -179,7 +179,7 @@ const Amount = () => {
           <HeaderContainer>
             <SendMax
               onPress={() =>
-                contextHandler(amount, setButtonState, {sendMax: true})
+                onAmountSelected(amount, setButtonState, {sendMax: true})
               }>
               <SendMaxText>Send Max</SendMaxText>
             </SendMax>
@@ -254,7 +254,7 @@ const Amount = () => {
             <Button
               state={buttonState}
               disabled={!+amount}
-              onPress={() => contextHandler(amount, setButtonState)}>
+              onPress={() => onAmountSelected(amount, setButtonState)}>
               Continue
             </Button>
           </ActionContainer>
