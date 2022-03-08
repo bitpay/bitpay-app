@@ -206,7 +206,7 @@ const Amount = () => {
         }),
       );
     }
-  }
+  };
 
   const onCellPress = (val: string) => {
     haptic('impactLight');

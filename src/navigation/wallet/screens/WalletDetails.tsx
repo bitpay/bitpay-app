@@ -9,7 +9,6 @@ import React, {
 } from 'react';
 import {useTranslation} from 'react-i18next';
 import {RefreshControl, SectionList, Share, View} from 'react-native';
-import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
 import Settings from '../../../components/settings/Settings';
 import {
