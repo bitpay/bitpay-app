@@ -125,7 +125,7 @@ const getWalletType = (key: Key, wallet: Wallet) => {
     credentials: {token, walletId, addressType},
   } = wallet;
   if (token) {
-    const linkedWallet = key.wallets.find(({tokens}) =>
+    const linkedWallet = key.wallets.find(({ tokens }) =>
       tokens?.includes(walletId),
     );
     const walletName =
@@ -198,9 +198,25 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         'This will generate an invoice, which the person you send it to can pay using any wallet.',
       onPress: () => {
         navigation.navigate('Wallet', {
-          screen: 'RequestSpecificAmount',
-          params: {wallet: fullWalletObj},
+          screen: 'Amount',
+          params: {
+            currencyAbbreviation:
+              fullWalletObj.currencyAbbreviation.toUpperCase(),
+            onAmountSelected: async (amount, setButtonState) => {
+              setButtonState('success');
+              await sleep(500);
+              navigation.navigate('Wallet', {
+                screen: 'RequestSpecificAmountQR',
+                params: {wallet: fullWalletObj, requestAmount: Number(amount)},
+              });
+            },
+            opts: {
+              hideSendMax: true,
+            },
+          },
         });
+
+
       },
     },
     {
