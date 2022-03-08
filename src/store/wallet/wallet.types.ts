@@ -40,6 +40,7 @@ export enum WalletActionTypes {
   UPDATE_WALLET_NAME = 'WALLET/UPDATE_WALLET_NAME',
   SET_WALLET_REFRESHING = 'WALLET/SET_WALLET_REFRESHING',
   SUCCESS_GET_RECEIVE_ADDRESS = 'WALLET/SUCCESS_GET_RECEIVE_ADDRESS',
+  UPDATE_WALLET_TX_HISTORY = 'WALLET/UPDATE_WALLET_TX_HISTORY',
 }
 
 interface successWalletStoreInit {
@@ -224,6 +225,16 @@ interface setWalletRefreshing {
   };
 }
 
+interface updateWalletTxHistory {
+  type: typeof WalletActionTypes.UPDATE_WALLET_TX_HISTORY;
+
+  payload: {
+    keyId: string;
+    walletId: string;
+    transactionHistory: {transactions: any[]; loadMore: boolean};
+  };
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -255,4 +266,5 @@ export type WalletActionType =
   | updateKeyName
   | updateWalletName
   | setWalletRefreshing
-  | successGetReceiveAddress;
+  | successGetReceiveAddress
+  | updateWalletTxHistory;

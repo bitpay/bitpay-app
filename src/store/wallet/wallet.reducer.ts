@@ -1,6 +1,5 @@
 import {Key, PriceHistory, Rates, Token} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
-import merge from 'lodash.merge';
 import {FeeLevels} from './effects/fee/fee';
 
 type WalletReduxPersistBlackList = [];
@@ -311,6 +310,27 @@ export const walletReducer = (
       keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
         if (wallet.id === walletId) {
           wallet.isRefreshing = isRefreshing;
+        }
+        return wallet;
+      });
+
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
+    case WalletActionTypes.UPDATE_WALLET_TX_HISTORY: {
+      const {keyId, walletId, transactionHistory} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
+        if (wallet.id === walletId) {
+          wallet.transactionHistory = transactionHistory;
         }
         return wallet;
       });

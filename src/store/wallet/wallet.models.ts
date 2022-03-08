@@ -70,6 +70,7 @@ export interface WalletObj {
   img: string | ((props?: any) => ReactElement);
   receiveAddress?: string;
   isRefreshing?: boolean;
+  transactionHistory?: {transactions: any[]; loadMore: boolean};
 }
 
 export interface PriceHistory {

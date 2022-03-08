@@ -40,7 +40,7 @@ import ReceiveAddress from '../components/ReceiveAddress';
 import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
-import {useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {
@@ -48,7 +48,7 @@ import {
   GetTransactionHistory,
   GroupTransactionHistory,
   IsMoved,
-  IsReceived,
+  IsReceived, TX_HISTORY_LIMIT,
 } from '../../../store/wallet/effects/transactions/transactions';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import TransactionRow, {
@@ -57,8 +57,6 @@ import TransactionRow, {
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
-
-const HISTORY_SHOW_LIMIT = 15;
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -141,7 +139,7 @@ const getWalletType = (key: Key, wallet: Wallet) => {
 
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const theme = useTheme();
   const {t} = useTranslation();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
@@ -271,18 +269,21 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       setIsLoading(!refresh);
       setErrorLoadingTxs(false);
       const [transactionHistory] = await Promise.all([
-        GetTransactionHistory({
-          wallet: fullWalletObj,
-          transactionsHistory: refresh ? [] : history,
-          limit: HISTORY_SHOW_LIMIT,
-          contactList,
-        }),
+        dispatch(
+          GetTransactionHistory({
+            wallet: fullWalletObj,
+            transactionsHistory: history,
+            limit: TX_HISTORY_LIMIT,
+            contactList,
+            refresh,
+          }),
+        ),
         sleep(500),
       ]);
 
       let {transactions: _history, loadMore: _loadMore} = transactionHistory;
 
-      if (_history?.length) {
+      if (_history?.length){
         setHistory(_history);
         const grouped = GroupTransactionHistory(_history);
         setGroupedHistory(grouped);

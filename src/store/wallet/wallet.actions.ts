@@ -1,12 +1,11 @@
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {
+  CacheKeys,
   Key,
   PriceHistory,
+  Rates,
   Token,
   WalletBalance,
-  Wallet,
-  Rates,
-  CacheKeys,
 } from './wallet.models';
 
 export const successWalletStoreInit = (): WalletActionType => ({
@@ -182,5 +181,14 @@ export const successGetReceiveAddress = (payload: {
   receiveAddress: string;
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_GET_RECEIVE_ADDRESS,
+  payload,
+});
+
+export const updateWalletTxHistory = (payload: {
+  keyId: string;
+  walletId: string;
+  transactionHistory: {transactions: any[]; loadMore: boolean};
+}): WalletActionType => ({
+  type: WalletActionTypes.UPDATE_WALLET_TX_HISTORY,
   payload,
 });
