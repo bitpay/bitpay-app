@@ -57,6 +57,8 @@ import TransactionRow, {
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
+import {DeviceEventEmitter} from 'react-native';
+import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 
 const HISTORY_SHOW_LIMIT = 15;
 
@@ -171,11 +173,18 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   }, [navigation, uiFormattedWallet.walletName]);
 
   useEffect(() => {
-    if (fullWalletObj.isRefreshing) {
-      loadHistory(true);
-    }
     setRefreshing(!!fullWalletObj.isRefreshing);
   }, [fullWalletObj.isRefreshing]);
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      DeviceEmitterEvents.FETCH_TX_HISTORY,
+      () => {
+        loadHistory(true);
+      },
+    );
+    return subscription.remove;
+  }, []);
 
   const ShareAddress = async () => {
     try {
