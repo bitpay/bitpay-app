@@ -104,7 +104,9 @@ const GlobalSelect = () => {
   );
 
   // all wallets
-  let wallets = Object.values(keys).flatMap(key => key.wallets);
+  let wallets = Object.values(keys)
+    .filter(key => key.backupComplete)
+    .flatMap(key => key.wallets);
 
   // only show wallets with funds
   if (context === 'send') {
