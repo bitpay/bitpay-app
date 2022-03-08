@@ -25,6 +25,8 @@ import {
 } from '../../utils/wallet';
 import {Network} from '../../../../constants';
 import {BALANCE_CACHE_DURATION} from '../../../../constants/wallet';
+import {DeviceEventEmitter} from 'react-native';
+import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
 
 /*
  * post broadcasting of payment
@@ -111,6 +113,7 @@ export const waitForTargetAmountAndUpdateWallet =
                   console.log('updated recipient wallet');
                 }
               }
+              DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_UPDATE_COMPLETE);
               await dispatch(updatePortfolioBalance());
 
               clearInterval(interval);

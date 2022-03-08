@@ -52,6 +52,7 @@ export interface AppState {
   pinLockActive: boolean;
   currentPin: string | undefined;
   pinBannedUntil: number | undefined;
+  showBlur: boolean;
 }
 
 const initialState: AppState = {
@@ -88,6 +89,7 @@ const initialState: AppState = {
   pinLockActive: false,
   currentPin: undefined,
   pinBannedUntil: undefined,
+  showBlur: false,
 };
 
 export const appReducer = (
@@ -248,6 +250,13 @@ export const appReducer = (
         ...state,
         pinBannedUntil: action.payload,
       };
+
+    case AppActionTypes.SHOW_BLUR:
+      return {
+        ...state,
+        showBlur: action.payload,
+      };
+
     default:
       return state;
   }

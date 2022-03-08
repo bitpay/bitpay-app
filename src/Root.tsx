@@ -73,6 +73,7 @@ import {DEVTOOLS_ENABLED} from './constants/config';
 import ConnectionsSettingsStack, {
   ConnectionsSettingsStackParamList,
 } from './navigation/tabs/settings/connections/ConnectionsStack';
+import {BlurView} from '@react-native-community/blur';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -173,6 +174,7 @@ export default () => {
   const currentRoute = useAppSelector(({APP}) => APP.currentRoute);
   const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
   const pinLockActive = useAppSelector(({APP}) => APP.pinLockActive);
+  const showBlur = useAppSelector(({APP}) => APP.showBlur);
 
   // MAIN APP INIT
   useEffect(() => {
@@ -191,13 +193,19 @@ export default () => {
     function onAppStateChange(status: AppStateStatus) {
       // status === 'active' when the app goes from background to foreground,
       // if no app scheme set, rerender in case the system theme has changed
-      if (status === 'active' && pinLockActive) {
-        dispatch(AppActions.showPinModal({type: 'check'}));
+      if (status === 'active') {
+        if (pinLockActive) {
+          dispatch(AppActions.showPinModal({type: 'check'}));
+        } else {
+          dispatch(AppActions.showBlur(false));
+        }
+      } else {
+        dispatch(AppActions.showBlur(true));
       }
     }
     AppState.addEventListener('change', onAppStateChange);
     return () => AppState.removeEventListener('change', onAppStateChange);
-  }, [pinLockActive]);
+  }, [dispatch, pinLockActive]);
 
   // THEME
   useEffect(() => {
@@ -353,6 +361,20 @@ export default () => {
           <OnGoingProcessModal />
           <BottomNotificationModal />
           <DecryptEnterPasswordModal />
+          {showBlur && (
+            <BlurView
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+              }}
+              blurType={theme.dark ? 'dark' : 'light'}
+              blurAmount={10}
+              reducedTransparencyFallbackColor="white"
+            />
+          )}
           <PinModal />
         </NavigationContainer>
       </ThemeProvider>

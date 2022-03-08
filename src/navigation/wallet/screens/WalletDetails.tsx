@@ -56,6 +56,8 @@ import TransactionRow, {
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
+import {DeviceEventEmitter} from 'react-native';
+import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -168,11 +170,18 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   }, [navigation, uiFormattedWallet.walletName]);
 
   useEffect(() => {
-    if (fullWalletObj.isRefreshing) {
-      loadHistory(true);
-    }
     setRefreshing(!!fullWalletObj.isRefreshing);
   }, [fullWalletObj.isRefreshing]);
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      DeviceEmitterEvents.WALLET_UPDATE_COMPLETE,
+      () => {
+        loadHistory(true);
+      },
+    );
+    return subscription.remove;
+  }, []);
 
   const ShareAddress = async () => {
     try {
@@ -195,8 +204,22 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         'This will generate an invoice, which the person you send it to can pay using any wallet.',
       onPress: () => {
         navigation.navigate('Wallet', {
-          screen: 'RequestSpecificAmount',
-          params: {wallet: fullWalletObj},
+          screen: 'Amount',
+          params: {
+            currencyAbbreviation:
+              fullWalletObj.currencyAbbreviation.toUpperCase(),
+            onAmountSelected: async (amount, setButtonState) => {
+              setButtonState('success');
+              await sleep(500);
+              navigation.navigate('Wallet', {
+                screen: 'RequestSpecificAmountQR',
+                params: {wallet: fullWalletObj, requestAmount: Number(amount)},
+              });
+            },
+            opts: {
+              hideSendMax: true,
+            },
+          },
         });
       },
     },
