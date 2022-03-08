@@ -5,7 +5,6 @@ import {useDispatch, useSelector} from 'react-redux';
 import Button from '../../components/button/Button';
 import haptic from '../../components/haptic-feedback/haptic';
 import {HeaderRightContainer} from '../../components/styled/Containers';
-import {Network} from '../../constants';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
@@ -13,6 +12,7 @@ import {
 import {RootState} from '../../store';
 import {BitPayIdEffects} from '../../store/bitpay-id';
 import {User} from '../../store/bitpay-id/bitpay-id.models';
+import {ShopEffects} from '../../store/shop';
 import Pair, {PairScreenParamList} from './screens/Pair';
 import Profile from './screens/ProfileSettings';
 
@@ -65,6 +65,7 @@ const BitpayIdStack = () => {
                       });
 
                       dispatch(BitPayIdEffects.startDisconnectBitPayId());
+                      dispatch(ShopEffects.startFetchCatalog());
                     } else {
                       navigation.navigate('Auth', {screen: 'Login'});
                     }

@@ -34,8 +34,7 @@ export const SettingsContainer = styled.SafeAreaView`
 `;
 
 export const Settings = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 15px;
+  padding: 10px ${ScreenGutter};
 `;
 
 const BitPayIdSettingsLink = styled(Setting)`
@@ -135,9 +134,11 @@ const SettingsHomeScreen: React.FC = () => {
           </BitPayIdAvatarContainer>
           {user ? (
             <BitPayIdUserContainer>
-              <BitPayIdUserText bold>
-                {user.givenName} {user.familyName}
-              </BitPayIdUserText>
+              {user.givenName || user.familyName ? (
+                <BitPayIdUserText bold>
+                  {user.givenName} {user.familyName}
+                </BitPayIdUserText>
+              ) : null}
               <BitPayIdUserText>{user.email}</BitPayIdUserText>
             </BitPayIdUserContainer>
           ) : (

@@ -7,7 +7,7 @@ import {
   RegisterErrorResponse,
 } from '../../api/auth/auth.types';
 import UserApi from '../../api/user';
-import {InitialUserData} from '../../api/user/user.types';
+import {BasicUserInfo, InitialUserData} from '../../api/user/user.types';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
 import {isAxiosError, isRateLimitError} from '../../utils/axios';
@@ -17,7 +17,7 @@ import {startOnGoingProcessModal} from '../app/app.effects';
 import {CardEffects} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
-import {User} from './bitpay-id.models';
+import {ShopEffects} from '../shop';
 import {BitPayIdActions} from './index';
 
 interface StartLoginParams {
@@ -37,6 +37,7 @@ export const startBitPayIdStoreInit =
         BitPayIdActions.successInitializeStore(APP.network, initialData),
       );
       dispatch(startSetBrazeUser(user));
+      dispatch(ShopEffects.startFetchCatalog());
     }
   };
 
@@ -447,7 +448,7 @@ export const startFetchDoshToken = (): Effect => async (dispatch, getState) => {
 };
 
 export const startSetBrazeUser =
-  ({eid, email}: User): Effect =>
+  ({eid, email}: BasicUserInfo): Effect =>
   async dispatch => {
     try {
       ReactAppboy.changeUser(eid);

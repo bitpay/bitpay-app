@@ -4,9 +4,9 @@ import styled from 'styled-components/native';
 import MinusSvg from '../../../../../assets/img/minus.svg';
 import PlusSvg from '../../../../../assets/img/plus.svg';
 import {BaseText} from '../../../../components/styled/Text';
-import {formatAmount} from '../../../../lib/gift-cards/gift-card';
 import {CardConfig} from '../../../../store/shop/shop.models';
 import {Action, BitPay} from '../../../../styles/colors';
+import {formatFiatAmount} from '../../../../utils/helper-methods';
 
 const Selector = styled.View`
   display: flex;
@@ -57,7 +57,7 @@ export default ({
         </ChangeDenomButton>
       </TouchableWithoutFeedback>
       <SelectedAmount>
-        {formatAmount(amounts[selectedIndex], cardConfig.currency, {
+        {formatFiatAmount(amounts[selectedIndex], cardConfig.currency, {
           customPrecision: 'minimal',
         })}
       </SelectedAmount>

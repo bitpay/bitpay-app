@@ -3,6 +3,7 @@ import i18n from 'i18next';
 import {Network} from '../../constants';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
+import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {NavScreenParams, RootStackParamList} from '../../Root';
 import {AppIdentity} from './app.models';
@@ -14,12 +15,16 @@ type AppReduxPersistBlackList = [
   'showOnGoingProcessModal',
   'onGoingProcessModalMessage',
   'showDecryptPasswordModal',
+  'showPinModal',
+  'pinModalConfig',
 ];
 export const appReduxPersistBlackList: AppReduxPersistBlackList = [
   'appIsLoading',
   'showOnGoingProcessModal',
   'onGoingProcessModalMessage',
   'showDecryptPasswordModal',
+  'showPinModal',
+  'pinModalConfig',
 ];
 
 export interface AppState {
@@ -42,6 +47,11 @@ export interface AppState {
   defaultLanguage: string;
   showDecryptPasswordModal: boolean;
   decryptPasswordConfig: DecryptPasswordConfig | undefined;
+  showPinModal: boolean;
+  pinModalConfig: PinModalConfig | undefined;
+  pinLockActive: boolean;
+  currentPin: string | undefined;
+  pinBannedUntil: number | undefined;
 }
 
 const initialState: AppState = {
@@ -73,6 +83,11 @@ const initialState: AppState = {
   defaultLanguage: i18n.language || 'en',
   showDecryptPasswordModal: false,
   decryptPasswordConfig: undefined,
+  showPinModal: false,
+  pinModalConfig: undefined,
+  pinLockActive: false,
+  currentPin: undefined,
+  pinBannedUntil: undefined,
 };
 
 export const appReducer = (
@@ -202,6 +217,37 @@ export const appReducer = (
         decryptPasswordConfig: undefined,
       };
 
+    case AppActionTypes.SHOW_PIN_MODAL:
+      return {
+        ...state,
+        showPinModal: true,
+        pinModalConfig: action.payload,
+      };
+
+    case AppActionTypes.DISMISS_PIN_MODAL:
+      return {
+        ...state,
+        showPinModal: false,
+        pinModalConfig: undefined,
+      };
+
+    case AppActionTypes.PIN_LOCK_ACTIVE:
+      return {
+        ...state,
+        pinLockActive: action.payload,
+      };
+
+    case AppActionTypes.CURRENT_PIN:
+      return {
+        ...state,
+        currentPin: action.payload,
+      };
+
+    case AppActionTypes.PIN_BANNED_UNTIL:
+      return {
+        ...state,
+        pinBannedUntil: action.payload,
+      };
     default:
       return state;
   }
