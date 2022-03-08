@@ -239,6 +239,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
     setTimeout(() => {
       setAddress('');
       setLoading(true);
+      init();
     });
   };
 
