@@ -104,14 +104,24 @@ const TransactModal = () => {
       img: () => <Icons.Receive />,
       title: 'Receive',
       description: 'Get crypto from another wallet',
-      onPress: () => {},
+      onPress: () => {
+        navigation.navigate('Wallet', {
+          screen: 'GlobalSelect',
+          params: {context: 'receive'},
+        });
+      },
     },
     {
       id: 'send',
       img: () => <Icons.Send />,
       title: 'Send',
       description: 'Send crypto to another wallet',
-      onPress: () => {},
+      onPress: () => {
+        navigation.navigate('Wallet', {
+          screen: 'GlobalSelect',
+          params: {context: 'send'},
+        });
+      },
     },
     {
       id: 'buyGiftCard',

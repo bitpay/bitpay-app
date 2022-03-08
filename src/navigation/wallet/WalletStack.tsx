@@ -42,6 +42,7 @@ import AddingOptions, {AddingOptionsParamList} from './screens/AddingOptions';
 import UpdateKeyOrWalletName from './screens/UpdateKeyOrWalletName';
 import RequestSpecificAmountQR from './screens/request-specific-amount/RequestSpecificAmountQR';
 import TransactionDetails from './screens/TransactionDetails';
+import GlobalSelect, {GlobalSelectParamList} from './screens/GlobalSelect';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -74,6 +75,7 @@ export type WalletStackParamList = {
   AddingOptions: AddingOptionsParamList;
   RequestSpecificAmountQR: {wallet: WalletModel; requestAmount: number};
   TransactionDetails: {wallet: WalletModel; transaction: any};
+  GlobalSelect: GlobalSelectParamList;
 };
 
 export enum WalletScreens {
@@ -103,6 +105,7 @@ export enum WalletScreens {
   ADDING_OPTIONS = 'AddingOptions',
   REQUEST_SPECIFIC_AMOUNT_QR = 'RequestSpecificAmountQR',
   TRANSACTION_DETAILS = 'TransactionDetails',
+  GLOBAL_SELECT = 'GlobalSelect',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -251,6 +254,13 @@ const WalletStack = () => {
           }}
           name={WalletScreens.TRANSACTION_DETAILS}
           component={TransactionDetails}
+        />
+        <Wallet.Screen
+          options={{
+            headerTitle: () => <HeaderTitle>Select a currency</HeaderTitle>,
+          }}
+          name={WalletScreens.GLOBAL_SELECT}
+          component={GlobalSelect}
         />
       </Wallet.Navigator>
     </>

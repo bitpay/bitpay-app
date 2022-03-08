@@ -117,7 +117,8 @@ const BuildKeyWalletRow = (
     value.wallets
       .filter(
         ({currencyAbbreviation, id, credentials: {network}}) =>
-          currencyAbbreviation === currentCurrencyAbbreviation &&
+          currencyAbbreviation.toLowerCase() ===
+            currentCurrencyAbbreviation.toLowerCase() &&
           id !== currentWalletId &&
           network === currentNetwork,
       )

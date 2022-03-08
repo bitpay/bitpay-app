@@ -176,7 +176,22 @@ const HomeRoot = () => {
         <CardsCarousel />
 
         {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
-        <LinkingButtons receive={{cta: () => null}} send={{cta: () => null}} />
+        <LinkingButtons
+          receive={{
+            cta: () =>
+              navigation.navigate('Wallet', {
+                screen: 'GlobalSelect',
+                params: {context: 'receive'},
+              }),
+          }}
+          send={{
+            cta: () =>
+              navigation.navigate('Wallet', {
+                screen: 'GlobalSelect',
+                params: {context: 'send'},
+              }),
+          }}
+        />
 
         {/* ////////////////////////////// LIMITED TIME OFFERS */}
         <SectionHeaderContainer justifyContent={'space-between'}>
