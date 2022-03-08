@@ -234,10 +234,12 @@ const Amount = () => {
             <SwapButton
               swapList={swapList}
               onChange={(currency: string) => {
+                setCurVal('');
                 updateAmountConfig(current => ({
                   ...current,
                   currency,
                   primaryIsFiat: !primaryIsFiat,
+                  displayAmount: '0',
                   displayEquivalentAmount: primaryIsFiat
                     ? formatFiatAmount(0, 'USD')
                     : '0',
