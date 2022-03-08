@@ -252,6 +252,13 @@ export const appReducer = (
         pinBannedUntil: action.payload,
       };
     case AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED:
+      if (
+        state.brazeContentCards.length === 0 &&
+        action.payload.contentCards.length === 0
+      ) {
+        return state;
+      }
+
       return {
         ...state,
         brazeContentCards: action.payload.contentCards,

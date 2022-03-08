@@ -26,3 +26,7 @@ export const isClassicContentCard = (
 export const isFeaturedMerchant = (contentCard: ContentCard) => {
   return contentCard.extras.feed_type === 'featured_merchants';
 };
+
+export const isQuickLink = (contentCard: ContentCard) => {
+  return contentCard.extras.feed_type === 'quick_links';
+};
