@@ -1,3 +1,3 @@
 export enum DeviceEmitterEvents {
-  FETCH_TX_HISTORY = 'FETCH_TX_HISTORY',
+  WALLET_UPDATE_COMPLETE = 'WALLET_UPDATE_COMPLETE',
 }

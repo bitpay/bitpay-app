@@ -127,7 +127,7 @@ const getWalletType = (key: Key, wallet: Wallet) => {
     credentials: {token, walletId, addressType},
   } = wallet;
   if (token) {
-    const linkedWallet = key.wallets.find(({ tokens }) =>
+    const linkedWallet = key.wallets.find(({tokens}) =>
       tokens?.includes(walletId),
     );
     const walletName =
@@ -178,7 +178,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
-      DeviceEmitterEvents.FETCH_TX_HISTORY,
+      DeviceEmitterEvents.WALLET_UPDATE_COMPLETE,
       () => {
         loadHistory(true);
       },
@@ -224,8 +224,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             },
           },
         });
-
-
       },
     },
     {
