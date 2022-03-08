@@ -14,7 +14,18 @@ export const AdvertisementList: AdvertisementProps[] = [
       navigationRef.navigate('Wallet', {
         screen: 'Amount',
         params: {
-          nextView: 'buyCrypto',
+          currencyAbbreviation: 'USD',
+          onAmountSelected: async (amount: string, setButtonState: any) => {
+            navigationRef.navigate('BuyCrypto', {
+              screen: 'Root',
+              params: {
+                amount: Number(amount),
+              },
+            });
+          },
+          opts: {
+            hideSendMax: true,
+          },
         },
       });
     },

@@ -482,9 +482,20 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       navigation.navigate('Wallet', {
                         screen: 'Amount',
                         params: {
-                          nextView: 'buyCrypto',
-                          buyCryptoOpts: {
-                            fromWallet: fullWalletObj,
+                          currencyAbbreviation: 'USD',
+                          onAmountSelected: async (
+                            amount: string,
+                          ) => {
+                            navigation.navigate('BuyCrypto', {
+                              screen: 'Root',
+                              params: {
+                                amount: Number(amount),
+                                fromWallet: fullWalletObj,
+                              },
+                            });
+                          },
+                          opts: {
+                            hideSendMax: true,
                           },
                         },
                       });

@@ -17,8 +17,6 @@ import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
 import useAppSelector from '../../../utils/hooks/useAppSelector';
 import {ParseAmount} from '../../../store/wallet/effects/amount/amount';
 import haptic from '../../../components/haptic-feedback/haptic';
-
-import {navigationRef} from '../../../Root';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';
 
 const SendMax = styled.TouchableOpacity`
@@ -118,8 +116,6 @@ export interface AmountParamList {
   opts?: {
     hideSendMax?: boolean;
   };
-  nextView?: string;
-  buyCryptoOpts?: any;
 }
 
 interface AmountProps {
@@ -130,11 +126,10 @@ interface AmountProps {
 
 const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss, openedFrom}) => {
   const route = useRoute<RouteProp<WalletStackParamList, 'Amount'>>();
-  const {onAmountSelected, currencyAbbreviation, opts, nextView, buyCryptoOpts} = route.params;
+  const {onAmountSelected, currencyAbbreviation, opts} = route.params;
   const navigation = useNavigation();
   const [buttonState, setButtonState] = useState<ButtonState>();
 
-  
   // flag for primary selector type
   const [rate, setRate] = useState(0);
   const [amountConfig, updateAmountConfig] = useState({
@@ -143,12 +138,12 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss, openedFrom}) => {
     displayEquivalentAmount: '0',
     // amount to be sent to proposal creation (sats)
     amount: '0',
-    currency: currencyAbbreviation,
-    primaryIsFiat: false,
+    currency: currencyAbbreviation ? currencyAbbreviation : 'USD',
+    primaryIsFiat: currencyAbbreviation === 'USD' ? true : false,
   });
   const swapList = currencyAbbreviation
-    ? [currencyAbbreviation, 'USD']
-    : ['USD'];
+  ? [...new Set([...[currencyAbbreviation], ...['USD']])]
+  : ['USD'];
 
   // display amount fiat/crypto
   // const [displayAmount, setDisplayAmount] = useState('0');
@@ -167,7 +162,6 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss, openedFrom}) => {
   // const swapList = currencyAbbreviation
   //   ? [currencyAbbreviation, 'USD']
   //   : ['USD'];
-  
 
 
   const allRates = useAppSelector(({WALLET}) => WALLET.rates);
@@ -186,7 +180,7 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss, openedFrom}) => {
       return;
     }
     // if added for dev (hot reload)
-    if (!primaryIsFiat) {
+    if (!primaryIsFiat && allRates[currency.toLowerCase()]) {
       const fiatRate = allRates[currency.toLowerCase()].find(
         r => r.code === 'USD',
       )!.rate;
@@ -213,10 +207,13 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss, openedFrom}) => {
       return;
     }
 
-    // if (nextView == 'buyCrypto' || openedFrom == 'buyCrypto') {
-    //   setAmount(val.toString());
-    //   return;
-    // }
+    if (currencyAbbreviation == 'USD' || openedFrom == 'buyCrypto') {
+      updateAmountConfig(current => ({
+        ...current,
+        amount: _val,
+      }));
+      return;
+    }
 
     const cryptoAmount =
       val === 0 || !currencyAbbreviation
@@ -235,8 +232,7 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss, openedFrom}) => {
   };
 
   useLayoutEffect(() => {
-    // if (!useAsModal) {
-    if (!opts?.hideSendMax) {
+    if (!opts?.hideSendMax && !useAsModal) {
       navigation.setOptions({
         headerRight: () => (
           <HeaderContainer>
@@ -251,49 +247,6 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss, openedFrom}) => {
       });
     }
   }, []);
-
-  // const goToNextView = () => {
-  //   if (useAsModal && onDismiss) {
-  //     onDismiss(Number(amount));
-  //     return;
-  //   }
-  //   switch (nextView) {
-  //     case 'confirm':
-  //       goToConfirm();
-  //       break;
-
-  //     case 'buyCrypto':
-  //       goToBuyCrypto();
-  //       break;
-
-  //     default:
-  //       break;
-  //   }
-  // };
-
-  // const goToConfirm = async () => {
-  //   if (!wallet || !recipient) {
-  //     console.log(`Missing parameters for nextView: ${nextView}`);
-  //     return;
-  //   }
-  //   try {
-  //     setButtonState('loading');
-  //     const {txDetails, txp} = await dispatch(
-  //       createProposalAndBuildTxDetails({
-  //         wallet,
-  //         recipient,
-  //         amount: Number(amount),
-  //       }),
-  //     );
-
-  //     setButtonState('success');
-  //     await sleep(300);
-  //     navigation.navigate('Wallet', {
-  //       screen: 'Confirm',
-  //       params: {wallet, recipient, txp, txDetails},
-  //     });
-  //   }
-  // };
 
   const onCellPress = (val: string) => {
     haptic('impactLight');
@@ -313,16 +266,6 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss, openedFrom}) => {
     }
     setCurVal(currentValue);
     updateAmount(currentValue);
-  };
-
-  const goToBuyCrypto = () => {
-    navigationRef.navigate('BuyCrypto', {
-      screen: 'Root',
-      params: {
-        amount: Number(amount),
-        fromWallet: buyCryptoOpts ? buyCryptoOpts.fromWallet : undefined,
-      },
-    });
   };
 
   return (
@@ -386,8 +329,13 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss, openedFrom}) => {
             <Button
               state={buttonState}
               disabled={!+amount}
-              onPress={() => onAmountSelected(amount, setButtonState)}>
-              {/* onPress={goToNextView}> */}
+              onPress={() => {
+                if (useAsModal && onDismiss) {
+                  onDismiss(Number(amount));
+                  return;
+                }
+                onAmountSelected(amount, setButtonState);
+              }}>
               Continue
             </Button>
           </ActionContainer>

@@ -1,6 +1,6 @@
 import Modal from 'react-native-modal';
 import React from 'react';
-import Amount from '../../../../navigation/wallet/screens/send/Amount';
+import Amount from '../../../../navigation/wallet/screens/Amount';
 import {Black, White} from '../../../../styles/colors';
 import styled, {useTheme} from 'styled-components/native';
 

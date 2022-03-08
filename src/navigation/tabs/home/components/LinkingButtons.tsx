@@ -79,7 +79,20 @@ const LinkingButtons = ({buy, receive, send}: Props) => {
               navigation.navigate('Wallet', {
                 screen: 'Amount',
                 params: {
-                  nextView: 'buyCrypto',
+                  currencyAbbreviation: 'USD',
+                  onAmountSelected: async (
+                    amount: string,
+                  ) => {
+                    navigation.navigate('BuyCrypto', {
+                      screen: 'Root',
+                      params: {
+                        amount: Number(amount),
+                      },
+                    });
+                  },
+                  opts: {
+                    hideSendMax: true,
+                  },
                 },
               });
             },
