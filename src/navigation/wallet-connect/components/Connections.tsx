@@ -109,7 +109,7 @@ export default ({
             navigation.navigate('Scan', {
               screen: 'Root',
               params: {
-                contextHandler: async data => {
+                onScanComplete: async data => {
                   try {
                     dispatch(
                       showOnGoingProcessModal(OnGoingProcessMessages.LOADING),
