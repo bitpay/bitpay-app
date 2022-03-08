@@ -71,6 +71,7 @@ const PinModal: React.FC = () => {
       sjcl.hash.sha256.hash(pin.join('')),
     );
     if (isEqual(currentPin, pinHash)) {
+      dispatch(AppActions.showBlur(false));
       dispatch(AppActions.dismissPinModal()); // Correct PIN dismiss modal
       setTimeout(reset, 300);
     } else {
@@ -88,6 +89,7 @@ const PinModal: React.FC = () => {
         sjcl.hash.sha256.hash(pin.join('')),
       );
       dispatch(AppActions.currentPin(pinHash));
+      dispatch(AppActions.showBlur(false));
       dispatch(AppActions.dismissPinModal());
       setTimeout(reset, 300);
       return;
@@ -138,7 +140,7 @@ const PinModal: React.FC = () => {
     }
 
     // Give some time for dot to fill
-    await sleep(200);
+    await sleep(0);
 
     if (!fistPinEntered.length && config?.type === 'set') {
       setMessage('Confirm your PIN');

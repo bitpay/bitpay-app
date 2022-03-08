@@ -136,3 +136,8 @@ export const currentPin = (pin: string | undefined): AppActionType => ({
   type: AppActionTypes.CURRENT_PIN,
   payload: pin,
 });
+
+export const showBlur = (value: boolean): AppActionType => ({
+  type: AppActionTypes.SHOW_BLUR,
+  payload: value,
+});
