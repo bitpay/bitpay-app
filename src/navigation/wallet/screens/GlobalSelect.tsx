@@ -177,6 +177,11 @@ const GlobalSelect = () => {
     }
   };
 
+  const closeModal = () => {
+    setShowReceiveAddressBottomModal(false);
+    setReceiveWallet(undefined);
+  };
+
   return (
     <>
       <GlobalSelectContainer>
@@ -207,9 +212,7 @@ const GlobalSelect = () => {
             {receiveWallet && (
               <ReceiveAddress
                 isVisible={showReceiveAddressBottomModal}
-                closeModal={() => {
-                  setShowReceiveAddressBottomModal(false);
-                }}
+                closeModal={closeModal}
                 wallet={receiveWallet}
               />
             )}
@@ -219,9 +222,7 @@ const GlobalSelect = () => {
         {receiveWallet && !walletSelectModalVisible && (
           <ReceiveAddress
             isVisible={showReceiveAddressBottomModal}
-            closeModal={() => {
-              setShowReceiveAddressBottomModal(false);
-            }}
+            closeModal={closeModal}
             wallet={receiveWallet}
           />
         )}
