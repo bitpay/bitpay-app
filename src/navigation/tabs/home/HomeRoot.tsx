@@ -4,15 +4,13 @@ import {RefreshControl, ScrollView} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
-import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
-import {AdvertisementList} from '../../../components/advertisement/advertisement';
-import AdvertisementCard from '../../../components/advertisement/AdvertisementCard';
 import ExchangeRatesSlides, {
   ExchangeRateProps,
 } from '../../../components/exchange-rate/ExchangeRatesSlides';
 import {ScreenGutter} from '../../../components/styled/Containers';
+import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {RootState} from '../../../store';
-import {AppActions} from '../../../store/app';
+import {AppActions, AppEffects} from '../../../store/app';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startGetRates} from '../../../store/wallet/effects';
 import {startUpdateAllKeyAndWalletBalances} from '../../../store/wallet/effects/balance/balance';
@@ -21,6 +19,7 @@ import {SlateDark, White} from '../../../styles/colors';
 import {
   isCaptionedContentCard,
   isClassicContentCard,
+  isDoMore,
   isFeaturedMerchant,
   isQuickLink,
 } from '../../../utils/braze';
@@ -28,6 +27,9 @@ import {sleep} from '../../../utils/helper-methods';
 import {useAppSelector} from '../../../utils/hooks';
 import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishModal';
 import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
+import {Advertisement} from './components/advertisements/AdvertisementCard';
+import AdvertisementsList from './components/advertisements/AdvertisementsList';
+import MockAdvertisements from './components/advertisements/MockAdvertisements';
 import CardsCarousel from './components/CardsCarousel';
 import ProfileButton from './components/HeaderProfileButton';
 import ScanButton from './components/HeaderScanButton';
@@ -104,6 +106,30 @@ const contentCardToQuickLink = (contentCard: ContentCard): QuickLink => {
   };
 };
 
+const contentCardToAdvertisement = (
+  contentCard: ContentCard,
+): Advertisement => {
+  let title = '';
+  let description = '';
+
+  if (
+    isClassicContentCard(contentCard) ||
+    isCaptionedContentCard(contentCard)
+  ) {
+    title = contentCard.title;
+    description = contentCard.cardDescription;
+  }
+
+  return {
+    id: contentCard.id,
+    title,
+    description,
+    img: {uri: contentCard.image},
+    url: contentCard.url,
+    openURLInWebView: contentCard.openURLInWebView,
+  };
+};
+
 const HomeRoot = () => {
   const dispatch = useDispatch();
   const onboardingCompleted = useSelector(
@@ -126,7 +152,7 @@ const HomeRoot = () => {
   const [refreshing, setRefreshing] = useState(false);
   const allContentCards = useAppSelector(({APP}) => APP.brazeContentCards);
 
-  // Offers
+  // Featured Merchants ("Offers")
   const memoizedOffers = useMemo(() => {
     const featuredMerchants = allContentCards.filter(isFeaturedMerchant);
 
@@ -135,6 +161,17 @@ const HomeRoot = () => {
     }
 
     return featuredMerchants.map(contentCardToOffer);
+  }, [allContentCards]);
+
+  // Advertisements ("Do More")
+  const memoizedAdvertisements = useMemo(() => {
+    const advertisements = allContentCards.filter(isDoMore);
+
+    if (__DEV__ && !advertisements.length) {
+      return MockAdvertisements;
+    }
+
+    return advertisements.map(contentCardToAdvertisement);
   }, [allContentCards]);
 
   // Exchange Rates
@@ -236,9 +273,11 @@ const HomeRoot = () => {
         ) : null}
 
         {/* ////////////////////////////// ADVERTISEMENTS */}
-        <HomeRow title="Do More">
-          <AdvertisementCard items={AdvertisementList} />
-        </HomeRow>
+        {memoizedAdvertisements.length ? (
+          <HomeRow title="Do More">
+            <AdvertisementsList items={memoizedAdvertisements} />
+          </HomeRow>
+        ) : null}
 
         {/* ////////////////////////////// EXCHANGE RATES */}
         {memoizedExchangeRates.length ? (
