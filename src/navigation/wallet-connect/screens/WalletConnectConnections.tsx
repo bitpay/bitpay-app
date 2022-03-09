@@ -1,9 +1,10 @@
 import {useNavigation} from '@react-navigation/native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {BaseText} from '../../../components/styled/Text';
 import {SlateDark} from '../../../styles/colors';
 import KeyIcon from '../../../../assets/img/key.svg';
+import AddConnection from '../../../components/add/Add';
 import {Hr} from '../../../components/styled/Containers';
 import {useSelector} from 'react-redux';
 import {HeaderTitle} from '../styled/WalletConnectText';
@@ -42,6 +43,10 @@ const KeyTitleText = styled(BaseText)`
   padding-top: ${Platform.OS === 'ios' ? '4px' : '8px'};
 `;
 
+const AddConnectionContainer = styled.TouchableOpacity`
+  margin-right: 15px;
+`;
+
 const WalletConnectConnections = () => {
   const navigation = useNavigation();
   const [groupedConnectors, setGroupedConnectors] = useState({});
@@ -75,6 +80,24 @@ const WalletConnectConnections = () => {
           : '',
     };
   };
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => {
+        return (
+          <AddConnectionContainer
+            onPress={() => {
+              navigation.navigate('WalletConnect', {
+                screen: 'Root',
+                params: {uri: undefined},
+              });
+            }}>
+            <AddConnection opacity={1} />
+          </AddConnectionContainer>
+        );
+      },
+    });
+  }, [navigation]);
 
   return (
     <WalletConnectContainer>

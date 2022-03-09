@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {Paragraph} from '../../../components/styled/Text';
@@ -83,6 +83,7 @@ const DescriptionItem = styled(Paragraph)`
 const WalletConnectStart = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
+  const [retryCount, setRetryCount] = useState(0);
   const {
     params: {walletId, keyId, peer},
   } = useRoute<RouteProp<{params: WalletConnectStartParamList}>>();
@@ -92,6 +93,7 @@ const WalletConnectStart = () => {
     ({WALLET}: RootState) =>
       keyId && walletId && findWalletById(WALLET.keys[keyId].wallets, walletId),
   ) as Wallet;
+  const [address, setAddress] = useState(wallet.receiveAddress);
 
   const showErrorMessage = useCallback(
     async (msg: BottomNotificationConfig) => {
@@ -101,18 +103,16 @@ const WalletConnectStart = () => {
     [dispatch],
   );
 
-  const approveSessionRequest = async () => {
+  const approveSessionRequest = useCallback(async () => {
     try {
-      haptic('impactLight');
       dispatch(showOnGoingProcessModal(OnGoingProcessMessages.LOADING));
-
-      if (!wallet.receiveAddress) {
+      if (!address) {
         throw 'MISSING_WALLET_ADDRESS';
       }
 
       const {chain} = Currencies[wallet.currencyAbbreviation];
       const chainId = CHAIN_ID[chain][wallet.credentials.network];
-      const accounts = [wallet.receiveAddress];
+      const accounts = [address];
       const customData: IWCCustomData = {
         keyId: wallet.keyId,
         walletId: wallet.id,
@@ -155,8 +155,15 @@ const WalletConnectStart = () => {
     } catch (e) {
       if (e === 'MISSING_WALLET_ADDRESS') {
         try {
-          await dispatch<any>(createWalletAddress({wallet}));
-          approveSessionRequest();
+          if (retryCount < 3) {
+            const walletAddress = (await dispatch<any>(
+              createWalletAddress({wallet}),
+            )) as string;
+            setAddress(walletAddress);
+            setRetryCount(r => r + 1);
+          } else {
+            throw 'Failed to create wallet address';
+          }
         } catch (error) {
           await showErrorMessage(
             CustomErrorMessage({
@@ -175,8 +182,17 @@ const WalletConnectStart = () => {
       }
     } finally {
       dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
     }
-  };
+  }, [
+    address,
+    dispatch,
+    navigation,
+    peerId,
+    retryCount,
+    showErrorMessage,
+    wallet,
+  ]);
 
   useEffect(() => {
     return navigation.addListener('beforeRemove', e => {
@@ -185,6 +201,12 @@ const WalletConnectStart = () => {
       }
     });
   }, [navigation, dispatch, peerId]);
+
+  useEffect(() => {
+    if (retryCount > 0) {
+      approveSessionRequest();
+    }
+  }, [retryCount, approveSessionRequest]);
 
   return (
     <WalletConnectContainer>
@@ -216,7 +238,10 @@ const WalletConnectStart = () => {
         <Button
           disabled={!peerMeta}
           buttonStyle={'primary'}
-          onPress={() => approveSessionRequest()}>
+          onPress={() => {
+            haptic('impactLight');
+            approveSessionRequest();
+          }}>
           Connect
         </Button>
       </ScrollView>
