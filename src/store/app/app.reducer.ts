@@ -40,11 +40,9 @@ export interface AppState {
   onGoingProcessModalMessage: string | undefined;
   showBottomNotificationModal: boolean;
   bottomNotificationModalConfig: BottomNotificationConfig | undefined;
-  colorScheme: ColorSchemeName;
   currentRoute: [keyof RootStackParamList, NavScreenParams] | undefined;
   notificationsAccepted: boolean;
   showOnboardingFinishModal: boolean;
-  defaultLanguage: string;
   showDecryptPasswordModal: boolean;
   decryptPasswordConfig: DecryptPasswordConfig | undefined;
   showPinModal: boolean;
@@ -53,6 +51,9 @@ export interface AppState {
   currentPin: string | undefined;
   pinBannedUntil: number | undefined;
   showBlur: boolean;
+  colorScheme: ColorSchemeName;
+  defaultLanguage: string;
+  showPortfolioValue: boolean;
 }
 
 const initialState: AppState = {
@@ -77,11 +78,9 @@ const initialState: AppState = {
   onGoingProcessModalMessage: OnGoingProcessMessages.GENERAL_AWAITING,
   showBottomNotificationModal: false,
   bottomNotificationModalConfig: undefined,
-  colorScheme: null,
   currentRoute: undefined,
   notificationsAccepted: false,
   showOnboardingFinishModal: false,
-  defaultLanguage: i18n.language || 'en',
   showDecryptPasswordModal: false,
   decryptPasswordConfig: undefined,
   showPinModal: false,
@@ -90,6 +89,9 @@ const initialState: AppState = {
   currentPin: undefined,
   pinBannedUntil: undefined,
   showBlur: false,
+  colorScheme: null,
+  defaultLanguage: i18n.language || 'en',
+  showPortfolioValue: true,
 };
 
 export const appReducer = (
@@ -255,6 +257,12 @@ export const appReducer = (
       return {
         ...state,
         showBlur: action.payload,
+      };
+
+    case AppActionTypes.SHOW_PORTFOLIO_VALUE:
+      return {
+        ...state,
+        showPortfolioValue: action.payload,
       };
 
     default:
