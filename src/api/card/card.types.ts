@@ -56,3 +56,11 @@ export interface FetchVirtualCardImageUrlsResponse {
     };
   };
 }
+
+export interface UpdateCardNameResponse {
+  user: {
+    card: {
+      nickname: string;
+    };
+  };
+}

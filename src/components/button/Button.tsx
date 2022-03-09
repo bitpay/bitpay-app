@@ -26,6 +26,7 @@ import * as Icons from './ButtonIcons';
 import ButtonOverlay from './ButtonOverlay';
 import ButtonSpinner from './ButtonSpinner';
 
+export type ButtonState = 'loading' | 'success' | 'failed' | null | undefined;
 export type ButtonStyle = 'primary' | 'secondary' | undefined;
 export type ButtonType = 'button' | 'link' | 'pill' | undefined;
 export type ButtonState = 'loading' | 'success' | 'failed' | null | undefined;
@@ -172,31 +173,6 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
   } = props;
   const secondary = buttonStyle === 'secondary';
 
-  // most common use case is to pass an anonymous function
-  // useRef to preserve memoized debounce
-  const onPressRef = useRef(onPress);
-  onPressRef.current = onPress;
-
-  const debouncedOnPress = useMemo(
-    () =>
-      debounce(
-        () => {
-          if (disabled || !onPressRef.current) {
-            return;
-          }
-
-          Haptic('impactLight');
-          onPressRef.current();
-        },
-        debounceTime || 0,
-        {
-          leading: true,
-          trailing: false,
-        },
-      ),
-    [debounceTime, disabled],
-  );
-
   const isLoading = state === 'loading';
   const isSuccess = state === 'success';
   const isFailure = state === 'failed';
@@ -226,11 +202,37 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
     ButtonTypeText = ButtonText;
   }
 
+  // useRef to preserve memoized debounce
+  const onPressRef = useRef(() => {});
+  onPressRef.current = () => {
+    if (!onPress || disabled || !!state) {
+      return;
+    }
+
+    Haptic('impactLight');
+    onPress();
+  };
+
+  const debouncedOnPress = useMemo(
+    () =>
+      debounce(
+        () => {
+          onPressRef.current();
+        },
+        debounceTime || 0,
+        {
+          leading: true,
+          trailing: false,
+        },
+      ),
+    [debounceTime],
+  );
+
   return (
     <ButtonContainer
       buttonType={buttonType}
       onPress={debouncedOnPress}
-      activeOpacity={ActiveOpacity}
+      activeOpacity={disabled ? 1 : ActiveOpacity}
       testID={'button'}>
       <ButtonTypeContainer secondary={secondary} disabled={disabled}>
         <Animated.View style={childrenStyle}>
