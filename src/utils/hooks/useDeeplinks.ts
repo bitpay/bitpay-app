@@ -6,6 +6,8 @@ import {useDispatch} from 'react-redux';
 import {DEEPLINK_PREFIX} from '../../constants/config';
 import {BitpayIdScreens} from '../../navigation/bitpay-id/BitpayIdStack';
 import {CardScreens} from '../../navigation/card/CardStack';
+import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoStack';
+import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoStack';
 import {RootStackParamList, RootStacks} from '../../Root';
 import {useLogger} from '.';
 
@@ -51,6 +53,16 @@ export const useDeeplinks = () => {
         [RootStacks.CARD]: {
           screens: {
             [CardScreens.HOME]: 'wallet-card/dashboard/:id',
+          },
+        },
+        [RootStacks.BUY_CRYPTO]: {
+          screens: {
+            [BuyCryptoScreens.ROOT]: 'buy',
+          },
+        },
+        [RootStacks.SWAP_CRYPTO]: {
+          screens: {
+            [SwapCryptoScreens.ROOT]: 'swap',
           },
         },
       },
