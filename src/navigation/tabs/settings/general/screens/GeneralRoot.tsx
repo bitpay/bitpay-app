@@ -2,23 +2,32 @@ import React from 'react';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import Button from '../../../../../components/button/Button';
 import {useNavigation} from '@react-navigation/native';
-import {useSelector} from 'react-redux';
 import {RootState} from '../../../../../store';
 import {
+  ActiveOpacity,
   Hr,
   Info,
   InfoTriangle,
   Setting,
-  SettingTitle,
+  SettingTitle
 } from '../../../../../components/styled/Containers';
 import AngleRight from '../../../../../../assets/img/angle-right.svg';
 import {useTranslation} from 'react-i18next';
 import ToggleSwitch from '../../../../../components/toggle-switch/ToggleSwitch';
 import {InfoDescription} from '../../../../../components/styled/Text';
-
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {AppActions} from '../../../../../store/app';
+import {WalletActions} from '../../../../../store/wallet';
 const GeneralSettingsRoot: React.FC = () => {
   const navigation = useNavigation();
-  const colorScheme = useSelector(({APP}: RootState) => APP.colorScheme);
+  const colorScheme = useAppSelector(({APP}: RootState) => APP.colorScheme);
+  const showPortfolioValue = useAppSelector(
+    ({APP}: RootState) => APP.showPortfolioValue,
+  );
+  const useUnconfirmedFunds = useAppSelector(
+    ({WALLET}: RootState) => WALLET.useUnconfirmedFunds,
+  );
+  const dispatch = useAppDispatch();
   const {t} = useTranslation();
 
   return (
@@ -27,6 +36,7 @@ const GeneralSettingsRoot: React.FC = () => {
         <Hr />
         {/*----------------------------------------------------------------------*/}
         <Setting
+          activeOpacity={ActiveOpacity}
           onPress={() =>
             navigation.navigate('GeneralSettings', {screen: 'Theme'})
           }>
@@ -46,6 +56,7 @@ const GeneralSettingsRoot: React.FC = () => {
         <Hr />
         {/*----------------------------------------------------------------------*/}
         <Setting
+          activeOpacity={ActiveOpacity}
           onPress={() =>
             navigation.navigate('GeneralSettings', {screen: 'CustomizeHome'})
           }>
@@ -54,16 +65,17 @@ const GeneralSettingsRoot: React.FC = () => {
         </Setting>
         <Hr />
         {/*----------------------------------------------------------------------*/}
-        <Setting
-          onPress={() =>
-            navigation.navigate('GeneralSettings', {screen: 'CustomizeHome'})
-          }>
+        <Setting activeOpacity={1}>
           <SettingTitle>{t('Show Portfolio')}</SettingTitle>
-          <ToggleSwitch onChange={() => null} isEnabled={false} />
+          <ToggleSwitch
+            onChange={value => dispatch(AppActions.showPortfolioValue(value))}
+            isEnabled={showPortfolioValue}
+          />
         </Setting>
         <Hr />
         {/*----------------------------------------------------------------------*/}
         <Setting
+          activeOpacity={ActiveOpacity}
           onPress={
             () => null // Todo
           }>
@@ -73,6 +85,7 @@ const GeneralSettingsRoot: React.FC = () => {
         <Hr />
         {/*----------------------------------------------------------------------*/}
         <Setting
+          activeOpacity={ActiveOpacity}
           onPress={() =>
             navigation.navigate('GeneralSettings', {screen: 'LanguageSettings'})
           }>
@@ -82,6 +95,7 @@ const GeneralSettingsRoot: React.FC = () => {
         <Hr />
         {/*----------------------------------------------------------------------*/}
         <Setting
+          activeOpacity={ActiveOpacity}
           onPress={
             () => null // Todo
           }>
@@ -89,9 +103,14 @@ const GeneralSettingsRoot: React.FC = () => {
         </Setting>
         <Hr />
         {/*----------------------------------------------------------------------*/}
-        <Setting>
+        <Setting activeOpacity={1}>
           <SettingTitle>{t('Use Unconfirmed Funds')}</SettingTitle>
-          <ToggleSwitch onChange={() => null} isEnabled={false} />
+          <ToggleSwitch
+            onChange={value =>
+              dispatch(WalletActions.setUseUnconfirmedFunds(value))
+            }
+            isEnabled={useUnconfirmedFunds}
+          />
         </Setting>
         <Info>
           <InfoTriangle />
