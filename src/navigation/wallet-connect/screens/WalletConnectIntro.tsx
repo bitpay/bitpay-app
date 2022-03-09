@@ -32,16 +32,18 @@ import {LightBlack, White} from '../../../styles/colors';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
+import {ScreenGutter} from '../../../components/styled/Containers';
 
 export type WalletConnectIntroParamList = {
   uri?: string;
 };
 
 const WalletSelectorContainer = styled.View`
-  padding: 20px;
+  padding: ${ScreenGutter};
   background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  border-top-left-radius: 17px;
-  border-top-right-radius: 17px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  max-height: 75%;
 `;
 
 const DescriptionText = styled(BaseText)`
