@@ -45,6 +45,9 @@ export const useDeeplinks = () => {
     config: {
       // configuration for associating screens with paths
       screens: {
+        [RootStacks.DEBUG]: {
+          path: 'debug/:name',
+        },
         [RootStacks.BITPAY_ID]: {
           screens: {
             [BitpayIdScreens.PAIR]: 'wallet-card/pairing',

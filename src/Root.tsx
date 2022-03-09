@@ -12,7 +12,10 @@ import {ThemeProvider} from 'styled-components/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
 import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
-import {baseScreenOptions} from './constants/NavigationOptions';
+import {
+  baseNavigatorOptions,
+  baseScreenOptions,
+} from './constants/NavigationOptions';
 import {AppEffects, AppActions} from './store/app';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 import {LogActions} from './store/log';
@@ -73,6 +76,7 @@ import {DEVTOOLS_ENABLED} from './constants/config';
 import ConnectionsSettingsStack, {
   ConnectionsSettingsStackParamList,
 } from './navigation/tabs/settings/connections/ConnectionsStack';
+import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -96,6 +100,7 @@ export type RootStackParamList = {
   BuyCrypto: NavigatorScreenParams<BuyCryptoStackParamList>;
   SwapCrypto: NavigatorScreenParams<SwapCryptoStackParamList>;
   WalletConnect: NavigatorScreenParams<WalletConnectStackParamList>;
+  Debug: DebugScreenParamList;
 };
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
@@ -120,6 +125,7 @@ export enum RootStacks {
   BUY_CRYPTO = 'BuyCrypto',
   SWAP_CRYPTO = 'SwapCrypto',
   WALLET_CONNECT = 'WalletConnect',
+  DEBUG = 'Debug',
 }
 
 // ROOT NAVIGATION CONFIG
@@ -281,6 +287,15 @@ export default () => {
               headerShown: false,
             }}
             initialRouteName={initialRoute}>
+            <Root.Screen
+              name={RootStacks.DEBUG}
+              component={DebugScreen}
+              options={{
+                ...baseNavigatorOptions,
+                headerShown: true,
+                headerTitle: 'Debug',
+              }}
+            />
             <Root.Screen name={RootStacks.AUTH} component={AuthStack} />
             <Root.Screen name={RootStacks.INTRO} component={IntroStack} />
             <Root.Screen
