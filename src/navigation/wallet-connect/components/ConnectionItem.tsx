@@ -1,7 +1,7 @@
 import {useNavigation} from '@react-navigation/native';
 import {IWalletConnectSession} from '@walletconnect/types';
 import React, {useCallback} from 'react';
-import {useDispatch} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {
@@ -26,16 +26,31 @@ import styled from 'styled-components/native';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
+import {IWCRequest} from '../../../store/wallet-connect/wallet-connect.models';
+import {RootState} from '../../../store';
 
 const NestedArrowContainer = styled.View`
   padding-right: 11px;
   padding-left: 7px;
 `;
 
+const Badge = styled.View`
+  position: absolute;
+  border-radius: 8px;
+  width: 7px;
+  height: 7px;
+  left: 61px;
+  top: 0px;
+  background: #ff647c;
+`;
+
 export default ({session}: {session: IWalletConnectSession}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {peerId, peerMeta, key} = session;
+  const requests: IWCRequest[] = useSelector(({WALLET_CONNECT}: RootState) => {
+    return WALLET_CONNECT.requests.filter(request => request.peerId === peerId);
+  });
 
   const showErrorMessage = useCallback(
     async (msg: BottomNotificationConfig) => {
@@ -69,6 +84,7 @@ export default ({session}: {session: IWalletConnectSession}) => {
                   style={{width: 37, height: 37}}
                 />
               </IconContainer>
+              {requests.length ? <Badge /> : null}
               <IconLabel>{peerMeta.url.replace('https://', '')}</IconLabel>
             </>
           ) : null}
