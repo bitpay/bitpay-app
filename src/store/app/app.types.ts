@@ -34,6 +34,7 @@ export enum AppActionTypes {
   PIN_LOCK_ACTIVE = 'APP/PIN_LOCK_ACTIVE',
   CURRENT_PIN = 'APP/CURRENT_PIN',
   PIN_BANNED_UNTIL = 'APP/PIN_BANNED_UNTIL',
+  SHOW_BLUR = 'APP/SHOW_BLUR',
 }
 
 interface NetworkChanged {
@@ -156,6 +157,11 @@ interface PinBannedUntil {
   payload: number | undefined;
 }
 
+interface ShowBlur {
+  type: typeof AppActionTypes.SHOW_BLUR;
+  payload: boolean;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
@@ -182,4 +188,5 @@ export type AppActionType =
   | DismissPinModal
   | PinLockActive
   | CurrentPin
-  | PinBannedUntil;
+  | PinBannedUntil
+  | ShowBlur;
