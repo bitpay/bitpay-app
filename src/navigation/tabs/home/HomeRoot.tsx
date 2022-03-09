@@ -1,15 +1,12 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import React, {useEffect, useMemo, useState} from 'react';
 import {RefreshControl, ScrollView} from 'react-native';
-import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import ExchangeRatesSlides, {
   ExchangeRateProps,
 } from '../../../components/exchange-rate/ExchangeRatesSlides';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
-import {RootState} from '../../../store';
-import {AppActions} from '../../../store/app';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startGetRates} from '../../../store/wallet/effects';
 import {startUpdateAllKeyAndWalletBalances} from '../../../store/wallet/effects/balance/balance';
@@ -17,7 +14,7 @@ import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
 import {isDoMore, isFeaturedMerchant, isQuickLink} from '../../../utils/braze';
 import {sleep} from '../../../utils/helper-methods';
-import {useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishModal';
 import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
 import AdvertisementsList from './components/advertisements/AdvertisementsList';
@@ -54,16 +51,14 @@ export const SectionHeaderContainer = styled.View<{justifyContent?: string}>`
 `;
 
 const HomeRoot = () => {
-  const dispatch = useDispatch();
-  const onboardingCompleted = useSelector(
-    ({APP}: RootState) => APP.onboardingCompleted,
-  );
-
-  const showOnboardingFinishModal = async () => {
-    await sleep(300);
-    dispatch(AppActions.showOnboardingFinishModal());
-  };
-
+  const dispatch = useAppDispatch();
+  // const onboardingCompleted = useAppSelector(
+  //   ({APP}: RootState) => APP.onboardingCompleted,
+  // );
+  // const showOnboardingFinishModal = async () => {
+  //   await sleep(300);
+  //   dispatch(AppActions.showOnboardingFinishModal());
+  // };
   // useEffect(() => {
   //   if (!onboardingCompleted) {
   //     showOnboardingFinishModal();
@@ -133,6 +128,8 @@ const HomeRoot = () => {
     return quickLinks;
   }, [allContentCards]);
 
+  const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
+
   useEffect(() => {
     return navigation.addListener('focus', () => {
       dispatch(updatePortfolioBalance());
@@ -170,9 +167,11 @@ const HomeRoot = () => {
         </HeaderContainer>
 
         {/* ////////////////////////////// PORTFOLIO BALANCE */}
-        <HomeRow title="Portfolio Balance" slimHeader>
-          <PortfolioBalance />
-        </HomeRow>
+        {showPortfolioValue ? (
+          <HomeRow title="Portfolio Balance" slimHeader>
+            <PortfolioBalance />
+          </HomeRow>
+        ) : null}
 
         {/* ////////////////////////////// CARDS CAROUSEL */}
         <CardsCarousel />

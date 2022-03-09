@@ -143,6 +143,11 @@ export const showBlur = (value: boolean): AppActionType => ({
   payload: value,
 });
 
+export const showPortfolioValue = (value: boolean): AppActionType => ({
+  type: AppActionTypes.SHOW_PORTFOLIO_VALUE,
+  payload: value,
+});
+
 export const brazeContentCardsFetched = (
   contentCards: ContentCard[],
 ): AppActionType => ({

@@ -184,3 +184,8 @@ export const successGetReceiveAddress = (payload: {
   type: WalletActionTypes.SUCCESS_GET_RECEIVE_ADDRESS,
   payload,
 });
+
+export const setUseUnconfirmedFunds = (payload: boolean): WalletActionType => ({
+  type: WalletActionTypes.SET_USE_UNCONFIRMED_FUNDS,
+  payload,
+});

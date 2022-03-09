@@ -36,7 +36,8 @@ export enum AppActionTypes {
   CURRENT_PIN = 'APP/CURRENT_PIN',
   PIN_BANNED_UNTIL = 'APP/PIN_BANNED_UNTIL',
   SHOW_BLUR = 'APP/SHOW_BLUR',
-  BRAZE_CONTENT_CARDS_FETCHED = 'APP/BRAZE_CONTENT_CARDS_FETCH',
+  SHOW_PORTFOLIO_VALUE = 'APP/SHOW_PORTFOLIO_VALUE',
+  BRAZE_CONTENT_CARDS_FETCHED = 'APP/BRAZE_CONTENT_CARDS_FETCHED',
 }
 
 interface NetworkChanged {
@@ -164,6 +165,11 @@ interface ShowBlur {
   payload: boolean;
 }
 
+interface ShowPortfolioValue {
+  type: typeof AppActionTypes.SHOW_PORTFOLIO_VALUE;
+  payload: boolean;
+}
+
 interface BrazeContentCardsFetched {
   type: typeof AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED;
   payload: {contentCards: ContentCard[]};
@@ -197,4 +203,5 @@ export type AppActionType =
   | CurrentPin
   | PinBannedUntil
   | ShowBlur
+  | ShowPortfolioValue
   | BrazeContentCardsFetched;
