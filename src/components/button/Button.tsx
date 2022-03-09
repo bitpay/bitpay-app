@@ -29,7 +29,7 @@ import ButtonSpinner from './ButtonSpinner';
 export type ButtonState = 'loading' | 'success' | 'failed' | null | undefined;
 export type ButtonStyle = 'primary' | 'secondary' | undefined;
 export type ButtonType = 'button' | 'link' | 'pill' | undefined;
-export type ButtonState = 'loading' | 'success' | 'failed' | null | undefined;
+
 interface ButtonProps extends BaseButtonProps {
   buttonStyle?: ButtonStyle;
   buttonType?: ButtonType;
