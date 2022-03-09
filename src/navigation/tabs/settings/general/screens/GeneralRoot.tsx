@@ -9,7 +9,7 @@ import {
   Info,
   InfoTriangle,
   Setting,
-  SettingTitle
+  SettingTitle,
 } from '../../../../../components/styled/Containers';
 import AngleRight from '../../../../../../assets/img/angle-right.svg';
 import {useTranslation} from 'react-i18next';
@@ -18,6 +18,9 @@ import {InfoDescription} from '../../../../../components/styled/Text';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {AppActions} from '../../../../../store/app';
 import {WalletActions} from '../../../../../store/wallet';
+import {showBottomNotificationModal} from '../../../../../store/app/app.actions';
+import {resetAllSettings} from '../../../../../store/app/app.effects';
+import {sleep} from '../../../../../utils/helper-methods';
 const GeneralSettingsRoot: React.FC = () => {
   const navigation = useNavigation();
   const colorScheme = useAppSelector(({APP}: RootState) => APP.colorScheme);
@@ -96,8 +99,45 @@ const GeneralSettingsRoot: React.FC = () => {
         {/*----------------------------------------------------------------------*/}
         <Setting
           activeOpacity={ActiveOpacity}
-          onPress={
-            () => null // Todo
+          onPress={() =>
+            dispatch(
+              showBottomNotificationModal({
+                type: 'warning',
+                title: 'Reset all settings',
+                message: 'Are you sure you want to reset all settings?',
+                enableBackdropDismiss: true,
+                actions: [
+                  {
+                    text: 'RESET',
+                    action: async () => {
+                      dispatch(resetAllSettings());
+                      await sleep(400);
+                      dispatch(
+                        showBottomNotificationModal({
+                          type: 'success',
+                          title: 'Reset complete',
+                          message: 'All settings have been reset.',
+                          enableBackdropDismiss: true,
+                          actions: [
+                            {
+                              text: 'OK',
+                              action: () => null,
+                              primary: true,
+                            },
+                          ],
+                        }),
+                      );
+                    },
+                    primary: true,
+                  },
+                  {
+                    text: 'CANCEL',
+                    action: () => {},
+                    primary: true,
+                  },
+                ],
+              }),
+            )
           }>
           <SettingTitle>{t('Reset All Settings')}</SettingTitle>
         </Setting>
@@ -116,7 +156,7 @@ const GeneralSettingsRoot: React.FC = () => {
           <InfoTriangle />
           <InfoDescription>
             If enabled, wallets will also try to spend unconfirmed funds.
-            However, unconfirmed funds are not allow for spending with
+            However, unconfirmed funds are not allowed for spending with
             merchants, BitPay Card loads, or BitPay in-app gift card purchases.
           </InfoDescription>
         </Info>
