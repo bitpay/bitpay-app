@@ -1,23 +1,26 @@
 import React from 'react';
+import {ContentCard} from 'react-native-appboy-sdk';
 import {Carousel} from 'react-native-snap-carousel';
 import {WIDTH} from '../../../../../components/styled/Containers';
-import QuickLinksCard, {QuickLink} from './QuickLinksCard';
+import QuickLinksCard from './QuickLinksCard';
 
 interface QuickLinksCarouselProps {
-  items: QuickLink[];
+  contentCards: ContentCard[];
 }
 
-const renderQuickLink = ({item}: {item: QuickLink}) => (
-  <QuickLinksCard quickLink={item} />
+const renderQuickLink = ({item}: {item: ContentCard}) => (
+  <QuickLinksCard contentCard={item} />
 );
 
-const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({items}) => {
+const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({
+  contentCards,
+}) => {
   return (
-    <Carousel<QuickLink>
+    <Carousel<ContentCard>
       vertical={false}
       layout={'default'}
       useExperimentalSnap={true}
-      data={items}
+      data={contentCards}
       renderItem={renderQuickLink}
       sliderWidth={WIDTH}
       itemWidth={212}

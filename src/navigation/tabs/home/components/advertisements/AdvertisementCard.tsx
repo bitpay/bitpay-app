@@ -1,5 +1,6 @@
 import React from 'react';
 import {Image, ImageSourcePropType, Linking} from 'react-native';
+import {ContentCard} from 'react-native-appboy-sdk';
 import styled from 'styled-components/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {ActiveOpacity} from '../../../../../components/styled/Containers';
@@ -11,19 +12,14 @@ import {
   SlateDark,
   White,
 } from '../../../../../styles/colors';
+import {
+  isCaptionedContentCard,
+  isClassicContentCard,
+} from '../../../../../utils/braze';
 import {useAppDispatch} from '../../../../../utils/hooks';
 
-export interface Advertisement {
-  id: string;
-  img: ImageSourcePropType;
-  title: string;
-  description: string;
-  url?: string;
-  openURLInWebView: boolean;
-}
-
 interface AdvertisementCardProps {
-  advertisement: Advertisement;
+  contentCard: ContentCard;
 }
 
 const AdvertisementCardContainer = styled.TouchableOpacity`
@@ -56,9 +52,28 @@ const ADVERTISEMENT_ICON_HEIGHT = 126;
 const ADVERTISEMENT_ICON_WIDTH = 96;
 
 const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
-  const {advertisement} = props;
-  const {title, description, img, url, openURLInWebView} = advertisement;
+  const {contentCard} = props;
+  const {image, url, openURLInWebView} = contentCard;
   const dispatch = useAppDispatch();
+  let title = '';
+  let description = '';
+  let imageSource: ImageSourcePropType | null = null;
+
+  if (
+    isCaptionedContentCard(contentCard) ||
+    isClassicContentCard(contentCard)
+  ) {
+    title = contentCard.title;
+    description = contentCard.cardDescription;
+  }
+
+  if (image) {
+    if (typeof image === 'string') {
+      imageSource = {uri: image};
+    } else if (__DEV__) {
+      imageSource = image as any;
+    }
+  }
 
   const onPress = () => {
     if (!url) {
@@ -78,17 +93,19 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
     <AdvertisementCardContainer activeOpacity={ActiveOpacity} onPress={onPress}>
       <AdvertisementCardTitle>{title}</AdvertisementCardTitle>
       <AdvertisementCardDescription>{description}</AdvertisementCardDescription>
-      <Image
-        source={img}
-        style={{
-          height: ADVERTISEMENT_ICON_HEIGHT,
-          width: ADVERTISEMENT_ICON_WIDTH,
-          right: 0,
-          position: 'absolute',
-        }}
-        height={ADVERTISEMENT_ICON_HEIGHT}
-        width={ADVERTISEMENT_ICON_WIDTH}
-      />
+      {imageSource ? (
+        <Image
+          source={imageSource}
+          style={{
+            height: ADVERTISEMENT_ICON_HEIGHT,
+            width: ADVERTISEMENT_ICON_WIDTH,
+            right: 0,
+            position: 'absolute',
+          }}
+          height={ADVERTISEMENT_ICON_HEIGHT}
+          width={ADVERTISEMENT_ICON_WIDTH}
+        />
+      ) : null}
     </AdvertisementCardContainer>
   );
 };

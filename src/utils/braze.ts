@@ -3,7 +3,28 @@ import {
   CaptionedContentCard,
   ClassicContentCard,
   ContentCard,
+  ContentCardBase,
 } from 'react-native-appboy-sdk';
+
+export const DEFAULT_CONTENT_CARD_BASE: ContentCardBase = {
+  id: '',
+  created: 0,
+  expiresAt: 0,
+  viewed: false,
+  clicked: false,
+  pinned: false,
+  dismissed: false,
+  dismissible: false,
+  openURLInWebView: false,
+  extras: {},
+};
+
+export const DEFAULT_CLASSIC_CONTENT_CARD: ClassicContentCard = {
+  ...DEFAULT_CONTENT_CARD_BASE,
+  type: 'Classic',
+  title: 'Lorem Ipsum',
+  cardDescription: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
+};
 
 export const isBannerContentCard = (
   contentCard: ContentCard,

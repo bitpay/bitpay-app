@@ -1,23 +1,22 @@
 import React from 'react';
-import {Image, ImageProps, ImageSourcePropType} from 'react-native';
+import {Image, ImageProps, ImageSourcePropType, Linking} from 'react-native';
 import * as Svg from 'react-native-svg';
+import {ContentCard} from 'react-native-appboy-sdk';
 import styled from 'styled-components/native';
+import ArrowRight from '../../../../../../assets/img/arrow-right.svg';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
 import {White} from '../../../../../styles/colors';
-import ArrowRight from '../../../../../../assets/img/arrow-right.svg';
-
-export interface Offer {
-  id: number | string;
-  img: ImageSourcePropType;
-  title?: string;
-  description?: string;
-  onPress: () => void;
-}
+import {
+  isCaptionedContentCard,
+  isClassicContentCard,
+} from '../../../../../utils/braze';
+import {useAppDispatch} from '../../../../../utils/hooks';
+import {AppEffects} from '../../../../../store/app';
 
 interface OfferCardProps {
-  offer: Offer;
+  contentCard: ContentCard;
 }
 
 const OFFER_HEIGHT = 182;
@@ -124,19 +123,53 @@ const OfferBackgroundOverlay = () => {
 };
 
 const OfferCard: React.FC<OfferCardProps> = props => {
-  const {offer} = props;
-  const {img, title, description, onPress} = offer;
+  const {contentCard} = props;
+  const {image, url, openURLInWebView} = contentCard;
+  const dispatch = useAppDispatch();
+  let title = '';
+  let description = '';
+  let imageSource: ImageSourcePropType | null = null;
+
+  if (
+    isCaptionedContentCard(contentCard) ||
+    isClassicContentCard(contentCard)
+  ) {
+    title = contentCard.title;
+    description = contentCard.cardDescription;
+  }
+
+  if (image) {
+    if (typeof image === 'string') {
+      imageSource = {uri: image};
+    } else if (__DEV__) {
+      imageSource = image as any;
+    }
+  }
+
   const _onPress = () => {
     haptic('impactLight');
-    onPress();
+
+    if (!url) {
+      return;
+    }
+
+    haptic('impactLight');
+
+    if (openURLInWebView) {
+      dispatch(AppEffects.openUrlWithInAppBrowser(url));
+    } else {
+      Linking.openURL(url);
+    }
   };
 
   return (
     <OfferCardContainer>
-      <OfferBackgroundContainer>
-        <OfferBackground source={img} />
-        <OfferBackgroundOverlay />
-      </OfferBackgroundContainer>
+      {imageSource ? (
+        <OfferBackgroundContainer>
+          <OfferBackground source={imageSource} />
+          <OfferBackgroundOverlay />
+        </OfferBackgroundContainer>
+      ) : null}
 
       <OfferTitleText>{title}</OfferTitleText>
 

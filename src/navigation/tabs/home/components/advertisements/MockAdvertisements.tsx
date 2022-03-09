@@ -1,19 +1,22 @@
-import {Advertisement} from './AdvertisementCard';
+import {ClassicContentCard} from 'react-native-appboy-sdk';
+import {DEFAULT_CLASSIC_CONTENT_CARD} from '../../../../../utils/braze';
 
-const MockAdvertisements: Advertisement[] = [
+const MockAdvertisements: ClassicContentCard[] = [
   {
+    ...DEFAULT_CLASSIC_CONTENT_CARD,
     id: 'buyCrypto',
-    img: require('../../../../../../assets/img/advertisement/adv-buy.svg'),
+    image: require('../../../../../../assets/img/advertisement/adv-buy.svg'),
     title: 'Buy Crypto',
-    description: '[Dev] Exchange ERC-20 Tokens or cross chain assets',
+    cardDescription: '[DEV] Exchange ERC-20 Tokens or cross chain assets',
     url: '',
     openURLInWebView: false,
   },
   {
+    ...DEFAULT_CLASSIC_CONTENT_CARD,
     id: 'swapCrypto',
-    img: require('../../../../../../assets/img/advertisement/adv-swap.svg'),
+    image: require('../../../../../../assets/img/advertisement/adv-swap.svg'),
     title: 'Swap Crypto',
-    description: '[Dev] Buy direct using your debit or credit card',
+    cardDescription: '[DEV] Buy direct using your debit or credit card',
     url: '',
     openURLInWebView: false,
   },

@@ -1,23 +1,26 @@
 import React, {memo} from 'react';
+import {ContentCard} from 'react-native-appboy-sdk';
 import {Carousel} from 'react-native-snap-carousel';
 import {WIDTH} from '../../../../../components/styled/Containers';
-import OfferCard, {Offer} from './OfferCard';
+import OfferCard from './OfferCard';
 
 interface OfferSlidesProps {
-  offers: Offer[];
+  contentCards: ContentCard[];
 }
 
-const renderOffer = ({item}: {item: Offer}) => <OfferCard offer={item} />;
+const renderOffer = ({item}: {item: ContentCard}) => (
+  <OfferCard contentCard={item} />
+);
 
 const OffersCarousel: React.FC<OfferSlidesProps> = props => {
-  const {offers} = props;
+  const {contentCards} = props;
 
   return (
-    <Carousel<Offer>
+    <Carousel<ContentCard>
       vertical={false}
       layout={'default'}
       useExperimentalSnap={true}
-      data={offers}
+      data={contentCards}
       renderItem={renderOffer}
       sliderWidth={WIDTH}
       itemWidth={280}

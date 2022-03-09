@@ -1,7 +1,6 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import React, {useEffect, useMemo, useState} from 'react';
 import {RefreshControl, ScrollView} from 'react-native';
-import {ContentCard} from 'react-native-appboy-sdk';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import ExchangeRatesSlides, {
@@ -10,24 +9,17 @@ import ExchangeRatesSlides, {
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {RootState} from '../../../store';
-import {AppActions, AppEffects} from '../../../store/app';
+import {AppActions} from '../../../store/app';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startGetRates} from '../../../store/wallet/effects';
 import {startUpdateAllKeyAndWalletBalances} from '../../../store/wallet/effects/balance/balance';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
-import {
-  isCaptionedContentCard,
-  isClassicContentCard,
-  isDoMore,
-  isFeaturedMerchant,
-  isQuickLink,
-} from '../../../utils/braze';
+import {isDoMore, isFeaturedMerchant, isQuickLink} from '../../../utils/braze';
 import {sleep} from '../../../utils/helper-methods';
 import {useAppSelector} from '../../../utils/hooks';
 import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishModal';
 import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
-import {Advertisement} from './components/advertisements/AdvertisementCard';
 import AdvertisementsList from './components/advertisements/AdvertisementsList';
 import MockAdvertisements from './components/advertisements/MockAdvertisements';
 import CardsCarousel from './components/CardsCarousel';
@@ -36,11 +28,9 @@ import ScanButton from './components/HeaderScanButton';
 import HomeRow from './components/HomeRow';
 import LinkingButtons from './components/LinkingButtons';
 import MockOffers from './components/offers/MockOffers';
-import {Offer} from './components/offers/OfferCard';
 import OffersCarousel from './components/offers/OffersCarousel';
 import PortfolioBalance from './components/PortfolioBalance';
 import MockQuickLinks from './components/quick-links/MockQuickLinks';
-import {QuickLink} from './components/quick-links/QuickLinksCard';
 import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
 
 const HeaderContainer = styled.View`
@@ -62,73 +52,6 @@ export const SectionHeaderContainer = styled.View<{justifyContent?: string}>`
   margin: 10px ${ScreenGutter} 0;
   justify-content: ${({justifyContent}) => justifyContent || 'flex-start'};
 `;
-
-const contentCardToOffer = (contentCard: ContentCard): Offer => {
-  let title = '';
-  let description = '';
-
-  if (
-    isClassicContentCard(contentCard) ||
-    isCaptionedContentCard(contentCard)
-  ) {
-    title = contentCard.title;
-    description = contentCard.cardDescription;
-  }
-
-  return {
-    id: contentCard.id,
-    img: {uri: contentCard.image},
-    title,
-    description,
-    onPress: () => {}, // TODO: go to merchant card in ShopOnline
-  };
-};
-
-const contentCardToQuickLink = (contentCard: ContentCard): QuickLink => {
-  let title = '';
-  let description = '';
-
-  if (
-    isClassicContentCard(contentCard) ||
-    isCaptionedContentCard(contentCard)
-  ) {
-    title = contentCard.title;
-    description = contentCard.cardDescription;
-  }
-
-  return {
-    id: contentCard.id,
-    img: {uri: contentCard.image},
-    title,
-    description,
-    url: contentCard.url,
-    openURLInWebView: contentCard.openURLInWebView,
-  };
-};
-
-const contentCardToAdvertisement = (
-  contentCard: ContentCard,
-): Advertisement => {
-  let title = '';
-  let description = '';
-
-  if (
-    isClassicContentCard(contentCard) ||
-    isCaptionedContentCard(contentCard)
-  ) {
-    title = contentCard.title;
-    description = contentCard.cardDescription;
-  }
-
-  return {
-    id: contentCard.id,
-    title,
-    description,
-    img: {uri: contentCard.image},
-    url: contentCard.url,
-    openURLInWebView: contentCard.openURLInWebView,
-  };
-};
 
 const HomeRoot = () => {
   const dispatch = useDispatch();
@@ -160,7 +83,7 @@ const HomeRoot = () => {
       return MockOffers;
     }
 
-    return featuredMerchants.map(contentCardToOffer);
+    return featuredMerchants;
   }, [allContentCards]);
 
   // Advertisements ("Do More")
@@ -171,7 +94,7 @@ const HomeRoot = () => {
       return MockAdvertisements;
     }
 
-    return advertisements.map(contentCardToAdvertisement);
+    return advertisements;
   }, [allContentCards]);
 
   // Exchange Rates
@@ -207,7 +130,7 @@ const HomeRoot = () => {
       return MockQuickLinks;
     }
 
-    return quickLinks.map(contentCardToQuickLink);
+    return quickLinks;
   }, [allContentCards]);
 
   useEffect(() => {
@@ -268,14 +191,14 @@ const HomeRoot = () => {
             title="Limited Time Offers"
             action="See all"
             onActionPress={() => console.log('TODO: see all offers')}>
-            <OffersCarousel offers={memoizedOffers} />
+            <OffersCarousel contentCards={memoizedOffers} />
           </HomeRow>
         ) : null}
 
         {/* ////////////////////////////// ADVERTISEMENTS */}
         {memoizedAdvertisements.length ? (
           <HomeRow title="Do More">
-            <AdvertisementsList items={memoizedAdvertisements} />
+            <AdvertisementsList contentCards={memoizedAdvertisements} />
           </HomeRow>
         ) : null}
 
@@ -289,7 +212,7 @@ const HomeRoot = () => {
         {/* ////////////////////////////// QUICK LINKS - Leave feedback etc */}
         {memoizedQuickLinks.length ? (
           <HomeRow title="Quick Links">
-            <QuickLinksCarousel items={memoizedQuickLinks} />
+            <QuickLinksCarousel contentCards={memoizedQuickLinks} />
           </HomeRow>
         ) : null}
       </ScrollView>

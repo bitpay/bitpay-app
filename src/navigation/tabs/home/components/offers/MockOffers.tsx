@@ -1,19 +1,24 @@
-import {Offer} from './OfferCard';
+import {ClassicContentCard} from 'react-native-appboy-sdk';
+import {DEFAULT_CLASSIC_CONTENT_CARD} from '../../../../../utils/braze';
 
-const MockOffers: Offer[] = [
+const MockOffers: ClassicContentCard[] = [
   {
-    id: 1,
-    title: '[DEV] JOMA',
-    description: '20% off select products for BitPay customers.',
-    img: require('../../../../../../assets/img/home/offers/jomashop.png'),
-    onPress: () => {},
+    ...DEFAULT_CLASSIC_CONTENT_CARD,
+    id: '1',
+    title: 'JOMASHOP',
+    cardDescription: '[DEV] 20% off select products for BitPay customers.',
+    image: require('../../../../../../assets/img/home/offers/jomashop.png'),
+    url: '',
+    openURLInWebView: false,
   },
   {
-    id: 2,
-    title: '[DEV] AIRBNB',
-    description: '20% off select products for BitPay customers.',
-    img: require('../../../../../../assets/img/home/offers/airbnb.png'),
-    onPress: () => {},
+    ...DEFAULT_CLASSIC_CONTENT_CARD,
+    id: '2',
+    title: 'AIRBNB',
+    cardDescription: '[DEV] 20% off select products for BitPay customers.',
+    image: require('../../../../../../assets/img/home/offers/airbnb.png'),
+    url: '',
+    openURLInWebView: false,
   },
 ];
 

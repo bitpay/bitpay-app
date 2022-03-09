@@ -1,10 +1,11 @@
 import React from 'react';
+import {ContentCard} from 'react-native-appboy-sdk';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
-import AdvertisementCard, {Advertisement} from './AdvertisementCard';
+import AdvertisementCard from './AdvertisementCard';
 
 interface AdvertisementListProps {
-  items: Advertisement[];
+  contentCards: ContentCard[];
 }
 
 const AdvertisementCardContainer = styled.View<{isLast: boolean}>`
@@ -12,15 +13,15 @@ const AdvertisementCardContainer = styled.View<{isLast: boolean}>`
 `;
 
 const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
-  const {items} = props;
+  const {contentCards} = props;
 
   return (
     <>
-      {items.map((advertisement, idx) => (
+      {contentCards.map((contentCard, idx) => (
         <AdvertisementCardContainer
-          key={advertisement.id}
-          isLast={idx === items.length - 1}>
-          <AdvertisementCard advertisement={advertisement} />
+          key={contentCard.id}
+          isLast={idx === contentCards.length - 1}>
+          <AdvertisementCard contentCard={contentCard} />
         </AdvertisementCardContainer>
       ))}
     </>
