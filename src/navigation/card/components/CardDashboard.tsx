@@ -21,6 +21,7 @@ import {
   Transaction,
   UiTransaction,
 } from '../../../store/card/card.models';
+import {selectCardGroups} from '../../../store/card/card.selectors';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {CardStackParamList} from '../CardStack';
 import {
@@ -36,77 +37,9 @@ import CardOverviewSlide from './CardOverviewSlide';
 import TransactionRow from './CardTransactionRow';
 
 interface CardDashboardProps {
-  id: string | undefined | null;
+  id: string;
   navigation: StackNavigationProp<CardStackParamList, 'Home'>;
 }
-
-export class OverviewSlide {
-  readonly provider: CardProvider;
-  private readonly _cards: Card[] = [];
-
-  get cards() {
-    return this._cards;
-  }
-
-  get primaryCard() {
-    return this._cards[0];
-  }
-
-  constructor(card: Card) {
-    this.provider = card.provider;
-    this._cards.push(card);
-  }
-
-  add(card: Card) {
-    this._cards.push(card);
-  }
-}
-
-const buildOverviewSlides = (cards: Card[]) => {
-  // sort galileo before firstView, then virtual before physical
-  const sortedCards = cards.sort((a, b) => {
-    if (
-      a.provider === CardProvider.galileo &&
-      b.provider === CardProvider.firstView
-    ) {
-      return -1;
-    }
-    if (
-      a.provider === CardProvider.firstView &&
-      b.provider === CardProvider.galileo
-    ) {
-      return 1;
-    }
-
-    if (a.cardType === 'virtual' && b.cardType === 'physical') {
-      return -1;
-    }
-    if (a.cardType === 'physical' && b.cardType === 'virtual') {
-      return 1;
-    }
-    return 0;
-  });
-
-  const slides = sortedCards.reduce((slideList, card) => {
-    if (!ProviderConfig[card.provider].groupEnabled) {
-      slideList.push(new OverviewSlide(card));
-
-      return slideList;
-    }
-
-    let slide = slideList.find(g => g.provider === card.provider);
-
-    if (slide) {
-      slide.add(card);
-    } else {
-      slideList.push(new OverviewSlide(card));
-    }
-
-    return slideList;
-  }, [] as OverviewSlide[]);
-
-  return slides;
-};
 
 const toUiTransaction = (tx: Transaction, settled: boolean) => {
   const uiTx = tx as UiTransaction;
@@ -120,23 +53,20 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const {id, navigation} = props;
-  const carouselRef = useRef<Carousel<OverviewSlide>>(null);
-  const cards = useAppSelector(({APP, CARD}) => CARD.cards[APP.network]);
+  const carouselRef = useRef<Carousel<Card[]>>(null);
+  const cardGroups = useAppSelector(selectCardGroups);
   const virtualDesignCurrency = useAppSelector(
     ({CARD}) => CARD.virtualDesignCurrency,
   );
-  const memoizedSlides = useMemo(() => buildOverviewSlides(cards), [cards]);
 
-  // if id was passed in, try to find the slide that contains that id
-  // if not, default to 0
-  const activeSlideIdx = id
-    ? Math.max(
-        0,
-        memoizedSlides.findIndex(s => s.cards.some(c => c.id === id)),
-      )
-    : 0;
-  const activeSlide = memoizedSlides[activeSlideIdx];
-  const activeCard = activeSlide.primaryCard;
+  const currentGroupIdx = Math.max(
+    0,
+    cardGroups.findIndex(g => g.some(c => c.id === id)),
+  );
+  const currentGroup = cardGroups[currentGroupIdx];
+  const activeCard = currentGroup[0];
+  const currentCardRef = useRef(activeCard);
+  currentCardRef.current = activeCard;
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -145,8 +75,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
           <Button
             onPress={() =>
               navigation.navigate('Settings', {
-                slide: activeSlide,
-                id: activeSlide.primaryCard.id,
+                id: currentCardRef.current.id,
               })
             }
             buttonType="pill"
@@ -156,7 +85,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         </HeaderRightContainer>
       ),
     });
-  }, [activeSlide, navigation, t]);
+  }, [navigation, t]);
 
   // if id does not exist as a key, tx for this card has not been initialized
   const pageData = useAppSelector(
@@ -221,9 +150,9 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   );
 
   const renderSlide = useCallback(
-    ({item}) => (
+    ({item}: {item: Card[]}) => (
       <CardOverviewSlide
-        card={item.primaryCard}
+        card={item[0]}
         designCurrency={virtualDesignCurrency}
       />
     ),
@@ -265,17 +194,17 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
       onEndReached={() => fetchNextPage()}
       ListHeaderComponent={
         <>
-          <Carousel<OverviewSlide>
+          <Carousel<Card[]>
             ref={carouselRef}
             vertical={false}
             layout="default"
             activeSlideAlignment="center"
-            firstItem={activeSlideIdx}
-            data={memoizedSlides}
+            firstItem={currentGroupIdx}
+            data={cardGroups}
             renderItem={renderSlide}
             onSnapToItem={idx => {
               navigation.setParams({
-                id: memoizedSlides[idx].primaryCard.id,
+                id: cardGroups[idx][0].id,
               });
             }}
             itemWidth={300 + 20}

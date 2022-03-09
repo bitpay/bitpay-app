@@ -10,6 +10,7 @@ import {BaseText} from '../../../../components/styled/Text';
 import {navigationRef} from '../../../../Root';
 import {titleCasing} from '../../../../utils/helper-methods';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
+import {useNavigation} from '@react-navigation/native';
 
 const ButtonsRow = styled.View`
   width: 100%;
@@ -65,22 +66,19 @@ interface Props {
 }
 
 const LinkingButtons = ({receive, send}: Props) => {
+  const navigation = useNavigation();
   const buttonsList: Array<ButtonListProps> = [
     // TODO: update icons
     {
       label: 'buy',
       img: <BuySvg />,
-      cta: () => {
-        navigationRef.navigate('BuyCrypto', {screen: 'Root'});
-      },
+      cta: () => navigation.navigate('BuyCrypto', {screen: 'Root'}),
       hide: false,
     },
     {
       label: 'swap',
       img: <SwapSvg />,
-      cta: () => {
-        navigationRef.navigate('SwapCrypto', {screen: 'Root'});
-      },
+      cta: () => navigation.navigate('SwapCrypto', {screen: 'Root'}),
       hide: false,
     },
     {

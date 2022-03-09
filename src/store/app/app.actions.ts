@@ -138,6 +138,11 @@ export const currentPin = (pin: string | undefined): AppActionType => ({
   payload: pin,
 });
 
+export const showBlur = (value: boolean): AppActionType => ({
+  type: AppActionTypes.SHOW_BLUR,
+  payload: value,
+});
+
 export const brazeContentCardsFetched = (
   contentCards: ContentCard[],
 ): AppActionType => ({

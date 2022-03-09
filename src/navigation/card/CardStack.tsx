@@ -10,17 +10,22 @@ import CardSettings, {CardSettingsParamList} from './screens/CardSettings';
 import CustomizeVirtualCard, {
   CustomizeVirtualCardParamList,
 } from './screens/settings/CustomizeVirtualCard';
+import UpdateCardNameScreen, {
+  UpdateCardNameScreenParamList,
+} from './screens/settings/UpdateCardName';
 
 export type CardStackParamList = {
   Home: CardHomeScreenParamList;
   Settings: CardSettingsParamList;
   CustomizeVirtualCard: CustomizeVirtualCardParamList;
+  UpdateCardName: UpdateCardNameScreenParamList;
 };
 
 export enum CardScreens {
   HOME = 'Home',
   SETTINGS = 'Settings',
   CUSTOMIZE_VIRTUAL_CARD = 'CustomizeVirtualCard',
+  UPDATE_CARD_NAME = 'UpdateCardName',
 }
 
 const Card = createStackNavigator<CardStackParamList>();
@@ -56,6 +61,13 @@ const CardStack = () => {
           component={CustomizeVirtualCard}
           options={{
             headerTitle: t('Customize Virtual Card'),
+          }}
+        />
+        <Card.Screen
+          name={CardScreens.UPDATE_CARD_NAME}
+          component={UpdateCardNameScreen}
+          options={{
+            headerTitle: t('Update Card Name'),
           }}
         />
       </Card.Group>

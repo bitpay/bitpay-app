@@ -11,7 +11,7 @@ export enum ScanScreens {
 }
 
 export type ScanStackParamList = {
-  Root: {contextHandler?: (data: string) => void} | undefined;
+  Root: {onScanComplete?: (data: string) => void} | undefined;
 };
 
 const ScanNavigator = createStackNavigator<ScanStackParamList>();

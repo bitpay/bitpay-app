@@ -180,8 +180,20 @@ const HomeRoot = () => {
         {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
         <HomeRow>
           <LinkingButtons
-            receive={{cta: () => null}}
-            send={{cta: () => null}}
+            receive={{
+              cta: () =>
+                navigation.navigate('Wallet', {
+                  screen: 'GlobalSelect',
+                  params: {context: 'receive'},
+                }),
+            }}
+            send={{
+              cta: () =>
+                navigation.navigate('Wallet', {
+                  screen: 'GlobalSelect',
+                  params: {context: 'send'},
+                }),
+            }}
           />
         </HomeRow>
 

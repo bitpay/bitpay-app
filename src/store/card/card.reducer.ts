@@ -13,6 +13,7 @@ import {
 
 export const cardReduxPersistBlacklist: Array<keyof CardState> = [
   'fetchCardsStatus',
+  'updateCardNameStatus',
   'balances',
   'settledTransactions',
   'pendingTransactions',
@@ -22,6 +23,8 @@ export type FetchCardsStatus = 'success' | 'failed' | null;
 export type FetchOverviewStatus = 'success' | 'failed' | null;
 export type FetchSettledTransactionsStatus = 'success' | 'failed' | null;
 export type FetchVirtualCardImageUrlsStatus = 'success' | 'failed' | null;
+export type UpdateCardNameStatus = 'success' | 'failed' | null;
+
 export interface CardState {
   lastUpdates: {
     [key in keyof typeof TTL]: number;
@@ -43,6 +46,9 @@ export interface CardState {
     [id: string]: FetchSettledTransactionsStatus;
   };
   fetchVirtualCardImageUrlsStatus: FetchVirtualCardImageUrlsStatus;
+  updateCardNameStatus: {
+    [id: string]: UpdateCardNameStatus | undefined;
+  };
   virtualDesignCurrency: VirtualDesignCurrency;
   overview: any;
   settledTransactions: {
@@ -67,6 +73,7 @@ const initialState: CardState = {
   fetchOverviewStatus: {},
   fetchSettledTransactionsStatus: {},
   fetchVirtualCardImageUrlsStatus: null,
+  updateCardNameStatus: {},
   virtualDesignCurrency: 'bitpay-b',
   overview: null,
   settledTransactions: {},
@@ -247,6 +254,49 @@ export const cardReducer = (
         ...state,
         fetchVirtualCardImageUrlsStatus: action.payload,
       };
+    case CardActionTypes.SUCCESS_UPDATE_CARD_NAME:
+      const cardList = state.cards[action.payload.network];
+
+      return {
+        ...state,
+        updateCardNameStatus: {
+          ...state.updateCardNameStatus,
+          [action.payload.id]: 'success',
+        },
+        cards: {
+          ...state.cards,
+          // update the card array reference
+          [action.payload.network]: cardList.map(c => {
+            // only update the card ref for the targeted card
+            if (c.id === action.payload.id) {
+              return {
+                ...c,
+                nickname: action.payload.nickname,
+              };
+            }
+
+            return c;
+          }),
+        },
+      };
+    case CardActionTypes.FAILED_UPDATE_CARD_NAME: {
+      return {
+        ...state,
+        updateCardNameStatus: {
+          ...state.updateCardNameStatus,
+          [action.payload.id]: 'failed',
+        },
+      };
+    }
+    case CardActionTypes.UPDATE_UPDATE_CARD_NAME_STATUS: {
+      return {
+        ...state,
+        updateCardNameStatus: {
+          ...state.updateCardNameStatus,
+          [action.payload.id]: action.payload.status,
+        },
+      };
+    }
     default:
       return state;
   }

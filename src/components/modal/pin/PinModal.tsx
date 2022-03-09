@@ -3,15 +3,15 @@ import React, {useState, useEffect} from 'react';
 import {RootState} from '../../../store';
 import {AppActions} from '../../../store/app';
 import {useDispatch, useSelector} from 'react-redux';
-import PinDots from '../../pin-dots/PinDots';
-import PinMessages from '../../../components/pin-messages/PinMessages';
+import PinDots from './PinDots';
 import haptic from '../../haptic-feedback/haptic';
 import {BwcProvider} from '../../../lib/bwc';
 import isEqual from 'lodash.isequal';
 import {sleep} from '../../../utils/helper-methods';
 import VirtualKeyboard from '../../../components/virtual-keyboard/VirtualKeyboard';
-import {LightBlack, White} from '../../../styles/colors';
 import styled, {useTheme} from 'styled-components/native';
+import {Animated} from 'react-native';
+import {BaseText} from '../../styled/Text';
 
 export interface PinModalConfig {
   type: 'set' | 'check';
@@ -19,7 +19,17 @@ export interface PinModalConfig {
 
 const PinContainer = styled.View`
   flex: 1;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+`;
+
+const PinMessagesContainer = styled(Animated.View)`
+  align-items: center;
+  text-align: center;
+  margin-top: 40%;
+`;
+
+const PinMessage = styled(BaseText)`
+  font-weight: 500;
+  font-size: 25px;
 `;
 
 const BWCProvider = BwcProvider.getInstance();
@@ -61,8 +71,9 @@ const PinModal: React.FC = () => {
       sjcl.hash.sha256.hash(pin.join('')),
     );
     if (isEqual(currentPin, pinHash)) {
+      dispatch(AppActions.showBlur(false));
       dispatch(AppActions.dismissPinModal()); // Correct PIN dismiss modal
-      reset();
+      setTimeout(reset, 300);
     } else {
       setShakeDots(true);
       setMessage('Incorrect PIN, try again');
@@ -78,7 +89,10 @@ const PinModal: React.FC = () => {
         sjcl.hash.sha256.hash(pin.join('')),
       );
       dispatch(AppActions.currentPin(pinHash));
+      dispatch(AppActions.showBlur(false));
       dispatch(AppActions.dismissPinModal());
+      setTimeout(reset, 300);
+      return;
     } else {
       setShakeDots(true);
     }
@@ -126,13 +140,13 @@ const PinModal: React.FC = () => {
     }
 
     // Give some time for dot to fill
-    await sleep(500);
+    await sleep(0);
 
-    if (!fistPinEntered.length && config?.type == 'set') {
+    if (!fistPinEntered.length && config?.type === 'set') {
       setMessage('Confirm your PIN');
       setFistPinEntered(newPin);
       setPin([]);
-    } else if (fistPinEntered.length && config?.type == 'set') {
+    } else if (fistPinEntered.length && config?.type === 'set') {
       setCurrentPin(newPin as Array<string>);
     } else {
       checkPin(newPin as Array<string>);
@@ -187,13 +201,15 @@ const PinModal: React.FC = () => {
       backdropTransitionOutTiming={0}
       hideModalContentWhileAnimating
       backdropOpacity={1}
-      backdropColor={theme.dark ? LightBlack : White}
+      backdropColor={theme.colors.background}
       animationIn={'fadeInUp'}
       animationOut={'fadeOutDown'}
       useNativeDriverForBackdrop={true}
       useNativeDriver={true}>
       <PinContainer>
-        <PinMessages message={message} />
+        <PinMessagesContainer>
+          <PinMessage>{message}</PinMessage>
+        </PinMessagesContainer>
         <PinDots
           shakeDots={shakeDots}
           setShakeDots={setShakeDots}

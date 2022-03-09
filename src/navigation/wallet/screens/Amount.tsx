@@ -1,29 +1,22 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {BaseText} from '../../../../components/styled/Text';
+import {BaseText} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import styled from 'styled-components/native';
-import {LightBlack, NeutralSlate, White} from '../../../../styles/colors';
+import {LightBlack, NeutralSlate, White} from '../../../styles/colors';
 import {
   HeaderRightContainer,
   ScreenGutter,
-} from '../../../../components/styled/Containers';
-import VirtualKeyboard from '../../../../components/virtual-keyboard/VirtualKeyboard';
-import SwapButton from '../../../../components/swap-button/SwapButton';
-import Button, {ButtonState} from '../../../../components/button/Button';
+} from '../../../components/styled/Containers';
+import VirtualKeyboard from '../../../components/virtual-keyboard/VirtualKeyboard';
+import SwapButton from '../../../components/swap-button/SwapButton';
+import Button, {ButtonState} from '../../../components/button/Button';
 import {View} from 'react-native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../../WalletStack';
-import {Recipient, Wallet} from '../../../../store/wallet/wallet.models';
-import {
-  createProposalAndBuildTxDetails,
-  handleCreateTxProposalError,
-} from '../../../../store/wallet/effects/send/send';
-import {useAppDispatch} from '../../../../utils/hooks';
-import {showBottomNotificationModal} from '../../../../store/app/app.actions';
-import {formatFiatAmount, sleep} from '../../../../utils/helper-methods';
-import useAppSelector from '../../../../utils/hooks/useAppSelector';
-import {ParseAmount} from '../../../../store/wallet/effects/amount/amount';
-import haptic from '../../../../components/haptic-feedback/haptic';
+import {WalletStackParamList} from '../WalletStack';
+import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
+import useAppSelector from '../../../utils/hooks/useAppSelector';
+import {ParseAmount} from '../../../store/wallet/effects/amount/amount';
+import haptic from '../../../components/haptic-feedback/haptic';
 
 const SendMax = styled.TouchableOpacity`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
@@ -94,33 +87,50 @@ export const AmountContainer = styled.View`
 `;
 
 export interface AmountParamList {
-  wallet: Wallet;
-  recipient: Recipient;
+  onAmountSelected: (
+    // crypto amount
+    amount: string,
+    // for toggling sync button 'loading' | 'success' | 'failed' | null | undefined;
+    setButtonState: (state: ButtonState) => void,
+    opts?: {sendMax?: boolean},
+  ) => void;
+  currencyAbbreviation: string;
+  opts?: {
+    hideSendMax?: boolean;
+  };
 }
 
 const Amount = () => {
   const route = useRoute<RouteProp<WalletStackParamList, 'Amount'>>();
-  const {wallet, recipient} = route.params;
+  const {onAmountSelected, currencyAbbreviation, opts} = route.params;
   const navigation = useNavigation();
-  const dispatch = useAppDispatch();
   const [buttonState, setButtonState] = useState<ButtonState>();
-  // display amount fiat/crypto
-  const [displayAmount, setDisplayAmount] = useState('0');
-  const [displayEquivalentAmount, setDisplayEquivalentAmount] = useState('0');
-  // amount to be sent to proposal creation (sats)
-  const [amount, setAmount] = useState('0');
-  const currencyAbbreviation = wallet.currencyAbbreviation.toUpperCase();
-  const [currency, setCurrency] = useState(currencyAbbreviation);
   // flag for primary selector type
-  const [isFiat, setIsFiat] = useState(false);
   const [rate, setRate] = useState(0);
+  const [amountConfig, updateAmountConfig] = useState({
+    // display amount fiat/crypto
+    displayAmount: '0',
+    displayEquivalentAmount: '0',
+    // amount to be sent to proposal creation (sats)
+    amount: '0',
+    currency: currencyAbbreviation,
+    primaryIsFiat: false,
+  });
   const swapList = [currencyAbbreviation, 'USD'];
   const allRates = useAppSelector(({WALLET}) => WALLET.rates);
   const [curVal, setCurVal] = useState('');
 
+  const {
+    displayAmount,
+    displayEquivalentAmount,
+    amount,
+    currency,
+    primaryIsFiat,
+  } = amountConfig;
+
   useEffect(() => {
     // if added for dev (hot reload)
-    if (!isFiat) {
+    if (!primaryIsFiat) {
       const fiatRate = allRates[currency.toLowerCase()].find(
         r => r.code === 'USD',
       )!.rate;
@@ -130,12 +140,16 @@ const Amount = () => {
 
   useEffect(() => {
     return navigation.addListener('blur', async () => {
+      await sleep(300);
       setButtonState(undefined);
     });
   }, [navigation]);
 
   const updateAmount = (_val: string) => {
-    setDisplayAmount(_val);
+    updateAmountConfig(current => ({
+      ...current,
+      displayAmount: _val,
+    }));
 
     const val = Number(_val);
     if (isNaN(val)) {
@@ -146,67 +160,34 @@ const Amount = () => {
       val === 0
         ? '0'
         : ParseAmount(
-            isFiat ? val / rate : val,
+            primaryIsFiat ? val / rate : val,
             currencyAbbreviation.toLowerCase(),
           ).amount;
     const fiatAmount = formatFiatAmount(val * rate, 'USD');
 
-    setDisplayEquivalentAmount(isFiat ? cryptoAmount : fiatAmount);
-    setAmount(cryptoAmount);
+    updateAmountConfig(current => ({
+      ...current,
+      displayEquivalentAmount: primaryIsFiat ? cryptoAmount : fiatAmount,
+      amount: cryptoAmount,
+    }));
   };
 
-  const sendMax = () => {};
-
   useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <HeaderContainer>
-          <SendMax onPress={sendMax}>
-            <SendMaxText>Send Max</SendMaxText>
-          </SendMax>
-        </HeaderContainer>
-      ),
-    });
-  });
-
-  const goToConfirm = async () => {
-    try {
-      setButtonState('loading');
-      const {txDetails, txp} = await dispatch(
-        createProposalAndBuildTxDetails({
-          wallet,
-          recipient,
-          amount: Number(amount),
-        }),
-      );
-
-      setButtonState('success');
-      await sleep(300);
-      navigation.navigate('Wallet', {
-        screen: 'Confirm',
-        params: {wallet, recipient, txp, txDetails},
+    if (!opts?.hideSendMax) {
+      navigation.setOptions({
+        headerRight: () => (
+          <HeaderContainer>
+            <SendMax
+              onPress={() =>
+                onAmountSelected(amount, setButtonState, {sendMax: true})
+              }>
+              <SendMaxText>Send Max</SendMaxText>
+            </SendMax>
+          </HeaderContainer>
+        ),
       });
-    } catch (err: any) {
-      setButtonState('failed');
-      const errorMessageConfig = (
-        await Promise.all([handleCreateTxProposalError(err), sleep(400)])
-      )[0];
-      dispatch(
-        showBottomNotificationModal({
-          ...errorMessageConfig,
-          enableBackdropDismiss: false,
-          actions: [
-            {
-              text: 'OK',
-              action: () => {
-                setButtonState(undefined);
-              },
-            },
-          ],
-        }),
-      );
     }
-  }
+  });
 
   const onCellPress = (val: string) => {
     haptic('impactLight');
@@ -225,7 +206,7 @@ const Amount = () => {
         currentValue = curVal + val;
     }
     setCurVal(currentValue);
-    setAmount(currentValue);
+    updateAmount(currentValue);
   };
 
   return (
@@ -245,15 +226,24 @@ const Amount = () => {
           </Row>
           <Row>
             <AmountEquivText>
-              {displayEquivalentAmount || 0} {isFiat && currencyAbbreviation}
+              {displayEquivalentAmount || 0}{' '}
+              {primaryIsFiat && currencyAbbreviation}
             </AmountEquivText>
           </Row>
           <SwapButtonContainer>
             <SwapButton
               swapList={swapList}
               onChange={(currency: string) => {
-                setCurrency(currency);
-                setIsFiat(!isFiat);
+                setCurVal('');
+                updateAmountConfig(current => ({
+                  ...current,
+                  currency,
+                  primaryIsFiat: !primaryIsFiat,
+                  displayAmount: '0',
+                  displayEquivalentAmount: primaryIsFiat
+                    ? formatFiatAmount(0, 'USD')
+                    : '0',
+                }));
               }}
             />
           </SwapButtonContainer>
@@ -264,7 +254,7 @@ const Amount = () => {
             <Button
               state={buttonState}
               disabled={!+amount}
-              onPress={goToConfirm}>
+              onPress={() => onAmountSelected(amount, setButtonState)}>
               Continue
             </Button>
           </ActionContainer>

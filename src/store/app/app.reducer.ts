@@ -53,6 +53,7 @@ export interface AppState {
   pinLockActive: boolean;
   currentPin: string | undefined;
   pinBannedUntil: number | undefined;
+  showBlur: boolean;
   brazeContentCards: ContentCard[];
 }
 
@@ -90,6 +91,7 @@ const initialState: AppState = {
   pinLockActive: false,
   currentPin: undefined,
   pinBannedUntil: undefined,
+  showBlur: false,
   brazeContentCards: [],
 };
 
@@ -251,6 +253,13 @@ export const appReducer = (
         ...state,
         pinBannedUntil: action.payload,
       };
+
+    case AppActionTypes.SHOW_BLUR:
+      return {
+        ...state,
+        showBlur: action.payload,
+      };
+
     case AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED:
       if (
         state.brazeContentCards.length === 0 &&

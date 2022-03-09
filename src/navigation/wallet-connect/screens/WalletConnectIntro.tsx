@@ -125,7 +125,7 @@ const WalletConnectIntro = () => {
       navigation.navigate('Scan', {
         screen: 'Root',
         params: {
-          contextHandler: async data => {
+          onScanComplete: async data => {
             if (isValidWalletConnectUri(data)) {
               goToStartView(wallet, data);
             }

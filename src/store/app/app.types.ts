@@ -35,6 +35,7 @@ export enum AppActionTypes {
   PIN_LOCK_ACTIVE = 'APP/PIN_LOCK_ACTIVE',
   CURRENT_PIN = 'APP/CURRENT_PIN',
   PIN_BANNED_UNTIL = 'APP/PIN_BANNED_UNTIL',
+  SHOW_BLUR = 'APP/SHOW_BLUR',
   BRAZE_CONTENT_CARDS_FETCHED = 'APP/BRAZE_CONTENT_CARDS_FETCH',
 }
 
@@ -158,6 +159,11 @@ interface PinBannedUntil {
   payload: number | undefined;
 }
 
+interface ShowBlur {
+  type: typeof AppActionTypes.SHOW_BLUR;
+  payload: boolean;
+}
+
 interface BrazeContentCardsFetched {
   type: typeof AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED;
   payload: {contentCards: ContentCard[]};
@@ -190,4 +196,5 @@ export type AppActionType =
   | PinLockActive
   | CurrentPin
   | PinBannedUntil
+  | ShowBlur
   | BrazeContentCardsFetched;
