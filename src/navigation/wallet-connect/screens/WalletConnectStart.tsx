@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components/native';
-import Button from '../../../components/button/Button';
+import Button, {ButtonState} from '../../../components/button/Button';
 import {Paragraph} from '../../../components/styled/Text';
 import VerifiedIcon from '../../../../assets/img/wallet-connect/verified-icon.svg';
 import WalletIcon from '../../../../assets/img/wallet-connect/wallet-icon.svg';
@@ -94,6 +94,7 @@ const WalletConnectStart = () => {
       keyId && walletId && findWalletById(WALLET.keys[keyId].wallets, walletId),
   ) as Wallet;
   const [address, setAddress] = useState(wallet.receiveAddress);
+  const [buttonState, setButtonState] = useState<ButtonState>();
 
   const showErrorMessage = useCallback(
     async (msg: BottomNotificationConfig) => {
@@ -105,7 +106,7 @@ const WalletConnectStart = () => {
 
   const approveSessionRequest = useCallback(async () => {
     try {
-      dispatch(showOnGoingProcessModal(OnGoingProcessMessages.LOADING));
+      setButtonState('loading');
       if (!address) {
         throw 'MISSING_WALLET_ADDRESS';
       }
@@ -128,8 +129,7 @@ const WalletConnectStart = () => {
           customData,
         ),
       );
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(800);
+      setButtonState('success');
       dispatch(
         showBottomNotificationModal({
           type: 'success',
@@ -165,6 +165,7 @@ const WalletConnectStart = () => {
             throw 'Failed to create wallet address';
           }
         } catch (error) {
+          setButtonState('failed');
           await showErrorMessage(
             CustomErrorMessage({
               errMsg: BWCErrorMessage(error),
@@ -173,6 +174,7 @@ const WalletConnectStart = () => {
           );
         }
       } else {
+        setButtonState('failed');
         await showErrorMessage(
           CustomErrorMessage({
             errMsg: BWCErrorMessage(e),
@@ -180,9 +182,6 @@ const WalletConnectStart = () => {
           }),
         );
       }
-    } finally {
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
     }
   }, [
     address,
@@ -236,6 +235,7 @@ const WalletConnectStart = () => {
           </View>
         )}
         <Button
+          state={buttonState}
           disabled={!peerMeta}
           buttonStyle={'primary'}
           onPress={() => {
