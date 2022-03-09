@@ -1,8 +1,8 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useMemo} from 'react';
+import React from 'react';
 import {SafeAreaView} from 'react-native';
-import {useSelector} from 'react-redux';
-import {RootState} from '../../../store';
+import {selectCardGroups} from '../../../store/card/card.selectors';
+import {useAppSelector} from '../../../utils/hooks';
 import {CardStackParamList} from '../CardStack';
 import CardDashboard from '../components/CardDashboard';
 import CardIntro from '../components/CardIntro';
@@ -15,23 +15,21 @@ export type CardHomeScreenParamList =
 type CardHomeScreenProps = StackScreenProps<CardStackParamList, 'Home'>;
 
 const CardHome: React.FC<CardHomeScreenProps> = ({navigation, route}) => {
-  const {params} = route;
-  const isDashboardEnabled = useSelector<RootState, boolean>(
-    ({APP, BITPAY_ID, CARD}) => {
-      const isPaired = !!BITPAY_ID.apiToken[APP.network];
-      const hasCards = CARD.cards[APP.network].length > 0;
+  const cardGroups = useAppSelector(selectCardGroups);
 
-      return isPaired && hasCards;
-    },
-  );
+  if (cardGroups.length) {
+    const id = route.params?.id || cardGroups[0][0].id;
 
-  const DashboardOrIntro = useMemo(() => {
-    return isDashboardEnabled ? CardDashboard : CardIntro;
-  }, [isDashboardEnabled]);
+    return (
+      <SafeAreaView>
+        <CardDashboard id={id} navigation={navigation} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView>
-      <DashboardOrIntro id={params?.id} navigation={navigation} />
+      <CardIntro />
     </SafeAreaView>
   );
 };
