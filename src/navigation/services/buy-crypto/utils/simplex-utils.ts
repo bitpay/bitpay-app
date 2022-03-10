@@ -8,7 +8,7 @@ const simplexEnv = env == 'development' ? 'sandbox' : 'production';
 
 const appName = 'bitpayapp';
 
-export const supportedFiatAltCurrencies = [
+export const simplexSupportedFiatAltCurrencies = [
   'AED',
   'ARS',
   'AUD',
@@ -59,7 +59,7 @@ export const supportedFiatAltCurrencies = [
   'VND',
   'ZAR',
 ];
-export const supportedCoins = [
+export const simplexSupportedCoins = [
   'btc',
   'bch',
   'eth',

@@ -1,5 +1,4 @@
 import styled from 'styled-components/native';
-import {SlateDark} from '../../../../../styles/colors';
 import {BaseText} from '../../../../../components/styled/Text';
 
 export const NoPrMsg = styled(BaseText)`

@@ -90,7 +90,6 @@ const TransactModal = () => {
         navigation.navigate('Wallet', {
           screen: 'Amount',
           params: {
-            currencyAbbreviation: 'USD',
             onAmountSelected: async (amount: string, setButtonState: any) => {
               navigation.navigate('BuyCrypto', {
                 screen: 'Root',

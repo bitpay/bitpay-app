@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {ScrollView} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {RouteProp} from '@react-navigation/core';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {BuyCryptoStackParamList} from '../BuyCryptoStack';
 import {PaymentMethodsAvailable} from '../constants/BuyCryptoConstants';
@@ -21,15 +21,16 @@ import {
 import Button from '../../../../components/button/Button';
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
 import {ItemProps} from '../../../../components/list/CurrencySelectionRow';
-import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {RootState} from '../../../../store';
 import {AppActions} from '../../../../store/app';
 import {Wallet} from '../../../../store/wallet/wallet.models';
-import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {Action, White} from '../../../../styles/colors';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import {getCountry} from '../../../../lib/location/location';
+import {simplexSupportedCoins} from '../utils/simplex-utils';
+import {wyreSupportedCoins} from '../utils/wyre-utils';
+import {sleep} from '../../../../utils/helper-methods';
 
 const CtaContainer = styled.View`
   margin: 20px 15px;
@@ -42,6 +43,7 @@ const ArrowContainer = styled.View`
 const BuyCryptoRoot: React.FC = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
+  const theme = useTheme();
   const route = useRoute<RouteProp<BuyCryptoStackParamList, 'Root'>>();
   const allKeys: any = useSelector(({WALLET}: RootState) => WALLET.keys);
 
@@ -60,6 +62,10 @@ const BuyCryptoRoot: React.FC = () => {
     PaymentMethodsAvailable.debitCard,
   );
   const [country, setCountry] = useState('US');
+
+  const supportedCoins = [
+    ...new Set([...simplexSupportedCoins, ...wyreSupportedCoins]),
+  ];
 
   const showModal = (id: string) => {
     switch (id) {
@@ -94,22 +100,17 @@ const BuyCryptoRoot: React.FC = () => {
   };
 
   const updateWalletData = () => {
-    setWalletData(
-      SupportedCurrencyOptions.find(
-        wallet =>
-          selectedWallet && wallet.id == selectedWallet.credentials.coin,
-      ),
-    );
+    if (selectedWallet) {
+      setWalletData(
+        SupportedCurrencyOptions.find(
+          currency =>
+            selectedWallet && currency.id == selectedWallet.credentials.coin,
+        ),
+      );
+    }
   };
 
-  useEffect(() => {
-    dispatch(startOnGoingProcessModal(OnGoingProcessMessages.GENERAL_AWAITING));
-
-    const getCountryData = async () => {
-      const countryData = await getCountry();
-      setCountry(countryData);
-    };
-
+  const selectFirstAvailableWallet = () => {
     const keysList = Object.values(allKeys).filter((key: any) => key.show);
 
     if (fromWallet && fromWallet.id) {
@@ -121,26 +122,80 @@ const BuyCryptoRoot: React.FC = () => {
       });
 
       fromWalletData = allWallets.find(wallet => wallet.id == fromWallet.id);
-      fromWalletData
-        ? setSelectedWallet(fromWalletData)
-        : console.log('Error setting wallet from params');
+      if (fromWalletData) {
+        setWallet(fromWalletData);
+      }
     } else {
-      if (allKeys) {
+      if (keysList[0]) {
         const firstKey: any = keysList[0];
         const firstKeyAllWallets: any[] = firstKey.wallets;
         const allowedWallets = firstKeyAllWallets.filter(
           wallet =>
-            wallet.credentials && wallet.credentials.network == 'livenet',
+            wallet.credentials &&
+            wallet.credentials.network == 'livenet' &&
+            supportedCoins.includes(wallet.credentials.coin.toLowerCase()),
         );
-        setSelectedWallet(allowedWallets[0]);
+        allowedWallets[0]
+          ? setSelectedWallet(allowedWallets[0])
+          : showError('walletNotSupported');
       }
     }
+  };
+
+  const setWallet = (wallet: any) => {
+    if (
+      wallet.credentials &&
+      wallet.credentials.network == 'livenet' &&
+      supportedCoins.includes(wallet.credentials.coin.toLowerCase())
+    ) {
+      setSelectedWallet(wallet);
+    } else {
+      showError('walletNotSupported');
+    }
+  };
+
+  const showError = async (type?: string) => {
+    let title, message: string;
+    switch (type) {
+      case 'walletNotSupported':
+        title = 'Wallet not supported';
+        message =
+          'The selected wallet is currently not supported for buying cryptocurrencies';
+        break;
+
+      default:
+        title = 'Error';
+        message = 'Unknown Error';
+        break;
+    }
+    await sleep(500);
+    dispatch(
+      AppActions.showBottomNotificationModal({
+        type: 'error',
+        title,
+        message,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'OK',
+            action: () => {
+              dispatch(AppActions.dismissBottomNotificationModal());
+            },
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
+
+  useEffect(() => {
+    const getCountryData = async () => {
+      const countryData = await getCountry();
+      setCountry(countryData);
+    };
 
     getCountryData().catch(console.error);
-
-    setTimeout(() => {
-      dispatch(AppActions.dismissOnGoingProcessModal());
-    }, 1000);
+    selectFirstAvailableWallet();
   }, []);
 
   useEffect(() => {
@@ -204,7 +259,11 @@ const BuyCryptoRoot: React.FC = () => {
                 </SelectedOptionText>
                 <ArrowContainer>
                   <SelectorArrowDown
-                    {...{width: 20, height: 20, color: 'white'}}
+                    {...{
+                      width: 20,
+                      height: 20,
+                      color: theme.dark ? 'white' : 'black',
+                    }}
                   />
                 </ArrowContainer>
               </SelectedOptionContainer>
@@ -285,8 +344,8 @@ const BuyCryptoRoot: React.FC = () => {
 
       <WalletSelectorModal
         onPress={wallet => {
-          setSelectedWallet(wallet);
           hideModal('walletSelector');
+          setWallet(wallet);
         }}
         isVisible={walletSelectorModalVisible}
         onBackdropPress={() => hideModal('walletSelector')}

@@ -1,6 +1,6 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {BaseText} from '../../../components/styled/Text';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {LightBlack, NeutralSlate, White} from '../../../styles/colors';
 import {
@@ -128,6 +128,7 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss, openedFrom}) => {
   const route = useRoute<RouteProp<WalletStackParamList, 'Amount'>>();
   const {onAmountSelected, currencyAbbreviation, opts} = route.params;
   const navigation = useNavigation();
+  const theme = useTheme();
   const [buttonState, setButtonState] = useState<ButtonState>();
 
   // flag for primary selector type
@@ -142,27 +143,8 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss, openedFrom}) => {
     primaryIsFiat: currencyAbbreviation === 'USD' ? true : false,
   });
   const swapList = currencyAbbreviation
-  ? [...new Set([...[currencyAbbreviation], ...['USD']])]
-  : ['USD'];
-
-  // display amount fiat/crypto
-  // const [displayAmount, setDisplayAmount] = useState('0');
-  // const [displayEquivalentAmount, setDisplayEquivalentAmount] = useState('0');
-  // amount to be sent to proposal creation (sats)
-  // const [amount, setAmount] = useState('0');
-  // const currencyAbbreviation = wallet
-  //   ? wallet.currencyAbbreviation.toUpperCase()
-  //   : undefined;
-  // const [currency, setCurrency] = useState(
-  //   currencyAbbreviation ? currencyAbbreviation : 'USD',
-  // );
-  // flag for primary selector type
-  // const [isFiat, setIsFiat] = useState(wallet ? false : true);
-  // const [rate, setRate] = useState(0);
-  // const swapList = currencyAbbreviation
-  //   ? [currencyAbbreviation, 'USD']
-  //   : ['USD'];
-
+    ? [...new Set([...[currencyAbbreviation], ...['USD']])]
+    : ['USD'];
 
   const allRates = useAppSelector(({WALLET}) => WALLET.rates);
   const [curVal, setCurVal] = useState('');
@@ -204,14 +186,6 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss, openedFrom}) => {
 
     const val = Number(_val);
     if (isNaN(val) || !currencyAbbreviation) {
-      return;
-    }
-
-    if (currencyAbbreviation == 'USD' || openedFrom == 'buyCrypto') {
-      updateAmountConfig(current => ({
-        ...current,
-        amount: _val,
-      }));
       return;
     }
 
@@ -278,7 +252,13 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss, openedFrom}) => {
                 onDismiss();
               }
             }}>
-            <CloseModal {...{width: 20, height: 20, color: '#000'}} />
+            <CloseModal
+              {...{
+                width: 20,
+                height: 20,
+                color: theme.dark ? 'white' : 'black',
+              }}
+            />
           </CloseModalButton>
         </ModalHeader>
       )}
