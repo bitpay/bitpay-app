@@ -81,7 +81,7 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
   const [showMultiOptions, setShowMultiOptions] = useState(false);
 
   const getIcon = () => {
-    return tx.customData?.service == 'debitcard' ? (
+    return tx.customData?.service === 'debitcard' ? (
       <CardSvg width={18} height={18} />
     ) : SUPPORTED_CURRENCIES.includes(coin) ? (
       CurrencyListIcons[coin]({width: 18, height: 18})

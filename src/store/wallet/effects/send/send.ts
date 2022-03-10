@@ -11,7 +11,10 @@ import {
 } from '../../wallet.models';
 import {FormatAmountStr, ParseAmount} from '../amount/amount';
 import {FeeLevels, getFeeRatePerKb} from '../fee/fee';
-import {formatCryptoAddress, formatFiatAmount} from '../../../../utils/helper-methods';
+import {
+  formatCryptoAddress,
+  formatFiatAmount,
+} from '../../../../utils/helper-methods';
 import {toFiat} from '../../utils/wallet';
 import {startGetRates} from '../rates/rates';
 import {waitForTargetAmountAndUpdateWallet} from '../balance/balance';

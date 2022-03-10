@@ -78,7 +78,14 @@ const Confirm = () => {
   const [txp] = useState(_txp);
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
 
-  const {currency, fee, sendingFrom, sendingTo: {recipientName, recipientAddress}, subTotal, total} = txDetails;
+  const {
+    currency,
+    fee,
+    sendingFrom,
+    sendingTo: {recipientName, recipientAddress},
+    subTotal,
+    total,
+  } = txDetails;
 
   const getIcon = () => {
     return SUPPORTED_CURRENCIES.includes(currency) ? (
