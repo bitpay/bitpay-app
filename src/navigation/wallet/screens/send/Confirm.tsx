@@ -25,6 +25,10 @@ import {sleep} from '../../../../utils/helper-methods';
 import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {dismissOnGoingProcessModal} from '../../../../store/app/app.actions';
+import SendToPill from '../../components/SendToPill';
+import {SUPPORTED_CURRENCIES} from '../../../../constants/currencies';
+import {CurrencyListIcons} from '../../../../constants/SupportedCurrencyOptions';
+import DefaultSvg from '../../../../../assets/img/currencies/default.svg';
 
 const ConfirmContainer = styled.SafeAreaView`
   flex: 1;
@@ -74,8 +78,15 @@ const Confirm = () => {
   const [txp] = useState(_txp);
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
 
-  const {fee, sendingFrom, sendingTo, subTotal, total} = txDetails;
+  const {currency, fee, sendingFrom, sendingTo: {recipientName, recipientAddress}, subTotal, total} = txDetails;
 
+  const getIcon = () => {
+    return SUPPORTED_CURRENCIES.includes(currency) ? (
+      CurrencyListIcons[currency]({width: 18, height: 18})
+    ) : (
+      <DefaultSvg width={18} height={18} />
+    );
+  };
   console.log(txp);
   return (
     <ConfirmContainer>
@@ -87,7 +98,11 @@ const Confirm = () => {
         <DetailContainer>
           <DetailRow>
             <H7>Sending to</H7>
-            <H5>{sendingTo.recipientName}</H5>
+
+            <SendToPill
+              icon={getIcon()}
+              description={recipientName || recipientAddress || ''}
+            />
           </DetailRow>
         </DetailContainer>
         <Hr />

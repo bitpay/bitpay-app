@@ -572,7 +572,7 @@ const CreateMultisig = () => {
 
                 {options.singleAddress && (
                   <>
-                    <Info>
+                    <Info style={{marginHorizontal: 10}}>
                       <InfoTriangle />
 
                       <InfoHeader>

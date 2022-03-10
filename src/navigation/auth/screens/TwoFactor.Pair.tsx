@@ -99,7 +99,7 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
   });
 
   return (
-    <AuthFormContainer header="Additional Verification">
+    <AuthFormContainer>
       {twoFactorPairingStatus === 'failed' ? (
         <AuthRowContainer>
           <AlertBox type="warning">

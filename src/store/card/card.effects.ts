@@ -226,3 +226,24 @@ export const startFetchVirtualCardImageUrls =
       });
     }
   };
+
+export const START_UPDATE_CARD_NAME =
+  (id: string, name: string): Effect =>
+  async (dispatch, getState) => {
+    try {
+      const {APP, BITPAY_ID} = getState();
+      const {network} = APP;
+      const token = BITPAY_ID.apiToken[network];
+
+      const res = await CardApi.updateCardName(token, id, name);
+      const {nickname} = res.user.card;
+
+      dispatch(CardActions.successUpdateCardName(network, id, nickname));
+    } catch (err) {
+      batch(() => {
+        dispatch(LogActions.error(`Failed to update card name for ${id}`));
+        dispatch(LogActions.error(JSON.stringify(err)));
+        dispatch(CardActions.failedUpdateCardName(id));
+      });
+    }
+  };

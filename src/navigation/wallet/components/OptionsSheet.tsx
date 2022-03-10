@@ -28,7 +28,7 @@ const OptionTextContainer = styled.View`
   align-items: flex-start;
   justify-content: space-around;
   flex-direction: column;
-  padding-left: 19px;
+  margin: 0 20px;
 `;
 
 const OptionTitleText = styled(BaseText)`

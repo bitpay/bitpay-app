@@ -1,26 +1,30 @@
-import {createStackNavigator} from '@react-navigation/stack';
+import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
 import React from 'react';
 import {HeaderTitle} from '../../components/styled/Text';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
 } from '../../constants/NavigationOptions';
-import WalletConnectIntro from './screens/WalletConnectIntro';
+import WalletConnectIntro, {
+  WalletConnectIntroParamList,
+} from './screens/WalletConnectIntro';
 import WalletConnectIcon from '../../../assets/img/wallet-connect/wallet-connect-icon.svg';
-import WalletConnectStart from './screens/WalletConnectStart';
-import WalletConnectHome from './screens/WalletConnectHome';
+import WalletConnectStart, {
+  WalletConnectStartParamList,
+} from './screens/WalletConnectStart';
+import WalletConnectHome, {
+  WalletConnectHomeParamList,
+} from './screens/WalletConnectHome';
 import WalletConnectConnections from './screens/WalletConnectConnections';
-import WalletConnectRequestDetails from './screens/WalletConnectRequestDetails';
+import WalletConnectRequestDetails, {
+  WalletConnectRequestDetailsParamList,
+} from './screens/WalletConnectRequestDetails';
 import styled from 'styled-components/native';
-import {Platform} from 'react-native';
+import {WalletConnectIconContainer} from './styled/WalletConnectContainers';
 
 const WalletConnectHeaderTitle = styled.View`
   align-items: center;
   flex-direction: row;
-`;
-const WalletConnectIconContainer = styled.View`
-  margin-right: 5px;
-  margin-bottom: ${Platform.OS === 'ios' ? '2px' : 0};
 `;
 
 const WalletConnectHeader = () => {
@@ -35,11 +39,11 @@ const WalletConnectHeader = () => {
 };
 
 export type WalletConnectStackParamList = {
-  Root: undefined;
-  WalletConnectStart: undefined;
+  Root: WalletConnectIntroParamList;
+  WalletConnectStart: WalletConnectStartParamList;
   WalletConnectConnections: undefined;
-  WalletConnectHome: undefined;
-  WalletConnectRequestDetails: undefined;
+  WalletConnectHome: WalletConnectHomeParamList;
+  WalletConnectRequestDetails: WalletConnectRequestDetailsParamList;
 };
 
 export enum WalletConnectScreens {
@@ -71,6 +75,7 @@ const WalletConnectStack = () => {
         name={WalletConnectScreens.WC_START}
         component={WalletConnectStart}
         options={{
+          ...TransitionPresets.ModalPresentationIOS,
           headerTitle: () => WalletConnectHeader(),
         }}
       />

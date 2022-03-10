@@ -1,11 +1,9 @@
 import React from 'react';
 import styled from 'styled-components/native';
 import {BaseText} from '../../../../components/styled/Text';
-import {
-  formatAmount,
-  spreadAmounts,
-} from '../../../../lib/gift-cards/gift-card';
+import {spreadAmounts} from '../../../../lib/gift-cards/gift-card';
 import {CardConfig} from '../../../../store/shop/shop.models';
+import {formatFiatAmount} from '../../../../utils/helper-methods';
 
 export const GiftCardDenomText = styled(BaseText)`
   font-size: 14px;
@@ -17,11 +15,11 @@ export default ({cardConfig}: {cardConfig: CardConfig}) => {
     <GiftCardDenomText>
       {cardConfig.minAmount && cardConfig.maxAmount && (
         <>
-          {formatAmount(cardConfig.minAmount, cardConfig.currency, {
+          {formatFiatAmount(cardConfig.minAmount, cardConfig.currency, {
             customPrecision: 'minimal',
           })}
           &nbsp;—&nbsp;
-          {formatAmount(cardConfig.maxAmount, cardConfig.currency, {
+          {formatFiatAmount(cardConfig.maxAmount, cardConfig.currency, {
             customPrecision: 'minimal',
           })}
         </>

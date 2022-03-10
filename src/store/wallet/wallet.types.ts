@@ -39,6 +39,7 @@ export enum WalletActionTypes {
   UPDATE_WALLET_NAME = 'WALLET/UPDATE_WALLET_NAME',
   SET_WALLET_REFRESHING = 'WALLET/SET_WALLET_REFRESHING',
   SUCCESS_GET_RECEIVE_ADDRESS = 'WALLET/SUCCESS_GET_RECEIVE_ADDRESS',
+  SET_USE_UNCONFIRMED_FUNDS = 'WALLET/SET_USE_UNCONFIRMED_FUNDS',
 }
 
 interface successWalletStoreInit {
@@ -223,6 +224,11 @@ interface setWalletRefreshing {
   };
 }
 
+interface setUseUnconfirmedFunds {
+  type: typeof WalletActionTypes.SET_USE_UNCONFIRMED_FUNDS;
+  payload: boolean;
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -254,4 +260,5 @@ export type WalletActionType =
   | updateKeyName
   | updateWalletName
   | setWalletRefreshing
-  | successGetReceiveAddress;
+  | successGetReceiveAddress
+  | setUseUnconfirmedFunds;

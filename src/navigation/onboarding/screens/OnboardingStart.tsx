@@ -1,7 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useRef, useState} from 'react';
-import {StatusBar} from 'react-native';
 import Carousel, {Pagination} from 'react-native-snap-carousel';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
@@ -14,9 +13,8 @@ import {
   WIDTH,
 } from '../../../components/styled/Containers';
 import {Link} from '../../../components/styled/Text';
-import {Network} from '../../../constants';
 import {RootState} from '../../../store';
-import {BitPayIdActions} from '../../../store/bitpay-id';
+import {BitPayIdEffects} from '../../../store/bitpay-id';
 import {Action} from '../../../styles/colors';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingImage} from '../components/Containers';
@@ -73,7 +71,6 @@ const LinkText = styled(Link)`
 const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
-  const network = useSelector<RootState, Network>(({APP}) => APP.network);
   const isPaired = useSelector<RootState, boolean>(({APP, BITPAY_ID}) => {
     return !!BITPAY_ID.apiToken[APP.network];
   });
@@ -88,7 +85,7 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
               buttonType="pill"
               onPress={() => {
                 haptic('impactLight');
-                dispatch(BitPayIdActions.bitPayIdDisconnected(network));
+                dispatch(BitPayIdEffects.startDisconnectBitPayId());
               }}>
               Log Out
             </Button>
@@ -98,9 +95,8 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
               onPress={() => {
                 haptic('impactLight');
                 navigation.navigate('Auth', {
-                  screen: 'LoginSignup',
+                  screen: 'Login',
                   params: {
-                    context: 'login',
                     onLoginSuccess: () => {
                       haptic('impactLight');
                       navigation.navigate('Onboarding', {
@@ -116,7 +112,7 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
         </HeaderRightContainer>
       ),
     });
-  }, [navigation, isPaired, network, dispatch]);
+  }, [navigation, isPaired, dispatch]);
 
   const themeType = useThemeType();
   const ref = useRef(null);
@@ -150,7 +146,6 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
 
   return (
     <OnboardingContainer>
-      <StatusBar barStyle="dark-content" />
       <Carousel
         vertical={false}
         layout={'default'}
@@ -196,8 +191,7 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
                 onPress={() => {
                   haptic('impactLight');
                   navigation.navigate('Auth', {
-                    screen: 'LoginSignup',
-                    params: {context: 'signup'},
+                    screen: 'CreateAccount',
                   });
                 }}>
                 Get Started

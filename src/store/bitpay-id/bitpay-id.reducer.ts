@@ -3,6 +3,10 @@ import {Session, User} from './bitpay-id.models';
 import {Network} from '../../constants';
 
 export const bitPayIdReduxPersistBlackList: (keyof BitPayIdState)[] = [
+  'session',
+  'fetchSessionStatus',
+  'createAccountStatus',
+  'createAccountError',
   'loginStatus',
   'loginError',
   'twoFactorAuthStatus',
@@ -16,6 +20,7 @@ export const bitPayIdReduxPersistBlackList: (keyof BitPayIdState)[] = [
 ];
 
 export type FetchSessionStatus = 'loading' | 'success' | 'failed' | null;
+export type CreateAccountStatus = 'success' | 'failed' | null;
 export type LoginStatus =
   | 'success'
   | 'failed'
@@ -45,6 +50,8 @@ export interface BitPayIdState {
     [key in Network]: User | null;
   };
   fetchSessionStatus: FetchSessionStatus;
+  createAccountStatus: CreateAccountStatus;
+  createAccountError: string | null;
   loginStatus: LoginStatus;
   loginError: string | null;
   twoFactorAuthStatus: TwoFactorAuthStatus;
@@ -62,6 +69,7 @@ const initialState: BitPayIdState = {
   session: {
     csrfToken: '',
     isAuthenticated: false,
+    captchaKey: '',
     noCaptchaKey: '',
   },
   apiToken: {
@@ -77,6 +85,8 @@ const initialState: BitPayIdState = {
     [Network.testnet]: null,
   },
   fetchSessionStatus: null,
+  createAccountStatus: null,
+  createAccountError: null,
   loginStatus: null,
   loginError: null,
   twoFactorAuthStatus: null,
@@ -112,6 +122,25 @@ export const bitPayIdReducer = (
       return {
         ...state,
         fetchSessionStatus: action.payload,
+      };
+
+    case BitPayIdActionTypes.SUCCESS_CREATE_ACCOUNT:
+      return {
+        ...state,
+        createAccountStatus: 'success',
+      };
+
+    case BitPayIdActionTypes.FAILED_CREATE_ACCOUNT:
+      return {
+        ...state,
+        createAccountStatus: 'failed',
+        createAccountError: action.payload.error || null,
+      };
+
+    case BitPayIdActionTypes.UPDATE_CREATE_ACCOUNT_STATUS:
+      return {
+        ...state,
+        createAccountStatus: action.payload,
       };
 
     case BitPayIdActionTypes.SUCCESS_LOGIN:
@@ -308,6 +337,23 @@ export const bitPayIdReducer = (
         ...state,
         fetchDoshTokenStatus: action.payload,
       };
+
+    case BitPayIdActionTypes.TOGGLE_SYNC_GIFT_CARD_PURCHASES: {
+      return {
+        ...state,
+        user: {
+          ...state.user,
+          [action.payload.network]: {
+            ...state.user[action.payload.network],
+            localSettings: {
+              syncGiftCardPurchases:
+                !state.user[action.payload.network]?.localSettings
+                  .syncGiftCardPurchases,
+            },
+          },
+        },
+      };
+    }
 
     default:
       return state;

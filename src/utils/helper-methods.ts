@@ -163,3 +163,13 @@ export const findContact = (
 
 export const getMnemonic = (key: Key) =>
   key.properties.mnemonic.trim().split(' ');
+
+export const isValidWalletConnectUri = (data: string): boolean => {
+  return !!/(wallet\/wc|wc:)/g.exec(data);
+};
+
+export const formatCryptoAddress = (address: string) => {
+  return (
+    address.substring(0, 4) + '....' + address.substring(address.length - 4)
+  );
+};

@@ -1,5 +1,5 @@
 import React, {useLayoutEffect, useState} from 'react';
-import {ScrollView, Linking, Share} from 'react-native';
+import {ScrollView, Linking, Share, RefreshControl} from 'react-native';
 import TimeAgo from 'react-native-timeago';
 import {StackScreenProps} from '@react-navigation/stack';
 import styled, {useTheme} from 'styled-components/native';
@@ -8,12 +8,18 @@ import {
   CtaContainer,
   HeaderRightContainer,
 } from '../../../../../components/styled/Containers';
-import {BaseText, Paragraph} from '../../../../../components/styled/Text';
+import {
+  BaseText,
+  Link,
+  Paragraph,
+  TextAlign,
+} from '../../../../../components/styled/Text';
 import {
   Grey,
   LightBlack,
   NeutralSlate,
   SlateDark,
+  White,
 } from '../../../../../styles/colors';
 import RemoteImage from '../../components/RemoteImage';
 import {GiftCardStackParamList} from '../GiftCardStack';
@@ -28,11 +34,10 @@ import {
   ExternalLinkSvg,
   InvoiceSvg,
 } from '../../components/svg/ShopTabSvgs';
-import {formatAmount} from '../../../../../lib/gift-cards/gift-card';
 import OptionsSheet, {Option} from '../../../../wallet/components/OptionsSheet';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../../constants/config';
-import {sleep} from '../../../../../utils/helper-methods';
+import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
 import {AppActions} from '../../../../../store/app';
 import {useDispatch} from 'react-redux';
 import Clipboard from '@react-native-community/clipboard';
@@ -57,6 +62,8 @@ const ClaimCodeBox = styled.View`
   align-items: center;
   width: 100%;
   max-width: ${maxWidth}px;
+  padding-left: 20px;
+  padding-right: 20px;
 `;
 
 const ClaimCode = styled(BaseText)`
@@ -125,6 +132,7 @@ const GiftCardDetails = ({
 }: StackScreenProps<GiftCardStackParamList, 'GiftCardDetails'>) => {
   const dispatch = useDispatch();
   const theme = useTheme();
+  const [refreshing, setRefreshing] = useState(false);
   const [isOptionsSheetVisible, setIsOptionsSheetVisible] = useState(false);
   const {cardConfig, giftCard} = route.params;
 
@@ -189,94 +197,147 @@ const GiftCardDetails = ({
         contentContainerStyle={{
           alignItems: 'center',
           paddingHorizontal: horizontalPadding,
-        }}>
-        <Amount>{formatAmount(giftCard.amount, giftCard.currency)}</Amount>
+        }}
+        refreshControl={
+          giftCard.status !== 'SUCCESS' ? (
+            <RefreshControl
+              tintColor={theme.dark ? White : SlateDark}
+              refreshing={refreshing}
+              onRefresh={() => {
+                setRefreshing(true);
+                setTimeout(() => {
+                  setRefreshing(false);
+                }, 3000);
+              }}
+            />
+          ) : undefined
+        }>
+        <Amount>{formatFiatAmount(giftCard.amount, giftCard.currency)}</Amount>
         <RemoteImage
           uri={cardConfig.cardImage}
           height={169}
           width={270}
           borderRadius={10}
         />
-        {cardConfig.defaultClaimCodeType !== 'link' ? (
-          <ClaimCodeBox>
-            <Paragraph>Claim Code</Paragraph>
-            {giftCard.barcodeImage &&
-            cardConfig.defaultClaimCodeType === 'barcode' ? (
-              <Barcode
-                height={barcodeHeight}
-                width={barcodeWidth}
-                source={{uri: giftCard.barcodeImage}}
-                resizeMode="contain"
-              />
-            ) : null}
-            <TouchableWithoutFeedback
-              onPress={() => copyToClipboard(giftCard.claimCode)}>
-              <ClaimCode>{giftCard.claimCode}</ClaimCode>
-            </TouchableWithoutFeedback>
-            {giftCard.pin ? (
-              <>
-                <Divider />
-                <Paragraph>Pin</Paragraph>
+        {giftCard.status === 'SUCCESS' ? (
+          <>
+            {cardConfig.defaultClaimCodeType !== 'link' ? (
+              <ClaimCodeBox>
+                <Paragraph>Claim Code</Paragraph>
+                {giftCard.barcodeImage &&
+                cardConfig.defaultClaimCodeType === 'barcode' ? (
+                  <Barcode
+                    height={barcodeHeight}
+                    width={barcodeWidth}
+                    source={{uri: giftCard.barcodeImage}}
+                    resizeMode="contain"
+                  />
+                ) : null}
                 <TouchableWithoutFeedback
-                  onPress={() => copyToClipboard(giftCard.pin as string)}>
-                  <ClaimCode>{giftCard.pin}</ClaimCode>
+                  onPress={() => copyToClipboard(giftCard.claimCode)}>
+                  <ClaimCode>{giftCard.claimCode}</ClaimCode>
                 </TouchableWithoutFeedback>
-              </>
-            ) : (
-              <Paragraph style={{marginBottom: 30}}>
+                {giftCard.pin ? (
+                  <>
+                    <Divider />
+                    <Paragraph>Pin</Paragraph>
+                    <TouchableWithoutFeedback
+                      onPress={() => copyToClipboard(giftCard.pin as string)}>
+                      <ClaimCode>{giftCard.pin}</ClaimCode>
+                    </TouchableWithoutFeedback>
+                  </>
+                ) : (
+                  <Paragraph style={{marginBottom: 30}}>
+                    Created <TimeAgo time={parseInt(giftCard.date, 10)} />
+                  </Paragraph>
+                )}
+              </ClaimCodeBox>
+            ) : null}
+            {giftCard.pin || cardConfig.defaultClaimCodeType === 'link' ? (
+              <Paragraph style={{marginTop: 15}}>
                 Created <TimeAgo time={parseInt(giftCard.date, 10)} />
               </Paragraph>
-            )}
-          </ClaimCodeBox>
-        ) : null}
-        {giftCard.pin || cardConfig.defaultClaimCodeType === 'link' ? (
-          <Paragraph style={{marginTop: 15}}>
-            Created <TimeAgo time={parseInt(giftCard.date, 10)} />
-          </Paragraph>
-        ) : null}
-        {!giftCard.archived || cardConfig.defaultClaimCodeType === 'link' ? (
-          <ActionContainer>
-            {cardConfig.redeemUrl ? (
-              <Button
-                onPress={() => {
-                  console.log('redeem now');
-                  Linking.openURL(
-                    `${cardConfig.redeemUrl as string}${giftCard.claimCode}}`,
-                  );
-                }}
-                buttonStyle={'primary'}>
-                Redeem Now
-              </Button>
-            ) : cardConfig.defaultClaimCodeType === 'link' ? (
-              <Button
-                onPress={() => {
-                  console.log('view redemption code');
-                  Linking.openURL(giftCard.claimLink as string);
-                }}
-                buttonStyle={'primary'}>
-                {cardConfig.redeemButtonText || 'View Redemption Code'}
-              </Button>
-            ) : (
-              <Button
-                onPress={() => copyToClipboard(giftCard.claimCode)}
-                buttonStyle={'primary'}>
-                Copy Code
-              </Button>
-            )}
-            {!giftCard.archived ? (
-              <ArchiveButtonContainer>
-                <Button
-                  onPress={() => {
-                    console.log('archive');
-                  }}
-                  buttonStyle={'secondary'}>
-                  I've used this card
-                </Button>
-              </ArchiveButtonContainer>
             ) : null}
-          </ActionContainer>
+            {!giftCard.archived ||
+            cardConfig.defaultClaimCodeType === 'link' ? (
+              <ActionContainer>
+                {cardConfig.redeemUrl ? (
+                  <Button
+                    onPress={() => {
+                      console.log('redeem now');
+                      Linking.openURL(
+                        `${cardConfig.redeemUrl as string}${
+                          giftCard.claimCode
+                        }}`,
+                      );
+                    }}
+                    buttonStyle={'primary'}>
+                    Redeem Now
+                  </Button>
+                ) : cardConfig.defaultClaimCodeType === 'link' ? (
+                  <Button
+                    onPress={() => {
+                      console.log('view redemption code');
+                      Linking.openURL(giftCard.claimLink as string);
+                    }}
+                    buttonStyle={'primary'}>
+                    {cardConfig.redeemButtonText || 'View Redemption Code'}
+                  </Button>
+                ) : (
+                  <Button
+                    onPress={() => copyToClipboard(giftCard.claimCode)}
+                    buttonStyle={'primary'}>
+                    Copy Code
+                  </Button>
+                )}
+                {!giftCard.archived ? (
+                  <ArchiveButtonContainer>
+                    <Button
+                      onPress={() => {
+                        console.log('archive');
+                      }}
+                      buttonStyle={'secondary'}>
+                      I've used this card
+                    </Button>
+                  </ArchiveButtonContainer>
+                ) : null}
+              </ActionContainer>
+            ) : (
+              <SectionSpacer />
+            )}
+          </>
         ) : (
-          <SectionSpacer />
+          <ClaimCodeBox>
+            {giftCard.status === 'PENDING' ? (
+              <TextAlign align="center">
+                <Paragraph>Awaiting payment to confirm</Paragraph>
+              </TextAlign>
+            ) : (
+              <>
+                <TextAlign align="center">
+                  <Paragraph>
+                    Claim code not yet available. Please check back later.
+                  </Paragraph>
+                </TextAlign>
+                <SectionSpacer />
+                <TextAlign align="center">
+                  <Paragraph>
+                    If this issue persists for more than 2 hours, please&nbsp;
+                    <Link
+                      onPress={() =>
+                        Linking.openURL(
+                          'https://bitpay.com/request-help/wizard',
+                        )
+                      }>
+                      contact BitPay Support
+                    </Link>
+                    .
+                  </Paragraph>
+                </TextAlign>
+              </>
+            )}
+            <SectionSpacer />
+          </ClaimCodeBox>
         )}
         <Terms>{cardConfig.terms}</Terms>
       </ScrollView>

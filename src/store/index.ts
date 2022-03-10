@@ -1,13 +1,18 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Action, applyMiddleware, combineReducers, createStore} from 'redux';
 import {composeWithDevTools} from 'redux-devtools-extension';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {createLogger} from 'redux-logger'; // https://github.com/LogRocket/redux-logger
 import {getUniqueId} from 'react-native-device-info';
 import {persistStore, persistReducer} from 'redux-persist'; // https://github.com/rt2zz/redux-persist
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
 import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
-import {bindWalletClient, bindWalletKeys} from './transforms/transforms';
+import {Selector} from 'reselect';
+import {
+  bindWalletClient,
+  bindWalletKeys,
+  transformCircular,
+} from './transforms/transforms';
 
 import {
   appReducer,
@@ -51,6 +56,12 @@ import {
   ContactState,
 } from './contact/contact.reducer';
 import {ContactActionType} from './contact/contact.types';
+import {
+  walletConnectReducer,
+  walletConnectReduxPersistBlackList,
+  WalletConnectState,
+} from './wallet-connect/wallet-connect.reducer';
+import {WalletConnectActionType} from './wallet-connect/wallet-connect.types';
 
 const basePersistConfig = {
   storage: AsyncStorage,
@@ -121,6 +132,15 @@ const reducers = {
     },
     contactReducer,
   ),
+  WALLET_CONNECT: persistReducer<WalletConnectState, WalletConnectActionType>(
+    {
+      storage: AsyncStorage,
+      key: 'WALLET_CONNECT',
+      transforms: [transformCircular],
+      blacklist: walletConnectReduxPersistBlackList,
+    },
+    walletConnectReducer,
+  ),
 };
 
 const rootReducer = combineReducers(reducers);
@@ -129,7 +149,7 @@ const getStore = () => {
   const middlewares = [
     thunkMiddleware,
     createLogger({
-      predicate: (getState, action) =>
+      predicate: (_getState, action) =>
         ![
           'LOG/ADD_LOG',
           'APP/SET_CURRENT_ROUTE',
@@ -186,6 +206,8 @@ const getStore = () => {
 };
 
 export type RootState = ReturnType<typeof rootReducer>;
+
+export type AppSelector<T = any> = Selector<RootState, T>;
 
 export type Effect<ReturnType = void> = ThunkAction<
   ReturnType,

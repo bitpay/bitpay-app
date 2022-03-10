@@ -6,6 +6,8 @@ export interface BasicUserInfo {
   experiments: string[];
   familyName: string;
   givenName: string;
+  incentiveLevel?: string;
+  incentiveLevelId?: string;
   name: string;
   referralCode: string;
   userSettings: {

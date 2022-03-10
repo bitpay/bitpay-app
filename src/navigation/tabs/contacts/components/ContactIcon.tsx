@@ -1,12 +1,12 @@
 import React from 'react';
 import styled from 'styled-components/native';
 
-import ProfileIcon from '../../../../components/avatar/Avatar';
+import Avatar from '../../../../components/avatar/Avatar';
 
 import {CurrencyListIcons} from '../../../../constants/SupportedCurrencyOptions';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 
-interface ContactSvgProps {
+interface ContactIconProps {
   size?: number;
   name?: string;
   coin: string;
@@ -36,11 +36,20 @@ const CoinBadge: React.FC<BadgeProps> = ({coin, size = 20}) => {
   );
 };
 
-const ContactIcon: React.FC<ContactSvgProps> = ({coin, size = 50}) => {
+const ContactIcon: React.FC<ContactIconProps> = ({coin, size = 50, name}) => {
+  const badge = coin ? <CoinBadge coin={coin} size={size / 2.5} /> : null;
+  const initials = name
+    ? name
+        .trim()
+        .split(' ')
+        .map(n => n.charAt(0))
+        .join('')
+        .toUpperCase()
+    : '';
+
   return (
     <ContactIconContainer>
-      <ProfileIcon size={size} isContact={true} />
-      {coin ? <CoinBadge coin={coin} size={size / 2.5} /> : null}
+      <Avatar size={size} initials={initials} badge={() => badge} />
     </ContactIconContainer>
   );
 };

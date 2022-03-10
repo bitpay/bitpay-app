@@ -43,7 +43,7 @@ const CopyToClipboard = styled.TouchableOpacity`
   border: 1px solid #9ba3ae;
   border-radius: 4px;
   padding: 0 10px;
-  min-height: 55px;
+  height: 55px;
   align-items: center;
   flex-direction: row;
 `;
@@ -90,6 +90,7 @@ const LoadingText = styled(H4)`
 
 const ReceiveAddressContainer = styled(SheetContainer)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+  min-height: 500px;
 `;
 
 const CloseButton = styled.TouchableOpacity`
@@ -233,8 +234,17 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
 
   const isUtxo = IsUtxoCoin(wallet.currencyAbbreviation);
 
+  const _closeModal = () => {
+    closeModal();
+    setTimeout(() => {
+      setAddress('');
+      setLoading(true);
+      init();
+    });
+  };
+
   return (
-    <SheetModal isVisible={isVisible} onBackdropPress={closeModal}>
+    <SheetModal isVisible={isVisible} onBackdropPress={_closeModal}>
       <ReceiveAddressContainer>
         <ReceiveAddressHeader
           onPressRefresh={createAddress}
@@ -272,7 +282,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
           </LoadingContainer>
         )}
 
-        <CloseButton onPress={closeModal}>
+        <CloseButton onPress={_closeModal}>
           <CloseButtonText>CLOSE</CloseButtonText>
         </CloseButton>
       </ReceiveAddressContainer>

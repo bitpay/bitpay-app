@@ -67,8 +67,13 @@ import DecryptEnterPasswordModal from './navigation/wallet/components/DecryptEnt
 import MerchantStack, {
   MerchantStackParamList,
 } from './navigation/tabs/shop/merchant/MerchantStack';
+import PinModal from './components/modal/pin/PinModal';
 import BpDevtools from './components/bp-devtools/BpDevtools';
 import {DEVTOOLS_ENABLED} from './constants/config';
+import ConnectionsSettingsStack, {
+  ConnectionsSettingsStackParamList,
+} from './navigation/tabs/settings/connections/ConnectionsStack';
+import {BlurView} from '@react-native-community/blur';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -85,6 +90,7 @@ export type RootStackParamList = {
   Merchant: NavigatorScreenParams<MerchantStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
   SecuritySettings: NavigatorScreenParams<SecuritySettingsStackParamList>;
+  ConnectionSettings: NavigatorScreenParams<ConnectionsSettingsStackParamList>;
   Contacts: NavigatorScreenParams<ContactsStackParamList>;
   NotificationSettings: NavigatorScreenParams<NotificationSettingsStackParamList>;
   About: NavigatorScreenParams<AboutStackParamList>;
@@ -109,6 +115,7 @@ export enum RootStacks {
   // SETTINGS
   GENERAL_SETTINGS = 'GeneralSettings',
   SECURITY_SETTINGS = 'SecuritySettings',
+  CONNECTION_SETTINGS = 'ConnectionSettings',
   NOTIFICATION_SETTINGS = 'NotificationSettings',
   ABOUT = 'About',
   BUY_CRYPTO = 'BuyCrypto',
@@ -127,6 +134,7 @@ export type NavScreenParams = NavigatorScreenParams<
     MerchantStackParamList &
     GeneralSettingsStackParamList &
     SecuritySettingsStackParamList &
+    ConnectionsSettingsStackParamList &
     ContactsStackParamList &
     NotificationSettingsStackParamList &
     AboutStackParamList &
@@ -165,6 +173,8 @@ export default () => {
   const appColorScheme = useAppSelector(({APP}) => APP.colorScheme);
   const currentRoute = useAppSelector(({APP}) => APP.currentRoute);
   const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
+  const pinLockActive = useAppSelector(({APP}) => APP.pinLockActive);
+  const showBlur = useAppSelector(({APP}) => APP.showBlur);
 
   // MAIN APP INIT
   useEffect(() => {
@@ -177,6 +187,25 @@ export default () => {
       i18n.changeLanguage(appLanguage);
     }
   }, [appLanguage]);
+
+  // CHECK PIN
+  useEffect(() => {
+    function onAppStateChange(status: AppStateStatus) {
+      // status === 'active' when the app goes from background to foreground,
+      // if no app scheme set, rerender in case the system theme has changed
+      if (status === 'active') {
+        if (pinLockActive) {
+          dispatch(AppActions.showPinModal({type: 'check'}));
+        } else {
+          dispatch(AppActions.showBlur(false));
+        }
+      } else {
+        dispatch(AppActions.showBlur(true));
+      }
+    }
+    AppState.addEventListener('change', onAppStateChange);
+    return () => AppState.removeEventListener('change', onAppStateChange);
+  }, [dispatch, pinLockActive]);
 
   // THEME
   useEffect(() => {
@@ -210,7 +239,8 @@ export default () => {
       <StatusBar
         animated={true}
         barStyle={theme.dark ? 'light-content' : 'dark-content'}
-        backgroundColor={theme.colors.background}
+        backgroundColor={'transparent'}
+        translucent={true}
       />
 
       <ThemeProvider theme={theme}>
@@ -307,6 +337,10 @@ export default () => {
             />
             <Root.Screen name={RootStacks.CONTACTS} component={ContactsStack} />
             <Root.Screen
+              name={RootStacks.CONNECTION_SETTINGS}
+              component={ConnectionsSettingsStack}
+            />
+            <Root.Screen
               name={RootStacks.NOTIFICATION_SETTINGS}
               component={NotificationSettingsStack}
             />
@@ -327,6 +361,21 @@ export default () => {
           <OnGoingProcessModal />
           <BottomNotificationModal />
           <DecryptEnterPasswordModal />
+          {showBlur && (
+            <BlurView
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+              }}
+              blurType={theme.dark ? 'dark' : 'light'}
+              blurAmount={10}
+              reducedTransparencyFallbackColor="white"
+            />
+          )}
+          <PinModal />
         </NavigationContainer>
       </ThemeProvider>
     </SafeAreaProvider>

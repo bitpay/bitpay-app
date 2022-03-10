@@ -1,3 +1,22 @@
+export interface RegisterParams {
+  salt: string;
+  hashedPassword: string;
+  givenName: string;
+  familyName: string;
+  email: string;
+  agreedToTOSandPP: boolean;
+  gCaptchaResponse?: string;
+}
+
+export interface RegisterResponse {
+  message: string;
+  userId: string;
+}
+
+export interface RegisterErrorResponse {
+  message: string;
+}
+
 export interface LoginResponse {
   accessTypes?: 'merchant' | 'visaCard' | 'visaManagement'[];
   twoFactorPending?: boolean;

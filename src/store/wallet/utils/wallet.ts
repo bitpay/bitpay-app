@@ -11,6 +11,7 @@ import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {Currencies, SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {BwcProvider} from '../../../lib/bwc';
+import {GetProtocolPrefix} from './currency';
 
 const mapAbbreviationAndName = (
   walletName: string,
@@ -171,4 +172,23 @@ export const generateKeyExportCode = (
   getKeyMnemonic?: string | undefined,
 ): string => {
   return `1|${getKeyMnemonic}|null|null|${key.properties.mnemonic}|null`;
+};
+
+export const isSegwit = (addressType: string): boolean => {
+  if (!addressType) {
+    return false;
+  }
+
+  return addressType === 'P2WPKH' || addressType === 'P2WSH';
+};
+
+export const GetProtocolPrefixAddress = (
+  coin: string,
+  network: string,
+  address: string,
+): string => {
+  if (coin !== 'bch') {
+    return address;
+  }
+  return GetProtocolPrefix(coin, network) + ':' + address;
 };

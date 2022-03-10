@@ -5,6 +5,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import Markdown from 'react-native-markdown-display';
 import {GiftCardScreens, GiftCardStackParamList} from '../GiftCardStack';
 import RemoteImage from '../../components/RemoteImage';
+import TagsSvg from '../../../../../../assets/img/tags-stack.svg';
 import {BaseText, fontFamily} from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
 import {
@@ -16,19 +17,21 @@ import {
   getMastheadGradient,
   horizontalPadding,
 } from '../../components/styled/ShopTabComponents';
-import {SlateDark, White} from '../../../../../styles/colors';
+import {Feather, SlateDark, White} from '../../../../../styles/colors';
 import Button from '../../../../../components/button/Button';
 import GiftCardDenomSelector from '../../components/GiftCardDenomSelector';
 import GiftCardDenoms, {
   GiftCardDenomText,
 } from '../../components/GiftCardDenoms';
 import {
-  formatAmount,
   getActivationFee,
+  isSupportedDiscountType,
 } from '../../../../../lib/gift-cards/gift-card';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {useDispatch} from 'react-redux';
 import {AppActions} from '../../../../../store/app';
+import GiftCardDiscountText from '../../components/GiftCardDiscountText';
+import {formatFiatAmount} from '../../../../../utils/helper-methods';
 
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;
@@ -49,6 +52,20 @@ const Amount = styled(BaseText)`
   margin-bottom: ${Platform.OS === 'android' ? 30 : 25}px;
   font-size: 38px;
   font-weight: 500;
+`;
+
+const DescriptionContainer = styled.View``;
+const DiscountContainer = styled.View`
+  align-items: center;
+  background-color: ${({theme}) => theme.colors.background};
+  justify-content: center;
+  flex-direction: row;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  border-bottom-width: 1px;
+  border-bottom-color: ${({theme}) => (theme.dark ? '#0f0f0f' : Feather)};
+  margin-top: -5px;
+  padding: 17px;
 `;
 
 const DescriptionBox = styled.View`
@@ -141,22 +158,34 @@ const BuyGiftCard = ({
                 </SupportedAmounts>
               </DenomSelectionContainer>
             ) : (
-              <Amount>{formatAmount(0, cardConfig.currency)}</Amount>
+              <Amount>{formatFiatAmount(0, cardConfig.currency)}</Amount>
             )}
           </AmountContainer>
         </GradientBox>
-        <DescriptionBox>
-          <Markdown
-            style={{
-              body: {
-                color: theme.dark ? White : SlateDark,
-                fontFamily,
-                fontSize: 16,
-              },
-            }}>
-            {cardConfig.description}
-          </Markdown>
-        </DescriptionBox>
+        <DescriptionContainer>
+          {cardConfig.discounts &&
+          isSupportedDiscountType(cardConfig.discounts[0].type) ? (
+            <DiscountContainer>
+              <TagsSvg style={{marginRight: 12}} />
+              <GiftCardDiscountText
+                cardConfig={cardConfig}
+                color={theme.colors.text}
+              />
+            </DiscountContainer>
+          ) : null}
+          <DescriptionBox>
+            <Markdown
+              style={{
+                body: {
+                  color: theme.dark ? White : SlateDark,
+                  fontFamily,
+                  fontSize: 16,
+                },
+              }}>
+              {cardConfig.description}
+            </Markdown>
+          </DescriptionBox>
+        </DescriptionContainer>
       </ScrollView>
       <FooterButton
         background={true}
@@ -180,7 +209,7 @@ const BuyGiftCard = ({
                   title: 'Activation Fee',
                   message: `${
                     cardConfig.displayName
-                  } gift cards contain an additional activation fee of ${formatAmount(
+                  } gift cards contain an additional activation fee of ${formatFiatAmount(
                     activationFee,
                     cardConfig.currency,
                   )}.`,

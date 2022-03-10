@@ -23,13 +23,13 @@ const ScanGuide = styled.View`
 `;
 
 interface Props {
-  contextHandler?: (data: string) => void;
+  onScanComplete?: (data: string) => void;
 }
 
 const Scan = () => {
   const dispatch = useDispatch();
   const route = useRoute<RouteProp<ScanStackParamList, 'Root'>>();
-  const {contextHandler} = route.params || {};
+  const {onScanComplete} = route.params || {};
 
   return (
     <RNCamera
@@ -47,13 +47,13 @@ const Scan = () => {
       }}
       onBarCodeRead={debounce(
         ({data}) => {
+          navigationRef.goBack();
           // if specific handler is passed use that else use generic self deriving handler
-          if (contextHandler) {
-            contextHandler(data);
+          if (onScanComplete) {
+            onScanComplete(data);
           } else {
             dispatch(incomingData(data));
           }
-          navigationRef.goBack();
         },
         500,
         {

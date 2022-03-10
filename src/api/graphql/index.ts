@@ -58,7 +58,7 @@ class GraphQlApi {
     }
   }
 
-  request<T = any>(params: GqlQueryParams) {
+  request<T = any>(params: GqlQueryParams<any>) {
     const config = {
       headers: {
         'x-identity': this.identity.pub,

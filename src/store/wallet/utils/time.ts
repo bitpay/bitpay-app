@@ -1,3 +1,5 @@
+import moment from 'moment';
+
 export const WithinSameMonth = (time1: number, time2: number): boolean => {
   if (!time1 || !time2) {
     return false;
@@ -21,4 +23,8 @@ export const IsDateInCurrentMonth = (time: number): boolean => {
   const now = new Date();
   const date = new Date(time);
   return GetMonthYear(now) === GetMonthYear(date);
+};
+
+export const GetAmFormatDate = (time: number) => {
+  return moment(time).format('MM/DD/YYYY hh:mm a');
 };

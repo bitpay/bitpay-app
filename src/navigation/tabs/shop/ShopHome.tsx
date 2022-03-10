@@ -9,7 +9,6 @@ import {
   getGiftCardCurations,
 } from '../../../lib/gift-cards/gift-card';
 import {useDispatch, useSelector} from 'react-redux';
-import {startFetchCatalog} from '../../../store/shop/shop.effects';
 import {RootState} from '../../../store';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import {ScreenOptions} from '../../../styles/tabNavigator';
@@ -22,6 +21,7 @@ import {
 } from '../../../store/shop/shop.models';
 import {BaseText} from '../../../components/styled/Text';
 import {purchasedGiftCards} from './stubs/gift-cards';
+import {ShopEffects} from '../../../store/shop';
 
 enum ShopTabs {
   GIFT_CARDS = 'Gift Cards',
@@ -190,7 +190,7 @@ const ShopHome = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(startFetchCatalog());
+    dispatch(ShopEffects.startFetchCatalog());
   }, [dispatch]);
 
   const insets = useSafeAreaInsets();

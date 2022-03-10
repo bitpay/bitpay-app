@@ -44,6 +44,7 @@ import Animated, {
 import {sleep} from '../../../utils/helper-methods';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import debounce from 'lodash.debounce';
+import FocusedStatusBar from '../../../components/focused-status-bar/FocusedStatusBar';
 
 const IntroWalletContainer = styled.View`
   flex: 1;
@@ -93,11 +94,14 @@ const IntroWallet = () => {
   }, [fade, x]);
 
   const navigation = useNavigation();
+
   return (
     <IntroWalletContainer>
+      <FocusedStatusBar barStyle={'light-content'} />
       <BackgroundImage
         source={theme.dark ? darkBackground : lightBackground}
         style={{position: 'absolute', bottom: 0}}
+        resizeMode="contain"
       />
       <Overlay />
       <Body>

@@ -325,6 +325,13 @@ export const walletReducer = (
       };
     }
 
+    case WalletActionTypes.SET_USE_UNCONFIRMED_FUNDS: {
+      return {
+        ...state,
+        useUnconfirmedFunds: action.payload,
+      };
+    }
+
     default:
       return state;
   }
