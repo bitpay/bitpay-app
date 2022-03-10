@@ -24,7 +24,9 @@ import {sleep} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   dismissBottomNotificationModal,
+  dismissOnGoingProcessModal,
   showBottomNotificationModal,
+  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import Clipboard from '@react-native-community/clipboard';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
@@ -34,9 +36,17 @@ import {
 } from '../../../store/wallet-connect/wallet-connect.models';
 import WalletConnect from '@walletconnect/client';
 import {FormatAmountStr} from '../../../store/wallet/effects/amount/amount';
+import {
+  createProposalAndBuildTxDetails,
+  handleCreateTxProposalError,
+} from '../../../store/wallet/effects/send/send';
+import {Wallet} from '../../../store/wallet/wallet.models';
+import {convertHexToNumber} from '@walletconnect/utils';
+import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 
 export type WalletConnectHomeParamList = {
   peerId: string;
+  wallet: Wallet;
 };
 
 const SummaryContainer = styled.View`
@@ -72,7 +82,7 @@ const WalletConnectHome = () => {
   const dispatch = useDispatch();
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
   const {
-    params: {peerId},
+    params: {peerId, wallet},
   } = useRoute<RouteProp<{params: WalletConnectHomeParamList}>>();
 
   const wcConnector: IWCConnector | undefined = useSelector(
@@ -85,7 +95,7 @@ const WalletConnectHome = () => {
     return WALLET_CONNECT.requests.filter(request => request.peerId === peerId);
   });
 
-  const goToConfirmView = () => {
+  const goToConfirmView = (request: IWCRequest) => {
     dispatch(
       showBottomNotificationModal({
         type: 'question',
@@ -96,9 +106,60 @@ const WalletConnectHome = () => {
           {
             text: 'CONTINUE',
             action: async () => {
-              dispatch(dismissBottomNotificationModal());
-              await sleep(300);
-              // TODO: go to confirm view
+              try {
+                dispatch(dismissBottomNotificationModal());
+                await sleep(500);
+                dispatch(
+                  showOnGoingProcessModal(OnGoingProcessMessages.LOADING),
+                );
+                const toAddress = request.payload.params[0].to;
+                const recipient = {
+                  address: toAddress,
+                };
+                const tx = {
+                  wallet,
+                  recipient,
+                  toAddress,
+                  from: request.payload.params[0].from,
+                  amount: convertHexToNumber(request.payload.params[0].value),
+                  gasPrice: convertHexToNumber(
+                    request.payload.params[0].gasPrice,
+                  ),
+                  nonce: convertHexToNumber(request.payload.params[0].nonce),
+                  gasLimit: convertHexToNumber(request.payload.params[0].gas),
+                  data: convertHexToNumber(request.payload.params[0].data),
+                };
+                const {txDetails, txp} = (await dispatch<any>(
+                  createProposalAndBuildTxDetails(tx),
+                )) as any;
+                dispatch(dismissOnGoingProcessModal());
+                await sleep(500);
+                navigation.navigate('WalletConnect', {
+                  screen: 'WalletConnectConfirm',
+                  params: {wallet, recipient, txp, txDetails, request},
+                });
+              } catch (err: any) {
+                const errorMessageConfig = (
+                  await Promise.all([
+                    handleCreateTxProposalError(err),
+                    sleep(500),
+                  ])
+                )[0];
+                dispatch(dismissOnGoingProcessModal());
+                await sleep(500);
+                dispatch(
+                  showBottomNotificationModal({
+                    ...errorMessageConfig,
+                    enableBackdropDismiss: false,
+                    actions: [
+                      {
+                        text: 'OK',
+                        action: () => {},
+                      },
+                    ],
+                  }),
+                );
+              }
             },
             primary: true,
           },
@@ -216,9 +277,10 @@ const WalletConnectHome = () => {
                             params: {
                               peerId,
                               requestId: request.payload.id,
+                              wallet,
                             },
                           })
-                        : goToConfirmView();
+                        : goToConfirmView(request);
                     }}>
                     <ItemTitleContainer>
                       {session && session.peerMeta ? (

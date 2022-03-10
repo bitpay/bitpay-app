@@ -28,6 +28,7 @@ import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {IWCRequest} from '../../../store/wallet-connect/wallet-connect.models';
 import {RootState} from '../../../store';
+import {Wallet} from '../../../store/wallet/wallet.models';
 
 const NestedArrowContainer = styled.View`
   padding-right: 11px;
@@ -44,7 +45,13 @@ const Badge = styled.View`
   background: #ff647c;
 `;
 
-export default ({session}: {session: IWalletConnectSession}) => {
+export default ({
+  session,
+  wallet,
+}: {
+  session: IWalletConnectSession;
+  wallet: Wallet;
+}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {peerId, peerMeta, key} = session;
@@ -70,6 +77,7 @@ export default ({session}: {session: IWalletConnectSession}) => {
               screen: 'WalletConnectHome',
               params: {
                 peerId,
+                wallet,
               },
             });
           }}>

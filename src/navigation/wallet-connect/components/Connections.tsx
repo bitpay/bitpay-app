@@ -21,14 +21,12 @@ import styled from 'styled-components/native';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
 import {walletConnectOnSessionRequest} from '../../../store/wallet-connect/wallet-connect.effects';
 
-import {
-  IWCConnector,
-  IWCCustomData,
-} from '../../../store/wallet-connect/wallet-connect.models';
+import {IWCConnector} from '../../../store/wallet-connect/wallet-connect.models';
 import ConnectionItem from './ConnectionItem';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
+import {Wallet} from '../../../store/wallet/wallet.models';
 
 const ConnectionsContainer = styled.View`
   padding-bottom: 32px;
@@ -74,16 +72,11 @@ const AddConnectionContainer = styled.TouchableOpacity`
 `;
 
 export default ({
-  customData,
+  wallet,
   connectors,
-  walletData,
 }: {
-  customData: IWCCustomData;
+  wallet: Wallet;
   connectors: IWCConnector[];
-  walletData: {
-    name: string;
-    network: string;
-  };
 }) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -161,6 +154,7 @@ export default ({
           <ConnectionItem
             key={key}
             session={(c as IWCConnector).connector.session}
+            wallet={wallet}
           />
         );
       })}

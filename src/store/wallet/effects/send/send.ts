@@ -258,7 +258,7 @@ export const startSendPayment =
     key: Key;
     wallet: Wallet;
     recipient: Recipient;
-  }): Effect =>
+  }): Effect<Promise<any>> =>
   async dispatch => {
     return new Promise(async (resolve, reject) => {
       wallet.createTxProposal(
@@ -267,7 +267,7 @@ export const startSendPayment =
           if (err) {
             return reject(err);
           }
-
+          let broadcastedTx;
           try {
             const publishedTx = await publishTx(wallet, proposal);
             console.log('-------- published');
@@ -275,7 +275,7 @@ export const startSendPayment =
             const signedTx = await signTx(wallet, key, publishedTx);
             console.log('-------- signed');
 
-            const broadcastedTx = await broadcastTx(wallet, signedTx);
+            broadcastedTx = await broadcastTx(wallet, signedTx);
             console.log('-------- broadcastedTx');
 
             const {fee, amount} = broadcastedTx as {
@@ -295,7 +295,7 @@ export const startSendPayment =
           } catch (error) {
             return reject(error);
           }
-          resolve();
+          resolve(broadcastedTx);
         },
         null,
       );

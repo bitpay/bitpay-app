@@ -73,17 +73,11 @@ const WalletConnectConnections = () => {
 
   const allKeys = useSelector(({WALLET}: RootState) => WALLET.keys);
 
-  const getWalletData = (customData?: IWCCustomData) => {
-    const wallet =
+  const getWallet = (customData?: IWCCustomData) => {
+    return (
       customData &&
-      findWalletById(allKeys[customData.keyId].wallets, customData.walletId);
-    return {
-      name: wallet?.walletName || wallet?.currencyName || '',
-      network:
-        wallet && wallet.credentials && wallet.credentials.network === 'testnet'
-          ? 'kovan'
-          : '',
-    };
+      findWalletById(allKeys[customData.keyId].wallets, customData.walletId)
+    );
   };
 
   useLayoutEffect(() => {
@@ -112,16 +106,16 @@ const WalletConnectConnections = () => {
               <Hr />
               {Object.entries(connectorsByKey as any).map(
                 ([walletId, _connectors]) => {
-                  return (
+                  const wallet = getWallet(
+                    (_connectors as IWCConnector[])[0].customData,
+                  );
+                  return wallet ? (
                     <Connections
                       key={walletId}
-                      customData={{walletId, keyId}}
                       connectors={_connectors as IWCConnector[]}
-                      walletData={getWalletData(
-                        (_connectors as IWCConnector[])[0].customData,
-                      )}
+                      wallet={wallet}
                     />
-                  );
+                  ) : null;
                 },
               )}
             </KeyConnectionsContainer>

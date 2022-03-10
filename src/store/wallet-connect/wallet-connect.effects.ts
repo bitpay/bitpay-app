@@ -8,6 +8,15 @@ import {
 } from './wallet-connect.models';
 import {Effect} from '..';
 import {sleep} from '../../utils/helper-methods';
+import {Key, Wallet} from '../wallet/wallet.models';
+import {BwcProvider} from '../../lib/bwc';
+import {
+  personalSign,
+  signTypedDataLegacy,
+  signTypedData_v4,
+} from 'eth-sig-util';
+
+const BWC = BwcProvider.getInstance();
 
 export const walletConnectInit = (): Effect => async (dispatch, getState) => {
   try {
@@ -204,10 +213,9 @@ export const walletConnectApproveCallRequest =
     return new Promise(async (resolve, reject) => {
       try {
         const wcConnector: IWCConnector =
-          getState().WALLET_CONNECT.connectors.filter((c: IWCConnector) => {
-            c.connector.peerId === peerId;
-          })[0];
-
+          getState().WALLET_CONNECT.connectors.filter(
+            (c: IWCConnector) => c.connector.peerId === peerId,
+          )[0];
         await wcConnector.connector.approveRequest(response);
 
         const updatedRequests: IWCRequest[] =
@@ -249,6 +257,80 @@ export const walletConnectRejectCallRequest =
       } catch (e) {
         console.log(e);
         reject(e);
+      }
+    });
+  };
+
+const getPrivKey =
+  (keyId: string): Effect<Promise<any>> =>
+  (_dispatch, getState) => {
+    return new Promise((resolve, reject) => {
+      try {
+        const {keys} = getState().WALLET;
+        const key: Key = keys[keyId];
+        // TODO
+        // const password = await this.keyProvider.handleEncryptedWallet(
+        //   wallet.keyId
+        // );
+        // const key = this.keyProvider.get(wallet.keyId, password);
+        const bitcore = BWC.getBitcore();
+        const xpriv = new bitcore.HDPrivateKey(key.properties.xPrivKey);
+        const priv = xpriv.deriveChild("m/44'/60'/0'/0/0").privateKey;
+        resolve(priv);
+      } catch (err) {
+        console.log(err);
+        reject(err);
+      }
+    });
+  };
+
+export const walletConnectSignTypedDataLegacy =
+  (data: any, wallet: Wallet): Effect<Promise<any>> =>
+  (dispatch, _getState) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const priv = (await dispatch<any>(getPrivKey(wallet.keyId))) as any;
+        const result = signTypedDataLegacy(
+          Buffer.from(priv.toString(), 'hex'),
+          {
+            data,
+          },
+        );
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  };
+
+export const walletConnectSignTypedData =
+  (data: any, wallet: Wallet): Effect<Promise<any>> =>
+  (dispatch, _getState) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const priv = (await dispatch<any>(getPrivKey(wallet.keyId))) as any;
+        const result = signTypedData_v4(Buffer.from(priv.toString(), 'hex'), {
+          data,
+        });
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  };
+
+export const walletConnectPersonalSign =
+  (data: any, wallet: Wallet): Effect<Promise<any>> =>
+  (dispatch, _getState) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const priv = (await dispatch<any>(getPrivKey(wallet.keyId))) as any;
+        const result = personalSign(Buffer.from(priv.toString(), 'hex'), {
+          data,
+        });
+        resolve(result);
+      } catch (err) {
+        reject(err);
       }
     });
   };
