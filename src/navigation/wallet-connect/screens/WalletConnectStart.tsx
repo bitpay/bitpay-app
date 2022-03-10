@@ -26,12 +26,9 @@ import {
   walletConnectApproveSessionRequest,
   walletConnectRejectSessionRequest,
 } from '../../../store/wallet-connect/wallet-connect.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissBottomNotificationModal,
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import {Network} from '../../../constants';
 import {Currencies} from '../../../constants/currencies';

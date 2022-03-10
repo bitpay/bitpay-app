@@ -21,6 +21,7 @@ import {
   IWCCustomData,
 } from '../../../store/wallet-connect/wallet-connect.models';
 import Connections from '../components/Connections';
+import WalletSelector from '../components/WalletSelector';
 
 const KeyConnectionsContainer = styled.View`
   margin-top: 26px;
@@ -50,6 +51,10 @@ const AddConnectionContainer = styled.TouchableOpacity`
 const WalletConnectConnections = () => {
   const navigation = useNavigation();
   const [groupedConnectors, setGroupedConnectors] = useState({});
+  const [walletSelectorModalVisible, setWalletSelectorModalVisible] =
+    useState(false);
+  const showWalletSelector = () => setWalletSelectorModalVisible(true);
+  const hideWalletSelector = () => setWalletSelectorModalVisible(false);
   const connectors: IWCConnector[] = useSelector(
     ({WALLET_CONNECT}: RootState) => WALLET_CONNECT.connectors,
   );
@@ -85,13 +90,7 @@ const WalletConnectConnections = () => {
     navigation.setOptions({
       headerRight: () => {
         return (
-          <AddConnectionContainer
-            onPress={() => {
-              navigation.navigate('WalletConnect', {
-                screen: 'Root',
-                params: {uri: undefined},
-              });
-            }}>
+          <AddConnectionContainer onPress={showWalletSelector}>
             <AddConnection opacity={1} />
           </AddConnectionContainer>
         );
@@ -128,6 +127,11 @@ const WalletConnectConnections = () => {
             </KeyConnectionsContainer>
           );
         })}
+        <WalletSelector
+          isVisible={walletSelectorModalVisible}
+          dappUri={''}
+          onBackdropPress={hideWalletSelector}
+        />
       </ScrollView>
     </WalletConnectContainer>
   );
