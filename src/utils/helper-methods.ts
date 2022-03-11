@@ -180,7 +180,8 @@ export const shouldScale = (
     value = Number(value).toFixed(2);
   }
   return value.length > threshold;
-  
+};
+
 export const formatCryptoAddress = (address: string) => {
   return (
     address.substring(0, 4) + '....' + address.substring(address.length - 4)
