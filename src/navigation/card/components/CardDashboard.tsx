@@ -7,6 +7,7 @@ import Carousel from 'react-native-snap-carousel';
 import GhostImg from '../../../../assets/img/ghost-cheeky.svg';
 import Button from '../../../components/button/Button';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
+import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import {
   Br,
   HeaderRightContainer,
@@ -55,6 +56,9 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const {id, navigation} = props;
   const carouselRef = useRef<Carousel<Card[]>>(null);
   const cardGroups = useAppSelector(selectCardGroups);
+  const fetchOverviewStatus = useAppSelector(
+    ({CARD}) => CARD.fetchOverviewStatus[id],
+  );
   const virtualDesignCurrency = useAppSelector(
     ({CARD}) => CARD.virtualDesignCurrency,
   );
@@ -92,6 +96,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     ({CARD}) => CARD.settledTransactions[activeCard.id],
   );
   const uninitializedId = pageData ? null : activeCard.id;
+  const isLoadingInitial = fetchOverviewStatus === 'loading' && !pageData;
 
   useEffect(() => {
     if (uninitializedId) {
@@ -135,18 +140,21 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   );
 
   const listEmptyComponent = useMemo(
-    () => (
-      <EmptyListContainer>
-        <EmptyGhostContainer>
-          <GhostImg />
-        </EmptyGhostContainer>
-        <EmptyListDescription>
-          Load your cash account and get instant access to spending at thousands
-          of merchants.
-        </EmptyListDescription>
-      </EmptyListContainer>
-    ),
-    [],
+    () =>
+      isLoadingInitial ? (
+        <WalletTransactionSkeletonRow />
+      ) : (
+        <EmptyListContainer>
+          <EmptyGhostContainer>
+            <GhostImg />
+          </EmptyGhostContainer>
+          <EmptyListDescription>
+            Load your cash account and get instant access to spending at
+            thousands of merchants.
+          </EmptyListDescription>
+        </EmptyListContainer>
+      ),
+    [isLoadingInitial],
   );
 
   const renderSlide = useCallback(
@@ -218,15 +226,17 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
             }}
           />
 
-          <TransactionListHeader>
-            <TransactionListHeaderTitle>
-              {filteredTransactions.length <= 0 ? null : 'Recent Activity'}
-            </TransactionListHeaderTitle>
+          {!isLoadingInitial ? (
+            <TransactionListHeader>
+              <TransactionListHeaderTitle>
+                {filteredTransactions.length <= 0 ? null : 'Recent Activity'}
+              </TransactionListHeaderTitle>
 
-            <TransactionListHeaderIcon onPress={() => onRefresh()}>
-              <RefreshIcon />
-            </TransactionListHeaderIcon>
-          </TransactionListHeader>
+              <TransactionListHeaderIcon onPress={() => onRefresh()}>
+                <RefreshIcon />
+              </TransactionListHeaderIcon>
+            </TransactionListHeader>
+          ) : null}
         </>
       }
       ListFooterComponent={listFooterComponent}
