@@ -2,7 +2,7 @@ import {useNavigation} from '@react-navigation/native';
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {BaseText} from '../../../components/styled/Text';
-import {SlateDark} from '../../../styles/colors';
+import {SlateDark, White} from '../../../styles/colors';
 import KeyIcon from '../../../../assets/img/key.svg';
 import AddConnection from '../../../components/add/Add';
 import {Hr} from '../../../components/styled/Containers';
@@ -38,7 +38,7 @@ const KeyTitleText = styled(BaseText)`
   font-size: 14px;
   font-weight: 700;
   line-height: 14px;
-  color: ${SlateDark};
+  color: ${({theme}) => (theme.dark ? White : SlateDark)};
   padding-right: 12px;
   padding-left: 6px;
   padding-top: ${Platform.OS === 'ios' ? '4px' : '8px'};
