@@ -26,7 +26,7 @@ import {findWalletById, isSegwit} from '../../../store/wallet/utils/wallet';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
-import {sleep} from '../../../utils/helper-methods';
+import {shouldScale, sleep} from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {
   BalanceUpdateError,
@@ -465,7 +465,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             <>
               <BalanceContainer>
                 <Row>
-                  <Balance>
+                  <Balance scale={shouldScale(cryptoBalance)}>
                     {cryptoBalance} {currencyAbbreviation}
                   </Balance>
                   <Chain>{currencyAbbreviation}</Chain>

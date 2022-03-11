@@ -168,6 +168,19 @@ export const isValidWalletConnectUri = (data: string): boolean => {
   return !!/(wallet\/wc|wc:)/g.exec(data);
 };
 
+export const shouldScale = (
+  value: string | number | null | undefined,
+  threshold = 10,
+): boolean => {
+  if (!value) {
+    return false;
+  }
+  // un-formatted fiat
+  if (typeof value === 'number') {
+    value = Number(value).toFixed(2);
+  }
+  return value.length > threshold;
+  
 export const formatCryptoAddress = (address: string) => {
   return (
     address.substring(0, 4) + '....' + address.substring(address.length - 4)
