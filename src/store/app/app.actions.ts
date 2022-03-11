@@ -141,3 +141,8 @@ export const showBlur = (value: boolean): AppActionType => ({
   type: AppActionTypes.SHOW_BLUR,
   payload: value,
 });
+
+export const showPortfolioValue = (value: boolean): AppActionType => ({
+  type: AppActionTypes.SHOW_PORTFOLIO_VALUE,
+  payload: value,
+});

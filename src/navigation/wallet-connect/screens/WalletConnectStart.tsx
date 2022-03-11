@@ -1,6 +1,6 @@
-import React, {useCallback, useEffect} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components/native';
-import Button from '../../../components/button/Button';
+import Button, {ButtonState} from '../../../components/button/Button';
 import {Paragraph} from '../../../components/styled/Text';
 import VerifiedIcon from '../../../../assets/img/wallet-connect/verified-icon.svg';
 import WalletIcon from '../../../../assets/img/wallet-connect/wallet-icon.svg';
@@ -26,12 +26,9 @@ import {
   walletConnectApproveSessionRequest,
   walletConnectRejectSessionRequest,
 } from '../../../store/wallet-connect/wallet-connect.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissBottomNotificationModal,
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import {Network} from '../../../constants';
 import {Currencies} from '../../../constants/currencies';
@@ -83,6 +80,7 @@ const DescriptionItem = styled(Paragraph)`
 const WalletConnectStart = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
+  const [retryCount, setRetryCount] = useState(0);
   const {
     params: {walletId, keyId, peer},
   } = useRoute<RouteProp<{params: WalletConnectStartParamList}>>();
@@ -92,6 +90,8 @@ const WalletConnectStart = () => {
     ({WALLET}: RootState) =>
       keyId && walletId && findWalletById(WALLET.keys[keyId].wallets, walletId),
   ) as Wallet;
+  const [address, setAddress] = useState(wallet.receiveAddress);
+  const [buttonState, setButtonState] = useState<ButtonState>();
 
   const showErrorMessage = useCallback(
     async (msg: BottomNotificationConfig) => {
@@ -101,18 +101,16 @@ const WalletConnectStart = () => {
     [dispatch],
   );
 
-  const approveSessionRequest = async () => {
+  const approveSessionRequest = useCallback(async () => {
     try {
-      haptic('impactLight');
-      dispatch(showOnGoingProcessModal(OnGoingProcessMessages.LOADING));
-
-      if (!wallet.receiveAddress) {
+      setButtonState('loading');
+      if (!address) {
         throw 'MISSING_WALLET_ADDRESS';
       }
 
       const {chain} = Currencies[wallet.currencyAbbreviation];
       const chainId = CHAIN_ID[chain][wallet.credentials.network];
-      const accounts = [wallet.receiveAddress];
+      const accounts = [address];
       const customData: IWCCustomData = {
         keyId: wallet.keyId,
         walletId: wallet.id,
@@ -128,8 +126,7 @@ const WalletConnectStart = () => {
           customData,
         ),
       );
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(800);
+      setButtonState('success');
       dispatch(
         showBottomNotificationModal({
           type: 'success',
@@ -155,9 +152,17 @@ const WalletConnectStart = () => {
     } catch (e) {
       if (e === 'MISSING_WALLET_ADDRESS') {
         try {
-          await dispatch<any>(createWalletAddress({wallet}));
-          approveSessionRequest();
+          if (retryCount < 3) {
+            const walletAddress = (await dispatch<any>(
+              createWalletAddress({wallet}),
+            )) as string;
+            setAddress(walletAddress);
+            setRetryCount(r => r + 1);
+          } else {
+            throw 'Failed to create wallet address';
+          }
         } catch (error) {
+          setButtonState('failed');
           await showErrorMessage(
             CustomErrorMessage({
               errMsg: BWCErrorMessage(error),
@@ -166,6 +171,7 @@ const WalletConnectStart = () => {
           );
         }
       } else {
+        setButtonState('failed');
         await showErrorMessage(
           CustomErrorMessage({
             errMsg: BWCErrorMessage(e),
@@ -173,10 +179,16 @@ const WalletConnectStart = () => {
           }),
         );
       }
-    } finally {
-      dispatch(dismissOnGoingProcessModal());
     }
-  };
+  }, [
+    address,
+    dispatch,
+    navigation,
+    peerId,
+    retryCount,
+    showErrorMessage,
+    wallet,
+  ]);
 
   useEffect(() => {
     return navigation.addListener('beforeRemove', e => {
@@ -185,6 +197,12 @@ const WalletConnectStart = () => {
       }
     });
   }, [navigation, dispatch, peerId]);
+
+  useEffect(() => {
+    if (retryCount > 0) {
+      approveSessionRequest();
+    }
+  }, [retryCount, approveSessionRequest]);
 
   return (
     <WalletConnectContainer>
@@ -214,9 +232,13 @@ const WalletConnectStart = () => {
           </View>
         )}
         <Button
+          state={buttonState}
           disabled={!peerMeta}
           buttonStyle={'primary'}
-          onPress={() => approveSessionRequest()}>
+          onPress={() => {
+            haptic('impactLight');
+            approveSessionRequest();
+          }}>
           Connect
         </Button>
       </ScrollView>

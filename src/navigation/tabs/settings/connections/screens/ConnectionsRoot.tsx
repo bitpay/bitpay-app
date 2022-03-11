@@ -44,6 +44,7 @@ const ConnectionSettingsRoot: React.FC = () => {
   return (
     <SettingsContainer>
       <Settings>
+        <Hr />
         <Setting onPress={() => goToNextView()}>
           <ConnectionItemContainer>
             <WalletConnectIconContainer>

@@ -2,6 +2,7 @@ import API from 'bitcore-wallet-client/ts_build';
 import {ReactElement} from 'react';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {RootState} from '../index';
+import {CardConfig, Invoice} from '../shop/shop.models';
 
 export interface KeyMethods {
   _checkCoin: Function;
@@ -166,8 +167,18 @@ export interface Recipient {
   address: string;
 }
 
+export interface CustomTransactionData {
+  service?: string;
+  giftCardName?: string;
+  changelly?: string;
+  oneInch?: string;
+  shapeShift?: string;
+  toWalletName?: any;
+}
+
 export interface TransactionOptions {
   wallet: Wallet;
+  invoice?: Invoice;
   recipient: Recipient;
   amount: number;
   context?: 'multisend' | 'paypro' | 'selectInputs';
@@ -175,9 +186,12 @@ export interface TransactionOptions {
   toAddress?: string;
   network?: string;
   feeLevel?: string;
+  feePerKb?: number;
   dryRun?: boolean;
   description?: string;
   message?: string;
+  customData?: CustomTransactionData;
+  payProUrl?: string;
   // btc
   enableRBF?: boolean;
   replaceTxByFee?: boolean;
@@ -215,14 +229,7 @@ export interface TransactionProposal {
   inputs: any;
   fee: any;
   message: string;
-  customData?: {
-    service?: string;
-    giftCardName?: string;
-    changelly?: string;
-    oneInch?: string;
-    shapeShift?: string;
-    toWalletName?: any;
-  };
+  customData?: CustomTransactionData;
   payProUrl: any;
   excludeUnconfirmedUtxos: boolean;
   feePerKb: number;
@@ -258,6 +265,10 @@ export interface TxDetails {
     fiatAmount: string;
     percentageOfTotalAmount: string;
   };
+  networkCost?: {
+    cryptoAmount: string;
+    fiatAmount: string;
+  };
   // eth
   gasPrice?: number;
   gasLimit?: number;
@@ -273,4 +284,10 @@ export interface TxDetails {
     cryptoAmount: string;
     fiatAmount: string;
   };
+}
+
+export interface InvoiceCreationParams {
+  invoiceType: string;
+  amount: number;
+  cardConfig?: CardConfig;
 }

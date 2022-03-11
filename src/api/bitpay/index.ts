@@ -164,11 +164,7 @@ export class BitPayIdApi {
     return token;
   }
 
-  request<T = any>(
-    method: string,
-    token: string,
-    params?: {[k: string]: string},
-  ) {
+  request<T = any>(method: string, token: string, params?: {[k: string]: any}) {
     const url = `${this.apiUrl}/${token || ''}`;
     const data = {method, token, params};
     const unsignedData = `${url}${JSON.stringify(data)}`;

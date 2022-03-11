@@ -1,9 +1,10 @@
 import {useNavigation} from '@react-navigation/native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {BaseText} from '../../../components/styled/Text';
-import {SlateDark} from '../../../styles/colors';
+import {SlateDark, White} from '../../../styles/colors';
 import KeyIcon from '../../../../assets/img/key.svg';
+import AddConnection from '../../../components/add/Add';
 import {Hr} from '../../../components/styled/Containers';
 import {useSelector} from 'react-redux';
 import {HeaderTitle} from '../styled/WalletConnectText';
@@ -20,6 +21,7 @@ import {
   IWCCustomData,
 } from '../../../store/wallet-connect/wallet-connect.models';
 import Connections from '../components/Connections';
+import WalletSelector from '../components/WalletSelector';
 
 const KeyConnectionsContainer = styled.View`
   margin-top: 26px;
@@ -36,15 +38,23 @@ const KeyTitleText = styled(BaseText)`
   font-size: 14px;
   font-weight: 700;
   line-height: 14px;
-  color: ${SlateDark};
+  color: ${({theme}) => (theme.dark ? White : SlateDark)};
   padding-right: 12px;
   padding-left: 6px;
   padding-top: ${Platform.OS === 'ios' ? '4px' : '8px'};
 `;
 
+const AddConnectionContainer = styled.TouchableOpacity`
+  margin-right: 15px;
+`;
+
 const WalletConnectConnections = () => {
   const navigation = useNavigation();
   const [groupedConnectors, setGroupedConnectors] = useState({});
+  const [walletSelectorModalVisible, setWalletSelectorModalVisible] =
+    useState(false);
+  const showWalletSelector = () => setWalletSelectorModalVisible(true);
+  const hideWalletSelector = () => setWalletSelectorModalVisible(false);
   const connectors: IWCConnector[] = useSelector(
     ({WALLET_CONNECT}: RootState) => WALLET_CONNECT.connectors,
   );
@@ -76,6 +86,18 @@ const WalletConnectConnections = () => {
     };
   };
 
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => {
+        return (
+          <AddConnectionContainer onPress={showWalletSelector}>
+            <AddConnection opacity={1} />
+          </AddConnectionContainer>
+        );
+      },
+    });
+  }, [navigation]);
+
   return (
     <WalletConnectContainer>
       <ScrollView>
@@ -105,6 +127,11 @@ const WalletConnectConnections = () => {
             </KeyConnectionsContainer>
           );
         })}
+        <WalletSelector
+          isVisible={walletSelectorModalVisible}
+          dappUri={''}
+          onBackdropPress={hideWalletSelector}
+        />
       </ScrollView>
     </WalletConnectContainer>
   );

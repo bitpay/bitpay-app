@@ -4,7 +4,6 @@ import {
   PriceHistory,
   Rates,
   Token,
-  Wallet,
   WalletBalance,
 } from './wallet.models';
 
@@ -40,6 +39,7 @@ export enum WalletActionTypes {
   UPDATE_WALLET_NAME = 'WALLET/UPDATE_WALLET_NAME',
   SET_WALLET_REFRESHING = 'WALLET/SET_WALLET_REFRESHING',
   SUCCESS_GET_RECEIVE_ADDRESS = 'WALLET/SUCCESS_GET_RECEIVE_ADDRESS',
+  SET_USE_UNCONFIRMED_FUNDS = 'WALLET/SET_USE_UNCONFIRMED_FUNDS',
   UPDATE_WALLET_TX_HISTORY = 'WALLET/UPDATE_WALLET_TX_HISTORY',
 }
 
@@ -225,6 +225,11 @@ interface setWalletRefreshing {
   };
 }
 
+interface setUseUnconfirmedFunds {
+  type: typeof WalletActionTypes.SET_USE_UNCONFIRMED_FUNDS;
+  payload: boolean;
+}
+
 interface updateWalletTxHistory {
   type: typeof WalletActionTypes.UPDATE_WALLET_TX_HISTORY;
 
@@ -267,4 +272,5 @@ export type WalletActionType =
   | updateWalletName
   | setWalletRefreshing
   | successGetReceiveAddress
+  | setUseUnconfirmedFunds
   | updateWalletTxHistory;

@@ -1,11 +1,11 @@
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {
-  CacheKeys,
   Key,
   PriceHistory,
-  Rates,
   Token,
   WalletBalance,
+  Rates,
+  CacheKeys,
 } from './wallet.models';
 
 export const successWalletStoreInit = (): WalletActionType => ({
@@ -190,5 +190,10 @@ export const updateWalletTxHistory = (payload: {
   transactionHistory: {transactions: any[]; loadMore: boolean};
 }): WalletActionType => ({
   type: WalletActionTypes.UPDATE_WALLET_TX_HISTORY,
+  payload,
+});
+
+export const setUseUnconfirmedFunds = (payload: boolean): WalletActionType => ({
+  type: WalletActionTypes.SET_USE_UNCONFIRMED_FUNDS,
   payload,
 });

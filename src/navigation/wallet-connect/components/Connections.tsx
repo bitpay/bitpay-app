@@ -11,8 +11,12 @@ import {
 import WalletConnectIcon from '../../../../assets/img/wallet-connect/wallet-connect-icon.svg';
 import AddIcon from '../../../../assets/img/add.svg';
 import EthIcon from '../../../../assets/img/currencies/eth.svg';
-import {isValidWalletConnectUri, sleep} from '../../../utils/helper-methods';
-import {H5, H7} from '../../../components/styled/Text';
+import {
+  isValidWalletConnectUri,
+  sleep,
+  titleCasing,
+} from '../../../utils/helper-methods';
+import {Badge, H5, H7} from '../../../components/styled/Text';
 import styled from 'styled-components/native';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
 import {walletConnectOnSessionRequest} from '../../../store/wallet-connect/wallet-connect.effects';
@@ -55,6 +59,7 @@ const ChainIconContainer = styled.View`
 const ChainTextContainer = styled.View`
   margin-left: 8px;
   align-items: flex-start;
+  flex-direction: row;
 `;
 
 const AddConnectionContainer = styled.TouchableOpacity`
@@ -91,6 +96,8 @@ export default ({
     [dispatch],
   );
 
+  const {name, network} = walletData;
+
   return (
     <ConnectionsContainer>
       <ChainContainer>
@@ -99,51 +106,55 @@ export default ({
             <EthIcon width={37} height={37} />
           </ChainIconContainer>
           <ChainTextContainer>
-            <H5>{walletData.name}</H5>
-            {walletData.network ? <H7>{walletData.network}</H7> : null}
+            <H5>{name}</H5>
+            {network ? (
+              <Badge style={{marginLeft: 5}}>
+                <H7>{titleCasing(network)}</H7>
+              </Badge>
+            ) : null}
           </ChainTextContainer>
         </ChainDetailsContainer>
-        <AddConnectionContainer
-          onPress={async () => {
-            haptic('impactLight');
-            navigation.navigate('Scan', {
-              screen: 'Root',
-              params: {
-                onScanComplete: async data => {
-                  try {
-                    dispatch(
-                      showOnGoingProcessModal(OnGoingProcessMessages.LOADING),
-                    );
-                    if (isValidWalletConnectUri(data)) {
-                      const peer = (await dispatch<any>(
-                        walletConnectOnSessionRequest(data),
-                      )) as any;
-                      navigation.navigate('WalletConnect', {
-                        screen: 'WalletConnectStart',
-                        params: {
-                          keyId: customData.keyId,
-                          walletId: customData.walletId,
-                          peer,
-                        },
-                      });
-                    }
-                  } catch (e) {
-                    await showErrorMessage(
-                      CustomErrorMessage({
-                        errMsg: BWCErrorMessage(e),
-                        title: 'Uh oh, something went wrong',
-                      }),
-                    );
-                  } finally {
-                    dispatch(dismissOnGoingProcessModal());
-                  }
-                },
-              },
-            });
-          }}>
-          <AddIcon width={13} />
-          <WalletConnectIcon width={25} />
-        </AddConnectionContainer>
+        {/*<AddConnectionContainer*/}
+        {/*  onPress={async () => {*/}
+        {/*    haptic('impactLight');*/}
+        {/*    navigation.navigate('Scan', {*/}
+        {/*      screen: 'Root',*/}
+        {/*      params: {*/}
+        {/*        onScanComplete: async data => {*/}
+        {/*          try {*/}
+        {/*            dispatch(*/}
+        {/*              showOnGoingProcessModal(OnGoingProcessMessages.LOADING),*/}
+        {/*            );*/}
+        {/*            if (isValidWalletConnectUri(data)) {*/}
+        {/*              const peer = (await dispatch<any>(*/}
+        {/*                walletConnectOnSessionRequest(data),*/}
+        {/*              )) as any;*/}
+        {/*              navigation.navigate('WalletConnect', {*/}
+        {/*                screen: 'WalletConnectStart',*/}
+        {/*                params: {*/}
+        {/*                  keyId: customData.keyId,*/}
+        {/*                  walletId: customData.walletId,*/}
+        {/*                  peer,*/}
+        {/*                },*/}
+        {/*              });*/}
+        {/*            }*/}
+        {/*          } catch (e) {*/}
+        {/*            await showErrorMessage(*/}
+        {/*              CustomErrorMessage({*/}
+        {/*                errMsg: BWCErrorMessage(e),*/}
+        {/*                title: 'Uh oh, something went wrong',*/}
+        {/*              }),*/}
+        {/*            );*/}
+        {/*          } finally {*/}
+        {/*            dispatch(dismissOnGoingProcessModal());*/}
+        {/*          }*/}
+        {/*        },*/}
+        {/*      },*/}
+        {/*    });*/}
+        {/*  }}>*/}
+        {/*  <AddIcon width={13} />*/}
+        {/*  <WalletConnectIcon width={25} />*/}
+        {/*</AddConnectionContainer>*/}
       </ChainContainer>
       {Object.entries(connectors as any).map(([key, c]) => {
         return (

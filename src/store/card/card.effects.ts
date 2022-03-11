@@ -74,6 +74,7 @@ export const startFetchOverview =
       dispatch(
         AppActions.showOnGoingProcessModal(OnGoingProcessMessages.LOADING),
       );
+      dispatch(CardActions.updateFetchOverviewStatus(id, 'loading'));
 
       const {APP, BITPAY_ID, CARD} = getState();
       let {pageSize, pageNumber, startDate, endDate} = options || {};
@@ -223,6 +224,27 @@ export const startFetchVirtualCardImageUrls =
         );
         dispatch(LogActions.error(JSON.stringify(err)));
         dispatch(CardActions.failedFetchVirtualImageUrls());
+      });
+    }
+  };
+
+export const START_UPDATE_CARD_NAME =
+  (id: string, name: string): Effect =>
+  async (dispatch, getState) => {
+    try {
+      const {APP, BITPAY_ID} = getState();
+      const {network} = APP;
+      const token = BITPAY_ID.apiToken[network];
+
+      const res = await CardApi.updateCardName(token, id, name);
+      const {nickname} = res.user.card;
+
+      dispatch(CardActions.successUpdateCardName(network, id, nickname));
+    } catch (err) {
+      batch(() => {
+        dispatch(LogActions.error(`Failed to update card name for ${id}`));
+        dispatch(LogActions.error(JSON.stringify(err)));
+        dispatch(CardActions.failedUpdateCardName(id));
       });
     }
   };
