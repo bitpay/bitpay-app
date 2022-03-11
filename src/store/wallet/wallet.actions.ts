@@ -4,7 +4,6 @@ import {
   PriceHistory,
   Token,
   WalletBalance,
-  Wallet,
   Rates,
   CacheKeys,
 } from './wallet.models';
