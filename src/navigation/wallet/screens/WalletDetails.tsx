@@ -180,7 +180,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         loadHistory(true);
       },
     );
-    return subscription.remove;
+    return () => subscription.remove();
   }, []);
 
   const ShareAddress = async () => {
@@ -299,8 +299,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             contactList,
             refresh,
           }),
-        ),
-        sleep(500),
+        )
+        )
       ]);
 
       let {transactions: _history, loadMore: _loadMore} = transactionHistory;
