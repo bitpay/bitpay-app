@@ -1,5 +1,5 @@
 import {useNavigation} from '@react-navigation/native';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import {FlatList} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
@@ -60,22 +60,20 @@ export default ({
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const [uri, setUri] = useState(dappUri);
-
   const allKeys = useSelector(({WALLET}: RootState) => WALLET.keys);
-  let allEthWallets: WalletRowProps[] = [];
-  Object.entries(allKeys).map(([_, value]) => {
-    if (!value.backupComplete) {
-      return;
-    }
 
-    const ethWallets = value.wallets.filter(
-      wallet => wallet.currencyAbbreviation === 'eth',
-    );
-    const UIFormattedEthWallets = ethWallets.map(wallet =>
-      buildUIFormattedWallet(wallet),
-    );
-    allEthWallets = [...allEthWallets, ...UIFormattedEthWallets];
-  });
+  const allEthWallets = useMemo(
+    () =>
+      Object.values(allKeys).flatMap(key => {
+        if (!key.backupComplete) {
+          return;
+        }
+        return key.wallets
+          .filter(wallet => wallet.currencyAbbreviation === 'eth')
+          .map(wallet => buildUIFormattedWallet(wallet));
+      }),
+    [],
+  ) as WalletRowProps[];
 
   const showErrorMessage = useCallback(
     async (msg: BottomNotificationConfig) => {
