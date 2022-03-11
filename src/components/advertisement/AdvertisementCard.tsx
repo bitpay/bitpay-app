@@ -61,7 +61,6 @@ const AdvertisementCard = ({items}: {items: AdvertisementProps[]}) => {
             key={item.id}
             onPress={() => _onPress(item)}>
             <AdvertisementCardTitle>{item.title}</AdvertisementCardTitle>
-
             <AdvertisementCardText>{item.text}</AdvertisementCardText>
             <AdvertisementCardImg>{item.img}</AdvertisementCardImg>
           </AdvertisementCardContainer>

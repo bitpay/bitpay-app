@@ -8,7 +8,7 @@ export const AdvertisementList: AdvertisementProps[] = [
   {
     id: 'buyCrypto',
     title: 'Buy Crypto',
-    text: 'Exchange ERC-20 Tokens or cross chain assets',
+    text: 'Buy direct using your debit or credit card',
     img: <AdvBuyImg />,
     onPress: () => {
       navigationRef.navigate('BuyCrypto', {screen: 'Root'});
@@ -17,7 +17,7 @@ export const AdvertisementList: AdvertisementProps[] = [
   {
     id: 'swapCrypto',
     title: 'Swap Crypto',
-    text: 'Buy direct using your debit or credit card',
+    text: 'Exchange ERC-20 Tokens or cross chain assets',
     img: <AdvSwapImg />,
     onPress: () => {
       navigationRef.navigate('SwapCrypto', {screen: 'Root'});
