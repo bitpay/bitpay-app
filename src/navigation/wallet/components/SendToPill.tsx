@@ -6,7 +6,7 @@ import ArrowDownSvg from '../../../../assets/img/chevron-down.svg';
 import ArrowUpSvg from '../../../../assets/img/chevron-up.svg';
 
 interface Props {
-  icon: ReactElement;
+  icon?: ReactElement;
   description: string;
   onPress?: () => void;
 }
@@ -25,6 +25,10 @@ const PillText = styled(H7)`
   margin-left: 5px;
 `;
 
+const ArrowContainer = styled.View`
+  margin-left: 8px;
+`;
+
 const SendToPill = ({icon, description, onPress}: Props) => {
   const [toggleArrow, setToggleArrow] = useState(false);
   const _onPress = () => {
@@ -41,11 +45,13 @@ const SendToPill = ({icon, description, onPress}: Props) => {
       </PillText>
 
       {onPress ? (
-        toggleArrow ? (
-          <ArrowUpSvg width={12} height={12} />
-        ) : (
-          <ArrowDownSvg width={12} height={12} />
-        )
+        <ArrowContainer>
+          {toggleArrow ? (
+            <ArrowUpSvg width={12} height={12} />
+          ) : (
+            <ArrowDownSvg width={12} height={12} />
+          )}
+        </ArrowContainer>
       ) : null}
     </PillContainer>
   );
