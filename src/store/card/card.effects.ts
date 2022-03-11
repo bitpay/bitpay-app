@@ -74,6 +74,7 @@ export const startFetchOverview =
       dispatch(
         AppActions.showOnGoingProcessModal(OnGoingProcessMessages.LOADING),
       );
+      dispatch(CardActions.updateFetchOverviewStatus(id, 'loading'));
 
       const {APP, BITPAY_ID, CARD} = getState();
       let {pageSize, pageNumber, startDate, endDate} = options || {};

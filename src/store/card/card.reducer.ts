@@ -20,7 +20,7 @@ export const cardReduxPersistBlacklist: Array<keyof CardState> = [
 ];
 
 export type FetchCardsStatus = 'success' | 'failed' | null;
-export type FetchOverviewStatus = 'success' | 'failed' | null;
+export type FetchOverviewStatus = 'loading' | 'success' | 'failed' | null;
 export type FetchSettledTransactionsStatus = 'success' | 'failed' | null;
 export type FetchVirtualCardImageUrlsStatus = 'success' | 'failed' | null;
 export type UpdateCardNameStatus = 'success' | 'failed' | null;
