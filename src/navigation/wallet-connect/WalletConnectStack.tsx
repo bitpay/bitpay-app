@@ -111,6 +111,7 @@ const WalletConnectStack = () => {
         options={{
           headerTitle: () => <HeaderTitle>Confirm Payment</HeaderTitle>,
           ...TransitionPresets.ModalPresentationIOS,
+          gestureEnabled: false,
         }}
       />
     </WalletConnect.Navigator>

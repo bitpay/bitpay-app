@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useCallback, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {
@@ -22,7 +22,12 @@ import {startSendPayment} from '../../../store/wallet/effects/send/send';
 import {sleep} from '../../../utils/helper-methods';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
-import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
+import {
+  dismissDecryptPasswordModal,
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+  showDecryptPasswordModal,
+} from '../../../store/app/app.actions';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import DefaultSvg from '../../../../assets/img/currencies/default.svg';
@@ -36,6 +41,13 @@ import {
 import {IWCRequest} from '../../../store/wallet-connect/wallet-connect.models';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
+import {checkEncryptPassword} from '../../../store/wallet/utils/wallet';
+import {
+  CustomErrorMessage,
+  WrongPasswordError,
+} from '../../wallet/components/ErrorMessages';
+import {BWCErrorMessage} from '../../../constants/BWCError';
+import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 
 const ConfirmContainer = styled.SafeAreaView`
   flex: 1;
@@ -116,11 +128,36 @@ const WalletConnectConfirm = () => {
 
   const approveCallRequest = async () => {
     try {
+      let password: string | undefined;
+
+      if (key.isPrivKeyEncrypted) {
+        password = await new Promise<string>((resolve, reject) => {
+          dispatch(
+            showDecryptPasswordModal({
+              onSubmitHandler: async (_password: string) => {
+                if (checkEncryptPassword(key, _password)) {
+                  dispatch(dismissDecryptPasswordModal());
+                  await sleep(500);
+                  resolve(_password);
+                } else {
+                  dispatch(dismissDecryptPasswordModal());
+                  await sleep(500);
+                  dispatch(showBottomNotificationModal(WrongPasswordError()));
+                  reject('invalid password');
+                }
+              },
+              onCancelHandler: () => {
+                reject('password canceled');
+              },
+            }),
+          );
+        });
+      }
       dispatch(
         startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT),
       );
       const broadcastedTx = (await dispatch<any>(
-        startSendPayment({txp, key, wallet, recipient}),
+        startSendPayment({txp, key, wallet, recipient, password}),
       )) as any;
       const response = {
         id: request.payload.id,
@@ -131,11 +168,23 @@ const WalletConnectConfirm = () => {
       await sleep(500);
       setShowPaymentSentModal(true);
     } catch (err) {
-      console.log('------err', err);
+      switch (err) {
+        case 'invalid password':
+        case 'password canceled':
+          // TODO: reset slide ?
+          break;
+        default:
+          await showErrorMessage(
+            CustomErrorMessage({
+              errMsg: BWCErrorMessage(err),
+              title: 'Uh oh, something went wrong',
+            }),
+          );
+      }
     }
   };
 
-  const rejectCallRequest = async () => {
+  const rejectCallRequest = useCallback(async () => {
     haptic('impactLight');
     try {
       dispatch(
@@ -153,8 +202,14 @@ const WalletConnectConfirm = () => {
       navigation.goBack();
     } catch (err) {
       console.log(err);
+      await showErrorMessage(
+        CustomErrorMessage({
+          errMsg: BWCErrorMessage(err),
+          title: 'Uh oh, something went wrong',
+        }),
+      );
     }
-  };
+  }, [dispatch, navigation, request]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -167,6 +222,14 @@ const WalletConnectConfirm = () => {
       ),
     });
   }, [navigation, rejectCallRequest]);
+
+  const showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
 
   return (
     <ConfirmContainer>

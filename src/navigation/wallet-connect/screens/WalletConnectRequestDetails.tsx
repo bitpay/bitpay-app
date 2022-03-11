@@ -33,9 +33,9 @@ import {IWCRequest} from '../../../store/wallet-connect/wallet-connect.models';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {sleep} from '../../../utils/helper-methods';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
+import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
 export type WalletConnectRequestDetailsParamList = {
   peerId: string;
@@ -180,8 +180,9 @@ const WalletConnectRequestDetails = () => {
       haptic('impactLight');
       setApproveButtonState('loading');
       if (!request) {
-        throw 'asd';
+        return;
       }
+
       let result: any;
       if (
         wallet.receiveAddress &&
@@ -222,15 +223,25 @@ const WalletConnectRequestDetails = () => {
       goToWalletConnectHome();
     } catch (err) {
       setApproveButtonState('failed');
-      await showErrorMessage(
-        CustomErrorMessage({
-          errMsg: BWCErrorMessage(err),
-          title: 'Uh oh, something went wrong',
-          action: () => {
-            setApproveButtonState(undefined);
-          },
-        }),
-      );
+      switch (err) {
+        case 'invalid password':
+        case 'password canceled':
+          await sleep(800);
+          setApproveButtonState('loading');
+          await sleep(200);
+          setApproveButtonState(undefined);
+          break;
+        default:
+          await showErrorMessage(
+            CustomErrorMessage({
+              errMsg: BWCErrorMessage(err),
+              title: 'Uh oh, something went wrong',
+              action: () => {
+                setApproveButtonState(undefined);
+              },
+            }),
+          );
+      }
     }
   };
 

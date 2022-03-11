@@ -15,6 +15,13 @@ import {
   signTypedDataLegacy,
   signTypedData_v4,
 } from 'eth-sig-util';
+import {
+  dismissDecryptPasswordModal,
+  showBottomNotificationModal,
+  showDecryptPasswordModal,
+} from '../app/app.actions';
+import {checkEncryptPassword} from '../wallet/utils/wallet';
+import {WrongPasswordError} from '../../navigation/wallet/components/ErrorMessages';
 
 const BWC = BwcProvider.getInstance();
 
@@ -263,18 +270,43 @@ export const walletConnectRejectCallRequest =
 
 const getPrivKey =
   (keyId: string): Effect<Promise<any>> =>
-  (_dispatch, getState) => {
-    return new Promise((resolve, reject) => {
+  (dispatch, getState) => {
+    return new Promise(async (resolve, reject) => {
       try {
         const {keys} = getState().WALLET;
         const key: Key = keys[keyId];
-        // TODO
-        // const password = await this.keyProvider.handleEncryptedWallet(
-        //   wallet.keyId
-        // );
-        // const key = this.keyProvider.get(wallet.keyId, password);
+
+        let password: string | undefined;
+
+        if (key.isPrivKeyEncrypted) {
+          password = await new Promise<string>((_resolve, _reject) => {
+            dispatch(
+              showDecryptPasswordModal({
+                onSubmitHandler: async (_password: string) => {
+                  if (checkEncryptPassword(key, _password)) {
+                    dispatch(dismissDecryptPasswordModal());
+                    await sleep(500);
+                    _resolve(_password);
+                  } else {
+                    dispatch(dismissDecryptPasswordModal());
+                    await sleep(500);
+                    dispatch(showBottomNotificationModal(WrongPasswordError()));
+                    _reject('invalid password');
+                  }
+                },
+                onCancelHandler: () => {
+                  _reject('password canceled');
+                },
+              }),
+            );
+          });
+        }
+
+        const xPrivKey = password
+          ? key.methods.get(password).xPrivKey
+          : key.properties.xPrivKey;
         const bitcore = BWC.getBitcore();
-        const xpriv = new bitcore.HDPrivateKey(key.properties.xPrivKey);
+        const xpriv = new bitcore.HDPrivateKey(xPrivKey);
         const priv = xpriv.deriveChild("m/44'/60'/0'/0/0").privateKey;
         resolve(priv);
       } catch (err) {

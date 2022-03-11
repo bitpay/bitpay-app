@@ -253,11 +253,13 @@ export const startSendPayment =
     key,
     wallet,
     recipient,
+    password,
   }: {
     txp: Partial<TransactionProposal>;
     key: Key;
     wallet: Wallet;
     recipient: Recipient;
+    password?: string;
   }): Effect<Promise<any>> =>
   async dispatch => {
     return new Promise(async (resolve, reject) => {
@@ -272,7 +274,7 @@ export const startSendPayment =
             const publishedTx = await publishTx(wallet, proposal);
             console.log('-------- published');
 
-            const signedTx = await signTx(wallet, key, publishedTx);
+            const signedTx = await signTx(wallet, key, publishedTx, password);
             console.log('-------- signed');
 
             broadcastedTx = await broadcastTx(wallet, signedTx);
@@ -313,11 +315,16 @@ export const publishTx = (wallet: Wallet, txp: any) => {
   });
 };
 
-export const signTx = (wallet: Wallet, key: Key, txp: any) => {
+export const signTx = (
+  wallet: Wallet,
+  key: Key,
+  txp: any,
+  password?: string,
+) => {
   return new Promise(async (resolve, reject) => {
     try {
       const rootPath = wallet.getRootPath();
-      const signatures = key.methods.sign(rootPath, txp, undefined);
+      const signatures = key.methods.sign(rootPath, txp, password);
       wallet.pushSignatures(
         txp,
         signatures,
