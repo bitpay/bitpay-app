@@ -299,8 +299,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             contactList,
             refresh,
           }),
-        )
-        )
+        ),
       ]);
 
       let {transactions: _history, loadMore: _loadMore} = transactionHistory;
