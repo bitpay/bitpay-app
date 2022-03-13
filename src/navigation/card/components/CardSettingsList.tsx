@@ -1,8 +1,7 @@
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import ReactNative, {View} from 'react-native';
-import {useDispatch} from 'react-redux';
+import {View} from 'react-native';
 import CustomizeCardIcon from '../../../../assets/img/customize-card.svg';
 import GetHelpIcon from '../../../../assets/img/get-help.svg';
 import HelpIcon from '../../../../assets/img/help.svg';
@@ -12,12 +11,13 @@ import {Br, Hr} from '../../../components/styled/Containers';
 import {Link, Smallest} from '../../../components/styled/Text';
 import {URL} from '../../../constants';
 import {CardBrand, CardProvider} from '../../../constants/card';
+import Dosh, {PoweredByUiOptions} from '../../../lib/dosh';
 import {AppEffects} from '../../../store/app';
 import {Card} from '../../../store/card/card.models';
+import {LogActions} from '../../../store/log';
+import {useAppDispatch} from '../../../utils/hooks';
 import {CardStackParamList} from '../CardStack';
 import * as Styled from './CardSettingsList.styled';
-
-const {Dosh} = ReactNative.NativeModules;
 
 interface SettingsListProps {
   card: Card;
@@ -44,7 +44,7 @@ const LINKS: {
 };
 
 const SettingsList: React.FC<SettingsListProps> = props => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const {card, navigation} = props;
   const [lockPlaceholder, setLockPlaceholder] = useState(false);
@@ -100,8 +100,25 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
           <Styled.SettingsLink
             Icon={HelpIcon}
-            onPress={() => Dosh && Dosh.present()}>
-            DOSH PLACEHOLDER
+            onPress={async () => {
+              try {
+                const options = new PoweredByUiOptions(
+                  'Dosh Rewards',
+                  'CIRCLE',
+                  'RECTANGLE',
+                );
+
+                Dosh.present(options);
+              } catch (err) {
+                dispatch(
+                  LogActions.error(
+                    'Something went wrong trying to open Dosh Rewards',
+                  ),
+                );
+                dispatch(LogActions.error(JSON.stringify(err)));
+              }
+            }}>
+            Dosh Rewards
           </Styled.SettingsLink>
 
           <Hr />
