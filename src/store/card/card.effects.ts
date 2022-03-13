@@ -31,18 +31,32 @@ export const startCardStoreInit =
       if (virtualCardIds.length) {
         dispatch(startFetchVirtualCardImageUrls(virtualCardIds));
       }
-
-      // Dosh card rewards
-      if (Dosh) {
-        const {doshToken} = initialData;
-        Dosh.initializeDosh();
-
-        if (doshToken) {
-          Dosh.setDoshToken(doshToken);
-        }
-      }
     } catch (err) {
       // swallow error so initialize is uninterrupted
+    }
+
+    // Dosh card rewards
+    try {
+      dispatch(LogActions.info('Initializing Dosh...'));
+
+      if (!Dosh) {
+        dispatch(LogActions.debug('Dosh module not found.'));
+        return;
+      }
+
+      await Dosh.initializeDosh();
+      dispatch(LogActions.info('Successfully initialized Dosh.'));
+
+      const {doshToken} = initialData;
+      if (!doshToken) {
+        dispatch(LogActions.debug('No doshToken provided.'));
+        return;
+      }
+
+      await Dosh.setDoshToken(doshToken);
+    } catch (err) {
+      dispatch(LogActions.error('An error occurred while initializing Dosh.'));
+      dispatch(LogActions.error(JSON.stringify(err)));
     }
   };
 
