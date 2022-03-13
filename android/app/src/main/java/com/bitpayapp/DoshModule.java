@@ -162,11 +162,11 @@ public class DoshModule extends ReactContextBaseJavaModule {
     String logoStyle = options.getString("logoStyle");
 
     switch (logoStyle) {
-      case "CIRCLE":
-        return DoshLogoStyle.CIRCLE;
       case "RECTANGLE":
-      default:
         return DoshLogoStyle.RECTANGLE;
+      case "CIRCLE":
+      default:
+        return DoshLogoStyle.CIRCLE;
     }
   }
 

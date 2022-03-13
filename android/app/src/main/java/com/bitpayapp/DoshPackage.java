@@ -1,4 +1,5 @@
-package com.bitpayapp; // replace your-app-name with your app’s name
+package com.bitpayapp;
+
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.NativeModule;
 import com.facebook.react.bridge.ReactApplicationContext;
