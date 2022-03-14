@@ -40,7 +40,7 @@ export const WalletSelectMenuContainer = styled.View`
 `;
 
 export const WalletSelectMenuHeaderContainer = styled.View`
-  margin-top: 20px;
+  padding: 20px;
 `;
 
 export const WalletSelectMenuBodyContainer = styled.ScrollView`
