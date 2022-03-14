@@ -7,7 +7,6 @@ import {
   GiftCardOrder,
   UnsoldGiftCard,
 } from './shop.models';
-import {Network} from '../../constants';
 
 export const successFetchCatalog = (payload: {
   availableCardMap: AvailableCardMap;

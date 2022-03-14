@@ -4,11 +4,6 @@ import {BwcProvider} from '../../../../lib/bwc';
 import {ExtractCoinNetworkAddress} from '../../utils/decode-uri';
 import {Effect} from '../../../index';
 import {successGetReceiveAddress} from '../../wallet.actions';
-import {
-  dismissOnGoingProcessModal,
-  showOnGoingProcessModal,
-} from '../../../app/app.actions';
-import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 
 const BWC = BwcProvider.getInstance();
 

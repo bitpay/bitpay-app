@@ -30,7 +30,6 @@ const EnterEmail = ({
   route,
 }: StackScreenProps<GiftCardStackParamList, 'EnterPhone'>) => {
   const emailRef = useRef<TextInput>(null);
-  const {cardConfig} = route.params;
 
   const {
     control,

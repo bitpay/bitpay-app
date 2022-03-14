@@ -1,5 +1,4 @@
 import React, {memo} from 'react';
-import {TouchableOpacityProps} from 'react-native';
 import styled, {css} from 'styled-components/native';
 import DeleteSvg from '../../../assets/img/delete.svg';
 import {SlateDark} from '../../styles/colors';

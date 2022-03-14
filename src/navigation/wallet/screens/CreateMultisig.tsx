@@ -54,7 +54,6 @@ import {
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import InfoSvg from '../../../../assets/img/info.svg';
-import WarningSvg from '../../../../assets/img/warning.svg';
 import PlusIcon from '../../../components/plus/Plus';
 import MinusIcon from '../../../components/minus/Minus';
 import {sleep} from '../../../utils/helper-methods';
