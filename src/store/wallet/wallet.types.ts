@@ -4,6 +4,7 @@ import {
   PriceHistory,
   Rates,
   Token,
+  Wallet,
   WalletBalance,
 } from './wallet.models';
 
@@ -40,6 +41,7 @@ export enum WalletActionTypes {
   SET_WALLET_REFRESHING = 'WALLET/SET_WALLET_REFRESHING',
   SUCCESS_GET_RECEIVE_ADDRESS = 'WALLET/SUCCESS_GET_RECEIVE_ADDRESS',
   SET_USE_UNCONFIRMED_FUNDS = 'WALLET/SET_USE_UNCONFIRMED_FUNDS',
+  SYNC_WALLETS = 'WALLET/SYNC_WALLETS',
 }
 
 interface successWalletStoreInit {
@@ -229,6 +231,14 @@ interface setUseUnconfirmedFunds {
   payload: boolean;
 }
 
+interface syncWallets {
+  type: typeof WalletActionTypes.SYNC_WALLETS;
+  payload: {
+    keyId: string;
+    wallets: Wallet[];
+  };
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -261,4 +271,5 @@ export type WalletActionType =
   | updateWalletName
   | setWalletRefreshing
   | successGetReceiveAddress
-  | setUseUnconfirmedFunds;
+  | setUseUnconfirmedFunds
+  | syncWallets;

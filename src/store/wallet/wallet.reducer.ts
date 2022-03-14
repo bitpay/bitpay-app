@@ -1,6 +1,7 @@
 import {Key, PriceHistory, Rates, Token} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {FeeLevels} from './effects/fee/fee';
+import merge from 'lodash.merge';
 
 type WalletReduxPersistBlackList = [];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
@@ -329,6 +330,22 @@ export const walletReducer = (
       return {
         ...state,
         useUnconfirmedFunds: action.payload,
+      };
+    }
+
+    case WalletActionTypes.SYNC_WALLETS: {
+      const {keyId, wallets} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      keyToUpdate.wallets = keyToUpdate.wallets.concat(wallets);
+
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
       };
     }
 
