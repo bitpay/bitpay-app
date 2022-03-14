@@ -152,7 +152,7 @@ const KeySettings = () => {
   const _tokenOptions = useAppSelector(({WALLET}) => WALLET.tokenOptions);
 
   const startSyncWallets = async (mnemonic: string) => {
-    if(_key.isPrivKeyEncrypted) {
+    if (_key.isPrivKeyEncrypted) {
       // To close decrypt modal
       await sleep(500);
     }
@@ -267,13 +267,14 @@ const KeySettings = () => {
           </InfoImageContainer>
         </WalletHeaderContainer>
 
-        {wallets.map(({id, currencyName, img, isToken}) => (
+        {wallets.map(({id, currencyName, img, isToken, network}) => (
           <WalletSettingsRow
             id={id}
             img={img}
             currencyName={currencyName}
             key={id}
             isToken={isToken}
+            network={network}
           />
         ))}
 

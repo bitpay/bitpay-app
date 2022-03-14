@@ -4,12 +4,14 @@ import {BaseText} from '../styled/Text';
 import {StyleProp, TextStyle} from 'react-native';
 import NestedArrow from '../../../assets/img/nested-arrow.svg';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
+import {buildTestBadge} from './WalletRow';
 
 export interface WalletSettingsRowProps {
   id: string;
   img: string | ((props: any) => ReactElement);
   currencyName: string;
   isToken?: boolean;
+  network: string;
 }
 
 const Row = styled.View`
@@ -34,6 +36,7 @@ const WalletSettingsRow = ({
   img,
   currencyName,
   isToken,
+  network,
 }: WalletSettingsRowProps) => {
   const theme = useTheme();
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
@@ -48,6 +51,7 @@ const WalletSettingsRow = ({
       <CurrencyName style={textStyle}>
         {currencyName} {isToken}
       </CurrencyName>
+      {buildTestBadge(network, currencyName, isToken)}
     </Row>
   );
 };
