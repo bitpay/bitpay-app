@@ -24,6 +24,9 @@ import appsFlyer from 'react-native-appsflyer';
 import {requestTrackingPermission} from 'react-native-tracking-transparency';
 import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
 import {showBlur} from './app.actions';
+import {batch} from 'react-redux';
+import i18n from 'i18next';
+import {WalletActions} from '../wallet';
 
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
@@ -91,7 +94,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     // splitting inits into store specific ones as to keep it cleaner in the main init here
     await dispatch(startWalletStoreInit());
     await dispatch(walletConnectInit());
-
     await sleep(500);
     dispatch(AppActions.successAppInit());
     dispatch(LogActions.info('Initialized app successfully.'));
@@ -269,3 +271,13 @@ export const askForTrackingPermissionAndEnableSdks =
       resolve();
     });
   };
+
+export const resetAllSettings = (): Effect => dispatch => {
+  batch(() => {
+    dispatch(AppActions.setColorScheme(null));
+    dispatch(AppActions.showPortfolioValue(true));
+    dispatch(AppActions.setDefaultLanguage(i18n.language || 'en'));
+    dispatch(WalletActions.setUseUnconfirmedFunds(false));
+    dispatch(LogActions.info('Reset all settings'));
+  });
+};

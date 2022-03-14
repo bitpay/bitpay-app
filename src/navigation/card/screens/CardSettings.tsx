@@ -1,5 +1,5 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useMemo, useRef, useState} from 'react';
+import React, {useMemo, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView} from 'react-native';
 import Carousel from 'react-native-snap-carousel';
@@ -7,14 +7,14 @@ import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {ScreenGutter, WIDTH} from '../../../components/styled/Containers';
 import {Card} from '../../../store/card/card.models';
+import {selectCardGroups} from '../../../store/card/card.selectors';
+import {useAppSelector} from '../../../utils/hooks';
 import {CardStackParamList} from '../CardStack';
-import {OverviewSlide} from '../components/CardDashboard';
 import SettingsList from '../components/CardSettingsList';
 import SettingsSlide from '../components/CardSettingsSlide';
 
 export type CardSettingsParamList = {
-  slide: OverviewSlide;
-  id?: string | null | undefined;
+  id: string;
 };
 
 type CardSettingsProps = StackScreenProps<CardStackParamList, 'Settings'>;
@@ -38,51 +38,46 @@ const CardTypeButtons = styled.View`
   flex-grow: 0;
 `;
 
-/**
- * Builds an array of 1-2 cards to display in the settings screen. Settings will display at most 1 virtual and 1 physical card at a time.
- * @param cards Cards to use as input data.
- * @returns Array of 1-2 Cards to display on the Settings screen.
- */
-const buildSettingsSlides = (cards: Card[]) => {
-  const slides: Card[] = [];
-
-  const virtual = cards.find(c => c.cardType === 'virtual');
-  const physical = cards.find(c => c.cardType === 'physical');
-
-  if (virtual) {
-    slides.push(virtual);
-  }
-
-  if (physical) {
-    slides.push(physical);
-  }
-
-  return slides;
-};
+const renderSettingsSlide = ({item}: {item: Card}) => (
+  <SettingsSlide card={item} />
+);
 
 const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
+  const {id} = route.params;
   const {t} = useTranslation();
   const carouselRef = useRef<Carousel<Card>>(null);
-  const {slide, id} = route.params;
-  const memoizedCards = useMemo(
-    () => buildSettingsSlides(slide.cards),
-    [slide.cards],
+  const currentGroup = useAppSelector(selectCardGroups).find(g =>
+    g.some(c => c.id === id),
   );
-  const [initialSlideIdx] = useState(() => {
-    return id
-      ? Math.max(
-          0,
-          memoizedCards.findIndex(c => c.id === id),
-        )
-      : 0;
-  });
+  const [cardsToShow, virtualCard, physicalCard] = useMemo(() => {
+    const cards: Card[] = [];
+    let virtual: Card | undefined;
+    let physical: Card | undefined;
 
-  const activeCard =
-    (id && memoizedCards.find(c => c.id === id)) ||
-    memoizedCards[initialSlideIdx];
+    if (currentGroup) {
+      virtual = currentGroup.find(c => c.cardType === 'virtual');
+      physical = currentGroup.find(c => c.cardType === 'physical');
+
+      if (virtual) {
+        cards.push(virtual);
+      }
+
+      if (physical) {
+        cards.push(physical);
+      }
+    }
+
+    return [cards, virtual, physical];
+  }, [currentGroup, id]);
+
+  const currentCard = cardsToShow.find(c => c.id === id);
+  const initialIdx = Math.max(
+    0,
+    cardsToShow.findIndex(c => c.id === id),
+  );
 
   const onCardChange = (idx: number) => {
-    const nextId = memoizedCards[idx].id;
+    const nextId = cardsToShow[idx].id;
 
     navigation.setParams({id: nextId});
   };
@@ -91,28 +86,28 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
     <ScrollView>
       <CardSettingsContainer>
         <CardSettingsHeader>
-          {memoizedCards.length === 2 ? (
+          {virtualCard && physicalCard ? (
             <CardTypeButtons>
               <Button
                 onPress={() => {
-                  navigation.setParams({id: memoizedCards[0].id});
+                  navigation.setParams({id: virtualCard.id});
                   carouselRef.current?.snapToItem(0);
                 }}
                 buttonType="pill"
                 buttonStyle={
-                  activeCard?.cardType === 'virtual' ? 'primary' : 'secondary'
+                  currentCard?.cardType === 'virtual' ? 'primary' : 'secondary'
                 }>
                 {t('Virtual')}
               </Button>
 
               <Button
                 onPress={() => {
-                  navigation.setParams({id: memoizedCards[1].id});
+                  navigation.setParams({id: physicalCard.id});
                   carouselRef.current?.snapToItem(1);
                 }}
                 buttonType="pill"
                 buttonStyle={
-                  activeCard?.cardType === 'physical' ? 'primary' : 'secondary'
+                  currentCard?.cardType === 'physical' ? 'primary' : 'secondary'
                 }>
                 {t('Physical')}
               </Button>
@@ -123,18 +118,20 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
 
       <Carousel<Card>
         ref={carouselRef}
-        data={memoizedCards}
+        data={cardsToShow}
         vertical={false}
-        firstItem={initialSlideIdx}
+        firstItem={initialIdx}
         itemWidth={300 + 20}
         sliderWidth={WIDTH}
-        renderItem={({item}) => <SettingsSlide card={item} />}
-        onScrollIndexChanged={idx => onCardChange(idx)}
+        renderItem={renderSettingsSlide}
+        onScrollIndexChanged={onCardChange}
         layout="default"
       />
 
       <CardSettingsContainer>
-        <SettingsList card={activeCard} navigation={navigation} />
+        {currentCard ? (
+          <SettingsList card={currentCard} navigation={navigation} />
+        ) : null}
       </CardSettingsContainer>
     </ScrollView>
   );

@@ -5,8 +5,10 @@ import {
   FetchOverviewResponse,
   FetchSettledTransactionsResponse,
   FetchVirtualCardImageUrlsResponse,
+  UpdateCardNameResponse,
 } from './card.types';
 import CardQueries from './card.queries';
+import CardMutations from './card.mutations';
 
 const fetchAll = async (token: string) => {
   const query = CardQueries.FETCH_CARDS(token);
@@ -128,12 +130,31 @@ const fetchVirtualCardImageUrls = async (token: string, ids: string[]) => {
   return Object.values(data.data.user);
 };
 
+const updateCardName = async (token: string, id: string, name: string) => {
+  const query = CardMutations.NAME_CARD(token, id, name);
+
+  const {data} = await GraphQlApi.getInstance().request<UpdateCardNameResponse>(
+    query,
+  );
+
+  if (data.errors) {
+    throw new Error(
+      data.errors
+        .map(e => `${e.path ? e.path.join('.') + ': ' : ''}${e.message}`)
+        .join(',\n') || `Failed to update card name for ${id}`,
+    );
+  }
+
+  return data.data;
+};
+
 const CardApi = {
   fetchAll,
   fetchOne,
   fetchOverview,
   fetchSettledTransactions,
   fetchVirtualCardImageUrls,
+  updateCardName,
 };
 
 export default CardApi;

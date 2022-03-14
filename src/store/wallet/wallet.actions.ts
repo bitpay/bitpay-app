@@ -4,7 +4,6 @@ import {
   PriceHistory,
   Token,
   WalletBalance,
-  Wallet,
   Rates,
   CacheKeys,
 } from './wallet.models';
@@ -182,5 +181,10 @@ export const successGetReceiveAddress = (payload: {
   receiveAddress: string;
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_GET_RECEIVE_ADDRESS,
+  payload,
+});
+
+export const setUseUnconfirmedFunds = (payload: boolean): WalletActionType => ({
+  type: WalletActionTypes.SET_USE_UNCONFIRMED_FUNDS,
   payload,
 });

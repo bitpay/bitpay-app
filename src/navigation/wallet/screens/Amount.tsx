@@ -17,6 +17,7 @@ import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
 import useAppSelector from '../../../utils/hooks/useAppSelector';
 import {ParseAmount} from '../../../store/wallet/effects/amount/amount';
 import haptic from '../../../components/haptic-feedback/haptic';
+import {CardConfig} from '../../../store/shop/shop.models';
 
 const SendMax = styled.TouchableOpacity`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
@@ -92,11 +93,12 @@ export interface AmountParamList {
     amount: string,
     // for toggling sync button 'loading' | 'success' | 'failed' | null | undefined;
     setButtonState: (state: ButtonState) => void,
-    opts?: {sendMax?: boolean},
+    opts?: {sendMax?: boolean; cardConfig?: CardConfig},
   ) => void;
-  currencyAbbreviation: string;
+  currencyAbbreviation?: string;
   opts?: {
     hideSendMax?: boolean;
+    cardConfig?: CardConfig;
   };
 }
 
@@ -116,7 +118,9 @@ const Amount = () => {
     currency: currencyAbbreviation,
     primaryIsFiat: false,
   });
-  const swapList = [currencyAbbreviation, 'USD'];
+  const swapList = currencyAbbreviation
+    ? [currencyAbbreviation, 'USD']
+    : ['USD'];
   const allRates = useAppSelector(({WALLET}) => WALLET.rates);
   const [curVal, setCurVal] = useState('');
 
@@ -129,6 +133,9 @@ const Amount = () => {
   } = amountConfig;
 
   useEffect(() => {
+    if (!currency) {
+      return;
+    }
     // if added for dev (hot reload)
     if (!primaryIsFiat) {
       const fiatRate = allRates[currency.toLowerCase()].find(
@@ -149,10 +156,11 @@ const Amount = () => {
     updateAmountConfig(current => ({
       ...current,
       displayAmount: _val,
+      amount: _val,
     }));
 
     const val = Number(_val);
-    if (isNaN(val)) {
+    if (isNaN(val) || !currencyAbbreviation) {
       return;
     }
 
@@ -175,16 +183,18 @@ const Amount = () => {
   useLayoutEffect(() => {
     if (!opts?.hideSendMax) {
       navigation.setOptions({
-        headerRight: () => (
-          <HeaderContainer>
-            <SendMax
-              onPress={() =>
-                onAmountSelected(amount, setButtonState, {sendMax: true})
-              }>
-              <SendMaxText>Send Max</SendMaxText>
-            </SendMax>
-          </HeaderContainer>
-        ),
+        headerRight: !opts?.cardConfig
+          ? () => (
+              <HeaderContainer>
+                <SendMax
+                  onPress={() =>
+                    onAmountSelected(amount, setButtonState, {sendMax: true})
+                  }>
+                  <SendMaxText>Send Max</SendMaxText>
+                </SendMax>
+              </HeaderContainer>
+            )
+          : null,
       });
     }
   });
@@ -221,32 +231,38 @@ const Amount = () => {
               {displayAmount || 0}
             </AmountText>
             <CurrencySuperScript>
-              <CurrencyText>{currency}</CurrencyText>
+              <CurrencyText>
+                {opts?.cardConfig?.currency || currency}
+              </CurrencyText>
             </CurrencySuperScript>
           </Row>
-          <Row>
-            <AmountEquivText>
-              {displayEquivalentAmount || 0}{' '}
-              {primaryIsFiat && currencyAbbreviation}
-            </AmountEquivText>
-          </Row>
-          <SwapButtonContainer>
-            <SwapButton
-              swapList={swapList}
-              onChange={(currency: string) => {
-                setCurVal('');
-                updateAmountConfig(current => ({
-                  ...current,
-                  currency,
-                  primaryIsFiat: !primaryIsFiat,
-                  displayAmount: '0',
-                  displayEquivalentAmount: primaryIsFiat
-                    ? formatFiatAmount(0, 'USD')
-                    : '0',
-                }));
-              }}
-            />
-          </SwapButtonContainer>
+          {currencyAbbreviation ? (
+            <Row>
+              <AmountEquivText>
+                {displayEquivalentAmount || 0}{' '}
+                {primaryIsFiat && currencyAbbreviation}
+              </AmountEquivText>
+            </Row>
+          ) : null}
+          {swapList.length > 1 ? (
+            <SwapButtonContainer>
+              <SwapButton
+                swapList={swapList}
+                onChange={(currency: string) => {
+                  setCurVal('');
+                  updateAmountConfig(current => ({
+                    ...current,
+                    currency,
+                    primaryIsFiat: !primaryIsFiat,
+                    displayAmount: '0',
+                    displayEquivalentAmount: primaryIsFiat
+                      ? formatFiatAmount(0, 'USD')
+                      : '0',
+                  }));
+                }}
+              />
+            </SwapButtonContainer>
+          ) : null}
         </AmountHeroContainer>
         <View>
           <VirtualKeyboard onCellPress={onCellPress} />

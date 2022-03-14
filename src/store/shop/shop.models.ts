@@ -68,6 +68,9 @@ export interface UnsoldGiftCard {
   currency: string;
   name: string;
   discounts?: GiftCardDiscount[];
+  invoiceId: string;
+  clientId: string;
+  accessKey: string;
 }
 
 export interface GiftCardBalanceEntry {
@@ -85,7 +88,6 @@ export interface GiftCard extends UnsoldGiftCard {
   claimLink?: string;
   date: string;
   displayName: string;
-  invoiceId: string;
   pin?: string;
   status: 'SUCCESS' | 'PENDING' | 'FAILURE' | 'UNREDEEMED';
   clientId: string;
@@ -114,12 +116,14 @@ export interface GiftCardInvoiceParams {
   discounts: string[];
   email?: string;
   phone?: string;
+  transactionCurrency: string;
 }
 
 export interface GiftCardOrder {
   accessKey: string;
   invoiceId: string;
-  totalDiscount: number;
+  invoice: Invoice;
+  totalDiscount?: number;
 }
 
 export interface GiftCardRedeemParams {
@@ -142,8 +146,16 @@ export interface CardConfigMap {
   [cardName: string]: CardConfig;
 }
 
+export interface InvoiceMinerFee {
+  satoshisPerByte: number;
+  totalFee: number;
+}
+
 export interface Invoice {
+  id: string;
   url: string;
+  exchangeRates: any;
+  minerFees: {[currency: string]: InvoiceMinerFee};
   paymentTotals: {[currency: string]: number};
   paymentDisplayTotals: {[currency: string]: string};
   amountPaid: number;

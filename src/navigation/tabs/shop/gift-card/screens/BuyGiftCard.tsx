@@ -32,6 +32,7 @@ import {useDispatch} from 'react-redux';
 import {AppActions} from '../../../../../store/app';
 import GiftCardDiscountText from '../../components/GiftCardDiscountText';
 import {formatFiatAmount} from '../../../../../utils/helper-methods';
+import {WalletScreens} from '../../../../wallet/WalletStack';
 
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;
@@ -113,7 +114,26 @@ const BuyGiftCard = ({
   });
 
   const next = () => {
-    cardConfig.phoneRequired
+    if (!cardConfig.supportedAmounts) {
+      return navigator.navigate('Wallet', {
+        screen: WalletScreens.AMOUNT,
+        params: {
+          opts: {cardConfig},
+          onAmountSelected: amount => {
+            const invoiceCreationParams = {
+              invoiceType: 'GiftCard',
+              amount: +amount,
+              cardConfig,
+            };
+            navigator.navigate('Wallet', {
+              screen: 'Confirm',
+              params: {invoiceCreationParams},
+            });
+          },
+        },
+      });
+    }
+    return cardConfig.phoneRequired
       ? navigator.navigate('GiftCard', {
           screen: GiftCardScreens.ENTER_PHONE,
           params: {cardConfig},

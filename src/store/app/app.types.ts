@@ -35,6 +35,7 @@ export enum AppActionTypes {
   CURRENT_PIN = 'APP/CURRENT_PIN',
   PIN_BANNED_UNTIL = 'APP/PIN_BANNED_UNTIL',
   SHOW_BLUR = 'APP/SHOW_BLUR',
+  SHOW_PORTFOLIO_VALUE = 'APP/SHOW_PORTFOLIO_VALUE',
 }
 
 interface NetworkChanged {
@@ -162,6 +163,11 @@ interface ShowBlur {
   payload: boolean;
 }
 
+interface ShowPortfolioValue {
+  type: typeof AppActionTypes.SHOW_PORTFOLIO_VALUE;
+  payload: boolean;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
@@ -189,4 +195,5 @@ export type AppActionType =
   | PinLockActive
   | CurrentPin
   | PinBannedUntil
-  | ShowBlur;
+  | ShowBlur
+  | ShowPortfolioValue;

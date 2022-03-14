@@ -1,6 +1,5 @@
 import {Key, PriceHistory, Rates, Token} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
-import merge from 'lodash.merge';
 import {FeeLevels} from './effects/fee/fee';
 
 type WalletReduxPersistBlackList = [];
@@ -323,6 +322,13 @@ export const walletReducer = (
             ...keyToUpdate,
           },
         },
+      };
+    }
+
+    case WalletActionTypes.SET_USE_UNCONFIRMED_FUNDS: {
+      return {
+        ...state,
+        useUnconfirmedFunds: action.payload,
       };
     }
 

@@ -5,7 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import {useDispatch, useSelector} from 'react-redux';
+import {useDispatch} from 'react-redux';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {RootState} from '../../../store';
 import {PriceHistory} from '../../../store/wallet/wallet.models';
@@ -29,7 +29,6 @@ import {
 } from '../../../components/styled/Containers';
 import AdvertisementCard from '../../../components/advertisement/AdvertisementCard';
 import {AdvertisementList} from '../../../components/advertisement/advertisement';
-import {AppActions} from '../../../store/app';
 import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishModal';
 import {sleep} from '../../../utils/helper-methods';
 import ProfileButton from './components/HeaderProfileButton';
@@ -41,6 +40,7 @@ import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {URL} from '../../../constants';
 import {startGetRates} from '../../../store/wallet/effects';
+import {useAppSelector} from '../../../utils/hooks';
 
 const HeaderContainer = styled.View`
   flex-direction: row;
@@ -77,15 +77,13 @@ export const SectionHeaderContainer = styled.View<{justifyContent?: string}>`
 
 const HomeRoot = () => {
   const dispatch = useDispatch();
-  const onboardingCompleted = useSelector(
-    ({APP}: RootState) => APP.onboardingCompleted,
-  );
-
-  const showOnboardingFinishModal = async () => {
-    await sleep(300);
-    dispatch(AppActions.showOnboardingFinishModal());
-  };
-
+  // const onboardingCompleted = useAppSelector(
+  //   ({APP}: RootState) => APP.onboardingCompleted,
+  // );
+  // const showOnboardingFinishModal = async () => {
+  //   await sleep(300);
+  //   dispatch(AppActions.showOnboardingFinishModal());
+  // };
   // useEffect(() => {
   //   if (!onboardingCompleted) {
   //     showOnboardingFinishModal();
@@ -95,6 +93,8 @@ const HomeRoot = () => {
   const navigation = useNavigation();
   const theme = useTheme();
   const [refreshing, setRefreshing] = useState(false);
+
+  const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
@@ -118,7 +118,7 @@ const HomeRoot = () => {
   };
 
   // Exchange Rates
-  const priceHistory = useSelector(
+  const priceHistory = useAppSelector(
     ({WALLET}: RootState) => WALLET.priceHistory,
   );
   const exchangeRatesItems: Array<ExchangeRateProps> = [];
@@ -170,7 +170,7 @@ const HomeRoot = () => {
           <ProfileButton />
         </HeaderContainer>
         {/* ////////////////////////////// PORTFOLIO BALANCE */}
-        <PortfolioBalance />
+        {showPortfolioValue && <PortfolioBalance />}
 
         {/* ////////////////////////////// CARDS CAROUSEL */}
         <CardsCarousel />

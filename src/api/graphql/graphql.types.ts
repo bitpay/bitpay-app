@@ -1,7 +1,7 @@
-export interface GqlQueryParams {
+export interface GqlQueryParams<T = undefined> {
   query: string;
   variables: {
-    [k: string]: string | number | boolean | undefined;
+    [k: string]: string | number | boolean | undefined | T;
   };
 }
 
