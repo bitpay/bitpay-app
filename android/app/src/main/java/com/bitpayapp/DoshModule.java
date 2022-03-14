@@ -22,6 +22,7 @@ class BpErrorCodes {
 
 public class DoshModule extends ReactContextBaseJavaModule {
   private boolean initialized = false;
+  private PoweredByUiOptions uiOptions = new PoweredByUiOptions("Dosh Rewards", DoshLogoStyle.CIRCLE, DoshBrandDetailsHeaderStyle.RECTANGLE, null, null);
   private String applicationId = "REPLACE_ME";
 
   DoshModule(ReactApplicationContext context) {
@@ -35,7 +36,7 @@ public class DoshModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void initializeDosh(Promise promise) {
+  public void initializeDosh(ReadableMap uiOptions, Promise promise) {
     DoshModule self = this;
     Activity activity = this.getCurrentActivity();
 
@@ -44,6 +45,7 @@ public class DoshModule extends ReactContextBaseJavaModule {
       public void run() {
         PoweredByDosh.Companion.initialize(self.applicationId, self.getReactApplicationContext());
         self.initialized = true;
+        self.uiOptions = self.mapToUiOptions(uiOptions);
         promise.resolve(true);
       }
     });
@@ -98,15 +100,15 @@ public class DoshModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void present(ReadableMap options, Promise promise) {
+  public void present(Promise promise) {
     if (!this.initialized) {
       promise.reject(BpErrorCodes.NOT_INIT, "Not initialized");
       return;
     }
 
     Activity activity = this.getCurrentActivity();
+    PoweredByUiOptions uiOptions = this.uiOptions;
     ReactApplicationContext context = this.getReactApplicationContext();
-    PoweredByUiOptions uiOptions = this.mapToUiOptions(options);
 
     activity.runOnUiThread(new Runnable() {
       @Override
@@ -144,7 +146,7 @@ public class DoshModule extends ReactContextBaseJavaModule {
 
   private PoweredByUiOptions mapToUiOptions(ReadableMap options) {
     if (options == null) {
-      return new PoweredByUiOptions("Dosh", DoshLogoStyle.CIRCLE, DoshBrandDetailsHeaderStyle.RECTANGLE, null, null);
+      return new PoweredByUiOptions("Dosh Rewards", DoshLogoStyle.CIRCLE, DoshBrandDetailsHeaderStyle.RECTANGLE, null, null);
     }
 
     String feedTitle = this.getFeedTitle(options);

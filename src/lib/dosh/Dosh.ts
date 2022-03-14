@@ -8,8 +8,9 @@ interface DoshModule {
   /**
    * This should be done before any other calls to the PoweredByDosh SDK.
    * TODO: pass in applicationId from JS?
+   * @param uiOptions Required on Android. Options to customize the SDK's header title and brand page UI.
    */
-  initializeDosh: () => Promise<any>;
+  initializeDosh: (uiOptions: PoweredByUiOptions) => Promise<any>;
 
   /**
    * User authorization between the app and Dosh is coordinated by providing the SDK with an authorization token.
@@ -18,10 +19,9 @@ interface DoshModule {
   setDoshToken: (token: string) => Promise<any>;
 
   /**
-   * Present a full screen view that is managed by the SDK. Options argument is required on Android.
-   * @param uiOptions Required on Android. Options to customize the SDK's header title and brand page UI.
+   * Present a full screen view that is managed by the SDK.
    */
-  present: (uiOptions?: PoweredByUiOptions) => Promise<any>;
+  present: () => Promise<any>;
 
   /**
    * Any time the app's current user changes, such as when the user logs out, the user's information should be cleared.
@@ -39,38 +39,33 @@ interface DoshModule {
 /**
  * React JS wrapper for calling the Dosh SDK to handle differences in the iOS/Android call signatures/implementations.
  */
-interface Dosh extends Omit<DoshModule, 'present'> {
+interface Dosh extends Omit<DoshModule, 'initializeDosh'> {
   /**
-   * Present a full screen view that is managed by the SDK.
+   * This should be done before any other calls to the PoweredByDosh SDK.
    */
-  present: (uiOptions?: PoweredByUiOptions) => Promise<any>;
+  initializeDosh: (uiOptions: PoweredByUiOptions) => Promise<any>;
 }
 
 const DoshModule = ReactNative.NativeModules.Dosh as DoshModule;
 
 const Dosh: Dosh = {
-  initializeDosh() {
-    return DoshModule.initializeDosh();
+  initializeDosh(uiOptions?: PoweredByUiOptions) {
+    const _uiOptions: PoweredByUiOptions = {
+      feedTitle: 'Dosh Rewards',
+      logoStyle: 'CIRCLE',
+      brandDetailsHeaderStyle: 'RECTANGLE',
+
+      ...(uiOptions || {}),
+    };
+
+    return DoshModule.initializeDosh(_uiOptions);
   },
 
   setDoshToken(token: string) {
     return DoshModule.setDoshToken(token);
   },
 
-  present(uiOptions?: PoweredByUiOptions) {
-    if (Platform.OS === 'android') {
-      const _uiOptions: PoweredByUiOptions = {
-        feedTitle: 'Dosh Rewards',
-        logoStyle: 'CIRCLE',
-        brandDetailsHeaderStyle: 'RECTANGLE',
-
-        ...(uiOptions || {}),
-      };
-
-      return DoshModule.present(_uiOptions);
-    }
-
-    // Not sure if iOS method has any customization available, even the Android options aren't mentioned in the docs.
+  present() {
     return DoshModule.present();
   },
 

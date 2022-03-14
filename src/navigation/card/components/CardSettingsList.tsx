@@ -11,7 +11,7 @@ import {Br, Hr} from '../../../components/styled/Containers';
 import {Link, Smallest} from '../../../components/styled/Text';
 import {URL} from '../../../constants';
 import {CardBrand, CardProvider} from '../../../constants/card';
-import Dosh, {PoweredByUiOptions} from '../../../lib/dosh';
+import Dosh from '../../../lib/dosh';
 import {AppEffects} from '../../../store/app';
 import {Card} from '../../../store/card/card.models';
 import {LogActions} from '../../../store/log';
@@ -102,13 +102,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
             Icon={HelpIcon}
             onPress={async () => {
               try {
-                const options = new PoweredByUiOptions(
-                  'Dosh Rewards',
-                  'CIRCLE',
-                  'RECTANGLE',
-                );
-
-                Dosh.present(options);
+                Dosh.present();
               } catch (err) {
                 dispatch(
                   LogActions.error(

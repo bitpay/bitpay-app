@@ -1,11 +1,9 @@
-export type DoshLogoStyle = 'CIRCLE' | 'RECTANGLE';
-export type DoshBrandDetailsHeaderStyle = 'DIAGONAL' | 'RECTANGLE';
+import {DoshBrandDetailsHeaderStyle, DoshLogoStyle} from './types';
 
 /**
- * An options object used to configure the Dosh UI.
- * TODO: does this apply to iOS SDK?
+ * An options object used to configure the Dosh Android SDK UI.
  */
-export class PoweredByUiOptions {
+class PoweredByUiOptions {
   /**
    * The title displayed in the Dosh UI header.
    */

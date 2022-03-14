@@ -1,6 +1,5 @@
 import FastImage from 'react-native-fast-image';
 import {batch} from 'react-redux';
-import {CardActions} from '.';
 import CardApi from '../../api/card';
 import {InitialUserData} from '../../api/user/user.types';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
@@ -8,12 +7,12 @@ import {sleep} from '../../utils/helper-methods';
 import {AppActions} from '../app';
 import {Effect} from '../index';
 import {LogActions} from '../log';
-import {TTL} from './card.types';
-import ReactNative from 'react-native';
 import {ProviderConfig} from '../../constants/config.card';
 import {CardProvider} from '../../constants/card';
+import Dosh, {PoweredByUiOptions} from '../../lib/dosh';
 import {isAxiosError} from '../../utils/axios';
-const {Dosh} = ReactNative.NativeModules;
+import {CardActions} from '.';
+import {TTL} from './card.types';
 
 export const startCardStoreInit =
   (initialData: InitialUserData): Effect<Promise<void>> =>
@@ -44,7 +43,13 @@ export const startCardStoreInit =
         return;
       }
 
-      await Dosh.initializeDosh();
+      const options = new PoweredByUiOptions(
+        'Dosh Rewards',
+        'CIRCLE',
+        'RECTANGLE',
+      );
+
+      await Dosh.initializeDosh(options);
       dispatch(LogActions.info('Successfully initialized Dosh.'));
 
       const {doshToken} = initialData;
