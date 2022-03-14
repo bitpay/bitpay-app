@@ -1,8 +1,5 @@
-import ReactNative from 'react-native';
-import {IDosh} from './types';
+import Dosh from './Dosh';
 
-export * from './types';
-
-const Dosh = ReactNative.NativeModules.Dosh as IDosh;
+export * from './PoweredByUiOptions';
 
 export default Dosh;
