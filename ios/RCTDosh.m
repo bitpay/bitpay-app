@@ -13,9 +13,9 @@
 
 RCT_EXPORT_MODULE();
 
-RCT_EXPORT_METHOD(initializeDosh)
+RCT_EXPORT_METHOD(initializeDosh:(NSDictionary *)uiOptions)
 {
-  [DoshAdapter initDosh];
+  [DoshAdapter initDoshWithUiOptions:uiOptions];
   RCTLogInfo(@"Initialized Dosh");
 }
 
