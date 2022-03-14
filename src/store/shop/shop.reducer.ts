@@ -1,7 +1,11 @@
+import {Network} from '../../constants';
+import {APP_NETWORK} from '../../constants/config';
 import {
   AvailableCardMap,
   CategoriesAndCurations,
   DirectIntegrationMap,
+  GiftCard,
+  UnsoldGiftCard,
 } from './shop.models';
 import {ShopActionType, ShopActionTypes} from './shop.types';
 
@@ -12,12 +16,19 @@ export interface ShopState {
   availableCardMap: AvailableCardMap;
   categoriesAndCurations: CategoriesAndCurations;
   integrations: DirectIntegrationMap;
+  giftCards: {
+    [key in Network]: (GiftCard | UnsoldGiftCard)[];
+  };
 }
 
 const initialState: ShopState = {
   availableCardMap: {},
   categoriesAndCurations: {curated: {}, categories: {}},
   integrations: {},
+  giftCards: {
+    [Network.mainnet]: [],
+    [Network.testnet]: [],
+  },
 };
 
 export const shopReducer = (
@@ -33,6 +44,47 @@ export const shopReducer = (
         availableCardMap,
         categoriesAndCurations,
         integrations,
+      };
+    case ShopActionTypes.INITIALIZED_UNSOLD_GIFT_CARD:
+      const {giftCard} = action.payload;
+      return {
+        ...state,
+        giftCards: {
+          ...state.giftCards,
+          [APP_NETWORK]: state.giftCards[APP_NETWORK].concat(giftCard),
+        },
+      };
+    case ShopActionTypes.DELETED_UNSOLD_GIFT_CARD:
+      const {invoiceId} = action.payload;
+      return {
+        ...state,
+        giftCards: {
+          ...state.giftCards,
+          [APP_NETWORK]: state.giftCards[APP_NETWORK].filter(
+            card => card.invoiceId !== invoiceId,
+          ),
+        },
+      };
+    case ShopActionTypes.REDEEMED_GIFT_CARD:
+      const {giftCard: redeemedGiftCard} = action.payload;
+      return {
+        ...state,
+        giftCards: {
+          ...state.giftCards,
+          [APP_NETWORK]: state.giftCards[APP_NETWORK].map(card =>
+            card.invoiceId === redeemedGiftCard.invoiceId
+              ? {...card, ...redeemedGiftCard}
+              : card,
+          ),
+        },
+      };
+    case ShopActionTypes.CLEARED_GIFT_CARDS:
+      return {
+        ...state,
+        giftCards: {
+          [Network.mainnet]: [],
+          [Network.testnet]: [],
+        },
       };
 
     default:

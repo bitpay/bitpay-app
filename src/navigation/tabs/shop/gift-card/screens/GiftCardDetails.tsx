@@ -248,14 +248,14 @@ const GiftCardDetails = ({
                   </>
                 ) : (
                   <Paragraph style={{marginBottom: 30}}>
-                    Created <TimeAgo time={parseInt(giftCard.date, 10)} />
+                    Created <TimeAgo time={giftCard.date} />
                   </Paragraph>
                 )}
               </ClaimCodeBox>
             ) : null}
             {giftCard.pin || cardConfig.defaultClaimCodeType === 'link' ? (
               <Paragraph style={{marginTop: 15}}>
-                Created <TimeAgo time={parseInt(giftCard.date, 10)} />
+                Created <TimeAgo time={giftCard.date} />
               </Paragraph>
             ) : null}
             {!giftCard.archived ||

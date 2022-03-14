@@ -3,6 +3,7 @@ import {WalletActions} from '../../index';
 import {getPriceHistory, startGetRates} from '../rates/rates';
 import {startGetTokenOptions} from '../currencies/currencies';
 import {startUpdateAllKeyAndWalletBalances} from '../balance/balance';
+import {updatePortfolioBalance} from '../../wallet.actions';
 
 export const startWalletStoreInit =
   (): Effect => async (dispatch, getState: () => RootState) => {
@@ -18,6 +19,7 @@ export const startWalletStoreInit =
       }
 
       dispatch(getPriceHistory());
+      dispatch(updatePortfolioBalance());
       dispatch(WalletActions.successWalletStoreInit());
     } catch (e) {
       console.error(e);

@@ -29,7 +29,6 @@ import {
 } from '../../../components/styled/Containers';
 import AdvertisementCard from '../../../components/advertisement/AdvertisementCard';
 import {AdvertisementList} from '../../../components/advertisement/advertisement';
-import {AppActions} from '../../../store/app';
 import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishModal';
 import {sleep} from '../../../utils/helper-methods';
 import ProfileButton from './components/HeaderProfileButton';
