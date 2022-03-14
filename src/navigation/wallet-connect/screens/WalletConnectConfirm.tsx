@@ -1,4 +1,4 @@
-import React, {useCallback, useLayoutEffect, useState} from 'react';
+import React, {useCallback, useLayoutEffect, useState, useEffect} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {
@@ -108,6 +108,7 @@ const WalletConnectConfirm = () => {
   const [txDetails] = useState(_txDetails);
   const [txp] = useState(_txp);
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
+  const [resetSwipeButton, setResetSwipeButton] = useState(false);
 
   const {
     currency,
@@ -171,7 +172,7 @@ const WalletConnectConfirm = () => {
       switch (err) {
         case 'invalid password':
         case 'password canceled':
-          // TODO: reset slide ?
+          setResetSwipeButton(true);
           break;
         default:
           await showErrorMessage(
@@ -183,6 +184,14 @@ const WalletConnectConfirm = () => {
       }
     }
   };
+
+  const showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
 
   const rejectCallRequest = useCallback(async () => {
     haptic('impactLight');
@@ -201,7 +210,6 @@ const WalletConnectConfirm = () => {
       await sleep(1000);
       navigation.goBack();
     } catch (err) {
-      console.log(err);
       await showErrorMessage(
         CustomErrorMessage({
           errMsg: BWCErrorMessage(err),
@@ -209,7 +217,7 @@ const WalletConnectConfirm = () => {
         }),
       );
     }
-  }, [dispatch, navigation, request]);
+  }, [dispatch, navigation, request, showErrorMessage]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -223,13 +231,16 @@ const WalletConnectConfirm = () => {
     });
   }, [navigation, rejectCallRequest]);
 
-  const showErrorMessage = useCallback(
-    async (msg: BottomNotificationConfig) => {
-      await sleep(500);
-      dispatch(showBottomNotificationModal(msg));
-    },
-    [dispatch],
-  );
+  useEffect(() => {
+    if (!resetSwipeButton) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setResetSwipeButton(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [resetSwipeButton]);
 
   return (
     <ConfirmContainer>
@@ -292,6 +303,7 @@ const WalletConnectConfirm = () => {
       <SwipeButton
         title={'Slide to send'}
         onSwipeComplete={approveCallRequest}
+        forceReset={resetSwipeButton}
       />
 
       <PaymentSent
