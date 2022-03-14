@@ -9,7 +9,7 @@ import {Effect} from '../index';
 import {LogActions} from '../log';
 import {ProviderConfig} from '../../constants/config.card';
 import {CardProvider} from '../../constants/card';
-import Dosh, {PoweredByUiOptions} from '../../lib/dosh';
+import Dosh, {DoshUiOptions} from '../../lib/dosh';
 import {isAxiosError} from '../../utils/axios';
 import {CardActions} from '.';
 import {TTL} from './card.types';
@@ -43,11 +43,7 @@ export const startCardStoreInit =
         return;
       }
 
-      const options = new PoweredByUiOptions(
-        'Dosh Rewards',
-        'CIRCLE',
-        'RECTANGLE',
-      );
+      const options = new DoshUiOptions('Dosh Rewards', 'CIRCLE', 'RECTANGLE');
 
       await Dosh.initializeDosh(options);
       dispatch(LogActions.info('Successfully initialized Dosh.'));

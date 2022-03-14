@@ -1,5 +1,5 @@
 import ReactNative, {Platform} from 'react-native';
-import PoweredByUiOptions from './PoweredByUiOptions';
+import DoshUiOptions from './DoshUiOptions';
 
 /**
  * NativeModule bridge to access the iOS or Android SDK methods.
@@ -10,7 +10,7 @@ interface DoshModule {
    * TODO: pass in applicationId from JS?
    * @param uiOptions Required on Android. Options to customize the SDK's header title and brand page UI.
    */
-  initializeDosh: (uiOptions: PoweredByUiOptions) => Promise<any>;
+  initializeDosh: (uiOptions: DoshUiOptions) => Promise<any>;
 
   /**
    * User authorization between the app and Dosh is coordinated by providing the SDK with an authorization token.
@@ -43,14 +43,14 @@ interface Dosh extends Omit<DoshModule, 'initializeDosh'> {
   /**
    * This should be done before any other calls to the PoweredByDosh SDK.
    */
-  initializeDosh: (uiOptions: PoweredByUiOptions) => Promise<any>;
+  initializeDosh: (uiOptions: DoshUiOptions) => Promise<any>;
 }
 
 const DoshModule = ReactNative.NativeModules.Dosh as DoshModule;
 
 const Dosh: Dosh = {
-  initializeDosh(uiOptions?: PoweredByUiOptions) {
-    const _uiOptions: PoweredByUiOptions = {
+  initializeDosh(uiOptions?: DoshUiOptions) {
+    const _uiOptions: DoshUiOptions = {
       feedTitle: 'Dosh Rewards',
       logoStyle: 'CIRCLE',
       brandDetailsHeaderStyle: 'RECTANGLE',

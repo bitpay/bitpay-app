@@ -3,7 +3,7 @@ import {DoshBrandDetailsHeaderStyle, DoshLogoStyle} from './types';
 /**
  * An options object used to configure the Dosh Android SDK UI.
  */
-class PoweredByUiOptions {
+class DoshUiOptions {
   /**
    * The title displayed in the Dosh UI header.
    */
@@ -45,4 +45,4 @@ class PoweredByUiOptions {
   }
 }
 
-export default PoweredByUiOptions;
+export default DoshUiOptions;
