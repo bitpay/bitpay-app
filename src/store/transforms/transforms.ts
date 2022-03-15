@@ -23,6 +23,8 @@ export const bindWalletClient = createTransform(
           if (!img && SUPPORTED_CURRENCIES.includes(currencyAbbreviation)) {
             wallet.img = CurrencyListIcons[currencyAbbreviation];
           }
+          // reset transaction history
+          wallet.transactionHistory = {transactions: [], loadMore: true};
           console.log(`bindWalletClient - ${wallet.id}`);
           return merge(
             BWCProvider.getClient(JSON.stringify(wallet.credentials)),
