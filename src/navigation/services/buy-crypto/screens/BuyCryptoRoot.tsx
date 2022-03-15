@@ -13,6 +13,7 @@ import {
   BuyCryptoItemCard,
   BuyCryptoItemTitle,
   ActionsContainer,
+  SelectedOptionCol,
   SelectedOptionContainer,
   SelectedOptionText,
   DataText,
@@ -27,6 +28,7 @@ import {AppActions} from '../../../../store/app';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {Action, White} from '../../../../styles/colors';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
+import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {getCountry} from '../../../../lib/location/location';
 import {simplexSupportedCoins} from '../utils/simplex-utils';
 import {wyreSupportedCoins} from '../utils/wyre-utils';
@@ -37,7 +39,7 @@ const CtaContainer = styled.View`
 `;
 
 const ArrowContainer = styled.View`
-  margin-right: 5px;
+  margin-left: 10px;
 `;
 
 const BuyCryptoRoot: React.FC = () => {
@@ -217,7 +219,18 @@ const BuyCryptoRoot: React.FC = () => {
                 USD
               </SelectedOptionText>
             </SelectedOptionContainer>
-            <DataText>{amount}</DataText>
+            <SelectedOptionCol>
+              <DataText>{amount}</DataText>
+              <ArrowContainer>
+                <SelectorArrowRight
+                  {...{
+                    width: 13,
+                    height: 13,
+                    color: theme.dark ? 'white' : '#9ba3ae',
+                  }}
+                />
+              </ArrowContainer>
+            </SelectedOptionCol>
           </ActionsContainer>
         </BuyCryptoItemCard>
 
@@ -237,7 +250,7 @@ const BuyCryptoRoot: React.FC = () => {
                 </SelectedOptionText>
                 <ArrowContainer>
                   <SelectorArrowDown
-                    {...{width: 20, height: 20, color: 'white'}}
+                    {...{width: 13, height: 13, color: 'white'}}
                   />
                 </ArrowContainer>
               </SelectedOptionContainer>
@@ -248,26 +261,39 @@ const BuyCryptoRoot: React.FC = () => {
               onPress={() => {
                 showModal('walletSelector');
               }}>
-              <SelectedOptionContainer>
-                {walletData && (
-                  <CoinIconContainer>
-                    <CurrencyImage img={walletData.img} size={25} />
-                  </CoinIconContainer>
-                )}
-                <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
-                  {selectedWallet.credentials.coin.toUpperCase()}
-                </SelectedOptionText>
+              <SelectedOptionContainer style={{minWidth: 120}}>
+                <SelectedOptionCol>
+                  {walletData && (
+                    <CoinIconContainer>
+                      <CurrencyImage img={walletData.img} size={20} />
+                    </CoinIconContainer>
+                  )}
+                  <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
+                    {selectedWallet.credentials.coin.toUpperCase()}
+                  </SelectedOptionText>
+                </SelectedOptionCol>
                 <ArrowContainer>
                   <SelectorArrowDown
                     {...{
-                      width: 20,
-                      height: 20,
-                      color: theme.dark ? 'white' : 'black',
+                      width: 13,
+                      height: 13,
+                      color: theme.dark ? 'white' : '#252525',
                     }}
                   />
                 </ArrowContainer>
               </SelectedOptionContainer>
-              <DataText>{selectedWallet.currencyName}</DataText>
+              <SelectedOptionCol>
+                <DataText>{selectedWallet.currencyName}</DataText>
+                <ArrowContainer>
+                  <SelectorArrowRight
+                    {...{
+                      width: 13,
+                      height: 13,
+                      color: theme.dark ? 'white' : '#9ba3ae',
+                    }}
+                  />
+                </ArrowContainer>
+              </SelectedOptionCol>
             </ActionsContainer>
           )}
         </BuyCryptoItemCard>
@@ -288,7 +314,7 @@ const BuyCryptoRoot: React.FC = () => {
                 </SelectedOptionText>
                 <ArrowContainer>
                   <SelectorArrowDown
-                    {...{width: 20, height: 20, color: 'white'}}
+                    {...{width: 13, height: 13, color: 'white'}}
                   />
                 </ArrowContainer>
               </SelectedOptionContainer>

@@ -31,7 +31,7 @@ export const ActionsContainer = styled.TouchableOpacity`
 export const SelectedOptionContainer = styled.View`
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   height: 40px;
   padding: 0px 14px;
@@ -45,13 +45,19 @@ export const SelectedOptionText = styled(BaseText)`
   font-weight: 500;
 `;
 
+export const SelectedOptionCol = styled.View`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+`;
+
 export const DataText = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-size: 26px;
+  font-size: 18px;
 `;
 
 export const CoinIconContainer = styled.View`
-  width: 40px;
+  width: 30px;
   height: 25px;
   display: flex;
   flex-direction: row;
