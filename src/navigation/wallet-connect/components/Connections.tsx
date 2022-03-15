@@ -46,7 +46,7 @@ export default ({
   wallet: Wallet;
   connectors: IWCConnector[];
 }) => {
-  const {name, network} = wallet.credentials;
+  const {walletName, network} = wallet.credentials;
 
   return (
     <ConnectionsContainer>
@@ -56,7 +56,7 @@ export default ({
             <EthIcon width={37} height={37} />
           </ChainIconContainer>
           <ChainTextContainer>
-            <H5>{name}</H5>
+            <H5>{walletName}</H5>
             {network ? (
               <Badge style={{marginLeft: 5}}>
                 <H7>{titleCasing(network)}</H7>
