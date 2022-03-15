@@ -112,7 +112,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
                 dispatch(LogActions.error(JSON.stringify(err)));
               }
             }}>
-            Dosh Rewards
+            Offers
           </Styled.SettingsLink>
 
           <Hr />

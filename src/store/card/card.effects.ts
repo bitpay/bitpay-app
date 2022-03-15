@@ -43,7 +43,7 @@ export const startCardStoreInit =
         return;
       }
 
-      const options = new DoshUiOptions('Dosh Rewards', 'CIRCLE', 'RECTANGLE');
+      const options = new DoshUiOptions('Offers', 'CIRCLE', 'RECTANGLE');
 
       await Dosh.initializeDosh(options);
       dispatch(LogActions.info('Successfully initialized Dosh.'));
