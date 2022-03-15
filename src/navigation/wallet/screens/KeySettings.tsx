@@ -268,14 +268,25 @@ const KeySettings = () => {
         </WalletHeaderContainer>
 
         {wallets.map(({id, currencyName, img, isToken, network}) => (
-          <WalletSettingsRow
-            id={id}
-            img={img}
-            currencyName={currencyName}
+          <TouchableOpacity
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('Wallet', {
+                screen: 'WalletSettings',
+                params: {walletId: id, key},
+              });
+            }}
             key={id}
-            isToken={isToken}
-            network={network}
-          />
+            activeOpacity={ActiveOpacity}>
+            <WalletSettingsRow
+              id={id}
+              img={img}
+              currencyName={currencyName}
+              key={id}
+              isToken={isToken}
+              network={network}
+            />
+          </TouchableOpacity>
         ))}
 
         <VerticalPadding style={{alignItems: 'center'}}>

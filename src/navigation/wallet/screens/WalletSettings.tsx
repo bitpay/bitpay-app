@@ -67,10 +67,11 @@ const WalletSettings = () => {
   const navigation = useNavigation();
   const [demoToggle, setDemoToggle] = useState(false);
   const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
+  const wallet = findWalletById(wallets, walletId) as Wallet;
   const {
     walletName,
     credentials: {walletName: credentialsWalletName},
-  } = findWalletById(wallets, walletId) as Wallet;
+  } = wallet;
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -166,7 +167,10 @@ const WalletSettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              //    TODO: Redirect me
+              navigation.navigate('Wallet', {
+                screen: 'WalletInformation',
+                params: {wallet},
+              });
             }}>
             <WalletSettingsTitle>Information</WalletSettingsTitle>
           </Setting>
