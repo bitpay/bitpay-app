@@ -71,6 +71,7 @@ export interface WalletObj {
   img: string | ((props?: any) => ReactElement);
   receiveAddress?: string;
   isRefreshing?: boolean;
+  transactionHistory?: {transactions: any[]; loadMore: boolean};
 }
 
 export interface PriceHistory {
@@ -251,38 +252,42 @@ export interface ProposalErrorHandlerProps {
 }
 
 // UI details
+export interface TxDetailsAmount {
+  cryptoAmount: string;
+  fiatAmount: string;
+}
+
+export interface TxDetailsFee {
+  feeLevel: string;
+  cryptoAmount: string;
+  fiatAmount: string;
+  percentageOfTotalAmount: string;
+}
+
+export interface TxDetailsSendingTo {
+  recipientType?: string | undefined;
+  recipientName?: string;
+  recipientAddress?: string;
+  img: string | ((props?: any) => ReactElement);
+}
+
+export interface TxDetailsSendingFrom {
+  walletName: string;
+  img: string | ((props?: any) => ReactElement);
+}
+
 export interface TxDetails {
   currency: string;
-  sendingTo: {
-    recipientType?: string | undefined;
-    recipientName?: string;
-    recipientAddress?: string;
-  };
-  fee: {
-    feeLevel: string;
-    cryptoAmount: string;
-    fiatAmount: string;
-    percentageOfTotalAmount: string;
-  };
-  networkCost?: {
-    cryptoAmount: string;
-    fiatAmount: string;
-  };
+  sendingTo: TxDetailsSendingTo;
+  fee: TxDetailsFee;
+  networkCost?: TxDetailsAmount;
   // eth
   gasPrice?: number;
   gasLimit?: number;
   //
-  sendingFrom: {
-    walletName: string;
-  };
-  subTotal: {
-    cryptoAmount: string;
-    fiatAmount: string;
-  };
-  total: {
-    cryptoAmount: string;
-    fiatAmount: string;
-  };
+  sendingFrom: TxDetailsSendingFrom;
+  subTotal: TxDetailsAmount;
+  total: TxDetailsAmount;
 }
 
 export interface InvoiceCreationParams {

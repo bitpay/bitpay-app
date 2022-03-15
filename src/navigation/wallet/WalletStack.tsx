@@ -34,7 +34,7 @@ import TermsOfUse, {
 import AddWallet, {AddWalletParamList} from './screens/AddWallet';
 import Amount, {AmountParamList} from './screens/Amount';
 import SendTo from './screens/send/SendTo';
-import Confirm, {ConfirmParamList} from './screens/send/Confirm';
+import Confirm, {ConfirmParamList} from './screens/send/confirm/Confirm';
 import CreateMultisig, {CreateMultisigProps} from './screens/CreateMultisig';
 import JoinMultisig, {JoinMultisigParamList} from './screens/JoinMultisig';
 import Copayers from './screens/Copayers';
@@ -43,6 +43,9 @@ import UpdateKeyOrWalletName from './screens/UpdateKeyOrWalletName';
 import RequestSpecificAmountQR from './screens/request-specific-amount/RequestSpecificAmountQR';
 import TransactionDetails from './screens/TransactionDetails';
 import GlobalSelect, {GlobalSelectParamList} from './screens/GlobalSelect';
+import GiftCardConfirm, {
+  GiftCardConfirmParamList,
+} from './screens/send/confirm/GiftCardConfirm';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -69,6 +72,7 @@ export type WalletStackParamList = {
   Amount: AmountParamList;
   SendTo: {wallet: WalletModel};
   Confirm: ConfirmParamList;
+  GiftCardConfirm: GiftCardConfirmParamList;
   CreateMultisig: CreateMultisigProps;
   JoinMultisig: JoinMultisigParamList | undefined;
   Copayers: {wallet: WalletModel; status: _Credentials};
@@ -99,6 +103,7 @@ export enum WalletScreens {
   AMOUNT = 'Amount',
   SEND_TO = 'SendTo',
   CONFIRM = 'Confirm',
+  GIFT_CARD_CONFIRM = 'GiftCardConfirm',
   CREATE_MULTISIG = 'CreateMultisig',
   JOIN_MULTISIG = 'JoinMultisig',
   COPAYERS = 'Copayers',
@@ -200,19 +205,18 @@ const WalletStack = () => {
         <Wallet.Screen
           options={{
             headerTitle: () => <HeaderTitle>Confirm Payment</HeaderTitle>,
-            // headerRight: () => (
-            //   <Button
-            //     buttonType={'pill'}
-            //     onPress={() => {
-            //       haptic('impactLight');
-            //     }}>
-            //     Cancel
-            //   </Button>
-            // ),
             ...TransitionPresets.ModalPresentationIOS,
           }}
           name={WalletScreens.CONFIRM}
           component={Confirm}
+        />
+        <Wallet.Screen
+          options={{
+            headerTitle: () => <HeaderTitle>Confirm Payment</HeaderTitle>,
+            ...TransitionPresets.ModalPresentationIOS,
+          }}
+          name={WalletScreens.GIFT_CARD_CONFIRM}
+          component={GiftCardConfirm}
         />
         <Wallet.Screen
           options={{

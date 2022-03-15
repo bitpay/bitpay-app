@@ -139,6 +139,7 @@ const buildTxDetails = ({
       recipientType: type,
       recipientName: name,
       recipientAddress: formatCryptoAddress(address),
+      img: wallet.img,
     },
     fee: {
       feeLevel,
@@ -160,6 +161,7 @@ const buildTxDetails = ({
     }),
     sendingFrom: {
       walletName: wallet.walletName || wallet.credentials.walletName,
+      img: wallet.img,
     },
     subTotal: {
       cryptoAmount: FormatAmountStr(coin, amount),
