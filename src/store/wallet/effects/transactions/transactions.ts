@@ -25,17 +25,12 @@ import {getHistoricFiatRate, startGetRates} from '../rates/rates';
 import {toFiat} from '../../utils/wallet';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {getFeeRatePerKb} from '../fee/fee';
+import {updateWalletTxHistory} from '../../wallet.actions';
 
 const BWC = BwcProvider.getInstance();
 const Errors = BWC.getErrors();
 
-const LIMIT = 15;
-
-interface TransactionsHistoryInterface {
-  limitTx?: string;
-  lowAmount?: number;
-  force?: boolean;
-}
+export const TX_HISTORY_LIMIT = 25;
 
 const GetCoinsForTx = (wallet: Wallet, txId: string): Promise<any> => {
   const {
@@ -308,68 +303,86 @@ export const GroupTransactionHistory = (history: any[]) => {
     });
 };
 
-export const GetTransactionHistory = ({
-  wallet,
-  transactionsHistory = [],
-  limit = LIMIT,
-  opts = {},
-  contactList = [],
-}: {
-  wallet: Wallet;
-  transactionsHistory: any[];
-  limit: number;
-  opts?: TransactionsHistoryInterface;
-  contactList?: any[];
-}): Promise<{transactions: any[]; loadMore: boolean}> => {
-  return new Promise(async (resolve, reject) => {
-    let requestLimit = limit;
+export const GetTransactionHistory =
+  ({
+    wallet,
+    transactionsHistory = [],
+    limit = TX_HISTORY_LIMIT,
+    refresh = false,
+    contactList = [],
+  }: {
+    wallet: Wallet;
+    transactionsHistory: any[];
+    limit: number;
+    refresh?: boolean;
+    contactList?: any[];
+  }): Effect<Promise<{transactions: any[]; loadMore: boolean}>> =>
+  async (dispatch): Promise<{transactions: any[]; loadMore: boolean}> => {
+    return new Promise(async (resolve, reject) => {
+      let requestLimit = limit;
 
-    const {walletId, coin} = wallet.credentials;
+      const {walletId, keyId} = wallet.credentials;
 
-    if (!walletId || !wallet.isComplete()) {
-      return resolve({transactions: [], loadMore: false});
-    }
+      if (!walletId || !wallet.isComplete()) {
+        return resolve({transactions: [], loadMore: false});
+      }
 
-    const lastTransactionId = transactionsHistory[0]
-      ? transactionsHistory[0].txid
-      : null;
-    const skip = transactionsHistory.length;
+      const lastTransactionId = transactionsHistory[0]
+        ? transactionsHistory[0].txid
+        : null;
+      const skip = refresh ? 0 : transactionsHistory.length;
 
-    try {
-      let {transactions, loadMore} = await GetNewTransactions(
-        [],
-        skip,
-        wallet,
-        requestLimit,
-        lastTransactionId,
-      );
+      if (wallet.transactionHistory?.transactions?.length && !refresh && !skip) {
+        return resolve(wallet.transactionHistory);
+      }
 
-      // To get transaction list details: icon, description, amount and date
-      transactions = BuildUiFriendlyList(
-        transactions,
-        wallet.currencyAbbreviation,
-        contactList,
-      );
+      try {
+        let {transactions, loadMore} = await GetNewTransactions(
+          [],
+          skip,
+          wallet,
+          requestLimit,
+          lastTransactionId,
+        );
 
-      const array = transactionsHistory
-        .concat(transactions)
-        .filter((txs: any) => txs);
+        // To get transaction list details: icon, description, amount and date
+        transactions = BuildUiFriendlyList(
+          transactions,
+          wallet.currencyAbbreviation,
+          contactList,
+        );
 
-      const newHistory = uniqBy(array, x => {
-        return (x as any).txid;
-      });
+        const array = transactionsHistory
+          .concat(transactions)
+          .filter((txs: any) => txs);
 
-      return resolve({transactions: newHistory, loadMore});
-    } catch (err) {
-      console.log(
-        '!! Could not update transaction history for ',
-        wallet.id,
-        err,
-      );
-      return reject(err);
-    }
-  });
-};
+        const newHistory = uniqBy(array, x => {
+          return (x as any).txid;
+        });
+
+        if (!skip) {
+          dispatch(
+            updateWalletTxHistory({
+              walletId: walletId,
+              keyId: keyId,
+              transactionHistory: {
+                transactions: newHistory.slice(0, TX_HISTORY_LIMIT),
+                loadMore,
+              },
+            }),
+          );
+        }
+        return resolve({transactions: newHistory, loadMore});
+      } catch (err) {
+        console.log(
+          '!! Could not update transaction history for ',
+          wallet.id,
+          err,
+        );
+        return reject(err);
+      }
+    });
+  };
 
 //////////////////////// Edit Transaction Note ///////////////////////////
 
