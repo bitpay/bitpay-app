@@ -369,7 +369,7 @@ const RecoveryPhrase = () => {
               navigation.navigate('Scan', {
                 screen: 'Root',
                 params: {
-                  contextHandler: data => {
+                  onScanComplete: data => {
                     try {
                       const parsedCode = data.split('|');
                       const recoveryObj: ImportObj = {

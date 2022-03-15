@@ -41,6 +41,7 @@ export enum WalletActionTypes {
   SET_WALLET_REFRESHING = 'WALLET/SET_WALLET_REFRESHING',
   SUCCESS_GET_RECEIVE_ADDRESS = 'WALLET/SUCCESS_GET_RECEIVE_ADDRESS',
   SET_USE_UNCONFIRMED_FUNDS = 'WALLET/SET_USE_UNCONFIRMED_FUNDS',
+  UPDATE_WALLET_TX_HISTORY = 'WALLET/UPDATE_WALLET_TX_HISTORY',
   SYNC_WALLETS = 'WALLET/SYNC_WALLETS',
 }
 
@@ -231,6 +232,16 @@ interface setUseUnconfirmedFunds {
   payload: boolean;
 }
 
+interface updateWalletTxHistory {
+  type: typeof WalletActionTypes.UPDATE_WALLET_TX_HISTORY;
+
+  payload: {
+    keyId: string;
+    walletId: string;
+    transactionHistory: {transactions: any[]; loadMore: boolean};
+  };
+}
+
 interface syncWallets {
   type: typeof WalletActionTypes.SYNC_WALLETS;
   payload: {
@@ -272,4 +283,5 @@ export type WalletActionType =
   | setWalletRefreshing
   | successGetReceiveAddress
   | setUseUnconfirmedFunds
+  | updateWalletTxHistory
   | syncWallets;

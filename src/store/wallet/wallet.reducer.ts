@@ -326,6 +326,27 @@ export const walletReducer = (
       };
     }
 
+    case WalletActionTypes.UPDATE_WALLET_TX_HISTORY: {
+      const {keyId, walletId, transactionHistory} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
+        if (wallet.id === walletId) {
+          wallet.transactionHistory = transactionHistory;
+        }
+        return wallet;
+      });
+
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
     case WalletActionTypes.SET_USE_UNCONFIRMED_FUNDS: {
       return {
         ...state,
