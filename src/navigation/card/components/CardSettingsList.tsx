@@ -6,6 +6,7 @@ import CustomizeCardIcon from '../../../../assets/img/customize-card.svg';
 import GetHelpIcon from '../../../../assets/img/get-help.svg';
 import HelpIcon from '../../../../assets/img/help.svg';
 import LockIcon from '../../../../assets/img/lock.svg';
+import OffersIcon from '../../../../assets/img/offers.svg';
 import UpdateIcon from '../../../../assets/img/update.svg';
 import {Br, Hr} from '../../../components/styled/Containers';
 import {Link, Smallest} from '../../../components/styled/Text';
@@ -99,7 +100,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
           <Hr />
 
           <Styled.SettingsLink
-            Icon={HelpIcon}
+            Icon={OffersIcon}
             onPress={async () => {
               try {
                 Dosh.present();
