@@ -180,6 +180,10 @@ const WalletSettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
+              navigation.navigate('Wallet', {
+                screen: 'Addresses',
+                params: {wallet},
+              });
             }}>
             <WalletSettingsTitle>Addresses</WalletSettingsTitle>
           </Setting>
@@ -189,19 +193,12 @@ const WalletSettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              //    TODO: Redirect me
+              navigation.navigate('Wallet', {
+                screen: 'ExportWallet',
+                params: {wallet},
+              });
             }}>
             <WalletSettingsTitle>Export Wallet</WalletSettingsTitle>
-          </Setting>
-          <Hr />
-
-          <Setting
-            activeOpacity={ActiveOpacity}
-            onPress={() => {
-              haptic('impactLight');
-              //    TODO: Redirect me
-            }}>
-            <WalletSettingsTitle>Delete</WalletSettingsTitle>
           </Setting>
         </VerticalPadding>
       </ScrollView>
