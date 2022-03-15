@@ -26,9 +26,9 @@ const schema = yup.object().shape({
   email: yup.string().email().required(),
 });
 
-const EnterEmail = ({
-  route,
-}: StackScreenProps<GiftCardStackParamList, 'EnterPhone'>) => {
+const EnterEmail: React.FC<
+  StackScreenProps<GiftCardStackParamList, 'EnterPhone'>
+> = () => {
   const emailRef = useRef<TextInput>(null);
 
   const {

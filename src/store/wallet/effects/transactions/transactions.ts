@@ -332,7 +332,11 @@ export const GetTransactionHistory =
         : null;
       const skip = refresh ? 0 : transactionsHistory.length;
 
-      if (wallet.transactionHistory?.transactions?.length && !refresh && !skip) {
+      if (
+        wallet.transactionHistory?.transactions?.length &&
+        !refresh &&
+        !skip
+      ) {
         return resolve(wallet.transactionHistory);
       }
 

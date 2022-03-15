@@ -3,11 +3,7 @@ import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
 import {Hr} from '../../../../../components/styled/Containers';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../../WalletStack';
-import {
-  useAppDispatch,
-  useAppSelector,
-  useLogger,
-} from '../../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {H4, TextAlign} from '../../../../../components/styled/Text';
 import {
   InvoiceCreationParams,
@@ -93,7 +89,6 @@ const GiftCardHeader = ({
 
 const Confirm = () => {
   const dispatch = useAppDispatch();
-  const logger = useLogger();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'GiftCardConfirm'>>();
   const {

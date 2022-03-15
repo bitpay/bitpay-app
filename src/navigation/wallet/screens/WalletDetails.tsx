@@ -47,7 +47,8 @@ import {
   GetTransactionHistory,
   GroupTransactionHistory,
   IsMoved,
-  IsReceived, TX_HISTORY_LIMIT,
+  IsReceived,
+  TX_HISTORY_LIMIT,
 } from '../../../store/wallet/effects/transactions/transactions';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import TransactionRow, {
@@ -304,7 +305,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
       let {transactions: _history, loadMore: _loadMore} = transactionHistory;
 
-      if (_history?.length){
+      if (_history?.length) {
         setHistory(_history);
         const grouped = GroupTransactionHistory(_history);
         setGroupedHistory(grouped);
