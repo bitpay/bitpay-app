@@ -113,7 +113,9 @@ export const waitForTargetAmountAndUpdateWallet =
                   console.log('updated recipient wallet');
                 }
               }
-              DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_UPDATE_COMPLETE);
+              DeviceEventEmitter.emit(
+                DeviceEmitterEvents.WALLET_UPDATE_COMPLETE,
+              );
               await dispatch(updatePortfolioBalance());
 
               clearInterval(interval);
