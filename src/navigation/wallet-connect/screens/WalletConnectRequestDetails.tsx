@@ -161,7 +161,6 @@ const WalletConnectRequestDetails = () => {
       setRejectButtonState('success');
       goToWalletConnectHome();
     } catch (e) {
-      console.log(e);
       setRejectButtonState('failed');
       await showErrorMessage(
         CustomErrorMessage({

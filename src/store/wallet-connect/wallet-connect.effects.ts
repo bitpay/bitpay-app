@@ -22,6 +22,7 @@ import {
 } from '../app/app.actions';
 import {checkEncryptPassword} from '../wallet/utils/wallet';
 import {WrongPasswordError} from '../../navigation/wallet/components/ErrorMessages';
+import {LogActions} from '../log';
 
 const BWC = BwcProvider.getInstance();
 
@@ -38,10 +39,18 @@ export const walletConnectInit = (): Effect => async (dispatch, getState) => {
           };
         }),
       ));
+    dispatch(
+      LogActions.info('[WC/walletConnectInit]: initialized successfully'),
+    );
     dispatch(WalletConnectActions.successInitRequest(connectors || []));
     dispatch(walletConnectSubscribeToEvents());
-  } catch (e) {
-    console.log(e);
+  } catch (err) {
+    dispatch(
+      LogActions.error(
+        '[WC/walletConnectInit]: an error occurred while initializing.',
+      ),
+    );
+    dispatch(LogActions.error(JSON.stringify(err)));
     dispatch(WalletConnectActions.failedInitRquest());
   }
 };
@@ -59,15 +68,23 @@ export const walletConnectOnSessionRequest =
         }
         const {pending} = getState().WALLET_CONNECT;
         dispatch(WalletConnectActions.sessionRequest([...pending, connector]));
+        dispatch(
+          LogActions.info(
+            '[WC/walletConnectOnSessionRequest]: session request',
+          ),
+        );
         resolve(payload.params[0]);
       });
 
       await sleep(5000);
       if (isWaitingForEvent) {
         // reject promise if Dapp doesn't respond
-        reject(
-          'Session request failed or rejected. Please try again by refreshing the QR code.',
+        const error =
+          'Session request failed or rejected. Please try again by refreshing the QR code.';
+        dispatch(
+          LogActions.error(`[WC/walletConnectOnSessionRequest]: ${error}`),
         );
+        reject(error);
       }
     });
   };
@@ -106,10 +123,20 @@ export const walletConnectApproveSessionRequest =
           ),
         );
         dispatch(walletConnectSubscribeToEvents(peerId));
+        dispatch(
+          LogActions.info(
+            '[WC/walletConnectApproveSessionRequest]: session approval',
+          ),
+        );
         resolve();
-      } catch (e) {
-        console.log(e);
-        reject(e);
+      } catch (err) {
+        dispatch(
+          LogActions.error(
+            '[WC/walletConnectApproveSessionRequest]: an error occurred while approving session.',
+          ),
+        );
+        dispatch(LogActions.error(JSON.stringify(err)));
+        reject(err);
       }
     });
   };
@@ -129,6 +156,11 @@ export const walletConnectRejectSessionRequest =
       (connector: WalletConnect) => connector.peerId !== peerId,
     );
 
+    dispatch(
+      LogActions.info(
+        '[WC/walletConnectRejectSessionRequest]: session rejection',
+      ),
+    );
     dispatch(WalletConnectActions.rejectSessionRequest(updatedPending));
   };
 
@@ -192,7 +224,7 @@ export const walletConnectSubscribeToEvents =
 
 export const walletConnectKillSession =
   (peerId: string): Effect<Promise<void>> =>
-  (_dispatch, getState) => {
+  (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       const {connectors} = getState().WALLET_CONNECT;
       await Promise.all(
@@ -200,11 +232,21 @@ export const walletConnectKillSession =
           try {
             if (c.connector.peerId === peerId) {
               await c.connector.killSession();
+              dispatch(
+                LogActions.info(
+                  '[WC/walletConnectKillSession]: session killed',
+                ),
+              );
               resolve();
             }
-          } catch (e) {
-            console.log(e);
-            reject(e);
+          } catch (err) {
+            dispatch(
+              LogActions.error(
+                '[WC/walletConnectKillSession]: an error occurred while killing session',
+              ),
+            );
+            dispatch(LogActions.error(JSON.stringify(err)));
+            reject(err);
           }
         }),
       );
@@ -232,10 +274,20 @@ export const walletConnectApproveCallRequest =
         await dispatch(
           WalletConnectActions.approveCallRequest(updatedRequests),
         );
+        dispatch(
+          LogActions.info(
+            '[WC/walletConnectApproveCallRequest]: call request approval',
+          ),
+        );
         resolve();
-      } catch (e) {
-        console.log(e);
-        reject(e);
+      } catch (err) {
+        dispatch(
+          LogActions.error(
+            '[WC/walletConnectApproveCallRequest]: an error occurred while approving call request',
+          ),
+        );
+        dispatch(LogActions.error(JSON.stringify(err)));
+        reject(err);
       }
     });
   };
@@ -260,10 +312,20 @@ export const walletConnectRejectCallRequest =
               request.payload && request.payload.id !== response.id,
           );
         await dispatch(WalletConnectActions.rejectCallRequest(updatedRequests));
+        dispatch(
+          LogActions.info(
+            '[WC/walletConnectRejectCallRequest]: call request rejection',
+          ),
+        );
         resolve();
-      } catch (e) {
-        console.log(e);
-        reject(e);
+      } catch (err) {
+        dispatch(
+          LogActions.error(
+            '[WC/walletConnectRejectCallRequest]: an error occurred while rejecting call request',
+          ),
+        );
+        dispatch(LogActions.error(JSON.stringify(err)));
+        reject(err);
       }
     });
   };
@@ -308,9 +370,17 @@ const getPrivKey =
         const bitcore = BWC.getBitcore();
         const xpriv = new bitcore.HDPrivateKey(xPrivKey);
         const priv = xpriv.deriveChild("m/44'/60'/0'/0/0").privateKey;
+        dispatch(
+          LogActions.info('[WC/getPrivKey]: got the private key successfully'),
+        );
         resolve(priv);
       } catch (err) {
-        console.log(err);
+        dispatch(
+          LogActions.error(
+            '[WC/getPrivKey]: an error occurred while getting private key',
+          ),
+        );
+        dispatch(LogActions.error(JSON.stringify(err)));
         reject(err);
       }
     });
@@ -328,8 +398,19 @@ export const walletConnectSignTypedDataLegacy =
             data,
           },
         );
+        dispatch(
+          LogActions.info(
+            '[WC/walletConnectSignTypedDataLegacy]: signed message',
+          ),
+        );
         resolve(result);
       } catch (err) {
+        dispatch(
+          LogActions.error(
+            '[WC/walletConnectSignTypedDataLegacy]: an error occurred while signing message',
+          ),
+        );
+        dispatch(LogActions.error(JSON.stringify(err)));
         reject(err);
       }
     });
@@ -344,8 +425,17 @@ export const walletConnectSignTypedData =
         const result = signTypedData_v4(Buffer.from(priv.toString(), 'hex'), {
           data,
         });
+        dispatch(
+          LogActions.info('[WC/walletConnectSignTypedData]: signed message'),
+        );
         resolve(result);
       } catch (err) {
+        dispatch(
+          LogActions.error(
+            '[WC/walletConnectSignTypedData]: an error occurred while signing message',
+          ),
+        );
+        dispatch(LogActions.error(JSON.stringify(err)));
         reject(err);
       }
     });
@@ -360,8 +450,17 @@ export const walletConnectPersonalSign =
         const result = personalSign(Buffer.from(priv.toString(), 'hex'), {
           data,
         });
+        dispatch(
+          LogActions.info('[WC/walletConnectPersonalSign]: signed message'),
+        );
         resolve(result);
       } catch (err) {
+        dispatch(
+          LogActions.error(
+            '[WC/walletConnectPersonalSign]: an error occurred while signing message',
+          ),
+        );
+        dispatch(LogActions.error(JSON.stringify(err)));
         reject(err);
       }
     });
