@@ -33,6 +33,8 @@ import {AppActions} from '../../../../../store/app';
 import GiftCardDiscountText from '../../components/GiftCardDiscountText';
 import {formatFiatAmount} from '../../../../../utils/helper-methods';
 import {WalletScreens} from '../../../../wallet/WalletStack';
+import {TransactionProposal} from '../../../../../store/wallet/wallet.models';
+import {deletedUnsoldGiftCard} from '../../../../../store/shop/shop.actions';
 
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;
@@ -118,7 +120,7 @@ const BuyGiftCard = ({
       return navigator.navigate('Wallet', {
         screen: WalletScreens.AMOUNT,
         params: {
-          opts: {cardConfig},
+          opts: {hideSendMax: true},
           onAmountSelected: amount => {
             const invoiceCreationParams = {
               invoiceType: 'GiftCard',
@@ -126,8 +128,10 @@ const BuyGiftCard = ({
               cardConfig,
             };
             navigator.navigate('Wallet', {
-              screen: 'Confirm',
-              params: {invoiceCreationParams},
+              screen: 'GiftCardConfirm',
+              params: {
+                invoiceCreationParams,
+              },
             });
           },
         },
