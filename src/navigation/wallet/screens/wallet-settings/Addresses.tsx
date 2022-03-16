@@ -9,6 +9,7 @@ import {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {
+  ActiveOpacity,
   Hr,
   ScreenGutter,
   SettingTitle,
@@ -26,16 +27,15 @@ import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {CustomErrorMessage} from '../../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {GetWalletBalance} from '../../../../store/wallet/effects/balance/balance';
-import uniqBy from 'lodash.uniqby';
 import {GetProtocolPrefixAddress} from '../../../../store/wallet/utils/wallet';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {
   FormatAmountStr,
   GetLowUtxos,
 } from '../../../../store/wallet/effects/amount/amount';
-import * as _ from 'lodash';
-import {View} from 'react-native';
+import {TouchableOpacity, View} from 'react-native';
 import {GetAmFormatDate} from '../../../../store/wallet/utils/time';
+import Clipboard from '@react-native-community/clipboard';
 
 const ADDRESS_LIMIT = 5;
 
@@ -84,10 +84,6 @@ const buildUiFormatList = (list: any, wallet: Wallet) => {
     item.path = item.path ? item.path.replace(/^m/g, 'xpub') : null;
     item.address = GetProtocolPrefixAddress(coin, network, item.address);
 
-    if (item.amount) {
-      item.amount = FormatAmountStr(coin, item.amount);
-    }
-
     if (item.createdOn) {
       item.uiTime = GetAmFormatDate(item.createdOn * 1000);
     }
@@ -101,6 +97,11 @@ const Addresses = () => {
     params: {wallet},
   } = useRoute<RouteProp<WalletStackParamList, 'Addresses'>>();
 
+  const {
+    credentials: {token, multisigEthInfo, coin},
+    walletName,
+    currencyName,
+  } = wallet;
   const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
   const dispatch = useAppDispatch();
@@ -131,10 +132,6 @@ const Addresses = () => {
   const [minFeePer, setMinFeePer] = useState<string>();
 
   const init = async () => {
-    const {
-      credentials: {token, multisigEthInfo, coin},
-    } = wallet;
-
     try {
       const allAddresses = await GetMainAddresses(wallet, {
         doNotVerify: true,
@@ -167,6 +164,34 @@ const Addresses = () => {
       );
       setLatestUsedAddress(_withBalance.slice(0, ADDRESS_LIMIT));
       setLatestUnusedAddress(_noBalance.slice(0, ADDRESS_LIMIT));
+
+      try {
+        const response = await GetLowUtxos(wallet);
+
+        if (response?.allUtxos?.length) {
+          const _allUtxos = response.allUtxos || 0;
+          const allSum = _allUtxos.reduce(
+            (total: number, {satoshis}: {satoshis: number}) => total + satoshis,
+            0,
+          );
+          const per = (response.minFee / allSum) * 100;
+          const _lowUtxos = response.lowUtxos || 0;
+          const _lowUtoxosSum = _lowUtxos.reduce(
+            (total: number, {satoshis}: {satoshis: number}) => total + satoshis,
+            0,
+          );
+
+          setLowUtxosNb(response.lowUtxos.length);
+          setAllUtxosNb(response.allUtxos.length);
+
+          setLowUtxosSum(FormatAmountStr(coin, _lowUtoxosSum));
+          setAllUtxosSum(FormatAmountStr(coin, allSum));
+          setMinFee(FormatAmountStr(coin, response.minFee || 0));
+          setMinFeePer(per.toFixed(2) + '%');
+        }
+      } catch (e) {
+        console.log(e);
+      }
       setLoading(false);
     } catch (e) {
       setLoading(false);
@@ -177,34 +202,6 @@ const Addresses = () => {
           }),
         ),
       );
-    }
-
-    try {
-      const resp = await GetLowUtxos(wallet);
-
-      if (resp?.allUtxos?.length) {
-        const _allUtxos = resp.allUtxos || 0;
-        const allSum = _allUtxos.reduce(
-          (total: number, {satoshis}: {satoshis: number}) => total + satoshis,
-          0,
-        );
-        const per = (resp.minFee / allSum) * 100;
-        const _lowUtxos = resp.lowUtxos || 0;
-        const _lowUtoxosSum = _lowUtxos.reduce(
-          (total: number, {satoshis}: {satoshis: number}) => total + satoshis,
-          0,
-        );
-
-        setLowUtxosNb(resp.lowUtxos.length);
-        setAllUtxosNb(resp.allUtxos.length);
-
-        setLowUtxosSum(FormatAmountStr(coin, _lowUtoxosSum));
-        setAllUtxosSum(FormatAmountStr(coin, allSum));
-        setMinFee(FormatAmountStr(coin, resp.minFee || 0));
-        setMinFeePer(per.toFixed(2) + '%');
-      }
-    } catch (e) {
-      console.log(e);
     }
   };
   useEffect(() => {
@@ -250,6 +247,10 @@ const Addresses = () => {
     } catch (e) {}
   };
 
+  const copyText = (text: string) => {
+    Clipboard.setString(text);
+  };
+
   return (
     <AddressesContainer>
       <ScrollView>
@@ -266,16 +267,28 @@ const Addresses = () => {
           </Button>
         </AddressesContainer>
 
-        {viewAll ? (
-          <AllAddressesLink>
-            <LinkText>View all addresses</LinkText>
-          </AllAddressesLink>
-        ) : null}
-
         {loading ? (
-          <></>
+          <>{/*  TODO: Add skeleton*/}</>
         ) : (
           <>
+            {viewAll ? (
+              <AllAddressesLink
+                activeOpacity={ActiveOpacity}
+                onPress={() => {
+                  navigation.navigate('Wallet', {
+                    screen: 'AllAddresses',
+                    params: {
+                      currencyAbbreviation: coin,
+                      walletName: walletName || currencyName,
+                      usedAddresses: usedAddress,
+                      unusedAddresses: unusedAddress,
+                    },
+                  });
+                }}>
+                <LinkText>View all addresses</LinkText>
+              </AllAddressesLink>
+            ) : null}
+
             {allUtxosNb ? (
               <>
                 <VerticalPadding>
@@ -324,11 +337,21 @@ const Addresses = () => {
                   {latestUsedAddress.map(({address, amount}, index) => (
                     <View key={index}>
                       <SettingView>
-                        <SettingTitle numberOfLines={1} ellipsizeMode={'tail'}>
-                          {address}
-                        </SettingTitle>
+                        <View>
+                          <TouchableOpacity
+                            style={{justifyContent: 'center'}}
+                            activeOpacity={ActiveOpacity}
+                            onPress={() => copyText(address)}>
+                            <SettingTitle
+                              numberOfLines={1}
+                              ellipsizeMode={'tail'}
+                              style={{maxWidth: 250}}>
+                              {address}
+                            </SettingTitle>
+                          </TouchableOpacity>
+                        </View>
 
-                        <H7>{amount}</H7>
+                        <H7>{FormatAmountStr(coin, amount)}</H7>
                       </SettingView>
 
                       <Hr />
@@ -346,9 +369,15 @@ const Addresses = () => {
                   {latestUnusedAddress.map(({address, path, uiTime}, index) => (
                     <View key={index}>
                       <VerticalPadding>
-                        <SettingTitle numberOfLines={1} ellipsizeMode={'tail'}>
-                          {address}
-                        </SettingTitle>
+                        <TouchableOpacity
+                          activeOpacity={ActiveOpacity}
+                          onPress={() => copyText(address)}>
+                          <SettingTitle
+                            numberOfLines={1}
+                            ellipsizeMode={'tail'}>
+                            {address}
+                          </SettingTitle>
+                        </TouchableOpacity>
 
                         <SubText>
                           {path} {uiTime}

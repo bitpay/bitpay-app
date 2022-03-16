@@ -46,6 +46,9 @@ import GlobalSelect, {GlobalSelectParamList} from './screens/GlobalSelect';
 import WalletInformation from './screens/wallet-settings/WalletInformation';
 import ExportWallet from './screens/wallet-settings/ExportWallet';
 import Addresses from './screens/wallet-settings/Addresses';
+import AllAddresses, {
+  AllAddressesParamList,
+} from './screens/wallet-settings/AllAddresses';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -82,6 +85,7 @@ export type WalletStackParamList = {
   WalletInformation: {wallet: WalletModel};
   ExportWallet: {wallet: WalletModel};
   Addresses: {wallet: WalletModel};
+  AllAddresses: AllAddressesParamList;
 };
 
 export enum WalletScreens {
@@ -115,6 +119,7 @@ export enum WalletScreens {
   WALLET_INFORMATION = 'WalletInformation',
   EXPORT_WALLET = 'ExportWallet',
   ADDRESSES = 'Addresses',
+  ALL_ADDRESSES = 'AllAddresses',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -280,6 +285,13 @@ const WalletStack = () => {
           component={ExportWallet}
         />
         <Wallet.Screen name={WalletScreens.ADDRESSES} component={Addresses} />
+        <Wallet.Screen
+          options={{
+            ...TransitionPresets.ModalPresentationIOS,
+          }}
+          name={WalletScreens.ALL_ADDRESSES}
+          component={AllAddresses}
+        />
       </Wallet.Navigator>
     </>
   );
