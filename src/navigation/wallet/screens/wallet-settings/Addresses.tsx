@@ -36,6 +36,7 @@ import {
 import {TouchableOpacity, View} from 'react-native';
 import {GetAmFormatDate} from '../../../../store/wallet/utils/time';
 import Clipboard from '@react-native-community/clipboard';
+import AddressesSkeleton from './AddressesSkeleton';
 
 const ADDRESS_LIMIT = 5;
 
@@ -268,7 +269,7 @@ const Addresses = () => {
         </AddressesContainer>
 
         {loading ? (
-          <>{/*  TODO: Add skeleton*/}</>
+          <AddressesSkeleton />
         ) : (
           <>
             {viewAll ? (

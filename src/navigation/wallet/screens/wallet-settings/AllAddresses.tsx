@@ -1,4 +1,4 @@
-import React, {useLayoutEffect} from 'react';
+import React, {useLayoutEffect, useState} from 'react';
 import {BaseText, H7, HeaderTitle} from '../../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import styled from 'styled-components/native';
@@ -15,8 +15,9 @@ import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
 import {SlateDark, White} from '../../../../styles/colors';
 import Clipboard from '@react-native-community/clipboard';
-import Button from '../../../../components/button/Button';
+import Button, {ButtonState} from '../../../../components/button/Button';
 import {FormatAmountStr} from '../../../../store/wallet/effects/amount/amount';
+import {sleep} from '../../../../utils/helper-methods';
 
 export type AllAddressesParamList = {
   walletName: string;
@@ -55,6 +56,7 @@ const AllAddresses = () => {
   } = useRoute<RouteProp<WalletStackParamList, 'AllAddresses'>>();
 
   const navigation = useNavigation();
+  const [buttonState, setButtonState] = useState<ButtonState>();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -66,8 +68,9 @@ const AllAddresses = () => {
     Clipboard.setString(text);
   };
 
-  const sendAddresses = () => {
+  const sendAddresses = async () => {
     try {
+      setButtonState('loading');
       const allAddresses =
         unusedAddresses?.concat(usedAddresses) || usedAddresses || [];
 
@@ -87,9 +90,15 @@ const AllAddresses = () => {
         .join('\n');
 
       const subject = appName + ' Addresses';
-      Linking.openURL(`mailto:?subject=${subject}&body=${body}`);
+      await Linking.openURL(`mailto:?subject=${subject}&body=${body}`);
+      setButtonState('success');
+      await sleep(200);
+      setButtonState(undefined);
     } catch (e) {
       console.log(e);
+      setButtonState('failed');
+      await sleep(500);
+      setButtonState(undefined);
     }
   };
 
@@ -166,7 +175,9 @@ const AllAddresses = () => {
           shadowRadius: 12,
           elevation: 5,
         }}>
-        <Button onPress={sendAddresses}>Send Addresses by Email</Button>
+        <Button onPress={sendAddresses} state={buttonState}>
+          Send Addresses by Email
+        </Button>
       </CtaContainerAbsolute>
     </AddressesContainer>
   );
