@@ -321,3 +321,15 @@ const updateWalletBalance = ({
     );
   });
 };
+
+export const GetWalletBalance = (wallet: Wallet, opts: any): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    opts = opts || {};
+    wallet.getBalance(opts, (err: any, resp: any) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(resp);
+    });
+  });
+};

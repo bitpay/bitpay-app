@@ -1,18 +1,43 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {
   BaseText,
+  H7,
   HeaderTitle,
+  Link,
   Paragraph,
 } from '../../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import styled from 'styled-components/native';
-import {ScreenGutter} from '../../../../components/styled/Containers';
+import {
+  Hr,
+  ScreenGutter,
+  SettingTitle,
+  SettingView,
+} from '../../../../components/styled/Containers';
 import {SlateDark, White} from '../../../../styles/colors';
 import Button, {ButtonState} from '../../../../components/button/Button';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../WalletStack';
 import {sleep} from '../../../../utils/helper-methods';
 import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
+import {GetMainAddresses} from '../../../../store/wallet/effects/address/address';
+import {useAppDispatch} from '../../../../utils/hooks';
+import {showBottomNotificationModal} from '../../../../store/app/app.actions';
+import {CustomErrorMessage} from '../../components/ErrorMessages';
+import {BWCErrorMessage} from '../../../../constants/BWCError';
+import {GetWalletBalance} from '../../../../store/wallet/effects/balance/balance';
+import uniqBy from 'lodash.uniqby';
+import {GetProtocolPrefixAddress} from '../../../../store/wallet/utils/wallet';
+import {Wallet} from '../../../../store/wallet/wallet.models';
+import {
+  FormatAmountStr,
+  GetLowUtxos,
+} from '../../../../store/wallet/effects/amount/amount';
+import * as _ from 'lodash';
+import {View} from 'react-native';
+import {GetAmFormatDate} from '../../../../store/wallet/utils/time';
+
+const ADDRESS_LIMIT = 5;
 
 const AddressesContainer = styled.SafeAreaView`
   flex: 1;
@@ -28,12 +53,57 @@ const AddressesParagraph = styled(Paragraph)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
+const AllAddressesLink = styled.TouchableOpacity`
+  margin: 25px 0 10px;
+`;
+
+const LinkText = styled(Link)`
+  font-size: 16px;
+`;
+
+const VerticalPadding = styled.View`
+  padding: ${ScreenGutter} 0;
+`;
+
+const Title = styled(BaseText)`
+  font-weight: bold;
+  font-size: 18px;
+  margin: 5px 0;
+  color: ${({theme}) => theme.colors.text};
+`;
+
+const SubText = styled(H7)`
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+`;
+
+const buildUiFormatList = (list: any, wallet: Wallet) => {
+  const {
+    credentials: {coin, network},
+  } = wallet;
+  list.forEach((item: any) => {
+    item.path = item.path ? item.path.replace(/^m/g, 'xpub') : null;
+    item.address = GetProtocolPrefixAddress(coin, network, item.address);
+
+    if (item.amount) {
+      item.amount = FormatAmountStr(coin, item.amount);
+    }
+
+    if (item.createdOn) {
+      item.uiTime = GetAmFormatDate(item.createdOn * 1000);
+    }
+    return item;
+  });
+
+  return list;
+};
 const Addresses = () => {
   const {
     params: {wallet},
   } = useRoute<RouteProp<WalletStackParamList, 'Addresses'>>();
 
   const navigation = useNavigation();
+  const [loading, setLoading] = useState(true);
+  const dispatch = useAppDispatch();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -47,6 +117,99 @@ const Addresses = () => {
   }, [navigation]);
   const [buttonState, setButtonState] = useState<ButtonState>();
   const key = useAppSelector(({WALLET}) => WALLET.keys[wallet.keyId]);
+  const [viewAll, setViewAll] = useState<boolean>();
+  const [usedAddress, setUsedAddress] = useState<any[]>();
+  const [latestUsedAddress, setLatestUsedAddress] = useState<any[]>();
+  const [unusedAddress, setUnusedAddress] = useState<any[]>();
+  const [latestUnusedAddress, setLatestUnusedAddress] = useState<any[]>();
+
+  const [lowUtxosNb, setLowUtxosNb] = useState<number>();
+  const [allUtxosNb, setAllUtxosNb] = useState<number>();
+  const [lowUtxosSum, setLowUtxosSum] = useState<string>();
+  const [allUtxosSum, setAllUtxosSum] = useState<string>();
+  const [minFee, setMinFee] = useState<string>();
+  const [minFeePer, setMinFeePer] = useState<string>();
+
+  const init = async () => {
+    const {
+      credentials: {token, multisigEthInfo, coin},
+    } = wallet;
+
+    try {
+      const allAddresses = await GetMainAddresses(wallet, {
+        doNotVerify: true,
+      });
+
+      const resp = await GetWalletBalance(wallet, {
+        tokenAddress: token?.address ? token.address : '',
+        multisigContractAddress: multisigEthInfo?.multisigContractAddress
+          ? multisigEthInfo.multisigContractAddress
+          : '',
+      });
+
+      const idx = resp.byAddress.map(
+        (a: {address: string; amount: string; path: string}) => {
+          return {[a.address]: a};
+        },
+      );
+
+      let _withBalance = resp.byAddress;
+      _withBalance = buildUiFormatList(_withBalance, wallet);
+      setUsedAddress(_withBalance);
+
+      let _noBalance = allAddresses.filter((a: any) => !idx[a.address]);
+      _noBalance = buildUiFormatList(_noBalance, wallet);
+      setUnusedAddress(_noBalance);
+
+      setViewAll(
+        _noBalance?.length > ADDRESS_LIMIT ||
+          _withBalance?.length > ADDRESS_LIMIT,
+      );
+      setLatestUsedAddress(_withBalance.slice(0, ADDRESS_LIMIT));
+      setLatestUnusedAddress(_noBalance.slice(0, ADDRESS_LIMIT));
+      setLoading(false);
+    } catch (e) {
+      setLoading(false);
+      dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            errMsg: BWCErrorMessage(e, 'Could not update wallet'),
+          }),
+        ),
+      );
+    }
+
+    try {
+      const resp = await GetLowUtxos(wallet);
+
+      if (resp?.allUtxos?.length) {
+        const _allUtxos = resp.allUtxos || 0;
+        const allSum = _allUtxos.reduce(
+          (total: number, {satoshis}: {satoshis: number}) => total + satoshis,
+          0,
+        );
+        const per = (resp.minFee / allSum) * 100;
+        const _lowUtxos = resp.lowUtxos || 0;
+        const _lowUtoxosSum = _lowUtxos.reduce(
+          (total: number, {satoshis}: {satoshis: number}) => total + satoshis,
+          0,
+        );
+
+        setLowUtxosNb(resp.lowUtxos.length);
+        setAllUtxosNb(resp.allUtxos.length);
+
+        setLowUtxosSum(FormatAmountStr(coin, _lowUtoxosSum));
+        setAllUtxosSum(FormatAmountStr(coin, allSum));
+        setMinFee(FormatAmountStr(coin, resp.minFee || 0));
+        setMinFeePer(per.toFixed(2) + '%');
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
+  useEffect(() => {
+    init();
+  }, [wallet]);
 
   const {
     credentials: {walletId},
@@ -102,6 +265,104 @@ const Addresses = () => {
             Scan Addresses for Funds
           </Button>
         </AddressesContainer>
+
+        {viewAll ? (
+          <AllAddressesLink>
+            <LinkText>View all addresses</LinkText>
+          </AllAddressesLink>
+        ) : null}
+
+        {loading ? (
+          <></>
+        ) : (
+          <>
+            {allUtxosNb ? (
+              <>
+                <VerticalPadding>
+                  <Title>Wallet Inputs</Title>
+
+                  <SettingView>
+                    <SettingTitle>Total wallet inputs</SettingTitle>
+
+                    <H7>
+                      {allUtxosNb} [{allUtxosSum}]
+                    </H7>
+                  </SettingView>
+
+                  <Hr />
+
+                  <SettingView>
+                    <SettingTitle>Low amount inputs</SettingTitle>
+
+                    <H7>
+                      {lowUtxosNb} [{lowUtxosSum}]
+                    </H7>
+                  </SettingView>
+
+                  <Hr />
+
+                  <SettingView>
+                    <SettingTitle numberOfLines={2}>
+                      Approximate Bitcoin network fee to transfer wallet's
+                      balance (with normal priority)
+                    </SettingTitle>
+
+                    <H7>
+                      {minFeePer} [{minFee}]
+                    </H7>
+                  </SettingView>
+                </VerticalPadding>
+                <Hr />
+              </>
+            ) : null}
+
+            {latestUsedAddress?.length ? (
+              <>
+                <VerticalPadding>
+                  <Title>Addresses with balance</Title>
+
+                  {latestUsedAddress.map(({address, amount}, index) => (
+                    <View key={index}>
+                      <SettingView>
+                        <SettingTitle numberOfLines={1} ellipsizeMode={'tail'}>
+                          {address}
+                        </SettingTitle>
+
+                        <H7>{amount}</H7>
+                      </SettingView>
+
+                      <Hr />
+                    </View>
+                  ))}
+                </VerticalPadding>
+              </>
+            ) : null}
+
+            {latestUnusedAddress?.length ? (
+              <>
+                <VerticalPadding>
+                  <Title>Unused addresses</Title>
+
+                  {latestUnusedAddress.map(({address, path, uiTime}, index) => (
+                    <View key={index}>
+                      <VerticalPadding>
+                        <SettingTitle numberOfLines={1} ellipsizeMode={'tail'}>
+                          {address}
+                        </SettingTitle>
+
+                        <SubText>
+                          {path} {uiTime}
+                        </SubText>
+                      </VerticalPadding>
+
+                      <Hr />
+                    </View>
+                  ))}
+                </VerticalPadding>
+              </>
+            ) : null}
+          </>
+        )}
       </ScrollView>
     </AddressesContainer>
   );

@@ -211,3 +211,16 @@ export const ToAddress = (address: string, currencyAbbreviation: string) => {
       return address;
   }
 };
+
+export const GetMainAddresses = (wallet: Wallet, opts: any): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    opts = opts || {};
+    opts.reverse = true;
+    wallet.getMainAddresses(opts, (err: any, addresses: any) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(addresses);
+    });
+  });
+};

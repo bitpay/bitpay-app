@@ -160,6 +160,7 @@ export const SettingTitle = styled(BaseText)`
   font-weight: 400;
   letter-spacing: 0;
   text-align: left;
+  margin-right: 5px;
 `;
 
 interface SettingIconProps {
