@@ -1,19 +1,18 @@
 import {useNavigation} from '@react-navigation/native';
 import React, {useEffect, useLayoutEffect, useState} from 'react';
+import {useAppSelector} from '../../../utils/hooks';
 import styled from 'styled-components/native';
 import {BaseText} from '../../../components/styled/Text';
 import {SlateDark, White} from '../../../styles/colors';
 import KeyIcon from '../../../../assets/img/key.svg';
 import AddConnection from '../../../components/add/Add';
 import {Hr} from '../../../components/styled/Containers';
-import {useSelector} from 'react-redux';
 import {HeaderTitle} from '../styled/WalletConnectText';
 import {
   ScrollView,
   WalletConnectContainer,
 } from '../styled/WalletConnectContainers';
 import {Platform} from 'react-native';
-import {RootState} from '../../../store';
 import _ from 'lodash';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {
@@ -55,8 +54,8 @@ const WalletConnectConnections = () => {
     useState(false);
   const showWalletSelector = () => setWalletSelectorModalVisible(true);
   const hideWalletSelector = () => setWalletSelectorModalVisible(false);
-  const connectors: IWCConnector[] = useSelector(
-    ({WALLET_CONNECT}: RootState) => WALLET_CONNECT.connectors,
+  const connectors: IWCConnector[] = useAppSelector(
+    ({WALLET_CONNECT}) => WALLET_CONNECT.connectors,
   );
 
   useEffect(() => {
@@ -71,7 +70,7 @@ const WalletConnectConnections = () => {
     }
   }, [connectors, navigation, setGroupedConnectors]);
 
-  const allKeys = useSelector(({WALLET}: RootState) => WALLET.keys);
+  const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
 
   const getWallet = (customData?: IWCCustomData) => {
     return (

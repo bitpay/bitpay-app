@@ -1,13 +1,12 @@
 import {RouteProp, useRoute} from '@react-navigation/native';
 import React, {useState} from 'react';
 import {TouchableOpacity} from 'react-native';
-import {useDispatch, useSelector} from 'react-redux';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {WalletRowProps} from '../../../components/list/WalletRow';
 import {Link, Paragraph} from '../../../components/styled/Text';
-import {RootState} from '../../../store';
 import {buildUIFormattedWallet} from '../../wallet/screens/KeyOverview';
 import {
   ScrollView,
@@ -26,7 +25,7 @@ const LinkContainer = styled.View`
 `;
 
 const WalletConnectIntro = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const route = useRoute<RouteProp<{params: WalletConnectIntroParamList}>>();
   const {uri} = route.params || {};
   const [walletSelectorModalVisible, setWalletSelectorModalVisible] =
@@ -34,7 +33,7 @@ const WalletConnectIntro = () => {
   const showWalletSelector = () => setWalletSelectorModalVisible(true);
   const hideWalletSelector = () => setWalletSelectorModalVisible(false);
 
-  const allKeys = useSelector(({WALLET}: RootState) => WALLET.keys);
+  const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
   let allEthWallets: WalletRowProps[] = [];
   Object.entries(allKeys).map(([_, value]) => {
     if (!value.backupComplete) {

@@ -5,7 +5,7 @@ import {H7} from '../../../components/styled/Text';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
 import EthIcon from '../../../../assets/img/currencies/eth.svg';
 import AngleRight from '../../../../assets/img/angle-right.svg';
-import {useDispatch, useSelector} from 'react-redux';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {Hr} from '../../../components/styled/Containers';
 import {HeaderTitle, IconLabel} from '../styled/WalletConnectText';
 import {
@@ -17,7 +17,6 @@ import {
   ScrollView,
   WalletConnectContainer,
 } from '../styled/WalletConnectContainers';
-import {RootState} from '../../../store';
 import {View} from 'react-native';
 import FastImage from 'react-native-fast-image';
 import {sleep} from '../../../utils/helper-methods';
@@ -79,19 +78,19 @@ const ClipboardContainer = styled.View`
 
 const WalletConnectHome = () => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
   const {
     params: {peerId, wallet},
   } = useRoute<RouteProp<{params: WalletConnectHomeParamList}>>();
 
-  const wcConnector: IWCConnector | undefined = useSelector(
-    ({WALLET_CONNECT}: RootState) => {
+  const wcConnector: IWCConnector | undefined = useAppSelector(
+    ({WALLET_CONNECT}) => {
       return WALLET_CONNECT.connectors.find(c => c.connector.peerId === peerId);
     },
   );
   const session: WalletConnect | undefined = wcConnector?.connector;
-  const requests: IWCRequest[] = useSelector(({WALLET_CONNECT}: RootState) => {
+  const requests: IWCRequest[] = useAppSelector(({WALLET_CONNECT}) => {
     return WALLET_CONNECT.requests.filter(request => request.peerId === peerId);
   });
 

@@ -1,7 +1,7 @@
 import {useNavigation} from '@react-navigation/native';
 import {IWalletConnectSession} from '@walletconnect/types';
 import React, {useCallback} from 'react';
-import {useDispatch, useSelector} from 'react-redux';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {
@@ -27,7 +27,6 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {IWCRequest} from '../../../store/wallet-connect/wallet-connect.models';
-import {RootState} from '../../../store';
 import {Wallet} from '../../../store/wallet/wallet.models';
 
 const NestedArrowContainer = styled.View`
@@ -53,9 +52,9 @@ export default ({
   wallet: Wallet;
 }) => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const {peerId, peerMeta, key} = session;
-  const requests: IWCRequest[] = useSelector(({WALLET_CONNECT}: RootState) => {
+  const requests: IWCRequest[] = useAppSelector(({WALLET_CONNECT}) => {
     return WALLET_CONNECT.requests.filter(request => request.peerId === peerId);
   });
 

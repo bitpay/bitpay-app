@@ -1,10 +1,9 @@
 import {useNavigation} from '@react-navigation/native';
 import React, {useCallback, useMemo, useState} from 'react';
-import {useDispatch, useSelector} from 'react-redux';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {BaseText, H4} from '../../../components/styled/Text';
-import {RootState} from '../../../store';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {
   formatFiatAmount,
@@ -65,9 +64,9 @@ export default ({
   onBackdropPress: () => void;
 }) => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [uri, setUri] = useState(dappUri);
-  const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
 
   let allWallets = Object.values(keys)
     .filter(key => key.backupComplete)

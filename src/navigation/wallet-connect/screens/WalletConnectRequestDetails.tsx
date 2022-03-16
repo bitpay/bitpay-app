@@ -17,8 +17,7 @@ import {
 } from '../styled/WalletConnectContainers';
 import {HeaderTitle} from '../styled/WalletConnectText';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
-import {useDispatch, useSelector} from 'react-redux';
-import {RootState} from '../../../store';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   walletConnectApproveCallRequest,
   walletConnectPersonalSign,
@@ -92,18 +91,16 @@ const WalletConnectRequestDetails = () => {
   const {
     params: {peerId, requestId, wallet},
   } = useRoute<RouteProp<{params: WalletConnectRequestDetailsParamList}>>();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [address, setAddress] = useState('');
   const [message, setMessage] = useState('');
   const [approveButtonState, setApproveButtonState] = useState<ButtonState>();
   const [rejectButtonState, setRejectButtonState] = useState<ButtonState>();
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
   const navigation = useNavigation();
-  const request: IWCRequest | undefined = useSelector(
-    ({WALLET_CONNECT}: RootState) => {
-      return WALLET_CONNECT.requests.find(req => req.payload.id === requestId);
-    },
-  );
+  const request: IWCRequest | undefined = useAppSelector(({WALLET_CONNECT}) => {
+    return WALLET_CONNECT.requests.find(req => req.payload.id === requestId);
+  });
 
   useEffect(() => {
     if (!request) {
