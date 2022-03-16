@@ -113,7 +113,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
                 dispatch(LogActions.error(JSON.stringify(err)));
               }
             }}>
-            Offers
+            Card Offers
           </Styled.SettingsLink>
 
           <Hr />
