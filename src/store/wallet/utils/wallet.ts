@@ -12,6 +12,9 @@ import {Currencies, SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {BwcProvider} from '../../../lib/bwc';
 import {GetProtocolPrefix} from './currency';
+import merge from 'lodash.merge';
+import cloneDeep from 'lodash.clonedeep';
+import {formatFiatAmount} from '../../../utils/helper-methods';
 
 const mapAbbreviationAndName = (
   walletName: string,
@@ -191,6 +194,29 @@ export const GetProtocolPrefixAddress = (
     return address;
   }
   return GetProtocolPrefix(coin, network) + ':' + address;
+};
+
+export const BuildKeysAndWalletsList = (allKeys: {[key in string]: Key}) => {
+  return Object.keys(allKeys).map(keyId => {
+    const keyObj = allKeys[keyId];
+    return {
+      key: keyId,
+      keyName: keyObj.keyName || 'My Key',
+      wallets: allKeys[keyId].wallets.map(walletObj => {
+        const {
+          balance,
+          currencyAbbreviation,
+          credentials: {network},
+        } = walletObj;
+        return merge(cloneDeep(walletObj), {
+          cryptoBalance: balance.crypto,
+          fiatBalance: formatFiatAmount(balance.fiat, 'USD'),
+          currencyAbbreviation,
+          network,
+        });
+      }),
+    };
+  });
 };
 
 // These 2 functions were taken from

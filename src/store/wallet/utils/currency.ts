@@ -9,7 +9,7 @@ export const GetProtocolPrefix = (
 };
 
 export const GetPrecision = (currencyAbbreviation: string) => {
-  return Currencies[currencyAbbreviation].unitInfo;
+  return Currencies[currencyAbbreviation.toLowerCase()].unitInfo;
 };
 
 export const IsUtxoCoin = (currencyAbbreviation: string): boolean => {
