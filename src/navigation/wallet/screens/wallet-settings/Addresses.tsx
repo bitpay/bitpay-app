@@ -256,10 +256,14 @@ const Addresses = () => {
     <AddressesContainer>
       <ScrollView>
         <AddressesParagraph>
-          {/*TODO: double check copy*/}
-          Each bitcoin wallet can generate billions of addresses from your
-          12-word recovery phrase. A new address is automatically generated and
-          shown each time you receive a payment. Learn more
+          Each wallet (except for ETH/ERC20) can generate billions of addresses
+          from your 12-word recovery phrase. A new address is automatically
+          generated and shown each time you receive a payment.
+        </AddressesParagraph>
+        <AddressesParagraph>
+          It's a good idea to avoid reusing addresses - this both protects your
+          privacy and keeps your bitcoins secure against hypothetical attacks by
+          quantum computers.
         </AddressesParagraph>
 
         <AddressesContainer>

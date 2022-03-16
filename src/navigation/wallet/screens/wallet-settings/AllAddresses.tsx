@@ -90,6 +90,7 @@ const AllAddresses = () => {
         .join('\n');
 
       const subject = appName + ' Addresses';
+      // Works only on device
       await Linking.openURL(`mailto:?subject=${subject}&body=${body}`);
       setButtonState('success');
       await sleep(200);
