@@ -10,10 +10,22 @@ import PoweredByDosh
 import UIKit
 
 struct CustomTheme: PoweredByDoshTheme {
-  var headerColor: UIColor
-  var primaryColor: UIColor
-  var interactiveColor: UIColor
   
+  // colors
+  var headerColor: UIColor = UIColor.init(red: 0x00/255, green: 0x00/255, blue: 0x00/255, alpha: 0xff/255);
+  var primaryColor: UIColor = UIColor.init(red: 0x00/255, green: 0x00/255, blue: 0x00/255, alpha: 0xff/255);
+  var interactiveColor: UIColor = UIColor.init(red: 0x22/255, green: 0x40/255, blue: 0xc4/255, alpha: 0xff/255);
+  
+  // font
+  let boldFontName: String = "Heebo-Bold";
+  let mediumFontName: String = "Heebo-Medium";
+  let regularFontName: String = "Heebo-Regular";
+  let lightFontName: String = "Heebo-Light";
+  
+  // nav bar
+  var navigationBarStyle: DoshNavigationBarStyle
+  
+  // brand UI layout style
   var logoStyle: DoshImageStyle = .circular
   var brandDetailsHeaderStyle: DoshBrandDetailsHeaderStyle = .rectangular
 }
@@ -23,15 +35,26 @@ public class DoshAdapter: NSObject {
   @objc static func initDosh(uiOptions: Dictionary<String, String>) {
     let instance = Dosh.initialize(applicationId: "REPLACE_ME")
     
-    // TODO: customize theme
-    let header = instance.theme.headerColor;
-    let primaryColor = instance.theme.primaryColor;
-    let interactiveColor = instance.theme.interactiveColor;
-
     let programName = uiOptions["feedTitle"];
-    let logoStyle = uiOptions["logoStyle"] == "RECTANGLE" ? DoshImageStyle.roundedRect : DoshImageStyle.circular;
-    let brandDetailsHeaderStyle = uiOptions["brandDetailsHeaderStyle"] == "DIAGONAL" ? DoshBrandDetailsHeaderStyle.diagonal : DoshBrandDetailsHeaderStyle.rectangular;
-    var theme:CustomTheme = CustomTheme(headerColor: header, primaryColor: primaryColor, interactiveColor: interactiveColor);
+    let logoStyle = uiOptions["logoStyle"] == "RECTANGLE"
+      ? DoshImageStyle.roundedRect
+      : DoshImageStyle.circular;
+    let brandDetailsHeaderStyle = uiOptions["brandDetailsHeaderStyle"] == "DIAGONAL"
+      ? DoshBrandDetailsHeaderStyle.diagonal
+      : DoshBrandDetailsHeaderStyle.rectangular;
+    
+    var theme: CustomTheme = CustomTheme(
+      navigationBarStyle: DoshNavigationBarStyle(
+        backgroundColor: .white,
+        separatorColor: .white,
+        backButtonImage: instance.theme.navigationBarStyle.backButtonImage,
+        titleTextStyle: DoshTextStyle(
+          weight: .bold,
+          size: 18,
+          color: UIColor.black
+        )
+      )
+    );
     
     theme.logoStyle = logoStyle;
     theme.brandDetailsHeaderStyle = brandDetailsHeaderStyle;
