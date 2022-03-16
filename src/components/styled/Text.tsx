@@ -157,8 +157,8 @@ export const Link = styled(BaseText)`
 `;
 
 // WALLET
-export const Balance = styled(BaseText)`
-  font-size: 36px;
+export const Balance = styled(BaseText)<{scale: boolean}>`
+  font-size: ${({scale}) => (scale ? 26 : 36)}px;
   font-style: normal;
   font-weight: 700;
   line-height: 53px;

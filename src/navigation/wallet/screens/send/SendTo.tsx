@@ -6,7 +6,7 @@ import {ScreenGutter} from '../../../../components/styled/Containers';
 import ScanSvg from '../../../../../assets/img/onboarding/scan.svg';
 import {NeutralSlate} from '../../../../styles/colors';
 import {RouteProp} from '@react-navigation/core';
-import {WalletStackParamList} from '../../WalletStack';
+import {WalletScreens, WalletStackParamList} from '../../WalletStack';
 import {RootState} from '../../../../store';
 import {formatFiatAmount, sleep} from '../../../../utils/helper-methods';
 import {Key, Recipient} from '../../../../store/wallet/wallet.models';
@@ -351,7 +351,7 @@ const SendTo = () => {
 
   const goToConfirm = (recipient: Recipient) => {
     navigation.navigate('Wallet', {
-      screen: 'Amount',
+      screen: WalletScreens.AMOUNT,
       params: {
         currencyAbbreviation: wallet.currencyAbbreviation.toUpperCase(),
         onAmountSelected: async (amount, setButtonState, opts) => {

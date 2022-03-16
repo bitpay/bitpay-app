@@ -94,7 +94,7 @@ export interface AmountParamList {
     setButtonState: (state: ButtonState) => void,
     opts?: {sendMax?: boolean},
   ) => void;
-  currencyAbbreviation: string;
+  currencyAbbreviation?: string;
   opts?: {
     hideSendMax?: boolean;
   };
@@ -116,7 +116,9 @@ const Amount = () => {
     currency: currencyAbbreviation,
     primaryIsFiat: false,
   });
-  const swapList = [currencyAbbreviation, 'USD'];
+  const swapList = currencyAbbreviation
+    ? [currencyAbbreviation, 'USD']
+    : ['USD'];
   const allRates = useAppSelector(({WALLET}) => WALLET.rates);
   const [curVal, setCurVal] = useState('');
 
@@ -129,6 +131,9 @@ const Amount = () => {
   } = amountConfig;
 
   useEffect(() => {
+    if (!currency) {
+      return;
+    }
     // if added for dev (hot reload)
     if (!primaryIsFiat) {
       const fiatRate = allRates[currency.toLowerCase()].find(
@@ -149,10 +154,11 @@ const Amount = () => {
     updateAmountConfig(current => ({
       ...current,
       displayAmount: _val,
+      amount: _val,
     }));
 
     const val = Number(_val);
-    if (isNaN(val)) {
+    if (isNaN(val) || !currencyAbbreviation) {
       return;
     }
 
@@ -187,7 +193,7 @@ const Amount = () => {
         ),
       });
     }
-  });
+  }, []);
 
   const onCellPress = (val: string) => {
     haptic('impactLight');
@@ -221,32 +227,36 @@ const Amount = () => {
               {displayAmount || 0}
             </AmountText>
             <CurrencySuperScript>
-              <CurrencyText>{currency}</CurrencyText>
+              <CurrencyText>{currency || 'USD'}</CurrencyText>
             </CurrencySuperScript>
           </Row>
-          <Row>
-            <AmountEquivText>
-              {displayEquivalentAmount || 0}{' '}
-              {primaryIsFiat && currencyAbbreviation}
-            </AmountEquivText>
-          </Row>
-          <SwapButtonContainer>
-            <SwapButton
-              swapList={swapList}
-              onChange={(currency: string) => {
-                setCurVal('');
-                updateAmountConfig(current => ({
-                  ...current,
-                  currency,
-                  primaryIsFiat: !primaryIsFiat,
-                  displayAmount: '0',
-                  displayEquivalentAmount: primaryIsFiat
-                    ? formatFiatAmount(0, 'USD')
-                    : '0',
-                }));
-              }}
-            />
-          </SwapButtonContainer>
+          {currencyAbbreviation ? (
+            <Row>
+              <AmountEquivText>
+                {displayEquivalentAmount || 0}{' '}
+                {primaryIsFiat && currencyAbbreviation}
+              </AmountEquivText>
+            </Row>
+          ) : null}
+          {swapList.length > 1 ? (
+            <SwapButtonContainer>
+              <SwapButton
+                swapList={swapList}
+                onChange={(currency: string) => {
+                  setCurVal('');
+                  updateAmountConfig(current => ({
+                    ...current,
+                    currency,
+                    primaryIsFiat: !primaryIsFiat,
+                    displayAmount: '0',
+                    displayEquivalentAmount: primaryIsFiat
+                      ? formatFiatAmount(0, 'USD')
+                      : '0',
+                  }));
+                }}
+              />
+            </SwapButtonContainer>
+          ) : null}
         </AmountHeroContainer>
         <View>
           <VirtualKeyboard onCellPress={onCellPress} />

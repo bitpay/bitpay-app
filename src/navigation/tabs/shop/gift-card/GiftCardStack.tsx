@@ -1,5 +1,5 @@
 import React from 'react';
-import {createStackNavigator} from '@react-navigation/stack';
+import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
@@ -18,6 +18,7 @@ export type GiftCardStackParamList = {
   EnterEmail: {cardConfig: CardConfig};
   EnterPhone: {cardConfig: CardConfig};
   GiftCardDetails: {cardConfig: CardConfig; giftCard: GiftCard};
+  GiftCardDetailsModal: {cardConfig: CardConfig; giftCard: GiftCard};
 };
 
 export enum GiftCardScreens {
@@ -26,6 +27,7 @@ export enum GiftCardScreens {
   ENTER_EMAIL = 'EnterEmail',
   ENTER_PHONE = 'EnterPhone',
   GIFT_CARD_DETAILS = 'GiftCardDetails',
+  GIFT_CARD_DETAILS_MODAL = 'GiftCardDetailsModal',
 }
 
 const GiftCards = createStackNavigator<GiftCardStackParamList>();
@@ -70,6 +72,14 @@ const GiftCardStack = () => {
         name={GiftCardScreens.GIFT_CARD_DETAILS}
         component={GiftCardDetails}
         options={{
+          gestureEnabled: false,
+        }}
+      />
+      <GiftCards.Screen
+        name={GiftCardScreens.GIFT_CARD_DETAILS_MODAL}
+        component={GiftCardDetails}
+        options={{
+          ...TransitionPresets.ModalPresentationIOS,
           gestureEnabled: false,
         }}
       />

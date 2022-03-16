@@ -9,7 +9,6 @@ import React, {
 } from 'react';
 import {useTranslation} from 'react-i18next';
 import {RefreshControl, SectionList, Share, View} from 'react-native';
-import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
 import Settings from '../../../components/settings/Settings';
 import {
@@ -26,7 +25,7 @@ import {findWalletById, isSegwit} from '../../../store/wallet/utils/wallet';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
-import {sleep} from '../../../utils/helper-methods';
+import {shouldScale, sleep} from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {
   BalanceUpdateError,
@@ -40,7 +39,7 @@ import ReceiveAddress from '../components/ReceiveAddress';
 import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
-import {useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {
@@ -48,7 +47,7 @@ import {
   GetTransactionHistory,
   GroupTransactionHistory,
   IsMoved,
-  IsReceived,
+  IsReceived, TX_HISTORY_LIMIT,
 } from '../../../store/wallet/effects/transactions/transactions';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import TransactionRow, {
@@ -59,8 +58,6 @@ import WalletTransactionSkeletonRow from '../../../components/list/WalletTransac
 import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
-
-const HISTORY_SHOW_LIMIT = 15;
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -143,7 +140,7 @@ const getWalletType = (key: Key, wallet: Wallet) => {
 
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const theme = useTheme();
   const {t} = useTranslation();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
@@ -183,7 +180,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         loadHistory(true);
       },
     );
-    return subscription.remove;
+    return () => subscription.remove();
   }, []);
 
   const ShareAddress = async () => {
@@ -294,18 +291,20 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       setIsLoading(!refresh);
       setErrorLoadingTxs(false);
       const [transactionHistory] = await Promise.all([
-        GetTransactionHistory({
-          wallet: fullWalletObj,
-          transactionsHistory: refresh ? [] : history,
-          limit: HISTORY_SHOW_LIMIT,
-          contactList,
-        }),
-        sleep(500),
+        dispatch(
+          GetTransactionHistory({
+            wallet: fullWalletObj,
+            transactionsHistory: history,
+            limit: TX_HISTORY_LIMIT,
+            contactList,
+            refresh,
+          }),
+        ),
       ]);
 
       let {transactions: _history, loadMore: _loadMore} = transactionHistory;
 
-      if (_history?.length) {
+      if (_history?.length){
         setHistory(_history);
         const grouped = GroupTransactionHistory(_history);
         setGroupedHistory(grouped);
@@ -465,7 +464,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             <>
               <BalanceContainer>
                 <Row>
-                  <Balance>
+                  <Balance scale={shouldScale(cryptoBalance)}>
                     {cryptoBalance} {currencyAbbreviation}
                   </Balance>
                   <Chain>{currencyAbbreviation}</Chain>

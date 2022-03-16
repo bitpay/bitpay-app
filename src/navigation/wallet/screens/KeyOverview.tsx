@@ -23,7 +23,11 @@ import {
   SlateDark,
   White,
 } from '../../../styles/colors';
-import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
+import {
+  formatFiatAmount,
+  shouldScale,
+  sleep,
+} from '../../../utils/helper-methods';
 import {BalanceUpdateError} from '../components/ErrorMessages';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Icons from '../components/WalletIcons';
@@ -54,8 +58,8 @@ const BalanceContainer = styled.View`
   padding: 10px 15px;
 `;
 
-const Balance = styled(BaseText)`
-  font-size: 36px;
+const Balance = styled(BaseText)<{scale: boolean}>`
+  font-size: ${({scale}) => (scale ? 25 : 35)}px;
   font-style: normal;
   font-weight: 700;
   line-height: 53px;
@@ -271,7 +275,9 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   return (
     <OverviewContainer>
       <BalanceContainer>
-        <Balance>${totalBalance?.toFixed(2)} USD</Balance>
+        <Balance scale={shouldScale(totalBalance)}>
+          {formatFiatAmount(totalBalance, 'USD')} USD
+        </Balance>
       </BalanceContainer>
       <Hr />
       <FlatList

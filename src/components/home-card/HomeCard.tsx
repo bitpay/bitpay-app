@@ -13,6 +13,7 @@ import Card from '../card/Card';
 import {View} from 'react-native';
 import {BaseText} from '../styled/Text';
 import * as Svg from 'react-native-svg';
+import {shouldScale} from '../../utils/helper-methods';
 
 const Arrow = ({isDark}: {isDark: boolean}) => {
   return (
@@ -61,8 +62,8 @@ const CardBodyDesc = styled(BaseText)`
   margin-top: ${CardGutter};
 `;
 
-const CardPrice = styled(BaseText)`
-  font-size: 31px;
+const CardPrice = styled(BaseText)<{scale: boolean}>`
+  font-size: ${({scale}) => (scale ? 21 : 31)}px;
   line-height: 46px;
   font-weight: bold;
   color: ${({theme}) => theme.colors.text};
@@ -119,7 +120,7 @@ const HomeCard: React.FC<HomeCardProps> = ({
   const BodyComp = (
     <View>
       {title && <CardBodyHeader>{title}</CardBodyHeader>}
-      {value && <CardPrice>{value}</CardPrice>}
+      {value && <CardPrice scale={shouldScale(value)}>{value}</CardPrice>}
       {pillText && (
         <CardPill>
           <CardPillText>{pillText}</CardPillText>

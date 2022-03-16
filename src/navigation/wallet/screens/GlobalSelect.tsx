@@ -31,7 +31,7 @@ const GlobalSelectContainer = styled.View`
 const ListContainer = styled.View`
   margin-top: 20px;
 `;
-const WalletSelectMenuContainer = styled.View`
+export const WalletSelectMenuContainer = styled.View`
   padding: ${ScreenGutter};
   background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   border-top-left-radius: 12px;
@@ -39,11 +39,11 @@ const WalletSelectMenuContainer = styled.View`
   max-height: 75%;
 `;
 
-const WalletSelectMenuHeaderContainer = styled.View`
-  margin-top: 20px;
+export const WalletSelectMenuHeaderContainer = styled.View`
+  padding: 20px;
 `;
 
-const WalletSelectMenuBodyContainer = styled.ScrollView`
+export const WalletSelectMenuBodyContainer = styled.ScrollView`
   padding-bottom: 20px;
 `;
 

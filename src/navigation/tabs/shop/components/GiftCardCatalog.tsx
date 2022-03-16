@@ -8,12 +8,12 @@ import {useForm, Controller} from 'react-hook-form';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {WIDTH} from '../../../../components/styled/Containers';
 import ShopCarouselList, {ShopCarouselItem} from './ShopCarouselList';
-import {purchasedGiftCards} from '../stubs/gift-cards';
 import {Paragraph} from '../../../../components/styled/Text';
 import GiftCardItem from './GiftCardItem';
 import {
   CardConfig,
   Category,
+  GiftCard,
   GiftCardCuration,
 } from '../../../../store/shop/shop.models';
 import {
@@ -34,6 +34,8 @@ import {useNavigation} from '@react-navigation/native';
 import {GiftCardScreens} from '../gift-card/GiftCardStack';
 import MyGiftCards from './MyGiftCards';
 import FilterSheet, {initializeCategoryMap} from './FilterSheet';
+import {useAppSelector} from '../../../../utils/hooks';
+import {APP_NETWORK} from '../../../../constants/config';
 
 const Curations = ({
   curations,
@@ -117,9 +119,17 @@ export default ({
 }) => {
   const navigation = useNavigation();
   const theme = useTheme();
+  const giftCards = useAppSelector(
+    ({SHOP}) => SHOP.giftCards[APP_NETWORK],
+  ) as GiftCard[];
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as CardConfig[]);
   const [isFilterSheetShown, setIsFilterSheetShown] = useState(false);
+  const [purchasedGiftCards, setPurchasedGiftCards] = useState(
+    giftCards
+      .filter(c => c.status === 'SUCCESS')
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+  );
   const [selectedCategoryMap, setSelectedCategoryMap] = useState(
     initializeCategoryMap(categories.map(category => category.displayName)),
   );

@@ -3,11 +3,11 @@ import styled from 'styled-components/native';
 
 export const WalletConnectContainer = styled.View`
   flex: 1;
-  padding: 0 16px 15px 16px;
 `;
 
 export const ScrollView = styled.ScrollView`
   margin-top: 20px;
+  padding: 16px;
 `;
 
 export const ItemContainer = styled.View`
