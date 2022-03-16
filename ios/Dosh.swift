@@ -47,7 +47,7 @@ public class DoshAdapter: NSObject {
       navigationBarStyle: DoshNavigationBarStyle(
         backgroundColor: .white,
         separatorColor: .white,
-        backButtonImage: instance.theme.navigationBarStyle.backButtonImage,
+        backButtonImage: UIImage.init(named: "BackArrow")!,
         titleTextStyle: DoshTextStyle(
           weight: .bold,
           size: 18,
