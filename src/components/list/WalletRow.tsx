@@ -6,9 +6,8 @@ import {
   Row,
   ActiveOpacity,
   RowContainer,
-  HiddenContainer,
 } from '../styled/Containers';
-import {Badge, H5, H7, SubText} from '../styled/Text';
+import {Badge, H5, SubText} from '../styled/Text';
 import styled from 'styled-components/native';
 import NestedArrow from '../../../assets/img/nested-arrow.svg';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
@@ -115,9 +114,7 @@ const WalletRow = ({wallet, onPress}: Props) => {
             )}
           </>
         ) : (
-          <HiddenContainer>
-            <H7>Balance Hidden</H7>
-          </HiddenContainer>
+          <H5>****</H5>
         )}
       </BalanceColumn>
     </RowContainer>

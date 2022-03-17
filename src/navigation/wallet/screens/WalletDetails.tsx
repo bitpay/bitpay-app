@@ -14,6 +14,7 @@ import Settings from '../../../components/settings/Settings';
 import {
   Balance,
   BaseText,
+  H2,
   H5,
   HeaderTitle,
 } from '../../../components/styled/Text';
@@ -50,10 +51,7 @@ import {
   IsReceived,
   TX_HISTORY_LIMIT,
 } from '../../../store/wallet/effects/transactions/transactions';
-import {
-  HiddenContainer,
-  ScreenGutter,
-} from '../../../components/styled/Containers';
+import {ScreenGutter} from '../../../components/styled/Containers';
 import TransactionRow, {
   TRANSACTION_ROW_HEIGHT,
 } from '../../../components/list/TransactionRow';
@@ -474,9 +472,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       {cryptoBalance} {currencyAbbreviation}
                     </Balance>
                   ) : (
-                    <HiddenContainer>
-                      <H5>Balance Hidden</H5>
-                    </HiddenContainer>
+                    <H2>****</H2>
                   )}
                   <Chain>{currencyAbbreviation}</Chain>
                 </Row>
