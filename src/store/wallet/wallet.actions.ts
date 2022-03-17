@@ -206,3 +206,10 @@ export const syncWallets = (payload: {
   type: WalletActionTypes.SYNC_WALLETS,
   payload,
 });
+
+export const toggleHideWallet = (payload: {
+  wallet: Wallet;
+}): WalletActionType => ({
+  type: WalletActionTypes.TOGGLE_HIDE_WALLET,
+  payload,
+});

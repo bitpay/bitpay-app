@@ -164,7 +164,9 @@ export const startUpdateWalletBalance =
         );
         // if balance has changed update key totalBalance
         if (network === Network.mainnet && balance.fiat !== lastKnownBalance) {
-          const wallets = getState().WALLET.keys[key.id].wallets;
+          const wallets = getState().WALLET.keys[key.id].wallets.filter(
+            w => !w.hideWallet,
+          );
 
           const totalFiatBalance = wallets.reduce(
             (acc, {balance: {fiat}}) => acc + fiat,
@@ -285,6 +287,7 @@ const updateWalletBalance = ({
       currencyAbbreviation,
       balance: lastKnownBalance,
       credentials: {network, token, multisigEthInfo},
+      hideWallet,
     } = wallet;
 
     wallet.getStatus(
@@ -306,7 +309,7 @@ const updateWalletBalance = ({
             sat: totalAmount,
             crypto: formatCryptoAmount(totalAmount, currencyAbbreviation),
             fiat:
-              network === Network.mainnet
+              network === Network.mainnet && !hideWallet
                 ? toFiat(totalAmount, 'USD', currencyAbbreviation, rates)
                 : 0,
           };

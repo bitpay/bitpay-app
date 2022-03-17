@@ -34,7 +34,7 @@ import {
 import {useDispatch} from 'react-redux';
 import InfoSvg from '../../../../assets/img/info.svg';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
-import {buildNestedWalletList} from './KeyOverview';
+import {buildUIFormattedWallet} from './KeyOverview';
 import {URL} from '../../../constants';
 import {getMnemonic} from '../../../utils/helper-methods';
 import {useAppSelector} from '../../../utils/hooks';
@@ -52,7 +52,7 @@ import {
   buildWalletObj,
   generateKeyExportCode,
 } from '../../../store/wallet/utils/wallet';
-import {Key} from '../../../store/wallet/wallet.models';
+import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {
   normalizeMnemonic,
   serverAssistedImport,
@@ -61,6 +61,7 @@ import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/
 import merge from 'lodash.merge';
 import {syncWallets} from '../../../store/wallet/wallet.actions';
 import {BWCErrorMessage} from '../../../constants/BWCError';
+import {WalletRowProps} from '../../../components/list/WalletRow';
 
 const WalletSettingsContainer = styled.View`
   flex: 1;
@@ -98,6 +99,33 @@ const VerticalPadding = styled.View`
 const WalletSettingsTitle = styled(SettingTitle)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
+
+export const buildNestedWalletList = (wallets: Wallet[]) => {
+  const walletList = [] as Array<WalletRowProps>;
+  const _coins = wallets.filter(wallet => !wallet.credentials.token);
+  const _tokens = wallets.filter(wallet => wallet.credentials.token);
+
+  _coins.forEach(coin => {
+    walletList.push({
+      ...buildUIFormattedWallet(coin),
+    });
+
+    // eth wallet with tokens -> for every token wallet ID grab full wallet from _tokens and add it to the list
+    if (coin.tokens) {
+      coin.tokens.forEach(id => {
+        const tokenWallet = _tokens.find(token => token.id === id);
+        if (tokenWallet) {
+          walletList.push({
+            ...buildUIFormattedWallet(tokenWallet),
+            isToken: true,
+          });
+        }
+      });
+    }
+  });
+
+  return walletList;
+};
 
 const KeySettings = () => {
   const {
@@ -267,27 +295,30 @@ const KeySettings = () => {
           </InfoImageContainer>
         </WalletHeaderContainer>
 
-        {wallets.map(({id, currencyName, img, isToken, network}) => (
-          <TouchableOpacity
-            onPress={() => {
-              haptic('impactLight');
-              navigation.navigate('Wallet', {
-                screen: 'WalletSettings',
-                params: {walletId: id, key},
-              });
-            }}
-            key={id}
-            activeOpacity={ActiveOpacity}>
-            <WalletSettingsRow
-              id={id}
-              img={img}
-              currencyName={currencyName}
+        {wallets.map(
+          ({id, currencyName, img, isToken, network, hideWallet}) => (
+            <TouchableOpacity
+              onPress={() => {
+                haptic('impactLight');
+                navigation.navigate('Wallet', {
+                  screen: 'WalletSettings',
+                  params: {walletId: id, key},
+                });
+              }}
               key={id}
-              isToken={isToken}
-              network={network}
-            />
-          </TouchableOpacity>
-        ))}
+              activeOpacity={ActiveOpacity}>
+              <WalletSettingsRow
+                id={id}
+                img={img}
+                currencyName={currencyName}
+                key={id}
+                isToken={isToken}
+                network={network}
+                hideWallet={hideWallet}
+              />
+            </TouchableOpacity>
+          ),
+        )}
 
         <VerticalPadding style={{alignItems: 'center'}}>
           <Link

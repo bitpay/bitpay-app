@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useLayoutEffect} from 'react';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
@@ -20,18 +20,22 @@ import haptic from '../../../components/haptic-feedback/haptic';
 
 import {SlateDark, White} from '../../../styles/colors';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppSelector} from '../../../utils/hooks';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {AppActions} from '../../../store/app';
 import {sleep} from '../../../utils/helper-methods';
 import {
-  dismissDecryptPasswordModal,
   showBottomNotificationModal,
   showDecryptPasswordModal,
 } from '../../../store/app/app.actions';
 import {WrongPasswordError} from '../components/ErrorMessages';
 import {useDispatch} from 'react-redux';
+import {
+  toggleHideWallet,
+  updatePortfolioBalance,
+} from '../../../store/wallet/wallet.actions';
+import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/balance';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -74,20 +78,21 @@ const WalletSettings = () => {
     params: {walletId, key},
   } = useRoute<RouteProp<WalletStackParamList, 'WalletSettings'>>();
   const navigation = useNavigation();
-  const [demoToggle, setDemoToggle] = useState(false);
+
   const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
   const wallet = findWalletById(wallets, walletId) as Wallet;
   const {
     walletName,
     credentials: {walletName: credentialsWalletName},
+    hideWallet,
   } = wallet;
 
   const dispatch = useDispatch();
 
   const buildEncryptModalConfig = (
     cta: (decryptedKey: {
-      mnemonic: string;
       mnemonicHasPassphrase: boolean;
+      mnemonic: string;
       xPrivKey: string;
     }) => void,
   ) => {
@@ -150,12 +155,13 @@ const WalletSettings = () => {
           <WalletSettingsTitle>Hide Wallet</WalletSettingsTitle>
 
           <ToggleSwitch
-            onChange={value => {
+            onChange={() => {
               haptic('impactLight');
-              //    TODO: Update me
-              setDemoToggle(value);
+              dispatch(toggleHideWallet({wallet}));
+              dispatch(startUpdateWalletBalance({key, wallet}));
+              dispatch(updatePortfolioBalance());
             }}
-            isEnabled={demoToggle}
+            isEnabled={!!hideWallet}
           />
         </SettingView>
         <Info>

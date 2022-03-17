@@ -74,6 +74,7 @@ export const buildWalletObj = (
     n,
     m,
     isRefreshing: false,
+    hideWallet: false,
   };
 };
 

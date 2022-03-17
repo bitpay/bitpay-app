@@ -24,7 +24,7 @@ import {Effect} from '../../../index';
 import {getHistoricFiatRate, startGetRates} from '../rates/rates';
 import {toFiat} from '../../utils/wallet';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
-import {getFeeRatePerKb, GetMinFee} from '../fee/fee';
+import {GetMinFee} from '../fee/fee';
 import {updateWalletTxHistory} from '../../wallet.actions';
 
 const BWC = BwcProvider.getInstance();

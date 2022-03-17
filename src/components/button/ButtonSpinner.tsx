@@ -19,14 +19,14 @@ const styles = StyleSheet.create({
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
   },
-  secondary : {
+  secondary: {
     borderTopColor: NotificationPrimary,
     borderBottomColor: NotificationPrimary,
   },
   default: {
     borderTopColor: White,
     borderBottomColor: White,
-  }
+  },
 });
 
 const Spinner = ({buttonStyle}: {buttonStyle?: string}) => {
@@ -41,7 +41,15 @@ const Spinner = ({buttonStyle}: {buttonStyle?: string}) => {
     transform: [{rotate: `${angle.value}deg`}],
   }));
 
-  return <Animated.View style={[styles.spinner, spin, buttonStyle === 'secondary' ? styles.secondary : styles.default]} />;
+  return (
+    <Animated.View
+      style={[
+        styles.spinner,
+        spin,
+        buttonStyle === 'secondary' ? styles.secondary : styles.default,
+      ]}
+    />
+  );
 };
 
 export default memo(Spinner);
