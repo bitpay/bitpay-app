@@ -15,6 +15,7 @@ import {GetProtocolPrefix} from './currency';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {formatFiatAmount} from '../../../utils/helper-methods';
+import {WALLET_DISPLAY_LIMIT} from '../../../navigation/tabs/home/components/Wallet';
 
 const mapAbbreviationAndName = (
   walletName: string,
@@ -82,7 +83,7 @@ export const buildKeyObj = ({
   key,
   wallets,
   totalBalance = 0,
-  backupComplete = false,
+  backupComplete = true,
 }: {
   key: KeyMethods;
   wallets: Wallet[];
@@ -95,7 +96,6 @@ export const buildKeyObj = ({
     properties: key.toObj(),
     methods: key,
     totalBalance,
-    show: true,
     isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
     backupComplete,
     keyName: 'My Key',
@@ -194,6 +194,17 @@ export const GetProtocolPrefixAddress = (
     return address;
   }
   return GetProtocolPrefix(coin, network) + ':' + address;
+};
+
+export const getRemainingWalletCount = (
+  wallets?: Wallet[],
+): undefined | number => {
+  if (!wallets) {
+    return;
+  }
+  return wallets.length > WALLET_DISPLAY_LIMIT
+    ? wallets.length - WALLET_DISPLAY_LIMIT
+    : undefined;
 };
 
 export const BuildKeysAndWalletsList = (allKeys: {[key in string]: Key}) => {

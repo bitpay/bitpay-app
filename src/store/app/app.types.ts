@@ -36,6 +36,7 @@ export enum AppActionTypes {
   PIN_BANNED_UNTIL = 'APP/PIN_BANNED_UNTIL',
   SHOW_BLUR = 'APP/SHOW_BLUR',
   SHOW_PORTFOLIO_VALUE = 'APP/SHOW_PORTFOLIO_VALUE',
+  SET_HOME_CAROUSEL_CONFIG = 'APP/SET_HOME_CAROUSEL_CONFIG',
 }
 
 interface NetworkChanged {
@@ -168,6 +169,11 @@ interface ShowPortfolioValue {
   payload: boolean;
 }
 
+interface SetHomeCarouselConfig {
+  type: typeof AppActionTypes.SET_HOME_CAROUSEL_CONFIG;
+  payload: any;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
@@ -196,4 +202,5 @@ export type AppActionType =
   | CurrentPin
   | PinBannedUntil
   | ShowBlur
-  | ShowPortfolioValue;
+  | ShowPortfolioValue
+  | SetHomeCarouselConfig;

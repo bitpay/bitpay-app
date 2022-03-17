@@ -34,7 +34,6 @@ export enum WalletActionTypes {
   SUCCESS_UPDATE_ALL_KEYS_AND_BALANCES = 'WALLET/SUCCESS_UPDATE_ALL_KEYS_AND_BALANCES',
   FAILED_UPDATE_ALL_KEYS_AND_BALANCES = 'WALLET/FAILED_UPDATE_ALL_KEYS_AND_BALANCES',
   UPDATE_PORTFOLIO_BALANCE = 'WALLET/UPDATE_PORTFOLIO_BALANCE',
-  TOGGLE_HOME_KEY_CARD = 'WALLET/TOGGLE_HOME_KEY_CARD',
   UPDATE_KEY_NAME = 'WALLET/UPDATE_KEY_NAME',
   UPDATE_WALLET_NAME = 'WALLET/UPDATE_WALLET_NAME',
   SET_WALLET_REFRESHING = 'WALLET/SET_WALLET_REFRESHING',
@@ -182,14 +181,6 @@ interface updatePortfolioBalance {
   type: typeof WalletActionTypes.UPDATE_PORTFOLIO_BALANCE;
 }
 
-interface toggleHomeKeyCard {
-  type: typeof WalletActionTypes.TOGGLE_HOME_KEY_CARD;
-  payload: {
-    keyId: string;
-    show: boolean;
-  };
-}
-
 interface successGetReceiveAddress {
   type: typeof WalletActionTypes.SUCCESS_GET_RECEIVE_ADDRESS;
   payload: {
@@ -267,7 +258,6 @@ export type WalletActionType =
   | updatePortfolioBalance
   | successUpdateAllKeysAndBalances
   | failedUpdateAllKeysAndBalances
-  | toggleHomeKeyCard
   | updateKeyName
   | updateWalletName
   | setWalletRefreshing

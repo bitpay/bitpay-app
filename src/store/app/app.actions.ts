@@ -146,3 +146,8 @@ export const showPortfolioValue = (value: boolean): AppActionType => ({
   type: AppActionTypes.SHOW_PORTFOLIO_VALUE,
   payload: value,
 });
+
+export const setHomeCarouselConfig = (update: any): AppActionType => ({
+  type: AppActionTypes.SET_HOME_CAROUSEL_CONFIG,
+  payload: update,
+});

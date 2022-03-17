@@ -1,7 +1,7 @@
 import React from 'react';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import styled from 'styled-components/native';
-import {Feather, SlateDark} from '../../../styles/colors';
+import {Feather} from '../../../styles/colors';
 import {
   ActiveOpacity,
   Column,
@@ -18,6 +18,7 @@ import {
 } from '../../tabs/home/components/Wallet';
 import {formatFiatAmount} from '../../../utils/helper-methods';
 import AngleRight from '../../../../assets/img/angle-right.svg';
+import {getRemainingWalletCount} from '../../../store/wallet/utils/wallet';
 
 interface Props {
   keyId: string;
@@ -58,10 +59,7 @@ const KeyDropdownOption = ({
   onPress,
 }: Props) => {
   const walletInfo = wallets.slice(0, WALLET_DISPLAY_LIMIT);
-  const remainingAssetCount =
-    wallets.length > WALLET_DISPLAY_LIMIT
-      ? wallets.length - WALLET_DISPLAY_LIMIT
-      : undefined;
+  const remainingWalletCount = getRemainingWalletCount(wallets);
 
   return (
     <OptionContainer
@@ -81,9 +79,9 @@ const KeyDropdownOption = ({
                 )
               );
             })}
-            {remainingAssetCount && (
+            {remainingWalletCount && (
               <RemainingAssetsLabel>
-                + {remainingAssetCount} more
+                + {remainingWalletCount} more
               </RemainingAssetsLabel>
             )}
           </HeaderImg>

@@ -230,22 +230,6 @@ export const walletReducer = (
       };
     }
 
-    case WalletActionTypes.TOGGLE_HOME_KEY_CARD: {
-      const {keyId, show} = action.payload;
-      const keyToUpdate = state.keys[keyId];
-      keyToUpdate.show = show;
-
-      return {
-        ...state,
-        keys: {
-          ...state.keys,
-          [keyId]: {
-            ...keyToUpdate,
-          },
-        },
-      };
-    }
-
     case WalletActionTypes.SUCCESS_GET_RECEIVE_ADDRESS: {
       const {keyId, walletId, receiveAddress} = action.payload;
       const keyToUpdate = state.keys[keyId];

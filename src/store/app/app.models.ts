@@ -20,3 +20,8 @@ export interface AppIdentity {
    */
   sin: string;
 }
+
+export interface HomeCarouselConfig {
+  id: string;
+  show: boolean;
+}

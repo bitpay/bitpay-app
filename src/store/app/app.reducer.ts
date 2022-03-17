@@ -54,6 +54,7 @@ export interface AppState {
   colorScheme: ColorSchemeName;
   defaultLanguage: string;
   showPortfolioValue: boolean;
+  homeCarouselConfig: any;
 }
 
 const initialState: AppState = {
@@ -92,6 +93,7 @@ const initialState: AppState = {
   colorScheme: null,
   defaultLanguage: i18n.language || 'en',
   showPortfolioValue: true,
+  homeCarouselConfig: undefined,
 };
 
 export const appReducer = (
@@ -263,6 +265,12 @@ export const appReducer = (
       return {
         ...state,
         showPortfolioValue: action.payload,
+      };
+
+    case AppActionTypes.SET_HOME_CAROUSEL_CONFIG:
+      return {
+        ...state,
+        homeCarouselConfig: action.payload,
       };
 
     default:
