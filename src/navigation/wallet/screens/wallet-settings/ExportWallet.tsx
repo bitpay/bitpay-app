@@ -188,7 +188,7 @@ const ExportWallet = () => {
       }
 
       // TODO: Update app name
-      const subject = `{BitPay} Wallet Backup: ${name}`;
+      const subject = `BitPay Wallet Backup: ${name}`;
       const body = `Here is the encrypted backup of the wallet ${name}: \n\n${_sendWallet} \n\nTo import this backup, copy all text between {...}, including the symbols {}`;
 
       // Works only on device
