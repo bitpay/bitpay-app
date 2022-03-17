@@ -164,12 +164,14 @@ const WalletSettings = () => {
             isEnabled={!!hideWallet}
           />
         </SettingView>
-        <Info>
-          <InfoTriangle />
-          <InfoDescription>
-            This wallet will not be removed from the device.
-          </InfoDescription>
-        </Info>
+        {!hideWallet ? (
+          <Info>
+            <InfoTriangle />
+            <InfoDescription>
+              This wallet will not be removed from the device.
+            </InfoDescription>
+          </Info>
+        ) : null}
 
         <SettingView>
           <WalletSettingsTitle>Hide Balance</WalletSettingsTitle>
