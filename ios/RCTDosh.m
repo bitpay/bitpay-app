@@ -31,4 +31,10 @@ RCT_EXPORT_METHOD(setDoshToken:(NSString *)token)
   RCTLogInfo(@"Dosh set token");
 }
 
+RCT_EXPORT_METHOD(clearUser)
+{
+  [DoshAdapter clearUser];
+  RCTLogInfo(@"Dosh clear user");
+}
+
 @end

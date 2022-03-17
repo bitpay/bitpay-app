@@ -79,4 +79,9 @@ public class DoshAdapter: NSObject {
     print("dosh set token")
   }
   
+  @objc static func clearUser() {
+    Dosh.instance?.clearUser()
+    print("dosh clear user")
+  }
+  
 };
