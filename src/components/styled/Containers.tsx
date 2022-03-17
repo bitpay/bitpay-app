@@ -314,3 +314,11 @@ export const SearchInput = styled.TextInput`
   color: ${({theme}) => theme.colors.text};
   background-color: transparent;
 `;
+
+// Hidden label
+
+export const HiddenContainer = styled.View`
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
+  padding: 5px 10px;
+  border-radius: 40px;
+`;

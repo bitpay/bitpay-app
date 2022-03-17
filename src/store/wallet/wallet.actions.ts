@@ -213,3 +213,10 @@ export const toggleHideWallet = (payload: {
   type: WalletActionTypes.TOGGLE_HIDE_WALLET,
   payload,
 });
+
+export const toggleHideBalance = (payload: {
+  wallet: Wallet;
+}): WalletActionType => ({
+  type: WalletActionTypes.TOGGLE_HIDE_BALANCE,
+  payload,
+});

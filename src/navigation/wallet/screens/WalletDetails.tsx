@@ -50,7 +50,10 @@ import {
   IsReceived,
   TX_HISTORY_LIMIT,
 } from '../../../store/wallet/effects/transactions/transactions';
-import {ScreenGutter} from '../../../components/styled/Containers';
+import {
+  HiddenContainer,
+  ScreenGutter,
+} from '../../../components/styled/Containers';
 import TransactionRow, {
   TRANSACTION_ROW_HEIGHT,
 } from '../../../components/list/TransactionRow';
@@ -270,6 +273,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     currencyName,
     currencyAbbreviation,
     network,
+    hideBalance,
   } = uiFormattedWallet;
 
   const showFiatBalance =
@@ -465,13 +469,19 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             <>
               <BalanceContainer>
                 <Row>
-                  <Balance scale={shouldScale(cryptoBalance)}>
-                    {cryptoBalance} {currencyAbbreviation}
-                  </Balance>
+                  {!hideBalance ? (
+                    <Balance scale={shouldScale(cryptoBalance)}>
+                      {cryptoBalance} {currencyAbbreviation}
+                    </Balance>
+                  ) : (
+                    <HiddenContainer>
+                      <H5>Balance Hidden</H5>
+                    </HiddenContainer>
+                  )}
                   <Chain>{currencyAbbreviation}</Chain>
                 </Row>
                 <Row>
-                  {showFiatBalance && <H5>{fiatBalance}</H5>}
+                  {showFiatBalance && !hideBalance && <H5>{fiatBalance}</H5>}
                   {walletType && <Type>{walletType}</Type>}
                 </Row>
               </BalanceContainer>

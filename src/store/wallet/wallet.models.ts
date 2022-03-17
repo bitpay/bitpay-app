@@ -75,6 +75,7 @@ export interface WalletObj {
   isRefreshing?: boolean;
   transactionHistory?: {transactions: any[]; loadMore: boolean};
   hideWallet?: boolean;
+  hideBalance?: boolean;
 }
 
 export interface PriceHistory {

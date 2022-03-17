@@ -6,8 +6,9 @@ import {
   Row,
   ActiveOpacity,
   RowContainer,
+  HiddenContainer,
 } from '../styled/Containers';
-import {Badge, H5, SubText} from '../styled/Text';
+import {Badge, H5, H7, SubText} from '../styled/Text';
 import styled from 'styled-components/native';
 import NestedArrow from '../../../assets/img/nested-arrow.svg';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
@@ -40,6 +41,7 @@ export interface WalletRowProps {
   isComplete?: boolean;
   isRefreshing?: boolean;
   hideWallet?: boolean;
+  hideBalance?: boolean;
 }
 
 interface Props {
@@ -76,6 +78,7 @@ const WalletRow = ({wallet, onPress}: Props) => {
     fiatBalance,
     isToken,
     network,
+    hideBalance,
   } = wallet;
 
   const showFiatBalance =
@@ -102,11 +105,19 @@ const WalletRow = ({wallet, onPress}: Props) => {
         <SubText>{currencyAbbreviation.toUpperCase()}</SubText>
       </CurrencyColumn>
       <BalanceColumn>
-        <H5>{cryptoBalance}</H5>
-        {showFiatBalance && (
-          <SubText>
-            {network === 'testnet' ? 'Test - No Value' : fiatBalance}
-          </SubText>
+        {!hideBalance ? (
+          <>
+            <H5>{cryptoBalance}</H5>
+            {showFiatBalance && (
+              <SubText>
+                {network === 'testnet' ? 'Test - No Value' : fiatBalance}
+              </SubText>
+            )}
+          </>
+        ) : (
+          <HiddenContainer>
+            <H7>Balance Hidden</H7>
+          </HiddenContainer>
         )}
       </BalanceColumn>
     </RowContainer>

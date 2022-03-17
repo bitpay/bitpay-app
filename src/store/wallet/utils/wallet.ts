@@ -75,6 +75,7 @@ export const buildWalletObj = (
     m,
     isRefreshing: false,
     hideWallet: false,
+    hideBalance: false,
   };
 };
 

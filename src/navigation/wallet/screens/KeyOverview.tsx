@@ -124,6 +124,7 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   keyId,
   isRefreshing,
   hideWallet,
+  hideBalance,
 }) => ({
   id,
   keyId,
@@ -136,6 +137,7 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   network: credentials.network,
   isRefreshing,
   hideWallet,
+  hideBalance,
 });
 
 // Key overview list builder

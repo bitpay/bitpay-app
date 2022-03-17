@@ -5,8 +5,7 @@ import {StyleProp, TextStyle} from 'react-native';
 import NestedArrow from '../../../assets/img/nested-arrow.svg';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {buildTestBadge} from './WalletRow';
-import {Column} from '../styled/Containers';
-import {LightBlack, NeutralSlate} from '../../styles/colors';
+import {Column, HiddenContainer} from '../styled/Containers';
 
 export interface WalletSettingsRowProps {
   id: string;
@@ -37,12 +36,6 @@ const NestedArrowContainer = styled.View`
 
 const HiddenColumn = styled(Column)`
   align-items: flex-end;
-`;
-
-const HiddenContainer = styled.View`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  padding: 5px 10px;
-  border-radius: 40px;
 `;
 
 const WalletSettingsRow = ({

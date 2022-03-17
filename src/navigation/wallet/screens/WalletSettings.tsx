@@ -32,6 +32,7 @@ import {
 import {WrongPasswordError} from '../components/ErrorMessages';
 import {useDispatch} from 'react-redux';
 import {
+  toggleHideBalance,
   toggleHideWallet,
   updatePortfolioBalance,
 } from '../../../store/wallet/wallet.actions';
@@ -85,6 +86,7 @@ const WalletSettings = () => {
     walletName,
     credentials: {walletName: credentialsWalletName},
     hideWallet,
+    hideBalance,
   } = wallet;
 
   const dispatch = useDispatch();
@@ -179,9 +181,9 @@ const WalletSettings = () => {
           <ToggleSwitch
             onChange={() => {
               haptic('impactLight');
-              //    TODO: Update me
+              dispatch(toggleHideBalance({wallet}));
             }}
-            isEnabled={false}
+            isEnabled={!!hideBalance}
           />
         </SettingView>
 

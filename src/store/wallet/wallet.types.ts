@@ -44,6 +44,7 @@ export enum WalletActionTypes {
   UPDATE_WALLET_TX_HISTORY = 'WALLET/UPDATE_WALLET_TX_HISTORY',
   SYNC_WALLETS = 'WALLET/SYNC_WALLETS',
   TOGGLE_HIDE_WALLET = 'WALLET/TOGGLE_HIDE_WALLET',
+  TOGGLE_HIDE_BALANCE = 'WALLET/TOGGLE_HIDE_BALANCE',
 }
 
 interface successWalletStoreInit {
@@ -258,6 +259,13 @@ interface toggleHideWallet {
   };
 }
 
+interface toggleHideBalance {
+  type: typeof WalletActionTypes.TOGGLE_HIDE_BALANCE;
+  payload: {
+    wallet: Wallet;
+  };
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -293,4 +301,5 @@ export type WalletActionType =
   | setUseUnconfirmedFunds
   | updateWalletTxHistory
   | syncWallets
-  | toggleHideWallet;
+  | toggleHideWallet
+  | toggleHideBalance;
