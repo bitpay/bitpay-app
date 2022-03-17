@@ -190,25 +190,6 @@ const WalletSettings = () => {
         <Hr />
 
         <VerticalPadding>
-          <Title>Security</Title>
-
-          <SettingView>
-            <WalletSettingsTitle>
-              Request Biometric Authentication
-            </WalletSettingsTitle>
-            <ToggleSwitch
-              onChange={() => {
-                haptic('impactLight');
-                //    TODO: Update me
-              }}
-              isEnabled={false}
-            />
-          </SettingView>
-
-          <Hr />
-        </VerticalPadding>
-
-        <VerticalPadding>
           <Title>Advanced</Title>
           <Setting
             activeOpacity={ActiveOpacity}
