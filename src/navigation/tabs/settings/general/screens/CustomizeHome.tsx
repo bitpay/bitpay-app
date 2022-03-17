@@ -233,7 +233,7 @@ const CustomizeHome = () => {
     return (
       <ScaleDecorator>
         <CustomizeCardContainer
-          onPressIn={() => {
+          onLongPress={() => {
             haptic('impactLight');
             drag();
           }}
