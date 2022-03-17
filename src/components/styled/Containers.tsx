@@ -8,6 +8,7 @@ import {
   SlateDark,
   White,
   Slate,
+  NotificationPrimary,
 } from '../../styles/colors';
 import {BaseText} from './Text';
 
@@ -233,7 +234,7 @@ export const AdvancedOptionsButton = styled.TouchableOpacity`
 export const AdvancedOptionsButtonText = styled(BaseText)`
   font-size: 16px;
   line-height: 25px;
-  color: ${({theme}) => theme.colors.text};
+  color: ${({theme: {dark}}) => (dark ? White : NotificationPrimary)};
 `;
 
 export const AdvancedOptions = styled.View`

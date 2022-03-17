@@ -81,11 +81,10 @@ const AllAddresses = () => {
         appName +
         ' Wallet "' +
         walletName +
-        '" Addresses\n  Only Main Addresses are  shown.\n\n';
-      body += '\n';
+        '" Addresses\nOnly Main Addresses are shown.\n\n\n';
       body += allAddresses
         .map(({address, path, uiTime}) => {
-          return `*  ${address} xpub ${path.substring(1)} ${uiTime}`;
+          return `*  ${address} xpub ${path.substring(1)} ${uiTime || ''}`;
         })
         .join('\n');
 

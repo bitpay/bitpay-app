@@ -87,7 +87,14 @@ export type WalletStackParamList = {
   TransactionDetails: {wallet: WalletModel; transaction: any};
   GlobalSelect: GlobalSelectParamList;
   WalletInformation: {wallet: WalletModel};
-  ExportWallet: {wallet: WalletModel};
+  ExportWallet: {
+    wallet: WalletModel;
+    keyObj: {
+      mnemonic: string;
+      mnemonicHasPassphrase: boolean;
+      xPrivKey: string;
+    };
+  };
   Addresses: {wallet: WalletModel};
   AllAddresses: AllAddressesParamList;
 };

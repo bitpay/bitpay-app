@@ -20,9 +20,18 @@ import haptic from '../../../components/haptic-feedback/haptic';
 
 import {SlateDark, White} from '../../../styles/colors';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
-import {useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {Wallet} from '../../../store/wallet/wallet.models';
+import {AppActions} from '../../../store/app';
+import {sleep} from '../../../utils/helper-methods';
+import {
+  dismissDecryptPasswordModal,
+  showBottomNotificationModal,
+  showDecryptPasswordModal,
+} from '../../../store/app/app.actions';
+import {WrongPasswordError} from '../components/ErrorMessages';
+import {useDispatch} from 'react-redux';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -72,6 +81,34 @@ const WalletSettings = () => {
     walletName,
     credentials: {walletName: credentialsWalletName},
   } = wallet;
+
+  const dispatch = useDispatch();
+
+  const buildEncryptModalConfig = (
+    cta: (decryptedKey: {
+      mnemonic: string;
+      mnemonicHasPassphrase: boolean;
+      xPrivKey: string;
+    }) => void,
+  ) => {
+    return {
+      onSubmitHandler: async (encryptPassword: string) => {
+        try {
+          const decryptedKey = key.methods.get(encryptPassword);
+          dispatch(AppActions.dismissDecryptPasswordModal());
+          await sleep(300);
+          cta(decryptedKey);
+        } catch (e) {
+          console.log(`Decrypt Error: ${e}`);
+          await dispatch(AppActions.dismissDecryptPasswordModal());
+          await sleep(500); // Wait to close Decrypt Password modal
+          dispatch(showBottomNotificationModal(WrongPasswordError()));
+        }
+      },
+      description: 'To continue please enter your encryption password.',
+      onCancelHandler: () => null,
+    };
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -193,10 +230,26 @@ const WalletSettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('Wallet', {
-                screen: 'ExportWallet',
-                params: {wallet},
-              });
+              if (key.methods.isPrivKeyEncrypted()) {
+                dispatch(
+                  showDecryptPasswordModal(
+                    buildEncryptModalConfig(async decryptedKey => {
+                      navigation.navigate('Wallet', {
+                        screen: 'ExportWallet',
+                        params: {
+                          wallet,
+                          keyObj: decryptedKey,
+                        },
+                      });
+                    }),
+                  ),
+                );
+              } else {
+                navigation.navigate('Wallet', {
+                  screen: 'ExportWallet',
+                  params: {wallet, keyObj: key.methods.get()},
+                });
+              }
             }}>
             <WalletSettingsTitle>Export Wallet</WalletSettingsTitle>
           </Setting>

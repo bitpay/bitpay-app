@@ -33,6 +33,8 @@ export interface KeyProperties {
   mnemonicHasPassphrase: boolean;
   version: number;
   xPrivKey: string;
+  xPrivKeyEncrypted?: string;
+  mnemonicEncrypted?: string;
 }
 
 export interface Key {
