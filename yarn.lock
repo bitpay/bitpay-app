@@ -10966,7 +10966,7 @@ react-native-dotenv@3.3.0:
   dependencies:
     dotenv "^10.0.0"
 
-react-native-draggable-flatlist@^3.0.7:
+react-native-draggable-flatlist@3.0.7:
   version "3.0.7"
   resolved "https://registry.yarnpkg.com/react-native-draggable-flatlist/-/react-native-draggable-flatlist-3.0.7.tgz#1baba5101a8fa85efaadef33e2e109d51f5fb331"
   integrity sha512-osza+3J14OOlTBJpwUyGXyUyXoo7imUMy1SzjMhotVAjb8Gul/vmOJf0hScuwgaZvRZXAFqa55DBAldoCW73FQ==

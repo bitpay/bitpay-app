@@ -34,13 +34,16 @@ import {sleep} from '../../../utils/helper-methods';
 import ProfileButton from './components/HeaderProfileButton';
 import ScanButton from './components/HeaderScanButton';
 import {startUpdateAllKeyAndWalletBalances} from '../../../store/wallet/effects/balance/balance';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {
+  setHomeCarouselConfig,
+  showBottomNotificationModal,
+} from '../../../store/app/app.actions';
 import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {URL} from '../../../constants';
 import {startGetRates} from '../../../store/wallet/effects';
-import {useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 
 const HeaderContainer = styled.View`
   flex-direction: row;
@@ -89,6 +92,21 @@ const HomeRoot = () => {
   //     showOnboardingFinishModal();
   //   }
   // }, []);
+
+  const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
+  const _keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const _cards = useAppSelector(({CARD, APP}) => CARD.cards[APP.network]);
+  if (!homeCarouselConfig) {
+    const keys = Object.values(_keys).map(key => ({
+      id: key.id,
+      show: true,
+    }));
+    const cards = _cards.map(_ => ({
+      id: 'bitpayCard',
+      show: true,
+    }));
+    dispatch(setHomeCarouselConfig([...keys, ...cards]));
+  }
 
   const navigation = useNavigation();
   const theme = useTheme();

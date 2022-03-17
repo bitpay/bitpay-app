@@ -6,7 +6,7 @@ import {BottomNotificationConfig} from '../../components/modal/bottom-notificati
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {NavScreenParams, RootStackParamList} from '../../Root';
-import {AppIdentity} from './app.models';
+import {AppIdentity, HomeCarouselConfig} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 
@@ -54,7 +54,7 @@ export interface AppState {
   colorScheme: ColorSchemeName;
   defaultLanguage: string;
   showPortfolioValue: boolean;
-  homeCarouselConfig: any;
+  homeCarouselConfig: HomeCarouselConfig[] | undefined;
 }
 
 const initialState: AppState = {

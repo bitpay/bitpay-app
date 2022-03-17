@@ -203,7 +203,7 @@ const CustomizeHome = () => {
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const cards = useAppSelector(({CARD, APP}) => CARD.cards[APP.network]);
-  const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
+  const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig)!;
   const navigation = useNavigation();
 
   const [_visible, _hidden] = createCustomizeCardList({

@@ -23,7 +23,7 @@ import {SEGMENT_API_KEY, APPSFLYER_API_KEY, APP_ID} from '@env';
 import appsFlyer from 'react-native-appsflyer';
 import {requestTrackingPermission} from 'react-native-tracking-transparency';
 import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
-import {showBlur} from './app.actions';
+import {setHomeCarouselConfig, showBlur} from './app.actions';
 import {batch} from 'react-redux';
 import i18n from 'i18next';
 import {WalletActions} from '../wallet';
@@ -32,7 +32,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     dispatch(LogActions.clear());
 
-    const {APP, BITPAY_ID} = getState();
+    const {APP, BITPAY_ID, WALLET, CARD} = getState();
     const network = APP.network;
     const pinLockActive = APP.pinLockActive;
 
