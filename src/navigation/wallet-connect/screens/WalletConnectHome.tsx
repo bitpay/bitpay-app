@@ -120,13 +120,19 @@ const WalletConnectHome = () => {
                   recipient,
                   toAddress,
                   from: request.payload.params[0].from,
-                  amount: convertHexToNumber(request.payload.params[0].value),
-                  gasPrice: convertHexToNumber(
-                    request.payload.params[0].gasPrice,
-                  ),
-                  nonce: convertHexToNumber(request.payload.params[0].nonce),
-                  gasLimit: convertHexToNumber(request.payload.params[0].gas),
-                  data: convertHexToNumber(request.payload.params[0].data),
+                  amount: request.payload.params[0].value
+                    ? convertHexToNumber(request.payload.params[0].value)
+                    : 0,
+                  gasPrice:
+                    request.payload.params[0].gasPrice &&
+                    convertHexToNumber(request.payload.params[0].gasPrice),
+                  nonce:
+                    request.payload.params[0].nonce &&
+                    convertHexToNumber(request.payload.params[0].nonce),
+                  gasLimit:
+                    request.payload.params[0].gas &&
+                    convertHexToNumber(request.payload.params[0].gas),
+                  data: request.payload.params[0].data,
                 };
                 const {txDetails, txp} = (await dispatch<any>(
                   createProposalAndBuildTxDetails(tx),
@@ -263,9 +269,9 @@ const WalletConnectHome = () => {
           <HeaderTitle>Pending Requests</HeaderTitle>
           <Hr />
           {requests && requests.length ? (
-            requests.map(request => {
+            requests.map((request, id) => {
               return (
-                <View key={request.payload.id}>
+                <View key={id}>
                   <ItemTouchableContainer
                     onPress={() => {
                       haptic('impactLight');
@@ -300,7 +306,11 @@ const WalletConnectHome = () => {
                         <IconLabel>
                           {FormatAmountStr(
                             'eth',
-                            parseInt(request.payload.params[0].value, 16),
+                            parseInt(
+                              request.payload.params[0].value ||
+                                request.payload.params[0].gas,
+                              16,
+                            ),
                           )}
                         </IconLabel>
                       ) : (
