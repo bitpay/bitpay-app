@@ -184,6 +184,15 @@ export const successGetReceiveAddress = (payload: {
   payload,
 });
 
+export const updateWalletTxHistory = (payload: {
+  keyId: string;
+  walletId: string;
+  transactionHistory: {transactions: any[]; loadMore: boolean};
+}): WalletActionType => ({
+  type: WalletActionTypes.UPDATE_WALLET_TX_HISTORY,
+  payload,
+});
+
 export const setUseUnconfirmedFunds = (payload: boolean): WalletActionType => ({
   type: WalletActionTypes.SET_USE_UNCONFIRMED_FUNDS,
   payload,

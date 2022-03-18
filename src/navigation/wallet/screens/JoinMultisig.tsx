@@ -221,7 +221,7 @@ const JoinMultisig = () => {
               navigation.navigate('Scan', {
                 screen: 'Root',
                 params: {
-                  contextHandler: data => {
+                  onScanComplete: data => {
                     setValue('invitationCode', data, {
                       shouldValidate: true,
                     });
