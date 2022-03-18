@@ -1,9 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import {ScrollView} from 'react-native';
-import {useDispatch, useSelector} from 'react-redux';
+import {useSelector} from 'react-redux';
 import {RouteProp} from '@react-navigation/core';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
+import {useAppDispatch} from '../../../../utils/hooks';
 import {BuyCryptoStackParamList} from '../BuyCryptoStack';
 import {PaymentMethodsAvailable} from '../constants/BuyCryptoConstants';
 import PaymentMethodsModal from '../components/PaymentMethodModal';
@@ -24,9 +25,9 @@ import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyO
 import {ItemProps} from '../../../../components/list/CurrencySelectionRow';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {RootState} from '../../../../store';
-import {AppActions} from '../../../../store/app';
+import {showBottomNotificationModal, dismissBottomNotificationModal} from '../../../../store/app/app.actions';
 import {Wallet} from '../../../../store/wallet/wallet.models';
-import {Action, White} from '../../../../styles/colors';
+import {Action, White, Slate, SlateDark} from '../../../../styles/colors';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {getCountry} from '../../../../lib/location/location';
@@ -43,11 +44,11 @@ const ArrowContainer = styled.View`
 `;
 
 const BuyCryptoRoot: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const theme = useTheme();
   const route = useRoute<RouteProp<BuyCryptoStackParamList, 'Root'>>();
-  const allKeys: any = useSelector(({WALLET}: RootState) => WALLET.keys);
+  const allKeys = useSelector(({WALLET}: RootState) => WALLET.keys);
 
   const fromWallet = route.params?.fromWallet;
   const fromAmount = route.params?.amount;
@@ -113,13 +114,13 @@ const BuyCryptoRoot: React.FC = () => {
   };
 
   const selectFirstAvailableWallet = () => {
-    const keysList = Object.values(allKeys).filter((key: any) => key.show);
+    const keysList = Object.values(allKeys).filter(key => key.show);
 
     if (fromWallet && fromWallet.id) {
       let fromWalletData;
-      let allWallets: any[] = [];
+      let allWallets: Wallet[] = [];
 
-      keysList.forEach((key: any) => {
+      keysList.forEach((key) => {
         allWallets = [...allWallets, ...key.wallets];
       });
 
@@ -129,8 +130,8 @@ const BuyCryptoRoot: React.FC = () => {
       }
     } else {
       if (keysList[0]) {
-        const firstKey: any = keysList[0];
-        const firstKeyAllWallets: any[] = firstKey.wallets;
+        const firstKey = keysList[0];
+        const firstKeyAllWallets: Wallet[] = firstKey.wallets;
         const allowedWallets = firstKeyAllWallets.filter(
           wallet =>
             wallet.credentials &&
@@ -144,7 +145,7 @@ const BuyCryptoRoot: React.FC = () => {
     }
   };
 
-  const setWallet = (wallet: any) => {
+  const setWallet = (wallet: Wallet) => {
     if (
       wallet.credentials &&
       wallet.credentials.network == 'livenet' &&
@@ -170,9 +171,9 @@ const BuyCryptoRoot: React.FC = () => {
         message = 'Unknown Error';
         break;
     }
-    await sleep(500);
+    await sleep(1000);
     dispatch(
-      AppActions.showBottomNotificationModal({
+      showBottomNotificationModal({
         type: 'error',
         title,
         message,
@@ -181,7 +182,7 @@ const BuyCryptoRoot: React.FC = () => {
           {
             text: 'OK',
             action: () => {
-              dispatch(AppActions.dismissBottomNotificationModal());
+              dispatch(dismissBottomNotificationModal());
             },
             primary: true,
           },
@@ -207,13 +208,12 @@ const BuyCryptoRoot: React.FC = () => {
   return (
     <>
       <ScrollView>
-        <BuyCryptoItemCard>
+        <BuyCryptoItemCard
+          onPress={() => {
+            showModal('amount');
+          }}>
           <BuyCryptoItemTitle>Amount</BuyCryptoItemTitle>
-          <ActionsContainer
-            onPress={() => {
-              // navigation.goBack();
-              showModal('amount');
-            }}>
+          <ActionsContainer>
             <SelectedOptionContainer>
               <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
                 USD
@@ -226,7 +226,7 @@ const BuyCryptoRoot: React.FC = () => {
                   {...{
                     width: 13,
                     height: 13,
-                    color: theme.dark ? 'white' : '#9ba3ae',
+                    color: theme.dark ? White : Slate,
                   }}
                 />
               </ArrowContainer>
@@ -234,13 +234,13 @@ const BuyCryptoRoot: React.FC = () => {
           </ActionsContainer>
         </BuyCryptoItemCard>
 
-        <BuyCryptoItemCard>
+        <BuyCryptoItemCard
+          onPress={() => {
+            showModal('walletSelector');
+          }}>
           <BuyCryptoItemTitle>Deposit to</BuyCryptoItemTitle>
           {!selectedWallet && (
-            <ActionsContainer
-              onPress={() => {
-                showModal('walletSelector');
-              }}>
+            <ActionsContainer>
               <SelectedOptionContainer style={{backgroundColor: Action}}>
                 <SelectedOptionText
                   style={{color: White}}
@@ -250,17 +250,14 @@ const BuyCryptoRoot: React.FC = () => {
                 </SelectedOptionText>
                 <ArrowContainer>
                   <SelectorArrowDown
-                    {...{width: 13, height: 13, color: 'white'}}
+                    {...{width: 13, height: 13, color: White}}
                   />
                 </ArrowContainer>
               </SelectedOptionContainer>
             </ActionsContainer>
           )}
           {selectedWallet && (
-            <ActionsContainer
-              onPress={() => {
-                showModal('walletSelector');
-              }}>
+            <ActionsContainer>
               <SelectedOptionContainer style={{minWidth: 120}}>
                 <SelectedOptionCol>
                   {walletData && (
@@ -277,19 +274,19 @@ const BuyCryptoRoot: React.FC = () => {
                     {...{
                       width: 13,
                       height: 13,
-                      color: theme.dark ? 'white' : '#252525',
+                      color: theme.dark ? White : SlateDark,
                     }}
                   />
                 </ArrowContainer>
               </SelectedOptionContainer>
               <SelectedOptionCol>
-                <DataText>{selectedWallet.currencyName}</DataText>
+                <DataText>{selectedWallet.walletName ? selectedWallet.walletName : selectedWallet.currencyName}</DataText>
                 <ArrowContainer>
                   <SelectorArrowRight
                     {...{
                       width: 13,
                       height: 13,
-                      color: theme.dark ? 'white' : '#9ba3ae',
+                      color: theme.dark ? White : Slate,
                     }}
                   />
                 </ArrowContainer>
@@ -298,13 +295,13 @@ const BuyCryptoRoot: React.FC = () => {
           )}
         </BuyCryptoItemCard>
 
-        <BuyCryptoItemCard>
+        <BuyCryptoItemCard
+          onPress={() => {
+            showModal('paymentMethod');
+          }}>
           <BuyCryptoItemTitle>Payment Method</BuyCryptoItemTitle>
           {!selectedPaymentMethod && (
-            <ActionsContainer
-              onPress={() => {
-                showModal('paymentMethod');
-              }}>
+            <ActionsContainer>
               <SelectedOptionContainer style={{backgroundColor: Action}}>
                 <SelectedOptionText
                   style={{color: White}}
@@ -314,19 +311,27 @@ const BuyCryptoRoot: React.FC = () => {
                 </SelectedOptionText>
                 <ArrowContainer>
                   <SelectorArrowDown
-                    {...{width: 13, height: 13, color: 'white'}}
+                    {...{width: 13, height: 13, color: White}}
                   />
                 </ArrowContainer>
               </SelectedOptionContainer>
             </ActionsContainer>
           )}
           {selectedPaymentMethod && (
-            <ActionsContainer
-              onPress={() => {
-                showModal('paymentMethod');
-              }}>
+            <ActionsContainer>
               <DataText>{selectedPaymentMethod.label}</DataText>
-              {selectedPaymentMethod && selectedPaymentMethod.imgSrc}
+              <SelectedOptionCol>
+                {selectedPaymentMethod.imgSrc}
+                <ArrowContainer>
+                  <SelectorArrowRight
+                    {...{
+                      width: 13,
+                      height: 13,
+                      color: theme.dark ? White : Slate,
+                    }}
+                  />
+                </ArrowContainer>
+              </SelectedOptionCol>
             </ActionsContainer>
           )}
         </BuyCryptoItemCard>
@@ -354,27 +359,24 @@ const BuyCryptoRoot: React.FC = () => {
       </ScrollView>
 
       <AmountModal
-        openedFrom={'buyCrypto'}
         isVisible={amountModalVisible}
         onDismiss={(newAmount?: number) => {
-          console.log(
-            'Dismissing Amount Modal and setting new amount: ',
-            newAmount,
-          );
           if (newAmount) {
             setAmount(newAmount);
           }
-          setAmountModalVisible(false);
+          hideModal('amount');
         }}
       />
 
       <WalletSelectorModal
-        onPress={wallet => {
-          hideModal('walletSelector');
-          setWallet(wallet);
-        }}
         isVisible={walletSelectorModalVisible}
-        onBackdropPress={() => hideModal('walletSelector')}
+        customSupportedCurrencies={supportedCoins}
+        onDismiss={(newWallet?: Wallet) => {
+          hideModal('walletSelector');
+          if (newWallet) {
+            setWallet(newWallet);
+          }
+        }}
       />
 
       <PaymentMethodsModal

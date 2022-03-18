@@ -121,10 +121,9 @@ export interface AmountParamList {
 interface AmountProps {
   useAsModal: any;
   onDismiss?: (amount?: number) => void;
-  openedFrom?: 'buyCrypto' | undefined;
 }
 
-const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss, openedFrom}) => {
+const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss}) => {
   const route = useRoute<RouteProp<WalletStackParamList, 'Amount'>>();
   const {onAmountSelected, currencyAbbreviation, opts} = route.params;
   const navigation = useNavigation();
@@ -143,7 +142,7 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss, openedFrom}) => {
     primaryIsFiat: currencyAbbreviation === 'USD' ? true : false,
   });
   const swapList = currencyAbbreviation
-    ? [...new Set([...[currencyAbbreviation], ...['USD']])]
+    ? [...new Set([currencyAbbreviation, 'USD'])]
     : ['USD'];
 
   const allRates = useAppSelector(({WALLET}) => WALLET.rates);

@@ -2,12 +2,8 @@ import {simplexPaymentData, wyrePaymentData} from './buy-crypto.models';
 import {BuyCryptoActionType, BuyCryptoActionTypes} from './buy-crypto.types';
 
 type BuyCryptoReduxPersistBlackList = string[];
-export const buyCryptoReduxPersistBlackList: BuyCryptoReduxPersistBlackList = [
-  'offers',
-  'finishedSimplex',
-  'finishedWyre',
-  'updateView',
-];
+export const buyCryptoReduxPersistBlackList: BuyCryptoReduxPersistBlackList =
+  [];
 
 export interface BuyCryptoState {
   simplex: {[key in string]: simplexPaymentData};

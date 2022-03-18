@@ -1,4 +1,5 @@
 import React from 'react';
+import {ScrollView, SafeAreaView} from 'react-native';
 import {useTheme} from '@react-navigation/native';
 import FastImage from 'react-native-fast-image';
 import {
@@ -14,7 +15,6 @@ import styled from 'styled-components/native';
 import {BaseText} from '../../../../components/styled/Text';
 import Button from '../../../../components/button/Button';
 import {Action, LightBlack, SlateDark, White} from '../../../../styles/colors';
-import {ScrollView, SafeAreaView} from 'react-native';
 
 // Images
 import SimplexLogo from '../../../../../assets/img/services/simplex/logo-simplex-color.svg';
@@ -29,7 +29,7 @@ interface PaymentMethodsModalProps {
   selectedPaymentMethod: any;
 }
 
-const PaymentMethodCard = styled.View`
+const PaymentMethodCard = styled.TouchableOpacity`
   border-radius: 7px;
   margin-bottom: 20px;
   padding: 14px;
@@ -87,21 +87,26 @@ const PaymentMethodsModal = ({
       isVisible={isVisible}
       onBackdropPress={onBackdropPress ? onBackdropPress : () => {}}>
       <ModalContainer>
-        <SafeAreaView>
+        <SafeAreaView style={{height: '100%'}}>
           <ModalHeader>
             <ModalHeaderText>Payment Method</ModalHeaderText>
             <ModalHeaderRight>
               <Button
                 buttonType={'pill'}
+                buttonStyle={'cancel'}
                 onPress={onBackdropPress ? onBackdropPress : () => {}}>
                 Close
               </Button>
             </ModalHeaderRight>
           </ModalHeader>
-          <ScrollView>
+          <ScrollView style={{marginTop: 20}}>
             {Object.values(PaymentMethodsAvailable).map(paymentMethod => {
               return (
-                <PaymentMethodCard key={paymentMethod.method}>
+                <PaymentMethodCard
+                  key={paymentMethod.method}
+                  onPress={() => {
+                    onPress ? onPress(paymentMethod) : () => {};
+                  }}>
                   <PaymentMethodCardContainer>
                     <Checkbox
                       radio={true}

@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   Linking,
 } from 'react-native';
-import {useDispatch, useSelector} from 'react-redux';
+import {useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import FastImage from 'react-native-fast-image';
 import {
@@ -15,9 +15,10 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import cloneDeep from 'lodash.clonedeep';
+import {useAppDispatch} from '../../../../utils/hooks';
 import Button from '../../../../components/button/Button';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {BaseText, Link} from '../../../../components/styled/Text';
+import {BaseText, Link, H5, H7, Small} from '../../../../components/styled/Text';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {useLogger} from '../../../../utils/hooks/useLogger';
 import {getPrecision} from '../../../../utils/helper-methods';
@@ -31,12 +32,14 @@ import {
 } from '../utils/simplex-utils';
 import {wyreFiatAmountLimits} from '../utils/wyre-utils';
 import {RootState} from '../../../../store';
-import {AppActions} from '../../../../store/app';
+import {showBottomNotificationModal, dismissBottomNotificationModal} from '../../../../store/app/app.actions';
 import {BuyCryptoActions} from '../../../../store/buy-crypto';
 import {simplexPaymentData} from '../../../../store/buy-crypto/buy-crypto.models';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
+import {Wallet} from '../../../../store/wallet/wallet.models';
+import {DEEPLINK_PREFIX} from '../../../../constants/config';
 
-// Images
+// Images // TODO: for exchanges images create a component like this: /bitpay-app-v2/src/components/icons/info
 import SimplexLogo from '../../../../../assets/img/services/simplex/logo-simplex-color.svg';
 const SimplexLogoDm = require('../../../../../assets/img/services/simplex/logo-simplex-dm.png');
 import WyreLogo from '../../../../../assets/img/services/wyre/logo-wyre.svg';
@@ -47,12 +50,12 @@ export interface BuyCryptoOffersProps {
   fiatCurrency: string;
   coin: string;
   country: string;
-  selectedWallet: any;
+  selectedWallet: Wallet;
   paymentMethod: any;
 }
 
 export type CryptoOffer = {
-  key: string;
+  key: 'simplex' | 'wyre';
   showOffer: boolean;
   logoLight: JSX.Element;
   logoDark: JSX.Element;
@@ -81,8 +84,7 @@ const SummaryRow = styled.View`
 const SummaryItemContainer = styled.View`
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
+  align-items: stretch;
   height: 50px;
 `;
 
@@ -130,30 +132,24 @@ const OfferDataContainer = styled.View`
   flex-direction: column;
 `;
 
-const OfferDataCryptoAmount = styled(BaseText)`
-  font-weight: 500;
-  font-size: 18px;
+const OfferDataCryptoAmount = styled(H5)`
   line-height: 20px;
   color: ${({theme: {dark}}) => (dark ? White : Black)};
 `;
 
-const OfferDataRate = styled(BaseText)`
-  font-size: 14px;
+const OfferDataRate = styled(H7)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-weight: 400;
 `;
 
 const OfferDataInfoContainer = styled.View`
   display: flex;
   flex-direction: row;
   align-items: center;
-  margin: ${({theme: {dark}}) => (dark ? '10px 0px' : '0px')};
+  margin-top: 20px;
 `;
 
-const OfferDataInfoLabel = styled(BaseText)`
-  font-size: 14px;
+const OfferDataInfoLabel = styled(H7)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-weight: 400;
   margin-right: 10px;
 `;
 
@@ -162,14 +158,12 @@ const OfferDataInfoText = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const OfferDataInfoTextSec = styled(BaseText)`
-  font-size: 14px;
+const OfferDataInfoTextSec = styled(H7)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   margin-top: 10px;
 `;
 
-const OfferDataInfoTotal = styled(BaseText)`
-  font-size: 18px;
+const OfferDataInfoTotal = styled(H5)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   font-weight: bold;
 `;
@@ -195,11 +189,10 @@ const TermsContainer = styled.View`
 `;
 
 const ExchangeTermsContainer = styled.View`
-  padding: 0;
+  padding: 0 0 10px 0;
 `;
 
-const TermsText = styled(BaseText)`
-  font-size: 13px;
+const TermsText = styled(Small)`
   line-height: 20px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
@@ -257,7 +250,7 @@ const BuyCryptoOffers: React.FC = () => {
 
   const logger = useLogger();
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const theme = useTheme();
   const [offers, setOffers] = useState(cloneDeep(offersDefault));
   const [finishedSimplex, setFinishedSimplex] = useState(false);
@@ -300,7 +293,7 @@ const BuyCryptoOffers: React.FC = () => {
 
       selectedWallet
         .simplexGetQuote(requestData)
-        .then((data: any) => {
+        .then(data => {
           if (data && data.quote_id) {
             offers.simplex.outOfLimitMsg = undefined;
             offers.simplex.errorMsg = undefined;
@@ -408,7 +401,7 @@ const BuyCryptoOffers: React.FC = () => {
         )) as string;
       } catch (err) {
         console.error(err);
-        showSimplexError(err);
+        showWyreError(err);
       }
 
       const dest = setPrefix(address, coin, selectedWallet.credentials.network);
@@ -436,7 +429,7 @@ const BuyCryptoOffers: React.FC = () => {
 
       selectedWallet
         .wyreWalletOrderQuotation(requestData)
-        .then((data: any) => {
+        .then(data => {
           if (data && (data.exceptionId || data.error)) {
             showWyreError(data);
             return;
@@ -487,7 +480,7 @@ const BuyCryptoOffers: React.FC = () => {
       )) as string;
     } catch (err) {
       console.error(err);
-      showWyreError(err);
+      showSimplexError(err);
     }
 
     const quoteData = {
@@ -571,7 +564,7 @@ const BuyCryptoOffers: React.FC = () => {
         _paymentMethod = 'debit-card';
         break;
     }
-    const appName = 'bitpayapp';
+    const appName = DEEPLINK_PREFIX;
     const redirectUrl =
       appName +
       '://wyre?walletId=' +
@@ -661,7 +654,7 @@ const BuyCryptoOffers: React.FC = () => {
     }
 
     dispatch(
-      AppActions.showBottomNotificationModal({
+      showBottomNotificationModal({
         type: 'question',
         title,
         message,
@@ -670,7 +663,7 @@ const BuyCryptoOffers: React.FC = () => {
           {
             text: 'CONTINUE',
             action: () => {
-              dispatch(AppActions.dismissBottomNotificationModal());
+              dispatch(dismissBottomNotificationModal());
               switch (exchange) {
                 case 'simplex':
                   continueToSimplex();
@@ -703,8 +696,8 @@ const BuyCryptoOffers: React.FC = () => {
     );
   };
 
-  const expandCard = (offer: any) => {
-    const key: 'simplex' | 'wyre' = offer.key;
+  const expandCard = (offer: CryptoOffer) => {
+    const key = offer.key;
     if (!offer.fiatMoney) {
       return;
     }
@@ -751,6 +744,7 @@ const BuyCryptoOffers: React.FC = () => {
           <Button
             buttonStyle={'secondary'}
             buttonType={'pill'}
+            buttonOutline={true}
             onPress={() => {
               navigation.goBack();
             }}>
@@ -822,7 +816,7 @@ const BuyCryptoOffers: React.FC = () => {
 
               {offer.expanded && (
                 <>
-                  <ItemDivisor />
+                  <ItemDivisor style={{marginTop: 20}}/>
                   <OfferExpandibleItem>
                     <OfferDataInfoLabel>Buy Amount</OfferDataInfoLabel>
                     <OfferDataRightContainer>
@@ -871,13 +865,13 @@ const BuyCryptoOffers: React.FC = () => {
                                 'https://support.simplex.com/hc/en-gb/articles/360014078420-What-fees-am-I-paying-',
                               );
                             }}>
-                            <Link style={{marginLeft: 2, marginBottom: -2}}>
+                            <Link style={{fontSize: 12, marginLeft: 2, top: 2}}>
                               Read more
                             </Link>
                           </TouchableOpacity>
                         </ExchangeTermsText>
                       )}
-                      <ExchangeTermsText>
+                      <ExchangeTermsText style={{marginTop: 4}}>
                         This service is provided by a third party, and you are
                         subject to their
                         <TouchableOpacity
@@ -887,7 +881,7 @@ const BuyCryptoOffers: React.FC = () => {
                               'https://www.simplex.com/terms-of-use/',
                             );
                           }}>
-                          <Link style={{marginBottom: -2}}>Terms of use</Link>
+                          <Link style={{fontSize: 12, top: 2}}>Terms of use</Link>
                         </TouchableOpacity>
                       </ExchangeTermsText>
                     </ExchangeTermsContainer>
@@ -921,9 +915,9 @@ const BuyCryptoOffers: React.FC = () => {
                             'https://support.sendwyre.com/hc/en-us/articles/360059565013-Wyre-card-processing-fees',
                           );
                         }}>
-                        <Link style={{marginBottom: -2}}>Read more</Link>
+                        <Link style={{fontSize: 12, top: 2}}>Read more</Link>
                       </TouchableOpacity>
-                      <ExchangeTermsText>
+                      <ExchangeTermsText style={{marginTop: 4}}>
                         This service is provided by a third party, and you are
                         subject to their
                         <TouchableOpacity
@@ -933,7 +927,7 @@ const BuyCryptoOffers: React.FC = () => {
                               'https://www.sendwyre.com/user-agreement/',
                             );
                           }}>
-                          <Link style={{marginBottom: -2}}>User Agreement</Link>
+                          <Link style={{fontSize: 12, top: 2}}>User Agreement</Link>
                         </TouchableOpacity>
                       </ExchangeTermsText>
                     </ExchangeTermsContainer>

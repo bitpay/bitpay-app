@@ -12,14 +12,9 @@ const AmountContainer = styled.View`
 interface AmountModalProps {
   isVisible: boolean;
   onDismiss?: (amount?: number) => any;
-  openedFrom: 'buyCrypto' | undefined;
 }
 
-const AmountModal: React.FC<AmountModalProps> = ({
-  isVisible,
-  onDismiss,
-  openedFrom,
-}) => {
+const AmountModal: React.FC<AmountModalProps> = ({isVisible, onDismiss}) => {
   const theme = useTheme();
 
   return (
@@ -35,11 +30,7 @@ const AmountModal: React.FC<AmountModalProps> = ({
       useNativeDriverForBackdrop={true}
       useNativeDriver={true}>
       <AmountContainer>
-        <Amount
-          useAsModal={true}
-          onDismiss={onDismiss}
-          openedFrom={openedFrom}
-        />
+        <Amount useAsModal={true} onDismiss={onDismiss} />
       </AmountContainer>
     </Modal>
   );

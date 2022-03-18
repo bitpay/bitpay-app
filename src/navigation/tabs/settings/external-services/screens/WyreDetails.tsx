@@ -6,8 +6,11 @@ import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {wyrePaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
 import WyreIcon from '../../../../../../assets/img/services/wyre/logo-wyre.svg';
-import {useDispatch} from 'react-redux';
-import {AppActions} from '../../../../../store/app';
+import {useAppDispatch} from '../../../../../utils/hooks';
+import {
+  showBottomNotificationModal,
+  dismissBottomNotificationModal,
+} from '../../../../../store/app/app.actions';
 import {BuyCryptoActions} from '../../../../../store/buy-crypto';
 import {
   RowDataContainer,
@@ -16,7 +19,6 @@ import {
   CryptoContainer,
   CryptoAmount,
   CryptoUnit,
-  IconContainer,
   RowLabel,
   RowData,
   LabelTip,
@@ -35,7 +37,7 @@ const WyreDetails: React.FC = () => {
     params: {paymentRequest},
   } = useRoute<RouteProp<{params: WyreDetailsProps}>>();
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     if (paymentRequest.purchaseAmount) {
@@ -83,7 +85,7 @@ const WyreDetails: React.FC = () => {
         <RowDataContainer>
           <RowLabel>Created</RowLabel>
           <RowData>
-            {moment(paymentRequest.created_on).format('MM/DD/YYYY hh:mm a')}
+            {moment(paymentRequest.created_on).format('MMM DD, YYYY hh:mm a')}
           </RowData>
         </RowDataContainer>
 
@@ -133,7 +135,7 @@ const WyreDetails: React.FC = () => {
           onPress={async () => {
             haptic('impactLight');
             dispatch(
-              AppActions.showBottomNotificationModal({
+              showBottomNotificationModal({
                 type: 'question',
                 title: 'Removing Payment Request Data',
                 message:
@@ -143,8 +145,7 @@ const WyreDetails: React.FC = () => {
                   {
                     text: 'REMOVE',
                     action: () => {
-                      console.log('Removing payment Request');
-                      dispatch(AppActions.dismissBottomNotificationModal());
+                      dispatch(dismissBottomNotificationModal());
                       dispatch(
                         BuyCryptoActions.removePaymentRequestWyre({
                           orderId: paymentRequest.orderId,

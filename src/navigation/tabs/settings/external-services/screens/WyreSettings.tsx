@@ -66,17 +66,17 @@ const WyreSettings: React.FC = () => {
                       <PrTxtFiatAmount>
                         {pr.sourceAmount} {pr.sourceCurrency}
                       </PrTxtFiatAmount>
-                      {pr.status == 'failed' && (
+                      {pr.status === 'failed' && (
                         <PrTxtStatus style={{color: '#df5264'}}>
                           Payment request rejected
                         </PrTxtStatus>
                       )}
-                      {pr.status == 'success' && (
+                      {pr.status === 'success' && (
                         <PrTxtStatus style={{color: '#01d1a2'}}>
                           Payment request approved
                         </PrTxtStatus>
                       )}
-                      {pr.status == 'paymentRequestSent' && (
+                      {pr.status === 'paymentRequestSent' && (
                         <PrTxtStatus>Attempted payment request</PrTxtStatus>
                       )}
                     </PrRowLeft>

@@ -22,10 +22,33 @@ import {LightBlack, White} from '../../../styles/colors';
 import {H4, TextAlign} from '../../../components/styled/Text';
 import {RouteProp, useRoute} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import ReceiveAddress from '../components/ReceiveAddress';
+import CloseModal from '../../../../assets/img/close-modal-icon.svg';
+
+const ModalHeader = styled.View`
+  height: 50px;
+  margin-right: 10px;
+`;
+
+const CloseModalButton = styled.TouchableOpacity`
+  margin: 15px 0;
+  padding: 5px;
+  height: 41px;
+  width: 41px;
+  border-radius: 50px;
+  background-color: #9ba3ae33;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const SafeAreaView = styled.SafeAreaView`
+  flex: 1;
+`;
+
 const GlobalSelectContainer = styled.View`
-  padding: 0 5px;
+  padding: 0;
 `;
 
 const ListContainer = styled.View`
@@ -84,10 +107,17 @@ const buildList = (category: string[], wallets: Wallet[]) => {
   return coins;
 };
 
-const GlobalSelect = () => {
+interface GlobalSelectProps {
+  useAsModal: any;
+  customSupportedCurrencies?: string[],
+  onDismiss?: (newWallet?: any) => void;
+}
+
+const GlobalSelect: React.FC<GlobalSelectProps> = ({useAsModal, customSupportedCurrencies, onDismiss}) => {
   const {
     params: {context},
   } = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
+  const theme = useTheme();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const tokens = useAppSelector(({WALLET}) => WALLET.tokenOptions);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
@@ -114,11 +144,11 @@ const GlobalSelect = () => {
   }
 
   const supportedCoins = useMemo(
-    () => buildList(SUPPORTED_CURRENCIES, wallets),
+    () => buildList(customSupportedCurrencies ? customSupportedCurrencies : SUPPORTED_CURRENCIES, wallets),
     [],
   );
   const otherCoins = useMemo(
-    () => buildList(NON_BITPAY_SUPPORTED_TOKENS, wallets),
+    () => buildList(customSupportedCurrencies ? [] : NON_BITPAY_SUPPORTED_TOKENS, wallets),
     [],
   );
 
@@ -166,6 +196,10 @@ const GlobalSelect = () => {
   }, []);
 
   const onWalletSelect = async (wallet: Wallet) => {
+    if (useAsModal && onDismiss) {
+      onDismiss(wallet);
+      return;
+    }
     if (context === 'send') {
       setWalletSelectModalVisible(false);
       navigation.navigate('Wallet', {
@@ -185,51 +219,69 @@ const GlobalSelect = () => {
   };
 
   return (
-    <>
-      <GlobalSelectContainer>
-        <ListContainer>
-          <FlatList
-            contentContainerStyle={{paddingBottom: 100}}
-            data={[...supportedCoins, ...otherCoins]}
-            keyExtractor={keyExtractor}
-            renderItem={renderItem}
-          />
-        </ListContainer>
-        <SheetModal
-          isVisible={walletSelectModalVisible}
-          onBackdropPress={() => setWalletSelectModalVisible(false)}>
-          <WalletSelectMenuContainer>
-            <WalletSelectMenuHeaderContainer>
-              <TextAlign align={'center'}>
-                <H4>Select a wallet</H4>
-              </TextAlign>
-            </WalletSelectMenuHeaderContainer>
-            <WalletSelectMenuBodyContainer>
-              <KeyWalletsRow
-                keyWallets={keyWallets!}
-                onPress={onWalletSelect}
+    <SafeAreaView>
+      {useAsModal && (
+          <ModalHeader>
+            <CloseModalButton
+              onPress={() => {
+                if (onDismiss) {
+                  onDismiss();
+                }
+              }}>
+              <CloseModal
+                {...{
+                  width: 20,
+                  height: 20,
+                  color: theme.dark ? 'white' : 'black',
+                }}
               />
-            </WalletSelectMenuBodyContainer>
-            {/*Nested receive modal*/}
-            {receiveWallet && (
-              <ReceiveAddress
-                isVisible={showReceiveAddressBottomModal}
-                closeModal={closeModal}
-                wallet={receiveWallet}
-              />
-            )}
-          </WalletSelectMenuContainer>
-        </SheetModal>
-        {/*Receive modal if one wallet*/}
-        {receiveWallet && !walletSelectModalVisible && (
-          <ReceiveAddress
-            isVisible={showReceiveAddressBottomModal}
-            closeModal={closeModal}
-            wallet={receiveWallet}
-          />
+            </CloseModalButton>
+          </ModalHeader>
         )}
-      </GlobalSelectContainer>
-    </>
+        <GlobalSelectContainer>
+          <ListContainer>
+            <FlatList
+              contentContainerStyle={{paddingBottom: 100}}
+              data={[...supportedCoins, ...otherCoins]}
+              keyExtractor={keyExtractor}
+              renderItem={renderItem}
+            />
+          </ListContainer>
+          <SheetModal
+            isVisible={walletSelectModalVisible}
+            onBackdropPress={() => setWalletSelectModalVisible(false)}>
+            <WalletSelectMenuContainer>
+              <WalletSelectMenuHeaderContainer>
+                <TextAlign align={'center'}>
+                  <H4>Select a wallet</H4>
+                </TextAlign>
+              </WalletSelectMenuHeaderContainer>
+              <WalletSelectMenuBodyContainer>
+                <KeyWalletsRow
+                  keyWallets={keyWallets!}
+                  onPress={onWalletSelect}
+                />
+              </WalletSelectMenuBodyContainer>
+              {/*Nested receive modal*/}
+              {receiveWallet && (
+                <ReceiveAddress
+                  isVisible={showReceiveAddressBottomModal}
+                  closeModal={closeModal}
+                  wallet={receiveWallet}
+                />
+              )}
+            </WalletSelectMenuContainer>
+          </SheetModal>
+          {/*Receive modal if one wallet*/}
+          {receiveWallet && !walletSelectModalVisible && (
+            <ReceiveAddress
+              isVisible={showReceiveAddressBottomModal}
+              closeModal={closeModal}
+              wallet={receiveWallet}
+            />
+          )}
+        </GlobalSelectContainer>
+      </SafeAreaView>
   );
 };
 

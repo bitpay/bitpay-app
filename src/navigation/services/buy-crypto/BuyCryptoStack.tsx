@@ -53,6 +53,7 @@ const BuyCryptoStack = () => {
             <HeaderRightContainer>
               <Button
                 buttonType={'pill'}
+                buttonStyle={'cancel'}
                 onPress={() => {
                   navigation.dispatch(StackActions.pop(2));
                 }}>
@@ -72,6 +73,7 @@ const BuyCryptoStack = () => {
             <HeaderRightContainer>
               <Button
                 buttonType={'pill'}
+                buttonStyle={'cancel'}
                 onPress={() => {
                   navigation.dispatch(StackActions.pop(2));
                 }}>

@@ -1,4 +1,5 @@
 import React from 'react';
+import {Platform} from 'react-native';
 
 // Images
 import ApplePayIcon from '../../../../../assets/img/services/payment-methods/apple-pay-logo.svg';
@@ -10,17 +11,17 @@ export const PaymentMethodsAvailable = {
   applePay: {
     label: 'Apple Pay',
     method: 'applePay',
-    imgSrc: <ApplePayIcon width={70} height={40} />,
+    imgSrc: <ApplePayIcon width={40} height={40} />,
     supportedExchanges: {
       simplex: true,
       wyre: true,
     },
-    enabled: true, // TODO: enable for iOS only
+    enabled: Platform.OS === 'ios',
   },
   sepaBankTransfer: {
     label: 'SEPA Bank Transfer',
     method: 'sepaBankTransfer',
-    imgSrc: <BankIcon width={70} height={40} />,
+    imgSrc: <BankIcon width={40} height={40} />,
     supportedExchanges: {
       simplex: true, // EU Only
       wyre: false,
@@ -30,7 +31,7 @@ export const PaymentMethodsAvailable = {
   creditCard: {
     label: 'Credit Card',
     method: 'creditCard',
-    imgSrc: <CreditCardIcon width={70} height={40} />,
+    imgSrc: <CreditCardIcon width={40} height={40} />,
     supportedExchanges: {
       simplex: true,
       wyre: false,
@@ -40,7 +41,7 @@ export const PaymentMethodsAvailable = {
   debitCard: {
     label: 'Debit Card',
     method: 'debitCard',
-    imgSrc: <DebitCardIcon width={70} height={40} />,
+    imgSrc: <DebitCardIcon width={40} height={40} />,
     supportedExchanges: {
       simplex: true,
       wyre: true,

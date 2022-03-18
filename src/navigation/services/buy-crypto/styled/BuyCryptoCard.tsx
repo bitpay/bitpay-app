@@ -7,7 +7,7 @@ import {
 } from '../../../../styles/colors';
 import {BaseText} from '../../../../components/styled/Text';
 
-export const BuyCryptoItemCard = styled.View`
+export const BuyCryptoItemCard = styled.TouchableOpacity`
   border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#eaeaea')};
   border-radius: 9px;
   margin: 20px 15px;
@@ -18,10 +18,10 @@ export const BuyCryptoExpandibleCard = styled.TouchableOpacity`
   border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#eaeaea')};
   border-radius: 9px;
   margin: 20px 15px 0px 15px;
-  padding: 14px;
+  padding: 20px 14px;
 `;
 
-export const ActionsContainer = styled.TouchableOpacity`
+export const ActionsContainer = styled.View`
   display: flex;
   justify-content: space-between;
   flex-direction: row;

@@ -7,8 +7,11 @@ import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {simplexPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
 const simplexIcon = require('../../../../../../assets/img/services/simplex/icon-simplex.png');
-import {useDispatch} from 'react-redux';
-import {AppActions} from '../../../../../store/app';
+import {useAppDispatch} from '../../../../../utils/hooks';
+import {
+  showBottomNotificationModal,
+  dismissBottomNotificationModal,
+} from '../../../../../store/app/app.actions';
 import {BuyCryptoActions} from '../../../../../store/buy-crypto';
 import {
   RowDataContainer,
@@ -36,7 +39,7 @@ const SimplexDetails: React.FC = () => {
     params: {paymentRequest},
   } = useRoute<RouteProp<{params: SimplexDetailsProps}>>();
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   return (
     <SettingsContainer>
@@ -77,7 +80,7 @@ const SimplexDetails: React.FC = () => {
         <RowDataContainer>
           <RowLabel>Created</RowLabel>
           <RowData>
-            {moment(paymentRequest.created_on).format('MM/DD/YYYY hh:mm a')}
+            {moment(paymentRequest.created_on).format('MMM DD, YYYY hh:mm a')}
           </RowData>
         </RowDataContainer>
 
@@ -130,7 +133,7 @@ const SimplexDetails: React.FC = () => {
           onPress={async () => {
             haptic('impactLight');
             dispatch(
-              AppActions.showBottomNotificationModal({
+              showBottomNotificationModal({
                 type: 'question',
                 title: 'Removing Payment Request Data',
                 message:
@@ -140,8 +143,7 @@ const SimplexDetails: React.FC = () => {
                   {
                     text: 'REMOVE',
                     action: () => {
-                      console.log('Removing payment Request');
-                      dispatch(AppActions.dismissBottomNotificationModal());
+                      dispatch(dismissBottomNotificationModal());
                       dispatch(
                         BuyCryptoActions.removePaymentRequestSimplex({
                           paymentId: paymentRequest.payment_id,
