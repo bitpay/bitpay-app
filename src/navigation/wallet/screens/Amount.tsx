@@ -17,7 +17,6 @@ import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
 import useAppSelector from '../../../utils/hooks/useAppSelector';
 import {ParseAmount} from '../../../store/wallet/effects/amount/amount';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {CardConfig} from '../../../store/shop/shop.models';
 
 const SendMax = styled.TouchableOpacity`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
@@ -93,12 +92,11 @@ export interface AmountParamList {
     amount: string,
     // for toggling sync button 'loading' | 'success' | 'failed' | null | undefined;
     setButtonState: (state: ButtonState) => void,
-    opts?: {sendMax?: boolean; cardConfig?: CardConfig},
+    opts?: {sendMax?: boolean},
   ) => void;
   currencyAbbreviation?: string;
   opts?: {
     hideSendMax?: boolean;
-    cardConfig?: CardConfig;
   };
 }
 
@@ -183,21 +181,19 @@ const Amount = () => {
   useLayoutEffect(() => {
     if (!opts?.hideSendMax) {
       navigation.setOptions({
-        headerRight: !opts?.cardConfig
-          ? () => (
-              <HeaderContainer>
-                <SendMax
-                  onPress={() =>
-                    onAmountSelected(amount, setButtonState, {sendMax: true})
-                  }>
-                  <SendMaxText>Send Max</SendMaxText>
-                </SendMax>
-              </HeaderContainer>
-            )
-          : null,
+        headerRight: () => (
+          <HeaderContainer>
+            <SendMax
+              onPress={() =>
+                onAmountSelected(amount, setButtonState, {sendMax: true})
+              }>
+              <SendMaxText>Send Max</SendMaxText>
+            </SendMax>
+          </HeaderContainer>
+        ),
       });
     }
-  });
+  }, []);
 
   const onCellPress = (val: string) => {
     haptic('impactLight');
@@ -231,9 +227,7 @@ const Amount = () => {
               {displayAmount || 0}
             </AmountText>
             <CurrencySuperScript>
-              <CurrencyText>
-                {opts?.cardConfig?.currency || currency}
-              </CurrencyText>
+              <CurrencyText>{currency || 'USD'}</CurrencyText>
             </CurrencySuperScript>
           </Row>
           {currencyAbbreviation ? (
