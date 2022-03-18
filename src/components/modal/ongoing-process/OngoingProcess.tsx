@@ -1,11 +1,11 @@
 import Modal from 'react-native-modal';
 import React from 'react';
 import {BaseText} from '../../styled/Text';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import {ActivityIndicator} from 'react-native';
-import {RootState} from '../../../store';
-import {useSelector} from 'react-redux';
 import {LightBlack, SlateDark, White} from '../../../styles/colors';
+import {useAppSelector} from '../../../utils/hooks';
+import Blur from '../../blur/Blur';
 
 export enum OnGoingProcessMessages {
   GENERAL_AWAITING = "Just a second, we're setting a few things up",
@@ -50,13 +50,10 @@ const Message = styled(BaseText)`
 `;
 
 const OnGoingProcessModal: React.FC = () => {
-  const message = useSelector(
-    ({APP}: RootState) => APP.onGoingProcessModalMessage,
-  );
-  const isVisible = useSelector(
-    ({APP}: RootState) => APP.showOnGoingProcessModal,
-  );
-
+  const message = useAppSelector(({APP}) => APP.onGoingProcessModalMessage);
+  const isVisible = useAppSelector(({APP}) => APP.showOnGoingProcessModal);
+  const showBlur = useAppSelector(({APP}) => APP.showBlur);
+  const theme = useTheme();
   return (
     <Modal
       isVisible={isVisible}
@@ -76,6 +73,7 @@ const OnGoingProcessModal: React.FC = () => {
             <ActivityIndicator color={SlateDark} />
           </ActivityIndicatorContainer>
           <Message>{message}</Message>
+          {showBlur && <Blur />}
         </Row>
       </OnGoingProcessContainer>
     </Modal>
