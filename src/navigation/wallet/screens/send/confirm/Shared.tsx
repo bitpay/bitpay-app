@@ -7,6 +7,7 @@ import {
 import {H4, H5, H6, H7} from '../../../../../components/styled/Text';
 import SendToPill from '../../../components/SendToPill';
 import {
+  ActiveOpacity,
   Column,
   Hr,
   Row,
@@ -14,7 +15,7 @@ import {
 } from '../../../../../components/styled/Containers';
 import React, {ReactChild} from 'react';
 import styled from 'styled-components/native';
-import {ScrollView} from 'react-native';
+import {Pressable, ScrollView, TouchableOpacity} from 'react-native';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
 
 // Styled
@@ -104,26 +105,30 @@ export const SendingTo = ({
 export const Fee = ({
   fee,
   hr,
+  onPress,
 }: {
   fee: TxDetailsFee | undefined;
   hr?: boolean;
+  onPress?: () => void;
 }): JSX.Element | null => {
   if (fee) {
     const {feeLevel, cryptoAmount, fiatAmount, percentageOfTotalAmount} = fee;
     return (
       <>
-        <DetailContainer>
-          <DetailRow>
-            <H7>Miner fee</H7>
-            <DetailColumn>
-              <H5>{feeLevel.toUpperCase()}</H5>
-              <H6>{cryptoAmount}</H6>
-              <H7>
-                {fiatAmount} ({percentageOfTotalAmount} of total amount)
-              </H7>
-            </DetailColumn>
-          </DetailRow>
-        </DetailContainer>
+        <Pressable disabled={!onPress} onPress={onPress}>
+          <DetailContainer>
+            <DetailRow>
+              <H7>Miner fee</H7>
+              <DetailColumn>
+                <H5>{feeLevel.toUpperCase()}</H5>
+                <H6>{cryptoAmount}</H6>
+                <H7>
+                  {fiatAmount} ({percentageOfTotalAmount} of total amount)
+                </H7>
+              </DetailColumn>
+            </DetailRow>
+          </DetailContainer>
+        </Pressable>
         {hr && <Hr />}
       </>
     );

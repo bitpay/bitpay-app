@@ -1,6 +1,5 @@
 import React, {useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {Hr} from '../../../../../components/styled/Containers';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../../WalletStack';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
@@ -26,6 +25,7 @@ import {
   SendingFrom,
   SendingTo,
 } from './Shared';
+import TransactionSpeed from '../TransactionSpeed';
 
 export interface ConfirmParamList {
   wallet: Wallet;
@@ -42,15 +42,25 @@ const Confirm = () => {
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
   const key = allKeys[wallet?.keyId!];
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
+  const [showTransactionSpeed, setShowTransactionSpeed] = useState(false);
 
   const {fee, sendingTo, sendingFrom, subTotal, total} = txDetails;
+
+  console.log(txDetails);
+  const isTxSpeedAvailable = () => {
+      const {currencyAbbreviation} = wallet;
+      const excludeCurrencies = ['bch', 'doge', 'ltc', 'xrp'];
+      // TODO: exclude paypro, coinbase, usingMerchantFee txs,
+      // const {payProUrl} = txDetails;
+      return (!excludeCurrencies.includes(currencyAbbreviation));
+  }
 
   return (
     <ConfirmContainer>
       <DetailsList>
         <Header>Summary</Header>
         <SendingTo recipient={sendingTo} hr />
-        <Fee fee={fee} hr />
+        <Fee onPress={isTxSpeedAvailable() ? () => setShowTransactionSpeed(true) : undefined} fee={fee} hr />
         <SendingFrom sender={sendingFrom} hr />
         <Amount description={'SubTotal'} amount={subTotal} />
         <Amount description={'Total'} amount={total} />
@@ -84,6 +94,15 @@ const Confirm = () => {
           });
           await sleep(300);
           setShowPaymentSentModal(false);
+        }}
+      />
+
+      <TransactionSpeed
+        feeLevel={fee.feeLevel}
+        wallet={wallet}
+        isVisible={showTransactionSpeed}
+        onCloseModal={selectedLevel => {
+          setShowTransactionSpeed(false);
         }}
       />
     </ConfirmContainer>

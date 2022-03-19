@@ -15,6 +15,11 @@ export interface Fee {
   nbBlocks: number;
 }
 
+const removeLowFeeLevels = (feeLevels: Fee[]) => {
+  const removeLevels = ['economy', 'superEconomy'];
+  return feeLevels.filter(({level}) => !removeLevels.includes(level));
+};
+
 export const getFeeRatePerKb = ({
   wallet,
   feeLevel,
@@ -61,6 +66,11 @@ export const getFeeLevels = ({
           if (err) {
             return reject(err);
           }
+
+          if (wallet.currencyAbbreviation === 'eth') {
+            feeLevels = removeLowFeeLevels(feeLevels);
+          }
+
           resolve(feeLevels);
         },
       );
