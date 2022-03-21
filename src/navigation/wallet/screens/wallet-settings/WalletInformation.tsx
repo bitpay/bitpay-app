@@ -22,6 +22,8 @@ import {
   IsUtxoCoin,
 } from '../../../../store/wallet/utils/currency';
 import {View} from 'react-native';
+import WalletInformationSkeleton from './WalletInformationSkeleton';
+import {sleep} from '../../../../utils/helper-methods';
 
 const InfoContainer = styled.SafeAreaView`
   flex: 1;
@@ -93,6 +95,7 @@ const WalletInformation = () => {
   } = wallet;
   const navigation = useNavigation();
   const key = useAppSelector(({WALLET}) => WALLET.keys[wallet.keyId]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -110,205 +113,219 @@ const WalletInformation = () => {
   const [balanceByAddress, setBalanceByAddress] = useState<any[]>();
 
   useEffect(() => {
-    wallet.getStatus({network: 'livenet'}, (err: any, status: WalletStatus) => {
-      if (err) {
-        // TODO
-        console.log(err);
-      }
-      if (status) {
-        setCopayers(status.wallet.copayers);
-        setBalanceByAddress(status.balance.byAddress);
-      }
-    });
+    wallet.getStatus(
+      {network: 'livenet'},
+      async (err: any, status: WalletStatus) => {
+        if (err) {
+          // TODO
+          console.log(err);
+          setIsLoading(false);
+        }
+        if (status) {
+          setCopayers(status.wallet.copayers);
+          setBalanceByAddress(status.balance.byAddress);
+          await sleep(500);
+          setIsLoading(false);
+        }
+      },
+    );
   }, [wallet]);
 
   return (
     <InfoContainer>
       <ScrollView>
-        <InfoSettingsRow>
-          <SettingTitle>Name (at creation)</SettingTitle>
-
-          <InfoLabel>
-            <H7>{walletName}</H7>
-          </InfoLabel>
-        </InfoSettingsRow>
-        <Hr />
-
-        <InfoSettingsRow>
-          <SettingTitle>Coin</SettingTitle>
-
-          <InfoLabel>
-            <H7>{coin.toUpperCase()}</H7>
-          </InfoLabel>
-        </InfoSettingsRow>
-        <Hr />
-
-        <InfoSettingsRow>
-          <SettingTitle>WalletId</SettingTitle>
-        </InfoSettingsRow>
-
-        <CopyButton onPress={() => copyText(walletId)}>
-          <H7 numberOfLines={1} ellipsizeMode={'tail'}>
-            {walletId}
-          </H7>
-        </CopyButton>
-        <Hr />
-
-        {token ? (
+        {isLoading ? (
+          <WalletInformationSkeleton />
+        ) : (
           <>
             <InfoSettingsRow>
-              <SettingTitle>Linked Ethereum Wallet</SettingTitle>
+              <SettingTitle>Name (at creation)</SettingTitle>
 
               <InfoLabel>
-                <H7>{getLinkedWallet(key, wallet)}</H7>
+                <H7>{walletName}</H7>
               </InfoLabel>
             </InfoSettingsRow>
             <Hr />
-          </>
-        ) : null}
 
-        <InfoSettingsRow>
-          <SettingTitle>Configuration (m-n)</SettingTitle>
-
-          <InfoLabel>
-            <H7>
-              {m}-{n}
-            </H7>
-          </InfoLabel>
-        </InfoSettingsRow>
-        <Hr />
-
-        <InfoSettingsRow>
-          <SettingTitle>Network</SettingTitle>
-
-          <InfoLabel>
-            <H7>{network}</H7>
-          </InfoLabel>
-        </InfoSettingsRow>
-        <Hr />
-
-        {IsUtxoCoin(coin) ? (
-          <>
             <InfoSettingsRow>
-              <SettingTitle>Address Type</SettingTitle>
+              <SettingTitle>Coin</SettingTitle>
 
               <InfoLabel>
-                <H7>{addressType || 'P2SH'}</H7>
+                <H7>{coin.toUpperCase()}</H7>
               </InfoLabel>
             </InfoSettingsRow>
             <Hr />
-          </>
-        ) : null}
 
-        <InfoSettingsRow>
-          <SettingTitle>Derivation Path</SettingTitle>
-
-          <InfoLabel>
-            <H7>{rootPath}</H7>
-          </InfoLabel>
-        </InfoSettingsRow>
-        <Hr />
-
-        {!keyId ? (
-          <>
             <InfoSettingsRow>
-              <SettingTitle>Read Only Wallet</SettingTitle>
-
-              <InfoLabel>
-                <H7>No private key</H7>
-              </InfoLabel>
-            </InfoSettingsRow>
-            <Hr />
-          </>
-        ) : null}
-
-        <InfoSettingsRow>
-          <SettingTitle>Account</SettingTitle>
-
-          <InfoLabel>
-            <H7>#{account}</H7>
-          </InfoLabel>
-        </InfoSettingsRow>
-        <Hr />
-
-        {copayers ? (
-          <>
-            <SettingsHeader>
-              <H5>Copayers</H5>
-            </SettingsHeader>
-
-            {copayers.map((copayer, index) => (
-              <InfoSettingsRow key={index}>
-                <SettingTitle>{copayer.name}</SettingTitle>
-
-                {copayer.id === copayerId ? (
-                  <InfoLabel>
-                    <H7>(Me)</H7>
-                  </InfoLabel>
-                ) : null}
-              </InfoSettingsRow>
-            ))}
-            <Hr />
-          </>
-        ) : null}
-
-        <SettingsHeader>
-          <H5>Extended Public Keys</H5>
-        </SettingsHeader>
-
-        {publicKeyRing.map(({xPubKey}: {xPubKey: string}, index: number) => (
-          <View key={index}>
-            <InfoSettingsRow>
-              <SettingTitle>Copayer {index}</SettingTitle>
+              <SettingTitle>WalletId</SettingTitle>
             </InfoSettingsRow>
 
-            <CopyButton onPress={() => copyText(xPubKey)}>
-              <H7>{xPubKey}</H7>
+            <CopyButton onPress={() => copyText(walletId)}>
+              <H7 numberOfLines={1} ellipsizeMode={'tail'}>
+                {walletId}
+              </H7>
             </CopyButton>
-
-            <InfoSettingsRow>
-              {index === 0 ? <H7>({rootPath})</H7> : null}
-            </InfoSettingsRow>
             <Hr />
-          </View>
-        ))}
 
-        {balanceByAddress ? (
-          <>
-            <SettingsHeader>
-              <H5>Balance By Address</H5>
-            </SettingsHeader>
-
-            {balanceByAddress.map((a, index: number) => (
-              <View key={index}>
-                <InfoSettingsRow style={{justifyContent: 'space-between'}}>
-                  <View>
-                    <CopyButton
-                      style={{marginBottom: 0}}
-                      onPress={() => copyText(a.address)}>
-                      <SettingTitle
-                        numberOfLines={1}
-                        ellipsizeMode={'tail'}
-                        style={{maxWidth: 200}}>
-                        {a.address}
-                      </SettingTitle>
-                    </CopyButton>
-                  </View>
+            {token ? (
+              <>
+                <InfoSettingsRow>
+                  <SettingTitle>Linked Ethereum Wallet</SettingTitle>
 
                   <InfoLabel>
-                    <H7>
-                      {(a.amount / unitToSatoshi).toFixed(8)}{' '}
-                      {coin.toUpperCase()}
-                    </H7>
+                    <H7>{getLinkedWallet(key, wallet)}</H7>
                   </InfoLabel>
                 </InfoSettingsRow>
-
                 <Hr />
-              </View>
-            ))}
+              </>
+            ) : null}
+
+            <InfoSettingsRow>
+              <SettingTitle>Configuration (m-n)</SettingTitle>
+
+              <InfoLabel>
+                <H7>
+                  {m}-{n}
+                </H7>
+              </InfoLabel>
+            </InfoSettingsRow>
             <Hr />
+
+            <InfoSettingsRow>
+              <SettingTitle>Network</SettingTitle>
+
+              <InfoLabel>
+                <H7>{network}</H7>
+              </InfoLabel>
+            </InfoSettingsRow>
+            <Hr />
+
+            {IsUtxoCoin(coin) ? (
+              <>
+                <InfoSettingsRow>
+                  <SettingTitle>Address Type</SettingTitle>
+
+                  <InfoLabel>
+                    <H7>{addressType || 'P2SH'}</H7>
+                  </InfoLabel>
+                </InfoSettingsRow>
+                <Hr />
+              </>
+            ) : null}
+
+            <InfoSettingsRow>
+              <SettingTitle>Derivation Path</SettingTitle>
+
+              <InfoLabel>
+                <H7>{rootPath}</H7>
+              </InfoLabel>
+            </InfoSettingsRow>
+            <Hr />
+
+            {!keyId ? (
+              <>
+                <InfoSettingsRow>
+                  <SettingTitle>Read Only Wallet</SettingTitle>
+
+                  <InfoLabel>
+                    <H7>No private key</H7>
+                  </InfoLabel>
+                </InfoSettingsRow>
+                <Hr />
+              </>
+            ) : null}
+
+            <InfoSettingsRow>
+              <SettingTitle>Account</SettingTitle>
+
+              <InfoLabel>
+                <H7>#{account}</H7>
+              </InfoLabel>
+            </InfoSettingsRow>
+            <Hr />
+
+            {copayers ? (
+              <>
+                <SettingsHeader>
+                  <H5>Copayers</H5>
+                </SettingsHeader>
+
+                {copayers.map((copayer, index) => (
+                  <InfoSettingsRow key={index}>
+                    <SettingTitle>{copayer.name}</SettingTitle>
+
+                    {copayer.id === copayerId ? (
+                      <InfoLabel>
+                        <H7>(Me)</H7>
+                      </InfoLabel>
+                    ) : null}
+                  </InfoSettingsRow>
+                ))}
+                <Hr />
+              </>
+            ) : null}
+
+            <SettingsHeader>
+              <H5>Extended Public Keys</H5>
+            </SettingsHeader>
+
+            {publicKeyRing.map(
+              ({xPubKey}: {xPubKey: string}, index: number) => (
+                <View key={index}>
+                  <InfoSettingsRow>
+                    <SettingTitle>Copayer {index}</SettingTitle>
+                  </InfoSettingsRow>
+
+                  <CopyButton onPress={() => copyText(xPubKey)}>
+                    <H7>{xPubKey}</H7>
+                  </CopyButton>
+
+                  <InfoSettingsRow>
+                    {index === 0 ? <H7>({rootPath})</H7> : null}
+                  </InfoSettingsRow>
+                  <Hr />
+                </View>
+              ),
+            )}
+
+            {balanceByAddress?.length ? (
+              <>
+                <SettingsHeader>
+                  <H5>Balance By Address</H5>
+                </SettingsHeader>
+
+                {balanceByAddress.map((a, index: number) => (
+                  <View key={index}>
+                    <InfoSettingsRow style={{justifyContent: 'space-between'}}>
+                      <View>
+                        <CopyButton
+                          style={{marginBottom: 0}}
+                          onPress={() => copyText(a.address)}>
+                          <SettingTitle
+                            numberOfLines={1}
+                            ellipsizeMode={'tail'}
+                            style={{maxWidth: 200}}>
+                            {a.address}
+                          </SettingTitle>
+                        </CopyButton>
+                      </View>
+
+                      <InfoLabel>
+                        <H7>
+                          {(a.amount / unitToSatoshi).toFixed(8)}{' '}
+                          {coin.toUpperCase()}
+                        </H7>
+                      </InfoLabel>
+                    </InfoSettingsRow>
+
+                    <Hr />
+                  </View>
+                ))}
+                <Hr />
+              </>
+            ) : null}
           </>
-        ) : null}
+        )}
       </ScrollView>
     </InfoContainer>
   );
