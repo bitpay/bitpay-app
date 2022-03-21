@@ -1,4 +1,5 @@
 import {ClassicContentCard} from 'react-native-appboy-sdk';
+import {DEEPLINK_PREFIX} from '../../../../../constants/config';
 import {DEFAULT_CLASSIC_CONTENT_CARD} from '../../../../../utils/braze';
 
 const MockOffers: ClassicContentCard[] = [
@@ -8,7 +9,7 @@ const MockOffers: ClassicContentCard[] = [
     title: 'JOMASHOP',
     cardDescription: '[DEV] 20% off select products for BitPay customers.',
     image: require('../../../../../../assets/img/home/offers/jomashop.png'),
-    url: '',
+    url: `${DEEPLINK_PREFIX}://giftcard?merchant=jomashop`,
     openURLInWebView: false,
   },
   {
@@ -17,7 +18,7 @@ const MockOffers: ClassicContentCard[] = [
     title: 'AIRBNB',
     cardDescription: '[DEV] 20% off select products for BitPay customers.',
     image: require('../../../../../../assets/img/home/offers/airbnb.png'),
-    url: '',
+    url: `${DEEPLINK_PREFIX}://giftcard?merchant=airbnb`,
     openURLInWebView: false,
   },
 ];
