@@ -19,6 +19,8 @@ import {
 import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
 import {
   createInvoiceAndTxProposal,
+  handleCreateTxProposalError,
+  removeTxp,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../components/PaymentSent';
@@ -47,48 +49,47 @@ import {
   Header,
   SendingFrom,
 } from './Shared';
+import {AppActions} from '../../../../../store/app';
+import {CustomErrorMessage} from '../../../components/ErrorMessages';
+import {APP_NETWORK} from '../../../../../constants/config';
 
 export interface GiftCardConfirmParamList {
   wallet?: Wallet;
   recipient?: Recipient;
   txp?: Partial<TransactionProposal>;
   txDetails?: TxDetails;
-  invoiceCreationParams?: InvoiceCreationParams;
+  invoiceCreationParams: InvoiceCreationParams;
 }
 
 const GiftCardHeader = ({
   invoiceCreationParams,
 }: {
-  invoiceCreationParams: InvoiceCreationParams | undefined;
+  invoiceCreationParams: InvoiceCreationParams;
 }): JSX.Element | null => {
-  if (invoiceCreationParams?.cardConfig) {
-    return (
-      <>
-        <Header hr>
-          <>{invoiceCreationParams.cardConfig.displayName} Gift Card</>
-        </Header>
-        <DetailContainer height={73}>
-          <DetailRow>
-            <H4>
-              {formatFiatAmount(
-                invoiceCreationParams.amount,
-                invoiceCreationParams.cardConfig.currency,
-              )}{' '}
-              {invoiceCreationParams.cardConfig.currency}
-            </H4>
-            <RemoteImage
-              uri={invoiceCreationParams.cardConfig.icon}
-              height={40}
-              borderRadius={40}
-            />
-          </DetailRow>
-        </DetailContainer>
-        <Hr style={{marginBottom: 40}} />
-      </>
-    );
-  } else {
-    return null;
-  }
+  return (
+    <>
+      <Header hr>
+        <>{invoiceCreationParams.cardConfig!.displayName} Gift Card</>
+      </Header>
+      <DetailContainer height={73}>
+        <DetailRow>
+          <H4>
+            {formatFiatAmount(
+              invoiceCreationParams.amount,
+              invoiceCreationParams.cardConfig!.currency,
+            )}{' '}
+            {invoiceCreationParams.cardConfig!.currency}
+          </H4>
+          <RemoteImage
+            uri={invoiceCreationParams.cardConfig!.icon}
+            height={40}
+            borderRadius={40}
+          />
+        </DetailRow>
+      </DetailContainer>
+      <Hr style={{marginBottom: 40}} />
+    </>
+  );
 };
 
 const Confirm = () => {
@@ -117,9 +118,14 @@ const Confirm = () => {
   const {fee, networkCost, sendingFrom, total} = txDetails || {};
 
   const memoizedKeysAndWalletsList = useMemo(
-    () => BuildKeysAndWalletsList(keys),
+    () => BuildKeysAndWalletsList(keys, APP_NETWORK),
     [keys],
   );
+
+  const reshowWalletSelector = async () => {
+    await sleep(500);
+    setWalletSelectModalVisible(true);
+  };
 
   useEffect(() => {
     return () => {
@@ -140,34 +146,44 @@ const Confirm = () => {
 
   const onWalletSelect = async (selectedWallet: Wallet) => {
     setWalletSelectModalVisible(false);
-    setWallet(selectedWallet);
-    setKey(keys[selectedWallet.keyId]);
-    if (!invoiceCreationParams) {
-      return;
-    }
     // not ideal - will dive into why the timeout has to be this long
-    await sleep(1000);
+    await sleep(500);
     dispatch(
       startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
     );
-    const {txDetails: newTxDetails, txp: newTxp} = await dispatch(
-      createInvoiceAndTxProposal(selectedWallet, invoiceCreationParams),
-    );
-    await sleep(500);
-    dispatch(dismissOnGoingProcessModal());
-    updateTxDetails(newTxDetails);
-    updateTxp(newTxp);
-    setRecipient({address: newTxDetails.sendingTo.recipientAddress} as {
-      address: string;
-    });
+    try {
+      const {txDetails: newTxDetails, txp: newTxp} = await dispatch(
+        createInvoiceAndTxProposal(selectedWallet, invoiceCreationParams),
+      );
+      setWallet(selectedWallet);
+      setKey(keys[selectedWallet.keyId]);
+      await sleep(500);
+      dispatch(dismissOnGoingProcessModal());
+      updateTxDetails(newTxDetails);
+      updateTxp(newTxp);
+      setRecipient({address: newTxDetails.sendingTo.recipientAddress} as {
+        address: string;
+      });
+    } catch (err: any) {
+      await sleep(500);
+      dispatch(dismissOnGoingProcessModal());
+      const [errorConfig] = await Promise.all([
+        handleCreateTxProposalError(err),
+        sleep(500),
+      ]);
+      dispatch(
+        AppActions.showBottomNotificationModal(
+          CustomErrorMessage({
+            title: 'Error',
+            errMsg: err.response?.data?.message || errorConfig.message,
+            action: () => reshowWalletSelector(),
+          }),
+        ),
+      );
+    }
   };
 
-  useEffect(() => {
-    if (!invoiceCreationParams || !invoiceCreationParams.cardConfig) {
-      return;
-    }
-    openKeyWalletSelector();
-  }, []);
+  useEffect(() => openKeyWalletSelector(), []);
 
   return (
     <ConfirmContainer>
@@ -200,7 +216,7 @@ const Confirm = () => {
                 );
                 await sleep(400);
                 await dispatch(startSendPayment({txp, key, wallet, recipient}));
-                if (invoiceCreationParams?.cardConfig && txp.invoiceID) {
+                if (txp.invoiceID) {
                   const giftCard = await dispatch(
                     ShopEffects.startRedeemGiftCard(txp.invoiceID),
                   );
@@ -232,7 +248,25 @@ const Confirm = () => {
                 dispatch(dismissOnGoingProcessModal());
                 await sleep(400);
                 setShowPaymentSentModal(true);
-              } catch (err) {}
+              } catch (err: any) {
+                await removeTxp(wallet, txp).catch(removeErr =>
+                  console.error('error deleting txp', removeErr),
+                );
+                dispatch(dismissOnGoingProcessModal());
+                await sleep(500);
+                updateTxDetails(undefined);
+                updateTxp(undefined);
+                setWallet(undefined);
+                dispatch(
+                  AppActions.showBottomNotificationModal(
+                    CustomErrorMessage({
+                      title: 'Error',
+                      errMsg: err.message || 'Could not send transaction',
+                      action: () => reshowWalletSelector(),
+                    }),
+                  ),
+                );
+              }
             }}
           />
         </>

@@ -86,7 +86,6 @@ export const createProposalAndBuildTxDetails =
             if (err) {
               return reject({err, tx, txp, getState});
             }
-
             try {
               const rates = await dispatch(startGetRates());
               // building UI object for details
@@ -98,6 +97,7 @@ export const createProposalAndBuildTxDetails =
                 recipient,
                 invoice,
               });
+              txp.id = proposal.id;
               resolve({txDetails, txp});
             } catch (err) {
               reject({err});
@@ -261,14 +261,14 @@ export const startSendPayment =
   }): Effect =>
   async dispatch => {
     return new Promise(async (resolve, reject) => {
-      try {
-        wallet.createTxProposal(
-          {...txp, dryRun: false},
-          async (err: Error, proposal: TransactionProposal) => {
-            if (err) {
-              return reject(err);
-            }
+      wallet.createTxProposal(
+        {...txp, dryRun: false},
+        async (err: Error, proposal: TransactionProposal) => {
+          if (err) {
+            return reject(err);
+          }
 
+          try {
             const publishedTx = await publishTx(wallet, proposal);
             console.log('-------- published');
 
@@ -292,14 +292,13 @@ export const startSendPayment =
                 recipient,
               }),
             );
-            resolve();
-          },
-          null,
-        );
-      } catch (err) {
-        console.log(err);
-        reject(err);
-      }
+          } catch (error) {
+            return reject(error);
+          }
+          resolve();
+        },
+        null,
+      );
     });
   };
 
@@ -344,6 +343,17 @@ export const broadcastTx = (wallet: Wallet, txp: any) => {
         return reject(err);
       }
       resolve(broadcastedTxp);
+    });
+  });
+};
+
+export const removeTxp = (wallet: Wallet, txp: TransactionProposal) => {
+  return new Promise<void>((resolve, reject) => {
+    wallet.removeTxProposal(txp, (err: Error) => {
+      if (err) {
+        return reject(err);
+      }
+      resolve();
     });
   });
 };
@@ -479,7 +489,7 @@ export const createInvoiceAndTxProposal =
           ),
         );
       } catch (err) {
-        reject({err});
+        reject(err);
       }
     });
   };

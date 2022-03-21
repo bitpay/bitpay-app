@@ -46,7 +46,7 @@ export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
 };
 
 export const startCreateGiftCardInvoice =
-  (params: GiftCardInvoiceParams): Effect<Promise<GiftCardOrder | undefined>> =>
+  (params: GiftCardInvoiceParams): Effect<Promise<GiftCardOrder>> =>
   async (dispatch, getState) => {
     try {
       const {APP, BITPAY_ID} = getState();
@@ -93,6 +93,7 @@ export const startCreateGiftCardInvoice =
     } catch (err) {
       console.error(err);
       dispatch(ShopActions.failedCreateGiftCardInvoice());
+      throw err;
     }
   };
 

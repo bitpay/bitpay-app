@@ -39,9 +39,10 @@ import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../../constants/config';
 import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
 import {AppActions} from '../../../../../store/app';
-import {useDispatch} from 'react-redux';
 import Clipboard from '@react-native-community/clipboard';
 import {CardConfig} from '../../../../../store/shop/shop.models';
+import {ShopEffects} from '../../../../../store/shop';
+import {useAppDispatch} from '../../../../../utils/hooks';
 
 const maxWidth = 320;
 
@@ -130,11 +131,12 @@ const GiftCardDetails = ({
   route,
   navigation,
 }: StackScreenProps<GiftCardStackParamList, 'GiftCardDetails'>) => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const theme = useTheme();
   const [refreshing, setRefreshing] = useState(false);
   const [isOptionsSheetVisible, setIsOptionsSheetVisible] = useState(false);
-  const {cardConfig, giftCard} = route.params;
+  const {cardConfig, giftCard: initialGiftCard} = route.params;
+  const [giftCard, setGiftCard] = useState(initialGiftCard);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -203,11 +205,13 @@ const GiftCardDetails = ({
             <RefreshControl
               tintColor={theme.dark ? White : SlateDark}
               refreshing={refreshing}
-              onRefresh={() => {
+              onRefresh={async () => {
                 setRefreshing(true);
-                setTimeout(() => {
-                  setRefreshing(false);
-                }, 3000);
+                const updatedGiftCard = await dispatch(
+                  ShopEffects.startRedeemGiftCard(giftCard.invoiceId),
+                );
+                setGiftCard(updatedGiftCard);
+                setRefreshing(false);
               }}
             />
           ) : undefined

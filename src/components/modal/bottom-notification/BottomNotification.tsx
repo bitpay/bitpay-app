@@ -35,6 +35,7 @@ export interface BottomNotificationConfig {
   }>;
   message2?: ReactChild;
   enableBackdropDismiss: boolean;
+  onBackdropDismiss?: () => void;
 }
 
 const svgProps = {
@@ -118,8 +119,15 @@ const BottomNotification = () => {
     );
   }, [navigation]);
 
-  const {type, title, message, actions, enableBackdropDismiss, message2} =
-    config || {};
+  const {
+    type,
+    title,
+    message,
+    actions,
+    enableBackdropDismiss,
+    message2,
+    onBackdropDismiss,
+  } = config || {};
 
   return (
     <SheetModal
@@ -128,6 +136,9 @@ const BottomNotification = () => {
         if (enableBackdropDismiss) {
           dispatch(AppActions.dismissBottomNotificationModal());
           haptic('impactLight');
+          if (onBackdropDismiss) {
+            onBackdropDismiss();
+          }
         }
       }}>
       <BottomNotificationContainer>

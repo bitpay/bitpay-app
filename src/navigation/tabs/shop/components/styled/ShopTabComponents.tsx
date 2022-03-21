@@ -35,8 +35,8 @@ export const SectionContainer = styled.View`
   padding: 0 ${horizontalPadding}px;
 `;
 
-export const SectionSpacer = styled.View`
-  height: 30px;
+export const SectionSpacer = styled.View<{height?: number}>`
+  height: ${({height}) => height || 30}px;
 `;
 
 export const SectionHeaderContainer = styled.View`
