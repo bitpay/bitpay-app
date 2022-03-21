@@ -18,10 +18,15 @@ import cloneDeep from 'lodash.clonedeep';
 import {useAppDispatch} from '../../../../utils/hooks';
 import Button from '../../../../components/button/Button';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {BaseText, Link, H5, H7, Small} from '../../../../components/styled/Text';
+import {
+  BaseText,
+  Link,
+  H5,
+  H7,
+  Small,
+} from '../../../../components/styled/Text';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {useLogger} from '../../../../utils/hooks/useLogger';
-import {getPrecision} from '../../../../utils/helper-methods';
 import {Currencies} from '../../../../constants/currencies';
 import {BuyCryptoExpandibleCard, ItemDivisor} from '../styled/BuyCryptoCard';
 import {Black, SlateDark, ProgressBlue, White} from '../../../../styles/colors';
@@ -32,12 +37,18 @@ import {
 } from '../utils/simplex-utils';
 import {wyreFiatAmountLimits} from '../utils/wyre-utils';
 import {RootState} from '../../../../store';
-import {showBottomNotificationModal, dismissBottomNotificationModal} from '../../../../store/app/app.actions';
+import {GetPrecision} from '../../../../store/wallet/utils/currency';
+import {
+  showBottomNotificationModal,
+  dismissBottomNotificationModal,
+} from '../../../../store/app/app.actions';
 import {BuyCryptoActions} from '../../../../store/buy-crypto';
 import {simplexPaymentData} from '../../../../store/buy-crypto/buy-crypto.models';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {DEEPLINK_PREFIX} from '../../../../constants/config';
+import {isPaymentMethodSupported} from '../utils/buy-crypto-utils';
+import {PaymentMethod} from '../constants/BuyCryptoConstants';
 
 // Images // TODO: for exchanges images create a component like this: /bitpay-app-v2/src/components/icons/info
 import SimplexLogo from '../../../../../assets/img/services/simplex/logo-simplex-color.svg';
@@ -51,7 +62,7 @@ export interface BuyCryptoOffersProps {
   coin: string;
   country: string;
   selectedWallet: Wallet;
-  paymentMethod: any;
+  paymentMethod: PaymentMethod;
 }
 
 export type CryptoOffer = {
@@ -98,6 +109,13 @@ const SummaryData = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : Black)};
   font-weight: 500;
   font-size: 16px;
+`;
+
+const SpinnerContainer = styled.View`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 `;
 
 const CoinContainer = styled.View`
@@ -215,7 +233,7 @@ const offersDefault: {
   simplex: {
     key: 'simplex',
     amountReceiving: '0',
-    showOffer: true, // TODO: check isPaymentMethodSupported
+    showOffer: true,
     logoLight: <SimplexLogo width={70} height={20} />,
     logoDark: <SimplexLogoContainer source={SimplexLogoDm} />,
     expanded: false,
@@ -226,7 +244,7 @@ const offersDefault: {
   wyre: {
     key: 'wyre',
     amountReceiving: '0',
-    showOffer: true, // TODO: check isPaymentMethodSupported
+    showOffer: true,
     logoLight: <WyreLogo width={70} height={20} />,
     logoDark: <WyreLogoDm width={70} height={20} />,
     expanded: false,
@@ -252,6 +270,18 @@ const BuyCryptoOffers: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
+  offersDefault.simplex.showOffer = isPaymentMethodSupported(
+    'simplex',
+    paymentMethod,
+    coin,
+    fiatCurrency,
+  );
+  offersDefault.wyre.showOffer = isPaymentMethodSupported(
+    'wyre',
+    paymentMethod,
+    coin,
+    fiatCurrency,
+  );
   const [offers, setOffers] = useState(cloneDeep(offersDefault));
   const [finishedSimplex, setFinishedSimplex] = useState(false);
   const [finishedWyre, setFinishedWyre] = useState(false);
@@ -303,10 +333,10 @@ const BuyCryptoOffers: React.FC = () => {
             offers.simplex.fee =
               data.fiat_money.total_amount - data.fiat_money.base_amount;
 
-            if (offers.simplex.buyAmount && coin && getPrecision(coin)) {
+            if (offers.simplex.buyAmount && coin && GetPrecision(coin)) {
               offers.simplex.fiatMoney = Number(
                 offers.simplex.buyAmount / data.digital_money.amount,
-              ).toFixed(getPrecision(coin).unitDecimals);
+              ).toFixed(GetPrecision(coin)!.unitDecimals);
             } else {
               logger.error(
                 `Simplex error: Could not get precision for ${coin}`,
@@ -761,180 +791,193 @@ const BuyCryptoOffers: React.FC = () => {
         )
         .map(offer => {
           return (
-            <BuyCryptoExpandibleCard
-              key={offer.key}
-              onPress={() => {
-                expandCard(offer);
-              }}>
-              {!offer.fiatMoney && !offer.errorMsg && !offer.outOfLimitMsg && (
-                <CoinContainer>
-                  <ActivityIndicator color={ProgressBlue} />
-                </CoinContainer>
-              )}
-              {!offer.fiatMoney && offer.outOfLimitMsg && (
-                <OfferDataContainer>
-                  <OfferDataInfoLabel>{offer.outOfLimitMsg}</OfferDataInfoLabel>
-                </OfferDataContainer>
-              )}
-              {!offer.fiatMoney && offer.errorMsg && (
-                <OfferDataContainer>
-                  <OfferDataInfoLabel>
-                    Error: {offer.errorMsg}
-                  </OfferDataInfoLabel>
-                </OfferDataContainer>
-              )}
-              <OfferRow>
-                <OfferDataContainer>
-                  {offer.fiatMoney && !offer.errorMsg && !offer.outOfLimitMsg && (
-                    <>
-                      <OfferDataCryptoAmount>
-                        {offer.amountReceiving} {coin.toUpperCase()}
-                      </OfferDataCryptoAmount>
-                      <OfferDataRate>
-                        1 {coin.toUpperCase()} = ${offer.fiatMoney}
-                      </OfferDataRate>
-                    </>
-                  )}
-                  <OfferDataInfoContainer>
-                    <OfferDataInfoLabel>Provided By</OfferDataInfoLabel>
-                    {offer && theme.dark ? offer.logoDark : offer.logoLight}
-                  </OfferDataInfoContainer>
-                </OfferDataContainer>
-                {offer.fiatMoney && (
-                  <SummaryCtaContainer>
-                    <Button
-                      buttonType={'pill'}
-                      onPress={() => {
-                        haptic('impactLight');
-                        goTo(offer.key);
-                      }}>
-                      Buy
-                    </Button>
-                  </SummaryCtaContainer>
+            offer.showOffer && (
+              <BuyCryptoExpandibleCard
+                key={offer.key}
+                onPress={() => {
+                  expandCard(offer);
+                }}>
+                {!offer.fiatMoney && !offer.errorMsg && !offer.outOfLimitMsg && (
+                  <SpinnerContainer>
+                    <ActivityIndicator color={ProgressBlue} />
+                  </SpinnerContainer>
                 )}
-              </OfferRow>
-
-              {offer.expanded && (
-                <>
-                  <ItemDivisor style={{marginTop: 20}}/>
-                  <OfferExpandibleItem>
-                    <OfferDataInfoLabel>Buy Amount</OfferDataInfoLabel>
-                    <OfferDataRightContainer>
-                      <OfferDataInfoText>
-                        {offer.buyAmount} {fiatCurrency}
-                      </OfferDataInfoText>
-                      <OfferDataInfoTextSec>
-                        {offer.amountReceiving} {coin.toUpperCase()}
-                      </OfferDataInfoTextSec>
-                    </OfferDataRightContainer>
-                  </OfferExpandibleItem>
-                  <ItemDivisor />
-                  <OfferExpandibleItem>
-                    <OfferDataInfoLabel>Fee</OfferDataInfoLabel>
-                    <OfferDataInfoText>
-                      {offer.fee} {fiatCurrency}
-                    </OfferDataInfoText>
-                  </OfferExpandibleItem>
-                  <ItemDivisor />
-                  <OfferExpandibleItem>
-                    <OfferDataInfoTotal>TOTAL</OfferDataInfoTotal>
-                    <OfferDataInfoTotal>
-                      {offer.amountCost} {fiatCurrency}
-                    </OfferDataInfoTotal>
-                  </OfferExpandibleItem>
-                  {offer.key == 'simplex' && (
-                    <ExchangeTermsContainer>
-                      <ExchangeTermsText>
-                        What service fees am I paying?
-                      </ExchangeTermsText>
-                      {paymentMethod.method == 'sepaBankTransfer' && (
-                        <ExchangeTermsText>
-                          1.5% of the amount.
-                        </ExchangeTermsText>
+                {!offer.fiatMoney && offer.outOfLimitMsg && (
+                  <OfferDataContainer>
+                    <OfferDataInfoLabel>
+                      {offer.outOfLimitMsg}
+                    </OfferDataInfoLabel>
+                  </OfferDataContainer>
+                )}
+                {!offer.fiatMoney && offer.errorMsg && (
+                  <OfferDataContainer>
+                    <OfferDataInfoLabel>
+                      Error: {offer.errorMsg}
+                    </OfferDataInfoLabel>
+                  </OfferDataContainer>
+                )}
+                <OfferRow>
+                  <OfferDataContainer>
+                    {offer.fiatMoney &&
+                      !offer.errorMsg &&
+                      !offer.outOfLimitMsg && (
+                        <>
+                          <OfferDataCryptoAmount>
+                            {offer.amountReceiving} {coin.toUpperCase()}
+                          </OfferDataCryptoAmount>
+                          <OfferDataRate>
+                            1 {coin.toUpperCase()} = ${offer.fiatMoney}
+                          </OfferDataRate>
+                          <OfferDataInfoContainer>
+                            <OfferDataInfoLabel>Provided By</OfferDataInfoLabel>
+                            {offer && theme.dark
+                              ? offer.logoDark
+                              : offer.logoLight}
+                          </OfferDataInfoContainer>
+                        </>
                       )}
-                      {paymentMethod.method != 'sepaBankTransfer' && (
+                  </OfferDataContainer>
+                  {offer.fiatMoney && (
+                    <SummaryCtaContainer>
+                      <Button
+                        buttonType={'pill'}
+                        onPress={() => {
+                          haptic('impactLight');
+                          goTo(offer.key);
+                        }}>
+                        Buy
+                      </Button>
+                    </SummaryCtaContainer>
+                  )}
+                </OfferRow>
+
+                {offer.expanded && (
+                  <>
+                    <ItemDivisor style={{marginTop: 20}} />
+                    <OfferExpandibleItem>
+                      <OfferDataInfoLabel>Buy Amount</OfferDataInfoLabel>
+                      <OfferDataRightContainer>
+                        <OfferDataInfoText>
+                          {offer.buyAmount} {fiatCurrency}
+                        </OfferDataInfoText>
+                        <OfferDataInfoTextSec>
+                          {offer.amountReceiving} {coin.toUpperCase()}
+                        </OfferDataInfoTextSec>
+                      </OfferDataRightContainer>
+                    </OfferExpandibleItem>
+                    <ItemDivisor />
+                    <OfferExpandibleItem>
+                      <OfferDataInfoLabel>Fee</OfferDataInfoLabel>
+                      <OfferDataInfoText>
+                        {offer.fee} {fiatCurrency}
+                      </OfferDataInfoText>
+                    </OfferExpandibleItem>
+                    <ItemDivisor />
+                    <OfferExpandibleItem>
+                      <OfferDataInfoTotal>TOTAL</OfferDataInfoTotal>
+                      <OfferDataInfoTotal>
+                        {offer.amountCost} {fiatCurrency}
+                      </OfferDataInfoTotal>
+                    </OfferExpandibleItem>
+                    {offer.key == 'simplex' && (
+                      <ExchangeTermsContainer>
                         <ExchangeTermsText>
-                          Can range from 3.5% to 5% of the transaction,
-                          depending on the volume of traffic (with a minimum of
-                          10 USD or its equivalent in any other fiat currency) +
-                          1% of the transaction.
+                          What service fees am I paying?
+                        </ExchangeTermsText>
+                        {paymentMethod.method == 'sepaBankTransfer' && (
+                          <ExchangeTermsText>
+                            1.5% of the amount.
+                          </ExchangeTermsText>
+                        )}
+                        {paymentMethod.method != 'sepaBankTransfer' && (
+                          <ExchangeTermsText>
+                            Can range from 3.5% to 5% of the transaction,
+                            depending on the volume of traffic (with a minimum
+                            of 10 USD or its equivalent in any other fiat
+                            currency) + 1% of the transaction.
+                            <TouchableOpacity
+                              onPress={() => {
+                                haptic('impactLight');
+                                Linking.openURL(
+                                  'https://support.simplex.com/hc/en-gb/articles/360014078420-What-fees-am-I-paying-',
+                                );
+                              }}>
+                              <Link
+                                style={{fontSize: 12, marginLeft: 2, top: 2}}>
+                                Read more
+                              </Link>
+                            </TouchableOpacity>
+                          </ExchangeTermsText>
+                        )}
+                        <ExchangeTermsText style={{marginTop: 4}}>
+                          This service is provided by a third party, and you are
+                          subject to their
                           <TouchableOpacity
                             onPress={() => {
                               haptic('impactLight');
                               Linking.openURL(
-                                'https://support.simplex.com/hc/en-gb/articles/360014078420-What-fees-am-I-paying-',
+                                'https://www.simplex.com/terms-of-use/',
                               );
                             }}>
-                            <Link style={{fontSize: 12, marginLeft: 2, top: 2}}>
-                              Read more
+                            <Link style={{fontSize: 12, top: 2}}>
+                              Terms of use
                             </Link>
                           </TouchableOpacity>
                         </ExchangeTermsText>
-                      )}
-                      <ExchangeTermsText style={{marginTop: 4}}>
-                        This service is provided by a third party, and you are
-                        subject to their
+                      </ExchangeTermsContainer>
+                    )}
+                    {offer.key == 'wyre' && (
+                      <ExchangeTermsContainer>
+                        <ExchangeTermsText>
+                          What service fees am I paying?
+                        </ExchangeTermsText>
+                        {country == 'US' && (
+                          <ExchangeTermsText>
+                            5 USD minimum fee or 2.9% of the amount + 0.30 USD,
+                            whichever is greater + Required miners fee.
+                          </ExchangeTermsText>
+                        )}
+                        {country != 'US' && (
+                          <ExchangeTermsText>
+                            5 USD minimum fee or 3.9% of the amount + 0.30 USD,
+                            whichever is greater + Required miners fee.
+                          </ExchangeTermsText>
+                        )}
+                        {fiatCurrency.toUpperCase() != 'USD' && (
+                          <ExchangeTermsText>
+                            Or its equivalent in {fiatCurrency.toUpperCase()}.
+                          </ExchangeTermsText>
+                        )}
                         <TouchableOpacity
                           onPress={() => {
                             haptic('impactLight');
                             Linking.openURL(
-                              'https://www.simplex.com/terms-of-use/',
+                              'https://support.sendwyre.com/hc/en-us/articles/360059565013-Wyre-card-processing-fees',
                             );
                           }}>
-                          <Link style={{fontSize: 12, top: 2}}>Terms of use</Link>
+                          <Link style={{fontSize: 12, top: 2}}>Read more</Link>
                         </TouchableOpacity>
-                      </ExchangeTermsText>
-                    </ExchangeTermsContainer>
-                  )}
-                  {offer.key == 'wyre' && (
-                    <ExchangeTermsContainer>
-                      <ExchangeTermsText>
-                        What service fees am I paying?
-                      </ExchangeTermsText>
-                      {country == 'US' && (
-                        <ExchangeTermsText>
-                          5 USD minimum fee or 2.9% of the amount + 0.30 USD,
-                          whichever is greater + Required miners fee.
+                        <ExchangeTermsText style={{marginTop: 4}}>
+                          This service is provided by a third party, and you are
+                          subject to their
+                          <TouchableOpacity
+                            onPress={() => {
+                              haptic('impactLight');
+                              Linking.openURL(
+                                'https://www.sendwyre.com/user-agreement/',
+                              );
+                            }}>
+                            <Link style={{fontSize: 12, top: 2}}>
+                              User Agreement
+                            </Link>
+                          </TouchableOpacity>
                         </ExchangeTermsText>
-                      )}
-                      {country != 'US' && (
-                        <ExchangeTermsText>
-                          5 USD minimum fee or 3.9% of the amount + 0.30 USD,
-                          whichever is greater + Required miners fee.
-                        </ExchangeTermsText>
-                      )}
-                      {fiatCurrency.toUpperCase() != 'USD' && (
-                        <ExchangeTermsText>
-                          Or its equivalent in {fiatCurrency.toUpperCase()}.
-                        </ExchangeTermsText>
-                      )}
-                      <TouchableOpacity
-                        onPress={() => {
-                          haptic('impactLight');
-                          Linking.openURL(
-                            'https://support.sendwyre.com/hc/en-us/articles/360059565013-Wyre-card-processing-fees',
-                          );
-                        }}>
-                        <Link style={{fontSize: 12, top: 2}}>Read more</Link>
-                      </TouchableOpacity>
-                      <ExchangeTermsText style={{marginTop: 4}}>
-                        This service is provided by a third party, and you are
-                        subject to their
-                        <TouchableOpacity
-                          onPress={() => {
-                            haptic('impactLight');
-                            Linking.openURL(
-                              'https://www.sendwyre.com/user-agreement/',
-                            );
-                          }}>
-                          <Link style={{fontSize: 12, top: 2}}>User Agreement</Link>
-                        </TouchableOpacity>
-                      </ExchangeTermsText>
-                    </ExchangeTermsContainer>
-                  )}
-                </>
-              )}
-            </BuyCryptoExpandibleCard>
+                      </ExchangeTermsContainer>
+                    )}
+                  </>
+                )}
+              </BuyCryptoExpandibleCard>
+            )
           );
         })}
 

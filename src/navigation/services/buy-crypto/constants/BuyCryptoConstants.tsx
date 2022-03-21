@@ -7,7 +7,21 @@ import BankIcon from '../../../../../assets/img/services/payment-methods/icon-ba
 import CreditCardIcon from '../../../../../assets/img/services/payment-methods/icon-creditcard.svg';
 import DebitCardIcon from '../../../../../assets/img/services/payment-methods/icon-debitcard.svg';
 
-export const PaymentMethodsAvailable = {
+export type PaymentMethods = {
+  [key in string]: PaymentMethod;
+};
+
+export interface PaymentMethod {
+  label: string;
+  method: string;
+  imgSrc: JSX.Element;
+  supportedExchanges: {
+    [key in string]: boolean;
+  };
+  enabled: boolean;
+}
+
+export const PaymentMethodsAvailable: PaymentMethods = {
   applePay: {
     label: 'Apple Pay',
     method: 'applePay',

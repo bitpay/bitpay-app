@@ -25,7 +25,10 @@ import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyO
 import {ItemProps} from '../../../../components/list/CurrencySelectionRow';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {RootState} from '../../../../store';
-import {showBottomNotificationModal, dismissBottomNotificationModal} from '../../../../store/app/app.actions';
+import {
+  showBottomNotificationModal,
+  dismissBottomNotificationModal,
+} from '../../../../store/app/app.actions';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {Action, White, Slate, SlateDark} from '../../../../styles/colors';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
@@ -69,6 +72,8 @@ const BuyCryptoRoot: React.FC = () => {
   const supportedCoins = [
     ...new Set([...simplexSupportedCoins, ...wyreSupportedCoins]),
   ];
+
+  const env = 'dev'; // TODO: take the correct environment
 
   const showModal = (id: string) => {
     switch (id) {
@@ -114,19 +119,23 @@ const BuyCryptoRoot: React.FC = () => {
   };
 
   const selectFirstAvailableWallet = () => {
-    const keysList = Object.values(allKeys).filter(key => key.show);
+    const keysList = Object.values(allKeys).filter(
+      key => key.show && key.backupComplete,
+    );
 
     if (fromWallet && fromWallet.id) {
       let fromWalletData;
       let allWallets: Wallet[] = [];
 
-      keysList.forEach((key) => {
+      keysList.forEach(key => {
         allWallets = [...allWallets, ...key.wallets];
       });
 
       fromWalletData = allWallets.find(wallet => wallet.id == fromWallet.id);
       if (fromWalletData) {
         setWallet(fromWalletData);
+      } else {
+        showError('walletNotSupported');
       }
     } else {
       if (keysList[0]) {
@@ -135,12 +144,20 @@ const BuyCryptoRoot: React.FC = () => {
         const allowedWallets = firstKeyAllWallets.filter(
           wallet =>
             wallet.credentials &&
-            wallet.credentials.network == 'livenet' &&
-            supportedCoins.includes(wallet.credentials.coin.toLowerCase()),
+            ((wallet.credentials.network === 'livenet' &&
+              supportedCoins.includes(wallet.credentials.coin.toLowerCase())) ||
+              (env === 'dev' &&
+                wallet.credentials.network === 'testnet' &&
+                wyreSupportedCoins.includes(
+                  wallet.credentials.coin.toLowerCase(),
+                ))) &&
+            wallet.isComplete(),
         );
         allowedWallets[0]
           ? setSelectedWallet(allowedWallets[0])
-          : showError('walletNotSupported');
+          : showError('noWalletsAbleToBuy');
+      } else {
+        showError('keyNeedsBackup');
       }
     }
   };
@@ -148,10 +165,21 @@ const BuyCryptoRoot: React.FC = () => {
   const setWallet = (wallet: Wallet) => {
     if (
       wallet.credentials &&
-      wallet.credentials.network == 'livenet' &&
-      supportedCoins.includes(wallet.credentials.coin.toLowerCase())
+      ((wallet.credentials.network === 'livenet' &&
+        supportedCoins.includes(wallet.credentials.coin.toLowerCase())) ||
+        (env === 'dev' &&
+          wallet.credentials.network === 'testnet' &&
+          wyreSupportedCoins.includes(wallet.credentials.coin.toLowerCase())))
     ) {
-      setSelectedWallet(wallet);
+      if (wallet.isComplete()) {
+        if (allKeys[wallet.keyId].backupComplete) {
+          setSelectedWallet(wallet);
+        } else {
+          showError('keyNeedsBackup');
+        }
+      } else {
+        showError('walletNotCompleted');
+      }
     } else {
       showError('walletNotSupported');
     }
@@ -165,7 +193,20 @@ const BuyCryptoRoot: React.FC = () => {
         message =
           'The selected wallet is currently not supported for buying cryptocurrencies';
         break;
-
+      case 'keyNeedsBackup':
+        title = 'Wallet needs backup';
+        message =
+          'The key of the selected wallet needs backup before being able to receive funds';
+        break;
+      case 'walletNotCompleted':
+        title = 'Incomplete Wallet';
+        message =
+          'The selected wallet needs to be complete before being able to receive funds';
+        break;
+      case 'noWalletsAbleToBuy':
+        title = 'No wallets';
+        message = 'No wallets available to receive funds.';
+        break;
       default:
         title = 'Error';
         message = 'Unknown Error';
@@ -280,7 +321,11 @@ const BuyCryptoRoot: React.FC = () => {
                 </ArrowContainer>
               </SelectedOptionContainer>
               <SelectedOptionCol>
-                <DataText>{selectedWallet.walletName ? selectedWallet.walletName : selectedWallet.currencyName}</DataText>
+                <DataText>
+                  {selectedWallet.walletName
+                    ? selectedWallet.walletName
+                    : selectedWallet.currencyName}
+                </DataText>
                 <ArrowContainer>
                   <SelectorArrowRight
                     {...{

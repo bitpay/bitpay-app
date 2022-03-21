@@ -1,10 +1,4 @@
-export const wyreSupportedFiatAltCurrencies = [
-  'AUD',
-  'CAD',
-  'EUR',
-  'GBP',
-  'USD',
-];
+export const wyreSupportedFiatCurrencies = ['AUD', 'CAD', 'EUR', 'GBP', 'USD'];
 export const wyreSupportedCoins = [
   'btc',
   'eth',

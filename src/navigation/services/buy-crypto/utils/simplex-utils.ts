@@ -9,7 +9,7 @@ const simplexEnv = env == 'development' ? 'sandbox' : 'production';
 
 const appName = DEEPLINK_PREFIX;
 
-export const simplexSupportedFiatAltCurrencies = [
+export const simplexSupportedFiatCurrencies = [
   'AED',
   'ARS',
   'AUD',

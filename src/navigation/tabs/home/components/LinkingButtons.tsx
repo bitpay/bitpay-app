@@ -93,7 +93,7 @@ const LinkingButtons = ({buy, receive, send}: Props) => {
                 },
               });
             },
-      hide: false,
+      hide: !!buy?.hide,
     },
     {
       label: 'swap',

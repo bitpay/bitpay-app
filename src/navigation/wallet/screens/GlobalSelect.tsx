@@ -109,11 +109,15 @@ const buildList = (category: string[], wallets: Wallet[]) => {
 
 interface GlobalSelectProps {
   useAsModal: any;
-  customSupportedCurrencies?: string[],
+  customSupportedCurrencies?: string[];
   onDismiss?: (newWallet?: any) => void;
 }
 
-const GlobalSelect: React.FC<GlobalSelectProps> = ({useAsModal, customSupportedCurrencies, onDismiss}) => {
+const GlobalSelect: React.FC<GlobalSelectProps> = ({
+  useAsModal,
+  customSupportedCurrencies,
+  onDismiss,
+}) => {
   const {
     params: {context},
   } = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
@@ -143,12 +147,26 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({useAsModal, customSupportedC
     wallets = wallets.filter(wallet => wallet.balance.sat > 0);
   }
 
+  if (useAsModal) {
+    wallets = wallets.filter(wallet => wallet.isComplete());
+  }
+
   const supportedCoins = useMemo(
-    () => buildList(customSupportedCurrencies ? customSupportedCurrencies : SUPPORTED_CURRENCIES, wallets),
+    () =>
+      buildList(
+        customSupportedCurrencies
+          ? customSupportedCurrencies
+          : SUPPORTED_CURRENCIES,
+        wallets,
+      ),
     [],
   );
   const otherCoins = useMemo(
-    () => buildList(customSupportedCurrencies ? [] : NON_BITPAY_SUPPORTED_TOKENS, wallets),
+    () =>
+      buildList(
+        customSupportedCurrencies ? [] : NON_BITPAY_SUPPORTED_TOKENS,
+        wallets,
+      ),
     [],
   );
 
@@ -221,67 +239,67 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({useAsModal, customSupportedC
   return (
     <SafeAreaView>
       {useAsModal && (
-          <ModalHeader>
-            <CloseModalButton
-              onPress={() => {
-                if (onDismiss) {
-                  onDismiss();
-                }
-              }}>
-              <CloseModal
-                {...{
-                  width: 20,
-                  height: 20,
-                  color: theme.dark ? 'white' : 'black',
-                }}
+        <ModalHeader>
+          <CloseModalButton
+            onPress={() => {
+              if (onDismiss) {
+                onDismiss();
+              }
+            }}>
+            <CloseModal
+              {...{
+                width: 20,
+                height: 20,
+                color: theme.dark ? 'white' : 'black',
+              }}
+            />
+          </CloseModalButton>
+        </ModalHeader>
+      )}
+      <GlobalSelectContainer>
+        <ListContainer>
+          <FlatList
+            contentContainerStyle={{paddingBottom: 100}}
+            data={[...supportedCoins, ...otherCoins]}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
+          />
+        </ListContainer>
+        <SheetModal
+          isVisible={walletSelectModalVisible}
+          onBackdropPress={() => setWalletSelectModalVisible(false)}>
+          <WalletSelectMenuContainer>
+            <WalletSelectMenuHeaderContainer>
+              <TextAlign align={'center'}>
+                <H4>Select a wallet</H4>
+              </TextAlign>
+            </WalletSelectMenuHeaderContainer>
+            <WalletSelectMenuBodyContainer>
+              <KeyWalletsRow
+                keyWallets={keyWallets!}
+                onPress={onWalletSelect}
               />
-            </CloseModalButton>
-          </ModalHeader>
+            </WalletSelectMenuBodyContainer>
+            {/*Nested receive modal*/}
+            {receiveWallet && (
+              <ReceiveAddress
+                isVisible={showReceiveAddressBottomModal}
+                closeModal={closeModal}
+                wallet={receiveWallet}
+              />
+            )}
+          </WalletSelectMenuContainer>
+        </SheetModal>
+        {/*Receive modal if one wallet*/}
+        {receiveWallet && !walletSelectModalVisible && (
+          <ReceiveAddress
+            isVisible={showReceiveAddressBottomModal}
+            closeModal={closeModal}
+            wallet={receiveWallet}
+          />
         )}
-        <GlobalSelectContainer>
-          <ListContainer>
-            <FlatList
-              contentContainerStyle={{paddingBottom: 100}}
-              data={[...supportedCoins, ...otherCoins]}
-              keyExtractor={keyExtractor}
-              renderItem={renderItem}
-            />
-          </ListContainer>
-          <SheetModal
-            isVisible={walletSelectModalVisible}
-            onBackdropPress={() => setWalletSelectModalVisible(false)}>
-            <WalletSelectMenuContainer>
-              <WalletSelectMenuHeaderContainer>
-                <TextAlign align={'center'}>
-                  <H4>Select a wallet</H4>
-                </TextAlign>
-              </WalletSelectMenuHeaderContainer>
-              <WalletSelectMenuBodyContainer>
-                <KeyWalletsRow
-                  keyWallets={keyWallets!}
-                  onPress={onWalletSelect}
-                />
-              </WalletSelectMenuBodyContainer>
-              {/*Nested receive modal*/}
-              {receiveWallet && (
-                <ReceiveAddress
-                  isVisible={showReceiveAddressBottomModal}
-                  closeModal={closeModal}
-                  wallet={receiveWallet}
-                />
-              )}
-            </WalletSelectMenuContainer>
-          </SheetModal>
-          {/*Receive modal if one wallet*/}
-          {receiveWallet && !walletSelectModalVisible && (
-            <ReceiveAddress
-              isVisible={showReceiveAddressBottomModal}
-              closeModal={closeModal}
-              wallet={receiveWallet}
-            />
-          )}
-        </GlobalSelectContainer>
-      </SafeAreaView>
+      </GlobalSelectContainer>
+    </SafeAreaView>
   );
 };
 
