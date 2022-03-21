@@ -58,6 +58,7 @@ export const useDeeplinks = () => {
             [CardScreens.HOME]: 'wallet-card/dashboard/:id',
           },
         },
+        [RootStacks.GIFT_CARD_DEEPLINK]: 'giftcard',
         [RootStacks.BUY_CRYPTO]: {
           screens: {
             [BuyCryptoScreens.ROOT]: 'buy',
