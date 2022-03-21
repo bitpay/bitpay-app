@@ -34,7 +34,10 @@ import {
   IWCRequest,
 } from '../../../store/wallet-connect/wallet-connect.models';
 import WalletConnect from '@walletconnect/client';
-import {FormatAmountStr} from '../../../store/wallet/effects/amount/amount';
+import {
+  FormatAmount,
+  FormatAmountStr,
+} from '../../../store/wallet/effects/amount/amount';
 import {
   createProposalAndBuildTxDetails,
   handleCreateTxProposalError,
@@ -115,14 +118,16 @@ const WalletConnectHome = () => {
                 const recipient = {
                   address: toAddress,
                 };
+                const amountStr = FormatAmount(
+                  'eth',
+                  parseInt(request.payload.params[0].value, 16),
+                );
                 const tx = {
                   wallet,
                   recipient,
                   toAddress,
                   from: request.payload.params[0].from,
-                  amount: request.payload.params[0].value
-                    ? convertHexToNumber(request.payload.params[0].value)
-                    : 0,
+                  amount: request.payload.params[0].value ? Number(amountStr) : 0,
                   gasPrice:
                     request.payload.params[0].gasPrice &&
                     convertHexToNumber(request.payload.params[0].gasPrice),
