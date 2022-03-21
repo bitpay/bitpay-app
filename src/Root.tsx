@@ -80,6 +80,7 @@ import ConnectionsSettingsStack, {
   ConnectionsSettingsStackParamList,
 } from './navigation/tabs/settings/connections/ConnectionsStack';
 import {BlurView} from '@react-native-community/blur';
+import Blur from './components/blur/Blur';
 import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
 
 // ROOT NAVIGATION CONFIG
@@ -204,19 +205,22 @@ export default () => {
     function onAppStateChange(status: AppStateStatus) {
       // status === 'active' when the app goes from background to foreground,
       // if no app scheme set, rerender in case the system theme has changed
-      if (status === 'active') {
-        if (pinLockActive) {
-          dispatch(AppActions.showPinModal({type: 'check'}));
+
+      if (onboardingCompleted) {
+        if (status === 'active') {
+          if (pinLockActive) {
+            dispatch(AppActions.showPinModal({type: 'check'}));
+          } else {
+            dispatch(AppActions.showBlur(false));
+          }
         } else {
-          dispatch(AppActions.showBlur(false));
+          dispatch(AppActions.showBlur(true));
         }
-      } else {
-        dispatch(AppActions.showBlur(true));
       }
     }
     AppState.addEventListener('change', onAppStateChange);
     return () => AppState.removeEventListener('change', onAppStateChange);
-  }, [dispatch, pinLockActive]);
+  }, [dispatch, onboardingCompleted, pinLockActive]);
 
   // THEME
   useEffect(() => {
@@ -385,20 +389,7 @@ export default () => {
           <OnGoingProcessModal />
           <BottomNotificationModal />
           <DecryptEnterPasswordModal />
-          {showBlur && (
-            <BlurView
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-              }}
-              blurType={theme.dark ? 'dark' : 'light'}
-              blurAmount={10}
-              reducedTransparencyFallbackColor="white"
-            />
-          )}
+          {showBlur && <Blur />}
           <PinModal />
         </NavigationContainer>
       </ThemeProvider>

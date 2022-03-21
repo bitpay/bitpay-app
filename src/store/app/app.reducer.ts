@@ -18,6 +18,7 @@ type AppReduxPersistBlackList = [
   'showDecryptPasswordModal',
   'showPinModal',
   'pinModalConfig',
+  'showBottomNotificationModal',
 ];
 export const appReduxPersistBlackList: AppReduxPersistBlackList = [
   'appIsLoading',
@@ -26,6 +27,7 @@ export const appReduxPersistBlackList: AppReduxPersistBlackList = [
   'showDecryptPasswordModal',
   'showPinModal',
   'pinModalConfig',
+  'showBottomNotificationModal',
 ];
 
 export interface AppState {
