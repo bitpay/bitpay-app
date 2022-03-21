@@ -60,7 +60,7 @@ const PinModal: React.FC = () => {
   >([]);
 
   const reset = () => {
-    setMessage(`Please ${type === 'set' ? 'create' : 'enter'} your PIN`);
+    setMessage('Please enter your PIN');
     setFistPinEntered([]);
     setAttempts(0);
     setPin([]);
