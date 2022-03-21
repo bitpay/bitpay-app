@@ -1,7 +1,6 @@
 import Modal from 'react-native-modal';
 import React from 'react';
 import {SheetParams} from '../../../styled/Containers';
-import {BlurView} from '@react-native-community/blur';
 import {View} from 'react-native';
 import {useAppSelector} from '../../../../utils/hooks';
 import Blur from '../../../blur/Blur';
@@ -38,10 +37,10 @@ const SheetModal: React.FC<Props> = ({
         justifyContent: placement === 'top' ? 'flex-start' : 'flex-end',
         margin: 0,
       }}>
-      <View>
+      <>
         {children}
         {showBlur && <Blur />}
-      </View>
+      </>
     </Modal>
   );
 };
