@@ -79,6 +79,9 @@ import MerchantStack, {
   MerchantStackParamList,
 } from './navigation/tabs/shop/merchant/MerchantStack';
 import PinModal from './components/modal/pin/PinModal';
+import CoinbaseStack, {
+  CoinbaseStackParamList,
+} from './navigation/coinbase/CoinbaseStack';
 import BpDevtools from './components/bp-devtools/BpDevtools';
 import {DEVTOOLS_ENABLED} from './constants/config';
 import ConnectionsSettingsStack, {
@@ -108,6 +111,7 @@ export type RootStackParamList = {
   ExternalServicesSettings: NavigatorScreenParams<ExternalServicesSettingsStackParamList>;
   NotificationSettings: NavigatorScreenParams<NotificationSettingsStackParamList>;
   About: NavigatorScreenParams<AboutStackParamList>;
+  Coinbase: NavigatorScreenParams<CoinbaseStackParamList>;
   BuyCrypto: NavigatorScreenParams<BuyCryptoStackParamList>;
   SwapCrypto: NavigatorScreenParams<SwapCryptoStackParamList>;
   WalletConnect: NavigatorScreenParams<WalletConnectStackParamList>;
@@ -135,6 +139,7 @@ export enum RootStacks {
   EXTERNAL_SERVICES_SETTINGS = 'ExternalServicesSettings',
   NOTIFICATION_SETTINGS = 'NotificationSettings',
   ABOUT = 'About',
+  COINBASE = 'Coinbase',
   BUY_CRYPTO = 'BuyCrypto',
   SWAP_CRYPTO = 'SwapCrypto',
   WALLET_CONNECT = 'WalletConnect',
@@ -157,6 +162,7 @@ export type NavScreenParams = NavigatorScreenParams<
     ExternalServicesSettingsStackParamList &
     NotificationSettingsStackParamList &
     AboutStackParamList &
+    CoinbaseStackParamList &
     BuyCryptoStackParamList &
     SwapCryptoStackParamList &
     ScanStackParamList &
@@ -417,6 +423,7 @@ export default () => {
               component={NotificationSettingsStack}
             />
             <Root.Screen name={RootStacks.ABOUT} component={AboutStack} />
+            <Root.Screen name={RootStacks.COINBASE} component={CoinbaseStack} />
             <Root.Screen
               name={RootStacks.BUY_CRYPTO}
               component={BuyCryptoStack}

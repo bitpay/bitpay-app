@@ -28,6 +28,7 @@ import {setHomeCarouselConfig, showBlur} from './app.actions';
 import {batch} from 'react-redux';
 import i18n from 'i18next';
 import {WalletActions} from '../wallet';
+import {CoinbaseEffects} from '../coinbase';
 
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
@@ -96,6 +97,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     await dispatch(startWalletStoreInit());
     await dispatch(walletConnectInit());
     await dispatch(initializeBrazeContent());
+    dispatch(CoinbaseEffects.setExchangeRate());
 
     // set home carousel config if not already set
     if (!homeCarouselConfig.length) {
@@ -109,6 +111,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       }));
       dispatch(setHomeCarouselConfig([...keys, ...cards]));
     }
+
     await sleep(500);
     dispatch(LogActions.info('Initialized app successfully.'));
     dispatch(LogActions.debug(`Pin Lock Active: ${pinLockActive}`));

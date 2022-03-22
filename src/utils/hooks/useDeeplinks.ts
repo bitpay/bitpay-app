@@ -8,6 +8,7 @@ import {BitpayIdScreens} from '../../navigation/bitpay-id/BitpayIdStack';
 import {CardScreens} from '../../navigation/card/CardStack';
 import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoStack';
 import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoStack';
+import {CoinbaseScreens} from '../../navigation/coinbase/CoinbaseStack';
 import {RootStackParamList, RootStacks} from '../../Root';
 import {useLogger} from '.';
 import {TabsScreens} from '../../navigation/tabs/TabsStack';
@@ -81,6 +82,11 @@ export const useDeeplinks = () => {
         [RootStacks.WALLET_CONNECT]: {
           screens: {
             [WalletConnectScreens.ROOT]: 'walletconnect',
+          },
+        },
+        [RootStacks.COINBASE]: {
+          screens: {
+            [CoinbaseScreens.ROOT]: 'coinbase',
           },
         },
       },
