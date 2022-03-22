@@ -1,5 +1,5 @@
 import React from 'react';
-import {Text, View, TouchableOpacity, Linking} from 'react-native';
+import {Text, View, TouchableOpacity} from 'react-native';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
 import moment from 'moment';
 import {Link} from '../../../../../components/styled/Text';
@@ -12,6 +12,7 @@ import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
 } from '../../../../../store/app/app.actions';
+import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {BuyCryptoActions} from '../../../../../store/buy-crypto';
 import {
   RowDataContainer,
@@ -106,7 +107,11 @@ const SimplexDetails: React.FC = () => {
           <TouchableOpacity
             onPress={() => {
               haptic('impactLight');
-              Linking.openURL('https://payment-status.simplex.com/#/');
+              dispatch(
+                openUrlWithInAppBrowser(
+                  'https://payment-status.simplex.com/#/',
+                ),
+              );
             }}>
             <Link style={{marginTop: 15}}>
               What is the status of my payment?

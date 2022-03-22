@@ -1,10 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import {TouchableOpacity, Linking} from 'react-native';
+import {TouchableOpacity} from 'react-native';
 import {useNavigation, useIsFocused} from '@react-navigation/native';
 import moment from 'moment';
 import {useSelector} from 'react-redux';
 import {Link} from '../../../../../components/styled/Text';
 import {RootState} from '../../../../../store';
+import {useAppDispatch} from '../../../../../utils/hooks';
+import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {wyrePaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
@@ -24,6 +26,7 @@ import {
 
 const WyreSettings: React.FC = () => {
   const wyreHistory = useSelector(({BUY_CRYPTO}: RootState) => BUY_CRYPTO.wyre);
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const [paymentRequests, setTransactions] = useState([] as wyrePaymentData[]);
@@ -99,7 +102,7 @@ const WyreSettings: React.FC = () => {
         <TouchableOpacity
           onPress={() => {
             haptic('impactLight');
-            Linking.openURL('https://www.wyre.com/support/');
+            dispatch(openUrlWithInAppBrowser('https://www.wyre.com/support/'));
           }}>
           <Link>Contact the Wyre support team.</Link>
         </TouchableOpacity>

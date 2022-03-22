@@ -42,6 +42,7 @@ import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
 } from '../../../../store/app/app.actions';
+import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
 import {BuyCryptoActions} from '../../../../store/buy-crypto';
 import {simplexPaymentData} from '../../../../store/buy-crypto/buy-crypto.models';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
@@ -898,8 +899,10 @@ const BuyCryptoOffers: React.FC = () => {
                             <TouchableOpacity
                               onPress={() => {
                                 haptic('impactLight');
-                                Linking.openURL(
-                                  'https://support.simplex.com/hc/en-gb/articles/360014078420-What-fees-am-I-paying-',
+                                dispatch(
+                                  openUrlWithInAppBrowser(
+                                    'https://support.simplex.com/hc/en-gb/articles/360014078420-What-fees-am-I-paying-',
+                                  ),
                                 );
                               }}>
                               <Link
@@ -915,8 +918,10 @@ const BuyCryptoOffers: React.FC = () => {
                           <TouchableOpacity
                             onPress={() => {
                               haptic('impactLight');
-                              Linking.openURL(
-                                'https://www.simplex.com/terms-of-use/',
+                              dispatch(
+                                openUrlWithInAppBrowser(
+                                  'https://www.simplex.com/terms-of-use/',
+                                ),
                               );
                             }}>
                             <Link style={{fontSize: 12, top: 2}}>
@@ -951,8 +956,10 @@ const BuyCryptoOffers: React.FC = () => {
                         <TouchableOpacity
                           onPress={() => {
                             haptic('impactLight');
-                            Linking.openURL(
-                              'https://support.sendwyre.com/hc/en-us/articles/360059565013-Wyre-card-processing-fees',
+                            dispatch(
+                              openUrlWithInAppBrowser(
+                                'https://support.sendwyre.com/hc/en-us/articles/360059565013-Wyre-card-processing-fees',
+                              ),
                             );
                           }}>
                           <Link style={{fontSize: 12, top: 2}}>Read more</Link>
@@ -963,8 +970,10 @@ const BuyCryptoOffers: React.FC = () => {
                           <TouchableOpacity
                             onPress={() => {
                               haptic('impactLight');
-                              Linking.openURL(
-                                'https://www.sendwyre.com/user-agreement/',
+                              dispatch(
+                                openUrlWithInAppBrowser(
+                                  'https://www.sendwyre.com/user-agreement/',
+                                ),
                               );
                             }}>
                             <Link style={{fontSize: 12, top: 2}}>

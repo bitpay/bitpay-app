@@ -1,10 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import {TouchableOpacity, Linking} from 'react-native';
+import {TouchableOpacity} from 'react-native';
 import {useNavigation, useIsFocused} from '@react-navigation/native';
 import moment from 'moment';
 import {useSelector} from 'react-redux';
 import {Link} from '../../../../../components/styled/Text';
+import {useAppDispatch} from '../../../../../utils/hooks';
 import {RootState} from '../../../../../store';
+import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {simplexPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
@@ -26,6 +28,7 @@ const SimplexSettings: React.FC = () => {
   const simplexHistory = useSelector(
     ({BUY_CRYPTO}: RootState) => BUY_CRYPTO.simplex,
   );
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const [paymentRequests, setTransactions] = useState(
@@ -103,7 +106,9 @@ const SimplexSettings: React.FC = () => {
         <TouchableOpacity
           onPress={() => {
             haptic('impactLight');
-            Linking.openURL('https://www.simplex.com/support/');
+            dispatch(
+              openUrlWithInAppBrowser('https://www.simplex.com/support/'),
+            );
           }}>
           <Link>Contact the Simplex support team.</Link>
         </TouchableOpacity>
