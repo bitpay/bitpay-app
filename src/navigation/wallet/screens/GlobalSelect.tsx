@@ -215,6 +215,8 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
 
   const onWalletSelect = async (wallet: Wallet) => {
     if (useAsModal && onDismiss) {
+      setWalletSelectModalVisible(false);
+      await sleep(100);
       onDismiss(wallet);
       return;
     }
