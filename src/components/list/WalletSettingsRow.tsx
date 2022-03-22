@@ -1,15 +1,19 @@
 import React, {memo, ReactElement} from 'react';
 import styled, {useTheme} from 'styled-components/native';
-import {BaseText} from '../styled/Text';
+import {BaseText, H7} from '../styled/Text';
 import {StyleProp, TextStyle} from 'react-native';
 import NestedArrow from '../../../assets/img/nested-arrow.svg';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
+import {buildTestBadge} from './WalletRow';
+import {Column, HiddenContainer} from '../styled/Containers';
 
 export interface WalletSettingsRowProps {
   id: string;
   img: string | ((props: any) => ReactElement);
   currencyName: string;
   isToken?: boolean;
+  network: string;
+  hideWallet?: boolean;
 }
 
 const Row = styled.View`
@@ -30,10 +34,16 @@ const NestedArrowContainer = styled.View`
   margin-right: 15px;
 `;
 
+const HiddenColumn = styled(Column)`
+  align-items: flex-end;
+`;
+
 const WalletSettingsRow = ({
   img,
   currencyName,
   isToken,
+  network,
+  hideWallet,
 }: WalletSettingsRowProps) => {
   const theme = useTheme();
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
@@ -48,6 +58,15 @@ const WalletSettingsRow = ({
       <CurrencyName style={textStyle}>
         {currencyName} {isToken}
       </CurrencyName>
+      {buildTestBadge(network, currencyName, isToken)}
+
+      {hideWallet ? (
+        <HiddenColumn>
+          <HiddenContainer>
+            <H7>Hidden</H7>
+          </HiddenContainer>
+        </HiddenColumn>
+      ) : null}
     </Row>
   );
 };

@@ -1,5 +1,6 @@
 import {Network} from '../../../../constants';
 import {Wallet} from '../../wallet.models';
+import {GetEstimatedTxSize} from '../../utils/wallet';
 
 export enum FeeLevels {
   URGENT = 'urgent',
@@ -76,6 +77,19 @@ export const getFeeLevels = ({
       );
     } catch (err) {
       reject(err);
+    }
+  });
+};
+
+export const GetMinFee = (wallet: Wallet, nbOutputs?: number): Promise<any> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const feePerKb = await getFeeRatePerKb({wallet, feeLevel: 'normal'});
+      const lowLevelRate: string = (feePerKb / 1000).toFixed(0);
+      const size = GetEstimatedTxSize(wallet, nbOutputs);
+      return resolve(size * parseInt(lowLevelRate, 10));
+    } catch (e) {
+      return reject(e);
     }
   });
 };

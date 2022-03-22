@@ -80,7 +80,8 @@ const createHomeCardList = (
     const walletCards = keys
       .filter(key => key.show)
       .map(key => {
-        const {wallets, totalBalance = 0, backupComplete} = key;
+        let {wallets, totalBalance = 0, backupComplete} = key;
+        wallets = wallets.filter(wallet => !wallet.hideWallet);
 
         return (
           <WalletCardComponent

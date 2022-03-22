@@ -24,7 +24,7 @@ import {Effect} from '../../../index';
 import {getHistoricFiatRate, startGetRates} from '../rates/rates';
 import {toFiat} from '../../utils/wallet';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
-import {getFeeRatePerKb} from '../fee/fee';
+import {GetMinFee} from '../fee/fee';
 import {updateWalletTxHistory} from '../../wallet.actions';
 
 const BWC = BwcProvider.getInstance();
@@ -332,7 +332,11 @@ export const GetTransactionHistory =
         : null;
       const skip = refresh ? 0 : transactionsHistory.length;
 
-      if (wallet.transactionHistory?.transactions?.length && !refresh && !skip) {
+      if (
+        wallet.transactionHistory?.transactions?.length &&
+        !refresh &&
+        !skip
+      ) {
         return resolve(wallet.transactionHistory);
       }
 
@@ -701,7 +705,7 @@ export const buildTransactionDetails =
           _transaction.feeRateStr =
             ((fees / (amount + fees)) * 100).toFixed(2) + '%';
           try {
-            const minFee = getMinFee(wallet);
+            const minFee = GetMinFee(wallet);
             _transaction.lowAmount = amount < minFee;
           } catch (minFeeErr) {
             console.log(minFeeErr);
@@ -765,44 +769,6 @@ const UpdateFiatRate = (
       formatFiatAmount(fiatRateStr, alternativeCurrency) + alternativeCurrency;
   }
   return fiatRateStr;
-};
-
-// These 2 functions were taken from
-// https://github.com/bitpay/bitcore-wallet-service/blob/master/lib/model/txproposal.js#L235
-const getEstimatedSizeForSingleInput = (wallet: Wallet): number => {
-  switch (wallet.credentials.addressType) {
-    case 'P2PKH':
-      return 147;
-    default:
-    case 'P2SH':
-      return wallet.m * 72 + wallet.n * 36 + 44;
-  }
-};
-
-const getEstimatedTxSize = (wallet: Wallet): number => {
-  // Note: found empirically based on all multisig P2SH inputs and within m & n allowed limits.
-  const nbOutputs = 2; // Assume 2 outputs
-  const safetyMargin = 0.02;
-  const overhead = 4 + 4 + 9 + 9;
-  const inputSize = getEstimatedSizeForSingleInput(wallet);
-  const outputSize = 34;
-  const nbInputs = 1; // Assume 1 input
-
-  const size = overhead + inputSize * nbInputs + outputSize * nbOutputs;
-  return parseInt((size * (1 + safetyMargin)).toFixed(0), 10);
-};
-
-const getMinFee = (wallet: Wallet): Promise<any> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const feePerKb = await getFeeRatePerKb({wallet, feeLevel: 'normal'});
-      const lowLevelRate: string = (feePerKb / 1000).toFixed(0);
-      const size = getEstimatedTxSize(wallet);
-      return resolve(size * parseInt(lowLevelRate, 10));
-    } catch (e) {
-      return reject(e);
-    }
-  });
 };
 
 export interface TxActions {

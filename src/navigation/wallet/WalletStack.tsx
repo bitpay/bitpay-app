@@ -46,6 +46,12 @@ import GlobalSelect, {GlobalSelectParamList} from './screens/GlobalSelect';
 import GiftCardConfirm, {
   GiftCardConfirmParamList,
 } from './screens/send/confirm/GiftCardConfirm';
+import WalletInformation from './screens/wallet-settings/WalletInformation';
+import ExportWallet from './screens/wallet-settings/ExportWallet';
+import Addresses from './screens/wallet-settings/Addresses';
+import AllAddresses, {
+  AllAddressesParamList,
+} from './screens/wallet-settings/AllAddresses';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -80,6 +86,17 @@ export type WalletStackParamList = {
   RequestSpecificAmountQR: {wallet: WalletModel; requestAmount: number};
   TransactionDetails: {wallet: WalletModel; transaction: any};
   GlobalSelect: GlobalSelectParamList;
+  WalletInformation: {wallet: WalletModel};
+  ExportWallet: {
+    wallet: WalletModel;
+    keyObj: {
+      mnemonic: string;
+      mnemonicHasPassphrase: boolean;
+      xPrivKey: string;
+    };
+  };
+  Addresses: {wallet: WalletModel};
+  AllAddresses: AllAddressesParamList;
 };
 
 export enum WalletScreens {
@@ -111,6 +128,10 @@ export enum WalletScreens {
   REQUEST_SPECIFIC_AMOUNT_QR = 'RequestSpecificAmountQR',
   TRANSACTION_DETAILS = 'TransactionDetails',
   GLOBAL_SELECT = 'GlobalSelect',
+  WALLET_INFORMATION = 'WalletInformation',
+  EXPORT_WALLET = 'ExportWallet',
+  ADDRESSES = 'Addresses',
+  ALL_ADDRESSES = 'AllAddresses',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -265,6 +286,22 @@ const WalletStack = () => {
           }}
           name={WalletScreens.GLOBAL_SELECT}
           component={GlobalSelect}
+        />
+        <Wallet.Screen
+          name={WalletScreens.WALLET_INFORMATION}
+          component={WalletInformation}
+        />
+        <Wallet.Screen
+          name={WalletScreens.EXPORT_WALLET}
+          component={ExportWallet}
+        />
+        <Wallet.Screen name={WalletScreens.ADDRESSES} component={Addresses} />
+        <Wallet.Screen
+          options={{
+            ...TransitionPresets.ModalPresentationIOS,
+          }}
+          name={WalletScreens.ALL_ADDRESSES}
+          component={AllAddresses}
         />
       </Wallet.Navigator>
     </>

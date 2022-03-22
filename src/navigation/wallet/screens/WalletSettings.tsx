@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useLayoutEffect} from 'react';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
@@ -23,6 +23,20 @@ import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {useAppSelector} from '../../../utils/hooks';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {Wallet} from '../../../store/wallet/wallet.models';
+import {AppActions} from '../../../store/app';
+import {sleep} from '../../../utils/helper-methods';
+import {
+  showBottomNotificationModal,
+  showDecryptPasswordModal,
+} from '../../../store/app/app.actions';
+import {WrongPasswordError} from '../components/ErrorMessages';
+import {useDispatch} from 'react-redux';
+import {
+  toggleHideBalance,
+  toggleHideWallet,
+  updatePortfolioBalance,
+} from '../../../store/wallet/wallet.actions';
+import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/balance';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -65,12 +79,43 @@ const WalletSettings = () => {
     params: {walletId, key},
   } = useRoute<RouteProp<WalletStackParamList, 'WalletSettings'>>();
   const navigation = useNavigation();
-  const [demoToggle, setDemoToggle] = useState(false);
+
   const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
+  const wallet = findWalletById(wallets, walletId) as Wallet;
   const {
     walletName,
     credentials: {walletName: credentialsWalletName},
-  } = findWalletById(wallets, walletId) as Wallet;
+    hideWallet,
+    hideBalance,
+  } = wallet;
+
+  const dispatch = useDispatch();
+
+  const buildEncryptModalConfig = (
+    cta: (decryptedKey: {
+      mnemonicHasPassphrase: boolean;
+      mnemonic: string;
+      xPrivKey: string;
+    }) => void,
+  ) => {
+    return {
+      onSubmitHandler: async (encryptPassword: string) => {
+        try {
+          const decryptedKey = key.methods.get(encryptPassword);
+          dispatch(AppActions.dismissDecryptPasswordModal());
+          await sleep(300);
+          cta(decryptedKey);
+        } catch (e) {
+          console.log(`Decrypt Error: ${e}`);
+          await dispatch(AppActions.dismissDecryptPasswordModal());
+          await sleep(500); // Wait to close Decrypt Password modal
+          dispatch(showBottomNotificationModal(WrongPasswordError()));
+        }
+      },
+      description: 'To continue please enter your encryption password.',
+      onCancelHandler: () => null,
+    };
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -112,20 +157,23 @@ const WalletSettings = () => {
           <WalletSettingsTitle>Hide Wallet</WalletSettingsTitle>
 
           <ToggleSwitch
-            onChange={value => {
+            onChange={() => {
               haptic('impactLight');
-              //    TODO: Update me
-              setDemoToggle(value);
+              dispatch(toggleHideWallet({wallet}));
+              dispatch(startUpdateWalletBalance({key, wallet}));
+              dispatch(updatePortfolioBalance());
             }}
-            isEnabled={demoToggle}
+            isEnabled={!!hideWallet}
           />
         </SettingView>
-        <Info>
-          <InfoTriangle />
-          <InfoDescription>
-            This wallet will not be removed from the device.
-          </InfoDescription>
-        </Info>
+        {!hideWallet ? (
+          <Info>
+            <InfoTriangle />
+            <InfoDescription>
+              This wallet will not be removed from the device.
+            </InfoDescription>
+          </Info>
+        ) : null}
 
         <SettingView>
           <WalletSettingsTitle>Hide Balance</WalletSettingsTitle>
@@ -133,32 +181,13 @@ const WalletSettings = () => {
           <ToggleSwitch
             onChange={() => {
               haptic('impactLight');
-              //    TODO: Update me
+              dispatch(toggleHideBalance({wallet}));
             }}
-            isEnabled={false}
+            isEnabled={!!hideBalance}
           />
         </SettingView>
 
         <Hr />
-
-        <VerticalPadding>
-          <Title>Security</Title>
-
-          <SettingView>
-            <WalletSettingsTitle>
-              Request Biometric Authentication
-            </WalletSettingsTitle>
-            <ToggleSwitch
-              onChange={() => {
-                haptic('impactLight');
-                //    TODO: Update me
-              }}
-              isEnabled={false}
-            />
-          </SettingView>
-
-          <Hr />
-        </VerticalPadding>
 
         <VerticalPadding>
           <Title>Advanced</Title>
@@ -166,7 +195,10 @@ const WalletSettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              //    TODO: Redirect me
+              navigation.navigate('Wallet', {
+                screen: 'WalletInformation',
+                params: {wallet},
+              });
             }}>
             <WalletSettingsTitle>Information</WalletSettingsTitle>
           </Setting>
@@ -176,6 +208,10 @@ const WalletSettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
+              navigation.navigate('Wallet', {
+                screen: 'Addresses',
+                params: {wallet},
+              });
             }}>
             <WalletSettingsTitle>Addresses</WalletSettingsTitle>
           </Setting>
@@ -185,19 +221,28 @@ const WalletSettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              //    TODO: Redirect me
+              if (key.methods.isPrivKeyEncrypted()) {
+                dispatch(
+                  showDecryptPasswordModal(
+                    buildEncryptModalConfig(async decryptedKey => {
+                      navigation.navigate('Wallet', {
+                        screen: 'ExportWallet',
+                        params: {
+                          wallet,
+                          keyObj: decryptedKey,
+                        },
+                      });
+                    }),
+                  ),
+                );
+              } else {
+                navigation.navigate('Wallet', {
+                  screen: 'ExportWallet',
+                  params: {wallet, keyObj: key.methods.get()},
+                });
+              }
             }}>
             <WalletSettingsTitle>Export Wallet</WalletSettingsTitle>
-          </Setting>
-          <Hr />
-
-          <Setting
-            activeOpacity={ActiveOpacity}
-            onPress={() => {
-              haptic('impactLight');
-              //    TODO: Redirect me
-            }}>
-            <WalletSettingsTitle>Delete</WalletSettingsTitle>
           </Setting>
         </VerticalPadding>
       </ScrollView>

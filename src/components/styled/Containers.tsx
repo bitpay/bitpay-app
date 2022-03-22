@@ -8,6 +8,7 @@ import {
   SlateDark,
   White,
   Slate,
+  NotificationPrimary,
 } from '../../styles/colors';
 import {BaseText} from './Text';
 
@@ -160,6 +161,7 @@ export const SettingTitle = styled(BaseText)`
   font-weight: 400;
   letter-spacing: 0;
   text-align: left;
+  margin-right: 5px;
 `;
 
 interface SettingIconProps {
@@ -232,7 +234,7 @@ export const AdvancedOptionsButton = styled.TouchableOpacity`
 export const AdvancedOptionsButtonText = styled(BaseText)`
   font-size: 16px;
   line-height: 25px;
-  color: ${({theme}) => theme.colors.text};
+  color: ${({theme: {dark}}) => (dark ? White : NotificationPrimary)};
 `;
 
 export const AdvancedOptions = styled.View`
@@ -311,4 +313,12 @@ export const SearchInput = styled.TextInput`
   height: 32px;
   color: ${({theme}) => theme.colors.text};
   background-color: transparent;
+`;
+
+// Hidden label
+
+export const HiddenContainer = styled.View`
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
+  padding: 5px 10px;
+  border-radius: 40px;
 `;

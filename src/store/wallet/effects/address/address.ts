@@ -4,11 +4,6 @@ import {BwcProvider} from '../../../../lib/bwc';
 import {ExtractCoinNetworkAddress} from '../../utils/decode-uri';
 import {Effect} from '../../../index';
 import {successGetReceiveAddress} from '../../wallet.actions';
-import {
-  dismissOnGoingProcessModal,
-  showOnGoingProcessModal,
-} from '../../../app/app.actions';
-import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 
 const BWC = BwcProvider.getInstance();
 
@@ -210,4 +205,17 @@ export const ToAddress = (address: string, currencyAbbreviation: string) => {
     default:
       return address;
   }
+};
+
+export const GetMainAddresses = (wallet: Wallet, opts: any): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    opts = opts || {};
+    opts.reverse = true;
+    wallet.getMainAddresses(opts, (err: any, addresses: any) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(addresses);
+    });
+  });
 };

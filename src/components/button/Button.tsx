@@ -246,7 +246,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
         isVisible={isLoading}
         buttonStyle={buttonStyle}
         buttonType={buttonType}>
-        <ButtonSpinner />
+        <ButtonSpinner buttonStyle={buttonStyle} />
       </ButtonOverlay>
 
       <ButtonOverlay
