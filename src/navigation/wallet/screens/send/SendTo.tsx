@@ -115,6 +115,7 @@ const BuildKeyWalletRow = (
   Object.entries(keys).forEach(([key, value]) => {
     const wallets: KeyWallet[] = [];
     value.wallets
+      .filter(({hideWallet}) => !hideWallet)
       .filter(
         ({currencyAbbreviation, id, credentials: {network}}) =>
           currencyAbbreviation.toLowerCase() ===

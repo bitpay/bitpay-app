@@ -74,6 +74,8 @@ export const buildWalletObj = (
     n,
     m,
     isRefreshing: false,
+    hideWallet: false,
+    hideBalance: false,
   };
 };
 
@@ -217,4 +219,32 @@ export const BuildKeysAndWalletsList = (allKeys: {[key in string]: Key}) => {
       }),
     };
   });
+};
+
+// These 2 functions were taken from
+// https://github.com/bitpay/bitcore-wallet-service/blob/master/lib/model/txproposal.js#L235
+const getEstimatedSizeForSingleInput = (wallet: Wallet): number => {
+  switch (wallet.credentials.addressType) {
+    case 'P2PKH':
+      return 147;
+    default:
+    case 'P2SH':
+      return wallet.m * 72 + wallet.n * 36 + 44;
+  }
+};
+
+export const GetEstimatedTxSize = (
+  wallet: Wallet,
+  nbOutputs?: number,
+): number => {
+  // Note: found empirically based on all multisig P2SH inputs and within m & n allowed limits.
+  nbOutputs = nbOutputs ? nbOutputs : 2; // Assume 2 outputs
+  const safetyMargin = 0.02;
+  const overhead = 4 + 4 + 9 + 9;
+  const inputSize = getEstimatedSizeForSingleInput(wallet);
+  const outputSize = 34;
+  const nbInputs = 1; // Assume 1 input
+
+  const size = overhead + inputSize * nbInputs + outputSize * nbOutputs;
+  return parseInt((size * (1 + safetyMargin)).toFixed(0), 10);
 };

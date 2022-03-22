@@ -33,6 +33,8 @@ export interface KeyProperties {
   mnemonicHasPassphrase: boolean;
   version: number;
   xPrivKey: string;
+  xPrivKeyEncrypted?: string;
+  mnemonicEncrypted?: string;
 }
 
 export interface Key {
@@ -72,6 +74,8 @@ export interface WalletObj {
   receiveAddress?: string;
   isRefreshing?: boolean;
   transactionHistory?: {transactions: any[]; loadMore: boolean};
+  hideWallet?: boolean;
+  hideBalance?: boolean;
 }
 
 export interface PriceHistory {

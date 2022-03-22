@@ -7,7 +7,6 @@ import SendSvg from '../../../../../assets/img/home/linking-buttons/send.svg';
 import SwapSvg from '../../../../../assets/img/home/linking-buttons/swap.svg';
 import Haptic from '../../../../components/haptic-feedback/haptic';
 import {BaseText} from '../../../../components/styled/Text';
-import {navigationRef} from '../../../../Root';
 import {titleCasing} from '../../../../utils/helper-methods';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
 import {useNavigation} from '@react-navigation/native';

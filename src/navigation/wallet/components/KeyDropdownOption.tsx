@@ -1,7 +1,7 @@
 import React from 'react';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import styled from 'styled-components/native';
-import {Feather, SlateDark} from '../../../styles/colors';
+import {Feather} from '../../../styles/colors';
 import {
   ActiveOpacity,
   Column,
@@ -57,10 +57,11 @@ const KeyDropdownOption = ({
   totalBalance,
   onPress,
 }: Props) => {
-  const walletInfo = wallets.slice(0, WALLET_DISPLAY_LIMIT);
+  const _wallets = wallets.filter(wallet => !wallet.hideWallet);
+  const walletInfo = _wallets.slice(0, WALLET_DISPLAY_LIMIT);
   const remainingAssetCount =
-    wallets.length > WALLET_DISPLAY_LIMIT
-      ? wallets.length - WALLET_DISPLAY_LIMIT
+    _wallets.length > WALLET_DISPLAY_LIMIT
+      ? _wallets.length - WALLET_DISPLAY_LIMIT
       : undefined;
 
   return (
@@ -70,23 +71,25 @@ const KeyDropdownOption = ({
       <Row style={{alignItems: 'center', justifyContent: 'center'}}>
         <Column>
           <KeyName style={{marginBottom: 5}}>{keyName}</KeyName>
-          <HeaderImg>
-            {walletInfo.map((wallet, index) => {
-              const {id, img} = wallet;
-              return (
-                wallet && (
-                  <Img key={id} isFirst={index === 0}>
-                    <CurrencyImage img={img} size={25} />
-                  </Img>
-                )
-              );
-            })}
-            {remainingAssetCount && (
-              <RemainingAssetsLabel>
-                + {remainingAssetCount} more
-              </RemainingAssetsLabel>
-            )}
-          </HeaderImg>
+          {walletInfo.length > 0 ? (
+            <HeaderImg>
+              {walletInfo.map((wallet, index) => {
+                const {id, img} = wallet;
+                return (
+                  wallet && (
+                    <Img key={id} isFirst={index === 0}>
+                      <CurrencyImage img={img} size={25} />
+                    </Img>
+                  )
+                );
+              })}
+              {remainingAssetCount && (
+                <RemainingAssetsLabel>
+                  + {remainingAssetCount} more
+                </RemainingAssetsLabel>
+              )}
+            </HeaderImg>
+          ) : null}
         </Column>
         <Row style={{alignItems: 'center', justifyContent: 'flex-end'}}>
           <Balance>{formatFiatAmount(totalBalance, 'USD')}</Balance>

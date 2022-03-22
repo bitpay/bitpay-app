@@ -113,7 +113,9 @@ export const waitForTargetAmountAndUpdateWallet =
                   console.log('updated recipient wallet');
                 }
               }
-              DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_UPDATE_COMPLETE);
+              DeviceEventEmitter.emit(
+                DeviceEmitterEvents.WALLET_UPDATE_COMPLETE,
+              );
               await dispatch(updatePortfolioBalance());
 
               clearInterval(interval);
@@ -162,7 +164,9 @@ export const startUpdateWalletBalance =
         );
         // if balance has changed update key totalBalance
         if (network === Network.mainnet && balance.fiat !== lastKnownBalance) {
-          const wallets = getState().WALLET.keys[key.id].wallets;
+          const wallets = getState().WALLET.keys[key.id].wallets.filter(
+            w => !w.hideWallet,
+          );
 
           const totalFiatBalance = wallets.reduce(
             (acc, {balance: {fiat}}) => acc + fiat,
@@ -283,6 +287,7 @@ const updateWalletBalance = ({
       currencyAbbreviation,
       balance: lastKnownBalance,
       credentials: {network, token, multisigEthInfo},
+      hideWallet,
     } = wallet;
 
     wallet.getStatus(
@@ -304,7 +309,7 @@ const updateWalletBalance = ({
             sat: totalAmount,
             crypto: formatCryptoAmount(totalAmount, currencyAbbreviation),
             fiat:
-              network === Network.mainnet
+              network === Network.mainnet && !hideWallet
                 ? toFiat(totalAmount, 'USD', currencyAbbreviation, rates)
                 : 0,
           };
@@ -317,5 +322,17 @@ const updateWalletBalance = ({
         }
       },
     );
+  });
+};
+
+export const GetWalletBalance = (wallet: Wallet, opts: any): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    opts = opts || {};
+    wallet.getBalance(opts, (err: any, resp: any) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(resp);
+    });
   });
 };

@@ -7,7 +7,7 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-import {White} from '../../styles/colors';
+import {NotificationPrimary, White} from '../../styles/colors';
 
 const styles = StyleSheet.create({
   spinner: {
@@ -16,14 +16,20 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     borderWidth: 3,
     borderStyle: 'solid',
-    borderTopColor: White,
-    borderBottomColor: White,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
   },
+  secondary: {
+    borderTopColor: NotificationPrimary,
+    borderBottomColor: NotificationPrimary,
+  },
+  default: {
+    borderTopColor: White,
+    borderBottomColor: White,
+  },
 });
 
-const Spinner = () => {
+const Spinner = ({buttonStyle}: {buttonStyle?: string}) => {
   const angle = useSharedValue(0);
   angle.value = withRepeat(
     withTiming(180, {duration: 250, easing: Easing.linear}),
@@ -35,7 +41,15 @@ const Spinner = () => {
     transform: [{rotate: `${angle.value}deg`}],
   }));
 
-  return <Animated.View style={[styles.spinner, spin]} />;
+  return (
+    <Animated.View
+      style={[
+        styles.spinner,
+        spin,
+        buttonStyle === 'secondary' ? styles.secondary : styles.default,
+      ]}
+    />
+  );
 };
 
 export default memo(Spinner);
