@@ -54,8 +54,15 @@ export interface Wallet extends WalletObj, API {}
 
 export interface WalletBalance {
   crypto: string;
+  cryptoLocked: string;
   fiat: number;
+  fiatLocked: number;
   sat: number;
+  satAvailable: number;
+  satLocked: number;
+  satConfirmedLocked: number;
+  satConfirmed: number;
+  satConfirmedAvailable: number;
 }
 
 export interface WalletObj {
@@ -249,6 +256,7 @@ export interface TransactionProposal {
   instantAcceptanceEscrow?: number;
   isTokenSwap?: boolean;
   id: string;
+  status: string;
 }
 
 export interface ProposalErrorHandlerProps {
