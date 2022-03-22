@@ -39,6 +39,8 @@ export interface WalletRowProps {
   network: string;
   isComplete?: boolean;
   isRefreshing?: boolean;
+  hideWallet?: boolean;
+  hideBalance?: boolean;
 }
 
 interface Props {
@@ -75,6 +77,7 @@ const WalletRow = ({wallet, onPress}: Props) => {
     fiatBalance,
     isToken,
     network,
+    hideBalance,
   } = wallet;
 
   const showFiatBalance =
@@ -101,11 +104,17 @@ const WalletRow = ({wallet, onPress}: Props) => {
         <SubText>{currencyAbbreviation.toUpperCase()}</SubText>
       </CurrencyColumn>
       <BalanceColumn>
-        <H5>{cryptoBalance}</H5>
-        {showFiatBalance && (
-          <SubText>
-            {network === 'testnet' ? 'Test - No Value' : fiatBalance}
-          </SubText>
+        {!hideBalance ? (
+          <>
+            <H5>{cryptoBalance}</H5>
+            {showFiatBalance && (
+              <SubText>
+                {network === 'testnet' ? 'Test - No Value' : fiatBalance}
+              </SubText>
+            )}
+          </>
+        ) : (
+          <H5>****</H5>
         )}
       </BalanceColumn>
     </RowContainer>

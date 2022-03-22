@@ -123,6 +123,8 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   credentials,
   keyId,
   isRefreshing,
+  hideWallet,
+  hideBalance,
 }) => ({
   id,
   keyId,
@@ -134,13 +136,19 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   fiatBalance: formatFiatAmount(balance.fiat, 'usd'),
   network: credentials.network,
   isRefreshing,
+  hideWallet,
+  hideBalance,
 });
 
-// Key overview and Key settings list builder
+// Key overview list builder
 export const buildNestedWalletList = (wallets: Wallet[]) => {
   const walletList = [] as Array<WalletRowProps>;
-  const _coins = wallets.filter(wallet => !wallet.credentials.token);
-  const _tokens = wallets.filter(wallet => wallet.credentials.token);
+  const _coins = wallets.filter(
+    wallet => !wallet.credentials.token && !wallet.hideWallet,
+  );
+  const _tokens = wallets.filter(
+    wallet => wallet.credentials.token && !wallet.hideWallet,
+  );
 
   _coins.forEach(coin => {
     walletList.push({

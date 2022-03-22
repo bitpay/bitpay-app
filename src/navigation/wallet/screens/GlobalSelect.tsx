@@ -108,6 +108,9 @@ const GlobalSelect = () => {
     .filter(key => key.backupComplete)
     .flatMap(key => key.wallets);
 
+  // Filter hidden wallets
+  wallets = wallets.filter(wallet => !wallet.hideWallet);
+
   // only show wallets with funds
   if (context === 'send') {
     wallets = wallets.filter(wallet => wallet.balance.sat > 0);
@@ -129,19 +132,21 @@ const GlobalSelect = () => {
         return {
           key: keyId,
           keyName: key.keyName || 'My Key',
-          wallets: selectObj.availableWalletsByKey[keyId].map(wallet => {
-            const {
-              balance,
-              currencyAbbreviation,
-              credentials: {network},
-            } = wallet;
-            return merge(cloneDeep(wallet), {
-              cryptoBalance: balance.crypto,
-              fiatBalance: formatFiatAmount(balance.fiat, 'USD'),
-              currencyAbbreviation: currencyAbbreviation.toUpperCase(),
-              network,
-            });
-          }),
+          wallets: selectObj.availableWalletsByKey[keyId]
+            .filter(wallet => !wallet.hideWallet)
+            .map(wallet => {
+              const {
+                balance,
+                currencyAbbreviation,
+                credentials: {network},
+              } = wallet;
+              return merge(cloneDeep(wallet), {
+                cryptoBalance: balance.crypto,
+                fiatBalance: formatFiatAmount(balance.fiat, 'USD'),
+                currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+                network,
+              });
+            }),
         };
       }),
     );

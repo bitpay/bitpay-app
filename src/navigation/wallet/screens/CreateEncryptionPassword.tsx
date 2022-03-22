@@ -3,7 +3,6 @@ import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {Caution, SlateDark, White} from '../../../styles/colors';
@@ -13,7 +12,7 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
 import {WalletActions} from '../../../store/wallet/index';
-import {useLogger} from '../../../utils/hooks';
+import {useLogger, useAppDispatch} from '../../../utils/hooks';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
   dismissBottomNotificationModal,
@@ -81,14 +80,13 @@ const CreateEncryptionPassword = () => {
     resolver: yupResolver(schema),
   });
 
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [genericError, setGenericError] = useState<string>('');
   const logger = useLogger();
   const onSubmit = ({password}: {password: string}) => {
     try {
       if (key) {
-        // TODO: Update wallet name
-        logger.debug('Encrypting private key for: Wallet 1');
+        logger.debug(`Encrypting private key for: ${key.keyName}`);
 
         key.methods.encrypt(password);
         dispatch(WalletActions.successEncryptOrDecryptPassword({key}));

@@ -21,6 +21,7 @@ export enum OnGoingProcessMessages {
   JOIN_WALLET = 'Joining Wallet',
   SENDING_PAYMENT = 'Sending Payment',
   GENERATING_ADDRESS = 'Generating Address',
+  SYNCING_WALLETS = 'Syncing Wallets...',
 }
 
 const OnGoingProcessContainer = styled.View`
