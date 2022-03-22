@@ -9,15 +9,18 @@ import {CustomErrorMessage} from '../../components/ErrorMessages';
 import {useAppDispatch} from '../../../../utils/hooks';
 import {GetFeeUnits, IsERCToken} from '../../../../store/wallet/utils/currency';
 import styled from 'styled-components/native';
-import TransactionSpeedRow from '../../../../components/list/TransactionSpeedRow';
+import TransactionSpeedRow, {SpeedOptionRow} from '../../../../components/list/TransactionSpeedRow';
 import {
-  ActiveOpacity,
+  ActiveOpacity, CtaContainer, Hr, ImportTextInput, Row,
   SheetContainer,
   WIDTH,
 } from '../../../../components/styled/Containers';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import Back from '../../../../components/back/Back';
 import {TouchableOpacity} from 'react-native';
+import {DetailColumn, DetailsList} from "./confirm/Shared";
+import Checkbox from "../../../../components/checkbox/Checkbox";
+import Button, {ButtonState} from "../../../../components/button/Button";
 
 export type TransactionSpeedParamList = {
   feeLevel: string;
@@ -26,7 +29,7 @@ export type TransactionSpeedParamList = {
   customFeePerKB?: number;
   feePerSatByte?: string;
   isVisible: boolean;
-  onCloseModal: (level: any) => void;
+  onCloseModal: (level?: any) => void;
 };
 
 interface FeeOpts {
@@ -95,6 +98,7 @@ const TransactionSpeed = ({
   const [customSatPerByte, setCustomSatPerByte] = useState<number>();
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSpeed, setSelectedSpeed] = useState(feeLevel);
+  const [buttonState, setButtonState] = useState<ButtonState>();
 
   const setSpeedUpMinFee = (_feeLevels: Fee[]) => {
     const minFeeLevel = coin === 'btc' ? 'custom' : 'priority';
@@ -193,14 +197,22 @@ const TransactionSpeed = ({
   }, [wallet]);
 
   const onClose = () => {
-    onCloseModal(selectedSpeed);
+    onCloseModal();
   };
+
+  const onSetCustomFee = () => {
+    setSelectedSpeed('custom');
+  }
+
+  const onApply = () => {
+    onCloseModal(selectedSpeed);
+  }
 
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onClose}>
       <TxSpeedContainer>
         <SheetHeaderContainer>
-          <TouchableOpacity activeOpacity={ActiveOpacity} onPress={onClose}>
+          <TouchableOpacity activeOpacity={ActiveOpacity} onPress={onCloseModal}>
             <Back opacity={1} />
           </TouchableOpacity>
           <TitleContainer>
@@ -210,7 +222,7 @@ const TransactionSpeed = ({
 
         <OptionsContainer>
           {feeOptions && feeOptions.length > 0
-            ? feeOptions.map((fee, i) => (
+            ? <>{feeOptions.map((fee, i) => (
                 <TransactionSpeedRow
                   key={fee.level}
                   fee={fee}
@@ -220,9 +232,54 @@ const TransactionSpeed = ({
                   selectedSpeed={selectedSpeed}
                   isFirst={i === 0}
                 />
+
               ))
+
+          }
+                <DetailsList>
+                  <SpeedOptionRow
+                      activeOpacity={ActiveOpacity}
+                      onPress={() => onSetCustomFee()}>
+                    <Row>
+                      <H6 style={{marginRight: 10}}>
+                        Custom fee
+                      </H6>
+                      <H6 medium={true}>
+                        in {feeUnit}
+                      </H6>
+                    </Row>
+
+                    <Row style={{justifyContent: 'flex-end', alignItems: 'center'}}>
+                      <Checkbox
+                          radio={true}
+                          onPress={() => onSetCustomFee()}
+                          checked={selectedSpeed === 'custom'}
+                      />
+                    </Row>
+
+                  </SpeedOptionRow>
+
+                  {selectedSpeed === 'custom' ? <>
+                    <ImportTextInput>
+
+                    </ImportTextInput>
+
+                  </> : null}
+
+                  <Hr/>
+
+
+                </DetailsList>
+
+                <CtaContainer>
+                  <Button onPress={() => onApply()} state={buttonState}>Apply</Button>
+                </CtaContainer>
+              </>
             : null}
         </OptionsContainer>
+
+
+
       </TxSpeedContainer>
     </SheetModal>
   );

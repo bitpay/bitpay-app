@@ -55,6 +55,10 @@ const Confirm = () => {
       return (!excludeCurrencies.includes(currencyAbbreviation));
   }
 
+  const onCloseTxSpeedModal = (speedLevel?: any) => {
+      setShowTransactionSpeed(false);
+  }
+
   return (
     <ConfirmContainer>
       <DetailsList>
@@ -101,9 +105,7 @@ const Confirm = () => {
         feeLevel={fee.feeLevel}
         wallet={wallet}
         isVisible={showTransactionSpeed}
-        onCloseModal={selectedLevel => {
-          setShowTransactionSpeed(false);
-        }}
+        onCloseModal={selectedLevel => onCloseTxSpeedModal(selectedLevel)}
       />
     </ConfirmContainer>
   );

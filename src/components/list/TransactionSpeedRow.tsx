@@ -6,7 +6,7 @@ import Checkbox from '../checkbox/Checkbox';
 import {DetailsList} from '../../navigation/wallet/screens/send/confirm/Shared';
 import {Fee} from '../../store/wallet/effects/fee/fee';
 
-const SpeedOptionRow = styled.TouchableOpacity`
+export const SpeedOptionRow = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   min-height: 53px;
