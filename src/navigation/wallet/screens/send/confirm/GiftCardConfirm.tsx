@@ -123,7 +123,7 @@ const Confirm = () => {
   );
 
   const reshowWalletSelector = async () => {
-    await sleep(500);
+    await sleep(400);
     setWalletSelectModalVisible(true);
   };
 
@@ -147,7 +147,7 @@ const Confirm = () => {
   const onWalletSelect = async (selectedWallet: Wallet) => {
     setWalletSelectModalVisible(false);
     // not ideal - will dive into why the timeout has to be this long
-    await sleep(500);
+    await sleep(400);
     dispatch(
       startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
     );
@@ -157,7 +157,7 @@ const Confirm = () => {
       );
       setWallet(selectedWallet);
       setKey(keys[selectedWallet.keyId]);
-      await sleep(500);
+      await sleep(400);
       dispatch(dismissOnGoingProcessModal());
       updateTxDetails(newTxDetails);
       updateTxp(newTxp);
@@ -165,7 +165,7 @@ const Confirm = () => {
         address: string;
       });
     } catch (err: any) {
-      await sleep(500);
+      await sleep(400);
       dispatch(dismissOnGoingProcessModal());
       const [errorConfig] = await Promise.all([
         handleCreateTxProposalError(err),
@@ -175,7 +175,8 @@ const Confirm = () => {
         AppActions.showBottomNotificationModal(
           CustomErrorMessage({
             title: 'Error',
-            errMsg: err.response?.data?.message || errorConfig.message,
+            errMsg:
+              err.response?.data?.message || err.message || errorConfig.message,
             action: () => reshowWalletSelector(),
           }),
         ),
@@ -253,7 +254,7 @@ const Confirm = () => {
                   console.error('error deleting txp', removeErr),
                 );
                 dispatch(dismissOnGoingProcessModal());
-                await sleep(500);
+                await sleep(400);
                 updateTxDetails(undefined);
                 updateTxp(undefined);
                 setWallet(undefined);

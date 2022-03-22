@@ -474,9 +474,6 @@ export const createInvoiceAndTxProposal =
         const cardOrder = await dispatch(
           ShopEffects.startCreateGiftCardInvoice(invoiceParams),
         );
-        if (!cardOrder) {
-          return;
-        }
         const {invoiceId, invoice} = cardOrder;
         const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
         const paymentUrl = `${baseUrl}/i/${invoiceId}`;

@@ -49,20 +49,27 @@ export const startCreateGiftCardInvoice =
   (params: GiftCardInvoiceParams): Effect<Promise<GiftCardOrder>> =>
   async (dispatch, getState) => {
     try {
-      const {APP, BITPAY_ID} = getState();
+      const {BITPAY_ID} = getState();
       const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
-      const user = BITPAY_ID.user[APP.network];
-      const shouldSync = false; //user?.localSettings.syncGiftCardPurchases; TODO
+      const user = BITPAY_ID.user[APP_NETWORK];
+      const shouldSync = user?.localSettings.syncGiftCardPurchases;
       const fullParams = {
         ...params,
         email: user?.email || 'satoshi@bitpay.com',
       };
       const createInvoiceResponse = shouldSync
-        ? await BitPayIdApi.getInstance().request(
-            'createGiftCardInvoice',
-            BITPAY_ID.apiToken[APP_NETWORK],
-            fullParams,
-          )
+        ? await BitPayIdApi.getInstance()
+            .request(
+              'createGiftCardInvoice',
+              BITPAY_ID.apiToken[APP_NETWORK],
+              fullParams,
+            )
+            .then(res => {
+              if (res?.data?.error) {
+                throw new Error(res.data.error);
+              }
+              return res.data;
+            })
         : await axios.post(`${baseUrl}/gift-cards/pay`, fullParams);
       const {data: cardOrder} = createInvoiceResponse as {data: GiftCardOrder};
       const getInvoiceResponse = await axios.get(
@@ -82,7 +89,7 @@ export const startCreateGiftCardInvoice =
         totalDiscount: cardOrder.totalDiscount,
         invoice: invoice,
         status: 'UNREDEEMED',
-        // ...(user && user.eid && { userEid: user.eid }), TODO
+        ...(user && user.eid && {userEid: user.eid}),
       } as UnsoldGiftCard;
       dispatch(
         ShopActions.initializedUnsoldGiftCard({

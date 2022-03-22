@@ -71,6 +71,7 @@ export interface UnsoldGiftCard {
   invoiceId: string;
   clientId: string;
   accessKey: string;
+  userEid?: string;
 }
 
 export interface GiftCardBalanceEntry {
@@ -94,7 +95,6 @@ export interface GiftCard extends UnsoldGiftCard {
   totalDiscount?: number;
   balanceHistory?: GiftCardBalanceEntry[];
   invoice: Invoice;
-  userEid?: string;
 }
 
 export type GiftCardSaveParams = Partial<{
