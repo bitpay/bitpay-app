@@ -143,6 +143,8 @@ export default ({
         const peer = (await dispatch<any>(
           walletConnectOnSessionRequest(wcUri),
         )) as any;
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
         navigation.navigate('WalletConnect', {
           screen: 'WalletConnectStart',
           params: {
@@ -152,6 +154,8 @@ export default ({
           },
         });
       } catch (e) {
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
         setUri('');
         await showErrorMessage(
           CustomErrorMessage({
@@ -159,8 +163,6 @@ export default ({
             title: 'Uh oh, something went wrong',
           }),
         );
-      } finally {
-        dispatch(dismissOnGoingProcessModal());
       }
     },
     [dispatch, navigation, showErrorMessage],

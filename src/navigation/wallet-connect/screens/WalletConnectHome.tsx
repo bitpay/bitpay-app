@@ -127,7 +127,9 @@ const WalletConnectHome = () => {
                   recipient,
                   toAddress,
                   from: request.payload.params[0].from,
-                  amount: request.payload.params[0].value ? Number(amountStr) : 0,
+                  amount: request.payload.params[0].value
+                    ? Number(amountStr)
+                    : 0,
                   gasPrice:
                     request.payload.params[0].gasPrice &&
                     convertHexToNumber(request.payload.params[0].gasPrice),
