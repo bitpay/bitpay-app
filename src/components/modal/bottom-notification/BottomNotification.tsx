@@ -117,7 +117,7 @@ const BottomNotification = () => {
     return navigation.addListener('blur', () =>
       dispatch(resetBottomNotificationModalConfig()),
     );
-  }, [navigation]);
+  }, [navigation, dispatch]);
 
   const {
     type,

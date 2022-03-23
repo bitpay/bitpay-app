@@ -21,7 +21,6 @@ import TransactButtonIcon from '../../../assets/img/tab-icons/transact-button.sv
 
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import TransactModal from '../../components/modal/transact-menu/TransactMenu';
-import {SafeAreaView} from 'react-native';
 
 const Icons: {[key: string]: React.FC<SvgProps>} = {
   Home: HomeIcon,

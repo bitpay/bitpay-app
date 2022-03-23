@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {BaseText} from '../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
@@ -204,22 +204,24 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss}) => {
     }));
   };
 
+  const onSendMaxPressed = () =>
+    onAmountSelected(amount, setButtonState, {sendMax: true});
+  const onSendMaxPressedRef = useRef(onSendMaxPressed);
+  onSendMaxPressedRef.current = onSendMaxPressed;
+
   useLayoutEffect(() => {
     if (!opts?.hideSendMax && !useAsModal) {
       navigation.setOptions({
         headerRight: () => (
           <HeaderContainer>
-            <SendMax
-              onPress={() =>
-                onAmountSelected(amount, setButtonState, {sendMax: true})
-              }>
+            <SendMax onPress={() => onSendMaxPressedRef.current()}>
               <SendMaxText>Send Max</SendMaxText>
             </SendMax>
           </HeaderContainer>
         ),
       });
     }
-  }, []);
+  }, [opts?.hideSendMax, navigation]);
 
   const onCellPress = (val: string) => {
     haptic('impactLight');
