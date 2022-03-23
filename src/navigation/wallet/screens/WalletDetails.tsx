@@ -60,6 +60,7 @@ import WalletTransactionSkeletonRow from '../../../components/list/WalletTransac
 import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
+import {isCoinSupportedToBuy} from '../../../navigation/services/buy-crypto/utils/buy-crypto-utils';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -484,6 +485,30 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
               {fullWalletObj ? (
                 <LinkingButtons
+                  buy={{
+                    hide: !isCoinSupportedToBuy(
+                      fullWalletObj.currencyAbbreviation,
+                    ),
+                    cta: () => {
+                      navigation.navigate('Wallet', {
+                        screen: 'Amount',
+                        params: {
+                          onAmountSelected: async (amount: string) => {
+                            navigation.navigate('BuyCrypto', {
+                              screen: 'Root',
+                              params: {
+                                amount: Number(amount),
+                                fromWallet: fullWalletObj,
+                              },
+                            });
+                          },
+                          opts: {
+                            hideSendMax: true,
+                          },
+                        },
+                      });
+                    },
+                  }}
                   receive={{cta: () => setShowReceiveAddressBottomModal(true)}}
                   send={{
                     hide: !fullWalletObj.balance.sat,
