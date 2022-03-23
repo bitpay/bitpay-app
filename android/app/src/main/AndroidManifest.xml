@@ -13,6 +13,12 @@
       android:allowBackup="false"
       android:theme="@style/AppTheme"
       android:networkSecurityConfig="@xml/network_security_config">
+
+      <!-- Used by Dosh Android SDK -->
+      <meta-data
+        android:name="com.google.android.geo.API_KEY"
+        android:value="REPLACE_ME" />
+
       <activity
         android:screenOrientation="portrait"
         android:name=".MainActivity"

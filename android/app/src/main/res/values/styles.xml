@@ -11,4 +11,7 @@
         <item name="android:background">@drawable/bootsplash</item>
     </style>
 
+    <style name="PoweredBy.Main">
+        <item name="android:statusBarColor">@color/dosh_core_navigation_bar_background</item>
+    </style>
 </resources>
