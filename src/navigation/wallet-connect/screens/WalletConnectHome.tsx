@@ -1,5 +1,5 @@
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {H7} from '../../../components/styled/Text';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
@@ -45,6 +45,9 @@ import {
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {convertHexToNumber} from '@walletconnect/utils';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
+import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
+import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
+import {walletConnectKillSession} from '../../../store/wallet-connect/wallet-connect.effects';
 
 export type WalletConnectHomeParamList = {
   peerId: string;
@@ -212,6 +215,26 @@ const WalletConnectHome = () => {
       navigation.goBack();
     }
   }, [wcConnector, navigation]);
+
+  const showErrorMessage = useCallback(async () => {
+    await sleep(500);
+    const msg: BottomNotificationConfig = CustomErrorMessage({
+      errMsg: `${session?.peerMeta?.name} does not support the same network as the selected wallet. Try connecting to a different DeFi or DApp.`,
+      title: 'Network Error',
+      action: () => {
+        dispatch(walletConnectKillSession(peerId));
+      },
+    });
+    dispatch(showBottomNotificationModal(msg));
+  }, [dispatch, peerId, session]);
+
+  useEffect(() => {
+    requests.forEach(request => {
+      if (request.payload.method === 'wallet_switchEthereumChain') {
+        showErrorMessage();
+      }
+    });
+  }, []);
 
   return (
     <WalletConnectContainer>
