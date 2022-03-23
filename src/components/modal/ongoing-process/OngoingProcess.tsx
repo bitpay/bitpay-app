@@ -1,7 +1,7 @@
 import Modal from 'react-native-modal';
 import React from 'react';
 import {BaseText} from '../../styled/Text';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
 import {ActivityIndicator} from 'react-native';
 import {LightBlack, SlateDark, White} from '../../../styles/colors';
 import {useAppSelector} from '../../../utils/hooks';
@@ -21,7 +21,8 @@ export enum OnGoingProcessMessages {
   JOIN_WALLET = 'Joining Wallet',
   SENDING_PAYMENT = 'Sending Payment',
   GENERATING_ADDRESS = 'Generating Address',
-  SYNCING_WALLETS = 'Syncing Wallets...',
+  SYNCING_WALLETS = 'Syncing Wallets',
+  UPDATING_FEE = 'Updating Fee'
 }
 
 const OnGoingProcessContainer = styled.View`
@@ -54,7 +55,6 @@ const OnGoingProcessModal: React.FC = () => {
   const message = useAppSelector(({APP}) => APP.onGoingProcessModalMessage);
   const isVisible = useAppSelector(({APP}) => APP.showOnGoingProcessModal);
   const showBlur = useAppSelector(({APP}) => APP.showBlur);
-  const theme = useTheme();
   return (
     <Modal
       isVisible={isVisible}

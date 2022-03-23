@@ -3,28 +3,15 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../../WalletStack';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
-import {
-  Recipient,
-  TransactionProposal,
-  TxDetails,
-  Wallet,
-} from '../../../../../store/wallet/wallet.models';
+import {Recipient, TransactionProposal, TxDetails, Wallet,} from '../../../../../store/wallet/wallet.models';
 import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
-import {startSendPayment} from '../../../../../store/wallet/effects/send/send';
+import {createProposalAndBuildTxDetails, startSendPayment,} from '../../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../components/PaymentSent';
 import {sleep} from '../../../../../utils/helper-methods';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
-import {
-  Amount,
-  ConfirmContainer,
-  DetailsList,
-  Fee,
-  Header,
-  SendingFrom,
-  SendingTo,
-} from './Shared';
+import {Amount, ConfirmContainer, DetailsList, Fee, Header, SendingFrom, SendingTo,} from './Shared';
 import TransactionSpeed from '../TransactionSpeed';
 
 export interface ConfirmParamList {
@@ -32,39 +19,80 @@ export interface ConfirmParamList {
   recipient: Recipient;
   txp: Partial<TransactionProposal>;
   txDetails: TxDetails;
+  amount: number;
 }
 
 const Confirm = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'Confirm'>>();
-  const {wallet, recipient, txDetails, txp} = route.params;
+  const {wallet, recipient, txDetails, txp: _txp, amount} = route.params;
+  const [txp, setTxp] = useState(_txp);
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
   const key = allKeys[wallet?.keyId!];
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [showTransactionSpeed, setShowTransactionSpeed] = useState(false);
 
-  const {fee, sendingTo, sendingFrom, subTotal, total} = txDetails;
+  const {
+    fee: _fee,
+    sendingTo,
+    sendingFrom,
+    subTotal,
+    total: _total,
+  } = txDetails;
 
-  console.log(txDetails);
+  const [fee, setFee] = useState(_fee);
+  const [total, setTotal] = useState(_total);
+  const {currencyAbbreviation} = wallet;
+
   const isTxSpeedAvailable = () => {
-      const {currencyAbbreviation} = wallet;
-      const excludeCurrencies = ['bch', 'doge', 'ltc', 'xrp'];
-      // TODO: exclude paypro, coinbase, usingMerchantFee txs,
-      // const {payProUrl} = txDetails;
-      return (!excludeCurrencies.includes(currencyAbbreviation));
-  }
+    const excludeCurrencies = ['bch', 'doge', 'ltc', 'xrp'];
+    // TODO: exclude paypro, coinbase, usingMerchantFee txs,
+    // const {payProUrl} = txDetails;
+    return !excludeCurrencies.includes(currencyAbbreviation);
+  };
 
-  const onCloseTxSpeedModal = (speedLevel?: any) => {
-      setShowTransactionSpeed(false);
-  }
+  const onCloseTxSpeedModal = async (newSpeedLevel?: any, customFeePerKB?: string ) => {
+    setShowTransactionSpeed(false);
+    try {
+      if (newSpeedLevel && newSpeedLevel !== fee.feeLevel) {
+          dispatch(startOnGoingProcessModal(OnGoingProcessMessages.UPDATING_FEE));
+
+          const {txDetails: _txDetails, txp: newTxp} = await dispatch(
+          createProposalAndBuildTxDetails({
+            wallet,
+            recipient,
+            amount,
+            feeLevel: newSpeedLevel
+          }),
+        );
+
+        setTxp(newTxp);
+        setFee(_txDetails.fee);
+        setTotal(_txDetails.total);
+        dispatch(dismissOnGoingProcessModal());
+      }
+    } catch (e) {
+      console.log(e);
+      dispatch(dismissOnGoingProcessModal());
+    }
+  };
 
   return (
     <ConfirmContainer>
       <DetailsList>
         <Header>Summary</Header>
         <SendingTo recipient={sendingTo} hr />
-        <Fee onPress={isTxSpeedAvailable() ? () => setShowTransactionSpeed(true) : undefined} fee={fee} hr />
+        <Fee
+          onPress={
+            isTxSpeedAvailable()
+              ? () => setShowTransactionSpeed(true)
+              : undefined
+          }
+          fee={fee}
+          currencyAbbreviation={currencyAbbreviation}
+          hr
+        />
         <SendingFrom sender={sendingFrom} hr />
         <Amount description={'SubTotal'} amount={subTotal} />
         <Amount description={'Total'} amount={total} />

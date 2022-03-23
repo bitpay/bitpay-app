@@ -1,26 +1,36 @@
 import React, {useEffect, useState} from 'react';
-import {H4, H6} from '../../../../components/styled/Text';
-import {Fee, getFeeLevels} from '../../../../store/wallet/effects/fee/fee';
-import {useNavigation} from '@react-navigation/native';
+import {BaseText, H4, H6} from '../../../../components/styled/Text';
+import {
+  Fee,
+  getFeeLevels,
+  GetFeeOptions,
+} from '../../../../store/wallet/effects/fee/fee';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import * as _ from 'lodash';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
-import {CustomErrorMessage} from '../../components/ErrorMessages';
+import {CustomErrorMessage, MinFeeWarning} from '../../components/ErrorMessages';
 import {useAppDispatch} from '../../../../utils/hooks';
 import {GetFeeUnits, IsERCToken} from '../../../../store/wallet/utils/currency';
 import styled from 'styled-components/native';
-import TransactionSpeedRow, {SpeedOptionRow} from '../../../../components/list/TransactionSpeedRow';
+import TransactionSpeedRow, {
+  SpeedOptionRow,
+} from '../../../../components/list/TransactionSpeedRow';
 import {
-  ActiveOpacity, CtaContainer, Hr, ImportTextInput, Row,
+  ActionContainer,
+  ActiveOpacity,
+  CtaContainer,
+  Hr,
+  Row,
   SheetContainer,
   WIDTH,
 } from '../../../../components/styled/Containers';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import Back from '../../../../components/back/Back';
 import {TouchableOpacity} from 'react-native';
-import {DetailColumn, DetailsList} from "./confirm/Shared";
-import Checkbox from "../../../../components/checkbox/Checkbox";
-import Button, {ButtonState} from "../../../../components/button/Button";
+import {DetailsList} from './confirm/Shared';
+import Checkbox from '../../../../components/checkbox/Checkbox';
+import Button from '../../../../components/button/Button';
+import {Caution, Slate} from "../../../../styles/colors";
 
 export type TransactionSpeedParamList = {
   feeLevel: string;
@@ -29,15 +39,8 @@ export type TransactionSpeedParamList = {
   customFeePerKB?: number;
   feePerSatByte?: string;
   isVisible: boolean;
-  onCloseModal: (level?: any) => void;
+  onCloseModal: (level?: string, customFeePerKB?: string) => void;
 };
-
-interface FeeOpts {
-  feeUnit: string;
-  feeUnitAmount: number;
-  blockTime: number;
-  disabled?: boolean;
-}
 
 enum ethAvgTime {
   normal = '<5m',
@@ -64,20 +67,27 @@ const TitleContainer = styled.View`
   width: ${WIDTH - 110}px;
 `;
 
+export const TextInput = styled.TextInput`
+  height: 50px;
+  color: ${({theme}) => theme.colors.text};
+  background: ${({theme}) => theme.colors.background};
+  border: 0.75px solid ${Slate};
+  border-top-right-radius: 4px;
+  border-top-left-radius: 4px;
+  padding: 5px;
+`;
+
 const OptionsContainer = styled.View``;
 
-const GetFeeOpts: any = (currencyAbbreviation: string) => {
-  const isEthOrToken =
-    currencyAbbreviation == 'eth' || IsERCToken(currencyAbbreviation);
-  return {
-    urgent: isEthOrToken ? 'High' : 'Urgent',
-    priority: isEthOrToken ? 'Average' : 'Priority',
-    normal: isEthOrToken ? 'Low' : 'Normal',
-    economy: 'Economy',
-    superEconomy: 'Super Economy',
-    custom: 'Custom',
-  };
-};
+const ErrorText = styled(BaseText)`
+  color: ${Caution};
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 4px;
+`;
+
+const FEE_MIN = 0;
+const FEE_MULTIPLIER = 10;
 
 const TransactionSpeed = ({
   isVisible,
@@ -98,7 +108,13 @@ const TransactionSpeed = ({
   const [customSatPerByte, setCustomSatPerByte] = useState<number>();
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSpeed, setSelectedSpeed] = useState(feeLevel);
-  const [buttonState, setButtonState] = useState<ButtonState>();
+  const [customSpeed, setCustomSpeed] = useState<number>();
+  const [error, setError] = useState<string | undefined>();
+  const [disableApply, setDisableApply] = useState(false);
+  const [maxFeeRecommended, setMaxFeeRecommended] = useState<number>();
+  const [minFeeRecommended, setMinFeeRecommended] = useState<number>();
+  const minFeeAllowed = FEE_MIN;
+  const [maxFeeAllowed, setMaxFeeAllowed] = useState<number>();
 
   const setSpeedUpMinFee = (_feeLevels: Fee[]) => {
     const minFeeLevel = coin === 'btc' ? 'custom' : 'priority';
@@ -128,7 +144,7 @@ const TransactionSpeed = ({
       const feeOption: any = {
         ...fee,
         feeUnit,
-        uiLevel: GetFeeOpts(coin)[level],
+        uiLevel: GetFeeOptions(coin)[level],
       };
 
       feeOption.feePerSatByte = (feePerKb / feeUnitAmount).toFixed();
@@ -162,8 +178,14 @@ const TransactionSpeed = ({
 
     setFeeOptions(_feeOptions);
     setIsLoading(false);
-    //    TODO: Warnings
+
+    setFeesRecommended(_feeLevels);
+    if(feeLevel === 'custom') {
+      checkFees(feePerSatByte);
+    }
   };
+
+  const [feeLevels, setFeeLevels] = useState<Fee>();
 
   const init = async () => {
     try {
@@ -181,6 +203,7 @@ const TransactionSpeed = ({
         return;
       }
 
+      setFeeLevels(feeLevels);
       if (isSpeedUpTx) {
         setSpeedUpMinFee(_feeLevels);
       }
@@ -192,27 +215,101 @@ const TransactionSpeed = ({
     } catch (e) {}
   };
 
+  const checkFees = (feePerSatByte: string | number | undefined): void => {
+    setError(undefined);
+    const fee = Number(feePerSatByte);
+
+    if (!fee) {
+      setDisableApply(true);
+      setError('required')
+      return;
+    }
+
+    if(fee < minFeeAllowed) {
+      setError('showMinError');
+      setDisableApply(true);
+      return;
+    }
+
+    if(fee > minFeeAllowed && minFeeRecommended !== undefined && fee < minFeeRecommended) {
+      setError('showMinWarning')
+    }
+
+    if(maxFeeAllowed && fee <= maxFeeAllowed  && maxFeeRecommended !== undefined && fee > maxFeeRecommended) {
+      setError('showMaxWarning');
+    }
+
+    if(maxFeeAllowed && fee > maxFeeAllowed) {
+      setError('showMaxError');
+      setDisableApply(true);
+      return;
+    }
+
+    setDisableApply(false);
+    return;
+  };
+
   useEffect(() => {
     init();
   }, [wallet]);
 
   const onClose = () => {
     onCloseModal();
+    setSelectedSpeed(feeLevel);
   };
 
-  const onSetCustomFee = () => {
-    setSelectedSpeed('custom');
-  }
-
   const onApply = () => {
-    onCloseModal(selectedSpeed);
-  }
+    if(selectedSpeed === 'custom' && customSpeed) {
+      const customFeePerKB = (customSpeed * feeUnitAmount).toFixed();
+
+      // TODO: custom speed
+      // if(error === 'showMinWarning') {
+      //   dispatch(showBottomNotificationModal(MinFeeWarning(() => {
+      //     onCloseModal(selectedSpeed, customFeePerKB)
+      //   })))
+      //   return;
+      // }
+      // onCloseModal(selectedSpeed, customFeePerKB)
+
+    } else {
+      onCloseModal(selectedSpeed);
+    }
+  };
+
+  const setFeesRecommended = (feeLevels: Fee[]): void => {
+    let {minValue, maxValue} = getRecommendedFees(feeLevels);
+    setMaxFeeRecommended(maxValue);
+    setMinFeeRecommended(minValue);
+    const _maxFeeAllowed = maxValue * FEE_MULTIPLIER;
+    setMaxFeeAllowed(_maxFeeAllowed);
+  };
+
+  const getRecommendedFees = (
+    feeLevels: Fee[],
+  ): {minValue: number; maxValue: number} => {
+    const value = feeLevels.map(({feePerKb}: Fee) => feePerKb);
+    const maxValue = Math.max(...value);
+
+    let minValue;
+    if (isSpeedUpTx && speedUpMinFeePerKb) {
+      minValue = speedUpMinFeePerKb;
+    } else {
+      minValue = Math.min(...value);
+    }
+
+    return {
+      maxValue: parseInt((maxValue / feeUnitAmount).toFixed(), 10),
+      minValue: parseInt((minValue / feeUnitAmount).toFixed(), 10),
+    };
+  };
 
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onClose}>
       <TxSpeedContainer>
         <SheetHeaderContainer>
-          <TouchableOpacity activeOpacity={ActiveOpacity} onPress={onCloseModal}>
+          <TouchableOpacity
+            activeOpacity={ActiveOpacity}
+            onPress={() => onClose()}>
             <Back opacity={1} />
           </TouchableOpacity>
           <TitleContainer>
@@ -221,65 +318,77 @@ const TransactionSpeed = ({
         </SheetHeaderContainer>
 
         <OptionsContainer>
-          {feeOptions && feeOptions.length > 0
-            ? <>{feeOptions.map((fee, i) => (
+          {feeOptions && feeOptions.length > 0 ? (
+            <>
+              {feeOptions.map((fee, i) => (
                 <TransactionSpeedRow
                   key={fee.level}
                   fee={fee}
-                  onPress={(selectedFee) => {
+                  onPress={selectedFee => {
+                    setDisableApply(false);
                     setSelectedSpeed(selectedFee.level);
                   }}
                   selectedSpeed={selectedSpeed}
                   isFirst={i === 0}
                 />
+              ))}
+              <DetailsList>
+                <SpeedOptionRow
+                  activeOpacity={ActiveOpacity}
+                  onPress={() => {
+                    setError(undefined);
+                    setDisableApply(true);
+                    setSelectedSpeed('custom');
+                  }}>
+                  <Row>
+                    <H6 style={{marginRight: 10}}>Custom fee</H6>
+                    <H6 medium={true}>in {feeUnit}</H6>
+                  </Row>
 
-              ))
+                  <Row
+                    style={{justifyContent: 'flex-end', alignItems: 'center'}}>
+                    <Checkbox
+                      radio={true}
+                      onPress={() => {
+                        setError(undefined);
 
-          }
-                <DetailsList>
-                  <SpeedOptionRow
-                      activeOpacity={ActiveOpacity}
-                      onPress={() => onSetCustomFee()}>
-                    <Row>
-                      <H6 style={{marginRight: 10}}>
-                        Custom fee
-                      </H6>
-                      <H6 medium={true}>
-                        in {feeUnit}
-                      </H6>
-                    </Row>
+                        setSelectedSpeed('custom');
+                        setDisableApply(true);
 
-                    <Row style={{justifyContent: 'flex-end', alignItems: 'center'}}>
-                      <Checkbox
-                          radio={true}
-                          onPress={() => onSetCustomFee()}
-                          checked={selectedSpeed === 'custom'}
-                      />
-                    </Row>
+                      }}
+                      checked={selectedSpeed === 'custom'}
+                    />
+                  </Row>
+                </SpeedOptionRow>
 
-                  </SpeedOptionRow>
+                {selectedSpeed === 'custom' ? (
+                  <ActionContainer>
+                    <TextInput keyboardType="numeric"
+                      onChangeText={(text: string) => {
+                        checkFees(text);
+                        setCustomSpeed(+text);
+                      }}
+                    />
+                    {error === 'required' ? <ErrorText>Fee is required.</ErrorText> : null}
+                    {error === 'showMinWarning' ? <ErrorText>Fee is lower than recommended.</ErrorText> : null}
+                    {error === 'showMaxWarning' ? <ErrorText>You should not set a fee higher than {maxFeeRecommended} {feeUnit}.</ErrorText> : null}
+                    {error === 'showMinError' ? <ErrorText>Fee should be higher than {minFeeAllowed} {feeUnit}.</ErrorText> : null}
+                    {error === 'showMaxError' ? <ErrorText>Fee Should be lesser than {maxFeeAllowed} {feeUnit}.</ErrorText> : null}
 
-                  {selectedSpeed === 'custom' ? <>
-                    <ImportTextInput>
+                  </ActionContainer>
+                ) : null}
 
-                    </ImportTextInput>
+                <Hr />
+              </DetailsList>
 
-                  </> : null}
-
-                  <Hr/>
-
-
-                </DetailsList>
-
-                <CtaContainer>
-                  <Button onPress={() => onApply()} state={buttonState}>Apply</Button>
-                </CtaContainer>
-              </>
-            : null}
+              <CtaContainer>
+                <Button onPress={() => onApply()} disabled={disableApply}>
+                  Apply {disableApply}
+                </Button>
+              </CtaContainer>
+            </>
+          ) : null}
         </OptionsContainer>
-
-
-
       </TxSpeedContainer>
     </SheetModal>
   );

@@ -7,7 +7,6 @@ import {
 import {H4, H5, H6, H7} from '../../../../../components/styled/Text';
 import SendToPill from '../../../components/SendToPill';
 import {
-  ActiveOpacity,
   Column,
   Hr,
   Row,
@@ -15,8 +14,10 @@ import {
 } from '../../../../../components/styled/Containers';
 import React, {ReactChild} from 'react';
 import styled from 'styled-components/native';
-import {Pressable, ScrollView, TouchableOpacity} from 'react-native';
+import {Pressable, ScrollView, View} from 'react-native';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
+import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
+import ChevronRightSvg from '../../../../../../assets/img/angle-right.svg';
 
 // Styled
 export const ConfirmContainer = styled.SafeAreaView`
@@ -106,8 +107,10 @@ export const Fee = ({
   fee,
   hr,
   onPress,
+  currencyAbbreviation,
 }: {
   fee: TxDetailsFee | undefined;
+  currencyAbbreviation: string;
   hr?: boolean;
   onPress?: () => void;
 }): JSX.Element | null => {
@@ -120,12 +123,23 @@ export const Fee = ({
             <DetailRow>
               <H7>Miner fee</H7>
               <DetailColumn>
-                <H5>{feeLevel.toUpperCase()}</H5>
+                {feeLevel && (
+                  <H5>
+                    {GetFeeOptions(currencyAbbreviation)[
+                      feeLevel
+                    ].toUpperCase()}
+                  </H5>
+                )}
                 <H6>{cryptoAmount}</H6>
                 <H7>
                   {fiatAmount} ({percentageOfTotalAmount} of total amount)
                 </H7>
               </DetailColumn>
+              {onPress ? (
+                <View style={{marginLeft: 10}}>
+                  <ChevronRightSvg />
+                </View>
+              ) : null}
             </DetailRow>
           </DetailContainer>
         </Pressable>
