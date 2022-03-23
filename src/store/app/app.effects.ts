@@ -97,7 +97,9 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     await dispatch(startWalletStoreInit());
     await dispatch(walletConnectInit());
     await dispatch(initializeBrazeContent());
-    dispatch(CoinbaseEffects.setExchangeRate());
+
+    // Update Coinbase
+    dispatch(CoinbaseEffects.updateCoinbaseData());
 
     // set home carousel config if not already set
     if (!homeCarouselConfig.length) {

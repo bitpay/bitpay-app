@@ -80,10 +80,6 @@ const Title = styled(BaseText)`
   border-bottom-width: 2px;
 `;
 
-export type CoinbaseSettingsScreenParamList = {
-  token: CoinbaseTokenProps | null;
-};
-
 export type CoinbaseTransactionScreenParamList = {
   tx: CoinbaseTransactionProps;
 };

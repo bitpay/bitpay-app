@@ -2,7 +2,11 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {useSelector} from 'react-redux';
 import {StackScreenProps} from '@react-navigation/stack';
 import {RootState} from '../../../store';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+  showOnGoingProcessModal,
+} from '../../../store/app/app.actions';
 import {CoinbaseStackParamList} from '../CoinbaseStack';
 import CoinbaseDashboard from '../components/CoinbaseDashboard';
 import CoinbaseIntro from '../components/CoinbaseIntro';
@@ -10,6 +14,7 @@ import {CoinbaseEffects} from '../../../store/coinbase';
 import {useAppDispatch} from '../../../utils/hooks';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import CoinbaseAPI from '../../../api/coinbase';
+import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 
 export type CoinbaseRootScreenParamList =
   | {
@@ -28,6 +33,9 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({route}) => {
 
   const tokenError = useSelector<RootState, CoinbaseErrorsProps | null>(
     ({COINBASE}) => COINBASE.getAccessTokenError,
+  );
+  const tokenStatus = useSelector<RootState, 'success' | 'failed' | null>(
+    ({COINBASE}) => COINBASE.getAccessTokenStatus,
   );
   const token = useSelector(({COINBASE}: RootState) => COINBASE.token);
   const [isDashboardEnabled, setIsDashboardEnabled] = useState(!!token);
@@ -54,14 +62,21 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({route}) => {
   };
 
   useEffect(() => {
-    if (token) {
-      setIsDashboardEnabled(true);
-    } else if (tokenError) {
-      showError(tokenError);
-      setIsDashboardEnabled(false);
-    } else if (code && state) {
+    if (!token && code && state) {
       dispatch(CoinbaseEffects.linkCoinbaseAccount(code, state));
-    } else {
+      dispatch(
+        showOnGoingProcessModal(OnGoingProcessMessages.CONNECTING_COINBASE),
+      );
+    }
+
+    if (token || tokenStatus === 'success') {
+      dispatch(dismissOnGoingProcessModal());
+      setIsDashboardEnabled(true);
+    }
+
+    if (tokenError) {
+      dispatch(dismissOnGoingProcessModal());
+      showError(tokenError);
       setIsDashboardEnabled(false);
     }
   }, [dispatch, code, state, token, tokenError]);
@@ -70,7 +85,7 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({route}) => {
     return isDashboardEnabled ? CoinbaseDashboard : CoinbaseIntro;
   }, [isDashboardEnabled]);
 
-  return <DashboardOrIntro token={token} />;
+  return <DashboardOrIntro />;
 };
 
 export default CoinbaseRoot;

@@ -1,25 +1,27 @@
-import React, {useLayoutEffect} from 'react';
+import React, {useLayoutEffect, useState} from 'react';
 import {useAppDispatch} from '../../../utils/hooks';
-import {FlatList} from 'react-native';
+import {FlatList, RefreshControl} from 'react-native';
 import styled from 'styled-components/native';
 import WalletRow from '../../../components/list/WalletRow';
 import {BaseText, H5} from '../../../components/styled/Text';
 import {Hr} from '../../../components/styled/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
+import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
+import {SlateDark, White} from '../../../styles/colors';
+import {sleep} from '../../../utils/helper-methods';
+
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
 import {CoinbaseEffects} from '../../../store/coinbase';
-import {CoinbaseTokenProps} from '../../../api/coinbase/coinbase.types';
-import {useNavigation} from '@react-navigation/native';
+import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import CoinbaseSettingsOption from './CoinbaseSettingsOption';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../store';
 import {formatFiatAmount} from '../../../utils/helper-methods';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {getCoinbaseExchangeRate} from '../../../store/coinbase/coinbase.effects';
-
-interface CoinbaseDashboardProps {
-  token: CoinbaseTokenProps | null;
-}
+import CoinbaseAPI from '../../../api/coinbase';
 
 const OverviewContainer = styled.View`
   flex: 1;
@@ -44,14 +46,24 @@ const WalletListHeader = styled.View`
   margin-top: 10px;
 `;
 
-const CoinbaseDashboard: React.FC<CoinbaseDashboardProps> = props => {
+const SkeletonContainer = styled.View`
+  margin-bottom: 20px;
+`;
+
+const CoinbaseDashboard = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const {token} = props || {};
+  const theme = useTheme();
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const isLoadingAccounts = useSelector<RootState, boolean>(
+    ({COINBASE}) => COINBASE.isApiLoading,
+  );
   const exchangeRates = useSelector(
     ({COINBASE}: RootState) => COINBASE.exchangeRates,
   );
+  const user = useSelector(({COINBASE}: RootState) => COINBASE.user);
   const accounts = useSelector(({COINBASE}: RootState) => COINBASE.accounts);
   const balance =
     useSelector(({COINBASE}: RootState) => COINBASE.balance) || 0.0;
@@ -64,14 +76,24 @@ const CoinbaseDashboard: React.FC<CoinbaseDashboardProps> = props => {
           onPress={() => {
             navigation.navigate('Coinbase', {
               screen: 'CoinbaseSettings',
-              params: {token},
             });
-            dispatch(CoinbaseEffects.getUser());
           }}
         />
       ),
     });
   }, [navigation]);
+
+  const listFooterComponent = () => {
+    return (
+      <>
+        {isLoadingAccounts && !accounts ? (
+          <SkeletonContainer>
+            <WalletTransactionSkeletonRow />
+          </SkeletonContainer>
+        ) : null}
+      </>
+    );
+  };
 
   const renderItem = ({item}: any) => {
     const fiatAmount = getCoinbaseExchangeRate(
@@ -96,7 +118,6 @@ const CoinbaseDashboard: React.FC<CoinbaseDashboardProps> = props => {
         wallet={walletItem}
         onPress={() => {
           haptic('impactLight');
-          // TODO redirect to new view
           navigation.navigate('Coinbase', {
             screen: 'CoinbaseAccount',
             params: {id: item.id},
@@ -107,13 +128,60 @@ const CoinbaseDashboard: React.FC<CoinbaseDashboardProps> = props => {
     );
   };
 
+  const showError = async (error: CoinbaseErrorsProps) => {
+    const errMsg = CoinbaseAPI.parseErrorToString(error);
+    dispatch(
+      showBottomNotificationModal({
+        type: 'error',
+        title: 'Coinbase Error',
+        message: errMsg,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'OK',
+            action: () => {
+              navigation.navigate('Tabs', {screen: 'Home'});
+            },
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await sleep(1000);
+
+    try {
+      await dispatch(CoinbaseEffects.getAccountsAndBalance());
+    } catch (err: CoinbaseErrorsProps | any) {
+      setRefreshing(false);
+      showError(err);
+    }
+    setRefreshing(false);
+  };
+
   return (
     <OverviewContainer>
       <BalanceContainer>
-        <Balance>{formatFiatAmount(balance, 'usd')} USD</Balance>
+        <Balance>
+          {formatFiatAmount(
+            balance,
+            user?.data.native_currency.toLowerCase() || 'usd',
+          )}{' '}
+          {user?.data.native_currency}
+        </Balance>
       </BalanceContainer>
       <Hr />
       <FlatList
+        refreshControl={
+          <RefreshControl
+            tintColor={theme.dark ? White : SlateDark}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        }
         ListHeaderComponent={() => {
           return (
             <WalletListHeader>
@@ -123,6 +191,7 @@ const CoinbaseDashboard: React.FC<CoinbaseDashboardProps> = props => {
         }}
         data={accounts}
         renderItem={renderItem}
+        ListFooterComponent={listFooterComponent}
       />
     </OverviewContainer>
   );

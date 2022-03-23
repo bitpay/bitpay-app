@@ -4,7 +4,6 @@ import {
   CoinbaseTokenProps,
   CoinbaseUserProps,
   CoinbaseExchangeRatesProps,
-  CoinbaseTransactionsProps,
   CoinbaseTransactionsByAccountProps,
 } from '../../api/coinbase/coinbase.types';
 

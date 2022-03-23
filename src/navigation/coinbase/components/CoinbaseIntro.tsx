@@ -8,9 +8,8 @@ import CoinbaseBitPayIcon from '../../../../assets/img/coinbase/bc.svg';
 import Coinbase from '../../../api/coinbase/index';
 import {AppEffects} from '../../../store/app';
 import {useAppDispatch} from '../../../utils/hooks';
+import {useTranslation} from 'react-i18next';
 
-// URLs
-/* const supportUrl: string = 'https://support.coinbase.com'; */
 const signupUrl: string = 'https://www.coinbase.com/signup';
 
 const CoinbaseContainer = styled.SafeAreaView`
@@ -51,6 +50,7 @@ const SubTitle = styled(BaseText)`
 `;
 
 const CoinbaseIntro = () => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
 
   const onPressButton = async (context: 'signin' | 'signup') => {
@@ -70,18 +70,22 @@ const CoinbaseIntro = () => {
           <NoConnectedIcon>
             <CoinbaseBitPayIcon width={160} height={120} />
           </NoConnectedIcon>
-          <Title>Connect to Coinbase</Title>
+          <Title>{t('Connect to Coinbase')}</Title>
           <SubTitle>
-            Manage your Coinbase accounts, check balances, deposits and withdraw
-            funds between wallets.
+            {t(
+              'Manage your Coinbase accounts, check balances, deposits and withdraw funds between wallets.',
+            )}
           </SubTitle>
         </CoinbaseHeaderContainer>
         <ButtonContainer>
-          <Button children="Connect" onPress={() => onPressButton('signin')} />
+          <Button
+            children={t('Connect')}
+            onPress={() => onPressButton('signin')}
+          />
         </ButtonContainer>
         <ButtonContainer>
           <Button
-            children="Sign Up for Coinbase"
+            children={t('Sign Up for Coinbase')}
             buttonStyle={'secondary'}
             onPress={() => onPressButton('signup')}
           />

@@ -12,7 +12,7 @@ import moment from 'moment';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../store';
-import {formatFiatAmount} from '../../../utils/helper-methods';
+import {formatFiatAmount, shouldScale} from '../../../utils/helper-methods';
 import {Hr} from '../../../components/styled/Containers';
 import {BaseText, Balance, H5} from '../../../components/styled/Text';
 import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
@@ -220,13 +220,18 @@ const CoinbaseAccount = ({
     <AccountContainer>
       <BalanceContainer>
         <Row>
-          <Balance>
+          <Balance scale={shouldScale(account?.balance.amount)}>
             {account?.balance.amount} {account?.balance.currency}
           </Balance>
         </Row>
         <Row>
           <H5>
-            {fiatAmount ? formatFiatAmount(fiatAmount, 'usd') : '...'}{' '}
+            {fiatAmount
+              ? formatFiatAmount(
+                  fiatAmount,
+                  user?.data.native_currency.toLowerCase() || 'usd',
+                )
+              : '...'}{' '}
             {user?.data.native_currency}
           </H5>
           {account?.primary && <Type>Primary</Type>}

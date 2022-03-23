@@ -12,16 +12,14 @@ import CoinbaseAccount, {
 import CoinbaseRoot, {
   CoinbaseRootScreenParamList,
 } from './screens/CoinbaseRoot';
-import CoinbaseSettings, {
-  CoinbaseSettingsScreenParamList,
-} from './screens/CoinbaseSettings';
+import CoinbaseSettings from './screens/CoinbaseSettings';
 import CoinbaseTransaction, {
   CoinbaseTransactionScreenParamList,
 } from './screens/CoinbaseTransaction';
 
 export type CoinbaseStackParamList = {
   CoinbaseRoot: CoinbaseRootScreenParamList;
-  CoinbaseSettings: CoinbaseSettingsScreenParamList;
+  CoinbaseSettings: undefined;
   CoinbaseAccount: CoinbaseAccountScreenParamList;
   CoinbaseTransaction: CoinbaseTransactionScreenParamList;
 };

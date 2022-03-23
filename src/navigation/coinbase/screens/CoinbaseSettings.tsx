@@ -1,22 +1,26 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
+import {RefreshControl} from 'react-native';
 import moment from 'moment';
 import styled from 'styled-components/native';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import {sleep} from '../../../utils/helper-methods';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {
-  CoinbaseErrorsProps,
-  CoinbaseTokenProps,
-} from '../../../api/coinbase/coinbase.types';
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+  showOnGoingProcessModal,
+} from '../../../store/app/app.actions';
+import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import Button from '../../../components/button/Button';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, TextAlign} from '../../../components/styled/Text';
+import {SlateDark, White} from '../../../styles/colors';
 import {Hr} from '../../../components/styled/Containers';
 import {CoinbaseEffects} from '../../../store/coinbase';
 import {useAppDispatch} from '../../../utils/hooks';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../store';
 import CoinbaseAPI from '../../../api/coinbase';
+import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 
 const SettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -66,16 +70,17 @@ const ButtonContainer = styled.View`
   margin: 0 ${ScreenGutter};
 `;
 
-export type CoinbaseSettingsScreenParamList = {
-  token: CoinbaseTokenProps | null;
-};
-
 const CoinbaseSettings = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const theme = useTheme();
+
+  const [refreshing, setRefreshing] = useState(false);
 
   const userData = useSelector(({COINBASE}: RootState) => COINBASE.user);
-
+  const isLoadingUserData = useSelector<RootState, boolean>(
+    ({COINBASE}) => COINBASE.isApiLoading,
+  );
   const userError = useSelector<RootState, CoinbaseErrorsProps | null>(
     ({COINBASE}) => COINBASE.getUserError,
   );
@@ -102,6 +107,10 @@ const CoinbaseSettings = () => {
   };
 
   useEffect(() => {
+    if (!userData && !isLoadingUserData) {
+      dispatch(CoinbaseEffects.getUser());
+    }
+
     if (userError) {
       if (CoinbaseAPI.isRevokedTokenError(userError)) {
         // Revoked token ... unlink account
@@ -109,11 +118,11 @@ const CoinbaseSettings = () => {
       }
       showError(userError);
     }
-  }, [dispatch, userError]);
+  }, [dispatch, userData, isLoadingUserData, userError]);
 
   const deleteAccount = async () => {
-    await sleep(500);
     dispatch(CoinbaseEffects.disconnectCoinbaseAccount());
+    await sleep(1000);
     navigation.navigate('Tabs', {screen: 'Home'});
   };
 
@@ -147,9 +156,30 @@ const CoinbaseSettings = () => {
     return moment(timestamp).format('MMM D, YYYY');
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    dispatch(
+      showOnGoingProcessModal(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
+    );
+    await sleep(1000);
+
+    try {
+      await dispatch(CoinbaseEffects.getUser());
+    } catch (err: CoinbaseErrorsProps | any) {
+      showError(err);
+    }
+    dispatch(dismissOnGoingProcessModal());
+    setRefreshing(false);
+  };
+
   return (
     <SettingsContainer>
       <SettingsScrollContainer>
+        <RefreshControl
+          tintColor={theme.dark ? White : SlateDark}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+        />
         <Title>Summary</Title>
         <Hr />
         <Details>
