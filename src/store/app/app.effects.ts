@@ -1,5 +1,6 @@
 import BitAuth from 'bitauth';
 import {Linking} from 'react-native';
+import ReactAppboy from 'react-native-appboy-sdk';
 import InAppBrowser, {
   InAppBrowserOptions,
 } from 'react-native-inappbrowser-reborn';
@@ -94,6 +95,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     // splitting inits into store specific ones as to keep it cleaner in the main init here
     await dispatch(startWalletStoreInit());
     await dispatch(walletConnectInit());
+    await dispatch(initializeBrazeContent());
+
     await sleep(500);
     dispatch(AppActions.successAppInit());
     dispatch(LogActions.info('Initialized app successfully.'));
@@ -158,6 +161,43 @@ const initializeApi =
   () => {
     BitPayApi.init(network, identity);
     GraphQlApi.init(network, identity);
+  };
+
+/**
+ * Initializes Braze content by checking for a paired user, refreshing the
+ * Braze cache, then fetching data from Braze and commiting it to the store.
+ * @returns void
+ */
+export const initializeBrazeContent =
+  (): Effect => async (dispatch, getState) => {
+    try {
+      dispatch(LogActions.info('Initializing Braze content...'));
+      const {APP, BITPAY_ID} = getState();
+      const user = BITPAY_ID.user[APP.network];
+
+      if (user) {
+        ReactAppboy.changeUser(user.eid);
+        ReactAppboy.setEmail(user.email);
+      }
+
+      ReactAppboy.requestContentCardsRefresh();
+
+      const contentCards = await ReactAppboy.getContentCards();
+
+      dispatch(LogActions.info('Successfully fetched data from Braze.'));
+      dispatch(AppActions.brazeContentCardsFetched(contentCards));
+    } catch (err) {
+      const errMsg = 'Failed to fetch data from Braze.';
+      console.log(errMsg);
+      dispatch(LogActions.error(errMsg));
+      dispatch(
+        LogActions.error(
+          err instanceof Error ? err.message : JSON.stringify(err),
+        ),
+      );
+    } finally {
+      dispatch(LogActions.info('Initializing Braze content complete.'));
+    }
   };
 
 export const startOnGoingProcessModal =

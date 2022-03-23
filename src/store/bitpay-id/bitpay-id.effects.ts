@@ -1,5 +1,4 @@
 import {upperFirst} from 'lodash';
-import ReactAppboy from 'react-native-appboy-sdk';
 import {batch} from 'react-redux';
 import AuthApi from '../../api/auth';
 import {
@@ -36,7 +35,6 @@ export const startBitPayIdStoreInit =
       dispatch(
         BitPayIdActions.successInitializeStore(APP.network, initialData),
       );
-      dispatch(startSetBrazeUser(user));
       dispatch(ShopEffects.startFetchCatalog());
     }
   };
@@ -383,6 +381,7 @@ const startPairAndLoadUser =
 
       dispatch(startBitPayIdStoreInit(data.user));
       dispatch(CardEffects.startCardStoreInit(data.user));
+      dispatch(AppEffects.initializeBrazeContent());
     } catch (err) {
       let errMsg;
 
@@ -446,15 +445,3 @@ export const startFetchDoshToken = (): Effect => async (dispatch, getState) => {
     });
   }
 };
-
-export const startSetBrazeUser =
-  ({eid, email}: BasicUserInfo): Effect =>
-  async dispatch => {
-    try {
-      ReactAppboy.changeUser(eid);
-      ReactAppboy.setEmail(email);
-      dispatch(LogActions.info('Braze user session created'));
-    } catch (err) {
-      dispatch(LogActions.error('Error creating Braze user session'));
-    }
-  };

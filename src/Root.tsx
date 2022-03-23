@@ -12,7 +12,10 @@ import {ThemeProvider} from 'styled-components/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
 import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
-import {baseScreenOptions} from './constants/NavigationOptions';
+import {
+  baseNavigatorOptions,
+  baseScreenOptions,
+} from './constants/NavigationOptions';
 import {AppEffects, AppActions} from './store/app';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 import {LogActions} from './store/log';
@@ -63,6 +66,9 @@ import {ShopStackParamList} from './navigation/tabs/shop/ShopStack';
 import GiftCardStack, {
   GiftCardStackParamList,
 } from './navigation/tabs/shop/gift-card/GiftCardStack';
+import GiftCardDeeplinkScreen, {
+  GiftCardDeeplinkScreenParamList,
+} from './navigation/tabs/shop/gift-card/GiftCardDeeplink';
 import DecryptEnterPasswordModal from './navigation/wallet/components/DecryptEnterPasswordModal';
 import MerchantStack, {
   MerchantStackParamList,
@@ -75,6 +81,7 @@ import ConnectionsSettingsStack, {
 } from './navigation/tabs/settings/connections/ConnectionsStack';
 import {BlurView} from '@react-native-community/blur';
 import Blur from './components/blur/Blur';
+import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -88,6 +95,7 @@ export type RootStackParamList = {
   Scan: NavigatorScreenParams<ScanStackParamList>;
   Shop: NavigatorScreenParams<ShopStackParamList>;
   GiftCard: NavigatorScreenParams<GiftCardStackParamList>;
+  GiftCardDeeplink: GiftCardDeeplinkScreenParamList;
   Merchant: NavigatorScreenParams<MerchantStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
   SecuritySettings: NavigatorScreenParams<SecuritySettingsStackParamList>;
@@ -98,6 +106,7 @@ export type RootStackParamList = {
   BuyCrypto: NavigatorScreenParams<BuyCryptoStackParamList>;
   SwapCrypto: NavigatorScreenParams<SwapCryptoStackParamList>;
   WalletConnect: NavigatorScreenParams<WalletConnectStackParamList>;
+  Debug: DebugScreenParamList;
 };
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
@@ -112,6 +121,7 @@ export enum RootStacks {
   SCAN = 'Scan',
   CONTACTS = 'Contacts',
   GIFT_CARD = 'GiftCard',
+  GIFT_CARD_DEEPLINK = 'GiftCardDeeplink',
   MERCHANT = 'Merchant',
   // SETTINGS
   GENERAL_SETTINGS = 'GeneralSettings',
@@ -122,6 +132,7 @@ export enum RootStacks {
   BUY_CRYPTO = 'BuyCrypto',
   SWAP_CRYPTO = 'SwapCrypto',
   WALLET_CONNECT = 'WalletConnect',
+  DEBUG = 'Debug',
 }
 
 // ROOT NAVIGATION CONFIG
@@ -293,6 +304,15 @@ export default () => {
               headerShown: false,
             }}
             initialRouteName={initialRoute}>
+            <Root.Screen
+              name={RootStacks.DEBUG}
+              component={DebugScreen}
+              options={{
+                ...baseNavigatorOptions,
+                headerShown: true,
+                headerTitle: 'Debug',
+              }}
+            />
             <Root.Screen name={RootStacks.AUTH} component={AuthStack} />
             <Root.Screen name={RootStacks.INTRO} component={IntroStack} />
             <Root.Screen
@@ -328,6 +348,10 @@ export default () => {
             <Root.Screen
               name={RootStacks.GIFT_CARD}
               component={GiftCardStack}
+            />
+            <Root.Screen
+              name={RootStacks.GIFT_CARD_DEEPLINK}
+              component={GiftCardDeeplinkScreen}
             />
             <Root.Screen name={RootStacks.MERCHANT} component={MerchantStack} />
             {/* SETTINGS */}
