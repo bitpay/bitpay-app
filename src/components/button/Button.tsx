@@ -15,7 +15,10 @@ import {
   Caution,
   Disabled,
   DisabledDark,
+  LightBlack,
   Midnight,
+  NeutralSlate,
+  SlateDark,
   Success,
   White,
 } from '../../styles/colors';
@@ -27,12 +30,13 @@ import ButtonOverlay from './ButtonOverlay';
 import ButtonSpinner from './ButtonSpinner';
 
 export type ButtonState = 'loading' | 'success' | 'failed' | null | undefined;
-export type ButtonStyle = 'primary' | 'secondary' | undefined;
+export type ButtonStyle = 'primary' | 'secondary' | 'cancel' | undefined;
 export type ButtonType = 'button' | 'link' | 'pill' | undefined;
 
 interface ButtonProps extends BaseButtonProps {
   buttonStyle?: ButtonStyle;
   buttonType?: ButtonType;
+  buttonOutline?: boolean;
   onPress?: () => any;
   disabled?: boolean;
   debounceTime?: number;
@@ -41,6 +45,8 @@ interface ButtonProps extends BaseButtonProps {
 
 interface ButtonOptionProps {
   secondary?: boolean;
+  outline?: boolean;
+  cancel?: boolean;
   disabled?: boolean;
 }
 
@@ -111,21 +117,36 @@ const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
 `;
 
 const PillContent = styled.View<ButtonOptionProps>`
-  background: ${({secondary, theme}) => {
+  background: ${({secondary, cancel, theme}) => {
     if (secondary) {
       return 'transparent';
     }
 
+    if (cancel) {
+      return theme?.dark ? LightBlack : NeutralSlate;
+    }
+
     return theme?.dark ? Midnight : Air;
   }};
-  border: 2px solid
-    ${({secondary, theme}) => {
-      if (secondary) {
-        return 'transparent';
-      }
+  border-style: solid;
+  border-width: ${({outline}) => {
+    return outline ? 1 : 2;
+  }}px;
+  border-color: ${({secondary, outline, cancel, theme}) => {
+    if (outline) {
+      return theme?.dark ? White : Action;
+    }
 
-      return theme?.dark ? Midnight : Air;
-    }};
+    if (secondary) {
+      return 'transparent';
+    }
+
+    if (cancel) {
+      return theme?.dark ? LightBlack : NeutralSlate;
+    }
+
+    return theme?.dark ? Midnight : Air;
+  }};
   border-radius: ${PILL_RADIUS}px;
   padding: 8px 15px;
 `;
@@ -134,9 +155,13 @@ const PillText = styled(ButtonBaseText)<ButtonOptionProps>`
   font-size: 15px;
   font-weight: 400;
 
-  color: ${({disabled, theme}) => {
+  color: ${({disabled, cancel, theme}) => {
     if (disabled) {
       return DisabledDark;
+    }
+
+    if (cancel) {
+      return theme?.dark ? White : SlateDark;
     }
 
     return theme?.dark ? White : Action;
@@ -166,12 +191,15 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
     onPress,
     buttonStyle = 'primary',
     buttonType = 'button',
+    buttonOutline,
     children,
     disabled,
     debounceTime,
     state,
   } = props;
   const secondary = buttonStyle === 'secondary';
+  const cancel = buttonStyle === 'cancel';
+  const outline = buttonOutline;
 
   const isLoading = state === 'loading';
   const isSuccess = state === 'success';
@@ -234,9 +262,16 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
       onPress={debouncedOnPress}
       activeOpacity={disabled ? 1 : ActiveOpacity}
       testID={'button'}>
-      <ButtonTypeContainer secondary={secondary} disabled={disabled}>
+      <ButtonTypeContainer
+        secondary={secondary}
+        outline={outline}
+        cancel={cancel}
+        disabled={disabled}>
         <Animated.View style={childrenStyle}>
-          <ButtonTypeText secondary={secondary} disabled={disabled}>
+          <ButtonTypeText
+            secondary={secondary}
+            cancel={cancel}
+            disabled={disabled}>
             {children}
           </ButtonTypeText>
         </Animated.View>

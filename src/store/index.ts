@@ -27,6 +27,12 @@ import {
 } from './bitpay-id/bitpay-id.reducer';
 import {BitPayIdActionType} from './bitpay-id/bitpay-id.types';
 import {
+  buyCryptoReducer,
+  buyCryptoReduxPersistBlackList,
+  BuyCryptoState,
+} from './buy-crypto/buy-crypto.reducer';
+import {BuyCryptoActionType} from './buy-crypto/buy-crypto.types';
+import {
   cardReducer,
   cardReduxPersistBlacklist,
   CardState,
@@ -90,6 +96,14 @@ const reducers = {
       blacklist: bitPayIdReduxPersistBlackList,
     },
     bitPayIdReducer,
+  ),
+  BUY_CRYPTO: persistReducer<BuyCryptoState, BuyCryptoActionType>(
+    {
+      ...basePersistConfig,
+      key: 'BUY_CRYPTO',
+      blacklist: buyCryptoReduxPersistBlackList,
+    },
+    buyCryptoReducer,
   ),
   CARD: persistReducer<CardState, CardActionType>(
     {

@@ -83,6 +83,11 @@ const SettingsHomeScreen: React.FC = () => {
       title: t('Security'),
       onPress: () => navigation.navigate('SecuritySettings', {screen: 'Root'}),
     },
+    // Settings for Buy/Swap Crypto will be momentarily commented
+    // {
+    //   title: t('External Services'),
+    //   onPress: () => navigation.navigate('ExternalServicesSettings', {screen: 'Root'}),
+    // },
     {
       title: t('Notifications'),
       onPress: () =>
