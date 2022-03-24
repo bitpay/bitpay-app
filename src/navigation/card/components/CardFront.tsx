@@ -168,7 +168,7 @@ const CardFront: React.FC<CardFrontProps> = props => {
 
         <Svg.Text
           id="card-nickname"
-          fontFamily="Heebo-Medium, Heebo"
+          fontFamily="Heebo"
           fontSize="14"
           fontWeight="400"
           fill="#FFFFFF">
@@ -181,9 +181,9 @@ const CardFront: React.FC<CardFrontProps> = props => {
           <>
             <Svg.Text
               id="balance-label"
-              fontFamily="Heebo-Medium, Heebo"
+              fontFamily="Heebo"
               fontSize="10"
-              fontWeight="400"
+              fontWeight="500"
               fill="#FFF">
               <Svg.TSpan x="20" y="90">
                 BALANCE
@@ -193,9 +193,9 @@ const CardFront: React.FC<CardFrontProps> = props => {
             <Svg.Text
               data-ref="balanceValue"
               id="balance-value"
-              fontFamily="Heebo-Medium, Heebo"
+              fontFamily="Heebo"
               fontSize="28"
-              fontWeight="400"
+              fontWeight="500"
               fill="#FFFFFF">
               <Svg.TSpan x="20" y="123">
                 {balance}
@@ -232,7 +232,7 @@ const CardFront: React.FC<CardFrontProps> = props => {
                 <Svg.Text
                   textAnchor="middle"
                   id="fiatSymbol"
-                  fontFamily="ArialMT, Arial"
+                  fontFamily="Heebo"
                   fontSize="11"
                   fontWeight="normal"
                   fill={colorPalette.pillColor}>
@@ -241,7 +241,7 @@ const CardFront: React.FC<CardFrontProps> = props => {
               </Svg.G>
               <Svg.Text
                 id="fiatName"
-                fontFamily="ArialMT, Arial"
+                fontFamily="Heebo"
                 fontSize="11"
                 fontWeight="normal"
                 fill={colorPalette.pillColor}>
