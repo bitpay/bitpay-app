@@ -129,7 +129,15 @@ const buildTxDetails = ({
   recipient: Recipient;
   invoice?: Invoice;
 }): TxDetails => {
-  const {coin, feeLevel = 'custom', fee, amount} = proposal;
+  const {
+    coin,
+    feeLevel = 'custom',
+    fee,
+    amount,
+    gasPrice,
+    gasLimit,
+    nonce,
+  } = proposal;
   const networkCost = invoice?.minerFees[coin.toUpperCase()]?.totalFee;
   const total = amount + fee;
   const {type, name, address} = recipient;
@@ -177,6 +185,9 @@ const buildTxDetails = ({
         fiatCode,
       ),
     },
+    gasPrice: gasPrice ? Number((gasPrice * 1e-9).toFixed(2)) : undefined,
+    gasLimit,
+    nonce,
   };
 };
 

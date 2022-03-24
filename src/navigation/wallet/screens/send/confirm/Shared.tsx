@@ -219,3 +219,25 @@ export const Amount = ({
     return null;
   }
 };
+
+export const SharedDetailRow = ({
+  description,
+  value,
+  hr,
+}: {
+  description: string;
+  value: number | string;
+  hr?: boolean;
+}): JSX.Element | null => {
+  return (
+    <>
+      <DetailContainer>
+        <DetailRow>
+          <H7>{description}</H7>
+          <H7>{value}</H7>
+        </DetailRow>
+      </DetailContainer>
+      {hr && <Hr />}
+    </>
+  );
+};

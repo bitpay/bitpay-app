@@ -31,6 +31,7 @@ import {
   Header,
   SendingFrom,
   SendingTo,
+  SharedDetailRow,
 } from './Shared';
 import TransactionSpeed from '../TransactionSpeed';
 
@@ -58,11 +59,15 @@ const Confirm = () => {
     sendingTo,
     sendingFrom,
     subTotal,
+    gasLimit,
+    gasPrice: _gasPrice,
+    nonce,
     total: _total,
   } = txDetails;
 
   const [fee, setFee] = useState(_fee);
   const [total, setTotal] = useState(_total);
+  const [gasPrice, setGasPrice] = useState(_gasPrice);
   const {currencyAbbreviation} = wallet;
 
   const isTxSpeedAvailable = () => {
@@ -96,6 +101,7 @@ const Confirm = () => {
         setTxp(newTxp);
         setFee(_txDetails.fee);
         setTotal(_txDetails.total);
+        setGasPrice(_txDetails.gasPrice);
         await sleep(200);
         dispatch(dismissOnGoingProcessModal());
       }
@@ -135,6 +141,17 @@ const Confirm = () => {
           currencyAbbreviation={currencyAbbreviation}
           hr
         />
+        {gasPrice && (
+          <SharedDetailRow
+            description={'Gas price'}
+            value={gasPrice.toFixed(2) + ' (Gwei)'}
+            hr
+          />
+        )}
+        {gasLimit && (
+          <SharedDetailRow description={'Gas limit'} value={gasLimit} hr />
+        )}
+        {nonce && <SharedDetailRow description={'Nonce'} value={nonce} hr />}
         <SendingFrom sender={sendingFrom} hr />
         <Amount description={'SubTotal'} amount={subTotal} />
         <Amount description={'Total'} amount={total} />

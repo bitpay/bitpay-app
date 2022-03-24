@@ -288,6 +288,7 @@ const IsFirstInGroup = (index: number, history: any[]) => {
 
 export const GroupTransactionHistory = (history: any[]) => {
   return history
+    .sort((x, y) => y.time - x.time)
     .reduce((groups, tx, txInd) => {
       IsFirstInGroup(txInd, history)
         ? groups.push([tx])
