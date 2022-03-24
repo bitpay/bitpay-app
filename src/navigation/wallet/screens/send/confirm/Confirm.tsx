@@ -144,7 +144,7 @@ const Confirm = () => {
         {gasPrice && (
           <SharedDetailRow
             description={'Gas price'}
-            value={gasPrice.toFixed(2) + ' (Gwei)'}
+            value={gasPrice.toFixed(2) + ' Gwei'}
             hr
           />
         )}
