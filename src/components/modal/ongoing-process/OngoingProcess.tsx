@@ -22,7 +22,7 @@ export enum OnGoingProcessMessages {
   SENDING_PAYMENT = 'Sending Payment',
   GENERATING_ADDRESS = 'Generating Address',
   SYNCING_WALLETS = 'Syncing Wallets',
-  UPDATING_FEE = 'Updating Fee'
+  CALCULATING_FEE = 'Calculating Fee',
 }
 
 const OnGoingProcessContainer = styled.View`

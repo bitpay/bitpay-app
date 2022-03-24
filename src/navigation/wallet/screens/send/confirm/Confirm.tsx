@@ -3,15 +3,35 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../../WalletStack';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
-import {Recipient, TransactionProposal, TxDetails, Wallet,} from '../../../../../store/wallet/wallet.models';
+import {
+  Recipient,
+  TransactionProposal,
+  TxDetails,
+  Wallet,
+} from '../../../../../store/wallet/wallet.models';
 import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
-import {createProposalAndBuildTxDetails, startSendPayment,} from '../../../../../store/wallet/effects/send/send';
+import {
+  createProposalAndBuildTxDetails,
+  handleCreateTxProposalError,
+  startSendPayment,
+} from '../../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../components/PaymentSent';
 import {sleep} from '../../../../../utils/helper-methods';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
-import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
-import {Amount, ConfirmContainer, DetailsList, Fee, Header, SendingFrom, SendingTo,} from './Shared';
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+} from '../../../../../store/app/app.actions';
+import {
+  Amount,
+  ConfirmContainer,
+  DetailsList,
+  Fee,
+  Header,
+  SendingFrom,
+  SendingTo,
+} from './Shared';
 import TransactionSpeed from '../TransactionSpeed';
 
 export interface ConfirmParamList {
@@ -52,29 +72,51 @@ const Confirm = () => {
     return !excludeCurrencies.includes(currencyAbbreviation);
   };
 
-  const onCloseTxSpeedModal = async (newSpeedLevel?: any, customFeePerKB?: string ) => {
+  const onCloseTxSpeedModal = async (
+    newSpeedLevel?: any,
+    customFeePerKB?: number,
+  ) => {
     setShowTransactionSpeed(false);
     try {
-      if (newSpeedLevel && newSpeedLevel !== fee.feeLevel) {
-          dispatch(startOnGoingProcessModal(OnGoingProcessMessages.UPDATING_FEE));
+      if (newSpeedLevel) {
+        dispatch(
+          startOnGoingProcessModal(OnGoingProcessMessages.CALCULATING_FEE),
+        );
 
-          const {txDetails: _txDetails, txp: newTxp} = await dispatch(
+        const {txDetails: _txDetails, txp: newTxp} = await dispatch(
           createProposalAndBuildTxDetails({
             wallet,
             recipient,
             amount,
-            feeLevel: newSpeedLevel
+            feeLevel: newSpeedLevel,
+            feePerKb: customFeePerKB,
           }),
         );
 
         setTxp(newTxp);
         setFee(_txDetails.fee);
         setTotal(_txDetails.total);
+        await sleep(200);
         dispatch(dismissOnGoingProcessModal());
       }
-    } catch (e) {
-      console.log(e);
+    } catch (err: any) {
       dispatch(dismissOnGoingProcessModal());
+      const [errorMessageConfig] = await Promise.all([
+        handleCreateTxProposalError(err),
+        sleep(400),
+      ]);
+      dispatch(
+        showBottomNotificationModal({
+          ...errorMessageConfig,
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: 'OK',
+              action: () => {},
+            },
+          ],
+        }),
+      );
     }
   };
 
@@ -133,7 +175,15 @@ const Confirm = () => {
         feeLevel={fee.feeLevel}
         wallet={wallet}
         isVisible={showTransactionSpeed}
-        onCloseModal={selectedLevel => onCloseTxSpeedModal(selectedLevel)}
+        onCloseModal={(selectedLevel, customFeePerKB) =>
+          onCloseTxSpeedModal(selectedLevel, customFeePerKB)
+        }
+        customFeePerKB={fee.feeLevel === 'custom' ? txp?.feePerKb : undefined}
+        feePerSatByte={
+          fee.feeLevel === 'custom' && txp?.feePerKb
+            ? txp?.feePerKb / 1000
+            : undefined
+        }
       />
     </ConfirmContainer>
   );

@@ -19,7 +19,7 @@ export interface Fee {
 
 export const GetFeeOptions: any = (currencyAbbreviation: string) => {
   const isEthOrToken =
-    currencyAbbreviation == 'eth' || IsERCToken(currencyAbbreviation);
+    currencyAbbreviation === 'eth' || IsERCToken(currencyAbbreviation);
   return {
     urgent: isEthOrToken ? 'High' : 'Urgent',
     priority: isEthOrToken ? 'Average' : 'Priority',

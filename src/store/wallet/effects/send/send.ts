@@ -129,7 +129,7 @@ const buildTxDetails = ({
   recipient: Recipient;
   invoice?: Invoice;
 }): TxDetails => {
-  const {coin, feeLevel, fee, amount} = proposal;
+  const {coin, feeLevel = 'custom', fee, amount} = proposal;
   const networkCost = invoice?.minerFees[coin.toUpperCase()]?.totalFee;
   const total = amount + fee;
   const {type, name, address} = recipient;

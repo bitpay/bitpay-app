@@ -8,7 +8,10 @@ import {
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import * as _ from 'lodash';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
-import {CustomErrorMessage, MinFeeWarning} from '../../components/ErrorMessages';
+import {
+  CustomErrorMessage,
+  MinFeeWarning,
+} from '../../components/ErrorMessages';
 import {useAppDispatch} from '../../../../utils/hooks';
 import {GetFeeUnits, IsERCToken} from '../../../../store/wallet/utils/currency';
 import styled from 'styled-components/native';
@@ -26,20 +29,20 @@ import {
 } from '../../../../components/styled/Containers';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import Back from '../../../../components/back/Back';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity, View} from 'react-native';
 import {DetailsList} from './confirm/Shared';
 import Checkbox from '../../../../components/checkbox/Checkbox';
 import Button from '../../../../components/button/Button';
-import {Caution, Slate} from "../../../../styles/colors";
+import {Caution, Slate} from '../../../../styles/colors';
 
 export type TransactionSpeedParamList = {
   feeLevel: string;
   wallet: Wallet;
   isSpeedUpTx?: boolean;
   customFeePerKB?: number;
-  feePerSatByte?: string;
+  feePerSatByte?: number;
   isVisible: boolean;
-  onCloseModal: (level?: string, customFeePerKB?: string) => void;
+  onCloseModal: (level?: string, customFeePerKB?: number) => void;
 };
 
 enum ethAvgTime {
@@ -77,8 +80,6 @@ export const TextInput = styled.TextInput`
   padding: 5px;
 `;
 
-const OptionsContainer = styled.View``;
-
 const ErrorText = styled(BaseText)`
   color: ${Caution};
   font-size: 12px;
@@ -100,15 +101,15 @@ const TransactionSpeed = ({
 }: TransactionSpeedParamList) => {
   const {coin, network} = wallet.credentials;
   const dispatch = useAppDispatch();
-  const [speedUpMinFeePerKb, setSpeedUpMinFeePerKb] = useState<number>();
 
+  const [speedUpMinFeePerKb, setSpeedUpMinFeePerKb] = useState<number>();
   const {feeUnit, feeUnitAmount, blockTime} = GetFeeUnits(coin);
   const [feeOptions, setFeeOptions] = useState<any[]>();
-  const [feePerSatByte, setFeePerSatByte] = useState(paramFeePerSatByte);
-  const [customSatPerByte, setCustomSatPerByte] = useState<number>();
-  const [isLoading, setIsLoading] = useState(true);
+  const [feePerSatByte, setFeePerSatByte] = useState<
+    number | string | undefined
+  >(paramFeePerSatByte);
   const [selectedSpeed, setSelectedSpeed] = useState(feeLevel);
-  const [customSpeed, setCustomSpeed] = useState<number>();
+  const [customSatsPerByte, setCustomSatsPerByte] = useState(feePerSatByte);
   const [error, setError] = useState<string | undefined>();
   const [disableApply, setDisableApply] = useState(false);
   const [maxFeeRecommended, setMaxFeeRecommended] = useState<number>();
@@ -125,7 +126,7 @@ const TransactionSpeed = ({
       );
       const _speedUpMinFeePerKb = feeLevelsAllowed.length
         ? // @ts-ignore
-          _.minBy(feeLevesAllowed, 'feePerKb').feePerKb
+          _.minBy(feeLevelsAllowed, 'feePerKb').feePerKb
         : customFeePerKB;
       setSpeedUpMinFeePerKb(_speedUpMinFeePerKb);
     } else {
@@ -139,7 +140,7 @@ const TransactionSpeed = ({
 
   const setFeeRate = (_feeLevels: Fee[]) => {
     const _feeOptions: any[] = [];
-    _feeLevels.forEach((fee: Fee, i: number) => {
+    _feeLevels.forEach((fee: Fee) => {
       const {feePerKb, level, nbBlocks} = fee;
       const feeOption: any = {
         ...fee,
@@ -165,8 +166,7 @@ const TransactionSpeed = ({
       }
 
       if (level === feeLevel) {
-        const _feePerSatByte = (feePerKb / feeUnitAmount).toFixed();
-        setFeePerSatByte(_feePerSatByte);
+        setFeePerSatByte((feePerKb / feeUnitAmount).toFixed());
       }
 
       if (isSpeedUpTx) {
@@ -177,10 +177,9 @@ const TransactionSpeed = ({
     });
 
     setFeeOptions(_feeOptions);
-    setIsLoading(false);
 
     setFeesRecommended(_feeLevels);
-    if(feeLevel === 'custom') {
+    if (feeLevel === 'custom') {
       checkFees(feePerSatByte);
     }
   };
@@ -210,7 +209,7 @@ const TransactionSpeed = ({
 
       setFeeRate(_feeLevels);
       if (customFeePerKB) {
-        setCustomSatPerByte(customFeePerKB / feeUnitAmount);
+        setCustomSatsPerByte(customFeePerKB / feeUnitAmount);
       }
     } catch (e) {}
   };
@@ -221,25 +220,34 @@ const TransactionSpeed = ({
 
     if (!fee) {
       setDisableApply(true);
-      setError('required')
+      setError('required');
       return;
     }
 
-    if(fee < minFeeAllowed) {
+    if (fee < minFeeAllowed) {
       setError('showMinError');
       setDisableApply(true);
       return;
     }
 
-    if(fee > minFeeAllowed && minFeeRecommended !== undefined && fee < minFeeRecommended) {
-      setError('showMinWarning')
+    if (
+      fee > minFeeAllowed &&
+      minFeeRecommended !== undefined &&
+      fee < minFeeRecommended
+    ) {
+      setError('showMinWarning');
     }
 
-    if(maxFeeAllowed && fee <= maxFeeAllowed  && maxFeeRecommended !== undefined && fee > maxFeeRecommended) {
+    if (
+      maxFeeAllowed &&
+      fee <= maxFeeAllowed &&
+      maxFeeRecommended !== undefined &&
+      fee > maxFeeRecommended
+    ) {
       setError('showMaxWarning');
     }
 
-    if(maxFeeAllowed && fee > maxFeeAllowed) {
+    if (maxFeeAllowed && fee > maxFeeAllowed) {
       setError('showMaxError');
       setDisableApply(true);
       return;
@@ -259,18 +267,22 @@ const TransactionSpeed = ({
   };
 
   const onApply = () => {
-    if(selectedSpeed === 'custom' && customSpeed) {
-      const customFeePerKB = (customSpeed * feeUnitAmount).toFixed();
+    if (selectedSpeed === 'custom' && customSatsPerByte) {
+      const customFeePerKB = Number(
+        (+customSatsPerByte * feeUnitAmount).toFixed(),
+      );
 
-      // TODO: custom speed
-      // if(error === 'showMinWarning') {
-      //   dispatch(showBottomNotificationModal(MinFeeWarning(() => {
-      //     onCloseModal(selectedSpeed, customFeePerKB)
-      //   })))
-      //   return;
-      // }
-      // onCloseModal(selectedSpeed, customFeePerKB)
-
+      if (error === 'showMinWarning') {
+        dispatch(
+          showBottomNotificationModal(
+            MinFeeWarning(() => {
+              onCloseModal(selectedSpeed, customFeePerKB);
+            }),
+          ),
+        );
+        return;
+      }
+      onCloseModal(selectedSpeed, customFeePerKB);
     } else {
       onCloseModal(selectedSpeed);
     }
@@ -280,8 +292,7 @@ const TransactionSpeed = ({
     let {minValue, maxValue} = getRecommendedFees(feeLevels);
     setMaxFeeRecommended(maxValue);
     setMinFeeRecommended(minValue);
-    const _maxFeeAllowed = maxValue * FEE_MULTIPLIER;
-    setMaxFeeAllowed(_maxFeeAllowed);
+    setMaxFeeAllowed(maxValue * FEE_MULTIPLIER);
   };
 
   const getRecommendedFees = (
@@ -317,7 +328,7 @@ const TransactionSpeed = ({
           </TitleContainer>
         </SheetHeaderContainer>
 
-        <OptionsContainer>
+        <View>
           {feeOptions && feeOptions.length > 0 ? (
             <>
               {feeOptions.map((fee, i) => (
@@ -351,10 +362,8 @@ const TransactionSpeed = ({
                       radio={true}
                       onPress={() => {
                         setError(undefined);
-
                         setSelectedSpeed('custom');
                         setDisableApply(true);
-
                       }}
                       checked={selectedSpeed === 'custom'}
                     />
@@ -363,18 +372,36 @@ const TransactionSpeed = ({
 
                 {selectedSpeed === 'custom' ? (
                   <ActionContainer>
-                    <TextInput keyboardType="numeric"
+                    <TextInput
+                      keyboardType="numeric"
+                      value={String(customSatsPerByte || '')}
                       onChangeText={(text: string) => {
                         checkFees(text);
-                        setCustomSpeed(+text);
+                        setCustomSatsPerByte(+text);
                       }}
                     />
-                    {error === 'required' ? <ErrorText>Fee is required.</ErrorText> : null}
-                    {error === 'showMinWarning' ? <ErrorText>Fee is lower than recommended.</ErrorText> : null}
-                    {error === 'showMaxWarning' ? <ErrorText>You should not set a fee higher than {maxFeeRecommended} {feeUnit}.</ErrorText> : null}
-                    {error === 'showMinError' ? <ErrorText>Fee should be higher than {minFeeAllowed} {feeUnit}.</ErrorText> : null}
-                    {error === 'showMaxError' ? <ErrorText>Fee Should be lesser than {maxFeeAllowed} {feeUnit}.</ErrorText> : null}
-
+                    {error === 'required' ? (
+                      <ErrorText>Fee is required.</ErrorText>
+                    ) : null}
+                    {error === 'showMinWarning' ? (
+                      <ErrorText>Fee is lower than recommended.</ErrorText>
+                    ) : null}
+                    {error === 'showMaxWarning' ? (
+                      <ErrorText>
+                        You should not set a fee higher than {maxFeeRecommended}{' '}
+                        {feeUnit}.
+                      </ErrorText>
+                    ) : null}
+                    {error === 'showMinError' ? (
+                      <ErrorText>
+                        Fee should be higher than {minFeeAllowed} {feeUnit}.
+                      </ErrorText>
+                    ) : null}
+                    {error === 'showMaxError' ? (
+                      <ErrorText>
+                        Fee Should be lesser than {maxFeeAllowed} {feeUnit}.
+                      </ErrorText>
+                    ) : null}
                   </ActionContainer>
                 ) : null}
 
@@ -388,7 +415,7 @@ const TransactionSpeed = ({
               </CtaContainer>
             </>
           ) : null}
-        </OptionsContainer>
+        </View>
       </TxSpeedContainer>
     </SheetModal>
   );
