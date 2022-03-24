@@ -26,7 +26,7 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
     return navigation.addListener('focus', () => {
       setPasswordToggle(!!key.methods.isPrivKeyEncrypted());
     });
-  }, [navigation]);
+  }, [navigation, key.methods]);
 
   const onSubmitPassword = async (password: string) => {
     if (key) {

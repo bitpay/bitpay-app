@@ -123,7 +123,7 @@ export const ShopOnline = ({
 
   return (
     <>
-      <SectionSpacer />
+      <SectionSpacer height={40} />
       <SectionContainer>
         <Controller
           control={control}

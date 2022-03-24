@@ -50,8 +50,6 @@ export default ({item}: {item: ExchangeRateProps}) => {
           shadowOpacity: 0.1,
           shadowRadius: 5,
           borderRadius: 12,
-          position: 'absolute',
-          top: 12,
           elevation: 3,
         },
       ]}>

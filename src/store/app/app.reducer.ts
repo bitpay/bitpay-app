@@ -1,14 +1,15 @@
-import {ColorSchemeName} from 'react-native';
 import i18n from 'i18next';
+import {ColorSchemeName} from 'react-native';
+import {ContentCard} from 'react-native-appboy-sdk';
 import {Network} from '../../constants';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {NavScreenParams, RootStackParamList} from '../../Root';
 import {AppIdentity} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
-import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 
 type AppReduxPersistBlackList = [
   'appIsLoading',
@@ -56,6 +57,7 @@ export interface AppState {
   colorScheme: ColorSchemeName;
   defaultLanguage: string;
   showPortfolioValue: boolean;
+  brazeContentCards: ContentCard[];
 }
 
 const initialState: AppState = {
@@ -94,6 +96,7 @@ const initialState: AppState = {
   colorScheme: null,
   defaultLanguage: i18n.language || 'en',
   showPortfolioValue: true,
+  brazeContentCards: [],
 };
 
 export const appReducer = (
@@ -265,6 +268,19 @@ export const appReducer = (
       return {
         ...state,
         showPortfolioValue: action.payload,
+      };
+
+    case AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED:
+      if (
+        state.brazeContentCards.length === 0 &&
+        action.payload.contentCards.length === 0
+      ) {
+        return state;
+      }
+
+      return {
+        ...state,
+        brazeContentCards: action.payload.contentCards,
       };
 
     default:

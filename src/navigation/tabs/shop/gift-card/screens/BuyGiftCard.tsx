@@ -33,8 +33,6 @@ import {AppActions} from '../../../../../store/app';
 import GiftCardDiscountText from '../../components/GiftCardDiscountText';
 import {formatFiatAmount} from '../../../../../utils/helper-methods';
 import {WalletScreens} from '../../../../wallet/WalletStack';
-import {TransactionProposal} from '../../../../../store/wallet/wallet.models';
-import {deletedUnsoldGiftCard} from '../../../../../store/shop/shop.actions';
 
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;

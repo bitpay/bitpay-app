@@ -183,9 +183,10 @@ export default ({
               supportedGiftCards={availableGiftCards}
             />
             <SectionDivider />
+            <SectionSpacer height={20} />
           </>
         ) : (
-          <SectionSpacer />
+          <SectionSpacer height={40} />
         )}
         <SectionContainer>
           <Controller

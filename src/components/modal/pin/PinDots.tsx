@@ -41,7 +41,7 @@ const PinDots: React.FC<PinDotsProps> = ({
   shakeDots,
   setShakeDots,
 }) => {
-  const [animation, setAnimation] = useState(new Animated.Value(0));
+  const [animation] = useState(new Animated.Value(0));
 
   const shake = () => {
     Animated.sequence([

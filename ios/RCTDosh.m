@@ -13,9 +13,9 @@
 
 RCT_EXPORT_MODULE();
 
-RCT_EXPORT_METHOD(initializeDosh)
+RCT_EXPORT_METHOD(initializeDosh:(NSDictionary *)uiOptions)
 {
-  [DoshAdapter initDosh];
+  [DoshAdapter initDoshWithUiOptions:uiOptions];
   RCTLogInfo(@"Initialized Dosh");
 }
 
@@ -29,6 +29,12 @@ RCT_EXPORT_METHOD(setDoshToken:(NSString *)token)
 {
   [DoshAdapter setDoshTokenWithToken:token];
   RCTLogInfo(@"Dosh set token");
+}
+
+RCT_EXPORT_METHOD(clearUser)
+{
+  [DoshAdapter clearUser];
+  RCTLogInfo(@"Dosh clear user");
 }
 
 @end

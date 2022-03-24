@@ -117,6 +117,7 @@ export const CustomErrorMessage = ({
     title: title || 'Something went wrong',
     message: errMsg,
     enableBackdropDismiss: true,
+    onBackdropDismiss: action,
     actions: [
       {
         text: 'OK',
