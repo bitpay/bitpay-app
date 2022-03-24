@@ -54,12 +54,12 @@ enum ethAvgTime {
 const TxSpeedContainer = styled(SheetContainer)`
   flex: 1;
   justify-content: flex-start;
-  margin-top: 20px;
+  margin-top: 0px;
   padding: 20px 0;
 `;
 
 const SheetHeaderContainer = styled.View`
-  margin-bottom: 20px;
+  margin: 20px 0;
   align-items: center;
   flex-direction: row;
 `;
@@ -109,7 +109,9 @@ const TransactionSpeed = ({
     number | string | undefined
   >(paramFeePerSatByte);
   const [selectedSpeed, setSelectedSpeed] = useState(feeLevel);
-  const [customSatsPerByte, setCustomSatsPerByte] = useState(feePerSatByte);
+  const [customSatsPerByte, setCustomSatsPerByte] = useState(
+    feePerSatByte ? feePerSatByte + '' : undefined,
+  );
   const [error, setError] = useState<string | undefined>();
   const [disableApply, setDisableApply] = useState(false);
   const [maxFeeRecommended, setMaxFeeRecommended] = useState<number>();
@@ -209,7 +211,7 @@ const TransactionSpeed = ({
 
       setFeeRate(_feeLevels);
       if (customFeePerKB) {
-        setCustomSatsPerByte(customFeePerKB / feeUnitAmount);
+        setCustomSatsPerByte((customFeePerKB / feeUnitAmount).toFixed());
       }
     } catch (e) {}
   };
@@ -314,6 +316,14 @@ const TransactionSpeed = ({
     };
   };
 
+  const onSelectCustomFee = () => {
+    setError(undefined);
+    setSelectedSpeed('custom');
+    if (customSatsPerByte) {
+      checkFees(customSatsPerByte);
+    }
+  };
+
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onClose}>
       <TxSpeedContainer>
@@ -346,11 +356,7 @@ const TransactionSpeed = ({
               <DetailsList>
                 <SpeedOptionRow
                   activeOpacity={ActiveOpacity}
-                  onPress={() => {
-                    setError(undefined);
-                    setDisableApply(true);
-                    setSelectedSpeed('custom');
-                  }}>
+                  onPress={onSelectCustomFee}>
                   <Row>
                     <H6 style={{marginRight: 10}}>Custom fee</H6>
                     <H6 medium={true}>in {feeUnit}</H6>
@@ -360,11 +366,7 @@ const TransactionSpeed = ({
                     style={{justifyContent: 'flex-end', alignItems: 'center'}}>
                     <Checkbox
                       radio={true}
-                      onPress={() => {
-                        setError(undefined);
-                        setSelectedSpeed('custom');
-                        setDisableApply(true);
-                      }}
+                      onPress={onSelectCustomFee}
                       checked={selectedSpeed === 'custom'}
                     />
                   </Row>
@@ -374,10 +376,10 @@ const TransactionSpeed = ({
                   <ActionContainer>
                     <TextInput
                       keyboardType="numeric"
-                      value={String(customSatsPerByte || '')}
+                      value={customSatsPerByte}
                       onChangeText={(text: string) => {
                         checkFees(text);
-                        setCustomSatsPerByte(+text);
+                        setCustomSatsPerByte(text);
                       }}
                     />
                     {error === 'required' ? (
