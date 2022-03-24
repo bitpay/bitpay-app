@@ -117,32 +117,31 @@ const WalletConnectHome = () => {
                 dispatch(
                   showOnGoingProcessModal(OnGoingProcessMessages.LOADING),
                 );
-                const toAddress = request.payload.params[0].to;
+
+                const {
+                  to: toAddress,
+                  from,
+                  gasPrice,
+                  gas,
+                  value = '0x0',
+                  nonce,
+                  data,
+                } = request.payload.params[0];
                 const recipient = {
                   address: toAddress,
                 };
-                const amountStr = FormatAmount(
-                  'eth',
-                  parseInt(request.payload.params[0].value, 16),
-                );
+                const amountStr =
+                  value && FormatAmount('eth', parseInt(value, 16));
                 const tx = {
                   wallet,
                   recipient,
                   toAddress,
-                  from: request.payload.params[0].from,
-                  amount: request.payload.params[0].value
-                    ? Number(amountStr)
-                    : 0,
-                  gasPrice:
-                    request.payload.params[0].gasPrice &&
-                    convertHexToNumber(request.payload.params[0].gasPrice),
-                  nonce:
-                    request.payload.params[0].nonce &&
-                    convertHexToNumber(request.payload.params[0].nonce),
-                  gasLimit:
-                    request.payload.params[0].gas &&
-                    convertHexToNumber(request.payload.params[0].gas),
-                  data: request.payload.params[0].data,
+                  from,
+                  amount: Number(amountStr),
+                  gasPrice: gasPrice && convertHexToNumber(gasPrice),
+                  nonce: nonce && convertHexToNumber(nonce),
+                  gasLimit: gas && convertHexToNumber(gas),
+                  data,
                 };
                 const {txDetails, txp} = (await dispatch<any>(
                   createProposalAndBuildTxDetails(tx),
@@ -300,6 +299,8 @@ const WalletConnectHome = () => {
           <Hr />
           {requests && requests.length ? (
             requests.map((request, id) => {
+              const {value = '0x0'} = request.payload.params[0];
+              const amountStr = FormatAmountStr('eth', parseInt(value, 16));
               return (
                 <View key={id}>
                   <ItemTouchableContainer
@@ -326,26 +327,14 @@ const WalletConnectHome = () => {
                               style={{width: 25, height: 25}}
                             />
                           </IconContainer>
-                          <IconLabel>{session.peerMeta.name}</IconLabel>
+                          <IconLabel numberOfLines={2} ellipsizeMode={'tail'}>
+                            {session.peerMeta.name}
+                          </IconLabel>
                         </>
                       ) : null}
                     </ItemTitleContainer>
                     <ItemNoteContainer>
-                      {request.payload.method === 'eth_signTransaction' ||
-                      request.payload.method === 'eth_sendTransaction' ? (
-                        <IconLabel>
-                          {FormatAmountStr(
-                            'eth',
-                            parseInt(
-                              request.payload.params[0].value ||
-                                request.payload.params[0].gas,
-                              16,
-                            ),
-                          )}
-                        </IconLabel>
-                      ) : (
-                        <IconLabel>0.00 ETH</IconLabel>
-                      )}
+                      <IconLabel>{amountStr}</IconLabel>
                       <IconContainer>
                         <AngleRight />
                       </IconContainer>

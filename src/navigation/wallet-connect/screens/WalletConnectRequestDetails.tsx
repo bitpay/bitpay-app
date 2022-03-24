@@ -204,7 +204,7 @@ const WalletConnectRequestDetails = () => {
             )) as any;
             break;
           default:
-            throw `Not supported method: ${request.payload.method}`;
+            throw `Method not supported: ${request.payload.method}`;
         }
       } else {
         throw 'Address requested does not match active account';

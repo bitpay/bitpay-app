@@ -70,7 +70,9 @@ export const walletConnectOnSessionRequest =
         dispatch(WalletConnectActions.sessionRequest([...pending, connector]));
         dispatch(
           LogActions.info(
-            '[WC/walletConnectOnSessionRequest]: session request',
+            `[WC/walletConnectOnSessionRequest]: session request: ${JSON.stringify(
+              payload.params[0],
+            )}`,
           ),
         );
         resolve(payload.params[0]);
@@ -182,6 +184,13 @@ export const walletConnectSubscribeToEvents =
         if (error) {
           throw error;
         }
+        dispatch(
+          LogActions.info(
+            `[WC/call_request]: new pending request: ${JSON.stringify(
+              payload,
+            )}`,
+          ),
+        );
         const updatedRequests: IWCRequest[] = [
           ...getState().WALLET_CONNECT.requests,
         ];
