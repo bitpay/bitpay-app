@@ -72,6 +72,10 @@ const WalletDetailsContainer = styled.View`
   padding-top: 10px;
 `;
 
+const HeaderContainer = styled.View`
+  margin: 20px 0;
+`;
+
 const Row = styled.View`
   flex-direction: row;
   justify-content: space-between;
@@ -79,7 +83,6 @@ const Row = styled.View`
 `;
 
 const BalanceContainer = styled.View`
-  margin-top: 20px;
   padding: 0 15px 10px;
   flex-direction: column;
 `;
@@ -465,7 +468,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         }
         ListHeaderComponent={() => {
           return (
-            <>
+            <HeaderContainer>
               <BalanceContainer>
                 <Row>
                   {!hideBalance ? (
@@ -520,7 +523,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                   }}
                 />
               ) : null}
-            </>
+            </HeaderContainer>
           );
         }}
         sections={groupedHistory}
