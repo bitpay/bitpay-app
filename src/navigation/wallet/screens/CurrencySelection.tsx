@@ -166,7 +166,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
           checked: false,
         };
       }),
-    [SupportedCurrencyOptions],
+    [],
   );
 
   const _currencies = useMemo(
@@ -176,7 +176,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
 
   const _multiSigCurrencies = useMemo(
     () => SupportedCurrencyOptions.filter(currency => currency.hasMultisig),
-    [SupportedCurrencyOptions],
+    [],
   );
 
   const checkEthIfTokenSelected = (

@@ -1,5 +1,4 @@
 import {upperFirst} from 'lodash';
-import ReactAppboy from 'react-native-appboy-sdk';
 import {batch} from 'react-redux';
 import AuthApi from '../../api/auth';
 import {
@@ -10,6 +9,7 @@ import UserApi from '../../api/user';
 import {BasicUserInfo, InitialUserData} from '../../api/user/user.types';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
+import Dosh from '../../lib/dosh';
 import {isAxiosError, isRateLimitError} from '../../utils/axios';
 import {generateSalt, hashPassword} from '../../utils/password';
 import {AppActions, AppEffects} from '../app/';
@@ -36,7 +36,6 @@ export const startBitPayIdStoreInit =
       dispatch(
         BitPayIdActions.successInitializeStore(APP.network, initialData),
       );
-      dispatch(startSetBrazeUser(user));
       dispatch(ShopEffects.startFetchCatalog());
     }
   };
@@ -383,6 +382,7 @@ const startPairAndLoadUser =
 
       dispatch(startBitPayIdStoreInit(data.user));
       dispatch(CardEffects.startCardStoreInit(data.user));
+      dispatch(AppEffects.initializeBrazeContent());
     } catch (err) {
       let errMsg;
 
@@ -412,6 +412,15 @@ export const startDisconnectBitPayId =
       // log but swallow this error
       dispatch(LogActions.error('An error occurred while logging out.'));
       dispatch(LogActions.error(JSON.stringify(err)));
+    }
+
+    try {
+      Dosh.clearUser();
+    } catch (err) {
+      // log but swallow this error
+      dispatch(LogActions.error('An error occured while clearing Dosh user.'));
+      dispatch(LogActions.error(JSON.stringify(err)));
+      return;
     }
   };
 
@@ -446,15 +455,3 @@ export const startFetchDoshToken = (): Effect => async (dispatch, getState) => {
     });
   }
 };
-
-export const startSetBrazeUser =
-  ({eid, email}: BasicUserInfo): Effect =>
-  async dispatch => {
-    try {
-      ReactAppboy.changeUser(eid);
-      ReactAppboy.setEmail(email);
-      dispatch(LogActions.info('Braze user session created'));
-    } catch (err) {
-      dispatch(LogActions.error('Error creating Braze user session'));
-    }
-  };

@@ -19,7 +19,6 @@ const ButtonsRow = styled.View`
 
 const ButtonContainer = styled.View`
   align-items: center;
-  margin: 20px 0;
 `;
 
 const ButtonText = styled(BaseText)`
@@ -65,15 +64,35 @@ interface Props {
   };
 }
 
-const LinkingButtons = ({receive, send}: Props) => {
+const LinkingButtons = ({buy, receive, send}: Props) => {
   const navigation = useNavigation();
   const buttonsList: Array<ButtonListProps> = [
     // TODO: update icons
     {
       label: 'buy',
       img: <BuySvg />,
-      cta: () => navigation.navigate('BuyCrypto', {screen: 'Root'}),
-      hide: false,
+      cta:
+        buy && buy.cta
+          ? buy.cta
+          : () => {
+              navigation.navigate('Wallet', {
+                screen: 'Amount',
+                params: {
+                  onAmountSelected: async (amount: string) => {
+                    navigation.navigate('BuyCrypto', {
+                      screen: 'Root',
+                      params: {
+                        amount: Number(amount),
+                      },
+                    });
+                  },
+                  opts: {
+                    hideSendMax: true,
+                  },
+                },
+              });
+            },
+      hide: !!buy?.hide,
     },
     {
       label: 'swap',

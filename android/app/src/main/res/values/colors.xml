@@ -1,3 +1,13 @@
 <resources>
+    <!-- RN Bootsplash -->
     <color name="bootsplash_background">#1A3B8B</color>
+
+    <!-- Dosh SDK -->
+    <color name="dosh_core_header">#000000</color>
+    <color name="dosh_core_primary">#000000</color>
+    <color name="dosh_core_interactive">#2240C4</color>
+    <color name="dosh_core_navigation_bar_title">#000000</color>
+    <color name="dosh_core_navigation_bar_background">#FFFFFF</color>
+    <color name="dosh_core_navigation_bar_back_button">#000000</color>
+    <color name="dosh_core_navigation_bar_separator">#FFFFFF</color>
 </resources>

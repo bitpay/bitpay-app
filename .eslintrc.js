@@ -7,4 +7,5 @@ module.exports = {
   env: {
     jest: true,
   },
+  ignorePatterns: ['android/*', 'ios/*'],
 };

@@ -15,6 +15,7 @@ import {GetProtocolPrefix} from './currency';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {formatFiatAmount} from '../../../utils/helper-methods';
+import {Network} from '../../../constants';
 
 const mapAbbreviationAndName = (
   walletName: string,
@@ -43,11 +44,13 @@ export const buildWalletObj = (
     balance = {crypto: '0', fiat: 0, sat: 0},
     tokens,
     keyId,
+    network,
     n,
     m,
   }: Credentials & {
     balance?: WalletBalance;
     tokens?: any;
+    network: Network;
   },
   tokenOpts?: {[key in string]: Token},
   otherOpts?: {
@@ -65,6 +68,7 @@ export const buildWalletObj = (
     walletName: otherOpts?.walletName,
     balance,
     tokens,
+    network,
     keyId,
     img: SUPPORTED_CURRENCIES.includes(currencyAbbreviation)
       ? CurrencyListIcons[currencyAbbreviation]
@@ -198,25 +202,30 @@ export const GetProtocolPrefixAddress = (
   return GetProtocolPrefix(coin, network) + ':' + address;
 };
 
-export const BuildKeysAndWalletsList = (allKeys: {[key in string]: Key}) => {
+export const BuildKeysAndWalletsList = (
+  allKeys: {[key in string]: Key},
+  appNetwork?: Network,
+) => {
   return Object.keys(allKeys).map(keyId => {
     const keyObj = allKeys[keyId];
     return {
       key: keyId,
       keyName: keyObj.keyName || 'My Key',
-      wallets: allKeys[keyId].wallets.map(walletObj => {
-        const {
-          balance,
-          currencyAbbreviation,
-          credentials: {network},
-        } = walletObj;
-        return merge(cloneDeep(walletObj), {
-          cryptoBalance: balance.crypto,
-          fiatBalance: formatFiatAmount(balance.fiat, 'USD'),
-          currencyAbbreviation,
-          network,
-        });
-      }),
+      wallets: allKeys[keyId].wallets
+        .filter(wallet => (appNetwork ? wallet.network === appNetwork : true))
+        .map(walletObj => {
+          const {
+            balance,
+            currencyAbbreviation,
+            credentials: {network},
+          } = walletObj;
+          return merge(cloneDeep(walletObj), {
+            cryptoBalance: balance.crypto,
+            fiatBalance: formatFiatAmount(balance.fiat, 'USD'),
+            currencyAbbreviation,
+            network,
+          });
+        }),
     };
   });
 };

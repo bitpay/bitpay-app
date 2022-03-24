@@ -87,7 +87,22 @@ const TransactModal = () => {
       title: 'Buy Crypto',
       description: 'Buy crypto with cash',
       onPress: () => {
-        navigation.navigate('BuyCrypto', {screen: 'Root'});
+        navigation.navigate('Wallet', {
+          screen: 'Amount',
+          params: {
+            onAmountSelected: async (amount: string, setButtonState: any) => {
+              navigation.navigate('BuyCrypto', {
+                screen: 'Root',
+                params: {
+                  amount: Number(amount),
+                },
+              });
+            },
+            opts: {
+              hideSendMax: true,
+            },
+          },
+        });
       },
     },
     {

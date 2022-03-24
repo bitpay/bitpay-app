@@ -10,12 +10,9 @@ const BWC = BwcProvider.getInstance();
 
 export const startCreateKeyMultisig =
   (opts: Partial<KeyOptions>): Effect =>
-  async (dispatch, getState): Promise<Key> => {
+  async (dispatch): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
       try {
-        const state = getState();
-        const network = state.APP.network; // TODO
-
         const _key = BWC.createKey({
           seedType: 'new',
         });
@@ -45,7 +42,7 @@ export const startCreateKeyMultisig =
 
 export const addWalletMultisig =
   ({key, opts}: {key: Key; opts: Partial<KeyOptions>}): Effect =>
-  async (dispatch, getState): Promise<Wallet> => {
+  async (dispatch): Promise<Wallet> => {
     return new Promise(async (resolve, reject) => {
       try {
         const newWallet = (await createMultisigWallet({
@@ -100,7 +97,6 @@ const createMultisigWallet = (params: {
           console.log(err);
           switch (err.name) {
             case 'bwc.ErrorCOPAYER_REGISTERED': {
-              // eslint-disable-next-line no-shadow
               const account = opts.account || 0;
               if (account >= 20) {
                 return reject(

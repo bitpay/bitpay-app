@@ -8,7 +8,6 @@ import {RowContainer} from '../styled/Containers';
 import {H5, H7} from '../styled/Text';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {GlobalSelectObj} from '../../navigation/wallet/screens/GlobalSelect';
-import {Wallet} from '../../store/wallet/wallet.models';
 import styled from 'styled-components/native';
 import {LightBlack, NeutralSlate} from '../../styles/colors';
 import AngleRightSvg from '../../../assets/img/angle-right.svg';

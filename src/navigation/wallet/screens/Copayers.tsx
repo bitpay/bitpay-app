@@ -10,7 +10,6 @@ import {
   Paragraph,
   BaseText,
   H6,
-  H4,
   TextAlign,
   HeaderTitle,
 } from '../../../components/styled/Text';
