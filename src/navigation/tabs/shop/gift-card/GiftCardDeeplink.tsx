@@ -45,7 +45,6 @@ const GiftCardDeeplinkScreen: React.FC<
             cardConfig: targetedGiftCardRef.current,
           },
         });
-
       } else {
         navigation.replace('GiftCard', {
           screen: 'BuyGiftCard',

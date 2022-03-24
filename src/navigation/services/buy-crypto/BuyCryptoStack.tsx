@@ -12,11 +12,13 @@ import {HeaderRightContainer} from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 
 export type BuyCryptoStackParamList = {
-  Root?: {
-    amount: number;
-    fromWallet?: any;
-    buyCryptoOpts?: any;
-  };
+  Root:
+    | {
+        amount: number;
+        fromWallet?: any;
+        buyCryptoOpts?: any;
+      }
+    | undefined;
   BuyCryptoOffers: {
     amount: number;
     fiatCurrency: string;
