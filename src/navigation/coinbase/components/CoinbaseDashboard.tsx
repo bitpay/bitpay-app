@@ -9,6 +9,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
+import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
@@ -28,9 +29,9 @@ const OverviewContainer = styled.View`
 `;
 
 const BalanceContainer = styled.View`
-  height: 15%;
   margin-top: 20px;
-  padding: 10px 15px;
+  margin-bottom: 10px;
+  padding: 0 15px;
 `;
 
 const Balance = styled(BaseText)`
@@ -172,6 +173,12 @@ const CoinbaseDashboard = () => {
           )}{' '}
           {user?.data.native_currency}
         </Balance>
+        <LinkingButtons
+          receive={{cta: () => null, label: 'deposit'}}
+          send={{cta: () => null, label: 'withdraw'}}
+          buy={{cta: () => null, hide: true}}
+          swap={{cta: () => null, hide: true}}
+        />
       </BalanceContainer>
       <Hr />
       <FlatList

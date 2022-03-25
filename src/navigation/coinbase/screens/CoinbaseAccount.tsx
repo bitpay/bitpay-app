@@ -16,7 +16,6 @@ import {formatFiatAmount, shouldScale} from '../../../utils/helper-methods';
 import {Hr} from '../../../components/styled/Containers';
 import {BaseText, Balance, H5} from '../../../components/styled/Text';
 import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
-import Button from '../../../components/button/Button';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 
@@ -39,7 +38,7 @@ const Row = styled.View`
 `;
 
 const BalanceContainer = styled.View`
-  margin-top: 20px;
+  margin: 20px 0;
   padding: 0 15px 10px;
   flex-direction: column;
 `;
@@ -50,7 +49,7 @@ const Type = styled(BaseText)`
   border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
   padding: 2px 4px;
   border-radius: 3px;
-  margin-bottom: 5px;
+  margin-bottom: 7px;
 `;
 
 const TransactionListHeader = styled.View`
@@ -71,12 +70,6 @@ const EmptyListContainer = styled.View`
 
 const SkeletonContainer = styled.View`
   margin-bottom: 20px;
-`;
-
-const ButtonContainer = styled.View`
-  flex-direction: row;
-  justify-content: space-around;
-  margin: 10px 0;
 `;
 
 export type CoinbaseAccountScreenParamList = {
@@ -237,14 +230,6 @@ const CoinbaseAccount = ({
           {account?.primary && <Type>Primary</Type>}
         </Row>
       </BalanceContainer>
-      <ButtonContainer>
-        <Button onPress={() => {}} buttonStyle={'primary'} buttonType={'link'}>
-          Deposit
-        </Button>
-        <Button onPress={() => {}} buttonStyle={'primary'} buttonType={'link'}>
-          Withdraw
-        </Button>
-      </ButtonContainer>
       <Hr />
       <FlatList
         ListHeaderComponent={() => {
