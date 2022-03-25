@@ -6,6 +6,7 @@ import {Wallet} from '../../../../store/wallet/wallet.models';
 import {Slate} from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
+import {getRemainingWalletCount} from '../../../../store/wallet/utils/wallet';
 
 interface WalletCardComponentProps {
   wallets: Wallet[];
@@ -48,10 +49,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   keyName = 'My Key',
 }) => {
   const walletInfo = wallets.slice(0, WALLET_DISPLAY_LIMIT);
-  const remainingAssetCount =
-    wallets.length > WALLET_DISPLAY_LIMIT
-      ? wallets.length - WALLET_DISPLAY_LIMIT
-      : undefined;
+  const remainingWalletCount = getRemainingWalletCount(wallets);
 
   const HeaderComponent = (
     <HeaderImg>
@@ -65,9 +63,9 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
           )
         );
       })}
-      {remainingAssetCount && (
+      {remainingWalletCount && (
         <RemainingAssetsLabel>
-          + {remainingAssetCount} more
+          + {remainingWalletCount} more
         </RemainingAssetsLabel>
       )}
     </HeaderImg>

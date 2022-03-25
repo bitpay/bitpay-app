@@ -42,6 +42,7 @@ export enum AppActionTypes {
   DISMISS_BIOMETRIC_MODAL = 'APP/DISMISS_BIOMETRIC_MODAL',
   BIOMETRIC_LOCK_ACTIVE = 'APP/BIOMETRIC_LOCK_ACTIVE',
   LOCK_AUTHORIZED_UNTIL = 'APP/LOCK_AUTHORIZED_UNTIL',
+  SET_HOME_CAROUSEL_CONFIG = 'APP/SET_HOME_CAROUSEL_CONFIG',
 }
 
 interface NetworkChanged {
@@ -195,6 +196,11 @@ interface BrazeContentCardsFetched {
   payload: {contentCards: ContentCard[]};
 }
 
+interface SetHomeCarouselConfig {
+  type: typeof AppActionTypes.SET_HOME_CAROUSEL_CONFIG;
+  payload: any;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
@@ -228,4 +234,5 @@ export type AppActionType =
   | ShowBiometricModal
   | DismissBiometricModal
   | BiometricLockActive
-  | LockAuthorizedUntil;
+  | LockAuthorizedUntil
+  | SetHomeCarouselConfig;

@@ -1,9 +1,10 @@
 import {NavigationProp, useNavigation} from '@react-navigation/native';
-import React, {ReactNode, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import Carousel from 'react-native-snap-carousel';
+import styled from 'styled-components/native';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {WIDTH} from '../../../../components/styled/Containers';
+import {ActiveOpacity, WIDTH} from '../../../../components/styled/Containers';
 import {RootState} from '../../../../store';
 import {Card} from '../../../../store/card/card.models';
 import {Key} from '../../../../store/wallet/wallet.models';
@@ -16,11 +17,19 @@ import {BottomNotificationConfig} from '../../../../components/modal/bottom-noti
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {Dispatch} from 'redux';
 import {getMnemonic} from '../../../../utils/helper-methods';
+import {TouchableOpacity} from 'react-native';
+import {HomeLink, SectionHeaderContainer} from '../HomeRoot';
 import {CardProvider} from '../../../../constants/card';
-import HomeRow from './HomeRow';
+import _ from 'lodash';
+import {useAppSelector} from '../../../../utils/hooks';
+import {HomeCarouselConfig} from '../../../../store/app/app.models';
 
-const _renderItem = ({item}: {item: ReactNode}) => {
-  return <>{item}</>;
+const CarouselContainer = styled.View`
+  margin: 10px 0 10px;
+`;
+
+const _renderItem = ({item}: {item: {id: string; component: JSX.Element}}) => {
+  return <>{item.component}</>;
 };
 
 const keyBackupRequired = (
@@ -56,28 +65,34 @@ const keyBackupRequired = (
   };
 };
 
-const createHomeCardList = (
-  navigation: NavigationProp<any>,
-  keys: Key[],
-  cards: Card[],
-  dispatch: Dispatch,
-) => {
+const createHomeCardList = ({
+  navigation,
+  keys,
+  cards,
+  dispatch,
+  homeCarouselConfig,
+}: {
+  navigation: NavigationProp<any>;
+  keys: Key[];
+  cards: Card[];
+  dispatch: Dispatch;
+  homeCarouselConfig: HomeCarouselConfig[];
+}) => {
   cards = cards.filter(c => c.provider === CardProvider.galileo);
-
-  const list: JSX.Element[] = [];
+  let list: {id: string; component: JSX.Element}[] = [];
+  const defaults: {id: string; component: JSX.Element}[] = [];
   const hasKeys = keys.length;
   const hasCards = cards.length;
   const hasGiftCards = false;
   const hasCoinbase = false;
-
   if (hasKeys) {
-    const walletCards = keys
-      .filter(key => key.show)
-      .map(key => {
-        let {wallets, totalBalance = 0, backupComplete} = key;
-        wallets = wallets.filter(wallet => !wallet.hideWallet);
+    const walletCards = keys.map(key => {
+      let {wallets, totalBalance = 0, backupComplete} = key;
+      wallets = wallets.filter(wallet => !wallet.hideWallet);
 
-        return (
+      return {
+        id: key.id,
+        component: (
           <WalletCardComponent
             keyName={key.keyName}
             wallets={wallets}
@@ -98,43 +113,48 @@ const createHomeCardList = (
               }
             }}
           />
-        );
-      });
+        ),
+      };
+    });
 
     list.push(...walletCards);
   } else {
-    list.push(<CreateWallet />);
+    defaults.push({id: 'createWallet', component: <CreateWallet />});
   }
 
   if (hasCards) {
-    list.push(<BitPayCard />);
+    list.push({id: 'bitpayCard', component: <BitPayCard />});
   } else {
-    list.push(<GetMastercard />);
+    defaults.push({id: 'getTheCard', component: <GetMastercard />});
   }
 
   if (hasCoinbase) {
     // TODO
   } else {
-    list.push(<ConnectCoinbase />);
+    defaults.push({id: 'connectToCoinbase', component: <ConnectCoinbase />});
   }
 
   if (hasGiftCards) {
     // TODO
   } else {
-    list.push(<BuyGiftCards />);
+    defaults.push({id: 'buyGiftCards', component: <BuyGiftCards />});
   }
 
   // if hasGiftCards, still show BuyGiftCards at the end before CreateWallet
   if (hasGiftCards) {
-    list.push(<BuyGiftCards />);
+    defaults.push({id: 'buyGiftCards', component: <BuyGiftCards />});
   }
 
   // if hasWallets, still show CreateWallet at the end
   if (hasKeys) {
-    list.push(<CreateWallet />);
+    defaults.push({id: 'createWallet', component: <CreateWallet />});
   }
-
-  return list;
+  list = list.filter(
+    item =>
+      homeCarouselConfig.find(configItem => configItem.id === item.id)?.show,
+  );
+  const order = homeCarouselConfig.map(item => item.id);
+  return [..._.sortBy(list, item => _.indexOf(order, item.id)), ...defaults];
 };
 
 const CardsCarousel = () => {
@@ -143,45 +163,60 @@ const CardsCarousel = () => {
   const bitPayCards = useSelector<RootState, Card[]>(
     ({APP, CARD}) => CARD.cards[APP.network],
   );
-  const keys = useSelector<RootState, {[k: string]: Key}>(
-    ({WALLET}) => WALLET.keys,
-  );
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
   const [cardsList, setCardsList] = useState(
-    createHomeCardList(navigation, Object.values(keys), bitPayCards, dispatch),
+    createHomeCardList({
+      navigation,
+      keys: Object.values(keys),
+      cards: bitPayCards,
+      dispatch,
+      homeCarouselConfig: homeCarouselConfig || [],
+    }),
   );
 
   useEffect(() => {
     setCardsList(
-      createHomeCardList(
+      createHomeCardList({
         navigation,
-        Object.values(keys),
-        bitPayCards,
+        keys: Object.values(keys),
+        cards: bitPayCards,
         dispatch,
-      ),
+        homeCarouselConfig: homeCarouselConfig || [],
+      }),
     );
-  }, [navigation, keys, bitPayCards, dispatch]);
+  }, [navigation, keys, bitPayCards, dispatch, homeCarouselConfig]);
 
   return (
-    <HomeRow
-      action={Object.keys(keys).length ? 'Customize' : ''}
-      onActionPress={() => {
-        haptic('impactLight');
-        navigation.navigate('GeneralSettings', {
-          screen: 'CustomizeHome',
-        });
-      }}>
-      <Carousel
-        vertical={false}
-        layout={'default'}
-        useExperimentalSnap={true}
-        data={cardsList}
-        renderItem={_renderItem}
-        sliderWidth={WIDTH}
-        itemWidth={235}
-        inactiveSlideScale={1}
-        inactiveSlideOpacity={1}
-      />
-    </HomeRow>
+    <>
+      {Object.keys(keys).length > 0 ? (
+        <SectionHeaderContainer justifyContent={'flex-end'}>
+          <TouchableOpacity
+            activeOpacity={ActiveOpacity}
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('GeneralSettings', {
+                screen: 'CustomizeHome',
+              });
+            }}>
+            <HomeLink>Customize</HomeLink>
+          </TouchableOpacity>
+        </SectionHeaderContainer>
+      ) : null}
+      <CarouselContainer>
+        <Carousel
+          vertical={false}
+          layout={'default'}
+          useExperimentalSnap={true}
+          data={cardsList}
+          renderItem={_renderItem}
+          sliderWidth={WIDTH}
+          itemWidth={235}
+          inactiveSlideScale={1}
+          inactiveSlideOpacity={1}
+        />
+      </CarouselContainer>
+    </>
   );
 };
 

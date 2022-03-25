@@ -8,7 +8,7 @@ import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {NavScreenParams, RootStackParamList} from '../../Root';
-import {AppIdentity} from './app.models';
+import {AppIdentity, HomeCarouselConfig} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
 
 type AppReduxPersistBlackList = [
@@ -67,6 +67,7 @@ export interface AppState {
   showBiometricModal: boolean;
   biometricLockActive: boolean;
   lockAuthorizedUntil: number | undefined;
+  homeCarouselConfig: HomeCarouselConfig[] | undefined;
 }
 
 const initialState: AppState = {
@@ -109,6 +110,7 @@ const initialState: AppState = {
   showBiometricModal: false,
   biometricLockActive: false,
   lockAuthorizedUntil: undefined,
+  homeCarouselConfig: undefined,
 };
 
 export const appReducer = (
@@ -317,6 +319,12 @@ export const appReducer = (
       return {
         ...state,
         lockAuthorizedUntil: action.payload,
+      };
+
+    case AppActionTypes.SET_HOME_CAROUSEL_CONFIG:
+      return {
+        ...state,
+        homeCarouselConfig: action.payload,
       };
 
     default:
