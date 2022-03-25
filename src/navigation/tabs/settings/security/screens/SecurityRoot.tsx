@@ -97,7 +97,7 @@ const EnableLockModalParagraph = styled(Paragraph)`
 const ImgRow = styled.View`
   flex-direction: row;
   justify-content: space-evenly;
-  margin-bottom: 32px;
+  margin-bottom: 20px;
 `;
 
 const SecuritySettingsRoot: React.FC = () => {
@@ -110,7 +110,10 @@ const SecuritySettingsRoot: React.FC = () => {
   const biometricLockActive = useSelector(
     ({APP}: RootState) => APP.biometricLockActive,
   );
-  const hideModal = () => setModalVisible(false);
+  const hideModal = () => {
+    setSelectedLock('');
+    setModalVisible(false);
+  };
 
   const setPin = () => {
     dispatch(AppActions.showPinModal({type: 'set'}));
@@ -202,37 +205,42 @@ const SecuritySettingsRoot: React.FC = () => {
           </Header>
 
           <EnableLockModalParagraph>
-            {'Secure app with biometric credentials or a PIN'}
+            Secure app with biometric credentials or a PIN
           </EnableLockModalParagraph>
 
           <ImgRow>
             {Platform.OS === 'android' && (
               <ImgContainer
-                isSelected={selectedLock == 'fingerprint'}
+                isSelected={selectedLock === 'fingerprint'}
                 onPress={() => setSelectedLock('fingerprint')}>
                 {FingerprintSvg[themeType]}
               </ImgContainer>
             )}
             {Platform.OS === 'ios' && (
               <ImgContainer
-                isSelected={selectedLock == 'face'}
+                isSelected={selectedLock === 'face'}
                 onPress={() => setSelectedLock('face')}>
                 {FaceSvg[themeType]}
               </ImgContainer>
             )}
             <ImgContainer
-              isSelected={selectedLock == 'pin'}
+              isSelected={selectedLock === 'pin'}
               onPress={() => setSelectedLock('pin')}>
               {PinSvg[themeType]}
             </ImgContainer>
           </ImgRow>
           <CtaContainer>
-            <Button onPress={setLockOption} buttonStyle={'primary'}>
+            <Button
+              onPress={setLockOption}
+              buttonStyle={'primary'}
+              disabled={!selectedLock}>
               Confirm
             </Button>
           </CtaContainer>
           <CtaContainer>
-            <Button onPress={hideModal} buttonStyle={'secondary'}>Cancel</Button>
+            <Button onPress={hideModal} buttonStyle={'secondary'}>
+              Cancel
+            </Button>
           </CtaContainer>
         </SheetContainer>
       </SheetModal>
