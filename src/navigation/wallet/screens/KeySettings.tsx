@@ -27,20 +27,41 @@ import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
 import WalletSettingsRow from '../../../components/list/WalletSettingsRow';
 import {SlateDark, White} from '../../../styles/colors';
-import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
+import {
+  openUrlWithInAppBrowser,
+  startOnGoingProcessModal,
+} from '../../../store/app/app.effects';
 import {useDispatch} from 'react-redux';
 import InfoSvg from '../../../../assets/img/info.svg';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
-import {buildNestedWalletList} from './KeyOverview';
+import {buildNestedWalletList, buildUIFormattedWallet} from './KeyOverview';
 import {URL} from '../../../constants';
 import {getMnemonic} from '../../../utils/helper-methods';
 import {useAppSelector} from '../../../utils/hooks';
 import {AppActions} from '../../../store/app';
 import {sleep} from '../../../utils/helper-methods';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {WrongPasswordError} from '../components/ErrorMessages';
-import {generateKeyExportCode} from '../../../store/wallet/utils/wallet';
-import {Key} from '../../../store/wallet/wallet.models';
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+} from '../../../store/app/app.actions';
+import {
+  CustomErrorMessage,
+  WrongPasswordError,
+} from '../components/ErrorMessages';
+import {
+  buildWalletObj,
+  generateKeyExportCode,
+} from '../../../store/wallet/utils/wallet';
+import {Key, Wallet} from '../../../store/wallet/wallet.models';
+import {
+  normalizeMnemonic,
+  serverAssistedImport,
+} from '../../../store/wallet/effects';
+import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
+import merge from 'lodash.merge';
+import {syncWallets} from '../../../store/wallet/wallet.actions';
+import {BWCErrorMessage} from '../../../constants/BWCError';
+import {WalletRowProps} from '../../../components/list/WalletRow';
 
 const WalletSettingsContainer = styled.View`
   flex: 1;
@@ -86,7 +107,12 @@ const KeySettings = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const dispatch = useDispatch();
   const navigation = useNavigation();
-  const wallets = buildNestedWalletList(key.wallets);
+
+  const _wallets = key.wallets;
+  const coins = _wallets.filter(wallet => !wallet.credentials.token);
+  const tokens = _wallets.filter(wallet => wallet.credentials.token);
+  const wallets = buildNestedWalletList(coins, tokens);
+
   const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
   const {keyName} = _key || {};
 
@@ -129,6 +155,96 @@ const KeySettings = () => {
     };
   };
 
+  const _tokenOptions = useAppSelector(({WALLET}) => WALLET.tokenOptions);
+
+  const startSyncWallets = async (mnemonic: string) => {
+    if (_key.isPrivKeyEncrypted) {
+      // To close decrypt modal
+      await sleep(500);
+    }
+    await dispatch(
+      startOnGoingProcessModal(OnGoingProcessMessages.SYNCING_WALLETS),
+    );
+    const opts = {
+      words: normalizeMnemonic(mnemonic),
+      mnemonic,
+    };
+    try {
+      let {key: _syncKey, wallets: _syncWallets} = await serverAssistedImport(
+        opts,
+      );
+      if (_syncKey.fingerPrint === key.properties.fingerPrint) {
+        // Filter for new wallets
+        _syncWallets = _syncWallets
+          .filter(
+            sw =>
+              sw.isComplete() &&
+              !_key.wallets.some(ew => ew.id === sw.credentials.walletId),
+          )
+          .map(syncWallet => {
+            // update to keyId
+            syncWallet.credentials.keyId = key.properties.id;
+            return merge(
+              syncWallet,
+              buildWalletObj(syncWallet.credentials, _tokenOptions),
+            );
+          });
+
+        let message;
+
+        const syncWalletsLength = _syncWallets.length;
+        if (syncWalletsLength) {
+          message =
+            syncWalletsLength === 1
+              ? 'New wallet found'
+              : `${syncWalletsLength} wallets found`;
+          dispatch(syncWallets({keyId: _key.id, wallets: _syncWallets}));
+        } else {
+          message = 'Your key is already synced';
+        }
+
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'error',
+            title: 'Sync Wallet',
+            message,
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: 'OK',
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+        );
+      } else {
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+        await dispatch(
+          showBottomNotificationModal(
+            CustomErrorMessage({
+              errMsg: 'Failed to Sync wallets',
+            }),
+          ),
+        );
+      }
+    } catch (e) {
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      await dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            errMsg: BWCErrorMessage(e),
+            title: 'Error',
+          }),
+        ),
+      );
+    }
+  };
+
   return (
     <WalletSettingsContainer>
       <ScrollContainer ref={scrollViewRef}>
@@ -157,15 +273,30 @@ const KeySettings = () => {
           </InfoImageContainer>
         </WalletHeaderContainer>
 
-        {wallets.map(({id, currencyName, img, isToken}) => (
-          <WalletSettingsRow
-            id={id}
-            img={img}
-            currencyName={currencyName}
-            key={id}
-            isToken={isToken}
-          />
-        ))}
+        {wallets.map(
+          ({id, currencyName, img, isToken, network, hideWallet}) => (
+            <TouchableOpacity
+              onPress={() => {
+                haptic('impactLight');
+                navigation.navigate('Wallet', {
+                  screen: 'WalletSettings',
+                  params: {walletId: id, key},
+                });
+              }}
+              key={id}
+              activeOpacity={ActiveOpacity}>
+              <WalletSettingsRow
+                id={id}
+                img={img}
+                currencyName={currencyName}
+                key={id}
+                isToken={isToken}
+                network={network}
+                hideWallet={hideWallet}
+              />
+            </TouchableOpacity>
+          ),
+        )}
 
         <VerticalPadding style={{alignItems: 'center'}}>
           <Link
@@ -262,7 +393,17 @@ const KeySettings = () => {
             activeOpacity={ActiveOpacity}
             onPress={() => {
               haptic('impactLight');
-              //    TODO: Redirect me
+              if (!_key.isPrivKeyEncrypted) {
+                startSyncWallets(_key.properties.mnemonic);
+              } else {
+                dispatch(
+                  AppActions.showDecryptPasswordModal(
+                    buildEncryptModalConfig(async ({mnemonic}) => {
+                      startSyncWallets(mnemonic);
+                    }),
+                  ),
+                );
+              }
             }}>
             <WalletSettingsTitle>
               Sync Wallets Across Devices

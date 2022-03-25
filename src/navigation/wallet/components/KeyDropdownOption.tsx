@@ -58,8 +58,9 @@ const KeyDropdownOption = ({
   totalBalance,
   onPress,
 }: Props) => {
-  const walletInfo = wallets.slice(0, WALLET_DISPLAY_LIMIT);
-  const remainingWalletCount = getRemainingWalletCount(wallets);
+  const _wallets = wallets.filter(wallet => !wallet.hideWallet);
+  const walletInfo = _wallets.slice(0, WALLET_DISPLAY_LIMIT);
+  const remainingWalletCount = getRemainingWalletCount(_wallets);
 
   return (
     <OptionContainer
@@ -68,23 +69,25 @@ const KeyDropdownOption = ({
       <Row style={{alignItems: 'center', justifyContent: 'center'}}>
         <Column>
           <KeyName style={{marginBottom: 5}}>{keyName}</KeyName>
-          <HeaderImg>
-            {walletInfo.map((wallet, index) => {
-              const {id, img} = wallet;
-              return (
-                wallet && (
-                  <Img key={id} isFirst={index === 0}>
-                    <CurrencyImage img={img} size={25} />
-                  </Img>
-                )
-              );
-            })}
-            {remainingWalletCount && (
-              <RemainingAssetsLabel>
-                + {remainingWalletCount} more
-              </RemainingAssetsLabel>
-            )}
-          </HeaderImg>
+          {walletInfo.length > 0 ? (
+            <HeaderImg>
+              {walletInfo.map((wallet, index) => {
+                const {id, img} = wallet;
+                return (
+                  wallet && (
+                    <Img key={id} isFirst={index === 0}>
+                      <CurrencyImage img={img} size={25} />
+                    </Img>
+                  )
+                );
+              })}
+              {remainingWalletCount && (
+                <RemainingAssetsLabel>
+                  + {remainingWalletCount} more
+                </RemainingAssetsLabel>
+              )}
+            </HeaderImg>
+          ) : null}
         </Column>
         <Row style={{alignItems: 'center', justifyContent: 'flex-end'}}>
           <Balance>{formatFiatAmount(totalBalance, 'USD')}</Balance>

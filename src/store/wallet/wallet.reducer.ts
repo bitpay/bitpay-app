@@ -337,6 +337,68 @@ export const walletReducer = (
       };
     }
 
+    case WalletActionTypes.SYNC_WALLETS: {
+      const {keyId, wallets} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      keyToUpdate.wallets = keyToUpdate.wallets.concat(wallets);
+
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
+    case WalletActionTypes.TOGGLE_HIDE_WALLET: {
+      const {
+        wallet: {keyId, id},
+      } = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
+        if (wallet.id === id) {
+          wallet.hideWallet = !wallet.hideWallet;
+        }
+        return wallet;
+      });
+
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
+    case WalletActionTypes.TOGGLE_HIDE_BALANCE: {
+      const {
+        wallet: {keyId, id},
+      } = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
+        if (wallet.id === id) {
+          wallet.hideBalance = !wallet.hideBalance;
+        }
+        return wallet;
+      });
+
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
     default:
       return state;
   }

@@ -12,12 +12,11 @@ import {
 } from '@react-navigation/native';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {useDispatch, useSelector} from 'react-redux';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   ScrollView,
   WalletConnectContainer,
 } from '../styled/WalletConnectContainers';
-import {RootState} from '../../../store';
 import {View} from 'react-native';
 import {sleep} from '../../../utils/helper-methods';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
@@ -78,7 +77,7 @@ const DescriptionItem = styled(Paragraph)`
 `;
 
 const WalletConnectStart = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const [retryCount, setRetryCount] = useState(0);
   const {
@@ -86,8 +85,8 @@ const WalletConnectStart = () => {
   } = useRoute<RouteProp<{params: WalletConnectStartParamList}>>();
   const {peerId, peerMeta} = peer;
 
-  const wallet = useSelector(
-    ({WALLET}: RootState) =>
+  const wallet = useAppSelector(
+    ({WALLET}) =>
       keyId && walletId && findWalletById(WALLET.keys[keyId].wallets, walletId),
   ) as Wallet;
   const [address, setAddress] = useState(wallet.receiveAddress);

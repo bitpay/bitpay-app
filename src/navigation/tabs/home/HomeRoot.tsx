@@ -1,49 +1,35 @@
-import React, {useEffect, useState} from 'react';
-import {
-  Image,
-  RefreshControl,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
-import {useDispatch} from 'react-redux';
 import {useNavigation, useTheme} from '@react-navigation/native';
-import {RootState} from '../../../store';
-import {PriceHistory} from '../../../store/wallet/wallet.models';
-
+import React, {useEffect, useMemo, useState} from 'react';
+import {RefreshControl, ScrollView} from 'react-native';
 import styled from 'styled-components/native';
-import {BaseText} from '../../../components/styled/Text';
-import {SlateDark, White} from '../../../styles/colors';
-
-import PortfolioBalance from './components/PortfolioBalance';
-import CardsCarousel from './components/CardsCarousel';
-import LinkingButtons from './components/LinkingButtons';
-import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import ExchangeRatesSlides, {
   ExchangeRateProps,
 } from '../../../components/exchange-rate/ExchangeRatesSlides';
-import QuickLinksSlides from '../../../components/quick-links/QuickLinksSlides';
-import OffersSlides from '../../../components/offer/OfferSlides';
-import {
-  ActiveOpacity,
-  ScreenGutter,
-} from '../../../components/styled/Containers';
-import AdvertisementCard from '../../../components/advertisement/AdvertisementCard';
-import {AdvertisementList} from '../../../components/advertisement/advertisement';
-import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishModal';
+import {ScreenGutter} from '../../../components/styled/Containers';
+import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {startGetRates} from '../../../store/wallet/effects';
+import {startUpdateAllKeyAndWalletBalances} from '../../../store/wallet/effects/balance/balance';
+import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
+import {SlateDark, White} from '../../../styles/colors';
+import {isDoMore, isFeaturedMerchant, isQuickLink} from '../../../utils/braze';
 import {sleep} from '../../../utils/helper-methods';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishModal';
+import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
+import AdvertisementsList from './components/advertisements/AdvertisementsList';
+import MockAdvertisements from './components/advertisements/MockAdvertisements';
+import CardsCarousel from './components/CardsCarousel';
 import ProfileButton from './components/HeaderProfileButton';
 import ScanButton from './components/HeaderScanButton';
-import {startUpdateAllKeyAndWalletBalances} from '../../../store/wallet/effects/balance/balance';
-import {
-  setHomeCarouselConfig,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
-import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
-import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
-import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
-import {URL} from '../../../constants';
-import {startGetRates} from '../../../store/wallet/effects';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import HomeRow from './components/HomeRow';
+import LinkingButtons from './components/LinkingButtons';
+import MockOffers from './components/offers/MockOffers';
+import OffersCarousel from './components/offers/OffersCarousel';
+import PortfolioBalance from './components/PortfolioBalance';
+import MockQuickLinks from './components/quick-links/MockQuickLinks';
+import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
+import {setHomeCarouselConfig} from '../../../store/app/app.actions';
 
 const HeaderContainer = styled.View`
   flex-direction: row;
@@ -59,19 +45,6 @@ const HomeContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-export const HomeLink = styled(BaseText)`
-  font-weight: 500;
-  font-size: 14px;
-  color: ${({theme}) => theme.colors.link};
-  text-decoration: ${({theme: {dark}}) => (dark ? 'underline' : 'none')};
-  text-decoration-color: ${White};
-`;
-
-const Title = styled(BaseText)`
-  font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
-
 export const SectionHeaderContainer = styled.View<{justifyContent?: string}>`
   flex-direction: row;
   margin: 10px ${ScreenGutter} 0;
@@ -79,7 +52,7 @@ export const SectionHeaderContainer = styled.View<{justifyContent?: string}>`
 `;
 
 const HomeRoot = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   // const onboardingCompleted = useAppSelector(
   //   ({APP}: RootState) => APP.onboardingCompleted,
   // );
@@ -111,6 +84,65 @@ const HomeRoot = () => {
   const navigation = useNavigation();
   const theme = useTheme();
   const [refreshing, setRefreshing] = useState(false);
+  const allContentCards = useAppSelector(({APP}) => APP.brazeContentCards);
+
+  // Featured Merchants ("Offers")
+  const memoizedOffers = useMemo(() => {
+    const featuredMerchants = allContentCards.filter(isFeaturedMerchant);
+
+    if (__DEV__ && !featuredMerchants.length) {
+      return MockOffers;
+    }
+
+    return featuredMerchants;
+  }, [allContentCards]);
+
+  // Advertisements ("Do More")
+  const memoizedAdvertisements = useMemo(() => {
+    const advertisements = allContentCards.filter(isDoMore);
+
+    if (__DEV__ && !advertisements.length) {
+      return MockAdvertisements;
+    }
+
+    return advertisements;
+  }, [allContentCards]);
+
+  // Exchange Rates
+  const priceHistory = useAppSelector(({WALLET}) => WALLET.priceHistory);
+  const memoizedExchangeRates: Array<ExchangeRateProps> = useMemo(
+    () =>
+      priceHistory.reduce((ratesList, history) => {
+        const option = SupportedCurrencyOptions.find(
+          ({id}) => id === history.coin,
+        );
+
+        if (option) {
+          const {id, img, currencyName} = option;
+
+          ratesList.push({
+            id,
+            img,
+            currencyName,
+            average: +history.percentChange,
+          });
+        }
+
+        return ratesList;
+      }, [] as ExchangeRateProps[]),
+    [priceHistory],
+  );
+
+  // Quick Links
+  const memoizedQuickLinks = useMemo(() => {
+    const quickLinks = allContentCards.filter(isQuickLink);
+
+    if (__DEV__ && !quickLinks.length) {
+      return MockQuickLinks;
+    }
+
+    return quickLinks;
+  }, [allContentCards]);
 
   const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
 
@@ -135,44 +167,6 @@ const HomeRoot = () => {
     setRefreshing(false);
   };
 
-  // Exchange Rates
-  const priceHistory = useAppSelector(
-    ({WALLET}: RootState) => WALLET.priceHistory,
-  );
-  const exchangeRatesItems: Array<ExchangeRateProps> = [];
-  priceHistory.forEach((ph: PriceHistory) => {
-    const option = SupportedCurrencyOptions.find(
-      ({id}: {id: string | number}) => id === ph.coin,
-    );
-
-    if (option) {
-      const {id, img, currencyName} = option;
-      exchangeRatesItems.push({
-        id,
-        img,
-        currencyName,
-        average: +ph.percentChange,
-      });
-    }
-  });
-
-  // Quick Links
-  const quickLinksItems = [
-    {
-      id: '1',
-      title: 'Leave Feedback',
-      description: "Let us know how we're doing",
-      img: (
-        <Image
-          source={require('../../../../assets/img/home/quick-links/icon-chat.png')}
-        />
-      ),
-      onPress: () => {
-        dispatch(openUrlWithInAppBrowser(URL.LEAVE_FEEDBACK));
-      },
-    },
-  ];
-
   return (
     <HomeContainer>
       <ScrollView
@@ -187,64 +181,69 @@ const HomeRoot = () => {
           <ScanButton />
           <ProfileButton />
         </HeaderContainer>
+
         {/* ////////////////////////////// PORTFOLIO BALANCE */}
-        {showPortfolioValue && <PortfolioBalance />}
+        {showPortfolioValue ? (
+          <HomeRow title="Portfolio Balance" slimHeader>
+            <PortfolioBalance />
+          </HomeRow>
+        ) : null}
 
         {/* ////////////////////////////// CARDS CAROUSEL */}
         <CardsCarousel />
 
         {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
-        <LinkingButtons
-          receive={{
-            cta: () =>
-              navigation.navigate('Wallet', {
-                screen: 'GlobalSelect',
-                params: {context: 'receive'},
-              }),
-          }}
-          send={{
-            cta: () =>
-              navigation.navigate('Wallet', {
-                screen: 'GlobalSelect',
-                params: {context: 'send'},
-              }),
-          }}
-        />
+        <HomeRow>
+          <LinkingButtons
+            receive={{
+              cta: () =>
+                navigation.navigate('Wallet', {
+                  screen: 'GlobalSelect',
+                  params: {context: 'receive'},
+                }),
+            }}
+            send={{
+              cta: () =>
+                navigation.navigate('Wallet', {
+                  screen: 'GlobalSelect',
+                  params: {context: 'send'},
+                }),
+            }}
+          />
+        </HomeRow>
 
         {/* ////////////////////////////// LIMITED TIME OFFERS */}
-        <SectionHeaderContainer justifyContent={'space-between'}>
-          <Title>Limited Time Offers</Title>
-          <TouchableOpacity
-            activeOpacity={ActiveOpacity}
-            onPress={() => console.log('offers')}>
-            <HomeLink> See all</HomeLink>
-          </TouchableOpacity>
-        </SectionHeaderContainer>
-        <OffersSlides />
+        {memoizedOffers.length ? (
+          <HomeRow
+            title="Limited Time Offers"
+            action="See all"
+            onActionPress={() => console.log('TODO: see all offers')}>
+            <OffersCarousel contentCards={memoizedOffers} />
+          </HomeRow>
+        ) : null}
 
         {/* ////////////////////////////// ADVERTISEMENTS */}
-        <SectionHeaderContainer>
-          <Title>Do More</Title>
-        </SectionHeaderContainer>
-
-        <AdvertisementCard items={AdvertisementList} />
+        {memoizedAdvertisements.length ? (
+          <HomeRow title="Do More">
+            <AdvertisementsList contentCards={memoizedAdvertisements} />
+          </HomeRow>
+        ) : null}
 
         {/* ////////////////////////////// EXCHANGE RATES */}
-        {exchangeRatesItems.length > 0 && (
-          <>
-            <SectionHeaderContainer>
-              <Title>Exchange Rates</Title>
-            </SectionHeaderContainer>
-            <ExchangeRatesSlides items={exchangeRatesItems} />
-          </>
-        )}
+        {memoizedExchangeRates.length ? (
+          <HomeRow title="Exchange Rates">
+            <ExchangeRatesSlides items={memoizedExchangeRates} />
+          </HomeRow>
+        ) : null}
 
         {/* ////////////////////////////// QUICK LINKS - Leave feedback etc */}
-        <SectionHeaderContainer>
-          <Title>Quick Links</Title>
-        </SectionHeaderContainer>
-        <QuickLinksSlides items={quickLinksItems} />
+        {memoizedQuickLinks.length ? (
+          <HomeRow title="Quick Links">
+            <QuickLinksCarousel contentCards={memoizedQuickLinks} />
+          </HomeRow>
+        ) : null}
       </ScrollView>
+
       <OnboardingFinishModal />
     </HomeContainer>
   );

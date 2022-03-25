@@ -1,6 +1,5 @@
 import FastImage from 'react-native-fast-image';
 import {batch} from 'react-redux';
-import {CardActions} from '.';
 import CardApi from '../../api/card';
 import {InitialUserData} from '../../api/user/user.types';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
@@ -8,12 +7,12 @@ import {sleep} from '../../utils/helper-methods';
 import {AppActions} from '../app';
 import {Effect} from '../index';
 import {LogActions} from '../log';
-import {TTL} from './card.types';
-import ReactNative from 'react-native';
 import {ProviderConfig} from '../../constants/config.card';
 import {CardProvider} from '../../constants/card';
+import Dosh, {DoshUiOptions} from '../../lib/dosh';
 import {isAxiosError} from '../../utils/axios';
-const {Dosh} = ReactNative.NativeModules;
+import {CardActions} from '.';
+import {TTL} from './card.types';
 
 export const startCardStoreInit =
   (initialData: InitialUserData): Effect<Promise<void>> =>
@@ -31,18 +30,34 @@ export const startCardStoreInit =
       if (virtualCardIds.length) {
         dispatch(startFetchVirtualCardImageUrls(virtualCardIds));
       }
-
-      // Dosh card rewards
-      if (Dosh) {
-        const {doshToken} = initialData;
-        Dosh.initializeDosh();
-
-        if (doshToken) {
-          Dosh.setDoshToken(doshToken);
-        }
-      }
     } catch (err) {
       // swallow error so initialize is uninterrupted
+    }
+
+    // Dosh card rewards
+    try {
+      dispatch(LogActions.info('Initializing Dosh...'));
+
+      if (!Dosh) {
+        dispatch(LogActions.debug('Dosh module not found.'));
+        return;
+      }
+
+      const options = new DoshUiOptions('Card Offers', 'CIRCLE', 'DIAGONAL');
+
+      await Dosh.initializeDosh(options);
+      dispatch(LogActions.info('Successfully initialized Dosh.'));
+
+      const {doshToken} = initialData;
+      if (!doshToken) {
+        dispatch(LogActions.debug('No doshToken provided.'));
+        return;
+      }
+
+      await Dosh.setDoshToken(doshToken);
+    } catch (err) {
+      dispatch(LogActions.error('An error occurred while initializing Dosh.'));
+      dispatch(LogActions.error(JSON.stringify(err)));
     }
   };
 

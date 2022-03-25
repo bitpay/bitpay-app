@@ -166,7 +166,11 @@ export class BitPayIdApi {
 
   request<T = any>(method: string, token: string, params?: {[k: string]: any}) {
     const url = `${this.apiUrl}/${token || ''}`;
-    const data = {method, token, params};
+    const data = {
+      method,
+      params: JSON.stringify(params),
+      token,
+    };
     const unsignedData = `${url}${JSON.stringify(data)}`;
     const signature: any = BitAuth.sign(unsignedData, this.identity.priv);
     const config = {
@@ -176,7 +180,6 @@ export class BitPayIdApi {
         'x-signature': signature.toString('hex'),
       },
     };
-
     return axios.post<BpApiResponse<T>>(url, data, config);
   }
 }

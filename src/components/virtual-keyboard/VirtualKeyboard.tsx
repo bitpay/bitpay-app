@@ -1,8 +1,8 @@
 import React, {memo} from 'react';
 import styled, {css} from 'styled-components/native';
-import {BaseText} from '../styled/Text';
 import DeleteSvg from '../../../assets/img/delete.svg';
 import {SlateDark} from '../../styles/colors';
+import {BaseText} from '../styled/Text';
 
 interface SymbolContainerProps {
   showLetters?: boolean;
@@ -44,47 +44,58 @@ const SymbolContainer = styled.View<SymbolContainerProps>`
     `};
 `;
 
-export interface numArray {
+export interface NumArray {
   val: string;
   letters: string;
 }
 
 export interface VirtualKeyboardProps {
-  onCellPress: (value: string) => void;
+  onCellPress?: ((value: string) => any) | undefined;
   showLetters?: boolean;
   showDot?: boolean;
 }
 
-const VirtualKeyboard = ({
+interface CellProps extends Pick<VirtualKeyboardProps, 'onCellPress'> {
+  value: string;
+  letters?: string;
+}
+
+const Cell: React.FC<CellProps> = ({value, letters, onCellPress}) => {
+  return (
+    <CellContainer onPress={() => onCellPress?.(value)}>
+      <CellValue>{value}</CellValue>
+      {letters ? <CellLetter>{letters}</CellLetter> : null}
+    </CellContainer>
+  );
+};
+
+interface RowProps
+  extends Pick<VirtualKeyboardProps, 'onCellPress' | 'showLetters'> {
+  numArray: NumArray[];
+}
+
+const Row: React.FC<RowProps> = ({numArray, showLetters, onCellPress}) => {
+  return (
+    <RowContainer>
+      {numArray
+        ? numArray.map(cell => (
+            <Cell
+              onCellPress={onCellPress}
+              value={cell.val}
+              letters={showLetters ? cell.letters : undefined}
+              key={cell.val}
+            />
+          ))
+        : null}
+    </RowContainer>
+  );
+};
+
+const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
   onCellPress,
   showLetters = false,
   showDot = true,
-}: VirtualKeyboardProps) => {
-  const Cell = (button: {val: string; letters?: string}) => {
-    return (
-      <CellContainer onPress={() => onCellPress(button.val)}>
-        <CellValue>{button.val}</CellValue>
-        {showLetters && <CellLetter>{button.letters}</CellLetter>}
-      </CellContainer>
-    );
-  };
-
-  const Row = ({numArray}: {numArray: Array<numArray>}) => {
-    return (
-      <RowContainer>
-        {numArray
-          ? numArray.map(button => (
-              <Cell
-                val={button.val}
-                letters={button.letters}
-                key={button.val}
-              />
-            ))
-          : null}
-      </RowContainer>
-    );
-  };
-
+}) => {
   return (
     <KeyboardContainer>
       <Row
@@ -102,6 +113,8 @@ const VirtualKeyboard = ({
             letters: 'DEF',
           },
         ]}
+        onCellPress={onCellPress}
+        showLetters={showLetters}
       />
       <Row
         numArray={[
@@ -118,6 +131,8 @@ const VirtualKeyboard = ({
             letters: 'MNO',
           },
         ]}
+        onCellPress={onCellPress}
+        showLetters={showLetters}
       />
       <Row
         numArray={[
@@ -134,18 +149,20 @@ const VirtualKeyboard = ({
             letters: 'WXYZ',
           },
         ]}
+        onCellPress={onCellPress}
+        showLetters={showLetters}
       />
 
       <RowContainer>
-        <CellContainer onPress={() => onCellPress('.')}>
-          {showDot && <Cell val={'.'} />}
+        <CellContainer onPress={() => onCellPress?.('.')}>
+          {showDot && <CellValue>{'.'}</CellValue>}
         </CellContainer>
-        <CellContainer onPress={() => onCellPress('0')}>
-          <Cell val={'0'} />
+        <CellContainer onPress={() => onCellPress?.('0')}>
+          <CellValue>{'0'}</CellValue>
         </CellContainer>
         <CellContainer
-          onPress={() => onCellPress('backspace')}
-          onLongPress={() => onCellPress('reset')}>
+          onPress={() => onCellPress?.('backspace')}
+          onLongPress={() => onCellPress?.('reset')}>
           <SymbolContainer showLetters={showLetters}>
             <DeleteSvg />
           </SymbolContainer>

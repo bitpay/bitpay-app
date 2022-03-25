@@ -22,10 +22,33 @@ import {LightBlack, White} from '../../../styles/colors';
 import {H4, TextAlign} from '../../../components/styled/Text';
 import {RouteProp, useRoute} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import ReceiveAddress from '../components/ReceiveAddress';
+import CloseModal from '../../../../assets/img/close-modal-icon.svg';
+
+const ModalHeader = styled.View`
+  height: 50px;
+  margin-right: 10px;
+`;
+
+const CloseModalButton = styled.TouchableOpacity`
+  margin: 15px 0;
+  padding: 5px;
+  height: 41px;
+  width: 41px;
+  border-radius: 50px;
+  background-color: #9ba3ae33;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const SafeAreaView = styled.SafeAreaView`
+  flex: 1;
+`;
+
 const GlobalSelectContainer = styled.View`
-  padding: 0 5px;
+  padding: 0;
 `;
 
 const ListContainer = styled.View`
@@ -84,10 +107,21 @@ const buildList = (category: string[], wallets: Wallet[]) => {
   return coins;
 };
 
-const GlobalSelect = () => {
+interface GlobalSelectProps {
+  useAsModal: any;
+  customSupportedCurrencies?: string[];
+  onDismiss?: (newWallet?: any) => void;
+}
+
+const GlobalSelect: React.FC<GlobalSelectProps> = ({
+  useAsModal,
+  customSupportedCurrencies,
+  onDismiss,
+}) => {
   const {
     params: {context},
   } = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
+  const theme = useTheme();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const tokens = useAppSelector(({WALLET}) => WALLET.tokenOptions);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
@@ -108,17 +142,34 @@ const GlobalSelect = () => {
     .filter(key => key.backupComplete)
     .flatMap(key => key.wallets);
 
+  // Filter hidden wallets
+  wallets = wallets.filter(wallet => !wallet.hideWallet);
+
   // only show wallets with funds
   if (context === 'send') {
     wallets = wallets.filter(wallet => wallet.balance.sat > 0);
   }
 
+  if (useAsModal) {
+    wallets = wallets.filter(wallet => wallet.isComplete());
+  }
+
   const supportedCoins = useMemo(
-    () => buildList(SUPPORTED_CURRENCIES, wallets),
+    () =>
+      buildList(
+        customSupportedCurrencies
+          ? customSupportedCurrencies
+          : SUPPORTED_CURRENCIES,
+        wallets,
+      ),
     [],
   );
   const otherCoins = useMemo(
-    () => buildList(NON_BITPAY_SUPPORTED_TOKENS, wallets),
+    () =>
+      buildList(
+        customSupportedCurrencies ? [] : NON_BITPAY_SUPPORTED_TOKENS,
+        wallets,
+      ),
     [],
   );
 
@@ -129,19 +180,21 @@ const GlobalSelect = () => {
         return {
           key: keyId,
           keyName: key.keyName || 'My Key',
-          wallets: selectObj.availableWalletsByKey[keyId].map(wallet => {
-            const {
-              balance,
-              currencyAbbreviation,
-              credentials: {network},
-            } = wallet;
-            return merge(cloneDeep(wallet), {
-              cryptoBalance: balance.crypto,
-              fiatBalance: formatFiatAmount(balance.fiat, 'USD'),
-              currencyAbbreviation: currencyAbbreviation.toUpperCase(),
-              network,
-            });
-          }),
+          wallets: selectObj.availableWalletsByKey[keyId]
+            .filter(wallet => !wallet.hideWallet)
+            .map(wallet => {
+              const {
+                balance,
+                currencyAbbreviation,
+                credentials: {network},
+              } = wallet;
+              return merge(cloneDeep(wallet), {
+                cryptoBalance: balance.crypto,
+                fiatBalance: formatFiatAmount(balance.fiat, 'USD'),
+                currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+                network,
+              });
+            }),
         };
       }),
     );
@@ -166,6 +219,12 @@ const GlobalSelect = () => {
   }, []);
 
   const onWalletSelect = async (wallet: Wallet) => {
+    if (useAsModal && onDismiss) {
+      setWalletSelectModalVisible(false);
+      await sleep(100);
+      onDismiss(wallet);
+      return;
+    }
     if (context === 'send') {
       setWalletSelectModalVisible(false);
       navigation.navigate('Wallet', {
@@ -185,7 +244,25 @@ const GlobalSelect = () => {
   };
 
   return (
-    <>
+    <SafeAreaView>
+      {useAsModal && (
+        <ModalHeader>
+          <CloseModalButton
+            onPress={() => {
+              if (onDismiss) {
+                onDismiss();
+              }
+            }}>
+            <CloseModal
+              {...{
+                width: 20,
+                height: 20,
+                color: theme.dark ? 'white' : 'black',
+              }}
+            />
+          </CloseModalButton>
+        </ModalHeader>
+      )}
       <GlobalSelectContainer>
         <ListContainer>
           <FlatList
@@ -229,7 +306,7 @@ const GlobalSelect = () => {
           />
         )}
       </GlobalSelectContainer>
-    </>
+    </SafeAreaView>
   );
 };
 

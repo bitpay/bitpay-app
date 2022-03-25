@@ -86,7 +86,6 @@ export const createProposalAndBuildTxDetails =
             if (err) {
               return reject({err, tx, txp, getState});
             }
-
             try {
               const rates = await dispatch(startGetRates());
               // building UI object for details
@@ -98,9 +97,10 @@ export const createProposalAndBuildTxDetails =
                 recipient,
                 invoice,
               });
+              txp.id = proposal.id;
               resolve({txDetails, txp});
-            } catch (err) {
-              reject({err});
+            } catch (err2) {
+              reject({err: err2});
             }
           },
           null,
@@ -186,7 +186,7 @@ const buildTxDetails = ({
 const buildTransactionProposal = (
   tx: Partial<TransactionOptions>,
 ): Promise<object> => {
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     const {currency, feeLevel, feePerKb, payProUrl} = tx;
     // base tx
     const txp: Partial<TransactionProposal> = {
@@ -253,29 +253,31 @@ export const startSendPayment =
     key,
     wallet,
     recipient,
+    password,
   }: {
     txp: Partial<TransactionProposal>;
     key: Key;
     wallet: Wallet;
     recipient: Recipient;
-  }): Effect =>
+    password?: string;
+  }): Effect<Promise<any>> =>
   async dispatch => {
     return new Promise(async (resolve, reject) => {
-      try {
-        wallet.createTxProposal(
-          {...txp, dryRun: false},
-          async (err: Error, proposal: TransactionProposal) => {
-            if (err) {
-              return reject(err);
-            }
-
+      wallet.createTxProposal(
+        {...txp, dryRun: false},
+        async (err: Error, proposal: TransactionProposal) => {
+          if (err) {
+            return reject(err);
+          }
+          let broadcastedTx;
+          try {
             const publishedTx = await publishTx(wallet, proposal);
             console.log('-------- published');
 
-            const signedTx = await signTx(wallet, key, publishedTx);
+            const signedTx = await signTx(wallet, key, publishedTx, password);
             console.log('-------- signed');
 
-            const broadcastedTx = await broadcastTx(wallet, signedTx);
+            broadcastedTx = await broadcastTx(wallet, signedTx);
             console.log('-------- broadcastedTx');
 
             const {fee, amount} = broadcastedTx as {
@@ -292,14 +294,13 @@ export const startSendPayment =
                 recipient,
               }),
             );
-            resolve();
-          },
-          null,
-        );
-      } catch (err) {
-        console.log(err);
-        reject(err);
-      }
+          } catch (error) {
+            return reject(error);
+          }
+          resolve(broadcastedTx);
+        },
+        null,
+      );
     });
   };
 
@@ -314,11 +315,16 @@ export const publishTx = (wallet: Wallet, txp: any) => {
   });
 };
 
-export const signTx = (wallet: Wallet, key: Key, txp: any) => {
+export const signTx = (
+  wallet: Wallet,
+  key: Key,
+  txp: any,
+  password?: string,
+) => {
   return new Promise(async (resolve, reject) => {
     try {
       const rootPath = wallet.getRootPath();
-      const signatures = key.methods.sign(rootPath, txp, undefined);
+      const signatures = key.methods.sign(rootPath, txp, password);
       wallet.pushSignatures(
         txp,
         signatures,
@@ -344,6 +350,17 @@ export const broadcastTx = (wallet: Wallet, txp: any) => {
         return reject(err);
       }
       resolve(broadcastedTxp);
+    });
+  });
+};
+
+export const removeTxp = (wallet: Wallet, txp: TransactionProposal) => {
+  return new Promise<void>((resolve, reject) => {
+    wallet.removeTxProposal(txp, (err: Error) => {
+      if (err) {
+        return reject(err);
+      }
+      resolve();
     });
   });
 };
@@ -464,9 +481,6 @@ export const createInvoiceAndTxProposal =
         const cardOrder = await dispatch(
           ShopEffects.startCreateGiftCardInvoice(invoiceParams),
         );
-        if (!cardOrder) {
-          return;
-        }
         const {invoiceId, invoice} = cardOrder;
         const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
         const paymentUrl = `${baseUrl}/i/${invoiceId}`;
@@ -479,7 +493,7 @@ export const createInvoiceAndTxProposal =
           ),
         );
       } catch (err) {
-        reject({err});
+        reject(err);
       }
     });
   };

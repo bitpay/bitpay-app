@@ -1,6 +1,6 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {BaseText} from '../../../components/styled/Text';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {LightBlack, NeutralSlate, White} from '../../../styles/colors';
 import {
@@ -17,6 +17,7 @@ import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
 import useAppSelector from '../../../utils/hooks/useAppSelector';
 import {ParseAmount} from '../../../store/wallet/effects/amount/amount';
 import haptic from '../../../components/haptic-feedback/haptic';
+import CloseModal from '../../../../assets/img/close-modal-icon.svg';
 
 const SendMax = styled.TouchableOpacity`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
@@ -32,6 +33,23 @@ const SendMaxText = styled(BaseText)`
 
 const HeaderContainer = styled(HeaderRightContainer)`
   justify-content: center;
+`;
+
+const ModalHeader = styled.View`
+  height: 50px;
+  margin-right: 10px;
+`;
+
+const CloseModalButton = styled.TouchableOpacity`
+  margin: 15px 0;
+  padding: 5px;
+  height: 41px;
+  width: 41px;
+  border-radius: 50px;
+  background-color: #9ba3ae33;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
 const SafeAreaView = styled.SafeAreaView`
@@ -100,11 +118,18 @@ export interface AmountParamList {
   };
 }
 
-const Amount = () => {
+interface AmountProps {
+  useAsModal: any;
+  onDismiss?: (amount?: number) => void;
+}
+
+const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss}) => {
   const route = useRoute<RouteProp<WalletStackParamList, 'Amount'>>();
   const {onAmountSelected, currencyAbbreviation, opts} = route.params;
   const navigation = useNavigation();
+  const theme = useTheme();
   const [buttonState, setButtonState] = useState<ButtonState>();
+
   // flag for primary selector type
   const [rate, setRate] = useState(0);
   const [amountConfig, updateAmountConfig] = useState({
@@ -113,12 +138,13 @@ const Amount = () => {
     displayEquivalentAmount: '0',
     // amount to be sent to proposal creation (sats)
     amount: '0',
-    currency: currencyAbbreviation,
-    primaryIsFiat: false,
+    currency: currencyAbbreviation ? currencyAbbreviation : 'USD',
+    primaryIsFiat: currencyAbbreviation === 'USD' ? true : false,
   });
   const swapList = currencyAbbreviation
-    ? [currencyAbbreviation, 'USD']
+    ? [...new Set([currencyAbbreviation, 'USD'])]
     : ['USD'];
+
   const allRates = useAppSelector(({WALLET}) => WALLET.rates);
   const [curVal, setCurVal] = useState('');
 
@@ -135,7 +161,7 @@ const Amount = () => {
       return;
     }
     // if added for dev (hot reload)
-    if (!primaryIsFiat) {
+    if (!primaryIsFiat && allRates[currency.toLowerCase()]) {
       const fiatRate = allRates[currency.toLowerCase()].find(
         r => r.code === 'USD',
       )!.rate;
@@ -163,7 +189,7 @@ const Amount = () => {
     }
 
     const cryptoAmount =
-      val === 0
+      val === 0 || !currencyAbbreviation
         ? '0'
         : ParseAmount(
             primaryIsFiat ? val / rate : val,
@@ -178,22 +204,24 @@ const Amount = () => {
     }));
   };
 
+  const onSendMaxPressed = () =>
+    onAmountSelected(amount, setButtonState, {sendMax: true});
+  const onSendMaxPressedRef = useRef(onSendMaxPressed);
+  onSendMaxPressedRef.current = onSendMaxPressed;
+
   useLayoutEffect(() => {
-    if (!opts?.hideSendMax) {
+    if (!opts?.hideSendMax && !useAsModal) {
       navigation.setOptions({
         headerRight: () => (
           <HeaderContainer>
-            <SendMax
-              onPress={() =>
-                onAmountSelected(amount, setButtonState, {sendMax: true})
-              }>
+            <SendMax onPress={() => onSendMaxPressedRef.current()}>
               <SendMaxText>Send Max</SendMaxText>
             </SendMax>
           </HeaderContainer>
         ),
       });
     }
-  }, []);
+  }, [opts?.hideSendMax, navigation]);
 
   const onCellPress = (val: string) => {
     haptic('impactLight');
@@ -217,6 +245,24 @@ const Amount = () => {
 
   return (
     <SafeAreaView>
+      {useAsModal && (
+        <ModalHeader>
+          <CloseModalButton
+            onPress={() => {
+              if (onDismiss) {
+                onDismiss();
+              }
+            }}>
+            <CloseModal
+              {...{
+                width: 20,
+                height: 20,
+                color: theme.dark ? 'white' : 'black',
+              }}
+            />
+          </CloseModalButton>
+        </ModalHeader>
+      )}
       <AmountContainer>
         <AmountHeroContainer>
           <Row>
@@ -264,7 +310,13 @@ const Amount = () => {
             <Button
               state={buttonState}
               disabled={!+amount}
-              onPress={() => onAmountSelected(amount, setButtonState)}>
+              onPress={() => {
+                if (useAsModal && onDismiss) {
+                  onDismiss(Number(amount));
+                  return;
+                }
+                onAmountSelected(amount, setButtonState);
+              }}>
               Continue
             </Button>
           </ActionContainer>

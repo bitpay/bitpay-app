@@ -1,11 +1,12 @@
 import {ColorSchemeName} from 'react-native';
-import {AppIdentity} from './app.models';
-import {AppActionType, AppActionTypes} from './app.types';
+import {ContentCard} from 'react-native-appboy-sdk';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
+import {AppIdentity} from './app.models';
+import {AppActionType, AppActionTypes} from './app.types';
 
 export const networkChanged = (network: Network): AppActionType => ({
   type: AppActionTypes.NETWORK_CHANGED,
@@ -145,6 +146,33 @@ export const showBlur = (value: boolean): AppActionType => ({
 export const showPortfolioValue = (value: boolean): AppActionType => ({
   type: AppActionTypes.SHOW_PORTFOLIO_VALUE,
   payload: value,
+});
+
+export const brazeContentCardsFetched = (
+  contentCards: ContentCard[],
+): AppActionType => ({
+  type: AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED,
+  payload: {contentCards},
+});
+
+export const showBiometricModal = (): AppActionType => ({
+  type: AppActionTypes.SHOW_BIOMETRIC_MODAL,
+});
+
+export const dismissBiometricModal = (): AppActionType => ({
+  type: AppActionTypes.DISMISS_BIOMETRIC_MODAL,
+});
+
+export const biometricLockActive = (active: boolean): AppActionType => ({
+  type: AppActionTypes.BIOMETRIC_LOCK_ACTIVE,
+  payload: active,
+});
+
+export const lockAuthorizedUntil = (
+  authorizedUntil: number | undefined,
+): AppActionType => ({
+  type: AppActionTypes.LOCK_AUTHORIZED_UNTIL,
+  payload: authorizedUntil,
 });
 
 export const setHomeCarouselConfig = (update: any): AppActionType => ({

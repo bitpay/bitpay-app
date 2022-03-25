@@ -87,7 +87,8 @@ const createHomeCardList = ({
   const hasCoinbase = false;
   if (hasKeys) {
     const walletCards = keys.map(key => {
-      const {wallets, totalBalance = 0, backupComplete} = key;
+      let {wallets, totalBalance = 0, backupComplete} = key;
+        wallets = wallets.filter(wallet => !wallet.hideWallet);
 
       return {
         id: key.id,

@@ -15,6 +15,7 @@ import {
 } from '../../../components/styled/Containers';
 import {useTranslation} from 'react-i18next';
 import {RootState} from '../../../store';
+import {AppActions} from '../../../store/app';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
 import {URL} from '../../../constants';
@@ -73,6 +74,10 @@ const SettingsHomeScreen: React.FC = () => {
   const user = useSelector<RootState, User | null>(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
+  const pinLockActive = useSelector(({APP}: RootState) => APP.pinLockActive);
+  const biometricLockActive = useSelector(
+    ({APP}: RootState) => APP.biometricLockActive,
+  );
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
   const SETTINGS: HomeSetting[] = [
     {
@@ -81,8 +86,21 @@ const SettingsHomeScreen: React.FC = () => {
     },
     {
       title: t('Security'),
-      onPress: () => navigation.navigate('SecuritySettings', {screen: 'Root'}),
+      onPress: () => {
+        if (biometricLockActive) {
+          dispatch(AppActions.showBiometricModal());
+        }
+        if (pinLockActive) {
+          dispatch(AppActions.showPinModal({type: 'check'}));
+        }
+        navigation.navigate('SecuritySettings', {screen: 'Root'});
+      },
     },
+    // Settings for Buy/Swap Crypto will be momentarily commented
+    // {
+    //   title: t('External Services'),
+    //   onPress: () => navigation.navigate('ExternalServicesSettings', {screen: 'Root'}),
+    // },
     {
       title: t('Notifications'),
       onPress: () =>

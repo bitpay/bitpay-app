@@ -1,11 +1,12 @@
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {
+  CacheKeys,
   Key,
   PriceHistory,
-  Token,
-  WalletBalance,
   Rates,
-  CacheKeys,
+  Token,
+  Wallet,
+  WalletBalance,
 } from './wallet.models';
 
 export const successWalletStoreInit = (): WalletActionType => ({
@@ -187,5 +188,27 @@ export const updateWalletTxHistory = (payload: {
 
 export const setUseUnconfirmedFunds = (payload: boolean): WalletActionType => ({
   type: WalletActionTypes.SET_USE_UNCONFIRMED_FUNDS,
+  payload,
+});
+
+export const syncWallets = (payload: {
+  keyId: string;
+  wallets: Wallet[];
+}): WalletActionType => ({
+  type: WalletActionTypes.SYNC_WALLETS,
+  payload,
+});
+
+export const toggleHideWallet = (payload: {
+  wallet: Wallet;
+}): WalletActionType => ({
+  type: WalletActionTypes.TOGGLE_HIDE_WALLET,
+  payload,
+});
+
+export const toggleHideBalance = (payload: {
+  wallet: Wallet;
+}): WalletActionType => ({
+  type: WalletActionTypes.TOGGLE_HIDE_BALANCE,
   payload,
 });

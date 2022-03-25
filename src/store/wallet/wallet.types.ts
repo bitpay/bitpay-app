@@ -4,6 +4,7 @@ import {
   PriceHistory,
   Rates,
   Token,
+  Wallet,
   WalletBalance,
 } from './wallet.models';
 
@@ -40,6 +41,9 @@ export enum WalletActionTypes {
   SUCCESS_GET_RECEIVE_ADDRESS = 'WALLET/SUCCESS_GET_RECEIVE_ADDRESS',
   SET_USE_UNCONFIRMED_FUNDS = 'WALLET/SET_USE_UNCONFIRMED_FUNDS',
   UPDATE_WALLET_TX_HISTORY = 'WALLET/UPDATE_WALLET_TX_HISTORY',
+  SYNC_WALLETS = 'WALLET/SYNC_WALLETS',
+  TOGGLE_HIDE_WALLET = 'WALLET/TOGGLE_HIDE_WALLET',
+  TOGGLE_HIDE_BALANCE = 'WALLET/TOGGLE_HIDE_BALANCE',
 }
 
 interface successWalletStoreInit {
@@ -231,6 +235,28 @@ interface updateWalletTxHistory {
   };
 }
 
+interface syncWallets {
+  type: typeof WalletActionTypes.SYNC_WALLETS;
+  payload: {
+    keyId: string;
+    wallets: Wallet[];
+  };
+}
+
+interface toggleHideWallet {
+  type: typeof WalletActionTypes.TOGGLE_HIDE_WALLET;
+  payload: {
+    wallet: Wallet;
+  };
+}
+
+interface toggleHideBalance {
+  type: typeof WalletActionTypes.TOGGLE_HIDE_BALANCE;
+  payload: {
+    wallet: Wallet;
+  };
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -263,4 +289,7 @@ export type WalletActionType =
   | setWalletRefreshing
   | successGetReceiveAddress
   | setUseUnconfirmedFunds
-  | updateWalletTxHistory;
+  | updateWalletTxHistory
+  | syncWallets
+  | toggleHideWallet
+  | toggleHideBalance;

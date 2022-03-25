@@ -12,7 +12,12 @@ import {ThemeProvider} from 'styled-components/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
 import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
-import {baseScreenOptions} from './constants/NavigationOptions';
+import {
+  baseNavigatorOptions,
+  baseScreenOptions,
+} from './constants/NavigationOptions';
+import {LOCK_AUTHORIZED_TIME} from './constants/Lock';
+import BiometricModal from './components/modal/biometric/BiometricModal';
 import {AppEffects, AppActions} from './store/app';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 import {LogActions} from './store/log';
@@ -41,6 +46,9 @@ import SecuritySettingsStack, {
 import ContactsStack, {
   ContactsStackParamList,
 } from './navigation/tabs/contacts/ContactsStack';
+import ExternalServicesSettingsStack, {
+  ExternalServicesSettingsStackParamList,
+} from './navigation/tabs/settings/external-services/ExternalServicesStack';
 import NotificationSettingsStack, {
   NotificationSettingsStackParamList,
 } from './navigation/tabs/settings/notifications/NotificationsStack';
@@ -63,6 +71,9 @@ import {ShopStackParamList} from './navigation/tabs/shop/ShopStack';
 import GiftCardStack, {
   GiftCardStackParamList,
 } from './navigation/tabs/shop/gift-card/GiftCardStack';
+import GiftCardDeeplinkScreen, {
+  GiftCardDeeplinkScreenParamList,
+} from './navigation/tabs/shop/gift-card/GiftCardDeeplink';
 import DecryptEnterPasswordModal from './navigation/wallet/components/DecryptEnterPasswordModal';
 import MerchantStack, {
   MerchantStackParamList,
@@ -74,6 +85,8 @@ import ConnectionsSettingsStack, {
   ConnectionsSettingsStackParamList,
 } from './navigation/tabs/settings/connections/ConnectionsStack';
 import {BlurView} from '@react-native-community/blur';
+import Blur from './components/blur/Blur';
+import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -87,16 +100,19 @@ export type RootStackParamList = {
   Scan: NavigatorScreenParams<ScanStackParamList>;
   Shop: NavigatorScreenParams<ShopStackParamList>;
   GiftCard: NavigatorScreenParams<GiftCardStackParamList>;
+  GiftCardDeeplink: GiftCardDeeplinkScreenParamList;
   Merchant: NavigatorScreenParams<MerchantStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
   SecuritySettings: NavigatorScreenParams<SecuritySettingsStackParamList>;
   ConnectionSettings: NavigatorScreenParams<ConnectionsSettingsStackParamList>;
   Contacts: NavigatorScreenParams<ContactsStackParamList>;
+  ExternalServicesSettings: NavigatorScreenParams<ExternalServicesSettingsStackParamList>;
   NotificationSettings: NavigatorScreenParams<NotificationSettingsStackParamList>;
   About: NavigatorScreenParams<AboutStackParamList>;
   BuyCrypto: NavigatorScreenParams<BuyCryptoStackParamList>;
   SwapCrypto: NavigatorScreenParams<SwapCryptoStackParamList>;
   WalletConnect: NavigatorScreenParams<WalletConnectStackParamList>;
+  Debug: DebugScreenParamList;
 };
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
@@ -111,16 +127,19 @@ export enum RootStacks {
   SCAN = 'Scan',
   CONTACTS = 'Contacts',
   GIFT_CARD = 'GiftCard',
+  GIFT_CARD_DEEPLINK = 'GiftCardDeeplink',
   MERCHANT = 'Merchant',
   // SETTINGS
   GENERAL_SETTINGS = 'GeneralSettings',
   SECURITY_SETTINGS = 'SecuritySettings',
   CONNECTION_SETTINGS = 'ConnectionSettings',
+  EXTERNAL_SERVICES_SETTINGS = 'ExternalServicesSettings',
   NOTIFICATION_SETTINGS = 'NotificationSettings',
   ABOUT = 'About',
   BUY_CRYPTO = 'BuyCrypto',
   SWAP_CRYPTO = 'SwapCrypto',
   WALLET_CONNECT = 'WalletConnect',
+  DEBUG = 'Debug',
 }
 
 // ROOT NAVIGATION CONFIG
@@ -136,6 +155,7 @@ export type NavScreenParams = NavigatorScreenParams<
     SecuritySettingsStackParamList &
     ConnectionsSettingsStackParamList &
     ContactsStackParamList &
+    ExternalServicesSettingsStackParamList &
     NotificationSettingsStackParamList &
     AboutStackParamList &
     BuyCryptoStackParamList &
@@ -175,6 +195,12 @@ export default () => {
   const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
   const pinLockActive = useAppSelector(({APP}) => APP.pinLockActive);
   const showBlur = useAppSelector(({APP}) => APP.showBlur);
+  const biometricLockActive = useAppSelector(
+    ({APP}) => APP.biometricLockActive,
+  );
+  const lockAuthorizedUntil = useAppSelector(
+    ({APP}) => APP.lockAuthorizedUntil,
+  );
 
   // MAIN APP INIT
   useEffect(() => {
@@ -187,25 +213,47 @@ export default () => {
       i18n.changeLanguage(appLanguage);
     }
   }, [appLanguage]);
-
-  // CHECK PIN
+  
+  // CHECK PIN || BIOMETRIC
   useEffect(() => {
     function onAppStateChange(status: AppStateStatus) {
       // status === 'active' when the app goes from background to foreground,
-      // if no app scheme set, rerender in case the system theme has changed
-      if (status === 'active') {
-        if (pinLockActive) {
+
+      const showLockOption = () => {
+        if (biometricLockActive) {
+          dispatch(AppActions.showBiometricModal());
+        } else if (pinLockActive) {
           dispatch(AppActions.showPinModal({type: 'check'}));
         } else {
           dispatch(AppActions.showBlur(false));
         }
-      } else {
-        dispatch(AppActions.showBlur(true));
+      }
+
+      if (onboardingCompleted) {
+        if (status === 'active') {
+          if (lockAuthorizedUntil) {
+            const now = Math.floor(Date.now() / 1000);
+            const totalSecs = lockAuthorizedUntil - now;
+            if (totalSecs < 0) {
+              dispatch(AppActions.lockAuthorizedUntil(undefined));
+              showLockOption();
+            } else {
+              const authorizedUntil =
+                Math.floor(Date.now() / 1000) + LOCK_AUTHORIZED_TIME;
+              dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
+              dispatch(AppActions.showBlur(false));
+            }
+          } else {
+            showLockOption();
+          }
+        } else {
+          dispatch(AppActions.showBlur(true));
+        }
       }
     }
     AppState.addEventListener('change', onAppStateChange);
     return () => AppState.removeEventListener('change', onAppStateChange);
-  }, [dispatch, pinLockActive]);
+  }, [dispatch, onboardingCompleted, pinLockActive, lockAuthorizedUntil, biometricLockActive]);
 
   // THEME
   useEffect(() => {
@@ -289,6 +337,15 @@ export default () => {
               headerShown: false,
             }}
             initialRouteName={initialRoute}>
+            <Root.Screen
+              name={RootStacks.DEBUG}
+              component={DebugScreen}
+              options={{
+                ...baseNavigatorOptions,
+                headerShown: true,
+                headerTitle: 'Debug',
+              }}
+            />
             <Root.Screen name={RootStacks.AUTH} component={AuthStack} />
             <Root.Screen name={RootStacks.INTRO} component={IntroStack} />
             <Root.Screen
@@ -325,6 +382,10 @@ export default () => {
               name={RootStacks.GIFT_CARD}
               component={GiftCardStack}
             />
+            <Root.Screen
+              name={RootStacks.GIFT_CARD_DEEPLINK}
+              component={GiftCardDeeplinkScreen}
+            />
             <Root.Screen name={RootStacks.MERCHANT} component={MerchantStack} />
             {/* SETTINGS */}
             <Root.Screen
@@ -339,6 +400,10 @@ export default () => {
             <Root.Screen
               name={RootStacks.CONNECTION_SETTINGS}
               component={ConnectionsSettingsStack}
+            />
+            <Root.Screen
+              name={RootStacks.EXTERNAL_SERVICES_SETTINGS}
+              component={ExternalServicesSettingsStack}
             />
             <Root.Screen
               name={RootStacks.NOTIFICATION_SETTINGS}
@@ -361,21 +426,9 @@ export default () => {
           <OnGoingProcessModal />
           <BottomNotificationModal />
           <DecryptEnterPasswordModal />
-          {showBlur && (
-            <BlurView
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-              }}
-              blurType={theme.dark ? 'dark' : 'light'}
-              blurAmount={10}
-              reducedTransparencyFallbackColor="white"
-            />
-          )}
+          {showBlur && <Blur />}
           <PinModal />
+          <BiometricModal />
         </NavigationContainer>
       </ThemeProvider>
     </SafeAreaProvider>

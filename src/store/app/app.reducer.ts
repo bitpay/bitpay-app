@@ -1,14 +1,15 @@
-import {ColorSchemeName} from 'react-native';
 import i18n from 'i18next';
+import {ColorSchemeName} from 'react-native';
+import {ContentCard} from 'react-native-appboy-sdk';
 import {Network} from '../../constants';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {NavScreenParams, RootStackParamList} from '../../Root';
 import {AppIdentity, HomeCarouselConfig} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
-import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 
 type AppReduxPersistBlackList = [
   'appIsLoading',
@@ -17,6 +18,10 @@ type AppReduxPersistBlackList = [
   'showDecryptPasswordModal',
   'showPinModal',
   'pinModalConfig',
+  'showBottomNotificationModal',
+  'showBiometricModal',
+  'dismissBiometricModal',
+  'checkingBiometric',
 ];
 export const appReduxPersistBlackList: AppReduxPersistBlackList = [
   'appIsLoading',
@@ -25,6 +30,10 @@ export const appReduxPersistBlackList: AppReduxPersistBlackList = [
   'showDecryptPasswordModal',
   'showPinModal',
   'pinModalConfig',
+  'showBottomNotificationModal',
+  'showBiometricModal',
+  'dismissBiometricModal',
+  'checkingBiometric',
 ];
 
 export interface AppState {
@@ -54,6 +63,10 @@ export interface AppState {
   colorScheme: ColorSchemeName;
   defaultLanguage: string;
   showPortfolioValue: boolean;
+  brazeContentCards: ContentCard[];
+  showBiometricModal: boolean;
+  biometricLockActive: boolean;
+  lockAuthorizedUntil: number | undefined;
   homeCarouselConfig: HomeCarouselConfig[] | undefined;
 }
 
@@ -93,6 +106,10 @@ const initialState: AppState = {
   colorScheme: null,
   defaultLanguage: i18n.language || 'en',
   showPortfolioValue: true,
+  brazeContentCards: [],
+  showBiometricModal: false,
+  biometricLockActive: false,
+  lockAuthorizedUntil: undefined,
   homeCarouselConfig: undefined,
 };
 
@@ -265,6 +282,43 @@ export const appReducer = (
       return {
         ...state,
         showPortfolioValue: action.payload,
+      };
+
+    case AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED:
+      if (
+        state.brazeContentCards.length === 0 &&
+        action.payload.contentCards.length === 0
+      ) {
+        return state;
+      }
+
+      return {
+        ...state,
+        brazeContentCards: action.payload.contentCards,
+      };
+
+    case AppActionTypes.SHOW_BIOMETRIC_MODAL:
+      return {
+        ...state,
+        showBiometricModal: true,
+      };
+
+    case AppActionTypes.DISMISS_BIOMETRIC_MODAL:
+      return {
+        ...state,
+        showBiometricModal: false,
+      };
+
+    case AppActionTypes.BIOMETRIC_LOCK_ACTIVE:
+      return {
+        ...state,
+        biometricLockActive: action.payload,
+      };
+
+    case AppActionTypes.LOCK_AUTHORIZED_UNTIL:
+      return {
+        ...state,
+        lockAuthorizedUntil: action.payload,
       };
 
     case AppActionTypes.SET_HOME_CAROUSEL_CONFIG:

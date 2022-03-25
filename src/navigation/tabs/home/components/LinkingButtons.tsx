@@ -7,7 +7,6 @@ import SendSvg from '../../../../../assets/img/home/linking-buttons/send.svg';
 import SwapSvg from '../../../../../assets/img/home/linking-buttons/swap.svg';
 import Haptic from '../../../../components/haptic-feedback/haptic';
 import {BaseText} from '../../../../components/styled/Text';
-import {navigationRef} from '../../../../Root';
 import {titleCasing} from '../../../../utils/helper-methods';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
 import {useNavigation} from '@react-navigation/native';
@@ -20,7 +19,6 @@ const ButtonsRow = styled.View`
 
 const ButtonContainer = styled.View`
   align-items: center;
-  margin: 20px 0;
 `;
 
 const ButtonText = styled(BaseText)`
@@ -66,15 +64,35 @@ interface Props {
   };
 }
 
-const LinkingButtons = ({receive, send}: Props) => {
+const LinkingButtons = ({buy, receive, send}: Props) => {
   const navigation = useNavigation();
   const buttonsList: Array<ButtonListProps> = [
     // TODO: update icons
     {
       label: 'buy',
       img: <BuySvg />,
-      cta: () => navigation.navigate('BuyCrypto', {screen: 'Root'}),
-      hide: false,
+      cta:
+        buy && buy.cta
+          ? buy.cta
+          : () => {
+              navigation.navigate('Wallet', {
+                screen: 'Amount',
+                params: {
+                  onAmountSelected: async (amount: string) => {
+                    navigation.navigate('BuyCrypto', {
+                      screen: 'Root',
+                      params: {
+                        amount: Number(amount),
+                      },
+                    });
+                  },
+                  opts: {
+                    hideSendMax: true,
+                  },
+                },
+              });
+            },
+      hide: !!buy?.hide,
     },
     {
       label: 'swap',

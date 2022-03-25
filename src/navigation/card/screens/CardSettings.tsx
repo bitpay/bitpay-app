@@ -68,7 +68,7 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
     }
 
     return [cards, virtual, physical];
-  }, [currentGroup, id]);
+  }, [currentGroup]);
 
   const currentCard = cardsToShow.find(c => c.id === id);
   const initialIdx = Math.max(

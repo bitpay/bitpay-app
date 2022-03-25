@@ -12,7 +12,7 @@ import VirtualKeyboard from '../../../components/virtual-keyboard/VirtualKeyboar
 import styled, {useTheme} from 'styled-components/native';
 import {Animated} from 'react-native';
 import {BaseText} from '../../styled/Text';
-
+import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
 export interface PinModalConfig {
   type: 'set' | 'check';
 }
@@ -43,7 +43,7 @@ const ATTEMPT_LOCK_OUT_TIME = 2 * 60;
 const PinModal: React.FC = () => {
   const dispatch = useDispatch();
   const isVisible = useSelector(({APP}: RootState) => APP.showPinModal);
-  const config = useSelector(({APP}: RootState) => APP.pinModalConfig);
+  const {type} = useSelector(({APP}: RootState) => APP.pinModalConfig) || {};
   const [pin, setPin] = useState<Array<string | undefined>>([]);
   const [message, setMessage] = useState<string>('Please enter your PIN');
   const [shakeDots, setShakeDots] = useState<boolean>(false);
@@ -72,6 +72,9 @@ const PinModal: React.FC = () => {
     );
     if (isEqual(currentPin, pinHash)) {
       dispatch(AppActions.showBlur(false));
+      const authorizedUntil =
+        Math.floor(Date.now() / 1000) + LOCK_AUTHORIZED_TIME;
+      dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
       dispatch(AppActions.dismissPinModal()); // Correct PIN dismiss modal
       setTimeout(reset, 300);
     } else {
@@ -90,6 +93,9 @@ const PinModal: React.FC = () => {
       );
       dispatch(AppActions.currentPin(pinHash));
       dispatch(AppActions.showBlur(false));
+      const authorizedUntil =
+        Math.floor(Date.now() / 1000) + LOCK_AUTHORIZED_TIME;
+      dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
       dispatch(AppActions.dismissPinModal());
       setTimeout(reset, 300);
       return;
@@ -142,11 +148,11 @@ const PinModal: React.FC = () => {
     // Give some time for dot to fill
     await sleep(0);
 
-    if (!fistPinEntered.length && config?.type === 'set') {
+    if (!fistPinEntered.length && type === 'set') {
       setMessage('Confirm your PIN');
       setFistPinEntered(newPin);
       setPin([]);
-    } else if (fistPinEntered.length && config?.type === 'set') {
+    } else if (fistPinEntered.length && type === 'set') {
       setCurrentPin(newPin as Array<string>);
     } else {
       checkPin(newPin as Array<string>);
@@ -202,10 +208,11 @@ const PinModal: React.FC = () => {
       hideModalContentWhileAnimating
       backdropOpacity={1}
       backdropColor={theme.colors.background}
-      animationIn={'fadeInUp'}
-      animationOut={'fadeOutDown'}
+      animationIn={'fadeIn'}
+      animationOut={'fadeOut'}
       useNativeDriverForBackdrop={true}
-      useNativeDriver={true}>
+      useNativeDriver={true}
+      style={{margin: 0}}>
       <PinContainer>
         <PinMessagesContainer>
           <PinMessage>{message}</PinMessage>

@@ -1,11 +1,12 @@
 import {ColorSchemeName} from 'react-native';
+import {ContentCard} from 'react-native-appboy-sdk';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
+import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {NavScreenParams, RootStackParamList} from '../../Root';
 import {AppIdentity} from './app.models';
-import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 
 export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
@@ -36,6 +37,11 @@ export enum AppActionTypes {
   PIN_BANNED_UNTIL = 'APP/PIN_BANNED_UNTIL',
   SHOW_BLUR = 'APP/SHOW_BLUR',
   SHOW_PORTFOLIO_VALUE = 'APP/SHOW_PORTFOLIO_VALUE',
+  BRAZE_CONTENT_CARDS_FETCHED = 'APP/BRAZE_CONTENT_CARDS_FETCHED',
+  SHOW_BIOMETRIC_MODAL = 'APP/SHOW_BIOMETRIC_MODAL',
+  DISMISS_BIOMETRIC_MODAL = 'APP/DISMISS_BIOMETRIC_MODAL',
+  BIOMETRIC_LOCK_ACTIVE = 'APP/BIOMETRIC_LOCK_ACTIVE',
+  LOCK_AUTHORIZED_UNTIL = 'APP/LOCK_AUTHORIZED_UNTIL',
   SET_HOME_CAROUSEL_CONFIG = 'APP/SET_HOME_CAROUSEL_CONFIG',
 }
 
@@ -158,6 +164,22 @@ interface PinBannedUntil {
   type: typeof AppActionTypes.PIN_BANNED_UNTIL;
   payload: number | undefined;
 }
+interface ShowBiometricModal {
+  type: typeof AppActionTypes.SHOW_BIOMETRIC_MODAL;
+}
+
+interface DismissBiometricModal {
+  type: typeof AppActionTypes.DISMISS_BIOMETRIC_MODAL;
+}
+interface BiometricLockActive {
+  type: typeof AppActionTypes.BIOMETRIC_LOCK_ACTIVE;
+  payload: boolean;
+}
+
+interface LockAuthorizedUntil {
+  type: typeof AppActionTypes.LOCK_AUTHORIZED_UNTIL;
+  payload: number | undefined;
+}
 
 interface ShowBlur {
   type: typeof AppActionTypes.SHOW_BLUR;
@@ -167,6 +189,11 @@ interface ShowBlur {
 interface ShowPortfolioValue {
   type: typeof AppActionTypes.SHOW_PORTFOLIO_VALUE;
   payload: boolean;
+}
+
+interface BrazeContentCardsFetched {
+  type: typeof AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED;
+  payload: {contentCards: ContentCard[]};
 }
 
 interface SetHomeCarouselConfig {
@@ -203,4 +230,9 @@ export type AppActionType =
   | PinBannedUntil
   | ShowBlur
   | ShowPortfolioValue
+  | BrazeContentCardsFetched
+  | ShowBiometricModal
+  | DismissBiometricModal
+  | BiometricLockActive
+  | LockAuthorizedUntil
   | SetHomeCarouselConfig;

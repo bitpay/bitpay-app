@@ -4,7 +4,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
+    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
+    
     <application
       android:name=".MainApplication"
       android:label="@string/app_name"
@@ -13,6 +14,12 @@
       android:allowBackup="false"
       android:theme="@style/AppTheme"
       android:networkSecurityConfig="@xml/network_security_config">
+
+      <!-- Used by Dosh Android SDK -->
+      <meta-data
+        android:name="com.google.android.geo.API_KEY"
+        android:value="REPLACE_ME" />
+
       <activity
         android:screenOrientation="portrait"
         android:name=".MainActivity"

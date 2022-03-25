@@ -14,6 +14,7 @@ import Settings from '../../../components/settings/Settings';
 import {
   Balance,
   BaseText,
+  H2,
   H5,
   HeaderTitle,
 } from '../../../components/styled/Text';
@@ -47,7 +48,8 @@ import {
   GetTransactionHistory,
   GroupTransactionHistory,
   IsMoved,
-  IsReceived, TX_HISTORY_LIMIT,
+  IsReceived,
+  TX_HISTORY_LIMIT,
 } from '../../../store/wallet/effects/transactions/transactions';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import TransactionRow, {
@@ -58,6 +60,7 @@ import WalletTransactionSkeletonRow from '../../../components/list/WalletTransac
 import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
+import {isCoinSupportedToBuy} from '../../../navigation/services/buy-crypto/utils/buy-crypto-utils';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -69,6 +72,10 @@ const WalletDetailsContainer = styled.View`
   padding-top: 10px;
 `;
 
+const HeaderContainer = styled.View`
+  margin: 20px 0;
+`;
+
 const Row = styled.View`
   flex-direction: row;
   justify-content: space-between;
@@ -76,7 +83,6 @@ const Row = styled.View`
 `;
 
 const BalanceContainer = styled.View`
-  margin-top: 20px;
   padding: 0 15px 10px;
   flex-direction: column;
 `;
@@ -269,6 +275,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     currencyName,
     currencyAbbreviation,
     network,
+    hideBalance,
   } = uiFormattedWallet;
 
   const showFiatBalance =
@@ -304,7 +311,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
       let {transactions: _history, loadMore: _loadMore} = transactionHistory;
 
-      if (_history?.length){
+      if (_history?.length) {
         setHistory(_history);
         const grouped = GroupTransactionHistory(_history);
         setGroupedHistory(grouped);
@@ -461,22 +468,50 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         }
         ListHeaderComponent={() => {
           return (
-            <>
+            <HeaderContainer>
               <BalanceContainer>
                 <Row>
-                  <Balance scale={shouldScale(cryptoBalance)}>
-                    {cryptoBalance} {currencyAbbreviation}
-                  </Balance>
+                  {!hideBalance ? (
+                    <Balance scale={shouldScale(cryptoBalance)}>
+                      {cryptoBalance} {currencyAbbreviation}
+                    </Balance>
+                  ) : (
+                    <H2>****</H2>
+                  )}
                   <Chain>{currencyAbbreviation}</Chain>
                 </Row>
                 <Row>
-                  {showFiatBalance && <H5>{fiatBalance}</H5>}
+                  {showFiatBalance && !hideBalance && <H5>{fiatBalance}</H5>}
                   {walletType && <Type>{walletType}</Type>}
                 </Row>
               </BalanceContainer>
 
               {fullWalletObj ? (
                 <LinkingButtons
+                  buy={{
+                    hide: !isCoinSupportedToBuy(
+                      fullWalletObj.currencyAbbreviation,
+                    ),
+                    cta: () => {
+                      navigation.navigate('Wallet', {
+                        screen: 'Amount',
+                        params: {
+                          onAmountSelected: async (amount: string) => {
+                            navigation.navigate('BuyCrypto', {
+                              screen: 'Root',
+                              params: {
+                                amount: Number(amount),
+                                fromWallet: fullWalletObj,
+                              },
+                            });
+                          },
+                          opts: {
+                            hideSendMax: true,
+                          },
+                        },
+                      });
+                    },
+                  }}
                   receive={{cta: () => setShowReceiveAddressBottomModal(true)}}
                   send={{
                     hide: !fullWalletObj.balance.sat,
@@ -488,7 +523,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                   }}
                 />
               ) : null}
-            </>
+            </HeaderContainer>
           );
         }}
         sections={groupedHistory}
