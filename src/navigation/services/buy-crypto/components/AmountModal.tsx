@@ -1,8 +1,8 @@
-import Modal from 'react-native-modal';
 import React from 'react';
 import Amount from '../../../../navigation/wallet/screens/Amount';
 import {Black, White} from '../../../../styles/colors';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 
 const AmountContainer = styled.View`
   flex: 1;
@@ -11,28 +11,16 @@ const AmountContainer = styled.View`
 
 interface AmountModalProps {
   isVisible: boolean;
-  onDismiss?: (amount?: number) => any;
+  onDismiss: (amount?: number) => void;
 }
 
 const AmountModal: React.FC<AmountModalProps> = ({isVisible, onDismiss}) => {
-  const theme = useTheme();
-
   return (
-    <Modal
-      isVisible={isVisible}
-      coverScreen={true}
-      backdropTransitionOutTiming={0}
-      hideModalContentWhileAnimating
-      backdropOpacity={1}
-      backdropColor={theme.dark ? Black : White}
-      animationIn={'fadeInUp'}
-      animationOut={'fadeOutDown'}
-      useNativeDriverForBackdrop={true}
-      useNativeDriver={true}>
+    <SheetModal isVisible={isVisible} onBackdropPress={onDismiss}>
       <AmountContainer>
         <Amount useAsModal={true} onDismiss={onDismiss} />
       </AmountContainer>
-    </Modal>
+    </SheetModal>
   );
 };
 

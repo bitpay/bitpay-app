@@ -1,8 +1,8 @@
-import Modal from 'react-native-modal';
 import React from 'react';
 import GlobalSelect from '../../../../navigation/wallet/screens/GlobalSelect';
 import {Black, White} from '../../../../styles/colors';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
+import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 
 const GlobalSelectContainer = styled.View`
   flex: 1;
@@ -12,7 +12,7 @@ const GlobalSelectContainer = styled.View`
 interface WalletSelectorModalProps {
   isVisible: boolean;
   customSupportedCurrencies?: string[];
-  onDismiss?: (newWallet?: any) => any;
+  onDismiss: (newWallet?: any) => void;
 }
 
 const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
@@ -20,20 +20,8 @@ const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
   customSupportedCurrencies,
   onDismiss,
 }) => {
-  const theme = useTheme();
-
   return (
-    <Modal
-      isVisible={isVisible}
-      coverScreen={true}
-      backdropTransitionOutTiming={0}
-      hideModalContentWhileAnimating
-      backdropOpacity={1}
-      backdropColor={theme.dark ? Black : White}
-      animationIn={'fadeInUp'}
-      animationOut={'fadeOutDown'}
-      useNativeDriverForBackdrop={true}
-      useNativeDriver={true}>
+    <SheetModal isVisible={isVisible} onBackdropPress={onDismiss}>
       <GlobalSelectContainer>
         <GlobalSelect
           useAsModal={true}
@@ -41,7 +29,7 @@ const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
           onDismiss={onDismiss}
         />
       </GlobalSelectContainer>
-    </Modal>
+    </SheetModal>
   );
 };
 
