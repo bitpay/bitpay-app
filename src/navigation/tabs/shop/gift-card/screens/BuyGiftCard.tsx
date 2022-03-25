@@ -33,6 +33,10 @@ import {AppActions} from '../../../../../store/app';
 import GiftCardDiscountText from '../../components/GiftCardDiscountText';
 import {formatFiatAmount} from '../../../../../utils/helper-methods';
 import {WalletScreens} from '../../../../wallet/WalletStack';
+import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
+import {ShopActions} from '../../../../../store/shop';
+import {APP_NETWORK} from '../../../../../constants/config';
+import {useAppSelector} from '../../../../../utils/hooks';
 
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;
@@ -104,6 +108,13 @@ const BuyGiftCard = ({
   const dispatch = useDispatch();
   const theme = useTheme();
   const {cardConfig} = route.params;
+  const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[APP_NETWORK]);
+  const {
+    email: savedEmail,
+    phone: savedPhone,
+    phoneCountryInfo: savedPhoneCountryInfo,
+  } = useAppSelector(({SHOP}) => SHOP);
+  const shouldSync = user?.localSettings.syncGiftCardPurchases;
   const [selectedAmountIndex, setSelectedAmountIndex] = useState(
     getMiddleIndex(cardConfig.supportedAmounts || []),
   );
@@ -113,39 +124,135 @@ const BuyGiftCard = ({
     });
   });
 
-  const next = () => {
-    if (!cardConfig.supportedAmounts) {
-      return navigator.navigate('Wallet', {
-        screen: WalletScreens.AMOUNT,
+  const showActivationFeeSheet = (activationFee: number, amount: number) => {
+    dispatch(
+      AppActions.showBottomNotificationModal({
+        type: 'info',
+        title: 'Activation Fee',
+        message: `${
+          cardConfig.displayName
+        } gift cards contain an additional activation fee of ${formatFiatAmount(
+          activationFee,
+          cardConfig.currency,
+        )}.`,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'GOT IT',
+            action: () => next(amount),
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
+
+  const goToConfirmScreen = (amount: Number) => {
+    const invoiceCreationParams = {
+      invoiceType: 'GiftCard',
+      amount: +amount,
+      cardConfig,
+    };
+    navigator.navigate('Wallet', {
+      screen: 'GiftCardConfirm',
+      params: {
+        invoiceCreationParams,
+      },
+    });
+  };
+
+  const goToAmountScreen = () => {
+    navigator.navigate('Wallet', {
+      screen: WalletScreens.AMOUNT,
+      params: {
+        fiatCurrencyAbbreviation: cardConfig.currency,
+        opts: {hideSendMax: true},
+        onAmountSelected: selectedAmount =>
+          onAmountScreenSubmit(+selectedAmount),
+      },
+    });
+  };
+
+  const onAmountScreenSubmit = (amount: number) => {
+    const minAmount = cardConfig.minAmount as number;
+    const maxAmount = cardConfig.maxAmount as number;
+    if (amount < minAmount) {
+      dispatch(
+        AppActions.showBottomNotificationModal(
+          CustomErrorMessage({
+            title: 'Below Minimum Amount',
+            errMsg: `The purchase amount must be at least ${formatFiatAmount(
+              minAmount,
+              cardConfig.currency,
+              {customPrecision: 'minimal'},
+            )}. Please modify your amount.`,
+          }),
+        ),
+      );
+      return;
+    }
+    if (amount > maxAmount) {
+      dispatch(
+        AppActions.showBottomNotificationModal(
+          CustomErrorMessage({
+            title: 'Purchase Limit Exceeded',
+            errMsg: `The purchase amount is limited to ${formatFiatAmount(
+              maxAmount,
+              cardConfig.currency,
+              {customPrecision: 'minimal'},
+            )}. Please modify your amount.`,
+          }),
+        ),
+      );
+      return;
+    }
+    const activationFee = getActivationFee(+amount, cardConfig);
+    if (activationFee) {
+      return showActivationFeeSheet(activationFee, +amount);
+    }
+    goToConfirmScreen(amount);
+  };
+
+  const requestPhone = (amount: number) => {
+    navigator.navigate('GiftCard', {
+      screen: GiftCardScreens.ENTER_PHONE,
+      params: {
+        cardConfig,
+        initialPhone: savedPhone,
+        initialPhoneCountryInfo: savedPhoneCountryInfo,
+        onSubmit: ({phone, phoneCountryInfo}) => {
+          dispatch(ShopActions.updatedPhone({phone, phoneCountryInfo}));
+          requestAmountIfNeeded(amount);
+        },
+      },
+    });
+  };
+
+  const requestAmountIfNeeded = (amount: number) => {
+    return amount ? goToConfirmScreen(amount) : goToAmountScreen();
+  };
+
+  const requestPhoneIfNeeded = (amount: number) => {
+    return cardConfig.phoneRequired
+      ? requestPhone(amount)
+      : requestAmountIfNeeded(amount);
+  };
+
+  const next = (amount: number) => {
+    if (cardConfig.emailRequired && !shouldSync) {
+      return navigator.navigate('GiftCard', {
+        screen: GiftCardScreens.ENTER_EMAIL,
         params: {
-          opts: {hideSendMax: true},
-          onAmountSelected: amount => {
-            const invoiceCreationParams = {
-              invoiceType: 'GiftCard',
-              amount: +amount,
-              cardConfig,
-            };
-            navigator.navigate('Wallet', {
-              screen: 'GiftCardConfirm',
-              params: {
-                invoiceCreationParams,
-              },
-            });
+          cardConfig,
+          initialEmail: savedEmail,
+          onSubmit: email => {
+            dispatch(ShopActions.updatedEmailAddress({email}));
+            requestPhoneIfNeeded(amount);
           },
         },
       });
     }
-    return cardConfig.phoneRequired
-      ? navigator.navigate('GiftCard', {
-          screen: GiftCardScreens.ENTER_PHONE,
-          params: {cardConfig},
-        })
-      : cardConfig.emailRequired
-      ? navigator.navigate('GiftCard', {
-          screen: GiftCardScreens.ENTER_EMAIL,
-          params: {cardConfig},
-        })
-      : undefined;
+    requestPhoneIfNeeded(amount);
   };
 
   return (
@@ -220,39 +327,13 @@ const BuyGiftCard = ({
         }}>
         <Button
           onPress={() => {
-            const activationFee = getActivationFee(
-              (cardConfig.supportedAmounts || [])[selectedAmountIndex],
-              cardConfig,
-            );
-            if (activationFee) {
-              dispatch(
-                AppActions.showBottomNotificationModal({
-                  type: 'info',
-                  title: 'Activation Fee',
-                  message: `${
-                    cardConfig.displayName
-                  } gift cards contain an additional activation fee of ${formatFiatAmount(
-                    activationFee,
-                    cardConfig.currency,
-                  )}.`,
-                  enableBackdropDismiss: true,
-                  actions: [
-                    {
-                      text: 'GOT IT',
-                      action: () => {
-                        next();
-                        // Go to phone/email screen if required or confirm screen if not
-                      },
-                      primary: true,
-                    },
-                  ],
-                }),
-              );
-              console.log('show activation fee sheet', activationFee);
-            } else {
-              next();
-              // Go to amount screen;
-            }
+            const selectedAmount = (cardConfig.supportedAmounts || [])[
+              selectedAmountIndex
+            ];
+            const activationFee = getActivationFee(selectedAmount, cardConfig);
+            return activationFee
+              ? showActivationFeeSheet(activationFee, selectedAmount)
+              : next(selectedAmount);
           }}
           buttonStyle={'primary'}>
           {cardConfig.supportedAmounts ? 'Continue' : 'Enter Amount'}
