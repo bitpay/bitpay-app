@@ -88,7 +88,7 @@ const createHomeCardList = ({
   if (hasKeys) {
     const walletCards = keys.map(key => {
       let {wallets, totalBalance = 0, backupComplete} = key;
-        wallets = wallets.filter(wallet => !wallet.hideWallet);
+      wallets = wallets.filter(wallet => !wallet.hideWallet);
 
       return {
         id: key.id,
@@ -150,7 +150,8 @@ const createHomeCardList = ({
     defaults.push({id: 'createWallet', component: <CreateWallet />});
   }
   list = list.filter(
-    _item => homeCarouselConfig.find(item => item.id === _item.id)?.show,
+    item =>
+      homeCarouselConfig.find(configItem => configItem.id === item.id)?.show,
   );
   const order = homeCarouselConfig.map(item => item.id);
   return [..._.sortBy(list, item => _.indexOf(order, item.id)), ...defaults];
@@ -170,7 +171,7 @@ const CardsCarousel = () => {
       keys: Object.values(keys),
       cards: bitPayCards,
       dispatch,
-      homeCarouselConfig,
+      homeCarouselConfig: homeCarouselConfig || [],
     }),
   );
 
@@ -181,7 +182,7 @@ const CardsCarousel = () => {
         keys: Object.values(keys),
         cards: bitPayCards,
         dispatch,
-        homeCarouselConfig,
+        homeCarouselConfig: homeCarouselConfig || [],
       }),
     );
   }, [navigation, keys, bitPayCards, dispatch, homeCarouselConfig]);

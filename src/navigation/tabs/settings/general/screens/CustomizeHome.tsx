@@ -1,7 +1,6 @@
 import React, {useMemo, useState} from 'react';
 import styled from 'styled-components/native';
 import {Key, Wallet} from '../../../../../store/wallet/wallet.models';
-import {Dispatch} from 'redux';
 import DraggableFlatList, {
   RenderItemParams,
   ScaleDecorator,
@@ -10,7 +9,7 @@ import {
   ActiveOpacity,
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
-import {Action, Feather, White} from '../../../../../styles/colors';
+import {Feather} from '../../../../../styles/colors';
 import {H5, H7} from '../../../../../components/styled/Text';
 import {
   HeaderImg,
@@ -87,7 +86,7 @@ const HamburgerContainer = styled.View`
 `;
 
 const ToggleText = styled(H7)`
-  color: ${({theme}) => (theme.dark ? White : Action)};
+  color: ${({theme}) => theme.colors.link};
 `;
 
 interface CustomizeItem {
@@ -145,12 +144,10 @@ const CustomizeCard = ({
 };
 
 const createCustomizeCardList = ({
-  dispatch,
   keys,
   cards,
   homeCarouselConfig,
 }: {
-  dispatch: Dispatch;
   keys: Key[];
   cards: Card[];
   homeCarouselConfig: HomeCarouselConfig[];
@@ -207,7 +204,6 @@ const CustomizeHome = () => {
   const navigation = useNavigation();
 
   const [_visible, _hidden] = createCustomizeCardList({
-    dispatch,
     keys: Object.values(keys),
     cards,
     homeCarouselConfig,
@@ -233,7 +229,7 @@ const CustomizeHome = () => {
     return (
       <ScaleDecorator>
         <CustomizeCardContainer
-          onLongPress={() => {
+          onPressIn={() => {
             haptic('impactLight');
             drag();
           }}
