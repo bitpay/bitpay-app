@@ -1,19 +1,15 @@
 import {useNavigation} from '@react-navigation/native';
 import React, {useCallback, useMemo, useState} from 'react';
-import {FlatList} from 'react-native';
-import {useDispatch, useSelector} from 'react-redux';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
-import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
 import {BaseText, H4} from '../../../components/styled/Text';
-import {RootState} from '../../../store';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {
+  formatFiatAmount,
   isValidWalletConnectUri,
-  keyExtractor,
   sleep,
 } from '../../../utils/helper-methods';
-import {buildUIFormattedWallet} from '../../wallet/screens/KeyOverview';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {walletConnectOnSessionRequest} from '../../../store/wallet-connect/wallet-connect.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
@@ -27,6 +23,16 @@ import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {ScreenGutter} from '../../../components/styled/Containers';
+import {
+  GlobalSelectObj,
+  WalletSelectMenuBodyContainer,
+} from '../../wallet/screens/GlobalSelect';
+import KeyWalletsRow, {
+  KeyWalletsRowProps,
+} from '../../../components/list/KeyWalletsRow';
+import merge from 'lodash.merge';
+import cloneDeep from 'lodash.clonedeep';
+import _ from 'lodash';
 
 export type WalletConnectIntroParamList = {
   uri?: string;
@@ -58,22 +64,69 @@ export default ({
   onBackdropPress: () => void;
 }) => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [uri, setUri] = useState(dappUri);
-  const allKeys = useSelector(({WALLET}: RootState) => WALLET.keys);
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
 
-  const allEthWallets = useMemo(
-    () =>
-      Object.values(allKeys).flatMap(key => {
-        if (!key.backupComplete) {
-          return;
-        }
-        return key.wallets
-          .filter(wallet => wallet.currencyAbbreviation === 'eth')
-          .map(wallet => buildUIFormattedWallet(wallet));
-      }),
-    [],
-  ) as WalletRowProps[];
+  let allWallets = Object.values(keys)
+    .filter(key => key.backupComplete)
+    .flatMap(key => key.wallets);
+
+  const buildList = (category: string[], wallets: Wallet[]) => {
+    const coins: GlobalSelectObj[] = [];
+    category.forEach(coin => {
+      const availableWallets = wallets.filter(
+        wallet => wallet.currencyAbbreviation === coin,
+      );
+      if (availableWallets.length) {
+        const {currencyName, img} = availableWallets[0];
+        coins.push({
+          id: Math.random().toString(),
+          currencyName,
+          img,
+          total: availableWallets.length,
+          availableWalletsByKey: _.groupBy(
+            availableWallets,
+            wallet => wallet.keyId,
+          ),
+        });
+      }
+    });
+    return coins;
+  };
+
+  const supportedCoins = useMemo(
+    () => buildList(['eth'], allWallets),
+    [allWallets],
+  );
+
+  let keyWallets: KeyWalletsRowProps[] = [];
+
+  supportedCoins.forEach(supportedCoin => {
+    const keyWallet = Object.keys(supportedCoin.availableWalletsByKey).map(
+      keyId => {
+        const key = keys[keyId];
+        return {
+          key: keyId,
+          keyName: key.keyName || 'My Key',
+          wallets: supportedCoin.availableWalletsByKey[keyId].map(wallet => {
+            const {
+              balance,
+              currencyAbbreviation,
+              credentials: {network},
+            } = wallet;
+            return merge(cloneDeep(wallet), {
+              cryptoBalance: balance.crypto,
+              fiatBalance: formatFiatAmount(balance.fiat, 'USD'),
+              currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+              network,
+            });
+          }),
+        };
+      },
+    );
+    keyWallets = [...keyWallets, ...keyWallet];
+  });
 
   const showErrorMessage = useCallback(
     async (msg: BottomNotificationConfig) => {
@@ -90,6 +143,8 @@ export default ({
         const peer = (await dispatch<any>(
           walletConnectOnSessionRequest(wcUri),
         )) as any;
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
         navigation.navigate('WalletConnect', {
           screen: 'WalletConnectStart',
           params: {
@@ -99,6 +154,8 @@ export default ({
           },
         });
       } catch (e) {
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
         setUri('');
         await showErrorMessage(
           CustomErrorMessage({
@@ -106,8 +163,6 @@ export default ({
             title: 'Uh oh, something went wrong',
           }),
         );
-      } finally {
-        dispatch(dismissOnGoingProcessModal());
       }
     },
     [dispatch, navigation, showErrorMessage],
@@ -129,39 +184,27 @@ export default ({
     [goToStartView, navigation],
   );
 
-  const renderItem = useCallback(
-    ({item}) => (
-      <WalletRow
-        id={item.id}
-        onPress={async () => {
-          haptic('impactLight');
-          onBackdropPress();
-          await sleep(500);
-          uri ? goToStartView(item, uri) : goToScanView(item);
-        }}
-        wallet={item}
-      />
-    ),
-    [onBackdropPress, goToStartView, goToScanView, uri],
-  );
+  const onWalletSelect = async (wallet: Wallet) => {
+    haptic('impactLight');
+    onBackdropPress();
+    await sleep(500);
+    uri ? goToStartView(wallet, uri) : goToScanView(wallet);
+  };
 
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onBackdropPress}>
       <WalletSelectorContainer>
         <H4>Select a Wallet</H4>
-        {allEthWallets.length ? (
+        {keyWallets.length ? (
           <DescriptionText>
             Which Ethereum wallet would you like to use for WalletConnect?
           </DescriptionText>
         ) : (
           <DescriptionText>No wallets available</DescriptionText>
         )}
-        <FlatList
-          contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
-          data={allEthWallets}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-        />
+        <WalletSelectMenuBodyContainer>
+          <KeyWalletsRow keyWallets={keyWallets!} onPress={onWalletSelect} />
+        </WalletSelectMenuBodyContainer>
       </WalletSelectorContainer>
     </SheetModal>
   );
