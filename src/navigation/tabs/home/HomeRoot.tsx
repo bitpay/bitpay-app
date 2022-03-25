@@ -31,6 +31,7 @@ import MockQuickLinks from './components/quick-links/MockQuickLinks';
 import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
 import {setHomeCarouselConfig} from '../../../store/app/app.actions';
 import {BaseText} from '../../../components/styled/Text';
+import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 
 const HeaderContainer = styled.View`
   flex-direction: row;
@@ -101,7 +102,7 @@ const HomeRoot = () => {
   const memoizedOffers = useMemo(() => {
     const featuredMerchants = allContentCards.filter(isFeaturedMerchant);
 
-    if (__DEV__ && !featuredMerchants.length) {
+    if (STATIC_CONTENT_CARDS_ENABLED && !featuredMerchants.length) {
       return MockOffers;
     }
 
@@ -112,7 +113,7 @@ const HomeRoot = () => {
   const memoizedAdvertisements = useMemo(() => {
     const advertisements = allContentCards.filter(isDoMore);
 
-    if (__DEV__ && !advertisements.length) {
+    if (STATIC_CONTENT_CARDS_ENABLED && !advertisements.length) {
       return MockAdvertisements;
     }
 
@@ -148,7 +149,7 @@ const HomeRoot = () => {
   const memoizedQuickLinks = useMemo(() => {
     const quickLinks = allContentCards.filter(isQuickLink);
 
-    if (__DEV__ && !quickLinks.length) {
+    if (STATIC_CONTENT_CARDS_ENABLED && !quickLinks.length) {
       return MockQuickLinks;
     }
 

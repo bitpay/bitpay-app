@@ -1,6 +1,7 @@
 import {Network} from '.';
 
 export const DEVTOOLS_ENABLED = false;
+export const STATIC_CONTENT_CARDS_ENABLED = true;
 
 // GENERAL
 export const APP_NETWORK = Network.mainnet;
