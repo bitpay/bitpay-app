@@ -132,12 +132,7 @@ const Amount: React.FC<AmountProps> = ({
 }) => {
   const route = useRoute<RouteProp<WalletStackParamList, 'Amount'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const {
-    onAmountSelected,
-    currencyAbbreviation,
-    fiatCurrencyAbbreviation,
-    opts,
-  } = route.params;
+  const {onAmountSelected, currencyAbbreviation, fiatCurrencyAbbreviation, opts} = route.params ? route.params : {onAmountSelected: undefined, currencyAbbreviation: undefined, fiatCurrencyAbbreviation: undefined, opts: undefined} ;  
   const navigation = useNavigation();
   const theme = useTheme();
   const [buttonState, setButtonState] = useState<ButtonState>();
@@ -225,7 +220,7 @@ const Amount: React.FC<AmountProps> = ({
   };
 
   const onSendMaxPressed = () =>
-    onAmountSelected(amount, setButtonState, {sendMax: true});
+  onAmountSelected ? onAmountSelected(amount, setButtonState, {sendMax: true}) : ()=>{};
   const onSendMaxPressedRef = useRef(onSendMaxPressed);
   onSendMaxPressedRef.current = onSendMaxPressed;
 
@@ -335,7 +330,9 @@ const Amount: React.FC<AmountProps> = ({
                   onDismiss(Number(amount));
                   return;
                 }
-                onAmountSelected(amount, setButtonState);
+                if (onAmountSelected) {
+                  onAmountSelected(amount, setButtonState);
+                }
               }}>
               Continue
             </Button>

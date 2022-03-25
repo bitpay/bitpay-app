@@ -8,7 +8,9 @@ import {HeaderTitle} from '../../../components/styled/Text';
 import SwapCryptoRoot from './screens/SwapCryptoRoot';
 
 export type SwapCryptoStackParamList = {
-  Root: undefined;
+  Root?: {
+    fromWallet?: any;
+  };
 };
 
 export enum SwapCryptoScreens {

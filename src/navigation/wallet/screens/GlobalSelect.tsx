@@ -149,9 +149,8 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   onDismiss,
   title,
 }) => {
-  const {
-    params: {context, toCoinbase},
-  } = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
+  const route = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
+  const {context, toCoinbase} = route.params || {}
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
