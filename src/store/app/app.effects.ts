@@ -36,6 +36,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     const {APP, BITPAY_ID} = getState();
     const network = APP.network;
     const pinLockActive = APP.pinLockActive;
+    const biometricLockActive = APP.biometricLockActive;
 
     dispatch(LogActions.info('Initializing app...'));
     dispatch(LogActions.debug(`Network: ${network}`));
@@ -101,12 +102,16 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(AppActions.successAppInit());
     dispatch(LogActions.info('Initialized app successfully.'));
     dispatch(LogActions.debug(`Pin Lock Active: ${pinLockActive}`));
-    dispatch(showBlur(pinLockActive));
+    dispatch(showBlur(pinLockActive || biometricLockActive));
+    dispatch(LogActions.debug(`Biometric Lock Active: ${biometricLockActive}`));
     RNBootSplash.hide({fade: true}).then(() => {
       // avoid splash conflicting with modal in iOS
       // https://stackoverflow.com/questions/65359539/showing-a-react-native-modal-right-after-app-startup-freezes-the-screen-in-ios
       if (pinLockActive) {
         dispatch(AppActions.showPinModal({type: 'check'}));
+      }
+      if (biometricLockActive) {
+        dispatch(AppActions.showBiometricModal());
       }
     });
   } catch (err) {
