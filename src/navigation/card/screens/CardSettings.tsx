@@ -6,6 +6,7 @@ import Carousel from 'react-native-snap-carousel';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {ScreenGutter, WIDTH} from '../../../components/styled/Containers';
+import {CARD_WIDTH} from '../../../constants/config.card';
 import {Card} from '../../../store/card/card.models';
 import {selectCardGroups} from '../../../store/card/card.selectors';
 import {useAppSelector} from '../../../utils/hooks';
@@ -121,7 +122,7 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
         data={cardsToShow}
         vertical={false}
         firstItem={initialIdx}
-        itemWidth={300 + 20}
+        itemWidth={CARD_WIDTH}
         sliderWidth={WIDTH}
         renderItem={renderSettingsSlide}
         onScrollIndexChanged={onCardChange}

@@ -53,7 +53,7 @@ const CardBack: React.FC<CardBackProps> = props => {
     <Svg.Svg
       width={`${CARD_WIDTH}px`}
       height={`${CARD_HEIGHT}px`}
-      viewBox="0 0 335 212"
+      viewBox={`0 0 ${CARD_WIDTH} ${CARD_HEIGHT}`}
       style={{borderRadius: 10}}>
       <Svg.G
         id="MASTERCARD-back"
@@ -67,8 +67,8 @@ const CardBack: React.FC<CardBackProps> = props => {
           x="0"
           y="0"
           rx="10"
-          width="335"
-          height="211.959877"
+          width={CARD_WIDTH}
+          height={CARD_HEIGHT}
         />
 
         <Svg.Text

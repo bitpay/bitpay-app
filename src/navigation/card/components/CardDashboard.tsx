@@ -15,7 +15,7 @@ import {
 } from '../../../components/styled/Containers';
 import {Smallest} from '../../../components/styled/Text';
 import {CardProvider} from '../../../constants/card';
-import {ProviderConfig} from '../../../constants/config.card';
+import {CARD_WIDTH, ProviderConfig} from '../../../constants/config.card';
 import {CardEffects} from '../../../store/card';
 import {
   Card,
@@ -215,7 +215,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
                 id: cardGroups[idx][0].id,
               });
             }}
-            itemWidth={300 + 20}
+            itemWidth={CARD_WIDTH}
             sliderWidth={WIDTH}
             inactiveSlideScale={1}
             inactiveSlideOpacity={1}
