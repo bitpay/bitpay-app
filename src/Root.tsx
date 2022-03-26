@@ -189,6 +189,7 @@ export default () => {
     ({APP}) => APP.onboardingCompleted,
   );
   const introCompleted = useAppSelector(({APP}) => APP.introCompleted);
+  const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
   const appColorScheme = useAppSelector(({APP}) => APP.colorScheme);
   const currentRoute = useAppSelector(({APP}) => APP.currentRoute);
   const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
@@ -229,7 +230,7 @@ export default () => {
       };
 
       if (onboardingCompleted) {
-        if (status === 'active') {
+        if (status === 'active' && !appIsLoading) {
           if (lockAuthorizedUntil) {
             const now = Math.floor(Date.now() / 1000);
             const totalSecs = lockAuthorizedUntil - now;
@@ -258,6 +259,7 @@ export default () => {
     pinLockActive,
     lockAuthorizedUntil,
     biometricLockActive,
+    appIsLoading,
   ]);
 
   // THEME

@@ -99,7 +99,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     await dispatch(initializeBrazeContent());
 
     await sleep(500);
-    dispatch(AppActions.successAppInit());
     dispatch(LogActions.info('Initialized app successfully.'));
     dispatch(LogActions.debug(`Pin Lock Active: ${pinLockActive}`));
     dispatch(showBlur(pinLockActive || biometricLockActive));
@@ -113,6 +112,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       if (biometricLockActive) {
         dispatch(AppActions.showBiometricModal());
       }
+      dispatch(AppActions.successAppInit());
     });
   } catch (err) {
     console.error(err);
