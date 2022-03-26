@@ -3,7 +3,7 @@ import {ReactElement} from 'react';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {RootState} from '../index';
 import {CardConfig, Invoice} from '../shop/shop.models';
-import { Network } from '../../constants';
+import {Network} from '../../constants';
 
 export interface KeyMethods {
   _checkCoin: Function;
