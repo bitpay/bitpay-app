@@ -84,7 +84,6 @@ import {DEVTOOLS_ENABLED} from './constants/config';
 import ConnectionsSettingsStack, {
   ConnectionsSettingsStackParamList,
 } from './navigation/tabs/settings/connections/ConnectionsStack';
-import {BlurView} from '@react-native-community/blur';
 import Blur from './components/blur/Blur';
 import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
 
@@ -213,7 +212,7 @@ export default () => {
       i18n.changeLanguage(appLanguage);
     }
   }, [appLanguage]);
-  
+
   // CHECK PIN || BIOMETRIC
   useEffect(() => {
     function onAppStateChange(status: AppStateStatus) {
@@ -227,7 +226,7 @@ export default () => {
         } else {
           dispatch(AppActions.showBlur(false));
         }
-      }
+      };
 
       if (onboardingCompleted) {
         if (status === 'active') {
@@ -253,7 +252,13 @@ export default () => {
     }
     AppState.addEventListener('change', onAppStateChange);
     return () => AppState.removeEventListener('change', onAppStateChange);
-  }, [dispatch, onboardingCompleted, pinLockActive, lockAuthorizedUntil, biometricLockActive]);
+  }, [
+    dispatch,
+    onboardingCompleted,
+    pinLockActive,
+    lockAuthorizedUntil,
+    biometricLockActive,
+  ]);
 
   // THEME
   useEffect(() => {
