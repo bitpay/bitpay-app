@@ -205,12 +205,10 @@ export const GetProtocolPrefixAddress = (
 export const getRemainingWalletCount = (
   wallets?: Wallet[],
 ): undefined | number => {
-  if (!wallets) {
+  if (!wallets || wallets.length < WALLET_DISPLAY_LIMIT) {
     return;
   }
-  return wallets.length > WALLET_DISPLAY_LIMIT
-    ? wallets.length - WALLET_DISPLAY_LIMIT
-    : 0;
+  return wallets.length - WALLET_DISPLAY_LIMIT;
 };
 
 export const BuildKeysAndWalletsList = (
