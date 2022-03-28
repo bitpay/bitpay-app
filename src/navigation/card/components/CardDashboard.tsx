@@ -1,5 +1,6 @@
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useCallback, useEffect, useLayoutEffect, useMemo} from 'react';
+import {useState} from 'react';
 import {useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import {FlatList} from 'react-native';
@@ -100,14 +101,19 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const pageData = useAppSelector(
     ({CARD}) => CARD.settledTransactions[activeCard.id],
   );
-  const uninitializedId = pageData ? null : activeCard.id;
+  // only auto-initialize once per mount
+  const [autoInitState, setAutoInitState] = useState(
+    {} as {[k: string]: boolean},
+  );
+  const uninitializedId = autoInitState[activeCard.id] ? null : activeCard.id;
   const isLoadingInitial = fetchOverviewStatus === 'loading' && !pageData;
 
   useEffect(() => {
     if (uninitializedId) {
+      setAutoInitState({...autoInitState, [uninitializedId]: true});
       dispatch(CardEffects.startFetchOverview(uninitializedId));
     }
-  }, [uninitializedId, dispatch]);
+  }, [uninitializedId, autoInitState, dispatch]);
 
   const {filters} = ProviderConfig[activeCard.provider];
   const settledTxList = useAppSelector(
