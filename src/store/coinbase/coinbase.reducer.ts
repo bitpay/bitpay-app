@@ -233,7 +233,7 @@ export const coinbaseReducer = (
       return {...state};
     case CoinbaseActionTypes.ACCOUNTS_FAILED:
       state.isApiLoading = false;
-      state.getAccessTokenStatus = 'failed';
+      state.getAccountsStatus = 'failed';
       state.getAccountsError = action.payload;
       return {...state};
 

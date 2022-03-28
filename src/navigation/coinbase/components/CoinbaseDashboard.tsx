@@ -182,6 +182,7 @@ const CoinbaseDashboard = () => {
       </BalanceContainer>
       <Hr />
       <FlatList
+        contentContainerStyle={{paddingBottom: 50, marginTop: 5}}
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}

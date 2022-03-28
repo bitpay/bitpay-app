@@ -134,7 +134,10 @@ const createHomeCardList = ({
   }
 
   if (hasCoinbase) {
-    list.push({id: 'coinbaseBalanceCard', component: <CoinbaseBalanceCard />});
+    defaults.push({
+      id: 'coinbaseBalanceCard',
+      component: <CoinbaseBalanceCard />,
+    });
   } else {
     defaults.push({id: 'connectToCoinbase', component: <ConnectCoinbase />});
   }

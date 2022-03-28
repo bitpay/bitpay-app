@@ -1,7 +1,7 @@
 import {Effect} from '../index';
 import {CoinbaseActions} from './index';
 
-import {includes, filter} from 'lodash';
+import {includes} from 'lodash';
 
 import CoinbaseAPI from '../../api/coinbase';
 import {
@@ -25,7 +25,7 @@ const isExpiredTokenError = (error: CoinbaseErrorsProps): boolean => {
 export const updateCoinbaseData =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
     const {COINBASE} = getState();
-    if (!COINBASE.token) {
+    if (!COINBASE.token[COINBASE_ENV]) {
       return;
     }
     await dispatch(getUser());
