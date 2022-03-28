@@ -29,6 +29,9 @@ import OffersCarousel from './components/offers/OffersCarousel';
 import PortfolioBalance from './components/PortfolioBalance';
 import MockQuickLinks from './components/quick-links/MockQuickLinks';
 import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
+import {setHomeCarouselConfig} from '../../../store/app/app.actions';
+import {BaseText} from '../../../components/styled/Text';
+import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 
 const HeaderContainer = styled.View`
   flex-direction: row;
@@ -42,6 +45,14 @@ export const HeaderButtonContainer = styled.View`
 
 const HomeContainer = styled.SafeAreaView`
   flex: 1;
+`;
+
+export const HomeLink = styled(BaseText)`
+  font-weight: 500;
+  font-size: 14px;
+  color: ${({theme}) => theme.colors.link};
+  text-decoration: ${({theme: {dark}}) => (dark ? 'underline' : 'none')};
+  text-decoration-color: ${White};
 `;
 
 export const SectionHeaderContainer = styled.View<{justifyContent?: string}>`
@@ -65,6 +76,23 @@ const HomeRoot = () => {
   //   }
   // }, []);
 
+  const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
+  const _keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const _cards = useAppSelector(({CARD, APP}) => CARD.cards[APP.network]);
+  useEffect(() => {
+    if (!homeCarouselConfig) {
+      const keys = Object.values(_keys).map(key => ({
+        id: key.id,
+        show: true,
+      }));
+      const cards = _cards.map(_ => ({
+        id: 'bitpayCard',
+        show: true,
+      }));
+      dispatch(setHomeCarouselConfig([...keys, ...cards]));
+    }
+  }, [_cards, _keys, dispatch, homeCarouselConfig]);
+
   const navigation = useNavigation();
   const theme = useTheme();
   const [refreshing, setRefreshing] = useState(false);
@@ -74,7 +102,7 @@ const HomeRoot = () => {
   const memoizedOffers = useMemo(() => {
     const featuredMerchants = allContentCards.filter(isFeaturedMerchant);
 
-    if (__DEV__ && !featuredMerchants.length) {
+    if (STATIC_CONTENT_CARDS_ENABLED && !featuredMerchants.length) {
       return MockOffers;
     }
 
@@ -85,7 +113,7 @@ const HomeRoot = () => {
   const memoizedAdvertisements = useMemo(() => {
     const advertisements = allContentCards.filter(isDoMore);
 
-    if (__DEV__ && !advertisements.length) {
+    if (STATIC_CONTENT_CARDS_ENABLED && !advertisements.length) {
       return MockAdvertisements;
     }
 
@@ -121,7 +149,7 @@ const HomeRoot = () => {
   const memoizedQuickLinks = useMemo(() => {
     const quickLinks = allContentCards.filter(isQuickLink);
 
-    if (__DEV__ && !quickLinks.length) {
+    if (STATIC_CONTENT_CARDS_ENABLED && !quickLinks.length) {
       return MockQuickLinks;
     }
 

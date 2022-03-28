@@ -7,7 +7,7 @@ const MockQuickLinks: ClassicContentCard[] = [
     ...DEFAULT_CLASSIC_CONTENT_CARD,
     id: '1',
     title: 'Feedback',
-    cardDescription: "[DEV] Let us know how we're doing",
+    cardDescription: "Let us know how we're doing",
     image: require('../../../../../../assets/img/home/quick-links/icon-chat.png'),
     url: URL.LEAVE_FEEDBACK,
     openURLInWebView: true,

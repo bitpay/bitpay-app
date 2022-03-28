@@ -41,7 +41,7 @@ const ModalHeader = styled.View`
 `;
 
 const CloseModalButton = styled.TouchableOpacity`
-  margin: 15px 0;
+  margin: 15px;
   padding: 5px;
   height: 41px;
   width: 41px;

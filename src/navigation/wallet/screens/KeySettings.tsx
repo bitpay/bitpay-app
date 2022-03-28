@@ -34,7 +34,7 @@ import {
 import {useDispatch} from 'react-redux';
 import InfoSvg from '../../../../assets/img/info.svg';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
-import {buildUIFormattedWallet} from './KeyOverview';
+import {buildNestedWalletList, buildUIFormattedWallet} from './KeyOverview';
 import {URL} from '../../../constants';
 import {getMnemonic} from '../../../utils/helper-methods';
 import {useAppSelector} from '../../../utils/hooks';
@@ -100,33 +100,6 @@ const WalletSettingsTitle = styled(SettingTitle)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-export const buildNestedWalletList = (wallets: Wallet[]) => {
-  const walletList = [] as Array<WalletRowProps>;
-  const _coins = wallets.filter(wallet => !wallet.credentials.token);
-  const _tokens = wallets.filter(wallet => wallet.credentials.token);
-
-  _coins.forEach(coin => {
-    walletList.push({
-      ...buildUIFormattedWallet(coin),
-    });
-
-    // eth wallet with tokens -> for every token wallet ID grab full wallet from _tokens and add it to the list
-    if (coin.tokens) {
-      coin.tokens.forEach(id => {
-        const tokenWallet = _tokens.find(token => token.id === id);
-        if (tokenWallet) {
-          walletList.push({
-            ...buildUIFormattedWallet(tokenWallet),
-            isToken: true,
-          });
-        }
-      });
-    }
-  });
-
-  return walletList;
-};
-
 const KeySettings = () => {
   const {
     params: {key, context},
@@ -134,7 +107,12 @@ const KeySettings = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const dispatch = useDispatch();
   const navigation = useNavigation();
-  const wallets = buildNestedWalletList(key.wallets);
+
+  const _wallets = key.wallets;
+  const coins = _wallets.filter(wallet => !wallet.credentials.token);
+  const tokens = _wallets.filter(wallet => wallet.credentials.token);
+  const wallets = buildNestedWalletList(coins, tokens);
+
   const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
   const {keyName} = _key || {};
 
