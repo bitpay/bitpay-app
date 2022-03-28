@@ -137,14 +137,16 @@ export interface CoinbaseExchangeRatesProps {
 }
 
 export interface CoinbaseCreateAddressProps {
-  id: string;
-  address: string;
-  name: string;
-  created_at: string;
-  updated_at: string;
-  network: string;
-  resource: string;
-  resource_path: string;
+  data: {
+    id: string;
+    address: string;
+    name: string;
+    created_at: string;
+    updated_at: string;
+    network: string;
+    resource: string;
+    resource_path: string;
+  };
 }
 
 export interface CoinbaseErrorsProps {
@@ -186,4 +188,9 @@ export interface ConfigApiProps {
     mobile: string;
     desktop: string;
   };
+}
+
+export enum CoinbaseEnvironment {
+  sandbox = 'sandbox',
+  production = 'production',
 }

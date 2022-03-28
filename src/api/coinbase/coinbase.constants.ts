@@ -1,4 +1,8 @@
-import {ConfigApiProps, CredentialsProps} from './coinbase.types';
+import {
+  CoinbaseEnvironment,
+  ConfigApiProps,
+  CredentialsProps,
+} from './coinbase.types';
 
 // TODO: essentials constants from config file
 export const COINBASE_CONFIG_API: ConfigApiProps = {
@@ -44,6 +48,10 @@ export const API_VERSION = '2017-10-31'; // TODO: there is a newest version: 202
 export const PAGE_LIMIT: number = 100;
 export const COINBASE_INVOICE_URL: string =
   'https://bitpay.com/oauth/coinbase/pay/';
+
+export const COINBASE_ENV: CoinbaseEnvironment = __DEV__
+  ? CoinbaseEnvironment.sandbox
+  : CoinbaseEnvironment.production;
 
 // TODO: remove?
 export enum Coin {

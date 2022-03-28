@@ -9,7 +9,6 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
-import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
@@ -23,15 +22,17 @@ import {formatFiatAmount} from '../../../utils/helper-methods';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {getCoinbaseExchangeRate} from '../../../store/coinbase/coinbase.effects';
 import CoinbaseAPI from '../../../api/coinbase';
+import {Network} from '../../../constants';
+import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 
 const OverviewContainer = styled.View`
   flex: 1;
 `;
 
 const BalanceContainer = styled.View`
+  height: 15%;
   margin-top: 20px;
-  margin-bottom: 10px;
-  padding: 0 15px;
+  padding: 10px 15px;
 `;
 
 const Balance = styled(BaseText)`
@@ -64,10 +65,15 @@ const CoinbaseDashboard = () => {
   const exchangeRates = useSelector(
     ({COINBASE}: RootState) => COINBASE.exchangeRates,
   );
-  const user = useSelector(({COINBASE}: RootState) => COINBASE.user);
-  const accounts = useSelector(({COINBASE}: RootState) => COINBASE.accounts);
+  const user = useSelector(
+    ({COINBASE}: RootState) => COINBASE.user[COINBASE_ENV],
+  );
+  const accounts = useSelector(
+    ({COINBASE}: RootState) => COINBASE.accounts[COINBASE_ENV],
+  );
   const balance =
-    useSelector(({COINBASE}: RootState) => COINBASE.balance) || 0.0;
+    useSelector(({COINBASE}: RootState) => COINBASE.balance[COINBASE_ENV]) ||
+    0.0;
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -111,7 +117,7 @@ const CoinbaseDashboard = () => {
       cryptoBalance: item.balance.amount,
       fiatBalance: formatFiatAmount(fiatAmount, 'usd'),
       isToken: false,
-      network: 'livenet',
+      network: Network.mainnet,
     };
     return (
       <WalletRow
@@ -121,7 +127,7 @@ const CoinbaseDashboard = () => {
           haptic('impactLight');
           navigation.navigate('Coinbase', {
             screen: 'CoinbaseAccount',
-            params: {id: item.id},
+            params: {accountId: item.id},
           });
           dispatch(CoinbaseEffects.getTransactionsByAccount(item.id));
         }}
@@ -173,12 +179,6 @@ const CoinbaseDashboard = () => {
           )}{' '}
           {user?.data.native_currency}
         </Balance>
-        <LinkingButtons
-          receive={{cta: () => null, label: 'deposit'}}
-          send={{cta: () => null, label: 'withdraw'}}
-          buy={{cta: () => null, hide: true}}
-          swap={{cta: () => null, hide: true}}
-        />
       </BalanceContainer>
       <Hr />
       <FlatList

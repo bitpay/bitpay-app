@@ -1,7 +1,7 @@
 import {Effect} from '../index';
 import {CoinbaseActions} from './index';
 
-import {includes} from 'lodash';
+import {includes, filter} from 'lodash';
 
 import CoinbaseAPI from '../../api/coinbase';
 import {
@@ -9,6 +9,9 @@ import {
   CoinbaseErrorsProps,
   CoinbaseExchangeRatesProps,
 } from '../../api/coinbase/coinbase.types';
+import {COINBASE_ENV} from '../../api/coinbase/coinbase.constants';
+
+import {SupportedCurrencyOptions} from '../../constants/SupportedCurrencyOptions';
 
 const isExpiredTokenError = (error: CoinbaseErrorsProps): boolean => {
   for (let i = 0; i < error.errors.length; i++) {
@@ -33,7 +36,8 @@ export const updateCoinbaseData =
 export const setExchangeRate =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
     const {COINBASE} = getState();
-    const nativeCurrency: string = COINBASE.user?.data.native_currency || 'USD';
+    const nativeCurrency: string =
+      COINBASE.user[COINBASE_ENV]?.data.native_currency || 'USD';
     try {
       dispatch(CoinbaseActions.exchangeRatesPending());
       const exchangeRates = await CoinbaseAPI.getExchangeRates(nativeCurrency);
@@ -63,7 +67,7 @@ export const linkCoinbaseAccount =
     try {
       dispatch(CoinbaseActions.accessTokenPending());
       const newToken = await CoinbaseAPI.getAccessToken(code);
-      dispatch(CoinbaseActions.accessTokenSuccess(newToken));
+      dispatch(CoinbaseActions.accessTokenSuccess(COINBASE_ENV, newToken));
       await dispatch(getUser());
       await dispatch(setExchangeRate());
       dispatch(getAccountsAndBalance());
@@ -76,14 +80,16 @@ export const refreshToken =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
     const {COINBASE} = getState();
 
-    if (!COINBASE.token) {
+    if (!COINBASE.token[COINBASE_ENV]) {
       return;
     }
 
     try {
       dispatch(CoinbaseActions.refreshTokenPending());
-      const newToken = await CoinbaseAPI.getRefreshToken(COINBASE.token);
-      dispatch(CoinbaseActions.refreshTokenSuccess(newToken));
+      const newToken = await CoinbaseAPI.getRefreshToken(
+        COINBASE.token[COINBASE_ENV],
+      );
+      dispatch(CoinbaseActions.refreshTokenSuccess(COINBASE_ENV, newToken));
     } catch (error: CoinbaseErrorsProps | any) {
       dispatch(CoinbaseActions.refreshTokenFailed(error));
     }
@@ -94,8 +100,8 @@ export const disconnectCoinbaseAccount =
     const {COINBASE} = getState();
 
     dispatch(CoinbaseActions.revokeTokenPending());
-    if (COINBASE.token) {
-      await CoinbaseAPI.revokeToken(COINBASE.token);
+    if (COINBASE.token[COINBASE_ENV]) {
+      await CoinbaseAPI.revokeToken(COINBASE.token[COINBASE_ENV]);
     }
     dispatch(CoinbaseActions.revokeTokenSuccess()); // Remove accounts
   };
@@ -104,14 +110,16 @@ export const getUser =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
     const {COINBASE} = getState();
 
-    if (!COINBASE.token) {
+    if (!COINBASE.token[COINBASE_ENV]) {
       return;
     }
 
     try {
       dispatch(CoinbaseActions.userPending());
-      const user = await CoinbaseAPI.getCurrentUser(COINBASE.token);
-      dispatch(CoinbaseActions.userSuccess(user));
+      const user = await CoinbaseAPI.getCurrentUser(
+        COINBASE.token[COINBASE_ENV],
+      );
+      dispatch(CoinbaseActions.userSuccess(COINBASE_ENV, user));
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
         await dispatch(refreshToken());
@@ -138,13 +146,20 @@ export const getAccountsAndBalance =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
     const {COINBASE} = getState();
 
-    if (!COINBASE.token) {
+    if (!COINBASE.token[COINBASE_ENV]) {
       return;
+    }
+
+    const supportedCurrency: string[] = [];
+    for (let i = 0; i < SupportedCurrencyOptions.length; i++) {
+      supportedCurrency.push(SupportedCurrencyOptions[i].id);
     }
 
     try {
       dispatch(CoinbaseActions.accountsPending());
-      const accounts = await CoinbaseAPI.getAccounts(COINBASE.token);
+      const accounts = await CoinbaseAPI.getAccounts(
+        COINBASE.token[COINBASE_ENV],
+      );
 
       // Calculate balance
 
@@ -157,7 +172,7 @@ export const getAccountsAndBalance =
           accounts.data[i].balance &&
           accounts.data[i].balance.currency &&
           includes(
-            ['btc', 'bch'],
+            supportedCurrency,
             accounts.data[i].balance.currency.toLowerCase(),
           )
         ) {
@@ -175,7 +190,11 @@ export const getAccountsAndBalance =
       }
 
       dispatch(
-        CoinbaseActions.accountsSuccess(availableAccounts, availableBalance),
+        CoinbaseActions.accountsSuccess(
+          COINBASE_ENV,
+          availableAccounts,
+          availableBalance,
+        ),
       );
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
@@ -192,7 +211,7 @@ export const getTransactionsByAccount =
   async (dispatch, getState) => {
     const {COINBASE} = getState();
 
-    if (!COINBASE.token) {
+    if (!COINBASE.token[COINBASE_ENV]) {
       return;
     }
 
@@ -200,15 +219,106 @@ export const getTransactionsByAccount =
       dispatch(CoinbaseActions.transactionsPending());
       const transactions = await CoinbaseAPI.getTransactions(
         accountId,
-        COINBASE.token,
+        COINBASE.token[COINBASE_ENV],
       );
-      dispatch(CoinbaseActions.transactionsSuccess(accountId, transactions));
+      dispatch(
+        CoinbaseActions.transactionsSuccess(
+          COINBASE_ENV,
+          accountId,
+          transactions,
+        ),
+      );
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
         await dispatch(refreshToken());
         dispatch(getTransactionsByAccount(accountId));
       } else {
         dispatch(CoinbaseActions.transactionsFailed(error));
+      }
+    }
+  };
+
+export const createAddress =
+  (accountId: string): Effect<Promise<any>> =>
+  async (dispatch, getState) => {
+    const {COINBASE} = getState();
+
+    if (!COINBASE.token[COINBASE_ENV]) {
+      return;
+    }
+
+    try {
+      dispatch(CoinbaseActions.createAddressPending());
+      const addressData = await CoinbaseAPI.getNewAddress(
+        accountId,
+        COINBASE.token[COINBASE_ENV],
+      );
+      dispatch(CoinbaseActions.createAddressSuccess());
+      return addressData.data.address;
+    } catch (error: CoinbaseErrorsProps | any) {
+      if (isExpiredTokenError(error)) {
+        await dispatch(refreshToken());
+        dispatch(createAddress(accountId));
+      } else {
+        dispatch(CoinbaseActions.createAddressFailed(error));
+      }
+    }
+  };
+
+export const sendTransaction =
+  (accountId: string, tx: any, code?: string): Effect<Promise<any>> =>
+  async (dispatch, getState) => {
+    const {COINBASE} = getState();
+
+    if (!COINBASE.token[COINBASE_ENV]) {
+      return;
+    }
+
+    try {
+      dispatch(CoinbaseActions.sendTransactionPending());
+      const addressData = await CoinbaseAPI.sendTransaction(
+        accountId,
+        tx,
+        COINBASE.token[COINBASE_ENV],
+        code,
+      );
+      dispatch(CoinbaseActions.sendTransactionSuccess());
+      return addressData.data.address;
+    } catch (error: CoinbaseErrorsProps | any) {
+      if (isExpiredTokenError(error)) {
+        await dispatch(refreshToken());
+        dispatch(sendTransaction(accountId, tx));
+      } else {
+        dispatch(CoinbaseActions.sendTransactionFailed(error));
+      }
+    }
+  };
+
+export const payInvoice =
+  (accountId: string, tx: any, code?: string): Effect<Promise<any>> =>
+  async (dispatch, getState) => {
+    const {COINBASE} = getState();
+
+    if (!COINBASE.token[COINBASE_ENV]) {
+      return;
+    }
+
+    try {
+      dispatch(CoinbaseActions.payInvoicePending());
+      const addressData = await CoinbaseAPI.payInvoice(
+        accountId,
+        tx,
+        COINBASE.token[COINBASE_ENV],
+        code,
+      );
+      dispatch(CoinbaseActions.payInvoiceSuccess());
+      return addressData.data.address;
+    } catch (error: CoinbaseErrorsProps | any) {
+      if (isExpiredTokenError(error)) {
+        await dispatch(refreshToken());
+        dispatch(payInvoice(accountId, tx));
+      } else {
+        dispatch(CoinbaseActions.payInvoiceFailed(error));
       }
     }
   };

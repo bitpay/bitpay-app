@@ -21,6 +21,7 @@ import {useSelector} from 'react-redux';
 import {RootState} from '../../../store';
 import CoinbaseAPI from '../../../api/coinbase';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
+import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 
 const SettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -77,7 +78,9 @@ const CoinbaseSettings = () => {
 
   const [refreshing, setRefreshing] = useState(false);
 
-  const userData = useSelector(({COINBASE}: RootState) => COINBASE.user);
+  const userData = useSelector(
+    ({COINBASE}: RootState) => COINBASE.user[COINBASE_ENV],
+  );
   const isLoadingUserData = useSelector<RootState, boolean>(
     ({COINBASE}) => COINBASE.isApiLoading,
   );

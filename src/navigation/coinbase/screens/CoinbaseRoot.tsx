@@ -15,6 +15,7 @@ import {useAppDispatch} from '../../../utils/hooks';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import CoinbaseAPI from '../../../api/coinbase';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
+import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 
 export type CoinbaseRootScreenParamList =
   | {
@@ -37,7 +38,9 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({route}) => {
   const tokenStatus = useSelector<RootState, 'success' | 'failed' | null>(
     ({COINBASE}) => COINBASE.getAccessTokenStatus,
   );
-  const token = useSelector(({COINBASE}: RootState) => COINBASE.token);
+  const token = useSelector(
+    ({COINBASE}: RootState) => COINBASE.token[COINBASE_ENV],
+  );
   const [isDashboardEnabled, setIsDashboardEnabled] = useState(!!token);
 
   let {code, state} = route.params || {};

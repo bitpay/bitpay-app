@@ -169,6 +169,18 @@ const Confirm = () => {
     [dispatch],
   );
 
+  let recipientData;
+
+  if (recipient.type && recipient.type == 'coinbase') {
+    recipientData = {
+      recipientName: recipient.name || 'Coinbase',
+      recipientAddress: sendingTo.recipientAddress,
+      img: 'coinbase',
+    };
+  } else {
+    recipientData = sendingTo;
+  }
+
   return (
     <ConfirmContainer>
       <DetailsList>

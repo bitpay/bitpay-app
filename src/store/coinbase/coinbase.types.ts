@@ -5,6 +5,7 @@ import {
   CoinbaseUserProps,
   CoinbaseExchangeRatesProps,
   CoinbaseTransactionsByAccountProps,
+  CoinbaseEnvironment,
 } from '../../api/coinbase/coinbase.types';
 
 export type ApiLoading = boolean;
@@ -15,6 +16,9 @@ export type GetUserStatus = 'success' | 'failed' | null;
 export type GetAccountsStatus = 'success' | 'failed' | null;
 export type GetExchangeRatesStatus = 'success' | 'failed' | null;
 export type GetTransactionsStatus = 'success' | 'failed' | null;
+export type CreateAddressStatus = 'success' | 'failed' | null;
+export type SendTransactionStatus = 'success' | 'failed' | null;
+export type PayInvoiceStatus = 'success' | 'failed' | null;
 
 export enum CoinbaseActionTypes {
   DISCONNECT_ACCOUNT_PENDING = 'Coinbase/DISCONNECT_ACCOUNT_PENDING',
@@ -38,6 +42,15 @@ export enum CoinbaseActionTypes {
   TRANSACTIONS_PENDING = 'Coinbase/TRANSACTIONS_PENDING',
   TRANSACTIONS_SUCCESS = 'Coinbase/TRANSACTIONS_SUCCESS',
   TRANSACTIONS_FAILED = 'Coinbase/TRANSACTIONS_FAILED',
+  CREATE_ADDRESS_PENDING = 'Coinbase/CREATE_ADDRESS_PENDING',
+  CREATE_ADDRESS_SUCCESS = 'Coinbase/CREATE_ADDRESS_SUCCESS',
+  CREATE_ADDRESS_FAILED = 'Coinbase/CREATE_ADDRESS_FAILED',
+  SEND_TRANSACTION_PENDING = 'Coinbase/SEND_TRANSACTION_PENDING',
+  SEND_TRANSACTION_SUCCESS = 'Coinbase/SEND_TRANSACTION_SUCCESS',
+  SEND_TRANSACTION_FAILED = 'Coinbase/SEND_TRANSACTION_FAILED',
+  PAY_INVOICE_PENDING = 'Coinbase/PAY_INVOICE_PENDING',
+  PAY_INVOICE_SUCCESS = 'Coinbase/PAY_INVOICE_SUCCESS',
+  PAY_INVOICE_FAILED = 'Coinbase/PAY_INVOICE_FAILED',
 }
 
 // ------- Exchange Rate -------- //
@@ -79,7 +92,7 @@ interface AccessTokenPending {
 
 interface AccessTokenSuccess {
   type: typeof CoinbaseActionTypes.ACCESS_TOKEN_SUCCESS;
-  payload: CoinbaseTokenProps;
+  payload: {env: CoinbaseEnvironment; token: CoinbaseTokenProps};
 }
 
 interface AccessTokenFailed {
@@ -95,7 +108,7 @@ interface RefreshTokenPending {
 
 interface RefreshTokenSuccess {
   type: typeof CoinbaseActionTypes.REFRESH_TOKEN_SUCCESS;
-  payload: CoinbaseTokenProps;
+  payload: {env: CoinbaseEnvironment; token: CoinbaseTokenProps};
 }
 
 interface RefreshTokenFailed {
@@ -111,7 +124,7 @@ interface UserPending {
 
 interface UserSuccess {
   type: typeof CoinbaseActionTypes.USER_SUCCESS;
-  payload: CoinbaseUserProps;
+  payload: {env: CoinbaseEnvironment; user: CoinbaseUserProps};
 }
 
 interface UserFailed {
@@ -127,7 +140,11 @@ interface AccountsPending {
 
 interface AccountsSuccess {
   type: typeof CoinbaseActionTypes.ACCOUNTS_SUCCESS;
-  payload: {balance: number; accounts: CoinbaseAccountProps[]};
+  payload: {
+    env: CoinbaseEnvironment;
+    balance: number;
+    accounts: CoinbaseAccountProps[];
+  };
 }
 
 interface AccountsFailed {
@@ -143,11 +160,56 @@ interface TransactionsPending {
 
 interface TransactionsSuccess {
   type: typeof CoinbaseActionTypes.TRANSACTIONS_SUCCESS;
-  payload: CoinbaseTransactionsByAccountProps;
+  payload: {env: CoinbaseEnvironment; txs: CoinbaseTransactionsByAccountProps};
 }
 
 interface TransactionsFailed {
   type: typeof CoinbaseActionTypes.TRANSACTIONS_FAILED;
+  payload: CoinbaseErrorsProps;
+}
+
+// ------- Address -------- //
+
+interface CreateAddressPending {
+  type: typeof CoinbaseActionTypes.CREATE_ADDRESS_PENDING;
+}
+
+interface CreateAddressSuccess {
+  type: typeof CoinbaseActionTypes.CREATE_ADDRESS_SUCCESS;
+}
+
+interface CreateAddressFailed {
+  type: typeof CoinbaseActionTypes.CREATE_ADDRESS_FAILED;
+  payload: CoinbaseErrorsProps;
+}
+
+// ------- Send Transaction -------- //
+
+interface SendTransactionPending {
+  type: typeof CoinbaseActionTypes.SEND_TRANSACTION_PENDING;
+}
+
+interface SendTransactionSuccess {
+  type: typeof CoinbaseActionTypes.SEND_TRANSACTION_SUCCESS;
+}
+
+interface SendTransactionFailed {
+  type: typeof CoinbaseActionTypes.SEND_TRANSACTION_FAILED;
+  payload: CoinbaseErrorsProps;
+}
+
+// ------- Pay Invoice -------- //
+
+interface PayInvoicePending {
+  type: typeof CoinbaseActionTypes.PAY_INVOICE_PENDING;
+}
+
+interface PayInvoiceSuccess {
+  type: typeof CoinbaseActionTypes.PAY_INVOICE_SUCCESS;
+}
+
+interface PayInvoiceFailed {
+  type: typeof CoinbaseActionTypes.PAY_INVOICE_FAILED;
   payload: CoinbaseErrorsProps;
 }
 
@@ -172,4 +234,13 @@ export type CoinbaseActionType =
   | AccountsFailed
   | TransactionsPending
   | TransactionsSuccess
-  | TransactionsFailed;
+  | TransactionsFailed
+  | CreateAddressPending
+  | CreateAddressSuccess
+  | CreateAddressFailed
+  | SendTransactionPending
+  | SendTransactionSuccess
+  | SendTransactionFailed
+  | PayInvoicePending
+  | PayInvoiceSuccess
+  | PayInvoiceFailed;

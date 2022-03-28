@@ -168,13 +168,17 @@ const SendTo = () => {
     });
   });
 
+  const {wallet, toCoinbase} = route.params;
+
   useEffect(() => {
+    if (toCoinbase) {
+      onSendToCoinbase(toCoinbase.account, toCoinbase.address);
+    }
     return navigation.addListener('blur', () =>
       setTimeout(() => setSearchInput(''), 300),
     );
-  }, [navigation]);
+  }, [navigation, toCoinbase]);
 
-  const {wallet} = route.params;
   const {
     currencyAbbreviation,
     id,
@@ -336,10 +340,29 @@ const SendTo = () => {
     }
   };
 
-  const goToConfirm = (recipient: Recipient) => {
+  const onSendToCoinbase = async (
+    account: string | undefined,
+    address: string | undefined,
+  ) => {
+    if (!address) return;
+    try {
+      const recipient = {
+        name: account || 'Coinbase',
+        type: 'coinbase',
+        address,
+      };
+
+      goToConfirm(recipient, {hideSendMax: true});
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const goToConfirm = (recipient: Recipient, opts?: any) => {
     navigation.navigate('Wallet', {
       screen: WalletScreens.AMOUNT,
       params: {
+        opts: opts || {},
         currencyAbbreviation: wallet.currencyAbbreviation.toUpperCase(),
         onAmountSelected: async (amount, setButtonState, opts) => {
           try {

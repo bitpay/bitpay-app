@@ -5,6 +5,7 @@ import {
   CoinbaseTokenProps,
   CoinbaseTransactionsProps,
   CoinbaseUserProps,
+  CoinbaseEnvironment,
 } from '../../api/coinbase/coinbase.types';
 import {CoinbaseActionType, CoinbaseActionTypes} from './coinbase.types';
 
@@ -52,10 +53,11 @@ export const accessTokenPending = (): CoinbaseActionType => ({
 });
 
 export const accessTokenSuccess = (
+  env: CoinbaseEnvironment,
   token: CoinbaseTokenProps,
 ): CoinbaseActionType => ({
   type: CoinbaseActionTypes.ACCESS_TOKEN_SUCCESS,
-  payload: token,
+  payload: {env, token},
 });
 
 export const accessTokenFailed = (
@@ -72,10 +74,11 @@ export const refreshTokenPending = (): CoinbaseActionType => ({
 });
 
 export const refreshTokenSuccess = (
+  env: CoinbaseEnvironment,
   token: CoinbaseTokenProps,
 ): CoinbaseActionType => ({
   type: CoinbaseActionTypes.REFRESH_TOKEN_SUCCESS,
-  payload: token,
+  payload: {env, token},
 });
 
 export const refreshTokenFailed = (
@@ -91,9 +94,12 @@ export const userPending = (): CoinbaseActionType => ({
   type: CoinbaseActionTypes.USER_PENDING,
 });
 
-export const userSuccess = (user: CoinbaseUserProps): CoinbaseActionType => ({
+export const userSuccess = (
+  env: CoinbaseEnvironment,
+  user: CoinbaseUserProps,
+): CoinbaseActionType => ({
   type: CoinbaseActionTypes.USER_SUCCESS,
-  payload: user,
+  payload: {env, user},
 });
 
 export const userFailed = (error: CoinbaseErrorsProps): CoinbaseActionType => ({
@@ -108,11 +114,12 @@ export const accountsPending = (): CoinbaseActionType => ({
 });
 
 export const accountsSuccess = (
+  env: CoinbaseEnvironment,
   accounts: CoinbaseAccountProps[],
   balance: number,
 ): CoinbaseActionType => ({
   type: CoinbaseActionTypes.ACCOUNTS_SUCCESS,
-  payload: {balance, accounts},
+  payload: {env, balance, accounts},
 });
 
 export const accountsFailed = (
@@ -129,16 +136,68 @@ export const transactionsPending = (): CoinbaseActionType => ({
 });
 
 export const transactionsSuccess = (
+  env: CoinbaseEnvironment,
   id: string,
   transactions: CoinbaseTransactionsProps,
 ): CoinbaseActionType => ({
   type: CoinbaseActionTypes.TRANSACTIONS_SUCCESS,
-  payload: {[id]: transactions},
+  payload: {env, txs: {[id]: transactions}},
 });
 
 export const transactionsFailed = (
   error: CoinbaseErrorsProps,
 ): CoinbaseActionType => ({
   type: CoinbaseActionTypes.TRANSACTIONS_FAILED,
+  payload: error,
+});
+
+// ------- Address -------- //
+
+export const createAddressPending = (): CoinbaseActionType => ({
+  type: CoinbaseActionTypes.CREATE_ADDRESS_PENDING,
+});
+
+export const createAddressSuccess = (): CoinbaseActionType => ({
+  type: CoinbaseActionTypes.CREATE_ADDRESS_SUCCESS,
+});
+
+export const createAddressFailed = (
+  error: CoinbaseErrorsProps,
+): CoinbaseActionType => ({
+  type: CoinbaseActionTypes.CREATE_ADDRESS_FAILED,
+  payload: error,
+});
+
+// ------- Send Transaction -------- //
+
+export const sendTransactionPending = (): CoinbaseActionType => ({
+  type: CoinbaseActionTypes.SEND_TRANSACTION_PENDING,
+});
+
+export const sendTransactionSuccess = (): CoinbaseActionType => ({
+  type: CoinbaseActionTypes.SEND_TRANSACTION_SUCCESS,
+});
+
+export const sendTransactionFailed = (
+  error: CoinbaseErrorsProps,
+): CoinbaseActionType => ({
+  type: CoinbaseActionTypes.SEND_TRANSACTION_FAILED,
+  payload: error,
+});
+
+// ------- Pay Invoice -------- //
+
+export const payInvoicePending = (): CoinbaseActionType => ({
+  type: CoinbaseActionTypes.PAY_INVOICE_PENDING,
+});
+
+export const payInvoiceSuccess = (): CoinbaseActionType => ({
+  type: CoinbaseActionTypes.PAY_INVOICE_SUCCESS,
+});
+
+export const payInvoiceFailed = (
+  error: CoinbaseErrorsProps,
+): CoinbaseActionType => ({
+  type: CoinbaseActionTypes.PAY_INVOICE_FAILED,
   payload: error,
 });

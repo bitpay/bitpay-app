@@ -1,4 +1,11 @@
-import React, {ReactElement, useCallback, useMemo, useState} from 'react';
+import React, {
+  ReactElement,
+  useCallback,
+  useMemo,
+  useState,
+  useEffect,
+  useLayoutEffect,
+} from 'react';
 import styled from 'styled-components/native';
 import {useAppSelector} from '../../../utils/hooks';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
@@ -27,8 +34,8 @@ import ReceiveAddress from '../components/ReceiveAddress';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';
 
 const ModalHeader = styled.View`
-  height: 50px;
-  margin-right: 10px;
+  padding: ${ScreenGutter};
+  display: flex;
 `;
 
 const CloseModalButton = styled.TouchableOpacity`
@@ -41,6 +48,11 @@ const CloseModalButton = styled.TouchableOpacity`
   display: flex;
   justify-content: center;
   align-items: center;
+`;
+
+const ModalTitle = styled.Text`
+  text-align: center;
+  font-size: 20px;
 `;
 
 const SafeAreaView = styled.SafeAreaView`
@@ -71,7 +83,13 @@ export const WalletSelectMenuBodyContainer = styled.ScrollView`
 `;
 
 export type GlobalSelectParamList = {
-  context: 'send' | 'receive';
+  context: 'send' | 'receive' | 'deposit';
+  toCoinbase?: {
+    account: string;
+    address: string;
+    currency: string;
+    title: string;
+  };
 };
 
 export interface GlobalSelectObj {
@@ -111,15 +129,17 @@ interface GlobalSelectProps {
   useAsModal: any;
   customSupportedCurrencies?: string[];
   onDismiss?: (newWallet?: any) => void;
+  title?: string;
 }
 
 const GlobalSelect: React.FC<GlobalSelectProps> = ({
   useAsModal,
   customSupportedCurrencies,
   onDismiss,
+  title,
 }) => {
   const {
-    params: {context},
+    params: {context, toCoinbase},
   } = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
   const theme = useTheme();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -146,8 +166,18 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   wallets = wallets.filter(wallet => !wallet.hideWallet && wallet.isComplete());
 
   // only show wallets with funds
-  if (context === 'send') {
+  if (context === 'send' || context === 'deposit') {
     wallets = wallets.filter(wallet => wallet.balance.sat > 0);
+  }
+
+  if (context === 'deposit' && toCoinbase) {
+    wallets = wallets.filter(
+      wallet => wallet.currencyAbbreviation === toCoinbase.currency,
+    );
+  }
+
+  if (useAsModal) {
+    wallets = wallets.filter(wallet => wallet.isComplete());
   }
 
   const supportedCoins = useMemo(
@@ -221,7 +251,13 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
       onDismiss(wallet);
       return;
     }
-    if (context === 'send') {
+    if (context === 'deposit') {
+      // Coinbase: send from BitPay to Coinbase
+      navigation.navigate('Wallet', {
+        screen: 'SendTo',
+        params: {wallet, toCoinbase},
+      });
+    } else if (context === 'send') {
       setWalletSelectModalVisible(false);
       navigation.navigate('Wallet', {
         screen: 'SendTo',
@@ -238,6 +274,24 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
     setShowReceiveAddressBottomModal(false);
     setReceiveWallet(undefined);
   };
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: toCoinbase?.title || 'Send To',
+    });
+  });
+
+  useEffect(() => {
+    if (!wallets[0]) {
+      // No wallets available
+      // TODO: show warning
+      if (useAsModal) {
+        closeModal();
+      } else {
+        navigation.goBack();
+      }
+    }
+  }, [wallets]);
 
   return (
     <SafeAreaView>
@@ -257,6 +311,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
               }}
             />
           </CloseModalButton>
+          {title && <ModalTitle>{title}</ModalTitle>}
         </ModalHeader>
       )}
       <GlobalSelectContainer>

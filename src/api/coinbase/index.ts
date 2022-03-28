@@ -9,6 +9,7 @@ import {
   CoinbaseTokenProps,
   CoinbaseExchangeRatesProps,
   CoinbaseErrorsProps,
+  CoinbaseCreateAddressProps,
 } from './coinbase.types';
 
 import {
@@ -24,6 +25,10 @@ let oauthStateCode: string = ''; // Random
 
 const getOauthStateCode = (): string => {
   return oauthStateCode;
+};
+
+const getTokenError = (): CoinbaseErrorsProps => {
+  return {errors: [{id: 'MISSING_TOKEN', message: 'Token not found'}]};
 };
 
 const setRandomHex = (): string => {
@@ -74,9 +79,10 @@ const getOAuthUrl = (): string => {
 };
 
 const getRefreshToken = (
-  token: CoinbaseTokenProps,
+  token: CoinbaseTokenProps | null,
 ): Promise<CoinbaseTokenProps> => {
   return new Promise((resolve, reject) => {
+    if (!token) return reject(getTokenError());
     const url = CREDENTIALS.host + '/oauth/token';
     const data = {
       grant_type: 'refresh_token',
@@ -134,8 +140,9 @@ const getAccessToken = (code: string): Promise<CoinbaseTokenProps> => {
   });
 };
 
-const revokeToken = (token: CoinbaseTokenProps): Promise<boolean> => {
+const revokeToken = (token: CoinbaseTokenProps | null): Promise<boolean> => {
   return new Promise((resolve, reject) => {
+    if (!token) return reject(getTokenError());
     const url = CREDENTIALS.host + '/oauth/revoke';
     const data = {
       token: token.access_token,
@@ -162,8 +169,9 @@ const revokeToken = (token: CoinbaseTokenProps): Promise<boolean> => {
 };
 
 const getAccounts = (
-  token: CoinbaseTokenProps,
+  token: CoinbaseTokenProps | null,
 ): Promise<CoinbaseAccountsProps> => {
+  if (!token) return Promise.reject(getTokenError());
   const url =
     CREDENTIALS.api_url + '/v2' + '/accounts?order=asc&limit=' + PAGE_LIMIT;
   const headers = {
@@ -214,8 +222,9 @@ const getAccount = (
 };
 
 const getCurrentUser = (
-  token: CoinbaseTokenProps,
+  token: CoinbaseTokenProps | null,
 ): Promise<CoinbaseUserProps> => {
+  if (!token) return Promise.reject(getTokenError());
   const url = CREDENTIALS.api_url + '/v2/user';
   const headers = {
     'Content-Type': 'application/json',
@@ -242,8 +251,9 @@ const getCurrentUser = (
 
 const getTransactions = (
   accountId: string,
-  token: CoinbaseTokenProps,
+  token: CoinbaseTokenProps | null,
 ): Promise<any> => {
+  if (!token) return Promise.reject(getTokenError());
   const url =
     CREDENTIALS.api_url + '/v2/accounts/' + accountId + '/transactions';
   const headers = {
@@ -271,11 +281,12 @@ const getTransactions = (
 
 const getNewAddress = (
   accountId: string,
-  label: string,
-  token: CoinbaseTokenProps,
-): Promise<any> => {
+  token: CoinbaseTokenProps | null,
+  label?: string,
+): Promise<CoinbaseCreateAddressProps> => {
+  if (!token) return Promise.reject(getTokenError());
   const data = {
-    name: label,
+    name: label || 'BitPay',
   };
   const url = CREDENTIALS.api_url + '/v2/accounts/' + accountId + '/addresses';
   const headers = {
@@ -304,9 +315,10 @@ const getNewAddress = (
 const sendTransaction = (
   accountId: string,
   tx: any,
-  token: CoinbaseTokenProps,
-  code?: string,
+  token: CoinbaseTokenProps | null,
+  twoFactorCode?: string,
 ): Promise<any> => {
+  if (!token) return Promise.reject(getTokenError());
   tx['type'] = 'send'; // Required for sending TX
   const url =
     CREDENTIALS.api_url + '/v2/accounts/' + accountId + '/transactions';
@@ -317,8 +329,8 @@ const sendTransaction = (
     Authorization: 'Bearer ' + token.access_token,
   };
 
-  if (code) {
-    headers['CB-2FA-TOKEN'] = code; // 2FA if required
+  if (twoFactorCode) {
+    headers['CB-2FA-TOKEN'] = twoFactorCode; // 2FA if required
   }
 
   console.debug('Coinbase: Sending Transaction...');
@@ -341,9 +353,10 @@ const sendTransaction = (
 const payInvoice = (
   invoiceId: string,
   currency: string,
-  token: CoinbaseTokenProps,
+  token: CoinbaseTokenProps | null,
   twoFactorCode?: string,
 ): Promise<any> => {
+  if (!token) return Promise.reject(getTokenError());
   const url = COINBASE_INVOICE_URL + invoiceId;
   const data = {
     currency,
