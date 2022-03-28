@@ -4,6 +4,7 @@ import {useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import {FlatList} from 'react-native';
 import Carousel from 'react-native-snap-carousel';
+import {SharedElement} from 'react-navigation-shared-element';
 import GhostImg from '../../../../assets/img/ghost-cheeky.svg';
 import Button from '../../../components/button/Button';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
@@ -72,16 +73,20 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const currentCardRef = useRef(activeCard);
   currentCardRef.current = activeCard;
 
+  const onViewDetailsClick = () => {
+    navigation.navigate('Settings', {
+      id: currentCardRef.current.id,
+    });
+  };
+  const onViewDetailsClickRef = useRef(onViewDetailsClick);
+  onViewDetailsClickRef.current = onViewDetailsClick;
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <HeaderRightContainer>
           <Button
-            onPress={() =>
-              navigation.navigate('Settings', {
-                id: currentCardRef.current.id,
-              })
-            }
+            onPress={() => onViewDetailsClickRef.current()}
             buttonType="pill"
             buttonStyle="primary">
             {t('View Card Details')}
@@ -158,13 +163,21 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   );
 
   const renderSlide = useCallback(
-    ({item}: {item: Card[]}) => (
-      <CardOverviewSlide
-        card={item[0]}
-        designCurrency={virtualDesignCurrency}
-      />
-    ),
-    [virtualDesignCurrency],
+    ({item}: {item: Card[]}) =>
+      activeCard.id === item[0].id ? (
+        <SharedElement id={'card.dashboard.active-card'}>
+          <CardOverviewSlide
+            card={item[0]}
+            designCurrency={virtualDesignCurrency}
+          />
+        </SharedElement>
+      ) : (
+        <CardOverviewSlide
+          card={item[0]}
+          designCurrency={virtualDesignCurrency}
+        />
+      ),
+    [virtualDesignCurrency, activeCard.id],
   );
 
   const renderTransaction = useCallback(
@@ -215,7 +228,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
                 id: cardGroups[idx][0].id,
               });
             }}
-            itemWidth={CARD_WIDTH}
+            itemWidth={CARD_WIDTH + 20}
             sliderWidth={WIDTH}
             inactiveSlideScale={1}
             inactiveSlideOpacity={1}

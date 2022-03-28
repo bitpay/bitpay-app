@@ -1,8 +1,9 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useMemo, useRef} from 'react';
+import React, {useCallback, useMemo, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView} from 'react-native';
 import Carousel from 'react-native-snap-carousel';
+import {SharedElement} from 'react-navigation-shared-element';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {ScreenGutter, WIDTH} from '../../../components/styled/Containers';
@@ -38,10 +39,6 @@ const CardTypeButtons = styled.View`
   flex-direction: row;
   flex-grow: 0;
 `;
-
-const renderSettingsSlide = ({item}: {item: Card}) => (
-  <SettingsSlide card={item} />
-);
 
 const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
   const {id} = route.params;
@@ -82,6 +79,18 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
 
     navigation.setParams({id: nextId});
   };
+
+  const renderSettingsSlide = useCallback(
+    ({item}: {item: Card}) =>
+      route.params.id === item.id ? (
+        <SharedElement id={'card.dashboard.active-card'}>
+          <SettingsSlide card={item} />
+        </SharedElement>
+      ) : (
+        <SettingsSlide card={item} />
+      ),
+    [route.params.id],
+  );
 
   return (
     <ScrollView>
