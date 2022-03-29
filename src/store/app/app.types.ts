@@ -6,7 +6,7 @@ import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/Ong
 import {Network} from '../../constants';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {NavScreenParams, RootStackParamList} from '../../Root';
-import {AppIdentity} from './app.models';
+import {AppIdentity, HomeCarouselConfig} from './app.models';
 
 export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
@@ -198,7 +198,7 @@ interface BrazeContentCardsFetched {
 
 interface SetHomeCarouselConfig {
   type: typeof AppActionTypes.SET_HOME_CAROUSEL_CONFIG;
-  payload: any;
+  payload: HomeCarouselConfig[] | HomeCarouselConfig;
 }
 
 export type AppActionType =
