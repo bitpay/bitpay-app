@@ -231,8 +231,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
   }
 
   // useRef to preserve memoized debounce
-  const onPressRef = useRef(() => {});
-  onPressRef.current = () => {
+  const _onPress = () => {
     if (!onPress || disabled || !!state) {
       return;
     }
@@ -240,6 +239,8 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
     Haptic('impactLight');
     onPress();
   };
+  const onPressRef = useRef(_onPress);
+  onPressRef.current = _onPress;
 
   const debouncedOnPress = useMemo(
     () =>
