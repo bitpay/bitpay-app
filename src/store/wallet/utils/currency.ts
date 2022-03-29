@@ -48,3 +48,7 @@ export const GetBlockExplorerUrl = (
 export const GetFeeUnits = (currencyAbbreviation: string) => {
   return Currencies[currencyAbbreviation.toLowerCase()].feeInfo;
 };
+
+export const GetTheme = (currencyAbbreviation: string) => {
+  return Currencies[currencyAbbreviation.toLowerCase()]?.theme;
+};

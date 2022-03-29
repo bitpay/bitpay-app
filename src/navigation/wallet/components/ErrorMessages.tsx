@@ -286,7 +286,7 @@ export const MinFeeWarning = (gotIt: () => void): BottomNotificationConfig => {
     type: 'warning',
     title: 'Warning!',
     message:
-      'The fee you are using is lower than the Super Economy level, we do not recommend doing this as the transaction will take very long to confirm or may never do it. You can continue at your own responsibility.',
+      'The fee you are using is lower than Super Economy level. It’s not recommended as this transaction may not confirm or will take very long to confirm.',
     enableBackdropDismiss: true,
     actions: [
       {

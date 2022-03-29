@@ -102,7 +102,7 @@ const Confirm = () => {
         setFee(_txDetails.fee);
         setTotal(_txDetails.total);
         setGasPrice(_txDetails.gasPrice);
-        await sleep(200);
+        await sleep(500);
         dispatch(dismissOnGoingProcessModal());
       }
     } catch (err: any) {
@@ -141,16 +141,16 @@ const Confirm = () => {
           currencyAbbreviation={currencyAbbreviation}
           hr
         />
-        {gasPrice && (
+        {gasPrice !== undefined ? (
           <SharedDetailRow
             description={'Gas price'}
             value={gasPrice.toFixed(2) + ' Gwei'}
             hr
           />
-        )}
-        {gasLimit && (
+        ) : null}
+        {gasLimit !== undefined ? (
           <SharedDetailRow description={'Gas limit'} value={gasLimit} hr />
-        )}
+        ) : null}
         {nonce && <SharedDetailRow description={'Nonce'} value={nonce} hr />}
         <SendingFrom sender={sendingFrom} hr />
         <Amount description={'SubTotal'} amount={subTotal} />

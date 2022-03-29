@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {BaseText, H4, H6} from '../../../../components/styled/Text';
+import {BaseText, H4, H7, Paragraph} from '../../../../components/styled/Text';
 import {
   Fee,
   getFeeLevels,
@@ -13,17 +13,17 @@ import {
   MinFeeWarning,
 } from '../../components/ErrorMessages';
 import {useAppDispatch} from '../../../../utils/hooks';
-import {GetFeeUnits, IsERCToken} from '../../../../store/wallet/utils/currency';
+import {
+  GetFeeUnits,
+  GetTheme,
+  IsERCToken,
+} from '../../../../store/wallet/utils/currency';
 import styled from 'styled-components/native';
-import TransactionSpeedRow, {
-  SpeedOptionRow,
-} from '../../../../components/list/TransactionSpeedRow';
 import {
   ActionContainer,
   ActiveOpacity,
   CtaContainer,
-  Hr,
-  Row,
+  ScreenGutter,
   SheetContainer,
   WIDTH,
 } from '../../../../components/styled/Containers';
@@ -31,9 +31,11 @@ import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import Back from '../../../../components/back/Back';
 import {TouchableOpacity, View} from 'react-native';
 import {DetailsList} from './confirm/Shared';
-import Checkbox from '../../../../components/checkbox/Checkbox';
 import Button from '../../../../components/button/Button';
-import {Caution, Slate} from '../../../../styles/colors';
+import {Caution, Slate, SlateDark, White} from '../../../../styles/colors';
+import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
+
+const CIRCLE_SIZE = 20;
 
 export type TransactionSpeedParamList = {
   feeLevel: string;
@@ -46,8 +48,8 @@ export type TransactionSpeedParamList = {
 };
 
 enum ethAvgTime {
-  normal = '<5m',
-  priority = '<2m',
+  normal = 'within 5 minutes',
+  priority = 'within 2 minutes',
   urgent = 'ASAP',
 }
 
@@ -87,6 +89,82 @@ const ErrorText = styled(BaseText)`
   margin-top: 4px;
 `;
 
+const StepsContainer = styled.View`
+  flex-direction: row;
+  margin: ${ScreenGutter};
+`;
+
+const StepContainer = styled.View<{length: number}>`
+  /* Circle size + horizontal gutter */
+  width: ${({length}) => (WIDTH - (CIRCLE_SIZE + 30)) / length}px;
+`;
+
+const Step = styled.View<{isLast?: boolean}>`
+  flex-direction: row;
+`;
+
+const Circle = styled.Pressable<{isActive: boolean; backgroundColor: string}>`
+  background-color: ${({backgroundColor}) => backgroundColor};
+  width: ${CIRCLE_SIZE}px;
+  height: ${CIRCLE_SIZE}px;
+  border-width: ${({isActive}) => (isActive ? '3px' : 0)};
+  border-color: ${White};
+  border-radius: 50px;
+  transform: ${({isActive}) => (isActive ? 'scale(1.3)' : 'scale(1)')};
+  z-index: 1;
+`;
+
+const Line = styled.View<{backgroundColor: string}>`
+  background-color: ${({backgroundColor}) => backgroundColor};
+  flex-grow: 1;
+  height: 2px;
+  align-self: center;
+`;
+
+const TopLabelContainer = styled.View`
+  min-height: 30px;
+`;
+
+const BottomLabelContainer = styled.View`
+  justify-content: space-between;
+  flex-direction: row;
+  margin: 0 ${ScreenGutter};
+`;
+
+const StepBottomLabel = styled(H7)`
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+`;
+
+const StepTopLabel = styled(H7)<{length: number}>`
+  text-align: center;
+  left: -50%;
+  width: ${({length}) => (WIDTH + (length - 1 + CIRCLE_SIZE)) / length}px;
+`;
+
+const TxSpeedParagraph = styled(Paragraph)`
+  margin: 0 ${ScreenGutter} ${ScreenGutter};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+`;
+
+const StepsHeader = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+
+const StepsHeaderContainer = styled.View`
+  margin: ${ScreenGutter} ${ScreenGutter} 0;
+`;
+
+const CurrencyImageContainer = styled.View`
+  margin-right: 10px;
+`;
+
+const StepsHeaderSubTitle = styled(Paragraph)`
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  padding-top: 5px;
+  min-height: 30px;
+`;
+
 const FEE_MIN = 0;
 const FEE_MULTIPLIER = 10;
 
@@ -99,7 +177,10 @@ const TransactionSpeed = ({
   feeLevel,
   feePerSatByte: paramFeePerSatByte,
 }: TransactionSpeedParamList) => {
-  const {coin, network} = wallet.credentials;
+  const {
+    img,
+    credentials: {coin, network},
+  } = wallet;
   const dispatch = useAppDispatch();
 
   const [speedUpMinFeePerKb, setSpeedUpMinFeePerKb] = useState<number>();
@@ -118,6 +199,9 @@ const TransactionSpeed = ({
   const [minFeeRecommended, setMinFeeRecommended] = useState<number>();
   const minFeeAllowed = FEE_MIN;
   const [maxFeeAllowed, setMaxFeeAllowed] = useState<number>();
+
+  const {coinColor: backgroundColor} =
+    coin === 'btc' ? GetTheme(coin) : GetTheme('eth');
 
   const setSpeedUpMinFee = (_feeLevels: Fee[]) => {
     const minFeeLevel = coin === 'btc' ? 'custom' : 'priority';
@@ -141,7 +225,7 @@ const TransactionSpeed = ({
   };
 
   const setFeeRate = (_feeLevels: Fee[]) => {
-    const _feeOptions: any[] = [];
+    let _feeOptions: any[] = [];
     _feeLevels.forEach((fee: Fee) => {
       const {feePerKb, level, nbBlocks} = fee;
       const feeOption: any = {
@@ -151,7 +235,7 @@ const TransactionSpeed = ({
       };
 
       feeOption.feePerSatByte = (feePerKb / feeUnitAmount).toFixed();
-      feeOption.uiFeePerSatByte = `@ ${feeOption.feePerSatByte} ${feeUnit}`;
+      feeOption.uiFeePerSatByte = `${feeOption.feePerSatByte} ${feeUnit}`;
 
       if (coin === 'eth' || IsERCToken(coin)) {
         // @ts-ignore
@@ -162,9 +246,9 @@ const TransactionSpeed = ({
         feeOption.avgConfirmationTime =
           hours > 0
             ? hours === 1
-              ? 'an hour'
-              : `${hours} hours`
-            : `${min} minutes`;
+              ? 'within an hour'
+              : `within ${hours} hours`
+            : `within ${min} minutes`;
       }
 
       if (level === feeLevel) {
@@ -178,6 +262,7 @@ const TransactionSpeed = ({
       _feeOptions.push(feeOption);
     });
 
+    _feeOptions = _feeOptions.reverse();
     setFeeOptions(_feeOptions);
 
     setFeesRecommended(_feeLevels);
@@ -216,9 +301,11 @@ const TransactionSpeed = ({
     } catch (e) {}
   };
 
-  const checkFees = (feePerSatByte: string | number | undefined): void => {
+  const checkFees = (
+    customFeePerSatByte: string | number | undefined,
+  ): void => {
     setError(undefined);
-    const fee = Number(feePerSatByte);
+    const fee = Number(customFeePerSatByte);
 
     if (!fee) {
       setDisableApply(true);
@@ -270,7 +357,7 @@ const TransactionSpeed = ({
 
   const onApply = () => {
     if (selectedSpeed === 'custom' && customSatsPerByte) {
-      const customFeePerKB = Number(
+      const _customFeePerKB = Number(
         (+customSatsPerByte * feeUnitAmount).toFixed(),
       );
 
@@ -278,29 +365,29 @@ const TransactionSpeed = ({
         dispatch(
           showBottomNotificationModal(
             MinFeeWarning(() => {
-              onCloseModal(selectedSpeed, customFeePerKB);
+              onCloseModal(selectedSpeed, _customFeePerKB);
             }),
           ),
         );
         return;
       }
-      onCloseModal(selectedSpeed, customFeePerKB);
+      onCloseModal(selectedSpeed, _customFeePerKB);
     } else {
       onCloseModal(selectedSpeed);
     }
   };
 
-  const setFeesRecommended = (feeLevels: Fee[]): void => {
-    let {minValue, maxValue} = getRecommendedFees(feeLevels);
+  const setFeesRecommended = (_feeLevels: Fee[]): void => {
+    let {minValue, maxValue} = getRecommendedFees(_feeLevels);
     setMaxFeeRecommended(maxValue);
     setMinFeeRecommended(minValue);
     setMaxFeeAllowed(maxValue * FEE_MULTIPLIER);
   };
 
   const getRecommendedFees = (
-    feeLevels: Fee[],
+    _feeLevels: Fee[],
   ): {minValue: number; maxValue: number} => {
-    const value = feeLevels.map(({feePerKb}: Fee) => feePerKb);
+    const value = _feeLevels.map(({feePerKb}: Fee) => feePerKb);
     const maxValue = Math.max(...value);
 
     let minValue;
@@ -324,6 +411,27 @@ const TransactionSpeed = ({
     }
   };
 
+  const getSelectedFeeOption = () => {
+    return feeOptions?.find(({level}) => level === selectedSpeed);
+  };
+
+  const getBackgroundColor = (index?: number) => {
+    if (selectedSpeed === 'custom') {
+      return backgroundColor;
+    }
+
+    if (index !== undefined) {
+      const selectedIndex =
+        feeOptions?.findIndex(({level}) => level === selectedSpeed) || 0;
+
+      if (!(selectedIndex + 1 <= index)) {
+        return backgroundColor;
+      }
+    }
+
+    return '#E1E7E4';
+  };
+
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onClose}>
       <TxSpeedContainer>
@@ -338,40 +446,105 @@ const TransactionSpeed = ({
           </TitleContainer>
         </SheetHeaderContainer>
 
+        <TxSpeedParagraph>
+          The higher the fee, the greater the incentive a miner has to include
+          that transaction in a block. Current fees are determined based on
+          network load and the selected policy.
+        </TxSpeedParagraph>
+
         <View>
           {feeOptions && feeOptions.length > 0 ? (
             <>
-              {feeOptions.map((fee, i) => (
-                <TransactionSpeedRow
-                  key={fee.level}
-                  fee={fee}
-                  onPress={selectedFee => {
-                    setDisableApply(false);
-                    setSelectedSpeed(selectedFee.level);
-                  }}
-                  selectedSpeed={selectedSpeed}
-                  isFirst={i === 0}
-                />
-              ))}
-              <DetailsList>
-                <SpeedOptionRow
-                  activeOpacity={ActiveOpacity}
-                  onPress={onSelectCustomFee}>
-                  <Row>
-                    <H6 style={{marginRight: 10}}>Custom fee</H6>
-                    <H6 medium={true}>in {feeUnit}</H6>
-                  </Row>
+              <StepsHeaderContainer>
+                <StepsHeader>
+                  <CurrencyImageContainer>
+                    <CurrencyImage img={img} size={20} />
+                  </CurrencyImageContainer>
+                  <H4>
+                    {coin === 'btc' ? 'Bitcoin' : 'Ethereum'} Network Fee Policy
+                  </H4>
+                </StepsHeader>
 
-                  <Row
-                    style={{justifyContent: 'flex-end', alignItems: 'center'}}>
-                    <Checkbox
-                      radio={true}
+                <StepsHeaderSubTitle>
+                  {selectedSpeed === 'custom' && customSatsPerByte
+                    ? `${customSatsPerByte} ${feeUnit}`
+                    : null}
+                  {selectedSpeed !== 'custom'
+                    ? `${getSelectedFeeOption()?.uiFeePerSatByte} ${
+                        getSelectedFeeOption()?.avgConfirmationTime
+                      }`
+                    : null}
+                </StepsHeaderSubTitle>
+              </StepsHeaderContainer>
+
+              <StepsContainer>
+                {feeOptions.map((fee, i, {length}) => (
+                  <StepContainer key={i} length={length}>
+                    <TopLabelContainer>
+                      {i !== 0 && selectedSpeed === fee.level ? (
+                        <View style={{flexShrink: 1}}>
+                          <StepTopLabel length={length} medium={true}>
+                            {fee.uiLevel}
+                          </StepTopLabel>
+                        </View>
+                      ) : null}
+                    </TopLabelContainer>
+
+                    <Step>
+                      <Circle
+                        isActive={selectedSpeed === fee.level}
+                        onPress={() => {
+                          setDisableApply(false);
+                          setSelectedSpeed(fee.level);
+                        }}
+                        backgroundColor={getBackgroundColor(i)}
+                        style={[
+                          {
+                            shadowColor: '#000',
+                            shadowOffset: {width: -2, height: 4},
+                            shadowOpacity:
+                              selectedSpeed === fee.level ? 0.1 : 0,
+                            shadowRadius: 5,
+                            borderRadius: 12,
+                            elevation: 3,
+                          },
+                        ]}
+                      />
+
+                      <Line backgroundColor={getBackgroundColor(i + 1)} />
+                    </Step>
+                  </StepContainer>
+                ))}
+
+                <View>
+                  <TopLabelContainer />
+
+                  <Step isLast={true}>
+                    <Circle
+                      isActive={selectedSpeed === 'custom'}
                       onPress={onSelectCustomFee}
-                      checked={selectedSpeed === 'custom'}
+                      backgroundColor={getBackgroundColor()}
+                      style={[
+                        {
+                          shadowColor: '#000',
+                          shadowOffset: {width: -2, height: 4},
+                          shadowOpacity: selectedSpeed === 'custom' ? 0.1 : 0,
+                          shadowRadius: 5,
+                          borderRadius: 12,
+                          elevation: 3,
+                        },
+                      ]}
                     />
-                  </Row>
-                </SpeedOptionRow>
+                  </Step>
+                </View>
+              </StepsContainer>
 
+              <BottomLabelContainer>
+                <StepBottomLabel>{feeOptions[0].uiLevel}</StepBottomLabel>
+                <StepBottomLabel>Custom</StepBottomLabel>
+              </BottomLabelContainer>
+
+              <DetailsList>
                 {selectedSpeed === 'custom' ? (
                   <ActionContainer>
                     <TextInput
@@ -390,7 +563,7 @@ const TransactionSpeed = ({
                     ) : null}
                     {error === 'showMaxWarning' ? (
                       <ErrorText>
-                        You should not set a fee higher than {maxFeeRecommended}{' '}
+                        Fee should not be higher than {maxFeeRecommended}{' '}
                         {feeUnit}.
                       </ErrorText>
                     ) : null}
@@ -406,13 +579,11 @@ const TransactionSpeed = ({
                     ) : null}
                   </ActionContainer>
                 ) : null}
-
-                <Hr />
               </DetailsList>
 
               <CtaContainer>
                 <Button onPress={() => onApply()} disabled={disableApply}>
-                  Apply {disableApply}
+                  Apply
                 </Button>
               </CtaContainer>
             </>
