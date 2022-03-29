@@ -33,6 +33,7 @@ import {Dispatch} from 'redux';
 import {RootStackParamList} from '../../../Root';
 import {
   dismissOnGoingProcessModal,
+  setHomeCarouselConfig,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {Key} from '../../../store/wallet/wallet.models';
@@ -220,6 +221,8 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
               const key = (await dispatch<any>(
                 startCreateKey(currencies),
               )) as Key;
+
+              dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 
               navigation.navigate(
                 context === 'onboarding' ? 'Onboarding' : 'Wallet',
