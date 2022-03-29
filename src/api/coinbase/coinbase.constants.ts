@@ -52,19 +52,3 @@ export const COINBASE_INVOICE_URL: string =
 export const COINBASE_ENV: CoinbaseEnvironment = __DEV__
   ? CoinbaseEnvironment.sandbox
   : CoinbaseEnvironment.production;
-
-// TODO: remove?
-export enum Coin {
-  BTC = 'btc',
-  BCH = 'bch',
-  ETH = 'eth',
-  XRP = 'xrp',
-  USDC = 'usdc',
-  GUSD = 'gusd',
-  PAX = 'pax',
-  BUSD = 'busd',
-  DAI = 'dai',
-  WBTC = 'wbtc',
-  DOGE = 'doge',
-  SHIB = 'shib',
-}

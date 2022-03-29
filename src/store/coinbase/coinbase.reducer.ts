@@ -69,24 +69,19 @@ export interface CoinbaseState {
   payInvoiceError: CoinbaseErrorsProps | null;
   exchangeRates: CoinbaseExchangeRatesProps | null;
   token: {
-    [CoinbaseEnvironment.production]: CoinbaseTokenProps | null;
-    [CoinbaseEnvironment.sandbox]: CoinbaseTokenProps | null;
+    [key in CoinbaseEnvironment]: CoinbaseTokenProps | null;
   };
   user: {
-    [CoinbaseEnvironment.production]: CoinbaseUserProps | null;
-    [CoinbaseEnvironment.sandbox]: CoinbaseUserProps | null;
+    [key in CoinbaseEnvironment]: CoinbaseUserProps | null;
   };
   accounts: {
-    [CoinbaseEnvironment.production]: CoinbaseAccountProps[] | null;
-    [CoinbaseEnvironment.sandbox]: CoinbaseAccountProps[] | null;
+    [key in CoinbaseEnvironment]: CoinbaseAccountProps[] | null;
   };
   transactions: {
-    [CoinbaseEnvironment.production]: CoinbaseTransactionsByAccountProps | null;
-    [CoinbaseEnvironment.sandbox]: CoinbaseTransactionsByAccountProps | null;
+    [key in CoinbaseEnvironment]: CoinbaseTransactionsByAccountProps | null;
   };
   balance: {
-    [CoinbaseEnvironment.production]: number | null;
-    [CoinbaseEnvironment.sandbox]: number | null;
+    [key in CoinbaseEnvironment]: number | null;
   };
 }
 
@@ -178,10 +173,15 @@ export const coinbaseReducer = (
       state.isApiLoading = true;
       return {...state};
     case CoinbaseActionTypes.ACCESS_TOKEN_SUCCESS:
-      state.isApiLoading = false;
-      state.getAccessTokenStatus = 'success';
-      state.token[action.payload.env] = action.payload.token;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: false,
+        getAccessTokenStatus: 'success',
+        token: {
+          ...state.token,
+          [action.payload.env]: action.payload.token,
+        },
+      };
     case CoinbaseActionTypes.ACCESS_TOKEN_FAILED:
       state.isApiLoading = false;
       state.getAccessTokenStatus = 'failed';
@@ -194,10 +194,15 @@ export const coinbaseReducer = (
       state.isApiLoading = true;
       return {...state};
     case CoinbaseActionTypes.REFRESH_TOKEN_SUCCESS:
-      state.isApiLoading = false;
-      state.getRefreshTokenStatus = 'success';
-      state.token[action.payload.env] = action.payload.token;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: false,
+        getRefreshTokenStatus: 'success',
+        token: {
+          ...state.token,
+          [action.payload.env]: action.payload.token,
+        },
+      };
     case CoinbaseActionTypes.REFRESH_TOKEN_FAILED:
       state.isApiLoading = false;
       state.getRefreshTokenStatus = 'failed';
@@ -210,10 +215,15 @@ export const coinbaseReducer = (
       state.isApiLoading = true;
       return {...state};
     case CoinbaseActionTypes.USER_SUCCESS:
-      state.isApiLoading = false;
-      state.getUserStatus = 'success';
-      state.user[action.payload.env] = action.payload.user;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: false,
+        getUserStatus: 'success',
+        user: {
+          ...state.user,
+          [action.payload.env]: action.payload.user,
+        },
+      };
     case CoinbaseActionTypes.USER_FAILED:
       state.isApiLoading = false;
       state.getUserStatus = 'failed';
@@ -226,11 +236,19 @@ export const coinbaseReducer = (
       state.isApiLoading = true;
       return {...state};
     case CoinbaseActionTypes.ACCOUNTS_SUCCESS:
-      state.isApiLoading = false;
-      state.getAccountsStatus = 'success';
-      state.accounts[action.payload.env] = action.payload.accounts;
-      state.balance[action.payload.env] = action.payload.balance;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: false,
+        getAccountsStatus: 'success',
+        accounts: {
+          ...state.accounts,
+          [action.payload.env]: action.payload.accounts,
+        },
+        balance: {
+          ...state.balance,
+          [action.payload.env]: action.payload.balance,
+        },
+      };
     case CoinbaseActionTypes.ACCOUNTS_FAILED:
       state.isApiLoading = false;
       state.getAccountsStatus = 'failed';
@@ -243,10 +261,15 @@ export const coinbaseReducer = (
       state.isApiLoading = true;
       return {...state};
     case CoinbaseActionTypes.TRANSACTIONS_SUCCESS:
-      state.isApiLoading = false;
-      state.getTransactionsStatus = 'success';
-      state.transactions[action.payload.env] = action.payload.txs;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: false,
+        getTransactionsStatus: 'success',
+        transactions: {
+          ...state.transactions,
+          [action.payload.env]: action.payload.txs,
+        },
+      };
     case CoinbaseActionTypes.TRANSACTIONS_FAILED:
       state.isApiLoading = false;
       state.getTransactionsStatus = 'failed';
