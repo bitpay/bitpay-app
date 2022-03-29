@@ -21,7 +21,7 @@ import {changellySupportedCoins} from '../utils/changelly-utils';
 
 interface FromWalletSelectorModalProps {
   isVisible: boolean;
-  customSupportedCurrencies: string[],
+  customSupportedCurrencies: string[];
   onBackdropPress?: () => void;
   onPress?: (wallet: Wallet) => void;
 }
@@ -100,7 +100,11 @@ const FromWalletSelectorModal = ({
                               }
                             />
                             <CurrencyColumn>
-                              <H5>{wallet.walletName ? wallet.walletName : wallet.currencyName}</H5>
+                              <H5>
+                                {wallet.walletName
+                                  ? wallet.walletName
+                                  : wallet.currencyName}
+                              </H5>
                               <SubText>
                                 {wallet.currencyAbbreviation.toUpperCase()}
                               </SubText>

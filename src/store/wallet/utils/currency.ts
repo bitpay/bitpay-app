@@ -1,5 +1,15 @@
 import {Currencies, SUPPORTED_TOKENS} from '../../../constants/currencies';
 
+export const GetProtoAddress = (
+  coin: string,
+  network: string,
+  address: string,
+): string => {
+  const proto: string = GetProtocolPrefix(coin, network);
+  const protoAddr: string = proto + ':' + address;
+  return protoAddr;
+};
+
 export const GetProtocolPrefix = (
   currencyAbbreviation: string,
   network: string = 'livenet',
