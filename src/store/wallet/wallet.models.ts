@@ -205,6 +205,7 @@ export interface TransactionOptions {
   message?: string;
   customData?: CustomTransactionData;
   payProUrl?: string;
+  sendMax?: boolean;
   // btc
   enableRBF?: boolean;
   replaceTxByFee?: boolean;
@@ -257,6 +258,7 @@ export interface TransactionProposal {
   isTokenSwap?: boolean;
   id: string;
   status: string;
+  sendMaxInfo?: SendMaxInfo;
 }
 
 export interface ProposalErrorHandlerProps {
@@ -309,4 +311,15 @@ export interface InvoiceCreationParams {
   invoiceType: string;
   amount: number;
   cardConfig?: CardConfig;
+}
+
+export interface SendMaxInfo {
+  amount: number;
+  amountAboveMaxSize: number;
+  amountBelowFee: number;
+  fee: number;
+  inputs: [any];
+  size: number;
+  utxosAboveMaxSize: number;
+  utxosBelowFee: number;
 }
