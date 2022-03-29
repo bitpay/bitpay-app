@@ -4,13 +4,15 @@ import {
   CredentialsProps,
 } from './coinbase.types';
 
+import {COINBASE_CLIENT_ID, COINBASE_CLIENT_SECRET} from '@env';
+
 // TODO: essentials constants from config file
 export const COINBASE_CONFIG_API: ConfigApiProps = {
   production: {
     host: 'https://www.coinbase.com',
     api: 'https://api.coinbase.com',
-    client_id: '',
-    client_secret: '',
+    client_id: COINBASE_CLIENT_ID,
+    client_secret: COINBASE_CLIENT_SECRET,
     send_limit_amount: 1000,
   },
   sandbox: {
