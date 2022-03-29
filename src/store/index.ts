@@ -175,7 +175,19 @@ const getStore = () => {
           ...state,
           WALLET: {
             ...state.WALLET,
-            rates: !!state.WALLET.rates,
+            rates: null,
+            tokenOptions: null,
+            balanceCacheKey: null,
+          },
+          SHOP: {
+            ...state.SHOP,
+            availableCardMap: null,
+            integrations: null,
+          },
+          BITPAY_ID: {
+            ...state.BITPAY_ID,
+            doshToken: null,
+            apiToken: null,
           },
         };
       },
