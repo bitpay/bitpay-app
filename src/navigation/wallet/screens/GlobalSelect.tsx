@@ -32,7 +32,7 @@ const ModalHeader = styled.View`
 `;
 
 const CloseModalButton = styled.TouchableOpacity`
-  margin: 15px 0;
+  margin: 15px;
   padding: 5px;
   height: 41px;
   width: 41px;
@@ -142,16 +142,12 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
     .filter(key => key.backupComplete)
     .flatMap(key => key.wallets);
 
-  // Filter hidden wallets
-  wallets = wallets.filter(wallet => !wallet.hideWallet);
+  // Filter hidden and incomplete wallets
+  wallets = wallets.filter(wallet => !wallet.hideWallet && wallet.isComplete());
 
   // only show wallets with funds
   if (context === 'send') {
     wallets = wallets.filter(wallet => wallet.balance.sat > 0);
-  }
-
-  if (useAsModal) {
-    wallets = wallets.filter(wallet => wallet.isComplete());
   }
 
   const supportedCoins = useMemo(

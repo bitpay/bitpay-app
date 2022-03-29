@@ -21,6 +21,9 @@ import WalletConnectRequestDetails, {
 } from './screens/WalletConnectRequestDetails';
 import styled from 'styled-components/native';
 import {WalletConnectIconContainer} from './styled/WalletConnectContainers';
+import WalletConnectConfirm, {
+  WalletConnectConfirmParamList,
+} from './screens/WalletConnectConfirm';
 
 const WalletConnectHeaderTitle = styled.View`
   align-items: center;
@@ -44,6 +47,7 @@ export type WalletConnectStackParamList = {
   WalletConnectConnections: undefined;
   WalletConnectHome: WalletConnectHomeParamList;
   WalletConnectRequestDetails: WalletConnectRequestDetailsParamList;
+  WalletConnectConfirm: WalletConnectConfirmParamList;
 };
 
 export enum WalletConnectScreens {
@@ -52,6 +56,7 @@ export enum WalletConnectScreens {
   WC_CONNECTIONS = 'WalletConnectConnections',
   WC_HOME = 'WalletConnectHome',
   WC_REQUEST_DETAILS = 'WalletConnectRequestDetails',
+  WC_CONFIRM = 'WalletConnectConfirm',
 }
 
 const WalletConnect = createStackNavigator<WalletConnectStackParamList>();
@@ -98,6 +103,15 @@ const WalletConnectStack = () => {
         component={WalletConnectRequestDetails}
         options={{
           headerTitle: () => <HeaderTitle>Sign Request</HeaderTitle>,
+        }}
+      />
+      <WalletConnect.Screen
+        name={WalletConnectScreens.WC_CONFIRM}
+        component={WalletConnectConfirm}
+        options={{
+          headerTitle: () => <HeaderTitle>Confirm Payment</HeaderTitle>,
+          ...TransitionPresets.ModalPresentationIOS,
+          gestureEnabled: false,
         }}
       />
     </WalletConnect.Navigator>

@@ -18,6 +18,7 @@ import {
 } from '../../tabs/home/components/Wallet';
 import {formatFiatAmount} from '../../../utils/helper-methods';
 import AngleRight from '../../../../assets/img/angle-right.svg';
+import {getRemainingWalletCount} from '../../../store/wallet/utils/wallet';
 
 interface Props {
   keyId: string;
@@ -59,10 +60,7 @@ const KeyDropdownOption = ({
 }: Props) => {
   const _wallets = wallets.filter(wallet => !wallet.hideWallet);
   const walletInfo = _wallets.slice(0, WALLET_DISPLAY_LIMIT);
-  const remainingAssetCount =
-    _wallets.length > WALLET_DISPLAY_LIMIT
-      ? _wallets.length - WALLET_DISPLAY_LIMIT
-      : undefined;
+  const remainingWalletCount = getRemainingWalletCount(_wallets);
 
   return (
     <OptionContainer
@@ -83,9 +81,9 @@ const KeyDropdownOption = ({
                   )
                 );
               })}
-              {remainingAssetCount && (
+              {remainingWalletCount && (
                 <RemainingAssetsLabel>
-                  + {remainingAssetCount} more
+                  + {remainingWalletCount} more
                 </RemainingAssetsLabel>
               )}
             </HeaderImg>

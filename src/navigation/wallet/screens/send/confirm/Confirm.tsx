@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../../WalletStack';
@@ -33,6 +33,12 @@ import {
   SendingTo,
   SharedDetailRow,
 } from './Shared';
+import {BottomNotificationConfig} from '../../../../../components/modal/bottom-notification/BottomNotification';
+import {
+  CustomErrorMessage,
+  WrongPasswordError,
+} from '../../../components/ErrorMessages';
+import {BWCErrorMessage} from '../../../../../constants/BWCError';
 import TransactionLevel from '../TransactionLevel';
 
 export interface ConfirmParamList {
@@ -52,6 +58,7 @@ const Confirm = () => {
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
   const key = allKeys[wallet?.keyId!];
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
+  const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [showTransactionLevel, setShowTransactionLevel] = useState(false);
 
   const {
@@ -64,6 +71,7 @@ const Confirm = () => {
     nonce,
     total: _total,
   } = txDetails;
+
 
   const [fee, setFee] = useState(_fee);
   const [total, setTotal] = useState(_total);
@@ -126,6 +134,25 @@ const Confirm = () => {
     }
   };
 
+  useEffect(() => {
+    if (!resetSwipeButton) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setResetSwipeButton(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [resetSwipeButton]);
+
+  const showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
+
   return (
     <ConfirmContainer>
       <DetailsList>
@@ -159,6 +186,7 @@ const Confirm = () => {
 
       <SwipeButton
         title={'Slide to send'}
+        forceReset={resetSwipeButton}
         onSwipeComplete={async () => {
           try {
             dispatch(
@@ -169,13 +197,31 @@ const Confirm = () => {
             dispatch(dismissOnGoingProcessModal());
             await sleep(400);
             setShowPaymentSentModal(true);
-          } catch (err) {}
+          } catch (err) {
+            dispatch(dismissOnGoingProcessModal());
+            await sleep(500);
+            switch (err) {
+              case 'invalid password':
+                dispatch(showBottomNotificationModal(WrongPasswordError()));
+              case 'password canceled':
+                setResetSwipeButton(true);
+                break;
+              default:
+                await showErrorMessage(
+                  CustomErrorMessage({
+                    errMsg: BWCErrorMessage(err),
+                    title: 'Uh oh, something went wrong',
+                  }),
+                );
+            }
+          }
         }}
       />
 
       <PaymentSent
         isVisible={showPaymentSentModal}
         onCloseModal={async () => {
+          setShowPaymentSentModal(false);
           navigation.navigate('Wallet', {
             screen: 'WalletDetails',
             params: {
@@ -183,8 +229,6 @@ const Confirm = () => {
               key,
             },
           });
-          await sleep(300);
-          setShowPaymentSentModal(false);
         }}
       />
 

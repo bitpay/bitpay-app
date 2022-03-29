@@ -28,6 +28,7 @@ export const ItemTitleContainer = styled.View`
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
+  max-width: 250px;
 `;
 
 export const ItemTitleTouchableContainer = styled.TouchableOpacity`

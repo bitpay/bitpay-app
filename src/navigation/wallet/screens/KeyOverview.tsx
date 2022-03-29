@@ -133,7 +133,9 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   currencyAbbreviation: currencyAbbreviation.toUpperCase(),
   walletName: walletName || credentials.walletName,
   cryptoBalance: balance.crypto,
+  cryptoLockedBalance: balance.cryptoLocked,
   fiatBalance: formatFiatAmount(balance.fiat, 'usd'),
+  fiatLockedBalance: formatFiatAmount(balance.fiatLocked, 'usd'),
   network: credentials.network,
   isRefreshing,
   hideWallet,
@@ -141,23 +143,17 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
 });
 
 // Key overview list builder
-export const buildNestedWalletList = (wallets: Wallet[]) => {
+export const buildNestedWalletList = (coins: Wallet[], tokens: Wallet[]) => {
   const walletList = [] as Array<WalletRowProps>;
-  const _coins = wallets.filter(
-    wallet => !wallet.credentials.token && !wallet.hideWallet,
-  );
-  const _tokens = wallets.filter(
-    wallet => wallet.credentials.token && !wallet.hideWallet,
-  );
 
-  _coins.forEach(coin => {
+  coins.forEach(coin => {
     walletList.push({
       ...buildUIFormattedWallet(coin),
     });
     // eth wallet with tokens -> for every token wallet ID grab full wallet from _tokens and add it to the list
     if (coin.tokens) {
       coin.tokens.forEach(id => {
-        const tokenWallet = _tokens.find(token => token.id === id);
+        const tokenWallet = tokens.find(token => token.id === id);
         if (tokenWallet) {
           walletList.push({
             ...buildUIFormattedWallet(tokenWallet),
@@ -227,7 +223,14 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
     ({WALLET}: RootState) => WALLET.keys[key.id] || {},
   );
 
-  const walletList = buildNestedWalletList(wallets);
+  const coins = wallets.filter(
+    wallet => !wallet.credentials.token && !wallet.hideWallet,
+  );
+  const tokens = wallets.filter(
+    wallet => wallet.credentials.token && !wallet.hideWallet,
+  );
+
+  const walletList = buildNestedWalletList(coins, tokens);
 
   const keyOptions: Array<Option> = [];
 

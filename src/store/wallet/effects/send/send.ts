@@ -16,13 +16,15 @@ import {FeeLevels, getFeeRatePerKb} from '../fee/fee';
 import {
   formatCryptoAddress,
   formatFiatAmount,
+  sleep,
 } from '../../../../utils/helper-methods';
-import {toFiat} from '../../utils/wallet';
+import {toFiat, checkEncryptPassword} from '../../utils/wallet';
 import {startGetRates} from '../rates/rates';
 import {waitForTargetAmountAndUpdateWallet} from '../balance/balance';
 import {
   CustomErrorMessage,
   GeneralError,
+  WrongPasswordError,
 } from '../../../../navigation/wallet/components/ErrorMessages';
 import {BWCErrorMessage, getErrorName} from '../../../../constants/BWCError';
 import {GiftCardInvoiceParams, Invoice} from '../../../shop/shop.models';
@@ -30,6 +32,11 @@ import {GetPayProDetails, HandlePayPro} from '../paypro/paypro';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../constants/config';
 import {ShopEffects} from '../../../shop';
 import {GetPrecision, IsUtxoCoin} from '../../utils/currency';
+import {
+  dismissDecryptPasswordModal,
+  showBottomNotificationModal,
+  showDecryptPasswordModal,
+} from '../../../app/app.actions';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -269,47 +276,117 @@ export const startSendPayment =
     key: Key;
     wallet: Wallet;
     recipient: Recipient;
-  }): Effect =>
+  }): Effect<Promise<any>> =>
   async dispatch => {
     return new Promise(async (resolve, reject) => {
-      wallet.createTxProposal(
-        {...txp, dryRun: false},
-        async (err: Error, proposal: TransactionProposal) => {
-          if (err) {
-            return reject(err);
-          }
+      try {
+        wallet.createTxProposal(
+          {...txp, dryRun: false},
+          async (err: Error, proposal: TransactionProposal) => {
+            if (err) {
+              return reject(err);
+            }
 
-          try {
-            const publishedTx = await publishTx(wallet, proposal);
-            console.log('-------- published');
-
-            const signedTx = await signTx(wallet, key, publishedTx);
-            console.log('-------- signed');
-
-            const broadcastedTx = await broadcastTx(wallet, signedTx);
-            console.log('-------- broadcastedTx');
-
-            const {fee, amount} = broadcastedTx as {
-              fee: number;
-              amount: number;
-            };
-            const targetAmount = wallet.balance.sat - (fee + amount);
-
-            dispatch(
-              waitForTargetAmountAndUpdateWallet({
+            const broadcastedTx = await dispatch(
+              publishAndSign({
+                txp: proposal,
                 key,
                 wallet,
-                targetAmount,
                 recipient,
               }),
             );
-          } catch (error) {
-            return reject(error);
-          }
-          resolve();
-        },
-        null,
-      );
+
+            resolve(broadcastedTx);
+          },
+          null,
+        );
+      } catch (err) {
+        console.log(err);
+        reject(err);
+      }
+    });
+  };
+
+export const publishAndSign =
+  ({
+    txp,
+    key,
+    wallet,
+    recipient,
+  }: {
+    txp: Partial<TransactionProposal>;
+    key: Key;
+    wallet: Wallet;
+    recipient?: Recipient;
+  }): Effect =>
+  async dispatch => {
+    return new Promise(async (resolve, reject) => {
+      let password;
+      if (key.isPrivKeyEncrypted) {
+        try {
+          password = await new Promise<string>((_resolve, _reject) => {
+            dispatch(
+              showDecryptPasswordModal({
+                onSubmitHandler: async (_password: string) => {
+                  dispatch(dismissDecryptPasswordModal());
+                  await sleep(500);
+                  checkEncryptPassword(key, _password)
+                    ? _resolve(_password)
+                    : _reject('invalid password');
+                },
+                onCancelHandler: () => {
+                  _reject('password canceled');
+                },
+              }),
+            );
+          });
+        } catch (error) {
+          return reject(error);
+        }
+      }
+
+      let broadcastedTx;
+      try {
+        let publishedTx;
+
+        // Already published?
+        if (txp.status !== 'pending') {
+          publishedTx = await publishTx(wallet, txp);
+          console.log('-------- published');
+        }
+
+        const signedTx: any = await signTx(
+          wallet,
+          key,
+          publishedTx || txp,
+          password,
+        );
+        console.log('-------- signed');
+
+        if (signedTx.status == 'accepted') {
+          const broadcastedTx = await broadcastTx(wallet, signedTx);
+          console.log('-------- broadcastedTx');
+
+          const {fee, amount} = broadcastedTx as {
+            fee: number;
+            amount: number;
+          };
+          const targetAmount = wallet.balance.sat - (fee + amount);
+
+          dispatch(
+            waitForTargetAmountAndUpdateWallet({
+              key,
+              wallet,
+              targetAmount,
+              recipient,
+            }),
+          );
+        }
+        resolve(broadcastedTx);
+      } catch (err) {
+        console.log(err);
+        reject(err);
+      }
     });
   };
 
@@ -324,11 +401,16 @@ export const publishTx = (wallet: Wallet, txp: any) => {
   });
 };
 
-export const signTx = (wallet: Wallet, key: Key, txp: any) => {
+export const signTx = (
+  wallet: Wallet,
+  key: Key,
+  txp: any,
+  password?: string,
+) => {
   return new Promise(async (resolve, reject) => {
     try {
       const rootPath = wallet.getRootPath();
-      const signatures = key.methods.sign(rootPath, txp, undefined);
+      const signatures = key.methods.sign(rootPath, txp, password);
       wallet.pushSignatures(
         txp,
         signatures,

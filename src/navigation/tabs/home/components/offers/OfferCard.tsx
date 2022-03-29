@@ -155,6 +155,11 @@ const OfferCard: React.FC<OfferCardProps> = props => {
 
     haptic('impactLight');
 
+    if ('debug') {
+      console.log('TODO: handle performance issues');
+      return;
+    }
+
     if (openURLInWebView) {
       dispatch(AppEffects.openUrlWithInAppBrowser(url));
     } else {

@@ -16,6 +16,15 @@ import {useNavigation} from '@react-navigation/native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useDispatch} from 'react-redux';
 import {AppActions} from '../../../store/app';
+import TouchID from 'react-native-touch-id';
+import {
+  TO_HANDLE_ERRORS,
+  BiometricError,
+  BiometricErrorNotification,
+  isSupportedOptionalConfigObject,
+  authOptionalConfigObject,
+} from '../../../constants/BiometricError';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
 const PinImage = {
   light: require('../../../../assets/img/onboarding/light/pin.png'),
@@ -60,6 +69,36 @@ const PinScreen = () => {
     });
   };
 
+  const onSetBiometricPress = () => {
+    haptic('impactLight');
+    TouchID.isSupported(isSupportedOptionalConfigObject)
+      .then(biometryType => {
+        if (biometryType === 'FaceID') {
+          console.log('FaceID is supported.');
+        } else {
+          console.log('TouchID is supported.');
+        }
+        return TouchID.authenticate(
+          'Authentication Check',
+          authOptionalConfigObject,
+        );
+      })
+      .then(() => {
+        dispatch(AppActions.biometricLockActive(true));
+        navigation.navigate('Onboarding', {
+          screen: 'CreateKey',
+        });
+      })
+      .catch((error: BiometricError) => {
+        if (error.code && TO_HANDLE_ERRORS[error.code]) {
+          const err = TO_HANDLE_ERRORS[error.code];
+          dispatch(
+            showBottomNotificationModal(BiometricErrorNotification(err)),
+          );
+        }
+      });
+  };
+
   useAndroidBackHandler(() => true);
   const themeType = useThemeType();
   return (
@@ -84,7 +123,11 @@ const PinScreen = () => {
           </Button>
         </ActionContainer>
         <ActionContainer>
-          <Button buttonStyle={'secondary'}>Fingerprint</Button>
+          <Button
+            onPress={() => onSetBiometricPress()}
+            buttonStyle={'secondary'}>
+            Biometric
+          </Button>
         </ActionContainer>
       </CtaContainer>
     </PinContainer>
