@@ -33,7 +33,7 @@ import {
   SendingTo,
   SharedDetailRow,
 } from './Shared';
-import TransactionSpeed from '../TransactionSpeed';
+import TransactionLevel from '../TransactionLevel';
 
 export interface ConfirmParamList {
   wallet: Wallet;
@@ -52,7 +52,7 @@ const Confirm = () => {
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
   const key = allKeys[wallet?.keyId!];
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
-  const [showTransactionSpeed, setShowTransactionSpeed] = useState(false);
+  const [showTransactionLevel, setShowTransactionLevel] = useState(false);
 
   const {
     fee: _fee,
@@ -70,20 +70,20 @@ const Confirm = () => {
   const [gasPrice, setGasPrice] = useState(_gasPrice);
   const {currencyAbbreviation} = wallet;
 
-  const isTxSpeedAvailable = () => {
+  const isTxLevelAvailable = () => {
     const excludeCurrencies = ['bch', 'doge', 'ltc', 'xrp'];
     // TODO: exclude paypro, coinbase, usingMerchantFee txs,
     // const {payProUrl} = txDetails;
     return !excludeCurrencies.includes(currencyAbbreviation);
   };
 
-  const onCloseTxSpeedModal = async (
-    newSpeedLevel?: any,
+  const onCloseTxLevelModal = async (
+    newLevel?: any,
     customFeePerKB?: number,
   ) => {
-    setShowTransactionSpeed(false);
+    setShowTransactionLevel(false);
     try {
-      if (newSpeedLevel) {
+      if (newLevel) {
         dispatch(
           startOnGoingProcessModal(OnGoingProcessMessages.CALCULATING_FEE),
         );
@@ -93,7 +93,7 @@ const Confirm = () => {
             wallet,
             recipient,
             amount,
-            feeLevel: newSpeedLevel,
+            feeLevel: newLevel,
             feePerKb: customFeePerKB,
           }),
         );
@@ -133,8 +133,8 @@ const Confirm = () => {
         <SendingTo recipient={sendingTo} hr />
         <Fee
           onPress={
-            isTxSpeedAvailable()
-              ? () => setShowTransactionSpeed(true)
+            isTxLevelAvailable()
+              ? () => setShowTransactionLevel(true)
               : undefined
           }
           fee={fee}
@@ -188,12 +188,12 @@ const Confirm = () => {
         }}
       />
 
-      <TransactionSpeed
+      <TransactionLevel
         feeLevel={fee.feeLevel}
         wallet={wallet}
-        isVisible={showTransactionSpeed}
+        isVisible={showTransactionLevel}
         onCloseModal={(selectedLevel, customFeePerKB) =>
-          onCloseTxSpeedModal(selectedLevel, customFeePerKB)
+          onCloseTxLevelModal(selectedLevel, customFeePerKB)
         }
         customFeePerKB={fee.feeLevel === 'custom' ? txp?.feePerKb : undefined}
         feePerSatByte={

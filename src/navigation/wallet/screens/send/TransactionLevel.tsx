@@ -168,7 +168,7 @@ const StepsHeaderSubTitle = styled(Paragraph)`
 const FEE_MIN = 0;
 const FEE_MULTIPLIER = 10;
 
-const TransactionSpeed = ({
+const TransactionLevel = ({
   isVisible,
   onCloseModal,
   wallet,
@@ -189,7 +189,7 @@ const TransactionSpeed = ({
   const [feePerSatByte, setFeePerSatByte] = useState<
     number | string | undefined
   >(paramFeePerSatByte);
-  const [selectedSpeed, setSelectedSpeed] = useState(feeLevel);
+  const [selectedLevel, setSelectedLevel] = useState(feeLevel);
   const [customSatsPerByte, setCustomSatsPerByte] = useState(
     feePerSatByte ? feePerSatByte + '' : undefined,
   );
@@ -352,11 +352,11 @@ const TransactionSpeed = ({
 
   const onClose = () => {
     onCloseModal();
-    setSelectedSpeed(feeLevel);
+    setSelectedLevel(feeLevel);
   };
 
   const onApply = () => {
-    if (selectedSpeed === 'custom' && customSatsPerByte) {
+    if (selectedLevel === 'custom' && customSatsPerByte) {
       const _customFeePerKB = Number(
         (+customSatsPerByte * feeUnitAmount).toFixed(),
       );
@@ -365,15 +365,15 @@ const TransactionSpeed = ({
         dispatch(
           showBottomNotificationModal(
             MinFeeWarning(() => {
-              onCloseModal(selectedSpeed, _customFeePerKB);
+              onCloseModal(selectedLevel, _customFeePerKB);
             }),
           ),
         );
         return;
       }
-      onCloseModal(selectedSpeed, _customFeePerKB);
+      onCloseModal(selectedLevel, _customFeePerKB);
     } else {
-      onCloseModal(selectedSpeed);
+      onCloseModal(selectedLevel);
     }
   };
 
@@ -405,24 +405,24 @@ const TransactionSpeed = ({
 
   const onSelectCustomFee = () => {
     setError(undefined);
-    setSelectedSpeed('custom');
+    setSelectedLevel('custom');
     if (customSatsPerByte) {
       checkFees(customSatsPerByte);
     }
   };
 
   const getSelectedFeeOption = () => {
-    return feeOptions?.find(({level}) => level === selectedSpeed);
+    return feeOptions?.find(({level}) => level === selectedLevel);
   };
 
   const getBackgroundColor = (index?: number) => {
-    if (selectedSpeed === 'custom') {
+    if (selectedLevel === 'custom') {
       return backgroundColor;
     }
 
     if (index !== undefined) {
       const selectedIndex =
-        feeOptions?.findIndex(({level}) => level === selectedSpeed) || 0;
+        feeOptions?.findIndex(({level}) => level === selectedLevel) || 0;
 
       if (!(selectedIndex + 1 <= index)) {
         return backgroundColor;
@@ -466,10 +466,10 @@ const TransactionSpeed = ({
                 </StepsHeader>
 
                 <StepsHeaderSubTitle>
-                  {selectedSpeed === 'custom' && customSatsPerByte
+                  {selectedLevel === 'custom' && customSatsPerByte
                     ? `${customSatsPerByte} ${feeUnit}`
                     : null}
-                  {selectedSpeed !== 'custom'
+                  {selectedLevel !== 'custom'
                     ? `${getSelectedFeeOption()?.uiFeePerSatByte} ${
                         getSelectedFeeOption()?.avgConfirmationTime
                       }`
@@ -481,7 +481,7 @@ const TransactionSpeed = ({
                 {feeOptions.map((fee, i, {length}) => (
                   <StepContainer key={i} length={length}>
                     <TopLabelContainer>
-                      {i !== 0 && selectedSpeed === fee.level ? (
+                      {i !== 0 && selectedLevel === fee.level ? (
                         <View style={{flexShrink: 1}}>
                           <StepTopLabel length={length} medium={true}>
                             {fee.uiLevel}
@@ -492,10 +492,10 @@ const TransactionSpeed = ({
 
                     <Step>
                       <Circle
-                        isActive={selectedSpeed === fee.level}
+                        isActive={selectedLevel === fee.level}
                         onPress={() => {
                           setDisableApply(false);
-                          setSelectedSpeed(fee.level);
+                          setSelectedLevel(fee.level);
                         }}
                         backgroundColor={getBackgroundColor(i)}
                         style={[
@@ -503,7 +503,7 @@ const TransactionSpeed = ({
                             shadowColor: '#000',
                             shadowOffset: {width: -2, height: 4},
                             shadowOpacity:
-                              selectedSpeed === fee.level ? 0.1 : 0,
+                              selectedLevel === fee.level ? 0.1 : 0,
                             shadowRadius: 5,
                             borderRadius: 12,
                             elevation: 3,
@@ -521,14 +521,14 @@ const TransactionSpeed = ({
 
                   <Step isLast={true}>
                     <Circle
-                      isActive={selectedSpeed === 'custom'}
+                      isActive={selectedLevel === 'custom'}
                       onPress={onSelectCustomFee}
                       backgroundColor={getBackgroundColor()}
                       style={[
                         {
                           shadowColor: '#000',
                           shadowOffset: {width: -2, height: 4},
-                          shadowOpacity: selectedSpeed === 'custom' ? 0.1 : 0,
+                          shadowOpacity: selectedLevel === 'custom' ? 0.1 : 0,
                           shadowRadius: 5,
                           borderRadius: 12,
                           elevation: 3,
@@ -545,7 +545,7 @@ const TransactionSpeed = ({
               </BottomLabelContainer>
 
               <DetailsList>
-                {selectedSpeed === 'custom' ? (
+                {selectedLevel === 'custom' ? (
                   <ActionContainer>
                     <TextInput
                       keyboardType="numeric"
@@ -594,4 +594,4 @@ const TransactionSpeed = ({
   );
 };
 
-export default TransactionSpeed;
+export default TransactionLevel;
