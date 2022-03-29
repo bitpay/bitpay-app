@@ -171,7 +171,9 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const renderSlide = useCallback(
     ({item}: {item: Card[]}) =>
       activeCard.id === item[0].id ? (
-        <SharedElement id={'card.dashboard.active-card'}>
+        <SharedElement
+          id={'card.dashboard.active-card'}
+          style={{paddingHorizontal: 10}}>
           <CardOverviewSlide
             card={item[0]}
             designCurrency={virtualDesignCurrency}

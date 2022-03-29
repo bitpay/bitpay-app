@@ -1,5 +1,5 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useCallback, useMemo, useRef} from 'react';
+import React, {useCallback, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView} from 'react-native';
 import Carousel from 'react-native-snap-carousel';
@@ -69,16 +69,32 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
   }, [currentGroup]);
 
   const currentCard = cardsToShow.find(c => c.id === id);
+  const [currentTab, setCurrentTab] = useState(
+    currentCard?.cardType || 'virtual',
+  );
   const initialIdx = Math.max(
     0,
     cardsToShow.findIndex(c => c.id === id),
   );
 
   const onCardChange = (idx: number) => {
-    const nextId = cardsToShow[idx].id;
+    const nextCard = cardsToShow[idx];
 
-    navigation.setParams({id: nextId});
+    navigation.setParams({id: nextCard.id});
+    if (nextCard.cardType) {
+      setCurrentTab(nextCard.cardType);
+    }
   };
+
+  const onVirtualPress = useCallback(() => {
+    setCurrentTab('virtual');
+    carouselRef.current?.snapToItem(0);
+  }, []);
+
+  const onPhysicalPress = useCallback(() => {
+    setCurrentTab('physical');
+    carouselRef.current?.snapToItem(1);
+  }, []);
 
   const renderSettingsSlide = useCallback(
     ({item}: {item: Card}) =>
@@ -99,25 +115,19 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
           {virtualCard && physicalCard ? (
             <CardTypeButtons>
               <Button
-                onPress={() => {
-                  navigation.setParams({id: virtualCard.id});
-                  carouselRef.current?.snapToItem(0);
-                }}
+                onPress={onVirtualPress}
                 buttonType="pill"
                 buttonStyle={
-                  currentCard?.cardType === 'virtual' ? 'primary' : 'secondary'
+                  currentTab === 'virtual' ? 'primary' : 'secondary'
                 }>
                 {t('Virtual')}
               </Button>
 
               <Button
-                onPress={() => {
-                  navigation.setParams({id: physicalCard.id});
-                  carouselRef.current?.snapToItem(1);
-                }}
+                onPress={onPhysicalPress}
                 buttonType="pill"
                 buttonStyle={
-                  currentCard?.cardType === 'physical' ? 'primary' : 'secondary'
+                  currentTab === 'physical' ? 'primary' : 'secondary'
                 }>
                 {t('Physical')}
               </Button>
