@@ -12,6 +12,7 @@ import {
 import {COINBASE_ENV} from '../../api/coinbase/coinbase.constants';
 
 import {SupportedCurrencyOptions} from '../../constants/SupportedCurrencyOptions';
+import {LogActions} from '../log';
 
 const isExpiredTokenError = (error: CoinbaseErrorsProps): boolean => {
   for (let i = 0; i < error.errors.length; i++) {
@@ -43,6 +44,7 @@ export const setExchangeRate =
       const exchangeRates = await CoinbaseAPI.getExchangeRates(nativeCurrency);
       dispatch(CoinbaseActions.exchangeRatesSuccess(exchangeRates));
     } catch (error: CoinbaseErrorsProps | any) {
+      dispatch(LogActions.warn(CoinbaseAPI.parseErrorToString(error)));
       dispatch(CoinbaseActions.exchangeRatesFailed(error));
     }
   };
@@ -72,6 +74,7 @@ export const linkCoinbaseAccount =
       await dispatch(setExchangeRate());
       dispatch(getAccountsAndBalance());
     } catch (error: CoinbaseErrorsProps | any) {
+      dispatch(LogActions.error(CoinbaseAPI.parseErrorToString(error)));
       dispatch(CoinbaseActions.accessTokenFailed(error));
     }
   };
@@ -91,6 +94,7 @@ export const refreshToken =
       );
       dispatch(CoinbaseActions.refreshTokenSuccess(COINBASE_ENV, newToken));
     } catch (error: CoinbaseErrorsProps | any) {
+      dispatch(LogActions.error(CoinbaseAPI.parseErrorToString(error)));
       dispatch(CoinbaseActions.refreshTokenFailed(error));
     }
   };
@@ -122,9 +126,11 @@ export const getUser =
       dispatch(CoinbaseActions.userSuccess(COINBASE_ENV, user));
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
+        dispatch(LogActions.warn('Token expired. Getting new token...'));
         await dispatch(refreshToken());
         dispatch(getUser());
       } else {
+        dispatch(LogActions.error(CoinbaseAPI.parseErrorToString(error)));
         dispatch(CoinbaseActions.userFailed(error));
       }
     }
@@ -198,9 +204,11 @@ export const getAccountsAndBalance =
       );
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
+        dispatch(LogActions.warn('Token expired. Getting new token...'));
         await dispatch(refreshToken());
         dispatch(getAccountsAndBalance());
       } else {
+        dispatch(LogActions.error(CoinbaseAPI.parseErrorToString(error)));
         dispatch(CoinbaseActions.accountsFailed(error));
       }
     }
@@ -230,9 +238,11 @@ export const getTransactionsByAccount =
       );
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
+        dispatch(LogActions.warn('Token expired. Getting new token...'));
         await dispatch(refreshToken());
         dispatch(getTransactionsByAccount(accountId));
       } else {
+        dispatch(LogActions.error(CoinbaseAPI.parseErrorToString(error)));
         dispatch(CoinbaseActions.transactionsFailed(error));
       }
     }
@@ -257,9 +267,11 @@ export const createAddress =
       return addressData.data.address;
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
+        dispatch(LogActions.warn('Token expired. Getting new token...'));
         await dispatch(refreshToken());
         dispatch(createAddress(accountId));
       } else {
+        dispatch(LogActions.error(CoinbaseAPI.parseErrorToString(error)));
         dispatch(CoinbaseActions.createAddressFailed(error));
       }
     }
@@ -286,9 +298,11 @@ export const sendTransaction =
       return addressData.data.address;
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
+        dispatch(LogActions.warn('Token expired. Getting new token...'));
         await dispatch(refreshToken());
         dispatch(sendTransaction(accountId, tx));
       } else {
+        dispatch(LogActions.error(CoinbaseAPI.parseErrorToString(error)));
         dispatch(CoinbaseActions.sendTransactionFailed(error));
       }
     }
@@ -315,9 +329,11 @@ export const payInvoice =
       return addressData.data.address;
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
+        dispatch(LogActions.warn('Token expired. Getting new token...'));
         await dispatch(refreshToken());
         dispatch(payInvoice(accountId, tx));
       } else {
+        dispatch(LogActions.error(CoinbaseAPI.parseErrorToString(error)));
         dispatch(CoinbaseActions.payInvoiceFailed(error));
       }
     }

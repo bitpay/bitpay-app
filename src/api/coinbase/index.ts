@@ -369,7 +369,10 @@ const isRevokedTokenError = (error: CoinbaseErrorsProps): boolean => {
   return false;
 };
 
-const parseErrorToString = (error: CoinbaseErrorsProps): string => {
+const parseErrorToString = (error: CoinbaseErrorsProps | any): string => {
+  if (typeof error == 'string') {
+    return error;
+  }
   let message = '';
   for (let i = 0; i < error.errors.length; i++) {
     message = message + error.errors[i].message + '. ';
