@@ -554,7 +554,7 @@ export const createInvoiceAndTxProposal =
           transactionCurrency: wallet.currencyAbbreviation.toUpperCase(),
         };
         const cardOrder = await dispatch(
-          ShopEffects.startCreateGiftCardInvoice(invoiceParams),
+          ShopEffects.startCreateGiftCardInvoice(cardConfig, invoiceParams),
         );
         const {invoiceId, invoice} = cardOrder;
         const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];

@@ -5,6 +5,7 @@ import {
   DirectIntegrationMap,
   GiftCard,
   GiftCardOrder,
+  PhoneCountryInfo,
   UnsoldGiftCard,
 } from './shop.models';
 
@@ -50,6 +51,21 @@ export const redeemedGiftCard = (payload: {
   giftCard: GiftCard;
 }): ShopActionType => ({
   type: ShopActionTypes.REDEEMED_GIFT_CARD,
+  payload,
+});
+
+export const updatedEmailAddress = (payload: {
+  email: string;
+}): ShopActionType => ({
+  type: ShopActionTypes.UPDATED_EMAIL_ADDRESS,
+  payload,
+});
+
+export const updatedPhone = (payload: {
+  phone: string;
+  phoneCountryInfo: PhoneCountryInfo;
+}): ShopActionType => ({
+  type: ShopActionTypes.UPDATED_PHONE,
   payload,
 });
 
