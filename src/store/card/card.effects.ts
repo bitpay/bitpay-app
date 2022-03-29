@@ -13,6 +13,7 @@ import Dosh, {DoshUiOptions} from '../../lib/dosh';
 import {isAxiosError} from '../../utils/axios';
 import {CardActions} from '.';
 import {TTL} from './card.types';
+import {setHomeCarouselConfig} from '../app/app.actions';
 
 export const startCardStoreInit =
   (initialData: InitialUserData): Effect<Promise<void>> =>
@@ -29,6 +30,12 @@ export const startCardStoreInit =
 
       if (virtualCardIds.length) {
         dispatch(startFetchVirtualCardImageUrls(virtualCardIds));
+        dispatch(
+          setHomeCarouselConfig([
+            ...APP.homeCarouselConfig,
+            {id: 'bitpayCard', show: true},
+          ]),
+        );
       }
     } catch (err) {
       // swallow error so initialize is uninterrupted
