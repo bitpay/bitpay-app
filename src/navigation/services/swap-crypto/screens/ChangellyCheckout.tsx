@@ -82,6 +82,8 @@ import {
 import {startSendPayment} from '../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../../navigation/wallet/components/PaymentSent';
 import cloneDeep from 'lodash.clonedeep';
+import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
+import {SwapCryptoActions} from '../../../../store/swap-crypto';
 
 export const ItemDivisor = styled.View`
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ebecee')};
@@ -618,6 +620,7 @@ const ChangellyCheckout: React.FC = () => {
       )) as any;
 
       console.log('====== broadcastedTx: ', broadcastedTx);
+      saveChangellyTx();
 
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
@@ -639,6 +642,31 @@ const ChangellyCheckout: React.FC = () => {
         // );
       }
     }
+  };
+
+  const saveChangellyTx = () => {
+    const newData: changellyTxData = {
+      exchangeTxId: exchangeTxId!,
+      date: Date.now(),
+      amountTo: amountTo!,
+      coinTo: toWalletSelected.currencyAbbreviation.toLowerCase(),
+      addressTo: addressTo,
+      amountFrom: amountFrom!,
+      coinFrom: fromWalletSelected.currencyAbbreviation.toLowerCase(),
+      refundAddress: addressFrom!,
+      payinAddress: addressToPay!,
+      payinExtraId: payinExtraId,
+      totalExchangeFee: totalExchangeFee!,
+      status: status!,
+    };
+
+    dispatch(
+      SwapCryptoActions.successTxChangelly({
+        changellyTxData: newData,
+      }),
+    );
+
+    console.log('Saved exchange with: ', newData);
   };
 
   useEffect(() => {
