@@ -96,15 +96,12 @@ const getRefreshToken = (
       Accept: 'application/json',
     };
 
-    console.debug('Coinbase: Getting Refresh Token...');
     axios
       .post(url, data, {headers})
       .then(response => {
-        console.info('Coinbase: Refresh Token SUCCESS');
         return resolve(response.data);
       })
       .catch(error => {
-        console.error('Coinbase: Refresh Token ERROR ' + error.response.status);
         return reject(error.response.data);
       });
   });
@@ -123,18 +120,13 @@ const getAccessToken = (code: string): Promise<CoinbaseTokenProps> => {
     'Content-Type': 'application/json',
     Accept: 'application/json',
   };
-  console.debug('Coinbase: Getting Token...');
   return new Promise((resolve, reject) => {
     axios
       .post(url, data, {headers})
       .then(response => {
-        console.info('Coinbase: GET Access Token: SUCCESS');
         return resolve(response.data);
       })
       .catch(error => {
-        console.error(
-          'Coinbase: GET Access Token: ERROR ' + error.response.status,
-        );
         return reject(error.response.data);
       });
   });
@@ -154,15 +146,12 @@ const revokeToken = (token: CoinbaseTokenProps | null): Promise<boolean> => {
       Authorization: 'Bearer ' + token.access_token,
     };
 
-    console.debug('Coinbase: Revoke Token...');
     axios
       .post(url, data, {headers})
       .then(_ => {
-        console.info('Coinbase: Revoke Token SUCCESS');
         return resolve(true);
       })
       .catch(error => {
-        console.error('Coinbase: Revoke Token ERROR ' + error.response.status);
         return reject(error.response.data);
       });
   });
@@ -180,16 +169,13 @@ const getAccounts = (
     'CB-VERSION': API_VERSION,
     Authorization: 'Bearer ' + token.access_token,
   };
-  console.debug('Coinbase: Getting Accounts...');
   return new Promise((resolve, reject) => {
     axios
       .get(url, {headers})
       .then(response => {
-        console.info('Coinbase: Get Accounts SUCCESS');
         return resolve(response.data);
       })
       .catch(error => {
-        console.error('Coinbase: Get Accounts ERROR ', error.response.status);
         return reject(error.response.data);
       });
   });
@@ -206,16 +192,13 @@ const getAccount = (
     'CB-VERSION': API_VERSION,
     Authorization: 'Bearer ' + token.access_token,
   };
-  console.debug('Coinbase: Getting Account...');
   return new Promise((resolve, reject) => {
     axios
       .get(url, {headers})
       .then(response => {
-        console.info('Coinbase: Get Account SUCCESS');
         return resolve(response.data);
       })
       .catch(error => {
-        console.error('Coinbase: Get Account ERROR ' + error.response.status);
         return reject(error.response.data);
       });
   });
@@ -232,18 +215,13 @@ const getCurrentUser = (
     'CB-VERSION': API_VERSION,
     Authorization: 'Bearer ' + token.access_token,
   };
-  console.debug('Coinbase: Getting Current User...');
   return new Promise((resolve, reject) => {
     axios
       .get(url, {headers})
       .then(response => {
-        console.info('Coinbase: Get Current User SUCCESS');
         return resolve(response.data);
       })
       .catch(error => {
-        console.error(
-          'Coinbase: Get Current User ERROR ' + error.response.status,
-        );
         return reject(error.response.data);
       });
   });
@@ -262,18 +240,13 @@ const getTransactions = (
     'CB-VERSION': API_VERSION,
     Authorization: 'Bearer ' + token.access_token,
   };
-  console.debug('Coinbase: Getting Transactions...');
   return new Promise((resolve, reject) => {
     axios
       .get(url, {headers})
       .then(response => {
-        console.info('Coinbase: Get Transactions SUCCESS');
         return resolve(response.data);
       })
       .catch(error => {
-        console.error(
-          'Coinbase: Get Transactions ERROR ' + error.response.status,
-        );
         return reject(error.response.data);
       });
   });
@@ -295,18 +268,13 @@ const getNewAddress = (
     'CB-VERSION': API_VERSION,
     Authorization: 'Bearer ' + token.access_token,
   };
-  console.debug('Coinbase: Creating Address...');
   return new Promise((resolve, reject) => {
     axios
       .post(url, data, {headers})
       .then(response => {
-        console.info('Coinbase: Create Address SUCCESS');
         return resolve(response.data);
       })
       .catch(error => {
-        console.error(
-          'Coinbase: Create Address ERROR ' + error.response.status,
-        );
         return reject(error.response.data);
       });
   });
@@ -333,18 +301,13 @@ const sendTransaction = (
     headers['CB-2FA-TOKEN'] = twoFactorCode; // 2FA if required
   }
 
-  console.debug('Coinbase: Sending Transaction...');
   return new Promise((resolve, reject) => {
     axios
       .post(url, tx, {headers})
       .then(response => {
-        console.info('Coinbase: Send Transaction SUCCESS');
         return resolve(response.data);
       })
       .catch(error => {
-        console.error(
-          'Coinbase: Send Transaction ERROR ' + error.response.status,
-        );
         return reject(error.response.data);
       });
   });
@@ -371,11 +334,9 @@ const payInvoice = (
     axios
       .post(url, data, {headers})
       .then(response => {
-        console.info('Coinbase: Pay invoice SUCCESS');
         return resolve(response.data);
       })
       .catch(error => {
-        console.error('Coinbase: Pay Invoice ERROR ' + error.response.status);
         return reject(error.response.data);
       });
   });
@@ -387,18 +348,13 @@ const getExchangeRates = (
   const url =
     CREDENTIALS.api_url + '/v2/exchange-rates' + '?currency=' + currency;
 
-  console.debug('Coinbase: Getting Exchange Rates...');
   return new Promise((resolve, reject) => {
     axios
       .get(url)
       .then(response => {
-        console.info('Coinbase: Get Exchange Rates SUCCESS');
         return resolve(response.data);
       })
       .catch(error => {
-        console.error(
-          'Coinbase: Get Exchange Rates ERROR ' + error.response.status,
-        );
         return reject(error.response.data);
       });
   });
@@ -407,7 +363,6 @@ const getExchangeRates = (
 const isRevokedTokenError = (error: CoinbaseErrorsProps): boolean => {
   for (let i = 0; i < error.errors.length; i++) {
     if (error.errors[i].id === 'revoked_token') {
-      console.warn('Coinbase: Token was revoked');
       return true;
     }
   }
