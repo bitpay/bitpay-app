@@ -1,6 +1,14 @@
 import React from 'react';
-import {Image, ImageSourcePropType, Linking} from 'react-native';
+import {
+  Image,
+  ImageSourcePropType,
+  ImageStyle,
+  Linking,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
+import {SvgProps} from 'react-native-svg';
 import styled from 'styled-components/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {ActiveOpacity} from '../../../../../components/styled/Containers';
@@ -21,6 +29,10 @@ import {useAppDispatch} from '../../../../../utils/hooks';
 interface AdvertisementCardProps {
   contentCard: ContentCard;
 }
+
+const isSvgComponent = (src: any): src is React.FC<SvgProps> => {
+  return src && src.name === 'SvgComponent';
+};
 
 const AdvertisementCardContainer = styled.TouchableOpacity`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
@@ -50,6 +62,14 @@ const AdvertisementCardDescription = styled(BaseText)`
 
 const ADVERTISEMENT_ICON_HEIGHT = 126;
 const ADVERTISEMENT_ICON_WIDTH = 96;
+
+const IconStyle: StyleProp<ViewStyle & ImageStyle> = {
+  height: ADVERTISEMENT_ICON_HEIGHT,
+  width: ADVERTISEMENT_ICON_WIDTH,
+  right: 0,
+  bottom: 0,
+  position: 'absolute',
+};
 
 const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   const {contentCard} = props;
@@ -94,23 +114,23 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
     }
   };
 
+  const MaybeSvgComponent = imageSource;
+  const icon = isSvgComponent(MaybeSvgComponent) ? (
+    <MaybeSvgComponent style={IconStyle} />
+  ) : imageSource ? (
+    <Image
+      source={imageSource}
+      style={IconStyle}
+      height={ADVERTISEMENT_ICON_HEIGHT}
+      width={ADVERTISEMENT_ICON_WIDTH}
+    />
+  ) : null;
+
   return (
     <AdvertisementCardContainer activeOpacity={ActiveOpacity} onPress={onPress}>
       <AdvertisementCardTitle>{title}</AdvertisementCardTitle>
       <AdvertisementCardDescription>{description}</AdvertisementCardDescription>
-      {imageSource ? (
-        <Image
-          source={imageSource}
-          style={{
-            height: ADVERTISEMENT_ICON_HEIGHT,
-            width: ADVERTISEMENT_ICON_WIDTH,
-            right: 0,
-            position: 'absolute',
-          }}
-          height={ADVERTISEMENT_ICON_HEIGHT}
-          width={ADVERTISEMENT_ICON_WIDTH}
-        />
-      ) : null}
+      {icon}
     </AdvertisementCardContainer>
   );
 };
