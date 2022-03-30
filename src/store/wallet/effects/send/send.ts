@@ -12,7 +12,12 @@ import {
   Wallet,
 } from '../../wallet.models';
 import {FormatAmount, FormatAmountStr, ParseAmount} from '../amount/amount';
-import {FeeLevels, getFeeRatePerKb} from '../fee/fee';
+import {
+  FeeLevels,
+  GetBitcoinSpeedUpTxFee,
+  getFeeRatePerKb,
+  GetInput,
+} from '../fee/fee';
 import {
   formatCryptoAddress,
   formatFiatAmount,
@@ -24,17 +29,15 @@ import {waitForTargetAmountAndUpdateWallet} from '../balance/balance';
 import {
   CustomErrorMessage,
   GeneralError,
-  WrongPasswordError,
 } from '../../../../navigation/wallet/components/ErrorMessages';
 import {BWCErrorMessage, getErrorName} from '../../../../constants/BWCError';
 import {GiftCardInvoiceParams, Invoice} from '../../../shop/shop.models';
 import {GetPayProDetails, HandlePayPro} from '../paypro/paypro';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../constants/config';
 import {ShopEffects} from '../../../shop';
-import {GetPrecision, IsERCToken, IsUtxoCoin} from '../../utils/currency';
+import {GetPrecision, IsUtxoCoin} from '../../utils/currency';
 import {
   dismissDecryptPasswordModal,
-  showBottomNotificationModal,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
 
@@ -584,43 +587,96 @@ export const createInvoiceAndTxProposal =
     });
   };
 
-export const buildEthERCTokenSpeedupTx = (wallet: Wallet, transaction: any) => {
-  const {
-    credentials: {coin, walletName, walletId, network},
-    keyId,
-  } = wallet;
+export const buildEthERCTokenSpeedupTx = (
+  wallet: Wallet,
+  transaction: any,
+): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const {
+        credentials: {coin, walletName, walletId, network},
+        keyId,
+      } = wallet;
 
-  const {customData, addressTo, nonce, data, gasLimit} = transaction;
-  const amount = Number(FormatAmount(coin, transaction.amount));
-  const recipient = {
-    type: 'wallet',
-    name: customData ? customData.toWalletName : walletName,
-    walletId,
-    keyId,
-    address: addressTo,
-  };
+      const {customData, addressTo, nonce, data, gasLimit} = transaction;
+      const amount = Number(FormatAmount(coin, transaction.amount));
+      const recipient = {
+        type: 'wallet',
+        name: customData ? customData.toWalletName : walletName,
+        walletId,
+        keyId,
+        address: addressTo,
+      };
 
-  return {
-    wallet,
-    amount,
-    recipient,
-    network,
-    currency: coin,
-    toAddress:addressTo,
-    nonce,
-    data,
-    gasLimit,
-    customData,
-    feeLevel: 'urgent'
-  }
-}
+      return resolve({
+        wallet,
+        amount,
+        recipient,
+        network,
+        currency: coin,
+        toAddress: addressTo,
+        nonce,
+        data,
+        gasLimit,
+        customData,
+        feeLevel: 'urgent',
+      });
+    } catch (e) {
+      return reject(e);
+    }
+  });
+};
 
-export const buildBtcSpeedupTx = async (wallet: Wallet, tx: any) => {
-  const {feeRate} = tx;
-  const _tx = {...tx};
-  _tx.feeRate = feeRate.substr(0, feeRate.indexOf(' ')) * 1000;
-  try {
-  } catch (e) {
-    throw e;
-  }
-}
+export const buildBtcSpeedupTx = (wallet: Wallet, tx: any, address: string) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const {feeRate, data, customData, txid, size} = tx;
+
+      const {
+        credentials: {coin, walletName, walletId, network},
+        keyId,
+      } = wallet;
+
+      const recipient = {
+        type: 'wallet',
+        name: walletName,
+        walletId,
+        keyId,
+        address,
+      };
+      const newFeeRate = feeRate.substr(0, feeRate.indexOf(' ')) * 1000;
+      const fee = await GetBitcoinSpeedUpTxFee(wallet, size);
+      const input = await GetInput(wallet, txid);
+      const inputs = [];
+      inputs.push(input);
+      let amount = input.satoshis - fee;
+      if (amount < 0) {
+        return reject('InsufficientFunds');
+      }
+
+      amount = Number(FormatAmount(coin, amount));
+
+      if (!input) {
+        return reject('NoInput');
+      }
+
+      return resolve({
+        wallet,
+        data,
+        customData,
+        name: walletName,
+        toAddress: address,
+        network,
+        currency: coin,
+        amount,
+        feePerKb: newFeeRate,
+        recipient,
+        feeLevel: 'custom',
+        excludeUnconfirmedUtxos: true,
+        inputs,
+      });
+    } catch (e) {
+      return reject(e);
+    }
+  });
+};

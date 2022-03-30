@@ -67,11 +67,9 @@ import sortBy from 'lodash.sortby';
 import {FlatList} from 'react-native';
 import {
   buildBtcSpeedupTx,
-  buildEthERC20SpeedupTx, buildEthERCTokenSpeedupTx,
-  buildEthSpeedupTx,
-  createProposalAndBuildTxDetails
+  buildEthERCTokenSpeedupTx,
+  createProposalAndBuildTxDetails,
 } from '../../../store/wallet/effects/send/send';
-import {FormatAmount} from '../../../store/wallet/effects/amount/amount';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -472,18 +470,24 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   };
 
   const speedUpTransaction = async (transaction: any) => {
-    //   TODO: BTC speed tx
     try {
-
       let tx: any;
-      if (currencyAbbreviation.toLowerCase() === 'eth' || IsERCToken(currencyAbbreviation)) {
-        tx = buildEthERCTokenSpeedupTx(fullWalletObj, transaction);
+      if (
+        currencyAbbreviation.toLowerCase() === 'eth' ||
+        IsERCToken(currencyAbbreviation)
+      ) {
+        tx = await buildEthERCTokenSpeedupTx(fullWalletObj, transaction);
       }
 
-      if(currencyAbbreviation.toLowerCase() === 'btc') {
-        tx = buildBtcSpeedupTx(wallet, transaction);
+      if (currencyAbbreviation.toLowerCase() === 'btc') {
+        const address = await dispatch<Promise<string>>(
+          createWalletAddress({wallet: fullWalletObj, newAddress: false}),
+        );
+
+        tx = await buildBtcSpeedupTx(fullWalletObj, transaction, address);
       }
 
+      const {recipient, amount} = tx;
       const {txDetails, txp: newTxp} = await dispatch(
         createProposalAndBuildTxDetails(tx),
       );

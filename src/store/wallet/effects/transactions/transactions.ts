@@ -393,7 +393,9 @@ export const GetTransactionHistory =
         return resolve({transactions: [], loadMore: false});
       }
 
-      const lastTransactionId = transactionsHistory[0]
+      const lastTransactionId = refresh
+        ? null
+        : transactionsHistory[0]
         ? transactionsHistory[0].txid
         : null;
       const skip = refresh ? 0 : transactionsHistory.length;
@@ -422,8 +424,8 @@ export const GetTransactionHistory =
           contactList,
         );
 
-        const array = transactionsHistory
-          .concat(transactions)
+        const array = transactions
+          .concat(transactionsHistory)
           .filter((txs: any) => txs);
 
         const newHistory = uniqBy(array, x => {

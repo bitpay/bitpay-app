@@ -1,7 +1,7 @@
 import {BwcProvider} from '../../../../lib/bwc';
 import {GetPrecision, IsCustomERCToken} from '../../utils/currency';
 import {Wallet} from '../../wallet.models';
-import {GetMinFee} from '../fee/fee';
+import {GetMinFee, GetUtxos} from '../fee/fee';
 const LOW_AMOUNT_RATIO = 0.15;
 const TOTAL_LOW_WARNING_RATIO = 0.3;
 
@@ -101,42 +101,32 @@ export const GetLowAmount = (wallet: Wallet): Promise<any> => {
 
 export const GetLowUtxos = (wallet: Wallet): Promise<any> => {
   return new Promise(async (resolve, reject) => {
-    wallet.getUtxos(
-      {
-        coin: wallet.credentials.coin,
-      },
-      async (err: any, resp: any) => {
-        if (err || !resp || !resp.length) {
-          return reject(err ? err : 'No UTXOs');
-        }
+    try {
+      const resp = await GetUtxos(wallet);
+      const minFee = await GetMinFee(wallet, resp.length);
+      const balance = resp.reduce(
+        (total: number, {satoshis}: {satoshis: number}) => total + satoshis,
+        0,
+      );
 
-        try {
-          const minFee = await GetMinFee(wallet, resp.length);
-          const balance = resp.reduce(
-            (total: number, {satoshis}: {satoshis: number}) => total + satoshis,
-            0,
-          );
+      const lowAmount = await GetLowAmount(wallet);
+      const lowUtxos = resp.filter((x: any) => {
+        return x.satoshis < lowAmount;
+      });
 
-          const lowAmount = await GetLowAmount(wallet);
-          const lowUtxos = resp.filter((x: any) => {
-            return x.satoshis < lowAmount;
-          });
-
-          const totalLow = lowUtxos.reduce(
-            (total: number, {satoshis}: {satoshis: number}) => total + satoshis,
-            0,
-          );
-          return resolve({
-            allUtxos: resp || [],
-            lowUtxos: lowUtxos || [],
-            totalLow,
-            warning: minFee / balance > TOTAL_LOW_WARNING_RATIO,
-            minFee,
-          });
-        } catch (e) {
-          return reject(err);
-        }
-      },
-    );
+      const totalLow = lowUtxos.reduce(
+        (total: number, {satoshis}: {satoshis: number}) => total + satoshis,
+        0,
+      );
+      return resolve({
+        allUtxos: resp || [],
+        lowUtxos: lowUtxos || [],
+        totalLow,
+        warning: minFee / balance > TOTAL_LOW_WARNING_RATIO,
+        minFee,
+      });
+    } catch (err) {
+      return reject(err);
+    }
   });
 };

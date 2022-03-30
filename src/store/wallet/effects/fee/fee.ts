@@ -107,3 +107,49 @@ export const GetMinFee = (wallet: Wallet, nbOutputs?: number): Promise<any> => {
     }
   });
 };
+
+export const GetUtxos = (wallet: Wallet): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    wallet.getUtxos(
+      {
+        coin: wallet.credentials.coin,
+      },
+      (err: any, resp: any) => {
+        if (err || !resp || !resp.length) {
+          return reject(err ? err : 'No UTXOs');
+        }
+        return resolve(resp);
+      },
+    );
+  });
+};
+
+export const GetInput = async (wallet: Wallet, txid: string) => {
+  try {
+    const utxos = await GetUtxos(wallet);
+    let biggestUtxo = 0;
+    let input;
+    utxos.forEach((u: any, i: any) => {
+      if (u.txid === txid) {
+        if (u.amount > biggestUtxo) {
+          biggestUtxo = u.amount;
+          input = utxos[i];
+        }
+      }
+    });
+    return input;
+  } catch (err) {
+    return;
+  }
+};
+
+export const GetBitcoinSpeedUpTxFee = async (
+  wallet: Wallet,
+  txSize: number,
+): Promise<number> => {
+  const urgentFee = await getFeeRatePerKb({wallet, feeLevel: 'urgent'});
+  // 250 bytes approx. is the minimum size of a tx with 1 input and 1 output
+  const averageTxSize = 250;
+  const fee = (urgentFee / 1000) * (txSize + averageTxSize);
+  return Number(fee.toFixed());
+};
