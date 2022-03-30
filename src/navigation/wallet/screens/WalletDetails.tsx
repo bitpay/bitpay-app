@@ -639,7 +639,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
               </HeaderContainer>
               {txps && txps[0] ? (
                 <TransactionSectionHeader>
-                  Pending Proposals
+                  {fullWalletObj.credentials.m > 1
+                    ? 'Pending Proposals'
+                    : 'Unsent Transactions'}
                 </TransactionSectionHeader>
               ) : null}
               <FlatList
@@ -658,8 +660,14 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                   </HeadContainer>
 
                   <TailContainer>
-                    <Value>{cryptoLockedBalance}</Value>
-                    <Fiat>{fiatLockedBalance}</Fiat>
+                    <Value>
+                      {cryptoLockedBalance} {currencyAbbreviation}
+                    </Value>
+                    <Fiat>
+                      {network === 'testnet'
+                        ? 'Test Only - No Value'
+                        : fiatLockedBalance}
+                    </Fiat>
                   </TailContainer>
                 </LockedBalanceContainer>
               ) : null}
