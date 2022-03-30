@@ -7,10 +7,11 @@ import React, {
 } from 'react';
 import {useAppDispatch} from '../../../utils/hooks';
 import styled from 'styled-components/native';
-import {FlatList} from 'react-native';
+import {FlatList, RefreshControl} from 'react-native';
 import {find} from 'lodash';
 import moment from 'moment';
-import {useNavigation} from '@react-navigation/native';
+import {sleep} from '../../../utils/helper-methods';
+import {useNavigation, useTheme} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../store';
 import {formatFiatAmount, shouldScale} from '../../../utils/helper-methods';
@@ -27,7 +28,10 @@ import GlobalSelect from '../../../navigation/wallet/screens/GlobalSelect';
 import {getCoinbaseExchangeRate} from '../../../store/coinbase/coinbase.effects';
 import {StackScreenProps} from '@react-navigation/stack';
 import {CoinbaseStackParamList} from '../CoinbaseStack';
-import {CoinbaseTransactionProps} from '../../../api/coinbase/coinbase.types';
+import {
+  CoinbaseErrorsProps,
+  CoinbaseTransactionProps,
+} from '../../../api/coinbase/coinbase.types';
 import CoinbaseIcon from '../components/CoinbaseIcon';
 import {CoinbaseEffects} from '../../../store/coinbase';
 import {
@@ -36,6 +40,10 @@ import {
 } from '../../../store/app/app.actions';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
+import {
+  ToCashAddress,
+  TranslateToBchCashAddress,
+} from '../../../store/wallet/effects/address/address';
 
 const AccountContainer = styled.View`
   flex: 1;
@@ -106,10 +114,12 @@ export type CoinbaseAccountScreenParamList = {
 const CoinbaseAccount = ({
   route,
 }: StackScreenProps<CoinbaseStackParamList, 'CoinbaseAccount'>) => {
+  const theme = useTheme();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const {accountId} = route.params;
 
+  const [refreshing, setRefreshing] = useState(false);
   const [customSupportedCurrencies, setCustomSupportedCurrencies] = useState(
     [] as string[],
   );
@@ -256,6 +266,11 @@ const CoinbaseAccount = ({
       showOnGoingProcessModal(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
     );
     dispatch(CoinbaseEffects.createAddress(accountId)).then(newAddress => {
+      if (account?.currency.code === 'BCH') {
+        // Convert old format bch address to bch cash address
+        newAddress = TranslateToBchCashAddress(newAddress);
+        newAddress = ToCashAddress(newAddress, false);
+      }
       dispatch(dismissOnGoingProcessModal());
       navigation.navigate('Wallet', {
         screen: 'GlobalSelect',
@@ -284,6 +299,39 @@ const CoinbaseAccount = ({
   const selectedWallet = () => {
     setWalletModalVisible(false);
     // TODO: Create Coinbase transaction and send to selected wallet
+  };
+
+  const showError = async (error: CoinbaseErrorsProps) => {
+    const errMsg = CoinbaseAPI.parseErrorToString(error);
+    dispatch(
+      showBottomNotificationModal({
+        type: 'error',
+        title: 'Coinbase Error',
+        message: errMsg,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'OK',
+            action: () => {},
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await sleep(1000);
+
+    try {
+      await dispatch(CoinbaseEffects.getAccountsAndBalance());
+      await dispatch(CoinbaseEffects.getTransactionsByAccount(accountId));
+    } catch (err: CoinbaseErrorsProps | any) {
+      setRefreshing(false);
+      showError(err);
+    }
+    setRefreshing(false);
   };
 
   return (
@@ -315,6 +363,13 @@ const CoinbaseAccount = ({
       </BalanceContainer>
       <Hr />
       <FlatList
+        refreshControl={
+          <RefreshControl
+            tintColor={theme.dark ? White : SlateDark}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        }
         ListHeaderComponent={() => {
           return (
             <TransactionListHeader>

@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useCallback, useLayoutEffect} from 'react';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../../WalletStack';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
@@ -254,13 +254,33 @@ const Confirm = () => {
         isVisible={showPaymentSentModal}
         onCloseModal={async () => {
           setShowPaymentSentModal(false);
-          navigation.navigate('Wallet', {
-            screen: 'WalletDetails',
-            params: {
-              walletId: wallet!.id,
-              key,
-            },
-          });
+          if (recipient.type === 'coinbase') {
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 2,
+                routes: [
+                  {
+                    name: 'Tabs',
+                    params: {screen: 'Home'},
+                  },
+                  {
+                    name: 'Coinbase',
+                    params: {
+                      screen: 'CoinbaseRoot',
+                    },
+                  },
+                ],
+              }),
+            );
+          } else {
+            navigation.navigate('Wallet', {
+              screen: 'WalletDetails',
+              params: {
+                walletId: wallet!.id,
+                key,
+              },
+            });
+          }
         }}
       />
 
