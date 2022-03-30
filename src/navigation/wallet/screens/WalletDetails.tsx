@@ -65,6 +65,8 @@ import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {isCoinSupportedToBuy} from '../../../navigation/services/buy-crypto/utils/buy-crypto-utils';
 import sortBy from 'lodash.sortby';
 import {FlatList} from 'react-native';
+import {createProposalAndBuildTxDetails} from '../../../store/wallet/effects/send/send';
+import {FormatAmount} from '../../../store/wallet/effects/amount/amount';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -464,8 +466,55 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     });
   };
 
-  const speedUpTransaction = (transaction: any) => {
-    //   TODO: Speed up Transaction
+  const speedUpTransaction = async (transaction: any) => {
+    //   TODO: BTC speed tx
+    try {
+      const {
+        credentials: {coin, walletName},
+        keyId,
+      } = fullWalletObj;
+      const amount = Number(FormatAmount(coin, transaction.amount));
+      const recipient = {
+        type: 'wallet',
+        name:
+          coin === 'eth' && transaction.customData
+            ? transaction.customData.toWalletName
+            : walletName,
+        walletId,
+        keyId,
+        address: coin === 'eth' ? transaction.addressTo : transaction.toAddress,
+      };
+
+      const {txDetails, txp: newTxp} = await dispatch(
+        createProposalAndBuildTxDetails({
+          wallet: fullWalletObj,
+          amount,
+          recipient,
+          network,
+          currency: currencyAbbreviation,
+          toAddress:
+            coin === 'eth' ? transaction.addressTo : transaction.toAddress,
+          nonce: transaction.nonce,
+          data: transaction.data,
+          gasLimit: transaction.gasLimit,
+          customData: transaction.customData,
+          feeLevel: coin === 'eth' || IsERCToken(coin) ? 'urgent' : 'custom',
+        }),
+      );
+
+      navigation.navigate('Wallet', {
+        screen: 'Confirm',
+        params: {
+          wallet: fullWalletObj,
+          recipient,
+          txp: newTxp,
+          txDetails,
+          amount,
+        },
+      });
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   const onPressTransaction = useMemo(

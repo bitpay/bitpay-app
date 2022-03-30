@@ -301,7 +301,7 @@ export interface TxDetails {
   // eth
   gasPrice?: number;
   gasLimit?: number;
-  nonce?: numberr;
+  nonce?: number;
   //
   sendingFrom: TxDetailsSendingFrom;
   subTotal: TxDetailsAmount;
