@@ -1,4 +1,9 @@
-import {HistoricRate, Rates, Wallet} from '../../wallet.models';
+import {
+  HistoricRate,
+  Rates,
+  Wallet,
+  TransactionProposal,
+} from '../../wallet.models';
 import {FormatAmountStr} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
 import uniqBy from 'lodash.uniqby';
@@ -77,11 +82,14 @@ export const RejectTxProposal = (wallet: Wallet, txp: any): Promise<any> => {
   });
 };
 
-export const ProcessPendingTxps = (txps: any, wallet: any) => {
+export const ProcessPendingTxps = (
+  txps: TransactionProposal[],
+  wallet: any,
+) => {
   const now = Math.floor(Date.now() / 1000);
   const {currencyAbbreviation} = wallet;
 
-  txps.forEach((tx: any) => {
+  txps.forEach((tx: TransactionProposal) => {
     tx = ProcessTx(currencyAbbreviation, tx);
 
     // no future transactions...
@@ -89,15 +97,8 @@ export const ProcessPendingTxps = (txps: any, wallet: any) => {
       tx.createdOn = now;
     }
 
-    tx.wallet = wallet;
-
-    if (!tx.wallet) {
-      console.log('no wallet at txp?');
-      return;
-    }
-
     const action: any = tx.actions.find(
-      (action: any) => action.copayerId === tx.wallet.credentials.copayerId,
+      (a: any) => a.copayerId === wallet.credentials.copayerId,
     );
 
     if ((!action || action.type === 'failed') && tx.status === 'pending') {
@@ -116,10 +117,10 @@ export const ProcessPendingTxps = (txps: any, wallet: any) => {
       tx.canBeRemoved = true;
     }
   });
-  txps = BuildUiFriendlyList(txps, currencyAbbreviation);
+  return BuildUiFriendlyList(txps, currencyAbbreviation);
 };
 
-const ProcessTx = (currencyAbbreviation: string, tx: any) => {
+const ProcessTx = (currencyAbbreviation: string, tx: TransactionProposal) => {
   if (!tx || tx.action === 'invalid') {
     return tx;
   }
@@ -139,7 +140,7 @@ const ProcessTx = (currencyAbbreviation: string, tx: any) => {
         return total + o.amount;
       }, 0);
     }
-    tx.toAddress = tx.outputs[0].toAddress;
+    tx.toAddress = tx.outputs[0].toAddress!;
 
     // translate legacy addresses
     if (tx.addressTo && currencyAbbreviation === 'ltc') {

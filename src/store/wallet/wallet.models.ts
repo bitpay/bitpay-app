@@ -65,6 +65,10 @@ export interface WalletBalance {
   satConfirmedAvailable: number;
 }
 
+export interface WalletStatus {
+  balance: WalletBalance;
+  pendingTxps: TransactionProposal[];
+}
 export interface WalletObj {
   id: string;
   keyId: string;
@@ -73,6 +77,7 @@ export interface WalletObj {
   m: number;
   n: number;
   balance: WalletBalance;
+  pendingTxps: TransactionProposal[];
   tokens?: string[];
   walletName?: string;
   preferences?: {
@@ -160,9 +165,9 @@ export interface _Credentials extends Credentials {
   secret: string;
   copayers: string[];
 }
-export interface WalletStatus {
+export interface Status {
   balance: Balance;
-  pendingTxps: any[];
+  pendingTxps: TransactionProposal[];
   preferences: any;
   serverMessages: any[];
   wallet: _Credentials;
@@ -234,18 +239,37 @@ export interface TransactionOptions {
   inputs?: any[];
 }
 
+export interface Action {
+  comment: string;
+  copayerId: string;
+  copayerName: string;
+  createdOn: number;
+  type: number;
+}
 export interface TransactionProposal {
+  action: string;
+  actions: Action[];
+  addressTo: string;
   coin: string;
   chain: string;
-  amount: any;
+  amount: number;
+  amountStr: string;
+  amountValueStr: string;
+  amountUnitStr: string;
+  size: number;
+  feeStr: string;
+  fees: number;
+  feeRate: string;
   from: string;
   nonce?: number;
   enableRBF?: boolean;
   replaceTxByFee?: boolean;
-  toAddress: any;
+  toAddress: string;
   outputs: Array<{
-    toAddress: any;
-    amount: any;
+    amount: number;
+    address?: string;
+    addressToShow?: string;
+    toAddress?: string;
     message?: string;
     data?: string;
     gasLimit?: number;
@@ -271,6 +295,13 @@ export interface TransactionProposal {
   gasPrice?: number;
   status: string;
   sendMaxInfo?: SendMaxInfo;
+  createdOn: number;
+  pendingForUs: boolean;
+  statusForUs: string;
+  deleteLockTime: number;
+  canBeRemoved: boolean;
+  recipientCount: number;
+  hasMultiplesOutputs: boolean;
 }
 
 export interface ProposalErrorHandlerProps {

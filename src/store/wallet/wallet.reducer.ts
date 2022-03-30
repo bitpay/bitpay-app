@@ -92,13 +92,14 @@ export const walletReducer = (
       };
     }
 
-    case WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCE: {
-      const {keyId, walletId, balance} = action.payload;
+    case WalletActionTypes.SUCCESS_UPDATE_WALLET_STATUS: {
+      const {keyId, walletId, status} = action.payload;
       const keyToUpdate = state.keys[keyId];
       if (keyToUpdate) {
         keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
           if (wallet.id === walletId) {
-            wallet.balance = balance;
+            wallet.balance = status.balance;
+            wallet.pendingTxps = status.pendingTxps;
             wallet.isRefreshing = false;
           }
           return wallet;
@@ -119,7 +120,7 @@ export const walletReducer = (
       };
     }
 
-    case WalletActionTypes.FAILED_UPDATE_WALLET_BALANCE: {
+    case WalletActionTypes.FAILED_UPDATE_WALLET_STATUS: {
       const {keyId, walletId} = action.payload;
       const keyToUpdate = state.keys[keyId];
       if (keyToUpdate) {
@@ -160,7 +161,7 @@ export const walletReducer = (
       };
     }
 
-    case WalletActionTypes.SUCCESS_UPDATE_ALL_KEYS_AND_BALANCES: {
+    case WalletActionTypes.SUCCESS_UPDATE_ALL_KEYS_AND_STATUS: {
       return {
         ...state,
         balanceCacheKey: {

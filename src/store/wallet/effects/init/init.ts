@@ -2,7 +2,7 @@ import {Effect, RootState} from '../../../index';
 import {WalletActions} from '../../index';
 import {getPriceHistory, startGetRates} from '../rates/rates';
 import {startGetTokenOptions} from '../currencies/currencies';
-import {startUpdateAllKeyAndWalletBalances} from '../balance/balance';
+import {startUpdateAllKeyAndWalletStatus} from '../status/status';
 import {updatePortfolioBalance} from '../../wallet.actions';
 
 export const startWalletStoreInit =
@@ -15,7 +15,7 @@ export const startWalletStoreInit =
       }
       if (Object.keys(WALLET.keys).length) {
         await dispatch(startGetRates());
-        dispatch(startUpdateAllKeyAndWalletBalances());
+        dispatch(startUpdateAllKeyAndWalletStatus());
       }
 
       dispatch(getPriceHistory());

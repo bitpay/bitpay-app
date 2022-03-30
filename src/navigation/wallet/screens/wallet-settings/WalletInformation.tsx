@@ -12,11 +12,7 @@ import {
 import {LightBlack, NeutralSlate} from '../../../../styles/colors';
 import Clipboard from '@react-native-community/clipboard';
 import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
-import {
-  Key,
-  Wallet,
-  WalletStatus,
-} from '../../../../store/wallet/wallet.models';
+import {Key, Wallet, Status} from '../../../../store/wallet/wallet.models';
 import {
   GetPrecision,
   IsUtxoCoin,
@@ -113,22 +109,20 @@ const WalletInformation = () => {
   const [balanceByAddress, setBalanceByAddress] = useState<any[]>();
 
   useEffect(() => {
-    wallet.getStatus(
-      {network: 'livenet'},
-      async (err: any, status: WalletStatus) => {
-        if (err) {
-          // TODO
-          console.log(err);
-          setIsLoading(false);
-        }
-        if (status) {
-          setCopayers(status.wallet.copayers);
-          setBalanceByAddress(status.balance.byAddress);
-          await sleep(500);
-          setIsLoading(false);
-        }
-      },
-    );
+    // TODO
+    wallet.getStatus({network: 'livenet'}, async (err: any, status: Status) => {
+      if (err) {
+        // TODO
+        console.log(err);
+        setIsLoading(false);
+      }
+      if (status) {
+        setCopayers(status.wallet.copayers);
+        setBalanceByAddress(status.balance.byAddress);
+        await sleep(500);
+        setIsLoading(false);
+      }
+    });
   }, [wallet]);
 
   return (

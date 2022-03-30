@@ -23,7 +23,7 @@ import {
 } from '../../../../utils/helper-methods';
 import {toFiat, checkEncryptPassword} from '../../utils/wallet';
 import {startGetRates} from '../rates/rates';
-import {waitForTargetAmountAndUpdateWallet} from '../balance/balance';
+import {waitForTargetAmountAndUpdateWallet} from '../status/status';
 import {
   CustomErrorMessage,
   GeneralError,
@@ -281,7 +281,7 @@ const buildTransactionProposal = (
         txp.payProUrl = payProUrl;
         txp.outputs.push({
           toAddress: tx.toAddress,
-          amount: tx.amount,
+          amount: tx.amount!,
           message: tx.message,
           data: tx.data,
           gasLimit: tx.gasLimit,
@@ -316,7 +316,7 @@ const buildTransactionProposal = (
       default:
         txp.outputs.push({
           toAddress: tx.toAddress,
-          amount: tx.amount,
+          amount: tx.amount!,
           message: tx.description,
           data: tx.data,
           gasLimit: tx.gasLimit,

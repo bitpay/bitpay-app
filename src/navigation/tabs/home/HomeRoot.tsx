@@ -6,7 +6,7 @@ import {ScreenGutter} from '../../../components/styled/Containers';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startGetRates} from '../../../store/wallet/effects';
-import {startUpdateAllKeyAndWalletBalances} from '../../../store/wallet/effects/balance/balance';
+import {startUpdateAllKeyAndWalletStatus} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
 import {isDoMore, isFeaturedMerchant, isQuickLink} from '../../../utils/braze';
@@ -154,7 +154,7 @@ const HomeRoot = () => {
     try {
       await dispatch(startGetRates());
       await Promise.all([
-        dispatch(startUpdateAllKeyAndWalletBalances()),
+        dispatch(startUpdateAllKeyAndWalletStatus()),
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
