@@ -1,16 +1,11 @@
 import React, {useEffect, useState} from 'react';
 import {
-  Text,
-  View,
-  ScrollView,
-  SafeAreaView,
-  TouchableOpacity,
-} from 'react-native';
-import {
   useTheme,
   RouteProp,
   useRoute,
   useNavigation,
+  StackActions,
+  CommonActions,
 } from '@react-navigation/native';
 import styled from 'styled-components/native';
 import SwipeButton from '../../../../components/swipe-button/SwipeButton';
@@ -22,30 +17,17 @@ import {createWalletAddress} from '../../../../store/wallet/effects/address/addr
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {
   changellyCreateFixTransaction,
-  changellyGetPairsParams,
-  changellyGetCurrencies,
   changellyGetFixRateForAmount,
 } from '../utils/changelly-utils';
 import {toFiat} from '../../../../store/wallet/utils/wallet';
 import {
   GetPrecision,
   IsERCToken,
-  IsCustomERCToken,
   GetChain,
   GetProtoAddress,
 } from '../../../../store/wallet/utils/currency';
-import {
-  FormatAmountStr,
-  ParseAmount,
-} from '../../../../store/wallet/effects/amount/amount';
-import {
-  BaseText,
-  Link,
-  H3,
-  H5,
-  H7,
-  Small,
-} from '../../../../components/styled/Text';
+import {FormatAmountStr} from '../../../../store/wallet/effects/amount/amount';
+import {BaseText, H5, H7} from '../../../../components/styled/Text';
 import {
   Black,
   SlateDark,
@@ -58,7 +40,6 @@ import {
 } from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import Checkbox from '../../../../components/checkbox/Checkbox';
-import {SUPPORTED_TOKENS} from '../../../../constants/currencies';
 import {TokenOpts} from '../../../../constants/tokens';
 import {BwcProvider} from '../../../../lib/bwc';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
@@ -69,17 +50,11 @@ import {sleep} from '../../../../utils/helper-methods';
 import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {
-  dismissDecryptPasswordModal,
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showDecryptPasswordModal,
 } from '../../../../store/app/app.actions';
-import {checkEncryptPassword} from '../../../../store/wallet/utils/wallet';
-import {
-  CustomErrorMessage,
-  WrongPasswordError,
-} from '../../../../navigation/wallet/components/ErrorMessages';
-import {startSendPayment} from '../../../../store/wallet/effects/send/send';
+import {WrongPasswordError} from '../../../../navigation/wallet/components/ErrorMessages';
+import {publishAndSign} from '../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../../navigation/wallet/components/PaymentSent';
 import cloneDeep from 'lodash.clonedeep';
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
@@ -573,61 +548,25 @@ const ChangellyCheckout: React.FC = () => {
     // onGoingProcessProvider.set('broadcastingTx');
 
     try {
-      let password: string | undefined;
-
-      if (key.isPrivKeyEncrypted) {
-        password = await new Promise<string>((resolve, reject) => {
-          dispatch(
-            showDecryptPasswordModal({
-              onSubmitHandler: async (_password: string) => {
-                if (checkEncryptPassword(key, _password)) {
-                  dispatch(dismissDecryptPasswordModal());
-                  await sleep(500);
-                  resolve(_password);
-                } else {
-                  dispatch(dismissDecryptPasswordModal());
-                  await sleep(500);
-                  dispatch(showBottomNotificationModal(WrongPasswordError()));
-                  reject('invalid password');
-                }
-              },
-              onCancelHandler: () => {
-                reject('password canceled');
-              },
-            }),
-          );
-        });
-      }
       dispatch(
         startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT),
       );
-      const recipient = {address: addressToPay!};
-      console.log('============ data to startSendPayment', {
-        txp: ctxp!,
-        key,
-        wallet: fromWalletSelected,
-        recipient,
-        password,
-      });
-      const broadcastedTx = (await dispatch<any>(
-        startSendPayment({
-          txp: ctxp!,
-          key,
-          wallet: fromWalletSelected,
-          recipient,
-          password,
-        }),
-      )) as any;
+      await sleep(400);
 
+      const broadcastedTx = (await dispatch<any>(
+        publishAndSign({txp: ctxp!, key, wallet: fromWalletSelected}),
+      )) as any;
       console.log('====== broadcastedTx: ', broadcastedTx);
       saveChangellyTx();
-
       dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
+      await sleep(400);
       setShowPaymentSentModal(true);
     } catch (err) {
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
       switch (err) {
         case 'invalid password':
+          dispatch(showBottomNotificationModal(WrongPasswordError()));
         case 'password canceled':
           setResetSwipeButton(true);
           break;
@@ -841,7 +780,26 @@ const ChangellyCheckout: React.FC = () => {
         isVisible={showPaymentSentModal}
         onCloseModal={async () => {
           setShowPaymentSentModal(false);
-          navigation.goBack();
+          await sleep(500);
+          // TODO: Navigate to Changelly settings
+          // navigation.dispatch(StackActions.pop(2));
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 2,
+              routes: [
+                {
+                  name: 'Tabs',
+                  params: {screen: 'Home'},
+                },
+                {
+                  name: 'ExternalServicesSettings',
+                  params: {
+                    screen: 'ChangellySettings',
+                  },
+                },
+              ],
+            }),
+          );
         }}
       />
     </>

@@ -37,6 +37,16 @@ const ExternalServicesSettingsRoot: React.FC = () => {
           <AngleRight />
         </Setting>
         <Hr />
+        <SettingTitle>Swap Crypto Services</SettingTitle>
+        <Setting
+          onPress={() =>
+            navigation.navigate('ExternalServicesSettings', {
+              screen: 'ChangellySettings',
+            })
+          }>
+          <SettingTitle>{t('Changelly')}</SettingTitle>
+          <AngleRight />
+        </Setting>
       </Settings>
     </SettingsContainer>
   );
