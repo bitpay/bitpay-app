@@ -11,7 +11,7 @@ import {
   TxDetails,
   Wallet,
 } from '../../wallet.models';
-import {FormatAmountStr, ParseAmount} from '../amount/amount';
+import {FormatAmount, FormatAmountStr, ParseAmount} from '../amount/amount';
 import {FeeLevels, getFeeRatePerKb} from '../fee/fee';
 import {
   formatCryptoAddress,
@@ -31,7 +31,7 @@ import {GiftCardInvoiceParams, Invoice} from '../../../shop/shop.models';
 import {GetPayProDetails, HandlePayPro} from '../paypro/paypro';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../constants/config';
 import {ShopEffects} from '../../../shop';
-import {GetPrecision, IsUtxoCoin} from '../../utils/currency';
+import {GetPrecision, IsERCToken, IsUtxoCoin} from '../../utils/currency';
 import {
   dismissDecryptPasswordModal,
   showBottomNotificationModal,
@@ -583,3 +583,44 @@ export const createInvoiceAndTxProposal =
       }
     });
   };
+
+export const buildEthERCTokenSpeedupTx = (wallet: Wallet, transaction: any) => {
+  const {
+    credentials: {coin, walletName, walletId, network},
+    keyId,
+  } = wallet;
+
+  const {customData, addressTo, nonce, data, gasLimit} = transaction;
+  const amount = Number(FormatAmount(coin, transaction.amount));
+  const recipient = {
+    type: 'wallet',
+    name: customData ? customData.toWalletName : walletName,
+    walletId,
+    keyId,
+    address: addressTo,
+  };
+
+  return {
+    wallet,
+    amount,
+    recipient,
+    network,
+    currency: coin,
+    toAddress:addressTo,
+    nonce,
+    data,
+    gasLimit,
+    customData,
+    feeLevel: 'urgent'
+  }
+}
+
+export const buildBtcSpeedupTx = async (wallet: Wallet, tx: any) => {
+  const {feeRate} = tx;
+  const _tx = {...tx};
+  _tx.feeRate = feeRate.substr(0, feeRate.indexOf(' ')) * 1000;
+  try {
+  } catch (e) {
+    throw e;
+  }
+}
