@@ -218,25 +218,21 @@ const ChangellyCheckout: React.FC = () => {
   );
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
-  const [addressToPay, setAddressToPay] = useState<string>();
+  // const [addressToPay, setAddressToPay] = useState<string>();
+  const [txData, setTxData] = useState<any>();
 
-  const coinFrom = fromWalletSelected.currencyAbbreviation;
-  const coinTo = toWalletSelected.currencyAbbreviation;
   const alternativeIsoCode = 'USD';
-  // let fee = 0;
-  // let totalExchangeFee = 0;
-  let addressFrom: string = ''; // Refund address
-  let addressTo: string = ''; // Receiving address
-  // let amountTo: number = 0;
+  let addressFrom: string; // Refund address
+  let addressTo: string; // Receiving address
   let payinExtraId: string;
-  // let exchangeTxId: string;
   let status: string;
-  // let fiatAmountTo: number;
-  // let paymentExpired: boolean = false;
-  // let remainingTimeStr: string;
   let payinAddress: string;
 
   const createFixTransaction = async () => {
+    dispatch(
+      startOnGoingProcessModal(OnGoingProcessMessages.EXCHANGE_GETTING_DATA),
+    );
+    await sleep(400);
     try {
       addressFrom = (await dispatch<any>(
         createWalletAddress({wallet: fromWalletSelected, newAddress: false}),
@@ -246,6 +242,9 @@ const ChangellyCheckout: React.FC = () => {
       )) as string;
     } catch (err) {
       console.error(err);
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(400);
+      return;
     }
 
     if (fromWalletSelected.currencyAbbreviation.toLowerCase() === 'bch') {
@@ -260,9 +259,9 @@ const ChangellyCheckout: React.FC = () => {
       amountFrom: amountExpectedFrom,
       coinFrom: fromWalletSelected.currencyAbbreviation.toLowerCase(),
       coinTo: toWalletSelected.currencyAbbreviation.toLowerCase(),
-      addressTo: addressTo,
-      refundAddress: addressFrom,
-      fixedRateId: fixedRateId,
+      addressTo: cloneDeep(addressTo),
+      refundAddress: cloneDeep(addressFrom),
+      fixedRateId: cloneDeep(fixedRateId),
     };
 
     changellyCreateFixTransaction(fromWalletSelected, createFixTxData)
@@ -318,9 +317,11 @@ const ChangellyCheckout: React.FC = () => {
           payinAddress = data.result.payinAddress;
         }
 
-        setAddressToPay(cloneDeep(payinAddress));
+        // setAddressToPay(cloneDeep(payinAddress));
 
-        payinExtraId = data.result.payinExtraId; // (destinationTag) Used for coins like: XRP, XLM, EOS, IGNIS, BNB, XMR, ARDOR, DCT, XEM
+        payinExtraId = data.result.payinExtraId
+          ? data.result.payinExtraId
+          : undefined; // (destinationTag) Used for coins like: XRP, XLM, EOS, IGNIS, BNB, XMR, ARDOR, DCT, XEM
         setExchangeTxId(data.result.id);
         setAmountExpectedFrom(data.result.amountExpectedFrom);
         // amountTo = data.result.amountTo;
@@ -353,10 +354,23 @@ const ChangellyCheckout: React.FC = () => {
         );
 
         createTx(fromWalletSelected, payinAddress, depositSat, payinExtraId)
-          .then(ctxp => {
+          .then(async ctxp => {
             console.log('========== CTXP: ', ctxp);
             setCtxp(ctxp);
             setFee(ctxp.fee);
+
+            const _txData = {
+              addressFrom,
+              addressTo,
+              payinExtraId,
+              status,
+              payinAddress,
+            };
+            setTxData(_txData);
+
+            dispatch(dismissOnGoingProcessModal());
+            await sleep(400);
+
             if (useSendMax) {
               console.log('TODO: handle send max');
               // showWarningSheet();
@@ -368,11 +382,13 @@ const ChangellyCheckout: React.FC = () => {
             return;
           });
       })
-      .catch(err => {
+      .catch(async err => {
         console.log('Changelly createFixTransaction Error: ', err);
         console.log(
           'Changelly is not available at this moment. Please, try again later.',
         );
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(400);
         return;
       });
   };
@@ -547,6 +563,8 @@ const ChangellyCheckout: React.FC = () => {
   const makePayment = async () => {
     // onGoingProcessProvider.set('broadcastingTx');
 
+    console.log('------- txData: ', txData);
+
     try {
       dispatch(
         startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT),
@@ -589,14 +607,15 @@ const ChangellyCheckout: React.FC = () => {
       date: Date.now(),
       amountTo: amountTo!,
       coinTo: toWalletSelected.currencyAbbreviation.toLowerCase(),
-      addressTo: addressTo,
+      addressTo: txData.addressTo,
+      walletIdTo: toWalletSelected.id,
       amountFrom: amountFrom!,
       coinFrom: fromWalletSelected.currencyAbbreviation.toLowerCase(),
-      refundAddress: addressFrom!,
-      payinAddress: addressToPay!,
-      payinExtraId: payinExtraId,
+      refundAddress: txData.addressFrom,
+      payinAddress: txData.payinAddress,
+      payinExtraId: txData.payinExtraId,
       totalExchangeFee: totalExchangeFee!,
-      status: status!,
+      status: txData.status,
     };
 
     dispatch(
@@ -780,9 +799,7 @@ const ChangellyCheckout: React.FC = () => {
         isVisible={showPaymentSentModal}
         onCloseModal={async () => {
           setShowPaymentSentModal(false);
-          await sleep(500);
-          // TODO: Navigate to Changelly settings
-          // navigation.dispatch(StackActions.pop(2));
+          await sleep(300);
           navigation.dispatch(
             CommonActions.reset({
               index: 2,

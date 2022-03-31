@@ -4,6 +4,7 @@ export interface changellyTxData {
   amountTo: number;
   coinTo: string;
   addressTo: string;
+  walletIdTo: string;
   amountFrom: number;
   coinFrom: string;
   refundAddress: string;

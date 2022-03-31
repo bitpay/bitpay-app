@@ -3,7 +3,7 @@ import {useTheme, useNavigation} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import cloneDeep from 'lodash.clonedeep';
 import {
-  // ActivityIndicator,
+  ActivityIndicator,
   ScrollView,
   TouchableOpacity,
   // Linking,
@@ -15,6 +15,7 @@ import {
   NeutralSlate,
   SlateDark,
   White,
+  ProgressBlue,
   Slate,
 } from '../../../../styles/colors';
 import {
@@ -42,6 +43,14 @@ import {
 import {Currencies} from '../../../../constants/currencies';
 import AmountModal from '../components/AmountModal';
 import {GetPrecision} from '../../../../store/wallet/utils/currency';
+import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
+import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+} from '../../../../store/app/app.actions';
+import {useAppDispatch} from '../../../../utils/hooks';
+import {sleep} from '../../../../utils/helper-methods';
 
 // Images // TODO: for exchanges images create a component like this: /bitpay-app-v2/src/components/icons/info
 import ChangellyLogo from '../../../../../assets/img/services/changelly/changelly-vector-logo.svg';
@@ -137,6 +146,13 @@ const ProviderLabel = styled(H7)`
   margin-right: 10px;
 `;
 
+const SpinnerContainer = styled.View`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+`;
+
 export interface RateData {
   fixedRateId: string;
   amountTo: number;
@@ -146,6 +162,7 @@ export interface RateData {
 const SwapCryptoRoot: React.FC = () => {
   const theme = useTheme();
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [fromWalletSelectorModalVisible, setFromWalletSelectorModalVisible] =
     useState(false);
@@ -162,6 +179,7 @@ const SwapCryptoRoot: React.FC = () => {
     string[]
   >([]);
   const [rateData, setRateData] = useState<RateData>();
+  const [loading, setLoading] = useState<boolean>(false);
 
   const SupportedCurrencies: string[] = Object.keys(Currencies);
   const SupportedChains: string[] = [
@@ -202,7 +220,13 @@ const SwapCryptoRoot: React.FC = () => {
   };
 
   const canContinue = (): boolean => {
-    return !!toWalletSelected && !!fromWalletSelected && amountFrom > 0;
+    return (
+      !!toWalletSelected &&
+      !!fromWalletSelected &&
+      amountFrom > 0 &&
+      !!rateData &&
+      !!rateData.fixedRateId
+    );
   };
 
   const isToWalletEnabled = (): boolean => {
@@ -232,7 +256,7 @@ const SwapCryptoRoot: React.FC = () => {
 
   const updateReceivingAmount = () => {
     if (!fromWalletSelected || !toWalletSelected || !amountFrom) {
-      // this.loading = false;
+      setLoading(false);
       return;
     }
 
@@ -256,7 +280,7 @@ const SwapCryptoRoot: React.FC = () => {
         // );
 
         if (spendableAmount < amountFrom) {
-          // this.loading = false;
+          setLoading(false);
           showError(
             'You are trying to send more funds than you have available. Make sure you do not have funds locked by pending transaction proposals or enter a valid amount.',
           );
@@ -266,9 +290,9 @@ const SwapCryptoRoot: React.FC = () => {
     }
 
     const pair =
-      fromWalletSelected.currencyAbbreviation +
+      fromWalletSelected.currencyAbbreviation.toLowerCase() +
       '_' +
-      toWalletSelected.currencyAbbreviation;
+      toWalletSelected.currencyAbbreviation.toLowerCase();
     console.log('Updating receiving amount with pair: ' + pair);
 
     const data = {
@@ -293,7 +317,7 @@ const SwapCryptoRoot: React.FC = () => {
           rate: Number(data.result[0].result), // result == rate
         };
         setRateData(newRateData);
-        // loading = false;
+        setLoading(false);
       })
       .catch((err: any) => {
         console.log('Changelly getFixRateForAmount Error: ', err);
@@ -310,11 +334,11 @@ const SwapCryptoRoot: React.FC = () => {
       return;
     }
 
-    // this.loading = true;
+    setLoading(true);
     let pair =
-      fromWalletSelected.currencyAbbreviation +
+      fromWalletSelected.currencyAbbreviation.toLowerCase() +
       '_' +
-      toWalletSelected.currencyAbbreviation;
+      toWalletSelected.currencyAbbreviation.toLowerCase();
     console.log('Updating max and min with pair: ' + pair);
 
     const data = {
@@ -388,7 +412,7 @@ const SwapCryptoRoot: React.FC = () => {
           //   );
           //   errorActionSheet.present();
           //   errorActionSheet.onDidDismiss(option => {
-          //     // loading = false;
+          //     setLoading(false);
           //     if (option) {
           //       amountFrom = maxAmount;
           //       useSendMax = null;
@@ -422,7 +446,7 @@ const SwapCryptoRoot: React.FC = () => {
           //   );
           //   errorActionSheet.present();
           //   errorActionSheet.onDidDismiss(() => {
-          //     // loading = false;
+          //     setLoading(false);
           //     useSendMax = null;
           //     amountFrom = null;
           //     amountTo = null;
@@ -443,7 +467,7 @@ const SwapCryptoRoot: React.FC = () => {
           // );
           // errorActionSheet.present();
           // errorActionSheet.onDidDismiss(option => {
-          //   // loading = false;
+          //   setLoading(false);
           //   if (option) {
           //     amountFrom = minAmount;
           //     useSendMax = null;
@@ -469,8 +493,12 @@ const SwapCryptoRoot: React.FC = () => {
   };
 
   useEffect(() => {
-    const country = 'US';
+    const country = 'US'; // TODO: use getCountry
     const getChangellyCurrencies = async () => {
+      dispatch(
+        startOnGoingProcessModal(OnGoingProcessMessages.GENERAL_AWAITING),
+      );
+      await sleep(400);
       const changellyCurrenciesData = await changellyGetCurrencies(true);
 
       if (
@@ -513,7 +541,16 @@ const SwapCryptoRoot: React.FC = () => {
       }
     };
 
-    getChangellyCurrencies().catch(console.error);
+    getChangellyCurrencies()
+      .then(async () => {
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(400);
+      })
+      .catch(async err => {
+        console.error(err);
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(400);
+      });
   }, []);
 
   useEffect(() => {
@@ -670,10 +707,15 @@ const SwapCryptoRoot: React.FC = () => {
                     />
                   </ArrowContainer>
                 </SelectedOptionContainer>
-                {rateData?.amountTo && (
+                {rateData?.amountTo && !loading && (
                   <SelectedOptionCol>
                     <DataText>{rateData?.amountTo}</DataText>
                   </SelectedOptionCol>
+                )}
+                {!rateData?.amountTo && loading && (
+                  <SpinnerContainer>
+                    <ActivityIndicator color={ProgressBlue} />
+                  </SpinnerContainer>
                 )}
               </ActionsContainer>
               {rateData?.rate && (
@@ -726,6 +768,12 @@ const SwapCryptoRoot: React.FC = () => {
         onPress={(fromWallet: Wallet) => {
           hideModal('fromWalletSelector');
           setFromWalletSelected(fromWallet);
+          setToWalletSelected(undefined);
+          setAmountFrom(0);
+          setLoading(false);
+          setToWalletData(undefined);
+          setRateData(undefined);
+
           // const coinsTo = cloneDeep(swapCryptoSupportedCoinsFrom).splice(swapCryptoSupportedCoinsFrom.indexOf(fromWallet.credentials.coin), 1);
           const coinsTo = cloneDeep(swapCryptoSupportedCoinsFrom).filter(
             coin => coin != fromWallet.credentials.coin,
@@ -754,6 +802,7 @@ const SwapCryptoRoot: React.FC = () => {
           hideModal('walletSelector');
           if (toWallet) {
             setToWalletSelected(toWallet);
+            setRateData(undefined);
           }
         }}
       />

@@ -2,6 +2,7 @@ import React from 'react';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import {useNavigation} from '@react-navigation/native';
 import {
+  Br,
   Hr,
   Setting,
   SettingTitle,
@@ -37,6 +38,7 @@ const ExternalServicesSettingsRoot: React.FC = () => {
           <AngleRight />
         </Setting>
         <Hr />
+        <Br />
         <SettingTitle>Swap Crypto Services</SettingTitle>
         <Setting
           onPress={() =>

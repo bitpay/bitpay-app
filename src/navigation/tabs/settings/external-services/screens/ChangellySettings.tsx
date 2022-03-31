@@ -45,7 +45,7 @@ const ChangellySettings: React.FC = () => {
     <>
       <SettingsContainer>
         <Settings style={{paddingBottom: 500}}>
-          {swapTxs && swapTxs.length > 0 && <PrTitle>Payment Requests</PrTitle>}
+          {swapTxs && swapTxs.length > 0 && <PrTitle>Transactions</PrTitle>}
           {swapTxs &&
             swapTxs.length > 0 &&
             swapTxs
@@ -99,7 +99,9 @@ const ChangellySettings: React.FC = () => {
           onPress={() => {
             haptic('impactLight');
             dispatch(
-              openUrlWithInAppBrowser('https://www.simplex.com/support/'),
+              openUrlWithInAppBrowser(
+                'https://support.changelly.com/en/support/home',
+              ),
             );
           }}>
           <Link>Contact the Changelly support team.</Link>

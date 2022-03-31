@@ -109,32 +109,18 @@ const ChangellyDetails: React.FC = () => {
           <ChangellyIcon width={50} height={50} />
         </RowDataContainer>
 
-        {/* <RowDataContainer>
-          <RowLabel>Approximate receiving fiat amount</RowLabel>
-          <RowData>
-            {swapTx.fiat_base_amount}{' '}
-            {swapTx.fiat_total_amount_currency}
-          </RowData>
-        </RowDataContainer>
-        <LabelTip type="warn">
-          <LabelTipText>
-            The final crypto amount you receive when the transaction is complete
-            may differ because it is based on Simplex's exchange rate.
-          </LabelTipText>
-        </LabelTip> */}
-
-        <RowDataContainer>
+        <ColumnDataContainer>
           <TouchableOpacity
             onPress={() => {
               haptic('impactLight');
               copyText(swapTx.addressTo);
             }}>
             <RowLabel>Deposit address</RowLabel>
-            <RowData>{swapTx.addressTo}</RowData>
+            <ColumnData>{swapTx.addressTo}</ColumnData>
           </TouchableOpacity>
-        </RowDataContainer>
+        </ColumnDataContainer>
 
-        <RowDataContainer>
+        <RowDataContainer style={{marginTop: 20}}>
           <RowLabel>Paying</RowLabel>
           <RowData>
             {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
@@ -163,32 +149,36 @@ const ChangellyDetails: React.FC = () => {
 
         <LabelTip type="info">
           <LabelTipText>{status.statusDescription}</LabelTipText>
-          <Br />
-          <TouchableOpacity
-            onPress={() => {
-              haptic('impactLight');
-              copyText('security@changelly.com');
-            }}>
-            <LabelTipText>
-              Please contact Changelly support:{' '}
-              <LabelTipText style={{fontWeight: '700'}}>
-                security@changelly.com
-              </LabelTipText>
-            </LabelTipText>
-          </TouchableOpacity>
-          <Br />
-          <TouchableOpacity
-            onPress={() => {
-              haptic('impactLight');
-              copyText(swapTx.exchangeTxId);
-            }}>
-            <LabelTipText>
-              Provide the transaction id:{' '}
-              <LabelTipText style={{fontWeight: '700'}}>
-                {swapTx.exchangeTxId}
-              </LabelTipText>
-            </LabelTipText>
-          </TouchableOpacity>
+          {!!swapTx.status && ['failed', 'hold'].includes(swapTx.status) && (
+            <>
+              <Br />
+              <TouchableOpacity
+                onPress={() => {
+                  haptic('impactLight');
+                  copyText('security@changelly.com');
+                }}>
+                <LabelTipText>
+                  Please contact Changelly support:{' '}
+                  <LabelTipText style={{fontWeight: '700'}}>
+                    security@changelly.com
+                  </LabelTipText>
+                </LabelTipText>
+              </TouchableOpacity>
+              <Br />
+              <TouchableOpacity
+                onPress={() => {
+                  haptic('impactLight');
+                  copyText(swapTx.exchangeTxId);
+                }}>
+                <LabelTipText>
+                  Provide the transaction id:{' '}
+                  <LabelTipText style={{fontWeight: '700'}}>
+                    {swapTx.exchangeTxId}
+                  </LabelTipText>
+                </LabelTipText>
+              </TouchableOpacity>
+            </>
+          )}
         </LabelTip>
 
         <ColumnDataContainer>
