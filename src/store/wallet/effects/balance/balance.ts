@@ -42,7 +42,7 @@ export const waitForTargetAmountAndUpdateWallet =
     key: Key;
     wallet: Wallet;
     targetAmount: number;
-    recipient: Recipient;
+    recipient?: Recipient;
   }): Effect =>
   async (dispatch, getState) => {
     try {
@@ -96,21 +96,23 @@ export const waitForTargetAmountAndUpdateWallet =
               dispatch(startUpdateWalletBalance({key, wallet}));
 
               // update recipient balance if local
-              const {walletId, keyId} = recipient;
-              if (walletId && keyId) {
-                const {
-                  WALLET: {keys},
-                } = getState();
-                const recipientKey = keys[keyId];
-                const recipientWallet = findWalletById(key.wallets, walletId);
-                if (recipientKey && recipientWallet) {
-                  await dispatch(
-                    startUpdateWalletBalance({
-                      key: recipientKey,
-                      wallet: recipientWallet,
-                    }),
-                  );
-                  console.log('updated recipient wallet');
+              if (recipient) {
+                const {walletId, keyId} = recipient;
+                if (walletId && keyId) {
+                  const {
+                    WALLET: {keys},
+                  } = getState();
+                  const recipientKey = keys[keyId];
+                  const recipientWallet = findWalletById(key.wallets, walletId);
+                  if (recipientKey && recipientWallet) {
+                    await dispatch(
+                      startUpdateWalletBalance({
+                        key: recipientKey,
+                        wallet: recipientWallet,
+                      }),
+                    );
+                    console.log('updated recipient wallet');
+                  }
                 }
               }
               DeviceEventEmitter.emit(
@@ -303,14 +305,34 @@ const updateWalletBalance = ({
           return resolve(lastKnownBalance);
         }
         try {
-          const {totalAmount} = status.balance;
+          const {
+            totalAmount,
+            totalConfirmedAmount,
+            lockedAmount,
+            lockedConfirmedAmount,
+            availableAmount,
+            availableConfirmedAmount,
+          } = status.balance;
 
           const newBalance = {
             sat: totalAmount,
+            satConfirmed: totalConfirmedAmount,
+            satLocked: lockedAmount,
+            satConfirmedLocked: lockedConfirmedAmount,
+            satAvailable: availableAmount,
+            satConfirmedAvailable: availableConfirmedAmount,
             crypto: formatCryptoAmount(totalAmount, currencyAbbreviation),
+            cryptoLocked: formatCryptoAmount(
+              lockedAmount,
+              currencyAbbreviation,
+            ),
             fiat:
               network === Network.mainnet && !hideWallet
                 ? toFiat(totalAmount, 'USD', currencyAbbreviation, rates)
+                : 0,
+            fiatLocked:
+              network === Network.mainnet && !hideWallet
+                ? toFiat(lockedAmount, 'USD', currencyAbbreviation, rates)
                 : 0,
           };
 

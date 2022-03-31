@@ -28,3 +28,7 @@ export const IsDateInCurrentMonth = (time: number): boolean => {
 export const GetAmFormatDate = (time: number) => {
   return moment(time).format('MM/DD/YYYY hh:mm a');
 };
+
+export const GetAmTimeAgo = (time: number) => {
+  return moment(time).fromNow();
+};

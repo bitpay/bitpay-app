@@ -67,7 +67,7 @@ export interface AppState {
   showBiometricModal: boolean;
   biometricLockActive: boolean;
   lockAuthorizedUntil: number | undefined;
-  homeCarouselConfig: HomeCarouselConfig[] | undefined;
+  homeCarouselConfig: HomeCarouselConfig[] | [];
 }
 
 const initialState: AppState = {
@@ -110,7 +110,7 @@ const initialState: AppState = {
   showBiometricModal: false,
   biometricLockActive: false,
   lockAuthorizedUntil: undefined,
-  homeCarouselConfig: undefined,
+  homeCarouselConfig: [],
 };
 
 export const appReducer = (
@@ -322,10 +322,20 @@ export const appReducer = (
       };
 
     case AppActionTypes.SET_HOME_CAROUSEL_CONFIG:
-      return {
-        ...state,
-        homeCarouselConfig: action.payload,
-      };
+      if (state.homeCarouselConfig) {
+        if (Array.isArray(action.payload)) {
+          return {
+            ...state,
+            homeCarouselConfig: action.payload,
+          };
+        }
+
+        return {
+          ...state,
+          homeCarouselConfig: [...state.homeCarouselConfig, action.payload],
+        };
+      }
+      return state;
 
     default:
       return state;

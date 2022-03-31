@@ -54,8 +54,15 @@ export interface Wallet extends WalletObj, API {}
 
 export interface WalletBalance {
   crypto: string;
+  cryptoLocked: string;
   fiat: number;
+  fiatLocked: number;
   sat: number;
+  satAvailable: number;
+  satLocked: number;
+  satConfirmedLocked: number;
+  satConfirmed: number;
+  satConfirmedAvailable: number;
 }
 
 export interface WalletObj {
@@ -198,6 +205,7 @@ export interface TransactionOptions {
   message?: string;
   customData?: CustomTransactionData;
   payProUrl?: string;
+  sendMax?: boolean;
   // btc
   enableRBF?: boolean;
   replaceTxByFee?: boolean;
@@ -249,6 +257,8 @@ export interface TransactionProposal {
   instantAcceptanceEscrow?: number;
   isTokenSwap?: boolean;
   id: string;
+  status: string;
+  sendMaxInfo?: SendMaxInfo;
 }
 
 export interface ProposalErrorHandlerProps {
@@ -301,4 +311,15 @@ export interface InvoiceCreationParams {
   invoiceType: string;
   amount: number;
   cardConfig?: CardConfig;
+}
+
+export interface SendMaxInfo {
+  amount: number;
+  amountAboveMaxSize: number;
+  amountBelowFee: number;
+  fee: number;
+  inputs: [any];
+  size: number;
+  utxosAboveMaxSize: number;
+  utxosBelowFee: number;
 }

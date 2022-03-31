@@ -11,6 +11,7 @@ import ShopCarouselList, {ShopCarouselItem} from './ShopCarouselList';
 import {Paragraph} from '../../../../components/styled/Text';
 import GiftCardItem from './GiftCardItem';
 import {
+  AvailableCardMap,
   CardConfig,
   Category,
   GiftCard,
@@ -107,12 +108,14 @@ const getSelectedGiftCards = (
 export default ({
   scrollViewRef,
   availableGiftCards,
+  supportedGiftCards,
   curations,
   categories,
   onSelectedGiftCardsChange,
 }: {
   scrollViewRef: any;
   availableGiftCards: CardConfig[];
+  supportedGiftCards: CardConfig[];
   curations: GiftCardCuration[];
   categories: CategoryWithGiftCards[];
   onSelectedGiftCardsChange: (newNumSelectedGiftCards: number) => void;
@@ -180,7 +183,7 @@ export default ({
           <>
             <MyGiftCards
               giftCards={purchasedGiftCards}
-              supportedGiftCards={availableGiftCards}
+              supportedGiftCards={supportedGiftCards}
             />
             <SectionDivider />
             <SectionSpacer height={20} />

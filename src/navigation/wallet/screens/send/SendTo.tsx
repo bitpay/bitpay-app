@@ -363,6 +363,7 @@ const SendTo = () => {
                 wallet,
                 recipient,
                 amount: Number(amount),
+                ...opts,
               }),
             );
             setButtonState('success');
