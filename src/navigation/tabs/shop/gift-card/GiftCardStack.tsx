@@ -4,7 +4,11 @@ import {
   baseNavigatorOptions,
   baseScreenOptions,
 } from '../../../../constants/NavigationOptions';
-import {CardConfig, GiftCard} from '../../../../store/shop/shop.models';
+import {
+  CardConfig,
+  GiftCard,
+  PhoneCountryInfo,
+} from '../../../../store/shop/shop.models';
 import BuyGiftCard from './screens/BuyGiftCard';
 import GiftCardDetails from './screens/GiftCardDetails';
 import ArchivedGiftCards from './screens/ArchivedGiftCards';
@@ -15,8 +19,23 @@ import {HeaderTitle} from '../../../../components/styled/Text';
 export type GiftCardStackParamList = {
   ArchivedGiftCards: {giftCards: GiftCard[]; supportedGiftCards: CardConfig[]};
   BuyGiftCard: {cardConfig: CardConfig};
-  EnterEmail: {cardConfig: CardConfig};
-  EnterPhone: {cardConfig: CardConfig};
+  EnterEmail: {
+    cardConfig: CardConfig;
+    initialEmail: string;
+    onSubmit: (email: string) => void;
+  };
+  EnterPhone: {
+    cardConfig: CardConfig;
+    initialPhone: string;
+    initialPhoneCountryInfo: PhoneCountryInfo;
+    onSubmit: ({
+      phone,
+      phoneCountryInfo,
+    }: {
+      phone: string;
+      phoneCountryInfo: PhoneCountryInfo;
+    }) => void;
+  };
   GiftCardDetails: {cardConfig: CardConfig; giftCard: GiftCard};
   GiftCardDetailsModal: {cardConfig: CardConfig; giftCard: GiftCard};
 };

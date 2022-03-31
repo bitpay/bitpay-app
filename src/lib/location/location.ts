@@ -18,8 +18,9 @@ export const getCountry = async () => {
       },
     );
 
-    return countryData.country;
+    return countryData.country as string;
   } catch (err) {
     console.log(err);
+    return 'US';
   }
 };
