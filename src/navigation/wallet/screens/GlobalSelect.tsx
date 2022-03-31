@@ -275,12 +275,6 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
     setReceiveWallet(undefined);
   };
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerTitle: toCoinbase?.title || 'Send To',
-    });
-  });
-
   useEffect(() => {
     if (!wallets[0]) {
       // No wallets available
@@ -311,7 +305,9 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
               }}
             />
           </CloseModalButton>
-          {title && <ModalTitle>{title}</ModalTitle>}
+          {(title || toCoinbase?.title) && (
+            <ModalTitle>{title || toCoinbase?.title}</ModalTitle>
+          )}
         </ModalHeader>
       )}
       <GlobalSelectContainer>

@@ -48,6 +48,7 @@ export enum CoinbaseActionTypes {
   SEND_TRANSACTION_PENDING = 'Coinbase/SEND_TRANSACTION_PENDING',
   SEND_TRANSACTION_SUCCESS = 'Coinbase/SEND_TRANSACTION_SUCCESS',
   SEND_TRANSACTION_FAILED = 'Coinbase/SEND_TRANSACTION_FAILED',
+  CLEAR_SEND_TRANSACTION_STATUS = 'Coinbase/CLEAR_SEND_TRANSACTION_STATUS',
   PAY_INVOICE_PENDING = 'Coinbase/PAY_INVOICE_PENDING',
   PAY_INVOICE_SUCCESS = 'Coinbase/PAY_INVOICE_SUCCESS',
   PAY_INVOICE_FAILED = 'Coinbase/PAY_INVOICE_FAILED',
@@ -198,6 +199,10 @@ interface SendTransactionFailed {
   payload: CoinbaseErrorsProps;
 }
 
+interface ClearSendTransactionStatus {
+  type: typeof CoinbaseActionTypes.CLEAR_SEND_TRANSACTION_STATUS;
+}
+
 // ------- Pay Invoice -------- //
 
 interface PayInvoicePending {
@@ -241,6 +246,7 @@ export type CoinbaseActionType =
   | SendTransactionPending
   | SendTransactionSuccess
   | SendTransactionFailed
+  | ClearSendTransactionStatus
   | PayInvoicePending
   | PayInvoiceSuccess
   | PayInvoiceFailed;

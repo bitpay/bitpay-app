@@ -288,14 +288,13 @@ export const sendTransaction =
 
     try {
       dispatch(CoinbaseActions.sendTransactionPending());
-      const addressData = await CoinbaseAPI.sendTransaction(
+      await CoinbaseAPI.sendTransaction(
         accountId,
         tx,
         COINBASE.token[COINBASE_ENV],
         code,
       );
       dispatch(CoinbaseActions.sendTransactionSuccess());
-      return addressData.data.address;
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
         dispatch(LogActions.warn('Token expired. Getting new token...'));
@@ -306,6 +305,11 @@ export const sendTransaction =
         dispatch(CoinbaseActions.sendTransactionFailed(error));
       }
     }
+  };
+
+export const clearSendTransactionStatus =
+  (): Effect<Promise<any>> => async dispatch => {
+    dispatch(CoinbaseActions.clearSendTransactionStatus());
   };
 
 export const payInvoice =
@@ -319,14 +323,13 @@ export const payInvoice =
 
     try {
       dispatch(CoinbaseActions.payInvoicePending());
-      const addressData = await CoinbaseAPI.payInvoice(
+      await CoinbaseAPI.payInvoice(
         accountId,
         tx,
         COINBASE.token[COINBASE_ENV],
         code,
       );
       dispatch(CoinbaseActions.payInvoiceSuccess());
-      return addressData.data.address;
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
         dispatch(LogActions.warn('Token expired. Getting new token...'));

@@ -36,6 +36,7 @@ import CoinbaseIcon from '../components/CoinbaseIcon';
 import {CoinbaseEffects} from '../../../store/coinbase';
 import {
   dismissOnGoingProcessModal,
+  showBottomNotificationModal,
   showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
@@ -44,6 +45,10 @@ import {
   ToCashAddress,
   TranslateToBchCashAddress,
 } from '../../../store/wallet/effects/address/address';
+import CoinbaseAPI from '../../../api/coinbase';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import Amount from '../../wallet/screens/Amount';
+import {Wallet} from '../../../store/wallet/wallet.models';
 
 const AccountContainer = styled.View`
   flex: 1;
@@ -107,6 +112,11 @@ export const WalletSelectMenuHeaderContainer = styled.View`
   padding: 50px 0;
 `;
 
+const AmountContainer = styled.View`
+  flex: 1;
+  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
+`;
+
 export type CoinbaseAccountScreenParamList = {
   accountId: string;
 };
@@ -123,10 +133,12 @@ const CoinbaseAccount = ({
   const [customSupportedCurrencies, setCustomSupportedCurrencies] = useState(
     [] as string[],
   );
-  const [modalTitle, setModalTitle] = useState('');
   const [walletModalVisible, setWalletModalVisible] = useState(false);
+  const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [fiatAmount, setFiatAmount] = useState(0);
   const [txs, setTxs] = useState([] as CoinbaseTransactionProps[]);
+
+  const [selectedWallet, setSelectedWallet] = useState<Wallet>();
 
   const exchangeRates = useSelector(
     ({COINBASE}: RootState) => COINBASE.exchangeRates,
@@ -257,7 +269,7 @@ const CoinbaseAccount = ({
     }
   }, [account, transactions, txsLoading]);
 
-  const selectWalletfromDeposit = async () => {
+  const deposit = async () => {
     // Deposit:
     //   Transfer from same coin BitPay wallet to the current Coinbase Account
     // setModalTitle('Select a wallet for sending funds to Coinbase');
@@ -280,25 +292,38 @@ const CoinbaseAccount = ({
             account: account?.name || 'Coinbase',
             currency: account?.currency.code.toLowerCase() || '',
             address: newAddress,
-            title: 'Send from',
+            title: 'Send from BitPay Wallet',
           },
         },
       });
     });
   };
 
-  const selectWalletToWithdraw = () => {
-    // Withdraw:
-    //   Transfer from current Coinbase Account to any same coin BitPay wallet
-    setModalTitle(
-      'Select a wallet you are going to deposit funds from Coinbase',
-    );
-    setWalletModalVisible(true);
+  const onSelectedWallet = async (newWallet?: Wallet) => {
+    setWalletModalVisible(false);
+
+    if (newWallet) {
+      dispatch(
+        startOnGoingProcessModal(OnGoingProcessMessages.GENERATING_ADDRESS),
+      );
+      /* const walletAddress = (await dispatch<any>(
+       *   createWalletAddress({wallet: newWallet, newAddress: false}),
+       * )) as string; */
+      setSelectedWallet(newWallet);
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      setAmountModalVisible(true);
+    }
   };
 
-  const selectedWallet = () => {
-    setWalletModalVisible(false);
-    // TODO: Create Coinbase transaction and send to selected wallet
+  const onEnteredAmount = (newAmount?: number) => {
+    setAmountModalVisible(false);
+    if (newAmount) {
+      navigation.navigate('Coinbase', {
+        screen: 'CoinbaseWithdraw',
+        params: {accountId, wallet: selectedWallet, amount: newAmount},
+      });
+    }
   };
 
   const showError = async (error: CoinbaseErrorsProps) => {
@@ -355,8 +380,13 @@ const CoinbaseAccount = ({
           {account?.primary && <Type>Primary</Type>}
         </Row>
         <LinkingButtons
-          receive={{cta: selectWalletfromDeposit, label: 'deposit'}}
-          send={{cta: selectWalletToWithdraw, label: 'withdraw'}}
+          receive={{cta: deposit, label: 'deposit'}}
+          send={{
+            cta: () => {
+              setWalletModalVisible(true);
+            },
+            label: 'withdraw',
+          }}
           buy={{cta: () => null, hide: true}}
           swap={{cta: () => null, hide: true}}
         />
@@ -383,17 +413,32 @@ const CoinbaseAccount = ({
         ListFooterComponent={listFooterComponent}
         ListEmptyComponent={listEmptyComponent}
       />
+
       <SheetModal
         isVisible={walletModalVisible}
         onBackdropPress={() => setWalletModalVisible(false)}>
         <GlobalSelectContainer>
           <GlobalSelect
-            title={modalTitle}
+            title={'Select a wallet to deposit funds'}
             customSupportedCurrencies={customSupportedCurrencies}
             useAsModal={true}
-            onDismiss={selectedWallet}
+            onDismiss={onSelectedWallet}
           />
         </GlobalSelectContainer>
+      </SheetModal>
+
+      <SheetModal
+        isVisible={amountModalVisible}
+        onBackdropPress={() => {
+          setAmountModalVisible(false);
+        }}>
+        <AmountContainer>
+          <Amount
+            useAsModal={true}
+            currencyAbbreviationModal={account?.balance.currency}
+            onDismiss={onEnteredAmount}
+          />
+        </AmountContainer>
       </SheetModal>
     </AccountContainer>
   );

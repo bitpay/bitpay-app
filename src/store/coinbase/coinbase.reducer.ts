@@ -306,6 +306,11 @@ export const coinbaseReducer = (
       state.sendTransactionError = action.payload;
       return {...state};
 
+    case CoinbaseActionTypes.CLEAR_SEND_TRANSACTION_STATUS:
+      state.sendTransactionStatus = null;
+      state.sendTransactionError = null;
+      return {...state};
+
     // ------- Pay Invoice -------- //
 
     case CoinbaseActionTypes.PAY_INVOICE_PENDING:

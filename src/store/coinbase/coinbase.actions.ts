@@ -185,6 +185,10 @@ export const sendTransactionFailed = (
   payload: error,
 });
 
+export const clearSendTransactionStatus = (): CoinbaseActionType => ({
+  type: CoinbaseActionTypes.CLEAR_SEND_TRANSACTION_STATUS,
+});
+
 // ------- Pay Invoice -------- //
 
 export const payInvoicePending = (): CoinbaseActionType => ({

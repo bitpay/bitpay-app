@@ -13,15 +13,18 @@ import CoinbaseRoot, {
   CoinbaseRootScreenParamList,
 } from './screens/CoinbaseRoot';
 import CoinbaseSettings from './screens/CoinbaseSettings';
+import CoinbaseWithdrawConfirm from './screens/CoinbaseWithdrawConfirm';
 import CoinbaseTransaction, {
   CoinbaseTransactionScreenParamList,
 } from './screens/CoinbaseTransaction';
+import {CoinbaseWithdrawConfirmParamList} from './screens/CoinbaseWithdrawConfirm';
 
 export type CoinbaseStackParamList = {
   CoinbaseRoot: CoinbaseRootScreenParamList;
   CoinbaseSettings: undefined;
   CoinbaseAccount: CoinbaseAccountScreenParamList;
   CoinbaseTransaction: CoinbaseTransactionScreenParamList;
+  CoinbaseWithdraw: CoinbaseWithdrawConfirmParamList;
 };
 
 export enum CoinbaseScreens {
@@ -29,6 +32,7 @@ export enum CoinbaseScreens {
   SETTINGS = 'CoinbaseSettings',
   ACCOUNT = 'CoinbaseAccount',
   TRANSACTION = 'CoinbaseTransaction',
+  WITHDRAW = 'CoinbaseWithdraw',
 }
 
 const Coinbase = createStackNavigator<CoinbaseStackParamList>();
@@ -70,6 +74,14 @@ const CoinbaseStack = () => {
         options={{
           headerMode: 'screen',
           headerTitle: () => <HeaderTitle>{t('Details')}</HeaderTitle>,
+        }}
+      />
+      <Coinbase.Screen
+        name={CoinbaseScreens.WITHDRAW}
+        component={CoinbaseWithdrawConfirm}
+        options={{
+          headerMode: 'screen',
+          headerTitle: () => <HeaderTitle>{t('Confirm Withdraw')}</HeaderTitle>,
         }}
       />
     </Coinbase.Navigator>
