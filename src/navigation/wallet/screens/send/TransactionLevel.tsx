@@ -103,7 +103,11 @@ const Step = styled.View<{isLast?: boolean}>`
   flex-direction: row;
 `;
 
-const Circle = styled.Pressable<{isActive: boolean; backgroundColor: string}>`
+const Circle = styled.Pressable<{
+  isActive: boolean;
+  backgroundColor: string;
+  isDisabled?: boolean;
+}>`
   background-color: ${({backgroundColor}) => backgroundColor};
   width: ${CIRCLE_SIZE}px;
   height: ${CIRCLE_SIZE}px;
@@ -112,6 +116,7 @@ const Circle = styled.Pressable<{isActive: boolean; backgroundColor: string}>`
   border-radius: 50px;
   transform: ${({isActive}) => (isActive ? 'scale(1.3)' : 'scale(1)')};
   z-index: 1;
+  opacity: ${({isDisabled}) => (isDisabled ? 0.7 : 1)};
 `;
 
 const Line = styled.View<{backgroundColor: string}>`
@@ -203,14 +208,15 @@ const TransactionLevel = ({
   const {coinColor: backgroundColor} =
     coin === 'btc' ? GetTheme(coin) : GetTheme('eth');
 
-  const setSpeedUpMinFee = (_feeLevels: Fee[]) => {
+  const setSpeedUpMinFee = (_feeLevels: Fee[]): number | undefined => {
     const minFeeLevel = coin === 'btc' ? 'custom' : 'priority';
     let feeLevelsAllowed: Fee[] = [];
+    let _speedUpMinFeePerKb;
     if (coin === 'btc') {
       feeLevelsAllowed = _feeLevels.filter(
         (f: Fee) => f.feePerKb >= customFeePerKB,
       );
-      const _speedUpMinFeePerKb = feeLevelsAllowed.length
+      _speedUpMinFeePerKb = feeLevelsAllowed.length
         ? // @ts-ignore
           _.minBy(feeLevelsAllowed, 'feePerKb').feePerKb
         : customFeePerKB;
@@ -219,12 +225,19 @@ const TransactionLevel = ({
       const {feePerKb} =
         _feeLevels.find((f: Fee) => f.level === minFeeLevel) || {};
       if (feePerKb) {
+        _speedUpMinFeePerKb = feePerKb;
         setSpeedUpMinFeePerKb(feePerKb);
       }
     }
+    return _speedUpMinFeePerKb;
   };
 
   const setFeeRate = (_feeLevels: Fee[]) => {
+    let _speedUpMinFeePerKb: number | undefined;
+    if (isSpeedUpTx) {
+      _speedUpMinFeePerKb = setSpeedUpMinFee(_feeLevels);
+    }
+
     let _feeOptions: any[] = [];
     _feeLevels.forEach((fee: Fee) => {
       const {feePerKb, level, nbBlocks} = fee;
@@ -255,8 +268,8 @@ const TransactionLevel = ({
         setFeePerSatByte((feePerKb / feeUnitAmount).toFixed());
       }
 
-      if (isSpeedUpTx) {
-        feeOption.disabled = speedUpMinFeePerKb || feePerKb < 0;
+      if (isSpeedUpTx && _speedUpMinFeePerKb) {
+        feeOption.disabled = _speedUpMinFeePerKb > feePerKb;
       }
 
       _feeOptions.push(feeOption);
@@ -290,10 +303,6 @@ const TransactionLevel = ({
       }
 
       setFeeLevels(feeLevels);
-      if (isSpeedUpTx) {
-        setSpeedUpMinFee(_feeLevels);
-      }
-
       setFeeRate(_feeLevels);
       if (customFeePerKB) {
         setCustomSatsPerByte((customFeePerKB / feeUnitAmount).toFixed());
@@ -325,6 +334,11 @@ const TransactionLevel = ({
       fee < minFeeRecommended
     ) {
       setError('showMinWarning');
+
+      if (isSpeedUpTx) {
+        setDisableApply(true);
+        return;
+      }
     }
 
     if (
@@ -493,10 +507,12 @@ const TransactionLevel = ({
                     <Step>
                       <Circle
                         isActive={selectedLevel === fee.level}
+                        isDisabled={fee.disabled}
                         onPress={() => {
                           setDisableApply(false);
                           setSelectedLevel(fee.level);
                         }}
+                        disabled={!!fee.disabled}
                         backgroundColor={getBackgroundColor(i)}
                         style={[
                           {

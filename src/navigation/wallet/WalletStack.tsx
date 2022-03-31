@@ -228,7 +228,6 @@ const WalletStack = () => {
         <Wallet.Screen name={WalletScreens.SEND_TO} component={SendTo} />
         <Wallet.Screen
           options={{
-            headerTitle: () => <HeaderTitle>Confirm Payment</HeaderTitle>,
             ...TransitionPresets.ModalPresentationIOS,
           }}
           name={WalletScreens.CONFIRM}
