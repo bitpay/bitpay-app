@@ -245,7 +245,7 @@ const TransactionDetails = () => {
     init();
   }, []);
 
-  const speedUp = () => {
+  const speedup = () => {
     //  TODO: speed up transaction
   };
 
@@ -349,7 +349,7 @@ const TransactionDetails = () => {
               }
               link={{
                 text: 'Speed Up',
-                onPress: speedUp,
+                onPress: speedup,
               }}
             />
           ) : null}

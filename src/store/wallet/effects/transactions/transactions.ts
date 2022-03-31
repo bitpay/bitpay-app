@@ -99,13 +99,13 @@ export const ProcessPendingTxps = (txps: any, wallet: any) => {
       (action: any) => action.copayerId === tx.wallet.credentials.copayerId,
     );
 
-    if ((!action || action.type === 'failed') && tx.status == 'pending') {
+    if ((!action || action.type === 'failed') && tx.status === 'pending') {
       tx.pendingForUs = true;
     }
 
-    if (action && action.type == 'accept') {
+    if (action && action.type === 'accept') {
       tx.statusForUs = 'accepted';
-    } else if (action && action.type == 'reject') {
+    } else if (action && action.type === 'reject') {
       tx.statusForUs = 'rejected';
     } else {
       tx.statusForUs = 'pending';
@@ -682,7 +682,7 @@ export const BuildUiFriendlyList = (
   });
 };
 
-export const CanSpeedUpTx = (
+export const CanSpeedupTx = (
   tx: any,
   currencyAbbreviation: string,
 ): boolean => {

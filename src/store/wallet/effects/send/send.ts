@@ -649,7 +649,8 @@ export const buildBtcSpeedupTx = (wallet: Wallet, tx: any, address: string) => {
       const input = await GetInput(wallet, txid);
       const inputs = [];
       inputs.push(input);
-      let amount = input.satoshis - fee;
+      const {satoshis} = input || {satoshis: 0};
+      let amount = satoshis - fee;
       if (amount < 0) {
         return reject('InsufficientFunds');
       }
@@ -674,6 +675,7 @@ export const buildBtcSpeedupTx = (wallet: Wallet, tx: any, address: string) => {
         feeLevel: 'custom',
         excludeUnconfirmedUtxos: true,
         inputs,
+        speedupFee: fee,
       });
     } catch (e) {
       return reject(e);
