@@ -272,31 +272,32 @@ const CoinbaseAccount = ({
   const deposit = async () => {
     // Deposit:
     //   Transfer from same coin BitPay wallet to the current Coinbase Account
-    // setModalTitle('Select a wallet for sending funds to Coinbase');
-
     dispatch(
       showOnGoingProcessModal(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
     );
-    dispatch(CoinbaseEffects.createAddress(accountId)).then(newAddress => {
-      if (account?.currency.code === 'BCH') {
-        // Convert old format bch address to bch cash address
-        newAddress = TranslateToBchCashAddress(newAddress);
-        newAddress = ToCashAddress(newAddress, false);
-      }
-      dispatch(dismissOnGoingProcessModal());
-      navigation.navigate('Wallet', {
-        screen: 'GlobalSelect',
-        params: {
-          context: 'deposit',
-          toCoinbase: {
-            account: account?.name || 'Coinbase',
-            currency: account?.currency.code.toLowerCase() || '',
-            address: newAddress,
-            title: 'Send from BitPay Wallet',
+    dispatch(CoinbaseEffects.createAddress(accountId)).then(
+      async newAddress => {
+        if (account?.currency.code === 'BCH') {
+          // Convert old format bch address to bch cash address
+          newAddress = TranslateToBchCashAddress(newAddress);
+          newAddress = ToCashAddress(newAddress, false);
+        }
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(400);
+        navigation.navigate('Wallet', {
+          screen: 'GlobalSelect',
+          params: {
+            context: 'deposit',
+            toCoinbase: {
+              account: account?.name || 'Coinbase',
+              currency: account?.currency.code.toLowerCase() || '',
+              address: newAddress,
+              title: 'Send from BitPay Wallet',
+            },
           },
-        },
-      });
-    });
+        });
+      },
+    );
   };
 
   const onSelectedWallet = async (newWallet?: Wallet) => {
