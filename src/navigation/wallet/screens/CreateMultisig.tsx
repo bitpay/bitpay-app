@@ -14,7 +14,8 @@ import Button from '../../../components/button/Button';
 import {useDispatch} from 'react-redux';
 import {
   showBottomNotificationModal,
-  dismissOnGoingProcessModal, setHomeCarouselConfig
+  dismissOnGoingProcessModal,
+  setHomeCarouselConfig,
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
