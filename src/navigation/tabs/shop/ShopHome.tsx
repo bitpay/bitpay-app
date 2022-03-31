@@ -22,6 +22,7 @@ import {
 import {BaseText} from '../../../components/styled/Text';
 import {purchasedGiftCards} from './stubs/gift-cards';
 import {ShopEffects} from '../../../store/shop';
+import {selectAvailableGiftCards} from '../../../store/shop/shop.selectors';
 
 enum ShopTabs {
   GIFT_CARDS = 'Gift Cards',
@@ -104,10 +105,7 @@ const ShopHome = () => {
   );
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const availableGiftCards = useMemo(
-    () => getCardConfigFromApiConfigMap(availableCardMap),
-    [availableCardMap],
-  );
+  const availableGiftCards = useSelector(selectAvailableGiftCards);
 
   const supportedGiftCards = useMemo(
     () => getCardConfigFromApiConfigMap(supportedCardMap || availableCardMap),
