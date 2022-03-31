@@ -1,4 +1,5 @@
 import React from 'react';
+import {View} from 'react-native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {NavigatorScreenParams, useTheme} from '@react-navigation/native';
 
@@ -63,7 +64,13 @@ const TabsStack = () => {
       initialRouteName={TabsScreens.HOME}
       screenOptions={({route}) => ({
         headerShown: false,
-        tabBarStyle: {backgroundColor: theme.colors.background, paddingTop: 10},
+        tabBarStyle: {
+          backgroundColor: theme.colors.background,
+          minHeight: 68,
+        },
+        tabBarItemStyle: {
+          minHeight: 68,
+        },
         tabBarShowLabel: false,
         lazy: false,
         tabBarIcon: ({focused}) => {
@@ -82,7 +89,10 @@ const TabsStack = () => {
       <Tab.Screen
         name={TabsScreens.TRANSACT_BUTTON}
         component={TransactionButton}
-        options={{tabBarButton: () => <TransactModal />}}
+        options={{
+          tabBarIcon: () => <TransactModal />,
+          tabBarButton: props => <View {...props} />,
+        }}
       />
       <Tab.Screen name={TabsScreens.CARD} component={CardStack} />
       <Tab.Screen name={TabsScreens.SETTINGS} component={SettingsRoot} />
