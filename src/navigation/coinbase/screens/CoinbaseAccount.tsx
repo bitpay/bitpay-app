@@ -42,6 +42,7 @@ import {
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {
+  createWalletAddress,
   ToCashAddress,
   TranslateToBchCashAddress,
 } from '../../../store/wallet/effects/address/address';
@@ -168,7 +169,7 @@ const CoinbaseAccount = ({
     navigation.setOptions({
       headerTitle: account?.name,
     });
-  }, [navigation]);
+  }, [navigation, account]);
 
   const parseTime = (timestamp?: string) => {
     if (!timestamp) return '';
@@ -191,7 +192,7 @@ const CoinbaseAccount = ({
         params: {tx: transaction},
       });
     },
-    [],
+    [navigation],
   );
 
   const renderItem = useCallback(
@@ -205,7 +206,7 @@ const CoinbaseAccount = ({
         onPressTransaction={() => onPressTransaction(item)}
       />
     ),
-    [],
+    [onPressTransaction],
   );
 
   const listFooterComponent = () => {
@@ -267,11 +268,11 @@ const CoinbaseAccount = ({
     if (txsStatus && txsStatus === 'failed') {
       setErrorLoadingTxs(true);
     }
-  }, [account, transactions, txsLoading]);
+  }, [account, transactions, txsLoading, txsStatus, accountId, exchangeRates]);
 
   const deposit = async () => {
     // Deposit:
-    //   Transfer from same coin BitPay wallet to the current Coinbase Account
+    //   Transfer from BitPay wallet to Coinbase Account
     dispatch(
       showOnGoingProcessModal(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
     );
@@ -307,9 +308,9 @@ const CoinbaseAccount = ({
       dispatch(
         startOnGoingProcessModal(OnGoingProcessMessages.GENERATING_ADDRESS),
       );
-      /* const walletAddress = (await dispatch<any>(
-       *   createWalletAddress({wallet: newWallet, newAddress: false}),
-       * )) as string; */
+      await dispatch<any>(
+        createWalletAddress({wallet: newWallet, newAddress: false}),
+      );
       setSelectedWallet(newWallet);
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
@@ -420,7 +421,7 @@ const CoinbaseAccount = ({
         onBackdropPress={() => setWalletModalVisible(false)}>
         <GlobalSelectContainer>
           <GlobalSelect
-            title={'Select a wallet to deposit funds'}
+            title={'Select destination wallet'}
             customSupportedCurrencies={customSupportedCurrencies}
             useAsModal={true}
             onDismiss={onSelectedWallet}

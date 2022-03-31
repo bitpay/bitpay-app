@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useSelector} from 'react-redux';
 import {StackScreenProps} from '@react-navigation/stack';
 import {RootState} from '../../../store';
@@ -45,24 +45,27 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({route}) => {
 
   let {code, state} = route.params || {};
 
-  const showError = async (error: CoinbaseErrorsProps) => {
-    const errMsg = CoinbaseAPI.parseErrorToString(error);
-    dispatch(
-      showBottomNotificationModal({
-        type: 'error',
-        title: 'Coinbase Error',
-        message: errMsg,
-        enableBackdropDismiss: true,
-        actions: [
-          {
-            text: 'OK',
-            action: () => {},
-            primary: true,
-          },
-        ],
-      }),
-    );
-  };
+  const showError = useCallback(
+    (error: CoinbaseErrorsProps) => {
+      const errMsg = CoinbaseAPI.parseErrorToString(error);
+      dispatch(
+        showBottomNotificationModal({
+          type: 'error',
+          title: 'Coinbase Error',
+          message: errMsg,
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: 'OK',
+              action: () => {},
+              primary: true,
+            },
+          ],
+        }),
+      );
+    },
+    [dispatch],
+  );
 
   useEffect(() => {
     if (!token && code && state) {
@@ -82,7 +85,7 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({route}) => {
       showError(tokenError);
       setIsDashboardEnabled(false);
     }
-  }, [dispatch, code, state, token, tokenError]);
+  }, [dispatch, code, state, token, tokenError, tokenStatus, showError]);
 
   const DashboardOrIntro = useMemo(() => {
     return isDashboardEnabled ? CoinbaseDashboard : CoinbaseIntro;

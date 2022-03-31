@@ -115,7 +115,9 @@ const CoinbaseDashboard = () => {
       walletName: item.currency.name,
       img: CurrencyListIcons[item.currency.code.toLowerCase()],
       cryptoBalance: item.balance.amount,
+      cryptoLockedBalance: '',
       fiatBalance: formatFiatAmount(fiatAmount, 'usd'),
+      fiatLockedBalance: '',
       isToken: false,
       network: Network.mainnet,
     };

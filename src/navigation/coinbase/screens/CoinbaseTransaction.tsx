@@ -1,10 +1,7 @@
 import React from 'react';
 import moment from 'moment';
 import styled from 'styled-components/native';
-import {
-  CoinbaseTokenProps,
-  CoinbaseTransactionProps,
-} from '../../../api/coinbase/coinbase.types';
+import {CoinbaseTransactionProps} from '../../../api/coinbase/coinbase.types';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, TextAlign} from '../../../components/styled/Text';
 import {Hr} from '../../../components/styled/Containers';

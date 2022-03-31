@@ -4,7 +4,6 @@ import React, {
   useMemo,
   useState,
   useEffect,
-  useLayoutEffect,
 } from 'react';
 import styled from 'styled-components/native';
 import {useAppSelector} from '../../../utils/hooks';
@@ -188,7 +187,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
           : SUPPORTED_CURRENCIES,
         wallets,
       ),
-    [],
+    [wallets, customSupportedCurrencies],
   );
   const otherCoins = useMemo(
     () =>
@@ -196,79 +195,96 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         customSupportedCurrencies ? [] : NON_BITPAY_SUPPORTED_TOKENS,
         wallets,
       ),
-    [],
+    [wallets, customSupportedCurrencies, NON_BITPAY_SUPPORTED_TOKENS],
   );
 
-  const openKeyWalletSelector = (selectObj: GlobalSelectObj) => {
-    setKeysWallets(
-      Object.keys(selectObj.availableWalletsByKey).map(keyId => {
-        const key = keys[keyId];
-        return {
-          key: keyId,
-          keyName: key.keyName || 'My Key',
-          wallets: selectObj.availableWalletsByKey[keyId]
-            .filter(wallet => !wallet.hideWallet)
-            .map(wallet => {
-              const {
-                balance,
-                currencyAbbreviation,
-                credentials: {network},
-              } = wallet;
-              return merge(cloneDeep(wallet), {
-                cryptoBalance: balance.crypto,
-                fiatBalance: formatFiatAmount(balance.fiat, 'USD'),
-                currencyAbbreviation: currencyAbbreviation.toUpperCase(),
-                network,
-              });
-            }),
-        };
-      }),
-    );
-    setWalletSelectModalVisible(true);
-  };
-  const renderItem = useCallback(({item}: {item: GlobalSelectObj}) => {
-    return (
-      <GlobalSelectRow
-        item={item}
-        emit={selectObj => {
-          // if only one wallet - skip wallet selector
-          const wallets = Object.values(selectObj.availableWalletsByKey).flat();
-          if (wallets.length === 1) {
-            onWalletSelect(wallets[0]);
-          } else {
-            openKeyWalletSelector(selectObj);
-          }
-        }}
-        key={item.id}
-      />
-    );
-  }, []);
+  const openKeyWalletSelector = useCallback(
+    (selectObj: GlobalSelectObj) => {
+      setKeysWallets(
+        Object.keys(selectObj.availableWalletsByKey).map(keyId => {
+          const key = keys[keyId];
+          return {
+            key: keyId,
+            keyName: key.keyName || 'My Key',
+            wallets: selectObj.availableWalletsByKey[keyId]
+              .filter(wallet => !wallet.hideWallet)
+              .map(wallet => {
+                const {
+                  balance,
+                  currencyAbbreviation,
+                  credentials: {network},
+                } = wallet;
+                return merge(cloneDeep(wallet), {
+                  cryptoBalance: balance.crypto,
+                  cryptoLockedBalance: balance.cryptoLocked,
+                  fiatBalance: formatFiatAmount(balance.fiat, 'USD'),
+                  fiatLockedBalance: formatFiatAmount(
+                    balance.fiatLocked,
+                    'USD',
+                  ),
+                  currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+                  network,
+                });
+              }),
+          };
+        }),
+      );
+      setWalletSelectModalVisible(true);
+    },
+    [keys],
+  );
 
-  const onWalletSelect = async (wallet: Wallet) => {
-    if (useAsModal && onDismiss) {
-      setWalletSelectModalVisible(false);
-      await sleep(100);
-      onDismiss(wallet);
-      return;
-    }
-    if (context === 'deposit') {
-      // Coinbase: send from BitPay to Coinbase
-      navigation.navigate('Wallet', {
-        screen: 'SendTo',
-        params: {wallet, toCoinbase},
-      });
-    } else if (context === 'send') {
-      setWalletSelectModalVisible(false);
-      navigation.navigate('Wallet', {
-        screen: 'SendTo',
-        params: {wallet},
-      });
-    } else {
-      setReceiveWallet(wallet);
-      await sleep(500);
-      setShowReceiveAddressBottomModal(true);
-    }
-  };
+  const onWalletSelect = useCallback(
+    async (wallet: Wallet) => {
+      if (useAsModal && onDismiss) {
+        setWalletSelectModalVisible(false);
+        await sleep(100);
+        onDismiss(wallet);
+        return;
+      }
+      if (context === 'deposit') {
+        // Coinbase: send from BitPay to Coinbase
+        navigation.navigate('Wallet', {
+          screen: 'SendTo',
+          params: {wallet, toCoinbase},
+        });
+      } else if (context === 'send') {
+        setWalletSelectModalVisible(false);
+        navigation.navigate('Wallet', {
+          screen: 'SendTo',
+          params: {wallet},
+        });
+      } else {
+        setReceiveWallet(wallet);
+        await sleep(500);
+        setShowReceiveAddressBottomModal(true);
+      }
+    },
+    [context, navigation, onDismiss, toCoinbase, useAsModal],
+  );
+
+  const renderItem = useCallback(
+    ({item}: {item: GlobalSelectObj}) => {
+      return (
+        <GlobalSelectRow
+          item={item}
+          emit={selectObj => {
+            // if only one wallet - skip wallet selector
+            const wallets = Object.values(
+              selectObj.availableWalletsByKey,
+            ).flat();
+            if (wallets.length === 1) {
+              onWalletSelect(wallets[0]);
+            } else {
+              openKeyWalletSelector(selectObj);
+            }
+          }}
+          key={item.id}
+        />
+      );
+    },
+    [onWalletSelect, openKeyWalletSelector],
+  );
 
   const closeModal = () => {
     setShowReceiveAddressBottomModal(false);
@@ -285,7 +301,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         navigation.goBack();
       }
     }
-  }, [wallets]);
+  }, [navigation, wallets, useAsModal]);
 
   return (
     <SafeAreaView>

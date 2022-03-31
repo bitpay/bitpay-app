@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {Alert} from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
@@ -68,65 +68,6 @@ const CoinbaseWithdrawConfirm = () => {
   const currency = wallet?.credentials.coin;
   const toAddress = wallet?.receiveAddress;
 
-  useEffect(() => {
-    if (!resetSwipeButton) {
-      return;
-    }
-    const timer = setTimeout(() => {
-      setResetSwipeButton(false);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [resetSwipeButton]);
-
-  const showError = async (error: CoinbaseErrorsProps | null) => {
-    const errMsg = CoinbaseAPI.parseErrorToString(error);
-    dispatch(
-      showBottomNotificationModal({
-        type: 'error',
-        title: 'Error Sending Transaction',
-        message: errMsg,
-        enableBackdropDismiss: false,
-        actions: [
-          {
-            text: 'OK',
-            action: () => {
-              dispatch(CoinbaseEffects.clearSendTransactionStatus());
-              navigation.goBack();
-            },
-            primary: true,
-          },
-        ],
-      }),
-    );
-  };
-
-  const askForTwoFactor = (sendError: CoinbaseErrorsProps) => {
-    Alert.prompt(
-      'Enter 2FA code',
-      'Two Factor verification code is required for sending this transaction.',
-      [
-        {
-          text: 'Cancel',
-          onPress: () => {
-            showError(sendError);
-          },
-          style: 'cancel',
-        },
-        {
-          text: 'OK',
-          onPress: code => {
-            dispatch(CoinbaseEffects.clearSendTransactionStatus());
-            sendTransaction(code);
-          },
-        },
-      ],
-      'secure-text',
-      '',
-      'number-pad',
-    );
-  };
-
   const recipientData = {
     recipientName: wallet?.credentials.walletName || 'BitPay Wallet',
     recipientAddress: toAddress,
@@ -149,11 +90,87 @@ const CoinbaseWithdrawConfirm = () => {
     fiatAmount: fiatAmountValue.toFixed(2) + ' USD',
   };
 
-  const buildTx = {
-    to: toAddress,
-    amount: amount,
-    currency: currency,
-  };
+  useEffect(() => {
+    if (!resetSwipeButton) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setResetSwipeButton(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [resetSwipeButton]);
+
+  const sendTransaction = useCallback(
+    async (code?: string) => {
+      dispatch(
+        startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT),
+      );
+      await sleep(400);
+      const buildTx = {
+        to: toAddress,
+        amount: amount,
+        currency: currency,
+      };
+      dispatch(CoinbaseEffects.sendTransaction(accountId, buildTx, code));
+      dispatch(dismissOnGoingProcessModal());
+    },
+    [dispatch, accountId, toAddress, amount, currency],
+  );
+
+  const showError = useCallback(
+    (error: CoinbaseErrorsProps | null) => {
+      const errMsg = CoinbaseAPI.parseErrorToString(error);
+      dispatch(
+        showBottomNotificationModal({
+          type: 'error',
+          title: 'Error Sending Transaction',
+          message: errMsg,
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: 'OK',
+              action: () => {
+                dispatch(CoinbaseEffects.clearSendTransactionStatus());
+                navigation.goBack();
+              },
+              primary: true,
+            },
+          ],
+        }),
+      );
+    },
+    [dispatch, navigation],
+  );
+
+  const askForTwoFactor = useCallback(
+    (sendError: CoinbaseErrorsProps) => {
+      Alert.prompt(
+        'Enter 2FA code',
+        'Two Factor verification code is required for sending this transaction.',
+        [
+          {
+            text: 'Cancel',
+            onPress: () => {
+              showError(sendError);
+            },
+            style: 'cancel',
+          },
+          {
+            text: 'OK',
+            onPress: code => {
+              dispatch(CoinbaseEffects.clearSendTransactionStatus());
+              sendTransaction(code);
+            },
+          },
+        ],
+        'secure-text',
+        '',
+        'number-pad',
+      );
+    },
+    [dispatch, showError, sendTransaction],
+  );
 
   useEffect(() => {
     if (!apiLoading && sendStatus === 'failed') {
@@ -169,14 +186,7 @@ const CoinbaseWithdrawConfirm = () => {
     if (!apiLoading && sendStatus === 'success') {
       setShowPaymentSentModal(true);
     }
-  }, [apiLoading, sendStatus, sendError]);
-
-  const sendTransaction = async (code?: string) => {
-    dispatch(startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT));
-    await sleep(400);
-    dispatch(CoinbaseEffects.sendTransaction(accountId, buildTx, code));
-    dispatch(dismissOnGoingProcessModal());
-  };
+  }, [apiLoading, sendStatus, sendError, showError, askForTwoFactor]);
 
   return (
     <ConfirmContainer>

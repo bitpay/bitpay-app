@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {RefreshControl} from 'react-native';
 import moment from 'moment';
 import styled from 'styled-components/native';
@@ -88,26 +88,29 @@ const CoinbaseSettings = () => {
     ({COINBASE}) => COINBASE.getUserError,
   );
 
-  const showError = async (error: CoinbaseErrorsProps) => {
-    const errMsg = CoinbaseAPI.parseErrorToString(error);
-    dispatch(
-      showBottomNotificationModal({
-        type: 'error',
-        title: 'Coinbase Error',
-        message: errMsg,
-        enableBackdropDismiss: true,
-        actions: [
-          {
-            text: 'OK',
-            action: () => {
-              navigation.navigate('Tabs', {screen: 'Home'});
+  const showError = useCallback(
+    (error: CoinbaseErrorsProps) => {
+      const errMsg = CoinbaseAPI.parseErrorToString(error);
+      dispatch(
+        showBottomNotificationModal({
+          type: 'error',
+          title: 'Coinbase Error',
+          message: errMsg,
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: 'OK',
+              action: () => {
+                navigation.navigate('Tabs', {screen: 'Home'});
+              },
+              primary: true,
             },
-            primary: true,
-          },
-        ],
-      }),
-    );
-  };
+          ],
+        }),
+      );
+    },
+    [dispatch, navigation],
+  );
 
   useEffect(() => {
     if (!userData && !isLoadingUserData) {
@@ -121,7 +124,7 @@ const CoinbaseSettings = () => {
       }
       showError(userError);
     }
-  }, [dispatch, userData, isLoadingUserData, userError]);
+  }, [dispatch, userData, isLoadingUserData, userError, showError]);
 
   const deleteAccount = async () => {
     dispatch(CoinbaseEffects.disconnectCoinbaseAccount());
