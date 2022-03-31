@@ -34,11 +34,7 @@ const CardHome: React.FC<CardHomeScreenProps> = ({navigation, route}) => {
     );
   }
 
-  return (
-    <SafeAreaView>
-      <CardIntro navigation={navigation} />
-    </SafeAreaView>
-  );
+  return <CardIntro navigation={navigation} />;
 };
 
 export default CardHome;

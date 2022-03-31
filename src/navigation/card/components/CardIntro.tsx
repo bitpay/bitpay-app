@@ -20,7 +20,7 @@ import {
   Smallest,
   TextAlign,
 } from '../../../components/styled/Text';
-import {IS_ANDROID, Network, URL} from '../../../constants';
+import {Network, URL} from '../../../constants';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {RootState} from '../../../store';
 import {AppEffects} from '../../../store/app';
@@ -97,7 +97,7 @@ const CardIntro: React.FC<CardIntroProps> = props => {
     <>
       <ScrollView
         style={{
-          marginTop: IS_ANDROID ? insets.top : 0,
+          marginTop: insets.top,
         }}>
         <ContentContainer>
           <IntroHero />
