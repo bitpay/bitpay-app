@@ -16,7 +16,7 @@ import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {AppEffects} from '../../../../../store/app';
 import {getStateFromPath, useNavigation} from '@react-navigation/native';
 import {selectAvailableGiftCards} from '../../../../../store/shop/shop.selectors';
-import {DEEPLINK_PREFIX} from '../../../../../constants/config';
+import {APP_DEEPLINK_PREFIX} from '../../../../../constants/config';
 import {LogActions} from '../../../../../store/log';
 
 interface OfferCardProps {
@@ -161,7 +161,7 @@ const OfferCard: React.FC<OfferCardProps> = props => {
     haptic('impactLight');
 
     try {
-      const path = url.replace(`${DEEPLINK_PREFIX}://`, '');
+      const path = url.replace(APP_DEEPLINK_PREFIX, '');
       const maybeParsedState = getStateFromPath(path);
 
       if (maybeParsedState?.routes.length) {

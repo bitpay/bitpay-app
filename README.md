@@ -55,11 +55,11 @@ Test deeplinking via command line with these commands (note: ampersand must be e
 If you want to associate the app with a different intent prefix eg. `myapp://`:
 
 1. Open `src/constants/config.ts`
-2. Modify `DEEPLINK_PREFIX` to your desired prefix eg. `myapp` (no colon or slashes)
+2. Modify `APP_DEEPLINK_PREFIX` to your desired prefix eg. `myapp://` (with colon and slashes)
 3. Update the OS specific configs:
   #### iOS
     1. Open `ios/BitPayApp/info.plist`
-    2. Find `CFBundleURLSchemes` and modify the value to your desired prefix eg. `myapp`
+    2. Find `CFBundleURLSchemes` and modify the value to your desired prefix (without colon and slashes) eg. `myapp`
   #### Android
     1. Open `android/app/src/main/AndroidManifest.xml`
-    2. Locate `<intent-filter><data android:scheme="...">` and modify the value to your desired prefix eg. `myapp`
+    2. Locate `<intent-filter><data android:scheme="...">` and modify the value to your desired prefix (without colon and slashes) eg. `myapp`

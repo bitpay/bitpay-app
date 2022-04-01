@@ -3,7 +3,7 @@ import {useEffect} from 'react';
 import {Linking} from 'react-native';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {useDispatch} from 'react-redux';
-import {DEEPLINK_PREFIX} from '../../constants/config';
+import {APP_DEEPLINK_PREFIX} from '../../constants/config';
 import {BitpayIdScreens} from '../../navigation/bitpay-id/BitpayIdStack';
 import {CardScreens} from '../../navigation/card/CardStack';
 import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoStack';
@@ -18,7 +18,7 @@ export const useDeeplinks = () => {
 
   useEffect(() => {
     const urlEventHandler = ({url}: {url: string}) => {
-      if (url && url.startsWith(`${DEEPLINK_PREFIX}://`)) {
+      if (url && url.startsWith(APP_DEEPLINK_PREFIX)) {
         logger.info(`Deep link received: ${url}`);
 
         try {
@@ -42,7 +42,7 @@ export const useDeeplinks = () => {
   }, [dispatch, logger]);
 
   const linkingOptions: LinkingOptions<RootStackParamList> = {
-    prefixes: [`${DEEPLINK_PREFIX}://`],
+    prefixes: [APP_DEEPLINK_PREFIX],
     config: {
       initialRouteName: 'Tabs',
       // configuration for associating screens with paths
