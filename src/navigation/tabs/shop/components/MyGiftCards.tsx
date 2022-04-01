@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {Carousel} from 'react-native-snap-carousel';
@@ -15,7 +15,10 @@ import {
 } from './styled/ShopTabComponents';
 import {WIDTH} from '../../../../components/styled/Containers';
 import {BaseText} from '../../../../components/styled/Text';
-import {SlateDark} from '../../../../styles/colors';
+import {SlateDark, White} from '../../../../styles/colors';
+import {useAppSelector} from '../../../../utils/hooks';
+import {APP_NETWORK} from '../../../../constants/config';
+import {sortByDescendingDate} from '../../../../lib/gift-cards/gift-card';
 
 const MyGiftCardsHeaderContainer = styled(SectionHeaderContainer)`
   margin-bottom: -10px;
@@ -32,34 +35,35 @@ const NoGiftCards = styled.View`
 `;
 
 const NoGiftCardsText = styled(BaseText)`
-  color: ${SlateDark};
+  color: ${({theme}) => (theme.dark ? White : SlateDark)};
 `;
 
 const MyGiftCards = ({
-  giftCards,
   supportedGiftCards,
 }: {
-  giftCards: GiftCard[];
   supportedGiftCards: CardConfig[];
 }) => {
   const carouselRef = useRef<Carousel<GiftCard[]>>(null);
   const navigation = useNavigation();
   const [slideIndex, setSlideIndex] = useState(0);
+  const allGiftCards = useAppSelector(
+    ({SHOP}) => SHOP.giftCards[APP_NETWORK],
+  ) as GiftCard[];
+  const giftCards = allGiftCards
+    .filter(giftCard => giftCard.status !== 'UNREDEEMED')
+    .sort(sortByDescendingDate);
   const activeGiftCards = giftCards.filter(giftCard => !giftCard.archived);
   const archivedGiftCards = giftCards.filter(giftCard => giftCard.archived);
   let slides = [activeGiftCards];
-  if (archivedGiftCards.length <= activeGiftCards.length) {
+  const shouldShowArchivedSlide =
+    archivedGiftCards.length <= activeGiftCards.length + 1;
+  if (shouldShowArchivedSlide) {
     slides.push(archivedGiftCards);
   }
 
-  const goToSlide = (ind: number) => {
-    carouselRef.current?.snapToItem(ind);
-    setSlideIndex(ind);
-  };
-
   const seeArchivedGiftCards = () => {
-    archivedGiftCards.length <= activeGiftCards.length
-      ? goToSlide(1)
+    shouldShowArchivedSlide
+      ? setSlideIndex(1)
       : navigation.navigate('GiftCard', {
           screen: GiftCardScreens.ARCHIVED_GIFT_CARDS,
           params: {
@@ -68,6 +72,16 @@ const MyGiftCards = ({
           },
         });
   };
+
+  useEffect(() => {
+    if (!archivedGiftCards.length) {
+      setTimeout(() => setSlideIndex(0), 500);
+    }
+  }, [archivedGiftCards.length]);
+
+  useEffect(() => {
+    setTimeout(() => carouselRef.current?.snapToItem(slideIndex), 50);
+  }, [slideIndex]);
 
   return (
     <>
@@ -80,17 +94,11 @@ const MyGiftCards = ({
             <>
               {slideIndex === 0 ? (
                 <TouchableWithoutFeedback
-                  onPress={() => {
-                    seeArchivedGiftCards();
-                  }}>
+                  onPress={() => seeArchivedGiftCards()}>
                   <SectionHeaderButton>See Archived</SectionHeaderButton>
                 </TouchableWithoutFeedback>
               ) : (
-                <TouchableWithoutFeedback
-                  onPress={() => {
-                    carouselRef.current?.snapToItem(0);
-                    setSlideIndex(0);
-                  }}>
+                <TouchableWithoutFeedback onPress={() => setSlideIndex(0)}>
                   <SectionHeaderButton>See Active</SectionHeaderButton>
                 </TouchableWithoutFeedback>
               )}

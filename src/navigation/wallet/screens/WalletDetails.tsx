@@ -535,6 +535,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     return (
       <TransactionRow
         icon={item.uiIcon}
+        iconURI={item.uiIconURI}
         description={item.uiDescription}
         time={item.uiTime}
         value={item.uiValue}

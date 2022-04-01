@@ -54,6 +54,13 @@ export const redeemedGiftCard = (payload: {
   payload,
 });
 
+export const toggledGiftCardArchivedStatus = (payload: {
+  giftCard: GiftCard;
+}): ShopActionType => ({
+  type: ShopActionTypes.TOGGLED_GIFT_CARD_ARCHIVED_STATUS,
+  payload,
+});
+
 export const updatedEmailAddress = (payload: {
   email: string;
 }): ShopActionType => ({

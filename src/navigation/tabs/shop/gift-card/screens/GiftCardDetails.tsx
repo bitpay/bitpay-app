@@ -1,5 +1,12 @@
-import React, {useLayoutEffect, useState} from 'react';
-import {ScrollView, Linking, Share, RefreshControl} from 'react-native';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
+import {
+  ScrollView,
+  Linking,
+  Share,
+  RefreshControl,
+  View,
+  Image,
+} from 'react-native';
 import TimeAgo from 'react-native-timeago';
 import {StackScreenProps} from '@react-navigation/stack';
 import styled, {useTheme} from 'styled-components/native';
@@ -27,6 +34,7 @@ import {
   horizontalPadding,
   NavIconButtonContainer,
   SectionSpacer,
+  Terms,
 } from '../../components/styled/ShopTabComponents';
 import {
   ArchiveSvg,
@@ -40,9 +48,13 @@ import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../../constants/config';
 import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
 import {AppActions} from '../../../../../store/app';
 import Clipboard from '@react-native-community/clipboard';
-import {CardConfig} from '../../../../../store/shop/shop.models';
-import {ShopEffects} from '../../../../../store/shop';
-import {useAppDispatch} from '../../../../../utils/hooks';
+import {
+  CardConfig,
+  ClaimCodeType,
+  GiftCard,
+} from '../../../../../store/shop/shop.models';
+import {ShopActions, ShopEffects} from '../../../../../store/shop';
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 
 const maxWidth = 320;
 
@@ -65,6 +77,7 @@ const ClaimCodeBox = styled.View`
   max-width: ${maxWidth}px;
   padding-left: 20px;
   padding-right: 20px;
+  overflow: hidden;
 `;
 
 const ClaimCode = styled(BaseText)`
@@ -82,28 +95,32 @@ const ActionContainer = styled(CtaContainer)`
   width: 100%;
 `;
 
-const Terms = styled(BaseText)`
-  color: ${SlateDark};
-  font-size: 12px;
-  line-height: 15px;
-  padding: 20px 10px 50px;
-  text-align: center;
-  max-width: ${maxWidth}px;
-`;
-
 const Divider = styled.View`
   background-color: ${({theme}) => (theme.dark ? LightBlack : Grey)};
   height: 1px;
   width: 80%;
   margin-bottom: 20px;
 `;
-
-const barcodeHeight = 70;
-const barcodeWidth = maxWidth * 0.8;
-const Barcode = styled.Image`
-  height: ${barcodeHeight}px;
-  width: ${barcodeWidth}px;
-  margin: 10px 0 -10px;
+interface ScannableCodeParams {
+  height: number;
+  width: number;
+}
+const ScannableCode = styled.Image<ScannableCodeParams>`
+  height: ${({height}) => height}px;
+  width: ${({width}) => width}px;
+`;
+const ScannableCodeContainer = styled.View<ScannableCodeParams>`
+  background-color: ${White};
+  border-color: ${Grey};
+  border-radius: 10px;
+  border-width: 1px;
+  height: ${({height}) => height}px;
+  width: ${({width}) => width}px;
+  margin-top: 10px;
+  align-items: center;
+  flex-direction: row;
+  overflow: hidden;
+  justify-content: center;
 `;
 
 const ArchiveButtonContainer = styled.View`
@@ -135,8 +152,35 @@ const GiftCardDetails = ({
   const theme = useTheme();
   const [refreshing, setRefreshing] = useState(false);
   const [isOptionsSheetVisible, setIsOptionsSheetVisible] = useState(false);
+  const [isBarcode, setIsBarcode] = useState(false);
+  const [scannableCodeDimensions, setScannableCodeDimensions] = useState({
+    height: 0,
+    width: 0,
+  });
   const {cardConfig, giftCard: initialGiftCard} = route.params;
-  const [giftCard, setGiftCard] = useState(initialGiftCard);
+  const giftCards = useAppSelector(
+    ({SHOP}) => SHOP.giftCards[APP_NETWORK],
+  ) as GiftCard[];
+  const [giftCard, setGiftCard] = useState(
+    giftCards.find(card => card.invoiceId === initialGiftCard.invoiceId) ||
+      initialGiftCard,
+  );
+
+  useEffect(() => {
+    if (!giftCard.barcodeImage) {
+      if (
+        cardConfig.defaultClaimCodeType === ClaimCodeType.barcode &&
+        giftCard.claimLink
+      ) {
+        cardConfig.defaultClaimCodeType = ClaimCodeType.link;
+      }
+      return;
+    }
+    Image.getSize(giftCard.barcodeImage, (width, height) => {
+      setIsBarcode(width / height > 3);
+      setScannableCodeDimensions({width, height});
+    });
+  }, [cardConfig, giftCard.barcodeImage, giftCard.claimLink]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -157,8 +201,8 @@ const GiftCardDetails = ({
   const assetOptions: Array<Option> = [
     {
       img: <ArchiveSvg theme={theme} />,
-      description: 'Archive Card',
-      onPress: () => null,
+      description: giftCard.archived ? 'Unarchive Card' : 'Archive Card',
+      onPress: () => toggleArchiveStatus(),
     },
     {
       img: <InvoiceSvg theme={theme} />,
@@ -185,6 +229,14 @@ const GiftCardDetails = ({
   const copyToClipboard = (value: string) => {
     Clipboard.setString(value);
     dispatch(showCopiedNotification(value, cardConfig));
+  };
+
+  const toggleArchiveStatus = () => {
+    dispatch(ShopActions.toggledGiftCardArchivedStatus({giftCard}));
+    giftCard.archived = !giftCard.archived;
+    if (giftCard.archived) {
+      navigation.pop();
+    }
   };
 
   return (
@@ -230,12 +282,16 @@ const GiftCardDetails = ({
                 <Paragraph>Claim Code</Paragraph>
                 {giftCard.barcodeImage &&
                 cardConfig.defaultClaimCodeType === 'barcode' ? (
-                  <Barcode
-                    height={barcodeHeight}
-                    width={barcodeWidth}
-                    source={{uri: giftCard.barcodeImage}}
-                    resizeMode="contain"
-                  />
+                  <ScannableCodeContainer
+                    height={isBarcode ? 80 : scannableCodeDimensions.height}
+                    width={isBarcode ? 290 : scannableCodeDimensions.width}>
+                    <ScannableCode
+                      height={isBarcode ? 45 : scannableCodeDimensions.height}
+                      width={isBarcode ? 384 : scannableCodeDimensions.width}
+                      source={{uri: giftCard.barcodeImage}}
+                      resizeMode={isBarcode ? 'cover' : 'contain'}
+                    />
+                  </ScannableCodeContainer>
                 ) : null}
                 <TouchableWithoutFeedback
                   onPress={() => copyToClipboard(giftCard.claimCode)}>
@@ -267,14 +323,13 @@ const GiftCardDetails = ({
               <ActionContainer>
                 {cardConfig.redeemUrl ? (
                   <Button
-                    onPress={() => {
-                      console.log('redeem now');
+                    onPress={() =>
                       Linking.openURL(
                         `${cardConfig.redeemUrl as string}${
                           giftCard.claimCode
                         }}`,
-                      );
-                    }}
+                      )
+                    }
                     buttonStyle={'primary'}>
                     Redeem Now
                   </Button>
@@ -297,9 +352,7 @@ const GiftCardDetails = ({
                 {!giftCard.archived ? (
                   <ArchiveButtonContainer>
                     <Button
-                      onPress={() => {
-                        console.log('archive');
-                      }}
+                      onPress={() => toggleArchiveStatus()}
                       buttonStyle={'secondary'}>
                       I've used this card
                     </Button>
@@ -343,7 +396,7 @@ const GiftCardDetails = ({
             <SectionSpacer />
           </ClaimCodeBox>
         )}
-        <Terms>{cardConfig.terms}</Terms>
+        <Terms maxWidth={maxWidth}>{cardConfig.terms}</Terms>
       </ScrollView>
     </>
   );

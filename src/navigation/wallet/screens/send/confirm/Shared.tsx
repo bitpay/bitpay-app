@@ -199,7 +199,11 @@ export const Amount = ({
       <>
         <DetailContainer>
           <DetailRow>
-            <H6>{description}</H6>
+            {fiatOnly ? (
+              <H7>{description}</H7>
+            ) : (
+              <H6>{description.toUpperCase()}</H6>
+            )}
             <DetailColumn>
               {fiatOnly ? (
                 <H7>{fiatAmount}</H7>
