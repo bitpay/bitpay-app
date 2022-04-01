@@ -7,6 +7,7 @@ import {
   Rates,
   Recipient,
   TransactionOptions,
+  SendMaxInfo,
   TransactionProposal,
   TxDetails,
   Wallet,
@@ -35,11 +36,11 @@ import {GiftCardInvoiceParams, Invoice} from '../../../shop/shop.models';
 import {GetPayProDetails, HandlePayPro} from '../paypro/paypro';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../constants/config';
 import {ShopEffects} from '../../../shop';
-import {GetPrecision, IsUtxoCoin} from '../../utils/currency';
 import {
   dismissDecryptPasswordModal,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
+import {GetPrecision, IsUtxoCoin, GetChain} from '../../utils/currency';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -54,12 +55,12 @@ export const createProposalAndBuildTxDetails =
     return new Promise(async (resolve, reject) => {
       try {
         // base tx
-        const {
+        let {
           wallet,
           recipient,
           amount,
           context,
-          feeLevel,
+          feeLevel: customFeeLevel,
           feePerKb,
           invoice,
           payProUrl,
@@ -69,8 +70,19 @@ export const createProposalAndBuildTxDetails =
         const {credentials, currencyAbbreviation} = wallet;
         const formattedAmount = ParseAmount(amount, currencyAbbreviation);
         const {
-          WALLET: {feeLevel: _feeLevel, useUnconfirmedFunds},
+          WALLET: {feeLevel: cachedFeeLevel, useUnconfirmedFunds},
         } = getState();
+        const feeLevel =
+          customFeeLevel ||
+          cachedFeeLevel[currencyAbbreviation] ||
+          FeeLevels.NORMAL;
+
+        if (!feePerKb) {
+          feePerKb = await getFeeRatePerKb({
+            wallet,
+            feeLevel: feeLevel,
+          });
+        }
 
         // build transaction proposal options then create full proposal
         const txp = {
@@ -83,8 +95,7 @@ export const createProposalAndBuildTxDetails =
             network: credentials.network,
             payProUrl,
             feePerKb,
-            feeLevel:
-              feeLevel || _feeLevel[currencyAbbreviation] || FeeLevels.NORMAL,
+            feeLevel,
             useUnconfirmedFunds,
           })),
           dryRun,
@@ -101,6 +112,7 @@ export const createProposalAndBuildTxDetails =
               // building UI object for details
               const txDetails = buildTxDetails({
                 proposal,
+                feeLevel,
                 rates,
                 fiatCode: 'USD',
                 wallet,
@@ -126,6 +138,7 @@ export const createProposalAndBuildTxDetails =
  * */
 const buildTxDetails = ({
   proposal,
+  feeLevel,
   rates,
   fiatCode,
   wallet,
@@ -133,6 +146,7 @@ const buildTxDetails = ({
   invoice,
 }: {
   proposal: TransactionProposal;
+  feeLevel: string;
   rates: Rates;
   fiatCode: string;
   wallet: Wallet;
@@ -207,14 +221,12 @@ const buildTxDetails = ({
 const buildTransactionProposal = (
   tx: Partial<TransactionOptions>,
 ): Promise<object> => {
-  return new Promise(resolve => {
-    const {currency, feeLevel, feePerKb, payProUrl} = tx;
+  return new Promise(async resolve => {
+    const {currency, feePerKb, payProUrl, sendMax, wallet} = tx;
     // base tx
     const txp: Partial<TransactionProposal> = {
       coin: currency,
-      chain: currency?.toUpperCase(),
-      feePerKb,
-      ...(!feePerKb && {feeLevel}),
+      chain: GetChain(currency!).toLowerCase(),
     };
     txp.invoiceID = tx.invoice?.id;
     // currency specific
@@ -233,6 +245,19 @@ const buildTransactionProposal = (
         txp.destinationTag = tx.destinationTag;
         break;
     }
+
+    // send max
+    if (sendMax && wallet) {
+      const {amount, inputs, fee} = await getSendMaxInfo({
+        wallet,
+        opts: {feePerKb, excludeUnconfirmedUtxos: true, returnInputs: true},
+      });
+
+      txp.amount = tx.amount = amount;
+      txp.inputs = inputs;
+      txp.fee = fee;
+    }
+
     // unconfirmed funds
     txp.excludeUnconfirmedUtxos = !tx.useUnconfirmedFunds;
 
@@ -586,6 +611,27 @@ export const createInvoiceAndTxProposal =
       }
     });
   };
+
+export const getSendMaxInfo = ({
+  wallet,
+  opts,
+}: {
+  wallet: Wallet;
+  opts?: {
+    feePerKb?: number;
+    excludeUnconfirmedUtxos?: boolean;
+    returnInputs?: boolean;
+  };
+}): Promise<SendMaxInfo> => {
+  return new Promise((resolve, reject) => {
+    wallet.getSendMaxInfo(opts, (err: Error, sendMaxInfo: SendMaxInfo) => {
+      if (err) {
+        return reject(err);
+      }
+      resolve(sendMaxInfo);
+    });
+  });
+};
 
 export const buildEthERCTokenSpeedupTx = (
   wallet: Wallet,
