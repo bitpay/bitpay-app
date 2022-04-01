@@ -81,36 +81,11 @@ const WalletConnectConfirm = () => {
 
   const approveCallRequest = async () => {
     try {
-      let password: string | undefined;
-
-      if (key.isPrivKeyEncrypted) {
-        password = await new Promise<string>((resolve, reject) => {
-          dispatch(
-            showDecryptPasswordModal({
-              onSubmitHandler: async (_password: string) => {
-                if (checkEncryptPassword(key, _password)) {
-                  dispatch(dismissDecryptPasswordModal());
-                  await sleep(500);
-                  resolve(_password);
-                } else {
-                  dispatch(dismissDecryptPasswordModal());
-                  await sleep(500);
-                  dispatch(showBottomNotificationModal(WrongPasswordError()));
-                  reject('invalid password');
-                }
-              },
-              onCancelHandler: () => {
-                reject('password canceled');
-              },
-            }),
-          );
-        });
-      }
       dispatch(
         startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT),
       );
       const broadcastedTx = (await dispatch<any>(
-        startSendPayment({txp, key, wallet, recipient, password}),
+        startSendPayment({txp, key, wallet, recipient}),
       )) as any;
       const response = {
         id: request.payload.id,
@@ -121,8 +96,11 @@ const WalletConnectConfirm = () => {
       await sleep(500);
       setShowPaymentSentModal(true);
     } catch (err) {
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
       switch (err) {
         case 'invalid password':
+          dispatch(showBottomNotificationModal(WrongPasswordError()));
         case 'password canceled':
           setResetSwipeButton(true);
           break;

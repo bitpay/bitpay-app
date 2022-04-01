@@ -8,7 +8,7 @@ import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {NavScreenParams, RootStackParamList} from '../../Root';
-import {AppIdentity, HomeCarouselConfig} from './app.models';
+import {AppIdentity, HomeCarouselConfig, HomeCarouselLayoutType} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
 
 type AppReduxPersistBlackList = [
@@ -67,7 +67,8 @@ export interface AppState {
   showBiometricModal: boolean;
   biometricLockActive: boolean;
   lockAuthorizedUntil: number | undefined;
-  homeCarouselConfig: HomeCarouselConfig[] | undefined;
+  homeCarouselConfig: HomeCarouselConfig[] | [];
+  homeCarouselLayoutType: HomeCarouselLayoutType;
 }
 
 const initialState: AppState = {
@@ -110,7 +111,8 @@ const initialState: AppState = {
   showBiometricModal: false,
   biometricLockActive: false,
   lockAuthorizedUntil: undefined,
-  homeCarouselConfig: undefined,
+  homeCarouselConfig: [],
+  homeCarouselLayoutType: 'carousel',
 };
 
 export const appReducer = (
@@ -322,9 +324,25 @@ export const appReducer = (
       };
 
     case AppActionTypes.SET_HOME_CAROUSEL_CONFIG:
+      if (state.homeCarouselConfig) {
+        if (Array.isArray(action.payload)) {
+          return {
+            ...state,
+            homeCarouselConfig: action.payload,
+          };
+        }
+
+        return {
+          ...state,
+          homeCarouselConfig: [...state.homeCarouselConfig, action.payload],
+        };
+      }
+      return state;
+
+    case AppActionTypes.SET_HOME_CAROUSEL_LAYOUT_TYPE:
       return {
         ...state,
-        homeCarouselConfig: action.payload,
+        homeCarouselLayoutType: action.payload,
       };
 
     default:

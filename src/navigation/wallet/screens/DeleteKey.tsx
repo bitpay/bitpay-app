@@ -17,6 +17,8 @@ import {
   deleteKey,
   updatePortfolioBalance,
 } from '../../../store/wallet/wallet.actions';
+import useAppSelector from '../../../utils/hooks/useAppSelector';
+import {setHomeCarouselConfig} from '../../../store/app/app.actions';
 
 const DeleteKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -38,6 +40,7 @@ const DeleteKeyParagraph = styled(Paragraph)`
 const DeleteKey = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
 
   const {
     params: {keyId},
@@ -56,6 +59,11 @@ const DeleteKey = () => {
     dispatch(startOnGoingProcessModal(OnGoingProcessMessages.DELETING_KEY));
     await sleep(300);
     dispatch(deleteKey({keyId}));
+    dispatch(
+      setHomeCarouselConfig(
+        homeCarouselConfig.filter(item => item.id !== keyId),
+      ),
+    );
     dispatch(updatePortfolioBalance());
     dispatch(AppActions.dismissOnGoingProcessModal());
     navigation.navigate('Tabs', {screen: 'Home'});

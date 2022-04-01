@@ -5,7 +5,7 @@ import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
-import {AppIdentity, HomeCarouselConfig} from './app.models';
+import {AppIdentity, HomeCarouselConfig, HomeCarouselLayoutType} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
 
 export const networkChanged = (network: Network): AppActionType => ({
@@ -176,8 +176,15 @@ export const lockAuthorizedUntil = (
 });
 
 export const setHomeCarouselConfig = (
-  update: HomeCarouselConfig[],
+  update: HomeCarouselConfig[] | HomeCarouselConfig,
 ): AppActionType => ({
   type: AppActionTypes.SET_HOME_CAROUSEL_CONFIG,
+  payload: update,
+});
+
+export const setHomeCarouselLayoutType = (
+  update: HomeCarouselLayoutType,
+): AppActionType => ({
+  type: AppActionTypes.SET_HOME_CAROUSEL_LAYOUT_TYPE,
   payload: update,
 });

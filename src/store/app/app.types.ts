@@ -6,7 +6,7 @@ import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/Ong
 import {Network} from '../../constants';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {NavScreenParams, RootStackParamList} from '../../Root';
-import {AppIdentity} from './app.models';
+import {AppIdentity, HomeCarouselConfig, HomeCarouselLayoutType} from './app.models';
 
 export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
@@ -43,6 +43,7 @@ export enum AppActionTypes {
   BIOMETRIC_LOCK_ACTIVE = 'APP/BIOMETRIC_LOCK_ACTIVE',
   LOCK_AUTHORIZED_UNTIL = 'APP/LOCK_AUTHORIZED_UNTIL',
   SET_HOME_CAROUSEL_CONFIG = 'APP/SET_HOME_CAROUSEL_CONFIG',
+  SET_HOME_CAROUSEL_LAYOUT_TYPE = 'APP/SET_HOME_CAROUSEL_LAYOUT_TYPE',
 }
 
 interface NetworkChanged {
@@ -198,7 +199,12 @@ interface BrazeContentCardsFetched {
 
 interface SetHomeCarouselConfig {
   type: typeof AppActionTypes.SET_HOME_CAROUSEL_CONFIG;
-  payload: any;
+  payload: HomeCarouselConfig[] | HomeCarouselConfig;
+}
+
+interface SetHomeCarouselLayoutType {
+  type: typeof AppActionTypes.SET_HOME_CAROUSEL_LAYOUT_TYPE;
+  payload: HomeCarouselLayoutType;
 }
 
 export type AppActionType =
@@ -235,4 +241,5 @@ export type AppActionType =
   | DismissBiometricModal
   | BiometricLockActive
   | LockAuthorizedUntil
-  | SetHomeCarouselConfig;
+  | SetHomeCarouselConfig
+  | SetHomeCarouselLayoutType;

@@ -30,7 +30,12 @@ import ButtonOverlay from './ButtonOverlay';
 import ButtonSpinner from './ButtonSpinner';
 
 export type ButtonState = 'loading' | 'success' | 'failed' | null | undefined;
-export type ButtonStyle = 'primary' | 'secondary' | 'cancel' | undefined;
+export type ButtonStyle =
+  | 'primary'
+  | 'secondary'
+  | 'cancel'
+  | 'danger'
+  | undefined;
 export type ButtonType = 'button' | 'link' | 'pill' | undefined;
 
 interface ButtonProps extends BaseButtonProps {
@@ -47,6 +52,7 @@ interface ButtonOptionProps {
   secondary?: boolean;
   outline?: boolean;
   cancel?: boolean;
+  danger?: boolean;
   disabled?: boolean;
 }
 
@@ -173,13 +179,17 @@ const LinkContent = styled.View<ButtonOptionProps>`
 `;
 
 const LinkText = styled(ButtonBaseText)<ButtonOptionProps>`
-  color: ${({disabled, theme}) => {
+  color: ${({disabled, danger, theme}) => {
     if (disabled) {
       return DisabledDark;
     }
 
     if (theme?.dark) {
       return theme.colors.text;
+    }
+
+    if (danger) {
+      return Caution;
     }
 
     return Action;
@@ -198,8 +208,9 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
     state,
   } = props;
   const secondary = buttonStyle === 'secondary';
-  const cancel = buttonStyle === 'cancel';
   const outline = buttonOutline;
+  const cancel = buttonStyle === 'cancel';
+  const danger = buttonStyle === 'danger';
 
   const isLoading = state === 'loading';
   const isSuccess = state === 'success';
@@ -272,6 +283,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
           <ButtonTypeText
             secondary={secondary}
             cancel={cancel}
+            danger={danger}
             disabled={disabled}>
             {children}
           </ButtonTypeText>

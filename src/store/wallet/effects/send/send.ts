@@ -7,6 +7,7 @@ import {
   Rates,
   Recipient,
   TransactionOptions,
+  SendMaxInfo,
   TransactionProposal,
   TxDetails,
   Wallet,
@@ -16,20 +17,26 @@ import {FeeLevels, getFeeRatePerKb} from '../fee/fee';
 import {
   formatCryptoAddress,
   formatFiatAmount,
+  sleep,
 } from '../../../../utils/helper-methods';
-import {toFiat} from '../../utils/wallet';
+import {toFiat, checkEncryptPassword} from '../../utils/wallet';
 import {startGetRates} from '../rates/rates';
 import {waitForTargetAmountAndUpdateWallet} from '../balance/balance';
 import {
   CustomErrorMessage,
   GeneralError,
+  WrongPasswordError,
 } from '../../../../navigation/wallet/components/ErrorMessages';
 import {BWCErrorMessage, getErrorName} from '../../../../constants/BWCError';
 import {GiftCardInvoiceParams, Invoice} from '../../../shop/shop.models';
 import {GetPayProDetails, HandlePayPro} from '../paypro/paypro';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../constants/config';
 import {ShopEffects} from '../../../shop';
-import {GetPrecision, IsUtxoCoin} from '../../utils/currency';
+import {
+  dismissDecryptPasswordModal,
+  showDecryptPasswordModal,
+} from '../../../app/app.actions';
+import {GetPrecision, IsUtxoCoin, GetChain} from '../../utils/currency';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -44,12 +51,12 @@ export const createProposalAndBuildTxDetails =
     return new Promise(async (resolve, reject) => {
       try {
         // base tx
-        const {
+        let {
           wallet,
           recipient,
           amount,
           context,
-          feeLevel,
+          feeLevel: customFeeLevel,
           feePerKb,
           invoice,
           payProUrl,
@@ -59,8 +66,19 @@ export const createProposalAndBuildTxDetails =
         const {credentials, currencyAbbreviation} = wallet;
         const formattedAmount = ParseAmount(amount, currencyAbbreviation);
         const {
-          WALLET: {feeLevel: _feeLevel, useUnconfirmedFunds},
+          WALLET: {feeLevel: cachedFeeLevel, useUnconfirmedFunds},
         } = getState();
+        const feeLevel =
+          customFeeLevel ||
+          cachedFeeLevel[currencyAbbreviation] ||
+          FeeLevels.NORMAL;
+
+        if (!feePerKb && tx.sendMax) {
+          feePerKb = await getFeeRatePerKb({
+            wallet,
+            feeLevel: feeLevel,
+          });
+        }
 
         // build transaction proposal options then create full proposal
         const txp = {
@@ -73,8 +91,7 @@ export const createProposalAndBuildTxDetails =
             network: credentials.network,
             payProUrl,
             feePerKb,
-            feeLevel:
-              feeLevel || _feeLevel[currencyAbbreviation] || FeeLevels.NORMAL,
+            feeLevel,
             useUnconfirmedFunds,
           })),
           dryRun,
@@ -129,7 +146,15 @@ const buildTxDetails = ({
   recipient: Recipient;
   invoice?: Invoice;
 }): TxDetails => {
-  const {coin, feeLevel, fee, amount} = proposal;
+  const {
+    coin,
+    fee,
+    amount,
+    gasPrice,
+    gasLimit,
+    nonce,
+    feeLevel = 'custom',
+  } = proposal;
   const networkCost = invoice?.minerFees[coin.toUpperCase()]?.totalFee;
   const total = amount + fee;
   const {type, name, address} = recipient;
@@ -177,6 +202,9 @@ const buildTxDetails = ({
         fiatCode,
       ),
     },
+    gasPrice: gasPrice ? Number((gasPrice * 1e-9).toFixed(2)) : undefined,
+    gasLimit,
+    nonce,
   };
 };
 
@@ -186,12 +214,12 @@ const buildTxDetails = ({
 const buildTransactionProposal = (
   tx: Partial<TransactionOptions>,
 ): Promise<object> => {
-  return new Promise(resolve => {
-    const {currency, feeLevel, feePerKb, payProUrl} = tx;
+  return new Promise(async resolve => {
+    const {currency, feePerKb, payProUrl, sendMax, wallet, feeLevel} = tx;
     // base tx
     const txp: Partial<TransactionProposal> = {
       coin: currency,
-      chain: currency?.toUpperCase(),
+      chain: GetChain(currency!).toLowerCase(),
       feePerKb,
       ...(!feePerKb && {feeLevel}),
     };
@@ -212,6 +240,21 @@ const buildTransactionProposal = (
         txp.destinationTag = tx.destinationTag;
         break;
     }
+
+    // send max
+    if (sendMax && wallet) {
+      const {amount, inputs, fee} = await getSendMaxInfo({
+        wallet,
+        opts: {feePerKb, excludeUnconfirmedUtxos: true, returnInputs: true},
+      });
+
+      txp.amount = tx.amount = amount;
+      txp.inputs = inputs;
+      // Either fee or feePerKb can be available
+      txp.fee = fee;
+      txp.feePerKb = undefined;
+    }
+
     // unconfirmed funds
     txp.excludeUnconfirmedUtxos = !tx.useUnconfirmedFunds;
 
@@ -253,54 +296,122 @@ export const startSendPayment =
     key,
     wallet,
     recipient,
-    password,
   }: {
     txp: Partial<TransactionProposal>;
     key: Key;
     wallet: Wallet;
     recipient: Recipient;
-    password?: string;
   }): Effect<Promise<any>> =>
   async dispatch => {
     return new Promise(async (resolve, reject) => {
-      wallet.createTxProposal(
-        {...txp, dryRun: false},
-        async (err: Error, proposal: TransactionProposal) => {
-          if (err) {
-            return reject(err);
-          }
-          let broadcastedTx;
-          try {
-            const publishedTx = await publishTx(wallet, proposal);
-            console.log('-------- published');
+      try {
+        wallet.createTxProposal(
+          {...txp, dryRun: false},
+          async (err: Error, proposal: TransactionProposal) => {
+            if (err) {
+              return reject(err);
+            }
 
-            const signedTx = await signTx(wallet, key, publishedTx, password);
-            console.log('-------- signed');
-
-            broadcastedTx = await broadcastTx(wallet, signedTx);
-            console.log('-------- broadcastedTx');
-
-            const {fee, amount} = broadcastedTx as {
-              fee: number;
-              amount: number;
-            };
-            const targetAmount = wallet.balance.sat - (fee + amount);
-
-            dispatch(
-              waitForTargetAmountAndUpdateWallet({
+            const broadcastedTx = await dispatch(
+              publishAndSign({
+                txp: proposal,
                 key,
                 wallet,
-                targetAmount,
                 recipient,
               }),
             );
-          } catch (error) {
-            return reject(error);
-          }
-          resolve(broadcastedTx);
-        },
-        null,
-      );
+
+            resolve(broadcastedTx);
+          },
+          null,
+        );
+      } catch (err) {
+        console.log(err);
+        reject(err);
+      }
+    });
+  };
+
+export const publishAndSign =
+  ({
+    txp,
+    key,
+    wallet,
+    recipient,
+  }: {
+    txp: Partial<TransactionProposal>;
+    key: Key;
+    wallet: Wallet;
+    recipient?: Recipient;
+  }): Effect =>
+  async dispatch => {
+    return new Promise(async (resolve, reject) => {
+      let password;
+      if (key.isPrivKeyEncrypted) {
+        try {
+          password = await new Promise<string>((_resolve, _reject) => {
+            dispatch(
+              showDecryptPasswordModal({
+                onSubmitHandler: async (_password: string) => {
+                  dispatch(dismissDecryptPasswordModal());
+                  await sleep(500);
+                  checkEncryptPassword(key, _password)
+                    ? _resolve(_password)
+                    : _reject('invalid password');
+                },
+                onCancelHandler: () => {
+                  _reject('password canceled');
+                },
+              }),
+            );
+          });
+        } catch (error) {
+          return reject(error);
+        }
+      }
+
+      let broadcastedTx;
+      try {
+        let publishedTx;
+
+        // Already published?
+        if (txp.status !== 'pending') {
+          publishedTx = await publishTx(wallet, txp);
+          console.log('-------- published');
+        }
+
+        const signedTx: any = await signTx(
+          wallet,
+          key,
+          publishedTx || txp,
+          password,
+        );
+        console.log('-------- signed');
+
+        if (signedTx.status == 'accepted') {
+          const broadcastedTx = await broadcastTx(wallet, signedTx);
+          console.log('-------- broadcastedTx');
+
+          const {fee, amount} = broadcastedTx as {
+            fee: number;
+            amount: number;
+          };
+          const targetAmount = wallet.balance.sat - (fee + amount);
+
+          dispatch(
+            waitForTargetAmountAndUpdateWallet({
+              key,
+              wallet,
+              targetAmount,
+              recipient,
+            }),
+          );
+        }
+        resolve(broadcastedTx);
+      } catch (err) {
+        console.log(err);
+        reject(err);
+      }
     });
   };
 
@@ -479,7 +590,7 @@ export const createInvoiceAndTxProposal =
           transactionCurrency: wallet.currencyAbbreviation.toUpperCase(),
         };
         const cardOrder = await dispatch(
-          ShopEffects.startCreateGiftCardInvoice(invoiceParams),
+          ShopEffects.startCreateGiftCardInvoice(cardConfig, invoiceParams),
         );
         const {invoiceId, invoice} = cardOrder;
         const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
@@ -497,3 +608,24 @@ export const createInvoiceAndTxProposal =
       }
     });
   };
+
+export const getSendMaxInfo = ({
+  wallet,
+  opts,
+}: {
+  wallet: Wallet;
+  opts?: {
+    feePerKb?: number;
+    excludeUnconfirmedUtxos?: boolean;
+    returnInputs?: boolean;
+  };
+}): Promise<SendMaxInfo> => {
+  return new Promise((resolve, reject) => {
+    wallet.getSendMaxInfo(opts, (err: Error, sendMaxInfo: SendMaxInfo) => {
+      if (err) {
+        return reject(err);
+      }
+      resolve(sendMaxInfo);
+    });
+  });
+};

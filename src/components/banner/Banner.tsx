@@ -34,7 +34,7 @@ const BannerDescription = styled(H7)`
 `;
 
 interface BannerProps {
-  title: string;
+  title?: string;
   description: string;
   type: string;
   link?: {onPress: () => void; text: string};
@@ -61,7 +61,7 @@ const Banner = ({title, description, type, link}: BannerProps) => {
         <Info bgColor={bgColor} />
 
         <Description>
-          <H7 medium={true}>{title}</H7>
+          {title ? <H7 medium={true}>{title}</H7> : null}
           <BannerDescription>{description}</BannerDescription>
           {link ? (
             <ActionContainer>

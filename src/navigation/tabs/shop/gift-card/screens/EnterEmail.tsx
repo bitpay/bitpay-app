@@ -26,9 +26,10 @@ const schema = yup.object().shape({
   email: yup.string().email().required(),
 });
 
-const EnterEmail: React.FC<
-  StackScreenProps<GiftCardStackParamList, 'EnterPhone'>
-> = () => {
+const EnterEmail = ({
+  route,
+}: StackScreenProps<GiftCardStackParamList, 'EnterEmail'>) => {
+  const {onSubmit, initialEmail} = route.params;
   const emailRef = useRef<TextInput>(null);
 
   const {
@@ -39,9 +40,9 @@ const EnterEmail: React.FC<
     resolver: yupResolver(schema),
   });
 
-  const onSubmit = handleSubmit(({email}) => {
+  const onFormSubmit = handleSubmit(({email}) => {
     Keyboard.dismiss();
-    console.log('email', email);
+    onSubmit(email);
   });
 
   return (
@@ -52,6 +53,7 @@ const EnterEmail: React.FC<
       <AuthRowContainer>
         <Controller
           control={control}
+          defaultValue={initialEmail}
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
               placeholder={'satoshi@bitpay.com'}
@@ -65,7 +67,6 @@ const EnterEmail: React.FC<
               }
               keyboardType={'email-address'}
               value={value}
-              defaultValue={undefined}
               returnKeyType="next"
               onSubmitEditing={() => emailRef.current?.focus()}
               blurOnSubmit={false}
@@ -77,7 +78,7 @@ const EnterEmail: React.FC<
 
       <AuthActionsContainer>
         <PrimaryActionContainer>
-          <Button onPress={onSubmit}>Continue</Button>
+          <Button onPress={onFormSubmit}>Continue</Button>
         </PrimaryActionContainer>
       </AuthActionsContainer>
     </AuthFormContainer>

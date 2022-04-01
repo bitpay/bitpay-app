@@ -1,7 +1,7 @@
+import {useFocusEffect} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
-import React, {useCallback, useEffect, useLayoutEffect, useMemo} from 'react';
-import {useState} from 'react';
-import {useRef} from 'react';
+import React, {useCallback, useLayoutEffect, useMemo} from 'react';
+import {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {FlatList} from 'react-native';
 import Carousel from 'react-native-snap-carousel';
@@ -108,12 +108,14 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const uninitializedId = autoInitState[activeCard.id] ? null : activeCard.id;
   const isLoadingInitial = fetchOverviewStatus === 'loading' && !pageData;
 
-  useEffect(() => {
-    if (uninitializedId) {
-      setAutoInitState({...autoInitState, [uninitializedId]: true});
-      dispatch(CardEffects.startFetchOverview(uninitializedId));
-    }
-  }, [uninitializedId, autoInitState, dispatch]);
+  useFocusEffect(
+    useCallback(() => {
+      if (uninitializedId) {
+        setAutoInitState({...autoInitState, [uninitializedId]: true});
+        dispatch(CardEffects.startFetchOverview(uninitializedId));
+      }
+    }, [uninitializedId, autoInitState, dispatch]),
+  );
 
   const {filters} = ProviderConfig[activeCard.provider];
   const settledTxList = useAppSelector(

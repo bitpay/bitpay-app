@@ -158,7 +158,6 @@ const WalletSettings = () => {
 
           <ToggleSwitch
             onChange={() => {
-              haptic('impactLight');
               dispatch(toggleHideWallet({wallet}));
               dispatch(startUpdateWalletBalance({key, wallet}));
               dispatch(updatePortfolioBalance());
@@ -180,7 +179,6 @@ const WalletSettings = () => {
 
           <ToggleSwitch
             onChange={() => {
-              haptic('impactLight');
               dispatch(toggleHideBalance({wallet}));
             }}
             isEnabled={!!hideBalance}

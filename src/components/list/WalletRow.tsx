@@ -34,7 +34,9 @@ export interface WalletRowProps {
   currencyAbbreviation: string;
   walletName?: string;
   cryptoBalance: string;
+  cryptoLockedBalance: string;
   fiatBalance: string;
+  fiatLockedBalance: string;
   isToken?: boolean;
   network: string;
   isComplete?: boolean;
