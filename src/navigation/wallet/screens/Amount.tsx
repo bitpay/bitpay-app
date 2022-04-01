@@ -121,34 +121,42 @@ export interface AmountParamList {
 
 interface AmountProps {
   useAsModal: any;
-  currencyAbbreviationModal?: string;
+  _currencyAbbreviation?: string;
   onDismiss?: (amount?: number) => void;
 }
 
 const Amount: React.FC<AmountProps> = ({
   useAsModal,
-  currencyAbbreviationModal,
+  _currencyAbbreviation,
   onDismiss,
 }) => {
   const route = useRoute<RouteProp<WalletStackParamList, 'Amount'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const {onAmountSelected, currencyAbbreviation, fiatCurrencyAbbreviation,  opts} = route.params
-    ? route.params
-    : {
-        onAmountSelected: undefined,
-        currencyAbbreviation: undefined,
-        fiatCurrencyAbbreviation: undefined,
-        opts: undefined,
-      };
+  let {onAmountSelected, currencyAbbreviation, fiatCurrencyAbbreviation, opts} = route.params
+    route.params
+      ? route.params
+      : {
+          onAmountSelected: undefined,
+          currencyAbbreviation: undefined,
+          fiatCurrencyAbbreviation: undefined,
+          opts: undefined,
+        };
   const navigation = useNavigation();
   const theme = useTheme();
   const [buttonState, setButtonState] = useState<ButtonState>();
 
   const fiatCurrency = fiatCurrencyAbbreviation || defaultAltCurrency.isoCode;
 
-  const cryptoCurrencyAbbreviation = useAsModal
-    ? currencyAbbreviationModal
-    : currencyAbbreviation;
+  // const cryptoCurrencyAbbreviation = useAsModal
+  //   ? currencyAbbreviationModal
+  //   : currencyAbbreviation;
+  
+  let cryptoCurrencyAbbreviation: string | undefined;
+  if (useAsModal) {
+    cryptoCurrencyAbbreviation = _currencyAbbreviation;
+  } else {
+    cryptoCurrencyAbbreviation = currencyAbbreviation;
+  }
 
   // flag for primary selector type
   const [rate, setRate] = useState(0);

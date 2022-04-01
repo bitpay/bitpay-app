@@ -11,14 +11,23 @@ const AmountContainer = styled.View`
 
 interface AmountModalProps {
   isVisible: boolean;
+  currencyAbbreviation?: string;
   onDismiss: (amount?: number) => void;
 }
 
-const AmountModal: React.FC<AmountModalProps> = ({isVisible, onDismiss}) => {
+const AmountModal: React.FC<AmountModalProps> = ({
+  isVisible,
+  currencyAbbreviation,
+  onDismiss,
+}) => {
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onDismiss}>
       <AmountContainer>
-        <Amount useAsModal={true} onDismiss={onDismiss} />
+        <Amount
+          useAsModal={true}
+          onDismiss={onDismiss}
+          _currencyAbbreviation={currencyAbbreviation}
+        />
       </AmountContainer>
     </SheetModal>
   );

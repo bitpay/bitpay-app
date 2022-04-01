@@ -801,6 +801,9 @@ const SwapCryptoRoot: React.FC = () => {
 
       <AmountModal
         isVisible={amountModalVisible}
+        currencyAbbreviation={cloneDeep(
+          fromWalletSelected?.currencyAbbreviation,
+        )?.toUpperCase()}
         onDismiss={(newAmount?: number) => {
           if (newAmount) {
             setAmountFrom(newAmount);
