@@ -44,6 +44,7 @@ export const useDeeplinks = () => {
   const linkingOptions: LinkingOptions<RootStackParamList> = {
     prefixes: [`${DEEPLINK_PREFIX}://`],
     config: {
+      initialRouteName: 'Tabs',
       // configuration for associating screens with paths
       screens: {
         [RootStacks.DEBUG]: {
