@@ -119,9 +119,7 @@ const BuyCryptoRoot: React.FC = () => {
   };
 
   const selectFirstAvailableWallet = () => {
-    const keysList = Object.values(allKeys).filter(
-      key => key.show && key.backupComplete,
-    );
+    const keysList = Object.values(allKeys).filter(key => key.backupComplete);
 
     if (fromWallet && fromWallet.id) {
       let fromWalletData;
