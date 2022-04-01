@@ -1,6 +1,7 @@
 import {Network} from '../../../../constants';
 import {Wallet} from '../../wallet.models';
 import {GetEstimatedTxSize} from '../../utils/wallet';
+import {IsERCToken} from '../../utils/currency';
 
 export enum FeeLevels {
   URGENT = 'urgent',
@@ -15,6 +16,24 @@ export interface Fee {
   level: string;
   nbBlocks: number;
 }
+
+export const GetFeeOptions: any = (currencyAbbreviation: string) => {
+  const isEthOrToken =
+    currencyAbbreviation === 'eth' || IsERCToken(currencyAbbreviation);
+  return {
+    urgent: isEthOrToken ? 'High' : 'Urgent',
+    priority: isEthOrToken ? 'Average' : 'Priority',
+    normal: isEthOrToken ? 'Low' : 'Normal',
+    economy: 'Economy',
+    superEconomy: 'Super Economy',
+    custom: 'Custom',
+  };
+};
+
+const removeLowFeeLevels = (feeLevels: Fee[]) => {
+  const removeLevels = ['economy', 'superEconomy'];
+  return feeLevels.filter(({level}) => !removeLevels.includes(level));
+};
 
 export const getFeeRatePerKb = ({
   wallet,
@@ -62,6 +81,11 @@ export const getFeeLevels = ({
           if (err) {
             return reject(err);
           }
+
+          if (wallet.currencyAbbreviation === 'eth') {
+            feeLevels = removeLowFeeLevels(feeLevels);
+          }
+
           resolve(feeLevels);
         },
       );

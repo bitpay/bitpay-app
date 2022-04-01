@@ -257,6 +257,8 @@ export interface TransactionProposal {
   instantAcceptanceEscrow?: number;
   isTokenSwap?: boolean;
   id: string;
+  gasLimit?: number;
+  gasPrice?: number;
   status: string;
   sendMaxInfo?: SendMaxInfo;
 }
@@ -301,6 +303,7 @@ export interface TxDetails {
   // eth
   gasPrice?: number;
   gasLimit?: number;
+  nonce?: numberr;
   //
   sendingFrom: TxDetailsSendingFrom;
   subTotal: TxDetailsAmount;

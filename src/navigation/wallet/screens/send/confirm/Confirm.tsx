@@ -10,7 +10,11 @@ import {
   Wallet,
 } from '../../../../../store/wallet/wallet.models';
 import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
-import {startSendPayment} from '../../../../../store/wallet/effects/send/send';
+import {
+  createProposalAndBuildTxDetails,
+  handleCreateTxProposalError,
+  startSendPayment,
+} from '../../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../components/PaymentSent';
 import {sleep} from '../../../../../utils/helper-methods';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
@@ -27,6 +31,7 @@ import {
   Header,
   SendingFrom,
   SendingTo,
+  SharedDetailRow,
 } from './Shared';
 import {BottomNotificationConfig} from '../../../../../components/modal/bottom-notification/BottomNotification';
 import {
@@ -34,25 +39,99 @@ import {
   WrongPasswordError,
 } from '../../../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../../../constants/BWCError';
+import TransactionLevel from '../TransactionLevel';
 
 export interface ConfirmParamList {
   wallet: Wallet;
   recipient: Recipient;
   txp: Partial<TransactionProposal>;
   txDetails: TxDetails;
+  amount: number;
 }
 
 const Confirm = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'Confirm'>>();
-  const {wallet, recipient, txDetails, txp} = route.params;
+  const {wallet, recipient, txDetails, txp: _txp, amount} = route.params;
+  const [txp, setTxp] = useState(_txp);
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
   const key = allKeys[wallet?.keyId!];
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
+  const [showTransactionLevel, setShowTransactionLevel] = useState(false);
 
-  const {fee, sendingTo, sendingFrom, subTotal, total} = txDetails;
+  const {
+    fee: _fee,
+    sendingTo,
+    sendingFrom,
+    subTotal,
+    gasLimit,
+    gasPrice: _gasPrice,
+    nonce,
+    total: _total,
+  } = txDetails;
+
+  const [fee, setFee] = useState(_fee);
+  const [total, setTotal] = useState(_total);
+  const [gasPrice, setGasPrice] = useState(_gasPrice);
+  const {currencyAbbreviation} = wallet;
+
+  const isTxLevelAvailable = () => {
+    const excludeCurrencies = ['bch', 'doge', 'ltc', 'xrp'];
+    // TODO: exclude paypro, coinbase, usingMerchantFee txs,
+    // const {payProUrl} = txDetails;
+    return !excludeCurrencies.includes(currencyAbbreviation);
+  };
+
+  const onCloseTxLevelModal = async (
+    newLevel?: any,
+    customFeePerKB?: number,
+  ) => {
+    setShowTransactionLevel(false);
+    try {
+      if (newLevel) {
+        dispatch(
+          startOnGoingProcessModal(OnGoingProcessMessages.CALCULATING_FEE),
+        );
+
+        const {txDetails: _txDetails, txp: newTxp} = await dispatch(
+          createProposalAndBuildTxDetails({
+            wallet,
+            recipient,
+            amount,
+            feeLevel: newLevel,
+            feePerKb: customFeePerKB,
+          }),
+        );
+
+        setTxp(newTxp);
+        setFee(_txDetails.fee);
+        setTotal(_txDetails.total);
+        setGasPrice(_txDetails.gasPrice);
+        await sleep(500);
+        dispatch(dismissOnGoingProcessModal());
+      }
+    } catch (err: any) {
+      dispatch(dismissOnGoingProcessModal());
+      const [errorMessageConfig] = await Promise.all([
+        handleCreateTxProposalError(err),
+        sleep(400),
+      ]);
+      dispatch(
+        showBottomNotificationModal({
+          ...errorMessageConfig,
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: 'OK',
+              action: () => {},
+            },
+          ],
+        }),
+      );
+    }
+  };
 
   useEffect(() => {
     if (!resetSwipeButton) {
@@ -78,7 +157,29 @@ const Confirm = () => {
       <DetailsList>
         <Header>Summary</Header>
         <SendingTo recipient={sendingTo} hr />
-        <Fee fee={fee} hr />
+        <Fee
+          onPress={
+            isTxLevelAvailable()
+              ? () => setShowTransactionLevel(true)
+              : undefined
+          }
+          fee={fee}
+          currencyAbbreviation={currencyAbbreviation}
+          hr
+        />
+        {gasPrice !== undefined ? (
+          <SharedDetailRow
+            description={'Gas price'}
+            value={gasPrice.toFixed(2) + ' Gwei'}
+            hr
+          />
+        ) : null}
+        {gasLimit !== undefined ? (
+          <SharedDetailRow description={'Gas limit'} value={gasLimit} hr />
+        ) : null}
+        {nonce !== undefined ? (
+          <SharedDetailRow description={'Nonce'} value={nonce} hr />
+        ) : null}
         <SendingFrom sender={sendingFrom} hr />
         <Amount description={'SubTotal'} amount={subTotal} />
         <Amount description={'Total'} amount={total} />
@@ -130,6 +231,21 @@ const Confirm = () => {
             },
           });
         }}
+      />
+
+      <TransactionLevel
+        feeLevel={fee.feeLevel}
+        wallet={wallet}
+        isVisible={showTransactionLevel}
+        onCloseModal={(selectedLevel, customFeePerKB) =>
+          onCloseTxLevelModal(selectedLevel, customFeePerKB)
+        }
+        customFeePerKB={fee.feeLevel === 'custom' ? txp?.feePerKb : undefined}
+        feePerSatByte={
+          fee.feeLevel === 'custom' && txp?.feePerKb
+            ? txp?.feePerKb / 1000
+            : undefined
+        }
       />
     </ConfirmContainer>
   );
