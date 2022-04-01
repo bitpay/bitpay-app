@@ -87,7 +87,7 @@ const CustomizeHome = () => {
         <CustomizeCardContainer
           delayLongPress={100}
           onLongPress={() => {
-            haptic('impactLight');
+            haptic('soft');
             drag();
           }}
           disabled={isActive}
@@ -170,7 +170,7 @@ const CustomizeHome = () => {
           }}
           screenListeners={{
             tabPress: tab => {
-              haptic('impactLight');
+              haptic('soft');
               if (tab.target) {
                 setDirty(true);
                 setLayoutType(
