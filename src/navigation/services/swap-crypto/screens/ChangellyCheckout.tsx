@@ -377,8 +377,10 @@ const ChangellyCheckout: React.FC = () => {
             }
             return;
           })
-          .catch(err => {
+          .catch(async err => {
             console.log(err.message);
+            dispatch(dismissOnGoingProcessModal());
+            await sleep(400);
             return;
           });
       })

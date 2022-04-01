@@ -25,7 +25,7 @@ import KeyWalletsRow, {
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {LightBlack, SlateDark, White} from '../../../styles/colors';
-import {H4, TextAlign} from '../../../components/styled/Text';
+import {H4, TextAlign, BaseText} from '../../../components/styled/Text';
 import {RouteProp, useRoute} from '@react-navigation/core';
 import {WalletScreens, WalletStackParamList} from '../WalletStack';
 import {useNavigation, useTheme} from '@react-navigation/native';
@@ -38,11 +38,14 @@ import {
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
 const ModalHeader = styled.View`
-  padding: ${ScreenGutter};
+  height: 50px;
+  margin-right: 10px;
+  margin-left: 10px;
   display: flex;
   flex-direction: row;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  position: relative;
 `;
 
 const CloseModalButtonContainer = styled.View`
@@ -50,23 +53,21 @@ const CloseModalButtonContainer = styled.View`
   left: 15px;
 `;
 
+const ModalHeaderLeft = styled(BaseText)`
+  position: absolute;
+  left: 0;
+`;
+
 const CloseModalButton = styled.TouchableOpacity`
   margin: 15px 0;
   padding: 5px;
-  height: 41px;
-  width: 41px;
+  height: 18px;
+  width: 18px;
   border-radius: 50px;
   background-color: #9ba3ae33;
   display: flex;
   justify-content: center;
   align-items: center;
-`;
-
-const ModalTitle = styled.Text`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  text-align: center;
-  font-size: 20px;
-  font-weight: bold;
 `;
 
 const SafeAreaView = styled.SafeAreaView`
@@ -91,6 +92,12 @@ export const WalletSelectMenuHeaderContainer = styled.View`
 
 export const WalletSelectMenuBodyContainer = styled.ScrollView`
   padding-bottom: 20px;
+`;
+
+const NoWalletsMsg = styled(BaseText)`
+  font-size: 15px;
+  text-align: center;
+  margin-top: 20px;
 `;
 
 export type GlobalSelectParamList = {
@@ -138,16 +145,18 @@ const buildList = (category: string[], wallets: Wallet[]) => {
 
 interface GlobalSelectProps {
   useAsModal: any;
+  modalTitle?: string;
   customSupportedCurrencies?: string[];
   onDismiss?: (newWallet?: any) => void;
-  title?: string;
+  modalContext?: string;
 }
 
 const GlobalSelect: React.FC<GlobalSelectProps> = ({
   useAsModal,
+  modalTitle,
   customSupportedCurrencies,
   onDismiss,
-  title,
+  modalContext,
 }) => {
   const route = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
   const {context, toCoinbase} = route.params || {}
@@ -398,18 +407,28 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
               />
             </CloseModalButton>
           </CloseModalButtonContainer>
-          {(title || toCoinbase?.title) && (
-            <ModalTitle>{title || toCoinbase?.title}</ModalTitle>
+          {(!!modalTitle || toCoinbase?.title) && (
+            <TextAlign align={'center'}>
+              <H4>{modalTitle || toCoinbase?.title}</H4>
+            </TextAlign>
           )}
         </ModalHeader>
       )}
       <GlobalSelectContainer>
-        <FlatList
-          contentContainerStyle={{paddingBottom: 100}}
-          data={[...supportedCoins, ...otherCoins]}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-        />
+        {[...supportedCoins, ...otherCoins].length > 0 && (
+          <FlatList
+            contentContainerStyle={{paddingBottom: 100}}
+            data={[...supportedCoins, ...otherCoins]}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
+          />
+        )}
+        {[...supportedCoins, ...otherCoins].length === 0 &&
+          context === 'send' && (
+            <NoWalletsMsg>
+              There are no wallets with funds available to use this feature.
+            </NoWalletsMsg>
+          )}
         <SheetModal
           isVisible={walletSelectModalVisible}
           onBackdropPress={() => setWalletSelectModalVisible(false)}>

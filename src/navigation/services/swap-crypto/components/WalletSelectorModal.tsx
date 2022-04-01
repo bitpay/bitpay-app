@@ -9,22 +9,28 @@ const GlobalSelectContainer = styled.View`
   background-color: ${({theme: {dark}}) => (dark ? Black : White)};
 `;
 
-interface ToWalletSelectorModalProps {
+interface WalletSelectorModalProps {
   isVisible: boolean;
   customSupportedCurrencies?: string[];
   onDismiss: (toWallet?: any) => void;
+  modalContext?: string;
+  modalTitle?: string;
 }
 
-const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
+const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
   isVisible,
   customSupportedCurrencies,
   onDismiss,
+  modalContext,
+  modalTitle,
 }) => {
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onDismiss}>
       <GlobalSelectContainer>
         <GlobalSelect
           useAsModal={true}
+          modalContext={modalContext}
+          modalTitle={modalTitle}
           customSupportedCurrencies={customSupportedCurrencies}
           onDismiss={onDismiss}
         />
@@ -33,4 +39,4 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
   );
 };
 
-export default ToWalletSelectorModal;
+export default WalletSelectorModal;

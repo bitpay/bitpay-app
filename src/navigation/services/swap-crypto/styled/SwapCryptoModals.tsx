@@ -28,3 +28,8 @@ export const ModalHeaderRight = styled(BaseText)`
   position: absolute;
   right: 0;
 `;
+
+export const ModalHeaderLeft = styled(BaseText)`
+  position: absolute;
+  left: 0;
+`;

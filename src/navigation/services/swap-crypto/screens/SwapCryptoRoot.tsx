@@ -28,8 +28,7 @@ import {
 import ArrowDown from '../../../../../assets/img/services/swap-crypto/down-arrow.svg';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import Button from '../../../../components/button/Button';
-import FromWalletSelectorModal from '../components/FromWalletSelectorModal';
-import ToWalletSelectorModal from '../components/ToWalletSelectorModal';
+import WalletSelectorModal from '../components/WalletSelectorModal';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
@@ -764,40 +763,33 @@ const SwapCryptoRoot: React.FC = () => {
         </ProviderContainer>
       </ScrollView>
 
-      <FromWalletSelectorModal
-        onPress={(fromWallet: Wallet) => {
-          hideModal('fromWalletSelector');
-          setFromWalletSelected(fromWallet);
-          setToWalletSelected(undefined);
-          setAmountFrom(0);
-          setLoading(false);
-          setToWalletData(undefined);
-          setRateData(undefined);
-
-          // const coinsTo = cloneDeep(swapCryptoSupportedCoinsFrom).splice(swapCryptoSupportedCoinsFrom.indexOf(fromWallet.credentials.coin), 1);
-          const coinsTo = cloneDeep(swapCryptoSupportedCoinsFrom).filter(
-            coin => coin != fromWallet.credentials.coin,
-          );
-          // debugger;
-          // const index = swapCryptoSupportedCoinsFrom.indexOf(fromWallet.credentials.coin);
-          // let coinsTo: string[] = [];
-          // if (index > -1) {
-          //   console.log(
-          //     `Removing ${fromWallet.credentials.coin.toUpperCase()} from Changelly supported coins`
-          //   );
-          //   const daga = cloneDeep(swapCryptoSupportedCoinsFrom);
-          //   coinsTo = daga.splice(index, 1);
-          // }
-          setSwapCryptoSupportedCoinsTo(coinsTo);
-        }}
-        customSupportedCurrencies={swapCryptoSupportedCoinsFrom}
+      <WalletSelectorModal
         isVisible={fromWalletSelectorModalVisible}
-        onBackdropPress={() => hideModal('fromWalletSelector')}
+        customSupportedCurrencies={swapCryptoSupportedCoinsFrom}
+        modalContext={'send'}
+        modalTitle={'Select Source Wallet'}
+        onDismiss={(fromWallet: Wallet) => {
+          hideModal('fromWalletSelector');
+          if (fromWallet) {
+            setFromWalletSelected(fromWallet);
+            setToWalletSelected(undefined);
+            setAmountFrom(0);
+            setLoading(false);
+            setToWalletData(undefined);
+            setRateData(undefined);
+
+            const coinsTo = cloneDeep(swapCryptoSupportedCoinsFrom).filter(
+              coin => coin != fromWallet.currencyAbbreviation.toLowerCase(),
+            );
+            setSwapCryptoSupportedCoinsTo(coinsTo);
+          }
+        }}
       />
 
-      <ToWalletSelectorModal
+      <WalletSelectorModal
         isVisible={walletSelectorModalVisible}
         customSupportedCurrencies={swapCryptoSupportedCoinsTo}
+        modalTitle={'Select Destination'}
         onDismiss={(toWallet?: Wallet) => {
           hideModal('walletSelector');
           if (toWallet) {
