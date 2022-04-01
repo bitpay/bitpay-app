@@ -4,6 +4,7 @@ export const DEVTOOLS_ENABLED = false;
 export const STATIC_CONTENT_CARDS_ENABLED = true;
 
 // GENERAL
+export const APP_NAME = 'bitpay';
 export const APP_NETWORK = Network.mainnet;
 export const BASE_BITPAY_URLS = {
   [Network.mainnet]: 'https://bitpay.com',
