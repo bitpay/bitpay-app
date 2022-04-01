@@ -12,8 +12,12 @@ import {
   isCaptionedContentCard,
   isClassicContentCard,
 } from '../../../../../utils/braze';
-import {useAppDispatch} from '../../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {AppEffects} from '../../../../../store/app';
+import {getStateFromPath, useNavigation} from '@react-navigation/native';
+import {selectAvailableGiftCards} from '../../../../../store/shop/shop.selectors';
+import {DEEPLINK_PREFIX} from '../../../../../constants/config';
+import {LogActions} from '../../../../../store/log';
 
 interface OfferCardProps {
   contentCard: ContentCard;
@@ -126,9 +130,12 @@ const OfferCard: React.FC<OfferCardProps> = props => {
   const {contentCard} = props;
   const {image, url, openURLInWebView} = contentCard;
   const dispatch = useAppDispatch();
+  const navigation = useNavigation();
   let title = '';
   let description = '';
   let imageSource: ImageSourcePropType | null = null;
+
+  const availableGiftCards = useAppSelector(selectAvailableGiftCards);
 
   if (
     isCaptionedContentCard(contentCard) ||
@@ -147,17 +154,52 @@ const OfferCard: React.FC<OfferCardProps> = props => {
   }
 
   const _onPress = () => {
-    haptic('impactLight');
-
     if (!url) {
       return;
     }
 
     haptic('impactLight');
 
-    if ('debug') {
-      console.log('TODO: handle performance issues');
-      return;
+    try {
+      const path = url.replace(`${DEEPLINK_PREFIX}://`, '');
+      const maybeParsedState = getStateFromPath(path);
+
+      if (maybeParsedState?.routes.length) {
+        const route = maybeParsedState.routes[0];
+
+        if (route.name === 'giftcard') {
+          if (route.params) {
+            const merchantName = (
+              (route.params as any).merchant || ''
+            ).toLowerCase();
+            const cardConfig = availableGiftCards.find(
+              giftCard => giftCard.name.toLowerCase() === merchantName,
+            );
+
+            if (cardConfig) {
+              navigation.navigate('GiftCard', {
+                screen: 'BuyGiftCard',
+                params: {
+                  cardConfig,
+                },
+              });
+
+              return;
+            }
+          }
+
+          navigation.navigate('Shop', {
+            screen: 'Home',
+          });
+
+          return;
+        }
+      }
+    } catch (err) {
+      dispatch(
+        LogActions.debug('Something went wrong parsing offer URL: ' + url),
+      );
+      dispatch(LogActions.debug(JSON.stringify(err)));
     }
 
     if (openURLInWebView) {
