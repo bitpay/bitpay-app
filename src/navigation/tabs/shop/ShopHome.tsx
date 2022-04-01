@@ -95,6 +95,9 @@ const ShopHome = () => {
   const availableCardMap = useSelector(
     ({SHOP}: RootState) => SHOP.availableCardMap,
   );
+  const supportedCardMap = useSelector(
+    ({SHOP}: RootState) => SHOP.supportedCardMap,
+  );
   const integrationsMap = useSelector(({SHOP}: RootState) => SHOP.integrations);
   const categoriesAndCurations = useSelector(
     ({SHOP}: RootState) => SHOP.categoriesAndCurations,
@@ -104,6 +107,11 @@ const ShopHome = () => {
   const availableGiftCards = useMemo(
     () => getCardConfigFromApiConfigMap(availableCardMap),
     [availableCardMap],
+  );
+
+  const supportedGiftCards = useMemo(
+    () => getCardConfigFromApiConfigMap(supportedCardMap || availableCardMap),
+    [supportedCardMap, availableCardMap],
   );
 
   const curations = useMemo(
@@ -164,6 +172,7 @@ const ShopHome = () => {
       <GiftCardCatalog
         scrollViewRef={scrollViewRef}
         availableGiftCards={availableGiftCards}
+        supportedGiftCards={supportedGiftCards}
         curations={curations}
         categories={categoriesWithGiftCards}
         onSelectedGiftCardsChange={newNumSelectedGiftCards =>

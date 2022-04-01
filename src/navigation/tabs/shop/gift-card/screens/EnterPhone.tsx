@@ -1,3 +1,4 @@
+import * as yup from 'yup';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useRef, useState} from 'react';
@@ -5,7 +6,6 @@ import {Controller, useForm} from 'react-hook-form';
 import {Keyboard, TextInput, View} from 'react-native';
 import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
-import * as yup from 'yup';
 import Button from '../../../../../components/button/Button';
 import BoxInput from '../../../../../components/form/BoxInput';
 import AuthFormContainer, {
@@ -77,7 +77,7 @@ export const showCountryCodeRequiredSheet = (
 };
 
 const basePhoneSchema = yup.string().required();
-const usPhoneSchema = basePhoneSchema.min(14, 'Must be exactly 10 digits');
+const usPhoneSchema = basePhoneSchema.min(10, 'Must be exactly 10 digits');
 const intlPhoneSchema = basePhoneSchema.max(
   15,
   'Must be no longer than 15 digits',
@@ -91,7 +91,8 @@ const EnterPhone = ({
 }: StackScreenProps<GiftCardStackParamList, 'EnterPhone'>) => {
   const dispatch = useDispatch();
   const phoneRef = useRef<TextInput>(null);
-  const {cardConfig} = route.params;
+  const {cardConfig, onSubmit, initialPhone, initialPhoneCountryInfo} =
+    route.params;
 
   const allowedPhoneCountryCodes = getPhoneCountryCodes().filter(
     phoneCountryCode =>
@@ -102,17 +103,34 @@ const EnterPhone = ({
         : true,
   );
 
-  const defaultPhoneCountryCode = allowedPhoneCountryCodes[0];
+  const defaultPhoneCountryCode =
+    (initialPhoneCountryInfo &&
+      allowedPhoneCountryCodes.find(
+        phoneCountryCode =>
+          phoneCountryCode.phone === initialPhoneCountryInfo.phoneCountryCode &&
+          phoneCountryCode.countryCode ===
+            initialPhoneCountryInfo.countryIsoCode,
+      )) ||
+    allowedPhoneCountryCodes[0];
   const [selectedPhoneCountryCode, setSelectedPhoneCountryCode] = useState(
     defaultPhoneCountryCode,
   );
   const [countryCodeSheetOpen, setCountryCodeSheetOpen] = useState(false);
+
+  const phoneWithoutCountryCode =
+    defaultPhoneCountryCode.phone ===
+      initialPhoneCountryInfo.phoneCountryCode &&
+    defaultPhoneCountryCode.countryCode ===
+      initialPhoneCountryInfo.countryIsoCode
+      ? initialPhone.replace(defaultPhoneCountryCode.phone, '')
+      : '';
 
   const {
     control,
     handleSubmit,
     formState: {errors},
   } = useForm<PhoneFormFieldValues>({
+    defaultValues: {phone: phoneWithoutCountryCode},
     resolver: yupResolver(
       yup.object().shape({
         phone:
@@ -123,13 +141,19 @@ const EnterPhone = ({
     ),
   });
 
-  const onSubmit = handleSubmit(({phone}) => {
+  const onFormSubmit = handleSubmit(({phone}) => {
     Keyboard.dismiss();
     const fullPhoneNumber = `${selectedPhoneCountryCode.phone}${phone.replace(
       /\D/g,
       '',
     )}`;
-    console.log('phone', fullPhoneNumber);
+    onSubmit({
+      phone: fullPhoneNumber,
+      phoneCountryInfo: {
+        phoneCountryCode: selectedPhoneCountryCode.phone,
+        countryIsoCode: selectedPhoneCountryCode.countryCode,
+      },
+    });
   });
 
   return (
@@ -142,12 +166,15 @@ const EnterPhone = ({
         <AuthRowContainer>
           <Controller
             control={control}
+            defaultValue={phoneWithoutCountryCode}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 placeholder={getPlaceholder(selectedPhoneCountryCode.phone)}
                 label={'PHONE NUMBER'}
                 onBlur={onBlur}
-                onChangeText={(text: string) => onChange(text)}
+                onChangeText={(formatted: string, extracted?: string) =>
+                  onChange(extracted)
+                }
                 icon={() => (
                   <AreaCodeContainer>
                     <TouchableWithoutFeedback
@@ -178,7 +205,6 @@ const EnterPhone = ({
                 mask={getPhoneMask(selectedPhoneCountryCode.phone)}
                 keyboardType={'numeric'}
                 value={value}
-                defaultValue={undefined}
                 type={'phone'}
                 returnKeyType="next"
                 onSubmitEditing={() => phoneRef.current?.focus()}
@@ -191,7 +217,7 @@ const EnterPhone = ({
 
         <AuthActionsContainer>
           <PrimaryActionContainer>
-            <Button onPress={onSubmit}>Continue</Button>
+            <Button onPress={onFormSubmit}>Continue</Button>
           </PrimaryActionContainer>
         </AuthActionsContainer>
       </AuthFormContainer>

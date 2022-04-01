@@ -24,7 +24,7 @@ import {SEGMENT_API_KEY, APPSFLYER_API_KEY, APP_ID} from '@env';
 import appsFlyer from 'react-native-appsflyer';
 import {requestTrackingPermission} from 'react-native-tracking-transparency';
 import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
-import {showBlur} from './app.actions';
+import {setHomeCarouselConfig, showBlur} from './app.actions';
 import {batch} from 'react-redux';
 import i18n from 'i18next';
 import {WalletActions} from '../wallet';
@@ -33,10 +33,9 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     dispatch(LogActions.clear());
 
-    const {APP, BITPAY_ID} = getState();
-    const network = APP.network;
-    const pinLockActive = APP.pinLockActive;
-    const biometricLockActive = APP.biometricLockActive;
+    const {APP, BITPAY_ID, WALLET, CARD} = getState();
+    const {network, pinLockActive, biometricLockActive, homeCarouselConfig} =
+      APP;
 
     dispatch(LogActions.info('Initializing app...'));
     dispatch(LogActions.debug(`Network: ${network}`));
@@ -98,6 +97,18 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     await dispatch(walletConnectInit());
     await dispatch(initializeBrazeContent());
 
+    // set home carousel config if not already set
+    if (!homeCarouselConfig.length) {
+      const keys = Object.values(WALLET.keys).map(key => ({
+        id: key.id,
+        show: true,
+      }));
+      const cards = CARD.cards[APP.network].map(_ => ({
+        id: 'bitpayCard',
+        show: true,
+      }));
+      dispatch(setHomeCarouselConfig([...keys, ...cards]));
+    }
     await sleep(500);
     dispatch(LogActions.info('Initialized app successfully.'));
     dispatch(LogActions.debug(`Pin Lock Active: ${pinLockActive}`));

@@ -15,6 +15,7 @@ import {useDispatch} from 'react-redux';
 import {
   showBottomNotificationModal,
   dismissOnGoingProcessModal,
+  setHomeCarouselConfig,
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -287,6 +288,8 @@ const CreateMultisig = () => {
         const multisigKey = (await dispatch<any>(
           startCreateKeyMultisig(opts),
         )) as Key;
+
+        dispatch(setHomeCarouselConfig({id: multisigKey.id, show: true}));
 
         navigation.navigate('Wallet', {
           screen: 'BackupKey',

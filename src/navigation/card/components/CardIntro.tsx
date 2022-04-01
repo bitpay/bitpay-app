@@ -1,6 +1,8 @@
-import React from 'react';
+import {StackNavigationProp} from '@react-navigation/stack';
+import React, {useLayoutEffect} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView, View} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import A from '../../../components/anchor/Anchor';
@@ -22,9 +24,14 @@ import {Network, URL} from '../../../constants';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {RootState} from '../../../store';
 import {AppEffects} from '../../../store/app';
+import {CardStackParamList} from '../CardStack';
 import CardFeatureTabs from './CardIntroFeatureTabs';
 import CardIntroHeroImg from './CardIntroHeroImage';
 import CardHighlights from './CardIntroHighlights';
+
+interface CardIntroProps {
+  navigation: StackNavigationProp<CardStackParamList, 'Home'>;
+}
 
 const Spacer = styled.View<{height: number}>`
   height: ${({height}) => height}px;
@@ -61,10 +68,12 @@ const IntroHero = () => {
   );
 };
 
-const CardIntro: React.FC = () => {
+const CardIntro: React.FC<CardIntroProps> = props => {
+  const {navigation} = props;
   const dispatch = useDispatch();
   const {t} = useTranslation();
   const network = useSelector<RootState, Network>(({APP}) => APP.network);
+  const insets = useSafeAreaInsets();
 
   const onGetCardPress = async (context?: 'login' | 'createAccount') => {
     const baseUrl = BASE_BITPAY_URLS[network];
@@ -78,9 +87,18 @@ const CardIntro: React.FC = () => {
     dispatch(AppEffects.openUrlWithInAppBrowser(url));
   };
 
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
+
   return (
     <>
-      <ScrollView>
+      <ScrollView
+        style={{
+          marginTop: insets.top,
+        }}>
         <ContentContainer>
           <IntroHero />
 

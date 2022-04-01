@@ -176,7 +176,7 @@ export const lockAuthorizedUntil = (
 });
 
 export const setHomeCarouselConfig = (
-  update: HomeCarouselConfig[],
+  update: HomeCarouselConfig[] | HomeCarouselConfig,
 ): AppActionType => ({
   type: AppActionTypes.SET_HOME_CAROUSEL_CONFIG,
   payload: update,

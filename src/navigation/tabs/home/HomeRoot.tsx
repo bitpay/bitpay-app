@@ -29,7 +29,6 @@ import OffersCarousel from './components/offers/OffersCarousel';
 import PortfolioBalance from './components/PortfolioBalance';
 import MockQuickLinks from './components/quick-links/MockQuickLinks';
 import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
-import {setHomeCarouselConfig} from '../../../store/app/app.actions';
 import {BaseText} from '../../../components/styled/Text';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 
@@ -75,23 +74,6 @@ const HomeRoot = () => {
   //     showOnboardingFinishModal();
   //   }
   // }, []);
-
-  const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
-  const _keys = useAppSelector(({WALLET}) => WALLET.keys);
-  const _cards = useAppSelector(({CARD, APP}) => CARD.cards[APP.network]);
-  useEffect(() => {
-    if (!homeCarouselConfig) {
-      const keys = Object.values(_keys).map(key => ({
-        id: key.id,
-        show: true,
-      }));
-      const cards = _cards.map(_ => ({
-        id: 'bitpayCard',
-        show: true,
-      }));
-      dispatch(setHomeCarouselConfig([...keys, ...cards]));
-    }
-  }, [_cards, _keys, dispatch, homeCarouselConfig]);
 
   const navigation = useNavigation();
   const theme = useTheme();
