@@ -25,3 +25,5 @@ export interface HomeCarouselConfig {
   id: string;
   show: boolean;
 }
+
+export type HomeCarouselLayoutType = 'carousel' | 'listView';
