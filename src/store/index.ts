@@ -183,6 +183,7 @@ const getStore = () => {
             ...state.SHOP,
             availableCardMap: null,
             integrations: null,
+            supportedCardMap: null,
           },
           BITPAY_ID: {
             ...state.BITPAY_ID,
