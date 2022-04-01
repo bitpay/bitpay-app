@@ -8,7 +8,11 @@ import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {NavScreenParams, RootStackParamList} from '../../Root';
-import {AppIdentity, HomeCarouselConfig, HomeCarouselLayoutType} from './app.models';
+import {
+  AppIdentity,
+  HomeCarouselConfig,
+  HomeCarouselLayoutType,
+} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
 
 type AppReduxPersistBlackList = [
