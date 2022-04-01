@@ -53,7 +53,7 @@ const CountryCode = styled(BaseText)`
 const SearchContainer = styled(SectionContainer)`
   background-color: ${({theme}) => theme.colors.background};
   padding-bottom: 5px;
-  padding-top: 5px;
+  padding-top: 30px;
   z-index: 1;
 `;
 

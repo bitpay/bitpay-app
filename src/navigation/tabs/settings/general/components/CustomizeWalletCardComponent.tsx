@@ -58,7 +58,6 @@ const CustomizeWalletCardComponent: React.FC<
   onPress: () => void;
   checked: boolean;
 }) => {
-  const walletInfo = wallets.slice(0, WALLET_DISPLAY_LIMIT);
   const remainingAssetCount =
     wallets.length > WALLET_DISPLAY_LIMIT
       ? wallets.length - WALLET_DISPLAY_LIMIT
@@ -66,7 +65,7 @@ const CustomizeWalletCardComponent: React.FC<
 
   const HeaderComponent = (
     <HeaderImg>
-      {walletInfo.map((wallet, index) => {
+      {wallets.slice(0, WALLET_DISPLAY_LIMIT).map((wallet, index) => {
         const {id, img} = wallet;
         return (
           wallet && (

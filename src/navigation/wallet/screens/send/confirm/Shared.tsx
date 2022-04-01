@@ -14,8 +14,10 @@ import {
 } from '../../../../../components/styled/Containers';
 import React, {ReactChild} from 'react';
 import styled from 'styled-components/native';
-import {ScrollView} from 'react-native';
+import {Pressable, ScrollView, View} from 'react-native';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
+import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
+import ChevronRightSvg from '../../../../../../assets/img/angle-right.svg';
 
 // Styled
 export const ConfirmContainer = styled.SafeAreaView`
@@ -104,26 +106,43 @@ export const SendingTo = ({
 export const Fee = ({
   fee,
   hr,
+  onPress,
+  currencyAbbreviation,
 }: {
   fee: TxDetailsFee | undefined;
+  currencyAbbreviation: string;
   hr?: boolean;
+  onPress?: () => void;
 }): JSX.Element | null => {
   if (fee) {
     const {feeLevel, cryptoAmount, fiatAmount, percentageOfTotalAmount} = fee;
     return (
       <>
-        <DetailContainer>
-          <DetailRow>
-            <H7>Miner fee</H7>
-            <DetailColumn>
-              <H5>{feeLevel.toUpperCase()}</H5>
-              <H6>{cryptoAmount}</H6>
-              <H7>
-                {fiatAmount} ({percentageOfTotalAmount} of total amount)
-              </H7>
-            </DetailColumn>
-          </DetailRow>
-        </DetailContainer>
+        <Pressable disabled={!onPress} onPress={onPress}>
+          <DetailContainer>
+            <DetailRow>
+              <H7>Miner fee</H7>
+              <DetailColumn>
+                {feeLevel && (
+                  <H5>
+                    {GetFeeOptions(currencyAbbreviation)[
+                      feeLevel
+                    ].toUpperCase()}
+                  </H5>
+                )}
+                <H6>{cryptoAmount}</H6>
+                <H7>
+                  {fiatAmount} ({percentageOfTotalAmount} of total amount)
+                </H7>
+              </DetailColumn>
+              {onPress ? (
+                <View style={{marginLeft: 10}}>
+                  <ChevronRightSvg />
+                </View>
+              ) : null}
+            </DetailRow>
+          </DetailContainer>
+        </Pressable>
         {hr && <Hr />}
       </>
     );
@@ -199,4 +218,26 @@ export const Amount = ({
   } else {
     return null;
   }
+};
+
+export const SharedDetailRow = ({
+  description,
+  value,
+  hr,
+}: {
+  description: string;
+  value: number | string;
+  hr?: boolean;
+}): JSX.Element | null => {
+  return (
+    <>
+      <DetailContainer>
+        <DetailRow>
+          <H7>{description}</H7>
+          <H7>{value}</H7>
+        </DetailRow>
+      </DetailContainer>
+      {hr && <Hr />}
+    </>
+  );
 };

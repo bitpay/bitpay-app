@@ -1,7 +1,7 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {Platform} from 'react-native';
 import styled from 'styled-components/native';
-import Button from '../../../components/button/Button';
+import Button, {ButtonState} from '../../../components/button/Button';
 import {
   ActionContainer,
   CtaContainer,
@@ -17,20 +17,29 @@ import {
 } from '../styled/WalletConnectContainers';
 import {HeaderTitle} from '../styled/WalletConnectText';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
-import {useDispatch, useSelector} from 'react-redux';
-import {RootState} from '../../../store';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   walletConnectApproveCallRequest,
+  walletConnectPersonalSign,
   walletConnectRejectCallRequest,
+  walletConnectSignTypedData,
+  walletConnectSignTypedDataLegacy,
 } from '../../../store/wallet-connect/wallet-connect.effects';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Clipboard from '@react-native-community/clipboard';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {IWCRequest} from '../../../store/wallet-connect/wallet-connect.models';
+import {Wallet} from '../../../store/wallet/wallet.models';
+import {sleep} from '../../../utils/helper-methods';
+import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
+import {BWCErrorMessage} from '../../../constants/BWCError';
+import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
 export type WalletConnectRequestDetailsParamList = {
   peerId: string;
   requestId: number;
+  wallet: Wallet;
 };
 
 const RequestDetailsContainer = styled.View`
@@ -80,35 +89,34 @@ const MessageTextContainer = styled.TouchableOpacity`
 
 const WalletConnectRequestDetails = () => {
   const {
-    params: {peerId, requestId},
+    params: {peerId, requestId, wallet},
   } = useRoute<RouteProp<{params: WalletConnectRequestDetailsParamList}>>();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [address, setAddress] = useState('');
   const [message, setMessage] = useState('');
+  const [approveButtonState, setApproveButtonState] = useState<ButtonState>();
+  const [rejectButtonState, setRejectButtonState] = useState<ButtonState>();
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
   const navigation = useNavigation();
-  const request: IWCRequest | undefined = useSelector(
-    ({WALLET_CONNECT}: RootState) => {
-      return WALLET_CONNECT.requests.find(req => req.payload.id === requestId);
-    },
-  );
+  const request: IWCRequest | undefined = useAppSelector(({WALLET_CONNECT}) => {
+    return WALLET_CONNECT.requests.find(req => req.payload.id === requestId);
+  });
 
   useEffect(() => {
     if (!request) {
-      navigation.goBack();
-    } else {
-      request.payload.method === 'eth_signTypedData' ||
-      request.payload.method === 'eth_sign' ||
-      request.payload.method === 'eth_signTypedData_v1' ||
-      request.payload.method === 'eth_signTypedData_v3' ||
-      request.payload.method === 'eth_signTypedData_v4'
-        ? setAddress(request.payload.params[0])
-        : setAddress(request.payload.params[1]);
-
-      request.payload.method === 'personal_sign'
-        ? setMessage(request.payload.params[0])
-        : setMessage(request.payload.params[1]);
+      return;
     }
+    request.payload.method === 'eth_signTypedData' ||
+    request.payload.method === 'eth_signTypedData_v1' ||
+    request.payload.method === 'eth_signTypedData_v3' ||
+    request.payload.method === 'eth_signTypedData_v4' ||
+    request.payload.method === 'eth_sign'
+      ? setAddress(request.payload.params[0])
+      : setAddress(request.payload.params[1]);
+
+    request.payload.method === 'personal_sign'
+      ? setMessage(request.payload.params[0])
+      : setMessage(request.payload.params[1]);
   }, [request, navigation, setAddress, setMessage]);
 
   const copyToClipboard = (value: string, type: string) => {
@@ -133,6 +141,113 @@ const WalletConnectRequestDetails = () => {
 
     return () => clearTimeout(timer);
   }, [clipboardObj]);
+
+  const goToWalletConnectHome = async () => {
+    await sleep(500);
+    navigation.goBack();
+  };
+
+  const rejectRequest = async () => {
+    try {
+      setRejectButtonState('loading');
+      const response = {
+        id: request?.payload.id,
+        error: {message: 'User rejected call request'},
+      };
+      await dispatch(walletConnectRejectCallRequest(peerId, response));
+      setRejectButtonState('success');
+      goToWalletConnectHome();
+    } catch (e) {
+      setRejectButtonState('failed');
+      await showErrorMessage(
+        CustomErrorMessage({
+          errMsg: BWCErrorMessage(e),
+          title: 'Uh oh, something went wrong',
+          action: () => {
+            setRejectButtonState(undefined);
+          },
+        }),
+      );
+    }
+  };
+
+  const approveRequest = async () => {
+    try {
+      haptic('impactLight');
+      setApproveButtonState('loading');
+      if (!request) {
+        return;
+      }
+
+      let result: any;
+      if (
+        wallet.receiveAddress &&
+        wallet.receiveAddress.toLowerCase() === address.toLowerCase()
+      ) {
+        switch (request.payload.method) {
+          case 'eth_signTypedData':
+          case 'eth_signTypedData_v3':
+          case 'eth_signTypedData_v4':
+            result = (await dispatch<any>(
+              walletConnectSignTypedData(JSON.parse(message), wallet),
+            )) as any;
+            break;
+          case 'eth_signTypedData_v1':
+            result = (await dispatch<any>(
+              walletConnectSignTypedDataLegacy(message, wallet),
+            )) as any;
+            break;
+          case 'personal_sign':
+          case 'eth_sign':
+            result = (await dispatch<any>(
+              walletConnectPersonalSign(message, wallet),
+            )) as any;
+            break;
+          default:
+            throw `Method not supported: ${request.payload.method}`;
+        }
+      } else {
+        throw 'Address requested does not match active account';
+      }
+      await dispatch(
+        walletConnectApproveCallRequest(peerId, {
+          id: request.payload.id,
+          result,
+        }),
+      );
+      setApproveButtonState('success');
+      goToWalletConnectHome();
+    } catch (err) {
+      setApproveButtonState('failed');
+      switch (err) {
+        case 'invalid password':
+        case 'password canceled':
+          await sleep(800);
+          setApproveButtonState('loading');
+          await sleep(200);
+          setApproveButtonState(undefined);
+          break;
+        default:
+          await showErrorMessage(
+            CustomErrorMessage({
+              errMsg: BWCErrorMessage(err),
+              title: 'Uh oh, something went wrong',
+              action: () => {
+                setApproveButtonState(undefined);
+              },
+            }),
+          );
+      }
+    }
+  };
+
+  const showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
 
   return (
     <WalletConnectContainer>
@@ -184,31 +299,17 @@ const WalletConnectRequestDetails = () => {
         <CtaContainer>
           <ActionContainer>
             <Button
+              state={approveButtonState}
               buttonStyle={'primary'}
-              disabled={true}
-              onPress={() => {
-                // TODO: approve req
-                // TODO: show success screen
-                const response = {
-                  id: 0,
-                  result: '',
-                };
-                dispatch(walletConnectApproveCallRequest(peerId, response));
-              }}>
+              onPress={approveRequest}>
               Approve
             </Button>
           </ActionContainer>
           <ActionContainer>
             <Button
+              state={rejectButtonState}
               buttonStyle={'secondary'}
-              onPress={() => {
-                const response = {
-                  id: request?.payload.id,
-                  error: {message: 'User rejected call request'},
-                };
-                // TODO: show reject message before go back
-                dispatch(walletConnectRejectCallRequest(peerId, response));
-              }}>
+              onPress={rejectRequest}>
               Reject
             </Button>
           </ActionContainer>

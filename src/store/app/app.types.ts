@@ -6,7 +6,7 @@ import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/Ong
 import {Network} from '../../constants';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {NavScreenParams, RootStackParamList} from '../../Root';
-import {AppIdentity} from './app.models';
+import {AppIdentity, HomeCarouselConfig, HomeCarouselLayoutType} from './app.models';
 
 export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
@@ -38,6 +38,12 @@ export enum AppActionTypes {
   SHOW_BLUR = 'APP/SHOW_BLUR',
   SHOW_PORTFOLIO_VALUE = 'APP/SHOW_PORTFOLIO_VALUE',
   BRAZE_CONTENT_CARDS_FETCHED = 'APP/BRAZE_CONTENT_CARDS_FETCHED',
+  SHOW_BIOMETRIC_MODAL = 'APP/SHOW_BIOMETRIC_MODAL',
+  DISMISS_BIOMETRIC_MODAL = 'APP/DISMISS_BIOMETRIC_MODAL',
+  BIOMETRIC_LOCK_ACTIVE = 'APP/BIOMETRIC_LOCK_ACTIVE',
+  LOCK_AUTHORIZED_UNTIL = 'APP/LOCK_AUTHORIZED_UNTIL',
+  SET_HOME_CAROUSEL_CONFIG = 'APP/SET_HOME_CAROUSEL_CONFIG',
+  SET_HOME_CAROUSEL_LAYOUT_TYPE = 'APP/SET_HOME_CAROUSEL_LAYOUT_TYPE',
 }
 
 interface NetworkChanged {
@@ -159,6 +165,22 @@ interface PinBannedUntil {
   type: typeof AppActionTypes.PIN_BANNED_UNTIL;
   payload: number | undefined;
 }
+interface ShowBiometricModal {
+  type: typeof AppActionTypes.SHOW_BIOMETRIC_MODAL;
+}
+
+interface DismissBiometricModal {
+  type: typeof AppActionTypes.DISMISS_BIOMETRIC_MODAL;
+}
+interface BiometricLockActive {
+  type: typeof AppActionTypes.BIOMETRIC_LOCK_ACTIVE;
+  payload: boolean;
+}
+
+interface LockAuthorizedUntil {
+  type: typeof AppActionTypes.LOCK_AUTHORIZED_UNTIL;
+  payload: number | undefined;
+}
 
 interface ShowBlur {
   type: typeof AppActionTypes.SHOW_BLUR;
@@ -173,6 +195,16 @@ interface ShowPortfolioValue {
 interface BrazeContentCardsFetched {
   type: typeof AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED;
   payload: {contentCards: ContentCard[]};
+}
+
+interface SetHomeCarouselConfig {
+  type: typeof AppActionTypes.SET_HOME_CAROUSEL_CONFIG;
+  payload: HomeCarouselConfig[] | HomeCarouselConfig;
+}
+
+interface SetHomeCarouselLayoutType {
+  type: typeof AppActionTypes.SET_HOME_CAROUSEL_LAYOUT_TYPE;
+  payload: HomeCarouselLayoutType;
 }
 
 export type AppActionType =
@@ -204,4 +236,10 @@ export type AppActionType =
   | PinBannedUntil
   | ShowBlur
   | ShowPortfolioValue
-  | BrazeContentCardsFetched;
+  | BrazeContentCardsFetched
+  | ShowBiometricModal
+  | DismissBiometricModal
+  | BiometricLockActive
+  | LockAuthorizedUntil
+  | SetHomeCarouselConfig
+  | SetHomeCarouselLayoutType;

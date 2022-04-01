@@ -41,7 +41,7 @@ const ModalHeader = styled.View`
 `;
 
 const CloseModalButton = styled.TouchableOpacity`
-  margin: 15px 0;
+  margin: 15px;
   padding: 5px;
   height: 41px;
   width: 41px;
@@ -113,6 +113,7 @@ export interface AmountParamList {
     opts?: {sendMax?: boolean},
   ) => void;
   currencyAbbreviation?: string;
+  fiatCurrencyAbbreviation?: string;
   opts?: {
     hideSendMax?: boolean;
   };
@@ -125,10 +126,17 @@ interface AmountProps {
 
 const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss}) => {
   const route = useRoute<RouteProp<WalletStackParamList, 'Amount'>>();
-  const {onAmountSelected, currencyAbbreviation, opts} = route.params;
+  const {
+    onAmountSelected,
+    currencyAbbreviation,
+    fiatCurrencyAbbreviation,
+    opts,
+  } = route.params;
   const navigation = useNavigation();
   const theme = useTheme();
   const [buttonState, setButtonState] = useState<ButtonState>();
+
+  const fiatCurrency = fiatCurrencyAbbreviation || 'USD';
 
   // flag for primary selector type
   const [rate, setRate] = useState(0);
@@ -138,12 +146,12 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss}) => {
     displayEquivalentAmount: '0',
     // amount to be sent to proposal creation (sats)
     amount: '0',
-    currency: currencyAbbreviation ? currencyAbbreviation : 'USD',
-    primaryIsFiat: currencyAbbreviation === 'USD' ? true : false,
+    currency: currencyAbbreviation ? currencyAbbreviation : fiatCurrency,
+    primaryIsFiat: currencyAbbreviation === fiatCurrency ? true : false,
   });
   const swapList = currencyAbbreviation
-    ? [...new Set([currencyAbbreviation, 'USD'])]
-    : ['USD'];
+    ? [...new Set([currencyAbbreviation, fiatCurrency])]
+    : [fiatCurrency];
 
   const allRates = useAppSelector(({WALLET}) => WALLET.rates);
   const [curVal, setCurVal] = useState('');
@@ -163,7 +171,7 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss}) => {
     // if added for dev (hot reload)
     if (!primaryIsFiat && allRates[currency.toLowerCase()]) {
       const fiatRate = allRates[currency.toLowerCase()].find(
-        r => r.code === 'USD',
+        r => r.code === fiatCurrency,
       )!.rate;
       setRate(fiatRate);
     }
@@ -296,7 +304,7 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss}) => {
                     primaryIsFiat: !primaryIsFiat,
                     displayAmount: '0',
                     displayEquivalentAmount: primaryIsFiat
-                      ? formatFiatAmount(0, 'USD')
+                      ? formatFiatAmount(0, fiatCurrency)
                       : '0',
                   }));
                 }}

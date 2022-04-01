@@ -10,6 +10,7 @@ import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoSt
 import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoStack';
 import {RootStackParamList, RootStacks} from '../../Root';
 import {useLogger} from '.';
+import {TabsScreens} from '../../navigation/tabs/TabsStack';
 
 export const useDeeplinks = () => {
   const dispatch = useDispatch();
@@ -53,9 +54,13 @@ export const useDeeplinks = () => {
             [BitpayIdScreens.PAIR]: 'wallet-card/pairing',
           },
         },
-        [RootStacks.CARD]: {
+        [RootStacks.TABS]: {
           screens: {
-            [CardScreens.HOME]: 'wallet-card/dashboard/:id',
+            [TabsScreens.CARD]: {
+              screens: {
+                [CardScreens.HOME]: 'wallet-card/dashboard/:id',
+              },
+            },
           },
         },
         [RootStacks.GIFT_CARD_DEEPLINK]: 'giftcard',

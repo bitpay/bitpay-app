@@ -8,7 +8,7 @@ import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {NavScreenParams, RootStackParamList} from '../../Root';
-import {AppIdentity} from './app.models';
+import {AppIdentity, HomeCarouselConfig, HomeCarouselLayoutType} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
 
 type AppReduxPersistBlackList = [
@@ -19,6 +19,9 @@ type AppReduxPersistBlackList = [
   'showPinModal',
   'pinModalConfig',
   'showBottomNotificationModal',
+  'showBiometricModal',
+  'dismissBiometricModal',
+  'checkingBiometric',
 ];
 export const appReduxPersistBlackList: AppReduxPersistBlackList = [
   'appIsLoading',
@@ -28,6 +31,9 @@ export const appReduxPersistBlackList: AppReduxPersistBlackList = [
   'showPinModal',
   'pinModalConfig',
   'showBottomNotificationModal',
+  'showBiometricModal',
+  'dismissBiometricModal',
+  'checkingBiometric',
 ];
 
 export interface AppState {
@@ -58,6 +64,11 @@ export interface AppState {
   defaultLanguage: string;
   showPortfolioValue: boolean;
   brazeContentCards: ContentCard[];
+  showBiometricModal: boolean;
+  biometricLockActive: boolean;
+  lockAuthorizedUntil: number | undefined;
+  homeCarouselConfig: HomeCarouselConfig[] | [];
+  homeCarouselLayoutType: HomeCarouselLayoutType;
 }
 
 const initialState: AppState = {
@@ -97,6 +108,11 @@ const initialState: AppState = {
   defaultLanguage: i18n.language || 'en',
   showPortfolioValue: true,
   brazeContentCards: [],
+  showBiometricModal: false,
+  biometricLockActive: false,
+  lockAuthorizedUntil: undefined,
+  homeCarouselConfig: [],
+  homeCarouselLayoutType: 'carousel',
 };
 
 export const appReducer = (
@@ -281,6 +297,52 @@ export const appReducer = (
       return {
         ...state,
         brazeContentCards: action.payload.contentCards,
+      };
+
+    case AppActionTypes.SHOW_BIOMETRIC_MODAL:
+      return {
+        ...state,
+        showBiometricModal: true,
+      };
+
+    case AppActionTypes.DISMISS_BIOMETRIC_MODAL:
+      return {
+        ...state,
+        showBiometricModal: false,
+      };
+
+    case AppActionTypes.BIOMETRIC_LOCK_ACTIVE:
+      return {
+        ...state,
+        biometricLockActive: action.payload,
+      };
+
+    case AppActionTypes.LOCK_AUTHORIZED_UNTIL:
+      return {
+        ...state,
+        lockAuthorizedUntil: action.payload,
+      };
+
+    case AppActionTypes.SET_HOME_CAROUSEL_CONFIG:
+      if (state.homeCarouselConfig) {
+        if (Array.isArray(action.payload)) {
+          return {
+            ...state,
+            homeCarouselConfig: action.payload,
+          };
+        }
+
+        return {
+          ...state,
+          homeCarouselConfig: [...state.homeCarouselConfig, action.payload],
+        };
+      }
+      return state;
+
+    case AppActionTypes.SET_HOME_CAROUSEL_LAYOUT_TYPE:
+      return {
+        ...state,
+        homeCarouselLayoutType: action.payload,
       };
 
     default:

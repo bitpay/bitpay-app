@@ -5,7 +5,7 @@ import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
-import {AppIdentity} from './app.models';
+import {AppIdentity, HomeCarouselConfig, HomeCarouselLayoutType} from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
 
 export const networkChanged = (network: Network): AppActionType => ({
@@ -153,4 +153,38 @@ export const brazeContentCardsFetched = (
 ): AppActionType => ({
   type: AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED,
   payload: {contentCards},
+});
+
+export const showBiometricModal = (): AppActionType => ({
+  type: AppActionTypes.SHOW_BIOMETRIC_MODAL,
+});
+
+export const dismissBiometricModal = (): AppActionType => ({
+  type: AppActionTypes.DISMISS_BIOMETRIC_MODAL,
+});
+
+export const biometricLockActive = (active: boolean): AppActionType => ({
+  type: AppActionTypes.BIOMETRIC_LOCK_ACTIVE,
+  payload: active,
+});
+
+export const lockAuthorizedUntil = (
+  authorizedUntil: number | undefined,
+): AppActionType => ({
+  type: AppActionTypes.LOCK_AUTHORIZED_UNTIL,
+  payload: authorizedUntil,
+});
+
+export const setHomeCarouselConfig = (
+  update: HomeCarouselConfig[] | HomeCarouselConfig,
+): AppActionType => ({
+  type: AppActionTypes.SET_HOME_CAROUSEL_CONFIG,
+  payload: update,
+});
+
+export const setHomeCarouselLayoutType = (
+  update: HomeCarouselLayoutType,
+): AppActionType => ({
+  type: AppActionTypes.SET_HOME_CAROUSEL_LAYOUT_TYPE,
+  payload: update,
 });

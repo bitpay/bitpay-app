@@ -42,6 +42,7 @@ import AddingOptions, {AddingOptionsParamList} from './screens/AddingOptions';
 import UpdateKeyOrWalletName from './screens/UpdateKeyOrWalletName';
 import RequestSpecificAmountQR from './screens/request-specific-amount/RequestSpecificAmountQR';
 import TransactionDetails from './screens/TransactionDetails';
+import TransactionProposalDetails from './screens/TransactionProposalDetails';
 import GlobalSelect, {GlobalSelectParamList} from './screens/GlobalSelect';
 import GiftCardConfirm, {
   GiftCardConfirmParamList,
@@ -85,6 +86,7 @@ export type WalletStackParamList = {
   AddingOptions: AddingOptionsParamList;
   RequestSpecificAmountQR: {wallet: WalletModel; requestAmount: number};
   TransactionDetails: {wallet: WalletModel; transaction: any};
+  TransactionProposalDetails: {wallet: WalletModel; transaction: any; key: Key};
   GlobalSelect: GlobalSelectParamList;
   WalletInformation: {wallet: WalletModel};
   ExportWallet: {
@@ -127,6 +129,7 @@ export enum WalletScreens {
   ADDING_OPTIONS = 'AddingOptions',
   REQUEST_SPECIFIC_AMOUNT_QR = 'RequestSpecificAmountQR',
   TRANSACTION_DETAILS = 'TransactionDetails',
+  TRANSACTION_PROPOSAL_DETAILS = 'TransactionProposalDetails',
   GLOBAL_SELECT = 'GlobalSelect',
   WALLET_INFORMATION = 'WalletInformation',
   EXPORT_WALLET = 'ExportWallet',
@@ -279,6 +282,13 @@ const WalletStack = () => {
           }}
           name={WalletScreens.TRANSACTION_DETAILS}
           component={TransactionDetails}
+        />
+        <Wallet.Screen
+          options={{
+            ...TransitionPresets.ModalPresentationIOS,
+          }}
+          name={WalletScreens.TRANSACTION_PROPOSAL_DETAILS}
+          component={TransactionProposalDetails}
         />
         <Wallet.Screen
           options={{

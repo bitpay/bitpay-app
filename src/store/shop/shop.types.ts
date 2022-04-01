@@ -4,6 +4,7 @@ import {
   DirectIntegrationMap,
   GiftCard,
   GiftCardOrder,
+  PhoneCountryInfo,
   UnsoldGiftCard,
 } from './shop.models';
 
@@ -14,6 +15,8 @@ export enum ShopActionTypes {
   FAILED_CREATE_GIFT_CARD_INVOICE = 'SHOP/FAILED_CREATE_GIFT_CARD_INVOICE',
   INITIALIZED_UNSOLD_GIFT_CARD = 'SHOP/INITIALIZED_UNSOLD_GIFT_CARD',
   DELETED_UNSOLD_GIFT_CARD = 'SHOP/DELETED_UNSOLD_GIFT_CARD',
+  UPDATED_EMAIL_ADDRESS = 'SHOP/UPDATED_EMAIL_ADDRESS',
+  UPDATED_PHONE = 'SHOP/UPDATED_PHONE',
   REDEEMED_GIFT_CARD = 'SHOP/REDEEMED_GIFT_CARD',
   CLEARED_GIFT_CARDS = 'SHOP/CLEARED_GIFT_CARDS',
 }
@@ -54,7 +57,19 @@ interface redeemedGiftCard {
     giftCard: GiftCard;
   };
 }
-
+interface updatedEmailAddress {
+  type: typeof ShopActionTypes.UPDATED_EMAIL_ADDRESS;
+  payload: {
+    email: string;
+  };
+}
+interface updatedPhone {
+  type: typeof ShopActionTypes.UPDATED_PHONE;
+  payload: {
+    phone: string;
+    phoneCountryInfo: PhoneCountryInfo;
+  };
+}
 interface clearedGiftCards {
   type: typeof ShopActionTypes.CLEARED_GIFT_CARDS;
 }
@@ -67,4 +82,6 @@ export type ShopActionType =
   | initializedUnsoldGiftCard
   | deletedUnsoldGiftCard
   | redeemedGiftCard
+  | updatedEmailAddress
+  | updatedPhone
   | clearedGiftCards;

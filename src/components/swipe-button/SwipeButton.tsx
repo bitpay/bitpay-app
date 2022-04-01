@@ -7,9 +7,14 @@ import haptic from '../haptic-feedback/haptic';
 export interface SwipeButtonConfig {
   title: string;
   onSwipeComplete: () => void;
+  forceReset?: boolean;
 }
 
-const SwipeButton = ({title, onSwipeComplete}: SwipeButtonConfig) => {
+const SwipeButton = ({
+  title,
+  onSwipeComplete,
+  forceReset,
+}: SwipeButtonConfig) => {
   return (
     <RNSwipeButton
       containerStyles={{borderRadius: 50}}
@@ -31,9 +36,11 @@ const SwipeButton = ({title, onSwipeComplete}: SwipeButtonConfig) => {
       titleStyles={{fontWeight: '500'}}
       // shouldResetAfterSuccess={true} // Button resets automatically after swipe success
       // resetAfterSuccessAnimDelay={3000} // Reset after 3s
-      // forceReset={ reset => {
-      //   forceResetLastButton = reset // Calling "reset" will reset the swipe thumb.
-      // }}
+      forceReset={(reset: any) => {
+        if (forceReset) {
+          reset(); // Calling "reset" will reset the swipe thumb.
+        }
+      }}
     />
   );
 };

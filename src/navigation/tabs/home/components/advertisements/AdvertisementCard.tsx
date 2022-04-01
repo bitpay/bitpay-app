@@ -82,6 +82,11 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
 
     haptic('impactLight');
 
+    if ('debug') {
+      console.log('TODO: handle performance issues');
+      return;
+    }
+
     if (openURLInWebView) {
       dispatch(AppEffects.openUrlWithInAppBrowser(url));
     } else {

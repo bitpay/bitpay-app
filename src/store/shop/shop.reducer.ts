@@ -5,6 +5,7 @@ import {
   CategoriesAndCurations,
   DirectIntegrationMap,
   GiftCard,
+  PhoneCountryInfo,
   UnsoldGiftCard,
 } from './shop.models';
 import {ShopActionType, ShopActionTypes} from './shop.types';
@@ -14,8 +15,12 @@ export const shopReduxPersistBlackList: ShopReduxPersistBlackList = [];
 
 export interface ShopState {
   availableCardMap: AvailableCardMap;
+  supportedCardMap: AvailableCardMap;
   categoriesAndCurations: CategoriesAndCurations;
   integrations: DirectIntegrationMap;
+  email: string;
+  phone: string;
+  phoneCountryInfo: PhoneCountryInfo;
   giftCards: {
     [key in Network]: (GiftCard | UnsoldGiftCard)[];
   };
@@ -23,8 +28,15 @@ export interface ShopState {
 
 const initialState: ShopState = {
   availableCardMap: {},
+  supportedCardMap: {},
   categoriesAndCurations: {curated: {}, categories: {}},
   integrations: {},
+  email: '',
+  phone: '',
+  phoneCountryInfo: {
+    phoneCountryCode: '',
+    countryIsoCode: '',
+  },
   giftCards: {
     [Network.mainnet]: [],
     [Network.testnet]: [],
@@ -42,6 +54,10 @@ export const shopReducer = (
       return {
         ...state,
         availableCardMap,
+        supportedCardMap: {
+          ...(state.supportedCardMap || {}),
+          ...availableCardMap,
+        },
         categoriesAndCurations,
         integrations,
       };
@@ -77,6 +93,19 @@ export const shopReducer = (
               : card,
           ),
         },
+      };
+    case ShopActionTypes.UPDATED_EMAIL_ADDRESS:
+      const {email} = action.payload;
+      return {
+        ...state,
+        email,
+      };
+    case ShopActionTypes.UPDATED_PHONE:
+      const {phone, phoneCountryInfo} = action.payload;
+      return {
+        ...state,
+        phone,
+        phoneCountryInfo,
       };
     case ShopActionTypes.CLEARED_GIFT_CARDS:
       return {

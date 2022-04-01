@@ -280,3 +280,27 @@ export const SpeedUpEthTransaction = (
     ],
   };
 };
+
+export const MinFeeWarning = (gotIt: () => void): BottomNotificationConfig => {
+  return {
+    type: 'warning',
+    title: 'Warning!',
+    message:
+      'The fee you are using is lower than Super Economy level. It’s not recommended as this transaction may not confirm or will take very long to confirm.',
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: 'Change Miner Fee',
+        action: () => {},
+        primary: true,
+      },
+      {
+        text: 'Got It',
+        action: () => {
+          gotIt();
+        },
+        primary: false,
+      },
+    ],
+  };
+};

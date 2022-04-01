@@ -59,11 +59,6 @@ const CustomizeHomeCard = ({body, footer, header}: CustomizeHomeCardProps) => {
           {body.title}
         </CardBodyHeader>
       )}
-      {body.value && (
-        <CardPrice style={textStyle} numberOfLines={1} ellipsizeMode={'tail'}>
-          {body.value}
-        </CardPrice>
-      )}
     </View>
   );
 

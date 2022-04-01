@@ -20,3 +20,10 @@ export interface AppIdentity {
    */
   sin: string;
 }
+
+export interface HomeCarouselConfig {
+  id: string;
+  show: boolean;
+}
+
+export type HomeCarouselLayoutType = 'carousel' | 'listView';

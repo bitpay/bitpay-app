@@ -19,6 +19,7 @@ import {Effect} from '../index';
 import {LogActions} from '../log';
 import {ShopEffects} from '../shop';
 import {BitPayIdActions} from './index';
+import {setHomeCarouselConfig} from '../app/app.actions';
 
 interface StartLoginParams {
   email: string;
@@ -400,11 +401,19 @@ const startPairAndLoadUser =
 export const startDisconnectBitPayId =
   (): Effect => async (dispatch, getState) => {
     try {
-      const {APP, BITPAY_ID} = getState();
+      const {APP, BITPAY_ID, CARD} = getState();
       const {isAuthenticated, csrfToken} = BITPAY_ID.session;
 
       if (isAuthenticated && csrfToken) {
         AuthApi.logout(APP.network, csrfToken);
+      }
+
+      if (CARD.cards[APP.network].length) {
+        dispatch(
+          setHomeCarouselConfig(
+            APP.homeCarouselConfig.filter(item => item.id !== 'bitpayCard'),
+          ),
+        );
       }
 
       dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));

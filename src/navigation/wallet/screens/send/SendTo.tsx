@@ -363,13 +363,20 @@ const SendTo = () => {
                 wallet,
                 recipient,
                 amount: Number(amount),
+                ...opts,
               }),
             );
             setButtonState('success');
             await sleep(300);
             navigation.navigate('Wallet', {
               screen: 'Confirm',
-              params: {wallet, recipient, txp, txDetails},
+              params: {
+                wallet,
+                recipient,
+                txp,
+                txDetails,
+                amount: Number(amount),
+              },
             });
           } catch (err: any) {
             setButtonState('failed');
