@@ -73,6 +73,13 @@ export const createProposalAndBuildTxDetails =
           cachedFeeLevel[currencyAbbreviation] ||
           FeeLevels.NORMAL;
 
+        if (!feePerKb && tx.sendMax) {
+          feePerKb = await getFeeRatePerKb({
+            wallet,
+            feeLevel: feeLevel,
+          });
+        }
+
         // build transaction proposal options then create full proposal
         const txp = {
           ...(await buildTransactionProposal({
@@ -243,7 +250,9 @@ const buildTransactionProposal = (
 
       txp.amount = tx.amount = amount;
       txp.inputs = inputs;
+      // Either fee or feePerKb can be available
       txp.fee = fee;
+      txp.feePerKb = undefined;
     }
 
     // unconfirmed funds
