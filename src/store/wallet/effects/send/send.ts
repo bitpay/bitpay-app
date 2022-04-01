@@ -77,7 +77,7 @@ export const createProposalAndBuildTxDetails =
           cachedFeeLevel[currencyAbbreviation] ||
           FeeLevels.NORMAL;
 
-        if (!feePerKb) {
+        if (!feePerKb && tx.sendMax) {
           feePerKb = await getFeeRatePerKb({
             wallet,
             feeLevel: feeLevel,
@@ -112,7 +112,6 @@ export const createProposalAndBuildTxDetails =
               // building UI object for details
               const txDetails = buildTxDetails({
                 proposal,
-                feeLevel,
                 rates,
                 fiatCode: 'USD',
                 wallet,
@@ -138,7 +137,6 @@ export const createProposalAndBuildTxDetails =
  * */
 const buildTxDetails = ({
   proposal,
-  feeLevel,
   rates,
   fiatCode,
   wallet,
@@ -146,7 +144,6 @@ const buildTxDetails = ({
   invoice,
 }: {
   proposal: TransactionProposal;
-  feeLevel: string;
   rates: Rates;
   fiatCode: string;
   wallet: Wallet;
@@ -155,12 +152,12 @@ const buildTxDetails = ({
 }): TxDetails => {
   const {
     coin,
-    feeLevel = 'custom',
     fee,
     amount,
     gasPrice,
     gasLimit,
     nonce,
+    feeLevel = 'custom',
   } = proposal;
   const networkCost = invoice?.minerFees[coin.toUpperCase()]?.totalFee;
   const total = amount + fee;
@@ -222,11 +219,13 @@ const buildTransactionProposal = (
   tx: Partial<TransactionOptions>,
 ): Promise<object> => {
   return new Promise(async resolve => {
-    const {currency, feePerKb, payProUrl, sendMax, wallet} = tx;
+    const {currency, feePerKb, payProUrl, sendMax, wallet, feeLevel} = tx;
     // base tx
     const txp: Partial<TransactionProposal> = {
       coin: currency,
       chain: GetChain(currency!).toLowerCase(),
+      feePerKb,
+      ...(!feePerKb && {feeLevel}),
     };
     txp.invoiceID = tx.invoice?.id;
     // currency specific
@@ -255,7 +254,9 @@ const buildTransactionProposal = (
 
       txp.amount = tx.amount = amount;
       txp.inputs = inputs;
+      // Either fee or feePerKb can be available
       txp.fee = fee;
+      txp.feePerKb = undefined;
     }
 
     // unconfirmed funds

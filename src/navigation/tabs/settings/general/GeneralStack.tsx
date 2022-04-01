@@ -7,7 +7,7 @@ import {
 import {HeaderTitle} from '../../../../components/styled/Text';
 import GeneralRoot from './screens/GeneralRoot';
 import Theme from './screens/Theme';
-import CustomizeHome from './screens/CustomizeHome';
+import CustomizeHome from './screens/customize-home/CustomizeHome';
 import LanguageSettings from './screens/LanguageSettings';
 
 import {useTranslation} from 'react-i18next';
