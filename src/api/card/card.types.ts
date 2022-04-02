@@ -57,6 +57,14 @@ export interface FetchVirtualCardImageUrlsResponse {
   };
 }
 
+export interface UpdateCardLockResponse {
+  user: {
+    card: {
+      locked: boolean;
+    };
+  };
+}
+
 export interface UpdateCardNameResponse {
   user: {
     card: {

@@ -5,6 +5,7 @@ import {
   FetchOverviewResponse,
   FetchSettledTransactionsResponse,
   FetchVirtualCardImageUrlsResponse,
+  UpdateCardLockResponse,
   UpdateCardNameResponse,
 } from './card.types';
 import CardQueries from './card.queries';
@@ -148,6 +149,24 @@ const updateCardName = async (token: string, id: string, name: string) => {
   return data.data;
 };
 
+const updateCardLock = async (token: string, id: string, locked: boolean) => {
+  const query = CardMutations.LOCK_CARD(token, id, locked);
+
+  const {data} = await GraphQlApi.getInstance().request<UpdateCardLockResponse>(
+    query,
+  );
+
+  if (data.errors) {
+    throw new Error(
+      data.errors
+        .map(e => `${e.path ? e.path.join('.') + ': ' : ''}${e.message}`)
+        .join(',\n') || `Failed to update card lock status for ${id}`,
+    );
+  }
+
+  return data.data;
+};
+
 const CardApi = {
   fetchAll,
   fetchOne,
@@ -155,6 +174,7 @@ const CardApi = {
   fetchSettledTransactions,
   fetchVirtualCardImageUrls,
   updateCardName,
+  updateCardLock,
 };
 
 export default CardApi;
