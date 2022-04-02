@@ -250,6 +250,29 @@ export const startFetchVirtualCardImageUrls =
     }
   };
 
+  export const START_UPDATE_CARD_LOCK =
+  (id: string, locked: boolean): Effect =>
+  async (dispatch, getState) => {
+    try {
+      const {APP, BITPAY_ID} = getState();
+      const {network} = APP;
+      const token = BITPAY_ID.apiToken[network];
+
+      const res = await CardApi.updateCardLock(token, id, locked);
+      const isLocked = res.user.card.locked;
+
+      dispatch(CardActions.successUpdateCardLock(network, id, isLocked));
+    } catch (err) {
+      batch(() => {
+        dispatch(
+          LogActions.error(`Failed to update card lock status for ${id}`),
+        );
+        dispatch(LogActions.error(JSON.stringify(err)));
+        dispatch(CardActions.failedUpdateCardLock(id));
+      });
+    }
+  };
+
 export const START_UPDATE_CARD_NAME =
   (id: string, name: string): Effect =>
   async (dispatch, getState) => {

@@ -6,6 +6,7 @@ import {
   FetchSettledTransactionsStatus,
   FetchVirtualCardImageUrlsStatus,
   UpdateCardNameStatus,
+  UpdateCardLockStatus,
 } from './card.reducer';
 
 export const TTL = {
@@ -42,6 +43,9 @@ export enum CardActionTypes {
   SUCCESS_FETCH_VIRTUAL_IMAGE_URLS = 'CARD/SUCCESS_FETCH_VIRTUAL_IMAGE_URLS',
   FAILED_FETCH_VIRTUAL_IMAGE_URLS = 'CARD/FAILED_FETCH_VIRTUAL_IMAGE_URLS',
   UPDATE_FETCH_VIRTUAL_IMAGE_URLS_STATUS = 'CARD/UPDATE_FETCH_VIRTUAL_IMAGE_URLS_STATUS',
+  SUCCESS_UPDATE_CARD_LOCK = 'CARD/SUCCESS_UPDATE_CARD_LOCK',
+  FAILED_UPDATE_CARD_LOCK = 'CARD/FAILED_UPDATE_CARD_LOCK',
+  UPDATE_UPDATE_CARD_LOCK_STATUS = 'CARD/UPDATE_UPDATE_CARD_LOCK_STATUS',
   SUCCESS_UPDATE_CARD_NAME = 'CARD/SUCCESS_UPDATE_CARD_NAME',
   FAILED_UPDATE_CARD_NAME = 'CARD/FAILED_UPDATE_CARD_NAME',
   UPDATE_UPDATE_CARD_NAME_STATUS = 'CARD/UPDATE_UPDATE_CARD_NAME_STATUS',
@@ -124,6 +128,21 @@ interface UpdateFetchVirtualImageUrlsStatus {
   payload: FetchVirtualCardImageUrlsStatus;
 }
 
+interface SuccessUpdateCardLock {
+  type: CardActionTypes.SUCCESS_UPDATE_CARD_LOCK;
+  payload: {network: Network; id: string; locked: boolean};
+}
+
+interface FailedUpdateCardLock {
+  type: CardActionTypes.FAILED_UPDATE_CARD_LOCK;
+  payload: {id: string};
+}
+
+interface UpdateUpdateCardLockStatus {
+  type: CardActionTypes.UPDATE_UPDATE_CARD_LOCK_STATUS;
+  payload: {id: string; status: UpdateCardLockStatus};
+}
+
 interface SuccessUpdateCardName {
   type: CardActionTypes.SUCCESS_UPDATE_CARD_NAME;
   payload: {network: Network; id: string; nickname: string};
@@ -154,6 +173,9 @@ export type CardActionType =
   | SuccessFetchVirtualImageUrls
   | FailedFetchVirtualImageUrls
   | UpdateFetchVirtualImageUrlsStatus
+  | SuccessUpdateCardLock
+  | FailedUpdateCardLock
+  | UpdateUpdateCardLockStatus
   | SuccessUpdateCardName
   | FailedUpdateCardName
   | UpdateUpdateCardNameStatus;
