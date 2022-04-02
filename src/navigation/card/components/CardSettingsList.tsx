@@ -1,5 +1,5 @@
 import {StackNavigationProp} from '@react-navigation/stack';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {View} from 'react-native';
 import CustomizeCardIcon from '../../../../assets/img/customize-card.svg';
@@ -14,9 +14,10 @@ import {URL} from '../../../constants';
 import {CardBrand, CardProvider} from '../../../constants/card';
 import Dosh from '../../../lib/dosh';
 import {AppEffects} from '../../../store/app';
+import {CardActions, CardEffects} from '../../../store/card';
 import {Card} from '../../../store/card/card.models';
 import {LogActions} from '../../../store/log';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {CardStackParamList} from '../CardStack';
 import * as Styled from './CardSettingsList.styled';
 
@@ -48,13 +49,33 @@ const SettingsList: React.FC<SettingsListProps> = props => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const {card, navigation} = props;
-  const [lockPlaceholder, setLockPlaceholder] = useState(false);
+  const [localLockState, setLocalLockState] = useState(false);
+  const updateCardLockStatus = useAppSelector(
+    ({CARD}) => CARD.updateCardLockStatus[card.id],
+  );
 
   const openUrl = (url: string) => {
     dispatch(AppEffects.openUrlWithInAppBrowser(url));
   };
 
   const links = LINKS[card.brand || CardBrand.Visa];
+
+  const onLockToggled = (locked: boolean) => {
+    // set local lock state for immediate feedback, reset if request fails
+    setLocalLockState(locked);
+    dispatch(CardEffects.START_UPDATE_CARD_LOCK(card.id, locked));
+  };
+
+  useEffect(() => {
+    // whether success or fail, lockedByUser will be correct so update the local state and reset the flag
+    if (
+      updateCardLockStatus === 'success' ||
+      updateCardLockStatus === 'failed'
+    ) {
+      setLocalLockState(card.lockedByUser);
+      dispatch(CardActions.updateUpdateCardLockStatus(card.id, null));
+    }
+  }, [updateCardLockStatus, card.id]);
 
   return (
     <View>
@@ -86,9 +107,9 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
           <Styled.SettingsToggle
             Icon={LockIcon}
-            value={lockPlaceholder}
-            onChange={() => setLockPlaceholder(!lockPlaceholder)}>
-            LOCK CARD PLACEHOLDER
+            value={localLockState}
+            onChange={onLockToggled}>
+            Lock Card
           </Styled.SettingsToggle>
 
           <Hr />
