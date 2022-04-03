@@ -1,5 +1,5 @@
 import {Currencies} from '../../../../constants/currencies';
-import {DEEPLINK_PREFIX} from '../../../../constants/config';
+import {APP_NAME} from '../../../../constants/config';
 
 const PASSTHROUGH_URI_DEV = 'https://cmgustavo.github.io/website/simplex/';
 const PASSTHROUGH_URI_PROD = 'https://bws.bitpay.com/static/simplex/';
@@ -7,7 +7,7 @@ const PASSTHROUGH_URI_PROD = 'https://bws.bitpay.com/static/simplex/';
 const env = 'development'; // TODO: take the correct environment
 const simplexEnv = env == 'development' ? 'sandbox' : 'production';
 
-const appName = DEEPLINK_PREFIX;
+const appName = APP_NAME;
 
 export const simplexSupportedFiatCurrencies = [
   'AED',

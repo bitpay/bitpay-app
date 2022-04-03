@@ -47,7 +47,7 @@ import {BuyCryptoActions} from '../../../../store/buy-crypto';
 import {simplexPaymentData} from '../../../../store/buy-crypto/buy-crypto.models';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {Wallet} from '../../../../store/wallet/wallet.models';
-import {DEEPLINK_PREFIX} from '../../../../constants/config';
+import {APP_NAME} from '../../../../constants/config';
 import {isPaymentMethodSupported} from '../utils/buy-crypto-utils';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
 
@@ -595,9 +595,9 @@ const BuyCryptoOffers: React.FC = () => {
         _paymentMethod = 'debit-card';
         break;
     }
-    const appName = DEEPLINK_PREFIX;
+    const appName = APP_NAME;
     const redirectUrl =
-      appName +
+      APP_NAME +
       '://wyre?walletId=' +
       selectedWallet.id +
       '&destAmount=' +
