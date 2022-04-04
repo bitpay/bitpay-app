@@ -250,7 +250,7 @@ export const startFetchVirtualCardImageUrls =
     }
   };
 
-  export const START_UPDATE_CARD_LOCK =
+export const START_UPDATE_CARD_LOCK =
   (id: string, locked: boolean): Effect =>
   async (dispatch, getState) => {
     try {

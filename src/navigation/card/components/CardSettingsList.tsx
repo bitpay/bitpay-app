@@ -49,7 +49,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const {card, navigation} = props;
-  const [localLockState, setLocalLockState] = useState(false);
+  const [localLockState, setLocalLockState] = useState(card.lockedByUser);
   const updateCardLockStatus = useAppSelector(
     ({CARD}) => CARD.updateCardLockStatus[card.id],
   );
@@ -139,13 +139,19 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
           <Hr />
 
-          <Styled.SettingsLink
-            Icon={CustomizeCardIcon}
-            onPress={() => navigation.navigate('CustomizeVirtualCard', {card})}>
-            {t('Customize Virtual Card')}
-          </Styled.SettingsLink>
+          {card.cardType === 'virtual' ? (
+            <>
+              <Styled.SettingsLink
+                Icon={CustomizeCardIcon}
+                onPress={() =>
+                  navigation.navigate('CustomizeVirtualCard', {card})
+                }>
+                {t('Customize Virtual Card')}
+              </Styled.SettingsLink>
 
-          <Hr />
+              <Hr />
+            </>
+          ) : null}
 
           <Styled.SettingsLink
             Icon={UpdateIcon}
