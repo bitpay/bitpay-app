@@ -259,7 +259,7 @@ export const startFetchVirtualCardImageUrls =
       const token = BITPAY_ID.apiToken[network];
 
       const res = await CardApi.updateCardLock(token, id, locked);
-      const isLocked = res.user.card.locked;
+      const isLocked = res.user.card.locked === 'true';
 
       dispatch(CardActions.successUpdateCardLock(network, id, isLocked));
     } catch (err) {

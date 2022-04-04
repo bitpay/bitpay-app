@@ -173,8 +173,8 @@ const CardApi = {
   fetchOverview,
   fetchSettledTransactions,
   fetchVirtualCardImageUrls,
-  updateCardName,
   updateCardLock,
+  updateCardName,
 };
 
 export default CardApi;
