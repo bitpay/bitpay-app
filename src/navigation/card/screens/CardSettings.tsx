@@ -2,6 +2,7 @@ import {StackScreenProps} from '@react-navigation/stack';
 import React, {useCallback, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView} from 'react-native';
+import Animated, {Easing, FadeInDown} from 'react-native-reanimated';
 import Carousel from 'react-native-snap-carousel';
 import {SharedElement} from 'react-navigation-shared-element';
 import styled from 'styled-components/native';
@@ -97,15 +98,19 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
   }, []);
 
   const renderSettingsSlide = useCallback(
-    ({item}: {item: Card}) =>
-      route.params.id === item.id ? (
-        <SharedElement id={'card.dashboard.active-card'}>
+    ({item}: {item: Card}) => {
+      const isActive = item.cardType === currentTab;
+      const sharedTransitionId = isActive ? 'card.dashboard.active-card' : '';
+
+      return isActive ? (
+        <SharedElement id={sharedTransitionId}>
           <SettingsSlide card={item} />
         </SharedElement>
       ) : (
         <SettingsSlide card={item} />
-      ),
-    [route.params.id],
+      );
+    },
+    [currentTab],
   );
 
   return (
@@ -135,7 +140,6 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
           ) : null}
         </CardSettingsHeader>
       </CardSettingsContainer>
-
       <Carousel<Card>
         ref={carouselRef}
         data={cardsToShow}
@@ -149,9 +153,23 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
       />
 
       <CardSettingsContainer>
-        {currentCard ? (
-          <SettingsList card={currentCard} navigation={navigation} />
-        ) : null}
+        {cardsToShow.map(c => {
+          const isActive = c.cardType === currentTab;
+          const delay = 150;
+          const duration = 250;
+          const easing = Easing.linear;
+
+          const useTransition = cardsToShow.length > 1;
+          const transitionEnter = useTransition
+            ? FadeInDown.duration(duration).delay(delay).easing(easing)
+            : undefined;
+
+          return isActive ? (
+            <Animated.View key={c.id} entering={transitionEnter}>
+              <SettingsList card={c} navigation={navigation} />
+            </Animated.View>
+          ) : null;
+        })}
       </CardSettingsContainer>
     </ScrollView>
   );
