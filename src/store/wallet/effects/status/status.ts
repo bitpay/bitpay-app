@@ -156,7 +156,7 @@ export const startUpdateWalletStatus =
           return resolve();
         }
 
-        const lastKnownBalance = wallet.balance.fiat;
+        const cachedBalance = wallet.balance.fiat;
         const status = await updateWalletStatus({wallet, rates});
 
         dispatch(
@@ -169,7 +169,7 @@ export const startUpdateWalletStatus =
         // if balance has changed update key totalBalance
         if (
           network === Network.mainnet &&
-          status.balance.fiat !== lastKnownBalance
+          status.balance.fiat !== cachedBalance
         ) {
           const wallets = getState().WALLET.keys[key.id].wallets.filter(
             w => !w.hideWallet,
@@ -292,10 +292,10 @@ const updateWalletStatus = ({
   return new Promise(async resolve => {
     const {
       currencyAbbreviation,
-      balance: lastKnownBalance,
+      balance: cachedBalance,
       credentials: {network, token, multisigEthInfo},
       hideWallet,
-      pendingTxps: lastKnowPendingTxps,
+      pendingTxps: cachedPendingTxps,
     } = wallet;
 
     wallet.getStatus(
@@ -309,8 +309,8 @@ const updateWalletStatus = ({
       (err: Error, status: Status) => {
         if (err) {
           return resolve({
-            balance: lastKnownBalance,
-            pendingTxps: lastKnowPendingTxps,
+            balance: cachedBalance,
+            pendingTxps: cachedPendingTxps,
           });
         }
         try {
@@ -352,8 +352,8 @@ const updateWalletStatus = ({
           resolve({balance: newBalance, pendingTxps: newPendingTxps});
         } catch (err2) {
           resolve({
-            balance: lastKnownBalance,
-            pendingTxps: lastKnowPendingTxps,
+            balance: cachedBalance,
+            pendingTxps: cachedPendingTxps,
           });
         }
       },
