@@ -171,7 +171,7 @@ const Confirm = () => {
 
   let recipientData;
 
-  if (recipient.type && recipient.type == 'coinbase') {
+  if (recipient.type && recipient.type === 'coinbase') {
     recipientData = {
       recipientName: recipient.name || 'Coinbase',
       recipientAddress: sendingTo.recipientAddress,
@@ -185,7 +185,7 @@ const Confirm = () => {
     <ConfirmContainer>
       <DetailsList>
         <Header>Summary</Header>
-        <SendingTo recipient={sendingTo} hr />
+        <SendingTo recipient={recipientData} hr />
         <Fee
           onPress={
             isTxLevelAvailable()
