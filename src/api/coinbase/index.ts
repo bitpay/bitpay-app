@@ -10,6 +10,8 @@ import {
   CoinbaseExchangeRatesProps,
   CoinbaseErrorsProps,
   CoinbaseCreateAddressProps,
+  CoinbaseTransactionsProps,
+  CoinbaseTransactionProps,
 } from './coinbase.types';
 
 import {
@@ -28,17 +30,18 @@ const getOauthStateCode = (): string => {
 };
 
 const getTokenError = (): CoinbaseErrorsProps => {
-  return {errors: [{id: 'MISSING_TOKEN', message: 'Token not found'}]};
+  return {
+    errors: [{id: 'MISSING_ACCESS_TOKEN', message: 'Access Token not found'}],
+  };
 };
 
-const setRandomHex = (): string => {
+const setRandomHex = () => {
   const characters = '0123456789abcdef';
   let str = '';
   for (let i = 0; i < 40; i++) {
     str += characters[Math.floor(Math.random() * 16)];
   }
   oauthStateCode = str;
-  return oauthStateCode;
 };
 
 const getOAuthUrl = (): string => {
@@ -78,38 +81,37 @@ const getOAuthUrl = (): string => {
   );
 };
 
-const getRefreshToken = (
+const getRefreshToken = async (
   token: CoinbaseTokenProps | null,
 ): Promise<CoinbaseTokenProps> => {
-  return new Promise((resolve, reject) => {
-    if (!token) return reject(getTokenError());
-    const url = CREDENTIALS.host + '/oauth/token';
-    const data = {
-      grant_type: 'refresh_token',
-      client_id: CREDENTIALS.client_id,
-      client_secret: CREDENTIALS.client_secret,
-      redirect_uri: COINBASE_CONFIG_API.redirect_uri.mobile,
-      refresh_token: token.refresh_token,
-    };
-    const headers = {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    };
+  if (!token) {
+    const err = getTokenError();
+    throw err;
+  }
+  const url = CREDENTIALS.host + '/oauth/token';
+  const body = {
+    grant_type: 'refresh_token',
+    client_id: CREDENTIALS.client_id,
+    client_secret: CREDENTIALS.client_secret,
+    redirect_uri: COINBASE_CONFIG_API.redirect_uri.mobile,
+    refresh_token: token.refresh_token,
+  };
+  const headers = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  };
 
-    axios
-      .post(url, data, {headers})
-      .then(response => {
-        return resolve(response.data);
-      })
-      .catch(error => {
-        return reject(error.response.data);
-      });
-  });
+  try {
+    const {data} = await axios.post(url, body, {headers});
+    return data;
+  } catch (error: any) {
+    throw error.response.data;
+  }
 };
 
-const getAccessToken = (code: string): Promise<CoinbaseTokenProps> => {
+const getAccessToken = async (code: string): Promise<CoinbaseTokenProps> => {
   const url = CREDENTIALS.host + '/oauth/token';
-  const data = {
+  const body = {
     grant_type: 'authorization_code',
     code,
     client_id: CREDENTIALS.client_id,
@@ -120,47 +122,46 @@ const getAccessToken = (code: string): Promise<CoinbaseTokenProps> => {
     'Content-Type': 'application/json',
     Accept: 'application/json',
   };
-  return new Promise((resolve, reject) => {
-    axios
-      .post(url, data, {headers})
-      .then(response => {
-        return resolve(response.data);
-      })
-      .catch(error => {
-        return reject(error.response.data);
-      });
-  });
+  try {
+    const {data} = await axios.post(url, body, {headers});
+    return data;
+  } catch (error: any) {
+    throw error.response.data;
+  }
 };
 
-const revokeToken = (token: CoinbaseTokenProps | null): Promise<boolean> => {
-  return new Promise((resolve, reject) => {
-    if (!token) return reject(getTokenError());
-    const url = CREDENTIALS.host + '/oauth/revoke';
-    const data = {
-      token: token.access_token,
-    };
-    const headers = {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      'CB-VERSION': API_VERSION,
-      Authorization: 'Bearer ' + token.access_token,
-    };
-
-    axios
-      .post(url, data, {headers})
-      .then(_ => {
-        return resolve(true);
-      })
-      .catch(error => {
-        return reject(error.response.data);
-      });
-  });
+const revokeToken = async (
+  token: CoinbaseTokenProps | null,
+): Promise<boolean> => {
+  if (!token) {
+    const error = getTokenError();
+    throw error;
+  }
+  const url = CREDENTIALS.host + '/oauth/revoke';
+  const body = {
+    token: token.access_token,
+  };
+  const headers = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    'CB-VERSION': API_VERSION,
+    Authorization: 'Bearer ' + token.access_token,
+  };
+  try {
+    const {data} = await axios.post(url, body, {headers});
+    return data;
+  } catch (error: any) {
+    throw error.response.data;
+  }
 };
 
-const getAccounts = (
+const getAccounts = async (
   token: CoinbaseTokenProps | null,
 ): Promise<CoinbaseAccountsProps> => {
-  if (!token) return Promise.reject(getTokenError());
+  if (!token) {
+    const error = getTokenError();
+    throw error;
+  }
   const url =
     CREDENTIALS.api_url + '/v2' + '/accounts?order=asc&limit=' + PAGE_LIMIT;
   const headers = {
@@ -169,19 +170,15 @@ const getAccounts = (
     'CB-VERSION': API_VERSION,
     Authorization: 'Bearer ' + token.access_token,
   };
-  return new Promise((resolve, reject) => {
-    axios
-      .get(url, {headers})
-      .then(response => {
-        return resolve(response.data);
-      })
-      .catch(error => {
-        return reject(error.response.data);
-      });
-  });
+  try {
+    const {data} = await axios.get(url, {headers});
+    return data;
+  } catch (error: any) {
+    throw error.response.data;
+  }
 };
 
-const getAccount = (
+const getAccount = async (
   id: string,
   token: CoinbaseTokenProps,
 ): Promise<CoinbaseAccountProps> => {
@@ -192,22 +189,21 @@ const getAccount = (
     'CB-VERSION': API_VERSION,
     Authorization: 'Bearer ' + token.access_token,
   };
-  return new Promise((resolve, reject) => {
-    axios
-      .get(url, {headers})
-      .then(response => {
-        return resolve(response.data);
-      })
-      .catch(error => {
-        return reject(error.response.data);
-      });
-  });
+  try {
+    const {data} = await axios.get(url, {headers});
+    return data;
+  } catch (error: any) {
+    throw error.response.data;
+  }
 };
 
-const getCurrentUser = (
+const getCurrentUser = async (
   token: CoinbaseTokenProps | null,
 ): Promise<CoinbaseUserProps> => {
-  if (!token) return Promise.reject(getTokenError());
+  if (!token) {
+    const error = getTokenError();
+    throw error;
+  }
   const url = CREDENTIALS.api_url + '/v2/user';
   const headers = {
     'Content-Type': 'application/json',
@@ -215,23 +211,22 @@ const getCurrentUser = (
     'CB-VERSION': API_VERSION,
     Authorization: 'Bearer ' + token.access_token,
   };
-  return new Promise((resolve, reject) => {
-    axios
-      .get(url, {headers})
-      .then(response => {
-        return resolve(response.data);
-      })
-      .catch(error => {
-        return reject(error.response.data);
-      });
-  });
+  try {
+    const {data} = await axios.get(url, {headers});
+    return data;
+  } catch (error: any) {
+    throw error.response.data;
+  }
 };
 
-const getTransactions = (
+const getTransactions = async (
   accountId: string,
   token: CoinbaseTokenProps | null,
-): Promise<any> => {
-  if (!token) return Promise.reject(getTokenError());
+): Promise<CoinbaseTransactionsProps> => {
+  if (!token) {
+    const error = getTokenError();
+    throw error;
+  }
   const url =
     CREDENTIALS.api_url + '/v2/accounts/' + accountId + '/transactions';
   const headers = {
@@ -240,25 +235,24 @@ const getTransactions = (
     'CB-VERSION': API_VERSION,
     Authorization: 'Bearer ' + token.access_token,
   };
-  return new Promise((resolve, reject) => {
-    axios
-      .get(url, {headers})
-      .then(response => {
-        return resolve(response.data);
-      })
-      .catch(error => {
-        return reject(error.response.data);
-      });
-  });
+  try {
+    const {data} = await axios.get(url, {headers});
+    return data;
+  } catch (error: any) {
+    throw error.response.data;
+  }
 };
 
-const getNewAddress = (
+const getNewAddress = async (
   accountId: string,
   token: CoinbaseTokenProps | null,
   label?: string,
 ): Promise<CoinbaseCreateAddressProps> => {
-  if (!token) return Promise.reject(getTokenError());
-  const data = {
+  if (!token) {
+    const error = getTokenError();
+    throw error;
+  }
+  const body = {
     name: label || 'BitPay',
   };
   const url = CREDENTIALS.api_url + '/v2/accounts/' + accountId + '/addresses';
@@ -268,26 +262,25 @@ const getNewAddress = (
     'CB-VERSION': API_VERSION,
     Authorization: 'Bearer ' + token.access_token,
   };
-  return new Promise((resolve, reject) => {
-    axios
-      .post(url, data, {headers})
-      .then(response => {
-        return resolve(response.data);
-      })
-      .catch(error => {
-        return reject(error.response.data);
-      });
-  });
+  try {
+    const {data} = await axios.post(url, body, {headers});
+    return data;
+  } catch (error: any) {
+    throw error.response.data;
+  }
 };
 
-const sendTransaction = (
+const sendTransaction = async (
   accountId: string,
   tx: any,
   token: CoinbaseTokenProps | null,
   twoFactorCode?: string,
-): Promise<any> => {
-  if (!token) return Promise.reject(getTokenError());
-  tx['type'] = 'send'; // Required for sending TX
+): Promise<CoinbaseTransactionProps> => {
+  if (!token) {
+    const error = getTokenError();
+    throw error;
+  }
+  tx = {...tx, type: 'send'}; // Required for sending TX
   const url =
     CREDENTIALS.api_url + '/v2/accounts/' + accountId + '/transactions';
   let headers: any = {
@@ -296,32 +289,29 @@ const sendTransaction = (
     'CB-VERSION': API_VERSION,
     Authorization: 'Bearer ' + token.access_token,
   };
-
   if (twoFactorCode) {
     headers['CB-2FA-TOKEN'] = twoFactorCode; // 2FA if required
   }
-
-  return new Promise((resolve, reject) => {
-    axios
-      .post(url, tx, {headers})
-      .then(response => {
-        return resolve(response.data);
-      })
-      .catch(error => {
-        return reject(error.response.data);
-      });
-  });
+  try {
+    const {data} = await axios.post(url, tx, {headers});
+    return data;
+  } catch (error: any) {
+    throw error.response.data;
+  }
 };
 
-const payInvoice = (
+const payInvoice = async (
   invoiceId: string,
   currency: string,
   token: CoinbaseTokenProps | null,
   twoFactorCode?: string,
 ): Promise<any> => {
-  if (!token) return Promise.reject(getTokenError());
+  if (!token) {
+    const error = getTokenError();
+    throw error;
+  }
   const url = COINBASE_INVOICE_URL + invoiceId;
-  const data = {
+  const body = {
     currency,
     token: token.access_token,
     twoFactorCode,
@@ -330,54 +320,25 @@ const payInvoice = (
     'Content-Type': 'application/json',
     Accept: 'application/json',
   };
-  return new Promise((resolve, reject) => {
-    axios
-      .post(url, data, {headers})
-      .then(response => {
-        return resolve(response.data);
-      })
-      .catch(error => {
-        return reject(error.response.data);
-      });
-  });
+  try {
+    const {data} = await axios.post(url, body, {headers});
+    return data;
+  } catch (error: any) {
+    throw error.response.data;
+  }
 };
 
-const getExchangeRates = (
+const getExchangeRates = async (
   currency: string = 'USD',
 ): Promise<CoinbaseExchangeRatesProps> => {
   const url =
     CREDENTIALS.api_url + '/v2/exchange-rates' + '?currency=' + currency;
-
-  return new Promise((resolve, reject) => {
-    axios
-      .get(url)
-      .then(response => {
-        return resolve(response.data);
-      })
-      .catch(error => {
-        return reject(error.response.data);
-      });
-  });
-};
-
-const isRevokedTokenError = (error: CoinbaseErrorsProps): boolean => {
-  for (let i = 0; i < error.errors.length; i++) {
-    if (error.errors[i].id === 'revoked_token') {
-      return true;
-    }
+  try {
+    const {data} = await axios.get(url);
+    return data;
+  } catch (error: any) {
+    throw error.response.data;
   }
-  return false;
-};
-
-const parseErrorToString = (error: CoinbaseErrorsProps | any): string => {
-  if (typeof error == 'string') {
-    return error;
-  }
-  let message = '';
-  for (let i = 0; i < error.errors.length; i++) {
-    message = message + error.errors[i].message + '. ';
-  }
-  return message;
 };
 
 const CoinbaseAPI = {
@@ -394,8 +355,6 @@ const CoinbaseAPI = {
   payInvoice,
   getOAuthUrl,
   getOauthStateCode,
-  isRevokedTokenError,
-  parseErrorToString,
 };
 
 export default CoinbaseAPI;
