@@ -1,6 +1,6 @@
 import React from 'react';
-import styled, {useTheme} from 'styled-components/native';
-import {LightBlack, Cloud, Feather} from '../../../styles/colors';
+import styled from 'styled-components/native';
+import {LightBlack, White} from '../../../styles/colors';
 import {ActiveOpacity} from '../../../components/styled/Containers';
 import {Theme} from '@react-navigation/native';
 import Svg, {Path} from 'react-native-svg';
@@ -9,11 +9,11 @@ const SettingsSvgContainer = styled.TouchableOpacity`
   margin-right: 15px;
   padding: 10px;
   border-radius: 30px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Feather)};
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
 `;
 
 const CogSvg = ({theme}: {theme: Theme}) => {
-  const cogColor = theme.dark ? Cloud : LightBlack;
+  const cogColor = theme.dark ? White : LightBlack;
   return (
     <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
       <Path
@@ -26,9 +26,13 @@ const CogSvg = ({theme}: {theme: Theme}) => {
   );
 };
 
-const CoinbaseSettingsOption = ({onPress}: {onPress: () => void}) => {
-  const theme = useTheme();
-
+const CoinbaseSettingsOption = ({
+  onPress,
+  theme,
+}: {
+  onPress: () => void;
+  theme: Theme;
+}) => {
   return (
     <SettingsSvgContainer activeOpacity={ActiveOpacity} onPress={onPress}>
       <CogSvg theme={theme} />

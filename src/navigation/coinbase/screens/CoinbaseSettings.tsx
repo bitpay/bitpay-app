@@ -131,7 +131,8 @@ const CoinbaseSettings = () => {
       showBottomNotificationModal({
         type: 'warning',
         title: 'Confirm',
-        message: 'Are you sure you want to delete account from this device?',
+        message:
+          'Are you sure you would like to log out of your Coinbase account?',
         enableBackdropDismiss: false,
         actions: [
           {

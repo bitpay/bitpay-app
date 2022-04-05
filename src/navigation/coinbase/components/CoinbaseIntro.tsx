@@ -1,5 +1,6 @@
-import React from 'react';
+import React, {useLayoutEffect} from 'react';
 import styled from 'styled-components/native';
+import {useNavigation} from '@react-navigation/native';
 import Button from '../../../components/button/Button';
 import {BaseText} from '../../../components/styled/Text';
 import {SlateDark, White} from '../../../styles/colors';
@@ -51,6 +52,7 @@ const SubTitle = styled(BaseText)`
 
 const CoinbaseIntro = () => {
   const {t} = useTranslation();
+  const navigation = useNavigation();
   const dispatch = useAppDispatch();
 
   const onPressButton = async (context: 'signin' | 'signup') => {
@@ -62,6 +64,12 @@ const CoinbaseIntro = () => {
     }
     dispatch(AppEffects.openUrlWithInAppBrowser(url));
   };
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: '',
+    });
+  }, [navigation]);
 
   return (
     <CoinbaseContainer>

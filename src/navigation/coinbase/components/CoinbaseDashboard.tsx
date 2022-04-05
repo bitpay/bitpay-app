@@ -4,11 +4,9 @@ import {FlatList, RefreshControl} from 'react-native';
 import styled from 'styled-components/native';
 import WalletRow from '../../../components/list/WalletRow';
 import {BaseText, H5} from '../../../components/styled/Text';
-import {Hr} from '../../../components/styled/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
-import {SlateDark, White} from '../../../styles/colors';
-import {sleep} from '../../../utils/helper-methods';
+import {Black, SlateDark, White} from '../../../styles/colors';
 
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
@@ -17,7 +15,7 @@ import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import CoinbaseSettingsOption from './CoinbaseSettingsOption';
 import {RootState} from '../../../store';
-import {formatFiatAmount} from '../../../utils/helper-methods';
+import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {getCoinbaseExchangeRate} from '../../../store/coinbase/coinbase.effects';
 import {Network} from '../../../constants';
@@ -25,10 +23,12 @@ import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 
 const OverviewContainer = styled.View`
   flex: 1;
+  background-color: ${({theme: {dark}}) =>
+    dark ? Black : 'rgb(245, 246, 248)'};
 `;
 
 const BalanceContainer = styled.View`
-  height: 15%;
+  height: 17%;
   margin-top: 20px;
   padding: 10px 15px;
 `;
@@ -75,7 +75,6 @@ const CoinbaseDashboard = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: 'Coinbase',
       headerRight: () => (
         <CoinbaseSettingsOption
           onPress={() => {
@@ -83,10 +82,11 @@ const CoinbaseDashboard = () => {
               screen: 'CoinbaseSettings',
             });
           }}
+          theme={theme}
         />
       ),
     });
-  }, [navigation]);
+  }, [navigation, theme]);
 
   const listFooterComponent = () => {
     return (
@@ -106,13 +106,17 @@ const CoinbaseDashboard = () => {
       item.balance.currency,
       exchangeRates,
     );
+    const cryptoAmount = Number(item.balance.amount)
+      ? item.balance.amount
+      : '0';
+
     const walletItem = {
       id: item.id,
       currencyName: item.currency.name,
       currencyAbbreviation: item.currency.code,
       walletName: item.currency.name,
       img: CurrencyListIcons[item.currency.code.toLowerCase()],
-      cryptoBalance: item.balance.amount,
+      cryptoBalance: cryptoAmount,
       cryptoLockedBalance: '',
       fiatBalance: formatFiatAmount(fiatAmount, 'usd'),
       fiatLockedBalance: '',
@@ -180,9 +184,12 @@ const CoinbaseDashboard = () => {
           {user?.data.native_currency}
         </Balance>
       </BalanceContainer>
-      <Hr />
       <FlatList
-        contentContainerStyle={{paddingBottom: 50, marginTop: 5}}
+        contentContainerStyle={{
+          paddingBottom: 50,
+          marginTop: 5,
+          backgroundColor: theme.dark ? 'rgb(37, 37, 37)' : White,
+        }}
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}

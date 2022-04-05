@@ -135,6 +135,7 @@ const CoinbaseAccount = ({
   const [walletModalVisible, setWalletModalVisible] = useState(false);
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [fiatAmount, setFiatAmount] = useState(0);
+  const [cryptoAmount, setCryptoAmount] = useState('0');
   const [txs, setTxs] = useState([] as CoinbaseTransactionProps[]);
 
   const [selectedWallet, setSelectedWallet] = useState<Wallet>();
@@ -241,15 +242,22 @@ const CoinbaseAccount = ({
 
   useEffect(() => {
     if (account && account.balance) {
-      const fa = getCoinbaseExchangeRate(
-        account.balance.amount,
-        account.balance.currency,
-        exchangeRates,
-      );
-      setFiatAmount(fa);
       const currencies: string[] = [];
       currencies.push(account.balance.currency.toLowerCase());
       setCustomSupportedCurrencies(currencies);
+
+      if (Number(account.balance.amount)) {
+        const fa = getCoinbaseExchangeRate(
+          account.balance.amount,
+          account.balance.currency,
+          exchangeRates,
+        );
+        setFiatAmount(fa);
+        setCryptoAmount(account.balance.amount.toString());
+      } else {
+        setFiatAmount(0);
+        setCryptoAmount('0');
+      }
     }
 
     if (transactions && transactions[accountId]) {
@@ -363,9 +371,11 @@ const CoinbaseAccount = ({
     <AccountContainer>
       <BalanceContainer>
         <Row>
-          <Balance scale={shouldScale(account?.balance.amount)}>
-            {account?.balance.amount} {account?.balance.currency}
-          </Balance>
+          {cryptoAmount && customSupportedCurrencies[0] && (
+            <Balance scale={shouldScale(cryptoAmount)}>
+              {cryptoAmount} {customSupportedCurrencies[0].toUpperCase()}
+            </Balance>
+          )}
         </Row>
         <Row>
           <H5>
@@ -374,7 +384,7 @@ const CoinbaseAccount = ({
                   fiatAmount,
                   user?.data.native_currency.toLowerCase() || 'usd',
                 )
-              : '...'}{' '}
+              : '0'}{' '}
             {user?.data.native_currency}
           </H5>
           {account?.primary && <Type>Primary</Type>}
@@ -401,11 +411,15 @@ const CoinbaseAccount = ({
           />
         }
         ListHeaderComponent={() => {
-          return (
-            <TransactionListHeader>
-              <H5>Transactions</H5>
-            </TransactionListHeader>
-          );
+          if (txs[0]) {
+            return (
+              <TransactionListHeader>
+                <H5>Transactions</H5>
+              </TransactionListHeader>
+            );
+          } else {
+            return <></>;
+          }
         }}
         data={txs}
         renderItem={renderItem}
