@@ -38,6 +38,7 @@ import {
   changellyGetCurrencies,
   changellyGetFixRateForAmount,
 } from '../utils/changelly-utils';
+import {getCountry} from '../../../../lib/location/location';
 import {useAppDispatch} from '../../../../utils/hooks';
 import {sleep} from '../../../../utils/helper-methods';
 import {useLogger} from '../../../../utils/hooks/useLogger';
@@ -162,7 +163,6 @@ const SwapCryptoRoot: React.FC = () => {
   };
 
   const updateReceivingAmount = () => {
-    console.log('======updateReceivingAmount amountFrom: ', amountFrom);
     if (!fromWalletSelected || !toWalletSelected || !amountFrom) {
       setLoading(false);
       return;
@@ -205,7 +205,6 @@ const SwapCryptoRoot: React.FC = () => {
       coinFrom: fromWalletSelected.currencyAbbreviation,
       coinTo: toWalletSelected.currencyAbbreviation,
     };
-    console.log('========changellyGetFixRateForAmount data enviada: ', data);
     changellyGetFixRateForAmount(fromWalletSelected, data)
       .then((data: any) => {
         if (data.error) {
@@ -214,8 +213,6 @@ const SwapCryptoRoot: React.FC = () => {
           showError(msg);
           return;
         }
-
-        console.log('=========changellyGetFixRateForAmount data:', data);
 
         const newRateData: RateData = {
           fixedRateId: data.result[0].id,
@@ -238,7 +235,6 @@ const SwapCryptoRoot: React.FC = () => {
 
   const changellyGetRates = () => {
     setRateData(undefined);
-    console.log('======changellyGetRates amountFrom: ', amountFrom);
     if (!fromWalletSelected || !toWalletSelected || !amountFrom) {
       return;
     }
@@ -256,7 +252,6 @@ const SwapCryptoRoot: React.FC = () => {
     };
     changellyGetPairsParams(fromWalletSelected, data)
       .then(async (data: any) => {
-        console.log('====== changellyGetPairsParamsData: ', data);
         if (data.error) {
           let msg: string;
           const title = 'Changelly Error';
@@ -351,7 +346,6 @@ const SwapCryptoRoot: React.FC = () => {
         // onGoingProcessProvider.clear();
 
         if (amountFrom > maxAmount) {
-          console.log('Error: amountFrom > maxAmount');
           const msg = `The amount entered is greater than the maximum allowed: ${maxAmount} ${fromWalletSelected.currencyAbbreviation.toUpperCase()}`;
           const actions = [
             {
@@ -377,7 +371,6 @@ const SwapCryptoRoot: React.FC = () => {
           return;
         }
         if (amountFrom < minAmount) {
-          console.log('Error: amountFrom < minAmount');
           // TODO: Handle min amount if useSendMax is true
           // if (useSendMax && shouldUseSendMax()) {
           //   let msg;
@@ -427,8 +420,6 @@ const SwapCryptoRoot: React.FC = () => {
                 dispatch(dismissBottomNotificationModal());
                 setAmountFrom(minAmount);
                 await sleep(400);
-                console.log('====== minAmount after 1000ms: ', minAmount);
-                // updateReceivingAmount(minAmount);
               },
               primary: true,
             },
@@ -475,7 +466,6 @@ const SwapCryptoRoot: React.FC = () => {
   };
 
   useEffect(() => {
-    const country = 'US'; // TODO: use getCountry
     const getChangellyCurrencies = async () => {
       dispatch(
         startOnGoingProcessModal(OnGoingProcessMessages.GENERAL_AWAITING),
@@ -506,11 +496,12 @@ const SwapCryptoRoot: React.FC = () => {
           supportedCoinsWithFixRateEnabled.includes(coin),
         );
 
-        const coinsToRemove = country == 'US' ? ['xrp'] : [];
+        const country = await getCountry();
+        const coinsToRemove = !country || country == 'US' ? ['xrp'] : [];
         coinsToRemove.forEach((coin: string) => {
           const index = supportedCoins.indexOf(coin);
           if (index > -1) {
-            console.log(`Removing ${coin} from Changelly supported coins`);
+            logger.debug(`Removing ${coin} from Changelly supported coins`);
             supportedCoins.splice(index, 1);
           }
         });
