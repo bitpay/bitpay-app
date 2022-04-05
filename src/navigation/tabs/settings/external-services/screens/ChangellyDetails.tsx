@@ -1,20 +1,18 @@
 import React, {useEffect, useState} from 'react';
-import {Text, View, TouchableOpacity} from 'react-native';
+import {Text, TouchableOpacity} from 'react-native';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
 import Clipboard from '@react-native-community/clipboard';
 import moment from 'moment';
-import {Link} from '../../../../../components/styled/Text';
 import {Br} from '../../../../../components/styled/Containers';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {changellyTxData} from '../../../../../store/swap-crypto/swap-crypto.models';
 import ChangellyIcon from '../../../../../../assets/img/services/changelly/changelly-icon.svg';
-import {useAppDispatch} from '../../../../../utils/hooks';
+import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
 import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
 } from '../../../../../store/app/app.actions';
-import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {SwapCryptoActions} from '../../../../../store/swap-crypto';
 import {
   changellyGetStatusDetails,
@@ -29,7 +27,6 @@ import {
   CryptoContainer,
   CryptoAmount,
   CryptoUnit,
-  IconContainer,
   RowLabel,
   RowData,
   LabelTip,
@@ -48,6 +45,7 @@ const ChangellyDetails: React.FC = () => {
     params: {swapTx},
   } = useRoute<RouteProp<{params: ChangellyDetailsProps}>>();
   const navigation = useNavigation();
+  const logger = useLogger();
   const dispatch = useAppDispatch();
   const [status, setStatus] = useState<Status>({
     statusTitle: undefined,
@@ -69,11 +67,11 @@ const ChangellyDetails: React.FC = () => {
     changellyGetStatus(swapTx.exchangeTxId, swapTx.status)
       .then(data => {
         if (data.error) {
-          console.log('Changelly getStatus Error: ' + data.error.message);
+          logger.error('Changelly getStatus Error: ' + data.error.message);
           return;
         }
         if (data.result != swapTx.status) {
-          console.log('Updating status to: ' + data.result);
+          logger.debug('Updating status to: ' + data.result);
           swapTx.status = data.result;
           updateStatusDescription();
           dispatch(
@@ -82,11 +80,11 @@ const ChangellyDetails: React.FC = () => {
             }),
           );
 
-          console.log('Saved exchange with: ', swapTx);
+          logger.debug('Saved swap with: ' + JSON.stringify(swapTx));
         }
       })
       .catch(err => {
-        console.log('Changelly getStatus Error: ', err);
+        logger.error('Changelly getStatus Error: ' + JSON.stringify(err));
       });
   };
 

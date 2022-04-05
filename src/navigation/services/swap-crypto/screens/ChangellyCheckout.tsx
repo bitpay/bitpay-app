@@ -4,21 +4,31 @@ import {
   RouteProp,
   useRoute,
   useNavigation,
-  StackActions,
   CommonActions,
 } from '@react-navigation/native';
 import styled from 'styled-components/native';
+import cloneDeep from 'lodash.clonedeep';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLogger,
+} from '../../../../utils/hooks';
+import {TokenOpts} from '../../../../constants/tokens';
+import {BWCErrorMessage} from '../../../../constants/BWCError';
+import {Black, White, Slate, Caution} from '../../../../styles/colors';
+import {BwcProvider} from '../../../../lib/bwc';
+import PaymentSent from '../../../../navigation/wallet/components/PaymentSent';
+import {WrongPasswordError} from '../../../../navigation/wallet/components/ErrorMessages';
 import SwipeButton from '../../../../components/swipe-button/SwipeButton';
+import {H5, H7} from '../../../../components/styled/Text';
+import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
+import Checkbox from '../../../../components/checkbox/Checkbox';
+import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {
   Wallet,
   TransactionProposal,
 } from '../../../../store/wallet/wallet.models';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
-import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
-import {
-  changellyCreateFixTransaction,
-  changellyGetFixRateForAmount,
-} from '../utils/changelly-utils';
 import {toFiat} from '../../../../store/wallet/utils/wallet';
 import {
   GetPrecision,
@@ -27,144 +37,45 @@ import {
   GetProtoAddress,
 } from '../../../../store/wallet/utils/currency';
 import {FormatAmountStr} from '../../../../store/wallet/effects/amount/amount';
-import {BaseText, H5, H7} from '../../../../components/styled/Text';
 import {
-  Black,
-  SlateDark,
-  ProgressBlue,
-  White,
-  LightBlack,
-  NeutralSlate,
-  Slate,
-  Caution,
-} from '../../../../styles/colors';
-import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
-import Checkbox from '../../../../components/checkbox/Checkbox';
-import {TokenOpts} from '../../../../constants/tokens';
-import {BwcProvider} from '../../../../lib/bwc';
-import {BWCErrorMessage} from '../../../../constants/BWCError';
-import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
-import ChangellyPoliciesModal from '../components/ChangellyPoliciesModal';
-import {startGetRates} from '../../../../store/wallet/effects';
+  changellyCreateFixTransaction,
+  changellyGetFixRateForAmount,
+} from '../utils/changelly-utils';
 import {sleep} from '../../../../utils/helper-methods';
+import ChangellyPoliciesModal from '../components/ChangellyPoliciesModal';
+import {
+  ItemDivisor,
+  RowDataContainer,
+  FiatAmountContainer,
+  RowLabel,
+  RowData,
+  FiatAmount,
+  SelectedOptionContainer,
+  SelectedOptionText,
+  SelectedOptionCol,
+  CoinIconContainer,
+  CheckBoxContainer,
+  CheckboxText,
+  PoliciesContainer,
+  PoliciesText,
+  ArrowContainer,
+} from '../styled/SwapCryptoCheckout.styled';
+import {startGetRates} from '../../../../store/wallet/effects';
 import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
+  dismissBottomNotificationModal,
 } from '../../../../store/app/app.actions';
-import {WrongPasswordError} from '../../../../navigation/wallet/components/ErrorMessages';
 import {publishAndSign} from '../../../../store/wallet/effects/send/send';
-import PaymentSent from '../../../../navigation/wallet/components/PaymentSent';
-import cloneDeep from 'lodash.clonedeep';
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 import {SwapCryptoActions} from '../../../../store/swap-crypto';
-
-export const ItemDivisor = styled.View`
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ebecee')};
-  border-bottom-width: 1px;
-  /* margin-bottom: 18px; */
-`;
+import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
   flex: 1;
   margin: 14px;
-`;
-
-export const RowDataContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  margin: 16px 0;
-`;
-
-export const FiatAmountContainer = styled.View`
-  /* display: flex; */
-  flex-direction: row;
-  /* align-items: center; */
-  justify-content: flex-end;
-  /* margin-bottom: 20px; */
-`;
-
-export const CryptoUnit = styled(BaseText)`
-  font-size: 15px;
-  padding-top: 7px;
-  padding-left: 5px;
-`;
-
-export const RowLabel = styled(BaseText)`
-  font-size: 14px;
-`;
-
-export const RowData = styled(BaseText)`
-  font-size: 16px;
-`;
-
-export const FiatAmount = styled(BaseText)`
-  font-size: 14px;
-  color: #667;
-`;
-
-const SelectedOptionContainer = styled.TouchableOpacity`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  height: 40px;
-  padding: 0px 14px;
-  background: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  border-radius: 12px;
-  opacity: ${({disabled}) => (disabled ? 0.2 : 1)};
-`;
-
-const SelectedOptionText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-size: 16px;
-  font-weight: 500;
-`;
-
-const SelectedOptionCol = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-`;
-
-const CoinIconContainer = styled.View`
-  width: 30px;
-  height: 25px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-`;
-
-const CheckBoxContainer = styled.View`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  margin: 10px 20px 0 0;
-`;
-
-const CheckboxText = styled(BaseText)`
-  color: #757575;
-  font-size: 11px;
-  font-weight: 300;
-  margin-left: 20px;
-`;
-
-const PoliciesContainer = styled.TouchableOpacity`
-  flex-direction: row;
-  justify-content: space-between;
-  margin: 20px 0;
-`;
-
-const PoliciesText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : ProgressBlue)};
-`;
-
-const ArrowContainer = styled.View`
-  margin-left: 10px;
 `;
 
 export interface ChangellyCheckoutProps {
@@ -194,7 +105,7 @@ const ChangellyCheckout: React.FC = () => {
     },
   } = useRoute<RouteProp<{params: ChangellyCheckoutProps}>>();
 
-  // const logger = useLogger();
+  const logger = useLogger();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
@@ -267,7 +178,7 @@ const ChangellyCheckout: React.FC = () => {
     changellyCreateFixTransaction(fromWalletSelected, createFixTxData)
       .then(async data => {
         if (data.error) {
-          console.log(
+          logger.error(
             'Changelly createFixTransaction Error: ' + data.error.message,
           );
 
@@ -275,12 +186,12 @@ const ChangellyCheckout: React.FC = () => {
             Math.abs(data.error.code) == 32602 ||
             Math.abs(data.error.code) == 32603
           ) {
-            console.log(
+            logger.debug(
               'Changelly rateId was expired or already used. Generating a new one',
             );
             updateReceivingAmount();
           } else {
-            console.log(data.error.message);
+            showError(data.error.message);
           }
           return;
         }
@@ -301,7 +212,7 @@ const ChangellyCheckout: React.FC = () => {
             (Number(data.result.apiExtraFee) * data.result.amountTo) /
             receivingPercentage;
           setTotalExchangeFee(exchangeFee + bitpayFee);
-          console.log(
+          logger.debug(
             `Changelly fee: ${exchangeFee} - BitPay fee: ${bitpayFee} - Total fee: ${
               exchangeFee + bitpayFee
             }`,
@@ -340,7 +251,7 @@ const ChangellyCheckout: React.FC = () => {
           );
           setFiatAmountTo(newFiatAmountTo);
         } catch (err) {
-          console.log('toFiat Error: ', err);
+          logger.error('toFiat Error');
         }
 
         paymentTimeControl(data.result.payTill);
@@ -378,19 +289,19 @@ const ChangellyCheckout: React.FC = () => {
             return;
           })
           .catch(async err => {
-            console.log(err.message);
-            dispatch(dismissOnGoingProcessModal());
-            await sleep(400);
+            logger.error(err.message);
+            const msg = 'Error creating transaction';
+            showError(msg);
             return;
           });
       })
       .catch(async err => {
-        console.log('Changelly createFixTransaction Error: ', err);
-        console.log(
-          'Changelly is not available at this moment. Please, try again later.',
+        logger.error(
+          'Changelly createFixTransaction Error: ' + JSON.stringify(err),
         );
-        dispatch(dismissOnGoingProcessModal());
-        await sleep(400);
+        const msg =
+          'Changelly is not available at this moment. Please, try again later.';
+        showError(msg);
         return;
       });
   };
@@ -441,7 +352,7 @@ const ChangellyCheckout: React.FC = () => {
         if (data.error) {
           const msg =
             'Changelly getFixRateForAmount Error: ' + data.error.message;
-          console.log(msg);
+          showError(msg);
           return;
         }
         fixedRateId = data.result[0].id;
@@ -452,10 +363,10 @@ const ChangellyCheckout: React.FC = () => {
         createFixTransaction();
       })
       .catch(err => {
-        console.log(err);
+        logger.error(JSON.stringify(err));
         let msg =
           'Changelly is not available at this moment. Please, try again later.';
-        console.log(msg);
+        showError(msg);
       });
   };
 
@@ -554,7 +465,7 @@ const ChangellyCheckout: React.FC = () => {
           if (err) {
             return reject(err);
           }
-          console.log('Transaction created');
+          logger.debug('Transaction created');
           return resolve(createdTxp);
         },
         null,
@@ -563,9 +474,7 @@ const ChangellyCheckout: React.FC = () => {
   };
 
   const makePayment = async () => {
-    // onGoingProcessProvider.set('broadcastingTx');
-
-    console.log('------- txData: ', txData);
+    console.log('-------makePayment txData: ', txData);
 
     try {
       dispatch(
@@ -591,7 +500,7 @@ const ChangellyCheckout: React.FC = () => {
           setResetSwipeButton(true);
           break;
         default:
-          console.log(err);
+          logger.error(JSON.stringify(err));
         // TODO: handle this case
         // await showErrorMessage(
         //   CustomErrorMessage({
@@ -626,7 +535,33 @@ const ChangellyCheckout: React.FC = () => {
       }),
     );
 
-    console.log('Saved exchange with: ', newData);
+    logger.debug('Saved swap with: ' + JSON.stringify(newData));
+  };
+
+  const showError = async (msg?: string, title?: string, actions?: any) => {
+    dispatch(dismissOnGoingProcessModal());
+    await sleep(1000);
+    dispatch(
+      showBottomNotificationModal({
+        type: 'error',
+        title: title ? title : 'Error',
+        message: msg ? msg : 'Unknown Error',
+        enableBackdropDismiss: true,
+        actions: actions
+          ? actions
+          : [
+              {
+                text: 'OK',
+                action: async () => {
+                  dispatch(dismissBottomNotificationModal());
+                  await sleep(1000);
+                  navigation.goBack();
+                },
+                primary: true,
+              },
+            ],
+      }),
+    );
   };
 
   useEffect(() => {
@@ -723,7 +658,10 @@ const ChangellyCheckout: React.FC = () => {
         <RowDataContainer>
           <RowLabel>Expires</RowLabel>
           {!!remainingTimeStr && (
-            <RowData style={{color: paymentExpired ? Caution : Black}}>
+            <RowData
+              style={{
+                color: paymentExpired ? Caution : theme.dark ? White : Black,
+              }}>
               {remainingTimeStr}
             </RowData>
           )}
@@ -782,7 +720,7 @@ const ChangellyCheckout: React.FC = () => {
           title={'Slide to send'}
           onSwipeComplete={async () => {
             try {
-              console.log('TODO: Swipe completed!');
+              logger.debug('Swipe completed. Making payment...');
               makePayment();
             } catch (err) {}
           }}
