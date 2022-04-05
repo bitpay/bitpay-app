@@ -16,10 +16,8 @@ import {BaseText, TextAlign} from '../../../components/styled/Text';
 import {SlateDark, White} from '../../../styles/colors';
 import {Hr} from '../../../components/styled/Containers';
 import {CoinbaseEffects} from '../../../store/coinbase';
-import {useAppDispatch} from '../../../utils/hooks';
-import {useSelector} from 'react-redux';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {RootState} from '../../../store';
-import CoinbaseAPI from '../../../api/coinbase';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 
@@ -78,19 +76,19 @@ const CoinbaseSettings = () => {
 
   const [refreshing, setRefreshing] = useState(false);
 
-  const userData = useSelector(
+  const userData = useAppSelector(
     ({COINBASE}: RootState) => COINBASE.user[COINBASE_ENV],
   );
-  const isLoadingUserData = useSelector<RootState, boolean>(
-    ({COINBASE}) => COINBASE.isApiLoading,
+  const isLoadingUserData = useAppSelector(
+    ({COINBASE}: RootState) => COINBASE.isApiLoading,
   );
-  const userError = useSelector<RootState, CoinbaseErrorsProps | null>(
-    ({COINBASE}) => COINBASE.getUserError,
+  const userError = useAppSelector(
+    ({COINBASE}: RootState) => COINBASE.getUserError,
   );
 
   const showError = useCallback(
     (error: CoinbaseErrorsProps) => {
-      const errMsg = CoinbaseAPI.parseErrorToString(error);
+      const errMsg = CoinbaseEffects.parseErrorToString(error);
       dispatch(
         showBottomNotificationModal({
           type: 'error',
@@ -118,10 +116,6 @@ const CoinbaseSettings = () => {
     }
 
     if (userError) {
-      if (CoinbaseAPI.isRevokedTokenError(userError)) {
-        // Revoked token ... unlink account
-        dispatch(CoinbaseEffects.disconnectCoinbaseAccount());
-      }
       showError(userError);
     }
   }, [dispatch, userData, isLoadingUserData, userError, showError]);
@@ -227,7 +221,7 @@ const CoinbaseSettings = () => {
       </SettingsScrollContainer>
       <ButtonContainer>
         <Button onPress={() => confirmDelete()} buttonStyle={'secondary'}>
-          Unlink Account
+          Sign out
         </Button>
       </ButtonContainer>
     </SettingsContainer>

@@ -24,7 +24,9 @@ const isRevokedTokenError = (error: CoinbaseErrorsProps): boolean => {
   return false;
 };
 
-const parseErrorToString = (error: CoinbaseErrorsProps | any): string => {
+export const parseErrorToString = (
+  error: CoinbaseErrorsProps | any,
+): string => {
   if (typeof error === 'string') {
     return error;
   }

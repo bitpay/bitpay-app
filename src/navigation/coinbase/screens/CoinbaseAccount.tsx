@@ -5,14 +5,13 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import styled from 'styled-components/native';
 import {FlatList, RefreshControl} from 'react-native';
 import {find} from 'lodash';
 import moment from 'moment';
 import {sleep} from '../../../utils/helper-methods';
 import {useNavigation, useTheme} from '@react-navigation/native';
-import {useSelector} from 'react-redux';
 import {RootState} from '../../../store';
 import {formatFiatAmount, shouldScale} from '../../../utils/helper-methods';
 import {Hr, ScreenGutter} from '../../../components/styled/Containers';
@@ -46,7 +45,6 @@ import {
   ToCashAddress,
   TranslateToBchCashAddress,
 } from '../../../store/wallet/effects/address/address';
-import CoinbaseAPI from '../../../api/coinbase';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import Amount from '../../wallet/screens/Amount';
 import {Wallet} from '../../../store/wallet/wallet.models';
@@ -141,25 +139,25 @@ const CoinbaseAccount = ({
 
   const [selectedWallet, setSelectedWallet] = useState<Wallet>();
 
-  const exchangeRates = useSelector(
+  const exchangeRates = useAppSelector(
     ({COINBASE}: RootState) => COINBASE.exchangeRates,
   );
-  const user = useSelector(
+  const user = useAppSelector(
     ({COINBASE}: RootState) => COINBASE.user[COINBASE_ENV],
   );
-  const transactions = useSelector(
+  const transactions = useAppSelector(
     ({COINBASE}: RootState) => COINBASE.transactions[COINBASE_ENV],
   );
-  const account = useSelector(({COINBASE}: RootState) => {
+  const account = useAppSelector(({COINBASE}: RootState) => {
     return find(COINBASE.accounts[COINBASE_ENV], {id: accountId});
   });
 
-  const txsStatus = useSelector<RootState, 'success' | 'failed' | null>(
-    ({COINBASE}) => COINBASE.getTransactionsStatus,
+  const txsStatus = useAppSelector(
+    ({COINBASE}: RootState) => COINBASE.getTransactionsStatus,
   );
 
-  const txsLoading = useSelector<RootState, boolean>(
-    ({COINBASE}) => COINBASE.isApiLoading,
+  const txsLoading = useAppSelector(
+    ({COINBASE}: RootState) => COINBASE.isApiLoading,
   );
 
   const [isLoading, setIsLoading] = useState<boolean>();
@@ -329,7 +327,7 @@ const CoinbaseAccount = ({
   };
 
   const showError = async (error: CoinbaseErrorsProps) => {
-    const errMsg = CoinbaseAPI.parseErrorToString(error);
+    const errMsg = CoinbaseEffects.parseErrorToString(error);
     dispatch(
       showBottomNotificationModal({
         type: 'error',

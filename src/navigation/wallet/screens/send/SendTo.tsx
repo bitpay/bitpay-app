@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {HeaderTitle} from '../../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
@@ -130,7 +130,9 @@ const BuildKeyWalletRow = (
         // Clone wallet to avoid altering store values
         const _wallet = merge(cloneDeep(wallet), {
           cryptoBalance: balance.crypto,
+          cryptoLockedBalance: '',
           fiatBalance: formatFiatAmount(balance.fiat, 'usd'),
+          fiatLockedBalance: '',
           currencyAbbreviation: currencyAbbreviation.toUpperCase(),
           network,
         });
@@ -169,15 +171,6 @@ const SendTo = () => {
   });
 
   const {wallet, toCoinbase} = route.params;
-
-  useEffect(() => {
-    if (toCoinbase) {
-      onSendToCoinbase(toCoinbase.account, toCoinbase.address);
-    }
-    return navigation.addListener('blur', () =>
-      setTimeout(() => setSearchInput(''), 300),
-    );
-  }, [navigation, toCoinbase]);
 
   const {
     currencyAbbreviation,
@@ -340,78 +333,91 @@ const SendTo = () => {
     }
   };
 
-  const onSendToCoinbase = async (
-    account: string | undefined,
-    address: string | undefined,
-  ) => {
-    if (!address) return;
-    try {
-      const recipient = {
-        name: account || 'Coinbase',
-        type: 'coinbase',
-        address,
-      };
-
-      goToConfirm(recipient, {hideSendMax: true});
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const goToConfirm = (recipient: Recipient, opts?: any) => {
-    navigation.navigate('Wallet', {
-      screen: WalletScreens.AMOUNT,
-      params: {
-        opts: opts || {},
-        currencyAbbreviation: wallet.currencyAbbreviation.toUpperCase(),
-        onAmountSelected: async (amount, setButtonState, opts) => {
-          try {
-            setButtonState('loading');
-            const {txDetails, txp} = await dispatch(
-              createProposalAndBuildTxDetails({
-                wallet,
-                recipient,
-                amount: Number(amount),
-                ...opts,
-              }),
-            );
-            setButtonState('success');
-            await sleep(300);
-            navigation.navigate('Wallet', {
-              screen: 'Confirm',
-              params: {
-                wallet,
-                recipient,
-                txp,
-                txDetails,
-                amount: Number(amount),
-              },
-            });
-          } catch (err: any) {
-            setButtonState('failed');
-            const [errorMessageConfig] = await Promise.all([
-              handleCreateTxProposalError(err),
-              sleep(400),
-            ]);
-            dispatch(
-              showBottomNotificationModal({
-                ...errorMessageConfig,
-                enableBackdropDismiss: false,
-                actions: [
-                  {
-                    text: 'OK',
-                    action: () => {
-                      setButtonState(undefined);
+  const goToConfirm = useCallback(
+    (recipient: Recipient, opts?: any) => {
+      navigation.navigate('Wallet', {
+        screen: WalletScreens.AMOUNT,
+        params: {
+          opts: opts || {},
+          currencyAbbreviation: wallet.currencyAbbreviation.toUpperCase(),
+          onAmountSelected: async (amount, setButtonState, opts) => {
+            try {
+              setButtonState('loading');
+              const {txDetails, txp} = await dispatch(
+                createProposalAndBuildTxDetails({
+                  wallet,
+                  recipient,
+                  amount: Number(amount),
+                  ...opts,
+                }),
+              );
+              setButtonState('success');
+              await sleep(300);
+              navigation.navigate('Wallet', {
+                screen: 'Confirm',
+                params: {
+                  wallet,
+                  recipient,
+                  txp,
+                  txDetails,
+                  amount: Number(amount),
+                },
+              });
+            } catch (err: any) {
+              setButtonState('failed');
+              const [errorMessageConfig] = await Promise.all([
+                handleCreateTxProposalError(err),
+                sleep(400),
+              ]);
+              dispatch(
+                showBottomNotificationModal({
+                  ...errorMessageConfig,
+                  enableBackdropDismiss: false,
+                  actions: [
+                    {
+                      text: 'OK',
+                      action: () => {
+                        setButtonState(undefined);
+                      },
                     },
-                  },
-                ],
-              }),
-            );
-          }
+                  ],
+                }),
+              );
+            }
+          },
         },
-      },
-    });
-  };
+      });
+    },
+    [dispatch, navigation, wallet],
+  );
+
+  const onSendToCoinbase = useCallback(
+    async (account: string | undefined, address: string | undefined) => {
+      if (!address) return;
+      try {
+        const recipient = {
+          name: account || 'Coinbase',
+          type: 'coinbase',
+          address,
+        };
+
+        goToConfirm(recipient, {hideSendMax: true});
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    [goToConfirm],
+  );
+
+  useEffect(() => {
+    if (toCoinbase) {
+      onSendToCoinbase(toCoinbase.account, toCoinbase.address);
+    }
+    return navigation.addListener('blur', () =>
+      setTimeout(() => setSearchInput(''), 300),
+    );
+  }, [navigation, toCoinbase, onSendToCoinbase]);
+
   return (
     <SafeAreaView>
       <ScrollView>

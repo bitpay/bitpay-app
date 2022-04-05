@@ -1,5 +1,4 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {useSelector} from 'react-redux';
 import {StackScreenProps} from '@react-navigation/stack';
 import {RootState} from '../../../store';
 import {
@@ -11,9 +10,8 @@ import {CoinbaseStackParamList} from '../CoinbaseStack';
 import CoinbaseDashboard from '../components/CoinbaseDashboard';
 import CoinbaseIntro from '../components/CoinbaseIntro';
 import {CoinbaseEffects} from '../../../store/coinbase';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
-import CoinbaseAPI from '../../../api/coinbase';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 
@@ -32,13 +30,13 @@ type CoinbaseRootScreenProps = StackScreenProps<
 const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({route}) => {
   const dispatch = useAppDispatch();
 
-  const tokenError = useSelector<RootState, CoinbaseErrorsProps | null>(
-    ({COINBASE}) => COINBASE.getAccessTokenError,
+  const tokenError = useAppSelector(
+    ({COINBASE}: RootState) => COINBASE.getAccessTokenError,
   );
-  const tokenStatus = useSelector<RootState, 'success' | 'failed' | null>(
-    ({COINBASE}) => COINBASE.getAccessTokenStatus,
+  const tokenStatus = useAppSelector(
+    ({COINBASE}: RootState) => COINBASE.getAccessTokenStatus,
   );
-  const token = useSelector(
+  const token = useAppSelector(
     ({COINBASE}: RootState) => COINBASE.token[COINBASE_ENV],
   );
   const [isDashboardEnabled, setIsDashboardEnabled] = useState(!!token);
@@ -47,7 +45,7 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({route}) => {
 
   const showError = useCallback(
     (error: CoinbaseErrorsProps) => {
-      const errMsg = CoinbaseAPI.parseErrorToString(error);
+      const errMsg = CoinbaseEffects.parseErrorToString(error);
       dispatch(
         showBottomNotificationModal({
           type: 'error',

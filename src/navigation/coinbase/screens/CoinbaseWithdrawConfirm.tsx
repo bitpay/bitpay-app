@@ -2,9 +2,8 @@ import React, {useState, useEffect, useCallback} from 'react';
 import {Alert} from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {useSelector} from 'react-redux';
 import {RootState} from '../../../store';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
 import PaymentSent from '../../wallet/components/PaymentSent';
@@ -29,7 +28,6 @@ import {find} from 'lodash';
 import {getCoinbaseExchangeRate} from '../../../store/coinbase/coinbase.effects';
 import {CoinbaseEffects} from '../../../store/coinbase';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
-import CoinbaseAPI from '../../../api/coinbase';
 
 export interface CoinbaseWithdrawConfirmParamList {
   accountId: string;
@@ -46,23 +44,23 @@ const CoinbaseWithdrawConfirm = () => {
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
 
-  const accountData = useSelector(({COINBASE}: RootState) => {
+  const accountData = useAppSelector(({COINBASE}: RootState) => {
     return find(COINBASE.accounts[COINBASE_ENV], {id: accountId});
   });
-  const exchangeRates = useSelector(
+  const exchangeRates = useAppSelector(
     ({COINBASE}: RootState) => COINBASE.exchangeRates,
   );
 
-  const sendStatus = useSelector<RootState, 'success' | 'failed' | null>(
-    ({COINBASE}) => COINBASE.sendTransactionStatus,
+  const sendStatus = useAppSelector(
+    ({COINBASE}: RootState) => COINBASE.sendTransactionStatus,
   );
 
-  const sendError = useSelector<RootState, CoinbaseErrorsProps | null>(
-    ({COINBASE}) => COINBASE.sendTransactionError,
+  const sendError = useAppSelector(
+    ({COINBASE}: RootState) => COINBASE.sendTransactionError,
   );
 
-  const apiLoading = useSelector<RootState, boolean>(
-    ({COINBASE}) => COINBASE.isApiLoading,
+  const apiLoading = useAppSelector(
+    ({COINBASE}: RootState) => COINBASE.isApiLoading,
   );
 
   const currency = wallet?.credentials.coin;
@@ -120,7 +118,7 @@ const CoinbaseWithdrawConfirm = () => {
 
   const showError = useCallback(
     (error: CoinbaseErrorsProps | null) => {
-      const errMsg = CoinbaseAPI.parseErrorToString(error);
+      const errMsg = CoinbaseEffects.parseErrorToString(error);
       dispatch(
         showBottomNotificationModal({
           type: 'error',
@@ -143,40 +141,37 @@ const CoinbaseWithdrawConfirm = () => {
     [dispatch, navigation],
   );
 
-  const askForTwoFactor = useCallback(
-    (sendError: CoinbaseErrorsProps) => {
-      Alert.prompt(
-        'Enter 2FA code',
-        'Two Factor verification code is required for sending this transaction.',
-        [
-          {
-            text: 'Cancel',
-            onPress: () => {
-              showError(sendError);
-            },
-            style: 'cancel',
+  const askForTwoFactor = useCallback(() => {
+    Alert.prompt(
+      'Enter 2FA code',
+      'Two Factor verification code is required for sending this transaction.',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => {
+            showError(sendError);
           },
-          {
-            text: 'OK',
-            onPress: code => {
-              dispatch(CoinbaseEffects.clearSendTransactionStatus());
-              sendTransaction(code);
-            },
+          style: 'cancel',
+        },
+        {
+          text: 'OK',
+          onPress: code => {
+            dispatch(CoinbaseEffects.clearSendTransactionStatus());
+            sendTransaction(code);
           },
-        ],
-        'secure-text',
-        '',
-        'number-pad',
-      );
-    },
-    [dispatch, showError, sendTransaction],
-  );
+        },
+      ],
+      'secure-text',
+      '',
+      'number-pad',
+    );
+  }, [dispatch, showError, sendError, sendTransaction]);
 
   useEffect(() => {
     if (!apiLoading && sendStatus === 'failed') {
       if (sendError?.errors[0].id === 'two_factor_required') {
         // Ask 2FA
-        askForTwoFactor(sendError);
+        askForTwoFactor();
       } else {
         // Show error
         showError(sendError);

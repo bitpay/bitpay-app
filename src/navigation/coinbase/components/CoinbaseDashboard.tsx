@@ -1,5 +1,5 @@
 import React, {useLayoutEffect, useState} from 'react';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {FlatList, RefreshControl} from 'react-native';
 import styled from 'styled-components/native';
 import WalletRow from '../../../components/list/WalletRow';
@@ -16,12 +16,10 @@ import {CoinbaseEffects} from '../../../store/coinbase';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import CoinbaseSettingsOption from './CoinbaseSettingsOption';
-import {useSelector} from 'react-redux';
 import {RootState} from '../../../store';
 import {formatFiatAmount} from '../../../utils/helper-methods';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {getCoinbaseExchangeRate} from '../../../store/coinbase/coinbase.effects';
-import CoinbaseAPI from '../../../api/coinbase';
 import {Network} from '../../../constants';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 
@@ -59,20 +57,20 @@ const CoinbaseDashboard = () => {
 
   const [refreshing, setRefreshing] = useState(false);
 
-  const isLoadingAccounts = useSelector<RootState, boolean>(
-    ({COINBASE}) => COINBASE.isApiLoading,
+  const isLoadingAccounts = useAppSelector(
+    ({COINBASE}: RootState) => COINBASE.isApiLoading,
   );
-  const exchangeRates = useSelector(
+  const exchangeRates = useAppSelector(
     ({COINBASE}: RootState) => COINBASE.exchangeRates,
   );
-  const user = useSelector(
+  const user = useAppSelector(
     ({COINBASE}: RootState) => COINBASE.user[COINBASE_ENV],
   );
-  const accounts = useSelector(
+  const accounts = useAppSelector(
     ({COINBASE}: RootState) => COINBASE.accounts[COINBASE_ENV],
   );
   const balance =
-    useSelector(({COINBASE}: RootState) => COINBASE.balance[COINBASE_ENV]) ||
+    useAppSelector(({COINBASE}: RootState) => COINBASE.balance[COINBASE_ENV]) ||
     0.0;
 
   useLayoutEffect(() => {
@@ -138,7 +136,7 @@ const CoinbaseDashboard = () => {
   };
 
   const showError = async (error: CoinbaseErrorsProps) => {
-    const errMsg = CoinbaseAPI.parseErrorToString(error);
+    const errMsg = CoinbaseEffects.parseErrorToString(error);
     dispatch(
       showBottomNotificationModal({
         type: 'error',
