@@ -28,7 +28,7 @@ import {setHomeCarouselConfig, showBlur} from './app.actions';
 import {batch} from 'react-redux';
 import i18n from 'i18next';
 import {WalletActions} from '../wallet';
-import {CoinbaseEffects} from '../coinbase';
+import {coinbaseInitialize} from '../coinbase';
 
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
@@ -99,7 +99,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     await dispatch(initializeBrazeContent());
 
     // Update Coinbase
-    dispatch(CoinbaseEffects.updateCoinbaseData());
+    dispatch(coinbaseInitialize());
 
     // set home carousel config if not already set
     if (!homeCarouselConfig.length) {

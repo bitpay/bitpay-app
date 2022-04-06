@@ -9,7 +9,10 @@ import {
 import {CoinbaseStackParamList} from '../CoinbaseStack';
 import CoinbaseDashboard from '../components/CoinbaseDashboard';
 import CoinbaseIntro from '../components/CoinbaseIntro';
-import {CoinbaseEffects} from '../../../store/coinbase';
+import {
+  coinbaseParseErrorToString,
+  coinbaseLinkAccount,
+} from '../../../store/coinbase';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
@@ -45,7 +48,7 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({route}) => {
 
   const showError = useCallback(
     (error: CoinbaseErrorsProps) => {
-      const errMsg = CoinbaseEffects.parseErrorToString(error);
+      const errMsg = coinbaseParseErrorToString(error);
       dispatch(
         showBottomNotificationModal({
           type: 'error',
@@ -67,7 +70,7 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({route}) => {
 
   useEffect(() => {
     if (!token && code && state) {
-      dispatch(CoinbaseEffects.linkCoinbaseAccount(code, state));
+      dispatch(coinbaseLinkAccount(code, state));
       dispatch(
         showOnGoingProcessModal(OnGoingProcessMessages.CONNECTING_COINBASE),
       );

@@ -24,7 +24,6 @@ import TransactionRow from '../../../components/list/TransactionRow';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import GlobalSelect from '../../../navigation/wallet/screens/GlobalSelect';
 
-import {getCoinbaseExchangeRate} from '../../../store/coinbase/coinbase.effects';
 import {StackScreenProps} from '@react-navigation/stack';
 import {CoinbaseStackParamList} from '../CoinbaseStack';
 import {
@@ -32,7 +31,13 @@ import {
   CoinbaseTransactionProps,
 } from '../../../api/coinbase/coinbase.types';
 import CoinbaseIcon from '../components/CoinbaseIcon';
-import {CoinbaseEffects} from '../../../store/coinbase';
+import {
+  coinbaseParseErrorToString,
+  coinbaseCreateAddress,
+  coinbaseGetAccountsAndBalance,
+  coinbaseGetTransactionsByAccount,
+  coinbaseGetFiatAmount,
+} from '../../../store/coinbase';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -247,7 +252,7 @@ const CoinbaseAccount = ({
       setCustomSupportedCurrencies(currencies);
 
       if (Number(account.balance.amount)) {
-        const fa = getCoinbaseExchangeRate(
+        const fa = coinbaseGetFiatAmount(
           account.balance.amount,
           account.balance.currency,
           exchangeRates,
@@ -282,29 +287,27 @@ const CoinbaseAccount = ({
     dispatch(
       showOnGoingProcessModal(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
     );
-    dispatch(CoinbaseEffects.createAddress(accountId)).then(
-      async newAddress => {
-        if (account?.currency.code === 'BCH') {
-          // Convert old format bch address to bch cash address
-          newAddress = TranslateToBchCashAddress(newAddress);
-          newAddress = ToCashAddress(newAddress, false);
-        }
-        dispatch(dismissOnGoingProcessModal());
-        await sleep(400);
-        navigation.navigate('Wallet', {
-          screen: 'GlobalSelect',
-          params: {
-            context: 'deposit',
-            toCoinbase: {
-              account: account?.name || 'Coinbase',
-              currency: account?.currency.code.toLowerCase() || '',
-              address: newAddress,
-              title: 'Send from BitPay Wallet',
-            },
+    dispatch(coinbaseCreateAddress(accountId)).then(async newAddress => {
+      if (account?.currency.code === 'BCH') {
+        // Convert old format bch address to bch cash address
+        newAddress = TranslateToBchCashAddress(newAddress);
+        newAddress = ToCashAddress(newAddress, false);
+      }
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(400);
+      navigation.navigate('Wallet', {
+        screen: 'GlobalSelect',
+        params: {
+          context: 'deposit',
+          toCoinbase: {
+            account: account?.name || 'Coinbase',
+            currency: account?.currency.code.toLowerCase() || '',
+            address: newAddress,
+            title: 'Send from BitPay Wallet',
           },
-        });
-      },
-    );
+        },
+      });
+    });
   };
 
   const onSelectedWallet = async (newWallet?: Wallet) => {
@@ -335,7 +338,7 @@ const CoinbaseAccount = ({
   };
 
   const showError = async (error: CoinbaseErrorsProps) => {
-    const errMsg = CoinbaseEffects.parseErrorToString(error);
+    const errMsg = coinbaseParseErrorToString(error);
     dispatch(
       showBottomNotificationModal({
         type: 'error',
@@ -358,8 +361,8 @@ const CoinbaseAccount = ({
     await sleep(1000);
 
     try {
-      await dispatch(CoinbaseEffects.getAccountsAndBalance());
-      await dispatch(CoinbaseEffects.getTransactionsByAccount(accountId));
+      await dispatch(coinbaseGetAccountsAndBalance());
+      await dispatch(coinbaseGetTransactionsByAccount(accountId));
     } catch (err: CoinbaseErrorsProps | any) {
       setRefreshing(false);
       showError(err);

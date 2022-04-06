@@ -10,14 +10,18 @@ import {Black, SlateDark, White} from '../../../styles/colors';
 
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
-import {CoinbaseEffects} from '../../../store/coinbase';
+import {
+  coinbaseGetFiatAmount,
+  coinbaseGetTransactionsByAccount,
+  coinbaseParseErrorToString,
+  coinbaseGetAccountsAndBalance,
+} from '../../../store/coinbase';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import CoinbaseSettingsOption from './CoinbaseSettingsOption';
 import {RootState} from '../../../store';
 import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
-import {getCoinbaseExchangeRate} from '../../../store/coinbase/coinbase.effects';
 import {Network} from '../../../constants';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 
@@ -101,7 +105,7 @@ const CoinbaseDashboard = () => {
   };
 
   const renderItem = ({item}: any) => {
-    const fiatAmount = getCoinbaseExchangeRate(
+    const fiatAmount = coinbaseGetFiatAmount(
       item.balance.amount,
       item.balance.currency,
       exchangeRates,
@@ -133,14 +137,14 @@ const CoinbaseDashboard = () => {
             screen: 'CoinbaseAccount',
             params: {accountId: item.id},
           });
-          dispatch(CoinbaseEffects.getTransactionsByAccount(item.id));
+          dispatch(coinbaseGetTransactionsByAccount(item.id));
         }}
       />
     );
   };
 
   const showError = async (error: CoinbaseErrorsProps) => {
-    const errMsg = CoinbaseEffects.parseErrorToString(error);
+    const errMsg = coinbaseParseErrorToString(error);
     dispatch(
       showBottomNotificationModal({
         type: 'error',
@@ -165,7 +169,7 @@ const CoinbaseDashboard = () => {
     await sleep(1000);
 
     try {
-      await dispatch(CoinbaseEffects.getAccountsAndBalance());
+      await dispatch(coinbaseGetAccountsAndBalance());
     } catch (err: CoinbaseErrorsProps | any) {
       setRefreshing(false);
       showError(err);

@@ -25,8 +25,12 @@ import {
 import {CoinbaseStackParamList} from '../CoinbaseStack';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {find} from 'lodash';
-import {getCoinbaseExchangeRate} from '../../../store/coinbase/coinbase.effects';
-import {CoinbaseEffects} from '../../../store/coinbase';
+import {
+  coinbaseGetFiatAmount,
+  coinbaseSendTransaction,
+  coinbaseParseErrorToString,
+  coinbaseClearSendTransactionStatus,
+} from '../../../store/coinbase';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 
 export interface CoinbaseWithdrawConfirmParamList {
@@ -77,7 +81,7 @@ const CoinbaseWithdrawConfirm = () => {
     img: 'coinbase',
   };
 
-  const fiatAmountValue = getCoinbaseExchangeRate(
+  const fiatAmountValue = coinbaseGetFiatAmount(
     amount,
     currency.toUpperCase(),
     exchangeRates,
@@ -110,7 +114,7 @@ const CoinbaseWithdrawConfirm = () => {
         amount: amount,
         currency: currency,
       };
-      dispatch(CoinbaseEffects.sendTransaction(accountId, buildTx, code));
+      dispatch(coinbaseSendTransaction(accountId, buildTx, code));
       dispatch(dismissOnGoingProcessModal());
     },
     [dispatch, accountId, toAddress, amount, currency],
@@ -118,7 +122,7 @@ const CoinbaseWithdrawConfirm = () => {
 
   const showError = useCallback(
     (error: CoinbaseErrorsProps | null) => {
-      const errMsg = CoinbaseEffects.parseErrorToString(error);
+      const errMsg = coinbaseParseErrorToString(error);
       dispatch(
         showBottomNotificationModal({
           type: 'error',
@@ -129,7 +133,7 @@ const CoinbaseWithdrawConfirm = () => {
             {
               text: 'OK',
               action: () => {
-                dispatch(CoinbaseEffects.clearSendTransactionStatus());
+                dispatch(coinbaseClearSendTransactionStatus());
                 navigation.goBack();
               },
               primary: true,
@@ -156,7 +160,7 @@ const CoinbaseWithdrawConfirm = () => {
         {
           text: 'OK',
           onPress: code => {
-            dispatch(CoinbaseEffects.clearSendTransactionStatus());
+            dispatch(coinbaseClearSendTransactionStatus());
             sendTransaction(code);
           },
         },
@@ -201,7 +205,7 @@ const CoinbaseWithdrawConfirm = () => {
       <PaymentSent
         isVisible={showPaymentSentModal}
         onCloseModal={async () => {
-          dispatch(CoinbaseEffects.clearSendTransactionStatus());
+          dispatch(coinbaseClearSendTransactionStatus());
           setShowPaymentSentModal(false);
           navigation.goBack();
         }}

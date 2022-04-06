@@ -1,5 +1,36 @@
 import {Effect} from '../index';
-import {CoinbaseActions} from './index';
+import {
+  exchangeRatesPending,
+  exchangeRatesSuccess,
+  exchangeRatesFailed,
+  accessTokenPending,
+  accessTokenSuccess,
+  accessTokenFailed,
+  refreshTokenPending,
+  refreshTokenSuccess,
+  refreshTokenFailed,
+  revokeTokenPending,
+  revokeTokenSuccess,
+  userPending,
+  userSuccess,
+  userFailed,
+  accountsPending,
+  accountsSuccess,
+  accountsFailed,
+  transactionsPending,
+  transactionsSuccess,
+  transactionsFailed,
+  createAddressPending,
+  createAddressSuccess,
+  createAddressFailed,
+  sendTransactionPending,
+  sendTransactionSuccess,
+  sendTransactionFailed,
+  clearSendTransactionStatus,
+  payInvoicePending,
+  payInvoiceSuccess,
+  payInvoiceFailed,
+} from './index';
 
 import {includes} from 'lodash';
 
@@ -24,7 +55,7 @@ const isRevokedTokenError = (error: CoinbaseErrorsProps): boolean => {
   return false;
 };
 
-export const parseErrorToString = (
+export const coinbaseParseErrorToString = (
   error: CoinbaseErrorsProps | any,
 ): string => {
   if (typeof error === 'string') {
@@ -47,33 +78,33 @@ const isExpiredTokenError = (error: CoinbaseErrorsProps): boolean => {
   return false;
 };
 
-export const updateCoinbaseData =
+export const coinbaseInitialize =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
     const {COINBASE} = getState();
     if (!COINBASE.token[COINBASE_ENV]) {
       return;
     }
-    await dispatch(getUser());
-    await dispatch(setExchangeRate());
-    dispatch(getAccountsAndBalance());
+    await dispatch(coinbaseGetUser());
+    await dispatch(coinbaseUpdateExchangeRate());
+    dispatch(coinbaseGetAccountsAndBalance());
   };
 
-export const setExchangeRate =
+export const coinbaseUpdateExchangeRate =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
     const {COINBASE} = getState();
     const nativeCurrency: string =
       COINBASE.user[COINBASE_ENV]?.data.native_currency || 'USD';
     try {
-      dispatch(CoinbaseActions.exchangeRatesPending());
+      dispatch(exchangeRatesPending());
       const exchangeRates = await CoinbaseAPI.getExchangeRates(nativeCurrency);
-      dispatch(CoinbaseActions.exchangeRatesSuccess(exchangeRates));
+      dispatch(exchangeRatesSuccess(exchangeRates));
     } catch (error: CoinbaseErrorsProps | any) {
-      dispatch(LogActions.warn(parseErrorToString(error)));
-      dispatch(CoinbaseActions.exchangeRatesFailed(error));
+      dispatch(LogActions.warn(coinbaseParseErrorToString(error)));
+      dispatch(exchangeRatesFailed(error));
     }
   };
 
-export const linkCoinbaseAccount =
+export const coinbaseLinkAccount =
   (code: string, state: string): Effect<Promise<any>> =>
   async dispatch => {
     if (CoinbaseAPI.getOauthStateCode() !== state) {
@@ -86,24 +117,24 @@ export const linkCoinbaseAccount =
           },
         ],
       };
-      dispatch(CoinbaseActions.accessTokenFailed(error));
+      dispatch(accessTokenFailed(error));
       throw error;
     }
 
     try {
-      dispatch(CoinbaseActions.accessTokenPending());
+      dispatch(accessTokenPending());
       const newToken = await CoinbaseAPI.getAccessToken(code);
-      dispatch(CoinbaseActions.accessTokenSuccess(COINBASE_ENV, newToken));
-      await dispatch(getUser());
-      await dispatch(setExchangeRate());
-      dispatch(getAccountsAndBalance());
+      dispatch(accessTokenSuccess(COINBASE_ENV, newToken));
+      await dispatch(coinbaseGetUser());
+      await dispatch(coinbaseUpdateExchangeRate());
+      dispatch(coinbaseGetAccountsAndBalance());
     } catch (error: CoinbaseErrorsProps | any) {
-      dispatch(LogActions.error(parseErrorToString(error)));
-      dispatch(CoinbaseActions.accessTokenFailed(error));
+      dispatch(LogActions.error(coinbaseParseErrorToString(error)));
+      dispatch(accessTokenFailed(error));
     }
   };
 
-export const refreshToken =
+export const coinbaseRefreshToken =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
     const {COINBASE} = getState();
 
@@ -112,29 +143,29 @@ export const refreshToken =
     }
 
     try {
-      dispatch(CoinbaseActions.refreshTokenPending());
+      dispatch(refreshTokenPending());
       const newToken = await CoinbaseAPI.getRefreshToken(
         COINBASE.token[COINBASE_ENV],
       );
-      dispatch(CoinbaseActions.refreshTokenSuccess(COINBASE_ENV, newToken));
+      dispatch(refreshTokenSuccess(COINBASE_ENV, newToken));
     } catch (error: CoinbaseErrorsProps | any) {
-      dispatch(LogActions.error(parseErrorToString(error)));
-      dispatch(CoinbaseActions.refreshTokenFailed(error));
+      dispatch(LogActions.error(coinbaseParseErrorToString(error)));
+      dispatch(refreshTokenFailed(error));
     }
   };
 
-export const disconnectCoinbaseAccount =
+export const coinbaseDisconnectAccount =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
     const {COINBASE} = getState();
 
-    dispatch(CoinbaseActions.revokeTokenPending());
+    dispatch(revokeTokenPending());
     if (COINBASE.token[COINBASE_ENV]) {
       await CoinbaseAPI.revokeToken(COINBASE.token[COINBASE_ENV]);
     }
-    dispatch(CoinbaseActions.revokeTokenSuccess()); // Remove accounts
+    dispatch(revokeTokenSuccess()); // Remove accounts
   };
 
-export const getUser =
+export const coinbaseGetUser =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
     const {COINBASE} = getState();
 
@@ -143,25 +174,25 @@ export const getUser =
     }
 
     try {
-      dispatch(CoinbaseActions.userPending());
+      dispatch(userPending());
       const user = await CoinbaseAPI.getCurrentUser(
         COINBASE.token[COINBASE_ENV],
       );
-      dispatch(CoinbaseActions.userSuccess(COINBASE_ENV, user));
+      dispatch(userSuccess(COINBASE_ENV, user));
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
-        await dispatch(refreshToken());
-        dispatch(getUser());
+        await dispatch(coinbaseRefreshToken());
+        dispatch(coinbaseGetUser());
       } else if (isRevokedTokenError(error)) {
-        dispatch(disconnectCoinbaseAccount());
+        dispatch(coinbaseDisconnectAccount());
       } else {
-        dispatch(LogActions.error(parseErrorToString(error)));
-        dispatch(CoinbaseActions.userFailed(error));
+        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
+        dispatch(userFailed(error));
       }
     }
   };
 
-export const getCoinbaseExchangeRate = (
+export const coinbaseGetFiatAmount = (
   amount: number,
   currency: string,
   exchangeRates: CoinbaseExchangeRatesProps | null,
@@ -173,7 +204,7 @@ export const getCoinbaseExchangeRate = (
   return amount / Number(rate);
 };
 
-export const getAccountsAndBalance =
+export const coinbaseGetAccountsAndBalance =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
     const {COINBASE} = getState();
 
@@ -187,7 +218,7 @@ export const getAccountsAndBalance =
     }
 
     try {
-      dispatch(CoinbaseActions.accountsPending());
+      dispatch(accountsPending());
       const accounts = await CoinbaseAPI.getAccounts(
         COINBASE.token[COINBASE_ENV],
       );
@@ -211,7 +242,7 @@ export const getAccountsAndBalance =
           if (COINBASE.exchangeRates) {
             availableBalance =
               availableBalance +
-              getCoinbaseExchangeRate(
+              coinbaseGetFiatAmount(
                 accounts.data[i].balance.amount,
                 accounts.data[i].balance.currency,
                 COINBASE.exchangeRates,
@@ -221,26 +252,22 @@ export const getAccountsAndBalance =
       }
 
       dispatch(
-        CoinbaseActions.accountsSuccess(
-          COINBASE_ENV,
-          availableAccounts,
-          availableBalance,
-        ),
+        accountsSuccess(COINBASE_ENV, availableAccounts, availableBalance),
       );
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
-        await dispatch(refreshToken());
-        dispatch(getAccountsAndBalance());
+        await dispatch(coinbaseRefreshToken());
+        dispatch(coinbaseGetAccountsAndBalance());
       } else if (isRevokedTokenError(error)) {
-        dispatch(disconnectCoinbaseAccount());
+        dispatch(coinbaseDisconnectAccount());
       } else {
-        dispatch(LogActions.error(parseErrorToString(error)));
-        dispatch(CoinbaseActions.accountsFailed(error));
+        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
+        dispatch(accountsFailed(error));
       }
     }
   };
 
-export const getTransactionsByAccount =
+export const coinbaseGetTransactionsByAccount =
   (accountId: string): Effect<Promise<any>> =>
   async (dispatch, getState) => {
     const {COINBASE} = getState();
@@ -250,32 +277,26 @@ export const getTransactionsByAccount =
     }
 
     try {
-      dispatch(CoinbaseActions.transactionsPending());
+      dispatch(transactionsPending());
       const transactions = await CoinbaseAPI.getTransactions(
         accountId,
         COINBASE.token[COINBASE_ENV],
       );
-      dispatch(
-        CoinbaseActions.transactionsSuccess(
-          COINBASE_ENV,
-          accountId,
-          transactions,
-        ),
-      );
+      dispatch(transactionsSuccess(COINBASE_ENV, accountId, transactions));
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
-        await dispatch(refreshToken());
-        dispatch(getTransactionsByAccount(accountId));
+        await dispatch(coinbaseRefreshToken());
+        dispatch(coinbaseGetTransactionsByAccount(accountId));
       } else if (isRevokedTokenError(error)) {
-        dispatch(disconnectCoinbaseAccount());
+        dispatch(coinbaseDisconnectAccount());
       } else {
-        dispatch(LogActions.error(parseErrorToString(error)));
-        dispatch(CoinbaseActions.transactionsFailed(error));
+        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
+        dispatch(transactionsFailed(error));
       }
     }
   };
 
-export const createAddress =
+export const coinbaseCreateAddress =
   (accountId: string): Effect<Promise<any>> =>
   async (dispatch, getState) => {
     const {COINBASE} = getState();
@@ -285,27 +306,27 @@ export const createAddress =
     }
 
     try {
-      dispatch(CoinbaseActions.createAddressPending());
+      dispatch(createAddressPending());
       const addressData = await CoinbaseAPI.getNewAddress(
         accountId,
         COINBASE.token[COINBASE_ENV],
       );
-      dispatch(CoinbaseActions.createAddressSuccess());
+      dispatch(createAddressSuccess());
       return addressData.data.address;
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
-        await dispatch(refreshToken());
-        dispatch(createAddress(accountId));
+        await dispatch(coinbaseRefreshToken());
+        dispatch(coinbaseCreateAddress(accountId));
       } else if (isRevokedTokenError(error)) {
-        dispatch(disconnectCoinbaseAccount());
+        dispatch(coinbaseDisconnectAccount());
       } else {
-        dispatch(LogActions.error(parseErrorToString(error)));
-        dispatch(CoinbaseActions.createAddressFailed(error));
+        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
+        dispatch(createAddressFailed(error));
       }
     }
   };
 
-export const sendTransaction =
+export const coinbaseSendTransaction =
   (accountId: string, tx: any, code?: string): Effect<Promise<any>> =>
   async (dispatch, getState) => {
     const {COINBASE} = getState();
@@ -315,33 +336,33 @@ export const sendTransaction =
     }
 
     try {
-      dispatch(CoinbaseActions.sendTransactionPending());
+      dispatch(sendTransactionPending());
       await CoinbaseAPI.sendTransaction(
         accountId,
         tx,
         COINBASE.token[COINBASE_ENV],
         code,
       );
-      dispatch(CoinbaseActions.sendTransactionSuccess());
+      dispatch(sendTransactionSuccess());
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
-        await dispatch(refreshToken());
-        dispatch(sendTransaction(accountId, tx));
+        await dispatch(coinbaseRefreshToken());
+        dispatch(coinbaseSendTransaction(accountId, tx));
       } else if (isRevokedTokenError(error)) {
-        dispatch(disconnectCoinbaseAccount());
+        dispatch(coinbaseDisconnectAccount());
       } else {
-        dispatch(LogActions.error(parseErrorToString(error)));
-        dispatch(CoinbaseActions.sendTransactionFailed(error));
+        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
+        dispatch(sendTransactionFailed(error));
       }
     }
   };
 
-export const clearSendTransactionStatus =
+export const coinbaseClearSendTransactionStatus =
   (): Effect<Promise<any>> => async dispatch => {
-    dispatch(CoinbaseActions.clearSendTransactionStatus());
+    dispatch(clearSendTransactionStatus());
   };
 
-export const payInvoice =
+export const coinbasePayInvoice =
   (accountId: string, tx: any, code?: string): Effect<Promise<any>> =>
   async (dispatch, getState) => {
     const {COINBASE} = getState();
@@ -351,23 +372,23 @@ export const payInvoice =
     }
 
     try {
-      dispatch(CoinbaseActions.payInvoicePending());
+      dispatch(payInvoicePending());
       await CoinbaseAPI.payInvoice(
         accountId,
         tx,
         COINBASE.token[COINBASE_ENV],
         code,
       );
-      dispatch(CoinbaseActions.payInvoiceSuccess());
+      dispatch(payInvoiceSuccess());
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
-        await dispatch(refreshToken());
-        dispatch(payInvoice(accountId, tx));
+        await dispatch(coinbaseRefreshToken());
+        dispatch(coinbasePayInvoice(accountId, tx));
       } else if (isRevokedTokenError(error)) {
-        dispatch(disconnectCoinbaseAccount());
+        dispatch(coinbaseDisconnectAccount());
       } else {
-        dispatch(LogActions.error(parseErrorToString(error)));
-        dispatch(CoinbaseActions.payInvoiceFailed(error));
+        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
+        dispatch(payInvoiceFailed(error));
       }
     }
   };

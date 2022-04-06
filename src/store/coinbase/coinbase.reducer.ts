@@ -132,46 +132,60 @@ const initialState: CoinbaseState = {
 export const coinbaseReducer = (
   state: CoinbaseState = initialState,
   action: CoinbaseActionType,
-) => {
+): CoinbaseState => {
   switch (action.type) {
     // ------- Exchange Rates -------- //
 
     case CoinbaseActionTypes.EXCHANGE_RATES_PENDING:
-      state.isApiLoading = true;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: true,
+      };
     case CoinbaseActionTypes.EXCHANGE_RATES_SUCCESS:
-      state.isApiLoading = false;
-      state.getExchangeRatesStatus = 'success';
-      state.exchangeRates = action.payload;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: false,
+        getExchangeRatesStatus: 'success',
+        exchangeRates: action.payload,
+      };
     case CoinbaseActionTypes.EXCHANGE_RATES_FAILED:
-      state.isApiLoading = false;
-      state.getExchangeRatesStatus = 'failed';
-      state.exchangeRates = null;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: false,
+        getExchangeRatesStatus: 'failed',
+        exchangeRates: null,
+      };
 
     // ------- Revoke and Delete Token -------- //
 
     case CoinbaseActionTypes.DISCONNECT_ACCOUNT_PENDING:
-      state.isApiLoading = true;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: true,
+      };
     case CoinbaseActionTypes.DISCONNECT_ACCOUNT_SUCCESS:
-      state.isApiLoading = false;
-      state.revokeTokenStatus = 'success';
-      state.revokeTokenError = null;
-      state = initialState; // Delete everything
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: false,
+        revokeTokenStatus: 'success',
+        revokeTokenError: null,
+        // TODO state = initialState; // Delete everything
+      };
     case CoinbaseActionTypes.DISCONNECT_ACCOUNT_FAILED:
-      state.isApiLoading = false;
-      state.revokeTokenStatus = 'failed';
-      state.revokeTokenError = action.payload;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: false,
+        revokeTokenStatus: 'failed',
+        revokeTokenError: action.payload,
+      };
 
     // ------- Access Token -------- //
 
     case CoinbaseActionTypes.ACCESS_TOKEN_PENDING:
-      state.isApiLoading = true;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: true,
+      };
     case CoinbaseActionTypes.ACCESS_TOKEN_SUCCESS:
       return {
         ...state,
@@ -183,16 +197,20 @@ export const coinbaseReducer = (
         },
       };
     case CoinbaseActionTypes.ACCESS_TOKEN_FAILED:
-      state.isApiLoading = false;
-      state.getAccessTokenStatus = 'failed';
-      state.getAccessTokenError = action.payload;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: false,
+        getAccessTokenStatus: 'failed',
+        getAccessTokenError: action.payload,
+      };
 
     // ------- Refresh Token -------- //
 
     case CoinbaseActionTypes.REFRESH_TOKEN_PENDING:
-      state.isApiLoading = true;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: true,
+      };
     case CoinbaseActionTypes.REFRESH_TOKEN_SUCCESS:
       return {
         ...state,
@@ -204,16 +222,20 @@ export const coinbaseReducer = (
         },
       };
     case CoinbaseActionTypes.REFRESH_TOKEN_FAILED:
-      state.isApiLoading = false;
-      state.getRefreshTokenStatus = 'failed';
-      state.getRefreshTokenError = action.payload;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: false,
+        getRefreshTokenStatus: 'failed',
+        getRefreshTokenError: action.payload,
+      };
 
     // ------- User Data -------- //
 
     case CoinbaseActionTypes.USER_PENDING:
-      state.isApiLoading = true;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: true,
+      };
     case CoinbaseActionTypes.USER_SUCCESS:
       return {
         ...state,
@@ -225,16 +247,20 @@ export const coinbaseReducer = (
         },
       };
     case CoinbaseActionTypes.USER_FAILED:
-      state.isApiLoading = false;
-      state.getUserStatus = 'failed';
-      state.getUserError = action.payload;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: false,
+        getUserStatus: 'failed',
+        getUserError: action.payload,
+      };
 
     // ------- Accounts (Wallets) -------- //
 
     case CoinbaseActionTypes.ACCOUNTS_PENDING:
-      state.isApiLoading = true;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: true,
+      };
     case CoinbaseActionTypes.ACCOUNTS_SUCCESS:
       return {
         ...state,
@@ -250,16 +276,20 @@ export const coinbaseReducer = (
         },
       };
     case CoinbaseActionTypes.ACCOUNTS_FAILED:
-      state.isApiLoading = false;
-      state.getAccountsStatus = 'failed';
-      state.getAccountsError = action.payload;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: false,
+        getAccountsStatus: 'failed',
+        getAccountsError: action.payload,
+      };
 
     // ------- Transactions (by Account) -------- //
 
     case CoinbaseActionTypes.TRANSACTIONS_PENDING:
-      state.isApiLoading = true;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: true,
+      };
     case CoinbaseActionTypes.TRANSACTIONS_SUCCESS:
       return {
         ...state,
@@ -271,60 +301,82 @@ export const coinbaseReducer = (
         },
       };
     case CoinbaseActionTypes.TRANSACTIONS_FAILED:
-      state.isApiLoading = false;
-      state.getTransactionsStatus = 'failed';
-      state.getTransactionsError = action.payload;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: false,
+        getTransactionsStatus: 'failed',
+        getTransactionsError: action.payload,
+      };
 
     // ------- Address -------- //
 
     case CoinbaseActionTypes.CREATE_ADDRESS_PENDING:
-      state.isApiLoading = true;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: true,
+      };
     case CoinbaseActionTypes.CREATE_ADDRESS_SUCCESS:
-      state.isApiLoading = false;
-      state.createAddressStatus = 'success';
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: false,
+        createAddressStatus: 'success',
+      };
     case CoinbaseActionTypes.CREATE_ADDRESS_FAILED:
-      state.isApiLoading = false;
-      state.createAddressStatus = 'failed';
-      state.createAddressError = action.payload;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: false,
+        createAddressStatus: 'failed',
+        createAddressError: action.payload,
+      };
 
     // ------- Send Transaction -------- //
 
     case CoinbaseActionTypes.SEND_TRANSACTION_PENDING:
-      state.isApiLoading = true;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: true,
+      };
     case CoinbaseActionTypes.SEND_TRANSACTION_SUCCESS:
-      state.isApiLoading = false;
-      state.sendTransactionStatus = 'success';
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: false,
+        sendTransactionStatus: 'success',
+      };
     case CoinbaseActionTypes.SEND_TRANSACTION_FAILED:
-      state.isApiLoading = false;
-      state.sendTransactionStatus = 'failed';
-      state.sendTransactionError = action.payload;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: false,
+        sendTransactionStatus: 'failed',
+        sendTransactionError: action.payload,
+      };
 
     case CoinbaseActionTypes.CLEAR_SEND_TRANSACTION_STATUS:
-      state.sendTransactionStatus = null;
-      state.sendTransactionError = null;
-      return {...state};
+      return {
+        ...state,
+        sendTransactionStatus: null,
+        sendTransactionError: null,
+      };
 
     // ------- Pay Invoice -------- //
 
     case CoinbaseActionTypes.PAY_INVOICE_PENDING:
-      state.isApiLoading = true;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: true,
+      };
     case CoinbaseActionTypes.PAY_INVOICE_SUCCESS:
-      state.isApiLoading = false;
-      state.payInvoiceStatus = 'success';
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: false,
+        payInvoiceStatus: 'success',
+      };
     case CoinbaseActionTypes.PAY_INVOICE_FAILED:
-      state.isApiLoading = false;
-      state.payInvoiceStatus = 'failed';
-      state.payInvoiceError = action.payload;
-      return {...state};
+      return {
+        ...state,
+        isApiLoading: false,
+        payInvoiceStatus: 'failed',
+        payInvoiceError: action.payload,
+      };
 
     default:
       return {...state};

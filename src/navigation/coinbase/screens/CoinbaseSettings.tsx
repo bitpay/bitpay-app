@@ -15,7 +15,11 @@ import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, TextAlign} from '../../../components/styled/Text';
 import {SlateDark, White} from '../../../styles/colors';
 import {Hr} from '../../../components/styled/Containers';
-import {CoinbaseEffects} from '../../../store/coinbase';
+import {
+  coinbaseParseErrorToString,
+  coinbaseGetUser,
+  coinbaseDisconnectAccount,
+} from '../../../store/coinbase';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {RootState} from '../../../store';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
@@ -88,7 +92,7 @@ const CoinbaseSettings = () => {
 
   const showError = useCallback(
     (error: CoinbaseErrorsProps) => {
-      const errMsg = CoinbaseEffects.parseErrorToString(error);
+      const errMsg = coinbaseParseErrorToString(error);
       dispatch(
         showBottomNotificationModal({
           type: 'error',
@@ -112,7 +116,7 @@ const CoinbaseSettings = () => {
 
   useEffect(() => {
     if (!userData && !isLoadingUserData) {
-      dispatch(CoinbaseEffects.getUser());
+      dispatch(coinbaseGetUser());
     }
 
     if (userError) {
@@ -121,7 +125,7 @@ const CoinbaseSettings = () => {
   }, [dispatch, userData, isLoadingUserData, userError, showError]);
 
   const deleteAccount = async () => {
-    dispatch(CoinbaseEffects.disconnectCoinbaseAccount());
+    dispatch(coinbaseDisconnectAccount());
     await sleep(1000);
     navigation.navigate('Tabs', {screen: 'Home'});
   };
@@ -165,7 +169,7 @@ const CoinbaseSettings = () => {
     await sleep(1000);
 
     try {
-      await dispatch(CoinbaseEffects.getUser());
+      await dispatch(coinbaseGetUser());
     } catch (err: CoinbaseErrorsProps | any) {
       showError(err);
     }
