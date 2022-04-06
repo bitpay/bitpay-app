@@ -741,12 +741,13 @@ export const buildBtcSpeedupTx = (wallet: Wallet, tx: any, address: string) => {
   });
 };
 
-
-export const getTx  = (wallet: Wallet, txpid: string): Promise<any> =>  {
+export const getTx = (wallet: Wallet, txpid: string): Promise<any> => {
   return new Promise((resolve, reject) => {
-    wallet.getTx(txpid, (err:any, txp: Partial<TransactionProposal>) => {
-      if (err) return reject(err);
+    wallet.getTx(txpid, (err: any, txp: Partial<TransactionProposal>) => {
+      if (err) {
+        return reject(err);
+      }
       return resolve(txp);
     });
   });
-}
+};

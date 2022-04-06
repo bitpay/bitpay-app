@@ -254,7 +254,7 @@ const getEstimatedSizeForSingleInput = (wallet: Wallet): number => {
 export const GetEstimatedTxSize = (
   wallet: Wallet,
   nbOutputs?: number,
-  nbInputs?: number
+  nbInputs?: number,
 ): number => {
   // Note: found empirically based on all multisig P2SH inputs and within m & n allowed limits.
   nbOutputs = nbOutputs ? nbOutputs : 2; // Assume 2 outputs

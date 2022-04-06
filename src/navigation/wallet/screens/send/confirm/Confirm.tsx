@@ -203,7 +203,7 @@ const Confirm = () => {
       </DetailsList>
 
       <SwipeButton
-        title={'Slide to send'}
+        title={speedup ? 'Speed Up' : 'Slide to send'}
         forceReset={resetSwipeButton}
         onSwipeComplete={async () => {
           try {

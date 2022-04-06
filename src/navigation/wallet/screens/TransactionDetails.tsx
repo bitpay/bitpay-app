@@ -59,12 +59,13 @@ import TransactionDetailSkeleton from '../components/TransactionDetailSkeleton';
 import {sleep} from '../../../utils/helper-methods';
 import {GetAmFormatDate} from '../../../store/wallet/utils/time';
 import {
-  createProposalAndBuildTxDetails, getTx,
-  handleCreateTxProposalError
-} from "../../../store/wallet/effects/send/send";
-import {showBottomNotificationModal} from "../../../store/app/app.actions";
-import {FormatAmount} from "../../../store/wallet/effects/amount/amount";
-import {getFeeRatePerKb} from "../../../store/wallet/effects/fee/fee";
+  createProposalAndBuildTxDetails,
+  getTx,
+  handleCreateTxProposalError,
+} from '../../../store/wallet/effects/send/send';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {FormatAmount} from '../../../store/wallet/effects/amount/amount';
+import {getFeeRatePerKb} from '../../../store/wallet/effects/fee/fee';
 
 const TxsDetailsContainer = styled.View`
   flex: 1;
@@ -255,23 +256,20 @@ const TransactionDetails = () => {
 
   const speedup = async () => {
     try {
-      console.log(transaction, 'transaction');
-      // Test code
-      const feePerKb = await getFeeRatePerKb({wallet, feeLevel:'priority'});
-      const txp = await getTx(wallet, transaction.proposalId)
-      const toAddress =transaction.outputs[0].address;
+      const txp = await getTx(wallet, transaction.proposalId);
+      const toAddress = transaction.outputs[0].address;
       const recipient = {
         type: 'wallet',
         name: walletName,
         walletId,
         keyId,
-        address:toAddress
+        address: toAddress,
       };
 
       const tx = {
         wallet,
         walletId,
-        context: 'fromReplaceByFee',
+        context: 'fromReplaceByFee' as 'fromReplaceByFee',
         amount: Number(FormatAmount(coin, transaction.amount)),
         toAddress,
         coin,
@@ -279,13 +277,12 @@ const TransactionDetails = () => {
         inputs: txp.inputs,
         feeLevel: 'priority',
         recipient,
-        feePerKb
-      }
+      };
 
-      console.log(tx, 'tx');
       const {txDetails, txp: newTxp} = await dispatch(
-          createProposalAndBuildTxDetails(tx),
+        createProposalAndBuildTxDetails(tx),
       );
+
       navigation.navigate('Wallet', {
         screen: 'Confirm',
         params: {
@@ -303,16 +300,16 @@ const TransactionDetails = () => {
         sleep(400),
       ]);
       dispatch(
-          showBottomNotificationModal({
-            ...errorMessageConfig,
-            enableBackdropDismiss: false,
-            actions: [
-              {
-                text: 'OK',
-                action: () => {},
-              },
-            ],
-          }),
+        showBottomNotificationModal({
+          ...errorMessageConfig,
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: 'OK',
+              action: () => {},
+            },
+          ],
+        }),
       );
     }
   };
