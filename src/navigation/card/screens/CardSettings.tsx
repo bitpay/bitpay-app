@@ -69,49 +69,46 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
     return [cards, virtual, physical];
   }, [currentGroup]);
 
-  const currentCard = cardsToShow.find(c => c.id === id);
-  const [currentTab, setCurrentTab] = useState(
-    currentCard?.cardType || 'virtual',
-  );
   const initialIdx = Math.max(
     0,
     cardsToShow.findIndex(c => c.id === id),
   );
+  const [activeCard, setActiveCard] = useState(cardsToShow[initialIdx]);
 
   const onCardChange = (idx: number) => {
     const nextCard = cardsToShow[idx];
 
-    navigation.setParams({id: nextCard.id});
     if (nextCard.cardType) {
-      setCurrentTab(nextCard.cardType);
+      setActiveCard(nextCard);
     }
   };
 
   const onVirtualPress = useCallback(() => {
-    setCurrentTab('virtual');
-    carouselRef.current?.snapToItem(0);
-  }, []);
+    if (virtualCard) {
+      setActiveCard(virtualCard);
+      carouselRef.current?.snapToItem(0);
+    }
+  }, [virtualCard]);
 
   const onPhysicalPress = useCallback(() => {
-    setCurrentTab('physical');
-    carouselRef.current?.snapToItem(1);
-  }, []);
+    if (physicalCard) {
+      setActiveCard(physicalCard);
+      carouselRef.current?.snapToItem(1);
+    }
+  }, [physicalCard]);
 
-  const renderSettingsSlide = useCallback(
-    ({item}: {item: Card}) => {
-      const isActive = item.cardType === currentTab;
-      const sharedTransitionId = isActive ? 'card.dashboard.active-card' : '';
+  const renderSettingsSlide = useCallback(({item}: {item: Card}) => {
+    const isVirtual = item.cardType === 'virtual' || cardsToShow.length < 2;
+    const sharedTransitionId = isVirtual ? 'card.dashboard.active-card' : '';
 
-      return isActive ? (
-        <SharedElement id={sharedTransitionId}>
-          <SettingsSlide card={item} />
-        </SharedElement>
-      ) : (
+    return isVirtual ? (
+      <SharedElement id={sharedTransitionId}>
         <SettingsSlide card={item} />
-      );
-    },
-    [currentTab],
-  );
+      </SharedElement>
+    ) : (
+      <SettingsSlide card={item} />
+    );
+  }, []);
 
   return (
     <ScrollView>
@@ -123,7 +120,7 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
                 onPress={onVirtualPress}
                 buttonType="pill"
                 buttonStyle={
-                  currentTab === 'virtual' ? 'primary' : 'secondary'
+                  activeCard.cardType === 'virtual' ? 'primary' : 'secondary'
                 }>
                 {t('Virtual')}
               </Button>
@@ -132,7 +129,7 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
                 onPress={onPhysicalPress}
                 buttonType="pill"
                 buttonStyle={
-                  currentTab === 'physical' ? 'primary' : 'secondary'
+                  activeCard.cardType === 'physical' ? 'primary' : 'secondary'
                 }>
                 {t('Physical')}
               </Button>
@@ -154,7 +151,7 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
 
       <CardSettingsContainer>
         {cardsToShow.map(c => {
-          const isActive = c.cardType === currentTab;
+          const isActive = c === activeCard;
           const delay = 150;
           const duration = 250;
           const easing = Easing.linear;
