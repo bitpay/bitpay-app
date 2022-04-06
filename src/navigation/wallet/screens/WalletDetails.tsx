@@ -525,7 +525,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           dispatch(
             showBottomNotificationModal(
               CustomErrorMessage({
-                errMsg: 'Error getting Speed Up information',
+                errMsg:
+                  'Error getting "Speed Up" information. Please try again later.',
               }),
             ),
           );
