@@ -1,6 +1,5 @@
 import React from 'react';
 import {useSelector} from 'react-redux';
-import styled from 'styled-components/native';
 import {CardBrand} from '../../../constants/card';
 import {RootState} from '../../../store';
 import {Card} from '../../../store/card/card.models';
@@ -13,10 +12,6 @@ export interface CardOverviewSlideProps {
   designCurrency: VirtualDesignCurrency;
 }
 
-const SlideContainer = styled.View`
-  padding: 0 10px;
-`;
-
 const CardOverviewSlide: React.FC<CardOverviewSlideProps> = ({
   card,
   designCurrency,
@@ -28,17 +23,15 @@ const CardOverviewSlide: React.FC<CardOverviewSlideProps> = ({
   const formattedBalance = format(balance, card.currency.code);
 
   return (
-    <SlideContainer>
-      <CardFront
-        brand={card.brand || CardBrand.Visa}
-        provider={card.provider}
-        balance={formattedBalance}
-        nickname={card.nickname}
-        fiat={card.currency.code}
-        fiatSymbol={card.currency.symbol}
-        designCurrency={designCurrency}
-      />
-    </SlideContainer>
+    <CardFront
+      brand={card.brand || CardBrand.Visa}
+      provider={card.provider}
+      balance={formattedBalance}
+      nickname={card.nickname}
+      fiat={card.currency.code}
+      fiatSymbol={card.currency.symbol}
+      designCurrency={designCurrency}
+    />
   );
 };
 

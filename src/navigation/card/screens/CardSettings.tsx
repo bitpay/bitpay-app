@@ -1,11 +1,13 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useMemo, useRef} from 'react';
+import React, {useCallback, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView} from 'react-native';
 import Carousel from 'react-native-snap-carousel';
+import {SharedElement} from 'react-navigation-shared-element';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {ScreenGutter, WIDTH} from '../../../components/styled/Containers';
+import {CARD_WIDTH} from '../../../constants/config.card';
 import {Card} from '../../../store/card/card.models';
 import {selectCardGroups} from '../../../store/card/card.selectors';
 import {useAppSelector} from '../../../utils/hooks';
@@ -38,10 +40,6 @@ const CardTypeButtons = styled.View`
   flex-grow: 0;
 `;
 
-const renderSettingsSlide = ({item}: {item: Card}) => (
-  <SettingsSlide card={item} />
-);
-
 const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
   const {id} = route.params;
   const {t} = useTranslation();
@@ -71,16 +69,44 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
   }, [currentGroup]);
 
   const currentCard = cardsToShow.find(c => c.id === id);
+  const [currentTab, setCurrentTab] = useState(
+    currentCard?.cardType || 'virtual',
+  );
   const initialIdx = Math.max(
     0,
     cardsToShow.findIndex(c => c.id === id),
   );
 
   const onCardChange = (idx: number) => {
-    const nextId = cardsToShow[idx].id;
+    const nextCard = cardsToShow[idx];
 
-    navigation.setParams({id: nextId});
+    navigation.setParams({id: nextCard.id});
+    if (nextCard.cardType) {
+      setCurrentTab(nextCard.cardType);
+    }
   };
+
+  const onVirtualPress = useCallback(() => {
+    setCurrentTab('virtual');
+    carouselRef.current?.snapToItem(0);
+  }, []);
+
+  const onPhysicalPress = useCallback(() => {
+    setCurrentTab('physical');
+    carouselRef.current?.snapToItem(1);
+  }, []);
+
+  const renderSettingsSlide = useCallback(
+    ({item}: {item: Card}) =>
+      route.params.id === item.id ? (
+        <SharedElement id={'card.dashboard.active-card'}>
+          <SettingsSlide card={item} />
+        </SharedElement>
+      ) : (
+        <SettingsSlide card={item} />
+      ),
+    [route.params.id],
+  );
 
   return (
     <ScrollView>
@@ -89,25 +115,19 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
           {virtualCard && physicalCard ? (
             <CardTypeButtons>
               <Button
-                onPress={() => {
-                  navigation.setParams({id: virtualCard.id});
-                  carouselRef.current?.snapToItem(0);
-                }}
+                onPress={onVirtualPress}
                 buttonType="pill"
                 buttonStyle={
-                  currentCard?.cardType === 'virtual' ? 'primary' : 'secondary'
+                  currentTab === 'virtual' ? 'primary' : 'secondary'
                 }>
                 {t('Virtual')}
               </Button>
 
               <Button
-                onPress={() => {
-                  navigation.setParams({id: physicalCard.id});
-                  carouselRef.current?.snapToItem(1);
-                }}
+                onPress={onPhysicalPress}
                 buttonType="pill"
                 buttonStyle={
-                  currentCard?.cardType === 'physical' ? 'primary' : 'secondary'
+                  currentTab === 'physical' ? 'primary' : 'secondary'
                 }>
                 {t('Physical')}
               </Button>
@@ -121,7 +141,7 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
         data={cardsToShow}
         vertical={false}
         firstItem={initialIdx}
-        itemWidth={300 + 20}
+        itemWidth={CARD_WIDTH}
         sliderWidth={WIDTH}
         renderItem={renderSettingsSlide}
         onScrollIndexChanged={onCardChange}

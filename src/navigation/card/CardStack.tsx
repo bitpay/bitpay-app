@@ -1,6 +1,6 @@
-import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
+import {createSharedElementStackNavigator} from 'react-navigation-shared-element';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
@@ -28,7 +28,7 @@ export enum CardScreens {
   UPDATE_CARD_NAME = 'UpdateCardName',
 }
 
-const Card = createStackNavigator<CardStackParamList>();
+const Card = createSharedElementStackNavigator<CardStackParamList>();
 
 const CardStack = () => {
   const {t} = useTranslation();
@@ -46,6 +46,14 @@ const CardStack = () => {
         options={{
           title: 'Card',
         }}
+        sharedElements={() => {
+          return [
+            {
+              id: 'card.dashboard.active-card',
+              animation: 'fade',
+            },
+          ];
+        }}
       />
       <Card.Screen
         name={CardScreens.SETTINGS}
@@ -55,22 +63,20 @@ const CardStack = () => {
           title: 'Settings',
         }}
       />
-      <Card.Group navigationKey="card-settings">
-        <Card.Screen
-          name={CardScreens.CUSTOMIZE_VIRTUAL_CARD}
-          component={CustomizeVirtualCard}
-          options={{
-            headerTitle: t('Customize Virtual Card'),
-          }}
-        />
-        <Card.Screen
-          name={CardScreens.UPDATE_CARD_NAME}
-          component={UpdateCardNameScreen}
-          options={{
-            headerTitle: t('Update Card Name'),
-          }}
-        />
-      </Card.Group>
+      <Card.Screen
+        name={CardScreens.CUSTOMIZE_VIRTUAL_CARD}
+        component={CustomizeVirtualCard}
+        options={{
+          headerTitle: t('Customize Virtual Card'),
+        }}
+      />
+      <Card.Screen
+        name={CardScreens.UPDATE_CARD_NAME}
+        component={UpdateCardNameScreen}
+        options={{
+          headerTitle: t('Update Card Name'),
+        }}
+      />
     </Card.Navigator>
   );
 };
