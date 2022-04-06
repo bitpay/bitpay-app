@@ -36,7 +36,7 @@ type ProviderConfigType = {
   };
 };
 
-export const CARD_HEIGHT = 190;
+export const CARD_HEIGHT = 204;
 export const CARD_WIDTH = 324;
 
 export const ProviderConfig: ProviderConfigType = {

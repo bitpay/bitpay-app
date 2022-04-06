@@ -3,21 +3,17 @@ import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {Keyboard, SafeAreaView, TextInput} from 'react-native';
-import {useDispatch, useSelector} from 'react-redux';
 import * as yup from 'yup';
 import AlertBox from '../../../components/alert-box/AlertBox';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {Link} from '../../../components/styled/Text';
-import {Network} from '../../../constants';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {navigationRef, RootStacks} from '../../../Root';
-import {RootState} from '../../../store';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
-import {Session} from '../../../store/bitpay-id/bitpay-id.models';
-import {LoginStatus} from '../../../store/bitpay-id/bitpay-id.reducer';
 import {sleep} from '../../../utils/helper-methods';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
 import {AuthStackParamList} from '../AuthStack';
 import AuthFormContainer, {
@@ -47,21 +43,17 @@ interface LoginFormFieldValues {
 }
 
 const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const {
     control,
     handleSubmit,
     getValues,
     formState: {errors},
   } = useForm<LoginFormFieldValues>({resolver: yupResolver(schema)});
-  const network = useSelector<RootState, Network>(({APP}) => APP.network);
-  const session = useSelector<RootState, Session>(
-    ({BITPAY_ID}) => BITPAY_ID.session,
-  );
-  const loginStatus = useSelector<RootState, LoginStatus>(
-    ({BITPAY_ID}) => BITPAY_ID.loginStatus,
-  );
-  const loginError = useSelector<RootState, string>(
+  const network = useAppSelector(({APP}) => APP.network);
+  const session = useAppSelector(({BITPAY_ID}) => BITPAY_ID.session);
+  const loginStatus = useAppSelector(({BITPAY_ID}) => BITPAY_ID.loginStatus);
+  const loginError = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.loginError || '',
   );
   const [isCaptchaModalVisible, setCaptchaModalVisible] = useState(false);
@@ -161,6 +153,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
                 onChangeText={(text: string) => onChange(text)}
                 error={errors.email?.message}
                 value={value}
+                keyboardType={'email-address'}
                 returnKeyType="next"
                 onSubmitEditing={() => passwordRef.current?.focus()}
                 blurOnSubmit={false}
