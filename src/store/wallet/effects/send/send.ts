@@ -280,6 +280,17 @@ const buildTransactionProposal = (
         break;
       case 'selectInputs':
         break;
+      case 'fromReplaceByFee':
+        txp.inputs = tx.inputs;
+        txp.replaceTxByFee = true;
+
+        txp.outputs.push({
+          toAddress: tx.toAddress,
+          amount: tx.amount,
+          message: tx.description,
+          data: tx.data,
+        });
+        break;
       default:
         txp.outputs.push({
           toAddress: tx.toAddress,
@@ -727,5 +738,16 @@ export const buildBtcSpeedupTx = (wallet: Wallet, tx: any, address: string) => {
     } catch (e) {
       return reject(e);
     }
+  });
+};
+
+export const getTx = (wallet: Wallet, txpid: string): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    wallet.getTx(txpid, (err: any, txp: Partial<TransactionProposal>) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(txp);
+    });
   });
 };

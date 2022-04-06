@@ -194,7 +194,7 @@ export interface TransactionOptions {
   invoice?: Invoice;
   recipient: Recipient;
   amount: number;
-  context?: 'multisend' | 'paypro' | 'selectInputs';
+  context?: 'multisend' | 'paypro' | 'selectInputs' | 'fromReplaceByFee';
   currency?: string;
   toAddress?: string;
   network?: string;
@@ -222,6 +222,9 @@ export interface TransactionOptions {
   destinationTag?: string;
   invoiceID?: string;
   useUnconfirmedFunds?: boolean;
+  // fromReplaceByFee
+  fee?: number;
+  inputs?: any[];
 }
 
 export interface TransactionProposal {
