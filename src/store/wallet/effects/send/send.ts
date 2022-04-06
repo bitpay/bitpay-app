@@ -327,16 +327,24 @@ export const startSendPayment =
               return reject(err);
             }
 
-            const broadcastedTx = await dispatch(
-              publishAndSign({
-                txp: proposal,
-                key,
-                wallet,
-                recipient,
-              }),
-            );
-
-            resolve(broadcastedTx);
+            try {
+              const broadcastedTx = await dispatch(
+                  publishAndSign({
+                    txp: proposal,
+                    key,
+                    wallet,
+                    recipient,
+                  }),
+              );
+              return resolve(broadcastedTx);
+            } catch (e) {
+              try {
+                await removeTxp(wallet, proposal);
+              } catch (removeTxpErr) {
+                console.log('Could not delete payment proposal');
+              }
+              return reject(e);
+            }
           },
           null,
         );

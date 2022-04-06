@@ -231,6 +231,8 @@ const Confirm = () => {
                     title: 'Uh oh, something went wrong',
                   }),
                 );
+                await sleep(500);
+                setResetSwipeButton(true);
             }
           }
         }}
