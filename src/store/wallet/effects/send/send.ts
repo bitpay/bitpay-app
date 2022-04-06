@@ -117,6 +117,7 @@ export const createProposalAndBuildTxDetails =
                 wallet,
                 recipient,
                 invoice,
+                context,
               });
               txp.id = proposal.id;
               resolve({txDetails, txp});
@@ -142,6 +143,7 @@ const buildTxDetails = ({
   wallet,
   recipient,
   invoice,
+  context,
 }: {
   proposal: TransactionProposal;
   rates: Rates;
@@ -149,18 +151,17 @@ const buildTxDetails = ({
   wallet: Wallet;
   recipient: Recipient;
   invoice?: Invoice;
+  context?: 'multisend' | 'paypro' | 'selectInputs' | 'fromReplaceByFee';
 }): TxDetails => {
-  const {
-    coin,
-    fee,
-    amount,
-    gasPrice,
-    gasLimit,
-    nonce,
-    feeLevel = 'custom',
-  } = proposal;
+  const {coin, fee, gasPrice, gasLimit, nonce, feeLevel = 'custom'} = proposal;
+  let {amount} = proposal;
   const networkCost = invoice?.minerFees[coin.toUpperCase()]?.totalFee;
   const total = amount + fee;
+
+  if (context === 'fromReplaceByFee') {
+    amount = amount - fee;
+  }
+
   const {type, name, address} = recipient;
   return {
     currency: coin,
@@ -329,12 +330,12 @@ export const startSendPayment =
 
             try {
               const broadcastedTx = await dispatch(
-                  publishAndSign({
-                    txp: proposal,
-                    key,
-                    wallet,
-                    recipient,
-                  }),
+                publishAndSign({
+                  txp: proposal,
+                  key,
+                  wallet,
+                  recipient,
+                }),
               );
               return resolve(broadcastedTx);
             } catch (e) {
