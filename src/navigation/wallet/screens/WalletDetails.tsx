@@ -678,6 +678,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         });
                       },
                     }}
+                    swap={{
+                      hide: fullWalletObj.credentials?.network === 'testnet',
+                      cta: () => {
+                        navigation.navigate('SwapCrypto', {
+                          screen: 'Root',
+                          params: {
+                            selectedWallet: fullWalletObj,
+                          },
+                        });
+                      },
+                    }}
                     receive={{
                       cta: () => setShowReceiveAddressBottomModal(true),
                     }}

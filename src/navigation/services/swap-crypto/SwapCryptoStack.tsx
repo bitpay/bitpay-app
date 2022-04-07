@@ -18,7 +18,7 @@ import {RootState} from '../../../store';
 
 export type SwapCryptoStackParamList = {
   Root?: {
-    fromWallet?: any;
+    selectedWallet?: any;
   };
   ChangellyCheckout?: {
     fromWalletSelected: Wallet;

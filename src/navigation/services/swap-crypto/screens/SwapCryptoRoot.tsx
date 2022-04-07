@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, ScrollView, TouchableOpacity} from 'react-native';
-import {useTheme, useNavigation} from '@react-navigation/native';
+import {useTheme, useNavigation, useRoute} from '@react-navigation/native';
+import {RouteProp} from '@react-navigation/core';
 import cloneDeep from 'lodash.clonedeep';
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
 import {Currencies} from '../../../../constants/currencies';
@@ -27,6 +28,7 @@ import {
   ProviderLabel,
   SpinnerContainer,
 } from '../styled/SwapCryptoRoot.styled';
+import {SwapCryptoStackParamList} from '../SwapCryptoStack';
 import Button from '../../../../components/button/Button';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {ItemProps} from '../../../../components/list/CurrencySelectionRow';
@@ -71,6 +73,7 @@ const SwapCryptoRoot: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
+  const route = useRoute<RouteProp<SwapCryptoStackParamList, 'Root'>>();
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [fromWalletSelectorModalVisible, setFromWalletSelectorModalVisible] =
     useState(false);
@@ -78,6 +81,7 @@ const SwapCryptoRoot: React.FC = () => {
     useState(false);
   const [fromWalletSelected, setFromWalletSelected] = useState<Wallet>();
   const [fromWalletData, setFromWalletData] = useState<ItemProps>();
+  const [useDefaultToWallet, setUseDefaultToWallet] = useState<boolean>(false);
   const [toWalletSelected, setToWalletSelected] = useState<Wallet>();
   const [toWalletData, setToWalletData] = useState<ItemProps>();
   const [amountFrom, setAmountFrom] = useState<number>(0);
@@ -89,6 +93,7 @@ const SwapCryptoRoot: React.FC = () => {
   const [rateData, setRateData] = useState<RateData>();
   const [loading, setLoading] = useState<boolean>(false);
 
+  const selectedWallet = route.params?.selectedWallet;
   const SupportedCurrencies: string[] = Object.keys(Currencies);
   const SupportedChains: string[] = [
     ...new Set(Object.values(Currencies).map(({chain}: any) => chain)),
@@ -135,6 +140,41 @@ const SwapCryptoRoot: React.FC = () => {
       !!rateData &&
       !!rateData.fixedRateId
     );
+  };
+
+  const setSelectedWallet = () => {
+    if (selectedWallet) {
+      if (selectedWallet.balance?.sat > 0) {
+        setFromWallet(selectedWallet);
+      } else if (selectedWallet.balance?.sat === 0) {
+        setToWallet(selectedWallet);
+        setUseDefaultToWallet(true);
+      } else {
+        logger.warn('It was not possible to set the selected wallet');
+      }
+    }
+  };
+
+  const setFromWallet = (fromWallet: Wallet) => {
+    setFromWalletSelected(fromWallet);
+    if (!useDefaultToWallet) {
+      setToWalletSelected(undefined);
+      setToWalletData(undefined);
+    }
+    setAmountFrom(0);
+    setLoading(false);
+    setRateData(undefined);
+
+    const coinsTo = cloneDeep(swapCryptoSupportedCoinsFrom).filter(
+      coin => coin != fromWallet.currencyAbbreviation.toLowerCase(),
+    );
+
+    setSwapCryptoSupportedCoinsTo(coinsTo);
+  };
+
+  const setToWallet = (toWallet: Wallet) => {
+    setToWalletSelected(toWallet);
+    setRateData(undefined);
   };
 
   const isToWalletEnabled = (): boolean => {
@@ -498,6 +538,9 @@ const SwapCryptoRoot: React.FC = () => {
 
         const country = await getCountry();
         const coinsToRemove = !country || country == 'US' ? ['xrp'] : [];
+        if (selectedWallet && selectedWallet.balance?.sat === 0) {
+          coinsToRemove.push(selectedWallet.currencyAbbreviation.toLowerCase());
+        }
         coinsToRemove.forEach((coin: string) => {
           const index = supportedCoins.indexOf(coin);
           if (index > -1) {
@@ -521,6 +564,10 @@ const SwapCryptoRoot: React.FC = () => {
         showError(msg);
       });
   }, []);
+
+  useEffect(() => {
+    setSelectedWallet();
+  }, [swapCryptoSupportedCoinsFrom]);
 
   useEffect(() => {
     updateWalletData();
@@ -645,7 +692,7 @@ const SwapCryptoRoot: React.FC = () => {
                 <SelectedOptionContainer
                   style={{minWidth: 120}}
                   onPress={() => {
-                    if (!isToWalletEnabled()) {
+                    if (useDefaultToWallet || !isToWalletEnabled()) {
                       return;
                     }
                     showModal('walletSelector');
@@ -662,15 +709,17 @@ const SwapCryptoRoot: React.FC = () => {
                       {toWalletSelected.credentials.coin.toUpperCase()}
                     </SelectedOptionText>
                   </SelectedOptionCol>
-                  <ArrowContainer>
-                    <SelectorArrowDown
-                      {...{
-                        width: 13,
-                        height: 13,
-                        color: theme.dark ? White : SlateDark,
-                      }}
-                    />
-                  </ArrowContainer>
+                  {!useDefaultToWallet && (
+                    <ArrowContainer>
+                      <SelectorArrowDown
+                        {...{
+                          width: 13,
+                          height: 13,
+                          color: theme.dark ? White : SlateDark,
+                        }}
+                      />
+                    </ArrowContainer>
+                  )}
                 </SelectedOptionContainer>
                 {rateData?.amountTo && !loading && (
                   <SelectedOptionCol>
@@ -737,17 +786,7 @@ const SwapCryptoRoot: React.FC = () => {
         onDismiss={(fromWallet: Wallet) => {
           hideModal('fromWalletSelector');
           if (fromWallet) {
-            setFromWalletSelected(fromWallet);
-            setToWalletSelected(undefined);
-            setAmountFrom(0);
-            setLoading(false);
-            setToWalletData(undefined);
-            setRateData(undefined);
-
-            const coinsTo = cloneDeep(swapCryptoSupportedCoinsFrom).filter(
-              coin => coin != fromWallet.currencyAbbreviation.toLowerCase(),
-            );
-            setSwapCryptoSupportedCoinsTo(coinsTo);
+            setFromWallet(fromWallet);
           }
         }}
       />
@@ -759,8 +798,7 @@ const SwapCryptoRoot: React.FC = () => {
         onDismiss={(toWallet?: Wallet) => {
           hideModal('walletSelector');
           if (toWallet) {
-            setToWalletSelected(toWallet);
-            setRateData(undefined);
+            setToWallet(toWallet);
           }
         }}
       />
