@@ -11,6 +11,7 @@ import {
   TransactionProposal,
   TxDetails,
   Wallet,
+  TransactionOptionsContext,
 } from '../../wallet.models';
 import {FormatAmount, FormatAmountStr, ParseAmount} from '../amount/amount';
 import {
@@ -151,7 +152,7 @@ const buildTxDetails = ({
   wallet: Wallet;
   recipient: Recipient;
   invoice?: Invoice;
-  context?: 'multisend' | 'paypro' | 'selectInputs' | 'fromReplaceByFee';
+  context?: TransactionOptionsContext;
 }): TxDetails => {
   const {coin, fee, gasPrice, gasLimit, nonce, feeLevel = 'custom'} = proposal;
   let {amount} = proposal;
@@ -284,6 +285,19 @@ const buildTransactionProposal = (
       case 'fromReplaceByFee':
         txp.inputs = tx.inputs;
         txp.replaceTxByFee = true;
+
+        txp.outputs.push({
+          toAddress: tx.toAddress,
+          amount: tx.amount,
+          message: tx.description,
+          data: tx.data,
+        });
+        break;
+      case 'speedupBtcReceive':
+        txp.inputs = tx.inputs;
+        txp.excludeUnconfirmedUtxos = true;
+        txp.fee = tx.fee;
+        txp.feeLevel = undefined;
 
         txp.outputs.push({
           toAddress: tx.toAddress,
@@ -697,7 +711,7 @@ export const buildEthERCTokenSpeedupTx = (
 export const buildBtcSpeedupTx = (wallet: Wallet, tx: any, address: string) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const {feeRate, data, customData, txid, size} = tx;
+      const {data, customData, txid, size} = tx;
 
       const {
         credentials: {coin, walletName, walletId, network},
@@ -711,22 +725,26 @@ export const buildBtcSpeedupTx = (wallet: Wallet, tx: any, address: string) => {
         keyId,
         address,
       };
-      const newFeeRate = feeRate.substr(0, feeRate.indexOf(' ')) * 1000;
       const fee = await GetBitcoinSpeedUpTxFee(wallet, size);
       const input = await GetInput(wallet, txid);
       const inputs = [];
       inputs.push(input);
       const {satoshis} = input || {satoshis: 0};
       let amount = satoshis - fee;
+
       if (amount < 0) {
         return reject('InsufficientFunds');
       }
 
-      amount = Number(FormatAmount(coin, amount));
-
       if (!input) {
         return reject('NoInput');
       }
+
+      const {unitToSatoshi} = GetPrecision('btc') || {
+        unitToSatoshi: 100000000,
+      };
+
+      amount = amount / unitToSatoshi;
 
       return resolve({
         wallet,
@@ -737,12 +755,11 @@ export const buildBtcSpeedupTx = (wallet: Wallet, tx: any, address: string) => {
         network,
         currency: coin,
         amount,
-        feePerKb: newFeeRate,
         recipient,
-        feeLevel: 'custom',
-        excludeUnconfirmedUtxos: true,
         inputs,
-        speedupFee: fee,
+        speedupFee: fee / unitToSatoshi,
+        fee,
+        context: 'speedupBtcReceive' as TransactionOptionsContext,
       });
     } catch (e) {
       return reject(e);

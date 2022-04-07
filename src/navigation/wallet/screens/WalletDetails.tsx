@@ -62,7 +62,7 @@ import TransactionRow, {
 import TransactionProposalRow from '../../../components/list/TransactionProposalRow';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
-import {GetPrecision, IsERCToken} from '../../../store/wallet/utils/currency';
+import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {isCoinSupportedToBuy} from '../../../navigation/services/buy-crypto/utils/buy-crypto-utils';
@@ -490,16 +490,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         );
 
         tx = await buildBtcSpeedupTx(fullWalletObj, transaction, address);
-        const {unitToSatoshi} = GetPrecision(currencyAbbreviation) || {
-          unitToSatoshi: 100000000,
-        };
 
-        const fee = tx.speedupFee / unitToSatoshi;
         dispatch(
           showBottomNotificationModal({
             type: 'warning',
             title: 'Miner Fee Notice',
-            message: `Because you are speeding up this transaction, the Bitcoin miner fee (${fee} ${currencyAbbreviation}) will be deducted from the total.`,
+            message: `Because you are speeding up this transaction, the Bitcoin miner fee (${tx.speedupFee} ${currencyAbbreviation}) will be deducted from the total.`,
             enableBackdropDismiss: true,
             actions: [
               {

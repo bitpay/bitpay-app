@@ -65,7 +65,7 @@ import {
 } from '../../../store/wallet/effects/send/send';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {FormatAmount} from '../../../store/wallet/effects/amount/amount';
-import {getFeeRatePerKb} from '../../../store/wallet/effects/fee/fee';
+import {TransactionOptionsContext} from '../../../store/wallet/wallet.models';
 
 const TxsDetailsContainer = styled.View`
   flex: 1;
@@ -269,7 +269,7 @@ const TransactionDetails = () => {
       const tx = {
         wallet,
         walletId,
-        context: 'fromReplaceByFee' as 'fromReplaceByFee',
+        context: 'fromReplaceByFee' as TransactionOptionsContext,
         amount: Number(FormatAmount(coin, transaction.amount)),
         toAddress,
         coin,

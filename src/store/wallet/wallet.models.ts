@@ -189,12 +189,18 @@ export interface CustomTransactionData {
   toWalletName?: any;
 }
 
+export type TransactionOptionsContext =
+  | 'multisend'
+  | 'paypro'
+  | 'selectInputs'
+  | 'fromReplaceByFee'
+  | 'speedupBtcReceive';
 export interface TransactionOptions {
   wallet: Wallet;
   invoice?: Invoice;
   recipient: Recipient;
   amount: number;
-  context?: 'multisend' | 'paypro' | 'selectInputs' | 'fromReplaceByFee';
+  context?: TransactionOptionsContext;
   currency?: string;
   toAddress?: string;
   network?: string;
