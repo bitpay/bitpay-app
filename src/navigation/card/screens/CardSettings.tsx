@@ -151,7 +151,7 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
 
       <CardSettingsContainer>
         {cardsToShow.map(c => {
-          const isActive = c === activeCard;
+          const isActive = c.id === activeCard.id;
           const delay = 150;
           const duration = 250;
           const easing = Easing.linear;
