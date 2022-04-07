@@ -14,12 +14,8 @@ import {
   TransactionOptionsContext,
 } from '../../wallet.models';
 import {FormatAmount, FormatAmountStr, ParseAmount} from '../amount/amount';
-import {
-  FeeLevels,
-  GetBitcoinSpeedUpTxFee,
-  getFeeRatePerKb,
-  GetInput,
-} from '../fee/fee';
+import {FeeLevels, GetBitcoinSpeedUpTxFee, getFeeRatePerKb} from '../fee/fee';
+import {GetInput} from '../transactions/transactions';
 import {
   formatCryptoAddress,
   formatFiatAmount,

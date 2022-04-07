@@ -1,9 +1,10 @@
 import {BwcProvider} from '../../../../lib/bwc';
 import {GetPrecision, IsCustomERCToken} from '../../utils/currency';
 import {Wallet} from '../../wallet.models';
-import {GetMinFee, GetUtxos} from '../fee/fee';
+import {GetMinFee} from '../fee/fee';
 const LOW_AMOUNT_RATIO = 0.15;
 const TOTAL_LOW_WARNING_RATIO = 0.3;
+import {GetUtxos} from '../transactions/transactions';
 
 export interface FormattedAmountObj {
   amount: string;
