@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useCallback, useLayoutEffect, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {FlatList, RefreshControl} from 'react-native';
 import styled from 'styled-components/native';
@@ -19,7 +19,6 @@ import {
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import CoinbaseSettingsOption from './CoinbaseSettingsOption';
-import {RootState} from '../../../store';
 import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {Network} from '../../../constants';
@@ -62,20 +61,15 @@ const CoinbaseDashboard = () => {
   const [refreshing, setRefreshing] = useState(false);
 
   const isLoadingAccounts = useAppSelector(
-    ({COINBASE}: RootState) => COINBASE.isApiLoading,
+    ({COINBASE}) => COINBASE.isApiLoading,
   );
-  const exchangeRates = useAppSelector(
-    ({COINBASE}: RootState) => COINBASE.exchangeRates,
-  );
-  const user = useAppSelector(
-    ({COINBASE}: RootState) => COINBASE.user[COINBASE_ENV],
-  );
+  const exchangeRates = useAppSelector(({COINBASE}) => COINBASE.exchangeRates);
+  const user = useAppSelector(({COINBASE}) => COINBASE.user[COINBASE_ENV]);
   const accounts = useAppSelector(
-    ({COINBASE}: RootState) => COINBASE.accounts[COINBASE_ENV],
+    ({COINBASE}) => COINBASE.accounts[COINBASE_ENV],
   );
   const balance =
-    useAppSelector(({COINBASE}: RootState) => COINBASE.balance[COINBASE_ENV]) ||
-    0.0;
+    useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -104,44 +98,47 @@ const CoinbaseDashboard = () => {
     );
   };
 
-  const renderItem = ({item}: any) => {
-    const fiatAmount = coinbaseGetFiatAmount(
-      item.balance.amount,
-      item.balance.currency,
-      exchangeRates,
-    );
-    const cryptoAmount = Number(item.balance.amount)
-      ? item.balance.amount
-      : '0';
+  const renderItem = useCallback(
+    ({item}: any) => {
+      const fiatAmount = coinbaseGetFiatAmount(
+        item.balance.amount,
+        item.balance.currency,
+        exchangeRates,
+      );
+      const cryptoAmount = Number(item.balance.amount)
+        ? item.balance.amount
+        : '0';
 
-    const walletItem = {
-      id: item.id,
-      currencyName: item.currency.name,
-      currencyAbbreviation: item.currency.code,
-      walletName: item.currency.name,
-      img: CurrencyListIcons[item.currency.code.toLowerCase()],
-      cryptoBalance: cryptoAmount,
-      cryptoLockedBalance: '',
-      fiatBalance: formatFiatAmount(fiatAmount, 'usd'),
-      fiatLockedBalance: '',
-      isToken: false,
-      network: Network.mainnet,
-    };
-    return (
-      <WalletRow
-        id={walletItem.id}
-        wallet={walletItem}
-        onPress={() => {
-          haptic('impactLight');
-          navigation.navigate('Coinbase', {
-            screen: 'CoinbaseAccount',
-            params: {accountId: item.id},
-          });
-          dispatch(coinbaseGetTransactionsByAccount(item.id));
-        }}
-      />
-    );
-  };
+      const walletItem = {
+        id: item.id,
+        currencyName: item.currency.name,
+        currencyAbbreviation: item.currency.code,
+        walletName: item.currency.name,
+        img: CurrencyListIcons[item.currency.code.toLowerCase()],
+        cryptoBalance: cryptoAmount,
+        cryptoLockedBalance: '',
+        fiatBalance: formatFiatAmount(fiatAmount, 'usd'),
+        fiatLockedBalance: '',
+        isToken: false,
+        network: Network.mainnet,
+      };
+      return (
+        <WalletRow
+          id={walletItem.id}
+          wallet={walletItem}
+          onPress={() => {
+            haptic('impactLight');
+            navigation.navigate('Coinbase', {
+              screen: 'CoinbaseAccount',
+              params: {accountId: item.id},
+            });
+            dispatch(coinbaseGetTransactionsByAccount(item.id));
+          }}
+        />
+      );
+    },
+    [dispatch, navigation, exchangeRates],
+  );
 
   const showError = async (error: CoinbaseErrorsProps) => {
     const errMsg = coinbaseParseErrorToString(error);

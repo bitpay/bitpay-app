@@ -22,13 +22,6 @@ export const exchangeRatesSuccess = (
   payload: exchangeRates,
 });
 
-export const exchangeRatesFailed = (
-  error: CoinbaseErrorsProps,
-): CoinbaseActionType => ({
-  type: CoinbaseActionTypes.EXCHANGE_RATES_FAILED,
-  payload: error,
-});
-
 // ------- Revoke and Delete Token -------- //
 
 export const revokeTokenPending = (): CoinbaseActionType => ({
@@ -37,13 +30,6 @@ export const revokeTokenPending = (): CoinbaseActionType => ({
 
 export const revokeTokenSuccess = (): CoinbaseActionType => ({
   type: CoinbaseActionTypes.DISCONNECT_ACCOUNT_SUCCESS,
-});
-
-export const revokeTokenFailed = (
-  error: CoinbaseErrorsProps,
-): CoinbaseActionType => ({
-  type: CoinbaseActionTypes.DISCONNECT_ACCOUNT_FAILED,
-  payload: error,
 });
 
 // ------- Access Token -------- //

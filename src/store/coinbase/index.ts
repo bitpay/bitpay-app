@@ -1,7 +1,6 @@
 export {
   exchangeRatesPending,
   exchangeRatesSuccess,
-  exchangeRatesFailed,
   accessTokenPending,
   accessTokenSuccess,
   accessTokenFailed,
@@ -10,7 +9,6 @@ export {
   refreshTokenFailed,
   revokeTokenPending,
   revokeTokenSuccess,
-  revokeTokenFailed,
   userPending,
   userSuccess,
   userFailed,
@@ -34,7 +32,6 @@ export {
 export {
   coinbaseParseErrorToString,
   coinbaseInitialize,
-  coinbaseUpdateExchangeRate,
   coinbaseLinkAccount,
   coinbaseRefreshToken,
   coinbaseDisconnectAccount,

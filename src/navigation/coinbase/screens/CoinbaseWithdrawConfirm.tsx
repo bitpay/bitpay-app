@@ -2,7 +2,6 @@ import React, {useState, useEffect, useCallback} from 'react';
 import {Alert} from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {RootState} from '../../../store';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
@@ -32,6 +31,7 @@ import {
   coinbaseClearSendTransactionStatus,
 } from '../../../store/coinbase';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
+import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 
 export interface CoinbaseWithdrawConfirmParamList {
   accountId: string;
@@ -48,31 +48,28 @@ const CoinbaseWithdrawConfirm = () => {
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
 
-  const accountData = useAppSelector(({COINBASE}: RootState) => {
+  const [receiveAddress, setReceiveAddress] = useState('');
+
+  const accountData = useAppSelector(({COINBASE}) => {
     return find(COINBASE.accounts[COINBASE_ENV], {id: accountId});
   });
-  const exchangeRates = useAppSelector(
-    ({COINBASE}: RootState) => COINBASE.exchangeRates,
-  );
+  const exchangeRates = useAppSelector(({COINBASE}) => COINBASE.exchangeRates);
 
   const sendStatus = useAppSelector(
-    ({COINBASE}: RootState) => COINBASE.sendTransactionStatus,
+    ({COINBASE}) => COINBASE.sendTransactionStatus,
   );
 
   const sendError = useAppSelector(
-    ({COINBASE}: RootState) => COINBASE.sendTransactionError,
+    ({COINBASE}) => COINBASE.sendTransactionError,
   );
 
-  const apiLoading = useAppSelector(
-    ({COINBASE}: RootState) => COINBASE.isApiLoading,
-  );
+  const apiLoading = useAppSelector(({COINBASE}) => COINBASE.isApiLoading);
 
   const currency = wallet?.credentials.coin;
-  const toAddress = wallet?.receiveAddress;
 
   const recipientData = {
     recipientName: wallet?.credentials.walletName || 'BitPay Wallet',
-    recipientAddress: toAddress,
+    recipientAddress: receiveAddress,
     img: wallet?.img || wallet?.credentials.coin,
   };
 
@@ -110,14 +107,14 @@ const CoinbaseWithdrawConfirm = () => {
       );
       await sleep(400);
       const buildTx = {
-        to: toAddress,
+        to: receiveAddress,
         amount: amount,
         currency: currency,
       };
       dispatch(coinbaseSendTransaction(accountId, buildTx, code));
       dispatch(dismissOnGoingProcessModal());
     },
-    [dispatch, accountId, toAddress, amount, currency],
+    [dispatch, accountId, receiveAddress, amount, currency],
   );
 
   const showError = useCallback(
@@ -171,6 +168,23 @@ const CoinbaseWithdrawConfirm = () => {
     );
   }, [dispatch, showError, sendError, sendTransaction]);
 
+  const newReceiveAddress = useCallback(
+    async (newWallet?: Wallet) => {
+      if (newWallet) {
+        dispatch(
+          startOnGoingProcessModal(OnGoingProcessMessages.GENERATING_ADDRESS),
+        );
+        const address = await dispatch(
+          createWalletAddress({wallet: newWallet, newAddress: false}),
+        );
+        setReceiveAddress(address);
+        await sleep(500);
+        dispatch(dismissOnGoingProcessModal());
+      }
+    },
+    [dispatch],
+  );
+
   useEffect(() => {
     if (!apiLoading && sendStatus === 'failed') {
       if (sendError?.errors[0].id === 'two_factor_required') {
@@ -185,7 +199,16 @@ const CoinbaseWithdrawConfirm = () => {
     if (!apiLoading && sendStatus === 'success') {
       setShowPaymentSentModal(true);
     }
-  }, [apiLoading, sendStatus, sendError, showError, askForTwoFactor]);
+
+    newReceiveAddress();
+  }, [
+    apiLoading,
+    sendStatus,
+    sendError,
+    showError,
+    askForTwoFactor,
+    newReceiveAddress,
+  ]);
 
   return (
     <ConfirmContainer>

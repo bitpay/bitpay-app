@@ -21,7 +21,6 @@ import {
   coinbaseDisconnectAccount,
 } from '../../../store/coinbase';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {RootState} from '../../../store';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 
@@ -80,15 +79,11 @@ const CoinbaseSettings = () => {
 
   const [refreshing, setRefreshing] = useState(false);
 
-  const userData = useAppSelector(
-    ({COINBASE}: RootState) => COINBASE.user[COINBASE_ENV],
-  );
+  const userData = useAppSelector(({COINBASE}) => COINBASE.user[COINBASE_ENV]);
   const isLoadingUserData = useAppSelector(
-    ({COINBASE}: RootState) => COINBASE.isApiLoading,
+    ({COINBASE}) => COINBASE.isApiLoading,
   );
-  const userError = useAppSelector(
-    ({COINBASE}: RootState) => COINBASE.getUserError,
-  );
+  const userError = useAppSelector(({COINBASE}) => COINBASE.getUserError);
 
   const showError = useCallback(
     (error: CoinbaseErrorsProps) => {

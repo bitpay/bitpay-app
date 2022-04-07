@@ -4,7 +4,6 @@ import {formatFiatAmount} from '../../../utils/helper-methods';
 import {useNavigation} from '@react-navigation/native';
 import CoinbaseSvg from '../../../../assets/img/logos/coinbase.svg';
 import styled from 'styled-components/native';
-import {RootState} from '../../../store';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {useAppSelector} from '../../../utils/hooks';
 
@@ -27,8 +26,7 @@ const CoinbaseBalanceCard = () => {
     navigation.navigate('Coinbase', {screen: 'CoinbaseRoot'});
   };
   const balance =
-    useAppSelector(({COINBASE}: RootState) => COINBASE.balance[COINBASE_ENV]) ||
-    0.0;
+    useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
 
   const body = {
     title: 'Coinbase',

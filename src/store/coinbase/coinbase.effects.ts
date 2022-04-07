@@ -2,7 +2,6 @@ import {Effect} from '../index';
 import {
   exchangeRatesPending,
   exchangeRatesSuccess,
-  exchangeRatesFailed,
   accessTokenPending,
   accessTokenSuccess,
   accessTokenFailed,
@@ -48,7 +47,6 @@ import {LogActions} from '../log';
 const isRevokedTokenError = (error: CoinbaseErrorsProps): boolean => {
   for (let i = 0; i < error.errors.length; i++) {
     if (error.errors[i].id === 'revoked_token') {
-      LogActions.warn('Token revoked. Should re-connect...');
       return true;
     }
   }
@@ -71,7 +69,6 @@ export const coinbaseParseErrorToString = (
 const isExpiredTokenError = (error: CoinbaseErrorsProps): boolean => {
   for (let i = 0; i < error.errors.length; i++) {
     if (error.errors[i].id === 'expired_token') {
-      LogActions.warn('Token expired. Getting new token...');
       return true;
     }
   }
@@ -89,7 +86,7 @@ export const coinbaseInitialize =
     dispatch(coinbaseGetAccountsAndBalance());
   };
 
-export const coinbaseUpdateExchangeRate =
+const coinbaseUpdateExchangeRate =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
     const {COINBASE} = getState();
     const nativeCurrency: string =
@@ -100,7 +97,6 @@ export const coinbaseUpdateExchangeRate =
       dispatch(exchangeRatesSuccess(exchangeRates));
     } catch (error: CoinbaseErrorsProps | any) {
       dispatch(LogActions.warn(coinbaseParseErrorToString(error)));
-      dispatch(exchangeRatesFailed(error));
     }
   };
 
@@ -181,9 +177,11 @@ export const coinbaseGetUser =
       dispatch(userSuccess(COINBASE_ENV, user));
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
+        dispatch(LogActions.warn('Token expired. Getting new token...'));
         await dispatch(coinbaseRefreshToken());
         dispatch(coinbaseGetUser());
       } else if (isRevokedTokenError(error)) {
+        dispatch(LogActions.warn('Token revoked. Should re-connect...'));
         dispatch(coinbaseDisconnectAccount());
       } else {
         dispatch(LogActions.error(coinbaseParseErrorToString(error)));
@@ -256,9 +254,11 @@ export const coinbaseGetAccountsAndBalance =
       );
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
+        dispatch(LogActions.warn('Token expired. Getting new token...'));
         await dispatch(coinbaseRefreshToken());
         dispatch(coinbaseGetAccountsAndBalance());
       } else if (isRevokedTokenError(error)) {
+        dispatch(LogActions.warn('Token revoked. Should re-connect...'));
         dispatch(coinbaseDisconnectAccount());
       } else {
         dispatch(LogActions.error(coinbaseParseErrorToString(error)));
@@ -285,9 +285,11 @@ export const coinbaseGetTransactionsByAccount =
       dispatch(transactionsSuccess(COINBASE_ENV, accountId, transactions));
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
+        dispatch(LogActions.warn('Token expired. Getting new token...'));
         await dispatch(coinbaseRefreshToken());
         dispatch(coinbaseGetTransactionsByAccount(accountId));
       } else if (isRevokedTokenError(error)) {
+        dispatch(LogActions.warn('Token revoked. Should re-connect...'));
         dispatch(coinbaseDisconnectAccount());
       } else {
         dispatch(LogActions.error(coinbaseParseErrorToString(error)));
@@ -297,7 +299,7 @@ export const coinbaseGetTransactionsByAccount =
   };
 
 export const coinbaseCreateAddress =
-  (accountId: string): Effect<Promise<any>> =>
+  (accountId: string): Effect<Promise<string | undefined>> =>
   async (dispatch, getState) => {
     const {COINBASE} = getState();
 
@@ -315,9 +317,11 @@ export const coinbaseCreateAddress =
       return addressData.data.address;
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
+        dispatch(LogActions.warn('Token expired. Getting new token...'));
         await dispatch(coinbaseRefreshToken());
         dispatch(coinbaseCreateAddress(accountId));
       } else if (isRevokedTokenError(error)) {
+        dispatch(LogActions.warn('Token revoked. Should re-connect...'));
         dispatch(coinbaseDisconnectAccount());
       } else {
         dispatch(LogActions.error(coinbaseParseErrorToString(error)));
@@ -346,9 +350,11 @@ export const coinbaseSendTransaction =
       dispatch(sendTransactionSuccess());
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
+        dispatch(LogActions.warn('Token expired. Getting new token...'));
         await dispatch(coinbaseRefreshToken());
         dispatch(coinbaseSendTransaction(accountId, tx));
       } else if (isRevokedTokenError(error)) {
+        dispatch(LogActions.warn('Token revoked. Should re-connect...'));
         dispatch(coinbaseDisconnectAccount());
       } else {
         dispatch(LogActions.error(coinbaseParseErrorToString(error)));
@@ -382,9 +388,11 @@ export const coinbasePayInvoice =
       dispatch(payInvoiceSuccess());
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
+        dispatch(LogActions.warn('Token expired. Getting new token...'));
         await dispatch(coinbaseRefreshToken());
         dispatch(coinbasePayInvoice(accountId, tx));
       } else if (isRevokedTokenError(error)) {
+        dispatch(LogActions.warn('Token revoked. Should re-connect...'));
         dispatch(coinbaseDisconnectAccount());
       } else {
         dispatch(LogActions.error(coinbaseParseErrorToString(error)));

@@ -12,7 +12,6 @@ import {find} from 'lodash';
 import moment from 'moment';
 import {sleep} from '../../../utils/helper-methods';
 import {useNavigation, useTheme} from '@react-navigation/native';
-import {RootState} from '../../../store';
 import {formatFiatAmount, shouldScale} from '../../../utils/helper-methods';
 import {Hr, ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, Balance, H5} from '../../../components/styled/Text';
@@ -46,11 +45,9 @@ import {
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {
-  createWalletAddress,
   ToCashAddress,
   TranslateToBchCashAddress,
 } from '../../../store/wallet/effects/address/address';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import Amount from '../../wallet/screens/Amount';
 import {Wallet} from '../../../store/wallet/wallet.models';
 
@@ -145,26 +142,20 @@ const CoinbaseAccount = ({
 
   const [selectedWallet, setSelectedWallet] = useState<Wallet>();
 
-  const exchangeRates = useAppSelector(
-    ({COINBASE}: RootState) => COINBASE.exchangeRates,
-  );
-  const user = useAppSelector(
-    ({COINBASE}: RootState) => COINBASE.user[COINBASE_ENV],
-  );
+  const exchangeRates = useAppSelector(({COINBASE}) => COINBASE.exchangeRates);
+  const user = useAppSelector(({COINBASE}) => COINBASE.user[COINBASE_ENV]);
   const transactions = useAppSelector(
-    ({COINBASE}: RootState) => COINBASE.transactions[COINBASE_ENV],
+    ({COINBASE}) => COINBASE.transactions[COINBASE_ENV],
   );
-  const account = useAppSelector(({COINBASE}: RootState) => {
+  const account = useAppSelector(({COINBASE}) => {
     return find(COINBASE.accounts[COINBASE_ENV], {id: accountId});
   });
 
   const txsStatus = useAppSelector(
-    ({COINBASE}: RootState) => COINBASE.getTransactionsStatus,
+    ({COINBASE}) => COINBASE.getTransactionsStatus,
   );
 
-  const txsLoading = useAppSelector(
-    ({COINBASE}: RootState) => COINBASE.isApiLoading,
-  );
+  const txsLoading = useAppSelector(({COINBASE}) => COINBASE.isApiLoading);
 
   const [isLoading, setIsLoading] = useState<boolean>();
   const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
@@ -176,13 +167,11 @@ const CoinbaseAccount = ({
   }, [navigation, account]);
 
   const parseTime = (timestamp?: string) => {
-    if (!timestamp) return '';
-    return moment(timestamp).format('MMM D, YYYY');
+    return timestamp ? moment(timestamp).format('MMM D, YYYY') : '';
   };
 
   const parseAmount = (amount?: string, coin?: string) => {
-    if (!amount || !coin) return '';
-    return amount + ' ' + coin;
+    return !amount || !coin ? amount + ' ' + coin : '';
   };
 
   const getIcon = (coinbaseTx: CoinbaseTransactionProps) => {
@@ -287,41 +276,40 @@ const CoinbaseAccount = ({
     dispatch(
       showOnGoingProcessModal(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
     );
-    dispatch(coinbaseCreateAddress(accountId)).then(async newAddress => {
-      if (account?.currency.code === 'BCH') {
-        // Convert old format bch address to bch cash address
-        newAddress = TranslateToBchCashAddress(newAddress);
-        newAddress = ToCashAddress(newAddress, false);
-      }
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(400);
-      navigation.navigate('Wallet', {
-        screen: 'GlobalSelect',
-        params: {
-          context: 'deposit',
-          toCoinbase: {
-            account: account?.name || 'Coinbase',
-            currency: account?.currency.code.toLowerCase() || '',
-            address: newAddress,
-            title: 'Send from BitPay Wallet',
+    dispatch(coinbaseCreateAddress(accountId))
+      .then(async newAddress => {
+        dispatch(dismissOnGoingProcessModal());
+        if (!newAddress) {
+          return;
+        }
+        if (account?.currency.code === 'BCH') {
+          // Convert old format bch address to bch cash address
+          newAddress = TranslateToBchCashAddress(newAddress);
+          newAddress = ToCashAddress(newAddress, false);
+        }
+        await sleep(400);
+        navigation.navigate('Wallet', {
+          screen: 'GlobalSelect',
+          params: {
+            context: 'deposit',
+            toCoinbase: {
+              account: account?.name || 'Coinbase',
+              currency: account?.currency.code.toLowerCase() || '',
+              address: newAddress,
+              title: 'Send from BitPay Wallet',
+            },
           },
-        },
+        });
+      })
+      .catch(error => {
+        showError(error);
       });
-    });
   };
 
   const onSelectedWallet = async (newWallet?: Wallet) => {
     setWalletModalVisible(false);
-
     if (newWallet) {
-      dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.GENERATING_ADDRESS),
-      );
-      await dispatch<any>(
-        createWalletAddress({wallet: newWallet, newAddress: false}),
-      );
       setSelectedWallet(newWallet);
-      dispatch(dismissOnGoingProcessModal());
       await sleep(500);
       setAmountModalVisible(true);
     }

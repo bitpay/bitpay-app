@@ -1,6 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {StackScreenProps} from '@react-navigation/stack';
-import {RootState} from '../../../store';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -34,14 +33,12 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({route}) => {
   const dispatch = useAppDispatch();
 
   const tokenError = useAppSelector(
-    ({COINBASE}: RootState) => COINBASE.getAccessTokenError,
+    ({COINBASE}) => COINBASE.getAccessTokenError,
   );
   const tokenStatus = useAppSelector(
-    ({COINBASE}: RootState) => COINBASE.getAccessTokenStatus,
+    ({COINBASE}) => COINBASE.getAccessTokenStatus,
   );
-  const token = useAppSelector(
-    ({COINBASE}: RootState) => COINBASE.token[COINBASE_ENV],
-  );
+  const token = useAppSelector(({COINBASE}) => COINBASE.token[COINBASE_ENV]);
   const [isDashboardEnabled, setIsDashboardEnabled] = useState(!!token);
 
   let {code, state} = route.params || {};

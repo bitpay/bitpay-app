@@ -9,12 +9,10 @@ import {
 } from '../../api/coinbase/coinbase.types';
 
 export type ApiLoading = boolean;
-export type RevokeTokenStatus = 'success' | 'failed' | null;
 export type GetAccessTokenStatus = 'success' | 'failed' | null;
 export type GetRefreshTokenStatus = 'success' | 'failed' | null;
 export type GetUserStatus = 'success' | 'failed' | null;
 export type GetAccountsStatus = 'success' | 'failed' | null;
-export type GetExchangeRatesStatus = 'success' | 'failed' | null;
 export type GetTransactionsStatus = 'success' | 'failed' | null;
 export type CreateAddressStatus = 'success' | 'failed' | null;
 export type SendTransactionStatus = 'success' | 'failed' | null;
@@ -23,10 +21,8 @@ export type PayInvoiceStatus = 'success' | 'failed' | null;
 export enum CoinbaseActionTypes {
   DISCONNECT_ACCOUNT_PENDING = 'Coinbase/DISCONNECT_ACCOUNT_PENDING',
   DISCONNECT_ACCOUNT_SUCCESS = 'Coinbase/DISCONNECT_ACCOUNT_SUCCESS',
-  DISCONNECT_ACCOUNT_FAILED = 'Coinbase/DISCONNECT_ACCOUNT_FAILED',
   EXCHANGE_RATES_PENDING = 'Coinbase/EXCHANGE_RATES_PENDING',
   EXCHANGE_RATES_SUCCESS = 'Coinbase/EXCHANGE_RATES_SUCCESS',
-  EXCHANGE_RATES_FAILED = 'Coinbase/EXCHANGE_RATES_FAILED',
   ACCESS_TOKEN_PENDING = 'Coinbase/ACCESS_TOKEN_PENDING',
   ACCESS_TOKEN_SUCCESS = 'Coinbase/ACCESS_TOKEN_SUCCESS',
   ACCESS_TOKEN_FAILED = 'Coinbase/ACCESS_TOKEN_FAILED',
@@ -65,11 +61,6 @@ interface ExchangeRatesSuccess {
   payload: CoinbaseExchangeRatesProps;
 }
 
-interface ExchangeRatesFailed {
-  type: typeof CoinbaseActionTypes.EXCHANGE_RATES_FAILED;
-  payload: CoinbaseErrorsProps;
-}
-
 // ------- Revoke and Delete Token -------- //
 
 interface DisconnectAccountPending {
@@ -78,11 +69,6 @@ interface DisconnectAccountPending {
 
 interface DisconnectAccountSuccess {
   type: typeof CoinbaseActionTypes.DISCONNECT_ACCOUNT_SUCCESS;
-}
-
-interface DisconnectAccountFailed {
-  type: typeof CoinbaseActionTypes.DISCONNECT_ACCOUNT_FAILED;
-  payload: CoinbaseErrorsProps;
 }
 
 // ------- Access Token -------- //
@@ -221,10 +207,8 @@ interface PayInvoiceFailed {
 export type CoinbaseActionType =
   | ExchangeRatesPending
   | ExchangeRatesSuccess
-  | ExchangeRatesFailed
   | DisconnectAccountPending
   | DisconnectAccountSuccess
-  | DisconnectAccountFailed
   | AccessTokenPending
   | AccessTokenSuccess
   | AccessTokenFailed
