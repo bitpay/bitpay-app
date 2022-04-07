@@ -24,7 +24,7 @@ import KeyWalletsRow, {
 } from '../../../components/list/KeyWalletsRow';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
-import {LightBlack, White} from '../../../styles/colors';
+import {LightBlack, SlateDark, White} from '../../../styles/colors';
 import {H4, TextAlign} from '../../../components/styled/Text';
 import {RouteProp, useRoute} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
@@ -50,6 +50,7 @@ const CloseModalButton = styled.TouchableOpacity`
 `;
 
 const ModalTitle = styled.Text`
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   text-align: center;
   font-size: 20px;
 `;

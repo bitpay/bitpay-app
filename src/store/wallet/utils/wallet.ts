@@ -221,8 +221,7 @@ export const getRemainingWalletCount = (
   if (!wallets || wallets.length < WALLET_DISPLAY_LIMIT) {
     return;
   }
-  const remainWallets = wallets.length - WALLET_DISPLAY_LIMIT;
-  return remainWallets > 0 ? remainWallets : undefined;
+  return wallets.length - WALLET_DISPLAY_LIMIT;
 };
 
 export const BuildKeysAndWalletsList = ({

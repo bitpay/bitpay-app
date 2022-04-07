@@ -171,7 +171,7 @@ const CoinbaseAccount = ({
   };
 
   const parseAmount = (amount?: string, coin?: string) => {
-    return !amount || !coin ? amount + ' ' + coin : '';
+    return amount && coin ? amount + ' ' + coin : '';
   };
 
   const getIcon = (coinbaseTx: CoinbaseTransactionProps) => {

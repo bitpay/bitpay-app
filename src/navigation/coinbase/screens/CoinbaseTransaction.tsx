@@ -4,6 +4,7 @@ import styled from 'styled-components/native';
 import {CoinbaseTransactionProps} from '../../../api/coinbase/coinbase.types';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, TextAlign} from '../../../components/styled/Text';
+import {SlateDark, White} from '../../../styles/colors';
 import {Hr} from '../../../components/styled/Containers';
 
 import {StackScreenProps} from '@react-navigation/stack';
@@ -26,6 +27,7 @@ const HeaderContainer = styled.View`
 `;
 
 const HeaderTitle = styled.Text`
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   font-size: 24px;
   font-weight: bold;
 `;

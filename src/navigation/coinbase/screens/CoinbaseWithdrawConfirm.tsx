@@ -168,18 +168,13 @@ const CoinbaseWithdrawConfirm = () => {
     );
   }, [dispatch, showError, sendError, sendTransaction]);
 
-  const newReceiveAddress = useCallback(
+  const generateReceiveAddress = useCallback(
     async (newWallet?: Wallet) => {
       if (newWallet) {
-        dispatch(
-          startOnGoingProcessModal(OnGoingProcessMessages.GENERATING_ADDRESS),
-        );
         const address = await dispatch(
           createWalletAddress({wallet: newWallet, newAddress: false}),
         );
         setReceiveAddress(address);
-        await sleep(500);
-        dispatch(dismissOnGoingProcessModal());
       }
     },
     [dispatch],
@@ -188,10 +183,8 @@ const CoinbaseWithdrawConfirm = () => {
   useEffect(() => {
     if (!apiLoading && sendStatus === 'failed') {
       if (sendError?.errors[0].id === 'two_factor_required') {
-        // Ask 2FA
         askForTwoFactor();
       } else {
-        // Show error
         showError(sendError);
       }
     }
@@ -200,14 +193,19 @@ const CoinbaseWithdrawConfirm = () => {
       setShowPaymentSentModal(true);
     }
 
-    newReceiveAddress();
+    if (wallet && wallet.receiveAddress) {
+      setReceiveAddress(wallet.receiveAddress);
+    } else {
+      generateReceiveAddress(wallet);
+    }
   }, [
     apiLoading,
     sendStatus,
     sendError,
     showError,
     askForTwoFactor,
-    newReceiveAddress,
+    generateReceiveAddress,
+    wallet,
   ]);
 
   return (
@@ -220,7 +218,7 @@ const CoinbaseWithdrawConfirm = () => {
       </DetailsList>
 
       <SwipeButton
-        title={'Slide to send'}
+        title={'Slide to withdraw'}
         forceReset={resetSwipeButton}
         onSwipeComplete={sendTransaction}
       />
