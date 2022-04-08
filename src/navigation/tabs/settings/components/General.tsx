@@ -11,7 +11,7 @@ import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
 import {RootState} from '../../../../store';
 import {useAppDispatch} from '../../../../utils/hooks/useAppDispatch';
 import {useTranslation} from 'react-i18next';
-import {SettingsContainer, Settings} from '../SettingsRoot';
+import {Settings} from '../SettingsRoot';
 import {
   ActiveOpacity,
   Hr,
@@ -29,113 +29,111 @@ const General = () => {
   const {t} = useTranslation();
 
   return (
-    <SettingsContainer>
-      <Settings>
-        <Setting
-          activeOpacity={ActiveOpacity}
+    <Settings>
+      <Setting
+        activeOpacity={ActiveOpacity}
+        onPress={() =>
+          navigation.navigate('GeneralSettings', {screen: 'Theme'})
+        }>
+        <SettingTitle>{t('Theme')}</SettingTitle>
+        <Button
+          buttonType={'pill'}
           onPress={() =>
             navigation.navigate('GeneralSettings', {screen: 'Theme'})
           }>
-          <SettingTitle>{t('Theme')}</SettingTitle>
-          <Button
-            buttonType={'pill'}
-            onPress={() =>
-              navigation.navigate('GeneralSettings', {screen: 'Theme'})
-            }>
-            {colorScheme === 'light'
-              ? 'Light Mode'
-              : colorScheme === 'dark'
-              ? 'Dark Mode'
-              : 'System Default'}
-          </Button>
-        </Setting>
-        <Hr />
-        {/*----------------------------------------------------------------------*/}
-        <Setting
-          activeOpacity={ActiveOpacity}
-          onPress={() =>
-            navigation.navigate('GeneralSettings', {screen: 'CustomizeHome'})
-          }>
-          <SettingTitle>{t('Customize Home')}</SettingTitle>
-          <AngleRight />
-        </Setting>
-        <Hr />
-        {/*----------------------------------------------------------------------*/}
-        <Setting activeOpacity={1}>
-          <SettingTitle>{t('Show Portfolio')}</SettingTitle>
-          <ToggleSwitch
-            onChange={value => dispatch(AppActions.showPortfolioValue(value))}
-            isEnabled={showPortfolioValue}
-          />
-        </Setting>
-        <Hr />
-        {/*----------------------------------------------------------------------*/}
-        <Setting
-          activeOpacity={ActiveOpacity}
-          onPress={
-            () => null // Todo
-          }>
-          <SettingTitle>{t('Display Currency')}</SettingTitle>
-          <AngleRight />
-        </Setting>
-        <Hr />
-        {/*----------------------------------------------------------------------*/}
-        <Setting
-          activeOpacity={ActiveOpacity}
-          onPress={() =>
-            navigation.navigate('GeneralSettings', {screen: 'LanguageSettings'})
-          }>
-          <SettingTitle>{t('Language')}</SettingTitle>
-          <AngleRight />
-        </Setting>
-        <Hr />
-        {/*----------------------------------------------------------------------*/}
-        <Setting
-          activeOpacity={ActiveOpacity}
-          onPress={() =>
-            dispatch(
-              showBottomNotificationModal({
-                type: 'warning',
-                title: 'Reset all settings',
-                message: 'Are you sure you want to reset all settings?',
-                enableBackdropDismiss: true,
-                actions: [
-                  {
-                    text: 'RESET',
-                    action: async () => {
-                      dispatch(resetAllSettings());
-                      await sleep(400);
-                      dispatch(
-                        showBottomNotificationModal({
-                          type: 'success',
-                          title: 'Reset complete',
-                          message: 'All settings have been reset.',
-                          enableBackdropDismiss: true,
-                          actions: [
-                            {
-                              text: 'OK',
-                              action: () => null,
-                              primary: true,
-                            },
-                          ],
-                        }),
-                      );
-                    },
-                    primary: true,
+          {colorScheme === 'light'
+            ? 'Light Mode'
+            : colorScheme === 'dark'
+            ? 'Dark Mode'
+            : 'System Default'}
+        </Button>
+      </Setting>
+      <Hr />
+      {/*----------------------------------------------------------------------*/}
+      <Setting
+        activeOpacity={ActiveOpacity}
+        onPress={() =>
+          navigation.navigate('GeneralSettings', {screen: 'CustomizeHome'})
+        }>
+        <SettingTitle>{t('Customize Home')}</SettingTitle>
+        <AngleRight />
+      </Setting>
+      <Hr />
+      {/*----------------------------------------------------------------------*/}
+      <Setting activeOpacity={1}>
+        <SettingTitle>{t('Show Portfolio')}</SettingTitle>
+        <ToggleSwitch
+          onChange={value => dispatch(AppActions.showPortfolioValue(value))}
+          isEnabled={showPortfolioValue}
+        />
+      </Setting>
+      <Hr />
+      {/*----------------------------------------------------------------------*/}
+      <Setting
+        activeOpacity={ActiveOpacity}
+        onPress={
+          () => null // Todo
+        }>
+        <SettingTitle>{t('Display Currency')}</SettingTitle>
+        <AngleRight />
+      </Setting>
+      <Hr />
+      {/*----------------------------------------------------------------------*/}
+      <Setting
+        activeOpacity={ActiveOpacity}
+        onPress={() =>
+          navigation.navigate('GeneralSettings', {screen: 'LanguageSettings'})
+        }>
+        <SettingTitle>{t('Language')}</SettingTitle>
+        <AngleRight />
+      </Setting>
+      <Hr />
+      {/*----------------------------------------------------------------------*/}
+      <Setting
+        activeOpacity={ActiveOpacity}
+        onPress={() =>
+          dispatch(
+            showBottomNotificationModal({
+              type: 'warning',
+              title: 'Reset all settings',
+              message: 'Are you sure you want to reset all settings?',
+              enableBackdropDismiss: true,
+              actions: [
+                {
+                  text: 'RESET',
+                  action: async () => {
+                    dispatch(resetAllSettings());
+                    await sleep(400);
+                    dispatch(
+                      showBottomNotificationModal({
+                        type: 'success',
+                        title: 'Reset complete',
+                        message: 'All settings have been reset.',
+                        enableBackdropDismiss: true,
+                        actions: [
+                          {
+                            text: 'OK',
+                            action: () => null,
+                            primary: true,
+                          },
+                        ],
+                      }),
+                    );
                   },
-                  {
-                    text: 'CANCEL',
-                    action: () => {},
-                    primary: true,
-                  },
-                ],
-              }),
-            )
-          }>
-          <SettingTitle>{t('Reset All Settings')}</SettingTitle>
-        </Setting>
-      </Settings>
-    </SettingsContainer>
+                  primary: true,
+                },
+                {
+                  text: 'CANCEL',
+                  action: () => {},
+                  primary: true,
+                },
+              ],
+            }),
+          )
+        }>
+        <SettingTitle>{t('Reset All Settings')}</SettingTitle>
+      </Setting>
+    </Settings>
   );
 };
 

@@ -24,8 +24,11 @@ import Notifications from './components/Notifications';
 import Connections from './components/Connections';
 import About from './components/About';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
+import {updateSettingsListConfig} from '../../../store/app/app.actions';
+import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
 
 interface HomeSetting {
+  id: SettingsListType;
   title: string;
   onPress: () => void;
   show: boolean;
@@ -77,10 +80,16 @@ const DropdownSetting = styled(Setting)`
   padding: 0 ${ScreenGutter};
 `;
 
+export type SettingsListType =
+  | 'General'
+  | 'Security'
+  | 'External Services'
+  | 'Connections'
+  | 'About BitPay';
 const SettingsHomeScreen: React.FC = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const theme = useTheme();
   const user = useSelector<RootState, User | null>(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
@@ -91,14 +100,17 @@ const SettingsHomeScreen: React.FC = () => {
   );
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
 
+  const hideList = useAppSelector(({APP}) => APP.settingsListConfig);
   const SETTINGS: HomeSetting[] = [
     {
+      id: 'General',
       title: t('General'),
       onPress: () => {},
       show: true,
       subListComponent: <General />,
     },
     {
+      id: 'Security',
       title: t('Security'),
       onPress: () => {
         if (biometricLockActive) {
@@ -113,18 +125,21 @@ const SettingsHomeScreen: React.FC = () => {
     },
     {
       // Settings for Buy/Swap Crypto will be momentarily commented
+      id: 'External Services',
       title: t('External Services'),
       onPress: () => {},
       show: true,
       subListComponent: <Notifications />,
     },
     {
+      id: 'Connections',
       title: t('Connections'),
       onPress: () => {},
       show: true,
       subListComponent: <Connections />,
     },
     {
+      id: 'About BitPay',
       title: t('About BitPay'),
       onPress: () => {},
       show: true,
@@ -135,7 +150,8 @@ const SettingsHomeScreen: React.FC = () => {
   return (
     <SettingsContainer>
       <SettingsHome>
-        <BitPayIdSettingsLink style={{paddingHorizontal: 15}}
+        <BitPayIdSettingsLink
+          style={{paddingHorizontal: 15}}
           onPress={() => {
             if (user) {
               navigation.navigate('BitpayId', {screen: 'Profile'});
@@ -163,18 +179,22 @@ const SettingsHomeScreen: React.FC = () => {
           </SettingIcon>
         </BitPayIdSettingsLink>
 
-        <Hr />
-
-        {SETTINGS.map(({title, onPress, show, subListComponent}) => {
+        {SETTINGS.map(({id, title, onPress, show, subListComponent}) => {
           return (
-            <View key={title}>
-              <DropdownSetting activeOpacity={ActiveOpacity} onPress={onPress}>
+            <View key={id}>
+              <DropdownSetting
+                activeOpacity={ActiveOpacity}
+                onPress={() => {
+                  console.log(id);
+                  dispatch(updateSettingsListConfig(id));
+                  onPress();
+                }}>
                 <SettingTitle style={textStyle}>{title}</SettingTitle>
                 <SettingIcon suffix>
-                  {show ? <ChevronDownSvg/> : <AngleRight />}
+                  {!hideList.includes(id) ? <ChevronDownSvg /> : <AngleRight />}
                 </SettingIcon>
               </DropdownSetting>
-              {show ? <>{subListComponent}</> : null}
+              {!hideList.includes(id) ? <>{subListComponent}</> : null}
             </View>
           );
         })}

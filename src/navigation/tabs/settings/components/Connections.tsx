@@ -3,12 +3,8 @@ import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {Settings, SettingsContainer} from '../SettingsRoot';
-import {
-  Hr,
-  Setting,
-  SettingTitle,
-} from '../../../../components/styled/Containers';
+import {Settings} from '../SettingsRoot';
+import {Setting, SettingTitle} from '../../../../components/styled/Containers';
 import {WalletConnectIconContainer} from '../../../wallet-connect/styled/WalletConnectContainers';
 import WalletConnectIcon from '../../../../../assets/img/wallet-connect/wallet-connect-icon.svg';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
@@ -41,19 +37,17 @@ const Connections = () => {
   };
 
   return (
-    <SettingsContainer>
-      <Settings>
-        <Setting onPress={() => goToNextView()}>
-          <ConnectionItemContainer>
-            <WalletConnectIconContainer>
-              <WalletConnectIcon />
-            </WalletConnectIconContainer>
-            <SettingTitle>WalletConnect</SettingTitle>
-          </ConnectionItemContainer>
-          <AngleRight />
-        </Setting>
-      </Settings>
-    </SettingsContainer>
+    <Settings>
+      <Setting onPress={() => goToNextView()}>
+        <ConnectionItemContainer>
+          <WalletConnectIconContainer>
+            <WalletConnectIcon />
+          </WalletConnectIconContainer>
+          <SettingTitle>WalletConnect</SettingTitle>
+        </ConnectionItemContainer>
+        <AngleRight />
+      </Setting>
+    </Settings>
   );
 };
 

@@ -1,6 +1,5 @@
-import {Settings, SettingsContainer} from '../SettingsRoot';
+import {Settings} from '../SettingsRoot';
 import {
-  Hr,
   Setting,
   SettingTitle,
   SheetContainer,
@@ -184,16 +183,14 @@ const Security = () => {
   };
   return (
     <>
-      <SettingsContainer>
-        <Settings>
-          <Setting onPress={onPressLockButton}>
-            <SettingTitle>Lock App</SettingTitle>
-            <Button onPress={onPressLockButton} buttonType={'pill'}>
-              {biometricLockActive || pinLockActive ? 'Enabled' : 'Disabled'}
-            </Button>
-          </Setting>
-        </Settings>
-      </SettingsContainer>
+      <Settings>
+        <Setting onPress={onPressLockButton}>
+          <SettingTitle>Lock App</SettingTitle>
+          <Button onPress={onPressLockButton} buttonType={'pill'}>
+            {biometricLockActive || pinLockActive ? 'Enabled' : 'Disabled'}
+          </Button>
+        </Setting>
+      </Settings>
       <SheetModal isVisible={modalVisible} onBackdropPress={hideModal}>
         <SheetContainer>
           <Header>

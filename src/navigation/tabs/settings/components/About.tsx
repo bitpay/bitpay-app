@@ -1,5 +1,5 @@
 import React from 'react';
-import {Settings, SettingsContainer} from '../SettingsRoot';
+import {Settings} from '../SettingsRoot';
 import {
   ActiveOpacity,
   Hr,
@@ -12,9 +12,8 @@ import {version} from '../../../../../package.json'; // TODO: better way to get 
 import {useNavigation} from '@react-navigation/native';
 import {URL} from '../../../../constants';
 import {useTranslation} from 'react-i18next';
-import {StyleProp, TextStyle, View} from 'react-native';
+import {View} from 'react-native';
 import {useDispatch} from 'react-redux';
-import {useTheme} from 'styled-components/native';
 import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
 
 interface LinkSetting {
@@ -46,36 +45,34 @@ const About = () => {
     },
   ];
   return (
-    <SettingsContainer>
-      <Settings>
-        <Setting>
-          <SettingTitle>Version</SettingTitle>
+    <Settings>
+      <Setting>
+        <SettingTitle>Version</SettingTitle>
 
-          <Button buttonType="pill">{version}</Button>
-        </Setting>
+        <Button buttonType="pill">{version}</Button>
+      </Setting>
 
-        <Hr />
+      <Hr />
 
-        <Setting
-          onPress={() => navigation.navigate('About', {screen: 'SessionLogs'})}>
-          <SettingTitle>Session Log</SettingTitle>
-        </Setting>
+      <Setting
+        onPress={() => navigation.navigate('About', {screen: 'SessionLogs'})}>
+        <SettingTitle>Session Log</SettingTitle>
+      </Setting>
 
-        <Hr />
-        {LINKS.map(({title, link}, index) => {
-          return (
-            <View key={title}>
-              <Setting
-                activeOpacity={ActiveOpacity}
-                onPress={() => dispatch(openUrlWithInAppBrowser(link))}>
-                <SettingTitle>{title}</SettingTitle>
-              </Setting>
-              {LINKS.length - 1 !== index && <Hr />}
-            </View>
-          );
-        })}
-      </Settings>
-    </SettingsContainer>
+      <Hr />
+      {LINKS.map(({title, link}, index) => {
+        return (
+          <View key={title}>
+            <Setting
+              activeOpacity={ActiveOpacity}
+              onPress={() => dispatch(openUrlWithInAppBrowser(link))}>
+              <SettingTitle>{title}</SettingTitle>
+            </Setting>
+            {LINKS.length - 1 !== index && <Hr />}
+          </View>
+        );
+      })}
+    </Settings>
   );
 };
 export default About;
