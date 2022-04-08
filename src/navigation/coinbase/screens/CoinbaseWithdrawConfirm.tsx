@@ -6,13 +6,7 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
 import PaymentSent from '../../wallet/components/PaymentSent';
-import {sleep} from '../../../utils/helper-methods';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {
   Amount,
   ConfirmContainer,
@@ -102,17 +96,12 @@ const CoinbaseWithdrawConfirm = () => {
 
   const sendTransaction = useCallback(
     async (code?: string) => {
-      dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT),
-      );
-      await sleep(400);
       const buildTx = {
         to: receiveAddress,
         amount: amount,
         currency: currency,
       };
       dispatch(coinbaseSendTransaction(accountId, buildTx, code));
-      dispatch(dismissOnGoingProcessModal());
     },
     [dispatch, accountId, receiveAddress, amount, currency],
   );

@@ -38,7 +38,7 @@ const ModalHeader = styled.View`
 `;
 
 const CloseModalButton = styled.TouchableOpacity`
-  margin: 15px;
+  margin: 15px 0;
   padding: 5px;
   height: 41px;
   width: 41px;
@@ -53,6 +53,7 @@ const ModalTitle = styled.Text`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   text-align: center;
   font-size: 20px;
+  font-weight: bold;
 `;
 
 const SafeAreaView = styled.SafeAreaView`
@@ -60,7 +61,7 @@ const SafeAreaView = styled.SafeAreaView`
 `;
 
 const GlobalSelectContainer = styled.View`
-  padding: 0;
+  padding: ${ScreenGutter};
 `;
 
 const ListContainer = styled.View`
