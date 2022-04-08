@@ -34,7 +34,7 @@ const ExchangeRateText = styled(H7)`
 `;
 
 const ExchangeRateSubText = styled(Smallest)`
-  line-height: 0;
+  line-height: 20px;
   font-weight: 500;
   color: ${({theme}) => (theme.dark ? White : SlateDark)};
 `;

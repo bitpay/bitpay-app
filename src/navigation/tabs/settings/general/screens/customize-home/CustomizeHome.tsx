@@ -50,7 +50,6 @@ const Noop = () => null;
 const CustomizeHome = () => {
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
-  const cards = useAppSelector(({CARD, APP}) => CARD.cards[APP.network]);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig)!;
   const defaultLayoutType = useAppSelector(
     ({APP}) => APP.homeCarouselLayoutType,
@@ -60,7 +59,6 @@ const CustomizeHome = () => {
   const theme = useTheme();
   const [_visible, _hidden] = createCustomizeCardList({
     keys: Object.values(keys),
-    cards,
     homeCarouselConfig,
   });
   const [visibleList, setVisibleList] = useState(_visible);
