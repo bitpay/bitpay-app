@@ -24,6 +24,7 @@ import {
 } from '../../../../store/app/app.models';
 import {
   HomeSectionSubtext,
+  HomeSectionSubTitle,
   HomeSectionTitle,
   SectionHeaderContainer,
 } from './Styled';
@@ -213,7 +214,11 @@ const Crypto = () => {
               </HomeSectionSubtext>
             </Row>
             <ButtonContainer>
-              <Button style={{marginBottom: 15}} onPress={() => navigation.navigate('Wallet', {screen: 'CreationOptions'})}>
+              <Button
+                style={{marginBottom: 15}}
+                onPress={() =>
+                  navigation.navigate('Wallet', {screen: 'CreationOptions'})
+                }>
                 Create, import or join a shared wallet
               </Button>
               <Button buttonStyle={'secondary'}>
@@ -276,7 +281,7 @@ const Crypto = () => {
       {/* ////////////////////////////// CREATE DEFAULTS */}
       <CarouselContainer>
         <SectionHeaderContainer style={{marginTop: 0, position: 'absolute'}}>
-          <HomeSectionTitle>Expand your Portfolio</HomeSectionTitle>
+          <HomeSectionSubTitle>Expand your Portfolio</HomeSectionSubTitle>
         </SectionHeaderContainer>
         <Carousel
           vertical={false}

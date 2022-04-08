@@ -22,13 +22,14 @@ interface HomeRowProps {
 }
 
 const HomeRowContainer = styled.View`
-  margin-bottom: 28px;
+  margin-bottom: 35px;
 `;
 
 const Header = styled.View<{slim?: boolean}>`
   flex-direction: row;
   margin: 0 ${ScreenGutter} ${({slim}) => (slim ? 0 : 12)}px;
   justify-content: space-between;
+  align-items: center;
   position: absolute;
   left: 0;
   right: 0;

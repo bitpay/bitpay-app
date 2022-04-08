@@ -25,6 +25,10 @@ export const HomeSectionTitle = styled(H5)`
   color: ${({theme: {dark}}) => (dark ? White : Black)};
 `;
 
+export const HomeSectionSubTitle = styled(HomeSectionTitle)`
+  font-size: 16px;
+`;
+
 export const SectionHeaderContainer = styled.View<{justifyContent?: string}>`
   flex-direction: row;
   margin: 20px ${ScreenGutter} 10px;

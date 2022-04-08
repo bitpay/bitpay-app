@@ -177,7 +177,7 @@ const Confirm = () => {
         {gasLimit !== undefined ? (
           <SharedDetailRow description={'Gas limit'} value={gasLimit} hr />
         ) : null}
-        {nonce !== undefined ? (
+        {nonce !== undefined &&  nonce !== null ? (
           <SharedDetailRow description={'Nonce'} value={nonce} hr />
         ) : null}
         <SendingFrom sender={sendingFrom} hr />
@@ -214,6 +214,8 @@ const Confirm = () => {
                     title: 'Uh oh, something went wrong',
                   }),
                 );
+                await sleep(500);
+                setResetSwipeButton(true);
             }
           }
         }}

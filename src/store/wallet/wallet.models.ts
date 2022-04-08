@@ -92,6 +92,7 @@ export interface PriceHistory {
   priceDisplay: Array<number>;
   percentChange: string;
   currencyPair: string;
+  prices: Array<{price: number; time: string}>;
 }
 
 export interface KeyOptions {
