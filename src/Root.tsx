@@ -46,9 +46,6 @@ import ContactsStack, {
 import ExternalServicesSettingsStack, {
   ExternalServicesSettingsStackParamList,
 } from './navigation/tabs/settings/external-services/ExternalServicesStack';
-import NotificationSettingsStack, {
-  NotificationSettingsStackParamList,
-} from './navigation/tabs/settings/notifications/NotificationsStack';
 import AboutStack, {
   AboutStackParamList,
 } from './navigation/tabs/settings/about/AboutStack';
@@ -98,7 +95,6 @@ export type RootStackParamList = {
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
   Contacts: NavigatorScreenParams<ContactsStackParamList>;
   ExternalServicesSettings: NavigatorScreenParams<ExternalServicesSettingsStackParamList>;
-  NotificationSettings: NavigatorScreenParams<NotificationSettingsStackParamList>;
   About: NavigatorScreenParams<AboutStackParamList>;
   BuyCrypto: NavigatorScreenParams<BuyCryptoStackParamList>;
   SwapCrypto: NavigatorScreenParams<SwapCryptoStackParamList>;
@@ -123,7 +119,6 @@ export enum RootStacks {
   // SETTINGS
   GENERAL_SETTINGS = 'GeneralSettings',
   EXTERNAL_SERVICES_SETTINGS = 'ExternalServicesSettings',
-  NOTIFICATION_SETTINGS = 'NotificationSettings',
   ABOUT = 'About',
   BUY_CRYPTO = 'BuyCrypto',
   SWAP_CRYPTO = 'SwapCrypto',
@@ -143,7 +138,6 @@ export type NavScreenParams = NavigatorScreenParams<
     GeneralSettingsStackParamList &
     ContactsStackParamList &
     ExternalServicesSettingsStackParamList &
-    NotificationSettingsStackParamList &
     AboutStackParamList &
     BuyCryptoStackParamList &
     SwapCryptoStackParamList &
@@ -391,10 +385,6 @@ export default () => {
             <Root.Screen
               name={RootStacks.EXTERNAL_SERVICES_SETTINGS}
               component={ExternalServicesSettingsStack}
-            />
-            <Root.Screen
-              name={RootStacks.NOTIFICATION_SETTINGS}
-              component={NotificationSettingsStack}
             />
             <Root.Screen name={RootStacks.ABOUT} component={AboutStack} />
             <Root.Screen

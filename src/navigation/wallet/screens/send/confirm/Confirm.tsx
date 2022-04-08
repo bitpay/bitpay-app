@@ -177,7 +177,7 @@ const Confirm = () => {
         {gasLimit !== undefined ? (
           <SharedDetailRow description={'Gas limit'} value={gasLimit} hr />
         ) : null}
-        {nonce !== undefined &&  nonce !== null ? (
+        {nonce !== undefined && nonce !== null ? (
           <SharedDetailRow description={'Nonce'} value={nonce} hr />
         ) : null}
         <SendingFrom sender={sendingFrom} hr />

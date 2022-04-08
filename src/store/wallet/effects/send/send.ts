@@ -314,12 +314,12 @@ export const startSendPayment =
 
             try {
               const broadcastedTx = await dispatch(
-                  publishAndSign({
-                    txp: proposal,
-                    key,
-                    wallet,
-                    recipient,
-                  }),
+                publishAndSign({
+                  txp: proposal,
+                  key,
+                  wallet,
+                  recipient,
+                }),
               );
               return resolve(broadcastedTx);
             } catch (e) {

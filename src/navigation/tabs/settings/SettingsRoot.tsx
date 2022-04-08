@@ -76,9 +76,6 @@ const DropdownSetting = styled(Setting)`
   padding: 0 ${ScreenGutter};
 `;
 
-const DropdownContainer = styled.View`
-  padding: 0 ${ScreenGutter};
-`;
 const SettingsHomeScreen: React.FC = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
@@ -176,9 +173,7 @@ const SettingsHomeScreen: React.FC = () => {
                   <AngleRight />
                 </SettingIcon>
               </DropdownSetting>
-              {show ? (
-                <DropdownContainer>{subListComponent}</DropdownContainer>
-              ) : null}
+              {show ? <>{subListComponent}</> : null}
             </View>
           );
         })}
