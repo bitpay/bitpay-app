@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {ReactElement, ReactNode} from 'react';
 import styled, {useTheme} from 'styled-components/native';
-import {Midnight, NeutralSlate, SlateDark, White} from '../../styles/colors';
+import {Action, LightBlack, SlateDark, White} from '../../styles/colors';
 import Haptic from '../haptic-feedback/haptic';
 import {
   ActiveOpacity,
@@ -19,7 +19,7 @@ const Arrow = ({isDark}: {isDark: boolean}) => {
   return (
     <Svg.Svg width="17" height="17" viewBox="0 0 17 17" fill="none">
       <Svg.Path
-        fill={isDark ? White : '#434D5A'}
+        fill={isDark ? '#4F6EF7' : Action}
         fillRule="evenodd"
         clipRule="evenodd"
         d="M9.65108 2.83329L8.4115 4.01737L12.2188 7.65419L1.41671 7.65419V9.34573L12.2188 9.34573L8.4115 12.9825L9.65108 14.1666L15.5834 8.49996L9.65108 2.83329Z"
@@ -44,7 +44,7 @@ interface HomeCardProps {
 }
 
 const CardHeader = styled.View`
-  min-height: 30px;
+  min-height: 20px;
 `;
 
 const CardBodyHeader = styled(BaseText)`
@@ -63,8 +63,8 @@ const CardBodyDesc = styled(BaseText)`
 `;
 
 const CardPrice = styled(BaseText)<{scale: boolean}>`
-  font-size: ${({scale}) => (scale ? 21 : 31)}px;
-  line-height: 46px;
+  font-size: ${({scale}) => (scale ? 15 : 20)}px;
+  line-height: 30px;
   font-weight: bold;
   color: ${({theme}) => theme.colors.text};
 `;
@@ -84,11 +84,11 @@ const CardPillText = styled(BaseText)`
 `;
 
 const FooterArrow = styled.TouchableOpacity`
-  width: 30px;
-  height: 30px;
+  width: 35px;
+  height: 35px;
   align-self: flex-end;
   border-radius: 50px;
-  background-color: ${({theme}) => (theme.dark ? '#3D4D71' : White)}
+  background-color: ${({theme}) => (theme.dark ? '#0C204E' : '#ECEFFD')}
   align-items: center;
   justify-content: center;
 `;
@@ -107,12 +107,7 @@ const NeedBackupText = styled(BaseText)`
   position: absolute;
 `;
 
-const HomeCard: React.FC<HomeCardProps> = ({
-  backgroundImg,
-  body,
-  onCTAPress,
-  header,
-}) => {
+const HomeCard: React.FC<HomeCardProps> = ({body, onCTAPress, header}) => {
   const HeaderComp = <CardHeader>{header}</CardHeader>;
   const theme = useTheme();
   const {title, value, pillText, description, needsBackup} = body;
@@ -149,13 +144,23 @@ const HomeCard: React.FC<HomeCardProps> = ({
   );
 
   const containerProps = {
-    backgroundColor: theme.dark ? Midnight : NeutralSlate,
+    backgroundColor: theme.dark ? LightBlack : White,
   };
 
   return (
-    <CardContainer activeOpacity={ActiveOpacity} onPress={_onPress}>
+    <CardContainer
+      activeOpacity={ActiveOpacity}
+      onPress={_onPress}
+      style={
+        !theme.dark && {
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 1},
+          shadowOpacity: 0.1,
+          shadowRadius: 12,
+          elevation: 5,
+        }
+      }>
       <Card
-        backgroundImg={backgroundImg}
         header={HeaderComp}
         body={BodyComp}
         footer={FooterComp}

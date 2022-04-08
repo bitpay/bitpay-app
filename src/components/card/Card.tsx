@@ -10,7 +10,7 @@ const CardHeader = styled.View`
 
 const CardBody = styled.View`
   flex-grow: 1;
-  padding: ${CardGutter};
+  padding: 0 ${CardGutter};
 `;
 
 const CardFooter = styled.View`
@@ -36,8 +36,6 @@ export interface CardProps {
   footer?: ReactNode;
   backgroundImg?: () => ReactElement;
   containerProps?: {
-    width?: string;
-    minHeight?: string;
     backgroundColor?: string;
   };
 }
@@ -49,14 +47,9 @@ const Card = ({
   backgroundImg,
   containerProps,
 }: CardProps) => {
-  const width = containerProps && containerProps.width;
-  const minHeight = containerProps && containerProps.minHeight;
   const backgroundColor = containerProps && containerProps.backgroundColor;
   return (
-    <CardContainer
-      backgroundColor={backgroundColor}
-      width={width}
-      minHeight={minHeight}>
+    <CardContainer backgroundColor={backgroundColor}>
       {backgroundImg && <BackgroundImage>{backgroundImg()}</BackgroundImage>}
 
       {header && <CardHeader>{header}</CardHeader>}

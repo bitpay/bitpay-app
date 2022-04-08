@@ -28,6 +28,7 @@ import {BaseText} from '../styled/Text';
 import * as Icons from './ButtonIcons';
 import ButtonOverlay from './ButtonOverlay';
 import ButtonSpinner from './ButtonSpinner';
+import {StyleProp, ViewStyle} from 'react-native';
 
 export type ButtonState = 'loading' | 'success' | 'failed' | null | undefined;
 export type ButtonStyle =
@@ -46,6 +47,7 @@ interface ButtonProps extends BaseButtonProps {
   disabled?: boolean;
   debounceTime?: number;
   state?: ButtonState;
+  style?: StyleProp<ViewStyle>;
 }
 
 interface ButtonOptionProps {
@@ -206,6 +208,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
     disabled,
     debounceTime,
     state,
+    style,
   } = props;
   const secondary = buttonStyle === 'secondary';
   const outline = buttonOutline;
@@ -270,6 +273,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
 
   return (
     <ButtonContainer
+      style={style}
       buttonType={buttonType}
       onPress={debouncedOnPress}
       activeOpacity={disabled ? 1 : ActiveOpacity}

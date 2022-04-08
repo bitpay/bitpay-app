@@ -17,13 +17,17 @@ const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({
 }) => {
   return (
     <Carousel<ContentCard>
+      containerCustomStyle={{
+        paddingVertical: 20,
+        marginTop: 20,
+      }}
       vertical={false}
       layout={'default'}
       useExperimentalSnap={true}
       data={contentCards}
       renderItem={renderQuickLink}
       sliderWidth={WIDTH}
-      itemWidth={212}
+      itemWidth={225}
       inactiveSlideScale={1}
       inactiveSlideOpacity={1}
     />

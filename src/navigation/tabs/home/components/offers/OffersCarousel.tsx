@@ -17,13 +17,17 @@ const OffersCarousel: React.FC<OfferSlidesProps> = props => {
 
   return (
     <Carousel<ContentCard>
+      containerCustomStyle={{
+        paddingVertical: 20,
+        marginTop: 20,
+      }}
       vertical={false}
       layout={'default'}
       useExperimentalSnap={true}
       data={contentCards}
       renderItem={renderOffer}
       sliderWidth={WIDTH}
-      itemWidth={280}
+      itemWidth={230}
       inactiveSlideScale={1}
       inactiveSlideOpacity={1}
     />

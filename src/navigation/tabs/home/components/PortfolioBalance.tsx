@@ -1,14 +1,24 @@
 import React from 'react';
 import styled from 'styled-components/native';
 import {BaseText} from '../../../../components/styled/Text';
-import {SlateDark} from '../../../../styles/colors';
-import {ScreenGutter} from '../../../../components/styled/Containers';
+import {SlateDark, White} from '../../../../styles/colors';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
 
 const PortfolioContainer = styled.View`
-  margin: 0 ${ScreenGutter};
+  justify-content: center;
+  align-items: center;
+`;
+
+const PortfolioBalanceHeader = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+`;
+
+const PortfolioBalanceTitle = styled(BaseText)`
+  font-size: 14px;
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
 const PortfolioBalanceText = styled(BaseText)`
@@ -46,6 +56,9 @@ const PortfolioBalance = () => {
 
   return (
     <PortfolioContainer>
+      <PortfolioBalanceHeader>
+        <PortfolioBalanceTitle>Portfolio Balance</PortfolioBalanceTitle>
+      </PortfolioBalanceHeader>
       <PortfolioBalanceText>
         {formatFiatAmount(portfolioBalance.current, 'usd')}
       </PortfolioBalanceText>

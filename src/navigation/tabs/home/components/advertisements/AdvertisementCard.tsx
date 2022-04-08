@@ -39,7 +39,7 @@ const AdvertisementCardContainer = styled.TouchableOpacity`
   border-radius: 12px;
   flex-direction: column;
   justify-content: center;
-  min-height: 112px;
+  min-height: 100px;
   overflow: hidden;
   padding: 20px 100px 20px 20px;
   position: relative;
@@ -48,26 +48,24 @@ const AdvertisementCardContainer = styled.TouchableOpacity`
 const AdvertisementCardTitle = styled(BaseText)`
   font-style: normal;
   font-weight: bold;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 23px;
   margin-bottom: 5px;
   color: ${({theme}) => theme.colors.text};
 `;
 
 const AdvertisementCardDescription = styled(BaseText)`
-  font-size: 14px;
-  line-height: 21px;
+  font-size: 12px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const ADVERTISEMENT_ICON_HEIGHT = 126;
-const ADVERTISEMENT_ICON_WIDTH = 96;
+const ADVERTISEMENT_ICON_HEIGHT = 50;
+const ADVERTISEMENT_ICON_WIDTH = 50;
 
 const IconStyle: StyleProp<ViewStyle & ImageStyle> = {
   height: ADVERTISEMENT_ICON_HEIGHT,
   width: ADVERTISEMENT_ICON_WIDTH,
-  right: 0,
-  bottom: 0,
+  right: 10,
   position: 'absolute',
 };
 
@@ -90,7 +88,7 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   if (image) {
     if (typeof image === 'string') {
       imageSource = {uri: image};
-    } else if (__DEV__) {
+    } else {
       imageSource = image as any;
     }
   }
@@ -101,11 +99,6 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
     }
 
     haptic('impactLight');
-
-    if ('debug') {
-      console.log('TODO: handle performance issues');
-      return;
-    }
 
     if (openURLInWebView) {
       dispatch(AppEffects.openUrlWithInAppBrowser(url));

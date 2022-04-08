@@ -1,12 +1,21 @@
 import React from 'react';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import HomeCard from '../../../../components/home-card/HomeCard';
 import {BaseText} from '../../../../components/styled/Text';
 import {Wallet} from '../../../../store/wallet/wallet.models';
-import {Slate} from '../../../../styles/colors';
+import {LightBlack, Slate, SlateDark, White} from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {getRemainingWalletCount} from '../../../../store/wallet/utils/wallet';
+import {
+  ActiveOpacity,
+  Column,
+  Row,
+  ScreenGutter,
+} from '../../../../components/styled/Containers';
+import {Balance, KeyName} from '../../../wallet/components/KeyDropdownOption';
+import {HomeCarouselLayoutType} from '../../../../store/app/app.models';
+import {BoxShadow} from './Styled';
 
 interface WalletCardComponentProps {
   wallets: Wallet[];
@@ -14,6 +23,7 @@ interface WalletCardComponentProps {
   onPress: () => void;
   needsBackup: boolean;
   keyName: string | undefined;
+  layout: HomeCarouselLayoutType;
 }
 
 export const HeaderImg = styled.View`
@@ -22,6 +32,16 @@ export const HeaderImg = styled.View`
   flex-direction: row;
   flex: 1;
   flex-wrap: wrap;
+`;
+
+export const ListCard = styled.TouchableOpacity`
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+  border-radius: 12px;
+  margin: 10px ${ScreenGutter};
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px;
 `;
 
 export const Img = styled.View<{isFirst: boolean}>`
@@ -38,8 +58,18 @@ export const RemainingAssetsLabel = styled(BaseText)`
   color: ${Slate};
   margin-left: 5px;
 `;
-export const WALLET_DISPLAY_LIMIT = 4;
-export const ICON_SIZE = 25;
+
+const NeedBackupText = styled(BaseText)`
+  font-size: 12px;
+  text-align: center;
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  padding: 2px 4px;
+  border: 1px solid ${({theme: {dark}}) => (dark ? White : '#E1E4E7')};
+  border-radius: 3px;
+`;
+
+export const WALLET_DISPLAY_LIMIT = 3;
+export const ICON_SIZE = 20;
 
 const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   wallets,
@@ -47,10 +77,12 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   onPress,
   needsBackup,
   keyName = 'My Key',
+  layout,
 }) => {
+  const theme = useTheme();
   const walletInfo = wallets.slice(0, WALLET_DISPLAY_LIMIT);
   const remainingWalletCount = getRemainingWalletCount(wallets);
-
+  const isListView = layout === 'listView';
   const HeaderComponent = (
     <HeaderImg>
       {walletInfo.map((wallet, index) => {
@@ -58,7 +90,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
         return (
           wallet && (
             <Img key={id} isFirst={index === 0}>
-              <CurrencyImage img={img} size={ICON_SIZE} />
+              <CurrencyImage img={img} size={isListView ? 15 : ICON_SIZE} />
             </Img>
           )
         );
@@ -71,13 +103,41 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
     </HeaderImg>
   );
 
-  const body = {
-    title: keyName,
-    value: formatFiatAmount(totalBalance, 'USD'),
-    needsBackup,
-  };
+  /* ////////////////////////////// LISTVIEW */
+  if (layout === 'listView') {
+    return (
+      <ListCard
+        activeOpacity={ActiveOpacity}
+        onPress={onPress}
+        style={!theme.dark ? BoxShadow : null}>
+        <Row style={{alignItems: 'center', justifyContent: 'center'}}>
+          <Column>
+            {HeaderComponent}
+            <KeyName>{keyName}</KeyName>
+          </Column>
+          <Column style={{justifyContent: 'center', alignItems: 'flex-end'}}>
+            <Balance>{formatFiatAmount(totalBalance, 'USD')}</Balance>
+            {needsBackup && <NeedBackupText>Needs Backup</NeedBackupText>}
+          </Column>
+        </Row>
+      </ListCard>
+    );
+  }
 
-  return <HomeCard header={HeaderComponent} body={body} onCTAPress={onPress} />;
+  // todo refactor to not use multiple layers for home card as it will no longer be used for anything other then keys
+
+  /* ////////////////////////////// CAROUSEL */
+  return (
+    <HomeCard
+      header={HeaderComponent}
+      body={{
+        title: keyName,
+        value: formatFiatAmount(totalBalance, 'USD'),
+        needsBackup,
+      }}
+      onCTAPress={onPress}
+    />
+  );
 };
 
 export default WalletCardComponent;
