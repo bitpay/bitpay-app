@@ -3,11 +3,9 @@ import React, {ReactElement} from 'react';
 import styled, {useTheme} from 'styled-components/native';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import {StyleProp, TextStyle, View} from 'react-native';
-import {useDispatch, useSelector} from 'react-redux';
 import Avatar from '../../../components/avatar/BitPayIdAvatar';
 import {
   ActiveOpacity,
-  Hr,
   ScreenGutter,
   Setting,
   SettingIcon,
@@ -17,21 +15,21 @@ import {useTranslation} from 'react-i18next';
 import {RootState} from '../../../store';
 import {AppActions} from '../../../store/app';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
-import General from './components/General';
 import {Feather, LightBlack} from '../../../styles/colors';
-import Security from './components/Security';
-import Notifications from './components/Notifications';
-import Connections from './components/Connections';
-import About from './components/About';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import {updateSettingsListConfig} from '../../../store/app/app.actions';
 import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
 
+import General from './components/General';
+import Security from './components/Security';
+import Notifications from './components/Notifications';
+import Connections from './components/Connections';
+import About from './components/About';
+import Contacts from './components/Contacts';
 interface HomeSetting {
   id: SettingsListType;
   title: string;
   onPress: () => void;
-  show: boolean;
   subListComponent: ReactElement;
 }
 
@@ -82,6 +80,7 @@ const DropdownSetting = styled(Setting)`
 
 export type SettingsListType =
   | 'General'
+  | 'Contacts'
   | 'Security'
   | 'External Services'
   | 'Connections'
@@ -91,11 +90,11 @@ const SettingsHomeScreen: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
-  const user = useSelector<RootState, User | null>(
+  const user = useAppSelector<RootState, User | null>(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
-  const pinLockActive = useSelector(({APP}: RootState) => APP.pinLockActive);
-  const biometricLockActive = useSelector(
+  const pinLockActive = useAppSelector(({APP}: RootState) => APP.pinLockActive);
+  const biometricLockActive = useAppSelector(
     ({APP}: RootState) => APP.biometricLockActive,
   );
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
@@ -106,8 +105,13 @@ const SettingsHomeScreen: React.FC = () => {
       id: 'General',
       title: t('General'),
       onPress: () => {},
-      show: true,
       subListComponent: <General />,
+    },
+    {
+      id: 'Contacts',
+      title: t('Contacts'),
+      onPress: () => {},
+      subListComponent: <Contacts />,
     },
     {
       id: 'Security',
@@ -120,7 +124,6 @@ const SettingsHomeScreen: React.FC = () => {
           dispatch(AppActions.showPinModal({type: 'check'}));
         }
       },
-      show: true,
       subListComponent: <Security />,
     },
     {
@@ -128,21 +131,18 @@ const SettingsHomeScreen: React.FC = () => {
       id: 'External Services',
       title: t('External Services'),
       onPress: () => {},
-      show: true,
       subListComponent: <Notifications />,
     },
     {
       id: 'Connections',
       title: t('Connections'),
       onPress: () => {},
-      show: true,
       subListComponent: <Connections />,
     },
     {
       id: 'About BitPay',
       title: t('About BitPay'),
       onPress: () => {},
-      show: true,
       subListComponent: <About />,
     },
   ];
@@ -179,13 +179,12 @@ const SettingsHomeScreen: React.FC = () => {
           </SettingIcon>
         </BitPayIdSettingsLink>
 
-        {SETTINGS.map(({id, title, onPress, show, subListComponent}) => {
+        {SETTINGS.map(({id, title, onPress, subListComponent}) => {
           return (
             <View key={id}>
               <DropdownSetting
                 activeOpacity={ActiveOpacity}
                 onPress={() => {
-                  console.log(id);
                   dispatch(updateSettingsListConfig(id));
                   onPress();
                 }}>
