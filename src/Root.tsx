@@ -40,9 +40,6 @@ import ScanStack, {ScanStackParamList} from './navigation/scan/ScanStack';
 import GeneralSettingsStack, {
   GeneralSettingsStackParamList,
 } from './navigation/tabs/settings/general/GeneralStack';
-import SecuritySettingsStack, {
-  SecuritySettingsStackParamList,
-} from './navigation/tabs/settings/security/SecurityStack';
 import ContactsStack, {
   ContactsStackParamList,
 } from './navigation/tabs/contacts/ContactsStack';
@@ -102,7 +99,6 @@ export type RootStackParamList = {
   GiftCardDeeplink: GiftCardDeeplinkScreenParamList;
   Merchant: NavigatorScreenParams<MerchantStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
-  SecuritySettings: NavigatorScreenParams<SecuritySettingsStackParamList>;
   ConnectionSettings: NavigatorScreenParams<ConnectionsSettingsStackParamList>;
   Contacts: NavigatorScreenParams<ContactsStackParamList>;
   ExternalServicesSettings: NavigatorScreenParams<ExternalServicesSettingsStackParamList>;
@@ -130,7 +126,6 @@ export enum RootStacks {
   MERCHANT = 'Merchant',
   // SETTINGS
   GENERAL_SETTINGS = 'GeneralSettings',
-  SECURITY_SETTINGS = 'SecuritySettings',
   CONNECTION_SETTINGS = 'ConnectionSettings',
   EXTERNAL_SERVICES_SETTINGS = 'ExternalServicesSettings',
   NOTIFICATION_SETTINGS = 'NotificationSettings',
@@ -151,7 +146,6 @@ export type NavScreenParams = NavigatorScreenParams<
     GiftCardStackParamList &
     MerchantStackParamList &
     GeneralSettingsStackParamList &
-    SecuritySettingsStackParamList &
     ConnectionsSettingsStackParamList &
     ContactsStackParamList &
     ExternalServicesSettingsStackParamList &
@@ -398,10 +392,6 @@ export default () => {
             <Root.Screen
               name={RootStacks.GENERAL_SETTINGS}
               component={GeneralSettingsStack}
-            />
-            <Root.Screen
-              name={RootStacks.SECURITY_SETTINGS}
-              component={SecuritySettingsStack}
             />
             <Root.Screen name={RootStacks.CONTACTS} component={ContactsStack} />
             <Root.Screen
