@@ -130,7 +130,6 @@ const SettingsHomeScreen: React.FC = () => {
     },
   ];
 
-
   return (
     <SettingsContainer>
       <Settings>

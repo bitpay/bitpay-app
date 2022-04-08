@@ -78,9 +78,6 @@ import MerchantStack, {
 import PinModal from './components/modal/pin/PinModal';
 import BpDevtools from './components/bp-devtools/BpDevtools';
 import {DEVTOOLS_ENABLED} from './constants/config';
-import ConnectionsSettingsStack, {
-  ConnectionsSettingsStackParamList,
-} from './navigation/tabs/settings/connections/ConnectionsStack';
 import Blur from './components/blur/Blur';
 import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
 
@@ -99,7 +96,6 @@ export type RootStackParamList = {
   GiftCardDeeplink: GiftCardDeeplinkScreenParamList;
   Merchant: NavigatorScreenParams<MerchantStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
-  ConnectionSettings: NavigatorScreenParams<ConnectionsSettingsStackParamList>;
   Contacts: NavigatorScreenParams<ContactsStackParamList>;
   ExternalServicesSettings: NavigatorScreenParams<ExternalServicesSettingsStackParamList>;
   NotificationSettings: NavigatorScreenParams<NotificationSettingsStackParamList>;
@@ -126,7 +122,6 @@ export enum RootStacks {
   MERCHANT = 'Merchant',
   // SETTINGS
   GENERAL_SETTINGS = 'GeneralSettings',
-  CONNECTION_SETTINGS = 'ConnectionSettings',
   EXTERNAL_SERVICES_SETTINGS = 'ExternalServicesSettings',
   NOTIFICATION_SETTINGS = 'NotificationSettings',
   ABOUT = 'About',
@@ -146,7 +141,6 @@ export type NavScreenParams = NavigatorScreenParams<
     GiftCardStackParamList &
     MerchantStackParamList &
     GeneralSettingsStackParamList &
-    ConnectionsSettingsStackParamList &
     ContactsStackParamList &
     ExternalServicesSettingsStackParamList &
     NotificationSettingsStackParamList &
@@ -394,10 +388,6 @@ export default () => {
               component={GeneralSettingsStack}
             />
             <Root.Screen name={RootStacks.CONTACTS} component={ContactsStack} />
-            <Root.Screen
-              name={RootStacks.CONNECTION_SETTINGS}
-              component={ConnectionsSettingsStack}
-            />
             <Root.Screen
               name={RootStacks.EXTERNAL_SERVICES_SETTINGS}
               component={ExternalServicesSettingsStack}
