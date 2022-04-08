@@ -24,7 +24,7 @@ import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {HeaderContainer, HomeContainer} from './components/Styled';
 import HomeSection from './components/HomeSection';
 
-import Crypto from './components/Crypto';
+import Crypto, {keyBackupRequired} from './components/Crypto';
 import AdvertisementsList from './components/advertisements/AdvertisementsList';
 import OffersCarousel from './components/offers/OffersCarousel';
 import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
@@ -157,18 +157,64 @@ const HomeRoot = () => {
           <HomeSection>
             <LinkingButtons
               receive={{
-                cta: () =>
-                  navigation.navigate('Wallet', {
-                    screen: 'GlobalSelect',
-                    params: {context: 'receive'},
-                  }),
+                cta: () => {
+                  const needsBackup = !Object.values(keys).filter(
+                    key => key.backupComplete,
+                  ).length;
+                  if (needsBackup) {
+                    dispatch(
+                      showBottomNotificationModal(
+                        keyBackupRequired(Object.values(keys)[0], navigation),
+                      ),
+                    );
+                  } else {
+                    navigation.navigate('Wallet', {
+                      screen: 'GlobalSelect',
+                      params: {context: 'receive'},
+                    });
+                  }
+                },
               }}
               send={{
-                cta: () =>
-                  navigation.navigate('Wallet', {
-                    screen: 'GlobalSelect',
-                    params: {context: 'send'},
-                  }),
+                cta: () => {
+                  const walletsWithBalance = Object.values(keys)
+                    .filter(key => key.backupComplete)
+                    .flatMap(key => key.wallets)
+                    .filter(wallet => !wallet.hideWallet && wallet.isComplete())
+                    .filter(wallet => wallet.balance.sat > 0);
+
+                  if (!walletsWithBalance.length) {
+                    dispatch(
+                      showBottomNotificationModal({
+                        type: 'warning',
+                        title: 'No funds available',
+                        message: 'You do not have any funds to send.',
+                        enableBackdropDismiss: true,
+                        actions: [
+                          {
+                            text: 'Add funds',
+                            action: () =>
+                              navigation.navigate('BuyCrypto', {
+                                screen: 'Root',
+                                params: {amount: 50},
+                              }),
+                            primary: true,
+                          },
+                          {
+                            text: 'Got It',
+                            action: () => null,
+                            primary: false,
+                          },
+                        ],
+                      }),
+                    );
+                  } else {
+                    navigation.navigate('Wallet', {
+                      screen: 'GlobalSelect',
+                      params: {context: 'send'},
+                    });
+                  }
+                },
               }}
             />
           </HomeSection>

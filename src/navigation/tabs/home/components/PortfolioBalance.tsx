@@ -5,18 +5,24 @@ import {SlateDark, White} from '../../../../styles/colors';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
+import QuestionSvg from '../../../../../assets/img/question.svg';
+import {ActiveOpacity} from '../../../../components/styled/Containers';
+import {useAppDispatch} from '../../../../utils/hooks';
+import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 
 const PortfolioContainer = styled.View`
   justify-content: center;
   align-items: center;
 `;
 
-const PortfolioBalanceHeader = styled.View`
+const PortfolioBalanceHeader = styled.TouchableOpacity`
   flex-direction: row;
   justify-content: space-between;
+  align-items: center;
 `;
 
 const PortfolioBalanceTitle = styled(BaseText)`
+  margin-right: 5px;
   font-size: 14px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
@@ -52,12 +58,35 @@ const PortfolioBalance = () => {
   const portfolioBalance = useSelector(
     ({WALLET}: RootState) => WALLET.portfolioBalance,
   );
+  const dispatch = useAppDispatch();
   // const percentageDifference = '+2.5%';
+
+  const showPortfolioBalanceInfoModal = () => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'info',
+        title: 'Portfolio Balance',
+        message:
+          'Your Portfolio Balance is the total of all your crypto assets.',
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'GOT IT',
+            action: () => null,
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
 
   return (
     <PortfolioContainer>
-      <PortfolioBalanceHeader>
+      <PortfolioBalanceHeader
+        activeOpacity={ActiveOpacity}
+        onPress={showPortfolioBalanceInfoModal}>
         <PortfolioBalanceTitle>Portfolio Balance</PortfolioBalanceTitle>
+        <QuestionSvg width={12} height={12} />
       </PortfolioBalanceHeader>
       <PortfolioBalanceText>
         {formatFiatAmount(portfolioBalance.current, 'usd')}

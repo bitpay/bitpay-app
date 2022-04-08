@@ -59,7 +59,7 @@ const _renderItem = ({item}: {item: {id: string; component: JSX.Element}}) => {
   return <>{item.component}</>;
 };
 
-const keyBackupRequired = (
+export const keyBackupRequired = (
   key: Key,
   navigation: NavigationProp<any>,
 ): BottomNotificationConfig => {
