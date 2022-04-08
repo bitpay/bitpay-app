@@ -25,7 +25,6 @@ import {waitForTargetAmountAndUpdateWallet} from '../balance/balance';
 import {
   CustomErrorMessage,
   GeneralError,
-  WrongPasswordError,
 } from '../../../../navigation/wallet/components/ErrorMessages';
 import {BWCErrorMessage, getErrorName} from '../../../../constants/BWCError';
 import {GiftCardInvoiceParams, Invoice} from '../../../shop/shop.models';
@@ -215,13 +214,24 @@ const buildTransactionProposal = (
   tx: Partial<TransactionOptions>,
 ): Promise<object> => {
   return new Promise(async resolve => {
-    const {currency, feePerKb, payProUrl, sendMax, wallet, feeLevel} = tx;
+    const {
+      currency,
+      customData,
+      feeLevel,
+      feePerKb,
+      message,
+      payProUrl,
+      sendMax,
+      wallet,
+    } = tx;
     // base tx
     const txp: Partial<TransactionProposal> = {
       coin: currency,
       chain: GetChain(currency!).toLowerCase(),
+      customData,
       feePerKb,
       ...(!feePerKb && {feeLevel}),
+      message,
     };
     txp.invoiceID = tx.invoice?.id;
     // currency specific
@@ -269,7 +279,7 @@ const buildTransactionProposal = (
         txp.outputs.push({
           toAddress: tx.toAddress,
           amount: tx.amount,
-          message: tx.description,
+          message: tx.message,
           data: tx.data,
           gasLimit: tx.gasLimit,
         });
@@ -535,12 +545,19 @@ export const handleCreateTxProposalError = async (
   }
 };
 
-export const createPayProTxProposal = async (
-  wallet: Wallet,
-  paymentUrl: string,
-  invoice: Invoice,
-  customData?: CustomTransactionData,
-) => {
+export const createPayProTxProposal = async ({
+  wallet,
+  paymentUrl,
+  invoice,
+  customData,
+  message,
+}: {
+  wallet: Wallet;
+  paymentUrl: string;
+  invoice: Invoice;
+  customData?: CustomTransactionData;
+  message?: string;
+}) => {
   const payProDetails = await GetPayProDetails({
     paymentUrl,
     coin: wallet!.currencyAbbreviation,
@@ -569,6 +586,7 @@ export const createPayProTxProposal = async (
     recipient: {address},
     amount: amount / unitToSatoshi,
     ...(customData && {customData}),
+    message,
   });
 };
 
@@ -594,7 +612,7 @@ export const createInvoiceAndTxProposal =
           brand: cardConfig.name,
           currency: cardConfig.currency,
           clientId: wallet!.id,
-          discounts: [],
+          discounts: invoiceCreationParams.discounts?.map(d => d.code) || [],
           transactionCurrency: wallet.currencyAbbreviation.toUpperCase(),
         };
         const cardOrder = await dispatch(
@@ -605,9 +623,18 @@ export const createInvoiceAndTxProposal =
         const paymentUrl = `${baseUrl}/i/${invoiceId}`;
         resolve(
           await dispatch(
-            await createPayProTxProposal(wallet, paymentUrl, invoice, {
-              giftCardName: cardConfig.name,
-              service: 'giftcards',
+            await createPayProTxProposal({
+              wallet,
+              paymentUrl,
+              invoice,
+              message: `${formatFiatAmount(
+                invoiceParams.amount,
+                cardConfig.currency,
+              )} Gift Card`,
+              customData: {
+                giftCardName: cardConfig.name,
+                service: 'giftcards',
+              },
             }),
           ),
         );

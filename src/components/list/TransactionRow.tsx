@@ -3,6 +3,8 @@ import {BaseText} from '../styled/Text';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../styled/Containers';
 import {SlateDark, White} from '../../styles/colors';
+import RemoteImage from '../../navigation/tabs/shop/components/RemoteImage';
+import {TRANSACTION_ICON_SIZE} from '../../constants/TransactionIcons';
 export const TRANSACTION_ROW_HEIGHT = 75;
 
 const TransactionContainer = styled.TouchableOpacity`
@@ -41,6 +43,7 @@ const Time = styled(BaseText)`
 
 interface Props {
   icon?: ReactElement;
+  iconURI?: string;
   description?: string;
   value?: string;
   time?: string;
@@ -49,6 +52,7 @@ interface Props {
 
 const TransactionRow = ({
   icon,
+  iconURI,
   description,
   value,
   time,
@@ -56,14 +60,23 @@ const TransactionRow = ({
 }: Props) => {
   return (
     <TransactionContainer onPress={onPressTransaction}>
-      {icon && <IconContainer>{icon}</IconContainer>}
-
+      {iconURI ? (
+        <IconContainer>
+          <RemoteImage
+            borderRadius={50}
+            fallbackComponent={() => icon as JSX.Element}
+            height={TRANSACTION_ICON_SIZE}
+            uri={iconURI}
+          />
+        </IconContainer>
+      ) : (
+        icon && <IconContainer>{icon}</IconContainer>
+      )}
       {description && (
         <Description numberOfLines={1} ellipsizeMode={'tail'}>
           {description}
         </Description>
       )}
-
       <TailContainer>
         {value && <Value>{value}</Value>}
         {time && <Time>{time}</Time>}

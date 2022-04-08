@@ -2,7 +2,7 @@ import API from 'bitcore-wallet-client/ts_build';
 import {ReactElement} from 'react';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {RootState} from '../index';
-import {CardConfig, Invoice} from '../shop/shop.models';
+import {CardConfig, GiftCardDiscount, Invoice} from '../shop/shop.models';
 import {Network} from '../../constants';
 
 export interface KeyMethods {
@@ -315,6 +315,7 @@ export interface InvoiceCreationParams {
   invoiceType: string;
   amount: number;
   cardConfig?: CardConfig;
+  discounts?: GiftCardDiscount[];
 }
 
 export interface SendMaxInfo {

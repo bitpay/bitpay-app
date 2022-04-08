@@ -27,6 +27,7 @@ import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {GetMinFee} from '../fee/fee';
 import {updateWalletTxHistory} from '../../wallet.actions';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
+import {getGiftCardIcons} from '../../../../lib/gift-cards/gift-card';
 
 const BWC = BwcProvider.getInstance();
 const Errors = BWC.getErrors();
@@ -383,7 +384,10 @@ export const GetTransactionHistory =
     refresh?: boolean;
     contactList?: any[];
   }): Effect<Promise<{transactions: any[]; loadMore: boolean}>> =>
-  async (dispatch): Promise<{transactions: any[]; loadMore: boolean}> => {
+  async (
+    dispatch,
+    getState,
+  ): Promise<{transactions: any[]; loadMore: boolean}> => {
     return new Promise(async (resolve, reject) => {
       let requestLimit = limit;
 
@@ -416,10 +420,12 @@ export const GetTransactionHistory =
         );
 
         // To get transaction list details: icon, description, amount and date
+        const {SHOP} = getState();
         transactions = BuildUiFriendlyList(
           transactions,
           wallet.currencyAbbreviation,
           contactList,
+          getGiftCardIcons(SHOP.supportedCardMap),
         );
 
         const array = transactionsHistory
@@ -535,6 +541,7 @@ export const BuildUiFriendlyList = (
   transactionList: any[] = [],
   currencyAbbreviation: string,
   contactList: any[] = [],
+  giftCardIcons: {[cardName: string]: string},
 ): any[] => {
   return transactionList.map(transaction => {
     const {
@@ -552,7 +559,11 @@ export const BuildUiFriendlyList = (
       message,
       creatorName,
     } = transaction || {};
-    const {service: customDataService, toWalletName} = customData || {};
+    const {
+      service: customDataService,
+      toWalletName,
+      giftCardName,
+    } = customData || {};
     const {body: noteBody} = note || {};
 
     const notZeroAmountEth = NotZeroAmountEth(amount, currencyAbbreviation);
@@ -604,10 +615,9 @@ export const BuildUiFriendlyList = (
         transaction.uiIcon = TransactionIcons.error;
       } else {
         if (isSent) {
-          // TODO: Get giftCard images
-          transaction.uiIcon = customDataService
-            ? TransactionIcons[customDataService]
-            : TransactionIcons.sent;
+          transaction.uiIcon =
+            TransactionIcons[customDataService] || TransactionIcons.sent;
+          transaction.uiIconURI = giftCardIcons[giftCardName];
 
           if (notZeroAmountEth) {
             if (noteBody) {

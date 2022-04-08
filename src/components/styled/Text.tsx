@@ -140,7 +140,7 @@ export const HeaderSubtitle = styled(BaseText)`
 `;
 
 interface TextAlignProps {
-  align: 'center' | 'left' | 'right';
+  align: 'center' | 'left' | 'right' | 'justify';
 }
 
 export const TextAlign = styled(BaseText)<TextAlignProps>`

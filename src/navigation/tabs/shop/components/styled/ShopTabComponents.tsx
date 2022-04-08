@@ -104,6 +104,16 @@ export const NavIconButtonContainer = styled.View`
   overflow: hidden;
 `;
 
+export const Terms = styled(BaseText)<{maxWidth?: number}>`
+  color: ${SlateDark};
+  font-size: 12px;
+  line-height: 15px;
+  padding: 20px 10px 50px;
+  text-align: justify;
+  font-weight: 300;
+  ${({maxWidth}) => (maxWidth ? 'max-width: ${maxWidth}px;' : '')}
+`;
+
 export interface HideableViewProps {
   show: boolean;
 }
