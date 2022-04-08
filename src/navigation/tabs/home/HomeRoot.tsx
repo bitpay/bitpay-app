@@ -2,9 +2,6 @@ import {useNavigation, useTheme} from '@react-navigation/native';
 import React, {useEffect, useMemo, useState} from 'react';
 import {RefreshControl, ScrollView} from 'react-native';
 import styled from 'styled-components/native';
-import ExchangeRatesSlides, {
-  ExchangeRateProps,
-} from '../../../components/exchange-rate/ExchangeRatesSlides';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -20,6 +17,9 @@ import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
 import AdvertisementsList from './components/advertisements/AdvertisementsList';
 import MockAdvertisements from './components/advertisements/MockAdvertisements';
 import CardsCarousel from './components/CardsCarousel';
+import ExchangeRatesList, {
+  ExchangeRateItemProps,
+} from './components/exchange-rates/ExchangeRatesList';
 import ProfileButton from './components/HeaderProfileButton';
 import ScanButton from './components/HeaderScanButton';
 import HomeRow from './components/HomeRow';
@@ -104,7 +104,7 @@ const HomeRoot = () => {
 
   // Exchange Rates
   const priceHistory = useAppSelector(({WALLET}) => WALLET.priceHistory);
-  const memoizedExchangeRates: Array<ExchangeRateProps> = useMemo(
+  const memoizedExchangeRates: Array<ExchangeRateItemProps> = useMemo(
     () =>
       priceHistory.reduce((ratesList, history) => {
         const option = SupportedCurrencyOptions.find(
@@ -112,18 +112,21 @@ const HomeRoot = () => {
         );
 
         if (option) {
-          const {id, img, currencyName} = option;
+          const {id, img, currencyName, currencyAbbreviation} = option;
 
           ratesList.push({
             id,
             img,
             currencyName,
+            currencyAbbreviation,
             average: +history.percentChange,
+            currentPrice: +history.prices[0].price,
+            priceDisplay: history.priceDisplay,
           });
         }
 
         return ratesList;
-      }, [] as ExchangeRateProps[]),
+      }, [] as ExchangeRateItemProps[]),
     [priceHistory],
   );
 
@@ -226,7 +229,7 @@ const HomeRoot = () => {
         {/* ////////////////////////////// EXCHANGE RATES */}
         {memoizedExchangeRates.length ? (
           <HomeRow title="Exchange Rates">
-            <ExchangeRatesSlides items={memoizedExchangeRates} />
+            <ExchangeRatesList items={memoizedExchangeRates} />
           </HomeRow>
         ) : null}
 
