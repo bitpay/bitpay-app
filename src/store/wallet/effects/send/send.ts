@@ -11,9 +11,11 @@ import {
   TransactionProposal,
   TxDetails,
   Wallet,
+  TransactionOptionsContext,
 } from '../../wallet.models';
-import {FormatAmountStr, ParseAmount} from '../amount/amount';
-import {FeeLevels, getFeeRatePerKb} from '../fee/fee';
+import {FormatAmount, FormatAmountStr, ParseAmount} from '../amount/amount';
+import {FeeLevels, GetBitcoinSpeedUpTxFee, getFeeRatePerKb} from '../fee/fee';
+import {GetInput} from '../transactions/transactions';
 import {
   formatCryptoAddress,
   formatFiatAmount,
@@ -112,6 +114,7 @@ export const createProposalAndBuildTxDetails =
                 wallet,
                 recipient,
                 invoice,
+                context,
               });
               txp.id = proposal.id;
               resolve({txDetails, txp});
@@ -137,6 +140,7 @@ const buildTxDetails = ({
   wallet,
   recipient,
   invoice,
+  context,
 }: {
   proposal: TransactionProposal;
   rates: Rates;
@@ -144,18 +148,17 @@ const buildTxDetails = ({
   wallet: Wallet;
   recipient: Recipient;
   invoice?: Invoice;
+  context?: TransactionOptionsContext;
 }): TxDetails => {
-  const {
-    coin,
-    fee,
-    amount,
-    gasPrice,
-    gasLimit,
-    nonce,
-    feeLevel = 'custom',
-  } = proposal;
+  const {coin, fee, gasPrice, gasLimit, nonce, feeLevel = 'custom'} = proposal;
+  let {amount} = proposal;
   const networkCost = invoice?.minerFees[coin.toUpperCase()]?.totalFee;
   const total = amount + fee;
+
+  if (context === 'fromReplaceByFee') {
+    amount = amount - fee;
+  }
+
   const {type, name, address} = recipient;
   return {
     currency: coin,
@@ -286,6 +289,30 @@ const buildTransactionProposal = (
         break;
       case 'selectInputs':
         break;
+      case 'fromReplaceByFee':
+        txp.inputs = tx.inputs;
+        txp.replaceTxByFee = true;
+
+        txp.outputs.push({
+          toAddress: tx.toAddress,
+          amount: tx.amount,
+          message: tx.description,
+          data: tx.data,
+        });
+        break;
+      case 'speedupBtcReceive':
+        txp.inputs = tx.inputs;
+        txp.excludeUnconfirmedUtxos = true;
+        txp.fee = tx.fee;
+        txp.feeLevel = undefined;
+
+        txp.outputs.push({
+          toAddress: tx.toAddress,
+          amount: tx.amount,
+          message: tx.description,
+          data: tx.data,
+        });
+        break;
       default:
         txp.outputs.push({
           toAddress: tx.toAddress,
@@ -324,12 +351,12 @@ export const startSendPayment =
 
             try {
               const broadcastedTx = await dispatch(
-                  publishAndSign({
-                    txp: proposal,
-                    key,
-                    wallet,
-                    recipient,
-                  }),
+                publishAndSign({
+                  txp: proposal,
+                  key,
+                  wallet,
+                  recipient,
+                }),
               );
               return resolve(broadcastedTx);
             } catch (e) {
@@ -661,6 +688,116 @@ export const getSendMaxInfo = ({
         return reject(err);
       }
       resolve(sendMaxInfo);
+    });
+  });
+};
+
+export const buildEthERCTokenSpeedupTx = (
+  wallet: Wallet,
+  transaction: any,
+): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const {
+        credentials: {coin, walletName, walletId, network},
+        keyId,
+      } = wallet;
+
+      const {customData, addressTo, nonce, data, gasLimit} = transaction;
+      const amount = Number(FormatAmount(coin, transaction.amount));
+      const recipient = {
+        type: 'wallet',
+        name: customData ? customData.toWalletName : walletName,
+        walletId,
+        keyId,
+        address: addressTo,
+      };
+
+      return resolve({
+        wallet,
+        amount,
+        recipient,
+        network,
+        currency: coin,
+        toAddress: addressTo,
+        nonce,
+        data,
+        gasLimit,
+        customData,
+        feeLevel: 'urgent',
+      });
+    } catch (e) {
+      return reject(e);
+    }
+  });
+};
+
+export const buildBtcSpeedupTx = (wallet: Wallet, tx: any, address: string) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const {data, customData, txid, size} = tx;
+
+      const {
+        credentials: {coin, walletName, walletId, network},
+        keyId,
+      } = wallet;
+
+      const recipient = {
+        type: 'wallet',
+        name: walletName,
+        walletId,
+        keyId,
+        address,
+      };
+      const fee = await GetBitcoinSpeedUpTxFee(wallet, size);
+      const input = await GetInput(wallet, txid);
+      const inputs = [];
+      inputs.push(input);
+      const {satoshis} = input || {satoshis: 0};
+      let amount = satoshis - fee;
+
+      if (amount < 0) {
+        return reject('InsufficientFunds');
+      }
+
+      if (!input) {
+        return reject('NoInput');
+      }
+
+      const {unitToSatoshi} = GetPrecision('btc') || {
+        unitToSatoshi: 100000000,
+      };
+
+      amount = amount / unitToSatoshi;
+
+      return resolve({
+        wallet,
+        data,
+        customData,
+        name: walletName,
+        toAddress: address,
+        network,
+        currency: coin,
+        amount,
+        recipient,
+        inputs,
+        speedupFee: fee / unitToSatoshi,
+        fee,
+        context: 'speedupBtcReceive' as TransactionOptionsContext,
+      });
+    } catch (e) {
+      return reject(e);
+    }
+  });
+};
+
+export const getTx = (wallet: Wallet, txpid: string): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    wallet.getTx(txpid, (err: any, txp: Partial<TransactionProposal>) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(txp);
     });
   });
 };

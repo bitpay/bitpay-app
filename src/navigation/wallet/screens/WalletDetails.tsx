@@ -30,9 +30,12 @@ import {shouldScale, sleep} from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {
   BalanceUpdateError,
+  CustomErrorMessage,
   RbfTransaction,
-  SpeedUpEthTransaction,
-  SpeedUpTransaction,
+  SpeedupEthTransaction,
+  SpeedupInsufficientFunds,
+  SpeedupInvalidTx,
+  SpeedupTransaction,
   UnconfirmedInputs,
 } from '../components/ErrorMessages';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
@@ -45,7 +48,7 @@ import {startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {ProcessPendingTxps} from '../../../store/wallet/effects/transactions/transactions';
 import {
-  CanSpeedUpTx,
+  CanSpeedupTx,
   GetTransactionHistory,
   GroupTransactionHistory,
   IsMoved,
@@ -65,6 +68,12 @@ import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {isCoinSupportedToBuy} from '../../../navigation/services/buy-crypto/utils/buy-crypto-utils';
 import sortBy from 'lodash.sortby';
 import {FlatList} from 'react-native';
+import {
+  buildBtcSpeedupTx,
+  buildEthERCTokenSpeedupTx,
+  createProposalAndBuildTxDetails,
+  handleCreateTxProposalError,
+} from '../../../store/wallet/effects/send/send';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -314,13 +323,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
           if (
             (!action || action.type === 'failed') &&
-            txp.status == 'pending'
+            txp.status === 'pending'
           ) {
             _needActionPendingTxps.push(txp);
           }
 
           // For unsent transactions
-          if (action && txp.status == 'accepted') {
+          if (action && txp.status === 'accepted') {
             _needActionPendingTxps.push(txp);
           }
         });
@@ -464,8 +473,99 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     });
   };
 
-  const speedUpTransaction = (transaction: any) => {
-    //   TODO: Speed up Transaction
+  const speedupTransaction = async (transaction: any) => {
+    try {
+      let tx: any;
+      if (
+        currencyAbbreviation.toLowerCase() === 'eth' ||
+        IsERCToken(currencyAbbreviation)
+      ) {
+        tx = await buildEthERCTokenSpeedupTx(fullWalletObj, transaction);
+        goToConfirm(tx);
+      }
+
+      if (currencyAbbreviation.toLowerCase() === 'btc') {
+        const address = await dispatch<Promise<string>>(
+          createWalletAddress({wallet: fullWalletObj, newAddress: false}),
+        );
+
+        tx = await buildBtcSpeedupTx(fullWalletObj, transaction, address);
+
+        dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: 'Miner Fee Notice',
+            message: `Because you are speeding up this transaction, the Bitcoin miner fee (${tx.speedupFee} ${currencyAbbreviation}) will be deducted from the total.`,
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: 'Got It',
+                action: () => {
+                  goToConfirm(tx);
+                },
+                primary: true,
+              },
+            ],
+          }),
+        );
+      }
+    } catch (e) {
+      switch (e) {
+        case 'InsufficientFunds':
+          dispatch(showBottomNotificationModal(SpeedupInsufficientFunds()));
+          break;
+        case 'NoInput':
+          dispatch(showBottomNotificationModal(SpeedupInvalidTx()));
+          break;
+        default:
+          dispatch(
+            showBottomNotificationModal(
+              CustomErrorMessage({
+                errMsg:
+                  'Error getting "Speed Up" information. Please try again later.',
+              }),
+            ),
+          );
+      }
+    }
+  };
+
+  const goToConfirm = async (tx: any) => {
+    try {
+      const {recipient, amount} = tx;
+      const {txDetails, txp: newTxp} = await dispatch(
+        createProposalAndBuildTxDetails(tx),
+      );
+
+      navigation.navigate('Wallet', {
+        screen: 'Confirm',
+        params: {
+          wallet: fullWalletObj,
+          recipient,
+          txp: newTxp,
+          txDetails,
+          amount,
+          speedup: true,
+        },
+      });
+    } catch (err: any) {
+      const [errorMessageConfig] = await Promise.all([
+        handleCreateTxProposalError(err),
+        sleep(400),
+      ]);
+      dispatch(
+        showBottomNotificationModal({
+          ...errorMessageConfig,
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: 'OK',
+              action: () => {},
+            },
+          ],
+        }),
+      );
+    }
   };
 
   const onPressTransaction = useMemo(
@@ -489,17 +589,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         dispatch(
           showBottomNotificationModal(
             RbfTransaction(
-              () => speedUpTransaction(transaction),
+              () => speedupTransaction(transaction),
               () => goToTransactionDetails(transaction),
             ),
           ),
         );
-      } else if (CanSpeedUpTx(transaction, currency)) {
+      } else if (CanSpeedupTx(transaction, currency)) {
         if (currency === 'eth' || IsERCToken(currency)) {
           dispatch(
             showBottomNotificationModal(
-              SpeedUpEthTransaction(
-                () => speedUpTransaction(transaction),
+              SpeedupEthTransaction(
+                () => speedupTransaction(transaction),
                 () => goToTransactionDetails(transaction),
               ),
             ),
@@ -507,8 +607,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         } else {
           dispatch(
             showBottomNotificationModal(
-              SpeedUpTransaction(
-                () => speedUpTransaction(transaction),
+              SpeedupTransaction(
+                () => speedupTransaction(transaction),
                 () => goToTransactionDetails(transaction),
               ),
             ),
@@ -640,7 +740,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
               </HeaderContainer>
               {txps && txps[0] ? (
                 <TransactionSectionHeader>
-                  Pending Proposals
+                  {fullWalletObj.credentials.m > 1
+                    ? 'Pending Proposals'
+                    : 'Unsent Transactions'}
                 </TransactionSectionHeader>
               ) : null}
               <FlatList
@@ -659,8 +761,14 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                   </HeadContainer>
 
                   <TailContainer>
-                    <Value>{cryptoLockedBalance}</Value>
-                    <Fiat>{fiatLockedBalance}</Fiat>
+                    <Value>
+                      {cryptoLockedBalance} {currencyAbbreviation}
+                    </Value>
+                    <Fiat>
+                      {network === 'testnet'
+                        ? 'Test Only - No Value'
+                        : fiatLockedBalance}
+                    </Fiat>
                   </TailContainer>
                 </LockedBalanceContainer>
               ) : null}

@@ -107,3 +107,14 @@ export const GetMinFee = (wallet: Wallet, nbOutputs?: number): Promise<any> => {
     }
   });
 };
+
+export const GetBitcoinSpeedUpTxFee = async (
+  wallet: Wallet,
+  txSize: number,
+): Promise<number> => {
+  const urgentFee = await getFeeRatePerKb({wallet, feeLevel: 'urgent'});
+  // 250 bytes approx. is the minimum size of a tx with 1 input and 1 output
+  const averageTxSize = 250;
+  const fee = (urgentFee / 1000) * (txSize + averageTxSize);
+  return Number(fee.toFixed());
+};

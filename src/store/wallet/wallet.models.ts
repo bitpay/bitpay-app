@@ -190,12 +190,18 @@ export interface CustomTransactionData {
   toWalletName?: any;
 }
 
+export type TransactionOptionsContext =
+  | 'multisend'
+  | 'paypro'
+  | 'selectInputs'
+  | 'fromReplaceByFee'
+  | 'speedupBtcReceive';
 export interface TransactionOptions {
   wallet: Wallet;
   invoice?: Invoice;
   recipient: Recipient;
   amount: number;
-  context?: 'multisend' | 'paypro' | 'selectInputs';
+  context?: TransactionOptionsContext;
   currency?: string;
   toAddress?: string;
   network?: string;
@@ -223,6 +229,9 @@ export interface TransactionOptions {
   destinationTag?: string;
   invoiceID?: string;
   useUnconfirmedFunds?: boolean;
+  // fromReplaceByFee
+  fee?: number;
+  inputs?: any[];
 }
 
 export interface TransactionProposal {
@@ -304,7 +313,7 @@ export interface TxDetails {
   // eth
   gasPrice?: number;
   gasLimit?: number;
-  nonce?: numberr;
+  nonce?: number;
   //
   sendingFrom: TxDetailsSendingFrom;
   subTotal: TxDetailsAmount;

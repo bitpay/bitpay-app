@@ -100,13 +100,13 @@ export const ProcessPendingTxps = (txps: any, wallet: any) => {
       (action: any) => action.copayerId === tx.wallet.credentials.copayerId,
     );
 
-    if ((!action || action.type === 'failed') && tx.status == 'pending') {
+    if ((!action || action.type === 'failed') && tx.status === 'pending') {
       tx.pendingForUs = true;
     }
 
-    if (action && action.type == 'accept') {
+    if (action && action.type === 'accept') {
       tx.statusForUs = 'accepted';
-    } else if (action && action.type == 'reject') {
+    } else if (action && action.type === 'reject') {
       tx.statusForUs = 'rejected';
     } else {
       tx.statusForUs = 'pending';
@@ -397,7 +397,9 @@ export const GetTransactionHistory =
         return resolve({transactions: [], loadMore: false});
       }
 
-      const lastTransactionId = transactionsHistory[0]
+      const lastTransactionId = refresh
+        ? null
+        : transactionsHistory[0]
         ? transactionsHistory[0].txid
         : null;
       const skip = refresh ? 0 : transactionsHistory.length;
@@ -428,8 +430,8 @@ export const GetTransactionHistory =
           getGiftCardIcons(SHOP.supportedCardMap),
         );
 
-        const array = transactionsHistory
-          .concat(transactions)
+        const array = transactions
+          .concat(transactionsHistory)
           .filter((txs: any) => txs);
 
         const newHistory = uniqBy(array, x => {
@@ -690,7 +692,7 @@ export const BuildUiFriendlyList = (
   });
 };
 
-export const CanSpeedUpTx = (
+export const CanSpeedupTx = (
   tx: any,
   currencyAbbreviation: string,
 ): boolean => {
@@ -906,4 +908,39 @@ const GetActionsList = (transaction: any, wallet: Wallet) => {
   }
 
   return actionList.reverse();
+};
+
+export const GetUtxos = (wallet: Wallet): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    wallet.getUtxos(
+      {
+        coin: wallet.credentials.coin,
+      },
+      (err: any, resp: any) => {
+        if (err || !resp || !resp.length) {
+          return reject(err ? err : 'No UTXOs');
+        }
+        return resolve(resp);
+      },
+    );
+  });
+};
+
+export const GetInput = async (wallet: Wallet, txid: string) => {
+  try {
+    const utxos = await GetUtxos(wallet);
+    let biggestUtxo = 0;
+    let input;
+    utxos.forEach((u: any, i: any) => {
+      if (u.txid === txid) {
+        if (u.amount > biggestUtxo) {
+          biggestUtxo = u.amount;
+          input = utxos[i];
+        }
+      }
+    });
+    return input;
+  } catch (err) {
+    return;
+  }
 };
