@@ -86,7 +86,7 @@ export const SendingTo = ({
     const {recipientName, recipientAddress, img} = recipient;
     return (
       <>
-        <DetailContainer>
+        <DetailContainer height={83}>
           <DetailRow>
             <H7>Sending to</H7>
             <SendToPill
@@ -108,9 +108,11 @@ export const Fee = ({
   hr,
   onPress,
   currencyAbbreviation,
+  hideFeeOptions,
 }: {
   fee: TxDetailsFee | undefined;
   currencyAbbreviation: string;
+  hideFeeOptions?: boolean;
   hr?: boolean;
   onPress?: () => void;
 }): JSX.Element | null => {
@@ -123,13 +125,13 @@ export const Fee = ({
             <DetailRow>
               <H7>Miner fee</H7>
               <DetailColumn>
-                {feeLevel && (
+                {feeLevel && !hideFeeOptions ? (
                   <H5>
                     {GetFeeOptions(currencyAbbreviation)[
                       feeLevel
                     ].toUpperCase()}
                   </H5>
-                )}
+                ) : null}
                 <H6>{cryptoAmount}</H6>
                 <H7>
                   {fiatAmount} ({percentageOfTotalAmount} of total amount)

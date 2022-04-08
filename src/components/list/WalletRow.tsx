@@ -12,6 +12,7 @@ import styled from 'styled-components/native';
 import NestedArrow from '../../../assets/img/nested-arrow.svg';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {SUPPORTED_CURRENCIES} from '../../constants/currencies';
+import { Network } from '../../constants';
 
 const BadgeContainer = styled.View`
   margin-left: 5px;
@@ -38,8 +39,7 @@ export interface WalletRowProps {
   fiatBalance: string;
   fiatLockedBalance: string;
   isToken?: boolean;
-  network: string;
-  isComplete?: boolean;
+  network: Network;
   isRefreshing?: boolean;
   hideWallet?: boolean;
   hideBalance?: boolean;

@@ -17,6 +17,7 @@ import cloneDeep from 'lodash.clonedeep';
 import {formatFiatAmount} from '../../../utils/helper-methods';
 import {WALLET_DISPLAY_LIMIT} from '../../../navigation/tabs/home/components/Wallet';
 import {Network} from '../../../constants';
+import {PayProOptions} from '../effects/paypro/paypro';
 
 const mapAbbreviationAndName = (
   walletName: string,
@@ -211,27 +212,52 @@ export const getRemainingWalletCount = (
   return wallets.length - WALLET_DISPLAY_LIMIT;
 };
 
-export const BuildKeysAndWalletsList = (
-  allKeys: {[key in string]: Key},
-  appNetwork?: Network,
-) => {
-  return Object.keys(allKeys).map(keyId => {
-    const keyObj = allKeys[keyId];
+export const BuildKeysAndWalletsList = ({
+  keys,
+  network,
+  payProOptions,
+}: {
+  keys: {[key in string]: Key};
+  network?: Network;
+  payProOptions?: PayProOptions;
+}) => {
+  return Object.keys(keys).map(keyId => {
+    const keyObj = keys[keyId];
+    const paymentOptions =
+      payProOptions?.paymentOptions?.filter(option => option.selected) ||
+      payProOptions?.paymentOptions;
     return {
       key: keyId,
       keyName: keyObj.keyName || 'My Key',
-      wallets: allKeys[keyId].wallets
-        .filter(wallet => (appNetwork ? wallet.network === appNetwork : true))
+      wallets: keys[keyId].wallets
+        .filter(wallet => {
+          if (paymentOptions) {
+            return paymentOptions.some(
+              ({chain, currency, network: optionNetwork}) => {
+                return (
+                  wallet.currencyAbbreviation === chain.toLowerCase() &&
+                  (!wallet.tokens ||
+                    wallet.tokens?.includes(currency.toLowerCase())) &&
+                  wallet.network === optionNetwork
+                );
+              },
+            );
+          }
+          if (network) {
+            return network === wallet.network;
+          }
+          return true;
+        })
         .map(walletObj => {
           const {
             balance,
-            currencyAbbreviation,
             credentials: {network},
           } = walletObj;
           return merge(cloneDeep(walletObj), {
             cryptoBalance: balance.crypto,
             fiatBalance: formatFiatAmount(balance.fiat, 'USD'),
-            currencyAbbreviation,
+            cryptoLockedBalance: balance.cryptoLocked,
+            fiatLockedBalance: formatFiatAmount(balance.fiatLocked, 'usd'),
             network,
           });
         }),

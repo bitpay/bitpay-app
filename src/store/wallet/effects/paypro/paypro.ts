@@ -2,8 +2,7 @@ import {BwcProvider} from '../../../../lib/bwc';
 import {Currencies} from '../../../../constants/currencies';
 
 const BWC = BwcProvider.getInstance();
-
-export interface PayProOptions {
+export interface PayProPaymentOption {
   chain: string;
   currency: string;
   decimals: number;
@@ -13,11 +12,19 @@ export interface PayProOptions {
   requiredFeeRate: number;
   selected: boolean;
 }
+export interface PayProOptions {
+  time: string;
+  expires: string;
+  memo: string;
+  paymentId: string;
+  paymentOptions: PayProPaymentOption[];
+  payProUrl: string;
+}
 
 export const GetPayProOptions = async (
   paymentUrl: string,
   attempt: number = 1,
-): Promise<any> => {
+): Promise<PayProOptions> => {
   const bwc = BWC.getPayProV2();
   const options: any = {
     paymentUrl,
@@ -70,12 +77,17 @@ export const GetPayProDetails = async (params: {
   return payDetails;
 };
 
-export const HandlePayPro = async (
-  payProDetails: any,
-  payProOptions: any,
-  url: string,
-  coin: string,
-) => {
+export const HandlePayPro = async ({
+  payProDetails,
+  payProOptions,
+  url,
+  coin,
+}: {
+  payProDetails: any;
+  payProOptions?: PayProOptions;
+  url: string;
+  coin: string;
+}) => {
   if (!payProDetails) {
     return;
   }
@@ -95,8 +107,8 @@ export const HandlePayPro = async (
     }
     const paymentOptions = payProOptions.paymentOptions;
     const {estimatedAmount, minerFee} = paymentOptions.find(
-      (option: PayProOptions) => option.currency.toLowerCase() === coin,
-    );
+      option => option.currency.toLowerCase() === coin,
+    ) as PayProPaymentOption;
     const {outputs, toAddress, data} = payProDetails.instructions[0];
     if (coin === 'xrp' && outputs) {
       invoiceID = outputs[0].invoiceID;

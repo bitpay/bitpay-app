@@ -53,6 +53,7 @@ import Addresses from './screens/wallet-settings/Addresses';
 import AllAddresses, {
   AllAddressesParamList,
 } from './screens/wallet-settings/AllAddresses';
+import PayProConfirm, { PayProConfirmParamList } from './screens/send/confirm/PayProConfirm';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -80,6 +81,7 @@ export type WalletStackParamList = {
   SendTo: {wallet: WalletModel};
   Confirm: ConfirmParamList;
   GiftCardConfirm: GiftCardConfirmParamList;
+  PayProConfirm: PayProConfirmParamList;
   CreateMultisig: CreateMultisigProps;
   JoinMultisig: JoinMultisigParamList | undefined;
   Copayers: {wallet: WalletModel; status: _Credentials};
@@ -123,6 +125,7 @@ export enum WalletScreens {
   SEND_TO = 'SendTo',
   CONFIRM = 'Confirm',
   GIFT_CARD_CONFIRM = 'GiftCardConfirm',
+  PAY_PRO_CONFIRM = 'PayProConfirm',
   CREATE_MULTISIG = 'CreateMultisig',
   JOIN_MULTISIG = 'JoinMultisig',
   COPAYERS = 'Copayers',
@@ -241,6 +244,14 @@ const WalletStack = () => {
           }}
           name={WalletScreens.GIFT_CARD_CONFIRM}
           component={GiftCardConfirm}
+        />
+        <Wallet.Screen
+          options={{
+            headerTitle: () => <HeaderTitle>Confirm Payment</HeaderTitle>,
+            ...TransitionPresets.ModalPresentationIOS,
+          }}
+          name={WalletScreens.PAY_PRO_CONFIRM}
+          component={PayProConfirm}
         />
         <Wallet.Screen
           options={{
