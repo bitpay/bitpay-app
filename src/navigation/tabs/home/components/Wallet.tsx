@@ -63,11 +63,12 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
           )
         );
       })}
-      {remainingWalletCount && (
+      {remainingWalletCount ? (
         <RemainingAssetsLabel>
-          + {remainingWalletCount} more
+          {' '}
+          + {remainingWalletCount} more{' '}
         </RemainingAssetsLabel>
-      )}
+      ) : null}
     </HeaderImg>
   );
 
