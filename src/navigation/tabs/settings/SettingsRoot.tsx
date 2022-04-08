@@ -36,6 +36,10 @@ export const SettingsContainer = styled.SafeAreaView`
 `;
 
 export const Settings = styled.ScrollView`
+  padding: 10px ${ScreenGutter};
+`;
+
+export const SettingsHome = styled.ScrollView`
   padding: 10px 0;
 `;
 
@@ -132,7 +136,7 @@ const SettingsHomeScreen: React.FC = () => {
 
   return (
     <SettingsContainer>
-      <Settings>
+      <SettingsHome>
         <BitPayIdSettingsLink
           onPress={() => {
             if (user) {
@@ -178,7 +182,7 @@ const SettingsHomeScreen: React.FC = () => {
             </View>
           );
         })}
-      </Settings>
+      </SettingsHome>
     </SettingsContainer>
   );
 };
