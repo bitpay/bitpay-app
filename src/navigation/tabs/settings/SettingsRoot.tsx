@@ -1,5 +1,5 @@
 import {useNavigation} from '@react-navigation/core';
-import React from 'react';
+import React, {ReactElement} from 'react';
 import styled, {useTheme} from 'styled-components/native';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import {StyleProp, TextStyle, View} from 'react-native';
@@ -16,18 +16,19 @@ import {
 import {useTranslation} from 'react-i18next';
 import {RootState} from '../../../store';
 import {AppActions} from '../../../store/app';
-import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
-import {URL} from '../../../constants';
+import General from './components/General';
+import {Feather, LightBlack} from '../../../styles/colors';
+import Security from './components/Security';
+import Notifications from './components/Notifications';
+import Connections from './components/Connections';
+import About from './components/About';
 
 interface HomeSetting {
   title: string;
   onPress: () => void;
-}
-
-interface LinkSetting {
-  title: string;
-  link: string;
+  show: boolean;
+  subListComponent: ReactElement;
 }
 
 export const SettingsContainer = styled.SafeAreaView`
@@ -35,7 +36,7 @@ export const SettingsContainer = styled.SafeAreaView`
 `;
 
 export const Settings = styled.ScrollView`
-  padding: 10px ${ScreenGutter};
+  padding: 10px 0;
 `;
 
 const BitPayIdSettingsLink = styled(Setting)`
@@ -66,6 +67,14 @@ const BitPayIdUserText = styled.Text<{bold?: boolean}>`
   color: ${({theme}) => theme.colors.text};
 `;
 
+const DropdownSetting = styled(Setting)`
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Feather)};
+  padding: 0 ${ScreenGutter};
+`;
+
+const DropdownContainer = styled.View`
+  padding: 0 ${ScreenGutter};
+`;
 const SettingsHomeScreen: React.FC = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
@@ -79,10 +88,13 @@ const SettingsHomeScreen: React.FC = () => {
     ({APP}: RootState) => APP.biometricLockActive,
   );
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
+
   const SETTINGS: HomeSetting[] = [
     {
       title: t('General'),
-      onPress: () => navigation.navigate('GeneralSettings', {screen: 'Root'}),
+      onPress: () => {},
+      show: true,
+      subListComponent: <General />,
     },
     {
       title: t('Security'),
@@ -93,48 +105,31 @@ const SettingsHomeScreen: React.FC = () => {
         if (pinLockActive) {
           dispatch(AppActions.showPinModal({type: 'check'}));
         }
-        navigation.navigate('SecuritySettings', {screen: 'Root'});
       },
+      show: true,
+      subListComponent: <Security />,
     },
-    // Settings for Buy/Swap Crypto will be momentarily commented
-    // {
-    //   title: t('External Services'),
-    //   onPress: () => navigation.navigate('ExternalServicesSettings', {screen: 'Root'}),
-    // },
     {
-      title: t('Notifications'),
-      onPress: () =>
-        navigation.navigate('NotificationSettings', {screen: 'Root'}),
+      // Settings for Buy/Swap Crypto will be momentarily commented
+      title: t('External Services'),
+      onPress: () => {},
+      show: true,
+      subListComponent: <Notifications />,
     },
     {
       title: t('Connections'),
-      onPress: () =>
-        navigation.navigate('ConnectionSettings', {screen: 'Root'}),
+      onPress: () => {},
+      show: true,
+      subListComponent: <Connections />,
     },
     {
       title: t('About BitPay'),
-      onPress: () => navigation.navigate('About', {screen: 'Root'}),
+      onPress: () => {},
+      show: true,
+      subListComponent: <About />,
     },
   ];
 
-  const LINKS: LinkSetting[] = [
-    {
-      title: t('Help & Support'),
-      link: URL.HELP_AND_SUPPORT,
-    },
-    {
-      title: t('Terms of Use'),
-      link: URL.TOU_WALLET,
-    },
-    {
-      title: t('Privacy'),
-      link: URL.PRIVACY_POLICY,
-    },
-    {
-      title: t('Accessibility Statement'),
-      link: URL.ACCESSIBILITY_STATEMENT,
-    },
-  ];
 
   return (
     <SettingsContainer>
@@ -169,28 +164,18 @@ const SettingsHomeScreen: React.FC = () => {
 
         <Hr />
 
-        {SETTINGS.map(({title, onPress}) => {
+        {SETTINGS.map(({title, onPress, show, subListComponent}) => {
           return (
             <View key={title}>
-              <Setting activeOpacity={ActiveOpacity} onPress={onPress}>
+              <DropdownSetting activeOpacity={ActiveOpacity} onPress={onPress}>
                 <SettingTitle style={textStyle}>{title}</SettingTitle>
                 <SettingIcon suffix>
                   <AngleRight />
                 </SettingIcon>
-              </Setting>
-              <Hr />
-            </View>
-          );
-        })}
-        {LINKS.map(({title, link}, index) => {
-          return (
-            <View key={title}>
-              <Setting
-                activeOpacity={ActiveOpacity}
-                onPress={() => dispatch(openUrlWithInAppBrowser(link))}>
-                <SettingTitle style={textStyle}>{title}</SettingTitle>
-              </Setting>
-              {LINKS.length - 1 !== index && <Hr />}
+              </DropdownSetting>
+              {show ? (
+                <DropdownContainer>{subListComponent}</DropdownContainer>
+              ) : null}
             </View>
           );
         })}
