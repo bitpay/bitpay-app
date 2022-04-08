@@ -23,6 +23,7 @@ import Security from './components/Security';
 import Notifications from './components/Notifications';
 import Connections from './components/Connections';
 import About from './components/About';
+import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 
 interface HomeSetting {
   title: string;
@@ -134,7 +135,7 @@ const SettingsHomeScreen: React.FC = () => {
   return (
     <SettingsContainer>
       <SettingsHome>
-        <BitPayIdSettingsLink
+        <BitPayIdSettingsLink style={{paddingHorizontal: 15}}
           onPress={() => {
             if (user) {
               navigation.navigate('BitpayId', {screen: 'Profile'});
@@ -170,7 +171,7 @@ const SettingsHomeScreen: React.FC = () => {
               <DropdownSetting activeOpacity={ActiveOpacity} onPress={onPress}>
                 <SettingTitle style={textStyle}>{title}</SettingTitle>
                 <SettingIcon suffix>
-                  <AngleRight />
+                  {show ? <ChevronDownSvg/> : <AngleRight />}
                 </SettingIcon>
               </DropdownSetting>
               {show ? <>{subListComponent}</> : null}
