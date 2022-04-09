@@ -148,18 +148,7 @@ const HomeCard: React.FC<HomeCardProps> = ({body, onCTAPress, header}) => {
   };
 
   return (
-    <CardContainer
-      activeOpacity={ActiveOpacity}
-      onPress={_onPress}
-      style={
-        !theme.dark && {
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 1},
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
-          elevation: 5,
-        }
-      }>
+    <CardContainer activeOpacity={ActiveOpacity} onPress={_onPress}>
       <Card
         header={HeaderComp}
         body={BodyComp}

@@ -16,6 +16,7 @@ import {
 import {Balance, KeyName} from '../../../wallet/components/KeyDropdownOption';
 import {HomeCarouselLayoutType} from '../../../../store/app/app.models';
 import {BoxShadow} from './Styled';
+import {View} from 'react-native';
 
 interface WalletCardComponentProps {
   wallets: Wallet[];
@@ -96,10 +97,12 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
         );
       })}
       {remainingWalletCount ? (
-        <RemainingAssetsLabel>
-          {' '}
-          + {remainingWalletCount} more{' '}
-        </RemainingAssetsLabel>
+        <View style={isListView ? {paddingBottom: 5} : null}>
+          <RemainingAssetsLabel>
+            + {remainingWalletCount} more{' '}
+          </RemainingAssetsLabel>
+        </View>
+
       ) : null}
     </HeaderImg>
   );

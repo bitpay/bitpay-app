@@ -1,7 +1,8 @@
 import {CardContainer, CardGutter} from '../styled/Containers';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import * as React from 'react';
 import {ReactElement, ReactNode} from 'react';
+import {BoxShadow} from '../../navigation/tabs/home/components/Styled';
 
 const CardHeader = styled.View`
   min-height: 30px;
@@ -47,9 +48,12 @@ const Card = ({
   backgroundImg,
   containerProps,
 }: CardProps) => {
+  const theme = useTheme();
   const backgroundColor = containerProps && containerProps.backgroundColor;
   return (
-    <CardContainer backgroundColor={backgroundColor}>
+    <CardContainer
+      backgroundColor={backgroundColor}
+      style={!theme.dark && BoxShadow}>
       {backgroundImg && <BackgroundImage>{backgroundImg()}</BackgroundImage>}
 
       {header && <CardHeader>{header}</CardHeader>}

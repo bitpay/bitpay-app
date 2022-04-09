@@ -93,6 +93,7 @@ export const buildWalletObj = (
     isRefreshing: false,
     hideWallet: false,
     hideBalance: false,
+    pendingTxps: [],
   };
 };
 
