@@ -16,6 +16,7 @@ import {
 import {Balance, KeyName} from '../../../wallet/components/KeyDropdownOption';
 import {HomeCarouselLayoutType} from '../../../../store/app/app.models';
 import {BoxShadow} from './Styled';
+import {View} from 'react-native';
 
 interface WalletCardComponentProps {
   wallets: Wallet[];
@@ -30,8 +31,6 @@ export const HeaderImg = styled.View`
   align-items: center;
   justify-content: flex-start;
   flex-direction: row;
-  flex: 1;
-  flex-wrap: wrap;
 `;
 
 export const ListCard = styled.TouchableOpacity`
@@ -42,6 +41,7 @@ export const ListCard = styled.TouchableOpacity`
   align-items: center;
   justify-content: space-between;
   padding: 15px;
+  height: 75px;
 `;
 
 export const Img = styled.View<{isFirst: boolean}>`
@@ -96,10 +96,11 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
         );
       })}
       {remainingWalletCount ? (
-        <RemainingAssetsLabel>
-          {' '}
-          + {remainingWalletCount} more{' '}
-        </RemainingAssetsLabel>
+        <View style={isListView ? {paddingBottom: 5} : null}>
+          <RemainingAssetsLabel>
+            + {remainingWalletCount} more{' '}
+          </RemainingAssetsLabel>
+        </View>
       ) : null}
     </HeaderImg>
   );
@@ -117,8 +118,11 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
             <KeyName>{keyName}</KeyName>
           </Column>
           <Column style={{justifyContent: 'center', alignItems: 'flex-end'}}>
-            <Balance>{formatFiatAmount(totalBalance, 'USD')}</Balance>
-            {needsBackup && <NeedBackupText>Needs Backup</NeedBackupText>}
+            {needsBackup ? (
+              <NeedBackupText>Needs Backup</NeedBackupText>
+            ) : (
+              <Balance>{formatFiatAmount(totalBalance, 'USD')}</Balance>
+            )}
           </Column>
         </Row>
       </ListCard>

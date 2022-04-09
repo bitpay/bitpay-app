@@ -218,11 +218,11 @@ export const CustomizeCard = ({
                     )
                   );
                 })}
-                {remainingWalletCount && (
+                {remainingWalletCount ? (
                   <RemainingAssetsLabel>
                     + {getRemainingWalletCount(wallets)} more
                   </RemainingAssetsLabel>
-                )}
+                ) : null}
               </HeaderImg>
             </Row>
           ) : null}

@@ -260,9 +260,6 @@ const Crypto = () => {
         <CarouselContainer>
           <Carousel
             vertical={false}
-            containerCustomStyle={{
-              paddingVertical: 20,
-            }}
             layout={'default'}
             useExperimentalSnap={true}
             data={cardsList.list}
