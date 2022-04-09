@@ -31,8 +31,6 @@ export const HeaderImg = styled.View`
   align-items: center;
   justify-content: flex-start;
   flex-direction: row;
-  flex: 1;
-  flex-wrap: wrap;
 `;
 
 export const ListCard = styled.TouchableOpacity`
@@ -43,6 +41,7 @@ export const ListCard = styled.TouchableOpacity`
   align-items: center;
   justify-content: space-between;
   padding: 15px;
+  height: 75px;
 `;
 
 export const Img = styled.View<{isFirst: boolean}>`
@@ -102,7 +101,6 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
             + {remainingWalletCount} more{' '}
           </RemainingAssetsLabel>
         </View>
-
       ) : null}
     </HeaderImg>
   );
@@ -120,8 +118,11 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
             <KeyName>{keyName}</KeyName>
           </Column>
           <Column style={{justifyContent: 'center', alignItems: 'flex-end'}}>
-            <Balance>{formatFiatAmount(totalBalance, 'USD')}</Balance>
-            {needsBackup && <NeedBackupText>Needs Backup</NeedBackupText>}
+            {needsBackup ? (
+              <NeedBackupText>Needs Backup</NeedBackupText>
+            ) : (
+              <Balance>{formatFiatAmount(totalBalance, 'USD')}</Balance>
+            )}
           </Column>
         </Row>
       </ListCard>
