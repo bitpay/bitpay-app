@@ -6,13 +6,13 @@ import {
   Column,
   CurrencyColumn,
   CurrencyImageContainer,
-  Row,
 } from '../../../../../components/styled/Containers';
-import {H5, SubText} from '../../../../../components/styled/Text';
+import {H7, Smallest} from '../../../../../components/styled/Text';
 import {formatFiatAmount} from '../../../../../utils/helper-methods';
 import IncrementArrow from '../../../../../../assets/img/home/exchange-rates/increment-arrow.svg';
 import DecrementArrow from '../../../../../../assets/img/home/exchange-rates/decrement-arrow.svg';
 import {ExchangeRateItemProps} from './ExchangeRatesList';
+import {SlateDark, White} from '../../../../../styles/colors';
 
 const RowContainer = styled.TouchableOpacity`
   flex-direction: row;
@@ -29,6 +29,16 @@ const SubTextContainer = styled.View`
   flex-direction: row;
 `;
 
+const ExchangeRateText = styled(H7)`
+  font-weight: 500;
+`;
+
+const ExchangeRateSubText = styled(Smallest)`
+  line-height: 20px;
+  font-weight: 500;
+  color: ${({theme}) => (theme.dark ? White : SlateDark)};
+`;
+
 const ExchangeRateItem = ({
   item,
   onPress,
@@ -40,19 +50,23 @@ const ExchangeRateItem = ({
 
   return (
     <RowContainer activeOpacity={ActiveOpacity} onPress={onPress}>
-      <CurrencyImageContainer>
-        <CurrencyImage img={img} size={45} />
+      <CurrencyImageContainer style={{width: 35, height: 35}}>
+        <CurrencyImage img={img} size={35} />
       </CurrencyImageContainer>
       <CurrencyColumn>
-        <Row>
-          <H5 ellipsizeMode="tail" numberOfLines={1}>
-            {currencyName}
-          </H5>
-        </Row>
-        <SubText>{currencyAbbreviation?.toUpperCase()}</SubText>
+        <ExchangeRateText ellipsizeMode="tail" numberOfLines={1}>
+          {currencyName}
+        </ExchangeRateText>
+        <ExchangeRateSubText>
+          {currencyAbbreviation?.toUpperCase()}
+        </ExchangeRateSubText>
       </CurrencyColumn>
       <NoteContainer>
-        {currentPrice && <H5>{formatFiatAmount(currentPrice, 'USD')}</H5>}
+        {currentPrice && (
+          <ExchangeRateText>
+            {formatFiatAmount(currentPrice, 'USD')}
+          </ExchangeRateText>
+        )}
         <SubTextContainer>
           {average && average > 0 ? (
             <IncrementArrow style={{marginRight: 5}} />
@@ -60,7 +74,7 @@ const ExchangeRateItem = ({
           {average && average < 0 ? (
             <DecrementArrow style={{marginRight: 5}} />
           ) : null}
-          <SubText>{average}%</SubText>
+          <ExchangeRateSubText>{average}%</ExchangeRateSubText>
         </SubTextContainer>
       </NoteContainer>
     </RowContainer>

@@ -2,6 +2,7 @@ import React, {ReactElement} from 'react';
 import ExchangeRateItem from './ExchangeRateItem';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
+import {HomeSectionTitle} from '../Styled';
 
 export interface ExchangeRateItemProps {
   id: string;
@@ -17,13 +18,14 @@ interface ExchangeRateProps {
 }
 
 const ExchangeRateListContainer = styled.View`
-  margin: 0 ${ScreenGutter};
+  margin: 15px ${ScreenGutter} 35px ${ScreenGutter};
 `;
 const ExchangeRatesList: React.FC<ExchangeRateProps> = props => {
   const {items} = props;
 
   return (
     <ExchangeRateListContainer>
+      <HomeSectionTitle>{'Exchange Rates'}</HomeSectionTitle>
       {items.map(item => (
         <ExchangeRateItem
           item={item}

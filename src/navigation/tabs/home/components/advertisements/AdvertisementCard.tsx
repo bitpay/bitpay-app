@@ -9,25 +9,22 @@ import {
 } from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import {SvgProps} from 'react-native-svg';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {ActiveOpacity} from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
 import {AppEffects} from '../../../../../store/app';
-import {
-  LightBlack,
-  NeutralSlate,
-  SlateDark,
-  White,
-} from '../../../../../styles/colors';
+import {LightBlack, SlateDark, White} from '../../../../../styles/colors';
 import {
   isCaptionedContentCard,
   isClassicContentCard,
 } from '../../../../../utils/braze';
 import {useAppDispatch} from '../../../../../utils/hooks';
+import {BoxShadow} from '../Styled';
 
 interface AdvertisementCardProps {
   contentCard: ContentCard;
+  ctaOverride?: () => void;
 }
 
 const isSvgComponent = (src: any): src is React.FC<SvgProps> => {
@@ -35,11 +32,11 @@ const isSvgComponent = (src: any): src is React.FC<SvgProps> => {
 };
 
 const AdvertisementCardContainer = styled.TouchableOpacity`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   border-radius: 12px;
   flex-direction: column;
   justify-content: center;
-  min-height: 112px;
+  min-height: 100px;
   overflow: hidden;
   padding: 20px 100px 20px 20px;
   position: relative;
@@ -48,33 +45,32 @@ const AdvertisementCardContainer = styled.TouchableOpacity`
 const AdvertisementCardTitle = styled(BaseText)`
   font-style: normal;
   font-weight: bold;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 23px;
   margin-bottom: 5px;
   color: ${({theme}) => theme.colors.text};
 `;
 
 const AdvertisementCardDescription = styled(BaseText)`
-  font-size: 14px;
-  line-height: 21px;
+  font-size: 12px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const ADVERTISEMENT_ICON_HEIGHT = 126;
-const ADVERTISEMENT_ICON_WIDTH = 96;
+const ADVERTISEMENT_ICON_HEIGHT = 50;
+const ADVERTISEMENT_ICON_WIDTH = 50;
 
 const IconStyle: StyleProp<ViewStyle & ImageStyle> = {
   height: ADVERTISEMENT_ICON_HEIGHT,
   width: ADVERTISEMENT_ICON_WIDTH,
-  right: 0,
-  bottom: 0,
+  right: 10,
   position: 'absolute',
 };
 
 const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
-  const {contentCard} = props;
+  const {contentCard, ctaOverride} = props;
   const {image, url, openURLInWebView} = contentCard;
   const dispatch = useAppDispatch();
+  const theme = useTheme();
   let title = '';
   let description = '';
   let imageSource: ImageSourcePropType | null = null;
@@ -90,22 +86,22 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   if (image) {
     if (typeof image === 'string') {
       imageSource = {uri: image};
-    } else if (__DEV__) {
+    } else {
       imageSource = image as any;
     }
   }
 
   const onPress = () => {
+    if (ctaOverride) {
+      ctaOverride();
+      return;
+    }
+
     if (!url) {
       return;
     }
 
     haptic('impactLight');
-
-    if ('debug') {
-      console.log('TODO: handle performance issues');
-      return;
-    }
 
     if (openURLInWebView) {
       dispatch(AppEffects.openUrlWithInAppBrowser(url));
@@ -127,7 +123,10 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   ) : null;
 
   return (
-    <AdvertisementCardContainer activeOpacity={ActiveOpacity} onPress={onPress}>
+    <AdvertisementCardContainer
+      activeOpacity={ActiveOpacity}
+      onPress={onPress}
+      style={!theme.dark && BoxShadow}>
       <AdvertisementCardTitle>{title}</AdvertisementCardTitle>
       <AdvertisementCardDescription>{description}</AdvertisementCardDescription>
       {icon}

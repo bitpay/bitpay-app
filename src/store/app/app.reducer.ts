@@ -116,7 +116,7 @@ const initialState: AppState = {
   biometricLockActive: false,
   lockAuthorizedUntil: undefined,
   homeCarouselConfig: [],
-  homeCarouselLayoutType: 'carousel',
+  homeCarouselLayoutType: 'listView',
 };
 
 export const appReducer = (

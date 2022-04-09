@@ -1,15 +1,11 @@
 import React from 'react';
-import HomeCard from '../../../../../components/home-card/HomeCard';
+import LinkCard from './LinkCard';
 
 const BuyGiftCards = () => {
-  const onCTAPress = () => {
-    /** TODO: Redirect me */
-  };
-
   return (
-    <HomeCard
-      body={{description: 'Buy gift cards from major retailers'}}
-      onCTAPress={onCTAPress}
+    <LinkCard
+      description={'Buy gift cards from major retailers'}
+      onPress={() => null}
     />
   );
 };
