@@ -38,6 +38,7 @@ import {
   ListHeader,
   ListViewSvg,
 } from './Shared';
+import {useAndroidBackHandler} from 'react-navigation-backhandler';
 
 enum LayoutTypes {
   CAROUSEL = 'Carousel',
@@ -48,6 +49,7 @@ enum LayoutTypes {
 const Noop = () => null;
 
 const CustomizeHome = () => {
+  useAndroidBackHandler(() => true);
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig)!;

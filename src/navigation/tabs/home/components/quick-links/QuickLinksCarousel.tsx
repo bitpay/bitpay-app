@@ -3,13 +3,16 @@ import {ContentCard} from 'react-native-appboy-sdk';
 import {Carousel} from 'react-native-snap-carousel';
 import {WIDTH} from '../../../../../components/styled/Containers';
 import QuickLinksCard from './QuickLinksCard';
+import {CarouselItemContainer} from '../Styled';
 
 interface QuickLinksCarouselProps {
   contentCards: ContentCard[];
 }
 
 const renderQuickLink = ({item}: {item: ContentCard}) => (
-  <QuickLinksCard contentCard={item} />
+  <CarouselItemContainer>
+    <QuickLinksCard contentCard={item} />
+  </CarouselItemContainer>
 );
 
 const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({
@@ -18,7 +21,6 @@ const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({
   return (
     <Carousel<ContentCard>
       containerCustomStyle={{
-        paddingVertical: 20,
         marginTop: 20,
       }}
       vertical={false}

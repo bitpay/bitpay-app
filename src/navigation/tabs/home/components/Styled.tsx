@@ -1,6 +1,6 @@
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../../components/styled/Containers';
-import {BaseText, H5, H7} from '../../../../components/styled/Text';
+import {H5, H7} from '../../../../components/styled/Text';
 import {Black, White} from '../../../../styles/colors';
 
 export const HeaderContainer = styled.View`
@@ -35,10 +35,14 @@ export const SectionHeaderContainer = styled.View<{justifyContent?: string}>`
   justify-content: ${({justifyContent}) => justifyContent || 'flex-start'};
 `;
 
+export const CarouselItemContainer = styled.View`
+  padding: 20px 0;
+`;
+
 export const BoxShadow = {
   shadowColor: '#000',
   shadowOffset: {width: 0, height: 1},
   shadowOpacity: 0.15,
   shadowRadius: 12,
-  elevation: 2,
+  elevation: 5,
 };

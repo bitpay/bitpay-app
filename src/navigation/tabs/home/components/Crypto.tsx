@@ -23,10 +23,11 @@ import {
   HomeCarouselLayoutType,
 } from '../../../../store/app/app.models';
 import {
+  CarouselItemContainer,
   HomeSectionSubtext,
   HomeSectionSubTitle,
   HomeSectionTitle,
-  SectionHeaderContainer,
+  SectionHeaderContainer
 } from './Styled';
 import {TouchableOpacity, View} from 'react-native';
 import CustomizeSvg from './CustomizeSvg';
@@ -57,7 +58,7 @@ const ButtonContainer = styled.View`
 `;
 
 const _renderItem = ({item}: {item: {id: string; component: JSX.Element}}) => {
-  return <>{item.component}</>;
+  return <CarouselItemContainer>{item.component}</CarouselItemContainer>;
 };
 
 export const keyBackupRequired = (
@@ -126,6 +127,7 @@ const createHomeCardList = ({
             totalBalance={totalBalance}
             needsBackup={!backupComplete}
             onPress={() => {
+              haptic('soft');
               if (backupComplete) {
                 navigation.navigate('Wallet', {
                   screen: 'KeyOverview',
@@ -287,7 +289,6 @@ const Crypto = () => {
           vertical={false}
           layout={'default'}
           containerCustomStyle={{
-            paddingVertical: 20,
             marginTop: 20,
           }}
           useExperimentalSnap={true}

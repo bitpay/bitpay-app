@@ -9,25 +9,22 @@ import {
 } from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import {SvgProps} from 'react-native-svg';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {ActiveOpacity} from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
 import {AppEffects} from '../../../../../store/app';
-import {
-  LightBlack,
-  NeutralSlate,
-  SlateDark,
-  White,
-} from '../../../../../styles/colors';
+import {LightBlack, SlateDark, White} from '../../../../../styles/colors';
 import {
   isCaptionedContentCard,
   isClassicContentCard,
 } from '../../../../../utils/braze';
 import {useAppDispatch} from '../../../../../utils/hooks';
+import {BoxShadow} from '../Styled';
 
 interface AdvertisementCardProps {
   contentCard: ContentCard;
+  ctaOverride?: () => void;
 }
 
 const isSvgComponent = (src: any): src is React.FC<SvgProps> => {
@@ -35,7 +32,7 @@ const isSvgComponent = (src: any): src is React.FC<SvgProps> => {
 };
 
 const AdvertisementCardContainer = styled.TouchableOpacity`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   border-radius: 12px;
   flex-direction: column;
   justify-content: center;
@@ -70,9 +67,10 @@ const IconStyle: StyleProp<ViewStyle & ImageStyle> = {
 };
 
 const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
-  const {contentCard} = props;
+  const {contentCard, ctaOverride} = props;
   const {image, url, openURLInWebView} = contentCard;
   const dispatch = useAppDispatch();
+  const theme = useTheme();
   let title = '';
   let description = '';
   let imageSource: ImageSourcePropType | null = null;
@@ -94,6 +92,11 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   }
 
   const onPress = () => {
+    if (ctaOverride) {
+      ctaOverride();
+      return;
+    }
+
     if (!url) {
       return;
     }
@@ -120,7 +123,10 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   ) : null;
 
   return (
-    <AdvertisementCardContainer activeOpacity={ActiveOpacity} onPress={onPress}>
+    <AdvertisementCardContainer
+      activeOpacity={ActiveOpacity}
+      onPress={onPress}
+      style={!theme.dark && BoxShadow}>
       <AdvertisementCardTitle>{title}</AdvertisementCardTitle>
       <AdvertisementCardDescription>{description}</AdvertisementCardDescription>
       {icon}

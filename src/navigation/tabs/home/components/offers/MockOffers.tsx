@@ -8,7 +8,7 @@ const MockOffers: ClassicContentCard[] = [
     id: '1',
     cardDescription: 'Buy movie tickets at AMC Theaters',
     image: require('../../../../../../assets/img/home/offers/amc.png'),
-    url: `${APP_DEEPLINK_PREFIX}giftcard?merchant=amc`,
+    url: `${APP_DEEPLINK_PREFIX}giftcard?merchant=amc%20theatres`,
     openURLInWebView: false,
   },
   {
@@ -16,7 +16,7 @@ const MockOffers: ClassicContentCard[] = [
     id: '2',
     cardDescription: 'Spend Crypto at Amazon',
     image: require('../../../../../../assets/img/home/offers/amazon.png'),
-    url: `${APP_DEEPLINK_PREFIX}giftcard?merchant=amazon`,
+    url: `${APP_DEEPLINK_PREFIX}giftcard?merchant=amazon.com`,
     openURLInWebView: false,
   },
 ];

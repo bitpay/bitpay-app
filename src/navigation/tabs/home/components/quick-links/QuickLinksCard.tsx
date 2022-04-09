@@ -44,7 +44,7 @@ const QuickLinkCardContainer = styled.TouchableOpacity`
   width: 202px;
   height: 91px;
   border-radius: 12px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   left: ${ScreenGutter};
   position: relative;
 `;
@@ -120,7 +120,7 @@ const QuickLinksCard: React.FC<QuickLinksCardProps> = props => {
     <QuickLinkCardContainer
       activeOpacity={ActiveOpacity}
       onPress={onPress}
-      style={!theme.dark ? BoxShadow : null}>
+      style={!theme.dark && BoxShadow}>
       <TextContainer>
         <TitleText>{title}</TitleText>
         <DescriptionText numberOfLines={2} ellipsizeMode={'tail'}>

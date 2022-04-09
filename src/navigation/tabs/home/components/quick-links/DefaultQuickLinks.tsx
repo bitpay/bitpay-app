@@ -17,7 +17,7 @@ const DefaultQuickLinks: ClassicContentCard[] = [
     ...DEFAULT_CLASSIC_CONTENT_CARD,
     id: '2',
     title: 'Leave Feedback',
-    cardDescription: 'Let us know how were doing.',
+    cardDescription: "Let us know how we're doing.",
     image: require('../../../../../../assets/img/home/quick-links/chat.png'),
     url: URL.LEAVE_FEEDBACK,
     openURLInWebView: true,

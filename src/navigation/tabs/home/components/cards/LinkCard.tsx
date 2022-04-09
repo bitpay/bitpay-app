@@ -5,9 +5,9 @@ import {
   ActiveOpacity,
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
-import {LightBlack, NeutralSlate, White} from '../../../../../styles/colors';
-import {Platform} from 'react-native';
+import {LightBlack, White} from '../../../../../styles/colors';
 import {BoxShadow} from '../Styled';
+import haptic from '../../../../../components/haptic-feedback/haptic';
 interface LinkCardProps {
   image?: any;
   description: string;
@@ -44,7 +44,10 @@ const LinkCard: React.FC<LinkCardProps> = ({image, description, onPress}) => {
   return (
     <LinkCardContainer
       activeOpacity={ActiveOpacity}
-      onPress={onPress}
+      onPress={() => {
+        haptic('soft');
+        onPress();
+      }}
       style={!theme.dark && BoxShadow}>
       <LinkCardImageContainer>{image && image(theme)}</LinkCardImageContainer>
       <LinkCardText>{description}</LinkCardText>

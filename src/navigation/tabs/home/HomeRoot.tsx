@@ -235,7 +235,7 @@ const HomeRoot = () => {
           <HomeSection
             title="Shop with Crypto"
             action="See all"
-            onActionPress={() => console.log('TODO: see all offers')}>
+            onActionPress={() => navigation.navigate('Tabs', {screen: 'Shop'})}>
             <OffersCarousel contentCards={memoizedOffers} />
           </HomeSection>
         ) : null}
