@@ -30,14 +30,14 @@ import {
 } from '../../../../navigation/wallet/components/ErrorMessages';
 import {BWCErrorMessage, getErrorName} from '../../../../constants/BWCError';
 import {GiftCardInvoiceParams, Invoice} from '../../../shop/shop.models';
-import {GetPayProDetails, HandlePayPro} from '../paypro/paypro';
+import {GetPayProDetails, HandlePayPro, PayProOptions} from '../paypro/paypro';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../constants/config';
 import {ShopEffects} from '../../../shop';
 import {
   dismissDecryptPasswordModal,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
-import {GetPrecision, IsUtxoCoin, GetChain} from '../../utils/currency';
+import {GetPrecision, GetChain} from '../../utils/currency';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -45,7 +45,7 @@ export const createProposalAndBuildTxDetails =
   ): Effect<
     Promise<{
       txDetails: TxDetails;
-      txp: Partial<TransactionProposal>;
+      txp: TransactionProposal;
     }>
   > =>
   async (dispatch, getState) => {
@@ -117,7 +117,7 @@ export const createProposalAndBuildTxDetails =
                 context,
               });
               txp.id = proposal.id;
-              resolve({txDetails, txp});
+              resolve({txDetails, txp: txp as TransactionProposal});
             } catch (err2) {
               reject({err: err2});
             }
@@ -222,6 +222,7 @@ const buildTransactionProposal = (
       customData,
       feeLevel,
       feePerKb,
+      invoiceID,
       message,
       payProUrl,
       sendMax,
@@ -234,9 +235,9 @@ const buildTransactionProposal = (
       customData,
       feePerKb,
       ...(!feePerKb && {feeLevel}),
+      invoiceID,
       message,
     };
-    txp.invoiceID = tx.invoice?.id;
     // currency specific
     switch (currency) {
       case 'btc':
@@ -575,13 +576,17 @@ export const handleCreateTxProposalError = async (
 export const createPayProTxProposal = async ({
   wallet,
   paymentUrl,
+  payProOptions,
   invoice,
+  invoiceID,
   customData,
   message,
 }: {
   wallet: Wallet;
   paymentUrl: string;
-  invoice: Invoice;
+  payProOptions?: PayProOptions;
+  invoice?: Invoice;
+  invoiceID?: string;
   customData?: CustomTransactionData;
   message?: string;
 }) => {
@@ -589,31 +594,32 @@ export const createPayProTxProposal = async ({
     paymentUrl,
     coin: wallet!.currencyAbbreviation,
   });
-  const confirmScreenParams = await HandlePayPro(
+  const confirmScreenParams = await HandlePayPro({
     payProDetails,
-    undefined,
-    paymentUrl,
-    wallet!.currencyAbbreviation,
-  );
-  const {toAddress: address, requiredFeeRate, amount} = confirmScreenParams!;
-  const feePerKb = requiredFeeRate
-    ? IsUtxoCoin(wallet.currencyAbbreviation)
-      ? parseInt((requiredFeeRate * 1.1).toFixed(0), 10) // Workaround to avoid gas price supplied is lower than requested error
-      : Math.ceil(requiredFeeRate * 1000)
-    : undefined;
+    payProOptions,
+    url: paymentUrl,
+    coin: wallet!.currencyAbbreviation,
+  });
+  const {
+    toAddress: address,
+    requiredFeeRate: feePerKb,
+    description,
+    amount,
+  } = confirmScreenParams!;
   const {unitToSatoshi} = GetPrecision(wallet.currencyAbbreviation) || {
     unitToSatoshi: 100000000,
   };
   return createProposalAndBuildTxDetails({
     context: 'paypro',
     invoice,
+    invoiceID,
     wallet,
     ...(feePerKb && {feePerKb}),
     payProUrl: paymentUrl,
     recipient: {address},
     amount: amount / unitToSatoshi,
     ...(customData && {customData}),
-    message,
+    message: message || description,
   });
 };
 
@@ -624,7 +630,7 @@ export const createInvoiceAndTxProposal =
   ): Effect<
     Promise<{
       txDetails: TxDetails;
-      txp: Partial<TransactionProposal>;
+      txp: TransactionProposal;
     }>
   > =>
   async dispatch => {
@@ -654,6 +660,7 @@ export const createInvoiceAndTxProposal =
               wallet,
               paymentUrl,
               invoice,
+              invoiceID: invoiceId,
               message: `${formatFiatAmount(
                 invoiceParams.amount,
                 cardConfig.currency,
