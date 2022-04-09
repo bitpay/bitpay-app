@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  Image,
-  ImageSourcePropType,
-  ImageStyle,
-  Linking,
-  StyleProp,
-  ViewStyle,
-} from 'react-native';
+import {ImageStyle, Linking, StyleProp} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import {SvgProps} from 'react-native-svg';
 import styled, {useTheme} from 'styled-components/native';
@@ -21,6 +14,7 @@ import {
 } from '../../../../../utils/braze';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {BoxShadow} from '../Styled';
+import FastImage, {Source} from 'react-native-fast-image';
 
 interface AdvertisementCardProps {
   contentCard: ContentCard;
@@ -28,7 +22,7 @@ interface AdvertisementCardProps {
 }
 
 const isSvgComponent = (src: any): src is React.FC<SvgProps> => {
-  return src && src.name === 'SvgComponent';
+  return src && typeof src === 'function';
 };
 
 const AdvertisementCardContainer = styled.TouchableOpacity`
@@ -56,14 +50,17 @@ const AdvertisementCardDescription = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
+const IconContainer = styled.View`
+  position: absolute;
+  right: 20px;
+`;
+
 const ADVERTISEMENT_ICON_HEIGHT = 50;
 const ADVERTISEMENT_ICON_WIDTH = 50;
 
-const IconStyle: StyleProp<ViewStyle & ImageStyle> = {
+const IconStyle: StyleProp<ImageStyle> = {
   height: ADVERTISEMENT_ICON_HEIGHT,
   width: ADVERTISEMENT_ICON_WIDTH,
-  right: 10,
-  position: 'absolute',
 };
 
 const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
@@ -73,7 +70,7 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   const theme = useTheme();
   let title = '';
   let description = '';
-  let imageSource: ImageSourcePropType | null = null;
+  let imageSource: Source | null = null;
 
   if (
     isCaptionedContentCard(contentCard) ||
@@ -114,12 +111,8 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   const icon = isSvgComponent(MaybeSvgComponent) ? (
     <MaybeSvgComponent style={IconStyle} />
   ) : imageSource ? (
-    <Image
-      source={imageSource}
-      style={IconStyle}
-      height={ADVERTISEMENT_ICON_HEIGHT}
-      width={ADVERTISEMENT_ICON_WIDTH}
-    />
+    // @ts-ignore
+    <FastImage source={imageSource} style={IconStyle} />
   ) : null;
 
   return (
@@ -129,7 +122,7 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
       style={!theme.dark && BoxShadow}>
       <AdvertisementCardTitle>{title}</AdvertisementCardTitle>
       <AdvertisementCardDescription>{description}</AdvertisementCardDescription>
-      {icon}
+      <IconContainer>{icon}</IconContainer>
     </AdvertisementCardContainer>
   );
 };
