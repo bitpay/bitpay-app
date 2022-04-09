@@ -1,5 +1,5 @@
 import React from 'react';
-import {Image, ImageSourcePropType, Linking} from 'react-native';
+import {Linking} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {
@@ -13,6 +13,7 @@ import {selectAvailableGiftCards} from '../../../../../store/shop/shop.selectors
 import {APP_DEEPLINK_PREFIX} from '../../../../../constants/config';
 import {LogActions} from '../../../../../store/log';
 import LinkCard from '../cards/LinkCard';
+import FastImage, {Source} from 'react-native-fast-image';
 
 interface OfferCardProps {
   contentCard: ContentCard;
@@ -27,7 +28,7 @@ const OfferCard: React.FC<OfferCardProps> = props => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   let description = '';
-  let imageSource: ImageSourcePropType | null = null;
+  let imageSource: Source | null = null;
 
   const availableGiftCards = useAppSelector(selectAvailableGiftCards);
 
@@ -41,7 +42,7 @@ const OfferCard: React.FC<OfferCardProps> = props => {
   if (image) {
     if (typeof image === 'string') {
       imageSource = {uri: image};
-    } else if (__DEV__) {
+    } else {
       imageSource = image as any;
     }
   }
@@ -106,13 +107,11 @@ const OfferCard: React.FC<OfferCardProps> = props => {
     <LinkCard
       image={() =>
         imageSource && (
-          <Image
+          <FastImage
             style={{
               height: OFFER_HEIGHT,
               width: OFFER_WIDTH,
             }}
-            height={OFFER_HEIGHT}
-            width={OFFER_WIDTH}
             source={imageSource}
           />
         )

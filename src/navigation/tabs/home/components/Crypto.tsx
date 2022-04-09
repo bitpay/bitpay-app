@@ -27,7 +27,7 @@ import {
   HomeSectionSubtext,
   HomeSectionSubTitle,
   HomeSectionTitle,
-  SectionHeaderContainer
+  SectionHeaderContainer,
 } from './Styled';
 import {TouchableOpacity, View} from 'react-native';
 import CustomizeSvg from './CustomizeSvg';
