@@ -21,7 +21,7 @@ import {
 import {Network} from '../../../constants';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/balance';
+import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {findWalletById, isSegwit} from '../../../store/wallet/utils/wallet';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
@@ -46,7 +46,6 @@ import {buildUIFormattedWallet} from './KeyOverview';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
-import {ProcessPendingTxps} from '../../../store/wallet/effects/transactions/transactions';
 import {
   CanSpeedupTx,
   GetTransactionHistory,
@@ -300,45 +299,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     },
   ];
 
-  const getStatus = () => {
-    fullWalletObj.getStatus(
-      {network: fullWalletObj.credentials.network},
-      async (err: any, status: any) => {
-        if (err) {
-          // TODO
-          console.log(err);
-        }
-        const copayerId = fullWalletObj.credentials.copayerId;
-        let _pendingTxps = !status.pendingTxps
-          ? []
-          : sortBy(status.pendingTxps, 'createdOn').reverse();
-
-        ProcessPendingTxps(_pendingTxps, fullWalletObj);
-        const _needActionPendingTxps: any = [];
-
-        _pendingTxps.forEach((txp: any) => {
-          const action: any = txp.actions.find(
-            (action: any) => action.copayerId === copayerId,
-          );
-
-          if (
-            (!action || action.type === 'failed') &&
-            txp.status === 'pending'
-          ) {
-            _needActionPendingTxps.push(txp);
-          }
-
-          // For unsent transactions
-          if (action && txp.status === 'accepted') {
-            _needActionPendingTxps.push(txp);
-          }
-        });
-        setTxps(_pendingTxps);
-        setNeedActionPendingTxps(_needActionPendingTxps);
-      },
-    );
-  };
-
   const onRefresh = async () => {
     setRefreshing(true);
     await sleep(1000);
@@ -346,12 +306,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     try {
       await dispatch(startGetRates());
       await Promise.all([
-        await dispatch(startUpdateWalletBalance({key, wallet: fullWalletObj})),
+        await dispatch(startUpdateWalletStatus({key, wallet: fullWalletObj})),
         await loadHistory(true),
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
-      getStatus();
     } catch (err) {
       dispatch(showBottomNotificationModal(BalanceUpdateError));
     }
@@ -367,6 +326,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     currencyAbbreviation,
     network,
     hideBalance,
+    pendingTxps,
   } = uiFormattedWallet;
 
   const showFiatBalance =
@@ -380,13 +340,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [loadMore, setLoadMore] = useState(true);
   const [isLoading, setIsLoading] = useState<boolean>();
   const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
-  const [needActionPendingTxps, setNeedActionPendingTxps] = useState<any[]>([]); // TODO
-  const [txps, setTxps] = useState<any[]>([]);
-
-  useEffect(() => {
-    //TODO get status from wallet.status ( updated by bws events )
-    getStatus();
-  }, []);
+  // const [needActionPendingTxps, setNeedActionPendingTxps] = useState<any[]>([]);  TODO
 
   const loadHistory = async (refresh?: boolean) => {
     if (!loadMore && !refresh) {
@@ -738,7 +692,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                   />
                 ) : null}
               </HeaderContainer>
-              {txps && txps[0] ? (
+              {pendingTxps && pendingTxps[0] ? (
                 <TransactionSectionHeader>
                   {fullWalletObj.credentials.m > 1
                     ? 'Pending Proposals'
@@ -747,7 +701,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
               ) : null}
               <FlatList
                 contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
-                data={txps} // TODO use needActionPendingTxps
+                data={pendingTxps} // TODO use needActionPendingTxps
                 keyExtractor={keyExtractor}
                 renderItem={renderTxp}
               />

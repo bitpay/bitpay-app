@@ -5,16 +5,17 @@ import {
   Key,
   WalletBalance,
   WalletStatus,
+  Status,
   Recipient,
 } from '../../wallet.models';
 import {
-  failedUpdateAllKeysAndBalances,
+  failedUpdateAllKeysAndStatus,
   failedUpdateKeyTotalBalance,
-  failedUpdateWalletBalance,
+  failedUpdateWalletStatus,
   setWalletRefreshing,
-  successUpdateAllKeysAndBalances,
+  successUpdateAllKeysAndStatus,
   successUpdateKeyTotalBalance,
-  successUpdateWalletBalance,
+  successUpdateWalletStatus,
   updatePortfolioBalance,
 } from '../../wallet.actions';
 import {
@@ -27,6 +28,7 @@ import {Network} from '../../../../constants';
 import {BALANCE_CACHE_DURATION} from '../../../../constants/wallet';
 import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
+import {ProcessPendingTxps} from '../transactions/transactions';
 
 /*
  * post broadcasting of payment
@@ -86,14 +88,14 @@ export const waitForTargetAmountAndUpdateWallet =
               ? multisigEthInfo.multisigContractAddress
               : null,
           },
-          async (err: Error, status: WalletStatus) => {
+          async (err: Error, status: Status) => {
             if (err) {
               console.error(err);
             }
             const {totalAmount} = status.balance;
             // expected amount - update balance
             if (totalAmount === targetAmount) {
-              dispatch(startUpdateWalletBalance({key, wallet}));
+              dispatch(startUpdateWalletStatus({key, wallet}));
 
               // update recipient balance if local
               if (recipient) {
@@ -106,7 +108,7 @@ export const waitForTargetAmountAndUpdateWallet =
                   const recipientWallet = findWalletById(key.wallets, walletId);
                   if (recipientKey && recipientWallet) {
                     await dispatch(
-                      startUpdateWalletBalance({
+                      startUpdateWalletStatus({
                         key: recipientKey,
                         wallet: recipientWallet,
                       }),
@@ -130,7 +132,7 @@ export const waitForTargetAmountAndUpdateWallet =
     }
   };
 
-export const startUpdateWalletBalance =
+export const startUpdateWalletStatus =
   ({key, wallet}: {key: Key; wallet: Wallet}): Effect =>
   async (dispatch, getState) => {
     return new Promise<WalletBalance | void>(async (resolve, reject) => {
@@ -154,18 +156,21 @@ export const startUpdateWalletBalance =
           return resolve();
         }
 
-        const lastKnownBalance = wallet.balance.fiat;
-        const balance = await updateWalletBalance({wallet, rates});
+        const cachedBalance = wallet.balance.fiat;
+        const status = await updateWalletStatus({wallet, rates});
 
         dispatch(
-          successUpdateWalletBalance({
+          successUpdateWalletStatus({
             keyId: key.id,
             walletId: id,
-            balance,
+            status,
           }),
         );
         // if balance has changed update key totalBalance
-        if (network === Network.mainnet && balance.fiat !== lastKnownBalance) {
+        if (
+          network === Network.mainnet &&
+          status.balance.fiat !== cachedBalance
+        ) {
           const wallets = getState().WALLET.keys[key.id].wallets.filter(
             w => !w.hideWallet,
           );
@@ -187,7 +192,7 @@ export const startUpdateWalletBalance =
         resolve();
       } catch (err) {
         dispatch(
-          failedUpdateWalletBalance({
+          failedUpdateWalletStatus({
             keyId: key.id,
             walletId: wallet.id,
           }),
@@ -197,7 +202,7 @@ export const startUpdateWalletBalance =
     });
   };
 
-export const startUpdateAllWalletBalancesForKey =
+export const startUpdateAllWalletStatusForKey =
   (key: Key): Effect =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
@@ -214,18 +219,18 @@ export const startUpdateAllWalletBalancesForKey =
         const balances = await Promise.all(
           key.wallets.map(async wallet => {
             return new Promise<WalletBalance>(async resolve2 => {
-              const balance = await updateWalletBalance({wallet, rates});
+              const status = await updateWalletStatus({wallet, rates});
               dispatch(
-                successUpdateWalletBalance({
+                successUpdateWalletStatus({
                   keyId: key.id,
                   walletId: wallet.id,
-                  balance,
+                  status,
                 }),
               );
               console.log(
                 `Wallet: ${wallet.currencyAbbreviation} ${wallet.id} - balance updated`,
               );
-              resolve2(balance);
+              resolve2(status.balance);
             });
           }),
         );
@@ -250,7 +255,7 @@ export const startUpdateAllWalletBalancesForKey =
     });
   };
 
-export const startUpdateAllKeyAndWalletBalances =
+export const startUpdateAllKeyAndWalletStatus =
   (): Effect => async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -265,31 +270,32 @@ export const startUpdateAllKeyAndWalletBalances =
 
         await Promise.all(
           Object.values(keys).map(key => {
-            dispatch(startUpdateAllWalletBalancesForKey(key));
+            dispatch(startUpdateAllWalletStatusForKey(key));
           }),
         );
-        dispatch(successUpdateAllKeysAndBalances());
+        dispatch(successUpdateAllKeysAndStatus());
         resolve();
       } catch (err) {
-        dispatch(failedUpdateAllKeysAndBalances());
+        dispatch(failedUpdateAllKeysAndStatus());
         reject(err);
       }
     });
   };
 
-const updateWalletBalance = ({
+const updateWalletStatus = ({
   wallet,
   rates,
 }: {
   wallet: Wallet;
   rates: Rates;
-}): Promise<WalletBalance> => {
+}): Promise<WalletStatus> => {
   return new Promise(async resolve => {
     const {
       currencyAbbreviation,
-      balance: lastKnownBalance,
+      balance: cachedBalance,
       credentials: {network, token, multisigEthInfo},
       hideWallet,
+      pendingTxps: cachedPendingTxps,
     } = wallet;
 
     wallet.getStatus(
@@ -300,9 +306,12 @@ const updateWalletBalance = ({
           ? multisigEthInfo.multisigContractAddress
           : null,
       },
-      (err: Error, status: WalletStatus) => {
+      (err: Error, status: Status) => {
         if (err) {
-          return resolve(lastKnownBalance);
+          return resolve({
+            balance: cachedBalance,
+            pendingTxps: cachedPendingTxps,
+          });
         }
         try {
           const {
@@ -336,11 +345,16 @@ const updateWalletBalance = ({
                 : 0,
           };
 
-          console.log(newBalance);
+          const newPendingTxps = ProcessPendingTxps(status.pendingTxps, wallet);
 
-          resolve(newBalance);
+          console.log(newBalance, newPendingTxps);
+
+          resolve({balance: newBalance, pendingTxps: newPendingTxps});
         } catch (err2) {
-          resolve(lastKnownBalance);
+          resolve({
+            balance: cachedBalance,
+            pendingTxps: cachedPendingTxps,
+          });
         }
       },
     );

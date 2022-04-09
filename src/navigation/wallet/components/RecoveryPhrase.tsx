@@ -70,7 +70,7 @@ import {
   getNetworkName,
 } from '../../../utils/helper-methods';
 import {DefaultDerivationPath} from '../../../constants/defaultDerivationPath';
-import {startUpdateAllWalletBalancesForKey} from '../../../store/wallet/effects/balance/balance';
+import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import Icons from '../components/WalletIcons';
@@ -306,7 +306,7 @@ const RecoveryPhrase = () => {
             startImportWithDerivationPath(importData, opts),
           )) as Key);
       await dispatch(startGetRates());
-      await dispatch(startUpdateAllWalletBalancesForKey(key));
+      await dispatch(startUpdateAllWalletStatusForKey(key));
       await dispatch(updatePortfolioBalance());
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
       backupRedirect({

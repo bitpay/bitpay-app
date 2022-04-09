@@ -6,6 +6,7 @@ import {
   Token,
   Wallet,
   WalletBalance,
+  TransactionProposal,
 } from './wallet.models';
 
 export enum WalletActionTypes {
@@ -28,12 +29,12 @@ export enum WalletActionTypes {
   FAILED_GET_TOKEN_OPTIONS = 'WALLET/FAILED_GET_TOKEN_OPTIONS',
   SUCCESS_ADD_WALLET = 'WALLET/SUCCESS_ADD_WALLET',
   FAILED_ADD_WALLET = 'WALLET/FAILED_ADD_WALLET',
-  SUCCESS_UPDATE_WALLET_BALANCE = 'WALLET/SUCCESS_UPDATE_WALLET_BALANCE',
-  FAILED_UPDATE_WALLET_BALANCE = 'WALLET/FAILED_UPDATE_WALLET_BALANCE',
+  SUCCESS_UPDATE_WALLET_STATUS = 'WALLET/SUCCESS_UPDATE_WALLET_STATUS',
+  FAILED_UPDATE_WALLET_STATUS = 'WALLET/FAILED_UPDATE_WALLET_STATUS',
   SUCCESS_UPDATE_KEY_TOTAL_BALANCE = 'WALLET/SUCCESS_UPDATE_KEY_TOTAL_BALANCE',
   FAILED_UPDATE_KEY_TOTAL_BALANCE = 'WALLET/FAILED_UPDATE_KEY_TOTAL_BALANCE',
-  SUCCESS_UPDATE_ALL_KEYS_AND_BALANCES = 'WALLET/SUCCESS_UPDATE_ALL_KEYS_AND_BALANCES',
-  FAILED_UPDATE_ALL_KEYS_AND_BALANCES = 'WALLET/FAILED_UPDATE_ALL_KEYS_AND_BALANCES',
+  SUCCESS_UPDATE_ALL_KEYS_AND_STATUS = 'WALLET/SUCCESS_UPDATE_ALL_KEYS_AND_STATUS',
+  FAILED_UPDATE_ALL_KEYS_AND_STATUS = 'WALLET/FAILED_UPDATE_ALL_KEYS_AND_STATUS',
   UPDATE_PORTFOLIO_BALANCE = 'WALLET/UPDATE_PORTFOLIO_BALANCE',
   UPDATE_KEY_NAME = 'WALLET/UPDATE_KEY_NAME',
   UPDATE_WALLET_NAME = 'WALLET/UPDATE_WALLET_NAME',
@@ -144,17 +145,20 @@ interface setWalletTermsAccepted {
   type: typeof WalletActionTypes.SET_WALLET_TERMS_ACCEPTED;
 }
 
-interface successUpdateWalletBalance {
-  type: typeof WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCE;
+interface successUpdateWalletStatus {
+  type: typeof WalletActionTypes.SUCCESS_UPDATE_WALLET_STATUS;
   payload: {
     keyId: string;
     walletId: string;
-    balance: WalletBalance;
+    status: {
+      balance: WalletBalance;
+      pendingTxps: TransactionProposal[];
+    };
   };
 }
 
-interface failedUpdateWalletBalance {
-  type: typeof WalletActionTypes.FAILED_UPDATE_WALLET_BALANCE;
+interface failedUpdateWalletStatus {
+  type: typeof WalletActionTypes.FAILED_UPDATE_WALLET_STATUS;
   payload: {
     keyId: string;
     walletId: string;
@@ -173,12 +177,12 @@ interface failedUpdateKeyTotalBalance {
   type: typeof WalletActionTypes.FAILED_UPDATE_KEY_TOTAL_BALANCE;
 }
 
-interface successUpdateAllKeysAndBalances {
-  type: typeof WalletActionTypes.SUCCESS_UPDATE_ALL_KEYS_AND_BALANCES;
+interface successUpdateAllKeysAndStatus {
+  type: typeof WalletActionTypes.SUCCESS_UPDATE_ALL_KEYS_AND_STATUS;
 }
 
-interface failedUpdateAllKeysAndBalances {
-  type: typeof WalletActionTypes.FAILED_UPDATE_ALL_KEYS_AND_BALANCES;
+interface failedUpdateAllKeysAndStatus {
+  type: typeof WalletActionTypes.FAILED_UPDATE_ALL_KEYS_AND_STATUS;
 }
 
 interface updatePortfolioBalance {
@@ -277,13 +281,13 @@ export type WalletActionType =
   | successGetTokenOptions
   | failedGetTokenOptions
   | setWalletTermsAccepted
-  | successUpdateWalletBalance
-  | failedUpdateWalletBalance
+  | successUpdateWalletStatus
+  | failedUpdateWalletStatus
   | successUpdateKeyTotalBalance
   | failedUpdateKeyTotalBalance
   | updatePortfolioBalance
-  | successUpdateAllKeysAndBalances
-  | failedUpdateAllKeysAndBalances
+  | successUpdateAllKeysAndStatus
+  | failedUpdateAllKeysAndStatus
   | updateKeyName
   | updateWalletName
   | setWalletRefreshing

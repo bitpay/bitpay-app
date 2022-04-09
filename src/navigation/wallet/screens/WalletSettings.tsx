@@ -36,7 +36,7 @@ import {
   toggleHideWallet,
   updatePortfolioBalance,
 } from '../../../store/wallet/wallet.actions';
-import {startUpdateWalletBalance} from '../../../store/wallet/effects/balance/balance';
+import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -159,7 +159,7 @@ const WalletSettings = () => {
           <ToggleSwitch
             onChange={() => {
               dispatch(toggleHideWallet({wallet}));
-              dispatch(startUpdateWalletBalance({key, wallet}));
+              dispatch(startUpdateWalletStatus({key, wallet}));
               dispatch(updatePortfolioBalance());
             }}
             isEnabled={!!hideWallet}

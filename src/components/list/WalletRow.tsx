@@ -43,6 +43,7 @@ export interface WalletRowProps {
   isRefreshing?: boolean;
   hideWallet?: boolean;
   hideBalance?: boolean;
+  pendingTxps?: any;
 }
 
 interface Props {
