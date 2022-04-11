@@ -14,9 +14,9 @@ import {
 } from '../../../components/styled/Containers';
 import {RootState} from '../../../store';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {startUpdateAllWalletBalancesForKey} from '../../../store/wallet/effects/balance/balance';
+import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
-import {Wallet, WalletStatus} from '../../../store/wallet/wallet.models';
+import {Wallet, Status} from '../../../store/wallet/wallet.models';
 import {
   LightBlack,
   NeutralSlate,
@@ -125,6 +125,7 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   isRefreshing,
   hideWallet,
   hideBalance,
+  pendingTxps,
 }) => ({
   id,
   keyId,
@@ -140,6 +141,7 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   isRefreshing,
   hideWallet,
   hideBalance,
+  pendingTxps,
 });
 
 // Key overview list builder
@@ -273,7 +275,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
     try {
       await dispatch(startGetRates());
       await Promise.all([
-        dispatch(startUpdateAllWalletBalancesForKey(key)),
+        dispatch(startUpdateAllWalletStatusForKey(key)),
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
@@ -336,7 +338,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
                 if (!fullWalletObj.isComplete()) {
                   fullWalletObj.getStatus(
                     {network: 'livenet'},
-                    (err: any, status: WalletStatus) => {
+                    (err: any, status: Status) => {
                       if (err) {
                         // TODO
                         console.log(err);

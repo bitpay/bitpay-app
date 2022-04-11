@@ -17,6 +17,7 @@ import cloneDeep from 'lodash.clonedeep';
 import {formatFiatAmount} from '../../../utils/helper-methods';
 import {WALLET_DISPLAY_LIMIT} from '../../../navigation/tabs/home/components/Wallet';
 import {Network} from '../../../constants';
+import {PayProOptions} from '../effects/paypro/paypro';
 
 const mapAbbreviationAndName = (
   walletName: string,
@@ -42,7 +43,18 @@ export const buildWalletObj = (
     walletId,
     walletName,
     coin,
-    balance = {crypto: '0', fiat: 0, sat: 0},
+    balance = {
+      crypto: '0',
+      cryptoLocked: '0',
+      fiat: 0,
+      fiatLocked: 0,
+      sat: 0,
+      satAvailable: 0,
+      satLocked: 0,
+      satConfirmedLocked: 0,
+      satConfirmed: 0,
+      satConfirmedAvailable: 0,
+    },
     tokens,
     keyId,
     network,
@@ -81,6 +93,7 @@ export const buildWalletObj = (
     isRefreshing: false,
     hideWallet: false,
     hideBalance: false,
+    pendingTxps: [],
   };
 };
 
@@ -211,27 +224,52 @@ export const getRemainingWalletCount = (
   return wallets.length - WALLET_DISPLAY_LIMIT;
 };
 
-export const BuildKeysAndWalletsList = (
-  allKeys: {[key in string]: Key},
-  appNetwork?: Network,
-) => {
-  return Object.keys(allKeys).map(keyId => {
-    const keyObj = allKeys[keyId];
+export const BuildKeysAndWalletsList = ({
+  keys,
+  network,
+  payProOptions,
+}: {
+  keys: {[key in string]: Key};
+  network?: Network;
+  payProOptions?: PayProOptions;
+}) => {
+  return Object.keys(keys).map(keyId => {
+    const keyObj = keys[keyId];
+    const paymentOptions =
+      payProOptions?.paymentOptions?.filter(option => option.selected) ||
+      payProOptions?.paymentOptions;
     return {
       key: keyId,
       keyName: keyObj.keyName || 'My Key',
-      wallets: allKeys[keyId].wallets
-        .filter(wallet => (appNetwork ? wallet.network === appNetwork : true))
+      wallets: keys[keyId].wallets
+        .filter(wallet => {
+          if (paymentOptions) {
+            return paymentOptions.some(
+              ({chain, currency, network: optionNetwork}) => {
+                return (
+                  wallet.currencyAbbreviation === chain.toLowerCase() &&
+                  (!wallet.tokens ||
+                    wallet.tokens?.includes(currency.toLowerCase())) &&
+                  wallet.network === optionNetwork
+                );
+              },
+            );
+          }
+          if (network) {
+            return network === wallet.network;
+          }
+          return true;
+        })
         .map(walletObj => {
           const {
             balance,
-            currencyAbbreviation,
             credentials: {network},
           } = walletObj;
           return merge(cloneDeep(walletObj), {
             cryptoBalance: balance.crypto,
             fiatBalance: formatFiatAmount(balance.fiat, 'USD'),
-            currencyAbbreviation,
+            cryptoLockedBalance: balance.cryptoLocked,
+            fiatLockedBalance: formatFiatAmount(balance.fiatLocked, 'usd'),
             network,
           });
         }),
@@ -254,6 +292,7 @@ const getEstimatedSizeForSingleInput = (wallet: Wallet): number => {
 export const GetEstimatedTxSize = (
   wallet: Wallet,
   nbOutputs?: number,
+  nbInputs?: number,
 ): number => {
   // Note: found empirically based on all multisig P2SH inputs and within m & n allowed limits.
   nbOutputs = nbOutputs ? nbOutputs : 2; // Assume 2 outputs
@@ -261,7 +300,7 @@ export const GetEstimatedTxSize = (
   const overhead = 4 + 4 + 9 + 9;
   const inputSize = getEstimatedSizeForSingleInput(wallet);
   const outputSize = 34;
-  const nbInputs = 1; // Assume 1 input
+  nbInputs = nbInputs ? nbInputs : 1; // Assume 1 input
 
   const size = overhead + inputSize * nbInputs + outputSize * nbOutputs;
   return parseInt((size * (1 + safetyMargin)).toFixed(0), 10);

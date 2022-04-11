@@ -117,13 +117,11 @@ export const CurrencyImageContainer = styled.View`
 export const CardGutter = '15px';
 
 interface CardContainerProps {
-  minHeight?: string;
-  width?: string;
   backgroundColor?: string;
 }
 export const CardContainer = styled.View<CardContainerProps>`
-  width: ${({width}: CardContainerProps) => width || '215px'};
-  min-height: ${({minHeight}: CardContainerProps) => minHeight || '250px'};
+  width: 170px;
+  height: 200px;
   background: ${({backgroundColor}: CardContainerProps) =>
     backgroundColor || NeutralSlate};
   border-radius: 21px;

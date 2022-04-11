@@ -55,7 +55,7 @@ const ListContainer = styled.View`
   margin-top: 20px;
 `;
 export const WalletSelectMenuContainer = styled.View`
-  padding: ${ScreenGutter};
+  padding: 0 ${ScreenGutter};
   background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;

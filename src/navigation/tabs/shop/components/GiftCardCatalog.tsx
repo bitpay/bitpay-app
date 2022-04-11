@@ -11,7 +11,6 @@ import ShopCarouselList, {ShopCarouselItem} from './ShopCarouselList';
 import {Paragraph} from '../../../../components/styled/Text';
 import GiftCardItem from './GiftCardItem';
 import {
-  AvailableCardMap,
   CardConfig,
   Category,
   GiftCard,
@@ -128,7 +127,7 @@ export default ({
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as CardConfig[]);
   const [isFilterSheetShown, setIsFilterSheetShown] = useState(false);
-  const [purchasedGiftCards, setPurchasedGiftCards] = useState(
+  const [purchasedGiftCards] = useState(
     giftCards
       .filter(c => c.status === 'SUCCESS')
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
@@ -181,10 +180,7 @@ export default ({
       <View>
         {purchasedGiftCards.length ? (
           <>
-            <MyGiftCards
-              giftCards={purchasedGiftCards}
-              supportedGiftCards={supportedGiftCards}
-            />
+            <MyGiftCards supportedGiftCards={supportedGiftCards} />
             <SectionDivider />
             <SectionSpacer height={20} />
           </>

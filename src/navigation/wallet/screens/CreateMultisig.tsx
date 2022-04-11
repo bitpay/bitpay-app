@@ -22,7 +22,7 @@ import * as yup from 'yup';
 import {useForm, Controller} from 'react-hook-form';
 import BoxInput from '../../../components/form/BoxInput';
 import {useLogger} from '../../../utils/hooks/useLogger';
-import {KeyOptions, WalletStatus} from '../../../store/wallet/wallet.models';
+import {KeyOptions, Status} from '../../../store/wallet/wallet.models';
 import {
   RouteProp,
   useNavigation,
@@ -249,38 +249,36 @@ const CreateMultisig = () => {
           }),
         )) as Wallet;
 
-        wallet.getStatus(
-          {network: 'livenet'},
-          (err: any, status: WalletStatus) => {
-            if (err) {
-              // TODO
-              console.log(err);
-            }
-            navigation.dispatch(
-              CommonActions.reset({
-                index: 2,
-                routes: [
-                  {
-                    name: 'Tabs',
-                    params: {screen: 'Home'},
+        // TODO
+        wallet.getStatus({network: 'livenet'}, (err: any, status: Status) => {
+          if (err) {
+            // TODO
+            console.log(err);
+          }
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 2,
+              routes: [
+                {
+                  name: 'Tabs',
+                  params: {screen: 'Home'},
+                },
+                {
+                  name: 'Wallet',
+                  params: {screen: 'KeyOverview', params: {key}},
+                },
+                {
+                  name: 'Wallet',
+                  params: {
+                    screen: 'Copayers',
+                    params: {wallet: wallet, status: status.wallet},
                   },
-                  {
-                    name: 'Wallet',
-                    params: {screen: 'KeyOverview', params: {key}},
-                  },
-                  {
-                    name: 'Wallet',
-                    params: {
-                      screen: 'Copayers',
-                      params: {wallet: wallet, status: status.wallet},
-                    },
-                  },
-                ],
-              }),
-            );
-            dispatch(dismissOnGoingProcessModal());
-          },
-        );
+                },
+              ],
+            }),
+          );
+          dispatch(dismissOnGoingProcessModal());
+        });
       } else {
         await dispatch(
           startOnGoingProcessModal(OnGoingProcessMessages.CREATING_KEY),

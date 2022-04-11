@@ -1,18 +1,22 @@
 import React from 'react';
-import {Image, ImageSourcePropType, Linking} from 'react-native';
+import {
+  ImageStyle,
+  Linking,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {
-  ActiveOpacity,
-  ScreenGutter,
+  ActiveOpacity, ImageContainer,
+  ScreenGutter
 } from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
 import {AppEffects} from '../../../../../store/app';
 import {
   Action,
   LightBlack,
-  NeutralSlate,
   SlateDark,
   White,
 } from '../../../../../styles/colors';
@@ -21,44 +25,36 @@ import {
   isClassicContentCard,
 } from '../../../../../utils/braze';
 import {useAppDispatch} from '../../../../../utils/hooks';
+import {BoxShadow} from '../Styled';
+import FastImage, {Source} from 'react-native-fast-image';
 
-const QUICK_LINK_ICON_HEIGHT = 75;
-const QUICK_LINK_ICON_WIDTH = 78;
+const QUICK_LINK_ICON_HEIGHT = 35;
+const QUICK_LINK_ICON_WIDTH = 35;
 
 interface QuickLinksCardProps {
   contentCard: ContentCard;
 }
 
 const QuickLinkCardContainer = styled.TouchableOpacity`
-  justify-content: center;
-  align-items: flex-start;
+  justify-content: flex-start;
+  align-items: center;
   flex-direction: row;
   width: 202px;
   height: 91px;
   border-radius: 12px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  overflow: hidden;
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   left: ${ScreenGutter};
-`;
-
-const ImgContainer = styled.View`
-  padding-left: 3px;
-  top: -8px;
-  right: -9px;
-  width: ${QUICK_LINK_ICON_WIDTH}px;
-  height: ${QUICK_LINK_ICON_HEIGHT}px;
+  position: relative;
 `;
 
 const TextContainer = styled.View`
-  padding-top: 19px;
-  padding-bottom: 19px;
-  padding-left: 16px;
-  width: 118px;
+  padding: 20px 0 20px 20px;
+  width: 130px;
 `;
 
 const TitleText = styled(BaseText)`
   font-style: normal;
-  font-weight: 500;
+  font-weight: 700;
   font-size: 12px;
   line-height: 25px;
   color: ${({theme: {dark}}) => (dark ? White : Action)};
@@ -71,13 +67,19 @@ const DescriptionText = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
+const IconContainer = styled.View`
+  position: absolute;
+  right: 20px;
+`;
+
 const QuickLinksCard: React.FC<QuickLinksCardProps> = props => {
   const {contentCard} = props;
   const {image, url, openURLInWebView} = contentCard;
   const dispatch = useAppDispatch();
+  const theme = useTheme();
   let title = '';
   let description = '';
-  let imageSource: ImageSourcePropType | null = null;
+  let imageSource: Source | null = null;
 
   if (
     isCaptionedContentCard(contentCard) ||
@@ -90,7 +92,7 @@ const QuickLinksCard: React.FC<QuickLinksCardProps> = props => {
   if (image) {
     if (typeof image === 'string') {
       imageSource = {uri: image};
-    } else if (__DEV__) {
+    } else {
       imageSource = image as any;
     }
   }
@@ -110,7 +112,10 @@ const QuickLinksCard: React.FC<QuickLinksCardProps> = props => {
   };
 
   return (
-    <QuickLinkCardContainer activeOpacity={ActiveOpacity} onPress={onPress}>
+    <QuickLinkCardContainer
+      activeOpacity={ActiveOpacity}
+      onPress={onPress}
+      style={!theme.dark && BoxShadow}>
       <TextContainer>
         <TitleText>{title}</TitleText>
         <DescriptionText numberOfLines={2} ellipsizeMode={'tail'}>
@@ -118,17 +123,16 @@ const QuickLinksCard: React.FC<QuickLinksCardProps> = props => {
         </DescriptionText>
       </TextContainer>
       {imageSource ? (
-        <ImgContainer>
-          <Image
+        <IconContainer>
+          <FastImage
+            resizeMode={'contain'}
             style={{
               height: QUICK_LINK_ICON_HEIGHT,
               width: QUICK_LINK_ICON_WIDTH,
             }}
-            height={QUICK_LINK_ICON_HEIGHT}
-            width={QUICK_LINK_ICON_WIDTH}
             source={imageSource}
           />
-        </ImgContainer>
+        </IconContainer>
       ) : null}
     </QuickLinkCardContainer>
   );

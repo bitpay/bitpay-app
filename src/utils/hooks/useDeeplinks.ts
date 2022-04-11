@@ -11,6 +11,7 @@ import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCrypt
 import {RootStackParamList, RootStacks} from '../../Root';
 import {useLogger} from '.';
 import {TabsScreens} from '../../navigation/tabs/TabsStack';
+import {WalletConnectScreens} from '../../navigation/wallet-connect/WalletConnectStack';
 
 export const useDeeplinks = () => {
   const dispatch = useDispatch();
@@ -67,12 +68,19 @@ export const useDeeplinks = () => {
         [RootStacks.GIFT_CARD_DEEPLINK]: 'giftcard',
         [RootStacks.BUY_CRYPTO]: {
           screens: {
-            [BuyCryptoScreens.ROOT]: 'buy',
+            [BuyCryptoScreens.ROOT]: {
+              path: 'buy/:amount',
+            },
           },
         },
         [RootStacks.SWAP_CRYPTO]: {
           screens: {
             [SwapCryptoScreens.ROOT]: 'swap',
+          },
+        },
+        [RootStacks.WALLET_CONNECT]: {
+          screens: {
+            [WalletConnectScreens.ROOT]: 'walletconnect',
           },
         },
       },

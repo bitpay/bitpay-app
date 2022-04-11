@@ -5,7 +5,7 @@ import {useSelector} from 'react-redux';
 import Avatar from '../../../../components/avatar/BitPayIdAvatar';
 import {RootState} from '../../../../store';
 import {User} from '../../../../store/bitpay-id/bitpay-id.models';
-import {HeaderButtonContainer} from '../HomeRoot';
+import {HeaderButtonContainer} from './Styled';
 
 const ProfileButton: React.FC = () => {
   const navigation = useNavigation();
