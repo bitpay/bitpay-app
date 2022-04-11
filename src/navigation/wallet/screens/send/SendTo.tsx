@@ -253,7 +253,7 @@ const SendTo = () => {
 
         const payProOptions = await GetPayProOptions(invoiceUrl);
         dispatch(dismissOnGoingProcessModal());
-
+        await sleep(500);
         const selected = payProOptions.paymentOptions.find(
           (option: PayProPaymentOption) =>
             option.selected &&
@@ -276,6 +276,7 @@ const SendTo = () => {
       } catch (err) {
         const formattedErrMsg = BWCErrorMessage(err);
         dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
         logger.warn(formattedErrMsg);
         dispatch(
           showBottomNotificationModal(
