@@ -29,7 +29,10 @@ const Crypto = () => {
       <Setting
         activeOpacity={ActiveOpacity}
         onPress={() =>
-          navigation.navigate('Settings', {screen: 'NetworkFeePolicy'})
+          navigation.navigate('Tabs', {
+            screen: 'Settings',
+            params: {screen: 'NetworkFeePolicy'},
+          })
         }>
         <SettingTitle>{t('Network Fee Policy')}</SettingTitle>
         <AngleRight />

@@ -28,6 +28,7 @@ import About from './components/About';
 import Contacts from './components/Contacts';
 import {useSelector} from 'react-redux';
 import Crypto from './components/Crypto';
+import WalletsAndKeys from './components/WalletsAndKeys';
 interface HomeSetting {
   id: SettingsListType;
   title: string;
@@ -84,6 +85,7 @@ export type SettingsListType =
   | 'General'
   | 'Contacts'
   | 'Crypto'
+  | 'Wallets & Keys'
   | 'Security'
   | 'External Services'
   | 'Connections'
@@ -121,6 +123,12 @@ const SettingsHomeScreen: React.FC = () => {
       title: t('Crypto'),
       onPress: () => {},
       subListComponent: <Crypto />,
+    },
+    {
+      id: 'Wallets & Keys',
+      title: t('Wallets & Keys'),
+      onPress: () => {},
+      subListComponent: <WalletsAndKeys />,
     },
     {
       id: 'Security',

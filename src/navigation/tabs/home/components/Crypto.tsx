@@ -64,6 +64,7 @@ const _renderItem = ({item}: {item: {id: string; component: JSX.Element}}) => {
 export const keyBackupRequired = (
   key: Key,
   navigation: NavigationProp<any>,
+  context?: string,
 ): BottomNotificationConfig => {
   return {
     type: 'error',
@@ -80,6 +81,7 @@ export const keyBackupRequired = (
               keyId: key.id,
               words: getMnemonic(key),
               key,
+              context,
             },
           });
         },
