@@ -20,6 +20,7 @@ import {LogActions} from '../../../store/log';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {CardStackParamList} from '../CardStack';
 import * as Styled from './CardSettingsList.styled';
+import {ToggleSpinnerState} from './ToggleSpinner';
 
 interface SettingsListProps {
   card: Card;
@@ -50,6 +51,8 @@ const SettingsList: React.FC<SettingsListProps> = props => {
   const {t} = useTranslation();
   const {card, navigation} = props;
   const [localLockState, setLocalLockState] = useState(card.lockedByUser);
+  const [localLockStatus, setLocalLockStatus] =
+    useState<ToggleSpinnerState>(null);
   const updateCardLockStatus = useAppSelector(
     ({CARD}) => CARD.updateCardLockStatus[card.id],
   );
@@ -63,6 +66,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
   const onLockToggled = (locked: boolean) => {
     // set local lock state for immediate feedback, reset if request fails
     setLocalLockState(locked);
+    setLocalLockStatus('loading');
     dispatch(CardEffects.START_UPDATE_CARD_LOCK(card.id, locked));
   };
 
@@ -73,9 +77,26 @@ const SettingsList: React.FC<SettingsListProps> = props => {
       updateCardLockStatus === 'failed'
     ) {
       setLocalLockState(card.lockedByUser);
-      dispatch(CardActions.updateUpdateCardLockStatus(card.id, null));
+
+      if (localLockStatus === 'loading') {
+        setLocalLockStatus(updateCardLockStatus);
+      }
+
+      let tid = setTimeout(() => {
+        setLocalLockStatus(null);
+
+        tid = setTimeout(() => {
+          dispatch(CardActions.updateUpdateCardLockStatus(card.id, null));
+        }, 1000);
+      }, 1000);
+
+      return () => {
+        clearTimeout(tid);
+      };
     }
-  }, [updateCardLockStatus, card.id]);
+    // localLockStatus ok to leave out of deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [updateCardLockStatus, card.id, card.lockedByUser, dispatch]);
 
   return (
     <View>
@@ -108,7 +129,8 @@ const SettingsList: React.FC<SettingsListProps> = props => {
           <Styled.SettingsToggle
             Icon={LockIcon}
             value={localLockState}
-            onChange={onLockToggled}>
+            onChange={onLockToggled}
+            state={localLockStatus}>
             Lock Card
           </Styled.SettingsToggle>
 
