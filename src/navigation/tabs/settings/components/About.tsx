@@ -60,6 +60,13 @@ const About = () => {
       </Setting>
 
       <Hr />
+
+      <Setting
+        onPress={() => navigation.navigate('About', {screen: 'SendFeedback'})}>
+        <SettingTitle>Send Feedback</SettingTitle>
+      </Setting>
+
+      <Hr />
       {LINKS.map(({title, link}, index) => {
         return (
           <View key={title}>
