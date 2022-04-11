@@ -33,6 +33,10 @@ export const IsValidPayPro = (data: string): boolean => {
   );
 };
 
+export const isValidWalletConnectUri = (data: string): boolean => {
+  return !!/(wallet\/wc|wc:)/g.exec(data);
+};
+
 const IsValidBitcoinUri = (data: string): boolean => {
   data = SanitizeUri(data);
   return !!BWC.getBitcore().URI.isValid(data);

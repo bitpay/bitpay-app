@@ -419,7 +419,7 @@ const KeySettings = () => {
                 navigation.navigate('Wallet', {
                   screen: 'ExportKey',
                   params: {
-                    code: generateKeyExportCode(_key),
+                    code: generateKeyExportCode(_key, _key.properties.mnemonic),
                     keyName,
                   },
                 });

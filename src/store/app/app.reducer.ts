@@ -91,7 +91,7 @@ const initialState: AppState = {
   network: APP_NETWORK,
   baseBitPayURL: BASE_BITPAY_URLS[Network.mainnet],
   appIsLoading: true,
-  introCompleted: false,
+  introCompleted: true,
   onboardingCompleted: false,
   showOnGoingProcessModal: false,
   onGoingProcessModalMessage: OnGoingProcessMessages.GENERAL_AWAITING,
@@ -116,7 +116,7 @@ const initialState: AppState = {
   biometricLockActive: false,
   lockAuthorizedUntil: undefined,
   homeCarouselConfig: [],
-  homeCarouselLayoutType: 'carousel',
+  homeCarouselLayoutType: 'listView',
 };
 
 export const appReducer = (

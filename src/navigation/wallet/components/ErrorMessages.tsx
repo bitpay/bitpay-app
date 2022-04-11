@@ -15,7 +15,7 @@ const List = styled(BaseText)`
 
 export const DecryptError: BottomNotificationConfig = {
   type: 'error',
-  title: 'Something went wrong',
+  title: 'Something Went Wrong',
   message: 'Could not decrypt wallet.',
   enableBackdropDismiss: true,
   actions: [
@@ -114,7 +114,7 @@ export const CustomErrorMessage = ({
 }): BottomNotificationConfig => {
   return {
     type: 'error',
-    title: title || 'Something went wrong',
+    title: title || 'Something Went Wrong',
     message: errMsg,
     enableBackdropDismiss: true,
     onBackdropDismiss: action,
@@ -196,7 +196,7 @@ export const UnconfirmedInputs = (
 };
 
 export const RbfTransaction = (
-  speedUp: () => void,
+  speedup: () => void,
   viewDetails: () => void,
 ): BottomNotificationConfig => {
   return {
@@ -209,7 +209,7 @@ export const RbfTransaction = (
       {
         text: 'Speed up transaction',
         action: () => {
-          speedUp();
+          speedup();
         },
         primary: true,
       },
@@ -224,8 +224,8 @@ export const RbfTransaction = (
   };
 };
 
-export const SpeedUpTransaction = (
-  speedUp: () => void,
+export const SpeedupTransaction = (
+  speedup: () => void,
   viewDetails: () => void,
 ): BottomNotificationConfig => {
   return {
@@ -238,7 +238,7 @@ export const SpeedUpTransaction = (
       {
         text: 'Speed up transaction',
         action: () => {
-          speedUp();
+          speedup();
         },
         primary: true,
       },
@@ -253,8 +253,8 @@ export const SpeedUpTransaction = (
   };
 };
 
-export const SpeedUpEthTransaction = (
-  speedUp: () => void,
+export const SpeedupEthTransaction = (
+  speedup: () => void,
   viewDetails: () => void,
 ): BottomNotificationConfig => {
   return {
@@ -266,7 +266,7 @@ export const SpeedUpEthTransaction = (
       {
         text: 'Speed up transaction',
         action: () => {
-          speedUp();
+          speedup();
         },
         primary: true,
       },
@@ -300,6 +300,38 @@ export const MinFeeWarning = (gotIt: () => void): BottomNotificationConfig => {
           gotIt();
         },
         primary: false,
+      },
+    ],
+  };
+};
+
+export const SpeedupInsufficientFunds = (): BottomNotificationConfig => {
+  return {
+    type: 'error',
+    title: 'Error',
+    message: 'Insufficient funds for paying speed up fee.',
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: 'Ok',
+        action: () => {},
+        primary: true,
+      },
+    ],
+  };
+};
+
+export const SpeedupInvalidTx = (): BottomNotificationConfig => {
+  return {
+    type: 'error',
+    title: 'Error',
+    message: 'Transaction not found. Probably invalid.',
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: 'Ok',
+        action: () => {},
+        primary: true,
       },
     ],
   };

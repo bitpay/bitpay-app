@@ -5,11 +5,7 @@ import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {BaseText, H4} from '../../../components/styled/Text';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {
-  formatFiatAmount,
-  isValidWalletConnectUri,
-  sleep,
-} from '../../../utils/helper-methods';
+import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {walletConnectOnSessionRequest} from '../../../store/wallet-connect/wallet-connect.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
@@ -33,6 +29,7 @@ import KeyWalletsRow, {
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import _ from 'lodash';
+import {isValidWalletConnectUri} from '../../../store/wallet/utils/validations';
 
 export type WalletConnectIntroParamList = {
   uri?: string;

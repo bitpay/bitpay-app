@@ -25,6 +25,7 @@ import GiftCardDenoms, {
 } from '../../components/GiftCardDenoms';
 import {
   getActivationFee,
+  getVisibleDiscount,
   isSupportedDiscountType,
 } from '../../../../../lib/gift-cards/gift-card';
 import {useNavigation, useTheme} from '@react-navigation/native';
@@ -148,13 +149,15 @@ const BuyGiftCard = ({
   };
 
   const goToConfirmScreen = (amount: Number) => {
+    const discount = getVisibleDiscount(cardConfig);
     const invoiceCreationParams = {
       invoiceType: 'GiftCard',
       amount: +amount,
       cardConfig,
+      discounts: discount ? [discount] : [],
     };
     navigator.navigate('Wallet', {
-      screen: 'GiftCardConfirm',
+      screen: WalletScreens.GIFT_CARD_CONFIRM,
       params: {
         invoiceCreationParams,
       },

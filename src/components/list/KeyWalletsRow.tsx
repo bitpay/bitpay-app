@@ -9,7 +9,7 @@ import {WalletRowProps} from './WalletRow';
 import WalletRow from './WalletRow';
 
 const RowContainer = styled.View`
-  margin: 20px 0;
+  margin-bottom: 20px;
 `;
 
 const KeyNameContainer = styled.View`
@@ -17,8 +17,7 @@ const KeyNameContainer = styled.View`
   align-items: center;
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
   border-bottom-width: 1px;
-  padding-bottom: 15px;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 `;
 
 const KeyName = styled(BaseText)`

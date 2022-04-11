@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect, useCallback, useLayoutEffect} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../../WalletStack';
@@ -40,6 +40,7 @@ import {
 } from '../../../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../../../constants/BWCError';
 import TransactionLevel from '../TransactionLevel';
+import {HeaderTitle} from '../../../../../components/styled/Text';
 
 export interface ConfirmParamList {
   wallet: Wallet;
@@ -47,13 +48,21 @@ export interface ConfirmParamList {
   txp: Partial<TransactionProposal>;
   txDetails: TxDetails;
   amount: number;
+  speedup?: boolean;
 }
 
 const Confirm = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'Confirm'>>();
-  const {wallet, recipient, txDetails, txp: _txp, amount} = route.params;
+  const {
+    wallet,
+    recipient,
+    txDetails,
+    txp: _txp,
+    amount,
+    speedup,
+  } = route.params;
   const [txp, setTxp] = useState(_txp);
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
   const key = allKeys[wallet?.keyId!];
@@ -76,6 +85,14 @@ const Confirm = () => {
   const [total, setTotal] = useState(_total);
   const [gasPrice, setGasPrice] = useState(_gasPrice);
   const {currencyAbbreviation} = wallet;
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => (
+        <HeaderTitle>Confirm {speedup ? 'Speed Up' : 'Payment'}</HeaderTitle>
+      ),
+    });
+  }, [navigation, speedup]);
 
   const isTxLevelAvailable = () => {
     const excludeCurrencies = ['bch', 'doge', 'ltc', 'xrp'];
@@ -177,7 +194,7 @@ const Confirm = () => {
         {gasLimit !== undefined ? (
           <SharedDetailRow description={'Gas limit'} value={gasLimit} hr />
         ) : null}
-        {nonce !== undefined ? (
+        {nonce !== undefined && nonce !== null ? (
           <SharedDetailRow description={'Nonce'} value={nonce} hr />
         ) : null}
         <SendingFrom sender={sendingFrom} hr />
@@ -186,7 +203,7 @@ const Confirm = () => {
       </DetailsList>
 
       <SwipeButton
-        title={'Slide to send'}
+        title={speedup ? 'Speed Up' : 'Slide to send'}
         forceReset={resetSwipeButton}
         onSwipeComplete={async () => {
           try {
@@ -214,6 +231,8 @@ const Confirm = () => {
                     title: 'Uh oh, something went wrong',
                   }),
                 );
+                await sleep(500);
+                setResetSwipeButton(true);
             }
           }
         }}
@@ -246,6 +265,7 @@ const Confirm = () => {
             ? txp?.feePerKb / 1000
             : undefined
         }
+        isSpeedUpTx={speedup}
       />
     </ConfirmContainer>
   );

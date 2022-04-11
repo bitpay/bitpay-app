@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {ScrollView} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
@@ -7,19 +7,37 @@ import {
   SectionSpacer,
 } from '../../components/styled/ShopTabComponents';
 import {GiftCardScreens, GiftCardStackParamList} from '../GiftCardStack';
-import {CardConfig} from '../../../../../store/shop/shop.models';
+import {CardConfig, GiftCard} from '../../../../../store/shop/shop.models';
 import GiftCardCreditsItem from '../../components/GiftCardCreditsItem';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
+import {useAppSelector} from '../../../../../utils/hooks';
+import {APP_NETWORK} from '../../../../../constants/config';
+import {sortByDescendingDate} from '../../../../../lib/gift-cards/gift-card';
 
 const ArchivedGiftCards = ({
   route,
+  navigation,
 }: StackScreenProps<GiftCardStackParamList, 'ArchivedGiftCards'>) => {
-  const navigation = useNavigation();
-  const {supportedGiftCards, giftCards} = route.params;
+  const navigator = useNavigation();
+  const {supportedGiftCards} = route.params;
+  const allGiftCards = useAppSelector(
+    ({SHOP}) => SHOP.giftCards[APP_NETWORK],
+  ) as GiftCard[];
+  const giftCards = allGiftCards
+    .filter(giftCard => giftCard.archived)
+    .sort(sortByDescendingDate);
   const supportedGiftCardMap = supportedGiftCards.reduce(
     (map, cardConfig) => ({...map, ...{[cardConfig.name]: cardConfig}}),
     {} as {[name: string]: CardConfig},
   );
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (!giftCards.length) {
+        navigation.pop();
+      }
+    });
+    return unsubscribe;
+  }, [giftCards.length, navigation]);
   return (
     <ScrollView>
       <SectionContainer>
@@ -32,7 +50,7 @@ const ArchivedGiftCards = ({
               <TouchableWithoutFeedback
                 key={giftCard.invoiceId}
                 onPress={() => {
-                  navigation.navigate('GiftCard', {
+                  navigator.navigate('GiftCard', {
                     screen: GiftCardScreens.GIFT_CARD_DETAILS,
                     params: {cardConfig, giftCard},
                   });

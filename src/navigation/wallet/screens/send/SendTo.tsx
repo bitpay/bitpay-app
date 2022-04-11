@@ -25,10 +25,8 @@ import KeyWalletsRow, {
   KeyWalletsRowProps,
 } from '../../../../components/list/KeyWalletsRow';
 import {
-  GetPayProDetails,
   GetPayProOptions,
-  HandlePayPro,
-  PayProOptions,
+  PayProPaymentOption,
 } from '../../../../store/wallet/effects/paypro/paypro';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
@@ -257,32 +255,20 @@ const SendTo = () => {
         dispatch(dismissOnGoingProcessModal());
 
         const selected = payProOptions.paymentOptions.find(
-          (option: PayProOptions) =>
+          (option: PayProPaymentOption) =>
             option.selected &&
             currencyAbbreviation.toUpperCase() === option.currency,
         );
         if (selected) {
           const isValid = checkCoinAndNetwork(selected, true);
-
           if (isValid) {
-            dispatch(
-              startOnGoingProcessModal(
-                OnGoingProcessMessages.FETCHING_PAYMENT_OPTIONS,
-              ),
-            );
-            const payProDetails = await GetPayProDetails({
-              paymentUrl: payProOptions.payProUrl,
-              coin: currencyAbbreviation,
+            navigation.navigate('Wallet', {
+              screen: WalletScreens.PAY_PRO_CONFIRM,
+              params: {
+                payProOptions,
+                wallet,
+              },
             });
-            dispatch(dismissOnGoingProcessModal());
-            const confirmScreenParams = await HandlePayPro(
-              payProDetails,
-              undefined,
-              payProOptions.payProUrl,
-              currencyAbbreviation,
-            );
-            //TODO: Redirect me
-            console.log(confirmScreenParams);
           }
         } else {
           // TODO: handle me

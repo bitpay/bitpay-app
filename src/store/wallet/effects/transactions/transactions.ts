@@ -1,4 +1,9 @@
-import {HistoricRate, Rates, Wallet} from '../../wallet.models';
+import {
+  HistoricRate,
+  Rates,
+  Wallet,
+  TransactionProposal,
+} from '../../wallet.models';
 import {FormatAmountStr} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
 import uniqBy from 'lodash.uniqby';
@@ -27,6 +32,7 @@ import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {GetMinFee} from '../fee/fee';
 import {updateWalletTxHistory} from '../../wallet.actions';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
+import {getGiftCardIcons} from '../../../../lib/gift-cards/gift-card';
 
 const BWC = BwcProvider.getInstance();
 const Errors = BWC.getErrors();
@@ -76,11 +82,14 @@ export const RejectTxProposal = (wallet: Wallet, txp: any): Promise<any> => {
   });
 };
 
-export const ProcessPendingTxps = (txps: any, wallet: any) => {
+export const ProcessPendingTxps = (
+  txps: TransactionProposal[],
+  wallet: any,
+) => {
   const now = Math.floor(Date.now() / 1000);
   const {currencyAbbreviation} = wallet;
 
-  txps.forEach((tx: any) => {
+  txps.forEach((tx: TransactionProposal) => {
     tx = ProcessTx(currencyAbbreviation, tx);
 
     // no future transactions...
@@ -88,24 +97,17 @@ export const ProcessPendingTxps = (txps: any, wallet: any) => {
       tx.createdOn = now;
     }
 
-    tx.wallet = wallet;
-
-    if (!tx.wallet) {
-      console.log('no wallet at txp?');
-      return;
-    }
-
     const action: any = tx.actions.find(
-      (action: any) => action.copayerId === tx.wallet.credentials.copayerId,
+      (a: any) => a.copayerId === wallet.credentials.copayerId,
     );
 
-    if ((!action || action.type === 'failed') && tx.status == 'pending') {
+    if ((!action || action.type === 'failed') && tx.status === 'pending') {
       tx.pendingForUs = true;
     }
 
-    if (action && action.type == 'accept') {
+    if (action && action.type === 'accept') {
       tx.statusForUs = 'accepted';
-    } else if (action && action.type == 'reject') {
+    } else if (action && action.type === 'reject') {
       tx.statusForUs = 'rejected';
     } else {
       tx.statusForUs = 'pending';
@@ -115,10 +117,10 @@ export const ProcessPendingTxps = (txps: any, wallet: any) => {
       tx.canBeRemoved = true;
     }
   });
-  txps = BuildUiFriendlyList(txps, currencyAbbreviation);
+  return BuildUiFriendlyList(txps, currencyAbbreviation);
 };
 
-const ProcessTx = (currencyAbbreviation: string, tx: any) => {
+const ProcessTx = (currencyAbbreviation: string, tx: TransactionProposal) => {
   if (!tx || tx.action === 'invalid') {
     return tx;
   }
@@ -138,7 +140,7 @@ const ProcessTx = (currencyAbbreviation: string, tx: any) => {
         return total + o.amount;
       }, 0);
     }
-    tx.toAddress = tx.outputs[0].toAddress;
+    tx.toAddress = tx.outputs[0].toAddress!;
 
     // translate legacy addresses
     if (tx.addressTo && currencyAbbreviation === 'ltc') {
@@ -383,7 +385,10 @@ export const GetTransactionHistory =
     refresh?: boolean;
     contactList?: any[];
   }): Effect<Promise<{transactions: any[]; loadMore: boolean}>> =>
-  async (dispatch): Promise<{transactions: any[]; loadMore: boolean}> => {
+  async (
+    dispatch,
+    getState,
+  ): Promise<{transactions: any[]; loadMore: boolean}> => {
     return new Promise(async (resolve, reject) => {
       let requestLimit = limit;
 
@@ -393,7 +398,9 @@ export const GetTransactionHistory =
         return resolve({transactions: [], loadMore: false});
       }
 
-      const lastTransactionId = transactionsHistory[0]
+      const lastTransactionId = refresh
+        ? null
+        : transactionsHistory[0]
         ? transactionsHistory[0].txid
         : null;
       const skip = refresh ? 0 : transactionsHistory.length;
@@ -416,14 +423,16 @@ export const GetTransactionHistory =
         );
 
         // To get transaction list details: icon, description, amount and date
+        const {SHOP} = getState();
         transactions = BuildUiFriendlyList(
           transactions,
           wallet.currencyAbbreviation,
           contactList,
+          getGiftCardIcons(SHOP.supportedCardMap),
         );
 
-        const array = transactionsHistory
-          .concat(transactions)
+        const array = transactions
+          .concat(transactionsHistory)
           .filter((txs: any) => txs);
 
         const newHistory = uniqBy(array, x => {
@@ -535,6 +544,7 @@ export const BuildUiFriendlyList = (
   transactionList: any[] = [],
   currencyAbbreviation: string,
   contactList: any[] = [],
+  giftCardIcons: {[cardName: string]: string},
 ): any[] => {
   return transactionList.map(transaction => {
     const {
@@ -552,7 +562,11 @@ export const BuildUiFriendlyList = (
       message,
       creatorName,
     } = transaction || {};
-    const {service: customDataService, toWalletName} = customData || {};
+    const {
+      service: customDataService,
+      toWalletName,
+      giftCardName,
+    } = customData || {};
     const {body: noteBody} = note || {};
 
     const notZeroAmountEth = NotZeroAmountEth(amount, currencyAbbreviation);
@@ -604,10 +618,9 @@ export const BuildUiFriendlyList = (
         transaction.uiIcon = TransactionIcons.error;
       } else {
         if (isSent) {
-          // TODO: Get giftCard images
-          transaction.uiIcon = customDataService
-            ? TransactionIcons[customDataService]
-            : TransactionIcons.sent;
+          transaction.uiIcon =
+            TransactionIcons[customDataService] || TransactionIcons.sent;
+          transaction.uiIconURI = giftCardIcons[giftCardName];
 
           if (notZeroAmountEth) {
             if (noteBody) {
@@ -680,7 +693,7 @@ export const BuildUiFriendlyList = (
   });
 };
 
-export const CanSpeedUpTx = (
+export const CanSpeedupTx = (
   tx: any,
   currencyAbbreviation: string,
 ): boolean => {
@@ -896,4 +909,39 @@ const GetActionsList = (transaction: any, wallet: Wallet) => {
   }
 
   return actionList.reverse();
+};
+
+export const GetUtxos = (wallet: Wallet): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    wallet.getUtxos(
+      {
+        coin: wallet.credentials.coin,
+      },
+      (err: any, resp: any) => {
+        if (err || !resp || !resp.length) {
+          return reject(err ? err : 'No UTXOs');
+        }
+        return resolve(resp);
+      },
+    );
+  });
+};
+
+export const GetInput = async (wallet: Wallet, txid: string) => {
+  try {
+    const utxos = await GetUtxos(wallet);
+    let biggestUtxo = 0;
+    let input;
+    utxos.forEach((u: any, i: any) => {
+      if (u.txid === txid) {
+        if (u.amount > biggestUtxo) {
+          biggestUtxo = u.amount;
+          input = utxos[i];
+        }
+      }
+    });
+    return input;
+  } catch (err) {
+    return;
+  }
 };

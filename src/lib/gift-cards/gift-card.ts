@@ -7,6 +7,7 @@ import {
   ApiCardConfig,
   AvailableCardMap,
   CardConfig,
+  GiftCard,
   GiftCardActivationFee,
 } from '../../store/shop/shop.models';
 import {formatFiatAmount} from '../../utils/helper-methods';
@@ -88,6 +89,10 @@ export function sortByDisplayName(
   const aSortValue = getDisplayNameSortValue(a.displayName);
   const bSortValue = getDisplayNameSortValue(b.displayName);
   return aSortValue > bSortValue ? 1 : -1;
+}
+
+export function sortByDescendingDate(a: GiftCard, b: GiftCard) {
+  return new Date(b.date).getTime() - new Date(a.date).getTime();
 }
 
 export function spreadAmounts(values: Array<number>, currency: string): string {
@@ -181,4 +186,22 @@ export function getPhoneCountryCodes(
 
 export function isSupportedDiscountType(discountType: string) {
   return ['percentage', 'flatrate'].includes(discountType);
+}
+
+export function getVisibleDiscount(cardConfig: CardConfig) {
+  const discounts = cardConfig.discounts;
+  return (
+    discounts &&
+    discounts.find(d => isSupportedDiscountType(d.type) && !d.hidden)
+  );
+}
+
+export function getGiftCardIcons(supportedCardMap: AvailableCardMap) {
+  return Object.keys(supportedCardMap).reduce(
+    (iconMap, cardName) => ({
+      ...iconMap,
+      [cardName]: supportedCardMap[cardName][0].icon,
+    }),
+    {} as {[cardName: string]: string},
+  );
 }

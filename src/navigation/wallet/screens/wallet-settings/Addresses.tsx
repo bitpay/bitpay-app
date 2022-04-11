@@ -26,7 +26,7 @@ import {useAppDispatch} from '../../../../utils/hooks';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {CustomErrorMessage} from '../../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
-import {GetWalletBalance} from '../../../../store/wallet/effects/balance/balance';
+import {GetWalletBalance} from '../../../../store/wallet/effects/status/status';
 import {GetProtocolPrefixAddress} from '../../../../store/wallet/utils/wallet';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {

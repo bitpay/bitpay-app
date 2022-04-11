@@ -164,10 +164,6 @@ export const findContact = (
 export const getMnemonic = (key: Key) =>
   key.properties.mnemonic.trim().split(' ');
 
-export const isValidWalletConnectUri = (data: string): boolean => {
-  return !!/(wallet\/wc|wc:)/g.exec(data);
-};
-
 export const shouldScale = (
   value: string | number | null | undefined,
   threshold = 10,

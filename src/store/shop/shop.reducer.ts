@@ -94,6 +94,19 @@ export const shopReducer = (
           ),
         },
       };
+    case ShopActionTypes.TOGGLED_GIFT_CARD_ARCHIVED_STATUS:
+      const {giftCard: archivableGiftCard} = action.payload;
+      return {
+        ...state,
+        giftCards: {
+          ...state.giftCards,
+          [APP_NETWORK]: state.giftCards[APP_NETWORK].map(card =>
+            card.invoiceId === archivableGiftCard.invoiceId
+              ? {...card, archived: !archivableGiftCard.archived}
+              : card,
+          ),
+        },
+      };
     case ShopActionTypes.UPDATED_EMAIL_ADDRESS:
       const {email} = action.payload;
       return {
