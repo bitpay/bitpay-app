@@ -47,7 +47,7 @@ export type TransactionSpeedParamList = {
   onCloseModal: (level?: string, customFeePerKB?: number) => void;
 };
 
-enum ethAvgTime {
+export enum ethAvgTime {
   normal = 'within 5 minutes',
   priority = 'within 2 minutes',
   urgent = 'ASAP',
@@ -56,7 +56,7 @@ enum ethAvgTime {
 const TxSpeedContainer = styled(SheetContainer)`
   flex: 1;
   justify-content: flex-start;
-  margin-top: 0px;
+  margin-top: 0;
   padding: 20px 0;
 `;
 
@@ -94,16 +94,19 @@ const StepsContainer = styled.View`
   margin: ${ScreenGutter};
 `;
 
-const StepContainer = styled.View<{length: number}>`
+export const FeeLevelStepContainer = styled.View<{length: number}>`
   /* Circle size + horizontal gutter */
   width: ${({length}) => (WIDTH - (CIRCLE_SIZE + 30)) / length}px;
 `;
 
-const Step = styled.View<{isLast?: boolean}>`
+export const FeeLevelStep = styled.View<{isLast?: boolean}>`
   flex-direction: row;
 `;
 
-const Circle = styled.Pressable<{isActive: boolean; backgroundColor: string}>`
+export const FeeLevelStepCircle = styled.Pressable<{
+  isActive: boolean;
+  backgroundColor: string;
+}>`
   background-color: ${({backgroundColor}) => backgroundColor};
   width: ${CIRCLE_SIZE}px;
   height: ${CIRCLE_SIZE}px;
@@ -114,7 +117,7 @@ const Circle = styled.Pressable<{isActive: boolean; backgroundColor: string}>`
   z-index: 1;
 `;
 
-const Line = styled.View<{backgroundColor: string}>`
+export const FeeLevelStepLine = styled.View<{backgroundColor: string}>`
   background-color: ${({backgroundColor}) => backgroundColor};
   flex-grow: 1;
   height: 2px;
@@ -131,11 +134,11 @@ const BottomLabelContainer = styled.View`
   margin: 0 ${ScreenGutter};
 `;
 
-const StepBottomLabel = styled(H7)`
+export const FeeLevelStepBottomLabel = styled(H7)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const StepTopLabel = styled(H7)<{length: number}>`
+export const FeeLevelStepTopLabel = styled(H7)<{length: number}>`
   text-align: center;
   left: -50%;
   width: ${({length}) => (WIDTH + (length - 1 + CIRCLE_SIZE)) / length}px;
@@ -146,7 +149,7 @@ const TxSpeedParagraph = styled(Paragraph)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const StepsHeader = styled.View`
+export const FeeLevelStepsHeader = styled.View`
   flex-direction: row;
   align-items: center;
 `;
@@ -159,7 +162,7 @@ const CurrencyImageContainer = styled.View`
   margin-right: 10px;
 `;
 
-const StepsHeaderSubTitle = styled(Paragraph)`
+export const FeeLevelStepsHeaderSubTitle = styled(Paragraph)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   padding-top: 5px;
   min-height: 30px;
@@ -235,7 +238,9 @@ const TransactionLevel = ({
       };
 
       feeOption.feePerSatByte = (feePerKb / feeUnitAmount).toFixed();
-      feeOption.uiFeePerSatByte = `${feeOption.feePerSatByte} ${feeUnit}`;
+      feeOption.uiFeePerSatByte = `${feeOption.feePerSatByte} ${
+          coin === 'btc' ? 'Satoshis per byte' : feeUnit
+      }`;
 
       if (coin === 'eth' || IsERCToken(coin)) {
         // @ts-ignore
@@ -456,16 +461,16 @@ const TransactionLevel = ({
           {feeOptions && feeOptions.length > 0 ? (
             <>
               <StepsHeaderContainer>
-                <StepsHeader>
+                <FeeLevelStepsHeader>
                   <CurrencyImageContainer>
                     <CurrencyImage img={img} size={20} />
                   </CurrencyImageContainer>
                   <H4>
                     {coin === 'btc' ? 'Bitcoin' : 'Ethereum'} Network Fee Policy
                   </H4>
-                </StepsHeader>
+                </FeeLevelStepsHeader>
 
-                <StepsHeaderSubTitle>
+                <FeeLevelStepsHeaderSubTitle>
                   {selectedLevel === 'custom' && customSatsPerByte
                     ? `${customSatsPerByte} ${feeUnit}`
                     : null}
@@ -474,24 +479,24 @@ const TransactionLevel = ({
                         getSelectedFeeOption()?.avgConfirmationTime
                       }`
                     : null}
-                </StepsHeaderSubTitle>
+                </FeeLevelStepsHeaderSubTitle>
               </StepsHeaderContainer>
 
               <StepsContainer>
                 {feeOptions.map((fee, i, {length}) => (
-                  <StepContainer key={i} length={length}>
+                  <FeeLevelStepContainer key={i} length={length}>
                     <TopLabelContainer>
                       {i !== 0 && selectedLevel === fee.level ? (
                         <View style={{flexShrink: 1}}>
-                          <StepTopLabel length={length} medium={true}>
+                          <FeeLevelStepTopLabel length={length} medium={true}>
                             {fee.uiLevel}
-                          </StepTopLabel>
+                          </FeeLevelStepTopLabel>
                         </View>
                       ) : null}
                     </TopLabelContainer>
 
-                    <Step>
-                      <Circle
+                    <FeeLevelStep>
+                      <FeeLevelStepCircle
                         isActive={selectedLevel === fee.level}
                         onPress={() => {
                           setDisableApply(false);
@@ -511,16 +516,18 @@ const TransactionLevel = ({
                         ]}
                       />
 
-                      <Line backgroundColor={getBackgroundColor(i + 1)} />
-                    </Step>
-                  </StepContainer>
+                      <FeeLevelStepLine
+                        backgroundColor={getBackgroundColor(i + 1)}
+                      />
+                    </FeeLevelStep>
+                  </FeeLevelStepContainer>
                 ))}
 
                 <View>
                   <TopLabelContainer />
 
-                  <Step isLast={true}>
-                    <Circle
+                  <FeeLevelStep isLast={true}>
+                    <FeeLevelStepCircle
                       isActive={selectedLevel === 'custom'}
                       onPress={onSelectCustomFee}
                       backgroundColor={getBackgroundColor()}
@@ -535,13 +542,15 @@ const TransactionLevel = ({
                         },
                       ]}
                     />
-                  </Step>
+                  </FeeLevelStep>
                 </View>
               </StepsContainer>
 
               <BottomLabelContainer>
-                <StepBottomLabel>{feeOptions[0].uiLevel}</StepBottomLabel>
-                <StepBottomLabel>Custom</StepBottomLabel>
+                <FeeLevelStepBottomLabel>
+                  {feeOptions[0].uiLevel}
+                </FeeLevelStepBottomLabel>
+                <FeeLevelStepBottomLabel>Custom</FeeLevelStepBottomLabel>
               </BottomLabelContainer>
 
               <DetailsList>

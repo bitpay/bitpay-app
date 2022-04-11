@@ -26,6 +26,8 @@ import Notifications from './components/Notifications';
 import Connections from './components/Connections';
 import About from './components/About';
 import Contacts from './components/Contacts';
+import {useSelector} from 'react-redux';
+import Crypto from './components/Crypto';
 interface HomeSetting {
   id: SettingsListType;
   title: string;
@@ -81,6 +83,7 @@ const DropdownSetting = styled(Setting)`
 export type SettingsListType =
   | 'General'
   | 'Contacts'
+  | 'Crypto'
   | 'Security'
   | 'External Services'
   | 'Connections'
@@ -90,7 +93,7 @@ const SettingsHomeScreen: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
-  const user = useAppSelector<RootState, User | null>(
+  const user = useSelector<RootState, User | null>(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
   const pinLockActive = useAppSelector(({APP}: RootState) => APP.pinLockActive);
@@ -112,6 +115,12 @@ const SettingsHomeScreen: React.FC = () => {
       title: t('Contacts'),
       onPress: () => {},
       subListComponent: <Contacts />,
+    },
+    {
+      id: 'Crypto',
+      title: t('Crypto'),
+      onPress: () => {},
+      subListComponent: <Crypto />,
     },
     {
       id: 'Security',

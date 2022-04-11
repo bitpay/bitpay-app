@@ -5,7 +5,7 @@ import {H7, Smallest} from '../styled/Text';
 import AngleRight from '../../../assets/img/angle-right.svg';
 import ContactIcon from '../../navigation/tabs/contacts/components/ContactIcon';
 import {SlateDark, White} from '../../styles/colors';
-import {ContactRowProps} from "./ContactRow";
+import {ContactRowProps} from './ContactRow';
 
 const ContactColumn = styled(Column)`
   margin-left: 25px;
