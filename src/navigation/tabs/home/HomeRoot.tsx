@@ -1,6 +1,8 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import React, {useEffect, useMemo, useState} from 'react';
 import {RefreshControl, ScrollView} from 'react-native';
+import styled from 'styled-components/native';
+import {ScreenGutter} from '../../../components/styled/Containers';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startGetRates} from '../../../store/wallet/effects';
@@ -13,9 +15,6 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishModal';
 import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
 import DefaultAdvertisements from './components/advertisements/DefaultAdvertisements';
-import ExchangeRatesList, {
-  ExchangeRateItemProps,
-} from './components/exchange-rates/ExchangeRatesList';
 import ProfileButton from './components/HeaderProfileButton';
 import ScanButton from './components/HeaderScanButton';
 import LinkingButtons from './components/LinkingButtons';
@@ -31,6 +30,9 @@ import AdvertisementsList from './components/advertisements/AdvertisementsList';
 import OffersCarousel from './components/offers/OffersCarousel';
 import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
 import {selectCardGroups} from '../../../store/card/card.selectors';
+import ExchangeRatesList, {
+  ExchangeRateItemProps,
+} from './components/exchange-rates/ExchangeRatesList';
 
 const HomeRoot = () => {
   const dispatch = useAppDispatch();
@@ -249,7 +251,9 @@ const HomeRoot = () => {
 
         {/* ////////////////////////////// EXCHANGE RATES */}
         {memoizedExchangeRates.length ? (
-          <ExchangeRatesList items={memoizedExchangeRates} />
+          <HomeSection title="Exchange Rates">
+            <ExchangeRatesList items={memoizedExchangeRates} />
+          </HomeSection>
         ) : null}
 
         {/* ////////////////////////////// QUICK LINKS - Leave feedback etc */}

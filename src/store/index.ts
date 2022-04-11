@@ -189,7 +189,6 @@ const getStore = () => {
           ...state,
           WALLET: {
             ...state.WALLET,
-            rates: null,
             tokenOptions: null,
             balanceCacheKey: null,
           },
