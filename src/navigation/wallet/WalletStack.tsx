@@ -53,7 +53,9 @@ import Addresses from './screens/wallet-settings/Addresses';
 import AllAddresses, {
   AllAddressesParamList,
 } from './screens/wallet-settings/AllAddresses';
-import PayProConfirm, { PayProConfirmParamList } from './screens/send/confirm/PayProConfirm';
+import PayProConfirm, {
+  PayProConfirmParamList,
+} from './screens/send/confirm/PayProConfirm';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;

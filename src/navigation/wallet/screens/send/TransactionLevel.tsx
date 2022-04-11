@@ -249,7 +249,7 @@ const TransactionLevel = ({
 
       feeOption.feePerSatByte = (feePerKb / feeUnitAmount).toFixed();
       feeOption.uiFeePerSatByte = `${feeOption.feePerSatByte} ${
-          coin === 'btc' ? 'Satoshis per byte' : feeUnit
+        coin === 'btc' ? 'Satoshis per byte' : feeUnit
       }`;
 
       if (coin === 'eth' || IsERCToken(coin)) {

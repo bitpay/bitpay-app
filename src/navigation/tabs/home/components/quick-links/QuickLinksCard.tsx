@@ -1,16 +1,12 @@
 import React from 'react';
-import {
-  ImageStyle,
-  Linking,
-  StyleProp,
-  ViewStyle,
-} from 'react-native';
+import {ImageStyle, Linking, StyleProp, ViewStyle} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import styled, {useTheme} from 'styled-components/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {
-  ActiveOpacity, ImageContainer,
-  ScreenGutter
+  ActiveOpacity,
+  ImageContainer,
+  ScreenGutter,
 } from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
 import {AppEffects} from '../../../../../store/app';
