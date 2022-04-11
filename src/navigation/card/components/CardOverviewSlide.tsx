@@ -36,7 +36,7 @@ const CardOverviewSlide: React.FC<CardOverviewSlideProps> = ({
         designCurrency={designCurrency}
       />
 
-      {card.lockedByUser  ? (
+      {card.lockedByUser ? (
         <View style={{position: 'absolute'}}>
           <LockCardOverlay />
         </View>
