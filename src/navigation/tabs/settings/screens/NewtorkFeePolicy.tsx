@@ -28,6 +28,8 @@ import {
 import {View} from 'react-native';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {CurrencyListIcons} from '../../../../constants/SupportedCurrencyOptions';
+import {sleep} from '../../../../utils/helper-methods';
+import NetworkPolicyPlaceHolder from '../components/NetworkPolicyPlaceHolder';
 
 const NetworkFeePolicyContainer = styled.SafeAreaView`
   flex: 1;
@@ -108,6 +110,7 @@ const FeeOptions = ({
   const isLast = (index: number, length: number): boolean => {
     return index === length - 1;
   };
+
   return (
     <FeeOptionsContainer>
       <StepsHeaderContainer>
@@ -186,6 +189,7 @@ const NetworkFeePolicy = () => {
   const network = 'livenet';
   const [ethFeeOptions, setEthFeeOptions] = useState<any[]>();
   const [btcFeeOptions, setBtcFeeOptions] = useState<any[]>();
+  const [isLoading, setIsLoading] = useState(true);
 
   const initFeeLevel = async (currencyAbbreviation: string) => {
     let feeOptions: any[] = [];
@@ -246,8 +250,10 @@ const NetworkFeePolicy = () => {
       return;
     }
   };
-  const init = () => {
-    ['btc', 'eth'].forEach(ca => initFeeLevel(ca));
+  const init = async () => {
+    ['btc', 'eth'].forEach((ca: string) => initFeeLevel(ca));
+    await sleep(500);
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -263,27 +269,33 @@ const NetworkFeePolicy = () => {
           network load and the selected policy.
         </NetworkFeePolicyParagraph>
 
-        <View>
-          {btcFeeOptions && btcFeeOptions.length > 0 ? (
-            <FeeOptions
-              feeOptions={btcFeeOptions}
-              currencyAbbreviation={'btc'}
-              currencyName={'Bitcoin'}
-              defaultFeeLevel={'superEconomy'}
-            />
-          ) : null}
-        </View>
+        {isLoading ? (
+          <NetworkPolicyPlaceHolder />
+        ) : (
+          <>
+            <View>
+              {btcFeeOptions && btcFeeOptions.length > 0 ? (
+                <FeeOptions
+                  feeOptions={btcFeeOptions}
+                  currencyAbbreviation={'btc'}
+                  currencyName={'Bitcoin'}
+                  defaultFeeLevel={'superEconomy'}
+                />
+              ) : null}
+            </View>
 
-        <View>
-          {ethFeeOptions && ethFeeOptions.length > 0 ? (
-            <FeeOptions
-              feeOptions={ethFeeOptions}
-              currencyAbbreviation={'eth'}
-              currencyName={'Ethereum'}
-              defaultFeeLevel={'normal'}
-            />
-          ) : null}
-        </View>
+            <View>
+              {ethFeeOptions && ethFeeOptions.length > 0 ? (
+                <FeeOptions
+                  feeOptions={ethFeeOptions}
+                  currencyAbbreviation={'eth'}
+                  currencyName={'Ethereum'}
+                  defaultFeeLevel={'normal'}
+                />
+              ) : null}
+            </View>
+          </>
+        )}
       </ScrollView>
     </NetworkFeePolicyContainer>
   );
