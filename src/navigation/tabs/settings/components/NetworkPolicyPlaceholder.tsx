@@ -4,7 +4,7 @@ import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import React from 'react';
 import {View} from 'react-native';
 
-const NetworkPolicyPlaceHolder = () => {
+const NetworkPolicyPlaceholder = () => {
   const theme = useTheme();
   return (
     <SkeletonPlaceholder
@@ -12,7 +12,7 @@ const NetworkPolicyPlaceHolder = () => {
       highlightColor={theme.dark ? '#333333' : '#F2F8FC'}>
       <View style={{marginTop: 20}}>
         {[...Array(2)].map((e, i) => (
-          <View style={{marginBottom: 30}}>
+          <View style={{marginBottom: 30}} key={i}>
             <SkeletonPlaceholder.Item
               flexDirection={'row'}
               alignItems={'center'}
@@ -65,4 +65,4 @@ const NetworkPolicyPlaceHolder = () => {
   );
 };
 
-export default NetworkPolicyPlaceHolder;
+export default NetworkPolicyPlaceholder;

@@ -6,7 +6,7 @@ import {
   SettingTitle,
 } from '../../../../../components/styled/Containers';
 import {Paragraph} from '../../../../../components/styled/Text';
-import {SlateDark, White} from '../../../../../styles/colors';
+import {LightBlack, SlateDark, White} from '../../../../../styles/colors';
 import AngleRight from '../../../../../../assets/img/angle-right.svg';
 import LinkSvg from '../../../../../../assets/img/link.svg';
 import Bug from '../../../../../../assets/img/settings/feedback/bug.svg';
@@ -30,7 +30,7 @@ const SendFeedbackParagraph = styled(Paragraph)`
 
 const ListItem = styled(Setting)`
   margin-bottom: 20px;
-  background: ${White};
+  background: ${({theme: {dark}}) => dark ? LightBlack : White};
   border-radius: 12px;
   padding: 5px 20px;
 `;

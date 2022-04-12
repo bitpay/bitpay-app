@@ -29,7 +29,7 @@ import {View} from 'react-native';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {CurrencyListIcons} from '../../../../constants/SupportedCurrencyOptions';
 import {sleep} from '../../../../utils/helper-methods';
-import NetworkPolicyPlaceHolder from '../components/NetworkPolicyPlaceHolder';
+import NetworkPolicyPlaceholder from '../components/NetworkPolicyPlaceholder';
 
 const NetworkFeePolicyContainer = styled.SafeAreaView`
   flex: 1;
@@ -270,7 +270,7 @@ const NetworkFeePolicy = () => {
         </NetworkFeePolicyParagraph>
 
         {isLoading ? (
-          <NetworkPolicyPlaceHolder />
+          <NetworkPolicyPlaceholder />
         ) : (
           <>
             <View>
