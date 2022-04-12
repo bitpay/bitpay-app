@@ -269,7 +269,13 @@ const KeySettings = () => {
         <WalletHeaderContainer>
           <Title>Wallets</Title>
           <InfoImageContainer infoMargin={'0 0 0 8px'}>
-            <InfoSvg />
+            <TouchableOpacity
+              onPress={() => {
+                haptic('impactLight');
+                navigation.navigate('Wallet', {screen: 'KeyExplanation'});
+              }}>
+              <InfoSvg />
+            </TouchableOpacity>
           </InfoImageContainer>
         </WalletHeaderContainer>
 
