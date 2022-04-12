@@ -15,7 +15,7 @@ import {useTranslation} from 'react-i18next';
 import {RootState} from '../../../store';
 import {AppActions} from '../../../store/app';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
-import {Feather, LightBlack} from '../../../styles/colors';
+import {Black, Feather, LightBlack, White} from '../../../styles/colors';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import {updateSettingsListConfig} from '../../../store/app/app.actions';
 import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
@@ -29,6 +29,8 @@ import Contacts from './components/Contacts';
 import {useSelector} from 'react-redux';
 import Crypto from './components/Crypto';
 import WalletsAndKeys from './components/WalletsAndKeys';
+
+import Animated, {FadeInUp, Easing} from 'react-native-reanimated';
 interface HomeSetting {
   id: SettingsListType;
   title: string;
@@ -79,6 +81,8 @@ const BitPayIdUserText = styled.Text<{bold?: boolean}>`
 const DropdownSetting = styled(Setting)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : Feather)};
   padding: 0 ${ScreenGutter};
+  border-bottom-width: 1px;
+  border-bottom-color: ${({theme: {dark}}) => (dark ? Black : White)};
 `;
 
 export type SettingsListType =
@@ -196,7 +200,7 @@ const SettingsHomeScreen: React.FC = () => {
           </SettingIcon>
         </BitPayIdSettingsLink>
 
-        {SETTINGS.map(({id, title, onPress, subListComponent}) => {
+        {SETTINGS.map(({id, title, onPress, subListComponent}, i, {length}) => {
           return (
             <View key={id}>
               <DropdownSetting
@@ -210,7 +214,16 @@ const SettingsHomeScreen: React.FC = () => {
                   {!hideList.includes(id) ? <ChevronDownSvg /> : <AngleRight />}
                 </SettingIcon>
               </DropdownSetting>
-              {!hideList.includes(id) ? <>{subListComponent}</> : null}
+              {!hideList.includes(id) ? (
+                <>
+                  <Animated.View
+                    entering={FadeInUp.easing(Easing.linear)
+                      .damping(15)
+                      .springify()}>
+                    {subListComponent}
+                  </Animated.View>
+                </>
+              ) : null}
             </View>
           );
         })}
