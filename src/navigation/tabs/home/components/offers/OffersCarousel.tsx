@@ -3,7 +3,6 @@ import {ContentCard} from 'react-native-appboy-sdk';
 import {Carousel} from 'react-native-snap-carousel';
 import {WIDTH} from '../../../../../components/styled/Containers';
 import OfferCard from './OfferCard';
-import {View} from 'react-native';
 import {CarouselItemContainer} from '../Styled';
 
 interface OfferSlidesProps {
