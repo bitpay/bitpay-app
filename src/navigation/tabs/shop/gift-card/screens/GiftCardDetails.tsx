@@ -1,12 +1,5 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {
-  ScrollView,
-  Linking,
-  Share,
-  RefreshControl,
-  View,
-  Image,
-} from 'react-native';
+import {ScrollView, Linking, Share, RefreshControl, Image} from 'react-native';
 import TimeAgo from 'react-native-timeago';
 import {StackScreenProps} from '@react-navigation/stack';
 import styled, {useTheme} from 'styled-components/native';
@@ -396,6 +389,11 @@ const GiftCardDetails = ({
             <SectionSpacer />
           </ClaimCodeBox>
         )}
+        {giftCard.status === 'PENDING' ? (
+          <Paragraph style={{marginTop: 15}}>
+            Created <TimeAgo time={giftCard.date} />
+          </Paragraph>
+        ) : null}
         <Terms maxWidth={maxWidth}>{cardConfig.terms}</Terms>
       </ScrollView>
     </>

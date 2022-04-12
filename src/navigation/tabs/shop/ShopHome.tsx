@@ -198,6 +198,7 @@ const ShopHome = () => {
 
   useEffect(() => {
     dispatch(ShopEffects.startFetchCatalog());
+    dispatch(ShopEffects.retryGiftCardRedemptions());
   }, [dispatch]);
 
   const insets = useSafeAreaInsets();

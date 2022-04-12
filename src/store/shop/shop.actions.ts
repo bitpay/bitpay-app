@@ -40,11 +40,16 @@ export const initializedUnsoldGiftCard = (payload: {
   payload,
 });
 
-export const deletedUnsoldGiftCard = (payload: {
+export const updatedGiftCardStatus = (payload: {
   invoiceId: string;
+  status: 'PENDING';
 }): ShopActionType => ({
-  type: ShopActionTypes.DELETED_UNSOLD_GIFT_CARD,
+  type: ShopActionTypes.UPDATED_GIFT_CARD_STATUS,
   payload,
+});
+
+export const deletedUnsoldGiftCards = (): ShopActionType => ({
+  type: ShopActionTypes.DELETED_UNSOLD_GIFT_CARDS,
 });
 
 export const redeemedGiftCard = (payload: {

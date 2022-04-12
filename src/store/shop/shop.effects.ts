@@ -12,6 +12,7 @@ import {
   Invoice,
   UnsoldGiftCard,
 } from './shop.models';
+import {redemptionFailuresLessThanADayOld} from '../../lib/gift-cards/gift-card';
 
 export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
   try {
@@ -151,4 +152,16 @@ export const startRedeemGiftCard =
     } as GiftCard;
     dispatch(ShopActions.redeemedGiftCard({giftCard: updatedGiftCard}));
     return updatedGiftCard;
+  };
+
+export const retryGiftCardRedemptions =
+  (): Effect<Promise<void>> => async (dispatch, getState) => {
+    const {SHOP} = getState();
+    const failedRedemptionGiftCards = SHOP.giftCards[APP_NETWORK].filter(
+      redemptionFailuresLessThanADayOld,
+    );
+    const retryPromises = failedRedemptionGiftCards.map(giftCard =>
+      dispatch(startRedeemGiftCard(giftCard.invoiceId)),
+    );
+    await Promise.all(retryPromises);
   };

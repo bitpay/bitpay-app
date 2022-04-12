@@ -434,7 +434,7 @@ export const publishAndSign =
         );
         console.log('-------- signed');
 
-        if (signedTx.status == 'accepted') {
+        if (signedTx.status === 'accepted') {
           const broadcastedTx = await broadcastTx(wallet, signedTx);
           console.log('-------- broadcastedTx');
 

@@ -128,13 +128,7 @@ const Confirm = () => {
 
   useEffect(() => {
     return () => {
-      if (invoiceCreationParams?.cardConfig && txp) {
-        dispatch(
-          ShopActions.deletedUnsoldGiftCard({
-            invoiceId: txp.invoiceID!,
-          }),
-        );
-      }
+      dispatch(ShopActions.deletedUnsoldGiftCards());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -151,6 +145,9 @@ const Confirm = () => {
     dispatch(
       startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
     );
+    if (txp) {
+      dispatch(ShopActions.deletedUnsoldGiftCards());
+    }
     try {
       const {txDetails: newTxDetails, txp: newTxp} = await dispatch(
         createInvoiceAndTxProposal(selectedWallet, invoiceCreationParams),
@@ -237,6 +234,12 @@ const Confirm = () => {
                   ),
                 );
                 await sleep(400);
+                dispatch(
+                  ShopActions.updatedGiftCardStatus({
+                    invoiceId: txp.invoiceID!,
+                    status: 'PENDING',
+                  }),
+                );
                 await dispatch(startSendPayment({txp, key, wallet, recipient}));
                 if (txp.invoiceID) {
                   dispatch(
