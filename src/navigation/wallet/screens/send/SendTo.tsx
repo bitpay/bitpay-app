@@ -56,6 +56,7 @@ import {
   createProposalAndBuildTxDetails,
   handleCreateTxProposalError,
 } from '../../../../store/wallet/effects/send/send';
+import {APP_NAME} from "../../../../constants/config";
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -218,8 +219,7 @@ const SendTo = () => {
       if (currencyAbbreviation === 'bch' && network === addrNetwork) {
         const isLegacy = CheckIfLegacyBCH(data);
         if (isLegacy) {
-          //  TODO: Get app name
-          const appName = 'BitPay';
+          const appName = APP_NAME;
 
           dispatch(
             showBottomNotificationModal(

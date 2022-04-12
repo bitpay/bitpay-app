@@ -17,6 +17,8 @@ import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {URL} from '../../../../../constants';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {BoxShadow} from '../../../home/components/Styled';
+import {Platform, Share} from 'react-native';
+import {APP_NAME, DOWNLOAD_BITPAY_URL} from '../../../../../constants/config';
 
 const SendFeedbackContainer = styled.SafeAreaView`
   flex: 1;
@@ -24,7 +26,7 @@ const SendFeedbackContainer = styled.SafeAreaView`
 `;
 
 const SendFeedbackParagraph = styled(Paragraph)`
-  margin-bottom: 15px;
+  margin-bottom: 30px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
@@ -41,6 +43,16 @@ const LeftIconContainer = styled.View`
 const SendFeedback = () => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
+  const share = async () => {
+    try {
+      let message = `Spend and control your cryptocurrency by downloading the ${APP_NAME} app.`;
+
+      if (Platform.OS !== 'ios') {
+        message = `${message} ${DOWNLOAD_BITPAY_URL}`;
+      }
+      await Share.share({message, url: DOWNLOAD_BITPAY_URL});
+    } catch (e) {}
+  };
   const feedbackList = [
     {
       key: 1,
@@ -53,9 +65,7 @@ const SendFeedback = () => {
     },
     {
       key: 2,
-      onPress: () => {
-        //    TODO: Update me
-      },
+      onPress: () => share(),
       description: 'Share with Friends',
       leftIcon: <ShareSvg width={20} height={20} />,
       rightIcon: <AngleRight />,
