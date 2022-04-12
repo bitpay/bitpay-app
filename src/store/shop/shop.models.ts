@@ -14,6 +14,7 @@ export interface GiftCardDiscount {
   code: string;
   type: 'flatrate' | 'percentage';
   amount: number;
+  hidden?: boolean;
 }
 
 export interface GiftCardActivationFee {
@@ -72,6 +73,7 @@ export interface UnsoldGiftCard {
   clientId: string;
   accessKey: string;
   userEid?: string;
+  totalDiscount?: number;
 }
 
 export interface GiftCardBalanceEntry {
@@ -92,7 +94,6 @@ export interface GiftCard extends UnsoldGiftCard {
   pin?: string;
   status: 'SUCCESS' | 'PENDING' | 'FAILURE' | 'UNREDEEMED';
   clientId: string;
-  totalDiscount?: number;
   balanceHistory?: GiftCardBalanceEntry[];
   invoice: Invoice;
 }

@@ -39,15 +39,13 @@ const OptionContainer = styled.TouchableOpacity`
   padding: 20px;
 `;
 
-const BaseText = styled(H5)`
+export const BaseText = styled(H5)`
   color: ${({theme}) => theme.colors.text};
 `;
 
-const KeyName = styled(BaseText)`
-  margin-bottom: 5px;
-`;
+export const KeyName = styled(BaseText)``;
 
-const Balance = styled(BaseText)`
+export const Balance = styled(BaseText)`
   font-weight: 700;
 `;
 

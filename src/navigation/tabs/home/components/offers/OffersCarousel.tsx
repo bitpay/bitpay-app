@@ -3,13 +3,17 @@ import {ContentCard} from 'react-native-appboy-sdk';
 import {Carousel} from 'react-native-snap-carousel';
 import {WIDTH} from '../../../../../components/styled/Containers';
 import OfferCard from './OfferCard';
+import {View} from 'react-native';
+import {CarouselItemContainer} from '../Styled';
 
 interface OfferSlidesProps {
   contentCards: ContentCard[];
 }
 
 const renderOffer = ({item}: {item: ContentCard}) => (
-  <OfferCard contentCard={item} />
+  <CarouselItemContainer>
+    <OfferCard contentCard={item} />
+  </CarouselItemContainer>
 );
 
 const OffersCarousel: React.FC<OfferSlidesProps> = props => {
@@ -17,13 +21,16 @@ const OffersCarousel: React.FC<OfferSlidesProps> = props => {
 
   return (
     <Carousel<ContentCard>
+      containerCustomStyle={{
+        marginTop: 20,
+      }}
       vertical={false}
       layout={'default'}
       useExperimentalSnap={true}
       data={contentCards}
       renderItem={renderOffer}
       sliderWidth={WIDTH}
-      itemWidth={280}
+      itemWidth={230}
       inactiveSlideScale={1}
       inactiveSlideOpacity={1}
     />

@@ -19,7 +19,6 @@ import {
   removeTxp,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
-import PaymentSent from '../../../components/PaymentSent';
 import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
@@ -48,11 +47,12 @@ import {
 import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../components/ErrorMessages';
 import {APP_NETWORK} from '../../../../../constants/config';
+import {Terms} from '../../../../tabs/shop/components/styled/ShopTabComponents';
 
 export interface GiftCardConfirmParamList {
   wallet?: Wallet;
   recipient?: Recipient;
-  txp?: Partial<TransactionProposal>;
+  txp?: TransactionProposal;
   txDetails?: TxDetails;
   invoiceCreationParams: InvoiceCreationParams;
 }
@@ -100,6 +100,7 @@ const Confirm = () => {
     invoiceCreationParams,
   } = route.params!;
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const giftCards = useAppSelector(({SHOP}) => SHOP.giftCards[APP_NETWORK]);
 
   const [walletSelectModalVisible, setWalletSelectModalVisible] =
     useState(false);
@@ -108,12 +109,15 @@ const Confirm = () => {
   const [recipient, setRecipient] = useState(_recipient);
   const [txDetails, updateTxDetails] = useState(_txDetails);
   const [txp, updateTxp] = useState(_txp);
-  const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [keyWallets, setKeysWallets] = useState<KeyWalletsRowProps[]>();
   const {fee, networkCost, sendingFrom, total} = txDetails || {};
 
+  const unsoldGiftCard = giftCards.find(
+    giftCard => giftCard.invoiceId === txp?.invoiceID,
+  );
+
   const memoizedKeysAndWalletsList = useMemo(
-    () => BuildKeysAndWalletsList(keys, APP_NETWORK),
+    () => BuildKeysAndWalletsList({keys, network: APP_NETWORK}),
     [keys],
   );
 
@@ -132,6 +136,7 @@ const Confirm = () => {
         );
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const openKeyWalletSelector = () => {
@@ -179,6 +184,7 @@ const Confirm = () => {
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => openKeyWalletSelector(), []);
 
   return (
@@ -193,9 +199,29 @@ const Confirm = () => {
               onPress={openKeyWalletSelector}
               hr
             />
-            <Amount description={'Network Cost'} amount={networkCost} hr />
+            {unsoldGiftCard && unsoldGiftCard.totalDiscount ? (
+              <Amount
+                description={'Discount'}
+                amount={{
+                  fiatAmount: `— ${formatFiatAmount(
+                    unsoldGiftCard.totalDiscount,
+                    invoiceCreationParams.cardConfig!.currency,
+                  )}`,
+                  cryptoAmount: '',
+                }}
+                fiatOnly
+                hr
+              />
+            ) : null}
+            <Amount
+              description={'Network Cost'}
+              amount={networkCost}
+              fiatOnly
+              hr
+            />
             <Amount description={'Miner fee'} amount={fee} fiatOnly hr />
             <Amount description={'Total'} amount={total} />
+            <Terms>{invoiceCreationParams?.cardConfig?.terms}</Terms>
           </>
         ) : null}
       </DetailsList>
@@ -213,6 +239,11 @@ const Confirm = () => {
                 await sleep(400);
                 await dispatch(startSendPayment({txp, key, wallet, recipient}));
                 if (txp.invoiceID) {
+                  dispatch(
+                    startOnGoingProcessModal(
+                      OnGoingProcessMessages.GENERATING_GIFT_CARD,
+                    ),
+                  );
                   const giftCard = await dispatch(
                     ShopEffects.startRedeemGiftCard(txp.invoiceID),
                   );
@@ -242,8 +273,6 @@ const Confirm = () => {
                   return;
                 }
                 dispatch(dismissOnGoingProcessModal());
-                await sleep(400);
-                setShowPaymentSentModal(true);
               } catch (err: any) {
                 await removeTxp(wallet, txp).catch(removeErr =>
                   console.error('error deleting txp', removeErr),
@@ -282,21 +311,6 @@ const Confirm = () => {
           </WalletSelectMenuBodyContainer>
         </WalletSelectMenuContainer>
       </SheetModal>
-
-      <PaymentSent
-        isVisible={showPaymentSentModal}
-        onCloseModal={async () => {
-          navigation.navigate('Wallet', {
-            screen: 'WalletDetails',
-            params: {
-              walletId: wallet!.id,
-              key,
-            },
-          });
-          await sleep(300);
-          setShowPaymentSentModal(false);
-        }}
-      />
     </ConfirmContainer>
   );
 };

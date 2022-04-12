@@ -148,17 +148,13 @@ export const LayoutToggleContainer = styled.View`
 
 export const createCustomizeCardList = ({
   keys,
-  cards,
   homeCarouselConfig,
 }: {
   keys: Key[];
-  cards: Card[];
   homeCarouselConfig: HomeCarouselConfig[];
 }) => {
   let list: CustomizeItem[] = [];
   const hasKeys = keys.length;
-  const hasCards = cards.length;
-  const hasGiftCards = false;
   const hasCoinbase = false;
   if (hasKeys) {
     const walletCards = keys.map(({id, keyName, wallets}): CustomizeItem => {
@@ -177,20 +173,6 @@ export const createCustomizeCardList = ({
 
   if (hasCoinbase) {
     // TODO
-  }
-
-  if (hasGiftCards) {
-    // TODO
-  }
-
-  if (hasCards) {
-    const id = 'bitpayCard';
-    const {show} = homeCarouselConfig?.find(item => item.id === id) || {};
-    list.push({
-      key: id,
-      name: 'BitPay Card',
-      show: show!,
-    });
   }
 
   const order = homeCarouselConfig.map(item => item.id);
@@ -236,11 +218,11 @@ export const CustomizeCard = ({
                     )
                   );
                 })}
-                {remainingWalletCount && (
+                {remainingWalletCount ? (
                   <RemainingAssetsLabel>
                     + {getRemainingWalletCount(wallets)} more
                   </RemainingAssetsLabel>
-                )}
+                ) : null}
               </HeaderImg>
             </Row>
           ) : null}
