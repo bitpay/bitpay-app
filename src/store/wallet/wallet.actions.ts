@@ -50,7 +50,10 @@ export const setBackupComplete = (keyId: string): WalletActionType => ({
   payload: keyId,
 });
 
-export const successGetRates = (payload: {rates: Rates}): WalletActionType => ({
+export const successGetRates = (payload: {
+  rates: Rates;
+  lastDayRates: Rates;
+}): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_GET_RATES,
   payload,
 });
@@ -125,6 +128,7 @@ export const failedUpdateWalletStatus = (payload: {
 export const successUpdateKeyTotalBalance = (payload: {
   keyId: string;
   totalBalance: number;
+  totalBalanceLastDay: number;
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_UPDATE_KEY_TOTAL_BALANCE,
   payload,

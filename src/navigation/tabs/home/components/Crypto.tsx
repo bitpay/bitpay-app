@@ -114,7 +114,17 @@ const createHomeCardList = ({
   const hasCoinbase = false;
   if (hasKeys) {
     const walletCards = keys.map(key => {
-      let {wallets, totalBalance = 0, backupComplete} = key;
+      let {
+        wallets,
+        totalBalance = 0,
+        totalBalanceLastDay = 0,
+        backupComplete,
+      } = key;
+      const percentageDifference = Number(
+        (((totalBalance - totalBalanceLastDay) * 100) / totalBalance).toFixed(
+          2,
+        ),
+      );
       wallets = wallets.filter(wallet => !wallet.hideWallet);
 
       return {
@@ -125,6 +135,7 @@ const createHomeCardList = ({
             keyName={key.keyName}
             wallets={wallets}
             totalBalance={totalBalance}
+            percentageDifference={percentageDifference}
             needsBackup={!backupComplete}
             onPress={() => {
               haptic('soft');
