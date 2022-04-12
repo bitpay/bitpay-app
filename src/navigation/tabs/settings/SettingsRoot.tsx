@@ -219,7 +219,8 @@ const SettingsHomeScreen: React.FC = () => {
                   <Animated.View
                     entering={FadeInUp.easing(Easing.linear)
                       .damping(15)
-                      .springify()}>
+                      .springify()
+                      .duration(200)}>
                     {subListComponent}
                   </Animated.View>
                 </>
