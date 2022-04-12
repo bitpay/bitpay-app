@@ -35,9 +35,8 @@ const Contacts = () => {
   const navigation = useNavigation();
   return (
     <Settings>
-      {contacts.length ? (
-        <>
-          {contacts.slice(0, 2).map((item, index) => (
+      {contacts.length
+        ? contacts.slice(0, 2).map((item, index) => (
             <View key={index}>
               <SettingsContactRow
                 contact={item}
@@ -50,31 +49,30 @@ const Contacts = () => {
               />
               <Hr />
             </View>
-          ))}
+          ))
+        : null}
 
-          <Setting
-            activeOpacity={ActiveOpacity}
-            onPress={() => {
-              navigation.navigate('Contacts', {
-                screen: 'ContactsAdd',
-              });
-            }}>
-            <PlusIconContainer>
-              <PlusSvg />
-            </PlusIconContainer>
+      <Setting
+        activeOpacity={ActiveOpacity}
+        onPress={() => {
+          navigation.navigate('Contacts', {
+            screen: 'ContactsAdd',
+          });
+        }}>
+        <PlusIconContainer>
+          <PlusSvg />
+        </PlusIconContainer>
 
-            <H6 medium={true}>Add Contact</H6>
-          </Setting>
+        <H6 medium={true}>Add Contact</H6>
+      </Setting>
 
-          {contacts.length > 2 ? (
-            <Setting
-              style={{justifyContent: 'center'}}
-              onPress={() => navigation.navigate('Contacts', {screen: 'Root'})}
-              activeOpacity={ActiveOpacity}>
-              <SeeAllLink>View All {contacts.length} Contacts</SeeAllLink>
-            </Setting>
-          ) : null}
-        </>
+      {contacts.length > 2 ? (
+        <Setting
+          style={{justifyContent: 'center'}}
+          onPress={() => navigation.navigate('Contacts', {screen: 'Root'})}
+          activeOpacity={ActiveOpacity}>
+          <SeeAllLink>View All {contacts.length} Contacts</SeeAllLink>
+        </Setting>
       ) : null}
     </Settings>
   );

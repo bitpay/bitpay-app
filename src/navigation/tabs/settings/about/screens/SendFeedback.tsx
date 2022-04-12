@@ -30,7 +30,7 @@ const SendFeedbackParagraph = styled(Paragraph)`
 
 const ListItem = styled(Setting)`
   margin-bottom: 20px;
-  background: ${({theme: {dark}}) => dark ? LightBlack : White};
+  background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   border-radius: 12px;
   padding: 5px 20px;
 `;
