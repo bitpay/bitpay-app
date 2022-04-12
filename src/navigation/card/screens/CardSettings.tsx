@@ -97,18 +97,21 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
     }
   }, [physicalCard]);
 
-  const renderSettingsSlide = useCallback(({item}: {item: Card}) => {
-    const isVirtual = item.cardType === 'virtual' || cardsToShow.length < 2;
-    const sharedTransitionId = isVirtual ? 'card.dashboard.active-card' : '';
+  const renderSettingsSlide = useCallback(
+    ({item}: {item: Card}) => {
+      const isVirtual = item.cardType === 'virtual' || cardsToShow.length < 2;
+      const sharedTransitionId = isVirtual ? 'card.dashboard.active-card' : '';
 
-    return isVirtual ? (
-      <SharedElement id={sharedTransitionId}>
+      return isVirtual ? (
+        <SharedElement id={sharedTransitionId}>
+          <SettingsSlide card={item} />
+        </SharedElement>
+      ) : (
         <SettingsSlide card={item} />
-      </SharedElement>
-    ) : (
-      <SettingsSlide card={item} />
-    );
-  }, []);
+      );
+    },
+    [cardsToShow.length],
+  );
 
   return (
     <ScrollView>
