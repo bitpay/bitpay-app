@@ -34,6 +34,7 @@ import CustomizeSvg from './CustomizeSvg';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {Feather} from '../../../../styles/colors';
 import Button from '../../../../components/button/Button';
+import CoinbaseBalanceCard from '../../../coinbase/components/CoinbaseBalanceCard';
 
 const CryptoContainer = styled.View`
   background: ${({theme}) => (theme.dark ? '#111111' : Feather)};
@@ -98,12 +99,14 @@ const createHomeCardList = ({
   navigation,
   keys,
   dispatch,
+  linkedCoinbase,
   homeCarouselConfig,
   homeCarouselLayoutType,
 }: {
   navigation: NavigationProp<any>;
   keys: Key[];
   dispatch: Dispatch;
+  linkedCoinbase: boolean;
   homeCarouselConfig: HomeCarouselConfig[];
   homeCarouselLayoutType: HomeCarouselLayoutType;
 }) => {
@@ -111,7 +114,7 @@ const createHomeCardList = ({
   const defaults: {id: string; component: JSX.Element}[] = [];
   const hasKeys = keys.length;
   const hasGiftCards = false;
-  const hasCoinbase = false;
+  const hasCoinbase = linkedCoinbase;
   if (hasKeys) {
     const walletCards = keys.map(key => {
       let {wallets, totalBalance = 0, backupComplete} = key;
@@ -152,7 +155,10 @@ const createHomeCardList = ({
   defaults.push({id: 'createWallet', component: <CreateWallet />});
 
   if (hasCoinbase) {
-    // TODO
+    list.push({
+      id: 'coinbaseBalanceCard',
+      component: <CoinbaseBalanceCard layout={homeCarouselLayoutType} />,
+    });
   } else {
     defaults.push({id: 'connectToCoinbase', component: <ConnectCoinbase />});
   }
@@ -177,6 +183,7 @@ const Crypto = () => {
   const dispatch = useDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
+  const linkedCoinbase = useAppSelector(({COINBASE}) => !!COINBASE.token);
   const homeCarouselLayoutType = useAppSelector(
     ({APP}) => APP.homeCarouselLayoutType,
   );
@@ -186,6 +193,7 @@ const Crypto = () => {
       navigation,
       keys: Object.values(keys),
       dispatch,
+      linkedCoinbase: false,
       homeCarouselConfig: homeCarouselConfig || [],
       homeCarouselLayoutType,
     }),
@@ -197,11 +205,19 @@ const Crypto = () => {
         navigation,
         keys: Object.values(keys),
         dispatch,
+        linkedCoinbase,
         homeCarouselConfig: homeCarouselConfig || [],
         homeCarouselLayoutType,
       }),
     );
-  }, [navigation, keys, dispatch, homeCarouselConfig, homeCarouselLayoutType]);
+  }, [
+    navigation,
+    keys,
+    dispatch,
+    linkedCoinbase,
+    homeCarouselConfig,
+    homeCarouselLayoutType,
+  ]);
 
   if (!hasKeys) {
     return (
