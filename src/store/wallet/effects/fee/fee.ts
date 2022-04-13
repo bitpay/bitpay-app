@@ -2,6 +2,8 @@ import {Network} from '../../../../constants';
 import {Wallet} from '../../wallet.models';
 import {GetEstimatedTxSize} from '../../utils/wallet';
 import {IsERCToken} from '../../utils/currency';
+import {BwcProvider} from '../../../../lib/bwc';
+const BWC = BwcProvider.getInstance();
 
 export enum FeeLevels {
   URGENT = 'urgent',
@@ -117,4 +119,28 @@ export const GetBitcoinSpeedUpTxFee = async (
   const averageTxSize = 250;
   const fee = (urgentFee / 1000) * (txSize + averageTxSize);
   return Number(fee.toFixed());
+};
+
+export const getFeeLevelsUsingBwcClient = (
+  currencyAbbreviation: string,
+  network: string,
+): Promise<Fee[]> => {
+  return new Promise((resolve, reject) => {
+    const bwcClient = BWC.getClient();
+    bwcClient.getFeeLevels(
+      currencyAbbreviation.toLowerCase(),
+      network,
+      (errLivenet: Error, feeLevels: Fee[]) => {
+        if (errLivenet) {
+          return reject('Could not get dynamic fee');
+        }
+
+        if (currencyAbbreviation.toLowerCase() === 'eth') {
+          feeLevels = removeLowFeeLevels(feeLevels);
+        }
+
+        return resolve(feeLevels);
+      },
+    );
+  });
 };

@@ -40,18 +40,12 @@ import ScanStack, {ScanStackParamList} from './navigation/scan/ScanStack';
 import GeneralSettingsStack, {
   GeneralSettingsStackParamList,
 } from './navigation/tabs/settings/general/GeneralStack';
-import SecuritySettingsStack, {
-  SecuritySettingsStackParamList,
-} from './navigation/tabs/settings/security/SecurityStack';
 import ContactsStack, {
   ContactsStackParamList,
 } from './navigation/tabs/contacts/ContactsStack';
 import ExternalServicesSettingsStack, {
   ExternalServicesSettingsStackParamList,
 } from './navigation/tabs/settings/external-services/ExternalServicesStack';
-import NotificationSettingsStack, {
-  NotificationSettingsStackParamList,
-} from './navigation/tabs/settings/notifications/NotificationsStack';
 import AboutStack, {
   AboutStackParamList,
 } from './navigation/tabs/settings/about/AboutStack';
@@ -81,9 +75,6 @@ import MerchantStack, {
 import PinModal from './components/modal/pin/PinModal';
 import BpDevtools from './components/bp-devtools/BpDevtools';
 import {DEVTOOLS_ENABLED} from './constants/config';
-import ConnectionsSettingsStack, {
-  ConnectionsSettingsStackParamList,
-} from './navigation/tabs/settings/connections/ConnectionsStack';
 import Blur from './components/blur/Blur';
 import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
 
@@ -102,11 +93,8 @@ export type RootStackParamList = {
   GiftCardDeeplink: GiftCardDeeplinkScreenParamList;
   Merchant: NavigatorScreenParams<MerchantStackParamList>;
   GeneralSettings: NavigatorScreenParams<GeneralSettingsStackParamList>;
-  SecuritySettings: NavigatorScreenParams<SecuritySettingsStackParamList>;
-  ConnectionSettings: NavigatorScreenParams<ConnectionsSettingsStackParamList>;
   Contacts: NavigatorScreenParams<ContactsStackParamList>;
   ExternalServicesSettings: NavigatorScreenParams<ExternalServicesSettingsStackParamList>;
-  NotificationSettings: NavigatorScreenParams<NotificationSettingsStackParamList>;
   About: NavigatorScreenParams<AboutStackParamList>;
   BuyCrypto: NavigatorScreenParams<BuyCryptoStackParamList>;
   SwapCrypto: NavigatorScreenParams<SwapCryptoStackParamList>;
@@ -130,10 +118,7 @@ export enum RootStacks {
   MERCHANT = 'Merchant',
   // SETTINGS
   GENERAL_SETTINGS = 'GeneralSettings',
-  SECURITY_SETTINGS = 'SecuritySettings',
-  CONNECTION_SETTINGS = 'ConnectionSettings',
   EXTERNAL_SERVICES_SETTINGS = 'ExternalServicesSettings',
-  NOTIFICATION_SETTINGS = 'NotificationSettings',
   ABOUT = 'About',
   BUY_CRYPTO = 'BuyCrypto',
   SWAP_CRYPTO = 'SwapCrypto',
@@ -151,11 +136,8 @@ export type NavScreenParams = NavigatorScreenParams<
     GiftCardStackParamList &
     MerchantStackParamList &
     GeneralSettingsStackParamList &
-    SecuritySettingsStackParamList &
-    ConnectionsSettingsStackParamList &
     ContactsStackParamList &
     ExternalServicesSettingsStackParamList &
-    NotificationSettingsStackParamList &
     AboutStackParamList &
     BuyCryptoStackParamList &
     SwapCryptoStackParamList &
@@ -399,22 +381,10 @@ export default () => {
               name={RootStacks.GENERAL_SETTINGS}
               component={GeneralSettingsStack}
             />
-            <Root.Screen
-              name={RootStacks.SECURITY_SETTINGS}
-              component={SecuritySettingsStack}
-            />
             <Root.Screen name={RootStacks.CONTACTS} component={ContactsStack} />
-            <Root.Screen
-              name={RootStacks.CONNECTION_SETTINGS}
-              component={ConnectionsSettingsStack}
-            />
             <Root.Screen
               name={RootStacks.EXTERNAL_SERVICES_SETTINGS}
               component={ExternalServicesSettingsStack}
-            />
-            <Root.Screen
-              name={RootStacks.NOTIFICATION_SETTINGS}
-              component={NotificationSettingsStack}
             />
             <Root.Screen name={RootStacks.ABOUT} component={AboutStack} />
             <Root.Screen

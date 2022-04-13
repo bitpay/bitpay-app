@@ -296,7 +296,7 @@ const buildTransactionProposal = (
 
         txp.outputs.push({
           toAddress: tx.toAddress,
-          amount: tx.amount,
+          amount: tx.amount!,
           message: tx.description,
           data: tx.data,
         });
@@ -309,7 +309,7 @@ const buildTransactionProposal = (
 
         txp.outputs.push({
           toAddress: tx.toAddress,
-          amount: tx.amount,
+          amount: tx.amount!,
           message: tx.description,
           data: tx.data,
         });
