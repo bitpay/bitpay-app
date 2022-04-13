@@ -20,7 +20,7 @@ const Start = () => {
           'Your home tab is now your launchpad. View all your keys and check out new offerings from BitPay.'
         }
         ctaText={'Check it out'}
-        cta={() => navigation.navigate('Intro', {screen: 'Wallet'})}
+        cta={() => navigation.navigate('Intro', {screen: 'WhatsNew'})}
       />
     </IntroStartContainer>
   );
