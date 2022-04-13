@@ -47,7 +47,7 @@ const ConnectionSettingsRoot: React.FC = () => {
     if (redirectTo === 'walletconnect') {
       goToWalletConnect();
     }
-  }, [redirectTo]);
+  }, [redirectTo, goToWalletConnect]);
 
   return (
     <SettingsContainer>

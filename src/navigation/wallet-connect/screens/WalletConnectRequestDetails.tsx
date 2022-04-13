@@ -6,8 +6,14 @@ import {
   ActionContainer,
   CtaContainer,
   Hr,
+  Info,
 } from '../../../components/styled/Containers';
-import {H7} from '../../../components/styled/Text';
+import {
+  H7,
+  InfoDescription,
+  InfoHeader,
+  InfoTitle,
+} from '../../../components/styled/Text';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
 import {
   ItemContainer,
@@ -40,6 +46,7 @@ export type WalletConnectRequestDetailsParamList = {
   peerId: string;
   requestId: number;
   wallet: Wallet;
+  peerName?: string;
 };
 
 const RequestDetailsContainer = styled.View`
@@ -87,13 +94,19 @@ const MessageTextContainer = styled.TouchableOpacity`
   margin-left: 2px;
 `;
 
+const InfoSubTitle = styled(InfoTitle)`
+  font-style: italic;
+`;
+
 const WalletConnectRequestDetails = () => {
   const {
-    params: {peerId, requestId, wallet},
+    params: {peerId, requestId, wallet, peerName},
   } = useRoute<RouteProp<{params: WalletConnectRequestDetailsParamList}>>();
   const dispatch = useAppDispatch();
   const [address, setAddress] = useState('');
   const [message, setMessage] = useState('');
+  const [isMethodSupported, setIsMethodSupported] = useState<boolean>();
+  const [methodNotSupportedMsg, setMethodNotSupportedMsg] = useState<string>();
   const [approveButtonState, setApproveButtonState] = useState<ButtonState>();
   const [rejectButtonState, setRejectButtonState] = useState<ButtonState>();
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
@@ -106,18 +119,43 @@ const WalletConnectRequestDetails = () => {
     if (!request) {
       return;
     }
-    request.payload.method === 'eth_signTypedData' ||
-    request.payload.method === 'eth_signTypedData_v1' ||
-    request.payload.method === 'eth_signTypedData_v3' ||
-    request.payload.method === 'eth_signTypedData_v4' ||
-    request.payload.method === 'eth_sign'
-      ? setAddress(request.payload.params[0])
-      : setAddress(request.payload.params[1]);
 
-    request.payload.method === 'personal_sign'
-      ? setMessage(request.payload.params[0])
-      : setMessage(request.payload.params[1]);
-  }, [request, navigation, setAddress, setMessage]);
+    switch (request.payload.method) {
+      case 'eth_signTypedData':
+      case 'eth_signTypedData_v1':
+      case 'eth_signTypedData_v3':
+      case 'eth_signTypedData_v4':
+      case 'eth_sign':
+        setAddress(request.payload.params[0]);
+        setMessage(request.payload.params[1]);
+        setIsMethodSupported(true);
+        break;
+      case 'personal_sign':
+        setAddress(request.payload.params[1]);
+        setMessage(request.payload.params[0]);
+        setIsMethodSupported(true);
+        break;
+      case 'wallet_switchEthereumChain':
+        setIsMethodSupported(false);
+        setMethodNotSupportedMsg(
+          `${peerName} wants to change network to a different one than the selected wallet. Please, try connecting to a different DeFi or DApp.`,
+        );
+        break;
+      default:
+        const defaultErrorMsg =
+          'Sorry, we currently do not support this method.';
+        setIsMethodSupported(false);
+        setMethodNotSupportedMsg(defaultErrorMsg);
+        break;
+    }
+  }, [
+    request,
+    peerName,
+    setAddress,
+    setMessage,
+    setIsMethodSupported,
+    setMethodNotSupportedMsg,
+  ]);
 
   const copyToClipboard = (value: string, type: string) => {
     haptic('impactLight');
@@ -204,7 +242,7 @@ const WalletConnectRequestDetails = () => {
             )) as any;
             break;
           default:
-            throw `Method not supported: ${request.payload.method}`;
+            throw methodNotSupportedMsg;
         }
       } else {
         throw 'Address requested does not match active account';
@@ -253,52 +291,64 @@ const WalletConnectRequestDetails = () => {
     <WalletConnectContainer>
       <ScrollView>
         <RequestDetailsContainer>
-          <HeaderTitle>Summary</HeaderTitle>
-          <Hr />
-          <ItemContainer>
-            <ItemTitleContainer>
-              <H7>Address</H7>
-            </ItemTitleContainer>
-            <AddressContainer>
-              {clipboardObj.copied && clipboardObj.type === 'address' ? (
-                <CopiedSvg width={17} />
-              ) : null}
-              <AddressTextContainer
-                disabled={clipboardObj.copied}
-                onPress={() => {
-                  copyToClipboard(address, 'address');
-                }}>
-                <H7 numberOfLines={1} ellipsizeMode={'middle'}>
-                  {address}
-                </H7>
-              </AddressTextContainer>
-            </AddressContainer>
-          </ItemContainer>
-          <Hr />
-          <MessageTitleContainer>
-            <ItemTitleContainer>
-              <H7>Message</H7>
-            </ItemTitleContainer>
-            <MessageNoteContainer>
-              {clipboardObj.copied && clipboardObj.type === 'message' ? (
-                <CopiedSvg width={17} />
-              ) : null}
-              <MessageTextContainer
-                disabled={clipboardObj.copied}
-                onPress={() => {
-                  copyToClipboard(message, 'message');
-                }}>
-                <H7 numberOfLines={3} ellipsizeMode={'tail'}>
-                  {message}
-                </H7>
-              </MessageTextContainer>
-            </MessageNoteContainer>
-          </MessageTitleContainer>
+          {isMethodSupported ? (
+            <>
+              <HeaderTitle>Summary</HeaderTitle>
+              <Hr />
+              <ItemContainer>
+                <ItemTitleContainer>
+                  <H7>Address</H7>
+                </ItemTitleContainer>
+                <AddressContainer>
+                  {clipboardObj.copied && clipboardObj.type === 'address' ? (
+                    <CopiedSvg width={17} />
+                  ) : null}
+                  <AddressTextContainer
+                    disabled={clipboardObj.copied}
+                    onPress={() => {
+                      copyToClipboard(address, 'address');
+                    }}>
+                    <H7 numberOfLines={1} ellipsizeMode={'middle'}>
+                      {address}
+                    </H7>
+                  </AddressTextContainer>
+                </AddressContainer>
+              </ItemContainer>
+              <Hr />
+              <MessageTitleContainer>
+                <ItemTitleContainer>
+                  <H7>Message</H7>
+                </ItemTitleContainer>
+                <MessageNoteContainer>
+                  {clipboardObj.copied && clipboardObj.type === 'message' ? (
+                    <CopiedSvg width={17} />
+                  ) : null}
+                  <MessageTextContainer
+                    disabled={clipboardObj.copied}
+                    onPress={() => {
+                      copyToClipboard(message, 'message');
+                    }}>
+                    <H7 numberOfLines={3} ellipsizeMode={'tail'}>
+                      {message}
+                    </H7>
+                  </MessageTextContainer>
+                </MessageNoteContainer>
+              </MessageTitleContainer>
+            </>
+          ) : (
+            <Info>
+              <InfoHeader>
+                <InfoSubTitle>{request?.payload.method}</InfoSubTitle>
+              </InfoHeader>
+              <InfoDescription>{methodNotSupportedMsg}</InfoDescription>
+            </Info>
+          )}
           <Hr />
         </RequestDetailsContainer>
         <CtaContainer>
           <ActionContainer>
             <Button
+              disabled={!isMethodSupported}
               state={approveButtonState}
               buttonStyle={'primary'}
               onPress={approveRequest}>
