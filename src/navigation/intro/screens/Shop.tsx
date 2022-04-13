@@ -21,6 +21,7 @@ import {askForTrackingPermissionAndEnableSdks} from '../../../store/app/app.effe
 import {useAppDispatch} from '../../../utils/hooks';
 import {StackScreenProps} from '@react-navigation/stack';
 import {RootStackParamList} from '../../../Root';
+import {IntroAnimeDelay} from '../IntroStack';
 
 const IntroShopContainer = styled.View`
   flex: 1;
@@ -40,7 +41,7 @@ const IntroShop = ({navigation}: IntroContactsScreenProps) => {
   const [delay, setDelay] = useState(0);
 
   useEffect(() => {
-    setDelay(200);
+    setDelay(IntroAnimeDelay);
   }, []);
 
   return (

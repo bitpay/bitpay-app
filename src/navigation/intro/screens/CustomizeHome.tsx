@@ -17,6 +17,7 @@ const darkBackground = require('../../../../assets/img/intro/dark/home-customize
 import Animated, {Easing, FadeIn} from 'react-native-reanimated';
 import FocusedStatusBar from '../../../components/focused-status-bar/FocusedStatusBar';
 import {TextContainer} from '../../../components/styled/Containers';
+import {IntroAnimeDelay} from '../IntroStack';
 
 const HomeContainer = styled.View`
   flex: 1;
@@ -29,7 +30,7 @@ const CustomizeHome = () => {
   const [delay, setDelay] = useState(0);
 
   useEffect(() => {
-    setDelay(200);
+    setDelay(IntroAnimeDelay);
   }, []);
 
   return (

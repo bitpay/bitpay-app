@@ -14,6 +14,7 @@ const darkImage = require('../../../../assets/img/intro/dark/whats-new.png');
 import Animated, {Easing, FadeIn} from 'react-native-reanimated';
 import IntroButton from '../components/intro-button/IntroButton';
 import FocusedStatusBar from '../../../components/focused-status-bar/FocusedStatusBar';
+import {IntroAnimeDelay} from '../IntroStack';
 
 const IntroWhatsNewContainer = styled.View`
   flex: 1;
@@ -26,7 +27,7 @@ const WhatsNew = () => {
   const [delay, setDelay] = useState(0);
 
   useEffect(() => {
-    setDelay(750);
+    setDelay(IntroAnimeDelay);
   }, []);
 
   return (
@@ -37,32 +38,34 @@ const WhatsNew = () => {
         source={theme.dark ? darkImage : lightImage}
         resizeMode="contain"
       />
-      {delay ? (
-        <Animated.View
-          entering={FadeIn.delay(delay).easing(Easing.linear)}
-          style={{
-            flex: 1,
-            position: 'absolute',
-            top: 0,
-            bottom: 0,
-            left: 0,
-            right: 0,
-          }}>
-          <Overlay />
-          <Body>
+
+      <Overlay />
+
+      <Body>
+        {delay ? (
+          <Animated.View
+            entering={FadeIn.delay(delay).easing(Easing.linear)}
+            style={{
+              flex: 1,
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              left: 0,
+              right: 0,
+            }}>
             <BodyContainer>
               <IntroText>Here’s what’s new.</IntroText>
             </BodyContainer>
-            <ButtonContainer>
-              <IntroButton
-                onPress={() => {
-                  navigation.navigate('Intro', {screen: 'CustomizeHome'});
-                }}
-              />
-            </ButtonContainer>
-          </Body>
-        </Animated.View>
-      ) : null}
+          </Animated.View>
+        ) : null}
+        <ButtonContainer>
+          <IntroButton
+            onPress={() => {
+              navigation.navigate('Intro', {screen: 'CustomizeHome'});
+            }}
+          />
+        </ButtonContainer>
+      </Body>
     </IntroWhatsNewContainer>
   );
 };
