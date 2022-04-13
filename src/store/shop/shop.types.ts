@@ -72,7 +72,7 @@ interface updatedGiftCardStatus {
   type: typeof ShopActionTypes.UPDATED_GIFT_CARD_STATUS;
   payload: {
     invoiceId: string;
-    status: 'PENDING';
+    status: 'PENDING' | 'UNREDEEMED';
   };
 }
 interface updatedPhone {

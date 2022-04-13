@@ -42,7 +42,7 @@ export const initializedUnsoldGiftCard = (payload: {
 
 export const updatedGiftCardStatus = (payload: {
   invoiceId: string;
-  status: 'PENDING';
+  status: 'PENDING' | 'UNREDEEMED';
 }): ShopActionType => ({
   type: ShopActionTypes.UPDATED_GIFT_CARD_STATUS,
   payload,

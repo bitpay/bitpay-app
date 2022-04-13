@@ -250,6 +250,7 @@ const Confirm = () => {
                   const giftCard = await dispatch(
                     ShopEffects.startRedeemGiftCard(txp.invoiceID),
                   );
+                  await sleep(200);
                   dispatch(dismissOnGoingProcessModal());
                   await sleep(400);
                   navigation.dispatch(
@@ -277,6 +278,12 @@ const Confirm = () => {
                 }
                 dispatch(dismissOnGoingProcessModal());
               } catch (err: any) {
+                dispatch(
+                  ShopActions.updatedGiftCardStatus({
+                    invoiceId: txp.invoiceID!,
+                    status: 'UNREDEEMED',
+                  }),
+                );
                 await removeTxp(wallet, txp).catch(removeErr =>
                   console.error('error deleting txp', removeErr),
                 );
