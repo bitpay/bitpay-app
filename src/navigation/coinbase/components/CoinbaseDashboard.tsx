@@ -23,6 +23,7 @@ import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {Network} from '../../../constants';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
+import {Hr} from '../../../components/styled/Containers';
 
 const OverviewContainer = styled.View`
   flex: 1;
@@ -31,7 +32,7 @@ const OverviewContainer = styled.View`
 `;
 
 const BalanceContainer = styled.View`
-  height: 17%;
+  height: 15%;
   margin-top: 20px;
   padding: 10px 15px;
 `;
@@ -121,6 +122,7 @@ const CoinbaseDashboard = () => {
         fiatLockedBalance: '',
         isToken: false,
         network: Network.mainnet,
+        pendingTxps: [],
       };
       return (
         <WalletRow
@@ -185,11 +187,11 @@ const CoinbaseDashboard = () => {
           {user?.data.native_currency}
         </Balance>
       </BalanceContainer>
+      {theme.dark ? <Hr /> : null}
       <FlatList
         contentContainerStyle={{
           paddingBottom: 50,
           marginTop: 5,
-          backgroundColor: theme.dark ? 'rgb(37, 37, 37)' : White,
         }}
         refreshControl={
           <RefreshControl

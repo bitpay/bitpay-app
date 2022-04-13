@@ -69,7 +69,7 @@ const CoinbaseStack = () => {
           headerTitle: () => (
             <HeaderTitleContainer>
               <CoinbaseSvg style={{marginRight: 10}} />
-              <HeaderTitle style={{marginTop: 2}}>{'Coinbase'}</HeaderTitle>
+              <HeaderTitle style={{marginTop: 3}}>{'Coinbase'}</HeaderTitle>
             </HeaderTitleContainer>
           ),
         }}

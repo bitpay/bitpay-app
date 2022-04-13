@@ -7,7 +7,7 @@ import Svg, {Path} from 'react-native-svg';
 
 const SettingsSvgContainer = styled.TouchableOpacity`
   margin-right: 15px;
-  padding: 10px;
+  padding: 12px;
   border-radius: 30px;
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
 `;
