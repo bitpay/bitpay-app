@@ -137,15 +137,16 @@ const KeyExplanation: React.FC<KeyExplanationScreenProps> = () => {
           <Button
             buttonStyle={'primary'}
             onPress={() => {
-              haptic('impactLight');
-              if (activeSlideIndex === 2) {
+              if (activeSlideIndex === keyExplanationSlides.length - 1) {
                 navigation.goBack();
               } else {
                 // @ts-ignore
                 ref.current.snapToNext();
               }
             }}>
-            {activeSlideIndex === 2 ? 'I understand' : 'Next'}
+            {activeSlideIndex === keyExplanationSlides.length - 1
+              ? 'I Understand'
+              : 'Next'}
           </Button>
         </ActionContainer>
       </CtaContainerAbsolute>
