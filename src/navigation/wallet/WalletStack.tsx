@@ -13,6 +13,7 @@ import CurrencySelection, {
   CurrencySelectionParamList,
 } from './screens/CurrencySelection';
 import KeyOverview from './screens/KeyOverview';
+import KeyExplanation from './screens/KeyExplanation';
 import KeySettings from './screens/KeySettings';
 import WalletDetails from './screens/WalletDetails';
 import WalletSettings from './screens/WalletSettings';
@@ -65,6 +66,7 @@ export type WalletStackParamList = {
   VerifyPhrase: VerifyPhraseParamList;
   TermsOfUse: TermsOfUseParamList;
   KeyOverview: {key: Key};
+  KeyExplanation: undefined;
   KeySettings: {key: Key; context?: 'createEncryptPassword'};
   UpdateKeyOrWalletName: {
     key: Key;
@@ -113,6 +115,7 @@ export enum WalletScreens {
   VERIFY_PHRASE = 'VerifyPhrase',
   TERMS_OF_USE = 'TermsOfUse',
   KEY_OVERVIEW = 'KeyOverview',
+  KEY_EXPLANATION = 'KeyExplanation',
   KEY_SETTINGS = 'KeySettings',
   UPDATE_KEY_OR_WALLET_NAME = 'UpdateKeyOrWalletName',
   WALLET_DETAILS = 'WalletDetails',
@@ -193,6 +196,10 @@ const WalletStack = () => {
         <Wallet.Screen
           name={WalletScreens.KEY_OVERVIEW}
           component={KeyOverview}
+        />
+        <Wallet.Screen
+          name={WalletScreens.KEY_EXPLANATION}
+          component={KeyExplanation}
         />
         <Wallet.Screen
           name={WalletScreens.KEY_SETTINGS}
