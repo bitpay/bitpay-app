@@ -12,7 +12,7 @@ import {CoinbaseScreens} from '../../navigation/coinbase/CoinbaseStack';
 import {RootStackParamList, RootStacks} from '../../Root';
 import {useLogger} from '.';
 import {TabsScreens} from '../../navigation/tabs/TabsStack';
-import {WalletConnectScreens} from '../../navigation/wallet-connect/WalletConnectStack';
+import {ConnectionSettingsScreens} from '../../navigation/tabs/settings/connections/ConnectionsStack';
 
 export const useDeeplinks = () => {
   const dispatch = useDispatch();
@@ -79,9 +79,9 @@ export const useDeeplinks = () => {
             [SwapCryptoScreens.ROOT]: 'swap',
           },
         },
-        [RootStacks.WALLET_CONNECT]: {
+        [RootStacks.CONNECTION_SETTINGS]: {
           screens: {
-            [WalletConnectScreens.ROOT]: 'walletconnect',
+            [ConnectionSettingsScreens.ROOT]: 'connections',
           },
         },
         [RootStacks.COINBASE]: {
