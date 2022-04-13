@@ -12,7 +12,7 @@ import {formatFiatAmount} from '../../../../../utils/helper-methods';
 import IncrementArrow from '../../../../../../assets/img/home/exchange-rates/increment-arrow.svg';
 import DecrementArrow from '../../../../../../assets/img/home/exchange-rates/decrement-arrow.svg';
 import {ExchangeRateItemProps} from './ExchangeRatesList';
-import {SlateDark, White} from '../../../../../styles/colors';
+import {Slate, SlateDark} from '../../../../../styles/colors';
 
 const RowContainer = styled.TouchableOpacity`
   flex-direction: row;
@@ -35,8 +35,7 @@ const ExchangeRateText = styled(H7)`
 
 const ExchangeRateSubText = styled(Smallest)`
   line-height: 20px;
-  font-weight: 500;
-  color: ${({theme}) => (theme.dark ? White : SlateDark)};
+  color: ${({theme}) => (theme.dark ? Slate : SlateDark)};
 `;
 
 const ExchangeRateItem = ({

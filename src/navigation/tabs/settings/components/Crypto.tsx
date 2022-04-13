@@ -1,4 +1,4 @@
-import {Settings} from '../SettingsRoot';
+import {SettingsComponent} from '../SettingsRoot';
 import React from 'react';
 import {
   InfoTriangle,
@@ -25,7 +25,7 @@ const Crypto = () => {
   const navigation = useNavigation();
 
   return (
-    <Settings>
+    <SettingsComponent>
       <Setting
         activeOpacity={ActiveOpacity}
         onPress={() =>
@@ -55,7 +55,7 @@ const Crypto = () => {
           Card loads, or BitPay in-app gift card purchases.
         </InfoDescription>
       </Info>
-    </Settings>
+    </SettingsComponent>
   );
 };
 

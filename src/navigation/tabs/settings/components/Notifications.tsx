@@ -1,5 +1,5 @@
 import React from 'react';
-import {Settings} from '../SettingsRoot';
+import {SettingsComponent} from '../SettingsRoot';
 import {
   Hr,
   Setting,
@@ -17,7 +17,7 @@ const Notifications = () => {
     {title: 'Offers & Promotions', checked: false},
   ];
   return (
-    <Settings>
+    <SettingsComponent>
       {notificationsList.map(({title, checked}, i) => (
         <View key={i}>
           {i !== 0 ? <Hr /> : null}
@@ -27,7 +27,7 @@ const Notifications = () => {
           </Setting>
         </View>
       ))}
-    </Settings>
+    </SettingsComponent>
   );
 };
 

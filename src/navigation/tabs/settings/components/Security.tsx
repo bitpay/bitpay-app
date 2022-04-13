@@ -1,4 +1,4 @@
-import {Settings} from '../SettingsRoot';
+import {SettingsComponent} from '../SettingsRoot';
 import {
   Setting,
   SettingTitle,
@@ -183,14 +183,14 @@ const Security = () => {
   };
   return (
     <>
-      <Settings>
+      <SettingsComponent>
         <Setting onPress={onPressLockButton}>
           <SettingTitle>Lock App</SettingTitle>
           <Button onPress={onPressLockButton} buttonType={'pill'}>
             {biometricLockActive || pinLockActive ? 'Enabled' : 'Disabled'}
           </Button>
         </Setting>
-      </Settings>
+      </SettingsComponent>
       <SheetModal isVisible={modalVisible} onBackdropPress={hideModal}>
         <SheetContainer>
           <Header>

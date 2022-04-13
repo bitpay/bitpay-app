@@ -2,7 +2,7 @@ import React from 'react';
 import {H6, Link} from '../../../../components/styled/Text';
 import {RootState} from '../../../../store';
 import {useAppSelector} from '../../../../utils/hooks';
-import {Settings} from '../SettingsRoot';
+import {SettingsComponent} from '../SettingsRoot';
 import {useNavigation} from '@react-navigation/native';
 import SettingsContactRow from '../../../../components/list/SettingsContactRow';
 import {
@@ -34,7 +34,7 @@ const Contacts = () => {
   const contacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const navigation = useNavigation();
   return (
-    <Settings>
+    <SettingsComponent>
       {contacts.length
         ? contacts.slice(0, 2).map((item, index) => (
             <View key={index}>
@@ -74,7 +74,7 @@ const Contacts = () => {
           <SeeAllLink>View All {contacts.length} Contacts</SeeAllLink>
         </Setting>
       ) : null}
-    </Settings>
+    </SettingsComponent>
   );
 };
 
