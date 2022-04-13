@@ -5,11 +5,11 @@ import {
   IntroText,
   IntroTextBold,
   ButtonContainer,
-  Overlay,
-  TopTabFill,
-  TopTabFillOverlay,
   BodyContainer,
   IntroBackgroundImage,
+  TopNavFill,
+  TopNavFillOverlay,
+  Overlay,
 } from '../components/styled/Styled';
 import IntroButton from '../components/intro-button/IntroButton';
 import {useTheme} from '@react-navigation/native';
@@ -47,8 +47,8 @@ const IntroShop = ({navigation}: IntroContactsScreenProps) => {
     <IntroShopContainer>
       <FocusedStatusBar barStyle={'light-content'} />
       <Overlay />
-      <TopTabFill />
-      <TopTabFillOverlay />
+      <TopNavFill />
+      <TopNavFillOverlay />
 
       <IntroBackgroundImage
         source={theme.dark ? darkBackground : lightBackground}

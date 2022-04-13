@@ -7,8 +7,8 @@ import {
   IntroBackgroundImage,
   IntroText,
   Overlay,
-  TopTabFill,
-  TopTabFillOverlay,
+  TopNavFill,
+  TopNavFillOverlay,
 } from '../components/styled/Styled';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
@@ -37,8 +37,8 @@ const CustomizeHome = () => {
       <FocusedStatusBar barStyle={'light-content'} />
 
       <Overlay />
-      <TopTabFill />
-      <TopTabFillOverlay />
+      <TopNavFill />
+      <TopNavFillOverlay />
 
       <IntroBackgroundImage
         source={theme.dark ? darkBackground : lightBackground}

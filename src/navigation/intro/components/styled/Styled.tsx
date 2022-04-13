@@ -49,26 +49,19 @@ export const ButtonContainer = styled.View`
   right: 5%;
 `;
 
-export const TopTabFill = styled.View`
+export const TopNavFill = styled.View`
   background: ${({theme}) => theme.colors.background};
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 50px;
+  height: 70px;
   z-index: 3;
 `;
 
-export const TopTabFillOverlay = styled.View`
-  height: 50px;
+export const TopNavFillOverlay = styled(Overlay)`
+  height: 70px;
   z-index: 3;
-  background: black;
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  bottom: 0;
-  opacity: 0.8;
 `;
 
 export const BodyContainer = styled.View`
