@@ -3,7 +3,7 @@ import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {Settings} from '../SettingsRoot';
+import {SettingsComponent} from '../SettingsRoot';
 import {Setting, SettingTitle} from '../../../../components/styled/Containers';
 import {WalletConnectIconContainer} from '../../../wallet-connect/styled/WalletConnectContainers';
 import WalletConnectIcon from '../../../../../assets/img/wallet-connect/wallet-connect-icon.svg';
@@ -37,7 +37,7 @@ const Connections = () => {
   };
 
   return (
-    <Settings>
+    <SettingsComponent>
       <Setting onPress={() => goToNextView()}>
         <ConnectionItemContainer>
           <WalletConnectIconContainer>
@@ -47,7 +47,7 @@ const Connections = () => {
         </ConnectionItemContainer>
         <AngleRight />
       </Setting>
-    </Settings>
+    </SettingsComponent>
   );
 };
 

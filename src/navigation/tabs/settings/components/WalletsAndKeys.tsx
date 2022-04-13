@@ -1,5 +1,5 @@
 import React from 'react';
-import {Settings} from '../SettingsRoot';
+import {SettingsComponent} from '../SettingsRoot';
 import {
   ActiveOpacity,
   Hr,
@@ -39,7 +39,7 @@ const WalletsAndKeys = () => {
         );
   };
   return (
-    <Settings>
+    <SettingsComponent>
       {Object.values(keys).length
         ? Object.values(keys).map(key => (
             <View key={key.id}>
@@ -68,7 +68,7 @@ const WalletsAndKeys = () => {
         activeOpacity={ActiveOpacity}>
         <CreateOrImportLink>Create or Import Key</CreateOrImportLink>
       </Setting>
-    </Settings>
+    </SettingsComponent>
   );
 };
 

@@ -46,6 +46,10 @@ export const Settings = styled.ScrollView`
   padding: 10px ${ScreenGutter};
 `;
 
+export const SettingsComponent = styled.View`
+  padding: 0 ${ScreenGutter};
+`;
+
 export const SettingsHome = styled.ScrollView`
   padding: 10px 0;
 `;

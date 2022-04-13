@@ -1,5 +1,5 @@
 import React from 'react';
-import {Settings} from '../SettingsRoot';
+import {SettingsComponent} from '../SettingsRoot';
 import {
   ActiveOpacity,
   Hr,
@@ -45,7 +45,7 @@ const About = () => {
     },
   ];
   return (
-    <Settings>
+    <SettingsComponent>
       <Setting>
         <SettingTitle>Version</SettingTitle>
 
@@ -79,7 +79,7 @@ const About = () => {
           </View>
         );
       })}
-    </Settings>
+    </SettingsComponent>
   );
 };
 export default About;

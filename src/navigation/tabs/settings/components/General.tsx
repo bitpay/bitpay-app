@@ -11,7 +11,7 @@ import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
 import {RootState} from '../../../../store';
 import {useAppDispatch} from '../../../../utils/hooks/useAppDispatch';
 import {useTranslation} from 'react-i18next';
-import {Settings} from '../SettingsRoot';
+import {SettingsComponent} from '../SettingsRoot';
 import {
   ActiveOpacity,
   Hr,
@@ -29,7 +29,7 @@ const General = () => {
   const {t} = useTranslation();
 
   return (
-    <Settings>
+    <SettingsComponent>
       <Setting
         activeOpacity={ActiveOpacity}
         onPress={() =>
@@ -133,7 +133,7 @@ const General = () => {
         }>
         <SettingTitle>{t('Reset All Settings')}</SettingTitle>
       </Setting>
-    </Settings>
+    </SettingsComponent>
   );
 };
 
