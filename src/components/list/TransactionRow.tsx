@@ -25,6 +25,11 @@ const Description = styled(BaseText)`
   font-size: 16px;
 `;
 
+const Details = styled(BaseText)`
+  font-size: 12px;
+  font-weight: 300;
+`;
+
 const TailContainer = styled.View`
   margin-left: auto;
 `;
@@ -45,6 +50,7 @@ interface Props {
   icon?: ReactElement;
   iconURI?: string;
   description?: string;
+  details?: string;
   value?: string;
   time?: string;
   onPressTransaction?: () => void;
@@ -54,6 +60,7 @@ const TransactionRow = ({
   icon,
   iconURI,
   description,
+  details,
   value,
   time,
   onPressTransaction,
@@ -73,8 +80,14 @@ const TransactionRow = ({
         icon && <IconContainer>{icon}</IconContainer>
       )}
       {description && (
-        <Description numberOfLines={1} ellipsizeMode={'tail'}>
+        <Description numberOfLines={details ? 2 : 1} ellipsizeMode={'tail'}>
           {description}
+          {details && (
+            <Details>
+              {'\n'}
+              {details}
+            </Details>
+          )}
         </Description>
       )}
       <TailContainer>

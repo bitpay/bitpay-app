@@ -102,10 +102,12 @@ interface ButtonListProps {
 
 interface Props {
   send: {
+    label?: string;
     hide?: boolean;
     cta: () => void;
   };
   receive: {
+    label?: string;
     hide?: boolean;
     cta: () => void;
   };
@@ -119,7 +121,7 @@ interface Props {
   };
 }
 
-const LinkingButtons = ({buy, receive, send}: Props) => {
+const LinkingButtons = ({buy, receive, send, swap}: Props) => {
   const navigation = useNavigation();
   const buttonsList: Array<ButtonListProps> = [
     // TODO: update icons
@@ -153,16 +155,16 @@ const LinkingButtons = ({buy, receive, send}: Props) => {
       label: 'swap',
       img: <SwapSvg />,
       cta: () => navigation.navigate('SwapCrypto', {screen: 'Root'}),
-      hide: false,
+      hide: !!swap?.hide,
     },
     {
-      label: 'receive',
+      label: receive.label || 'receive',
       img: <ReceiveSvg />,
       cta: receive.cta,
-      hide: false,
+      hide: !!receive?.hide,
     },
     {
-      label: 'send',
+      label: send.label || 'send',
       img: <SendSvg />,
       cta: send.cta,
       hide: !!send?.hide,

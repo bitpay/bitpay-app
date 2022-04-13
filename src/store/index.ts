@@ -68,6 +68,12 @@ import {
   WalletConnectState,
 } from './wallet-connect/wallet-connect.reducer';
 import {WalletConnectActionType} from './wallet-connect/wallet-connect.types';
+import {CoinbaseActionType} from './coinbase/coinbase.types';
+import {
+  coinbaseReducer,
+  CoinbaseReduxPersistBlackList,
+  CoinbaseState,
+} from './coinbase/coinbase.reducer';
 
 const basePersistConfig = {
   storage: AsyncStorage,
@@ -145,6 +151,14 @@ const reducers = {
       blacklist: ContactReduxPersistBlackList,
     },
     contactReducer,
+  ),
+  COINBASE: persistReducer<CoinbaseState, CoinbaseActionType>(
+    {
+      ...basePersistConfig,
+      key: 'COINBASE',
+      blacklist: CoinbaseReduxPersistBlackList,
+    },
+    coinbaseReducer,
   ),
   WALLET_CONNECT: persistReducer<WalletConnectState, WalletConnectActionType>(
     {

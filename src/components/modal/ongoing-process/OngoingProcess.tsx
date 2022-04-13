@@ -26,6 +26,8 @@ export enum OnGoingProcessMessages {
   REJECTING_CALL_REQUEST = 'Rejecting Call Request',
   SAVING_LAYOUT = 'Saving Layout',
   CALCULATING_FEE = 'Calculating Fee',
+  CONNECTING_COINBASE = 'Connecting with Coinbase...',
+  FETCHING_COINBASE_DATA = 'Fetching data from Coinbase...',
 }
 
 const OnGoingProcessContainer = styled.View`

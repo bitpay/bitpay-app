@@ -82,7 +82,10 @@ export type WalletStackParamList = {
   DeleteKey: {keyId: string};
   ExportKey: {code: string; keyName: string | undefined};
   Amount: AmountParamList;
-  SendTo: {wallet: WalletModel};
+  SendTo: {
+    wallet: WalletModel;
+    toCoinbase?: {account: string; address: string};
+  };
   Confirm: ConfirmParamList;
   GiftCardConfirm: GiftCardConfirmParamList;
   PayProConfirm: PayProConfirmParamList;
