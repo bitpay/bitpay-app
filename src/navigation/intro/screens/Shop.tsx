@@ -1,42 +1,29 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {
-  BackgroundImage,
-  Body,
-  IntroText,
-  IntroTextBold,
-  ButtonContainer,
-  Overlay,
+    Body,
+    IntroText,
+    IntroTextBold,
+    ButtonContainer,
+    Overlay,
+    TopTabFill,
+    TopTabFillOverlay,
+    BodyContainer,
+    IntroBackgroundImage,
 } from '../components/styled/Styled';
-import {WIDTH} from '../../../components/styled/Containers';
 import IntroButton from '../components/intro-button/IntroButton';
-import {useNavigation, useTheme} from '@react-navigation/native';
-import LightBottomTabBarShopSvg from '../../../../assets/img/intro/light/bottom-tabbar-shop.svg';
-import DarkBottomTabBarShopSvg from '../../../../assets/img/intro/dark/bottom-tabbar-shop.svg';
+import {useTheme} from '@react-navigation/native';
 import FocusedStatusBar from '../../../components/focused-status-bar/FocusedStatusBar';
 const lightBackground = require('../../../../assets/img/intro/light/shop-background.png');
 const darkBackground = require('../../../../assets/img/intro/dark/shop-background.png');
+import Animated, {Easing, FadeIn} from 'react-native-reanimated';
+import {askForTrackingPermissionAndEnableSdks} from '../../../store/app/app.effects';
+import {useAppDispatch} from '../../../utils/hooks';
+import {StackScreenProps} from "@react-navigation/stack";
+import {RootStackParamList} from "../../../Root";
 
 const IntroShopContainer = styled.View`
   flex: 1;
-  position: relative;
-`;
-
-const BottomTabContainer = styled.View`
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
-`;
-
-const BottomTabFill = styled.View`
-  background: ${({theme}) => theme.colors.background};
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 70px;
 `;
 
 const TextContainer = styled.View`
@@ -45,37 +32,54 @@ const TextContainer = styled.View`
   margin-bottom: 10px;
 `;
 
-const IntroShop = () => {
-  const navigation = useNavigation();
+type IntroContactsScreenProps = StackScreenProps<RootStackParamList, 'Intro'>;
+
+const IntroShop = ({navigation}: IntroContactsScreenProps) => {
   const theme = useTheme();
+  const dispatch = useAppDispatch();
+  const [delay, setDelay] = useState(0);
+
+  useEffect(() => {
+    setDelay(200);
+  }, []);
+
   return (
     <IntroShopContainer>
       <FocusedStatusBar barStyle={'light-content'} />
-      <BackgroundImage source={theme.dark ? darkBackground : lightBackground} />
       <Overlay />
+      <TopTabFill />
+      <TopTabFillOverlay />
+
+      <IntroBackgroundImage
+        source={theme.dark ? darkBackground : lightBackground}
+        resizeMode="contain"
+      />
       <Body>
+        <BodyContainer>
+          {delay ? (
+            <Animated.View
+              entering={FadeIn.easing(Easing.linear)
+                .duration(300)
+                .delay(delay)}>
+              <TextContainer>
+                <IntroText>
+                  Shop with crypto and {'\n'} buy gift cards in the
+                </IntroText>
+                <IntroTextBold>Shop Tab.</IntroTextBold>
+              </TextContainer>
+            </Animated.View>
+          ) : null}
+        </BodyContainer>
         <ButtonContainer>
           <IntroButton
-            onPress={() => {
-              navigation.navigate('Intro', {screen: 'Contacts'});
-            }}
-          />
+            onPress={async () => {
+              await dispatch(askForTrackingPermissionAndEnableSdks());
+              navigation.replace('Onboarding', {screen: 'OnboardingStart'});
+            }}>
+            Finish
+          </IntroButton>
         </ButtonContainer>
       </Body>
-      <BottomTabContainer>
-        <TextContainer>
-          <IntroText>
-            Shop with crypto and {'\n'} buy gift cards in the
-          </IntroText>
-          <IntroTextBold>Shop Tab.</IntroTextBold>
-        </TextContainer>
-        <BottomTabFill />
-        {theme.dark ? (
-          <DarkBottomTabBarShopSvg width={WIDTH} />
-        ) : (
-          <LightBottomTabBarShopSvg width={WIDTH} />
-        )}
-      </BottomTabContainer>
     </IntroShopContainer>
   );
 };
