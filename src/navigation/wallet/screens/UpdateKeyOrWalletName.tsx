@@ -63,11 +63,6 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
   const placeholder = context === 'key' ? key.keyName : walletName;
 
   const updateName = ({name}: {name: string}) => {
-    name = name
-      .split(' ')
-      .map(word => titleCasing(word))
-      .join(' ');
-
     if (context === 'key') {
       dispatch(updateKeyName({keyId: key.id, name}));
     } else {
