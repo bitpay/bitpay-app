@@ -339,6 +339,8 @@ export const resetAllSettings = (): Effect => dispatch => {
     dispatch(AppActions.showPortfolioValue(true));
     dispatch(AppActions.setDefaultLanguage(i18n.language || 'en'));
     dispatch(WalletActions.setUseUnconfirmedFunds(false));
+    dispatch(WalletActions.setCustomizeNonce(false));
+    dispatch(WalletActions.setEnableReplaceByFee(false));
     dispatch(LogActions.info('Reset all settings'));
   });
 };
