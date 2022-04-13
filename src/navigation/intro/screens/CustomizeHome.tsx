@@ -3,7 +3,8 @@ import IntroButton from '../components/intro-button/IntroButton';
 import {
   Body,
   BodyContainer,
-  ButtonContainer, IntroBackgroundImage,
+  ButtonContainer,
+  IntroBackgroundImage,
   IntroText,
   Overlay,
   TopTabFill,

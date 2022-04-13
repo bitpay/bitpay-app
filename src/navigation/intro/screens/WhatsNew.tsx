@@ -7,7 +7,7 @@ import {
   ButtonContainer,
   IntroText,
   Overlay,
-  BodyContainer
+  BodyContainer,
 } from '../components/styled/Styled';
 const lightImage = require('../../../../assets/img/intro/light/whats-new.png');
 const darkImage = require('../../../../assets/img/intro/dark/whats-new.png');

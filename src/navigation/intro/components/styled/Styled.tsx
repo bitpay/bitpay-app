@@ -78,6 +78,6 @@ export const BodyContainer = styled.View`
 `;
 
 export const IntroBackgroundImage = styled(BackgroundImage)`
-    margin-top: 0;
+  margin-top: 0;
   z-index: 2;
-`
+`;

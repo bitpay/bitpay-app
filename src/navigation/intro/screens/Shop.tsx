@@ -1,15 +1,15 @@
 import React, {useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {
-    Body,
-    IntroText,
-    IntroTextBold,
-    ButtonContainer,
-    Overlay,
-    TopTabFill,
-    TopTabFillOverlay,
-    BodyContainer,
-    IntroBackgroundImage,
+  Body,
+  IntroText,
+  IntroTextBold,
+  ButtonContainer,
+  Overlay,
+  TopTabFill,
+  TopTabFillOverlay,
+  BodyContainer,
+  IntroBackgroundImage,
 } from '../components/styled/Styled';
 import IntroButton from '../components/intro-button/IntroButton';
 import {useTheme} from '@react-navigation/native';
@@ -19,8 +19,8 @@ const darkBackground = require('../../../../assets/img/intro/dark/shop-backgroun
 import Animated, {Easing, FadeIn} from 'react-native-reanimated';
 import {askForTrackingPermissionAndEnableSdks} from '../../../store/app/app.effects';
 import {useAppDispatch} from '../../../utils/hooks';
-import {StackScreenProps} from "@react-navigation/stack";
-import {RootStackParamList} from "../../../Root";
+import {StackScreenProps} from '@react-navigation/stack';
+import {RootStackParamList} from '../../../Root';
 
 const IntroShopContainer = styled.View`
   flex: 1;
