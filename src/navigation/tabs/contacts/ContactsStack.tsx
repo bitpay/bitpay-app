@@ -35,13 +35,7 @@ const ContactsStack = () => {
         ...baseNavigatorOptions,
         ...baseScreenOptions,
       }}>
-      <Contacts.Screen
-        name={ContactsScreens.ROOT}
-        component={ContactsRoot}
-        options={{
-          headerShown: false,
-        }}
-      />
+      <Contacts.Screen name={ContactsScreens.ROOT} component={ContactsRoot} />
       <Contacts.Screen
         name={ContactsScreens.DETAILS}
         component={ContactsDetails}

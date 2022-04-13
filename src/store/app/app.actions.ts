@@ -11,6 +11,7 @@ import {
   HomeCarouselLayoutType,
 } from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
+import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 
 export const networkChanged = (network: Network): AppActionType => ({
   type: AppActionTypes.NETWORK_CHANGED,
@@ -191,4 +192,11 @@ export const setHomeCarouselLayoutType = (
 ): AppActionType => ({
   type: AppActionTypes.SET_HOME_CAROUSEL_LAYOUT_TYPE,
   payload: update,
+});
+
+export const updateSettingsListConfig = (
+  listItem: SettingsListType,
+): AppActionType => ({
+  type: AppActionTypes.UPDATE_SETTINGS_LIST_CONFIG,
+  payload: listItem,
 });

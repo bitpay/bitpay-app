@@ -1,45 +1,43 @@
-import React, {useState} from 'react';
-import {useDispatch, useSelector} from 'react-redux';
-import {Settings, SettingsContainer} from '../../SettingsRoot';
-import Button from '../../../../../components/button/Button';
-import {RootState} from '../../../../../store';
-import styled, {css} from 'styled-components/native';
-import {H4, Paragraph} from '../../../../../components/styled/Text';
+import {Settings} from '../SettingsRoot';
 import {
-  Hr,
   Setting,
   SettingTitle,
   SheetContainer,
-} from '../../../../../components/styled/Containers';
-import {AppActions} from '../../../../../store/app';
+} from '../../../../components/styled/Containers';
+import Button from '../../../../components/button/Button';
+import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
+import {Platform} from 'react-native';
+import React, {useState} from 'react';
+import {useDispatch, useSelector} from 'react-redux';
+import {useThemeType} from '../../../../utils/hooks/useThemeType';
+import {RootState} from '../../../../store';
+import {AppActions} from '../../../../store/app';
 import TouchID from 'react-native-touch-id';
 import {
-  TO_HANDLE_ERRORS,
+  authOptionalConfigObject,
   BiometricError,
   BiometricErrorNotification,
   isSupportedOptionalConfigObject,
-  authOptionalConfigObject,
-} from '../../../../../constants/BiometricError';
-import {LOCK_AUTHORIZED_TIME} from '../../../../../constants/Lock';
-import {showBottomNotificationModal} from '../../../../../store/app/app.actions';
-import {sleep} from '../../../../../utils/helper-methods';
-import SheetModal from '../../../../../components/modal/base/sheet/SheetModal';
-import {Platform} from 'react-native';
+  TO_HANDLE_ERRORS,
+} from '../../../../constants/BiometricError';
+import {LOCK_AUTHORIZED_TIME} from '../../../../constants/Lock';
+import {showBottomNotificationModal} from '../../../../store/app/app.actions';
+import {sleep} from '../../../../utils/helper-methods';
+import FingerprintImg from '../../../../../assets/img/fingerprint.svg';
+import FingerprintDarkModeImg from '../../../../../assets/img/fingerprint-darkmode.svg';
+import FaceImg from '../../../../../assets/img/face.svg';
+import FaceDarkModeImg from '../../../../../assets/img/face-darkmode.svg';
+import PinImg from '../../../../../assets/img/pin.svg';
+import PinDarkModeImg from '../../../../../assets/img/pin-darkmode.svg';
+import styled, {css} from 'styled-components/native';
 import {
+  Action,
+  Midnight,
+  ProgressBlue,
   SlateDark,
   White,
-  Midnight,
-  Action,
-  ProgressBlue,
-} from '../../../../../styles/colors';
-import {useThemeType} from '../../../../../utils/hooks/useThemeType';
-import FingerprintImg from '../../../../../../assets/img/fingerprint.svg';
-import FingerprintDarkModeImg from '../../../../../../assets/img/fingerprint-darkmode.svg';
-import FaceImg from '../../../../../../assets/img/face.svg';
-import FaceDarkModeImg from '../../../../../../assets/img/face-darkmode.svg';
-import PinImg from '../../../../../../assets/img/pin.svg';
-import PinDarkModeImg from '../../../../../../assets/img/pin-darkmode.svg';
-
+} from '../../../../styles/colors';
+import {H4, Paragraph} from '../../../../components/styled/Text';
 const FingerprintSvg = {
   light: <FingerprintImg />,
   dark: <FingerprintDarkModeImg />,
@@ -100,7 +98,7 @@ const ImgRow = styled.View`
   margin-bottom: 20px;
 `;
 
-const SecuritySettingsRoot: React.FC = () => {
+const Security = () => {
   const dispatch = useDispatch();
   const themeType = useThemeType();
   const [modalVisible, setModalVisible] = useState(false);
@@ -183,21 +181,16 @@ const SecuritySettingsRoot: React.FC = () => {
         break;
     }
   };
-
   return (
     <>
-      <SettingsContainer>
-        <Settings>
-          <Hr />
-          <Setting>
-            <SettingTitle>Lock App</SettingTitle>
-            <Button onPress={onPressLockButton} buttonType={'pill'}>
-              {biometricLockActive || pinLockActive ? 'Enabled' : 'Disabled'}
-            </Button>
-          </Setting>
-          <Hr />
-        </Settings>
-      </SettingsContainer>
+      <Settings>
+        <Setting onPress={onPressLockButton}>
+          <SettingTitle>Lock App</SettingTitle>
+          <Button onPress={onPressLockButton} buttonType={'pill'}>
+            {biometricLockActive || pinLockActive ? 'Enabled' : 'Disabled'}
+          </Button>
+        </Setting>
+      </Settings>
       <SheetModal isVisible={modalVisible} onBackdropPress={hideModal}>
         <SheetContainer>
           <Header>
@@ -248,4 +241,4 @@ const SecuritySettingsRoot: React.FC = () => {
   );
 };
 
-export default SecuritySettingsRoot;
+export default Security;

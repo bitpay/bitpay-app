@@ -57,4 +57,10 @@ export const URL = {
     'https://bitpay.com/assets/pdfs/gpr-mastercard-short-form.pdf',
   MASTERCARD_FAQ:
     'https://support.bitpay.com/hc/en-us/categories/115000745966-BitPay-Card',
+
+  /**
+   * Settings
+   * */
+  REQUEST_FEATURE: 'https://payux.typeform.com/to/QOxsnCzo',
+  REPORT_ISSUE: 'https://bitpay.com/request-help/wizard?category=wallet',
 };

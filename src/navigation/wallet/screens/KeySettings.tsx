@@ -323,7 +323,7 @@ const KeySettings = () => {
                     keyId: key.id,
                     words: getMnemonic(_key),
                     walletTermsAccepted: true,
-                    context: 'settings',
+                    context: 'keySettings',
                     key,
                   },
                 });
@@ -337,7 +337,7 @@ const KeySettings = () => {
                           keyId: key.id,
                           words: mnemonic.trim().split(' '),
                           walletTermsAccepted: true,
-                          context: 'settings',
+                          context: 'keySettings',
                           key,
                         },
                       });
