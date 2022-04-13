@@ -140,6 +140,13 @@ const CoinbaseAccount = ({
   const [cryptoAmount, setCryptoAmount] = useState('0');
   const [txs, setTxs] = useState([] as CoinbaseTransactionProps[]);
 
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+
+  const [availableWalletToDeposit, setAvailableWalletToDeposit] =
+    useState(false);
+  const [availableWalletToWithdraw, setAvailableWalletToWithdraw] =
+    useState(false);
+
   const [selectedWallet, setSelectedWallet] = useState<Wallet>();
 
   const exchangeRates = useAppSelector(({COINBASE}) => COINBASE.exchangeRates);
@@ -235,6 +242,31 @@ const CoinbaseAccount = ({
   };
 
   useEffect(() => {
+    // all wallets
+    let availableWallets = Object.values(keys)
+      .filter(key => key.backupComplete)
+      .flatMap(key => key.wallets);
+
+    availableWallets = availableWallets.filter(
+      wallet =>
+        !wallet.hideWallet &&
+        wallet.isComplete() &&
+        wallet.currencyAbbreviation ===
+          account?.currency.code.toLocaleLowerCase(),
+    );
+    if (availableWallets[0]) {
+      setAvailableWalletToWithdraw(true);
+
+      availableWallets = availableWallets.filter(
+        wallet => wallet.balance.sat > 0,
+      );
+
+      // If has balance
+      if (availableWallets[0]) {
+        setAvailableWalletToDeposit(true);
+      }
+    }
+
     if (account && account.balance) {
       const currencies: string[] = [];
       currencies.push(account.balance.currency.toLowerCase());
@@ -268,7 +300,15 @@ const CoinbaseAccount = ({
     if (txsStatus && txsStatus === 'failed') {
       setErrorLoadingTxs(true);
     }
-  }, [account, transactions, txsLoading, txsStatus, accountId, exchangeRates]);
+  }, [
+    account,
+    transactions,
+    txsLoading,
+    txsStatus,
+    accountId,
+    exchangeRates,
+    keys,
+  ]);
 
   const deposit = async () => {
     // Deposit:
@@ -381,12 +421,17 @@ const CoinbaseAccount = ({
           {account?.primary && <Type>Primary</Type>}
         </Row>
         <LinkingButtons
-          receive={{cta: deposit, label: 'deposit'}}
+          receive={{
+            cta: deposit,
+            label: 'deposit',
+            hide: !availableWalletToDeposit,
+          }}
           send={{
             cta: () => {
               setWalletModalVisible(true);
             },
             label: 'withdraw',
+            hide: !availableWalletToWithdraw,
           }}
           buy={{cta: () => null, hide: true}}
           swap={{cta: () => null, hide: true}}
