@@ -56,7 +56,7 @@ import {
   createProposalAndBuildTxDetails,
   handleCreateTxProposalError,
 } from '../../../../store/wallet/effects/send/send';
-import {APP_NAME} from "../../../../constants/config";
+import {APP_NAME} from '../../../../constants/config';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
