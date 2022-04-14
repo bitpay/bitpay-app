@@ -35,6 +35,7 @@ import haptic from '../../../../components/haptic-feedback/haptic';
 import {Feather} from '../../../../styles/colors';
 import Button from '../../../../components/button/Button';
 import CoinbaseBalanceCard from '../../../coinbase/components/CoinbaseBalanceCard';
+import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 
 const CryptoContainer = styled.View`
   background: ${({theme}) => (theme.dark ? '#111111' : Feather)};
@@ -185,7 +186,9 @@ const Crypto = () => {
   const dispatch = useDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
-  const linkedCoinbase = useAppSelector(({COINBASE}) => !!COINBASE.token);
+  const linkedCoinbase = useAppSelector(
+    ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
+  );
   const homeCarouselLayoutType = useAppSelector(
     ({APP}) => APP.homeCarouselLayoutType,
   );
