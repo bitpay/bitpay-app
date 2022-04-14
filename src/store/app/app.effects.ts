@@ -113,7 +113,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
         show: true,
       }));
       const coinbase = {
-        id: 'coinbase',
+        id: 'coinbaseBalanceCard',
         show: !!COINBASE.token[COINBASE_ENV],
       };
       dispatch(setHomeCarouselConfig([...keys, ...cards, coinbase]));
