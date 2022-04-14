@@ -1,5 +1,12 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {ScrollView, Linking, Share, RefreshControl, Image} from 'react-native';
+import {
+  ScrollView,
+  Linking,
+  Share,
+  RefreshControl,
+  Image,
+  DeviceEventEmitter,
+} from 'react-native';
 import TimeAgo from 'react-native-timeago';
 import {StackScreenProps} from '@react-navigation/stack';
 import styled, {useTheme} from 'styled-components/native';
@@ -48,6 +55,7 @@ import {
 } from '../../../../../store/shop/shop.models';
 import {ShopActions, ShopEffects} from '../../../../../store/shop';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {DeviceEmitterEvents} from '../../../../../constants/device-emitter-events';
 
 const maxWidth = 320;
 
@@ -158,6 +166,14 @@ const GiftCardDetails = ({
     giftCards.find(card => card.invoiceId === initialGiftCard.invoiceId) ||
       initialGiftCard,
   );
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      DeviceEmitterEvents.GIFT_CARD_REDEEMED,
+      (updatedGiftCard: GiftCard) => setGiftCard(updatedGiftCard),
+    );
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     if (!giftCard.barcodeImage) {

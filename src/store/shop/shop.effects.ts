@@ -13,6 +13,8 @@ import {
   UnsoldGiftCard,
 } from './shop.models';
 import {redemptionFailuresLessThanADayOld} from '../../lib/gift-cards/gift-card';
+import {DeviceEventEmitter} from 'react-native';
+import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 
 export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
   try {
@@ -164,4 +166,26 @@ export const retryGiftCardRedemptions =
       dispatch(startRedeemGiftCard(giftCard.invoiceId)),
     );
     await Promise.all(retryPromises);
+  };
+
+export const waitForConfirmation =
+  (invoiceId: string): Effect<Promise<void>> =>
+  async (dispatch, getState) => {
+    let numTries = 0;
+    const interval = setInterval(() => {
+      const {SHOP} = getState();
+      const unredeemedGiftCard = SHOP.giftCards[APP_NETWORK].find(
+        card => card.invoiceId === invoiceId,
+      ) as UnsoldGiftCard;
+      if (unredeemedGiftCard.status !== 'PENDING' || numTries > 5) {
+        DeviceEventEmitter.emit(
+          DeviceEmitterEvents.GIFT_CARD_REDEEMED,
+          unredeemedGiftCard,
+        );
+        clearInterval(interval);
+        return;
+      }
+      dispatch(startRedeemGiftCard(unredeemedGiftCard.invoiceId));
+      numTries++;
+    }, 10000);
   };

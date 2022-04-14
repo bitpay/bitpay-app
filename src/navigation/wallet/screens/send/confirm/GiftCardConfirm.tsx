@@ -253,6 +253,11 @@ const Confirm = () => {
                   await sleep(200);
                   dispatch(dismissOnGoingProcessModal());
                   await sleep(400);
+                  if (giftCard.status === 'PENDING') {
+                    dispatch(
+                      ShopEffects.waitForConfirmation(giftCard.invoiceId),
+                    );
+                  }
                   navigation.dispatch(
                     CommonActions.reset({
                       index: 2,
