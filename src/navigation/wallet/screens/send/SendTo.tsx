@@ -393,7 +393,9 @@ const SendTo = () => {
 
   const onSendToCoinbase = useCallback(
     async (account: string | undefined, address: string | undefined) => {
-      if (!address) return;
+      if (!address) {
+        return;
+      }
       try {
         const recipient = {
           name: account || 'Coinbase',

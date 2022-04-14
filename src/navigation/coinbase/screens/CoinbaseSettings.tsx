@@ -152,7 +152,9 @@ const CoinbaseSettings = () => {
   };
 
   const parseTime = (timestamp?: string) => {
-    if (!timestamp) return '';
+    if (!timestamp) {
+      return '';
+    }
     return moment(timestamp).format('MMM D, YYYY');
   };
 
