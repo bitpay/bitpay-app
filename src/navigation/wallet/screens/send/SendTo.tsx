@@ -2,7 +2,11 @@ import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {HeaderTitle} from '../../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
-import {ScreenGutter} from '../../../../components/styled/Containers';
+import {
+  ScreenGutter,
+  SearchContainer,
+  SearchInput,
+} from '../../../../components/styled/Containers';
 import ScanSvg from '../../../../../assets/img/onboarding/scan.svg';
 import {NeutralSlate} from '../../../../styles/colors';
 import {RouteProp} from '@react-navigation/core';
@@ -82,26 +86,6 @@ const ScrollView = styled.ScrollView`
   flex: 1;
   margin-top: 20px;
   padding: 0 ${ScreenGutter};
-`;
-
-const SearchContainer = styled.View`
-  flex-direction: row;
-  border: 1px solid #9ba3ae;
-  align-items: center;
-  border-top-right-radius: 4px;
-  border-top-left-radius: 4px;
-  padding: 4px 0;
-  margin-bottom: 20px;
-`;
-
-const SearchInput = styled.TextInput`
-  flex: 1;
-  padding: 0 10px;
-  border-right-width: 1px;
-  border-right-color: ${({theme: {dark}}) => (dark ? '#45484E' : '#ECEFFD')};
-  height: 32px;
-  color: ${({theme}) => theme.colors.text};
-  background-color: transparent;
 `;
 
 const BuildKeyWalletRow = (
@@ -390,6 +374,26 @@ const SendTo = () => {
       });
     },
     [dispatch, navigation, wallet],
+  );
+
+  const onSendToCoinbase = useCallback(
+    async (account: string | undefined, address: string | undefined) => {
+      if (!address) {
+        return;
+      }
+      try {
+        const recipient = {
+          name: account || 'Coinbase',
+          type: 'coinbase',
+          address,
+        };
+
+        goToConfirm(recipient, {hideSendMax: true});
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    [goToConfirm],
   );
 
   useEffect(() => {

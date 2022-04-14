@@ -3,12 +3,14 @@ import axios from 'axios';
 import {BASE_BWS_URL} from '../../../../constants/config';
 import {WalletActions} from '../../index';
 import {SUPPORTED_COINS} from '../../../../constants/currencies';
-import {HistoricRate, PriceHistory, Rates} from '../../wallet.models';
+import {HistoricRate, PriceHistory, Rate, Rates} from '../../wallet.models';
 import {isCacheKeyStale} from '../../utils/wallet';
 import {RATES_CACHE_DURATION} from '../../../../constants/wallet';
 import {updateCacheKey} from '../../wallet.actions';
 import {CacheKeys} from '../../wallet.models';
 import moment from 'moment';
+import {addAltCurrencyList} from '../../../app/app.actions';
+import {AltCurrenciesRowProps} from '../../../../components/list/AltCurrenciesRow';
 
 export const getPriceHistory = (): Effect => async dispatch => {
   try {
@@ -37,7 +39,8 @@ export const getPriceHistory = (): Effect => async dispatch => {
 };
 
 export const startGetRates =
-  (): Effect<Promise<Rates>> => async (dispatch, getState) => {
+  (init?: boolean): Effect<Promise<Rates>> =>
+  async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       const {
         WALLET: {ratesCacheKey, rates: cachedRates},
@@ -57,6 +60,17 @@ export const startGetRates =
         const {data: lastDayRates} = await axios.get(
           `${BASE_BWS_URL}/v3/fiatrates?ts=${yesterday}`,
         );
+        if (init) {
+          // set alternative currency list
+          const alternatives: Array<AltCurrenciesRowProps> = [];
+          rates.btc.forEach((r: Rate) => {
+            if (r.code && r.name) {
+              alternatives.push({isoCode: r.code, name: r.name});
+            }
+          });
+          alternatives.sort((a, b) => (a.name < b.name ? -1 : 1));
+          dispatch(addAltCurrencyList(alternatives));
+        }
         dispatch(WalletActions.successGetRates({rates, lastDayRates}));
         resolve(rates);
       } catch (err) {

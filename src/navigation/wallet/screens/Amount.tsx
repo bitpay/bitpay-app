@@ -131,6 +131,7 @@ const Amount: React.FC<AmountProps> = ({
   onDismiss,
 }) => {
   const route = useRoute<RouteProp<WalletStackParamList, 'Amount'>>();
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const {
     onAmountSelected,
     currencyAbbreviation,
@@ -141,7 +142,7 @@ const Amount: React.FC<AmountProps> = ({
   const theme = useTheme();
   const [buttonState, setButtonState] = useState<ButtonState>();
 
-  const fiatCurrency = fiatCurrencyAbbreviation || 'USD';
+  const fiatCurrency = fiatCurrencyAbbreviation || defaultAltCurrency.isoCode;
 
   const cryptoCurrencyAbbreviation = useAsModal
     ? currencyAbbreviationModal
