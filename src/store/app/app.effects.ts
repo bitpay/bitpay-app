@@ -108,15 +108,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
         id: key.id,
         show: true,
       }));
-      const cards = CARD.cards[APP.network].map(_ => ({
-        id: 'bitpayCard',
-        show: true,
-      }));
-      const coinbase = {
-        id: 'coinbaseBalanceCard',
-        show: !!COINBASE.token[COINBASE_ENV],
-      };
-      dispatch(setHomeCarouselConfig([...keys, ...cards, coinbase]));
+      dispatch(setHomeCarouselConfig([...keys]));
     }
 
     await sleep(500);
