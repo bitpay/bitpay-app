@@ -114,7 +114,6 @@ const CustomizeHome = () => {
       <ListFooterButtonContainer>
         <Button
           disabled={!dirty}
-          style={{marginTop: 100}}
           onPress={async () => {
             dispatch(
               showOnGoingProcessModal(OnGoingProcessMessages.SAVING_LAYOUT),
