@@ -149,6 +149,7 @@ interface GlobalSelectProps {
   customSupportedCurrencies?: string[];
   onDismiss?: (newWallet?: any) => void;
   modalContext?: string;
+  livenetOnly?: boolean;
 }
 
 const GlobalSelect: React.FC<GlobalSelectProps> = ({
@@ -157,6 +158,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   customSupportedCurrencies,
   onDismiss,
   modalContext,
+  livenetOnly,
 }) => {
   const route = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
   const {context, toCoinbase} = route.params || {}
@@ -196,8 +198,10 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
     );
   }
 
-  if (useAsModal) {
-    wallets = wallets.filter(wallet => wallet.isComplete());
+  if (livenetOnly) {
+    wallets = wallets.filter(
+      wallet => wallet.credentials.network === 'livenet',
+    );
   }
 
   const supportedCoins = useMemo(

@@ -112,7 +112,7 @@ export interface AmountParamList {
     setButtonState: (state: ButtonState) => void,
     opts?: {sendMax?: boolean},
   ) => void;
-  currencyAbbreviation?: string;
+  currencyAbbreviationRouteParam?: string;
   fiatCurrencyAbbreviation?: string;
   opts?: {
     hideSendMax?: boolean;
@@ -121,26 +121,23 @@ export interface AmountParamList {
 
 interface AmountProps {
   useAsModal: any;
-  _currencyAbbreviation?: string;
+  currencyAbbreviationProp?: string;
   onDismiss?: (amount?: number) => void;
 }
 
 const Amount: React.FC<AmountProps> = ({
   useAsModal,
-  _currencyAbbreviation,
+  currencyAbbreviationProp,
   onDismiss,
 }) => {
   const route = useRoute<RouteProp<WalletStackParamList, 'Amount'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  let {onAmountSelected, currencyAbbreviation, fiatCurrencyAbbreviation, opts} = route.params
-    route.params
-      ? route.params
-      : {
-          onAmountSelected: undefined,
-          currencyAbbreviation: undefined,
-          fiatCurrencyAbbreviation: undefined,
-          opts: undefined,
-        };
+  let {
+    onAmountSelected,
+    currencyAbbreviationRouteParam,
+    fiatCurrencyAbbreviation,
+    opts,
+  } = route.params || {};
   const navigation = useNavigation();
   const theme = useTheme();
   const [buttonState, setButtonState] = useState<ButtonState>();
@@ -151,12 +148,16 @@ const Amount: React.FC<AmountProps> = ({
   //   ? currencyAbbreviationModal
   //   : currencyAbbreviation;
   
-  let cryptoCurrencyAbbreviation: string | undefined;
-  if (useAsModal) {
-    cryptoCurrencyAbbreviation = _currencyAbbreviation;
-  } else {
-    cryptoCurrencyAbbreviation = currencyAbbreviation;
-  }
+  // let cryptoCurrencyAbbreviation: string | undefined;
+  // if (useAsModal) {
+  //   cryptoCurrencyAbbreviation = _currencyAbbreviation;
+  // } else {
+  //   cryptoCurrencyAbbreviation = currencyAbbreviation;
+  // }
+
+  const cryptoCurrencyAbbreviation = currencyAbbreviationRouteParam
+    ? currencyAbbreviationRouteParam
+    : currencyAbbreviationProp;
 
   // flag for primary selector type
   const [rate, setRate] = useState(0);

@@ -139,11 +139,7 @@ const ChangellyCheckout: React.FC = () => {
   let status: string;
   let payinAddress: string;
 
-  const createFixTransaction = async () => {
-    dispatch(
-      startOnGoingProcessModal(OnGoingProcessMessages.EXCHANGE_GETTING_DATA),
-    );
-    await sleep(400);
+  const createFixTransaction = async (tries: number) => {
     try {
       addressFrom = (await dispatch<any>(
         createWalletAddress({wallet: fromWalletSelected, newAddress: false}),
@@ -189,7 +185,13 @@ const ChangellyCheckout: React.FC = () => {
             logger.debug(
               'Changelly rateId was expired or already used. Generating a new one',
             );
-            updateReceivingAmount();
+            if (tries < 2) {
+              updateReceivingAmount(tries);
+            } else {
+              const msg =
+                'Failed to create transaction for Changelly, please try again later.';
+              showError(msg);
+            }
           } else {
             showError(data.error.message);
           }
@@ -338,7 +340,8 @@ const ChangellyCheckout: React.FC = () => {
     setRemainingTimeStr(('0' + m).slice(-2) + ':' + ('0' + s).slice(-2));
   };
 
-  const updateReceivingAmount = () => {
+  const updateReceivingAmount = (tries: number) => {
+    logger.debug(`updateReceivingAmount. tries: ${tries}`);
     if (!fromWalletSelected || !toWalletSelected || !amountExpectedFrom) {
       return;
     }
@@ -360,7 +363,7 @@ const ChangellyCheckout: React.FC = () => {
         setAmountTo(Number(data.result[0].amountTo));
         rate = Number(data.result[0].result); // result == rate
 
-        createFixTransaction();
+        createFixTransaction(++tries);
       })
       .catch(err => {
         logger.error(JSON.stringify(err));
@@ -565,7 +568,10 @@ const ChangellyCheckout: React.FC = () => {
   };
 
   useEffect(() => {
-    createFixTransaction();
+    dispatch(
+      startOnGoingProcessModal(OnGoingProcessMessages.EXCHANGE_GETTING_DATA),
+    );
+    createFixTransaction(1);
   }, []);
 
   useEffect(() => {

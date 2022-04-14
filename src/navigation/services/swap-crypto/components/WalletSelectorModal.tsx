@@ -12,6 +12,7 @@ const GlobalSelectContainer = styled.View`
 interface WalletSelectorModalProps {
   isVisible: boolean;
   customSupportedCurrencies?: string[];
+  livenetOnly?: boolean;
   onDismiss: (toWallet?: any) => void;
   modalContext?: string;
   modalTitle?: string;
@@ -20,6 +21,7 @@ interface WalletSelectorModalProps {
 const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
   isVisible,
   customSupportedCurrencies,
+  livenetOnly,
   onDismiss,
   modalContext,
   modalTitle,
@@ -33,6 +35,7 @@ const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
           modalTitle={modalTitle}
           customSupportedCurrencies={customSupportedCurrencies}
           onDismiss={onDismiss}
+          livenetOnly={livenetOnly}
         />
       </GlobalSelectContainer>
     </SheetModal>

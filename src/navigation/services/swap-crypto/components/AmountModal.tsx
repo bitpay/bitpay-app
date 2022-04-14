@@ -26,7 +26,7 @@ const AmountModal: React.FC<AmountModalProps> = ({
         <Amount
           useAsModal={true}
           onDismiss={onDismiss}
-          _currencyAbbreviation={currencyAbbreviation}
+          currencyAbbreviationProp={currencyAbbreviation}
         />
       </AmountContainer>
     </SheetModal>

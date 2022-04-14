@@ -61,7 +61,7 @@ const SwapCryptoStack = () => {
           headerTitle: () => <HeaderTitle>Swap Crypto</HeaderTitle>,
           headerRight: () => (
             <HeaderRightContainer>
-              {changellyTxs.length === 0 && (
+              {!changellyTxs.length && (
                 <Button
                   buttonType={'pill'}
                   buttonStyle={'cancel'}
@@ -71,7 +71,7 @@ const SwapCryptoStack = () => {
                   Cancel
                 </Button>
               )}
-              {changellyTxs.length > 0 && (
+              {!!changellyTxs.length && (
                 <TouchableOpacity
                   onPress={() => {
                     navigation.navigate('ExternalServicesSettings', {
