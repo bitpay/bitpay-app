@@ -10,7 +10,7 @@ const DefaultQuickLinks: ClassicContentCard[] = [
     title: 'WalletConnect',
     cardDescription: 'Connect with hundreds of Dapps.',
     image: require('../../../../../../assets/img/home/quick-links/wallet-connect.png'),
-    url: `${APP_DEEPLINK_PREFIX}connections?redirectTo=walletconnect`,
+    url: `${APP_DEEPLINK_PREFIX}connections/walletconnect`,
     openURLInWebView: false,
   },
   {
