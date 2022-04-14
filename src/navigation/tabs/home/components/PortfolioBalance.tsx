@@ -4,13 +4,15 @@ import {BaseText} from '../../../../components/styled/Text';
 import {SlateDark, White} from '../../../../styles/colors';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
-import {formatFiatAmount} from '../../../../utils/helper-methods';
+import {
+  calculatePercentageDifference,
+  formatFiatAmount,
+} from '../../../../utils/helper-methods';
 import QuestionSvg from '../../../../../assets/img/question.svg';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
 import {useAppDispatch} from '../../../../utils/hooks';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
-import IncrementArrow from '../../../../../assets/img/home/exchange-rates/increment-arrow.svg';
-import DecrementArrow from '../../../../../assets/img/home/exchange-rates/decrement-arrow.svg';
+import Percentage from '../../../../components/percentage/Percentage';
 
 const PortfolioContainer = styled.View`
   justify-content: center;
@@ -35,25 +37,14 @@ const PortfolioBalanceText = styled(BaseText)`
   color: ${({theme}) => theme.colors.text};
 `;
 
-const Row = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-
-const PercentageContainer = styled(BaseText)`
-  color: ${({theme}) => theme.colors.text};
-`;
-
 const PortfolioBalance = () => {
   const portfolioBalance = useSelector(
     ({WALLET}: RootState) => WALLET.portfolioBalance,
   );
   const dispatch = useAppDispatch();
-  const percentageDifference = Number(
-    (
-      ((portfolioBalance.current - portfolioBalance.lastDay) * 100) /
-      portfolioBalance.current
-    ).toFixed(2),
+  const percentageDifference = calculatePercentageDifference(
+    portfolioBalance.current,
+    portfolioBalance.lastDay,
   );
 
   const showPortfolioBalanceInfoModal = () => {
@@ -86,17 +77,9 @@ const PortfolioBalance = () => {
       <PortfolioBalanceText>
         {formatFiatAmount(portfolioBalance.current, 'usd')}
       </PortfolioBalanceText>
-      <Row>
-        {percentageDifference && percentageDifference > 0 ? (
-          <IncrementArrow style={{marginRight: 5}} />
-        ) : null}
-        {percentageDifference && percentageDifference < 0 ? (
-          <DecrementArrow style={{marginRight: 5}} />
-        ) : null}
-        {percentageDifference ? (
-          <PercentageContainer>{percentageDifference}%</PercentageContainer>
-        ) : null}
-      </Row>
+      {percentageDifference ? (
+        <Percentage percentageDifference={percentageDifference} />
+      ) : null}
     </PortfolioContainer>
   );
 };

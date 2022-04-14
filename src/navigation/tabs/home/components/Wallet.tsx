@@ -17,8 +17,7 @@ import {Balance, KeyName} from '../../../wallet/components/KeyDropdownOption';
 import {HomeCarouselLayoutType} from '../../../../store/app/app.models';
 import {BoxShadow} from './Styled';
 import {View} from 'react-native';
-import IncrementArrow from '../../../../../assets/img/home/exchange-rates/increment-arrow.svg';
-import DecrementArrow from '../../../../../assets/img/home/exchange-rates/decrement-arrow.svg';
+import Percentage from '../../../../components/percentage/Percentage';
 
 interface WalletCardComponentProps {
   wallets: Wallet[];
@@ -131,19 +130,9 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
             ) : (
               <>
                 <Balance>{formatFiatAmount(totalBalance, 'USD')}</Balance>
-                <Row style={{alignItems: 'center'}}>
-                  {percentageDifference && percentageDifference > 0 ? (
-                    <IncrementArrow style={{marginRight: 5}} />
-                  ) : null}
-                  {percentageDifference && percentageDifference < 0 ? (
-                    <DecrementArrow style={{marginRight: 5}} />
-                  ) : null}
-                  {percentageDifference ? (
-                    <PercentageContainer>
-                      {percentageDifference}%
-                    </PercentageContainer>
-                  ) : null}
-                </Row>
+                {percentageDifference ? (
+                  <Percentage percentageDifference={percentageDifference} />
+                ) : null}
               </>
             )}
           </Column>

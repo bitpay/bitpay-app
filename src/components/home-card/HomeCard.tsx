@@ -10,12 +10,11 @@ import {
   ScreenGutter,
 } from '../styled/Containers';
 import Card from '../card/Card';
+import Percentage from '../percentage/Percentage';
 import {View} from 'react-native';
 import {BaseText} from '../styled/Text';
 import * as Svg from 'react-native-svg';
 import {shouldScale} from '../../utils/helper-methods';
-import IncrementArrow from '../../../assets/img/home/exchange-rates/increment-arrow.svg';
-import DecrementArrow from '../../../assets/img/home/exchange-rates/decrement-arrow.svg';
 
 const Arrow = ({isDark}: {isDark: boolean}) => {
   return (
@@ -110,16 +109,6 @@ const NeedBackupText = styled(BaseText)`
   position: absolute;
 `;
 
-const PercentageContainer = styled(BaseText)<{scale: boolean}>`
-  font-size: ${({scale}) => (scale ? 10 : 12)}px;
-  color: ${({theme}) => theme.colors.text};
-`;
-
-const PercentageRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-
 const HomeCard: React.FC<HomeCardProps> = ({body, onCTAPress, header}) => {
   const HeaderComp = <CardHeader>{header}</CardHeader>;
   const theme = useTheme();
@@ -136,19 +125,9 @@ const HomeCard: React.FC<HomeCardProps> = ({body, onCTAPress, header}) => {
     <View>
       {title && <CardBodyHeader>{title}</CardBodyHeader>}
       {value && <CardPrice scale={shouldScale(value)}>{value}</CardPrice>}
-      <PercentageRow>
-        {percentageDifference && percentageDifference > 0 ? (
-          <IncrementArrow style={{marginRight: 5}} />
-        ) : null}
-        {percentageDifference && percentageDifference < 0 ? (
-          <DecrementArrow style={{marginRight: 5}} />
-        ) : null}
-        {percentageDifference ? (
-          <PercentageContainer scale={shouldScale(value)}>
-            {percentageDifference}%
-          </PercentageContainer>
-        ) : null}
-      </PercentageRow>
+      {percentageDifference ? (
+        <Percentage percentageDifference={percentageDifference} />
+      ) : null}
       {pillText && (
         <CardPill>
           <CardPillText>{pillText}</CardPillText>

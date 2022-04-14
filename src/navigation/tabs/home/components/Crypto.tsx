@@ -15,7 +15,10 @@ import WalletCardComponent from './Wallet';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {Dispatch} from 'redux';
-import {getMnemonic} from '../../../../utils/helper-methods';
+import {
+  calculatePercentageDifference,
+  getMnemonic,
+} from '../../../../utils/helper-methods';
 import _ from 'lodash';
 import {useAppSelector} from '../../../../utils/hooks';
 import {
@@ -120,11 +123,12 @@ const createHomeCardList = ({
         totalBalanceLastDay = 0,
         backupComplete,
       } = key;
-      const percentageDifference = Number(
-        (((totalBalance - totalBalanceLastDay) * 100) / totalBalance).toFixed(
-          2,
-        ),
+
+      const percentageDifference = calculatePercentageDifference(
+        totalBalance,
+        totalBalanceLastDay,
       );
+
       wallets = wallets.filter(wallet => !wallet.hideWallet);
 
       return {
