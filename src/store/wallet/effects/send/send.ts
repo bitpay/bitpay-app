@@ -64,8 +64,10 @@ export const createProposalAndBuildTxDetails =
           dryRun = true,
         } = tx;
 
-        const {credentials, currencyAbbreviation} = wallet;
+        let {credentials} = wallet;
+        const {coin: currencyAbbreviation} = credentials;
         const formattedAmount = ParseAmount(amount, currencyAbbreviation);
+
         const {
           WALLET: {feeLevel: cachedFeeLevel, useUnconfirmedFunds},
         } = getState();
