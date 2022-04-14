@@ -50,19 +50,14 @@ const ModalHeader = styled.View`
 
 const CloseModalButtonContainer = styled.View`
   position: absolute;
-  left: 15px;
-`;
-
-const ModalHeaderLeft = styled(BaseText)`
-  position: absolute;
-  left: 0;
+  left: 0px;
 `;
 
 const CloseModalButton = styled.TouchableOpacity`
-  margin: 15px 0;
+  margin: 15px;
   padding: 5px;
-  height: 18px;
-  width: 18px;
+  height: 41px;
+  width: 41px;
   border-radius: 50px;
   background-color: #9ba3ae33;
   display: flex;
@@ -148,7 +143,7 @@ interface GlobalSelectProps {
   modalTitle?: string;
   customSupportedCurrencies?: string[];
   onDismiss?: (newWallet?: any) => void;
-  modalContext?: string;
+  modalContext?: 'send' | 'receive' | 'deposit';
   livenetOnly?: boolean;
 }
 
@@ -161,7 +156,10 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   livenetOnly,
 }) => {
   const route = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
-  const {context, toCoinbase} = route.params || {}
+  let {context, toCoinbase} = route.params || {};
+  if (useAsModal && modalContext) {
+    context = modalContext;
+  }
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);

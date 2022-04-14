@@ -482,7 +482,7 @@ const CoinbaseAccount = ({
         <AmountContainer>
           <Amount
             useAsModal={true}
-            currencyAbbreviationModal={account?.balance.currency}
+            currencyAbbreviationProp={account?.balance.currency}
             onDismiss={onEnteredAmount}
           />
         </AmountContainer>

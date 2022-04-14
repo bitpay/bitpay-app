@@ -144,17 +144,6 @@ const Amount: React.FC<AmountProps> = ({
 
   const fiatCurrency = fiatCurrencyAbbreviation || defaultAltCurrency.isoCode;
 
-  // const cryptoCurrencyAbbreviation = useAsModal
-  //   ? currencyAbbreviationModal
-  //   : currencyAbbreviation;
-  
-  // let cryptoCurrencyAbbreviation: string | undefined;
-  // if (useAsModal) {
-  //   cryptoCurrencyAbbreviation = _currencyAbbreviation;
-  // } else {
-  //   cryptoCurrencyAbbreviation = currencyAbbreviation;
-  // }
-
   const cryptoCurrencyAbbreviation = currencyAbbreviationRouteParam
     ? currencyAbbreviationRouteParam
     : currencyAbbreviationProp;
