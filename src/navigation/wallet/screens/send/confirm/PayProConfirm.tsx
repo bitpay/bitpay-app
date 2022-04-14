@@ -126,7 +126,7 @@ const PayProConfirm = () => {
             title: 'Error',
             errMsg:
               err.response?.data?.message || err.message || errorConfig.message,
-            action: () => reshowWalletSelector(),
+            action: () => (wallet ? null : reshowWalletSelector()),
           }),
         ),
       );
