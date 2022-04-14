@@ -173,10 +173,12 @@ export const createCustomizeCardList = ({
   }
 
   if (hasCoinbase) {
+    const {show} =
+      homeCarouselConfig?.find(item => item.id === 'coinbaseBalanceCard') || {};
     list.push({
       key: 'coinbaseBalanceCard',
       name: 'Coinbase',
-      show: true,
+      show: show!,
     });
   }
 
