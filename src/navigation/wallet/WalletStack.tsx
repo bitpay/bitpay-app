@@ -13,6 +13,7 @@ import CurrencySelection, {
   CurrencySelectionParamList,
 } from './screens/CurrencySelection';
 import KeyOverview from './screens/KeyOverview';
+import KeyExplanation from './screens/KeyExplanation';
 import KeySettings from './screens/KeySettings';
 import WalletDetails from './screens/WalletDetails';
 import WalletSettings from './screens/WalletSettings';
@@ -53,7 +54,9 @@ import Addresses from './screens/wallet-settings/Addresses';
 import AllAddresses, {
   AllAddressesParamList,
 } from './screens/wallet-settings/AllAddresses';
-import PayProConfirm, { PayProConfirmParamList } from './screens/send/confirm/PayProConfirm';
+import PayProConfirm, {
+  PayProConfirmParamList,
+} from './screens/send/confirm/PayProConfirm';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -63,6 +66,7 @@ export type WalletStackParamList = {
   VerifyPhrase: VerifyPhraseParamList;
   TermsOfUse: TermsOfUseParamList;
   KeyOverview: {key: Key};
+  KeyExplanation: undefined;
   KeySettings: {key: Key; context?: 'createEncryptPassword'};
   UpdateKeyOrWalletName: {
     key: Key;
@@ -78,7 +82,10 @@ export type WalletStackParamList = {
   DeleteKey: {keyId: string};
   ExportKey: {code: string; keyName: string | undefined};
   Amount: AmountParamList;
-  SendTo: {wallet: WalletModel};
+  SendTo: {
+    wallet: WalletModel;
+    toCoinbase?: {account: string; address: string};
+  };
   Confirm: ConfirmParamList;
   GiftCardConfirm: GiftCardConfirmParamList;
   PayProConfirm: PayProConfirmParamList;
@@ -111,6 +118,7 @@ export enum WalletScreens {
   VERIFY_PHRASE = 'VerifyPhrase',
   TERMS_OF_USE = 'TermsOfUse',
   KEY_OVERVIEW = 'KeyOverview',
+  KEY_EXPLANATION = 'KeyExplanation',
   KEY_SETTINGS = 'KeySettings',
   UPDATE_KEY_OR_WALLET_NAME = 'UpdateKeyOrWalletName',
   WALLET_DETAILS = 'WalletDetails',
@@ -191,6 +199,10 @@ const WalletStack = () => {
         <Wallet.Screen
           name={WalletScreens.KEY_OVERVIEW}
           component={KeyOverview}
+        />
+        <Wallet.Screen
+          name={WalletScreens.KEY_EXPLANATION}
+          component={KeyExplanation}
         />
         <Wallet.Screen
           name={WalletScreens.KEY_SETTINGS}

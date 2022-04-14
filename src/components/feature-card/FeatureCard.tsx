@@ -9,6 +9,7 @@ import {BaseText, H5, Link} from '../styled/Text';
 const FeatureImage = styled(Image)`
   height: 100%;
   width: 100%;
+  transform: scale(0.8);
 `;
 
 const BottomDescriptionContainer = styled.View`
