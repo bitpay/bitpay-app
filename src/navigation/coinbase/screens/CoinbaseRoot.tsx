@@ -17,7 +17,6 @@ import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {sleep} from '../../../utils/helper-methods';
-import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 
 export type CoinbaseRootScreenParamList =
   | {
