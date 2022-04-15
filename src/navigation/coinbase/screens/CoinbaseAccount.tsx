@@ -254,17 +254,12 @@ const CoinbaseAccount = ({
         wallet.currencyAbbreviation ===
           account?.currency.code.toLocaleLowerCase(),
     );
-    if (availableWallets[0]) {
-      setAvailableWalletToWithdraw(true);
 
-      availableWallets = availableWallets.filter(
-        wallet => wallet.balance.sat > 0,
-      );
-
-      // If has balance
-      if (availableWallets[0]) {
-        setAvailableWalletToDeposit(true);
+    if (availableWallets.length) {
+      if (Number(account?.balance.amount) > 0) {
+        setAvailableWalletToWithdraw(true);
       }
+      setAvailableWalletToDeposit(true);
     }
 
     if (account && account.balance) {
