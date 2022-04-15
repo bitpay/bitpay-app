@@ -4,14 +4,14 @@ import {
   baseNavigatorOptions,
   baseScreenOptions,
 } from '../../../constants/NavigationOptions';
-import SettingsRoot from './SettingsRoot';
+import SettingsRoot, {SettingsHomeParamList} from './SettingsRoot';
 import {HeaderTitle} from '../../../components/styled/Text';
 
 import {useTranslation} from 'react-i18next';
 import NetworkFeePolicy from './screens/NewtorkFeePolicy';
 
 export type SettingsStackParamList = {
-  Root: undefined;
+  Root: SettingsHomeParamList | undefined;
   NetworkFeePolicy: undefined;
 };
 

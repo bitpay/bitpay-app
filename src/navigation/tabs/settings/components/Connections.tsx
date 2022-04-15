@@ -1,16 +1,23 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {useAppSelector} from '../../../../utils/hooks';
 import styled from 'styled-components/native';
 import {useNavigation} from '@react-navigation/native';
-import {RootState} from '../../../../store';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {SettingsComponent} from '../SettingsRoot';
-import {Setting, SettingTitle} from '../../../../components/styled/Containers';
+import {
+  Hr,
+  Setting,
+  SettingTitle,
+} from '../../../../components/styled/Containers';
 import {WalletConnectIconContainer} from '../../../wallet-connect/styled/WalletConnectContainers';
 import WalletConnectIcon from '../../../../../assets/img/wallet-connect/wallet-connect-icon.svg';
 import CoinbaseSvg from '../../../../../assets/img/logos/coinbase.svg';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
+
+interface ConnectionsProps {
+  redirectTo?: string;
+}
 
 const ConnectionItemContainer = styled.View`
   justify-content: flex-start;
@@ -33,13 +40,12 @@ const CoinbaseIconContainer = (
   </IconCoinbase>
 );
 
-const Connections = () => {
+const Connections: React.FC<ConnectionsProps> = props => {
+  const {redirectTo} = props;
   const navigation = useNavigation();
-  const {connectors} = useAppSelector(
-    ({WALLET_CONNECT}: RootState) => WALLET_CONNECT,
-  );
-  const goToNextView = () => {
-    haptic('impactLight');
+  const {connectors} = useAppSelector(({WALLET_CONNECT}) => WALLET_CONNECT);
+
+  const goToWalletConnect = () => {
     if (Object.keys(connectors).length) {
       navigation.navigate('WalletConnect', {
         screen: 'WalletConnectConnections',
@@ -65,10 +71,19 @@ const Connections = () => {
       });
     }
   };
+  useEffect(() => {
+    if (redirectTo === 'walletconnect') {
+      goToWalletConnect();
+    }
+  }, [redirectTo, goToWalletConnect]);
 
   return (
     <SettingsComponent>
-      <Setting onPress={() => goToNextView()}>
+      <Setting
+        onPress={() => {
+          haptic('impactLight');
+          goToWalletConnect();
+        }}>
         <ConnectionItemContainer>
           <WalletConnectIconContainer>
             <WalletConnectIcon />
@@ -77,6 +92,7 @@ const Connections = () => {
         </ConnectionItemContainer>
         <AngleRight />
       </Setting>
+      <Hr />
       <Setting onPress={() => goToCoinbase()}>
         <ConnectionItemContainer>
           {CoinbaseIconContainer}
