@@ -164,9 +164,9 @@ const CoinbaseAccount = ({
 
   const txsLoading = useAppSelector(({COINBASE}) => COINBASE.isApiLoading);
 
-  const [isLoading, setIsLoading] = useState<boolean>();
+  const [isLoading, setIsLoading] = useState<boolean>(txsLoading);
   const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
-
+  const [initialLoad, setInitialLoad] = useState<boolean>(true);
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: account?.name,
@@ -212,7 +212,7 @@ const CoinbaseAccount = ({
   const listFooterComponent = () => {
     return (
       <>
-        {isLoading ? (
+        {isLoading && initialLoad && !txs.length ? (
           <SkeletonContainer>
             <WalletTransactionSkeletonRow />
           </SkeletonContainer>
@@ -224,16 +224,13 @@ const CoinbaseAccount = ({
   const listEmptyComponent = () => {
     return (
       <>
-        {!isLoading && !errorLoadingTxs && (
+        {!initialLoad && !txs.length && (
           <EmptyListContainer>
-            <H5>It's a ghost town in here</H5>
-            <GhostSvg style={{marginTop: 20}} />
-          </EmptyListContainer>
-        )}
-
-        {!isLoading && errorLoadingTxs && (
-          <EmptyListContainer>
-            <H5>Could not update transaction history</H5>
+            <H5>
+              {!errorLoadingTxs
+                ? "It's a ghost town in here"
+                : 'Could not update transaction history'}
+            </H5>
             <GhostSvg style={{marginTop: 20}} />
           </EmptyListContainer>
         )}
@@ -250,19 +247,18 @@ const CoinbaseAccount = ({
     availableWallets = availableWallets.filter(
       wallet =>
         !wallet.hideWallet &&
+        wallet.network === 'livenet' &&
         wallet.isComplete() &&
-        wallet.currencyAbbreviation ===
+        wallet.currencyAbbreviation.toLowerCase() ===
           account?.currency.code.toLocaleLowerCase(),
     );
-    if (availableWallets[0]) {
-      setAvailableWalletToWithdraw(true);
 
-      availableWallets = availableWallets.filter(
-        wallet => wallet.balance.sat > 0,
-      );
-
+    if (availableWallets.length) {
+      if (Number(account?.balance.amount) > 0) {
+        setAvailableWalletToWithdraw(true);
+      }
       // If has balance
-      if (availableWallets[0]) {
+      if (availableWallets.filter(wallet => wallet.balance.sat > 0).length) {
         setAvailableWalletToDeposit(true);
       }
     }
@@ -294,6 +290,7 @@ const CoinbaseAccount = ({
     if (txsLoading) {
       setIsLoading(true);
     } else {
+      setInitialLoad(false);
       setIsLoading(false);
     }
 

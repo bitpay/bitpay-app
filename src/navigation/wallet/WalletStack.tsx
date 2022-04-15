@@ -84,7 +84,6 @@ export type WalletStackParamList = {
   Amount: AmountParamList;
   SendTo: {
     wallet: WalletModel;
-    toCoinbase?: {account: string; address: string};
   };
   Confirm: ConfirmParamList;
   GiftCardConfirm: GiftCardConfirmParamList;

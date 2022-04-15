@@ -143,12 +143,9 @@ const Amount: React.FC<AmountProps> = ({
 
   const fiatCurrency = fiatCurrencyAbbreviation || 'USD';
 
-  let cryptoCurrencyAbbreviation: string | undefined;
-  if (useAsModal) {
-    cryptoCurrencyAbbreviation = currencyAbbreviationModal;
-  } else {
-    cryptoCurrencyAbbreviation = currencyAbbreviation;
-  }
+  const cryptoCurrencyAbbreviation = useAsModal
+    ? currencyAbbreviationModal
+    : currencyAbbreviation;
 
   // flag for primary selector type
   const [rate, setRate] = useState(0);
@@ -161,7 +158,7 @@ const Amount: React.FC<AmountProps> = ({
     currency: cryptoCurrencyAbbreviation
       ? cryptoCurrencyAbbreviation
       : fiatCurrency,
-    primaryIsFiat: cryptoCurrencyAbbreviation === fiatCurrency ? true : false,
+    primaryIsFiat: cryptoCurrencyAbbreviation === fiatCurrency,
   });
   const swapList = cryptoCurrencyAbbreviation
     ? [...new Set([cryptoCurrencyAbbreviation, fiatCurrency])]
