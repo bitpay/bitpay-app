@@ -103,6 +103,7 @@ const CoinbaseStack = () => {
         options={{
           headerMode: 'screen',
           headerTitle: () => <HeaderTitle>{t('Confirm Withdraw')}</HeaderTitle>,
+          gestureEnabled: false,
         }}
       />
     </Coinbase.Navigator>
