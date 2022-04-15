@@ -1,7 +1,5 @@
 import React, {useCallback, useState} from 'react';
 import styled from 'styled-components/native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useForm} from 'react-hook-form';
 import {RootState} from '../../../../../store';
 import debounce from 'lodash.debounce';
 import AltCurrenciesRow, {
@@ -23,7 +21,7 @@ import {useNavigation} from '@react-navigation/native';
 import {LightBlack, White} from '../../../../../styles/colors';
 import GhostSvg from '../../../../../../assets/img/ghost-cheeky.svg';
 import {sleep} from '../../../../../utils/helper-methods';
-
+import SearchSvg from '../../../../../../assets/img/search.svg';
 const AltCurrencySettingsContainer = styled.SafeAreaView`
   margin-top: 20px;
   flex: 1;
@@ -64,8 +62,13 @@ const Label = styled(BaseText)`
 `;
 
 const Hr = styled(_Hr)`
-  margin: 0px 15px;
+  margin: 0 15px;
 `;
+
+const SearchIconContainer = styled.View`
+  padding: 10px;
+`;
+
 interface HideableViewProps {
   show: boolean;
 }
@@ -140,6 +143,9 @@ const AltCurrencySettings = () => {
               updateSearchResults(text);
             }}
           />
+          <SearchIconContainer>
+            <SearchSvg height={25} width={25} />
+          </SearchIconContainer>
         </SearchContainer>
       </Header>
       <HideableView show={!!searchVal}>
