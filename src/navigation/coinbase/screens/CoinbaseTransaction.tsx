@@ -11,6 +11,7 @@ import {StackScreenProps} from '@react-navigation/stack';
 import {CoinbaseStackParamList} from '../CoinbaseStack';
 import CoinbaseIcon from '../components/CoinbaseIcon';
 import {View} from 'react-native';
+import {formatCryptoAddress} from '../../../utils/helper-methods';
 
 const TransactionContainer = styled.SafeAreaView`
   flex: 1;
@@ -156,7 +157,9 @@ const CoinbaseTransaction = ({
               <>
                 <Detail>
                   <Item>To</Item>
-                  <DetailInfo align="right">{tx.to.address}</DetailInfo>
+                  <DetailInfo align="right">
+                    {formatCryptoAddress(tx.to.address)}
+                  </DetailInfo>
                 </Detail>
                 <Hr />
               </>
