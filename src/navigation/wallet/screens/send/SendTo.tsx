@@ -171,7 +171,7 @@ const SendTo = () => {
     });
   });
 
-  const {wallet, toCoinbase} = route.params;
+  const {wallet} = route.params;
 
   const {
     currencyAbbreviation,
@@ -391,32 +391,11 @@ const SendTo = () => {
     [dispatch, navigation, wallet],
   );
 
-  const onSendToCoinbase = useCallback(
-    async (account: string | undefined, address: string | undefined) => {
-      if (!address) return;
-      try {
-        const recipient = {
-          name: account || 'Coinbase',
-          type: 'coinbase',
-          address,
-        };
-
-        goToConfirm(recipient, {hideSendMax: true});
-      } catch (err) {
-        console.error(err);
-      }
-    },
-    [goToConfirm],
-  );
-
   useEffect(() => {
-    if (toCoinbase) {
-      onSendToCoinbase(toCoinbase.account, toCoinbase.address);
-    }
     return navigation.addListener('blur', () =>
       setTimeout(() => setSearchInput(''), 300),
     );
-  }, [navigation, toCoinbase, onSendToCoinbase]);
+  }, [navigation]);
 
   return (
     <SafeAreaView>
