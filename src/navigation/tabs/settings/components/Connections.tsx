@@ -4,7 +4,11 @@ import styled from 'styled-components/native';
 import {useNavigation} from '@react-navigation/native';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {SettingsComponent} from '../SettingsRoot';
-import {Setting, SettingTitle} from '../../../../components/styled/Containers';
+import {
+  Hr,
+  Setting,
+  SettingTitle,
+} from '../../../../components/styled/Containers';
 import {WalletConnectIconContainer} from '../../../wallet-connect/styled/WalletConnectContainers';
 import WalletConnectIcon from '../../../../../assets/img/wallet-connect/wallet-connect-icon.svg';
 import CoinbaseSvg from '../../../../../assets/img/logos/coinbase.svg';
@@ -88,6 +92,7 @@ const Connections: React.FC<ConnectionsProps> = props => {
         </ConnectionItemContainer>
         <AngleRight />
       </Setting>
+      <Hr />
       <Setting onPress={() => goToCoinbase()}>
         <ConnectionItemContainer>
           {CoinbaseIconContainer}
