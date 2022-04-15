@@ -22,6 +22,8 @@ export interface WalletState {
   ratesCacheKey: number | undefined;
   feeLevel: {[key in string]: FeeLevels};
   useUnconfirmedFunds: boolean;
+  customizeNonce: boolean;
+  enableReplaceByFee: boolean;
 }
 
 const initialState: WalletState = {
@@ -44,6 +46,8 @@ const initialState: WalletState = {
     eth: FeeLevels.NORMAL,
   },
   useUnconfirmedFunds: false,
+  customizeNonce: false,
+  enableReplaceByFee: false,
 };
 
 export const walletReducer = (
@@ -347,6 +351,20 @@ export const walletReducer = (
       return {
         ...state,
         useUnconfirmedFunds: action.payload,
+      };
+    }
+
+    case WalletActionTypes.SET_CUSTOMIZE_NONCE: {
+      return {
+        ...state,
+        customizeNonce: action.payload,
+      };
+    }
+
+    case WalletActionTypes.SET_ENABLE_REPLACE_BY_FEE: {
+      return {
+        ...state,
+        enableReplaceByFee: action.payload,
       };
     }
 

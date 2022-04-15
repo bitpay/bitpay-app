@@ -41,6 +41,8 @@ export enum WalletActionTypes {
   SET_WALLET_REFRESHING = 'WALLET/SET_WALLET_REFRESHING',
   SUCCESS_GET_RECEIVE_ADDRESS = 'WALLET/SUCCESS_GET_RECEIVE_ADDRESS',
   SET_USE_UNCONFIRMED_FUNDS = 'WALLET/SET_USE_UNCONFIRMED_FUNDS',
+  SET_CUSTOMIZE_NONCE = 'WALLET/SET_CUSTOMIZE_NONCE',
+  SET_ENABLE_REPLACE_BY_FEE = 'WALLET/SET_ENABLE_REPLACE_BY_FEE',
   UPDATE_WALLET_TX_HISTORY = 'WALLET/UPDATE_WALLET_TX_HISTORY',
   SYNC_WALLETS = 'WALLET/SYNC_WALLETS',
   TOGGLE_HIDE_WALLET = 'WALLET/TOGGLE_HIDE_WALLET',
@@ -230,7 +232,14 @@ interface setUseUnconfirmedFunds {
   type: typeof WalletActionTypes.SET_USE_UNCONFIRMED_FUNDS;
   payload: boolean;
 }
-
+interface setCustomizeNonce {
+  type: typeof WalletActionTypes.SET_CUSTOMIZE_NONCE;
+  payload: boolean;
+}
+interface setEnableReplaceByFee {
+  type: typeof WalletActionTypes.SET_ENABLE_REPLACE_BY_FEE;
+  payload: boolean;
+}
 interface updateWalletTxHistory {
   type: typeof WalletActionTypes.UPDATE_WALLET_TX_HISTORY;
 
@@ -295,6 +304,8 @@ export type WalletActionType =
   | setWalletRefreshing
   | successGetReceiveAddress
   | setUseUnconfirmedFunds
+  | setCustomizeNonce
+  | setEnableReplaceByFee
   | updateWalletTxHistory
   | syncWallets
   | toggleHideWallet
