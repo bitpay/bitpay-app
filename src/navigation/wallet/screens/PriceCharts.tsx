@@ -25,7 +25,7 @@ import {WalletStackParamList} from '../WalletStack';
 import {Currencies} from '../../../constants/currencies';
 import {useTheme} from 'styled-components/native';
 import {ExchangeRateItemProps} from '../../tabs/home/components/exchange-rates/ExchangeRatesList';
-import {fetchHistoricalRates} from '../../../store/wallet/effects/rates/rates';
+import {fetchHistoricalRates} from '../../../store/wallet/effects';
 import {useAppDispatch} from '../../../utils/hooks';
 import {
   dismissOnGoingProcessModal,
