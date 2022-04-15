@@ -1,8 +1,6 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import React, {useEffect, useMemo, useState} from 'react';
 import {RefreshControl, ScrollView} from 'react-native';
-import styled from 'styled-components/native';
-import {ScreenGutter} from '../../../components/styled/Containers';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -11,7 +9,6 @@ import {
   selectBrazeOffers,
   selectBrazeQuickLinks,
 } from '../../../store/app/app.selectors';
-import {selectCardGroups} from '../../../store/card/card.selectors';
 import {startGetRates} from '../../../store/wallet/effects';
 import {startUpdateAllKeyAndWalletStatus} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
