@@ -12,6 +12,7 @@ import {
 } from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
+import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 
 export const networkChanged = (network: Network): AppActionType => ({
   type: AppActionTypes.NETWORK_CHANGED,
@@ -199,4 +200,18 @@ export const updateSettingsListConfig = (
 ): AppActionType => ({
   type: AppActionTypes.UPDATE_SETTINGS_LIST_CONFIG,
   payload: listItem,
+});
+
+export const addAltCurrencyList = (
+  altCurrencyList: Array<AltCurrenciesRowProps>,
+): AppActionType => ({
+  type: AppActionTypes.ADD_ALT_CURRENCIES_LIST,
+  altCurrencyList,
+});
+
+export const setDefaultAltCurrency = (
+  defaultAltCurrency: AltCurrenciesRowProps,
+): AppActionType => ({
+  type: AppActionTypes.SET_DEFAULT_ALT_CURRENCY,
+  defaultAltCurrency,
 });

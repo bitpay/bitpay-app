@@ -12,6 +12,7 @@ import {
   HomeCarouselLayoutType,
 } from './app.models';
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
+import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 
 export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
@@ -50,6 +51,8 @@ export enum AppActionTypes {
   SET_HOME_CAROUSEL_CONFIG = 'APP/SET_HOME_CAROUSEL_CONFIG',
   SET_HOME_CAROUSEL_LAYOUT_TYPE = 'APP/SET_HOME_CAROUSEL_LAYOUT_TYPE',
   UPDATE_SETTINGS_LIST_CONFIG = 'APP/UPDATE_SETTINGS_LIST_CONFIG',
+  ADD_ALT_CURRENCIES_LIST = 'APP/ADD_ALT_CURRENCIES_LIST',
+  SET_DEFAULT_ALT_CURRENCY = 'APP/SET_DEFAULT_ALT_CURRENCY',
 }
 
 interface NetworkChanged {
@@ -218,6 +221,16 @@ interface updateSettingsListConfigType {
   payload: SettingsListType;
 }
 
+interface AddAltCurrencyList {
+  type: typeof AppActionTypes.ADD_ALT_CURRENCIES_LIST;
+  altCurrencyList: Array<AltCurrenciesRowProps>;
+}
+
+interface SetDefaultAltCurrency {
+  type: typeof AppActionTypes.SET_DEFAULT_ALT_CURRENCY;
+  defaultAltCurrency: AltCurrenciesRowProps;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
@@ -254,4 +267,6 @@ export type AppActionType =
   | LockAuthorizedUntil
   | SetHomeCarouselConfig
   | SetHomeCarouselLayoutType
-  | updateSettingsListConfigType;
+  | updateSettingsListConfigType
+  | AddAltCurrencyList
+  | SetDefaultAltCurrency;
