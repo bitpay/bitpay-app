@@ -463,7 +463,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
 
         <ButtonContainer>
           <Button onPress={add} buttonStyle={'primary'}>
-            Add Wallet
+            Add Wallet/Token
           </Button>
         </ButtonContainer>
       </ScrollView>
