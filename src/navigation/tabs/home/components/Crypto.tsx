@@ -244,7 +244,7 @@ const Crypto = () => {
       <CryptoContainer>
         <SectionHeaderContainer style={{marginBottom: 0}}>
           <Column>
-            <HomeSectionTitle>Your Crypto</HomeSectionTitle>
+            <HomeSectionTitle>My Crypto</HomeSectionTitle>
             <Row style={{justifyContent: 'space-between'}}>
               <HomeSectionSubtext style={{width: '90%'}}>
                 You don’t have any crypto. Create a wallet, import a wallet or
@@ -277,7 +277,7 @@ const Crypto = () => {
     <CryptoContainer>
       <SectionHeaderContainer style={{marginBottom: 0}}>
         <Column>
-          <HomeSectionTitle>Your Crypto</HomeSectionTitle>
+          <HomeSectionTitle>My Crypto</HomeSectionTitle>
           <Row style={{justifyContent: 'space-between'}}>
             <HomeSectionSubtext style={{width: '75%'}}>
               View your wallets, card balance, connect to Coinbase and more.
