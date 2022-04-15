@@ -1,11 +1,10 @@
 import React from 'react';
-import {ImageStyle, Linking, StyleProp, ViewStyle} from 'react-native';
+import {Linking} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
 import styled, {useTheme} from 'styled-components/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {
   ActiveOpacity,
-  ImageContainer,
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
@@ -29,6 +28,7 @@ const QUICK_LINK_ICON_WIDTH = 35;
 
 interface QuickLinksCardProps {
   contentCard: ContentCard;
+  ctaOverride?: () => void;
 }
 
 const QuickLinkCardContainer = styled.TouchableOpacity`
@@ -69,7 +69,7 @@ const IconContainer = styled.View`
 `;
 
 const QuickLinksCard: React.FC<QuickLinksCardProps> = props => {
-  const {contentCard} = props;
+  const {contentCard, ctaOverride} = props;
   const {image, url, openURLInWebView} = contentCard;
   const dispatch = useAppDispatch();
   const theme = useTheme();
@@ -94,6 +94,11 @@ const QuickLinksCard: React.FC<QuickLinksCardProps> = props => {
   }
 
   const onPress = () => {
+    if (ctaOverride) {
+      ctaOverride();
+      return;
+    }
+
     if (!url) {
       return;
     }

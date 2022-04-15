@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useCallback, useEffect} from 'react';
 import {useAppSelector} from '../../../../utils/hooks';
 import styled from 'styled-components/native';
 import {useNavigation} from '@react-navigation/native';
@@ -45,7 +45,7 @@ const Connections: React.FC<ConnectionsProps> = props => {
   const navigation = useNavigation();
   const {connectors} = useAppSelector(({WALLET_CONNECT}) => WALLET_CONNECT);
 
-  const goToWalletConnect = () => {
+  const goToWalletConnect = useCallback(() => {
     if (Object.keys(connectors).length) {
       navigation.navigate('WalletConnect', {
         screen: 'WalletConnectConnections',
@@ -56,7 +56,7 @@ const Connections: React.FC<ConnectionsProps> = props => {
         params: {uri: undefined},
       });
     }
-  };
+  }, [connectors, navigation]);
 
   const token = useAppSelector(({COINBASE}) => COINBASE.token[COINBASE_ENV]);
   const goToCoinbase = () => {
