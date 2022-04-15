@@ -204,6 +204,16 @@ export const setUseUnconfirmedFunds = (payload: boolean): WalletActionType => ({
   payload,
 });
 
+export const setCustomizeNonce = (payload: boolean): WalletActionType => ({
+  type: WalletActionTypes.SET_CUSTOMIZE_NONCE,
+  payload,
+});
+
+export const setEnableReplaceByFee = (payload: boolean): WalletActionType => ({
+  type: WalletActionTypes.SET_ENABLE_REPLACE_BY_FEE,
+  payload,
+});
+
 export const syncWallets = (payload: {
   keyId: string;
   wallets: Wallet[];
