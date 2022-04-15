@@ -1,7 +1,6 @@
 import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
 import styled from 'styled-components/native';
-import {useTheme} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 import {HeaderTitle} from '../../components/styled/Text';
 import {
@@ -20,7 +19,6 @@ import CoinbaseTransaction, {
   CoinbaseTransactionScreenParamList,
 } from './screens/CoinbaseTransaction';
 import {CoinbaseWithdrawConfirmParamList} from './screens/CoinbaseWithdrawConfirm';
-import {Black} from '../../styles/colors';
 import CoinbaseSvg from '../../../assets/img/logos/coinbase.svg';
 
 export type CoinbaseStackParamList = {
@@ -49,7 +47,6 @@ const HeaderTitleContainer = styled.View`
 const Coinbase = createStackNavigator<CoinbaseStackParamList>();
 
 const CoinbaseStack = () => {
-  const theme = useTheme();
   const {t} = useTranslation();
   return (
     <Coinbase.Navigator
@@ -63,9 +60,6 @@ const CoinbaseStack = () => {
         component={CoinbaseRoot}
         options={{
           headerShown: true,
-          headerStyle: {
-            backgroundColor: theme.dark ? Black : 'rgb(245, 246, 248)',
-          },
           headerTitle: () => (
             <HeaderTitleContainer>
               <CoinbaseSvg style={{marginRight: 10}} />
@@ -103,6 +97,7 @@ const CoinbaseStack = () => {
         options={{
           headerMode: 'screen',
           headerTitle: () => <HeaderTitle>{t('Confirm Withdraw')}</HeaderTitle>,
+          gestureEnabled: false,
         }}
       />
     </Coinbase.Navigator>

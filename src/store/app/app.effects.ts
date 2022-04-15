@@ -29,12 +29,13 @@ import {batch} from 'react-redux';
 import i18n from 'i18next';
 import {WalletActions} from '../wallet';
 import {coinbaseInitialize} from '../coinbase';
+import {COINBASE_ENV} from '../../api/coinbase/coinbase.constants';
 
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     dispatch(LogActions.clear());
 
-    const {APP, BITPAY_ID, WALLET, CARD} = getState();
+    const {APP, BITPAY_ID, WALLET, CARD, COINBASE} = getState();
     const {network, pinLockActive, biometricLockActive, homeCarouselConfig} =
       APP;
 
@@ -107,11 +108,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
         id: key.id,
         show: true,
       }));
-      const cards = CARD.cards[APP.network].map(_ => ({
-        id: 'bitpayCard',
-        show: true,
-      }));
-      dispatch(setHomeCarouselConfig([...keys, ...cards]));
+      dispatch(setHomeCarouselConfig([...keys]));
     }
 
     await sleep(500);

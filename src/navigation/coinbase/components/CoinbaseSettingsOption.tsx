@@ -6,7 +6,7 @@ import {Theme} from '@react-navigation/native';
 import Svg, {Path} from 'react-native-svg';
 
 const SettingsSvgContainer = styled.TouchableOpacity`
-  margin-right: 15px;
+  margin: 10px 15px 0 0;
   padding: 12px;
   border-radius: 30px;
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};

@@ -6,7 +6,7 @@ import WalletRow from '../../../components/list/WalletRow';
 import {BaseText, H5} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
-import {Black, SlateDark, White} from '../../../styles/colors';
+import {SlateDark, White} from '../../../styles/colors';
 
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
@@ -24,11 +24,10 @@ import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {Network} from '../../../constants';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {Hr} from '../../../components/styled/Containers';
+import Animated, {FadeInLeft} from 'react-native-reanimated';
 
 const OverviewContainer = styled.View`
   flex: 1;
-  background-color: ${({theme: {dark}}) =>
-    dark ? Black : 'rgb(245, 246, 248)'};
 `;
 
 const BalanceContainer = styled.View`
@@ -179,15 +178,19 @@ const CoinbaseDashboard = () => {
   return (
     <OverviewContainer>
       <BalanceContainer>
-        <Balance>
-          {formatFiatAmount(
-            balance,
-            user?.data.native_currency.toLowerCase() || 'usd',
-          )}{' '}
-          {user?.data.native_currency}
-        </Balance>
+        {!isLoadingAccounts && (
+          <Animated.View entering={FadeInLeft}>
+            <Balance>
+              {formatFiatAmount(
+                balance,
+                user?.data?.native_currency?.toLowerCase() || 'usd',
+              )}{' '}
+              {user?.data?.native_currency}
+            </Balance>
+          </Animated.View>
+        )}
       </BalanceContainer>
-      {theme.dark ? <Hr /> : null}
+      <Hr />
       <FlatList
         contentContainerStyle={{
           paddingBottom: 50,
