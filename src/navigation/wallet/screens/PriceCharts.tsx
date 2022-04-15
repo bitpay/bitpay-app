@@ -113,7 +113,6 @@ const CurrencyAverageContainer = styled.View<{average?: number}>`
       ? Success25
       : '#ff647c'};
   border-radius: 7px;
-  height: 23px;
   width: auto;
   max-width: 80px;
   justify-content: center;
@@ -173,7 +172,10 @@ const PriceCharts = () => {
   const [cachedRates, setCachedRates] =
     useState<{[key in DateRanges]: ChartDataType}>(defaultCachedRates);
 
-  const getFormattedData = (rates: Array<number>): ChartDataType => {
+  const getFormattedData = (
+    rates: Array<number>,
+    currencyAbbreviation?: string,
+  ): ChartDataType => {
     let data = rates;
 
     // reduce number of points to improve performance
@@ -189,7 +191,10 @@ const PriceCharts = () => {
       data: data.map((value, key) => ({
         x: key,
         y: value,
-        label: formatFiatAmount(value, 'USD'),
+        label: formatFiatAmount(value, 'USD', {
+          customPrecision: 'minimal',
+          currencyAbbreviation,
+        }),
       })),
       domain: {
         x: [0, data.length - 1],
@@ -211,8 +216,10 @@ const PriceCharts = () => {
       const historicFiatRates = (await dispatch<any>(
         fetchHistoricalRates(dateRange, currencyAbbreviation),
       )) as Array<number>;
-
-      return getFormattedData(historicFiatRates.reverse());
+      return getFormattedData(
+        historicFiatRates.reverse(),
+        currencyAbbreviation,
+      );
     } catch (e) {
       throw e;
     }
@@ -273,7 +280,10 @@ const PriceCharts = () => {
   useEffect(() => {
     if (loading) {
       const defaultDateRange = DateRanges.Day;
-      const formattedData = getFormattedData(priceDisplay);
+      const formattedData = getFormattedData(
+        priceDisplay,
+        currencyAbbreviation,
+      );
       setCachedRates({...cachedRates, ...{[defaultDateRange]: formattedData}});
       setDisplayData(formattedData);
       setLoading(false);
@@ -283,7 +293,14 @@ const PriceCharts = () => {
   return (
     <SafeAreaView>
       <HeaderContainer>
-        {currentPrice && <H2>{formatFiatAmount(currentPrice, 'USD')}</H2>}
+        {currentPrice && (
+          <H2>
+            {formatFiatAmount(currentPrice, 'USD', {
+              customPrecision: 'minimal',
+              currencyAbbreviation,
+            })}
+          </H2>
+        )}
         <CurrencyAverageContainer average={average}>
           <CurrencyAverageText average={average}>
             {average && average > 0 ? '+' : null}
