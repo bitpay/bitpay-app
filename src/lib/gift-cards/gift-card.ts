@@ -1,5 +1,6 @@
 import 'intl';
 import 'intl/locale-data/jsonp/en';
+import moment from 'moment';
 import {countries} from 'countries-list';
 
 import {
@@ -9,6 +10,7 @@ import {
   CardConfig,
   GiftCard,
   GiftCardActivationFee,
+  UnsoldGiftCard,
 } from '../../store/shop/shop.models';
 import {formatFiatAmount} from '../../utils/helper-methods';
 
@@ -93,6 +95,16 @@ export function sortByDisplayName(
 
 export function sortByDescendingDate(a: GiftCard, b: GiftCard) {
   return new Date(b.date).getTime() - new Date(a.date).getTime();
+}
+
+export function redemptionFailuresLessThanADayOld(
+  giftCard: GiftCard | UnsoldGiftCard,
+) {
+  const dayAgo = moment().subtract(1, 'day').toDate();
+  return (
+    ['FAILURE', 'PENDING'].includes(giftCard.status) &&
+    new Date(giftCard.date) > dayAgo
+  );
 }
 
 export function spreadAmounts(values: Array<number>, currency: string): string {

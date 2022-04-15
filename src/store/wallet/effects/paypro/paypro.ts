@@ -109,7 +109,7 @@ export const HandlePayPro = async ({
     const {estimatedAmount, minerFee} = paymentOptions.find(
       option => option.currency.toLowerCase() === coin,
     ) as PayProPaymentOption;
-    const {outputs, toAddress, data} = payProDetails.instructions[0];
+    const {outputs, toAddress, data, gasLimit} = payProDetails.instructions[0];
     if (coin === 'xrp' && outputs) {
       invoiceID = outputs[0].invoiceID;
     }
@@ -118,6 +118,7 @@ export const HandlePayPro = async ({
       toAddress,
       description: memo,
       data,
+      gasLimit,
       invoiceID,
       payPro: payProDetails,
       coin,

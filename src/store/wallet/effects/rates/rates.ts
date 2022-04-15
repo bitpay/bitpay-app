@@ -1,16 +1,32 @@
 import {Effect} from '../../../index';
 import axios from 'axios';
 import {BASE_BWS_URL} from '../../../../constants/config';
-import {WalletActions} from '../../index';
 import {SUPPORTED_COINS} from '../../../../constants/currencies';
-import {HistoricRate, PriceHistory, Rate, Rates} from '../../wallet.models';
+import {
+  DateRanges,
+  HistoricRate,
+  PriceHistory,
+  Rate,
+  Rates,
+} from '../../wallet.models';
 import {isCacheKeyStale} from '../../utils/wallet';
-import {RATES_CACHE_DURATION} from '../../../../constants/wallet';
-import {updateCacheKey} from '../../wallet.actions';
+import {
+  DEFAULT_DATE_RANGE,
+  HISTORIC_RATES_CACHE_DURATION,
+  RATES_CACHE_DURATION,
+} from '../../../../constants/wallet';
+import {
+  failedGetPriceHistory,
+  failedGetRates,
+  successGetPriceHistory,
+  successGetRates,
+  updateCacheKey,
+} from '../../wallet.actions';
 import {CacheKeys} from '../../wallet.models';
 import moment from 'moment';
 import {addAltCurrencyList} from '../../../app/app.actions';
 import {AltCurrenciesRowProps} from '../../../../components/list/AltCurrenciesRow';
+import {LogActions} from '../../../log';
 
 export const getPriceHistory = (): Effect => async dispatch => {
   try {
@@ -31,10 +47,10 @@ export const getPriceHistory = (): Effect => async dispatch => {
       };
     });
 
-    dispatch(WalletActions.successGetPriceHistory(formattedData));
+    dispatch(successGetPriceHistory(formattedData));
   } catch (err) {
     console.error(err);
-    dispatch(WalletActions.failedGetPriceHistory());
+    dispatch(failedGetPriceHistory());
   }
 };
 
@@ -45,12 +61,18 @@ export const startGetRates =
       const {
         WALLET: {ratesCacheKey, rates: cachedRates},
       } = getState();
-      if (!isCacheKeyStale(ratesCacheKey, RATES_CACHE_DURATION)) {
+
+      if (
+        !isCacheKeyStale(
+          ratesCacheKey[DEFAULT_DATE_RANGE],
+          RATES_CACHE_DURATION,
+        )
+      ) {
         console.log('Rates - using cached rates');
-        return resolve(cachedRates);
+        return resolve(cachedRates[DEFAULT_DATE_RANGE]);
       }
 
-      dispatch(updateCacheKey(CacheKeys.RATES));
+      dispatch(updateCacheKey({cacheKey: CacheKeys.RATES}));
 
       try {
         console.log('Rates - fetching new rates');
@@ -71,11 +93,11 @@ export const startGetRates =
           alternatives.sort((a, b) => (a.name < b.name ? -1 : 1));
           dispatch(addAltCurrencyList(alternatives));
         }
-        dispatch(WalletActions.successGetRates({rates, lastDayRates}));
+        dispatch(successGetRates({rates,lastDayRates}));
         resolve(rates);
       } catch (err) {
         console.error(err);
-        dispatch(WalletActions.failedGetRates());
+        dispatch(failedGetRates());
         reject();
       }
     });
@@ -96,3 +118,69 @@ export const getHistoricFiatRate = (
     }
   });
 };
+
+export const fetchHistoricalRates =
+  (
+    dateRange: DateRanges = DateRanges.Day,
+    currencyAbbreviation?: string,
+    fiatIsoCode: string = 'USD',
+  ): Effect<Promise<Array<number>>> =>
+  async (dispatch, getState) => {
+    return new Promise(async (resolve, reject) => {
+      const {
+        WALLET: {ratesCacheKey, rates: cachedRates},
+      } = getState();
+
+      if (
+        !isCacheKeyStale(
+          ratesCacheKey[dateRange],
+          HISTORIC_RATES_CACHE_DURATION,
+        )
+      ) {
+        dispatch(LogActions.info('[rates]: using cached rates'));
+        const cachedRatesByCoin: Array<number> = currencyAbbreviation
+          ? cachedRates[dateRange][currencyAbbreviation.toLowerCase()].map(
+              (r: Rate) => {
+                return r.rate;
+              },
+            )
+          : [];
+
+        return resolve(cachedRatesByCoin);
+      }
+
+      dispatch(updateCacheKey({cacheKey: CacheKeys.RATES}));
+
+      try {
+        dispatch(
+          LogActions.info(
+            `[rates]: fetching historical rates for ${fiatIsoCode} period ${dateRange}`,
+          ),
+        );
+        const firstDateTs =
+          moment().subtract(dateRange, 'days').startOf('hour').unix() * 1000;
+
+        // This pulls ALL coins in one query
+        const url = `${BASE_BWS_URL}/v2/fiatrates/${fiatIsoCode}?ts=${firstDateTs}`;
+        const {data: rates} = await axios.get(url);
+        dispatch(successGetRates({rates, dateRange}));
+        dispatch(
+          LogActions.info('[rates]: fetched historical rates successfully'),
+        );
+
+        const ratesByCoin: Array<number> = currencyAbbreviation
+          ? rates[currencyAbbreviation.toLowerCase()].map((r: Rate) => {
+              return r.rate;
+            })
+          : [];
+        resolve(ratesByCoin);
+      } catch (e) {
+        dispatch(
+          LogActions.error(
+            '[rates]: an error occurred while fetching historical rates.',
+          ),
+        );
+        reject(e);
+      }
+    });
+  };

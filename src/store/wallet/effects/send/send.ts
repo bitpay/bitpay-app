@@ -436,7 +436,7 @@ export const publishAndSign =
         );
         console.log('-------- signed');
 
-        if (signedTx.status == 'accepted') {
+        if (signedTx.status === 'accepted') {
           const broadcastedTx = await broadcastTx(wallet, signedTx);
           console.log('-------- broadcastedTx');
 
@@ -605,6 +605,8 @@ export const createPayProTxProposal = async ({
   const {
     toAddress: address,
     requiredFeeRate: feePerKb,
+    data,
+    gasLimit,
     description,
     amount,
   } = confirmScreenParams!;
@@ -619,6 +621,8 @@ export const createPayProTxProposal = async ({
     ...(feePerKb && {feePerKb}),
     payProUrl: paymentUrl,
     recipient: {address},
+    gasLimit,
+    data,
     amount: amount / unitToSatoshi,
     ...(customData && {customData}),
     message: message || description,

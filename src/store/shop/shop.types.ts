@@ -14,8 +14,9 @@ export enum ShopActionTypes {
   SUCCESS_CREATE_GIFT_CARD_INVOICE = 'SHOP/SUCCESS_CREATE_GIFT_CARD_INVOICE',
   FAILED_CREATE_GIFT_CARD_INVOICE = 'SHOP/FAILED_CREATE_GIFT_CARD_INVOICE',
   INITIALIZED_UNSOLD_GIFT_CARD = 'SHOP/INITIALIZED_UNSOLD_GIFT_CARD',
-  DELETED_UNSOLD_GIFT_CARD = 'SHOP/DELETED_UNSOLD_GIFT_CARD',
+  DELETED_UNSOLD_GIFT_CARDS = 'SHOP/DELETED_UNSOLD_GIFT_CARDS',
   UPDATED_EMAIL_ADDRESS = 'SHOP/UPDATED_EMAIL_ADDRESS',
+  UPDATED_GIFT_CARD_STATUS = 'SHOP/UPDATED_GIFT_CARD_STATUS',
   UPDATED_PHONE = 'SHOP/UPDATED_PHONE',
   REDEEMED_GIFT_CARD = 'SHOP/REDEEMED_GIFT_CARD',
   TOGGLED_GIFT_CARD_ARCHIVED_STATUS = 'SHOP/TOGGLED_GIFT_CARD_ARCHIVED_STATUS',
@@ -47,10 +48,7 @@ interface initializedUnsoldGiftCard {
   };
 }
 interface deletedUnsoldGiftCard {
-  type: typeof ShopActionTypes.DELETED_UNSOLD_GIFT_CARD;
-  payload: {
-    invoiceId: string;
-  };
+  type: typeof ShopActionTypes.DELETED_UNSOLD_GIFT_CARDS;
 }
 interface redeemedGiftCard {
   type: typeof ShopActionTypes.REDEEMED_GIFT_CARD;
@@ -68,6 +66,13 @@ interface updatedEmailAddress {
   type: typeof ShopActionTypes.UPDATED_EMAIL_ADDRESS;
   payload: {
     email: string;
+  };
+}
+interface updatedGiftCardStatus {
+  type: typeof ShopActionTypes.UPDATED_GIFT_CARD_STATUS;
+  payload: {
+    invoiceId: string;
+    status: 'PENDING' | 'UNREDEEMED';
   };
 }
 interface updatedPhone {
@@ -91,5 +96,6 @@ export type ShopActionType =
   | redeemedGiftCard
   | toggledGiftCardArchivedStatus
   | updatedEmailAddress
+  | updatedGiftCardStatus
   | updatedPhone
   | clearedGiftCards;

@@ -1,82 +1,75 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import React, {useEffect, useMemo, useState} from 'react';
 import {RefreshControl, ScrollView} from 'react-native';
+import styled from 'styled-components/native';
+import {ScreenGutter} from '../../../components/styled/Containers';
+import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {
+  selectBrazeAdvertisements,
+  selectBrazeOffers,
+  selectBrazeQuickLinks,
+} from '../../../store/app/app.selectors';
+import {selectCardGroups} from '../../../store/card/card.selectors';
 import {startGetRates} from '../../../store/wallet/effects';
 import {startUpdateAllKeyAndWalletStatus} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
-import {isDoMore, isFeaturedMerchant, isQuickLink} from '../../../utils/braze';
 import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishModal';
 import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
+import AdvertisementsList from './components/advertisements/AdvertisementsList';
 import DefaultAdvertisements from './components/advertisements/DefaultAdvertisements';
+import Crypto, {keyBackupRequired} from './components/Crypto';
 import ExchangeRatesList, {
   ExchangeRateItemProps,
 } from './components/exchange-rates/ExchangeRatesList';
 import ProfileButton from './components/HeaderProfileButton';
 import ScanButton from './components/HeaderScanButton';
+import HomeSection from './components/HomeSection';
 import LinkingButtons from './components/LinkingButtons';
 import MockOffers from './components/offers/MockOffers';
+import OffersCarousel from './components/offers/OffersCarousel';
 import PortfolioBalance from './components/PortfolioBalance';
 import DefaultQuickLinks from './components/quick-links/DefaultQuickLinks';
-import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
-import {HeaderContainer, HomeContainer} from './components/Styled';
-import HomeSection from './components/HomeSection';
-
-import Crypto, {keyBackupRequired} from './components/Crypto';
-import AdvertisementsList from './components/advertisements/AdvertisementsList';
-import OffersCarousel from './components/offers/OffersCarousel';
 import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
 import {selectCardGroups} from '../../../store/card/card.selectors';
+import {HeaderContainer, HomeContainer} from './components/Styled';
 
 const HomeRoot = () => {
   const dispatch = useAppDispatch();
-  // const onboardingCompleted = useAppSelector(
-  //   ({APP}: RootState) => APP.onboardingCompleted,
-  // );
-  // const showOnboardingFinishModal = async () => {
-  //   await sleep(300);
-  //   dispatch(AppActions.showOnboardingFinishModal());
-  // };
-  // useEffect(() => {
-  //   if (!onboardingCompleted) {
-  //     showOnboardingFinishModal();
-  //   }
-  // }, []);
-
   const navigation = useNavigation();
   const theme = useTheme();
   const [refreshing, setRefreshing] = useState(false);
-  const allContentCards = useAppSelector(({APP}) => APP.brazeContentCards);
+  const brazeOffers = useAppSelector(selectBrazeOffers);
+  const brazeAdvertisements = useAppSelector(selectBrazeAdvertisements);
+  const brazeQuickLinks = useAppSelector(selectBrazeQuickLinks);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const hasKeys = Object.values(keys).length;
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups.length > 0;
-  // Featured Merchants ("Offers")
-  const memoizedOffers = useMemo(() => {
-    const featuredMerchants = allContentCards.filter(isFeaturedMerchant);
 
-    if (STATIC_CONTENT_CARDS_ENABLED && !featuredMerchants.length) {
+  // Featured Merchants ("Shop with Crypto")
+  const memoizedOffers = useMemo(() => {
+    if (STATIC_CONTENT_CARDS_ENABLED && !brazeOffers.length) {
       return MockOffers;
     }
 
-    return featuredMerchants;
-  }, [allContentCards]);
+    return brazeOffers;
+  }, [brazeOffers]);
 
   // Advertisements ("Do More")
   const memoizedAdvertisements = useMemo(() => {
-    const advertisements = allContentCards.filter(isDoMore);
     const defaults = DefaultAdvertisements.filter(advertisement => {
       if (hasCards) {
         return advertisement.id !== 'card';
       }
       return advertisement;
     });
-    return [...defaults, ...advertisements];
-  }, [allContentCards, hasCards]);
+    return [...defaults, ...brazeAdvertisements];
+  }, [brazeAdvertisements, hasCards]);
 
   // Exchange Rates
   const priceHistory = useAppSelector(({WALLET}) => WALLET.priceHistory);
@@ -108,9 +101,8 @@ const HomeRoot = () => {
 
   // Quick Links
   const memoizedQuickLinks = useMemo(() => {
-    const quickLinks = allContentCards.filter(isQuickLink);
-    return [...DefaultQuickLinks, ...quickLinks];
-  }, [allContentCards]);
+    return [...DefaultQuickLinks, ...brazeQuickLinks];
+  }, [brazeQuickLinks]);
 
   const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
 
@@ -249,7 +241,9 @@ const HomeRoot = () => {
 
         {/* ////////////////////////////// EXCHANGE RATES */}
         {memoizedExchangeRates.length ? (
-          <ExchangeRatesList items={memoizedExchangeRates} />
+          <HomeSection title="Exchange Rates">
+            <ExchangeRatesList items={memoizedExchangeRates} />
+          </HomeSection>
         ) : null}
 
         {/* ////////////////////////////// QUICK LINKS - Leave feedback etc */}

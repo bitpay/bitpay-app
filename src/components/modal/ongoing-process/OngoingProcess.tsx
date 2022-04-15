@@ -28,6 +28,7 @@ export enum OnGoingProcessMessages {
   CALCULATING_FEE = 'Calculating Fee',
   CONNECTING_COINBASE = 'Connecting with Coinbase...',
   FETCHING_COINBASE_DATA = 'Fetching data from Coinbase...',
+  UPDATING_TXP = 'Updating Transaction',
 }
 
 const OnGoingProcessContainer = styled.View`

@@ -70,14 +70,13 @@ export const shopReducer = (
           [APP_NETWORK]: state.giftCards[APP_NETWORK].concat(giftCard),
         },
       };
-    case ShopActionTypes.DELETED_UNSOLD_GIFT_CARD:
-      const {invoiceId} = action.payload;
+    case ShopActionTypes.DELETED_UNSOLD_GIFT_CARDS:
       return {
         ...state,
         giftCards: {
           ...state.giftCards,
           [APP_NETWORK]: state.giftCards[APP_NETWORK].filter(
-            card => card.invoiceId !== invoiceId,
+            card => card.status !== 'UNREDEEMED',
           ),
         },
       };
@@ -112,6 +111,17 @@ export const shopReducer = (
       return {
         ...state,
         email,
+      };
+    case ShopActionTypes.UPDATED_GIFT_CARD_STATUS:
+      const {invoiceId: invoiceIdToUpdate, status} = action.payload;
+      return {
+        ...state,
+        giftCards: {
+          ...state.giftCards,
+          [APP_NETWORK]: state.giftCards[APP_NETWORK].map(card =>
+            card.invoiceId === invoiceIdToUpdate ? {...card, status} : card,
+          ),
+        },
       };
     case ShopActionTypes.UPDATED_PHONE:
       const {phone, phoneCountryInfo} = action.payload;
