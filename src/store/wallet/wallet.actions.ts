@@ -1,6 +1,7 @@
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {
   CacheKeys,
+  DateRanges,
   Key,
   PriceHistory,
   Rates,
@@ -50,7 +51,11 @@ export const setBackupComplete = (keyId: string): WalletActionType => ({
   payload: keyId,
 });
 
-export const successGetRates = (payload: {rates: Rates}): WalletActionType => ({
+export const successGetRates = (payload: {
+  rates: Rates;
+  lastDayRates?: Rates;
+  dateRange?: number;
+}): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_GET_RATES,
   payload,
 });
@@ -59,7 +64,10 @@ export const failedGetRates = (): WalletActionType => ({
   type: WalletActionTypes.FAILED_GET_RATES,
 });
 
-export const updateCacheKey = (payload: CacheKeys): WalletActionType => ({
+export const updateCacheKey = (payload: {
+  cacheKey: CacheKeys;
+  dateRange?: DateRanges;
+}): WalletActionType => ({
   type: WalletActionTypes.UPDATE_CACHE_KEY,
   payload,
 });
@@ -125,6 +133,7 @@ export const failedUpdateWalletStatus = (payload: {
 export const successUpdateKeyTotalBalance = (payload: {
   keyId: string;
   totalBalance: number;
+  totalBalanceLastDay: number;
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_UPDATE_KEY_TOTAL_BALANCE,
   payload,
@@ -192,6 +201,16 @@ export const updateWalletTxHistory = (payload: {
 
 export const setUseUnconfirmedFunds = (payload: boolean): WalletActionType => ({
   type: WalletActionTypes.SET_USE_UNCONFIRMED_FUNDS,
+  payload,
+});
+
+export const setCustomizeNonce = (payload: boolean): WalletActionType => ({
+  type: WalletActionTypes.SET_CUSTOMIZE_NONCE,
+  payload,
+});
+
+export const setEnableReplaceByFee = (payload: boolean): WalletActionType => ({
+  type: WalletActionTypes.SET_ENABLE_REPLACE_BY_FEE,
   payload,
 });
 

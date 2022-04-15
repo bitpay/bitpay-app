@@ -121,10 +121,15 @@ export interface AmountParamList {
 
 interface AmountProps {
   useAsModal: any;
+  currencyAbbreviationModal?: string;
   onDismiss?: (amount?: number) => void;
 }
 
-const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss}) => {
+const Amount: React.FC<AmountProps> = ({
+  useAsModal,
+  currencyAbbreviationModal,
+  onDismiss,
+}) => {
   const route = useRoute<RouteProp<WalletStackParamList, 'Amount'>>();
   const {
     onAmountSelected,
@@ -138,6 +143,10 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss}) => {
 
   const fiatCurrency = fiatCurrencyAbbreviation || 'USD';
 
+  const cryptoCurrencyAbbreviation = useAsModal
+    ? currencyAbbreviationModal
+    : currencyAbbreviation;
+
   // flag for primary selector type
   const [rate, setRate] = useState(0);
   const [amountConfig, updateAmountConfig] = useState({
@@ -146,11 +155,13 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss}) => {
     displayEquivalentAmount: '0',
     // amount to be sent to proposal creation (sats)
     amount: '0',
-    currency: currencyAbbreviation ? currencyAbbreviation : fiatCurrency,
-    primaryIsFiat: currencyAbbreviation === fiatCurrency ? true : false,
+    currency: cryptoCurrencyAbbreviation
+      ? cryptoCurrencyAbbreviation
+      : fiatCurrency,
+    primaryIsFiat: cryptoCurrencyAbbreviation === fiatCurrency,
   });
-  const swapList = currencyAbbreviation
-    ? [...new Set([currencyAbbreviation, fiatCurrency])]
+  const swapList = cryptoCurrencyAbbreviation
+    ? [...new Set([cryptoCurrencyAbbreviation, fiatCurrency])]
     : [fiatCurrency];
 
   const allRates = useAppSelector(({WALLET}) => WALLET.rates);
@@ -192,16 +203,16 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss}) => {
     }));
 
     const val = Number(_val);
-    if (isNaN(val) || !currencyAbbreviation) {
+    if (isNaN(val) || !cryptoCurrencyAbbreviation) {
       return;
     }
 
     const cryptoAmount =
-      val === 0 || !currencyAbbreviation
+      val === 0 || !cryptoCurrencyAbbreviation
         ? '0'
         : ParseAmount(
             primaryIsFiat ? val / rate : val,
-            currencyAbbreviation.toLowerCase(),
+            cryptoCurrencyAbbreviation.toLowerCase(),
           ).amount;
     const fiatAmount = formatFiatAmount(val * rate, 'USD');
 
@@ -284,11 +295,11 @@ const Amount: React.FC<AmountProps> = ({useAsModal, onDismiss}) => {
               <CurrencyText>{currency || 'USD'}</CurrencyText>
             </CurrencySuperScript>
           </Row>
-          {currencyAbbreviation ? (
+          {cryptoCurrencyAbbreviation ? (
             <Row>
               <AmountEquivText>
                 {displayEquivalentAmount || 0}{' '}
-                {primaryIsFiat && currencyAbbreviation}
+                {primaryIsFiat && cryptoCurrencyAbbreviation}
               </AmountEquivText>
             </Row>
           ) : null}

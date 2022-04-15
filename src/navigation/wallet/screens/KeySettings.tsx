@@ -269,7 +269,13 @@ const KeySettings = () => {
         <WalletHeaderContainer>
           <Title>Wallets</Title>
           <InfoImageContainer infoMargin={'0 0 0 8px'}>
-            <InfoSvg />
+            <TouchableOpacity
+              onPress={() => {
+                haptic('impactLight');
+                navigation.navigate('Wallet', {screen: 'KeyExplanation'});
+              }}>
+              <InfoSvg />
+            </TouchableOpacity>
           </InfoImageContainer>
         </WalletHeaderContainer>
 
@@ -323,7 +329,7 @@ const KeySettings = () => {
                     keyId: key.id,
                     words: getMnemonic(_key),
                     walletTermsAccepted: true,
-                    context: 'settings',
+                    context: 'keySettings',
                     key,
                   },
                 });
@@ -337,7 +343,7 @@ const KeySettings = () => {
                           keyId: key.id,
                           words: mnemonic.trim().split(' '),
                           walletTermsAccepted: true,
-                          context: 'settings',
+                          context: 'keySettings',
                           key,
                         },
                       });

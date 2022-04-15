@@ -1,8 +1,8 @@
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useState} from 'react';
-import {ScrollView, StyleProp, Text, TextStyle} from 'react-native';
+import {StyleProp, Text, TextStyle} from 'react-native';
 import {useSelector} from 'react-redux';
-import {useTheme} from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import {RootState} from '../../../../../store';
 import {LogLevel} from '../../../../../store/log/log.models';
 import {AboutStackParamList} from '../AboutStack';
@@ -13,6 +13,10 @@ type SessionLogsScreenProps = StackNavigationProp<
   AboutStackParamList,
   'SessionLogs'
 >;
+
+const ScrollView = styled.ScrollView`
+  margin: 20px 15px;
+`;
 
 const SessionLogs: React.FC<SessionLogsScreenProps> = () => {
   const theme = useTheme();

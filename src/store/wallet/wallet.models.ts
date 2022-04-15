@@ -46,6 +46,7 @@ export interface Key {
   backupComplete?: boolean;
   show?: boolean;
   totalBalance: number;
+  totalBalanceLastDay: number;
   isPrivKeyEncrypted?: boolean;
   keyName?: string;
 }
@@ -56,6 +57,7 @@ export interface WalletBalance {
   crypto: string;
   cryptoLocked: string;
   fiat: number;
+  fiatLastDay: number;
   fiatLocked: number;
   sat: number;
   satAvailable: number;
@@ -150,6 +152,12 @@ export interface HistoricRate {
 export type Rates = {
   [key in string]: Rate[];
 };
+
+export enum DateRanges {
+  Day = 1,
+  Week = 7,
+  Month = 30,
+}
 
 export interface Balance {
   availableAmount: number;

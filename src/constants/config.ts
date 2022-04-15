@@ -18,3 +18,6 @@ export const BWC_TIMEOUT = 100000;
 
 // Storybook
 export const APP_LOAD_STORY_BOOK = false;
+
+// Download URL's
+export const DOWNLOAD_BITPAY_URL = 'https://bitpay.com/wallet';

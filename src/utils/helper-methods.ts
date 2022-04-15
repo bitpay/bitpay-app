@@ -1,5 +1,5 @@
 import {Currencies} from '../constants/currencies';
-import {Key} from '../store/wallet/wallet.models';
+import {Balance, Key} from '../store/wallet/wallet.models';
 import {ContactRowProps} from '../components/list/ContactRow';
 
 export const sleep = async (duration: number) =>
@@ -129,14 +129,23 @@ export const isValidDerivationPathCoin = (
 
 export const keyExtractor = (item: {id: string}) => item.id;
 
+export const getSignificantDigits = (currencyAbbreviation?: string) => {
+  return currencyAbbreviation === 'DOGE' || currencyAbbreviation === 'XRP'
+    ? 4
+    : undefined;
+};
+
 export const formatFiatAmount = (
   amount: number,
   currency: string,
   opts: {
     customPrecision?: 'minimal';
+    currencyAbbreviation?: string;
   } = {},
 ) =>
   new Intl.NumberFormat('en-US', {
+    minimumSignificantDigits: getSignificantDigits(opts.currencyAbbreviation),
+    maximumSignificantDigits: getSignificantDigits(opts.currencyAbbreviation),
     style: 'currency',
     currency: currency.toLowerCase(),
     ...(opts.customPrecision === 'minimal' &&
@@ -181,5 +190,14 @@ export const shouldScale = (
 export const formatCryptoAddress = (address: string) => {
   return (
     address.substring(0, 4) + '....' + address.substring(address.length - 4)
+  );
+};
+
+export const calculatePercentageDifference = (
+  currentBalance: number,
+  lastDayBalance: number,
+): number => {
+  return Number(
+    (((currentBalance - lastDayBalance) * 100) / currentBalance).toFixed(2),
   );
 };

@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import DraggableFlatList, {
   RenderItemParams,
   ScaleDecorator,
@@ -39,6 +39,7 @@ import {
   ListViewSvg,
 } from './Shared';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
+import {COINBASE_ENV} from '../../../../../../api/coinbase/coinbase.constants';
 
 enum LayoutTypes {
   CAROUSEL = 'Carousel',
@@ -56,11 +57,15 @@ const CustomizeHome = () => {
   const defaultLayoutType = useAppSelector(
     ({APP}) => APP.homeCarouselLayoutType,
   );
+  const hasCoinbase = useAppSelector(
+    ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
+  );
   const [layoutType, setLayoutType] = useState(defaultLayoutType);
   const navigation = useNavigation();
   const theme = useTheme();
   const [_visible, _hidden] = createCustomizeCardList({
     keys: Object.values(keys),
+    hasCoinbase,
     homeCarouselConfig,
   });
   const [visibleList, setVisibleList] = useState(_visible);
@@ -68,18 +73,21 @@ const CustomizeHome = () => {
   const [hiddenList, setHiddenList] = useState(_hidden);
   const Tab = createMaterialTopTabNavigator();
 
-  const toggle = (item: CustomizeItem) => {
-    const {show, key} = item;
-    item.show = !show;
-    setDirty(true);
-    if (show) {
-      setVisibleList(visibleList.filter(vi => vi.key !== key));
-      setHiddenList(hiddenList.concat(item));
-    } else {
-      setHiddenList(hiddenList.filter(hi => hi.key !== key));
-      setVisibleList(visibleList.concat(item));
-    }
-  };
+  const toggle = useCallback(
+    (item: CustomizeItem) => {
+      const {show, key} = item;
+      item.show = !show;
+      setDirty(true);
+      if (show) {
+        setVisibleList(visibleList.filter(vi => vi.key !== key));
+        setHiddenList(hiddenList.concat(item));
+      } else {
+        setHiddenList(hiddenList.filter(hi => hi.key !== key));
+        setVisibleList(visibleList.concat(item));
+      }
+    },
+    [hiddenList, visibleList],
+  );
 
   const visibleRenderItem = ({item, drag, isActive}: RenderItemParams<any>) => {
     return (
@@ -106,7 +114,6 @@ const CustomizeHome = () => {
       <ListFooterButtonContainer>
         <Button
           disabled={!dirty}
-          style={{marginTop: 100}}
           onPress={async () => {
             dispatch(
               showOnGoingProcessModal(OnGoingProcessMessages.SAVING_LAYOUT),
@@ -146,7 +153,7 @@ const CustomizeHome = () => {
         keyExtractor={item => item.key}
       />
     );
-  }, [hiddenList]);
+  }, [hiddenList, toggle]);
 
   return (
     <CustomizeHomeContainer>

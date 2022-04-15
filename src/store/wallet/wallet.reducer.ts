@@ -1,6 +1,7 @@
-import {Key, PriceHistory, Rates, Token} from './wallet.models';
+import {DateRanges, Key, PriceHistory, Rates, Token} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {FeeLevels} from './effects/fee/fee';
+import {DEFAULT_DATE_RANGE} from '../../constants/wallet';
 
 type WalletReduxPersistBlackList = [];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
@@ -8,38 +9,46 @@ export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
 export interface WalletState {
   createdOn: number;
   keys: {[key in string]: Key};
-  rates: Rates;
+  lastDayRates: Rates;
+  rates: {[key in number]: Rates};
   priceHistory: Array<PriceHistory>;
   tokenOptions: {[key in string]: Token};
   walletTermsAccepted: boolean;
   portfolioBalance: {
     current: number;
+    lastDay: number;
     previous: number;
   };
   balanceCacheKey: {[key in string]: number | undefined};
-  ratesCacheKey: number | undefined;
+  ratesCacheKey: {[key in number]: DateRanges | undefined};
   feeLevel: {[key in string]: FeeLevels};
   useUnconfirmedFunds: boolean;
+  customizeNonce: boolean;
+  enableReplaceByFee: boolean;
 }
 
 const initialState: WalletState = {
   createdOn: Date.now(),
   keys: {},
   rates: {},
+  lastDayRates: {},
   priceHistory: [],
   tokenOptions: {},
   walletTermsAccepted: false,
   portfolioBalance: {
     current: 0,
+    lastDay: 0,
     previous: 0,
   },
   balanceCacheKey: {},
-  ratesCacheKey: undefined,
+  ratesCacheKey: {},
   feeLevel: {
     btc: FeeLevels.NORMAL,
     eth: FeeLevels.NORMAL,
   },
   useUnconfirmedFunds: false,
+  customizeNonce: false,
+  enableReplaceByFee: false,
 };
 
 export const walletReducer = (
@@ -68,20 +77,20 @@ export const walletReducer = (
     }
 
     case WalletActionTypes.SUCCESS_GET_RATES: {
-      const {rates} = action.payload;
-
+      const {rates, lastDayRates, dateRange = DEFAULT_DATE_RANGE} = action.payload;
       return {
         ...state,
-        rates: {...state.rates, ...rates},
-        ratesCacheKey: Date.now(),
+        rates: {...state.rates, [dateRange]: {...rates}},
+        ratesCacheKey: {...state.ratesCacheKey, [dateRange]: Date.now()},
+        lastDayRates: {...state.lastDayRates, ...lastDayRates},
       };
     }
 
     case WalletActionTypes.UPDATE_CACHE_KEY: {
-      const cacheKey = action.payload;
+      const {cacheKey, dateRange = DEFAULT_DATE_RANGE} = action.payload;
       return {
         ...state,
-        [cacheKey]: Date.now(),
+        [cacheKey]: {...state.ratesCacheKey, [dateRange]: Date.now()},
       };
     }
 
@@ -143,9 +152,10 @@ export const walletReducer = (
     }
 
     case WalletActionTypes.SUCCESS_UPDATE_KEY_TOTAL_BALANCE: {
-      const {keyId, totalBalance} = action.payload;
+      const {keyId, totalBalance, totalBalanceLastDay} = action.payload;
       const keyToUpdate = state.keys[keyId];
       keyToUpdate.totalBalance = totalBalance;
+      keyToUpdate.totalBalanceLastDay = totalBalanceLastDay;
       return {
         ...state,
         keys: {
@@ -173,11 +183,16 @@ export const walletReducer = (
 
     case WalletActionTypes.UPDATE_PORTFOLIO_BALANCE: {
       let current = 0;
+      let lastDay = 0;
       Object.values(state.keys).forEach(key => (current += key.totalBalance));
+      Object.values(state.keys).forEach(
+        key => (lastDay += key.totalBalanceLastDay),
+      );
       return {
         ...state,
         portfolioBalance: {
           current,
+          lastDay,
           previous: 0,
         },
       };
@@ -212,6 +227,7 @@ export const walletReducer = (
         },
         portfolioBalance: {
           current: state.portfolioBalance.current - balanceToRemove,
+          lastDay: state.portfolioBalance.lastDay - balanceToRemove,
           previous: 0,
         },
       };
@@ -335,6 +351,20 @@ export const walletReducer = (
       return {
         ...state,
         useUnconfirmedFunds: action.payload,
+      };
+    }
+
+    case WalletActionTypes.SET_CUSTOMIZE_NONCE: {
+      return {
+        ...state,
+        customizeNonce: action.payload,
+      };
+    }
+
+    case WalletActionTypes.SET_ENABLE_REPLACE_BY_FEE: {
+      return {
+        ...state,
+        enableReplaceByFee: action.payload,
       };
     }
 

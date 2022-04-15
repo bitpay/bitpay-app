@@ -1,4 +1,4 @@
-import React, {useState, useCallback, useEffect} from 'react';
+import React, {useState, useCallback, useEffect, useLayoutEffect} from 'react';
 import {useTranslation} from 'react-i18next';
 import debounce from 'lodash.debounce';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -16,7 +16,7 @@ import {
   HEIGHT,
   WIDTH,
 } from '../../../../components/styled/Containers';
-import {BaseText, H4} from '../../../../components/styled/Text';
+import {BaseText, H4, HeaderTitle} from '../../../../components/styled/Text';
 import {SlateDark, White, LightBlack, Cloud} from '../../../../styles/colors';
 import BoxInput from '../../../../components/form/BoxInput';
 import {RootState} from '../../../../store';
@@ -25,7 +25,7 @@ import ContactRow, {
   ContactRowProps,
 } from '../../../../components/list/ContactRow';
 
-const ContactsContainer = styled.View`
+const ContactsContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
@@ -102,7 +102,7 @@ const SearchBox = styled(BoxInput)`
 
 const SearchContainer = styled.View`
   padding: 0 ${horizontalPadding}px;
-  margin-bottom: 20px;
+  margin: 20px 0;
 `;
 
 const SearchResults = styled.View`
@@ -147,6 +147,13 @@ const ContactsRoot: React.FC = () => {
   const [searchResults, setSearchResults] = useState([] as ContactRowProps[]);
   const [searchVal, setSearchVal] = useState('');
 
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => {
+        return contacts.length ? <HeaderTitle>My Contacts</HeaderTitle> : null;
+      },
+    });
+  }, [navigation, contacts]);
   useEffect(() => {
     // Sort list
     contacts.sort((x, y) => {
@@ -195,7 +202,6 @@ const ContactsRoot: React.FC = () => {
     <ContactsContainer style={{paddingTop: insets.top}}>
       {contactList.length ? (
         <>
-          <ContactsHeader>{t('My Contacts')}</ContactsHeader>
           <SearchContainer>
             <Controller
               control={control}

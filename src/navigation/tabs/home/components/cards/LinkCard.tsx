@@ -50,7 +50,9 @@ const LinkCard: React.FC<LinkCardProps> = ({image, description, onPress}) => {
       }}
       style={!theme.dark && BoxShadow}>
       <LinkCardImageContainer>{image && image(theme)}</LinkCardImageContainer>
-      <LinkCardText>{description}</LinkCardText>
+      <LinkCardText numberOfLines={2} ellipsizeMode={'tail'}>
+        {description}
+      </LinkCardText>
     </LinkCardContainer>
   );
 };

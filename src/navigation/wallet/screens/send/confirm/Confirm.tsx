@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useCallback, useLayoutEffect} from 'react';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../../WalletStack';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
@@ -40,8 +40,11 @@ import {
 } from '../../../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../../../constants/BWCError';
 import TransactionLevel from '../TransactionLevel';
-import {HeaderTitle} from '../../../../../components/styled/Text';
-
+import {BaseText, HeaderTitle} from '../../../../../components/styled/Text';
+import styled from 'styled-components/native';
+import ToggleSwitch from '../../../../../components/toggle-switch/ToggleSwitch';
+import {useTranslation} from 'react-i18next';
+import {Hr} from '../../../../../components/styled/Containers';
 export interface ConfirmParamList {
   wallet: Wallet;
   recipient: Recipient;
@@ -51,9 +54,29 @@ export interface ConfirmParamList {
   speedup?: boolean;
 }
 
+export const Setting = styled.TouchableOpacity`
+  align-items: center;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  height: 58px;
+`;
+
+export const SettingTitle = styled(BaseText)`
+  color: ${({theme}) => theme.colors.text};
+  flex-grow: 1;
+  flex-shrink: 1;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-align: left;
+  margin-right: 5px;
+`;
+
 const Confirm = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const {t} = useTranslation();
   const route = useRoute<RouteProp<WalletStackParamList, 'Confirm'>>();
   const {
     wallet,
@@ -65,10 +88,15 @@ const Confirm = () => {
   } = route.params;
   const [txp, setTxp] = useState(_txp);
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
+  const enableReplaceByFee = useAppSelector(
+    ({WALLET}) => WALLET.enableReplaceByFee,
+  );
+
   const key = allKeys[wallet?.keyId!];
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [showTransactionLevel, setShowTransactionLevel] = useState(false);
+  const [enableRBF, setEnableRBF] = useState(false);
 
   const {
     fee: _fee,
@@ -106,29 +134,39 @@ const Confirm = () => {
     customFeePerKB?: number,
   ) => {
     setShowTransactionLevel(false);
+    if (newLevel) {
+      updateTxProposal({
+        feeLevel: newLevel,
+        feePerKb: customFeePerKB,
+      });
+    }
+  };
+
+  const onChangeEnableReplaceByFee = async (enableRBF?: boolean) => {
+    updateTxProposal({
+      enableRBF,
+    });
+  };
+
+  const updateTxProposal = async (newOpts: any) => {
     try {
-      if (newLevel) {
-        dispatch(
-          startOnGoingProcessModal(OnGoingProcessMessages.CALCULATING_FEE),
-        );
+      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.UPDATING_TXP));
+      const {txDetails: _txDetails, txp: newTxp} = await dispatch(
+        createProposalAndBuildTxDetails({
+          wallet,
+          recipient,
+          amount,
+          ...txp,
+          ...newOpts,
+        }),
+      );
 
-        const {txDetails: _txDetails, txp: newTxp} = await dispatch(
-          createProposalAndBuildTxDetails({
-            wallet,
-            recipient,
-            amount,
-            feeLevel: newLevel,
-            feePerKb: customFeePerKB,
-          }),
-        );
-
-        setTxp(newTxp);
-        setFee(_txDetails.fee);
-        setTotal(_txDetails.total);
-        setGasPrice(_txDetails.gasPrice);
-        await sleep(500);
-        dispatch(dismissOnGoingProcessModal());
-      }
+      setTxp(newTxp);
+      setFee(_txDetails.fee);
+      setTotal(_txDetails.total);
+      setGasPrice(_txDetails.gasPrice);
+      await sleep(500);
+      dispatch(dismissOnGoingProcessModal());
     } catch (err: any) {
       dispatch(dismissOnGoingProcessModal());
       const [errorMessageConfig] = await Promise.all([
@@ -169,11 +207,23 @@ const Confirm = () => {
     [dispatch],
   );
 
+  let recipientData;
+
+  if (recipient.type && recipient.type === 'coinbase') {
+    recipientData = {
+      recipientName: recipient.name || 'Coinbase',
+      recipientAddress: sendingTo.recipientAddress,
+      img: 'coinbase',
+    };
+  } else {
+    recipientData = sendingTo;
+  }
+
   return (
     <ConfirmContainer>
       <DetailsList>
         <Header>Summary</Header>
-        <SendingTo recipient={sendingTo} hr />
+        <SendingTo recipient={recipientData} hr />
         <Fee
           onPress={
             isTxLevelAvailable()
@@ -184,6 +234,21 @@ const Confirm = () => {
           currencyAbbreviation={currencyAbbreviation}
           hr
         />
+        {enableReplaceByFee ? (
+          <>
+            <Setting activeOpacity={1}>
+              <SettingTitle>{t('Enable Replace-By-Fee')}</SettingTitle>
+              <ToggleSwitch
+                onChange={value => {
+                  setEnableRBF(value);
+                  onChangeEnableReplaceByFee(value);
+                }}
+                isEnabled={enableRBF}
+              />
+            </Setting>
+            <Hr />
+          </>
+        ) : null}
         {gasPrice !== undefined ? (
           <SharedDetailRow
             description={'Gas price'}
@@ -242,13 +307,33 @@ const Confirm = () => {
         isVisible={showPaymentSentModal}
         onCloseModal={async () => {
           setShowPaymentSentModal(false);
-          navigation.navigate('Wallet', {
-            screen: 'WalletDetails',
-            params: {
-              walletId: wallet!.id,
-              key,
-            },
-          });
+          if (recipient.type === 'coinbase') {
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 2,
+                routes: [
+                  {
+                    name: 'Tabs',
+                    params: {screen: 'Home'},
+                  },
+                  {
+                    name: 'Coinbase',
+                    params: {
+                      screen: 'CoinbaseRoot',
+                    },
+                  },
+                ],
+              }),
+            );
+          } else {
+            navigation.navigate('Wallet', {
+              screen: 'WalletDetails',
+              params: {
+                walletId: wallet!.id,
+                key,
+              },
+            });
+          }
         }}
       />
 

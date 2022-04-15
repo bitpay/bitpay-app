@@ -18,6 +18,7 @@ import Clipboard from '@react-native-community/clipboard';
 import Button, {ButtonState} from '../../../../components/button/Button';
 import {FormatAmountStr} from '../../../../store/wallet/effects/amount/amount';
 import {sleep} from '../../../../utils/helper-methods';
+import {APP_NAME} from '../../../../constants/config';
 
 export type AllAddressesParamList = {
   walletName: string;
@@ -74,8 +75,7 @@ const AllAddresses = () => {
       const allAddresses =
         unusedAddresses?.concat(usedAddresses) || usedAddresses || [];
 
-      // TODO: Get app name
-      const appName = 'BitPay';
+      const appName = APP_NAME;
 
       let body: string =
         appName +

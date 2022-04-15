@@ -64,8 +64,10 @@ export const createProposalAndBuildTxDetails =
           dryRun = true,
         } = tx;
 
-        const {credentials, currencyAbbreviation} = wallet;
+        let {credentials} = wallet;
+        const {coin: currencyAbbreviation} = credentials;
         const formattedAmount = ParseAmount(amount, currencyAbbreviation);
+
         const {
           WALLET: {feeLevel: cachedFeeLevel, useUnconfirmedFunds},
         } = getState();
@@ -296,7 +298,7 @@ const buildTransactionProposal = (
 
         txp.outputs.push({
           toAddress: tx.toAddress,
-          amount: tx.amount,
+          amount: tx.amount!,
           message: tx.description,
           data: tx.data,
         });
@@ -309,7 +311,7 @@ const buildTransactionProposal = (
 
         txp.outputs.push({
           toAddress: tx.toAddress,
-          amount: tx.amount,
+          amount: tx.amount!,
           message: tx.description,
           data: tx.data,
         });

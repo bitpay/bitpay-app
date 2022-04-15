@@ -13,6 +13,7 @@ import CurrencySelection, {
   CurrencySelectionParamList,
 } from './screens/CurrencySelection';
 import KeyOverview from './screens/KeyOverview';
+import KeyExplanation from './screens/KeyExplanation';
 import KeySettings from './screens/KeySettings';
 import WalletDetails from './screens/WalletDetails';
 import WalletSettings from './screens/WalletSettings';
@@ -56,6 +57,7 @@ import AllAddresses, {
 import PayProConfirm, {
   PayProConfirmParamList,
 } from './screens/send/confirm/PayProConfirm';
+import PriceCharts, {PriceChartsParamList} from './screens/PriceCharts';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -65,6 +67,7 @@ export type WalletStackParamList = {
   VerifyPhrase: VerifyPhraseParamList;
   TermsOfUse: TermsOfUseParamList;
   KeyOverview: {key: Key};
+  KeyExplanation: undefined;
   KeySettings: {key: Key; context?: 'createEncryptPassword'};
   UpdateKeyOrWalletName: {
     key: Key;
@@ -80,7 +83,9 @@ export type WalletStackParamList = {
   DeleteKey: {keyId: string};
   ExportKey: {code: string; keyName: string | undefined};
   Amount: AmountParamList;
-  SendTo: {wallet: WalletModel};
+  SendTo: {
+    wallet: WalletModel;
+  };
   Confirm: ConfirmParamList;
   GiftCardConfirm: GiftCardConfirmParamList;
   PayProConfirm: PayProConfirmParamList;
@@ -103,6 +108,7 @@ export type WalletStackParamList = {
   };
   Addresses: {wallet: WalletModel};
   AllAddresses: AllAddressesParamList;
+  PriceCharts: PriceChartsParamList;
 };
 
 export enum WalletScreens {
@@ -113,6 +119,7 @@ export enum WalletScreens {
   VERIFY_PHRASE = 'VerifyPhrase',
   TERMS_OF_USE = 'TermsOfUse',
   KEY_OVERVIEW = 'KeyOverview',
+  KEY_EXPLANATION = 'KeyExplanation',
   KEY_SETTINGS = 'KeySettings',
   UPDATE_KEY_OR_WALLET_NAME = 'UpdateKeyOrWalletName',
   WALLET_DETAILS = 'WalletDetails',
@@ -140,6 +147,7 @@ export enum WalletScreens {
   EXPORT_WALLET = 'ExportWallet',
   ADDRESSES = 'Addresses',
   ALL_ADDRESSES = 'AllAddresses',
+  PRICE_CHARTS = 'PriceCharts',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -193,6 +201,10 @@ const WalletStack = () => {
         <Wallet.Screen
           name={WalletScreens.KEY_OVERVIEW}
           component={KeyOverview}
+        />
+        <Wallet.Screen
+          name={WalletScreens.KEY_EXPLANATION}
+          component={KeyExplanation}
         />
         <Wallet.Screen
           name={WalletScreens.KEY_SETTINGS}
@@ -324,6 +336,13 @@ const WalletStack = () => {
           }}
           name={WalletScreens.ALL_ADDRESSES}
           component={AllAddresses}
+        />
+        <Wallet.Screen
+          options={{
+            ...TransitionPresets.ModalPresentationIOS,
+          }}
+          name={WalletScreens.PRICE_CHARTS}
+          component={PriceCharts}
         />
       </Wallet.Navigator>
     </>
