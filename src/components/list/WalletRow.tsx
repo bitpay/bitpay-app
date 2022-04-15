@@ -12,7 +12,7 @@ import styled from 'styled-components/native';
 import NestedArrow from '../../../assets/img/nested-arrow.svg';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {SUPPORTED_CURRENCIES} from '../../constants/currencies';
-import { Network } from '../../constants';
+import {Network} from '../../constants';
 import {TransactionProposal} from '../../store/wallet/wallet.models';
 
 const BadgeContainer = styled.View`

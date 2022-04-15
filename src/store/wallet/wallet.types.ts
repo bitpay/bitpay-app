@@ -97,6 +97,7 @@ interface successGetRates {
   type: typeof WalletActionTypes.SUCCESS_GET_RATES;
   payload: {
     rates: Rates;
+    lastDayRates: Rates;
   };
 }
 
@@ -170,6 +171,7 @@ interface successUpdateKeyTotalBalance {
   payload: {
     keyId: string;
     totalBalance: number;
+    totalBalanceLastDay: number;
   };
 }
 

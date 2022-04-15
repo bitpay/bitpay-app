@@ -52,8 +52,10 @@ export const backupRedirect = ({
     navigation.navigate('Onboarding', {
       screen: 'TermsOfUse',
     });
-  } else if (context === 'settings') {
+  } else if (context === 'keySettings') {
     navigation.navigate('Wallet', {screen: 'KeySettings', params: {key}});
+  } else if (context === 'settings') {
+    navigation.navigate('Tabs', {screen: 'Settings', params: {key}});
   } else if (!key?.backupComplete) {
     navigation.navigate('Tabs', {screen: 'Home'});
   } else if (!walletTermsAccepted) {

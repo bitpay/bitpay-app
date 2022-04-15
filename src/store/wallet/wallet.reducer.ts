@@ -9,11 +9,13 @@ export interface WalletState {
   createdOn: number;
   keys: {[key in string]: Key};
   rates: Rates;
+  lastDayRates: Rates;
   priceHistory: Array<PriceHistory>;
   tokenOptions: {[key in string]: Token};
   walletTermsAccepted: boolean;
   portfolioBalance: {
     current: number;
+    lastDay: number;
     previous: number;
   };
   balanceCacheKey: {[key in string]: number | undefined};
@@ -26,11 +28,13 @@ const initialState: WalletState = {
   createdOn: Date.now(),
   keys: {},
   rates: {},
+  lastDayRates: {},
   priceHistory: [],
   tokenOptions: {},
   walletTermsAccepted: false,
   portfolioBalance: {
     current: 0,
+    lastDay: 0,
     previous: 0,
   },
   balanceCacheKey: {},
@@ -68,11 +72,12 @@ export const walletReducer = (
     }
 
     case WalletActionTypes.SUCCESS_GET_RATES: {
-      const {rates} = action.payload;
+      const {rates, lastDayRates} = action.payload;
 
       return {
         ...state,
         rates: {...state.rates, ...rates},
+        lastDayRates: {...state.lastDayRates, ...lastDayRates},
         ratesCacheKey: Date.now(),
       };
     }
@@ -143,9 +148,10 @@ export const walletReducer = (
     }
 
     case WalletActionTypes.SUCCESS_UPDATE_KEY_TOTAL_BALANCE: {
-      const {keyId, totalBalance} = action.payload;
+      const {keyId, totalBalance, totalBalanceLastDay} = action.payload;
       const keyToUpdate = state.keys[keyId];
       keyToUpdate.totalBalance = totalBalance;
+      keyToUpdate.totalBalanceLastDay = totalBalanceLastDay;
       return {
         ...state,
         keys: {
@@ -173,11 +179,16 @@ export const walletReducer = (
 
     case WalletActionTypes.UPDATE_PORTFOLIO_BALANCE: {
       let current = 0;
+      let lastDay = 0;
       Object.values(state.keys).forEach(key => (current += key.totalBalance));
+      Object.values(state.keys).forEach(
+        key => (lastDay += key.totalBalanceLastDay),
+      );
       return {
         ...state,
         portfolioBalance: {
           current,
+          lastDay,
           previous: 0,
         },
       };
@@ -212,6 +223,7 @@ export const walletReducer = (
         },
         portfolioBalance: {
           current: state.portfolioBalance.current - balanceToRemove,
+          lastDay: state.portfolioBalance.lastDay - balanceToRemove,
           previous: 0,
         },
       };

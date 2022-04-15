@@ -17,7 +17,7 @@ export const Overlay = styled.View`
   left: 0;
   bottom: 0;
   z-index: 1;
-  opacity: 0.75;
+  opacity: 0.8;
 `;
 
 export const Body = styled.View`
@@ -47,4 +47,30 @@ export const ButtonContainer = styled.View`
   position: absolute;
   bottom: 15%;
   right: 5%;
+`;
+
+export const TopNavFill = styled.View`
+  background: ${({theme}) => theme.colors.background};
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  z-index: 3;
+`;
+
+export const TopNavFillOverlay = styled(Overlay)`
+  height: 70px;
+  z-index: 3;
+`;
+
+export const BodyContainer = styled.View`
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+`;
+
+export const IntroBackgroundImage = styled(BackgroundImage)`
+  margin-top: 0;
+  z-index: 2;
 `;

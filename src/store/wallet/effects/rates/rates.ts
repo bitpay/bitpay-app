@@ -8,6 +8,7 @@ import {isCacheKeyStale} from '../../utils/wallet';
 import {RATES_CACHE_DURATION} from '../../../../constants/wallet';
 import {updateCacheKey} from '../../wallet.actions';
 import {CacheKeys} from '../../wallet.models';
+import moment from 'moment';
 
 export const getPriceHistory = (): Effect => async dispatch => {
   try {
@@ -50,8 +51,13 @@ export const startGetRates =
 
       try {
         console.log('Rates - fetching new rates');
+        const yesterday =
+          moment().subtract(1, 'days').startOf('hour').unix() * 1000;
         const {data: rates} = await axios.get(`${BASE_BWS_URL}/v3/fiatrates/`);
-        dispatch(WalletActions.successGetRates({rates}));
+        const {data: lastDayRates} = await axios.get(
+          `${BASE_BWS_URL}/v3/fiatrates?ts=${yesterday}`,
+        );
+        dispatch(WalletActions.successGetRates({rates, lastDayRates}));
         resolve(rates);
       } catch (err) {
         console.error(err);

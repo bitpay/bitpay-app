@@ -14,6 +14,7 @@ import {
   HomeCarouselLayoutType,
 } from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
+import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 
 type AppReduxPersistBlackList = [
   'appIsLoading',
@@ -73,6 +74,7 @@ export interface AppState {
   lockAuthorizedUntil: number | undefined;
   homeCarouselConfig: HomeCarouselConfig[] | [];
   homeCarouselLayoutType: HomeCarouselLayoutType;
+  settingsListConfig: SettingsListType[];
 }
 
 const initialState: AppState = {
@@ -91,7 +93,7 @@ const initialState: AppState = {
   network: APP_NETWORK,
   baseBitPayURL: BASE_BITPAY_URLS[Network.mainnet],
   appIsLoading: true,
-  introCompleted: true,
+  introCompleted: false,
   onboardingCompleted: false,
   showOnGoingProcessModal: false,
   onGoingProcessModalMessage: OnGoingProcessMessages.GENERAL_AWAITING,
@@ -117,6 +119,7 @@ const initialState: AppState = {
   lockAuthorizedUntil: undefined,
   homeCarouselConfig: [],
   homeCarouselLayoutType: 'listView',
+  settingsListConfig: [],
 };
 
 export const appReducer = (
@@ -347,6 +350,19 @@ export const appReducer = (
       return {
         ...state,
         homeCarouselLayoutType: action.payload,
+      };
+
+    case AppActionTypes.UPDATE_SETTINGS_LIST_CONFIG:
+      const item = action.payload;
+      let newList = [...state.settingsListConfig];
+      if (newList.includes(item)) {
+        newList.splice(newList.indexOf(item), 1);
+      } else {
+        newList.push(item);
+      }
+      return {
+        ...state,
+        settingsListConfig: newList,
       };
 
     default:

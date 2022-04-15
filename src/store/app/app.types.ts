@@ -11,6 +11,7 @@ import {
   HomeCarouselConfig,
   HomeCarouselLayoutType,
 } from './app.models';
+import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 
 export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
@@ -48,6 +49,7 @@ export enum AppActionTypes {
   LOCK_AUTHORIZED_UNTIL = 'APP/LOCK_AUTHORIZED_UNTIL',
   SET_HOME_CAROUSEL_CONFIG = 'APP/SET_HOME_CAROUSEL_CONFIG',
   SET_HOME_CAROUSEL_LAYOUT_TYPE = 'APP/SET_HOME_CAROUSEL_LAYOUT_TYPE',
+  UPDATE_SETTINGS_LIST_CONFIG = 'APP/UPDATE_SETTINGS_LIST_CONFIG',
 }
 
 interface NetworkChanged {
@@ -211,6 +213,11 @@ interface SetHomeCarouselLayoutType {
   payload: HomeCarouselLayoutType;
 }
 
+interface updateSettingsListConfigType {
+  type: typeof AppActionTypes.UPDATE_SETTINGS_LIST_CONFIG;
+  payload: SettingsListType;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
@@ -246,4 +253,5 @@ export type AppActionType =
   | BiometricLockActive
   | LockAuthorizedUntil
   | SetHomeCarouselConfig
-  | SetHomeCarouselLayoutType;
+  | SetHomeCarouselLayoutType
+  | updateSettingsListConfigType;

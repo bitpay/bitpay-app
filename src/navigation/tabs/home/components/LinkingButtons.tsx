@@ -7,6 +7,7 @@ import {titleCasing} from '../../../../utils/helper-methods';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
 import {useNavigation} from '@react-navigation/native';
 import {Path, Svg} from 'react-native-svg';
+import {useRequireKeyAndWalletRedirect} from '../../../../utils/hooks/useRequireKeyAndWalletRedirect';
 
 const ButtonsRow = styled.View`
   width: 100%;
@@ -102,10 +103,12 @@ interface ButtonListProps {
 
 interface Props {
   send: {
+    label?: string;
     hide?: boolean;
     cta: () => void;
   };
   receive: {
+    label?: string;
     hide?: boolean;
     cta: () => void;
   };
@@ -119,50 +122,52 @@ interface Props {
   };
 }
 
-const LinkingButtons = ({buy, receive, send}: Props) => {
+const LinkingButtons = ({buy, receive, send, swap}: Props) => {
   const navigation = useNavigation();
+  const buyCryptoCta = useRequireKeyAndWalletRedirect(
+    buy && buy.cta
+      ? buy.cta
+      : () => {
+          navigation.navigate('Wallet', {
+            screen: 'Amount',
+            params: {
+              onAmountSelected: async (amount: string) => {
+                navigation.navigate('BuyCrypto', {
+                  screen: 'Root',
+                  params: {
+                    amount: Number(amount),
+                  },
+                });
+              },
+              opts: {
+                hideSendMax: true,
+              },
+            },
+          });
+        },
+  );
   const buttonsList: Array<ButtonListProps> = [
     // TODO: update icons
     {
       label: 'buy',
       img: <BuySvg />,
-      cta:
-        buy && buy.cta
-          ? buy.cta
-          : () => {
-              navigation.navigate('Wallet', {
-                screen: 'Amount',
-                params: {
-                  onAmountSelected: async (amount: string) => {
-                    navigation.navigate('BuyCrypto', {
-                      screen: 'Root',
-                      params: {
-                        amount: Number(amount),
-                      },
-                    });
-                  },
-                  opts: {
-                    hideSendMax: true,
-                  },
-                },
-              });
-            },
+      cta: buyCryptoCta,
       hide: !!buy?.hide,
     },
     {
       label: 'swap',
       img: <SwapSvg />,
       cta: () => navigation.navigate('SwapCrypto', {screen: 'Root'}),
-      hide: false,
+      hide: !!swap?.hide,
     },
     {
-      label: 'receive',
+      label: receive.label || 'receive',
       img: <ReceiveSvg />,
       cta: receive.cta,
-      hide: false,
+      hide: !!receive?.hide,
     },
     {
-      label: 'send',
+      label: send.label || 'send',
       img: <SendSvg />,
       cta: send.cta,
       hide: !!send?.hide,

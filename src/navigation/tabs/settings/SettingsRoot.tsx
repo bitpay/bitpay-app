@@ -1,13 +1,11 @@
 import {useNavigation} from '@react-navigation/core';
-import React from 'react';
+import React, {ReactElement} from 'react';
 import styled, {useTheme} from 'styled-components/native';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import {StyleProp, TextStyle, View} from 'react-native';
-import {useDispatch, useSelector} from 'react-redux';
 import Avatar from '../../../components/avatar/BitPayIdAvatar';
 import {
   ActiveOpacity,
-  Hr,
   ScreenGutter,
   Setting,
   SettingIcon,
@@ -16,18 +14,28 @@ import {
 import {useTranslation} from 'react-i18next';
 import {RootState} from '../../../store';
 import {AppActions} from '../../../store/app';
-import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
-import {URL} from '../../../constants';
+import {Black, Feather, LightBlack, White} from '../../../styles/colors';
+import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
+import {updateSettingsListConfig} from '../../../store/app/app.actions';
+import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
 
+import General from './components/General';
+import Security from './components/Security';
+import Notifications from './components/Notifications';
+import Connections from './components/Connections';
+import About from './components/About';
+import Contacts from './components/Contacts';
+import {useSelector} from 'react-redux';
+import Crypto from './components/Crypto';
+import WalletsAndKeys from './components/WalletsAndKeys';
+
+import Animated, {FadeInUp, Easing} from 'react-native-reanimated';
 interface HomeSetting {
+  id: SettingsListType;
   title: string;
   onPress: () => void;
-}
-
-interface LinkSetting {
-  title: string;
-  link: string;
+  subListComponent: ReactElement;
 }
 
 export const SettingsContainer = styled.SafeAreaView`
@@ -36,6 +44,14 @@ export const SettingsContainer = styled.SafeAreaView`
 
 export const Settings = styled.ScrollView`
   padding: 10px ${ScreenGutter};
+`;
+
+export const SettingsComponent = styled.View`
+  padding: 0 ${ScreenGutter};
+`;
+
+export const SettingsHome = styled.ScrollView`
+  padding: 10px 0;
 `;
 
 const BitPayIdSettingsLink = styled(Setting)`
@@ -66,25 +82,64 @@ const BitPayIdUserText = styled.Text<{bold?: boolean}>`
   color: ${({theme}) => theme.colors.text};
 `;
 
+const DropdownSetting = styled(Setting)`
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Feather)};
+  padding: 0 ${ScreenGutter};
+  border-bottom-width: 1px;
+  border-bottom-color: ${({theme: {dark}}) => (dark ? Black : White)};
+`;
+
+export type SettingsListType =
+  | 'General'
+  | 'Contacts'
+  | 'Crypto'
+  | 'Wallets & Keys'
+  | 'Security'
+  | 'External Services'
+  | 'Connections'
+  | 'About BitPay';
 const SettingsHomeScreen: React.FC = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const theme = useTheme();
   const user = useSelector<RootState, User | null>(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
-  const pinLockActive = useSelector(({APP}: RootState) => APP.pinLockActive);
-  const biometricLockActive = useSelector(
+  const pinLockActive = useAppSelector(({APP}: RootState) => APP.pinLockActive);
+  const biometricLockActive = useAppSelector(
     ({APP}: RootState) => APP.biometricLockActive,
   );
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
+
+  const hideList = useAppSelector(({APP}) => APP.settingsListConfig);
   const SETTINGS: HomeSetting[] = [
     {
+      id: 'General',
       title: t('General'),
-      onPress: () => navigation.navigate('GeneralSettings', {screen: 'Root'}),
+      onPress: () => {},
+      subListComponent: <General />,
     },
     {
+      id: 'Contacts',
+      title: t('Contacts'),
+      onPress: () => {},
+      subListComponent: <Contacts />,
+    },
+    {
+      id: 'Crypto',
+      title: t('Crypto'),
+      onPress: () => {},
+      subListComponent: <Crypto />,
+    },
+    {
+      id: 'Wallets & Keys',
+      title: t('Wallets & Keys'),
+      onPress: () => {},
+      subListComponent: <WalletsAndKeys />,
+    },
+    {
+      id: 'Security',
       title: t('Security'),
       onPress: () => {
         if (biometricLockActive) {
@@ -93,53 +148,35 @@ const SettingsHomeScreen: React.FC = () => {
         if (pinLockActive) {
           dispatch(AppActions.showPinModal({type: 'check'}));
         }
-        navigation.navigate('SecuritySettings', {screen: 'Root'});
       },
-    },
-    // Settings for Buy/Swap Crypto will be momentarily commented
-    // {
-    //   title: t('External Services'),
-    //   onPress: () => navigation.navigate('ExternalServicesSettings', {screen: 'Root'}),
-    // },
-    {
-      title: t('Notifications'),
-      onPress: () =>
-        navigation.navigate('NotificationSettings', {screen: 'Root'}),
+      subListComponent: <Security />,
     },
     {
+      // Settings for Buy/Swap Crypto will be momentarily commented
+      id: 'External Services',
+      title: t('External Services'),
+      onPress: () => {},
+      subListComponent: <Notifications />,
+    },
+    {
+      id: 'Connections',
       title: t('Connections'),
-      onPress: () =>
-        navigation.navigate('ConnectionSettings', {screen: 'Root'}),
+      onPress: () => {},
+      subListComponent: <Connections />,
     },
     {
+      id: 'About BitPay',
       title: t('About BitPay'),
-      onPress: () => navigation.navigate('About', {screen: 'Root'}),
-    },
-  ];
-
-  const LINKS: LinkSetting[] = [
-    {
-      title: t('Help & Support'),
-      link: URL.HELP_AND_SUPPORT,
-    },
-    {
-      title: t('Terms of Use'),
-      link: URL.TOU_WALLET,
-    },
-    {
-      title: t('Privacy'),
-      link: URL.PRIVACY_POLICY,
-    },
-    {
-      title: t('Accessibility Statement'),
-      link: URL.ACCESSIBILITY_STATEMENT,
+      onPress: () => {},
+      subListComponent: <About />,
     },
   ];
 
   return (
     <SettingsContainer>
-      <Settings>
+      <SettingsHome>
         <BitPayIdSettingsLink
+          style={{paddingHorizontal: 15}}
           onPress={() => {
             if (user) {
               navigation.navigate('BitpayId', {screen: 'Profile'});
@@ -167,34 +204,35 @@ const SettingsHomeScreen: React.FC = () => {
           </SettingIcon>
         </BitPayIdSettingsLink>
 
-        <Hr />
-
-        {SETTINGS.map(({title, onPress}) => {
+        {SETTINGS.map(({id, title, onPress, subListComponent}, i, {length}) => {
           return (
-            <View key={title}>
-              <Setting activeOpacity={ActiveOpacity} onPress={onPress}>
+            <View key={id}>
+              <DropdownSetting
+                activeOpacity={ActiveOpacity}
+                onPress={() => {
+                  dispatch(updateSettingsListConfig(id));
+                  onPress();
+                }}>
                 <SettingTitle style={textStyle}>{title}</SettingTitle>
                 <SettingIcon suffix>
-                  <AngleRight />
+                  {!hideList.includes(id) ? <ChevronDownSvg /> : <AngleRight />}
                 </SettingIcon>
-              </Setting>
-              <Hr />
+              </DropdownSetting>
+              {!hideList.includes(id) ? (
+                <>
+                  <Animated.View
+                    entering={FadeInUp.easing(Easing.linear)
+                      .damping(15)
+                      .springify()
+                      .duration(200)}>
+                    {subListComponent}
+                  </Animated.View>
+                </>
+              ) : null}
             </View>
           );
         })}
-        {LINKS.map(({title, link}, index) => {
-          return (
-            <View key={title}>
-              <Setting
-                activeOpacity={ActiveOpacity}
-                onPress={() => dispatch(openUrlWithInAppBrowser(link))}>
-                <SettingTitle style={textStyle}>{title}</SettingTitle>
-              </Setting>
-              {LINKS.length - 1 !== index && <Hr />}
-            </View>
-          );
-        })}
-      </Settings>
+      </SettingsHome>
     </SettingsContainer>
   );
 };

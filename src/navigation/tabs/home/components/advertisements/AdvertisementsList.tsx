@@ -5,6 +5,7 @@ import {ScreenGutter} from '../../../../../components/styled/Containers';
 import AdvertisementCard from './AdvertisementCard';
 import {BoxShadow} from '../Styled';
 import {useNavigation} from '@react-navigation/native';
+import {useRequireKeyAndWalletRedirect} from '../../../../../utils/hooks/useRequireKeyAndWalletRedirect';
 
 interface AdvertisementListProps {
   contentCards: ContentCard[];
@@ -22,12 +23,16 @@ const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
   const {contentCards} = props;
   const theme = useTheme();
   const navigation = useNavigation();
-
+  const buyCryptoCta = useRequireKeyAndWalletRedirect(() => {
+    navigation.navigate('BuyCrypto', {
+      screen: 'Root',
+      params: {amount: 50},
+    });
+  });
   const CTA_OVERRIDES: {[key in string]: () => void} = {
     card: () => navigation.navigate('Card', {screen: 'Home'}),
     swapCrypto: () => navigation.navigate('SwapCrypto', {screen: 'Root'}),
-    buyCrypto: () =>
-      navigation.navigate('BuyCrypto', {screen: 'Root', params: {amount: 50}}),
+    buyCrypto: buyCryptoCta,
   };
 
   return (
