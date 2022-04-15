@@ -244,8 +244,12 @@ const Crypto = () => {
                 }>
                 Create, import or join a shared wallet
               </Button>
-              <Button buttonStyle={'secondary'}>
-                Connect your Coinbase account
+              <Button
+                buttonStyle={'secondary'}
+                onPress={() =>
+                  navigation.navigate('Coinbase', {screen: 'CoinbaseRoot'})
+                }>
+                {linkedCoinbase ? 'Coinbase' : 'Connect your Coinbase account'}
               </Button>
             </ButtonContainer>
           </Column>
