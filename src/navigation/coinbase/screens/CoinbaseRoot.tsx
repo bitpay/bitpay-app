@@ -16,6 +16,8 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
+import {sleep} from '../../../utils/helper-methods';
+import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 
 export type CoinbaseRootScreenParamList =
   | {
@@ -29,7 +31,10 @@ type CoinbaseRootScreenProps = StackScreenProps<
   'CoinbaseRoot'
 >;
 
-const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({route}) => {
+const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({
+  navigation,
+  route,
+}) => {
   const dispatch = useAppDispatch();
 
   const tokenError = useAppSelector(
@@ -40,8 +45,6 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({route}) => {
   );
   const token = useAppSelector(({COINBASE}) => COINBASE.token[COINBASE_ENV]);
   const [isDashboardEnabled, setIsDashboardEnabled] = useState(!!token);
-
-  let {code, state} = route.params || {};
 
   const showError = useCallback(
     (error: CoinbaseErrorsProps) => {
@@ -66,24 +69,32 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({route}) => {
   );
 
   useEffect(() => {
-    if (!token && code && state) {
-      dispatch(coinbaseLinkAccount(code, state));
-      dispatch(
-        showOnGoingProcessModal(OnGoingProcessMessages.CONNECTING_COINBASE),
-      );
-    }
+    (async () => {
+      const {code, state} = route.params || {};
 
-    if (token || tokenStatus === 'success') {
-      dispatch(dismissOnGoingProcessModal());
-      setIsDashboardEnabled(true);
-    }
+      if (!token && code && state) {
+        await sleep(1000);
+        dispatch(
+          showOnGoingProcessModal(OnGoingProcessMessages.CONNECTING_COINBASE),
+        );
+        await dispatch(coinbaseLinkAccount(code, state));
+        // reset params to prevent re-triggering flow based on cached params when disconnecting
+        navigation.setParams({code: undefined, state: undefined});
+      }
 
-    if (tokenError) {
-      dispatch(dismissOnGoingProcessModal());
-      showError(tokenError);
-      setIsDashboardEnabled(false);
-    }
-  }, [dispatch, code, state, token, tokenError, tokenStatus, showError]);
+      if (token || tokenStatus === 'success') {
+        await sleep(1000);
+        dispatch(dismissOnGoingProcessModal());
+        setIsDashboardEnabled(true);
+      }
+
+      if (tokenError) {
+        dispatch(dismissOnGoingProcessModal());
+        showError(tokenError);
+        setIsDashboardEnabled(false);
+      }
+    })();
+  }, [dispatch, route.params, token, tokenError, tokenStatus, showError]);
 
   const DashboardOrIntro = useMemo(() => {
     return isDashboardEnabled ? CoinbaseDashboard : CoinbaseIntro;
