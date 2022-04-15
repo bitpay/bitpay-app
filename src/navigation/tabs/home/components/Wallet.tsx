@@ -17,10 +17,12 @@ import {Balance, KeyName} from '../../../wallet/components/KeyDropdownOption';
 import {HomeCarouselLayoutType} from '../../../../store/app/app.models';
 import {BoxShadow} from './Styled';
 import {View} from 'react-native';
+import Percentage from '../../../../components/percentage/Percentage';
 
 interface WalletCardComponentProps {
   wallets: Wallet[];
   totalBalance: number;
+  percentageDifference: number;
   onPress: () => void;
   needsBackup: boolean;
   keyName: string | undefined;
@@ -68,12 +70,17 @@ const NeedBackupText = styled(BaseText)`
   border-radius: 3px;
 `;
 
+const PercentageContainer = styled(BaseText)`
+  color: ${({theme}) => theme.colors.text};
+`;
+
 export const WALLET_DISPLAY_LIMIT = 3;
 export const ICON_SIZE = 20;
 
 const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   wallets,
   totalBalance,
+  percentageDifference,
   onPress,
   needsBackup,
   keyName = 'My Key',
@@ -121,7 +128,12 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
             {needsBackup ? (
               <NeedBackupText>Needs Backup</NeedBackupText>
             ) : (
-              <Balance>{formatFiatAmount(totalBalance, 'USD')}</Balance>
+              <>
+                <Balance>{formatFiatAmount(totalBalance, 'USD')}</Balance>
+                {percentageDifference ? (
+                  <Percentage percentageDifference={percentageDifference} />
+                ) : null}
+              </>
             )}
           </Column>
         </Row>
@@ -138,6 +150,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
       body={{
         title: keyName,
         value: formatFiatAmount(totalBalance, 'USD'),
+        percentageDifference,
         needsBackup,
       }}
       onCTAPress={onPress}

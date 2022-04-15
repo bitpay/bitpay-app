@@ -4,11 +4,15 @@ import {BaseText} from '../../../../components/styled/Text';
 import {SlateDark, White} from '../../../../styles/colors';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
-import {formatFiatAmount} from '../../../../utils/helper-methods';
+import {
+  calculatePercentageDifference,
+  formatFiatAmount,
+} from '../../../../utils/helper-methods';
 import QuestionSvg from '../../../../../assets/img/question.svg';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
 import {useAppDispatch} from '../../../../utils/hooks';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
+import Percentage from '../../../../components/percentage/Percentage';
 
 const PortfolioContainer = styled.View`
   justify-content: center;
@@ -33,33 +37,15 @@ const PortfolioBalanceText = styled(BaseText)`
   color: ${({theme}) => theme.colors.text};
 `;
 
-const PercentagePill = styled.View`
-  background-color: #cbf3e8;
-  align-self: flex-start;
-  border-radius: 7px;
-  padding: 4px 8px;
-  margin-right: 5px;
-`;
-
-const Row = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-
-const PercentagePillText = styled(BaseText)`
-  color: ${SlateDark};
-`;
-
-const SubTitle = styled(BaseText)`
-  color: ${({theme}) => theme.colors.text};
-`;
-
 const PortfolioBalance = () => {
   const portfolioBalance = useSelector(
     ({WALLET}: RootState) => WALLET.portfolioBalance,
   );
   const dispatch = useAppDispatch();
-  // const percentageDifference = '+2.5%';
+  const percentageDifference = calculatePercentageDifference(
+    portfolioBalance.current,
+    portfolioBalance.lastDay,
+  );
 
   const showPortfolioBalanceInfoModal = () => {
     dispatch(
@@ -91,12 +77,9 @@ const PortfolioBalance = () => {
       <PortfolioBalanceText>
         {formatFiatAmount(portfolioBalance.current, 'usd')}
       </PortfolioBalanceText>
-      {/*<Row>*/}
-      {/*  <PercentagePill>*/}
-      {/*    <PercentagePillText>{percentageDifference}</PercentagePillText>*/}
-      {/*  </PercentagePill>*/}
-      {/*  <SubTitle>Last day</SubTitle>*/}
-      {/*</Row>*/}
+      {percentageDifference ? (
+        <Percentage percentageDifference={percentageDifference} />
+      ) : null}
     </PortfolioContainer>
   );
 };

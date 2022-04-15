@@ -142,7 +142,7 @@ export const startUpdateWalletStatus =
 
       try {
         const {
-          WALLET: {rates, balanceCacheKey},
+          WALLET: {rates, lastDayRates, balanceCacheKey},
         } = getState();
 
         const {
@@ -157,7 +157,7 @@ export const startUpdateWalletStatus =
         }
 
         const cachedBalance = wallet.balance.fiat;
-        const status = await updateWalletStatus({wallet, rates});
+        const status = await updateWalletStatus({wallet, rates, lastDayRates});
 
         dispatch(
           successUpdateWalletStatus({
@@ -180,10 +180,17 @@ export const startUpdateWalletStatus =
             0,
           );
 
+          const totalLastDayFiatBalance = wallets.reduce(
+            (acc, {balance: {fiatLastDay}}) =>
+              fiatLastDay ? acc + fiatLastDay : acc,
+            0,
+          );
+
           dispatch(
             successUpdateKeyTotalBalance({
               keyId: key.id,
               totalBalance: totalFiatBalance,
+              totalBalanceLastDay: totalLastDayFiatBalance,
             }),
           );
         }
@@ -208,7 +215,7 @@ export const startUpdateAllWalletStatusForKey =
     return new Promise(async (resolve, reject) => {
       try {
         const {
-          WALLET: {rates, balanceCacheKey},
+          WALLET: {rates, lastDayRates, balanceCacheKey},
         } = getState();
 
         if (!isCacheKeyStale(balanceCacheKey[key.id], BALANCE_CACHE_DURATION)) {
@@ -219,7 +226,11 @@ export const startUpdateAllWalletStatusForKey =
         const balances = await Promise.all(
           key.wallets.map(async wallet => {
             return new Promise<WalletBalance>(async resolve2 => {
-              const status = await updateWalletStatus({wallet, rates});
+              const status = await updateWalletStatus({
+                wallet,
+                rates,
+                lastDayRates,
+              });
               dispatch(
                 successUpdateWalletStatus({
                   keyId: key.id,
@@ -240,10 +251,16 @@ export const startUpdateAllWalletStatusForKey =
           0,
         );
 
+        const totalKeyFiatLastDayBalance = balances.reduce(
+          (acc, {fiatLastDay}) => (fiatLastDay ? acc + fiatLastDay : acc),
+          0,
+        );
+
         dispatch(
           successUpdateKeyTotalBalance({
             keyId: key.id,
             totalBalance: totalKeyFiatBalance,
+            totalBalanceLastDay: totalKeyFiatLastDayBalance,
           }),
         );
 
@@ -285,9 +302,11 @@ export const startUpdateAllKeyAndWalletStatus =
 const updateWalletStatus = ({
   wallet,
   rates,
+  lastDayRates,
 }: {
   wallet: Wallet;
   rates: Rates;
+  lastDayRates: Rates;
 }): Promise<WalletStatus> => {
   return new Promise(async resolve => {
     const {
@@ -343,11 +362,15 @@ const updateWalletStatus = ({
               network === Network.mainnet && !hideWallet
                 ? toFiat(lockedAmount, 'USD', currencyAbbreviation, rates)
                 : 0,
+            fiatLastDay:
+              network === Network.mainnet && !hideWallet
+                ? toFiat(totalAmount, 'USD', currencyAbbreviation, lastDayRates)
+                : 0,
           };
 
           const newPendingTxps = ProcessPendingTxps(status.pendingTxps, wallet);
 
-          console.log(newBalance, newPendingTxps);
+          console.log('Status updated: ', newBalance, newPendingTxps);
 
           resolve({balance: newBalance, pendingTxps: newPendingTxps});
         } catch (err2) {

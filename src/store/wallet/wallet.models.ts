@@ -46,6 +46,7 @@ export interface Key {
   backupComplete?: boolean;
   show?: boolean;
   totalBalance: number;
+  totalBalanceLastDay: number;
   isPrivKeyEncrypted?: boolean;
   keyName?: string;
 }
@@ -56,6 +57,7 @@ export interface WalletBalance {
   crypto: string;
   cryptoLocked: string;
   fiat: number;
+  fiatLastDay: number;
   fiatLocked: number;
   sat: number;
   satAvailable: number;

@@ -1,5 +1,5 @@
 import {Currencies} from '../constants/currencies';
-import {Key} from '../store/wallet/wallet.models';
+import {Balance, Key} from '../store/wallet/wallet.models';
 import {ContactRowProps} from '../components/list/ContactRow';
 
 export const sleep = async (duration: number) =>
@@ -181,5 +181,14 @@ export const shouldScale = (
 export const formatCryptoAddress = (address: string) => {
   return (
     address.substring(0, 4) + '....' + address.substring(address.length - 4)
+  );
+};
+
+export const calculatePercentageDifference = (
+  currentBalance: number,
+  lastDayBalance: number,
+): number => {
+  return Number(
+    (((currentBalance - lastDayBalance) * 100) / currentBalance).toFixed(2),
   );
 };

@@ -15,7 +15,10 @@ import WalletCardComponent from './Wallet';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {Dispatch} from 'redux';
-import {getMnemonic} from '../../../../utils/helper-methods';
+import {
+  calculatePercentageDifference,
+  getMnemonic,
+} from '../../../../utils/helper-methods';
 import _ from 'lodash';
 import {useAppSelector} from '../../../../utils/hooks';
 import {
@@ -120,7 +123,18 @@ const createHomeCardList = ({
   const hasCoinbase = linkedCoinbase;
   if (hasKeys) {
     const walletCards = keys.map(key => {
-      let {wallets, totalBalance = 0, backupComplete} = key;
+      let {
+        wallets,
+        totalBalance = 0,
+        totalBalanceLastDay = 0,
+        backupComplete,
+      } = key;
+
+      const percentageDifference = calculatePercentageDifference(
+        totalBalance,
+        totalBalanceLastDay,
+      );
+
       wallets = wallets.filter(wallet => !wallet.hideWallet);
 
       return {
@@ -131,6 +145,7 @@ const createHomeCardList = ({
             keyName={key.keyName}
             wallets={wallets}
             totalBalance={totalBalance}
+            percentageDifference={percentageDifference}
             needsBackup={!backupComplete}
             onPress={() => {
               haptic('soft');
