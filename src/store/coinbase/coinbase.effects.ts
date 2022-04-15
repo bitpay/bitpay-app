@@ -154,9 +154,16 @@ export const coinbaseRefreshToken =
 
 export const coinbaseDisconnectAccount =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
-    const {COINBASE} = getState();
+    const {COINBASE, APP} = getState();
 
     dispatch(revokeTokenPending());
+    dispatch(
+      setHomeCarouselConfig(
+        APP.homeCarouselConfig.filter(
+          item => item?.id !== 'coinbaseBalanceCard',
+        ),
+      ),
+    );
     if (COINBASE.token[COINBASE_ENV]) {
       await CoinbaseAPI.revokeToken(COINBASE.token[COINBASE_ENV]);
     }
