@@ -35,6 +35,14 @@ import CloseModal from '../../../../assets/img/close-modal-icon.svg';
 const ModalHeader = styled.View`
   padding: ${ScreenGutter};
   display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+`;
+
+const CloseModalButtonContainer = styled.View`
+  position: absolute;
+  left: 15px;
 `;
 
 const CloseModalButton = styled.TouchableOpacity`
@@ -64,9 +72,6 @@ const GlobalSelectContainer = styled.View`
   padding: ${ScreenGutter};
 `;
 
-const ListContainer = styled.View`
-  margin-top: 20px;
-`;
 export const WalletSelectMenuContainer = styled.View`
   padding: 0 ${ScreenGutter};
   background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
@@ -309,34 +314,34 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
     <SafeAreaView>
       {useAsModal && (
         <ModalHeader>
-          <CloseModalButton
-            onPress={() => {
-              if (onDismiss) {
-                onDismiss();
-              }
-            }}>
-            <CloseModal
-              {...{
-                width: 20,
-                height: 20,
-                color: theme.dark ? 'white' : 'black',
-              }}
-            />
-          </CloseModalButton>
+          <CloseModalButtonContainer>
+            <CloseModalButton
+              onPress={() => {
+                if (onDismiss) {
+                  onDismiss();
+                }
+              }}>
+              <CloseModal
+                {...{
+                  width: 20,
+                  height: 20,
+                  color: theme.dark ? 'white' : 'black',
+                }}
+              />
+            </CloseModalButton>
+          </CloseModalButtonContainer>
           {(title || toCoinbase?.title) && (
             <ModalTitle>{title || toCoinbase?.title}</ModalTitle>
           )}
         </ModalHeader>
       )}
       <GlobalSelectContainer>
-        <ListContainer>
-          <FlatList
-            contentContainerStyle={{paddingBottom: 100}}
-            data={[...supportedCoins, ...otherCoins]}
-            keyExtractor={keyExtractor}
-            renderItem={renderItem}
-          />
-        </ListContainer>
+        <FlatList
+          contentContainerStyle={{paddingBottom: 100}}
+          data={[...supportedCoins, ...otherCoins]}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+        />
         <SheetModal
           isVisible={walletSelectModalVisible}
           onBackdropPress={() => setWalletSelectModalVisible(false)}>
