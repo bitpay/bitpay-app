@@ -7,7 +7,6 @@ import {H5, H7} from '../../../../../../components/styled/Text';
 import {ScreenGutter} from '../../../../../../components/styled/Containers';
 import {TouchableOpacity} from 'react-native';
 import {Key, Wallet} from '../../../../../../store/wallet/wallet.models';
-import {Card} from '../../../../../../store/card/card.models';
 import {HomeCarouselConfig} from '../../../../../../store/app/app.models';
 import _ from 'lodash';
 import {
@@ -18,6 +17,7 @@ import {
 } from '../../../../home/components/Wallet';
 import {getRemainingWalletCount} from '../../../../../../store/wallet/utils/wallet';
 import {CurrencyImage} from '../../../../../../components/currency-image/CurrencyImage';
+import CoinbaseSvg from '../../../../../../../assets/img/logos/coinbase.svg';
 
 export const StarSvg = ({favorited}: {favorited: boolean}) => {
   return (
@@ -148,14 +148,15 @@ export const LayoutToggleContainer = styled.View`
 
 export const createCustomizeCardList = ({
   keys,
+  hasCoinbase,
   homeCarouselConfig,
 }: {
   keys: Key[];
+  hasCoinbase: boolean;
   homeCarouselConfig: HomeCarouselConfig[];
 }) => {
   let list: CustomizeItem[] = [];
   const hasKeys = keys.length;
-  const hasCoinbase = false;
   if (hasKeys) {
     const walletCards = keys.map(({id, keyName, wallets}): CustomizeItem => {
       const {show} = homeCarouselConfig?.find(item => item.id === id) || {};
@@ -172,7 +173,13 @@ export const createCustomizeCardList = ({
   }
 
   if (hasCoinbase) {
-    // TODO
+    const {show} =
+      homeCarouselConfig?.find(item => item.id === 'coinbaseBalanceCard') || {};
+    list.push({
+      key: 'coinbaseBalanceCard',
+      name: 'Coinbase',
+      show: show!,
+    });
   }
 
   const order = homeCarouselConfig.map(item => item.id);
@@ -189,7 +196,7 @@ export interface CustomizeItem {
 }
 
 export const CustomizeCard = ({
-  item: {wallets, name, show},
+  item: {wallets, name, show, key},
   toggle,
 }: {
   item: CustomizeItem;
@@ -205,6 +212,13 @@ export const CustomizeCard = ({
           <Row>
             <CustomizeCardTitle>{name}</CustomizeCardTitle>
           </Row>
+          {key === 'coinbaseBalanceCard' ? (
+            <Row>
+              <HeaderImg>
+                <CoinbaseSvg width="25" height="25" />
+              </HeaderImg>
+            </Row>
+          ) : null}
           {wallets ? (
             <Row>
               <HeaderImg>

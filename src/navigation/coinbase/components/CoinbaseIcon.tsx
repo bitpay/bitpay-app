@@ -6,19 +6,19 @@ export const CoinbaseIcon = (coinbaseTx: CoinbaseTransactionProps) => {
   switch (coinbaseTx.type) {
     case 'send':
       if (coinbaseTx.from) {
-        txIcon = TransactionIcons['received'];
+        txIcon = TransactionIcons.received;
       } else {
-        txIcon = TransactionIcons['sent'];
+        txIcon = TransactionIcons.sent;
       }
       break;
     case 'trade':
-      txIcon = TransactionIcons['confirming'];
+      txIcon = TransactionIcons.confirming;
       break;
     case 'receive':
-      txIcon = TransactionIcons['received'];
+      txIcon = TransactionIcons.received;
       break;
     default:
-      txIcon = TransactionIcons['coinbase'];
+      txIcon = TransactionIcons.coinbase;
   }
   return txIcon;
 };

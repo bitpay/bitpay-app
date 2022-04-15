@@ -6,7 +6,7 @@ import React, {
   useEffect,
 } from 'react';
 import styled from 'styled-components/native';
-import {useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {
@@ -27,14 +27,27 @@ import cloneDeep from 'lodash.clonedeep';
 import {LightBlack, SlateDark, White} from '../../../styles/colors';
 import {H4, TextAlign} from '../../../components/styled/Text';
 import {RouteProp, useRoute} from '@react-navigation/core';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletScreens, WalletStackParamList} from '../WalletStack';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import ReceiveAddress from '../components/ReceiveAddress';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';
+import {
+  createProposalAndBuildTxDetails,
+  handleCreateTxProposalError,
+} from '../../../store/wallet/effects/send/send';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
 const ModalHeader = styled.View`
   padding: ${ScreenGutter};
   display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+`;
+
+const CloseModalButtonContainer = styled.View`
+  position: absolute;
+  left: 15px;
 `;
 
 const CloseModalButton = styled.TouchableOpacity`
@@ -64,9 +77,6 @@ const GlobalSelectContainer = styled.View`
   padding: ${ScreenGutter};
 `;
 
-const ListContainer = styled.View`
-  margin-top: 20px;
-`;
 export const WalletSelectMenuContainer = styled.View`
   padding: 0 ${ScreenGutter};
   background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
@@ -143,6 +153,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
     params: {context, toCoinbase},
   } = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
   const theme = useTheme();
+  const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const tokens = useAppSelector(({WALLET}) => WALLET.tokenOptions);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
@@ -245,11 +256,74 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         return;
       }
       if (context === 'deposit') {
+        const {account, address} = toCoinbase!;
         // Coinbase: send from BitPay to Coinbase
-        navigation.navigate('Wallet', {
-          screen: 'SendTo',
-          params: {wallet, toCoinbase},
-        });
+        if (!address) {
+          return;
+        }
+
+        try {
+          const recipient = {
+            name: account || 'Coinbase',
+            type: 'coinbase',
+            address,
+          };
+
+          navigation.navigate('Wallet', {
+            screen: WalletScreens.AMOUNT,
+            params: {
+              opts: {hideSendMax: true},
+              currencyAbbreviation: wallet.currencyAbbreviation.toUpperCase(),
+              onAmountSelected: async (amount, setButtonState, opts) => {
+                try {
+                  setButtonState('loading');
+                  const {txDetails, txp} = await dispatch(
+                    createProposalAndBuildTxDetails({
+                      wallet,
+                      recipient,
+                      amount: Number(amount),
+                      ...opts,
+                    }),
+                  );
+                  setButtonState('success');
+                  await sleep(300);
+                  navigation.navigate('Wallet', {
+                    screen: 'Confirm',
+                    params: {
+                      wallet,
+                      recipient,
+                      txp,
+                      txDetails,
+                      amount: Number(amount),
+                    },
+                  });
+                } catch (err: any) {
+                  setButtonState('failed');
+                  const [errorMessageConfig] = await Promise.all([
+                    handleCreateTxProposalError(err),
+                    sleep(400),
+                  ]);
+                  dispatch(
+                    showBottomNotificationModal({
+                      ...errorMessageConfig,
+                      enableBackdropDismiss: false,
+                      actions: [
+                        {
+                          text: 'OK',
+                          action: () => {
+                            setButtonState(undefined);
+                          },
+                        },
+                      ],
+                    }),
+                  );
+                }
+              },
+            },
+          });
+        } catch (err) {
+          console.error(err);
+        }
       } else if (context === 'send') {
         setWalletSelectModalVisible(false);
         navigation.navigate('Wallet', {
@@ -309,34 +383,34 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
     <SafeAreaView>
       {useAsModal && (
         <ModalHeader>
-          <CloseModalButton
-            onPress={() => {
-              if (onDismiss) {
-                onDismiss();
-              }
-            }}>
-            <CloseModal
-              {...{
-                width: 20,
-                height: 20,
-                color: theme.dark ? 'white' : 'black',
-              }}
-            />
-          </CloseModalButton>
+          <CloseModalButtonContainer>
+            <CloseModalButton
+              onPress={() => {
+                if (onDismiss) {
+                  onDismiss();
+                }
+              }}>
+              <CloseModal
+                {...{
+                  width: 20,
+                  height: 20,
+                  color: theme.dark ? 'white' : 'black',
+                }}
+              />
+            </CloseModalButton>
+          </CloseModalButtonContainer>
           {(title || toCoinbase?.title) && (
             <ModalTitle>{title || toCoinbase?.title}</ModalTitle>
           )}
         </ModalHeader>
       )}
       <GlobalSelectContainer>
-        <ListContainer>
-          <FlatList
-            contentContainerStyle={{paddingBottom: 100}}
-            data={[...supportedCoins, ...otherCoins]}
-            keyExtractor={keyExtractor}
-            renderItem={renderItem}
-          />
-        </ListContainer>
+        <FlatList
+          contentContainerStyle={{paddingBottom: 100}}
+          data={[...supportedCoins, ...otherCoins]}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+        />
         <SheetModal
           isVisible={walletSelectModalVisible}
           onBackdropPress={() => setWalletSelectModalVisible(false)}>

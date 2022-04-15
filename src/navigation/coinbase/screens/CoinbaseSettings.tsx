@@ -23,6 +23,7 @@ import {
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
+import CoinbaseSvg from '../../../../assets/img/logos/coinbase.svg';
 
 const SettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -57,19 +58,30 @@ const Item = styled(BaseText)`
   letter-spacing: 0;
 `;
 
-const Title = styled(BaseText)`
-  margin-top: 20px;
-  margin-bottom: 10px;
+const ButtonContainer = styled.View`
+  margin: 0 ${ScreenGutter};
+`;
+
+const CoinbaseHeader = styled.View`
+  justify-content: flex-start;
+  align-items: center;
+  flex-direction: row;
+  flex: 1;
+  margin-top: 25px;
+  margin-bottom: 20px;
+`;
+
+const IconCoinbase = styled.View`
+  width: 23px;
+  height: 23px;
+`;
+
+const TitleCoinbase = styled(BaseText)`
+  margin-left: 8px;
   font-size: 16px;
   font-style: normal;
   font-weight: bold;
   letter-spacing: 0;
-  border-bottom-color: #000000;
-  border-bottom-width: 2px;
-`;
-
-const ButtonContainer = styled.View`
-  margin: 0 ${ScreenGutter};
 `;
 
 const CoinbaseSettings = () => {
@@ -120,8 +132,7 @@ const CoinbaseSettings = () => {
   }, [dispatch, userData, isLoadingUserData, userError, showError]);
 
   const deleteAccount = async () => {
-    dispatch(coinbaseDisconnectAccount());
-    await sleep(1000);
+    await dispatch(coinbaseDisconnectAccount());
     navigation.navigate('Tabs', {screen: 'Home'});
   };
 
@@ -152,7 +163,9 @@ const CoinbaseSettings = () => {
   };
 
   const parseTime = (timestamp?: string) => {
-    if (!timestamp) return '';
+    if (!timestamp) {
+      return '';
+    }
     return moment(timestamp).format('MMM D, YYYY');
   };
 
@@ -180,7 +193,12 @@ const CoinbaseSettings = () => {
           refreshing={refreshing}
           onRefresh={onRefresh}
         />
-        <Title>Summary</Title>
+        <CoinbaseHeader>
+          <IconCoinbase>
+            <CoinbaseSvg width="23" height="23" />
+          </IconCoinbase>
+          <TitleCoinbase>Coinbase</TitleCoinbase>
+        </CoinbaseHeader>
         <Hr />
         <Details>
           <Detail>

@@ -10,6 +10,7 @@ import {
   ScreenGutter,
 } from '../styled/Containers';
 import Card from '../card/Card';
+import Percentage from '../percentage/Percentage';
 import {View} from 'react-native';
 import {BaseText} from '../styled/Text';
 import * as Svg from 'react-native-svg';
@@ -34,6 +35,7 @@ interface BodyProps {
   value?: string;
   pillText?: string;
   needsBackup?: boolean;
+  percentageDifference?: number;
 }
 
 interface HomeCardProps {
@@ -110,12 +112,22 @@ const NeedBackupText = styled(BaseText)`
 const HomeCard: React.FC<HomeCardProps> = ({body, onCTAPress, header}) => {
   const HeaderComp = <CardHeader>{header}</CardHeader>;
   const theme = useTheme();
-  const {title, value, pillText, description, needsBackup} = body;
+  const {
+    title,
+    value,
+    percentageDifference,
+    pillText,
+    description,
+    needsBackup,
+  } = body;
 
   const BodyComp = (
     <View>
       {title && <CardBodyHeader>{title}</CardBodyHeader>}
       {value && <CardPrice scale={shouldScale(value)}>{value}</CardPrice>}
+      {percentageDifference ? (
+        <Percentage percentageDifference={percentageDifference} />
+      ) : null}
       {pillText && (
         <CardPill>
           <CardPillText>{pillText}</CardPillText>

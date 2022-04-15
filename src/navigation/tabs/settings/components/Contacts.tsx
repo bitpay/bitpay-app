@@ -12,8 +12,7 @@ import {
 } from '../../../../components/styled/Containers';
 import {View} from 'react-native';
 import styled from 'styled-components/native';
-import PlusSvg from '../../../../../assets/img/plus.svg';
-import {LightBlack, NeutralSlate} from '../../../../styles/colors';
+import Icons from '../../../wallet/components/WalletIcons';
 
 const SeeAllLink = styled(Link)`
   font-weight: 500;
@@ -21,13 +20,7 @@ const SeeAllLink = styled(Link)`
 `;
 
 const PlusIconContainer = styled.View`
-  width: 40px;
-  height: 40px;
-  align-items: center;
-  justify-content: center;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   margin-right: 15px;
-  border-radius: 12px;
 `;
 
 const Contacts = () => {
@@ -60,7 +53,7 @@ const Contacts = () => {
           });
         }}>
         <PlusIconContainer>
-          <PlusSvg />
+          <Icons.Add />
         </PlusIconContainer>
 
         <H6 medium={true}>Add Contact</H6>

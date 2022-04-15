@@ -47,6 +47,7 @@ export const buildWalletObj = (
       crypto: '0',
       cryptoLocked: '0',
       fiat: 0,
+      fiatLastDay: 0,
       fiatLocked: 0,
       sat: 0,
       satAvailable: 0,
@@ -102,11 +103,13 @@ export const buildKeyObj = ({
   key,
   wallets,
   totalBalance = 0,
+  totalBalanceLastDay = 0,
   backupComplete = false,
 }: {
   key: KeyMethods;
   wallets: Wallet[];
   totalBalance?: number;
+  totalBalanceLastDay?: number;
   backupComplete?: boolean;
 }): Key => {
   return {
@@ -115,6 +118,7 @@ export const buildKeyObj = ({
     properties: key.toObj(),
     methods: key,
     totalBalance,
+    totalBalanceLastDay,
     isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
     backupComplete,
     keyName: 'My Key',

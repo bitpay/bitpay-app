@@ -43,6 +43,7 @@ import {COINBASE_ENV} from '../../api/coinbase/coinbase.constants';
 
 import {SupportedCurrencyOptions} from '../../constants/SupportedCurrencyOptions';
 import {LogActions} from '../log';
+import {setHomeCarouselConfig} from '../app/app.actions';
 
 const isRevokedTokenError = (error: CoinbaseErrorsProps): boolean => {
   for (let i = 0; i < error.errors.length; i++) {
@@ -123,6 +124,7 @@ export const coinbaseLinkAccount =
       dispatch(accessTokenSuccess(COINBASE_ENV, newToken));
       await dispatch(coinbaseGetUser());
       await dispatch(coinbaseUpdateExchangeRate());
+      dispatch(setHomeCarouselConfig({id: 'coinbaseBalanceCard', show: true}));
       dispatch(coinbaseGetAccountsAndBalance());
     } catch (error: CoinbaseErrorsProps | any) {
       dispatch(LogActions.error(coinbaseParseErrorToString(error)));
@@ -152,9 +154,16 @@ export const coinbaseRefreshToken =
 
 export const coinbaseDisconnectAccount =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
-    const {COINBASE} = getState();
+    const {COINBASE, APP} = getState();
 
     dispatch(revokeTokenPending());
+    dispatch(
+      setHomeCarouselConfig(
+        APP.homeCarouselConfig.filter(
+          item => item?.id !== 'coinbaseBalanceCard',
+        ),
+      ),
+    );
     if (COINBASE.token[COINBASE_ENV]) {
       await CoinbaseAPI.revokeToken(COINBASE.token[COINBASE_ENV]);
     }
