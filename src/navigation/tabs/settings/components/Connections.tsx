@@ -73,6 +73,8 @@ const Connections: React.FC<ConnectionsProps> = props => {
   };
   useEffect(() => {
     if (redirectTo === 'walletconnect') {
+      // reset params to prevent re-triggering
+      navigation.setParams({redirectTo: undefined} as any);
       goToWalletConnect();
     }
   }, [redirectTo, goToWalletConnect]);
