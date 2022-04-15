@@ -132,8 +132,7 @@ const CoinbaseSettings = () => {
   }, [dispatch, userData, isLoadingUserData, userError, showError]);
 
   const deleteAccount = async () => {
-    dispatch(coinbaseDisconnectAccount());
-    await sleep(1000);
+    await dispatch(coinbaseDisconnectAccount());
     navigation.navigate('Tabs', {screen: 'Home'});
   };
 
