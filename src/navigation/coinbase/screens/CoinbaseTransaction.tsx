@@ -10,6 +10,7 @@ import {Hr} from '../../../components/styled/Containers';
 import {StackScreenProps} from '@react-navigation/stack';
 import {CoinbaseStackParamList} from '../CoinbaseStack';
 import CoinbaseIcon from '../components/CoinbaseIcon';
+import {View} from 'react-native';
 
 const TransactionContainer = styled.SafeAreaView`
   flex: 1;
@@ -21,9 +22,15 @@ const TransactionScrollContainer = styled.ScrollView`
 `;
 
 const HeaderContainer = styled.View`
-  flex-direction: row;
+  flex-direction: column;
   justify-content: space-between;
   margin-top: 20px;
+`;
+
+const HeaderSubTitleContainer = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
 `;
 
 const HeaderTitle = styled.Text`
@@ -33,6 +40,7 @@ const HeaderTitle = styled.Text`
 `;
 
 const HeaderSubtitle = styled.Text`
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   font-size: 16px;
 `;
 
@@ -89,7 +97,9 @@ const CoinbaseTransaction = ({
   const {tx} = route.params;
 
   const parseTime = (timestamp?: string) => {
-    if (!timestamp) return '';
+    if (!timestamp) {
+      return '';
+    }
     return moment(timestamp).format('MMM D, YYYY hh:mm a');
   };
 
@@ -101,12 +111,18 @@ const CoinbaseTransaction = ({
     <TransactionContainer>
       <TransactionScrollContainer>
         <HeaderContainer>
-          <HeaderTitle>
-            {tx.details.title}
-            {'\n'}
-            <HeaderSubtitle>{tx.details.subtitle}</HeaderSubtitle>
-          </HeaderTitle>
-          <HeaderIcon>{getIcon()}</HeaderIcon>
+          <HeaderTitle>{tx.details.title}</HeaderTitle>
+          <HeaderSubTitleContainer>
+            <View>
+              <HeaderSubtitle
+                numberOfLines={1}
+                style={{width: '90%'}}
+                ellipsizeMode={'tail'}>
+                {tx.details.subtitle}
+              </HeaderSubtitle>
+            </View>
+            <HeaderIcon>{getIcon()}</HeaderIcon>
+          </HeaderSubTitleContainer>
         </HeaderContainer>
         <SummaryContainer>
           <Title>Summary</Title>
