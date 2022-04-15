@@ -71,8 +71,10 @@ const General = () => {
       {/*----------------------------------------------------------------------*/}
       <Setting
         activeOpacity={ActiveOpacity}
-        onPress={
-          () => null // Todo
+        onPress={() =>
+          navigation.navigate('GeneralSettings', {
+            screen: 'AltCurrencySettings',
+          })
         }>
         <SettingTitle>{t('Display Currency')}</SettingTitle>
         <AngleRight />

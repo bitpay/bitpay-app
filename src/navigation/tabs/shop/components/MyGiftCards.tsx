@@ -18,7 +18,10 @@ import {BaseText} from '../../../../components/styled/Text';
 import {SlateDark, White} from '../../../../styles/colors';
 import {useAppSelector} from '../../../../utils/hooks';
 import {APP_NETWORK} from '../../../../constants/config';
-import {sortByDescendingDate} from '../../../../lib/gift-cards/gift-card';
+import {
+  redemptionFailuresLessThanADayOld,
+  sortByDescendingDate,
+} from '../../../../lib/gift-cards/gift-card';
 
 const MyGiftCardsHeaderContainer = styled(SectionHeaderContainer)`
   margin-bottom: -10px;
@@ -50,7 +53,11 @@ const MyGiftCards = ({
     ({SHOP}) => SHOP.giftCards[APP_NETWORK],
   ) as GiftCard[];
   const giftCards = allGiftCards
-    .filter(giftCard => giftCard.status !== 'UNREDEEMED')
+    .filter(
+      giftCard =>
+        giftCard.status === 'SUCCESS' ||
+        redemptionFailuresLessThanADayOld(giftCard),
+    )
     .sort(sortByDescendingDate);
   const activeGiftCards = giftCards.filter(giftCard => !giftCard.archived);
   const archivedGiftCards = giftCards.filter(giftCard => giftCard.archived);
@@ -125,34 +132,32 @@ const MyGiftCards = ({
           <>
             {item.item.length ? (
               <>
-                {item.item
-                  .sort((a, b) => parseInt(b.date, 10) - parseInt(a.date, 10))
-                  .map(giftCard => {
-                    const cardConfig = supportedGiftCards.find(
-                      config => config.name === giftCard.name,
-                    );
-                    return (
-                      cardConfig && (
-                        <TouchableWithoutFeedback
+                {item.item.sort(sortByDescendingDate).map(giftCard => {
+                  const cardConfig = supportedGiftCards.find(
+                    config => config.name === giftCard.name,
+                  );
+                  return (
+                    cardConfig && (
+                      <TouchableWithoutFeedback
+                        key={giftCard.invoiceId}
+                        onPress={() => {
+                          navigation.navigate('GiftCard', {
+                            screen: GiftCardScreens.GIFT_CARD_DETAILS,
+                            params: {
+                              cardConfig,
+                              giftCard,
+                            },
+                          });
+                        }}>
+                        <GiftCardCreditsItem
                           key={giftCard.invoiceId}
-                          onPress={() => {
-                            navigation.navigate('GiftCard', {
-                              screen: GiftCardScreens.GIFT_CARD_DETAILS,
-                              params: {
-                                cardConfig,
-                                giftCard,
-                              },
-                            });
-                          }}>
-                          <GiftCardCreditsItem
-                            key={giftCard.invoiceId}
-                            cardConfig={cardConfig}
-                            amount={giftCard.amount}
-                          />
-                        </TouchableWithoutFeedback>
-                      )
-                    );
-                  })}
+                          cardConfig={cardConfig}
+                          amount={giftCard.amount}
+                        />
+                      </TouchableWithoutFeedback>
+                    )
+                  );
+                })}
               </>
             ) : (
               <NoGiftCards>

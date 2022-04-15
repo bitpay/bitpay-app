@@ -6,6 +6,7 @@ import {
   FetchOverviewStatus,
   FetchSettledTransactionsStatus,
   FetchVirtualCardImageUrlsStatus,
+  UpdateCardLockStatus,
   UpdateCardNameStatus,
 } from './card.reducer';
 import {
@@ -117,6 +118,28 @@ export const updateFetchVirtualImageUrlsStatus = (
 ): CardActionType => ({
   type: CardActionTypes.UPDATE_FETCH_VIRTUAL_IMAGE_URLS_STATUS,
   payload: status,
+});
+
+export const successUpdateCardLock = (
+  network: Network,
+  id: string,
+  locked: boolean,
+): CardActionType => ({
+  type: CardActionTypes.SUCCESS_UPDATE_CARD_LOCK,
+  payload: {network, id, locked},
+});
+
+export const failedUpdateCardLock = (id: string): CardActionType => ({
+  type: CardActionTypes.FAILED_UPDATE_CARD_LOCK,
+  payload: {id},
+});
+
+export const updateUpdateCardLockStatus = (
+  id: string,
+  status: UpdateCardLockStatus,
+): CardActionType => ({
+  type: CardActionTypes.UPDATE_UPDATE_CARD_LOCK_STATUS,
+  payload: {id, status},
 });
 
 export const successUpdateCardName = (

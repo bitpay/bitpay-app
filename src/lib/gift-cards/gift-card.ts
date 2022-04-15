@@ -1,5 +1,7 @@
 import 'intl';
 import 'intl/locale-data/jsonp/en';
+import moment from 'moment';
+import uniqBy from 'lodash.uniqby';
 import {countries} from 'countries-list';
 
 import {
@@ -9,6 +11,8 @@ import {
   CardConfig,
   GiftCard,
   GiftCardActivationFee,
+  GiftCardCuration,
+  UnsoldGiftCard,
 } from '../../store/shop/shop.models';
 import {formatFiatAmount} from '../../utils/helper-methods';
 
@@ -95,6 +99,16 @@ export function sortByDescendingDate(a: GiftCard, b: GiftCard) {
   return new Date(b.date).getTime() - new Date(a.date).getTime();
 }
 
+export function redemptionFailuresLessThanADayOld(
+  giftCard: GiftCard | UnsoldGiftCard,
+) {
+  const dayAgo = moment().subtract(1, 'day').toDate();
+  return (
+    ['FAILURE', 'PENDING'].includes(giftCard.status) &&
+    new Date(giftCard.date) > dayAgo
+  );
+}
+
 export function spreadAmounts(values: Array<number>, currency: string): string {
   let caption = '';
   values.forEach((value: number, index: number) => {
@@ -110,8 +124,27 @@ export function spreadAmounts(values: Array<number>, currency: string): string {
 export function getGiftCardCurations(
   availableGiftCards: CardConfig[],
   directory: any,
+  purchasedGiftCards: GiftCard[] = [],
 ) {
-  return Object.keys(directory.curated)
+  const recentlyPurchasedBrands = uniqBy(
+    purchasedGiftCards.sort(sortByDescendingDate),
+    giftCard => giftCard.name,
+  )
+    .filter(giftCard =>
+      availableGiftCards.some(cardConfig => cardConfig.name === giftCard.name),
+    )
+    .slice(0, 9)
+    .map(
+      giftCard =>
+        availableGiftCards.find(
+          cardConfig => cardConfig.name === giftCard.name,
+        ) as CardConfig,
+    );
+  const recentlyPurchasedCuration: GiftCardCuration = {
+    displayName: 'Recently Purchased',
+    giftCards: recentlyPurchasedBrands,
+  };
+  const remoteCurations = Object.keys(directory.curated)
     .map(curationName => {
       const curation = (directory as any).curated[curationName] as any;
       const curationMerchants = curation.merchants as any;
@@ -130,6 +163,9 @@ export function getGiftCardCurations(
       };
     })
     .filter(curation => curation.giftCards.length);
+  return recentlyPurchasedBrands.length
+    ? [recentlyPurchasedCuration, ...remoteCurations]
+    : remoteCurations;
 }
 
 export function getActivationFee(

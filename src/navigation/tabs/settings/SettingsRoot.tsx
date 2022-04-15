@@ -31,6 +31,9 @@ import Crypto from './components/Crypto';
 import WalletsAndKeys from './components/WalletsAndKeys';
 
 import Animated, {FadeInUp, Easing} from 'react-native-reanimated';
+import {SettingsStackParamList} from './SettingsStack';
+import {StackScreenProps} from '@react-navigation/stack';
+
 interface HomeSetting {
   id: SettingsListType;
   title: string;
@@ -89,6 +92,14 @@ const DropdownSetting = styled(Setting)`
   border-bottom-color: ${({theme: {dark}}) => (dark ? Black : White)};
 `;
 
+export type SettingsHomeParamList =
+  | {
+      redirectTo?: string;
+    }
+  | undefined;
+
+type SettingsHomeProps = StackScreenProps<SettingsStackParamList, 'Root'>;
+
 export type SettingsListType =
   | 'General'
   | 'Contacts'
@@ -98,7 +109,9 @@ export type SettingsListType =
   | 'External Services'
   | 'Connections'
   | 'About BitPay';
-const SettingsHomeScreen: React.FC = () => {
+
+const SettingsHomeScreen: React.FC<SettingsHomeProps> = ({route}) => {
+  const {redirectTo} = route.params || {};
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -111,7 +124,6 @@ const SettingsHomeScreen: React.FC = () => {
     ({APP}: RootState) => APP.biometricLockActive,
   );
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
-
   const hideList = useAppSelector(({APP}) => APP.settingsListConfig);
   const SETTINGS: HomeSetting[] = [
     {
@@ -162,7 +174,7 @@ const SettingsHomeScreen: React.FC = () => {
       id: 'Connections',
       title: t('Connections'),
       onPress: () => {},
-      subListComponent: <Connections />,
+      subListComponent: <Connections redirectTo={redirectTo} />,
     },
     {
       id: 'About BitPay',

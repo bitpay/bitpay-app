@@ -42,27 +42,26 @@ const ArchivedGiftCards = ({
     <ScrollView>
       <SectionContainer>
         <SectionSpacer />
-        {giftCards
-          .sort((a, b) => parseInt(b.date, 10) - parseInt(a.date, 10))
-          .map(giftCard => {
-            const cardConfig = supportedGiftCardMap[giftCard.name];
-            return (
-              <TouchableWithoutFeedback
-                key={giftCard.invoiceId}
-                onPress={() => {
-                  navigator.navigate('GiftCard', {
-                    screen: GiftCardScreens.GIFT_CARD_DETAILS,
-                    params: {cardConfig, giftCard},
-                  });
-                }}>
-                <GiftCardCreditsItem
-                  cardConfig={cardConfig}
-                  amount={giftCard.amount}
-                />
-              </TouchableWithoutFeedback>
-            );
-          })}
+        {giftCards.map(giftCard => {
+          const cardConfig = supportedGiftCardMap[giftCard.name];
+          return (
+            <TouchableWithoutFeedback
+              key={giftCard.invoiceId}
+              onPress={() => {
+                navigator.navigate('GiftCard', {
+                  screen: GiftCardScreens.GIFT_CARD_DETAILS,
+                  params: {cardConfig, giftCard},
+                });
+              }}>
+              <GiftCardCreditsItem
+                cardConfig={cardConfig}
+                amount={giftCard.amount}
+              />
+            </TouchableWithoutFeedback>
+          );
+        })}
       </SectionContainer>
+      <SectionSpacer height={100} />
     </ScrollView>
   );
 };

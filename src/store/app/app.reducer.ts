@@ -15,6 +15,7 @@ import {
 } from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
+import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 
 type AppReduxPersistBlackList = [
   'appIsLoading',
@@ -75,6 +76,8 @@ export interface AppState {
   homeCarouselConfig: HomeCarouselConfig[] | [];
   homeCarouselLayoutType: HomeCarouselLayoutType;
   settingsListConfig: SettingsListType[];
+  altCurrencyList: Array<AltCurrenciesRowProps>;
+  defaultAltCurrency: AltCurrenciesRowProps;
 }
 
 const initialState: AppState = {
@@ -120,6 +123,8 @@ const initialState: AppState = {
   homeCarouselConfig: [],
   homeCarouselLayoutType: 'listView',
   settingsListConfig: [],
+  altCurrencyList: [],
+  defaultAltCurrency: {isoCode: 'USD', name: 'US Dollar'},
 };
 
 export const appReducer = (
@@ -363,6 +368,18 @@ export const appReducer = (
       return {
         ...state,
         settingsListConfig: newList,
+      };
+
+    case AppActionTypes.ADD_ALT_CURRENCIES_LIST:
+      return {
+        ...state,
+        altCurrencyList: action.altCurrencyList,
+      };
+
+    case AppActionTypes.SET_DEFAULT_ALT_CURRENCY:
+      return {
+        ...state,
+        defaultAltCurrency: action.defaultAltCurrency,
       };
 
     default:

@@ -1,6 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import {IWalletConnectSession} from '@walletconnect/types';
-import React, {useCallback} from 'react';
+import React, {useCallback, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
@@ -28,6 +28,7 @@ import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {IWCRequest} from '../../../store/wallet-connect/wallet-connect.models';
 import {Wallet} from '../../../store/wallet/wallet.models';
+import ConnectionSkeletonRow from './ConnectionSkeletonRow';
 
 const NestedArrowContainer = styled.View`
   padding-right: 11px;
@@ -57,6 +58,7 @@ export default ({
   const requests: IWCRequest[] = useAppSelector(({WALLET_CONNECT}) => {
     return WALLET_CONNECT.requests.filter(request => request.peerId === peerId);
   });
+  const [isLoading, setIsLoading] = useState<boolean>();
 
   const showErrorMessage = useCallback(
     async (msg: BottomNotificationConfig) => {
@@ -83,16 +85,25 @@ export default ({
           <NestedArrowContainer>
             <NestedArrow />
           </NestedArrowContainer>
+          {isLoading ? <ConnectionSkeletonRow /> : null}
           {peerMeta && peerMeta.icons[0] ? (
             <>
               <IconContainer>
                 <FastImage
                   source={{uri: peerMeta.icons[0]}}
                   style={{width: 37, height: 37}}
+                  onLoadStart={() => {
+                    setIsLoading(true);
+                  }}
+                  onLoadEnd={() => {
+                    setIsLoading(false);
+                  }}
                 />
               </IconContainer>
               {requests.length ? <Badge /> : null}
-              <IconLabel>{peerMeta.url.replace('https://', '')}</IconLabel>
+              {!isLoading ? (
+                <IconLabel>{peerMeta.url.replace('https://', '')}</IconLabel>
+              ) : null}
             </>
           ) : null}
         </ItemTitleTouchableContainer>

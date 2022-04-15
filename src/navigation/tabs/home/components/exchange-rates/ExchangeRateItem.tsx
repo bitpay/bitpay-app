@@ -63,7 +63,10 @@ const ExchangeRateItem = ({
       <NoteContainer>
         {currentPrice && (
           <ExchangeRateText>
-            {formatFiatAmount(currentPrice, 'USD')}
+            {formatFiatAmount(currentPrice, 'USD', {
+              customPrecision: 'minimal',
+              currencyAbbreviation,
+            })}
           </ExchangeRateText>
         )}
         <SubTextContainer>

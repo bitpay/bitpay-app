@@ -153,6 +153,12 @@ export type Rates = {
   [key in string]: Rate[];
 };
 
+export enum DateRanges {
+  Day = 1,
+  Week = 7,
+  Month = 30,
+}
+
 export interface Balance {
   availableAmount: number;
   availableConfirmedAmount: number;

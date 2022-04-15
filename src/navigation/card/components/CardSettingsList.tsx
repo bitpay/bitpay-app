@@ -1,5 +1,5 @@
 import {StackNavigationProp} from '@react-navigation/stack';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {View} from 'react-native';
 import CustomizeCardIcon from '../../../../assets/img/customize-card.svg';
@@ -14,11 +14,13 @@ import {URL} from '../../../constants';
 import {CardBrand, CardProvider} from '../../../constants/card';
 import Dosh from '../../../lib/dosh';
 import {AppEffects} from '../../../store/app';
+import {CardActions, CardEffects} from '../../../store/card';
 import {Card} from '../../../store/card/card.models';
 import {LogActions} from '../../../store/log';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {CardStackParamList} from '../CardStack';
 import * as Styled from './CardSettingsList.styled';
+import {ToggleSpinnerState} from './ToggleSpinner';
 
 interface SettingsListProps {
   card: Card;
@@ -48,13 +50,53 @@ const SettingsList: React.FC<SettingsListProps> = props => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const {card, navigation} = props;
-  const [lockPlaceholder, setLockPlaceholder] = useState(false);
+  const [localLockState, setLocalLockState] = useState(card.lockedByUser);
+  const [localLockStatus, setLocalLockStatus] =
+    useState<ToggleSpinnerState>(null);
+  const updateCardLockStatus = useAppSelector(
+    ({CARD}) => CARD.updateCardLockStatus[card.id],
+  );
 
   const openUrl = (url: string) => {
     dispatch(AppEffects.openUrlWithInAppBrowser(url));
   };
 
   const links = LINKS[card.brand || CardBrand.Visa];
+
+  const onLockToggled = (locked: boolean) => {
+    // set local lock state for immediate feedback, reset if request fails
+    setLocalLockState(locked);
+    setLocalLockStatus('loading');
+    dispatch(CardEffects.START_UPDATE_CARD_LOCK(card.id, locked));
+  };
+
+  useEffect(() => {
+    // whether success or fail, lockedByUser will be correct so update the local state and reset the flag
+    if (
+      updateCardLockStatus === 'success' ||
+      updateCardLockStatus === 'failed'
+    ) {
+      setLocalLockState(card.lockedByUser);
+
+      if (localLockStatus === 'loading') {
+        setLocalLockStatus(updateCardLockStatus);
+      }
+
+      let tid = setTimeout(() => {
+        setLocalLockStatus(null);
+
+        tid = setTimeout(() => {
+          dispatch(CardActions.updateUpdateCardLockStatus(card.id, null));
+        }, 1000);
+      }, 1000);
+
+      return () => {
+        clearTimeout(tid);
+      };
+    }
+    // localLockStatus ok to leave out of deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [updateCardLockStatus, card.id, card.lockedByUser, dispatch]);
 
   return (
     <View>
@@ -86,9 +128,10 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
           <Styled.SettingsToggle
             Icon={LockIcon}
-            value={lockPlaceholder}
-            onChange={() => setLockPlaceholder(!lockPlaceholder)}>
-            LOCK CARD PLACEHOLDER
+            value={localLockState}
+            onChange={onLockToggled}
+            state={localLockStatus}>
+            Lock Card
           </Styled.SettingsToggle>
 
           <Hr />
@@ -118,13 +161,19 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
           <Hr />
 
-          <Styled.SettingsLink
-            Icon={CustomizeCardIcon}
-            onPress={() => navigation.navigate('CustomizeVirtualCard', {card})}>
-            {t('Customize Virtual Card')}
-          </Styled.SettingsLink>
+          {card.cardType === 'virtual' ? (
+            <>
+              <Styled.SettingsLink
+                Icon={CustomizeCardIcon}
+                onPress={() =>
+                  navigation.navigate('CustomizeVirtualCard', {card})
+                }>
+                {t('Customize Virtual Card')}
+              </Styled.SettingsLink>
 
-          <Hr />
+              <Hr />
+            </>
+          ) : null}
 
           <Styled.SettingsLink
             Icon={UpdateIcon}

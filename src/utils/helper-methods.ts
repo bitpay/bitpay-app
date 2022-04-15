@@ -129,14 +129,23 @@ export const isValidDerivationPathCoin = (
 
 export const keyExtractor = (item: {id: string}) => item.id;
 
+export const getSignificantDigits = (currencyAbbreviation?: string) => {
+  return currencyAbbreviation === 'DOGE' || currencyAbbreviation === 'XRP'
+    ? 4
+    : undefined;
+};
+
 export const formatFiatAmount = (
   amount: number,
   currency: string,
   opts: {
     customPrecision?: 'minimal';
+    currencyAbbreviation?: string;
   } = {},
 ) =>
   new Intl.NumberFormat('en-US', {
+    minimumSignificantDigits: getSignificantDigits(opts.currencyAbbreviation),
+    maximumSignificantDigits: getSignificantDigits(opts.currencyAbbreviation),
     style: 'currency',
     currency: currency.toLowerCase(),
     ...(opts.customPrecision === 'minimal' &&

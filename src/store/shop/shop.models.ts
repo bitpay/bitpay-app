@@ -67,6 +67,7 @@ export interface CardConfig extends CommonCardConfig {
 export interface UnsoldGiftCard {
   amount: number;
   currency: string;
+  date: string | Date;
   name: string;
   discounts?: GiftCardDiscount[];
   invoiceId: string;
@@ -74,6 +75,7 @@ export interface UnsoldGiftCard {
   accessKey: string;
   userEid?: string;
   totalDiscount?: number;
+  status: 'SUCCESS' | 'PENDING' | 'FAILURE' | 'UNREDEEMED';
 }
 
 export interface GiftCardBalanceEntry {
@@ -89,10 +91,8 @@ export interface GiftCard extends UnsoldGiftCard {
   barcodeImage?: string;
   claimCode: string;
   claimLink?: string;
-  date: string;
   displayName: string;
   pin?: string;
-  status: 'SUCCESS' | 'PENDING' | 'FAILURE' | 'UNREDEEMED';
   clientId: string;
   balanceHistory?: GiftCardBalanceEntry[];
   invoice: Invoice;

@@ -1,8 +1,9 @@
+import {useNavigation} from '@react-navigation/native';
 import React, {ReactElement} from 'react';
-import ExchangeRateItem from './ExchangeRateItem';
 import styled from 'styled-components/native';
+import haptic from '../../../../../components/haptic-feedback/haptic';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
-import {HomeSectionTitle} from '../Styled';
+import ExchangeRateItem from './ExchangeRateItem';
 
 export interface ExchangeRateItemProps {
   id: string;
@@ -11,27 +12,32 @@ export interface ExchangeRateItemProps {
   currencyAbbreviation?: string;
   average?: number;
   currentPrice?: number;
-  priceDisplay?: Array<any>;
+  priceDisplay: Array<any>;
 }
+
+const ExchangeRateListContainer = styled.View`
+  margin: 35px ${ScreenGutter};
+`;
 interface ExchangeRateProps {
   items: Array<ExchangeRateItemProps>;
 }
 
-const ExchangeRateListContainer = styled.View`
-  margin: 15px ${ScreenGutter} 35px ${ScreenGutter};
-`;
 const ExchangeRatesList: React.FC<ExchangeRateProps> = props => {
   const {items} = props;
+  const navigation = useNavigation();
 
   return (
     <ExchangeRateListContainer>
-      <HomeSectionTitle>{'Exchange Rates'}</HomeSectionTitle>
       {items.map(item => (
         <ExchangeRateItem
           item={item}
           key={item.id}
           onPress={() => {
-            // TODO
+            haptic('impactLight');
+            navigation.navigate('Wallet', {
+              screen: 'PriceCharts',
+              params: {item},
+            });
           }}
         />
       ))}

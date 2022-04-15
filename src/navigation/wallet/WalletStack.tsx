@@ -57,6 +57,7 @@ import AllAddresses, {
 import PayProConfirm, {
   PayProConfirmParamList,
 } from './screens/send/confirm/PayProConfirm';
+import PriceCharts, {PriceChartsParamList} from './screens/PriceCharts';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -107,6 +108,7 @@ export type WalletStackParamList = {
   };
   Addresses: {wallet: WalletModel};
   AllAddresses: AllAddressesParamList;
+  PriceCharts: PriceChartsParamList;
 };
 
 export enum WalletScreens {
@@ -145,6 +147,7 @@ export enum WalletScreens {
   EXPORT_WALLET = 'ExportWallet',
   ADDRESSES = 'Addresses',
   ALL_ADDRESSES = 'AllAddresses',
+  PRICE_CHARTS = 'PriceCharts',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -333,6 +336,13 @@ const WalletStack = () => {
           }}
           name={WalletScreens.ALL_ADDRESSES}
           component={AllAddresses}
+        />
+        <Wallet.Screen
+          options={{
+            ...TransitionPresets.ModalPresentationIOS,
+          }}
+          name={WalletScreens.PRICE_CHARTS}
+          component={PriceCharts}
         />
       </Wallet.Navigator>
     </>

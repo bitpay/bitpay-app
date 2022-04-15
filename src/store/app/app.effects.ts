@@ -334,8 +334,13 @@ export const resetAllSettings = (): Effect => dispatch => {
   batch(() => {
     dispatch(AppActions.setColorScheme(null));
     dispatch(AppActions.showPortfolioValue(true));
+    dispatch(
+      AppActions.setDefaultAltCurrency({isoCode: 'USD', name: 'US Dollar'}),
+    );
     dispatch(AppActions.setDefaultLanguage(i18n.language || 'en'));
     dispatch(WalletActions.setUseUnconfirmedFunds(false));
+    dispatch(WalletActions.setCustomizeNonce(false));
+    dispatch(WalletActions.setEnableReplaceByFee(false));
     dispatch(LogActions.info('Reset all settings'));
   });
 };

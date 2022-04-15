@@ -4,20 +4,34 @@ import {Carousel} from 'react-native-snap-carousel';
 import {WIDTH} from '../../../../../components/styled/Containers';
 import QuickLinksCard from './QuickLinksCard';
 import {CarouselItemContainer} from '../Styled';
+import {useNavigation} from '@react-navigation/native';
+import {useAppSelector} from '../../../../../utils/hooks';
 
 interface QuickLinksCarouselProps {
   contentCards: ContentCard[];
 }
 
-const renderQuickLink = ({item}: {item: ContentCard}) => (
-  <CarouselItemContainer>
-    <QuickLinksCard contentCard={item} />
-  </CarouselItemContainer>
-);
-
 const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({
   contentCards,
 }) => {
+  const navigation = useNavigation();
+  const {connectors} = useAppSelector(({WALLET_CONNECT}) => WALLET_CONNECT);
+
+  const CTA_OVERRIDES: {[key in string]: () => void} = {
+    walletConnect: () => {
+      if (Object.keys(connectors).length) {
+        navigation.navigate('WalletConnect', {
+          screen: 'WalletConnectConnections',
+        });
+      } else {
+        navigation.navigate('WalletConnect', {
+          screen: 'Root',
+          params: {uri: undefined},
+        });
+      }
+    },
+  };
+
   return (
     <Carousel<ContentCard>
       containerCustomStyle={{
@@ -27,7 +41,14 @@ const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({
       layout={'default'}
       useExperimentalSnap={true}
       data={contentCards}
-      renderItem={renderQuickLink}
+      renderItem={({item}: {item: ContentCard}) => (
+        <CarouselItemContainer>
+          <QuickLinksCard
+            contentCard={item}
+            ctaOverride={CTA_OVERRIDES[item.id]}
+          />
+        </CarouselItemContainer>
+      )}
       sliderWidth={WIDTH}
       itemWidth={225}
       inactiveSlideScale={1}

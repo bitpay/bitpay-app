@@ -13,6 +13,7 @@ import {
 
 export const cardReduxPersistBlacklist: Array<keyof CardState> = [
   'fetchCardsStatus',
+  'updateCardLockStatus',
   'updateCardNameStatus',
   'balances',
   'settledTransactions',
@@ -23,6 +24,7 @@ export type FetchCardsStatus = 'success' | 'failed' | null;
 export type FetchOverviewStatus = 'loading' | 'success' | 'failed' | null;
 export type FetchSettledTransactionsStatus = 'success' | 'failed' | null;
 export type FetchVirtualCardImageUrlsStatus = 'success' | 'failed' | null;
+export type UpdateCardLockStatus = 'success' | 'failed' | null;
 export type UpdateCardNameStatus = 'success' | 'failed' | null;
 
 export interface CardState {
@@ -46,6 +48,9 @@ export interface CardState {
     [id: string]: FetchSettledTransactionsStatus;
   };
   fetchVirtualCardImageUrlsStatus: FetchVirtualCardImageUrlsStatus;
+  updateCardLockStatus: {
+    [id: string]: UpdateCardLockStatus | undefined;
+  };
   updateCardNameStatus: {
     [id: string]: UpdateCardNameStatus | undefined;
   };
@@ -73,6 +78,7 @@ const initialState: CardState = {
   fetchOverviewStatus: {},
   fetchSettledTransactionsStatus: {},
   fetchVirtualCardImageUrlsStatus: null,
+  updateCardLockStatus: {},
   updateCardNameStatus: {},
   virtualDesignCurrency: 'bitpay-b',
   overview: null,
@@ -254,7 +260,52 @@ export const cardReducer = (
         ...state,
         fetchVirtualCardImageUrlsStatus: action.payload,
       };
-    case CardActionTypes.SUCCESS_UPDATE_CARD_NAME:
+
+    case CardActionTypes.SUCCESS_UPDATE_CARD_LOCK: {
+      const cardList = state.cards[action.payload.network];
+
+      return {
+        ...state,
+        updateCardLockStatus: {
+          ...state.updateCardLockStatus,
+          [action.payload.id]: 'success',
+        },
+        cards: {
+          ...state.cards,
+          // update the card array reference
+          [action.payload.network]: cardList.map(c => {
+            // only update the card ref for the targeted card
+            if (c.id === action.payload.id) {
+              return {
+                ...c,
+                lockedByUser: action.payload.locked,
+              };
+            }
+
+            return c;
+          }),
+        },
+      };
+    }
+    case CardActionTypes.FAILED_UPDATE_CARD_LOCK: {
+      return {
+        ...state,
+        updateCardLockStatus: {
+          ...state.updateCardLockStatus,
+          [action.payload.id]: 'failed',
+        },
+      };
+    }
+    case CardActionTypes.UPDATE_UPDATE_CARD_LOCK_STATUS: {
+      return {
+        ...state,
+        updateCardLockStatus: {
+          ...state.updateCardLockStatus,
+          [action.payload.id]: action.payload.status,
+        },
+      };
+    }
+    case CardActionTypes.SUCCESS_UPDATE_CARD_NAME: {
       const cardList = state.cards[action.payload.network];
 
       return {
@@ -279,6 +330,7 @@ export const cardReducer = (
           }),
         },
       };
+    }
     case CardActionTypes.FAILED_UPDATE_CARD_NAME: {
       return {
         ...state,

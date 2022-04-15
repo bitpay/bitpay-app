@@ -4,8 +4,8 @@ import {
   Linking,
   Share,
   RefreshControl,
-  View,
   Image,
+  DeviceEventEmitter,
 } from 'react-native';
 import TimeAgo from 'react-native-timeago';
 import {StackScreenProps} from '@react-navigation/stack';
@@ -55,6 +55,7 @@ import {
 } from '../../../../../store/shop/shop.models';
 import {ShopActions, ShopEffects} from '../../../../../store/shop';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {DeviceEmitterEvents} from '../../../../../constants/device-emitter-events';
 
 const maxWidth = 320;
 
@@ -165,6 +166,14 @@ const GiftCardDetails = ({
     giftCards.find(card => card.invoiceId === initialGiftCard.invoiceId) ||
       initialGiftCard,
   );
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      DeviceEmitterEvents.GIFT_CARD_REDEEMED,
+      (updatedGiftCard: GiftCard) => setGiftCard(updatedGiftCard),
+    );
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     if (!giftCard.barcodeImage) {
@@ -396,6 +405,11 @@ const GiftCardDetails = ({
             <SectionSpacer />
           </ClaimCodeBox>
         )}
+        {giftCard.status === 'PENDING' ? (
+          <Paragraph style={{marginTop: 15}}>
+            Created <TimeAgo time={giftCard.date} />
+          </Paragraph>
+        ) : null}
         <Terms maxWidth={maxWidth}>{cardConfig.terms}</Terms>
       </ScrollView>
     </>

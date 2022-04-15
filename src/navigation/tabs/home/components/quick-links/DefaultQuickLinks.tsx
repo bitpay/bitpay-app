@@ -6,16 +6,16 @@ import {APP_DEEPLINK_PREFIX} from '../../../../../constants/config';
 const DefaultQuickLinks: ClassicContentCard[] = [
   {
     ...DEFAULT_CLASSIC_CONTENT_CARD,
-    id: '1',
+    id: 'walletConnect',
     title: 'WalletConnect',
     cardDescription: 'Connect with hundreds of Dapps.',
     image: require('../../../../../../assets/img/home/quick-links/wallet-connect.png'),
-    url: `${APP_DEEPLINK_PREFIX}walletconnect`,
+    url: `${APP_DEEPLINK_PREFIX}connections/walletconnect`,
     openURLInWebView: false,
   },
   {
     ...DEFAULT_CLASSIC_CONTENT_CARD,
-    id: '2',
+    id: 'leaveFeedback',
     title: 'Leave Feedback',
     cardDescription: "Let us know how we're doing.",
     image: require('../../../../../../assets/img/home/quick-links/chat.png'),

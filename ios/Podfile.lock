@@ -523,8 +523,8 @@ PODS:
     - React-Core
   - RNSharedElement (0.8.4):
     - React-Core
-  - RNSVG (12.1.1):
-    - React
+  - RNSVG (12.3.0):
+    - React-Core
   - SDWebImage (5.11.1):
     - SDWebImage/Core (= 5.11.1)
   - SDWebImage/Core (5.11.1)
@@ -787,7 +787,7 @@ SPEC CHECKSUMS:
   boost-for-react-native: 39c7adb57c4e60d6c5479dd8623128eb5b3f0f2c
   BVLinearGradient: e3aad03778a456d77928f594a649e96995f1c872
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
-  DoubleConversion: cf9b38bf0b2d048436d9a82ad2abe1404f11e7de
+  DoubleConversion: 831926d9b8bf8166fd87886c4abab286c2422662
   FBLazyVector: 7b423f9e248eae65987838148c36eec1dbfe0b53
   FBReactNativeSpec: dd46d4e146208387b271b7500a66f67bfab74b52
   Flipper: d3da1aa199aad94455ae725e9f3aa43f3ec17021
@@ -797,7 +797,7 @@ SPEC CHECKSUMS:
   Flipper-PeerTalk: 116d8f857dc6ef55c7a5a75ea3ceaafe878aadc9
   Flipper-RSocket: 127954abe8b162fcaf68d2134d34dc2bd7076154
   FlipperKit: 8a20b5c5fcf9436cac58551dc049867247f64b00
-  glog: 73c2498ac6884b13ede40eda8228cb1eee9d9d62
+  glog: 476ee3e89abb49e07f822b48323c51c57124b572
   GoogleDataTransport: 629c20a4d363167143f30ea78320d5a7eb8bd940
   GoogleMLKit: 0d7f5aa2f8a2f2ea9d849a05abdbe80974b0ec83
   GoogleToolboxForMac: 8bef7c7c5cf7291c687cf5354f39f9db6399ad34
@@ -868,7 +868,7 @@ SPEC CHECKSUMS:
   RNReanimated: 07fe739b271f5f67a84d3244099d92e7044512b3
   RNScreens: f7ad633b2e0190b77b6a7aab7f914fad6f198d8d
   RNSharedElement: eb7d506733952d58634f34c82ec17e82f557e377
-  RNSVG: 551acb6562324b1d52a4e0758f7ca0ec234e278f
+  RNSVG: 302bfc9905bd8122f08966dc2ce2d07b7b52b9f8
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
   SDWebImageWebPCoder: f93010f3f6c031e2f8fb3081ca4ee6966c539815
   TouchID: ba4c656d849cceabc2e4eef722dea5e55959ecf4

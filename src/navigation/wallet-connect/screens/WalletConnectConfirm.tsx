@@ -15,10 +15,8 @@ import {sleep} from '../../../utils/helper-methods';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {
-  dismissDecryptPasswordModal,
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showDecryptPasswordModal,
 } from '../../../store/app/app.actions';
 import {WalletConnectStackParamList} from '../WalletConnectStack';
 import PaymentSent from '../../wallet/components/PaymentSent';
@@ -29,7 +27,6 @@ import {
 import {IWCRequest} from '../../../store/wallet-connect/wallet-connect.models';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {checkEncryptPassword} from '../../../store/wallet/utils/wallet';
 import {
   CustomErrorMessage,
   WrongPasswordError,
@@ -177,7 +174,12 @@ const WalletConnectConfirm = () => {
       <DetailsList>
         <Header>Summary</Header>
         <SendingTo recipient={sendingTo} hr />
-        <Fee fee={fee} hr />
+        <Fee
+          hideFeeOptions
+          fee={fee}
+          currencyAbbreviation={wallet.currencyAbbreviation}
+          hr
+        />
         <SendingFrom sender={sendingFrom} hr />
         <Amount description={'SubTotal'} amount={subTotal} />
         <Amount description={'Total'} amount={total} />

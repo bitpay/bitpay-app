@@ -2,6 +2,7 @@ import {StackScreenProps} from '@react-navigation/stack';
 import React, {useCallback, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView} from 'react-native';
+import Animated, {Easing, FadeInDown} from 'react-native-reanimated';
 import Carousel from 'react-native-snap-carousel';
 import {SharedElement} from 'react-navigation-shared-element';
 import styled from 'styled-components/native';
@@ -68,44 +69,48 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
     return [cards, virtual, physical];
   }, [currentGroup]);
 
-  const currentCard = cardsToShow.find(c => c.id === id);
-  const [currentTab, setCurrentTab] = useState(
-    currentCard?.cardType || 'virtual',
-  );
   const initialIdx = Math.max(
     0,
     cardsToShow.findIndex(c => c.id === id),
   );
+  const [activeCard, setActiveCard] = useState(cardsToShow[initialIdx]);
 
   const onCardChange = (idx: number) => {
     const nextCard = cardsToShow[idx];
 
-    navigation.setParams({id: nextCard.id});
     if (nextCard.cardType) {
-      setCurrentTab(nextCard.cardType);
+      setActiveCard(nextCard);
     }
   };
 
   const onVirtualPress = useCallback(() => {
-    setCurrentTab('virtual');
-    carouselRef.current?.snapToItem(0);
-  }, []);
+    if (virtualCard) {
+      setActiveCard(virtualCard);
+      carouselRef.current?.snapToItem(0);
+    }
+  }, [virtualCard]);
 
   const onPhysicalPress = useCallback(() => {
-    setCurrentTab('physical');
-    carouselRef.current?.snapToItem(1);
-  }, []);
+    if (physicalCard) {
+      setActiveCard(physicalCard);
+      carouselRef.current?.snapToItem(1);
+    }
+  }, [physicalCard]);
 
   const renderSettingsSlide = useCallback(
-    ({item}: {item: Card}) =>
-      route.params.id === item.id ? (
-        <SharedElement id={'card.dashboard.active-card'}>
+    ({item}: {item: Card}) => {
+      const isVirtual = item.cardType === 'virtual' || cardsToShow.length < 2;
+      const sharedTransitionId = isVirtual ? 'card.dashboard.active-card' : '';
+
+      return isVirtual ? (
+        <SharedElement id={sharedTransitionId}>
           <SettingsSlide card={item} />
         </SharedElement>
       ) : (
         <SettingsSlide card={item} />
-      ),
-    [route.params.id],
+      );
+    },
+    [cardsToShow.length],
   );
 
   return (
@@ -118,7 +123,7 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
                 onPress={onVirtualPress}
                 buttonType="pill"
                 buttonStyle={
-                  currentTab === 'virtual' ? 'primary' : 'secondary'
+                  activeCard.cardType === 'virtual' ? 'primary' : 'secondary'
                 }>
                 {t('Virtual')}
               </Button>
@@ -127,7 +132,7 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
                 onPress={onPhysicalPress}
                 buttonType="pill"
                 buttonStyle={
-                  currentTab === 'physical' ? 'primary' : 'secondary'
+                  activeCard.cardType === 'physical' ? 'primary' : 'secondary'
                 }>
                 {t('Physical')}
               </Button>
@@ -135,7 +140,6 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
           ) : null}
         </CardSettingsHeader>
       </CardSettingsContainer>
-
       <Carousel<Card>
         ref={carouselRef}
         data={cardsToShow}
@@ -149,9 +153,23 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
       />
 
       <CardSettingsContainer>
-        {currentCard ? (
-          <SettingsList card={currentCard} navigation={navigation} />
-        ) : null}
+        {cardsToShow.map(c => {
+          const isActive = c.id === activeCard.id;
+          const delay = 150;
+          const duration = 250;
+          const easing = Easing.linear;
+
+          const useTransition = cardsToShow.length > 1;
+          const transitionEnter = useTransition
+            ? FadeInDown.duration(duration).delay(delay).easing(easing)
+            : undefined;
+
+          return isActive ? (
+            <Animated.View key={c.id} entering={transitionEnter}>
+              <SettingsList card={c} navigation={navigation} />
+            </Animated.View>
+          ) : null;
+        })}
       </CardSettingsContainer>
     </ScrollView>
   );

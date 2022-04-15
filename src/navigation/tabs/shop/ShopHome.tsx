@@ -20,9 +20,10 @@ import {
   GiftCard,
 } from '../../../store/shop/shop.models';
 import {BaseText} from '../../../components/styled/Text';
-import {purchasedGiftCards} from './stubs/gift-cards';
 import {ShopEffects} from '../../../store/shop';
 import {selectAvailableGiftCards} from '../../../store/shop/shop.selectors';
+import {APP_NETWORK} from '../../../constants/config';
+import {useAppSelector} from '../../../utils/hooks';
 
 enum ShopTabs {
   GIFT_CARDS = 'Gift Cards',
@@ -99,7 +100,15 @@ const ShopHome = () => {
   const supportedCardMap = useSelector(
     ({SHOP}: RootState) => SHOP.supportedCardMap,
   );
-  const integrationsMap = useSelector(({SHOP}: RootState) => SHOP.integrations);
+  const integrationsMap = useAppSelector(
+    ({SHOP}: RootState) => SHOP.integrations,
+  );
+  const purchasedGiftCards = useAppSelector(
+    ({SHOP}) => SHOP.giftCards[APP_NETWORK],
+  ) as GiftCard[];
+  const activeGiftCards = purchasedGiftCards.filter(
+    giftCard => !giftCard.archived,
+  );
   const categoriesAndCurations = useSelector(
     ({SHOP}: RootState) => SHOP.categoriesAndCurations,
   );
@@ -113,8 +122,13 @@ const ShopHome = () => {
   );
 
   const curations = useMemo(
-    () => getGiftCardCurations(availableGiftCards, categoriesAndCurations),
-    [availableGiftCards, categoriesAndCurations],
+    () =>
+      getGiftCardCurations(
+        availableGiftCards,
+        categoriesAndCurations,
+        purchasedGiftCards,
+      ),
+    [availableGiftCards, categoriesAndCurations, purchasedGiftCards],
   );
 
   const integrations = useMemo(
@@ -158,7 +172,7 @@ const ShopHome = () => {
       categoriesWitIntegrations,
       availableGiftCards,
       0,
-      purchasedGiftCards,
+      activeGiftCards,
       curations,
     ),
   );
@@ -198,6 +212,7 @@ const ShopHome = () => {
 
   useEffect(() => {
     dispatch(ShopEffects.startFetchCatalog());
+    dispatch(ShopEffects.retryGiftCardRedemptions());
   }, [dispatch]);
 
   const insets = useSafeAreaInsets();
@@ -217,7 +232,7 @@ const ShopHome = () => {
         categoriesWitIntegrations,
         availableGiftCards,
         numSelectedGiftCards,
-        purchasedGiftCards,
+        activeGiftCards,
         curations,
       ),
     );
@@ -227,6 +242,7 @@ const ShopHome = () => {
     activeTab,
     categoriesWitIntegrations,
     availableGiftCards,
+    activeGiftCards,
     curations,
   ]);
 

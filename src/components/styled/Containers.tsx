@@ -303,6 +303,16 @@ export const OptionInfoContainer = styled.View`
 
 // Search
 
+export const SearchContainer = styled.View`
+  flex-direction: row;
+  border: 1px solid #9ba3ae;
+  align-items: center;
+  border-top-right-radius: 4px;
+  border-top-left-radius: 4px;
+  padding: 4px 0;
+  margin-bottom: 20px;
+`;
+
 export const SearchInput = styled.TextInput`
   flex: 1;
   padding: 0 10px;
