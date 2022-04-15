@@ -24,6 +24,7 @@ import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {Network} from '../../../constants';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {Hr} from '../../../components/styled/Containers';
+import Animated, {FadeInLeft} from 'react-native-reanimated';
 
 const OverviewContainer = styled.View`
   flex: 1;
@@ -179,13 +180,17 @@ const CoinbaseDashboard = () => {
   return (
     <OverviewContainer>
       <BalanceContainer>
-        <Balance>
-          {formatFiatAmount(
-            balance,
-            user?.data.native_currency.toLowerCase() || 'usd',
-          )}{' '}
-          {user?.data.native_currency}
-        </Balance>
+        {!isLoadingAccounts && (
+          <Animated.View entering={FadeInLeft}>
+            <Balance>
+              {formatFiatAmount(
+                balance,
+                user?.data?.native_currency?.toLowerCase() || 'usd',
+              )}{' '}
+              {user?.data?.native_currency}
+            </Balance>
+          </Animated.View>
+        )}
       </BalanceContainer>
       {theme.dark ? <Hr /> : null}
       <FlatList
