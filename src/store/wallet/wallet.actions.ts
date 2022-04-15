@@ -1,6 +1,7 @@
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {
   CacheKeys,
+  DateRanges,
   Key,
   PriceHistory,
   Rates,
@@ -52,7 +53,8 @@ export const setBackupComplete = (keyId: string): WalletActionType => ({
 
 export const successGetRates = (payload: {
   rates: Rates;
-  lastDayRates: Rates;
+  lastDayRates?: Rates;
+  dateRange?: number;
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_GET_RATES,
   payload,
@@ -62,7 +64,10 @@ export const failedGetRates = (): WalletActionType => ({
   type: WalletActionTypes.FAILED_GET_RATES,
 });
 
-export const updateCacheKey = (payload: CacheKeys): WalletActionType => ({
+export const updateCacheKey = (payload: {
+  cacheKey: CacheKeys;
+  dateRange?: DateRanges;
+}): WalletActionType => ({
   type: WalletActionTypes.UPDATE_CACHE_KEY,
   payload,
 });

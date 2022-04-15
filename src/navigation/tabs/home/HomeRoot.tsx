@@ -1,6 +1,8 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import React, {useEffect, useMemo, useState} from 'react';
 import {RefreshControl, ScrollView} from 'react-native';
+import styled from 'styled-components/native';
+import {ScreenGutter} from '../../../components/styled/Containers';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -33,6 +35,7 @@ import OffersCarousel from './components/offers/OffersCarousel';
 import PortfolioBalance from './components/PortfolioBalance';
 import DefaultQuickLinks from './components/quick-links/DefaultQuickLinks';
 import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
+import {selectCardGroups} from '../../../store/card/card.selectors';
 import {HeaderContainer, HomeContainer} from './components/Styled';
 
 const HomeRoot = () => {
@@ -238,7 +241,9 @@ const HomeRoot = () => {
 
         {/* ////////////////////////////// EXCHANGE RATES */}
         {memoizedExchangeRates.length ? (
-          <ExchangeRatesList items={memoizedExchangeRates} />
+          <HomeSection title="Exchange Rates">
+            <ExchangeRatesList items={memoizedExchangeRates} />
+          </HomeSection>
         ) : null}
 
         {/* ////////////////////////////// QUICK LINKS - Leave feedback etc */}

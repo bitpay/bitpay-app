@@ -1,5 +1,6 @@
 import {
   CacheKeys,
+  DateRanges,
   Key,
   PriceHistory,
   Rates,
@@ -99,7 +100,8 @@ interface successGetRates {
   type: typeof WalletActionTypes.SUCCESS_GET_RATES;
   payload: {
     rates: Rates;
-    lastDayRates: Rates;
+    lastDayRates?: Rates;
+    dateRange?: DateRanges;
   };
 }
 
@@ -109,7 +111,10 @@ interface failedGetRates {
 
 interface updateCacheKey {
   type: typeof WalletActionTypes.UPDATE_CACHE_KEY;
-  payload: CacheKeys;
+  payload: {
+    cacheKey: CacheKeys;
+    dateRange?: DateRanges;
+  };
 }
 
 interface successGetPriceHistory {
