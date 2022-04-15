@@ -22,7 +22,7 @@ const CardHome: React.FC<CardHomeScreenProps> = ({navigation, route}) => {
     navigation.setOptions({
       headerShown: hasCards,
     });
-  }, [hasCards]);
+  }, [hasCards, navigation]);
 
   if (hasCards) {
     const id = route.params?.id || cardGroups[0][0].id;

@@ -1,4 +1,5 @@
 import React from 'react';
+import {View} from 'react-native';
 import {useSelector} from 'react-redux';
 import {CardBrand} from '../../../constants/card';
 import {RootState} from '../../../store';
@@ -6,6 +7,7 @@ import {Card} from '../../../store/card/card.models';
 import {VirtualDesignCurrency} from '../../../store/card/card.types';
 import {format} from '../../../utils/currency';
 import CardFront from './CardFront';
+import LockCardOverlay from './LockCardOverlay';
 
 export interface CardOverviewSlideProps {
   card: Card;
@@ -23,15 +25,23 @@ const CardOverviewSlide: React.FC<CardOverviewSlideProps> = ({
   const formattedBalance = format(balance, card.currency.code);
 
   return (
-    <CardFront
-      brand={card.brand || CardBrand.Visa}
-      provider={card.provider}
-      balance={formattedBalance}
-      nickname={card.nickname}
-      fiat={card.currency.code}
-      fiatSymbol={card.currency.symbol}
-      designCurrency={designCurrency}
-    />
+    <View style={{position: 'relative'}}>
+      <CardFront
+        brand={card.brand || CardBrand.Visa}
+        provider={card.provider}
+        balance={formattedBalance}
+        nickname={card.nickname}
+        fiat={card.currency.code}
+        fiatSymbol={card.currency.symbol}
+        designCurrency={designCurrency}
+      />
+
+      {card.lockedByUser ? (
+        <View style={{position: 'absolute'}}>
+          <LockCardOverlay />
+        </View>
+      ) : null}
+    </View>
   );
 };
 

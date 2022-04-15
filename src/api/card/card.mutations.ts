@@ -4,6 +4,10 @@ type NameCardInputType = {
   value: string;
 };
 
+type LockCardInputType = {
+  value: boolean;
+};
+
 export const NAME_CARD = (
   token: string,
   id: string,
@@ -29,8 +33,34 @@ export const NAME_CARD = (
   };
 };
 
+export const LOCK_CARD = (
+  token: string,
+  id: string,
+  locked: boolean,
+): GqlQueryParams<LockCardInputType> => {
+  return {
+    query: `
+      mutation LOCK_CARD($token:String!, $csrf:String, $cardId:String!, $input:LockCardInputType!) {
+        user:bitpayUser(token:$token, csrf:$csrf) {
+          card:debitCard(cardId:$cardId) {
+            locked:lockCard(input:$input)
+          }
+        }
+      }
+    `,
+    variables: {
+      token,
+      cardId: id,
+      input: {
+        value: locked,
+      },
+    },
+  };
+};
+
 const CardMutations = {
   NAME_CARD,
+  LOCK_CARD,
 };
 
 export default CardMutations;
