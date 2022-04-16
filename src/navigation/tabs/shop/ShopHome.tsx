@@ -8,7 +8,7 @@ import {
   getCardConfigFromApiConfigMap,
   getGiftCardCurations,
 } from '../../../lib/gift-cards/gift-card';
-import {useDispatch, useSelector} from 'react-redux';
+import {useDispatch} from 'react-redux';
 import {RootState} from '../../../store';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import {ScreenOptions} from '../../../styles/tabNavigator';
@@ -94,27 +94,30 @@ const getScrollViewHeight = (
 };
 
 const ShopHome = () => {
-  const availableCardMap = useSelector(
+  const availableCardMap = useAppSelector(
     ({SHOP}: RootState) => SHOP.availableCardMap,
   );
-  const supportedCardMap = useSelector(
+  const supportedCardMap = useAppSelector(
     ({SHOP}: RootState) => SHOP.supportedCardMap,
   );
   const integrationsMap = useAppSelector(
     ({SHOP}: RootState) => SHOP.integrations,
   );
-  const purchasedGiftCards = useAppSelector(
+  const giftCards = useAppSelector(
     ({SHOP}) => SHOP.giftCards[APP_NETWORK],
   ) as GiftCard[];
+  const purchasedGiftCards = giftCards.filter(
+    giftCard => giftCard.status !== 'UNREDEEMED',
+  );
   const activeGiftCards = purchasedGiftCards.filter(
     giftCard => !giftCard.archived,
   );
-  const categoriesAndCurations = useSelector(
+  const categoriesAndCurations = useAppSelector(
     ({SHOP}: RootState) => SHOP.categoriesAndCurations,
   );
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const availableGiftCards = useSelector(selectAvailableGiftCards);
+  const availableGiftCards = useAppSelector(selectAvailableGiftCards);
 
   const supportedGiftCards = useMemo(
     () => getCardConfigFromApiConfigMap(supportedCardMap || availableCardMap),
