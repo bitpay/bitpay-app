@@ -22,6 +22,12 @@ import {
   COINBASE_CONFIG_API,
 } from './coinbase.constants';
 
+// Redirect URI
+const COINBASE_REDIRECT_URI =
+  Platform.OS !== 'android'
+    ? COINBASE_CONFIG_API.redirect_uri.mobile
+    : 'https://bitpay.com/oauth/coinbase/redirect';
+
 // OAuth
 let oauthStateCode: string = ''; // Random
 
@@ -45,11 +51,6 @@ const setRandomHex = () => {
 };
 
 const getOAuthUrl = (): string => {
-  const redirect_uri =
-    Platform.OS !== 'android'
-      ? COINBASE_CONFIG_API.redirect_uri.mobile
-      : 'https://bitpay.com/oauth/coinbase/redirect';
-
   // Random string to protect against cross-site request forgery attacks
   setRandomHex(); // set State Code
   const state = getOauthStateCode();
@@ -70,7 +71,7 @@ const getOAuthUrl = (): string => {
     '/oauth/authorize?response_type=code&client_id=' +
     client_id +
     '&redirect_uri=' +
-    redirect_uri +
+    COINBASE_REDIRECT_URI +
     '&account=all&state=' +
     state +
     '&scope=' +
@@ -93,7 +94,7 @@ const getRefreshToken = async (
     grant_type: 'refresh_token',
     client_id: CREDENTIALS.client_id,
     client_secret: CREDENTIALS.client_secret,
-    redirect_uri: COINBASE_CONFIG_API.redirect_uri.mobile,
+    redirect_uri: COINBASE_REDIRECT_URI,
     refresh_token: token.refresh_token,
   };
   const headers = {
@@ -116,7 +117,7 @@ const getAccessToken = async (code: string): Promise<CoinbaseTokenProps> => {
     code,
     client_id: CREDENTIALS.client_id,
     client_secret: CREDENTIALS.client_secret,
-    redirect_uri: COINBASE_CONFIG_API.redirect_uri.mobile,
+    redirect_uri: COINBASE_REDIRECT_URI,
   };
   const headers = {
     'Content-Type': 'application/json',
