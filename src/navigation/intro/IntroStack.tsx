@@ -24,7 +24,7 @@ export enum IntroScreens {
 }
 
 const Intro = createStackNavigator<IntroStackParamList>();
-export const IntroAnimeDelay = 400;
+export const IntroAnimeDelay = 300;
 
 const IntroStack = () => {
   return (

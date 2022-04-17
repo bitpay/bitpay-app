@@ -75,7 +75,7 @@ const IntroShop = ({navigation}: IntroContactsScreenProps) => {
           <IntroButton
             onPress={async () => {
               await dispatch(askForTrackingPermissionAndEnableSdks());
-              navigation.replace('Onboarding', {screen: 'OnboardingStart'});
+              navigation.push('Onboarding', {screen: 'OnboardingStart'});
             }}>
             Finish
           </IntroButton>
