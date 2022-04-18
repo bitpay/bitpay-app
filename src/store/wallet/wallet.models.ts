@@ -153,6 +153,10 @@ export type Rates = {
   [key in string]: Rate[];
 };
 
+export type RatesByDateRange = {
+  [key in DateRanges]: Rate[];
+};
+
 export enum DateRanges {
   Day = 1,
   Week = 7,

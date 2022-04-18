@@ -9,6 +9,7 @@ import {
   Wallet,
   WalletBalance,
   TransactionProposal,
+  RatesByDateRange,
 } from './wallet.models';
 
 export const successWalletStoreInit = (): WalletActionType => ({
@@ -52,7 +53,8 @@ export const setBackupComplete = (keyId: string): WalletActionType => ({
 });
 
 export const successGetRates = (payload: {
-  rates: Rates;
+  rates?: Rates;
+  ratesByDateRange?: RatesByDateRange;
   lastDayRates?: Rates;
   dateRange?: number;
 }): WalletActionType => ({
