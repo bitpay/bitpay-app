@@ -25,6 +25,7 @@ export {
   sendTransactionSuccess,
   sendTransactionFailed,
   clearSendTransactionStatus,
+  clearErrorStatus,
   payInvoicePending,
   payInvoiceSuccess,
   payInvoiceFailed,
@@ -43,4 +44,5 @@ export {
   coinbaseSendTransaction,
   coinbaseClearSendTransactionStatus,
   coinbasePayInvoice,
+  coinbaseClearErrorStatus,
 } from './coinbase.effects';
