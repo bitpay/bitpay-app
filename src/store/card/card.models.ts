@@ -72,3 +72,10 @@ export interface PagedTransactionData {
   totalRecordCount: number;
   transactionList: Transaction[];
 }
+
+export interface ReferredUsersType {
+  expiration: string;
+  familyName: string;
+  givenName: string;
+  status: string;
+}

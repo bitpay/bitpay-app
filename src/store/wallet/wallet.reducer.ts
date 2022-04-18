@@ -77,7 +77,11 @@ export const walletReducer = (
     }
 
     case WalletActionTypes.SUCCESS_GET_RATES: {
-      const {rates, lastDayRates, dateRange = DEFAULT_DATE_RANGE} = action.payload;
+      const {
+        rates,
+        lastDayRates,
+        dateRange = DEFAULT_DATE_RANGE,
+      } = action.payload;
       return {
         ...state,
         rates: {...state.rates, [dateRange]: {...rates}},

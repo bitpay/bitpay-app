@@ -13,12 +13,14 @@ import CustomizeVirtualCard, {
 import UpdateCardNameScreen, {
   UpdateCardNameScreenParamList,
 } from './screens/settings/UpdateCardName';
+import Referral, {ReferralParamList} from './screens/settings/Referral';
 
 export type CardStackParamList = {
   Home: CardHomeScreenParamList;
   Settings: CardSettingsParamList;
   CustomizeVirtualCard: CustomizeVirtualCardParamList;
   UpdateCardName: UpdateCardNameScreenParamList;
+  Referral: ReferralParamList;
 };
 
 export enum CardScreens {
@@ -26,6 +28,7 @@ export enum CardScreens {
   SETTINGS = 'Settings',
   CUSTOMIZE_VIRTUAL_CARD = 'CustomizeVirtualCard',
   UPDATE_CARD_NAME = 'UpdateCardName',
+  REFERRAL = 'Referral',
 }
 
 const Card = createSharedElementStackNavigator<CardStackParamList>();
@@ -76,6 +79,11 @@ const CardStack = () => {
         options={{
           headerTitle: t('Update Card Name'),
         }}
+      />
+      <Card.Screen
+        name={CardScreens.REFERRAL}
+        component={Referral}
+        options={{}}
       />
     </Card.Navigator>
   );

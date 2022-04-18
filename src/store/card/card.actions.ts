@@ -1,6 +1,11 @@
 import {InitialUserData} from '../../api/user/user.types';
 import {Network} from '../../constants';
-import {Card, PagedTransactionData, Transaction} from './card.models';
+import {
+  Card,
+  PagedTransactionData,
+  ReferredUsersType,
+  Transaction,
+} from './card.models';
 import {
   FetchCardsStatus,
   FetchOverviewStatus,
@@ -162,4 +167,25 @@ export const updateUpdateCardNameStatus = (
 ): CardActionType => ({
   type: CardActionTypes.UPDATE_UPDATE_CARD_NAME_STATUS,
   payload: {id, status},
+});
+
+export const successFetchReferralCode = (
+  id: string,
+  code: string,
+): CardActionType => ({
+  type: CardActionTypes.SUCCESS_FETCH_REFERRAL_CODE,
+  payload: {id, code},
+});
+
+export const failedFetchReferralCode = (id: string): CardActionType => ({
+  type: CardActionTypes.FAILED_FETCH_REFERRAL_CODE,
+  payload: {id},
+});
+
+export const successFetchReferredUsers = (
+  id: string,
+  referredUsers: ReferredUsersType[],
+) => ({
+  type: CardActionTypes.SUCCESS_FETCH_REFERRED_USERS,
+  payload: {id, referredUsers},
 });

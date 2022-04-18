@@ -2,6 +2,7 @@ import {
   Card,
   PagedTransactionData,
   Transaction,
+  ReferredUsersType,
 } from '../../store/card/card.models';
 
 export interface FetchAllCardsResponse {
@@ -70,5 +71,17 @@ export interface UpdateCardNameResponse {
     card: {
       nickname: string;
     };
+  };
+}
+
+export interface FetchReferralCodeResponse {
+  user: {
+    referralCode: string;
+  };
+}
+
+export interface FetchReferredUsers {
+  user: {
+    referredUsers: ReferredUsersType[];
   };
 }

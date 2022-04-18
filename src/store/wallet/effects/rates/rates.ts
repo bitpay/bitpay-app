@@ -93,7 +93,7 @@ export const startGetRates =
           alternatives.sort((a, b) => (a.name < b.name ? -1 : 1));
           dispatch(addAltCurrencyList(alternatives));
         }
-        dispatch(successGetRates({rates,lastDayRates}));
+        dispatch(successGetRates({rates, lastDayRates}));
         resolve(rates);
       } catch (err) {
         console.error(err);

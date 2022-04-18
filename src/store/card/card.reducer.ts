@@ -3,7 +3,12 @@ import {
   BitPayIdActionType,
   BitPayIdActionTypes,
 } from '../bitpay-id/bitpay-id.types';
-import {Card, PagedTransactionData, Transaction} from './card.models';
+import {
+  Card,
+  PagedTransactionData,
+  ReferredUsersType,
+  Transaction,
+} from './card.models';
 import {
   CardActionType,
   CardActionTypes,
@@ -62,6 +67,12 @@ export interface CardState {
   pendingTransactions: {
     [id: string]: Transaction[] | undefined;
   };
+  referralCode: {
+    [id: string]: string;
+  };
+  referredUsers: {
+    [id: string]: ReferredUsersType[];
+  };
 }
 
 const initialState: CardState = {
@@ -84,6 +95,8 @@ const initialState: CardState = {
   overview: null,
   settledTransactions: {},
   pendingTransactions: {},
+  referralCode: {},
+  referredUsers: {},
 };
 
 export const cardReducer = (
@@ -349,6 +362,29 @@ export const cardReducer = (
         },
       };
     }
+    case CardActionTypes.SUCCESS_FETCH_REFERRAL_CODE: {
+      return {
+        ...state,
+        referralCode: {
+          [action.payload.id]: action.payload.code,
+        },
+      };
+    }
+    case CardActionTypes.FAILED_FETCH_REFERRAL_CODE:
+      return {
+        ...state,
+        referralCode: {
+          [action.payload.id]: 'failed',
+        },
+      };
+
+    case CardActionTypes.SUCCESS_FETCH_REFERRED_USERS:
+      return {
+        ...state,
+        referredUsers: {
+          [action.payload.id]: action.payload.referredUsers,
+        },
+      };
     default:
       return state;
   }

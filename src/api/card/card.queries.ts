@@ -277,12 +277,48 @@ const FETCH_VIRTUAL_CARD_IMAGE_URLS = (
   };
 };
 
+const FETCH_REFERRAL_CODE = (token: string): GqlQueryParams => {
+  return {
+    query: `
+      query FETCH_REFERRAL_CODE($token:String!, $csrf:String) {
+        user:bitpayUser(token:$token, csrf:$csrf) {
+          referralCode: getOrGenerateReferralCode
+        }
+      }`,
+    variables: {
+      token,
+    },
+  };
+};
+
+const FETCH_REFERRED_USERS = (token: string): GqlQueryParams => {
+  return {
+    query: `
+      query START_GET_REFERRED_USERS($token:String!, $csrf:String) {
+        user:bitpayUser(token:$token, csrf:$csrf) {
+          referredUsers: getReferredUsers{
+            givenName
+            familyName
+            status
+            expiration
+          }
+        }
+      }
+    `,
+    variables: {
+      token,
+    },
+  };
+};
+
 const CardQueries = {
   FETCH_CARDS,
   FETCH_CARD,
   FETCH_OVERVIEW,
   FETCH_SETTLED_TRANSACTIONS,
   FETCH_VIRTUAL_CARD_IMAGE_URLS,
+  FETCH_REFERRAL_CODE,
+  FETCH_REFERRED_USERS,
 };
 
 export default CardQueries;

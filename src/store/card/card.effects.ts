@@ -293,3 +293,41 @@ export const START_UPDATE_CARD_NAME =
       });
     }
   };
+
+export const START_FETCH_REFERRAL_CODE =
+  (id: string): Effect =>
+  async (dispatch, getState) => {
+    try {
+      const {APP, BITPAY_ID, CARD} = getState();
+      const {network} = APP;
+      const token = BITPAY_ID.apiToken[network];
+      const code = CARD.referralCode[id];
+      if (code && code !== 'failed') {
+        return;
+      }
+      const res = await CardApi.fetchReferralCode(token);
+
+      if (res) {
+        dispatch(CardActions.successFetchReferralCode(id, res));
+      }
+    } catch (e) {
+      dispatch(CardActions.failedFetchReferralCode(id));
+    }
+  };
+
+export const START_FETCH_REFERRED_USERS =
+  (id: string): Effect =>
+  async (dispatch, getState) => {
+    try {
+      const {APP, BITPAY_ID} = getState();
+      const {network} = APP;
+      const token = BITPAY_ID.apiToken[network];
+
+      const res = await CardApi.fetchReferredUsers(token);
+      if (res) {
+        dispatch(CardActions.successFetchReferredUsers(id, res));
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };

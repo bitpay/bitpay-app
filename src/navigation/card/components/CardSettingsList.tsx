@@ -8,6 +8,7 @@ import HelpIcon from '../../../../assets/img/help.svg';
 import LockIcon from '../../../../assets/img/lock.svg';
 import OffersIcon from '../../../../assets/img/offers.svg';
 import UpdateIcon from '../../../../assets/img/update.svg';
+import PresentIcon from '../../../../assets/img/present.svg';
 import {Br, Hr} from '../../../components/styled/Containers';
 import {Link, Smallest} from '../../../components/styled/Text';
 import {URL} from '../../../constants';
@@ -197,6 +198,14 @@ const SettingsList: React.FC<SettingsListProps> = props => {
         Icon={GetHelpIcon}
         onPress={() => openUrl(URL.HELP_WIZARD)}>
         {t('Get Help')}
+      </Styled.SettingsLink>
+
+      <Hr />
+
+      <Styled.SettingsLink
+        Icon={PresentIcon}
+        onPress={() => navigation.navigate('Referral', {card})}>
+        {t('Refer & Earn')}
       </Styled.SettingsLink>
 
       <Hr />
