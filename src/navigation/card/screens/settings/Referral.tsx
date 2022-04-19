@@ -8,7 +8,13 @@ import {CardStackParamList} from '../../CardStack';
 import LargePresentSvg from '../../../../../assets/img/large-present.svg';
 import PresentSvg from '../../../../../assets/img/present.svg';
 import styled from 'styled-components/native';
-import {Air, Black, Caution25, SlateDark, White} from '../../../../styles/colors';
+import {
+  Air,
+  Black,
+  Caution25,
+  SlateDark,
+  White,
+} from '../../../../styles/colors';
 import {
   ActiveOpacity,
   CopyImgContainer,
@@ -26,6 +32,7 @@ import {
 } from '../../../../components/styled/Text';
 import CopySvg from '../../../../../assets/img/copy.svg';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
+import GhostSvg from '../../../../../assets/img/ghost-straight-face.svg';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import Clipboard from '@react-native-community/clipboard';
 import {Share, View} from 'react-native';
@@ -49,12 +56,13 @@ const ReferralHeroBackgroundColor = styled.View`
   right: 0;
   left: 0;
   bottom: 55%;
-  background-color: ${({theme: {dark}}) => dark?  Black : Air};
+  background-color: ${({theme: {dark}}) => (dark ? Black : Air)};
 `;
 
 const ScrollView = styled.ScrollView`
   margin-top: 20px;
 `;
+
 const ReferralHeroContainer = styled.View`
   padding: 20px ${ScreenGutter};
   height: 300px;
@@ -62,7 +70,7 @@ const ReferralHeroContainer = styled.View`
 `;
 
 const DescriptionContainer = styled.View`
-  padding: 5px ${ScreenGutter} 10px;
+  padding: 5px ${ScreenGutter} 20px;
   align-items: center;
 `;
 
@@ -73,7 +81,7 @@ const Paragraph = styled(H6)`
 `;
 
 const CodeContainer = styled.View`
-  padding: 10px ${ScreenGutter};
+  padding: 20px ${ScreenGutter};
 `;
 
 const VerticalSpacing = styled.View`
@@ -94,14 +102,21 @@ const HorizontalSpacing = styled.View`
 `;
 
 const PromotionTermsContainer = styled.View`
-  margin: 20px ${ScreenGutter};
+  margin: 40px ${ScreenGutter};
+`;
+
+const ZeroReferralsContainer = styled.View`
+  margin: 40px 40px 20px;
+  justify-content: center;
+  align-items: center;
 `;
 
 const FailedContainer = styled.View`
-  background-color: ${({theme: {dark}}) => dark? '#2C0F13' : Caution25};
+  background-color: ${({theme: {dark}}) => (dark ? '#2C0F13' : Caution25)};
   padding: ${ScreenGutter};
   margin: ${ScreenGutter};
 `;
+
 const Referral = ({}) => {
   const {
     params: {
@@ -221,33 +236,43 @@ const Referral = ({}) => {
 
           <Hr />
 
-          {referredUsers.map(
-            ({givenName, familyName, status, expiration}, index) => (
-              <View key={index}>
-                <CategoryRow>
-                  <SettingTitle>
-                    {givenName} {getInitial(familyName)}.
-                  </SettingTitle>
-
-                  {status === 'paid' ? (
-                    <View>
-                      <Row>
-                        <HorizontalSpacing>
-                          <PresentSvg />
-                        </HorizontalSpacing>
-
-                        <SettingTitle>$10 Earned</SettingTitle>
-                      </Row>
-                    </View>
-                  ) : (
-                    <SettingTitle style={{textAlign: 'right'}}>
-                      {getStatus(status, +expiration)}
+          {referredUsers && referredUsers.length ? (
+            referredUsers.map(
+              ({givenName, familyName, status, expiration}, index) => (
+                <View key={index}>
+                  <CategoryRow>
+                    <SettingTitle>
+                      {givenName} {getInitial(familyName)}.
                     </SettingTitle>
-                  )}
-                </CategoryRow>
-                <Hr />
-              </View>
-            ),
+
+                    {status === 'paid' ? (
+                      <View>
+                        <Row>
+                          <HorizontalSpacing>
+                            <PresentSvg />
+                          </HorizontalSpacing>
+
+                          <SettingTitle>$10 Earned</SettingTitle>
+                        </Row>
+                      </View>
+                    ) : (
+                      <SettingTitle style={{textAlign: 'right'}}>
+                        {getStatus(status, +expiration)}
+                      </SettingTitle>
+                    )}
+                  </CategoryRow>
+                  <Hr />
+                </View>
+              ),
+            )
+          ) : (
+            <ZeroReferralsContainer>
+              <GhostSvg height={50} />
+              <VerticalSpacing>
+                <H6>It looks like you have no referrals.</H6>
+                <H6 style={{textAlign: 'center'}}> Go refer someone!</H6>
+              </VerticalSpacing>
+            </ZeroReferralsContainer>
           )}
         </ReferredUsersContainer>
 
