@@ -8,7 +8,7 @@ import {CardStackParamList} from '../../CardStack';
 import LargePresentSvg from '../../../../../assets/img/large-present.svg';
 import PresentSvg from '../../../../../assets/img/present.svg';
 import styled from 'styled-components/native';
-import {Air, SlateDark, White} from '../../../../styles/colors';
+import {Air, Black, Caution25, SlateDark, White} from '../../../../styles/colors';
 import {
   ActiveOpacity,
   CopyImgContainer,
@@ -21,6 +21,7 @@ import {
   CopyToClipboardText,
   H3,
   H6,
+  H7,
   Smallest,
 } from '../../../../components/styled/Text';
 import CopySvg from '../../../../../assets/img/copy.svg';
@@ -48,7 +49,7 @@ const ReferralHeroBackgroundColor = styled.View`
   right: 0;
   left: 0;
   bottom: 55%;
-  background-color: ${Air};
+  background-color: ${({theme: {dark}}) => dark?  Black : Air};
 `;
 
 const ScrollView = styled.ScrollView`
@@ -94,6 +95,12 @@ const HorizontalSpacing = styled.View`
 
 const PromotionTermsContainer = styled.View`
   margin: 20px ${ScreenGutter};
+`;
+
+const FailedContainer = styled.View`
+  background-color: ${({theme: {dark}}) => dark? '#2C0F13' : Caution25};
+  padding: ${ScreenGutter};
+  margin: ${ScreenGutter};
 `;
 const Referral = ({}) => {
   const {
@@ -177,22 +184,31 @@ const Referral = ({}) => {
           </Paragraph>
         </DescriptionContainer>
 
-        <CodeContainer>
-          <CopyToClipboardContainer
-            onPress={copyToClipboard}
-            activeOpacity={ActiveOpacity}>
-            <CopyImgContainer>
-              {!copied ? <CopySvg width={17} /> : <CopiedSvg width={17} />}
-            </CopyImgContainer>
-            <CopyToClipboardText numberOfLines={1} ellipsizeMode={'tail'}>
-              {code}
-            </CopyToClipboardText>
-          </CopyToClipboardContainer>
+        {!code || code === 'failed' ? (
+          <FailedContainer>
+            <H7>
+              Uh oh, something went wrong retrieving your referral code. Please
+              try again later.
+            </H7>
+          </FailedContainer>
+        ) : (
+          <CodeContainer>
+            <CopyToClipboardContainer
+              onPress={copyToClipboard}
+              activeOpacity={ActiveOpacity}>
+              <CopyImgContainer>
+                {!copied ? <CopySvg width={17} /> : <CopiedSvg width={17} />}
+              </CopyImgContainer>
+              <CopyToClipboardText numberOfLines={1} ellipsizeMode={'tail'}>
+                {code}
+              </CopyToClipboardText>
+            </CopyToClipboardContainer>
 
-          <VerticalSpacing>
-            <Button onPress={onShareReferralCode}>Share</Button>
-          </VerticalSpacing>
-        </CodeContainer>
+            <VerticalSpacing>
+              <Button onPress={onShareReferralCode}>Share</Button>
+            </VerticalSpacing>
+          </CodeContainer>
+        )}
 
         <ReferredUsersContainer>
           <CategoryRow>
@@ -205,32 +221,34 @@ const Referral = ({}) => {
 
           <Hr />
 
-          {referredUsers.map(({givenName, familyName, status, expiration}) => (
-            <>
-              <CategoryRow>
-                <SettingTitle>
-                  {givenName} {getInitial(familyName)}.
-                </SettingTitle>
-
-                {status === 'paid' ? (
-                  <View>
-                    <Row>
-                      <HorizontalSpacing>
-                        <PresentSvg />
-                      </HorizontalSpacing>
-
-                      <SettingTitle>$10 Earned</SettingTitle>
-                    </Row>
-                  </View>
-                ) : (
-                  <SettingTitle style={{textAlign: 'right'}}>
-                    {getStatus(status, +expiration)}
+          {referredUsers.map(
+            ({givenName, familyName, status, expiration}, index) => (
+              <View key={index}>
+                <CategoryRow>
+                  <SettingTitle>
+                    {givenName} {getInitial(familyName)}.
                   </SettingTitle>
-                )}
-              </CategoryRow>
-              <Hr />
-            </>
-          ))}
+
+                  {status === 'paid' ? (
+                    <View>
+                      <Row>
+                        <HorizontalSpacing>
+                          <PresentSvg />
+                        </HorizontalSpacing>
+
+                        <SettingTitle>$10 Earned</SettingTitle>
+                      </Row>
+                    </View>
+                  ) : (
+                    <SettingTitle style={{textAlign: 'right'}}>
+                      {getStatus(status, +expiration)}
+                    </SettingTitle>
+                  )}
+                </CategoryRow>
+                <Hr />
+              </View>
+            ),
+          )}
         </ReferredUsersContainer>
 
         <PromotionTermsContainer>

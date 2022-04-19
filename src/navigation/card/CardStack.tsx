@@ -80,10 +80,7 @@ const CardStack = () => {
           headerTitle: t('Update Card Name'),
         }}
       />
-      <Card.Screen
-        name={CardScreens.REFERRAL}
-        component={Referral}
-      />
+      <Card.Screen name={CardScreens.REFERRAL} component={Referral} />
     </Card.Navigator>
   );
 };
