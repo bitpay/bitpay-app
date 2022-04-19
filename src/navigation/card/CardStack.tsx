@@ -83,7 +83,6 @@ const CardStack = () => {
       <Card.Screen
         name={CardScreens.REFERRAL}
         component={Referral}
-        options={{}}
       />
     </Card.Navigator>
   );

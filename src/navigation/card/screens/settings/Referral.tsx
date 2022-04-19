@@ -1,26 +1,255 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {Card} from '../../../../store/card/card.models';
-import {useAppDispatch} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {CardEffects} from '../../../../store/card';
 import {useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {CardStackParamList} from '../../CardStack';
+import LargePresentSvg from '../../../../../assets/img/large-present.svg';
+import PresentSvg from '../../../../../assets/img/present.svg';
+import styled from 'styled-components/native';
+import {Air, SlateDark, White} from '../../../../styles/colors';
+import {
+  ActiveOpacity,
+  CopyImgContainer,
+  CopyToClipboardContainer,
+  Hr,
+  ScreenGutter,
+  SettingTitle,
+} from '../../../../components/styled/Containers';
+import {
+  CopyToClipboardText,
+  H3,
+  H6,
+  Smallest,
+} from '../../../../components/styled/Text';
+import CopySvg from '../../../../../assets/img/copy.svg';
+import CopiedSvg from '../../../../../assets/img/copied-success.svg';
+import haptic from '../../../../components/haptic-feedback/haptic';
+import Clipboard from '@react-native-community/clipboard';
+import {Share, View} from 'react-native';
+import Button from '../../../../components/button/Button';
+import {
+  CategoryHeading,
+  CategoryRow,
+} from '../../components/CardSettingsList.styled';
+
 export interface ReferralParamList {
   card: Card;
 }
 
+const ReferralContainer = styled.SafeAreaView`
+  flex: 1;
+`;
+
+const ReferralHeroBackgroundColor = styled.View`
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 55%;
+  background-color: ${Air};
+`;
+
+const ScrollView = styled.ScrollView`
+  margin-top: 20px;
+`;
+const ReferralHeroContainer = styled.View`
+  padding: 20px ${ScreenGutter};
+  height: 300px;
+  justify-content: center;
+`;
+
+const DescriptionContainer = styled.View`
+  padding: 5px ${ScreenGutter} 10px;
+  align-items: center;
+`;
+
+const Paragraph = styled(H6)`
+  text-align: center;
+  margin-top: 10px;
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+`;
+
+const CodeContainer = styled.View`
+  padding: 10px ${ScreenGutter};
+`;
+
+const VerticalSpacing = styled.View`
+  margin: 20px 0;
+`;
+
+const ReferredUsersContainer = styled.View`
+  margin: 0 ${ScreenGutter};
+`;
+
+const Row = styled.View`
+  flex-direction: row;
+  justify-content: flex-end;
+`;
+
+const HorizontalSpacing = styled.View`
+  margin: 0 10px;
+`;
+
+const PromotionTermsContainer = styled.View`
+  margin: 20px ${ScreenGutter};
+`;
 const Referral = ({}) => {
   const {
     params: {
       card: {id},
     },
   } = useRoute<RouteProp<CardStackParamList, 'Referral'>>();
+  const [copied, setCopied] = useState(false);
 
   const dispatch = useAppDispatch();
-  dispatch(CardEffects.START_FETCH_REFERRAL_CODE(id));
-  dispatch(CardEffects.START_FETCH_REFERRED_USERS(id));
+  const network = useAppSelector(({APP}) => APP.network);
 
-  return <></>;
+  const {givenName} =
+    useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]) || {};
+  const code = useAppSelector(({CARD}) => CARD.referralCode[id]);
+  const referredUsers = useAppSelector(({CARD}) => CARD.referredUsers[id]);
+
+  const init = () => {
+    dispatch(CardEffects.START_FETCH_REFERRAL_CODE(id));
+    dispatch(CardEffects.START_FETCH_REFERRED_USERS(id));
+  };
+  useEffect(() => {
+    init();
+  }, [id]);
+
+  const copyToClipboard = () => {
+    haptic('impactLight');
+    if (!copied) {
+      Clipboard.setString('');
+      setCopied(true);
+    }
+  };
+
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setCopied(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [copied]);
+
+  const onShareReferralCode = async () => {
+    try {
+      const message = `Hey, checkout BitPay's new card. You can convert crypto to dollars easily. Just get the app, set up a wallet, and order the card using my code ${code}. https://${
+        network === 'testnet' ? 'test.bitpay.com' : 'bitpay.com'
+      }/card?code=${code}&ref=${givenName}`;
+
+      await Share.share({
+        message,
+      });
+    } catch (e) {}
+  };
+  const currentDate = new Date().getTime();
+
+  const getStatus = (status: string, expiration: number) => {
+    return status === 'pending' && currentDate >= expiration
+      ? 'Expired'
+      : status.charAt(0).toUpperCase() + status.slice(1);
+  };
+
+  const getInitial = (name: string) => {
+    return name?.charAt(0);
+  };
+
+  return (
+    <ReferralContainer>
+      <ScrollView>
+        <ReferralHeroContainer>
+          <ReferralHeroBackgroundColor />
+          <LargePresentSvg height={275} width={275} />
+        </ReferralHeroContainer>
+
+        <DescriptionContainer>
+          <H3> Refer a friend and get $10</H3>
+          <Paragraph medium={true}>
+            Share the referral code below and we'll load $10 on your card and
+            your friend's card after they sign up and load their first $100.
+          </Paragraph>
+        </DescriptionContainer>
+
+        <CodeContainer>
+          <CopyToClipboardContainer
+            onPress={copyToClipboard}
+            activeOpacity={ActiveOpacity}>
+            <CopyImgContainer>
+              {!copied ? <CopySvg width={17} /> : <CopiedSvg width={17} />}
+            </CopyImgContainer>
+            <CopyToClipboardText numberOfLines={1} ellipsizeMode={'tail'}>
+              {code}
+            </CopyToClipboardText>
+          </CopyToClipboardContainer>
+
+          <VerticalSpacing>
+            <Button onPress={onShareReferralCode}>Share</Button>
+          </VerticalSpacing>
+        </CodeContainer>
+
+        <ReferredUsersContainer>
+          <CategoryRow>
+            <CategoryHeading>My Referrals</CategoryHeading>
+
+            <CategoryHeading style={{textAlign: 'right'}}>
+              Status
+            </CategoryHeading>
+          </CategoryRow>
+
+          <Hr />
+
+          {referredUsers.map(({givenName, familyName, status, expiration}) => (
+            <>
+              <CategoryRow>
+                <SettingTitle>
+                  {givenName} {getInitial(familyName)}.
+                </SettingTitle>
+
+                {status === 'paid' ? (
+                  <View>
+                    <Row>
+                      <HorizontalSpacing>
+                        <PresentSvg />
+                      </HorizontalSpacing>
+
+                      <SettingTitle>$10 Earned</SettingTitle>
+                    </Row>
+                  </View>
+                ) : (
+                  <SettingTitle style={{textAlign: 'right'}}>
+                    {getStatus(status, +expiration)}
+                  </SettingTitle>
+                )}
+              </CategoryRow>
+              <Hr />
+            </>
+          ))}
+        </ReferredUsersContainer>
+
+        <PromotionTermsContainer>
+          <Smallest>
+            Promotion Terms: BitPay Cardholders may refer others to become new
+            Cardholders. If a referred person acquires a Card and loads at least
+            US$100 within 30 days of signing up for the Card, then BitPay will
+            provide an incentive US$10 Card load to both the referring
+            Cardholder and new Cardholder. The new Cardholder must not
+            previously have signed up for a virtual or physical BitPay Card. The
+            referred person must sign up using the referring Cardholder’s
+            referral code. BitPay reserves the right to modify this promotion or
+            discontinue eligibility for the promotion at any time and in its
+            sole discretion.
+          </Smallest>
+        </PromotionTermsContainer>
+      </ScrollView>
+    </ReferralContainer>
+  );
 };
 
 export default Referral;
