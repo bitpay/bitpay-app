@@ -45,6 +45,8 @@ import styled from 'styled-components/native';
 import ToggleSwitch from '../../../../../components/toggle-switch/ToggleSwitch';
 import {useTranslation} from 'react-i18next';
 import {Hr} from '../../../../../components/styled/Containers';
+import {Alert} from 'react-native';
+
 export interface ConfirmParamList {
   wallet: Wallet;
   recipient: Recipient;
@@ -91,6 +93,7 @@ const Confirm = () => {
   const enableReplaceByFee = useAppSelector(
     ({WALLET}) => WALLET.enableReplaceByFee,
   );
+  const customizeNonce = useAppSelector(({WALLET}) => WALLET.customizeNonce);
 
   const key = allKeys[wallet?.keyId!];
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
@@ -103,15 +106,17 @@ const Confirm = () => {
     sendingTo,
     sendingFrom,
     subTotal,
-    gasLimit,
+    gasLimit: _gasLimit,
     gasPrice: _gasPrice,
-    nonce,
+    nonce: _nonce,
     total: _total,
   } = txDetails;
 
   const [fee, setFee] = useState(_fee);
   const [total, setTotal] = useState(_total);
   const [gasPrice, setGasPrice] = useState(_gasPrice);
+  const [gasLimit, setGasLimit] = useState(_gasLimit);
+  const [nonce, setNonce] = useState(_nonce);
   const {currencyAbbreviation} = wallet;
 
   useLayoutEffect(() => {
@@ -142,6 +147,40 @@ const Confirm = () => {
     }
   };
 
+  const editValue = (title: string, type: string) => {
+    Alert.prompt(
+      title,
+      '',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => {},
+          style: 'cancel',
+        },
+        {
+          text: 'OK',
+          onPress: value => {
+            const opts: {nonce?: number; gasLimit?: number} = {};
+            switch (type) {
+              case 'nonce':
+                opts.nonce = Number(value);
+                break;
+              case 'gasLimit':
+                opts.gasLimit = Number(value);
+                break;
+              default:
+                break;
+            }
+            updateTxProposal(opts);
+          },
+        },
+      ],
+      'plain-text',
+      '',
+      'number-pad',
+    );
+  };
+
   const onChangeEnableReplaceByFee = async (enableRBF?: boolean) => {
     updateTxProposal({
       enableRBF,
@@ -165,6 +204,8 @@ const Confirm = () => {
       setFee(_txDetails.fee);
       setTotal(_txDetails.total);
       setGasPrice(_txDetails.gasPrice);
+      setGasLimit(_txDetails.gasLimit);
+      setNonce(_txDetails.nonce);
       await sleep(500);
       dispatch(dismissOnGoingProcessModal());
     } catch (err: any) {
@@ -257,10 +298,24 @@ const Confirm = () => {
           />
         ) : null}
         {gasLimit !== undefined ? (
-          <SharedDetailRow description={'Gas limit'} value={gasLimit} hr />
+          <SharedDetailRow
+            description={'Gas limit'}
+            value={gasLimit}
+            onPress={() => editValue('Edit gas limit', 'gasLimit')}
+            hr
+          />
         ) : null}
         {nonce !== undefined && nonce !== null ? (
-          <SharedDetailRow description={'Nonce'} value={nonce} hr />
+          <SharedDetailRow
+            description={'Nonce'}
+            value={nonce}
+            onPress={
+              customizeNonce
+                ? () => editValue('Edit nonce', 'nonce')
+                : undefined
+            }
+            hr
+          />
         ) : null}
         <SendingFrom sender={sendingFrom} hr />
         <Amount description={'SubTotal'} amount={subTotal} />
