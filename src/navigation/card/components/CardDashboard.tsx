@@ -32,6 +32,8 @@ import {
   EmptyGhostContainer,
   EmptyListContainer,
   EmptyListDescription,
+  FloatingActionButton,
+  FloatingActionButtonContainer,
   TransactionListFooter,
   TransactionListHeader,
   TransactionListHeaderIcon,
@@ -107,17 +109,6 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerLeft: () => (
-        <HeaderRightContainer>
-          <Button
-            style={{marginLeft: 10}}
-            onPress={() => goToAmountScreen()}
-            buttonType="pill"
-            buttonStyle="primary">
-            {t('Add Funds')}
-          </Button>
-        </HeaderRightContainer>
-      ),
       headerRight: () => (
         <HeaderRightContainer>
           <Button
@@ -251,54 +242,63 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   };
 
   return (
-    <FlatList
-      data={filteredTransactions}
-      renderItem={renderTransaction}
-      initialNumToRender={30}
-      onEndReachedThreshold={0.1}
-      onEndReached={() => fetchNextPage()}
-      ListHeaderComponent={
-        <>
-          <Carousel<Card[]>
-            ref={carouselRef}
-            vertical={false}
-            layout="default"
-            activeSlideAlignment="center"
-            firstItem={currentGroupIdx}
-            data={cardGroups}
-            renderItem={renderSlide}
-            onSnapToItem={idx => {
-              navigation.setParams({
-                id: cardGroups[idx][0].id,
-              });
-            }}
-            itemWidth={CARD_WIDTH + 20}
-            sliderWidth={WIDTH}
-            inactiveSlideScale={1}
-            inactiveSlideOpacity={1}
-            containerCustomStyle={{
-              flexGrow: 0,
-              marginBottom: 32,
-              marginTop: 32,
-            }}
-          />
+    <>
+      <FlatList
+        data={filteredTransactions}
+        renderItem={renderTransaction}
+        initialNumToRender={30}
+        onEndReachedThreshold={0.1}
+        onEndReached={() => fetchNextPage()}
+        ListHeaderComponent={
+          <>
+            <Carousel<Card[]>
+              ref={carouselRef}
+              vertical={false}
+              layout="default"
+              activeSlideAlignment="center"
+              firstItem={currentGroupIdx}
+              data={cardGroups}
+              renderItem={renderSlide}
+              onSnapToItem={idx => {
+                navigation.setParams({
+                  id: cardGroups[idx][0].id,
+                });
+              }}
+              itemWidth={CARD_WIDTH + 20}
+              sliderWidth={WIDTH}
+              inactiveSlideScale={1}
+              inactiveSlideOpacity={1}
+              containerCustomStyle={{
+                flexGrow: 0,
+                marginBottom: 32,
+                marginTop: 32,
+              }}
+            />
 
-          {!isLoadingInitial ? (
-            <TransactionListHeader>
-              <TransactionListHeaderTitle>
-                {filteredTransactions.length <= 0 ? null : 'Recent Activity'}
-              </TransactionListHeaderTitle>
+            {!isLoadingInitial ? (
+              <TransactionListHeader>
+                <TransactionListHeaderTitle>
+                  {filteredTransactions.length <= 0 ? null : 'Recent Activity'}
+                </TransactionListHeaderTitle>
 
-              <TransactionListHeaderIcon onPress={() => onRefresh()}>
-                <RefreshIcon />
-              </TransactionListHeaderIcon>
-            </TransactionListHeader>
-          ) : null}
-        </>
-      }
-      ListFooterComponent={listFooterComponent}
-      ListEmptyComponent={listEmptyComponent}
-    />
+                <TransactionListHeaderIcon onPress={() => onRefresh()}>
+                  <RefreshIcon />
+                </TransactionListHeaderIcon>
+              </TransactionListHeader>
+            ) : null}
+          </>
+        }
+        ListFooterComponent={listFooterComponent}
+        ListEmptyComponent={listEmptyComponent}
+      />
+      <FloatingActionButtonContainer>
+        <FloatingActionButton
+          onPress={() => goToAmountScreen()}
+          buttonStyle={'primary'}
+          children={t('Add Funds')}
+        />
+      </FloatingActionButtonContainer>
+    </>
   );
 };
 
