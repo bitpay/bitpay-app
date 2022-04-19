@@ -10,7 +10,8 @@ export interface WalletState {
   createdOn: number;
   keys: {[key in string]: Key};
   lastDayRates: Rates;
-  rates: {[key in number]: Rates};
+  rates: Rates;
+  ratesByDateRange: {[key in DateRanges]: Rates};
   priceHistory: Array<PriceHistory>;
   tokenOptions: {[key in string]: Token};
   walletTermsAccepted: boolean;
@@ -31,6 +32,11 @@ const initialState: WalletState = {
   createdOn: Date.now(),
   keys: {},
   rates: {},
+  ratesByDateRange: {
+    1: {},
+    7: {},
+    30: {},
+  },
   lastDayRates: {},
   priceHistory: [],
   tokenOptions: {},
@@ -79,12 +85,18 @@ export const walletReducer = (
     case WalletActionTypes.SUCCESS_GET_RATES: {
       const {
         rates,
+        ratesByDateRange,
         lastDayRates,
         dateRange = DEFAULT_DATE_RANGE,
       } = action.payload;
+
       return {
         ...state,
-        rates: {...state.rates, [dateRange]: {...rates}},
+        rates: {...state.rates, ...rates},
+        ratesByDateRange: {
+          ...state.ratesByDateRange,
+          [dateRange]: {...ratesByDateRange},
+        },
         ratesCacheKey: {...state.ratesCacheKey, [dateRange]: Date.now()},
         lastDayRates: {...state.lastDayRates, ...lastDayRates},
       };

@@ -20,6 +20,7 @@ import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingImage} from '../components/Containers';
 import OnboardingSlide from '../components/OnboardingSlide';
 import {OnboardingStackParamList} from '../OnboardingStack';
+import {useAndroidBackHandler} from 'react-navigation-backhandler';
 
 type OnboardingStartScreenProps = StackScreenProps<
   OnboardingStackParamList,
@@ -74,6 +75,8 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
   const isPaired = useSelector<RootState, boolean>(({APP, BITPAY_ID}) => {
     return !!BITPAY_ID.apiToken[APP.network];
   });
+
+  useAndroidBackHandler(() => true);
 
   useLayoutEffect(() => {
     navigation.setOptions({

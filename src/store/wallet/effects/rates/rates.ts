@@ -69,7 +69,7 @@ export const startGetRates =
         )
       ) {
         console.log('Rates - using cached rates');
-        return resolve(cachedRates[DEFAULT_DATE_RANGE]);
+        return resolve(cachedRates);
       }
 
       dispatch(updateCacheKey({cacheKey: CacheKeys.RATES}));
@@ -93,7 +93,9 @@ export const startGetRates =
           alternatives.sort((a, b) => (a.name < b.name ? -1 : 1));
           dispatch(addAltCurrencyList(alternatives));
         }
-        dispatch(successGetRates({rates, lastDayRates}));
+        dispatch(
+          successGetRates({rates, lastDayRates, ratesByDateRange: rates}),
+        );
         resolve(rates);
       } catch (err) {
         console.error(err);
@@ -128,7 +130,7 @@ export const fetchHistoricalRates =
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       const {
-        WALLET: {ratesCacheKey, rates: cachedRates},
+        WALLET: {ratesCacheKey, ratesByDateRange: cachedRates},
       } = getState();
 
       if (
@@ -163,7 +165,7 @@ export const fetchHistoricalRates =
         // This pulls ALL coins in one query
         const url = `${BASE_BWS_URL}/v2/fiatrates/${fiatIsoCode}?ts=${firstDateTs}`;
         const {data: rates} = await axios.get(url);
-        dispatch(successGetRates({rates, dateRange}));
+        dispatch(successGetRates({ratesByDateRange: rates, dateRange}));
         dispatch(
           LogActions.info('[rates]: fetched historical rates successfully'),
         );

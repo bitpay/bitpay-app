@@ -8,6 +8,7 @@ import {
   Wallet,
   WalletBalance,
   TransactionProposal,
+  RatesByDateRange,
 } from './wallet.models';
 
 export enum WalletActionTypes {
@@ -99,7 +100,8 @@ interface setBackupComplete {
 interface successGetRates {
   type: typeof WalletActionTypes.SUCCESS_GET_RATES;
   payload: {
-    rates: Rates;
+    rates?: Rates;
+    ratesByDateRange?: RatesByDateRange;
     lastDayRates?: Rates;
     dateRange?: DateRanges;
   };
