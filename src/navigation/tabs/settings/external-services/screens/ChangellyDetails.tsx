@@ -7,6 +7,7 @@ import {Br} from '../../../../../components/styled/Containers';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {changellyTxData} from '../../../../../store/swap-crypto/swap-crypto.models';
+import {changellyGetStatus} from '../../../../../store/swap-crypto/effects/changelly/changelly';
 import ChangellyIcon from '../../../../../../assets/img/services/changelly/changelly-icon.svg';
 import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
 import {
@@ -16,7 +17,6 @@ import {
 import {SwapCryptoActions} from '../../../../../store/swap-crypto';
 import {
   changellyGetStatusDetails,
-  changellyGetStatus,
   Status,
   changellyGetStatusColor,
 } from '../../../../../navigation/services/swap-crypto/utils/changelly-utils';
@@ -61,7 +61,7 @@ const ChangellyDetails: React.FC = () => {
   };
 
   const getStatus = (force?: boolean) => {
-    if (swapTx.status == 'finished' && !force) {
+    if (swapTx.status === 'finished' && !force) {
       return;
     }
     changellyGetStatus(swapTx.exchangeTxId, swapTx.status)

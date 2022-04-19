@@ -2,28 +2,9 @@ import React from 'react';
 import styled from 'styled-components/native';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
-import {
-  Black,
-  SlateDark,
-  ProgressBlue,
-  White,
-  LightBlack,
-  NeutralSlate,
-  Slate,
-} from '../../../../styles/colors';
-import {
-  BaseText,
-  Link,
-  H5,
-  H7,
-  Small,
-} from '../../../../components/styled/Text';
-import {
-  useTheme,
-  RouteProp,
-  useRoute,
-  useNavigation,
-} from '@react-navigation/native';
+import {Black, SlateDark, White, Slate} from '../../../../styles/colors';
+import {BaseText, H7} from '../../../../components/styled/Text';
+import {useTheme} from '@react-navigation/native';
 import ChangellyLogo from '../../../../../assets/img/services/changelly/changelly-vector-logo.svg';
 import ChangellyLogoDm from '../../../../../assets/img/services/changelly/changelly-vector-logo-dark.svg';
 import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';

@@ -37,7 +37,6 @@ import WalletSelectorModal from '../components/WalletSelectorModal';
 import AmountModal from '../components/AmountModal';
 import {
   changellyGetPairsParams,
-  changellyGetCurrencies,
   changellyGetFixRateForAmount,
 } from '../utils/changelly-utils';
 import {getCountry} from '../../../../lib/location/location';
@@ -46,6 +45,7 @@ import {sleep} from '../../../../utils/helper-methods';
 import {useLogger} from '../../../../utils/hooks/useLogger';
 import {GetPrecision} from '../../../../store/wallet/utils/currency';
 import {Wallet} from '../../../../store/wallet/wallet.models';
+import {changellyGetCurrencies} from '../../../../store/swap-crypto/effects/changelly/changelly';
 import {
   startOnGoingProcessModal,
   openUrlWithInAppBrowser,
@@ -166,7 +166,7 @@ const SwapCryptoRoot: React.FC = () => {
     setRateData(undefined);
 
     const coinsTo = cloneDeep(swapCryptoSupportedCoinsFrom).filter(
-      coin => coin != fromWallet.currencyAbbreviation.toLowerCase(),
+      coin => coin !== fromWallet.currencyAbbreviation.toLowerCase(),
     );
 
     setSwapCryptoSupportedCoinsTo(coinsTo);
@@ -185,18 +185,14 @@ const SwapCryptoRoot: React.FC = () => {
     if (fromWalletSelected) {
       setFromWalletData(
         SupportedCurrencyOptions.find(
-          currency =>
-            fromWalletSelected &&
-            currency.id == fromWalletSelected.credentials.coin,
+          ({id}) => id === fromWalletSelected?.credentials.coin,
         ),
       );
     }
     if (toWalletSelected) {
       setToWalletData(
         SupportedCurrencyOptions.find(
-          currency =>
-            toWalletSelected &&
-            currency.id == toWalletSelected.credentials.coin,
+          ({id}) => id === toWalletSelected?.credentials.coin,
         ),
       );
     }
@@ -209,12 +205,8 @@ const SwapCryptoRoot: React.FC = () => {
     }
 
     if (fromWalletSelected.balance && fromWalletSelected.balance.sat) {
-      const unitToSatoshi = GetPrecision(
-        fromWalletSelected.currencyAbbreviation,
-      )?.unitToSatoshi;
-      const unitDecimals = GetPrecision(
-        fromWalletSelected.currencyAbbreviation,
-      )?.unitDecimals;
+      const {unitToSatoshi, unitDecimals} =
+        GetPrecision(fromWalletSelected.currencyAbbreviation) || {};
       if (unitToSatoshi && unitDecimals) {
         const satToUnit = 1 / unitToSatoshi;
 
@@ -242,8 +234,8 @@ const SwapCryptoRoot: React.FC = () => {
 
     const data = {
       amountFrom: amountFrom,
-      coinFrom: fromWalletSelected.currencyAbbreviation,
-      coinTo: toWalletSelected.currencyAbbreviation,
+      coinFrom: fromWalletSelected.currencyAbbreviation.toLowerCase(),
+      coinTo: toWalletSelected.currencyAbbreviation.toLowerCase(),
     };
     changellyGetFixRateForAmount(fromWalletSelected, data)
       .then((data: any) => {
@@ -302,15 +294,12 @@ const SwapCryptoRoot: React.FC = () => {
             const actions = [
               {
                 text: 'OK',
-                action: () => {
-                  dispatch(dismissBottomNotificationModal());
-                },
+                action: () => {},
                 primary: true,
               },
               {
                 text: 'Submit a ticket',
                 action: async () => {
-                  dispatch(dismissBottomNotificationModal());
                   await sleep(1000);
                   dispatch(
                     openUrlWithInAppBrowser(
@@ -339,15 +328,12 @@ const SwapCryptoRoot: React.FC = () => {
           const actions = [
             {
               text: 'OK',
-              action: () => {
-                dispatch(dismissBottomNotificationModal());
-              },
+              action: () => {},
               primary: true,
             },
             {
               text: 'Submit a ticket',
               action: async () => {
-                dispatch(dismissBottomNotificationModal());
                 await sleep(1000);
                 dispatch(
                   openUrlWithInAppBrowser(
@@ -386,19 +372,16 @@ const SwapCryptoRoot: React.FC = () => {
         // onGoingProcessProvider.clear();
 
         if (amountFrom > maxAmount) {
-          const msg = `The amount entered is greater than the maximum allowed: ${maxAmount} ${fromWalletSelected.currencyAbbreviation.toUpperCase()}`;
+          const msg = `The amount entered is greater than the maximum allowed: ${maxAmount} ${fromWalletData?.currencyAbbreviation}`;
           const actions = [
             {
               text: 'OK',
-              action: () => {
-                dispatch(dismissBottomNotificationModal());
-              },
+              action: () => {},
               primary: true,
             },
             {
               text: 'Use Max Amount',
               action: async () => {
-                dispatch(dismissBottomNotificationModal());
                 setAmountFrom(maxAmount);
                 await sleep(400);
                 // updateReceivingAmount();
@@ -428,7 +411,7 @@ const SwapCryptoRoot: React.FC = () => {
           //       amount: amountFrom,
           //       fee: estimatedFee,
           //       minAmount: minAmount,
-          //       coin: fromWalletSelected.currencyAbbreviation.toUpperCase(),
+          //       coin: fromWalletData.currencyAbbreviation,
           //       msg
           //     }
           //   );
@@ -445,19 +428,16 @@ const SwapCryptoRoot: React.FC = () => {
           //   });
           //   return;
           // } else {
-          const msg = `The amount entered is lower than the minimum allowed: ${minAmount} ${fromWalletSelected.currencyAbbreviation.toUpperCase()}`;
+          const msg = `The amount entered is lower than the minimum allowed: ${minAmount} ${fromWalletData?.currencyAbbreviation}`;
           const actions = [
             {
               text: 'OK',
-              action: () => {
-                dispatch(dismissBottomNotificationModal());
-              },
+              action: () => {},
               primary: true,
             },
             {
               text: 'Use Min Amount',
               action: async () => {
-                dispatch(dismissBottomNotificationModal());
                 setAmountFrom(minAmount);
                 await sleep(400);
               },
@@ -495,9 +475,7 @@ const SwapCryptoRoot: React.FC = () => {
           : [
               {
                 text: 'OK',
-                action: () => {
-                  dispatch(dismissBottomNotificationModal());
-                },
+                action: () => {},
                 primary: true,
               },
             ],
@@ -513,11 +491,7 @@ const SwapCryptoRoot: React.FC = () => {
       await sleep(400);
       const changellyCurrenciesData = await changellyGetCurrencies(true);
 
-      if (
-        changellyCurrenciesData &&
-        changellyCurrenciesData.result &&
-        changellyCurrenciesData.result.length > 0
-      ) {
+      if (changellyCurrenciesData?.result?.length) {
         const supportedCoinsWithFixRateEnabled = changellyCurrenciesData.result
           .filter(
             (coin: any) =>
@@ -613,15 +587,17 @@ const SwapCryptoRoot: React.FC = () => {
                   }}>
                   <SelectedOptionCol>
                     {fromWalletData && (
-                      <CoinIconContainer>
-                        <CurrencyImage img={fromWalletData.img} size={20} />
-                      </CoinIconContainer>
+                      <>
+                        <CoinIconContainer>
+                          <CurrencyImage img={fromWalletData.img} size={20} />
+                        </CoinIconContainer>
+                        <SelectedOptionText
+                          numberOfLines={1}
+                          ellipsizeMode={'tail'}>
+                          {fromWalletData.currencyAbbreviation}
+                        </SelectedOptionText>
+                      </>
                     )}
-                    <SelectedOptionText
-                      numberOfLines={1}
-                      ellipsizeMode={'tail'}>
-                      {fromWalletSelected.credentials.coin.toUpperCase()}
-                    </SelectedOptionText>
                   </SelectedOptionCol>
                   <ArrowContainer>
                     <SelectorArrowDown
@@ -647,8 +623,7 @@ const SwapCryptoRoot: React.FC = () => {
               <ActionsContainer>
                 <BottomDataText>
                   {fromWalletSelected.balance.crypto}{' '}
-                  {fromWalletSelected.currencyAbbreviation.toUpperCase()}{' '}
-                  available to swap
+                  {fromWalletData?.currencyAbbreviation} available to swap
                 </BottomDataText>
               </ActionsContainer>
             </>
@@ -706,7 +681,7 @@ const SwapCryptoRoot: React.FC = () => {
                     <SelectedOptionText
                       numberOfLines={1}
                       ellipsizeMode={'tail'}>
-                      {toWalletSelected.credentials.coin.toUpperCase()}
+                      {toWalletData?.currencyAbbreviation}
                     </SelectedOptionText>
                   </SelectedOptionCol>
                   {!useDefaultToWallet && (
@@ -735,9 +710,8 @@ const SwapCryptoRoot: React.FC = () => {
               {rateData?.rate && (
                 <ActionsContainer alignEnd={true}>
                   <BottomDataText>
-                    1 {fromWalletSelected?.currencyAbbreviation.toUpperCase()} ~{' '}
-                    {rateData?.rate}{' '}
-                    {toWalletSelected.currencyAbbreviation.toUpperCase()}
+                    1 {fromWalletData?.currencyAbbreviation} ~ {rateData?.rate}{' '}
+                    {toWalletData?.currencyAbbreviation}
                   </BottomDataText>
                 </ActionsContainer>
               )}
@@ -806,9 +780,7 @@ const SwapCryptoRoot: React.FC = () => {
 
       <AmountModal
         isVisible={amountModalVisible}
-        currencyAbbreviation={cloneDeep(
-          fromWalletSelected?.currencyAbbreviation,
-        )?.toUpperCase()}
+        currencyAbbreviation={fromWalletData?.currencyAbbreviation}
         onDismiss={(newAmount?: number) => {
           if (newAmount) {
             setAmountFrom(newAmount);

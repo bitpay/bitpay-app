@@ -1,7 +1,4 @@
-import axios from 'axios';
 import {Wallet} from '../../../../store/wallet/wallet.models';
-
-const uri = 'https://bws.bitpay.com/bws/api';
 
 export const changellySupportedCoins = [
   'btc',
@@ -16,44 +13,16 @@ export const changellySupportedCoins = [
   'bat',
   'shib',
   'xrp',
+  'wbtc',
 ];
 
-const generateMessageId = (walletId?: string) => {
+export const generateMessageId = (walletId?: string) => {
   const now = Date.now();
   if (walletId) {
     return `${walletId}-${now}`;
   }
   const randomInt = Math.floor(1e8 * Math.random());
   return `${randomInt}-${now}`;
-};
-
-export const changellyGetCurrencies = async (full?: boolean) => {
-  try {
-    const body = {
-      id: generateMessageId(),
-      full,
-    };
-
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-
-    const {data} = await axios.post(
-      uri + '/v1/service/changelly/getCurrencies',
-      body,
-      config,
-    );
-
-    if (data.id && data.id != body.id) {
-      console.log('The response does not match the origin of the request');
-    }
-
-    return data;
-  } catch (err) {
-    console.log(err);
-  }
 };
 
 export interface ChangellyFixRateDataType {
@@ -76,11 +45,15 @@ export interface ChangellyFixTransactionDataType {
   refundAddress: string;
 }
 
-export const changellyGetFixRateForAmount = (
+export const isCoinSupportedToSwap = (coin: string): boolean => {
+  return changellySupportedCoins.includes(coin.toLowerCase());
+};
+
+export const changellyGetFixRateForAmount = async (
   wallet: Wallet,
   data: ChangellyFixRateDataType,
 ): Promise<any> => {
-  return new Promise((resolve, reject) => {
+  try {
     const messageData = {
       id: generateMessageId(wallet.id),
       coinFrom: data.coinFrom,
@@ -88,54 +61,48 @@ export const changellyGetFixRateForAmount = (
       amountFrom: data.amountFrom,
     };
 
-    wallet
-      .changellyGetFixRateForAmount(messageData)
-      .then((data: any) => {
-        if (data.id && data.id != messageData.id) {
-          return reject(
-            'The response does not match the origin of the request',
-          );
-        }
-        return resolve(data);
-      })
-      .catch((err: any) => {
-        return reject(err);
-      });
-  });
+    const response = await wallet.changellyGetFixRateForAmount(messageData);
+
+    if (response.id && response?.id !== messageData.id) {
+      return Promise.reject(
+        'The response does not match the origin of the request',
+      );
+    }
+    return Promise.resolve(response);
+  } catch (err) {
+    return Promise.reject(err);
+  }
 };
 
-export const changellyGetPairsParams = (
+export const changellyGetPairsParams = async (
   wallet: Wallet,
   data: ChangellyPairParamsDataType,
 ): Promise<any> => {
-  return new Promise((resolve, reject) => {
+  try {
     const messageData = {
       id: generateMessageId(wallet.id),
       coinFrom: data.coinFrom,
       coinTo: data.coinTo,
     };
 
-    wallet
-      .changellyGetPairsParams(messageData)
-      .then(data => {
-        if (data.id && data.id != messageData.id) {
-          return reject(
-            'The response does not match the origin of the request',
-          );
-        }
-        return resolve(data);
-      })
-      .catch(err => {
-        return reject(err);
-      });
-  });
+    const response = await wallet.changellyGetPairsParams(messageData);
+
+    if (response.id && response.id !== messageData.id) {
+      return Promise.reject(
+        'The response does not match the origin of the request',
+      );
+    }
+    return Promise.resolve(response);
+  } catch (err) {
+    return Promise.reject(err);
+  }
 };
 
-export const changellyCreateFixTransaction = (
+export const changellyCreateFixTransaction = async (
   wallet: Wallet,
   data: ChangellyFixTransactionDataType,
 ): Promise<any> => {
-  return new Promise((resolve, reject) => {
+  try {
     const messageData = {
       id: generateMessageId(wallet.id),
       coinFrom: data.coinFrom,
@@ -146,20 +113,17 @@ export const changellyCreateFixTransaction = (
       refundAddress: data.refundAddress,
     };
 
-    wallet
-      .changellyCreateFixTransaction(messageData)
-      .then(data => {
-        if (data.id && data.id != messageData.id) {
-          return reject(
-            'The response does not match the origin of the request',
-          );
-        }
-        return resolve(data);
-      })
-      .catch(err => {
-        return reject(err);
-      });
-  });
+    const response = await wallet.changellyCreateFixTransaction(messageData);
+
+    if (response.id && response.id !== messageData.id) {
+      return Promise.reject(
+        'The response does not match the origin of the request',
+      );
+    }
+    return Promise.resolve(response);
+  } catch (err) {
+    return Promise.reject(err);
+  }
 };
 
 export interface Status {
@@ -223,47 +187,6 @@ export const changellyGetStatusDetails = (status: string): Status => {
     statusTitle,
     statusDescription,
   };
-};
-
-export const changellyGetStatus = (
-  exchangeTxId: string,
-  oldStatus: string,
-): Promise<any> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const body = {
-        id: generateMessageId(),
-        exchangeTxId,
-      };
-
-      const config = {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      };
-
-      console.log(
-        'Making a Changelly request with body: ' + JSON.stringify(body),
-      );
-
-      const {data} = await axios.post(
-        uri + '/v1/service/changelly/getStatus',
-        body,
-        config,
-      );
-
-      if (data.id && data.id != body.id) {
-        console.log('The response does not match the origin of the request');
-      }
-
-      data.exchangeTxId = exchangeTxId;
-      data.oldStatus = oldStatus;
-      return resolve(data);
-    } catch (err) {
-      console.log(err);
-      return reject(err);
-    }
-  });
 };
 
 export const changellyGetStatusColor = (status: string): string => {

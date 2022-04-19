@@ -14,11 +14,10 @@ import Button from '../../../components/button/Button';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import HistoryIcon from '../../../../assets/img/services/swap-crypto/icon-history.svg';
 import {useAppSelector} from '../../../utils/hooks';
-import {RootState} from '../../../store';
 
 export type SwapCryptoStackParamList = {
   Root?: {
-    selectedWallet?: any;
+    selectedWallet?: Wallet;
   };
   ChangellyCheckout?: {
     fromWalletSelected: Wallet;
@@ -43,7 +42,7 @@ const SwapCrypto = createStackNavigator<SwapCryptoStackParamList>();
 const SwapCryptoStack = () => {
   const navigation = useNavigation();
   const changellyHistory = useAppSelector(
-    ({SWAP_CRYPTO}: RootState) => SWAP_CRYPTO.changelly,
+    ({SWAP_CRYPTO}) => SWAP_CRYPTO.changelly,
   );
   const changellyTxs = Object.values(changellyHistory);
 

@@ -2,10 +2,8 @@ import React, {useEffect, useState} from 'react';
 import {TouchableOpacity} from 'react-native';
 import {useNavigation, useIsFocused} from '@react-navigation/native';
 import moment from 'moment';
-import {useSelector} from 'react-redux';
 import {Link} from '../../../../../components/styled/Text';
-import {useAppDispatch} from '../../../../../utils/hooks';
-import {RootState} from '../../../../../store';
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
@@ -23,11 +21,11 @@ import {
   FooterSupport,
   SupportTxt,
 } from '../styled/ExternalServicesSettings';
-import {changellyGetStatusColor} from '../../../../../navigation/services/swap-crypto/utils/changelly-utils';
+import {changellyGetStatusColor} from '../../../../services/swap-crypto/utils/changelly-utils';
 
 const ChangellySettings: React.FC = () => {
-  const changellyHistory = useSelector(
-    ({SWAP_CRYPTO}: RootState) => SWAP_CRYPTO.changelly,
+  const changellyHistory = useAppSelector(
+    ({SWAP_CRYPTO}) => SWAP_CRYPTO.changelly,
   );
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -37,7 +35,7 @@ const ChangellySettings: React.FC = () => {
   useEffect(() => {
     if (isFocused) {
       const changellyTransactions = Object.values(changellyHistory);
-      setSwapTxs(changellyTransactions);
+      setSwapTxs(changellyTransactions.sort((a, b) => b.date - a.date));
     }
   }, [isFocused]);
 
@@ -45,48 +43,45 @@ const ChangellySettings: React.FC = () => {
     <>
       <SettingsContainer>
         <Settings style={{paddingBottom: 500}}>
-          {swapTxs && swapTxs.length > 0 && <PrTitle>Transactions</PrTitle>}
-          {swapTxs &&
-            swapTxs.length > 0 &&
-            swapTxs
-              .sort((a, b) => b.date - a.date)
-              .map(swapTx => {
-                return (
-                  <PrRow
-                    key={swapTx.exchangeTxId}
-                    onPress={() => {
-                      haptic('impactLight');
-                      navigation.navigate('ExternalServicesSettings', {
-                        screen: 'ChangellyDetails',
-                        params: {
-                          swapTx: swapTx,
-                        },
-                      });
-                    }}>
-                    <PrRowLeft>
-                      <PrTxtFiatAmount>
-                        {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
-                      </PrTxtFiatAmount>
-                      {!!swapTx.status && (
-                        <PrTxtStatus
-                          style={{
-                            color: changellyGetStatusColor(swapTx.status),
-                            textTransform: 'capitalize',
-                          }}>
-                          {swapTx.status}
-                        </PrTxtStatus>
-                      )}
-                    </PrRowLeft>
-                    <PrRowRight>
-                      <PrTxtCryptoAmount>
-                        {swapTx.amountTo} {swapTx.coinTo.toUpperCase()}
-                      </PrTxtCryptoAmount>
-                      <PrTxtDate>{moment(swapTx.date).fromNow()}</PrTxtDate>
-                    </PrRowRight>
-                  </PrRow>
-                );
-              })}
-          {(!swapTxs || swapTxs.length == 0) && (
+          {!!swapTxs?.length && <PrTitle>Transactions</PrTitle>}
+          {!!swapTxs?.length &&
+            swapTxs.map(swapTx => {
+              return (
+                <PrRow
+                  key={swapTx.exchangeTxId}
+                  onPress={() => {
+                    haptic('impactLight');
+                    navigation.navigate('ExternalServicesSettings', {
+                      screen: 'ChangellyDetails',
+                      params: {
+                        swapTx: swapTx,
+                      },
+                    });
+                  }}>
+                  <PrRowLeft>
+                    <PrTxtFiatAmount>
+                      {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
+                    </PrTxtFiatAmount>
+                    {!!swapTx.status && (
+                      <PrTxtStatus
+                        style={{
+                          color: changellyGetStatusColor(swapTx.status),
+                          textTransform: 'capitalize',
+                        }}>
+                        {swapTx.status}
+                      </PrTxtStatus>
+                    )}
+                  </PrRowLeft>
+                  <PrRowRight>
+                    <PrTxtCryptoAmount>
+                      {swapTx.amountTo} {swapTx.coinTo.toUpperCase()}
+                    </PrTxtCryptoAmount>
+                    <PrTxtDate>{moment(swapTx.date).fromNow()}</PrTxtDate>
+                  </PrRowRight>
+                </PrRow>
+              );
+            })}
+          {!swapTxs?.length && (
             <NoPrMsg>
               There are currently no transactions with Changelly
             </NoPrMsg>

@@ -463,6 +463,24 @@ export const publishAndSign =
     });
   };
 
+export const createTxProposal = (
+  wallet: Wallet,
+  txp: Partial<TransactionProposal>,
+): Promise<TransactionProposal> => {
+  return new Promise((resolve, reject) => {
+    wallet.createTxProposal(
+      txp,
+      (err: Error, createdTxp: TransactionProposal) => {
+        if (err) {
+          return reject(err);
+        }
+        return resolve(createdTxp);
+      },
+      null,
+    );
+  });
+};
+
 export const publishTx = (wallet: Wallet, txp: any) => {
   return new Promise((resolve, reject) => {
     wallet.publishTxProposal({txp}, (err: Error, publishedProposal: any) => {

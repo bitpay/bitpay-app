@@ -14,7 +14,7 @@ interface WalletSelectorModalProps {
   customSupportedCurrencies?: string[];
   livenetOnly?: boolean;
   onDismiss: (toWallet?: any) => void;
-  modalContext?: string;
+  modalContext?: 'send' | 'receive' | 'deposit';
   modalTitle?: string;
 }
 

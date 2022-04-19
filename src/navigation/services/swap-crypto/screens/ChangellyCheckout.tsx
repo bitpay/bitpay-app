@@ -29,12 +29,14 @@ import {
   TransactionProposal,
 } from '../../../../store/wallet/wallet.models';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
-import {toFiat} from '../../../../store/wallet/utils/wallet';
+import {
+  toFiat,
+  GetProtocolPrefixAddress,
+} from '../../../../store/wallet/utils/wallet';
 import {
   GetPrecision,
   IsERCToken,
   GetChain,
-  GetProtoAddress,
 } from '../../../../store/wallet/utils/currency';
 import {FormatAmountStr} from '../../../../store/wallet/effects/amount/amount';
 import {
@@ -67,7 +69,10 @@ import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
 } from '../../../../store/app/app.actions';
-import {publishAndSign} from '../../../../store/wallet/effects/send/send';
+import {
+  createTxProposal,
+  publishAndSign,
+} from '../../../../store/wallet/effects/send/send';
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 import {SwapCryptoActions} from '../../../../store/swap-crypto';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
@@ -129,7 +134,6 @@ const ChangellyCheckout: React.FC = () => {
   );
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
-  // const [addressToPay, setAddressToPay] = useState<string>();
   const [txData, setTxData] = useState<any>();
 
   const alternativeIsoCode = 'USD';
@@ -155,7 +159,7 @@ const ChangellyCheckout: React.FC = () => {
     }
 
     if (fromWalletSelected.currencyAbbreviation.toLowerCase() === 'bch') {
-      addressFrom = GetProtoAddress(
+      addressFrom = GetProtocolPrefixAddress(
         fromWalletSelected.currencyAbbreviation.toLowerCase(),
         fromWalletSelected.network,
         addressFrom,
@@ -230,14 +234,11 @@ const ChangellyCheckout: React.FC = () => {
           payinAddress = data.result.payinAddress;
         }
 
-        // setAddressToPay(cloneDeep(payinAddress));
-
         payinExtraId = data.result.payinExtraId
           ? data.result.payinExtraId
           : undefined; // (destinationTag) Used for coins like: XRP, XLM, EOS, IGNIS, BNB, XMR, ARDOR, DCT, XEM
         setExchangeTxId(data.result.id);
         setAmountExpectedFrom(data.result.amountExpectedFrom);
-        // amountTo = data.result.amountTo;
         setAmountTo(Number(data.result.amountTo));
         status = data.result.status;
 
@@ -268,7 +269,6 @@ const ChangellyCheckout: React.FC = () => {
 
         createTx(fromWalletSelected, payinAddress, depositSat, payinExtraId)
           .then(async ctxp => {
-            console.log('========== CTXP: ', ctxp);
             setCtxp(ctxp);
             setFee(ctxp.fee);
 
@@ -373,13 +373,13 @@ const ChangellyCheckout: React.FC = () => {
       });
   };
 
-  const createTx = (
+  const createTx = async (
     wallet: Wallet,
     payinAddress: string,
     depositSat: number,
     destTag?: string,
-  ): Promise<any> => {
-    return new Promise((resolve, reject) => {
+  ) => {
+    try {
       const message =
         fromWalletSelected.currencyAbbreviation.toUpperCase() +
         ' to ' +
@@ -407,7 +407,7 @@ const ChangellyCheckout: React.FC = () => {
       if (IsERCToken(wallet.currencyAbbreviation.toLowerCase())) {
         let tokens = Object.values(TokenOpts);
         const token = tokens.find(
-          token => token.symbol == wallet.currencyAbbreviation.toUpperCase(),
+          token => token.symbol === wallet.currencyAbbreviation.toUpperCase(),
         );
 
         if (token && token.address) {
@@ -433,8 +433,8 @@ const ChangellyCheckout: React.FC = () => {
         txp.fee = sendMaxInfo.fee;
       } else {
         if (
-          wallet.currencyAbbreviation.toLowerCase() == 'btc' ||
-          GetChain(wallet.currencyAbbreviation.toLowerCase()) == 'eth'
+          wallet.currencyAbbreviation.toLowerCase() === 'btc' ||
+          GetChain(wallet.currencyAbbreviation.toLowerCase()) === 'eth'
         ) {
           txp.feeLevel = 'priority';
         } // Avoid expired order due to slow TX confirmation
@@ -444,41 +444,17 @@ const ChangellyCheckout: React.FC = () => {
         txp.destinationTag = destTag;
       }
 
-      createTxProposal(wallet, txp)
-        .then(ctxp => {
-          return resolve(ctxp);
-        })
-        .catch(err => {
-          return reject({
-            title: 'Could not create transaction',
-            message: BWCErrorMessage(err),
-          });
-        });
-    });
-  };
-
-  const createTxProposal = (
-    wallet: Wallet,
-    txp: Partial<TransactionProposal>,
-  ): Promise<TransactionProposal> => {
-    return new Promise((resolve, reject) => {
-      wallet.createTxProposal(
-        txp,
-        (err: any, createdTxp: any) => {
-          if (err) {
-            return reject(err);
-          }
-          logger.debug('Transaction created');
-          return resolve(createdTxp);
-        },
-        null,
-      );
-    });
+      const ctxp = await createTxProposal(wallet, txp);
+      return Promise.resolve(ctxp);
+    } catch (err) {
+      return Promise.reject({
+        title: 'Could not create transaction',
+        message: BWCErrorMessage(err),
+      });
+    }
   };
 
   const makePayment = async () => {
-    console.log('-------makePayment txData: ', txData);
-
     try {
       dispatch(
         startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT),
@@ -488,7 +464,6 @@ const ChangellyCheckout: React.FC = () => {
       const broadcastedTx = (await dispatch<any>(
         publishAndSign({txp: ctxp!, key, wallet: fromWalletSelected}),
       )) as any;
-      console.log('====== broadcastedTx: ', broadcastedTx);
       saveChangellyTx();
       dispatch(dismissOnGoingProcessModal());
       await sleep(400);
