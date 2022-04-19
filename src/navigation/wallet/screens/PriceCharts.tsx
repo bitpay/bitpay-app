@@ -37,10 +37,11 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import {CustomErrorMessage} from '../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {
+  LineSegment,
   VictoryArea,
+  VictoryCursorContainer,
   VictoryGroup,
   VictoryTooltip,
-  VictoryVoronoiContainer,
 } from 'victory-native';
 import {DateRanges} from '../../../store/wallet/wallet.models';
 import {Defs, Stop, LinearGradient} from 'react-native-svg';
@@ -54,7 +55,6 @@ export type PriceChartsParamList = {
 interface ChartDisplayDataType {
   x: number;
   y: number;
-  label: string;
 }
 
 interface ChartDomainType {
@@ -74,7 +74,6 @@ const defaultDisplayData: ChartDataType = {
     {
       x: 0,
       y: 0,
-      label: '',
     },
   ],
 };
@@ -167,16 +166,14 @@ const PriceCharts = () => {
   }, [navigation, currencyName]);
 
   const [loading, setLoading] = useState(true);
+  const [tooltipOrientation, setTooltipOrientation] = useState<string>('left');
   const [showRageDateSelector, setShowRageDateSelector] = useState(true);
   const [displayData, setDisplayData] =
     useState<ChartDataType>(defaultDisplayData);
   const [cachedRates, setCachedRates] =
     useState<{[key in DateRanges]: ChartDataType}>(defaultCachedRates);
 
-  const getFormattedData = (
-    rates: Array<number>,
-    currencyAbbreviation?: string,
-  ): ChartDataType => {
+  const getFormattedData = (rates: Array<number>): ChartDataType => {
     let data = rates;
 
     // reduce number of points to improve performance
@@ -192,10 +189,6 @@ const PriceCharts = () => {
       data: data.map((value, key) => ({
         x: key,
         y: value,
-        label: formatFiatAmount(value, defaultAltCurrency.isoCode, {
-          customPrecision: 'minimal',
-          currencyAbbreviation,
-        }),
       })),
       domain: {
         x: [0, data.length - 1],
@@ -217,10 +210,7 @@ const PriceCharts = () => {
       const historicFiatRates = (await dispatch<any>(
         fetchHistoricalRates(dateRange, currencyAbbreviation),
       )) as Array<number>;
-      return getFormattedData(
-        historicFiatRates.reverse(),
-        currencyAbbreviation,
-      );
+      return getFormattedData(historicFiatRates.reverse());
     } catch (e) {
       throw e;
     }
@@ -281,15 +271,12 @@ const PriceCharts = () => {
   useEffect(() => {
     if (loading) {
       const defaultDateRange = DateRanges.Day;
-      const formattedData = getFormattedData(
-        priceDisplay,
-        currencyAbbreviation,
-      );
+      const formattedData = getFormattedData(priceDisplay);
       setCachedRates({...cachedRates, ...{[defaultDateRange]: formattedData}});
       setDisplayData(formattedData);
       setLoading(false);
     }
-  }, [loading]);
+  }, [loading, cachedRates, currencyAbbreviation, priceDisplay]);
 
   return (
     <SafeAreaView>
@@ -313,9 +300,52 @@ const PriceCharts = () => {
         {!loading ? (
           <VictoryGroup
             containerComponent={
-              <VictoryVoronoiContainer
-                voronoiDimension="x"
-                mouseFollowTooltips
+              <VictoryCursorContainer
+                cursorComponent={
+                  <LineSegment
+                    style={{
+                      stroke:
+                        theme.dark && coinColor === Black ? White : coinColor,
+                    }}
+                  />
+                }
+                onCursorChange={value => {
+                  const orientation =
+                    displayData.domain && value < displayData.domain.x[1] / 2
+                      ? 'left'
+                      : 'right';
+                  setTooltipOrientation((prevState: string) =>
+                    prevState !== orientation ? orientation : prevState,
+                  );
+                }}
+                cursorDimension={'x'}
+                cursorLabel={({datum}: any) =>
+                  formatFiatAmount(datum.y, 'USD', {
+                    customPrecision: 'minimal',
+                    currencyAbbreviation,
+                  })
+                }
+                cursorLabelComponent={
+                  <VictoryTooltip
+                    cornerRadius={5}
+                    pointerLength={0}
+                    centerOffset={{
+                      x: tooltipOrientation === 'left' ? 40 : -50,
+                      y: -50,
+                    }}
+                    renderInPortal={false}
+                    flyoutStyle={{
+                      stroke:
+                        theme.dark && coinColor === Black ? White : coinColor,
+                      fill: theme.dark ? Black : White,
+                    }}
+                    style={{
+                      fill:
+                        theme.dark && coinColor === Black ? White : coinColor,
+                      fontFamily,
+                    }}
+                  />
+                }
               />
             }
             width={WIDTH}
@@ -324,23 +354,7 @@ const PriceCharts = () => {
             domain={displayData?.domain}
             domainPadding={{y: 40}}>
             <VictoryArea
-              labelComponent={
-                <VictoryTooltip
-                  constrainToVisibleArea={true}
-                  cornerRadius={5}
-                  pointerLength={5}
-                  renderInPortal={false}
-                  flyoutStyle={{
-                    stroke:
-                      theme.dark && coinColor === Black ? White : coinColor,
-                    fill: theme.dark ? Black : White,
-                  }}
-                  style={{
-                    fill: theme.dark && coinColor === Black ? White : coinColor,
-                    fontFamily,
-                  }}
-                />
-              }
+              interpolation={'monotoneX'}
               style={chartStyle}
               data={displayData?.data}
             />
