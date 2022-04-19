@@ -121,19 +121,27 @@ export const startImportWithDerivationPath =
         );
         const data = await createKeyAndCredentials(opts);
         const {wallet, key: _key} = data;
-        const key = buildKeyObj({
-          key: _key,
-          wallets: [
-            merge(wallet, buildWalletObj(wallet.credentials, tokenOpts)),
-          ],
-          backupComplete: true,
+        wallet.openWallet(async (err: Error) => {
+          if (err) {
+            if (err.message.indexOf('not found') > 0) {
+              err = new Error('WALLET_DOES_NOT_EXIST');
+            }
+            throw err;
+          }
+          const key = buildKeyObj({
+            key: _key,
+            wallets: [
+              merge(wallet, buildWalletObj(wallet.credentials, tokenOpts)),
+            ],
+            backupComplete: true,
+          });
+          dispatch(
+            successImport({
+              key,
+            }),
+          );
+          resolve(key);
         });
-        dispatch(
-          successImport({
-            key,
-          }),
-        );
-        resolve(key);
       } catch (e) {
         dispatch(failedImport());
         reject(e);
