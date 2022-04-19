@@ -1,4 +1,4 @@
-import {useFocusEffect} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useCallback, useLayoutEffect, useMemo} from 'react';
 import {useRef, useState} from 'react';
@@ -26,6 +26,7 @@ import {
 } from '../../../store/card/card.models';
 import {selectCardGroups} from '../../../store/card/card.selectors';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {WalletScreens} from '../../wallet/WalletStack';
 import {CardStackParamList} from '../CardStack';
 import {
   EmptyGhostContainer,
@@ -54,6 +55,7 @@ const toUiTransaction = (tx: Transaction, settled: boolean) => {
 
 const CardDashboard: React.FC<CardDashboardProps> = props => {
   const dispatch = useAppDispatch();
+  const navigator = useNavigation();
   const {t} = useTranslation();
   const {id, navigation} = props;
   const carouselRef = useRef<Carousel<Card[]>>(null);
@@ -82,8 +84,40 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const onViewDetailsClickRef = useRef(onViewDetailsClick);
   onViewDetailsClickRef.current = onViewDetailsClick;
 
+  const goToConfirmScreen = (amount: number) => {
+    navigator.navigate('Wallet', {
+      screen: WalletScreens.DEBIT_CARD_CONFIRM,
+      params: {
+        amount,
+        card: activeCard,
+      },
+    });
+  };
+
+  const goToAmountScreen = () => {
+    navigator.navigate('Wallet', {
+      screen: WalletScreens.AMOUNT,
+      params: {
+        fiatCurrencyAbbreviation: activeCard.currency.code,
+        opts: {hideSendMax: true},
+        onAmountSelected: selectedAmount => goToConfirmScreen(+selectedAmount),
+      },
+    });
+  };
+
   useLayoutEffect(() => {
     navigation.setOptions({
+      headerLeft: () => (
+        <HeaderRightContainer>
+          <Button
+            style={{marginLeft: 10}}
+            onPress={() => goToAmountScreen()}
+            buttonType="pill"
+            buttonStyle="primary">
+            {t('Add Funds')}
+          </Button>
+        </HeaderRightContainer>
+      ),
       headerRight: () => (
         <HeaderRightContainer>
           <Button

@@ -45,6 +45,9 @@ import RequestSpecificAmountQR from './screens/request-specific-amount/RequestSp
 import TransactionDetails from './screens/TransactionDetails';
 import TransactionProposalDetails from './screens/TransactionProposalDetails';
 import GlobalSelect, {GlobalSelectParamList} from './screens/GlobalSelect';
+import DebitCardConfirm, {
+  DebitCardConfirmParamList,
+} from './screens/send/confirm/DebitCardConfirm';
 import GiftCardConfirm, {
   GiftCardConfirmParamList,
 } from './screens/send/confirm/GiftCardConfirm';
@@ -87,6 +90,7 @@ export type WalletStackParamList = {
     wallet: WalletModel;
   };
   Confirm: ConfirmParamList;
+  DebitCardConfirm: DebitCardConfirmParamList;
   GiftCardConfirm: GiftCardConfirmParamList;
   PayProConfirm: PayProConfirmParamList;
   CreateMultisig: CreateMultisigProps;
@@ -133,6 +137,7 @@ export enum WalletScreens {
   AMOUNT = 'Amount',
   SEND_TO = 'SendTo',
   CONFIRM = 'Confirm',
+  DEBIT_CARD_CONFIRM = 'DebitCardConfirm',
   GIFT_CARD_CONFIRM = 'GiftCardConfirm',
   PAY_PRO_CONFIRM = 'PayProConfirm',
   CREATE_MULTISIG = 'CreateMultisig',
@@ -249,6 +254,14 @@ const WalletStack = () => {
           }}
           name={WalletScreens.CONFIRM}
           component={Confirm}
+        />
+        <Wallet.Screen
+          options={{
+            headerTitle: () => <HeaderTitle>Confirm Payment</HeaderTitle>,
+            ...TransitionPresets.ModalPresentationIOS,
+          }}
+          name={WalletScreens.DEBIT_CARD_CONFIRM}
+          component={DebitCardConfirm}
         />
         <Wallet.Screen
           options={{
