@@ -44,5 +44,4 @@ export {
   coinbaseSendTransaction,
   coinbaseClearSendTransactionStatus,
   coinbasePayInvoice,
-  coinbaseClearErrorStatus,
 } from './coinbase.effects';

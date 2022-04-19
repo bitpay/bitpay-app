@@ -26,7 +26,6 @@ import {
   sendTransactionSuccess,
   sendTransactionFailed,
   clearSendTransactionStatus,
-  clearErrorStatus,
   payInvoicePending,
   payInvoiceSuccess,
   payInvoiceFailed,
@@ -412,9 +411,4 @@ export const coinbasePayInvoice =
         dispatch(LogActions.error(coinbaseParseErrorToString(error)));
       }
     }
-  };
-
-export const coinbaseClearErrorStatus =
-  (): Effect<Promise<any>> => async dispatch => {
-    dispatch(clearErrorStatus());
   };

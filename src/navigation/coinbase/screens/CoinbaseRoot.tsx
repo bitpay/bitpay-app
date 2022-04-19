@@ -11,7 +11,7 @@ import CoinbaseIntro from '../components/CoinbaseIntro';
 import {
   coinbaseParseErrorToString,
   coinbaseLinkAccount,
-  coinbaseClearErrorStatus,
+  clearErrorStatus,
 } from '../../../store/coinbase';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
@@ -59,7 +59,7 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({
             {
               text: 'OK',
               action: () => {
-                dispatch(coinbaseClearErrorStatus());
+                dispatch(clearErrorStatus());
                 navigation.goBack();
               },
               primary: true,
