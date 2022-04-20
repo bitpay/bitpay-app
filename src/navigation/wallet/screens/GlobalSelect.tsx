@@ -283,7 +283,8 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             screen: WalletScreens.AMOUNT,
             params: {
               opts: {hideSendMax: true},
-              currencyAbbreviation: wallet.currencyAbbreviation.toUpperCase(),
+              currencyAbbreviationRouteParam:
+                wallet.currencyAbbreviation.toUpperCase(),
               onAmountSelected: async (amount, setButtonState, opts) => {
                 try {
                   setButtonState('loading');
