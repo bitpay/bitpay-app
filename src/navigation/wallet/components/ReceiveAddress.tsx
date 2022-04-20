@@ -152,13 +152,13 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
     dispatch(showBottomNotificationModal(msg));
   };
 
-  const createAddress = async () => {
+  const createAddress = async (newAddress: boolean = false) => {
     let {coin, network} = wallet.credentials;
     const prefix = 'Could not create address';
 
     try {
       const walletAddress = (await dispatch<any>(
-        createWalletAddress({wallet}),
+        createWalletAddress({wallet, newAddress}),
       )) as string;
       setLoading(false);
       if (coin === 'bch') {
@@ -177,7 +177,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
 
           if (retryCount < 3) {
             setRetryCount(retryCount + 1);
-            createAddress();
+            createAddress(newAddress);
             return;
           } else {
             showErrorMessage(
@@ -247,7 +247,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
     <SheetModal isVisible={isVisible} onBackdropPress={_closeModal}>
       <ReceiveAddressContainer>
         <ReceiveAddressHeader
-          onPressRefresh={createAddress}
+          onPressRefresh={() => createAddress(true)}
           contextHandlers={headerContextHandlers}
           showRefresh={isUtxo}
         />
