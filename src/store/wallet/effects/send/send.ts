@@ -1,7 +1,6 @@
 import {Effect} from '../../../index';
 import {
   CustomTransactionData,
-  InvoiceCreationParams,
   Key,
   ProposalErrorHandlerProps,
   Rates,
@@ -29,10 +28,8 @@ import {
   GeneralError,
 } from '../../../../navigation/wallet/components/ErrorMessages';
 import {BWCErrorMessage, getErrorName} from '../../../../constants/BWCError';
-import {GiftCardInvoiceParams, Invoice} from '../../../shop/shop.models';
+import {Invoice} from '../../../shop/shop.models';
 import {GetPayProDetails, HandlePayPro, PayProOptions} from '../paypro/paypro';
-import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../constants/config';
-import {ShopEffects} from '../../../shop';
 import {
   dismissDecryptPasswordModal,
   showDecryptPasswordModal,
@@ -648,61 +645,6 @@ export const createPayProTxProposal = async ({
     message: message || description,
   });
 };
-
-export const createInvoiceAndTxProposal =
-  (
-    wallet: Wallet,
-    invoiceCreationParams: InvoiceCreationParams,
-  ): Effect<
-    Promise<{
-      txDetails: TxDetails;
-      txp: TransactionProposal;
-    }>
-  > =>
-  async dispatch => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const {cardConfig, amount} = invoiceCreationParams!;
-        if (!cardConfig) {
-          return;
-        }
-        const invoiceParams: GiftCardInvoiceParams = {
-          amount: amount,
-          brand: cardConfig.name,
-          currency: cardConfig.currency,
-          clientId: wallet!.id,
-          discounts: invoiceCreationParams.discounts?.map(d => d.code) || [],
-          transactionCurrency: wallet.currencyAbbreviation.toUpperCase(),
-        };
-        const cardOrder = await dispatch(
-          ShopEffects.startCreateGiftCardInvoice(cardConfig, invoiceParams),
-        );
-        const {invoiceId, invoice} = cardOrder;
-        const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
-        const paymentUrl = `${baseUrl}/i/${invoiceId}`;
-        resolve(
-          await dispatch(
-            await createPayProTxProposal({
-              wallet,
-              paymentUrl,
-              invoice,
-              invoiceID: invoiceId,
-              message: `${formatFiatAmount(
-                invoiceParams.amount,
-                cardConfig.currency,
-              )} Gift Card`,
-              customData: {
-                giftCardName: cardConfig.name,
-                service: 'giftcards',
-              },
-            }),
-          ),
-        );
-      } catch (err) {
-        reject(err);
-      }
-    });
-  };
 
 export const getSendMaxInfo = ({
   wallet,

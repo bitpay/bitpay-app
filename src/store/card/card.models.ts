@@ -72,3 +72,10 @@ export interface PagedTransactionData {
   totalRecordCount: number;
   transactionList: Transaction[];
 }
+
+export interface DebitCardTopUpInvoiceParams {
+  invoicePrice: number;
+  invoiceCurrency: string;
+  transactionCurrency: string;
+  walletId: string;
+}
