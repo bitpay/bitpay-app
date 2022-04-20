@@ -324,7 +324,8 @@ const SendTo = () => {
         screen: WalletScreens.AMOUNT,
         params: {
           opts: opts || {},
-          currencyAbbreviation: wallet.currencyAbbreviation.toUpperCase(),
+          currencyAbbreviationRouteParam:
+            wallet.currencyAbbreviation.toUpperCase(),
           onAmountSelected: async (amount, setButtonState, opts) => {
             try {
               setButtonState('loading');
