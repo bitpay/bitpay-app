@@ -24,7 +24,7 @@ import KeyWalletsRow, {
 } from '../../../components/list/KeyWalletsRow';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
-import {LightBlack, SlateDark, White} from '../../../styles/colors';
+import {LightBlack, White} from '../../../styles/colors';
 import {H4, TextAlign, BaseText} from '../../../components/styled/Text';
 import {RouteProp, useRoute} from '@react-navigation/core';
 import {WalletScreens, WalletStackParamList} from '../WalletStack';
@@ -192,7 +192,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
 
   if (context === 'deposit' && toCoinbase) {
     wallets = wallets.filter(
-      wallet => wallet.currencyAbbreviation === toCoinbase.currency,
+      wallet => wallet.currencyAbbreviation === toCoinbase?.currency,
     );
   }
 

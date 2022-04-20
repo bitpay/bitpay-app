@@ -158,9 +158,15 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => (
-        <HeaderTitle>Create {currencyAbbreviation} Wallet</HeaderTitle>
-      ),
+      headerTitle: () => {
+        return (
+          <HeaderTitle>
+            {isToken
+              ? `Add ${currencyAbbreviation} Token`
+              : `Add ${currencyAbbreviation} Wallet`}
+          </HeaderTitle>
+        );
+      },
     });
   }, [navigation]);
 
@@ -359,7 +365,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
               placeholder={`${currencyAbbreviation} Wallet`}
-              label={'WALLET NAME'}
+              label={isToken ? 'TOKEN NAME' : 'WALLET NAME'}
               onBlur={onBlur}
               onChangeText={(text: string) => onChange(text)}
               error={errors.walletName?.message}
@@ -463,7 +469,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
 
         <ButtonContainer>
           <Button onPress={add} buttonStyle={'primary'}>
-            Add Wallet/Token
+            Add {isToken ? 'Token' : 'Wallet'}
           </Button>
         </ButtonContainer>
       </ScrollView>
