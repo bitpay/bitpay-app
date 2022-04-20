@@ -1,4 +1,5 @@
 import styled from 'styled-components/native';
+import {View} from 'react-native';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, H5} from '../../../components/styled/Text';
 import {
@@ -8,6 +9,7 @@ import {
   Slate,
   SlateDark,
 } from '../../../styles/colors';
+import Button from '../../../components/button/Button';
 
 export const TransactionListHeader = styled.View`
 background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
@@ -48,4 +50,18 @@ export const EmptyListDescription = styled(BaseText)`
   font-size: 16px;
   line-height: 25px;
   text-align: center;
+`;
+
+export const FloatingActionButtonContainer = styled(View)`
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 20px;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
+`;
+
+export const FloatingActionButton = styled(Button)`
+  border-radius: 50px;
 `;

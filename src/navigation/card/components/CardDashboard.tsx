@@ -1,4 +1,4 @@
-import {useFocusEffect} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useCallback, useLayoutEffect, useMemo} from 'react';
 import {useRef, useState} from 'react';
@@ -26,11 +26,14 @@ import {
 } from '../../../store/card/card.models';
 import {selectCardGroups} from '../../../store/card/card.selectors';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {WalletScreens} from '../../wallet/WalletStack';
 import {CardStackParamList} from '../CardStack';
 import {
   EmptyGhostContainer,
   EmptyListContainer,
   EmptyListDescription,
+  FloatingActionButton,
+  FloatingActionButtonContainer,
   TransactionListFooter,
   TransactionListHeader,
   TransactionListHeaderIcon,
@@ -54,6 +57,7 @@ const toUiTransaction = (tx: Transaction, settled: boolean) => {
 
 const CardDashboard: React.FC<CardDashboardProps> = props => {
   const dispatch = useAppDispatch();
+  const navigator = useNavigation();
   const {t} = useTranslation();
   const {id, navigation} = props;
   const carouselRef = useRef<Carousel<Card[]>>(null);
@@ -81,6 +85,27 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   };
   const onViewDetailsClickRef = useRef(onViewDetailsClick);
   onViewDetailsClickRef.current = onViewDetailsClick;
+
+  const goToConfirmScreen = (amount: number) => {
+    navigator.navigate('Wallet', {
+      screen: WalletScreens.DEBIT_CARD_CONFIRM,
+      params: {
+        amount,
+        card: activeCard,
+      },
+    });
+  };
+
+  const goToAmountScreen = () => {
+    navigator.navigate('Wallet', {
+      screen: WalletScreens.AMOUNT,
+      params: {
+        fiatCurrencyAbbreviation: activeCard.currency.code,
+        opts: {hideSendMax: true},
+        onAmountSelected: selectedAmount => goToConfirmScreen(+selectedAmount),
+      },
+    });
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -217,54 +242,63 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   };
 
   return (
-    <FlatList
-      data={filteredTransactions}
-      renderItem={renderTransaction}
-      initialNumToRender={30}
-      onEndReachedThreshold={0.1}
-      onEndReached={() => fetchNextPage()}
-      ListHeaderComponent={
-        <>
-          <Carousel<Card[]>
-            ref={carouselRef}
-            vertical={false}
-            layout="default"
-            activeSlideAlignment="center"
-            firstItem={currentGroupIdx}
-            data={cardGroups}
-            renderItem={renderSlide}
-            onSnapToItem={idx => {
-              navigation.setParams({
-                id: cardGroups[idx][0].id,
-              });
-            }}
-            itemWidth={CARD_WIDTH + 20}
-            sliderWidth={WIDTH}
-            inactiveSlideScale={1}
-            inactiveSlideOpacity={1}
-            containerCustomStyle={{
-              flexGrow: 0,
-              marginBottom: 32,
-              marginTop: 32,
-            }}
-          />
+    <>
+      <FlatList
+        data={filteredTransactions}
+        renderItem={renderTransaction}
+        initialNumToRender={30}
+        onEndReachedThreshold={0.1}
+        onEndReached={() => fetchNextPage()}
+        ListHeaderComponent={
+          <>
+            <Carousel<Card[]>
+              ref={carouselRef}
+              vertical={false}
+              layout="default"
+              activeSlideAlignment="center"
+              firstItem={currentGroupIdx}
+              data={cardGroups}
+              renderItem={renderSlide}
+              onSnapToItem={idx => {
+                navigation.setParams({
+                  id: cardGroups[idx][0].id,
+                });
+              }}
+              itemWidth={CARD_WIDTH + 20}
+              sliderWidth={WIDTH}
+              inactiveSlideScale={1}
+              inactiveSlideOpacity={1}
+              containerCustomStyle={{
+                flexGrow: 0,
+                marginBottom: 32,
+                marginTop: 32,
+              }}
+            />
 
-          {!isLoadingInitial ? (
-            <TransactionListHeader>
-              <TransactionListHeaderTitle>
-                {filteredTransactions.length <= 0 ? null : 'Recent Activity'}
-              </TransactionListHeaderTitle>
+            {!isLoadingInitial ? (
+              <TransactionListHeader>
+                <TransactionListHeaderTitle>
+                  {filteredTransactions.length <= 0 ? null : 'Recent Activity'}
+                </TransactionListHeaderTitle>
 
-              <TransactionListHeaderIcon onPress={() => onRefresh()}>
-                <RefreshIcon />
-              </TransactionListHeaderIcon>
-            </TransactionListHeader>
-          ) : null}
-        </>
-      }
-      ListFooterComponent={listFooterComponent}
-      ListEmptyComponent={listEmptyComponent}
-    />
+                <TransactionListHeaderIcon onPress={() => onRefresh()}>
+                  <RefreshIcon />
+                </TransactionListHeaderIcon>
+              </TransactionListHeader>
+            ) : null}
+          </>
+        }
+        ListFooterComponent={listFooterComponent}
+        ListEmptyComponent={listEmptyComponent}
+      />
+      <FloatingActionButtonContainer>
+        <FloatingActionButton
+          onPress={() => goToAmountScreen()}
+          buttonStyle={'primary'}
+          children={t('Add Funds')}
+        />
+      </FloatingActionButtonContainer>
+    </>
   );
 };
 

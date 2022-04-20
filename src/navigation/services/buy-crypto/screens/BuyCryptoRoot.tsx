@@ -73,8 +73,6 @@ const BuyCryptoRoot: React.FC = () => {
     ...new Set([...simplexSupportedCoins, ...wyreSupportedCoins]),
   ];
 
-  const env = 'dev'; // TODO: take the correct environment
-
   const showModal = (id: string) => {
     switch (id) {
       case 'paymentMethod':
@@ -144,7 +142,7 @@ const BuyCryptoRoot: React.FC = () => {
             wallet.credentials &&
             ((wallet.credentials.network === 'livenet' &&
               supportedCoins.includes(wallet.credentials.coin.toLowerCase())) ||
-              (env === 'dev' &&
+              (__DEV__ &&
                 wallet.credentials.network === 'testnet' &&
                 wyreSupportedCoins.includes(
                   wallet.credentials.coin.toLowerCase(),
@@ -165,7 +163,7 @@ const BuyCryptoRoot: React.FC = () => {
       wallet.credentials &&
       ((wallet.credentials.network === 'livenet' &&
         supportedCoins.includes(wallet.credentials.coin.toLowerCase())) ||
-        (env === 'dev' &&
+        (__DEV__ &&
           wallet.credentials.network === 'testnet' &&
           wyreSupportedCoins.includes(wallet.credentials.coin.toLowerCase())))
     ) {

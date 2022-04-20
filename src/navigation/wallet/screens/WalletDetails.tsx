@@ -65,6 +65,7 @@ import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {isCoinSupportedToBuy} from '../../../navigation/services/buy-crypto/utils/buy-crypto-utils';
+import {isCoinSupportedToSwap} from '../../../navigation/services/swap-crypto/utils/changelly-utils';
 import sortBy from 'lodash.sortby';
 import {FlatList} from 'react-native';
 import {
@@ -264,7 +265,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         navigation.navigate('Wallet', {
           screen: 'Amount',
           params: {
-            currencyAbbreviation:
+            currencyAbbreviationRouteParam:
               fullWalletObj.currencyAbbreviation.toUpperCase(),
             onAmountSelected: async (amount, setButtonState) => {
               setButtonState('success');
@@ -678,6 +679,21 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                             opts: {
                               hideSendMax: true,
                             },
+                          },
+                        });
+                      },
+                    }}
+                    swap={{
+                      hide:
+                        fullWalletObj.credentials?.network === 'testnet' ||
+                        !isCoinSupportedToSwap(
+                          fullWalletObj.currencyAbbreviation,
+                        ),
+                      cta: () => {
+                        navigation.navigate('SwapCrypto', {
+                          screen: 'Root',
+                          params: {
+                            selectedWallet: fullWalletObj,
                           },
                         });
                       },

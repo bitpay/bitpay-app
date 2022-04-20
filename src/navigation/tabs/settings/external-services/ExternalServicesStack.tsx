@@ -11,10 +11,13 @@ import SimplexSettings from './screens/SimplexSettings';
 import SimplexDetails from './screens/SimplexDetails';
 import WyreSettings from './screens/WyreSettings';
 import WyreDetails from './screens/WyreDetails';
+import ChangellySettings from './screens/ChangellySettings';
+import ChangellyDetails from './screens/ChangellyDetails';
 import {
   simplexPaymentData,
   wyrePaymentData,
 } from '../../../../store/buy-crypto/buy-crypto.models';
+import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 
 export type ExternalServicesSettingsStackParamList = {
   Root: undefined;
@@ -26,6 +29,10 @@ export type ExternalServicesSettingsStackParamList = {
   WyreDetails: {
     paymentRequest: wyrePaymentData;
   };
+  ChangellySettings: undefined;
+  ChangellyDetails: {
+    swapTx: changellyTxData;
+  };
 };
 
 export enum ExternalServicesSettingsScreens {
@@ -34,6 +41,8 @@ export enum ExternalServicesSettingsScreens {
   SIMPLEX_DETAILS = 'SimplexDetails',
   WYRE_SETTINGS = 'WyreSettings',
   WYRE_DETAILS = 'WyreDetails',
+  CHANGELLY_SETTINGS = 'ChangellySettings',
+  CHANGELLY_DETAILS = 'ChangellyDetails',
 }
 
 const ExternalServicesSettings =
@@ -81,6 +90,22 @@ const ExternalServicesSettingsStack = () => {
       <ExternalServicesSettings.Screen
         name={ExternalServicesSettingsScreens.WYRE_DETAILS}
         component={WyreDetails}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Order Details')}</HeaderTitle>,
+        }}
+      />
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.CHANGELLY_SETTINGS}
+        component={ChangellySettings}
+        options={{
+          headerTitle: () => (
+            <HeaderTitle>{t('Changelly Settings')}</HeaderTitle>
+          ),
+        }}
+      />
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.CHANGELLY_DETAILS}
+        component={ChangellyDetails}
         options={{
           headerTitle: () => <HeaderTitle>{t('Order Details')}</HeaderTitle>,
         }}

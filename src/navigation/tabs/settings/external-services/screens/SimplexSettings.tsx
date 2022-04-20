@@ -37,10 +37,9 @@ const SimplexSettings: React.FC = () => {
 
   useEffect(() => {
     if (isFocused) {
-      // TODO: filter Payment Requests history with env
       const simplexPaymentRequests = Object.values(simplexHistory).filter(
-        pr => pr.env == 'dev',
-      ); // TODO: correct env
+        pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
+      );
       setTransactions(simplexPaymentRequests);
     }
   }, [isFocused]);

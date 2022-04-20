@@ -239,39 +239,38 @@ export const BuildKeysAndWalletsList = ({
   payProOptions?: PayProOptions;
   defaultAltCurrencyIsoCode?: string;
 }) => {
-  return Object.keys(keys).map(keyId => {
-    const keyObj = keys[keyId];
-    const paymentOptions =
-      payProOptions?.paymentOptions?.filter(option => option.selected) ||
-      payProOptions?.paymentOptions;
-    return {
-      key: keyId,
-      keyName: keyObj.keyName || 'My Key',
-      wallets: keys[keyId].wallets
-        .filter(wallet => {
-          if (paymentOptions) {
-            return paymentOptions.some(
-              ({chain, currency, network: optionNetwork}) => {
-                return (
-                  wallet.currencyAbbreviation === chain.toLowerCase() &&
-                  (!wallet.tokens ||
-                    wallet.tokens?.includes(currency.toLowerCase())) &&
-                  wallet.network === optionNetwork
-                );
-              },
-            );
-          }
-          if (network) {
-            return network === wallet.network;
-          }
-          return true;
-        })
-        .map(walletObj => {
-          const {
-            balance,
-            credentials: {network},
-          } = walletObj;
-          return merge(cloneDeep(walletObj), {
+  return Object.keys(keys)
+    .map(keyId => {
+      const keyObj = keys[keyId];
+      const paymentOptions =
+        payProOptions?.paymentOptions?.filter(option => option.selected) ||
+        payProOptions?.paymentOptions;
+      return {
+        key: keyId,
+        keyName: keyObj.keyName || 'My Key',
+        wallets: keys[keyId].wallets
+          .filter(wallet => {
+            if (paymentOptions) {
+              return paymentOptions.some(
+                ({currency, network: optionNetwork}) => {
+                  return (
+                    wallet.currencyAbbreviation === currency.toLowerCase() &&
+                    wallet.network === optionNetwork
+                  );
+                },
+              );
+            }
+            if (network) {
+              return network === wallet.network;
+            }
+            return true;
+          })
+          .map(walletObj => {
+            const {
+              balance,
+              credentials: {network},
+            } = walletObj;
+            return merge(cloneDeep(walletObj), {
             cryptoBalance: balance.crypto,
             fiatBalance: formatFiatAmount(
               balance.fiat,
@@ -284,9 +283,10 @@ export const BuildKeysAndWalletsList = ({
             ),
             network,
           });
-        }),
-    };
-  });
+          }),
+      };
+    })
+    .filter(key => key.wallets.length);
 };
 
 // These 2 functions were taken from

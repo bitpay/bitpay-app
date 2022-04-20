@@ -34,6 +34,7 @@ import {
   getPaymentUrl,
   simplexFiatAmountLimits,
   simplexPaymentRequest,
+  simplexEnv,
 } from '../utils/simplex-utils';
 import {wyreFiatAmountLimits} from '../utils/wyre-utils';
 import {RootState} from '../../../../store';
@@ -319,7 +320,7 @@ const BuyCryptoOffers: React.FC = () => {
         requested_amount: amount,
         end_user_id: selectedWallet.id,
         payment_methods: paymentMethodArray,
-        env: 'sandbox', // TODO: send the correct environment: sandbox/production
+        env: simplexEnv,
       };
 
       selectedWallet
@@ -455,7 +456,7 @@ const BuyCryptoOffers: React.FC = () => {
         country,
         amountIncludeFees: true, // If amountIncludeFees is true, use sourceAmount instead of amount
         walletType,
-        env: 'sandbox', // TODO: send the correct environment: sandbox/production
+        env: simplexEnv,
       };
 
       selectedWallet
@@ -543,7 +544,7 @@ const BuyCryptoOffers: React.FC = () => {
           created_on: Date.now(),
           crypto_amount: offers.simplex.quoteData.digital_money.amount,
           coin: coin.toUpperCase(),
-          env: 'dev',
+          env: __DEV__ ? 'dev' : 'prod',
           fiat_base_amount: offers.simplex.quoteData.fiat_money.base_amount,
           fiat_total_amount: offers.simplex.quoteData.fiat_money.total_amount,
           fiat_total_amount_currency: fiatCurrency,
@@ -615,7 +616,7 @@ const BuyCryptoOffers: React.FC = () => {
       amountIncludeFees: true, // If amountIncludeFees is true, use sourceAmount instead of amount
       redirectUrl,
       failureRedirectUrl,
-      env: 'sandbox', // TODO: send the correct environment: sandbox/production
+      env: simplexEnv,
     };
 
     selectedWallet

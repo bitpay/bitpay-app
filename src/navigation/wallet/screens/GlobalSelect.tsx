@@ -25,7 +25,7 @@ import KeyWalletsRow, {
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {LightBlack, SlateDark, White} from '../../../styles/colors';
-import {H4, TextAlign} from '../../../components/styled/Text';
+import {H4, TextAlign, BaseText} from '../../../components/styled/Text';
 import {RouteProp, useRoute} from '@react-navigation/core';
 import {WalletScreens, WalletStackParamList} from '../WalletStack';
 import {useNavigation, useTheme} from '@react-navigation/native';
@@ -38,20 +38,23 @@ import {
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
 const ModalHeader = styled.View`
-  padding: ${ScreenGutter};
+  height: 50px;
+  margin-right: 10px;
+  margin-left: 10px;
   display: flex;
   flex-direction: row;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  position: relative;
 `;
 
 const CloseModalButtonContainer = styled.View`
   position: absolute;
-  left: 15px;
+  left: 0px;
 `;
 
 const CloseModalButton = styled.TouchableOpacity`
-  margin: 15px 0;
+  margin: 15px;
   padding: 5px;
   height: 41px;
   width: 41px;
@@ -60,13 +63,6 @@ const CloseModalButton = styled.TouchableOpacity`
   display: flex;
   justify-content: center;
   align-items: center;
-`;
-
-const ModalTitle = styled.Text`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  text-align: center;
-  font-size: 20px;
-  font-weight: bold;
 `;
 
 const SafeAreaView = styled.SafeAreaView`
@@ -91,6 +87,12 @@ export const WalletSelectMenuHeaderContainer = styled.View`
 
 export const WalletSelectMenuBodyContainer = styled.ScrollView`
   padding-bottom: 20px;
+`;
+
+const NoWalletsMsg = styled(BaseText)`
+  font-size: 15px;
+  text-align: center;
+  margin-top: 20px;
 `;
 
 export type GlobalSelectParamList = {
@@ -138,20 +140,26 @@ const buildList = (category: string[], wallets: Wallet[]) => {
 
 interface GlobalSelectProps {
   useAsModal: any;
+  modalTitle?: string;
   customSupportedCurrencies?: string[];
   onDismiss?: (newWallet?: any) => void;
-  title?: string;
+  modalContext?: 'send' | 'receive' | 'deposit';
+  livenetOnly?: boolean;
 }
 
 const GlobalSelect: React.FC<GlobalSelectProps> = ({
   useAsModal,
+  modalTitle,
   customSupportedCurrencies,
   onDismiss,
-  title,
+  modalContext,
+  livenetOnly,
 }) => {
-  const {
-    params: {context, toCoinbase},
-  } = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
+  const route = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
+  let {context, toCoinbase} = route.params || {};
+  if (useAsModal && modalContext) {
+    context = modalContext;
+  }
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -189,8 +197,10 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
     );
   }
 
-  if (useAsModal) {
-    wallets = wallets.filter(wallet => wallet.isComplete());
+  if (livenetOnly) {
+    wallets = wallets.filter(
+      wallet => wallet.credentials.network === 'livenet',
+    );
   }
 
   const supportedCoins = useMemo(
@@ -277,7 +287,8 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             screen: WalletScreens.AMOUNT,
             params: {
               opts: {hideSendMax: true},
-              currencyAbbreviation: wallet.currencyAbbreviation.toUpperCase(),
+              currencyAbbreviationRouteParam:
+                wallet.currencyAbbreviation.toUpperCase(),
               onAmountSelected: async (amount, setButtonState, opts) => {
                 try {
                   setButtonState('loading');
@@ -403,18 +414,28 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
               />
             </CloseModalButton>
           </CloseModalButtonContainer>
-          {(title || toCoinbase?.title) && (
-            <ModalTitle>{title || toCoinbase?.title}</ModalTitle>
+          {(!!modalTitle || toCoinbase?.title) && (
+            <TextAlign align={'center'}>
+              <H4>{modalTitle || toCoinbase?.title}</H4>
+            </TextAlign>
           )}
         </ModalHeader>
       )}
       <GlobalSelectContainer>
-        <FlatList
-          contentContainerStyle={{paddingBottom: 100}}
-          data={[...supportedCoins, ...otherCoins]}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-        />
+        {[...supportedCoins, ...otherCoins].length > 0 && (
+          <FlatList
+            contentContainerStyle={{paddingBottom: 100}}
+            data={[...supportedCoins, ...otherCoins]}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
+          />
+        )}
+        {[...supportedCoins, ...otherCoins].length === 0 &&
+          context === 'send' && (
+            <NoWalletsMsg>
+              There are no wallets with funds available to use this feature.
+            </NoWalletsMsg>
+          )}
         <SheetModal
           isVisible={walletSelectModalVisible}
           onBackdropPress={() => setWalletSelectModalVisible(false)}>
