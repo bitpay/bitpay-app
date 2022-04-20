@@ -162,6 +162,7 @@ const ContactsDetails = ({
               name,
               address: newAddress,
               currency: coin,
+              network,
             },
           },
         });

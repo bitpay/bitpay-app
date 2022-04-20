@@ -336,6 +336,7 @@ const CoinbaseAccount = ({
               name: account.name || 'Coinbase',
               currency: account.currency.code.toLowerCase(),
               address: newAddress,
+              network: 'livenet',
             },
           },
         });
