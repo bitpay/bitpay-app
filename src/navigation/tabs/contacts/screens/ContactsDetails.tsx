@@ -144,6 +144,11 @@ const ContactsDetails = ({
   );
 
   if (availableWallets.length) {
+    let newAddress = address;
+    if (coin === 'bch') {
+      // Remove prefix
+      newAddress = ToCashAddress(address, false);
+    }
     contactOptions.push({
       img: theme.dark ? <SendIconWhite /> : <SendIcon />,
       title: 'Send ' + coin.toUpperCase(),
@@ -155,7 +160,7 @@ const ContactsDetails = ({
             context: 'contact',
             recipient: {
               name,
-              address: ToCashAddress(address, false),
+              address: newAddress,
               currency: coin,
             },
           },
