@@ -347,7 +347,6 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         });
       } else {
         setReceiveWallet(wallet);
-        await sleep(500);
         setShowReceiveAddressBottomModal(true);
       }
     },
@@ -379,7 +378,6 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
 
   const closeModal = () => {
     setShowReceiveAddressBottomModal(false);
-    setReceiveWallet(undefined);
   };
 
   useEffect(() => {

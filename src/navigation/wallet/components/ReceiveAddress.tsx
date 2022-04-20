@@ -232,7 +232,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
     };
   }
 
-  const isUtxo = IsUtxoCoin(wallet.currencyAbbreviation);
+  const isUtxo = IsUtxoCoin(wallet?.currencyAbbreviation);
 
   const _closeModal = () => {
     closeModal();
