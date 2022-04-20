@@ -24,7 +24,7 @@ import KeyWalletsRow, {
 } from '../../../components/list/KeyWalletsRow';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
-import {LightBlack, SlateDark, White} from '../../../styles/colors';
+import {LightBlack, White} from '../../../styles/colors';
 import {H4, TextAlign, BaseText} from '../../../components/styled/Text';
 import {RouteProp, useRoute} from '@react-navigation/core';
 import {WalletScreens, WalletStackParamList} from '../WalletStack';
@@ -96,12 +96,11 @@ const NoWalletsMsg = styled(BaseText)`
 `;
 
 export type GlobalSelectParamList = {
-  context: 'send' | 'receive' | 'deposit';
-  toCoinbase?: {
-    account: string;
+  context: 'send' | 'receive' | 'coinbase' | 'contact';
+  recipient?: {
+    name: string;
     address: string;
     currency: string;
-    title: string;
   };
 };
 
@@ -143,7 +142,7 @@ interface GlobalSelectProps {
   modalTitle?: string;
   customSupportedCurrencies?: string[];
   onDismiss?: (newWallet?: any) => void;
-  modalContext?: 'send' | 'receive' | 'deposit';
+  modalContext?: 'send' | 'receive' | 'coinbase' | 'contact';
   livenetOnly?: boolean;
 }
 
@@ -156,7 +155,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   livenetOnly,
 }) => {
   const route = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
-  let {context, toCoinbase} = route.params || {};
+  let {context, recipient} = route.params || {};
   if (useAsModal && modalContext) {
     context = modalContext;
   }
@@ -186,13 +185,13 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   wallets = wallets.filter(wallet => !wallet.hideWallet && wallet.isComplete());
 
   // only show wallets with funds
-  if (context === 'send' || context === 'deposit') {
+  if (context === 'send' || context === 'coinbase' || context === 'contact') {
     wallets = wallets.filter(wallet => wallet.balance.sat > 0);
   }
 
-  if (context === 'deposit' && toCoinbase) {
+  if (recipient && (context === 'coinbase' || context === 'contact')) {
     wallets = wallets.filter(
-      wallet => wallet.currencyAbbreviation === toCoinbase.currency,
+      wallet => wallet.currencyAbbreviation === recipient?.currency,
     );
   }
 
@@ -265,17 +264,16 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         onDismiss(wallet);
         return;
       }
-      if (context === 'deposit') {
-        const {account, address} = toCoinbase!;
-        // Coinbase: send from BitPay to Coinbase
+      if (context === 'coinbase' || context === 'contact') {
+        const {name, address} = recipient!;
         if (!address) {
           return;
         }
 
         try {
-          const recipient = {
-            name: account || 'Coinbase',
-            type: 'coinbase',
+          const sendTo = {
+            name,
+            type: context,
             address,
           };
 
@@ -283,14 +281,15 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             screen: WalletScreens.AMOUNT,
             params: {
               opts: {hideSendMax: true},
-              currencyAbbreviation: wallet.currencyAbbreviation.toUpperCase(),
+              currencyAbbreviationRouteParam:
+                wallet.currencyAbbreviation.toUpperCase(),
               onAmountSelected: async (amount, setButtonState, opts) => {
                 try {
                   setButtonState('loading');
                   const {txDetails, txp} = await dispatch(
                     createProposalAndBuildTxDetails({
                       wallet,
-                      recipient,
+                      recipient: sendTo,
                       amount: Number(amount),
                       ...opts,
                     }),
@@ -301,7 +300,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                     screen: 'Confirm',
                     params: {
                       wallet,
-                      recipient,
+                      recipient: sendTo,
                       txp,
                       txDetails,
                       amount: Number(amount),
@@ -346,7 +345,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         setShowReceiveAddressBottomModal(true);
       }
     },
-    [context, navigation, onDismiss, toCoinbase, useAsModal],
+    [context, navigation, onDismiss, recipient, useAsModal],
   );
 
   const renderItem = useCallback(
@@ -409,9 +408,9 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
               />
             </CloseModalButton>
           </CloseModalButtonContainer>
-          {(!!modalTitle || toCoinbase?.title) && (
+          {!!modalTitle && (
             <TextAlign align={'center'}>
-              <H4>{modalTitle || toCoinbase?.title}</H4>
+              <H4>{modalTitle}</H4>
             </TextAlign>
           )}
         </ModalHeader>

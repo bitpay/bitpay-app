@@ -250,11 +250,14 @@ const Confirm = () => {
 
   let recipientData;
 
-  if (recipient.type && recipient.type === 'coinbase') {
+  if (
+    recipient.type &&
+    (recipient.type === 'coinbase' || recipient.type === 'contact')
+  ) {
     recipientData = {
-      recipientName: recipient.name || 'Coinbase',
+      recipientName: recipient.name,
       recipientAddress: sendingTo.recipientAddress,
-      img: 'coinbase',
+      img: recipient.type,
     };
   } else {
     recipientData = sendingTo;
