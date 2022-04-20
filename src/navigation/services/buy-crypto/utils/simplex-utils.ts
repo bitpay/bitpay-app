@@ -1,11 +1,13 @@
 import {Currencies} from '../../../../constants/currencies';
 import {APP_NAME} from '../../../../constants/config';
+// @ts-ignore
+import {version} from '../../../../../package.json'; // TODO: better way to get version
+import UserAgent from 'react-native-user-agent';
 
 const PASSTHROUGH_URI_DEV = 'https://cmgustavo.github.io/website/simplex/';
 const PASSTHROUGH_URI_PROD = 'https://bws.bitpay.com/static/simplex/';
 
-const env = 'development'; // TODO: take the correct environment
-const simplexEnv = env == 'development' ? 'sandbox' : 'production';
+export const simplexEnv = __DEV__ ? 'sandbox' : 'production';
 
 const appName = APP_NAME;
 
@@ -80,13 +82,13 @@ export const simplexFiatAmountLimits = {
 };
 
 export const getCheckoutUrl = (): string => {
-  return env == 'development'
+  return __DEV__
     ? 'https://sandbox.test-simplexcc.com'
     : 'https://checkout.simplexcc.com';
 };
 
 export const getPassthroughUri = (): string => {
-  return env == 'development' ? PASSTHROUGH_URI_DEV : PASSTHROUGH_URI_PROD;
+  return __DEV__ ? PASSTHROUGH_URI_DEV : PASSTHROUGH_URI_PROD;
 };
 
 const paymentRequest = (wallet: any, data: any): Promise<any> => {
@@ -95,13 +97,12 @@ const paymentRequest = (wallet: any, data: any): Promise<any> => {
 };
 
 const getUserAgent = (): string => {
-  // TODO: return the correct userAgent
-  return 'application-name/1.6.4.176 CFNetwork/897.15 Darwin/17.5.0 (iPhone/6s iOS/11.3)';
+  // Example: 'application-name/1.6.4.176 CFNetwork/897.15 Darwin/17.5.0 (iPhone/6s iOS/11.3)';
+  return UserAgent.getUserAgent(); //synchronous
 };
 
 const getAppVersion = (): string => {
-  // TODO: return the correct app version
-  return '12.10.4';
+  return version;
 };
 
 const checkSimplexCoin = (coin: string): string => {

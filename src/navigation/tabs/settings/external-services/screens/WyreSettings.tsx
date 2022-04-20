@@ -33,10 +33,9 @@ const WyreSettings: React.FC = () => {
 
   useEffect(() => {
     if (isFocused) {
-      // TODO: filter Payment Requests history with env
       const wyrePaymentRequests = Object.values(wyreHistory).filter(
-        pr => pr.env == 'dev',
-      ); // TODO: correct env
+        pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
+      );
       setTransactions(wyrePaymentRequests);
     }
   }, [isFocused]);
