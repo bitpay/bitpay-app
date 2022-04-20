@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useCallback, useLayoutEffect} from 'react';
 import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
-import {RouteProp} from '@react-navigation/core';
+import {RouteProp, StackActions} from '@react-navigation/core';
 import {WalletStackParamList} from '../../../WalletStack';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {
@@ -383,6 +383,8 @@ const Confirm = () => {
                 ],
               }),
             );
+          } else if (recipient.type === 'contact') {
+            navigation.dispatch(StackActions.popToTop());
           } else {
             navigation.navigate('Wallet', {
               screen: 'WalletDetails',
