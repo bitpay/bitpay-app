@@ -155,6 +155,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
   const network = useAppSelector(({APP}) => APP.network);
   const [showOptions, setShowOptions] = useState(false);
   const [isTestnet, setIsTestnet] = useState(false);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -177,7 +178,10 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
 
   // formatting for the bottom modal
   const UIFormattedEthWallets = useMemo(
-    () => ethWallets.map(wallet => buildUIFormattedWallet(wallet)),
+    () =>
+      ethWallets.map(wallet =>
+        buildUIFormattedWallet(wallet, defaultAltCurrency.isoCode),
+      ),
     [],
   );
 
