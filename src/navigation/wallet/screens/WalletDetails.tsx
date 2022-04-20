@@ -202,8 +202,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const {walletId, key} = route.params;
   const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const fullWalletObj = findWalletById(wallets, walletId) as Wallet;
-  const uiFormattedWallet = buildUIFormattedWallet(fullWalletObj);
+  const uiFormattedWallet = buildUIFormattedWallet(
+    fullWalletObj,
+    defaultAltCurrency.isoCode,
+  );
 
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);

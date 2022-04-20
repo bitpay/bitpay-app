@@ -143,6 +143,7 @@ export const startUpdateWalletStatus =
       try {
         const {
           WALLET: {rates, lastDayRates, balanceCacheKey},
+          APP: {defaultAltCurrency},
         } = getState();
 
         const {
@@ -157,7 +158,12 @@ export const startUpdateWalletStatus =
         }
 
         const cachedBalance = wallet.balance.fiat;
-        const status = await updateWalletStatus({wallet, rates, lastDayRates});
+        const status = await updateWalletStatus({
+          wallet,
+          defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+          rates,
+          lastDayRates,
+        });
 
         dispatch(
           successUpdateWalletStatus({
@@ -216,6 +222,7 @@ export const startUpdateAllWalletStatusForKey =
       try {
         const {
           WALLET: {rates, lastDayRates, balanceCacheKey},
+          APP: {defaultAltCurrency},
         } = getState();
 
         if (!isCacheKeyStale(balanceCacheKey[key.id], BALANCE_CACHE_DURATION)) {
@@ -228,6 +235,7 @@ export const startUpdateAllWalletStatusForKey =
             return new Promise<WalletBalance>(async resolve2 => {
               const status = await updateWalletStatus({
                 wallet,
+                defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
                 rates,
                 lastDayRates,
               });
@@ -301,11 +309,13 @@ export const startUpdateAllKeyAndWalletStatus =
 
 const updateWalletStatus = ({
   wallet,
+  defaultAltCurrencyIsoCode,
   rates,
   lastDayRates,
 }: {
   wallet: Wallet;
   rates: Rates;
+  defaultAltCurrencyIsoCode: string;
   lastDayRates: Rates;
 }): Promise<WalletStatus> => {
   return new Promise(async resolve => {
@@ -356,15 +366,30 @@ const updateWalletStatus = ({
             ),
             fiat:
               network === Network.mainnet && !hideWallet
-                ? toFiat(totalAmount, 'USD', currencyAbbreviation, rates)
+                ? toFiat(
+                    totalAmount,
+                    defaultAltCurrencyIsoCode,
+                    currencyAbbreviation,
+                    rates,
+                  )
                 : 0,
             fiatLocked:
               network === Network.mainnet && !hideWallet
-                ? toFiat(lockedAmount, 'USD', currencyAbbreviation, rates)
+                ? toFiat(
+                    lockedAmount,
+                    defaultAltCurrencyIsoCode,
+                    currencyAbbreviation,
+                    rates,
+                  )
                 : 0,
             fiatLastDay:
               network === Network.mainnet && !hideWallet
-                ? toFiat(totalAmount, 'USD', currencyAbbreviation, lastDayRates)
+                ? toFiat(
+                    totalAmount,
+                    defaultAltCurrencyIsoCode,
+                    currencyAbbreviation,
+                    lastDayRates,
+                  )
                 : 0,
           };
 

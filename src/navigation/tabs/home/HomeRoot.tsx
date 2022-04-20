@@ -44,6 +44,7 @@ const HomeRoot = () => {
   const brazeAdvertisements = useAppSelector(selectBrazeAdvertisements);
   const brazeQuickLinks = useAppSelector(selectBrazeQuickLinks);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const hasKeys = Object.values(keys).length;
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups.length > 0;
@@ -239,7 +240,10 @@ const HomeRoot = () => {
         {/* ////////////////////////////// EXCHANGE RATES */}
         {memoizedExchangeRates.length ? (
           <HomeSection title="Exchange Rates">
-            <ExchangeRatesList items={memoizedExchangeRates} />
+            <ExchangeRatesList
+              items={memoizedExchangeRates}
+              defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
+            />
           </HomeSection>
         ) : null}
 

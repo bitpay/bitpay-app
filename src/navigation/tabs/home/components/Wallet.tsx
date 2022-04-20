@@ -18,6 +18,7 @@ import {HomeCarouselLayoutType} from '../../../../store/app/app.models';
 import {BoxShadow} from './Styled';
 import {View} from 'react-native';
 import Percentage from '../../../../components/percentage/Percentage';
+import {useAppSelector} from '../../../../utils/hooks';
 
 interface WalletCardComponentProps {
   wallets: Wallet[];
@@ -87,6 +88,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   layout,
 }) => {
   const theme = useTheme();
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const walletInfo = wallets.slice(0, WALLET_DISPLAY_LIMIT);
   const remainingWalletCount = getRemainingWalletCount(wallets);
   const isListView = layout === 'listView';
@@ -129,7 +131,9 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
               <NeedBackupText>Needs Backup</NeedBackupText>
             ) : (
               <>
-                <Balance>{formatFiatAmount(totalBalance, 'USD')}</Balance>
+                <Balance>
+                  {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode)}
+                </Balance>
                 {percentageDifference ? (
                   <Percentage percentageDifference={percentageDifference} />
                 ) : null}
@@ -149,7 +153,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
       header={HeaderComponent}
       body={{
         title: keyName,
-        value: formatFiatAmount(totalBalance, 'USD'),
+        value: formatFiatAmount(totalBalance, defaultAltCurrency.isoCode),
         percentageDifference,
         needsBackup,
       }}

@@ -113,20 +113,26 @@ const CogIconContainer = styled.TouchableOpacity`
   width: 45px;
 `;
 
-export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
-  id,
-  img,
-  currencyName,
-  currencyAbbreviation,
-  walletName,
-  balance,
-  credentials,
-  keyId,
-  isRefreshing,
-  hideWallet,
-  hideBalance,
-  pendingTxps,
-}) => ({
+export const buildUIFormattedWallet: (
+  wallet: Wallet,
+  defaultAltCurrencyIsoCode: string,
+) => WalletRowProps = (
+  {
+    id,
+    img,
+    currencyName,
+    currencyAbbreviation,
+    walletName,
+    balance,
+    credentials,
+    keyId,
+    isRefreshing,
+    hideWallet,
+    hideBalance,
+    pendingTxps,
+  },
+  defaultAltCurrencyIsoCode,
+) => ({
   id,
   keyId,
   img,
@@ -135,8 +141,11 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
   walletName: walletName || credentials.walletName,
   cryptoBalance: balance.crypto,
   cryptoLockedBalance: balance.cryptoLocked,
-  fiatBalance: formatFiatAmount(balance.fiat, 'usd'),
-  fiatLockedBalance: formatFiatAmount(balance.fiatLocked, 'usd'),
+  fiatBalance: formatFiatAmount(balance.fiat, defaultAltCurrencyIsoCode),
+  fiatLockedBalance: formatFiatAmount(
+    balance.fiatLocked,
+    defaultAltCurrencyIsoCode,
+  ),
   network: credentials.network,
   isRefreshing,
   hideWallet,
@@ -145,12 +154,16 @@ export const buildUIFormattedWallet: (wallet: Wallet) => WalletRowProps = ({
 });
 
 // Key overview list builder
-export const buildNestedWalletList = (coins: Wallet[], tokens: Wallet[]) => {
+export const buildNestedWalletList = (
+  coins: Wallet[],
+  tokens: Wallet[],
+  defaultAltCurrencyIso: string,
+) => {
   const walletList = [] as Array<WalletRowProps>;
 
   coins.forEach(coin => {
     walletList.push({
-      ...buildUIFormattedWallet(coin),
+      ...buildUIFormattedWallet(coin, defaultAltCurrencyIso),
     });
     // eth wallet with tokens -> for every token wallet ID grab full wallet from _tokens and add it to the list
     if (coin.tokens) {
@@ -158,7 +171,7 @@ export const buildNestedWalletList = (coins: Wallet[], tokens: Wallet[]) => {
         const tokenWallet = tokens.find(token => token.id === id);
         if (tokenWallet) {
           walletList.push({
-            ...buildUIFormattedWallet(tokenWallet),
+            ...buildUIFormattedWallet(tokenWallet, defaultAltCurrencyIso),
             isToken: true,
           });
         }
@@ -177,6 +190,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
   const [refreshing, setRefreshing] = useState(false);
   const {key} = route.params;
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
   useLayoutEffect(() => {
@@ -232,7 +246,11 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
     wallet => wallet.credentials.token && !wallet.hideWallet,
   );
 
-  const walletList = buildNestedWalletList(coins, tokens);
+  const walletList = buildNestedWalletList(
+    coins,
+    tokens,
+    defaultAltCurrency.isoCode,
+  );
 
   const keyOptions: Array<Option> = [];
 
@@ -289,7 +307,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
     <OverviewContainer>
       <BalanceContainer>
         <Balance scale={shouldScale(totalBalance)}>
-          {formatFiatAmount(totalBalance, 'USD')} USD
+          {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode)}
         </Balance>
       </BalanceContainer>
       <Hr />
@@ -394,6 +412,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
                       }),
                     );
                   }}
+                  defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
                 />
               ))}
           </KeyDropdownOptionsContainer>

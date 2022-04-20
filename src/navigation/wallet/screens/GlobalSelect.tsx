@@ -164,6 +164,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const tokens = useAppSelector(({WALLET}) => WALLET.tokenOptions);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
   const [receiveWallet, setReceiveWallet] = useState<Wallet>();
@@ -240,10 +241,13 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                 return merge(cloneDeep(wallet), {
                   cryptoBalance: balance.crypto,
                   cryptoLockedBalance: balance.cryptoLocked,
-                  fiatBalance: formatFiatAmount(balance.fiat, 'USD'),
+                  fiatBalance: formatFiatAmount(
+                    balance.fiat,
+                    defaultAltCurrency.isoCode,
+                  ),
                   fiatLockedBalance: formatFiatAmount(
                     balance.fiatLocked,
-                    'USD',
+                    defaultAltCurrency.isoCode,
                   ),
                   currencyAbbreviation: currencyAbbreviation.toUpperCase(),
                   network,

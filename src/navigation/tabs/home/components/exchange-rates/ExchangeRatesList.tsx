@@ -3,6 +3,7 @@ import React, {ReactElement} from 'react';
 import styled from 'styled-components/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
+import {useAppSelector} from '../../../../../utils/hooks';
 import ExchangeRateItem from './ExchangeRateItem';
 
 export interface ExchangeRateItemProps {
@@ -20,10 +21,11 @@ const ExchangeRateListContainer = styled.View`
 `;
 interface ExchangeRateProps {
   items: Array<ExchangeRateItemProps>;
+  defaultAltCurrencyIsoCode: string;
 }
 
 const ExchangeRatesList: React.FC<ExchangeRateProps> = props => {
-  const {items} = props;
+  const {items, defaultAltCurrencyIsoCode} = props;
   const navigation = useNavigation();
 
   return (
@@ -39,6 +41,7 @@ const ExchangeRatesList: React.FC<ExchangeRateProps> = props => {
               params: {item},
             });
           }}
+          defaultAltCurrencyIsoCode={defaultAltCurrencyIsoCode}
         />
       ))}
     </ExchangeRateListContainer>

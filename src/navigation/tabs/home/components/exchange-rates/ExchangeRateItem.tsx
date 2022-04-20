@@ -41,9 +41,11 @@ const ExchangeRateSubText = styled(Smallest)`
 const ExchangeRateItem = ({
   item,
   onPress,
+  defaultAltCurrencyIsoCode,
 }: {
   item: ExchangeRateItemProps;
   onPress: () => void;
+  defaultAltCurrencyIsoCode: string;
 }) => {
   const {img, currencyName, currentPrice, average, currencyAbbreviation} = item;
 
@@ -63,7 +65,7 @@ const ExchangeRateItem = ({
       <NoteContainer>
         {currentPrice && (
           <ExchangeRateText>
-            {formatFiatAmount(currentPrice, 'USD', {
+            {formatFiatAmount(currentPrice, defaultAltCurrencyIsoCode, {
               customPrecision: 'minimal',
               currencyAbbreviation,
             })}
