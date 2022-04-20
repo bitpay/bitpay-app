@@ -391,7 +391,7 @@ export const publishAndSign =
     key: Key;
     wallet: Wallet;
     recipient?: Recipient;
-  }): Effect =>
+  }): Effect<Promise<Partial<TransactionProposal> | void>> =>
   async dispatch => {
     return new Promise(async (resolve, reject) => {
       let password;
@@ -418,9 +418,8 @@ export const publishAndSign =
         }
       }
 
-      let broadcastedTx;
       try {
-        let publishedTx;
+        let publishedTx, broadcastedTx;
 
         // Already published?
         if (txp.status !== 'pending') {
@@ -437,7 +436,7 @@ export const publishAndSign =
         console.log('-------- signed');
 
         if (signedTx.status === 'accepted') {
-          const broadcastedTx = await broadcastTx(wallet, signedTx);
+          broadcastedTx = await broadcastTx(wallet, signedTx);
           console.log('-------- broadcastedTx');
 
           const {fee, amount} = broadcastedTx as {
@@ -520,7 +519,10 @@ export const signTx = (
   });
 };
 
-export const broadcastTx = (wallet: Wallet, txp: any) => {
+export const broadcastTx = (
+  wallet: Wallet,
+  txp: TransactionProposal,
+): Promise<Partial<TransactionProposal>> => {
   return new Promise(async (resolve, reject) => {
     wallet.broadcastTxProposal(txp, (err: Error, broadcastedTxp: any) => {
       if (err) {
