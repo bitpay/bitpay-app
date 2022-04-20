@@ -265,6 +265,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         return;
       }
       if (context === 'coinbase' || context === 'contact') {
+        setWalletSelectModalVisible(false);
         const {name, address} = recipient!;
         if (!address) {
           return;
