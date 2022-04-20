@@ -84,6 +84,7 @@ const WalletConnectConfirm = () => {
       const broadcastedTx = (await dispatch<any>(
         startSendPayment({txp, key, wallet, recipient}),
       )) as any;
+
       const response = {
         id: request.payload.id,
         result: broadcastedTx.txid,
