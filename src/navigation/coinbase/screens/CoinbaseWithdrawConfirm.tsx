@@ -6,7 +6,10 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
 import PaymentSent from '../../wallet/components/PaymentSent';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+} from '../../../store/app/app.actions';
 import {
   Amount,
   ConfirmContainer,
@@ -26,6 +29,9 @@ import {
 } from '../../../store/coinbase';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
+import {sleep} from '../../../utils/helper-methods';
 
 export interface CoinbaseWithdrawConfirmParamList {
   accountId: string;
@@ -101,6 +107,10 @@ const CoinbaseWithdrawConfirm = () => {
         amount: amount,
         currency: currency,
       };
+      dispatch(
+        startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT),
+      );
+      await sleep(400);
       dispatch(coinbaseSendTransaction(accountId, buildTx, code));
     },
     [dispatch, accountId, receiveAddress, amount, currency],
@@ -170,24 +180,31 @@ const CoinbaseWithdrawConfirm = () => {
   );
 
   useEffect(() => {
-    if (!apiLoading && sendStatus === 'failed') {
-      if (sendError?.errors[0].id === 'two_factor_required') {
-        askForTwoFactor();
-      } else {
-        showError(sendError);
+    (async () => {
+      if (!apiLoading && sendStatus === 'failed') {
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+        if (sendError?.errors[0].id === 'two_factor_required') {
+          askForTwoFactor();
+        } else {
+          showError(sendError);
+        }
       }
-    }
 
-    if (!apiLoading && sendStatus === 'success') {
-      setShowPaymentSentModal(true);
-    }
+      if (!apiLoading && sendStatus === 'success') {
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+        setShowPaymentSentModal(true);
+      }
 
-    if (wallet && wallet.receiveAddress) {
-      setReceiveAddress(wallet.receiveAddress);
-    } else {
-      generateReceiveAddress(wallet);
-    }
+      if (wallet && wallet.receiveAddress) {
+        setReceiveAddress(wallet.receiveAddress);
+      } else {
+        generateReceiveAddress(wallet);
+      }
+    })();
   }, [
+    dispatch,
     apiLoading,
     sendStatus,
     sendError,
