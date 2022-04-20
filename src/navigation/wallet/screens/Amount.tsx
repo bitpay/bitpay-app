@@ -112,7 +112,7 @@ export interface AmountParamList {
     setButtonState: (state: ButtonState) => void,
     opts?: {sendMax?: boolean},
   ) => void;
-  currencyAbbreviation?: string;
+  currencyAbbreviationRouteParam?: string;
   fiatCurrencyAbbreviation?: string;
   opts?: {
     hideSendMax?: boolean;
@@ -121,32 +121,32 @@ export interface AmountParamList {
 
 interface AmountProps {
   useAsModal: any;
-  currencyAbbreviationModal?: string;
+  currencyAbbreviationProp?: string;
   onDismiss?: (amount?: number) => void;
 }
 
 const Amount: React.FC<AmountProps> = ({
   useAsModal,
-  currencyAbbreviationModal,
+  currencyAbbreviationProp,
   onDismiss,
 }) => {
   const route = useRoute<RouteProp<WalletStackParamList, 'Amount'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const {
+  let {
     onAmountSelected,
-    currencyAbbreviation,
+    currencyAbbreviationRouteParam,
     fiatCurrencyAbbreviation,
     opts,
-  } = route.params;
+  } = route.params || {};
   const navigation = useNavigation();
   const theme = useTheme();
   const [buttonState, setButtonState] = useState<ButtonState>();
 
   const fiatCurrency = fiatCurrencyAbbreviation || defaultAltCurrency.isoCode;
 
-  const cryptoCurrencyAbbreviation = useAsModal
-    ? currencyAbbreviationModal
-    : currencyAbbreviation;
+  const cryptoCurrencyAbbreviation = currencyAbbreviationRouteParam
+    ? currencyAbbreviationRouteParam
+    : currencyAbbreviationProp;
 
   // flag for primary selector type
   const [rate, setRate] = useState(0);
@@ -225,7 +225,9 @@ const Amount: React.FC<AmountProps> = ({
   };
 
   const onSendMaxPressed = () =>
-    onAmountSelected(amount, setButtonState, {sendMax: true});
+    onAmountSelected
+      ? onAmountSelected(amount, setButtonState, {sendMax: true})
+      : () => {};
   const onSendMaxPressedRef = useRef(onSendMaxPressed);
   onSendMaxPressedRef.current = onSendMaxPressed;
 
@@ -335,7 +337,9 @@ const Amount: React.FC<AmountProps> = ({
                   onDismiss(Number(amount));
                   return;
                 }
-                onAmountSelected(amount, setButtonState);
+                if (onAmountSelected) {
+                  onAmountSelected(amount, setButtonState);
+                }
               }}>
               Continue
             </Button>

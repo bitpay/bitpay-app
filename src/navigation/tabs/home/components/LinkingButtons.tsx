@@ -157,7 +157,10 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
     {
       label: 'swap',
       img: <SwapSvg />,
-      cta: () => navigation.navigate('SwapCrypto', {screen: 'Root'}),
+      cta:
+        swap && swap.cta
+          ? swap.cta
+          : () => navigation.navigate('SwapCrypto', {screen: 'Root'}),
       hide: !!swap?.hide,
     },
     {
