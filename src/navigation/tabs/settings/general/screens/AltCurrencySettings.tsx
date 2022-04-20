@@ -167,7 +167,7 @@ const AltCurrencySettings = () => {
               <BaseText style={{fontWeight: 'bold'}}>{searchVal}</BaseText>.
             </NoResultsDescription>
             <NoResultsDescription>
-              Please try anoter currency
+              Please try another currency.
             </NoResultsDescription>
           </NoResultsContainer>
         )}

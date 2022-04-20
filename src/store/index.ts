@@ -51,6 +51,12 @@ import {
 } from './shop/shop.reducer';
 import {ShopActionType} from './shop/shop.types';
 import {
+  swapCryptoReducer,
+  swapCryptoReduxPersistBlackList,
+  SwapCryptoState,
+} from './swap-crypto/swap-crypto.reducer';
+import {SwapCryptoActionType} from './swap-crypto/swap-crypto.types';
+import {
   walletReducer,
   walletReduxPersistBlackList,
   WalletState,
@@ -134,6 +140,14 @@ const reducers = {
       blacklist: shopReduxPersistBlackList,
     },
     shopReducer,
+  ),
+  SWAP_CRYPTO: persistReducer<SwapCryptoState, SwapCryptoActionType>(
+    {
+      ...basePersistConfig,
+      key: 'SWAP_CRYPTO',
+      blacklist: swapCryptoReduxPersistBlackList,
+    },
+    swapCryptoReducer,
   ),
   WALLET: persistReducer<WalletState, WalletActionType>(
     {

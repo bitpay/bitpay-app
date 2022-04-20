@@ -466,7 +466,7 @@ const CoinbaseAccount = ({
         onBackdropPress={() => setWalletModalVisible(false)}>
         <GlobalSelectContainer>
           <GlobalSelect
-            title={'Select destination wallet'}
+            modalTitle={'Select destination wallet'}
             customSupportedCurrencies={customSupportedCurrencies}
             useAsModal={true}
             onDismiss={onSelectedWallet}
@@ -482,7 +482,7 @@ const CoinbaseAccount = ({
         <AmountContainer>
           <Amount
             useAsModal={true}
-            currencyAbbreviationModal={account?.balance.currency}
+            currencyAbbreviationProp={account?.balance.currency}
             onDismiss={onEnteredAmount}
           />
         </AmountContainer>
