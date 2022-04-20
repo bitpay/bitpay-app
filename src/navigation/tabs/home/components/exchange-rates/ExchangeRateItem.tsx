@@ -51,8 +51,8 @@ const ExchangeRateItem = ({
 
   return (
     <RowContainer activeOpacity={ActiveOpacity} onPress={onPress}>
-      <CurrencyImageContainer style={{width: 35, height: 35}}>
-        <CurrencyImage img={img} size={35} />
+      <CurrencyImageContainer style={{width: 40, height: 40}}>
+        <CurrencyImage img={img} size={40} />
       </CurrencyImageContainer>
       <CurrencyColumn>
         <ExchangeRateText ellipsizeMode="tail" numberOfLines={1}>
