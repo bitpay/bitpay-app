@@ -93,6 +93,7 @@ const BuildKeyWalletRow = (
   currentWalletId: string,
   currentCurrencyAbbreviation: string,
   currentNetwork: string,
+  defaultAltCurrencyIsoCode: string,
 ) => {
   let filteredKeys: KeyWalletsRowProps[] = [];
   Object.entries(keys).forEach(([key, value]) => {
@@ -116,7 +117,10 @@ const BuildKeyWalletRow = (
         const _wallet = merge(cloneDeep(wallet), {
           cryptoBalance: balance.crypto,
           cryptoLockedBalance: '',
-          fiatBalance: formatFiatAmount(balance.fiat, 'usd'),
+          fiatBalance: formatFiatAmount(
+            balance.fiat,
+            defaultAltCurrencyIsoCode,
+          ),
           fiatLockedBalance: '',
           currencyAbbreviation: currencyAbbreviation.toUpperCase(),
           network,
@@ -138,6 +142,7 @@ const SendTo = () => {
   const route = useRoute<RouteProp<WalletStackParamList, 'SendTo'>>();
 
   const keys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const theme = useTheme();
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
   const [searchInput, setSearchInput] = useState('');
@@ -167,6 +172,7 @@ const SendTo = () => {
     id,
     currencyAbbreviation,
     network,
+    defaultAltCurrency.isoCode,
   );
 
   const onErrorMessageDismiss = () => {

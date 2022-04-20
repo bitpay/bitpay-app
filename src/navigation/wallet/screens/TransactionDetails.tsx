@@ -10,7 +10,7 @@ import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   buildTransactionDetails,
   EditTxNote,
@@ -212,6 +212,7 @@ const TransactionDetails = () => {
   const {
     params: {transaction, wallet},
   } = useRoute<RouteProp<WalletStackParamList, 'TransactionDetails'>>();
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -237,7 +238,11 @@ const TransactionDetails = () => {
   const init = async () => {
     try {
       const _transaction = await dispatch(
-        buildTransactionDetails({transaction, wallet}),
+        buildTransactionDetails({
+          transaction,
+          wallet,
+          defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+        }),
       );
       setTxs(_transaction);
       setMemo(_transaction.detailsMemo);

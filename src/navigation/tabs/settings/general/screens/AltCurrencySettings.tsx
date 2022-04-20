@@ -22,6 +22,8 @@ import {LightBlack, White} from '../../../../../styles/colors';
 import GhostSvg from '../../../../../../assets/img/ghost-cheeky.svg';
 import {sleep} from '../../../../../utils/helper-methods';
 import SearchSvg from '../../../../../../assets/img/search.svg';
+import {startUpdateAllKeyAndWalletStatus} from '../../../../../store/wallet/effects/status/status';
+import {updatePortfolioBalance} from '../../../../../store/wallet/wallet.actions';
 const AltCurrencySettingsContainer = styled.SafeAreaView`
   margin-top: 20px;
   flex: 1;
@@ -120,8 +122,12 @@ const AltCurrencySettings = () => {
             altCurrency={item}
             selected={selected}
             onPress={async () => {
-              dispatch(setDefaultAltCurrency(item));
-              await sleep(500);
+              await dispatch(setDefaultAltCurrency(item));
+              await Promise.all([
+                dispatch(startUpdateAllKeyAndWalletStatus()),
+                dispatch(updatePortfolioBalance()),
+                sleep(500),
+              ]);
               navigation.goBack();
             }}
           />

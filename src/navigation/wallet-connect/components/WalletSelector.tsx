@@ -64,6 +64,7 @@ export default ({
   const dispatch = useAppDispatch();
   const [uri, setUri] = useState(dappUri);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   let allWallets = Object.values(keys)
     .filter(key => key.backupComplete)
@@ -114,7 +115,10 @@ export default ({
             } = wallet;
             return merge(cloneDeep(wallet), {
               cryptoBalance: balance.crypto,
-              fiatBalance: formatFiatAmount(balance.fiat, 'USD'),
+              fiatBalance: formatFiatAmount(
+                balance.fiat,
+                defaultAltCurrency.isoCode,
+              ),
               currencyAbbreviation: currencyAbbreviation.toUpperCase(),
               network,
             });

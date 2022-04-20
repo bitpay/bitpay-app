@@ -138,7 +138,7 @@ export const formatCryptoAmount = (
 
 export const toFiat = (
   totalAmount: number,
-  fiatCode: string,
+  fiatCode: string = 'USD',
   currencyAbbreviation: string,
   rates: Rates = {},
   customRate?: number,
@@ -232,10 +232,12 @@ export const BuildKeysAndWalletsList = ({
   keys,
   network,
   payProOptions,
+  defaultAltCurrencyIsoCode = 'USD',
 }: {
   keys: {[key in string]: Key};
   network?: Network;
   payProOptions?: PayProOptions;
+  defaultAltCurrencyIsoCode?: string;
 }) => {
   return Object.keys(keys).map(keyId => {
     const keyObj = keys[keyId];
@@ -271,9 +273,15 @@ export const BuildKeysAndWalletsList = ({
           } = walletObj;
           return merge(cloneDeep(walletObj), {
             cryptoBalance: balance.crypto,
-            fiatBalance: formatFiatAmount(balance.fiat, 'USD'),
+            fiatBalance: formatFiatAmount(
+              balance.fiat,
+              defaultAltCurrencyIsoCode,
+            ),
             cryptoLockedBalance: balance.cryptoLocked,
-            fiatLockedBalance: formatFiatAmount(balance.fiatLocked, 'usd'),
+            fiatLockedBalance: formatFiatAmount(
+              balance.fiatLocked,
+              defaultAltCurrencyIsoCode,
+            ),
             network,
           });
         }),

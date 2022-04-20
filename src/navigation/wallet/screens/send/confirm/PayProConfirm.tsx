@@ -66,6 +66,7 @@ const PayProConfirm = () => {
     txp: _txp,
   } = route.params!;
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const [walletSelectModalVisible, setWalletSelectModalVisible] =
     useState(false);
@@ -82,7 +83,12 @@ const PayProConfirm = () => {
     .split('/')[0];
 
   const memoizedKeysAndWalletsList = useMemo(
-    () => BuildKeysAndWalletsList({keys, payProOptions}),
+    () =>
+      BuildKeysAndWalletsList({
+        keys,
+        payProOptions,
+        defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+      }),
     [keys, payProOptions],
   );
 

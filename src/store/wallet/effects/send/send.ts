@@ -71,6 +71,10 @@ export const createProposalAndBuildTxDetails =
         const {
           WALLET: {feeLevel: cachedFeeLevel, useUnconfirmedFunds},
         } = getState();
+        const {
+          APP: {defaultAltCurrency},
+        } = getState();
+
         const feeLevel =
           customFeeLevel ||
           cachedFeeLevel[currencyAbbreviation] ||
@@ -112,7 +116,7 @@ export const createProposalAndBuildTxDetails =
               const txDetails = buildTxDetails({
                 proposal,
                 rates,
-                fiatCode: 'USD',
+                defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
                 wallet,
                 recipient,
                 invoice,
@@ -138,7 +142,7 @@ export const createProposalAndBuildTxDetails =
 const buildTxDetails = ({
   proposal,
   rates,
-  fiatCode,
+  defaultAltCurrencyIsoCode,
   wallet,
   recipient,
   invoice,
@@ -146,7 +150,7 @@ const buildTxDetails = ({
 }: {
   proposal: TransactionProposal;
   rates: Rates;
-  fiatCode: string;
+  defaultAltCurrencyIsoCode: string;
   wallet: Wallet;
   recipient: Recipient;
   invoice?: Invoice;
@@ -174,8 +178,8 @@ const buildTxDetails = ({
       feeLevel,
       cryptoAmount: FormatAmountStr(coin, fee),
       fiatAmount: formatFiatAmount(
-        toFiat(fee, fiatCode, coin, rates),
-        fiatCode,
+        toFiat(fee, defaultAltCurrencyIsoCode, coin, rates),
+        defaultAltCurrencyIsoCode,
       ),
       percentageOfTotalAmount: ((fee / (amount + fee)) * 100).toFixed(2) + '%',
     },
@@ -183,8 +187,8 @@ const buildTxDetails = ({
       networkCost: {
         cryptoAmount: FormatAmountStr(coin, networkCost),
         fiatAmount: formatFiatAmount(
-          toFiat(networkCost, fiatCode, coin, rates),
-          fiatCode,
+          toFiat(networkCost, defaultAltCurrencyIsoCode, coin, rates),
+          defaultAltCurrencyIsoCode,
         ),
       },
     }),
@@ -195,15 +199,15 @@ const buildTxDetails = ({
     subTotal: {
       cryptoAmount: FormatAmountStr(coin, amount),
       fiatAmount: formatFiatAmount(
-        toFiat(amount, fiatCode, coin, rates),
-        fiatCode,
+        toFiat(amount, defaultAltCurrencyIsoCode, coin, rates),
+        defaultAltCurrencyIsoCode,
       ),
     },
     total: {
       cryptoAmount: FormatAmountStr(coin, total),
       fiatAmount: formatFiatAmount(
-        toFiat(total, fiatCode, coin, rates),
-        fiatCode,
+        toFiat(total, defaultAltCurrencyIsoCode, coin, rates),
+        defaultAltCurrencyIsoCode,
       ),
     },
     gasPrice: gasPrice ? Number((gasPrice * 1e-9).toFixed(2)) : undefined,
