@@ -183,7 +183,7 @@ const CoinbaseWithdrawConfirm = () => {
     (async () => {
       if (!apiLoading && sendStatus === 'failed') {
         dispatch(dismissOnGoingProcessModal());
-        await sleep(1000);
+        await sleep(500);
         if (sendError?.errors[0].id === 'two_factor_required') {
           askForTwoFactor();
         } else {
@@ -193,7 +193,7 @@ const CoinbaseWithdrawConfirm = () => {
 
       if (!apiLoading && sendStatus === 'success') {
         dispatch(dismissOnGoingProcessModal());
-        await sleep(1000);
+        await sleep(500);
         setShowPaymentSentModal(true);
       }
 
