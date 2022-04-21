@@ -733,7 +733,6 @@ const SwapCryptoRoot: React.FC = () => {
                   toWalletData: toWalletData!,
                   fixedRateId: rateData!.fixedRateId,
                   amountFrom: amountFrom,
-                  rate: rateData!.rate,
                   // useSendMax: useSendMax,
                   // sendMaxInfo: sendMaxInfo
                 },
