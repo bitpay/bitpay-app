@@ -98,7 +98,7 @@ const Confirm = () => {
   const onWalletSelect = async (selectedWallet: Wallet) => {
     setWalletSelectModalVisible(false);
     // not ideal - will dive into why the timeout has to be this long
-    await sleep(400);
+    await sleep(500);
     dispatch(
       startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
     );
