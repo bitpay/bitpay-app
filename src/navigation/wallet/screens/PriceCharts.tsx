@@ -1,5 +1,11 @@
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {
+  ComponentType,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from 'react';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {
@@ -37,9 +43,9 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import {CustomErrorMessage} from '../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {
+  createContainer,
   LineSegment,
   VictoryArea,
-  VictoryCursorContainer,
   VictoryGroup,
   VictoryTooltip,
 } from 'victory-native';
@@ -158,6 +164,11 @@ const PriceCharts = () => {
     },
   };
 
+  const VictoryCursorVoronoiContainer: ComponentType<any> = createContainer(
+    'cursor',
+    'voronoi',
+  );
+
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
@@ -166,7 +177,6 @@ const PriceCharts = () => {
   }, [navigation, currencyName]);
 
   const [loading, setLoading] = useState(true);
-  const [tooltipOrientation, setTooltipOrientation] = useState<string>('left');
   const [showRageDateSelector, setShowRageDateSelector] = useState(true);
   const [displayData, setDisplayData] =
     useState<ChartDataType>(defaultDisplayData);
@@ -300,39 +310,28 @@ const PriceCharts = () => {
         {!loading ? (
           <VictoryGroup
             containerComponent={
-              <VictoryCursorContainer
+              <VictoryCursorVoronoiContainer
+                voronoiDimension="x"
+                cursorDimension="x"
                 cursorComponent={
                   <LineSegment
                     style={{
                       stroke:
                         theme.dark && coinColor === Black ? White : coinColor,
+                      strokeDasharray: '4, 8',
                     }}
                   />
                 }
-                onCursorChange={value => {
-                  const orientation =
-                    displayData.domain && value < displayData.domain.x[1] / 2
-                      ? 'left'
-                      : 'right';
-                  setTooltipOrientation((prevState: string) =>
-                    prevState !== orientation ? orientation : prevState,
-                  );
-                }}
-                cursorDimension={'x'}
-                cursorLabel={({datum}: any) =>
+                labels={({datum}: any) =>
                   formatFiatAmount(datum.y, 'USD', {
                     customPrecision: 'minimal',
                     currencyAbbreviation,
                   })
                 }
-                cursorLabelComponent={
+                labelComponent={
                   <VictoryTooltip
                     cornerRadius={5}
-                    pointerLength={0}
-                    centerOffset={{
-                      x: tooltipOrientation === 'left' ? 40 : -50,
-                      y: -50,
-                    }}
+                    pointerLength={5}
                     renderInPortal={false}
                     flyoutStyle={{
                       stroke:
@@ -357,6 +356,11 @@ const PriceCharts = () => {
               interpolation={'monotoneX'}
               style={chartStyle}
               data={displayData?.data}
+            />
+            <LineSegment
+              style={{
+                stroke: theme.dark && coinColor === Black ? White : coinColor,
+              }}
             />
             <Defs>
               <LinearGradient
