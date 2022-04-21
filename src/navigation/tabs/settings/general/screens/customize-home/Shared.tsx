@@ -5,7 +5,7 @@ import React from 'react';
 import styled from 'styled-components/native';
 import {H5, H7} from '../../../../../../components/styled/Text';
 import {ScreenGutter} from '../../../../../../components/styled/Containers';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity, View} from 'react-native';
 import {Key, Wallet} from '../../../../../../store/wallet/wallet.models';
 import {HomeCarouselConfig} from '../../../../../../store/app/app.models';
 import _ from 'lodash';
@@ -18,6 +18,7 @@ import {
 import {getRemainingWalletCount} from '../../../../../../store/wallet/utils/wallet';
 import {CurrencyImage} from '../../../../../../components/currency-image/CurrencyImage';
 import CoinbaseSvg from '../../../../../../../assets/img/logos/coinbase.svg';
+import {NeedBackupText} from '../../../../../../components/home-card/HomeCard';
 
 export const StarSvg = ({favorited}: {favorited: boolean}) => {
   return (
@@ -146,6 +147,10 @@ export const LayoutToggleContainer = styled.View`
   border-bottom-width: 1px;
 `;
 
+const NeedsBackupContainer = styled.View`
+  min-height: 22px;
+`;
+
 export const createCustomizeCardList = ({
   keys,
   hasCoinbase,
@@ -158,16 +163,19 @@ export const createCustomizeCardList = ({
   let list: CustomizeItem[] = [];
   const hasKeys = keys.length;
   if (hasKeys) {
-    const walletCards = keys.map(({id, keyName, wallets}): CustomizeItem => {
-      const {show} = homeCarouselConfig?.find(item => item.id === id) || {};
+    const walletCards = keys.map(
+      ({id, keyName, wallets, backupComplete}): CustomizeItem => {
+        const {show} = homeCarouselConfig?.find(item => item.id === id) || {};
 
-      return {
-        key: id,
-        name: keyName!,
-        wallets: wallets,
-        show: show!,
-      };
-    });
+        return {
+          key: id,
+          name: keyName!,
+          wallets: wallets,
+          show: show!,
+          needsBackup: !backupComplete,
+        };
+      },
+    );
 
     list.push(...walletCards);
   }
@@ -193,10 +201,11 @@ export interface CustomizeItem {
   name: string;
   wallets?: Wallet[];
   show: boolean;
+  needsBackup?: boolean;
 }
 
 export const CustomizeCard = ({
-  item: {wallets, name, show, key},
+  item: {wallets, name, show, key, needsBackup},
   toggle,
 }: {
   item: CustomizeItem;
@@ -204,6 +213,36 @@ export const CustomizeCard = ({
 }) => {
   const walletInfo = wallets?.slice(0, WALLET_DISPLAY_LIMIT);
   const remainingWalletCount = getRemainingWalletCount(wallets);
+
+  const header = () => {
+    if (needsBackup) {
+      return (
+        <NeedsBackupContainer>
+          <NeedBackupText>Needs Backup</NeedBackupText>
+        </NeedsBackupContainer>
+      );
+    }
+
+    return (
+      <HeaderImg>
+        {walletInfo?.map((wallet: Wallet, index: number) => {
+          const {id, img} = wallet;
+          return (
+            wallet && (
+              <Img key={id} isFirst={index === 0}>
+                <CurrencyImage img={img} size={25} />
+              </Img>
+            )
+          );
+        })}
+        {remainingWalletCount ? (
+          <RemainingAssetsLabel>
+            + {getRemainingWalletCount(wallets)} more
+          </RemainingAssetsLabel>
+        ) : null}
+      </HeaderImg>
+    );
+  };
 
   return (
     <>
@@ -221,23 +260,7 @@ export const CustomizeCard = ({
           ) : null}
           {wallets ? (
             <Row>
-              <HeaderImg>
-                {walletInfo?.map((wallet: Wallet, index: number) => {
-                  const {id, img} = wallet;
-                  return (
-                    wallet && (
-                      <Img key={id} isFirst={index === 0}>
-                        <CurrencyImage img={img} size={25} />
-                      </Img>
-                    )
-                  );
-                })}
-                {remainingWalletCount ? (
-                  <RemainingAssetsLabel>
-                    + {getRemainingWalletCount(wallets)} more
-                  </RemainingAssetsLabel>
-                ) : null}
-              </HeaderImg>
+              {header()}
             </Row>
           ) : null}
         </Column>
