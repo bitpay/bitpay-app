@@ -224,7 +224,7 @@ const createWallet = (params: {
     );
 
     bwcClient.createWallet(
-      Currencies[coin].name,
+      Currencies[coin.toLowerCase()].name,
       'me',
       1,
       1,

@@ -189,7 +189,7 @@ const SendTo = () => {
     let isValid, addrData: CoinNetwork | null;
     if (isPayPro) {
       isValid =
-        data?.chain === Currencies[currencyAbbreviation].chain &&
+        data?.chain === Currencies[currencyAbbreviation.toLowerCase()].chain &&
         data?.network === network;
     } else {
       addrData = GetCoinAndNetwork(data, network);
