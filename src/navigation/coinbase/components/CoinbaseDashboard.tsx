@@ -78,6 +78,7 @@ const CoinbaseDashboard = () => {
           onPress={() => {
             navigation.navigate('Coinbase', {
               screen: 'CoinbaseSettings',
+              params: {fromScreen: 'CoinbaseDashboard'},
             });
           }}
           theme={theme}

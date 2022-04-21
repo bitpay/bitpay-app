@@ -148,18 +148,14 @@ const BuyGiftCard = ({
     );
   };
 
-  const goToConfirmScreen = (amount: Number) => {
+  const goToConfirmScreen = (amount: number) => {
     const discount = getVisibleDiscount(cardConfig);
-    const invoiceCreationParams = {
-      invoiceType: 'GiftCard',
-      amount: +amount,
-      cardConfig,
-      discounts: discount ? [discount] : [],
-    };
     navigator.navigate('Wallet', {
       screen: WalletScreens.GIFT_CARD_CONFIRM,
       params: {
-        invoiceCreationParams,
+        amount,
+        cardConfig,
+        discounts: discount ? [discount] : [],
       },
     });
   };

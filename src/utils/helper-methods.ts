@@ -137,7 +137,7 @@ export const getSignificantDigits = (currencyAbbreviation?: string) => {
 
 export const formatFiatAmount = (
   amount: number,
-  currency: string,
+  currency: string = 'USD',
   opts: {
     customPrecision?: 'minimal';
     currencyAbbreviation?: string;

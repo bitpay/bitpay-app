@@ -26,7 +26,7 @@ import {Currencies} from '../../../constants/currencies';
 import {useTheme} from 'styled-components/native';
 import {ExchangeRateItemProps} from '../../tabs/home/components/exchange-rates/ExchangeRatesList';
 import {fetchHistoricalRates} from '../../../store/wallet/effects';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -136,6 +136,7 @@ const PriceCharts = () => {
   const {
     params: {item},
   } = useRoute<RouteProp<WalletStackParamList, 'PriceCharts'>>();
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const {
     average,
@@ -191,7 +192,7 @@ const PriceCharts = () => {
       data: data.map((value, key) => ({
         x: key,
         y: value,
-        label: formatFiatAmount(value, 'USD', {
+        label: formatFiatAmount(value, defaultAltCurrency.isoCode, {
           customPrecision: 'minimal',
           currencyAbbreviation,
         }),
@@ -295,7 +296,7 @@ const PriceCharts = () => {
       <HeaderContainer>
         {currentPrice && (
           <H2>
-            {formatFiatAmount(currentPrice, 'USD', {
+            {formatFiatAmount(currentPrice, defaultAltCurrency.isoCode, {
               customPrecision: 'minimal',
               currencyAbbreviation,
             })}

@@ -191,3 +191,9 @@ export const payInvoiceFailed = (
   type: CoinbaseActionTypes.PAY_INVOICE_FAILED,
   payload: error,
 });
+
+// ------- Errors -------- //
+
+export const clearErrorStatus = (): CoinbaseActionType => ({
+  type: CoinbaseActionTypes.CLEAR_ERROR_STATUS,
+});

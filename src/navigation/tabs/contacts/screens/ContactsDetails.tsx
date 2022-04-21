@@ -1,4 +1,5 @@
 import React, {useEffect, useLayoutEffect, useState, ReactElement} from 'react';
+import {useAppSelector} from '../../../../utils/hooks';
 import styled, {useTheme} from 'styled-components/native';
 import {useNavigation} from '@react-navigation/core';
 import {StackScreenProps} from '@react-navigation/stack';
@@ -25,6 +26,7 @@ import SendIconWhite from '../../../../../assets/img/send-icon-white.svg';
 import DeleteIcon from '../../../../../assets/img/delete-icon.svg';
 import DeleteIconWhite from '../../../../../assets/img/delete-icon-white.svg';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
+import {ToCashAddress} from '../../../../store/wallet/effects/address/address';
 
 const ContactsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -124,14 +126,66 @@ const ContactsDetails = ({
   const {address, coin, network, name, tag, email} = route.params;
 
   const [copied, setCopied] = useState(false);
-  const [showContactOptions, setShowContactOptions] = useState(false);
+  const [showIconOptions, setShowIconOptions] = useState(false);
+
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const contactOptions: Array<ModalOpt> = [];
+  let availableWallets = Object.values(keys)
+    .filter(key => key.backupComplete)
+    .flatMap(key => key.wallets);
+
+  availableWallets = availableWallets.filter(
+    wallet =>
+      !wallet.hideWallet &&
+      wallet.network === 'livenet' &&
+      wallet.isComplete() &&
+      wallet.currencyAbbreviation === coin &&
+      wallet.balance.sat > 0,
+  );
+
+  if (availableWallets.length) {
+    let newAddress = address;
+    if (coin === 'bch') {
+      // Remove prefix
+      newAddress = ToCashAddress(address, false);
+    }
+    contactOptions.push({
+      img: theme.dark ? <SendIconWhite /> : <SendIcon />,
+      title: 'Send ' + coin.toUpperCase(),
+      onPress: () => {
+        setShowIconOptions(false);
+        navigation.navigate('Wallet', {
+          screen: 'GlobalSelect',
+          params: {
+            context: 'contact',
+            recipient: {
+              name,
+              address: newAddress,
+              currency: coin,
+              network,
+            },
+          },
+        });
+      },
+    });
+  }
+
+  contactOptions.push({
+    img: theme.dark ? <DeleteIconWhite /> : <DeleteIcon />,
+    title: 'Delete Contact',
+    onPress: async () => {
+      setShowIconOptions(false);
+      await sleep(500);
+      deleteModal();
+    },
+  });
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <Settings
           onPress={() => {
-            setShowContactOptions(true);
+            setShowIconOptions(true);
           }}
         />
       ),
@@ -185,23 +239,6 @@ const ContactsDetails = ({
       }),
     );
   };
-
-  const contactOptions: Array<ModalOpt> = [
-    {
-      img: theme.dark ? <SendIconWhite /> : <SendIcon />,
-      title: 'Send ' + coin.toUpperCase(),
-      onPress: () => null,
-    },
-    {
-      img: theme.dark ? <DeleteIconWhite /> : <DeleteIcon />,
-      title: 'Delete Contact',
-      onPress: async () => {
-        setShowContactOptions(false);
-        await sleep(500);
-        deleteModal();
-      },
-    },
-  ];
 
   return (
     <ContactsDetailsContainer>
@@ -266,8 +303,8 @@ const ContactsDetails = ({
 
       <SheetModal
         placement={'top'}
-        isVisible={showContactOptions}
-        onBackdropPress={() => setShowContactOptions(false)}>
+        isVisible={showIconOptions}
+        onBackdropPress={() => setShowIconOptions(false)}>
         <ModalContainer>
           {contactOptions.map(({img, title: optionTitle, onPress}, index) => (
             <OptionContainer

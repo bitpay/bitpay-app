@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useCallback, useLayoutEffect} from 'react';
 import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
-import {RouteProp} from '@react-navigation/core';
+import {RouteProp, StackActions} from '@react-navigation/core';
 import {WalletStackParamList} from '../../../WalletStack';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {
@@ -250,11 +250,14 @@ const Confirm = () => {
 
   let recipientData;
 
-  if (recipient.type && recipient.type === 'coinbase') {
+  if (
+    recipient.type &&
+    (recipient.type === 'coinbase' || recipient.type === 'contact')
+  ) {
     recipientData = {
-      recipientName: recipient.name || 'Coinbase',
+      recipientName: recipient.name,
       recipientAddress: sendingTo.recipientAddress,
-      img: 'coinbase',
+      img: recipient.type,
     };
   } else {
     recipientData = sendingTo;
@@ -380,6 +383,8 @@ const Confirm = () => {
                 ],
               }),
             );
+          } else if (recipient.type === 'contact') {
+            navigation.dispatch(StackActions.popToTop());
           } else {
             navigation.navigate('Wallet', {
               screen: 'WalletDetails',

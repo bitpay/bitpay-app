@@ -1,3 +1,5 @@
+import axios from 'axios';
+import BitPayIdApi from '../../api/bitpay';
 import FastImage from 'react-native-fast-image';
 import {batch} from 'react-redux';
 import CardApi from '../../api/card';
@@ -14,6 +16,9 @@ import {isAxiosError} from '../../utils/axios';
 import {CardActions} from '.';
 import {TTL} from './card.types';
 import {setHomeCarouselConfig} from '../app/app.actions';
+import {Card, DebitCardTopUpInvoiceParams} from './card.models';
+import {Invoice} from '../shop/shop.models';
+import {BASE_BITPAY_URLS} from '../../constants/config';
 
 export const startCardStoreInit =
   (initialData: InitialUserData): Effect<Promise<void>> =>
@@ -146,6 +151,38 @@ export const startFetchOverview =
       });
     } finally {
       dispatch(AppActions.dismissOnGoingProcessModal());
+    }
+  };
+
+export const startCreateDebitCardTopUpInvoice =
+  (
+    card: Card,
+    params: DebitCardTopUpInvoiceParams,
+  ): Effect<Promise<{invoiceId: string; invoice: Invoice}>> =>
+  async (dispatch, getState) => {
+    try {
+      const {APP} = getState();
+      const {network} = APP;
+      const baseUrl = BASE_BITPAY_URLS[network];
+      const createInvoiceResponse = await BitPayIdApi.getInstance()
+        .request('generateTopUpInvoice', card.token, params)
+        .then(res => {
+          if (res.data.error) {
+            throw new Error(res.data.error);
+          }
+          return res.data;
+        });
+      const {data: invoiceId} = createInvoiceResponse as {data: string};
+      const getInvoiceResponse = await axios.get(
+        `${baseUrl}/invoices/${invoiceId}`,
+      );
+      const {
+        data: {data: invoice},
+      } = getInvoiceResponse as {data: {data: Invoice}};
+      return {invoiceId, invoice} as {invoiceId: string; invoice: Invoice};
+    } catch (err) {
+      console.error('Error creating debit card top up invoice', err);
+      throw err;
     }
   };
 

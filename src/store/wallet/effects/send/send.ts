@@ -1,7 +1,6 @@
 import {Effect} from '../../../index';
 import {
   CustomTransactionData,
-  InvoiceCreationParams,
   Key,
   ProposalErrorHandlerProps,
   Rates,
@@ -29,10 +28,8 @@ import {
   GeneralError,
 } from '../../../../navigation/wallet/components/ErrorMessages';
 import {BWCErrorMessage, getErrorName} from '../../../../constants/BWCError';
-import {GiftCardInvoiceParams, Invoice} from '../../../shop/shop.models';
+import {Invoice} from '../../../shop/shop.models';
 import {GetPayProDetails, HandlePayPro, PayProOptions} from '../paypro/paypro';
-import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../constants/config';
-import {ShopEffects} from '../../../shop';
 import {
   dismissDecryptPasswordModal,
   showDecryptPasswordModal,
@@ -71,6 +68,10 @@ export const createProposalAndBuildTxDetails =
         const {
           WALLET: {feeLevel: cachedFeeLevel, useUnconfirmedFunds},
         } = getState();
+        const {
+          APP: {defaultAltCurrency},
+        } = getState();
+
         const feeLevel =
           customFeeLevel ||
           cachedFeeLevel[currencyAbbreviation] ||
@@ -112,7 +113,7 @@ export const createProposalAndBuildTxDetails =
               const txDetails = buildTxDetails({
                 proposal,
                 rates,
-                fiatCode: 'USD',
+                defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
                 wallet,
                 recipient,
                 invoice,
@@ -138,7 +139,7 @@ export const createProposalAndBuildTxDetails =
 const buildTxDetails = ({
   proposal,
   rates,
-  fiatCode,
+  defaultAltCurrencyIsoCode,
   wallet,
   recipient,
   invoice,
@@ -146,7 +147,7 @@ const buildTxDetails = ({
 }: {
   proposal: TransactionProposal;
   rates: Rates;
-  fiatCode: string;
+  defaultAltCurrencyIsoCode: string;
   wallet: Wallet;
   recipient: Recipient;
   invoice?: Invoice;
@@ -174,8 +175,8 @@ const buildTxDetails = ({
       feeLevel,
       cryptoAmount: FormatAmountStr(coin, fee),
       fiatAmount: formatFiatAmount(
-        toFiat(fee, fiatCode, coin, rates),
-        fiatCode,
+        toFiat(fee, defaultAltCurrencyIsoCode, coin, rates),
+        defaultAltCurrencyIsoCode,
       ),
       percentageOfTotalAmount: ((fee / (amount + fee)) * 100).toFixed(2) + '%',
     },
@@ -183,8 +184,8 @@ const buildTxDetails = ({
       networkCost: {
         cryptoAmount: FormatAmountStr(coin, networkCost),
         fiatAmount: formatFiatAmount(
-          toFiat(networkCost, fiatCode, coin, rates),
-          fiatCode,
+          toFiat(networkCost, defaultAltCurrencyIsoCode, coin, rates),
+          defaultAltCurrencyIsoCode,
         ),
       },
     }),
@@ -195,15 +196,15 @@ const buildTxDetails = ({
     subTotal: {
       cryptoAmount: FormatAmountStr(coin, amount),
       fiatAmount: formatFiatAmount(
-        toFiat(amount, fiatCode, coin, rates),
-        fiatCode,
+        toFiat(amount, defaultAltCurrencyIsoCode, coin, rates),
+        defaultAltCurrencyIsoCode,
       ),
     },
     total: {
       cryptoAmount: FormatAmountStr(coin, total),
       fiatAmount: formatFiatAmount(
-        toFiat(total, fiatCode, coin, rates),
-        fiatCode,
+        toFiat(total, defaultAltCurrencyIsoCode, coin, rates),
+        defaultAltCurrencyIsoCode,
       ),
     },
     gasPrice: gasPrice ? Number((gasPrice * 1e-9).toFixed(2)) : undefined,
@@ -391,7 +392,7 @@ export const publishAndSign =
     key: Key;
     wallet: Wallet;
     recipient?: Recipient;
-  }): Effect =>
+  }): Effect<Promise<Partial<TransactionProposal> | void>> =>
   async dispatch => {
     return new Promise(async (resolve, reject) => {
       let password;
@@ -418,9 +419,8 @@ export const publishAndSign =
         }
       }
 
-      let broadcastedTx;
       try {
-        let publishedTx;
+        let publishedTx, broadcastedTx;
 
         // Already published?
         if (txp.status !== 'pending') {
@@ -437,7 +437,7 @@ export const publishAndSign =
         console.log('-------- signed');
 
         if (signedTx.status === 'accepted') {
-          const broadcastedTx = await broadcastTx(wallet, signedTx);
+          broadcastedTx = await broadcastTx(wallet, signedTx);
           console.log('-------- broadcastedTx');
 
           const {fee, amount} = broadcastedTx as {
@@ -520,7 +520,10 @@ export const signTx = (
   });
 };
 
-export const broadcastTx = (wallet: Wallet, txp: any) => {
+export const broadcastTx = (
+  wallet: Wallet,
+  txp: TransactionProposal,
+): Promise<Partial<TransactionProposal>> => {
   return new Promise(async (resolve, reject) => {
     wallet.broadcastTxProposal(txp, (err: Error, broadcastedTxp: any) => {
       if (err) {
@@ -646,61 +649,6 @@ export const createPayProTxProposal = async ({
     message: message || description,
   });
 };
-
-export const createInvoiceAndTxProposal =
-  (
-    wallet: Wallet,
-    invoiceCreationParams: InvoiceCreationParams,
-  ): Effect<
-    Promise<{
-      txDetails: TxDetails;
-      txp: TransactionProposal;
-    }>
-  > =>
-  async dispatch => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const {cardConfig, amount} = invoiceCreationParams!;
-        if (!cardConfig) {
-          return;
-        }
-        const invoiceParams: GiftCardInvoiceParams = {
-          amount: amount,
-          brand: cardConfig.name,
-          currency: cardConfig.currency,
-          clientId: wallet!.id,
-          discounts: invoiceCreationParams.discounts?.map(d => d.code) || [],
-          transactionCurrency: wallet.currencyAbbreviation.toUpperCase(),
-        };
-        const cardOrder = await dispatch(
-          ShopEffects.startCreateGiftCardInvoice(cardConfig, invoiceParams),
-        );
-        const {invoiceId, invoice} = cardOrder;
-        const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
-        const paymentUrl = `${baseUrl}/i/${invoiceId}`;
-        resolve(
-          await dispatch(
-            await createPayProTxProposal({
-              wallet,
-              paymentUrl,
-              invoice,
-              invoiceID: invoiceId,
-              message: `${formatFiatAmount(
-                invoiceParams.amount,
-                cardConfig.currency,
-              )} Gift Card`,
-              customData: {
-                giftCardName: cardConfig.name,
-                service: 'giftcards',
-              },
-            }),
-          ),
-        );
-      } catch (err) {
-        reject(err);
-      }
-    });
-  };
 
 export const getSendMaxInfo = ({
   wallet,

@@ -11,6 +11,7 @@ import CoinbaseIntro from '../components/CoinbaseIntro';
 import {
   coinbaseParseErrorToString,
   coinbaseLinkAccount,
+  clearErrorStatus,
 } from '../../../store/coinbase';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
@@ -57,21 +58,24 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({
           actions: [
             {
               text: 'OK',
-              action: () => {},
+              action: () => {
+                dispatch(clearErrorStatus());
+                navigation.goBack();
+              },
               primary: true,
             },
           ],
         }),
       );
     },
-    [dispatch],
+    [dispatch, navigation],
   );
 
   useEffect(() => {
     (async () => {
       const {code, state} = route.params || {};
 
-      if (!token && code && state) {
+      if (!token && code && state && tokenStatus !== 'failed') {
         await sleep(1000);
         dispatch(
           showOnGoingProcessModal(OnGoingProcessMessages.CONNECTING_COINBASE),
@@ -89,11 +93,20 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({
 
       if (tokenError) {
         dispatch(dismissOnGoingProcessModal());
-        showError(tokenError);
         setIsDashboardEnabled(false);
+        await sleep(1000);
+        showError(tokenError);
       }
     })();
-  }, [dispatch, route.params, token, tokenError, tokenStatus, showError]);
+  }, [
+    navigation,
+    dispatch,
+    route.params,
+    token,
+    tokenError,
+    tokenStatus,
+    showError,
+  ]);
 
   const DashboardOrIntro = useMemo(() => {
     return isDashboardEnabled ? CoinbaseDashboard : CoinbaseIntro;

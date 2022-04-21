@@ -2,7 +2,12 @@ import React, {useCallback, useEffect, useState} from 'react';
 import {RefreshControl} from 'react-native';
 import moment from 'moment';
 import styled from 'styled-components/native';
-import {useNavigation, useTheme} from '@react-navigation/native';
+import {
+  RouteProp,
+  useNavigation,
+  useRoute,
+  useTheme,
+} from '@react-navigation/native';
 import {sleep} from '../../../utils/helper-methods';
 import {
   dismissOnGoingProcessModal,
@@ -24,6 +29,7 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import CoinbaseSvg from '../../../../assets/img/logos/coinbase.svg';
+import {CoinbaseStackParamList} from '../CoinbaseStack';
 
 const SettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -84,10 +90,18 @@ const TitleCoinbase = styled(BaseText)`
   letter-spacing: 0;
 `;
 
+export type CoinbaseSettingsScreenParamList = {
+  fromScreen: string;
+};
+
 const CoinbaseSettings = () => {
   const dispatch = useAppDispatch();
-  const navigation = useNavigation();
   const theme = useTheme();
+
+  const navigation = useNavigation();
+  const {
+    params: {fromScreen},
+  } = useRoute<RouteProp<CoinbaseStackParamList, 'CoinbaseSettings'>>();
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -110,7 +124,7 @@ const CoinbaseSettings = () => {
             {
               text: 'OK',
               action: () => {
-                navigation.navigate('Tabs', {screen: 'Home'});
+                navigation.goBack();
               },
               primary: true,
             },
@@ -133,7 +147,12 @@ const CoinbaseSettings = () => {
 
   const deleteAccount = async () => {
     await dispatch(coinbaseDisconnectAccount());
-    navigation.navigate('Tabs', {screen: 'Home'});
+    if (fromScreen === 'CoinbaseDashboard') {
+      navigation.navigate('Tabs', {screen: 'Home'});
+    } else {
+      // From Settings Tab
+      navigation.goBack();
+    }
   };
 
   const confirmDelete = () => {

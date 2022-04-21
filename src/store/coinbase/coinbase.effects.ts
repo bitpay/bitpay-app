@@ -59,12 +59,15 @@ export const coinbaseParseErrorToString = (
 ): string => {
   if (typeof error === 'string') {
     return error;
+  } else if (typeof error === 'object') {
+    return error.error_description;
+  } else {
+    let message = '';
+    for (let i = 0; i < error.errors.length; i++) {
+      message = message + error.errors[i].message + '. ';
+    }
+    return message;
   }
-  let message = '';
-  for (let i = 0; i < error.errors.length; i++) {
-    message = message + error.errors[i].message + '. ';
-  }
-  return message;
 };
 
 const isExpiredTokenError = (error: CoinbaseErrorsProps): boolean => {
@@ -127,8 +130,8 @@ export const coinbaseLinkAccount =
       dispatch(setHomeCarouselConfig({id: 'coinbaseBalanceCard', show: true}));
       dispatch(coinbaseGetAccountsAndBalance());
     } catch (error: CoinbaseErrorsProps | any) {
-      dispatch(LogActions.error(coinbaseParseErrorToString(error)));
       dispatch(accessTokenFailed(error));
+      dispatch(LogActions.error(coinbaseParseErrorToString(error)));
     }
   };
 
@@ -147,8 +150,8 @@ export const coinbaseRefreshToken =
       );
       dispatch(refreshTokenSuccess(COINBASE_ENV, newToken));
     } catch (error: CoinbaseErrorsProps | any) {
-      dispatch(LogActions.error(coinbaseParseErrorToString(error)));
       dispatch(refreshTokenFailed(error));
+      dispatch(LogActions.error(coinbaseParseErrorToString(error)));
     }
   };
 
@@ -193,8 +196,8 @@ export const coinbaseGetUser =
         dispatch(LogActions.warn('Token revoked. Should re-connect...'));
         dispatch(coinbaseDisconnectAccount());
       } else {
-        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
         dispatch(userFailed(error));
+        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
       }
     }
   };
@@ -270,8 +273,8 @@ export const coinbaseGetAccountsAndBalance =
         dispatch(LogActions.warn('Token revoked. Should re-connect...'));
         dispatch(coinbaseDisconnectAccount());
       } else {
-        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
         dispatch(accountsFailed(error));
+        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
       }
     }
   };
@@ -301,8 +304,8 @@ export const coinbaseGetTransactionsByAccount =
         dispatch(LogActions.warn('Token revoked. Should re-connect...'));
         dispatch(coinbaseDisconnectAccount());
       } else {
-        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
         dispatch(transactionsFailed(error));
+        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
       }
     }
   };
@@ -333,8 +336,8 @@ export const coinbaseCreateAddress =
         dispatch(LogActions.warn('Token revoked. Should re-connect...'));
         dispatch(coinbaseDisconnectAccount());
       } else {
-        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
         dispatch(createAddressFailed(error));
+        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
       }
     }
   };
@@ -366,8 +369,8 @@ export const coinbaseSendTransaction =
         dispatch(LogActions.warn('Token revoked. Should re-connect...'));
         dispatch(coinbaseDisconnectAccount());
       } else {
-        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
         dispatch(sendTransactionFailed(error));
+        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
       }
     }
   };
@@ -404,8 +407,8 @@ export const coinbasePayInvoice =
         dispatch(LogActions.warn('Token revoked. Should re-connect...'));
         dispatch(coinbaseDisconnectAccount());
       } else {
-        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
         dispatch(payInvoiceFailed(error));
+        dispatch(LogActions.error(coinbaseParseErrorToString(error)));
       }
     }
   };
