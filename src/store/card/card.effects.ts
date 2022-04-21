@@ -342,6 +342,17 @@ export const START_FETCH_REFERRAL_CODE =
       if (code && code !== 'failed') {
         return;
       }
+
+      if (BITPAY_ID.user[network]?.referralCode) {
+        dispatch(
+          CardActions.successFetchReferralCode(
+            id,
+            BITPAY_ID.user[network]?.referralCode!,
+          ),
+        );
+        return;
+      }
+
       const res = await CardApi.fetchReferralCode(token);
 
       if (res) {
@@ -365,6 +376,6 @@ export const START_FETCH_REFERRED_USERS =
         dispatch(CardActions.successFetchReferredUsers(id, res));
       }
     } catch (e) {
-      console.log(e);
+      dispatch(CardActions.failedFetchReferredUsers(id));
     }
   };

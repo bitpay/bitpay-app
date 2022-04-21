@@ -189,3 +189,8 @@ export const successFetchReferredUsers = (
   type: CardActionTypes.SUCCESS_FETCH_REFERRED_USERS,
   payload: {id, referredUsers},
 });
+
+export const failedFetchReferredUsers = (id: string): CardActionType => ({
+  type: CardActionTypes.FAILED_FETCH_REFERRED_USERS,
+  payload: {id},
+});

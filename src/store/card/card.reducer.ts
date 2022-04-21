@@ -71,7 +71,7 @@ export interface CardState {
     [id: string]: string;
   };
   referredUsers: {
-    [id: string]: ReferredUsersType[];
+    [id: string]: ReferredUsersType[] | 'failed';
   };
 }
 
@@ -385,6 +385,15 @@ export const cardReducer = (
           [action.payload.id]: action.payload.referredUsers,
         },
       };
+
+    case CardActionTypes.FAILED_FETCH_REFERRED_USERS:
+      return {
+        ...state,
+        referredUsers: {
+          [action.payload.id]: 'failed',
+        },
+      };
+
     default:
       return state;
   }

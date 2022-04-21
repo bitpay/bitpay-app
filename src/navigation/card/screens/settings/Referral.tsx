@@ -111,10 +111,10 @@ const ZeroReferralsContainer = styled.View`
   align-items: center;
 `;
 
-const FailedContainer = styled.View`
+const FailedContainer = styled.View<{noHorizontalMargin?: boolean}>`
   background-color: ${({theme: {dark}}) => (dark ? '#2C0F13' : Caution25)};
   padding: ${ScreenGutter};
-  margin: ${ScreenGutter};
+  margin: ${({noHorizontalMargin}) => (noHorizontalMargin ? `${ScreenGutter} 0` : ScreenGutter)};
 `;
 
 const Referral = ({}) => {
@@ -236,7 +236,9 @@ const Referral = ({}) => {
 
           <Hr />
 
-          {referredUsers && referredUsers.length ? (
+          {referredUsers &&
+          referredUsers !== 'failed' &&
+          referredUsers.length ? (
             referredUsers.map(
               ({givenName, familyName, status, expiration}, index) => (
                 <View key={index}>
@@ -265,6 +267,10 @@ const Referral = ({}) => {
                 </View>
               ),
             )
+          ) : referredUsers === 'failed' ? (
+            <FailedContainer noHorizontalMargin={true}>
+              <H7>Uh oh, something went wrong. Please try again later.</H7>
+            </FailedContainer>
           ) : (
             <ZeroReferralsContainer>
               <GhostSvg height={50} />

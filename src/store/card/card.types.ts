@@ -182,6 +182,11 @@ interface SuccessFetchReferredUsers {
   payload: {id: string; referredUsers: ReferredUsersType[]};
 }
 
+interface FailedFetchReferredUsers {
+  type: CardActionTypes.FAILED_FETCH_REFERRED_USERS;
+  payload: {id: string};
+}
+
 export type CardActionType =
   | SuccessInitializeStore
   | SuccessFetchCards
@@ -205,4 +210,5 @@ export type CardActionType =
   | UpdateUpdateCardNameStatus
   | SuccessFetchReferralCode
   | FailedFetchReferralCode
-  | SuccessFetchReferredUsers;
+  | SuccessFetchReferredUsers
+  | FailedFetchReferredUsers;
