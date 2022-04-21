@@ -194,7 +194,7 @@ const SendTo = () => {
     } else {
       addrData = GetCoinAndNetwork(data, network);
       isValid =
-        currencyAbbreviation === addrData?.coin &&
+        currencyAbbreviation.toLowerCase() === addrData?.coin.toLowerCase() &&
         addrData?.network === network;
     }
 
