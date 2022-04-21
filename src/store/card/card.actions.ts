@@ -1,6 +1,6 @@
 import {InitialUserData} from '../../api/user/user.types';
 import {Network} from '../../constants';
-import {Card, PagedTransactionData, Transaction} from './card.models';
+import {Card, PagedTransactionData, TopUp, Transaction} from './card.models';
 import {
   FetchCardsStatus,
   FetchOverviewStatus,
@@ -58,14 +58,22 @@ export const successFetchOverview = ({
   balance,
   settledTransactions,
   pendingTransactions,
+  topUpHistory,
 }: {
   id: string;
   balance: number;
   settledTransactions: PagedTransactionData;
   pendingTransactions: Transaction[];
+  topUpHistory: TopUp[];
 }): CardActionType => ({
   type: CardActionTypes.SUCCESS_FETCH_OVERVIEW,
-  payload: {id, balance, settledTransactions, pendingTransactions},
+  payload: {
+    id,
+    balance,
+    settledTransactions,
+    pendingTransactions,
+    topUpHistory,
+  },
 });
 
 export const failedFetchOverview = (id: string): CardActionType => ({

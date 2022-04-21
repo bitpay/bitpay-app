@@ -1,5 +1,5 @@
 import {Network} from '../../constants';
-import {Card, PagedTransactionData, Transaction} from './card.models';
+import {Card, PagedTransactionData, TopUp, Transaction} from './card.models';
 import {
   FetchCardsStatus,
   FetchOverviewStatus,
@@ -86,6 +86,7 @@ interface SuccessFetchOverview {
     balance: number;
     settledTransactions: PagedTransactionData;
     pendingTransactions: Transaction[];
+    topUpHistory: TopUp[];
   };
 }
 

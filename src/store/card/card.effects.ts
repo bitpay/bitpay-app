@@ -132,7 +132,9 @@ export const startFetchOverview =
           endDate,
         },
       );
-      const {settledTransactions, pendingTransactions} = res.card.overview;
+
+      const {overview, topUpHistory} = res.card;
+      const {settledTransactions, pendingTransactions} = overview;
 
       dispatch(
         CardActions.successFetchOverview({
@@ -140,6 +142,7 @@ export const startFetchOverview =
           balance: res.card.balance,
           settledTransactions,
           pendingTransactions,
+          topUpHistory,
         }),
       );
     } catch (err) {
