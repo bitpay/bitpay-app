@@ -111,6 +111,7 @@ const Confirm = () => {
   const [txp, updateTxp] = useState(_txp);
   const [keyWallets, setKeysWallets] = useState<KeyWalletsRowProps[]>();
   const {fee, networkCost, sendingFrom, total, subTotal} = txDetails || {};
+  const [disableSwipeSendButton, setDisableSwipeSendButton] = useState(false);
 
   const [remainingTime, setRemainingTime] = useState<string>();
   const [invoiceExpirationTime, setInvoiceExpirationTime] = useState<number>();
@@ -195,6 +196,7 @@ const Confirm = () => {
 
         if (now > invoiceExpirationTime) {
           setRemainingTime('Expired');
+          setDisableSwipeSendButton(true);
           clearInterval(interval);
           return;
         }
@@ -206,7 +208,7 @@ const Confirm = () => {
         const _remainingTimeStr =
           ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2);
         setRemainingTime(_remainingTimeStr);
-      }, 1000);
+      }, 1000); //each count lasts for a second
     }
     //cleanup the interval on complete
     if (interval) {
@@ -298,6 +300,7 @@ const Confirm = () => {
       {txp && recipient && wallet ? (
         <>
           <SwipeButton
+            disabled={disableSwipeSendButton}
             title={'Slide to send'}
             onSwipeComplete={async () => {
               try {
