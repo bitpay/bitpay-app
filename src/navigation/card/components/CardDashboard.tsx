@@ -79,6 +79,21 @@ const topUpToUiTopUp = (topUp: TopUp) => {
   return uiTx;
 };
 
+const sortPendingTxByTimestamp = (
+  a: Pick<UiTransaction, 'dates'>,
+  b: Pick<UiTransaction, 'dates'>,
+) => {
+  const timestampA = a.dates.auth;
+  const timestampB = b.dates.auth;
+
+  if (timestampA > timestampB) {
+    return -1;
+  }
+  if (timestampA < timestampB) {
+    return 1;
+  }
+  return 0;
+};
 const CardDashboard: React.FC<CardDashboardProps> = props => {
   const dispatch = useAppDispatch();
   const navigator = useNavigation();
@@ -175,16 +190,19 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   );
   const topUpHistory = useAppSelector(({CARD}) => CARD.topUpHistory[id]);
 
-  const filteredTransactions = useMemo(
-    () => [
+  const filteredTransactions = useMemo(() => {
+    const uiPendingTxList = [
       ...(pendingTxList || []).map(tx => toUiTransaction(tx, false)),
       ...(topUpHistory || []).map(tu => topUpToUiTopUp(tu)),
+    ].sort(sortPendingTxByTimestamp);
+
+    return [
+      ...uiPendingTxList,
       ...(settledTxList || [])
         .filter(filters.settledTx)
         .map(tx => toUiTransaction(tx, true)),
-    ],
-    [settledTxList, pendingTxList, topUpHistory, filters],
-  );
+    ];
+  }, [settledTxList, pendingTxList, topUpHistory, filters]);
 
   const listFooterComponent = useMemo(
     () => (
