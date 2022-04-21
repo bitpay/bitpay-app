@@ -24,8 +24,8 @@ import KeyWalletsRow, {
 } from '../../../components/list/KeyWalletsRow';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
-import {LightBlack, SlateDark, White} from '../../../styles/colors';
-import {H4, TextAlign} from '../../../components/styled/Text';
+import {LightBlack, White} from '../../../styles/colors';
+import {H4, TextAlign, BaseText} from '../../../components/styled/Text';
 import {RouteProp, useRoute} from '@react-navigation/core';
 import {WalletScreens, WalletStackParamList} from '../WalletStack';
 import {useNavigation, useTheme} from '@react-navigation/native';
@@ -38,20 +38,23 @@ import {
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
 const ModalHeader = styled.View`
-  padding: ${ScreenGutter};
+  height: 50px;
+  margin-right: 10px;
+  margin-left: 10px;
   display: flex;
   flex-direction: row;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  position: relative;
 `;
 
 const CloseModalButtonContainer = styled.View`
   position: absolute;
-  left: 15px;
+  left: 0px;
 `;
 
 const CloseModalButton = styled.TouchableOpacity`
-  margin: 15px 0;
+  margin: 15px;
   padding: 5px;
   height: 41px;
   width: 41px;
@@ -60,13 +63,6 @@ const CloseModalButton = styled.TouchableOpacity`
   display: flex;
   justify-content: center;
   align-items: center;
-`;
-
-const ModalTitle = styled.Text`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  text-align: center;
-  font-size: 20px;
-  font-weight: bold;
 `;
 
 const SafeAreaView = styled.SafeAreaView`
@@ -93,13 +89,19 @@ export const WalletSelectMenuBodyContainer = styled.ScrollView`
   padding-bottom: 20px;
 `;
 
+const NoWalletsMsg = styled(BaseText)`
+  font-size: 15px;
+  text-align: center;
+  margin-top: 20px;
+`;
+
 export type GlobalSelectParamList = {
-  context: 'send' | 'receive' | 'deposit';
-  toCoinbase?: {
-    account: string;
+  context: 'send' | 'receive' | 'coinbase' | 'contact';
+  recipient?: {
+    name: string;
     address: string;
     currency: string;
-    title: string;
+    network: string;
   };
 };
 
@@ -138,24 +140,31 @@ const buildList = (category: string[], wallets: Wallet[]) => {
 
 interface GlobalSelectProps {
   useAsModal: any;
+  modalTitle?: string;
   customSupportedCurrencies?: string[];
   onDismiss?: (newWallet?: any) => void;
-  title?: string;
+  modalContext?: 'send' | 'receive' | 'coinbase' | 'contact';
+  livenetOnly?: boolean;
 }
 
 const GlobalSelect: React.FC<GlobalSelectProps> = ({
   useAsModal,
+  modalTitle,
   customSupportedCurrencies,
   onDismiss,
-  title,
+  modalContext,
+  livenetOnly,
 }) => {
-  const {
-    params: {context, toCoinbase},
-  } = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
+  const route = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
+  let {context, recipient} = route.params || {};
+  if (useAsModal && modalContext) {
+    context = modalContext;
+  }
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const tokens = useAppSelector(({WALLET}) => WALLET.tokenOptions);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
   const [receiveWallet, setReceiveWallet] = useState<Wallet>();
@@ -178,18 +187,22 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   wallets = wallets.filter(wallet => !wallet.hideWallet && wallet.isComplete());
 
   // only show wallets with funds
-  if (context === 'send' || context === 'deposit') {
+  if (context === 'send' || context === 'coinbase' || context === 'contact') {
     wallets = wallets.filter(wallet => wallet.balance.sat > 0);
   }
 
-  if (context === 'deposit' && toCoinbase) {
+  if (recipient && (context === 'coinbase' || context === 'contact')) {
     wallets = wallets.filter(
-      wallet => wallet.currencyAbbreviation === toCoinbase.currency,
+      wallet =>
+        wallet.currencyAbbreviation === recipient?.currency &&
+        wallet.credentials.network === recipient?.network,
     );
   }
 
-  if (useAsModal) {
-    wallets = wallets.filter(wallet => wallet.isComplete());
+  if (livenetOnly) {
+    wallets = wallets.filter(
+      wallet => wallet.credentials.network === 'livenet',
+    );
   }
 
   const supportedCoins = useMemo(
@@ -230,10 +243,13 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                 return merge(cloneDeep(wallet), {
                   cryptoBalance: balance.crypto,
                   cryptoLockedBalance: balance.cryptoLocked,
-                  fiatBalance: formatFiatAmount(balance.fiat, 'USD'),
+                  fiatBalance: formatFiatAmount(
+                    balance.fiat,
+                    defaultAltCurrency.isoCode,
+                  ),
                   fiatLockedBalance: formatFiatAmount(
                     balance.fiatLocked,
-                    'USD',
+                    defaultAltCurrency.isoCode,
                   ),
                   currencyAbbreviation: currencyAbbreviation.toUpperCase(),
                   network,
@@ -255,17 +271,17 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         onDismiss(wallet);
         return;
       }
-      if (context === 'deposit') {
-        const {account, address} = toCoinbase!;
-        // Coinbase: send from BitPay to Coinbase
+      if (context === 'coinbase' || context === 'contact') {
+        setWalletSelectModalVisible(false);
+        const {name, address} = recipient!;
         if (!address) {
           return;
         }
 
         try {
-          const recipient = {
-            name: account || 'Coinbase',
-            type: 'coinbase',
+          const sendTo = {
+            name,
+            type: context,
             address,
           };
 
@@ -273,14 +289,15 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             screen: WalletScreens.AMOUNT,
             params: {
               opts: {hideSendMax: true},
-              currencyAbbreviation: wallet.currencyAbbreviation.toUpperCase(),
+              currencyAbbreviationRouteParam:
+                wallet.currencyAbbreviation.toUpperCase(),
               onAmountSelected: async (amount, setButtonState, opts) => {
                 try {
                   setButtonState('loading');
                   const {txDetails, txp} = await dispatch(
                     createProposalAndBuildTxDetails({
                       wallet,
-                      recipient,
+                      recipient: sendTo,
                       amount: Number(amount),
                       ...opts,
                     }),
@@ -291,7 +308,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                     screen: 'Confirm',
                     params: {
                       wallet,
-                      recipient,
+                      recipient: sendTo,
                       txp,
                       txDetails,
                       amount: Number(amount),
@@ -332,11 +349,10 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         });
       } else {
         setReceiveWallet(wallet);
-        await sleep(500);
         setShowReceiveAddressBottomModal(true);
       }
     },
-    [context, navigation, onDismiss, toCoinbase, useAsModal],
+    [context, navigation, onDismiss, recipient, useAsModal],
   );
 
   const renderItem = useCallback(
@@ -364,7 +380,6 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
 
   const closeModal = () => {
     setShowReceiveAddressBottomModal(false);
-    setReceiveWallet(undefined);
   };
 
   useEffect(() => {
@@ -399,18 +414,28 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
               />
             </CloseModalButton>
           </CloseModalButtonContainer>
-          {(title || toCoinbase?.title) && (
-            <ModalTitle>{title || toCoinbase?.title}</ModalTitle>
+          {!!modalTitle && (
+            <TextAlign align={'center'}>
+              <H4>{modalTitle}</H4>
+            </TextAlign>
           )}
         </ModalHeader>
       )}
       <GlobalSelectContainer>
-        <FlatList
-          contentContainerStyle={{paddingBottom: 100}}
-          data={[...supportedCoins, ...otherCoins]}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-        />
+        {[...supportedCoins, ...otherCoins].length > 0 && (
+          <FlatList
+            contentContainerStyle={{paddingBottom: 100}}
+            data={[...supportedCoins, ...otherCoins]}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
+          />
+        )}
+        {[...supportedCoins, ...otherCoins].length === 0 &&
+          context === 'send' && (
+            <NoWalletsMsg>
+              There are no wallets with funds available to use this feature.
+            </NoWalletsMsg>
+          )}
         <SheetModal
           isVisible={walletSelectModalVisible}
           onBackdropPress={() => setWalletSelectModalVisible(false)}>

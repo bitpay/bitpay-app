@@ -214,7 +214,7 @@ const CustomizeHome = () => {
         ListFooterComponent={memoizedFooterList}
         contentContainerStyle={{paddingTop: 20, paddingBottom: 250}}
         onDragEnd={({data}) => {
-          if (!dirty) {
+          if (!dirty && visibleList[0]?.key !== data[0]?.key) {
             setDirty(true);
           }
           setVisibleList(data);

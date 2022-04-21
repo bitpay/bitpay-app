@@ -15,6 +15,7 @@ const RowContainer = styled.View`
 const KeyNameContainer = styled.View`
   flex-direction: row;
   align-items: center;
+  padding-bottom: 10px;
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
   border-bottom-width: 1px;
   margin-bottom: 10px;

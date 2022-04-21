@@ -26,6 +26,7 @@ interface Props {
   wallets: Wallet[];
   totalBalance: number;
   onPress: (keyId: string) => void;
+  defaultAltCurrencyIsoCode: string;
 }
 
 const OptionContainer = styled.TouchableOpacity`
@@ -54,6 +55,7 @@ const KeyDropdownOption = ({
   keyName,
   wallets,
   totalBalance,
+  defaultAltCurrencyIsoCode,
   onPress,
 }: Props) => {
   const _wallets = wallets.filter(wallet => !wallet.hideWallet);
@@ -88,7 +90,9 @@ const KeyDropdownOption = ({
           ) : null}
         </Column>
         <Row style={{alignItems: 'center', justifyContent: 'flex-end'}}>
-          <Balance>{formatFiatAmount(totalBalance, 'USD')}</Balance>
+          <Balance>
+            {formatFiatAmount(totalBalance, defaultAltCurrencyIsoCode)}
+          </Balance>
           <AngleRight style={{marginLeft: 10}} />
         </Row>
       </Row>

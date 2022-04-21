@@ -13,6 +13,7 @@ interface CustomizeWalletCardComponentProps {
   totalBalance: number;
   onPress: () => void;
   checked: boolean;
+  defaultAltCurrencyIsoCode: string;
 }
 
 const WALLET_DISPLAY_LIMIT = 3;
@@ -52,11 +53,13 @@ const CustomizeWalletCardComponent: React.FC<
   totalBalance,
   onPress,
   checked,
+  defaultAltCurrencyIsoCode,
 }: {
   wallets: Wallet[];
   totalBalance: number;
   onPress: () => void;
   checked: boolean;
+  defaultAltCurrencyIsoCode: string;
 }) => {
   const remainingAssetCount =
     wallets.length > WALLET_DISPLAY_LIMIT
@@ -85,7 +88,7 @@ const CustomizeWalletCardComponent: React.FC<
 
   const body = {
     title: 'My Key',
-    value: formatFiatAmount(totalBalance, 'USD'),
+    value: formatFiatAmount(totalBalance, defaultAltCurrencyIsoCode),
   };
 
   return (

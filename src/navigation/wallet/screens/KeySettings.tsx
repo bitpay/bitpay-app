@@ -34,7 +34,7 @@ import {
 import {useDispatch} from 'react-redux';
 import InfoSvg from '../../../../assets/img/info.svg';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
-import {buildNestedWalletList, buildUIFormattedWallet} from './KeyOverview';
+import {buildNestedWalletList} from './KeyOverview';
 import {URL} from '../../../constants';
 import {getMnemonic} from '../../../utils/helper-methods';
 import {useAppSelector} from '../../../utils/hooks';

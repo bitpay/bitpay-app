@@ -331,11 +331,17 @@ const RecoveryPhrase = () => {
         const _selectedCurrency = CurrencyOptions.filter(
           currency => currency.id === id,
         );
+        const currencyAbbreviation = _selectedCurrency[0].currencyAbbreviation;
+        const defaultCoin = `default${currencyAbbreviation.toUpperCase()}`;
+        // @ts-ignore
+        const derivationPath = DefaultDerivationPath[defaultCoin];
         setSelectedCurrency(_selectedCurrency[0]);
         setCurrencyModalVisible(false);
+
         setOptions({
           ...options,
-          coin: _selectedCurrency[0].currencyAbbreviation,
+          coin: currencyAbbreviation,
+          derivationPath,
         });
       };
 

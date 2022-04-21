@@ -25,6 +25,7 @@ export enum OnGoingProcessMessages {
   SYNCING_WALLETS = 'Syncing Wallets...',
   REJECTING_CALL_REQUEST = 'Rejecting Call Request',
   SAVING_LAYOUT = 'Saving Layout',
+  EXCHANGE_GETTING_DATA = 'Getting data from the exchange...',
   CALCULATING_FEE = 'Calculating Fee',
   CONNECTING_COINBASE = 'Connecting with Coinbase...',
   FETCHING_COINBASE_DATA = 'Fetching data from Coinbase...',

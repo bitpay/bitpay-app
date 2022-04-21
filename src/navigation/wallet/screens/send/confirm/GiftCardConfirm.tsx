@@ -6,7 +6,6 @@ import {WalletStackParamList} from '../../../WalletStack';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {H4, TextAlign} from '../../../../../components/styled/Text';
 import {
-  InvoiceCreationParams,
   Recipient,
   TransactionProposal,
   TxDetails,
@@ -14,7 +13,7 @@ import {
 } from '../../../../../store/wallet/wallet.models';
 import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
 import {
-  createInvoiceAndTxProposal,
+  createPayProTxProposal,
   handleCreateTxProposalError,
   removeTxp,
   startSendPayment,
@@ -46,41 +45,42 @@ import {
 } from './Shared';
 import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../components/ErrorMessages';
-import {APP_NETWORK} from '../../../../../constants/config';
+import {APP_NETWORK, BASE_BITPAY_URLS} from '../../../../../constants/config';
 import {Terms} from '../../../../tabs/shop/components/styled/ShopTabComponents';
+import {
+  CardConfig,
+  GiftCardDiscount,
+} from '../../../../../store/shop/shop.models';
 
 export interface GiftCardConfirmParamList {
+  amount: number;
+  cardConfig: CardConfig;
+  discounts: GiftCardDiscount[];
   wallet?: Wallet;
   recipient?: Recipient;
   txp?: TransactionProposal;
   txDetails?: TxDetails;
-  invoiceCreationParams: InvoiceCreationParams;
 }
 
 const GiftCardHeader = ({
-  invoiceCreationParams,
+  amount,
+  cardConfig,
 }: {
-  invoiceCreationParams: InvoiceCreationParams;
+  amount: number;
+  cardConfig: CardConfig;
 }): JSX.Element | null => {
   return (
     <>
       <Header hr>
-        <>{invoiceCreationParams.cardConfig!.displayName} Gift Card</>
+        <>{cardConfig.displayName} Gift Card</>
       </Header>
       <DetailContainer height={73}>
         <DetailRow>
           <H4>
-            {formatFiatAmount(
-              invoiceCreationParams.amount,
-              invoiceCreationParams.cardConfig!.currency,
-            )}{' '}
-            {invoiceCreationParams.cardConfig!.currency}
+            {formatFiatAmount(amount, cardConfig.currency)}{' '}
+            {cardConfig.currency}
           </H4>
-          <RemoteImage
-            uri={invoiceCreationParams.cardConfig!.icon}
-            height={40}
-            borderRadius={40}
-          />
+          <RemoteImage uri={cardConfig.icon} height={40} borderRadius={40} />
         </DetailRow>
       </DetailContainer>
       <Hr style={{marginBottom: 40}} />
@@ -93,11 +93,13 @@ const Confirm = () => {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'GiftCardConfirm'>>();
   const {
+    amount,
+    cardConfig,
+    discounts,
     wallet: _wallet,
     recipient: _recipient,
     txDetails: _txDetails,
     txp: _txp,
-    invoiceCreationParams,
   } = route.params!;
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const giftCards = useAppSelector(({SHOP}) => SHOP.giftCards[APP_NETWORK]);
@@ -149,8 +151,32 @@ const Confirm = () => {
       dispatch(ShopActions.deletedUnsoldGiftCards());
     }
     try {
+      const {name: brand, currency} = cardConfig;
+      const {invoice, invoiceId} = await dispatch(
+        ShopEffects.startCreateGiftCardInvoice(cardConfig!, {
+          amount,
+          brand,
+          currency,
+          clientId: selectedWallet.id,
+          discounts: discounts.map(d => d.code) || [],
+          transactionCurrency:
+            selectedWallet.currencyAbbreviation.toUpperCase(),
+        }),
+      );
+      const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
+      const paymentUrl = `${baseUrl}/i/${invoiceId}`;
       const {txDetails: newTxDetails, txp: newTxp} = await dispatch(
-        createInvoiceAndTxProposal(selectedWallet, invoiceCreationParams),
+        await createPayProTxProposal({
+          wallet: selectedWallet,
+          paymentUrl,
+          invoice,
+          invoiceID: invoiceId,
+          message: `${formatFiatAmount(amount, currency)} Gift Card`,
+          customData: {
+            giftCardName: brand,
+            service: 'giftcards',
+          },
+        }),
       );
       setWallet(selectedWallet);
       setKey(keys[selectedWallet.keyId]);
@@ -187,7 +213,7 @@ const Confirm = () => {
   return (
     <ConfirmContainer>
       <DetailsList>
-        <GiftCardHeader invoiceCreationParams={invoiceCreationParams} />
+        <GiftCardHeader amount={amount} cardConfig={cardConfig} />
         {txp && recipient && wallet ? (
           <>
             <Header hr>Summary</Header>
@@ -202,7 +228,7 @@ const Confirm = () => {
                 amount={{
                   fiatAmount: `— ${formatFiatAmount(
                     unsoldGiftCard.totalDiscount,
-                    invoiceCreationParams.cardConfig!.currency,
+                    cardConfig.currency,
                   )}`,
                   cryptoAmount: '',
                 }}
@@ -218,7 +244,7 @@ const Confirm = () => {
             />
             <Amount description={'Miner fee'} amount={fee} fiatOnly hr />
             <Amount description={'Total'} amount={total} />
-            <Terms>{invoiceCreationParams?.cardConfig?.terms}</Terms>
+            <Terms>{cardConfig.terms}</Terms>
           </>
         ) : null}
       </DetailsList>
@@ -272,7 +298,7 @@ const Confirm = () => {
                             screen: 'GiftCardDetails',
                             params: {
                               giftCard,
-                              cardConfig: invoiceCreationParams.cardConfig,
+                              cardConfig,
                             },
                           },
                         },

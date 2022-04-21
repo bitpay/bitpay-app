@@ -310,6 +310,9 @@ const CoinbaseAccount = ({
   const deposit = async () => {
     // Deposit:
     //   Transfer from BitPay wallet to Coinbase Account
+    if (!account) {
+      return;
+    }
     dispatch(
       showOnGoingProcessModal(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
     );
@@ -328,12 +331,12 @@ const CoinbaseAccount = ({
         navigation.navigate('Wallet', {
           screen: 'GlobalSelect',
           params: {
-            context: 'deposit',
-            toCoinbase: {
-              account: account?.name || 'Coinbase',
-              currency: account?.currency.code.toLowerCase() || '',
+            context: 'coinbase',
+            recipient: {
+              name: account.name || 'Coinbase',
+              currency: account.currency.code.toLowerCase(),
               address: newAddress,
-              title: 'Send from BitPay Wallet',
+              network: 'livenet',
             },
           },
         });
@@ -466,7 +469,7 @@ const CoinbaseAccount = ({
         onBackdropPress={() => setWalletModalVisible(false)}>
         <GlobalSelectContainer>
           <GlobalSelect
-            title={'Select destination wallet'}
+            modalTitle={'Select destination wallet'}
             customSupportedCurrencies={customSupportedCurrencies}
             useAsModal={true}
             onDismiss={onSelectedWallet}
@@ -482,7 +485,7 @@ const CoinbaseAccount = ({
         <AmountContainer>
           <Amount
             useAsModal={true}
-            currencyAbbreviationModal={account?.balance.currency}
+            currencyAbbreviationProp={account?.balance.currency}
             onDismiss={onEnteredAmount}
           />
         </AmountContainer>

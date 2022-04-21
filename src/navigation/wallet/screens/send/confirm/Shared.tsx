@@ -42,6 +42,13 @@ export const DetailContainer = styled.View<DetailContainerParams>`
   ${({height}) => (height ? `height: ${height}px;` : '')}
 `;
 
+export const PressableDetailContainer = styled.TouchableOpacity<DetailContainerParams>`
+  min-height: 53px;
+  padding: 20px 0;
+  justify-content: center;
+  ${({height}) => (height ? `height: ${height}px;` : '')}
+`;
+
 export const DetailRow = styled(Row)`
   align-items: center;
   justify-content: space-between;
@@ -230,19 +237,30 @@ export const SharedDetailRow = ({
   description,
   value,
   hr,
+  onPress,
 }: {
   description: string;
   value: number | string;
   hr?: boolean;
+  onPress?: () => void;
 }): JSX.Element | null => {
   return (
     <>
-      <DetailContainer>
-        <DetailRow>
-          <H7>{description}</H7>
-          <H7>{value}</H7>
-        </DetailRow>
-      </DetailContainer>
+      {onPress ? (
+        <PressableDetailContainer onPress={onPress}>
+          <DetailRow>
+            <H7>{description}</H7>
+            <H7>{value}</H7>
+          </DetailRow>
+        </PressableDetailContainer>
+      ) : (
+        <DetailContainer>
+          <DetailRow>
+            <H7>{description}</H7>
+            <H7>{value}</H7>
+          </DetailRow>
+        </DetailContainer>
+      )}
       {hr && <Hr />}
     </>
   );

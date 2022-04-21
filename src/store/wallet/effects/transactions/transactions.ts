@@ -748,9 +748,11 @@ export const buildTransactionDetails =
   ({
     transaction,
     wallet,
+    defaultAltCurrencyIsoCode = 'USD',
   }: {
     transaction: any;
     wallet: Wallet;
+    defaultAltCurrencyIsoCode?: string;
   }): Effect<Promise<any>> =>
   async dispatch => {
     return new Promise(async (resolve, reject) => {
@@ -769,8 +771,8 @@ export const buildTransactionDetails =
         const {currencyAbbreviation} = wallet;
         const currency = currencyAbbreviation.toLowerCase();
         const _fee = fees || fee;
-        // TODO: update alternative currency
-        const alternativeCurrency = 'USD';
+
+        const alternativeCurrency = defaultAltCurrencyIsoCode;
 
         const rates = await dispatch(startGetRates());
 

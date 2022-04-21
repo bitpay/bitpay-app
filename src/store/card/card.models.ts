@@ -73,6 +73,13 @@ export interface PagedTransactionData {
   transactionList: Transaction[];
 }
 
+export interface DebitCardTopUpInvoiceParams {
+  invoicePrice: number;
+  invoiceCurrency: string;
+  transactionCurrency: string;
+  walletId: string;
+}
+
 export interface ReferredUsersType {
   expiration: string;
   familyName: string;

@@ -64,6 +64,7 @@ const Connections: React.FC<ConnectionsProps> = props => {
     if (token && token.access_token) {
       navigation.navigate('Coinbase', {
         screen: 'CoinbaseSettings',
+        params: {fromScreen: 'Settings'},
       });
     } else {
       navigation.navigate('Coinbase', {

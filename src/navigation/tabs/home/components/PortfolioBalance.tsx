@@ -10,7 +10,7 @@ import {
 } from '../../../../utils/helper-methods';
 import QuestionSvg from '../../../../../assets/img/question.svg';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
-import {useAppDispatch} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import Percentage from '../../../../components/percentage/Percentage';
 
@@ -41,6 +41,8 @@ const PortfolioBalance = () => {
   const portfolioBalance = useSelector(
     ({WALLET}: RootState) => WALLET.portfolioBalance,
   );
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+
   const dispatch = useAppDispatch();
   const percentageDifference = calculatePercentageDifference(
     portfolioBalance.current,
@@ -75,7 +77,7 @@ const PortfolioBalance = () => {
         <QuestionSvg width={12} height={12} />
       </PortfolioBalanceHeader>
       <PortfolioBalanceText>
-        {formatFiatAmount(portfolioBalance.current, 'usd')}
+        {formatFiatAmount(portfolioBalance.current, defaultAltCurrency.isoCode)}
       </PortfolioBalanceText>
       {percentageDifference ? (
         <Percentage percentageDifference={percentageDifference} />

@@ -9,8 +9,9 @@ import {
 } from '../../../../../components/styled/Containers';
 import {H7, Smallest} from '../../../../../components/styled/Text';
 import {formatFiatAmount} from '../../../../../utils/helper-methods';
-import IncrementArrow from '../../../../../../assets/img/home/exchange-rates/increment-arrow.svg';
-import DecrementArrow from '../../../../../../assets/img/home/exchange-rates/decrement-arrow.svg';
+import GainArrow from '../../../../../../assets/img/home/exchange-rates/increment-arrow.svg';
+import LossArrow from '../../../../../../assets/img/home/exchange-rates/decrement-arrow.svg';
+import NeutralArrow from '../../../../../../assets/img/home/exchange-rates/flat-arrow.svg';
 import {ExchangeRateItemProps} from './ExchangeRatesList';
 import {Slate, SlateDark} from '../../../../../styles/colors';
 
@@ -38,19 +39,35 @@ const ExchangeRateSubText = styled(Smallest)`
   color: ${({theme}) => (theme.dark ? Slate : SlateDark)};
 `;
 
+const showLossGainOrNeutralArrow = (average: number | undefined) => {
+  if (average === undefined) {
+    return;
+  }
+
+  if (average > 0) {
+    return <GainArrow style={{marginRight: 5}} />;
+  } else if (average < 0) {
+    return <LossArrow style={{marginRight: 5}} />;
+  } else {
+    return <NeutralArrow style={{marginRight: 5}} />;
+  }
+};
+
 const ExchangeRateItem = ({
   item,
   onPress,
+  defaultAltCurrencyIsoCode,
 }: {
   item: ExchangeRateItemProps;
   onPress: () => void;
+  defaultAltCurrencyIsoCode: string;
 }) => {
   const {img, currencyName, currentPrice, average, currencyAbbreviation} = item;
 
   return (
     <RowContainer activeOpacity={ActiveOpacity} onPress={onPress}>
-      <CurrencyImageContainer style={{width: 35, height: 35}}>
-        <CurrencyImage img={img} size={35} />
+      <CurrencyImageContainer style={{width: 40, height: 40}}>
+        <CurrencyImage img={img} size={40} />
       </CurrencyImageContainer>
       <CurrencyColumn>
         <ExchangeRateText ellipsizeMode="tail" numberOfLines={1}>
@@ -63,19 +80,14 @@ const ExchangeRateItem = ({
       <NoteContainer>
         {currentPrice && (
           <ExchangeRateText>
-            {formatFiatAmount(currentPrice, 'USD', {
+            {formatFiatAmount(currentPrice, defaultAltCurrencyIsoCode, {
               customPrecision: 'minimal',
               currencyAbbreviation,
             })}
           </ExchangeRateText>
         )}
         <SubTextContainer>
-          {average && average > 0 ? (
-            <IncrementArrow style={{marginRight: 5}} />
-          ) : null}
-          {average && average < 0 ? (
-            <DecrementArrow style={{marginRight: 5}} />
-          ) : null}
+          {showLossGainOrNeutralArrow(average)}
           <ExchangeRateSubText>{average}%</ExchangeRateSubText>
         </SubTextContainer>
       </NoteContainer>
