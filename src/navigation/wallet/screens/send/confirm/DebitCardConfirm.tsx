@@ -67,7 +67,7 @@ export interface DebitCardConfirmParamList {
 }
 
 const CardTermsContainer = styled.View`
-  margin-top: 40px;
+  margin: 40px 0 20px;
 `;
 
 const CardDetailsContainer = styled.View`
