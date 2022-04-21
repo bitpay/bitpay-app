@@ -194,8 +194,8 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   if (recipient && (context === 'coinbase' || context === 'contact')) {
     wallets = wallets.filter(
       wallet =>
-        wallet => wallet.currencyAbbreviation === toCoinbase?.currency &&
-        wallet.credentials.network === recipient?.network
+        wallet.currencyAbbreviation === recipient?.currency &&
+        wallet.credentials.network === recipient?.network,
     );
   }
 
