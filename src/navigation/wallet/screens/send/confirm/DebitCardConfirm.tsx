@@ -44,6 +44,7 @@ import {
   DetailsList,
   Header,
   SendingFrom,
+  SharedDetailRow,
 } from './Shared';
 import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../components/ErrorMessages';
@@ -111,6 +112,8 @@ const Confirm = () => {
   const [keyWallets, setKeysWallets] = useState<KeyWalletsRowProps[]>();
   const {fee, networkCost, sendingFrom, total, subTotal} = txDetails || {};
 
+  const [remainingTime, setRemainingTime] = useState<string>();
+  const [invoiceExpirationTime, setInvoiceExpirationTime] = useState<number>();
   const memoizedKeysAndWalletsList = useMemo(
     () => BuildKeysAndWalletsList({keys, network}),
     [keys, network],
@@ -184,6 +187,33 @@ const Confirm = () => {
     }
   };
 
+  useEffect(() => {
+    let interval: any;
+    if (invoiceExpirationTime) {
+      interval = setInterval(() => {
+        const now = Math.floor(Date.now() / 1000);
+
+        if (now > invoiceExpirationTime) {
+          setRemainingTime('Expired');
+          clearInterval(interval);
+          return;
+        }
+
+        const totalSecs = invoiceExpirationTime - now;
+        const m = Math.floor(totalSecs / 60);
+        const s = totalSecs % 60;
+
+        const _remainingTimeStr =
+          ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2);
+        setRemainingTime(_remainingTimeStr);
+      }, 1000);
+    }
+    //cleanup the interval on complete
+    if (interval) {
+      return () => clearInterval(interval);
+    }
+  }, [invoiceExpirationTime]);
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => openKeyWalletSelector(), []);
 
@@ -200,12 +230,12 @@ const Confirm = () => {
                 <RightMargin>
                   <H6>BitPay Card</H6>
                 </RightMargin>
-                {cardType === 'virtual' ? (
-                  <Type noAutoMarginLeft={true}>Virtual</Type>
-                ) : null}
-                {cardType === 'physical' ? (
-                  <Type noAutoMarginLeft={true}>Physical</Type>
-                ) : null}
+
+                <RightMargin>
+                  <Type>Virtual</Type>
+                </RightMargin>
+
+                <Type noAutoMarginLeft={true}>Physical</Type>
               </CardDetailsContainer>
             ) : (
               <CardDetailsContainer>
@@ -228,6 +258,13 @@ const Confirm = () => {
               onPress={openKeyWalletSelector}
               hr
             />
+            {remainingTime ? (
+              <SharedDetailRow
+                description={'Expires'}
+                value={remainingTime}
+                hr
+              />
+            ) : null}
             <Amount
               description={'Network Cost'}
               amount={networkCost}
