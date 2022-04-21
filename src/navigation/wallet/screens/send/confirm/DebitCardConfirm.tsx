@@ -15,6 +15,7 @@ import {
   createPayProTxProposal,
   handleCreateTxProposalError,
   removeTxp,
+  showNoWalletsModal,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
@@ -91,8 +92,12 @@ const Confirm = () => {
   };
 
   const openKeyWalletSelector = () => {
-    setKeysWallets(memoizedKeysAndWalletsList);
-    setWalletSelectModalVisible(true);
+    if (memoizedKeysAndWalletsList.length) {
+      setKeysWallets(memoizedKeysAndWalletsList);
+      setWalletSelectModalVisible(true);
+    } else {
+      dispatch(showNoWalletsModal({navigation}));
+    }
   };
 
   const onWalletSelect = async (selectedWallet: Wallet) => {
