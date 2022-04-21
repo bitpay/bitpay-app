@@ -367,11 +367,14 @@ export const START_FETCH_REFERRED_USERS =
   (id: string): Effect =>
   async (dispatch, getState) => {
     try {
+      dispatch(CardActions.successFetchReferredUsers(id, 'loading'));
+
       const {APP, BITPAY_ID} = getState();
       const {network} = APP;
       const token = BITPAY_ID.apiToken[network];
 
       const res = await CardApi.fetchReferredUsers(token);
+      await sleep(1000);
       if (res) {
         dispatch(CardActions.successFetchReferredUsers(id, res));
       }

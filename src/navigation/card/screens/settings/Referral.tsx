@@ -41,6 +41,7 @@ import {
   CategoryHeading,
   CategoryRow,
 } from '../../components/CardSettingsList.styled';
+import ReferredUsersSkeleton from '../../components/ReferredUsersSkeleton';
 
 export interface ReferralParamList {
   card: Card;
@@ -114,7 +115,8 @@ const ZeroReferralsContainer = styled.View`
 const FailedContainer = styled.View<{noHorizontalMargin?: boolean}>`
   background-color: ${({theme: {dark}}) => (dark ? '#2C0F13' : Caution25)};
   padding: ${ScreenGutter};
-  margin: ${({noHorizontalMargin}) => (noHorizontalMargin ? `${ScreenGutter} 0` : ScreenGutter)};
+  margin: ${({noHorizontalMargin}) =>
+    noHorizontalMargin ? `${ScreenGutter} 0` : ScreenGutter};
 `;
 
 const Referral = ({}) => {
@@ -236,49 +238,57 @@ const Referral = ({}) => {
 
           <Hr />
 
-          {referredUsers &&
-          referredUsers !== 'failed' &&
-          referredUsers.length ? (
-            referredUsers.map(
-              ({givenName, familyName, status, expiration}, index) => (
-                <View key={index}>
-                  <CategoryRow>
-                    <SettingTitle>
-                      {givenName} {getInitial(familyName)}.
-                    </SettingTitle>
+          {typeof referredUsers === 'string' ? (
+            <>
+              {referredUsers === 'failed' ? (
+                <FailedContainer noHorizontalMargin={true}>
+                  <H7>Uh oh, something went wrong. Please try again later.</H7>
+                </FailedContainer>
+              ) : null}
 
-                    {status === 'paid' ? (
-                      <View>
-                        <Row>
-                          <HorizontalSpacing>
-                            <PresentSvg />
-                          </HorizontalSpacing>
-
-                          <SettingTitle>$10 Earned</SettingTitle>
-                        </Row>
-                      </View>
-                    ) : (
-                      <SettingTitle style={{textAlign: 'right'}}>
-                        {getStatus(status, +expiration)}
-                      </SettingTitle>
-                    )}
-                  </CategoryRow>
-                  <Hr />
-                </View>
-              ),
-            )
-          ) : referredUsers === 'failed' ? (
-            <FailedContainer noHorizontalMargin={true}>
-              <H7>Uh oh, something went wrong. Please try again later.</H7>
-            </FailedContainer>
+              {referredUsers === 'loading' ? <ReferredUsersSkeleton /> : null}
+            </>
           ) : (
-            <ZeroReferralsContainer>
-              <GhostSvg height={50} />
-              <VerticalSpacing>
-                <H6>It looks like you have no referrals.</H6>
-                <H6 style={{textAlign: 'center'}}> Go refer someone!</H6>
-              </VerticalSpacing>
-            </ZeroReferralsContainer>
+            <>
+              {referredUsers && referredUsers.length ? (
+                referredUsers!.map(
+                  ({givenName, familyName, status, expiration}, index) => (
+                    <View key={index}>
+                      <CategoryRow>
+                        <SettingTitle>
+                          {givenName} {getInitial(familyName)}.
+                        </SettingTitle>
+
+                        {status === 'paid' ? (
+                          <View>
+                            <Row>
+                              <HorizontalSpacing>
+                                <PresentSvg />
+                              </HorizontalSpacing>
+
+                              <SettingTitle>$10 Earned</SettingTitle>
+                            </Row>
+                          </View>
+                        ) : (
+                          <SettingTitle style={{textAlign: 'right'}}>
+                            {getStatus(status, +expiration)}
+                          </SettingTitle>
+                        )}
+                      </CategoryRow>
+                      <Hr />
+                    </View>
+                  ),
+                )
+              ) : (
+                <ZeroReferralsContainer>
+                  <GhostSvg height={50} />
+                  <VerticalSpacing>
+                    <H6>It looks like you have no referrals.</H6>
+                    <H6 style={{textAlign: 'center'}}> Go refer someone!</H6>
+                  </VerticalSpacing>
+                </ZeroReferralsContainer>
+              )}
+            </>
           )}
         </ReferredUsersContainer>
 

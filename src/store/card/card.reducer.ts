@@ -71,7 +71,7 @@ export interface CardState {
     [id: string]: string;
   };
   referredUsers: {
-    [id: string]: ReferredUsersType[] | 'failed';
+    [id: string]: ReferredUsersType[] | 'failed' | 'loading';
   };
 }
 
