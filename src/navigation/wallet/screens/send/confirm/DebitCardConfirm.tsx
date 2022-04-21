@@ -3,7 +3,7 @@ import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../../WalletStack';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
-import {H4, TextAlign} from '../../../../../components/styled/Text';
+import {H4, Smallest, TextAlign} from '../../../../../components/styled/Text';
 import {
   Recipient,
   TransactionProposal,
@@ -44,6 +44,8 @@ import {BASE_BITPAY_URLS} from '../../../../../constants/config';
 import {CardEffects} from '../../../../../store/card';
 import PaymentSent from '../../../components/PaymentSent';
 import {Card} from '../../../../../store/card/card.models';
+import styled from 'styled-components/native';
+import {Br} from '../../../../../components/styled/Containers';
 
 export interface DebitCardConfirmParamList {
   amount: number;
@@ -53,6 +55,10 @@ export interface DebitCardConfirmParamList {
   txp?: TransactionProposal;
   txDetails?: TxDetails;
 }
+
+const CardTermsContainer = styled.View`
+  margin-top: 40px;
+`;
 
 const Confirm = () => {
   const dispatch = useAppDispatch();
@@ -97,7 +103,7 @@ const Confirm = () => {
 
   const onWalletSelect = async (selectedWallet: Wallet) => {
     setWalletSelectModalVisible(false);
-    // not ideal - will dive into why the timeout has to be this long
+    // Wait to close wallet selection modal
     await sleep(500);
     dispatch(
       startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
@@ -175,6 +181,22 @@ const Confirm = () => {
             />
             <Amount description={'Miner fee'} amount={fee} fiatOnly hr />
             <Amount description={'Total'} amount={total} />
+
+            <CardTermsContainer>
+              <Smallest>
+                BY USING THIS CARD YOU AGREE WITH THE TERMS AND CONDITIONS OF
+                THE CARDHOLDER AGREEMENT AND FEE SCHEDULE, IF ANY. This card is
+                issued by Metropolitan Commercial Bank (Member FDIC) pursuant to
+                a license from Mastercard International. "Metropolitan
+                Commercial Bank" and "Metropolitan" are registered trademarks of
+                Metropolitan Commercial Bank ©2014.
+              </Smallest>
+              <Br />
+              <Smallest>
+                Mastercard is a registered trademark and the circles design is a
+                trademark of Mastercard International Incorporated.
+              </Smallest>
+            </CardTermsContainer>
           </>
         ) : null}
       </DetailsList>
