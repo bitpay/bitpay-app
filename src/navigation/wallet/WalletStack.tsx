@@ -257,7 +257,7 @@ const WalletStack = () => {
         />
         <Wallet.Screen
           options={{
-            headerTitle: () => <HeaderTitle>Confirm Payment</HeaderTitle>,
+            headerTitle: () => <HeaderTitle>Add Funds</HeaderTitle>,
             ...TransitionPresets.ModalPresentationIOS,
           }}
           name={WalletScreens.DEBIT_CARD_CONFIRM}

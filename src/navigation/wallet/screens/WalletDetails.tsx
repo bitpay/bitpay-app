@@ -17,6 +17,7 @@ import {
   H2,
   H5,
   HeaderTitle,
+  Type,
 } from '../../../components/styled/Text';
 import {Network} from '../../../constants';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
@@ -64,9 +65,8 @@ import WalletTransactionSkeletonRow from '../../../components/list/WalletTransac
 import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
-import {isCoinSupportedToBuy} from '../../../navigation/services/buy-crypto/utils/buy-crypto-utils';
-import {isCoinSupportedToSwap} from '../../../navigation/services/swap-crypto/utils/changelly-utils';
-import sortBy from 'lodash.sortby';
+import {isCoinSupportedToBuy} from '../../services/buy-crypto/utils/buy-crypto-utils';
+import {isCoinSupportedToSwap} from '../../services/swap-crypto/utils/changelly-utils';
 import {FlatList} from 'react-native';
 import {
   buildBtcSpeedupTx,
@@ -106,15 +106,6 @@ const Chain = styled(BaseText)`
   letter-spacing: 0;
   line-height: 40px;
   color: ${({theme: {dark}}) => (dark ? White : LightBlack)};
-`;
-
-const Type = styled(BaseText)`
-  font-size: 12px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
-  padding: 2px 4px;
-  border-radius: 3px;
-  margin-left: auto;
 `;
 
 const TransactionSectionHeader = styled(H5)`
