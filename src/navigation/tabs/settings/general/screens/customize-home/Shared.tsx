@@ -258,11 +258,7 @@ export const CustomizeCard = ({
               </HeaderImg>
             </Row>
           ) : null}
-          {wallets ? (
-            <Row>
-              {header()}
-            </Row>
-          ) : null}
+          {wallets ? <Row>{header()}</Row> : null}
         </Column>
       </Row>
       <Toggle onPress={toggle}>
