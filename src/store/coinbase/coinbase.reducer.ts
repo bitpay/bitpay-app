@@ -386,6 +386,29 @@ export const coinbaseReducer = (
         payInvoiceError: action.payload,
       };
 
+    // ------- Errors -------- //
+
+    case CoinbaseActionTypes.CLEAR_ERROR_STATUS:
+      return {
+        ...state,
+        getAccessTokenStatus: null,
+        getAccessTokenError: null,
+        getRefreshTokenStatus: null,
+        getRefreshTokenError: null,
+        getAccountsStatus: null,
+        getAccountsError: null,
+        getUserStatus: null,
+        getUserError: null,
+        getTransactionsStatus: null,
+        getTransactionsError: null,
+        createAddressStatus: null,
+        createAddressError: null,
+        sendTransactionStatus: null,
+        sendTransactionError: null,
+        payInvoiceStatus: null,
+        payInvoiceError: null,
+      };
+
     default:
       return {...state};
   }

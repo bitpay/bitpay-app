@@ -292,11 +292,15 @@ const GiftCardDetails = ({
                 {giftCard.barcodeImage &&
                 cardConfig.defaultClaimCodeType === 'barcode' ? (
                   <ScannableCodeContainer
-                    height={isBarcode ? 80 : scannableCodeDimensions.height}
-                    width={isBarcode ? 290 : scannableCodeDimensions.width}>
+                    height={scannableCodeDimensions.height}
+                    width={scannableCodeDimensions.width}>
                     <ScannableCode
-                      height={isBarcode ? 45 : scannableCodeDimensions.height}
-                      width={isBarcode ? 384 : scannableCodeDimensions.width}
+                      height={
+                        isBarcode
+                          ? scannableCodeDimensions.height * 0.7
+                          : scannableCodeDimensions.height
+                      }
+                      width={scannableCodeDimensions.width}
                       source={{uri: giftCard.barcodeImage}}
                       resizeMode={isBarcode ? 'cover' : 'contain'}
                     />
@@ -344,10 +348,9 @@ const GiftCardDetails = ({
                   </Button>
                 ) : cardConfig.defaultClaimCodeType === 'link' ? (
                   <Button
-                    onPress={() => {
-                      console.log('view redemption code');
-                      Linking.openURL(giftCard.claimLink as string);
-                    }}
+                    onPress={() =>
+                      Linking.openURL(giftCard.claimLink as string)
+                    }
                     buttonStyle={'primary'}>
                     {cardConfig.redeemButtonText || 'View Redemption Code'}
                   </Button>

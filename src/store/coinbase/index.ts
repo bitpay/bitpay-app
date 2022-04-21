@@ -25,6 +25,7 @@ export {
   sendTransactionSuccess,
   sendTransactionFailed,
   clearSendTransactionStatus,
+  clearErrorStatus,
   payInvoicePending,
   payInvoiceSuccess,
   payInvoiceFailed,

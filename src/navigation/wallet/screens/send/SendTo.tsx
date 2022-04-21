@@ -330,7 +330,8 @@ const SendTo = () => {
         screen: WalletScreens.AMOUNT,
         params: {
           opts: opts || {},
-          currencyAbbreviation: wallet.currencyAbbreviation.toUpperCase(),
+          currencyAbbreviationRouteParam:
+            wallet.currencyAbbreviation.toUpperCase(),
           onAmountSelected: async (amount, setButtonState, opts) => {
             try {
               setButtonState('loading');
@@ -380,26 +381,6 @@ const SendTo = () => {
       });
     },
     [dispatch, navigation, wallet],
-  );
-
-  const onSendToCoinbase = useCallback(
-    async (account: string | undefined, address: string | undefined) => {
-      if (!address) {
-        return;
-      }
-      try {
-        const recipient = {
-          name: account || 'Coinbase',
-          type: 'coinbase',
-          address,
-        };
-
-        goToConfirm(recipient, {hideSendMax: true});
-      } catch (err) {
-        console.error(err);
-      }
-    },
-    [goToConfirm],
   );
 
   useEffect(() => {

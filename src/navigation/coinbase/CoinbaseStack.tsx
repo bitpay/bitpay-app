@@ -13,7 +13,9 @@ import CoinbaseAccount, {
 import CoinbaseRoot, {
   CoinbaseRootScreenParamList,
 } from './screens/CoinbaseRoot';
-import CoinbaseSettings from './screens/CoinbaseSettings';
+import CoinbaseSettings, {
+  CoinbaseSettingsScreenParamList,
+} from './screens/CoinbaseSettings';
 import CoinbaseWithdrawConfirm from './screens/CoinbaseWithdrawConfirm';
 import CoinbaseTransaction, {
   CoinbaseTransactionScreenParamList,
@@ -23,7 +25,7 @@ import CoinbaseSvg from '../../../assets/img/logos/coinbase.svg';
 
 export type CoinbaseStackParamList = {
   CoinbaseRoot: CoinbaseRootScreenParamList;
-  CoinbaseSettings: undefined;
+  CoinbaseSettings: CoinbaseSettingsScreenParamList;
   CoinbaseAccount: CoinbaseAccountScreenParamList;
   CoinbaseTransaction: CoinbaseTransactionScreenParamList;
   CoinbaseWithdraw: CoinbaseWithdrawConfirmParamList;
