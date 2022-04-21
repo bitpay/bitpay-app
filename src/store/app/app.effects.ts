@@ -47,7 +47,9 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     const identity = dispatch(initializeAppIdentity());
 
     dispatch(startWalletStoreInit());
+
     await dispatch(initializeApi(APP.network, identity));
+
     if (isPaired) {
       try {
         dispatch(
@@ -94,7 +96,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     }
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here
-    await dispatch(startWalletStoreInit());
     await dispatch(walletConnectInit());
     await dispatch(initializeBrazeContent());
 
