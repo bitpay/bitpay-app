@@ -44,7 +44,7 @@ import {
 } from './CardDashboard.styled';
 import CardOverviewSlide from './CardOverviewSlide';
 import TransactionRow from './CardTransactionRow';
-import PlusSvg from '../assets/img/plus.svg';
+import PlusSvg from '../../../../assets/img/card/icons/plus.svg';
 
 interface CardDashboardProps {
   id: string;

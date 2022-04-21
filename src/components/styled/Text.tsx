@@ -1,7 +1,7 @@
 import React from 'react';
 import {StatusBar, Text} from 'react-native';
 import styled, {css} from 'styled-components/native';
-import {SlateDark, White} from '../../styles/colors';
+import {LightBlack, SlateDark, White} from '../../styles/colors';
 
 export const fontFamily = 'Heebo';
 
@@ -210,4 +210,13 @@ export const OptionDescription = styled(BaseText)`
   font-size: 14px;
   line-height: 18px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+`;
+
+export const Type = styled(BaseText)`
+  font-size: 12px;
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
+  padding: 2px 4px;
+  border-radius: 3px;
+  margin-left: auto;
 `;

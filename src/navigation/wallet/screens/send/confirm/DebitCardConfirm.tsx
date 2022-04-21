@@ -3,7 +3,14 @@ import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../../../WalletStack';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
-import {H4, Smallest, TextAlign} from '../../../../../components/styled/Text';
+import {
+  Balance,
+  H4,
+  H6,
+  Smallest,
+  TextAlign,
+  Type,
+} from '../../../../../components/styled/Text';
 import {
   Recipient,
   TransactionProposal,
@@ -46,6 +53,8 @@ import PaymentSent from '../../../components/PaymentSent';
 import {Card} from '../../../../../store/card/card.models';
 import styled from 'styled-components/native';
 import {Br} from '../../../../../components/styled/Containers';
+import MasterCardSvg from '../../../../../../assets/img/card/bitpay-card-mc.svg';
+import VisaCardSvg from '../../../../../../assets/img/card/bitpay-card-visa.svg';
 
 export interface DebitCardConfirmParamList {
   amount: number;
@@ -60,6 +69,20 @@ const CardTermsContainer = styled.View`
   margin-top: 40px;
 `;
 
+const CardDetailsContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
+  margin: 20px 0 10px;
+`;
+
+const RightMargin = styled.View`
+  margin-right: 10px;
+`;
+
+const BalanceContainer = styled.View`
+  margin-bottom: 10px;
+`;
+
 const Confirm = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -72,6 +95,8 @@ const Confirm = () => {
     txDetails: _txDetails,
     txp: _txp,
   } = route.params!;
+
+  const {brand, cardType, lastFourDigits} = card;
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const network = useAppSelector(({APP}) => APP.network);
 
@@ -84,7 +109,7 @@ const Confirm = () => {
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [txp, updateTxp] = useState(_txp);
   const [keyWallets, setKeysWallets] = useState<KeyWalletsRowProps[]>();
-  const {fee, networkCost, sendingFrom, total} = txDetails || {};
+  const {fee, networkCost, sendingFrom, total, subTotal} = txDetails || {};
 
   const memoizedKeysAndWalletsList = useMemo(
     () => BuildKeysAndWalletsList({keys, network}),
@@ -167,6 +192,32 @@ const Confirm = () => {
       <DetailsList>
         {txp && recipient && wallet ? (
           <>
+            {brand === 'Mastercard' ? (
+              <CardDetailsContainer>
+                <RightMargin>
+                  <MasterCardSvg height={55} width={55} />
+                </RightMargin>
+                <RightMargin>
+                  <H6>BitPay Card</H6>
+                </RightMargin>
+                {cardType === 'virtual' ? <Type>Virtual</Type> : null}
+                {cardType === 'physical' ? <Type>Physical</Type> : null}
+              </CardDetailsContainer>
+            ) : (
+              <CardDetailsContainer>
+                <RightMargin>
+                  <VisaCardSvg height={55} width={55} />
+                </RightMargin>
+                <H6>BitPay Visa&reg; Card ({lastFourDigits})</H6>
+              </CardDetailsContainer>
+            )}
+
+            {subTotal?.fiatAmount ? (
+              <BalanceContainer>
+                <Balance scale={false}>{subTotal.fiatAmount}</Balance>
+              </BalanceContainer>
+            ) : null}
+
             <Header hr>Summary</Header>
             <SendingFrom
               sender={sendingFrom!}
