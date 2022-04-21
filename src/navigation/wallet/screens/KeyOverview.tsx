@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useCallback, useLayoutEffect, useMemo, useState} from 'react';
 import {StackActions, useTheme} from '@react-navigation/native';
 import {FlatList, LogBox, RefreshControl, TouchableOpacity} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
@@ -190,13 +190,13 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   const {key} = route.params;
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => {
         const hasMultipleKeys =
-          Object.values(keys).filter(key => key.backupComplete).length > 1;
+          Object.values(keys).filter(k => k.backupComplete).length > 1;
         return (
           <KeyToggle
             activeOpacity={ActiveOpacity}
@@ -229,24 +229,21 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
         );
       },
     });
-  }, [navigation, key]);
+  }, [navigation, key, keys]);
 
-  const {wallets = [], totalBalance} = useSelector(
-    ({WALLET}: RootState) => WALLET.keys[key.id] || {},
-  );
+  const {wallets = [], totalBalance} =
+    useSelector(({WALLET}: RootState) => WALLET.keys[key.id]) || {};
 
-  const coins = wallets.filter(
-    wallet => !wallet.credentials.token && !wallet.hideWallet,
-  );
-  const tokens = wallets.filter(
-    wallet => wallet.credentials.token && !wallet.hideWallet,
-  );
+  const memoizedWalletList = useMemo(() => {
+    const coins = wallets.filter(
+      wallet => !wallet.credentials.token && !wallet.hideWallet,
+    );
+    const tokens = wallets.filter(
+      wallet => wallet.credentials.token && !wallet.hideWallet,
+    );
 
-  const walletList = buildNestedWalletList(
-    coins,
-    tokens,
-    defaultAltCurrency.isoCode,
-  );
+    return buildNestedWalletList(coins, tokens, defaultAltCurrency.isoCode);
+  }, [wallets, defaultAltCurrency.isoCode]);
 
   const keyOptions: Array<Option> = [];
 
@@ -293,6 +290,42 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
     setRefreshing(false);
   };
 
+  const memoizedRenderItem = useCallback(
+    ({item}: {item: WalletRowProps}) => {
+      return (
+        <WalletRow
+          id={item.id}
+          wallet={item}
+          onPress={() => {
+            haptic('impactLight');
+            const fullWalletObj = key.wallets.find(({id}) => id === item.id)!;
+            if (!fullWalletObj.isComplete()) {
+              fullWalletObj.getStatus(
+                {network: 'livenet'},
+                (err: any, status: Status) => {
+                  if (err) {
+                    // TODO
+                    console.log(err);
+                  }
+                  navigation.navigate('Copayers', {
+                    wallet: fullWalletObj,
+                    status: status.wallet,
+                  });
+                },
+              );
+            } else {
+              navigation.navigate('WalletDetails', {
+                walletId: item.id,
+                key,
+              });
+            }
+          }}
+        />
+      );
+    },
+    [navigation, key],
+  );
+
   return (
     <OverviewContainer>
       <BalanceContainer>
@@ -300,8 +333,10 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
           {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode)}
         </Balance>
       </BalanceContainer>
+
       <Hr />
-      <FlatList
+
+      <FlatList<WalletRowProps>
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
@@ -331,42 +366,10 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
             </WalletListFooter>
           );
         }}
-        data={walletList}
-        renderItem={({item}) => {
-          return (
-            <WalletRow
-              id={item.id}
-              wallet={item}
-              onPress={() => {
-                haptic('impactLight');
-                const fullWalletObj = key.wallets.find(
-                  ({id}) => id === item.id,
-                )!;
-                if (!fullWalletObj.isComplete()) {
-                  fullWalletObj.getStatus(
-                    {network: 'livenet'},
-                    (err: any, status: Status) => {
-                      if (err) {
-                        // TODO
-                        console.log(err);
-                      }
-                      navigation.navigate('Copayers', {
-                        wallet: fullWalletObj,
-                        status: status.wallet,
-                      });
-                    },
-                  );
-                } else {
-                  navigation.navigate('WalletDetails', {
-                    walletId: item.id,
-                    key,
-                  });
-                }
-              }}
-            />
-          );
-        }}
+        data={memoizedWalletList}
+        renderItem={memoizedRenderItem}
       />
+
       {keyOptions.length > 0 ? (
         <OptionsSheet
           isVisible={showKeyOptions}
@@ -375,6 +378,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
           closeModal={() => setShowKeyOptions(false)}
         />
       ) : null}
+
       <SheetModal
         isVisible={showKeyDropdown}
         placement={'top'}
@@ -383,23 +387,19 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
           <HeaderTitle style={{margin: 15}}>Other Keys</HeaderTitle>
           <KeyDropdownOptionsContainer>
             {Object.values(keys)
-              .filter(_key => _key.id !== key.id)
-              .filter(_key => _key.backupComplete)
-              .map(({id, keyName, wallets, totalBalance}) => (
+              .filter(_key => _key.backupComplete && _key.id !== key.id)
+              .map(_key => (
                 <KeyDropdownOption
-                  key={id}
-                  keyId={id}
-                  keyName={keyName}
-                  wallets={wallets}
-                  totalBalance={totalBalance}
+                  key={_key.id}
+                  keyId={_key.id}
+                  keyName={_key.keyName}
+                  wallets={_key.wallets}
+                  totalBalance={_key.totalBalance}
                   onPress={keyId => {
                     setShowKeyDropdown(false);
-                    navigation.dispatch(
-                      StackActions.replace('Wallet', {
-                        screen: 'KeyOverview',
-                        params: {key: keys[keyId]},
-                      }),
-                    );
+                    navigation.replace('KeyOverview', {
+                      key: keys[keyId],
+                    });
                   }}
                   defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
                 />
