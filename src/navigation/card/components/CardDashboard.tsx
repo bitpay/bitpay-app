@@ -21,6 +21,7 @@ import {CARD_WIDTH, ProviderConfig} from '../../../constants/config.card';
 import {CardEffects} from '../../../store/card';
 import {
   Card,
+  TopUp,
   Transaction,
   UiTransaction,
 } from '../../../store/card/card.models';
@@ -48,9 +49,32 @@ interface CardDashboardProps {
 }
 
 const toUiTransaction = (tx: Transaction, settled: boolean) => {
-  const uiTx = tx as UiTransaction;
+  const uiTx: UiTransaction = {
+    ...tx,
+    settled,
+  };
 
-  uiTx.settled = settled;
+  return uiTx;
+};
+
+const topUpToUiTopUp = (topUp: TopUp) => {
+  const uiTx: UiTransaction = {
+    id: topUp.id,
+    displayMerchant: 'BitPay Load',
+    settled: false,
+    displayPrice: Number(topUp.amount),
+    merchant: topUp.displayMerchant,
+    provider: topUp.provider,
+    status: 'pending',
+    dates: {
+      auth: topUp.invoice.invoiceTime as string,
+      post: topUp.invoice.invoiceTime as string,
+    },
+
+    // unused
+    type: '',
+    description: '',
+  };
 
   return uiTx;
 };
@@ -149,15 +173,17 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const pendingTxList = useAppSelector(
     ({CARD}) => CARD.pendingTransactions[activeCard.id],
   );
+  const topUpHistory = useAppSelector(({CARD}) => CARD.topUpHistory[id]);
 
   const filteredTransactions = useMemo(
     () => [
       ...(pendingTxList || []).map(tx => toUiTransaction(tx, false)),
+      ...(topUpHistory || []).map(tu => topUpToUiTopUp(tu)),
       ...(settledTxList || [])
         .filter(filters.settledTx)
         .map(tx => toUiTransaction(tx, true)),
     ],
-    [settledTxList, pendingTxList, filters],
+    [settledTxList, pendingTxList, topUpHistory, filters],
   );
 
   const listFooterComponent = useMemo(
