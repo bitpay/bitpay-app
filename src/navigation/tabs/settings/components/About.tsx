@@ -15,6 +15,7 @@ import {useTranslation} from 'react-i18next';
 import {View} from 'react-native';
 import {useDispatch} from 'react-redux';
 import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
+import AngleRight from '../../../../../assets/img/angle-right.svg';
 
 interface LinkSetting {
   title: string;
@@ -57,6 +58,7 @@ const About = () => {
       <Setting
         onPress={() => navigation.navigate('About', {screen: 'SessionLogs'})}>
         <SettingTitle>Session Log</SettingTitle>
+        <AngleRight />
       </Setting>
 
       <Hr />
@@ -64,6 +66,7 @@ const About = () => {
       <Setting
         onPress={() => navigation.navigate('About', {screen: 'SendFeedback'})}>
         <SettingTitle>Send Feedback</SettingTitle>
+        <AngleRight />
       </Setting>
 
       <Hr />
