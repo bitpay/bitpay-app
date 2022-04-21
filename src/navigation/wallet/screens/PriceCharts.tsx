@@ -319,6 +319,7 @@ const PriceCharts = () => {
                       stroke:
                         theme.dark && coinColor === Black ? White : coinColor,
                       strokeDasharray: '4, 8',
+                      strokeWidth: 2,
                     }}
                   />
                 }
@@ -331,7 +332,7 @@ const PriceCharts = () => {
                 labelComponent={
                   <VictoryTooltip
                     cornerRadius={5}
-                    pointerLength={5}
+                    pointerLength={0}
                     renderInPortal={false}
                     flyoutStyle={{
                       stroke:
@@ -356,11 +357,6 @@ const PriceCharts = () => {
               interpolation={'monotoneX'}
               style={chartStyle}
               data={displayData?.data}
-            />
-            <LineSegment
-              style={{
-                stroke: theme.dark && coinColor === Black ? White : coinColor,
-              }}
             />
             <Defs>
               <LinearGradient
