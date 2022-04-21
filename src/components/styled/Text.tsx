@@ -212,11 +212,11 @@ export const OptionDescription = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-export const Type = styled(BaseText)`
+export const Type = styled(BaseText)<{noAutoMarginLeft?: boolean}>`
   font-size: 12px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
   padding: 2px 4px;
   border-radius: 3px;
-  margin-left: auto;
+  margin-left: ${({noAutoMarginLeft}) => (noAutoMarginLeft ? 0 : 'auto')};
 `;

@@ -200,8 +200,12 @@ const Confirm = () => {
                 <RightMargin>
                   <H6>BitPay Card</H6>
                 </RightMargin>
-                {cardType === 'virtual' ? <Type>Virtual</Type> : null}
-                {cardType === 'physical' ? <Type>Physical</Type> : null}
+                {cardType === 'virtual' ? (
+                  <Type noAutoMarginLeft={true}>Virtual</Type>
+                ) : null}
+                {cardType === 'physical' ? (
+                  <Type noAutoMarginLeft={true}>Physical</Type>
+                ) : null}
               </CardDetailsContainer>
             ) : (
               <CardDetailsContainer>
@@ -231,7 +235,7 @@ const Confirm = () => {
               hr
             />
             <Amount description={'Miner fee'} amount={fee} fiatOnly hr />
-            
+
             <Amount description={'SubTotal'} amount={subTotal} />
 
             <Amount description={'Total'} amount={total} />
