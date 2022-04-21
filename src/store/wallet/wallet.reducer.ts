@@ -64,6 +64,7 @@ export const walletReducer = (
   switch (action.type) {
     case WalletActionTypes.SUCCESS_ADD_WALLET:
     case WalletActionTypes.SUCCESS_CREATE_KEY:
+    case WalletActionTypes.SUCCESS_UPDATE_KEY:
     case WalletActionTypes.SUCCESS_IMPORT: {
       const {key} = action.payload;
       return {
