@@ -1,5 +1,5 @@
 import React, {useLayoutEffect, useState} from 'react';
-import {StackActions, useNavigation, useTheme} from '@react-navigation/native';
+import {StackActions, useTheme} from '@react-navigation/native';
 import {FlatList, LogBox, RefreshControl, TouchableOpacity} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
@@ -182,8 +182,7 @@ export const buildNestedWalletList = (
   return walletList;
 };
 
-const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
-  const navigation = useNavigation();
+const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
@@ -212,11 +211,8 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
         return key.methods.isPrivKeyEncrypted() ? (
           <CogIconContainer
             onPress={() =>
-              navigation.navigate('Wallet', {
-                screen: 'KeySettings',
-                params: {
-                  key,
-                },
+              navigation.navigate('KeySettings', {
+                key,
               })
             }
             activeOpacity={ActiveOpacity}>
@@ -262,12 +258,9 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
         'Prevent an unauthorized user from sending funds out of your wallet.',
       onPress: () => {
         haptic('impactLight');
-        navigation.navigate('Wallet', {
-          screen: 'KeySettings',
-          params: {
-            key,
-            context: 'createEncryptPassword',
-          },
+        navigation.navigate('KeySettings', {
+          key,
+          context: 'createEncryptPassword',
         });
       },
     });
@@ -278,11 +271,8 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
       description: 'View all the ways to manage and configure your key.',
       onPress: () => {
         haptic('impactLight');
-        navigation.navigate('Wallet', {
-          screen: 'KeySettings',
-          params: {
-            key,
-          },
+        navigation.navigate('KeySettings', {
+          key,
         });
       },
     });
@@ -332,9 +322,8 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
               activeOpacity={ActiveOpacity}
               onPress={() => {
                 haptic('impactLight');
-                navigation.navigate('Wallet', {
-                  screen: 'AddingOptions',
-                  params: {key},
+                navigation.navigate('AddingOptions', {
+                  key,
                 });
               }}>
               <Icons.Add />
@@ -361,16 +350,16 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({route}) => {
                         // TODO
                         console.log(err);
                       }
-                      navigation.navigate('Wallet', {
-                        screen: 'Copayers',
-                        params: {wallet: fullWalletObj, status: status.wallet},
+                      navigation.navigate('Copayers', {
+                        wallet: fullWalletObj,
+                        status: status.wallet,
                       });
                     },
                   );
                 } else {
-                  navigation.navigate('Wallet', {
-                    screen: 'WalletDetails',
-                    params: {walletId: item.id, key},
+                  navigation.navigate('WalletDetails', {
+                    walletId: item.id,
+                    key,
                   });
                 }
               }}
