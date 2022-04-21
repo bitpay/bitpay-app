@@ -1,6 +1,7 @@
 import {
   Card,
   PagedTransactionData,
+  TopUp,
   Transaction,
 } from '../../store/card/card.models';
 
@@ -26,13 +27,8 @@ export interface FetchOverviewResponse {
         pendingTransactions: Transaction[];
         settledTransactions: PagedTransactionData;
       };
+      topUpHistory: TopUp[];
     };
-    cards: [
-      {
-        id: string;
-        topUpHistory: [];
-      },
-    ];
   };
 }
 

@@ -177,9 +177,6 @@ const FETCH_OVERVIEW = (
                 }
               }
             }
-          }
-          cards:debitCards {
-            id
             topUpHistory(startDate:$startDate, endDate:$endDate, credited:$credited) {
               ${topUpFields}
             }
