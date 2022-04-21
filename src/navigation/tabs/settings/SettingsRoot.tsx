@@ -17,6 +17,7 @@ import {AppActions} from '../../../store/app';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
 import {Black, Feather, LightBlack, White} from '../../../styles/colors';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
+import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import {updateSettingsListConfig} from '../../../store/app/app.actions';
 import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
 
@@ -29,8 +30,6 @@ import Contacts from './components/Contacts';
 import {useSelector} from 'react-redux';
 import Crypto from './components/Crypto';
 import WalletsAndKeys from './components/WalletsAndKeys';
-
-import Animated, {FadeInUp, Easing} from 'react-native-reanimated';
 import {SettingsStackParamList} from './SettingsStack';
 import {StackScreenProps} from '@react-navigation/stack';
 
@@ -216,7 +215,7 @@ const SettingsHomeScreen: React.FC<SettingsHomeProps> = ({route}) => {
           </SettingIcon>
         </BitPayIdSettingsLink>
 
-        {SETTINGS.map(({id, title, onPress, subListComponent}, i, {length}) => {
+        {SETTINGS.map(({id, title, onPress, subListComponent}) => {
           return (
             <View key={id}>
               <DropdownSetting
@@ -227,20 +226,14 @@ const SettingsHomeScreen: React.FC<SettingsHomeProps> = ({route}) => {
                 }}>
                 <SettingTitle style={textStyle}>{title}</SettingTitle>
                 <SettingIcon suffix>
-                  {!hideList.includes(id) ? <ChevronDownSvg /> : <AngleRight />}
+                  {!hideList.includes(id) ? (
+                    <ChevronDownSvg />
+                  ) : (
+                    <ChevronUpSvg />
+                  )}
                 </SettingIcon>
               </DropdownSetting>
-              {!hideList.includes(id) ? (
-                <>
-                  <Animated.View
-                    entering={FadeInUp.easing(Easing.linear)
-                      .damping(15)
-                      .springify()
-                      .duration(200)}>
-                    {subListComponent}
-                  </Animated.View>
-                </>
-              ) : null}
+              {!hideList.includes(id) ? <>{subListComponent}</> : null}
             </View>
           );
         })}

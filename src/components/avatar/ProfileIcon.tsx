@@ -14,7 +14,7 @@ const ProfileIcon: React.FC<ProfileIconProps> = props => {
   const theme = useTheme();
 
   size = size || 35;
-  color = color || (theme.dark ? ProgressBlue : '#9FAFF5');
+  color = color || (theme.dark ? '#4989FF' : '#9FAFF5');
   background = background || (theme.dark ? Midnight : ProgressBlue);
 
   return (

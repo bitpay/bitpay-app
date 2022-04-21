@@ -99,7 +99,7 @@ const CardContainer = styled.TouchableOpacity`
   left: ${ScreenGutter};
 `;
 
-const NeedBackupText = styled(BaseText)`
+export const NeedBackupText = styled(BaseText)`
   font-size: 12px;
   text-align: center;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};

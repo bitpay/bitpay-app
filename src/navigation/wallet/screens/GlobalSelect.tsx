@@ -194,8 +194,8 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   if (recipient && (context === 'coinbase' || context === 'contact')) {
     wallets = wallets.filter(
       wallet =>
-        wallet.currencyAbbreviation === recipient?.currency &&
-        wallet.credentials.network === recipient?.network,
+        wallet => wallet.currencyAbbreviation === toCoinbase?.currency &&
+        wallet.credentials.network === recipient?.network
     );
   }
 
@@ -349,7 +349,6 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         });
       } else {
         setReceiveWallet(wallet);
-        await sleep(500);
         setShowReceiveAddressBottomModal(true);
       }
     },
@@ -381,7 +380,6 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
 
   const closeModal = () => {
     setShowReceiveAddressBottomModal(false);
-    setReceiveWallet(undefined);
   };
 
   useEffect(() => {
