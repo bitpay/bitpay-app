@@ -266,7 +266,7 @@ const PayProConfirm = () => {
               ],
             }),
           );
-          await sleep(300);
+          await sleep(0);
           setShowPaymentSentModal(false);
         }}
       />
