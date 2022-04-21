@@ -8,8 +8,9 @@ import {
   NeutralSlate,
   Slate,
   SlateDark,
+  Action,
+  White,
 } from '../../../styles/colors';
-import Button from '../../../components/button/Button';
 
 export const TransactionListHeader = styled.View`
 background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
@@ -62,6 +63,20 @@ export const FloatingActionButtonContainer = styled(View)`
   z-index: 1;
 `;
 
-export const FloatingActionButton = styled(Button)`
+export const FloatingActionButton = styled.TouchableOpacity`
   border-radius: 50px;
+  min-width: 180px;
+  padding: 18px;
+  align-items: center;
+  justify-content: center;
+  background-color: ${Action};
+  flex-direction: row;
+`;
+
+export const FloatingActionButtonText = styled(H5)`
+  color: ${White};
+`;
+
+export const FloatingActionButtonIconContainer = styled.View`
+  margin-right: 10px;
 `;

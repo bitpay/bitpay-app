@@ -11,6 +11,7 @@ import Button from '../../../components/button/Button';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import {
+  ActiveOpacity,
   Br,
   HeaderRightContainer,
   WIDTH,
@@ -34,6 +35,8 @@ import {
   EmptyListDescription,
   FloatingActionButton,
   FloatingActionButtonContainer,
+  FloatingActionButtonIconContainer,
+  FloatingActionButtonText,
   TransactionListFooter,
   TransactionListHeader,
   TransactionListHeaderIcon,
@@ -41,6 +44,7 @@ import {
 } from './CardDashboard.styled';
 import CardOverviewSlide from './CardOverviewSlide';
 import TransactionRow from './CardTransactionRow';
+import PlusSvg from '../assets/img/plus.svg';
 
 interface CardDashboardProps {
   id: string;
@@ -294,9 +298,12 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
       <FloatingActionButtonContainer>
         <FloatingActionButton
           onPress={() => goToAmountScreen()}
-          buttonStyle={'primary'}
-          children={t('Add Funds')}
-        />
+          activeOpacity={ActiveOpacity}>
+          <FloatingActionButtonIconContainer>
+            <PlusSvg />
+          </FloatingActionButtonIconContainer>
+          <FloatingActionButtonText>{t('Add Funds')}</FloatingActionButtonText>
+        </FloatingActionButton>
       </FloatingActionButtonContainer>
     </>
   );
