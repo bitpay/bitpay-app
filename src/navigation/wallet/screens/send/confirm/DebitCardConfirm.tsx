@@ -231,6 +231,9 @@ const Confirm = () => {
               hr
             />
             <Amount description={'Miner fee'} amount={fee} fiatOnly hr />
+            
+            <Amount description={'SubTotal'} amount={subTotal} />
+
             <Amount description={'Total'} amount={total} />
 
             <CardTermsContainer>
