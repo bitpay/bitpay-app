@@ -26,7 +26,6 @@ export type SwapCryptoStackParamList = {
     toWalletData: any;
     fixedRateId: string;
     amountFrom: number;
-    rate: number;
     useSendMax?: boolean;
     sendMaxInfo?: any;
   };
@@ -88,7 +87,7 @@ const SwapCryptoStack = () => {
         name={SwapCryptoScreens.CHANGELLY_CHECKOUT}
         component={ChangellyCheckout}
         options={{
-          ...baseScreenOptions,
+          gestureEnabled: false,
           headerTitle: () => <HeaderTitle>Swap Checkout</HeaderTitle>,
           headerRight: () => (
             <HeaderRightContainer>
