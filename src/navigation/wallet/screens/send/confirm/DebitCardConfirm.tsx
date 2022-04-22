@@ -169,6 +169,7 @@ const Confirm = () => {
           walletId: selectedWallet.id,
         }),
       );
+      setInvoiceExpirationTime(Math.floor(new Date(invoice.expirationTime).getTime() / 1000));
       const baseUrl = BASE_BITPAY_URLS[network];
       const paymentUrl = `${baseUrl}/i/${invoiceId}`;
       const {txDetails: newTxDetails, txp: newTxp} = await dispatch(
