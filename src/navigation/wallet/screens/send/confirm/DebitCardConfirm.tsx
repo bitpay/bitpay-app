@@ -116,10 +116,17 @@ const Confirm = () => {
 
   const [remainingTime, setRemainingTime] = useState<string>();
   const [invoiceExpirationTime, setInvoiceExpirationTime] = useState<number>();
-  const memoizedKeysAndWalletsList = useMemo(
-    () => BuildKeysAndWalletsList({keys, network}),
-    [keys, network],
-  );
+  const memoizedKeysAndWalletsList = useMemo(() => {
+    let filteredKeysAndWallets = BuildKeysAndWalletsList({keys, network});
+    filteredKeysAndWallets = filteredKeysAndWallets
+      .map(key => {
+        key.wallets = key.wallets.filter(({balance}) => balance.sat > 0);
+        return key;
+      })
+      .filter(key => key.wallets.length > 0);
+
+    return filteredKeysAndWallets;
+  }, [keys, network]);
 
   const reshowWalletSelector = async () => {
     await sleep(400);
@@ -127,7 +134,16 @@ const Confirm = () => {
   };
 
   const openKeyWalletSelector = () => {
-    if (memoizedKeysAndWalletsList.length) {
+    const keysWalletsLength = memoizedKeysAndWalletsList.length;
+    if (keysWalletsLength) {
+      if (
+        keysWalletsLength === 1 &&
+        memoizedKeysAndWalletsList[0].wallets.length === 1
+      ) {
+        onWalletSelect(memoizedKeysAndWalletsList[0].wallets[0]);
+        setKeysWallets(memoizedKeysAndWalletsList);
+        return;
+      }
       setKeysWallets(memoizedKeysAndWalletsList);
       setWalletSelectModalVisible(true);
     } else {
@@ -153,6 +169,7 @@ const Confirm = () => {
           walletId: selectedWallet.id,
         }),
       );
+      setInvoiceExpirationTime(Math.floor(new Date(invoice.expirationTime).getTime() / 1000));
       const baseUrl = BASE_BITPAY_URLS[network];
       const paymentUrl = `${baseUrl}/i/${invoiceId}`;
       const {txDetails: newTxDetails, txp: newTxp} = await dispatch(
@@ -192,7 +209,6 @@ const Confirm = () => {
       );
     }
   };
-
   useEffect(() => {
     let interval: any;
     if (invoiceExpirationTime) {
@@ -260,11 +276,16 @@ const Confirm = () => {
             ) : null}
 
             <Header hr>Summary</Header>
-            <SendingFrom
-              sender={sendingFrom!}
-              onPress={openKeyWalletSelector}
-              hr
-            />
+            {memoizedKeysAndWalletsList.length === 1 &&
+            memoizedKeysAndWalletsList[0].wallets.length === 1 ? (
+              <SendingFrom sender={sendingFrom!} hr />
+            ) : (
+              <SendingFrom
+                sender={sendingFrom!}
+                onPress={openKeyWalletSelector}
+                hr
+              />
+            )}
             {remainingTime ? (
               <SharedDetailRow
                 description={'Expires'}
