@@ -292,6 +292,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   return (
     <>
       <FlatList
+        contentContainerStyle={{minHeight: '100%'}}
         data={filteredTransactions}
         renderItem={renderTransaction}
         initialNumToRender={30}
