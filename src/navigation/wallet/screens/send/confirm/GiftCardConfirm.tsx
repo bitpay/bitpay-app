@@ -347,8 +347,10 @@ const Confirm = () => {
         isVisible={walletSelectModalVisible}
         onBackdropPress={async () => {
           setWalletSelectModalVisible(false);
-          await sleep(100);
-          navigation.goBack();
+          if (!txp) {
+            await sleep(100);
+            navigation.goBack();
+          }
         }}>
         <WalletSelectMenuContainer>
           <WalletSelectMenuHeaderContainer>
