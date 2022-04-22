@@ -62,7 +62,25 @@ export interface Transaction {
   type: string;
 }
 
-export interface UiTransaction extends Transaction {
+export interface TopUp {
+  amount: string;
+  appliedDate: string;
+  debitCard: string;
+  displayMerchant: {
+    merchantName: string;
+    merchantCity: string;
+    merchantState: string;
+  };
+  id: string;
+  invoice: any;
+  pending: boolean;
+  provider: string;
+  referralId: string | null;
+  user: string;
+}
+
+export interface UiTransaction
+  extends Omit<Transaction, 'amount' | 'currency' | 'fees' | 'feesTotal'> {
   settled: boolean;
 }
 

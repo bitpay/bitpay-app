@@ -31,10 +31,13 @@ import {BWCErrorMessage, getErrorName} from '../../../../constants/BWCError';
 import {Invoice} from '../../../shop/shop.models';
 import {GetPayProDetails, HandlePayPro, PayProOptions} from '../paypro/paypro';
 import {
+  dismissBottomNotificationModal,
   dismissDecryptPasswordModal,
+  showBottomNotificationModal,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
 import {GetPrecision, GetChain} from '../../utils/currency';
+import {CommonActions} from '@react-navigation/native';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -780,3 +783,53 @@ export const getTx = (wallet: Wallet, txpid: string): Promise<any> => {
     });
   });
 };
+
+export const showNoWalletsModal =
+  ({navigation}: {navigation: any}): Effect<void> =>
+  async dispatch => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'info',
+        title: 'No compatible wallets',
+        message:
+          "You currently don't have any wallets capable of sending this payment. Would you like to import one?",
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'Import Wallet',
+            action: () => {
+              dispatch(dismissBottomNotificationModal());
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 2,
+                  routes: [
+                    {
+                      name: 'Tabs',
+                      params: {screen: 'Home'},
+                    },
+                    {
+                      name: 'Wallet',
+                      params: {
+                        screen: 'CreationOptions',
+                      },
+                    },
+                  ],
+                }),
+              );
+            },
+            primary: true,
+          },
+          {
+            text: 'Maybe Later',
+            action: () => {
+              dispatch(dismissBottomNotificationModal());
+              while (navigation.canGoBack()) {
+                navigation.goBack();
+              }
+            },
+            primary: false,
+          },
+        ],
+      }),
+    );
+  };

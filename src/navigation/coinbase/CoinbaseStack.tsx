@@ -43,7 +43,7 @@ const HeaderTitleContainer = styled.View`
   flex: 1;
   flex-direction: row;
   justify-content: center;
-  padding-top: 10px;
+  padding-top: 13px;
 `;
 
 const Coinbase = createStackNavigator<CoinbaseStackParamList>();
@@ -64,8 +64,8 @@ const CoinbaseStack = () => {
           headerShown: true,
           headerTitle: () => (
             <HeaderTitleContainer>
-              <CoinbaseSvg style={{marginRight: 10}} />
-              <HeaderTitle style={{marginTop: 3}}>{'Coinbase'}</HeaderTitle>
+              <CoinbaseSvg style={{marginRight: 8, marginTop: 2}} />
+              <HeaderTitle style={{marginTop: 4}}>{'Coinbase'}</HeaderTitle>
             </HeaderTitleContainer>
           ),
         }}

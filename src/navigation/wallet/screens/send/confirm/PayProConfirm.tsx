@@ -16,6 +16,7 @@ import {
   createPayProTxProposal,
   handleCreateTxProposalError,
   removeTxp,
+  showNoWalletsModal,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../components/PaymentSent';
@@ -145,8 +146,12 @@ const PayProConfirm = () => {
   }, []);
 
   const openKeyWalletSelector = () => {
-    setKeysWallets(memoizedKeysAndWalletsList);
-    setWalletSelectModalVisible(true);
+    if (memoizedKeysAndWalletsList.length) {
+      setKeysWallets(memoizedKeysAndWalletsList);
+      setWalletSelectModalVisible(true);
+    } else {
+      dispatch(showNoWalletsModal({navigation}));
+    }
   };
 
   const onWalletSelect = async (selectedWallet: Wallet) => {
@@ -266,7 +271,7 @@ const PayProConfirm = () => {
               ],
             }),
           );
-          await sleep(300);
+          await sleep(0);
           setShowPaymentSentModal(false);
         }}
       />

@@ -8,12 +8,14 @@ export interface SwipeButtonConfig {
   title: string;
   onSwipeComplete: () => void;
   forceReset?: boolean;
+  disabled?: boolean;
 }
 
 const SwipeButton = ({
   title,
   onSwipeComplete,
   forceReset,
+  disabled = false,
 }: SwipeButtonConfig) => {
   return (
     <RNSwipeButton
@@ -41,6 +43,7 @@ const SwipeButton = ({
           reset(); // Calling "reset" will reset the swipe thumb.
         }
       }}
+      disabled={disabled}
     />
   );
 };

@@ -3,7 +3,7 @@ import {
   BitPayIdActionType,
   BitPayIdActionTypes,
 } from '../bitpay-id/bitpay-id.types';
-import {Card, PagedTransactionData, Transaction} from './card.models';
+import {Card, PagedTransactionData, TopUp, Transaction} from './card.models';
 import {
   CardActionType,
   CardActionTypes,
@@ -62,6 +62,9 @@ export interface CardState {
   pendingTransactions: {
     [id: string]: Transaction[] | undefined;
   };
+  topUpHistory: {
+    [id: string]: TopUp[] | undefined;
+  };
 }
 
 const initialState: CardState = {
@@ -84,6 +87,7 @@ const initialState: CardState = {
   overview: null,
   settledTransactions: {},
   pendingTransactions: {},
+  topUpHistory: {},
 };
 
 export const cardReducer = (
@@ -167,6 +171,10 @@ export const cardReducer = (
         pendingTransactions: {
           ...state.pendingTransactions,
           [action.payload.id]: action.payload.pendingTransactions,
+        },
+        topUpHistory: {
+          ...state.topUpHistory,
+          [action.payload.id]: action.payload.topUpHistory,
         },
       };
     case CardActionTypes.FAILED_FETCH_OVERVIEW:

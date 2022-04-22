@@ -1,6 +1,5 @@
 import {showBottomNotificationModal} from '../../store/app/app.actions';
 import {keyBackupRequired} from '../../navigation/tabs/home/components/Crypto';
-import haptic from '../../components/haptic-feedback/haptic';
 import {useAppDispatch, useAppSelector} from '../../utils/hooks';
 import {useNavigation} from '@react-navigation/native';
 
@@ -36,7 +35,6 @@ export const useRequireKeyAndWalletRedirect = (cta: () => void) => {
               {
                 text: 'Add wallet',
                 action: () => {
-                  haptic('impactLight');
                   navigation.navigate('Wallet', {
                     screen: 'AddingOptions',
                     params: {key: backedUpKey},
@@ -68,7 +66,6 @@ export const useRequireKeyAndWalletRedirect = (cta: () => void) => {
             {
               text: 'Continue',
               action: () => {
-                haptic('impactLight');
                 navigation.navigate('Wallet', {screen: 'CreationOptions'});
               },
               primary: true,

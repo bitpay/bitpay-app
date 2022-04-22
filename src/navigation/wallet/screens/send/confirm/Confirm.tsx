@@ -386,13 +386,29 @@ const Confirm = () => {
           } else if (recipient.type === 'contact') {
             navigation.dispatch(StackActions.popToTop());
           } else {
-            navigation.navigate('Wallet', {
-              screen: 'WalletDetails',
-              params: {
-                walletId: wallet!.id,
-                key,
-              },
-            });
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 2,
+                routes: [
+                  {
+                    name: 'Tabs',
+                    params: {screen: 'Home'},
+                  },
+                  {
+                    name: 'Wallet',
+                    params: {
+                      screen: 'WalletDetails',
+                      params: {
+                        walletId: wallet!.id,
+                        key,
+                      },
+                    },
+                  },
+                ],
+              }),
+            );
+            await sleep(0);
+            setShowPaymentSentModal(false);
           }
         }}
       />

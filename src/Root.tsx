@@ -401,6 +401,9 @@ export default () => {
             <Root.Screen
               name={RootStacks.SWAP_CRYPTO}
               component={SwapCryptoStack}
+              options={{
+                gestureEnabled: false,
+              }}
             />
             <Root.Screen
               name={RootStacks.WALLET_CONNECT}

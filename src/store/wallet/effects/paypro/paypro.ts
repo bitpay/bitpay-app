@@ -50,7 +50,7 @@ export const GetPayProDetails = async (params: {
 }): Promise<any> => {
   let {paymentUrl, coin, payload, attempt = 1} = params;
   const bwc = BWC.getPayProV2();
-  const chain = Currencies[coin].chain;
+  const chain = Currencies[coin.toLowerCase()].chain;
   const options: any = {
     paymentUrl,
     chain,
@@ -95,7 +95,7 @@ export const HandlePayPro = async ({
   let requiredFeeRate;
 
   if (payProDetails.requiredFeeRate) {
-    requiredFeeRate = !Currencies[coin].properties.isUtxo
+    requiredFeeRate = !Currencies[coin.toLowerCase()].properties.isUtxo
       ? parseInt((payProDetails.requiredFeeRate * 1.1).toFixed(0), 10) // Workaround to avoid gas price supplied is lower than requested error
       : Math.ceil(payProDetails.requiredFeeRate * 1000);
   }
@@ -107,7 +107,7 @@ export const HandlePayPro = async ({
     }
     const paymentOptions = payProOptions.paymentOptions;
     const {estimatedAmount, minerFee} = paymentOptions.find(
-      option => option.currency.toLowerCase() === coin,
+      option => option?.currency.toLowerCase() === coin.toLowerCase(),
     ) as PayProPaymentOption;
     const {outputs, toAddress, data, gasLimit} = payProDetails.instructions[0];
     if (coin === 'xrp' && outputs) {

@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import {ScrollView} from 'react-native';
 import {
   useTheme,
   RouteProp,
@@ -17,8 +18,8 @@ import {TokenOpts} from '../../../../constants/tokens';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {Black, White, Slate, Caution} from '../../../../styles/colors';
 import {BwcProvider} from '../../../../lib/bwc';
-import PaymentSent from '../../../../navigation/wallet/components/PaymentSent';
-import {WrongPasswordError} from '../../../../navigation/wallet/components/ErrorMessages';
+import PaymentSent from '../../../wallet/components/PaymentSent';
+import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import SwipeButton from '../../../../components/swipe-button/SwipeButton';
 import {H5, H7} from '../../../../components/styled/Text';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
@@ -90,7 +91,6 @@ export interface ChangellyCheckoutProps {
   toWalletData: any;
   fixedRateId: string;
   amountFrom: number;
-  rate: number;
   useSendMax?: boolean;
   sendMaxInfo?: any;
 }
@@ -104,7 +104,6 @@ const ChangellyCheckout: React.FC = () => {
       toWalletData,
       fixedRateId,
       amountFrom,
-      rate,
       useSendMax,
       sendMaxInfo,
     },
@@ -359,9 +358,7 @@ const ChangellyCheckout: React.FC = () => {
           return;
         }
         fixedRateId = data.result[0].id;
-        // amountTo = Number(data.result[0].amountTo);
         setAmountTo(Number(data.result[0].amountTo));
-        rate = Number(data.result[0].result); // result == rate
 
         createFixTransaction(++tries);
       })
@@ -561,8 +558,8 @@ const ChangellyCheckout: React.FC = () => {
   }, [resetSwipeButton]);
 
   return (
-    <>
-      <SwapCheckoutContainer>
+    <SwapCheckoutContainer>
+      <ScrollView>
         <RowDataContainer>
           <H5>SUMMARY</H5>
         </RowDataContainer>
@@ -694,7 +691,7 @@ const ChangellyCheckout: React.FC = () => {
             />
           </ArrowContainer>
         </PoliciesContainer>
-      </SwapCheckoutContainer>
+      </ScrollView>
 
       {termsAccepted && !paymentExpired && !!exchangeTxId && (
         <SwipeButton
@@ -740,7 +737,7 @@ const ChangellyCheckout: React.FC = () => {
           );
         }}
       />
-    </>
+    </SwapCheckoutContainer>
   );
 };
 

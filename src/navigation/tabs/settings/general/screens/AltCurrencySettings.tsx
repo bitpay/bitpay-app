@@ -14,7 +14,10 @@ import {
 } from '../../../../../components/styled/Containers';
 import {FlatList} from 'react-native';
 import {BaseText} from '../../../../../components/styled/Text';
-import {setDefaultAltCurrency} from '../../../../../store/app/app.actions';
+import {
+  dismissOnGoingProcessModal,
+  setDefaultAltCurrency,
+} from '../../../../../store/app/app.actions';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 
 import {useNavigation} from '@react-navigation/native';
@@ -22,8 +25,11 @@ import {LightBlack, White} from '../../../../../styles/colors';
 import GhostSvg from '../../../../../../assets/img/ghost-cheeky.svg';
 import {sleep} from '../../../../../utils/helper-methods';
 import SearchSvg from '../../../../../../assets/img/search.svg';
-import {startUpdateAllKeyAndWalletStatus} from '../../../../../store/wallet/effects/status/status';
+import {FormatKeyBalances} from '../../../../../store/wallet/effects/status/status';
+import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
+import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
 import {updatePortfolioBalance} from '../../../../../store/wallet/wallet.actions';
+
 const AltCurrencySettingsContainer = styled.SafeAreaView`
   margin-top: 20px;
   flex: 1;
@@ -122,12 +128,17 @@ const AltCurrencySettings = () => {
             altCurrency={item}
             selected={selected}
             onPress={async () => {
-              await dispatch(setDefaultAltCurrency(item));
-              await Promise.all([
-                dispatch(startUpdateAllKeyAndWalletStatus()),
-                dispatch(updatePortfolioBalance()),
-                sleep(500),
-              ]);
+              dispatch(
+                startOnGoingProcessModal(
+                  OnGoingProcessMessages.GENERAL_AWAITING,
+                ),
+              );
+              await sleep(400);
+              dispatch(setDefaultAltCurrency(item));
+              dispatch(FormatKeyBalances());
+              dispatch(updatePortfolioBalance());
+              await sleep(500);
+              dispatch(dismissOnGoingProcessModal());
               navigation.goBack();
             }}
           />
