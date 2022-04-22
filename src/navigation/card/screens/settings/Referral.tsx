@@ -43,6 +43,7 @@ import {
 } from '../../components/CardSettingsList.styled';
 import ReferredUsersSkeleton from '../../components/ReferredUsersSkeleton';
 import ReferralCodeSkeleton from '../../components/ReferralCodeSkeleton';
+import {BASE_BITPAY_URLS} from '../../../../constants/config';
 
 export interface ReferralParamList {
   card: Card;
@@ -165,9 +166,7 @@ const Referral = ({}) => {
 
   const onShareReferralCode = async () => {
     try {
-      const message = `Hey, checkout BitPay's new card. You can convert crypto to dollars easily. Just get the app, set up a wallet, and order the card using my code ${code}. https://${
-        network === 'testnet' ? 'test.bitpay.com' : 'bitpay.com'
-      }/card?code=${code}&ref=${givenName}`;
+      const message = `Hey, checkout BitPay's new card. You can convert crypto to dollars easily. Just get the app, set up a wallet, and order the card using my code ${code}. ${BASE_BITPAY_URLS[network]}/card?code=${code}&ref=${givenName}`;
 
       await Share.share({
         message,
@@ -257,11 +256,14 @@ const Referral = ({}) => {
             <>
               {referredUsers && referredUsers.length ? (
                 referredUsers!.map(
-                  ({givenName, familyName, status, expiration}, index) => (
+                  (
+                    {givenName: name, familyName, status, expiration},
+                    index,
+                  ) => (
                     <View key={index}>
                       <CategoryRow>
                         <SettingTitle>
-                          {givenName} {getInitial(familyName)}.
+                          {name} {getInitial(familyName)}.
                         </SettingTitle>
 
                         {status === 'paid' ? (
