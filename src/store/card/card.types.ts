@@ -1,5 +1,11 @@
 import {Network} from '../../constants';
-import {Card, PagedTransactionData, TopUp, Transaction} from './card.models';
+import {
+  Card,
+  PagedTransactionData,
+  ReferredUsersType,
+  TopUp,
+  Transaction,
+} from './card.models';
 import {
   FetchCardsStatus,
   FetchOverviewStatus,
@@ -7,6 +13,7 @@ import {
   FetchVirtualCardImageUrlsStatus,
   UpdateCardNameStatus,
   UpdateCardLockStatus,
+  referredUsersStatus,
 } from './card.reducer';
 
 export const TTL = {
@@ -49,6 +56,10 @@ export enum CardActionTypes {
   SUCCESS_UPDATE_CARD_NAME = 'CARD/SUCCESS_UPDATE_CARD_NAME',
   FAILED_UPDATE_CARD_NAME = 'CARD/FAILED_UPDATE_CARD_NAME',
   UPDATE_UPDATE_CARD_NAME_STATUS = 'CARD/UPDATE_UPDATE_CARD_NAME_STATUS',
+  SUCCESS_FETCH_REFERRAL_CODE = 'CARD/SUCCESS_FETCH_REFERRAL_CODE',
+  UPDATE_FETCH_REFERRAL_CODE_STATUS = 'CARD/UPDATE_FETCH_REFERRAL_CODE_STATUS',
+  SUCCESS_FETCH_REFERRED_USERS = 'CARD/SUCCESS_FETCH_REFERRED_USERS',
+  UPDATE_FETCH_REFERRED_USERS_STATUS = 'CARD/UPDATE_FETCH_REFERRED_USERS_STATUS',
 }
 
 interface SuccessInitializeStore {
@@ -159,6 +170,26 @@ interface UpdateUpdateCardNameStatus {
   payload: {id: string; status: UpdateCardNameStatus};
 }
 
+interface SuccessFetchReferralCode {
+  type: CardActionTypes.SUCCESS_FETCH_REFERRAL_CODE;
+  payload: {id: string; code: string};
+}
+
+interface UpdateFetchReferralCodeStatus {
+  type: CardActionTypes.UPDATE_FETCH_REFERRAL_CODE_STATUS;
+  payload: {id: string; status: referredUsersStatus};
+}
+
+interface SuccessFetchReferredUsers {
+  type: CardActionTypes.SUCCESS_FETCH_REFERRED_USERS;
+  payload: {id: string; referredUsers: ReferredUsersType[]};
+}
+
+interface FailedFetchReferredUsers {
+  type: CardActionTypes.UPDATE_FETCH_REFERRED_USERS_STATUS;
+  payload: {id: string; status: referredUsersStatus};
+}
+
 export type CardActionType =
   | SuccessInitializeStore
   | SuccessFetchCards
@@ -179,4 +210,8 @@ export type CardActionType =
   | UpdateUpdateCardLockStatus
   | SuccessUpdateCardName
   | FailedUpdateCardName
-  | UpdateUpdateCardNameStatus;
+  | UpdateUpdateCardNameStatus
+  | SuccessFetchReferralCode
+  | UpdateFetchReferralCodeStatus
+  | SuccessFetchReferredUsers
+  | FailedFetchReferredUsers;

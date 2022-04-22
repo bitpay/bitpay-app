@@ -97,3 +97,10 @@ export interface DebitCardTopUpInvoiceParams {
   transactionCurrency: string;
   walletId: string;
 }
+
+export interface ReferredUsersType {
+  expiration: string;
+  familyName: string;
+  givenName: string;
+  status: string;
+}

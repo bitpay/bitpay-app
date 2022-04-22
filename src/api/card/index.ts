@@ -3,6 +3,8 @@ import {
   FetchAllCardsResponse,
   FetchCardResponse,
   FetchOverviewResponse,
+  FetchReferralCodeResponse,
+  FetchReferredUsers,
   FetchSettledTransactionsResponse,
   FetchVirtualCardImageUrlsResponse,
   UpdateCardLockResponse,
@@ -167,6 +169,33 @@ const updateCardLock = async (token: string, id: string, locked: boolean) => {
   return data.data;
 };
 
+const fetchReferralCode = async (token: string) => {
+  const query = CardQueries.FETCH_REFERRAL_CODE(token);
+
+  const {data} =
+    await GraphQlApi.getInstance().request<FetchReferralCodeResponse>(query);
+
+  if (data.errors) {
+    throw new Error(data.errors.map(e => e.message).join(', '));
+  }
+
+  return data.data.user.referralCode;
+};
+
+const fetchReferredUsers = async (token: string) => {
+  const query = CardQueries.FETCH_REFERRED_USERS(token);
+
+  const {data} = await GraphQlApi.getInstance().request<FetchReferredUsers>(
+    query,
+  );
+
+  if (data.errors) {
+    throw new Error(data.errors.map(e => e.message).join(', '));
+  }
+
+  return data.data.user.referredUsers;
+};
+
 const CardApi = {
   fetchAll,
   fetchOne,
@@ -175,6 +204,8 @@ const CardApi = {
   fetchVirtualCardImageUrls,
   updateCardLock,
   updateCardName,
+  fetchReferralCode,
+  fetchReferredUsers,
 };
 
 export default CardApi;

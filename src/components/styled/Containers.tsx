@@ -330,3 +330,22 @@ export const HiddenContainer = styled.View`
   padding: 5px 10px;
   border-radius: 40px;
 `;
+
+// Copy to Clipboard
+
+export const CopyToClipboardContainer = styled.TouchableOpacity`
+  border: 1px solid #9ba3ae;
+  border-radius: 4px;
+  padding: 0 10px;
+  height: 55px;
+  align-items: center;
+  flex-direction: row;
+`;
+
+export const CopyImgContainer = styled.View`
+  border-right-color: ${({theme: {dark}}) => (dark ? '#46494E' : '#ECEFFD')};
+  border-right-width: 1px;
+  padding-right: 10px;
+  height: 25px;
+  justify-content: center;
+`;

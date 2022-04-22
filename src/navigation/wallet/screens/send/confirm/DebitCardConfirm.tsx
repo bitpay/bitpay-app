@@ -127,7 +127,16 @@ const Confirm = () => {
   };
 
   const openKeyWalletSelector = () => {
-    if (memoizedKeysAndWalletsList.length) {
+    const keysWalletsLength = memoizedKeysAndWalletsList.length;
+    if (keysWalletsLength) {
+      if (
+        keysWalletsLength === 1 &&
+        memoizedKeysAndWalletsList[0].wallets.length === 1
+      ) {
+        onWalletSelect(memoizedKeysAndWalletsList[0].wallets[0]);
+        setKeysWallets(memoizedKeysAndWalletsList);
+        return;
+      }
       setKeysWallets(memoizedKeysAndWalletsList);
       setWalletSelectModalVisible(true);
     } else {
@@ -152,6 +161,9 @@ const Confirm = () => {
             selectedWallet.currencyAbbreviation.toUpperCase(),
           walletId: selectedWallet.id,
         }),
+      );
+      setInvoiceExpirationTime(
+        Math.floor(new Date(invoice.expirationTime).getTime() / 1000),
       );
       const baseUrl = BASE_BITPAY_URLS[network];
       const paymentUrl = `${baseUrl}/i/${invoiceId}`;
@@ -192,7 +204,6 @@ const Confirm = () => {
       );
     }
   };
-
   useEffect(() => {
     let interval: any;
     if (invoiceExpirationTime) {
@@ -260,11 +271,16 @@ const Confirm = () => {
             ) : null}
 
             <Header hr>Summary</Header>
-            <SendingFrom
-              sender={sendingFrom!}
-              onPress={openKeyWalletSelector}
-              hr
-            />
+            {memoizedKeysAndWalletsList.length === 1 &&
+            memoizedKeysAndWalletsList[0].wallets.length === 1 ? (
+              <SendingFrom sender={sendingFrom!} hr />
+            ) : (
+              <SendingFrom
+                sender={sendingFrom!}
+                onPress={openKeyWalletSelector}
+                hr
+              />
+            )}
             {remainingTime ? (
               <SharedDetailRow
                 description={'Expires'}

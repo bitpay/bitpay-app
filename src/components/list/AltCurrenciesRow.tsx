@@ -43,7 +43,7 @@ const AltCurrencyIsoCodeContainer = styled.View<{selected?: boolean}>`
     `};
   width: 60px;
   height: 40px;
-  border-radius: 17.5px;
+  border-radius: 27.5px;
 `;
 
 const IsoCodeNameContainer = styled(BaseText)<{selected?: boolean}>`
