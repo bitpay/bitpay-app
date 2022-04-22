@@ -115,11 +115,16 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   );
 
   const keys = useAppSelector(({WALLET}) => Object.values(WALLET.keys));
+  const network = useAppSelector(({APP}) => APP.network);
 
   const getLengthOfWalletsWithBalance = useMemo(
     () =>
-      keys.flatMap(key => key.wallets).filter(({balance: {sat}}) => sat > 0)
-        .length,
+      keys
+        .flatMap(key => key.wallets)
+        .filter(
+          ({balance: {sat}, network: walletNetwork}) =>
+            sat > 0 && walletNetwork === network,
+        ).length,
     [keys],
   );
 
