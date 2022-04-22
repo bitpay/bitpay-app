@@ -6,7 +6,11 @@ import Markdown from 'react-native-markdown-display';
 import {GiftCardScreens, GiftCardStackParamList} from '../GiftCardStack';
 import RemoteImage from '../../components/RemoteImage';
 import TagsSvg from '../../../../../../assets/img/tags-stack.svg';
-import {BaseText, fontFamily} from '../../../../../components/styled/Text';
+import {
+  BaseText,
+  fontFamily,
+  HeaderTitle,
+} from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
 import {
   CtaContainerAbsolute,
@@ -121,7 +125,11 @@ const BuyGiftCard = ({
   );
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: `Buy ${cardConfig.displayName} Gift Card`,
+      headerTitle: () => {
+        return (
+          <HeaderTitle>{`Buy ${cardConfig.displayName} Gift Card`}</HeaderTitle>
+        );
+      },
     });
   });
 
