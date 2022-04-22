@@ -3,7 +3,7 @@ import React, {useCallback, useMemo, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {BaseText, H4} from '../../../components/styled/Text';
+import {BaseText, H4, TextAlign} from '../../../components/styled/Text';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
@@ -74,7 +74,7 @@ export default ({
     const coins: GlobalSelectObj[] = [];
     category.forEach(coin => {
       const availableWallets = wallets.filter(
-        wallet => wallet.currencyAbbreviation === coin,
+        wallet => wallet.currencyAbbreviation === coin && !wallet.hideWallet,
       );
       if (availableWallets.length) {
         const {currencyName, img} = availableWallets[0];
@@ -195,7 +195,9 @@ export default ({
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onBackdropPress}>
       <WalletSelectorContainer>
-        <H4>Select a Wallet</H4>
+        <TextAlign align={'center'}>
+          <H4>Select a Wallet</H4>
+        </TextAlign>
         {keyWallets.length ? (
           <DescriptionText>
             Which Ethereum wallet would you like to use for WalletConnect?

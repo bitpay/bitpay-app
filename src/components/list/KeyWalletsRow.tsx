@@ -28,6 +28,7 @@ const KeyName = styled(BaseText)`
 
 const NoGutter = styled(View)`
   margin: 0 -10px;
+  padding-right: 5px;
 `;
 
 export interface KeyWallet extends Wallet, WalletRowProps {
