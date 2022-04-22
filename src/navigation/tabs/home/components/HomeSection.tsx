@@ -27,7 +27,7 @@ const HomeRowContainer = styled.View`
 
 const Header = styled.View<{slim?: boolean}>`
   flex-direction: row;
-  margin: 0 ${ScreenGutter} ${({slim}) => (slim ? 0 : 12)}px;
+  margin: 0 ${ScreenGutter} ${({slim}) => (slim ? 0 : 12)}px 16px;
   justify-content: space-between;
   align-items: center;
   position: absolute;
