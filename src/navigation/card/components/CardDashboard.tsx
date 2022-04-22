@@ -46,6 +46,8 @@ import {
 import CardOverviewSlide from './CardOverviewSlide';
 import TransactionRow from './CardTransactionRow';
 import PlusSvg from '../../../../assets/img/card/icons/plus.svg';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {BuyCryptoScreens} from '../../services/buy-crypto/BuyCryptoStack';
 
 interface CardDashboardProps {
   id: string;
@@ -112,6 +114,15 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     ({CARD}) => CARD.virtualDesignCurrency,
   );
 
+  const keys = useAppSelector(({WALLET}) => Object.values(WALLET.keys));
+
+  const getLengthOfWalletsWithBalance = useMemo(
+    () =>
+      keys.flatMap(key => key.wallets).filter(({balance: {sat}}) => sat > 0)
+        .length,
+    [keys],
+  );
+
   const currentGroupIdx = Math.max(
     0,
     cardGroups.findIndex(g => g.some(c => c.id === id)),
@@ -140,14 +151,42 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   };
 
   const goToAmountScreen = () => {
-    navigator.navigate('Wallet', {
-      screen: WalletScreens.AMOUNT,
-      params: {
-        fiatCurrencyAbbreviation: activeCard.currency.code,
-        opts: {hideSendMax: true},
-        onAmountSelected: selectedAmount => goToConfirmScreen(+selectedAmount),
-      },
-    });
+    if (getLengthOfWalletsWithBalance) {
+      navigator.navigate('Wallet', {
+        screen: WalletScreens.AMOUNT,
+        params: {
+          fiatCurrencyAbbreviation: activeCard.currency.code,
+          opts: {hideSendMax: true},
+          onAmountSelected: selectedAmount =>
+            goToConfirmScreen(+selectedAmount),
+        },
+      });
+    } else {
+      dispatch(
+        showBottomNotificationModal({
+          type: 'warning',
+          title: 'No funds available',
+          message: 'You do not have any funds to send.',
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: 'Add funds',
+              action: () =>
+                navigator.navigate('BuyCrypto', {
+                  screen: BuyCryptoScreens.ROOT,
+                  params: {amount: 50},
+                }),
+              primary: true,
+            },
+            {
+              text: 'Got It',
+              action: () => null,
+              primary: false,
+            },
+          ],
+        }),
+      );
+    }
   };
 
   useLayoutEffect(() => {
