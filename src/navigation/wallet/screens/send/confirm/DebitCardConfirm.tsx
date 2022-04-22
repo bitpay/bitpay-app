@@ -361,7 +361,11 @@ const Confirm = () => {
 
       <SheetModal
         isVisible={walletSelectModalVisible}
-        onBackdropPress={() => setWalletSelectModalVisible(false)}>
+        onBackdropPress={async () => {
+          setWalletSelectModalVisible(false);
+          await sleep(100);
+          navigation.goBack();
+        }}>
         <WalletSelectMenuContainer>
           <WalletSelectMenuHeaderContainer>
             <TextAlign align={'center'}>
