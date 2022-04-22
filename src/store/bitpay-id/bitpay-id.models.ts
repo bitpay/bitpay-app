@@ -34,4 +34,5 @@ export interface User {
   localSettings: {
     syncGiftCardPurchases: boolean;
   };
+  referralCode?: string;
 }

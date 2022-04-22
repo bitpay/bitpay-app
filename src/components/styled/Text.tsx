@@ -1,7 +1,7 @@
 import React from 'react';
 import {StatusBar, Text} from 'react-native';
 import styled, {css} from 'styled-components/native';
-import {LightBlack, SlateDark, White} from '../../styles/colors';
+import {NeutralSlate, SlateDark, White, LightBlack} from '../../styles/colors';
 
 export const fontFamily = 'Heebo';
 
@@ -219,4 +219,10 @@ export const Type = styled(BaseText)<{noAutoMarginLeft?: boolean}>`
   padding: 2px 4px;
   border-radius: 3px;
   margin-left: ${({noAutoMarginLeft}) => (noAutoMarginLeft ? 0 : 'auto')};
+`;
+
+export const CopyToClipboardText = styled(BaseText)`
+  font-size: 16px;
+  color: ${({theme: {dark}}) => (dark ? NeutralSlate : '#6F7782')};
+  padding: 0 20px 0 10px;
 `;

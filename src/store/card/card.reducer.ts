@@ -3,7 +3,13 @@ import {
   BitPayIdActionType,
   BitPayIdActionTypes,
 } from '../bitpay-id/bitpay-id.types';
-import {Card, PagedTransactionData, TopUp, Transaction} from './card.models';
+import {
+  Card,
+  PagedTransactionData,
+  ReferredUsersType,
+  TopUp,
+  Transaction,
+} from './card.models';
 import {
   CardActionType,
   CardActionTypes,
@@ -26,6 +32,7 @@ export type FetchSettledTransactionsStatus = 'success' | 'failed' | null;
 export type FetchVirtualCardImageUrlsStatus = 'success' | 'failed' | null;
 export type UpdateCardLockStatus = 'success' | 'failed' | null;
 export type UpdateCardNameStatus = 'success' | 'failed' | null;
+export type referredUsersStatus = 'loading' | 'failed';
 
 export interface CardState {
   lastUpdates: {
@@ -65,6 +72,12 @@ export interface CardState {
   topUpHistory: {
     [id: string]: TopUp[] | undefined;
   };
+  referralCode: {
+    [id: string]: string;
+  };
+  referredUsers: {
+    [id: string]: ReferredUsersType[] | referredUsersStatus;
+  };
 }
 
 const initialState: CardState = {
@@ -88,6 +101,8 @@ const initialState: CardState = {
   settledTransactions: {},
   pendingTransactions: {},
   topUpHistory: {},
+  referralCode: {},
+  referredUsers: {},
 };
 
 export const cardReducer = (
@@ -357,6 +372,38 @@ export const cardReducer = (
         },
       };
     }
+    case CardActionTypes.SUCCESS_FETCH_REFERRAL_CODE: {
+      return {
+        ...state,
+        referralCode: {
+          [action.payload.id]: action.payload.code,
+        },
+      };
+    }
+    case CardActionTypes.UPDATE_FETCH_REFERRAL_CODE_STATUS:
+      return {
+        ...state,
+        referralCode: {
+          [action.payload.id]: action.payload.status,
+        },
+      };
+
+    case CardActionTypes.SUCCESS_FETCH_REFERRED_USERS:
+      return {
+        ...state,
+        referredUsers: {
+          [action.payload.id]: action.payload.referredUsers,
+        },
+      };
+
+    case CardActionTypes.UPDATE_FETCH_REFERRED_USERS_STATUS:
+      return {
+        ...state,
+        referredUsers: {
+          [action.payload.id]: action.payload.status,
+        },
+      };
+
     default:
       return state;
   }
