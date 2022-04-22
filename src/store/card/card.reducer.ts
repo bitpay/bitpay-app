@@ -31,6 +31,7 @@ export type FetchSettledTransactionsStatus = 'success' | 'failed' | null;
 export type FetchVirtualCardImageUrlsStatus = 'success' | 'failed' | null;
 export type UpdateCardLockStatus = 'success' | 'failed' | null;
 export type UpdateCardNameStatus = 'success' | 'failed' | null;
+export type referredUsersStatus = 'loading' | 'failed';
 
 export interface CardState {
   lastUpdates: {
@@ -71,7 +72,7 @@ export interface CardState {
     [id: string]: string;
   };
   referredUsers: {
-    [id: string]: ReferredUsersType[] | 'failed' | 'loading';
+    [id: string]: ReferredUsersType[] | referredUsersStatus;
   };
 }
 
@@ -370,11 +371,11 @@ export const cardReducer = (
         },
       };
     }
-    case CardActionTypes.FAILED_FETCH_REFERRAL_CODE:
+    case CardActionTypes.UPDATE_FETCH_REFERRAL_CODE_STATUS:
       return {
         ...state,
         referralCode: {
-          [action.payload.id]: 'failed',
+          [action.payload.id]: action.payload.status,
         },
       };
 
@@ -386,11 +387,11 @@ export const cardReducer = (
         },
       };
 
-    case CardActionTypes.FAILED_FETCH_REFERRED_USERS:
+    case CardActionTypes.UPDATE_FETCH_REFERRED_USERS_STATUS:
       return {
         ...state,
         referredUsers: {
-          [action.payload.id]: 'failed',
+          [action.payload.id]: action.payload.status,
         },
       };
 

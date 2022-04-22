@@ -339,9 +339,12 @@ export const START_FETCH_REFERRAL_CODE =
       const {network} = APP;
       const token = BITPAY_ID.apiToken[network];
       const code = CARD.referralCode[id];
-      if (code && code !== 'failed') {
+      if (code && code !== 'failed' && code !== 'loading') {
         return;
       }
+      dispatch(CardActions.updateFetchReferralCodeStatus(id, 'loading'));
+
+      await sleep(500);
 
       if (BITPAY_ID.user[network]?.referralCode) {
         dispatch(
@@ -359,7 +362,7 @@ export const START_FETCH_REFERRAL_CODE =
         dispatch(CardActions.successFetchReferralCode(id, res));
       }
     } catch (e) {
-      dispatch(CardActions.failedFetchReferralCode(id));
+      dispatch(CardActions.updateFetchReferralCodeStatus(id, 'failed'));
     }
   };
 
@@ -367,18 +370,18 @@ export const START_FETCH_REFERRED_USERS =
   (id: string): Effect =>
   async (dispatch, getState) => {
     try {
-      dispatch(CardActions.successFetchReferredUsers(id, 'loading'));
+      dispatch(CardActions.updateFetchReferredUsersStatus(id, 'loading'));
 
       const {APP, BITPAY_ID} = getState();
       const {network} = APP;
       const token = BITPAY_ID.apiToken[network];
 
       const res = await CardApi.fetchReferredUsers(token);
-      await sleep(1000);
+      await sleep(500);
       if (res) {
         dispatch(CardActions.successFetchReferredUsers(id, res));
       }
     } catch (e) {
-      dispatch(CardActions.failedFetchReferredUsers(id));
+      dispatch(CardActions.updateFetchReferredUsersStatus(id, 'failed'));
     }
   };

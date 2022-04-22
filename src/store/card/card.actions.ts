@@ -11,6 +11,7 @@ import {
   FetchOverviewStatus,
   FetchSettledTransactionsStatus,
   FetchVirtualCardImageUrlsStatus,
+  referredUsersStatus,
   UpdateCardLockStatus,
   UpdateCardNameStatus,
 } from './card.reducer';
@@ -177,9 +178,12 @@ export const successFetchReferralCode = (
   payload: {id, code},
 });
 
-export const failedFetchReferralCode = (id: string): CardActionType => ({
-  type: CardActionTypes.FAILED_FETCH_REFERRAL_CODE,
-  payload: {id},
+export const updateFetchReferralCodeStatus = (
+  id: string,
+  status: referredUsersStatus,
+): CardActionType => ({
+  type: CardActionTypes.UPDATE_FETCH_REFERRAL_CODE_STATUS,
+  payload: {id, status},
 });
 
 export const successFetchReferredUsers = (
@@ -190,7 +194,10 @@ export const successFetchReferredUsers = (
   payload: {id, referredUsers},
 });
 
-export const failedFetchReferredUsers = (id: string): CardActionType => ({
-  type: CardActionTypes.FAILED_FETCH_REFERRED_USERS,
-  payload: {id},
+export const updateFetchReferredUsersStatus = (
+  id: string,
+  status: referredUsersStatus,
+): CardActionType => ({
+  type: CardActionTypes.UPDATE_FETCH_REFERRED_USERS_STATUS,
+  payload: {id, status},
 });

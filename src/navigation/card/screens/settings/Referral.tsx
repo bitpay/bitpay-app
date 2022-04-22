@@ -42,6 +42,7 @@ import {
   CategoryRow,
 } from '../../components/CardSettingsList.styled';
 import ReferredUsersSkeleton from '../../components/ReferredUsersSkeleton';
+import ReferralCodeSkeleton from '../../components/ReferralCodeSkeleton';
 
 export interface ReferralParamList {
   card: Card;
@@ -201,14 +202,7 @@ const Referral = ({}) => {
           </Paragraph>
         </DescriptionContainer>
 
-        {!code || code === 'failed' ? (
-          <FailedContainer>
-            <H7>
-              Uh oh, something went wrong retrieving your referral code. Please
-              try again later.
-            </H7>
-          </FailedContainer>
-        ) : (
+        {code && code !== 'failed' && code !== 'loading' ? (
           <CodeContainer>
             <CopyToClipboardContainer
               onPress={copyToClipboard}
@@ -224,6 +218,17 @@ const Referral = ({}) => {
             <VerticalSpacing>
               <Button onPress={onShareReferralCode}>Share</Button>
             </VerticalSpacing>
+          </CodeContainer>
+        ) : code === 'failed' ? (
+          <FailedContainer>
+            <H7>
+              Uh oh, something went wrong retrieving your referral code. Please
+              try again later.
+            </H7>
+          </FailedContainer>
+        ) : (
+          <CodeContainer>
+            <ReferralCodeSkeleton />
           </CodeContainer>
         )}
 

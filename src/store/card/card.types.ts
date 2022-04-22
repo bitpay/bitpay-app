@@ -12,6 +12,7 @@ import {
   FetchVirtualCardImageUrlsStatus,
   UpdateCardNameStatus,
   UpdateCardLockStatus,
+  referredUsersStatus,
 } from './card.reducer';
 
 export const TTL = {
@@ -55,9 +56,9 @@ export enum CardActionTypes {
   FAILED_UPDATE_CARD_NAME = 'CARD/FAILED_UPDATE_CARD_NAME',
   UPDATE_UPDATE_CARD_NAME_STATUS = 'CARD/UPDATE_UPDATE_CARD_NAME_STATUS',
   SUCCESS_FETCH_REFERRAL_CODE = 'CARD/SUCCESS_FETCH_REFERRAL_CODE',
-  FAILED_FETCH_REFERRAL_CODE = 'CARD/FAILED_FETCH_REFERRAL_CODE',
+  UPDATE_FETCH_REFERRAL_CODE_STATUS = 'CARD/UPDATE_FETCH_REFERRAL_CODE_STATUS',
   SUCCESS_FETCH_REFERRED_USERS = 'CARD/SUCCESS_FETCH_REFERRED_USERS',
-  FAILED_FETCH_REFERRED_USERS = 'CARD/FAILED_FETCH_REFERRED_USERS',
+  UPDATE_FETCH_REFERRED_USERS_STATUS = 'CARD/UPDATE_FETCH_REFERRED_USERS_STATUS',
 }
 
 interface SuccessInitializeStore {
@@ -172,9 +173,9 @@ interface SuccessFetchReferralCode {
   payload: {id: string; code: string};
 }
 
-interface FailedFetchReferralCode {
-  type: CardActionTypes.FAILED_FETCH_REFERRAL_CODE;
-  payload: {id: string};
+interface UpdateFetchReferralCodeStatus {
+  type: CardActionTypes.UPDATE_FETCH_REFERRAL_CODE_STATUS;
+  payload: {id: string; status: referredUsersStatus};
 }
 
 interface SuccessFetchReferredUsers {
@@ -183,8 +184,8 @@ interface SuccessFetchReferredUsers {
 }
 
 interface FailedFetchReferredUsers {
-  type: CardActionTypes.FAILED_FETCH_REFERRED_USERS;
-  payload: {id: string};
+  type: CardActionTypes.UPDATE_FETCH_REFERRED_USERS_STATUS;
+  payload: {id: string; status: referredUsersStatus};
 }
 
 export type CardActionType =
@@ -209,6 +210,6 @@ export type CardActionType =
   | FailedUpdateCardName
   | UpdateUpdateCardNameStatus
   | SuccessFetchReferralCode
-  | FailedFetchReferralCode
+  | UpdateFetchReferralCodeStatus
   | SuccessFetchReferredUsers
   | FailedFetchReferredUsers;
