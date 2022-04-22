@@ -1,3 +1,4 @@
+import {DOSH_WHITELIST} from '@env';
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
@@ -13,7 +14,7 @@ import {Link, Smallest} from '../../../components/styled/Text';
 import {URL} from '../../../constants';
 import {CardBrand, CardProvider} from '../../../constants/card';
 import Dosh from '../../../lib/dosh';
-import {AppEffects} from '../../../store/app';
+import {AppActions, AppEffects} from '../../../store/app';
 import {CardActions, CardEffects} from '../../../store/card';
 import {Card} from '../../../store/card/card.models';
 import {LogActions} from '../../../store/log';
@@ -46,10 +47,23 @@ const LINKS: {
   ],
 };
 
+const DoshWhitelist: string[] = [];
+
+if (DOSH_WHITELIST) {
+  try {
+    DoshWhitelist.push(...DOSH_WHITELIST.split(',').map(email => email.trim()));
+  } catch (e) {
+    console.log('Unable to parse DOSH_WHITELIST', e);
+  }
+}
+
 const SettingsList: React.FC<SettingsListProps> = props => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const {card, navigation} = props;
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
   const [localLockState, setLocalLockState] = useState(card.lockedByUser);
   const [localLockStatus, setLocalLockStatus] =
     useState<ToggleSpinnerState>(null);
@@ -62,6 +76,8 @@ const SettingsList: React.FC<SettingsListProps> = props => {
   };
 
   const links = LINKS[card.brand || CardBrand.Visa];
+
+  const isDoshWhitelisted = !!user && DoshWhitelist.includes(user.email);
 
   const onLockToggled = (locked: boolean) => {
     // set local lock state for immediate feedback, reset if request fails
@@ -145,6 +161,26 @@ const SettingsList: React.FC<SettingsListProps> = props => {
           <Styled.SettingsLink
             Icon={OffersIcon}
             onPress={async () => {
+              if (!isDoshWhitelisted) {
+                dispatch(
+                  AppActions.showBottomNotificationModal({
+                    type: 'warning',
+                    title: 'Unavailable',
+                    message: 'Cards Offers unavailable at this time',
+                    enableBackdropDismiss: true,
+                    actions: [
+                      {
+                        text: 'OK',
+                        action: () => {},
+                        primary: true,
+                      },
+                    ],
+                  }),
+                );
+
+                return;
+              }
+
               try {
                 Dosh.present();
               } catch (err) {
