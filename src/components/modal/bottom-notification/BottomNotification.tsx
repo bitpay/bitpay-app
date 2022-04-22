@@ -8,7 +8,9 @@ import {RootState} from '../../../store';
 import {
   Black,
   LightBlack,
+  LinkBlue,
   NotificationPrimary,
+  Slate,
   SlateDark,
   White,
 } from '../../../styles/colors';
@@ -96,9 +98,13 @@ const Cta = styled(BaseText)`
   letter-spacing: 0.5px;
   text-align: left;
   color: ${({primary, theme: {dark}}: {primary?: boolean; theme: Theme}) =>
-    dark ? White : primary ? NotificationPrimary : Black};
-  text-decoration: ${({theme: {dark}}) => (dark ? 'underline' : 'none')};
-  text-decoration-color: ${White};
+    dark
+      ? primary
+        ? LinkBlue
+        : Slate
+      : primary
+      ? NotificationPrimary
+      : Black};
 `;
 
 const BottomNotification = () => {
