@@ -152,8 +152,6 @@ export const TextAlign = styled(BaseText)<TextAlignProps>`
 
 export const Link = styled(BaseText)`
   color: ${({theme}) => theme.colors.link};
-  text-decoration: ${({theme}) => (theme.dark ? 'underline' : 'none')};
-  text-decoration-color: ${({theme}) => theme.colors.link};
 `;
 
 // WALLET
