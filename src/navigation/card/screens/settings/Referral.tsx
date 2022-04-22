@@ -148,7 +148,7 @@ const Referral = ({}) => {
   const copyToClipboard = () => {
     haptic('impactLight');
     if (!copied) {
-      Clipboard.setString('');
+      Clipboard.setString(code);
       setCopied(true);
     }
   };
