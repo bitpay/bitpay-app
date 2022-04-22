@@ -76,7 +76,7 @@ const GiftCardStack = () => {
         component={EnterEmail}
         options={{
           headerTitle: () => (
-            <HeaderTitle>Enter your email address</HeaderTitle>
+            <HeaderTitle>Enter Email</HeaderTitle>
           ),
         }}
       />

@@ -53,7 +53,7 @@ const MerchantName = styled(H6)<MerchantNameProps>`
 `;
 
 const MerchantDescription = styled(Paragraph)`
-  color: ${({theme}) => (theme.dark ? White : SlateDark)};
+  color: ${({theme}) => (theme.dark ? '#E1E4E7' : SlateDark)};
   font-size: 12px;
   font-weight: 400;
   line-height: 16px;

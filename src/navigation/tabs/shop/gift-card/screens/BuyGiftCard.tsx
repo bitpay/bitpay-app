@@ -343,7 +343,7 @@ const BuyGiftCard = ({
               : next(selectedAmount);
           }}
           buttonStyle={'primary'}>
-          {cardConfig.supportedAmounts ? 'Continue' : 'Enter Amount'}
+          {cardConfig.supportedAmounts ? 'Continue' : 'Buy Gift Card'}
         </Button>
       </FooterButton>
     </>
