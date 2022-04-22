@@ -116,17 +116,10 @@ const Confirm = () => {
 
   const [remainingTime, setRemainingTime] = useState<string>();
   const [invoiceExpirationTime, setInvoiceExpirationTime] = useState<number>();
-  const memoizedKeysAndWalletsList = useMemo(() => {
-    let filteredKeysAndWallets = BuildKeysAndWalletsList({keys, network});
-    filteredKeysAndWallets = filteredKeysAndWallets
-      .map(key => {
-        key.wallets = key.wallets.filter(({balance}) => balance.sat > 0);
-        return key;
-      })
-      .filter(key => key.wallets.length > 0);
-
-    return filteredKeysAndWallets;
-  }, [keys, network]);
+  const memoizedKeysAndWalletsList = useMemo(
+    () => BuildKeysAndWalletsList({keys, network}),
+    [keys, network],
+  );
 
   const reshowWalletSelector = async () => {
     await sleep(400);
@@ -169,7 +162,9 @@ const Confirm = () => {
           walletId: selectedWallet.id,
         }),
       );
-      setInvoiceExpirationTime(Math.floor(new Date(invoice.expirationTime).getTime() / 1000));
+      setInvoiceExpirationTime(
+        Math.floor(new Date(invoice.expirationTime).getTime() / 1000),
+      );
       const baseUrl = BASE_BITPAY_URLS[network];
       const paymentUrl = `${baseUrl}/i/${invoiceId}`;
       const {txDetails: newTxDetails, txp: newTxp} = await dispatch(
