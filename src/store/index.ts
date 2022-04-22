@@ -187,40 +187,44 @@ const reducers = {
 
 const rootReducer = combineReducers(reducers);
 
-const getStore = () => {
-  const middlewares = [
-    thunkMiddleware,
-    createLogger({
-      predicate: (_getState, action) =>
-        ![
-          'LOG/ADD_LOG',
-          'APP/SET_CURRENT_ROUTE',
-          'persist/REHYDRATE',
-          'persist/PERSIST',
-        ].includes(action.type),
-      stateTransformer: state => {
-        return {
-          ...state,
-          WALLET: {
-            ...state.WALLET,
-            tokenOptions: null,
-            balanceCacheKey: null,
-          },
-          SHOP: {
-            ...state.SHOP,
-            availableCardMap: null,
-            integrations: null,
-            supportedCardMap: null,
-          },
-          BITPAY_ID: {
-            ...state.BITPAY_ID,
-            doshToken: null,
-            apiToken: null,
-          },
-        };
+const logger = createLogger({
+  predicate: (_getState, action) =>
+    ![
+      'LOG/ADD_LOG',
+      'APP/SET_CURRENT_ROUTE',
+      'persist/REHYDRATE',
+      'persist/PERSIST',
+    ].includes(action.type),
+  stateTransformer: state => {
+    return {
+      ...state,
+      WALLET: {
+        ...state.WALLET,
+        tokenOptions: null,
+        balanceCacheKey: null,
       },
-    }),
-  ];
+      SHOP: {
+        ...state.SHOP,
+        availableCardMap: null,
+        integrations: null,
+        supportedCardMap: null,
+      },
+      BITPAY_ID: {
+        ...state.BITPAY_ID,
+        doshToken: null,
+        apiToken: null,
+      },
+    };
+  },
+});
+
+const getStore = () => {
+  const middlewares = [thunkMiddleware];
+  if (__DEV__) {
+    // @ts-ignore
+    middlewares.push(logger);
+  }
+
   let middlewareEnhancers = applyMiddleware(...middlewares);
 
   if (__DEV__) {

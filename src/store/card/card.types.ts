@@ -3,6 +3,7 @@ import {
   Card,
   PagedTransactionData,
   ReferredUsersType,
+  TopUp,
   Transaction,
 } from './card.models';
 import {
@@ -96,6 +97,7 @@ interface SuccessFetchOverview {
     balance: number;
     settledTransactions: PagedTransactionData;
     pendingTransactions: Transaction[];
+    topUpHistory: TopUp[];
   };
 }
 

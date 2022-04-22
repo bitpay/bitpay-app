@@ -6,7 +6,7 @@ import {startUpdateAllKeyAndWalletStatus} from '../status/status';
 import {updatePortfolioBalance} from '../../wallet.actions';
 
 export const startWalletStoreInit =
-  (): Effect => async (dispatch, getState: () => RootState) => {
+  (): Effect<Promise<void>> => async (dispatch, getState: () => RootState) => {
     try {
       const {WALLET} = getState();
 

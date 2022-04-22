@@ -1,7 +1,7 @@
 import React from 'react';
 import {ScrollView, SafeAreaView} from 'react-native';
-import {useTheme} from '@react-navigation/native';
 import FastImage from 'react-native-fast-image';
+import styled, {useTheme} from 'styled-components/native';
 import {
   ModalContainer,
   ModalHeader,
@@ -11,7 +11,6 @@ import {
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import Checkbox from '../../../../components/checkbox/Checkbox';
 import {PaymentMethodsAvailable} from '../constants/BuyCryptoConstants';
-import styled from 'styled-components/native';
 import {BaseText} from '../../../../components/styled/Text';
 import Button from '../../../../components/button/Button';
 import {Action, LightBlack, SlateDark, White} from '../../../../styles/colors';
@@ -28,6 +27,10 @@ interface PaymentMethodsModalProps {
   onPress?: (paymentMethod: any) => any;
   selectedPaymentMethod: any;
 }
+
+const EnabledPaymentMethods = Object.values(PaymentMethodsAvailable).filter(
+  method => method.enabled,
+);
 
 const PaymentMethodCard = styled.TouchableOpacity`
   border-radius: 7px;
@@ -82,6 +85,7 @@ const PaymentMethodsModal = ({
   selectedPaymentMethod,
 }: PaymentMethodsModalProps) => {
   const theme = useTheme();
+
   return (
     <SheetModal
       isVisible={isVisible}
@@ -99,20 +103,17 @@ const PaymentMethodsModal = ({
               </Button>
             </ModalHeaderRight>
           </ModalHeader>
+
           <ScrollView style={{marginTop: 20}}>
-            {Object.values(PaymentMethodsAvailable).map(paymentMethod => {
+            {EnabledPaymentMethods.map(paymentMethod => {
               return (
                 <PaymentMethodCard
                   key={paymentMethod.method}
-                  onPress={() => {
-                    onPress ? onPress(paymentMethod) : () => {};
-                  }}>
+                  onPress={() => onPress?.(paymentMethod)}>
                   <PaymentMethodCardContainer>
                     <Checkbox
                       radio={true}
-                      onPress={() => {
-                        onPress ? onPress(paymentMethod) : () => {};
-                      }}
+                      onPress={() => onPress?.(paymentMethod)}
                       checked={
                         selectedPaymentMethod.method == paymentMethod.method
                       }
@@ -121,24 +122,25 @@ const PaymentMethodsModal = ({
                       <PaymentMethodLabel>
                         {paymentMethod.label}
                       </PaymentMethodLabel>
+
                       <PaymentMethodProvider>
                         <PaymentMethodProviderText>
                           Provided by
                         </PaymentMethodProviderText>
+
                         {paymentMethod.supportedExchanges.simplex &&
-                          ((!theme.dark && (
+                          (theme.dark ? (
+                            <SimplexLogoContainer source={SimplexLogoDm} />
+                          ) : (
                             <SimplexLogo width={60} height={20} />
-                          )) ||
-                            (theme.dark && (
-                              <SimplexLogoContainer source={SimplexLogoDm} />
-                            )))}
+                          ))}
+
                         {paymentMethod.supportedExchanges.wyre &&
-                          ((!theme.dark && (
+                          (theme.dark ? (
+                            <WyreLogoDm width={60} height={15} />
+                          ) : (
                             <WyreLogo width={60} height={15} />
-                          )) ||
-                            (theme.dark && (
-                              <WyreLogoDm width={60} height={15} />
-                            )))}
+                          ))}
                       </PaymentMethodProvider>
                     </PaymentMethodCheckboxTexts>
                   </PaymentMethodCardContainer>

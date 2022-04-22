@@ -271,18 +271,18 @@ export const BuildKeysAndWalletsList = ({
               credentials: {network},
             } = walletObj;
             return merge(cloneDeep(walletObj), {
-            cryptoBalance: balance.crypto,
-            fiatBalance: formatFiatAmount(
-              balance.fiat,
-              defaultAltCurrencyIsoCode,
-            ),
-            cryptoLockedBalance: balance.cryptoLocked,
-            fiatLockedBalance: formatFiatAmount(
-              balance.fiatLocked,
-              defaultAltCurrencyIsoCode,
-            ),
-            network,
-          });
+              cryptoBalance: balance.crypto,
+              fiatBalance: formatFiatAmount(
+                balance.fiat,
+                defaultAltCurrencyIsoCode,
+              ),
+              cryptoLockedBalance: balance.cryptoLocked,
+              fiatLockedBalance: formatFiatAmount(
+                balance.fiatLocked,
+                defaultAltCurrencyIsoCode,
+              ),
+              network,
+            });
           }),
       };
     })

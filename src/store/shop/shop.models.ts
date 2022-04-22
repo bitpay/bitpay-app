@@ -164,6 +164,7 @@ export interface Invoice {
   nonPayProPaymentReceived?: boolean;
   transactionCurrency: string;
   status: 'new' | 'paid' | 'confirmed' | 'complete' | 'expired' | 'invalid';
+  expirationTime: number;
 }
 
 export interface PhoneCountryInfo {

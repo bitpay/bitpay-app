@@ -7,6 +7,7 @@ import {
   Card,
   PagedTransactionData,
   ReferredUsersType,
+  TopUp,
   Transaction,
 } from './card.models';
 import {
@@ -68,6 +69,9 @@ export interface CardState {
   pendingTransactions: {
     [id: string]: Transaction[] | undefined;
   };
+  topUpHistory: {
+    [id: string]: TopUp[] | undefined;
+  };
   referralCode: {
     [id: string]: string;
   };
@@ -96,6 +100,7 @@ const initialState: CardState = {
   overview: null,
   settledTransactions: {},
   pendingTransactions: {},
+  topUpHistory: {},
   referralCode: {},
   referredUsers: {},
 };
@@ -181,6 +186,10 @@ export const cardReducer = (
         pendingTransactions: {
           ...state.pendingTransactions,
           [action.payload.id]: action.payload.pendingTransactions,
+        },
+        topUpHistory: {
+          ...state.topUpHistory,
+          [action.payload.id]: action.payload.topUpHistory,
         },
       };
     case CardActionTypes.FAILED_FETCH_OVERVIEW:

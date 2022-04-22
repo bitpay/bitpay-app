@@ -10,10 +10,12 @@ import {
 } from '../../wallet.models';
 import {
   failedUpdateAllKeysAndStatus,
+  failedUpdateKey,
   failedUpdateKeyTotalBalance,
   failedUpdateWalletStatus,
   setWalletRefreshing,
   successUpdateAllKeysAndStatus,
+  successUpdateKey,
   successUpdateKeyTotalBalance,
   successUpdateWalletStatus,
   updatePortfolioBalance,
@@ -420,3 +422,118 @@ export const GetWalletBalance = (wallet: Wallet, opts: any): Promise<any> => {
     });
   });
 };
+
+export const FormatKeyBalances = (): Effect => async (dispatch, getState) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const {
+        WALLET: {keys, rates, lastDayRates},
+        APP: {defaultAltCurrency},
+      } = getState();
+
+      await Promise.all(
+        Object.values(keys).map(key => {
+          dispatch(
+            startFormatBalanceAllWallesForKey({
+              key,
+              defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+              rates,
+              lastDayRates,
+            }),
+          );
+        }),
+      );
+
+      resolve();
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const startFormatBalanceAllWallesForKey =
+  ({
+    key,
+    defaultAltCurrencyIsoCode,
+    rates,
+    lastDayRates,
+  }: {
+    key: Key;
+    defaultAltCurrencyIsoCode: string;
+    rates: Rates;
+    lastDayRates: Rates;
+  }): Effect =>
+  async dispatch => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const balances = key.wallets.map(wallet => {
+          const {
+            currencyAbbreviation,
+            balance: cachedBalance,
+            credentials: {network},
+            hideWallet,
+          } = wallet;
+          try {
+            const {sat, satLocked} = cachedBalance;
+
+            const newBalance = {
+              crypsatConfirmedLockedto: formatCryptoAmount(
+                sat,
+                currencyAbbreviation,
+              ),
+              cryptoLocked: formatCryptoAmount(satLocked, currencyAbbreviation),
+              fiat:
+                network === Network.mainnet && !hideWallet
+                  ? toFiat(
+                      sat,
+                      defaultAltCurrencyIsoCode,
+                      currencyAbbreviation,
+                      rates,
+                    )
+                  : 0,
+              fiatLocked:
+                network === Network.mainnet && !hideWallet
+                  ? toFiat(
+                      satLocked,
+                      defaultAltCurrencyIsoCode,
+                      currencyAbbreviation,
+                      rates,
+                    )
+                  : 0,
+              fiatLastDay:
+                network === Network.mainnet && !hideWallet
+                  ? toFiat(
+                      sat,
+                      defaultAltCurrencyIsoCode,
+                      currencyAbbreviation,
+                      lastDayRates,
+                    )
+                  : 0,
+            };
+
+            wallet.balance = {...wallet.balance, ...newBalance};
+            return newBalance;
+          } catch (error) {
+            return cachedBalance;
+          }
+        });
+
+        key.totalBalance = balances.reduce((acc, {fiat}) => acc + fiat, 0);
+        key.totalBalanceLastDay = balances.reduce(
+          (acc, {fiatLastDay}) => (fiatLastDay ? acc + fiatLastDay : acc),
+          0,
+        );
+
+        dispatch(
+          successUpdateKey({
+            key,
+          }),
+        );
+
+        return resolve();
+      } catch (err) {
+        dispatch(failedUpdateKey());
+        return reject(err);
+      }
+    });
+  };

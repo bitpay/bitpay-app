@@ -4,6 +4,7 @@ import {
   Card,
   PagedTransactionData,
   ReferredUsersType,
+  TopUp,
   Transaction,
 } from './card.models';
 import {
@@ -64,14 +65,22 @@ export const successFetchOverview = ({
   balance,
   settledTransactions,
   pendingTransactions,
+  topUpHistory,
 }: {
   id: string;
   balance: number;
   settledTransactions: PagedTransactionData;
   pendingTransactions: Transaction[];
+  topUpHistory: TopUp[];
 }): CardActionType => ({
   type: CardActionTypes.SUCCESS_FETCH_OVERVIEW,
-  payload: {id, balance, settledTransactions, pendingTransactions},
+  payload: {
+    id,
+    balance,
+    settledTransactions,
+    pendingTransactions,
+    topUpHistory,
+  },
 });
 
 export const failedFetchOverview = (id: string): CardActionType => ({

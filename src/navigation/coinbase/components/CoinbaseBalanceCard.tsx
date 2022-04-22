@@ -54,7 +54,7 @@ const HeaderComponent = (
 
 const HeaderComponentList = (
   <HeaderImgList>
-    <CoinbaseSvg width="15" height="15" />
+    <CoinbaseSvg width="16" height="16" />
   </HeaderImgList>
 );
 
