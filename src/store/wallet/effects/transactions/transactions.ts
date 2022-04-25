@@ -117,7 +117,7 @@ export const ProcessPendingTxps = (
       tx.canBeRemoved = true;
     }
   });
-  return BuildUiFriendlyList(txps, currencyAbbreviation);
+  return BuildUiFriendlyList(txps, currencyAbbreviation, [], {});
 };
 
 const ProcessTx = (currencyAbbreviation: string, tx: TransactionProposal) => {
@@ -671,6 +671,7 @@ export const BuildUiFriendlyList = (
 
     if (!notZeroAmountEth) {
       const {uiDescription} = transaction;
+      transaction.uiIcon = TransactionIcons.contractInteraction;
 
       transaction.uiDescription = uiDescription
         ? `Interaction with contract ${uiDescription}`
