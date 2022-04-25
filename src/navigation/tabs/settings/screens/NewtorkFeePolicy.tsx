@@ -56,6 +56,7 @@ const CurrencyImageContainer = styled.View`
 const StepsContainer = styled.View`
   flex-direction: row;
   margin: 0 0 ${ScreenGutter} 0;
+  padding: 0 3px;
 `;
 
 const BottomLabelContainer = styled.View`
