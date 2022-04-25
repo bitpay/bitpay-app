@@ -10,9 +10,10 @@ import {Path, Svg} from 'react-native-svg';
 import {useRequireKeyAndWalletRedirect} from '../../../../utils/hooks/useRequireKeyAndWalletRedirect';
 
 const ButtonsRow = styled.View`
-  width: 100%;
   justify-content: space-evenly;
   flex-direction: row;
+  width: 350px;
+  align-self: center;
 `;
 
 const ButtonContainer = styled.View`
