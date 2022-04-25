@@ -81,11 +81,12 @@ const KeyDropdownOption = ({
                   )
                 );
               })}
-              {remainingWalletCount && (
+              {remainingWalletCount ? (
                 <RemainingAssetsLabel>
-                  + {remainingWalletCount} more
+                  {' '}
+                  + {remainingWalletCount} more{' '}
                 </RemainingAssetsLabel>
-              )}
+              ) : null}
             </HeaderImg>
           ) : null}
         </Column>
