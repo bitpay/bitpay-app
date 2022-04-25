@@ -3,6 +3,7 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {View} from 'react-native';
+import styled from 'styled-components/native';
 import {Br, Hr} from '../../../components/styled/Containers';
 import {Link, Smallest} from '../../../components/styled/Text';
 import {URL} from '../../../constants';
@@ -57,6 +58,11 @@ if (DOSH_WHITELIST) {
     console.log('Unable to parse DOSH_WHITELIST', e);
   }
 }
+
+// TODO: update theme.colors.link if this is a universal change
+const CardSettingsTextLink = styled(Link)`
+  color: ${({theme}) => (theme.dark ? '#4989ff' : theme.colors.link)};
+`;
 
 const SettingsList: React.FC<SettingsListProps> = props => {
   const dispatch = useAppDispatch();
@@ -254,9 +260,11 @@ const SettingsList: React.FC<SettingsListProps> = props => {
           {links.map((link, idx) => {
             return (
               <React.Fragment key={link.labelKey}>
-                <Link onPress={() => openUrl(link.url)}>
+                <CardSettingsTextLink
+                  onPress={() => openUrl(link.url)}
+                  style={{}}>
                   {t(link.labelKey)}
-                </Link>
+                </CardSettingsTextLink>
 
                 {idx < links.length - 1 ? <Br /> : null}
               </React.Fragment>
