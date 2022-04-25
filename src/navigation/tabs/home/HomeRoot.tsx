@@ -142,14 +142,14 @@ const HomeRoot = () => {
 
         {/* ////////////////////////////// PORTFOLIO BALANCE */}
         {showPortfolioValue ? (
-          <HomeSection style={{marginTop: 20}}>
+          <HomeSection style={{marginTop: 5}} slimContainer={true}>
             <PortfolioBalance />
           </HomeSection>
         ) : null}
 
         {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
         {hasKeys ? (
-          <HomeSection>
+          <HomeSection style={{marginBottom: 25}}>
             <LinkingButtons
               receive={{
                 cta: () => {
@@ -239,7 +239,7 @@ const HomeRoot = () => {
 
         {/* ////////////////////////////// EXCHANGE RATES */}
         {memoizedExchangeRates.length ? (
-          <HomeSection title="Exchange Rates" style={{marginBottom: 32}}>
+          <HomeSection title="Exchange Rates" slimContainer={true}>
             <ExchangeRatesList
               items={memoizedExchangeRates}
               defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
