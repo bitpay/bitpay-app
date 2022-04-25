@@ -10,14 +10,14 @@ import {Path, Svg} from 'react-native-svg';
 import {useRequireKeyAndWalletRedirect} from '../../../../utils/hooks/useRequireKeyAndWalletRedirect';
 
 const ButtonsRow = styled.View`
-  justify-content: space-evenly;
+  justify-content: center;
   flex-direction: row;
-  width: 350px;
   align-self: center;
 `;
 
 const ButtonContainer = styled.View`
   align-items: center;
+  margin: 0 16px;
 `;
 
 const ButtonText = styled(BaseText)`
@@ -34,7 +34,7 @@ const LinkButton = styled.TouchableOpacity`
   align-items: center;
   justify-content: center;
   background: ${({theme: {dark}}) => (dark ? '#0C204E' : Action)};
-  margin: 10px 0;
+  margin: 11px 0 8px;
 `;
 
 const BuySvg = () => {

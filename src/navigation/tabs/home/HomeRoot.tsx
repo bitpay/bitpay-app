@@ -149,7 +149,7 @@ const HomeRoot = () => {
 
         {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
         {hasKeys ? (
-          <HomeSection slimContainer={true}>
+          <HomeSection style={{marginBottom: 25}}>
             <LinkingButtons
               receive={{
                 cta: () => {
