@@ -3,13 +3,6 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {View} from 'react-native';
-import CustomizeCardIcon from '../../../../assets/img/customize-card.svg';
-import GetHelpIcon from '../../../../assets/img/get-help.svg';
-import HelpIcon from '../../../../assets/img/help.svg';
-import LockIcon from '../../../../assets/img/lock.svg';
-import OffersIcon from '../../../../assets/img/offers.svg';
-import UpdateIcon from '../../../../assets/img/update.svg';
-import PresentIcon from '../../../../assets/img/present.svg';
 import {Br, Hr} from '../../../components/styled/Containers';
 import {Link, Smallest} from '../../../components/styled/Text';
 import {URL} from '../../../constants';
@@ -20,6 +13,13 @@ import {CardActions, CardEffects} from '../../../store/card';
 import {Card} from '../../../store/card/card.models';
 import {LogActions} from '../../../store/log';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import CustomizeCardIcon from '../assets/settings/icon-card.svg';
+import EditCardNameIcon from '../assets/settings/icon-cardname.svg';
+import FaqsIcon from '../assets/settings/icon-faqs.svg';
+import GetHelpIcon from '../assets/settings/icon-help.svg';
+import LockIcon from '../assets/settings/icon-lock.svg';
+import OffersIcon from '../assets/settings/icon-offers.svg';
+import ReferEarnIcon from '../assets/settings/icon-referearn.svg';
 import {CardStackParamList} from '../CardStack';
 import * as Styled from './CardSettingsList.styled';
 import {ToggleSpinnerState} from './ToggleSpinner';
@@ -126,7 +126,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
           <Hr />
 
           <Styled.SettingsLink
-            Icon={HelpIcon}
+            Icon={FaqsIcon}
             onPress={() => openUrl(URL.VISA_FAQ)}>
             {t('FAQs')}
           </Styled.SettingsLink>
@@ -213,7 +213,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
           ) : null}
 
           <Styled.SettingsLink
-            Icon={UpdateIcon}
+            Icon={EditCardNameIcon}
             onPress={() => navigation.navigate('UpdateCardName', {card})}>
             {t('Update Card Name')}
           </Styled.SettingsLink>
@@ -221,7 +221,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
           <Hr />
 
           <Styled.SettingsLink
-            Icon={HelpIcon}
+            Icon={FaqsIcon}
             onPress={() => openUrl(URL.MASTERCARD_FAQ)}>
             {t('FAQs')}
           </Styled.SettingsLink>
@@ -239,7 +239,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
       <Hr />
 
       <Styled.SettingsLink
-        Icon={PresentIcon}
+        Icon={ReferEarnIcon}
         onPress={() => navigation.navigate('Referral', {card})}>
         {t('Refer & Earn')}
       </Styled.SettingsLink>
