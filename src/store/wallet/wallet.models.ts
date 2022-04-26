@@ -4,6 +4,7 @@ import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {RootState} from '../index';
 import {Invoice} from '../shop/shop.models';
 import {Network} from '../../constants';
+import {FeeLevels} from './effects/fee/fee';
 
 export interface KeyMethods {
   _checkCoin: Function;
@@ -372,4 +373,9 @@ export interface SendMaxInfo {
   size: number;
   utxosAboveMaxSize: number;
   utxosBelowFee: number;
+}
+
+export interface CacheFeeLevel {
+  currency: 'eth' | 'btc';
+  feeLevel: FeeLevels;
 }
