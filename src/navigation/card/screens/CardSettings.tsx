@@ -1,7 +1,8 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useCallback, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {ScrollView} from 'react-native';
+import {ScrollView, View} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import Animated, {Easing, FadeInDown} from 'react-native-reanimated';
 import Carousel from 'react-native-snap-carousel';
 import {SharedElement} from 'react-navigation-shared-element';
@@ -97,20 +98,27 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
     }
   }, [physicalCard]);
 
-  const renderSettingsSlide = useCallback(
-    ({item}: {item: Card}) => {
-      const isVirtual = item.cardType === 'virtual' || cardsToShow.length < 2;
-      const sharedTransitionId = isVirtual ? 'card.dashboard.active-card' : '';
+  const goToCardHome = () => {
+    navigation.navigate('Home', {
+      id: id,
+    });
+  };
+  const goToCardHomeRef = useRef(goToCardHome);
+  goToCardHomeRef.current = goToCardHome;
 
-      return isVirtual ? (
-        <SharedElement id={sharedTransitionId}>
-          <SettingsSlide card={item} />
-        </SharedElement>
-      ) : (
-        <SettingsSlide card={item} />
-      );
-    },
-    [cardsToShow.length],
+  const renderSettingsSlide = useCallback(
+    ({item}: {item: Card}) => (
+      <SharedElement id={'card.dashboard.active-card.' + item.id}>
+        <View>
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => goToCardHomeRef.current()}>
+            <SettingsSlide card={item} />
+          </TouchableOpacity>
+        </View>
+      </SharedElement>
+    ),
+    [],
   );
 
   return (

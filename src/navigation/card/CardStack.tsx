@@ -49,10 +49,10 @@ const CardStack = () => {
         options={{
           title: 'Card',
         }}
-        sharedElements={() => {
+        sharedElements={route => {
           return [
             {
-              id: 'card.dashboard.active-card',
+              id: 'card.dashboard.active-card.' + route.params.id,
               animation: 'fade',
             },
           ];
