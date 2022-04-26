@@ -14,8 +14,7 @@ const GiftCardItemContainer = styled.View`
   flex-direction: row;
   align-items: center;
   height: 55px;
-  margin: 16px 0;
-  margin-left: 20px;
+  margin: 16px 0 16px 20px;
 `;
 
 const GiftCardBrandName = styled(BaseText)`
