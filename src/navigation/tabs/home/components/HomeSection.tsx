@@ -19,10 +19,11 @@ interface HomeRowProps {
   onActionPress?: TouchableWithoutFeedbackProps['onPress'];
   slimHeader?: boolean;
   style?: StyleProp<ViewStyle>;
+  slimContainer?: boolean;
 }
 
-const HomeRowContainer = styled.View`
-  margin-bottom: 64px;
+const HomeRowContainer = styled.View<{slim?: boolean}>`
+  margin-bottom: ${({slim}) => (slim ? 32 : 64)}px;
 `;
 
 const Header = styled.View<{slim?: boolean}>`
@@ -41,10 +42,18 @@ const HeaderLink = styled(Link)`
 `;
 
 const HomeSection: React.FC<HomeRowProps> = props => {
-  const {title, action, onActionPress, slimHeader, children, style} = props;
+  const {
+    title,
+    action,
+    onActionPress,
+    slimHeader,
+    children,
+    style,
+    slimContainer,
+  } = props;
 
   return (
-    <HomeRowContainer style={style}>
+    <HomeRowContainer style={style} slim={slimContainer}>
       <Header slim={slimHeader}>
         <HomeSectionTitle>{title || ''}</HomeSectionTitle>
         <TouchableOpacity activeOpacity={ActiveOpacity} onPress={onActionPress}>

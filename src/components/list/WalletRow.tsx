@@ -85,7 +85,8 @@ const WalletRow = ({wallet, onPress}: Props) => {
   } = wallet;
 
   const showFiatBalance =
-    Number(cryptoBalance) > 0 &&
+    // @ts-ignore
+    Number(cryptoBalance.replaceAll(',', '')) > 0 &&
     SUPPORTED_CURRENCIES.includes(currencyAbbreviation.toLowerCase());
 
   return (

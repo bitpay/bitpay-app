@@ -92,11 +92,12 @@ const ErrorText = styled(BaseText)`
 const StepsContainer = styled.View`
   flex-direction: row;
   margin: ${ScreenGutter};
+  padding: 0 3px;
 `;
 
 export const FeeLevelStepContainer = styled.View<{length: number}>`
   /* Circle size + horizontal gutter */
-  width: ${({length}) => (WIDTH - (CIRCLE_SIZE + 30)) / length}px;
+  width: ${({length}) => (WIDTH - (CIRCLE_SIZE + 36)) / length}px;
 `;
 
 export const FeeLevelStep = styled.View<{isLast?: boolean}>`

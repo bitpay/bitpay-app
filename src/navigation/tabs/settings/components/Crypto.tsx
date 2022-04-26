@@ -38,7 +38,7 @@ const Crypto = () => {
             params: {screen: 'NetworkFeePolicy'},
           })
         }>
-        <SettingTitle>{t('Network Fee Policy')}</SettingTitle>
+        <SettingTitle>{t('Network Fee Policies')}</SettingTitle>
         <AngleRight />
       </Setting>
       <Hr />
