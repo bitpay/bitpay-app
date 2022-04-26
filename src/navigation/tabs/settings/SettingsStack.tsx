@@ -44,7 +44,7 @@ const SettingsStack = () => {
         component={NetworkFeePolicy}
         options={{
           headerTitle: () => (
-            <HeaderTitle>{t('Network Fee Policy')}</HeaderTitle>
+            <HeaderTitle>{t('Network Fee Policies')}</HeaderTitle>
           ),
         }}
       />
