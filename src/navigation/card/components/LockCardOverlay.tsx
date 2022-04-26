@@ -1,8 +1,8 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import LockSvg from '../../../../assets/img/lock.svg';
 import {CARD_HEIGHT, CARD_WIDTH} from '../../../constants/config.card';
 import {White} from '../../../styles/colors';
+import LockIcon from '../assets/settings/icon-lock.svg';
 import CardOverlayBackground from './CardOverlayBackground';
 
 const LockCardOverlayContainer = styled.View`
@@ -31,7 +31,7 @@ const LockCardOverlay: React.FC = () => {
       <CardOverlayBackground />
 
       <LockCardOverlayContent>
-        <LockSvg />
+        <LockIcon />
 
         <LockText>Card is locked</LockText>
       </LockCardOverlayContent>
