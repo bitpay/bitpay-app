@@ -610,62 +610,61 @@ export const BuildUiFriendlyList = (
     }
 
     if (confirmations > 0) {
-      if (
-        (currencyAbbreviation === 'eth' ||
-          IsCustomERCToken(currencyAbbreviation)) &&
-        error
-      ) {
-        transaction.uiIcon = TransactionIcons.error;
-      } else {
-        if (isSent) {
+      if (isSent) {
+        if (
+          (currencyAbbreviation === 'eth' ||
+            IsCustomERCToken(currencyAbbreviation)) &&
+          error
+        ) {
+          transaction.uiIcon = TransactionIcons.error;
+        } else {
           transaction.uiIcon =
             TransactionIcons[customDataService] || TransactionIcons.sent;
           transaction.uiIconURI = giftCardIcons[giftCardName];
-
-          if (notZeroAmountEth) {
-            if (noteBody) {
-              transaction.uiDescription = noteBody;
-            } else if (message) {
-              transaction.uiDescription = message;
-            } else if (contactName) {
-              transaction.uiDescription = contactName;
-            } else if (toWalletName) {
-              transaction.uiDescription = `Sent to ${toWalletName}`;
-            } else {
-              transaction.uiDescription = 'Sent';
-            }
-          }
         }
-
-        if (isReceived) {
-          transaction.uiIcon = TransactionIcons.received;
-
-          if (noteBody) {
-            transaction.uiDescription = noteBody;
-          } else if (contactName) {
-            transaction.uiDescription = contactName;
-          } else {
-            transaction.uiDescription = 'Received';
-          }
-        }
-
-        if (isMoved) {
-          transaction.uiIcon = TransactionIcons.moved;
-
+        if (notZeroAmountEth) {
           if (noteBody) {
             transaction.uiDescription = noteBody;
           } else if (message) {
             transaction.uiDescription = message;
+          } else if (contactName) {
+            transaction.uiDescription = contactName;
+          } else if (toWalletName) {
+            transaction.uiDescription = `Sent to ${toWalletName}`;
           } else {
-            transaction.uiDescription = 'Sent to self';
+            transaction.uiDescription = 'Sent';
           }
         }
+      }
 
-        if (isInvalid) {
-          transaction.uiIcon = TransactionIcons.error;
+      if (isReceived) {
+        transaction.uiIcon = TransactionIcons.received;
 
-          transaction.uiDescription = 'Invalid';
+        if (noteBody) {
+          transaction.uiDescription = noteBody;
+        } else if (contactName) {
+          transaction.uiDescription = contactName;
+        } else {
+          transaction.uiDescription = 'Received';
         }
+      }
+
+      if (isMoved) {
+        transaction.uiIcon = TransactionIcons.moved;
+
+        if (noteBody) {
+          transaction.uiDescription = noteBody;
+        } else if (message) {
+          transaction.uiDescription = message;
+        } else {
+          transaction.uiDescription = 'Sent to self';
+        }
+      }
+
+      if (isInvalid) {
+        transaction.uiIcon = TransactionIcons.error;
+
+        transaction.uiDescription = 'Invalid';
       }
     }
 
