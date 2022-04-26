@@ -24,9 +24,21 @@ const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
   const theme = useTheme();
   const navigation = useNavigation();
   const buyCryptoCta = useRequireKeyAndWalletRedirect(() => {
-    navigation.navigate('BuyCrypto', {
-      screen: 'Root',
-      params: {amount: 50},
+    navigation.navigate('Wallet', {
+      screen: 'Amount',
+      params: {
+        onAmountSelected: (amount: string) => {
+          navigation.navigate('BuyCrypto', {
+            screen: 'Root',
+            params: {
+              amount: Number(amount),
+            },
+          });
+        },
+        opts: {
+          hideSendMax: true,
+        },
+      },
     });
   });
   const CTA_OVERRIDES: {[key in string]: () => void} = {
