@@ -1,3 +1,4 @@
+import {StartActivateCardParams} from '../../store/card/card.effects';
 import {GqlQueryParams} from '../graphql/graphql.types';
 
 type NameCardInputType = {
@@ -6,6 +7,13 @@ type NameCardInputType = {
 
 type LockCardInputType = {
   value: boolean;
+};
+
+type ActivateCardInputType = {
+  cardNumber: string | undefined;
+  cvv: string;
+  expirationDate: string;
+  lastFourDigits: string | undefined;
 };
 
 export const NAME_CARD = (
@@ -58,9 +66,38 @@ export const LOCK_CARD = (
   };
 };
 
+export const ACTIVATE_CARD = (
+  token: string,
+  id: string,
+  {cvv, expirationDate, cardNumber, lastFourDigits}: StartActivateCardParams,
+): GqlQueryParams<ActivateCardInputType> => {
+  return {
+    query: `
+      mutation ACTIVATE_CARD($token:String!, $csrf:String, $cardId:String!, $input:ActivateCardInputType!) {
+        user:bitpayUser(token:$token, csrf:$csrf) {
+          card:debitCard(cardId:$cardId) {
+            activateCard(input:$input)
+          }
+        }
+      }
+    `,
+    variables: {
+      token,
+      cardId: id,
+      input: {
+        cardNumber,
+        cvv,
+        expirationDate,
+        lastFourDigits,
+      },
+    },
+  };
+};
+
 const CardMutations = {
   NAME_CARD,
   LOCK_CARD,
+  ACTIVATE_CARD,
 };
 
 export default CardMutations;

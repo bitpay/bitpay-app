@@ -62,6 +62,14 @@ export interface UpdateCardLockResponse {
   };
 }
 
+export interface ActivateCardResponse {
+  user: {
+    card: {
+      activateCard: any;
+    };
+  };
+}
+
 export interface UpdateCardNameResponse {
   user: {
     card: {
