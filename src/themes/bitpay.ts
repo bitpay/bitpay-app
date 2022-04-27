@@ -27,7 +27,7 @@ export const BitPayLightTheme: BitPayTheme = {
     background: White,
     card: DefaultTheme.colors.card,
     text: Black,
-    link: Action,
+    link: LinkBlue,
     description: SlateDark,
     border: DefaultTheme.colors.border,
     notification: DefaultTheme.colors.notification,
