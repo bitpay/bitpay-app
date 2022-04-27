@@ -1,7 +1,7 @@
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../../../../components/styled/Containers';
 import {H5, H7} from '../../../../components/styled/Text';
-import {Black, White} from '../../../../styles/colors';
+import {Black, Slate, White} from '../../../../styles/colors';
 
 export const HeaderContainer = styled.View`
   flex-direction: row;
@@ -18,7 +18,7 @@ export const HomeContainer = styled.SafeAreaView`
 `;
 
 export const HomeSectionSubtext = styled(H7)`
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
+  color: ${({theme: {dark}}) => (dark ? Slate : Black)};
 `;
 
 export const HomeSectionTitle = styled(H5)`

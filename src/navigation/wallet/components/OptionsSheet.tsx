@@ -8,6 +8,7 @@ import {
   SheetParams,
 } from '../../../components/styled/Containers';
 import {Platform, Image, ImageSourcePropType} from 'react-native';
+import {Black, Slate} from '../../../styles/colors';
 
 const OptionsTitleContainer = styled.View`
   margin-bottom: 25px;
@@ -43,7 +44,7 @@ const OptionDescriptionText = styled(BaseText)`
   font-weight: 400;
   font-size: 14px;
   line-height: 19px;
-  color: ${({theme}) => theme.colors.description};
+  color: ${({theme: {dark}}) => (dark ? Slate : Black)};
 `;
 
 export interface Option {

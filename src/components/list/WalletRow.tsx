@@ -7,13 +7,14 @@ import {
   ActiveOpacity,
   RowContainer,
 } from '../styled/Containers';
-import {Badge, H5, SubText} from '../styled/Text';
+import {Badge, H5, H7} from '../styled/Text';
 import styled from 'styled-components/native';
 import NestedArrow from '../../../assets/img/nested-arrow.svg';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {SUPPORTED_CURRENCIES} from '../../constants/currencies';
 import {Network} from '../../constants';
 import {TransactionProposal} from '../../store/wallet/wallet.models';
+import {Black, LuckySevens} from '../../styles/colors';
 
 const BadgeContainer = styled.View`
   margin-left: 5px;
@@ -27,6 +28,10 @@ const NestedArrowContainer = styled.View`
   align-items: center;
   justify-content: center;
   margin-right: 15px;
+`;
+
+const SubText = styled(H7)`
+  color: ${({theme: {dark}}) => (dark ? LuckySevens : Black)};
 `;
 
 export interface WalletRowProps {

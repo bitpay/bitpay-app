@@ -17,7 +17,7 @@ import {
   Exp,
   H3,
   Paragraph,
-  Smallest,
+  Smallest as SharedSmallest,
   TextAlign,
 } from '../../../components/styled/Text';
 import {Network, URL} from '../../../constants';
@@ -28,6 +28,7 @@ import {CardStackParamList} from '../CardStack';
 import CardFeatureTabs from './CardIntroFeatureTabs';
 import CardIntroHeroImg from './CardIntroHeroImage';
 import CardHighlights from './CardIntroHighlights';
+import {Black, LuckySevens} from '../../../styles/colors';
 
 interface CardIntroProps {
   navigation: StackNavigationProp<CardStackParamList, 'Home'>;
@@ -41,6 +42,9 @@ const ContentContainer = styled.View`
   padding: ${ScreenGutter};
 `;
 
+const Smallest = styled(SharedSmallest)`
+  color: ${({theme: {dark}}) => (dark ? LuckySevens : Black)};
+`;
 const IntroHero = () => {
   return (
     <View style={{flexDirection: 'row'}}>

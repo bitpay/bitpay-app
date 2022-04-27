@@ -5,6 +5,7 @@ export const Action = '#2240C4';
 
 /* Secondary */
 export const SlateDark = '#434D5A';
+export const LuckySevens = '#777777';
 export const Slate = '#9BA3AE';
 export const NeutralSlate = '#F5F7F8';
 export const Air = '#EBEDF8';
