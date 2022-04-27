@@ -4,10 +4,11 @@ import {BaseText} from '../../../../components/styled/Text';
 import {spreadAmounts} from '../../../../lib/gift-cards/gift-card';
 import {CardConfig} from '../../../../store/shop/shop.models';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
+import {Black} from "../../../../styles/colors";
 
 export const GiftCardDenomText = styled(BaseText)`
   font-size: 14px;
-  font-weight: 300;
+  color: ${({theme: {dark}}) => dark ? '#777777' : Black}
 `;
 
 export default ({cardConfig}: {cardConfig: CardConfig}) => {

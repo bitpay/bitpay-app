@@ -248,13 +248,7 @@ const WalletStack = () => {
         />
         <Wallet.Screen name={WalletScreens.AMOUNT} component={Amount} />
         <Wallet.Screen name={WalletScreens.SEND_TO} component={SendTo} />
-        <Wallet.Screen
-          options={{
-            ...TransitionPresets.ModalPresentationIOS,
-          }}
-          name={WalletScreens.CONFIRM}
-          component={Confirm}
-        />
+        <Wallet.Screen name={WalletScreens.CONFIRM} component={Confirm} />
         <Wallet.Screen
           options={{
             headerTitle: () => <HeaderTitle>Add Funds</HeaderTitle>,
@@ -274,7 +268,6 @@ const WalletStack = () => {
         <Wallet.Screen
           options={{
             headerTitle: () => <HeaderTitle>Confirm Payment</HeaderTitle>,
-            ...TransitionPresets.ModalPresentationIOS,
           }}
           name={WalletScreens.PAY_PRO_CONFIRM}
           component={PayProConfirm}

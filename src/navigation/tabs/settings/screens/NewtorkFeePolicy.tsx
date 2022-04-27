@@ -30,6 +30,8 @@ import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage
 import {CurrencyListIcons} from '../../../../constants/SupportedCurrencyOptions';
 import {sleep} from '../../../../utils/helper-methods';
 import NetworkPolicyPlaceholder from '../components/NetworkPolicyPlaceholder';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
+import {updateCacheFeeLevel} from '../../../../store/wallet/wallet.actions';
 
 const NetworkFeePolicyContainer = styled.SafeAreaView`
   flex: 1;
@@ -76,14 +78,16 @@ const FeeOptions = ({
   feeOptions,
   currencyAbbreviation,
   currencyName,
-  defaultFeeLevel,
 }: {
   feeOptions: any[];
-  currencyAbbreviation: string;
+  currencyAbbreviation: 'btc' | 'eth';
   currencyName: string;
-  defaultFeeLevel: string;
 }) => {
-  const [selectedLevel, setSelectedLevel] = useState(defaultFeeLevel);
+  const dispatch = useAppDispatch();
+  const cachedFeeLevels = useAppSelector(({WALLET}) => WALLET.feeLevel);
+  const [selectedLevel, setSelectedLevel] = useState(
+    cachedFeeLevels[currencyAbbreviation],
+  );
 
   const getSelectedFeeOption = () => {
     return feeOptions?.find(({level}) => level === selectedLevel);
@@ -151,7 +155,15 @@ const FeeOptions = ({
               <FeeLevelStepCircle
                 isActive={selectedLevel === fee.level}
                 onPress={() => {
-                  setSelectedLevel(fee.level);
+                  if (selectedLevel !== fee.level) {
+                    setSelectedLevel(fee.level);
+                    dispatch(
+                      updateCacheFeeLevel({
+                        currency: currencyAbbreviation,
+                        feeLevel: fee.level,
+                      }),
+                    );
+                  }
                 }}
                 backgroundColor={getBackgroundColor(i)}
                 style={[
@@ -280,7 +292,6 @@ const NetworkFeePolicy = () => {
                   feeOptions={btcFeeOptions}
                   currencyAbbreviation={'btc'}
                   currencyName={'Bitcoin'}
-                  defaultFeeLevel={'superEconomy'}
                 />
               ) : null}
             </View>
@@ -291,7 +302,6 @@ const NetworkFeePolicy = () => {
                   feeOptions={ethFeeOptions}
                   currencyAbbreviation={'eth'}
                   currencyName={'Ethereum'}
-                  defaultFeeLevel={'normal'}
                 />
               ) : null}
             </View>
