@@ -60,7 +60,7 @@ interface ButtonOptionProps {
 
 export const DURATION = 100;
 export const BUTTON_RADIUS = 6;
-export const PILL_RADIUS = 25;
+export const PILL_RADIUS = 50;
 export const LINK_RADIUS = 0;
 
 const ButtonBaseText = styled(BaseText)`

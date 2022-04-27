@@ -32,7 +32,7 @@ const GiftCardItem = styled(LinearGradient)<GiftCardCreditsItemProps>`
   ${({logoBackgroundColor, theme}) =>
     css`
       overflow: hidden;
-      border-radius: 30px;
+      border-radius: 50px;
       border-width: 1px;
       padding-right: 20px;
       margin-top: 10px;
