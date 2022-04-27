@@ -1,7 +1,14 @@
 import React from 'react';
 import {StatusBar, Text} from 'react-native';
 import styled, {css} from 'styled-components/native';
-import {NeutralSlate, SlateDark, White, LightBlack} from '../../styles/colors';
+import {
+  NeutralSlate,
+  SlateDark,
+  White,
+  LightBlack,
+  LuckySevens,
+  Black,
+} from '../../styles/colors';
 
 export const fontFamily = 'Heebo';
 
@@ -77,6 +84,7 @@ export const Smallest = styled(BaseText)`
   font-size: 12px;
   font-weight: 400;
   line-height: 15px;
+  color: ${({theme: {dark}}) => (dark ? LuckySevens : Black)};
 `;
 
 export const Paragraph = styled(BaseText)`
