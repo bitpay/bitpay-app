@@ -220,7 +220,7 @@ const getWalletType = (
 
 const getChain = (currencyAbbreviation: string, network: string) => {
   if (currencyAbbreviation === 'eth' || IsERCToken(currencyAbbreviation)) {
-    return network === 'testnet' ? 'Kovan' : 'Ethereum';
+    return network === 'testnet' ? 'Kovan' : 'Ethereum Mainnet';
   }
 
   return network === 'testnet' ? 'Testnet' : undefined;
@@ -255,7 +255,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             <KeySvg width={10} height={10} />
             <HeaderKeyName>{key.keyName}</HeaderKeyName>
           </HeaderSubTitleContainer>
-          <HeaderTitle>{uiFormattedWallet.walletName}</HeaderTitle>
+          <HeaderTitle style={{textAlign: 'center'}}>
+            {uiFormattedWallet.walletName}
+          </HeaderTitle>
         </>
       ),
       headerRight: () => (
