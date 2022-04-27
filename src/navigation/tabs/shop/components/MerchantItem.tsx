@@ -5,8 +5,6 @@ import {DirectIntegrationApiObject} from '../../../../store/shop/shop.models';
 import {
   LightBlack,
   NeutralSlate,
-  SlateDark,
-  White,
 } from '../../../../styles/colors';
 import RemoteImage from './RemoteImage';
 import {BaseText, H6, Paragraph} from '../../../../components/styled/Text';
@@ -53,9 +51,8 @@ const MerchantName = styled(H6)<MerchantNameProps>`
 `;
 
 const MerchantDescription = styled(Paragraph)`
-  color: ${({theme}) => (theme.dark ? White : SlateDark)};
+  color: ${({theme}) => (theme.dark ? '#E1E4E7' : '#777777')};
   font-size: 12px;
-  font-weight: 400;
   line-height: 16px;
   margin-top: 8px;
 `;
