@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import LockSvg from '../../../../assets/img/lock.svg';
+import LockSvg from '../../../../assets/img/card/settings/lock.svg';
 import {CARD_HEIGHT, CARD_WIDTH} from '../../../constants/config.card';
 import {White} from '../../../styles/colors';
 import CardOverlayBackground from './CardOverlayBackground';

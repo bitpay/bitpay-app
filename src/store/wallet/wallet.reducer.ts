@@ -447,6 +447,15 @@ export const walletReducer = (
       };
     }
 
+    case WalletActionTypes.UPDATE_CACHE_FEE_LEVEL: {
+      const newFeeLevel = state.feeLevel;
+      newFeeLevel[action.payload.currency] = action.payload.feeLevel;
+      return {
+        ...state,
+        feeLevel: newFeeLevel,
+      };
+    }
+
     default:
       return state;
   }

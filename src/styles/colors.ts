@@ -40,3 +40,4 @@ export const DisabledDark = '#3c3c3c';
 
 export const NotificationPrimary = '#1F3AB3';
 export const ProgressBlue = '#4F6EF7';
+export const LinkBlue = '#4989FF';
