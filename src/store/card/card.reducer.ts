@@ -33,6 +33,7 @@ export type FetchVirtualCardImageUrlsStatus = 'success' | 'failed' | null;
 export type UpdateCardLockStatus = 'success' | 'failed' | null;
 export type UpdateCardNameStatus = 'success' | 'failed' | null;
 export type referredUsersStatus = 'loading' | 'failed';
+export type ActivateCardStatus = 'success' | 'failed' | null;
 
 export interface CardState {
   lastUpdates: {
@@ -78,6 +79,8 @@ export interface CardState {
   referredUsers: {
     [id: string]: ReferredUsersType[] | referredUsersStatus;
   };
+  activateCardStatus: ActivateCardStatus;
+  activateCardError: string | null;
 }
 
 const initialState: CardState = {
@@ -103,6 +106,8 @@ const initialState: CardState = {
   topUpHistory: {},
   referralCode: {},
   referredUsers: {},
+  activateCardStatus: null,
+  activateCardError: null,
 };
 
 export const cardReducer = (
@@ -402,6 +407,26 @@ export const cardReducer = (
         referredUsers: {
           [action.payload.id]: action.payload.status,
         },
+      };
+
+    case CardActionTypes.SUCCESS_ACTIVATE_CARD:
+      return {
+        ...state,
+        activateCardStatus: 'success',
+        activateCardError: null,
+      };
+
+    case CardActionTypes.FAILED_ACTIVATE_CARD:
+      return {
+        ...state,
+        activateCardStatus: 'failed',
+        activateCardError: action.payload || null,
+      };
+
+    case CardActionTypes.UPDATE_ACTIVATE_CARD_STATUS:
+      return {
+        ...state,
+        activateCardStatus: action.payload,
       };
 
     default:

@@ -8,6 +8,7 @@ import {
   Transaction,
 } from './card.models';
 import {
+  ActivateCardStatus,
   FetchCardsStatus,
   FetchOverviewStatus,
   FetchSettledTransactionsStatus,
@@ -209,4 +210,21 @@ export const updateFetchReferredUsersStatus = (
 ): CardActionType => ({
   type: CardActionTypes.UPDATE_FETCH_REFERRED_USERS_STATUS,
   payload: {id, status},
+});
+
+export const successActivateCard = (): CardActionType => ({
+  type: CardActionTypes.SUCCESS_ACTIVATE_CARD,
+  payload: undefined,
+});
+
+export const failedActivateCard = (error?: string): CardActionType => ({
+  type: CardActionTypes.FAILED_ACTIVATE_CARD,
+  payload: error,
+});
+
+export const updateActivateCardStatus = (
+  status: ActivateCardStatus,
+): CardActionType => ({
+  type: CardActionTypes.UPDATE_ACTIVATE_CARD_STATUS,
+  payload: status,
 });
