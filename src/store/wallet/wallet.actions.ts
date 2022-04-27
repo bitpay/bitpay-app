@@ -10,6 +10,7 @@ import {
   WalletBalance,
   TransactionProposal,
   RatesByDateRange,
+  CacheFeeLevel,
 } from './wallet.models';
 
 export const successWalletStoreInit = (): WalletActionType => ({
@@ -244,5 +245,12 @@ export const toggleHideBalance = (payload: {
   wallet: Wallet;
 }): WalletActionType => ({
   type: WalletActionTypes.TOGGLE_HIDE_BALANCE,
+  payload,
+});
+
+export const updateCacheFeeLevel = (
+  payload: CacheFeeLevel,
+): WalletActionType => ({
+  type: WalletActionTypes.UPDATE_CACHE_FEE_LEVEL,
   payload,
 });
