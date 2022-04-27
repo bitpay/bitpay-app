@@ -3,6 +3,7 @@ import {
   ProviderConfig,
   SUPPORTED_DESIGN_CURRENCIES,
 } from '../constants/config.card';
+import {Card} from '../store/card/card.models';
 import {VirtualDesignCurrency} from '../store/card/card.types';
 
 export const isVirtualDesignSupported = (provider: CardProvider) => {
@@ -17,4 +18,10 @@ export const getCardCurrencyColorPalette = (
     SUPPORTED_DESIGN_CURRENCIES['bitpay-b'];
 
   return config.palette;
+};
+
+export const isActivationRequired = (card: Card) => {
+  const {provider} = card;
+
+  return ProviderConfig[provider].activation.isRequired(card);
 };
