@@ -12,6 +12,7 @@ import {
   PendingLoginStatus,
   TwoFactorAuthStatus,
   TwoFactorPairingStatus,
+  VerifyAuthStatus,
 } from './bitpay-id.reducer';
 import {BitPayIdActionTypes, BitPayIdActionType} from './bitpay-id.types';
 
@@ -216,4 +217,21 @@ export const toggleSyncGiftCardPurchases = (
 ): BitPayIdActionType => ({
   type: BitPayIdActionTypes.TOGGLE_SYNC_GIFT_CARD_PURCHASES,
   payload: {network},
+});
+
+export const successVerifyAuth = (session: Session): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.SUCCESS_VERIFY_AUTH,
+  payload: {session},
+});
+
+export const failedVerifyAuth = (error?: string): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.FAILED_VERIFY_AUTH,
+  payload: error,
+});
+
+export const updateVerifyAuthStatus = (
+  status: VerifyAuthStatus,
+): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.UPDATE_VERIFY_AUTH_STATUS,
+  payload: status,
 });

@@ -37,6 +37,16 @@ export type EmailPairingStatus = 'success' | 'failed' | null;
 export type PairingBitPayIdStatus = 'success' | 'failed' | null;
 export type FetchBasicInfoStatus = 'success' | 'failed' | null;
 export type FetchDoshTokenStatus = 'success' | 'failed' | null;
+export type VerifyAuthStatus =
+  | 'success'
+  | 'failed'
+  | 'twoFactorPending'
+  | 'emailAuthenticationPending'
+  | null;
+export type PendingVerifyAuthStatus = Extract<
+  VerifyAuthStatus,
+  'twoFactorPending' | 'emailAuthenticationPending'
+>;
 
 export interface BitPayIdState {
   session: Session;
@@ -63,6 +73,8 @@ export interface BitPayIdState {
   pairingBitPayIdError: string | null;
   fetchBasicInfoStatus: FetchBasicInfoStatus;
   fetchDoshTokenStatus: FetchDoshTokenStatus;
+  verifyAuthStatus: VerifyAuthStatus;
+  verifyAuthError: string | null;
 }
 
 const initialState: BitPayIdState = {
@@ -98,6 +110,8 @@ const initialState: BitPayIdState = {
   pairingBitPayIdError: null,
   fetchBasicInfoStatus: null,
   fetchDoshTokenStatus: null,
+  verifyAuthStatus: null,
+  verifyAuthError: null,
 };
 
 export const bitPayIdReducer = (
@@ -354,6 +368,27 @@ export const bitPayIdReducer = (
         },
       };
     }
+
+    case BitPayIdActionTypes.SUCCESS_VERIFY_AUTH:
+      return {
+        ...state,
+        verifyAuthStatus: 'success',
+        verifyAuthError: null,
+        session: action.payload.session,
+      };
+
+    case BitPayIdActionTypes.FAILED_VERIFY_AUTH:
+      return {
+        ...state,
+        verifyAuthStatus: 'failed',
+        verifyAuthError: action.payload || null,
+      };
+
+    case BitPayIdActionTypes.UPDATE_VERIFY_AUTH_STATUS:
+      return {
+        ...state,
+        verifyAuthStatus: action.payload,
+      };
 
     default:
       return state;

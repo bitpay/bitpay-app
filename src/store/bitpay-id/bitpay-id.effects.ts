@@ -41,18 +41,19 @@ export const startBitPayIdStoreInit =
     }
   };
 
-export const startFetchSession = (): Effect => async (dispatch, getState) => {
-  try {
-    const {APP} = getState();
-    dispatch(BitPayIdActions.updateFetchSessionStatus('loading'));
+export const startFetchSession =
+  (): Effect<Promise<void>> => async (dispatch, getState) => {
+    try {
+      const {APP} = getState();
+      dispatch(BitPayIdActions.updateFetchSessionStatus('loading'));
 
-    const session = await AuthApi.fetchSession(APP.network);
+      const session = await AuthApi.fetchSession(APP.network);
 
-    dispatch(BitPayIdActions.successFetchSession(session));
-  } catch (err) {
-    dispatch(BitPayIdActions.failedFetchSession());
-  }
-};
+      dispatch(BitPayIdActions.successFetchSession(session));
+    } catch (err) {
+      dispatch(BitPayIdActions.failedFetchSession());
+    }
+  };
 
 interface CreateAccountParams {
   givenName: string;
@@ -244,6 +245,58 @@ export const startTwoFactorAuth =
       });
     } finally {
       dispatch(AppActions.dismissOnGoingProcessModal());
+    }
+  };
+
+export const startVerifyAuth =
+  ({email, password, gCaptchaResponse}: StartLoginParams): Effect =>
+  async (dispatch, getState) => {
+    try {
+      dispatch(BitPayIdActions.updateVerifyAuthStatus(null));
+
+      const {APP, BITPAY_ID} = getState();
+
+      // authenticate
+      dispatch(LogActions.info('Verifying authentication...'));
+      const {twoFactorPending, emailAuthenticationPending} =
+        await AuthApi.login(
+          APP.network,
+          email,
+          password,
+          BITPAY_ID.session.csrfToken,
+          gCaptchaResponse,
+        );
+
+      // refresh session
+      const session = await AuthApi.fetchSession(APP.network);
+
+      if (twoFactorPending) {
+        dispatch(
+          LogActions.debug('Verifying two-factor authentication pending.'),
+        );
+        // dispatch(BitPayIdActions.pendingLogin('twoFactorPending', session));
+        return;
+      }
+
+      if (emailAuthenticationPending) {
+        dispatch(LogActions.debug('Verifying email authentication pending.'));
+        // dispatch(BitPayIdActions.pendingLogin('emailAuthenticationPending', session));
+        return;
+      }
+
+      dispatch(LogActions.info('Successfully verified authentication.'));
+
+      // complete
+      dispatch(BitPayIdActions.successVerifyAuth(session));
+    } catch (err) {
+      let errMsg = JSON.stringify(err);
+
+      if (err instanceof Error) {
+        errMsg = err.message;
+      }
+
+      dispatch(LogActions.error(errMsg))
+      dispatch(BitPayIdActions.failedVerifyAuth(errMsg));
     }
   };
 
