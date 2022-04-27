@@ -295,7 +295,7 @@ export const startVerifyAuth =
         errMsg = err.message;
       }
 
-      dispatch(LogActions.error(errMsg))
+      dispatch(LogActions.error(errMsg));
       dispatch(BitPayIdActions.failedVerifyAuth(errMsg));
     }
   };

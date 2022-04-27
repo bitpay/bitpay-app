@@ -76,7 +76,7 @@ export const ACTIVATE_CARD = (
       mutation ACTIVATE_CARD($token:String!, $csrf:String, $cardId:String!, $input:ActivateCardInputType!) {
         user:bitpayUser(token:$token, csrf:$csrf) {
           card:debitCard(cardId:$cardId) {
-            activateCard(input:$input)
+            activationDate:activateCard(input:$input)
           }
         }
       }
