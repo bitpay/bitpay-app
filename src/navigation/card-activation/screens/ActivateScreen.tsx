@@ -164,7 +164,7 @@ const ActivateScreen: React.FC<
       setButtonState('success');
       dispatch(CardActions.updateActivateCardStatus(null));
       setTimeout(() => {
-        navigation.navigate('Complete');
+        navigation.replace('Complete');
       }, 1000);
     } else if (activateStatus === 'failed') {
       setButtonState('failed');

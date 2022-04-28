@@ -81,6 +81,9 @@ const CardActivationStack: React.FC = () => {
       <CardActivation.Screen
         name={CardActivationScreens.COMPLETE}
         component={CompleteScreen}
+        options={{
+          headerShown: false,
+        }}
       />
     </CardActivation.Navigator>
   );
