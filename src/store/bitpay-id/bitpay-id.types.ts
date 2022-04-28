@@ -12,6 +12,7 @@ import {
   TwoFactorAuthStatus,
   TwoFactorPairingStatus,
   VerifyAuthStatus,
+  PendingVerifyAuthStatus,
 } from './bitpay-id.reducer';
 
 export enum BitPayIdActionTypes {
@@ -50,6 +51,7 @@ export enum BitPayIdActionTypes {
   TOGGLE_SYNC_GIFT_CARD_PURCHASES = 'BitPayId/TOGGLE_SYNC_GIFT_CARD_PURCHASES',
   SUCCESS_VERIFY_AUTH = 'BitPayId/SUCCESS_VERIFY_AUTH',
   FAILED_VERIFY_AUTH = 'BitPayId/FAILED_VERIFY_AUTH',
+  PENDING_VERIFY_AUTH = 'BitPayId/PENDING_VERIFY_AUTH',
   UPDATE_VERIFY_AUTH_STATUS = 'BitPayId/UPDATE_VERIFY_AUTH_STATUS',
 }
 
@@ -221,6 +223,11 @@ interface FailedVerifyAuth {
   payload: string | undefined;
 }
 
+interface PendingVerifyAuth {
+  type: BitPayIdActionTypes.PENDING_VERIFY_AUTH;
+  payload: {status: PendingVerifyAuthStatus; session: Session};
+}
+
 interface UpdateVerifyAuthStatus {
   type: BitPayIdActionTypes.UPDATE_VERIFY_AUTH_STATUS;
   payload: VerifyAuthStatus;
@@ -243,6 +250,7 @@ export type BitPayIdActionType =
   | UpdateLoginStatus
   | SuccessVerifyAuth
   | FailedVerifyAuth
+  | PendingVerifyAuth
   | UpdateVerifyAuthStatus
 
   // auth + two factor

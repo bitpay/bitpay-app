@@ -274,13 +274,20 @@ export const startVerifyAuth =
         dispatch(
           LogActions.debug('Verifying two-factor authentication pending.'),
         );
-        // dispatch(BitPayIdActions.pendingLogin('twoFactorPending', session));
+        dispatch(
+          BitPayIdActions.pendingVerifyAuth('twoFactorPending', session),
+        );
         return;
       }
 
       if (emailAuthenticationPending) {
         dispatch(LogActions.debug('Verifying email authentication pending.'));
-        // dispatch(BitPayIdActions.pendingLogin('emailAuthenticationPending', session));
+        dispatch(
+          BitPayIdActions.pendingVerifyAuth(
+            'emailAuthenticationPending',
+            session,
+          ),
+        );
         return;
       }
 

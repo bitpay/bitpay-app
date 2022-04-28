@@ -8,7 +8,9 @@ import {
 import ActivateScreen, {
   ActivateScreenParamList,
 } from './screens/ActivateScreen';
-import AuthenticationEmailAuthScreen from './screens/AuthenticationEmailAuthScreen';
+import AuthenticationTwoFactorEmailScreen, {
+  TwoFactorEmailScreenParamList,
+} from './screens/AuthenticationTwoFactorEmailScreen';
 import AuthenticationScreen, {
   AuthScreenParamList,
 } from './screens/AuthenticationScreen';
@@ -21,8 +23,8 @@ import RootScreen, {RootScreenParamList} from './screens/RootScreen';
 export type CardActivationStackParamList = {
   Root: RootScreenParamList;
   Authentication: AuthScreenParamList;
-  TwoFactor: undefined;
-  EmailAuth: undefined;
+  TwoFactorAuth: undefined;
+  TwoFactorEmail: TwoFactorEmailScreenParamList;
   Activate: ActivateScreenParamList;
   Complete: CompleteScreenParamList;
 };
@@ -30,8 +32,8 @@ export type CardActivationStackParamList = {
 export enum CardActivationScreens {
   ROOT = 'Root',
   AUTHENTICATION = 'Authentication',
-  TWO_FACTOR = 'TwoFactor',
-  EMAIL_AUTH = 'EmailAuth',
+  TWO_FACTOR_AUTH = 'TwoFactorAuth',
+  TWO_FACTOR_EMAIL = 'TwoFactorEmail',
   ACTIVATE = 'Activate',
   COMPLETE = 'Complete',
 }
@@ -58,15 +60,15 @@ const CardActivationStack: React.FC = () => {
         }}
       />
       <CardActivation.Screen
-        name={CardActivationScreens.TWO_FACTOR}
+        name={CardActivationScreens.TWO_FACTOR_AUTH}
         component={AuthenticationTwoFactorScreen}
         options={{
           headerTitle: () => <HeaderTitle>2-Step Verification</HeaderTitle>,
         }}
       />
       <CardActivation.Screen
-        name={CardActivationScreens.EMAIL_AUTH}
-        component={AuthenticationEmailAuthScreen}
+        name={CardActivationScreens.TWO_FACTOR_EMAIL}
+        component={AuthenticationTwoFactorEmailScreen}
         options={{
           headerTitle: () => <HeaderTitle>Check your email</HeaderTitle>,
         }}

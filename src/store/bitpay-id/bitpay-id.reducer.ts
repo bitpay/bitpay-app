@@ -17,6 +17,8 @@ export const bitPayIdReduxPersistBlackList: (keyof BitPayIdState)[] = [
   'fetchBasicInfoStatus',
   'doshToken',
   'fetchDoshTokenStatus',
+  'verifyAuthStatus',
+  'verifyAuthError',
 ];
 
 export type FetchSessionStatus = 'loading' | 'success' | 'failed' | null;
@@ -382,6 +384,13 @@ export const bitPayIdReducer = (
         ...state,
         verifyAuthStatus: 'failed',
         verifyAuthError: action.payload || null,
+      };
+
+    case BitPayIdActionTypes.PENDING_VERIFY_AUTH:
+      return {
+        ...state,
+        verifyAuthStatus: action.payload.status,
+        session: action.payload.session,
       };
 
     case BitPayIdActionTypes.UPDATE_VERIFY_AUTH_STATUS:

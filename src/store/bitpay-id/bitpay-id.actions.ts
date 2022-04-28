@@ -10,6 +10,7 @@ import {
   LoginStatus,
   PairingBitPayIdStatus,
   PendingLoginStatus,
+  PendingVerifyAuthStatus,
   TwoFactorAuthStatus,
   TwoFactorPairingStatus,
   VerifyAuthStatus,
@@ -227,6 +228,14 @@ export const successVerifyAuth = (session: Session): BitPayIdActionType => ({
 export const failedVerifyAuth = (error?: string): BitPayIdActionType => ({
   type: BitPayIdActionTypes.FAILED_VERIFY_AUTH,
   payload: error,
+});
+
+export const pendingVerifyAuth = (
+  status: PendingVerifyAuthStatus,
+  session: Session,
+): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.PENDING_VERIFY_AUTH,
+  payload: {status, session},
 });
 
 export const updateVerifyAuthStatus = (
