@@ -23,7 +23,6 @@ export const HomeSectionSubtext = styled(H7)`
 
 export const HomeSectionTitle = styled(H5)`
   color: ${({theme: {dark}}) => (dark ? White : Black)};
-  margin-bottom: 16px;
 `;
 
 export const HomeSectionSubTitle = styled(HomeSectionTitle)`
