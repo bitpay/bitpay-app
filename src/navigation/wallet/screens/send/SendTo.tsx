@@ -61,6 +61,7 @@ import {
   handleCreateTxProposalError,
 } from '../../../../store/wallet/effects/send/send';
 import {APP_NAME} from '../../../../constants/config';
+import {GetChain} from '../../../../store/wallet/utils/currency';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -194,8 +195,8 @@ const SendTo = () => {
     } else {
       addrData = GetCoinAndNetwork(data, network);
       isValid =
-        currencyAbbreviation.toLowerCase() === addrData?.coin.toLowerCase() &&
-        addrData?.network === network;
+        GetChain(currencyAbbreviation).toLowerCase() ===
+          addrData?.coin.toLowerCase() && addrData?.network === network;
     }
 
     if (isValid) {
