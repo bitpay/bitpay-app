@@ -307,6 +307,47 @@ export const startVerifyAuth =
     }
   };
 
+export const startVerifyTwoFactor =
+  (code: string): Effect =>
+  async (dispatch, getState) => {
+    try {
+      const {APP, BITPAY_ID} = getState();
+
+      await AuthApi.submitTwoFactor(
+        APP.network,
+        code,
+        BITPAY_ID.session.csrfToken,
+      );
+
+      // refresh session
+      const session = await AuthApi.fetchSession(APP.network);
+
+      dispatch(BitPayIdActions.successVerifyTwoFactorAuth(session));
+    } catch (err) {
+      batch(() => {
+        let errMsg;
+
+        if (isAxiosError<string>(err)) {
+          errMsg = upperFirst(
+            err.response?.data ||
+              err.message ||
+              'An unexpected error occurred.',
+          );
+        } else if (err instanceof Error) {
+          errMsg = err.message;
+        } else {
+          errMsg = JSON.stringify(err);
+        }
+
+        dispatch(
+          LogActions.error('Verifying two factor authentication failed.'),
+        );
+        dispatch(LogActions.error(errMsg));
+        dispatch(BitPayIdActions.failedVerifyTwoFactorAuth(errMsg));
+      });
+    }
+  };
+
 export const startTwoFactorPairing =
   (code: string): Effect =>
   async (dispatch, getState) => {

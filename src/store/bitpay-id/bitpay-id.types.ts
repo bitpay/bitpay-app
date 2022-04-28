@@ -53,6 +53,9 @@ export enum BitPayIdActionTypes {
   FAILED_VERIFY_AUTH = 'BitPayId/FAILED_VERIFY_AUTH',
   PENDING_VERIFY_AUTH = 'BitPayId/PENDING_VERIFY_AUTH',
   UPDATE_VERIFY_AUTH_STATUS = 'BitPayId/UPDATE_VERIFY_AUTH_STATUS',
+  SUCCESS_VERIFY_TWO_FACTOR_AUTH = 'BitPayId/SUCCESS_VERIFY_TWO_FACTOR_AUTH',
+  FAILED_VERIFY_TWO_FACTOR_AUTH = 'BitPayId/FAILED_VERIFY_TWO_FACTOR_AUTH',
+  UPDATE_VERIFY_TWO_FACTOR_AUTH_STATUS = 'BitPayId/UPDATE_VERIFY_TWO_FACTOR_AUTH_STATUS',
 }
 
 interface SuccessFetchSession {
@@ -232,6 +235,22 @@ interface UpdateVerifyAuthStatus {
   type: BitPayIdActionTypes.UPDATE_VERIFY_AUTH_STATUS;
   payload: VerifyAuthStatus;
 }
+
+interface SuccessVerifyTwoFactorAuth {
+  type: BitPayIdActionTypes.SUCCESS_VERIFY_TWO_FACTOR_AUTH;
+  payload: {session: Session};
+}
+
+interface FailedVerifyTwoFactorAuth {
+  type: BitPayIdActionTypes.FAILED_VERIFY_TWO_FACTOR_AUTH;
+  payload: string;
+}
+
+interface UpdateVerifyTwoFactorAuthStatus {
+  type: BitPayIdActionTypes.UPDATE_VERIFY_TWO_FACTOR_AUTH_STATUS;
+  payload: TwoFactorAuthStatus;
+}
+
 export type BitPayIdActionType =
   | SuccessFetchSession
   | FailedFetchSession
@@ -252,6 +271,9 @@ export type BitPayIdActionType =
   | FailedVerifyAuth
   | PendingVerifyAuth
   | UpdateVerifyAuthStatus
+  | SuccessVerifyTwoFactorAuth
+  | FailedVerifyTwoFactorAuth
+  | UpdateVerifyTwoFactorAuthStatus
 
   // auth + two factor
   | SuccessSubmitTwoFactorAuth

@@ -244,3 +244,24 @@ export const updateVerifyAuthStatus = (
   type: BitPayIdActionTypes.UPDATE_VERIFY_AUTH_STATUS,
   payload: status,
 });
+
+export const successVerifyTwoFactorAuth = (
+  session: Session,
+): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.SUCCESS_VERIFY_TWO_FACTOR_AUTH,
+  payload: {session},
+});
+
+export const failedVerifyTwoFactorAuth = (
+  error: string,
+): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.FAILED_VERIFY_TWO_FACTOR_AUTH,
+  payload: error,
+});
+
+export const updateVerifyTwoFactorAuthStatus = (
+  status: TwoFactorAuthStatus,
+): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.UPDATE_VERIFY_TWO_FACTOR_AUTH_STATUS,
+  payload: status,
+});

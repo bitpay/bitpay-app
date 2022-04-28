@@ -19,6 +19,8 @@ export const bitPayIdReduxPersistBlackList: (keyof BitPayIdState)[] = [
   'fetchDoshTokenStatus',
   'verifyAuthStatus',
   'verifyAuthError',
+  'verifyTwoFactorAuthStatus',
+  'verifyTwoFactorAuthError',
 ];
 
 export type FetchSessionStatus = 'loading' | 'success' | 'failed' | null;
@@ -77,6 +79,8 @@ export interface BitPayIdState {
   fetchDoshTokenStatus: FetchDoshTokenStatus;
   verifyAuthStatus: VerifyAuthStatus;
   verifyAuthError: string | null;
+  verifyTwoFactorAuthStatus: TwoFactorAuthStatus;
+  verifyTwoFactorAuthError: string | null;
 }
 
 const initialState: BitPayIdState = {
@@ -114,6 +118,8 @@ const initialState: BitPayIdState = {
   fetchDoshTokenStatus: null,
   verifyAuthStatus: null,
   verifyAuthError: null,
+  verifyTwoFactorAuthStatus: null,
+  verifyTwoFactorAuthError: null,
 };
 
 export const bitPayIdReducer = (
@@ -190,10 +196,7 @@ export const bitPayIdReducer = (
       return {
         ...state,
         twoFactorAuthStatus: 'success',
-        session: {
-          ...state.session,
-          [action.payload.network]: action.payload.session,
-        },
+        session: action.payload.session,
       };
 
     case BitPayIdActionTypes.SUCCESS_SUBMIT_TWO_FACTOR_PAIRING:
@@ -397,6 +400,27 @@ export const bitPayIdReducer = (
       return {
         ...state,
         verifyAuthStatus: action.payload,
+      };
+
+    case BitPayIdActionTypes.SUCCESS_VERIFY_TWO_FACTOR_AUTH:
+      return {
+        ...state,
+        verifyTwoFactorAuthStatus: 'success',
+        verifyTwoFactorAuthError: null,
+        session: action.payload.session,
+      };
+
+    case BitPayIdActionTypes.FAILED_VERIFY_TWO_FACTOR_AUTH:
+      return {
+        ...state,
+        verifyTwoFactorAuthStatus: 'failed',
+        verifyTwoFactorAuthError: action.payload,
+      };
+
+    case BitPayIdActionTypes.UPDATE_VERIFY_TWO_FACTOR_AUTH_STATUS:
+      return {
+        ...state,
+        verifyTwoFactorAuthStatus: action.payload,
       };
 
     default:

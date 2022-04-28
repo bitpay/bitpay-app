@@ -105,7 +105,9 @@ const AuthScreen: React.FC<
       return;
     } else if (verifyAuthStatus === 'twoFactorPending') {
       setButtonState(null);
-      navigation.replace('TwoFactorAuth');
+      navigation.replace('TwoFactorAuth', {
+        card,
+      });
       return;
     } else if (verifyAuthStatus === 'emailAuthenticationPending') {
       setButtonState(null);

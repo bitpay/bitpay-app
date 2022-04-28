@@ -14,7 +14,9 @@ import AuthenticationTwoFactorEmailScreen, {
 import AuthenticationScreen, {
   AuthScreenParamList,
 } from './screens/AuthenticationScreen';
-import AuthenticationTwoFactorScreen from './screens/AuthenticationTwoFactorScreen';
+import AuthenticationTwoFactorScreen, {
+  TwoFactorAuthScreenParamList,
+} from './screens/AuthenticationTwoFactorScreen';
 import CompleteScreen, {
   CompleteScreenParamList,
 } from './screens/CompleteScreen';
@@ -23,7 +25,7 @@ import RootScreen, {RootScreenParamList} from './screens/RootScreen';
 export type CardActivationStackParamList = {
   Root: RootScreenParamList;
   Authentication: AuthScreenParamList;
-  TwoFactorAuth: undefined;
+  TwoFactorAuth: TwoFactorAuthScreenParamList;
   TwoFactorEmail: TwoFactorEmailScreenParamList;
   Activate: ActivateScreenParamList;
   Complete: CompleteScreenParamList;
