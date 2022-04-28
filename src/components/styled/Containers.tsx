@@ -349,3 +349,21 @@ export const CopyImgContainer = styled.View`
   height: 25px;
   justify-content: center;
 `;
+
+// Search box no result
+
+export const NoResultsContainer = styled.View`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: ${HEIGHT - 300}px;
+  padding: 20px 40px;
+`;
+
+export const NoResultsImgContainer = styled.View`
+  padding-bottom: 40px;
+`;
+
+export const NoResultsDescription = styled(BaseText)`
+  font-size: 16px;
+`;

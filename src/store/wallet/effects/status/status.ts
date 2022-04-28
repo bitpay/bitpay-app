@@ -537,3 +537,18 @@ export const startFormatBalanceAllWallesForKey =
       }
     });
   };
+
+export const getTokenContractInfo = (
+  wallet: Wallet,
+  opts: any,
+): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    opts = opts || {};
+    wallet.getTokenContractInfo(opts, (err: any, resp: any) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(resp);
+    });
+  });
+};

@@ -6,11 +6,13 @@ import AltCurrenciesRow, {
   AltCurrenciesRowProps,
 } from '../../../../../components/list/AltCurrenciesRow';
 import {
-  HEIGHT,
   Hr as _Hr,
   SearchContainer,
   SearchInput,
   ScreenGutter,
+  NoResultsContainer,
+  NoResultsImgContainer,
+  NoResultsDescription,
 } from '../../../../../components/styled/Containers';
 import {FlatList} from 'react-native';
 import {BaseText} from '../../../../../components/styled/Text';
@@ -43,21 +45,7 @@ const SearchResults = styled.View`
   margin: 0 0 50px 0;
 `;
 
-const NoResultsContainer = styled.View`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: ${HEIGHT - 300}px;
-  padding: 20px 40px;
-`;
-
-const NoResultsImgContainer = styled.View`
-  padding-bottom: 40px;
-`;
-
-const NoResultsDescription = styled(BaseText)`
-  font-size: 16px;
-`;
+const CustomTokenOption = styled.TouchableOpacity``;
 
 const Label = styled(BaseText)`
   color: ${({theme}) => (theme.dark ? White : LightBlack)};
@@ -183,9 +171,7 @@ const AltCurrencySettings = () => {
               {"We couldn't find a match for "}
               <BaseText style={{fontWeight: 'bold'}}>{searchVal}</BaseText>.
             </NoResultsDescription>
-            <NoResultsDescription>
-              Please try another currency.
-            </NoResultsDescription>
+            <CustomTokenOption>Please try another currency.</CustomTokenOption>
           </NoResultsContainer>
         )}
       </HideableView>
