@@ -1,5 +1,6 @@
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
+import analytics from '@segment/analytics-react-native';
 import React, {useCallback, useLayoutEffect, useMemo} from 'react';
 import {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
@@ -175,11 +176,15 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
           actions: [
             {
               text: 'Add funds',
-              action: () =>
+              action: () => {
+                analytics.track('BitPay App - Clicked Buy Crypto', {
+                  from: 'CardDashboard',
+                });
                 navigator.navigate('BuyCrypto', {
                   screen: BuyCryptoScreens.ROOT,
                   params: {amount: 50},
-                }),
+                });
+              },
               primary: true,
             },
             {

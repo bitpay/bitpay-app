@@ -57,6 +57,7 @@ import {
 } from '../../../../store/app/app.actions';
 import ArrowDown from '../../../../../assets/img/services/swap-crypto/down-arrow.svg';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
+import analytics from '@segment/analytics-react-native';
 
 // Images // TODO: for exchanges images create a component like this: /bitpay-app-v2/src/components/icons/info
 import ChangellyLogo from '../../../../../assets/img/services/changelly/changelly-vector-logo.svg';
@@ -724,6 +725,14 @@ const SwapCryptoRoot: React.FC = () => {
             buttonStyle={'primary'}
             disabled={!canContinue()}
             onPress={() => {
+              analytics.track('BitPay App - Requested Swap Crypto', {
+                fromWalletId: fromWalletSelected!.id,
+                toWalletId: toWalletSelected!.id,
+                fromCoin: fromWalletSelected!.currencyAbbreviation,
+                toCoin: toWalletSelected!.currencyAbbreviation,
+                amountFrom: amountFrom,
+                exchange: 'changelly',
+              });
               navigation.navigate('SwapCrypto', {
                 screen: 'ChangellyCheckout',
                 params: {

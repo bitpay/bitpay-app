@@ -6,6 +6,7 @@ import AdvertisementCard from './AdvertisementCard';
 import {BoxShadow} from '../Styled';
 import {useNavigation} from '@react-navigation/native';
 import {useRequireKeyAndWalletRedirect} from '../../../../../utils/hooks/useRequireKeyAndWalletRedirect';
+import analytics from '@segment/analytics-react-native';
 
 interface AdvertisementListProps {
   contentCards: ContentCard[];
@@ -24,6 +25,9 @@ const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
   const theme = useTheme();
   const navigation = useNavigation();
   const buyCryptoCta = useRequireKeyAndWalletRedirect(() => {
+    analytics.track('BitPay App - Clicked Buy Crypto', {
+      from: 'Advertisement',
+    });
     navigation.navigate('Wallet', {
       screen: 'Amount',
       params: {
@@ -43,7 +47,12 @@ const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
   });
   const CTA_OVERRIDES: {[key in string]: () => void} = {
     card: () => navigation.navigate('Card', {screen: 'Home'}),
-    swapCrypto: () => navigation.navigate('SwapCrypto', {screen: 'Root'}),
+    swapCrypto: () => {
+      analytics.track('BitPay App - Clicked Swap Crypto', {
+        from: 'Advertisement',
+      });
+      navigation.navigate('SwapCrypto', {screen: 'Root'});
+    },
     buyCrypto: buyCryptoCta,
   };
 

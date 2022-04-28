@@ -77,6 +77,7 @@ import {
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 import {SwapCryptoActions} from '../../../../store/swap-crypto';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
+import analytics from '@segment/analytics-react-native';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -511,6 +512,15 @@ const ChangellyCheckout: React.FC = () => {
     );
 
     logger.debug('Saved swap with: ' + JSON.stringify(newData));
+
+    analytics.track('BitPay App - Successful Crypto Swap', {
+      fromWalletId: fromWalletSelected.id,
+      toWalletId: toWalletSelected.id,
+      fromCoin: fromWalletSelected.currencyAbbreviation,
+      toCoin: toWalletSelected.currencyAbbreviation,
+      amountFrom: amountFrom,
+      exchange: 'changelly',
+    });
   };
 
   const showError = async (msg?: string, title?: string, actions?: any) => {
