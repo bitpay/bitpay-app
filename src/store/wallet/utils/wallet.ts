@@ -321,3 +321,36 @@ export const GetEstimatedTxSize = (
   const size = overhead + inputSize * nbInputs + outputSize * nbOutputs;
   return parseInt((size * (1 + safetyMargin)).toFixed(0), 10);
 };
+
+export const isMatch = (key1: any, key2: Key) => {
+  // return this.Key.match(key1, key2); TODO needs to be fixed on bwc
+  if (key1.fingerPrint && key2.properties.fingerPrint) {
+    return key1.fingerPrint === key2.properties.fingerPrint;
+  } else {
+    return key1.id === key2.id;
+  }
+};
+
+export const getMatchedKey = (key: any, keys: Key[]) => {
+  return keys.find(k => isMatch(key, k));
+};
+
+export const findMatchedKeyAndUpdate = (
+  wallets: Wallet[],
+  key: any,
+  keys: Key[],
+  opts: any,
+): {key: KeyMethods; wallets: Wallet[]} => {
+  if (!opts.keyId) {
+    const matchedKey = getMatchedKey(key, keys);
+
+    if (matchedKey) {
+      key = matchedKey.methods;
+      wallets.forEach(wallet => {
+        wallet.credentials.keyId = wallet.keyId = matchedKey.id;
+      });
+    }
+  }
+
+  return {key, wallets};
+};
