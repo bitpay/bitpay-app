@@ -147,7 +147,15 @@ const WalletConnectHome = () => {
                 await sleep(500);
                 navigation.navigate('WalletConnect', {
                   screen: 'WalletConnectConfirm',
-                  params: {wallet, recipient, txp, txDetails, request},
+                  params: {
+                    wallet,
+                    recipient,
+                    txp,
+                    txDetails,
+                    request,
+                    amount: tx.amount,
+                    data,
+                  },
                 });
               } catch (err: any) {
                 const errorMessageConfig = (

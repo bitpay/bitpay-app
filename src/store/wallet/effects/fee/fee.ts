@@ -84,7 +84,7 @@ export const getFeeLevels = ({
             return reject(err);
           }
 
-          if (wallet.currencyAbbreviation === 'eth') {
+          if (wallet.credentials.coin === 'eth') {
             feeLevels = removeLowFeeLevels(feeLevels);
           }
 

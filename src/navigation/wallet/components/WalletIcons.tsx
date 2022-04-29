@@ -3,6 +3,7 @@ import * as Svg from 'react-native-svg';
 import {useTheme} from 'styled-components/native';
 import {
   Black,
+  LuckySevens,
   NeutralSlate,
   Slate,
   SlateDark,
@@ -230,6 +231,52 @@ const Delete = () => {
   );
 };
 
+const Wallet = () => {
+  const theme = useTheme() as BitPayTheme;
+
+  return (
+    <Svg.Svg width="9" height="9" viewBox="0 0 9 9" fill="none">
+      <Svg.Path
+        d="M5.625 0H0.84375C0.39375 0 0 0.39375 0 0.84375C0 1.29375 0.39375 1.6875 0.84375 1.6875H5.625V0Z"
+        fill={theme.dark ? LuckySevens : SlateDark}
+      />
+      <Svg.Path
+        d="M8.4375 2.8125H0V7.875C0 8.49375 0.50625 9 1.125 9H8.4375C8.775 9 9 8.775 9 8.4375V3.375C9 3.0375 8.775 2.8125 8.4375 2.8125ZM7.03125 6.75C6.58125 6.75 6.1875 6.35625 6.1875 5.90625C6.1875 5.45625 6.58125 5.0625 7.03125 5.0625C7.48125 5.0625 7.875 5.45625 7.875 5.90625C7.875 6.35625 7.48125 6.75 7.03125 6.75Z"
+        fill={theme.dark ? LuckySevens : SlateDark}
+      />
+    </Svg.Svg>
+  );
+};
+
+const Network = () => {
+  const theme = useTheme() as BitPayTheme;
+
+  return (
+    <Svg.Svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+      <Svg.Path
+        d="M6.25 7.5H3.75V10H6.25V7.5Z"
+        fill={theme.dark ? LuckySevens : SlateDark}
+      />
+      <Svg.Path
+        d="M6.25 0H3.75V2.5H6.25V0Z"
+        fill={theme.dark ? LuckySevens : SlateDark}
+      />
+      <Svg.Path
+        d="M10 7.5H7.5V10H10V7.5Z"
+        fill={theme.dark ? LuckySevens : SlateDark}
+      />
+      <Svg.Path
+        d="M2.5 7.5H0V10H2.5V7.5Z"
+        fill={theme.dark ? LuckySevens : SlateDark}
+      />
+      <Svg.Path
+        d="M1.875 5.625H4.375V6.875H5.625V5.625H8.125V6.875H9.375V5C9.375 4.625 9.125 4.375 8.75 4.375H5.625V3.125H4.375V4.375H1.25C0.875 4.375 0.625 4.625 0.625 5V6.875H1.875V5.625Z"
+        fill={theme.dark ? LuckySevens : SlateDark}
+      />
+    </Svg.Svg>
+  );
+};
+
 export default {
   Add,
   Backup,
@@ -240,4 +287,6 @@ export default {
   DownToggle,
   Cog,
   Delete,
+  Wallet,
+  Network,
 };

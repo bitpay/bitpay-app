@@ -4,8 +4,10 @@ import React, {useCallback, useLayoutEffect, useMemo} from 'react';
 import {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {FlatList} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import Carousel from 'react-native-snap-carousel';
 import {SharedElement} from 'react-navigation-shared-element';
+import PlusSvg from '../../../../assets/img/card/icons/plus.svg';
 import GhostImg from '../../../../assets/img/ghost-cheeky.svg';
 import Button from '../../../components/button/Button';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
@@ -19,6 +21,7 @@ import {
 import {Smallest} from '../../../components/styled/Text';
 import {CardProvider} from '../../../constants/card';
 import {CARD_WIDTH, ProviderConfig} from '../../../constants/config.card';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {CardEffects} from '../../../store/card';
 import {
   Card,
@@ -28,6 +31,7 @@ import {
 } from '../../../store/card/card.models';
 import {selectCardGroups} from '../../../store/card/card.selectors';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {BuyCryptoScreens} from '../../services/buy-crypto/BuyCryptoStack';
 import {WalletScreens} from '../../wallet/WalletStack';
 import {CardStackParamList} from '../CardStack';
 import {
@@ -45,9 +49,6 @@ import {
 } from './CardDashboard.styled';
 import CardOverviewSlide from './CardOverviewSlide';
 import TransactionRow from './CardTransactionRow';
-import PlusSvg from '../../../../assets/img/card/icons/plus.svg';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {BuyCryptoScreens} from '../../services/buy-crypto/BuyCryptoStack';
 
 interface CardDashboardProps {
   id: string;
@@ -121,11 +122,9 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     () =>
       keys
         .flatMap(key => key.wallets)
-        .filter(
-          ({balance: {sat}, network: walletNetwork}) =>
-            sat > 0 && walletNetwork === network,
-        ).length,
-    [keys],
+        .filter(wallet => wallet.balance.sat > 0 && wallet.network === network)
+        .length,
+    [keys, network],
   );
 
   const currentGroupIdx = Math.max(
@@ -137,13 +136,13 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const currentCardRef = useRef(activeCard);
   currentCardRef.current = activeCard;
 
-  const onViewDetailsClick = () => {
+  const goToCardSettings = () => {
     navigation.navigate('Settings', {
       id: currentCardRef.current.id,
     });
   };
-  const onViewDetailsClickRef = useRef(onViewDetailsClick);
-  onViewDetailsClickRef.current = onViewDetailsClick;
+  const goToCardSettingsRef = useRef(goToCardSettings);
+  goToCardSettingsRef.current = goToCardSettings;
 
   const goToConfirmScreen = (amount: number) => {
     navigator.navigate('Wallet', {
@@ -199,7 +198,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
       headerRight: () => (
         <HeaderRightContainer>
           <Button
-            onPress={() => onViewDetailsClickRef.current()}
+            onPress={() => goToCardSettingsRef.current()}
             buttonType="pill"
             buttonStyle="primary">
             {t('View Card Details')}
@@ -291,12 +290,16 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     ({item}: {item: Card[]}) =>
       activeCard.id === item[0].id ? (
         <SharedElement
-          id={'card.dashboard.active-card'}
+          id={'card.dashboard.active-card.' + item[0].id}
           style={{paddingHorizontal: 10}}>
-          <CardOverviewSlide
-            card={item[0]}
-            designCurrency={virtualDesignCurrency}
-          />
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => goToCardSettingsRef.current()}>
+            <CardOverviewSlide
+              card={item[0]}
+              designCurrency={virtualDesignCurrency}
+            />
+          </TouchableOpacity>
         </SharedElement>
       ) : (
         <CardOverviewSlide

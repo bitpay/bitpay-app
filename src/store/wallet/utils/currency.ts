@@ -27,7 +27,7 @@ export const IsCustomERCToken = (currencyAbbreviation: string) => {
 };
 
 export const GetChain = (currencyAbbreviation: string): string => {
-  return Currencies[currencyAbbreviation.toLowerCase()].chain;
+  return Currencies[currencyAbbreviation.toLowerCase()]?.chain;
 };
 
 export const IsERCToken = (currencyAbbreviation: string): boolean => {
