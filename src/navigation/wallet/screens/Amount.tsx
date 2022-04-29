@@ -2,7 +2,12 @@ import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {BaseText} from '../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
-import {LightBlack, NeutralSlate, White} from '../../../styles/colors';
+import {
+  LightBlack,
+  NeutralSlate,
+  SlateDark,
+  White,
+} from '../../../styles/colors';
 import {
   HeaderRightContainer,
   ScreenGutter,
@@ -21,7 +26,7 @@ import CloseModal from '../../../../assets/img/close-modal-icon.svg';
 
 const SendMax = styled.TouchableOpacity`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  border-radius: 17.5px;
+  border-radius: 27.5px;
   padding: 8px 15px;
 `;
 
@@ -82,7 +87,11 @@ export const AmountText = styled(BaseText)<{bigAmount?: boolean}>`
 `;
 
 export const AmountEquivText = styled(AmountText)`
-  font-size: ${({bigAmount}) => (bigAmount ? '12px' : '15px')};
+  font-size: 12px;
+  border-width: 1px;
+  border-color: ${({theme: {dark}}) => (dark ? SlateDark : NeutralSlate)};
+  padding: 4px 8px;
+  border-radius: 15px;
 `;
 
 export const CurrencySuperScript = styled.View`
@@ -180,6 +189,7 @@ const Amount: React.FC<AmountProps> = ({
     if (!currency) {
       return;
     }
+    updateAmount('0');
     // if added for dev (hot reload)
     if (!primaryIsFiat && allRates[currency.toLowerCase()]) {
       const fiatRate = allRates[currency.toLowerCase()].find(
