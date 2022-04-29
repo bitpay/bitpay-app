@@ -10,26 +10,45 @@ import isEqual from 'lodash.isequal';
 import {sleep} from '../../../utils/helper-methods';
 import VirtualKeyboard from '../../../components/virtual-keyboard/VirtualKeyboard';
 import styled, {useTheme} from 'styled-components/native';
-import {Animated} from 'react-native';
-import {BaseText} from '../../styled/Text';
+import {Animated, TouchableOpacity, View} from 'react-native';
+import {H5} from '../../styled/Text';
 import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
+import {Action, White} from '../../../styles/colors';
+import BitPayLogo from '../../../../assets/img/logos/bitpay-white.svg';
+import {ActiveOpacity} from '../../styled/Containers';
+import Back from '../../back/Back';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 export interface PinModalConfig {
   type: 'set' | 'check';
 }
 
 const PinContainer = styled.View`
   flex: 1;
+  background-color: ${Action};
 `;
 
+const LogoContainer = styled.View`
+  margin-top: 10%;
+`;
 const PinMessagesContainer = styled(Animated.View)`
   align-items: center;
   text-align: center;
-  margin-top: 40%;
+  margin-top: 32px;
 `;
 
-const PinMessage = styled(BaseText)`
-  font-weight: 500;
-  font-size: 25px;
+const PinMessage = styled(H5)`
+  color: ${White};
+  line-height: 25px;
+`;
+
+const VirtualKeyboardContainer = styled.View`
+  margin-bottom: 50px;
+`;
+
+const SheetHeaderContainer = styled.View`
+  margin: 20px 0;
+  align-items: center;
+  flex-direction: row;
 `;
 
 const BWCProvider = BwcProvider.getInstance();
@@ -48,6 +67,7 @@ const PinModal: React.FC = () => {
   const [message, setMessage] = useState<string>('Please enter your PIN');
   const [shakeDots, setShakeDots] = useState<boolean>(false);
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   // checkPin
   const currentPin = useSelector(({APP}: RootState) => APP.currentPin);
@@ -214,6 +234,24 @@ const PinModal: React.FC = () => {
       useNativeDriver={true}
       style={{margin: 0}}>
       <PinContainer>
+        {type === 'set' ? (
+          <SheetHeaderContainer style={{marginTop: insets.top}}>
+            <TouchableOpacity
+              activeOpacity={ActiveOpacity}
+              onPress={() => {
+                dispatch(AppActions.dismissPinModal());
+              }}>
+              <Back
+                color={White}
+                background={'rgba(255, 255, 255, 0.2)'}
+                opacity={1}
+              />
+            </TouchableOpacity>
+          </SheetHeaderContainer>
+        ) : null}
+        <View style={{marginTop: type === 'set' ? '10%' : '40%'}}>
+          <BitPayLogo height={50} />
+        </View>
         <PinMessagesContainer>
           <PinMessage>{message}</PinMessage>
         </PinMessagesContainer>
@@ -223,11 +261,13 @@ const PinModal: React.FC = () => {
           pinLength={PIN_LENGTH}
           pin={pin}
         />
-        <VirtualKeyboard
-          showDot={false}
-          showLetters={true}
-          onCellPress={onCellPress}
-        />
+        <VirtualKeyboardContainer>
+          <VirtualKeyboard
+            showDot={false}
+            onCellPress={onCellPress}
+            darkModeOnly={true}
+          />
+        </VirtualKeyboardContainer>
       </PinContainer>
     </Modal>
   );

@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {Animated, Vibration} from 'react-native';
 import styled, {css} from 'styled-components/native';
-import {NeutralSlate} from '../../../styles/colors';
+import {NeutralSlate, White} from '../../../styles/colors';
 
 interface PinDotsProps {
   pin: Array<string | undefined>;
@@ -18,7 +18,7 @@ const DotsContainer = styled.View`
   display: flex;
   justify-content: space-between;
   flex-direction: row;
-  margin: 30px auto auto auto;
+  margin: 16px auto auto auto;
   max-width: 145px;
   width: 50%;
 `;
@@ -27,11 +27,12 @@ const Dot = styled(Animated.View)<ContainerProps>`
   height: 18px;
   width: 18px;
   border-radius: 50px;
-  background-color: ${NeutralSlate};
+  border-width: 1.5px;
+  border-color: ${White};
   ${({isFilled}) =>
     isFilled &&
     css`
-      background-color: #4f6ef7;
+      background-color: ${White};
     `};
 `;
 
