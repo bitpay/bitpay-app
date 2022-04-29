@@ -68,6 +68,13 @@ const PinModal: React.FC = () => {
   const [shakeDots, setShakeDots] = useState<boolean>(false);
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const [showBackButton, setShowBackButton] = useState<boolean>();
+
+  useEffect(() => {
+    if (type === 'set' && !showBackButton) {
+      setShowBackButton(true);
+    }
+  }, [type]);
 
   // checkPin
   const currentPin = useSelector(({APP}: RootState) => APP.currentPin);
@@ -234,7 +241,7 @@ const PinModal: React.FC = () => {
       useNativeDriver={true}
       style={{margin: 0}}>
       <PinContainer>
-        {type === 'set' ? (
+        {showBackButton ? (
           <SheetHeaderContainer style={{marginTop: insets.top}}>
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
