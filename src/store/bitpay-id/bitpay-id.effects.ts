@@ -298,7 +298,13 @@ export const startVerifyAuth =
     } catch (err) {
       let errMsg = JSON.stringify(err);
 
-      if (err instanceof Error) {
+      if (isAxiosError<{message: string}>(err)) {
+        errMsg = upperFirst(
+          err.response?.data?.message ||
+          err.message ||
+          'An unexpected error occurred.',
+        );
+      } else if (err instanceof Error) {
         errMsg = err.message;
       }
 

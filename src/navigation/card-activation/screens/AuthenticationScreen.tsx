@@ -9,6 +9,7 @@ import BoxInput from '../../../components/form/BoxInput';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {BaseText, Link} from '../../../components/styled/Text';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
+import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {Card} from '../../../store/card/card.models';
 import {Air} from '../../../styles/colors';
@@ -53,6 +54,9 @@ const AuthScreen: React.FC<
   const network = useAppSelector(({APP}) => APP.network);
   const verifyAuthStatus = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.verifyAuthStatus,
+  );
+  const verifyAuthError = useAppSelector(
+    ({BITPAY_ID}) => BITPAY_ID.verifyAuthError,
   );
   const [isCaptchaModalVisible, setCaptchaModalVisible] = useState(false);
   const captchaRef = useRef<CaptchaRef>(null);
@@ -99,9 +103,27 @@ const AuthScreen: React.FC<
       }, 1000);
       return;
     } else if (verifyAuthStatus === 'failed') {
-      // TODO
       setButtonState('failed');
       captchaRef.current?.reset();
+
+      dispatch(
+        AppActions.showBottomNotificationModal({
+          type: 'error',
+          title: 'Verification Failed',
+          message:
+            verifyAuthError || 'An error occurred while verifying credentials.',
+          actions: [
+            {
+              text: 'Dismiss',
+              primary: true,
+              action: () => {
+                setButtonState(null);
+              },
+            },
+          ],
+          enableBackdropDismiss: true,
+        }),
+      );
       return;
     } else if (verifyAuthStatus === 'twoFactorPending') {
       setButtonState(null);

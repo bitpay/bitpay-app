@@ -5,7 +5,8 @@ import {Controller, useForm} from 'react-hook-form';
 import * as yup from 'yup';
 import Button, {ButtonState} from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
-import {BitPayIdEffects} from '../../../store/bitpay-id';
+import {AppActions} from '../../../store/app';
+import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {Card} from '../../../store/card/card.models';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import AuthFormContainer, {
@@ -59,14 +60,38 @@ const AuthenticationTwoFactorAuthScreen: React.FC<
   useEffect(() => {
     switch (verifyTwoFactorStatus) {
       case 'success':
-        navigation.replace('Activate', {
-          card: route.params.card,
-        });
+        setButtonState('success');
+        dispatch(BitPayIdActions.updateVerifyTwoFactorAuthStatus(null));
+        setTimeout(() => {
+          navigation.replace('Activate', {
+            card: route.params.card,
+          });
+        }, 1000);
         return;
 
       case 'failed':
-        // TODO
-        console.log('Authentication with two factor failed');
+        setButtonState('failed');
+
+        dispatch(
+          AppActions.showBottomNotificationModal({
+            type: 'error',
+            title: 'Verification Failed',
+            message:
+              verifyTwoFactorError ||
+              'An error occurred while verifying two factor credentials.',
+            actions: [
+              {
+                text: 'Dismiss',
+                primary: true,
+                action: () => {
+                  setButtonState(null);
+                },
+              },
+            ],
+            enableBackdropDismiss: true,
+          }),
+        );
+
         return;
     }
   }, [verifyTwoFactorStatus, navigation]);
