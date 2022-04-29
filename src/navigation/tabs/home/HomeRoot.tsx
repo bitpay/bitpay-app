@@ -34,7 +34,6 @@ import DefaultQuickLinks from './components/quick-links/DefaultQuickLinks';
 import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
 import {selectCardGroups} from '../../../store/card/card.selectors';
 import {HeaderContainer, HomeContainer} from './components/Styled';
-
 const HomeRoot = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
