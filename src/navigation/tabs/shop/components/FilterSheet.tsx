@@ -10,12 +10,18 @@ import {Platform} from 'react-native';
 import {
   Action,
   Black,
+  LinkBlue,
   NotificationPrimary,
+  Slate,
   White,
 } from '../../../../styles/colors';
 import {Theme} from '@react-navigation/native';
 import {horizontalPadding} from './styled/ShopTabComponents';
 import {sleep} from '../../../../utils/helper-methods';
+import {
+  BottomNotificationCta,
+  BottomNotificationHr,
+} from '../../../../components/modal/bottom-notification/BottomNotification';
 
 const SheetTitleContainer = styled.View`
   margin-bottom: 25px;
@@ -29,25 +35,6 @@ const CtaContainer = styled.View`
     css`
       margin-bottom: 10px;
     `}
-`;
-
-const Cta = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 24px;
-  letter-spacing: 0.5px;
-  text-align: left;
-  color: ${({primary, theme: {dark}}: {primary?: boolean; theme: Theme}) =>
-    dark ? White : primary ? NotificationPrimary : Black};
-  text-decoration: ${({theme: {dark}}) => (dark ? 'underline' : 'none')};
-  text-decoration-color: ${White};
-`;
-
-const Hr = styled.View`
-  border-bottom-color: #ebebeb;
-  border-bottom-width: 1px;
-  margin: 20px 0;
 `;
 
 const PillSheetContainer = styled(SheetContainer)`
@@ -68,7 +55,7 @@ const Pill = styled.View<PillParams>`
   align-items: center;
   justify-content: center;
   border: 2px solid ${Action};
-  border-radius: 20px;
+  border-radius: 50px;
   margin-right: 10px;
   margin-bottom: 12px;
   ${({selected}) => (selected ? `background-color: ${Action};` : '')};
@@ -134,9 +121,9 @@ const FilterSheet = ({
             </Pill>
           ))}
         </Pills>
-        <Hr />
+        <BottomNotificationHr />
         <CtaContainer platform={Platform.OS}>
-          <Cta
+          <BottomNotificationCta
             suppressHighlighting={true}
             primary={true}
             onPress={async () => {
@@ -146,15 +133,15 @@ const FilterSheet = ({
               setInitialCategoryMap(categoryMap);
             }}>
             {'Apply Filter'.toUpperCase()}
-          </Cta>
-          <Cta
+          </BottomNotificationCta>
+          <BottomNotificationCta
             suppressHighlighting={true}
             primary={false}
             onPress={() =>
               setCategoryMap(initializeCategoryMap(Object.keys(categoryMap)))
             }>
             {'Clear'.toUpperCase()}
-          </Cta>
+          </BottomNotificationCta>
         </CtaContainer>
       </PillSheetContainer>
     </SheetModal>

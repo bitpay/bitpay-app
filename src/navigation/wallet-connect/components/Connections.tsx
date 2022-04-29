@@ -1,7 +1,7 @@
 import React from 'react';
 import EthIcon from '../../../../assets/img/currencies/eth.svg';
 import {titleCasing} from '../../../utils/helper-methods';
-import {Badge, H5, H7} from '../../../components/styled/Text';
+import {Badge, H5} from '../../../components/styled/Text';
 import styled from 'styled-components/native';
 import {IWCConnector} from '../../../store/wallet-connect/wallet-connect.models';
 import ConnectionItem from './ConnectionItem';

@@ -2,7 +2,7 @@ import React, {ReactElement, memo} from 'react';
 import {BaseText} from '../styled/Text';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../styled/Containers';
-import {SlateDark, White} from '../../styles/colors';
+import {LuckySevens, SlateDark, White} from '../../styles/colors';
 import RemoteImage from '../../navigation/tabs/shop/components/RemoteImage';
 import {TRANSACTION_ICON_SIZE} from '../../constants/TransactionIcons';
 export const TRANSACTION_ROW_HEIGHT = 75;
@@ -28,6 +28,7 @@ const Description = styled(BaseText)`
 const Details = styled(BaseText)`
   font-size: 12px;
   font-weight: 300;
+  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
 `;
 
 const TailContainer = styled.View`
@@ -42,7 +43,7 @@ const Value = styled(BaseText)`
 
 const Time = styled(BaseText)`
   font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
   text-align: right;
 `;
 

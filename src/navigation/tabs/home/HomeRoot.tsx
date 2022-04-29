@@ -34,7 +34,6 @@ import DefaultQuickLinks from './components/quick-links/DefaultQuickLinks';
 import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
 import {selectCardGroups} from '../../../store/card/card.selectors';
 import {HeaderContainer, HomeContainer} from './components/Styled';
-
 const HomeRoot = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -188,11 +187,24 @@ const HomeRoot = () => {
                         actions: [
                           {
                             text: 'Add funds',
-                            action: () =>
-                              navigation.navigate('BuyCrypto', {
-                                screen: 'Root',
-                                params: {amount: 50},
-                              }),
+                            action: () => {
+                              navigation.navigate('Wallet', {
+                                screen: 'Amount',
+                                params: {
+                                  onAmountSelected: (amount: string) => {
+                                    navigation.navigate('BuyCrypto', {
+                                      screen: 'Root',
+                                      params: {
+                                        amount: Number(amount),
+                                      },
+                                    });
+                                  },
+                                  opts: {
+                                    hideSendMax: true,
+                                  },
+                                },
+                              });
+                            },
                             primary: true,
                           },
                           {

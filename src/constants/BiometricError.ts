@@ -62,7 +62,7 @@ export const authOptionalConfigObject = {
   sensorDescription: 'Touch sensor', // Android
   sensorErrorDescription: 'Failed', // Android
   cancelText: 'Cancel', // Android
-  fallbackLabel: 'Show Passcode', // iOS (if empty, then label is hidden)
+  fallbackLabel: '', // iOS (if empty, then label is hidden) - Feature is not supported by the plugin
   unifiedErrors: true, // use unified error messages (default false)
   passcodeFallback: true, // iOS - allows the device to fall back to using the passcode, if faceid/touch is not available. this does not mean that if touchid/faceid fails the first few times it will revert to passcode, rather that if the former are not enrolled, then it will use the passcode.
 };

@@ -37,11 +37,9 @@ const SettingsSlide: React.FC<SettingsSlideProps> = props => {
   const virtualImageUrl = useAppSelector(
     ({CARD}) => CARD.virtualCardImages[card.id],
   );
-  const [isLoading, setLoading] = useState(!!virtualImageUrl);
   const [isError, setError] = useState(false);
 
   const onLoad = () => {
-    setLoading(false);
     dispatch(
       LogActions.debug(
         `Successfully loaded virtual card image for card ${card.id}`,
@@ -51,7 +49,6 @@ const SettingsSlide: React.FC<SettingsSlideProps> = props => {
 
   const onError = () => {
     setError(true);
-    setLoading(false);
     dispatch(
       LogActions.error(
         `An error occurred while loading virtual card image for card ${card.id}`,
@@ -61,11 +58,9 @@ const SettingsSlide: React.FC<SettingsSlideProps> = props => {
 
   return (
     <SettingsSlideContainer>
-      {isLoading ? (
-        <PlaceholderContainer>
-          <CardBack card={card} />
-        </PlaceholderContainer>
-      ) : null}
+      <PlaceholderContainer>
+        <CardBack card={card} />
+      </PlaceholderContainer>
 
       {!isError && virtualImageUrl ? (
         <StyledImage
@@ -73,9 +68,7 @@ const SettingsSlide: React.FC<SettingsSlideProps> = props => {
           onLoad={() => onLoad()}
           onError={() => onError()}
         />
-      ) : (
-        <CardBack card={card} />
-      )}
+      ) : null}
     </SettingsSlideContainer>
   );
 };

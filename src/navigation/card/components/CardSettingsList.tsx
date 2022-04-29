@@ -3,13 +3,7 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {View} from 'react-native';
-import CustomizeCardIcon from '../../../../assets/img/card/settings/customize-virtual-card.svg';
-import GetHelpIcon from '../../../../assets/img/get-help.svg';
-import HelpIcon from '../../../../assets/img/help.svg';
-import LockIcon from '../../../../assets/img/card/settings/lock.svg';
-import OffersIcon from '../../../../assets/img/card/settings/card-offers.svg';
-import UpdateIcon from '../../../../assets/img/card/settings/card-name.svg';
-import PresentIcon from '../../../../assets/img/card/settings/refer-and-earn.svg';
+import styled from 'styled-components/native';
 import {Br, Hr} from '../../../components/styled/Containers';
 import {Link, Smallest} from '../../../components/styled/Text';
 import {URL} from '../../../constants';
@@ -20,6 +14,13 @@ import {CardActions, CardEffects} from '../../../store/card';
 import {Card} from '../../../store/card/card.models';
 import {LogActions} from '../../../store/log';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import CustomizeCardIcon from '../assets/settings/icon-card.svg';
+import EditCardNameIcon from '../assets/settings/icon-cardname.svg';
+import FaqsIcon from '../assets/settings/icon-faqs.svg';
+import GetHelpIcon from '../assets/settings/icon-help.svg';
+import LockIcon from '../assets/settings/icon-lock.svg';
+import OffersIcon from '../assets/settings/icon-offers.svg';
+import ReferEarnIcon from '../assets/settings/icon-referearn.svg';
 import {CardStackParamList} from '../CardStack';
 import * as Styled from './CardSettingsList.styled';
 import {ToggleSpinnerState} from './ToggleSpinner';
@@ -57,6 +58,11 @@ if (DOSH_WHITELIST) {
     console.log('Unable to parse DOSH_WHITELIST', e);
   }
 }
+
+// TODO: update theme.colors.link if this is a universal change
+const CardSettingsTextLink = styled(Link)`
+  color: ${({theme}) => (theme.dark ? '#4989ff' : theme.colors.link)};
+`;
 
 const SettingsList: React.FC<SettingsListProps> = props => {
   const dispatch = useAppDispatch();
@@ -126,7 +132,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
           <Hr />
 
           <Styled.SettingsLink
-            Icon={HelpIcon}
+            Icon={FaqsIcon}
             onPress={() => openUrl(URL.VISA_FAQ)}>
             {t('FAQs')}
           </Styled.SettingsLink>
@@ -213,7 +219,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
           ) : null}
 
           <Styled.SettingsLink
-            Icon={UpdateIcon}
+            Icon={EditCardNameIcon}
             onPress={() => navigation.navigate('UpdateCardName', {card})}>
             {t('Update Card Name')}
           </Styled.SettingsLink>
@@ -221,7 +227,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
           <Hr />
 
           <Styled.SettingsLink
-            Icon={HelpIcon}
+            Icon={FaqsIcon}
             onPress={() => openUrl(URL.MASTERCARD_FAQ)}>
             {t('FAQs')}
           </Styled.SettingsLink>
@@ -239,7 +245,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
       <Hr />
 
       <Styled.SettingsLink
-        Icon={PresentIcon}
+        Icon={ReferEarnIcon}
         onPress={() => navigation.navigate('Referral', {card})}>
         {t('Refer & Earn')}
       </Styled.SettingsLink>
@@ -254,9 +260,11 @@ const SettingsList: React.FC<SettingsListProps> = props => {
           {links.map((link, idx) => {
             return (
               <React.Fragment key={link.labelKey}>
-                <Link onPress={() => openUrl(link.url)}>
+                <CardSettingsTextLink
+                  onPress={() => openUrl(link.url)}
+                  style={{}}>
                   {t(link.labelKey)}
-                </Link>
+                </CardSettingsTextLink>
 
                 {idx < links.length - 1 ? <Br /> : null}
               </React.Fragment>

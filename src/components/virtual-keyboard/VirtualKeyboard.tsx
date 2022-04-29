@@ -1,8 +1,10 @@
 import React, {memo} from 'react';
-import styled, {css} from 'styled-components/native';
-import DeleteSvg from '../../../assets/img/delete.svg';
-import {SlateDark} from '../../styles/colors';
+import styled, {css, useTheme} from 'styled-components/native';
+import {SlateDark, White} from '../../styles/colors';
 import {BaseText} from '../styled/Text';
+import DeleteIcon from '../icons/delete/Delete';
+import VirtualKeyboardButtonAnimation from './VirtualKeyboardButtonAnimation';
+export const VIRTUAL_KEYBOARD_BUTTON_SIZE = 85;
 
 interface SymbolContainerProps {
   showLetters?: boolean;
@@ -16,16 +18,17 @@ const RowContainer = styled.View`
   flex-direction: row;
 `;
 
-const CellContainer = styled.TouchableOpacity`
+const CellContainer = styled.View`
   width: 33.333333%;
   justify-content: center;
   align-items: center;
 `;
 
-const CellValue = styled(BaseText)`
+const CellValue = styled(BaseText)<{darkModeOnly?: boolean}>`
   font-size: 32.08px;
   font-weight: 500;
-  color: ${({theme}) => theme.colors.text};
+  color: ${({theme, darkModeOnly}) =>
+    darkModeOnly ? White : theme.colors.text};
   line-height: 65px;
 `;
 
@@ -53,18 +56,33 @@ export interface VirtualKeyboardProps {
   onCellPress?: ((value: string) => any) | undefined;
   showLetters?: boolean;
   showDot?: boolean;
+  darkModeOnly?: boolean;
 }
 
 interface CellProps extends Pick<VirtualKeyboardProps, 'onCellPress'> {
   value: string;
   letters?: string;
+  backgroundColor: string;
+  darkModeOnly?: boolean;
 }
 
-const Cell: React.FC<CellProps> = ({value, letters, onCellPress}) => {
+const Cell: React.FC<CellProps> = ({
+  value,
+  letters,
+  onCellPress,
+  backgroundColor,
+  darkModeOnly,
+}) => {
   return (
-    <CellContainer onPress={() => onCellPress?.(value)}>
-      <CellValue>{value}</CellValue>
-      {letters ? <CellLetter>{letters}</CellLetter> : null}
+    <CellContainer>
+      <VirtualKeyboardButtonAnimation
+        onPress={() => onCellPress?.(value)}
+        backgroundColor={backgroundColor}>
+        <>
+          <CellValue darkModeOnly={darkModeOnly}>{value}</CellValue>
+          {letters ? <CellLetter>{letters}</CellLetter> : null}
+        </>
+      </VirtualKeyboardButtonAnimation>
     </CellContainer>
   );
 };
@@ -72,9 +90,17 @@ const Cell: React.FC<CellProps> = ({value, letters, onCellPress}) => {
 interface RowProps
   extends Pick<VirtualKeyboardProps, 'onCellPress' | 'showLetters'> {
   numArray: NumArray[];
+  backgroundColor: string;
+  darkModeOnly?: boolean;
 }
 
-const Row: React.FC<RowProps> = ({numArray, showLetters, onCellPress}) => {
+const Row: React.FC<RowProps> = ({
+  numArray,
+  showLetters,
+  onCellPress,
+  backgroundColor,
+  darkModeOnly,
+}) => {
   return (
     <RowContainer>
       {numArray
@@ -84,6 +110,8 @@ const Row: React.FC<RowProps> = ({numArray, showLetters, onCellPress}) => {
               value={cell.val}
               letters={showLetters ? cell.letters : undefined}
               key={cell.val}
+              backgroundColor={backgroundColor}
+              darkModeOnly={darkModeOnly}
             />
           ))
         : null}
@@ -95,7 +123,14 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
   onCellPress,
   showLetters = false,
   showDot = true,
+  darkModeOnly = false,
 }) => {
+  const theme = useTheme();
+  const backgroundColor =
+    darkModeOnly || theme.dark
+      ? 'rgba(255, 255, 255, 0.2)'
+      : 'rgba(0, 0, 0, 0.1)';
+  const bgColor = darkModeOnly || theme.dark ? White : '#4A4A4A';
   return (
     <KeyboardContainer>
       <Row
@@ -115,6 +150,8 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
         ]}
         onCellPress={onCellPress}
         showLetters={showLetters}
+        backgroundColor={backgroundColor}
+        darkModeOnly={darkModeOnly}
       />
       <Row
         numArray={[
@@ -133,6 +170,8 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
         ]}
         onCellPress={onCellPress}
         showLetters={showLetters}
+        backgroundColor={backgroundColor}
+        darkModeOnly={darkModeOnly}
       />
       <Row
         numArray={[
@@ -151,21 +190,39 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
         ]}
         onCellPress={onCellPress}
         showLetters={showLetters}
+        backgroundColor={backgroundColor}
+        darkModeOnly={darkModeOnly}
       />
 
       <RowContainer>
-        <CellContainer onPress={() => onCellPress?.('.')}>
-          {showDot && <CellValue>{'.'}</CellValue>}
+        <CellContainer>
+          {showDot ? (
+            <VirtualKeyboardButtonAnimation
+              onPress={() => onCellPress?.('.')}
+              backgroundColor={backgroundColor}>
+              <CellValue style={{lineHeight: 30}} darkModeOnly={darkModeOnly}>
+                .
+              </CellValue>
+            </VirtualKeyboardButtonAnimation>
+          ) : null}
         </CellContainer>
-        <CellContainer onPress={() => onCellPress?.('0')}>
-          <CellValue>{'0'}</CellValue>
-        </CellContainer>
-        <CellContainer
-          onPress={() => onCellPress?.('backspace')}
-          onLongPress={() => onCellPress?.('reset')}>
-          <SymbolContainer showLetters={showLetters}>
-            <DeleteSvg />
-          </SymbolContainer>
+        <Cell
+          onCellPress={() => onCellPress?.('0')}
+          value={'0'}
+          letters={undefined}
+          backgroundColor={backgroundColor}
+          darkModeOnly={darkModeOnly}
+        />
+
+        <CellContainer>
+          <VirtualKeyboardButtonAnimation
+            backgroundColor={backgroundColor}
+            onLongPress={() => onCellPress?.('reset')}
+            onPress={() => onCellPress?.('backspace')}>
+            <SymbolContainer showLetters={showLetters}>
+              <DeleteIcon bgColor={bgColor} />
+            </SymbolContainer>
+          </VirtualKeyboardButtonAnimation>
         </CellContainer>
       </RowContainer>
     </KeyboardContainer>

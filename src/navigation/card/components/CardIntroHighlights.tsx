@@ -10,6 +10,7 @@ import A from '../../../components/anchor/Anchor';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, Exp, H4} from '../../../components/styled/Text';
 import {URL} from '../../../constants';
+import {Black, LuckySevens} from '../../../styles/colors';
 
 interface CardHighlight {
   icon: React.FC<SvgProps>;
@@ -38,6 +39,10 @@ const HighlightTitle = styled(H4)`
   margin-bottom: 4px;
 `;
 
+const SubText = styled(BaseText)`
+  color: ${({theme: {dark}}) => (dark ? LuckySevens : Black)};
+`;
+
 const CARD_HIGHLIGHTS: CardHighlight[] = [
   {
     icon: InstantReloadsIcon,
@@ -48,52 +53,52 @@ const CARD_HIGHLIGHTS: CardHighlight[] = [
       </HighlightTitle>
     ),
     description: (
-      <BaseText>
+      <SubText>
         Reload your balance with no conversion fees. Powered by our{' '}
         <A href={URL.EXCHANGE_RATES}>competitive exchange rates</A>.
-      </BaseText>
+      </SubText>
     ),
   },
   {
     icon: FlexibilityIcon,
     title: <HighlightTitle>Flexibility</HighlightTitle>,
     description: (
-      <BaseText>
+      <SubText>
         View your balance, request a new PIN and reload instantly all within the
         BitPay App.
-      </BaseText>
+      </SubText>
     ),
   },
   {
     icon: EnhancedSecurityIcon,
     title: <HighlightTitle>Enhanced security</HighlightTitle>,
     description: (
-      <BaseText>
+      <SubText>
         Includes EMV chip and options to lock your card and control how you
         spend.
-      </BaseText>
+      </SubText>
     ),
   },
   {
     icon: WorldwideIcon,
     title: <HighlightTitle>Worldwide</HighlightTitle>,
     description: (
-      <BaseText>
+      <SubText>
         Ready to use in millions of locations around the world with contactless
         payment, PIN, Google Pay, Apple Pay, or by simply withdrawing cash from
         any compatible ATM
         <Exp i={2} />.
-      </BaseText>
+      </SubText>
     ),
   },
   {
     icon: EarnCashIcon,
     title: <HighlightTitle>Earn cash</HighlightTitle>,
     description: (
-      <BaseText>
+      <SubText>
         Refer friends and you'll each receive $10 when they load their first
         $100.
-      </BaseText>
+      </SubText>
     ),
   },
 ];

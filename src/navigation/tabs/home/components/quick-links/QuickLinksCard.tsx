@@ -12,6 +12,7 @@ import {AppEffects} from '../../../../../store/app';
 import {
   Action,
   LightBlack,
+  Slate,
   SlateDark,
   White,
 } from '../../../../../styles/colors';
@@ -60,7 +61,7 @@ const DescriptionText = styled(BaseText)`
   font-weight: 400;
   font-size: 12px;
   line-height: 16px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
 `;
 
 const IconContainer = styled.View`
