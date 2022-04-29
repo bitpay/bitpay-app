@@ -7,6 +7,7 @@ import {
   White,
   LightBlack,
   LuckySevens,
+  Black,
 } from '../../styles/colors';
 
 export const fontFamily = 'Heebo';
@@ -83,6 +84,7 @@ export const Smallest = styled(BaseText)`
   font-size: 12px;
   font-weight: 400;
   line-height: 15px;
+  color: ${({theme: {dark}}) => (dark ? LuckySevens : Black)};
 `;
 
 export const Paragraph = styled(BaseText)`

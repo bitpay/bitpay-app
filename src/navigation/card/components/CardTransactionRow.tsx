@@ -5,7 +5,7 @@ import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, H7} from '../../../components/styled/Text';
 import {CardProvider} from '../../../constants/card';
 import {Card, UiTransaction} from '../../../store/card/card.models';
-import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
+import {Air, LightBlack, LuckySevens, SlateDark} from '../../../styles/colors';
 import {format} from '../../../utils/currency';
 import {
   TxCardLoadIcon,
@@ -54,7 +54,7 @@ const TxText = styled(BaseText)<{
   ${({light}) =>
     light &&
     css`
-      color: ${({theme}) => (theme.dark ? White : SlateDark)};
+      color: ${({theme}) => (theme.dark ? LuckySevens : SlateDark)};
       font-size: 12px;
     `}
 `;
