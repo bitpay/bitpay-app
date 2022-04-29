@@ -13,18 +13,21 @@ interface WalletSelectorModalProps {
   isVisible: boolean;
   customSupportedCurrencies?: string[];
   onDismiss: (newWallet?: any) => void;
+  modalTitle?: string;
 }
 
 const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
   isVisible,
   customSupportedCurrencies,
   onDismiss,
+  modalTitle,
 }) => {
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onDismiss}>
       <GlobalSelectContainer>
         <GlobalSelect
           useAsModal={true}
+          modalTitle={modalTitle}
           customSupportedCurrencies={customSupportedCurrencies}
           onDismiss={onDismiss}
         />

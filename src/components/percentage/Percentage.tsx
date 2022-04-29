@@ -3,10 +3,11 @@ import * as React from 'react';
 import IncrementArrow from '../../../assets/img/home/exchange-rates/increment-arrow.svg';
 import DecrementArrow from '../../../assets/img/home/exchange-rates/decrement-arrow.svg';
 import {BaseText} from '../styled/Text';
+import {Black, LuckySevens} from '../../styles/colors';
 
-const PercentageContainer = styled(BaseText)`
+const PercentageContainer = styled(BaseText)<{darkModeColor: string}>`
   font-size: 12px;
-  color: ${({theme}) => theme.colors.text};
+  color: ${({theme: {dark}, darkModeColor}) => (dark ? darkModeColor : Black)};
 `;
 
 const PercentageRow = styled.View`
@@ -16,9 +17,13 @@ const PercentageRow = styled.View`
 
 export interface PercentageProps {
   percentageDifference: number;
+  darkModeColor?: string;
 }
 
-const Percentage = ({percentageDifference}: PercentageProps) => {
+const Percentage = ({
+  percentageDifference,
+  darkModeColor = LuckySevens,
+}: PercentageProps) => {
   return (
     <>
       <PercentageRow>
@@ -28,7 +33,9 @@ const Percentage = ({percentageDifference}: PercentageProps) => {
         {percentageDifference < 0 ? (
           <DecrementArrow style={{marginRight: 5}} />
         ) : null}
-        <PercentageContainer>{percentageDifference}%</PercentageContainer>
+        <PercentageContainer darkModeColor={darkModeColor}>
+          {percentageDifference}%
+        </PercentageContainer>
       </PercentageRow>
     </>
   );

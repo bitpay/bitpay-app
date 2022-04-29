@@ -2,10 +2,7 @@ import React, {useCallback, useState} from 'react';
 import TagSvg from '../../../../../assets/img/tag.svg';
 import styled, {css} from 'styled-components/native';
 import {DirectIntegrationApiObject} from '../../../../store/shop/shop.models';
-import {
-  LightBlack,
-  NeutralSlate,
-} from '../../../../styles/colors';
+import {LightBlack, NeutralSlate} from '../../../../styles/colors';
 import RemoteImage from './RemoteImage';
 import {BaseText, H6, Paragraph} from '../../../../components/styled/Text';
 import {WIDTH} from '../../../../components/styled/Containers';

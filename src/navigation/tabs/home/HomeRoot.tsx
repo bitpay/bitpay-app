@@ -187,11 +187,24 @@ const HomeRoot = () => {
                         actions: [
                           {
                             text: 'Add funds',
-                            action: () =>
-                              navigation.navigate('BuyCrypto', {
-                                screen: 'Root',
-                                params: {amount: 50},
-                              }),
+                            action: () => {
+                              navigation.navigate('Wallet', {
+                                screen: 'Amount',
+                                params: {
+                                  onAmountSelected: (amount: string) => {
+                                    navigation.navigate('BuyCrypto', {
+                                      screen: 'Root',
+                                      params: {
+                                        amount: Number(amount),
+                                      },
+                                    });
+                                  },
+                                  opts: {
+                                    hideSendMax: true,
+                                  },
+                                },
+                              });
+                            },
                             primary: true,
                           },
                           {

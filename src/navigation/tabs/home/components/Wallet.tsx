@@ -135,7 +135,10 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
                   {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode)}
                 </Balance>
                 {percentageDifference ? (
-                  <Percentage percentageDifference={percentageDifference} />
+                  <Percentage
+                    percentageDifference={percentageDifference}
+                    darkModeColor={Slate}
+                  />
                 ) : null}
               </>
             )}

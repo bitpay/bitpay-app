@@ -79,6 +79,10 @@ export const SearchResults = styled.View`
   min-height: ${HEIGHT - 300}px;
 `;
 
+export const NoResultsImgContainer = styled.View`
+  margin: 40px;
+`;
+
 export const NoResultsContainer = styled.View`
   display: flex;
   flex-direction: column;
