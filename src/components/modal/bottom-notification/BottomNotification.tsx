@@ -74,7 +74,7 @@ const MessageContainer = styled.View`
   margin: 15px 0 20px 0;
 `;
 
-const Hr = styled.View`
+export const BottomNotificationHr = styled.View`
   border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#ebebeb')};
   border-bottom-width: 1px;
   margin: 20px 0;
@@ -90,7 +90,7 @@ const CtaContainer = styled.View`
     `}
 `;
 
-const Cta = styled(BaseText)`
+export const BottomNotificationCta = styled(BaseText)`
   font-size: 16px;
   font-style: normal;
   font-weight: 400;
@@ -176,11 +176,11 @@ const BottomNotification = () => {
           ) : null}
         </MessageContainer>
         {message2 ? message2 : null}
-        <Hr />
+        <BottomNotificationHr />
         <CtaContainer platform={Platform.OS}>
           {actions?.map(({primary, action, text}, index) => {
             return (
-              <Cta
+              <BottomNotificationCta
                 key={index}
                 suppressHighlighting={true}
                 primary={primary}
@@ -191,7 +191,7 @@ const BottomNotification = () => {
                   action(rootState);
                 }}>
                 {text.toUpperCase()}
-              </Cta>
+              </BottomNotificationCta>
             );
           })}
         </CtaContainer>

@@ -6,7 +6,7 @@ import {View} from 'react-native';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import styled, {useTheme} from 'styled-components/native';
 import {WIDTH} from '../../../../components/styled/Containers';
-import {Paragraph} from '../../../../components/styled/Text';
+import {BaseText, Paragraph} from '../../../../components/styled/Text';
 import {
   Category,
   DirectIntegrationApiObject,
@@ -18,7 +18,7 @@ import {
   HideableView,
   horizontalPadding,
   NoResultsContainer,
-  NoResultsHeader,
+  NoResultsImgContainer,
   SearchBox,
   SectionContainer,
   SectionHeader,
@@ -26,6 +26,7 @@ import {
   SectionHeaderContainer,
   SectionSpacer,
 } from './styled/ShopTabComponents';
+import GhostSvg from '../../../../../assets/img/ghost-cheeky.svg';
 
 const SearchResults = styled.View`
   display: flex;
@@ -154,8 +155,16 @@ export const ShopOnline = ({
       </SectionContainer>
       <HideableView show={!!(searchVal && !searchResults.length)}>
         <NoResultsContainer>
-          <NoResultsHeader>No Results</NoResultsHeader>
-          <Paragraph>Please try searching something else.</Paragraph>
+          <NoResultsContainer>
+            <NoResultsImgContainer>
+              <GhostSvg />
+            </NoResultsImgContainer>
+            <Paragraph>
+              {"We couldn't find a match for "}
+              <BaseText style={{fontWeight: 'bold'}}>{searchVal}</BaseText>.
+            </Paragraph>
+            <Paragraph>Please try searching something else.</Paragraph>
+          </NoResultsContainer>
         </NoResultsContainer>
       </HideableView>
       <HideableView show={!!(searchVal && searchResults.length)}>
