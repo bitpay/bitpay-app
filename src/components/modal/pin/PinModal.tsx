@@ -240,6 +240,7 @@ const PinModal: React.FC = () => {
               activeOpacity={ActiveOpacity}
               onPress={() => {
                 dispatch(AppActions.dismissPinModal());
+                reset();
               }}>
               <Back
                 color={White}
