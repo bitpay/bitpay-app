@@ -7,22 +7,24 @@ import {
 } from '../../wallet.actions';
 import {CurrencyOpts} from '../../../../constants/currencies';
 
-export const startGetTokenOptions = (): Effect => async dispatch => {
-  try {
-    const {
-      data: {tokens},
-    } = await axios.get<{
-      tokens: {[key in string]: Token};
-    }>('https://api.1inch.io/v4.0/1/tokens');
+export const startGetTokenOptions =
+  (): Effect<Promise<void>> => async dispatch => {
+    try {
+      const {
+        data: {tokens},
+      } = await axios.get<{
+        tokens: {[key in string]: Token};
+      }>('https://api.1inch.io/v4.0/1/tokens');
 
     const tokenOptions: {[key in string]: Token} = {};
+    const tokenOptionsByAddress: {[key in string]: Token} = {};
     const tokenData: {[key in string]: CurrencyOpts} = {};
 
     Object.values(tokens).forEach(token => {
-      populateTokenInfo({token, tokenOptions, tokenData});
+      populateTokenInfo({token, tokenOptions, tokenData, tokenOptionsByAddress});
     });
 
-    dispatch(successGetTokenOptions({tokenOptions, tokenData}));
+    dispatch(successGetTokenOptions({tokenOptions,tokenOptionsByAddress,  tokenData}));
   } catch (e) {
     console.error(e);
     dispatch(failedGetTokenOptions());
@@ -34,9 +36,10 @@ export const addCustomTokenOption =
   async dispatch => {
     try {
       const tokenOptions: {[key in string]: Token} = {};
+      const tokenOptionsByAddress: {[key in string]: Token} = {};
       const tokenData: {[key in string]: CurrencyOpts} = {};
-      populateTokenInfo({token, tokenOptions, tokenData});
-      dispatch(successGetTokenOptions({tokenOptions, tokenData}));
+      populateTokenInfo({token, tokenOptions, tokenData, tokenOptionsByAddress});
+      dispatch(successGetTokenOptions({tokenOptions, tokenData, tokenOptionsByAddress}));
     } catch (e) {
       console.error(e);
       dispatch(failedGetTokenOptions());
@@ -47,12 +50,15 @@ const populateTokenInfo = ({
   token,
   tokenOptions,
   tokenData,
+  tokenOptionsByAddress
 }: {
   token: Token;
   tokenOptions: {[key in string]: Token};
   tokenData: {[key in string]: CurrencyOpts};
+  tokenOptionsByAddress: {[key in string]: Token};
 }) => {
   tokenOptions[token.symbol.toLowerCase()] = token;
+  tokenOptionsByAddress[token.address.toLowerCase()] = token;
   tokenData[token.symbol.toLowerCase()] = {
     name: token.name,
     chain: 'ETH',
