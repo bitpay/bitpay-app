@@ -180,9 +180,21 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
                 analytics.track('BitPay App - Clicked Buy Crypto', {
                   from: 'CardDashboard',
                 });
-                navigator.navigate('BuyCrypto', {
-                  screen: BuyCryptoScreens.ROOT,
-                  params: {amount: 50},
+                navigator.navigate('Wallet', {
+                  screen: WalletScreens.AMOUNT,
+                  params: {
+                    onAmountSelected: (amount: string) => {
+                      navigator.navigate('BuyCrypto', {
+                        screen: BuyCryptoScreens.ROOT,
+                        params: {
+                          amount: Number(amount),
+                        },
+                      });
+                    },
+                    opts: {
+                      hideSendMax: true,
+                    },
+                  },
                 });
               },
               primary: true,
