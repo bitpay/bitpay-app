@@ -73,10 +73,9 @@ const WalletConnectConnections = () => {
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
 
   const getWallet = (customData?: IWCCustomData) => {
-    return (
-      customData &&
-      findWalletById(allKeys[customData.keyId].wallets, customData.walletId)
-    );
+    return customData && allKeys[customData.keyId]
+      ? findWalletById(allKeys[customData.keyId].wallets, customData.walletId)
+      : null;
   };
 
   useLayoutEffect(() => {
@@ -100,7 +99,9 @@ const WalletConnectConnections = () => {
             <KeyConnectionsContainer key={keyId}>
               <KeyTitleContainer>
                 <KeyIcon />
-                <KeyTitleText>{allKeys[keyId].keyName}</KeyTitleText>
+                <KeyTitleText>
+                  {allKeys[keyId].keyName || 'My Key'}
+                </KeyTitleText>
               </KeyTitleContainer>
               <Hr />
               {Object.entries(connectorsByKey as any).map(

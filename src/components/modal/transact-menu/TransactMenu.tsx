@@ -3,7 +3,7 @@ import React, {ReactElement, useState} from 'react';
 import {FlatList, TouchableOpacity, View} from 'react-native';
 import styled from 'styled-components/native';
 import TransactButtonIcon from '../../../../assets/img/tab-icons/transact-button.svg';
-import {Midnight, NeutralSlate, White} from '../../../styles/colors';
+import {Action, Midnight, White} from '../../../styles/colors';
 import {ActiveOpacity, SheetContainer} from '../../styled/Containers';
 import {BaseText, H6} from '../../styled/Text';
 import SheetModal from '../base/sheet/SheetModal';
@@ -26,7 +26,7 @@ const TransactItemContainer = styled.TouchableOpacity`
 `;
 
 const ItemIconContainer = styled.View`
-  background-color: ${({theme}) => (theme.dark ? Midnight : NeutralSlate)};
+  background-color: ${({theme}) => (theme.dark ? Midnight : Action)};
   border-radius: 11px;
 `;
 
@@ -46,7 +46,7 @@ const ItemDescriptionText = styled(BaseText)`
 `;
 
 const ScanButtonContainer = styled.TouchableOpacity`
-  background-color: ${({theme}) => (theme.dark ? Midnight : NeutralSlate)};
+  background-color: ${({theme}) => (theme.dark ? Midnight : Action)};
   flex-direction: row;
   align-self: center;
   align-items: center;
@@ -59,7 +59,7 @@ const ScanButtonContainer = styled.TouchableOpacity`
 `;
 
 const ScanButtonText = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? White : '#000')};
+  color: ${White};
 `;
 
 const CloseButtonContainer = styled.TouchableOpacity`
