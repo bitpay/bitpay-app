@@ -9,6 +9,7 @@ import {
   WalletBalance,
   TransactionProposal,
   RatesByDateRange,
+  CacheFeeLevel,
 } from './wallet.models';
 
 export enum WalletActionTypes {
@@ -51,6 +52,7 @@ export enum WalletActionTypes {
   SYNC_WALLETS = 'WALLET/SYNC_WALLETS',
   TOGGLE_HIDE_WALLET = 'WALLET/TOGGLE_HIDE_WALLET',
   TOGGLE_HIDE_BALANCE = 'WALLET/TOGGLE_HIDE_BALANCE',
+  UPDATE_CACHE_FEE_LEVEL = 'WALLET/UPDATE_CACHE_FEE_LEVEL',
 }
 
 interface successWalletStoreInit {
@@ -292,6 +294,11 @@ interface toggleHideBalance {
   };
 }
 
+interface updateCacheFeeLevel {
+  type: typeof WalletActionTypes.UPDATE_CACHE_FEE_LEVEL;
+  payload: CacheFeeLevel;
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -331,4 +338,5 @@ export type WalletActionType =
   | updateWalletTxHistory
   | syncWallets
   | toggleHideWallet
-  | toggleHideBalance;
+  | toggleHideBalance
+  | updateCacheFeeLevel;

@@ -105,7 +105,7 @@ export type SettingsListType =
   | 'Crypto'
   | 'Wallets & Keys'
   | 'Security'
-  | 'External Services'
+  | 'Notifications'
   | 'Connections'
   | 'About BitPay';
 
@@ -164,8 +164,8 @@ const SettingsHomeScreen: React.FC<SettingsHomeProps> = ({route}) => {
     },
     {
       // Settings for Buy/Swap Crypto will be momentarily commented
-      id: 'External Services',
-      title: t('External Services'),
+      id: 'Notifications',
+      title: t('Notifications'),
       onPress: () => {},
       subListComponent: <Notifications />,
     },

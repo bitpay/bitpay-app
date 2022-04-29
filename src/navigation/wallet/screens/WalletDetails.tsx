@@ -326,6 +326,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   } = uiFormattedWallet;
 
   const showFiatBalance =
+    // @ts-ignore
+    Number(cryptoBalance.replaceAll(',', '')) > 0 &&
     SUPPORTED_CURRENCIES.includes(currencyAbbreviation.toLowerCase()) &&
     network !== Network.testnet;
 
