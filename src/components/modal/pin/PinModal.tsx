@@ -27,9 +27,6 @@ const PinContainer = styled.View`
   background-color: ${Action};
 `;
 
-const LogoContainer = styled.View`
-  margin-top: 10%;
-`;
 const PinMessagesContainer = styled(Animated.View)`
   align-items: center;
   text-align: center;
@@ -42,7 +39,7 @@ const PinMessage = styled(H5)`
 `;
 
 const VirtualKeyboardContainer = styled.View`
-  margin-bottom: 50px;
+  margin-bottom: 10%;
 `;
 
 const SheetHeaderContainer = styled.View`

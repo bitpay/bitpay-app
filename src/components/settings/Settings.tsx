@@ -20,7 +20,7 @@ const SettingsSvg: React.FC<SettingsSvgProps> = ({color, background}) => {
 };
 
 const SettingsSvgContainer = styled.TouchableOpacity`
-  padding-top: 10px;
+  padding-top: 12px;
   transform: scale(1.1);
   padding-right: 15px;
 `;
