@@ -1,6 +1,5 @@
 import React, {ReactElement} from 'react';
 import AmazonSvg from '../../assets/img/wallet/transactions/amazon.svg';
-import WalletConnectSvg from '../../assets/img/wallet/transactions/wallet-connect.svg';
 import ShapeShiftSvg from '../../assets/img/wallet/transactions/shapeshift.svg';
 import ChangellySvg from '../../assets/img/wallet/transactions/changelly.svg';
 import OneInchSvg from '../../assets/img/wallet/transactions/1inch.svg';
@@ -287,16 +286,32 @@ export const TxReferralRewardsIcon = ({
   );
 };
 
+export const TxWalletConnectIcon = ({
+  size = TRANSACTION_ICON_SIZE,
+}: TxIconProps) => {
+  const theme = useTheme() as BitPayTheme;
+
+  return (
+    <Svg.Svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+      <Svg.Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M-1.19209e-06 20C-1.19209e-06 8.9543 8.9543 -1.19209e-06 20 -1.19209e-06C31.0457 -1.19209e-06 40 8.9543 40 20C40 31.0457 31.0457 40 20 40C8.9543 40 -1.19209e-06 31.0457 -1.19209e-06 20Z"
+        fill={theme.dark ? '#003C7B' : '#BEDEFF'}
+      />
+      <Svg.Path
+        d="M13.0638 14.9621C17.0976 11.0126 23.6376 11.0126 27.6714 14.9621L28.1569 15.4374C28.3586 15.6348 28.3586 15.955 28.1569 16.1525L26.4962 17.7784C26.3953 17.8772 26.2318 17.8772 26.131 17.7784L25.4629 17.1243C22.6489 14.3691 18.0864 14.3691 15.2723 17.1243L14.5568 17.8248C14.456 17.9236 14.2925 17.9236 14.1917 17.8248L12.531 16.1989C12.3293 16.0014 12.3293 15.6812 12.531 15.4838L13.0638 14.9621ZM31.1059 18.3247L32.5839 19.7718C32.7856 19.9693 32.7856 20.2895 32.5839 20.4869L25.9194 27.0122C25.7177 27.2096 25.3907 27.2096 25.189 27.0122C25.189 27.0122 25.189 27.0122 25.189 27.0122L20.4589 22.381C20.4085 22.3317 20.3268 22.3317 20.2763 22.381C20.2763 22.381 20.2763 22.381 20.2763 22.381L15.5464 27.0122C15.3447 27.2096 15.0177 27.2097 14.816 27.0122C14.816 27.0122 14.816 27.0122 14.816 27.0122L8.15127 20.4869C7.94958 20.2894 7.94958 19.9692 8.15127 19.7718L9.6293 18.3246C9.83099 18.1272 10.158 18.1272 10.3597 18.3246L15.0898 22.9559C15.1402 23.0052 15.222 23.0052 15.2724 22.9559C15.2724 22.9559 15.2724 22.9559 15.2724 22.9559L20.0023 18.3246C20.204 18.1272 20.531 18.1272 20.7327 18.3246C20.7327 18.3246 20.7327 18.3246 20.7327 18.3246L25.4629 22.9559C25.5133 23.0052 25.595 23.0052 25.6455 22.9559L30.3755 18.3247C30.5772 18.1273 30.9042 18.1273 31.1059 18.3247Z"
+        fill="#3B99FC"
+      />
+    </Svg.Svg>
+  );
+};
+
 export const TransactionIcons: {[key in string]: ReactElement} = {
   amazon: (
     <AmazonSvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
   ),
-  walletConnect: (
-    <WalletConnectSvg
-      width={TRANSACTION_ICON_SIZE}
-      height={TRANSACTION_ICON_SIZE}
-    />
-  ),
+  walletConnect: <TxWalletConnectIcon />,
   shapeshift: (
     <ShapeShiftSvg
       width={TRANSACTION_ICON_SIZE}
