@@ -212,6 +212,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
+      headerLeft: () => null,
       headerRight: () => (
         <HeaderRightContainer>
           <Button
