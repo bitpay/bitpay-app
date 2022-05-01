@@ -51,6 +51,7 @@ import {Wallet} from '../../../../store/wallet/wallet.models';
 import {APP_NAME} from '../../../../constants/config';
 import {isPaymentMethodSupported} from '../utils/buy-crypto-utils';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
+import analytics from '@segment/analytics-react-native';
 
 // Images // TODO: for exchanges images create a component like this: /bitpay-app-v2/src/components/icons/info
 import SimplexLogo from '../../../../../assets/img/services/simplex/logo-simplex-color.svg';
@@ -560,6 +561,15 @@ const BuyCryptoOffers: React.FC = () => {
           }),
         );
 
+        analytics.track('BitPay App - Requested Crypto Purchase', {
+          exchange: 'simplex',
+          walletId: selectedWallet.id,
+          fiatAmount: amount,
+          fiatCurrency: fiatCurrency,
+          paymentMethod: paymentMethod.method,
+          coin: selectedWallet.currencyAbbreviation,
+        });
+
         const paymentUrl: string = getPaymentUrl(
           selectedWallet,
           quoteData,
@@ -636,6 +646,14 @@ const BuyCryptoOffers: React.FC = () => {
   };
 
   const continueToWyre = (paymentUrl: string) => {
+    analytics.track('BitPay App - Requested Crypto Purchase', {
+      exchange: 'wyre',
+      walletId: selectedWallet.id,
+      fiatAmount: amount,
+      fiatCurrency: fiatCurrency,
+      paymentMethod: paymentMethod.method,
+      coin: selectedWallet.currencyAbbreviation,
+    });
     Linking.openURL(paymentUrl)
       .then(() => {
         navigation.goBack();

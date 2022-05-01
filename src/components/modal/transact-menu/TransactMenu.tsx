@@ -8,6 +8,7 @@ import {ActiveOpacity, SheetContainer} from '../../styled/Containers';
 import {BaseText, H6} from '../../styled/Text';
 import SheetModal from '../base/sheet/SheetModal';
 import Icons from './TransactMenuIcons';
+import analytics from '@segment/analytics-react-native';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -87,6 +88,9 @@ const TransactModal = () => {
       title: 'Buy Crypto',
       description: 'Buy crypto with cash',
       onPress: () => {
+        analytics.track('BitPay App - Clicked Buy Crypto', {
+          from: 'TransactMenu',
+        });
         navigation.navigate('Wallet', {
           screen: 'Amount',
           params: {
@@ -111,6 +115,9 @@ const TransactModal = () => {
       title: 'Exchange',
       description: 'Swap crypto for another',
       onPress: () => {
+        analytics.track('BitPay App - Clicked Swap Crypto', {
+          from: 'TransactMenu',
+        });
         navigation.navigate('SwapCrypto', {screen: 'Root'});
       },
     },

@@ -37,6 +37,7 @@ import {getCountry} from '../../../../lib/location/location';
 import {simplexSupportedCoins} from '../utils/simplex-utils';
 import {wyreSupportedCoins} from '../utils/wyre-utils';
 import {sleep} from '../../../../utils/helper-methods';
+import analytics from '@segment/analytics-react-native';
 
 const CtaContainer = styled.View`
   margin: 20px 15px;
@@ -431,6 +432,14 @@ const BuyCryptoRoot: React.FC = () => {
             buttonStyle={'primary'}
             disabled={!selectedWallet || !amount}
             onPress={() => {
+              analytics.track('BitPay App - Buy Crypto "View Offers"', {
+                walletId: selectedWallet!.id,
+                fiatAmount: amount,
+                fiatCurrency: 'USD',
+                paymentMethod: selectedPaymentMethod.method,
+                coin: selectedWallet!.currencyAbbreviation,
+              });
+
               navigation.navigate('BuyCrypto', {
                 screen: 'BuyCryptoOffers',
                 params: {

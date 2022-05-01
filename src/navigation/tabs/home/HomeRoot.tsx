@@ -1,6 +1,7 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import React, {useEffect, useMemo, useState} from 'react';
 import {RefreshControl, ScrollView} from 'react-native';
+import analytics from '@segment/analytics-react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -34,6 +35,7 @@ import DefaultQuickLinks from './components/quick-links/DefaultQuickLinks';
 import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
 import {selectCardGroups} from '../../../store/card/card.selectors';
 import {HeaderContainer, HomeContainer} from './components/Styled';
+
 const HomeRoot = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -188,6 +190,12 @@ const HomeRoot = () => {
                           {
                             text: 'Add funds',
                             action: () => {
+                              analytics.track(
+                                'BitPay App - Clicked Buy Crypto',
+                                {
+                                  from: 'HomeRoot',
+                                },
+                              );
                               navigation.navigate('Wallet', {
                                 screen: 'Amount',
                                 params: {

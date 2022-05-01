@@ -53,6 +53,7 @@ import {DateRanges} from '../../../store/wallet/wallet.models';
 import {Defs, Stop, LinearGradient} from 'react-native-svg';
 import _ from 'lodash';
 import {Platform} from 'react-native';
+import analytics from '@segment/analytics-react-native';
 
 export type PriceChartsParamList = {
   item: ExchangeRateItemProps;
@@ -259,6 +260,10 @@ const PriceCharts = () => {
   };
 
   const goToBuyCrypto = () => {
+    analytics.track('BitPay App - Clicked Buy Crypto', {
+      from: 'PriceChart',
+      coin: currencyAbbreviation || '',
+    });
     navigation.navigate('Wallet', {
       screen: 'Amount',
       params: {

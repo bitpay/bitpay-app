@@ -8,6 +8,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
+import analytics from '@segment/analytics-react-native';
 import {useTranslation} from 'react-i18next';
 import {RefreshControl, SectionList, Share, View} from 'react-native';
 import styled from 'styled-components/native';
@@ -728,6 +729,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         fullWalletObj.currencyAbbreviation,
                       ),
                       cta: () => {
+                        analytics.track('BitPay App - Clicked Buy Crypto', {
+                          from: 'walletDetails',
+                          coin: fullWalletObj.currencyAbbreviation,
+                        });
                         navigation.navigate('Wallet', {
                           screen: 'Amount',
                           params: {
@@ -754,6 +759,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           fullWalletObj.currencyAbbreviation,
                         ),
                       cta: () => {
+                        analytics.track('BitPay App - Clicked Swap Crypto', {
+                          from: 'walletDetails',
+                          coin: fullWalletObj.currencyAbbreviation,
+                        });
                         navigation.navigate('SwapCrypto', {
                           screen: 'Root',
                           params: {
