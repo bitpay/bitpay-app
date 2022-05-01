@@ -45,8 +45,6 @@ const SearchResults = styled.View`
   margin: 0 0 50px 0;
 `;
 
-const CustomTokenOption = styled.TouchableOpacity``;
-
 const Label = styled(BaseText)`
   color: ${({theme}) => (theme.dark ? White : LightBlack)};
   font-weight: 500;
@@ -171,7 +169,6 @@ const AltCurrencySettings = () => {
               {"We couldn't find a match for "}
               <BaseText style={{fontWeight: 'bold'}}>{searchVal}</BaseText>.
             </NoResultsDescription>
-            <CustomTokenOption>Please try another currency.</CustomTokenOption>
           </NoResultsContainer>
         )}
       </HideableView>
