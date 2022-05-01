@@ -1,3 +1,4 @@
+import {CurrencyOpts} from '../../constants/currencies';
 import {
   CacheKeys,
   DateRanges,
@@ -159,7 +160,10 @@ interface deleteKey {
 
 interface successGetTokenOptions {
   type: typeof WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS;
-  payload: {[key in string]: Token};
+  payload: {
+    tokenOptions: {[key in string]: Token};
+    tokenData: {[key in string]: CurrencyOpts};
+  };
 }
 
 interface failedGetTokenOptions {

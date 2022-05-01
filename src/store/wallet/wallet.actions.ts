@@ -12,6 +12,7 @@ import {
   RatesByDateRange,
   CacheFeeLevel,
 } from './wallet.models';
+import {CurrencyOpts} from '../../constants/currencies';
 
 export const successWalletStoreInit = (): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_WALLET_STORE_INIT,
@@ -108,7 +109,8 @@ export const deleteKey = (payload: {keyId: string}): WalletActionType => ({
 });
 
 export const successGetTokenOptions = (payload: {
-  [key in string]: Token;
+  tokenOptions: {[key in string]: Token};
+  tokenData: {[key in string]: CurrencyOpts};
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS,
   payload,

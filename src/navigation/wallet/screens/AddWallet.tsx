@@ -27,7 +27,7 @@ import {
 } from '../../../components/styled/Containers';
 import {StackScreenProps} from '@react-navigation/stack';
 import {WalletStackParamList} from '../WalletStack';
-import {Key, Wallet} from '../../../store/wallet/wallet.models';
+import {Key, Token, Wallet} from '../../../store/wallet/wallet.models';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
@@ -65,14 +65,18 @@ import {Network} from '../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {WrongPasswordError} from '../components/ErrorMessages';
 import {checkEncryptPassword} from '../../../store/wallet/utils/wallet';
+import {getTokenContractInfo} from '../../../store/wallet/effects/status/status';
+import {GetCoinAndNetwork} from '../../../store/wallet/effects/address/address';
+import {addCustomTokenOption} from '../../../store/wallet/effects/currencies/currencies';
 
 type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
 
 export type AddWalletParamList = {
-  currencyAbbreviation: string;
-  currencyName: string;
   key: Key;
+  currencyAbbreviation?: string;
+  currencyName?: string;
   isToken?: boolean;
+  isCustomToken?: boolean;
 };
 
 const CreateWalletContainer = styled.SafeAreaView`
@@ -150,19 +154,32 @@ const WalletAdvancedOptionsContainer = styled(AdvancedOptionsContainer)`
 const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const {currencyAbbreviation, currencyName, key, isToken} = route.params;
+  const {
+    currencyAbbreviation: _currencyAbbreviation,
+    currencyName: _currencyName,
+    key,
+    isToken,
+    isCustomToken,
+  } = route.params;
   // temporary until advanced settings is finished
   const network = useAppSelector(({APP}) => APP.network);
   const [showOptions, setShowOptions] = useState(false);
   const [isTestnet, setIsTestnet] = useState(false);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const [customTokenAddress, setCustomTokenAddress] = useState('');
+  const [currencyName, setCurrencyName] = useState(_currencyName);
+  const [currencyAbbreviation, setCurrencyAbbreviation] = useState(
+    _currencyAbbreviation,
+  );
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => {
         return (
           <HeaderTitle>
-            {isToken
+            {isCustomToken
+              ? 'Add Custom Token'
+              : isToken
               ? `Add ${currencyAbbreviation} Token`
               : `Add ${currencyAbbreviation} Wallet`}
           </HeaderTitle>
@@ -216,7 +233,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
 
   const add = handleSubmit(async ({walletName}) => {
     try {
-      const currency = currencyAbbreviation.toLowerCase();
+      const currency = currencyAbbreviation!.toLowerCase();
       let _associatedWallet: Wallet | undefined;
 
       if (isToken) {
@@ -361,24 +378,66 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
     [],
   );
 
+  const setTokenInfo = async (tokenAddress: string) => {
+    try {
+      if (!tokenAddress) {
+        return;
+      }
+
+      const opts = {
+        tokenAddress,
+      };
+      const fullWalletObj = key.wallets.find(
+        ({id}) => id === associatedWallet.id,
+      )!;
+      const {network, currencyAbbreviation} = fullWalletObj;
+      const addrData = GetCoinAndNetwork(tokenAddress, network);
+      const isValid =
+        currencyAbbreviation.toLowerCase() === addrData?.coin.toLowerCase() &&
+        addrData?.network === network;
+
+      if (!isValid) {
+        return;
+      }
+
+      const tokenContractInfo = await getTokenContractInfo(fullWalletObj, opts);
+      let customToken: Token = {
+        name: tokenContractInfo.name,
+        symbol: tokenContractInfo.symbol,
+        decimals: Number(tokenContractInfo.decimals),
+        address: tokenAddress,
+      };
+      setCustomTokenAddress(tokenAddress);
+      setCurrencyAbbreviation(tokenContractInfo.symbol);
+      setCurrencyName(tokenContractInfo.name);
+      dispatch(addCustomTokenOption(customToken));
+    } catch (error) {
+      const err =
+        'Could not find any ERC20 contract attached to the provided address. Recheck the contract address and network of the associated wallet.';
+      showErrorModal(err);
+    }
+  };
+
   return (
     <CreateWalletContainer>
       <ScrollView>
-        <Controller
-          control={control}
-          render={({field: {onChange, onBlur, value}}) => (
-            <BoxInput
-              placeholder={`${currencyAbbreviation} Wallet`}
-              label={isToken ? 'TOKEN NAME' : 'WALLET NAME'}
-              onBlur={onBlur}
-              onChangeText={(text: string) => onChange(text)}
-              error={errors.walletName?.message}
-              value={value}
-            />
-          )}
-          name="walletName"
-          defaultValue={`${currencyName}`}
-        />
+        {currencyAbbreviation && currencyName ? (
+          <Controller
+            control={control}
+            render={({field: {onChange, onBlur, value}}) => (
+              <BoxInput
+                placeholder={`${currencyAbbreviation} Wallet`}
+                label={isToken ? 'TOKEN NAME' : 'WALLET NAME'}
+                onBlur={onBlur}
+                onChangeText={(text: string) => onChange(text)}
+                error={errors.walletName?.message}
+                value={value}
+              />
+            )}
+            name="walletName"
+            defaultValue={`${currencyName}`}
+          />
+        ) : null}
 
         {showAssociatedWalletSelectionDropdown && (
           <AssociatedWalletContainer>
@@ -402,6 +461,18 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
             </AssociatedWallet>
           </AssociatedWalletContainer>
         )}
+
+        {isCustomToken ? (
+          <BoxInput
+            placeholder={'Token Address'}
+            label={'CUSTOM TOKEN CONTRACT'}
+            onChangeText={(text: string) => {
+              setTokenInfo(text);
+            }}
+            error={errors.walletName?.message}
+            value={customTokenAddress}
+          />
+        ) : null}
 
         {showWalletAdvancedOptions && (
           <WalletAdvancedOptionsContainer>
@@ -472,8 +543,11 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
         </SheetModal>
 
         <ButtonContainer>
-          <Button onPress={add} buttonStyle={'primary'}>
-            Add {isToken ? 'Token' : 'Wallet'}
+          <Button
+            disabled={!currencyAbbreviation || !currencyName}
+            onPress={add}
+            buttonStyle={'primary'}>
+            Add {isCustomToken ? 'Custom Token' : isToken ? 'Token' : 'Wallet'}
           </Button>
         </ButtonContainer>
       </ScrollView>
