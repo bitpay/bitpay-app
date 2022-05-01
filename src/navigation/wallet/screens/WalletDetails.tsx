@@ -95,7 +95,7 @@ const WalletDetailsContainer = styled.View`
 `;
 
 const HeaderContainer = styled.View`
-  margin: 20px 0;
+  margin: 32px 0 24px;
 `;
 
 const Row = styled.View`
@@ -105,7 +105,7 @@ const Row = styled.View`
 `;
 
 const BalanceContainer = styled.View`
-  padding: 0 15px 10px;
+  padding: 0 15px 40px;
   flex-direction: column;
 `;
 
@@ -181,7 +181,7 @@ const TypeContainer = styled(HeaderSubTitleContainer)`
   border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
   padding: 2px 5px;
   border-radius: 3px;
-  margin: 5px 4px 0;
+  margin: 10px 4px 0;
 `;
 
 const IconContainer = styled.View`
