@@ -256,7 +256,7 @@ export const walletReducer = (
     }
 
     case WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS: {
-      const {tokenOptions,  tokenData,tokenOptionsByAddress} = action.payload;
+      const {tokenOptions, tokenData, tokenOptionsByAddress} = action.payload;
       return {
         ...state,
         tokenOptions: {
@@ -271,7 +271,7 @@ export const walletReducer = (
           ...state.tokenOptionsByAddress,
           ...tokenOptionsByAddress,
         },
-      }
+      };
     }
 
     case WalletActionTypes.SET_WALLET_TERMS_ACCEPTED: {

@@ -10,8 +10,6 @@ export const startWalletStoreInit =
     try {
       const {WALLET} = getState();
 
-      await dispatch(startGetRates(true)); // populate rates and alternative currency list
-
       if (
         !Object.keys(WALLET.tokenOptions).length ||
         !Object.keys(WALLET.tokenData).length ||

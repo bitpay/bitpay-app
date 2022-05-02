@@ -16,20 +16,31 @@ export const startGetTokenOptions =
         tokens: {[key in string]: Token};
       }>('https://api.1inch.io/v4.0/1/tokens');
 
-    const tokenOptions: {[key in string]: Token} = {};
-    const tokenOptionsByAddress: {[key in string]: Token} = {};
-    const tokenData: {[key in string]: CurrencyOpts} = {};
+      const tokenOptions: {[key in string]: Token} = {};
+      const tokenOptionsByAddress: {[key in string]: Token} = {};
+      const tokenData: {[key in string]: CurrencyOpts} = {};
 
-    Object.values(tokens).forEach(token => {
-      populateTokenInfo({token, tokenOptions, tokenData, tokenOptionsByAddress});
-    });
+      Object.values(tokens).forEach(token => {
+        populateTokenInfo({
+          token,
+          tokenOptions,
+          tokenData,
+          tokenOptionsByAddress,
+        });
+      });
 
-    dispatch(successGetTokenOptions({tokenOptions,tokenOptionsByAddress,  tokenData}));
-  } catch (e) {
-    console.error(e);
-    dispatch(failedGetTokenOptions());
-  }
-};
+      dispatch(
+        successGetTokenOptions({
+          tokenOptions,
+          tokenData,
+          tokenOptionsByAddress,
+        }),
+      );
+    } catch (e) {
+      console.error(e);
+      dispatch(failedGetTokenOptions());
+    }
+  };
 
 export const addCustomTokenOption =
   (token: Token): Effect =>
@@ -38,8 +49,19 @@ export const addCustomTokenOption =
       const tokenOptions: {[key in string]: Token} = {};
       const tokenOptionsByAddress: {[key in string]: Token} = {};
       const tokenData: {[key in string]: CurrencyOpts} = {};
-      populateTokenInfo({token, tokenOptions, tokenData, tokenOptionsByAddress});
-      dispatch(successGetTokenOptions({tokenOptions, tokenData, tokenOptionsByAddress}));
+      populateTokenInfo({
+        token,
+        tokenOptions,
+        tokenData,
+        tokenOptionsByAddress,
+      });
+      dispatch(
+        successGetTokenOptions({
+          tokenOptions,
+          tokenData,
+          tokenOptionsByAddress,
+        }),
+      );
     } catch (e) {
       console.error(e);
       dispatch(failedGetTokenOptions());
@@ -50,7 +72,7 @@ const populateTokenInfo = ({
   token,
   tokenOptions,
   tokenData,
-  tokenOptionsByAddress
+  tokenOptionsByAddress,
 }: {
   token: Token;
   tokenOptions: {[key in string]: Token};
