@@ -15,12 +15,13 @@ const signupUrl: string = 'https://www.coinbase.com/signup';
 
 const CoinbaseContainer = styled.SafeAreaView`
   flex: 1;
+  justify-content: center;
 `;
 
 const CoinbaseHeaderContainer = styled.View`
-  margin-top: 10px;
   text-align: center;
   margin-bottom: 40px;
+  margin-top: -50px;
 `;
 
 const ButtonContainer = styled.View`
@@ -41,13 +42,13 @@ const Title = styled(BaseText)`
   font-size: 26px;
   font-weight: bold;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin: 30px 0;
+  margin: 30px 0 8px 0;
 `;
 
 const SubTitle = styled(BaseText)`
   text-align: center;
   font-size: 16px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? '#E1E4E7' : SlateDark)};
 `;
 
 const CoinbaseIntro = () => {
