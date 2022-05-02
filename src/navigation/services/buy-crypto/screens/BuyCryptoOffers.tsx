@@ -338,10 +338,11 @@ const BuyCryptoOffers: React.FC = () => {
             offers.simplex.fee =
               data.fiat_money.total_amount - data.fiat_money.base_amount;
 
-            if (offers.simplex.buyAmount && coin && GetPrecision(coin)) {
+            const precision = dispatch(GetPrecision(coin));
+            if (offers.simplex.buyAmount && coin && precision) {
               offers.simplex.fiatMoney = Number(
                 offers.simplex.buyAmount / data.digital_money.amount,
-              ).toFixed(GetPrecision(coin)!.unitDecimals);
+              ).toFixed(precision!.unitDecimals);
             } else {
               logger.error(
                 `Simplex error: Could not get precision for ${coin}`,

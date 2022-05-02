@@ -94,7 +94,9 @@ const FeeOptions = ({
   };
 
   const getBackgroundColor = (index?: number) => {
-    const {coinColor: backgroundColor} = GetTheme(currencyAbbreviation);
+    const {coinColor: backgroundColor} = dispatch(
+      GetTheme(currencyAbbreviation),
+    );
 
     if (index !== undefined) {
       const selectedIndex =
@@ -203,11 +205,13 @@ const NetworkFeePolicy = () => {
   const [ethFeeOptions, setEthFeeOptions] = useState<any[]>();
   const [btcFeeOptions, setBtcFeeOptions] = useState<any[]>();
   const [isLoading, setIsLoading] = useState(true);
+  const dispatch = useAppDispatch();
 
   const initFeeLevel = async (currencyAbbreviation: string) => {
     let feeOptions: any[] = [];
-    const {feeUnit, feeUnitAmount, blockTime} =
-      GetFeeUnits(currencyAbbreviation);
+    const {feeUnit, feeUnitAmount, blockTime} = dispatch(
+      GetFeeUnits(currencyAbbreviation),
+    );
     try {
       const _feeLevels = await getFeeLevelsUsingBwcClient(
         currencyAbbreviation,
@@ -222,7 +226,8 @@ const NetworkFeePolicy = () => {
         const feeOption: any = {
           ...fee,
           feeUnit,
-          uiLevel: GetFeeOptions(currencyAbbreviation)[level],
+          // @ts-ignore
+          uiLevel: dispatch(GetFeeOptions(currencyAbbreviation))[level],
         };
         feeOption.feePerSatByte = (feePerKb / feeUnitAmount).toFixed();
         feeOption.uiFeePerSatByte = `${feeOption.feePerSatByte} ${
@@ -231,7 +236,7 @@ const NetworkFeePolicy = () => {
 
         if (
           currencyAbbreviation === 'eth' ||
-          IsERCToken(currencyAbbreviation)
+          dispatch(IsERCToken(currencyAbbreviation))
         ) {
           // @ts-ignore
           feeOption.avgConfirmationTime = ethAvgTime[level];

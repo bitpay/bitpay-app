@@ -23,6 +23,7 @@ import useAppSelector from '../../../utils/hooks/useAppSelector';
 import {ParseAmount} from '../../../store/wallet/effects/amount/amount';
 import haptic from '../../../components/haptic-feedback/haptic';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';
+import {useAppDispatch} from '../../../utils/hooks';
 
 const SendMax = styled.TouchableOpacity`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
@@ -149,6 +150,7 @@ const Amount: React.FC<AmountProps> = ({
   } = route.params || {};
   const navigation = useNavigation();
   const theme = useTheme();
+  const dispatch = useAppDispatch();
   const [buttonState, setButtonState] = useState<ButtonState>();
 
   const fiatCurrency = fiatCurrencyAbbreviation || defaultAltCurrency.isoCode;
@@ -221,9 +223,11 @@ const Amount: React.FC<AmountProps> = ({
     const cryptoAmount =
       val === 0 || !cryptoCurrencyAbbreviation
         ? '0'
-        : ParseAmount(
-            primaryIsFiat ? val / rate : val,
-            cryptoCurrencyAbbreviation.toLowerCase(),
+        : dispatch(
+            ParseAmount(
+              primaryIsFiat ? val / rate : val,
+              cryptoCurrencyAbbreviation.toLowerCase(),
+            ),
           ).amount;
     const fiatAmount = formatFiatAmount(val * rate, fiatCurrency);
 

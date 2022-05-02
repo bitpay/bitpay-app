@@ -11,7 +11,7 @@ import ScanSvg from '../../../../../assets/img/onboarding/scan.svg';
 import {NeutralSlate} from '../../../../styles/colors';
 import {RouteProp} from '@react-navigation/core';
 import {WalletScreens, WalletStackParamList} from '../../WalletStack';
-import {RootState} from '../../../../store';
+import {Effect, RootState} from '../../../../store';
 import {formatFiatAmount, sleep} from '../../../../utils/helper-methods';
 import {Key, Recipient} from '../../../../store/wallet/wallet.models';
 import debounce from 'lodash.debounce';
@@ -186,47 +186,52 @@ const SendTo = () => {
     validateAndNavigateToConfirm(cashAddr);
   };
 
-  const checkCoinAndNetwork = (data: any, isPayPro?: boolean): boolean => {
-    let isValid, addrData: CoinNetwork | null;
-    if (isPayPro) {
-      isValid =
-        data?.chain === Currencies[currencyAbbreviation.toLowerCase()].chain &&
-        data?.network === network;
-    } else {
-      addrData = GetCoinAndNetwork(data, network);
-      isValid =
-        GetChain(currencyAbbreviation).toLowerCase() ===
-          addrData?.coin.toLowerCase() && addrData?.network === network;
-    }
+  const checkCoinAndNetwork =
+    (data: any, isPayPro?: boolean): Effect<boolean> =>
+    dispatch => {
+      let isValid, addrData: CoinNetwork | null;
+      if (isPayPro) {
+        isValid =
+          data?.chain ===
+            Currencies[currencyAbbreviation.toLowerCase()].chain &&
+          data?.network === network;
+      } else {
+        addrData = GetCoinAndNetwork(data, network);
+        isValid =
+          dispatch(GetChain(currencyAbbreviation)).toLowerCase() ===
+            addrData?.coin.toLowerCase() && addrData?.network === network;
+      }
 
-    if (isValid) {
-      return true;
-    } else {
-      // @ts-ignore
-      let addrNetwork = isPayPro ? data.network : addrData?.network;
-      if (currencyAbbreviation === 'bch' && network === addrNetwork) {
-        const isLegacy = CheckIfLegacyBCH(data);
-        if (isLegacy) {
-          const appName = APP_NAME;
+      if (isValid) {
+        return true;
+      } else {
+        // @ts-ignore
+        let addrNetwork = isPayPro ? data.network : addrData?.network;
+        if (currencyAbbreviation === 'bch' && network === addrNetwork) {
+          const isLegacy = CheckIfLegacyBCH(data);
+          if (isLegacy) {
+            const appName = APP_NAME;
 
-          dispatch(
-            showBottomNotificationModal(
-              BchLegacyAddressInfo(appName, () => {
-                BchLegacyAddressInfoDismiss(data);
-              }),
-            ),
-          );
+            dispatch(
+              showBottomNotificationModal(
+                BchLegacyAddressInfo(appName, () => {
+                  BchLegacyAddressInfoDismiss(data);
+                }),
+              ),
+            );
+          } else {
+            dispatch(
+              showBottomNotificationModal(Mismatch(onErrorMessageDismiss)),
+            );
+          }
         } else {
           dispatch(
             showBottomNotificationModal(Mismatch(onErrorMessageDismiss)),
           );
         }
-      } else {
-        dispatch(showBottomNotificationModal(Mismatch(onErrorMessageDismiss)));
       }
-    }
-    return false;
-  };
+      return false;
+    };
 
   const validateAndNavigateToConfirm = async (text: string) => {
     const data = ValidateURI(text);
@@ -248,7 +253,7 @@ const SendTo = () => {
             currencyAbbreviation.toUpperCase() === option.currency,
         );
         if (selected) {
-          const isValid = checkCoinAndNetwork(selected, true);
+          const isValid = dispatch(checkCoinAndNetwork(selected, true));
           if (isValid) {
             navigation.navigate('Wallet', {
               screen: WalletScreens.PAY_PRO_CONFIRM,
@@ -273,7 +278,7 @@ const SendTo = () => {
         );
       }
     } else if (ValidDataTypes.includes(data?.type)) {
-      if (checkCoinAndNetwork(text)) {
+      if (dispatch(checkCoinAndNetwork(text))) {
         const recipient = {
           type: 'address',
           address: text,
@@ -359,7 +364,7 @@ const SendTo = () => {
             } catch (err: any) {
               setButtonState('failed');
               const [errorMessageConfig] = await Promise.all([
-                handleCreateTxProposalError(err),
+                dispatch(handleCreateTxProposalError(err)),
                 sleep(400),
               ]);
               dispatch(

@@ -317,7 +317,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                 } catch (err: any) {
                   setButtonState('failed');
                   const [errorMessageConfig] = await Promise.all([
-                    handleCreateTxProposalError(err),
+                    dispatch(handleCreateTxProposalError(err)),
                     sleep(400),
                   ]);
                   dispatch(
