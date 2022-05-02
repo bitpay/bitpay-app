@@ -188,7 +188,9 @@ export const getTokenRates =
               code: altCurrency.toUpperCase(),
               fetchedOn: yesterday,
               name: tokenName,
-              rate: value[altCurrency] + value[`${altCurrency}_24h_change`],
+              rate:
+                value[altCurrency] +
+                (value[altCurrency] * value[`${altCurrency}_24h_change`]) / 100,
               ts: yesterday,
             });
           });
