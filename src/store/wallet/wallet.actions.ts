@@ -111,6 +111,7 @@ export const deleteKey = (payload: {keyId: string}): WalletActionType => ({
 export const successGetTokenOptions = (payload: {
   tokenOptions: {[key in string]: Token};
   tokenData: {[key in string]: CurrencyOpts};
+  tokenOptionsByAddress: {[key in string]: Token};
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS,
   payload,

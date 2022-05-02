@@ -163,6 +163,7 @@ interface successGetTokenOptions {
   payload: {
     tokenOptions: {[key in string]: Token};
     tokenData: {[key in string]: CurrencyOpts};
+    tokenOptionsByAddress: {[key in string]: Token};
   };
 }
 
