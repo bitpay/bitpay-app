@@ -2,6 +2,7 @@ import {DateRanges, Key, PriceHistory, Rates, Token} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {FeeLevels} from './effects/fee/fee';
 import {DEFAULT_DATE_RANGE} from '../../constants/wallet';
+import {CurrencyOpts} from '../../constants/currencies';
 
 type WalletReduxPersistBlackList = [];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
@@ -14,6 +15,7 @@ export interface WalletState {
   ratesByDateRange: {[key in DateRanges]: Rates};
   priceHistory: Array<PriceHistory>;
   tokenOptions: {[key in string]: Token};
+  tokenData: {[key in string]: CurrencyOpts};
   walletTermsAccepted: boolean;
   portfolioBalance: {
     current: number;
@@ -40,6 +42,7 @@ const initialState: WalletState = {
   lastDayRates: {},
   priceHistory: [],
   tokenOptions: {},
+  tokenData: {},
   walletTermsAccepted: false,
   portfolioBalance: {
     current: 0,
@@ -251,9 +254,17 @@ export const walletReducer = (
     }
 
     case WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS: {
+      const {tokenOptions, tokenData} = action.payload;
       return {
         ...state,
-        tokenOptions: action.payload,
+        tokenOptions: {
+          ...state.tokenOptions,
+          ...tokenOptions,
+        },
+        tokenData: {
+          ...state.tokenData,
+          ...tokenData,
+        },
       };
     }
 

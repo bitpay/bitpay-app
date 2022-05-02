@@ -1,5 +1,5 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useCallback, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ScrollView, View} from 'react-native';
 import {TouchableOpacity} from 'react-native-gesture-handler';
@@ -49,6 +49,10 @@ const CardTypeButtons = styled.View`
 `;
 
 const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
+  const [animationsEnabled, setAnimationsEnabled] = useState<boolean>();
+  useEffect(() => {
+    setAnimationsEnabled(true);
+  }, []);
   const {id} = route.params;
   const {t} = useTranslation();
   const carouselRef = useRef<Carousel<Card>>(null);
@@ -175,11 +179,12 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
           const easing = Easing.linear;
 
           const useTransition = cardsToShow.length > 1;
-          const transitionEnter = useTransition
-            ? isVirtual
-              ? SlideInLeft.duration(duration).delay(delay).easing(easing)
-              : SlideInRight.duration(duration).delay(delay).easing(easing)
-            : undefined;
+          const transitionEnter =
+            useTransition && animationsEnabled
+              ? isVirtual
+                ? SlideInLeft.duration(duration).delay(delay).easing(easing)
+                : SlideInRight.duration(duration).delay(delay).easing(easing)
+              : undefined;
 
           const transitionLeave = useTransition
             ? isVirtual

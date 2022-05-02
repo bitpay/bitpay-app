@@ -66,6 +66,7 @@ import {
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {FormatAmount} from '../../../store/wallet/effects/amount/amount';
 import {TransactionOptionsContext} from '../../../store/wallet/wallet.models';
+import CopiedSvg from '../../../../assets/img/copied-success.svg';
 
 const TxsDetailsContainer = styled.View`
   flex: 1;
@@ -155,6 +156,15 @@ const DetailLink = styled(Link)`
 
 const InputText = styled(ImportTextInput)`
   height: 75px;
+`;
+
+const CopyImgContainer = styled.View`
+  justify-content: center;
+  margin-right: 5px;
+`;
+
+const CopyTransactionId = styled.TouchableOpacity`
+  flex-direction: row;
 `;
 
 const TimelineList = ({actions}: {actions: TxActions[]}) => {
@@ -319,9 +329,25 @@ const TransactionDetails = () => {
     }
   };
 
+  const [copied, setCopied] = useState(false);
+
   const copyText = (text: string) => {
-    Clipboard.setString(text);
+    if (!copied) {
+      Clipboard.setString(text);
+      setCopied(true);
+    }
   };
+
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setCopied(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [copied]);
 
   const goToBlockchain = () => {
     let url = GetBlockExplorerUrl(currencyAbbreviation, network);
@@ -548,11 +574,14 @@ const TransactionDetails = () => {
             <DetailRow>
               <H7>Transaction ID</H7>
 
-              <TouchableOpacity onPress={() => copyText(txs.txid)}>
+              <CopyTransactionId onPress={() => copyText(txs.txid)}>
+                <CopyImgContainer>
+                  {copied ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainer>
                 <TransactionIdText numberOfLines={1} ellipsizeMode={'tail'}>
                   {txs.txid}
                 </TransactionIdText>
-              </TouchableOpacity>
+              </CopyTransactionId>
             </DetailRow>
           </DetailContainer>
 

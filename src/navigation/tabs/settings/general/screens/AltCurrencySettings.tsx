@@ -6,11 +6,13 @@ import AltCurrenciesRow, {
   AltCurrenciesRowProps,
 } from '../../../../../components/list/AltCurrenciesRow';
 import {
-  HEIGHT,
   Hr as _Hr,
   SearchContainer,
   SearchInput,
   ScreenGutter,
+  NoResultsContainer,
+  NoResultsImgContainer,
+  NoResultsDescription,
 } from '../../../../../components/styled/Containers';
 import {FlatList} from 'react-native';
 import {BaseText} from '../../../../../components/styled/Text';
@@ -41,22 +43,6 @@ const Header = styled.View`
 
 const SearchResults = styled.View`
   margin: 0 0 50px 0;
-`;
-
-const NoResultsContainer = styled.View`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: ${HEIGHT - 300}px;
-  padding: 20px 40px;
-`;
-
-const NoResultsImgContainer = styled.View`
-  padding-bottom: 40px;
-`;
-
-const NoResultsDescription = styled(BaseText)`
-  font-size: 16px;
 `;
 
 const Label = styled(BaseText)`
@@ -182,9 +168,6 @@ const AltCurrencySettings = () => {
             <NoResultsDescription>
               {"We couldn't find a match for "}
               <BaseText style={{fontWeight: 'bold'}}>{searchVal}</BaseText>.
-            </NoResultsDescription>
-            <NoResultsDescription>
-              Please try another currency.
             </NoResultsDescription>
           </NoResultsContainer>
         )}

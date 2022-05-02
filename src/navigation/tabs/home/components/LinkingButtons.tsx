@@ -8,6 +8,7 @@ import {ActiveOpacity} from '../../../../components/styled/Containers';
 import {useNavigation} from '@react-navigation/native';
 import {Path, Svg} from 'react-native-svg';
 import {useRequireKeyAndWalletRedirect} from '../../../../utils/hooks/useRequireKeyAndWalletRedirect';
+import analytics from '@segment/analytics-react-native';
 
 const ButtonsRow = styled.View`
   justify-content: center;
@@ -129,6 +130,9 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
     buy && buy.cta
       ? buy.cta
       : () => {
+          analytics.track('BitPay App - Clicked Buy Crypto', {
+            from: 'LinkingButtons',
+          });
           navigation.navigate('Wallet', {
             screen: 'Amount',
             params: {
@@ -161,7 +165,12 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
       cta:
         swap && swap.cta
           ? swap.cta
-          : () => navigation.navigate('SwapCrypto', {screen: 'Root'}),
+          : () => {
+              analytics.track('BitPay App - Clicked Swap Crypto', {
+                from: 'LinkingButtons',
+              });
+              navigation.navigate('SwapCrypto', {screen: 'Root'});
+            },
       hide: !!swap?.hide,
     },
     {
