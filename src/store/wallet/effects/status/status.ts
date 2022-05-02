@@ -395,7 +395,16 @@ const updateWalletStatus = ({
                 : 0,
           };
 
-          const newPendingTxps = ProcessPendingTxps(status.pendingTxps, wallet);
+          let newPendingTxps = [];
+          try {
+            if (status.pendingTxps?.length > 0) {
+              newPendingTxps = ProcessPendingTxps(status.pendingTxps, wallet);
+            }
+          } catch (error) {
+            console.log(
+              `Wallet: ${wallet.currencyAbbreviation} - error getting pending txps.`,
+            );
+          }
 
           console.log('Status updated: ', newBalance, newPendingTxps);
 
