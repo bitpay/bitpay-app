@@ -46,6 +46,9 @@ const HomeRoot = () => {
   const brazeQuickLinks = useAppSelector(selectBrazeQuickLinks);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
   const hasKeys = Object.values(keys).length;
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups.length > 0;
@@ -194,6 +197,7 @@ const HomeRoot = () => {
                                 'BitPay App - Clicked Buy Crypto',
                                 {
                                   from: 'HomeRoot',
+                                  appUser: user?.eid || '',
                                 },
                               );
                               navigation.navigate('Wallet', {

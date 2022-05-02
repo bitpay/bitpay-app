@@ -1,10 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import {ScrollView} from 'react-native';
-import {useSelector} from 'react-redux';
 import {RouteProp} from '@react-navigation/core';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
-import {useAppDispatch} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {BuyCryptoStackParamList} from '../BuyCryptoStack';
 import {PaymentMethodsAvailable} from '../constants/BuyCryptoConstants';
 import PaymentMethodsModal from '../components/PaymentMethodModal';
@@ -52,7 +51,10 @@ const BuyCryptoRoot: React.FC = () => {
   const navigation = useNavigation();
   const theme = useTheme();
   const route = useRoute<RouteProp<BuyCryptoStackParamList, 'Root'>>();
-  const allKeys = useSelector(({WALLET}: RootState) => WALLET.keys);
+  const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
 
   const fromWallet = route.params?.fromWallet;
   const fromAmount = route.params?.amount;
@@ -438,6 +440,7 @@ const BuyCryptoRoot: React.FC = () => {
                 fiatCurrency: 'USD',
                 paymentMethod: selectedPaymentMethod.method,
                 coin: selectedWallet!.currencyAbbreviation,
+                appUser: user?.eid || '',
               });
 
               navigation.navigate('BuyCrypto', {
