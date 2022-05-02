@@ -42,6 +42,7 @@ import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
 import {ShopActions} from '../../../../../store/shop';
 import {APP_NETWORK} from '../../../../../constants/config';
 import {useAppSelector} from '../../../../../utils/hooks';
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;
@@ -294,7 +295,9 @@ const BuyGiftCard = ({
                 </SupportedAmounts>
               </DenomSelectionContainer>
             ) : (
-              <Amount>{formatFiatAmount(0, cardConfig.currency)}</Amount>
+              <TouchableWithoutFeedback onPress={() => goToAmountScreen()}>
+                <Amount>{formatFiatAmount(0, cardConfig.currency)}</Amount>
+              </TouchableWithoutFeedback>
             )}
           </AmountContainer>
         </GradientBox>
