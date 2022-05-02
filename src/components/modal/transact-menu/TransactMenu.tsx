@@ -9,6 +9,7 @@ import {BaseText, H6} from '../../styled/Text';
 import SheetModal from '../base/sheet/SheetModal';
 import Icons from './TransactMenuIcons';
 import analytics from '@segment/analytics-react-native';
+import {useAppSelector} from '../../../utils/hooks';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -80,6 +81,9 @@ const TransactModal = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const hideModal = () => setModalVisible(false);
   const showModal = () => setModalVisible(true);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
 
   const TransactMenuList: Array<TransactMenuItemProps> = [
     {
@@ -90,6 +94,7 @@ const TransactModal = () => {
       onPress: () => {
         analytics.track('BitPay App - Clicked Buy Crypto', {
           from: 'TransactMenu',
+          appUser: user?.eid || '',
         });
         navigation.navigate('Wallet', {
           screen: 'Amount',
@@ -117,6 +122,7 @@ const TransactModal = () => {
       onPress: () => {
         analytics.track('BitPay App - Clicked Swap Crypto', {
           from: 'TransactMenu',
+          appUser: user?.eid || '',
         });
         navigation.navigate('SwapCrypto', {screen: 'Root'});
       },

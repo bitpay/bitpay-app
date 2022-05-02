@@ -143,6 +143,9 @@ const PriceCharts = () => {
     params: {item},
   } = useRoute<RouteProp<WalletStackParamList, 'PriceCharts'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
 
   const {
     average,
@@ -263,6 +266,7 @@ const PriceCharts = () => {
     analytics.track('BitPay App - Clicked Buy Crypto', {
       from: 'PriceChart',
       coin: currencyAbbreviation || '',
+      appUser: user?.eid || '',
     });
     navigation.navigate('Wallet', {
       screen: 'Amount',

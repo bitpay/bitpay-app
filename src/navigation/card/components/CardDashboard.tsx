@@ -115,6 +115,9 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const virtualDesignCurrency = useAppSelector(
     ({CARD}) => CARD.virtualDesignCurrency,
   );
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
 
   const keys = useAppSelector(({WALLET}) => Object.values(WALLET.keys));
   const network = useAppSelector(({APP}) => APP.network);
@@ -179,6 +182,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
               action: () => {
                 analytics.track('BitPay App - Clicked Buy Crypto', {
                   from: 'CardDashboard',
+                  appUser: user?.eid || '',
                 });
                 navigator.navigate('Wallet', {
                   screen: WalletScreens.AMOUNT,

@@ -238,6 +238,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
   const fullWalletObj = findWalletById(wallets, walletId) as Wallet;
   const uiFormattedWallet = buildUIFormattedWallet(
     fullWalletObj,
@@ -732,6 +735,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         analytics.track('BitPay App - Clicked Buy Crypto', {
                           from: 'walletDetails',
                           coin: fullWalletObj.currencyAbbreviation,
+                          appUser: user?.eid || '',
                         });
                         navigation.navigate('Wallet', {
                           screen: 'Amount',
@@ -762,6 +766,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         analytics.track('BitPay App - Clicked Swap Crypto', {
                           from: 'walletDetails',
                           coin: fullWalletObj.currencyAbbreviation,
+                          appUser: user?.eid || '',
                         });
                         navigation.navigate('SwapCrypto', {
                           screen: 'Root',
