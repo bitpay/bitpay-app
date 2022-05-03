@@ -1,8 +1,6 @@
 import Modal from 'react-native-modal';
 import React, {useState, useEffect} from 'react';
-import {RootState} from '../../../store';
 import {AppActions} from '../../../store/app';
-import {useDispatch, useSelector} from 'react-redux';
 import PinDots from './PinDots';
 import haptic from '../../haptic-feedback/haptic';
 import {BwcProvider} from '../../../lib/bwc';
@@ -19,6 +17,8 @@ import {ActiveOpacity} from '../../styled/Containers';
 import Back from '../../back/Back';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+
 export interface PinModalConfig {
   type: 'set' | 'check';
 }
@@ -58,12 +58,12 @@ const ATTEMPT_LIMIT = 3;
 const ATTEMPT_LOCK_OUT_TIME = 2 * 60;
 
 const PinModal: React.FC = () => {
-  const dispatch = useDispatch();
-  const isVisible = useSelector(({APP}: RootState) => APP.showPinModal);
-  const {type} = useSelector(({APP}: RootState) => APP.pinModalConfig) || {};
+  const dispatch = useAppDispatch();
+  const isVisible = useAppSelector(({APP}) => APP.showPinModal);
+  const {type} = useAppSelector(({APP}) => APP.pinModalConfig) || {};
   const [pin, setPin] = useState<Array<string | undefined>>([]);
-  const [message, setMessage] = useState<string>('Please enter your PIN');
-  const [shakeDots, setShakeDots] = useState<boolean>(false);
+  const [message, setMessage] = useState('Please enter your PIN');
+  const [shakeDots, setShakeDots] = useState(false);
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const [showBackButton, setShowBackButton] = useState<boolean>();
@@ -75,18 +75,18 @@ const PinModal: React.FC = () => {
   }, [type]);
 
   // checkPin
-  const currentPin = useSelector(({APP}: RootState) => APP.currentPin);
-  const pinBannedUntil = useSelector(({APP}: RootState) => APP.pinBannedUntil);
+  const currentPin = useAppSelector(({APP}) => APP.currentPin);
+  const pinBannedUntil = useAppSelector(({APP}) => APP.pinBannedUntil);
   const [attempts, setAttempts] = useState<number>(0);
 
   // setPin
-  const [fistPinEntered, setFistPinEntered] = useState<
+  const [firstPinEntered, setFirstPinEntered] = useState<
     Array<string | undefined>
   >([]);
 
   const reset = () => {
     setMessage('Please enter your PIN');
-    setFistPinEntered([]);
+    setFirstPinEntered([]);
     setAttempts(0);
     setPin([]);
   };
@@ -111,7 +111,7 @@ const PinModal: React.FC = () => {
   };
 
   const setCurrentPin = (pin: Array<string>) => {
-    if (isEqual(fistPinEntered, pin)) {
+    if (isEqual(firstPinEntered, pin)) {
       dispatch(AppActions.pinLockActive(true));
       const pinHash = sjcl.codec.hex.fromBits(
         sjcl.hash.sha256.hash(pin.join('')),
@@ -173,11 +173,11 @@ const PinModal: React.FC = () => {
     // Give some time for dot to fill
     await sleep(0);
 
-    if (!fistPinEntered.length && type === 'set') {
+    if (!firstPinEntered.length && type === 'set') {
       setMessage('Confirm your PIN');
-      setFistPinEntered(newPin);
+      setFirstPinEntered(newPin);
       setPin([]);
-    } else if (fistPinEntered.length && type === 'set') {
+    } else if (firstPinEntered.length && type === 'set') {
       setCurrentPin(newPin as Array<string>);
     } else {
       checkPin(newPin as Array<string>);
