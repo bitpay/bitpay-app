@@ -1,5 +1,5 @@
 import Modal from 'react-native-modal';
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {AppActions} from '../../../store/app';
 import PinDots from './PinDots';
 import haptic from '../../haptic-feedback/haptic';
@@ -57,19 +57,23 @@ const PIN_LENGTH = 4;
 const ATTEMPT_LIMIT = 3;
 const ATTEMPT_LOCK_OUT_TIME = 2 * 60;
 
-const PinModal: React.FC = () => {
+const hashPin = (pin: string[]) => {
+  const bits = sjcl.hash.sha256.hash(pin.join(''));
+
+  return sjcl.codec.hex.fromBits(bits);
+};
+
+const Pin = gestureHandlerRootHOC(() => {
   const dispatch = useAppDispatch();
-  const isVisible = useAppSelector(({APP}) => APP.showPinModal);
   const {type} = useAppSelector(({APP}) => APP.pinModalConfig) || {};
   const [pin, setPin] = useState<Array<string | undefined>>([]);
   const [message, setMessage] = useState('Please enter your PIN');
   const [shakeDots, setShakeDots] = useState(false);
-  const theme = useTheme();
   const insets = useSafeAreaInsets();
   const [showBackButton, setShowBackButton] = useState<boolean>();
 
   useEffect(() => {
-    if (type === 'set' && !showBackButton) {
+    if (type === 'set') {
       setShowBackButton(true);
     }
   }, [type]);
@@ -84,122 +88,165 @@ const PinModal: React.FC = () => {
     Array<string | undefined>
   >([]);
 
-  const reset = () => {
+  const reset = useCallback(() => {
     setMessage('Please enter your PIN');
     setFirstPinEntered([]);
     setAttempts(0);
     setPin([]);
-  };
+  }, [setMessage, setFirstPinEntered, setAttempts, setPin]);
 
-  const checkPin = (pin: Array<string>) => {
-    const pinHash = sjcl.codec.hex.fromBits(
-      sjcl.hash.sha256.hash(pin.join('')),
-    );
-    if (isEqual(currentPin, pinHash)) {
-      dispatch(AppActions.showBlur(false));
-      const authorizedUntil =
-        Math.floor(Date.now() / 1000) + LOCK_AUTHORIZED_TIME;
-      dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
-      dispatch(AppActions.dismissPinModal()); // Correct PIN dismiss modal
-      setTimeout(reset, 300);
-    } else {
+  const checkPin = useCallback(
+    (pinToCheck: Array<string>) => {
+      const pinHash = hashPin(pinToCheck);
+
+      if (isEqual(currentPin, pinHash)) {
+        dispatch(AppActions.showBlur(false));
+        const authorizedUntil =
+          Math.floor(Date.now() / 1000) + LOCK_AUTHORIZED_TIME;
+        dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
+        dispatch(AppActions.dismissPinModal()); // Correct PIN dismiss modal
+        const timerId = setTimeout(reset, 300);
+
+        return () => {
+          clearTimeout(timerId);
+        };
+      }
+
       setShakeDots(true);
       setMessage('Incorrect PIN, try again');
       setPin([]);
-      setAttempts(attempts + 1); // Incorrect increment attempts
-    }
-  };
+      setAttempts(_attempts => _attempts + 1); // Incorrect increment attempts
+    },
+    [
+      dispatch,
+      setShakeDots,
+      setMessage,
+      setPin,
+      setAttempts,
+      reset,
+      currentPin,
+    ],
+  );
 
-  const setCurrentPin = (pin: Array<string>) => {
-    if (isEqual(firstPinEntered, pin)) {
-      dispatch(AppActions.pinLockActive(true));
-      const pinHash = sjcl.codec.hex.fromBits(
-        sjcl.hash.sha256.hash(pin.join('')),
-      );
-      dispatch(AppActions.currentPin(pinHash));
-      dispatch(AppActions.showBlur(false));
-      const authorizedUntil =
-        Math.floor(Date.now() / 1000) + LOCK_AUTHORIZED_TIME;
-      dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
-      dispatch(AppActions.dismissPinModal());
-      setTimeout(reset, 300);
-      return;
-    } else {
+  const setCurrentPin = useCallback(
+    (newPin: Array<string>) => {
+      if (isEqual(firstPinEntered, newPin)) {
+        dispatch(AppActions.pinLockActive(true));
+        const pinHash = hashPin(newPin);
+        dispatch(AppActions.currentPin(pinHash));
+        dispatch(AppActions.showBlur(false));
+
+        const authorizedUntil =
+          Math.floor(Date.now() / 1000) + LOCK_AUTHORIZED_TIME;
+        dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
+        dispatch(AppActions.dismissPinModal());
+
+        const timerId = setTimeout(reset, 300);
+
+        return () => {
+          clearTimeout(timerId);
+        };
+      }
+
       setShakeDots(true);
-    }
-    reset();
-  };
+      reset();
+    },
+    [dispatch, setShakeDots, reset, firstPinEntered],
+  );
 
-  const handleCellPress = (value: string) => {
-    let newPin = [...pin];
-    switch (value) {
-      case 'reset':
-        reset();
-        newPin = [];
-        break;
-      case 'backspace':
-        newPin.splice(-1);
-        setPin(newPin);
-        break;
-      default:
-        if (
-          Number(value) >= PIN_MIN_VALUE &&
-          Number(value) <= PIN_MAX_VALUE &&
-          pin.length <= PIN_LENGTH
-        ) {
-          // Adding new PIN
-          newPin[newPin.length] = value;
+  const handleCellPress = useCallback(
+    (value: string) => {
+      let newPin = pin.slice();
+      switch (value) {
+        case 'reset':
+          reset();
+          newPin = [];
+          break;
+        case 'backspace':
+          newPin.splice(-1);
           setPin(newPin);
-        }
-        break;
-    }
-    return newPin;
-  };
+          break;
+        default:
+          if (
+            Number(value) >= PIN_MIN_VALUE &&
+            Number(value) <= PIN_MAX_VALUE &&
+            pin.length <= PIN_LENGTH
+          ) {
+            // Adding new PIN
+            newPin[newPin.length] = value;
+            setPin(newPin);
+          }
+          break;
+      }
+      return newPin;
+    },
+    [setPin, reset, pin],
+  );
 
-  const onCellPress = async (value: string) => {
-    if (pinBannedUntil) {
-      // banned wait for entering new pin
-      return;
-    }
-    haptic('impactLight');
+  const onCellPress = useCallback(
+    async (value: string) => {
+      if (pinBannedUntil) {
+        // banned wait for entering new pin
+        return;
+      }
+      haptic('soft');
 
-    const newPin = handleCellPress(value);
+      const newPin = handleCellPress(value);
 
-    if (newPin.length !== PIN_LENGTH) {
-      // Waiting for more PIN digits
-      return;
-    }
-
-    // Give some time for dot to fill
-    await sleep(0);
-
-    if (!firstPinEntered.length && type === 'set') {
-      setMessage('Confirm your PIN');
-      setFirstPinEntered(newPin);
-      setPin([]);
-    } else if (firstPinEntered.length && type === 'set') {
-      setCurrentPin(newPin as Array<string>);
-    } else {
-      checkPin(newPin as Array<string>);
-    }
-  };
-
-  const setCountDown = (bannedUntil: number) => {
-    return setInterval(() => {
-      const now = Math.floor(Date.now() / 1000);
-      const totalSecs = bannedUntil - now;
-
-      if (totalSecs < 0) {
-        dispatch(AppActions.pinBannedUntil(undefined));
-        reset();
+      if (newPin.length !== PIN_LENGTH) {
+        // Waiting for more PIN digits
         return;
       }
 
-      const m = Math.floor(totalSecs / 60);
-      const s = totalSecs % 60;
-      setMessage(`Try again in ${('0' + m).slice(-2)}:${('0' + s).slice(-2)}`);
-    }, 1000);
-  };
+      // Give some time for dot to fill
+      await sleep(0);
+
+      if (type === 'set') {
+        if (firstPinEntered.length) {
+          setCurrentPin(newPin as Array<string>);
+        } else {
+          setMessage('Confirm your PIN');
+          setFirstPinEntered(newPin);
+          setPin([]);
+        }
+      } else {
+        checkPin(newPin as Array<string>);
+      }
+    },
+    [
+      setCurrentPin,
+      setMessage,
+      setFirstPinEntered,
+      setPin,
+      handleCellPress,
+      checkPin,
+      firstPinEntered.length,
+      pinBannedUntil,
+      type,
+    ],
+  );
+
+  const setCountDown = useCallback(
+    (bannedUntil: number) => {
+      return setInterval(() => {
+        const now = Math.floor(Date.now() / 1000);
+        const totalSecs = bannedUntil - now;
+
+        if (totalSecs < 0) {
+          dispatch(AppActions.pinBannedUntil(undefined));
+          reset();
+          return;
+        }
+
+        const m = Math.floor(totalSecs / 60);
+        const s = totalSecs % 60;
+        setMessage(
+          `Try again in ${('0' + m).slice(-2)}:${('0' + s).slice(-2)}`,
+        );
+      }, 1000);
+    },
+    [dispatch, setMessage, reset],
+  );
 
   useEffect(() => {
     if (attempts === ATTEMPT_LIMIT) {
@@ -211,7 +258,7 @@ const PinModal: React.FC = () => {
         clearInterval(timer);
       };
     }
-  }, [attempts]);
+  }, [dispatch, setCountDown, attempts]);
 
   useEffect(() => {
     const now = Math.floor(Date.now() / 1000);
@@ -223,49 +270,52 @@ const PinModal: React.FC = () => {
     } else if (pinBannedUntil) {
       dispatch(AppActions.pinBannedUntil(undefined));
     }
-  }, [pinBannedUntil]);
+  }, [dispatch, setCountDown, pinBannedUntil]);
 
-  const Pin = gestureHandlerRootHOC(() => {
-    return (
-      <PinContainer>
-        {showBackButton ? (
-          <SheetHeaderContainer style={{marginTop: insets.top, marginLeft: 15}}>
-            <TouchableOpacity
-              activeOpacity={ActiveOpacity}
-              onPress={() => {
-                dispatch(AppActions.dismissPinModal());
-                reset();
-              }}>
-              <Back
-                color={White}
-                background={'rgba(255, 255, 255, 0.2)'}
-                opacity={1}
-              />
-            </TouchableOpacity>
-          </SheetHeaderContainer>
-        ) : null}
-        <View style={{marginTop: type === 'set' ? '10%' : '40%'}}>
-          <BitPayLogo height={50} />
-        </View>
-        <PinMessagesContainer>
-          <PinMessage>{message}</PinMessage>
-        </PinMessagesContainer>
-        <PinDots
-          shakeDots={shakeDots}
-          setShakeDots={setShakeDots}
-          pinLength={PIN_LENGTH}
-          pin={pin}
+  return (
+    <PinContainer>
+      {showBackButton ? (
+        <SheetHeaderContainer style={{marginTop: insets.top, marginLeft: 15}}>
+          <TouchableOpacity
+            activeOpacity={ActiveOpacity}
+            onPress={() => {
+              dispatch(AppActions.dismissPinModal());
+              reset();
+            }}>
+            <Back
+              color={White}
+              background={'rgba(255, 255, 255, 0.2)'}
+              opacity={1}
+            />
+          </TouchableOpacity>
+        </SheetHeaderContainer>
+      ) : null}
+      <View style={{marginTop: type === 'set' ? '10%' : '40%'}}>
+        <BitPayLogo height={50} />
+      </View>
+      <PinMessagesContainer>
+        <PinMessage>{message}</PinMessage>
+      </PinMessagesContainer>
+      <PinDots
+        shakeDots={shakeDots}
+        setShakeDots={setShakeDots}
+        pinLength={PIN_LENGTH}
+        pin={pin}
+      />
+      <VirtualKeyboardContainer>
+        <VirtualKeyboard
+          showDot={false}
+          onCellPress={onCellPress}
+          darkModeOnly={true}
         />
-        <VirtualKeyboardContainer>
-          <VirtualKeyboard
-            showDot={false}
-            onCellPress={onCellPress}
-            darkModeOnly={true}
-          />
-        </VirtualKeyboardContainer>
-      </PinContainer>
-    );
-  });
+      </VirtualKeyboardContainer>
+    </PinContainer>
+  );
+});
+
+const PinModal: React.FC = () => {
+  const isVisible = useAppSelector(({APP}) => APP.showPinModal);
+  const theme = useTheme();
 
   return (
     <Modal
