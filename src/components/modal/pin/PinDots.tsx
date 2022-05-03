@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {Animated, Vibration} from 'react-native';
 import styled, {css} from 'styled-components/native';
-import {NeutralSlate, White} from '../../../styles/colors';
+import {White} from '../../../styles/colors';
 
 interface PinDotsProps {
   pin: Array<string | undefined>;

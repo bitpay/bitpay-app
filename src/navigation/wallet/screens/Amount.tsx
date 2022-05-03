@@ -1,4 +1,10 @@
-import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import {BaseText} from '../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
@@ -175,7 +181,7 @@ const Amount: React.FC<AmountProps> = ({
     : [fiatCurrency];
 
   const allRates = useAppSelector(({WALLET}) => WALLET.rates);
-  const [curVal, setCurVal] = useState('');
+  const curValRef = useRef('');
 
   const {
     displayAmount,
@@ -185,36 +191,16 @@ const Amount: React.FC<AmountProps> = ({
     primaryIsFiat,
   } = amountConfig;
 
-  useEffect(() => {
-    if (!currency) {
-      return;
-    }
-    updateAmount('0');
-    // if added for dev (hot reload)
-    if (!primaryIsFiat && allRates[currency.toLowerCase()]) {
-      const fiatRate = allRates[currency.toLowerCase()].find(
-        r => r.code === fiatCurrency,
-      )!.rate;
-      setRate(fiatRate);
-    }
-  }, []);
-
-  useEffect(() => {
-    return navigation.addListener('blur', async () => {
-      await sleep(300);
-      setButtonState(undefined);
-    });
-  }, [navigation]);
-
   const updateAmount = (_val: string) => {
-    updateAmountConfig(current => ({
-      ...current,
-      displayAmount: _val,
-      amount: _val,
-    }));
-
     const val = Number(_val);
+
     if (isNaN(val) || !cryptoCurrencyAbbreviation) {
+      updateAmountConfig(current => ({
+        ...current,
+        displayAmount: _val,
+        amount: _val,
+      }));
+
       return;
     }
 
@@ -229,10 +215,38 @@ const Amount: React.FC<AmountProps> = ({
 
     updateAmountConfig(current => ({
       ...current,
+      displayAmount: _val,
       displayEquivalentAmount: primaryIsFiat ? cryptoAmount : fiatAmount,
       amount: cryptoAmount,
     }));
   };
+  const updateAmountRef = useRef(updateAmount);
+  updateAmountRef.current = updateAmount;
+
+  const init = () => {
+    if (!currency) {
+      return;
+    }
+    updateAmount('0');
+    // if added for dev (hot reload)
+    if (!primaryIsFiat && allRates[currency.toLowerCase()]) {
+      const fiatRate = allRates[currency.toLowerCase()].find(
+        r => r.code === fiatCurrency,
+      )!.rate;
+      setRate(fiatRate);
+    }
+  };
+  const initRef = useRef(init);
+  initRef.current = init;
+
+  useEffect(() => initRef.current(), []);
+
+  useEffect(() => {
+    return navigation.addListener('blur', async () => {
+      await sleep(300);
+      setButtonState(undefined);
+    });
+  }, [navigation]);
 
   const onSendMaxPressed = () =>
     onAmountSelected
@@ -241,8 +255,9 @@ const Amount: React.FC<AmountProps> = ({
   const onSendMaxPressedRef = useRef(onSendMaxPressed);
   onSendMaxPressedRef.current = onSendMaxPressed;
 
+  const showSendMaxButton = !opts?.hideSendMax && !useAsModal;
   useLayoutEffect(() => {
-    if (!opts?.hideSendMax && !useAsModal) {
+    if (showSendMaxButton) {
       navigation.setOptions({
         headerRight: () => (
           <HeaderContainer>
@@ -253,27 +268,30 @@ const Amount: React.FC<AmountProps> = ({
         ),
       });
     }
-  }, [opts?.hideSendMax, navigation]);
+  }, [showSendMaxButton, navigation]);
 
-  const onCellPress = (val: string) => {
-    haptic('impactLight');
-    let currentValue;
+  const onCellPress = useCallback((val: string) => {
+    haptic('soft');
+    let newValue;
     switch (val) {
       case 'reset':
-        currentValue = '';
+        newValue = '';
         break;
       case 'backspace':
-        currentValue = curVal.slice(0, -1);
+        newValue = curValRef.current.slice(0, -1);
         break;
       case '.':
-        currentValue = curVal.includes('.') ? curVal : curVal + val;
+        newValue = curValRef.current.includes('.')
+          ? curValRef.current
+          : curValRef.current + val;
         break;
       default:
-        currentValue = curVal + val;
+        newValue = curValRef.current + val;
     }
-    setCurVal(currentValue);
-    updateAmount(currentValue);
-  };
+
+    curValRef.current = newValue;
+    updateAmountRef.current(newValue);
+  }, []);
 
   return (
     <SafeAreaView>
@@ -320,11 +338,11 @@ const Amount: React.FC<AmountProps> = ({
             <SwapButtonContainer>
               <SwapButton
                 swapList={swapList}
-                onChange={(currency: string) => {
-                  setCurVal('');
+                onChange={(toCurrency: string) => {
+                  curValRef.current = '';
                   updateAmountConfig(current => ({
                     ...current,
-                    currency,
+                    currency: toCurrency,
                     primaryIsFiat: !primaryIsFiat,
                     displayAmount: '0',
                     displayEquivalentAmount: primaryIsFiat
