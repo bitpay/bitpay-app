@@ -67,6 +67,7 @@ const Pin = gestureHandlerRootHOC(() => {
   const dispatch = useAppDispatch();
   const {type} = useAppSelector(({APP}) => APP.pinModalConfig) || {};
   const [pin, setPin] = useState<Array<string | undefined>>([]);
+  const [headerMargin, setHeaderMargin] = useState<string | undefined>();
   const [message, setMessage] = useState('Please enter your PIN');
   const [shakeDots, setShakeDots] = useState(false);
   const insets = useSafeAreaInsets();
@@ -77,6 +78,10 @@ const Pin = gestureHandlerRootHOC(() => {
       setShowBackButton(true);
     }
   }, [type]);
+
+  useEffect(() => {
+    setHeaderMargin(type === 'set' ? '10%' : '40%');
+  }, []);
 
   // checkPin
   const currentPin = useAppSelector(({APP}) => APP.currentPin);
@@ -105,27 +110,14 @@ const Pin = gestureHandlerRootHOC(() => {
           Math.floor(Date.now() / 1000) + LOCK_AUTHORIZED_TIME;
         dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
         dispatch(AppActions.dismissPinModal()); // Correct PIN dismiss modal
-        const timerId = setTimeout(reset, 300);
-
-        return () => {
-          clearTimeout(timerId);
-        };
+      } else {
+        setShakeDots(true);
+        setMessage('Incorrect PIN, try again');
+        setPin([]);
+        setAttempts(_attempts => _attempts + 1); // Incorrect increment attempts
       }
-
-      setShakeDots(true);
-      setMessage('Incorrect PIN, try again');
-      setPin([]);
-      setAttempts(_attempts => _attempts + 1); // Incorrect increment attempts
     },
-    [
-      dispatch,
-      setShakeDots,
-      setMessage,
-      setPin,
-      setAttempts,
-      reset,
-      currentPin,
-    ],
+    [dispatch, setShakeDots, setMessage, setPin, setAttempts, currentPin],
   );
 
   const setCurrentPin = useCallback(
@@ -140,16 +132,10 @@ const Pin = gestureHandlerRootHOC(() => {
           Math.floor(Date.now() / 1000) + LOCK_AUTHORIZED_TIME;
         dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
         dispatch(AppActions.dismissPinModal());
-
-        const timerId = setTimeout(reset, 300);
-
-        return () => {
-          clearTimeout(timerId);
-        };
+      } else {
+        setShakeDots(true);
+        reset();
       }
-
-      setShakeDots(true);
-      reset();
     },
     [dispatch, setShakeDots, reset, firstPinEntered],
   );
@@ -290,7 +276,7 @@ const Pin = gestureHandlerRootHOC(() => {
           </TouchableOpacity>
         </SheetHeaderContainer>
       ) : null}
-      <View style={{marginTop: type === 'set' ? '10%' : '40%'}}>
+      <View style={{marginTop: headerMargin}}>
         <BitPayLogo height={50} />
       </View>
       <PinMessagesContainer>
