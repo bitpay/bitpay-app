@@ -16,7 +16,7 @@ const TransactionContainer = styled.TouchableOpacity`
 `;
 
 const IconContainer = styled.View`
-  margin-right: 10px;
+  margin-right: 14px;
 `;
 
 const Description = styled(BaseText)`
