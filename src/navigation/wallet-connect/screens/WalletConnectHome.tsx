@@ -160,7 +160,7 @@ const WalletConnectHome = () => {
               } catch (err: any) {
                 const errorMessageConfig = (
                   await Promise.all([
-                    handleCreateTxProposalError(err),
+                    dispatch(handleCreateTxProposalError(err)),
                     sleep(500),
                   ])
                 )[0];
@@ -285,7 +285,9 @@ const WalletConnectHome = () => {
           {requests && requests.length ? (
             requests.map((request, id) => {
               const {value = '0x0'} = request.payload.params[0];
-              const amountStr = FormatAmountStr('eth', parseInt(value, 16));
+              const amountStr = dispatch(
+                FormatAmountStr('eth', parseInt(value, 16)),
+              );
               return (
                 <View key={id}>
                   <ItemTouchableContainer

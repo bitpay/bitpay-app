@@ -38,6 +38,7 @@ import {
 } from '../../../app/app.actions';
 import {GetPrecision, GetChain} from '../../utils/currency';
 import {CommonActions} from '@react-navigation/native';
+import {BwcProvider} from '../../../../lib/bwc';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -65,8 +66,10 @@ export const createProposalAndBuildTxDetails =
         } = tx;
 
         let {credentials} = wallet;
-        const {coin: currencyAbbreviation} = credentials;
-        const formattedAmount = ParseAmount(amount, currencyAbbreviation);
+        const {coin: currencyAbbreviation, token} = credentials;
+        const formattedAmount = dispatch(
+          ParseAmount(amount, currencyAbbreviation),
+        );
 
         const {
           WALLET: {feeLevel: cachedFeeLevel, useUnconfirmedFunds},
@@ -89,18 +92,21 @@ export const createProposalAndBuildTxDetails =
 
         // build transaction proposal options then create full proposal
         const txp = {
-          ...(await buildTransactionProposal({
-            ...tx,
-            context,
-            currency: currencyAbbreviation,
-            toAddress: recipient.address,
-            amount: formattedAmount.amountSat,
-            network: credentials.network,
-            payProUrl,
-            feePerKb,
-            feeLevel,
-            useUnconfirmedFunds,
-          })),
+          ...(await dispatch(
+            buildTransactionProposal({
+              ...tx,
+              context,
+              currency: currencyAbbreviation,
+              tokenAddress: token ? token.address : null,
+              toAddress: recipient.address,
+              amount: formattedAmount.amountSat,
+              network: credentials.network,
+              payProUrl,
+              feePerKb,
+              feeLevel,
+              useUnconfirmedFunds,
+            }),
+          )),
           dryRun,
         } as Partial<TransactionProposal>;
 
@@ -113,15 +119,17 @@ export const createProposalAndBuildTxDetails =
             try {
               const rates = await dispatch(startGetRates());
               // building UI object for details
-              const txDetails = buildTxDetails({
-                proposal,
-                rates,
-                defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-                wallet,
-                recipient,
-                invoice,
-                context,
-              });
+              const txDetails = dispatch(
+                buildTxDetails({
+                  proposal,
+                  rates,
+                  defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+                  wallet,
+                  recipient,
+                  invoice,
+                  context,
+                }),
+              );
               txp.id = proposal.id;
               resolve({txDetails, txp: txp as TransactionProposal});
             } catch (err2) {
@@ -139,200 +147,231 @@ export const createProposalAndBuildTxDetails =
 /*
  * UI formatted details for confirm view
  * */
-const buildTxDetails = ({
-  proposal,
-  rates,
-  defaultAltCurrencyIsoCode,
-  wallet,
-  recipient,
-  invoice,
-  context,
-}: {
-  proposal: TransactionProposal;
-  rates: Rates;
-  defaultAltCurrencyIsoCode: string;
-  wallet: Wallet;
-  recipient: Recipient;
-  invoice?: Invoice;
-  context?: TransactionOptionsContext;
-}): TxDetails => {
-  const {coin, fee, gasPrice, gasLimit, nonce, feeLevel = 'custom'} = proposal;
-  let {amount} = proposal;
-  const networkCost = invoice?.minerFees[coin.toUpperCase()]?.totalFee;
-  const total = amount + fee;
+const buildTxDetails =
+  ({
+    proposal,
+    rates,
+    defaultAltCurrencyIsoCode,
+    wallet,
+    recipient,
+    invoice,
+    context,
+  }: {
+    proposal: TransactionProposal;
+    rates: Rates;
+    defaultAltCurrencyIsoCode: string;
+    wallet: Wallet;
+    recipient: Recipient;
+    invoice?: Invoice;
+    context?: TransactionOptionsContext;
+  }): Effect<TxDetails> =>
+  dispatch => {
+    const {
+      coin,
+      fee,
+      gasPrice,
+      gasLimit,
+      nonce,
+      feeLevel = 'custom',
+    } = proposal;
+    let {amount} = proposal;
+    const networkCost = invoice?.minerFees[coin.toUpperCase()]?.totalFee;
+    const total = amount + fee;
 
-  if (context === 'fromReplaceByFee') {
-    amount = amount - fee;
-  }
+    if (context === 'fromReplaceByFee') {
+      amount = amount - fee;
+    }
 
-  const {type, name, address} = recipient;
-  return {
-    currency: coin,
-    sendingTo: {
-      recipientType: type,
-      recipientName: name,
-      recipientAddress: formatCryptoAddress(address),
-      img: wallet.img,
-    },
-    fee: {
-      feeLevel,
-      cryptoAmount: FormatAmountStr(coin, fee),
-      fiatAmount: formatFiatAmount(
-        toFiat(fee, defaultAltCurrencyIsoCode, coin, rates),
-        defaultAltCurrencyIsoCode,
-      ),
-      percentageOfTotalAmount: ((fee / (amount + fee)) * 100).toFixed(2) + '%',
-    },
-    ...(networkCost && {
-      networkCost: {
-        cryptoAmount: FormatAmountStr(coin, networkCost),
+    const {type, name, address} = recipient;
+    return {
+      currency: coin,
+      sendingTo: {
+        recipientType: type,
+        recipientName: name,
+        recipientAddress: formatCryptoAddress(address),
+        img: wallet.img,
+      },
+      fee: {
+        feeLevel,
+        cryptoAmount: dispatch(FormatAmountStr(coin, fee)),
         fiatAmount: formatFiatAmount(
-          toFiat(networkCost, defaultAltCurrencyIsoCode, coin, rates),
+          dispatch(toFiat(fee, defaultAltCurrencyIsoCode, coin, rates)),
+          defaultAltCurrencyIsoCode,
+        ),
+        percentageOfTotalAmount:
+          ((fee / (amount + fee)) * 100).toFixed(2) + '%',
+      },
+      ...(networkCost && {
+        networkCost: {
+          cryptoAmount: dispatch(FormatAmountStr(coin, networkCost)),
+          fiatAmount: formatFiatAmount(
+            dispatch(
+              toFiat(networkCost, defaultAltCurrencyIsoCode, coin, rates),
+            ),
+            defaultAltCurrencyIsoCode,
+          ),
+        },
+      }),
+      sendingFrom: {
+        walletName: wallet.walletName || wallet.credentials.walletName,
+        img: wallet.img,
+      },
+      subTotal: {
+        cryptoAmount: dispatch(FormatAmountStr(coin, amount)),
+        fiatAmount: formatFiatAmount(
+          dispatch(toFiat(amount, defaultAltCurrencyIsoCode, coin, rates)),
           defaultAltCurrencyIsoCode,
         ),
       },
-    }),
-    sendingFrom: {
-      walletName: wallet.walletName || wallet.credentials.walletName,
-      img: wallet.img,
-    },
-    subTotal: {
-      cryptoAmount: FormatAmountStr(coin, amount),
-      fiatAmount: formatFiatAmount(
-        toFiat(amount, defaultAltCurrencyIsoCode, coin, rates),
-        defaultAltCurrencyIsoCode,
-      ),
-    },
-    total: {
-      cryptoAmount: FormatAmountStr(coin, total),
-      fiatAmount: formatFiatAmount(
-        toFiat(total, defaultAltCurrencyIsoCode, coin, rates),
-        defaultAltCurrencyIsoCode,
-      ),
-    },
-    gasPrice: gasPrice ? Number((gasPrice * 1e-9).toFixed(2)) : undefined,
-    gasLimit,
-    nonce,
+      total: {
+        cryptoAmount: dispatch(FormatAmountStr(coin, total)),
+        fiatAmount: formatFiatAmount(
+          dispatch(toFiat(total, defaultAltCurrencyIsoCode, coin, rates)),
+          defaultAltCurrencyIsoCode,
+        ),
+      },
+      gasPrice: gasPrice ? Number((gasPrice * 1e-9).toFixed(2)) : undefined,
+      gasLimit,
+      nonce,
+    };
   };
-};
 
 /*
  * txp options object for wallet.createTxProposal
  * */
-const buildTransactionProposal = (
-  tx: Partial<TransactionOptions>,
-): Promise<object> => {
-  return new Promise(async resolve => {
-    const {
-      currency,
-      customData,
-      feeLevel,
-      feePerKb,
-      invoiceID,
-      message,
-      payProUrl,
-      sendMax,
-      wallet,
-    } = tx;
-    // base tx
-    const txp: Partial<TransactionProposal> = {
-      coin: currency,
-      chain: GetChain(currency!).toLowerCase(),
-      customData,
-      feePerKb,
-      ...(!feePerKb && {feeLevel}),
-      invoiceID,
-      message,
-    };
-    // currency specific
-    switch (currency) {
-      case 'btc':
-        txp.enableRBF = tx.enableRBF;
-        txp.replaceTxByFee = tx.replaceTxByFee;
-        break;
-      case 'eth':
-        txp.from = tx.from;
-        txp.nonce = tx.nonce;
-        txp.tokenAddress = tx.tokenAddress;
-        txp.multisigContractAddress = tx.multisigContractAddress;
-        break;
-      case 'xrp':
-        txp.destinationTag = tx.destinationTag;
-        break;
-    }
-
-    // send max
-    if (sendMax && wallet) {
-      const {amount, inputs, fee} = await getSendMaxInfo({
+const buildTransactionProposal =
+  (tx: Partial<TransactionOptions>): Effect<Promise<object>> =>
+  dispatch => {
+    return new Promise(async resolve => {
+      const {
+        currency,
+        customData,
+        feeLevel,
+        feePerKb,
+        invoiceID,
+        message,
+        payProUrl,
+        sendMax,
         wallet,
-        opts: {feePerKb, excludeUnconfirmedUtxos: true, returnInputs: true},
-      });
+      } = tx;
+      // base tx
+      const txp: Partial<TransactionProposal> = {
+        coin: currency,
+        chain: dispatch(GetChain(currency!)).toLowerCase(),
+        customData,
+        feePerKb,
+        ...(!feePerKb && {feeLevel}),
+        invoiceID,
+        message,
+      };
+      // currency specific
+      switch (currency) {
+        case 'btc':
+          txp.enableRBF = tx.enableRBF;
+          txp.replaceTxByFee = tx.replaceTxByFee;
+          break;
+        case 'eth':
+          txp.from = tx.from;
+          txp.nonce = tx.nonce;
+          txp.tokenAddress = tx.tokenAddress;
+          txp.multisigContractAddress = tx.multisigContractAddress;
+          break;
+        case 'xrp':
+          txp.destinationTag = tx.destinationTag;
+          break;
+      }
 
-      txp.amount = tx.amount = amount;
-      txp.inputs = inputs;
-      // Either fee or feePerKb can be available
-      txp.fee = fee;
-      txp.feePerKb = undefined;
-    }
-
-    // unconfirmed funds
-    txp.excludeUnconfirmedUtxos = !tx.useUnconfirmedFunds;
-
-    const {context} = tx;
-    // outputs
-    txp.outputs = [];
-    switch (context) {
-      case 'multisend':
-        break;
-      case 'paypro':
-        txp.payProUrl = payProUrl;
-        txp.outputs.push({
-          toAddress: tx.toAddress,
-          amount: tx.amount!,
-          message: tx.message,
-          data: tx.data,
-          gasLimit: tx.gasLimit,
+      // send max
+      if (sendMax && wallet) {
+        const {amount, inputs, fee} = await getSendMaxInfo({
+          wallet,
+          opts: {feePerKb, excludeUnconfirmedUtxos: true, returnInputs: true},
         });
-        break;
-      case 'selectInputs':
-        break;
-      case 'fromReplaceByFee':
-        txp.inputs = tx.inputs;
-        txp.replaceTxByFee = true;
 
-        txp.outputs.push({
-          toAddress: tx.toAddress,
-          amount: tx.amount!,
-          message: tx.description,
-          data: tx.data,
-        });
-        break;
-      case 'speedupBtcReceive':
-        txp.inputs = tx.inputs;
-        txp.excludeUnconfirmedUtxos = true;
-        txp.fee = tx.fee;
-        txp.feeLevel = undefined;
+        txp.amount = tx.amount = amount;
+        txp.inputs = inputs;
+        // Either fee or feePerKb can be available
+        txp.fee = fee;
+        txp.feePerKb = undefined;
+      }
 
-        txp.outputs.push({
-          toAddress: tx.toAddress,
-          amount: tx.amount!,
-          message: tx.description,
-          data: tx.data,
-        });
-        break;
-      default:
-        txp.outputs.push({
-          toAddress: tx.toAddress,
-          amount: tx.amount!,
-          message: tx.description,
-          data: tx.data,
-          gasLimit: tx.gasLimit,
-        });
-    }
+      // unconfirmed funds
+      txp.excludeUnconfirmedUtxos = !tx.useUnconfirmedFunds;
 
-    resolve(txp);
-  });
-};
+      const {context} = tx;
+      // outputs
+      txp.outputs = [];
+      switch (context) {
+        case 'multisend':
+          break;
+        case 'paypro':
+          txp.payProUrl = payProUrl;
+          txp.outputs.push({
+            toAddress: tx.toAddress,
+            amount: tx.amount!,
+            message: tx.message,
+            data: tx.data,
+            gasLimit: tx.gasLimit,
+          });
+          break;
+        case 'selectInputs':
+          break;
+        case 'fromReplaceByFee':
+          txp.inputs = tx.inputs;
+          txp.replaceTxByFee = true;
+
+          txp.outputs.push({
+            toAddress: tx.toAddress,
+            amount: tx.amount!,
+            message: tx.description,
+            data: tx.data,
+          });
+          break;
+        case 'speedupBtcReceive':
+          txp.inputs = tx.inputs;
+          txp.excludeUnconfirmedUtxos = true;
+          txp.fee = tx.fee;
+          txp.feeLevel = undefined;
+
+          txp.outputs.push({
+            toAddress: tx.toAddress,
+            amount: tx.amount!,
+            message: tx.description,
+            data: tx.data,
+          });
+          break;
+        default:
+          txp.outputs.push({
+            toAddress: tx.toAddress,
+            amount: tx.amount!,
+            message: tx.description,
+            data: tx.data,
+            gasLimit: tx.gasLimit,
+          });
+      }
+
+      if (tx.tokenAddress) {
+        txp.tokenAddress = tx.tokenAddress;
+        if (tx.context !== 'paypro') {
+          for (const output of txp.outputs) {
+            if (!output.data) {
+              output.data = BwcProvider.getInstance()
+                .getCore()
+                .Transactions.get({chain: 'ERC20'})
+                .encodeData({
+                  recipients: [
+                    {address: output.toAddress, amount: output.amount},
+                  ],
+                  tokenAddress: tx.tokenAddress,
+                });
+            }
+          }
+        }
+      }
+
+      resolve(txp);
+    });
+  };
 
 export const startSendPayment =
   ({
@@ -548,110 +587,115 @@ export const removeTxp = (wallet: Wallet, txp: TransactionProposal) => {
   });
 };
 
-export const handleCreateTxProposalError = async (
-  proposalErrorProps: ProposalErrorHandlerProps,
-) => {
-  try {
-    const {err} = proposalErrorProps;
+export const handleCreateTxProposalError =
+  (proposalErrorProps: ProposalErrorHandlerProps): Effect<Promise<any>> =>
+  async dispatch => {
+    try {
+      const {err} = proposalErrorProps;
 
-    switch (getErrorName(err)) {
-      case 'INSUFFICIENT_FUNDS':
-        const {tx, txp, getState} = proposalErrorProps;
+      switch (getErrorName(err)) {
+        case 'INSUFFICIENT_FUNDS':
+          const {tx, txp, getState} = proposalErrorProps;
 
-        if (!tx || !txp || !getState) {
-          return GeneralError;
-        }
+          if (!tx || !txp || !getState) {
+            return GeneralError;
+          }
 
-        const {wallet, amount} = tx;
-        const {feeLevel} = txp;
+          const {wallet, amount} = tx;
+          const {feeLevel} = txp;
 
-        const feeRatePerKb = await getFeeRatePerKb({
-          wallet,
-          feeLevel: feeLevel || FeeLevels.NORMAL,
-        });
-
-        if (
-          !getState().WALLET.useUnconfirmedFunds &&
-          wallet.balance.sat >=
-            ParseAmount(amount, wallet.currencyAbbreviation).amountSat +
-              feeRatePerKb
-        ) {
-          return CustomErrorMessage({
-            title: 'Insufficient confirmed funds',
-            errMsg:
-              'You do not have enough confirmed funds to make this payment. Wait for your pending transactions to confirm or enable "Use unconfirmed funds" in Advanced Settings.',
+          const feeRatePerKb = await getFeeRatePerKb({
+            wallet,
+            feeLevel: feeLevel || FeeLevels.NORMAL,
           });
-        } else {
+
+          if (
+            !getState().WALLET.useUnconfirmedFunds &&
+            wallet.balance.sat >=
+              dispatch(ParseAmount(amount, wallet.currencyAbbreviation))
+                .amountSat +
+                feeRatePerKb
+          ) {
+            return CustomErrorMessage({
+              title: 'Insufficient confirmed funds',
+              errMsg:
+                'You do not have enough confirmed funds to make this payment. Wait for your pending transactions to confirm or enable "Use unconfirmed funds" in Advanced Settings.',
+            });
+          } else {
+            return CustomErrorMessage({
+              title: 'Insufficient funds',
+              errMsg: BWCErrorMessage(err),
+            });
+          }
+
+        default:
           return CustomErrorMessage({
-            title: 'Insufficient funds',
+            title: 'Error',
             errMsg: BWCErrorMessage(err),
           });
-        }
-
-      default:
-        return CustomErrorMessage({
-          title: 'Error',
-          errMsg: BWCErrorMessage(err),
-        });
+      }
+    } catch (err2) {
+      return GeneralError;
     }
-  } catch (err2) {
-    return GeneralError;
-  }
-};
-
-export const createPayProTxProposal = async ({
-  wallet,
-  paymentUrl,
-  payProOptions,
-  invoice,
-  invoiceID,
-  customData,
-  message,
-}: {
-  wallet: Wallet;
-  paymentUrl: string;
-  payProOptions?: PayProOptions;
-  invoice?: Invoice;
-  invoiceID?: string;
-  customData?: CustomTransactionData;
-  message?: string;
-}) => {
-  const payProDetails = await GetPayProDetails({
-    paymentUrl,
-    coin: wallet!.currencyAbbreviation,
-  });
-  const confirmScreenParams = await HandlePayPro({
-    payProDetails,
-    payProOptions,
-    url: paymentUrl,
-    coin: wallet!.currencyAbbreviation,
-  });
-  const {
-    toAddress: address,
-    requiredFeeRate: feePerKb,
-    data,
-    gasLimit,
-    description,
-    amount,
-  } = confirmScreenParams!;
-  const {unitToSatoshi} = GetPrecision(wallet.currencyAbbreviation) || {
-    unitToSatoshi: 100000000,
   };
-  return createProposalAndBuildTxDetails({
-    context: 'paypro',
+
+export const createPayProTxProposal =
+  async ({
+    wallet,
+    paymentUrl,
+    payProOptions,
     invoice,
     invoiceID,
-    wallet,
-    ...(feePerKb && {feePerKb}),
-    payProUrl: paymentUrl,
-    recipient: {address},
-    gasLimit,
-    data,
-    amount: amount / unitToSatoshi,
-    ...(customData && {customData}),
-    message: message || description,
-  });
-};
+    customData,
+    message,
+  }: {
+    wallet: Wallet;
+    paymentUrl: string;
+    payProOptions?: PayProOptions;
+    invoice?: Invoice;
+    invoiceID?: string;
+    customData?: CustomTransactionData;
+    message?: string;
+  }): Promise<Effect<Promise<any>>> =>
+  async dispatch => {
+    const payProDetails = await GetPayProDetails({
+      paymentUrl,
+      coin: wallet!.currencyAbbreviation,
+    });
+    const confirmScreenParams = await HandlePayPro({
+      payProDetails,
+      payProOptions,
+      url: paymentUrl,
+      coin: wallet!.currencyAbbreviation,
+    });
+    const {
+      toAddress: address,
+      requiredFeeRate: feePerKb,
+      data,
+      gasLimit,
+      description,
+      amount,
+    } = confirmScreenParams!;
+    const {unitToSatoshi} = dispatch(
+      GetPrecision(wallet.currencyAbbreviation),
+    ) || {
+      unitToSatoshi: 100000000,
+    };
+    return createProposalAndBuildTxDetails({
+      context: 'paypro',
+      invoice,
+      invoiceID,
+      wallet,
+      ...(feePerKb && {feePerKb}),
+      payProUrl: paymentUrl,
+      recipient: {address},
+      gasLimit,
+      data,
+      amount: amount / unitToSatoshi,
+      ...(customData && {customData}),
+      message: message || description,
+    });
+  };
 
 export const getSendMaxInfo = ({
   wallet,
@@ -714,64 +758,66 @@ export const buildEthERCTokenSpeedupTx = (
   });
 };
 
-export const buildBtcSpeedupTx = (wallet: Wallet, tx: any, address: string) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const {data, customData, txid, size} = tx;
+export const buildBtcSpeedupTx =
+  (wallet: Wallet, tx: any, address: string): Effect<Promise<any>> =>
+  dispatch => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const {data, customData, txid, size} = tx;
 
-      const {
-        credentials: {coin, walletName, walletId, network},
-        keyId,
-      } = wallet;
+        const {
+          credentials: {coin, walletName, walletId, network},
+          keyId,
+        } = wallet;
 
-      const recipient = {
-        type: 'wallet',
-        name: walletName,
-        walletId,
-        keyId,
-        address,
-      };
-      const fee = await GetBitcoinSpeedUpTxFee(wallet, size);
-      const input = await GetInput(wallet, txid);
-      const inputs = [];
-      inputs.push(input);
-      const {satoshis} = input || {satoshis: 0};
-      let amount = satoshis - fee;
+        const recipient = {
+          type: 'wallet',
+          name: walletName,
+          walletId,
+          keyId,
+          address,
+        };
+        const fee = await GetBitcoinSpeedUpTxFee(wallet, size);
+        const input = await GetInput(wallet, txid);
+        const inputs = [];
+        inputs.push(input);
+        const {satoshis} = input || {satoshis: 0};
+        let amount = satoshis - fee;
 
-      if (amount < 0) {
-        return reject('InsufficientFunds');
+        if (amount < 0) {
+          return reject('InsufficientFunds');
+        }
+
+        if (!input) {
+          return reject('NoInput');
+        }
+
+        const {unitToSatoshi} = dispatch(GetPrecision('btc')) || {
+          unitToSatoshi: 100000000,
+        };
+
+        amount = amount / unitToSatoshi;
+
+        return resolve({
+          wallet,
+          data,
+          customData,
+          name: walletName,
+          toAddress: address,
+          network,
+          currency: coin,
+          amount,
+          recipient,
+          inputs,
+          speedupFee: fee / unitToSatoshi,
+          fee,
+          context: 'speedupBtcReceive' as TransactionOptionsContext,
+        });
+      } catch (e) {
+        return reject(e);
       }
-
-      if (!input) {
-        return reject('NoInput');
-      }
-
-      const {unitToSatoshi} = GetPrecision('btc') || {
-        unitToSatoshi: 100000000,
-      };
-
-      amount = amount / unitToSatoshi;
-
-      return resolve({
-        wallet,
-        data,
-        customData,
-        name: walletName,
-        toAddress: address,
-        network,
-        currency: coin,
-        amount,
-        recipient,
-        inputs,
-        speedupFee: fee / unitToSatoshi,
-        fee,
-        context: 'speedupBtcReceive' as TransactionOptionsContext,
-      });
-    } catch (e) {
-      return reject(e);
-    }
-  });
-};
+    });
+  };
 
 export const getTx = (wallet: Wallet, txpid: string): Promise<any> => {
   return new Promise((resolve, reject) => {

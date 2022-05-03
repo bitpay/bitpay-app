@@ -210,7 +210,7 @@ const SwapCryptoRoot: React.FC = () => {
 
     if (fromWalletSelected.balance && fromWalletSelected.balance.sat) {
       const {unitToSatoshi, unitDecimals} =
-        GetPrecision(fromWalletSelected.currencyAbbreviation) || {};
+        dispatch(GetPrecision(fromWalletSelected.currencyAbbreviation)) || {};
       if (unitToSatoshi && unitDecimals) {
         const satToUnit = 1 / unitToSatoshi;
 

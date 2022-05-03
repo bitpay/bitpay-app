@@ -1,4 +1,5 @@
 import {
+  FeeOptions,
   TxDetailsAmount,
   TxDetailsFee,
   TxDetailsSendingFrom,
@@ -16,7 +17,6 @@ import React, {ReactChild} from 'react';
 import styled from 'styled-components/native';
 import {Pressable, ScrollView, View} from 'react-native';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
-import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
 import ChevronRightSvg from '../../../../../../assets/img/angle-right.svg';
 
 // Styled
@@ -114,17 +114,19 @@ export const Fee = ({
   fee,
   hr,
   onPress,
-  currencyAbbreviation,
+  feeOptions,
   hideFeeOptions,
 }: {
   fee: TxDetailsFee | undefined;
-  currencyAbbreviation: string;
+  feeOptions: FeeOptions;
   hideFeeOptions?: boolean;
   hr?: boolean;
   onPress?: () => void;
 }): JSX.Element | null => {
   if (fee) {
     const {feeLevel, cryptoAmount, fiatAmount, percentageOfTotalAmount} = fee;
+    // @ts-ignore
+    const viewFee = feeOptions[feeLevel].toUpperCase();
     return (
       <>
         <Pressable disabled={!onPress} onPress={onPress}>
@@ -132,13 +134,7 @@ export const Fee = ({
             <DetailRow>
               <H7>Miner fee</H7>
               <DetailColumn>
-                {feeLevel && !hideFeeOptions ? (
-                  <H5>
-                    {GetFeeOptions(currencyAbbreviation)[
-                      feeLevel
-                    ].toUpperCase()}
-                  </H5>
-                ) : null}
+                {feeLevel && !hideFeeOptions ? <H5>{viewFee}</H5> : null}
                 <H6>{cryptoAmount}</H6>
                 <H7>
                   {fiatAmount} ({percentageOfTotalAmount} of total amount)

@@ -82,219 +82,231 @@ export const RejectTxProposal = (wallet: Wallet, txp: any): Promise<any> => {
   });
 };
 
-export const ProcessPendingTxps = (
-  txps: TransactionProposal[],
-  wallet: any,
-) => {
-  const now = Math.floor(Date.now() / 1000);
-  const {currencyAbbreviation} = wallet;
+export const ProcessPendingTxps =
+  (txps: TransactionProposal[], wallet: any): Effect<any> =>
+  dispatch => {
+    const now = Math.floor(Date.now() / 1000);
+    const {currencyAbbreviation} = wallet;
 
-  txps.forEach((tx: TransactionProposal) => {
-    tx = ProcessTx(currencyAbbreviation, tx);
+    txps.forEach((tx: TransactionProposal) => {
+      tx = dispatch(ProcessTx(currencyAbbreviation, tx));
 
-    // no future transactions...
-    if (tx.createdOn > now) {
-      tx.createdOn = now;
+      // no future transactions...
+      if (tx.createdOn > now) {
+        tx.createdOn = now;
+      }
+
+      const action: any = tx.actions.find(
+        (a: any) => a.copayerId === wallet.credentials.copayerId,
+      );
+
+      if ((!action || action.type === 'failed') && tx.status === 'pending') {
+        tx.pendingForUs = true;
+      }
+
+      if (action && action.type === 'accept') {
+        tx.statusForUs = 'accepted';
+      } else if (action && action.type === 'reject') {
+        tx.statusForUs = 'rejected';
+      } else {
+        tx.statusForUs = 'pending';
+      }
+
+      if (!tx.deleteLockTime) {
+        tx.canBeRemoved = true;
+      }
+    });
+    return BuildUiFriendlyList(txps, currencyAbbreviation, [], {});
+  };
+
+const ProcessTx =
+  (
+    currencyAbbreviation: string,
+    tx: TransactionProposal,
+  ): Effect<TransactionProposal> =>
+  dispatch => {
+    if (!tx || tx.action === 'invalid') {
+      return tx;
     }
 
-    const action: any = tx.actions.find(
-      (a: any) => a.copayerId === wallet.credentials.copayerId,
-    );
+    // New transaction output format. Fill tx.amount and tx.toAmount for
+    // backward compatibility.
+    if (tx.outputs?.length) {
+      const outputsNr = tx.outputs.length;
 
-    if ((!action || action.type === 'failed') && tx.status === 'pending') {
-      tx.pendingForUs = true;
+      if (tx.action !== 'received') {
+        if (outputsNr > 1) {
+          tx.recipientCount = outputsNr;
+          tx.hasMultiplesOutputs = true;
+        }
+        tx.amount = tx.outputs.reduce((total: number, o: any) => {
+          o.amountStr = dispatch(
+            FormatAmountStr(currencyAbbreviation, o.amount),
+          );
+          return total + o.amount;
+        }, 0);
+      }
+      tx.toAddress = tx.outputs[0].toAddress!;
+
+      // translate legacy addresses
+      if (tx.addressTo && currencyAbbreviation === 'ltc') {
+        for (let o of tx.outputs) {
+          o.address = o.addressToShow = ToLtcAddress(tx.addressTo);
+        }
+      }
+
+      if (tx.toAddress) {
+        tx.toAddress = ToAddress(tx.toAddress, currencyAbbreviation);
+      }
     }
 
-    if (action && action.type === 'accept') {
-      tx.statusForUs = 'accepted';
-    } else if (action && action.type === 'reject') {
-      tx.statusForUs = 'rejected';
-    } else {
-      tx.statusForUs = 'pending';
+    // Old tx format. Fill .output, for forward compatibility
+    if (!tx.outputs) {
+      tx.outputs = [
+        {
+          address: tx.toAddress,
+          amount: tx.amount,
+        },
+      ];
     }
 
-    if (!tx.deleteLockTime) {
-      tx.canBeRemoved = true;
-    }
-  });
-  return BuildUiFriendlyList(txps, currencyAbbreviation, [], {});
-};
+    tx.amountStr = dispatch(FormatAmountStr(currencyAbbreviation, tx.amount));
 
-const ProcessTx = (currencyAbbreviation: string, tx: TransactionProposal) => {
-  if (!tx || tx.action === 'invalid') {
+    const chain = dispatch(GetChain(currencyAbbreviation)).toLowerCase();
+
+    tx.feeStr = tx.fee
+      ? dispatch(FormatAmountStr(chain, tx.fee))
+      : tx.fees
+      ? dispatch(FormatAmountStr(chain, tx.fees))
+      : 'N/A';
+
+    if (tx.amountStr) {
+      tx.amountValueStr = tx.amountStr.split(' ')[0];
+      tx.amountUnitStr = tx.amountStr.split(' ')[1];
+    }
+
+    if (tx.size && (tx.fee || tx.fees) && tx.amountUnitStr) {
+      tx.feeRate = `${((tx.fee || tx.fees) / tx.size).toFixed(0)} sat/byte`;
+    }
+
+    if (tx.addressTo) {
+      tx.addressTo = ToAddress(tx.addressTo, currencyAbbreviation);
+    }
+
     return tx;
-  }
+  };
 
-  // New transaction output format. Fill tx.amount and tx.toAmount for
-  // backward compatibility.
-  if (tx.outputs?.length) {
-    const outputsNr = tx.outputs.length;
+const ProcessNewTxs =
+  (wallet: Wallet, txs: any[]): Effect<Promise<any>> =>
+  async dispatch => {
+    const now = Math.floor(Date.now() / 1000);
+    const txHistoryUnique: any = {};
+    const ret = [];
+    const {currencyAbbreviation} = wallet;
 
-    if (tx.action !== 'received') {
-      if (outputsNr > 1) {
-        tx.recipientCount = outputsNr;
-        tx.hasMultiplesOutputs = true;
+    for (let tx of txs) {
+      tx = dispatch(ProcessTx(currencyAbbreviation, tx));
+
+      // no future transactions...
+      if (tx.time > now) {
+        tx.time = now;
       }
-      tx.amount = tx.outputs.reduce((total: number, o: any) => {
-        o.amountStr = FormatAmountStr(currencyAbbreviation, o.amount);
-        return total + o.amount;
-      }, 0);
-    }
-    tx.toAddress = tx.outputs[0].toAddress!;
 
-    // translate legacy addresses
-    if (tx.addressTo && currencyAbbreviation === 'ltc') {
-      for (let o of tx.outputs) {
-        o.address = o.addressToShow = ToLtcAddress(tx.addressTo);
-      }
-    }
-
-    if (tx.toAddress) {
-      tx.toAddress = ToAddress(tx.toAddress, currencyAbbreviation);
-    }
-  }
-
-  // Old tx format. Fill .output, for forward compatibility
-  if (!tx.outputs) {
-    tx.outputs = [
-      {
-        address: tx.toAddress,
-        amount: tx.amount,
-      },
-    ];
-  }
-
-  tx.amountStr = FormatAmountStr(currencyAbbreviation, tx.amount);
-
-  const chain = GetChain(currencyAbbreviation).toLowerCase();
-
-  tx.feeStr = tx.fee
-    ? FormatAmountStr(chain, tx.fee)
-    : tx.fees
-    ? FormatAmountStr(chain, tx.fees)
-    : 'N/A';
-
-  if (tx.amountStr) {
-    tx.amountValueStr = tx.amountStr.split(' ')[0];
-    tx.amountUnitStr = tx.amountStr.split(' ')[1];
-  }
-
-  if (tx.size && (tx.fee || tx.fees) && tx.amountUnitStr) {
-    tx.feeRate = `${((tx.fee || tx.fees) / tx.size).toFixed(0)} sat/byte`;
-  }
-
-  if (tx.addressTo) {
-    tx.addressTo = ToAddress(tx.addressTo, currencyAbbreviation);
-  }
-
-  return tx;
-};
-
-const ProcessNewTxs = async (wallet: Wallet, txs: any[]): Promise<any> => {
-  const now = Math.floor(Date.now() / 1000);
-  const txHistoryUnique: any = {};
-  const ret = [];
-  const {currencyAbbreviation} = wallet;
-
-  for (let tx of txs) {
-    tx = ProcessTx(currencyAbbreviation, tx);
-
-    // no future transactions...
-    if (tx.time > now) {
-      tx.time = now;
-    }
-
-    if (tx.confirmations === 0 && currencyAbbreviation === 'btc') {
-      const {inputs} = await GetCoinsForTx(wallet, tx.txid);
-      tx.isRBF = inputs.some(
-        (input: any) =>
-          input.sequenceNumber &&
-          input.sequenceNumber < DEFAULT_RBF_SEQ_NUMBER - 1,
-      );
-      tx.hasUnconfirmedInputs = inputs.some(
-        (input: any) => input.mintHeight < 0,
-      );
-    }
-
-    if (tx.confirmations >= SAFE_CONFIRMATIONS) {
-      tx.safeConfirmed = SAFE_CONFIRMATIONS + '+';
-    } else {
-      tx.safeConfirmed = false;
-    }
-
-    if (tx.note) {
-      delete tx.note.encryptedEditedByName;
-      delete tx.note.encryptedBody;
-    }
-
-    if (!txHistoryUnique[tx.txid]) {
-      ret.push(tx);
-      txHistoryUnique[tx.txid] = true;
-    } else {
-      console.log('Ignoring duplicate TX in history: ' + tx.txid);
-    }
-  }
-  return Promise.resolve(ret);
-};
-
-const GetNewTransactions = (
-  newTxs: any[],
-  skip: number,
-  wallet: Wallet,
-  requestLimit: number,
-  lastTransactionId: string | null,
-  tries: number = 0,
-): Promise<any> => {
-  return new Promise((resolve, reject) => {
-    GetTransactionHistoryFromServer(
-      wallet,
-      skip,
-      lastTransactionId,
-      requestLimit,
-    )
-      .then(async result => {
-        const {transactions, loadMore = false} = result;
-
-        let _transactions = transactions.filter(txs => txs);
-        const _newTxs = await ProcessNewTxs(wallet, _transactions);
-        newTxs = newTxs.concat(_newTxs);
-
-        console.log(
-          `Merging TXs for: ${wallet.id}. Got: ${newTxs.length} Skip: ${skip} lastTransactionId: ${lastTransactionId} Load more: ${loadMore}`,
+      if (tx.confirmations === 0 && currencyAbbreviation === 'btc') {
+        const {inputs} = await GetCoinsForTx(wallet, tx.txid);
+        tx.isRBF = inputs.some(
+          (input: any) =>
+            input.sequenceNumber &&
+            input.sequenceNumber < DEFAULT_RBF_SEQ_NUMBER - 1,
         );
+        tx.hasUnconfirmedInputs = inputs.some(
+          (input: any) => input.mintHeight < 0,
+        );
+      }
 
-        return resolve({
-          transactions: newTxs,
-          loadMore,
-        });
-      })
-      .catch(err => {
-        if (
-          err instanceof Errors.CONNECTION_ERROR ||
-          (err.message && err.message.match(/5../))
-        ) {
-          if (tries > 1) {
+      if (tx.confirmations >= SAFE_CONFIRMATIONS) {
+        tx.safeConfirmed = SAFE_CONFIRMATIONS + '+';
+      } else {
+        tx.safeConfirmed = false;
+      }
+
+      if (tx.note) {
+        delete tx.note.encryptedEditedByName;
+        delete tx.note.encryptedBody;
+      }
+
+      if (!txHistoryUnique[tx.txid]) {
+        ret.push(tx);
+        txHistoryUnique[tx.txid] = true;
+      } else {
+        console.log('Ignoring duplicate TX in history: ' + tx.txid);
+      }
+    }
+    return Promise.resolve(ret);
+  };
+
+const GetNewTransactions =
+  (
+    newTxs: any[],
+    skip: number,
+    wallet: Wallet,
+    requestLimit: number,
+    lastTransactionId: string | null,
+    tries: number = 0,
+  ): Effect<Promise<any>> =>
+  dispatch => {
+    return new Promise((resolve, reject) => {
+      GetTransactionHistoryFromServer(
+        wallet,
+        skip,
+        lastTransactionId,
+        requestLimit,
+      )
+        .then(async result => {
+          const {transactions, loadMore = false} = result;
+
+          let _transactions = transactions.filter(txs => txs);
+          const _newTxs = await dispatch(ProcessNewTxs(wallet, _transactions));
+          newTxs = newTxs.concat(_newTxs);
+
+          console.log(
+            `Merging TXs for: ${wallet.id}. Got: ${newTxs.length} Skip: ${skip} lastTransactionId: ${lastTransactionId} Load more: ${loadMore}`,
+          );
+
+          return resolve({
+            transactions: newTxs,
+            loadMore,
+          });
+        })
+        .catch(err => {
+          if (
+            err instanceof Errors.CONNECTION_ERROR ||
+            (err.message && err.message.match(/5../))
+          ) {
+            if (tries > 1) {
+              return reject(err);
+            }
+
+            return setTimeout(() => {
+              return resolve(
+                dispatch(
+                  GetNewTransactions(
+                    newTxs,
+                    skip,
+                    wallet,
+                    requestLimit,
+                    lastTransactionId,
+                    ++tries,
+                  ),
+                ),
+              );
+            }, 2000 + 3000 * tries);
+          } else {
             return reject(err);
           }
-
-          return setTimeout(() => {
-            return resolve(
-              GetNewTransactions(
-                newTxs,
-                skip,
-                wallet,
-                requestLimit,
-                lastTransactionId,
-                ++tries,
-              ),
-            );
-          }, 2000 + 3000 * tries);
-        } else {
-          return reject(err);
-        }
-      });
-  });
-};
+        });
+    });
+  };
 
 export const GetTransactionHistoryFromServer = (
   wallet: Wallet,
@@ -414,12 +426,8 @@ export const GetTransactionHistory =
       }
 
       try {
-        let {transactions, loadMore} = await GetNewTransactions(
-          [],
-          skip,
-          wallet,
-          requestLimit,
-          lastTransactionId,
+        let {transactions, loadMore} = await dispatch(
+          GetNewTransactions([], skip, wallet, requestLimit, lastTransactionId),
         );
 
         // To get transaction list details: icon, description, amount and date
@@ -693,37 +701,39 @@ export const BuildUiFriendlyList = (
   });
 };
 
-export const CanSpeedupTx = (
-  tx: any,
-  currencyAbbreviation: string,
-): boolean => {
-  const isERC20Wallet = IsERCToken(currencyAbbreviation);
-  const isEthWallet = currencyAbbreviation === 'eth';
+export const CanSpeedupTx =
+  (tx: any, currencyAbbreviation: string): Effect<boolean> =>
+  dispatch => {
+    const isERC20Wallet = dispatch(IsERCToken(currencyAbbreviation));
+    const isEthWallet = currencyAbbreviation === 'eth';
 
-  if (currencyAbbreviation !== 'btc' && isEthWallet && isERC20Wallet) {
-    return false;
-  }
+    if (currencyAbbreviation !== 'btc' && isEthWallet && isERC20Wallet) {
+      return false;
+    }
 
-  const {action, abiType, confirmations} = tx || {};
-  const isERC20Transfer = abiType?.name === 'transfer';
-  const isUnconfirmed = !confirmations || confirmations === 0;
+    const {action, abiType, confirmations} = tx || {};
+    const isERC20Transfer = abiType?.name === 'transfer';
+    const isUnconfirmed = !confirmations || confirmations === 0;
 
-  if ((isEthWallet && !isERC20Transfer) || (isERC20Wallet && isERC20Transfer)) {
-    // Can speed up the eth/erc20 tx instantly
-    return isUnconfirmed && (IsSent(action) || IsMoved(action));
-  } else {
-    const currentTime = moment();
-    const txTime = moment(tx.time * 1000);
+    if (
+      (isEthWallet && !isERC20Transfer) ||
+      (isERC20Wallet && isERC20Transfer)
+    ) {
+      // Can speed up the eth/erc20 tx instantly
+      return isUnconfirmed && (IsSent(action) || IsMoved(action));
+    } else {
+      const currentTime = moment();
+      const txTime = moment(tx.time * 1000);
 
-    // Can speed up the btc tx after 1 hours without confirming
-    return (
-      currentTime.diff(txTime, 'hours') >= 1 &&
-      isUnconfirmed &&
-      IsReceived(action) &&
-      currencyAbbreviation === 'btc'
-    );
-  }
-};
+      // Can speed up the btc tx after 1 hours without confirming
+      return (
+        currentTime.diff(txTime, 'hours') >= 1 &&
+        isUnconfirmed &&
+        IsReceived(action) &&
+        currencyAbbreviation === 'btc'
+      );
+    }
+  };
 
 ///////////////////////////////////////// Transaction Details ////////////////////////////////////////////////
 
@@ -777,7 +787,7 @@ export const buildTransactionDetails =
         const rates = await dispatch(startGetRates());
 
         _transaction.feeFiatStr = formatFiatAmount(
-          toFiat(_fee, alternativeCurrency, currency, rates),
+          dispatch(toFiat(_fee, alternativeCurrency, currency, rates)),
           alternativeCurrency,
         );
 
@@ -785,7 +795,9 @@ export const buildTransactionDetails =
           if (action !== 'received') {
             _transaction.outputs = _transaction.outputs.map((o: any) => {
               o.alternativeAmountStr = formatFiatAmount(
-                toFiat(o.amount, alternativeCurrency, currency, rates),
+                dispatch(
+                  toFiat(o.amount, alternativeCurrency, currency, rates),
+                ),
                 alternativeCurrency,
               );
               return o;
@@ -819,12 +831,14 @@ export const buildTransactionDetails =
           currency,
           (time * 1000).toString(),
         );
-        _transaction.fiatRateStr = UpdateFiatRate(
-          historicFiatRate,
-          transaction,
-          rates,
-          currency,
-          alternativeCurrency,
+        _transaction.fiatRateStr = dispatch(
+          UpdateFiatRate(
+            historicFiatRate,
+            transaction,
+            rates,
+            currency,
+            alternativeCurrency,
+          ),
         );
 
         resolve(_transaction);
@@ -834,34 +848,39 @@ export const buildTransactionDetails =
     });
   };
 
-const UpdateFiatRate = (
-  historicFiatRate: HistoricRate,
-  transaction: any,
-  rates: Rates = {},
-  currency: string,
-  alternativeCurrency: string,
-) => {
-  const {amountValueStr, amount} = transaction;
-  let fiatRateStr;
-  if (historicFiatRate?.rate) {
-    const {rate} = historicFiatRate;
-    fiatRateStr =
-      formatFiatAmount(
-        parseFloat((rate * amountValueStr).toFixed(2)),
-        alternativeCurrency,
-      ) +
-      ` @ ${formatFiatAmount(
-        rate,
-        alternativeCurrency,
-      )} per ${currency.toUpperCase()}`;
-  } else {
-    // Get current fiat value when historic rates are unavailable
-    fiatRateStr = toFiat(amount, alternativeCurrency, currency, rates);
-    fiatRateStr =
-      formatFiatAmount(fiatRateStr, alternativeCurrency) + alternativeCurrency;
-  }
-  return fiatRateStr;
-};
+const UpdateFiatRate =
+  (
+    historicFiatRate: HistoricRate,
+    transaction: any,
+    rates: Rates = {},
+    currency: string,
+    alternativeCurrency: string,
+  ): Effect<string> =>
+  dispatch => {
+    const {amountValueStr, amount} = transaction;
+    let fiatRateStr;
+    if (historicFiatRate?.rate) {
+      const {rate} = historicFiatRate;
+      fiatRateStr =
+        formatFiatAmount(
+          parseFloat((rate * amountValueStr).toFixed(2)),
+          alternativeCurrency,
+        ) +
+        ` @ ${formatFiatAmount(
+          rate,
+          alternativeCurrency,
+        )} per ${currency.toUpperCase()}`;
+    } else {
+      // Get current fiat value when historic rates are unavailable
+      fiatRateStr = dispatch(
+        toFiat(amount, alternativeCurrency, currency, rates),
+      );
+      fiatRateStr =
+        formatFiatAmount(fiatRateStr, alternativeCurrency) +
+        alternativeCurrency;
+    }
+    return fiatRateStr;
+  };
 
 export interface TxActions {
   type: string;

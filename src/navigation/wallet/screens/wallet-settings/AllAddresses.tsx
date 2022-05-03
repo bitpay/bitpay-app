@@ -19,6 +19,7 @@ import Button, {ButtonState} from '../../../../components/button/Button';
 import {FormatAmountStr} from '../../../../store/wallet/effects/amount/amount';
 import {sleep} from '../../../../utils/helper-methods';
 import {APP_NAME} from '../../../../constants/config';
+import {useAppDispatch} from '../../../../utils/hooks';
 
 export type AllAddressesParamList = {
   walletName: string;
@@ -57,6 +58,8 @@ const AllAddresses = () => {
   } = useRoute<RouteProp<WalletStackParamList, 'AllAddresses'>>();
 
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
+
   const [buttonState, setButtonState] = useState<ButtonState>();
 
   useLayoutEffect(() => {
@@ -127,7 +130,9 @@ const AllAddresses = () => {
                       </TouchableOpacity>
                     </View>
 
-                    <H7>{FormatAmountStr(currencyAbbreviation, amount)}</H7>
+                    <H7>
+                      {dispatch(FormatAmountStr(currencyAbbreviation, amount))}
+                    </H7>
                   </SettingView>
 
                   <Hr />

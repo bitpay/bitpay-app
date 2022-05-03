@@ -190,7 +190,7 @@ const TransactionLevel = ({
   const dispatch = useAppDispatch();
 
   const [speedUpMinFeePerKb, setSpeedUpMinFeePerKb] = useState<number>();
-  const {feeUnit, feeUnitAmount, blockTime} = GetFeeUnits(coin);
+  const {feeUnit, feeUnitAmount, blockTime} = dispatch(GetFeeUnits(coin));
   const [feeOptions, setFeeOptions] = useState<any[]>();
   const [feePerSatByte, setFeePerSatByte] = useState<
     number | string | undefined
@@ -207,7 +207,7 @@ const TransactionLevel = ({
   const [maxFeeAllowed, setMaxFeeAllowed] = useState<number>();
 
   const {coinColor: backgroundColor} =
-    coin === 'btc' ? GetTheme(coin) : GetTheme('eth');
+    coin === 'btc' ? dispatch(GetTheme(coin)) : dispatch(GetTheme('eth'));
 
   const setSpeedUpMinFee = (_feeLevels: Fee[]): number | undefined => {
     const minFeeLevel = coin === 'btc' ? 'custom' : 'priority';
@@ -245,7 +245,8 @@ const TransactionLevel = ({
       const feeOption: any = {
         ...fee,
         feeUnit,
-        uiLevel: GetFeeOptions(coin)[level],
+        // @ts-ignore
+        uiLevel: dispatch(GetFeeOptions(coin))[level],
       };
 
       feeOption.feePerSatByte = (feePerKb / feeUnitAmount).toFixed();
@@ -253,7 +254,7 @@ const TransactionLevel = ({
         coin === 'btc' ? 'Satoshis per byte' : feeUnit
       }`;
 
-      if (coin === 'eth' || IsERCToken(coin)) {
+      if (coin === 'eth' || dispatch(IsERCToken(coin))) {
         // @ts-ignore
         feeOption.avgConfirmationTime = ethAvgTime[level];
       } else {
