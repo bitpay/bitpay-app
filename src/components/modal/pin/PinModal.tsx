@@ -11,7 +11,7 @@ import styled, {useTheme} from 'styled-components/native';
 import {Animated, TouchableOpacity, View} from 'react-native';
 import {H5} from '../../styled/Text';
 import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
-import {Action, White} from '../../../styles/colors';
+import {BitPay, White} from '../../../styles/colors';
 import BitPayLogo from '../../../../assets/img/logos/bitpay-white.svg';
 import {ActiveOpacity} from '../../styled/Containers';
 import Back from '../../back/Back';
@@ -25,7 +25,7 @@ export interface PinModalConfig {
 
 const PinContainer = styled.View`
   flex: 1;
-  background-color: ${Action};
+  background-color: ${BitPay};
 `;
 
 const PinMessagesContainer = styled(Animated.View)`
