@@ -16,6 +16,7 @@ export interface WalletState {
   priceHistory: Array<PriceHistory>;
   tokenOptions: {[key in string]: Token};
   tokenData: {[key in string]: CurrencyOpts};
+  tokenOptionsByAddress: {[key in string]: Token};
   walletTermsAccepted: boolean;
   portfolioBalance: {
     current: number;
@@ -43,6 +44,7 @@ const initialState: WalletState = {
   priceHistory: [],
   tokenOptions: {},
   tokenData: {},
+  tokenOptionsByAddress: {},
   walletTermsAccepted: false,
   portfolioBalance: {
     current: 0,
@@ -254,7 +256,7 @@ export const walletReducer = (
     }
 
     case WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS: {
-      const {tokenOptions, tokenData} = action.payload;
+      const {tokenOptions, tokenData, tokenOptionsByAddress} = action.payload;
       return {
         ...state,
         tokenOptions: {
@@ -264,6 +266,10 @@ export const walletReducer = (
         tokenData: {
           ...state.tokenData,
           ...tokenData,
+        },
+        tokenOptionsByAddress: {
+          ...state.tokenOptionsByAddress,
+          ...tokenOptionsByAddress,
         },
       };
     }

@@ -1,7 +1,13 @@
 import React, {useState} from 'react';
 import styled from 'styled-components/native';
 import {BaseText} from '../../../components/styled/Text';
-import {Action, White} from '../../../styles/colors';
+import {
+  Action,
+  LightBlack,
+  Midnight,
+  NeutralSlate,
+  White,
+} from '../../../styles/colors';
 import {ActiveOpacity} from '../../../components/styled/Containers';
 import {titleCasing} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -24,22 +30,28 @@ const ButtonContainer = styled.View`
 const ButtonText = styled(BaseText)<{isActive: string; label: string}>`
   font-size: 16px;
   font-style: normal;
-  font-weight: 400;
+  font-weight: ${({isActive, label}) => (isActive === label ? 500 : 400)};
   line-height: 24px;
   letter-spacing: 0px;
   text-align: center;
   color: ${({isActive, label, theme}) =>
-    isActive === label ? White : theme.colors.text};
+    isActive === label
+      ? theme.dark
+        ? White
+        : Action
+      : theme.dark
+      ? NeutralSlate
+      : LightBlack};
 `;
 
 const LinkButton = styled.TouchableOpacity<{isActive: string; label: string}>`
-  height: 46px;
-  width: 58px;
+  height: 40px;
+  width: 50px;
   border-radius: 18px;
   align-items: center;
   justify-content: center;
-  background: ${({isActive, label}) =>
-    isActive === label ? Action : 'transparent'};
+  background: ${({isActive, label, theme}) =>
+    isActive === label ? (theme.dark ? Midnight : '#EDF0FE') : 'transparent'};
 `;
 
 const RangeDateSelector = ({onPress}: Props) => {

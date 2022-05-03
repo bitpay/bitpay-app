@@ -132,6 +132,9 @@ const ChangellyCheckout: React.FC = () => {
   const key = useAppSelector(
     ({WALLET}) => WALLET.keys[fromWalletSelected.keyId],
   );
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [txData, setTxData] = useState<any>();
@@ -520,6 +523,7 @@ const ChangellyCheckout: React.FC = () => {
       toCoin: toWalletSelected.currencyAbbreviation,
       amountFrom: amountFrom,
       exchange: 'changelly',
+      appUser: user?.eid || '',
     });
   };
 

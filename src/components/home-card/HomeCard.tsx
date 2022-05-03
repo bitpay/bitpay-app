@@ -90,7 +90,7 @@ const FooterArrow = styled.TouchableOpacity`
   height: 35px;
   align-self: flex-end;
   border-radius: 50px;
-  background-color: ${({theme}) => (theme.dark ? '#0C204E' : '#ECEFFD')}
+  background-color: ${({theme}) => (theme.dark ? '#0C204E' : '#ECEFFD')};
   align-items: center;
   justify-content: center;
 `;

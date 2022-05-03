@@ -13,18 +13,13 @@ import {
   WIDTH,
 } from '../../../components/styled/Containers';
 import {
-  BaseText,
+  Badge,
   fontFamily,
   H2,
+  H5,
   HeaderTitle,
 } from '../../../components/styled/Text';
-import {
-  SlateDark,
-  Success25,
-  White,
-  LightBlack,
-  Black,
-} from '../../../styles/colors';
+import {SlateDark, White, Black, LuckySevens} from '../../../styles/colors';
 import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
 import RangeDateSelector from '../components/RangeDateSelector';
 import {WalletStackParamList} from '../WalletStack';
@@ -54,6 +49,10 @@ import {Defs, Stop, LinearGradient} from 'react-native-svg';
 import _ from 'lodash';
 import {Platform} from 'react-native';
 import analytics from '@segment/analytics-react-native';
+import GainArrow from '../../../../assets/img/home/exchange-rates/increment-arrow.svg';
+import LossArrow from '../../../../assets/img/home/exchange-rates/decrement-arrow.svg';
+import NeutralArrow from '../../../../assets/img/home/exchange-rates/flat-arrow.svg';
+import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 
 export type PriceChartsParamList = {
   item: ExchangeRateItemProps;
@@ -109,30 +108,13 @@ const RangeDateSelectorContainer = styled.View`
   margin-bottom: 33px;
 `;
 
-const CurrencyAverageContainer = styled.View<{average?: number}>`
-  margin-top: 4px;
-  height: 23px;
-  background-color: ${({average}) =>
-    average === 0
-      ? LightBlack
-      : average && average >= 0
-      ? Success25
-      : '#ff647c'};
-  border-radius: 7px;
-  width: auto;
-  max-width: 80px;
-  justify-content: center;
-  flex-direction: row;
-  align-items: center;
+const CurrencyAverageText = styled(H5)`
+  color: ${({theme}) => (theme.dark ? LuckySevens : SlateDark)};
 `;
 
-const CurrencyAverageText = styled(BaseText)<{average?: number}>`
-  font-style: normal;
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 20px;
-  color: ${({average}) => (average && average >= 0 ? SlateDark : White)};
-  margin: 2px 10px;
+const RowContainer = styled.View`
+  align-items: center;
+  flex-direction: row;
 `;
 
 const PriceCharts = () => {
@@ -143,6 +125,9 @@ const PriceCharts = () => {
     params: {item},
   } = useRoute<RouteProp<WalletStackParamList, 'PriceCharts'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
 
   const {
     average,
@@ -151,6 +136,7 @@ const PriceCharts = () => {
     priceDisplay,
     id,
     currencyAbbreviation,
+    img,
   } = item;
 
   const {coinColor, gradientBackgroundColor} =
@@ -170,10 +156,22 @@ const PriceCharts = () => {
     'voronoi',
   );
 
+  const PriceChartHeader = () => {
+    return (
+      <RowContainer>
+        <CurrencyImage img={img} size={20} />
+        <HeaderTitle style={{paddingLeft: 4, paddingRight: 8}}>
+          {currencyName}
+        </HeaderTitle>
+        <Badge>{currencyAbbreviation}</Badge>
+      </RowContainer>
+    );
+  };
+
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
-      headerTitle: () => <HeaderTitle>{currencyName}</HeaderTitle>,
+      headerTitle: () => <PriceChartHeader />,
     });
   }, [navigation, currencyName]);
 
@@ -263,6 +261,7 @@ const PriceCharts = () => {
     analytics.track('BitPay App - Clicked Buy Crypto', {
       from: 'PriceChart',
       coin: currencyAbbreviation || '',
+      appUser: user?.eid || '',
     });
     navigation.navigate('Wallet', {
       screen: 'Amount',
@@ -293,6 +292,20 @@ const PriceCharts = () => {
     }
   }, [loading, cachedRates, currencyAbbreviation, priceDisplay]);
 
+  const showLossGainOrNeutralArrow = (average: number | undefined) => {
+    if (average === undefined) {
+      return;
+    }
+
+    if (average > 0) {
+      return <GainArrow style={{marginRight: 5}} width={20} height={20} />;
+    } else if (average < 0) {
+      return <LossArrow style={{marginRight: 5}} width={20} height={20} />;
+    } else {
+      return <NeutralArrow style={{marginRight: 5}} width={20} height={20} />;
+    }
+  };
+
   return (
     <SafeAreaView>
       <HeaderContainer>
@@ -304,12 +317,10 @@ const PriceCharts = () => {
             })}
           </H2>
         )}
-        <CurrencyAverageContainer average={average}>
-          <CurrencyAverageText average={average}>
-            {average && average > 0 ? '+' : null}
-            {average}%
-          </CurrencyAverageText>
-        </CurrencyAverageContainer>
+        <RowContainer>
+          {showLossGainOrNeutralArrow(average)}
+          <CurrencyAverageText>{average}%</CurrencyAverageText>
+        </RowContainer>
       </HeaderContainer>
       <PriceChartContainer>
         {!loading ? (
@@ -357,7 +368,7 @@ const PriceCharts = () => {
             padding={0}
             height={350}
             domain={displayData?.domain}
-            domainPadding={{y: 40}}>
+            domainPadding={{y: 20}}>
             <VictoryArea
               interpolation={'monotoneX'}
               style={chartStyle}

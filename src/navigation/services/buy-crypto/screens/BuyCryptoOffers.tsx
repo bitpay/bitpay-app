@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   Linking,
 } from 'react-native';
-import {useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import FastImage from 'react-native-fast-image';
 import {
@@ -15,7 +14,7 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import cloneDeep from 'lodash.clonedeep';
-import {useAppDispatch} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import Button from '../../../../components/button/Button';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {
@@ -290,7 +289,10 @@ const BuyCryptoOffers: React.FC = () => {
   const [finishedWyre, setFinishedWyre] = useState(false);
   const [updateView, setUpdateView] = useState(false);
 
-  const createdOn = useSelector(({WALLET}: RootState) => WALLET.createdOn);
+  const createdOn = useAppSelector(({WALLET}: RootState) => WALLET.createdOn);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
 
   const getSimplexQuote = (): void => {
     logger.debug('Simplex getting quote');
@@ -568,6 +570,7 @@ const BuyCryptoOffers: React.FC = () => {
           fiatCurrency: fiatCurrency,
           paymentMethod: paymentMethod.method,
           coin: selectedWallet.currencyAbbreviation,
+          appUser: user?.eid || '',
         });
 
         const paymentUrl: string = getPaymentUrl(
@@ -653,6 +656,7 @@ const BuyCryptoOffers: React.FC = () => {
       fiatCurrency: fiatCurrency,
       paymentMethod: paymentMethod.method,
       coin: selectedWallet.currencyAbbreviation,
+      appUser: user?.eid || '',
     });
     Linking.openURL(paymentUrl)
       .then(() => {

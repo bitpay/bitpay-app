@@ -40,7 +40,7 @@ import {
   changellyGetFixRateForAmount,
 } from '../utils/changelly-utils';
 import {getCountry} from '../../../../lib/location/location';
-import {useAppDispatch} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {sleep} from '../../../../utils/helper-methods';
 import {useLogger} from '../../../../utils/hooks/useLogger';
 import {GetPrecision} from '../../../../store/wallet/utils/currency';
@@ -74,6 +74,9 @@ const SwapCryptoRoot: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
   const route = useRoute<RouteProp<SwapCryptoStackParamList, 'Root'>>();
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [fromWalletSelectorModalVisible, setFromWalletSelectorModalVisible] =
@@ -732,6 +735,7 @@ const SwapCryptoRoot: React.FC = () => {
                 toCoin: toWalletSelected!.currencyAbbreviation,
                 amountFrom: amountFrom,
                 exchange: 'changelly',
+                appUser: user?.eid || '',
               });
               navigation.navigate('SwapCrypto', {
                 screen: 'ChangellyCheckout',
