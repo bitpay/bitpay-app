@@ -157,17 +157,30 @@ const Confirm = () => {
     }
     try {
       const {name: brand, currency} = cardConfig;
+      const invoiceCreationParams = {
+        amount,
+        brand,
+        currency,
+        clientId: selectedWallet.id,
+        discounts: discounts.map(d => d.code) || [],
+        transactionCurrency: selectedWallet.currencyAbbreviation.toUpperCase(),
+      };
       const {invoice, invoiceId} = await dispatch(
-        ShopEffects.startCreateGiftCardInvoice(cardConfig!, {
-          amount,
-          brand,
-          currency,
-          clientId: selectedWallet.id,
-          discounts: discounts.map(d => d.code) || [],
-          transactionCurrency:
-            selectedWallet.currencyAbbreviation.toUpperCase(),
-        }),
-      );
+        ShopEffects.startCreateGiftCardInvoice(
+          cardConfig,
+          invoiceCreationParams,
+        ),
+      ).catch(err => {
+        if (err.message === 'Invoice price must be at least $1 USD') {
+          return dispatch(
+            ShopEffects.startCreateGiftCardInvoice(cardConfig, {
+              ...invoiceCreationParams,
+              discounts: [],
+            }),
+          );
+        }
+        throw err;
+      });
       const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
       const paymentUrl = `${baseUrl}/i/${invoiceId}`;
       const {txDetails: newTxDetails, txp: newTxp} = await dispatch(
