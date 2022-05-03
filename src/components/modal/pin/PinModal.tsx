@@ -18,6 +18,7 @@ import BitPayLogo from '../../../../assets/img/logos/bitpay-white.svg';
 import {ActiveOpacity} from '../../styled/Containers';
 import Back from '../../back/Back';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 export interface PinModalConfig {
   type: 'set' | 'check';
 }
@@ -224,22 +225,11 @@ const PinModal: React.FC = () => {
     }
   }, [pinBannedUntil]);
 
-  return (
-    <Modal
-      isVisible={isVisible}
-      coverScreen={true}
-      backdropTransitionOutTiming={0}
-      hideModalContentWhileAnimating
-      backdropOpacity={1}
-      backdropColor={theme.colors.background}
-      animationIn={'fadeIn'}
-      animationOut={'fadeOut'}
-      useNativeDriverForBackdrop={true}
-      useNativeDriver={true}
-      style={{margin: 0}}>
+  const Pin = gestureHandlerRootHOC(() => {
+    return (
       <PinContainer>
         {showBackButton ? (
-          <SheetHeaderContainer style={{marginTop: insets.top}}>
+          <SheetHeaderContainer style={{marginTop: insets.top, marginLeft: 15}}>
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
               onPress={() => {
@@ -274,6 +264,23 @@ const PinModal: React.FC = () => {
           />
         </VirtualKeyboardContainer>
       </PinContainer>
+    );
+  });
+
+  return (
+    <Modal
+      isVisible={isVisible}
+      coverScreen={true}
+      backdropTransitionOutTiming={0}
+      hideModalContentWhileAnimating
+      backdropOpacity={1}
+      backdropColor={theme.colors.background}
+      animationIn={'fadeIn'}
+      animationOut={'fadeOut'}
+      useNativeDriverForBackdrop={true}
+      useNativeDriver={true}
+      style={{margin: 0}}>
+      <Pin />
     </Modal>
   );
 };
