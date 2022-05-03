@@ -38,6 +38,7 @@ import {
 } from '../../../app/app.actions';
 import {GetPrecision, GetChain} from '../../utils/currency';
 import {CommonActions} from '@react-navigation/native';
+import {BwcProvider} from '../../../../lib/bwc';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -65,7 +66,7 @@ export const createProposalAndBuildTxDetails =
         } = tx;
 
         let {credentials} = wallet;
-        const {coin: currencyAbbreviation} = credentials;
+        const {coin: currencyAbbreviation, token} = credentials;
         const formattedAmount = dispatch(
           ParseAmount(amount, currencyAbbreviation),
         );
@@ -96,6 +97,7 @@ export const createProposalAndBuildTxDetails =
               ...tx,
               context,
               currency: currencyAbbreviation,
+              tokenAddress: token ? token.address : null,
               toAddress: recipient.address,
               amount: formattedAmount.amountSat,
               network: credentials.network,
@@ -346,6 +348,25 @@ const buildTransactionProposal =
             data: tx.data,
             gasLimit: tx.gasLimit,
           });
+      }
+
+      if (tx.tokenAddress) {
+        txp.tokenAddress = tx.tokenAddress;
+        if (tx.context !== 'paypro') {
+          for (const output of txp.outputs) {
+            if (!output.data) {
+              output.data = BwcProvider.getInstance()
+                .getCore()
+                .Transactions.get({chain: 'ERC20'})
+                .encodeData({
+                  recipients: [
+                    {address: output.toAddress, amount: output.amount},
+                  ],
+                  tokenAddress: tx.tokenAddress,
+                });
+            }
+          }
+        }
       }
 
       resolve(txp);

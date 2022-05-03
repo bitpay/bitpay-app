@@ -87,7 +87,7 @@ export const GetFeeUnits =
   (dispatch, getState) => {
     const {WALLET} = getState();
     const currency = currencyAbbreviation.toLowerCase();
-    return Currencies[currency].feeInfo || WALLET.tokenData[currency]?.feeInfo;
+    return Currencies[currency]?.feeInfo || WALLET.tokenData[currency]?.feeInfo;
   };
 
 export const GetTheme =
