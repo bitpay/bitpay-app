@@ -13,17 +13,10 @@ const RootScreen: React.FC<
   StackScreenProps<CardActivationStackParamList, 'Root'>
 > = ({navigation, route}) => {
   const {card} = route.params;
-  const session = useAppSelector(({BITPAY_ID}) => BITPAY_ID.session);
 
   const redirectRef = useRef(() => {
     if (!isActivationRequired(card)) {
       return navigation.replace('Complete');
-    }
-
-    if (!session.isAuthenticated) {
-      return navigation.replace('Authentication', {
-        card,
-      });
     }
 
     return navigation.replace('Activate', {

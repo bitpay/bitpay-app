@@ -11,8 +11,6 @@ import {
   CreateAccountStatus,
   TwoFactorAuthStatus,
   TwoFactorPairingStatus,
-  VerifyAuthStatus,
-  PendingVerifyAuthStatus,
 } from './bitpay-id.reducer';
 
 export enum BitPayIdActionTypes {
@@ -49,13 +47,6 @@ export enum BitPayIdActionTypes {
   FAILED_FETCH_DOSH_TOKEN = 'BitPayId/FAILED_FETCH_DOSH_TOKEN',
   UPDATE_FETCH_DOSH_TOKEN_STATUS = 'BitPayId/UPDATE_FETCH_DOSH_TOKEN_STATUS',
   TOGGLE_SYNC_GIFT_CARD_PURCHASES = 'BitPayId/TOGGLE_SYNC_GIFT_CARD_PURCHASES',
-  SUCCESS_VERIFY_AUTH = 'BitPayId/SUCCESS_VERIFY_AUTH',
-  FAILED_VERIFY_AUTH = 'BitPayId/FAILED_VERIFY_AUTH',
-  PENDING_VERIFY_AUTH = 'BitPayId/PENDING_VERIFY_AUTH',
-  UPDATE_VERIFY_AUTH_STATUS = 'BitPayId/UPDATE_VERIFY_AUTH_STATUS',
-  SUCCESS_VERIFY_TWO_FACTOR_AUTH = 'BitPayId/SUCCESS_VERIFY_TWO_FACTOR_AUTH',
-  FAILED_VERIFY_TWO_FACTOR_AUTH = 'BitPayId/FAILED_VERIFY_TWO_FACTOR_AUTH',
-  UPDATE_VERIFY_TWO_FACTOR_AUTH_STATUS = 'BitPayId/UPDATE_VERIFY_TWO_FACTOR_AUTH_STATUS',
 }
 
 interface SuccessFetchSession {
@@ -216,41 +207,6 @@ interface ToggleSyncGiftCardPurchases {
   };
 }
 
-interface SuccessVerifyAuth {
-  type: BitPayIdActionTypes.SUCCESS_VERIFY_AUTH;
-  payload: {session: Session};
-}
-
-interface FailedVerifyAuth {
-  type: BitPayIdActionTypes.FAILED_VERIFY_AUTH;
-  payload: string | undefined;
-}
-
-interface PendingVerifyAuth {
-  type: BitPayIdActionTypes.PENDING_VERIFY_AUTH;
-  payload: {status: PendingVerifyAuthStatus; session: Session};
-}
-
-interface UpdateVerifyAuthStatus {
-  type: BitPayIdActionTypes.UPDATE_VERIFY_AUTH_STATUS;
-  payload: VerifyAuthStatus;
-}
-
-interface SuccessVerifyTwoFactorAuth {
-  type: BitPayIdActionTypes.SUCCESS_VERIFY_TWO_FACTOR_AUTH;
-  payload: {session: Session};
-}
-
-interface FailedVerifyTwoFactorAuth {
-  type: BitPayIdActionTypes.FAILED_VERIFY_TWO_FACTOR_AUTH;
-  payload: string;
-}
-
-interface UpdateVerifyTwoFactorAuthStatus {
-  type: BitPayIdActionTypes.UPDATE_VERIFY_TWO_FACTOR_AUTH_STATUS;
-  payload: TwoFactorAuthStatus;
-}
-
 export type BitPayIdActionType =
   | SuccessFetchSession
   | FailedFetchSession
@@ -267,13 +223,6 @@ export type BitPayIdActionType =
   | FailedLogin
   | PendingLogin
   | UpdateLoginStatus
-  | SuccessVerifyAuth
-  | FailedVerifyAuth
-  | PendingVerifyAuth
-  | UpdateVerifyAuthStatus
-  | SuccessVerifyTwoFactorAuth
-  | FailedVerifyTwoFactorAuth
-  | UpdateVerifyTwoFactorAuthStatus
 
   // auth + two factor
   | SuccessSubmitTwoFactorAuth

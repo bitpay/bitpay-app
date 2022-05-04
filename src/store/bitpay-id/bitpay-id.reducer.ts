@@ -17,10 +17,6 @@ export const bitPayIdReduxPersistBlackList: (keyof BitPayIdState)[] = [
   'fetchBasicInfoStatus',
   'doshToken',
   'fetchDoshTokenStatus',
-  'verifyAuthStatus',
-  'verifyAuthError',
-  'verifyTwoFactorAuthStatus',
-  'verifyTwoFactorAuthError',
 ];
 
 export type FetchSessionStatus = 'loading' | 'success' | 'failed' | null;
@@ -41,16 +37,6 @@ export type EmailPairingStatus = 'success' | 'failed' | null;
 export type PairingBitPayIdStatus = 'success' | 'failed' | null;
 export type FetchBasicInfoStatus = 'success' | 'failed' | null;
 export type FetchDoshTokenStatus = 'success' | 'failed' | null;
-export type VerifyAuthStatus =
-  | 'success'
-  | 'failed'
-  | 'twoFactorPending'
-  | 'emailAuthenticationPending'
-  | null;
-export type PendingVerifyAuthStatus = Extract<
-  VerifyAuthStatus,
-  'twoFactorPending' | 'emailAuthenticationPending'
->;
 
 export interface BitPayIdState {
   session: Session;
@@ -77,10 +63,6 @@ export interface BitPayIdState {
   pairingBitPayIdError: string | null;
   fetchBasicInfoStatus: FetchBasicInfoStatus;
   fetchDoshTokenStatus: FetchDoshTokenStatus;
-  verifyAuthStatus: VerifyAuthStatus;
-  verifyAuthError: string | null;
-  verifyTwoFactorAuthStatus: TwoFactorAuthStatus;
-  verifyTwoFactorAuthError: string | null;
 }
 
 const initialState: BitPayIdState = {
@@ -116,10 +98,6 @@ const initialState: BitPayIdState = {
   pairingBitPayIdError: null,
   fetchBasicInfoStatus: null,
   fetchDoshTokenStatus: null,
-  verifyAuthStatus: null,
-  verifyAuthError: null,
-  verifyTwoFactorAuthStatus: null,
-  verifyTwoFactorAuthError: null,
 };
 
 export const bitPayIdReducer = (
@@ -373,55 +351,6 @@ export const bitPayIdReducer = (
         },
       };
     }
-
-    case BitPayIdActionTypes.SUCCESS_VERIFY_AUTH:
-      return {
-        ...state,
-        verifyAuthStatus: 'success',
-        verifyAuthError: null,
-        session: action.payload.session,
-      };
-
-    case BitPayIdActionTypes.FAILED_VERIFY_AUTH:
-      return {
-        ...state,
-        verifyAuthStatus: 'failed',
-        verifyAuthError: action.payload || null,
-      };
-
-    case BitPayIdActionTypes.PENDING_VERIFY_AUTH:
-      return {
-        ...state,
-        verifyAuthStatus: action.payload.status,
-        session: action.payload.session,
-      };
-
-    case BitPayIdActionTypes.UPDATE_VERIFY_AUTH_STATUS:
-      return {
-        ...state,
-        verifyAuthStatus: action.payload,
-      };
-
-    case BitPayIdActionTypes.SUCCESS_VERIFY_TWO_FACTOR_AUTH:
-      return {
-        ...state,
-        verifyTwoFactorAuthStatus: 'success',
-        verifyTwoFactorAuthError: null,
-        session: action.payload.session,
-      };
-
-    case BitPayIdActionTypes.FAILED_VERIFY_TWO_FACTOR_AUTH:
-      return {
-        ...state,
-        verifyTwoFactorAuthStatus: 'failed',
-        verifyTwoFactorAuthError: action.payload,
-      };
-
-    case BitPayIdActionTypes.UPDATE_VERIFY_TWO_FACTOR_AUTH_STATUS:
-      return {
-        ...state,
-        verifyTwoFactorAuthStatus: action.payload,
-      };
 
     default:
       return state;
