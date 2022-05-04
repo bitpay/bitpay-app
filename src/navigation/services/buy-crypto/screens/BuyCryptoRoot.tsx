@@ -369,7 +369,7 @@ const BuyCryptoRoot: React.FC = () => {
                 </ArrowContainer>
               </SelectedOptionContainer>
               <SelectedOptionCol>
-                <DataText>
+                <DataText numberOfLines={1} ellipsizeMode={'tail'}>
                   {selectedWallet.walletName
                     ? selectedWallet.walletName
                     : selectedWallet.currencyName}
