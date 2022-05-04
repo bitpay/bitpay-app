@@ -84,6 +84,7 @@ import {
   handleCreateTxProposalError,
 } from '../../../store/wallet/effects/send/send';
 import KeySvg from '../../../../assets/img/key.svg';
+import {Effect} from '../../../store';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -221,13 +222,18 @@ const getWalletType = (
   return;
 };
 
-const getChain = (currencyAbbreviation: string, network: string) => {
-  if (currencyAbbreviation === 'eth' || IsERCToken(currencyAbbreviation)) {
-    return network === 'testnet' ? 'Kovan' : 'Ethereum Mainnet';
-  }
+const getChain =
+  (currencyAbbreviation: string, network: string): Effect<string | undefined> =>
+  dispatch => {
+    if (
+      currencyAbbreviation === 'eth' ||
+      dispatch(IsERCToken(currencyAbbreviation))
+    ) {
+      return network === 'testnet' ? 'Kovan' : 'Ethereum Mainnet';
+    }
 
-  return network === 'testnet' ? 'Testnet' : undefined;
-};
+    return network === 'testnet' ? 'Testnet' : undefined;
+  };
 
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
@@ -385,7 +391,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const showFiatBalance =
     // @ts-ignore
     Number(cryptoBalance.replaceAll(',', '')) > 0 &&
-    SUPPORTED_CURRENCIES.includes(currencyAbbreviation.toLowerCase()) &&
     network !== Network.testnet;
 
   const [history, setHistory] = useState<any[]>([]);
@@ -487,7 +492,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       let tx: any;
       if (
         currencyAbbreviation.toLowerCase() === 'eth' ||
-        IsERCToken(currencyAbbreviation)
+        dispatch(IsERCToken(currencyAbbreviation))
       ) {
         tx = await buildEthERCTokenSpeedupTx(fullWalletObj, transaction);
         goToConfirm(tx);
@@ -559,7 +564,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       });
     } catch (err: any) {
       const [errorMessageConfig] = await Promise.all([
-        handleCreateTxProposalError(err),
+        dispatch(handleCreateTxProposalError(err)),
         sleep(400),
       ]);
       dispatch(
@@ -603,8 +608,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             ),
           ),
         );
-      } else if (CanSpeedupTx(transaction, currency)) {
-        if (currency === 'eth' || IsERCToken(currency)) {
+      } else if (dispatch(CanSpeedupTx(transaction, currency))) {
+        if (currency === 'eth' || dispatch(IsERCToken(currency))) {
           dispatch(
             showBottomNotificationModal(
               SpeedupEthTransaction(
@@ -676,7 +681,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     [],
   );
 
-  const chain = getChain(currencyAbbreviation.toLowerCase(), network);
+  const chain = dispatch(getChain(currencyAbbreviation.toLowerCase(), network));
 
   return (
     <WalletDetailsContainer>

@@ -49,6 +49,7 @@ import {
 } from '../../wallet/screens/send/confirm/Shared';
 import TransactionLevel from '../../wallet/screens/send/TransactionLevel';
 import {Alert} from 'react-native';
+import {GetFeeOptions} from '../../../store/wallet/effects/fee/fee';
 
 const HeaderRightContainer = styled.View`
   margin-right: 15px;
@@ -103,6 +104,8 @@ const WalletConnectConfirm = () => {
   const [gasPrice, setGasPrice] = useState(_gasPrice);
   const [gasLimit, setGasLimit] = useState(_gasLimit);
   const [nonce, setNonce] = useState(_nonce);
+
+  const feeOptions = dispatch(GetFeeOptions(wallet.currencyAbbreviation));
 
   const approveCallRequest = async () => {
     try {
@@ -224,7 +227,7 @@ const WalletConnectConfirm = () => {
     } catch (err: any) {
       dispatch(dismissOnGoingProcessModal());
       const [errorMessageConfig] = await Promise.all([
-        handleCreateTxProposalError(err),
+        dispatch(handleCreateTxProposalError(err)),
         sleep(400),
       ]);
       dispatch(
@@ -299,7 +302,7 @@ const WalletConnectConfirm = () => {
         <Fee
           onPress={() => setShowTransactionLevel(true)}
           fee={fee}
-          currencyAbbreviation={wallet.currencyAbbreviation}
+          feeOptions={feeOptions}
           hr
         />
         {gasPrice !== undefined ? (

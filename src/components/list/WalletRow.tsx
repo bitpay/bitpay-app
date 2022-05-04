@@ -84,10 +84,8 @@ const WalletRow = ({wallet, onPress}: Props) => {
     hideBalance,
   } = wallet;
 
-  const showFiatBalance =
-    // @ts-ignore
-    Number(cryptoBalance.replaceAll(',', '')) > 0 &&
-    SUPPORTED_CURRENCIES.includes(currencyAbbreviation.toLowerCase());
+  // @ts-ignore
+  const showFiatBalance = Number(cryptoBalance.replaceAll(',', '')) > 0;
 
   return (
     <RowContainer activeOpacity={ActiveOpacity} onPress={onPress}>

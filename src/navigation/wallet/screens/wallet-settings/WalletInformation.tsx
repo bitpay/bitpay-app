@@ -20,6 +20,7 @@ import {
 import {View} from 'react-native';
 import WalletInformationSkeleton from './WalletInformationSkeleton';
 import {sleep} from '../../../../utils/helper-methods';
+import {useAppDispatch} from '../../../../utils/hooks';
 
 const InfoContainer = styled.SafeAreaView`
   flex: 1;
@@ -90,6 +91,7 @@ const WalletInformation = () => {
     },
   } = wallet;
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
   const key = useAppSelector(({WALLET}) => WALLET.keys[wallet.keyId]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -103,7 +105,7 @@ const WalletInformation = () => {
     Clipboard.setString(text);
   };
 
-  const unitToSatoshi = GetPrecision(coin)?.unitToSatoshi || 0;
+  const unitToSatoshi = dispatch(GetPrecision(coin))?.unitToSatoshi || 0;
 
   const [copayers, setCopayers] = useState<any[]>();
   const [balanceByAddress, setBalanceByAddress] = useState<any[]>();

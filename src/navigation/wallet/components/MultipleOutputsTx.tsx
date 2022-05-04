@@ -23,6 +23,7 @@ import {
   White,
 } from '../../../styles/colors';
 import Clipboard from '@react-native-community/clipboard';
+import {useAppDispatch} from '../../../utils/hooks';
 
 const MisunderstoodOutputsText = styled(H7)`
   margin-bottom: 5px;
@@ -51,6 +52,7 @@ const MultiOptionsMessage = styled(H7)`
 const MultipleOutputsTx = ({tx}: {tx: any}) => {
   let {coin, network} = tx;
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
+  const dispatch = useAppDispatch();
 
   tx.outputs.forEach((output: any) => {
     const outputAddr = output.toAddress ? output.toAddress : output.address;
@@ -60,7 +62,9 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
       network = network || coinAndNetwork?.network;
     }
 
-    const addressToShow = GetProtocolPrefixAddress(coin, network, outputAddr);
+    const addressToShow = dispatch(
+      GetProtocolPrefixAddress(coin, network, outputAddr),
+    );
 
     output.addressToShow =
       addressToShow === 'false' ? 'Unparsed address' : addressToShow;

@@ -46,6 +46,7 @@ import {
 import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../components/ErrorMessages';
 import {PayProOptions} from '../../../../../store/wallet/effects/paypro/paypro';
+import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
 
 export interface PayProConfirmParamList {
   wallet?: Wallet;
@@ -124,7 +125,7 @@ const PayProConfirm = () => {
       await sleep(400);
       dispatch(dismissOnGoingProcessModal());
       const [errorConfig] = await Promise.all([
-        handleCreateTxProposalError(err),
+        dispatch(handleCreateTxProposalError(err)),
         sleep(500),
       ]);
       dispatch(
@@ -179,7 +180,7 @@ const PayProConfirm = () => {
             <Fee
               fee={fee}
               hideFeeOptions
-              currencyAbbreviation={wallet.currencyAbbreviation}
+              feeOptions={dispatch(GetFeeOptions(wallet.currencyAbbreviation))}
               hr
             />
             <SendingFrom

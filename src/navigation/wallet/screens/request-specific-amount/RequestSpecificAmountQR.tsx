@@ -20,7 +20,6 @@ import {LightBlack, White} from '../../../../styles/colors';
 import ShareIcon from '../../../../components/icons/share/Share';
 import {Share} from 'react-native';
 import GhostSvg from '../../../../../assets/img/ghost-straight-face.svg';
-import {useDispatch} from 'react-redux';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {
   GetProtocolPrefix,
@@ -30,6 +29,7 @@ import {
   FormattedAmountObj,
   ParseAmount,
 } from '../../../../store/wallet/effects/amount/amount';
+import {useAppDispatch} from '../../../../utils/hooks';
 
 const SpecificAmtQRContainer = styled.SafeAreaView`
   flex: 1;
@@ -109,7 +109,7 @@ const RequestSpecificAmountQR = () => {
     currencyAbbreviation,
   } = wallet;
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [formattedAmountObj, setFormattedAmountObj] =
     useState<FormattedAmountObj>();
   const [loading, setLoading] = useState(true);
@@ -143,11 +143,12 @@ const RequestSpecificAmountQR = () => {
 
       let _qrValue;
       _qrValue =
-        GetProtocolPrefix(currencyAbbreviation, network) + ':' + address;
+        dispatch(GetProtocolPrefix(currencyAbbreviation, network)) +
+        ':' +
+        address;
 
-      const _formattedAmountObj: FormattedAmountObj = ParseAmount(
-        requestAmount,
-        currencyAbbreviation,
+      const _formattedAmountObj = dispatch(
+        ParseAmount(requestAmount, currencyAbbreviation),
       );
 
       if (IsUtxoCoin(currencyAbbreviation) || currencyAbbreviation === 'xrp') {

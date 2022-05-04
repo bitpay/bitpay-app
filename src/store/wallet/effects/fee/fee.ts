@@ -1,8 +1,9 @@
 import {Network} from '../../../../constants';
-import {Wallet} from '../../wallet.models';
+import {FeeOptions, Wallet} from '../../wallet.models';
 import {GetEstimatedTxSize} from '../../utils/wallet';
 import {IsERCToken} from '../../utils/currency';
 import {BwcProvider} from '../../../../lib/bwc';
+import {Effect} from '../../..';
 const BWC = BwcProvider.getInstance();
 
 export enum FeeLevels {
@@ -19,18 +20,21 @@ export interface Fee {
   nbBlocks: number;
 }
 
-export const GetFeeOptions: any = (currencyAbbreviation: string) => {
-  const isEthOrToken =
-    currencyAbbreviation === 'eth' || IsERCToken(currencyAbbreviation);
-  return {
-    urgent: isEthOrToken ? 'High' : 'Urgent',
-    priority: isEthOrToken ? 'Average' : 'Priority',
-    normal: isEthOrToken ? 'Low' : 'Normal',
-    economy: 'Economy',
-    superEconomy: 'Super Economy',
-    custom: 'Custom',
+export const GetFeeOptions =
+  (currencyAbbreviation: string): Effect<FeeOptions> =>
+  dispatch => {
+    const isEthOrToken =
+      currencyAbbreviation === 'eth' ||
+      dispatch(IsERCToken(currencyAbbreviation));
+    return {
+      urgent: isEthOrToken ? 'High' : 'Urgent',
+      priority: isEthOrToken ? 'Average' : 'Priority',
+      normal: isEthOrToken ? 'Low' : 'Normal',
+      economy: 'Economy',
+      superEconomy: 'Super Economy',
+      custom: 'Custom',
+    };
   };
-};
 
 const removeLowFeeLevels = (feeLevels: Fee[]) => {
   const removeLevels = ['economy', 'superEconomy'];

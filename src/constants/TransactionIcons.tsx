@@ -292,7 +292,7 @@ export const TxWalletConnectIcon = ({
   const theme = useTheme() as BitPayTheme;
 
   return (
-    <Svg.Svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+    <Svg.Svg width={size} height={size} viewBox="0 0 40 40" fill="none">
       <Svg.Path
         fillRule="evenodd"
         clipRule="evenodd"

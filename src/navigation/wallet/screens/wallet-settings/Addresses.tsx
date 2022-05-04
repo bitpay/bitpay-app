@@ -77,22 +77,6 @@ const SubText = styled(H7)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const buildUiFormatList = (list: any, wallet: Wallet) => {
-  const {
-    credentials: {coin, network},
-  } = wallet;
-  list.forEach((item: any) => {
-    item.path = item.path ? item.path.replace(/^m/g, 'xpub') : null;
-    item.address = GetProtocolPrefixAddress(coin, network, item.address);
-
-    if (item.createdOn) {
-      item.uiTime = GetAmFormatDate(item.createdOn * 1000);
-    }
-    return item;
-  });
-
-  return list;
-};
 const Addresses = () => {
   const {
     params: {wallet},
@@ -185,9 +169,9 @@ const Addresses = () => {
           setLowUtxosNb(response.lowUtxos.length);
           setAllUtxosNb(response.allUtxos.length);
 
-          setLowUtxosSum(FormatAmountStr(coin, _lowUtoxosSum));
-          setAllUtxosSum(FormatAmountStr(coin, allSum));
-          setMinFee(FormatAmountStr(coin, response.minFee || 0));
+          setLowUtxosSum(dispatch(FormatAmountStr(coin, _lowUtoxosSum)));
+          setAllUtxosSum(dispatch(FormatAmountStr(coin, allSum)));
+          setMinFee(dispatch(FormatAmountStr(coin, response.minFee || 0)));
           setMinFeePer(per.toFixed(2) + '%');
         }
       } catch (e) {
@@ -205,6 +189,26 @@ const Addresses = () => {
       );
     }
   };
+
+  const buildUiFormatList = (list: any, wallet: Wallet) => {
+    const {
+      credentials: {coin, network},
+    } = wallet;
+    list.forEach((item: any) => {
+      item.path = item.path ? item.path.replace(/^m/g, 'xpub') : null;
+      item.address = dispatch(
+        GetProtocolPrefixAddress(coin, network, item.address),
+      );
+
+      if (item.createdOn) {
+        item.uiTime = GetAmFormatDate(item.createdOn * 1000);
+      }
+      return item;
+    });
+
+    return list;
+  };
+
   useEffect(() => {
     init();
   }, [wallet]);
@@ -356,7 +360,7 @@ const Addresses = () => {
                           </TouchableOpacity>
                         </View>
 
-                        <H7>{FormatAmountStr(coin, amount)}</H7>
+                        <H7>{dispatch(FormatAmountStr(coin, amount))}</H7>
                       </SettingView>
 
                       <Hr />
