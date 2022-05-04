@@ -45,7 +45,6 @@ export const startCreateKey =
           createMultipleWallets({
             key: _key,
             currencies,
-            state,
             options: {
               network,
             },
@@ -154,16 +153,15 @@ const createMultipleWallets =
   ({
     key,
     currencies,
-    state,
     options,
   }: {
     key: KeyMethods;
     currencies: string[];
-    state: RootState;
     options: CreateOptions;
   }): Effect<Promise<Wallet[]>> =>
-  async dispatch => {
-    const tokenOpts = state.WALLET.tokenOptions;
+  async (dispatch, getState) => {
+    const {WALLET} = getState();
+    const tokenOpts = WALLET.tokenOptions;
     const supportedCoins = currencies.filter(
       (currency): currency is SupportedCoins =>
         SUPPORTED_COINS.includes(currency),
