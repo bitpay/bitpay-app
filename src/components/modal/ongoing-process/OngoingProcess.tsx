@@ -30,6 +30,7 @@ export enum OnGoingProcessMessages {
   CONNECTING_COINBASE = 'Connecting with Coinbase...',
   FETCHING_COINBASE_DATA = 'Fetching data from Coinbase...',
   UPDATING_TXP = 'Updating Transaction',
+  SENDING_EMAIL = 'Sending Email',
 }
 
 const OnGoingProcessContainer = styled.View`

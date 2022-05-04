@@ -114,8 +114,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   });
 
   const onTroubleLoggingIn = () => {
-    // TODO
-    console.log('trouble logging in');
+    navigation.navigate('ForgotPassword');
   };
 
   const onCaptchaResponse = async (gCaptchaResponse: string) => {

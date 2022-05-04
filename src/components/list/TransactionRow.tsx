@@ -2,7 +2,7 @@ import React, {ReactElement, memo} from 'react';
 import {BaseText} from '../styled/Text';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../styled/Containers';
-import {LuckySevens, SlateDark, White} from '../../styles/colors';
+import {LuckySevens, SlateDark} from '../../styles/colors';
 import RemoteImage from '../../navigation/tabs/shop/components/RemoteImage';
 import {TRANSACTION_ICON_SIZE} from '../../constants/TransactionIcons';
 export const TRANSACTION_ROW_HEIGHT = 75;

@@ -205,6 +205,36 @@ export const AuthApi = {
 
     return token;
   },
+
+  async submitForgotPasswordEmail(
+    network: Network,
+    csrfToken: string,
+    email: string,
+    gCaptchaResponse?: string,
+  ): Promise<{success?: boolean; message?: string}> {
+    const body = {
+      email,
+      gCaptchaResponse,
+      returnUrl: 'email',
+    };
+
+    const config = {
+      headers: {
+        'x-csrf-token': csrfToken,
+      },
+    };
+
+    try {
+      const {data} = await axios.post(
+        `${BASE_BITPAY_URLS[network]}/password/reset`,
+        body,
+        config,
+      );
+      return data.result;
+    } catch (err: any) {
+      throw err;
+    }
+  },
 };
 
 export default AuthApi;
