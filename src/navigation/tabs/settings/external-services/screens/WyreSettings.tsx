@@ -1,11 +1,16 @@
 import React, {useEffect, useState} from 'react';
 import {TouchableOpacity} from 'react-native';
-import {useNavigation, useIsFocused} from '@react-navigation/native';
+import {
+  RouteProp,
+  useRoute,
+  useNavigation,
+  useIsFocused,
+} from '@react-navigation/native';
 import moment from 'moment';
 import {useSelector} from 'react-redux';
 import {Link} from '../../../../../components/styled/Text';
 import {RootState} from '../../../../../store';
-import {useAppDispatch} from '../../../../../utils/hooks';
+import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
@@ -23,13 +28,68 @@ import {
   FooterSupport,
   SupportTxt,
 } from '../styled/ExternalServicesSettings';
+import {
+  dismissBottomNotificationModal,
+  showBottomNotificationModal,
+} from '../../../../../store/app/app.actions';
+import {sleep} from '../../../../../utils/helper-methods';
+
+export interface WyreSettingsProps {
+  incomingPaymentRequest?: wyrePaymentData;
+  paymentRequestError?: boolean;
+}
 
 const WyreSettings: React.FC = () => {
   const wyreHistory = useSelector(({BUY_CRYPTO}: RootState) => BUY_CRYPTO.wyre);
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const logger = useLogger();
   const [paymentRequests, setTransactions] = useState([] as wyrePaymentData[]);
+
+  const route = useRoute<RouteProp<{params: WyreSettingsProps}>>();
+  const {incomingPaymentRequest, paymentRequestError} = route.params || {};
+
+  useEffect(() => {
+    const handlePaymentError = async () => {
+      await sleep(600);
+      dispatch(
+        showBottomNotificationModal({
+          type: 'error',
+          title: 'Payment Error',
+          message: 'There was an error with the payment process through Wyre.',
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: 'Visit Help Center',
+              action: async () => {
+                await sleep(600);
+                dispatch(
+                  openUrlWithInAppBrowser(
+                    'https://wyre-support.zendesk.com/hc/en-us/requests/new',
+                  ),
+                );
+              },
+              primary: true,
+            },
+            {
+              text: 'GOT IT',
+              action: () => {
+                dispatch(dismissBottomNotificationModal());
+              },
+              primary: false,
+            },
+          ],
+        }),
+      );
+    };
+    if (incomingPaymentRequest) {
+      logger.debug(`Coming from order: ${incomingPaymentRequest.orderId}`);
+    }
+    if (paymentRequestError) {
+      handlePaymentError();
+    }
+  }, []);
 
   useEffect(() => {
     if (isFocused) {
@@ -79,7 +139,7 @@ const WyreSettings: React.FC = () => {
                         </PrTxtStatus>
                       )}
                       {pr.status === 'paymentRequestSent' && (
-                        <PrTxtStatus>Attempted payment request</PrTxtStatus>
+                        <PrTxtStatus>Processing payment request</PrTxtStatus>
                       )}
                     </PrRowLeft>
                     <PrRowRight>
@@ -101,7 +161,11 @@ const WyreSettings: React.FC = () => {
         <TouchableOpacity
           onPress={() => {
             haptic('impactLight');
-            dispatch(openUrlWithInAppBrowser('https://www.wyre.com/support/'));
+            dispatch(
+              openUrlWithInAppBrowser(
+                'https://support.sendwyre.com/hc/en-us/requests/new',
+              ),
+            );
           }}>
           <Link>Contact the Wyre support team.</Link>
         </TouchableOpacity>
