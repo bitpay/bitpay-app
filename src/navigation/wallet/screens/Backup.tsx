@@ -4,6 +4,7 @@ import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainer,
   HeaderRightContainer,
+  ImageContainer,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
@@ -19,7 +20,7 @@ import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {StackActions} from '@react-navigation/native';
 import {RootState} from '../../../store';
 import {StackScreenProps} from '@react-navigation/stack';
-const BackupImage = '../../../../assets/img/onboarding/backup.png';
+const BackupImage = require('../../../../assets/img/onboarding/backup.png');
 
 type BackupScreenProps = StackScreenProps<WalletStackParamList, 'BackupKey'>;
 
@@ -139,7 +140,12 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
 
   return (
     <BackupContainer>
-      <OnboardingImage source={BackupImage} />
+      <ImageContainer>
+        <OnboardingImage
+          style={{width: 217, height: 195}}
+          source={BackupImage}
+        />
+      </ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>
           <H3>Would you like to backup your key?</H3>
