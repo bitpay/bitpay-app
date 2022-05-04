@@ -19,7 +19,7 @@ import {
   HeaderRightContainer,
   WIDTH,
 } from '../../../components/styled/Containers';
-import {Smallest} from '../../../components/styled/Text';
+import {HeaderTitle, Smallest} from '../../../components/styled/Text';
 import {CardProvider} from '../../../constants/card';
 import {CARD_WIDTH, ProviderConfig} from '../../../constants/config.card';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -148,6 +148,12 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const goToCardSettingsRef = useRef(goToCardSettings);
   goToCardSettingsRef.current = goToCardSettings;
 
+  const goToReferAndEarn = () => {
+    navigation.navigate('Referral', {card: currentCardRef.current});
+  };
+  const goToReferAndEarnRef = useRef(goToReferAndEarn);
+  goToReferAndEarnRef.current = goToReferAndEarn;
+
   const goToConfirmScreen = (amount: number) => {
     navigator.navigate('Wallet', {
       screen: WalletScreens.DEBIT_CARD_CONFIRM,
@@ -217,13 +223,13 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => null,
+      headerTitle: () => <HeaderTitle>{t('Card')}</HeaderTitle>,
       headerRight: () => (
         <HeaderRightContainer>
           <Button
-            onPress={() => goToCardSettingsRef.current()}
-            buttonType="pill"
-            buttonStyle="primary">
-            {t('View Card Details')}
+            onPress={() => goToReferAndEarnRef.current()}
+            buttonType="pill">
+            {t('Earn $10')}
           </Button>
         </HeaderRightContainer>
       ),
