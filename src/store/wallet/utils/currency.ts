@@ -103,3 +103,11 @@ export const GetTheme =
     const currency = currencyAbbreviation.toLowerCase();
     return Currencies[currency]?.theme || WALLET.tokenData[currency]?.theme;
   };
+
+export const GetName =
+  (currencyAbbreviation: string): Effect<string> =>
+  (dispatch, getState) => {
+    const {WALLET} = getState();
+    const currency = currencyAbbreviation.toLowerCase();
+    return Currencies[currency]?.name || WALLET.tokenData[currency]?.name;
+  };
