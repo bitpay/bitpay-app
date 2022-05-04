@@ -6,6 +6,8 @@ import {useTranslation} from 'react-i18next';
 import {FlatList} from 'react-native';
 import Carousel from 'react-native-snap-carousel';
 import {SharedElement} from 'react-navigation-shared-element';
+import styled from 'styled-components/native';
+import PlusSvg from '../../../../assets/img/card/icons/plus.svg';
 import GhostImg from '../../../../assets/img/ghost-cheeky.svg';
 import Button from '../../../components/button/Button';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
@@ -14,11 +16,14 @@ import {
   ActiveOpacity,
   Br,
   HeaderRightContainer,
+  ScreenGutter,
   WIDTH,
 } from '../../../components/styled/Containers';
 import {Smallest} from '../../../components/styled/Text';
 import {CardProvider} from '../../../constants/card';
 import {CARD_WIDTH, ProviderConfig} from '../../../constants/config.card';
+import {navigationRef} from '../../../Root';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {CardEffects} from '../../../store/card';
 import {
   Card,
@@ -27,7 +32,9 @@ import {
   UiTransaction,
 } from '../../../store/card/card.models';
 import {selectCardGroups} from '../../../store/card/card.selectors';
+import {isActivationRequired} from '../../../utils/card';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {BuyCryptoScreens} from '../../services/buy-crypto/BuyCryptoStack';
 import {WalletScreens} from '../../wallet/WalletStack';
 import {CardStackParamList} from '../CardStack';
 import {
@@ -44,15 +51,21 @@ import {
   TransactionListHeaderTitle,
 } from './CardDashboard.styled';
 import CardOverviewSlide from './CardOverviewSlide';
+import ShippingStatus from './CardShippingStatus';
 import TransactionRow from './CardTransactionRow';
-import PlusSvg from '../../../../assets/img/card/icons/plus.svg';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {BuyCryptoScreens} from '../../services/buy-crypto/BuyCryptoStack';
 
 interface CardDashboardProps {
   id: string;
   navigation: StackNavigationProp<CardStackParamList, 'Home'>;
 }
+
+const CardsRowContainer = styled.View`
+  padding: ${ScreenGutter};
+`;
+
+const BelowCarouselSpacer = styled.View`
+  height: 32px;
+`;
 
 const toUiTransaction = (tx: Transaction, settled: boolean) => {
   const uiTx: UiTransaction = {
@@ -134,12 +147,13 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   );
   const currentGroup = cardGroups[currentGroupIdx];
   const activeCard = currentGroup[0];
-  const currentCardRef = useRef(activeCard);
-  currentCardRef.current = activeCard;
+  const unactivatedCard = currentGroup.find(
+    c => c.cardType === 'physical' && isActivationRequired(c),
+  );
 
   const onViewDetailsClick = () => {
     navigation.navigate('Settings', {
-      id: currentCardRef.current.id,
+      id: activeCard.id,
     });
   };
   const onViewDetailsClickRef = useRef(onViewDetailsClick);
@@ -333,6 +347,18 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     }
   };
 
+  const onActivatePress = useCallback(
+    (card: Card) => {
+      navigationRef.navigate('CardActivation', {
+        screen: 'Root',
+        params: {
+          card,
+        },
+      });
+    },
+    [unactivatedCard],
+  );
+
   return (
     <>
       <FlatList
@@ -363,10 +389,20 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
               inactiveSlideOpacity={1}
               containerCustomStyle={{
                 flexGrow: 0,
-                marginBottom: 32,
                 marginTop: 32,
               }}
             />
+
+            {unactivatedCard ? (
+              <CardsRowContainer>
+                <ShippingStatus
+                  card={unactivatedCard}
+                  onActivatePress={onActivatePress}
+                />
+              </CardsRowContainer>
+            ) : (
+              <BelowCarouselSpacer />
+            )}
 
             {!isLoadingInitial ? (
               <TransactionListHeader>
