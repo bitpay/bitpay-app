@@ -3,7 +3,6 @@ import React, {ReactElement} from 'react';
 import styled from 'styled-components/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
-import {useAppSelector} from '../../../../../utils/hooks';
 import ExchangeRateItem from './ExchangeRateItem';
 
 export interface ExchangeRateItemProps {

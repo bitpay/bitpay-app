@@ -166,10 +166,12 @@ const Fiat = styled(BaseText)`
   text-align: right;
 `;
 
-const HeaderKeyName = styled(HeaderSubtitle)`
+const HeaderKeyName = styled(BaseText)`
   text-align: center;
   margin-left: 5px;
   color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
+  font-size: 12px;
+  line-height: 20px;
 `;
 
 const HeaderSubTitleContainer = styled.View`

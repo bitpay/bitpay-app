@@ -93,13 +93,13 @@ const WyreDetails: React.FC = () => {
           <View>
             <RowLabel>Status</RowLabel>
             <View>
-              {paymentRequest.status == 'paymentRequestSent' && (
+              {paymentRequest.status === 'paymentRequestSent' && (
                 <Text style={{color: '#df5264'}}>Payment request sent</Text>
               )}
-              {paymentRequest.status == 'failed' && (
+              {paymentRequest.status === 'failed' && (
                 <Text style={{color: '#df5264'}}>Payment request rejected</Text>
               )}
-              {paymentRequest.status == 'success' && (
+              {paymentRequest.status === 'success' && (
                 <Text style={{color: '#01d1a2'}}>Payment request approved</Text>
               )}
             </View>

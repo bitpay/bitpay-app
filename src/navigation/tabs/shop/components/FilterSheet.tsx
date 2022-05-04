@@ -7,15 +7,7 @@ import {
   SheetParams,
 } from '../../../../components/styled/Containers';
 import {Platform} from 'react-native';
-import {
-  Action,
-  Black,
-  LinkBlue,
-  NotificationPrimary,
-  Slate,
-  White,
-} from '../../../../styles/colors';
-import {Theme} from '@react-navigation/native';
+import {Action, White} from '../../../../styles/colors';
 import {horizontalPadding} from './styled/ShopTabComponents';
 import {sleep} from '../../../../utils/helper-methods';
 import {

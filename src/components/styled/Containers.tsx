@@ -24,7 +24,7 @@ export const HeaderRightContainer = styled.View`
 
 export const ImageContainer = styled.View`
   margin: 10px 0;
-  height: 200px;
+  height: 247px;
   display: flex;
   justify-content: center;
 `;

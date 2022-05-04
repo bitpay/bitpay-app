@@ -5,12 +5,12 @@ import {
   ActionContainer,
   CtaContainer,
   HeaderRightContainer,
+  ImageContainer,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingImage} from '../components/Containers';
 import {useNavigation} from '@react-navigation/native';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -26,10 +26,7 @@ import {
 } from '../../../constants/BiometricError';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
-const PinImage = {
-  light: require('../../../../assets/img/onboarding/light/pin.png'),
-  dark: require('../../../../assets/img/onboarding/dark/pin.png'),
-};
+const PinImage = require('../../../../assets/img/onboarding/pin.png');
 
 const PinContainer = styled.SafeAreaView`
   flex: 1;
@@ -100,10 +97,11 @@ const PinScreen = () => {
   };
 
   useAndroidBackHandler(() => true);
-  const themeType = useThemeType();
   return (
     <PinContainer>
-      <OnboardingImage source={PinImage[themeType]} />
+      <ImageContainer>
+        <OnboardingImage style={{width: 160, height: 262}} source={PinImage} />
+      </ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>
           <H3>Protect your wallet</H3>

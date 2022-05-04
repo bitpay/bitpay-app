@@ -16,7 +16,6 @@ import {Link} from '../../../components/styled/Text';
 import {RootState} from '../../../store';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
 import {Action, LightBlack} from '../../../styles/colors';
-import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingImage} from '../components/Containers';
 import OnboardingSlide from '../components/OnboardingSlide';
 import {OnboardingStackParamList} from '../OnboardingStack';
@@ -29,22 +28,10 @@ type OnboardingStartScreenProps = StackScreenProps<
 
 // IMAGES
 const OnboardingImages = {
-  card: {
-    light: require('../../../../assets/img/onboarding/light/card.png'),
-    dark: require('../../../../assets/img/onboarding/dark/card.png'),
-  },
-  spend: {
-    light: require('../../../../assets/img/onboarding/light/spend.png'),
-    dark: require('../../../../assets/img/onboarding/dark/spend.png'),
-  },
-  wallet: {
-    light: require('../../../../assets/img/onboarding/light/wallet.png'),
-    dark: require('../../../../assets/img/onboarding/dark/wallet.png'),
-  },
-  swap: {
-    light: require('../../../../assets/img/onboarding/light/swap.png'),
-    dark: require('../../../../assets/img/onboarding/dark/swap.png'),
-  },
+  card: require('../../../../assets/img/onboarding/card.png'),
+  spend: require('../../../../assets/img/onboarding/spend.png'),
+  wallet: require('../../../../assets/img/onboarding/wallet.png'),
+  swap: require('../../../../assets/img/onboarding/swap.png'),
 };
 
 const OnboardingContainer = styled.SafeAreaView`
@@ -117,7 +104,6 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
     });
   }, [navigation, isPaired, dispatch]);
 
-  const themeType = useThemeType();
   const ref = useRef(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
@@ -126,24 +112,42 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
       title: 'Turn crypto into dollars with our BitPay Card',
       text: 'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
       subText: '*Currently available in the USA. More countries coming soon.',
-      img: () => <OnboardingImage source={OnboardingImages.card[themeType]} />,
+      img: () => (
+        <OnboardingImage
+          style={{height: 247, width: 170}}
+          source={OnboardingImages.card}
+        />
+      ),
     },
     {
       title: 'Spend crypto at your favorite places',
       text: 'Discover a curated list of places you can spend your crypto. Purchase, manage and spend store credits instantly.',
-      img: () => <OnboardingImage source={OnboardingImages.spend[themeType]} />,
+      img: () => (
+        <OnboardingImage
+          style={{height: 240, width: 170}}
+          source={OnboardingImages.spend}
+        />
+      ),
     },
     {
       title: 'Keep your funds safe & secure',
       text: 'Websites and exchanges get hacked. BitPay allows you to privately store, manage and use your crypto funds without having to trust a centralized bank or exchange.',
       img: () => (
-        <OnboardingImage source={OnboardingImages.wallet[themeType]} />
+        <OnboardingImage
+          style={{height: 170, width: 206}}
+          source={OnboardingImages.wallet}
+        />
       ),
     },
     {
       title: 'Seamlessly buy & swap with a decentralized exchange',
       text: 'Buy with a credit card or existing funds, then seamlessly swap coins at competitive rates without leaving the app.',
-      img: () => <OnboardingImage source={OnboardingImages.swap[themeType]} />,
+      img: () => (
+        <OnboardingImage
+          style={{height: 218, width: 194}}
+          source={OnboardingImages.swap}
+        />
+      ),
     },
   ];
 
