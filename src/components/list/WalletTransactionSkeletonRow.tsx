@@ -24,7 +24,7 @@ const WalletTransactionSkeletonRow = () => {
             width={TRANSACTION_ICON_SIZE}
             height={TRANSACTION_ICON_SIZE}
             borderRadius={50}
-            marginRight={10}
+            marginRight={8}
           />
           <SkeletonPlaceholder.Item width={150} height={18} borderRadius={4} />
           <SkeletonPlaceholder.Item marginLeft={'auto'} alignItems={'flex-end'}>

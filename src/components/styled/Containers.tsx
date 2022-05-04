@@ -101,7 +101,7 @@ export const RowContainer = styled.TouchableOpacity`
 `;
 
 export const CurrencyColumn = styled(Column)`
-  margin-left: 10px;
+  margin-left: 8px;
 `;
 
 export const CurrencyImageContainer = styled.View`
