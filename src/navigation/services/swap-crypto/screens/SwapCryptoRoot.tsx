@@ -1,5 +1,10 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, ScrollView, TouchableOpacity} from 'react-native';
+import {
+  ActivityIndicator,
+  InteractionManager,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
 import {useTheme, useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import cloneDeep from 'lodash.clonedeep';
@@ -487,60 +492,60 @@ const SwapCryptoRoot: React.FC = () => {
     );
   };
 
-  useEffect(() => {
-    const getChangellyCurrencies = async () => {
-      dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.GENERAL_AWAITING),
+  const getChangellyCurrencies = async () => {
+    const changellyCurrenciesData = await changellyGetCurrencies(true);
+
+    if (changellyCurrenciesData?.result?.length) {
+      const supportedCoinsWithFixRateEnabled = changellyCurrenciesData.result
+        .filter(
+          (coin: any) =>
+            coin.enabled &&
+            coin.fixRateEnabled &&
+            [...SupportedChains, 'ERC20'].includes(coin.protocol.toUpperCase()),
+        )
+        .map(({name}: any) => name);
+
+      // TODO: add support to float-rate coins supported by Changelly
+
+      // Intersection
+      const supportedCoins = SupportedCurrencies.filter(coin =>
+        supportedCoinsWithFixRateEnabled.includes(coin),
       );
-      await sleep(400);
-      const changellyCurrenciesData = await changellyGetCurrencies(true);
 
-      if (changellyCurrenciesData?.result?.length) {
-        const supportedCoinsWithFixRateEnabled = changellyCurrenciesData.result
-          .filter(
-            (coin: any) =>
-              coin.enabled &&
-              coin.fixRateEnabled &&
-              [...SupportedChains, 'ERC20'].includes(
-                coin.protocol.toUpperCase(),
-              ),
-          )
-          .map(({name}: any) => name);
-
-        // TODO: add support to float-rate coins supported by Changelly
-
-        // Intersection
-        const supportedCoins = SupportedCurrencies.filter(coin =>
-          supportedCoinsWithFixRateEnabled.includes(coin),
-        );
-
-        const country = await getCountry();
-        const coinsToRemove = !country || country == 'US' ? ['xrp'] : [];
-        if (selectedWallet && selectedWallet.balance?.sat === 0) {
-          coinsToRemove.push(selectedWallet.currencyAbbreviation.toLowerCase());
-        }
-        coinsToRemove.forEach((coin: string) => {
-          const index = supportedCoins.indexOf(coin);
-          if (index > -1) {
-            logger.debug(`Removing ${coin} from Changelly supported coins`);
-            supportedCoins.splice(index, 1);
-          }
-        });
-        setSwapCryptoSupportedCoinsFrom(supportedCoins);
+      const country = await getCountry();
+      const coinsToRemove = !country || country === 'US' ? ['xrp'] : [];
+      if (selectedWallet && selectedWallet.balance?.sat === 0) {
+        coinsToRemove.push(selectedWallet.currencyAbbreviation.toLowerCase());
       }
-    };
+      coinsToRemove.forEach((coin: string) => {
+        const index = supportedCoins.indexOf(coin);
+        if (index > -1) {
+          logger.debug(`Removing ${coin} from Changelly supported coins`);
+          supportedCoins.splice(index, 1);
+        }
+      });
+      setSwapCryptoSupportedCoinsFrom(supportedCoins);
+    }
+  };
 
-    getChangellyCurrencies()
-      .then(async () => {
-        dispatch(dismissOnGoingProcessModal());
+  useEffect(() => {
+    InteractionManager.runAfterInteractions(async () => {
+      try {
+        dispatch(
+          startOnGoingProcessModal(OnGoingProcessMessages.GENERAL_AWAITING),
+        );
+        await getChangellyCurrencies();
         await sleep(400);
-      })
-      .catch(err => {
+        dispatch(dismissOnGoingProcessModal());
+      } catch (err) {
         logger.error('Changelly getCurrencies Error: ' + JSON.stringify(err));
         const msg =
           'Changelly is not available at this moment. Please, try again later.';
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(200);
         showError(msg);
-      });
+      }
+    });
   }, []);
 
   useEffect(() => {
