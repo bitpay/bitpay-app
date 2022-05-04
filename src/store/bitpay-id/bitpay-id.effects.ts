@@ -479,9 +479,7 @@ export const startSubmitForgotPasswordEmail =
 
     try {
       dispatch(BitPayIdActions.resetForgotPasswordEmailStatus());
-      dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.SENDING_EMAIL),
-      );
+      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.SENDING_EMAIL));
       const data = await AuthApi.submitForgotPasswordEmail(
         APP.network,
         BITPAY_ID.session.csrfToken,

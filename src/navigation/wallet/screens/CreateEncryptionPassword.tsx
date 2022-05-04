@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useLayoutEffect, useRef, useState} from 'react';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
@@ -18,6 +18,7 @@ import {
   dismissBottomNotificationModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
+import {TextInput} from 'react-native';
 
 const EncryptPasswordContainer = styled.SafeAreaView`
   flex: 1;
@@ -83,6 +84,7 @@ const CreateEncryptionPassword = () => {
   const dispatch = useAppDispatch();
   const [genericError, setGenericError] = useState<string>('');
   const logger = useLogger();
+  const confirmPasswordRef = useRef<TextInput>(null);
   const onSubmit = ({password}: {password: string}) => {
     try {
       if (key) {
@@ -154,6 +156,9 @@ const CreateEncryptionPassword = () => {
                   onChangeText={(text: string) => onChange(text)}
                   error={errors.password?.message}
                   value={value}
+                  returnKeyType="next"
+                  onSubmitEditing={() => confirmPasswordRef.current?.focus()}
+                  blurOnSubmit={false}
                 />
               )}
               name="password"
@@ -166,6 +171,7 @@ const CreateEncryptionPassword = () => {
               control={control}
               render={({field: {onChange, onBlur, value}}) => (
                 <BoxInput
+                  ref={confirmPasswordRef}
                   placeholder={'strongPassword123'}
                   label={'CONFIRM ENCRYPTION PASSWORD'}
                   type={'password'}
@@ -173,6 +179,7 @@ const CreateEncryptionPassword = () => {
                   onChangeText={(text: string) => onChange(text)}
                   error={errors.confirmPassword?.message}
                   value={value}
+                  onSubmitEditing={handleSubmit(onSubmit)}
                 />
               )}
               name="confirmPassword"
