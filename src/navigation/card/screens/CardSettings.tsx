@@ -1,8 +1,15 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useCallback, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {ScrollView} from 'react-native';
-import Animated, {Easing, FadeInDown} from 'react-native-reanimated';
+import {ScrollView, View} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
+import Animated, {
+  Easing,
+  FadeOutLeft,
+  FadeOutRight,
+  SlideInLeft,
+  SlideInRight,
+} from 'react-native-reanimated';
 import Carousel from 'react-native-snap-carousel';
 import {SharedElement} from 'react-navigation-shared-element';
 import styled from 'styled-components/native';
@@ -42,6 +49,10 @@ const CardTypeButtons = styled.View`
 `;
 
 const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
+  const [animationsEnabled, setAnimationsEnabled] = useState<boolean>();
+  useEffect(() => {
+    setAnimationsEnabled(true);
+  }, []);
   const {id} = route.params;
   const {t} = useTranslation();
   const carouselRef = useRef<Carousel<Card>>(null);
@@ -97,20 +108,27 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
     }
   }, [physicalCard]);
 
-  const renderSettingsSlide = useCallback(
-    ({item}: {item: Card}) => {
-      const isVirtual = item.cardType === 'virtual' || cardsToShow.length < 2;
-      const sharedTransitionId = isVirtual ? 'card.dashboard.active-card' : '';
+  const goToCardHome = () => {
+    navigation.navigate('Home', {
+      id: id,
+    });
+  };
+  const goToCardHomeRef = useRef(goToCardHome);
+  goToCardHomeRef.current = goToCardHome;
 
-      return isVirtual ? (
-        <SharedElement id={sharedTransitionId}>
-          <SettingsSlide card={item} />
-        </SharedElement>
-      ) : (
-        <SettingsSlide card={item} />
-      );
-    },
-    [cardsToShow.length],
+  const renderSettingsSlide = useCallback(
+    ({item}: {item: Card}) => (
+      <SharedElement id={'card.dashboard.active-card.' + item.id}>
+        <View>
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => goToCardHomeRef.current()}>
+            <SettingsSlide card={item} />
+          </TouchableOpacity>
+        </View>
+      </SharedElement>
+    ),
+    [],
   );
 
   return (
@@ -155,17 +173,34 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
       <CardSettingsContainer>
         {cardsToShow.map(c => {
           const isActive = c.id === activeCard.id;
-          const delay = 150;
+          const isVirtual = c.cardType === 'virtual';
+          const delay = 0;
           const duration = 250;
           const easing = Easing.linear;
 
           const useTransition = cardsToShow.length > 1;
-          const transitionEnter = useTransition
-            ? FadeInDown.duration(duration).delay(delay).easing(easing)
+          const transitionEnter =
+            useTransition && animationsEnabled
+              ? isVirtual
+                ? SlideInLeft.duration(duration).delay(delay).easing(easing)
+                : SlideInRight.duration(duration).delay(delay).easing(easing)
+              : undefined;
+
+          const transitionLeave = useTransition
+            ? isVirtual
+              ? FadeOutLeft.duration(duration / 2)
+                  .delay(0)
+                  .easing(easing)
+              : FadeOutRight.duration(duration / 2)
+                  .delay(0)
+                  .easing(easing)
             : undefined;
 
           return isActive ? (
-            <Animated.View key={c.id} entering={transitionEnter}>
+            <Animated.View
+              key={c.id}
+              entering={transitionEnter}
+              exiting={transitionLeave}>
               <SettingsList card={c} navigation={navigation} />
             </Animated.View>
           ) : null;

@@ -98,7 +98,7 @@ const Confirm = () => {
     txp: _txp,
   } = route.params!;
 
-  const {brand, cardType, lastFourDigits} = card;
+  const {brand, lastFourDigits} = card;
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const network = useAppSelector(({APP}) => APP.network);
 
@@ -173,7 +173,13 @@ const Confirm = () => {
           paymentUrl,
           invoiceID: invoiceId,
           invoice,
-          message: `${formatFiatAmount(amount, invoiceCurrency)} Top-Up`,
+          message: `${formatFiatAmount(
+            amount,
+            invoiceCurrency,
+          )} to ${lastFourDigits}`,
+          customData: {
+            service: 'debitcard',
+          },
         }),
       );
       setWallet(selectedWallet);
@@ -189,7 +195,7 @@ const Confirm = () => {
       await sleep(400);
       dispatch(dismissOnGoingProcessModal());
       const [errorConfig] = await Promise.all([
-        handleCreateTxProposalError(err),
+        dispatch(handleCreateTxProposalError(err)),
         sleep(500),
       ]);
       dispatch(

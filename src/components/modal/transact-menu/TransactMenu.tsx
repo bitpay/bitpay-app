@@ -3,11 +3,13 @@ import React, {ReactElement, useState} from 'react';
 import {FlatList, TouchableOpacity, View} from 'react-native';
 import styled from 'styled-components/native';
 import TransactButtonIcon from '../../../../assets/img/tab-icons/transact-button.svg';
-import {Midnight, NeutralSlate, White} from '../../../styles/colors';
+import {Action, Midnight, White} from '../../../styles/colors';
 import {ActiveOpacity, SheetContainer} from '../../styled/Containers';
 import {BaseText, H6} from '../../styled/Text';
 import SheetModal from '../base/sheet/SheetModal';
 import Icons from './TransactMenuIcons';
+import analytics from '@segment/analytics-react-native';
+import {useAppSelector} from '../../../utils/hooks';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -26,7 +28,7 @@ const TransactItemContainer = styled.TouchableOpacity`
 `;
 
 const ItemIconContainer = styled.View`
-  background-color: ${({theme}) => (theme.dark ? Midnight : NeutralSlate)};
+  background-color: ${({theme}) => (theme.dark ? Midnight : Action)};
   border-radius: 11px;
 `;
 
@@ -46,7 +48,7 @@ const ItemDescriptionText = styled(BaseText)`
 `;
 
 const ScanButtonContainer = styled.TouchableOpacity`
-  background-color: ${({theme}) => (theme.dark ? Midnight : NeutralSlate)};
+  background-color: ${({theme}) => (theme.dark ? Midnight : Action)};
   flex-direction: row;
   align-self: center;
   align-items: center;
@@ -59,7 +61,7 @@ const ScanButtonContainer = styled.TouchableOpacity`
 `;
 
 const ScanButtonText = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? White : '#000')};
+  color: ${White};
 `;
 
 const CloseButtonContainer = styled.TouchableOpacity`
@@ -79,6 +81,9 @@ const TransactModal = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const hideModal = () => setModalVisible(false);
   const showModal = () => setModalVisible(true);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
 
   const TransactMenuList: Array<TransactMenuItemProps> = [
     {
@@ -87,6 +92,10 @@ const TransactModal = () => {
       title: 'Buy Crypto',
       description: 'Buy crypto with cash',
       onPress: () => {
+        analytics.track('BitPay App - Clicked Buy Crypto', {
+          from: 'TransactMenu',
+          appUser: user?.eid || '',
+        });
         navigation.navigate('Wallet', {
           screen: 'Amount',
           params: {
@@ -111,6 +120,10 @@ const TransactModal = () => {
       title: 'Exchange',
       description: 'Swap crypto for another',
       onPress: () => {
+        analytics.track('BitPay App - Clicked Swap Crypto', {
+          from: 'TransactMenu',
+          appUser: user?.eid || '',
+        });
         navigation.navigate('SwapCrypto', {screen: 'Root'});
       },
     },

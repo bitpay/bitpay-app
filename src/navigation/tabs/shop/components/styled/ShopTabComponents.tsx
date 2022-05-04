@@ -2,9 +2,8 @@ import {Theme} from '@react-navigation/native';
 import styled, {css} from 'styled-components/native';
 import BoxInput from '../../../../../components/form/BoxInput';
 import {HEIGHT, WIDTH} from '../../../../../components/styled/Containers';
-import {BaseText, H4} from '../../../../../components/styled/Text';
+import {BaseText, H4, Link} from '../../../../../components/styled/Text';
 import {
-  Action,
   Cloud,
   LightBlack,
   NeutralSlate,
@@ -45,10 +44,9 @@ export const SectionHeaderContainer = styled.View`
   align-items: center;
 `;
 
-export const SectionHeaderButton = styled(BaseText)`
+export const SectionHeaderButton = styled(Link)`
   margin-top: 38px;
   margin-bottom: 16px;
-  color: ${({theme}) => (theme.dark ? White : Action)};
   font-weight: 500;
 `;
 
@@ -79,6 +77,10 @@ export const SearchBox = styled(BoxInput)`
 
 export const SearchResults = styled.View`
   min-height: ${HEIGHT - 300}px;
+`;
+
+export const NoResultsImgContainer = styled.View`
+  margin: 40px;
 `;
 
 export const NoResultsContainer = styled.View`

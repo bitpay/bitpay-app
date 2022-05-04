@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {ReactElement, ReactNode} from 'react';
 import styled, {useTheme} from 'styled-components/native';
-import {Action, LightBlack, SlateDark, White} from '../../styles/colors';
+import {Action, LightBlack, Slate, SlateDark, White} from '../../styles/colors';
 import Haptic from '../haptic-feedback/haptic';
 import {
   ActiveOpacity,
@@ -52,7 +52,7 @@ const CardHeader = styled.View`
 const CardBodyHeader = styled(BaseText)`
   font-size: 14px;
   line-height: 21px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
   margin-top: ${CardGutter};
 `;
 
@@ -90,7 +90,7 @@ const FooterArrow = styled.TouchableOpacity`
   height: 35px;
   align-self: flex-end;
   border-radius: 50px;
-  background-color: ${({theme}) => (theme.dark ? '#0C204E' : '#ECEFFD')}
+  background-color: ${({theme}) => (theme.dark ? '#0C204E' : '#ECEFFD')};
   align-items: center;
   justify-content: center;
 `;
@@ -126,7 +126,10 @@ const HomeCard: React.FC<HomeCardProps> = ({body, onCTAPress, header}) => {
       {title && <CardBodyHeader>{title}</CardBodyHeader>}
       {value && <CardPrice scale={shouldScale(value)}>{value}</CardPrice>}
       {percentageDifference ? (
-        <Percentage percentageDifference={percentageDifference} />
+        <Percentage
+          percentageDifference={percentageDifference}
+          darkModeColor={Slate}
+        />
       ) : null}
       {pillText && (
         <CardPill>

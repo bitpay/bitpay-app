@@ -76,6 +76,11 @@ export const startGetRates =
 
       try {
         console.log('Rates - fetching new rates');
+
+        const {tokenRates, tokenLastDayRates} = (await dispatch<any>(
+          getTokenRates(),
+        )) as any;
+
         const yesterday =
           moment().subtract(1, 'days').startOf('hour').unix() * 1000;
         const {data: rates} = await axios.get(`${BASE_BWS_URL}/v3/fiatrates/`);
@@ -93,14 +98,112 @@ export const startGetRates =
           alternatives.sort((a, b) => (a.name < b.name ? -1 : 1));
           dispatch(addAltCurrencyList(alternatives));
         }
+
+        const allRates = {...rates, ...tokenRates};
+        const allLastDayRates = {...lastDayRates, ...tokenLastDayRates};
+
         dispatch(
-          successGetRates({rates, lastDayRates, ratesByDateRange: rates}),
+          successGetRates({
+            rates: allRates,
+            lastDayRates: allLastDayRates,
+            ratesByDateRange: rates,
+          }),
         );
-        resolve(rates);
+        resolve(allRates);
       } catch (err) {
         console.error(err);
         dispatch(failedGetRates());
         reject();
+      }
+    });
+  };
+
+export const getContractAddresses =
+  (): Effect<Array<string | undefined>> => (_dispatch, getState) => {
+    const {
+      WALLET: {keys},
+    } = getState();
+    let allTokenAddresses: string[] = [];
+
+    Object.values(keys).forEach(key => {
+      key.wallets.forEach(wallet => {
+        if (wallet.currencyAbbreviation === 'eth' && wallet.tokens) {
+          const tokenAddresses = wallet.tokens.map(t =>
+            t.replace(`${wallet.id}-`, ''),
+          );
+          allTokenAddresses.push(...tokenAddresses);
+        }
+      });
+    });
+
+    return allTokenAddresses;
+  };
+
+export const getTokenRates =
+  (): Effect<
+    Promise<{tokenRates: Rates; tokenLastDayRates: Rates} | undefined>
+  > =>
+  (dispatch, getState) => {
+    return new Promise(async resolve => {
+      let tokenRates: {[key in string]: any} = {};
+      let tokenLastDayRates: {[key in string]: any} = {};
+
+      try {
+        const {
+          APP: {altCurrencyList},
+          WALLET: {tokenOptionsByAddress},
+        } = getState();
+
+        const altCurrencies = altCurrencyList.map(altCurrency =>
+          altCurrency.isoCode.toLowerCase(),
+        );
+        const contractAddresses = dispatch(getContractAddresses());
+
+        const url = `https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${contractAddresses.join(
+          ',',
+        )}&vs_currencies=${altCurrencies.join(
+          ',',
+        )}&include_24hr_change=true&include_last_updated_at=true`;
+        const {data} = await axios.get(url);
+
+        Object.entries(data).map(([key, value]: [string, any]) => {
+          const tokenName = tokenOptionsByAddress[key].symbol.toLowerCase();
+          tokenRates[tokenName] = [];
+          tokenLastDayRates[tokenName] = [];
+
+          altCurrencies.forEach(altCurrency => {
+            tokenRates[tokenName].push({
+              code: altCurrency.toUpperCase(),
+              fetchedOn: value.last_updated_at,
+              name: tokenName,
+              rate: value[altCurrency],
+              ts: value.last_updated_at,
+            });
+
+            const yesterday = moment
+              .unix(value.last_updated_at)
+              .subtract(1, 'days')
+              .unix();
+            tokenLastDayRates[tokenName].push({
+              code: altCurrency.toUpperCase(),
+              fetchedOn: yesterday,
+              name: tokenName,
+              rate:
+                value[altCurrency] +
+                (value[altCurrency] * value[`${altCurrency}_24h_change`]) / 100,
+              ts: yesterday,
+            });
+          });
+        });
+
+        resolve({tokenRates, tokenLastDayRates});
+      } catch (e) {
+        dispatch(
+          LogActions.error(
+            '[getTokenRates]: an error occurred while fetching token rates from coingecko.',
+          ),
+        );
+        resolve({tokenRates, tokenLastDayRates}); // prevent the app from crashing if coingecko fails
       }
     });
   };

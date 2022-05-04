@@ -77,6 +77,7 @@ import {
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 import {SwapCryptoActions} from '../../../../store/swap-crypto';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
+import analytics from '@segment/analytics-react-native';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -131,6 +132,9 @@ const ChangellyCheckout: React.FC = () => {
   const key = useAppSelector(
     ({WALLET}) => WALLET.keys[fromWalletSelected.keyId],
   );
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [txData, setTxData] = useState<any>();
@@ -158,10 +162,12 @@ const ChangellyCheckout: React.FC = () => {
     }
 
     if (fromWalletSelected.currencyAbbreviation.toLowerCase() === 'bch') {
-      addressFrom = GetProtocolPrefixAddress(
-        fromWalletSelected.currencyAbbreviation.toLowerCase(),
-        fromWalletSelected.network,
-        addressFrom,
+      addressFrom = dispatch(
+        GetProtocolPrefixAddress(
+          fromWalletSelected.currencyAbbreviation.toLowerCase(),
+          fromWalletSelected.network,
+          addressFrom,
+        ),
       );
     }
 
@@ -243,13 +249,16 @@ const ChangellyCheckout: React.FC = () => {
 
         try {
           const rates = await dispatch(startGetRates());
-          const newFiatAmountTo = toFiat(
-            Number(amountTo) *
-              GetPrecision(toWalletSelected.currencyAbbreviation)!
-                .unitToSatoshi,
-            alternativeIsoCode,
-            toWalletSelected.currencyAbbreviation.toLowerCase(),
-            rates,
+          const presicion = dispatch(
+            GetPrecision(toWalletSelected.currencyAbbreviation),
+          );
+          const newFiatAmountTo = dispatch(
+            toFiat(
+              Number(amountTo) * presicion!.unitToSatoshi,
+              alternativeIsoCode,
+              toWalletSelected.currencyAbbreviation.toLowerCase(),
+              rates,
+            ),
           );
           setFiatAmountTo(newFiatAmountTo);
         } catch (err) {
@@ -258,12 +267,12 @@ const ChangellyCheckout: React.FC = () => {
 
         paymentTimeControl(data.result.payTill);
 
+        const presicion = dispatch(
+          GetPrecision(fromWalletSelected.currencyAbbreviation),
+        );
         // To Sat
         const depositSat = Number(
-          (
-            amountExpectedFrom *
-            GetPrecision(fromWalletSelected.currencyAbbreviation)!.unitToSatoshi
-          ).toFixed(0),
+          (amountExpectedFrom * presicion!.unitToSatoshi).toFixed(0),
         );
 
         createTx(fromWalletSelected, payinAddress, depositSat, payinExtraId)
@@ -401,7 +410,7 @@ const ChangellyCheckout: React.FC = () => {
         },
       };
 
-      if (IsERCToken(wallet.currencyAbbreviation.toLowerCase())) {
+      if (dispatch(IsERCToken(wallet.currencyAbbreviation.toLowerCase()))) {
         let tokens = Object.values(TokenOpts);
         const token = tokens.find(
           token => token.symbol === wallet.currencyAbbreviation.toUpperCase(),
@@ -431,7 +440,8 @@ const ChangellyCheckout: React.FC = () => {
       } else {
         if (
           wallet.currencyAbbreviation.toLowerCase() === 'btc' ||
-          GetChain(wallet.currencyAbbreviation.toLowerCase()) === 'eth'
+          dispatch(GetChain(wallet.currencyAbbreviation.toLowerCase())) ===
+            'eth'
         ) {
           txp.feeLevel = 'priority';
         } // Avoid expired order due to slow TX confirmation
@@ -511,6 +521,16 @@ const ChangellyCheckout: React.FC = () => {
     );
 
     logger.debug('Saved swap with: ' + JSON.stringify(newData));
+
+    analytics.track('BitPay App - Successful Crypto Swap', {
+      fromWalletId: fromWalletSelected.id,
+      toWalletId: toWalletSelected.id,
+      fromCoin: fromWalletSelected.currencyAbbreviation,
+      toCoin: toWalletSelected.currencyAbbreviation,
+      amountFrom: amountFrom,
+      exchange: 'changelly',
+      appUser: user?.eid || '',
+    });
   };
 
   const showError = async (msg?: string, title?: string, actions?: any) => {
@@ -614,9 +634,13 @@ const ChangellyCheckout: React.FC = () => {
           <RowLabel>Miner Fee</RowLabel>
           {fee && (
             <RowData>
-              {FormatAmountStr(
-                GetChain(fromWalletSelected.currencyAbbreviation).toLowerCase(),
-                fee,
+              {dispatch(
+                FormatAmountStr(
+                  dispatch(
+                    GetChain(fromWalletSelected.currencyAbbreviation),
+                  ).toLowerCase(),
+                  fee,
+                ),
               )}
             </RowData>
           )}

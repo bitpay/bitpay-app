@@ -1,31 +1,317 @@
 import React, {ReactElement} from 'react';
 import AmazonSvg from '../../assets/img/wallet/transactions/amazon.svg';
-import WalletConnectSvg from '../../assets/img/wallet/transactions/wallet-connect.svg';
 import ShapeShiftSvg from '../../assets/img/wallet/transactions/shapeshift.svg';
 import ChangellySvg from '../../assets/img/wallet/transactions/changelly.svg';
 import OneInchSvg from '../../assets/img/wallet/transactions/1inch.svg';
 import MercadolivreSvg from '../../assets/img/wallet/transactions/mercadolivre.svg';
 import CoinbaseSvg from '../../assets/img/wallet/transactions/coinbase.svg';
 import BitPaySvg from '../../assets/img/wallet/transactions/bitpay.svg';
-import GiftCardSvg from '../../assets/img/wallet/transactions/giftcard.svg';
-import SentSvg from '../../assets/img/wallet/transactions/sent.svg';
-import ReceivedSvg from '../../assets/img/wallet/transactions/received.svg';
-import MovedSvg from '../../assets/img/wallet/transactions/moved.svg';
-import ConfirmingSvg from '../../assets/img/wallet/transactions/confirming.svg';
-import ErrorSvg from '../../assets/img/wallet/transactions/failed.svg';
-import BroadcastSvg from '../../assets/img/wallet/transactions/broadcasted.svg';
+import {useTheme} from 'styled-components/native';
+import {BitPayTheme} from '../themes/bitpay';
+import * as Svg from 'react-native-svg';
+import {Success25, Success50} from '../styles/colors';
 export const TRANSACTION_ICON_SIZE = 35;
+
+export interface TxIconProps {
+  size?: number;
+}
+
+export const TxReceivedIcon = ({size = TRANSACTION_ICON_SIZE}: TxIconProps) => {
+  const theme = useTheme() as BitPayTheme;
+
+  return (
+    <Svg.Svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+      <Svg.Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M0 20C0 8.9543 8.9543 0 20 0C31.0457 0 40 8.9543 40 20C40 31.0457 31.0457 40 20 40C8.9543 40 0 31.0457 0 20Z"
+        fill={theme.dark ? '#004D27' : Success25}
+      />
+      <Svg.Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M21.044 24.2638L23.6539 21.6539C24.121 21.1868 24.8783 21.1868 25.3455 21.6539C25.8126 22.121 25.8126 22.8784 25.3455 23.3455L20.701 27.99C20.6735 28.0179 20.6447 28.0445 20.6147 28.0696C20.5362 28.1353 20.4514 28.1893 20.3623 28.2317C20.2065 28.306 20.0321 28.3477 19.8479 28.3477C19.6741 28.3477 19.5089 28.3106 19.3599 28.2439C19.2435 28.1919 19.1336 28.1204 19.0354 28.0293C19.0229 28.0178 19.0107 28.006 18.9987 27.9939L14.3503 23.3455C13.8832 22.8784 13.8832 22.121 14.3503 21.6539C14.8174 21.1868 15.5747 21.1868 16.0418 21.6539L18.6518 24.2638L18.6518 13.1961C18.6518 12.5355 19.1873 12 19.8479 12C20.5085 12 21.044 12.5355 21.044 13.1961L21.044 24.2638Z"
+        fill={theme.dark ? Success50 : '#004D27'}
+      />
+    </Svg.Svg>
+  );
+};
+
+export const TxGiftCardIcon = ({size = TRANSACTION_ICON_SIZE}: TxIconProps) => {
+  const theme = useTheme() as BitPayTheme;
+
+  return (
+    <Svg.Svg width={size} height={size} viewBox="0 0 41 40" fill="none">
+      <Svg.Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M20.6938 40C9.64815 40 0.693849 31.0457 0.693849 20C0.693848 8.95431 9.64815 1.35705e-06 20.6938 8.74228e-07C31.7395 3.91405e-07 40.6938 8.9543 40.6938 20C40.6938 31.0457 31.7395 40 20.6938 40Z"
+        fill={theme.dark ? '#393939' : '#E1E4E7'}
+      />
+      <Svg.Path
+        d="M29.6715 21.4904L20.4154 12.2342C20.3433 12.1617 20.2449 12.1212 20.1427 12.1212H13.2006C12.9877 12.1212 12.8149 12.294 12.8149 12.5069V19.449C12.8149 19.5512 12.8554 19.6496 12.9279 19.7217L22.1841 28.9779C22.2593 29.0531 22.358 29.0909 22.4568 29.0909C22.5555 29.0909 22.6542 29.0531 22.7294 28.9779L29.6715 22.0358C29.8223 21.885 29.8223 21.6412 29.6715 21.4904ZM16.6717 17.135C16.0326 17.135 15.5147 16.617 15.5147 15.978C15.5147 15.3389 16.0326 14.8209 16.6717 14.8209C17.3107 14.8209 17.8287 15.3389 17.8287 15.978C17.8287 16.617 17.3107 17.135 16.6717 17.135Z"
+        fill={theme.dark ? '#9BA3AE' : '#434D5A'}
+      />
+    </Svg.Svg>
+  );
+};
+
+export const TxConfirmingIcon = ({
+  size = TRANSACTION_ICON_SIZE,
+}: TxIconProps) => {
+  const theme = useTheme() as BitPayTheme;
+  return (
+    <Svg.Svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+      <Svg.Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M20 40C8.95431 40 0 31.0457 0 20C0 8.95431 8.95431 0 20 0C31.0457 0 40 8.95431 40 20C40 31.0457 31.0457 40 20 40Z"
+        fill={theme.dark ? '#393939' : '#E1E4E7'}
+      />
+      <Svg.Path
+        d="M10.0001 19.5005L10.0002 19.4938L10 19.4752L10.0003 19.4491C10.0125 17.296 10.7944 15.21 12.2184 13.5337C13.6539 11.844 15.6552 10.6724 17.8892 10.2141C20.1231 9.75574 22.455 10.0382 24.4964 11.0146C25.6424 11.5627 26.6581 12.3109 27.4955 13.2117V12.3487C27.4955 11.6916 28.0562 11.159 28.7478 11.159C29.4394 11.159 30 11.6916 30 12.3487V16.1459C30 16.516 29.8222 16.8465 29.5433 17.0647C29.3889 17.1855 29.2035 17.2719 29.0001 17.3114C28.9186 17.3273 28.8342 17.3356 28.7478 17.3356L24.7509 17.3356C24.0593 17.3356 23.4986 16.803 23.4986 16.1459C23.4986 15.4889 24.0593 14.9562 24.7509 14.9562H25.7563C25.103 14.2093 24.291 13.5921 23.3653 13.1494C21.8374 12.4187 20.0922 12.2072 18.4202 12.5503C16.7482 12.8933 15.2504 13.7702 14.1761 15.0348C13.1018 16.2993 12.5158 17.8754 12.5158 19.5005H12.5079C12.4938 20.1469 11.9378 20.6667 11.2541 20.6667C10.5704 20.6667 10.0143 20.1469 10.0001 19.5005Z"
+        fill={theme.dark ? '#9BA3AE' : '#434D5A'}
+      />
+      <Svg.Path
+        d="M11.2524 22.6376L11.2652 22.6377H15.2493C15.9409 22.6377 16.5015 23.1703 16.5015 23.8274C16.5015 24.4845 15.9409 25.0171 15.2493 25.0171H14.2204C14.8777 25.776 15.698 26.4026 16.6347 26.8506C18.1626 27.5813 19.9078 27.7928 21.5798 27.4497C23.2518 27.1067 24.7496 26.2298 25.8239 24.9652C26.8982 23.7007 27.4841 22.1246 27.4841 20.4995H27.492C27.5062 19.8531 28.0621 19.3333 28.7459 19.3333C29.4296 19.3333 29.9856 19.8531 29.9997 20.4995L29.9998 20.5061L30 20.5247L29.9997 20.5508C29.9874 22.704 29.2056 24.79 27.7815 26.4663C26.3461 28.156 24.3448 29.3276 22.1108 29.7859C19.8768 30.2443 17.545 29.9618 15.5036 28.9854C14.3576 28.4374 13.342 27.6892 12.5046 26.7885V27.6246C12.5046 28.2816 11.944 28.8143 11.2524 28.8143C10.5608 28.8143 10.0001 28.2816 10.0001 27.6246L10.0001 23.8273C10.0001 23.1703 10.5608 22.6376 11.2524 22.6376Z"
+        fill={theme.dark ? '#9BA3AE' : '#434D5A'}
+      />
+    </Svg.Svg>
+  );
+};
+
+export const TxSentIcon = ({size = TRANSACTION_ICON_SIZE}: TxIconProps) => {
+  const theme = useTheme() as BitPayTheme;
+
+  return (
+    <Svg.Svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+      <Svg.Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M20 40C8.95431 40 1.64958e-07 31.0457 -3.17865e-07 20C-8.00688e-07 8.95431 8.9543 1.35705e-06 20 8.74228e-07C31.0457 3.91405e-07 40 8.95431 40 20C40 31.0457 31.0457 40 20 40Z"
+        fill={theme.dark ? '#393939' : '#E1E4E7'}
+      />
+      <Svg.Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M18.6517 16.0839L16.0419 18.6937C15.5747 19.1609 14.8174 19.1609 14.3503 18.6937C13.8832 18.2266 13.8832 17.4693 14.3503 17.0022L18.9948 12.3577C19.0222 12.3298 19.051 12.3032 19.0811 12.2781C19.1595 12.2124 19.2444 12.1584 19.3334 12.116C19.4892 12.0416 19.6637 12 19.8479 12C20.0217 12 20.1868 12.0371 20.3358 12.1037C20.4523 12.1557 20.5621 12.2273 20.6604 12.3183C20.6728 12.3299 20.685 12.3417 20.697 12.3537L25.3455 17.0022C25.8126 17.4693 25.8126 18.2266 25.3455 18.6937C24.8784 19.1609 24.121 19.1609 23.6539 18.6937L21.044 16.0838L21.044 27.1515C21.044 27.8121 20.5084 28.3477 19.8479 28.3477C19.1873 28.3477 18.6517 27.8121 18.6517 27.1515L18.6517 16.0839Z"
+        fill={theme.dark ? '#9BA3AE' : '#434D5A'}
+      />
+    </Svg.Svg>
+  );
+};
+
+export const TxErrorIcon = ({size = TRANSACTION_ICON_SIZE}: TxIconProps) => {
+  const theme = useTheme() as BitPayTheme;
+
+  return (
+    <Svg.Svg width={size} height={size} viewBox="0 0 40 41" fill="none">
+      <Svg.Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M-1.19209e-06 20.0601C-1.19209e-06 9.01436 8.9543 0.0600574 20 0.0600574C31.0457 0.0600574 40 9.01436 40 20.0601C40 31.1058 31.0457 40.0601 20 40.0601C8.9543 40.0601 -1.19209e-06 31.1058 -1.19209e-06 20.0601Z"
+        fill={theme.dark ? '#A71C1C' : '#FFCDCD'}
+      />
+      <Svg.Path
+        d="M21.9043 20.2504L27.904 26.25C28.3774 26.7234 28.3774 27.4909 27.904 27.9642C27.4307 28.4375 26.6632 28.4375 26.1899 27.9642L20.1902 21.9645L14.1905 27.9642C13.7171 28.4375 12.9497 28.4375 12.4763 27.9642C12.0029 27.4907 12.0029 26.7234 12.4763 26.2499L18.4759 20.2502L12.4763 14.2506C12.0029 13.7773 12.0029 13.0098 12.4763 12.5364C12.9496 12.0629 13.7171 12.0629 14.1904 12.5364L20.1901 18.5361L26.1899 12.5363C26.6632 12.0629 27.4307 12.0629 27.9041 12.5363C28.3774 13.0098 28.3774 13.7773 27.9041 14.2506L21.9043 20.2504Z"
+        fill={theme.dark ? '#FFCDCD' : '#CD4040'}
+      />
+    </Svg.Svg>
+  );
+};
+
+export const TxContractInteractionIcon = ({
+  size = TRANSACTION_ICON_SIZE,
+}: TxIconProps) => {
+  const theme = useTheme() as BitPayTheme;
+
+  return (
+    <Svg.Svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+      <Svg.Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M20 40C8.9543 40 0 31.0457 0 20C0 8.9543 8.9543 0 20 0C31.0457 0 40 8.9543 40 20C40 31.0457 31.0457 40 20 40Z"
+        fill={theme.dark ? '#393939' : '#E1E4E7'}
+      />
+      <Svg.Path
+        d="M21.7771 25.0419L18.99 25.7516L19.6997 22.9644L28.1159 14.5482C28.3913 14.2726 28.765 14.1177 29.1546 14.1177C29.5443 14.1177 29.918 14.2726 30.1934 14.5482V14.5482C30.469 14.8236 30.6239 15.1973 30.6239 15.5869C30.6239 15.9766 30.469 16.3503 30.1934 16.6257L21.7771 25.0419Z"
+        fill={theme.dark ? '#9BA3AE' : '#434D5A'}
+      />
+      <Svg.Line
+        x1="10.1618"
+        y1="25.1323"
+        x2="17.0591"
+        y2="25.1323"
+        stroke={theme.dark ? '#9BA3AE' : '#434D5A'}
+        stroke-width="1.5"
+        stroke-linecap="round"
+      />
+    </Svg.Svg>
+  );
+};
+
+export const TxMovedIcon = ({size = TRANSACTION_ICON_SIZE}: TxIconProps) => {
+  const theme = useTheme() as BitPayTheme;
+
+  return (
+    <Svg.Svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+      <Svg.Path
+        opacity="0.2"
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M-1.19209e-06 20C-1.19209e-06 8.9543 8.9543 -1.19209e-06 20 -1.19209e-06C31.0457 -1.19209e-06 40 8.9543 40 20C40 31.0457 31.0457 40 20 40C8.9543 40 -1.19209e-06 31.0457 -1.19209e-06 20Z"
+        fill={theme.dark ? '#393939' : '#E1E4E7'}
+      />
+      <Svg.Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M23.9161 18.6517L21.3063 16.0419C20.8391 15.5747 20.8391 14.8174 21.3063 14.3503C21.7734 13.8832 22.5307 13.8832 22.9978 14.3503L27.6423 18.9948C27.6702 19.0222 27.6968 19.051 27.7219 19.0811C27.7876 19.1595 27.8416 19.2444 27.884 19.3334C27.9584 19.4892 28 19.6637 28 19.8479C28 20.0217 27.9629 20.1868 27.8963 20.3358C27.8443 20.4523 27.7727 20.5621 27.6817 20.6604C27.6701 20.6728 27.6583 20.685 27.6463 20.697L22.9978 25.3455C22.5307 25.8126 21.7734 25.8126 21.3063 25.3455C20.8391 24.8784 20.8391 24.121 21.3063 23.6539L23.9162 21.044L12.8485 21.044C12.1879 21.044 11.6523 20.5084 11.6523 19.8479C11.6523 19.1873 12.1879 18.6517 12.8485 18.6517L23.9161 18.6517Z"
+        fill={theme.dark ? '#9BA3AE' : '#434D5A'}
+      />
+    </Svg.Svg>
+  );
+};
+
+export const TxBroadcastIcon = ({
+  size = TRANSACTION_ICON_SIZE,
+}: TxIconProps) => {
+  const theme = useTheme() as BitPayTheme;
+
+  return (
+    <Svg.Svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+      <Svg.Path
+        fill-rule="evenodd"
+        clip-rule="evenodd"
+        d="M-1.19209e-06 20C-1.19209e-06 8.9543 8.9543 -1.19209e-06 20 -1.19209e-06C31.0457 -1.19209e-06 40 8.9543 40 20C40 31.0457 31.0457 40 20 40C8.9543 40 -1.19209e-06 31.0457 -1.19209e-06 20Z"
+        fill={theme.dark ? '#393939' : '#E1E4E7'}
+      />
+      <Svg.Path
+        d="M28 21.1248C28.5523 21.1248 29 20.677 29 20.1248V19.9998C28.9973 17.6138 28.0483 15.3262 26.3611 13.6389C24.6739 11.9518 22.3863 11.0027 20.0002 11H19.8752C19.3229 11 18.8752 11.4478 18.8752 12V12.25C18.8752 12.8022 19.3229 13.25 19.8752 13.25H20.0002C21.7898 13.2517 23.5056 13.9635 24.7711 15.2289C26.0366 16.4944 26.7483 18.2102 26.7501 19.9998V20.1248C26.7501 20.677 27.1978 21.1248 27.7501 21.1248H28Z"
+        fill={theme.dark ? '#9BA3AE' : '#434D5A'}
+      />
+      <Svg.Path
+        d="M12.6462 16.3063C12.9841 15.8694 13.6232 15.8728 14.0137 16.2633L18.0823 20.3319L18.9141 19.5001C19.3046 19.1095 19.9378 19.1095 20.3283 19.5001L20.502 19.6737C20.8925 20.0643 20.8925 20.6974 20.502 21.088L19.6702 21.9198L23.7367 25.9863C24.1273 26.3768 24.1306 27.0159 23.6938 27.3539C22.3217 28.4153 20.6286 29 18.8752 29C16.7866 29 14.7835 28.1703 13.3066 26.6935C11.8297 25.2166 11 23.2135 11 21.1248C11 19.3715 11.5847 17.6783 12.6462 16.3063Z"
+        fill={theme.dark ? '#9BA3AE' : '#434D5A'}
+      />
+      <Svg.Path
+        d="M25.6251 20.1248C25.6251 20.6771 25.1774 21.1249 24.6251 21.1249H24.3751C23.8228 21.1249 23.3751 20.6771 23.3751 20.1249V19.9999C23.3751 19.1047 23.0196 18.2463 22.3866 17.6134C21.7537 16.9805 20.8953 16.6249 20.0002 16.6249H19.8752C19.3229 16.6249 18.8752 16.1772 18.8752 15.6249V15.375C18.8752 14.8226 19.3229 14.375 19.8752 14.375H20.0002C21.4915 14.3767 22.9211 14.97 23.9756 16.0244C25.0301 17.0789 25.6233 18.5085 25.6251 19.9999V20.1248Z"
+        fill={theme.dark ? '#9BA3AE' : '#434D5A'}
+      />
+    </Svg.Svg>
+  );
+};
+
+export const TxFeeIcon = ({size = TRANSACTION_ICON_SIZE}: TxIconProps) => {
+  const theme = useTheme() as BitPayTheme;
+
+  return (
+    <Svg.Svg width={size} height={size} viewBox="0 0 41 40" fill="none">
+      <Svg.Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M20.8469 40C9.80123 40 0.846925 31.0457 0.846925 20C0.846924 8.95431 9.80123 1.35705e-06 20.8469 8.74228e-07C31.8926 3.91405e-07 40.8469 8.9543 40.8469 20C40.8469 31.0457 31.8926 40 20.8469 40Z"
+        fill={theme.dark ? '#393939' : '#E1E4E7'}
+      />
+      <Svg.Path
+        d="M22.3622 18.1818C22.3622 20.0061 23.547 21.9697 26.15 21.9697C28.7531 21.9697 29.9379 20.0061 29.9379 18.1818C29.9379 18.0242 29.8887 17.8697 29.797 17.7417L26.016 12.4485C25.9372 12.3356 25.8273 12.2417 25.691 12.1826C25.5887 12.1379 25.4872 12.1265 25.3758 12.1212H16.3182C16.219 12.1235 16.1061 12.1379 16.0031 12.1826C15.8667 12.2409 15.7561 12.3349 15.6781 12.4485L11.897 17.7417C11.8053 17.8697 11.7561 18.0242 11.7561 18.1818C11.7561 20.0061 12.941 21.9697 15.544 21.9697C18.147 21.9697 19.3319 20.0061 19.3319 18.1818C19.3319 18.0788 19.3114 17.9773 19.2705 17.8833L17.4508 13.6364H20.0894V26.5152H15.544C15.1258 26.5152 14.7864 26.8538 14.7864 27.2727C14.7864 27.6917 15.1258 28.0303 15.544 28.0303H26.15C26.5682 28.0303 26.9076 27.6917 26.9076 27.2727C26.9076 26.8538 26.5682 26.5152 26.15 26.5152H21.6046V13.6364H24.2432L22.4235 17.8833C22.3826 17.9773 22.3622 18.0788 22.3622 18.1818ZM17.75 18.1818H13.4447L16.1349 14.4144L17.75 18.1818ZM25.5584 14.4144L28.2493 18.1818H23.944L25.5584 14.4144Z"
+        fill={theme.dark ? '#9BA3AE' : '#434D5A'}
+      />
+    </Svg.Svg>
+  );
+};
+
+export const TxCardLoadIcon = ({size = TRANSACTION_ICON_SIZE}: TxIconProps) => {
+  const theme = useTheme() as BitPayTheme;
+
+  return (
+    <Svg.Svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+      <Svg.Path
+        fill-rule="evenodd"
+        clip-rule="evenodd"
+        d="M20 40C8.95431 40 1.35705e-06 31.0457 8.74228e-07 20C3.91405e-07 8.95431 8.9543 1.35705e-06 20 8.74228e-07C31.0457 3.91405e-07 40 8.9543 40 20C40 31.0457 31.0457 40 20 40Z"
+        fill={theme.dark ? '#004D27' : '#CBF3E8'}
+      />
+      <Svg.Path
+        d="M25.9088 22.5253H24.5957V24.495H22.626V25.8081H24.5957V27.7778H25.9088V25.8081H27.8785V24.495H25.9088V22.5253Z"
+        fill={theme.dark ? '#97E7D1' : '#004D27'}
+      />
+      <Svg.Path
+        d="M25.909 13.3334H14.0908C13.0048 13.3334 12.1211 14.2171 12.1211 15.3031V23.8384C12.1211 24.9244 13.0048 25.8081 14.0908 25.8081H19.9999V24.495H14.0908C13.7284 24.495 13.4342 24.2002 13.4342 23.8384V20.5556H27.8787V15.3031C27.8787 14.2171 26.9949 13.3334 25.909 13.3334ZM13.4342 16.6162V15.3031C13.4342 14.9413 13.7284 14.6465 14.0908 14.6465H25.909C26.2714 14.6465 26.5655 14.9413 26.5655 15.3031V16.6162H13.4342Z"
+        fill={theme.dark ? '#97E7D1' : '#004D27'}
+      />
+    </Svg.Svg>
+  );
+};
+
+export const TxReferralRewardsIcon = ({
+  size = TRANSACTION_ICON_SIZE,
+}: TxIconProps) => {
+  const theme = useTheme() as BitPayTheme;
+
+  return (
+    <Svg.Svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+      <Svg.Path
+        fill-rule="evenodd"
+        clip-rule="evenodd"
+        d="M-1.19209e-06 20C-1.19209e-06 8.9543 8.9543 -1.19209e-06 20 -1.19209e-06C31.0457 -1.19209e-06 40 8.9543 40 20C40 31.0457 31.0457 40 20 40C8.9543 40 -1.19209e-06 31.0457 -1.19209e-06 20Z"
+        fill={theme.dark ? '#004D27' : '#CBF3E8'}
+      />
+      <Svg.Path
+        d="M18.5802 18.374L13.646 23.2299V26.5244L21.9278 18.374H18.5802Z"
+        fill={theme.dark ? '#CBF3E8' : '#004D27'}
+      />
+      <Svg.Path
+        d="M17.8614 18.374H13.9001C13.7597 18.374 13.646 18.486 13.646 18.6241V22.5225L17.8614 18.374Z"
+        fill={theme.dark ? '#CBF3E8' : '#004D27'}
+      />
+      <Svg.Path
+        d="M26.3539 18.7278L17.0554 27.8787H20.9114L26.3539 22.5226V18.7278Z"
+        fill={theme.dark ? '#CBF3E8' : '#004D27'}
+      />
+      <Svg.Path
+        d="M21.6303 27.8787H26.0998C26.2403 27.8787 26.354 27.7667 26.354 27.6286V23.23L21.6303 27.8787Z"
+        fill={theme.dark ? '#CBF3E8' : '#004D27'}
+      />
+      <Svg.Path
+        d="M25.9943 18.374H22.6466L13.646 27.2318V27.6285C13.646 27.7666 13.7597 27.8786 13.9001 27.8786H16.3364L25.9943 18.374Z"
+        fill={theme.dark ? '#CBF3E8' : '#004D27'}
+      />
+      <Svg.Path
+        fill-rule="evenodd"
+        clip-rule="evenodd"
+        d="M27.6246 15.3727H24.6465C24.9202 15.0322 25.0831 14.5996 25.0831 14.1221C25.0831 13.0001 24.1901 12.1211 23.0499 12.1211C21.4669 12.1211 20.5128 13.3225 20 14.2923C19.4872 13.3225 18.5332 12.1211 16.9502 12.1211C15.8099 12.1211 14.9169 13.0001 14.9169 14.1221C14.9169 14.5996 15.0798 15.0322 15.3536 15.3727H12.3754C12.2349 15.3727 12.1212 15.4846 12.1212 15.6228V17.6237C12.1212 17.7619 12.2349 17.8739 12.3754 17.8739H27.6246C27.7651 17.8739 27.8788 17.7619 27.8788 17.6237V15.6228C27.8788 15.4846 27.7651 15.3727 27.6246 15.3727ZM23.0498 13.1216C23.6294 13.1216 24.0664 13.5517 24.0664 14.1221C24.0664 14.6924 23.6294 15.1226 23.0498 15.1226H20.7254C21.0687 14.3442 21.8059 13.1216 23.0498 13.1216ZM19.2745 15.1226C18.9315 14.3445 18.1941 13.1216 16.9501 13.1216C16.3706 13.1216 15.9335 13.5517 15.9335 14.1221C15.9335 14.6924 16.3706 15.1226 16.9501 15.1226H19.2745Z"
+        fill={theme.dark ? '#CBF3E8' : '#004D27'}
+      />
+    </Svg.Svg>
+  );
+};
+
+export const TxWalletConnectIcon = ({
+  size = TRANSACTION_ICON_SIZE,
+}: TxIconProps) => {
+  const theme = useTheme() as BitPayTheme;
+
+  return (
+    <Svg.Svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+      <Svg.Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M-1.19209e-06 20C-1.19209e-06 8.9543 8.9543 -1.19209e-06 20 -1.19209e-06C31.0457 -1.19209e-06 40 8.9543 40 20C40 31.0457 31.0457 40 20 40C8.9543 40 -1.19209e-06 31.0457 -1.19209e-06 20Z"
+        fill={theme.dark ? '#003C7B' : '#BEDEFF'}
+      />
+      <Svg.Path
+        d="M13.0638 14.9621C17.0976 11.0126 23.6376 11.0126 27.6714 14.9621L28.1569 15.4374C28.3586 15.6348 28.3586 15.955 28.1569 16.1525L26.4962 17.7784C26.3953 17.8772 26.2318 17.8772 26.131 17.7784L25.4629 17.1243C22.6489 14.3691 18.0864 14.3691 15.2723 17.1243L14.5568 17.8248C14.456 17.9236 14.2925 17.9236 14.1917 17.8248L12.531 16.1989C12.3293 16.0014 12.3293 15.6812 12.531 15.4838L13.0638 14.9621ZM31.1059 18.3247L32.5839 19.7718C32.7856 19.9693 32.7856 20.2895 32.5839 20.4869L25.9194 27.0122C25.7177 27.2096 25.3907 27.2096 25.189 27.0122C25.189 27.0122 25.189 27.0122 25.189 27.0122L20.4589 22.381C20.4085 22.3317 20.3268 22.3317 20.2763 22.381C20.2763 22.381 20.2763 22.381 20.2763 22.381L15.5464 27.0122C15.3447 27.2096 15.0177 27.2097 14.816 27.0122C14.816 27.0122 14.816 27.0122 14.816 27.0122L8.15127 20.4869C7.94958 20.2894 7.94958 19.9692 8.15127 19.7718L9.6293 18.3246C9.83099 18.1272 10.158 18.1272 10.3597 18.3246L15.0898 22.9559C15.1402 23.0052 15.222 23.0052 15.2724 22.9559C15.2724 22.9559 15.2724 22.9559 15.2724 22.9559L20.0023 18.3246C20.204 18.1272 20.531 18.1272 20.7327 18.3246C20.7327 18.3246 20.7327 18.3246 20.7327 18.3246L25.4629 22.9559C25.5133 23.0052 25.595 23.0052 25.6455 22.9559L30.3755 18.3247C30.5772 18.1273 30.9042 18.1273 31.1059 18.3247Z"
+        fill="#3B99FC"
+      />
+    </Svg.Svg>
+  );
+};
 
 export const TransactionIcons: {[key in string]: ReactElement} = {
   amazon: (
     <AmazonSvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
   ),
-  walletConnect: (
-    <WalletConnectSvg
-      width={TRANSACTION_ICON_SIZE}
-      height={TRANSACTION_ICON_SIZE}
-    />
-  ),
+  walletConnect: <TxWalletConnectIcon />,
   shapeshift: (
     <ShapeShiftSvg
       width={TRANSACTION_ICON_SIZE}
@@ -53,31 +339,12 @@ export const TransactionIcons: {[key in string]: ReactElement} = {
   debitcard: (
     <BitPaySvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
   ),
-  giftcards: (
-    <GiftCardSvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
-  ),
-  sent: (
-    <SentSvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
-  ),
-  received: (
-    <ReceivedSvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
-  ),
-  moved: (
-    <MovedSvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
-  ),
-  confirming: (
-    <ConfirmingSvg
-      width={TRANSACTION_ICON_SIZE}
-      height={TRANSACTION_ICON_SIZE}
-    />
-  ),
-  error: (
-    <ErrorSvg width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE} />
-  ),
-  broadcast: (
-    <BroadcastSvg
-      width={TRANSACTION_ICON_SIZE}
-      height={TRANSACTION_ICON_SIZE}
-    />
-  ),
+  giftcards: <TxGiftCardIcon />,
+  sent: <TxSentIcon />,
+  received: <TxReceivedIcon />,
+  moved: <TxMovedIcon />,
+  confirming: <TxConfirmingIcon />,
+  error: <TxErrorIcon />,
+  broadcast: <TxBroadcastIcon />,
+  contractInteraction: <TxContractInteractionIcon />,
 };

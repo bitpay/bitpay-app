@@ -1,6 +1,7 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import React, {useEffect, useMemo, useState} from 'react';
 import {RefreshControl, ScrollView} from 'react-native';
+import analytics from '@segment/analytics-react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -45,6 +46,9 @@ const HomeRoot = () => {
   const brazeQuickLinks = useAppSelector(selectBrazeQuickLinks);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
   const hasKeys = Object.values(keys).length;
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups.length > 0;
@@ -188,11 +192,31 @@ const HomeRoot = () => {
                         actions: [
                           {
                             text: 'Add funds',
-                            action: () =>
-                              navigation.navigate('BuyCrypto', {
-                                screen: 'Root',
-                                params: {amount: 50},
-                              }),
+                            action: () => {
+                              analytics.track(
+                                'BitPay App - Clicked Buy Crypto',
+                                {
+                                  from: 'HomeRoot',
+                                  appUser: user?.eid || '',
+                                },
+                              );
+                              navigation.navigate('Wallet', {
+                                screen: 'Amount',
+                                params: {
+                                  onAmountSelected: (amount: string) => {
+                                    navigation.navigate('BuyCrypto', {
+                                      screen: 'Root',
+                                      params: {
+                                        amount: Number(amount),
+                                      },
+                                    });
+                                  },
+                                  opts: {
+                                    hideSendMax: true,
+                                  },
+                                },
+                              });
+                            },
                             primary: true,
                           },
                           {

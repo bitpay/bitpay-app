@@ -15,7 +15,7 @@ import {
 import {Link} from '../../../components/styled/Text';
 import {RootState} from '../../../store';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
-import {Action} from '../../../styles/colors';
+import {Action, LightBlack} from '../../../styles/colors';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingImage} from '../components/Containers';
 import OnboardingSlide from '../components/OnboardingSlide';
@@ -177,13 +177,13 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
               animatedFriction={100}
               animatedTension={100}
               dotStyle={{
-                backgroundColor: Action,
                 width: 15,
                 height: 15,
                 borderRadius: 10,
                 marginHorizontal: 1,
               }}
-              inactiveDotOpacity={0.4}
+              dotColor={Action}
+              inactiveDotColor={LightBlack}
               inactiveDotScale={0.5}
             />
           </Column>

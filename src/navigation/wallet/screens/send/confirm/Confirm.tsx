@@ -46,6 +46,7 @@ import ToggleSwitch from '../../../../../components/toggle-switch/ToggleSwitch';
 import {useTranslation} from 'react-i18next';
 import {Hr} from '../../../../../components/styled/Containers';
 import {Alert} from 'react-native';
+import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
 
 export interface ConfirmParamList {
   wallet: Wallet;
@@ -118,7 +119,7 @@ const Confirm = () => {
   const [gasLimit, setGasLimit] = useState(_gasLimit);
   const [nonce, setNonce] = useState(_nonce);
   const {currencyAbbreviation} = wallet;
-
+  const feeOptions = dispatch(GetFeeOptions(currencyAbbreviation));
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
@@ -211,7 +212,7 @@ const Confirm = () => {
     } catch (err: any) {
       dispatch(dismissOnGoingProcessModal());
       const [errorMessageConfig] = await Promise.all([
-        handleCreateTxProposalError(err),
+        dispatch(handleCreateTxProposalError(err)),
         sleep(400),
       ]);
       dispatch(
@@ -275,7 +276,7 @@ const Confirm = () => {
               : undefined
           }
           fee={fee}
-          currencyAbbreviation={currencyAbbreviation}
+          feeOptions={feeOptions}
           hr
         />
         {enableReplaceByFee ? (

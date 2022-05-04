@@ -20,17 +20,13 @@ import {
   successUpdateWalletStatus,
   updatePortfolioBalance,
 } from '../../wallet.actions';
-import {
-  findWalletById,
-  formatCryptoAmount,
-  isCacheKeyStale,
-  toFiat,
-} from '../../utils/wallet';
+import {findWalletById, isCacheKeyStale, toFiat} from '../../utils/wallet';
 import {Network} from '../../../../constants';
 import {BALANCE_CACHE_DURATION} from '../../../../constants/wallet';
 import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
 import {ProcessPendingTxps} from '../transactions/transactions';
+import {FormatAmount} from '../amount/amount';
 
 /*
  * post broadcasting of payment
@@ -160,12 +156,14 @@ export const startUpdateWalletStatus =
         }
 
         const cachedBalance = wallet.balance.fiat;
-        const status = await updateWalletStatus({
-          wallet,
-          defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-          rates,
-          lastDayRates,
-        });
+        const status = await dispatch(
+          updateWalletStatus({
+            wallet,
+            defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+            rates,
+            lastDayRates,
+          }),
+        );
 
         dispatch(
           successUpdateWalletStatus({
@@ -235,12 +233,14 @@ export const startUpdateAllWalletStatusForKey =
         const balances = await Promise.all(
           key.wallets.map(async wallet => {
             return new Promise<WalletBalance>(async resolve2 => {
-              const status = await updateWalletStatus({
-                wallet,
-                defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-                rates,
-                lastDayRates,
-              });
+              const status = await dispatch(
+                updateWalletStatus({
+                  wallet,
+                  defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+                  rates,
+                  lastDayRates,
+                }),
+              );
               dispatch(
                 successUpdateWalletStatus({
                   keyId: key.id,
@@ -309,107 +309,127 @@ export const startUpdateAllKeyAndWalletStatus =
     });
   };
 
-const updateWalletStatus = ({
-  wallet,
-  defaultAltCurrencyIsoCode,
-  rates,
-  lastDayRates,
-}: {
-  wallet: Wallet;
-  rates: Rates;
-  defaultAltCurrencyIsoCode: string;
-  lastDayRates: Rates;
-}): Promise<WalletStatus> => {
-  return new Promise(async resolve => {
-    const {
-      currencyAbbreviation,
-      balance: cachedBalance,
-      credentials: {network, token, multisigEthInfo},
-      hideWallet,
-      pendingTxps: cachedPendingTxps,
-    } = wallet;
+const updateWalletStatus =
+  ({
+    wallet,
+    defaultAltCurrencyIsoCode,
+    rates,
+    lastDayRates,
+  }: {
+    wallet: Wallet;
+    rates: Rates;
+    defaultAltCurrencyIsoCode: string;
+    lastDayRates: Rates;
+  }): Effect<Promise<WalletStatus>> =>
+  async dispatch => {
+    return new Promise(async resolve => {
+      const {
+        currencyAbbreviation,
+        balance: cachedBalance,
+        credentials: {network, token, multisigEthInfo},
+        hideWallet,
+        pendingTxps: cachedPendingTxps,
+      } = wallet;
 
-    wallet.getStatus(
-      {
-        twoStep: true,
-        tokenAddress: token ? token.address : null,
-        multisigContractAddress: multisigEthInfo
-          ? multisigEthInfo.multisigContractAddress
-          : null,
-      },
-      (err: Error, status: Status) => {
-        if (err) {
-          return resolve({
-            balance: cachedBalance,
-            pendingTxps: cachedPendingTxps,
-          });
-        }
-        try {
-          const {
-            totalAmount,
-            totalConfirmedAmount,
-            lockedAmount,
-            lockedConfirmedAmount,
-            availableAmount,
-            availableConfirmedAmount,
-          } = status.balance;
-
-          const newBalance = {
-            sat: totalAmount,
-            satConfirmed: totalConfirmedAmount,
-            satLocked: lockedAmount,
-            satConfirmedLocked: lockedConfirmedAmount,
-            satAvailable: availableAmount,
-            satConfirmedAvailable: availableConfirmedAmount,
-            crypto: formatCryptoAmount(totalAmount, currencyAbbreviation),
-            cryptoLocked: formatCryptoAmount(
+      wallet.getStatus(
+        {
+          twoStep: true,
+          tokenAddress: token ? token.address : null,
+          multisigContractAddress: multisigEthInfo
+            ? multisigEthInfo.multisigContractAddress
+            : null,
+        },
+        (err: Error, status: Status) => {
+          if (err) {
+            return resolve({
+              balance: cachedBalance,
+              pendingTxps: cachedPendingTxps,
+            });
+          }
+          try {
+            const {
+              totalAmount,
+              totalConfirmedAmount,
               lockedAmount,
-              currencyAbbreviation,
-            ),
-            fiat:
-              network === Network.mainnet && !hideWallet
-                ? toFiat(
-                    totalAmount,
-                    defaultAltCurrencyIsoCode,
-                    currencyAbbreviation,
-                    rates,
-                  )
-                : 0,
-            fiatLocked:
-              network === Network.mainnet && !hideWallet
-                ? toFiat(
-                    lockedAmount,
-                    defaultAltCurrencyIsoCode,
-                    currencyAbbreviation,
-                    rates,
-                  )
-                : 0,
-            fiatLastDay:
-              network === Network.mainnet && !hideWallet
-                ? toFiat(
-                    totalAmount,
-                    defaultAltCurrencyIsoCode,
-                    currencyAbbreviation,
-                    lastDayRates,
-                  )
-                : 0,
-          };
+              lockedConfirmedAmount,
+              availableAmount,
+              availableConfirmedAmount,
+            } = status.balance;
 
-          const newPendingTxps = ProcessPendingTxps(status.pendingTxps, wallet);
+            const newBalance = {
+              sat: totalAmount,
+              satConfirmed: totalConfirmedAmount,
+              satLocked: lockedAmount,
+              satConfirmedLocked: lockedConfirmedAmount,
+              satAvailable: availableAmount,
+              satConfirmedAvailable: availableConfirmedAmount,
+              crypto: dispatch(
+                FormatAmount(currencyAbbreviation, Number(totalAmount)),
+              ),
+              cryptoLocked: dispatch(
+                FormatAmount(currencyAbbreviation, Number(lockedAmount)),
+              ),
+              fiat:
+                network === Network.mainnet && !hideWallet
+                  ? dispatch(
+                      toFiat(
+                        totalAmount,
+                        defaultAltCurrencyIsoCode,
+                        currencyAbbreviation,
+                        rates,
+                      ),
+                    )
+                  : 0,
+              fiatLocked:
+                network === Network.mainnet && !hideWallet
+                  ? dispatch(
+                      toFiat(
+                        lockedAmount,
+                        defaultAltCurrencyIsoCode,
+                        currencyAbbreviation,
+                        rates,
+                      ),
+                    )
+                  : 0,
+              fiatLastDay:
+                network === Network.mainnet && !hideWallet
+                  ? dispatch(
+                      toFiat(
+                        totalAmount,
+                        defaultAltCurrencyIsoCode,
+                        currencyAbbreviation,
+                        lastDayRates,
+                      ),
+                    )
+                  : 0,
+            };
 
-          console.log('Status updated: ', newBalance, newPendingTxps);
+            let newPendingTxps = [];
+            try {
+              if (status.pendingTxps?.length > 0) {
+                newPendingTxps = dispatch(
+                  ProcessPendingTxps(status.pendingTxps, wallet),
+                );
+              }
+            } catch (error) {
+              console.log(
+                `Wallet: ${wallet.currencyAbbreviation} - error getting pending txps.`,
+              );
+            }
 
-          resolve({balance: newBalance, pendingTxps: newPendingTxps});
-        } catch (err2) {
-          resolve({
-            balance: cachedBalance,
-            pendingTxps: cachedPendingTxps,
-          });
-        }
-      },
-    );
-  });
-};
+            console.log('Status updated: ', newBalance, newPendingTxps);
+
+            resolve({balance: newBalance, pendingTxps: newPendingTxps});
+          } catch (err2) {
+            resolve({
+              balance: cachedBalance,
+              pendingTxps: cachedPendingTxps,
+            });
+          }
+        },
+      );
+    });
+  };
 
 export const GetWalletBalance = (wallet: Wallet, opts: any): Promise<any> => {
   return new Promise((resolve, reject) => {
@@ -477,36 +497,43 @@ export const startFormatBalanceAllWallesForKey =
             const {sat, satLocked} = cachedBalance;
 
             const newBalance = {
-              crypsatConfirmedLockedto: formatCryptoAmount(
-                sat,
-                currencyAbbreviation,
+              crypsatConfirmedLockedto: dispatch(
+                FormatAmount(currencyAbbreviation, sat),
               ),
-              cryptoLocked: formatCryptoAmount(satLocked, currencyAbbreviation),
+              cryptoLocked: dispatch(
+                FormatAmount(currencyAbbreviation, satLocked),
+              ),
               fiat:
                 network === Network.mainnet && !hideWallet
-                  ? toFiat(
-                      sat,
-                      defaultAltCurrencyIsoCode,
-                      currencyAbbreviation,
-                      rates,
+                  ? dispatch(
+                      toFiat(
+                        sat,
+                        defaultAltCurrencyIsoCode,
+                        currencyAbbreviation,
+                        rates,
+                      ),
                     )
                   : 0,
               fiatLocked:
                 network === Network.mainnet && !hideWallet
-                  ? toFiat(
-                      satLocked,
-                      defaultAltCurrencyIsoCode,
-                      currencyAbbreviation,
-                      rates,
+                  ? dispatch(
+                      toFiat(
+                        satLocked,
+                        defaultAltCurrencyIsoCode,
+                        currencyAbbreviation,
+                        rates,
+                      ),
                     )
                   : 0,
               fiatLastDay:
                 network === Network.mainnet && !hideWallet
-                  ? toFiat(
-                      sat,
-                      defaultAltCurrencyIsoCode,
-                      currencyAbbreviation,
-                      lastDayRates,
+                  ? dispatch(
+                      toFiat(
+                        sat,
+                        defaultAltCurrencyIsoCode,
+                        currencyAbbreviation,
+                        lastDayRates,
+                      ),
                     )
                   : 0,
             };
@@ -537,3 +564,18 @@ export const startFormatBalanceAllWallesForKey =
       }
     });
   };
+
+export const getTokenContractInfo = (
+  wallet: Wallet,
+  opts: any,
+): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    opts = opts || {};
+    wallet.getTokenContractInfo(opts, (err: any, resp: any) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(resp);
+    });
+  });
+};

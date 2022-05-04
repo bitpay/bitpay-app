@@ -78,7 +78,7 @@ const Connections: React.FC<ConnectionsProps> = props => {
       navigation.setParams({redirectTo: undefined} as any);
       goToWalletConnect();
     }
-  }, [redirectTo, goToWalletConnect]);
+  }, [redirectTo, goToWalletConnect, navigation]);
 
   return (
     <SettingsComponent>

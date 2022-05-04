@@ -5,6 +5,7 @@ export const Action = '#2240C4';
 
 /* Secondary */
 export const SlateDark = '#434D5A';
+export const LuckySevens = '#777777';
 export const Slate = '#9BA3AE';
 export const NeutralSlate = '#F5F7F8';
 export const Air = '#EBEDF8';
@@ -39,3 +40,4 @@ export const DisabledDark = '#3c3c3c';
 
 export const NotificationPrimary = '#1F3AB3';
 export const ProgressBlue = '#4F6EF7';
+export const LinkBlue = '#4989FF';

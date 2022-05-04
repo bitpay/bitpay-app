@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   Linking,
 } from 'react-native';
-import {useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import FastImage from 'react-native-fast-image';
 import {
@@ -15,7 +14,7 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import cloneDeep from 'lodash.clonedeep';
-import {useAppDispatch} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import Button from '../../../../components/button/Button';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {
@@ -51,6 +50,7 @@ import {Wallet} from '../../../../store/wallet/wallet.models';
 import {APP_NAME} from '../../../../constants/config';
 import {isPaymentMethodSupported} from '../utils/buy-crypto-utils';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
+import analytics from '@segment/analytics-react-native';
 
 // Images // TODO: for exchanges images create a component like this: /bitpay-app-v2/src/components/icons/info
 import SimplexLogo from '../../../../../assets/img/services/simplex/logo-simplex-color.svg';
@@ -289,7 +289,10 @@ const BuyCryptoOffers: React.FC = () => {
   const [finishedWyre, setFinishedWyre] = useState(false);
   const [updateView, setUpdateView] = useState(false);
 
-  const createdOn = useSelector(({WALLET}: RootState) => WALLET.createdOn);
+  const createdOn = useAppSelector(({WALLET}: RootState) => WALLET.createdOn);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
 
   const getSimplexQuote = (): void => {
     logger.debug('Simplex getting quote');
@@ -335,10 +338,11 @@ const BuyCryptoOffers: React.FC = () => {
             offers.simplex.fee =
               data.fiat_money.total_amount - data.fiat_money.base_amount;
 
-            if (offers.simplex.buyAmount && coin && GetPrecision(coin)) {
+            const precision = dispatch(GetPrecision(coin));
+            if (offers.simplex.buyAmount && coin && precision) {
               offers.simplex.fiatMoney = Number(
                 offers.simplex.buyAmount / data.digital_money.amount,
-              ).toFixed(GetPrecision(coin)!.unitDecimals);
+              ).toFixed(precision!.unitDecimals);
             } else {
               logger.error(
                 `Simplex error: Could not get precision for ${coin}`,
@@ -560,6 +564,16 @@ const BuyCryptoOffers: React.FC = () => {
           }),
         );
 
+        analytics.track('BitPay App - Requested Crypto Purchase', {
+          exchange: 'simplex',
+          walletId: selectedWallet.id,
+          fiatAmount: amount,
+          fiatCurrency: fiatCurrency,
+          paymentMethod: paymentMethod.method,
+          coin: selectedWallet.currencyAbbreviation,
+          appUser: user?.eid || '',
+        });
+
         const paymentUrl: string = getPaymentUrl(
           selectedWallet,
           quoteData,
@@ -636,6 +650,15 @@ const BuyCryptoOffers: React.FC = () => {
   };
 
   const continueToWyre = (paymentUrl: string) => {
+    analytics.track('BitPay App - Requested Crypto Purchase', {
+      exchange: 'wyre',
+      walletId: selectedWallet.id,
+      fiatAmount: amount,
+      fiatCurrency: fiatCurrency,
+      paymentMethod: paymentMethod.method,
+      coin: selectedWallet.currencyAbbreviation,
+      appUser: user?.eid || '',
+    });
     Linking.openURL(paymentUrl)
       .then(() => {
         navigation.goBack();

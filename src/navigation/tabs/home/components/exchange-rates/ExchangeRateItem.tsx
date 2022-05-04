@@ -13,7 +13,7 @@ import GainArrow from '../../../../../../assets/img/home/exchange-rates/incremen
 import LossArrow from '../../../../../../assets/img/home/exchange-rates/decrement-arrow.svg';
 import NeutralArrow from '../../../../../../assets/img/home/exchange-rates/flat-arrow.svg';
 import {ExchangeRateItemProps} from './ExchangeRatesList';
-import {Slate, SlateDark} from '../../../../../styles/colors';
+import {LuckySevens, SlateDark} from '../../../../../styles/colors';
 
 const RowContainer = styled.TouchableOpacity`
   flex-direction: row;
@@ -36,7 +36,7 @@ const ExchangeRateText = styled(H7)`
 
 const ExchangeRateSubText = styled(Smallest)`
   line-height: 20px;
-  color: ${({theme}) => (theme.dark ? Slate : SlateDark)};
+  color: ${({theme}) => (theme.dark ? LuckySevens : SlateDark)};
 `;
 
 const showLossGainOrNeutralArrow = (average: number | undefined) => {

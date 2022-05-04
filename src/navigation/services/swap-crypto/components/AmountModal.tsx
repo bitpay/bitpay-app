@@ -3,6 +3,7 @@ import Amount from '../../../../navigation/wallet/screens/Amount';
 import {Black, White} from '../../../../styles/colors';
 import styled from 'styled-components/native';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
+import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 
 const AmountContainer = styled.View`
   flex: 1;
@@ -20,8 +21,8 @@ const AmountModal: React.FC<AmountModalProps> = ({
   currencyAbbreviation,
   onDismiss,
 }) => {
-  return (
-    <SheetModal isVisible={isVisible} onBackdropPress={onDismiss}>
+  const AmountComponent = gestureHandlerRootHOC(() => {
+    return (
       <AmountContainer>
         <Amount
           useAsModal={true}
@@ -29,6 +30,12 @@ const AmountModal: React.FC<AmountModalProps> = ({
           currencyAbbreviationProp={currencyAbbreviation}
         />
       </AmountContainer>
+    );
+  });
+
+  return (
+    <SheetModal isVisible={isVisible} onBackdropPress={onDismiss}>
+      <AmountComponent />
     </SheetModal>
   );
 };

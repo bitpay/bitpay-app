@@ -5,6 +5,9 @@ import {
   CtaContainerAbsolute,
   HeaderRightContainer,
   SearchInput,
+  NoResultsContainer,
+  NoResultsImgContainer,
+  NoResultsDescription,
 } from '../../../components/styled/Containers';
 import CurrencySelectionRow, {
   CurrencySelectionToggleProps,
@@ -21,7 +24,7 @@ import {FlatList, TouchableOpacity} from 'react-native';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
-import {HeaderTitle} from '../../../components/styled/Text';
+import {BaseText, HeaderTitle, Link} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   SupportedCurrencyOptions,
@@ -45,6 +48,7 @@ import {NeutralSlate} from '../../../styles/colors';
 import debounce from 'lodash.debounce';
 import Icons from '../components/WalletIcons';
 import SearchSvg from '../../../../assets/img/search.svg';
+import GhostSvg from '../../../../assets/img/ghost-cheeky.svg';
 import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
 
 type CurrencySelectionScreenProps = StackScreenProps<
@@ -437,14 +441,38 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
         </SearchImageContainer>
       </SearchContainer>
 
-      <ListContainer>
-        <FlatList
-          contentContainerStyle={{paddingBottom: 100}}
-          data={currencyOptions}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-        />
-      </ListContainer>
+      {currencyOptions.length ? (
+        <ListContainer>
+          <FlatList
+            contentContainerStyle={{paddingBottom: 100}}
+            data={currencyOptions}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
+          />
+        </ListContainer>
+      ) : (
+        <NoResultsContainer>
+          <NoResultsImgContainer>
+            <GhostSvg style={{marginTop: 20}} />
+          </NoResultsImgContainer>
+          <NoResultsDescription>
+            {"We couldn't find a match for "}
+            <BaseText style={{fontWeight: 'bold'}}>{searchInput}</BaseText>.
+          </NoResultsDescription>
+          {key ? (
+            <Link
+              style={{marginTop: 10}}
+              onPress={() => {
+                navigation.navigate('Wallet', {
+                  screen: 'AddWallet',
+                  params: {key, isCustomToken: true, isToken: true},
+                });
+              }}>
+              Add custom token
+            </Link>
+          ) : null}
+        </NoResultsContainer>
+      )}
 
       {bottomCta && !hideBottomCta && (
         <CtaContainerAbsolute

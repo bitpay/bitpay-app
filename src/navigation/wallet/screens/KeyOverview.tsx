@@ -64,6 +64,7 @@ const Balance = styled(BaseText)<{scale: boolean}>`
   font-weight: 700;
   line-height: 53px;
   letter-spacing: 0;
+  text-align: center;
 `;
 
 const WalletListHeader = styled.View`

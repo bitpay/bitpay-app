@@ -4,10 +4,12 @@ import {Action, White} from '../../../../styles/colors';
 import Haptic from '../../../../components/haptic-feedback/haptic';
 import {BaseText} from '../../../../components/styled/Text';
 import {titleCasing} from '../../../../utils/helper-methods';
+import {useAppSelector} from '../../../../utils/hooks';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
 import {useNavigation} from '@react-navigation/native';
 import {Path, Svg} from 'react-native-svg';
 import {useRequireKeyAndWalletRedirect} from '../../../../utils/hooks/useRequireKeyAndWalletRedirect';
+import analytics from '@segment/analytics-react-native';
 
 const ButtonsRow = styled.View`
   justify-content: center;
@@ -125,10 +127,17 @@ interface Props {
 
 const LinkingButtons = ({buy, receive, send, swap}: Props) => {
   const navigation = useNavigation();
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
   const buyCryptoCta = useRequireKeyAndWalletRedirect(
     buy && buy.cta
       ? buy.cta
       : () => {
+          analytics.track('BitPay App - Clicked Buy Crypto', {
+            from: 'LinkingButtons',
+            appUser: user?.eid || '',
+          });
           navigation.navigate('Wallet', {
             screen: 'Amount',
             params: {
@@ -161,7 +170,13 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
       cta:
         swap && swap.cta
           ? swap.cta
-          : () => navigation.navigate('SwapCrypto', {screen: 'Root'}),
+          : () => {
+              analytics.track('BitPay App - Clicked Swap Crypto', {
+                from: 'LinkingButtons',
+                appUser: user?.eid || '',
+              });
+              navigation.navigate('SwapCrypto', {screen: 'Root'});
+            },
       hide: !!swap?.hide,
     },
     {

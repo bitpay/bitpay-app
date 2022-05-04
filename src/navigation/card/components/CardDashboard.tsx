@@ -1,9 +1,11 @@
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
+import analytics from '@segment/analytics-react-native';
 import React, {useCallback, useLayoutEffect, useMemo} from 'react';
 import {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {FlatList} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import Carousel from 'react-native-snap-carousel';
 import {SharedElement} from 'react-navigation-shared-element';
 import styled from 'styled-components/native';
@@ -126,6 +128,9 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const virtualDesignCurrency = useAppSelector(
     ({CARD}) => CARD.virtualDesignCurrency,
   );
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
 
   const keys = useAppSelector(({WALLET}) => Object.values(WALLET.keys));
   const network = useAppSelector(({APP}) => APP.network);
@@ -134,11 +139,9 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     () =>
       keys
         .flatMap(key => key.wallets)
-        .filter(
-          ({balance: {sat}, network: walletNetwork}) =>
-            sat > 0 && walletNetwork === network,
-        ).length,
-    [keys],
+        .filter(wallet => wallet.balance.sat > 0 && wallet.network === network)
+        .length,
+    [keys, network],
   );
 
   const currentGroupIdx = Math.max(
@@ -151,13 +154,13 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     c => c.cardType === 'physical' && isActivationRequired(c),
   );
 
-  const onViewDetailsClick = () => {
+  const goToCardSettings = () => {
     navigation.navigate('Settings', {
       id: activeCard.id,
     });
   };
-  const onViewDetailsClickRef = useRef(onViewDetailsClick);
-  onViewDetailsClickRef.current = onViewDetailsClick;
+  const goToCardSettingsRef = useRef(goToCardSettings);
+  goToCardSettingsRef.current = goToCardSettings;
 
   const goToConfirmScreen = (amount: number) => {
     navigator.navigate('Wallet', {
@@ -190,11 +193,28 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
           actions: [
             {
               text: 'Add funds',
-              action: () =>
-                navigator.navigate('BuyCrypto', {
-                  screen: BuyCryptoScreens.ROOT,
-                  params: {amount: 50},
-                }),
+              action: () => {
+                analytics.track('BitPay App - Clicked Buy Crypto', {
+                  from: 'CardDashboard',
+                  appUser: user?.eid || '',
+                });
+                navigator.navigate('Wallet', {
+                  screen: WalletScreens.AMOUNT,
+                  params: {
+                    onAmountSelected: (amount: string) => {
+                      navigator.navigate('BuyCrypto', {
+                        screen: BuyCryptoScreens.ROOT,
+                        params: {
+                          amount: Number(amount),
+                        },
+                      });
+                    },
+                    opts: {
+                      hideSendMax: true,
+                    },
+                  },
+                });
+              },
               primary: true,
             },
             {
@@ -210,10 +230,11 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
+      headerLeft: () => null,
       headerRight: () => (
         <HeaderRightContainer>
           <Button
-            onPress={() => onViewDetailsClickRef.current()}
+            onPress={() => goToCardSettingsRef.current()}
             buttonType="pill"
             buttonStyle="primary">
             {t('View Card Details')}
@@ -305,12 +326,16 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     ({item}: {item: Card[]}) =>
       activeCard.id === item[0].id ? (
         <SharedElement
-          id={'card.dashboard.active-card'}
+          id={'card.dashboard.active-card.' + item[0].id}
           style={{paddingHorizontal: 10}}>
-          <CardOverviewSlide
-            card={item[0]}
-            designCurrency={virtualDesignCurrency}
-          />
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => goToCardSettingsRef.current()}>
+            <CardOverviewSlide
+              card={item[0]}
+              designCurrency={virtualDesignCurrency}
+            />
+          </TouchableOpacity>
         </SharedElement>
       ) : (
         <CardOverviewSlide

@@ -195,6 +195,9 @@ export default () => {
   const lockAuthorizedUntil = useAppSelector(
     ({APP}) => APP.lockAuthorizedUntil,
   );
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
 
   // MAIN APP INIT
   useEffect(() => {
@@ -328,6 +331,7 @@ export default () => {
                 }
                 analytics.screen(name, {
                   screen: params?.screen || '',
+                  appUser: user?.eid || '',
                 });
               }
             }

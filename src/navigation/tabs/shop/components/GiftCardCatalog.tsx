@@ -8,7 +8,7 @@ import {useForm, Controller} from 'react-hook-form';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {WIDTH} from '../../../../components/styled/Containers';
 import ShopCarouselList, {ShopCarouselItem} from './ShopCarouselList';
-import {Paragraph} from '../../../../components/styled/Text';
+import {BaseText, Paragraph} from '../../../../components/styled/Text';
 import GiftCardItem from './GiftCardItem';
 import {
   CardConfig,
@@ -20,7 +20,7 @@ import {
   HideableView,
   ListItemTouchableHighlight,
   NoResultsContainer,
-  NoResultsHeader,
+  NoResultsImgContainer,
   SearchBox,
   SearchResults,
   SectionContainer,
@@ -36,6 +36,7 @@ import MyGiftCards from './MyGiftCards';
 import FilterSheet, {initializeCategoryMap} from './FilterSheet';
 import {useAppSelector} from '../../../../utils/hooks';
 import {APP_NETWORK} from '../../../../constants/config';
+import GhostSvg from '../../../../../assets/img/ghost-cheeky.svg';
 
 const Curations = ({
   curations,
@@ -241,7 +242,13 @@ export default ({
             </SearchResults>
           ) : (
             <NoResultsContainer>
-              <NoResultsHeader>No Results</NoResultsHeader>
+              <NoResultsImgContainer>
+                <GhostSvg />
+              </NoResultsImgContainer>
+              <Paragraph>
+                {"We couldn't find a match for "}
+                <BaseText style={{fontWeight: 'bold'}}>{searchVal}</BaseText>.
+              </Paragraph>
               <Paragraph>Please try searching something else.</Paragraph>
             </NoResultsContainer>
           )}

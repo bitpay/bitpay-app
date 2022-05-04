@@ -1,5 +1,10 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, ScrollView, TouchableOpacity} from 'react-native';
+import {
+  ActivityIndicator,
+  InteractionManager,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
 import {useTheme, useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import cloneDeep from 'lodash.clonedeep';
@@ -40,7 +45,7 @@ import {
   changellyGetFixRateForAmount,
 } from '../utils/changelly-utils';
 import {getCountry} from '../../../../lib/location/location';
-import {useAppDispatch} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {sleep} from '../../../../utils/helper-methods';
 import {useLogger} from '../../../../utils/hooks/useLogger';
 import {GetPrecision} from '../../../../store/wallet/utils/currency';
@@ -57,6 +62,7 @@ import {
 } from '../../../../store/app/app.actions';
 import ArrowDown from '../../../../../assets/img/services/swap-crypto/down-arrow.svg';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
+import analytics from '@segment/analytics-react-native';
 
 // Images // TODO: for exchanges images create a component like this: /bitpay-app-v2/src/components/icons/info
 import ChangellyLogo from '../../../../../assets/img/services/changelly/changelly-vector-logo.svg';
@@ -73,6 +79,9 @@ const SwapCryptoRoot: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
   const route = useRoute<RouteProp<SwapCryptoStackParamList, 'Root'>>();
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [fromWalletSelectorModalVisible, setFromWalletSelectorModalVisible] =
@@ -206,7 +215,7 @@ const SwapCryptoRoot: React.FC = () => {
 
     if (fromWalletSelected.balance && fromWalletSelected.balance.sat) {
       const {unitToSatoshi, unitDecimals} =
-        GetPrecision(fromWalletSelected.currencyAbbreviation) || {};
+        dispatch(GetPrecision(fromWalletSelected.currencyAbbreviation)) || {};
       if (unitToSatoshi && unitDecimals) {
         const satToUnit = 1 / unitToSatoshi;
 
@@ -483,60 +492,60 @@ const SwapCryptoRoot: React.FC = () => {
     );
   };
 
-  useEffect(() => {
-    const getChangellyCurrencies = async () => {
-      dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.GENERAL_AWAITING),
+  const getChangellyCurrencies = async () => {
+    const changellyCurrenciesData = await changellyGetCurrencies(true);
+
+    if (changellyCurrenciesData?.result?.length) {
+      const supportedCoinsWithFixRateEnabled = changellyCurrenciesData.result
+        .filter(
+          (coin: any) =>
+            coin.enabled &&
+            coin.fixRateEnabled &&
+            [...SupportedChains, 'ERC20'].includes(coin.protocol.toUpperCase()),
+        )
+        .map(({name}: any) => name);
+
+      // TODO: add support to float-rate coins supported by Changelly
+
+      // Intersection
+      const supportedCoins = SupportedCurrencies.filter(coin =>
+        supportedCoinsWithFixRateEnabled.includes(coin),
       );
-      await sleep(400);
-      const changellyCurrenciesData = await changellyGetCurrencies(true);
 
-      if (changellyCurrenciesData?.result?.length) {
-        const supportedCoinsWithFixRateEnabled = changellyCurrenciesData.result
-          .filter(
-            (coin: any) =>
-              coin.enabled &&
-              coin.fixRateEnabled &&
-              [...SupportedChains, 'ERC20'].includes(
-                coin.protocol.toUpperCase(),
-              ),
-          )
-          .map(({name}: any) => name);
-
-        // TODO: add support to float-rate coins supported by Changelly
-
-        // Intersection
-        const supportedCoins = SupportedCurrencies.filter(coin =>
-          supportedCoinsWithFixRateEnabled.includes(coin),
-        );
-
-        const country = await getCountry();
-        const coinsToRemove = !country || country == 'US' ? ['xrp'] : [];
-        if (selectedWallet && selectedWallet.balance?.sat === 0) {
-          coinsToRemove.push(selectedWallet.currencyAbbreviation.toLowerCase());
-        }
-        coinsToRemove.forEach((coin: string) => {
-          const index = supportedCoins.indexOf(coin);
-          if (index > -1) {
-            logger.debug(`Removing ${coin} from Changelly supported coins`);
-            supportedCoins.splice(index, 1);
-          }
-        });
-        setSwapCryptoSupportedCoinsFrom(supportedCoins);
+      const country = await getCountry();
+      const coinsToRemove = !country || country === 'US' ? ['xrp'] : [];
+      if (selectedWallet && selectedWallet.balance?.sat === 0) {
+        coinsToRemove.push(selectedWallet.currencyAbbreviation.toLowerCase());
       }
-    };
+      coinsToRemove.forEach((coin: string) => {
+        const index = supportedCoins.indexOf(coin);
+        if (index > -1) {
+          logger.debug(`Removing ${coin} from Changelly supported coins`);
+          supportedCoins.splice(index, 1);
+        }
+      });
+      setSwapCryptoSupportedCoinsFrom(supportedCoins);
+    }
+  };
 
-    getChangellyCurrencies()
-      .then(async () => {
-        dispatch(dismissOnGoingProcessModal());
+  useEffect(() => {
+    InteractionManager.runAfterInteractions(async () => {
+      try {
+        dispatch(
+          startOnGoingProcessModal(OnGoingProcessMessages.GENERAL_AWAITING),
+        );
+        await getChangellyCurrencies();
         await sleep(400);
-      })
-      .catch(err => {
+        dispatch(dismissOnGoingProcessModal());
+      } catch (err) {
         logger.error('Changelly getCurrencies Error: ' + JSON.stringify(err));
         const msg =
           'Changelly is not available at this moment. Please, try again later.';
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(200);
         showError(msg);
-      });
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -724,6 +733,15 @@ const SwapCryptoRoot: React.FC = () => {
             buttonStyle={'primary'}
             disabled={!canContinue()}
             onPress={() => {
+              analytics.track('BitPay App - Requested Swap Crypto', {
+                fromWalletId: fromWalletSelected!.id,
+                toWalletId: toWalletSelected!.id,
+                fromCoin: fromWalletSelected!.currencyAbbreviation,
+                toCoin: toWalletSelected!.currencyAbbreviation,
+                amountFrom: amountFrom,
+                exchange: 'changelly',
+                appUser: user?.eid || '',
+              });
               navigation.navigate('SwapCrypto', {
                 screen: 'ChangellyCheckout',
                 params: {

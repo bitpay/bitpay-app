@@ -10,7 +10,9 @@ import {
   WalletBalance,
   TransactionProposal,
   RatesByDateRange,
+  CacheFeeLevel,
 } from './wallet.models';
+import {CurrencyOpts} from '../../constants/currencies';
 
 export const successWalletStoreInit = (): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_WALLET_STORE_INIT,
@@ -107,7 +109,9 @@ export const deleteKey = (payload: {keyId: string}): WalletActionType => ({
 });
 
 export const successGetTokenOptions = (payload: {
-  [key in string]: Token;
+  tokenOptions: {[key in string]: Token};
+  tokenData: {[key in string]: CurrencyOpts};
+  tokenOptionsByAddress: {[key in string]: Token};
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS,
   payload,
@@ -244,5 +248,12 @@ export const toggleHideBalance = (payload: {
   wallet: Wallet;
 }): WalletActionType => ({
   type: WalletActionTypes.TOGGLE_HIDE_BALANCE,
+  payload,
+});
+
+export const updateCacheFeeLevel = (
+  payload: CacheFeeLevel,
+): WalletActionType => ({
+  type: WalletActionTypes.UPDATE_CACHE_FEE_LEVEL,
   payload,
 });

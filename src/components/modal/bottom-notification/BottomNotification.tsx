@@ -1,4 +1,4 @@
-import React, {ReactChild, useEffect} from 'react';
+import React, {ReactChild, useEffect, useState} from 'react';
 import SheetModal from '../base/sheet/SheetModal';
 import {BaseText, fontFamily, H4} from '../../styled/Text';
 import styled, {css} from 'styled-components/native';
@@ -8,7 +8,9 @@ import {RootState} from '../../../store';
 import {
   Black,
   LightBlack,
+  LinkBlue,
   NotificationPrimary,
+  Slate,
   SlateDark,
   White,
 } from '../../../styles/colors';
@@ -72,7 +74,7 @@ const MessageContainer = styled.View`
   margin: 15px 0 20px 0;
 `;
 
-const Hr = styled.View`
+export const BottomNotificationHr = styled.View`
   border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#ebebeb')};
   border-bottom-width: 1px;
   margin: 20px 0;
@@ -88,7 +90,7 @@ const CtaContainer = styled.View`
     `}
 `;
 
-const Cta = styled(BaseText)`
+export const BottomNotificationCta = styled(BaseText)`
   font-size: 16px;
   font-style: normal;
   font-weight: 400;
@@ -96,9 +98,13 @@ const Cta = styled(BaseText)`
   letter-spacing: 0.5px;
   text-align: left;
   color: ${({primary, theme: {dark}}: {primary?: boolean; theme: Theme}) =>
-    dark ? White : primary ? NotificationPrimary : Black};
-  text-decoration: ${({theme: {dark}}) => (dark ? 'underline' : 'none')};
-  text-decoration-color: ${White};
+    dark
+      ? primary
+        ? LinkBlue
+        : Slate
+      : primary
+      ? NotificationPrimary
+      : Black};
 `;
 
 const BottomNotification = () => {
@@ -121,13 +127,21 @@ const BottomNotification = () => {
 
   const {
     type,
-    title,
+    title: _title,
     message,
     actions,
     enableBackdropDismiss,
     message2,
     onBackdropDismiss,
   } = config || {};
+
+  const [title, setTitle] = useState<string>();
+
+  useEffect(() => {
+    if (_title) {
+      setTitle(_title.charAt(0).toUpperCase() + _title.slice(1).toLowerCase());
+    }
+  }, [_title]);
 
   return (
     <SheetModal
@@ -162,11 +176,11 @@ const BottomNotification = () => {
           ) : null}
         </MessageContainer>
         {message2 ? message2 : null}
-        <Hr />
+        <BottomNotificationHr />
         <CtaContainer platform={Platform.OS}>
           {actions?.map(({primary, action, text}, index) => {
             return (
-              <Cta
+              <BottomNotificationCta
                 key={index}
                 suppressHighlighting={true}
                 primary={primary}
@@ -177,7 +191,7 @@ const BottomNotification = () => {
                   action(rootState);
                 }}>
                 {text.toUpperCase()}
-              </Cta>
+              </BottomNotificationCta>
             );
           })}
         </CtaContainer>

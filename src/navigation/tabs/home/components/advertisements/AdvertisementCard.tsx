@@ -7,7 +7,12 @@ import haptic from '../../../../../components/haptic-feedback/haptic';
 import {ActiveOpacity} from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
 import {AppEffects} from '../../../../../store/app';
-import {LightBlack, SlateDark, White} from '../../../../../styles/colors';
+import {
+  LightBlack,
+  Slate,
+  SlateDark,
+  White,
+} from '../../../../../styles/colors';
 import {
   isCaptionedContentCard,
   isClassicContentCard,
@@ -47,7 +52,7 @@ const AdvertisementCardTitle = styled(BaseText)`
 
 const AdvertisementCardDescription = styled(BaseText)`
   font-size: 12px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
 `;
 
 const IconContainer = styled.View`

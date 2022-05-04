@@ -1,13 +1,13 @@
 import {StackActions, useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useLayoutEffect, useState} from 'react';
-import {ScrollView} from 'react-native';
+import React, {ReactElement, useLayoutEffect, useState} from 'react';
+import {Linking, ScrollView} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {CtaContainerAbsolute} from '../../../components/styled/Containers';
-import {HeaderTitle} from '../../../components/styled/Text';
+import {HeaderTitle, Link, Paragraph} from '../../../components/styled/Text';
 import {URL} from '../../../constants';
 import {setOnboardingCompleted} from '../../../store/app/app.actions';
 import {setWalletTermsAccepted} from '../../../store/wallet/wallet.actions';
@@ -25,37 +25,74 @@ export interface TermsOfUseParamList {
   key?: Key;
 }
 
-interface Term {
+export interface TermsOfUseModel {
   id: number;
-  statement: string;
-  acknowledgement?: string;
-  link?: {
-    text: string;
-    url: string;
-  };
+  statement: ReactElement;
 }
 
-const Terms: Array<Term> = [
+const StatementText = styled(Paragraph)`
+  color: ${({theme}) => theme.colors.text};
+`;
+
+const StatementTextUnderline = styled(Paragraph)`
+  color: ${({theme}) => theme.colors.text};
+  text-decoration: underline;
+`;
+
+const StatementTextBold = styled(Paragraph)`
+  color: ${({theme}) => theme.colors.text};
+  font-weight: 500;
+`;
+
+const StatementLink = styled(Link)`
+  font-size: 16px;
+  font-style: normal;
+  line-height: 25px;
+  letter-spacing: 0;
+`;
+const Terms: Array<TermsOfUseModel> = [
   {
     id: 1,
-    statement: 'Your funds are in your custody',
-    acknowledgement:
-      'I understand that my funds are held and controlled on this device, not by a company.',
+    statement: (
+      <StatementText>
+        My funds are held and controlled on this device.{' '}
+        <StatementTextUnderline>
+          BitPay has no custody, access or control over my funds
+        </StatementTextUnderline>
+        .
+      </StatementText>
+    ),
   },
   {
     id: 2,
-    statement:
-      "BitPay cannot recover your funds if you don't set up a recovery phrase or if you lose your key",
-    acknowledgement:
-      'I understand that if this app is moved to another device or deleted, my crypto funds can only be recovered with the recovery phrase.',
+    statement: (
+      <StatementText>
+        <StatementTextBold>
+          BitPay can never recover my funds for me.
+        </StatementTextBold>{' '}
+        <StatementTextUnderline>
+          It is my responsibility to save and maintain the 12-word recovery
+          phrase
+        </StatementTextUnderline>
+        . Using my 12-word phrase is the only way to recover my funds if this
+        app is deleted or the device is lost.{' '}
+        <StatementTextUnderline>
+          If I lose my recovery phrase, it can’t be recovered
+        </StatementTextUnderline>
+        .
+      </StatementText>
+    ),
   },
   {
     id: 3,
-    statement: 'I have read, understood and agree with the Terms of Use',
-    link: {
-      text: 'View the complete Terms of Use',
-      url: URL.TOU_WALLET,
-    },
+    statement: (
+      <StatementText>
+        I have read, understood and accepted the{' '}
+        <StatementLink onPress={() => Linking.openURL(URL.TOU_WALLET)}>
+          Wallet Terms of Use.
+        </StatementLink>
+      </StatementText>
+    ),
   },
 ];
 
@@ -66,7 +103,7 @@ const TermsOfUseContainer = styled.SafeAreaView`
 
 // need padding-bottom for the CTA
 const TermsContainer = styled.View`
-  padding: 0 10px 100px;
+  padding: 20px 10px 100px;
 `;
 
 const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
@@ -87,7 +124,7 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
-      headerTitle: () => <HeaderTitle>Terms of Use</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>Important</HeaderTitle>,
       headerLeft: () => null,
       headerRight: () => null,
     });
@@ -102,7 +139,8 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
     <TermsOfUseContainer>
       <ScrollView>
         <TermsContainer>
-          {termsList.map((term: Term) => {
+          <StatementText>I understand that:</StatementText>
+          {termsList.map((term: TermsOfUseModel) => {
             return <TermsBox term={term} emit={setChecked} key={term.id} />;
           })}
         </TermsContainer>

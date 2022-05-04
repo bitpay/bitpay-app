@@ -1,3 +1,4 @@
+import {Effect} from '../../..';
 import {BwcProvider} from '../../../../lib/bwc';
 import {GetPrecision, IsCustomERCToken} from '../../utils/currency';
 import {Wallet} from '../../wallet.models';
@@ -13,80 +14,92 @@ export interface FormattedAmountObj {
   amountUnitStr: string;
 }
 
-export const ParseAmount = (
-  amount: number,
-  currencyAbbreviation: string,
-  fullPrecision?: boolean,
-): FormattedAmountObj => {
-  // @ts-ignore
-  const {unitToSatoshi, unitDecimals} = GetPrecision(currencyAbbreviation);
-  const satToUnit = 1 / unitToSatoshi;
-  let amountUnitStr;
-  let amountSat;
-  let _amount;
-  amountSat = Number((amount * unitToSatoshi).toFixed(0));
-  amountUnitStr =
-    FormatAmountStr(currencyAbbreviation, amountSat, fullPrecision) || '';
-
-  _amount = (amountSat * satToUnit).toFixed(unitDecimals);
-  const currency = currencyAbbreviation.toUpperCase();
-
-  return {
-    amount: _amount,
-    currency,
-    amountSat,
-    amountUnitStr,
-  };
-};
-
-export const FormatAmountStr = (
-  currencyAbbreviation: string,
-  satoshis: number,
-  fullPrecision?: boolean,
-): string => {
-  if (isNaN(satoshis)) {
-    throw Error('Nan');
-  }
-
-  try {
-    return (
-      FormatAmount(currencyAbbreviation, satoshis, fullPrecision) +
-      ' ' +
-      currencyAbbreviation.toUpperCase()
+export const ParseAmount =
+  (
+    amount: number,
+    currencyAbbreviation: string,
+    fullPrecision?: boolean,
+  ): Effect<FormattedAmountObj> =>
+  dispatch => {
+    // @ts-ignore
+    const {unitToSatoshi, unitDecimals} = dispatch(
+      GetPrecision(currencyAbbreviation),
     );
-  } catch (e) {
-    throw e;
-  }
-};
+    const satToUnit = 1 / unitToSatoshi;
+    let amountUnitStr;
+    let amountSat;
+    let _amount;
+    amountSat = Number((amount * unitToSatoshi).toFixed(0));
+    amountUnitStr =
+      dispatch(
+        FormatAmountStr(currencyAbbreviation, amountSat, fullPrecision),
+      ) || '';
 
-export const FormatAmount = (
-  currencyAbbreviation: string,
-  satoshis: number,
-  fullPrecision?: boolean,
-): string => {
-  // TODO : now only works for english, specify opts to change thousand separator and decimal separator
-  let opts: any = {
-    fullPrecision: !!fullPrecision,
+    _amount = (amountSat * satToUnit).toFixed(unitDecimals);
+    const currency = currencyAbbreviation.toUpperCase();
+
+    return {
+      amount: _amount,
+      currency,
+      amountSat,
+      amountUnitStr,
+    };
   };
 
-  if (currencyAbbreviation && IsCustomERCToken(currencyAbbreviation)) {
-    opts.toSatoshis = GetPrecision(currencyAbbreviation)?.unitToSatoshi;
-    opts.decimals = {
-      full: {
-        maxDecimals: 8,
-        minDecimals: 8,
-      },
-      short: {
-        maxDecimals: 6,
-        minDecimals: 2,
-      },
-    };
-  }
+export const FormatAmountStr =
+  (
+    currencyAbbreviation: string,
+    satoshis: number,
+    fullPrecision?: boolean,
+  ): Effect<string> =>
+  dispatch => {
+    if (isNaN(satoshis)) {
+      throw Error('Nan');
+    }
 
-  return BwcProvider.getInstance()
-    .getUtils()
-    .formatAmount(satoshis, currencyAbbreviation, opts); // This util returns a string
-};
+    try {
+      return (
+        dispatch(FormatAmount(currencyAbbreviation, satoshis, fullPrecision)) +
+        ' ' +
+        currencyAbbreviation.toUpperCase()
+      );
+    } catch (e) {
+      throw e;
+    }
+  };
+
+export const FormatAmount =
+  (
+    currencyAbbreviation: string,
+    satoshis: number,
+    fullPrecision?: boolean,
+  ): Effect<string> =>
+  dispatch => {
+    // TODO : now only works for english, specify opts to change thousand separator and decimal separator
+    let opts: any = {
+      fullPrecision: !!fullPrecision,
+    };
+
+    if (currencyAbbreviation && IsCustomERCToken(currencyAbbreviation)) {
+      opts.toSatoshis = dispatch(
+        GetPrecision(currencyAbbreviation),
+      )?.unitToSatoshi;
+      opts.decimals = {
+        full: {
+          maxDecimals: 8,
+          minDecimals: 8,
+        },
+        short: {
+          maxDecimals: 6,
+          minDecimals: 2,
+        },
+      };
+    }
+
+    return BwcProvider.getInstance()
+      .getUtils()
+      .formatAmount(satoshis, currencyAbbreviation, opts); // This util returns a string
+  };
 
 // Approx utxo amount, from which the uxto is economically redeemable
 export const GetLowAmount = (wallet: Wallet): Promise<any> => {

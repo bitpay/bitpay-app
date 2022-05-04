@@ -48,7 +48,7 @@ const CustomizeHome = () => {
 
       <Body>
         <BodyContainer>
-          <TextContainer style={{marginTop: 20}}>
+          <TextContainer style={{marginTop: 50}}>
             {delay ? (
               <Animated.View
                 entering={FadeIn.easing(Easing.linear)

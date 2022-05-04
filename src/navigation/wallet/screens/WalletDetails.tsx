@@ -1,12 +1,14 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {
+  ReactElement,
   useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
   useState,
 } from 'react';
+import analytics from '@segment/analytics-react-native';
 import {useTranslation} from 'react-i18next';
 import {RefreshControl, SectionList, Share, View} from 'react-native';
 import styled from 'styled-components/native';
@@ -16,8 +18,9 @@ import {
   BaseText,
   H2,
   H5,
+  HeaderSubtitle,
   HeaderTitle,
-  Type,
+  Paragraph,
 } from '../../../components/styled/Text';
 import {Network} from '../../../constants';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
@@ -26,7 +29,13 @@ import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/stat
 import {findWalletById, isSegwit} from '../../../store/wallet/utils/wallet';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
-import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
+import {
+  Air,
+  LightBlack,
+  LuckySevens,
+  SlateDark,
+  White,
+} from '../../../styles/colors';
 import {shouldScale, sleep} from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {
@@ -74,6 +83,8 @@ import {
   createProposalAndBuildTxDetails,
   handleCreateTxProposalError,
 } from '../../../store/wallet/effects/send/send';
+import KeySvg from '../../../../assets/img/key.svg';
+import {Effect} from '../../../store';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -86,26 +97,18 @@ const WalletDetailsContainer = styled.View`
 `;
 
 const HeaderContainer = styled.View`
-  margin: 20px 0;
+  margin: 32px 0 24px;
 `;
 
 const Row = styled.View`
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: center;
   align-items: flex-end;
 `;
 
 const BalanceContainer = styled.View`
-  padding: 0 15px 10px;
+  padding: 0 15px 40px;
   flex-direction: column;
-`;
-
-const Chain = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  letter-spacing: 0;
-  line-height: 40px;
-  color: ${({theme: {dark}}) => (dark ? White : LightBlack)};
 `;
 
 const TransactionSectionHeader = styled(H5)`
@@ -164,24 +167,71 @@ const Fiat = styled(BaseText)`
   text-align: right;
 `;
 
-const getWalletType = (key: Key, wallet: Wallet) => {
+const HeaderKeyName = styled(HeaderSubtitle)`
+  text-align: center;
+  margin-left: 5px;
+  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
+`;
+
+const HeaderSubTitleContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+`;
+
+const TypeContainer = styled(HeaderSubTitleContainer)`
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
+  padding: 2px 5px;
+  border-radius: 3px;
+  margin: 10px 4px 0;
+`;
+
+const IconContainer = styled.View`
+  margin-right: 5px;
+`;
+
+const TypeText = styled(BaseText)`
+  font-size: 12px;
+  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
+`;
+
+const getWalletType = (
+  key: Key,
+  wallet: Wallet,
+): undefined | {title: string; icon?: ReactElement} => {
   const {
-    credentials: {token, walletId, addressType},
+    credentials: {token, walletId, addressType, keyId},
   } = wallet;
+  if (!keyId) {
+    return {title: 'Read Only'};
+  }
   if (token) {
     const linkedWallet = key.wallets.find(({tokens}) =>
       tokens?.includes(walletId),
     );
     const walletName =
       linkedWallet?.walletName || linkedWallet?.credentials.walletName;
-    return `Linked to ${walletName}`;
+    return {title: `${walletName}`, icon: <Icons.Wallet />};
   }
 
   if (isSegwit(addressType)) {
-    return 'Segwit';
+    return {title: 'Segwit'};
   }
   return;
 };
+
+const getChain =
+  (currencyAbbreviation: string, network: string): Effect<string | undefined> =>
+  dispatch => {
+    if (
+      currencyAbbreviation === 'eth' ||
+      dispatch(IsERCToken(currencyAbbreviation))
+    ) {
+      return network === 'testnet' ? 'Kovan' : 'Ethereum Mainnet';
+    }
+
+    return network === 'testnet' ? 'Testnet' : undefined;
+  };
 
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
@@ -194,6 +244,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
   const fullWalletObj = findWalletById(wallets, walletId) as Wallet;
   const uiFormattedWallet = buildUIFormattedWallet(
     fullWalletObj,
@@ -207,7 +260,15 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
-        <HeaderTitle>{uiFormattedWallet.walletName}</HeaderTitle>
+        <>
+          <HeaderSubTitleContainer>
+            <KeySvg width={10} height={10} />
+            <HeaderKeyName>{key.keyName}</HeaderKeyName>
+          </HeaderSubTitleContainer>
+          <HeaderTitle style={{textAlign: 'center'}}>
+            {uiFormattedWallet.walletName}
+          </HeaderTitle>
+        </>
       ),
       headerRight: () => (
         <Settings
@@ -217,7 +278,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         />
       ),
     });
-  }, [navigation, uiFormattedWallet.walletName]);
+  }, [navigation, uiFormattedWallet.walletName, key.keyName]);
 
   useEffect(() => {
     setRefreshing(!!fullWalletObj.isRefreshing);
@@ -328,7 +389,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const showFiatBalance =
     // @ts-ignore
     Number(cryptoBalance.replaceAll(',', '')) > 0 &&
-    SUPPORTED_CURRENCIES.includes(currencyAbbreviation.toLowerCase()) &&
     network !== Network.testnet;
 
   const [history, setHistory] = useState<any[]>([]);
@@ -430,7 +490,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       let tx: any;
       if (
         currencyAbbreviation.toLowerCase() === 'eth' ||
-        IsERCToken(currencyAbbreviation)
+        dispatch(IsERCToken(currencyAbbreviation))
       ) {
         tx = await buildEthERCTokenSpeedupTx(fullWalletObj, transaction);
         goToConfirm(tx);
@@ -502,7 +562,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       });
     } catch (err: any) {
       const [errorMessageConfig] = await Promise.all([
-        handleCreateTxProposalError(err),
+        dispatch(handleCreateTxProposalError(err)),
         sleep(400),
       ]);
       dispatch(
@@ -546,8 +606,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             ),
           ),
         );
-      } else if (CanSpeedupTx(transaction, currency)) {
-        if (currency === 'eth' || IsERCToken(currency)) {
+      } else if (dispatch(CanSpeedupTx(transaction, currency))) {
+        if (currency === 'eth' || dispatch(IsERCToken(currency))) {
           dispatch(
             showBottomNotificationModal(
               SpeedupEthTransaction(
@@ -619,6 +679,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     [],
   );
 
+  const chain = dispatch(getChain(currencyAbbreviation.toLowerCase(), network));
+
   return (
     <WalletDetailsContainer>
       <SectionList
@@ -642,11 +704,29 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     ) : (
                       <H2>****</H2>
                     )}
-                    <Chain>{currencyAbbreviation}</Chain>
                   </Row>
                   <Row>
-                    {showFiatBalance && !hideBalance && <H5>{fiatBalance}</H5>}
-                    {walletType && <Type>{walletType}</Type>}
+                    {showFiatBalance && !hideBalance && (
+                      <Paragraph>{fiatBalance}</Paragraph>
+                    )}
+                  </Row>
+                  <Row>
+                    {walletType && (
+                      <TypeContainer>
+                        {walletType.icon ? (
+                          <IconContainer>{walletType.icon}</IconContainer>
+                        ) : null}
+                        <TypeText>{walletType.title}</TypeText>
+                      </TypeContainer>
+                    )}
+                    {chain ? (
+                      <TypeContainer>
+                        <IconContainer>
+                          <Icons.Network />
+                        </IconContainer>
+                        <TypeText>{chain}</TypeText>
+                      </TypeContainer>
+                    ) : null}
                   </Row>
                 </BalanceContainer>
 
@@ -657,6 +737,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         fullWalletObj.currencyAbbreviation,
                       ),
                       cta: () => {
+                        analytics.track('BitPay App - Clicked Buy Crypto', {
+                          from: 'walletDetails',
+                          coin: fullWalletObj.currencyAbbreviation,
+                          appUser: user?.eid || '',
+                        });
                         navigation.navigate('Wallet', {
                           screen: 'Amount',
                           params: {
@@ -683,6 +768,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           fullWalletObj.currencyAbbreviation,
                         ),
                       cta: () => {
+                        analytics.track('BitPay App - Clicked Swap Crypto', {
+                          from: 'walletDetails',
+                          coin: fullWalletObj.currencyAbbreviation,
+                          appUser: user?.eid || '',
+                        });
                         navigation.navigate('SwapCrypto', {
                           screen: 'Root',
                           params: {

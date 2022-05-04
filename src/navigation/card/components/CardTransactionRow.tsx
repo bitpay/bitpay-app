@@ -1,18 +1,20 @@
 import moment from 'moment';
 import React, {memo} from 'react';
 import styled, {css} from 'styled-components/native';
-import ArrowDownIcon from '../../../../assets/img/card/icons/arrow-down.svg';
-import ArrowUpIcon from '../../../../assets/img/card/icons/arrow-up.svg';
-import FeeIcon from '../../../../assets/img/card/icons/fee.svg';
-import PendingIcon from '../../../../assets/img/card/icons/pending.svg';
-import RewardIcon from '../../../../assets/img/card/icons/reward.svg';
-import TopUpIcon from '../../../../assets/img/card/icons/topup.svg';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {BaseText, H7} from '../../../components/styled/Text';
 import {CardProvider} from '../../../constants/card';
 import {Card, UiTransaction} from '../../../store/card/card.models';
-import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
+import {Air, LightBlack, LuckySevens, SlateDark} from '../../../styles/colors';
 import {format} from '../../../utils/currency';
+import {
+  TxCardLoadIcon,
+  TxConfirmingIcon,
+  TxFeeIcon,
+  TxReceivedIcon,
+  TxReferralRewardsIcon,
+  TxSentIcon,
+} from '../../../constants/TransactionIcons';
 
 interface TransactionRowProps {
   tx: UiTransaction;
@@ -52,7 +54,7 @@ const TxText = styled(BaseText)<{
   ${({light}) =>
     light &&
     css`
-      color: ${({theme}) => (theme.dark ? White : SlateDark)};
+      color: ${({theme}) => (theme.dark ? LuckySevens : SlateDark)};
       font-size: 12px;
     `}
 `;
@@ -77,26 +79,26 @@ const isFee = (tx: UiTransaction, provider: CardProvider) => {
 
 const getTxIcon = (tx: UiTransaction, provider: CardProvider) => {
   if (isFee(tx, provider)) {
-    return FeeIcon;
+    return TxFeeIcon;
   }
 
   if (!tx.settled) {
-    return PendingIcon;
+    return TxConfirmingIcon;
   }
 
   if (isTopUp(tx)) {
-    return TopUpIcon;
+    return TxCardLoadIcon;
   }
 
   if (tx.displayPrice < 0) {
-    return ArrowUpIcon;
+    return TxSentIcon;
   }
 
   if (isBitPayReward(tx)) {
-    return RewardIcon;
+    return TxReferralRewardsIcon;
   }
 
-  return ArrowDownIcon;
+  return TxReceivedIcon;
 };
 
 const withinPastDay = (timeMs: number) => {
@@ -156,7 +158,7 @@ const TransactionRow: React.FC<TransactionRowProps> = props => {
   return (
     <TxRowContainer>
       <TxColumn>
-        <Icon />
+        <Icon size={40} />
       </TxColumn>
 
       <DescriptionColumn>

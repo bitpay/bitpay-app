@@ -11,13 +11,14 @@ import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {Currencies, SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {BwcProvider} from '../../../lib/bwc';
-import {GetProtocolPrefix} from './currency';
+import {GetPrecision, GetProtocolPrefix} from './currency';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {formatFiatAmount} from '../../../utils/helper-methods';
 import {WALLET_DISPLAY_LIMIT} from '../../../navigation/tabs/home/components/Wallet';
 import {Network} from '../../../constants';
 import {PayProOptions} from '../effects/paypro/paypro';
+import {Effect} from '../..';
 
 const mapAbbreviationAndName = (
   walletName: string,
@@ -136,42 +137,40 @@ export const formatCryptoAmount = (
     : '0';
 };
 
-export const toFiat = (
-  totalAmount: number,
-  fiatCode: string = 'USD',
-  currencyAbbreviation: string,
-  rates: Rates = {},
-  customRate?: number,
-): number => {
-  // TODO - remove when we add coin gecko for token rates
-  if (!SUPPORTED_CURRENCIES.includes(currencyAbbreviation)) {
-    return 0;
-  }
+export const toFiat =
+  (
+    totalAmount: number,
+    fiatCode: string = 'USD',
+    currencyAbbreviation: string,
+    rates: Rates = {},
+    customRate?: number,
+  ): Effect<number> =>
+  dispatch => {
+    const ratesPerCurrency = rates[currencyAbbreviation];
 
-  const ratesPerCurrency = rates[currencyAbbreviation];
+    if (!ratesPerCurrency) {
+      throw Error(`Rate not found for currency: ${currencyAbbreviation}`);
+    }
 
-  if (!ratesPerCurrency) {
-    throw Error(`Rate not found for currency: ${currencyAbbreviation}`);
-  }
+    const fiatRate =
+      customRate ||
+      ratesPerCurrency.find(_currency => _currency.code === fiatCode)?.rate;
 
-  const fiatRate =
-    customRate ||
-    ratesPerCurrency.find(_currency => _currency.code === fiatCode)?.rate;
+    if (!fiatRate) {
+      throw Error(
+        `Rate not found for fiat/currency pair: ${fiatCode} -> ${currencyAbbreviation}`,
+      );
+    }
 
-  if (!fiatRate) {
-    throw Error(
-      `Rate not found for fiat/currency pair: ${fiatCode} -> ${currencyAbbreviation}`,
-    );
-  }
+    const precision = dispatch(GetPrecision(currencyAbbreviation));
 
-  const currencyOpt = Currencies[currencyAbbreviation];
+    if (!precision) {
+      throw Error(`precision not found for currency ${currencyAbbreviation}`);
+    } else {
+    }
 
-  if (!currencyOpt?.unitInfo) {
-    throw Error(`unitInfo not found for currency ${currencyAbbreviation}`);
-  }
-
-  return totalAmount * (1 / currencyOpt.unitInfo.unitToSatoshi) * fiatRate;
-};
+    return totalAmount * (1 / precision.unitToSatoshi) * fiatRate;
+  };
 
 export const findWalletById = (
   wallets: Wallet[],
@@ -208,16 +207,14 @@ export const isSegwit = (addressType: string): boolean => {
   return addressType === 'P2WPKH' || addressType === 'P2WSH';
 };
 
-export const GetProtocolPrefixAddress = (
-  coin: string,
-  network: string,
-  address: string,
-): string => {
-  if (coin !== 'bch') {
-    return address;
-  }
-  return GetProtocolPrefix(coin, network) + ':' + address;
-};
+export const GetProtocolPrefixAddress =
+  (coin: string, network: string, address: string): Effect<string> =>
+  dispatch => {
+    if (coin !== 'bch') {
+      return address;
+    }
+    return dispatch(GetProtocolPrefix(coin, network)) + ':' + address;
+  };
 
 export const getRemainingWalletCount = (
   wallets?: Wallet[],
@@ -320,4 +317,37 @@ export const GetEstimatedTxSize = (
 
   const size = overhead + inputSize * nbInputs + outputSize * nbOutputs;
   return parseInt((size * (1 + safetyMargin)).toFixed(0), 10);
+};
+
+export const isMatch = (key1: any, key2: Key) => {
+  // return this.Key.match(key1, key2); TODO needs to be fixed on bwc
+  if (key1.fingerPrint && key2.properties.fingerPrint) {
+    return key1.fingerPrint === key2.properties.fingerPrint;
+  } else {
+    return key1.id === key2.id;
+  }
+};
+
+export const getMatchedKey = (key: any, keys: Key[]) => {
+  return keys.find(k => isMatch(key, k));
+};
+
+export const findMatchedKeyAndUpdate = (
+  wallets: Wallet[],
+  key: any,
+  keys: Key[],
+  opts: any,
+): {key: KeyMethods; wallets: Wallet[]} => {
+  if (!opts.keyId) {
+    const matchedKey = getMatchedKey(key, keys);
+
+    if (matchedKey) {
+      key = matchedKey.methods;
+      wallets.forEach(wallet => {
+        wallet.credentials.keyId = wallet.keyId = matchedKey.id;
+      });
+    }
+  }
+
+  return {key, wallets};
 };
