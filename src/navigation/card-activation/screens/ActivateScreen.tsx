@@ -1,6 +1,6 @@
 import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {TextInput} from 'react-native';
 import * as yup from 'yup';
@@ -12,6 +12,7 @@ import {ProviderConfig} from '../../../constants/config.card';
 import {CardActions, CardEffects} from '../../../store/card';
 import {StartActivateCardParams} from '../../../store/card/card.effects';
 import {Card} from '../../../store/card/card.models';
+import {isActivationRequired} from '../../../utils/card';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {arrayToSentence} from '../../../utils/text';
 import AuthFormContainer, {
@@ -137,6 +138,14 @@ const ActivateScreen: React.FC<
   const expDateRef = useRef<TextInput>(null);
   const cvvRef = useRef<TextInput>(null);
 
+  const init = () => {
+    if (!isActivationRequired(card)) {
+      navigation.replace('Complete');
+    }
+  };
+  const initRef = useRef(init);
+  initRef.current = init;
+
   const onSubmit = handleSubmit(formData => {
     setButtonState('loading');
     const {cvv, expirationDate} = formData;
@@ -158,6 +167,10 @@ const ActivateScreen: React.FC<
 
     dispatch(CardEffects.startActivateCard(card.id, payload));
   });
+
+  useLayoutEffect(() => {
+    initRef.current();
+  }, []);
 
   useEffect(() => {
     if (activateStatus === 'success') {

@@ -372,17 +372,14 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     }
   };
 
-  const onActivatePress = useCallback(
-    (card: Card) => {
-      navigationRef.navigate('CardActivation', {
-        screen: 'Root',
-        params: {
-          card,
-        },
-      });
-    },
-    [unactivatedCard],
-  );
+  const onActivatePress = useCallback((card: Card) => {
+    navigationRef.navigate('CardActivation', {
+      screen: 'Activate',
+      params: {
+        card,
+      },
+    });
+  }, []);
 
   return (
     <>

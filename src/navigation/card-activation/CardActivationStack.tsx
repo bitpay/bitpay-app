@@ -11,16 +11,13 @@ import ActivateScreen, {
 import CompleteScreen, {
   CompleteScreenParamList,
 } from './screens/CompleteScreen';
-import RootScreen, {RootScreenParamList} from './screens/RootScreen';
 
 export type CardActivationStackParamList = {
-  Root: RootScreenParamList;
   Activate: ActivateScreenParamList;
   Complete: CompleteScreenParamList;
 };
 
 export enum CardActivationScreens {
-  ROOT = 'Root',
   ACTIVATE = 'Activate',
   COMPLETE = 'Complete',
 }
@@ -30,15 +27,11 @@ const CardActivation = createStackNavigator<CardActivationStackParamList>();
 const CardActivationStack: React.FC = () => {
   return (
     <CardActivation.Navigator
-      initialRouteName={CardActivationScreens.ROOT}
+      initialRouteName={CardActivationScreens.ACTIVATE}
       screenOptions={{
         ...baseNavigatorOptions,
         ...baseScreenOptions,
       }}>
-      <CardActivation.Screen
-        name={CardActivationScreens.ROOT}
-        component={RootScreen}
-      />
       <CardActivation.Screen
         name={CardActivationScreens.ACTIVATE}
         component={ActivateScreen}
