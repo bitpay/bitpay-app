@@ -1,4 +1,4 @@
-import {BitPayIdActionTypes, BitPayIdActionType} from './bitpay-id.types';
+import {BitPayIdActionType, BitPayIdActionTypes} from './bitpay-id.types';
 import {Session, User} from './bitpay-id.models';
 import {Network} from '../../constants';
 
@@ -17,6 +17,7 @@ export const bitPayIdReduxPersistBlackList: (keyof BitPayIdState)[] = [
   'fetchBasicInfoStatus',
   'doshToken',
   'fetchDoshTokenStatus',
+  'forgotPasswordEmailStatus',
 ];
 
 export type FetchSessionStatus = 'loading' | 'success' | 'failed' | null;
@@ -37,6 +38,10 @@ export type EmailPairingStatus = 'success' | 'failed' | null;
 export type PairingBitPayIdStatus = 'success' | 'failed' | null;
 export type FetchBasicInfoStatus = 'success' | 'failed' | null;
 export type FetchDoshTokenStatus = 'success' | 'failed' | null;
+export type ForgotPasswordEmailStatus = {
+  status: 'success' | 'failed';
+  message: string;
+} | null;
 
 export interface BitPayIdState {
   session: Session;
@@ -63,6 +68,7 @@ export interface BitPayIdState {
   pairingBitPayIdError: string | null;
   fetchBasicInfoStatus: FetchBasicInfoStatus;
   fetchDoshTokenStatus: FetchDoshTokenStatus;
+  forgotPasswordEmailStatus: ForgotPasswordEmailStatus;
 }
 
 const initialState: BitPayIdState = {
@@ -98,6 +104,7 @@ const initialState: BitPayIdState = {
   pairingBitPayIdError: null,
   fetchBasicInfoStatus: null,
   fetchDoshTokenStatus: null,
+  forgotPasswordEmailStatus: null,
 };
 
 export const bitPayIdReducer = (
@@ -352,6 +359,23 @@ export const bitPayIdReducer = (
             },
           },
         },
+      };
+    }
+
+    case BitPayIdActionTypes.FORGOT_PASSWORD_EMAIL_STATUS: {
+      return {
+        ...state,
+        forgotPasswordEmailStatus: {
+          status: action.payload.status,
+          message: action.payload.message,
+        },
+      };
+    }
+
+    case BitPayIdActionTypes.RESET_FORGOT_PASSWORD_EMAIL_STATUS: {
+      return {
+        ...state,
+        forgotPasswordEmailStatus: null,
       };
     }
 
