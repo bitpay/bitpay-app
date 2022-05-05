@@ -57,15 +57,18 @@ export interface Wallet extends WalletObj, API {}
 export interface WalletBalance {
   crypto: string;
   cryptoLocked: string;
+  cryptoSpendable: string;
   fiat: number;
   fiatLastDay: number;
   fiatLocked: number;
+  fiatSpendable: number;
   sat: number;
   satAvailable: number;
   satLocked: number;
   satConfirmedLocked: number;
   satConfirmed: number;
   satConfirmedAvailable: number;
+  satSpendable: number;
 }
 
 export interface WalletStatus {
