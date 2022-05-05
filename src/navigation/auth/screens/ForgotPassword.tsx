@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Keyboard, SafeAreaView} from 'react-native';
 import AuthFormContainer, {
   AuthActionRow,
@@ -10,7 +10,7 @@ import * as yup from 'yup';
 import {yupResolver} from '@hookform/resolvers/yup';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
-import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
+import RecaptchaModal from '../components/RecaptchaModal';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {useAppSelector} from '../../../utils/hooks/useAppSelector';
 import {sleep} from '../../../utils/helper-methods';
@@ -34,7 +34,6 @@ const ForgotPassword = () => {
   const session = useAppSelector(({BITPAY_ID}) => BITPAY_ID.session);
   const [isCaptchaModalVisible, setCaptchaModalVisible] = useState(false);
   const network = useAppSelector(({APP}) => APP.network);
-  const captchaRef = useRef<CaptchaRef>(null);
   const forgotPasswordEmailStatus = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.forgotPasswordEmailStatus,
   );
@@ -52,6 +51,7 @@ const ForgotPassword = () => {
     if (!forgotPasswordEmailStatus) {
       return;
     }
+
     setStatus(forgotPasswordEmailStatus.status);
     setMessage(forgotPasswordEmailStatus.message);
     const timer = setTimeout(() => {
@@ -129,7 +129,6 @@ const ForgotPassword = () => {
 
         <RecaptchaModal
           isVisible={isCaptchaModalVisible}
-          ref={captchaRef}
           sitekey={session.noCaptchaKey}
           baseUrl={BASE_BITPAY_URLS[network]}
           onResponse={onCaptchaResponse}

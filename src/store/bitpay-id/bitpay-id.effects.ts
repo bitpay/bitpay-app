@@ -490,7 +490,7 @@ export const startSubmitForgotPasswordEmail =
         dispatch(
           BitPayIdActions.forgotPasswordEmailStatus(
             'success',
-            'Email sent. If an account with that email address exists, you’ll receive an email with a link to reset your password.',
+            "Email sent. If an account with that email address exists, you'll receive an email with a link to reset your password.",
           ),
         );
       } else {

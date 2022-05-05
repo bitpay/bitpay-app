@@ -224,16 +224,12 @@ export const AuthApi = {
       },
     };
 
-    try {
-      const {data} = await axios.post(
-        `${BASE_BITPAY_URLS[network]}/password/reset`,
-        body,
-        config,
-      );
-      return data.result;
-    } catch (err: any) {
-      throw err;
-    }
+    const {data} = await axios.post(
+      `${BASE_BITPAY_URLS[network]}/password/reset`,
+      body,
+      config,
+    );
+    return data.result;
   },
 };
 
