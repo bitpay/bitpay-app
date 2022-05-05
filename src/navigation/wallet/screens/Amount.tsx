@@ -8,10 +8,7 @@ import React, {
 import {BaseText} from '../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
-import {
-  NeutralSlate,
-  SlateDark,
-} from '../../../styles/colors';
+import {NeutralSlate, SlateDark} from '../../../styles/colors';
 import {
   HeaderRightContainer,
   ScreenGutter,
