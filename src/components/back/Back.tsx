@@ -23,8 +23,8 @@ const BackSvg: React.FC<BackSvgProps> = ({color, background, opacity}) => {
   return (
     <Svg
       title="Button/Back"
-      width="41px"
-      height="41px"
+      width="40px"
+      height="40px"
       viewBox="0 0 41 41"
       style={{marginBottom: 5}}>
       <G

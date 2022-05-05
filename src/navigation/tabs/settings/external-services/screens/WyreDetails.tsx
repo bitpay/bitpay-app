@@ -192,7 +192,7 @@ const WyreDetails: React.FC = () => {
             dispatch(
               showBottomNotificationModal({
                 type: 'question',
-                title: 'Removing Payment Request Data',
+                title: 'Removing payment request data',
                 message:
                   "The data of this payment request will be deleted. Make sure you don't need it",
                 enableBackdropDismiss: true,

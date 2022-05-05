@@ -370,7 +370,7 @@ const CoinbaseAccount = ({
     dispatch(
       showBottomNotificationModal({
         type: 'error',
-        title: 'Coinbase Error',
+        title: 'Coinbase error',
         message: errMsg,
         enableBackdropDismiss: true,
         actions: [

@@ -44,7 +44,7 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
         dispatch(
           showBottomNotificationModal({
             type: 'success',
-            title: 'Password Removed',
+            title: 'Password removed',
             message:
               'Your encryption password has been removed. This key is now decrypted.',
             enableBackdropDismiss: true,

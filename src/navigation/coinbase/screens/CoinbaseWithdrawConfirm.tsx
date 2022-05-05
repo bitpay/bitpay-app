@@ -122,7 +122,7 @@ const CoinbaseWithdrawConfirm = () => {
       dispatch(
         showBottomNotificationModal({
           type: 'error',
-          title: 'Error Sending Transaction',
+          title: 'Error sending transaction',
           message: errMsg,
           enableBackdropDismiss: false,
           actions: [

@@ -53,7 +53,7 @@ const PortfolioBalance = () => {
     dispatch(
       showBottomNotificationModal({
         type: 'info',
-        title: 'Portfolio Balance',
+        title: 'Portfolio balance',
         message:
           'Your Portfolio Balance is the total of all your crypto assets.',
         enableBackdropDismiss: true,

@@ -208,7 +208,7 @@ const KeySettings = () => {
         dispatch(
           showBottomNotificationModal({
             type: 'error',
-            title: 'Sync Wallet',
+            title: 'Sync wallet',
             message,
             enableBackdropDismiss: true,
             actions: [
