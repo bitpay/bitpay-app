@@ -9,10 +9,8 @@ import {BaseText} from '../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {
-  LightBlack,
   NeutralSlate,
   SlateDark,
-  White,
 } from '../../../styles/colors';
 import {
   HeaderRightContainer,
@@ -30,18 +28,6 @@ import {ParseAmount} from '../../../store/wallet/effects/amount/amount';
 import haptic from '../../../components/haptic-feedback/haptic';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';
 import {useAppDispatch} from '../../../utils/hooks';
-
-const SendMax = styled.TouchableOpacity`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  border-radius: 27.5px;
-  padding: 8px 15px;
-`;
-
-const SendMaxText = styled(BaseText)`
-  line-height: 25px;
-  font-size: 15px;
-  color: ${({theme: {dark}}) => (dark ? White : '#434D5A')};
-`;
 
 const HeaderContainer = styled(HeaderRightContainer)`
   justify-content: center;
@@ -265,9 +251,12 @@ const Amount: React.FC<AmountProps> = ({
       navigation.setOptions({
         headerRight: () => (
           <HeaderContainer>
-            <SendMax onPress={() => onSendMaxPressedRef.current()}>
-              <SendMaxText>Send Max</SendMaxText>
-            </SendMax>
+            <Button
+              buttonType="pill"
+              buttonStyle="cancel"
+              onPress={() => onSendMaxPressedRef.current()}>
+              Send Max
+            </Button>
           </HeaderContainer>
         ),
       });

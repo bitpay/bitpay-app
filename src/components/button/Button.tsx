@@ -137,9 +137,7 @@ const PillContent = styled.View<ButtonOptionProps>`
     return theme?.dark ? Midnight : Air;
   }};
   border-style: solid;
-  border-width: ${({outline}) => {
-    return outline ? 1 : 2;
-  }}px;
+  border-width: 1px;
   border-color: ${({secondary, outline, cancel, theme}) => {
     if (outline) {
       return theme?.dark ? White : Action;
@@ -159,9 +157,11 @@ const PillContent = styled.View<ButtonOptionProps>`
   padding: 8px 15px;
 `;
 
-const PillText = styled(ButtonBaseText)<ButtonOptionProps>`
+const PillText = styled(BaseText)<ButtonOptionProps>`
   font-size: 15px;
   font-weight: 400;
+  line-height: 22.03px;
+  text-align: center;
 
   color: ${({disabled, cancel, theme}) => {
     if (disabled) {
