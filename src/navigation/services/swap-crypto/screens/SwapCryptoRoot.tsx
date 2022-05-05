@@ -153,9 +153,9 @@ const SwapCryptoRoot: React.FC = () => {
 
   const setSelectedWallet = () => {
     if (selectedWallet) {
-      if (selectedWallet.balance?.sat > 0) {
+      if (selectedWallet.balance?.satSpendable > 0) {
         setFromWallet(selectedWallet);
-      } else if (selectedWallet.balance?.sat === 0) {
+      } else if (selectedWallet.balance?.satSpendable === 0) {
         setToWallet(selectedWallet);
         setUseDefaultToWallet(true);
       } else {
@@ -213,14 +213,16 @@ const SwapCryptoRoot: React.FC = () => {
       return;
     }
 
-    if (fromWalletSelected.balance && fromWalletSelected.balance.sat) {
+    if (fromWalletSelected.balance?.satSpendable) {
       const {unitToSatoshi, unitDecimals} =
         dispatch(GetPrecision(fromWalletSelected.currencyAbbreviation)) || {};
       if (unitToSatoshi && unitDecimals) {
         const satToUnit = 1 / unitToSatoshi;
 
         const spendableAmount = parseFloat(
-          (fromWalletSelected.balance.sat * satToUnit).toFixed(unitDecimals),
+          (fromWalletSelected.balance.satSpendable * satToUnit).toFixed(
+            unitDecimals,
+          ),
         );
 
         if (spendableAmount < amountFrom) {
@@ -514,7 +516,7 @@ const SwapCryptoRoot: React.FC = () => {
 
       const country = await getCountry();
       const coinsToRemove = !country || country === 'US' ? ['xrp'] : [];
-      if (selectedWallet && selectedWallet.balance?.sat === 0) {
+      if (selectedWallet?.balance?.satSpendable === 0) {
         coinsToRemove.push(selectedWallet.currencyAbbreviation.toLowerCase());
       }
       coinsToRemove.forEach((coin: string) => {

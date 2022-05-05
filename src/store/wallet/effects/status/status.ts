@@ -321,7 +321,7 @@ const updateWalletStatus =
     defaultAltCurrencyIsoCode: string;
     lastDayRates: Rates;
   }): Effect<Promise<WalletStatus>> =>
-  async dispatch => {
+  async (dispatch, getState) => {
     return new Promise(async resolve => {
       const {
         currencyAbbreviation,
@@ -348,6 +348,10 @@ const updateWalletStatus =
           }
           try {
             const {
+              WALLET: {useUnconfirmedFunds},
+            } = getState();
+
+            const {
               totalAmount,
               totalConfirmedAmount,
               lockedAmount,
@@ -356,6 +360,10 @@ const updateWalletStatus =
               availableConfirmedAmount,
             } = status.balance;
 
+            const spendableAmount = useUnconfirmedFunds
+              ? totalAmount - lockedAmount
+              : totalConfirmedAmount - lockedAmount;
+
             const newBalance = {
               sat: totalAmount,
               satConfirmed: totalConfirmedAmount,
@@ -363,11 +371,15 @@ const updateWalletStatus =
               satConfirmedLocked: lockedConfirmedAmount,
               satAvailable: availableAmount,
               satConfirmedAvailable: availableConfirmedAmount,
+              satSpendable: spendableAmount,
               crypto: dispatch(
                 FormatAmount(currencyAbbreviation, Number(totalAmount)),
               ),
               cryptoLocked: dispatch(
                 FormatAmount(currencyAbbreviation, Number(lockedAmount)),
+              ),
+              cryptoSpendable: dispatch(
+                FormatAmount(currencyAbbreviation, Number(spendableAmount)),
               ),
               fiat:
                 network === Network.mainnet && !hideWallet
@@ -385,6 +397,17 @@ const updateWalletStatus =
                   ? dispatch(
                       toFiat(
                         lockedAmount,
+                        defaultAltCurrencyIsoCode,
+                        currencyAbbreviation,
+                        rates,
+                      ),
+                    )
+                  : 0,
+              fiatSpendable:
+                network === Network.mainnet && !hideWallet
+                  ? dispatch(
+                      toFiat(
+                        spendableAmount,
                         defaultAltCurrencyIsoCode,
                         currencyAbbreviation,
                         rates,
