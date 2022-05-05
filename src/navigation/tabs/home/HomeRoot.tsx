@@ -64,13 +64,13 @@ const HomeRoot = () => {
 
   // Do More
   const memoizedDoMoreCards = useMemo(() => {
-    const defaults = DefaultAdvertisements.filter(advertisement => {
-      if (hasCards) {
-        return advertisement.id !== 'card';
-      }
-      return advertisement;
-    });
-    return [...defaults, ...brazeDoMore];
+    if (STATIC_CONTENT_CARDS_ENABLED && !brazeDoMore.length) {
+      return DefaultAdvertisements.filter(advertisement => {
+        return hasCards ? advertisement.id !== 'card' : true;
+      });
+    }
+
+    return brazeDoMore;
   }, [brazeDoMore, hasCards]);
 
   // Exchange Rates
@@ -103,7 +103,11 @@ const HomeRoot = () => {
 
   // Quick Links
   const memoizedQuickLinks = useMemo(() => {
-    return [...DefaultQuickLinks, ...brazeQuickLinks];
+    if (STATIC_CONTENT_CARDS_ENABLED && !brazeQuickLinks.length) {
+      return DefaultQuickLinks;
+    }
+
+    return brazeQuickLinks;
   }, [brazeQuickLinks]);
 
   const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
