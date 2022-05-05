@@ -506,7 +506,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         dispatch(
           showBottomNotificationModal({
             type: 'warning',
-            title: 'Miner Fee Notice',
+            title: 'Miner fee notice',
             message: `Because you are speeding up this transaction, the Bitcoin miner fee (${tx.speedupFee} ${currencyAbbreviation}) will be deducted from the total.`,
             enableBackdropDismiss: true,
             actions: [
@@ -852,7 +852,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       <OptionsSheet
         isVisible={showWalletOptions}
         closeModal={() => setShowWalletOptions(false)}
-        title={t('ReceiveCurrency', {currency: currencyName})}
+        title={t('WalletOptions')}
         options={assetOptions}
       />
 

@@ -6,9 +6,9 @@ import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {
-  selectBrazeAdvertisements,
-  selectBrazeOffers,
+  selectBrazeDoMore,
   selectBrazeQuickLinks,
+  selectBrazeShopWithCrypto,
 } from '../../../store/app/app.selectors';
 import {startGetRates} from '../../../store/wallet/effects';
 import {startUpdateAllKeyAndWalletStatus} from '../../../store/wallet/effects/status/status';
@@ -41,8 +41,8 @@ const HomeRoot = () => {
   const navigation = useNavigation();
   const theme = useTheme();
   const [refreshing, setRefreshing] = useState(false);
-  const brazeOffers = useAppSelector(selectBrazeOffers);
-  const brazeAdvertisements = useAppSelector(selectBrazeAdvertisements);
+  const brazeShopWithCrypto = useAppSelector(selectBrazeShopWithCrypto);
+  const brazeDoMore = useAppSelector(selectBrazeDoMore);
   const brazeQuickLinks = useAppSelector(selectBrazeQuickLinks);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
@@ -53,25 +53,25 @@ const HomeRoot = () => {
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups.length > 0;
 
-  // Featured Merchants ("Shop with Crypto")
-  const memoizedOffers = useMemo(() => {
-    if (STATIC_CONTENT_CARDS_ENABLED && !brazeOffers.length) {
+  // Shop with Crypto
+  const memoizedShopWithCryptoCards = useMemo(() => {
+    if (STATIC_CONTENT_CARDS_ENABLED && !brazeShopWithCrypto.length) {
       return MockOffers;
     }
 
-    return brazeOffers;
-  }, [brazeOffers]);
+    return brazeShopWithCrypto;
+  }, [brazeShopWithCrypto]);
 
-  // Advertisements ("Do More")
-  const memoizedAdvertisements = useMemo(() => {
-    const defaults = DefaultAdvertisements.filter(advertisement => {
-      if (hasCards) {
-        return advertisement.id !== 'card';
-      }
-      return advertisement;
-    });
-    return [...defaults, ...brazeAdvertisements];
-  }, [brazeAdvertisements, hasCards]);
+  // Do More
+  const memoizedDoMoreCards = useMemo(() => {
+    if (STATIC_CONTENT_CARDS_ENABLED && !brazeDoMore.length) {
+      return DefaultAdvertisements.filter(advertisement => {
+        return hasCards ? advertisement.id !== 'card' : true;
+      });
+    }
+
+    return brazeDoMore;
+  }, [brazeDoMore, hasCards]);
 
   // Exchange Rates
   const priceHistory = useAppSelector(({WALLET}) => WALLET.priceHistory);
@@ -103,7 +103,11 @@ const HomeRoot = () => {
 
   // Quick Links
   const memoizedQuickLinks = useMemo(() => {
-    return [...DefaultQuickLinks, ...brazeQuickLinks];
+    if (STATIC_CONTENT_CARDS_ENABLED && !brazeQuickLinks.length) {
+      return DefaultQuickLinks;
+    }
+
+    return brazeQuickLinks;
   }, [brazeQuickLinks]);
 
   const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
@@ -244,20 +248,20 @@ const HomeRoot = () => {
           <Crypto />
         </HomeSection>
 
-        {/* ////////////////////////////// LIMITED TIME OFFERS */}
-        {memoizedOffers.length ? (
+        {/* ////////////////////////////// SHOP WITH CRYPTO */}
+        {memoizedShopWithCryptoCards.length ? (
           <HomeSection
             title="Shop with Crypto"
             action="See all"
             onActionPress={() => navigation.navigate('Tabs', {screen: 'Shop'})}>
-            <OffersCarousel contentCards={memoizedOffers} />
+            <OffersCarousel contentCards={memoizedShopWithCryptoCards} />
           </HomeSection>
         ) : null}
 
-        {/* ////////////////////////////// ADVERTISEMENTS */}
-        {memoizedAdvertisements.length ? (
+        {/* ////////////////////////////// DO MORE */}
+        {memoizedDoMoreCards.length ? (
           <HomeSection title="Do More">
-            <AdvertisementsList contentCards={memoizedAdvertisements} />
+            <AdvertisementsList contentCards={memoizedDoMoreCards} />
           </HomeSection>
         ) : null}
 

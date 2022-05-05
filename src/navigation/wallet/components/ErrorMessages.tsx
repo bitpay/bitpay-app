@@ -15,7 +15,7 @@ const List = styled(BaseText)`
 
 export const DecryptError: BottomNotificationConfig = {
   type: 'error',
-  title: 'Something Went Wrong',
+  title: 'Something went wrong',
   message: 'Could not decrypt wallet.',
   enableBackdropDismiss: true,
   actions: [
@@ -114,7 +114,7 @@ export const CustomErrorMessage = ({
 }): BottomNotificationConfig => {
   return {
     type: 'error',
-    title: title || 'Something Went Wrong',
+    title: title || 'Something went wrong',
     message: errMsg,
     enableBackdropDismiss: true,
     onBackdropDismiss: action,

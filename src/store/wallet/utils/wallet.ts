@@ -11,7 +11,7 @@ import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {Currencies, SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {BwcProvider} from '../../../lib/bwc';
-import {GetPrecision, GetProtocolPrefix} from './currency';
+import {GetName, GetPrecision, GetProtocolPrefix} from './currency';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {formatFiatAmount} from '../../../utils/helper-methods';
@@ -20,84 +20,85 @@ import {Network} from '../../../constants';
 import {PayProOptions} from '../effects/paypro/paypro';
 import {Effect} from '../..';
 
-const mapAbbreviationAndName = (
-  walletName: string,
-  coin: string,
-): {currencyAbbreviation: string; currencyName: string} => {
-  switch (coin) {
-    case 'pax':
-      return {
-        currencyAbbreviation: 'usdp',
-        currencyName: 'Pax Dollar',
-      };
-    default:
-      return {
-        currencyAbbreviation: coin,
-        currencyName: walletName,
-      };
-  }
-};
+const mapAbbreviationAndName =
+  (
+    coin: string,
+  ): Effect<{currencyAbbreviation: string; currencyName: string}> =>
+  dispatch => {
+    switch (coin) {
+      case 'pax':
+        return {
+          currencyAbbreviation: 'usdp',
+          currencyName: dispatch(GetName(coin)),
+        };
+      default:
+        return {
+          currencyAbbreviation: coin,
+          currencyName: dispatch(GetName(coin)),
+        };
+    }
+  };
 
 // Formatted wallet obj - this is merged with BWC client
-export const buildWalletObj = (
-  {
-    walletId,
-    walletName,
-    coin,
-    balance = {
-      crypto: '0',
-      cryptoLocked: '0',
-      fiat: 0,
-      fiatLastDay: 0,
-      fiatLocked: 0,
-      sat: 0,
-      satAvailable: 0,
-      satLocked: 0,
-      satConfirmedLocked: 0,
-      satConfirmed: 0,
-      satConfirmedAvailable: 0,
+export const buildWalletObj =
+  (
+    {
+      walletId,
+      coin,
+      balance = {
+        crypto: '0',
+        cryptoLocked: '0',
+        fiat: 0,
+        fiatLastDay: 0,
+        fiatLocked: 0,
+        sat: 0,
+        satAvailable: 0,
+        satLocked: 0,
+        satConfirmedLocked: 0,
+        satConfirmed: 0,
+        satConfirmedAvailable: 0,
+      },
+      tokens,
+      keyId,
+      network,
+      n,
+      m,
+    }: Credentials & {
+      balance?: WalletBalance;
+      tokens?: any;
+      network: Network;
     },
-    tokens,
-    keyId,
-    network,
-    n,
-    m,
-  }: Credentials & {
-    balance?: WalletBalance;
-    tokens?: any;
-    network: Network;
-  },
-  tokenOpts?: {[key in string]: Token},
-  otherOpts?: {
-    walletName?: string;
-  },
-): WalletObj => {
-  const {currencyName, currencyAbbreviation} = mapAbbreviationAndName(
-    walletName,
-    coin,
-  );
-  return {
-    id: walletId,
-    currencyName,
-    currencyAbbreviation,
-    walletName: otherOpts?.walletName,
-    balance,
-    tokens,
-    network,
-    keyId,
-    img: SUPPORTED_CURRENCIES.includes(currencyAbbreviation)
-      ? CurrencyListIcons[currencyAbbreviation]
-      : tokenOpts
-      ? tokenOpts[currencyAbbreviation]?.logoURI
-      : '',
-    n,
-    m,
-    isRefreshing: false,
-    hideWallet: false,
-    hideBalance: false,
-    pendingTxps: [],
+    tokenOpts?: {[key in string]: Token},
+    otherOpts?: {
+      walletName?: string;
+    },
+  ): Effect<WalletObj> =>
+  dispatch => {
+    const {currencyName, currencyAbbreviation} = dispatch(
+      mapAbbreviationAndName(coin),
+    );
+    return {
+      id: walletId,
+      currencyName,
+      currencyAbbreviation,
+      walletName: otherOpts?.walletName,
+      balance,
+      tokens,
+      network,
+      keyId,
+      img: SUPPORTED_CURRENCIES.includes(currencyAbbreviation)
+        ? CurrencyListIcons[currencyAbbreviation]
+        : tokenOpts && tokenOpts[currencyAbbreviation]?.logoURI
+        ? (tokenOpts[currencyAbbreviation].logoURI as string)
+        : '',
+      n,
+      m,
+      isRefreshing: false,
+      hideWallet: false,
+      hideBalance: false,
+      pendingTxps: [],
+    };
   };
-};
 
 // Formatted key Obj
 export const buildKeyObj = ({

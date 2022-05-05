@@ -536,8 +536,7 @@ const SwapCryptoRoot: React.FC = () => {
         dispatch(
           startOnGoingProcessModal(OnGoingProcessMessages.GENERAL_AWAITING),
         );
-        await getChangellyCurrencies();
-        await sleep(400);
+        await Promise.all([getChangellyCurrencies(), sleep(400)]);
         dispatch(dismissOnGoingProcessModal());
       } catch (err) {
         logger.error('Changelly getCurrencies Error: ' + JSON.stringify(err));
@@ -571,6 +570,7 @@ const SwapCryptoRoot: React.FC = () => {
             <ActionsContainer>
               <SelectedOptionContainer
                 style={{backgroundColor: Action}}
+                disabled={swapCryptoSupportedCoinsFrom.length === 0}
                 onPress={() => {
                   showModal('fromWalletSelector');
                 }}>
@@ -631,12 +631,14 @@ const SwapCryptoRoot: React.FC = () => {
                   </TouchableOpacity>
                 </SelectedOptionCol>
               </ActionsContainer>
-              <ActionsContainer>
-                <BottomDataText>
-                  {fromWalletSelected.balance.cryptoSpendable}{' '}
-                  {fromWalletData?.currencyAbbreviation} available to swap
-                </BottomDataText>
-              </ActionsContainer>
+              {fromWalletSelected.balance?.crypto ? (
+                <ActionsContainer>
+                  <BottomDataText>
+                    {fromWalletSelected.balance.crypto}{' '}
+                    {fromWalletData?.currencyAbbreviation} available to swap
+                  </BottomDataText>
+                </ActionsContainer>
+              ) : null}
             </>
           )}
         </SwapCryptoCard>
