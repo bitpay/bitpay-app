@@ -629,14 +629,14 @@ const SwapCryptoRoot: React.FC = () => {
                   </TouchableOpacity>
                 </SelectedOptionCol>
               </ActionsContainer>
-              {!!fromWalletSelected.balance?.crypto && (
+              {fromWalletSelected.balance?.crypto ? (
                 <ActionsContainer>
                   <BottomDataText>
                     {fromWalletSelected.balance.crypto}{' '}
                     {fromWalletData?.currencyAbbreviation} available to swap
                   </BottomDataText>
                 </ActionsContainer>
-              )}
+              ) : null}
             </>
           )}
         </SwapCryptoCard>

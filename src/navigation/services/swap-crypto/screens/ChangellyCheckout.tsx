@@ -622,12 +622,12 @@ const ChangellyCheckout: React.FC = () => {
         <ItemDivisor />
         <RowDataContainer>
           <RowLabel>Paying</RowLabel>
-          {!!amountFrom && (
+          {amountFrom ? (
             <RowData>
-              {Number(amountFrom).toFixed(6)}{' '}
+              {Number(amountFrom.toFixed(6))}{' '}
               {fromWalletSelected.currencyAbbreviation.toUpperCase()}
             </RowData>
-          )}
+          ) : null}
         </RowDataContainer>
         <ItemDivisor />
         <RowDataContainer>
