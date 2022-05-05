@@ -53,7 +53,7 @@ const CreateOrImportKey = () => {
   return (
     <CreateKeyContainer>
       <ImageContainer>
-        <OnboardingImage style={{width: 172, height: 273}} source={KeyImage} />
+        <OnboardingImage style={{width: 155, height: 247}} source={KeyImage} />
       </ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>

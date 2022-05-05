@@ -86,7 +86,7 @@ const NotificationsScreen = () => {
 
   return (
     <NotificationsContainer>
-      <ImageContainer>
+      <ImageContainer justifyContent={'flex-end'}>
         <OnboardingImage
           style={{width: 182, height: 213}}
           source={NotificationImage}

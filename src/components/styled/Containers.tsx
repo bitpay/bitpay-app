@@ -23,11 +23,11 @@ export const HeaderRightContainer = styled.View`
   margin-top: 10px;
 `;
 
-export const ImageContainer = styled.View`
+export const ImageContainer = styled.View<{justifyContent?: string}>`
   margin: 10px 0;
   height: 247px;
   display: flex;
-  justify-content: center;
+  justify-content: ${({justifyContent}) => justifyContent || 'center'};
 `;
 
 export const HeaderTitleContainer = styled.View`

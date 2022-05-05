@@ -100,7 +100,7 @@ const PinScreen = () => {
   return (
     <PinContainer>
       <ImageContainer>
-        <OnboardingImage style={{width: 160, height: 262}} source={PinImage} />
+        <OnboardingImage style={{width: 151, height: 247}} source={PinImage} />
       </ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>
