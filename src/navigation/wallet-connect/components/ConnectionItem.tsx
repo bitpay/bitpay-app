@@ -114,7 +114,7 @@ export default ({
             dispatch(
               showBottomNotificationModal({
                 type: 'question',
-                title: 'Confirm Delete',
+                title: 'Confirm delete',
                 message: 'Are you sure you want to delete this connection?',
                 enableBackdropDismiss: true,
                 actions: [

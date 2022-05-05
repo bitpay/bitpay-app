@@ -231,7 +231,7 @@ const ChangellyDetails: React.FC = () => {
             dispatch(
               showBottomNotificationModal({
                 type: 'question',
-                title: 'Removing Transaction Data',
+                title: 'Removing transaction data',
                 message:
                   "The data of this swap will be deleted from your device. Make sure you don't need it",
                 enableBackdropDismiss: true,

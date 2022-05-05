@@ -224,7 +224,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
         dispatch(
           AppActions.showBottomNotificationModal({
             type: 'warning',
-            title: 'Incorrect Recovery Phrase',
+            title: 'Incorrect recovery phrase',
             message: 'The recovery phrase you provided was incorrect.',
             enableBackdropDismiss: false,
             actions: [

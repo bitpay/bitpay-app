@@ -137,7 +137,7 @@ const BuyGiftCard = ({
     dispatch(
       AppActions.showBottomNotificationModal({
         type: 'info',
-        title: 'Activation Fee',
+        title: 'Activation fee',
         message: `${
           cardConfig.displayName
         } gift cards contain an additional activation fee of ${formatFiatAmount(
