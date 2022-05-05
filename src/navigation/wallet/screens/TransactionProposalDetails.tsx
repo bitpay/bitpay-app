@@ -64,6 +64,7 @@ import {
 } from '../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
+import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 
 const TxsDetailsContainer = styled.View`
   flex: 1;
@@ -259,6 +260,7 @@ const TransactionProposalDetails = () => {
               text: 'YES',
               action: async () => {
                 await RemoveTxProposal(wallet, txs);
+                dispatch(startUpdateWalletStatus({key, wallet}));
                 navigation.goBack();
               },
               primary: true,
@@ -289,6 +291,7 @@ const TransactionProposalDetails = () => {
               text: 'YES',
               action: async () => {
                 await RejectTxProposal(wallet, txs);
+                dispatch(startUpdateWalletStatus({key, wallet}));
                 navigation.goBack();
               },
               primary: true,
