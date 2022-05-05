@@ -128,6 +128,7 @@ export const createProposalAndBuildTxDetails =
                   recipient,
                   invoice,
                   context,
+                  feeLevel,
                 }),
               );
               txp.id = proposal.id;
@@ -156,6 +157,7 @@ const buildTxDetails =
     recipient,
     invoice,
     context,
+    feeLevel = 'custom',
   }: {
     proposal: TransactionProposal;
     rates: Rates;
@@ -164,16 +166,10 @@ const buildTxDetails =
     recipient: Recipient;
     invoice?: Invoice;
     context?: TransactionOptionsContext;
+    feeLevel?: string;
   }): Effect<TxDetails> =>
   dispatch => {
-    const {
-      coin,
-      fee,
-      gasPrice,
-      gasLimit,
-      nonce,
-      feeLevel = 'custom',
-    } = proposal;
+    const {coin, fee, gasPrice, gasLimit, nonce} = proposal;
     let {amount} = proposal;
     const networkCost = invoice?.minerFees[coin.toUpperCase()]?.totalFee;
     const total = amount + fee;

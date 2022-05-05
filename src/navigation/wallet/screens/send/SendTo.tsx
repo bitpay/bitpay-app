@@ -359,6 +359,7 @@ const SendTo = () => {
                   txp,
                   txDetails,
                   amount: Number(amount),
+                  sendMax: opts?.sendMax,
                 },
               });
             } catch (err: any) {
