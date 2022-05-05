@@ -1,5 +1,5 @@
 import React from 'react';
-import {StatusBar, Text} from 'react-native';
+import {Dimensions, StatusBar, Text} from 'react-native';
 import styled, {css} from 'styled-components/native';
 import {
   NeutralSlate,
@@ -140,7 +140,10 @@ export const ZeroHeightHeader = styled.View`
 
 export const HeaderTitle = styled(H5).attrs(() => ({
   bold: true,
-}))``;
+  numberOfLines: 1,
+}))`
+  max-width: ${Dimensions.get('window').width - 150}px;
+`;
 
 export const HeaderSubtitle = styled(BaseText)`
   font-size: 16px;
