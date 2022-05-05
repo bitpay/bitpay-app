@@ -22,7 +22,10 @@ import {
 } from '../../../../utils/helper-methods';
 import {toFiat, checkEncryptPassword} from '../../utils/wallet';
 import {startGetRates} from '../rates/rates';
-import {waitForTargetAmountAndUpdateWallet} from '../status/status';
+import {
+  startUpdateWalletStatus,
+  waitForTargetAmountAndUpdateWallet,
+} from '../status/status';
 import {
   CustomErrorMessage,
   GeneralError,
@@ -492,6 +495,8 @@ export const publishAndSign =
               recipient,
             }),
           );
+        } else {
+          dispatch(startUpdateWalletStatus({key, wallet}));
         }
         resolve(broadcastedTx);
       } catch (err) {
