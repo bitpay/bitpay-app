@@ -73,7 +73,7 @@ export const keyBackupRequired = (
 ): BottomNotificationConfig => {
   return {
     type: 'error',
-    title: 'Key Backup Required',
+    title: 'Key backup required',
     message: 'To continue you will need to back up your key.',
     enableBackdropDismiss: true,
     actions: [

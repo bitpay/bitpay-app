@@ -18,8 +18,9 @@ export const ScreenGutter = '15px';
 export const ActiveOpacity = 0.75;
 // Nav
 export const HeaderRightContainer = styled.View`
-  height: 50px;
+  height: 40px;
   margin-right: 10px;
+  margin-top: 10px;
 `;
 
 export const ImageContainer = styled.View`

@@ -28,7 +28,7 @@ export const useRequireKeyAndWalletRedirect = (cta: () => void) => {
         dispatch(
           showBottomNotificationModal({
             type: 'warning',
-            title: 'Wallet Required',
+            title: 'Wallet required',
             message: 'To continue you will need to add a wallet to your key.',
             enableBackdropDismiss: true,
             actions: [
@@ -58,7 +58,7 @@ export const useRequireKeyAndWalletRedirect = (cta: () => void) => {
       dispatch(
         showBottomNotificationModal({
           type: 'warning',
-          title: 'Key and Wallet Required',
+          title: 'Key and wallet required',
           message:
             'To continue you will need to create a key and add a wallet.',
           enableBackdropDismiss: true,

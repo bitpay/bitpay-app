@@ -1,5 +1,6 @@
 import {simplexPaymentData, wyrePaymentData} from './buy-crypto.models';
 import {BuyCryptoActionType, BuyCryptoActionTypes} from './buy-crypto.types';
+import {handleWyreStatus} from '../../navigation/services/buy-crypto/utils/wyre-utils';
 
 type BuyCryptoReduxPersistBlackList = string[];
 export const buyCryptoReduxPersistBlackList: BuyCryptoReduxPersistBlackList =
@@ -30,6 +31,27 @@ export const buyCryptoReducer = (
         },
       };
 
+    case BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_SIMPLEX:
+      const {simplexIncomingData} = action.payload;
+
+      if (
+        simplexIncomingData.paymentId &&
+        state.simplex[simplexIncomingData.paymentId]
+      ) {
+        state.simplex[simplexIncomingData.paymentId].status =
+          simplexIncomingData.success === 'true' ? 'success' : 'failed';
+        return {
+          ...state,
+          simplex: {
+            ...state.simplex,
+            [simplexIncomingData.paymentId]:
+              state.simplex[simplexIncomingData.paymentId],
+          },
+        };
+      } else {
+        return state;
+      }
+
     case BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_SIMPLEX:
       const {paymentId} = action.payload;
       const simplexPaymentRequestsList = {...state.simplex};
@@ -42,10 +64,17 @@ export const buyCryptoReducer = (
 
     case BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_WYRE:
       const {wyrePaymentData} = action.payload;
-      return {
-        ...state,
-        wyre: {...state.wyre, [wyrePaymentData.orderId]: wyrePaymentData},
-      };
+      if (wyrePaymentData.orderId) {
+        if (wyrePaymentData.status) {
+          wyrePaymentData.status = handleWyreStatus(wyrePaymentData.status);
+        }
+        return {
+          ...state,
+          wyre: {...state.wyre, [wyrePaymentData.orderId]: wyrePaymentData},
+        };
+      } else {
+        return state;
+      }
 
     case BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_WYRE:
       const {orderId} = action.payload;

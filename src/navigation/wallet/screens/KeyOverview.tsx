@@ -11,6 +11,7 @@ import {
   Hr,
   ActiveOpacity,
   ScreenGutter,
+  HeaderRightContainer,
 } from '../../../components/styled/Containers';
 import {RootState} from '../../../store';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -104,14 +105,12 @@ const KeyDropdownOptionsContainer = styled.ScrollView`
 `;
 
 const CogIconContainer = styled.TouchableOpacity`
-  margin-top: 10px;
-  margin-right: 10px;
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   border-radius: 50px;
   justify-content: center;
   align-items: center;
-  height: 45px;
-  width: 45px;
+  height: 40px;
+  width: 40px;
 `;
 
 export const buildUIFormattedWallet: (
@@ -210,15 +209,17 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
       },
       headerRight: () => {
         return key.methods.isPrivKeyEncrypted() ? (
-          <CogIconContainer
-            onPress={() =>
-              navigation.navigate('KeySettings', {
-                key,
-              })
-            }
-            activeOpacity={ActiveOpacity}>
-            <Icons.Cog />
-          </CogIconContainer>
+          <HeaderRightContainer>
+            <CogIconContainer
+              onPress={() =>
+                navigation.navigate('KeySettings', {
+                  key,
+                })
+              }
+              activeOpacity={ActiveOpacity}>
+              <Icons.Cog />
+            </CogIconContainer>
+          </HeaderRightContainer>
         ) : (
           <>
             <Settings

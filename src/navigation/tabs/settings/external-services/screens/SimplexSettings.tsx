@@ -1,10 +1,15 @@
 import React, {useEffect, useState} from 'react';
 import {TouchableOpacity} from 'react-native';
-import {useNavigation, useIsFocused} from '@react-navigation/native';
+import {
+  RouteProp,
+  useRoute,
+  useNavigation,
+  useIsFocused,
+} from '@react-navigation/native';
 import moment from 'moment';
 import {useSelector} from 'react-redux';
 import {Link} from '../../../../../components/styled/Text';
-import {useAppDispatch} from '../../../../../utils/hooks';
+import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
 import {RootState} from '../../../../../store';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
@@ -24,6 +29,15 @@ import {
   SupportTxt,
 } from '../styled/ExternalServicesSettings';
 
+export interface SimplexSettingsProps {
+  incomingPaymentRequest: {
+    success: string;
+    paymentId: string;
+    quoteId: string;
+    userId: string;
+  };
+}
+
 const SimplexSettings: React.FC = () => {
   const simplexHistory = useSelector(
     ({BUY_CRYPTO}: RootState) => BUY_CRYPTO.simplex,
@@ -31,9 +45,21 @@ const SimplexSettings: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const logger = useLogger();
   const [paymentRequests, setTransactions] = useState(
     [] as simplexPaymentData[],
   );
+
+  const route = useRoute<RouteProp<{params: SimplexSettingsProps}>>();
+  const {incomingPaymentRequest} = route.params || {};
+
+  useEffect(() => {
+    if (incomingPaymentRequest) {
+      logger.debug(
+        `Coming from payment request: ${incomingPaymentRequest.paymentId}`,
+      );
+    }
+  }, []);
 
   useEffect(() => {
     if (isFocused) {

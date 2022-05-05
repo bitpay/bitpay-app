@@ -100,7 +100,7 @@ const CreateEncryptionPassword = () => {
         dispatch(
           showBottomNotificationModal({
             type: 'success',
-            title: 'Password Set',
+            title: 'Password set',
             message:
               'Your encryption password has been set. This key is now encrypted.',
             enableBackdropDismiss: true,

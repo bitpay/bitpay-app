@@ -1,13 +1,14 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Text, View} from 'react-native';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
 import moment from 'moment';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {wyrePaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
-import WyreIcon from '../../../../../../assets/img/services/wyre/logo-wyre.svg';
+import WyreIcon from '../../../../../../assets/img/services/wyre/icon-wyre.svg';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {
+  dismissOnGoingProcessModal,
   showBottomNotificationModal,
   dismissBottomNotificationModal,
 } from '../../../../../store/app/app.actions';
@@ -27,6 +28,12 @@ import {
   ColumnData,
   RemoveCta,
 } from '../styled/ExternalServicesDetails';
+import {sleep} from '../../../../../utils/helper-methods';
+import {useLogger} from '../../../../../utils/hooks/useLogger';
+import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
+import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
+import {wyreGetWalletOrderDetails} from '../../../../../store/buy-crypto/effects/wyre/wyre';
+import {handleWyreStatus} from '../../../../services/buy-crypto/utils/wyre-utils';
 
 export interface WyreDetailsProps {
   paymentRequest: wyrePaymentData;
@@ -38,13 +45,51 @@ const WyreDetails: React.FC = () => {
   } = useRoute<RouteProp<{params: WyreDetailsProps}>>();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const logger = useLogger();
+  const [paymentData, setPaymentData] =
+    useState<wyrePaymentData>(paymentRequest);
 
   useEffect(() => {
-    if (paymentRequest.purchaseAmount) {
-      paymentRequest.fiatBaseAmount = paymentRequest.purchaseAmount;
-    } else if (paymentRequest.fee) {
-      paymentRequest.fiatBaseAmount =
-        +paymentRequest.sourceAmount - +paymentRequest.fee;
+    const getWalletOrderDetails = async (orderId: string) => {
+      dispatch(
+        startOnGoingProcessModal(OnGoingProcessMessages.GENERAL_AWAITING),
+      );
+      await sleep(400);
+      const orderData = await wyreGetWalletOrderDetails(orderId);
+      if (orderData.status) {
+        paymentRequest.status = handleWyreStatus(orderData.status);
+      }
+      if (orderData.blockchainNetworkTx) {
+        paymentRequest.blockchainNetworkTx = orderData.blockchainNetworkTx;
+      }
+      if (orderData.destAmount) {
+        paymentRequest.destAmount = orderData.destAmount;
+      }
+      setPaymentData(paymentRequest);
+
+      dispatch(
+        BuyCryptoActions.successPaymentRequestWyre({
+          wyrePaymentData: paymentRequest,
+        }),
+      );
+    };
+
+    if (
+      paymentRequest.orderId &&
+      (paymentRequest.status != 'success' ||
+        !paymentRequest.transferId ||
+        (paymentRequest.transferId && !paymentRequest.blockchainNetworkTx))
+    ) {
+      getWalletOrderDetails(paymentRequest.orderId)
+        .then(async () => {
+          dispatch(dismissOnGoingProcessModal());
+          await sleep(400);
+        })
+        .catch(err => {
+          logger.error(
+            'Wyre getWalletOrderDetails Error: ' + JSON.stringify(err),
+          );
+        });
     }
   }, []);
 
@@ -55,17 +100,17 @@ const WyreDetails: React.FC = () => {
           <CryptoAmountContainer>
             <CryptoTitle>Approximate receiving amount</CryptoTitle>
             <CryptoContainer>
-              <CryptoAmount>{paymentRequest.destAmount}</CryptoAmount>
-              <CryptoUnit>{paymentRequest.destCurrency}</CryptoUnit>
+              <CryptoAmount>{paymentData.destAmount}</CryptoAmount>
+              <CryptoUnit>{paymentData.destCurrency}</CryptoUnit>
             </CryptoContainer>
           </CryptoAmountContainer>
-          <WyreIcon />
+          <WyreIcon width={60} height={40} />
         </RowDataContainer>
 
         <RowDataContainer>
           <RowLabel>Approximate receiving fiat amount</RowLabel>
           <RowData>
-            {paymentRequest.fiatBaseAmount} {paymentRequest.sourceCurrency}
+            {paymentData.purchaseAmount} {paymentData.sourceCurrency}
           </RowData>
         </RowDataContainer>
         <LabelTip type="warn">
@@ -78,58 +123,68 @@ const WyreDetails: React.FC = () => {
         <RowDataContainer>
           <RowLabel>Paying</RowLabel>
           <RowData>
-            {paymentRequest.sourceAmount} {paymentRequest.sourceCurrency}
+            {paymentData.sourceAmount} {paymentData.sourceCurrency}
           </RowData>
         </RowDataContainer>
 
         <RowDataContainer>
           <RowLabel>Created</RowLabel>
           <RowData>
-            {moment(paymentRequest.created_on).format('MMM DD, YYYY hh:mm a')}
+            {moment(paymentData.created_on).format('MMM DD, YYYY hh:mm a')}
           </RowData>
         </RowDataContainer>
 
-        {['failed', 'success'].includes(paymentRequest.status) && (
-          <View>
+        {!!paymentData.status && (
+          <RowDataContainer>
             <RowLabel>Status</RowLabel>
-            <View>
-              {paymentRequest.status === 'paymentRequestSent' && (
-                <Text style={{color: '#df5264'}}>Payment request sent</Text>
+            <RowData>
+              {paymentData.status === 'paymentRequestSent' && (
+                <Text>Processing payment request</Text>
               )}
-              {paymentRequest.status === 'failed' && (
+              {paymentData.status === 'failed' && (
                 <Text style={{color: '#df5264'}}>Payment request rejected</Text>
               )}
-              {paymentRequest.status === 'success' && (
+              {paymentData.status === 'success' && (
                 <Text style={{color: '#01d1a2'}}>Payment request approved</Text>
               )}
-            </View>
-          </View>
+            </RowData>
+          </RowDataContainer>
         )}
 
-        <ColumnDataContainer>
-          <RowLabel>Deposit address</RowLabel>
-          <ColumnData>{paymentRequest.dest}</ColumnData>
-        </ColumnDataContainer>
+        {!!paymentData.dest && (
+          <ColumnDataContainer>
+            <RowLabel>Deposit address</RowLabel>
+            <ColumnData>{paymentData.dest}</ColumnData>
+          </ColumnDataContainer>
+        )}
 
-        <ColumnDataContainer>
-          <RowLabel>Payment method</RowLabel>
-          <ColumnData>{paymentRequest.paymentMethodName}</ColumnData>
-        </ColumnDataContainer>
+        {!!paymentData.paymentMethodName && (
+          <ColumnDataContainer>
+            <RowLabel>Payment method</RowLabel>
+            <ColumnData>{paymentData.paymentMethodName}</ColumnData>
+          </ColumnDataContainer>
+        )}
 
-        <ColumnDataContainer>
-          <RowLabel>Transfer ID</RowLabel>
-          <ColumnData>{paymentRequest.transferId}</ColumnData>
-        </ColumnDataContainer>
+        {!!paymentData.transferId && (
+          <ColumnDataContainer>
+            <RowLabel>Transfer ID</RowLabel>
+            <ColumnData>{paymentData.transferId}</ColumnData>
+          </ColumnDataContainer>
+        )}
 
-        <ColumnDataContainer>
-          <RowLabel>Order ID</RowLabel>
-          <ColumnData>{paymentRequest.orderId}</ColumnData>
-        </ColumnDataContainer>
+        {!!paymentData.orderId && (
+          <ColumnDataContainer>
+            <RowLabel>Order ID</RowLabel>
+            <ColumnData>{paymentData.orderId}</ColumnData>
+          </ColumnDataContainer>
+        )}
 
-        <ColumnDataContainer>
-          <RowLabel>Blockchain Network Tx</RowLabel>
-          <ColumnData>{paymentRequest.blockchainNetworkTx}</ColumnData>
-        </ColumnDataContainer>
+        {!!paymentData.blockchainNetworkTx && (
+          <ColumnDataContainer>
+            <RowLabel>Blockchain Network Tx</RowLabel>
+            <ColumnData>{paymentData.blockchainNetworkTx}</ColumnData>
+          </ColumnDataContainer>
+        )}
 
         <RemoveCta
           onPress={async () => {
@@ -137,7 +192,7 @@ const WyreDetails: React.FC = () => {
             dispatch(
               showBottomNotificationModal({
                 type: 'question',
-                title: 'Removing Payment Request Data',
+                title: 'Removing payment request data',
                 message:
                   "The data of this payment request will be deleted. Make sure you don't need it",
                 enableBackdropDismiss: true,
@@ -148,7 +203,7 @@ const WyreDetails: React.FC = () => {
                       dispatch(dismissBottomNotificationModal());
                       dispatch(
                         BuyCryptoActions.removePaymentRequestWyre({
-                          orderId: paymentRequest.orderId,
+                          orderId: paymentData.orderId,
                         }),
                       );
                       navigation.goBack();
@@ -158,7 +213,7 @@ const WyreDetails: React.FC = () => {
                   {
                     text: 'GO BACK',
                     action: () => {
-                      console.log('Removing payment Request CANCELED');
+                      logger.debug('Removing payment Request CANCELED');
                     },
                   },
                 ],

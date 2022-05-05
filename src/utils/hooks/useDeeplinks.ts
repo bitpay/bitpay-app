@@ -13,6 +13,7 @@ import {RootStackParamList, RootStacks} from '../../Root';
 import {useLogger} from '.';
 import {TabsScreens} from '../../navigation/tabs/TabsStack';
 import {SettingsScreens} from '../../navigation/tabs/settings/SettingsStack';
+import {incomingData} from '../../store/scan/scan.effects';
 
 export const useDeeplinks = () => {
   const dispatch = useDispatch();
@@ -22,6 +23,8 @@ export const useDeeplinks = () => {
     const urlEventHandler = ({url}: {url: string}) => {
       if (url && url.startsWith(APP_DEEPLINK_PREFIX)) {
         logger.info(`Deep link received: ${url}`);
+
+        dispatch(incomingData(url));
 
         try {
           // clicking a deeplink from the IAB in iOS doesn't auto-close the IAB, so do it manually
