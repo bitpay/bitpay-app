@@ -361,7 +361,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     await sleep(1000);
 
     try {
-      await dispatch(startGetRates());
+      await dispatch(startGetRates({force: true}));
       await Promise.all([
         await dispatch(startUpdateWalletStatus({key, wallet: fullWalletObj})),
         await loadHistory(true),

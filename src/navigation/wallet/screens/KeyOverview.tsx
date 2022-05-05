@@ -280,7 +280,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      await dispatch(startGetRates());
+      await dispatch(startGetRates({force: true}));
       await Promise.all([
         dispatch(startUpdateAllWalletStatusForKey(key)),
         sleep(1000),

@@ -248,7 +248,7 @@ const ChangellyCheckout: React.FC = () => {
         status = data.result.status;
 
         try {
-          const rates = await dispatch(startGetRates());
+          const rates = await dispatch(startGetRates({}));
           const presicion = dispatch(
             GetPrecision(toWalletSelected.currencyAbbreviation),
           );

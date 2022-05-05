@@ -121,7 +121,7 @@ const HomeRoot = () => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      await dispatch(startGetRates());
+      await dispatch(startGetRates({force: true}));
       await Promise.all([
         dispatch(startUpdateAllKeyAndWalletStatus()),
         sleep(1000),
