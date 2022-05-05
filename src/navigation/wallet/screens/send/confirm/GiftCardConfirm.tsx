@@ -196,7 +196,7 @@ const Confirm = () => {
       await sleep(400);
       dispatch(dismissOnGoingProcessModal());
       const [errorConfig] = await Promise.all([
-        handleCreateTxProposalError(err),
+        dispatch(handleCreateTxProposalError(err)),
         sleep(500),
       ]);
       dispatch(

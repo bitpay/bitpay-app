@@ -311,7 +311,7 @@ const TransactionDetails = () => {
       });
     } catch (err: any) {
       const [errorMessageConfig] = await Promise.all([
-        handleCreateTxProposalError(err),
+        dispatch(handleCreateTxProposalError(err)),
         sleep(400),
       ]);
       dispatch(
@@ -350,7 +350,7 @@ const TransactionDetails = () => {
   }, [copied]);
 
   const goToBlockchain = () => {
-    let url = GetBlockExplorerUrl(currencyAbbreviation, network);
+    let url = dispatch(GetBlockExplorerUrl(currencyAbbreviation, network));
     switch (currencyAbbreviation) {
       case 'doge':
         url =
@@ -407,7 +407,7 @@ const TransactionDetails = () => {
 
           {/* --------- Info ----------------*/}
           {(currencyAbbreviation === 'eth' ||
-            IsERCToken(currencyAbbreviation)) &&
+            dispatch(IsERCToken(currencyAbbreviation))) &&
           txs.error ? (
             <Banner
               type={'error'}

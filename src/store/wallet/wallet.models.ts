@@ -337,6 +337,15 @@ export interface TxDetailsFee {
   percentageOfTotalAmount: string;
 }
 
+export interface FeeOptions {
+  urgent: string;
+  priority: string;
+  normal: string;
+  economy: string;
+  superEconomy: string;
+  custom: string;
+}
+
 export interface TxDetailsSendingTo {
   recipientType?: string | undefined;
   recipientName?: string;

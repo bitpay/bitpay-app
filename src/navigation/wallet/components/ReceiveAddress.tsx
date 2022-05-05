@@ -162,7 +162,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
       )) as string;
       setLoading(false);
       if (coin === 'bch') {
-        const protocolPrefix = GetProtocolPrefix(coin, network);
+        const protocolPrefix = dispatch(GetProtocolPrefix(coin, network));
         const formattedAddr = protocolPrefix + ':' + walletAddress;
         setAddress(formattedAddr);
         setBchAddress(formattedAddr);

@@ -1,21 +1,12 @@
 import React, {useState} from 'react';
 import styled from 'styled-components/native';
-import {BaseText, Link, Paragraph} from '../../../components/styled/Text';
-import {Linking} from 'react-native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
+import {TermsOfUseModel} from '../screens/TermsOfUse';
 interface Props {
   emit: (id: number) => void;
-  term: {
-    id: number;
-    statement: string;
-    acknowledgement?: string | undefined;
-    link?: {
-      text: string;
-      url: string;
-    };
-  };
+  term: TermsOfUseModel;
 }
 
 const TermsBoxContainer = styled.TouchableOpacity`
@@ -25,17 +16,6 @@ const TermsBoxContainer = styled.TouchableOpacity`
   background: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   border-radius: 11px;
   margin: 10px 0;
-`;
-
-const TermText = styled(BaseText)`
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 25px;
-  letter-spacing: 0;
-  text-align: left;
-  margin: 5px 0;
-  color: ${({theme}) => theme.colors.text};
 `;
 
 const CheckBoxContainer = styled.View`
@@ -49,7 +29,7 @@ const TermTextContainer = styled.View`
 `;
 
 const TermsBox = ({term, emit}: Props) => {
-  const {statement, acknowledgement, link} = term;
+  const {statement} = term;
   const [checked, setChecked] = useState(false);
   const acknowledge = (): void => {
     if (!checked) {
@@ -63,13 +43,7 @@ const TermsBox = ({term, emit}: Props) => {
       <CheckBoxContainer>
         <Checkbox checked={checked} onPress={acknowledge} />
       </CheckBoxContainer>
-      <TermTextContainer>
-        <TermText>{statement}</TermText>
-        {acknowledgement && <Paragraph>{acknowledgement}</Paragraph>}
-        {link && (
-          <Link onPress={() => Linking.openURL(link.url)}>{link.text}</Link>
-        )}
-      </TermTextContainer>
+      <TermTextContainer>{statement}</TermTextContainer>
     </TermsBoxContainer>
   );
 };
