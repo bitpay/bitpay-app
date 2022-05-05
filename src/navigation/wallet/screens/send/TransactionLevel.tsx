@@ -1,5 +1,11 @@
 import React, {useEffect, useState} from 'react';
-import {BaseText, H4, H7, Paragraph} from '../../../../components/styled/Text';
+import {
+  BaseText,
+  H4,
+  H7,
+  HeaderTitle,
+  Paragraph,
+} from '../../../../components/styled/Text';
 import {
   Fee,
   getFeeLevels,
@@ -34,6 +40,7 @@ import {DetailsList} from './confirm/Shared';
 import Button from '../../../../components/button/Button';
 import {Caution, Slate, SlateDark, White} from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const CIRCLE_SIZE = 20;
 
@@ -57,11 +64,11 @@ const TxSpeedContainer = styled(SheetContainer)`
   flex: 1;
   justify-content: flex-start;
   margin-top: 0;
-  padding: 20px 0;
+  padding: 0 0 20px 0;
 `;
 
 const SheetHeaderContainer = styled.View`
-  margin: 20px 0;
+  margin-bottom: 15px;
   align-items: center;
   flex-direction: row;
 `;
@@ -188,6 +195,7 @@ const TransactionLevel = ({
     credentials: {coin, network},
   } = wallet;
   const dispatch = useAppDispatch();
+  const insets = useSafeAreaInsets();
 
   const [speedUpMinFeePerKb, setSpeedUpMinFeePerKb] = useState<number>();
   const {feeUnit, feeUnitAmount, blockTime} = dispatch(GetFeeUnits(coin));
@@ -453,14 +461,14 @@ const TransactionLevel = ({
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onClose}>
       <TxSpeedContainer>
-        <SheetHeaderContainer>
+        <SheetHeaderContainer style={{marginTop: insets.top}}>
           <TouchableOpacity
             activeOpacity={ActiveOpacity}
             onPress={() => onClose()}>
             <Back opacity={1} background={'#464646'} />
           </TouchableOpacity>
           <TitleContainer>
-            <H4>Transaction Speed</H4>
+            <HeaderTitle>Transaction Speed</HeaderTitle>
           </TitleContainer>
         </SheetHeaderContainer>
 
