@@ -13,24 +13,31 @@ export interface simplexPaymentData {
   user_id: string;
 }
 
+export interface simplexIncomingData {
+  paymentId?: string;
+  success?: string;
+  quoteId?: string;
+  userId?: string;
+}
+
 export interface wyrePaymentData {
-  accountId: string;
-  blockchainNetworkTx: string;
-  created_on: number;
-  createdAt: number;
-  dest: string;
-  destAmount: number;
-  destCurrency: string;
+  orderId: string;
   env: 'dev' | 'prod';
+  created_on: number;
+  accountId?: string;
+  blockchainNetworkTx?: string;
+  createdAt?: string;
+  dest?: string;
+  destAmount?: string;
+  destCurrency?: string;
   fee?: number;
   fiatBaseAmount?: number;
-  owner: string;
-  orderId: string;
-  paymentMethodName: string;
-  purchaseAmount: any;
-  sourceAmount: number;
-  sourceCurrency: string;
-  status: string;
-  transferId: string;
-  walletId: string;
+  owner?: string;
+  paymentMethodName?: string;
+  purchaseAmount?: any;
+  sourceAmount?: string;
+  sourceCurrency?: string;
+  status?: string;
+  transferId?: string;
+  walletId?: string;
 }

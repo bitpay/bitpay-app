@@ -853,14 +853,12 @@ const BuyCryptoOffers: React.FC = () => {
                           <OfferDataRate>
                             1 {coin.toUpperCase()} = ${offer.fiatMoney}
                           </OfferDataRate>
-                          <OfferDataInfoContainer>
-                            <OfferDataInfoLabel>Provided By</OfferDataInfoLabel>
-                            {offer && theme.dark
-                              ? offer.logoDark
-                              : offer.logoLight}
-                          </OfferDataInfoContainer>
                         </>
                       )}
+                    <OfferDataInfoContainer>
+                      <OfferDataInfoLabel>Provided By</OfferDataInfoLabel>
+                      {offer && theme.dark ? offer.logoDark : offer.logoLight}
+                    </OfferDataInfoContainer>
                   </OfferDataContainer>
                   {offer.fiatMoney && (
                     <SummaryCtaContainer>

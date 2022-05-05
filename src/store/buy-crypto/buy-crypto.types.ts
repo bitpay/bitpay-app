@@ -1,7 +1,12 @@
-import {simplexPaymentData, wyrePaymentData} from './buy-crypto.models';
+import {
+  simplexPaymentData,
+  simplexIncomingData,
+  wyrePaymentData,
+} from './buy-crypto.models';
 
 export enum BuyCryptoActionTypes {
   SUCCESS_PAYMENT_REQUEST_SIMPLEX = 'BUY_CRYPTO/SUCCESS_PAYMENT_REQUEST_SIMPLEX',
+  UPDATE_PAYMENT_REQUEST_SIMPLEX = 'BUY_CRYPTO/UPDATE_PAYMENT_REQUEST_SIMPLEX',
   REMOVE_PAYMENT_REQUEST_SIMPLEX = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_SIMPLEX',
   SUCCESS_PAYMENT_REQUEST_WYRE = 'BUY_CRYPTO/SUCCESS_PAYMENT_REQUEST_WYRE',
   REMOVE_PAYMENT_REQUEST_WYRE = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_WYRE',
@@ -11,6 +16,13 @@ interface successPaymentRequestSimplex {
   type: typeof BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_SIMPLEX;
   payload: {
     simplexPaymentData: simplexPaymentData;
+  };
+}
+
+interface updatePaymentRequestSimplex {
+  type: typeof BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_SIMPLEX;
+  payload: {
+    simplexIncomingData: simplexIncomingData;
   };
 }
 
@@ -37,6 +49,7 @@ interface removePaymentRequestWyre {
 
 export type BuyCryptoActionType =
   | successPaymentRequestSimplex
+  | updatePaymentRequestSimplex
   | removePaymentRequestSimplex
   | successPaymentRequestWyre
   | removePaymentRequestWyre;

@@ -14,6 +14,7 @@ import WyreDetails from './screens/WyreDetails';
 import ChangellySettings from './screens/ChangellySettings';
 import ChangellyDetails from './screens/ChangellyDetails';
 import {
+  simplexIncomingData,
   simplexPaymentData,
   wyrePaymentData,
 } from '../../../../store/buy-crypto/buy-crypto.models';
@@ -21,11 +22,16 @@ import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models'
 
 export type ExternalServicesSettingsStackParamList = {
   Root: undefined;
-  SimplexSettings: undefined;
+  SimplexSettings: {
+    incomingPaymentRequest?: simplexIncomingData;
+  };
   SimplexDetails: {
     paymentRequest: simplexPaymentData;
   };
-  WyreSettings: undefined;
+  WyreSettings: {
+    incomingPaymentRequest?: wyrePaymentData;
+    paymentRequestError?: boolean;
+  };
   WyreDetails: {
     paymentRequest: wyrePaymentData;
   };
