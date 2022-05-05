@@ -464,3 +464,46 @@ export const startFetchDoshToken = (): Effect => async (dispatch, getState) => {
     });
   }
 };
+
+export const startSubmitForgotPasswordEmail =
+  ({
+    email,
+    gCaptchaResponse,
+  }: {
+    email: string;
+    gCaptchaResponse?: string;
+  }): Effect =>
+  async (dispatch, getState) => {
+    const {APP, BITPAY_ID} = getState();
+    const errMsg = 'Error sending forgot password request.';
+
+    try {
+      dispatch(BitPayIdActions.resetForgotPasswordEmailStatus());
+      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.SENDING_EMAIL));
+      const data = await AuthApi.submitForgotPasswordEmail(
+        APP.network,
+        BITPAY_ID.session.csrfToken,
+        email,
+        gCaptchaResponse,
+      );
+      if (data.success) {
+        dispatch(
+          BitPayIdActions.forgotPasswordEmailStatus(
+            'success',
+            "Email sent. If an account with that email address exists, you'll receive an email with a link to reset your password.",
+          ),
+        );
+      } else {
+        dispatch(
+          BitPayIdActions.forgotPasswordEmailStatus(
+            'failed',
+            data.message || errMsg,
+          ),
+        );
+      }
+    } catch (e) {
+      dispatch(BitPayIdActions.forgotPasswordEmailStatus('failed', errMsg));
+    } finally {
+      dispatch(AppActions.dismissOnGoingProcessModal());
+    }
+  };
