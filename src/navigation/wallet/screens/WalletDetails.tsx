@@ -852,7 +852,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       <OptionsSheet
         isVisible={showWalletOptions}
         closeModal={() => setShowWalletOptions(false)}
-        title={t('ReceiveCurrency', {currency: currencyName})}
+        title={t('WalletOptions')}
         options={assetOptions}
       />
 
