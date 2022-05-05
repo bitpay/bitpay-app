@@ -457,7 +457,7 @@ const TransactionLevel = ({
           <TouchableOpacity
             activeOpacity={ActiveOpacity}
             onPress={() => onClose()}>
-            <Back opacity={1} />
+            <Back opacity={1} background={'#464646'} />
           </TouchableOpacity>
           <TitleContainer>
             <H4>Transaction Speed</H4>
