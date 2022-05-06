@@ -54,7 +54,7 @@ import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {startGetRates} from '../../../store/wallet/effects';
+import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {
   CanSpeedupTx,
@@ -361,6 +361,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     await sleep(1000);
 
     try {
+      dispatch(getPriceHistory());
       await dispatch(startGetRates({force: true}));
       await Promise.all([
         await dispatch(startUpdateWalletStatus({key, wallet: fullWalletObj})),

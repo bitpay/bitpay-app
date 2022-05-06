@@ -38,7 +38,7 @@ import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import {useAppSelector} from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import KeyDropdownOption from '../components/KeyDropdownOption';
-import {startGetRates} from '../../../store/wallet/effects';
+import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -280,6 +280,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
+      dispatch(getPriceHistory());
       await dispatch(startGetRates({force: true}));
       await Promise.all([
         dispatch(startUpdateAllWalletStatusForKey(key)),

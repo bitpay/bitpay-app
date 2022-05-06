@@ -10,7 +10,7 @@ import {
   selectBrazeQuickLinks,
   selectBrazeShopWithCrypto,
 } from '../../../store/app/app.selectors';
-import {startGetRates} from '../../../store/wallet/effects';
+import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
 import {startUpdateAllKeyAndWalletStatus} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
@@ -91,7 +91,7 @@ const HomeRoot = () => {
             currencyName,
             currencyAbbreviation,
             average: +history.percentChange,
-            currentPrice: +history.prices[0].price,
+            currentPrice: +history.prices[history.prices.length - 1].price,
             priceDisplay: history.priceDisplay,
           });
         }
@@ -121,6 +121,7 @@ const HomeRoot = () => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
+      dispatch(getPriceHistory());
       await dispatch(startGetRates({force: true}));
       await Promise.all([
         dispatch(startUpdateAllKeyAndWalletStatus()),
