@@ -127,8 +127,9 @@ const WalletConnectHome = () => {
                 const recipient = {
                   address: toAddress,
                 };
-                const amountStr =
-                  value && FormatAmount('eth', parseInt(value, 16));
+                const amountStr = value
+                  ? dispatch(FormatAmount('eth', parseInt(value, 16)))
+                  : 0;
                 const tx = {
                   wallet,
                   recipient,
