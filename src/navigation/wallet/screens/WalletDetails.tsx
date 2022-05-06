@@ -363,7 +363,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     await sleep(1000);
 
     try {
-      dispatch(getPriceHistory());
+      dispatch(getPriceHistory(defaultAltCurrency.isoCode));
       await dispatch(startGetRates({force: true}));
       await Promise.all([
         await dispatch(startUpdateWalletStatus({key, wallet: fullWalletObj})),
@@ -382,7 +382,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     cryptoLockedBalance,
     fiatBalance,
     fiatLockedBalance,
-    currencyName,
     currencyAbbreviation,
     network,
     hideBalance,
