@@ -784,7 +784,7 @@ export const buildTransactionDetails =
 
         const alternativeCurrency = defaultAltCurrencyIsoCode;
 
-        const rates = await dispatch(startGetRates());
+        const rates = await dispatch(startGetRates({}));
 
         _transaction.feeFiatStr = formatFiatAmount(
           dispatch(toFiat(_fee, alternativeCurrency, currency, rates)),

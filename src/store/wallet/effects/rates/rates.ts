@@ -60,18 +60,18 @@ export const getPriceHistory =
   };
 
 export const startGetRates =
-  (init?: boolean): Effect<Promise<Rates>> =>
+  ({init, force}: {init?: boolean; force?: boolean}): Effect<Promise<Rates>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       const {
         WALLET: {ratesCacheKey, rates: cachedRates},
       } = getState();
-
       if (
         !isCacheKeyStale(
           ratesCacheKey[DEFAULT_DATE_RANGE],
           RATES_CACHE_DURATION,
-        )
+        ) &&
+        !force
       ) {
         console.log('Rates - using cached rates');
         return resolve(cachedRates);

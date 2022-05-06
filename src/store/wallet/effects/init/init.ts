@@ -22,7 +22,7 @@ export const startWalletStoreInit =
         dispatch(startUpdateAllKeyAndWalletStatus());
       }
 
-      await dispatch(startGetRates(true)); // populate rates and alternative currency list
+      await dispatch(startGetRates({init: true})); // populate rates and alternative currency list
 
       dispatch(getPriceHistory(defaultAltCurrencyIsoCode));
       dispatch(updatePortfolioBalance());

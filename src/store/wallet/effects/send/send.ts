@@ -120,7 +120,7 @@ export const createProposalAndBuildTxDetails =
               return reject({err, tx, txp, getState});
             }
             try {
-              const rates = await dispatch(startGetRates());
+              const rates = await dispatch(startGetRates({}));
               // building UI object for details
               const txDetails = dispatch(
                 buildTxDetails({
