@@ -5,13 +5,13 @@ import {
   ActionContainer,
   CtaContainer,
   HeaderRightContainer,
+  ImageContainer,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {useNavigation} from '@react-navigation/native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingImage} from '../components/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
 
@@ -19,11 +19,7 @@ const CreateKeyContainer = styled.SafeAreaView`
   flex: 1;
   align-items: center;
 `;
-
-const CreateKeyImage = {
-  light: require('../../../../assets/img/onboarding/light/create-wallet.png'),
-  dark: require('../../../../assets/img/onboarding/dark/create-wallet.png'),
-};
+const KeyImage = require('../../../../assets/img/onboarding/create-wallet.png');
 
 const CreateOrImportKey = () => {
   const navigation = useNavigation();
@@ -53,11 +49,12 @@ const CreateOrImportKey = () => {
   }, [navigation]);
 
   useAndroidBackHandler(() => true);
-  const themeType = useThemeType();
 
   return (
     <CreateKeyContainer>
-      <OnboardingImage source={CreateKeyImage[themeType]} />
+      <ImageContainer>
+        <OnboardingImage style={{width: 155, height: 247}} source={KeyImage} />
+      </ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>
           <H3>Create a key or import an existing key</H3>

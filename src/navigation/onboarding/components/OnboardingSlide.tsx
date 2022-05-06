@@ -34,7 +34,7 @@ export const OnboardingSlide = ({item}: {item: OnboardingSlide}) => {
 
   return (
     <SlideContainer>
-      <ImageContainer>{img()}</ImageContainer>
+      <ImageContainer justifyContent="flex-end">{img()}</ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'} style={themedText}>
           <H3>{title}</H3>

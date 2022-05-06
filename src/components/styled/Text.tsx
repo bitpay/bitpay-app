@@ -74,6 +74,14 @@ export const SubText = styled(H7)`
   color: ${({theme}) => theme.colors.description};
 `;
 
+export const ListItemSubText = styled(H7)<{
+  textAlign?: 'right' | 'left' | 'center';
+}>`
+  margin-top: 2px;
+  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
+  text-align: ${({textAlign}) => textAlign || 'left'};
+`;
+
 export const Small = styled(BaseText)`
   font-size: 13px;
   font-weight: 400;
