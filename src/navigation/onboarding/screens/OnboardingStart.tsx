@@ -15,7 +15,7 @@ import {
 import {Link} from '../../../components/styled/Text';
 import {RootState} from '../../../store';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
-import {Action, LightBlack} from '../../../styles/colors';
+import {Action, LuckySevens} from '../../../styles/colors';
 import {OnboardingImage} from '../components/Containers';
 import OnboardingSlide from '../components/OnboardingSlide';
 import {OnboardingStackParamList} from '../OnboardingStack';
@@ -187,7 +187,7 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
                 marginHorizontal: 1,
               }}
               dotColor={Action}
-              inactiveDotColor={LightBlack}
+              inactiveDotColor={LuckySevens}
               inactiveDotScale={0.5}
             />
           </Column>
