@@ -682,20 +682,22 @@ export const createPayProTxProposal =
     ) || {
       unitToSatoshi: 100000000,
     };
-    return createProposalAndBuildTxDetails({
-      context: 'paypro',
-      invoice,
-      invoiceID,
-      wallet,
-      ...(feePerKb && {feePerKb}),
-      payProUrl: paymentUrl,
-      recipient: {address},
-      gasLimit,
-      data,
-      amount: amount / unitToSatoshi,
-      ...(customData && {customData}),
-      message: message || description,
-    });
+    return await dispatch(
+      createProposalAndBuildTxDetails({
+        context: 'paypro',
+        invoice,
+        invoiceID,
+        wallet,
+        ...(feePerKb && {feePerKb}),
+        payProUrl: paymentUrl,
+        recipient: {address},
+        gasLimit,
+        data,
+        amount: amount / unitToSatoshi,
+        ...(customData && {customData}),
+        message: message || description,
+      }),
+    );
   };
 
 export const getSendMaxInfo = ({
