@@ -62,7 +62,6 @@ const Header = styled.View`
 `;
 
 const Title = styled(H4)`
-  margin-left: 10px;
   width: 100%;
   text-align: center;
 `;
