@@ -5,7 +5,7 @@ import {
   failedGetTokenOptions,
   successGetTokenOptions,
 } from '../../wallet.actions';
-import {CurrencyOpts} from '../../../../constants/currencies';
+import {Currencies, CurrencyOpts} from '../../../../constants/currencies';
 
 export const startGetTokenOptions =
   (): Effect<Promise<void>> => async dispatch => {
@@ -19,8 +19,10 @@ export const startGetTokenOptions =
       const tokenOptions: {[key in string]: Token} = {};
       const tokenOptionsByAddress: {[key in string]: Token} = {};
       const tokenData: {[key in string]: CurrencyOpts} = {};
-
       Object.values(tokens).forEach(token => {
+        if (Currencies[token.symbol.toLowerCase()]) {
+          return;
+        } // remove bitpay supported tokens and currencies
         populateTokenInfo({
           token,
           tokenOptions,

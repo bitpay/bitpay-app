@@ -39,7 +39,7 @@ import {
   showBottomNotificationModal,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
-import {GetPrecision, GetChain} from '../../utils/currency';
+import {GetPrecision, GetChain, IsERCToken} from '../../utils/currency';
 import {CommonActions} from '@react-navigation/native';
 import {BwcProvider} from '../../../../lib/bwc';
 
@@ -175,7 +175,8 @@ const buildTxDetails =
     const {coin, fee, gasPrice, gasLimit, nonce} = proposal;
     let {amount} = proposal;
     const networkCost = invoice?.minerFees[coin.toUpperCase()]?.totalFee;
-    const total = amount + fee;
+    const chain = dispatch(GetChain(coin)).toLowerCase(); // always use chain for fee values
+    const isERC20 = dispatch(IsERCToken(coin));
 
     if (context === 'fromReplaceByFee') {
       amount = amount - fee;
@@ -192,9 +193,9 @@ const buildTxDetails =
       },
       fee: {
         feeLevel,
-        cryptoAmount: dispatch(FormatAmountStr(coin, fee)),
+        cryptoAmount: dispatch(FormatAmountStr(chain, fee)),
         fiatAmount: formatFiatAmount(
-          dispatch(toFiat(fee, defaultAltCurrencyIsoCode, coin, rates)),
+          dispatch(toFiat(fee, defaultAltCurrencyIsoCode, chain, rates)),
           defaultAltCurrencyIsoCode,
         ),
         percentageOfTotalAmount:
@@ -202,10 +203,10 @@ const buildTxDetails =
       },
       ...(networkCost && {
         networkCost: {
-          cryptoAmount: dispatch(FormatAmountStr(coin, networkCost)),
+          cryptoAmount: dispatch(FormatAmountStr(chain, networkCost)),
           fiatAmount: formatFiatAmount(
             dispatch(
-              toFiat(networkCost, defaultAltCurrencyIsoCode, coin, rates),
+              toFiat(networkCost, defaultAltCurrencyIsoCode, chain, rates),
             ),
             defaultAltCurrencyIsoCode,
           ),
@@ -223,9 +224,14 @@ const buildTxDetails =
         ),
       },
       total: {
-        cryptoAmount: dispatch(FormatAmountStr(coin, total)),
+        cryptoAmount: isERC20
+          ? `${dispatch(FormatAmountStr(coin, amount))} + ${dispatch(
+              FormatAmountStr(chain, fee),
+            )}`
+          : dispatch(FormatAmountStr(coin, amount + fee)),
         fiatAmount: formatFiatAmount(
-          dispatch(toFiat(total, defaultAltCurrencyIsoCode, coin, rates)),
+          dispatch(toFiat(amount, defaultAltCurrencyIsoCode, coin, rates)) +
+            dispatch(toFiat(fee, defaultAltCurrencyIsoCode, chain, rates)),
           defaultAltCurrencyIsoCode,
         ),
       },
