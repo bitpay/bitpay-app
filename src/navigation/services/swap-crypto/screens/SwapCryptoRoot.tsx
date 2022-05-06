@@ -153,9 +153,9 @@ const SwapCryptoRoot: React.FC = () => {
 
   const setSelectedWallet = () => {
     if (selectedWallet) {
-      if (selectedWallet.balance?.sat > 0) {
+      if (selectedWallet.balance?.satSpendable > 0) {
         setFromWallet(selectedWallet);
-      } else if (selectedWallet.balance?.sat === 0) {
+      } else if (selectedWallet.balance?.satSpendable === 0) {
         setToWallet(selectedWallet);
         setUseDefaultToWallet(true);
       } else {
@@ -213,14 +213,16 @@ const SwapCryptoRoot: React.FC = () => {
       return;
     }
 
-    if (fromWalletSelected.balance && fromWalletSelected.balance.sat) {
+    if (fromWalletSelected.balance?.satSpendable) {
       const {unitToSatoshi, unitDecimals} =
         dispatch(GetPrecision(fromWalletSelected.currencyAbbreviation)) || {};
       if (unitToSatoshi && unitDecimals) {
         const satToUnit = 1 / unitToSatoshi;
 
         const spendableAmount = parseFloat(
-          (fromWalletSelected.balance.sat * satToUnit).toFixed(unitDecimals),
+          (fromWalletSelected.balance.satSpendable * satToUnit).toFixed(
+            unitDecimals,
+          ),
         );
 
         if (spendableAmount < amountFrom) {
@@ -514,7 +516,7 @@ const SwapCryptoRoot: React.FC = () => {
 
       const country = await getCountry();
       const coinsToRemove = !country || country === 'US' ? ['xrp'] : [];
-      if (selectedWallet && selectedWallet.balance?.sat === 0) {
+      if (selectedWallet?.balance?.satSpendable === 0) {
         coinsToRemove.push(selectedWallet.currencyAbbreviation.toLowerCase());
       }
       coinsToRemove.forEach((coin: string) => {
@@ -534,8 +536,7 @@ const SwapCryptoRoot: React.FC = () => {
         dispatch(
           startOnGoingProcessModal(OnGoingProcessMessages.GENERAL_AWAITING),
         );
-        await getChangellyCurrencies();
-        await sleep(400);
+        await Promise.all([getChangellyCurrencies(), sleep(400)]);
         dispatch(dismissOnGoingProcessModal());
       } catch (err) {
         logger.error('Changelly getCurrencies Error: ' + JSON.stringify(err));
@@ -569,6 +570,7 @@ const SwapCryptoRoot: React.FC = () => {
             <ActionsContainer>
               <SelectedOptionContainer
                 style={{backgroundColor: Action}}
+                disabled={swapCryptoSupportedCoinsFrom.length === 0}
                 onPress={() => {
                   showModal('fromWalletSelector');
                 }}>
@@ -629,12 +631,14 @@ const SwapCryptoRoot: React.FC = () => {
                   </TouchableOpacity>
                 </SelectedOptionCol>
               </ActionsContainer>
-              <ActionsContainer>
-                <BottomDataText>
-                  {fromWalletSelected.balance.crypto}{' '}
-                  {fromWalletData?.currencyAbbreviation} available to swap
-                </BottomDataText>
-              </ActionsContainer>
+              {fromWalletSelected.balance?.crypto ? (
+                <ActionsContainer>
+                  <BottomDataText>
+                    {fromWalletSelected.balance.crypto}{' '}
+                    {fromWalletData?.currencyAbbreviation} available to swap
+                  </BottomDataText>
+                </ActionsContainer>
+              ) : null}
             </>
           )}
         </SwapCryptoCard>

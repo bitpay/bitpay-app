@@ -1,5 +1,6 @@
 import {BwcProvider} from '../../../lib/bwc';
 import {ExtractBitPayUriAddress} from './decode-uri';
+import {APP_NAME} from '../../../constants/config';
 
 const BWC = BwcProvider.getInstance();
 
@@ -35,6 +36,20 @@ export const IsValidPayPro = (data: string): boolean => {
 
 export const isValidWalletConnectUri = (data: string): boolean => {
   return !!/(wallet\/wc|wc:)/g.exec(data);
+};
+
+export const isValidSimplexUri = (data: string): boolean => {
+  data = SanitizeUri(data);
+  return !!(data && data.indexOf(APP_NAME + '://simplex') === 0);
+};
+
+export const isValidWyreUri = (data: string): boolean => {
+  data = SanitizeUri(data);
+  return !!(
+    data &&
+    (data.indexOf(APP_NAME + '://wyre') === 0 ||
+      data.indexOf(APP_NAME + '://wyreError') === 0)
+  );
 };
 
 const IsValidBitcoinUri = (data: string): boolean => {

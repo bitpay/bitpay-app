@@ -86,17 +86,17 @@ const SimplexDetails: React.FC = () => {
         </RowDataContainer>
 
         {['failed', 'success'].includes(paymentRequest.status) && (
-          <View>
+          <RowDataContainer>
             <RowLabel>Status</RowLabel>
-            <View>
+            <RowData>
               {paymentRequest.status == 'failed' && (
                 <Text style={{color: '#df5264'}}>Payment request rejected</Text>
               )}
               {paymentRequest.status == 'success' && (
                 <Text style={{color: '#01d1a2'}}>Payment request approved</Text>
               )}
-            </View>
-          </View>
+            </RowData>
+          </RowDataContainer>
         )}
 
         <LabelTip type="info">

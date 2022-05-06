@@ -186,7 +186,7 @@ const KeySettings = () => {
             syncWallet.credentials.keyId = key.properties.id;
             return merge(
               syncWallet,
-              buildWalletObj(syncWallet.credentials, _tokenOptions),
+              dispatch(buildWalletObj(syncWallet.credentials, _tokenOptions)),
             );
           });
 

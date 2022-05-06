@@ -13,7 +13,7 @@ import {
   TwoFactorAuthStatus,
   TwoFactorPairingStatus,
 } from './bitpay-id.reducer';
-import {BitPayIdActionTypes, BitPayIdActionType} from './bitpay-id.types';
+import {BitPayIdActionType, BitPayIdActionTypes} from './bitpay-id.types';
 
 export const successFetchSession = (session: Session): BitPayIdActionType => ({
   type: BitPayIdActionTypes.SUCCESS_FETCH_SESSION,
@@ -216,4 +216,19 @@ export const toggleSyncGiftCardPurchases = (
 ): BitPayIdActionType => ({
   type: BitPayIdActionTypes.TOGGLE_SYNC_GIFT_CARD_PURCHASES,
   payload: {network},
+});
+
+export const forgotPasswordEmailStatus = (
+  status: 'success' | 'failed',
+  message: string,
+): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.FORGOT_PASSWORD_EMAIL_STATUS,
+  payload: {
+    status,
+    message,
+  },
+});
+
+export const resetForgotPasswordEmailStatus = (): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.RESET_FORGOT_PASSWORD_EMAIL_STATUS,
 });
