@@ -194,7 +194,8 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
       // filter out empty string and compare words against real order
       const compareWords = update.filter(w => w);
       if (words.every((_word, index) => _word === compareWords[index])) {
-        if (context !== 'settings') {
+        // user have already been through the backup flow no need to set the flag again
+        if (context !== 'keySettings') {
           dispatch(WalletActions.setBackupComplete(keyId));
         }
         setProgress(1);
