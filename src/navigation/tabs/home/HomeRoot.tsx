@@ -244,7 +244,7 @@ const HomeRoot = () => {
         ) : null}
 
         {/* ////////////////////////////// CRYPTO */}
-        <HomeSection>
+        <HomeSection slimContainer={true}>
           <Crypto />
         </HomeSection>
 
@@ -267,7 +267,7 @@ const HomeRoot = () => {
 
         {/* ////////////////////////////// EXCHANGE RATES */}
         {memoizedExchangeRates.length ? (
-          <HomeSection title="Exchange Rates" slimContainer={true}>
+          <HomeSection title="Exchange Rates">
             <ExchangeRatesList
               items={memoizedExchangeRates}
               defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
