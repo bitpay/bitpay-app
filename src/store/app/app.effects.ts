@@ -206,7 +206,7 @@ export const initializeBrazeContent =
       dispatch(AppActions.brazeContentCardsFetched(contentCards));
     } catch (err) {
       const errMsg = 'Failed to fetch data from Braze.';
-      console.log(errMsg);
+
       dispatch(LogActions.error(errMsg));
       dispatch(
         LogActions.error(
@@ -217,6 +217,35 @@ export const initializeBrazeContent =
       dispatch(LogActions.info('Initializing Braze content complete.'));
     }
   };
+
+/**
+ * Refreshes Braze content by refreshing the Braze cache, then fetching
+ * data from Braze and commiting it to the store. Does not change or set user.
+ * @returns void
+ */
+export const startRefreshBrazeContent = (): Effect => async dispatch => {
+  try {
+    dispatch(LogActions.info('Refreshing Braze content...'));
+
+    ReactAppboy.requestContentCardsRefresh();
+
+    const contentCards = await ReactAppboy.getContentCards();
+
+    dispatch(LogActions.info('Successfully fetched data from Braze.'));
+    dispatch(AppActions.brazeContentCardsFetched(contentCards));
+  } catch (err) {
+    const errMsg = 'Failed to fetch data from Braze.';
+
+    dispatch(LogActions.error(errMsg));
+    dispatch(
+      LogActions.error(
+        err instanceof Error ? err.message : JSON.stringify(err),
+      ),
+    );
+  } finally {
+    dispatch(LogActions.info('Refreshing Braze content complete.'));
+  }
+};
 
 export const startOnGoingProcessModal =
   (message: OnGoingProcessMessages): Effect =>

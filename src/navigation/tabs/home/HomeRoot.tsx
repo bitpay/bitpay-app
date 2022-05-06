@@ -5,11 +5,13 @@ import analytics from '@segment/analytics-react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {startRefreshBrazeContent} from '../../../store/app/app.effects';
 import {
   selectBrazeDoMore,
   selectBrazeQuickLinks,
   selectBrazeShopWithCrypto,
 } from '../../../store/app/app.selectors';
+import {selectCardGroups} from '../../../store/card/card.selectors';
 import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
 import {startUpdateAllKeyAndWalletStatus} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
@@ -33,7 +35,6 @@ import OffersCarousel from './components/offers/OffersCarousel';
 import PortfolioBalance from './components/PortfolioBalance';
 import DefaultQuickLinks from './components/quick-links/DefaultQuickLinks';
 import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
-import {selectCardGroups} from '../../../store/card/card.selectors';
 import {HeaderContainer, HomeContainer} from './components/Styled';
 
 const HomeRoot = () => {
@@ -125,6 +126,7 @@ const HomeRoot = () => {
       await dispatch(startGetRates({force: true}));
       await Promise.all([
         dispatch(startUpdateAllKeyAndWalletStatus()),
+        dispatch(startRefreshBrazeContent()),
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
