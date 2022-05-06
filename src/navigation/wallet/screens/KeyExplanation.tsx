@@ -23,18 +23,9 @@ type KeyExplanationScreenProps = StackScreenProps<
 
 // IMAGES
 const KeyExplanationImages = {
-  recoveryPhrase: {
-    light: require('../../../../assets/img/key-explanation/light/recovery-phrase.png'),
-    dark: require('../../../../assets/img/key-explanation/dark/recovery-phrase.png'),
-  },
-  safeCoins: {
-    light: require('../../../../assets/img/key-explanation/light/safe-coins.png'),
-    dark: require('../../../../assets/img/key-explanation/dark/safe-coins.png'),
-  },
-  walletSafety: {
-    light: require('../../../../assets/img/key-explanation/light/wallet-safety.png'),
-    dark: require('../../../../assets/img/key-explanation/dark/wallet-safety.png'),
-  },
+  recoveryPhrase: require('../../../../assets/img/key-explanation/recovery-phrase.png'),
+  safeCoins: require('../../../../assets/img/key-explanation/safe-coins.png'),
+  walletSafety: require('../../../../assets/img/key-explanation/wallet-safety.png'),
 };
 
 const KeyExplanationContainer = styled.SafeAreaView`
@@ -62,9 +53,9 @@ const KeyExplanation: React.FC<KeyExplanationScreenProps> = () => {
       text: 'A wallet is like a vault stored on your device containing your crypto funds. Much like a vault, your wallet will only be accessible with the recovery phrase.',
       img: () => (
         <OnboardingImage
-          widthPct={0.24}
-          heightPct={0.21}
-          source={KeyExplanationImages.recoveryPhrase[themeType]}
+          widthPct={0.217}
+          heightPct={0.24}
+          source={KeyExplanationImages.safeCoins}
         />
       ),
     },
@@ -74,8 +65,8 @@ const KeyExplanation: React.FC<KeyExplanationScreenProps> = () => {
       img: () => (
         <OnboardingImage
           widthPct={0.24}
-          heightPct={0.27}
-          source={KeyExplanationImages.safeCoins[themeType]}
+          heightPct={0.185}
+          source={KeyExplanationImages.recoveryPhrase}
         />
       ),
     },
@@ -85,8 +76,8 @@ const KeyExplanation: React.FC<KeyExplanationScreenProps> = () => {
       img: () => (
         <OnboardingImage
           widthPct={0.24}
-          heightPct={0.2}
-          source={KeyExplanationImages.walletSafety[themeType]}
+          heightPct={0.169}
+          source={KeyExplanationImages.walletSafety}
         />
       ),
     },

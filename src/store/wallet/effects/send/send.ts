@@ -22,7 +22,10 @@ import {
 } from '../../../../utils/helper-methods';
 import {toFiat, checkEncryptPassword} from '../../utils/wallet';
 import {startGetRates} from '../rates/rates';
-import {waitForTargetAmountAndUpdateWallet} from '../status/status';
+import {
+  startUpdateWalletStatus,
+  waitForTargetAmountAndUpdateWallet,
+} from '../status/status';
 import {
   CustomErrorMessage,
   GeneralError,
@@ -117,7 +120,7 @@ export const createProposalAndBuildTxDetails =
               return reject({err, tx, txp, getState});
             }
             try {
-              const rates = await dispatch(startGetRates());
+              const rates = await dispatch(startGetRates({}));
               // building UI object for details
               const txDetails = dispatch(
                 buildTxDetails({
@@ -128,6 +131,7 @@ export const createProposalAndBuildTxDetails =
                   recipient,
                   invoice,
                   context,
+                  feeLevel,
                 }),
               );
               txp.id = proposal.id;
@@ -156,6 +160,7 @@ const buildTxDetails =
     recipient,
     invoice,
     context,
+    feeLevel = 'custom',
   }: {
     proposal: TransactionProposal;
     rates: Rates;
@@ -164,16 +169,10 @@ const buildTxDetails =
     recipient: Recipient;
     invoice?: Invoice;
     context?: TransactionOptionsContext;
+    feeLevel?: string;
   }): Effect<TxDetails> =>
   dispatch => {
-    const {
-      coin,
-      fee,
-      gasPrice,
-      gasLimit,
-      nonce,
-      feeLevel = 'custom',
-    } = proposal;
+    const {coin, fee, gasPrice, gasLimit, nonce} = proposal;
     let {amount} = proposal;
     const networkCost = invoice?.minerFees[coin.toUpperCase()]?.totalFee;
     const total = amount + fee;
@@ -496,6 +495,8 @@ export const publishAndSign =
               recipient,
             }),
           );
+        } else {
+          dispatch(startUpdateWalletStatus({key, wallet}));
         }
         resolve(broadcastedTx);
       } catch (err) {
@@ -681,20 +682,22 @@ export const createPayProTxProposal =
     ) || {
       unitToSatoshi: 100000000,
     };
-    return createProposalAndBuildTxDetails({
-      context: 'paypro',
-      invoice,
-      invoiceID,
-      wallet,
-      ...(feePerKb && {feePerKb}),
-      payProUrl: paymentUrl,
-      recipient: {address},
-      gasLimit,
-      data,
-      amount: amount / unitToSatoshi,
-      ...(customData && {customData}),
-      message: message || description,
-    });
+    return await dispatch(
+      createProposalAndBuildTxDetails({
+        context: 'paypro',
+        invoice,
+        invoiceID,
+        wallet,
+        ...(feePerKb && {feePerKb}),
+        payProUrl: paymentUrl,
+        recipient: {address},
+        gasLimit,
+        data,
+        amount: amount / unitToSatoshi,
+        ...(customData && {customData}),
+        message: message || description,
+      }),
+    );
   };
 
 export const getSendMaxInfo = ({

@@ -3,7 +3,6 @@ import React, {ReactElement} from 'react';
 import styled from 'styled-components/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
-import {useAppSelector} from '../../../../../utils/hooks';
 import ExchangeRateItem from './ExchangeRateItem';
 
 export interface ExchangeRateItemProps {
@@ -17,7 +16,7 @@ export interface ExchangeRateItemProps {
 }
 
 const ExchangeRateListContainer = styled.View`
-  margin: 35px ${ScreenGutter};
+  margin: 35px ${ScreenGutter} 0;
 `;
 interface ExchangeRateProps {
   items: Array<ExchangeRateItemProps>;

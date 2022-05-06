@@ -1,10 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import Clipboard from '@react-native-community/clipboard';
-import {useDispatch} from 'react-redux';
 import QRCode from 'react-native-qrcode-svg';
 import styled from 'styled-components/native';
 
-import {useLogger} from '../../../utils/hooks';
+import {useAppDispatch, useLogger} from '../../../utils/hooks';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
 import {BaseText, H4, Paragraph} from '../../../components/styled/Text';
@@ -108,7 +107,7 @@ interface Props {
 }
 
 const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const logger = useLogger();
   const [copied, setCopied] = useState(false);
   const [retryCount, setRetryCount] = useState(0);

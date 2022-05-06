@@ -29,16 +29,20 @@ const TxRowContainer = styled.View`
 `;
 
 const TxColumn = styled.View`
-  padding: ${ScreenGutter};
+  padding: ${ScreenGutter} 8px ${ScreenGutter} ${ScreenGutter};
   justify-content: center;
 `;
 
-const DescriptionColumn = styled(TxColumn)`
+const DescriptionColumn = styled.View`
+  justify-content: center;
+  padding: ${ScreenGutter} 0;
   flex: 1;
 `;
 
-const PriceColumn = styled(TxColumn)`
+const PriceColumn = styled.View`
+  padding: ${ScreenGutter};
   align-items: flex-end;
+  justify-content: center;
 `;
 
 const TxText = styled(BaseText)<{

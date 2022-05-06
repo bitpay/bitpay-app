@@ -8,7 +8,8 @@ import {updatePortfolioBalance} from '../../wallet.actions';
 export const startWalletStoreInit =
   (): Effect<Promise<void>> => async (dispatch, getState: () => RootState) => {
     try {
-      const {WALLET} = getState();
+      const {WALLET, APP} = getState();
+      const defaultAltCurrencyIsoCode = APP.defaultAltCurrency.isoCode;
 
       if (
         !Object.keys(WALLET.tokenOptions).length ||
@@ -21,9 +22,9 @@ export const startWalletStoreInit =
         dispatch(startUpdateAllKeyAndWalletStatus());
       }
 
-      await dispatch(startGetRates(true)); // populate rates and alternative currency list
+      await dispatch(startGetRates({init: true})); // populate rates and alternative currency list
 
-      dispatch(getPriceHistory());
+      dispatch(getPriceHistory(defaultAltCurrencyIsoCode));
       dispatch(updatePortfolioBalance());
       dispatch(WalletActions.successWalletStoreInit());
     } catch (e) {

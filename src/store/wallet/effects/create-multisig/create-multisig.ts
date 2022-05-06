@@ -21,7 +21,7 @@ export const startCreateKeyMultisig =
         // build out app specific props
         const wallet = merge(
           _wallet,
-          buildWalletObj(_wallet.credentials),
+          dispatch(buildWalletObj(_wallet.credentials)),
         ) as Wallet;
 
         const key = buildKeyObj({key: _key, wallets: [wallet]});
@@ -50,7 +50,10 @@ export const addWalletMultisig =
           opts,
         })) as Wallet;
         key.wallets.push(
-          merge(newWallet, buildWalletObj(newWallet.credentials)) as Wallet,
+          merge(
+            newWallet,
+            dispatch(buildWalletObj(newWallet.credentials)),
+          ) as Wallet,
         );
 
         dispatch(successAddWallet({key}));

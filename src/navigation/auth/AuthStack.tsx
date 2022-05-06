@@ -25,6 +25,9 @@ import TwoFactorPairing, {
 import VerifyEmailScreen, {
   VerifyEmailScreenParamList,
 } from './screens/VerifyEmail';
+import ForgotPassword, {
+  ForgotPasswordParamList,
+} from './screens/ForgotPassword';
 
 export enum AuthScreens {
   LOGIN = 'Login',
@@ -33,6 +36,7 @@ export enum AuthScreens {
   EMAIL_AUTH = 'EmailAuthentication',
   TWO_FACTOR_AUTH = 'TwoFactorAuthentication',
   TWO_FACTOR_PAIR = 'TwoFactorPairing',
+  FORGOT_PASSWORD = 'ForgotPassword',
 }
 
 export type AuthStackParamList = {
@@ -42,6 +46,7 @@ export type AuthStackParamList = {
   EmailAuthentication: EmailAuthenticationParamList;
   TwoFactorAuthentication: TwoFactorAuthenticationParamList;
   TwoFactorPairing: TwoFactorPairingParamList;
+  ForgotPassword: ForgotPasswordParamList;
 };
 
 const Auth = createStackNavigator<AuthStackParamList>();
@@ -116,6 +121,13 @@ const AuthStack: React.FC = () => {
           }}
         />
       )}
+      <Auth.Screen
+        name={AuthScreens.FORGOT_PASSWORD}
+        component={ForgotPassword}
+        options={{
+          headerTitle: () => <HeaderTitle>Reset Password</HeaderTitle>,
+        }}
+      />
     </Auth.Navigator>
   );
 };

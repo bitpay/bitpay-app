@@ -7,6 +7,7 @@ import {useDispatch} from 'react-redux';
 import {
   showBottomNotificationModal,
   dismissOnGoingProcessModal,
+  setHomeCarouselConfig,
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -175,11 +176,15 @@ const JoinMultisig = () => {
           }),
         );
       } else {
-        const key = (await dispatch<any>(startJoinMultisig(opts))) as Key;
+        const multisigKey = (await dispatch<any>(
+          startJoinMultisig(opts),
+        )) as Key;
+
+        dispatch(setHomeCarouselConfig({id: multisigKey.id, show: true}));
 
         navigation.navigate('Wallet', {
           screen: 'BackupKey',
-          params: {context: 'createNewKey', key},
+          params: {context: 'createNewKey', key: multisigKey},
         });
       }
 

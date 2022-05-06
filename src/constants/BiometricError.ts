@@ -34,6 +34,7 @@ export interface BiometricError {
 
 export const BiometricErrorNotification = (
   message: string,
+  onDismissModal?: () => void,
 ): BottomNotificationConfig => {
   return {
     type: 'error',
@@ -43,7 +44,11 @@ export const BiometricErrorNotification = (
     actions: [
       {
         text: 'OK',
-        action: () => {},
+        action: () => {
+          if (onDismissModal) {
+            onDismissModal();
+          }
+        },
         primary: true,
       },
     ],

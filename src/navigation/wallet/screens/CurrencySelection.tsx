@@ -461,8 +461,9 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
           </NoResultsDescription>
           {key ? (
             <Link
-              style={{marginTop: 10}}
+              style={{marginTop: 10, height: 50}}
               onPress={() => {
+                haptic('soft');
                 navigation.navigate('Wallet', {
                   screen: 'AddWallet',
                   params: {key, isCustomToken: true, isToken: true},

@@ -42,7 +42,7 @@ import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 
 const CryptoContainer = styled.View`
   background: ${({theme}) => (theme.dark ? '#111111' : Feather)};
-  padding: 20px 0;
+  padding: 20px 0 32px;
 `;
 
 const CarouselContainer = styled.View`
@@ -54,11 +54,11 @@ const Row = styled.View`
 `;
 
 const ListViewContainer = styled.View`
-  padding: 20px 0 10px 0;
+  padding: 20px 0 12px 0;
 `;
 
 const ButtonContainer = styled.View`
-  padding: 20px 0;
+  padding: 20px 0 0;
   margin-top: 15px;
 `;
 
@@ -73,7 +73,7 @@ export const keyBackupRequired = (
 ): BottomNotificationConfig => {
   return {
     type: 'error',
-    title: 'Key Backup Required',
+    title: 'Key backup required',
     message: 'To continue you will need to back up your key.',
     enableBackdropDismiss: true,
     actions: [
@@ -297,7 +297,7 @@ const Crypto = () => {
       </SectionHeaderContainer>
       {/* ////////////////////////////// CAROUSEL/LISTVIEW */}
       {homeCarouselLayoutType === 'carousel' ? (
-        <CarouselContainer>
+        <CarouselContainer style={{marginBottom: 22}}>
           <Carousel
             vertical={false}
             layout={'default'}

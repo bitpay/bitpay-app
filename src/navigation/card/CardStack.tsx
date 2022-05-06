@@ -14,6 +14,7 @@ import UpdateCardNameScreen, {
   UpdateCardNameScreenParamList,
 } from './screens/settings/UpdateCardName';
 import Referral, {ReferralParamList} from './screens/settings/Referral';
+import {HeaderTitle} from '../../components/styled/Text';
 
 export type CardStackParamList = {
   Home: CardHomeScreenParamList;
@@ -62,7 +63,7 @@ const CardStack = () => {
         name={CardScreens.SETTINGS}
         component={CardSettings}
         options={{
-          headerTitle: t('Card Details'),
+          headerTitle: () => <HeaderTitle>{t('Card Details')}</HeaderTitle>,
           title: 'Settings',
         }}
       />
@@ -70,14 +71,16 @@ const CardStack = () => {
         name={CardScreens.CUSTOMIZE_VIRTUAL_CARD}
         component={CustomizeVirtualCard}
         options={{
-          headerTitle: t('Customize Virtual Card'),
+          headerTitle: () => (
+            <HeaderTitle>{t('Customize Virtual Card')}</HeaderTitle>
+          ),
         }}
       />
       <Card.Screen
         name={CardScreens.UPDATE_CARD_NAME}
         component={UpdateCardNameScreen}
         options={{
-          headerTitle: t('Update Card Name'),
+          headerTitle: () => <HeaderTitle>{t('Update Card Name')}</HeaderTitle>,
         }}
       />
       <Card.Screen name={CardScreens.REFERRAL} component={Referral} />

@@ -55,6 +55,7 @@ export interface ConfirmParamList {
   txDetails: TxDetails;
   amount: number;
   speedup?: boolean;
+  sendMax?: boolean;
 }
 
 export const Setting = styled.TouchableOpacity`
@@ -88,6 +89,7 @@ const Confirm = () => {
     txp: _txp,
     amount,
     speedup,
+    sendMax,
   } = route.params;
   const [txp, setTxp] = useState(_txp);
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -106,7 +108,7 @@ const Confirm = () => {
     fee: _fee,
     sendingTo,
     sendingFrom,
-    subTotal,
+    subTotal: _subTotal,
     gasLimit: _gasLimit,
     gasPrice: _gasPrice,
     nonce: _nonce,
@@ -115,6 +117,7 @@ const Confirm = () => {
 
   const [fee, setFee] = useState(_fee);
   const [total, setTotal] = useState(_total);
+  const [subTotal, setSubTotal] = useState(_subTotal);
   const [gasPrice, setGasPrice] = useState(_gasPrice);
   const [gasLimit, setGasLimit] = useState(_gasLimit);
   const [nonce, setNonce] = useState(_nonce);
@@ -196,6 +199,7 @@ const Confirm = () => {
           wallet,
           recipient,
           amount,
+          sendMax,
           ...txp,
           ...newOpts,
         }),
@@ -204,6 +208,7 @@ const Confirm = () => {
       setTxp(newTxp);
       setFee(_txDetails.fee);
       setTotal(_txDetails.total);
+      setSubTotal(_txDetails.subTotal);
       setGasPrice(_txDetails.gasPrice);
       setGasLimit(_txDetails.gasLimit);
       setNonce(_txDetails.nonce);
