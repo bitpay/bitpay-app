@@ -138,13 +138,13 @@ const WyreDetails: React.FC = () => {
           <RowDataContainer>
             <RowLabel>Status</RowLabel>
             <RowData>
-              {paymentData.status == 'paymentRequestSent' && (
+              {paymentData.status === 'paymentRequestSent' && (
                 <Text>Processing payment request</Text>
               )}
-              {paymentData.status == 'failed' && (
+              {paymentData.status === 'failed' && (
                 <Text style={{color: '#df5264'}}>Payment request rejected</Text>
               )}
-              {paymentData.status == 'success' && (
+              {paymentData.status === 'success' && (
                 <Text style={{color: '#01d1a2'}}>Payment request approved</Text>
               )}
             </RowData>
@@ -192,7 +192,7 @@ const WyreDetails: React.FC = () => {
             dispatch(
               showBottomNotificationModal({
                 type: 'question',
-                title: 'Removing Payment Request Data',
+                title: 'Removing payment request data',
                 message:
                   "The data of this payment request will be deleted. Make sure you don't need it",
                 enableBackdropDismiss: true,

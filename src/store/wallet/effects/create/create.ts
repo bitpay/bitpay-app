@@ -41,14 +41,15 @@ export const startCreateKey =
           seedType: 'new',
         });
 
-        const wallets = await createMultipleWallets({
-          key: _key,
-          currencies,
-          state,
-          options: {
-            network,
-          },
-        });
+        const wallets = await dispatch(
+          createMultipleWallets({
+            key: _key,
+            currencies,
+            options: {
+              network,
+            },
+          }),
+        );
 
         const key = buildKeyObj({key: _key, wallets});
 
@@ -100,7 +101,9 @@ export const addWallet =
             key.wallets.push(
               merge(
                 associatedWallet,
-                buildWalletObj(associatedWallet.credentials, tokenOpts),
+                dispatch(
+                  buildWalletObj(associatedWallet.credentials, tokenOpts),
+                ),
               ),
             );
           }
@@ -125,9 +128,11 @@ export const addWallet =
         key.wallets.push(
           merge(
             newWallet,
-            buildWalletObj(newWallet.credentials, tokenOpts, {
-              walletName,
-            }),
+            dispatch(
+              buildWalletObj(newWallet.credentials, tokenOpts, {
+                walletName,
+              }),
+            ),
           ),
         );
 
@@ -144,52 +149,56 @@ export const addWallet =
 
 /////////////////////////////////////////////////////////////
 
-const createMultipleWallets = async ({
-  key,
-  currencies,
-  state,
-  options,
-}: {
-  key: KeyMethods;
-  currencies: string[];
-  state: RootState;
-  options: CreateOptions;
-}): Promise<Wallet[]> => {
-  const tokenOpts = state.WALLET.tokenOptions;
-  const supportedCoins = currencies.filter(
-    (currency): currency is SupportedCoins =>
-      SUPPORTED_COINS.includes(currency),
-  );
-  const supportedTokens = currencies.filter(
-    (currency): currency is SupportedTokens =>
-      SUPPORTED_TOKENS.includes(currency),
-  );
-  const customTokens = currencies.filter(
-    currency => !SUPPORTED_CURRENCIES.includes(currency),
-  );
-  const tokens = [...supportedTokens, ...customTokens];
-  const wallets: API[] = [];
+const createMultipleWallets =
+  ({
+    key,
+    currencies,
+    options,
+  }: {
+    key: KeyMethods;
+    currencies: string[];
+    options: CreateOptions;
+  }): Effect<Promise<Wallet[]>> =>
+  async (dispatch, getState) => {
+    const {WALLET} = getState();
+    const tokenOpts = WALLET.tokenOptions;
+    const supportedCoins = currencies.filter(
+      (currency): currency is SupportedCoins =>
+        SUPPORTED_COINS.includes(currency),
+    );
+    const supportedTokens = currencies.filter(
+      (currency): currency is SupportedTokens =>
+        SUPPORTED_TOKENS.includes(currency),
+    );
+    const customTokens = currencies.filter(
+      currency => !SUPPORTED_CURRENCIES.includes(currency),
+    );
+    const tokens = [...supportedTokens, ...customTokens];
+    const wallets: API[] = [];
 
-  for (const coin of supportedCoins) {
-    const wallet = (await createWallet({key, coin, options})) as Wallet;
-    wallets.push(wallet);
+    for (const coin of supportedCoins) {
+      const wallet = (await createWallet({key, coin, options})) as Wallet;
+      wallets.push(wallet);
 
-    if (coin === 'eth') {
-      wallet.preferences = wallet.preferences || {
-        tokenAddresses: [],
-      };
-      for (const token of tokens) {
-        const tokenWallet = await createTokenWallet(wallet, token, tokenOpts);
-        wallets.push(tokenWallet);
+      if (coin === 'eth') {
+        wallet.preferences = wallet.preferences || {
+          tokenAddresses: [],
+        };
+        for (const token of tokens) {
+          const tokenWallet = await createTokenWallet(wallet, token, tokenOpts);
+          wallets.push(tokenWallet);
+        }
       }
     }
-  }
 
-  // build out app specific props
-  return wallets.map(wallet => {
-    return merge(wallet, buildWalletObj(wallet.credentials, tokenOpts));
-  });
-};
+    // build out app specific props
+    return wallets.map(wallet => {
+      return merge(
+        wallet,
+        dispatch(buildWalletObj(wallet.credentials, tokenOpts)),
+      );
+    });
+  };
 
 /////////////////////////////////////////////////////////////
 

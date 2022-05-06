@@ -12,7 +12,7 @@ import {
   selectBrazeShopWithCrypto,
 } from '../../../store/app/app.selectors';
 import {selectCardGroups} from '../../../store/card/card.selectors';
-import {startGetRates} from '../../../store/wallet/effects';
+import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
 import {startUpdateAllKeyAndWalletStatus} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
@@ -92,7 +92,7 @@ const HomeRoot = () => {
             currencyName,
             currencyAbbreviation,
             average: +history.percentChange,
-            currentPrice: +history.prices[0].price,
+            currentPrice: +history.prices[history.prices.length - 1].price,
             priceDisplay: history.priceDisplay,
           });
         }
@@ -122,7 +122,8 @@ const HomeRoot = () => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      await dispatch(startGetRates());
+      dispatch(getPriceHistory(defaultAltCurrency.isoCode));
+      await dispatch(startGetRates({force: true}));
       await Promise.all([
         dispatch(startUpdateAllKeyAndWalletStatus()),
         dispatch(startRefreshBrazeContent()),
@@ -246,7 +247,7 @@ const HomeRoot = () => {
         ) : null}
 
         {/* ////////////////////////////// CRYPTO */}
-        <HomeSection>
+        <HomeSection slimContainer={true}>
           <Crypto />
         </HomeSection>
 
@@ -269,7 +270,7 @@ const HomeRoot = () => {
 
         {/* ////////////////////////////// EXCHANGE RATES */}
         {memoizedExchangeRates.length ? (
-          <HomeSection title="Exchange Rates" slimContainer={true}>
+          <HomeSection title="Exchange Rates">
             <ExchangeRatesList
               items={memoizedExchangeRates}
               defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}

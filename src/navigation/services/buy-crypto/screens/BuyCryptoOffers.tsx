@@ -57,6 +57,7 @@ import SimplexLogo from '../../../../../assets/img/services/simplex/logo-simplex
 const SimplexLogoDm = require('../../../../../assets/img/services/simplex/logo-simplex-dm.png');
 import WyreLogo from '../../../../../assets/img/services/wyre/logo-wyre.svg';
 import WyreLogoDm from '../../../../../assets/img/services/wyre/logo-wyre-dm.svg';
+import {formatFiatAmount} from '../../../../utils/helper-methods';
 
 export interface BuyCryptoOffersProps {
   amount: number;
@@ -389,6 +390,8 @@ const BuyCryptoOffers: React.FC = () => {
     logger.error('Simplex error: ' + msg);
 
     offers.simplex.errorMsg = msg;
+    offers.simplex.fiatMoney = undefined;
+    offers.simplex.expanded = false;
     setUpdateView(!updateView);
   };
 
@@ -416,6 +419,8 @@ const BuyCryptoOffers: React.FC = () => {
 
     logger.error('Crypto offer error: ' + msg);
     offers.wyre.errorMsg = msg;
+    offers.wyre.fiatMoney = undefined;
+    offers.wyre.expanded = false;
     setUpdateView(!updateView);
   };
 
@@ -780,7 +785,11 @@ const BuyCryptoOffers: React.FC = () => {
       <SummaryRow>
         <SummaryItemContainer>
           <SummaryTitle>Amount</SummaryTitle>
-          <SummaryData>${amount}</SummaryData>
+          <SummaryData>
+            {formatFiatAmount(Number(amount), fiatCurrency, {
+              customPrecision: 'minimal',
+            })}
+          </SummaryData>
         </SummaryItemContainer>
         <SummaryItemContainer>
           <SummaryTitle>Crypto</SummaryTitle>
@@ -851,7 +860,11 @@ const BuyCryptoOffers: React.FC = () => {
                             {offer.amountReceiving} {coin.toUpperCase()}
                           </OfferDataCryptoAmount>
                           <OfferDataRate>
-                            1 {coin.toUpperCase()} = ${offer.fiatMoney}
+                            1 {coin.toUpperCase()} ={' '}
+                            {formatFiatAmount(
+                              Number(offer.fiatMoney),
+                              fiatCurrency,
+                            )}
                           </OfferDataRate>
                         </>
                       )}
@@ -881,10 +894,14 @@ const BuyCryptoOffers: React.FC = () => {
                       <OfferDataInfoLabel>Buy Amount</OfferDataInfoLabel>
                       <OfferDataRightContainer>
                         <OfferDataInfoText>
-                          {offer.buyAmount} {fiatCurrency}
+                          {formatFiatAmount(
+                            Number(offer.buyAmount),
+                            fiatCurrency,
+                          )}
                         </OfferDataInfoText>
                         <OfferDataInfoTextSec>
-                          {offer.amountReceiving} {coin.toUpperCase()}
+                          {Number(offer.amountReceiving).toFixed(6)}{' '}
+                          {coin.toUpperCase()}
                         </OfferDataInfoTextSec>
                       </OfferDataRightContainer>
                     </OfferExpandibleItem>
@@ -892,14 +909,18 @@ const BuyCryptoOffers: React.FC = () => {
                     <OfferExpandibleItem>
                       <OfferDataInfoLabel>Fee</OfferDataInfoLabel>
                       <OfferDataInfoText>
-                        {offer.fee} {fiatCurrency}
+                        {formatFiatAmount(Number(offer.fee), fiatCurrency)}
                       </OfferDataInfoText>
                     </OfferExpandibleItem>
                     <ItemDivisor />
                     <OfferExpandibleItem>
                       <OfferDataInfoTotal>TOTAL</OfferDataInfoTotal>
                       <OfferDataInfoTotal>
-                        {offer.amountCost} {fiatCurrency}
+                        {formatFiatAmount(
+                          Number(offer.amountCost),
+                          fiatCurrency,
+                          {customPrecision: 'minimal'},
+                        )}
                       </OfferDataInfoTotal>
                     </OfferExpandibleItem>
                     {offer.key == 'simplex' && (

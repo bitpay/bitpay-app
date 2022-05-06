@@ -54,6 +54,7 @@ export const SelectedOptionCol = styled.View`
 export const DataText = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   font-size: 18px;
+  max-width: 160px;
 `;
 
 export const CoinIconContainer = styled.View`

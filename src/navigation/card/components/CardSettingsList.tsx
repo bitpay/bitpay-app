@@ -166,6 +166,14 @@ const SettingsList: React.FC<SettingsListProps> = props => {
           <Hr />
 
           <Styled.SettingsLink
+            Icon={ReferEarnIcon}
+            onPress={() => navigation.navigate('Referral', {card})}>
+            {t('Refer & Earn')}
+          </Styled.SettingsLink>
+
+          <Hr />
+
+          <Styled.SettingsLink
             Icon={OffersIcon}
             onPress={async () => {
               if (!isDoshWhitelisted) {
@@ -240,14 +248,6 @@ const SettingsList: React.FC<SettingsListProps> = props => {
         Icon={GetHelpIcon}
         onPress={() => openUrl(URL.HELP_WIZARD)}>
         {t('Get Help')}
-      </Styled.SettingsLink>
-
-      <Hr />
-
-      <Styled.SettingsLink
-        Icon={ReferEarnIcon}
-        onPress={() => navigation.navigate('Referral', {card})}>
-        {t('Refer & Earn')}
       </Styled.SettingsLink>
 
       <Hr />

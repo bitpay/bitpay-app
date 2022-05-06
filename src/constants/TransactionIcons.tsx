@@ -10,7 +10,7 @@ import {useTheme} from 'styled-components/native';
 import {BitPayTheme} from '../themes/bitpay';
 import * as Svg from 'react-native-svg';
 import {Success25, Success50} from '../styles/colors';
-export const TRANSACTION_ICON_SIZE = 35;
+export const TRANSACTION_ICON_SIZE = 40;
 
 export interface TxIconProps {
   size?: number;

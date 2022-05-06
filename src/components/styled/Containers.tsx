@@ -18,15 +18,16 @@ export const ScreenGutter = '15px';
 export const ActiveOpacity = 0.75;
 // Nav
 export const HeaderRightContainer = styled.View`
-  height: 50px;
+  height: 40px;
   margin-right: 10px;
+  margin-top: 10px;
 `;
 
-export const ImageContainer = styled.View`
+export const ImageContainer = styled.View<{justifyContent?: string}>`
   margin: 10px 0;
-  height: 200px;
+  height: 247px;
   display: flex;
-  justify-content: center;
+  justify-content: ${({justifyContent}) => justifyContent || 'center'};
 `;
 
 export const HeaderTitleContainer = styled.View`
@@ -101,7 +102,7 @@ export const RowContainer = styled.TouchableOpacity`
 `;
 
 export const CurrencyColumn = styled(Column)`
-  margin-left: 10px;
+  margin-left: 8px;
 `;
 
 export const CurrencyImageContainer = styled.View`

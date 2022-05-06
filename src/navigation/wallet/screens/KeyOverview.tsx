@@ -11,6 +11,7 @@ import {
   Hr,
   ActiveOpacity,
   ScreenGutter,
+  HeaderRightContainer,
 } from '../../../components/styled/Containers';
 import {RootState} from '../../../store';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -37,7 +38,7 @@ import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import {useAppSelector} from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import KeyDropdownOption from '../components/KeyDropdownOption';
-import {startGetRates} from '../../../store/wallet/effects';
+import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -104,14 +105,12 @@ const KeyDropdownOptionsContainer = styled.ScrollView`
 `;
 
 const CogIconContainer = styled.TouchableOpacity`
-  margin-top: 10px;
-  margin-right: 10px;
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   border-radius: 50px;
   justify-content: center;
   align-items: center;
-  height: 45px;
-  width: 45px;
+  height: 40px;
+  width: 40px;
 `;
 
 export const buildUIFormattedWallet: (
@@ -210,15 +209,17 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
       },
       headerRight: () => {
         return key.methods.isPrivKeyEncrypted() ? (
-          <CogIconContainer
-            onPress={() =>
-              navigation.navigate('KeySettings', {
-                key,
-              })
-            }
-            activeOpacity={ActiveOpacity}>
-            <Icons.Cog />
-          </CogIconContainer>
+          <HeaderRightContainer>
+            <CogIconContainer
+              onPress={() =>
+                navigation.navigate('KeySettings', {
+                  key,
+                })
+              }
+              activeOpacity={ActiveOpacity}>
+              <Icons.Cog />
+            </CogIconContainer>
+          </HeaderRightContainer>
         ) : (
           <>
             <Settings
@@ -279,7 +280,8 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      await dispatch(startGetRates());
+      dispatch(getPriceHistory(defaultAltCurrency.isoCode));
+      await dispatch(startGetRates({force: true}));
       await Promise.all([
         dispatch(startUpdateAllWalletStatusForKey(key)),
         sleep(1000),

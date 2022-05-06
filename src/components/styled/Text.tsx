@@ -1,5 +1,5 @@
 import React from 'react';
-import {StatusBar, Text} from 'react-native';
+import {Dimensions, StatusBar, Text} from 'react-native';
 import styled, {css} from 'styled-components/native';
 import {
   NeutralSlate,
@@ -74,6 +74,14 @@ export const SubText = styled(H7)`
   color: ${({theme}) => theme.colors.description};
 `;
 
+export const ListItemSubText = styled(H7)<{
+  textAlign?: 'right' | 'left' | 'center';
+}>`
+  margin-top: 2px;
+  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
+  text-align: ${({textAlign}) => textAlign || 'left'};
+`;
+
 export const Small = styled(BaseText)`
   font-size: 13px;
   font-weight: 400;
@@ -140,7 +148,10 @@ export const ZeroHeightHeader = styled.View`
 
 export const HeaderTitle = styled(H5).attrs(() => ({
   bold: true,
-}))``;
+  numberOfLines: 1,
+}))`
+  max-width: ${Dimensions.get('window').width - 150}px;
+`;
 
 export const HeaderSubtitle = styled(BaseText)`
   font-size: 16px;

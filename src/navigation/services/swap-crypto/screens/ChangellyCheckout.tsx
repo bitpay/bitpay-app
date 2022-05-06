@@ -248,7 +248,7 @@ const ChangellyCheckout: React.FC = () => {
         status = data.result.status;
 
         try {
-          const rates = await dispatch(startGetRates());
+          const rates = await dispatch(startGetRates({}));
           const presicion = dispatch(
             GetPrecision(toWalletSelected.currencyAbbreviation),
           );
@@ -622,12 +622,12 @@ const ChangellyCheckout: React.FC = () => {
         <ItemDivisor />
         <RowDataContainer>
           <RowLabel>Paying</RowLabel>
-          {!!amountExpectedFrom && (
+          {amountFrom ? (
             <RowData>
-              {amountExpectedFrom}{' '}
+              {Number(amountFrom.toFixed(6))}{' '}
               {fromWalletSelected.currencyAbbreviation.toUpperCase()}
             </RowData>
-          )}
+          ) : null}
         </RowDataContainer>
         <ItemDivisor />
         <RowDataContainer>
@@ -651,7 +651,7 @@ const ChangellyCheckout: React.FC = () => {
           {!!totalExchangeFee && (
             <RowData>
               {' '}
-              {totalExchangeFee}{' '}
+              {Number(totalExchangeFee).toFixed(6)}{' '}
               {toWalletSelected.currencyAbbreviation.toUpperCase()}
             </RowData>
           )}

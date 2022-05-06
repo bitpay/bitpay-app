@@ -121,7 +121,7 @@ const SimplexSettings: React.FC = () => {
                   </PrRow>
                 );
               })}
-          {(!paymentRequests || paymentRequests.length == 0) && (
+          {(!paymentRequests || paymentRequests.length === 0) && (
             <NoPrMsg>There are currently no transactions with Simplex</NoPrMsg>
           )}
         </Settings>

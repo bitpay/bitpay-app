@@ -5,16 +5,16 @@ import * as Svg from 'react-native-svg';
 import {HeaderButtonContainer} from './Styled';
 import {
   Action,
+  LinkBlue,
   Midnight,
   NeutralSlate,
-  ProgressBlue,
 } from '../../../../styles/colors';
 import {useTheme} from 'styled-components/native';
 
 const ScanIcon = () => {
   const theme = useTheme();
   const background = theme.dark ? Midnight : NeutralSlate;
-  const fill = theme.dark ? ProgressBlue : Action;
+  const fill = theme.dark ? LinkBlue : Action;
 
   return (
     <Svg.Svg width="35" height="35" viewBox="0 0 35 35" fill="none">

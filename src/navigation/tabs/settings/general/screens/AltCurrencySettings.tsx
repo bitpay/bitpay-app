@@ -31,6 +31,7 @@ import {FormatKeyBalances} from '../../../../../store/wallet/effects/status/stat
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
 import {updatePortfolioBalance} from '../../../../../store/wallet/wallet.actions';
+import {getPriceHistory} from '../../../../../store/wallet/effects';
 
 const AltCurrencySettingsContainer = styled.SafeAreaView`
   margin-top: 20px;
@@ -123,6 +124,7 @@ const AltCurrencySettings = () => {
               dispatch(setDefaultAltCurrency(item));
               dispatch(FormatKeyBalances());
               dispatch(updatePortfolioBalance());
+              dispatch(getPriceHistory(item.isoCode));
               await sleep(500);
               dispatch(dismissOnGoingProcessModal());
               navigation.goBack();
