@@ -28,31 +28,36 @@ import {addAltCurrencyList} from '../../../app/app.actions';
 import {AltCurrenciesRowProps} from '../../../../components/list/AltCurrenciesRow';
 import {LogActions} from '../../../log';
 
-export const getPriceHistory = (): Effect => async dispatch => {
-  try {
-    //TODO: update exchange currency
-    const coinsList = SUPPORTED_COINS.map(coin => `${coin.toUpperCase()}:USD`)
-      .toString()
-      .split(',')
-      .join('","');
-    const {
-      data: {data},
-    } = await axios.get(
-      `https://bitpay.com/currencies/prices?currencyPairs=["${coinsList}"]`,
-    );
-    const formattedData = data.map((d: PriceHistory) => {
-      return {
-        ...d,
-        coin: d.currencyPair.split(':')[0].toLowerCase(),
-      };
-    });
-
-    dispatch(successGetPriceHistory(formattedData));
-  } catch (err) {
-    console.error(err);
-    dispatch(failedGetPriceHistory());
-  }
-};
+export const getPriceHistory =
+  (defaultAltCurrencyIsoCode: string): Effect =>
+  async dispatch => {
+    try {
+      const coinsList = SUPPORTED_COINS.map(
+        coin =>
+          `${coin.toUpperCase()}:${defaultAltCurrencyIsoCode.toUpperCase()}`,
+      )
+        .toString()
+        .split(',')
+        .join('","');
+      const {
+        data: {data},
+      } = await axios.get(
+        `https://bitpay.com/currencies/prices?currencyPairs=["${coinsList}"]`,
+      );
+      const formattedData = data
+        .filter((d: PriceHistory) => d)
+        .map((d: PriceHistory) => {
+          return {
+            ...d,
+            coin: d?.currencyPair.split(':')[0].toLowerCase(),
+          };
+        });
+      dispatch(successGetPriceHistory(formattedData));
+    } catch (err) {
+      console.error(err);
+      dispatch(failedGetPriceHistory());
+    }
+  };
 
 export const startGetRates =
   (init?: boolean): Effect<Promise<Rates>> =>
