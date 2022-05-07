@@ -212,7 +212,7 @@ const HomeRoot = () => {
                                 params: {
                                   onAmountSelected: (amount: string) => {
                                     navigation.navigate('BuyCrypto', {
-                                      screen: 'Root',
+                                      screen: 'BuyCryptoRoot',
                                       params: {
                                         amount: Number(amount),
                                       },
