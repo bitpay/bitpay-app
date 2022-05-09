@@ -40,7 +40,6 @@ import {DetailsList} from './confirm/Shared';
 import Button from '../../../../components/button/Button';
 import {
   Caution,
-  LightBlack,
   NeutralSlate,
   Slate,
   SlateDark,
