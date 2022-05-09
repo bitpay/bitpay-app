@@ -118,7 +118,7 @@ const KeySettings = () => {
   );
 
   const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
-  const {keyName, keyId} = _key || {};
+  const {keyName} = _key || {};
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -404,7 +404,7 @@ const KeySettings = () => {
                   onPress={() => {
                     navigation.navigate('Wallet', {
                       screen: 'ClearEncryptPassword',
-                      params: {keyId},
+                      params: {keyId: key.id},
                     });
                   }}>
                   <WalletSettingsTitle>

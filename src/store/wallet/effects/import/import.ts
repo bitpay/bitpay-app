@@ -5,10 +5,10 @@ import merge from 'lodash.merge';
 import {
   buildKeyObj,
   buildWalletObj,
-  findMatchedKeyAndUpdate,
+  findMatchedKeyAndUpdate, getMatchedKey, isMatch,
 } from '../../utils/wallet';
 import {LogActions} from '../../../../store/log';
-import {failedImport, successImport} from '../../wallet.actions';
+import {deleteKey, failedImport, successImport} from '../../wallet.actions';
 
 const BWC = BwcProvider.getInstance();
 
@@ -42,12 +42,20 @@ export const startImportMnemonic =
         opts.xPrivKey = xPrivKey;
 
         const data = await serverAssistedImport(opts);
+
+        // To Avoid Duplicate wallet import
         const {key: _key, wallets} = findMatchedKeyAndUpdate(
           data.wallets,
           data.key,
           Object.values(state.WALLET.keys),
           opts,
         );
+
+        // To clear encrypt password
+        if (opts.keyId && isMatch(_key, state.WALLET.keys[opts.keyId])) {
+          dispatch(deleteKey({keyId: opts.keyId}))
+        }
+
         const key = buildKeyObj({
           key: _key,
           wallets: wallets.map(wallet =>
