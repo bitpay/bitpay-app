@@ -42,6 +42,7 @@ import {
 import {GetPrecision, GetChain, IsERCToken} from '../../utils/currency';
 import {CommonActions} from '@react-navigation/native';
 import {BwcProvider} from '../../../../lib/bwc';
+import {ToCashAddress} from '../address/address';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -283,6 +284,9 @@ const buildTransactionProposal =
           break;
         case 'xrp':
           txp.destinationTag = tx.destinationTag;
+          break;
+        case 'bch':
+          tx.toAddress = ToCashAddress(tx.toAddress!, false);
           break;
       }
 
