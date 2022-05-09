@@ -355,3 +355,9 @@ export const findMatchedKeyAndUpdate = (
 
   return {key, wallets};
 };
+
+export const isMatchedWallet = (newWallet: Wallet, wallets: Wallet[]) => {
+  return wallets.find(
+    wallet => wallet.credentials.walletId === newWallet.credentials.walletId,
+  );
+};
