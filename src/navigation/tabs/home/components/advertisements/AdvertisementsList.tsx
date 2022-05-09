@@ -38,7 +38,7 @@ const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
       params: {
         onAmountSelected: (amount: string) => {
           navigation.navigate('BuyCrypto', {
-            screen: 'Root',
+            screen: 'BuyCryptoRoot',
             params: {
               amount: Number(amount),
             },

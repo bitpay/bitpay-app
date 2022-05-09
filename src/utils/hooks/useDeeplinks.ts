@@ -73,7 +73,7 @@ export const useDeeplinks = () => {
         [RootStacks.BUY_CRYPTO]: {
           screens: {
             [BuyCryptoScreens.ROOT]: {
-              path: 'buy/:amount',
+              path: 'buy/:amount?',
             },
           },
         },

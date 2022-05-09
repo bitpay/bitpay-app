@@ -280,7 +280,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      dispatch(getPriceHistory());
+      dispatch(getPriceHistory(defaultAltCurrency.isoCode));
       await dispatch(startGetRates({force: true}));
       await Promise.all([
         dispatch(startUpdateAllWalletStatusForKey(key)),

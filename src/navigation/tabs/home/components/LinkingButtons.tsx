@@ -143,7 +143,7 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
             params: {
               onAmountSelected: async (amount: string) => {
                 navigation.navigate('BuyCrypto', {
-                  screen: 'Root',
+                  screen: 'BuyCryptoRoot',
                   params: {
                     amount: Number(amount),
                   },

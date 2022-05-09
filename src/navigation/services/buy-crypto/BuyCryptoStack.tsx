@@ -12,7 +12,7 @@ import {HeaderRightContainer} from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 
 export type BuyCryptoStackParamList = {
-  Root:
+  BuyCryptoRoot:
     | {
         amount: number;
         fromWallet?: any;
@@ -31,7 +31,7 @@ export type BuyCryptoStackParamList = {
 };
 
 export enum BuyCryptoScreens {
-  ROOT = 'Root',
+  ROOT = 'BuyCryptoRoot',
   OFFERS = 'BuyCryptoOffers',
 }
 
