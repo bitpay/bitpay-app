@@ -114,7 +114,7 @@ const KeySettings = () => {
   const wallets = buildNestedWalletList(coins, tokens);
 
   const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
-  const {keyName} = _key || {};
+  const {keyName, keyId} = _key || {};
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -391,6 +391,26 @@ const KeySettings = () => {
           </Info>
 
           <Hr />
+
+          {key.methods.isPrivKeyEncrypted() ? (
+            <>
+              <SettingView>
+                <Setting
+                  activeOpacity={ActiveOpacity}
+                  onPress={() => {
+                    navigation.navigate('Wallet', {
+                      screen: 'ClearEncryptPassword',
+                      params: {keyId},
+                    });
+                  }}>
+                  <WalletSettingsTitle>
+                    Clear Encrypt Password
+                  </WalletSettingsTitle>
+                </Setting>
+              </SettingView>
+              <Hr />
+            </>
+          ) : null}
         </VerticalPadding>
 
         <VerticalPadding>
