@@ -137,12 +137,18 @@ const buildList = (category: string[], wallets: Wallet[]) => {
   return coins;
 };
 
+export type GlobalSelectModalContext =
+  | 'send'
+  | 'receive'
+  | 'coinbase'
+  | 'contact';
+
 interface GlobalSelectProps {
   useAsModal: any;
   modalTitle?: string;
   customSupportedCurrencies?: string[];
   onDismiss?: (newWallet?: any) => void;
-  modalContext?: 'send' | 'receive' | 'coinbase' | 'contact';
+  modalContext?: GlobalSelectModalContext;
   livenetOnly?: boolean;
 }
 

@@ -31,13 +31,12 @@ import {
   openUrlWithInAppBrowser,
   startOnGoingProcessModal,
 } from '../../../store/app/app.effects';
-import {useDispatch} from 'react-redux';
 import InfoSvg from '../../../../assets/img/info.svg';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
 import {buildNestedWalletList} from './KeyOverview';
 import {URL} from '../../../constants';
 import {getMnemonic} from '../../../utils/helper-methods';
-import {useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {AppActions} from '../../../store/app';
 import {sleep} from '../../../utils/helper-methods';
 import {
@@ -105,13 +104,18 @@ const KeySettings = () => {
     params: {key, context},
   } = useRoute<RouteProp<WalletStackParamList, 'KeySettings'>>();
   const scrollViewRef = useRef<ScrollView>(null);
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const _wallets = key.wallets;
   const coins = _wallets.filter(wallet => !wallet.credentials.token);
   const tokens = _wallets.filter(wallet => wallet.credentials.token);
-  const wallets = buildNestedWalletList(coins, tokens);
+  const wallets = buildNestedWalletList(
+    coins,
+    tokens,
+    defaultAltCurrency.isoCode,
+  );
 
   const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
   const {keyName} = _key || {};
@@ -186,7 +190,7 @@ const KeySettings = () => {
             syncWallet.credentials.keyId = key.properties.id;
             return merge(
               syncWallet,
-              buildWalletObj(syncWallet.credentials, _tokenOptions),
+              dispatch(buildWalletObj(syncWallet.credentials, _tokenOptions)),
             );
           });
 
@@ -208,7 +212,7 @@ const KeySettings = () => {
         dispatch(
           showBottomNotificationModal({
             type: 'error',
-            title: 'Sync Wallet',
+            title: 'Sync wallet',
             message,
             enableBackdropDismiss: true,
             actions: [

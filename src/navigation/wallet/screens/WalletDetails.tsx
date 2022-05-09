@@ -54,7 +54,7 @@ import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {startGetRates} from '../../../store/wallet/effects';
+import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {
   CanSpeedupTx,
@@ -167,10 +167,12 @@ const Fiat = styled(BaseText)`
   text-align: right;
 `;
 
-const HeaderKeyName = styled(HeaderSubtitle)`
+const HeaderKeyName = styled(BaseText)`
   text-align: center;
   margin-left: 5px;
   color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
+  font-size: 12px;
+  line-height: 20px;
 `;
 
 const HeaderSubTitleContainer = styled.View`
@@ -361,7 +363,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     await sleep(1000);
 
     try {
-      await dispatch(startGetRates());
+      dispatch(getPriceHistory(defaultAltCurrency.isoCode));
+      await dispatch(startGetRates({force: true}));
       await Promise.all([
         await dispatch(startUpdateWalletStatus({key, wallet: fullWalletObj})),
         await loadHistory(true),
@@ -379,7 +382,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     cryptoLockedBalance,
     fiatBalance,
     fiatLockedBalance,
-    currencyName,
     currencyAbbreviation,
     network,
     hideBalance,
@@ -506,7 +508,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         dispatch(
           showBottomNotificationModal({
             type: 'warning',
-            title: 'Miner Fee Notice',
+            title: 'Miner fee notice',
             message: `Because you are speeding up this transaction, the Bitcoin miner fee (${tx.speedupFee} ${currencyAbbreviation}) will be deducted from the total.`,
             enableBackdropDismiss: true,
             actions: [
@@ -747,7 +749,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           params: {
                             onAmountSelected: async (amount: string) => {
                               navigation.navigate('BuyCrypto', {
-                                screen: 'Root',
+                                screen: 'BuyCryptoRoot',
                                 params: {
                                   amount: Number(amount),
                                   fromWallet: fullWalletObj,
@@ -852,7 +854,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       <OptionsSheet
         isVisible={showWalletOptions}
         closeModal={() => setShowWalletOptions(false)}
-        title={t('ReceiveCurrency', {currency: currencyName})}
+        title={t('WalletOptions')}
         options={assetOptions}
       />
 

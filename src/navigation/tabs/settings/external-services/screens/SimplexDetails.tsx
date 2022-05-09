@@ -86,17 +86,17 @@ const SimplexDetails: React.FC = () => {
         </RowDataContainer>
 
         {['failed', 'success'].includes(paymentRequest.status) && (
-          <View>
+          <RowDataContainer>
             <RowLabel>Status</RowLabel>
-            <View>
-              {paymentRequest.status == 'failed' && (
+            <RowData>
+              {paymentRequest.status === 'failed' && (
                 <Text style={{color: '#df5264'}}>Payment request rejected</Text>
               )}
-              {paymentRequest.status == 'success' && (
+              {paymentRequest.status === 'success' && (
                 <Text style={{color: '#01d1a2'}}>Payment request approved</Text>
               )}
-            </View>
-          </View>
+            </RowData>
+          </RowDataContainer>
         )}
 
         <LabelTip type="info">
@@ -140,7 +140,7 @@ const SimplexDetails: React.FC = () => {
             dispatch(
               showBottomNotificationModal({
                 type: 'question',
-                title: 'Removing Payment Request Data',
+                title: 'Removing payment request data',
                 message:
                   "The data of this payment request will be deleted. Make sure you don't need it",
                 enableBackdropDismiss: true,

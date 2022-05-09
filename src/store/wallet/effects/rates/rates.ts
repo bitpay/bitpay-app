@@ -28,45 +28,50 @@ import {addAltCurrencyList} from '../../../app/app.actions';
 import {AltCurrenciesRowProps} from '../../../../components/list/AltCurrenciesRow';
 import {LogActions} from '../../../log';
 
-export const getPriceHistory = (): Effect => async dispatch => {
-  try {
-    //TODO: update exchange currency
-    const coinsList = SUPPORTED_COINS.map(coin => `${coin.toUpperCase()}:USD`)
-      .toString()
-      .split(',')
-      .join('","');
-    const {
-      data: {data},
-    } = await axios.get(
-      `https://bitpay.com/currencies/prices?currencyPairs=["${coinsList}"]`,
-    );
-    const formattedData = data.map((d: PriceHistory) => {
-      return {
-        ...d,
-        coin: d.currencyPair.split(':')[0].toLowerCase(),
-      };
-    });
-
-    dispatch(successGetPriceHistory(formattedData));
-  } catch (err) {
-    console.error(err);
-    dispatch(failedGetPriceHistory());
-  }
-};
+export const getPriceHistory =
+  (defaultAltCurrencyIsoCode: string): Effect =>
+  async dispatch => {
+    try {
+      const coinsList = SUPPORTED_COINS.map(
+        coin =>
+          `${coin.toUpperCase()}:${defaultAltCurrencyIsoCode.toUpperCase()}`,
+      )
+        .toString()
+        .split(',')
+        .join('","');
+      const {
+        data: {data},
+      } = await axios.get(
+        `https://bitpay.com/currencies/prices?currencyPairs=["${coinsList}"]`,
+      );
+      const formattedData = data
+        .filter((d: PriceHistory) => d)
+        .map((d: PriceHistory) => {
+          return {
+            ...d,
+            coin: d?.currencyPair.split(':')[0].toLowerCase(),
+          };
+        });
+      dispatch(successGetPriceHistory(formattedData));
+    } catch (err) {
+      console.error(err);
+      dispatch(failedGetPriceHistory());
+    }
+  };
 
 export const startGetRates =
-  (init?: boolean): Effect<Promise<Rates>> =>
+  ({init, force}: {init?: boolean; force?: boolean}): Effect<Promise<Rates>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       const {
         WALLET: {ratesCacheKey, rates: cachedRates},
       } = getState();
-
       if (
         !isCacheKeyStale(
           ratesCacheKey[DEFAULT_DATE_RANGE],
           RATES_CACHE_DURATION,
-        )
+        ) &&
+        !force
       ) {
         console.log('Rates - using cached rates');
         return resolve(cachedRates);

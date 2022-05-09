@@ -1,10 +1,21 @@
 import {BuyCryptoActionType, BuyCryptoActionTypes} from './buy-crypto.types';
-import {simplexPaymentData, wyrePaymentData} from './buy-crypto.models';
+import {
+  simplexPaymentData,
+  simplexIncomingData,
+  wyrePaymentData,
+} from './buy-crypto.models';
 
 export const successPaymentRequestSimplex = (payload: {
   simplexPaymentData: simplexPaymentData;
 }): BuyCryptoActionType => ({
   type: BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_SIMPLEX,
+  payload,
+});
+
+export const updatePaymentRequestSimplex = (payload: {
+  simplexIncomingData: simplexIncomingData;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_SIMPLEX,
   payload,
 });
 

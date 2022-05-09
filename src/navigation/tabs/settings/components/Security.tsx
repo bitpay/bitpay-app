@@ -29,14 +29,8 @@ import FaceImg from '../../../../../assets/img/face.svg';
 import FaceDarkModeImg from '../../../../../assets/img/face-darkmode.svg';
 import PinImg from '../../../../../assets/img/pin.svg';
 import PinDarkModeImg from '../../../../../assets/img/pin-darkmode.svg';
-import styled, {css} from 'styled-components/native';
-import {
-  Action,
-  Midnight,
-  ProgressBlue,
-  SlateDark,
-  White,
-} from '../../../../styles/colors';
+import styled from 'styled-components/native';
+import {Midnight, SlateDark, White} from '../../../../styles/colors';
 import {H4, Paragraph} from '../../../../components/styled/Text';
 const FingerprintSvg = {
   light: <FingerprintImg />,
@@ -53,11 +47,7 @@ const PinSvg = {
   dark: <PinDarkModeImg />,
 };
 
-interface ContainerProps {
-  isSelected: boolean;
-}
-
-const ImgContainer = styled.TouchableOpacity<ContainerProps>`
+const ImgContainer = styled.TouchableOpacity`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -65,16 +55,6 @@ const ImgContainer = styled.TouchableOpacity<ContainerProps>`
   width: 65px;
   background-color: ${({theme: {dark}}) => (dark ? Midnight : '#ECEFFD')};
   border-radius: 50px;
-  ${({isSelected}) =>
-    isSelected &&
-    css`
-      border-color: ${({theme: {dark}}) => (dark ? ProgressBlue : Action)};
-      border-width: 2px;
-    `};
-`;
-
-const CtaContainer = styled.View`
-  margin: 10px 0;
 `;
 
 const Header = styled.View`
@@ -82,7 +62,6 @@ const Header = styled.View`
 `;
 
 const Title = styled(H4)`
-  margin-left: 10px;
   width: 100%;
   text-align: center;
 `;
@@ -90,6 +69,7 @@ const Title = styled(H4)`
 const EnableLockModalParagraph = styled(Paragraph)`
   margin: 15px 0 20px;
   color: ${({theme}) => (theme.dark ? White : SlateDark)};
+  text-align: center;
 `;
 
 const ImgRow = styled.View`
@@ -102,14 +82,12 @@ const Security = () => {
   const dispatch = useDispatch();
   const themeType = useThemeType();
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedLock, setSelectedLock] = useState('');
 
   const pinLockActive = useSelector(({APP}: RootState) => APP.pinLockActive);
   const biometricLockActive = useSelector(
     ({APP}: RootState) => APP.biometricLockActive,
   );
   const hideModal = () => {
-    setSelectedLock('');
     setModalVisible(false);
   };
 
@@ -145,7 +123,11 @@ const Security = () => {
         if (error.code && TO_HANDLE_ERRORS[error.code]) {
           const err = TO_HANDLE_ERRORS[error.code];
           dispatch(
-            showBottomNotificationModal(BiometricErrorNotification(err)),
+            showBottomNotificationModal(
+              BiometricErrorNotification(err, () => {
+                setModalVisible(true);
+              }),
+            ),
           );
         }
       });
@@ -167,7 +149,9 @@ const Security = () => {
     setModalVisible(true);
   };
 
-  const setLockOption = async () => {
+  const setLockOption = async (
+    selectedLock: 'fingerprint' | 'face' | 'pin',
+  ) => {
     hideModal();
     switch (selectedLock) {
       case 'fingerprint':
@@ -176,7 +160,7 @@ const Security = () => {
         break;
 
       case 'pin':
-        await sleep(500); // avoid modal conflicting with options sheet
+        await sleep(400); // avoid modal conflicting with options sheet
         setPin();
         break;
     }
@@ -198,43 +182,27 @@ const Security = () => {
           </Header>
 
           <EnableLockModalParagraph>
-            Secure app with biometric credentials or a PIN
+            Secure the app with biometric or PIN.
           </EnableLockModalParagraph>
 
           <ImgRow>
             {Platform.OS === 'android' && (
               <ImgContainer
-                isSelected={selectedLock === 'fingerprint'}
-                onPress={() => setSelectedLock('fingerprint')}>
+                onPress={() => {
+                  setLockOption('fingerprint');
+                }}>
                 {FingerprintSvg[themeType]}
               </ImgContainer>
             )}
             {Platform.OS === 'ios' && (
-              <ImgContainer
-                isSelected={selectedLock === 'face'}
-                onPress={() => setSelectedLock('face')}>
+              <ImgContainer onPress={() => setLockOption('face')}>
                 {FaceSvg[themeType]}
               </ImgContainer>
             )}
-            <ImgContainer
-              isSelected={selectedLock === 'pin'}
-              onPress={() => setSelectedLock('pin')}>
+            <ImgContainer onPress={() => setLockOption('pin')}>
               {PinSvg[themeType]}
             </ImgContainer>
           </ImgRow>
-          <CtaContainer>
-            <Button
-              onPress={setLockOption}
-              buttonStyle={'primary'}
-              disabled={!selectedLock}>
-              Confirm
-            </Button>
-          </CtaContainer>
-          <CtaContainer>
-            <Button onPress={hideModal} buttonStyle={'secondary'}>
-              Cancel
-            </Button>
-          </CtaContainer>
         </SheetContainer>
       </SheetModal>
     </>

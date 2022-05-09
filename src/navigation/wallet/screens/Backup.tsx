@@ -4,13 +4,13 @@ import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainer,
   HeaderRightContainer,
+  ImageContainer,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {useDispatch, useSelector} from 'react-redux';
-import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingImage} from '../../onboarding/components/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -20,10 +20,7 @@ import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {StackActions} from '@react-navigation/native';
 import {RootState} from '../../../store';
 import {StackScreenProps} from '@react-navigation/stack';
-const BackupImage = {
-  light: require('../../../../assets/img/onboarding/light/backup.png'),
-  dark: require('../../../../assets/img/onboarding/dark/backup.png'),
-};
+const BackupImage = require('../../../../assets/img/onboarding/backup.png');
 
 type BackupScreenProps = StackScreenProps<WalletStackParamList, 'BackupKey'>;
 
@@ -140,11 +137,15 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
   }, [navigation]);
 
   useAndroidBackHandler(() => true);
-  const themeType = useThemeType();
 
   return (
     <BackupContainer>
-      <OnboardingImage source={BackupImage[themeType]} />
+      <ImageContainer>
+        <OnboardingImage
+          style={{width: 217, height: 195}}
+          source={BackupImage}
+        />
+      </ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>
           <H3>Would you like to backup your key?</H3>

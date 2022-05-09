@@ -6,7 +6,7 @@ import {
   ActiveOpacity,
 } from '../styled/Containers';
 import {RowContainer} from '../styled/Containers';
-import {H5, SubText} from '../styled/Text';
+import {H5, ListItemSubText} from '../styled/Text';
 import haptic from '../haptic-feedback/haptic';
 import Checkbox from '../checkbox/Checkbox';
 import {SupportedCurrencyOption} from '../../constants/SupportedCurrencyOptions';
@@ -68,7 +68,7 @@ const CurrencySelectionRow = ({item, emit, removeCheckbox}: Props) => {
       </CurrencyImageContainer>
       <CurrencyColumn>
         <H5>{currencyName}</H5>
-        <SubText>{currencyAbbreviation}</SubText>
+        <ListItemSubText>{currencyAbbreviation}</ListItemSubText>
       </CurrencyColumn>
       {!removeCheckbox && (
         <CheckBoxContainer>

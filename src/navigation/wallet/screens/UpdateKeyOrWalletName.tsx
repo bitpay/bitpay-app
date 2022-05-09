@@ -84,6 +84,7 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
               onChangeText={(text: string) => onChange(text)}
               error={errors.name?.message}
               value={value}
+              onSubmitEditing={handleSubmit(updateName)}
             />
           )}
           name="name"

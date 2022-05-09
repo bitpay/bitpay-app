@@ -22,7 +22,10 @@ import {
 } from '../../../../utils/helper-methods';
 import {toFiat, checkEncryptPassword} from '../../utils/wallet';
 import {startGetRates} from '../rates/rates';
-import {waitForTargetAmountAndUpdateWallet} from '../status/status';
+import {
+  startUpdateWalletStatus,
+  waitForTargetAmountAndUpdateWallet,
+} from '../status/status';
 import {
   CustomErrorMessage,
   GeneralError,
@@ -36,7 +39,7 @@ import {
   showBottomNotificationModal,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
-import {GetPrecision, GetChain} from '../../utils/currency';
+import {GetPrecision, GetChain, IsERCToken} from '../../utils/currency';
 import {CommonActions} from '@react-navigation/native';
 import {BwcProvider} from '../../../../lib/bwc';
 
@@ -117,7 +120,7 @@ export const createProposalAndBuildTxDetails =
               return reject({err, tx, txp, getState});
             }
             try {
-              const rates = await dispatch(startGetRates());
+              const rates = await dispatch(startGetRates({}));
               // building UI object for details
               const txDetails = dispatch(
                 buildTxDetails({
@@ -128,6 +131,7 @@ export const createProposalAndBuildTxDetails =
                   recipient,
                   invoice,
                   context,
+                  feeLevel,
                 }),
               );
               txp.id = proposal.id;
@@ -156,6 +160,7 @@ const buildTxDetails =
     recipient,
     invoice,
     context,
+    feeLevel = 'custom',
   }: {
     proposal: TransactionProposal;
     rates: Rates;
@@ -164,19 +169,14 @@ const buildTxDetails =
     recipient: Recipient;
     invoice?: Invoice;
     context?: TransactionOptionsContext;
+    feeLevel?: string;
   }): Effect<TxDetails> =>
   dispatch => {
-    const {
-      coin,
-      fee,
-      gasPrice,
-      gasLimit,
-      nonce,
-      feeLevel = 'custom',
-    } = proposal;
+    const {coin, fee, gasPrice, gasLimit, nonce} = proposal;
     let {amount} = proposal;
     const networkCost = invoice?.minerFees[coin.toUpperCase()]?.totalFee;
-    const total = amount + fee;
+    const chain = dispatch(GetChain(coin)).toLowerCase(); // always use chain for fee values
+    const isERC20 = dispatch(IsERCToken(coin));
 
     if (context === 'fromReplaceByFee') {
       amount = amount - fee;
@@ -193,9 +193,9 @@ const buildTxDetails =
       },
       fee: {
         feeLevel,
-        cryptoAmount: dispatch(FormatAmountStr(coin, fee)),
+        cryptoAmount: dispatch(FormatAmountStr(chain, fee)),
         fiatAmount: formatFiatAmount(
-          dispatch(toFiat(fee, defaultAltCurrencyIsoCode, coin, rates)),
+          dispatch(toFiat(fee, defaultAltCurrencyIsoCode, chain, rates)),
           defaultAltCurrencyIsoCode,
         ),
         percentageOfTotalAmount:
@@ -203,10 +203,10 @@ const buildTxDetails =
       },
       ...(networkCost && {
         networkCost: {
-          cryptoAmount: dispatch(FormatAmountStr(coin, networkCost)),
+          cryptoAmount: dispatch(FormatAmountStr(chain, networkCost)),
           fiatAmount: formatFiatAmount(
             dispatch(
-              toFiat(networkCost, defaultAltCurrencyIsoCode, coin, rates),
+              toFiat(networkCost, defaultAltCurrencyIsoCode, chain, rates),
             ),
             defaultAltCurrencyIsoCode,
           ),
@@ -224,9 +224,14 @@ const buildTxDetails =
         ),
       },
       total: {
-        cryptoAmount: dispatch(FormatAmountStr(coin, total)),
+        cryptoAmount: isERC20
+          ? `${dispatch(FormatAmountStr(coin, amount))} + ${dispatch(
+              FormatAmountStr(chain, fee),
+            )}`
+          : dispatch(FormatAmountStr(coin, amount + fee)),
         fiatAmount: formatFiatAmount(
-          dispatch(toFiat(total, defaultAltCurrencyIsoCode, coin, rates)),
+          dispatch(toFiat(amount, defaultAltCurrencyIsoCode, coin, rates)) +
+            dispatch(toFiat(fee, defaultAltCurrencyIsoCode, chain, rates)),
           defaultAltCurrencyIsoCode,
         ),
       },
@@ -496,6 +501,8 @@ export const publishAndSign =
               recipient,
             }),
           );
+        } else {
+          dispatch(startUpdateWalletStatus({key, wallet}));
         }
         resolve(broadcastedTx);
       } catch (err) {
@@ -681,20 +688,22 @@ export const createPayProTxProposal =
     ) || {
       unitToSatoshi: 100000000,
     };
-    return createProposalAndBuildTxDetails({
-      context: 'paypro',
-      invoice,
-      invoiceID,
-      wallet,
-      ...(feePerKb && {feePerKb}),
-      payProUrl: paymentUrl,
-      recipient: {address},
-      gasLimit,
-      data,
-      amount: amount / unitToSatoshi,
-      ...(customData && {customData}),
-      message: message || description,
-    });
+    return await dispatch(
+      createProposalAndBuildTxDetails({
+        context: 'paypro',
+        invoice,
+        invoiceID,
+        wallet,
+        ...(feePerKb && {feePerKb}),
+        payProUrl: paymentUrl,
+        recipient: {address},
+        gasLimit,
+        data,
+        amount: amount / unitToSatoshi,
+        ...(customData && {customData}),
+        message: message || description,
+      }),
+    );
   };
 
 export const getSendMaxInfo = ({

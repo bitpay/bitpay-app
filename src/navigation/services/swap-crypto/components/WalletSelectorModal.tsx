@@ -1,5 +1,7 @@
 import React from 'react';
-import GlobalSelect from '../../../../navigation/wallet/screens/GlobalSelect';
+import GlobalSelect, {
+  GlobalSelectModalContext,
+} from '../../../../navigation/wallet/screens/GlobalSelect';
 import {Black, White} from '../../../../styles/colors';
 import styled from 'styled-components/native';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
@@ -14,7 +16,7 @@ interface WalletSelectorModalProps {
   customSupportedCurrencies?: string[];
   livenetOnly?: boolean;
   onDismiss: (toWallet?: any) => void;
-  modalContext?: 'send' | 'receive' | 'deposit';
+  modalContext?: GlobalSelectModalContext;
   modalTitle?: string;
 }
 

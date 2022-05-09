@@ -1,4 +1,5 @@
 import {Network} from '../../constants';
+import {CardProvider} from '../../constants/card';
 import {
   BitPayIdActionType,
   BitPayIdActionTypes,
@@ -124,7 +125,7 @@ export const cardReducer = (
         },
         balances: {},
       };
-    case CardActionTypes.SUCCESS_INITIALIZE_STORE:
+    case CardActionTypes.SUCCESS_INITIALIZE_STORE: {
       const payloadBalances = action.payload.balances.reduce(
         (list, {id, balance}) => {
           list[id] = balance;
@@ -134,26 +135,36 @@ export const cardReducer = (
         {} as {[id: string]: number},
       );
 
+      const filterFirstViewCards = (action.payload.cards || []).filter(
+        c => c.provider !== CardProvider.firstView,
+      );
+
       return {
         ...state,
         cards: {
           ...state.cards,
-          [action.payload.network]: action.payload.cards || [],
+          [action.payload.network]: filterFirstViewCards,
         },
         balances: {
           ...state.balances,
           ...payloadBalances,
         },
       };
-    case CardActionTypes.SUCCESS_FETCH_CARDS:
+    }
+    case CardActionTypes.SUCCESS_FETCH_CARDS: {
+      const filterFirstViewCards = (action.payload.cards || []).filter(
+        c => c.provider !== CardProvider.firstView,
+      );
+
       return {
         ...state,
         fetchCardsStatus: 'success',
         cards: {
           ...state.cards,
-          [action.payload.network]: action.payload.cards || [],
+          [action.payload.network]: filterFirstViewCards,
         },
       };
+    }
     case CardActionTypes.FAILED_FETCH_CARDS:
       return {
         ...state,

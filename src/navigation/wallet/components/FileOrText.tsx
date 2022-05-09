@@ -18,9 +18,10 @@ import {BwcProvider} from '../../../lib/bwc';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {useDispatch, useSelector} from 'react-redux';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {startImportFile} from '../../../store/wallet/effects';
+import {startGetRates, startImportFile} from '../../../store/wallet/effects';
 import {
   dismissOnGoingProcessModal,
+  setHomeCarouselConfig,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {RouteProp} from '@react-navigation/core';
@@ -30,6 +31,8 @@ import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/
 import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
 import {sleep} from '../../../utils/helper-methods';
+import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
+import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 
 const BWCProvider = BwcProvider.getInstance();
 
@@ -88,6 +91,12 @@ const FileOrText = () => {
       );
       // @ts-ignore
       const key = await dispatch<Key>(startImportFile(decryptBackupText, opts));
+
+      await dispatch(startGetRates({}));
+      await dispatch(startUpdateAllWalletStatusForKey(key));
+      await dispatch(updatePortfolioBalance());
+      dispatch(setHomeCarouselConfig({id: key.id, show: true}));
+
       backupRedirect({
         context: route.params?.context,
         navigation,

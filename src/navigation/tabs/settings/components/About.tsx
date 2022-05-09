@@ -46,7 +46,7 @@ const About = () => {
     },
   ];
   return (
-    <SettingsComponent>
+    <SettingsComponent style={{marginBottom: 10}}>
       <Setting>
         <SettingTitle>Version</SettingTitle>
 

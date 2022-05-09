@@ -1,17 +1,17 @@
 import {ContentCard} from 'react-native-appboy-sdk';
 import {createSelector} from 'reselect';
 import {AppSelector} from '..';
-import {isDoMore, isFeaturedMerchant, isQuickLink} from '../../utils/braze';
+import {isDoMore, isQuickLink, isShopWithCrypto} from '../../utils/braze';
 
 export const selectBrazeContentCards: AppSelector<ContentCard[]> = ({APP}) =>
   APP.brazeContentCards;
 
-export const selectBrazeOffers = createSelector(
+export const selectBrazeShopWithCrypto = createSelector(
   [selectBrazeContentCards],
-  contentCards => contentCards.filter(isFeaturedMerchant),
+  contentCards => contentCards.filter(isShopWithCrypto),
 );
 
-export const selectBrazeAdvertisements = createSelector(
+export const selectBrazeDoMore = createSelector(
   [selectBrazeContentCards],
   contentCards => contentCards.filter(isDoMore),
 );

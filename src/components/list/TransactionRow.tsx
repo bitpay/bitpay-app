@@ -1,8 +1,8 @@
 import React, {ReactElement, memo} from 'react';
-import {BaseText} from '../styled/Text';
+import {BaseText, ListItemSubText} from '../styled/Text';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../styled/Containers';
-import {LuckySevens, SlateDark, White} from '../../styles/colors';
+import {LuckySevens, SlateDark} from '../../styles/colors';
 import RemoteImage from '../../navigation/tabs/shop/components/RemoteImage';
 import {TRANSACTION_ICON_SIZE} from '../../constants/TransactionIcons';
 export const TRANSACTION_ROW_HEIGHT = 75;
@@ -16,19 +16,13 @@ const TransactionContainer = styled.TouchableOpacity`
 `;
 
 const IconContainer = styled.View`
-  margin-right: 14px;
+  margin-right: 8px;
 `;
 
 const Description = styled(BaseText)`
   overflow: hidden;
   margin-right: 175px;
   font-size: 16px;
-`;
-
-const Details = styled(BaseText)`
-  font-size: 12px;
-  font-weight: 300;
-  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
 `;
 
 const TailContainer = styled.View`
@@ -39,12 +33,6 @@ const Value = styled(BaseText)`
   text-align: right;
   font-weight: 700;
   font-size: 16px;
-`;
-
-const Time = styled(BaseText)`
-  font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
-  text-align: right;
 `;
 
 interface Props {
@@ -84,16 +72,16 @@ const TransactionRow = ({
         <Description numberOfLines={details ? 2 : 1} ellipsizeMode={'tail'}>
           {description}
           {details && (
-            <Details>
+            <ListItemSubText>
               {'\n'}
               {details}
-            </Details>
+            </ListItemSubText>
           )}
         </Description>
       )}
       <TailContainer>
         {value && <Value>{value}</Value>}
-        {time && <Time>{time}</Time>}
+        {time && <ListItemSubText textAlign={'right'}>{time}</ListItemSubText>}
       </TailContainer>
     </TransactionContainer>
   );

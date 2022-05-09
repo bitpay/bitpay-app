@@ -16,19 +16,23 @@ import HistoryIcon from '../../../../assets/img/services/swap-crypto/icon-histor
 import {useAppSelector} from '../../../utils/hooks';
 
 export type SwapCryptoStackParamList = {
-  Root?: {
-    selectedWallet?: Wallet;
-  };
-  ChangellyCheckout?: {
-    fromWalletSelected: Wallet;
-    toWalletSelected: Wallet;
-    fromWalletData: any;
-    toWalletData: any;
-    fixedRateId: string;
-    amountFrom: number;
-    useSendMax?: boolean;
-    sendMaxInfo?: any;
-  };
+  Root:
+    | {
+        selectedWallet?: Wallet;
+      }
+    | undefined;
+  ChangellyCheckout:
+    | {
+        fromWalletSelected: Wallet;
+        toWalletSelected: Wallet;
+        fromWalletData: any;
+        toWalletData: any;
+        fixedRateId: string;
+        amountFrom: number;
+        useSendMax?: boolean;
+        sendMaxInfo?: any;
+      }
+    | undefined;
 };
 
 export enum SwapCryptoScreens {

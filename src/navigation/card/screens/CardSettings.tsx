@@ -38,7 +38,7 @@ const CardSettingsHeader = styled.View`
   align-items: center;
   display: flex;
   flex-direction: row;
-  justify-content: flex-end;
+  justify-content: center;
   margin-bottom: ${ScreenGutter};
 `;
 

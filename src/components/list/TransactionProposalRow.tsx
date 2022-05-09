@@ -1,8 +1,7 @@
 import React, {ReactElement, memo} from 'react';
-import {BaseText} from '../styled/Text';
+import {BaseText, ListItemSubText} from '../styled/Text';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../styled/Containers';
-import {SlateDark, White} from '../../styles/colors';
 export const TRANSACTION_PROPOSAL_ROW_HEIGHT = 75;
 
 const TransactionContainer = styled.TouchableOpacity`
@@ -14,7 +13,7 @@ const TransactionContainer = styled.TouchableOpacity`
 `;
 
 const IconContainer = styled.View`
-  margin-right: 10px;
+  margin-right: 8px;
 `;
 
 const Description = styled(BaseText)`
@@ -23,11 +22,9 @@ const Description = styled(BaseText)`
   font-size: 16px;
 `;
 
-const Creator = styled(BaseText)`
+const Creator = styled(ListItemSubText)`
   overflow: hidden;
   margin-right: 175px;
-  font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
 const TailContainer = styled.View`
@@ -40,12 +37,6 @@ const Value = styled(BaseText)`
   text-align: right;
   font-weight: 700;
   font-size: 16px;
-`;
-
-const Time = styled(BaseText)`
-  font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  text-align: right;
 `;
 
 interface Props {
@@ -76,7 +67,7 @@ const TransactionProposalRow = ({
 
       <TailContainer>
         {value && <Value>{value}</Value>}
-        {time && <Time>{time}</Time>}
+        {time && <ListItemSubText textAlign={'right'}>{time}</ListItemSubText>}
       </TailContainer>
     </TransactionContainer>
   );

@@ -101,7 +101,7 @@ const WalletConnectHome = () => {
     dispatch(
       showBottomNotificationModal({
         type: 'question',
-        title: 'Confirm Request',
+        title: 'Confirm request',
         message: `Please check on ${session?.peerMeta?.name} that the request is still waiting for confirmation and the swap amount is correct before proceeding to the confirmation step.`,
         enableBackdropDismiss: true,
         actions: [
@@ -127,8 +127,9 @@ const WalletConnectHome = () => {
                 const recipient = {
                   address: toAddress,
                 };
-                const amountStr =
-                  value && FormatAmount('eth', parseInt(value, 16));
+                const amountStr = value
+                  ? dispatch(FormatAmount('eth', parseInt(value, 16)))
+                  : 0;
                 const tx = {
                   wallet,
                   recipient,
