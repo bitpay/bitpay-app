@@ -11,7 +11,6 @@ import {SlateDark, White} from '../../../styles/colors';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
 import {
-  coinbaseGetFiatAmount,
   coinbaseGetTransactionsByAccount,
   coinbaseParseErrorToString,
   coinbaseGetAccountsAndBalance,
@@ -20,11 +19,10 @@ import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import CoinbaseSettingsOption from './CoinbaseSettingsOption';
 import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
-import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
-import {Network} from '../../../constants';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {Hr} from '../../../components/styled/Containers';
 import Animated, {FadeInLeft} from 'react-native-reanimated';
+import {coinbaseAccountToWalletRow} from '../../../store/wallet/utils/wallet';
 
 const OverviewContainer = styled.View`
   flex: 1;
@@ -101,29 +99,7 @@ const CoinbaseDashboard = () => {
 
   const renderItem = useCallback(
     ({item}: any) => {
-      const fiatAmount = coinbaseGetFiatAmount(
-        item.balance.amount,
-        item.balance.currency,
-        exchangeRates,
-      );
-      const cryptoAmount = Number(item.balance.amount)
-        ? item.balance.amount
-        : '0';
-
-      const walletItem = {
-        id: item.id,
-        currencyName: item.currency.name,
-        currencyAbbreviation: item.currency.code,
-        walletName: item.currency.name,
-        img: CurrencyListIcons[item.currency.code.toLowerCase()],
-        cryptoBalance: cryptoAmount,
-        cryptoLockedBalance: '',
-        fiatBalance: formatFiatAmount(fiatAmount, 'usd'),
-        fiatLockedBalance: '',
-        isToken: false,
-        network: Network.mainnet,
-        pendingTxps: [],
-      };
+      const walletItem = coinbaseAccountToWalletRow(item, exchangeRates);
       return (
         <WalletRow
           id={walletItem.id}
