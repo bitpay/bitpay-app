@@ -61,6 +61,7 @@ import PayProConfirm, {
   PayProConfirmParamList,
 } from './screens/send/confirm/PayProConfirm';
 import PriceCharts, {PriceChartsParamList} from './screens/PriceCharts';
+import PayProConfirmTwoFactor from './screens/send/confirm/PayProConfirmTwoFactor';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -93,6 +94,7 @@ export type WalletStackParamList = {
   DebitCardConfirm: DebitCardConfirmParamList;
   GiftCardConfirm: GiftCardConfirmParamList;
   PayProConfirm: PayProConfirmParamList;
+  PayProConfirmTwoFactor: {onSubmit: (code: string) => void};
   CreateMultisig: CreateMultisigProps;
   JoinMultisig: JoinMultisigParamList | undefined;
   Copayers: {wallet: WalletModel; status: _Credentials};
@@ -140,6 +142,7 @@ export enum WalletScreens {
   DEBIT_CARD_CONFIRM = 'DebitCardConfirm',
   GIFT_CARD_CONFIRM = 'GiftCardConfirm',
   PAY_PRO_CONFIRM = 'PayProConfirm',
+  PAY_PRO_CONFIRM_TWO_FACTOR = 'PayProConfirmTwoFactor',
   CREATE_MULTISIG = 'CreateMultisig',
   JOIN_MULTISIG = 'JoinMultisig',
   COPAYERS = 'Copayers',
@@ -271,6 +274,13 @@ const WalletStack = () => {
           }}
           name={WalletScreens.PAY_PRO_CONFIRM}
           component={PayProConfirm}
+        />
+        <Wallet.Screen
+          options={{
+            headerTitle: () => <HeaderTitle>Two-Step Verification</HeaderTitle>,
+          }}
+          name={WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR}
+          component={PayProConfirmTwoFactor}
         />
         <Wallet.Screen
           options={{

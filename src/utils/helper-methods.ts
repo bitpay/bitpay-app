@@ -1,5 +1,5 @@
 import {Currencies} from '../constants/currencies';
-import {Balance, Key} from '../store/wallet/wallet.models';
+import {Key} from '../store/wallet/wallet.models';
 import {ContactRowProps} from '../components/list/ContactRow';
 
 export const sleep = async (duration: number) =>
