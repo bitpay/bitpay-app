@@ -395,6 +395,26 @@ const KeySettings = () => {
           </Info>
 
           <Hr />
+
+          {key.methods.isPrivKeyEncrypted() ? (
+            <>
+              <SettingView>
+                <Setting
+                  activeOpacity={ActiveOpacity}
+                  onPress={() => {
+                    navigation.navigate('Wallet', {
+                      screen: 'ClearEncryptPassword',
+                      params: {keyId: key.id},
+                    });
+                  }}>
+                  <WalletSettingsTitle>
+                    Clear Encrypt Password
+                  </WalletSettingsTitle>
+                </Setting>
+              </SettingView>
+              <Hr />
+            </>
+          ) : null}
         </VerticalPadding>
 
         <VerticalPadding>

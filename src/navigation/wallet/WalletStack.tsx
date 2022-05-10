@@ -61,6 +61,9 @@ import PayProConfirm, {
   PayProConfirmParamList,
 } from './screens/send/confirm/PayProConfirm';
 import PriceCharts, {PriceChartsParamList} from './screens/PriceCharts';
+import ClearEncryptPassword, {
+  ClearEncryptPasswordParamList,
+} from './screens/ClearEncryptPassword';
 import PayProConfirmTwoFactor from './screens/send/confirm/PayProConfirmTwoFactor';
 
 export type WalletStackParamList = {
@@ -115,6 +118,7 @@ export type WalletStackParamList = {
   Addresses: {wallet: WalletModel};
   AllAddresses: AllAddressesParamList;
   PriceCharts: PriceChartsParamList;
+  ClearEncryptPassword: ClearEncryptPasswordParamList;
 };
 
 export enum WalletScreens {
@@ -156,6 +160,7 @@ export enum WalletScreens {
   ADDRESSES = 'Addresses',
   ALL_ADDRESSES = 'AllAddresses',
   PRICE_CHARTS = 'PriceCharts',
+  CLEAR_ENCRYPT_PASSWORD = 'ClearEncryptPassword',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -359,6 +364,15 @@ const WalletStack = () => {
           }}
           name={WalletScreens.PRICE_CHARTS}
           component={PriceCharts}
+        />
+        <Wallet.Screen
+          options={{
+            headerTitle: () => (
+              <HeaderTitle>Clear Encrypt Password</HeaderTitle>
+            ),
+          }}
+          name={WalletScreens.CLEAR_ENCRYPT_PASSWORD}
+          component={ClearEncryptPassword}
         />
       </Wallet.Navigator>
     </>
