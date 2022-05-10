@@ -24,7 +24,7 @@ import {
   GetTheme,
   IsERCToken,
 } from '../../../../store/wallet/utils/currency';
-import styled from 'styled-components/native';
+import styled, { useTheme } from 'styled-components/native';
 import {
   ActionContainer,
   ActiveOpacity,
@@ -38,7 +38,7 @@ import Back from '../../../../components/back/Back';
 import {TouchableOpacity, View} from 'react-native';
 import {DetailsList} from './confirm/Shared';
 import Button from '../../../../components/button/Button';
-import {Caution, Slate, SlateDark, White} from '../../../../styles/colors';
+import {Caution, LightBlack, NeutralSlate, Slate, SlateDark, White} from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
@@ -196,6 +196,7 @@ const TransactionLevel = ({
   } = wallet;
   const dispatch = useAppDispatch();
   const insets = useSafeAreaInsets();
+  const theme = useTheme();
 
   const [speedUpMinFeePerKb, setSpeedUpMinFeePerKb] = useState<number>();
   const {feeUnit, feeUnitAmount, blockTime} = dispatch(GetFeeUnits(coin));
@@ -216,6 +217,8 @@ const TransactionLevel = ({
 
   const {coinColor: backgroundColor} =
     coin === 'btc' ? dispatch(GetTheme(coin)) : dispatch(GetTheme('eth'));
+
+  const themedBackground = theme.dark ? '#464646' : NeutralSlate;
 
   const setSpeedUpMinFee = (_feeLevels: Fee[]): number | undefined => {
     const minFeeLevel = coin === 'btc' ? 'custom' : 'priority';
@@ -465,7 +468,7 @@ const TransactionLevel = ({
           <TouchableOpacity
             activeOpacity={ActiveOpacity}
             onPress={() => onClose()}>
-            <Back opacity={1} background={'#464646'} />
+            <Back opacity={1} background={themedBackground} />
           </TouchableOpacity>
           <TitleContainer>
             <HeaderTitle>Transaction Speed</HeaderTitle>

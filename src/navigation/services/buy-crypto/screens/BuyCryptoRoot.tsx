@@ -1,8 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {ScrollView} from 'react-native';
-import {RouteProp} from '@react-navigation/core';
-import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
-import styled from 'styled-components/native';
+import {StackScreenProps} from '@react-navigation/stack';
+import styled, {useTheme} from 'styled-components/native';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {BuyCryptoStackParamList} from '../BuyCryptoStack';
 import {PaymentMethodsAvailable} from '../constants/BuyCryptoConstants';
@@ -46,11 +45,11 @@ const ArrowContainer = styled.View`
   margin-left: 10px;
 `;
 
-const BuyCryptoRoot: React.FC = () => {
+const BuyCryptoRoot: React.FC<
+  StackScreenProps<BuyCryptoStackParamList, 'BuyCryptoRoot'>
+> = ({navigation, route}) => {
   const dispatch = useAppDispatch();
-  const navigation = useNavigation();
   const theme = useTheme();
-  const route = useRoute<RouteProp<BuyCryptoStackParamList, 'Root'>>();
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
@@ -443,16 +442,13 @@ const BuyCryptoRoot: React.FC = () => {
                 appUser: user?.eid || '',
               });
 
-              navigation.navigate('BuyCrypto', {
-                screen: 'BuyCryptoOffers',
-                params: {
-                  amount,
-                  fiatCurrency: 'USD',
-                  coin: selectedWallet?.currencyAbbreviation || '',
-                  country,
-                  selectedWallet,
-                  paymentMethod: selectedPaymentMethod,
-                },
+              navigation.navigate('BuyCryptoOffers', {
+                amount,
+                fiatCurrency: 'USD',
+                coin: selectedWallet?.currencyAbbreviation || '',
+                country,
+                selectedWallet,
+                paymentMethod: selectedPaymentMethod,
               });
             }}>
             View Offers

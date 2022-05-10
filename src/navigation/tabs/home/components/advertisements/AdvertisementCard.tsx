@@ -1,12 +1,16 @@
+import {useLinkTo} from '@react-navigation/native';
 import React from 'react';
 import {ImageStyle, Linking, StyleProp} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
+import FastImage, {Source} from 'react-native-fast-image';
 import {SvgProps} from 'react-native-svg';
 import styled, {useTheme} from 'styled-components/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {ActiveOpacity} from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
+import {APP_DEEPLINK_PREFIX} from '../../../../../constants/config';
 import {AppEffects} from '../../../../../store/app';
+import {LogActions} from '../../../../../store/log';
 import {
   LightBlack,
   Slate,
@@ -19,7 +23,6 @@ import {
 } from '../../../../../utils/braze';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {BoxShadow} from '../Styled';
-import FastImage, {Source} from 'react-native-fast-image';
 
 interface AdvertisementCardProps {
   contentCard: ContentCard;
@@ -72,7 +75,9 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   const {contentCard, ctaOverride} = props;
   const {image, url, openURLInWebView} = contentCard;
   const dispatch = useAppDispatch();
+  const linkTo = useLinkTo();
   const theme = useTheme();
+
   let title = '';
   let description = '';
   let imageSource: Source | null = null;
@@ -94,6 +99,8 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   }
 
   const onPress = () => {
+    haptic('impactLight');
+
     if (ctaOverride) {
       ctaOverride();
       return;
@@ -103,7 +110,20 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
       return;
     }
 
-    haptic('impactLight');
+    if (url.startsWith(APP_DEEPLINK_PREFIX)) {
+      try {
+        const path = '/' + url.replace(APP_DEEPLINK_PREFIX, '');
+
+        linkTo(path);
+
+        return;
+      } catch (err) {
+        dispatch(
+          LogActions.debug('Something went wrong parsing Do More URL: ' + url),
+        );
+        dispatch(LogActions.debug(JSON.stringify(err)));
+      }
+    }
 
     if (openURLInWebView) {
       dispatch(AppEffects.openUrlWithInAppBrowser(url));

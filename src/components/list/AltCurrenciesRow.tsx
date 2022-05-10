@@ -44,11 +44,12 @@ const AltCurrencyIsoCodeContainer = styled.View<{selected?: boolean}>`
   width: 60px;
   height: 40px;
   border-radius: 27.5px;
+  align-items: center;
+  justify-content: center;
 `;
 
-const IsoCodeNameContainer = styled(BaseText)<{selected?: boolean}>`
+const IsoCodeNameLabel = styled(BaseText)<{selected?: boolean}>`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  padding: 9px 15px 9px 15px;
   font-size: 15px;
   line-height: 22px;
   font-weight: 400;
@@ -93,7 +94,7 @@ const AltCurrencyRow = ({altCurrency, selected, onPress}: Props) => {
           <AltCurrencyName selected={selected}>{name}</AltCurrencyName>
         </Column>
         <AltCurrencyIsoCodeContainer selected={selected}>
-          <IsoCodeNameContainer>{isoCode}</IsoCodeNameContainer>
+          <IsoCodeNameLabel>{isoCode}</IsoCodeNameLabel>
         </AltCurrencyIsoCodeContainer>
       </RowContainer>
     </AltCurrencyContainer>

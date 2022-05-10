@@ -3,6 +3,7 @@ import Amount from '../../../../navigation/wallet/screens/Amount';
 import {Black, White} from '../../../../styles/colors';
 import styled from 'styled-components/native';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
+import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 
 const AmountContainer = styled.View`
   flex: 1;
@@ -14,12 +15,16 @@ interface AmountModalProps {
   onDismiss: (amount?: number) => void;
 }
 
+const AmountModalWrapper = gestureHandlerRootHOC(props => {
+  return <AmountContainer>{props.children}</AmountContainer>;
+});
+
 const AmountModal: React.FC<AmountModalProps> = ({isVisible, onDismiss}) => {
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onDismiss}>
-      <AmountContainer>
+      <AmountModalWrapper>
         <Amount useAsModal={true} onDismiss={onDismiss} />
-      </AmountContainer>
+      </AmountModalWrapper>
     </SheetModal>
   );
 };

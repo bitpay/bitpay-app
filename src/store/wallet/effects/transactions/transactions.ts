@@ -780,6 +780,7 @@ export const buildTransactionDetails =
         } = transaction;
         const {currencyAbbreviation} = wallet;
         const currency = currencyAbbreviation.toLowerCase();
+        const chain = dispatch(GetChain(currency)).toLowerCase();
         const _fee = fees || fee;
 
         const alternativeCurrency = defaultAltCurrencyIsoCode;
@@ -787,7 +788,7 @@ export const buildTransactionDetails =
         const rates = await dispatch(startGetRates({}));
 
         _transaction.feeFiatStr = formatFiatAmount(
-          dispatch(toFiat(_fee, alternativeCurrency, currency, rates)),
+          dispatch(toFiat(_fee, alternativeCurrency, chain, rates)),
           alternativeCurrency,
         );
 

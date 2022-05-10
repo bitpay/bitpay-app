@@ -285,7 +285,7 @@ const TransactionDetails = () => {
         wallet,
         walletId,
         context: 'fromReplaceByFee' as TransactionOptionsContext,
-        amount: Number(FormatAmount(coin, transaction.amount)),
+        amount: Number(dispatch(FormatAmount(coin, transaction.amount))),
         toAddress,
         coin,
         network,

@@ -101,7 +101,7 @@ const TransactModal = () => {
           params: {
             onAmountSelected: async (amount: string, setButtonState: any) => {
               navigation.navigate('BuyCrypto', {
-                screen: 'Root',
+                screen: 'BuyCryptoRoot',
                 params: {
                   amount: Number(amount),
                 },
