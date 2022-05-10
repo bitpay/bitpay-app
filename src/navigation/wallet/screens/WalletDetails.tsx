@@ -494,7 +494,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         currencyAbbreviation.toLowerCase() === 'eth' ||
         dispatch(IsERCToken(currencyAbbreviation))
       ) {
-        tx = await buildEthERCTokenSpeedupTx(fullWalletObj, transaction);
+        tx = await dispatch(
+          buildEthERCTokenSpeedupTx(fullWalletObj, transaction),
+        );
         goToConfirm(tx);
       }
 
