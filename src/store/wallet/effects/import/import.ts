@@ -113,7 +113,10 @@ export const startImportFile =
 
         // To clear encrypt password
         if (opts.keyId && matchedKey) {
-          const filteredKeys = matchedKey.wallets.filter(w => w.credentials.walletId !== wallets[0].credentials.walletId)
+          let filteredKeys = matchedKey.wallets.filter(
+            w => w.credentials.walletId !== wallets[0].credentials.walletId,
+          );
+          filteredKeys.forEach(w => (w.credentials.keyId = w.keyId = _key.id));
           wallets = wallets.concat(filteredKeys);
           dispatch(deleteKey({keyId: opts.keyId}));
         }
