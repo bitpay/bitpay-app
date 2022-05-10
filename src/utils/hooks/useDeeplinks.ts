@@ -67,6 +67,11 @@ export const useDeeplinks = () => {
                 [CardScreens.HOME]: 'wallet-card/dashboard/:id',
               },
             },
+            [TabsScreens.SETTINGS]: {
+              screens: {
+                [SettingsScreens.Root]: 'connections/:redirectTo',
+              },
+            },
           },
         },
         [RootStacks.GIFT_CARD_DEEPLINK]: 'giftcard',
@@ -80,15 +85,6 @@ export const useDeeplinks = () => {
         [RootStacks.SWAP_CRYPTO]: {
           screens: {
             [SwapCryptoScreens.ROOT]: 'swap',
-          },
-        },
-        [RootStacks.TABS]: {
-          screens: {
-            [TabsScreens.SETTINGS]: {
-              screens: {
-                [SettingsScreens.Root]: 'connections/:redirectTo',
-              },
-            },
           },
         },
         [RootStacks.COINBASE]: {
