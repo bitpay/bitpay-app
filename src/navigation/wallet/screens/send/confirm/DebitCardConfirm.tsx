@@ -36,6 +36,7 @@ import {
   WalletSelectMenuHeaderContainer,
 } from '../../GlobalSelect';
 import KeyWalletsRow, {
+  KeyWallet,
   KeyWalletsRowProps,
 } from '../../../../../components/list/KeyWalletsRow';
 import {BuildKeysAndWalletsList} from '../../../../../store/wallet/utils/wallet';
@@ -110,7 +111,8 @@ const Confirm = () => {
   const [txDetails, updateTxDetails] = useState(_txDetails);
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [txp, updateTxp] = useState(_txp);
-  const [keyWallets, setKeysWallets] = useState<KeyWalletsRowProps[]>();
+  const [keyWallets, setKeysWallets] =
+    useState<KeyWalletsRowProps<KeyWallet>[]>();
   const {fee, networkCost, sendingFrom, total, subTotal} = txDetails || {};
   const [disableSwipeSendButton, setDisableSwipeSendButton] = useState(false);
 

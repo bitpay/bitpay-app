@@ -43,6 +43,7 @@ import {GetPrecision, GetChain, IsERCToken} from '../../utils/currency';
 import {CommonActions} from '@react-navigation/native';
 import {BwcProvider} from '../../../../lib/bwc';
 import {ToCashAddress} from '../address/address';
+import {WalletRowProps} from '../../../../components/list/WalletRow';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -152,7 +153,7 @@ export const createProposalAndBuildTxDetails =
 /*
  * UI formatted details for confirm view
  * */
-const buildTxDetails =
+export const buildTxDetails =
   ({
     proposal,
     rates,
@@ -163,18 +164,23 @@ const buildTxDetails =
     context,
     feeLevel = 'custom',
   }: {
-    proposal: TransactionProposal;
+    proposal?: TransactionProposal;
     rates: Rates;
     defaultAltCurrencyIsoCode: string;
-    wallet: Wallet;
-    recipient: Recipient;
+    wallet: Wallet | WalletRowProps;
+    recipient?: Recipient;
     invoice?: Invoice;
     context?: TransactionOptionsContext;
     feeLevel?: string;
   }): Effect<TxDetails> =>
   dispatch => {
-    const {coin, fee, gasPrice, gasLimit, nonce} = proposal;
-    let {amount} = proposal;
+    const {coin, fee, gasPrice, gasLimit, nonce} = proposal || {
+      coin: invoice!.buyerProvidedInfo!.selectedTransactionCurrency!.toLowerCase(),
+      fee: 0,
+    };
+    let {amount} = proposal || {
+      amount: invoice!.paymentTotals[coin.toUpperCase()],
+    };
     const networkCost = invoice?.minerFees[coin.toUpperCase()]?.totalFee;
     const chain = dispatch(GetChain(coin)).toLowerCase(); // always use chain for fee values
     const isERC20 = dispatch(IsERCToken(coin));
@@ -183,13 +189,13 @@ const buildTxDetails =
       amount = amount - fee;
     }
 
-    const {type, name, address} = recipient;
+    const {type, name, address} = recipient || {};
     return {
       currency: coin,
       sendingTo: {
         recipientType: type,
         recipientName: name,
-        recipientAddress: formatCryptoAddress(address),
+        recipientAddress: address && formatCryptoAddress(address),
         img: wallet.img,
       },
       fee: {

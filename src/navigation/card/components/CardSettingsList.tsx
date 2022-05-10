@@ -2,7 +2,7 @@ import {DOSH_WHITELIST} from '@env';
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {View} from 'react-native';
+import {Linking, View} from 'react-native';
 import styled from 'styled-components/native';
 import {Br, Hr} from '../../../components/styled/Containers';
 import {Link, Smallest} from '../../../components/styled/Text';
@@ -34,6 +34,7 @@ const LINKS: {
   [k in CardBrand]: {
     labelKey: string;
     url: string;
+    download?: boolean;
   }[];
 } = {
   Visa: [],
@@ -41,10 +42,12 @@ const LINKS: {
     {
       labelKey: 'Cardholder Agreement',
       url: URL.MASTERCARD_CARDHOLDER_AGREEMENT,
+      download: true,
     },
     {
       labelKey: 'Fees Disclosure',
       url: URL.MASTERCARD_FEES_DISCLOSURE,
+      download: true,
     },
   ],
 };
@@ -78,7 +81,14 @@ const SettingsList: React.FC<SettingsListProps> = props => {
     ({CARD}) => CARD.updateCardLockStatus[card.id],
   );
 
-  const openUrl = (url: string) => {
+  const openUrl = async (url: string, download?: boolean) => {
+    const canUrlBeHandled = await Linking.canOpenURL(url).catch(() => false);
+
+    if (download && canUrlBeHandled) {
+      Linking.openURL(url);
+      return;
+    }
+
     dispatch(AppEffects.openUrlWithInAppBrowser(url));
   };
 
@@ -261,7 +271,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
             return (
               <React.Fragment key={link.labelKey}>
                 <CardSettingsTextLink
-                  onPress={() => openUrl(link.url)}
+                  onPress={() => openUrl(link.url, link.download)}
                   style={{}}>
                   {t(link.labelKey)}
                 </CardSettingsTextLink>
