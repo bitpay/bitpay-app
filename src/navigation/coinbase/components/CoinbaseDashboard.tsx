@@ -1,12 +1,12 @@
 import React, {useCallback, useLayoutEffect, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {FlatList, RefreshControl} from 'react-native';
+import {FlatList, RefreshControl, View} from 'react-native';
 import styled from 'styled-components/native';
 import WalletRow from '../../../components/list/WalletRow';
-import {BaseText, H5} from '../../../components/styled/Text';
+import {BaseText, H5, HeaderTitle} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
-import {SlateDark, White} from '../../../styles/colors';
+import {SlateDark, White, LightBlack} from '../../../styles/colors';
 
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
@@ -18,10 +18,15 @@ import {
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import CoinbaseSettingsOption from './CoinbaseSettingsOption';
-import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
+import {
+  formatFiatAmount,
+  shouldScale,
+  sleep,
+} from '../../../utils/helper-methods';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {Hr} from '../../../components/styled/Containers';
-import Animated, {FadeInLeft} from 'react-native-reanimated';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import CoinbaseSvg from '../../../../assets/img/logos/coinbase.svg';
 import {coinbaseAccountToWalletRow} from '../../../store/wallet/utils/wallet';
 
 const OverviewContainer = styled.View`
@@ -34,12 +39,13 @@ const BalanceContainer = styled.View`
   padding: 10px 15px;
 `;
 
-const Balance = styled(BaseText)`
-  font-size: 36px;
+const Balance = styled(BaseText)<{scale: boolean}>`
+  font-size: ${({scale}) => (scale ? 25 : 35)}px;
   font-style: normal;
   font-weight: 700;
   line-height: 53px;
   letter-spacing: 0;
+  text-align: center;
 `;
 
 const WalletListHeader = styled.View`
@@ -49,6 +55,13 @@ const WalletListHeader = styled.View`
 
 const SkeletonContainer = styled.View`
   margin-bottom: 20px;
+`;
+
+const HeaderTitleContainer = styled.View`
+  flex: 1;
+  flex-direction: row;
+  justify-content: center;
+  padding-top: 13px;
 `;
 
 const CoinbaseDashboard = () => {
@@ -71,6 +84,12 @@ const CoinbaseDashboard = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
+      headerTitle: () => (
+        <HeaderTitleContainer>
+          <CoinbaseSvg style={{marginRight: 8, marginTop: 2}} />
+          <HeaderTitle style={{marginTop: 4}}>{'Coinbase'}</HeaderTitle>
+        </HeaderTitleContainer>
+      ),
       headerRight: () => (
         <CoinbaseSettingsOption
           onPress={() => {
@@ -155,16 +174,26 @@ const CoinbaseDashboard = () => {
   return (
     <OverviewContainer>
       <BalanceContainer>
-        {!isLoadingAccounts && (
-          <Animated.View entering={FadeInLeft}>
-            <Balance>
-              {formatFiatAmount(
-                balance,
-                user?.data?.native_currency?.toLowerCase() || 'usd',
-              )}{' '}
-              {user?.data?.native_currency}
-            </Balance>
-          </Animated.View>
+        {balance ? (
+          <Balance scale={shouldScale(balance)}>
+            {formatFiatAmount(
+              balance,
+              user?.data?.native_currency?.toLowerCase() || 'usd',
+            )}{' '}
+            {user?.data?.native_currency}
+          </Balance>
+        ) : (
+          <SkeletonPlaceholder
+            backgroundColor={theme.dark ? LightBlack : '#E1E9EE'}
+            highlightColor={theme.dark ? '#333333' : '#F2F8FC'}>
+            <View
+              style={{
+                flexDirection: 'column',
+                alignItems: 'center',
+              }}>
+              <View style={{width: 220, height: 50, borderRadius: 4}} />
+            </View>
+          </SkeletonPlaceholder>
         )}
       </BalanceContainer>
       <Hr />
