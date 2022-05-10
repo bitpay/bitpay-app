@@ -42,6 +42,7 @@ import {
 import {GetPrecision, GetChain, IsERCToken} from '../../utils/currency';
 import {CommonActions} from '@react-navigation/native';
 import {BwcProvider} from '../../../../lib/bwc';
+import {ToCashAddress} from '../address/address';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -283,6 +284,9 @@ const buildTransactionProposal =
           break;
         case 'xrp':
           txp.destinationTag = tx.destinationTag;
+          break;
+        case 'bch':
+          tx.toAddress = ToCashAddress(tx.toAddress!, false);
           break;
       }
 
@@ -727,45 +731,44 @@ export const getSendMaxInfo = ({
   });
 };
 
-export const buildEthERCTokenSpeedupTx = (
-  wallet: Wallet,
-  transaction: any,
-): Promise<any> => {
-  return new Promise((resolve, reject) => {
-    try {
-      const {
-        credentials: {coin, walletName, walletId, network},
-        keyId,
-      } = wallet;
+export const buildEthERCTokenSpeedupTx =
+  (wallet: Wallet, transaction: any): Effect<Promise<any>> =>
+  dispatch => {
+    return new Promise((resolve, reject) => {
+      try {
+        const {
+          credentials: {coin, walletName, walletId, network},
+          keyId,
+        } = wallet;
 
-      const {customData, addressTo, nonce, data, gasLimit} = transaction;
-      const amount = Number(FormatAmount(coin, transaction.amount));
-      const recipient = {
-        type: 'wallet',
-        name: customData ? customData.toWalletName : walletName,
-        walletId,
-        keyId,
-        address: addressTo,
-      };
+        const {customData, addressTo, nonce, data, gasLimit} = transaction;
+        const amount = Number(dispatch(FormatAmount(coin, transaction.amount)));
+        const recipient = {
+          type: 'wallet',
+          name: customData ? customData.toWalletName : walletName,
+          walletId,
+          keyId,
+          address: addressTo,
+        };
 
-      return resolve({
-        wallet,
-        amount,
-        recipient,
-        network,
-        currency: coin,
-        toAddress: addressTo,
-        nonce,
-        data,
-        gasLimit,
-        customData,
-        feeLevel: 'urgent',
-      });
-    } catch (e) {
-      return reject(e);
-    }
-  });
-};
+        return resolve({
+          wallet,
+          amount,
+          recipient,
+          network,
+          currency: coin,
+          toAddress: addressTo,
+          nonce,
+          data,
+          gasLimit,
+          customData,
+          feeLevel: 'urgent',
+        });
+      } catch (e) {
+        return reject(e);
+      }
+    });
+  };
 
 export const buildBtcSpeedupTx =
   (wallet: Wallet, tx: any, address: string): Effect<Promise<any>> =>
