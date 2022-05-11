@@ -198,7 +198,9 @@ const Amount: React.FC<AmountProps> = ({
               cryptoCurrencyAbbreviation.toLowerCase(),
             ),
           ).amount;
-    const fiatAmount = formatFiatAmount(val * rate, fiatCurrency, {}, 'symbol');
+    const fiatAmount = formatFiatAmount(val * rate, fiatCurrency, {
+      currencyDisplay: 'symbol',
+    });
 
     updateAmountConfig(current => ({
       ...current,
@@ -336,7 +338,9 @@ const Amount: React.FC<AmountProps> = ({
                     primaryIsFiat: !primaryIsFiat,
                     displayAmount: '0',
                     displayEquivalentAmount: primaryIsFiat
-                      ? formatFiatAmount(0, fiatCurrency, {}, 'symbol')
+                      ? formatFiatAmount(0, fiatCurrency, {
+                          currencyDisplay: 'symbol',
+                        })
                       : '0',
                   }));
                 }}

@@ -80,8 +80,7 @@ const PortfolioBalance = () => {
         {formatFiatAmount(
           portfolioBalance.current,
           defaultAltCurrency.isoCode,
-          {},
-          'symbol',
+          {currencyDisplay: 'symbol'},
         )}
       </PortfolioBalanceText>
       {percentageDifference ? (

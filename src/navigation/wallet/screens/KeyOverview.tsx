@@ -143,17 +143,13 @@ export const buildUIFormattedWallet: (
   walletName: walletName || credentials.walletName,
   cryptoBalance: balance.crypto,
   cryptoLockedBalance: balance.cryptoLocked,
-  fiatBalance: formatFiatAmount(
-    balance.fiat,
-    defaultAltCurrencyIsoCode,
-    {},
+  fiatBalance: formatFiatAmount(balance.fiat, defaultAltCurrencyIsoCode, {
     currencyDisplay,
-  ),
+  }),
   fiatLockedBalance: formatFiatAmount(
     balance.fiatLocked,
     defaultAltCurrencyIsoCode,
-    {},
-    currencyDisplay,
+    {currencyDisplay},
   ),
   network: credentials.network,
   isRefreshing,
@@ -342,12 +338,9 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
     <OverviewContainer>
       <BalanceContainer>
         <Balance scale={shouldScale(totalBalance)}>
-          {formatFiatAmount(
-            totalBalance,
-            defaultAltCurrency.isoCode,
-            {},
-            'symbol',
-          )}
+          {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
+            currencyDisplay: 'symbol',
+          })}
         </Balance>
       </BalanceContainer>
 
