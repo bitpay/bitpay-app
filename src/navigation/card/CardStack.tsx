@@ -6,6 +6,9 @@ import {
   baseScreenOptions,
 } from '../../constants/NavigationOptions';
 import CardHome, {CardHomeScreenParamList} from './screens/CardHome';
+import CardPairingScreen, {
+  CardPairingScreenParamList,
+} from './screens/CardPairingScreen';
 import CardSettings, {CardSettingsParamList} from './screens/CardSettings';
 import CustomizeVirtualCard, {
   CustomizeVirtualCardParamList,
@@ -17,7 +20,8 @@ import Referral, {ReferralParamList} from './screens/settings/Referral';
 import {HeaderTitle} from '../../components/styled/Text';
 
 export type CardStackParamList = {
-  Home: CardHomeScreenParamList;
+  CardHome: CardHomeScreenParamList;
+  Pairing: CardPairingScreenParamList;
   Settings: CardSettingsParamList;
   CustomizeVirtualCard: CustomizeVirtualCardParamList;
   UpdateCardName: UpdateCardNameScreenParamList;
@@ -25,7 +29,8 @@ export type CardStackParamList = {
 };
 
 export enum CardScreens {
-  HOME = 'Home',
+  HOME = 'CardHome',
+  PAIRING = 'Pairing',
   SETTINGS = 'Settings',
   CUSTOMIZE_VIRTUAL_CARD = 'CustomizeVirtualCard',
   UPDATE_CARD_NAME = 'UpdateCardName',
@@ -57,6 +62,13 @@ const CardStack = () => {
               animation: 'fade',
             },
           ];
+        }}
+      />
+      <Card.Screen
+        name={CardScreens.PAIRING}
+        component={CardPairingScreen}
+        options={{
+          headerTitle: () => <HeaderTitle>Pairing...</HeaderTitle>,
         }}
       />
       <Card.Screen

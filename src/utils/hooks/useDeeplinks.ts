@@ -56,15 +56,18 @@ export const useDeeplinks = () => {
           path: 'debug/:name',
         },
         [RootStacks.BITPAY_ID]: {
+          path: 'id',
           screens: {
-            [BitpayIdScreens.PAIR]: 'wallet-card/pairing',
+            [BitpayIdScreens.PAIR]: 'pair',
           },
         },
         [RootStacks.TABS]: {
           screens: {
             [TabsScreens.CARD]: {
+              path: 'wallet-card',
               screens: {
-                [CardScreens.HOME]: 'wallet-card/dashboard/:id',
+                [CardScreens.HOME]: 'dashboard/:id',
+                [CardScreens.PAIRING]: 'pairing',
               },
             },
             [TabsScreens.SETTINGS]: {

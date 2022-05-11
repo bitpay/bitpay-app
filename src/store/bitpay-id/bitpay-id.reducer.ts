@@ -14,6 +14,7 @@ export const bitPayIdReduxPersistBlackList: (keyof BitPayIdState)[] = [
   'twoFactorPairingStatus',
   'twoFactorPairingError',
   'pairingBitPayIdStatus',
+  'pairingBitPayIdError',
   'fetchBasicInfoStatus',
   'doshToken',
   'fetchDoshTokenStatus',

@@ -53,9 +53,14 @@ const Pair: React.FC<PairScreenProps> = ({navigation}) => {
   useEffect(() => {
     if (pairingStatus === 'success') {
       if (dashboardRedirect) {
-        navigationRef.navigate('Card', {screen: 'Home'});
+        navigationRef.navigate('Tabs', {
+          screen: 'Card',
+          params: {
+            screen: 'CardHome',
+          },
+        });
       } else {
-        navigation.navigate('Profile');
+        navigation.replace('Profile');
       }
 
       dispatch(
