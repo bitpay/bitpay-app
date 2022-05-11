@@ -13,16 +13,18 @@ import {RootState} from '../../store';
 import {BitPayIdEffects} from '../../store/bitpay-id';
 import {User} from '../../store/bitpay-id/bitpay-id.models';
 import {ShopEffects} from '../../store/shop';
-import Pair, {PairScreenParamList} from './screens/Pair';
+import PairingScreen, {
+  BitPayIdPairingScreenParamList,
+} from './screens/BitPayIdPairingScreen';
 import Profile from './screens/ProfileSettings';
 
 export type BitpayIdStackParamList = {
-  Pair: PairScreenParamList;
+  PairingScreen: BitPayIdPairingScreenParamList;
   Profile: undefined;
 };
 
 export enum BitpayIdScreens {
-  PAIR = 'Pair',
+  PAIRING = 'PairingScreen',
   PROFILE = 'Profile',
 }
 
@@ -40,8 +42,8 @@ const BitpayIdStack = () => {
       screenOptions={{...baseNavigatorOptions}}
       initialRouteName={BitpayIdScreens.PROFILE}>
       <BitpayId.Screen
-        name={BitpayIdScreens.PAIR}
-        component={Pair}
+        name={BitpayIdScreens.PAIRING}
+        component={PairingScreen}
         options={{
           ...baseScreenOptions,
         }}

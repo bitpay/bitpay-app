@@ -28,7 +28,7 @@ const SpinnerWrapper = styled.View`
   margin-top: 20px;
 `;
 
-const PairingScreen: React.FC<
+const CardPairingScreen: React.FC<
   StackScreenProps<CardStackParamList, 'Pairing'>
 > = props => {
   const {navigation, route} = props;
@@ -117,4 +117,4 @@ const PairingScreen: React.FC<
   );
 };
 
-export default PairingScreen;
+export default CardPairingScreen;

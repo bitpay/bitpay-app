@@ -58,7 +58,7 @@ export const useDeeplinks = () => {
         [RootStacks.BITPAY_ID]: {
           path: 'id',
           screens: {
-            [BitpayIdScreens.PAIR]: 'pair',
+            [BitpayIdScreens.PAIRING]: 'pair',
           },
         },
         [RootStacks.TABS]: {

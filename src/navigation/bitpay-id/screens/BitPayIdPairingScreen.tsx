@@ -8,9 +8,9 @@ import {RootState} from '../../../store';
 import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {PairingBitPayIdStatus} from '../../../store/bitpay-id/bitpay-id.reducer';
-import {BitpayIdStackParamList} from '../BitpayIdStack';
+import {BitpayIdScreens, BitpayIdStackParamList} from '../BitpayIdStack';
 
-export type PairScreenParamList =
+export type BitPayIdPairingScreenParamList =
   | {
       secret?: string;
       code?: string;
@@ -26,8 +26,8 @@ const SpinnerWrapper = styled.View`
   margin-top: 20px;
 `;
 
-const Pair: React.FC<
-  StackScreenProps<BitpayIdStackParamList, 'Pair'>
+const BitPayIdPairingScreen: React.FC<
+  StackScreenProps<BitpayIdStackParamList, BitpayIdScreens.PAIRING>
 > = props => {
   const {navigation, route} = props;
   const {secret, code} = route.params || {};
@@ -105,4 +105,4 @@ const Pair: React.FC<
   );
 };
 
-export default Pair;
+export default BitPayIdPairingScreen;
