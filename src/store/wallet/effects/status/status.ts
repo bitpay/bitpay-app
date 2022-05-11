@@ -55,6 +55,9 @@ export const waitForTargetAmountAndUpdateWallet =
         }),
       );
 
+      // Update history for showing confirming transactions
+      DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_SENT_COMPLETE);
+
       let retry = 0;
 
       // wait for expected balance
@@ -91,6 +94,8 @@ export const waitForTargetAmountAndUpdateWallet =
               console.error(err);
             }
             const {totalAmount} = status.balance;
+            // TODO ETH totalAmount !== targetAmount while the transaction is unconfirmed
+            // remove this for eth when status get updated with push notifications otherwise getStatus call will be duplicated
             // expected amount - update balance
             if (totalAmount === targetAmount) {
               dispatch(startUpdateWalletStatus({key, wallet}));
@@ -115,9 +120,7 @@ export const waitForTargetAmountAndUpdateWallet =
                   }
                 }
               }
-              DeviceEventEmitter.emit(
-                DeviceEmitterEvents.WALLET_UPDATE_COMPLETE,
-              );
+              DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_SENT_COMPLETE);
               await dispatch(updatePortfolioBalance());
 
               clearInterval(interval);
