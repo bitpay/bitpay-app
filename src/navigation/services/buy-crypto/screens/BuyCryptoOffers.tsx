@@ -215,13 +215,13 @@ const ExchangeTermsContainer = styled.View`
 
 const TermsText = styled(Small)`
   line-height: 20px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? '#777777' : SlateDark)};
 `;
 
 const ExchangeTermsText = styled(BaseText)`
   font-size: 11px;
   line-height: 20px;
-  color: #757575;
+  color: #777777;
 `;
 
 const SimplexLogoContainer = styled(FastImage)`
