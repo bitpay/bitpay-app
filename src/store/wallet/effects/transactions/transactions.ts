@@ -739,10 +739,10 @@ export const CanSpeedupTx =
 
 export const getDetailsTitle = (transaction: any, wallet: Wallet) => {
   const {action, error} = transaction;
-  const {currencyAbbreviation} = wallet;
+  const {coin} = wallet.credentials;
 
   if (!IsInvalid(action)) {
-    if (currencyAbbreviation === 'ETH' && error) {
+    if (coin === 'eth' && error) {
       return 'Failed';
     } else if (IsSent(action)) {
       return 'Sent';
@@ -778,8 +778,7 @@ export const buildTransactionDetails =
           time,
           hasMultiplesOutputs,
         } = transaction;
-        const {currencyAbbreviation} = wallet;
-        const currency = currencyAbbreviation.toLowerCase();
+        const {coin: currency} = wallet.credentials;
         const chain = dispatch(GetChain(currency)).toLowerCase();
         const _fee = fees || fee;
 

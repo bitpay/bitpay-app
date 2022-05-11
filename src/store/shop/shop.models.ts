@@ -155,6 +155,9 @@ export interface InvoiceMinerFee {
 export interface Invoice {
   id: string;
   url: string;
+  buyerProvidedInfo?: {
+    selectedTransactionCurrency?: string;
+  };
   exchangeRates: any;
   minerFees: {[currency: string]: InvoiceMinerFee};
   paymentTotals: {[currency: string]: number};

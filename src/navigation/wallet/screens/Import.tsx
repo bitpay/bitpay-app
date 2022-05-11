@@ -13,6 +13,7 @@ type ImportScreenProps = StackScreenProps<WalletStackParamList, 'Import'>;
 
 export interface ImportParamList {
   context?: string;
+  keyId?: string;
 }
 
 const ImportContainer = styled.SafeAreaView`

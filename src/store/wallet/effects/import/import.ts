@@ -6,9 +6,12 @@ import {
   buildKeyObj,
   buildWalletObj,
   findMatchedKeyAndUpdate,
+  getMatchedKey,
+  isMatch,
+  isMatchedWallet,
 } from '../../utils/wallet';
 import {LogActions} from '../../../../store/log';
-import {failedImport, successImport} from '../../wallet.actions';
+import {deleteKey, failedImport, successImport} from '../../wallet.actions';
 
 const BWC = BwcProvider.getInstance();
 
@@ -42,12 +45,20 @@ export const startImportMnemonic =
         opts.xPrivKey = xPrivKey;
 
         const data = await serverAssistedImport(opts);
+
+        // To Avoid Duplicate wallet import
         const {key: _key, wallets} = findMatchedKeyAndUpdate(
           data.wallets,
           data.key,
           Object.values(state.WALLET.keys),
           opts,
         );
+
+        // To clear encrypt password
+        if (opts.keyId && isMatch(_key, state.WALLET.keys[opts.keyId])) {
+          dispatch(deleteKey({keyId: opts.keyId}));
+        }
+
         const key = buildKeyObj({
           key: _key,
           wallets: wallets.map(wallet =>
@@ -79,18 +90,45 @@ export const startImportFile =
       try {
         const state = getState();
         const tokenOpts = state.WALLET.tokenOptions;
-        const {key: _key, wallet} = await createKeyAndCredentialsWithFile(
+        let {key: _key, wallet} = await createKeyAndCredentialsWithFile(
           decryptBackupText,
           opts,
         );
+        let wallets = [wallet];
+
+        const matchedKey = getMatchedKey(
+          _key,
+          Object.values(state.WALLET.keys),
+        );
+
+        if (matchedKey && !opts?.keyId) {
+          _key = matchedKey.methods;
+          opts.keyId = null;
+          if (isMatchedWallet(wallets[0], matchedKey.wallets)) {
+            throw new Error('The wallet is already in the app.');
+          }
+          wallets[0].keyId = matchedKey.id;
+          wallets = wallets.concat(matchedKey.wallets);
+        }
+
+        // To clear encrypt password
+        if (opts.keyId && matchedKey) {
+          let filteredKeys = matchedKey.wallets.filter(
+            w => w.credentials.walletId !== wallets[0].credentials.walletId,
+          );
+          filteredKeys.forEach(w => (w.credentials.keyId = w.keyId = _key.id));
+          wallets = wallets.concat(filteredKeys);
+          dispatch(deleteKey({keyId: opts.keyId}));
+        }
+
         const key = buildKeyObj({
           key: _key,
-          wallets: [
+          wallets: wallets.map(wallet =>
             merge(
               wallet,
               dispatch(buildWalletObj(wallet.credentials, tokenOpts)),
             ),
-          ],
+          ),
           backupComplete: true,
         });
 
@@ -249,7 +287,6 @@ const createKeyAndCredentialsWithFile = async (
     try {
       credentials = data.credentials;
       if (data.key) {
-        // TODO check if the key exists to just add the wallet
         key = new Key({
           seedType: 'object',
           seedData: data.key,

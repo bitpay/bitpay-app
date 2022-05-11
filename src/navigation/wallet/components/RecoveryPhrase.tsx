@@ -220,6 +220,11 @@ const RecoveryPhrase = () => {
   const setImportOptions = (opts: Partial<KeyOptions>) => {
     opts.passphrase = options.passphrase;
 
+    // To clear encrypt password
+    if (route.params?.keyId) {
+      opts.keyId = route.params.keyId;
+    }
+
     if (derivationPathEnabled) {
       const derivationPath = options.derivationPath;
 

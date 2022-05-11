@@ -31,6 +31,7 @@ import {
   WalletSelectMenuHeaderContainer,
 } from '../../GlobalSelect';
 import KeyWalletsRow, {
+  KeyWallet,
   KeyWalletsRowProps,
 } from '../../../../../components/list/KeyWalletsRow';
 import {BuildKeysAndWalletsList} from '../../../../../store/wallet/utils/wallet';
@@ -77,7 +78,8 @@ const PayProConfirm = () => {
   const [recipient, setRecipient] = useState(_recipient);
   const [txDetails, updateTxDetails] = useState(_txDetails);
   const [txp, updateTxp] = useState(_txp);
-  const [keyWallets, setKeysWallets] = useState<KeyWalletsRowProps[]>();
+  const [keyWallets, setKeysWallets] =
+    useState<KeyWalletsRowProps<KeyWallet>[]>();
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const {fee, sendingFrom, subTotal, total} = txDetails || {};
   const payProHost = payProOptions.payProUrl
@@ -91,7 +93,7 @@ const PayProConfirm = () => {
         payProOptions,
         defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
       }),
-    [keys, payProOptions],
+    [defaultAltCurrency.isoCode, keys, payProOptions],
   );
 
   const reshowWalletSelector = async () => {

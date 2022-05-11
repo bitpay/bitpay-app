@@ -135,6 +135,9 @@ const FileOrText = () => {
     const {text, password} = formData;
 
     let opts: Partial<KeyOptions> = {};
+    if (route.params?.keyId) {
+      opts.keyId = route.params.keyId;
+    }
     let decryptBackupText: string;
     try {
       decryptBackupText = BWCProvider.getSJCL().decrypt(password, text);
