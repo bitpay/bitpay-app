@@ -51,7 +51,13 @@ const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
     });
   });
   const CTA_OVERRIDES: {[key in string]: () => void} = {
-    card: () => navigation.navigate('Card', {screen: 'Home'}),
+    card: () =>
+      navigation.navigate('Tabs', {
+        screen: 'Card',
+        params: {
+          screen: 'CardHome',
+        },
+      }),
     swapCrypto: () => {
       analytics.track('BitPay App - Clicked Swap Crypto', {
         from: 'Advertisement',

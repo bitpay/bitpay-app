@@ -8,7 +8,14 @@ export const GetMastercard: React.FC = () => {
   return (
     <LinkCard
       description={'Get the BitPay prepaid Mastercard®'}
-      onPress={() => navigation.navigate('Card', {screen: 'Home'})}
+      onPress={() =>
+        navigation.navigate('Tabs', {
+          screen: 'Card',
+          params: {
+            screen: 'CardHome',
+          },
+        })
+      }
     />
   );
 };

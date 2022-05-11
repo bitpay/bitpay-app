@@ -21,7 +21,7 @@ import {HeaderTitle} from '../../components/styled/Text';
 
 export type CardStackParamList = {
   CardHome: CardHomeScreenParamList;
-  Pairing: CardPairingScreenParamList;
+  CardPairingScreen: CardPairingScreenParamList;
   Settings: CardSettingsParamList;
   CustomizeVirtualCard: CustomizeVirtualCardParamList;
   UpdateCardName: UpdateCardNameScreenParamList;
@@ -30,7 +30,7 @@ export type CardStackParamList = {
 
 export enum CardScreens {
   HOME = 'CardHome',
-  PAIRING = 'Pairing',
+  PAIRING = 'CardPairingScreen',
   SETTINGS = 'Settings',
   CUSTOMIZE_VIRTUAL_CARD = 'CustomizeVirtualCard',
   UPDATE_CARD_NAME = 'UpdateCardName',

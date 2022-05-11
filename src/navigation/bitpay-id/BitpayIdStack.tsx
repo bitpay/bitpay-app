@@ -19,12 +19,12 @@ import PairingScreen, {
 import Profile from './screens/ProfileSettings';
 
 export type BitpayIdStackParamList = {
-  PairingScreen: BitPayIdPairingScreenParamList;
+  BitPayIdPairingScreen: BitPayIdPairingScreenParamList;
   Profile: undefined;
 };
 
 export enum BitpayIdScreens {
-  PAIRING = 'PairingScreen',
+  PAIRING = 'BitPayIdPairingScreen',
   PROFILE = 'Profile',
 }
 
