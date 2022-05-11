@@ -253,6 +253,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const uiFormattedWallet = buildUIFormattedWallet(
     fullWalletObj,
     defaultAltCurrency.isoCode,
+    'symbol',
   );
 
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
