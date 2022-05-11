@@ -1,14 +1,10 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useEffect} from 'react';
-import styled from 'styled-components/native';
-import Spinner from '../../../components/spinner/Spinner';
-import {ScreenGutter} from '../../../components/styled/Containers';
-import {AppActions} from '../../../store/app';
-import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
+import React, {useCallback} from 'react';
 import {CardActions} from '../../../store/card';
 import {VirtualDesignCurrency} from '../../../store/card/card.types';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {CardStackParamList} from '../CardStack';
+import {useAppDispatch} from '../../../utils/hooks';
+import BasePairing from '../../bitpay-id/components/BasePairing';
+import {CardScreens, CardStackParamList} from '../CardStack';
 
 export type CardPairingScreenParamList =
   | {
@@ -19,101 +15,37 @@ export type CardPairingScreenParamList =
     }
   | undefined;
 
-const PairingContainer = styled.View`
-  padding: ${ScreenGutter};
-  align-items: center;
-`;
-
-const SpinnerWrapper = styled.View`
-  margin-top: 20px;
-`;
-
 const CardPairingScreen: React.FC<
-  StackScreenProps<CardStackParamList, 'Pairing'>
+  StackScreenProps<CardStackParamList, CardScreens.PAIRING>
 > = props => {
   const {navigation, route} = props;
   const {secret, code} = route.params || {};
 
   const dispatch = useAppDispatch();
-  const pairingStatus = useAppSelector(
-    ({BITPAY_ID}) => BITPAY_ID.pairingBitPayIdStatus,
-  );
-  const pairingError = useAppSelector(
-    ({BITPAY_ID}) => BITPAY_ID.pairingBitPayIdError || '',
-  );
 
-  useEffect(() => {
-    if (secret) {
-      dispatch(BitPayIdEffects.startDeeplinkPairing(secret, code));
-    } else {
-      const goToCardHome = () => {
-        navigation.replace('CardHome');
-      };
+  const onSuccess = useCallback(() => {
+    const virtualDesignCurrency = route.params?.vcd as
+      | VirtualDesignCurrency
+      | undefined;
 
-      dispatch(
-        AppActions.showBottomNotificationModal({
-          title: 'Pairing failed',
-          message: 'No pairing data received.',
-          type: 'warning',
-          actions: [
-            {
-              text: 'OK',
-              action: goToCardHome,
-            },
-          ],
-          enableBackdropDismiss: true,
-          onBackdropDismiss: goToCardHome,
-        }),
-      );
-    }
-  }, [dispatch, navigation, secret, code]);
+    dispatch(
+      CardActions.virtualDesignCurrencyUpdated(
+        virtualDesignCurrency || 'bitpay-b',
+      ),
+    );
+  }, [dispatch, route.params?.vcd]);
 
-  useEffect(() => {
-    if (pairingStatus) {
-      const goToCardHome = () => {
-        navigation.replace('CardHome');
-        dispatch(BitPayIdActions.updatePairingBitPayIdStatus(null));
-      };
-
-      if (pairingStatus === 'success') {
-        const virtualDesignCurrency = route.params?.vcd as
-          | VirtualDesignCurrency
-          | undefined;
-
-        dispatch(
-          CardActions.virtualDesignCurrencyUpdated(
-            virtualDesignCurrency || 'bitpay-b',
-          ),
-        );
-
-        goToCardHome();
-      } else if (pairingStatus === 'failed') {
-        dispatch(
-          AppActions.showBottomNotificationModal({
-            type: 'error',
-            title: 'Pairing failed',
-            message: pairingError,
-            actions: [
-              {
-                primary: true,
-                action: goToCardHome,
-                text: 'OK',
-              },
-            ],
-            enableBackdropDismiss: true,
-            onBackdropDismiss: goToCardHome,
-          }),
-        );
-      }
-    }
-  }, [dispatch, navigation, route, pairingStatus, pairingError]);
+  const onComplete = useCallback(() => {
+    navigation.replace('CardHome');
+  }, [navigation]);
 
   return (
-    <PairingContainer>
-      <SpinnerWrapper>
-        <Spinner size={60} />
-      </SpinnerWrapper>
-    </PairingContainer>
+    <BasePairing
+      secret={secret}
+      code={code}
+      onSuccess={onSuccess}
+      onComplete={onComplete}
+    />
   );
 };
 
