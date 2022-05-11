@@ -5,6 +5,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import Button from '../../components/button/Button';
 import haptic from '../../components/haptic-feedback/haptic';
 import {HeaderRightContainer} from '../../components/styled/Containers';
+import {HeaderTitle} from '../../components/styled/Text';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
@@ -46,6 +47,7 @@ const BitpayIdStack = () => {
         component={PairingScreen}
         options={{
           ...baseScreenOptions,
+          headerTitle: () => <HeaderTitle>Pairing...</HeaderTitle>,
         }}
       />
       <BitpayId.Screen

@@ -106,7 +106,7 @@ const BasePairing = (props: BasePairingParamList) => {
   return (
     <PairingContainer>
       <SpinnerWrapper>
-        <Spinner size={60} />
+        <Spinner size={78} />
       </SpinnerWrapper>
     </PairingContainer>
   );
