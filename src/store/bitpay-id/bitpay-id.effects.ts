@@ -323,7 +323,7 @@ export const startDeeplinkPairing =
 
     try {
       dispatch(
-        AppEffects.startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN),
+        AppEffects.startOnGoingProcessModal(OnGoingProcessMessages.PAIRING),
       );
       await dispatch(startPairAndLoadUser(network, secret, code));
     } catch (err) {
