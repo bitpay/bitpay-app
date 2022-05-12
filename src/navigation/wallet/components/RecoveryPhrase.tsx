@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {
   Caution,
@@ -34,6 +34,7 @@ import BoxInput from '../../../components/form/BoxInput';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {Key, KeyOptions} from '../../../store/wallet/wallet.models';
 import {
+  startCreateKeyWithOpts,
   startGetRates,
   startImportMnemonic,
   startImportWithDerivationPath,
@@ -82,6 +83,10 @@ import CurrencySelectionRow, {
 } from '../../../components/list/CurrencySelectionRow';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {sleep} from '../../../utils/helper-methods';
+import {
+  GetName,
+  isSingleAddressCoin,
+} from '../../../store/wallet/utils/currency';
 
 const ScrollViewContainer = styled.ScrollView`
   margin-top: 20px;
@@ -176,12 +181,13 @@ const RecoveryPhrase = () => {
   const walletTermsAccepted = useSelector(
     ({WALLET}: RootState) => WALLET.walletTermsAccepted,
   );
-  const [showOptions, setShowOptions] = useState(false);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [derivationPathEnabled, setDerivationPathEnabled] = useState(false);
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState(CurrencyOptions[0]);
+  const [recreateWallet, setRecreateWallet] = useState(false);
 
-  const [options, setOptions] = useState({
+  const [advancedOptions, setAdvancedOptions] = useState({
     derivationPath: DefaultDerivationPath.defaultBTC as string,
     coin: CurrencyOptions[0].currencyAbbreviation,
     passphrase: undefined as string | undefined,
@@ -193,78 +199,129 @@ const RecoveryPhrase = () => {
     handleSubmit,
     setValue,
     formState: {errors},
+    getValues,
   } = useForm({resolver: yupResolver(schema)});
 
-  const showErrorModal = (e: string) => {
-    dispatch(
-      showBottomNotificationModal({
-        type: 'warning',
-        title: 'Something went wrong',
-        message: e,
-        enableBackdropDismiss: true,
-        actions: [
-          {
-            text: 'OK',
-            action: () => {},
-            primary: true,
-          },
-        ],
-      }),
-    );
+  const showErrorModal = (e: Error) => {
+    if (e && e.message === 'WALLET_DOES_NOT_EXIST') {
+      dispatch(
+        showBottomNotificationModal({
+          type: 'warning',
+          title: "We couldn't find your wallet",
+          message:
+            'There are no records of your wallet on our servers. If you are importing a BIP44 compatible wallet from a 3rd party you can continue to recreate it. If you wallet is not BIP44 compatible, you will not be able to access its funds.',
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: 'Continue',
+              action: async () => {
+                await sleep(500);
+                if (derivationPathEnabled) {
+                  const {text} = getValues();
+                  setOptsAndCreate(text, advancedOptions);
+                } else {
+                  // select coin to create
+                  setRecreateWallet(true);
+                  setCurrencyModalVisible(true);
+                }
+              },
+              primary: true,
+            },
+            {
+              text: 'Go Back',
+              action: () => {},
+              primary: false,
+            },
+          ],
+        }),
+      );
+    } else {
+      dispatch(
+        showBottomNotificationModal({
+          type: 'warning',
+          title: 'Something went wrong',
+          message: e.message,
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: 'OK',
+              action: () => {},
+              primary: true,
+            },
+          ],
+        }),
+      );
+    }
   };
 
   const isValidPhrase = (words: string) => {
     return words && words.trim().split(/[\u3000\s]+/).length % 3 === 0;
   };
 
-  const setImportOptions = (opts: Partial<KeyOptions>) => {
-    opts.passphrase = options.passphrase;
+  const setKeyOptions = (
+    keyOpts: Partial<KeyOptions>,
+    advancedOpts: {
+      derivationPath: string;
+      coin: string;
+      passphrase: string | undefined;
+      isMultisig: boolean;
+    },
+  ) => {
+    keyOpts.passphrase = advancedOpts.passphrase;
 
     // To clear encrypt password
     if (route.params?.keyId) {
-      opts.keyId = route.params.keyId;
+      keyOpts.keyId = route.params.keyId;
     }
 
-    if (derivationPathEnabled) {
-      const derivationPath = options.derivationPath;
+    if (derivationPathEnabled || recreateWallet) {
+      const derivationPath = advancedOpts.derivationPath;
 
-      opts.networkName = getNetworkName(derivationPath);
-      opts.derivationStrategy = getDerivationStrategy(derivationPath);
-      opts.account = getAccount(derivationPath);
+      keyOpts.networkName = getNetworkName(derivationPath);
+      keyOpts.derivationStrategy = getDerivationStrategy(derivationPath);
+      keyOpts.account = getAccount(derivationPath);
 
-      /* TODO: opts.n is just used to determinate if the wallet is multisig (m/48'/xx) or single sig (m/44')
-        we should change the name to 'isMultisig'.
-        isMultisig is used to allow import old multisig wallets with derivation strategy = 'BIP44'
+      /* TODO: keyOpts.n is just used to determinate if the wallet is multisig (m/48'/xx) or single sig (m/44')
+      we should change the name to 'isMultisig'.
+      isMultisig is used to allow import old multisig wallets with derivation strategy = 'BIP44'
       */
-      opts.n = options.isMultisig
+      keyOpts.n = advancedOpts.isMultisig
         ? 2
-        : opts.derivationStrategy === 'BIP48'
+        : keyOpts.derivationStrategy === 'BIP48'
         ? 2
         : 1;
 
-      opts.coin = options.coin.toLowerCase();
+      keyOpts.coin = advancedOpts.coin.toLowerCase();
+      keyOpts.singleAddress = dispatch(
+        isSingleAddressCoin(advancedOpts.coin.toLowerCase()),
+      );
 
       // set opts.useLegacyPurpose
-      if (parsePath(derivationPath).purpose === "44'" && opts.n > 1) {
-        opts.useLegacyPurpose = true;
+      if (parsePath(derivationPath).purpose === "44'" && keyOpts.n > 1) {
+        keyOpts.useLegacyPurpose = true;
         logger.debug('Using 44 for Multisig');
       }
 
       // set opts.useLegacyCoinType
-      if (opts.coin === 'bch' && parsePath(derivationPath).coinCode === "0'") {
-        opts.useLegacyCoinType = true;
+      if (
+        keyOpts.coin === 'bch' &&
+        parsePath(derivationPath).coinCode === "0'"
+      ) {
+        keyOpts.useLegacyCoinType = true;
         logger.debug('Using 0 for BCH creation');
       }
 
       if (
-        !opts.networkName ||
-        !opts.derivationStrategy ||
-        !Number.isInteger(opts.account)
+        !keyOpts.networkName ||
+        !keyOpts.derivationStrategy ||
+        !Number.isInteger(keyOpts.account)
       ) {
         throw new Error('Invalid derivation path');
       }
 
-      if (!isValidDerivationPathCoin(options.derivationPath, opts.coin)) {
+      if (
+        !isValidDerivationPathCoin(advancedOpts.derivationPath, keyOpts.coin)
+      ) {
         throw new Error('Invalid derivation path for selected coin');
       }
     }
@@ -273,27 +330,27 @@ const RecoveryPhrase = () => {
   const onSubmit = (formData: {text: string}) => {
     const {text} = formData;
 
-    let opts: Partial<KeyOptions> = {};
+    let keyOpts: Partial<KeyOptions> = {};
 
     try {
-      setImportOptions(opts);
+      setKeyOptions(keyOpts, advancedOptions);
     } catch (e: any) {
       logger.error(e.message);
-      showErrorModal(e.message);
+      showErrorModal(e);
       return;
     }
 
     if (text.includes('xprv') || text.includes('tprv')) {
       const xPrivKey = text;
-      importWallet({xPrivKey}, opts);
+      importWallet({xPrivKey}, keyOpts);
     } else {
       const words = text;
       if (!isValidPhrase(words)) {
         logger.error('Incorrect words length');
-        showErrorModal('The recovery phrase is invalid.');
+        showErrorModal(new Error('The recovery phrase is invalid.'));
         return;
       }
-      importWallet({words}, opts);
+      importWallet({words}, keyOpts);
     }
   };
 
@@ -325,7 +382,71 @@ const RecoveryPhrase = () => {
       logger.error(e.message);
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
-      showErrorModal(e.message);
+      showErrorModal(e);
+      return;
+    }
+  };
+
+  const setOptsAndCreate = async (
+    text: string,
+    advancedOpts: {
+      derivationPath: string;
+      coin: string;
+      passphrase: string | undefined;
+      isMultisig: boolean;
+    },
+  ): Promise<void> => {
+    try {
+      let keyOpts: Partial<KeyOptions> = {
+        name: dispatch(GetName(advancedOpts.coin!)),
+      };
+
+      try {
+        setKeyOptions(keyOpts, advancedOpts);
+      } catch (e: any) {
+        logger.error(e.message);
+        showErrorModal(e);
+        return;
+      }
+
+      if (text.includes('xprv') || text.includes('tprv')) {
+        keyOpts.extendedPrivateKey = text;
+        keyOpts.seedType = 'extendedPrivateKey';
+      } else {
+        keyOpts.mnemonic = text;
+        keyOpts.seedType = 'mnemonic';
+        if (!isValidPhrase(text)) {
+          logger.error('Incorrect words length');
+          showErrorModal(new Error('The recovery phrase is invalid.'));
+          return;
+        }
+      }
+
+      await dispatch(
+        startOnGoingProcessModal(OnGoingProcessMessages.CREATING_KEY),
+      );
+
+      const key = (await dispatch<any>(startCreateKeyWithOpts(keyOpts))) as Key;
+      await dispatch(startGetRates({}));
+      await dispatch(startUpdateAllWalletStatusForKey(key));
+      await dispatch(updatePortfolioBalance());
+
+      dispatch(setHomeCarouselConfig({id: key.id, show: true}));
+
+      backupRedirect({
+        context: route.params?.context,
+        navigation,
+        walletTermsAccepted,
+        key,
+      });
+      dispatch(dismissOnGoingProcessModal());
+      setRecreateWallet(false);
+    } catch (e: any) {
+      logger.error(e.message);
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      showErrorModal(e);
+      setRecreateWallet(false);
       return;
     }
   };
@@ -342,12 +463,18 @@ const RecoveryPhrase = () => {
         const derivationPath = DefaultDerivationPath[defaultCoin];
         setSelectedCurrency(_selectedCurrency[0]);
         setCurrencyModalVisible(false);
-
-        setOptions({
-          ...options,
+        const advancedOpts = {
+          ...advancedOptions,
           coin: currencyAbbreviation,
           derivationPath,
-        });
+        };
+        setAdvancedOptions(advancedOpts);
+
+        // is trying to create wallet in bws
+        if (recreateWallet) {
+          const {text} = getValues();
+          setOptsAndCreate(text, advancedOpts);
+        }
       };
 
       return (
@@ -359,7 +486,14 @@ const RecoveryPhrase = () => {
         />
       );
     },
-    [setSelectedCurrency, setCurrencyModalVisible, setOptions, options],
+    [
+      setSelectedCurrency,
+      setCurrencyModalVisible,
+      setAdvancedOptions,
+      advancedOptions,
+      recreateWallet,
+      setRecreateWallet,
+    ],
   );
 
   return (
@@ -393,12 +527,16 @@ const RecoveryPhrase = () => {
                       };
 
                       if (!isValidPhrase(recoveryObj.data)) {
-                        showErrorModal('The recovery phrase is invalid.');
+                        showErrorModal(
+                          new Error('The recovery phrase is invalid.'),
+                        );
                       } else {
                         setValue('text', recoveryObj.data);
                       }
                     } catch (err) {
-                      showErrorModal('The recovery phrase is invalid.');
+                      showErrorModal(
+                        new Error('The recovery phrase is invalid.'),
+                      );
                     }
                   },
                 },
@@ -433,9 +571,9 @@ const RecoveryPhrase = () => {
             <AdvancedOptionsButton
               onPress={() => {
                 Haptic('impactLight');
-                setShowOptions(!showOptions);
+                setShowAdvancedOptions(!showAdvancedOptions);
               }}>
-              {showOptions ? (
+              {showAdvancedOptions ? (
                 <>
                   <AdvancedOptionsButtonText>
                     Hide Advanced Options
@@ -452,7 +590,7 @@ const RecoveryPhrase = () => {
               )}
             </AdvancedOptionsButton>
 
-            {showOptions && (
+            {showAdvancedOptions && (
               <AdvancedOptions>
                 <RowContainer
                   activeOpacity={1}
@@ -474,7 +612,7 @@ const RecoveryPhrase = () => {
               </AdvancedOptions>
             )}
 
-            {showOptions && derivationPathEnabled && (
+            {showAdvancedOptions && derivationPathEnabled && (
               <AdvancedOptions>
                 <CurrencySelectorContainer>
                   <Label>CURRENCY</Label>
@@ -517,39 +655,46 @@ const RecoveryPhrase = () => {
               </CurrencySelectionModalContainer>
             </SheetModal>
 
-            {showOptions && derivationPathEnabled && (
+            {showAdvancedOptions && derivationPathEnabled && (
               <AdvancedOptions>
                 <InputContainer>
                   <BoxInput
                     label={'DERIVATION PATH'}
                     onChangeText={(text: string) =>
-                      setOptions({...options, derivationPath: text})
+                      setAdvancedOptions({
+                        ...advancedOptions,
+                        derivationPath: text,
+                      })
                     }
-                    value={options.derivationPath}
+                    value={advancedOptions.derivationPath}
                   />
                 </InputContainer>
               </AdvancedOptions>
             )}
 
-            {showOptions &&
+            {showAdvancedOptions &&
               derivationPathEnabled &&
-              options.derivationPath === DefaultDerivationPath.defaultBTC && (
+              advancedOptions.derivationPath ===
+                DefaultDerivationPath.defaultBTC && (
                 <AdvancedOptions>
                   <RowContainer
                     activeOpacity={1}
                     onPress={() => {
-                      setOptions({...options, isMultisig: !options.isMultisig});
+                      setAdvancedOptions({
+                        ...advancedOptions,
+                        isMultisig: !advancedOptions.isMultisig,
+                      });
                     }}>
                     <Column>
                       <OptionTitle>Shared Wallet</OptionTitle>
                     </Column>
                     <CheckBoxContainer>
                       <Checkbox
-                        checked={options.isMultisig}
+                        checked={advancedOptions.isMultisig}
                         onPress={() => {
-                          setOptions({
-                            ...options,
-                            isMultisig: !options.isMultisig,
+                          setAdvancedOptions({
+                            ...advancedOptions,
+                            isMultisig: !advancedOptions.isMultisig,
                           });
                         }}
                       />
@@ -558,16 +703,16 @@ const RecoveryPhrase = () => {
                 </AdvancedOptions>
               )}
 
-            {showOptions && (
+            {showAdvancedOptions && (
               <AdvancedOptions>
                 <InputContainer>
                   <BoxInput
                     placeholder={'strongPassword123'}
                     type={'password'}
                     onChangeText={(text: string) =>
-                      setOptions({...options, passphrase: text})
+                      setAdvancedOptions({...advancedOptions, passphrase: text})
                     }
-                    value={options.passphrase}
+                    value={advancedOptions.passphrase}
                   />
                 </InputContainer>
                 <PasswordParagraph>

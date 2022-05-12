@@ -129,6 +129,7 @@ export interface KeyOptions {
   words?: string;
   xPrivKey?: string;
   invitationCode?: string;
+  seedType?: string;
 }
 
 export interface Token {

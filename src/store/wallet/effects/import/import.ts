@@ -180,7 +180,7 @@ export const startImportWithDerivationPath =
             if (err.message.indexOf('not found') > 0) {
               err = new Error('WALLET_DOES_NOT_EXIST');
             }
-            throw err;
+            return reject(err);
           }
           const key = buildKeyObj({
             key: _key,
@@ -371,7 +371,7 @@ export const serverAssistedImport = async (
             return reject(err);
           }
           if (wallets.length === 0) {
-            return reject(new Error('No wallets found'));
+            return reject(new Error('WALLET_DOES_NOT_EXIST'));
           } else {
             // TODO CUSTOM TOKENS
             const tokens: Wallet[] = wallets.filter(
