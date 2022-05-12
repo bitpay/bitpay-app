@@ -10,7 +10,7 @@ const DefaultAdvertisements: ClassicContentCard[] = [
     ...DEFAULT_CLASSIC_CONTENT_CARD,
     id: 'card',
     image: CardIcon as any,
-    title: 'Get the BitPay Prepaid Mastercard ®',
+    title: 'Get the BitPay Prepaid Mastercard®',
     cardDescription: 'Turn your crypto into dollars. Spend instantly.',
     url: `${APP_DEEPLINK_PREFIX}wallet-card/dashboard/signup`,
     openURLInWebView: false,
