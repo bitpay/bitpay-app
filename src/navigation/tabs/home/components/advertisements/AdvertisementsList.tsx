@@ -15,6 +15,7 @@ interface AdvertisementListProps {
 
 const AdvertisementListContainer = styled.View`
   margin-top: 40px;
+  margin-bottom: 20px;
 `;
 
 const AdvertisementCardContainer = styled.View<{isLast: boolean}>`
