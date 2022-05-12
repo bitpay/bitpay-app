@@ -77,7 +77,11 @@ const PortfolioBalance = () => {
         <QuestionSvg width={12} height={12} />
       </PortfolioBalanceHeader>
       <PortfolioBalanceText>
-        {formatFiatAmount(portfolioBalance.current, defaultAltCurrency.isoCode)}
+        {formatFiatAmount(
+          portfolioBalance.current,
+          defaultAltCurrency.isoCode,
+          {currencyDisplay: 'symbol'},
+        )}
       </PortfolioBalanceText>
       {percentageDifference ? (
         <Percentage percentageDifference={percentageDifference} />
