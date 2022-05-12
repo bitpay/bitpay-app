@@ -28,7 +28,6 @@ import i18n from 'i18next';
 import BitpayIdStack, {
   BitpayIdStackParamList,
 } from './navigation/bitpay-id/BitpayIdStack';
-import CardStack, {CardStackParamList} from './navigation/card/CardStack';
 import OnboardingStack, {
   OnboardingStackParamList,
 } from './navigation/onboarding/OnboardingStack';
@@ -89,7 +88,6 @@ export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabsStackParamList>;
   BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
   Wallet: NavigatorScreenParams<WalletStackParamList>;
-  Card: NavigatorScreenParams<CardStackParamList>;
   Scan: NavigatorScreenParams<ScanStackParamList>;
   Shop: NavigatorScreenParams<ShopStackParamList>;
   GiftCard: NavigatorScreenParams<GiftCardStackParamList>;
@@ -114,7 +112,6 @@ export enum RootStacks {
   TABS = 'Tabs',
   BITPAY_ID = 'BitpayId',
   WALLET = 'Wallet',
-  CARD = 'Card',
   SCAN = 'Scan',
   CONTACTS = 'Contacts',
   GIFT_CARD = 'GiftCard',
@@ -137,7 +134,6 @@ export type NavScreenParams = NavigatorScreenParams<
     OnboardingStackParamList &
     BitpayIdStackParamList &
     WalletStackParamList &
-    CardStackParamList &
     GiftCardStackParamList &
     MerchantStackParamList &
     GeneralSettingsStackParamList &
@@ -368,13 +364,6 @@ export default () => {
               }}
               name={RootStacks.WALLET}
               component={WalletStack}
-            />
-            <Root.Screen
-              name={RootStacks.CARD}
-              component={CardStack}
-              options={{
-                gestureEnabled: false,
-              }}
             />
             <Root.Screen name={RootStacks.SCAN} component={ScanStack} />
             <Root.Screen

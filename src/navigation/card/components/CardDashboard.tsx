@@ -34,7 +34,7 @@ import {selectCardGroups} from '../../../store/card/card.selectors';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {BuyCryptoScreens} from '../../services/buy-crypto/BuyCryptoStack';
 import {WalletScreens} from '../../wallet/WalletStack';
-import {CardStackParamList} from '../CardStack';
+import {CardScreens, CardStackParamList} from '../CardStack';
 import {
   EmptyGhostContainer,
   EmptyListContainer,
@@ -53,7 +53,7 @@ import TransactionRow from './CardTransactionRow';
 
 interface CardDashboardProps {
   id: string;
-  navigation: StackNavigationProp<CardStackParamList, 'Home'>;
+  navigation: StackNavigationProp<CardStackParamList, CardScreens.HOME>;
 }
 
 const toUiTransaction = (tx: Transaction, settled: boolean) => {

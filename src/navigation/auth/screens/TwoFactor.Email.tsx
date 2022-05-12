@@ -1,6 +1,8 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
+import styled from 'styled-components/native';
+import Spinner from '../../../components/spinner/Spinner';
 import {navigationRef} from '../../../Root';
 import {RootState} from '../../../store';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
@@ -19,6 +21,11 @@ type EmailAuthenticationScreenProps = StackScreenProps<
 
 const POLL_INTERVAL = 1000 * 3;
 const POLL_TIMEOUT = 1000 * 60 * 5;
+
+const SpinnerWrapper = styled.View`
+  align-items: center;
+  margin-bottom: 32px;
+`;
 
 const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
   navigation,
@@ -112,6 +119,10 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
           </>
         ) : (
           <>
+            <SpinnerWrapper>
+              <Spinner size={78} />
+            </SpinnerWrapper>
+
             <AuthFormParagraph>
               We sent an email containing a link to authenticate this login
               attempt.

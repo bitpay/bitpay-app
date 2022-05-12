@@ -25,7 +25,7 @@ import {CardActions} from '../../../../store/card';
 import {Card} from '../../../../store/card/card.models';
 import {VirtualDesignCurrency} from '../../../../store/card/card.types';
 import {getCardCurrencyColorPalette} from '../../../../utils/card';
-import {CardStackParamList} from '../../CardStack';
+import {CardScreens, CardStackParamList} from '../../CardStack';
 import CardFront from '../../components/CardFront';
 import CheckIcon from './CheckIcon';
 import * as Styled from './CustomizeVirtualCard.styled';
@@ -165,7 +165,7 @@ const CustomizeVirtualCard: React.FC<
     if (navigation.canGoBack()) {
       navigation.goBack();
     } else {
-      navigation.navigate('Home');
+      navigation.navigate(CardScreens.HOME);
     }
   };
 
