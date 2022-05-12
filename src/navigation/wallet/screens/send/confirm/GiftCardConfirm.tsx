@@ -1,7 +1,7 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {Hr} from '../../../../../components/styled/Containers';
-import {RouteProp} from '@react-navigation/core';
+import {RouteProp, StackActions} from '@react-navigation/core';
 import {WalletScreens, WalletStackParamList} from '../../../WalletStack';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {H4, TextAlign} from '../../../../../components/styled/Text';
@@ -301,27 +301,15 @@ const Confirm = () => {
     if (giftCard.status === 'PENDING') {
       dispatch(ShopEffects.waitForConfirmation(giftCard.invoiceId));
     }
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 2,
-        routes: [
-          {
-            name: 'Tabs',
-            params: {screen: 'Shop'},
-          },
-          {
-            name: 'GiftCard',
-            params: {
-              screen: 'GiftCardDetails',
-              params: {
-                giftCard,
-                cardConfig,
-              },
-            },
-          },
-        ],
-      }),
-    );
+    navigation.dispatch(StackActions.popToTop());
+    navigation.dispatch(StackActions.pop(3));
+    navigation.navigate('GiftCard', {
+      screen: 'GiftCardDetails',
+      params: {
+        giftCard,
+        cardConfig,
+      },
+    });
   };
 
   const showError = ({

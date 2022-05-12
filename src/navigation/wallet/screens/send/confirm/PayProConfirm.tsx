@@ -1,7 +1,7 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import axios from 'axios';
-import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
-import {RouteProp} from '@react-navigation/core';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import {RouteProp, StackActions} from '@react-navigation/core';
 import {WalletScreens, WalletStackParamList} from '../../../WalletStack';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {H4, TextAlign} from '../../../../../components/styled/Text';
@@ -400,36 +400,22 @@ const PayProConfirm = () => {
       <PaymentSent
         isVisible={showPaymentSentModal}
         onCloseModal={async () => {
-          const nextScreen = coinbaseAccount
-            ? {
-                name: 'Coinbase',
+          navigation.dispatch(StackActions.popToTop());
+          if (coinbaseAccount) {
+            navigation.dispatch(StackActions.pop(3));
+          }
+          coinbaseAccount
+            ? navigation.navigate('Coinbase', {
+                screen: 'CoinbaseAccount',
+                params: {accountId: coinbaseAccount.id},
+              })
+            : navigation.navigate('Wallet', {
+                screen: 'WalletDetails',
                 params: {
-                  screen: 'CoinbaseAccount',
-                  params: {accountId: coinbaseAccount.id},
+                  walletId: wallet!.id,
+                  key,
                 },
-              }
-            : {
-                name: 'Wallet',
-                params: {
-                  screen: 'WalletDetails',
-                  params: {
-                    walletId: wallet!.id,
-                    key,
-                  },
-                },
-              };
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 2,
-              routes: [
-                {
-                  name: 'Tabs',
-                  params: {screen: 'Home'},
-                },
-                nextScreen,
-              ],
-            }),
-          );
+              });
           await sleep(0);
           setShowPaymentSentModal(false);
         }}
