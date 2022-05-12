@@ -282,14 +282,11 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
           dispatch(
             showDecryptPasswordModal({
               onSubmitHandler: async (_password: string) => {
+                dispatch(dismissDecryptPasswordModal());
+                await sleep(500);
                 if (checkEncryptPassword(key, _password)) {
-                  dispatch(dismissDecryptPasswordModal());
-                  await sleep(500);
                   resolve(_password);
                 } else {
-                  dispatch(dismissDecryptPasswordModal());
-                  await sleep(500);
-                  dispatch(showBottomNotificationModal(WrongPasswordError()));
                   return reject('invalid password');
                 }
               },
@@ -340,10 +337,13 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
       );
       dispatch(dismissOnGoingProcessModal());
     } catch (err: any) {
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
-      console.error(err);
-      showErrorModal(err.message);
+      if (err === 'invalid password') {
+        dispatch(showBottomNotificationModal(WrongPasswordError()));
+      } else {
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+        showErrorModal(err.message);
+      }
     }
   });
 
