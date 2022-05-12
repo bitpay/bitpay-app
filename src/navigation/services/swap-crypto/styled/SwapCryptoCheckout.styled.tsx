@@ -6,6 +6,7 @@ import {
   White,
   LightBlack,
   NeutralSlate,
+  LinkBlue,
 } from '../../../../styles/colors';
 
 export const ItemDivisor = styled.View`
@@ -85,7 +86,7 @@ export const CheckBoxContainer = styled.View`
 `;
 
 export const CheckboxText = styled(BaseText)`
-  color: #757575;
+  color: #777777;
   font-size: 11px;
   font-weight: 300;
   margin-left: 20px;
@@ -98,7 +99,7 @@ export const PoliciesContainer = styled.TouchableOpacity`
 `;
 
 export const PoliciesText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : ProgressBlue)};
+  color: ${({theme: {dark}}) => (dark ? LinkBlue : ProgressBlue)};
 `;
 
 export const ArrowContainer = styled.View`

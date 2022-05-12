@@ -7,13 +7,13 @@ import {
   ActiveOpacity,
   RowContainer,
 } from '../styled/Containers';
-import {Badge, H5, H7, ListItemSubText} from '../styled/Text';
+import {Badge, H5, ListItemSubText} from '../styled/Text';
 import styled from 'styled-components/native';
 import NestedArrow from '../../../assets/img/nested-arrow.svg';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
-import {SUPPORTED_CURRENCIES} from '../../constants/currencies';
 import {Network} from '../../constants';
 import {TransactionProposal} from '../../store/wallet/wallet.models';
+import {CoinbaseAccountProps} from '../../api/coinbase/coinbase.types';
 
 const BadgeContainer = styled.View`
   margin-left: 5px;
@@ -45,6 +45,7 @@ export interface WalletRowProps {
   hideWallet?: boolean;
   hideBalance?: boolean;
   pendingTxps: TransactionProposal[];
+  coinbaseAccount?: CoinbaseAccountProps;
 }
 
 interface Props {

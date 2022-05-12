@@ -415,6 +415,10 @@ export const coinbasePayInvoice =
         dispatch(payInvoiceFailed(error));
         dispatch(LogActions.error(coinbaseParseErrorToString(error)));
       }
+      const coinbaseErrorString = coinbaseParseErrorToString(error);
+      if (coinbaseErrorString) {
+        throw new Error(coinbaseErrorString);
+      }
       throw error;
     }
   };

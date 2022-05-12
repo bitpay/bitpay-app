@@ -101,7 +101,11 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {params} = route;
-  const {keyId, words, context, key, walletTermsAccepted} = params;
+  const {keyId, words: _words, context, key, walletTermsAccepted} = params;
+
+  let words = _words.map(w => {
+    return {word: w, isActive: true};
+  });
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -156,7 +160,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
   }, [navigation]);
 
   const ref = useRef(null);
-  const shuffledWords = useRef<Array<string>>(
+  const shuffledWords = useRef<Array<{word: string; isActive: boolean}>>(
     [...words].sort(() => Math.random() - 0.5),
   );
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
@@ -193,7 +197,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
     } else {
       // filter out empty string and compare words against real order
       const compareWords = update.filter(w => w);
-      if (words.every((_word, index) => _word === compareWords[index])) {
+      if (words.every((w, index) => w.word === compareWords[index])) {
         // user have already been through the backup flow no need to set the flag again
         if (context !== 'keySettings') {
           dispatch(WalletActions.setBackupComplete(keyId));
@@ -301,12 +305,15 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
             </TextAlign>
           </DirectionsContainer>
           <WordSelectorContainer>
-            {shuffledWords.current.map(word => (
+            {shuffledWords.current.map((value, index) => (
               <WordSelector
-                key={word}
-                onPress={() => wordSelected(word)}
-                disabled={attemptWords.includes(word)}>
-                <WordSelectorText>{word}</WordSelectorText>
+                key={index}
+                onPress={() => {
+                  value.isActive = false;
+                  wordSelected(value.word);
+                }}
+                disabled={!value.isActive}>
+                <WordSelectorText>{value.word}</WordSelectorText>
               </WordSelector>
             ))}
           </WordSelectorContainer>

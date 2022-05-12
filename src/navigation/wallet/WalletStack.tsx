@@ -97,7 +97,7 @@ export type WalletStackParamList = {
   DebitCardConfirm: DebitCardConfirmParamList;
   GiftCardConfirm: GiftCardConfirmParamList;
   PayProConfirm: PayProConfirmParamList;
-  PayProConfirmTwoFactor: {onSubmit: (code: string) => void};
+  PayProConfirmTwoFactor: {onSubmit: (code: string) => Promise<void>};
   CreateMultisig: CreateMultisigProps;
   JoinMultisig: JoinMultisigParamList | undefined;
   Copayers: {wallet: WalletModel; status: _Credentials};

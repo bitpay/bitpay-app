@@ -21,7 +21,6 @@ import CoinbaseTransaction, {
   CoinbaseTransactionScreenParamList,
 } from './screens/CoinbaseTransaction';
 import {CoinbaseWithdrawConfirmParamList} from './screens/CoinbaseWithdrawConfirm';
-import CoinbaseSvg from '../../../assets/img/logos/coinbase.svg';
 
 export type CoinbaseStackParamList = {
   CoinbaseRoot: CoinbaseRootScreenParamList;
@@ -39,13 +38,6 @@ export enum CoinbaseScreens {
   WITHDRAW = 'CoinbaseWithdraw',
 }
 
-const HeaderTitleContainer = styled.View`
-  flex: 1;
-  flex-direction: row;
-  justify-content: center;
-  padding-top: 13px;
-`;
-
 const Coinbase = createStackNavigator<CoinbaseStackParamList>();
 
 const CoinbaseStack = () => {
@@ -62,12 +54,6 @@ const CoinbaseStack = () => {
         component={CoinbaseRoot}
         options={{
           headerShown: true,
-          headerTitle: () => (
-            <HeaderTitleContainer>
-              <CoinbaseSvg style={{marginRight: 8, marginTop: 2}} />
-              <HeaderTitle style={{marginTop: 4}}>{'Coinbase'}</HeaderTitle>
-            </HeaderTitleContainer>
-          ),
         }}
       />
       <Coinbase.Screen

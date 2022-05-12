@@ -7,7 +7,7 @@ import {
   SheetParams,
 } from '../../../../components/styled/Containers';
 import {Platform} from 'react-native';
-import {Action, White} from '../../../../styles/colors';
+import {Action, LightBlack, LinkBlue, White} from '../../../../styles/colors';
 import {horizontalPadding} from './styled/ShopTabComponents';
 import {sleep} from '../../../../utils/helper-methods';
 import {
@@ -46,16 +46,17 @@ const Pill = styled.View<PillParams>`
   height: 40px;
   align-items: center;
   justify-content: center;
-  border: 2px solid ${Action};
+  border: ${({theme: {dark}}) => `2px solid ${dark ? LinkBlue : Action}`};
   border-radius: 50px;
   margin-right: 10px;
   margin-bottom: 12px;
-  ${({selected}) => (selected ? `background-color: ${Action};` : '')};
+  ${({selected, theme: {dark}}) =>
+    selected ? `background-color: ${dark ? LinkBlue : Action};` : ''};
 `;
 
 const PillText = styled(BaseText)<PillParams>`
   color: ${({selected, theme}) =>
-    selected ? White : theme.dark ? White : Action};
+    selected ? (theme.dark ? LightBlack : White) : theme.dark ? White : Action};
   font-weight: 500;
   padding: 8px 12px;
 `;

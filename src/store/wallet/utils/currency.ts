@@ -111,3 +111,14 @@ export const GetName =
     const currency = currencyAbbreviation.toLowerCase();
     return Currencies[currency]?.name || WALLET.tokenData[currency]?.name;
   };
+
+export const isSingleAddressCoin =
+  (currencyAbbreviation: string): Effect<boolean> =>
+  (dispatch, getState) => {
+    const {WALLET} = getState();
+    const currency = currencyAbbreviation.toLowerCase();
+    return (
+      Currencies[currency]?.properties.singleAddress ||
+      WALLET.tokenData[currency]?.properties.singleAddress
+    );
+  };
