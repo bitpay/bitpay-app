@@ -79,6 +79,9 @@ import BpDevtools from './components/bp-devtools/BpDevtools';
 import {DEVTOOLS_ENABLED} from './constants/config';
 import Blur from './components/blur/Blur';
 import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
+import CardActivationStack, {
+  CardActivationStackParamList,
+} from './navigation/card-activation/CardActivationStack';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -88,6 +91,7 @@ export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabsStackParamList>;
   BitpayId: NavigatorScreenParams<BitpayIdStackParamList>;
   Wallet: NavigatorScreenParams<WalletStackParamList>;
+  CardActivation: NavigatorScreenParams<CardActivationStackParamList>;
   Scan: NavigatorScreenParams<ScanStackParamList>;
   Shop: NavigatorScreenParams<ShopStackParamList>;
   GiftCard: NavigatorScreenParams<GiftCardStackParamList>;
@@ -112,6 +116,7 @@ export enum RootStacks {
   TABS = 'Tabs',
   BITPAY_ID = 'BitpayId',
   WALLET = 'Wallet',
+  CARD_ACTIVATION = 'CardActivation',
   SCAN = 'Scan',
   CONTACTS = 'Contacts',
   GIFT_CARD = 'GiftCard',
@@ -134,6 +139,7 @@ export type NavScreenParams = NavigatorScreenParams<
     OnboardingStackParamList &
     BitpayIdStackParamList &
     WalletStackParamList &
+    CardActivationStackParamList &
     GiftCardStackParamList &
     MerchantStackParamList &
     GeneralSettingsStackParamList &
@@ -364,6 +370,13 @@ export default () => {
               }}
               name={RootStacks.WALLET}
               component={WalletStack}
+            />
+            <Root.Screen
+              name={RootStacks.CARD_ACTIVATION}
+              component={CardActivationStack}
+              options={{
+                gestureEnabled: false,
+              }}
             />
             <Root.Screen name={RootStacks.SCAN} component={ScanStack} />
             <Root.Screen

@@ -12,7 +12,7 @@ import GUSDShape from '../navigation/card/assets/currency-shapes/GUSD-shape.svg'
 import USDPShape from '../navigation/card/assets/currency-shapes/USDP-shape.svg';
 import USDCShape from '../navigation/card/assets/currency-shapes/USDC-shape.svg';
 import XRPShape from '../navigation/card/assets/currency-shapes/XRP-shape.svg';
-import {Transaction} from '../store/card/card.models';
+import {Card, Transaction} from '../store/card/card.models';
 import {CardProvider} from './card';
 
 type ProviderConfigType = {
@@ -32,6 +32,15 @@ type ProviderConfigType = {
        * Filter function to determine whether or not a settled transaction should be displayed.
        */
       settledTx: (tx: Transaction) => boolean;
+    };
+    activation: {
+      isRequired: (card: Card) => boolean;
+      fields: {
+        cardNumber?: boolean;
+        cvv?: boolean;
+        expirationDate?: boolean;
+        lastFourDigits?: boolean;
+      };
     };
   };
 };
@@ -71,6 +80,20 @@ export const ProviderConfig: ProviderConfigType = {
         return !TX_TYPE_BLACKLIST[tx.type];
       },
     },
+    activation: {
+      isRequired: card => {
+        if (!card) {
+          return false;
+        }
+
+        return !card.activationDate && card.status !== 'active';
+      },
+      fields: {
+        cvv: true,
+        expirationDate: true,
+        lastFourDigits: true,
+      },
+    },
   },
   firstView: {
     programStartYear: 2016,
@@ -80,6 +103,16 @@ export const ProviderConfig: ProviderConfigType = {
     filters: {
       settledTx: () => {
         return true;
+      },
+    },
+    activation: {
+      isRequired: () => {
+        return false;
+      },
+      fields: {
+        cardNumber: true,
+        cvv: true,
+        expirationDate: true,
       },
     },
   },

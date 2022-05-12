@@ -1,5 +1,6 @@
 import GraphQlApi from '../graphql';
 import {
+  ActivateCardResponse,
   FetchAllCardsResponse,
   FetchCardResponse,
   FetchOverviewResponse,
@@ -12,6 +13,7 @@ import {
 } from './card.types';
 import CardQueries from './card.queries';
 import CardMutations from './card.mutations';
+import {StartActivateCardParams} from '../../store/card/card.effects';
 
 const fetchAll = async (token: string) => {
   const query = CardQueries.FETCH_CARDS(token);
@@ -196,16 +198,31 @@ const fetchReferredUsers = async (token: string) => {
   return data.data.user.referredUsers;
 };
 
+const activateCard = async (
+  token: string,
+  id: string,
+  payload: StartActivateCardParams,
+) => {
+  const query = CardMutations.ACTIVATE_CARD(token, id, payload);
+
+  const {data} = await GraphQlApi.getInstance().request<ActivateCardResponse>(
+    query,
+  );
+
+  return data;
+};
+
 const CardApi = {
+  activateCard,
   fetchAll,
   fetchOne,
   fetchOverview,
+  fetchReferralCode,
+  fetchReferredUsers,
   fetchSettledTransactions,
   fetchVirtualCardImageUrls,
   updateCardLock,
   updateCardName,
-  fetchReferralCode,
-  fetchReferredUsers,
 };
 
 export default CardApi;

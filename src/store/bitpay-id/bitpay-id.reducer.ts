@@ -182,10 +182,7 @@ export const bitPayIdReducer = (
       return {
         ...state,
         twoFactorAuthStatus: 'success',
-        session: {
-          ...state.session,
-          [action.payload.network]: action.payload.session,
-        },
+        session: action.payload.session,
       };
 
     case BitPayIdActionTypes.SUCCESS_SUBMIT_TWO_FACTOR_PAIRING:

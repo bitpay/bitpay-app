@@ -21,3 +21,7 @@ export const APP_LOAD_STORY_BOOK = false;
 
 // Download URL's
 export const DOWNLOAD_BITPAY_URL = 'https://bitpay.com/wallet';
+
+// Auth
+export const TWO_FACTOR_EMAIL_POLL_INTERVAL = 1000 * 3;
+export const TWO_FACTOR_EMAIL_POLL_TIMEOUT = 1000 * 60 * 5;
