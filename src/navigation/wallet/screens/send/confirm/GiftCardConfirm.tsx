@@ -35,10 +35,7 @@ import KeyWalletsRow, {
   KeyWallet,
 } from '../../../../../components/list/KeyWalletsRow';
 import {ShopActions, ShopEffects} from '../../../../../store/shop';
-import {
-  BuildCoinbaseWalletsList,
-  BuildKeysAndWalletsList,
-} from '../../../../../store/wallet/utils/wallet';
+import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
 import {
   Amount,
   ConfirmContainer,
@@ -57,13 +54,14 @@ import {
   GiftCardDiscount,
   Invoice,
 } from '../../../../../store/shop/shop.models';
-import {COINBASE_ENV} from '../../../../../api/coinbase/coinbase.constants';
 import {WalletRowProps} from '../../../../../components/list/WalletRow';
 import CoinbaseSmall from '../../../../../../assets/img/logos/coinbase-small.svg';
-import {CoinbaseAccountProps} from '../../../../../api/coinbase/coinbase.types';
+import {
+  CoinbaseAccountProps,
+  CoinbaseErrorMessages,
+} from '../../../../../api/coinbase/coinbase.types';
 import {startGetRates} from '../../../../../store/wallet/effects';
 import {coinbasePayInvoice} from '../../../../../store/coinbase';
-import {coinbaseParseErrorToString} from '../../../../../store/coinbase/coinbase.effects';
 
 export interface GiftCardConfirmParamList {
   amount: number;
@@ -116,15 +114,6 @@ const Confirm = () => {
   } = route.params!;
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const giftCards = useAppSelector(({SHOP}) => SHOP.giftCards[APP_NETWORK]);
-  const coinbaseUser = useAppSelector(
-    ({COINBASE}) => COINBASE.user[COINBASE_ENV],
-  );
-  const coinbaseAccounts = useAppSelector(
-    ({COINBASE}) => COINBASE.accounts[COINBASE_ENV],
-  );
-  const coinbaseExchangeRates = useAppSelector(
-    ({COINBASE}) => COINBASE.exchangeRates,
-  );
 
   const [walletSelectModalVisible, setWalletSelectModalVisible] =
     useState(false);
@@ -144,19 +133,8 @@ const Confirm = () => {
   );
 
   const memoizedKeysAndWalletsList = useMemo(
-    () => BuildKeysAndWalletsList({keys, network: APP_NETWORK}),
-    [keys],
-  );
-
-  const memoizedCoinbaseWalletsList = useMemo(
-    () =>
-      BuildCoinbaseWalletsList({
-        coinbaseAccounts,
-        coinbaseExchangeRates,
-        coinbaseUser,
-        network: APP_NETWORK,
-      }),
-    [coinbaseAccounts, coinbaseExchangeRates, coinbaseUser],
+    () => dispatch(BuildPayProWalletSelectorList({keys, network: APP_NETWORK})),
+    [dispatch, keys],
   );
 
   const reshowWalletSelector = async () => {
@@ -172,10 +150,8 @@ const Confirm = () => {
   }, []);
 
   const openKeyWalletSelector = () => {
-    if (
-      memoizedKeysAndWalletsList.length ||
-      memoizedCoinbaseWalletsList.length
-    ) {
+    const {keyWallets, coinbaseWallets} = memoizedKeysAndWalletsList;
+    if (keyWallets.length || coinbaseWallets.length) {
       setWalletSelectModalVisible(true);
     } else {
       dispatch(showNoWalletsModal({navigation}));
@@ -226,22 +202,15 @@ const Confirm = () => {
       dispatch(handleCreateTxProposalError(err)),
       sleep(500),
     ]);
-    dispatch(
-      AppActions.showBottomNotificationModal(
-        CustomErrorMessage({
-          title: 'Error',
-          errMsg:
-            err.response?.data?.message || err.message || errorConfig.message,
-          action: () => reshowWalletSelector(),
-        }),
-      ),
-    );
+    showError({
+      defaultErrorMessage:
+        err.response?.data?.message || err.message || errorConfig.message,
+      onDismiss: () => reshowWalletSelector(),
+    });
   };
 
-  const onCoinbaseAccountSelect = async (
-    selectedCoinbaseAccount: CoinbaseAccountProps,
-    walletRowProps: WalletRowProps,
-  ) => {
+  const onCoinbaseAccountSelect = async (walletRowProps: WalletRowProps) => {
+    const selectedCoinbaseAccount = walletRowProps.coinbaseAccount!;
     try {
       const {invoice: newInvoice} = await createGiftCardInvoice({
         clientId: selectedCoinbaseAccount.id,
@@ -316,13 +285,7 @@ const Confirm = () => {
             coinbaseAccount!.currency.code,
             twoFactorCode,
           ),
-        ).catch(err => {
-          const coinbaseErrorString = coinbaseParseErrorToString(err);
-          if (coinbaseErrorString) {
-            throw new Error(coinbaseErrorString);
-          }
-          throw err;
-        });
+        );
   };
 
   const redeemGiftCardAndNavigateToGiftCardDetails = async () => {
@@ -334,7 +297,7 @@ const Confirm = () => {
     );
     await sleep(200);
     dispatch(dismissOnGoingProcessModal());
-    await sleep(400);
+    await sleep(200);
     if (giftCard.status === 'PENDING') {
       dispatch(ShopEffects.waitForConfirmation(giftCard.invoiceId));
     }
@@ -390,6 +353,7 @@ const Confirm = () => {
     updateTxDetails(undefined);
     updateTxp(undefined);
     setWallet(undefined);
+    setInvoice(undefined);
     setCoinbaseAccount(undefined);
     showError({
       error,
@@ -408,11 +372,11 @@ const Confirm = () => {
             await redeemGiftCardAndNavigateToGiftCardDetails();
           } catch (error: any) {
             dispatch(dismissOnGoingProcessModal());
-            const invalid2faMessage =
-              'That code was invalid. Please try again.';
-            error?.message?.includes(invalid2faMessage)
+            const invalid2faMessage = CoinbaseErrorMessages.twoFactorInvalid;
+            error?.message?.includes(CoinbaseErrorMessages.twoFactorInvalid)
               ? showError({defaultErrorMessage: invalid2faMessage})
               : handlePaymentFailure(error);
+            throw error;
           }
         },
       },
@@ -482,7 +446,9 @@ const Confirm = () => {
                 await sleep(400);
                 const twoFactorRequired =
                   coinbaseAccount &&
-                  err?.message?.includes('Two-step verification code required');
+                  err?.message?.includes(
+                    CoinbaseErrorMessages.twoFactorRequired,
+                  );
                 twoFactorRequired
                   ? await request2FA()
                   : await handlePaymentFailure(err);
@@ -509,18 +475,13 @@ const Confirm = () => {
           </WalletSelectMenuHeaderContainer>
           <WalletSelectMenuBodyContainer>
             <KeyWalletsRow<KeyWallet>
-              keyWallets={memoizedKeysAndWalletsList}
+              keyWallets={memoizedKeysAndWalletsList.keyWallets}
               onPress={onWalletSelect}
             />
             <KeyWalletsRow<WalletRowProps>
-              keyWallets={memoizedCoinbaseWalletsList}
+              keyWallets={memoizedKeysAndWalletsList.coinbaseWallets}
               keySvg={CoinbaseSmall}
-              onPress={coinbaseWallet => {
-                const selectedAccount = coinbaseAccounts!.find(
-                  account => account.id === coinbaseWallet.id,
-                );
-                onCoinbaseAccountSelect(selectedAccount!, coinbaseWallet);
-              }}
+              onPress={onCoinbaseAccountSelect}
             />
           </WalletSelectMenuBodyContainer>
         </WalletSelectMenuContainer>

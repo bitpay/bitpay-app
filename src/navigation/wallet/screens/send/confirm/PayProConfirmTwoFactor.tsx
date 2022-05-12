@@ -1,6 +1,6 @@
 import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useRef} from 'react';
+import React, {useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {Keyboard, TextInput} from 'react-native';
 import styled from 'styled-components/native';
@@ -31,6 +31,7 @@ const PayProConfirmTwoFactor = ({
 }: StackScreenProps<WalletStackParamList, 'PayProConfirmTwoFactor'>) => {
   const {onSubmit} = route.params;
   const codeRef = useRef<TextInput>(null);
+  const [submitDisabled, setSubmitDisabled] = useState(false);
 
   const {
     control,
@@ -40,9 +41,14 @@ const PayProConfirmTwoFactor = ({
     resolver: yupResolver(schema),
   });
 
-  const onFormSubmit = handleSubmit(({code}) => {
+  const onFormSubmit = handleSubmit(async ({code}) => {
     Keyboard.dismiss();
-    onSubmit(code);
+    try {
+      setSubmitDisabled(true);
+      await onSubmit(code);
+    } catch (err) {
+      setSubmitDisabled(false);
+    }
   });
 
   return (
@@ -79,7 +85,9 @@ const PayProConfirmTwoFactor = ({
 
       <AuthActionsContainer>
         <PrimaryActionContainer>
-          <Button onPress={onFormSubmit}>Continue</Button>
+          <Button onPress={onFormSubmit} disabled={submitDisabled}>
+            Continue
+          </Button>
         </PrimaryActionContainer>
       </AuthActionsContainer>
     </AuthFormContainer>

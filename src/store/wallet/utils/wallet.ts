@@ -26,6 +26,11 @@ import {
 } from '../../../api/coinbase/coinbase.types';
 import {coinbaseGetFiatAmount} from '../../coinbase';
 import {WalletRowProps} from '../../../components/list/WalletRow';
+import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
+import {
+  KeyWallet,
+  KeyWalletsRowProps,
+} from '../../../components/list/KeyWalletsRow';
 
 const mapAbbreviationAndName =
   (
@@ -256,6 +261,7 @@ export const coinbaseAccountToWalletRow = (
     id: account.id,
     currencyName: account.currency.name,
     currencyAbbreviation: account.currency.code,
+    coinbaseAccount: account,
     walletName: account.currency.name,
     img: CurrencyListIcons[account.currency.code.toLowerCase()],
     cryptoBalance: cryptoAmount,
@@ -392,6 +398,43 @@ export const BuildKeysAndWalletsList = ({
     })
     .filter(key => key.wallets.length);
 };
+
+export const BuildPayProWalletSelectorList =
+  ({
+    keys,
+    network,
+    payProOptions,
+    defaultAltCurrencyIsoCode = 'USD',
+  }: {
+    keys: {[key in string]: Key};
+    network?: Network;
+    payProOptions?: PayProOptions;
+    defaultAltCurrencyIsoCode?: string;
+  }): Effect<{
+    keyWallets: KeyWalletsRowProps<KeyWallet>[];
+    coinbaseWallets: KeyWalletsRowProps<WalletRowProps>[];
+  }> =>
+  (_, getState) => {
+    const {COINBASE} = getState();
+    const coinbaseAccounts = COINBASE.accounts[COINBASE_ENV];
+    const coinbaseUser = COINBASE.user[COINBASE_ENV];
+    const coinbaseExchangeRates = COINBASE.exchangeRates;
+    const keyWallets = BuildKeysAndWalletsList({
+      keys,
+      network,
+      payProOptions,
+      defaultAltCurrencyIsoCode,
+    });
+    const coinbaseWallets = BuildCoinbaseWalletsList({
+      coinbaseAccounts,
+      coinbaseUser,
+      coinbaseExchangeRates,
+      network,
+      payProOptions,
+      defaultAltCurrencyIsoCode,
+    });
+    return {keyWallets, coinbaseWallets};
+  };
 
 // These 2 functions were taken from
 // https://github.com/bitpay/bitcore-wallet-service/blob/master/lib/model/txproposal.js#L235
