@@ -42,7 +42,7 @@ import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 
 const CryptoContainer = styled.View`
   background: ${({theme}) => (theme.dark ? '#111111' : Feather)};
-  padding: 20px 0 32px;
+  padding: 20px 0 12px;
 `;
 
 const CarouselContainer = styled.View`
@@ -58,7 +58,7 @@ const ListViewContainer = styled.View`
 `;
 
 const ButtonContainer = styled.View`
-  padding: 20px 0 0;
+  padding: 20px 0;
   margin-top: 15px;
 `;
 
