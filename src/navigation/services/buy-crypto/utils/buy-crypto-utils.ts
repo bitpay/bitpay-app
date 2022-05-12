@@ -1,9 +1,21 @@
-import {PaymentMethod} from '../constants/BuyCryptoConstants';
+import {
+  PaymentMethod,
+  PaymentMethods,
+  PaymentMethodsAvailable,
+} from '../constants/BuyCryptoConstants';
 import {
   simplexSupportedCoins,
   simplexSupportedFiatCurrencies,
 } from './simplex-utils';
 import {wyreSupportedCoins, wyreSupportedFiatCurrencies} from './wyre-utils';
+
+export const getPaymentMethodsAvailable = (
+  isEuCountry?: boolean,
+): PaymentMethods => {
+  PaymentMethodsAvailable.sepaBankTransfer.enabled = !!isEuCountry;
+
+  return PaymentMethodsAvailable;
+};
 
 export const isPaymentMethodSupported = (
   exchange: string,

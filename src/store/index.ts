@@ -39,6 +39,12 @@ import {
 } from './card/card.reducer';
 import {CardActionType} from './card/card.types';
 import {
+  locationReducer,
+  locationReduxPersistBlackList,
+  LocationState,
+} from './location/location.reducer';
+import {LocationActionType} from './location/location.types';
+import {
   logReducer,
   logReduxPersistBlackList,
   LogState,
@@ -124,6 +130,14 @@ const reducers = {
       blacklist: cardReduxPersistBlacklist,
     },
     cardReducer,
+  ),
+  LOCATION: persistReducer<LocationState, LocationActionType>(
+    {
+      ...basePersistConfig,
+      key: 'LOCATION',
+      blacklist: locationReduxPersistBlackList,
+    },
+    locationReducer,
   ),
   LOG: persistReducer<LogState, LogActionType>(
     {
