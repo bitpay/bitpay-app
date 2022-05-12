@@ -39,6 +39,8 @@ import {useAppSelector} from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import KeyDropdownOption from '../components/KeyDropdownOption';
 import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
+import EncryptPasswordImg from '../../../../assets/img/tinyicon-encrypt.svg';
+import EncryptPasswordDarkModeImg from '../../../../assets/img/tinyicon-encrypt-darkmode.svg';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -90,7 +92,7 @@ const WalletListFooterText = styled(BaseText)`
 
 const KeyToggle = styled(TouchableOpacity)`
   align-items: center;
-  flex-direction: row;
+  flex-direction: column;
 `;
 
 const KeyDropdown = styled.SafeAreaView`
@@ -111,6 +113,11 @@ const CogIconContainer = styled.TouchableOpacity`
   align-items: center;
   height: 40px;
   width: 40px;
+`;
+
+const HeaderTitleContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
 `;
 
 export const buildUIFormattedWallet: (
@@ -207,8 +214,17 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
             activeOpacity={ActiveOpacity}
             disabled={!hasMultipleKeys}
             onPress={() => setShowKeyDropdown(true)}>
-            <HeaderTitle>{key?.keyName}</HeaderTitle>
-            {hasMultipleKeys && <ChevronDownSvg style={{marginLeft: 10}} />}
+            {theme.dark ? (
+              <EncryptPasswordDarkModeImg />
+            ) : (
+              <EncryptPasswordImg />
+            )}
+            <HeaderTitleContainer>
+              <HeaderTitle style={{textAlign: 'center'}}>
+                {key?.keyName}
+              </HeaderTitle>
+              {hasMultipleKeys && <ChevronDownSvg style={{marginLeft: 10}} />}
+            </HeaderTitleContainer>
           </KeyToggle>
         );
       },
