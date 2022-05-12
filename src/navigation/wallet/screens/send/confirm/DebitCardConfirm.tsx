@@ -1,5 +1,5 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
+import {useNavigation, useRoute, StackActions} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletScreens, WalletStackParamList} from '../../../WalletStack';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
@@ -521,18 +521,9 @@ const Confirm = () => {
       <PaymentSent
         isVisible={showPaymentSentModal}
         onCloseModal={async () => {
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 2,
-              routes: [
-                {
-                  name: 'Tabs',
-                  params: {screen: 'Card'},
-                },
-              ],
-            }),
-          );
-          await sleep(300);
+          navigation.dispatch(StackActions.popToTop());
+          navigation.dispatch(StackActions.pop(3));
+          await sleep(0);
           setShowPaymentSentModal(false);
         }}
       />
