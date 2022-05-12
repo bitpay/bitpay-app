@@ -17,6 +17,9 @@ import {BaseText} from '../styled/Text';
 
 type InputType = 'password' | 'phone' | 'search';
 
+const INPUT_HEIGHT = 55;
+const SEPARATOR_HEIGHT = 37;
+
 interface InputProps {
   isFocused: boolean;
   isError?: boolean;
@@ -61,13 +64,13 @@ const Separator = styled.View`
   border-right-color: ${({theme}) => (theme.dark ? '#45484E' : '#eceffd')};
   border-right-width: 1px;
   border-style: solid;
-  height: 37px;
+  height: ${SEPARATOR_HEIGHT}px;
 `;
 
 const Input = styled(TextInputMask)<InputProps>`
   background-color: transparent;
   color: ${({theme}) => theme.colors.text};
-  height: 55px;
+  height: ${INPUT_HEIGHT}px;
   padding: 10px;
   flex: 1 1 auto;
   font-weight: 500;
@@ -98,7 +101,9 @@ const IconContainer = styled.TouchableOpacity.attrs(() => ({
   activeOpacity: ActiveOpacity,
 }))`
   align-items: center;
-  min-width: 55px;
+  height: ${INPUT_HEIGHT}px;
+  min-width: ${INPUT_HEIGHT}px;
+  justify-content: center;
 `;
 
 const Prefix: React.FC = ({children}) => {
@@ -133,65 +138,71 @@ interface BoxInputProps extends TextInputProps {
 const BoxInput = React.forwardRef<
   TextInput,
   BoxInputProps & TextInputMaskProps
->(({label, onFocus, onBlur, onSearch, prefix, suffix, error, type, ...props}, ref) => {
-  const isPassword = type === 'password';
-  const isSearch = type === 'search';
-  const [isFocused, setIsFocused] = useState(false);
-  const [isSecureTextEntry, setSecureTextEntry] = useState(isPassword);
+>(
+  (
+    {label, onFocus, onBlur, onSearch, prefix, suffix, error, type, ...props},
+    ref,
+  ) => {
+    const isPassword = type === 'password';
+    const isSearch = type === 'search';
+    const [isFocused, setIsFocused] = useState(false);
+    const [isSecureTextEntry, setSecureTextEntry] = useState(isPassword);
 
-  const _onFocus = () => {
-    setIsFocused(true);
-    onFocus && onFocus();
-  };
+    const _onFocus = () => {
+      setIsFocused(true);
+      onFocus && onFocus();
+    };
 
-  const _onBlur = () => {
-    setIsFocused(false);
-    onBlur && onBlur();
-  };
+    const _onBlur = () => {
+      setIsFocused(false);
+      onBlur && onBlur();
+    };
 
-  const errorMessage =
-    typeof error === 'string' && error.charAt(0).toUpperCase() + error.slice(1);
+    const errorMessage =
+      typeof error === 'string' &&
+      error.charAt(0).toUpperCase() + error.slice(1);
 
-  if (isPassword) {
-    suffix = () => (
-      <IconContainer onPress={() => setSecureTextEntry(!isSecureTextEntry)}>
-        {isSecureTextEntry ? <ObfuscationHide /> : <ObfuscationShow />}
-      </IconContainer>
+    if (isPassword) {
+      suffix = () => (
+        <IconContainer onPress={() => setSecureTextEntry(!isSecureTextEntry)}>
+          {isSecureTextEntry ? <ObfuscationHide /> : <ObfuscationShow />}
+        </IconContainer>
+      );
+    } else if (isSearch) {
+      suffix = () => (
+        <IconContainer onPress={() => onSearch?.()}>
+          <Search />
+        </IconContainer>
+      );
+    }
+
+    return (
+      <>
+        {label ? <Label>{label}</Label> : null}
+
+        <InputContainer isFocused={isFocused} isError={error}>
+          {prefix ? <Prefix>{prefix()}</Prefix> : null}
+
+          <Input
+            {...props}
+            ref={ref}
+            secureTextEntry={isPassword && isSecureTextEntry}
+            placeholderTextColor={Slate}
+            onFocus={_onFocus}
+            onBlur={_onBlur}
+            isFocused={isFocused}
+            isError={error}
+            autoCapitalize={'none'}
+            type={type}
+          />
+
+          {suffix ? <Suffix>{suffix()}</Suffix> : null}
+        </InputContainer>
+
+        {errorMessage ? <ErrorText>{errorMessage}</ErrorText> : null}
+      </>
     );
-  } else if (isSearch) {
-    suffix = () => (
-      <IconContainer onPress={() => onSearch?.()}>
-        <Search />
-      </IconContainer>
-    );
-  }
-
-  return (
-    <>
-      {label ? <Label>{label}</Label> : null}
-
-      <InputContainer isFocused={isFocused} isError={error}>
-        {prefix ? <Prefix>{prefix()}</Prefix> : null}
-
-        <Input
-          {...props}
-          ref={ref}
-          secureTextEntry={isPassword && isSecureTextEntry}
-          placeholderTextColor={Slate}
-          onFocus={_onFocus}
-          onBlur={_onBlur}
-          isFocused={isFocused}
-          isError={error}
-          autoCapitalize={'none'}
-          type={type}
-        />
-
-        {suffix ? <Suffix>{suffix()}</Suffix> : null}
-      </InputContainer>
-
-      {errorMessage ? <ErrorText>{errorMessage}</ErrorText> : null}
-    </>
-  );
-});
+  },
+);
 
 export default BoxInput;
