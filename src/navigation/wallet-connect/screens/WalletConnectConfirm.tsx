@@ -333,7 +333,7 @@ const WalletConnectConfirm = () => {
         <Amount description={'Total'} amount={total} />
       </DetailsList>
       <SwipeButton
-        title={'Slide to send'}
+        title={'Slide to approve'}
         onSwipeComplete={approveCallRequest}
         forceReset={resetSwipeButton}
       />

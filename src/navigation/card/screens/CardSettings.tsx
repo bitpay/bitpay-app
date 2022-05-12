@@ -109,7 +109,7 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
   }, [physicalCard]);
 
   const goToCardHome = () => {
-    navigation.navigate('Home', {
+    navigation.navigate('CardHome', {
       id: id,
     });
   };

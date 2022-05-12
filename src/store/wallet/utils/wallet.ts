@@ -8,7 +8,7 @@ import {
   WalletObj,
 } from '../wallet.models';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
-import {Currencies, SUPPORTED_CURRENCIES} from '../../../constants/currencies';
+import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {BwcProvider} from '../../../lib/bwc';
 import {GetName, GetPrecision, GetProtocolPrefix} from './currency';
@@ -19,6 +19,18 @@ import {WALLET_DISPLAY_LIMIT} from '../../../navigation/tabs/home/components/Wal
 import {Network} from '../../../constants';
 import {PayProOptions} from '../effects/paypro/paypro';
 import {Effect} from '../..';
+import {
+  CoinbaseAccountProps,
+  CoinbaseExchangeRatesProps,
+  CoinbaseUserProps,
+} from '../../../api/coinbase/coinbase.types';
+import {coinbaseGetFiatAmount} from '../../coinbase';
+import {WalletRowProps} from '../../../components/list/WalletRow';
+import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
+import {
+  KeyWallet,
+  KeyWalletsRowProps,
+} from '../../../components/list/KeyWalletsRow';
 
 const mapAbbreviationAndName =
   (
@@ -156,9 +168,11 @@ export const toFiat =
       throw Error(`Rate not found for currency: ${currencyAbbreviation}`);
     }
 
-    const fiatRate =
-      customRate ||
-      ratesPerCurrency.find(_currency => _currency.code === fiatCode)?.rate;
+    const rateObj = ratesPerCurrency.find(
+      _currency => _currency.code === fiatCode,
+    );
+    const rate = rateObj && !rateObj.rate ? 1 : rateObj?.rate;
+    const fiatRate = customRate || rate;
 
     if (!fiatRate) {
       throw Error(
@@ -229,6 +243,94 @@ export const getRemainingWalletCount = (
   return wallets.length - WALLET_DISPLAY_LIMIT;
 };
 
+export const coinbaseAccountToWalletRow = (
+  account: CoinbaseAccountProps,
+  exchangeRates: CoinbaseExchangeRatesProps | null,
+  defaultAltCurrencyIsoCode = 'USD',
+) => {
+  const fiatAmount = coinbaseGetFiatAmount(
+    account.balance.amount,
+    account.balance.currency,
+    exchangeRates,
+  );
+  const cryptoAmount = Number(account.balance.amount)
+    ? account.balance.amount
+    : '0';
+
+  const walletItem = {
+    id: account.id,
+    currencyName: account.currency.name,
+    currencyAbbreviation: account.currency.code,
+    coinbaseAccount: account,
+    walletName: account.currency.name,
+    img: CurrencyListIcons[account.currency.code.toLowerCase()],
+    cryptoBalance: cryptoAmount,
+    cryptoLockedBalance: '',
+    fiatBalance: formatFiatAmount(fiatAmount, defaultAltCurrencyIsoCode),
+    fiatLockedBalance: '',
+    isToken: false,
+    network: Network.mainnet,
+    pendingTxps: [],
+  };
+  return walletItem as WalletRowProps;
+};
+
+export const BuildCoinbaseWalletsList = ({
+  coinbaseAccounts,
+  coinbaseExchangeRates,
+  coinbaseUser,
+  defaultAltCurrencyIsoCode = 'USD',
+  network,
+  payProOptions,
+}: {
+  coinbaseAccounts: CoinbaseAccountProps[] | null;
+  coinbaseExchangeRates: CoinbaseExchangeRatesProps | null;
+  coinbaseUser: CoinbaseUserProps | null;
+  defaultAltCurrencyIsoCode?: string;
+  network?: Network;
+  payProOptions?: PayProOptions;
+}) => {
+  if (
+    !coinbaseAccounts ||
+    !coinbaseUser ||
+    !coinbaseExchangeRates ||
+    network === Network.testnet
+  ) {
+    return [];
+  }
+  const selectedPaymentOptions = payProOptions?.paymentOptions?.filter(
+    option => option.selected,
+  );
+  const paymentOptions = selectedPaymentOptions?.length
+    ? selectedPaymentOptions
+    : payProOptions?.paymentOptions;
+  const wallets = coinbaseAccounts
+    .filter(account => account.balance.amount > 0)
+    .filter(
+      account =>
+        !paymentOptions?.length ||
+        paymentOptions.some(
+          ({currency, network}) =>
+            account.currency.code.toLowerCase() === currency.toLowerCase() &&
+            network === Network.mainnet,
+        ),
+    )
+    .map(account =>
+      coinbaseAccountToWalletRow(
+        account,
+        coinbaseExchangeRates,
+        defaultAltCurrencyIsoCode,
+      ),
+    );
+  return [
+    {
+      key: coinbaseUser.data.id,
+      keyName: `${coinbaseUser.data.name}'s Coinbase Account`,
+      wallets,
+    },
+  ].filter(key => key.wallets.length);
+};
+
 export const BuildKeysAndWalletsList = ({
   keys,
   network,
@@ -240,18 +342,21 @@ export const BuildKeysAndWalletsList = ({
   payProOptions?: PayProOptions;
   defaultAltCurrencyIsoCode?: string;
 }) => {
+  const selectedPaymentOptions = payProOptions?.paymentOptions?.filter(
+    option => option.selected,
+  );
+  const paymentOptions = selectedPaymentOptions?.length
+    ? selectedPaymentOptions
+    : payProOptions?.paymentOptions;
   return Object.keys(keys)
     .map(keyId => {
       const keyObj = keys[keyId];
-      const paymentOptions =
-        payProOptions?.paymentOptions?.filter(option => option.selected) ||
-        payProOptions?.paymentOptions;
       return {
         key: keyId,
         keyName: keyObj.keyName || 'My Key',
         wallets: keys[keyId].wallets
           .filter(wallet => {
-            if (paymentOptions) {
+            if (paymentOptions?.length) {
               return paymentOptions.some(
                 ({currency, network: optionNetwork}) => {
                   return (
@@ -293,6 +398,43 @@ export const BuildKeysAndWalletsList = ({
     })
     .filter(key => key.wallets.length);
 };
+
+export const BuildPayProWalletSelectorList =
+  ({
+    keys,
+    network,
+    payProOptions,
+    defaultAltCurrencyIsoCode = 'USD',
+  }: {
+    keys: {[key in string]: Key};
+    network?: Network;
+    payProOptions?: PayProOptions;
+    defaultAltCurrencyIsoCode?: string;
+  }): Effect<{
+    keyWallets: KeyWalletsRowProps<KeyWallet>[];
+    coinbaseWallets: KeyWalletsRowProps<WalletRowProps>[];
+  }> =>
+  (_, getState) => {
+    const {COINBASE} = getState();
+    const coinbaseAccounts = COINBASE.accounts[COINBASE_ENV];
+    const coinbaseUser = COINBASE.user[COINBASE_ENV];
+    const coinbaseExchangeRates = COINBASE.exchangeRates;
+    const keyWallets = BuildKeysAndWalletsList({
+      keys,
+      network,
+      payProOptions,
+      defaultAltCurrencyIsoCode,
+    });
+    const coinbaseWallets = BuildCoinbaseWalletsList({
+      coinbaseAccounts,
+      coinbaseUser,
+      coinbaseExchangeRates,
+      network,
+      payProOptions,
+      defaultAltCurrencyIsoCode,
+    });
+    return {keyWallets, coinbaseWallets};
+  };
 
 // These 2 functions were taken from
 // https://github.com/bitpay/bitcore-wallet-service/blob/master/lib/model/txproposal.js#L235
@@ -354,4 +496,10 @@ export const findMatchedKeyAndUpdate = (
   }
 
   return {key, wallets};
+};
+
+export const isMatchedWallet = (newWallet: Wallet, wallets: Wallet[]) => {
+  return wallets.find(
+    wallet => wallet.credentials.walletId === newWallet.credentials.walletId,
+  );
 };

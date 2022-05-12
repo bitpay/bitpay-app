@@ -8,9 +8,9 @@ import {
   ModalHeaderText,
   ModalHeaderRight,
 } from '../styled/BuyCryptoModals';
+import {getPaymentMethodsAvailable} from '../utils/buy-crypto-utils';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import Checkbox from '../../../../components/checkbox/Checkbox';
-import {PaymentMethodsAvailable} from '../constants/BuyCryptoConstants';
 import {BaseText} from '../../../../components/styled/Text';
 import Button from '../../../../components/button/Button';
 import {Action, LightBlack, SlateDark, White} from '../../../../styles/colors';
@@ -20,6 +20,7 @@ import SimplexLogo from '../../../../../assets/img/services/simplex/logo-simplex
 const SimplexLogoDm = require('../../../../../assets/img/services/simplex/logo-simplex-dm.png');
 import WyreLogo from '../../../../../assets/img/services/wyre/logo-wyre.svg';
 import WyreLogoDm from '../../../../../assets/img/services/wyre/logo-wyre-dm.svg';
+import {useAppSelector} from '../../../../utils/hooks';
 
 interface PaymentMethodsModalProps {
   isVisible: boolean;
@@ -27,10 +28,6 @@ interface PaymentMethodsModalProps {
   onPress?: (paymentMethod: any) => any;
   selectedPaymentMethod: any;
 }
-
-const EnabledPaymentMethods = Object.values(PaymentMethodsAvailable).filter(
-  method => method.enabled,
-);
 
 const PaymentMethodCard = styled.TouchableOpacity`
   border-radius: 7px;
@@ -85,6 +82,13 @@ const PaymentMethodsModal = ({
   selectedPaymentMethod,
 }: PaymentMethodsModalProps) => {
   const theme = useTheme();
+  const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
+  const PaymentMethodsAvailable = getPaymentMethodsAvailable(
+    countryData?.isEuCountry,
+  );
+  const EnabledPaymentMethods = Object.values(PaymentMethodsAvailable).filter(
+    method => method.enabled,
+  );
 
   return (
     <SheetModal

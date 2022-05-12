@@ -25,11 +25,12 @@ import {CardActions} from '../../../../store/card';
 import {Card} from '../../../../store/card/card.models';
 import {VirtualDesignCurrency} from '../../../../store/card/card.types';
 import {getCardCurrencyColorPalette} from '../../../../utils/card';
-import {CardStackParamList} from '../../CardStack';
+import {CardScreens, CardStackParamList} from '../../CardStack';
 import CardFront from '../../components/CardFront';
 import CheckIcon from './CheckIcon';
 import * as Styled from './CustomizeVirtualCard.styled';
 import {CardBrand} from '../../../../constants/card';
+import {format} from '../../../../utils/currency';
 
 export interface CustomizeVirtualCardParamList {
   card: Card;
@@ -152,13 +153,19 @@ const CustomizeVirtualCard: React.FC<
   );
   const [selectedDesign, setSelectedDesign] = useState(designCurrency);
 
+  const balance = useSelector<RootState, number>(
+    ({CARD}) => CARD.balances[card.id],
+  );
+
+  const formattedBalance = format(balance, card.currency.code);
+
   const onSavePress = () => {
     dispatch(CardActions.virtualDesignCurrencyUpdated(selectedDesign));
 
     if (navigation.canGoBack()) {
       navigation.goBack();
     } else {
-      navigation.navigate('Home');
+      navigation.navigate(CardScreens.HOME);
     }
   };
 
@@ -179,7 +186,7 @@ const CustomizeVirtualCard: React.FC<
             provider={card.provider}
             fiat={card.currency.code}
             fiatSymbol={card.currency.symbol}
-            balance=""
+            balance={formattedBalance}
             nickname={card.nickname}
             designCurrency={selectedDesign}
           />

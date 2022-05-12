@@ -24,7 +24,7 @@ import {
   GetTheme,
   IsERCToken,
 } from '../../../../store/wallet/utils/currency';
-import styled, { useTheme } from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import {
   ActionContainer,
   ActiveOpacity,
@@ -38,7 +38,13 @@ import Back from '../../../../components/back/Back';
 import {TouchableOpacity, View} from 'react-native';
 import {DetailsList} from './confirm/Shared';
 import Button from '../../../../components/button/Button';
-import {Caution, LightBlack, NeutralSlate, Slate, SlateDark, White} from '../../../../styles/colors';
+import {
+  Caution,
+  NeutralSlate,
+  Slate,
+  SlateDark,
+  White,
+} from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 

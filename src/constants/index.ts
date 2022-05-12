@@ -40,6 +40,8 @@ export const URL = {
     'https://support.bitpay.com/hc/en-us/articles/115004497783-What-does-the-BitPay-wallet-s-warning-amount-too-low-to-spend-mean-',
   HELP_TXS_UNCONFIRMED:
     'https://support.bitpay.com/hc/en-us/articles/360025484512-Missing-transactions-Why-is-my-transaction-unconfirmed-',
+  HELP_FORGOT_WALLET_ENCRYPT_PASSWORD:
+    'https://support.bitpay.com/hc/en-us/articles/115003004403-I-forgot-my-wallet-s-encrypted-password-What-can-I-do-',
 
   /**
    * Quick Links

@@ -30,7 +30,7 @@ import CardIntroHeroImg from './CardIntroHeroImage';
 import CardHighlights from './CardIntroHighlights';
 
 interface CardIntroProps {
-  navigation: StackNavigationProp<CardStackParamList, 'Home'>;
+  navigation: StackNavigationProp<CardStackParamList, 'CardHome'>;
 }
 
 const Spacer = styled.View<{height: number}>`
@@ -151,7 +151,7 @@ const CardIntro: React.FC<CardIntroProps> = props => {
 
         <ContentContainer style={{marginBottom: 200}}>
           <TextAlign align="center">
-            <A href={URL.MASTERCARD_CARDHOLDER_AGREEMENT}>
+            <A href={URL.MASTERCARD_CARDHOLDER_AGREEMENT} download>
               Cardholder Agreement
             </A>
           </TextAlign>

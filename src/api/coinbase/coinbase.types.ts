@@ -190,6 +190,11 @@ export interface ConfigApiProps {
   };
 }
 
+export enum CoinbaseErrorMessages {
+  twoFactorInvalid = 'That code was invalid. Please try again.',
+  twoFactorRequired = 'Two-step verification code required',
+}
+
 export enum CoinbaseEnvironment {
   sandbox = 'sandbox',
   production = 'production',

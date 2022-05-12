@@ -3,7 +3,6 @@ import {ShopActions} from '.';
 import {Effect} from '..';
 import BitPayIdApi from '../../api/bitpay';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
-import {getCountry} from '../../lib/location/location';
 import {
   CardConfig,
   GiftCard,
@@ -18,20 +17,19 @@ import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 
 export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
   try {
-    const {APP, BITPAY_ID} = getState();
+    const {APP, BITPAY_ID, LOCATION} = getState();
     const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
     const user = BITPAY_ID.user[APP.network];
     const incentiveLevelId = user?.incentiveLevelId;
+    const country = LOCATION.countryData?.shortCode || 'US';
     const [catalogResponse, directoryResponse, integrationsResponse] =
       await Promise.all([
-        getCountry().then(country =>
-          axios.get(
-            `${baseUrl}/gift-cards/catalog/${country}${
-              incentiveLevelId && user.localSettings.syncGiftCardPurchases
-                ? `/${incentiveLevelId}`
-                : ''
-            }`,
-          ),
+        axios.get(
+          `${baseUrl}/gift-cards/catalog/${country}${
+            incentiveLevelId && user.localSettings.syncGiftCardPurchases
+              ? `/${incentiveLevelId}`
+              : ''
+          }`,
         ),
         axios.get(`${baseUrl}/merchant-directory/directory`),
         axios.get(`${baseUrl}/merchant-directory/integrations`),

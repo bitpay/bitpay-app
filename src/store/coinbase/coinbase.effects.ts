@@ -46,12 +46,25 @@ import {LogActions} from '../log';
 import {setHomeCarouselConfig} from '../app/app.actions';
 
 const isRevokedTokenError = (error: CoinbaseErrorsProps): boolean => {
-  for (let i = 0; i < error.errors.length; i++) {
-    if (error.errors[i].id === 'revoked_token') {
-      return true;
-    }
-  }
-  return false;
+  return error.errors.some(err => err.id === 'revoked_token');
+};
+
+const isExpiredTokenError = (error: CoinbaseErrorsProps): boolean => {
+  return error.errors.some(err => err.id === 'expired_token');
+};
+
+export const coinbaseErrorIncludesErrorParams = (
+  error: CoinbaseErrorsProps | any,
+  errorParams: {
+    id?: string;
+    message?: string;
+  },
+): boolean => {
+  return error?.errors?.some((err: any) =>
+    err && errorParams.id && errorParams.message
+      ? err.id === errorParams.id && err.message === errorParams.message
+      : err.id === errorParams.id || err.message === errorParams.message,
+  );
 };
 
 export const coinbaseParseErrorToString = (
@@ -59,24 +72,15 @@ export const coinbaseParseErrorToString = (
 ): string => {
   if (typeof error === 'string') {
     return error;
-  } else if (typeof error === 'object') {
+  } else if (error?.error_description) {
     return error.error_description;
   } else {
     let message = '';
     for (let i = 0; i < error.errors.length; i++) {
-      message = message + error.errors[i].message + '. ';
+      message = message + (i > 0 ? '. ' : '') + error.errors[i].message;
     }
     return message;
   }
-};
-
-const isExpiredTokenError = (error: CoinbaseErrorsProps): boolean => {
-  for (let i = 0; i < error.errors.length; i++) {
-    if (error.errors[i].id === 'expired_token') {
-      return true;
-    }
-  }
-  return false;
 };
 
 export const coinbaseInitialize =
@@ -381,7 +385,7 @@ export const coinbaseClearSendTransactionStatus =
   };
 
 export const coinbasePayInvoice =
-  (accountId: string, tx: any, code?: string): Effect<Promise<any>> =>
+  (invoiceId: string, currency: any, code?: string): Effect<Promise<any>> =>
   async (dispatch, getState) => {
     const {COINBASE} = getState();
 
@@ -392,8 +396,8 @@ export const coinbasePayInvoice =
     try {
       dispatch(payInvoicePending());
       await CoinbaseAPI.payInvoice(
-        accountId,
-        tx,
+        invoiceId,
+        currency,
         COINBASE.token[COINBASE_ENV],
         code,
       );
@@ -402,7 +406,8 @@ export const coinbasePayInvoice =
       if (isExpiredTokenError(error)) {
         dispatch(LogActions.warn('Token expired. Getting new token...'));
         await dispatch(coinbaseRefreshToken());
-        dispatch(coinbasePayInvoice(accountId, tx));
+        dispatch(coinbasePayInvoice(invoiceId, currency));
+        return;
       } else if (isRevokedTokenError(error)) {
         dispatch(LogActions.warn('Token revoked. Should re-connect...'));
         dispatch(coinbaseDisconnectAccount());
@@ -410,5 +415,10 @@ export const coinbasePayInvoice =
         dispatch(payInvoiceFailed(error));
         dispatch(LogActions.error(coinbaseParseErrorToString(error)));
       }
+      const coinbaseErrorString = coinbaseParseErrorToString(error);
+      if (coinbaseErrorString) {
+        throw new Error(coinbaseErrorString);
+      }
+      throw error;
     }
   };

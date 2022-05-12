@@ -1,4 +1,4 @@
-import React, {memo, ReactElement} from 'react';
+import React, {ReactElement} from 'react';
 import styled from 'styled-components/native';
 import {View} from 'react-native';
 import {BaseText} from '../styled/Text';
@@ -7,6 +7,7 @@ import {LightBlack, SlateDark, White} from '../../styles/colors';
 import {Wallet} from '../../store/wallet/wallet.models';
 import {WalletRowProps} from './WalletRow';
 import WalletRow from './WalletRow';
+import {SvgProps} from 'react-native-svg';
 
 const RowContainer = styled.View`
   margin-bottom: 20px;
@@ -31,28 +32,35 @@ const NoGutter = styled(View)`
   padding-right: 5px;
 `;
 
+type WalletRowType = KeyWallet | WalletRowProps;
+
 export interface KeyWallet extends Wallet, WalletRowProps {
   img: string | ((props: any) => ReactElement);
 }
 
-export interface KeyWalletsRowProps {
+export interface KeyWalletsRowProps<T> {
   key: string;
   keyName: string;
-  wallets: KeyWallet[];
+  wallets: T[];
 }
 
-interface KeyWalletProps {
-  keyWallets: KeyWalletsRowProps[];
-  onPress: (wallet: KeyWallet) => void;
+interface KeyWalletProps<T extends WalletRowType> {
+  keyWallets: KeyWalletsRowProps<T>[];
+  keySvg?: React.FC<SvgProps>;
+  onPress: (wallet: T) => void;
 }
 
-const KeyWalletsRow = ({keyWallets, onPress}: KeyWalletProps) => {
+const KeyWalletsRow = <T extends WalletRowType>({
+  keyWallets,
+  keySvg = KeySvg,
+  onPress,
+}: KeyWalletProps<T>) => {
   return (
     <View>
       {keyWallets.map(key => (
         <RowContainer key={key.key}>
           <KeyNameContainer>
-            <KeySvg />
+            {keySvg({})}
             <KeyName>{key.keyName || 'My Key'}</KeyName>
           </KeyNameContainer>
 
@@ -73,4 +81,4 @@ const KeyWalletsRow = ({keyWallets, onPress}: KeyWalletProps) => {
   );
 };
 
-export default memo(KeyWalletsRow);
+export default KeyWalletsRow;

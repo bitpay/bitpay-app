@@ -1,8 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView} from 'react-native';
+import {Platform, ScrollView} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import styled, {useTheme} from 'styled-components/native';
-import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLogger,
+} from '../../../../utils/hooks';
 import {BuyCryptoStackParamList} from '../BuyCryptoStack';
 import {PaymentMethodsAvailable} from '../constants/BuyCryptoConstants';
 import PaymentMethodsModal from '../components/PaymentMethodModal';
@@ -31,7 +35,6 @@ import {Wallet} from '../../../../store/wallet/wallet.models';
 import {Action, White, Slate, SlateDark} from '../../../../styles/colors';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
-import {getCountry} from '../../../../lib/location/location';
 import {simplexSupportedCoins} from '../utils/simplex-utils';
 import {wyreSupportedCoins} from '../utils/wyre-utils';
 import {sleep} from '../../../../utils/helper-methods';
@@ -50,10 +53,12 @@ const BuyCryptoRoot: React.FC<
 > = ({navigation, route}) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
+  const logger = useLogger();
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
+  const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
 
   const fromWallet = route.params?.fromWallet;
   const fromAmount = route.params?.amount;
@@ -69,13 +74,13 @@ const BuyCryptoRoot: React.FC<
   const [walletSelectorModalVisible, setWalletSelectorModalVisible] =
     useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(
-    PaymentMethodsAvailable.debitCard,
+    Platform.OS === 'ios'
+      ? PaymentMethodsAvailable.applePay
+      : PaymentMethodsAvailable.debitCard,
   );
-  const [country, setCountry] = useState('US');
-
-  const supportedCoins = [
+  const [buyCryptoSupportedCoins, setbuyCryptoSupportedCoins] = useState([
     ...new Set([...simplexSupportedCoins, ...wyreSupportedCoins]),
-  ];
+  ]);
 
   const showModal = (id: string) => {
     switch (id) {
@@ -158,7 +163,7 @@ const BuyCryptoRoot: React.FC<
 
         if (
           fromCurrencyAbbreviation &&
-          supportedCoins.includes(fromCurrencyAbbreviation)
+          buyCryptoSupportedCoins.includes(fromCurrencyAbbreviation)
         ) {
           allowedWallets = allowedWallets.filter(
             wallet => wallet.currencyAbbreviation === fromCurrencyAbbreviation,
@@ -184,7 +189,9 @@ const BuyCryptoRoot: React.FC<
     return (
       wallet.credentials &&
       ((wallet.credentials.network === 'livenet' &&
-        supportedCoins.includes(wallet.credentials.coin.toLowerCase())) ||
+        buyCryptoSupportedCoins.includes(
+          wallet.credentials.coin.toLowerCase(),
+        )) ||
         (__DEV__ &&
           wallet.credentials.network === 'testnet' &&
           wyreSupportedCoins.includes(
@@ -200,7 +207,9 @@ const BuyCryptoRoot: React.FC<
     if (
       wallet.credentials &&
       ((wallet.credentials.network === 'livenet' &&
-        supportedCoins.includes(wallet.credentials.coin.toLowerCase())) ||
+        buyCryptoSupportedCoins.includes(
+          wallet.credentials.coin.toLowerCase(),
+        )) ||
         (__DEV__ &&
           wallet.credentials.network === 'testnet' &&
           wyreSupportedCoins.includes(wallet.credentials.coin.toLowerCase())))
@@ -280,12 +289,20 @@ const BuyCryptoRoot: React.FC<
   };
 
   useEffect(() => {
-    const getCountryData = async () => {
-      const countryData = await getCountry();
-      setCountry(countryData);
-    };
+    const coinsToRemove =
+      !countryData || countryData.shortCode === 'US' ? ['xrp'] : [];
 
-    getCountryData().catch(console.error);
+    if (coinsToRemove.length > 0) {
+      coinsToRemove.forEach((coin: string) => {
+        const index = buyCryptoSupportedCoins.indexOf(coin);
+        if (index > -1) {
+          logger.debug(`Removing ${coin} from Buy Crypto supported coins`);
+          buyCryptoSupportedCoins.splice(index, 1);
+        }
+      });
+      setbuyCryptoSupportedCoins(buyCryptoSupportedCoins);
+    }
+
     selectFirstAvailableWallet();
   }, []);
 
@@ -446,7 +463,7 @@ const BuyCryptoRoot: React.FC<
                 amount,
                 fiatCurrency: 'USD',
                 coin: selectedWallet?.currencyAbbreviation || '',
-                country,
+                country: countryData?.shortCode || 'US',
                 selectedWallet,
                 paymentMethod: selectedPaymentMethod,
               });
@@ -469,7 +486,9 @@ const BuyCryptoRoot: React.FC<
       <WalletSelectorModal
         isVisible={walletSelectorModalVisible}
         customSupportedCurrencies={
-          fromCurrencyAbbreviation ? [fromCurrencyAbbreviation] : supportedCoins
+          fromCurrencyAbbreviation
+            ? [fromCurrencyAbbreviation]
+            : buyCryptoSupportedCoins
         }
         modalTitle={'Select Destination'}
         onDismiss={(newWallet?: Wallet) => {

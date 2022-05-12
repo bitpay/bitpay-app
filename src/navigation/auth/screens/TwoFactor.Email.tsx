@@ -1,6 +1,8 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
+import styled from 'styled-components/native';
+import Spinner from '../../../components/spinner/Spinner';
 import {
   TWO_FACTOR_EMAIL_POLL_INTERVAL,
   TWO_FACTOR_EMAIL_POLL_TIMEOUT,
@@ -20,6 +22,11 @@ type EmailAuthenticationScreenProps = StackScreenProps<
   AuthStackParamList,
   'EmailAuthentication'
 >;
+
+const SpinnerWrapper = styled.View`
+  align-items: center;
+  margin-bottom: 32px;
+`;
 
 const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
   navigation,
@@ -113,6 +120,10 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
           </>
         ) : (
           <>
+            <SpinnerWrapper>
+              <Spinner size={78} />
+            </SpinnerWrapper>
+
             <AuthFormParagraph>
               We sent an email containing a link to authenticate this login
               attempt.

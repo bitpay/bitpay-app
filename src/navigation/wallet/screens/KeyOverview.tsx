@@ -39,6 +39,8 @@ import {useAppSelector} from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import KeyDropdownOption from '../components/KeyDropdownOption';
 import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
+import EncryptPasswordImg from '../../../../assets/img/tinyicon-encrypt.svg';
+import EncryptPasswordDarkModeImg from '../../../../assets/img/tinyicon-encrypt-darkmode.svg';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -90,7 +92,7 @@ const WalletListFooterText = styled(BaseText)`
 
 const KeyToggle = styled(TouchableOpacity)`
   align-items: center;
-  flex-direction: row;
+  flex-direction: column;
 `;
 
 const KeyDropdown = styled.SafeAreaView`
@@ -113,9 +115,15 @@ const CogIconContainer = styled.TouchableOpacity`
   width: 40px;
 `;
 
+const HeaderTitleContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+
 export const buildUIFormattedWallet: (
   wallet: Wallet,
   defaultAltCurrencyIsoCode: string,
+  currencyDisplay?: 'symbol',
 ) => WalletRowProps = (
   {
     id,
@@ -132,6 +140,7 @@ export const buildUIFormattedWallet: (
     pendingTxps,
   },
   defaultAltCurrencyIsoCode,
+  currencyDisplay,
 ) => ({
   id,
   keyId,
@@ -141,10 +150,13 @@ export const buildUIFormattedWallet: (
   walletName: walletName || credentials.walletName,
   cryptoBalance: balance.crypto,
   cryptoLockedBalance: balance.cryptoLocked,
-  fiatBalance: formatFiatAmount(balance.fiat, defaultAltCurrencyIsoCode),
+  fiatBalance: formatFiatAmount(balance.fiat, defaultAltCurrencyIsoCode, {
+    currencyDisplay,
+  }),
   fiatLockedBalance: formatFiatAmount(
     balance.fiatLocked,
     defaultAltCurrencyIsoCode,
+    {currencyDisplay},
   ),
   network: credentials.network,
   isRefreshing,
@@ -202,8 +214,17 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
             activeOpacity={ActiveOpacity}
             disabled={!hasMultipleKeys}
             onPress={() => setShowKeyDropdown(true)}>
-            <HeaderTitle>{key?.keyName}</HeaderTitle>
-            {hasMultipleKeys && <ChevronDownSvg style={{marginLeft: 10}} />}
+            {theme.dark ? (
+              <EncryptPasswordDarkModeImg />
+            ) : (
+              <EncryptPasswordImg />
+            )}
+            <HeaderTitleContainer>
+              <HeaderTitle style={{textAlign: 'center'}}>
+                {key?.keyName}
+              </HeaderTitle>
+              {hasMultipleKeys && <ChevronDownSvg style={{marginLeft: 10}} />}
+            </HeaderTitleContainer>
           </KeyToggle>
         );
       },
@@ -333,7 +354,9 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
     <OverviewContainer>
       <BalanceContainer>
         <Balance scale={shouldScale(totalBalance)}>
-          {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode)}
+          {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
+            currencyDisplay: 'symbol',
+          })}
         </Balance>
       </BalanceContainer>
 

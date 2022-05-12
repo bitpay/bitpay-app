@@ -18,12 +18,10 @@ import {
   BaseText,
   H2,
   H5,
-  HeaderSubtitle,
   HeaderTitle,
   Paragraph,
 } from '../../../components/styled/Text';
 import {Network} from '../../../constants';
-import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {findWalletById, isSegwit} from '../../../store/wallet/utils/wallet';
@@ -253,6 +251,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const uiFormattedWallet = buildUIFormattedWallet(
     fullWalletObj,
     defaultAltCurrency.isoCode,
+    'symbol',
   );
 
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
@@ -494,7 +493,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         currencyAbbreviation.toLowerCase() === 'eth' ||
         dispatch(IsERCToken(currencyAbbreviation))
       ) {
-        tx = await buildEthERCTokenSpeedupTx(fullWalletObj, transaction);
+        tx = await dispatch(
+          buildEthERCTokenSpeedupTx(fullWalletObj, transaction),
+        );
         goToConfirm(tx);
       }
 

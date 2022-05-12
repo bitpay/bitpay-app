@@ -5,6 +5,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import Button from '../../components/button/Button';
 import haptic from '../../components/haptic-feedback/haptic';
 import {HeaderRightContainer} from '../../components/styled/Containers';
+import {HeaderTitle} from '../../components/styled/Text';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
@@ -13,16 +14,18 @@ import {RootState} from '../../store';
 import {BitPayIdEffects} from '../../store/bitpay-id';
 import {User} from '../../store/bitpay-id/bitpay-id.models';
 import {ShopEffects} from '../../store/shop';
-import Pair, {PairScreenParamList} from './screens/Pair';
+import PairingScreen, {
+  BitPayIdPairingScreenParamList,
+} from './screens/BitPayIdPairingScreen';
 import Profile from './screens/ProfileSettings';
 
 export type BitpayIdStackParamList = {
-  Pair: PairScreenParamList;
+  BitPayIdPairingScreen: BitPayIdPairingScreenParamList;
   Profile: undefined;
 };
 
 export enum BitpayIdScreens {
-  PAIR = 'Pair',
+  PAIRING = 'BitPayIdPairingScreen',
   PROFILE = 'Profile',
 }
 
@@ -40,10 +43,11 @@ const BitpayIdStack = () => {
       screenOptions={{...baseNavigatorOptions}}
       initialRouteName={BitpayIdScreens.PROFILE}>
       <BitpayId.Screen
-        name={BitpayIdScreens.PAIR}
-        component={Pair}
+        name={BitpayIdScreens.PAIRING}
+        component={PairingScreen}
         options={{
           ...baseScreenOptions,
+          headerTitle: () => <HeaderTitle>Pairing...</HeaderTitle>,
         }}
       />
       <BitpayId.Screen
