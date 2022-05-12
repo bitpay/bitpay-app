@@ -36,16 +36,12 @@ function getPlaceholder(phoneCountryCode: string) {
 
 const AreaCodeContainer = styled.View`
   flex-direction: row;
-  position: absolute;
-  left: 0;
   align-items: center;
   justify-content: center;
   padding-left: 15px;
   padding-right: 10px;
   height: 37px;
   width: 80px;
-  border-right-width: 1px;
-  border-right-color: ${({theme}) => (theme.dark ? '#45484E' : '#eceffd')};
 `;
 
 const AreaCode = styled(BaseText)`
@@ -175,7 +171,7 @@ const EnterPhone = ({
                 onChangeText={(formatted: string, extracted?: string) =>
                   onChange(extracted)
                 }
-                icon={() => (
+                prefix={() => (
                   <AreaCodeContainer>
                     <TouchableWithoutFeedback
                       onPress={() => {
