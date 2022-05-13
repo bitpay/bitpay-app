@@ -5,8 +5,7 @@ import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.s
 import {Black, SlateDark, White, Slate} from '../../../../styles/colors';
 import {BaseText, H7} from '../../../../components/styled/Text';
 import {useTheme} from '@react-navigation/native';
-import ChangellyLogo from '../../../../../assets/img/services/changelly/changelly-vector-logo.svg';
-import ChangellyLogoDm from '../../../../../assets/img/services/changelly/changelly-vector-logo-dark.svg';
+import ChangellyLogo from '../../../../components/icons/external-services/changelly/changelly-logo';
 import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
 import {useAppDispatch} from '../../../../utils/hooks';
 import haptic from '../../../../components/haptic-feedback/haptic';
@@ -147,11 +146,7 @@ const ChangellyPoliciesModal: React.FC<ChangellyPoliciesModalProps> = ({
         </PoliciesContainer>
         <ProviderContainer>
           <ProviderLabel>Provided By</ProviderLabel>
-          {theme.dark ? (
-            <ChangellyLogoDm width={100} height={30} />
-          ) : (
-            <ChangellyLogo width={100} height={30} />
-          )}
+          <ChangellyLogo width={100} height={30} />
         </ProviderContainer>
       </ChangellyPoliciesContainer>
     </SheetModal>

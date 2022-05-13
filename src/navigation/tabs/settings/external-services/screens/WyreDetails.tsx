@@ -4,8 +4,8 @@ import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
 import moment from 'moment';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
+import WyreLogo from '../../../../../components/icons/external-services/wyre/wyre-logo';
 import {wyrePaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
-import WyreIcon from '../../../../../../assets/img/services/wyre/icon-wyre.svg';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {
   dismissOnGoingProcessModal,
@@ -104,7 +104,7 @@ const WyreDetails: React.FC = () => {
               <CryptoUnit>{paymentData.destCurrency}</CryptoUnit>
             </CryptoContainer>
           </CryptoAmountContainer>
-          <WyreIcon width={60} height={40} />
+          <WyreLogo iconOnly={true} width={45} height={40} />
         </RowDataContainer>
 
         <RowDataContainer>
