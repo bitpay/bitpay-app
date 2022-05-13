@@ -44,7 +44,6 @@ import {
   changellyGetPairsParams,
   changellyGetFixRateForAmount,
 } from '../utils/changelly-utils';
-import {getCountry} from '../../../../lib/location/location';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {sleep} from '../../../../utils/helper-methods';
 import {useLogger} from '../../../../utils/hooks/useLogger';
@@ -58,7 +57,6 @@ import {
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  dismissBottomNotificationModal,
 } from '../../../../store/app/app.actions';
 import ArrowDown from '../../../../../assets/img/services/swap-crypto/down-arrow.svg';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
@@ -82,6 +80,7 @@ const SwapCryptoRoot: React.FC = () => {
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
+  const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
   const route = useRoute<RouteProp<SwapCryptoStackParamList, 'Root'>>();
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [fromWalletSelectorModalVisible, setFromWalletSelectorModalVisible] =
@@ -514,8 +513,8 @@ const SwapCryptoRoot: React.FC = () => {
         supportedCoinsWithFixRateEnabled.includes(coin),
       );
 
-      const country = await getCountry();
-      const coinsToRemove = !country || country === 'US' ? ['xrp'] : [];
+      const coinsToRemove =
+        !countryData || countryData.shortCode === 'US' ? ['xrp'] : [];
       if (selectedWallet?.balance?.satSpendable === 0) {
         coinsToRemove.push(selectedWallet.currencyAbbreviation.toLowerCase());
       }

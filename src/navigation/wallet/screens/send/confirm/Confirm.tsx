@@ -392,25 +392,11 @@ const Confirm = () => {
           } else if (recipient.type === 'contact') {
             navigation.dispatch(StackActions.popToTop());
           } else {
+            navigation.dispatch(StackActions.popToTop());
             navigation.dispatch(
-              CommonActions.reset({
-                index: 2,
-                routes: [
-                  {
-                    name: 'Tabs',
-                    params: {screen: 'Home'},
-                  },
-                  {
-                    name: 'Wallet',
-                    params: {
-                      screen: 'WalletDetails',
-                      params: {
-                        walletId: wallet!.id,
-                        key,
-                      },
-                    },
-                  },
-                ],
+              StackActions.replace('WalletDetails', {
+                walletId: wallet!.id,
+                key,
               }),
             );
             await sleep(0);

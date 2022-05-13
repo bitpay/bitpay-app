@@ -41,18 +41,19 @@ export const startBitPayIdStoreInit =
     }
   };
 
-export const startFetchSession = (): Effect => async (dispatch, getState) => {
-  try {
-    const {APP} = getState();
-    dispatch(BitPayIdActions.updateFetchSessionStatus('loading'));
+export const startFetchSession =
+  (): Effect<Promise<void>> => async (dispatch, getState) => {
+    try {
+      const {APP} = getState();
+      dispatch(BitPayIdActions.updateFetchSessionStatus('loading'));
 
-    const session = await AuthApi.fetchSession(APP.network);
+      const session = await AuthApi.fetchSession(APP.network);
 
-    dispatch(BitPayIdActions.successFetchSession(session));
-  } catch (err) {
-    dispatch(BitPayIdActions.failedFetchSession());
-  }
-};
+      dispatch(BitPayIdActions.successFetchSession(session));
+    } catch (err) {
+      dispatch(BitPayIdActions.failedFetchSession());
+    }
+  };
 
 interface CreateAccountParams {
   givenName: string;
@@ -323,7 +324,7 @@ export const startDeeplinkPairing =
 
     try {
       dispatch(
-        AppEffects.startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN),
+        AppEffects.startOnGoingProcessModal(OnGoingProcessMessages.PAIRING),
       );
       await dispatch(startPairAndLoadUser(network, secret, code));
     } catch (err) {

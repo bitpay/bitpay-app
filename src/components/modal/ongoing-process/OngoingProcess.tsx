@@ -11,6 +11,7 @@ export enum OnGoingProcessMessages {
   GENERAL_AWAITING = "Just a second, we're setting a few things up",
   CREATING_KEY = 'Creating Key',
   LOGGING_IN = 'Logging In',
+  PAIRING = 'Pairing',
   CREATING_ACCOUNT = 'Creating Account',
   IMPORTING = 'Importing',
   DELETING_KEY = 'Deleting Key',

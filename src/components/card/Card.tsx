@@ -3,6 +3,7 @@ import styled, {useTheme} from 'styled-components/native';
 import * as React from 'react';
 import {ReactElement, ReactNode} from 'react';
 import {BoxShadow} from '../../navigation/tabs/home/components/Styled';
+import {StyleProp, ViewStyle} from 'react-native';
 
 const CardHeader = styled.View`
   min-height: 30px;
@@ -39,6 +40,7 @@ export interface CardProps {
   containerProps?: {
     backgroundColor?: string;
   };
+  style?: StyleProp<ViewStyle>;
 }
 
 const Card = ({
@@ -47,13 +49,17 @@ const Card = ({
   footer,
   backgroundImg,
   containerProps,
+  style,
 }: CardProps) => {
   const theme = useTheme();
   const backgroundColor = containerProps && containerProps.backgroundColor;
   return (
     <CardContainer
       backgroundColor={backgroundColor}
-      style={!theme.dark && BoxShadow}>
+      style={{
+        ...(theme.dark ? {} : BoxShadow),
+        ...((style as object) || {}),
+      }}>
       {backgroundImg && <BackgroundImage>{backgroundImg()}</BackgroundImage>}
 
       {header && <CardHeader>{header}</CardHeader>}

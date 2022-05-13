@@ -30,7 +30,7 @@ import CardIntroHeroImg from './CardIntroHeroImage';
 import CardHighlights from './CardIntroHighlights';
 
 interface CardIntroProps {
-  navigation: StackNavigationProp<CardStackParamList, 'Home'>;
+  navigation: StackNavigationProp<CardStackParamList, 'CardHome'>;
 }
 
 const Spacer = styled.View<{height: number}>`

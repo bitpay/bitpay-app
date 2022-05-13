@@ -13,6 +13,7 @@ import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
 import {BitPayIdEffects} from '../bitpay-id';
 import {CardEffects} from '../card';
+import {LocationEffects} from '../location';
 import {RootState, Effect} from '../index';
 import {LogActions} from '../log';
 import {startWalletStoreInit} from '../wallet/effects';
@@ -73,7 +74,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
             ),
           );
         }
-
+        await dispatch(LocationEffects.getCountry());
         await dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
         await dispatch(CardEffects.startCardStoreInit(data.user));
       } catch (err: any) {

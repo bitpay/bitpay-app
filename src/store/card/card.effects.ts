@@ -20,6 +20,13 @@ import {Card, DebitCardTopUpInvoiceParams} from './card.models';
 import {Invoice} from '../shop/shop.models';
 import {BASE_BITPAY_URLS} from '../../constants/config';
 
+export interface StartActivateCardParams {
+  cvv: string;
+  expirationDate: string;
+  lastFourDigits?: string;
+  cardNumber?: string;
+}
+
 export const startCardStoreInit =
   (initialData: InitialUserData): Effect<Promise<void>> =>
   async (dispatch, getState) => {
@@ -310,6 +317,39 @@ export const START_UPDATE_CARD_LOCK =
         dispatch(LogActions.error(JSON.stringify(err)));
         dispatch(CardActions.failedUpdateCardLock(id));
       });
+    }
+  };
+
+export const startActivateCard =
+  (id: string, payload: StartActivateCardParams): Effect =>
+  async (dispatch, getState) => {
+    try {
+      dispatch(CardActions.updateActivateCardStatus(null));
+
+      const {APP, BITPAY_ID} = getState();
+      const {network} = APP;
+      const token = BITPAY_ID.apiToken[network];
+
+      const {data, errors} = await CardApi.activateCard(token, id, payload);
+
+      if (errors) {
+        const errorMsg = errors.map(e => e.message).join('\n');
+
+        throw new Error(errorMsg);
+      } else if (data) {
+        dispatch(CardActions.successActivateCard());
+      } else {
+        throw new Error('An unexpected error occurred.');
+      }
+    } catch (err) {
+      let errMsg = JSON.stringify(err);
+
+      if (err instanceof Error) {
+        errMsg = err.message;
+      }
+
+      dispatch(LogActions.error(`Failed to activate card: ${errMsg}`));
+      dispatch(CardActions.failedActivateCard(errMsg));
     }
   };
 

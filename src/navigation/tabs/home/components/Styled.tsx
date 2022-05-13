@@ -36,7 +36,7 @@ export const SectionHeaderContainer = styled.View<{justifyContent?: string}>`
 `;
 
 export const CarouselItemContainer = styled.View`
-  padding: 20px 0 0;
+  padding: 20px 0;
 `;
 
 export const BoxShadow = {

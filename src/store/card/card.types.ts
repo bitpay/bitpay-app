@@ -7,6 +7,7 @@ import {
   Transaction,
 } from './card.models';
 import {
+  ActivateCardStatus,
   FetchCardsStatus,
   FetchOverviewStatus,
   FetchSettledTransactionsStatus,
@@ -60,6 +61,9 @@ export enum CardActionTypes {
   UPDATE_FETCH_REFERRAL_CODE_STATUS = 'CARD/UPDATE_FETCH_REFERRAL_CODE_STATUS',
   SUCCESS_FETCH_REFERRED_USERS = 'CARD/SUCCESS_FETCH_REFERRED_USERS',
   UPDATE_FETCH_REFERRED_USERS_STATUS = 'CARD/UPDATE_FETCH_REFERRED_USERS_STATUS',
+  SUCCESS_ACTIVATE_CARD = 'CARD/SUCCESS_ACTIVATE_CARD',
+  FAILED_ACTIVATE_CARD = 'CARD/FAILED_ACTIVATE_CARD',
+  UPDATE_ACTIVATE_CARD_STATUS = 'CARD/UPDATE_ACTIVATE_CARD_STATUS',
 }
 
 interface SuccessInitializeStore {
@@ -190,6 +194,21 @@ interface FailedFetchReferredUsers {
   payload: {id: string; status: referredUsersStatus};
 }
 
+interface SuccessActivateCard {
+  type: CardActionTypes.SUCCESS_ACTIVATE_CARD;
+  payload: undefined;
+}
+
+interface FailedActivateCard {
+  type: CardActionTypes.FAILED_ACTIVATE_CARD;
+  payload: string | undefined;
+}
+
+interface UpdateActivateCardStatus {
+  type: CardActionTypes.UPDATE_ACTIVATE_CARD_STATUS;
+  payload: ActivateCardStatus;
+}
+
 export type CardActionType =
   | SuccessInitializeStore
   | SuccessFetchCards
@@ -214,4 +233,7 @@ export type CardActionType =
   | SuccessFetchReferralCode
   | UpdateFetchReferralCodeStatus
   | SuccessFetchReferredUsers
-  | FailedFetchReferredUsers;
+  | FailedFetchReferredUsers
+  | SuccessActivateCard
+  | FailedActivateCard
+  | UpdateActivateCardStatus;

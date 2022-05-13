@@ -1,6 +1,12 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
+import styled from 'styled-components/native';
+import Spinner from '../../../components/spinner/Spinner';
+import {
+  TWO_FACTOR_EMAIL_POLL_INTERVAL,
+  TWO_FACTOR_EMAIL_POLL_TIMEOUT,
+} from '../../../constants/config';
 import {navigationRef} from '../../../Root';
 import {RootState} from '../../../store';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
@@ -17,15 +23,17 @@ type EmailAuthenticationScreenProps = StackScreenProps<
   'EmailAuthentication'
 >;
 
-const POLL_INTERVAL = 1000 * 3;
-const POLL_TIMEOUT = 1000 * 60 * 5;
+const SpinnerWrapper = styled.View`
+  align-items: center;
+  margin-bottom: 32px;
+`;
 
 const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
   navigation,
 }) => {
   const dispatch = useDispatch();
   const pollId = useRef<ReturnType<typeof setInterval>>();
-  const pollCountdown = useRef(POLL_TIMEOUT);
+  const pollCountdown = useRef(TWO_FACTOR_EMAIL_POLL_TIMEOUT);
   const isAuthenticated = useSelector<RootState, boolean>(
     ({BITPAY_ID}) => BITPAY_ID.session.isAuthenticated,
   );
@@ -41,8 +49,8 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
   useEffect(() => {
     pollId.current = setInterval(() => {
       dispatch(BitPayIdEffects.startFetchSession());
-      pollCountdown.current -= POLL_INTERVAL;
-    }, POLL_INTERVAL);
+      pollCountdown.current -= TWO_FACTOR_EMAIL_POLL_INTERVAL;
+    }, TWO_FACTOR_EMAIL_POLL_INTERVAL);
 
     return () => {
       if (pollId.current) {
@@ -112,6 +120,10 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
           </>
         ) : (
           <>
+            <SpinnerWrapper>
+              <Spinner size={78} />
+            </SpinnerWrapper>
+
             <AuthFormParagraph>
               We sent an email containing a link to authenticate this login
               attempt.

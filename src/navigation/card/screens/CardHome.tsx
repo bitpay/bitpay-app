@@ -3,7 +3,7 @@ import React, {useLayoutEffect} from 'react';
 import {SafeAreaView} from 'react-native';
 import {selectCardGroups} from '../../../store/card/card.selectors';
 import {useAppSelector} from '../../../utils/hooks';
-import {CardStackParamList} from '../CardStack';
+import {CardScreens, CardStackParamList} from '../CardStack';
 import CardDashboard from '../components/CardDashboard';
 import CardIntro from '../components/CardIntro';
 
@@ -12,7 +12,10 @@ export type CardHomeScreenParamList =
       id: string | undefined | null;
     }
   | undefined;
-type CardHomeScreenProps = StackScreenProps<CardStackParamList, 'Home'>;
+type CardHomeScreenProps = StackScreenProps<
+  CardStackParamList,
+  CardScreens.HOME
+>;
 
 const CardHome: React.FC<CardHomeScreenProps> = ({navigation, route}) => {
   const cardGroups = useAppSelector(selectCardGroups);

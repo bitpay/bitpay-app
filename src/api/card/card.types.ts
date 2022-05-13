@@ -62,6 +62,17 @@ export interface UpdateCardLockResponse {
   };
 }
 
+export interface ActivateCardResponse {
+  user: {
+    card: {
+      /**
+       * Activation date in ms, as a string.
+       */
+      activationDate: string;
+    };
+  };
+}
+
 export interface UpdateCardNameResponse {
   user: {
     card: {
