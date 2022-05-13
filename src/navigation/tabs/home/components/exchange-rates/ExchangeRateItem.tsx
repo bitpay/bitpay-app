@@ -7,13 +7,18 @@ import {
   CurrencyColumn,
   CurrencyImageContainer,
 } from '../../../../../components/styled/Containers';
-import {H7, Smallest} from '../../../../../components/styled/Text';
-import {formatFiatAmount} from '../../../../../utils/helper-methods';
+import {H7, Smallest, BaseText} from '../../../../../components/styled/Text';
+import {formatFiatAmountObj} from '../../../../../utils/helper-methods';
 import GainArrow from '../../../../../../assets/img/home/exchange-rates/increment-arrow.svg';
 import LossArrow from '../../../../../../assets/img/home/exchange-rates/decrement-arrow.svg';
 import NeutralArrow from '../../../../../../assets/img/home/exchange-rates/flat-arrow.svg';
 import {ExchangeRateItemProps} from './ExchangeRatesList';
-import {LuckySevens, SlateDark} from '../../../../../styles/colors';
+import {
+  LuckySevens,
+  NeutralSlate,
+  SlateDark,
+} from '../../../../../styles/colors';
+import {View} from 'react-native';
 
 const RowContainer = styled.TouchableOpacity`
   flex-direction: row;
@@ -32,6 +37,13 @@ const SubTextContainer = styled.View`
 
 const ExchangeRateText = styled(H7)`
   font-weight: 500;
+`;
+
+const ExchangeRateCode = styled(BaseText)`
+  font-weight: 500;
+  font-size: 10px;
+  padding-left: 2px;
+  color: ${({theme: {dark}}) => (dark ? NeutralSlate : SlateDark)};
 `;
 
 const ExchangeRateSubText = styled(Smallest)`
@@ -64,6 +76,15 @@ const ExchangeRateItem = ({
 }) => {
   const {img, currencyName, currentPrice, average, currencyAbbreviation} = item;
 
+  const {amount, code} = formatFiatAmountObj(
+    currentPrice!,
+    defaultAltCurrencyIsoCode,
+    {
+      customPrecision: 'minimal',
+      currencyAbbreviation,
+    },
+  );
+
   return (
     <RowContainer activeOpacity={ActiveOpacity} onPress={onPress}>
       <CurrencyImageContainer style={{width: 40, height: 40}}>
@@ -80,10 +101,12 @@ const ExchangeRateItem = ({
       <NoteContainer>
         {currentPrice && (
           <ExchangeRateText>
-            {formatFiatAmount(currentPrice, defaultAltCurrencyIsoCode, {
-              customPrecision: 'minimal',
-              currencyAbbreviation,
-            })}
+            {amount}
+            {code ? (
+              <View>
+                <ExchangeRateCode>{code}</ExchangeRateCode>
+              </View>
+            ) : null}
           </ExchangeRateText>
         )}
         <SubTextContainer>

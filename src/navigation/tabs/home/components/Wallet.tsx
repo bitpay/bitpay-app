@@ -3,9 +3,18 @@ import styled, {useTheme} from 'styled-components/native';
 import HomeCard from '../../../../components/home-card/HomeCard';
 import {BaseText} from '../../../../components/styled/Text';
 import {Wallet} from '../../../../store/wallet/wallet.models';
-import {LightBlack, Slate, SlateDark, White} from '../../../../styles/colors';
+import {
+  LightBlack,
+  NeutralSlate,
+  Slate,
+  SlateDark,
+  White,
+} from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
-import {formatFiatAmount} from '../../../../utils/helper-methods';
+import {
+  formatFiatAmount,
+  formatFiatAmountObj,
+} from '../../../../utils/helper-methods';
 import {getRemainingWalletCount} from '../../../../store/wallet/utils/wallet';
 import {
   ActiveOpacity,
@@ -71,8 +80,14 @@ const NeedBackupText = styled(BaseText)`
   border-radius: 3px;
 `;
 
-const PercentageContainer = styled(BaseText)`
-  color: ${({theme}) => theme.colors.text};
+const BalanceCode = styled(BaseText)`
+  font-size: 12px;
+  color: ${({theme: {dark}}) => (dark ? NeutralSlate : SlateDark)};
+  font-weight: 500;
+`;
+
+const BalanceCodeContainer = styled.View`
+  padding-left: 2px;
 `;
 
 export const WALLET_DISPLAY_LIMIT = 3;
@@ -116,6 +131,10 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
 
   /* ////////////////////////////// LISTVIEW */
   if (layout === 'listView') {
+    const {amount, code} = formatFiatAmountObj(
+      totalBalance,
+      defaultAltCurrency.isoCode,
+    );
     return (
       <ListCard
         activeOpacity={ActiveOpacity}
@@ -132,7 +151,12 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
             ) : (
               <>
                 <Balance>
-                  {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode)}
+                  {amount}
+                  {code ? (
+                    <BalanceCodeContainer>
+                      <BalanceCode>{code}</BalanceCode>
+                    </BalanceCodeContainer>
+                  ) : null}
                 </Balance>
                 {percentageDifference ? (
                   <Percentage

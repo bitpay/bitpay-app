@@ -135,13 +135,13 @@ export const getSignificantDigits = (currencyAbbreviation?: string) => {
     : undefined;
 };
 
-export const formatFiatAmount = (
+const getFormatter = (
   amount: number,
   currency: string = 'USD',
   opts: {
     customPrecision?: 'minimal';
     currencyAbbreviation?: string;
-    currencyDisplay?: 'symbol';
+    currencyDisplay?: 'symbol' | 'code';
   } = {},
 ) =>
   new Intl.NumberFormat('en-US', {
@@ -154,9 +154,41 @@ export const formatFiatAmount = (
         maximumFractionDigits: 0,
         minimumFractionDigits: 0,
       }),
-    currencyDisplay:
-      currency === 'USD' ? 'symbol' : opts.currencyDisplay || 'code',
-  }).format(amount);
+    currencyDisplay: opts.currencyDisplay,
+  });
+
+export const formatFiatAmount = (
+  amount: number,
+  currency: string = 'USD',
+  opts: {
+    customPrecision?: 'minimal';
+    currencyAbbreviation?: string;
+    currencyDisplay?: 'symbol';
+  } = {},
+) => {
+  const currencyDisplay =
+    currency === 'USD' ? 'symbol' : opts.currencyDisplay || 'code';
+  const formatter = getFormatter(amount, currency, {...opts, currencyDisplay});
+
+  if (currencyDisplay === 'symbol') {
+    return formatter.format(amount);
+  }
+
+  let code;
+  let numberString = formatter
+    .formatToParts(amount)
+    .map(({type, value}) => {
+      switch (type) {
+        case 'currency':
+          code = value;
+          return '';
+        default:
+          return value;
+      }
+    })
+    .reduce((string, part) => string + part);
+  return `${numberString} ${code}`;
+};
 
 export const findContact = (
   contactList: ContactRowProps[],
@@ -203,4 +235,37 @@ export const calculatePercentageDifference = (
   return Number(
     (((currentBalance - lastDayBalance) * 100) / currentBalance).toFixed(2),
   );
+};
+
+export const formatFiatAmountObj = (
+  amount: number,
+  currency: string = 'USD',
+  opts: {
+    customPrecision?: 'minimal';
+    currencyAbbreviation?: string;
+    currencyDisplay?: 'symbol';
+  } = {},
+): {amount: string; code?: string} => {
+  const currencyDisplay =
+    currency === 'USD' ? 'symbol' : opts.currencyDisplay || 'code';
+  const formatter = getFormatter(amount, currency, {...opts, currencyDisplay});
+
+  if (currencyDisplay === 'symbol') {
+    return {amount: formatter.format(amount)};
+  }
+
+  let code;
+  let numberString = formatter
+    .formatToParts(amount)
+    .map(({type, value}) => {
+      switch (type) {
+        case 'currency':
+          code = value;
+          return '';
+        default:
+          return value;
+      }
+    })
+    .reduce((string, part) => string + part);
+  return {amount: numberString, code};
 };
