@@ -163,7 +163,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   goToCardSettingsRef.current = goToCardSettings;
 
   const goToReferAndEarn = () => {
-    navigation.navigate('Referral', {card: currentCardRef.current});
+    navigation.navigate('Referral', {card: activeCard});
   };
   const goToReferAndEarnRef = useRef(goToReferAndEarn);
   goToReferAndEarnRef.current = goToReferAndEarn;
