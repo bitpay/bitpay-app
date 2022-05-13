@@ -51,7 +51,7 @@ const CardBalanceValueRow = styled.View`
 const CardBalance = styled(BaseText)<{balance: number}>`
   color: ${White};
   font-size: ${({balance}) =>
-    balance > 1e9 ? 21 : balance > 1e8 ? 24 : balance > 1e6 ? 26 : 28}px;
+    balance >= 1e9 ? 21 : balance >= 1e8 ? 24 : balance >= 1e6 ? 26 : 28}px;
   font-weight: 500;
   margin-right: 20px;
   flex-shrink: 1;
