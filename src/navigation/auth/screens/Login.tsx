@@ -4,13 +4,13 @@ import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {Keyboard, SafeAreaView, TextInput} from 'react-native';
 import * as yup from 'yup';
-import AlertBox from '../../../components/alert-box/AlertBox';
-import Button from '../../../components/button/Button';
+import Button, {ButtonState} from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {Link} from '../../../components/styled/Text';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {navigationRef, RootStacks} from '../../../Root';
+import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
@@ -57,6 +57,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
     ({BITPAY_ID}) => BITPAY_ID.loginError || '',
   );
   const [isCaptchaModalVisible, setCaptchaModalVisible] = useState(false);
+  const [buttonState, setButtonState] = useState<ButtonState>(null);
   const passwordRef = useRef<TextInput>(null);
   const captchaRef = useRef<CaptchaRef>(null);
   const {onLoginSuccess} = route.params || {};
@@ -71,6 +72,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
 
       if (onLoginSuccess) {
         onLoginSuccess();
+        dispatch(BitPayIdActions.updateLoginStatus(null));
         return;
       }
 
@@ -84,21 +86,47 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
         });
       }
 
+      dispatch(BitPayIdActions.updateLoginStatus(null));
       return;
     }
 
     if (loginStatus === 'failed') {
-      // TODO
       captchaRef.current?.reset();
+      setButtonState('failed');
+
+      const done = () => {
+        setButtonState(null);
+        dispatch(BitPayIdActions.updateLoginStatus(null));
+      };
+
+      dispatch(
+        AppActions.showBottomNotificationModal({
+          type: 'error',
+          title: 'Login failed',
+          message:
+            loginError ||
+            'Could not log in. Please review your information and try again.',
+          enableBackdropDismiss: true,
+          onBackdropDismiss: done,
+          actions: [
+            {
+              text: 'OK',
+              action: done,
+            },
+          ],
+        }),
+      );
       return;
     }
 
     if (loginStatus === 'twoFactorPending') {
+      setButtonState(null);
       navigation.navigate('TwoFactorAuthentication');
       return;
     }
 
     if (loginStatus === 'emailAuthenticationPending') {
+      setButtonState(null);
       navigation.navigate('EmailAuthentication');
       return;
     }
@@ -107,6 +135,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   const onSubmit = handleSubmit(({email, password}) => {
     Keyboard.dismiss();
     if (session.captchaDisabled) {
+      setButtonState('loading');
       dispatch(BitPayIdEffects.startLogin({email, password}));
     } else {
       setCaptchaModalVisible(true);
@@ -120,6 +149,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   const onCaptchaResponse = async (gCaptchaResponse: string) => {
     const {email, password} = getValues();
     setCaptchaModalVisible(false);
+    setButtonState('loading');
     await sleep(500);
     dispatch(BitPayIdEffects.startLogin({email, password, gCaptchaResponse}));
   };
@@ -132,15 +162,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   return (
     <SafeAreaView>
       <AuthFormContainer>
-        {loginStatus === 'failed' ? (
-          <AuthRowContainer>
-            <AlertBox type="warning">
-              {loginError ||
-                'Could not log in. Please review your information and try again.'}
-            </AlertBox>
-          </AuthRowContainer>
-        ) : null}
-
         <AuthRowContainer>
           <Controller
             control={control}
@@ -186,7 +207,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
 
         <AuthActionsContainer>
           <AuthActionRow>
-            <Button onPress={onSubmit}>Log In</Button>
+            <Button onPress={onSubmit} state={buttonState}>
+              Log In
+            </Button>
           </AuthActionRow>
 
           <AuthActionRow>

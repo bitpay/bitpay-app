@@ -133,7 +133,6 @@ export const startLogin =
   ({email, password, gCaptchaResponse}: StartLoginParams): Effect =>
   async (dispatch, getState) => {
     try {
-      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
       dispatch(BitPayIdActions.updateLoginStatus(null));
 
       const {APP, BITPAY_ID} = getState();
@@ -198,8 +197,6 @@ export const startLogin =
         dispatch(LogActions.error(JSON.stringify(err)));
         dispatch(BitPayIdActions.failedLogin(errMsg));
       });
-    } finally {
-      dispatch(AppActions.dismissOnGoingProcessModal());
     }
   };
 
