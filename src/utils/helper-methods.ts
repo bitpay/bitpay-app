@@ -141,7 +141,7 @@ export const formatFiatAmount = (
   opts: {
     customPrecision?: 'minimal';
     currencyAbbreviation?: string;
-    currencyDisplay?: 'symbol';
+    // currencyDisplay?: 'symbol';
   } = {},
 ) =>
   new Intl.NumberFormat('en-US', {
@@ -154,8 +154,8 @@ export const formatFiatAmount = (
         maximumFractionDigits: 0,
         minimumFractionDigits: 0,
       }),
-    currencyDisplay:
-      currency === 'USD' ? 'symbol' : opts.currencyDisplay || 'code',
+    // currencyDisplay:
+    //   currency === 'USD' ? 'symbol' : opts.currencyDisplay || 'code',
   }).format(amount);
 
 export const findContact = (
