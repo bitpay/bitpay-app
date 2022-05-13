@@ -287,7 +287,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
-      DeviceEmitterEvents.WALLET_SENT_COMPLETE,
+      DeviceEmitterEvents.WALLET_LOAD_HISTORY,
       () => {
         loadHistory(true);
       },

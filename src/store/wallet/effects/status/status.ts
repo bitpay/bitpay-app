@@ -56,7 +56,7 @@ export const waitForTargetAmountAndUpdateWallet =
       );
 
       // Update history for showing confirming transactions
-      DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_SENT_COMPLETE);
+      DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
 
       let retry = 0;
 
@@ -120,7 +120,7 @@ export const waitForTargetAmountAndUpdateWallet =
                   }
                 }
               }
-              DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_SENT_COMPLETE);
+              DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
               await dispatch(updatePortfolioBalance());
 
               clearInterval(interval);
