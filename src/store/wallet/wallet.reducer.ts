@@ -17,6 +17,9 @@ export interface WalletState {
   tokenOptions: {[key in string]: Token};
   tokenData: {[key in string]: CurrencyOpts};
   tokenOptionsByAddress: {[key in string]: Token};
+  customTokenOptions: {[key in string]: Token};
+  customTokenData: {[key in string]: CurrencyOpts};
+  customTokenOptionsByAddress: {[key in string]: Token};
   walletTermsAccepted: boolean;
   portfolioBalance: {
     current: number;
@@ -45,6 +48,9 @@ const initialState: WalletState = {
   tokenOptions: {},
   tokenData: {},
   tokenOptionsByAddress: {},
+  customTokenOptions: {},
+  customTokenData: {},
+  customTokenOptionsByAddress: {},
   walletTermsAccepted: false,
   portfolioBalance: {
     current: 0,
@@ -260,16 +266,33 @@ export const walletReducer = (
       return {
         ...state,
         tokenOptions: {
-          ...state.tokenOptions,
           ...tokenOptions,
         },
         tokenData: {
-          ...state.tokenData,
           ...tokenData,
         },
         tokenOptionsByAddress: {
-          ...state.tokenOptionsByAddress,
           ...tokenOptionsByAddress,
+        },
+      };
+    }
+
+    case WalletActionTypes.SUCCESS_GET_CUSTOM_TOKEN_OPTIONS: {
+      const {customTokenOptions, customTokenData, customTokenOptionsByAddress} =
+        action.payload;
+      return {
+        ...state,
+        customTokenOptions: {
+          ...state.customTokenOptions,
+          ...customTokenOptions,
+        },
+        customTokenData: {
+          ...state.customTokenData,
+          ...customTokenData,
+        },
+        customTokenOptionsByAddress: {
+          ...state.customTokenOptionsByAddress,
+          ...customTokenOptionsByAddress,
         },
       };
     }

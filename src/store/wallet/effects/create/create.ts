@@ -87,7 +87,10 @@ export const addWallet =
       try {
         let newWallet;
         const state = getState();
-        const tokenOpts = state.WALLET.tokenOptions;
+        const tokenOpts = {
+          ...state.WALLET.tokenOptions,
+          ...state.WALLET.customTokenOptions,
+        };
         const {walletName} = options;
 
         if (isToken) {
@@ -161,7 +164,7 @@ const createMultipleWallets =
   }): Effect<Promise<Wallet[]>> =>
   async (dispatch, getState) => {
     const {WALLET} = getState();
-    const tokenOpts = WALLET.tokenOptions;
+    const tokenOpts = {...WALLET.tokenOptions, ...WALLET.customTokenOptions};
     const supportedCoins = currencies.filter(
       (currency): currency is SupportedCoins =>
         SUPPORTED_COINS.includes(currency),

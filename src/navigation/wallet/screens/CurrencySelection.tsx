@@ -122,9 +122,9 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
   const [searchInput, setSearchInput] = useState('');
 
-  const tokenOptions = useAppSelector(
-    ({WALLET}: RootState) => WALLET.tokenOptions,
-  );
+  const tokenOptions = useAppSelector(({WALLET}: RootState) => {
+    return {...WALLET.tokenOptions, ...WALLET.customTokenOptions};
+  });
 
   const ALL_CUSTOM_TOKENS = useMemo(
     () =>
