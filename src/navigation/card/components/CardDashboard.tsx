@@ -21,7 +21,7 @@ import {
   ScreenGutter,
   WIDTH,
 } from '../../../components/styled/Containers';
-import {HeaderTitle, Smallest} from '../../../components/styled/Text';
+import {Smallest} from '../../../components/styled/Text';
 import {CardProvider} from '../../../constants/card';
 import {CARD_WIDTH, ProviderConfig} from '../../../constants/config.card';
 import {navigationRef} from '../../../Root';
@@ -236,8 +236,6 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerLeft: () => null,
-      headerTitle: () => <HeaderTitle>{t('Card')}</HeaderTitle>,
       headerRight: () => (
         <HeaderRightContainer>
           <Button
