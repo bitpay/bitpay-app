@@ -1,5 +1,11 @@
-import React, {useCallback, useLayoutEffect, useMemo, useState} from 'react';
-import {StackActions, useTheme} from '@react-navigation/native';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
+import {useTheme} from '@react-navigation/native';
 import {FlatList, LogBox, RefreshControl, TouchableOpacity} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
@@ -203,6 +209,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
+  const [keyData, setKeyData] = useState(keys[key.id]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -221,7 +228,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
             )}
             <HeaderTitleContainer>
               <HeaderTitle style={{textAlign: 'center'}}>
-                {key?.keyName}
+                {keyData?.keyName}
               </HeaderTitle>
               {hasMultipleKeys && <ChevronDownSvg style={{marginLeft: 10}} />}
             </HeaderTitleContainer>
@@ -229,12 +236,12 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
         );
       },
       headerRight: () => {
-        return key.methods.isPrivKeyEncrypted() ? (
+        return keyData.methods.isPrivKeyEncrypted() ? (
           <HeaderRightContainer>
             <CogIconContainer
               onPress={() =>
                 navigation.navigate('KeySettings', {
-                  key,
+                  key: keyData,
                 })
               }
               activeOpacity={ActiveOpacity}>
@@ -252,10 +259,10 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
         );
       },
     });
-  }, [navigation, key, keys]);
+  }, [navigation, keyData, keys, theme.dark]);
 
   const {wallets = [], totalBalance} =
-    useSelector(({WALLET}: RootState) => WALLET.keys[key.id]) || {};
+    useSelector(({WALLET}: RootState) => WALLET.keys[keyData.id]) || {};
 
   const memoizedWalletList = useMemo(() => {
     const coins = wallets.filter(
@@ -270,7 +277,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
 
   const keyOptions: Array<Option> = [];
 
-  if (!key.methods.isPrivKeyEncrypted()) {
+  if (!keyData.methods.isPrivKeyEncrypted()) {
     keyOptions.push({
       img: <Icons.Encrypt />,
       title: 'Encrypt your Key',
@@ -279,7 +286,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
       onPress: () => {
         haptic('impactLight');
         navigation.navigate('KeySettings', {
-          key,
+          key: keyData,
           context: 'createEncryptPassword',
         });
       },
@@ -292,7 +299,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
       onPress: () => {
         haptic('impactLight');
         navigation.navigate('KeySettings', {
-          key,
+          key: keyData,
         });
       },
     });
@@ -322,7 +329,9 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
           wallet={item}
           onPress={() => {
             haptic('impactLight');
-            const fullWalletObj = key.wallets.find(({id}) => id === item.id)!;
+            const fullWalletObj = keyData.wallets.find(
+              ({id}) => id === item.id,
+            )!;
             if (!fullWalletObj.isComplete()) {
               fullWalletObj.getStatus(
                 {network: 'livenet'},
@@ -340,15 +349,20 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
             } else {
               navigation.navigate('WalletDetails', {
                 walletId: item.id,
-                key,
+                key: keyData,
               });
             }
           }}
         />
       );
     },
-    [navigation, key],
+    [navigation, keyData],
   );
+
+  useEffect(() => {
+    // Update key when back from child view
+    setKeyData(keys[key.id]);
+  }, [key, keys]);
 
   return (
     <OverviewContainer>
@@ -384,7 +398,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
               onPress={() => {
                 haptic('impactLight');
                 navigation.navigate('AddingOptions', {
-                  key,
+                  key: keyData,
                 });
               }}>
               <Icons.Add />
