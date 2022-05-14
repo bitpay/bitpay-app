@@ -29,7 +29,7 @@ const CardFrontContainer = styled.View`
 
 const CardBalanceLabelRow = styled(BaseText)`
   color: ${White};
-  font-size: 10;
+  font-size: 10px;
   font-weight: 500;
   left: 0px;
   padding: 0 20px;
