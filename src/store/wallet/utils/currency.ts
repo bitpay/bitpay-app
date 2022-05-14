@@ -4,13 +4,16 @@ import {Currencies} from '../../../constants/currencies';
 export const GetProtocolPrefix =
   (currencyAbbreviation: string, network: string = 'livenet'): Effect<string> =>
   (dispatch, getState) => {
-    const {WALLET} = getState();
+    const {
+      WALLET: {tokenData, customTokenData},
+    } = getState();
+    const tokens = {...tokenData, ...customTokenData};
     const currency = currencyAbbreviation.toLowerCase();
     return (
       // @ts-ignore
       Currencies[currency]?.paymentInfo.protocolPrefix[network] ||
       // @ts-ignore
-      WALLET.tokenData[currency]?.paymentInfo.protocolPrefix[network]
+      tokens[currency]?.paymentInfo.protocolPrefix[network]
     );
   };
 
@@ -27,11 +30,12 @@ export const GetPrecision =
     | undefined
   > =>
   (dispatch, getState) => {
-    const {WALLET} = getState();
+    const {
+      WALLET: {tokenData, customTokenData},
+    } = getState();
+    const tokens = {...tokenData, ...customTokenData};
     const currency = currencyAbbreviation.toLowerCase();
-    return (
-      Currencies[currency]?.unitInfo || WALLET.tokenData[currency]?.unitInfo
-    );
+    return Currencies[currency]?.unitInfo || tokens[currency]?.unitInfo;
   };
 
 export const IsUtxoCoin = (currencyAbbreviation: string): boolean => {
@@ -47,32 +51,41 @@ export const IsCustomERCToken = (currencyAbbreviation: string) => {
 export const GetChain =
   (currencyAbbreviation: string): Effect<string> =>
   (dispatch, getState) => {
-    const {WALLET} = getState();
+    const {
+      WALLET: {tokenData, customTokenData},
+    } = getState();
+    const tokens = {...tokenData, ...customTokenData};
     const currency = currencyAbbreviation.toLowerCase();
-    return Currencies[currency]?.chain || WALLET.tokenData[currency]?.chain;
+    return Currencies[currency]?.chain || tokens[currency]?.chain;
   };
 
 export const IsERCToken =
   (currencyAbbreviation: string): Effect<boolean> =>
   (dispatch, getState) => {
-    const {WALLET} = getState();
+    const {
+      WALLET: {tokenData, customTokenData},
+    } = getState();
+    const tokens = {...tokenData, ...customTokenData};
     const currency = currencyAbbreviation.toLowerCase();
     return (
       Currencies[currency]?.properties.isERCToken ||
-      WALLET.tokenData[currency]?.properties.isERCToken
+      tokens[currency]?.properties.isERCToken
     );
   };
 
 export const GetBlockExplorerUrl =
   (currencyAbbreviation: string, network: string = 'livenet'): Effect<string> =>
   (dispatch, getState) => {
-    const {WALLET} = getState();
+    const {
+      WALLET: {tokenData, customTokenData},
+    } = getState();
+    const tokens = {...tokenData, ...customTokenData};
     const currency = currencyAbbreviation.toLowerCase();
     return network === 'livenet'
       ? Currencies[currency]?.paymentInfo.blockExplorerUrls ||
-          WALLET.tokenData[currency]?.paymentInfo.blockExplorerUrls
+          tokens[currency]?.paymentInfo.blockExplorerUrls
       : Currencies[currency]?.paymentInfo.blockExplorerUrlsTestnet ||
-          WALLET.tokenData[currency]?.paymentInfo.blockExplorerUrlsTestnet;
+          tokens[currency]?.paymentInfo.blockExplorerUrlsTestnet;
   };
 
 export const GetFeeUnits =
@@ -85,9 +98,12 @@ export const GetFeeUnits =
     maxMerchantFee: string;
   }> =>
   (dispatch, getState) => {
-    const {WALLET} = getState();
+    const {
+      WALLET: {tokenData, customTokenData},
+    } = getState();
+    const tokens = {...tokenData, ...customTokenData};
     const currency = currencyAbbreviation.toLowerCase();
-    return Currencies[currency]?.feeInfo || WALLET.tokenData[currency]?.feeInfo;
+    return Currencies[currency]?.feeInfo || tokens[currency]?.feeInfo;
   };
 
 export const GetTheme =
@@ -99,26 +115,35 @@ export const GetTheme =
     gradientBackgroundColor: string;
   }> =>
   (dispatch, getState) => {
-    const {WALLET} = getState();
+    const {
+      WALLET: {tokenData, customTokenData},
+    } = getState();
+    const tokens = {...tokenData, ...customTokenData};
     const currency = currencyAbbreviation.toLowerCase();
-    return Currencies[currency]?.theme || WALLET.tokenData[currency]?.theme;
+    return Currencies[currency]?.theme || tokens[currency]?.theme;
   };
 
 export const GetName =
   (currencyAbbreviation: string): Effect<string> =>
   (dispatch, getState) => {
-    const {WALLET} = getState();
+    const {
+      WALLET: {tokenData, customTokenData},
+    } = getState();
+    const tokens = {...tokenData, ...customTokenData};
     const currency = currencyAbbreviation.toLowerCase();
-    return Currencies[currency]?.name || WALLET.tokenData[currency]?.name;
+    return Currencies[currency]?.name || tokens[currency]?.name;
   };
 
 export const isSingleAddressCoin =
   (currencyAbbreviation: string): Effect<boolean> =>
   (dispatch, getState) => {
-    const {WALLET} = getState();
+    const {
+      WALLET: {tokenData, customTokenData},
+    } = getState();
+    const tokens = {...tokenData, ...customTokenData};
     const currency = currencyAbbreviation.toLowerCase();
     return (
       Currencies[currency]?.properties.singleAddress ||
-      WALLET.tokenData[currency]?.properties.singleAddress
+      tokens[currency]?.properties.singleAddress
     );
   };

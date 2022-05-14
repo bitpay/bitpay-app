@@ -3,6 +3,7 @@ import axios from 'axios';
 import {Token} from '../../wallet.models';
 import {
   failedGetTokenOptions,
+  successGetCustomTokenOptions,
   successGetTokenOptions,
 } from '../../wallet.actions';
 import {Currencies, CurrencyOpts} from '../../../../constants/currencies';
@@ -48,20 +49,23 @@ export const addCustomTokenOption =
   (token: Token): Effect =>
   async dispatch => {
     try {
-      const tokenOptions: {[key in string]: Token} = {};
-      const tokenOptionsByAddress: {[key in string]: Token} = {};
-      const tokenData: {[key in string]: CurrencyOpts} = {};
+      const customTokenOptions: {[key in string]: Token} = {};
+      const customTokenOptionsByAddress: {[key in string]: Token} = {};
+      const customTokenData: {[key in string]: CurrencyOpts} = {};
+      if (Currencies[token.symbol.toLowerCase()]) {
+        return;
+      } // remove bitpay supported tokens and currencies
       populateTokenInfo({
         token,
-        tokenOptions,
-        tokenData,
-        tokenOptionsByAddress,
+        tokenOptions: customTokenOptions,
+        tokenData: customTokenData,
+        tokenOptionsByAddress: customTokenOptionsByAddress,
       });
       dispatch(
-        successGetTokenOptions({
-          tokenOptions,
-          tokenData,
-          tokenOptionsByAddress,
+        successGetCustomTokenOptions({
+          customTokenOptions,
+          customTokenData,
+          customTokenOptionsByAddress,
         }),
       );
     } catch (e) {
