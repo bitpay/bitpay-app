@@ -217,7 +217,11 @@ export const successGetReceiveAddress = (payload: {
 export const updateWalletTxHistory = (payload: {
   keyId: string;
   walletId: string;
-  transactionHistory: {transactions: any[]; loadMore: boolean};
+  transactionHistory: {
+    transactions: any[];
+    loadMore: boolean;
+    hasConfirmingTxs: boolean;
+  };
 }): WalletActionType => ({
   type: WalletActionTypes.UPDATE_WALLET_TX_HISTORY,
   payload,

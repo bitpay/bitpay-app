@@ -76,6 +76,20 @@ export const createProposalAndBuildTxDetails =
           ParseAmount(amount, currencyAbbreviation),
         );
 
+        const chain = dispatch(GetChain(currencyAbbreviation)).toLowerCase();
+
+        if (
+          chain === 'eth' &&
+          wallet.transactionHistory?.hasConfirmingTxs &&
+          context !== 'speedupEth'
+        ) {
+          return reject({
+            err: new Error(
+              'There is a pending transaction with a lower account nonce. Wait for your pending transactions to confirm or enable "ETH Queued transactions" in Advanced Settings.',
+            ),
+          });
+        }
+
         const {
           WALLET: {feeLevel: cachedFeeLevel, useUnconfirmedFunds},
         } = getState();
@@ -769,6 +783,7 @@ export const buildEthERCTokenSpeedupTx =
           gasLimit,
           customData,
           feeLevel: 'urgent',
+          context: 'speedupEth' as TransactionOptionsContext,
         });
       } catch (e) {
         return reject(e);

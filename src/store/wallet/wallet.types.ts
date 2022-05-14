@@ -283,7 +283,11 @@ interface updateWalletTxHistory {
   payload: {
     keyId: string;
     walletId: string;
-    transactionHistory: {transactions: any[]; loadMore: boolean};
+    transactionHistory: {
+      transactions: any[];
+      loadMore: boolean;
+      hasConfirmingTxs: boolean;
+    };
   };
 }
 
