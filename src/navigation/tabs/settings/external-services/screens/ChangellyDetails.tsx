@@ -8,7 +8,7 @@ import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {changellyTxData} from '../../../../../store/swap-crypto/swap-crypto.models';
 import {changellyGetStatus} from '../../../../../store/swap-crypto/effects/changelly/changelly';
-import ChangellyIcon from '../../../../../../assets/img/services/changelly/changelly-icon.svg';
+import ChangellyLogo from '../../../../../components/icons/external-services/changelly/changelly-logo';
 import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
 import {
   showBottomNotificationModal,
@@ -104,7 +104,7 @@ const ChangellyDetails: React.FC = () => {
               <CryptoUnit>{swapTx.coinTo.toUpperCase()}</CryptoUnit>
             </CryptoContainer>
           </CryptoAmountContainer>
-          <ChangellyIcon width={50} height={50} />
+          <ChangellyLogo iconOnly={true} width={45} height={45} />
         </RowDataContainer>
 
         <ColumnDataContainer>

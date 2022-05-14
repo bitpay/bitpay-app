@@ -2,11 +2,12 @@ import styled from 'styled-components/native';
 import {BaseText} from '../../../../components/styled/Text';
 import {
   SlateDark,
-  ProgressBlue,
+  Action,
   White,
   LightBlack,
   NeutralSlate,
   LinkBlue,
+  LuckySevens,
 } from '../../../../styles/colors';
 
 export const ItemDivisor = styled.View`
@@ -86,7 +87,7 @@ export const CheckBoxContainer = styled.View`
 `;
 
 export const CheckboxText = styled(BaseText)`
-  color: #777777;
+  color: ${LuckySevens};
   font-size: 11px;
   font-weight: 300;
   margin-left: 20px;
@@ -99,7 +100,7 @@ export const PoliciesContainer = styled.TouchableOpacity`
 `;
 
 export const PoliciesText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? LinkBlue : ProgressBlue)};
+  color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
 `;
 
 export const ArrowContainer = styled.View`

@@ -13,13 +13,9 @@ import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import Checkbox from '../../../../components/checkbox/Checkbox';
 import {BaseText} from '../../../../components/styled/Text';
 import Button from '../../../../components/button/Button';
+import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
+import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 import {Action, LightBlack, SlateDark, White} from '../../../../styles/colors';
-
-// Images
-import SimplexLogo from '../../../../../assets/img/services/simplex/logo-simplex-color.svg';
-const SimplexLogoDm = require('../../../../../assets/img/services/simplex/logo-simplex-dm.png');
-import WyreLogo from '../../../../../assets/img/services/wyre/logo-wyre.svg';
-import WyreLogoDm from '../../../../../assets/img/services/wyre/logo-wyre-dm.svg';
 import {useAppSelector} from '../../../../utils/hooks';
 
 interface PaymentMethodsModalProps {
@@ -131,20 +127,12 @@ const PaymentMethodsModal = ({
                         <PaymentMethodProviderText>
                           Provided by
                         </PaymentMethodProviderText>
-
-                        {paymentMethod.supportedExchanges.simplex &&
-                          (theme.dark ? (
-                            <SimplexLogoContainer source={SimplexLogoDm} />
-                          ) : (
-                            <SimplexLogo width={60} height={20} />
-                          ))}
-
-                        {paymentMethod.supportedExchanges.wyre &&
-                          (theme.dark ? (
-                            <WyreLogoDm width={60} height={15} />
-                          ) : (
-                            <WyreLogo width={60} height={15} />
-                          ))}
+                        {paymentMethod.supportedExchanges.simplex && (
+                          <SimplexLogo width={60} height={20} />
+                        )}
+                        {paymentMethod.supportedExchanges.wyre && (
+                          <WyreLogo width={60} height={15} />
+                        )}
                       </PaymentMethodProvider>
                     </PaymentMethodCheckboxTexts>
                   </PaymentMethodCardContainer>
