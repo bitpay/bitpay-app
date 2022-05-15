@@ -360,8 +360,11 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   );
 
   useEffect(() => {
+    const keyData = keys[key.id];
+    if (keyData) {
+      setKeyData(keyData);
+    }
     // Update key when back from child view
-    setKeyData(keys[key.id]);
   }, [key, keys]);
 
   return (
