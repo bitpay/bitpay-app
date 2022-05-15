@@ -222,7 +222,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
 
   useEffect(() => {
     setShowAssociatedWalletSelectionDropdown(ethWallets.length > 1 && isToken);
-    if (isToken && ethWallets.length > 0) {
+    if (isToken) {
       setShowWalletAdvancedOptions(false);
     }
   }, []);
