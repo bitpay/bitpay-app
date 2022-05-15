@@ -61,6 +61,7 @@ import merge from 'lodash.merge';
 import {syncWallets} from '../../../store/wallet/wallet.actions';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {RootState} from '../../../store';
+import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
 
 const WalletSettingsContainer = styled.View`
   flex: 1;
@@ -160,7 +161,11 @@ const KeySettings = () => {
   };
 
   const _tokenOptions = useAppSelector(({WALLET}: RootState) => {
-    return {...WALLET.tokenOptions, ...WALLET.customTokenOptions};
+    return {
+      ...BitpaySupportedTokenOpts,
+      ...WALLET.tokenOptions,
+      ...WALLET.customTokenOptions,
+    };
   });
 
   const startSyncWallets = async (mnemonic: string) => {

@@ -12,6 +12,7 @@ import {
 } from '../../utils/wallet';
 import {LogActions} from '../../../../store/log';
 import {deleteKey, failedImport, successImport} from '../../wallet.actions';
+import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 
 const BWC = BwcProvider.getInstance();
 
@@ -40,6 +41,7 @@ export const startImportMnemonic =
       try {
         const state = getState();
         const tokenOpts = {
+          ...BitpaySupportedTokenOpts,
           ...state.WALLET.tokenOptions,
           ...state.WALLET.customTokenOptions,
         };
@@ -93,6 +95,7 @@ export const startImportFile =
       try {
         const state = getState();
         const tokenOpts = {
+          ...BitpaySupportedTokenOpts,
           ...state.WALLET.tokenOptions,
           ...state.WALLET.customTokenOptions,
         };
@@ -162,6 +165,7 @@ export const startImportWithDerivationPath =
       try {
         const state = getState();
         const tokenOpts = {
+          ...BitpaySupportedTokenOpts,
           ...state.WALLET.tokenOptions,
           ...state.WALLET.customTokenOptions,
         };

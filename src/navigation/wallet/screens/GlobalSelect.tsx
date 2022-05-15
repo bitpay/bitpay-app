@@ -37,6 +37,7 @@ import {
 } from '../../../store/wallet/effects/send/send';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {RootState} from '../../../store';
+import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -170,7 +171,11 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const tokens = useAppSelector(({WALLET}: RootState) => {
-    return {...WALLET.tokenOptions, ...WALLET.customTokenOptions};
+    return {
+      ...BitpaySupportedTokenOpts,
+      ...WALLET.tokenOptions,
+      ...WALLET.customTokenOptions,
+    };
   });
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
