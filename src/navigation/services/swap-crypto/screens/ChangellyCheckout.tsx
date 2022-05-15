@@ -14,7 +14,7 @@ import {
   useAppSelector,
   useLogger,
 } from '../../../../utils/hooks';
-import {TokenOpts} from '../../../../constants/tokens';
+import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {Black, White, Slate, Caution} from '../../../../styles/colors';
 import {BwcProvider} from '../../../../lib/bwc';
@@ -411,7 +411,7 @@ const ChangellyCheckout: React.FC = () => {
       };
 
       if (dispatch(IsERCToken(wallet.currencyAbbreviation.toLowerCase()))) {
-        let tokens = Object.values(TokenOpts);
+        let tokens = Object.values(BitpaySupportedTokenOpts);
         const token = tokens.find(
           token => token.symbol === wallet.currencyAbbreviation.toUpperCase(),
         );

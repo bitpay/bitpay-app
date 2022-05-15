@@ -50,6 +50,7 @@ import Icons from '../components/WalletIcons';
 import SearchSvg from '../../../../assets/img/search.svg';
 import GhostSvg from '../../../../assets/img/ghost-cheeky.svg';
 import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
+import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
 
 type CurrencySelectionScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -123,7 +124,11 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
   const [searchInput, setSearchInput] = useState('');
 
   const tokenOptions = useAppSelector(({WALLET}: RootState) => {
-    return {...WALLET.tokenOptions, ...WALLET.customTokenOptions};
+    return {
+      ...BitpaySupportedTokenOpts,
+      ...WALLET.tokenOptions,
+      ...WALLET.customTokenOptions,
+    };
   });
 
   const ALL_CUSTOM_TOKENS = useMemo(
