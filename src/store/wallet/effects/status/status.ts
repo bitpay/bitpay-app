@@ -256,8 +256,6 @@ export const startUpdateAllWalletStatusForKey =
             };
           });
 
-        console.log(walletOptions);
-
         const {bulkClient} = BwcProvider.getInstance().getClient();
         const credentials = key.wallets
           .filter(wallet => !wallet.credentials.token)
@@ -271,17 +269,26 @@ export const startUpdateAllWalletStatusForKey =
               return reject();
             }
 
-            console.log(bulkStatus);
-
             const balances = key.wallets.map(wallet => {
               const {balance: cachedBalance} = wallet;
 
               const {status, success} =
                 bulkStatus.find(bStatus => {
+                  if (typeof bStatus.tokenAddress === 'string') {
+                    return (
+                      bStatus.tokenAddress === wallet.credentials.token?.address
+                    );
+                  }
+
                   return bStatus.walletId === wallet.id;
                 }) || {};
 
-              if (!status || !success) {
+              if (
+                !status ||
+                !success ||
+                // skip formatting amounts if nothing has changed
+                status.balance.totalAmount === cachedBalance.sat
+              ) {
                 return cachedBalance;
               }
 

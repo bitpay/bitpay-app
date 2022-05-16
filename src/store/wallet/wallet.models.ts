@@ -405,4 +405,5 @@ export interface BulkStatus {
   status: Status;
   success: boolean;
   walletId: string;
+  tokenAddress?: string;
 }
