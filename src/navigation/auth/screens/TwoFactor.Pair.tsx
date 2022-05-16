@@ -68,12 +68,17 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
   });
 
   useEffect(() => {
+    return () => {
+      dispatch(BitPayIdActions.updateTwoFactorPairStatus(null));
+    };
+  }, [dispatch]);
+
+  useEffect(() => {
     switch (twoFactorPairingStatus) {
       case 'success':
         const parentNav = navigation.getParent();
 
         resetField('code');
-        dispatch(BitPayIdActions.updateTwoFactorPairStatus(null));
         dispatch(BitPayIdActions.completedPairing());
 
         if (parentNav?.canGoBack()) {
@@ -87,7 +92,6 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
         return;
 
       case 'failed':
-        console.log('Pairing with two factor failed.');
         const done = () => {
           setButtonState(null);
           dispatch(BitPayIdActions.updateTwoFactorPairStatus(null));
@@ -110,7 +114,13 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
         );
         return;
     }
-  }, [twoFactorPairingStatus, dispatch, navigation, resetField]);
+  }, [
+    dispatch,
+    resetField,
+    navigation,
+    twoFactorPairingStatus,
+    twoFactorPairingError,
+  ]);
 
   const onSubmit = handleSubmit(({code}) => {
     if (!code) {

@@ -56,11 +56,16 @@ const TwoFactorAuthentication: React.FC<
   });
 
   useEffect(() => {
+    return () => {
+      dispatch(BitPayIdActions.updateTwoFactorAuthStatus(null));
+    };
+  }, [dispatch]);
+
+  useEffect(() => {
     switch (twoFactorAuthStatus) {
       case 'success':
         const {code} = getValues();
         resetField('code');
-        dispatch(BitPayIdActions.updateTwoFactorAuthStatus(null));
         navigation.navigate('TwoFactorPairing', {prevCode: code});
 
         return;
@@ -89,7 +94,14 @@ const TwoFactorAuthentication: React.FC<
         );
         return;
     }
-  }, [twoFactorAuthStatus, resetField, navigation, getValues]);
+  }, [
+    dispatch,
+    resetField,
+    getValues,
+    navigation,
+    twoFactorAuthStatus,
+    twoFactorAuthError,
+  ]);
 
   const onSubmit = handleSubmit(({code}) => {
     if (!code) {

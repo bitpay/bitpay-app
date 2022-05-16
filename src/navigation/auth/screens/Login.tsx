@@ -130,7 +130,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
       navigation.navigate('EmailAuthentication');
       return;
     }
-  }, [loginStatus, navigation, dispatch, onLoginSuccess]);
+  }, [dispatch, onLoginSuccess, navigation, loginStatus, loginError]);
 
   const onSubmit = handleSubmit(({email, password}) => {
     Keyboard.dismiss();
