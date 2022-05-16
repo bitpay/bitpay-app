@@ -32,6 +32,7 @@ export enum WalletActionTypes {
   DELETE_KEY = 'WALLET/DELETE_KEY',
   SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD = 'WALLET/SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD',
   SUCCESS_GET_TOKEN_OPTIONS = 'WALLET/SUCCESS_GET_TOKEN_OPTIONS',
+  SUCCESS_GET_CUSTOM_TOKEN_OPTIONS = 'WALLET/SUCCESS_GET_CUSTOM_TOKEN_OPTIONS',
   FAILED_GET_TOKEN_OPTIONS = 'WALLET/FAILED_GET_TOKEN_OPTIONS',
   SUCCESS_ADD_WALLET = 'WALLET/SUCCESS_ADD_WALLET',
   FAILED_ADD_WALLET = 'WALLET/FAILED_ADD_WALLET',
@@ -167,6 +168,15 @@ interface successGetTokenOptions {
   };
 }
 
+interface successGetCustomTokenOptions {
+  type: typeof WalletActionTypes.SUCCESS_GET_CUSTOM_TOKEN_OPTIONS;
+  payload: {
+    customTokenOptions: {[key in string]: Token};
+    customTokenData: {[key in string]: CurrencyOpts};
+    customTokenOptionsByAddress: {[key in string]: Token};
+  };
+}
+
 interface failedGetTokenOptions {
   type: typeof WalletActionTypes.FAILED_GET_TOKEN_OPTIONS;
 }
@@ -273,7 +283,11 @@ interface updateWalletTxHistory {
   payload: {
     keyId: string;
     walletId: string;
-    transactionHistory: {transactions: any[]; loadMore: boolean};
+    transactionHistory: {
+      transactions: any[];
+      loadMore: boolean;
+      hasConfirmingTxs: boolean;
+    };
   };
 }
 
@@ -324,6 +338,7 @@ export type WalletActionType =
   | deleteKey
   | successEncryptOrDecryptPassword
   | successGetTokenOptions
+  | successGetCustomTokenOptions
   | failedGetTokenOptions
   | setWalletTermsAccepted
   | successUpdateWalletStatus

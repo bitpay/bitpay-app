@@ -5,7 +5,6 @@ import {CardBrand} from '../../../constants/card';
 import {RootState} from '../../../store';
 import {Card} from '../../../store/card/card.models';
 import {VirtualDesignCurrency} from '../../../store/card/card.types';
-import {format} from '../../../utils/currency';
 import CardFront from './CardFront';
 import LockCardOverlay from './LockCardOverlay';
 
@@ -22,14 +21,12 @@ const CardOverviewSlide: React.FC<CardOverviewSlideProps> = ({
     ({CARD}) => CARD.balances[card.id],
   );
 
-  const formattedBalance = format(balance, card.currency.code);
-
   return (
     <View style={{position: 'relative'}}>
       <CardFront
         brand={card.brand || CardBrand.Visa}
         provider={card.provider}
-        balance={formattedBalance}
+        balance={balance}
         nickname={card.nickname}
         fiat={card.currency.code}
         fiatSymbol={card.currency.symbol}

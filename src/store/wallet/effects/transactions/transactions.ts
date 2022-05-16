@@ -448,6 +448,33 @@ export const GetTransactionHistory =
         });
 
         if (!skip) {
+          let hasConfirmingTxs: boolean = false;
+          let transactionHistory;
+          // linked eth wallet could have pendings txs from different tokens
+          // this means we need to check pending txs from the linked wallet if is ERC20Token instead of the sending wallet
+          if (dispatch(IsERCToken(wallet.currencyAbbreviation))) {
+            const {WALLET} = getState();
+            const key = WALLET.keys[keyId];
+            const linkedWallet = key.wallets.find(({tokens}) =>
+              tokens?.includes(walletId),
+            );
+            transactionHistory = linkedWallet?.transactionHistory?.transactions;
+          } else {
+            transactionHistory = newHistory;
+          }
+
+          // look for sent or moved unconfirmed until find a confirmed
+          if (transactionHistory && transactionHistory[0]) {
+            for (let tx of transactionHistory) {
+              if (tx.confirmations === 0) {
+                if (tx.action === 'sent' || tx.action === 'moved') {
+                  hasConfirmingTxs = true;
+                }
+              } else {
+                break;
+              }
+            }
+          }
           dispatch(
             updateWalletTxHistory({
               walletId: walletId,
@@ -455,6 +482,7 @@ export const GetTransactionHistory =
               transactionHistory: {
                 transactions: newHistory.slice(0, TX_HISTORY_LIMIT),
                 loadMore,
+                hasConfirmingTxs,
               },
             }),
           );

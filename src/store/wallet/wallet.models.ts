@@ -92,7 +92,11 @@ export interface WalletObj {
   img: string | ((props?: any) => ReactElement);
   receiveAddress?: string;
   isRefreshing?: boolean;
-  transactionHistory?: {transactions: any[]; loadMore: boolean};
+  transactionHistory?: {
+    transactions: any[];
+    loadMore: boolean;
+    hasConfirmingTxs: boolean;
+  };
   hideWallet?: boolean;
   hideBalance?: boolean;
   network: Network;
@@ -217,7 +221,9 @@ export type TransactionOptionsContext =
   | 'paypro'
   | 'selectInputs'
   | 'fromReplaceByFee'
-  | 'speedupBtcReceive';
+  | 'speedupBtcReceive'
+  | 'speedupEth';
+
 export interface TransactionOptions {
   wallet: Wallet;
   invoice?: Invoice;

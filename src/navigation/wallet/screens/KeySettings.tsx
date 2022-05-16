@@ -60,7 +60,8 @@ import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/
 import merge from 'lodash.merge';
 import {syncWallets} from '../../../store/wallet/wallet.actions';
 import {BWCErrorMessage} from '../../../constants/BWCError';
-import {WalletRowProps} from '../../../components/list/WalletRow';
+import {RootState} from '../../../store';
+import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
 
 const WalletSettingsContainer = styled.View`
   flex: 1;
@@ -159,7 +160,13 @@ const KeySettings = () => {
     };
   };
 
-  const _tokenOptions = useAppSelector(({WALLET}) => WALLET.tokenOptions);
+  const _tokenOptions = useAppSelector(({WALLET}: RootState) => {
+    return {
+      ...BitpaySupportedTokenOpts,
+      ...WALLET.tokenOptions,
+      ...WALLET.customTokenOptions,
+    };
+  });
 
   const startSyncWallets = async (mnemonic: string) => {
     if (_key.isPrivKeyEncrypted) {

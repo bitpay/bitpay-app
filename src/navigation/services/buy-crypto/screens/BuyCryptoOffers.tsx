@@ -6,7 +6,6 @@ import {
   Linking,
 } from 'react-native';
 import styled from 'styled-components/native';
-import FastImage from 'react-native-fast-image';
 import {
   useTheme,
   RouteProp,
@@ -27,8 +26,16 @@ import {
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {useLogger} from '../../../../utils/hooks/useLogger';
 import {Currencies} from '../../../../constants/currencies';
+import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
+import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 import {BuyCryptoExpandibleCard, ItemDivisor} from '../styled/BuyCryptoCard';
-import {Black, SlateDark, ProgressBlue, White} from '../../../../styles/colors';
+import {
+  Black,
+  SlateDark,
+  ProgressBlue,
+  White,
+  LuckySevens,
+} from '../../../../styles/colors';
 import {
   getPaymentUrl,
   simplexFiatAmountLimits,
@@ -49,15 +56,9 @@ import {createWalletAddress} from '../../../../store/wallet/effects/address/addr
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {APP_NAME} from '../../../../constants/config';
 import {isPaymentMethodSupported} from '../utils/buy-crypto-utils';
+import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
 import analytics from '@segment/analytics-react-native';
-
-// Images // TODO: for exchanges images create a component like this: /bitpay-app-v2/src/components/icons/info
-import SimplexLogo from '../../../../../assets/img/services/simplex/logo-simplex-color.svg';
-const SimplexLogoDm = require('../../../../../assets/img/services/simplex/logo-simplex-dm.png');
-import WyreLogo from '../../../../../assets/img/services/wyre/logo-wyre.svg';
-import WyreLogoDm from '../../../../../assets/img/services/wyre/logo-wyre-dm.svg';
-import {formatFiatAmount} from '../../../../utils/helper-methods';
 
 export interface BuyCryptoOffersProps {
   amount: number;
@@ -71,8 +72,7 @@ export interface BuyCryptoOffersProps {
 export type CryptoOffer = {
   key: 'simplex' | 'wyre';
   showOffer: boolean;
-  logoLight: JSX.Element;
-  logoDark: JSX.Element;
+  logo: JSX.Element;
   expanded: boolean;
   amountCost?: number;
   buyAmount?: number;
@@ -215,18 +215,13 @@ const ExchangeTermsContainer = styled.View`
 
 const TermsText = styled(Small)`
   line-height: 20px;
-  color: ${({theme: {dark}}) => (dark ? '#777777' : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
 `;
 
 const ExchangeTermsText = styled(BaseText)`
   font-size: 11px;
   line-height: 20px;
-  color: #777777;
-`;
-
-const SimplexLogoContainer = styled(FastImage)`
-  height: 18px;
-  width: 60px;
+  color: ${LuckySevens};
 `;
 
 const offersDefault: {
@@ -237,8 +232,7 @@ const offersDefault: {
     key: 'simplex',
     amountReceiving: '0',
     showOffer: true,
-    logoLight: <SimplexLogo width={70} height={20} />,
-    logoDark: <SimplexLogoContainer source={SimplexLogoDm} />,
+    logo: <SimplexLogo width={70} height={20} />,
     expanded: false,
     fiatMoney: undefined,
     errorMsg: undefined,
@@ -248,8 +242,7 @@ const offersDefault: {
     key: 'wyre',
     amountReceiving: '0',
     showOffer: true,
-    logoLight: <WyreLogo width={70} height={20} />,
-    logoDark: <WyreLogoDm width={70} height={20} />,
+    logo: <WyreLogo width={70} height={20} />,
     expanded: false,
     fiatMoney: undefined,
     errorMsg: undefined,
@@ -870,7 +863,7 @@ const BuyCryptoOffers: React.FC = () => {
                       )}
                     <OfferDataInfoContainer>
                       <OfferDataInfoLabel>Provided By</OfferDataInfoLabel>
-                      {offer && theme.dark ? offer.logoDark : offer.logoLight}
+                      {offer.logo}
                     </OfferDataInfoContainer>
                   </OfferDataContainer>
                   {offer.fiatMoney && (

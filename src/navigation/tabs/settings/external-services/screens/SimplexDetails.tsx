@@ -1,12 +1,12 @@
 import React from 'react';
-import {Text, View, TouchableOpacity} from 'react-native';
+import {Text, TouchableOpacity} from 'react-native';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
 import moment from 'moment';
 import {Link} from '../../../../../components/styled/Text';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
+import SimplexLogo from '../../../../../components/icons/external-services/simplex/simplex-logo';
 import {simplexPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
-const simplexIcon = require('../../../../../../assets/img/services/simplex/icon-simplex.png');
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {
   showBottomNotificationModal,
@@ -53,7 +53,7 @@ const SimplexDetails: React.FC = () => {
               <CryptoUnit>{paymentRequest.coin}</CryptoUnit>
             </CryptoContainer>
           </CryptoAmountContainer>
-          <IconContainer source={simplexIcon} />
+          <SimplexLogo iconOnly={true} width={45} height={45} />
         </RowDataContainer>
 
         <RowDataContainer>

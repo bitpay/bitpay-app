@@ -177,21 +177,22 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
     });
   }, [navigation]);
 
-  const wordSelected = async (word: string) => {
+  const wordSelected = async (value: {word: string; isActive: boolean}) => {
     if (isAnimating) {
       return;
     }
+    value.isActive = false;
     haptic('impactLight');
     // lock UI - (unlocks from onSnap event in carousel props in jsx)
     setIsAnimating(true);
     // update words and append empty string for next entry
-    const update = [...attemptWords.filter(w => w), word, ''];
+    const update = [...attemptWords.filter(w => w), value.word, ''];
     // store words and update index
     setAttemptWords(update);
     setActiveSlideIndex(activeSlideIndex + 1);
     // sleep for animation time
     await sleep(0);
-    if (activeSlideIndex !== 11) {
+    if (activeSlideIndex !== words.length - 1) {
       // @ts-ignore
       ref.current.snapToNext();
     } else {
@@ -296,7 +297,9 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
           }}
         />
         <CountTracker>
-          <CountText>{activeSlideIndex}/12</CountText>
+          <CountText>
+            {activeSlideIndex}/{words.length}
+          </CountText>
         </CountTracker>
         <BottomContainer>
           <DirectionsContainer>
@@ -309,8 +312,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
               <WordSelector
                 key={index}
                 onPress={() => {
-                  value.isActive = false;
-                  wordSelected(value.word);
+                  wordSelected(value);
                 }}
                 disabled={!value.isActive}>
                 <WordSelectorText>{value.word}</WordSelectorText>

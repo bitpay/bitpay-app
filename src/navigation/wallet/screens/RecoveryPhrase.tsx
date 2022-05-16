@@ -150,7 +150,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
   }, [navigation]);
 
   const next = () => {
-    if (activeSlideIndex === 11) {
+    if (activeSlideIndex === words.length - 1) {
       navigation.navigate(context === 'onboarding' ? 'Onboarding' : 'Wallet', {
         screen: 'VerifyPhrase',
         params: {...params, walletTermsAccepted},
@@ -184,7 +184,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
         <Carousel
           vertical={false}
           layout={'stack'}
-          layoutCardOffset={12}
+          layoutCardOffset={words.length}
           useExperimentalSnap={true}
           data={words}
           renderItem={({item: word}: {item: string}) => {
@@ -205,7 +205,9 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
           disableIntervalMomentum={true}
         />
         <CountTracker>
-          <CountText>{activeSlideIndex + 1}/12</CountText>
+          <CountText>
+            {activeSlideIndex + 1}/{words.length}
+          </CountText>
         </CountTracker>
         <CtaContainer>
           <Button

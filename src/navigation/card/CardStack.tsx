@@ -54,6 +54,7 @@ const CardStack = () => {
         component={CardHome}
         options={{
           title: 'Card',
+          headerTitle: () => <HeaderTitle>{t('Card')}</HeaderTitle>,
         }}
         sharedElements={route => {
           return [

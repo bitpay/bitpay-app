@@ -12,6 +12,7 @@ import {
 } from '../../utils/wallet';
 import {LogActions} from '../../../../store/log';
 import {deleteKey, failedImport, successImport} from '../../wallet.actions';
+import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 
 const BWC = BwcProvider.getInstance();
 
@@ -39,7 +40,11 @@ export const startImportMnemonic =
     return new Promise(async (resolve, reject) => {
       try {
         const state = getState();
-        const tokenOpts = state.WALLET.tokenOptions;
+        const tokenOpts = {
+          ...BitpaySupportedTokenOpts,
+          ...state.WALLET.tokenOptions,
+          ...state.WALLET.customTokenOptions,
+        };
         const {words, xPrivKey} = importData;
         opts.words = normalizeMnemonic(words);
         opts.xPrivKey = xPrivKey;
@@ -89,7 +94,11 @@ export const startImportFile =
     return new Promise(async (resolve, reject) => {
       try {
         const state = getState();
-        const tokenOpts = state.WALLET.tokenOptions;
+        const tokenOpts = {
+          ...BitpaySupportedTokenOpts,
+          ...state.WALLET.tokenOptions,
+          ...state.WALLET.customTokenOptions,
+        };
         let {key: _key, wallet} = await createKeyAndCredentialsWithFile(
           decryptBackupText,
           opts,
@@ -155,7 +164,11 @@ export const startImportWithDerivationPath =
     return new Promise(async (resolve, reject) => {
       try {
         const state = getState();
-        const tokenOpts = state.WALLET.tokenOptions;
+        const tokenOpts = {
+          ...BitpaySupportedTokenOpts,
+          ...state.WALLET.tokenOptions,
+          ...state.WALLET.customTokenOptions,
+        };
         const {words, xPrivKey} = importData;
         opts.mnemonic = words;
         opts.extendedPrivateKey = xPrivKey;

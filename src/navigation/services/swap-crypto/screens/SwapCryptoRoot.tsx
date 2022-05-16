@@ -35,6 +35,7 @@ import {
 } from '../styled/SwapCryptoRoot.styled';
 import {SwapCryptoStackParamList} from '../SwapCryptoStack';
 import Button from '../../../../components/button/Button';
+import ChangellyLogo from '../../../../components/icons/external-services/changelly/changelly-logo';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {ItemProps} from '../../../../components/list/CurrencySelectionRow';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
@@ -61,10 +62,6 @@ import {
 import ArrowDown from '../../../../../assets/img/services/swap-crypto/down-arrow.svg';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import analytics from '@segment/analytics-react-native';
-
-// Images // TODO: for exchanges images create a component like this: /bitpay-app-v2/src/components/icons/info
-import ChangellyLogo from '../../../../../assets/img/services/changelly/changelly-vector-logo.svg';
-import ChangellyLogoDm from '../../../../../assets/img/services/changelly/changelly-vector-logo-dark.svg';
 
 export interface RateData {
   fixedRateId: string;
@@ -764,11 +761,7 @@ const SwapCryptoRoot: React.FC = () => {
         </CtaContainer>
         <ProviderContainer>
           <ProviderLabel>Provided By</ProviderLabel>
-          {theme.dark ? (
-            <ChangellyLogoDm width={100} height={30} />
-          ) : (
-            <ChangellyLogo width={100} height={30} />
-          )}
+          <ChangellyLogo width={100} height={30} />
         </ProviderContainer>
       </ScrollView>
 

@@ -27,6 +27,7 @@ import moment from 'moment';
 import {addAltCurrencyList} from '../../../app/app.actions';
 import {AltCurrenciesRowProps} from '../../../../components/list/AltCurrenciesRow';
 import {LogActions} from '../../../log';
+import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 
 export const getPriceHistory =
   (defaultAltCurrencyIsoCode: string): Effect =>
@@ -156,9 +157,14 @@ export const getTokenRates =
       try {
         const {
           APP: {altCurrencyList},
-          WALLET: {tokenOptionsByAddress},
+          WALLET: {tokenOptionsByAddress, customTokenOptionsByAddress},
         } = getState();
 
+        const tokens = {
+          ...BitpaySupportedTokenOptsByAddress,
+          ...tokenOptionsByAddress,
+          ...customTokenOptionsByAddress,
+        };
         const altCurrencies = altCurrencyList.map(altCurrency =>
           altCurrency.isoCode.toLowerCase(),
         );
@@ -172,7 +178,7 @@ export const getTokenRates =
         const {data} = await axios.get(url);
 
         Object.entries(data).map(([key, value]: [string, any]) => {
-          const tokenName = tokenOptionsByAddress[key].symbol.toLowerCase();
+          const tokenName = tokens[key].symbol.toLowerCase();
           tokenRates[tokenName] = [];
           tokenLastDayRates[tokenName] = [];
 

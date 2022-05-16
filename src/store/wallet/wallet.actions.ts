@@ -117,6 +117,15 @@ export const successGetTokenOptions = (payload: {
   payload,
 });
 
+export const successGetCustomTokenOptions = (payload: {
+  customTokenOptions: {[key in string]: Token};
+  customTokenData: {[key in string]: CurrencyOpts};
+  customTokenOptionsByAddress: {[key in string]: Token};
+}): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_GET_CUSTOM_TOKEN_OPTIONS,
+  payload,
+});
+
 export const failedGetTokenOptions = (): WalletActionType => ({
   type: WalletActionTypes.FAILED_GET_TOKEN_OPTIONS,
 });
@@ -208,7 +217,11 @@ export const successGetReceiveAddress = (payload: {
 export const updateWalletTxHistory = (payload: {
   keyId: string;
   walletId: string;
-  transactionHistory: {transactions: any[]; loadMore: boolean};
+  transactionHistory: {
+    transactions: any[];
+    loadMore: boolean;
+    hasConfirmingTxs: boolean;
+  };
 }): WalletActionType => ({
   type: WalletActionTypes.UPDATE_WALLET_TX_HISTORY,
   payload,
