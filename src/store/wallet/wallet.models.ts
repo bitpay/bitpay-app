@@ -381,6 +381,8 @@ export interface TxDetails {
   sendingFrom: TxDetailsSendingFrom;
   subTotal: TxDetailsAmount;
   total: TxDetailsAmount;
+  // xrp
+  destinationTag?: string;
 }
 
 export interface SendMaxInfo {
