@@ -265,7 +265,7 @@ const CreateMultisig = () => {
                 },
                 {
                   name: 'Wallet',
-                  params: {screen: 'KeyOverview', params: {key}},
+                  params: {screen: 'KeyOverview', params: {id: key.id}},
                 },
                 {
                   name: 'Wallet',

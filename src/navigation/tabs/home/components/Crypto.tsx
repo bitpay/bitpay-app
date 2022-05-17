@@ -152,7 +152,7 @@ const createHomeCardList = ({
               if (backupComplete) {
                 navigation.navigate('Wallet', {
                   screen: 'KeyOverview',
-                  params: {key},
+                  params: {id: key.id},
                 });
               } else {
                 dispatch(

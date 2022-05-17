@@ -73,7 +73,7 @@ export type WalletStackParamList = {
   RecoveryPhrase: RecoveryPhraseParamList;
   VerifyPhrase: VerifyPhraseParamList;
   TermsOfUse: TermsOfUseParamList;
-  KeyOverview: {key: Key};
+  KeyOverview: {id: string};
   KeyExplanation: undefined;
   KeySettings: {key: Key; context?: 'createEncryptPassword'};
   UpdateKeyOrWalletName: {

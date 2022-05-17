@@ -317,7 +317,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
           {
             name: 'KeyOverview',
             params: {
-              key,
+              id: key.id,
             },
           },
           {
