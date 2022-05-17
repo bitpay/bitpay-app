@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, {useCallback, useLayoutEffect, useMemo, useState} from 'react';
 import {useTheme} from '@react-navigation/native';
 import {FlatList, LogBox, RefreshControl, TouchableOpacity} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
@@ -205,17 +199,17 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   const theme = useTheme();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {key} = route.params;
+  const id = route.params.key.id;
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
-  const [keyData, setKeyData] = useState(keys[key.id]);
+  const keyData = keys[id];
+  const hasMultipleKeys =
+    Object.values(keys).filter(k => k.backupComplete).length > 1;
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => {
-        const hasMultipleKeys =
-          Object.values(keys).filter(k => k.backupComplete).length > 1;
         return (
           <KeyToggle
             activeOpacity={ActiveOpacity}
@@ -259,7 +253,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
         );
       },
     });
-  }, [navigation, keyData, keys, theme.dark]);
+  }, [navigation, keyData, hasMultipleKeys, theme.dark]);
 
   const {wallets = [], totalBalance} =
     useSelector(({WALLET}: RootState) => WALLET.keys[keyData.id]) || {};
@@ -311,7 +305,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
       dispatch(getPriceHistory(defaultAltCurrency.isoCode));
       await dispatch(startGetRates({force: true}));
       await Promise.all([
-        dispatch(startUpdateAllWalletStatusForKey(key)),
+        dispatch(startUpdateAllWalletStatusForKey(keyData)),
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
@@ -358,14 +352,6 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
     },
     [navigation, keyData],
   );
-
-  useEffect(() => {
-    const keyData = keys[key.id];
-    if (keyData) {
-      setKeyData(keyData);
-    }
-    // Update key when back from child view
-  }, [key, keys]);
 
   return (
     <OverviewContainer>
@@ -430,7 +416,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
           <HeaderTitle style={{margin: 15}}>Other Keys</HeaderTitle>
           <KeyDropdownOptionsContainer>
             {Object.values(keys)
-              .filter(_key => _key.backupComplete && _key.id !== key.id)
+              .filter(_key => _key.backupComplete && _key.id !== id)
               .map(_key => (
                 <KeyDropdownOption
                   key={_key.id}
@@ -440,7 +426,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
                   totalBalance={_key.totalBalance}
                   onPress={keyId => {
                     setShowKeyDropdown(false);
-                    navigation.replace('KeyOverview', {
+                    navigation.setParams({
                       key: keys[keyId],
                     });
                   }}
