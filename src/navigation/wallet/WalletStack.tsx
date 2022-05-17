@@ -81,7 +81,7 @@ export type WalletStackParamList = {
     wallet?: {walletId: string; walletName: string | undefined};
     context: 'key' | 'wallet';
   };
-  WalletDetails: {walletId: string; key: Key};
+  WalletDetails: {walletId: string; key: Key; skipInitializeHistory?: boolean};
   WalletSettings: {walletId: string; key: Key};
   CreationOptions: undefined;
   Import: ImportParamList | undefined;
