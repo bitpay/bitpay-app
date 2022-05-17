@@ -90,6 +90,17 @@ export const createProposalAndBuildTxDetails =
           });
         }
 
+        if (
+          currencyAbbreviation === 'xrp' &&
+          wallet.receiveAddress === recipient.address
+        ) {
+          return reject({
+            err: new Error(
+              'Cannot send XRP to the same wallet you are trying to send from. Please check the destination address and try it again.',
+            ),
+          });
+        }
+
         const {
           WALLET: {feeLevel: cachedFeeLevel, useUnconfirmedFunds},
         } = getState();
@@ -188,7 +199,7 @@ export const buildTxDetails =
     feeLevel?: string;
   }): Effect<TxDetails> =>
   dispatch => {
-    const {coin, fee, gasPrice, gasLimit, nonce} = proposal || {
+    const {coin, fee, gasPrice, gasLimit, nonce, destinationTag} = proposal || {
       coin: invoice!.buyerProvidedInfo!.selectedTransactionCurrency!.toLowerCase(),
       fee: 0,
     };
@@ -259,6 +270,7 @@ export const buildTxDetails =
       gasPrice: gasPrice ? Number((gasPrice * 1e-9).toFixed(2)) : undefined,
       gasLimit,
       nonce,
+      destinationTag,
     };
   };
 
