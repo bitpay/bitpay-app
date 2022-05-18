@@ -295,7 +295,8 @@ export const openUrlWithInAppBrowser =
 
           // android options
           forceCloseOnRedirection: false,
-          showInRecents: false,
+          hasBackButton: true,
+          showInRecents: true,
 
           ...options,
         });
