@@ -400,3 +400,10 @@ export interface CacheFeeLevel {
   currency: 'eth' | 'btc';
   feeLevel: FeeLevels;
 }
+
+export interface BulkStatus {
+  status: Status;
+  success: boolean;
+  walletId: string;
+  tokenAddress?: string;
+}

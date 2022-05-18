@@ -93,7 +93,7 @@ const FileOrText = () => {
       const key = await dispatch<Key>(startImportFile(decryptBackupText, opts));
 
       await dispatch(startGetRates({}));
-      await dispatch(startUpdateAllWalletStatusForKey(key));
+      await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
       await dispatch(updatePortfolioBalance());
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 
