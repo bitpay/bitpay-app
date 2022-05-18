@@ -156,7 +156,7 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
               navigation.dispatch(
                 StackActions.replace('Wallet', {
                   screen: 'KeyOverview',
-                  params: {key},
+                  params: {id: key.id},
                 }),
               );
             } else {
