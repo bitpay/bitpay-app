@@ -56,24 +56,21 @@ import {
   GetCoinAndNetwork,
   TranslateToBchCashAddress,
 } from '../../../../store/wallet/effects/address/address';
-import {
-  createProposalAndBuildTxDetails,
-  handleCreateTxProposalError,
-} from '../../../../store/wallet/effects/send/send';
-import {APP_NAME} from '../../../../constants/config';
+import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {GetChain} from '../../../../store/wallet/utils/currency';
+import {goToAmount, incomingData} from '../../../../store/scan/scan.effects';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
   'BitcoinCashAddress',
   'EthereumAddress',
-  'EthereumUri',
   'RippleAddress',
   'DogecoinAddress',
   'LitecoinAddress',
   'RippleUri',
   'BitcoinUri',
   'BitcoinCashUri',
+  'EthereumUri',
   'DogecoinUri',
   'LitecoinUri',
   'BitPayUri',
@@ -181,9 +178,15 @@ const SendTo = () => {
   };
 
   const BchLegacyAddressInfoDismiss = (searchText: string) => {
-    const cashAddr = TranslateToBchCashAddress(searchText);
-    setSearchInput(cashAddr);
-    validateAndNavigateToConfirm(cashAddr);
+    try {
+      const cashAddr = TranslateToBchCashAddress(
+        searchText.replace(/^(bitcoincash:|bchtest:)/, ''),
+      );
+      setSearchInput(cashAddr);
+      validateAndNavigateToConfirm(cashAddr);
+    } catch (error) {
+      dispatch(showBottomNotificationModal(Mismatch(onErrorMessageDismiss)));
+    }
   };
 
   const checkCoinAndNetwork =
@@ -210,7 +213,7 @@ const SendTo = () => {
         if (currencyAbbreviation === 'bch' && network === addrNetwork) {
           const isLegacy = CheckIfLegacyBCH(data);
           if (isLegacy) {
-            const appName = APP_NAME;
+            const appName = APP_NAME_UPPERCASE;
 
             dispatch(
               showBottomNotificationModal(
@@ -279,13 +282,9 @@ const SendTo = () => {
       }
     } else if (ValidDataTypes.includes(data?.type)) {
       if (dispatch(checkCoinAndNetwork(text))) {
-        const recipient = {
-          type: 'address',
-          address: text,
-        };
         setSearchInput(text);
         await sleep(0);
-        goToConfirm(recipient);
+        dispatch(incomingData(text, wallet));
       }
     }
   };
@@ -324,72 +323,13 @@ const SendTo = () => {
         address,
       };
 
-      goToConfirm(recipient);
+      dispatch(
+        goToAmount({coin: wallet.currencyAbbreviation, recipient, wallet}),
+      );
     } catch (err) {
       console.error(err);
     }
   };
-
-  const goToConfirm = useCallback(
-    (recipient: Recipient, opts?: any) => {
-      navigation.navigate('Wallet', {
-        screen: WalletScreens.AMOUNT,
-        params: {
-          opts: opts || {},
-          currencyAbbreviationRouteParam:
-            wallet.currencyAbbreviation.toUpperCase(),
-          onAmountSelected: async (amount, setButtonState, opts) => {
-            try {
-              setButtonState('loading');
-              const {txDetails, txp} = await dispatch(
-                createProposalAndBuildTxDetails({
-                  wallet,
-                  recipient,
-                  amount: Number(amount),
-                  ...opts,
-                }),
-              );
-              setButtonState('success');
-              await sleep(300);
-              navigation.navigate('Wallet', {
-                screen: 'Confirm',
-                params: {
-                  wallet,
-                  recipient,
-                  txp,
-                  txDetails,
-                  amount: Number(amount),
-                  sendMax: opts?.sendMax,
-                },
-              });
-            } catch (err: any) {
-              setButtonState('failed');
-              const [errorMessageConfig] = await Promise.all([
-                dispatch(handleCreateTxProposalError(err)),
-                sleep(400),
-              ]);
-              dispatch(
-                showBottomNotificationModal({
-                  ...errorMessageConfig,
-                  enableBackdropDismiss: false,
-                  actions: [
-                    {
-                      text: 'OK',
-                      action: () => {
-                        setButtonState(undefined);
-                      },
-                    },
-                  ],
-                }),
-              );
-            }
-          },
-        },
-      });
-    },
-    [dispatch, navigation, wallet],
-  );
-
   useEffect(() => {
     return navigation.addListener('blur', () =>
       setTimeout(() => setSearchInput(''), 300),

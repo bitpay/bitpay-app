@@ -52,80 +52,82 @@ export const isValidWyreUri = (data: string): boolean => {
   );
 };
 
-const IsValidBitcoinUri = (data: string): boolean => {
+export const IsValidBitcoinUri = (data: string): boolean => {
   data = SanitizeUri(data);
   return !!BWC.getBitcore().URI.isValid(data);
 };
 
-const IsValidBitcoinCashUri = (data: string): boolean => {
+export const IsValidBitcoinCashUri = (data: string): boolean => {
   data = SanitizeUri(data);
   return !!BWC.getBitcoreCash().URI.isValid(data);
 };
 
-const IsValidEthereumUri = (data: string): boolean => {
+export const IsValidEthereumUri = (data: string): boolean => {
   data = SanitizeUri(data);
   return !!BWC.getCore().Validation.validateUri('ETH', data);
 };
 
-const IsValidRippleUri = (data: string): boolean => {
+export const IsValidRippleUri = (data: string): boolean => {
   data = SanitizeUri(data);
   return !!BWC.getCore().Validation.validateUri('XRP', data);
 };
 
-const IsValidDogecoinUri = (data: string): boolean => {
+export const IsValidDogecoinUri = (data: string): boolean => {
   data = SanitizeUri(data);
   return !!BWC.getBitcoreDoge().URI.isValid(data);
 };
 
-const IsValidLitecoinUri = (data: string): boolean => {
+export const IsValidLitecoinUri = (data: string): boolean => {
   data = SanitizeUri(data);
   return !!BWC.getBitcoreLtc().URI.isValid(data);
 };
 
-const IsValidBitcoinCashUriWithLegacyAddress = (data: string): boolean => {
+export const IsValidBitcoinCashUriWithLegacyAddress = (
+  data: string,
+): boolean => {
   data = SanitizeUri(data);
   return !!BWC.getBitcore().URI.isValid(
     data.replace(/^(bitcoincash:|bchtest:)/, 'bitcoin:'),
   );
 };
 
-const IsValidBitcoinAddress = (data: string): boolean => {
+export const IsValidBitcoinAddress = (data: string): boolean => {
   return !!(
     BWC.getBitcore().Address.isValid(data, 'livenet') ||
     BWC.getBitcore().Address.isValid(data, 'testnet')
   );
 };
 
-const IsValidBitcoinCashAddress = (data: string): boolean => {
+export const IsValidBitcoinCashAddress = (data: string): boolean => {
   return !!(
     BWC.getBitcoreCash().Address.isValid(data, 'livenet') ||
     BWC.getBitcoreCash().Address.isValid(data, 'testnet')
   );
 };
 
-const IsValidEthereumAddress = (data: string): boolean => {
+export const IsValidEthereumAddress = (data: string): boolean => {
   return !!BWC.getCore().Validation.validateAddress('ETH', 'livenet', data);
 };
 
-const IsValidRippleAddress = (data: string): boolean => {
+export const IsValidRippleAddress = (data: string): boolean => {
   return !!BWC.getCore().Validation.validateAddress('XRP', 'livenet', data);
 };
 
-const IsValidDogecoinAddress = (data: string): boolean => {
+export const IsValidDogecoinAddress = (data: string): boolean => {
   return !!(
     BWC.getBitcoreDoge().Address.isValid(data, 'livenet') ||
     BWC.getBitcoreDoge().Address.isValid(data, 'testnet')
   );
 };
 
-const IsValidLitecoinAddress = (data: string): boolean => {
+export const IsValidLitecoinAddress = (data: string): boolean => {
   return !!(
     BWC.getBitcoreLtc().Address.isValid(data, 'livenet') ||
     BWC.getBitcoreLtc().Address.isValid(data, 'testnet')
   );
 };
 
-const IsValidBitPayUri = (data: string): boolean => {
+export const IsValidBitPayUri = (data: string): boolean => {
   data = SanitizeUri(data);
   if (!(data && data.indexOf('bitpay:') === 0)) {
     return false;
@@ -134,7 +136,7 @@ const IsValidBitPayUri = (data: string): boolean => {
   if (!address) {
     return false;
   }
-  let params: URLSearchParams = new URLSearchParams(
+  const params: URLSearchParams = new URLSearchParams(
     data.replace(`bitpay:${address}`, ''),
   );
   const coin = params.get('coin');
@@ -144,7 +146,7 @@ const IsValidBitPayUri = (data: string): boolean => {
   return true;
 };
 
-const IsValidBitcoinCashLegacyAddress = (data: string): boolean => {
+export const IsValidBitcoinCashLegacyAddress = (data: string): boolean => {
   return !!(
     BWC.getBitcore().Address.isValid(data, 'livenet') ||
     BWC.getBitcore().Address.isValid(data, 'testnet')

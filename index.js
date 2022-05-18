@@ -9,6 +9,7 @@ import {Provider} from 'react-redux';
 import {PersistGate} from 'redux-persist/integration/react';
 import StorybookUIRoot from './storybook';
 import {APP_LOAD_STORY_BOOK} from './src/constants/config';
+import 'react-native-url-polyfill/auto'; // https://github.com/facebook/react-native/issues/23922#issuecomment-648096619
 
 export const {store, persistor} = getStore();
 

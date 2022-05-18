@@ -31,6 +31,7 @@ export enum OnGoingProcessMessages {
   CONNECTING_COINBASE = 'Connecting with Coinbase...',
   FETCHING_COINBASE_DATA = 'Fetching data from Coinbase...',
   UPDATING_TXP = 'Updating Transaction',
+  CREATING_TXP = 'Creating Transaction',
   SENDING_EMAIL = 'Sending Email',
 }
 
