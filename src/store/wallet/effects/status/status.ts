@@ -277,7 +277,6 @@ export const startUpdateAllWalletStatusForKey =
           (err: Error, bulkStatus: BulkStatus[]) => {
             if (err) {
               console.log(err);
-              return reject();
             }
 
             const balances = key.wallets.map(wallet => {
