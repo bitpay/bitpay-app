@@ -95,15 +95,16 @@ export const NoResultsHeader = styled(H4)`
   font-size: 17px;
 `;
 
-export const NavIconButtonContainer = styled.View`
+export const NavIconButtonContainer = styled.TouchableOpacity`
   align-items: center;
   justify-content: center;
+  transform: scale(1.1);
   background-color: ${({theme}) => (theme.dark ? '#252525' : NeutralSlate)};
   border-radius: 50px;
-  height: 45px;
-  width: 45px;
-  margin-top: 5px;
+  height: 40px;
+  width: 40px;
   overflow: hidden;
+  margin-top: -2px;
 `;
 
 export const Terms = styled(BaseText)<{maxWidth?: number}>`

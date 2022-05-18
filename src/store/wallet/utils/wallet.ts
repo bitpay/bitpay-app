@@ -355,6 +355,7 @@ export const BuildKeysAndWalletsList = ({
         key: keyId,
         keyName: keyObj.keyName || 'My Key',
         wallets: keys[keyId].wallets
+          .filter(wallet => !wallet.hideWallet)
           .filter(wallet => {
             if (paymentOptions?.length) {
               return paymentOptions.some(

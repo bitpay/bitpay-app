@@ -14,6 +14,8 @@ import AuthFormContainer, {
 } from '../../../../auth/components/AuthFormContainer';
 import {WalletStackParamList} from '../../../WalletStack';
 
+const COINBASE_SMS_2FA_CODE_LENGTH = 7;
+
 const PrimaryActionContainer = styled.View`
   margin-bottom: 20px;
 `;
@@ -41,15 +43,17 @@ const PayProConfirmTwoFactor = ({
     resolver: yupResolver(schema),
   });
 
-  const onFormSubmit = handleSubmit(async ({code}) => {
+  const submitForm = async (code: string) => {
+    setSubmitDisabled(true);
     Keyboard.dismiss();
     try {
-      setSubmitDisabled(true);
       await onSubmit(code);
     } catch (err) {
       setSubmitDisabled(false);
     }
-  });
+  };
+
+  const onFormSubmit = handleSubmit(async ({code}) => submitForm(code));
 
   return (
     <AuthFormContainer>
@@ -64,7 +68,12 @@ const PayProConfirmTwoFactor = ({
               placeholder={'1231234'}
               label={'TWO-STEP VERIFICATION CODE'}
               onBlur={onBlur}
-              onChangeText={(text: string) => onChange(text)}
+              onChangeText={(text: string) => {
+                onChange(text);
+                if (text.length === COINBASE_SMS_2FA_CODE_LENGTH) {
+                  submitForm(text);
+                }
+              }}
               error={
                 errors.code?.message
                   ? 'Please enter a valid verification code.'

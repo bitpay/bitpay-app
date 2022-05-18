@@ -25,7 +25,7 @@ const GradientBox = styled(LinearGradient)`
 `;
 
 const ContentContainer = styled(SectionContainer)`
-  padding: 0 3px;
+  padding: 0 3px 100px;
 `;
 
 const MerchantName = styled(H3)`

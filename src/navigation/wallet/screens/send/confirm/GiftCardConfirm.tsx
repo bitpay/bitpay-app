@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {Hr} from '../../../../../components/styled/Containers';
 import {RouteProp, StackActions} from '@react-navigation/core';
@@ -149,14 +149,15 @@ const Confirm = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const openKeyWalletSelector = () => {
+  const openKeyWalletSelector = useCallback(async () => {
     const {keyWallets, coinbaseWallets} = memoizedKeysAndWalletsList;
     if (keyWallets.length || coinbaseWallets.length) {
+      await sleep(10);
       setWalletSelectModalVisible(true);
     } else {
       dispatch(showNoWalletsModal({navigation}));
     }
-  };
+  }, [dispatch, memoizedKeysAndWalletsList, navigation]);
 
   const createGiftCardInvoice = async ({
     clientId,
@@ -373,8 +374,10 @@ const Confirm = () => {
     setResetSwipeButton(true);
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => openKeyWalletSelector(), []);
+  useEffect(() => {
+    openKeyWalletSelector();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <ConfirmContainer>

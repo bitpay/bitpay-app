@@ -407,7 +407,7 @@ const PayProConfirm = () => {
           coinbaseAccount
             ? navigation.navigate('Coinbase', {
                 screen: 'CoinbaseAccount',
-                params: {accountId: coinbaseAccount.id},
+                params: {accountId: coinbaseAccount.id, refresh: true},
               })
             : navigation.navigate('Wallet', {
                 screen: 'WalletDetails',

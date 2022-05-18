@@ -38,7 +38,6 @@ import {
 } from '../../components/styled/ShopTabComponents';
 import {
   ArchiveSvg,
-  CogSvg,
   ExternalLinkSvg,
   InvoiceSvg,
 } from '../../components/svg/ShopTabSvgs';
@@ -56,6 +55,7 @@ import {
 import {ShopActions, ShopEffects} from '../../../../../store/shop';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {DeviceEmitterEvents} from '../../../../../constants/device-emitter-events';
+import Icons from '../../../../wallet/components/WalletIcons';
 
 const maxWidth = 320;
 
@@ -196,12 +196,10 @@ const GiftCardDetails = ({
       headerTitle: cardConfig.displayName,
       headerRight: () => (
         <HeaderRightContainer>
-          <TouchableWithoutFeedback
+          <NavIconButtonContainer
             onPress={() => setIsOptionsSheetVisible(true)}>
-            <NavIconButtonContainer>
-              <CogSvg theme={theme} />
-            </NavIconButtonContainer>
-          </TouchableWithoutFeedback>
+            <Icons.Cog />
+          </NavIconButtonContainer>
         </HeaderRightContainer>
       ),
     });
@@ -340,7 +338,7 @@ const GiftCardDetails = ({
                       Linking.openURL(
                         `${cardConfig.redeemUrl as string}${
                           giftCard.claimCode
-                        }}`,
+                        }`,
                       )
                     }
                     buttonStyle={'primary'}>
