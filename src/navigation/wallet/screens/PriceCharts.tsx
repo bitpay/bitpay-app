@@ -53,6 +53,7 @@ import GainArrow from '../../../../assets/img/home/exchange-rates/increment-arro
 import LossArrow from '../../../../assets/img/home/exchange-rates/decrement-arrow.svg';
 import NeutralArrow from '../../../../assets/img/home/exchange-rates/flat-arrow.svg';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
+import {useRequireKeyAndWalletRedirect} from '../../../utils/hooks/useRequireKeyAndWalletRedirect';
 
 export type PriceChartsParamList = {
   item: ExchangeRateItemProps;
@@ -257,7 +258,7 @@ const PriceCharts = () => {
     }
   };
 
-  const goToBuyCrypto = () => {
+  const goToBuyCrypto = useRequireKeyAndWalletRedirect(() => {
     analytics.track('BitPay App - Clicked Buy Crypto', {
       from: 'PriceChart',
       coin: currencyAbbreviation || '',
@@ -280,7 +281,7 @@ const PriceCharts = () => {
         },
       },
     });
-  };
+  });
 
   useEffect(() => {
     if (loading) {
