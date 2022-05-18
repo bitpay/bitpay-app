@@ -356,30 +356,36 @@ const Confirm = () => {
         ) : null}
         <SendingFrom sender={sendingFrom} hr />
         {currencyAbbreviation === 'xrp' ? (
-          <SharedDetailRow
-            description={'Destination Tag'}
-            value={destinationTag || 'edit'}
-            onPress={() => editValue('Edit destination tag', 'destinationTag')}
-          />
-        ) : null}
-        <Info>
-          <InfoTriangle />
-          <InfoDescription>
-            A Destination Tag is an optional number that corresponds to an
-            invoice or a XRP account on an exchange.
-          </InfoDescription>
+          <>
+            <SharedDetailRow
+              description={'Destination Tag'}
+              value={destinationTag || 'edit'}
+              onPress={() =>
+                editValue('Edit destination tag', 'destinationTag')
+              }
+            />
+            <Info>
+              <InfoTriangle />
+              <InfoDescription>
+                A Destination Tag is an optional number that corresponds to an
+                invoice or a XRP account on an exchange.
+              </InfoDescription>
 
-          <VerticalPadding>
-            <TouchableOpacity
-              activeOpacity={ActiveOpacity}
-              onPress={() => {
-                haptic('impactLight');
-                dispatch(openUrlWithInAppBrowser('URL.HELP_DESTINATION_TAG'));
-              }}>
-              <Link>Learn More</Link>
-            </TouchableOpacity>
-          </VerticalPadding>
-        </Info>
+              <VerticalPadding>
+                <TouchableOpacity
+                  activeOpacity={ActiveOpacity}
+                  onPress={() => {
+                    haptic('impactLight');
+                    dispatch(
+                      openUrlWithInAppBrowser('URL.HELP_DESTINATION_TAG'),
+                    );
+                  }}>
+                  <Link>Learn More</Link>
+                </TouchableOpacity>
+              </VerticalPadding>
+            </Info>
+          </>
+        ) : null}
         <Amount description={'SubTotal'} amount={subTotal} />
         <Amount description={'Total'} amount={total} />
       </DetailsList>
