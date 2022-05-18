@@ -222,7 +222,7 @@ export const startUpdateWalletStatus =
   };
 
 export const startUpdateAllWalletStatusForKey =
-  (key: Key): Effect =>
+  ({key, force}: {key: Key; force?: boolean}): Effect =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -244,7 +244,10 @@ export const startUpdateAllWalletStatusForKey =
         };
 
         key.wallets
-          .filter(wallet => !wallet.credentials.token)
+          .filter(
+            wallet =>
+              !wallet.credentials.token && wallet.credentials.isComplete(),
+          )
           .forEach(({credentials: {copayerId, multisigEthInfo}, tokens}) => {
             walletOptions[copayerId] = {
               tokenAddresses: tokens?.map(
@@ -258,8 +261,16 @@ export const startUpdateAllWalletStatusForKey =
 
         const {bulkClient} = BwcProvider.getInstance().getClient();
         const credentials = key.wallets
-          .filter(wallet => !wallet.credentials.token)
+          .filter(
+            wallet =>
+              !wallet.credentials.token && wallet.credentials.isComplete(),
+          )
           .map(wallet => wallet.credentials);
+
+        if (!credentials.length) {
+          return resolve();
+        }
+
         bulkClient.getStatusAll(
           credentials,
           {includeExtendedInfo: true, twoStep: true, wallets: walletOptions},
@@ -284,6 +295,7 @@ export const startUpdateAllWalletStatusForKey =
                 }) || {};
 
               if (
+                !force ||
                 !status ||
                 !success ||
                 // skip formatting amounts if nothing has changed
@@ -357,7 +369,7 @@ export const startUpdateAllKeyAndWalletStatus =
 
         await Promise.all(
           Object.values(keys).map(key => {
-            dispatch(startUpdateAllWalletStatusForKey(key));
+            dispatch(startUpdateAllWalletStatusForKey({key}));
           }),
         );
         dispatch(successUpdateAllKeysAndStatus());
@@ -487,7 +499,7 @@ const buildBalance =
       fiat: convertToFiat(
         dispatch(
           toFiat(
-            lockedAmount,
+            totalAmount,
             defaultAltCurrencyIsoCode,
             currencyAbbreviation,
             rates,
