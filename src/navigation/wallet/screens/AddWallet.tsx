@@ -293,9 +293,12 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
         });
       }
 
+      navigation.popToTop();
+
       await dispatch(
         startOnGoingProcessModal(OnGoingProcessMessages.ADDING_WALLET),
       );
+
       // adds wallet and binds to key obj - creates eth wallet if needed
       const wallet = await dispatch(
         addWallet({
@@ -311,25 +314,12 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
         }),
       );
 
-      navigation.reset({
-        index: 1,
-        routes: [
-          {
-            name: 'KeyOverview',
-            params: {
-              id: key.id,
-            },
-          },
-          {
-            name: 'WalletDetails',
-            params: {
-              walletId: wallet.id,
-              key,
-              skipInitializeHistory: true,
-            },
-          },
-        ],
+      navigation.navigate('WalletDetails', {
+        walletId: wallet.id,
+        key,
+        skipInitializeHistory: true,
       });
+
       dispatch(dismissOnGoingProcessModal());
     } catch (err: any) {
       if (err === 'invalid password') {
