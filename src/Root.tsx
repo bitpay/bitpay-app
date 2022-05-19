@@ -22,7 +22,7 @@ import {AppEffects, AppActions} from './store/app';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 import {LogActions} from './store/log';
 import {useAppDispatch, useAppSelector, useDeeplinks} from './utils/hooks';
-import analytics from '@segment/analytics-react-native';
+import {useAnalytics} from '@segment/analytics-react-native';
 import i18n from 'i18next';
 
 import BitpayIdStack, {
@@ -172,6 +172,7 @@ export const navigate = (
 const Root = createStackNavigator<RootStackParamList>();
 
 export default () => {
+  const analytics = useAnalytics();
   const dispatch = useAppDispatch();
   const [, rerender] = useState({});
   const linking = useDeeplinks();

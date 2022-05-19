@@ -20,7 +20,7 @@ import {startWalletStoreInit} from '../wallet/effects';
 import {AppActions} from './';
 import {AppIdentity} from './app.models';
 import RNBootSplash from 'react-native-bootsplash';
-import analytics from '@segment/analytics-react-native';
+import {createClient} from '@segment/analytics-react-native';
 import {SEGMENT_API_KEY, APPSFLYER_API_KEY, APP_ID} from '@env';
 import appsFlyer from 'react-native-appsflyer';
 import {requestTrackingPermission} from 'react-native-tracking-transparency';
@@ -346,8 +346,8 @@ export const askForTrackingPermissionAndEnableSdks =
         }
 
         try {
-          await analytics.setup(SEGMENT_API_KEY, {
-            recordScreenViews: false,
+          await createClient({
+            writeKey: SEGMENT_API_KEY,
             trackAppLifecycleEvents: true,
           });
         } catch (err) {
