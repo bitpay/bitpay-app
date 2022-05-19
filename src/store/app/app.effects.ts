@@ -111,11 +111,10 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       }));
       dispatch(setHomeCarouselConfig([...keys]));
     }
-
+    dispatch(showBlur(pinLockActive || biometricLockActive));
     await sleep(500);
     dispatch(LogActions.info('Initialized app successfully.'));
     dispatch(LogActions.debug(`Pin Lock Active: ${pinLockActive}`));
-    dispatch(showBlur(pinLockActive || biometricLockActive));
     dispatch(LogActions.debug(`Biometric Lock Active: ${biometricLockActive}`));
     RNBootSplash.hide({fade: true}).then(() => {
       // avoid splash conflicting with modal in iOS
