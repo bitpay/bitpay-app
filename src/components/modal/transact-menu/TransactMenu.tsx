@@ -8,8 +8,8 @@ import {ActiveOpacity, SheetContainer} from '../../styled/Containers';
 import {BaseText, H6} from '../../styled/Text';
 import SheetModal from '../base/sheet/SheetModal';
 import Icons from './TransactMenuIcons';
-import analytics from '@segment/analytics-react-native';
 import {useAppSelector} from '../../../utils/hooks';
+import {useAnalytics} from '@segment/analytics-react-native';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -77,6 +77,7 @@ interface TransactMenuItemProps {
 }
 
 const TransactModal = () => {
+  const analytics = useAnalytics();
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
   const hideModal = () => setModalVisible(false);
