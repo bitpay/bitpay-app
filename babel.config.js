@@ -14,7 +14,7 @@ const plugins = [
     'module:react-native-dotenv',
     {
       moduleName: '@env',
-      path: '.env',
+      path: prod ? '.env.production' : '.env.development',
       safe: true,
       allowUndefined: true,
     },
