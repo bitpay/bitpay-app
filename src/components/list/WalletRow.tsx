@@ -9,11 +9,11 @@ import {
 } from '../styled/Containers';
 import {Badge, H5, ListItemSubText} from '../styled/Text';
 import styled from 'styled-components/native';
-import NestedArrow from '../../../assets/img/nested-arrow.svg';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {Network} from '../../constants';
 import {TransactionProposal} from '../../store/wallet/wallet.models';
 import {CoinbaseAccountProps} from '../../api/coinbase/coinbase.types';
+import NestedArrowIcon from '../nested-arrow/NestedArrow';
 
 const BadgeContainer = styled.View`
   margin-left: 5px;
@@ -92,7 +92,7 @@ const WalletRow = ({wallet, onPress}: Props) => {
     <RowContainer activeOpacity={ActiveOpacity} onPress={onPress}>
       {isToken && (
         <NestedArrowContainer>
-          <NestedArrow />
+          <NestedArrowIcon />
         </NestedArrowContainer>
       )}
       <CurrencyImageContainer>
