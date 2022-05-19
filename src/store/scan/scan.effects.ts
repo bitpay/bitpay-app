@@ -32,7 +32,6 @@ import {
   simplexIncomingData,
   wyrePaymentData,
 } from '../buy-crypto/buy-crypto.models';
-import analytics from '@segment/analytics-react-native';
 import {LogActions} from '../log';
 import {startOnGoingProcessModal} from '../app/app.effects';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
@@ -557,14 +556,14 @@ const handleSimplexUri =
     const user = BITPAY_ID.user[APP.network];
     const order = BUY_CRYPTO.simplex[paymentId];
 
-    analytics.track('BitPay App - Successfully Complete Crypto Purchase ', {
-      exchange: 'simplex',
-      walletId: userId || '',
-      fiatAmount: order?.fiat_total_amount || '',
-      fiatCurrency: order?.fiat_total_amount_currency || '',
-      coin: order?.coin || '',
-      appUser: user?.eid || '',
-    });
+    // analytics.track('BitPay App - Successfully Complete Crypto Purchase ', {
+    //   exchange: 'simplex',
+    //   walletId: userId || '',
+    //   fiatAmount: order?.fiat_total_amount || '',
+    //   fiatCurrency: order?.fiat_total_amount_currency || '',
+    //   coin: order?.coin || '',
+    //   appUser: user?.eid || '',
+    // });
 
     navigationRef.navigate('ExternalServicesSettings', {
       screen: 'SimplexSettings',
@@ -633,14 +632,14 @@ const handleWyreUri =
     const {APP, BITPAY_ID} = getState();
     const user = BITPAY_ID.user[APP.network];
 
-    analytics.track('BitPay App - Successfully Complete Crypto Purchase ', {
-      exchange: 'wyre',
-      walletId: walletId || '',
-      fiatAmount: sourceAmount || '',
-      fiatCurrency: sourceCurrency || '',
-      coin: destCurrency || '',
-      appUser: user?.eid || '',
-    });
+    // analytics.track('BitPay App - Successfully Complete Crypto Purchase ', {
+    //   exchange: 'wyre',
+    //   walletId: walletId || '',
+    //   fiatAmount: sourceAmount || '',
+    //   fiatCurrency: sourceCurrency || '',
+    //   coin: destCurrency || '',
+    //   appUser: user?.eid || '',
+    // });
 
     navigationRef.navigate('ExternalServicesSettings', {
       screen: 'WyreSettings',
