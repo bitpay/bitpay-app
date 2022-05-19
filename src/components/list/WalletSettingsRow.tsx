@@ -2,10 +2,10 @@ import React, {memo, ReactElement} from 'react';
 import styled, {useTheme} from 'styled-components/native';
 import {BaseText, H7} from '../styled/Text';
 import {StyleProp, TextStyle} from 'react-native';
-import NestedArrow from '../../../assets/img/nested-arrow.svg';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {buildTestBadge} from './WalletRow';
 import {Column, HiddenContainer} from '../styled/Containers';
+import NestedArrowIcon from '../nested-arrow/NestedArrow';
 
 export interface WalletSettingsRowProps {
   id: string;
@@ -53,7 +53,7 @@ const WalletSettingsRow = ({
     <Row>
       {isToken && (
         <NestedArrowContainer>
-          <NestedArrow />
+          <NestedArrowIcon />
         </NestedArrowContainer>
       )}
       <CurrencyImage img={img} size={45} />

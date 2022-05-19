@@ -1,8 +1,7 @@
 import debounce from 'lodash.debounce';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import styled, {css} from 'styled-components/native';
-import {Platform, ScrollView} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import styled from 'styled-components/native';
+import {ScrollView} from 'react-native';
 import GiftCardCatalog from './components/GiftCardCatalog';
 import {
   getCardConfigFromApiConfigMap,
@@ -19,7 +18,6 @@ import {
   DirectIntegrationApiObject,
   GiftCard,
 } from '../../../store/shop/shop.models';
-import {BaseText} from '../../../components/styled/Text';
 import {ShopEffects} from '../../../store/shop';
 import {selectAvailableGiftCards} from '../../../store/shop/shop.selectors';
 import {APP_NETWORK} from '../../../constants/config';
@@ -36,19 +34,8 @@ const ShopContainer = styled.View`
   flex: 1;
 `;
 
-const ShopHeader = styled(BaseText)`
-  font-size: 18px;
-  font-weight: 700;
-  margin-top: ${Platform.select({
-    ios: css`
-      20px
-    `,
-    android: css`
-      40px
-    `,
-  })};
-  text-align: center;
-  margin-bottom: 30px;
+const ShopInnerContainer = styled.View`
+  margin-top: 15px;
 `;
 
 const getGiftCardsScrollViewHeight = (
@@ -218,8 +205,6 @@ const ShopHome = () => {
     dispatch(ShopEffects.retryGiftCardRedemptions());
   }, [dispatch]);
 
-  const insets = useSafeAreaInsets();
-
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSetScrollViewHeight = useCallback(
     debounce(newScrollViewHeight => {
@@ -250,40 +235,35 @@ const ShopHome = () => {
   ]);
 
   return (
-    <ShopContainer
-      style={{
-        paddingTop: insets.top,
-        paddingBottom: 0,
-        paddingLeft: insets.left,
-        paddingRight: insets.right,
-      }}>
+    <ShopContainer>
       <ScrollView ref={scrollViewRef} keyboardDismissMode="on-drag">
-        <ShopHeader>Shop with Crypto</ShopHeader>
-        <Tab.Navigator
-          style={{
-            height: scrollViewHeight,
-          }}
-          screenOptions={ScreenOptions(112)}
-          screenListeners={{
-            tabPress: tab => {
-              if (tab.target) {
-                setActiveTab(
-                  tab.target.includes(ShopTabs.GIFT_CARDS)
-                    ? ShopTabs.GIFT_CARDS
-                    : ShopTabs.SHOP_ONLINE,
-                );
-              }
-            },
-          }}>
-          <Tab.Screen
-            name={ShopTabs.GIFT_CARDS}
-            component={memoizedGiftCardCatalog}
-          />
-          <Tab.Screen
-            name={ShopTabs.SHOP_ONLINE}
-            component={memoizedShopOnline}
-          />
-        </Tab.Navigator>
+        <ShopInnerContainer>
+          <Tab.Navigator
+            style={{
+              height: scrollViewHeight,
+            }}
+            screenOptions={ScreenOptions(112)}
+            screenListeners={{
+              tabPress: tab => {
+                if (tab.target) {
+                  setActiveTab(
+                    tab.target.includes(ShopTabs.GIFT_CARDS)
+                      ? ShopTabs.GIFT_CARDS
+                      : ShopTabs.SHOP_ONLINE,
+                  );
+                }
+              },
+            }}>
+            <Tab.Screen
+              name={ShopTabs.GIFT_CARDS}
+              component={memoizedGiftCardCatalog}
+            />
+            <Tab.Screen
+              name={ShopTabs.SHOP_ONLINE}
+              component={memoizedShopOnline}
+            />
+          </Tab.Navigator>
+        </ShopInnerContainer>
       </ScrollView>
     </ShopContainer>
   );

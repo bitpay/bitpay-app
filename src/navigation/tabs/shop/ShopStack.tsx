@@ -5,6 +5,8 @@ import {
   baseScreenOptions,
 } from '../../../constants/NavigationOptions';
 import ShopHome from './ShopHome';
+import {HeaderTitle} from '../../../components/styled/Text';
+import {t} from 'i18next';
 
 export type ShopStackParamList = {
   Home: undefined;
@@ -28,7 +30,7 @@ const ShopStack = () => {
         name={ShopScreens.HOME}
         component={ShopHome}
         options={{
-          headerShown: false,
+          headerTitle: () => <HeaderTitle>{t('Shop with crypto')}</HeaderTitle>,
         }}
       />
     </Shop.Navigator>
