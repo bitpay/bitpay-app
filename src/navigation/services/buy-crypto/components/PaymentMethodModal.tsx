@@ -1,14 +1,16 @@
 import React from 'react';
 import {ScrollView, SafeAreaView} from 'react-native';
-import FastImage from 'react-native-fast-image';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
 import {
   ModalContainer,
   ModalHeader,
   ModalHeaderText,
   ModalHeaderRight,
 } from '../styled/BuyCryptoModals';
-import {getPaymentMethodsAvailable} from '../utils/buy-crypto-utils';
+import {
+  getEnabledPaymentMethods,
+  isPaymentMethodSupported,
+} from '../utils/buy-crypto-utils';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import Checkbox from '../../../../components/checkbox/Checkbox';
 import {BaseText} from '../../../../components/styled/Text';
@@ -23,6 +25,8 @@ interface PaymentMethodsModalProps {
   onBackdropPress?: () => void;
   onPress?: (paymentMethod: any) => any;
   selectedPaymentMethod: any;
+  coin?: string;
+  currency?: string;
 }
 
 const PaymentMethodCard = styled.TouchableOpacity`
@@ -66,24 +70,20 @@ const PaymentMethodProviderText = styled(BaseText)`
   margin-right: 6px;
 `;
 
-const SimplexLogoContainer = styled(FastImage)`
-  height: 18px;
-  width: 60px;
-`;
-
 const PaymentMethodsModal = ({
   isVisible,
   onPress,
   onBackdropPress,
   selectedPaymentMethod,
+  coin,
+  currency,
 }: PaymentMethodsModalProps) => {
-  const theme = useTheme();
   const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
-  const PaymentMethodsAvailable = getPaymentMethodsAvailable(
-    countryData?.isEuCountry,
-  );
-  const EnabledPaymentMethods = Object.values(PaymentMethodsAvailable).filter(
-    method => method.enabled,
+
+  const EnabledPaymentMethods = getEnabledPaymentMethods(
+    countryData,
+    currency,
+    coin,
   );
 
   return (
@@ -105,7 +105,7 @@ const PaymentMethodsModal = ({
           </ModalHeader>
 
           <ScrollView style={{marginTop: 20}}>
-            {EnabledPaymentMethods.map(paymentMethod => {
+            {Object.values(EnabledPaymentMethods).map(paymentMethod => {
               return (
                 <PaymentMethodCard
                   key={paymentMethod.method}
@@ -127,12 +127,26 @@ const PaymentMethodsModal = ({
                         <PaymentMethodProviderText>
                           Provided by
                         </PaymentMethodProviderText>
-                        {paymentMethod.supportedExchanges.simplex && (
+                        {coin &&
+                        currency &&
+                        isPaymentMethodSupported(
+                          'simplex',
+                          paymentMethod,
+                          coin,
+                          currency,
+                        ) ? (
                           <SimplexLogo width={60} height={20} />
-                        )}
-                        {paymentMethod.supportedExchanges.wyre && (
+                        ) : null}
+                        {coin &&
+                        currency &&
+                        isPaymentMethodSupported(
+                          'wyre',
+                          paymentMethod,
+                          coin,
+                          currency,
+                        ) ? (
                           <WyreLogo width={60} height={15} />
-                        )}
+                        ) : null}
                       </PaymentMethodProvider>
                     </PaymentMethodCheckboxTexts>
                   </PaymentMethodCardContainer>

@@ -40,8 +40,8 @@ import {wyreSupportedCoins} from '../utils/wyre-utils';
 import {sleep} from '../../../../utils/helper-methods';
 import analytics from '@segment/analytics-react-native';
 import {AppActions} from '../../../../store/app';
-import {BaseText} from '../../../../components/styled/Text';
 import {IsERCToken} from '../../../../store/wallet/utils/currency';
+import {isPaymentMethodSupported} from '../utils/buy-crypto-utils';
 
 const CtaContainer = styled.View`
   margin: 20px 15px;
@@ -85,6 +85,7 @@ const BuyCryptoRoot: React.FC<
   const [buyCryptoSupportedCoins, setbuyCryptoSupportedCoins] = useState([
     ...new Set([...simplexSupportedCoins, ...wyreSupportedCoins]),
   ]);
+  const fiatCurrency = 'USD';
 
   const showModal = (id: string) => {
     switch (id) {
@@ -288,7 +289,7 @@ const BuyCryptoRoot: React.FC<
     analytics.track('BitPay App - Buy Crypto "View Offers"', {
       walletId: selectedWallet!.id,
       fiatAmount: amount,
-      fiatCurrency: 'USD',
+      fiatCurrency,
       paymentMethod: selectedPaymentMethod.method,
       coin: selectedWallet!.currencyAbbreviation,
       appUser: user?.eid || '',
@@ -296,12 +297,72 @@ const BuyCryptoRoot: React.FC<
 
     navigation.navigate('BuyCryptoOffers', {
       amount,
-      fiatCurrency: 'USD',
+      fiatCurrency,
       coin: selectedWallet?.currencyAbbreviation || '',
       country: countryData?.shortCode || 'US',
       selectedWallet,
       paymentMethod: selectedPaymentMethod,
     });
+  };
+
+  const setDefaultPaymentMethod = () => {
+    if (!!selectedWallet && Platform.OS === 'ios') {
+      setSelectedPaymentMethod(
+        isPaymentMethodSupported(
+          'simplex',
+          PaymentMethodsAvailable.applePay,
+          selectedWallet.currencyAbbreviation,
+          fiatCurrency,
+        ) ||
+          isPaymentMethodSupported(
+            'wyre',
+            PaymentMethodsAvailable.applePay,
+            selectedWallet.currencyAbbreviation,
+            fiatCurrency,
+          )
+          ? PaymentMethodsAvailable.applePay
+          : PaymentMethodsAvailable.debitCard,
+      );
+    } else {
+      setSelectedPaymentMethod(PaymentMethodsAvailable.debitCard);
+    }
+  };
+
+  const checkPaymentMethod = () => {
+    if (!selectedWallet || !selectedPaymentMethod) {
+      return;
+    }
+    if (
+      selectedPaymentMethod.method == 'sepaBankTransfer' &&
+      !countryData?.isEuCountry
+    ) {
+      setDefaultPaymentMethod();
+      return;
+    }
+    if (
+      isPaymentMethodSupported(
+        'simplex',
+        selectedPaymentMethod,
+        selectedWallet.currencyAbbreviation,
+        fiatCurrency,
+      ) ||
+      isPaymentMethodSupported(
+        'wyre',
+        selectedPaymentMethod,
+        selectedWallet.currencyAbbreviation,
+        fiatCurrency,
+      )
+    ) {
+      logger.debug(
+        `Selected payment method available for ${selectedWallet.currencyAbbreviation} and ${fiatCurrency}`,
+      );
+      return;
+    } else {
+      logger.debug(
+        `Selected payment method not available for ${selectedWallet.currencyAbbreviation} and ${fiatCurrency}. Set to default.`,
+      );
+      setDefaultPaymentMethod();
+    }
   };
 
   const showError = async (type?: string, coin?: string) => {
@@ -384,6 +445,7 @@ const BuyCryptoRoot: React.FC<
 
   useEffect(() => {
     updateWalletData();
+    checkPaymentMethod();
   }, [selectedWallet]);
 
   return (
@@ -567,6 +629,8 @@ const BuyCryptoRoot: React.FC<
         isVisible={paymentMethodModalVisible}
         onBackdropPress={() => hideModal('paymentMethod')}
         selectedPaymentMethod={selectedPaymentMethod}
+        coin={selectedWallet?.currencyAbbreviation}
+        currency={fiatCurrency}
       />
     </>
   );
