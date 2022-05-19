@@ -9,6 +9,8 @@ import {useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {ScanStackParamList} from '../ScanStack';
 import {navigationRef} from '../../../Root';
+import {AppActions} from '../../../store/app';
+import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 
 const ScanContainer = styled.SafeAreaView`
   flex: 1;
@@ -46,13 +48,24 @@ const Scan = () => {
         buttonNegative: 'Cancel',
       }}
       onBarCodeRead={debounce(
-        ({data}) => {
+        async ({data}) => {
           navigationRef.goBack();
           // if specific handler is passed use that else use generic self deriving handler
           if (onScanComplete) {
             onScanComplete(data);
           } else {
-            dispatch(incomingData(data));
+            try {
+              await dispatch(incomingData(data));
+            } catch (error: any) {
+              dispatch(
+                AppActions.showBottomNotificationModal(
+                  CustomErrorMessage({
+                    title: 'Error',
+                    errMsg: error?.message || 'Unable to read QR code',
+                  }),
+                ),
+              );
+            }
           }
         },
         500,

@@ -14,6 +14,7 @@ export interface WalletSettingsRowProps {
   isToken?: boolean;
   network: string;
   hideWallet?: boolean;
+  walletName?: string;
 }
 
 const Row = styled.View`
@@ -44,6 +45,7 @@ const WalletSettingsRow = ({
   isToken,
   network,
   hideWallet,
+  walletName,
 }: WalletSettingsRowProps) => {
   const theme = useTheme();
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
@@ -56,7 +58,7 @@ const WalletSettingsRow = ({
       )}
       <CurrencyImage img={img} size={45} />
       <CurrencyName style={textStyle}>
-        {currencyName} {isToken}
+        {walletName || currencyName} {isToken}
       </CurrencyName>
       {buildTestBadge(network, currencyName, isToken)}
 

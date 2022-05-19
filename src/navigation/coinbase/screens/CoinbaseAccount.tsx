@@ -120,6 +120,7 @@ const AmountContainer = styled.View`
 
 export type CoinbaseAccountScreenParamList = {
   accountId: string;
+  refresh?: boolean;
 };
 
 const CoinbaseAccount = ({
@@ -128,7 +129,7 @@ const CoinbaseAccount = ({
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const {accountId} = route.params;
+  const {accountId, refresh} = route.params;
 
   const [refreshing, setRefreshing] = useState(false);
   const [customSupportedCurrencies, setCustomSupportedCurrencies] = useState(
@@ -397,6 +398,13 @@ const CoinbaseAccount = ({
     }
     setRefreshing(false);
   };
+
+  useEffect(() => {
+    if (refresh) {
+      onRefresh();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <AccountContainer>

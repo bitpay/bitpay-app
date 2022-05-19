@@ -17,20 +17,36 @@ import {
 } from '../buy-crypto/buy-crypto.models';
 import analytics from '@segment/analytics-react-native';
 import {LogActions} from '../log';
+import {startOnGoingProcessModal} from '../app/app.effects';
+import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {dismissOnGoingProcessModal} from '../app/app.actions';
+import {sleep} from '../../utils/helper-methods';
 
 export const incomingData =
   (data: string): Effect<Promise<void>> =>
   async dispatch => {
     // TODO incoming data handler
     if (IsValidPayPro(data)) {
+      dispatch(
+        startOnGoingProcessModal(
+          OnGoingProcessMessages.FETCHING_PAYMENT_OPTIONS,
+        ),
+      );
       const payProUrl = GetPayProUrl(data);
-      const payProOptions = await GetPayProOptions(payProUrl);
-      navigationRef.navigate('Wallet', {
-        screen: WalletScreens.PAY_PRO_CONFIRM,
-        params: {
-          payProOptions,
-        },
-      });
+      try {
+        const payProOptions = await GetPayProOptions(payProUrl);
+        dispatch(dismissOnGoingProcessModal());
+        navigationRef.navigate('Wallet', {
+          screen: WalletScreens.PAY_PRO_CONFIRM,
+          params: {
+            payProOptions,
+          },
+        });
+      } catch (err) {
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(300);
+        throw err;
+      }
     } else if (isValidWalletConnectUri(data)) {
       navigationRef.navigate('WalletConnect', {
         screen: 'Root',
