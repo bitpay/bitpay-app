@@ -226,6 +226,7 @@ export default ({
         <HideableView show={!!searchVal}>
           {searchResults.length ? (
             <SearchResults>
+              <SectionSpacer height={20} />
               {searchResults.map((cardConfig: CardConfig) => (
                 <ListItemTouchableHighlight
                   key={cardConfig.name}
