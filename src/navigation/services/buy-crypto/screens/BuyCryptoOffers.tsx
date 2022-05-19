@@ -58,7 +58,7 @@ import {APP_NAME} from '../../../../constants/config';
 import {isPaymentMethodSupported} from '../utils/buy-crypto-utils';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
-import {useAnalytics} from '@segment/analytics-react-native';
+import analytics from '@segment/analytics-react-native';
 
 export interface BuyCryptoOffersProps {
   amount: number;
@@ -261,7 +261,7 @@ const BuyCryptoOffers: React.FC = () => {
       paymentMethod,
     },
   } = useRoute<RouteProp<{params: BuyCryptoOffersProps}>>();
-  const analytics = useAnalytics();
+
   const logger = useLogger();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();

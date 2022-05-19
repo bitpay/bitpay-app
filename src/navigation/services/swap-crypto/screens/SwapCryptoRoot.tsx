@@ -64,8 +64,8 @@ import {
 } from '../../../../store/app/app.actions';
 import ArrowDown from '../../../../../assets/img/services/swap-crypto/down-arrow.svg';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
+import analytics from '@segment/analytics-react-native';
 import {AppActions} from '../../../../store/app';
-import {useAnalytics} from '@segment/analytics-react-native';
 
 export interface RateData {
   fixedRateId: string;
@@ -74,7 +74,6 @@ export interface RateData {
 }
 
 const SwapCryptoRoot: React.FC = () => {
-  const analytics = useAnalytics();
   const theme = useTheme();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();

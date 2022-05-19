@@ -9,6 +9,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import analytics from '@segment/analytics-react-native';
 import {useTranslation} from 'react-i18next';
 import {RefreshControl, SectionList, Share, View} from 'react-native';
 import {batch} from 'react-redux';
@@ -84,7 +85,6 @@ import {
 } from '../../../store/wallet/effects/send/send';
 import KeySvg from '../../../../assets/img/key.svg';
 import {Effect} from '../../../store';
-import {useAnalytics} from '@segment/analytics-react-native';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -236,7 +236,6 @@ const getChain =
   };
 
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
-  const analytics = useAnalytics();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
