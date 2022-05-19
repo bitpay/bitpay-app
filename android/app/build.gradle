@@ -137,7 +137,7 @@ android {
         applicationId "com.bitpayapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 35
+        versionCode 36
         versionName "1.14.2"
         missingDimensionStrategy 'react-native-camera', 'mlkit'
     }
