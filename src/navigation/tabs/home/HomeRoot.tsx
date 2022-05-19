@@ -1,6 +1,7 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import React, {useEffect, useMemo, useState} from 'react';
 import {RefreshControl, ScrollView} from 'react-native';
+import analytics from '@segment/analytics-react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -35,10 +36,8 @@ import PortfolioBalance from './components/PortfolioBalance';
 import DefaultQuickLinks from './components/quick-links/DefaultQuickLinks';
 import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
 import {HeaderContainer, HomeContainer} from './components/Styled';
-import {useAnalytics} from '@segment/analytics-react-native';
 
 const HomeRoot = () => {
-  const analytics = useAnalytics();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const theme = useTheme();

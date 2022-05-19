@@ -38,10 +38,10 @@ import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.s
 import {simplexSupportedCoins} from '../utils/simplex-utils';
 import {wyreSupportedCoins} from '../utils/wyre-utils';
 import {sleep} from '../../../../utils/helper-methods';
+import analytics from '@segment/analytics-react-native';
 import {AppActions} from '../../../../store/app';
 import {IsERCToken} from '../../../../store/wallet/utils/currency';
 import {isPaymentMethodSupported} from '../utils/buy-crypto-utils';
-import {useAnalytics} from '@segment/analytics-react-native';
 
 const CtaContainer = styled.View`
   margin: 20px 15px;
@@ -54,7 +54,6 @@ const ArrowContainer = styled.View`
 const BuyCryptoRoot: React.FC<
   StackScreenProps<BuyCryptoStackParamList, 'BuyCryptoRoot'>
 > = ({navigation, route}) => {
-  const analytics = useAnalytics();
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const logger = useLogger();

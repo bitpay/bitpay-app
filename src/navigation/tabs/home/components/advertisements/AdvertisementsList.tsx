@@ -7,7 +7,7 @@ import {BoxShadow} from '../Styled';
 import {useNavigation} from '@react-navigation/native';
 import {useRequireKeyAndWalletRedirect} from '../../../../../utils/hooks/useRequireKeyAndWalletRedirect';
 import {useAppSelector} from '../../../../../utils/hooks';
-import {useAnalytics} from '@segment/analytics-react-native';
+import analytics from '@segment/analytics-react-native';
 
 interface AdvertisementListProps {
   contentCards: ContentCard[];
@@ -23,7 +23,6 @@ const AdvertisementCardContainer = styled.View<{isLast: boolean}>`
 `;
 
 const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
-  const analytics = useAnalytics();
   const {contentCards} = props;
   const theme = useTheme();
   const navigation = useNavigation();

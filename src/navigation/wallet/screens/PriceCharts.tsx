@@ -48,12 +48,12 @@ import {DateRanges} from '../../../store/wallet/wallet.models';
 import {Defs, Stop, LinearGradient} from 'react-native-svg';
 import _ from 'lodash';
 import {Platform} from 'react-native';
+import analytics from '@segment/analytics-react-native';
 import GainArrow from '../../../../assets/img/home/exchange-rates/increment-arrow.svg';
 import LossArrow from '../../../../assets/img/home/exchange-rates/decrement-arrow.svg';
 import NeutralArrow from '../../../../assets/img/home/exchange-rates/flat-arrow.svg';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {useRequireKeyAndWalletRedirect} from '../../../utils/hooks/useRequireKeyAndWalletRedirect';
-import {useAnalytics} from '@segment/analytics-react-native';
 
 export type PriceChartsParamList = {
   item: ExchangeRateItemProps;
@@ -119,7 +119,6 @@ const RowContainer = styled.View`
 `;
 
 const PriceCharts = () => {
-  const analytics = useAnalytics();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const theme = useTheme();

@@ -77,7 +77,7 @@ import {
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 import {SwapCryptoActions} from '../../../../store/swap-crypto';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
-import {useAnalytics} from '@segment/analytics-react-native';
+import analytics from '@segment/analytics-react-native';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -109,7 +109,7 @@ const ChangellyCheckout: React.FC = () => {
       sendMaxInfo,
     },
   } = useRoute<RouteProp<{params: ChangellyCheckoutProps}>>();
-  const analytics = useAnalytics();
+
   const logger = useLogger();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();

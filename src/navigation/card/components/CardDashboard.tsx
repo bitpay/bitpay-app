@@ -1,5 +1,6 @@
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
+import analytics from '@segment/analytics-react-native';
 import React, {useCallback, useLayoutEffect, useMemo} from 'react';
 import {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
@@ -54,7 +55,6 @@ import {
 import CardOverviewSlide from './CardOverviewSlide';
 import ShippingStatus from './CardShippingStatus';
 import TransactionRow from './CardTransactionRow';
-import {useAnalytics} from '@segment/analytics-react-native';
 
 interface CardDashboardProps {
   id: string;
@@ -116,7 +116,6 @@ const sortPendingTxByTimestamp = (
   return 0;
 };
 const CardDashboard: React.FC<CardDashboardProps> = props => {
-  const analytics = useAnalytics();
   const dispatch = useAppDispatch();
   const navigator = useNavigation();
   const {t} = useTranslation();
