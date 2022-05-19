@@ -18,10 +18,8 @@ export const COINBASE_CONFIG_API: ConfigApiProps = {
   sandbox: {
     host: 'https://www.coinbase.com',
     api: 'https://api.coinbase.com',
-    client_id:
-      'f4595bf79429ab2f113b5533d9ac9f140236d0f0a0d0006eebdaacd7e970f2ef',
-    client_secret:
-      'a524b3a3056f22d944c30d0e5d32b0cfd67f993510d493f200124cfc70ade3e5',
+    client_id: COINBASE_CLIENT_ID,
+    client_secret: COINBASE_CLIENT_SECRET,
     send_limit_amount: 1,
   },
   redirect_uri: {
