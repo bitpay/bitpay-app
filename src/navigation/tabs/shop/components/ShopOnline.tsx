@@ -32,7 +32,7 @@ const SearchResults = styled.View`
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  padding: ${horizontalPadding}px;
+  padding: 0 ${horizontalPadding}px;
 `;
 
 interface CategoryWithIntegrations extends Category {
@@ -96,7 +96,6 @@ export const ShopOnline = ({
                   marginLeft={horizontalPadding}
                   height={categoryHasDiscount ? 200 : 168}
                   width={133}
-                  headerMargin={categoryHasDiscount ? 18 : 37}
                 />
               );
             }}
@@ -168,11 +167,11 @@ export const ShopOnline = ({
         </NoResultsContainer>
       </HideableView>
       <HideableView show={!!(searchVal && searchResults.length)}>
+        <SectionContainer>
+          <SectionHeader>Search Results for "{searchVal}"</SectionHeader>
+        </SectionContainer>
         <SearchResults>
           {searchResults.map(integration => {
-            const searchResultsHaveDiscount = searchResults.some(
-              merchant => merchant.discount,
-            );
             return (
               <TouchableWithoutFeedback
                 key={integration.displayName}
@@ -187,7 +186,6 @@ export const ShopOnline = ({
                 <MerchantItem
                   merchant={integration}
                   height={200}
-                  headerMargin={searchResultsHaveDiscount ? 30 : 60}
                   key={integration.displayName}
                 />
               </TouchableWithoutFeedback>

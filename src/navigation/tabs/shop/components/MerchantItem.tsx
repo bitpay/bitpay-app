@@ -35,16 +35,9 @@ const MerchantBoxBody = styled.View`
   flex-grow: 1;
 `;
 
-interface MerchantNameProps {
-  headerMargin: number;
-}
-
-const MerchantName = styled(H6)<MerchantNameProps>`
-  ${({headerMargin}) =>
-    css`
-      margin-top: ${headerMargin}px;
-      line-height: 18px;
-    `}
+const MerchantName = styled(H6)`
+  margin-top: 16px;
+  line-height: 20px;
 `;
 
 const MerchantDescription = styled(Paragraph)`
@@ -69,32 +62,22 @@ const PromoText = styled(BaseText)`
   margin-left: 8px;
 `;
 
-interface MerchantItemProps extends MerchantBoxProps, MerchantNameProps {
+interface MerchantItemProps extends MerchantBoxProps {
   merchant: DirectIntegrationApiObject;
-  headerMargin: number;
 }
 
-export default ({
-  merchant,
-  height,
-  marginLeft,
-  width,
-  headerMargin,
-}: MerchantItemProps) => {
+export default ({merchant, height, marginLeft, width}: MerchantItemProps) => {
   const {caption, displayName, icon, discount} = merchant;
   const [descriptionNumLines, setDescriptionNumLines] = useState(3);
   const onTextLayout = useCallback(
-    e => setDescriptionNumLines(e.nativeEvent.lines.length > 1 ? 2 : 3),
+    e => setDescriptionNumLines(e.nativeEvent.lines.length > 1 ? 3 : 4),
     [],
   );
   return (
     <MerchantBox height={height} marginLeft={marginLeft} width={width}>
       <MerchantBoxBody>
         <RemoteImage uri={icon} height={26} borderRadius={30} />
-        <MerchantName
-          headerMargin={headerMargin}
-          numberOfLines={2}
-          onTextLayout={onTextLayout}>
+        <MerchantName numberOfLines={2} onTextLayout={onTextLayout}>
           {displayName}
         </MerchantName>
         <MerchantDescription numberOfLines={descriptionNumLines}>
