@@ -214,7 +214,7 @@ export const generateKeyExportCode = (
   key: Key,
   getKeyMnemonic?: string | undefined,
 ): string => {
-  return `1|${getKeyMnemonic}|null|null|${key.properties.mnemonic}|null`;
+  return `1|${getKeyMnemonic}|null|null|${key.properties.mnemonicHasPassphrase}|null`;
 };
 
 export const isSegwit = (addressType: string): boolean => {

@@ -322,3 +322,12 @@ export const ValidateCoinAddress = (
       return false;
   }
 };
+
+export const isValidImportPrivateKey = (data: string): boolean => {
+  return !!(
+    data &&
+    (data.substring(0, 2) == '1|' ||
+      data.substring(0, 2) == '2|' ||
+      data.substring(0, 2) == '3|')
+  );
+};

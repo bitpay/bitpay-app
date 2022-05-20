@@ -258,6 +258,42 @@ const RecoveryPhrase = () => {
     return words && words.trim().split(/[\u3000\s]+/).length % 3 === 0;
   };
 
+  const processImportQrCode = (code: string): void => {
+    try {
+      const parsedCode = code.split('|');
+      const recoveryObj: ImportObj = {
+        type: parsedCode[0],
+        data: parsedCode[1],
+        hasPassphrase: parsedCode[4] == 'true' ? true : false,
+      };
+
+      if (!isValidPhrase(recoveryObj.data)) {
+        showErrorModal(new Error('The recovery phrase is invalid.'));
+        return;
+      }
+      if (recoveryObj.type == '1' && recoveryObj.hasPassphrase) {
+        dispatch(
+          showBottomNotificationModal({
+            type: 'info',
+            title: 'Password required',
+            message: 'Make sure to enter your password in advanced options',
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: 'OK',
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+        );
+      }
+      setValue('text', recoveryObj.data);
+    } catch (err) {
+      showErrorModal(new Error('The recovery phrase is invalid.'));
+    }
+  };
+
   const setKeyOptions = (
     keyOpts: Partial<KeyOptions>,
     advancedOpts: {
@@ -496,6 +532,12 @@ const RecoveryPhrase = () => {
     ],
   );
 
+  useEffect(() => {
+    if (route.params?.importQrCodeData) {
+      processImportQrCode(route.params.importQrCodeData);
+    }
+  }, []);
+
   return (
     <ScrollViewContainer>
       <ImportContainer>
@@ -517,27 +559,7 @@ const RecoveryPhrase = () => {
                 screen: 'Root',
                 params: {
                   onScanComplete: data => {
-                    try {
-                      const parsedCode = data.split('|');
-                      const recoveryObj: ImportObj = {
-                        type: parsedCode[0],
-                        data: parsedCode[1],
-                        network: parsedCode[2],
-                        hasPassphrase: !!parsedCode[4],
-                      };
-
-                      if (!isValidPhrase(recoveryObj.data)) {
-                        showErrorModal(
-                          new Error('The recovery phrase is invalid.'),
-                        );
-                      } else {
-                        setValue('text', recoveryObj.data);
-                      }
-                    } catch (err) {
-                      showErrorModal(
-                        new Error('The recovery phrase is invalid.'),
-                      );
-                    }
+                    processImportQrCode(data);
                   },
                 },
               })

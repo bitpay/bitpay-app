@@ -26,6 +26,7 @@ import {
   IsValidDogecoinAddress,
   IsValidLitecoinAddress,
   IsValidBitPayInvoice,
+  isValidImportPrivateKey,
 } from '../wallet/utils/validations';
 import {APP_NAME} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
@@ -111,6 +112,9 @@ export const incomingData =
         // Plain Address (Litecoin)
       } else if (IsValidLitecoinAddress(data)) {
         dispatch(handlePlainAddress(data, 'ltc', wallet));
+        // Import Private Key
+      } else if (isValidImportPrivateKey(data)) {
+        goToImport(data);
       }
     } catch (err) {
       dispatch(dismissOnGoingProcessModal());
@@ -701,3 +705,12 @@ const handlePlainAddress =
     };
     dispatch(goToAmount({coin, recipient, wallet}));
   };
+
+const goToImport = (importQrCodeData: string): void => {
+  navigationRef.navigate('Wallet', {
+    screen: WalletScreens.IMPORT,
+    params: {
+      importQrCodeData,
+    },
+  });
+};
