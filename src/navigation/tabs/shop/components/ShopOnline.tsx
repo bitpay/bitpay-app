@@ -143,7 +143,7 @@ export const ShopOnline = ({
                   scrollViewRef.current &&
                   scrollViewRef.current.scrollTo({
                     x: 0,
-                    y: 170,
+                    y: 100,
                     animated: true,
                   });
               }}
