@@ -12,6 +12,11 @@ export const BASE_BITPAY_URLS = {
   [Network.testnet]: 'https://test.bitpay.com',
 };
 export const APP_DEEPLINK_PREFIX = 'bitpay://';
+export const APP_UNIVERSAL_LINK_DOMAINS = [
+  'link.bitpay.com',
+  'link.test.bitpay.com',
+  'link.staging.bitpay.com',
+];
 
 // BWC
 export const BASE_BWS_URL = 'https://bws.bitpay.com/bws/api';
