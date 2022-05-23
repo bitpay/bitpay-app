@@ -5,7 +5,7 @@ import {
   TxDetailsSendingFrom,
   TxDetailsSendingTo,
 } from '../../../../../store/wallet/wallet.models';
-import {H4, H5, H6, H7} from '../../../../../components/styled/Text';
+import {H4, H5, H6, H7, TextAlign} from '../../../../../components/styled/Text';
 import SendToPill from '../../../components/SendToPill';
 import {
   Column,
@@ -13,11 +13,27 @@ import {
   Row,
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
-import React, {ReactChild} from 'react';
+import React, {ReactChild, useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {Pressable, ScrollView, View} from 'react-native';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
 import ChevronRightSvg from '../../../../../../assets/img/angle-right.svg';
+import {sleep} from '../../../../../utils/helper-methods';
+import {WalletsAndAccounts} from '../../../../../store/wallet/utils/wallet';
+import {WalletRowProps} from '../../../../../components/list/WalletRow';
+import KeyWalletsRow, {
+  KeyWallet,
+} from '../../../../../components/list/KeyWalletsRow';
+import SheetModal from '../../../../../components/modal/base/sheet/SheetModal';
+import {
+  WalletSelectMenuBodyContainer,
+  WalletSelectMenuContainer,
+  WalletSelectMenuHeaderContainer,
+} from '../../GlobalSelect';
+import CoinbaseSmall from '../../../../../../assets/img/logos/coinbase-small.svg';
+import {useNavigation} from '@react-navigation/native';
+import {useAppDispatch} from '../../../../../utils/hooks';
+import {showNoWalletsModal} from '../../../../../store/wallet/effects/send/send';
 
 // Styled
 export const ConfirmContainer = styled.SafeAreaView`
@@ -259,5 +275,107 @@ export const SharedDetailRow = ({
       )}
       {hr && <Hr />}
     </>
+  );
+};
+
+export const WalletSelector = ({
+  walletsAndAccounts,
+  onWalletSelect,
+  onCoinbaseAccountSelect,
+  onBackdropPress,
+  isVisible,
+  setWalletSelectorVisible,
+}: {
+  walletsAndAccounts: WalletsAndAccounts;
+  onWalletSelect: (wallet: KeyWallet) => void;
+  onCoinbaseAccountSelect: (account: WalletRowProps) => void;
+  onBackdropPress: () => void;
+  isVisible: boolean;
+  setWalletSelectorVisible: React.Dispatch<React.SetStateAction<boolean>>;
+}) => {
+  const dispatch = useAppDispatch();
+  const navigation = useNavigation();
+  const [selectorVisible, setSelectorVisible] = useState(false);
+  const [autoSelectSingleWallet, setAutoSelectSingleWallet] = useState(true);
+
+  const selectOption = useCallback(
+    async (onSelect: () => void, waitForClose?: boolean) => {
+      setWalletSelectorVisible(false);
+      setAutoSelectSingleWallet(false);
+      if (waitForClose) {
+        // not ideal - will dive into why the timeout has to be this long
+        await sleep(600);
+      }
+      onSelect();
+    },
+    [setWalletSelectorVisible],
+  );
+
+  const showSelector = useCallback(
+    async autoSelect => {
+      const {keyWallets, coinbaseWallets} = walletsAndAccounts;
+      if (keyWallets.length || coinbaseWallets.length) {
+        if (autoSelect) {
+          if (
+            keyWallets.length === 1 &&
+            keyWallets[0].wallets.length === 1 &&
+            coinbaseWallets.length === 0
+          ) {
+            return selectOption(() => onWalletSelect(keyWallets[0].wallets[0]));
+          } else if (
+            coinbaseWallets.length === 1 &&
+            coinbaseWallets[0].wallets.length === 1 &&
+            keyWallets.length === 0
+          ) {
+            return selectOption(() =>
+              onCoinbaseAccountSelect(coinbaseWallets[0].wallets[0]),
+            );
+          }
+        }
+        await sleep(10);
+        setSelectorVisible(true);
+      } else {
+        dispatch(showNoWalletsModal({navigation}));
+      }
+    },
+    [
+      dispatch,
+      navigation,
+      onCoinbaseAccountSelect,
+      onWalletSelect,
+      selectOption,
+      walletsAndAccounts,
+    ],
+  );
+
+  useEffect(() => {
+    isVisible
+      ? showSelector(autoSelectSingleWallet)
+      : setSelectorVisible(false);
+  }, [autoSelectSingleWallet, isVisible, showSelector]);
+
+  return (
+    <SheetModal isVisible={selectorVisible} onBackdropPress={onBackdropPress}>
+      <WalletSelectMenuContainer>
+        <WalletSelectMenuHeaderContainer>
+          <TextAlign align={'center'}>
+            <H4>Select a wallet</H4>
+          </TextAlign>
+        </WalletSelectMenuHeaderContainer>
+        <WalletSelectMenuBodyContainer>
+          <KeyWalletsRow<KeyWallet>
+            keyWallets={walletsAndAccounts.keyWallets}
+            onPress={wallet => selectOption(() => onWalletSelect(wallet), true)}
+          />
+          <KeyWalletsRow<WalletRowProps>
+            keyWallets={walletsAndAccounts.coinbaseWallets}
+            keySvg={CoinbaseSmall}
+            onPress={account =>
+              selectOption(() => onCoinbaseAccountSelect(account), true)
+            }
+          />
+        </WalletSelectMenuBodyContainer>
+      </WalletSelectMenuContainer>
+    </SheetModal>
   );
 };

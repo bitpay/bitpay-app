@@ -105,7 +105,6 @@ export const NavIconButtonContainer = styled.TouchableOpacity`
   height: 40px;
   width: 40px;
   overflow: hidden;
-  margin-top: -2px;
 `;
 
 export const Terms = styled(BaseText)<{maxWidth?: number}>`
