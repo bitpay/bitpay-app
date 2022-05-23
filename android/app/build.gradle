@@ -134,7 +134,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.bitpayapp"
+        applicationId "com.bitpay.wallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 38
