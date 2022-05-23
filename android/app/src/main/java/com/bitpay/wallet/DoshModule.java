@@ -1,4 +1,4 @@
-package com.bitpayapp;
+package com.bitpay.wallet;
 
 import android.app.Activity;
 import androidx.annotation.NonNull;

@@ -6,12 +6,17 @@ export const ExtractBitPayUriAddress = (data: string): string => {
 };
 
 export const GetPayProUrl = (data: string): string => {
-  return decodeURIComponent(
-    data.replace(
+  let url;
+  // universal link
+  if (data.startsWith('https://')) {
+    url = data.replace(/link./, '');
+  } else {
+    url = data.replace(
       /(bitcoin|bitcoincash|ethereum|ripple|dogecoin|litecoin)?:\?r=/,
       '',
-    ),
-  );
+    );
+  }
+  return decodeURIComponent(url);
 };
 
 export const ExtractCoinNetworkAddress = (str: string): string => {

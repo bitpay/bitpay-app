@@ -568,7 +568,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.bitpay.app.v2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bitpay.wallet;
 				PRODUCT_NAME = BitPayApp;
 				SWIFT_OBJC_BRIDGING_HEADER = "BitPayApp-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -600,7 +600,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.bitpay.app.v2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bitpay.wallet;
 				PRODUCT_NAME = BitPayApp;
 				SWIFT_OBJC_BRIDGING_HEADER = "BitPayApp-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;

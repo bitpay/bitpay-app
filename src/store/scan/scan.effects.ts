@@ -25,6 +25,7 @@ import {
   IsValidRippleAddress,
   IsValidDogecoinAddress,
   IsValidLitecoinAddress,
+  IsValidBitPayInvoice,
 } from '../wallet/utils/validations';
 import {APP_NAME} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
@@ -47,13 +48,17 @@ import {showBottomNotificationModal} from '../app/app.actions';
 import {Wallet} from '../wallet/wallet.models';
 import {FormatAmount} from '../wallet/effects/amount/amount';
 import {ButtonState} from '../../components/button/Button';
+import {InteractionManager} from 'react-native';
 
 export const incomingData =
   (data: string, wallet?: Wallet): Effect<Promise<void>> =>
   async dispatch => {
     try {
+      if (IsValidBitPayInvoice(data)) {
+        dispatch(goToPayPro(data));
+      }
       // Paypro
-      if (IsValidPayPro(data)) {
+      else if (IsValidPayPro(data)) {
         dispatch(goToPayPro(data));
         // Bitcoin  URI
       } else if (IsValidBitcoinUri(data)) {
@@ -131,20 +136,46 @@ const getParameterByName = (name: string, url: string): string | undefined => {
 };
 
 const goToPayPro =
-  (data: string): Effect<void> =>
+  (data: string): Effect =>
   async dispatch => {
     dispatch(
       startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_OPTIONS),
     );
+
     const payProUrl = GetPayProUrl(data);
-    const payProOptions = await GetPayProOptions(payProUrl);
-    dispatch(dismissOnGoingProcessModal());
-    navigationRef.navigate('Wallet', {
-      screen: WalletScreens.PAY_PRO_CONFIRM,
-      params: {
-        payProOptions,
-      },
-    });
+
+    try {
+      const payProOptions = await GetPayProOptions(payProUrl);
+      dispatch(dismissOnGoingProcessModal());
+
+      InteractionManager.runAfterInteractions(() => {
+        navigationRef.navigate('Wallet', {
+          screen: WalletScreens.PAY_PRO_CONFIRM,
+          params: {
+            payProOptions,
+          },
+        });
+      });
+    } catch (e: any) {
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(400);
+
+      dispatch(
+        showBottomNotificationModal({
+          type: 'warning',
+          title: 'Something went wrong',
+          message: e?.message,
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: 'OK',
+              action: () => {},
+              primary: true,
+            },
+          ],
+        }),
+      );
+    }
   };
 
 const goToConfirm =

@@ -884,7 +884,7 @@ export const showNoWalletsModal =
         title: 'No compatible wallets',
         message:
           "You currently don't have any wallets capable of sending this payment. Would you like to import one?",
-        enableBackdropDismiss: true,
+        enableBackdropDismiss: false,
         actions: [
           {
             text: 'Import Wallet',
