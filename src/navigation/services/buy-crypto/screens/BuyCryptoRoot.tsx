@@ -39,6 +39,9 @@ import {simplexSupportedCoins} from '../utils/simplex-utils';
 import {wyreSupportedCoins} from '../utils/wyre-utils';
 import {sleep} from '../../../../utils/helper-methods';
 import analytics from '@segment/analytics-react-native';
+import {AppActions} from '../../../../store/app';
+import {IsERCToken} from '../../../../store/wallet/utils/currency';
+import {isPaymentMethodSupported} from '../utils/buy-crypto-utils';
 
 const CtaContainer = styled.View`
   margin: 20px 15px;
@@ -58,6 +61,7 @@ const BuyCryptoRoot: React.FC<
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
 
   const fromWallet = route.params?.fromWallet;
@@ -81,6 +85,7 @@ const BuyCryptoRoot: React.FC<
   const [buyCryptoSupportedCoins, setbuyCryptoSupportedCoins] = useState([
     ...new Set([...simplexSupportedCoins, ...wyreSupportedCoins]),
   ]);
+  const fiatCurrency = 'USD';
 
   const showModal = (id: string) => {
     switch (id) {
@@ -228,6 +233,138 @@ const BuyCryptoRoot: React.FC<
     }
   };
 
+  const getLinkedWalletName = () => {
+    if (!selectedWallet) {
+      return;
+    }
+
+    const linkedWallet = keys[selectedWallet.keyId].wallets.find(({tokens}) =>
+      tokens?.includes(selectedWallet.id),
+    );
+
+    const walletName =
+      linkedWallet?.walletName || linkedWallet?.credentials.walletName;
+    return `${walletName}`;
+  };
+
+  const showTokensInfoSheet = () => {
+    const linkedWalletName = getLinkedWalletName();
+    dispatch(
+      AppActions.showBottomNotificationModal({
+        type: 'info',
+        title: 'Reminder',
+        message: `Keep in mind that once the funds are received in your ${selectedWallet?.currencyAbbreviation.toUpperCase()} wallet, to move them you will need to have enough funds in your Ethereum linked wallet ${
+          linkedWalletName ? `(${linkedWalletName}) ` : ' '
+        }to pay the ETH miner fees.`,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'GOT IT',
+            action: () => {
+              continueToViewOffers();
+            },
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
+
+  const checkIfErc20Token = () => {
+    const tokensWarn = async () => {
+      await sleep(600);
+      showTokensInfoSheet();
+    };
+    if (
+      !!selectedWallet &&
+      dispatch(IsERCToken(selectedWallet.currencyAbbreviation))
+    ) {
+      tokensWarn();
+    } else {
+      continueToViewOffers();
+    }
+  };
+
+  const continueToViewOffers = () => {
+    analytics.track('BitPay App - Buy Crypto "View Offers"', {
+      walletId: selectedWallet!.id,
+      fiatAmount: amount,
+      fiatCurrency,
+      paymentMethod: selectedPaymentMethod.method,
+      coin: selectedWallet!.currencyAbbreviation,
+      appUser: user?.eid || '',
+    });
+
+    navigation.navigate('BuyCryptoOffers', {
+      amount,
+      fiatCurrency,
+      coin: selectedWallet?.currencyAbbreviation || '',
+      country: countryData?.shortCode || 'US',
+      selectedWallet,
+      paymentMethod: selectedPaymentMethod,
+    });
+  };
+
+  const setDefaultPaymentMethod = () => {
+    if (!!selectedWallet && Platform.OS === 'ios') {
+      setSelectedPaymentMethod(
+        isPaymentMethodSupported(
+          'simplex',
+          PaymentMethodsAvailable.applePay,
+          selectedWallet.currencyAbbreviation,
+          fiatCurrency,
+        ) ||
+          isPaymentMethodSupported(
+            'wyre',
+            PaymentMethodsAvailable.applePay,
+            selectedWallet.currencyAbbreviation,
+            fiatCurrency,
+          )
+          ? PaymentMethodsAvailable.applePay
+          : PaymentMethodsAvailable.debitCard,
+      );
+    } else {
+      setSelectedPaymentMethod(PaymentMethodsAvailable.debitCard);
+    }
+  };
+
+  const checkPaymentMethod = () => {
+    if (!selectedWallet || !selectedPaymentMethod) {
+      return;
+    }
+    if (
+      selectedPaymentMethod.method == 'sepaBankTransfer' &&
+      !countryData?.isEuCountry
+    ) {
+      setDefaultPaymentMethod();
+      return;
+    }
+    if (
+      isPaymentMethodSupported(
+        'simplex',
+        selectedPaymentMethod,
+        selectedWallet.currencyAbbreviation,
+        fiatCurrency,
+      ) ||
+      isPaymentMethodSupported(
+        'wyre',
+        selectedPaymentMethod,
+        selectedWallet.currencyAbbreviation,
+        fiatCurrency,
+      )
+    ) {
+      logger.debug(
+        `Selected payment method available for ${selectedWallet.currencyAbbreviation} and ${fiatCurrency}`,
+      );
+      return;
+    } else {
+      logger.debug(
+        `Selected payment method not available for ${selectedWallet.currencyAbbreviation} and ${fiatCurrency}. Set to default.`,
+      );
+      setDefaultPaymentMethod();
+    }
+  };
+
   const showError = async (type?: string, coin?: string) => {
     let title, message: string;
     switch (type) {
@@ -308,6 +445,7 @@ const BuyCryptoRoot: React.FC<
 
   useEffect(() => {
     updateWalletData();
+    checkPaymentMethod();
   }, [selectedWallet]);
 
   return (
@@ -450,23 +588,7 @@ const BuyCryptoRoot: React.FC<
             buttonStyle={'primary'}
             disabled={!selectedWallet || !amount}
             onPress={() => {
-              analytics.track('BitPay App - Buy Crypto "View Offers"', {
-                walletId: selectedWallet!.id,
-                fiatAmount: amount,
-                fiatCurrency: 'USD',
-                paymentMethod: selectedPaymentMethod.method,
-                coin: selectedWallet!.currencyAbbreviation,
-                appUser: user?.eid || '',
-              });
-
-              navigation.navigate('BuyCryptoOffers', {
-                amount,
-                fiatCurrency: 'USD',
-                coin: selectedWallet?.currencyAbbreviation || '',
-                country: countryData?.shortCode || 'US',
-                selectedWallet,
-                paymentMethod: selectedPaymentMethod,
-              });
+              checkIfErc20Token();
             }}>
             View Offers
           </Button>
@@ -507,6 +629,8 @@ const BuyCryptoRoot: React.FC<
         isVisible={paymentMethodModalVisible}
         onBackdropPress={() => hideModal('paymentMethod')}
         selectedPaymentMethod={selectedPaymentMethod}
+        coin={selectedWallet?.currencyAbbreviation}
+        currency={fiatCurrency}
       />
     </>
   );

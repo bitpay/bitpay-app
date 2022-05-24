@@ -4,7 +4,7 @@ import {Hr} from '../../../../../components/styled/Containers';
 import {RouteProp, StackActions} from '@react-navigation/core';
 import {WalletScreens, WalletStackParamList} from '../../../WalletStack';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
-import {H4, TextAlign} from '../../../../../components/styled/Text';
+import {H4} from '../../../../../components/styled/Text';
 import {
   Recipient,
   TransactionProposal,
@@ -17,7 +17,6 @@ import {
   createPayProTxProposal,
   handleCreateTxProposalError,
   removeTxp,
-  showNoWalletsModal,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
@@ -25,15 +24,6 @@ import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import RemoteImage from '../../../../tabs/shop/components/RemoteImage';
-import SheetModal from '../../../../../components/modal/base/sheet/SheetModal';
-import {
-  WalletSelectMenuBodyContainer,
-  WalletSelectMenuContainer,
-  WalletSelectMenuHeaderContainer,
-} from '../../GlobalSelect';
-import KeyWalletsRow, {
-  KeyWallet,
-} from '../../../../../components/list/KeyWalletsRow';
 import {ShopActions, ShopEffects} from '../../../../../store/shop';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
 import {
@@ -44,6 +34,7 @@ import {
   DetailsList,
   Header,
   SendingFrom,
+  WalletSelector,
 } from './Shared';
 import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../components/ErrorMessages';
@@ -55,14 +46,12 @@ import {
   Invoice,
 } from '../../../../../store/shop/shop.models';
 import {WalletRowProps} from '../../../../../components/list/WalletRow';
-import CoinbaseSmall from '../../../../../../assets/img/logos/coinbase-small.svg';
 import {
   CoinbaseAccountProps,
   CoinbaseErrorMessages,
 } from '../../../../../api/coinbase/coinbase.types';
 import {startGetRates} from '../../../../../store/wallet/effects';
 import {coinbasePayInvoice} from '../../../../../store/coinbase';
-
 export interface GiftCardConfirmParamList {
   amount: number;
   cardConfig: CardConfig;
@@ -115,8 +104,7 @@ const Confirm = () => {
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const giftCards = useAppSelector(({SHOP}) => SHOP.giftCards[APP_NETWORK]);
 
-  const [walletSelectModalVisible, setWalletSelectModalVisible] =
-    useState(false);
+  const [walletSelectorVisible, setWalletSelectorVisible] = useState(false);
   const [key, setKey] = useState(keys[_wallet ? _wallet.keyId : '']);
   const [wallet, setWallet] = useState(_wallet);
   const [coinbaseAccount, setCoinbaseAccount] =
@@ -139,7 +127,7 @@ const Confirm = () => {
 
   const reshowWalletSelector = async () => {
     await sleep(400);
-    setWalletSelectModalVisible(true);
+    setWalletSelectorVisible(true);
   };
 
   useEffect(() => {
@@ -149,13 +137,8 @@ const Confirm = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const openKeyWalletSelector = () => {
-    const {keyWallets, coinbaseWallets} = memoizedKeysAndWalletsList;
-    if (keyWallets.length || coinbaseWallets.length) {
-      setWalletSelectModalVisible(true);
-    } else {
-      dispatch(showNoWalletsModal({navigation}));
-    }
+  const openWalletSelector = () => {
+    setWalletSelectorVisible(true);
   };
 
   const createGiftCardInvoice = async ({
@@ -165,9 +148,6 @@ const Confirm = () => {
     clientId: string;
     transactionCurrency: string;
   }) => {
-    setWalletSelectModalVisible(false);
-    // not ideal - will dive into why the timeout has to be this long
-    await sleep(400);
     dispatch(
       startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
     );
@@ -373,8 +353,10 @@ const Confirm = () => {
     setResetSwipeButton(true);
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => openKeyWalletSelector(), []);
+  useEffect(() => {
+    openWalletSelector();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <ConfirmContainer>
@@ -385,7 +367,7 @@ const Confirm = () => {
             <Header hr>Summary</Header>
             <SendingFrom
               sender={sendingFrom!}
-              onPress={openKeyWalletSelector}
+              onPress={openWalletSelector}
               hr
             />
             {unsoldGiftCard && unsoldGiftCard.totalDiscount ? (
@@ -446,34 +428,20 @@ const Confirm = () => {
         </>
       ) : null}
 
-      <SheetModal
-        isVisible={walletSelectModalVisible}
+      <WalletSelector
+        isVisible={walletSelectorVisible}
+        setWalletSelectorVisible={setWalletSelectorVisible}
+        walletsAndAccounts={memoizedKeysAndWalletsList}
+        onWalletSelect={onWalletSelect}
+        onCoinbaseAccountSelect={onCoinbaseAccountSelect}
         onBackdropPress={async () => {
-          setWalletSelectModalVisible(false);
+          setWalletSelectorVisible(false);
           if (!wallet && !coinbaseAccount) {
             await sleep(100);
             navigation.goBack();
           }
-        }}>
-        <WalletSelectMenuContainer>
-          <WalletSelectMenuHeaderContainer>
-            <TextAlign align={'center'}>
-              <H4>Select a wallet</H4>
-            </TextAlign>
-          </WalletSelectMenuHeaderContainer>
-          <WalletSelectMenuBodyContainer>
-            <KeyWalletsRow<KeyWallet>
-              keyWallets={memoizedKeysAndWalletsList.keyWallets}
-              onPress={onWalletSelect}
-            />
-            <KeyWalletsRow<WalletRowProps>
-              keyWallets={memoizedKeysAndWalletsList.coinbaseWallets}
-              keySvg={CoinbaseSmall}
-              onPress={onCoinbaseAccountSelect}
-            />
-          </WalletSelectMenuBodyContainer>
-        </WalletSelectMenuContainer>
-      </SheetModal>
+        }}
+      />
     </ConfirmContainer>
   );
 };

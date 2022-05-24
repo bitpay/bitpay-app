@@ -17,7 +17,10 @@ import {
 } from '../../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../components/PaymentSent';
 import {sleep} from '../../../../../utils/helper-methods';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
+import {
+  openUrlWithInAppBrowser,
+  startOnGoingProcessModal,
+} from '../../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissOnGoingProcessModal,
@@ -40,14 +43,29 @@ import {
 } from '../../../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../../../constants/BWCError';
 import TransactionLevel from '../TransactionLevel';
-import {BaseText, HeaderTitle} from '../../../../../components/styled/Text';
+import {
+  BaseText,
+  HeaderTitle,
+  InfoDescription,
+  Link,
+} from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
 import ToggleSwitch from '../../../../../components/toggle-switch/ToggleSwitch';
 import {useTranslation} from 'react-i18next';
-import {Hr} from '../../../../../components/styled/Containers';
-import {Alert} from 'react-native';
+import {
+  ActiveOpacity,
+  Hr,
+  Info,
+  InfoTriangle,
+  ScreenGutter,
+} from '../../../../../components/styled/Containers';
+import {Alert, TouchableOpacity} from 'react-native';
 import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
+import haptic from '../../../../../components/haptic-feedback/haptic';
 
+const VerticalPadding = styled.View`
+  padding: ${ScreenGutter} 0;
+`;
 export interface ConfirmParamList {
   wallet: Wallet;
   recipient: Recipient;
@@ -113,6 +131,7 @@ const Confirm = () => {
     gasPrice: _gasPrice,
     nonce: _nonce,
     total: _total,
+    destinationTag: _destinationTag,
   } = txDetails;
 
   const [fee, setFee] = useState(_fee);
@@ -121,6 +140,7 @@ const Confirm = () => {
   const [gasPrice, setGasPrice] = useState(_gasPrice);
   const [gasLimit, setGasLimit] = useState(_gasLimit);
   const [nonce, setNonce] = useState(_nonce);
+  const [destinationTag, setDestinationTag] = useState(_destinationTag);
   const {currencyAbbreviation} = wallet;
   const feeOptions = dispatch(GetFeeOptions(currencyAbbreviation));
   useLayoutEffect(() => {
@@ -164,13 +184,20 @@ const Confirm = () => {
         {
           text: 'OK',
           onPress: value => {
-            const opts: {nonce?: number; gasLimit?: number} = {};
+            const opts: {
+              nonce?: number;
+              gasLimit?: number;
+              destinationTag?: string;
+            } = {};
             switch (type) {
               case 'nonce':
                 opts.nonce = Number(value);
                 break;
               case 'gasLimit':
                 opts.gasLimit = Number(value);
+                break;
+              case 'destinationTag':
+                opts.destinationTag = value;
                 break;
               default:
                 break;
@@ -212,6 +239,7 @@ const Confirm = () => {
       setGasPrice(_txDetails.gasPrice);
       setGasLimit(_txDetails.gasLimit);
       setNonce(_txDetails.nonce);
+      setDestinationTag(_txDetails.destinationTag);
       await sleep(500);
       dispatch(dismissOnGoingProcessModal());
     } catch (err: any) {
@@ -327,6 +355,37 @@ const Confirm = () => {
           />
         ) : null}
         <SendingFrom sender={sendingFrom} hr />
+        {currencyAbbreviation === 'xrp' ? (
+          <>
+            <SharedDetailRow
+              description={'Destination Tag'}
+              value={destinationTag || 'edit'}
+              onPress={() =>
+                editValue('Edit destination tag', 'destinationTag')
+              }
+            />
+            <Info>
+              <InfoTriangle />
+              <InfoDescription>
+                A Destination Tag is an optional number that corresponds to an
+                invoice or a XRP account on an exchange.
+              </InfoDescription>
+
+              <VerticalPadding>
+                <TouchableOpacity
+                  activeOpacity={ActiveOpacity}
+                  onPress={() => {
+                    haptic('impactLight');
+                    dispatch(
+                      openUrlWithInAppBrowser('URL.HELP_DESTINATION_TAG'),
+                    );
+                  }}>
+                  <Link>Learn More</Link>
+                </TouchableOpacity>
+              </VerticalPadding>
+            </Info>
+          </>
+        ) : null}
         <Amount description={'SubTotal'} amount={subTotal} />
         <Amount description={'Total'} amount={total} />
       </DetailsList>

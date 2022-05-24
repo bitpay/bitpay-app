@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import styled from 'styled-components/native';
 import {
   Caution,
@@ -368,7 +368,7 @@ const RecoveryPhrase = () => {
             startImportWithDerivationPath(importData, opts),
           )) as Key);
       await dispatch(startGetRates({}));
-      await dispatch(startUpdateAllWalletStatusForKey(key));
+      await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
       await dispatch(updatePortfolioBalance());
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
       backupRedirect({
@@ -428,7 +428,7 @@ const RecoveryPhrase = () => {
 
       const key = (await dispatch<any>(startCreateKeyWithOpts(keyOpts))) as Key;
       await dispatch(startGetRates({}));
-      await dispatch(startUpdateAllWalletStatusForKey(key));
+      await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
       await dispatch(updatePortfolioBalance());
 
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));

@@ -4,6 +4,7 @@ import BoxInput from '../../../../../components/form/BoxInput';
 import {HEIGHT, WIDTH} from '../../../../../components/styled/Containers';
 import {BaseText, H4, Link} from '../../../../../components/styled/Text';
 import {
+  Black,
   Cloud,
   LightBlack,
   NeutralSlate,
@@ -46,18 +47,18 @@ export const SectionHeaderContainer = styled.View`
 
 export const SectionHeaderButton = styled(Link)`
   margin-top: 38px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   font-weight: 500;
 `;
 
 export const SectionHeader = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? White : SlateDark)};
-  font-size: 14px;
+  color: ${({theme}) => (theme.dark ? White : Black)};
+  font-size: 18px;
   text-align: left;
   margin-bottom: 16px;
   margin-top: 40px;
   flex-grow: 1;
-  font-weight: 400;
+  font-weight: 500;
 `;
 
 export const SectionDivider = styled.View`
@@ -95,14 +96,14 @@ export const NoResultsHeader = styled(H4)`
   font-size: 17px;
 `;
 
-export const NavIconButtonContainer = styled.View`
+export const NavIconButtonContainer = styled.TouchableOpacity`
   align-items: center;
   justify-content: center;
+  transform: scale(1.1);
   background-color: ${({theme}) => (theme.dark ? '#252525' : NeutralSlate)};
   border-radius: 50px;
-  height: 45px;
-  width: 45px;
-  margin-top: 5px;
+  height: 40px;
+  width: 40px;
   overflow: hidden;
 `;
 

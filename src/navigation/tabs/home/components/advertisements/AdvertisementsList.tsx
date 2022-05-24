@@ -51,6 +51,13 @@ const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
       },
     });
   });
+  const swapCryptoCta = useRequireKeyAndWalletRedirect(() => {
+    analytics.track('BitPay App - Clicked Swap Crypto', {
+      from: 'Advertisement',
+      appUser: user?.eid || '',
+    });
+    navigation.navigate('SwapCrypto', {screen: 'Root'});
+  });
   const CTA_OVERRIDES: {[key in string]: () => void} = {
     card: () =>
       navigation.navigate('Tabs', {
@@ -59,13 +66,7 @@ const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
           screen: 'CardHome',
         },
       }),
-    swapCrypto: () => {
-      analytics.track('BitPay App - Clicked Swap Crypto', {
-        from: 'Advertisement',
-        appUser: user?.eid || '',
-      });
-      navigation.navigate('SwapCrypto', {screen: 'Root'});
-    },
+    swapCrypto: swapCryptoCta,
     buyCrypto: buyCryptoCta,
   };
 

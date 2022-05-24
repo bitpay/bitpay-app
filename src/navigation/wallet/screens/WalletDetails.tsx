@@ -6,11 +6,13 @@ import React, {
   useEffect,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import analytics from '@segment/analytics-react-native';
 import {useTranslation} from 'react-i18next';
 import {RefreshControl, SectionList, Share, View} from 'react-native';
+import {batch} from 'react-redux';
 import styled from 'styled-components/native';
 import Settings from '../../../components/settings/Settings';
 import {
@@ -240,7 +242,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const {t} = useTranslation();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {walletId, key} = route.params;
+  const {walletId, key, skipInitializeHistory} = route.params;
   const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
@@ -284,16 +286,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   useEffect(() => {
     setRefreshing(!!fullWalletObj.isRefreshing);
   }, [fullWalletObj.isRefreshing]);
-
-  useEffect(() => {
-    const subscription = DeviceEventEmitter.addListener(
-      DeviceEmitterEvents.WALLET_LOAD_HISTORY,
-      () => {
-        loadHistory(true);
-      },
-    );
-    return () => subscription.remove();
-  }, []);
 
   const ShareAddress = async () => {
     try {
@@ -406,8 +398,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       return;
     }
     try {
-      setIsLoading(!refresh);
-      setErrorLoadingTxs(false);
+      batch(() => {
+        setIsLoading(!refresh);
+        setErrorLoadingTxs(false);
+      });
+
       const [transactionHistory] = await Promise.all([
         dispatch(
           GetTransactionHistory({
@@ -420,15 +415,22 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         ),
       ]);
 
-      let {transactions: _history, loadMore: _loadMore} = transactionHistory;
+      batch(() => {
+        if (transactionHistory) {
+          let {transactions: _history, loadMore: _loadMore} =
+            transactionHistory;
 
-      if (_history?.length) {
-        setHistory(_history);
-        const grouped = GroupTransactionHistory(_history);
-        setGroupedHistory(grouped);
-      }
-      setIsLoading(false);
-      setLoadMore(_loadMore);
+          if (_history?.length) {
+            setHistory(_history);
+            const grouped = GroupTransactionHistory(_history);
+            setGroupedHistory(grouped);
+          }
+
+          setLoadMore(_loadMore);
+        }
+
+        setIsLoading(false);
+      });
     } catch (e) {
       setLoadMore(false);
       setIsLoading(false);
@@ -437,10 +439,24 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       console.log('Transaction Update: ', e);
     }
   };
+  const loadHistoryRef = useRef(loadHistory);
+  loadHistoryRef.current = loadHistory;
 
   useEffect(() => {
-    loadHistory();
+    const subscription = DeviceEventEmitter.addListener(
+      DeviceEmitterEvents.WALLET_LOAD_HISTORY,
+      () => {
+        loadHistoryRef.current(true);
+      },
+    );
+    return () => subscription.remove();
   }, []);
+
+  useEffect(() => {
+    if (!skipInitializeHistory) {
+      loadHistoryRef.current();
+    }
+  }, [skipInitializeHistory]);
 
   const listFooterComponent = () => {
     return (

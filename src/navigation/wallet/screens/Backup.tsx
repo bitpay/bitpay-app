@@ -64,7 +64,7 @@ export const backupRedirect = ({
     navigation.dispatch(
       StackActions.replace('Wallet', {
         screen: 'KeyOverview',
-        params: {key},
+        params: {id: key.id},
       }),
     );
   }

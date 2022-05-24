@@ -65,4 +65,10 @@ export const URL = {
    * */
   REQUEST_FEATURE: 'https://payux.typeform.com/to/QOxsnCzo',
   REPORT_ISSUE: 'https://bitpay.com/request-help/wizard?category=wallet',
+
+  /**
+   * XRP destination tag
+   * */
+  HELP_DESTINATION_TAG:
+    'https://support.bitpay.com/hc/en-us/articles/360039839312-What-are-XRP-Destination-Tags-',
 };

@@ -1,4 +1,4 @@
-package com.bitpayapp;
+package com.bitpay.wallet;
 
 import com.facebook.react.ReactActivity;
 import android.content.Intent;
@@ -18,7 +18,7 @@ public class MainActivity extends ReactActivity {
    */
   @Override
   protected String getMainComponentName() {
-    return "BitPayApp";
+    return "BitPay";
   }
 
   @Override

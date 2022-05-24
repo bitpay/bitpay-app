@@ -1,34 +1,39 @@
 import debounce from 'lodash.debounce';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import styled, {css} from 'styled-components/native';
-import {Platform, ScrollView} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import styled from 'styled-components/native';
+import {ScrollView} from 'react-native';
 import GiftCardCatalog from './components/GiftCardCatalog';
 import {
   getCardConfigFromApiConfigMap,
   getGiftCardCurations,
 } from '../../../lib/gift-cards/gift-card';
 import {useDispatch} from 'react-redux';
-import {RootState} from '../../../store';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import {ScreenOptions} from '../../../styles/tabNavigator';
 import {ShopOnline} from './components/ShopOnline';
-import {
-  CardConfig,
-  Category,
-  DirectIntegrationApiObject,
-  GiftCard,
-} from '../../../store/shop/shop.models';
-import {BaseText} from '../../../components/styled/Text';
+import {CardConfig, Category, GiftCard} from '../../../store/shop/shop.models';
 import {ShopEffects} from '../../../store/shop';
-import {selectAvailableGiftCards} from '../../../store/shop/shop.selectors';
+import {
+  selectAvailableGiftCards,
+  selectCategories,
+  selectCategoriesAndCurations,
+  selectCategoriesWithIntegrations,
+  selectIntegrations,
+} from '../../../store/shop/shop.selectors';
 import {APP_NETWORK} from '../../../constants/config';
 import {useAppSelector} from '../../../utils/hooks';
+import {StackScreenProps} from '@react-navigation/stack';
+import {ShopScreens, ShopStackParamList} from './ShopStack';
 
-enum ShopTabs {
+export enum ShopTabs {
   GIFT_CARDS = 'Gift Cards',
   SHOP_ONLINE = 'Shop Online',
 }
+
+export type ShopHomeParamList = {
+  [ShopTabs.GIFT_CARDS]: undefined;
+  [ShopTabs.SHOP_ONLINE]: undefined;
+};
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -36,19 +41,8 @@ const ShopContainer = styled.View`
   flex: 1;
 `;
 
-const ShopHeader = styled(BaseText)`
-  font-size: 18px;
-  font-weight: 700;
-  margin-top: ${Platform.select({
-    ios: css`
-      20px
-    `,
-    android: css`
-      40px
-    `,
-  })};
-  text-align: center;
-  margin-bottom: 30px;
+const ShopInnerContainer = styled.View`
+  margin-top: 15px;
 `;
 
 const getGiftCardsScrollViewHeight = (
@@ -93,16 +87,11 @@ const getScrollViewHeight = (
     : getShopOnlineScrollViewHeight(integrationsCategories);
 };
 
-const ShopHome = () => {
-  const availableCardMap = useAppSelector(
-    ({SHOP}: RootState) => SHOP.availableCardMap,
-  );
-  const supportedCardMap = useAppSelector(
-    ({SHOP}: RootState) => SHOP.supportedCardMap,
-  );
-  const integrationsMap = useAppSelector(
-    ({SHOP}: RootState) => SHOP.integrations,
-  );
+const ShopHome: React.FC<
+  StackScreenProps<ShopStackParamList, ShopScreens.HOME>
+> = ({route}) => {
+  const availableCardMap = useAppSelector(({SHOP}) => SHOP.availableCardMap);
+  const supportedCardMap = useAppSelector(({SHOP}) => SHOP.supportedCardMap);
   const giftCards = useAppSelector(
     ({SHOP}) => SHOP.giftCards[APP_NETWORK],
   ) as GiftCard[];
@@ -112,9 +101,7 @@ const ShopHome = () => {
   const activeGiftCards = purchasedGiftCards.filter(
     giftCard => !giftCard.archived,
   );
-  const categoriesAndCurations = useAppSelector(
-    ({SHOP}: RootState) => SHOP.categoriesAndCurations,
-  );
+  const categoriesAndCurations = useAppSelector(selectCategoriesAndCurations);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const availableGiftCards = useAppSelector(selectAvailableGiftCards);
@@ -134,27 +121,10 @@ const ShopHome = () => {
     [availableGiftCards, categoriesAndCurations, purchasedGiftCards],
   );
 
-  const integrations = useMemo(
-    () => Object.values(integrationsMap) as DirectIntegrationApiObject[],
-    [integrationsMap],
-  );
-
-  const categories = useMemo(
-    () => Object.values(categoriesAndCurations.categories) as Category[],
-    [categoriesAndCurations.categories],
-  );
-
-  const categoriesWitIntegrations = useMemo(
-    () =>
-      categories
-        .map(category => ({
-          ...category,
-          integrations: integrations.filter(integration =>
-            category.tags.some((tag: string) => integration.tags.includes(tag)),
-          ),
-        }))
-        .filter(category => category.integrations.length),
-    [categories, integrations],
+  const integrations = useAppSelector(selectIntegrations);
+  const categories = useAppSelector(selectCategories);
+  const categoriesWitIntegrations = useAppSelector(
+    selectCategoriesWithIntegrations,
   );
 
   const categoriesWithGiftCards = categories
@@ -218,7 +188,11 @@ const ShopHome = () => {
     dispatch(ShopEffects.retryGiftCardRedemptions());
   }, [dispatch]);
 
-  const insets = useSafeAreaInsets();
+  useEffect(() => {
+    if (route.params?.screen) {
+      setActiveTab(route.params.screen);
+    }
+  }, [route.params?.screen]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSetScrollViewHeight = useCallback(
@@ -250,40 +224,35 @@ const ShopHome = () => {
   ]);
 
   return (
-    <ShopContainer
-      style={{
-        paddingTop: insets.top,
-        paddingBottom: 0,
-        paddingLeft: insets.left,
-        paddingRight: insets.right,
-      }}>
+    <ShopContainer>
       <ScrollView ref={scrollViewRef} keyboardDismissMode="on-drag">
-        <ShopHeader>Shop with Crypto</ShopHeader>
-        <Tab.Navigator
-          style={{
-            height: scrollViewHeight,
-          }}
-          screenOptions={ScreenOptions(112)}
-          screenListeners={{
-            tabPress: tab => {
-              if (tab.target) {
-                setActiveTab(
-                  tab.target.includes(ShopTabs.GIFT_CARDS)
-                    ? ShopTabs.GIFT_CARDS
-                    : ShopTabs.SHOP_ONLINE,
-                );
-              }
-            },
-          }}>
-          <Tab.Screen
-            name={ShopTabs.GIFT_CARDS}
-            component={memoizedGiftCardCatalog}
-          />
-          <Tab.Screen
-            name={ShopTabs.SHOP_ONLINE}
-            component={memoizedShopOnline}
-          />
-        </Tab.Navigator>
+        <ShopInnerContainer>
+          <Tab.Navigator
+            style={{
+              height: scrollViewHeight,
+            }}
+            screenOptions={ScreenOptions(112)}
+            screenListeners={{
+              tabPress: tab => {
+                if (tab.target) {
+                  setActiveTab(
+                    tab.target.includes(ShopTabs.GIFT_CARDS)
+                      ? ShopTabs.GIFT_CARDS
+                      : ShopTabs.SHOP_ONLINE,
+                  );
+                }
+              },
+            }}>
+            <Tab.Screen
+              name={ShopTabs.GIFT_CARDS}
+              component={memoizedGiftCardCatalog}
+            />
+            <Tab.Screen
+              name={ShopTabs.SHOP_ONLINE}
+              component={memoizedShopOnline}
+            />
+          </Tab.Navigator>
+        </ShopInnerContainer>
       </ScrollView>
     </ShopContainer>
   );

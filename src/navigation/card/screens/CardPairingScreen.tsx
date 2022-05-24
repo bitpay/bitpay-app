@@ -36,7 +36,13 @@ const CardPairingScreen: React.FC<
   }, [dispatch, route.params?.vcd]);
 
   const onComplete = useCallback(() => {
-    navigation.replace('CardHome');
+    const navState = navigation.getState();
+
+    if (navState.routes.some(r => r.name === 'CardHome')) {
+      navigation.navigate('CardHome');
+    } else {
+      navigation.replace('CardHome');
+    }
   }, [navigation]);
 
   return (

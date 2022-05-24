@@ -51,7 +51,7 @@ import {
   buildWalletObj,
   generateKeyExportCode,
 } from '../../../store/wallet/utils/wallet';
-import {Key, Wallet} from '../../../store/wallet/wallet.models';
+import {Key} from '../../../store/wallet/wallet.models';
 import {
   normalizeMnemonic,
   serverAssistedImport,
@@ -291,7 +291,15 @@ const KeySettings = () => {
         </WalletHeaderContainer>
 
         {wallets.map(
-          ({id, currencyName, img, isToken, network, hideWallet}) => (
+          ({
+            id,
+            currencyName,
+            img,
+            isToken,
+            network,
+            hideWallet,
+            walletName,
+          }) => (
             <TouchableOpacity
               onPress={() => {
                 haptic('impactLight');
@@ -310,6 +318,7 @@ const KeySettings = () => {
                 isToken={isToken}
                 network={network}
                 hideWallet={hideWallet}
+                walletName={walletName}
               />
             </TouchableOpacity>
           ),

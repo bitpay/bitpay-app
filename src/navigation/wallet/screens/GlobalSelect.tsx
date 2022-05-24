@@ -35,9 +35,15 @@ import {
   createProposalAndBuildTxDetails,
   handleCreateTxProposalError,
 } from '../../../store/wallet/effects/send/send';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {RootState} from '../../../store';
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+} from '../../../store/app/app.actions';
+import {Effect, RootState} from '../../../store';
 import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
+import {ButtonState} from '../../../components/button/Button';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -97,13 +103,21 @@ const NoWalletsMsg = styled(BaseText)`
 `;
 
 export type GlobalSelectParamList = {
-  context: 'send' | 'receive' | 'coinbase' | 'contact';
+  context: 'send' | 'receive' | 'coinbase' | 'contact' | 'scanner';
   recipient?: {
-    name: string;
     address: string;
     currency: string;
-    network: string;
+    name?: string;
+    type?: string;
+    network?: string;
+    opts?: {
+      sendMax?: boolean | undefined;
+      message?: string;
+      feePerKb?: number;
+      destinationTag?: string;
+    };
   };
+  amount?: number;
 };
 
 export interface GlobalSelectObj {
@@ -163,7 +177,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   livenetOnly,
 }) => {
   const route = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
-  let {context, recipient} = route.params || {};
+  let {context, recipient, amount} = route.params || {};
   if (useAsModal && modalContext) {
     context = modalContext;
   }
@@ -200,16 +214,21 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   wallets = wallets.filter(wallet => !wallet.hideWallet && wallet.isComplete());
 
   // only show wallets with funds
-  if (context === 'send' || context === 'coinbase' || context === 'contact') {
+  if (['send', 'coinbase', 'contact', 'scanner'].includes(context)) {
     wallets = wallets.filter(wallet => wallet.balance.sat > 0);
   }
 
-  if (recipient && (context === 'coinbase' || context === 'contact')) {
-    wallets = wallets.filter(
-      wallet =>
-        wallet.currencyAbbreviation === recipient?.currency &&
-        wallet.credentials.network === recipient?.network,
-    );
+  if (recipient && ['coinbase', 'contact', 'scanner'].includes(context)) {
+    if (recipient?.currency) {
+      wallets = wallets.filter(
+        wallet => wallet.currencyAbbreviation === recipient?.currency,
+      );
+    }
+    if (recipient?.network) {
+      wallets = wallets.filter(
+        wallet => wallet.credentials.network === recipient?.network,
+      );
+    }
   }
 
   if (livenetOnly) {
@@ -284,9 +303,9 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         onDismiss(wallet);
         return;
       }
-      if (context === 'coinbase' || context === 'contact') {
+      if (['coinbase', 'contact', 'scanner'].includes(context)) {
         setWalletSelectModalVisible(false);
-        const {name, address} = recipient!;
+        const {name, address, type, opts} = recipient!;
         if (!address) {
           return;
         }
@@ -294,63 +313,40 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         try {
           const sendTo = {
             name,
-            type: context,
+            type: type || context,
             address,
           };
 
-          navigation.navigate('Wallet', {
-            screen: WalletScreens.AMOUNT,
-            params: {
-              opts: {hideSendMax: true},
-              currencyAbbreviationRouteParam:
-                wallet.currencyAbbreviation.toUpperCase(),
-              onAmountSelected: async (amount, setButtonState, opts) => {
-                try {
-                  setButtonState('loading');
-                  const {txDetails, txp} = await dispatch(
-                    createProposalAndBuildTxDetails({
-                      wallet,
-                      recipient: sendTo,
-                      amount: Number(amount),
-                      ...opts,
-                    }),
-                  );
-                  setButtonState('success');
-                  await sleep(300);
-                  navigation.navigate('Wallet', {
-                    screen: 'Confirm',
-                    params: {
-                      wallet,
-                      recipient: sendTo,
-                      txp,
-                      txDetails,
-                      amount: Number(amount),
-                    },
-                  });
-                } catch (err: any) {
-                  setButtonState('failed');
-                  const [errorMessageConfig] = await Promise.all([
-                    dispatch(handleCreateTxProposalError(err)),
-                    sleep(400),
-                  ]);
+          if (!amount) {
+            navigation.navigate('Wallet', {
+              screen: WalletScreens.AMOUNT,
+              params: {
+                opts: {hideSendMax: true},
+                currencyAbbreviationRouteParam:
+                  wallet.currencyAbbreviation.toUpperCase(),
+                onAmountSelected: async (amount, setButtonState, opts) => {
                   dispatch(
-                    showBottomNotificationModal({
-                      ...errorMessageConfig,
-                      enableBackdropDismiss: false,
-                      actions: [
-                        {
-                          text: 'OK',
-                          action: () => {
-                            setButtonState(undefined);
-                          },
-                        },
-                      ],
+                    _createProposalAndBuildTxDetails({
+                      wallet,
+                      amount: Number(amount),
+                      sendTo,
+                      setButtonState,
+                      opts,
                     }),
                   );
-                }
+                },
               },
-            },
-          });
+            });
+          } else {
+            dispatch(
+              _createProposalAndBuildTxDetails({
+                wallet,
+                amount: Number(amount),
+                sendTo,
+                opts,
+              }),
+            );
+          }
         } catch (err) {
           console.error(err);
         }
@@ -367,6 +363,86 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
     },
     [context, navigation, onDismiss, recipient, useAsModal],
   );
+
+  const _createProposalAndBuildTxDetails =
+    ({
+      wallet,
+      amount,
+      sendTo,
+      setButtonState,
+      opts,
+    }: {
+      wallet: Wallet;
+      amount: number;
+      sendTo: {
+        name: string | undefined;
+        type: string;
+        address: string;
+      };
+      setButtonState?: (state: ButtonState) => void;
+      opts: any;
+    }): Effect<Promise<void>> =>
+    async (dispatch, getState) => {
+      try {
+        if (setButtonState) {
+          setButtonState('loading');
+        } else {
+          dispatch(
+            startOnGoingProcessModal(OnGoingProcessMessages.CREATING_TXP),
+          );
+        }
+        const {txDetails, txp} = await dispatch(
+          createProposalAndBuildTxDetails({
+            wallet,
+            recipient: sendTo,
+            amount,
+            ...opts,
+          }),
+        );
+        if (setButtonState) {
+          setButtonState('success');
+        } else {
+          dispatch(dismissOnGoingProcessModal());
+        }
+        await sleep(300);
+        navigation.navigate('Wallet', {
+          screen: 'Confirm',
+          params: {
+            wallet,
+            recipient: sendTo,
+            txp,
+            txDetails,
+            amount,
+          },
+        });
+      } catch (err: any) {
+        if (setButtonState) {
+          setButtonState('failed');
+        } else {
+          dispatch(dismissOnGoingProcessModal());
+        }
+        const [errorMessageConfig] = await Promise.all([
+          dispatch(handleCreateTxProposalError(err)),
+          sleep(400),
+        ]);
+        dispatch(
+          showBottomNotificationModal({
+            ...errorMessageConfig,
+            enableBackdropDismiss: false,
+            actions: [
+              {
+                text: 'OK',
+                action: () => {
+                  if (setButtonState) {
+                    setButtonState(undefined);
+                  }
+                },
+              },
+            ],
+          }),
+        );
+      }
+    };
 
   const renderItem = useCallback(
     ({item}: {item: GlobalSelectObj}) => {

@@ -144,7 +144,7 @@ export default ({
     giftCard => !giftCard.archived,
   );
   const numActiveGiftCards = activeGiftCards.length;
-  const activeGiftCardsHeight = numActiveGiftCards * 60 + 260;
+  const activeGiftCardsHeight = numActiveGiftCards * 62 + 215;
 
   const updateSearchResults = debounce((text: string) => {
     setSearchVal(text);
@@ -160,6 +160,15 @@ export default ({
     () => <Curations curations={curations} underlayColor={underlayColor} />,
     [curations, underlayColor],
   );
+
+  const getYPos = () => {
+    const yPos = numActiveGiftCards
+      ? activeGiftCardsHeight
+      : purchasedGiftCards.length
+      ? 270
+      : 130;
+    return yPos;
+  };
 
   return (
     <>
@@ -201,11 +210,7 @@ export default ({
                     scrollViewRef.current &&
                     scrollViewRef.current.scrollTo({
                       x: 0,
-                      y: numActiveGiftCards
-                        ? activeGiftCardsHeight + 15
-                        : purchasedGiftCards.length
-                        ? 300
-                        : 160,
+                      y: getYPos(),
                       animated: Platform.select({
                         ios: true,
                         android: !numActiveGiftCards,
@@ -226,6 +231,7 @@ export default ({
         <HideableView show={!!searchVal}>
           {searchResults.length ? (
             <SearchResults>
+              <SectionSpacer height={20} />
               {searchResults.map((cardConfig: CardConfig) => (
                 <ListItemTouchableHighlight
                   key={cardConfig.name}

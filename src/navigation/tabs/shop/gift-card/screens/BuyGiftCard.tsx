@@ -36,7 +36,7 @@ import {useNavigation, useTheme} from '@react-navigation/native';
 import {useDispatch} from 'react-redux';
 import {AppActions} from '../../../../../store/app';
 import GiftCardDiscountText from '../../components/GiftCardDiscountText';
-import {formatFiatAmount} from '../../../../../utils/helper-methods';
+import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
 import {WalletScreens} from '../../../../wallet/WalletStack';
 import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
 import {ShopActions} from '../../../../../store/shop';
@@ -134,7 +134,11 @@ const BuyGiftCard = ({
     });
   });
 
-  const showActivationFeeSheet = (activationFee: number, amount: number) => {
+  const showActivationFeeSheet = (
+    activationFee: number,
+    amount: number,
+    phone?: string,
+  ) => {
     dispatch(
       AppActions.showBottomNotificationModal({
         type: 'info',
@@ -149,7 +153,10 @@ const BuyGiftCard = ({
         actions: [
           {
             text: 'GOT IT',
-            action: () => next(amount),
+            action: async () => {
+              await sleep(400);
+              next(amount, phone);
+            },
             primary: true,
           },
         ],
@@ -157,7 +164,7 @@ const BuyGiftCard = ({
     );
   };
 
-  const goToConfirmScreen = (amount: number) => {
+  const goToConfirmScreen = async (amount: number) => {
     const discount = getVisibleDiscount(cardConfig);
     navigator.navigate('Wallet', {
       screen: WalletScreens.GIFT_CARD_CONFIRM,
@@ -169,19 +176,19 @@ const BuyGiftCard = ({
     });
   };
 
-  const goToAmountScreen = () => {
+  const goToAmountScreen = (phone?: string) => {
     navigator.navigate('Wallet', {
       screen: WalletScreens.AMOUNT,
       params: {
         fiatCurrencyAbbreviation: cardConfig.currency,
         opts: {hideSendMax: true},
         onAmountSelected: selectedAmount =>
-          onAmountScreenSubmit(+selectedAmount),
+          onAmountScreenSubmit(+selectedAmount, phone),
       },
     });
   };
 
-  const onAmountScreenSubmit = (amount: number) => {
+  const onAmountScreenSubmit = (amount: number, phone?: string) => {
     const minAmount = cardConfig.minAmount as number;
     const maxAmount = cardConfig.maxAmount as number;
     if (amount < minAmount) {
@@ -216,7 +223,7 @@ const BuyGiftCard = ({
     }
     const activationFee = getActivationFee(+amount, cardConfig);
     if (activationFee) {
-      return showActivationFeeSheet(activationFee, +amount);
+      return showActivationFeeSheet(activationFee, +amount, phone);
     }
     goToConfirmScreen(amount);
   };
@@ -230,23 +237,23 @@ const BuyGiftCard = ({
         initialPhoneCountryInfo: savedPhoneCountryInfo,
         onSubmit: ({phone, phoneCountryInfo}) => {
           dispatch(ShopActions.updatedPhone({phone, phoneCountryInfo}));
-          requestAmountIfNeeded(amount);
+          requestAmountIfNeeded(amount, phone);
         },
       },
     });
   };
 
-  const requestAmountIfNeeded = (amount: number) => {
-    return amount ? goToConfirmScreen(amount) : goToAmountScreen();
+  const requestAmountIfNeeded = (amount: number, phone?: string) => {
+    return amount ? goToConfirmScreen(amount) : goToAmountScreen(phone);
   };
 
-  const requestPhoneIfNeeded = (amount: number) => {
-    return cardConfig.phoneRequired
+  const requestPhoneIfNeeded = (amount: number, phone?: string) => {
+    return cardConfig.phoneRequired && !phone
       ? requestPhone(amount)
       : requestAmountIfNeeded(amount);
   };
 
-  const next = (amount: number) => {
+  const next = (amount: number, phone?: string) => {
     if (cardConfig.emailRequired && !shouldSync) {
       return navigator.navigate('GiftCard', {
         screen: GiftCardScreens.ENTER_EMAIL,
@@ -255,12 +262,22 @@ const BuyGiftCard = ({
           initialEmail: savedEmail,
           onSubmit: email => {
             dispatch(ShopActions.updatedEmailAddress({email}));
-            requestPhoneIfNeeded(amount);
+            requestPhoneIfNeeded(amount, phone);
           },
         },
       });
     }
-    requestPhoneIfNeeded(amount);
+    requestPhoneIfNeeded(amount, phone);
+  };
+
+  const buyGiftCard = () => {
+    const selectedAmount = (cardConfig.supportedAmounts || [])[
+      selectedAmountIndex
+    ];
+    const activationFee = getActivationFee(selectedAmount, cardConfig);
+    return activationFee
+      ? showActivationFeeSheet(activationFee, selectedAmount)
+      : next(selectedAmount);
   };
 
   return (
@@ -295,7 +312,7 @@ const BuyGiftCard = ({
                 </SupportedAmounts>
               </DenomSelectionContainer>
             ) : (
-              <TouchableWithoutFeedback onPress={() => goToAmountScreen()}>
+              <TouchableWithoutFeedback onPress={() => buyGiftCard()}>
                 <Amount>{formatFiatAmount(0, cardConfig.currency)}</Amount>
               </TouchableWithoutFeedback>
             )}
@@ -335,17 +352,7 @@ const BuyGiftCard = ({
           shadowRadius: 12,
           elevation: 5,
         }}>
-        <Button
-          onPress={() => {
-            const selectedAmount = (cardConfig.supportedAmounts || [])[
-              selectedAmountIndex
-            ];
-            const activationFee = getActivationFee(selectedAmount, cardConfig);
-            return activationFee
-              ? showActivationFeeSheet(activationFee, selectedAmount)
-              : next(selectedAmount);
-          }}
-          buttonStyle={'primary'}>
+        <Button onPress={() => buyGiftCard()} buttonStyle={'primary'}>
           {cardConfig.supportedAmounts ? 'Continue' : 'Buy Gift Card'}
         </Button>
       </FooterButton>

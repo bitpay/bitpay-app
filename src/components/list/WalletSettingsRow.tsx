@@ -2,10 +2,10 @@ import React, {memo, ReactElement} from 'react';
 import styled, {useTheme} from 'styled-components/native';
 import {BaseText, H7} from '../styled/Text';
 import {StyleProp, TextStyle} from 'react-native';
-import NestedArrow from '../../../assets/img/nested-arrow.svg';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {buildTestBadge} from './WalletRow';
 import {Column, HiddenContainer} from '../styled/Containers';
+import NestedArrowIcon from '../nested-arrow/NestedArrow';
 
 export interface WalletSettingsRowProps {
   id: string;
@@ -14,6 +14,7 @@ export interface WalletSettingsRowProps {
   isToken?: boolean;
   network: string;
   hideWallet?: boolean;
+  walletName?: string;
 }
 
 const Row = styled.View`
@@ -44,6 +45,7 @@ const WalletSettingsRow = ({
   isToken,
   network,
   hideWallet,
+  walletName,
 }: WalletSettingsRowProps) => {
   const theme = useTheme();
   const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
@@ -51,12 +53,12 @@ const WalletSettingsRow = ({
     <Row>
       {isToken && (
         <NestedArrowContainer>
-          <NestedArrow />
+          <NestedArrowIcon />
         </NestedArrowContainer>
       )}
       <CurrencyImage img={img} size={45} />
       <CurrencyName style={textStyle}>
-        {currencyName} {isToken}
+        {walletName || currencyName} {isToken}
       </CurrencyName>
       {buildTestBadge(network, currencyName, isToken)}
 

@@ -156,6 +156,17 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
           });
         },
   );
+  const swapCryptoCta = useRequireKeyAndWalletRedirect(
+    swap && swap.cta
+      ? swap.cta
+      : () => {
+          analytics.track('BitPay App - Clicked Swap Crypto', {
+            from: 'LinkingButtons',
+            appUser: user?.eid || '',
+          });
+          navigation.navigate('SwapCrypto', {screen: 'Root'});
+        },
+  );
   const buttonsList: Array<ButtonListProps> = [
     // TODO: update icons
     {
@@ -167,16 +178,7 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
     {
       label: 'swap',
       img: <SwapSvg />,
-      cta:
-        swap && swap.cta
-          ? swap.cta
-          : () => {
-              analytics.track('BitPay App - Clicked Swap Crypto', {
-                from: 'LinkingButtons',
-                appUser: user?.eid || '',
-              });
-              navigation.navigate('SwapCrypto', {screen: 'Root'});
-            },
+      cta: swapCryptoCta,
       hide: !!swap?.hide,
     },
     {

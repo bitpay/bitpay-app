@@ -8,13 +8,26 @@ import {
   simplexSupportedFiatCurrencies,
 } from './simplex-utils';
 import {wyreSupportedCoins, wyreSupportedFiatCurrencies} from './wyre-utils';
+import * as _ from 'lodash';
 
-export const getPaymentMethodsAvailable = (
-  isEuCountry?: boolean,
+export const getEnabledPaymentMethods = (
+  country: any,
+  currency?: string,
+  coin?: string,
 ): PaymentMethods => {
-  PaymentMethodsAvailable.sepaBankTransfer.enabled = !!isEuCountry;
+  if (!currency || !coin || !country) {
+    return {};
+  }
+  PaymentMethodsAvailable.sepaBankTransfer.enabled = !!country.isEuCountry;
+  const EnabledPaymentMethods = _.pickBy(PaymentMethodsAvailable, method => {
+    return (
+      method.enabled &&
+      (isPaymentMethodSupported('simplex', method, coin, currency) ||
+        isPaymentMethodSupported('wyre', method, coin, currency))
+    );
+  });
 
-  return PaymentMethodsAvailable;
+  return EnabledPaymentMethods;
 };
 
 export const isPaymentMethodSupported = (

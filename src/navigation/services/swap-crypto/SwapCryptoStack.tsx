@@ -80,7 +80,7 @@ const SwapCryptoStack = () => {
                       screen: 'ChangellySettings',
                     });
                   }}>
-                  <HistoryIcon width={50} height={50} />
+                  <HistoryIcon width={42} height={42} />
                 </TouchableOpacity>
               )}
             </HeaderRightContainer>

@@ -134,11 +134,11 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.bitpayapp"
+        applicationId "com.bitpay.wallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 33
-        versionName "1.14.1"
+        versionCode 38
+        versionName "1.15.1"
         missingDimensionStrategy 'react-native-camera', 'mlkit'
     }
     splits {

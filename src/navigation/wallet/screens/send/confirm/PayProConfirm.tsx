@@ -4,9 +4,7 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp, StackActions} from '@react-navigation/core';
 import {WalletScreens, WalletStackParamList} from '../../../WalletStack';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
-import {H4, TextAlign} from '../../../../../components/styled/Text';
 import SecureLockIcon from '../../../../../../assets/img/secure-lock.svg';
-import CoinbaseSmall from '../../../../../../assets/img/logos/coinbase-small.svg';
 import {
   Recipient,
   TransactionProposal,
@@ -19,7 +17,6 @@ import {
   createPayProTxProposal,
   handleCreateTxProposalError,
   removeTxp,
-  showNoWalletsModal,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../components/PaymentSent';
@@ -27,15 +24,6 @@ import {sleep} from '../../../../../utils/helper-methods';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
-import SheetModal from '../../../../../components/modal/base/sheet/SheetModal';
-import {
-  WalletSelectMenuBodyContainer,
-  WalletSelectMenuContainer,
-  WalletSelectMenuHeaderContainer,
-} from '../../GlobalSelect';
-import KeyWalletsRow, {
-  KeyWallet,
-} from '../../../../../components/list/KeyWalletsRow';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
 import {
   Amount,
@@ -45,6 +33,7 @@ import {
   Header,
   SendingFrom,
   SendingTo,
+  WalletSelector,
 } from './Shared';
 import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../components/ErrorMessages';
@@ -81,8 +70,8 @@ const PayProConfirm = () => {
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
-  const [walletSelectModalVisible, setWalletSelectModalVisible] =
-    useState(false);
+  const [walletSelectorVisible, setWalletSelectorVisible] = useState(false);
+
   const [key, setKey] = useState(keys[_wallet ? _wallet.keyId : '']);
   const [coinbaseAccount, setCoinbaseAccount] =
     useState<CoinbaseAccountProps>();
@@ -112,7 +101,7 @@ const PayProConfirm = () => {
 
   const reshowWalletSelector = async () => {
     await sleep(400);
-    setWalletSelectModalVisible(true);
+    setWalletSelectorVisible(true);
   };
 
   const createTxp = async (selectedWallet: Wallet) => {
@@ -163,12 +152,7 @@ const PayProConfirm = () => {
   }, []);
 
   const openKeyWalletSelector = () => {
-    const {keyWallets, coinbaseWallets} = memoizedKeysAndWalletsList;
-    if (keyWallets.length || coinbaseWallets.length) {
-      setWalletSelectModalVisible(true);
-    } else {
-      dispatch(showNoWalletsModal({navigation}));
-    }
+    setWalletSelectorVisible(true);
   };
 
   const handleCreateGiftCardInvoiceOrTxpError = async (err: any) => {
@@ -191,9 +175,6 @@ const PayProConfirm = () => {
   };
 
   const onCoinbaseAccountSelect = async (walletRowProps: WalletRowProps) => {
-    setWalletSelectModalVisible(false);
-    // not ideal - will dive into why the timeout has to be this long
-    await sleep(400);
     dispatch(
       startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
     );
@@ -225,7 +206,7 @@ const PayProConfirm = () => {
   };
 
   const onWalletSelect = async (selectedWallet: Wallet) => {
-    setWalletSelectModalVisible(false);
+    setWalletSelectorVisible(false);
     // not ideal - will dive into why the timeout has to be this long
     await sleep(400);
     createTxp(selectedWallet);
@@ -368,34 +349,20 @@ const PayProConfirm = () => {
         </>
       ) : null}
 
-      <SheetModal
-        isVisible={walletSelectModalVisible}
+      <WalletSelector
+        isVisible={walletSelectorVisible}
+        setWalletSelectorVisible={setWalletSelectorVisible}
+        walletsAndAccounts={memoizedKeysAndWalletsList}
+        onWalletSelect={onWalletSelect}
+        onCoinbaseAccountSelect={onCoinbaseAccountSelect}
         onBackdropPress={async () => {
-          setWalletSelectModalVisible(false);
+          setWalletSelectorVisible(false);
           if (!wallet && !coinbaseAccount) {
             await sleep(100);
             navigation.goBack();
           }
-        }}>
-        <WalletSelectMenuContainer>
-          <WalletSelectMenuHeaderContainer>
-            <TextAlign align={'center'}>
-              <H4>Select a wallet</H4>
-            </TextAlign>
-          </WalletSelectMenuHeaderContainer>
-          <WalletSelectMenuBodyContainer>
-            <KeyWalletsRow<KeyWallet>
-              keyWallets={memoizedKeysAndWalletsList.keyWallets}
-              onPress={onWalletSelect}
-            />
-            <KeyWalletsRow<WalletRowProps>
-              keyWallets={memoizedKeysAndWalletsList.coinbaseWallets}
-              keySvg={CoinbaseSmall}
-              onPress={onCoinbaseAccountSelect}
-            />
-          </WalletSelectMenuBodyContainer>
-        </WalletSelectMenuContainer>
-      </SheetModal>
+        }}
+      />
 
       <PaymentSent
         isVisible={showPaymentSentModal}
@@ -407,7 +374,7 @@ const PayProConfirm = () => {
           coinbaseAccount
             ? navigation.navigate('Coinbase', {
                 screen: 'CoinbaseAccount',
-                params: {accountId: coinbaseAccount.id},
+                params: {accountId: coinbaseAccount.id, refresh: true},
               })
             : navigation.navigate('Wallet', {
                 screen: 'WalletDetails',

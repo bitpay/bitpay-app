@@ -115,6 +115,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
   const [loading, setLoading] = useState(true);
   const [bchAddressType, setBchAddressType] = useState('Cash Address');
   const [bchAddress, setBchAddress] = useState('');
+  const [wasInit, setWasInit] = useState(false);
 
   const copyToClipboard = () => {
     haptic('impactLight');
@@ -214,10 +215,13 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
     }
   };
 
+  const shouldInit = isVisible && !wasInit ? init : null;
   useEffect(() => {
-    init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wallet]);
+    if (shouldInit) {
+      setWasInit(true);
+      shouldInit();
+    }
+  }, [wallet, shouldInit]);
 
   let headerContextHandlers: HeaderContextHandler | null = null;
 

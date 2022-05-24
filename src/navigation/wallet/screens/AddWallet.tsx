@@ -11,7 +11,6 @@ import {
   HeaderTitle,
   TextAlign,
 } from '../../../components/styled/Text';
-import {CommonActions, useNavigation} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
@@ -151,8 +150,7 @@ const WalletAdvancedOptionsContainer = styled(AdvancedOptionsContainer)`
   margin-top: 20px;
 `;
 
-const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
-  const navigation = useNavigation();
+const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const dispatch = useAppDispatch();
   const {
     currencyAbbreviation: _currencyAbbreviation,
@@ -295,9 +293,12 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
         });
       }
 
+      navigation.popToTop();
+
       await dispatch(
         startOnGoingProcessModal(OnGoingProcessMessages.ADDING_WALLET),
       );
+
       // adds wallet and binds to key obj - creates eth wallet if needed
       const wallet = await dispatch(
         addWallet({
@@ -313,28 +314,12 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({route}) => {
         }),
       );
 
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 2,
-          routes: [
-            {
-              name: 'Tabs',
-              params: {screen: 'Home'},
-            },
-            {
-              name: 'Wallet',
-              params: {screen: 'KeyOverview', params: {key}},
-            },
-            {
-              name: 'Wallet',
-              params: {
-                screen: 'WalletDetails',
-                params: {walletId: wallet.id, key},
-              },
-            },
-          ],
-        }),
-      );
+      navigation.navigate('WalletDetails', {
+        walletId: wallet.id,
+        key,
+        skipInitializeHistory: true,
+      });
+
       dispatch(dismissOnGoingProcessModal());
     } catch (err: any) {
       if (err === 'invalid password') {

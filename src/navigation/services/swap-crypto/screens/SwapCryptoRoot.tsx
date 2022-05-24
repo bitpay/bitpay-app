@@ -48,7 +48,10 @@ import {
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {sleep} from '../../../../utils/helper-methods';
 import {useLogger} from '../../../../utils/hooks/useLogger';
-import {GetPrecision} from '../../../../store/wallet/utils/currency';
+import {
+  GetPrecision,
+  IsERCToken,
+} from '../../../../store/wallet/utils/currency';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {changellyGetCurrencies} from '../../../../store/swap-crypto/effects/changelly/changelly';
 import {
@@ -62,6 +65,7 @@ import {
 import ArrowDown from '../../../../../assets/img/services/swap-crypto/down-arrow.svg';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import analytics from '@segment/analytics-react-native';
+import {AppActions} from '../../../../store/app';
 
 export interface RateData {
   fixedRateId: string;
@@ -77,6 +81,7 @@ const SwapCryptoRoot: React.FC = () => {
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
   const route = useRoute<RouteProp<SwapCryptoStackParamList, 'Root'>>();
   const [amountModalVisible, setAmountModalVisible] = useState(false);
@@ -490,6 +495,84 @@ const SwapCryptoRoot: React.FC = () => {
     );
   };
 
+  const getLinkedToWalletName = () => {
+    if (!toWalletSelected) {
+      return;
+    }
+
+    const linkedWallet = keys[toWalletSelected.keyId].wallets.find(({tokens}) =>
+      tokens?.includes(toWalletSelected.id),
+    );
+
+    const walletName =
+      linkedWallet?.walletName || linkedWallet?.credentials.walletName;
+    return `${walletName}`;
+  };
+
+  const showTokensInfoSheet = () => {
+    const linkedWalletName = getLinkedToWalletName();
+    dispatch(
+      AppActions.showBottomNotificationModal({
+        type: 'info',
+        title: 'Reminder',
+        message: `Keep in mind that once the funds are received in your ${toWalletSelected?.currencyAbbreviation.toUpperCase()} wallet, to move them you will need to have enough funds in your Ethereum linked wallet ${
+          linkedWalletName ? `(${linkedWalletName}) ` : ' '
+        }to pay the ETH miner fees.`,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'GOT IT',
+            action: async () => {
+              await sleep(400);
+              continueToCheckout();
+            },
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
+
+  const checkIfErc20Token = () => {
+    const tokensWarn = async () => {
+      await sleep(300);
+      showTokensInfoSheet();
+    };
+    if (
+      !!toWalletSelected &&
+      dispatch(IsERCToken(toWalletSelected.currencyAbbreviation))
+    ) {
+      tokensWarn();
+    } else {
+      continueToCheckout();
+    }
+  };
+
+  const continueToCheckout = () => {
+    analytics.track('BitPay App - Requested Swap Crypto', {
+      fromWalletId: fromWalletSelected!.id,
+      toWalletId: toWalletSelected!.id,
+      fromCoin: fromWalletSelected!.currencyAbbreviation,
+      toCoin: toWalletSelected!.currencyAbbreviation,
+      amountFrom: amountFrom,
+      exchange: 'changelly',
+      appUser: user?.eid || '',
+    });
+    navigation.navigate('SwapCrypto', {
+      screen: 'ChangellyCheckout',
+      params: {
+        fromWalletSelected: fromWalletSelected!,
+        toWalletSelected: toWalletSelected!,
+        fromWalletData: fromWalletData!,
+        toWalletData: toWalletData!,
+        fixedRateId: rateData!.fixedRateId,
+        amountFrom: amountFrom,
+        // useSendMax: useSendMax,
+        // sendMaxInfo: sendMaxInfo
+      },
+    });
+  };
+
   const getChangellyCurrencies = async () => {
     const changellyCurrenciesData = await changellyGetCurrencies(true);
 
@@ -733,28 +816,7 @@ const SwapCryptoRoot: React.FC = () => {
             buttonStyle={'primary'}
             disabled={!canContinue()}
             onPress={() => {
-              analytics.track('BitPay App - Requested Swap Crypto', {
-                fromWalletId: fromWalletSelected!.id,
-                toWalletId: toWalletSelected!.id,
-                fromCoin: fromWalletSelected!.currencyAbbreviation,
-                toCoin: toWalletSelected!.currencyAbbreviation,
-                amountFrom: amountFrom,
-                exchange: 'changelly',
-                appUser: user?.eid || '',
-              });
-              navigation.navigate('SwapCrypto', {
-                screen: 'ChangellyCheckout',
-                params: {
-                  fromWalletSelected: fromWalletSelected!,
-                  toWalletSelected: toWalletSelected!,
-                  fromWalletData: fromWalletData!,
-                  toWalletData: toWalletData!,
-                  fixedRateId: rateData!.fixedRateId,
-                  amountFrom: amountFrom,
-                  // useSendMax: useSendMax,
-                  // sendMaxInfo: sendMaxInfo
-                },
-              });
+              checkIfErc20Token();
             }}>
             Continue
           </Button>

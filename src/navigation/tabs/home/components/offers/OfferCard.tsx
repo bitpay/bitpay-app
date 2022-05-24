@@ -1,19 +1,24 @@
+import {getStateFromPath, useNavigation} from '@react-navigation/native';
 import React from 'react';
 import {Linking} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
+import FastImage, {Source} from 'react-native-fast-image';
 import haptic from '../../../../../components/haptic-feedback/haptic';
+import {APP_DEEPLINK_PREFIX} from '../../../../../constants/config';
 import {
   isCaptionedContentCard,
   isClassicContentCard,
 } from '../../../../../utils/braze';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {AppEffects} from '../../../../../store/app';
-import {getStateFromPath, useNavigation} from '@react-navigation/native';
-import {selectAvailableGiftCards} from '../../../../../store/shop/shop.selectors';
-import {APP_DEEPLINK_PREFIX} from '../../../../../constants/config';
 import {LogActions} from '../../../../../store/log';
+import {
+  selectAvailableGiftCards,
+  selectIntegrations,
+} from '../../../../../store/shop/shop.selectors';
+import {ShopTabs} from '../../../shop/ShopHome';
 import LinkCard from '../cards/LinkCard';
-import FastImage, {Source} from 'react-native-fast-image';
+import {ShopScreens} from '../../../shop/ShopStack';
 
 interface OfferCardProps {
   contentCard: ContentCard;
@@ -31,6 +36,7 @@ const OfferCard: React.FC<OfferCardProps> = props => {
   let imageSource: Source | null = null;
 
   const availableGiftCards = useAppSelector(selectAvailableGiftCards);
+  const integrations = useAppSelector(selectIntegrations);
 
   if (
     isCaptionedContentCard(contentCard) ||
@@ -56,39 +62,63 @@ const OfferCard: React.FC<OfferCardProps> = props => {
 
     try {
       const path = url.replace(APP_DEEPLINK_PREFIX, '');
-      const maybeParsedState = getStateFromPath(path);
+      const state = getStateFromPath(path);
 
-      if (maybeParsedState?.routes.length) {
-        const route = maybeParsedState.routes[0];
+      if (!state?.routes.length) {
+        return;
+      }
 
-        if (route.name === 'giftcard') {
-          if (route.params) {
-            const merchantName = (
-              (route.params as any).merchant || ''
-            ).toLowerCase();
-            const cardConfig = availableGiftCards.find(
-              giftCard => giftCard.name.toLowerCase() === merchantName,
-            );
+      const route = state.routes[0];
 
-            if (cardConfig) {
-              navigation.navigate('GiftCard', {
-                screen: 'BuyGiftCard',
-                params: {
-                  cardConfig,
-                },
-              });
+      if (!route.params) {
+        return;
+      }
 
-              return;
-            }
-          }
+      const merchantName = ((route.params as any).merchant || '').toLowerCase();
 
-          navigation.navigate('Shop', {
-            screen: 'Home',
+      if (route.name === 'giftcard') {
+        const cardConfig = availableGiftCards.find(
+          gc => gc.name.toLowerCase() === merchantName,
+        );
+
+        if (cardConfig) {
+          navigation.navigate('GiftCard', {
+            screen: 'BuyGiftCard',
+            params: {
+              cardConfig,
+            },
           });
+        } else {
+          navigation.navigate('Shop', {
+            screen: ShopScreens.HOME,
+            params: {
+              screen: ShopTabs.GIFT_CARDS,
+            },
+          });
+        }
+      } else if (route.name === 'shoponline') {
+        const directIntegration = integrations.find(
+          i => i.displayName.toLowerCase() === merchantName,
+        );
 
-          return;
+        if (directIntegration) {
+          navigation.navigate('Merchant', {
+            screen: 'MerchantDetails',
+            params: {
+              directIntegration,
+            },
+          });
+        } else {
+          navigation.navigate('Shop', {
+            screen: ShopScreens.HOME,
+            params: {
+              screen: ShopTabs.SHOP_ONLINE,
+            },
+          });
         }
       }
+
+      return;
     } catch (err) {
       dispatch(
         LogActions.debug('Something went wrong parsing offer URL: ' + url),
