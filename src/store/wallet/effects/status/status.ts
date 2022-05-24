@@ -293,13 +293,7 @@ export const startUpdateAllWalletStatusForKey =
                   return bStatus.walletId === wallet.id;
                 }) || {};
 
-              if (
-                !force ||
-                !status ||
-                !success ||
-                // skip formatting amounts if nothing has changed
-                status.balance.totalAmount === cachedBalance.sat
-              ) {
+              if (!force || !status || !success) {
                 return cachedBalance;
               }
 
@@ -354,7 +348,8 @@ export const startUpdateAllWalletStatusForKey =
   };
 
 export const startUpdateAllKeyAndWalletStatus =
-  (): Effect => async (dispatch, getState) => {
+  ({force}: {force: boolean} = {force: false}): Effect =>
+  async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
         const {
@@ -368,7 +363,7 @@ export const startUpdateAllKeyAndWalletStatus =
 
         await Promise.all(
           Object.values(keys).map(key => {
-            dispatch(startUpdateAllWalletStatusForKey({key}));
+            dispatch(startUpdateAllWalletStatusForKey({key, force}));
           }),
         );
         dispatch(successUpdateAllKeysAndStatus());
@@ -637,9 +632,7 @@ export const startFormatBalanceAllWalletsForKey =
             const {sat, satLocked} = cachedBalance;
 
             const newBalance = {
-              crypto: dispatch(
-                FormatAmount(currencyAbbreviation, sat),
-              ),
+              crypto: dispatch(FormatAmount(currencyAbbreviation, sat)),
               cryptoLocked: dispatch(
                 FormatAmount(currencyAbbreviation, satLocked),
               ),
