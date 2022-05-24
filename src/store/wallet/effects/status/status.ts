@@ -30,6 +30,7 @@ import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
 import {ProcessPendingTxps} from '../transactions/transactions';
 import {FormatAmount} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
+import {IsUtxoCoin} from '../../utils/currency';
 
 /*
  * post broadcasting of payment
@@ -478,20 +479,36 @@ const buildBalance =
       ? totalAmount - lockedAmount
       : totalConfirmedAmount - lockedAmount;
 
+    const pendingAmount =
+      useUnconfirmedFunds && IsUtxoCoin(currencyAbbreviation)
+        ? 0
+        : totalAmount - totalConfirmedAmount;
+
+    const satLockedAmount = ['xrp'].includes(currencyAbbreviation)
+      ? lockedAmount - lockedConfirmedAmount
+      : lockedAmount;
+
     return {
       sat: totalAmount,
       satConfirmed: totalConfirmedAmount,
-      satLocked: lockedAmount,
+      satLocked: satLockedAmount,
       satConfirmedLocked: lockedConfirmedAmount,
       satAvailable: availableAmount,
       satConfirmedAvailable: availableConfirmedAmount,
       satSpendable: spendableAmount,
+      satPending: pendingAmount,
       crypto: dispatch(FormatAmount(currencyAbbreviation, Number(totalAmount))),
       cryptoLocked: dispatch(
-        FormatAmount(currencyAbbreviation, Number(lockedAmount)),
+        FormatAmount(currencyAbbreviation, Number(satLockedAmount)),
+      ),
+      cryptoConfirmedLocked: dispatch(
+        FormatAmount(currencyAbbreviation, Number(lockedConfirmedAmount)),
       ),
       cryptoSpendable: dispatch(
         FormatAmount(currencyAbbreviation, Number(spendableAmount)),
+      ),
+      cryptoPending: dispatch(
+        FormatAmount(currencyAbbreviation, Number(pendingAmount)),
       ),
       fiat: convertToFiat(
         dispatch(
@@ -508,7 +525,19 @@ const buildBalance =
       fiatLocked: convertToFiat(
         dispatch(
           toFiat(
-            lockedAmount,
+            satLockedAmount,
+            defaultAltCurrencyIsoCode,
+            currencyAbbreviation,
+            rates,
+          ),
+        ),
+        hideWallet,
+        network,
+      ),
+      fiatConfirmedLocked: convertToFiat(
+        dispatch(
+          toFiat(
+            lockedConfirmedAmount,
             defaultAltCurrencyIsoCode,
             currencyAbbreviation,
             rates,
@@ -521,6 +550,18 @@ const buildBalance =
         dispatch(
           toFiat(
             spendableAmount,
+            defaultAltCurrencyIsoCode,
+            currencyAbbreviation,
+            rates,
+          ),
+        ),
+        hideWallet,
+        network,
+      ),
+      fiatPending: convertToFiat(
+        dispatch(
+          toFiat(
+            pendingAmount,
             defaultAltCurrencyIsoCode,
             currencyAbbreviation,
             rates,
