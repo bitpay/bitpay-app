@@ -400,6 +400,11 @@ export const BuildKeysAndWalletsList = ({
     .filter(key => key.wallets.length);
 };
 
+export interface WalletsAndAccounts {
+  keyWallets: KeyWalletsRowProps<KeyWallet>[];
+  coinbaseWallets: KeyWalletsRowProps<WalletRowProps>[];
+}
+
 export const BuildPayProWalletSelectorList =
   ({
     keys,
@@ -411,10 +416,7 @@ export const BuildPayProWalletSelectorList =
     network?: Network;
     payProOptions?: PayProOptions;
     defaultAltCurrencyIsoCode?: string;
-  }): Effect<{
-    keyWallets: KeyWalletsRowProps<KeyWallet>[];
-    coinbaseWallets: KeyWalletsRowProps<WalletRowProps>[];
-  }> =>
+  }): Effect<WalletsAndAccounts> =>
   (_, getState) => {
     const {COINBASE} = getState();
     const coinbaseAccounts = COINBASE.accounts[COINBASE_ENV];

@@ -270,6 +270,16 @@ const BuyGiftCard = ({
     requestPhoneIfNeeded(amount, phone);
   };
 
+  const buyGiftCard = () => {
+    const selectedAmount = (cardConfig.supportedAmounts || [])[
+      selectedAmountIndex
+    ];
+    const activationFee = getActivationFee(selectedAmount, cardConfig);
+    return activationFee
+      ? showActivationFeeSheet(activationFee, selectedAmount)
+      : next(selectedAmount);
+  };
+
   return (
     <>
       <ScrollView
@@ -302,7 +312,7 @@ const BuyGiftCard = ({
                 </SupportedAmounts>
               </DenomSelectionContainer>
             ) : (
-              <TouchableWithoutFeedback onPress={() => goToAmountScreen()}>
+              <TouchableWithoutFeedback onPress={() => buyGiftCard()}>
                 <Amount>{formatFiatAmount(0, cardConfig.currency)}</Amount>
               </TouchableWithoutFeedback>
             )}
@@ -342,17 +352,7 @@ const BuyGiftCard = ({
           shadowRadius: 12,
           elevation: 5,
         }}>
-        <Button
-          onPress={() => {
-            const selectedAmount = (cardConfig.supportedAmounts || [])[
-              selectedAmountIndex
-            ];
-            const activationFee = getActivationFee(selectedAmount, cardConfig);
-            return activationFee
-              ? showActivationFeeSheet(activationFee, selectedAmount)
-              : next(selectedAmount);
-          }}
-          buttonStyle={'primary'}>
+        <Button onPress={() => buyGiftCard()} buttonStyle={'primary'}>
           {cardConfig.supportedAmounts ? 'Continue' : 'Buy Gift Card'}
         </Button>
       </FooterButton>
