@@ -41,7 +41,7 @@ static void InitializeFlipper(UIApplication *application) {
     [bridge moduleForClass:[RCTDevLoadingView class]];
   #endif
   RCTRootView *rootView = [[RCTRootView alloc] initWithBridge:bridge
-                                                   moduleName:@"BitPayApp"
+                                                   moduleName:@"BitPay"
                                             initialProperties:nil];
 
   if (@available(iOS 13.0, *)) {
