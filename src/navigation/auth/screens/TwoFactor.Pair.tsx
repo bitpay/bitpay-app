@@ -91,21 +91,18 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
         return;
 
       case 'failed':
-        const done = () => {
-          dispatch(BitPayIdActions.updateTwoFactorPairStatus(null));
-        };
-
         dispatch(
           AppActions.showBottomNotificationModal({
             type: 'error',
             title: 'Login failed',
             message: twoFactorPairingError || 'An unexpected error occurred.',
-            enableBackdropDismiss: true,
-            onBackdropDismiss: done,
+            enableBackdropDismiss: false,
             actions: [
               {
                 text: 'OK',
-                action: done,
+                action: () => {
+                  dispatch(BitPayIdActions.updateTwoFactorPairStatus(null));
+                },
               },
             ],
           }),

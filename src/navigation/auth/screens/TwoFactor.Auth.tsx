@@ -70,21 +70,18 @@ const TwoFactorAuthentication: React.FC<
         return;
 
       case 'failed':
-        const done = () => {
-          dispatch(BitPayIdActions.updateTwoFactorAuthStatus(null));
-        };
-
         dispatch(
           AppActions.showBottomNotificationModal({
             type: 'error',
             title: 'Login failed',
             message: twoFactorAuthError || 'An unexpected error occurred.',
-            enableBackdropDismiss: true,
-            onBackdropDismiss: done,
+            enableBackdropDismiss: false,
             actions: [
               {
                 text: 'OK',
-                action: done,
+                action: () => {
+                  dispatch(BitPayIdActions.updateTwoFactorAuthStatus(null));
+                },
               },
             ],
           }),

@@ -92,10 +92,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
     if (loginStatus === 'failed') {
       captchaRef.current?.reset();
 
-      const done = () => {
-        dispatch(BitPayIdActions.updateLoginStatus(null));
-      };
-
       dispatch(
         AppActions.showBottomNotificationModal({
           type: 'error',
@@ -103,12 +99,13 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
           message:
             loginError ||
             'Could not log in. Please review your information and try again.',
-          enableBackdropDismiss: true,
-          onBackdropDismiss: done,
+          enableBackdropDismiss: false,
           actions: [
             {
               text: 'OK',
-              action: done,
+              action: () => {
+                dispatch(BitPayIdActions.updateLoginStatus(null));
+              },
             },
           ],
         }),
