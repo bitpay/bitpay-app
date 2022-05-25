@@ -98,21 +98,18 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
         return;
 
       case 'failed':
-        const done = () => {
-          navigation.navigate('Login');
-        };
-
         dispatch(
           AppActions.showBottomNotificationModal({
             type: 'error',
             title: 'Login failed',
             message: 'Something went wrong while authenticating.',
-            enableBackdropDismiss: true,
-            onBackdropDismiss: done,
+            enableBackdropDismiss: false,
             actions: [
               {
                 text: 'OK',
-                action: done,
+                action: () => {
+                  navigation.navigate('Login');
+                },
               },
             ],
           }),
