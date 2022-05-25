@@ -1,5 +1,6 @@
 import BitAuth from 'bitauth';
 import {Linking} from 'react-native';
+import uuid from 'react-native-uuid';
 import ReactAppboy from 'react-native-appboy-sdk';
 import InAppBrowser, {
   InAppBrowserOptions,
@@ -31,6 +32,7 @@ import {
   setNotificationsAccepted,
   setOffersAndPromotionsAccepted,
   setProductsUpdatesAccepted,
+  setBrazeEid,
   showBlur,
 } from './app.actions';
 import {batch} from 'react-redux';
@@ -212,9 +214,9 @@ export const initializeBrazeContent =
         ReactAppboy.changeUser(user.eid);
         ReactAppboy.setEmail(user.email);
       } else {
-        // TODO: Create or read UUID for receive push notifications for anonymous users
-        const eid = APP.brazeEid || 'testing-user-01'; // TODO generate UUID
-        ReactAppboy.changeUser(eid); // TODO: set eid to storage
+        const eid = APP.brazeEid || uuid.v4().toString();
+        ReactAppboy.changeUser(eid);
+        dispatch(setBrazeEid(eid));
       }
 
       ReactAppboy.requestContentCardsRefresh();

@@ -182,6 +182,11 @@ export const brazeContentCardsFetched = (
   payload: {contentCards},
 });
 
+export const setBrazeEid = (eid: string): AppActionType => ({
+  type: AppActionTypes.SET_BRAZE_EID,
+  payload: eid,
+});
+
 export const showBiometricModal = (): AppActionType => ({
   type: AppActionTypes.SHOW_BIOMETRIC_MODAL,
 });
