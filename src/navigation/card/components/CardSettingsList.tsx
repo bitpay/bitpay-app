@@ -18,6 +18,7 @@ import CustomizeCardIcon from '../assets/settings/icon-card.svg';
 import EditCardNameIcon from '../assets/settings/icon-cardname.svg';
 import FaqsIcon from '../assets/settings/icon-faqs.svg';
 import GetHelpIcon from '../assets/settings/icon-help.svg';
+import DownloadHistoryIcon from '../assets/settings/icon-history.svg';
 import LockIcon from '../assets/settings/icon-lock.svg';
 import OffersIcon from '../assets/settings/icon-offers.svg';
 import ReferEarnIcon from '../assets/settings/icon-referearn.svg';
@@ -240,6 +241,14 @@ const SettingsList: React.FC<SettingsListProps> = props => {
             Icon={EditCardNameIcon}
             onPress={() => navigation.navigate('UpdateCardName', {card})}>
             {t('Update Card Name')}
+          </Styled.SettingsLink>
+
+          <Hr />
+
+          <Styled.SettingsLink
+            Icon={DownloadHistoryIcon}
+            onPress={() => openUrl(URL.PERSONAL_DASHBOARD_CARD)}>
+            {t('Download History')}
           </Styled.SettingsLink>
 
           <Hr />
