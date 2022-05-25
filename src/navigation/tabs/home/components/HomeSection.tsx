@@ -10,8 +10,9 @@ import {
   ActiveOpacity,
   ScreenGutter,
 } from '../../../../components/styled/Containers';
-import {Link} from '../../../../components/styled/Text';
+import {BaseText, Link} from '../../../../components/styled/Text';
 import {HomeSectionTitle} from './Styled';
+import {LightBlack, LuckySevens, SlateDark} from '../../../../styles/colors';
 
 interface HomeRowProps {
   title?: string | undefined;
@@ -20,6 +21,7 @@ interface HomeRowProps {
   slimHeader?: boolean;
   style?: StyleProp<ViewStyle>;
   slimContainer?: boolean;
+  label?: string;
 }
 
 const HomeRowContainer = styled.View<{slim?: boolean}>`
@@ -41,6 +43,18 @@ const HeaderLink = styled(Link)`
   font-size: 14px;
 `;
 
+const HeaderLabel = styled(BaseText)`
+  font-weight: 500;
+  font-size: 14px;
+  color: ${({theme}) => (theme.dark ? LuckySevens : SlateDark)};
+`;
+
+const HeaderLabelContainer = styled.View`
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
+  padding: 0 8px;
+  border-radius: 50px;
+`;
+
 const HomeSection: React.FC<HomeRowProps> = props => {
   const {
     title,
@@ -50,6 +64,7 @@ const HomeSection: React.FC<HomeRowProps> = props => {
     children,
     style,
     slimContainer,
+    label,
   } = props;
 
   return (
@@ -59,6 +74,11 @@ const HomeSection: React.FC<HomeRowProps> = props => {
         <TouchableOpacity activeOpacity={ActiveOpacity} onPress={onActionPress}>
           <HeaderLink>{action || ''}</HeaderLink>
         </TouchableOpacity>
+        {label ? (
+          <HeaderLabelContainer>
+            <HeaderLabel>{label}</HeaderLabel>
+          </HeaderLabelContainer>
+        ) : null}
       </Header>
       {children}
     </HomeRowContainer>
