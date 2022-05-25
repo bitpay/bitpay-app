@@ -637,9 +637,7 @@ export const startFormatBalanceAllWalletsForKey =
             const {sat, satLocked} = cachedBalance;
 
             const newBalance = {
-              crypto: dispatch(
-                FormatAmount(currencyAbbreviation, sat),
-              ),
+              crypto: dispatch(FormatAmount(currencyAbbreviation, sat)),
               cryptoLocked: dispatch(
                 FormatAmount(currencyAbbreviation, satLocked),
               ),

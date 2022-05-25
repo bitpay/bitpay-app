@@ -62,6 +62,7 @@ import {
   GroupTransactionHistory,
   IsMoved,
   IsReceived,
+  IsShared,
   TX_HISTORY_LIMIT,
 } from '../../../store/wallet/effects/transactions/transactions';
 import {ScreenGutter} from '../../../components/styled/Containers';
@@ -744,6 +745,14 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           <Icons.Network />
                         </IconContainer>
                         <TypeText>{chain}</TypeText>
+                      </TypeContainer>
+                    ) : null}
+                    {IsShared(fullWalletObj) ? (
+                      <TypeContainer>
+                        <TypeText>
+                          Multisig {fullWalletObj.credentials.m}/
+                          {fullWalletObj.credentials.n}
+                        </TypeText>
                       </TypeContainer>
                     ) : null}
                   </Row>

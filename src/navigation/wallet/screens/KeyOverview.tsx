@@ -161,6 +161,10 @@ export const buildUIFormattedWallet: (
   hideWallet,
   hideBalance,
   pendingTxps,
+  multisig:
+    credentials.n > 1
+      ? `- Multisig ${credentials.m}/${credentials.n}`
+      : undefined,
 });
 
 // Key overview list builder

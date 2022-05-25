@@ -46,6 +46,7 @@ export interface WalletRowProps {
   hideBalance?: boolean;
   pendingTxps: TransactionProposal[];
   coinbaseAccount?: CoinbaseAccountProps;
+  multisig?: string;
 }
 
 interface Props {
@@ -83,6 +84,7 @@ const WalletRow = ({wallet, onPress}: Props) => {
     isToken,
     network,
     hideBalance,
+    multisig,
   } = wallet;
 
   // @ts-ignore
@@ -105,6 +107,9 @@ const WalletRow = ({wallet, onPress}: Props) => {
           </H5>
           {buildTestBadge(network, currencyName, isToken)}
         </Row>
+        <ListItemSubText>
+          {currencyAbbreviation.toUpperCase()} {multisig ? multisig : null}
+        </ListItemSubText>
         <ListItemSubText>{currencyAbbreviation.toUpperCase()}</ListItemSubText>
       </CurrencyColumn>
       <BalanceColumn>
