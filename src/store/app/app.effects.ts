@@ -25,11 +25,23 @@ import {SEGMENT_API_KEY, APPSFLYER_API_KEY, APP_ID} from '@env';
 import appsFlyer from 'react-native-appsflyer';
 import {requestTrackingPermission} from 'react-native-tracking-transparency';
 import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
-import {setHomeCarouselConfig, showBlur} from './app.actions';
+import {
+  setConfirmedTxAccepted,
+  setHomeCarouselConfig,
+  setNotificationsAccepted,
+  setOffersAndPromotionsAccepted,
+  setProductsUpdatesAccepted,
+  showBlur,
+} from './app.actions';
 import {batch} from 'react-redux';
 import i18n from 'i18next';
 import {WalletActions} from '../wallet';
 import {coinbaseInitialize} from '../coinbase';
+
+// Subscription groups (Braze)
+const CONFIRMED_TX_GROUP_ID = 'dff24ef2-1896-4dee-81fd-7dca9c9c7a8a';
+const PRODUCTS_UPDATES_GROUP_ID = '27c86a0b-2a91-4383-b05b-5e671554f186';
+const OFFERS_AND_PROMOTIONS_GROUP_ID = '6be103aa-4df0-46f6-a3fa-438e61aadced';
 
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
@@ -102,6 +114,9 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     // Update Coinbase
     dispatch(coinbaseInitialize());
+
+    // Subscribe Pursh Notifications if enabled
+    dispatch(initializeNotifications());
 
     // set home carousel config if not already set
     if (!homeCarouselConfig.length) {
@@ -196,6 +211,10 @@ export const initializeBrazeContent =
       if (user) {
         ReactAppboy.changeUser(user.eid);
         ReactAppboy.setEmail(user.email);
+      } else {
+        // TODO: Create or read UUID for receive push notifications for anonymous users
+        const eid = APP.brazeEid || 'testing-user-01'; // TODO generate UUID
+        ReactAppboy.changeUser(eid); // TODO: set eid to storage
       }
 
       ReactAppboy.requestContentCardsRefresh();
@@ -358,6 +377,75 @@ export const askForTrackingPermissionAndEnableSdks =
 
       resolve();
     });
+  };
+
+/**
+- * Initialize push notifications if enabled.
+- * @returns void
+- */
+export const initializeNotifications =
+  (): Effect => async (dispatch, getState) => {
+    try {
+      dispatch(LogActions.info('Initializing Push Notifications...'));
+      const {APP} = getState();
+      setNotifications(APP.notificationsAccepted);
+      setConfirmTxNotifications(APP.confirmedTxAccepted);
+      setProductsUpdatesNotifications(APP.productsUpdatesAccepted);
+      setOffersAndPromotionsNotifications(APP.offersAndPromotionsAccepted);
+    } catch (err) {
+      const errMsg = 'Failed to initialize push notifications.';
+
+      dispatch(LogActions.error(errMsg));
+      dispatch(
+        LogActions.error(
+          err instanceof Error ? err.message : JSON.stringify(err),
+        ),
+      );
+    } finally {
+      dispatch(LogActions.info('Initializing Push Notifications complete.'));
+    }
+  };
+
+export const setNotifications =
+  (accepted: boolean): Effect =>
+  async dispatch => {
+    dispatch(setNotificationsAccepted(accepted));
+    const value = accepted ? 'subscribed' : 'unsubscribed';
+    ReactAppboy.setPushNotificationSubscriptionType(value);
+    dispatch(LogActions.info('Push Notifications: ' + value));
+  };
+
+export const setConfirmTxNotifications =
+  (accepted: boolean): Effect =>
+  async dispatch => {
+    dispatch(setConfirmedTxAccepted(accepted));
+    if (accepted) {
+      ReactAppboy.addToSubscriptionGroup(CONFIRMED_TX_GROUP_ID);
+    } else {
+      ReactAppboy.removeFromSubscriptionGroup(CONFIRMED_TX_GROUP_ID);
+    }
+  };
+
+export const setProductsUpdatesNotifications =
+  (accepted: boolean): Effect =>
+  async dispatch => {
+    dispatch(setProductsUpdatesAccepted(accepted));
+    if (accepted) {
+      ReactAppboy.addToSubscriptionGroup(PRODUCTS_UPDATES_GROUP_ID);
+    } else {
+      ReactAppboy.removeFromSubscriptionGroup(PRODUCTS_UPDATES_GROUP_ID);
+    }
+  };
+
+export const setOffersAndPromotionsNotifications =
+  (accepted: boolean): Effect =>
+  async dispatch => {
+    dispatch(setOffersAndPromotionsAccepted(accepted));
+    if (accepted) {
+      ReactAppboy.addToSubscriptionGroup(OFFERS_AND_PROMOTIONS_GROUP_ID);
+    } else {
+      ReactAppboy.removeFromSubscriptionGroup(OFFERS_AND_PROMOTIONS_GROUP_ID);
+    }
   };
 
 export const resetAllSettings = (): Effect => dispatch => {

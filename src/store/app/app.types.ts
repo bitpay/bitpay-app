@@ -30,6 +30,9 @@ export enum AppActionTypes {
   SUCCESS_GENERATE_APP_IDENTITY = 'APP/SUCCESS_GENERATE_APP_IDENTITY',
   FAILED_GENERATE_APP_IDENTITY = 'APP/FAILED_GENERATE_APP_IDENTITY',
   SET_NOTIFICATIONS_ACCEPTED = 'APP/SET_NOTIFICATIONS_ACCEPTED',
+  SET_CONFIRMED_TX_ACCEPTED = 'APP/SET_CONFIRMED_TX_ACCEPTED',
+  SET_PRODUCTS_UPDATES_ACCEPTED = 'APP/SET_PRODUCTS_UPDATES_ACCEPTED',
+  SET_OFFERS_AND_PROMOTIONS_ACCEPTED = 'APP/SET_OFFERS_AND_PROMOTIONS_ACCEPTED',
   SHOW_ONBOARDING_FINISH_MODAL = 'APP/SHOW_ONBOARDING_FINISH_MODAL',
   DISMISS_ONBOARDING_FINISH_MODAL = 'APP/DISMISS_ONBOARDING_FINISH_MODAL',
   SHOW_DECRYPT_PASSWORD_MODAL = 'APP/SHOW_DECRYPT_PASSWORD_MODAL',
@@ -44,6 +47,7 @@ export enum AppActionTypes {
   SHOW_BLUR = 'APP/SHOW_BLUR',
   SHOW_PORTFOLIO_VALUE = 'APP/SHOW_PORTFOLIO_VALUE',
   BRAZE_CONTENT_CARDS_FETCHED = 'APP/BRAZE_CONTENT_CARDS_FETCHED',
+  SET_BRAZE_EID = 'APP/SET_BRAZE_EID',
   SHOW_BIOMETRIC_MODAL = 'APP/SHOW_BIOMETRIC_MODAL',
   DISMISS_BIOMETRIC_MODAL = 'APP/DISMISS_BIOMETRIC_MODAL',
   BIOMETRIC_LOCK_ACTIVE = 'APP/BIOMETRIC_LOCK_ACTIVE',
@@ -119,6 +123,21 @@ interface FailedGenerateAppIdentity {
 
 interface SetNotificationsAccepted {
   type: typeof AppActionTypes.SET_NOTIFICATIONS_ACCEPTED;
+  payload: boolean;
+}
+
+interface SetConfirmedTxAccepted {
+  type: typeof AppActionTypes.SET_CONFIRMED_TX_ACCEPTED;
+  payload: boolean;
+}
+
+interface SetProductsUpdatesAccepted {
+  type: typeof AppActionTypes.SET_PRODUCTS_UPDATES_ACCEPTED;
+  payload: boolean;
+}
+
+interface SetOffersAndPromotionsAccepted {
+  type: typeof AppActionTypes.SET_OFFERS_AND_PROMOTIONS_ACCEPTED;
   payload: boolean;
 }
 
@@ -206,6 +225,11 @@ interface BrazeContentCardsFetched {
   payload: {contentCards: ContentCard[]};
 }
 
+interface SetBrazeEid {
+  type: typeof AppActionTypes.SET_BRAZE_EID;
+  payload: string;
+}
+
 interface SetHomeCarouselConfig {
   type: typeof AppActionTypes.SET_HOME_CAROUSEL_CONFIG;
   payload: HomeCarouselConfig[] | HomeCarouselConfig;
@@ -247,6 +271,9 @@ export type AppActionType =
   | SuccessGenerateAppIdentity
   | FailedGenerateAppIdentity
   | SetNotificationsAccepted
+  | SetConfirmedTxAccepted
+  | SetProductsUpdatesAccepted
+  | SetOffersAndPromotionsAccepted
   | ShowOnboardingFinishModal
   | DismissOnboardingFinishModal
   | SetDefaultLanguage
@@ -261,6 +288,7 @@ export type AppActionType =
   | ShowBlur
   | ShowPortfolioValue
   | BrazeContentCardsFetched
+  | SetBrazeEid
   | ShowBiometricModal
   | DismissBiometricModal
   | BiometricLockActive
