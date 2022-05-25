@@ -222,6 +222,7 @@ export const buildTxDetails =
         recipientName: name,
         recipientAddress: address && formatCryptoAddress(address),
         img: wallet.img,
+        recipientFullAddress: address,
       },
       fee: {
         feeLevel,

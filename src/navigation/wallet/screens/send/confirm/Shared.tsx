@@ -34,6 +34,8 @@ import CoinbaseSmall from '../../../../../../assets/img/logos/coinbase-small.svg
 import {useNavigation} from '@react-navigation/native';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {showNoWalletsModal} from '../../../../../store/wallet/effects/send/send';
+import Clipboard from '@react-native-community/clipboard';
+import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 
 // Styled
 export const ConfirmContainer = styled.SafeAreaView`
@@ -105,15 +107,43 @@ export const SendingTo = ({
   recipient: TxDetailsSendingTo | undefined;
   hr?: boolean;
 }): JSX.Element | null => {
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setCopied(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [copied]);
+
   if (recipient) {
-    const {recipientName, recipientAddress, img} = recipient;
+    const {recipientName, recipientAddress, img, recipientFullAddress} =
+      recipient;
+
+    const copyText = (text: string) => {
+      if (!copied && !!text) {
+        Clipboard.setString(text);
+        setCopied(true);
+      }
+    };
+
     return (
       <>
         <DetailContainer height={83}>
           <DetailRow>
             <H7>Sending to</H7>
             <SendToPill
-              icon={<CurrencyImage img={img} size={18} />}
+              onPress={() => copyText(recipientFullAddress || '')}
+              icon={
+                copied ? (
+                  <CopiedSvg width={18} />
+                ) : (
+                  <CurrencyImage img={img} size={18} />
+                )
+              }
               description={recipientName || recipientAddress || ''}
             />
           </DetailRow>
