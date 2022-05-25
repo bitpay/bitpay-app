@@ -86,7 +86,7 @@ const ForgotPassword = () => {
         }),
       );
     }
-  }, [forgotPasswordEmailStatus]);
+  }, [dispatch, forgotPasswordEmailStatus]);
 
   const onSubmit = handleSubmit(({email}) => {
     Keyboard.dismiss();

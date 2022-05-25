@@ -1,6 +1,6 @@
 import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useDispatch, useSelector} from 'react-redux';
 import * as yup from 'yup';
