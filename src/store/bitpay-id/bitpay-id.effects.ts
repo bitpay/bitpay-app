@@ -133,6 +133,7 @@ export const startLogin =
   ({email, password, gCaptchaResponse}: StartLoginParams): Effect =>
   async (dispatch, getState) => {
     try {
+      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
       dispatch(BitPayIdActions.updateLoginStatus(null));
 
       const {APP, BITPAY_ID} = getState();
@@ -197,6 +198,8 @@ export const startLogin =
         dispatch(LogActions.error(JSON.stringify(err)));
         dispatch(BitPayIdActions.failedLogin(errMsg));
       });
+    } finally {
+      dispatch(AppActions.dismissOnGoingProcessModal());
     }
   };
 
@@ -204,6 +207,8 @@ export const startTwoFactorAuth =
   (code: string): Effect =>
   async (dispatch, getState) => {
     try {
+      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
+
       const {APP, BITPAY_ID} = getState();
 
       await AuthApi.submitTwoFactor(
@@ -238,6 +243,8 @@ export const startTwoFactorAuth =
         dispatch(LogActions.error(JSON.stringify(err)));
         dispatch(BitPayIdActions.failedSubmitTwoFactorAuth(errMsg));
       });
+    } finally {
+      dispatch(AppActions.dismissOnGoingProcessModal());
     }
   };
 
@@ -245,6 +252,8 @@ export const startTwoFactorPairing =
   (code: string): Effect =>
   async (dispatch, getState) => {
     try {
+      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
+
       const {APP, BITPAY_ID} = getState();
       const secret = await AuthApi.generatePairingCode(
         APP.network,
@@ -278,6 +287,8 @@ export const startTwoFactorPairing =
           BitPayIdActions.failedSubmitTwoFactorPairing(JSON.stringify(errMsg)),
         );
       });
+    } finally {
+      dispatch(AppActions.dismissOnGoingProcessModal());
     }
   };
 

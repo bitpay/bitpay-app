@@ -4,7 +4,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {Keyboard, SafeAreaView, TextInput} from 'react-native';
 import * as yup from 'yup';
-import Button, {ButtonState} from '../../../components/button/Button';
+import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {Link} from '../../../components/styled/Text';
@@ -57,7 +57,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
     ({BITPAY_ID}) => BITPAY_ID.loginError || '',
   );
   const [isCaptchaModalVisible, setCaptchaModalVisible] = useState(false);
-  const [buttonState, setButtonState] = useState<ButtonState>(null);
   const passwordRef = useRef<TextInput>(null);
   const captchaRef = useRef<CaptchaRef>(null);
   const {onLoginSuccess} = route.params || {};
@@ -92,10 +91,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
 
     if (loginStatus === 'failed') {
       captchaRef.current?.reset();
-      setButtonState('failed');
 
       const done = () => {
-        setButtonState(null);
         dispatch(BitPayIdActions.updateLoginStatus(null));
       };
 
@@ -120,13 +117,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
     }
 
     if (loginStatus === 'twoFactorPending') {
-      setButtonState(null);
       navigation.navigate('TwoFactorAuthentication');
       return;
     }
 
     if (loginStatus === 'emailAuthenticationPending') {
-      setButtonState(null);
       navigation.navigate('EmailAuthentication');
       return;
     }
@@ -135,7 +130,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   const onSubmit = handleSubmit(({email, password}) => {
     Keyboard.dismiss();
     if (session.captchaDisabled) {
-      setButtonState('loading');
       dispatch(BitPayIdEffects.startLogin({email, password}));
     } else {
       setCaptchaModalVisible(true);
@@ -149,7 +143,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   const onCaptchaResponse = async (gCaptchaResponse: string) => {
     const {email, password} = getValues();
     setCaptchaModalVisible(false);
-    setButtonState('loading');
     await sleep(500);
     dispatch(BitPayIdEffects.startLogin({email, password, gCaptchaResponse}));
   };
@@ -207,9 +200,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
 
         <AuthActionsContainer>
           <AuthActionRow>
-            <Button onPress={onSubmit} state={buttonState}>
-              Log In
-            </Button>
+            <Button onPress={onSubmit}>Log In</Button>
           </AuthActionRow>
 
           <AuthActionRow>

@@ -4,7 +4,7 @@ import React, {useEffect, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useDispatch, useSelector} from 'react-redux';
 import * as yup from 'yup';
-import Button, {ButtonState} from '../../../components/button/Button';
+import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import {RootState} from '../../../store';
 import {AppActions} from '../../../store/app';
@@ -43,7 +43,6 @@ const TwoFactorAuthentication: React.FC<
   const twoFactorAuthError = useSelector<RootState, string>(
     ({BITPAY_ID}) => BITPAY_ID.twoFactorAuthError || '',
   );
-  const [buttonState, setButtonState] = useState<ButtonState>(null);
   const {
     control,
     formState: {errors, isValid},
@@ -72,11 +71,9 @@ const TwoFactorAuthentication: React.FC<
 
       case 'failed':
         const done = () => {
-          setButtonState(null);
           dispatch(BitPayIdActions.updateTwoFactorAuthStatus(null));
         };
 
-        setButtonState('failed');
         dispatch(
           AppActions.showBottomNotificationModal({
             type: 'error',
@@ -108,7 +105,6 @@ const TwoFactorAuthentication: React.FC<
       return;
     }
 
-    setButtonState('loading');
     dispatch(BitPayIdEffects.startTwoFactorAuth(code));
   });
 
@@ -139,7 +135,7 @@ const TwoFactorAuthentication: React.FC<
       </AuthRowContainer>
 
       <AuthActionsContainer>
-        <Button onPress={onSubmit} disabled={!isValid} state={buttonState}>
+        <Button onPress={onSubmit} disabled={!isValid}>
           Submit
         </Button>
       </AuthActionsContainer>

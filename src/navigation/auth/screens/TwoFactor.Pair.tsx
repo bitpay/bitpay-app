@@ -4,7 +4,7 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useDispatch, useSelector} from 'react-redux';
 import * as yup from 'yup';
-import Button, {ButtonState} from '../../../components/button/Button';
+import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import {navigationRef, RootStacks} from '../../../Root';
 import {RootState} from '../../../store';
@@ -56,7 +56,6 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
   const twoFactorPairingError = useSelector<RootState, string>(
     ({BITPAY_ID}) => BITPAY_ID.twoFactorPairingError || '',
   );
-  const [buttonState, setButtonState] = useState<ButtonState>(null);
   const {
     control,
     formState: {errors, isValid},
@@ -93,7 +92,6 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
 
       case 'failed':
         const done = () => {
-          setButtonState(null);
           dispatch(BitPayIdActions.updateTwoFactorPairStatus(null));
         };
 
@@ -127,7 +125,6 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
       return;
     }
 
-    setButtonState('loading');
     dispatch(BitPayIdEffects.startTwoFactorPairing(code));
   });
 
@@ -161,7 +158,7 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
       </AuthRowContainer>
 
       <AuthActionsContainer>
-        <Button onPress={onSubmit} disabled={!isValid} state={buttonState}>
+        <Button onPress={onSubmit} disabled={!isValid}>
           Submit
         </Button>
       </AuthActionsContainer>
