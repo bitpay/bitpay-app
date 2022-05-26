@@ -26,13 +26,9 @@ import {CardProvider} from '../../../constants/card';
 import {CARD_WIDTH} from '../../../constants/config.card';
 import {navigationRef} from '../../../Root';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {selectBrazeCardOffers} from '../../../store/app/app.selectors';
 import {CardEffects} from '../../../store/card';
-import {
-  Card,
-  TopUp,
-  Transaction,
-  UiTransaction,
-} from '../../../store/card/card.models';
+import {Card, UiTransaction} from '../../../store/card/card.models';
 import {
   selectCardGroups,
   selectDashboardTransactions,
@@ -55,6 +51,7 @@ import {
   TransactionListHeaderIcon,
   TransactionListHeaderTitle,
 } from './CardDashboard.styled';
+import CardOffers from './CardOffers';
 import CardOverviewSlide from './CardOverviewSlide';
 import ShippingStatus from './CardShippingStatus';
 import TransactionRow from './CardTransactionRow';
@@ -90,6 +87,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   );
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const network = useAppSelector(({APP}) => APP.network);
+  const brazeCardOffers = useAppSelector(selectBrazeCardOffers);
 
   const getLengthOfWalletsWithBalance = useMemo(
     () =>
@@ -322,6 +320,27 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     });
   }, []);
 
+  const additionalContent: {key: string; content: JSX.Element}[] = [];
+
+  if (unactivatedCard) {
+    additionalContent.push({
+      key: 'shipping-status',
+      content: (
+        <ShippingStatus
+          card={unactivatedCard}
+          onActivatePress={onActivatePress}
+        />
+      ),
+    });
+  }
+
+  if (brazeCardOffers.length) {
+    additionalContent.push({
+      key: 'card-offers',
+      content: <CardOffers contentCard={brazeCardOffers[0]} />,
+    });
+  }
+
   return (
     <>
       <FlatList
@@ -356,13 +375,10 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
               }}
             />
 
-            {unactivatedCard ? (
-              <CardsRowContainer>
-                <ShippingStatus
-                  card={unactivatedCard}
-                  onActivatePress={onActivatePress}
-                />
-              </CardsRowContainer>
+            {additionalContent.length ? (
+              additionalContent.map(({key, content}) => (
+                <CardsRowContainer key={key}>{content}</CardsRowContainer>
+              ))
             ) : (
               <BelowCarouselSpacer />
             )}
