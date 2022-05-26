@@ -21,6 +21,9 @@ import {LogActions} from '../../../../store/log';
 import {
   deleteKey,
   failedImport,
+  setCustomizeNonce,
+  setEnableReplaceByFee,
+  setUseUnconfirmedFunds,
   setWalletTermsAccepted,
   successImport,
   updateCacheFeeLevel,
@@ -31,9 +34,9 @@ import RNFS from 'react-native-fs';
 import {
   biometricLockActive,
   currentPin,
-  pinBannedUntil,
   pinLockActive,
   setColorScheme,
+  setDefaultAltCurrency,
   setHomeCarouselConfig,
   setIntroCompleted,
   setKeyMigrationFailure,
@@ -124,8 +127,6 @@ export const startMigration =
           await RNFS.readFile(cordovaStoragePath + 'config', 'utf8'),
         );
 
-        console.log(config);
-
         const {
           // TODO - handle Notifications;
           confirmedTxsNotifications,
@@ -136,7 +137,8 @@ export const startMigration =
           feeLevels,
           theme,
           lock,
-        } = config;
+          wallet,
+        } = config || {};
 
         // lock
         if (lock) {
@@ -149,25 +151,45 @@ export const startMigration =
           }
         }
 
-        // theme
-        dispatch(
-          setColorScheme(
-            theme.system ? null : theme.name === 'light' ? 'light' : 'dark',
-          ),
-        );
-
+        // settings
+        if (wallet) {
+          const {
+            showCustomizeNonce,
+            showEnableRBF,
+            spendUnconfirmed,
+            settings: {alternativeIsoCode: isoCode, alternativeName: name},
+          } = wallet;
+          dispatch(setDefaultAltCurrency({isoCode, name}));
+          dispatch(setCustomizeNonce(showCustomizeNonce));
+          dispatch(setUseUnconfirmedFunds(spendUnconfirmed));
+          dispatch(setEnableReplaceByFee(showEnableRBF));
+        }
         // portfolio balance hide/show
-        dispatch(showPortfolioValue(totalBalance));
+        if (totalBalance) {
+          dispatch(showPortfolioValue(totalBalance.show));
+        }
 
         // fee level policy
-        Object.keys(feeLevels).forEach(currency => {
+        if (feeLevels) {
+          Object.keys(feeLevels).forEach(currency => {
+            dispatch(
+              updateCacheFeeLevel({
+                currency: currency as 'btc' | 'eth',
+                feeLevel: feeLevels[currency],
+              }),
+            );
+          });
+        }
+
+        // theme
+        if (theme) {
           dispatch(
-            updateCacheFeeLevel({
-              currency: currency as 'btc' | 'eth',
-              feeLevel: feeLevels[currency],
-            }),
+            setColorScheme(
+              theme.system ? null : theme.name === 'light' ? 'light' : 'dark',
+            ),
           );
-        });
+        }
+
         dispatch(LogActions.info('Successfully migrated config settings'));
       } catch (err) {
         dispatch(LogActions.info('Failed to migrate config settings'));

@@ -39,23 +39,14 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     await dispatch(startWalletStoreInit());
 
     if (!getState().APP.migrationComplete) {
-      try {
-        await dispatch(startMigration());
-      } catch (err) {
-        console.log(err);
-      }
+      await dispatch(startMigration());
       dispatch(setMigrationComplete());
     }
 
     const {BITPAY_ID} = getState();
-    const {
-      network,
-      pinLockActive,
-      biometricLockActive,
-      currentPin,
-      colorScheme,
-    } = getState().APP;
-    console.log(currentPin, pinLockActive);
+    const {network, pinLockActive, biometricLockActive, colorScheme} =
+      getState().APP;
+
     dispatch(LogActions.debug(`Network: ${network}`));
     dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
 
