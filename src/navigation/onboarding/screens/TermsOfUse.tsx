@@ -37,6 +37,7 @@ const StatementText = styled(Paragraph)`
 const StatementTextUnderline = styled(Paragraph)`
   color: ${({theme}) => theme.colors.text};
   text-decoration: underline;
+  text-decoration-color: ${({theme}) => theme.colors.text};
 `;
 
 const StatementTextBold = styled(Paragraph)`
