@@ -110,7 +110,6 @@ const WalletRow = ({wallet, onPress}: Props) => {
         <ListItemSubText>
           {currencyAbbreviation.toUpperCase()} {multisig ? multisig : null}
         </ListItemSubText>
-        <ListItemSubText>{currencyAbbreviation.toUpperCase()}</ListItemSubText>
       </CurrencyColumn>
       <BalanceColumn>
         {!hideBalance ? (
