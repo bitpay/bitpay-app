@@ -31,11 +31,9 @@ const Notifications = () => {
       onPress: () => {
         const accepted = !p.notificationsAccepted;
         dispatch(AppEffects.setNotifications(accepted));
-        if (!accepted) {
-          dispatch(AppEffects.setConfirmTxNotifications(false));
-          dispatch(AppEffects.setProductsUpdatesNotifications(false));
-          dispatch(AppEffects.setOffersAndPromotionsNotifications(false));
-        }
+        dispatch(AppEffects.setConfirmTxNotifications(accepted));
+        dispatch(AppEffects.setProductsUpdatesNotifications(accepted));
+        dispatch(AppEffects.setOffersAndPromotionsNotifications(accepted));
       },
     },
     {
