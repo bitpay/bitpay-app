@@ -29,6 +29,10 @@ import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 import {Platform} from 'react-native';
 import RNFS from 'react-native-fs';
 import {
+  biometricLockActive,
+  currentPin,
+  pinBannedUntil,
+  pinLockActive,
   setColorScheme,
   setHomeCarouselConfig,
   setIntroCompleted,
@@ -54,6 +58,7 @@ import {
   CoinbaseTokenProps,
 } from '../../../../api/coinbase/coinbase.types';
 import {coinbaseUpdateExchangeRate} from '../../../coinbase/coinbase.effects';
+import {hashPin} from '../../../../components/modal/pin/PinModal';
 
 const BWC = BwcProvider.getInstance();
 
@@ -119,6 +124,8 @@ export const startMigration =
           await RNFS.readFile(cordovaStoragePath + 'config', 'utf8'),
         );
 
+        console.log(config);
+
         const {
           // TODO - handle Notifications;
           confirmedTxsNotifications,
@@ -128,7 +135,19 @@ export const startMigration =
           totalBalance,
           feeLevels,
           theme,
+          lock,
         } = config;
+
+        // lock
+        if (lock) {
+          const {method, value} = lock;
+          if (method === 'pin') {
+            dispatch(currentPin(hashPin(value.split(''))));
+            dispatch(pinLockActive(true));
+          } else if (method === 'fingerprint') {
+            dispatch(biometricLockActive(true));
+          }
+        }
 
         // theme
         dispatch(
