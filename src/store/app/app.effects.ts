@@ -36,8 +36,13 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(LogActions.clear());
 
     const {APP, BITPAY_ID, WALLET} = getState();
-    const {network, pinLockActive, biometricLockActive, homeCarouselConfig} =
-      APP;
+    const {
+      network,
+      pinLockActive,
+      biometricLockActive,
+      homeCarouselConfig,
+      onboardingCompleted,
+    } = APP;
 
     dispatch(LogActions.info('Initializing app...'));
     dispatch(LogActions.debug(`Network: ${network}`));
@@ -102,6 +107,11 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     // Update Coinbase
     dispatch(coinbaseInitialize());
+
+    // Reinitialize Tracking Permission
+    if (onboardingCompleted) {
+      dispatch(askForTrackingPermissionAndEnableSdks());
+    }
 
     // set home carousel config if not already set
     if (!homeCarouselConfig.length) {
