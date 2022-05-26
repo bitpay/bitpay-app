@@ -39,6 +39,7 @@ import {batch} from 'react-redux';
 import i18n from 'i18next';
 import {WalletActions} from '../wallet';
 import {coinbaseInitialize} from '../coinbase';
+import {Key} from '../wallet/wallet.models';
 
 // Subscription groups (Braze)
 const CONFIRMED_TX_GROUP_ID = 'dff24ef2-1896-4dee-81fd-7dca9c9c7a8a';
@@ -116,9 +117,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     // Update Coinbase
     dispatch(coinbaseInitialize());
-
-    // Subscribe Pursh Notifications if enabled
-    dispatch(initializeNotifications());
 
     // set home carousel config if not already set
     if (!homeCarouselConfig.length) {
@@ -213,6 +211,7 @@ export const initializeBrazeContent =
       if (user) {
         ReactAppboy.changeUser(user.eid);
         ReactAppboy.setEmail(user.email);
+        dispatch(setBrazeEid(user.eid));
       } else {
         const eid = APP.brazeEid || uuid.v4().toString();
         ReactAppboy.changeUser(eid);
@@ -381,40 +380,97 @@ export const askForTrackingPermissionAndEnableSdks =
     });
   };
 
-/**
-- * Initialize push notifications if enabled.
-- * @returns void
-- */
-export const initializeNotifications =
-  (): Effect => async (dispatch, getState) => {
+const getAllWalletClients = (keys: {
+  [key in string]: Key;
+}): Promise<any[]> => {
+  return new Promise(async (resolve, reject) => {
+    const walletClients: any[] = [];
     try {
-      dispatch(LogActions.info('Initializing Push Notifications...'));
-      const {APP} = getState();
-      setNotifications(APP.notificationsAccepted);
-      setConfirmTxNotifications(APP.confirmedTxAccepted);
-      setProductsUpdatesNotifications(APP.productsUpdatesAccepted);
-      setOffersAndPromotionsNotifications(APP.offersAndPromotionsAccepted);
-    } catch (err) {
-      const errMsg = 'Failed to initialize push notifications.';
-
-      dispatch(LogActions.error(errMsg));
-      dispatch(
-        LogActions.error(
-          err instanceof Error ? err.message : JSON.stringify(err),
-        ),
+      await Promise.all(
+        Object.values(keys).map(key => {
+          key.wallets
+            .filter(
+              wallet =>
+                !wallet.credentials.token && wallet.credentials.isComplete(),
+            )
+            .forEach(walletClient => {
+              walletClients.push(walletClient);
+            });
+        }),
       );
-    } finally {
-      dispatch(LogActions.info('Initializing Push Notifications complete.'));
+      resolve(walletClients);
+    } catch (err) {
+      reject(err);
     }
+  });
+};
+
+const subscribePushNotifications = (walletClient: any, eid: string) => {
+  const opts = {
+    //token: this._token, // TODO: token optional
+    external_user_id: eid, // todo add external user id
+    platform: null, // TODO: add platform
+    packageName: 'BitPayApp',
+    walletId: walletClient.credentials.walletId,
   };
+  console.log(
+    '[app.effects.ts:444] SUBSCRIBED PUSH NOTIFICATIONS',
+    walletClient.credentials.walletName,
+    opts,
+  ); /* TODO */
+  /*
+   * TODO: uncomment after deploy BWS
+  walletClient.pushNotificationsSubscribe(opts, (err: any) => {
+    if (err) {
+      console.log('[app.effects.ts:449] ERROR', err)
+    } else {
+      console.log('[app.effects.ts:449] SUCCESS', walletClient.credentials.walletName);
+    }
+  });
+  */
+};
+
+const unSubscribePushNotifications = (walletClient: any, eid: string) => {
+  console.log(
+    '[app.effects.ts:464] UNSUBSCRIBED PUSH NOTIFICATIONS',
+    walletClient.credentials.walletName,
+    eid,
+  ); /* TODO */
+  /*
+   * TODO: uncomment after deploy BWS
+  walletClient.pushNotificationsUnsubscribe(eid, (err: any) => {
+    if (err) {
+      console.log('[app.effects.ts:449] ERROR', err)
+    } else {
+      console.log('[app.effects.ts:449] SUCCESS', walletClient.credentials.walletName);
+    }
+  });
+  */
+};
 
 export const setNotifications =
   (accepted: boolean): Effect =>
-  async dispatch => {
+  async (dispatch, getState) => {
     dispatch(setNotificationsAccepted(accepted));
     const value = accepted ? 'subscribed' : 'unsubscribed';
     ReactAppboy.setPushNotificationSubscriptionType(value);
-    dispatch(LogActions.info('Push Notifications: ' + value));
+    const {
+      WALLET: {keys},
+      APP,
+    } = getState();
+
+    getAllWalletClients(keys).then(walletClients => {
+      if (accepted) {
+        walletClients.forEach(walletClient => {
+          subscribePushNotifications(walletClient, APP.brazeEid!);
+        });
+      } else {
+        walletClients.forEach(walletClient => {
+          unSubscribePushNotifications(walletClient, APP.brazeEid!);
+        });
+      }
+      dispatch(LogActions.info('Push Notifications: ' + value));
+    });
   };
 
 export const setConfirmTxNotifications =
