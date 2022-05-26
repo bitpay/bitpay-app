@@ -76,14 +76,12 @@ export const startMigration =
   (): Effect =>
   async (dispatch): Promise<void> => {
     return new Promise(async (resolve, reject) => {
-      // migration
+      const cordovaStoragePath =
+        Platform.OS === 'ios'
+          ? RNFS.LibraryDirectoryPath + '/NoCloud/'
+          : RNFS.DocumentDirectoryPath;
+      // keys and wallets
       try {
-        const cordovaStoragePath =
-          Platform.OS === 'ios'
-            ? RNFS.LibraryDirectoryPath + '/NoCloud/'
-            : RNFS.DocumentDirectoryPath;
-
-        // keys and wallets
         const profile = JSON.parse(
           await RNFS.readFile(cordovaStoragePath + 'profile', 'utf8'),
         ) as {credentials: Wallet[]};
@@ -108,85 +106,84 @@ export const startMigration =
         // update store with token rates from coin gecko and update balances
         await dispatch(startGetRates({force: true}));
         await dispatch(startUpdateAllKeyAndWalletStatus());
-
-        // address book
-        try {
-          dispatch(LogActions.info('Migrating address book'));
-          const addressBook = JSON.parse(
-            await RNFS.readFile(
-              cordovaStoragePath + 'addressbook-v2-livenet',
-              'utf8',
-            ),
-          ) as {[key in string]: ContactRowProps};
-          Object.values(addressBook).forEach((contact: ContactRowProps) => {
-            dispatch(createContact(contact));
-          });
-          dispatch(LogActions.info('Successfully migrated address book'));
-        } catch (err) {
-          dispatch(LogActions.info('Failed to migrate address book'));
-        }
-
-        // app identity
-        try {
-          dispatch(LogActions.info('Migrating app identity'));
-          const identity = JSON.parse(
-            await RNFS.readFile(
-              cordovaStoragePath + 'appIdentity-livenet',
-              'utf8',
-            ),
-          ) as AppIdentity;
-          dispatch(LogActions.info('Successfully migrated app identity'));
-          dispatch(successGenerateAppIdentity(Network.mainnet, identity));
-        } catch (err) {
-          dispatch(LogActions.info('Failed to migrate app identity'));
-        }
-
-        // bitpay id
-        try {
-          dispatch(LogActions.info('Migrating bitpay id'));
-          const token = await RNFS.readFile(
-            cordovaStoragePath + 'bitpayIdToken-livenet',
-            'utf8',
-          );
-          dispatch(LogActions.info('Successfully migrated bitpay id'));
-          await dispatch(successPairingBitPayId(Network.mainnet, token));
-        } catch (err) {
-          dispatch(LogActions.info('Failed to migrate bitpay id'));
-        }
-
-        // coinbase
-        try {
-          dispatch(LogActions.info('Migrating Coinbase tokens'));
-          const account = JSON.parse(
-            await RNFS.readFile(
-              cordovaStoragePath + 'coinbase-production',
-              'utf8',
-            ),
-          ) as {token: CoinbaseTokenProps};
-          dispatch(
-            accessTokenSuccess(CoinbaseEnvironment.production, account.token),
-          );
-          await dispatch(coinbaseGetUser());
-          await dispatch(coinbaseUpdateExchangeRate());
-          await dispatch(coinbaseGetAccountsAndBalance());
-          dispatch(
-            setHomeCarouselConfig({id: 'coinbaseBalanceCard', show: true}),
-          );
-          dispatch(LogActions.info('Successfully migrated Coinbase account'));
-        } catch (err) {
-          console.log(err);
-          dispatch(LogActions.info('Failed to migrate Coinbase account'));
-        }
-
-        dispatch(setOnboardingCompleted());
-        dispatch(setWalletTermsAccepted());
-
-        resolve();
       } catch (err) {
         console.log(err);
         // todo - error modal your keys are not lost call bitpay
-        reject(err);
       }
+
+      // address book
+      try {
+        dispatch(LogActions.info('Migrating address book'));
+        const addressBook = JSON.parse(
+          await RNFS.readFile(
+            cordovaStoragePath + 'addressbook-v2-livenet',
+            'utf8',
+          ),
+        ) as {[key in string]: ContactRowProps};
+        Object.values(addressBook).forEach((contact: ContactRowProps) => {
+          dispatch(createContact(contact));
+        });
+        dispatch(LogActions.info('Successfully migrated address book'));
+      } catch (err) {
+        dispatch(LogActions.info('Failed to migrate address book'));
+      }
+
+      // app identity
+      try {
+        dispatch(LogActions.info('Migrating app identity'));
+        const identity = JSON.parse(
+          await RNFS.readFile(
+            cordovaStoragePath + 'appIdentity-livenet',
+            'utf8',
+          ),
+        ) as AppIdentity;
+        dispatch(LogActions.info('Successfully migrated app identity'));
+        dispatch(successGenerateAppIdentity(Network.mainnet, identity));
+      } catch (err) {
+        dispatch(LogActions.info('Failed to migrate app identity'));
+      }
+
+      // bitpay id
+      try {
+        dispatch(LogActions.info('Migrating bitpay id'));
+        const token = await RNFS.readFile(
+          cordovaStoragePath + 'bitpayIdToken-livenet',
+          'utf8',
+        );
+        dispatch(LogActions.info('Successfully migrated bitpay id'));
+        await dispatch(successPairingBitPayId(Network.mainnet, token));
+      } catch (err) {
+        dispatch(LogActions.info('Failed to migrate bitpay id'));
+      }
+
+      // coinbase
+      try {
+        dispatch(LogActions.info('Migrating Coinbase tokens'));
+        const account = JSON.parse(
+          await RNFS.readFile(
+            cordovaStoragePath + 'coinbase-production',
+            'utf8',
+          ),
+        ) as {token: CoinbaseTokenProps};
+        dispatch(
+          accessTokenSuccess(CoinbaseEnvironment.production, account.token),
+        );
+        await dispatch(coinbaseGetUser());
+        await dispatch(coinbaseUpdateExchangeRate());
+        await dispatch(coinbaseGetAccountsAndBalance());
+        dispatch(
+          setHomeCarouselConfig({id: 'coinbaseBalanceCard', show: true}),
+        );
+        dispatch(LogActions.info('Successfully migrated Coinbase account'));
+      } catch (err) {
+        console.log(err);
+        dispatch(LogActions.info('Failed to migrate Coinbase account'));
+      }
+
+      dispatch(setOnboardingCompleted());
+      dispatch(setWalletTermsAccepted());
+
+      resolve();
     });
   };
 
