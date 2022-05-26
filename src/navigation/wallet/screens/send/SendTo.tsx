@@ -321,6 +321,7 @@ const SendTo = () => {
         walletId,
         keyId,
         address,
+        currency: credentials.coin,
       };
 
       dispatch(
