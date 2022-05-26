@@ -276,6 +276,7 @@ const CoinbaseAccount = ({
           exchangeRates,
         );
         setFiatAmount(fa);
+        console.log(fa);
         setCryptoAmount(account.balance.amount.toString());
       } else {
         setFiatAmount(0);
@@ -285,6 +286,7 @@ const CoinbaseAccount = ({
 
     if (transactions && transactions[accountId]) {
       const tx = transactions[accountId].data;
+      console.log(tx);
       setTxs(tx);
     }
 
@@ -421,10 +423,9 @@ const CoinbaseAccount = ({
             {fiatAmount
               ? formatFiatAmount(
                   fiatAmount,
-                  user?.data.native_currency.toLowerCase() || 'usd',
+                  user?.data?.native_currency?.toUpperCase(),
                 )
-              : '0'}{' '}
-            {user?.data.native_currency}
+              : '0'}
           </H5>
           {account?.primary && <Type>Primary</Type>}
         </Row>

@@ -68,10 +68,14 @@ const CoinbaseBalanceCard: React.FC<CoinbaseCardComponentProps> = ({
   };
   const balance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
+  const user = useAppSelector(({COINBASE}) => COINBASE.user[COINBASE_ENV]);
 
   const body = {
     title: 'Coinbase',
-    value: formatFiatAmount(balance, 'USD'),
+    value: formatFiatAmount(
+      balance,
+      user?.data?.native_currency?.toUpperCase(),
+    ),
   };
 
   if (layout === 'listView') {
