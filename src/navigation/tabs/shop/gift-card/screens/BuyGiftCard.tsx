@@ -83,7 +83,7 @@ const DescriptionBox = styled.View`
   width: ${WIDTH}px;
   background-color: ${({theme}) =>
     theme.dark ? theme.colors.background : 'transparent'};
-  padding: 20px ${horizontalPadding}px 110px;
+  padding: 20px ${horizontalPadding}px 100px;
 `;
 
 const FooterButton = styled(CtaContainerAbsolute)`
