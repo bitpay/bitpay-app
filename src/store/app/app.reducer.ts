@@ -78,6 +78,7 @@ export interface AppState {
   settingsListConfig: SettingsListType[];
   altCurrencyList: Array<AltCurrenciesRowProps>;
   defaultAltCurrency: AltCurrenciesRowProps;
+  migrationComplete: boolean;
 }
 
 const initialState: AppState = {
@@ -125,6 +126,7 @@ const initialState: AppState = {
   settingsListConfig: [],
   altCurrencyList: [],
   defaultAltCurrency: {isoCode: 'USD', name: 'US Dollar'},
+  migrationComplete: false,
 };
 
 export const appReducer = (
@@ -380,6 +382,12 @@ export const appReducer = (
       return {
         ...state,
         defaultAltCurrency: action.defaultAltCurrency,
+      };
+
+    case AppActionTypes.SET_MIGRATION_COMPLETE:
+      return {
+        ...state,
+        migrationComplete: true,
       };
 
     default:

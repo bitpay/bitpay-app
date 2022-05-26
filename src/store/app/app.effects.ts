@@ -16,7 +16,7 @@ import {CardEffects} from '../card';
 import {LocationEffects} from '../location';
 import {RootState, Effect} from '../index';
 import {LogActions} from '../log';
-import {startWalletStoreInit} from '../wallet/effects';
+import {startMigration, startWalletStoreInit} from '../wallet/effects';
 import {AppActions} from './';
 import {AppIdentity} from './app.models';
 import RNBootSplash from 'react-native-bootsplash';
@@ -25,7 +25,11 @@ import {SEGMENT_API_KEY, APPSFLYER_API_KEY, APP_ID} from '@env';
 import appsFlyer from 'react-native-appsflyer';
 import {requestTrackingPermission} from 'react-native-tracking-transparency';
 import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
-import {setHomeCarouselConfig, showBlur} from './app.actions';
+import {
+  setHomeCarouselConfig,
+  setMigrationComplete,
+  showBlur,
+} from './app.actions';
 import {batch} from 'react-redux';
 import i18n from 'i18next';
 import {WalletActions} from '../wallet';
@@ -35,7 +39,18 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     dispatch(LogActions.clear());
 
-    const {APP, BITPAY_ID, WALLET} = getState();
+    const {APP} = getState();
+
+    if (!APP.migrationComplete) {
+      try {
+        await dispatch(startMigration());
+      } catch (err) {
+        console.log(err);
+      }
+      dispatch(setMigrationComplete());
+    }
+
+    const {BITPAY_ID, WALLET} = getState();
     const {network, pinLockActive, biometricLockActive, homeCarouselConfig} =
       APP;
 

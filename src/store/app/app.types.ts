@@ -53,6 +53,7 @@ export enum AppActionTypes {
   UPDATE_SETTINGS_LIST_CONFIG = 'APP/UPDATE_SETTINGS_LIST_CONFIG',
   ADD_ALT_CURRENCIES_LIST = 'APP/ADD_ALT_CURRENCIES_LIST',
   SET_DEFAULT_ALT_CURRENCY = 'APP/SET_DEFAULT_ALT_CURRENCY',
+  SET_MIGRATION_COMPLETE = 'APP/SET_MIGRATION_COMPLETE',
 }
 
 interface NetworkChanged {
@@ -231,6 +232,10 @@ interface SetDefaultAltCurrency {
   defaultAltCurrency: AltCurrenciesRowProps;
 }
 
+interface SetMigrationComplete {
+  type: typeof AppActionTypes.SET_MIGRATION_COMPLETE;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
@@ -269,4 +274,5 @@ export type AppActionType =
   | SetHomeCarouselLayoutType
   | updateSettingsListConfigType
   | AddAltCurrencyList
+  | SetMigrationComplete
   | SetDefaultAltCurrency;

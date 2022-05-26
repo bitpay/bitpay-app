@@ -1,9 +1,16 @@
-import {Key, KeyMethods, KeyOptions, Wallet} from '../../wallet.models';
+import {
+  Key,
+  KeyMethods,
+  KeyOptions,
+  KeyProperties,
+  Wallet,
+} from '../../wallet.models';
 import {Effect} from '../../../index';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
 import {
   buildKeyObj,
+  buildMigrationKeyObj,
   buildWalletObj,
   findMatchedKeyAndUpdate,
   getMatchedKey,
@@ -11,8 +18,26 @@ import {
   isMatchedWallet,
 } from '../../utils/wallet';
 import {LogActions} from '../../../../store/log';
-import {deleteKey, failedImport, successImport} from '../../wallet.actions';
+import {
+  deleteKey,
+  failedImport,
+  setWalletTermsAccepted,
+  successImport,
+} from '../../wallet.actions';
 import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
+import {Platform} from 'react-native';
+import RNFS from 'react-native-fs';
+import {
+  setHomeCarouselConfig,
+  setIntroCompleted,
+  setOnboardingCompleted,
+  successGenerateAppIdentity,
+} from '../../../app/app.actions';
+import {createContact} from '../../../contact/contact.actions';
+import {ContactRowProps} from '../../../../components/list/ContactRow';
+import {Network} from '../../../../constants';
+import {successPairingBitPayId} from '../../../bitpay-id/bitpay-id.actions';
+import {AppIdentity} from '../../../app/app.models';
 
 const BWC = BwcProvider.getInstance();
 
@@ -30,6 +55,147 @@ export const normalizeMnemonic = (words?: string): string | undefined => {
 
   return wordList.join(isJA ? '\u3000' : ' ');
 };
+
+export const startMigration =
+  (): Effect =>
+  async (dispatch): Promise<void> => {
+    return new Promise(async (resolve, reject) => {
+      // migration
+      try {
+        const cordovaStoragePath =
+          Platform.OS === 'ios'
+            ? RNFS.LibraryDirectoryPath + '/NoCloud/'
+            : RNFS.DocumentDirectoryPath;
+
+        // keys and wallets
+        const profile = JSON.parse(
+          await RNFS.readFile(cordovaStoragePath + 'profile', 'utf8'),
+        ) as {credentials: Wallet[]};
+        const keys = JSON.parse(
+          await RNFS.readFile(cordovaStoragePath + 'keys', 'utf8'),
+        ) as KeyProperties[];
+
+        // no keys = new user -> skip intro and navigate to onboarding start
+        if (!keys.length) {
+          dispatch(setIntroCompleted());
+          return resolve();
+        }
+
+        for (const key of keys) {
+          const wallets = profile.credentials.filter(
+            credentials => credentials.keyId === key.id,
+          );
+          await dispatch(migrateKeyAndWallets({key, wallets}));
+          dispatch(setHomeCarouselConfig({id: key.id, show: true}));
+        }
+
+        // address book
+        try {
+          dispatch(LogActions.info('Migrating address book'));
+          const addressBook = JSON.parse(
+            await RNFS.readFile(
+              cordovaStoragePath + 'addressbook-v2-livenet',
+              'utf8',
+            ),
+          ) as {[key in string]: ContactRowProps};
+          Object.values(addressBook).forEach((contact: ContactRowProps) => {
+            dispatch(createContact(contact));
+          });
+          dispatch(LogActions.info('Successfully migrated address book'));
+        } catch (err) {
+          dispatch(LogActions.info('Failed to migrate address book'));
+        }
+
+        // app identity
+        try {
+          dispatch(LogActions.info('Migrating app identity'));
+          const identity = JSON.parse(
+            await RNFS.readFile(
+              cordovaStoragePath + 'appIdentity-livenet',
+              'utf8',
+            ),
+          ) as AppIdentity;
+          dispatch(LogActions.info('Successfully migrated app identity'));
+          dispatch(successGenerateAppIdentity(Network.mainnet, identity));
+        } catch (err) {
+          dispatch(LogActions.info('Failed to migrate app identity'));
+        }
+
+        // bitpay id
+        try {
+          dispatch(LogActions.info('Migrating bitpay id'));
+          const token = await RNFS.readFile(
+            cordovaStoragePath + 'bitpayIdToken-livenet',
+            'utf8',
+          );
+          dispatch(LogActions.info('Successfully migrated bitpay id'));
+          await dispatch(successPairingBitPayId(Network.mainnet, token));
+        } catch (err) {
+          dispatch(LogActions.info('Failed to migrate bitpay id'));
+        }
+
+        // TODO - GIFT CARD, COINBASE, MISC SETTINGS
+
+        dispatch(setOnboardingCompleted());
+        dispatch(setWalletTermsAccepted());
+
+        resolve();
+      } catch (err) {
+        reject(err);
+      }
+    });
+  };
+
+export const migrateKeyAndWallets =
+  (migrationData: {
+    key: KeyProperties;
+    wallets: any[];
+  }): Effect<Promise<void>> =>
+  async (dispatch, getState) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const state = getState();
+        const tokenOpts = {
+          ...BitpaySupportedTokenOpts,
+          ...state.WALLET.tokenOptions,
+          ...state.WALLET.customTokenOptions,
+        };
+        const keyObj = merge(migrationData.key, {
+          methods: BWC.createKey({
+            seedType: 'object',
+            seedData: migrationData.key,
+          }),
+        });
+
+        const wallets = [];
+        for (const wallet of migrationData.wallets) {
+          const walletObj = await BWC.getClient(JSON.stringify(wallet));
+          wallets.push(
+            merge(
+              walletObj,
+              dispatch(buildWalletObj(walletObj.credentials, tokenOpts)),
+            ),
+          );
+        }
+
+        const key = buildMigrationKeyObj({
+          key: keyObj,
+          wallets,
+          backupComplete: true,
+        });
+
+        dispatch(
+          successImport({
+            key,
+          }),
+        );
+        resolve();
+      } catch (e) {
+        dispatch(failedImport());
+        reject(e);
+      }
+    });
+  };
 
 export const startImportMnemonic =
   (

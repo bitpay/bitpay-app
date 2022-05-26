@@ -265,7 +265,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
     );
 
     return buildNestedWalletList(coins, tokens, defaultAltCurrency.isoCode);
-  }, [wallets, defaultAltCurrency.isoCode]);
+  }, [keys, wallets, defaultAltCurrency.isoCode]);
 
   const keyOptions: Array<Option> = [];
 
@@ -346,7 +346,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
         />
       );
     },
-    [navigation, key],
+    [navigation, keys],
   );
 
   return (

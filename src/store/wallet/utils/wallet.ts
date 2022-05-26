@@ -142,6 +142,32 @@ export const buildKeyObj = ({
   };
 };
 
+export const buildMigrationKeyObj = ({
+  key,
+  wallets,
+  totalBalance = 0,
+  totalBalanceLastDay = 0,
+  backupComplete = false,
+}: {
+  key: any;
+  wallets: Wallet[];
+  totalBalance?: number;
+  totalBalanceLastDay?: number;
+  backupComplete?: boolean;
+}): Key => {
+  return {
+    id: key.id,
+    wallets,
+    properties: key.methods.toObj(),
+    methods: key.methods,
+    totalBalance,
+    totalBalanceLastDay,
+    isPrivKeyEncrypted: key.methods.isPrivKeyEncrypted(),
+    backupComplete,
+    keyName: 'My Key',
+  };
+};
+
 export const formatCryptoAmount = (
   totalAmount: number,
   currencyAbbreviation: string,

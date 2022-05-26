@@ -215,3 +215,7 @@ export const setDefaultAltCurrency = (
   type: AppActionTypes.SET_DEFAULT_ALT_CURRENCY,
   defaultAltCurrency,
 });
+
+export const setMigrationComplete = (): AppActionType => ({
+  type: AppActionTypes.SET_MIGRATION_COMPLETE,
+});
