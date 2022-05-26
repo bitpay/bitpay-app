@@ -41,6 +41,19 @@ import {successPairingBitPayId} from '../../../bitpay-id/bitpay-id.actions';
 import {AppIdentity} from '../../../app/app.models';
 import {startUpdateAllKeyAndWalletStatus} from '../status/status';
 import {startGetRates} from '../rates/rates';
+import {
+  accessTokenSuccess,
+  coinbaseGetAccountsAndBalance,
+  coinbaseGetUser,
+  refreshTokenSuccess,
+} from '../../../coinbase';
+import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
+import {
+  CoinbaseEnvironment,
+  CoinbaseTokenProps,
+} from '../../../../api/coinbase/coinbase.types';
+import {coinbaseUpdateExchangeRate} from '../../../coinbase/coinbase.effects';
+import {sleep} from '../../../../utils/helper-methods';
 
 const BWC = BwcProvider.getInstance();
 
@@ -141,12 +154,37 @@ export const startMigration =
           dispatch(LogActions.info('Failed to migrate bitpay id'));
         }
 
-        // TODO - GIFT CARD, COINBASE, MISC SETTINGS
+        // coinbase
+        try {
+          dispatch(LogActions.info('Migrating Coinbase tokens'));
+          const account = JSON.parse(
+            await RNFS.readFile(
+              cordovaStoragePath + 'coinbase-production',
+              'utf8',
+            ),
+          ) as {token: CoinbaseTokenProps};
+          dispatch(
+            accessTokenSuccess(CoinbaseEnvironment.production, account.token),
+          );
+          await dispatch(coinbaseGetUser());
+          await dispatch(coinbaseUpdateExchangeRate());
+          await dispatch(coinbaseGetAccountsAndBalance());
+          dispatch(
+            setHomeCarouselConfig({id: 'coinbaseBalanceCard', show: true}),
+          );
+          dispatch(LogActions.info('Successfully migrated Coinbase account'));
+        } catch (err) {
+          console.log(err);
+          dispatch(LogActions.info('Failed to migrate Coinbase account'));
+        }
+
         dispatch(setOnboardingCompleted());
         dispatch(setWalletTermsAccepted());
 
         resolve();
       } catch (err) {
+        console.log(err);
+        // todo - error modal your keys are not lost call bitpay
         reject(err);
       }
     });

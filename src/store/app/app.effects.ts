@@ -25,11 +25,7 @@ import {SEGMENT_API_KEY, APPSFLYER_API_KEY, APP_ID} from '@env';
 import appsFlyer from 'react-native-appsflyer';
 import {requestTrackingPermission} from 'react-native-tracking-transparency';
 import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
-import {
-  setHomeCarouselConfig,
-  setMigrationComplete,
-  showBlur,
-} from './app.actions';
+import {setMigrationComplete, showBlur} from './app.actions';
 import {batch} from 'react-redux';
 import i18n from 'i18next';
 import {WalletActions} from '../wallet';
@@ -51,9 +47,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       dispatch(setMigrationComplete());
     }
 
-    const {BITPAY_ID, WALLET} = getState();
-    const {network, pinLockActive, biometricLockActive, homeCarouselConfig} =
-      APP;
+    const {BITPAY_ID} = getState();
+    const {network, pinLockActive, biometricLockActive} = APP;
 
     dispatch(LogActions.info('Initializing app...'));
     dispatch(LogActions.debug(`Network: ${network}`));
@@ -116,15 +111,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     // Update Coinbase
     dispatch(coinbaseInitialize());
-
-    // set home carousel config if not already set
-    if (!homeCarouselConfig.length) {
-      const keys = Object.values(WALLET.keys).map(key => ({
-        id: key.id,
-        show: true,
-      }));
-      dispatch(setHomeCarouselConfig([...keys]));
-    }
     dispatch(showBlur(pinLockActive || biometricLockActive));
     await sleep(500);
     dispatch(LogActions.info('Initialized app successfully.'));

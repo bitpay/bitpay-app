@@ -94,7 +94,7 @@ export const coinbaseInitialize =
     dispatch(coinbaseGetAccountsAndBalance());
   };
 
-const coinbaseUpdateExchangeRate =
+export const coinbaseUpdateExchangeRate =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
     const {COINBASE} = getState();
     const nativeCurrency: string =
