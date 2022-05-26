@@ -65,6 +65,11 @@ const CardsRowContainer = styled.View`
   padding: ${ScreenGutter};
 `;
 
+const CardOffersContainer = styled(TouchableOpacity)`
+  margin: -16px;
+  padding: 16px;
+`;
+
 const BelowCarouselSpacer = styled.View`
   height: 32px;
 `;
@@ -337,7 +342,15 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   if (brazeCardOffers.length) {
     additionalContent.push({
       key: 'card-offers',
-      content: <CardOffers contentCard={brazeCardOffers[0]} />,
+      content: (
+        <CardOffersContainer
+          activeOpacity={ActiveOpacity}
+          onPress={() => {
+            dispatch(CardEffects.startOpenDosh(user?.email || ''));
+          }}>
+          <CardOffers contentCard={brazeCardOffers[0]} />
+        </CardOffersContainer>
+      ),
     });
   }
 
