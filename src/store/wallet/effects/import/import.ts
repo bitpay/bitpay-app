@@ -32,6 +32,7 @@ import {
   setColorScheme,
   setHomeCarouselConfig,
   setIntroCompleted,
+  setKeyMigrationFailure,
   setOnboardingCompleted,
   showPortfolioValue,
   successGenerateAppIdentity,
@@ -106,8 +107,9 @@ export const startMigration =
         await dispatch(startGetRates({force: true}));
         await dispatch(startUpdateAllKeyAndWalletStatus());
       } catch (err) {
-        console.log(err);
-        // todo - error modal your keys are not lost call bitpay
+        dispatch(LogActions.info('Failed to migrate keys'));
+        // flag for showing error modal
+        dispatch(setKeyMigrationFailure());
       }
 
       // config

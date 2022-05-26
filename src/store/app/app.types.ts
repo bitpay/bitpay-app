@@ -54,6 +54,9 @@ export enum AppActionTypes {
   ADD_ALT_CURRENCIES_LIST = 'APP/ADD_ALT_CURRENCIES_LIST',
   SET_DEFAULT_ALT_CURRENCY = 'APP/SET_DEFAULT_ALT_CURRENCY',
   SET_MIGRATION_COMPLETE = 'APP/SET_MIGRATION_COMPLETE',
+  SET_KEY_MIGRATION_FAILURE = 'APP/SET_KEY_MIGRATION_FAILURE',
+  SET_SHOW_KEY_MIGRATION_FAILURE_MODAL = 'APP/SET_SHOW_KEY_MIGRATION_FAILURE_MODAL',
+  SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN = 'APP/SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN',
 }
 
 interface NetworkChanged {
@@ -236,6 +239,19 @@ interface SetMigrationComplete {
   type: typeof AppActionTypes.SET_MIGRATION_COMPLETE;
 }
 
+interface SetKeyMigrationFailure {
+  type: typeof AppActionTypes.SET_KEY_MIGRATION_FAILURE;
+}
+
+interface SetShowKeyMigrationFailureModal {
+  type: typeof AppActionTypes.SET_SHOW_KEY_MIGRATION_FAILURE_MODAL;
+  payload: boolean;
+}
+
+interface SetKeyMigrationFailureModalHasBeenShown {
+  type: typeof AppActionTypes.SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
@@ -275,4 +291,7 @@ export type AppActionType =
   | updateSettingsListConfigType
   | AddAltCurrencyList
   | SetMigrationComplete
+  | SetKeyMigrationFailure
+  | SetShowKeyMigrationFailureModal
+  | SetKeyMigrationFailureModalHasBeenShown
   | SetDefaultAltCurrency;

@@ -219,3 +219,18 @@ export const setDefaultAltCurrency = (
 export const setMigrationComplete = (): AppActionType => ({
   type: AppActionTypes.SET_MIGRATION_COMPLETE,
 });
+
+export const setKeyMigrationFailure = (): AppActionType => ({
+  type: AppActionTypes.SET_KEY_MIGRATION_FAILURE,
+});
+
+export const setShowKeyMigrationFailureModal = (
+  payload: boolean,
+): AppActionType => ({
+  type: AppActionTypes.SET_SHOW_KEY_MIGRATION_FAILURE_MODAL,
+  payload,
+});
+
+export const setKeyMigrationFailureModalHasBeenShown = (): AppActionType => ({
+  type: AppActionTypes.SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN,
+});

@@ -34,6 +34,7 @@ import {coinbaseInitialize} from '../coinbase';
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     dispatch(LogActions.clear());
+    dispatch(LogActions.info('Initializing app...'));
 
     const {APP} = getState();
     await dispatch(startWalletStoreInit());
@@ -49,8 +50,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     const {BITPAY_ID} = getState();
     const {network, pinLockActive, biometricLockActive} = APP;
-
-    dispatch(LogActions.info('Initializing app...'));
     dispatch(LogActions.debug(`Network: ${network}`));
     dispatch(LogActions.debug(`Theme: ${APP.colorScheme || 'system'}`));
 
