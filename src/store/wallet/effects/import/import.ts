@@ -38,6 +38,7 @@ import {ContactRowProps} from '../../../../components/list/ContactRow';
 import {Network} from '../../../../constants';
 import {successPairingBitPayId} from '../../../bitpay-id/bitpay-id.actions';
 import {AppIdentity} from '../../../app/app.models';
+import { startGetTokenOptions } from "../currencies/currencies";
 
 const BWC = BwcProvider.getInstance();
 
@@ -80,6 +81,8 @@ export const startMigration =
           dispatch(setIntroCompleted());
           return resolve();
         }
+
+        await dispatch(startGetTokenOptions());
 
         for (const key of keys) {
           const wallets = profile.credentials.filter(
@@ -167,7 +170,7 @@ export const migrateKeyAndWallets =
           }),
         });
 
-        const wallets = [];
+        let wallets = [];
         for (const wallet of migrationData.wallets) {
           const walletObj = await BWC.getClient(JSON.stringify(wallet));
           wallets.push(
@@ -176,6 +179,14 @@ export const migrateKeyAndWallets =
               dispatch(buildWalletObj(walletObj.credentials, tokenOpts)),
             ),
           );
+        }
+
+        const tokens: Wallet[] = wallets.filter(
+          (wallet: Wallet) => !!wallet.credentials.token,
+        );
+
+        if (tokens && !!tokens.length) {
+          wallets = linkTokenToWallet(tokens, wallets);
         }
 
         const key = buildMigrationKeyObj({
