@@ -1,3 +1,4 @@
+import {DOSH_WHITELIST} from '@env';
 import axios from 'axios';
 import BitPayIdApi from '../../api/bitpay';
 import FastImage from 'react-native-fast-image';
@@ -19,6 +20,16 @@ import {setHomeCarouselConfig} from '../app/app.actions';
 import {Card, DebitCardTopUpInvoiceParams} from './card.models';
 import {Invoice} from '../shop/shop.models';
 import {BASE_BITPAY_URLS} from '../../constants/config';
+
+const DoshWhitelist: string[] = [];
+
+if (DOSH_WHITELIST) {
+  try {
+    DoshWhitelist.push(...DOSH_WHITELIST.split(',').map(email => email.trim()));
+  } catch (e) {
+    console.log('Unable to parse DOSH_WHITELIST', e);
+  }
+}
 
 export interface StartActivateCardParams {
   cvv: string;
@@ -426,5 +437,40 @@ export const START_FETCH_REFERRED_USERS =
       }
     } catch (e) {
       dispatch(CardActions.updateFetchReferredUsersStatus(id, 'failed'));
+    }
+  };
+
+export const startOpenDosh =
+  (email: string): Effect<void> =>
+  async dispatch => {
+    const isDoshWhitelisted = !!email && DoshWhitelist.includes(email);
+
+    if (!isDoshWhitelisted) {
+      dispatch(
+        AppActions.showBottomNotificationModal({
+          type: 'warning',
+          title: 'Unavailable',
+          message: 'Cards Offers unavailable at this time',
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: 'OK',
+              action: () => {},
+              primary: true,
+            },
+          ],
+        }),
+      );
+
+      return;
+    }
+
+    try {
+      Dosh.present();
+    } catch (err) {
+      dispatch(
+        LogActions.error('Something went wrong trying to open Dosh Rewards'),
+      );
+      dispatch(LogActions.error(JSON.stringify(err)));
     }
   };

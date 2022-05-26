@@ -1,4 +1,3 @@
-import {DOSH_WHITELIST} from '@env';
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
@@ -8,11 +7,9 @@ import {Br, Hr} from '../../../components/styled/Containers';
 import {Link, Smallest} from '../../../components/styled/Text';
 import {URL} from '../../../constants';
 import {CardBrand, CardProvider} from '../../../constants/card';
-import Dosh from '../../../lib/dosh';
-import {AppActions, AppEffects} from '../../../store/app';
+import {AppEffects} from '../../../store/app';
 import {CardActions, CardEffects} from '../../../store/card';
 import {Card} from '../../../store/card/card.models';
-import {LogActions} from '../../../store/log';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import CustomizeCardIcon from '../assets/settings/icon-card.svg';
 import EditCardNameIcon from '../assets/settings/icon-cardname.svg';
@@ -53,16 +50,6 @@ const LINKS: {
   ],
 };
 
-const DoshWhitelist: string[] = [];
-
-if (DOSH_WHITELIST) {
-  try {
-    DoshWhitelist.push(...DOSH_WHITELIST.split(',').map(email => email.trim()));
-  } catch (e) {
-    console.log('Unable to parse DOSH_WHITELIST', e);
-  }
-}
-
 // TODO: update theme.colors.link if this is a universal change
 const CardSettingsTextLink = styled(Link)`
   color: ${({theme}) => (theme.dark ? '#4989ff' : theme.colors.link)};
@@ -94,8 +81,6 @@ const SettingsList: React.FC<SettingsListProps> = props => {
   };
 
   const links = LINKS[card.brand || CardBrand.Visa];
-
-  const isDoshWhitelisted = !!user && DoshWhitelist.includes(user.email);
 
   const onLockToggled = (locked: boolean) => {
     // set local lock state for immediate feedback, reset if request fails
@@ -187,36 +172,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
           <Styled.SettingsLink
             Icon={OffersIcon}
             onPress={async () => {
-              if (!isDoshWhitelisted) {
-                dispatch(
-                  AppActions.showBottomNotificationModal({
-                    type: 'warning',
-                    title: 'Unavailable',
-                    message: 'Cards Offers unavailable at this time',
-                    enableBackdropDismiss: true,
-                    actions: [
-                      {
-                        text: 'OK',
-                        action: () => {},
-                        primary: true,
-                      },
-                    ],
-                  }),
-                );
-
-                return;
-              }
-
-              try {
-                Dosh.present();
-              } catch (err) {
-                dispatch(
-                  LogActions.error(
-                    'Something went wrong trying to open Dosh Rewards',
-                  ),
-                );
-                dispatch(LogActions.error(JSON.stringify(err)));
-              }
+              dispatch(CardEffects.startOpenDosh(user?.email || ''));
             }}>
             Card Offers
           </Styled.SettingsLink>
