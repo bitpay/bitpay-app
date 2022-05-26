@@ -23,15 +23,17 @@ import {
   failedImport,
   setWalletTermsAccepted,
   successImport,
-  updatePortfolioBalance,
+  updateCacheFeeLevel,
 } from '../../wallet.actions';
 import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 import {Platform} from 'react-native';
 import RNFS from 'react-native-fs';
 import {
+  setColorScheme,
   setHomeCarouselConfig,
   setIntroCompleted,
   setOnboardingCompleted,
+  showPortfolioValue,
   successGenerateAppIdentity,
 } from '../../../app/app.actions';
 import {createContact} from '../../../contact/contact.actions';
@@ -45,15 +47,12 @@ import {
   accessTokenSuccess,
   coinbaseGetAccountsAndBalance,
   coinbaseGetUser,
-  refreshTokenSuccess,
 } from '../../../coinbase';
-import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {
   CoinbaseEnvironment,
   CoinbaseTokenProps,
 } from '../../../../api/coinbase/coinbase.types';
 import {coinbaseUpdateExchangeRate} from '../../../coinbase/coinbase.effects';
-import {sleep} from '../../../../utils/helper-methods';
 
 const BWC = BwcProvider.getInstance();
 
@@ -75,7 +74,7 @@ export const normalizeMnemonic = (words?: string): string | undefined => {
 export const startMigration =
   (): Effect =>
   async (dispatch): Promise<void> => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async resolve => {
       const cordovaStoragePath =
         Platform.OS === 'ios'
           ? RNFS.LibraryDirectoryPath + '/NoCloud/'
@@ -109,6 +108,48 @@ export const startMigration =
       } catch (err) {
         console.log(err);
         // todo - error modal your keys are not lost call bitpay
+      }
+
+      // config
+      try {
+        dispatch(LogActions.info('Migrating config settings'));
+        const config = JSON.parse(
+          await RNFS.readFile(cordovaStoragePath + 'config', 'utf8'),
+        );
+
+        const {
+          // TODO - handle Notifications;
+          confirmedTxsNotifications,
+          pushNotifications,
+          offersAndPromotions,
+          productsUpdates,
+          totalBalance,
+          feeLevels,
+          theme,
+        } = config;
+
+        // theme
+        dispatch(
+          setColorScheme(
+            theme.system ? null : theme.name === 'light' ? 'light' : 'dark',
+          ),
+        );
+
+        // portfolio balance hide/show
+        dispatch(showPortfolioValue(totalBalance));
+
+        // fee level policy
+        Object.keys(feeLevels).forEach(currency => {
+          dispatch(
+            updateCacheFeeLevel({
+              currency: currency as 'btc' | 'eth',
+              feeLevel: feeLevels[currency],
+            }),
+          );
+        });
+        dispatch(LogActions.info('Successfully migrated config settings'));
+      } catch (err) {
+        dispatch(LogActions.info('Failed to migrate config settings'));
       }
 
       // address book
@@ -176,7 +217,6 @@ export const startMigration =
         );
         dispatch(LogActions.info('Successfully migrated Coinbase account'));
       } catch (err) {
-        console.log(err);
         dispatch(LogActions.info('Failed to migrate Coinbase account'));
       }
 
