@@ -40,6 +40,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(LogActions.clear());
 
     const {APP} = getState();
+    await dispatch(startWalletStoreInit());
 
     if (!APP.migrationComplete) {
       try {
@@ -61,8 +62,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     const token = BITPAY_ID.apiToken[network];
     const isPaired = !!token;
     const identity = dispatch(initializeAppIdentity());
-
-    dispatch(startWalletStoreInit());
 
     await dispatch(initializeApi(APP.network, identity));
 

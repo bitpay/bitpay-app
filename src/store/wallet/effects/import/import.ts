@@ -23,6 +23,7 @@ import {
   failedImport,
   setWalletTermsAccepted,
   successImport,
+  updatePortfolioBalance,
 } from '../../wallet.actions';
 import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 import {Platform} from 'react-native';
@@ -38,7 +39,8 @@ import {ContactRowProps} from '../../../../components/list/ContactRow';
 import {Network} from '../../../../constants';
 import {successPairingBitPayId} from '../../../bitpay-id/bitpay-id.actions';
 import {AppIdentity} from '../../../app/app.models';
-import { startGetTokenOptions } from "../currencies/currencies";
+import {startUpdateAllKeyAndWalletStatus} from '../status/status';
+import {startGetRates} from '../rates/rates';
 
 const BWC = BwcProvider.getInstance();
 
@@ -82,8 +84,6 @@ export const startMigration =
           return resolve();
         }
 
-        await dispatch(startGetTokenOptions());
-
         for (const key of keys) {
           const wallets = profile.credentials.filter(
             credentials => credentials.keyId === key.id,
@@ -91,6 +91,10 @@ export const startMigration =
           await dispatch(migrateKeyAndWallets({key, wallets}));
           dispatch(setHomeCarouselConfig({id: key.id, show: true}));
         }
+
+        // update store with token rates from coin gecko and update balances
+        await dispatch(startGetRates({force: true}));
+        await dispatch(startUpdateAllKeyAndWalletStatus());
 
         // address book
         try {
@@ -138,7 +142,6 @@ export const startMigration =
         }
 
         // TODO - GIFT CARD, COINBASE, MISC SETTINGS
-
         dispatch(setOnboardingCompleted());
         dispatch(setWalletTermsAccepted());
 
