@@ -619,15 +619,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     if (!fullWalletObj) {
       return false;
     }
-    if (['xrp'].includes(fullWalletObj.currencyAbbreviation)) {
-      const minXrpBalance = 20000000; // 20 XRP * 1e6
-      return (
-        fullWalletObj.balance?.sat !=
-        fullWalletObj.balance?.satSpendable + minXrpBalance
-      );
-    } else {
-      return fullWalletObj.balance?.sat != fullWalletObj.balance?.satSpendable;
-    }
+    return fullWalletObj.balance?.sat != fullWalletObj.balance?.satSpendable;
   };
 
   const onPressTransaction = useMemo(

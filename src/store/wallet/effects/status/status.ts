@@ -475,6 +475,14 @@ const buildBalance =
       availableConfirmedAmount,
     } = status.balance;
 
+    let satTotalAmount = totalAmount;
+    let satLockedAmount = lockedAmount;
+
+    if (['xrp'].includes(currencyAbbreviation)) {
+      satLockedAmount = lockedAmount - lockedConfirmedAmount;
+      satTotalAmount = totalAmount - lockedConfirmedAmount;
+    }
+
     const spendableAmount = useUnconfirmedFunds
       ? totalAmount - lockedAmount
       : totalConfirmedAmount - lockedAmount;
@@ -484,12 +492,8 @@ const buildBalance =
         ? 0
         : totalAmount - totalConfirmedAmount;
 
-    const satLockedAmount = ['xrp'].includes(currencyAbbreviation)
-      ? lockedAmount - lockedConfirmedAmount
-      : lockedAmount;
-
     return {
-      sat: totalAmount,
+      sat: satTotalAmount,
       satConfirmed: totalConfirmedAmount,
       satLocked: satLockedAmount,
       satConfirmedLocked: lockedConfirmedAmount,
@@ -497,7 +501,9 @@ const buildBalance =
       satConfirmedAvailable: availableConfirmedAmount,
       satSpendable: spendableAmount,
       satPending: pendingAmount,
-      crypto: dispatch(FormatAmount(currencyAbbreviation, Number(totalAmount))),
+      crypto: dispatch(
+        FormatAmount(currencyAbbreviation, Number(satTotalAmount)),
+      ),
       cryptoLocked: dispatch(
         FormatAmount(currencyAbbreviation, Number(satLockedAmount)),
       ),
@@ -513,7 +519,7 @@ const buildBalance =
       fiat: convertToFiat(
         dispatch(
           toFiat(
-            totalAmount,
+            satTotalAmount,
             defaultAltCurrencyIsoCode,
             currencyAbbreviation,
             rates,
@@ -573,7 +579,7 @@ const buildBalance =
       fiatLastDay: convertToFiat(
         dispatch(
           toFiat(
-            totalAmount,
+            satTotalAmount,
             defaultAltCurrencyIsoCode,
             currencyAbbreviation,
             lastDayRates,

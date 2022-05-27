@@ -4,7 +4,7 @@ import {BaseText} from '../../../components/styled/Text';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {SheetContainer} from '../../../components/styled/Containers';
 import {Black, White, Success, Caution, Warning} from '../../../styles/colors';
-import {ScrollView, SafeAreaView} from 'react-native';
+import {ScrollView, SafeAreaView, Text} from 'react-native';
 import Button from '../../../components/button/Button';
 import {WalletRowProps} from '../../../components/list/WalletRow';
 import LockSvg from '../../../../assets/img/wallet/balance/lock.svg';
@@ -168,7 +168,16 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
             </Row>
             <LabelTip type="info">
               <LabelTipText>
-                The total amount of {wallet.currencyName} stored in this wallet.
+                <Text>
+                  The total amount of {wallet.currencyName} stored in this
+                  wallet.
+                </Text>
+                {wallet.currencyAbbreviation.toLowerCase() === 'xrp' ? (
+                  <Text>
+                    {' '}
+                    Not including locked funds required for activation.
+                  </Text>
+                ) : null}
               </LabelTipText>
             </LabelTip>
 
