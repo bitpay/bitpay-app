@@ -62,6 +62,7 @@ import {
 } from '../../../../api/coinbase/coinbase.types';
 import {coinbaseUpdateExchangeRate} from '../../../coinbase/coinbase.effects';
 import {hashPin} from '../../../../components/modal/pin/PinModal';
+import {navigationRef} from '../../../../Root';
 
 const BWC = BwcProvider.getInstance();
 
@@ -84,22 +85,42 @@ export const startMigration =
   (): Effect =>
   async (dispatch): Promise<void> => {
     return new Promise(async resolve => {
+      const goToNewUserOnboarding = () => {
+        navigationRef.navigate('Onboarding', {screen: 'OnboardingStart'});
+        dispatch(setIntroCompleted());
+      };
+
       const cordovaStoragePath =
         Platform.OS === 'ios'
           ? RNFS.LibraryDirectoryPath + '/NoCloud/'
-          : RNFS.DocumentDirectoryPath;
+          : RNFS.DocumentDirectoryPath + '/';
       // keys and wallets
       try {
-        const profile = JSON.parse(
-          await RNFS.readFile(cordovaStoragePath + 'profile', 'utf8'),
-        ) as {credentials: Wallet[]};
+        const files = (await RNFS.readDir(cordovaStoragePath)) as {
+          name: string;
+        }[];
+
+        // key file does not exist = new user -> skip intro and navigate to onboarding start
+        if (!files.find(file => file.name === 'keys')) {
+          dispatch(
+            LogActions.info('Key file not found -> new user onboarding'),
+          );
+          goToNewUserOnboarding();
+          return resolve();
+        }
+
         const keys = JSON.parse(
           await RNFS.readFile(cordovaStoragePath + 'keys', 'utf8'),
         ) as KeyProperties[];
 
+        const profile = JSON.parse(
+          await RNFS.readFile(cordovaStoragePath + 'profile', 'utf8'),
+        ) as {credentials: Wallet[]};
+
         // no keys = new user -> skip intro and navigate to onboarding start
         if (!keys.length) {
-          dispatch(setIntroCompleted());
+          dispatch(LogActions.info('No keys -> new user onboarding'));
+          goToNewUserOnboarding();
           return resolve();
         }
 
