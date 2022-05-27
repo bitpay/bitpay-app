@@ -78,9 +78,13 @@ export const buildWalletObj =
       network,
       n,
       m,
+      hideWallet = false,
+      hideBalance = false,
     }: Credentials & {
       balance?: WalletBalance;
       tokens?: any;
+      hideWallet?: boolean; // ionic migration only
+      hideBalance?: boolean; // ionic migration only
       network: Network;
     },
     tokenOpts?: {[key in string]: Token},
@@ -109,8 +113,8 @@ export const buildWalletObj =
       n,
       m,
       isRefreshing: false,
-      hideWallet: false,
-      hideBalance: false,
+      hideWallet,
+      hideBalance,
       pendingTxps: [],
     };
   };
@@ -147,13 +151,15 @@ export const buildMigrationKeyObj = ({
   wallets,
   totalBalance = 0,
   totalBalanceLastDay = 0,
-  backupComplete = false,
+  backupComplete,
+  keyName = 'My Key',
 }: {
   key: any;
   wallets: Wallet[];
+  backupComplete: boolean;
+  keyName: string | undefined;
   totalBalance?: number;
   totalBalanceLastDay?: number;
-  backupComplete?: boolean;
 }): Key => {
   return {
     id: key.id,
@@ -164,7 +170,7 @@ export const buildMigrationKeyObj = ({
     totalBalanceLastDay,
     isPrivKeyEncrypted: key.methods.isPrivKeyEncrypted(),
     backupComplete,
-    keyName: 'My Key',
+    keyName,
   };
 };
 
