@@ -185,6 +185,7 @@ export interface Balance {
 export interface _Credentials extends Credentials {
   secret: string;
   copayers: string[];
+  status: string;
 }
 export interface Status {
   balance: Balance;

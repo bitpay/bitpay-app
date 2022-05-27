@@ -249,36 +249,52 @@ const CreateMultisig = () => {
           }),
         )) as Wallet;
 
-        // TODO
-        wallet.getStatus({network: 'livenet'}, (err: any, status: Status) => {
-          if (err) {
-            // TODO
-            console.log(err);
-          }
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 2,
-              routes: [
-                {
-                  name: 'Tabs',
-                  params: {screen: 'Home'},
-                },
-                {
-                  name: 'Wallet',
-                  params: {screen: 'KeyOverview', params: {id: key.id}},
-                },
-                {
-                  name: 'Wallet',
-                  params: {
-                    screen: 'Copayers',
-                    params: {wallet: wallet, status: status.wallet},
-                  },
-                },
-              ],
-            }),
-          );
-          dispatch(dismissOnGoingProcessModal());
-        });
+        wallet.getStatus(
+          {network: wallet.network},
+          (err: any, status: Status) => {
+            if (err) {
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 1,
+                  routes: [
+                    {
+                      name: 'Tabs',
+                      params: {screen: 'Home'},
+                    },
+                    {
+                      name: 'Wallet',
+                      params: {screen: 'KeyOverview', params: {id: key.id}},
+                    },
+                  ],
+                }),
+              );
+            } else {
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 2,
+                  routes: [
+                    {
+                      name: 'Tabs',
+                      params: {screen: 'Home'},
+                    },
+                    {
+                      name: 'Wallet',
+                      params: {screen: 'KeyOverview', params: {id: key.id}},
+                    },
+                    {
+                      name: 'Wallet',
+                      params: {
+                        screen: 'Copayers',
+                        params: {wallet: wallet, status: status.wallet},
+                      },
+                    },
+                  ],
+                }),
+              );
+            }
+            dispatch(dismissOnGoingProcessModal());
+          },
+        );
       } else {
         await dispatch(
           startOnGoingProcessModal(OnGoingProcessMessages.CREATING_KEY),

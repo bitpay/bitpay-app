@@ -14,6 +14,7 @@ type ImportScreenProps = StackScreenProps<WalletStackParamList, 'Import'>;
 export interface ImportParamList {
   context?: string;
   keyId?: string;
+  importQrCodeData?: string;
 }
 
 const ImportContainer = styled.SafeAreaView`

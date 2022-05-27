@@ -322,3 +322,16 @@ export const ValidateCoinAddress = (
       return false;
   }
 };
+
+export const IsValidImportPrivateKey = (data: string): boolean => {
+  return !!(
+    data &&
+    (data.substring(0, 2) == '1|' ||
+      data.substring(0, 2) == '2|' ||
+      data.substring(0, 2) == '3|')
+  );
+};
+
+export const IsValidJoinCode = (data: string): boolean => {
+  return !!(data && data.match(/^[0-9A-HJ-NP-Za-km-z]{70,80}$/));
+};
