@@ -18,9 +18,11 @@ import Back from '../../back/Back';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useNavigation} from '@react-navigation/native';
 
 export interface PinModalConfig {
   type: 'set' | 'check';
+  context?: 'onboarding';
 }
 
 const PinContainer = styled.View`
@@ -65,13 +67,14 @@ const hashPin = (pin: string[]) => {
 
 const Pin = gestureHandlerRootHOC(() => {
   const dispatch = useAppDispatch();
-  const {type} = useAppSelector(({APP}) => APP.pinModalConfig) || {};
+  const {type, context} = useAppSelector(({APP}) => APP.pinModalConfig) || {};
   const [pin, setPin] = useState<Array<string | undefined>>([]);
   const [headerMargin, setHeaderMargin] = useState<string | undefined>();
   const [message, setMessage] = useState('Please enter your PIN');
   const [shakeDots, setShakeDots] = useState(false);
   const insets = useSafeAreaInsets();
   const [showBackButton, setShowBackButton] = useState<boolean>();
+  const navigation = useNavigation();
 
   useEffect(() => {
     if (type === 'set') {
@@ -120,6 +123,14 @@ const Pin = gestureHandlerRootHOC(() => {
     [dispatch, setShakeDots, setMessage, setPin, setAttempts, currentPin],
   );
 
+  const gotoCreateKey = async () => {
+    navigation.navigate('Onboarding', {
+      screen: 'CreateKey',
+    });
+    await sleep(10);
+    dispatch(AppActions.dismissPinModal());
+  };
+
   const setCurrentPin = useCallback(
     (newPin: Array<string>) => {
       if (isEqual(firstPinEntered, newPin)) {
@@ -131,7 +142,12 @@ const Pin = gestureHandlerRootHOC(() => {
         const authorizedUntil =
           Math.floor(Date.now() / 1000) + LOCK_AUTHORIZED_TIME;
         dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
-        dispatch(AppActions.dismissPinModal());
+
+        if (context === 'onboarding') {
+          gotoCreateKey();
+        } else {
+          dispatch(AppActions.dismissPinModal());
+        }
       } else {
         setShakeDots(true);
         reset();
