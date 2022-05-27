@@ -11,7 +11,10 @@ import {
   Invoice,
   UnsoldGiftCard,
 } from './shop.models';
-import {redemptionFailuresLessThanADayOld} from '../../lib/gift-cards/gift-card';
+import {
+  getCardConfigMapFromApiConfigMap,
+  redemptionFailuresLessThanADayOld,
+} from '../../lib/gift-cards/gift-card';
 import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 
@@ -39,7 +42,7 @@ export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
     const {data: integrations} = integrationsResponse;
     dispatch(
       ShopActions.successFetchCatalog({
-        availableCardMap,
+        availableCardMap: getCardConfigMapFromApiConfigMap(availableCardMap),
         categoriesAndCurations,
         integrations,
       }),
