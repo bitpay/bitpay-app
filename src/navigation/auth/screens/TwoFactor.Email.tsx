@@ -1,5 +1,6 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef} from 'react';
+import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import Spinner from '../../../components/spinner/Spinner';
 import {
@@ -7,9 +8,9 @@ import {
   TWO_FACTOR_EMAIL_POLL_TIMEOUT,
 } from '../../../constants/config';
 import {navigationRef} from '../../../Root';
-import {AppActions} from '../../../store/app';
+import {RootState} from '../../../store';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {EmailPairingStatus} from '../../../store/bitpay-id/bitpay-id.reducer';
 import {AuthStackParamList} from '../AuthStack';
 import AuthFormContainer, {
   AuthFormParagraph,
@@ -30,16 +31,16 @@ const SpinnerWrapper = styled.View`
 const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
   navigation,
 }) => {
-  const dispatch = useAppDispatch();
+  const dispatch = useDispatch();
   const pollId = useRef<ReturnType<typeof setInterval>>();
   const pollCountdown = useRef(TWO_FACTOR_EMAIL_POLL_TIMEOUT);
-  const isAuthenticated = useAppSelector(
+  const isAuthenticated = useSelector<RootState, boolean>(
     ({BITPAY_ID}) => BITPAY_ID.session.isAuthenticated,
   );
-  const csrfToken = useAppSelector(
+  const csrfToken = useSelector<RootState, string>(
     ({BITPAY_ID}) => BITPAY_ID.session.csrfToken,
   );
-  const emailPairingStatus = useAppSelector(
+  const emailPairingStatus = useSelector<RootState, EmailPairingStatus>(
     ({BITPAY_ID}) => BITPAY_ID.emailPairingStatus,
   );
   const isTimedOut = pollCountdown.current <= 0;
@@ -52,9 +53,6 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
     }, TWO_FACTOR_EMAIL_POLL_INTERVAL);
 
     return () => {
-      dispatch(BitPayIdActions.updateLoginStatus(null));
-      dispatch(BitPayIdActions.updateEmailPairingStatus(null));
-
       if (pollId.current) {
         clearInterval(pollId.current);
       }
@@ -98,22 +96,7 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
         return;
 
       case 'failed':
-        dispatch(
-          AppActions.showBottomNotificationModal({
-            type: 'error',
-            title: 'Login failed',
-            message: 'Something went wrong while authenticating.',
-            enableBackdropDismiss: false,
-            actions: [
-              {
-                text: 'OK',
-                action: () => {
-                  navigation.navigate('Login');
-                },
-              },
-            ],
-          }),
-        );
+        console.error('Pairing failed.');
         return;
     }
   }, [emailPairingStatus, navigation, dispatch]);
@@ -128,18 +111,25 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
         </>
       )}
 
-      {!isTimedOut && (
-        <>
-          <SpinnerWrapper>
-            <Spinner size={78} />
-          </SpinnerWrapper>
+      {!isTimedOut &&
+        (emailPairingStatus === 'failed' ? (
+          <>
+            <AuthFormParagraph>
+              Something went wrong while authenticating.
+            </AuthFormParagraph>
+          </>
+        ) : (
+          <>
+            <SpinnerWrapper>
+              <Spinner size={78} />
+            </SpinnerWrapper>
 
-          <AuthFormParagraph>
-            We sent an email containing a link to authenticate this login
-            attempt.
-          </AuthFormParagraph>
-        </>
-      )}
+            <AuthFormParagraph>
+              We sent an email containing a link to authenticate this login
+              attempt.
+            </AuthFormParagraph>
+          </>
+        ))}
     </AuthFormContainer>
   );
 };

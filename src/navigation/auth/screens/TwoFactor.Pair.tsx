@@ -4,11 +4,11 @@ import React, {useEffect, useMemo} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useDispatch, useSelector} from 'react-redux';
 import * as yup from 'yup';
+import AlertBox from '../../../components/alert-box/AlertBox';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import {navigationRef, RootStacks} from '../../../Root';
 import {RootState} from '../../../store';
-import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {TwoFactorPairingStatus} from '../../../store/bitpay-id/bitpay-id.reducer';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdStack';
@@ -67,12 +67,6 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
   });
 
   useEffect(() => {
-    return () => {
-      dispatch(BitPayIdActions.updateTwoFactorPairStatus(null));
-    };
-  }, [dispatch]);
-
-  useEffect(() => {
     switch (twoFactorPairingStatus) {
       case 'success':
         const parentNav = navigation.getParent();
@@ -91,31 +85,10 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
         return;
 
       case 'failed':
-        dispatch(
-          AppActions.showBottomNotificationModal({
-            type: 'error',
-            title: 'Login failed',
-            message: twoFactorPairingError || 'An unexpected error occurred.',
-            enableBackdropDismiss: false,
-            actions: [
-              {
-                text: 'OK',
-                action: () => {
-                  dispatch(BitPayIdActions.updateTwoFactorPairStatus(null));
-                },
-              },
-            ],
-          }),
-        );
+        console.log('Pairing with two factor failed.');
         return;
     }
-  }, [
-    dispatch,
-    resetField,
-    navigation,
-    twoFactorPairingStatus,
-    twoFactorPairingError,
-  ]);
+  }, [twoFactorPairingStatus, dispatch, navigation, resetField]);
 
   const onSubmit = handleSubmit(({code}) => {
     if (!code) {
@@ -127,6 +100,14 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
 
   return (
     <AuthFormContainer>
+      {twoFactorPairingStatus === 'failed' ? (
+        <AuthRowContainer>
+          <AlertBox type="warning">
+            {twoFactorPairingError || 'An unexpected error occurred.'}
+          </AlertBox>
+        </AuthRowContainer>
+      ) : null}
+
       <AuthFormParagraph>
         This additional verification will allow your device to be marked as a
         verified device. You will be securely connected to your BitPay ID
