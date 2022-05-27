@@ -4,7 +4,6 @@ import FastImage, {Source} from 'react-native-fast-image';
 import styled, {useTheme} from 'styled-components/native';
 import {CardContainer} from '../../../components/styled/Containers';
 import {BaseText} from '../../../components/styled/Text';
-import {SlateDark} from '../../../styles/colors';
 import {
   isCaptionedContentCard,
   isClassicContentCard,
@@ -44,7 +43,7 @@ const TitleRow = styled(BaseText)`
 `;
 
 const DescriptionRow = styled(BaseText)`
-  color: ${SlateDark};
+  color: ${({theme}) => theme.colors.description};
   font-size: 12px;
 `;
 

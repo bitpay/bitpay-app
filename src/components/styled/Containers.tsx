@@ -117,7 +117,7 @@ export const CurrencyImageContainer = styled.View`
 export const CardGutter = '15px';
 
 export const CardContainer = styled.View`
-  background: ${White};
+  background: ${({theme}) => (theme.dark ? LightBlack : White)};
   border-radius: 21px;
   overflow: hidden;
 `;
