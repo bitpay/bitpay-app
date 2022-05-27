@@ -34,7 +34,7 @@ const Percentage = ({
           <DecrementArrow style={{marginRight: 5}} />
         ) : null}
         <PercentageContainer darkModeColor={darkModeColor}>
-          {percentageDifference}%
+          {Math.abs(percentageDifference)}%
         </PercentageContainer>
       </PercentageRow>
     </>
