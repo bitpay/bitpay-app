@@ -294,45 +294,43 @@ export const startUpdateAllWalletStatusForKey =
                 }) || {};
 
               if (
-                !force ||
-                !status ||
-                !success ||
-                // skip formatting amounts if nothing has changed
-                status.balance.totalAmount === cachedBalance.sat
+                status &&
+                success &&
+                (force || status.balance.totalAmount !== cachedBalance.sat)
               ) {
+                const newBalance = dispatch(
+                  buildBalance({
+                    wallet,
+                    status,
+                    defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+                    rates,
+                    lastDayRates,
+                  }),
+                );
+
+                const newPendingTxps = dispatch(
+                  buildPendingTxps({wallet, status}),
+                );
+
+                dispatch(
+                  successUpdateWalletStatus({
+                    keyId: key.id,
+                    walletId: wallet.id,
+                    status: {
+                      balance: newBalance,
+                      pendingTxps: newPendingTxps,
+                    },
+                  }),
+                );
+
+                console.log(
+                  `Wallet: ${wallet.currencyAbbreviation} ${wallet.id} - status updated`,
+                );
+
+                return newBalance;
+              } else {
                 return cachedBalance;
               }
-
-              const newBalance = dispatch(
-                buildBalance({
-                  wallet,
-                  status,
-                  defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-                  rates,
-                  lastDayRates,
-                }),
-              );
-
-              const newPendingTxps = dispatch(
-                buildPendingTxps({wallet, status}),
-              );
-
-              dispatch(
-                successUpdateWalletStatus({
-                  keyId: key.id,
-                  walletId: wallet.id,
-                  status: {
-                    balance: newBalance,
-                    pendingTxps: newPendingTxps,
-                  },
-                }),
-              );
-
-              console.log(
-                `Wallet: ${wallet.currencyAbbreviation} ${wallet.id} - status updated`,
-              );
-
-              return newBalance;
             });
 
             dispatch(
@@ -637,9 +635,7 @@ export const startFormatBalanceAllWalletsForKey =
             const {sat, satLocked} = cachedBalance;
 
             const newBalance = {
-              crypto: dispatch(
-                FormatAmount(currencyAbbreviation, sat),
-              ),
+              crypto: dispatch(FormatAmount(currencyAbbreviation, sat)),
               cryptoLocked: dispatch(
                 FormatAmount(currencyAbbreviation, satLocked),
               ),
