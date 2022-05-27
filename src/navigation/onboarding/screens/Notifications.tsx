@@ -18,16 +18,30 @@ import {useNavigation} from '@react-navigation/native';
 import {OnboardingImage} from '../components/Containers';
 import {requestNotifications, RESULTS} from 'react-native-permissions';
 import {Platform} from 'react-native';
+import {useThemeType} from '../../../utils/hooks/useThemeType';
 
 const NotificationsContainer = styled.SafeAreaView`
   flex: 1;
   align-items: center;
 `;
 
-const NotificationImage = require('../../../../assets/img/onboarding/notifications.png');
-
+const NotificationImage = {
+  light: (
+    <OnboardingImage
+      style={{width: 190, height: 178}}
+      source={require('../../../../assets/img/onboarding/light/notifications.png')}
+    />
+  ),
+  dark: (
+    <OnboardingImage
+      style={{width: 190, height: 170}}
+      source={require('../../../../assets/img/onboarding/dark/notifications.png')}
+    />
+  ),
+};
 const NotificationsScreen = () => {
   const navigation = useNavigation();
+  const themeType = useThemeType();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -87,10 +101,7 @@ const NotificationsScreen = () => {
   return (
     <NotificationsContainer>
       <ImageContainer justifyContent={'flex-end'}>
-        <OnboardingImage
-          style={{width: 182, height: 213}}
-          source={NotificationImage}
-        />
+        {NotificationImage[themeType]}
       </ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>

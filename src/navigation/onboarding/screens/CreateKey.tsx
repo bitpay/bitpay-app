@@ -14,15 +14,29 @@ import {useNavigation} from '@react-navigation/native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {OnboardingImage} from '../components/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
+import {useThemeType} from '../../../utils/hooks/useThemeType';
 
 const CreateKeyContainer = styled.SafeAreaView`
   flex: 1;
   align-items: center;
 `;
-const KeyImage = require('../../../../assets/img/onboarding/create-wallet.png');
-
+const KeyImage = {
+  light: (
+    <OnboardingImage
+      style={{width: 212, height: 247}}
+      source={require('../../../../assets/img/onboarding/light/create-wallet.png')}
+    />
+  ),
+  dark: (
+    <OnboardingImage
+      style={{width: 189, height: 247}}
+      source={require('../../../../assets/img/onboarding/dark/create-wallet.png')}
+    />
+  ),
+};
 const CreateOrImportKey = () => {
   const navigation = useNavigation();
+  const themeType = useThemeType();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -52,9 +66,7 @@ const CreateOrImportKey = () => {
 
   return (
     <CreateKeyContainer>
-      <ImageContainer>
-        <OnboardingImage style={{width: 155, height: 247}} source={KeyImage} />
-      </ImageContainer>
+      <ImageContainer>{KeyImage[themeType]}</ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>
           <H3>Create a key or import an existing key</H3>
