@@ -1,23 +1,23 @@
-import {yupResolver} from '@hookform/resolvers/yup';
 import React, {useEffect, useState} from 'react';
-import {Controller, useForm} from 'react-hook-form';
 import {Keyboard, SafeAreaView} from 'react-native';
-import * as yup from 'yup';
-import Button from '../../../components/button/Button';
-import BoxInput from '../../../components/form/BoxInput';
-import haptic from '../../../components/haptic-feedback/haptic';
-import {BASE_BITPAY_URLS} from '../../../constants/config';
-import {AppActions} from '../../../store/app';
-import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
-import {sleep} from '../../../utils/helper-methods';
-import {useAppDispatch} from '../../../utils/hooks/useAppDispatch';
-import {useAppSelector} from '../../../utils/hooks/useAppSelector';
 import AuthFormContainer, {
   AuthActionRow,
   AuthActionsContainer,
   AuthRowContainer,
 } from '../components/AuthFormContainer';
+import {Controller, useForm} from 'react-hook-form';
+import * as yup from 'yup';
+import {yupResolver} from '@hookform/resolvers/yup';
+import BoxInput from '../../../components/form/BoxInput';
+import Button from '../../../components/button/Button';
 import RecaptchaModal from '../components/RecaptchaModal';
+import {BASE_BITPAY_URLS} from '../../../constants/config';
+import {useAppSelector} from '../../../utils/hooks/useAppSelector';
+import {sleep} from '../../../utils/helper-methods';
+import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
+import haptic from '../../../components/haptic-feedback/haptic';
+import {useAppDispatch} from '../../../utils/hooks/useAppDispatch';
+import AlertBox from '../../../components/alert-box/AlertBox';
 
 export type ForgotPasswordParamList = {} | undefined;
 
@@ -38,6 +38,8 @@ const ForgotPassword = () => {
     ({BITPAY_ID}) => BITPAY_ID.forgotPasswordEmailStatus,
   );
 
+  const [status, setStatus] = useState<string | null>();
+  const [message, setMessage] = useState<string | null>();
   const {
     control,
     handleSubmit,
@@ -49,46 +51,19 @@ const ForgotPassword = () => {
     if (!forgotPasswordEmailStatus) {
       return;
     }
-    const {status, message} = forgotPasswordEmailStatus;
 
-    if (status === 'success') {
-      dispatch(
-        AppActions.showBottomNotificationModal({
-          type: 'success',
-          title: 'Email Sent',
-          message,
-          enableBackdropDismiss: false,
-          actions: [
-            {
-              text: 'OK',
-              action: () => {
-                dispatch(BitPayIdActions.resetForgotPasswordEmailStatus());
-              },
-            },
-          ],
-        }),
-      );
-    } else if (status === 'failed') {
-      dispatch(
-        AppActions.showBottomNotificationModal({
-          type: 'error',
-          title: 'Error',
-          message,
-          enableBackdropDismiss: false,
-          actions: [
-            {
-              text: 'OK',
-              action: () => {
-                dispatch(BitPayIdActions.resetForgotPasswordEmailStatus());
-              },
-            },
-          ],
-        }),
-      );
-    }
-  }, [dispatch, forgotPasswordEmailStatus]);
+    setStatus(forgotPasswordEmailStatus.status);
+    setMessage(forgotPasswordEmailStatus.message);
+    const timer = setTimeout(() => {
+      dispatch(BitPayIdActions.resetForgotPasswordEmailStatus());
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [forgotPasswordEmailStatus]);
 
   const onSubmit = handleSubmit(({email}) => {
+    setStatus(null);
+    setMessage(null);
     Keyboard.dismiss();
 
     if (session.captchaDisabled) {
@@ -114,6 +89,18 @@ const ForgotPassword = () => {
   return (
     <SafeAreaView>
       <AuthFormContainer>
+        {status === 'failed' ? (
+          <AuthRowContainer>
+            <AlertBox type="warning">{message}</AlertBox>
+          </AuthRowContainer>
+        ) : null}
+
+        {status === 'success' ? (
+          <AuthRowContainer>
+            <AlertBox type="success">{message}</AlertBox>
+          </AuthRowContainer>
+        ) : null}
+
         <AuthRowContainer>
           <Controller
             control={control}
