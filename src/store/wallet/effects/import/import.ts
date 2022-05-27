@@ -66,6 +66,11 @@ import {navigationRef} from '../../../../Root';
 
 const BWC = BwcProvider.getInstance();
 
+const cordovaStoragePath =
+  Platform.OS === 'ios'
+    ? RNFS.LibraryDirectoryPath + '/NoCloud/'
+    : RNFS.DocumentDirectoryPath + '/';
+
 export const normalizeMnemonic = (words?: string): string | undefined => {
   if (!words || !words.indexOf) {
     return words;
@@ -90,10 +95,6 @@ export const startMigration =
         dispatch(setIntroCompleted());
       };
 
-      const cordovaStoragePath =
-        Platform.OS === 'ios'
-          ? RNFS.LibraryDirectoryPath + '/NoCloud/'
-          : RNFS.DocumentDirectoryPath + '/';
       // keys and wallets
       try {
         const files = (await RNFS.readDir(cordovaStoragePath)) as {
@@ -128,7 +129,25 @@ export const startMigration =
           const wallets = profile.credentials.filter(
             credentials => credentials.keyId === key.id,
           );
-          await dispatch(migrateKeyAndWallets({key, wallets}));
+          let keyName: string | undefined;
+          let backupComplete: string | undefined;
+          try {
+            keyName = (await RNFS.readFile(
+              cordovaStoragePath + `Key-${key.id}`,
+              'utf8',
+            )) as string;
+            backupComplete = (await RNFS.readFile(
+              cordovaStoragePath + `walletGroupBackup-${key.id}`,
+              'utf8',
+            )) as string;
+          } catch (e) {
+            // not found. Continue anyway
+          }
+          const keyConfig = {
+            backupComplete: !!backupComplete,
+            keyName,
+          };
+          await dispatch(migrateKeyAndWallets({key, wallets, keyConfig}));
           dispatch(setHomeCarouselConfig({id: key.id, show: true}));
         }
 
@@ -295,11 +314,16 @@ export const migrateKeyAndWallets =
   (migrationData: {
     key: KeyProperties;
     wallets: any[];
+    keyConfig: {
+      backupComplete: boolean;
+      keyName: string | undefined;
+    };
   }): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
         const state = getState();
+        const {backupComplete, keyName} = migrationData.keyConfig;
         const tokenOpts = {
           ...BitpaySupportedTokenOpts,
           ...state.WALLET.tokenOptions,
@@ -315,10 +339,32 @@ export const migrateKeyAndWallets =
         let wallets = [];
         for (const wallet of migrationData.wallets) {
           const walletObj = await BWC.getClient(JSON.stringify(wallet));
+          let hideBalance: boolean | undefined;
+          let hideWallet: boolean | undefined;
+          try {
+            const id = walletObj.credentials.walletId;
+            hideBalance =
+              (await RNFS.readFile(
+                cordovaStoragePath + `hideBalance-${id}`,
+                'utf8',
+              )) === 'true';
+            hideWallet =
+              (await RNFS.readFile(
+                cordovaStoragePath + `hideWallet-${id}`,
+                'utf8',
+              )) === 'true';
+          } catch (e) {
+            // not found. Continue anyway
+          }
           wallets.push(
             merge(
               walletObj,
-              dispatch(buildWalletObj(walletObj.credentials, tokenOpts)),
+              dispatch(
+                buildWalletObj(
+                  {...walletObj.credentials, hideBalance, hideWallet},
+                  tokenOpts,
+                ),
+              ),
             ),
           );
         }
@@ -334,7 +380,8 @@ export const migrateKeyAndWallets =
         const key = buildMigrationKeyObj({
           key: keyObj,
           wallets,
-          backupComplete: true,
+          backupComplete,
+          keyName,
         });
 
         dispatch(
