@@ -166,7 +166,7 @@ export default ({
       ? activeGiftCardsHeight
       : purchasedGiftCards.length
       ? 270
-      : 130;
+      : 100;
     return yPos;
   };
 
