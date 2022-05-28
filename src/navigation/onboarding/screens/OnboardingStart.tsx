@@ -1,6 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useLayoutEffect, useRef, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import Carousel, {Pagination} from 'react-native-snap-carousel';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
@@ -20,6 +20,8 @@ import {OnboardingImage} from '../components/Containers';
 import OnboardingSlide from '../components/OnboardingSlide';
 import {OnboardingStackParamList} from '../OnboardingStack';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
+import {askForTrackingPermissionAndEnableSdks} from '../../../store/app/app.effects';
+import {sleep} from '../../../utils/helper-methods';
 
 type OnboardingStartScreenProps = StackScreenProps<
   OnboardingStackParamList,
@@ -65,6 +67,12 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
 
   useAndroidBackHandler(() => true);
 
+  const askForTrackingThenNavigate = async (cb: () => void) => {
+    haptic('impactLight');
+    await dispatch(askForTrackingPermissionAndEnableSdks());
+    cb();
+  };
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => null,
@@ -82,20 +90,21 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
           ) : (
             <Button
               buttonType={'pill'}
-              onPress={() => {
-                haptic('impactLight');
-                navigation.navigate('Auth', {
-                  screen: 'Login',
-                  params: {
-                    onLoginSuccess: () => {
-                      haptic('impactLight');
-                      navigation.navigate('Onboarding', {
-                        screen: 'Notifications',
-                      });
+              onPress={() =>
+                askForTrackingThenNavigate(() => {
+                  navigation.navigate('Auth', {
+                    screen: 'Login',
+                    params: {
+                      onLoginSuccess: async () => {
+                        haptic('impactLight');
+                        navigation.navigate('Onboarding', {
+                          screen: 'Notifications',
+                        });
+                      },
                     },
-                  },
-                });
-              }}>
+                  });
+                })
+              }>
               Log In
             </Button>
           )}
@@ -196,9 +205,10 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
               <Button
                 buttonStyle={'primary'}
                 onPress={() => {
-                  haptic('impactLight');
-                  navigation.navigate('Auth', {
-                    screen: 'CreateAccount',
+                  askForTrackingThenNavigate(() => {
+                    navigation.navigate('Auth', {
+                      screen: 'CreateAccount',
+                    });
                   });
                 }}>
                 Get Started
@@ -207,9 +217,10 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
               <Button
                 buttonStyle={'primary'}
                 onPress={() => {
-                  haptic('impactLight');
-                  navigation.navigate('Onboarding', {
-                    screen: 'Notifications',
+                  askForTrackingThenNavigate(() => {
+                    navigation.navigate('Onboarding', {
+                      screen: 'Notifications',
+                    });
                   });
                 }}>
                 Continue
@@ -223,9 +234,10 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
               <Button
                 buttonType={'link'}
                 onPress={() => {
-                  haptic('impactLight');
-                  navigation.navigate('Onboarding', {
-                    screen: 'Notifications',
+                  askForTrackingThenNavigate(() => {
+                    navigation.navigate('Onboarding', {
+                      screen: 'Notifications',
+                    });
                   });
                 }}>
                 <LinkText>Continue without an account</LinkText>
