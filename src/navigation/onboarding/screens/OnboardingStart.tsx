@@ -1,6 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import React, {useLayoutEffect, useRef, useState} from 'react';
 import Carousel, {Pagination} from 'react-native-snap-carousel';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
@@ -21,7 +21,6 @@ import OnboardingSlide from '../components/OnboardingSlide';
 import {OnboardingStackParamList} from '../OnboardingStack';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {askForTrackingPermissionAndEnableSdks} from '../../../store/app/app.effects';
-import {sleep} from '../../../utils/helper-methods';
 
 type OnboardingStartScreenProps = StackScreenProps<
   OnboardingStackParamList,

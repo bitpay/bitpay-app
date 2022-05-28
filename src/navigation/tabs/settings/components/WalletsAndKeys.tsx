@@ -34,7 +34,7 @@ const WalletsAndKeys = () => {
         })
       : dispatch(
           showBottomNotificationModal(
-            keyBackupRequired(key, navigation, 'settings'),
+            keyBackupRequired(key, navigation, dispatch, 'settings'),
           ),
         );
   };
