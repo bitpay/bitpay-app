@@ -13,11 +13,16 @@ import ConnectCoinbase from './cards/ConnectCoinbase';
 import CreateWallet from './cards/CreateWallet';
 import WalletCardComponent from './Wallet';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
-import {showBottomNotificationModal} from '../../../../store/app/app.actions';
+import {
+  dismissDecryptPasswordModal,
+  showBottomNotificationModal,
+  showDecryptPasswordModal,
+} from '../../../../store/app/app.actions';
 import {Dispatch} from 'redux';
 import {
   calculatePercentageDifference,
   getMnemonic,
+  sleep,
 } from '../../../../utils/helper-methods';
 import _ from 'lodash';
 import {useAppSelector} from '../../../../utils/hooks';
@@ -39,6 +44,7 @@ import {Feather} from '../../../../styles/colors';
 import Button from '../../../../components/button/Button';
 import CoinbaseBalanceCard from '../../../coinbase/components/CoinbaseBalanceCard';
 import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
+import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 
 const CryptoContainer = styled.View`
   background: ${({theme}) => (theme.dark ? '#111111' : Feather)};
@@ -69,6 +75,7 @@ const _renderItem = ({item}: {item: {id: string; component: JSX.Element}}) => {
 export const keyBackupRequired = (
   key: Key,
   navigation: NavigationProp<any>,
+  dispatch: Dispatch,
   context?: string,
 ): BottomNotificationConfig => {
   return {
@@ -79,16 +86,45 @@ export const keyBackupRequired = (
     actions: [
       {
         text: 'Back up Key',
-        action: () => {
-          navigation.navigate('Wallet', {
-            screen: 'RecoveryPhrase',
-            params: {
-              keyId: key.id,
-              words: getMnemonic(key),
-              key,
-              context,
-            },
-          });
+        action: async () => {
+          if (key.properties.mnemonicEncrypted) {
+            await sleep(500);
+            dispatch(
+              showDecryptPasswordModal({
+                onSubmitHandler: async (encryptPassword: string) => {
+                  try {
+                    const decryptedKey = key.methods.get(encryptPassword);
+                    await dispatch(dismissDecryptPasswordModal());
+                    await sleep(300);
+                    navigation.navigate('Wallet', {
+                      screen: 'RecoveryPhrase',
+                      params: {
+                        keyId: key.id,
+                        words: decryptedKey.mnemonic.trim().split(' '),
+                        key,
+                        context,
+                      },
+                    });
+                  } catch (e) {
+                    console.log(`Decrypt Error: ${e}`);
+                    await dispatch(dismissDecryptPasswordModal());
+                    await sleep(1000); // Wait to close Decrypt Password modal
+                    dispatch(showBottomNotificationModal(WrongPasswordError()));
+                  }
+                },
+              }),
+            );
+          } else {
+            navigation.navigate('Wallet', {
+              screen: 'RecoveryPhrase',
+              params: {
+                keyId: key.id,
+                words: getMnemonic(key),
+                key,
+                context,
+              },
+            });
+          }
         },
         primary: true,
       },
@@ -157,7 +193,7 @@ const createHomeCardList = ({
               } else {
                 dispatch(
                   showBottomNotificationModal(
-                    keyBackupRequired(key, navigation),
+                    keyBackupRequired(key, navigation, dispatch),
                   ),
                 );
               }

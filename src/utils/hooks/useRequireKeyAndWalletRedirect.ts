@@ -18,7 +18,7 @@ export const useRequireKeyAndWalletRedirect = (cta: () => void) => {
         const keyToBackup = allKeys.find(key => !key.backupComplete)!;
         dispatch(
           showBottomNotificationModal(
-            keyBackupRequired(keyToBackup, navigation),
+            keyBackupRequired(keyToBackup, navigation, dispatch),
           ),
         );
         return;
