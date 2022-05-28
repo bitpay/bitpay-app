@@ -70,6 +70,7 @@ import {
 } from '../../../shop/shop.models';
 import {ShopActions} from '../../../shop';
 import {initialShopState} from '../../../shop/shop.reducer';
+import {StackActions} from '@react-navigation/native';
 
 const BWC = BwcProvider.getInstance();
 
@@ -98,8 +99,12 @@ export const startMigration =
   async (dispatch): Promise<void> => {
     return new Promise(async resolve => {
       const goToNewUserOnboarding = () => {
-        navigationRef.navigate('Onboarding', {screen: 'OnboardingStart'});
         dispatch(setIntroCompleted());
+        navigationRef.dispatch(
+          StackActions.replace('Onboarding', {
+            screen: 'OnboardingStart',
+          }),
+        );
       };
 
       // keys and wallets
