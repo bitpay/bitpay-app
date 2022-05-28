@@ -31,6 +31,7 @@ const ShopStack = () => {
         name={ShopScreens.HOME}
         component={ShopHome}
         options={{
+          headerLeft: () => null,
           headerTitle: () => <HeaderTitle>{t('Shop with crypto')}</HeaderTitle>,
         }}
       />
