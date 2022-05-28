@@ -20,7 +20,21 @@ import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {StackActions} from '@react-navigation/native';
 import {RootState} from '../../../store';
 import {StackScreenProps} from '@react-navigation/stack';
-const BackupImage = require('../../../../assets/img/onboarding/backup.png');
+import {useThemeType} from '../../../utils/hooks/useThemeType';
+const BackupImage = {
+  light: (
+    <OnboardingImage
+      style={{width: 217, height: 195}}
+      source={require('../../../../assets/img/onboarding/light/backup.png')}
+    />
+  ),
+  dark: (
+    <OnboardingImage
+      style={{width: 217, height: 165}}
+      source={require('../../../../assets/img/onboarding/dark/backup.png')}
+    />
+  ),
+};
 
 type BackupScreenProps = StackScreenProps<WalletStackParamList, 'BackupKey'>;
 
@@ -73,6 +87,8 @@ export const backupRedirect = ({
 const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
+  const themeType = useThemeType();
+
   const walletTermsAccepted = useSelector(
     ({WALLET}: RootState) => WALLET.walletTermsAccepted,
   );
@@ -140,12 +156,7 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
 
   return (
     <BackupContainer>
-      <ImageContainer>
-        <OnboardingImage
-          style={{width: 217, height: 195}}
-          source={BackupImage}
-        />
-      </ImageContainer>
+      <ImageContainer>{BackupImage[themeType]}</ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>
           <H3>Would you like to backup your key?</H3>
