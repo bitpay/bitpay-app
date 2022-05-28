@@ -44,8 +44,13 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     }
 
     const {BITPAY_ID} = getState();
-    const {network, pinLockActive, biometricLockActive, colorScheme, onboardingCompleted} =
-      getState().APP;
+    const {
+      network,
+      pinLockActive,
+      biometricLockActive,
+      colorScheme,
+      onboardingCompleted,
+    } = getState().APP;
 
     dispatch(LogActions.debug(`Network: ${network}`));
     dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
