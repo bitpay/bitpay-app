@@ -217,11 +217,13 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
             activeOpacity={ActiveOpacity}
             disabled={!hasMultipleKeys}
             onPress={() => setShowKeyDropdown(true)}>
-            {theme.dark ? (
-              <EncryptPasswordDarkModeImg />
-            ) : (
-              <EncryptPasswordImg />
-            )}
+            {key.methods.isPrivKeyEncrypted() ? (
+              theme.dark ? (
+                <EncryptPasswordDarkModeImg />
+              ) : (
+                <EncryptPasswordImg />
+              )
+            ) : null}
             <HeaderTitleContainer>
               <HeaderTitle style={{textAlign: 'center'}}>
                 {key?.keyName}
