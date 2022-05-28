@@ -14,24 +14,19 @@ import {
   NoResultsImgContainer,
   NoResultsDescription,
 } from '../../../../../components/styled/Containers';
-import {FlatList} from 'react-native';
+import {FlatList, InteractionManager, Keyboard} from 'react-native';
 import {BaseText} from '../../../../../components/styled/Text';
-import {
-  dismissOnGoingProcessModal,
-  setDefaultAltCurrency,
-} from '../../../../../store/app/app.actions';
+import {setDefaultAltCurrency} from '../../../../../store/app/app.actions';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 
 import {useNavigation} from '@react-navigation/native';
 import {LightBlack, White} from '../../../../../styles/colors';
 import GhostSvg from '../../../../../../assets/img/ghost-cheeky.svg';
-import {sleep} from '../../../../../utils/helper-methods';
 import SearchSvg from '../../../../../../assets/img/search.svg';
 import {FormatKeyBalances} from '../../../../../store/wallet/effects/status/status';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
-import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
 import {updatePortfolioBalance} from '../../../../../store/wallet/wallet.actions';
 import {getPriceHistory} from '../../../../../store/wallet/effects';
+import {batch} from 'react-redux';
 
 const AltCurrencySettingsContainer = styled.SafeAreaView`
   margin-top: 20px;
@@ -115,19 +110,16 @@ const AltCurrencySettings = () => {
             altCurrency={item}
             selected={selected}
             onPress={async () => {
-              dispatch(
-                startOnGoingProcessModal(
-                  OnGoingProcessMessages.GENERAL_AWAITING,
-                ),
-              );
-              await sleep(400);
-              dispatch(setDefaultAltCurrency(item));
-              dispatch(FormatKeyBalances());
-              dispatch(updatePortfolioBalance());
-              dispatch(getPriceHistory(item.isoCode));
-              await sleep(500);
-              dispatch(dismissOnGoingProcessModal());
+              Keyboard.dismiss();
               navigation.goBack();
+              InteractionManager.runAfterInteractions(() => {
+                batch(() => {
+                  dispatch(setDefaultAltCurrency(item));
+                  dispatch(FormatKeyBalances());
+                  dispatch(updatePortfolioBalance());
+                  dispatch(getPriceHistory(item.isoCode));
+                });
+              });
             }}
           />
           {!selected ? <Hr /> : null}
