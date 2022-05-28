@@ -175,6 +175,17 @@ export const createProposalAndBuildTxDetails =
     });
   };
 
+export const getInvoiceEffectiveRate =
+  (invoice: Invoice, coin: string): Effect<number | undefined> =>
+  dispatch => {
+    const precision = dispatch(GetPrecision(coin.toLowerCase()));
+    return (
+      precision &&
+      invoice.price /
+        (invoice.paymentSubtotals[coin.toUpperCase()] / precision.unitToSatoshi)
+    );
+  };
+
 /*
  * UI formatted details for confirm view
  * */
@@ -206,6 +217,8 @@ export const buildTxDetails =
     let {amount} = proposal || {
       amount: invoice!.paymentTotals[coin.toUpperCase()],
     };
+    const effectiveRate =
+      invoice && dispatch(getInvoiceEffectiveRate(invoice, coin));
     const networkCost = invoice?.minerFees[coin.toUpperCase()]?.totalFee;
     const chain = dispatch(GetChain(coin)).toLowerCase(); // always use chain for fee values
     const isERC20 = dispatch(IsERCToken(coin));
@@ -228,7 +241,9 @@ export const buildTxDetails =
         feeLevel,
         cryptoAmount: dispatch(FormatAmountStr(chain, fee)),
         fiatAmount: formatFiatAmount(
-          dispatch(toFiat(fee, defaultAltCurrencyIsoCode, chain, rates)),
+          dispatch(
+            toFiat(fee, defaultAltCurrencyIsoCode, chain, rates, effectiveRate),
+          ),
           defaultAltCurrencyIsoCode,
         ),
         percentageOfTotalAmount:
@@ -239,7 +254,13 @@ export const buildTxDetails =
           cryptoAmount: dispatch(FormatAmountStr(chain, networkCost)),
           fiatAmount: formatFiatAmount(
             dispatch(
-              toFiat(networkCost, defaultAltCurrencyIsoCode, chain, rates),
+              toFiat(
+                networkCost,
+                defaultAltCurrencyIsoCode,
+                chain,
+                rates,
+                effectiveRate,
+              ),
             ),
             defaultAltCurrencyIsoCode,
           ),
@@ -252,7 +273,15 @@ export const buildTxDetails =
       subTotal: {
         cryptoAmount: dispatch(FormatAmountStr(coin, amount)),
         fiatAmount: formatFiatAmount(
-          dispatch(toFiat(amount, defaultAltCurrencyIsoCode, coin, rates)),
+          dispatch(
+            toFiat(
+              amount,
+              defaultAltCurrencyIsoCode,
+              coin,
+              rates,
+              effectiveRate,
+            ),
+          ),
           defaultAltCurrencyIsoCode,
         ),
       },
@@ -263,8 +292,24 @@ export const buildTxDetails =
             )}`
           : dispatch(FormatAmountStr(coin, amount + fee)),
         fiatAmount: formatFiatAmount(
-          dispatch(toFiat(amount, defaultAltCurrencyIsoCode, coin, rates)) +
-            dispatch(toFiat(fee, defaultAltCurrencyIsoCode, chain, rates)),
+          dispatch(
+            toFiat(
+              amount,
+              defaultAltCurrencyIsoCode,
+              coin,
+              rates,
+              effectiveRate,
+            ),
+          ) +
+            dispatch(
+              toFiat(
+                fee,
+                defaultAltCurrencyIsoCode,
+                chain,
+                rates,
+                effectiveRate,
+              ),
+            ),
           defaultAltCurrencyIsoCode,
         ),
       },

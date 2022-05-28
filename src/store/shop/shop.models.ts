@@ -160,8 +160,10 @@ export interface Invoice {
   };
   exchangeRates: any;
   minerFees: {[currency: string]: InvoiceMinerFee};
+  paymentSubtotals: {[currency: string]: number};
   paymentTotals: {[currency: string]: number};
   paymentDisplayTotals: {[currency: string]: string};
+  price: number;
   amountPaid: number;
   displayAmountPaid: string;
   nonPayProPaymentReceived?: boolean;
