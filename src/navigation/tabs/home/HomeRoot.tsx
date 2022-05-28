@@ -4,7 +4,11 @@ import {RefreshControl, ScrollView} from 'react-native';
 import analytics from '@segment/analytics-react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
-import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {
+  setKeyMigrationFailureModalHasBeenShown,
+  setShowKeyMigrationFailureModal,
+  showBottomNotificationModal,
+} from '../../../store/app/app.actions';
 import {startRefreshBrazeContent} from '../../../store/app/app.effects';
 import {
   selectBrazeDoMore,
@@ -18,7 +22,6 @@ import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import OnboardingFinishModal from '../../onboarding/components/OnboardingFinishModal';
 import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
 import AdvertisementsList from './components/advertisements/AdvertisementsList';
 import DefaultAdvertisements from './components/advertisements/DefaultAdvertisements';
@@ -36,6 +39,8 @@ import PortfolioBalance from './components/PortfolioBalance';
 import DefaultQuickLinks from './components/quick-links/DefaultQuickLinks';
 import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
 import {HeaderContainer, HomeContainer} from './components/Styled';
+import KeyMigrationFailureModal from './components/KeyMigrationFailureModal';
+import {batch} from 'react-redux';
 
 const HomeRoot = () => {
   const dispatch = useAppDispatch();
@@ -46,6 +51,12 @@ const HomeRoot = () => {
   const brazeDoMore = useAppSelector(selectBrazeDoMore);
   const brazeQuickLinks = useAppSelector(selectBrazeQuickLinks);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const keyMigrationFailure = useAppSelector(
+    ({APP}) => APP.keyMigrationFailure,
+  );
+  const keyMigrationFailureModalHasBeenShown = useAppSelector(
+    ({APP}) => APP.keyMigrationFailureModalHasBeenShown,
+  );
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
@@ -135,6 +146,15 @@ const HomeRoot = () => {
     }
     setRefreshing(false);
   };
+
+  useEffect(() => {
+    if (keyMigrationFailure && !keyMigrationFailureModalHasBeenShown) {
+      batch(() => {
+        dispatch(setShowKeyMigrationFailureModal(true));
+        dispatch(setKeyMigrationFailureModalHasBeenShown());
+      });
+    }
+  }, [dispatch, keyMigrationFailure, keyMigrationFailureModalHasBeenShown]);
 
   return (
     <HomeContainer>
@@ -270,7 +290,7 @@ const HomeRoot = () => {
 
         {/* ////////////////////////////// EXCHANGE RATES */}
         {memoizedExchangeRates.length ? (
-          <HomeSection title="Exchange Rates">
+          <HomeSection title="Exchange Rates" label="1D">
             <ExchangeRatesList
               items={memoizedExchangeRates}
               defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
@@ -285,8 +305,7 @@ const HomeRoot = () => {
           </HomeSection>
         ) : null}
       </ScrollView>
-
-      <OnboardingFinishModal />
+      <KeyMigrationFailureModal />
     </HomeContainer>
   );
 };

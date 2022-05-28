@@ -57,7 +57,7 @@ const PIN_LENGTH = 4;
 const ATTEMPT_LIMIT = 3;
 const ATTEMPT_LOCK_OUT_TIME = 2 * 60;
 
-const hashPin = (pin: string[]) => {
+export const hashPin = (pin: string[]) => {
   const bits = sjcl.hash.sha256.hash(pin.join(''));
 
   return sjcl.codec.hex.fromBits(bits);

@@ -17,7 +17,7 @@ interface Props {
   emit: (item: GlobalSelectObj) => void;
 }
 
-const AvailableWalletsPill = styled.View`
+export const AvailableWalletsPill = styled.View`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   flex-direction: row;
   border-radius: 40px;

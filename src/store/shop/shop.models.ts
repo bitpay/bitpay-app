@@ -67,7 +67,7 @@ export interface CardConfig extends CommonCardConfig {
 export interface UnsoldGiftCard {
   amount: number;
   currency: string;
-  date: string | Date;
+  date: number | Date;
   name: string;
   discounts?: GiftCardDiscount[];
   invoiceId: string;
@@ -95,7 +95,7 @@ export interface GiftCard extends UnsoldGiftCard {
   pin?: string;
   clientId: string;
   balanceHistory?: GiftCardBalanceEntry[];
-  invoice: Invoice;
+  invoice?: Invoice;
 }
 
 export type GiftCardSaveParams = Partial<{
@@ -160,8 +160,10 @@ export interface Invoice {
   };
   exchangeRates: any;
   minerFees: {[currency: string]: InvoiceMinerFee};
+  paymentSubtotals: {[currency: string]: number};
   paymentTotals: {[currency: string]: number};
   paymentDisplayTotals: {[currency: string]: string};
+  price: number;
   amountPaid: number;
   displayAmountPaid: string;
   nonPayProPaymentReceived?: boolean;
@@ -225,4 +227,25 @@ export interface DirectIntegrationMap {
 export interface CategoriesAndCurations {
   curated: CurationMap;
   categories: CategoryMap;
+}
+
+export interface LegacyGiftCard {
+  accessKey: string;
+  amount: number;
+  archived: boolean;
+  barcodeData?: string;
+  barcodeFormat?: string;
+  barcodeImage?: string;
+  claimCode: string;
+  claimLink?: string;
+  currency: string;
+  date: number;
+  displayName: string;
+  invoiceId: string;
+  invoiceTime?: number;
+  invoiceUrl: string;
+  name: string;
+  pin?: string;
+  status: string;
+  uuid: string;
 }

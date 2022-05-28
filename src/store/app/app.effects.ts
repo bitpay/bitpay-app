@@ -16,7 +16,7 @@ import {CardEffects} from '../card';
 import {LocationEffects} from '../location';
 import {RootState, Effect} from '../index';
 import {LogActions} from '../log';
-import {startWalletStoreInit} from '../wallet/effects';
+import {startMigration, startWalletStoreInit} from '../wallet/effects';
 import {AppActions} from './';
 import {AppIdentity} from './app.models';
 import RNBootSplash from 'react-native-bootsplash';
@@ -25,7 +25,7 @@ import {SEGMENT_API_KEY, APPSFLYER_API_KEY, APP_ID} from '@env';
 import appsFlyer from 'react-native-appsflyer';
 import {requestTrackingPermission} from 'react-native-tracking-transparency';
 import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
-import {setHomeCarouselConfig, showBlur} from './app.actions';
+import {setMigrationComplete, showBlur} from './app.actions';
 import {batch} from 'react-redux';
 import i18n from 'i18next';
 import {WalletActions} from '../wallet';
@@ -34,22 +34,27 @@ import {coinbaseInitialize} from '../coinbase';
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     dispatch(LogActions.clear());
-
-    const {APP, BITPAY_ID, WALLET} = getState();
-    const {network, pinLockActive, biometricLockActive, homeCarouselConfig} =
-      APP;
-
     dispatch(LogActions.info('Initializing app...'));
+
+    await dispatch(startWalletStoreInit());
+
+    if (!getState().APP.migrationComplete) {
+      await dispatch(startMigration());
+      dispatch(setMigrationComplete());
+    }
+
+    const {BITPAY_ID} = getState();
+    const {network, pinLockActive, biometricLockActive, colorScheme} =
+      getState().APP;
+
     dispatch(LogActions.debug(`Network: ${network}`));
-    dispatch(LogActions.debug(`Theme: ${APP.colorScheme || 'system'}`));
+    dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
 
     const token = BITPAY_ID.apiToken[network];
     const isPaired = !!token;
     const identity = dispatch(initializeAppIdentity());
 
-    dispatch(startWalletStoreInit());
-
-    await dispatch(initializeApi(APP.network, identity));
+    await dispatch(initializeApi(network, identity));
 
     if (isPaired) {
       try {
@@ -102,15 +107,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     // Update Coinbase
     dispatch(coinbaseInitialize());
-
-    // set home carousel config if not already set
-    if (!homeCarouselConfig.length) {
-      const keys = Object.values(WALLET.keys).map(key => ({
-        id: key.id,
-        show: true,
-      }));
-      dispatch(setHomeCarouselConfig([...keys]));
-    }
     dispatch(showBlur(pinLockActive || biometricLockActive));
     await sleep(500);
     dispatch(LogActions.info('Initialized app successfully.'));

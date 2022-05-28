@@ -140,6 +140,9 @@ const WalletConnectHome = () => {
                   nonce: nonce && convertHexToNumber(nonce),
                   gasLimit: gas && convertHexToNumber(gas),
                   data,
+                  customData: {
+                    service: 'walletConnect',
+                  },
                 };
                 const {txDetails, txp} = (await dispatch<any>(
                   createProposalAndBuildTxDetails(tx),

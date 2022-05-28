@@ -78,6 +78,10 @@ export interface AppState {
   settingsListConfig: SettingsListType[];
   altCurrencyList: Array<AltCurrenciesRowProps>;
   defaultAltCurrency: AltCurrenciesRowProps;
+  migrationComplete: boolean;
+  keyMigrationFailure: boolean;
+  showKeyMigrationFailureModal: boolean;
+  keyMigrationFailureModalHasBeenShown: boolean;
 }
 
 const initialState: AppState = {
@@ -125,6 +129,10 @@ const initialState: AppState = {
   settingsListConfig: [],
   altCurrencyList: [],
   defaultAltCurrency: {isoCode: 'USD', name: 'US Dollar'},
+  migrationComplete: false,
+  keyMigrationFailure: false,
+  showKeyMigrationFailureModal: false,
+  keyMigrationFailureModalHasBeenShown: false,
 };
 
 export const appReducer = (
@@ -380,6 +388,30 @@ export const appReducer = (
       return {
         ...state,
         defaultAltCurrency: action.defaultAltCurrency,
+      };
+
+    case AppActionTypes.SET_MIGRATION_COMPLETE:
+      return {
+        ...state,
+        migrationComplete: true,
+      };
+
+    case AppActionTypes.SET_KEY_MIGRATION_FAILURE:
+      return {
+        ...state,
+        keyMigrationFailure: true,
+      };
+
+    case AppActionTypes.SET_SHOW_KEY_MIGRATION_FAILURE_MODAL:
+      return {
+        ...state,
+        showKeyMigrationFailureModal: action.payload,
+      };
+
+    case AppActionTypes.SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN:
+      return {
+        ...state,
+        keyMigrationFailureModalHasBeenShown: true,
       };
 
     default:
