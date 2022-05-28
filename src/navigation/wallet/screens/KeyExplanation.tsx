@@ -23,9 +23,48 @@ type KeyExplanationScreenProps = StackScreenProps<
 
 // IMAGES
 const KeyExplanationImages = {
-  recoveryPhrase: require('../../../../assets/img/key-explanation/recovery-phrase.png'),
-  safeCoins: require('../../../../assets/img/key-explanation/safe-coins.png'),
-  walletSafety: require('../../../../assets/img/key-explanation/wallet-safety.png'),
+  recoveryPhrase: {
+    light: (
+      <OnboardingImage
+        style={{width: 205, height: 210}}
+        source={require('../../../../assets/img/key-explanation/light/recovery-phrase.png')}
+      />
+    ),
+    dark: (
+      <OnboardingImage
+        style={{width: 200, height: 210}}
+        source={require('../../../../assets/img/key-explanation/dark/recovery-phrase.png')}
+      />
+    ),
+  },
+  safeCoins: {
+    light: (
+      <OnboardingImage
+        style={{width: 247, height: 225}}
+        source={require('../../../../assets/img/key-explanation/light/safe-coins.png')}
+      />
+    ),
+    dark: (
+      <OnboardingImage
+        style={{width: 247, height: 190}}
+        source={require('../../../../assets/img/key-explanation/dark/safe-coins.png')}
+      />
+    ),
+  },
+  walletSafety: {
+    light: (
+      <OnboardingImage
+        style={{width: 205, height: 210}}
+        source={require('../../../../assets/img/key-explanation/light/wallet-safety.png')}
+      />
+    ),
+    dark: (
+      <OnboardingImage
+        style={{width: 180, height: 210}}
+        source={require('../../../../assets/img/key-explanation/dark/wallet-safety.png')}
+      />
+    ),
+  },
 };
 
 const KeyExplanationContainer = styled.SafeAreaView`
@@ -51,35 +90,17 @@ const KeyExplanation: React.FC<KeyExplanationScreenProps> = () => {
     {
       title: 'Your funds, on your device',
       text: 'A wallet is like a vault stored on your device containing your crypto funds. Much like a vault, your wallet will only be accessible with the recovery phrase.',
-      img: () => (
-        <OnboardingImage
-          widthPct={0.217}
-          heightPct={0.24}
-          source={KeyExplanationImages.safeCoins}
-        />
-      ),
+      img: () => KeyExplanationImages.safeCoins[themeType],
     },
     {
       title: 'The recovery phrase',
       text: 'Your wallet recovery phrase is composed of 12 randomly selected words. If you ever lose or damage your device, you can re-gain access to your wallet as long as you have your 12-word recovery phrase.',
-      img: () => (
-        <OnboardingImage
-          widthPct={0.24}
-          heightPct={0.185}
-          source={KeyExplanationImages.recoveryPhrase}
-        />
-      ),
+      img: () => KeyExplanationImages.recoveryPhrase[themeType],
     },
     {
       title: "Don't lose it!",
       text: 'In order to protect your funds from being accessible to hackers and thieves, the recovery phrase must be kept somewhere safe and remain a secret.',
-      img: () => (
-        <OnboardingImage
-          widthPct={0.24}
-          heightPct={0.169}
-          source={KeyExplanationImages.walletSafety}
-        />
-      ),
+      img: () => KeyExplanationImages.walletSafety[themeType],
     },
   ];
 
