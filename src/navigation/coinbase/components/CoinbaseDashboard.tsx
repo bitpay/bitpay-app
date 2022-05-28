@@ -178,9 +178,8 @@ const CoinbaseDashboard = () => {
           <Balance scale={shouldScale(balance)}>
             {formatFiatAmount(
               balance,
-              user?.data?.native_currency?.toLowerCase() || 'usd',
-            )}{' '}
-            {user?.data?.native_currency}
+              user?.data?.native_currency?.toUpperCase(),
+            )}
           </Balance>
         ) : (
           <SkeletonPlaceholder

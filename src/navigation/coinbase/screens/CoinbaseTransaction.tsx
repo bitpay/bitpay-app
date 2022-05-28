@@ -23,14 +23,9 @@ const TransactionScrollContainer = styled.ScrollView`
 `;
 
 const HeaderContainer = styled.View`
-  flex-direction: column;
-  justify-content: space-between;
-  margin-top: 20px;
-`;
-
-const HeaderSubTitleContainer = styled.View`
   flex-direction: row;
   justify-content: space-between;
+  margin-top: 20px;
   align-items: center;
 `;
 
@@ -43,6 +38,7 @@ const HeaderTitle = styled.Text`
 const HeaderSubtitle = styled.Text`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   font-size: 16px;
+  margin-top: 8px;
 `;
 
 const HeaderIcon = styled.View`
@@ -112,18 +108,16 @@ const CoinbaseTransaction = ({
     <TransactionContainer>
       <TransactionScrollContainer>
         <HeaderContainer>
-          <HeaderTitle>{tx.details.title}</HeaderTitle>
-          <HeaderSubTitleContainer>
-            <View>
-              <HeaderSubtitle
-                numberOfLines={1}
-                style={{width: '90%'}}
-                ellipsizeMode={'tail'}>
-                {tx.details.subtitle}
-              </HeaderSubtitle>
-            </View>
-            <HeaderIcon>{getIcon()}</HeaderIcon>
-          </HeaderSubTitleContainer>
+          <View>
+            <HeaderTitle>{tx.details.title}</HeaderTitle>
+            <HeaderSubtitle
+              numberOfLines={1}
+              style={{width: '90%'}}
+              ellipsizeMode={'tail'}>
+              {tx.details.subtitle}
+            </HeaderSubtitle>
+          </View>
+          <HeaderIcon>{getIcon()}</HeaderIcon>
         </HeaderContainer>
         <SummaryContainer>
           <Title>Summary</Title>

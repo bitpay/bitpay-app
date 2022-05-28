@@ -234,7 +234,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
         );
       },
       headerRight: () => {
-        return key.methods.isPrivKeyEncrypted() ? (
+        return key?.methods.isPrivKeyEncrypted() ? (
           <HeaderRightContainer>
             <CogIconContainer
               onPress={() =>
@@ -275,7 +275,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
 
   const keyOptions: Array<Option> = [];
 
-  if (!key.methods.isPrivKeyEncrypted()) {
+  if (!key?.methods.isPrivKeyEncrypted()) {
     keyOptions.push({
       img: <Icons.Encrypt />,
       title: 'Encrypt your Key',
