@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useAppSelector} from '../../../utils/hooks/useAppSelector';
 import {GetCoinAndNetwork} from '../../../store/wallet/effects/address/address';
 import {GetProtocolPrefixAddress} from '../../../store/wallet/utils/wallet';
@@ -24,6 +24,7 @@ import {
 } from '../../../styles/colors';
 import Clipboard from '@react-native-community/clipboard';
 import {useAppDispatch} from '../../../utils/hooks';
+import CopiedSvg from '../../../../assets/img/copied-success.svg';
 
 const MisunderstoodOutputsText = styled(H7)`
   margin-bottom: 5px;
@@ -53,6 +54,25 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
   let {coin, network} = tx;
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const dispatch = useAppDispatch();
+
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setCopied(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [copied]);
+
+  const copyText = (text: string) => {
+    if (!copied && !!text) {
+      Clipboard.setString(text);
+      setCopied(true);
+    }
+  };
 
   tx.outputs.forEach((output: any) => {
     const outputAddr = output.toAddress ? output.toAddress : output.address;
@@ -94,10 +114,6 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
     );
   };
 
-  const copyText = (text: string) => {
-    Clipboard.setString(text);
-  };
-
   return (
     <>
       <DetailContainer>
@@ -109,7 +125,24 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
 
             {!tx.hasMultiplesOutputs ? (
               <DetailRow>
-                <SendToPill icon={getIcon()} description={getDesc()} />
+                {copied ? (
+                  <SendToPill
+                    icon={<CopiedSvg width={18} />}
+                    description={getDesc()}
+                  />
+                ) : (
+                  <SendToPill
+                    icon={getIcon()}
+                    description={getDesc()}
+                    onPress={() =>
+                      copyText(
+                        tx.outputs[0].addressToShow
+                          ? tx.outputs[0].addressToShow
+                          : tx.outputs[0].address,
+                      )
+                    }
+                  />
+                )}
               </DetailRow>
             ) : null}
 

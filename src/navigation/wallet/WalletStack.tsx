@@ -45,6 +45,9 @@ import RequestSpecificAmountQR from './screens/request-specific-amount/RequestSp
 import TransactionDetails from './screens/TransactionDetails';
 import TransactionProposalDetails from './screens/TransactionProposalDetails';
 import GlobalSelect, {GlobalSelectParamList} from './screens/GlobalSelect';
+import KeyGlobalSelect, {
+  KeyGlobalSelectParamList,
+} from './screens/KeyGlobalSelect';
 import DebitCardConfirm, {
   DebitCardConfirmParamList,
 } from './screens/send/confirm/DebitCardConfirm';
@@ -106,6 +109,7 @@ export type WalletStackParamList = {
   TransactionDetails: {wallet: WalletModel; transaction: any};
   TransactionProposalDetails: {wallet: WalletModel; transaction: any; key: Key};
   GlobalSelect: GlobalSelectParamList;
+  KeyGlobalSelect: KeyGlobalSelectParamList;
   WalletInformation: {wallet: WalletModel};
   ExportWallet: {
     wallet: WalletModel;
@@ -155,6 +159,7 @@ export enum WalletScreens {
   TRANSACTION_DETAILS = 'TransactionDetails',
   TRANSACTION_PROPOSAL_DETAILS = 'TransactionProposalDetails',
   GLOBAL_SELECT = 'GlobalSelect',
+  KEY_GLOBAL_SELECT = 'KeyGlobalSelect',
   WALLET_INFORMATION = 'WalletInformation',
   EXPORT_WALLET = 'ExportWallet',
   ADDRESSES = 'Addresses',
@@ -341,6 +346,13 @@ const WalletStack = () => {
           }}
           name={WalletScreens.GLOBAL_SELECT}
           component={GlobalSelect}
+        />
+        <Wallet.Screen
+          options={{
+            headerTitle: () => <HeaderTitle>Select a key</HeaderTitle>,
+          }}
+          name={WalletScreens.KEY_GLOBAL_SELECT}
+          component={KeyGlobalSelect}
         />
         <Wallet.Screen
           name={WalletScreens.WALLET_INFORMATION}

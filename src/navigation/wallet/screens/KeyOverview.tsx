@@ -161,6 +161,10 @@ export const buildUIFormattedWallet: (
   hideWallet,
   hideBalance,
   pendingTxps,
+  multisig:
+    credentials.n > 1
+      ? `- Multisig ${credentials.m}/${credentials.n}`
+      : undefined,
 });
 
 // Key overview list builder
@@ -213,11 +217,13 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
             activeOpacity={ActiveOpacity}
             disabled={!hasMultipleKeys}
             onPress={() => setShowKeyDropdown(true)}>
-            {theme.dark ? (
-              <EncryptPasswordDarkModeImg />
-            ) : (
-              <EncryptPasswordImg />
-            )}
+            {key.methods.isPrivKeyEncrypted() ? (
+              theme.dark ? (
+                <EncryptPasswordDarkModeImg />
+              ) : (
+                <EncryptPasswordImg />
+              )
+            ) : null}
             <HeaderTitleContainer>
               <HeaderTitle style={{textAlign: 'center'}}>
                 {key?.keyName}
@@ -265,7 +271,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
     );
 
     return buildNestedWalletList(coins, tokens, defaultAltCurrency.isoCode);
-  }, [wallets, defaultAltCurrency.isoCode]);
+  }, [keys, wallets, defaultAltCurrency.isoCode]);
 
   const keyOptions: Array<Option> = [];
 
@@ -346,7 +352,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
         />
       );
     },
-    [navigation, key],
+    [navigation, keys],
   );
 
   return (

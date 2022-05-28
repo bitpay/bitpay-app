@@ -78,9 +78,13 @@ export const buildWalletObj =
       network,
       n,
       m,
+      hideWallet = false,
+      hideBalance = false,
     }: Credentials & {
       balance?: WalletBalance;
       tokens?: any;
+      hideWallet?: boolean; // ionic migration only
+      hideBalance?: boolean; // ionic migration only
       network: Network;
     },
     tokenOpts?: {[key in string]: Token},
@@ -109,8 +113,8 @@ export const buildWalletObj =
       n,
       m,
       isRefreshing: false,
-      hideWallet: false,
-      hideBalance: false,
+      hideWallet,
+      hideBalance,
       pendingTxps: [],
     };
   };
@@ -139,6 +143,34 @@ export const buildKeyObj = ({
     isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
     backupComplete,
     keyName: 'My Key',
+  };
+};
+
+export const buildMigrationKeyObj = ({
+  key,
+  wallets,
+  totalBalance = 0,
+  totalBalanceLastDay = 0,
+  backupComplete,
+  keyName = 'My Key',
+}: {
+  key: any;
+  wallets: Wallet[];
+  backupComplete: boolean;
+  keyName: string | undefined;
+  totalBalance?: number;
+  totalBalanceLastDay?: number;
+}): Key => {
+  return {
+    id: key.id,
+    wallets,
+    properties: key.methods.toObj(),
+    methods: key.methods,
+    totalBalance,
+    totalBalanceLastDay,
+    isPrivKeyEncrypted: key.methods.isPrivKeyEncrypted(),
+    backupComplete,
+    keyName,
   };
 };
 
@@ -214,7 +246,7 @@ export const generateKeyExportCode = (
   key: Key,
   getKeyMnemonic?: string | undefined,
 ): string => {
-  return `1|${getKeyMnemonic}|null|null|${key.properties.mnemonic}|null`;
+  return `1|${getKeyMnemonic}|null|null|${key.properties.mnemonicHasPassphrase}|null`;
 };
 
 export const isSegwit = (addressType: string): boolean => {

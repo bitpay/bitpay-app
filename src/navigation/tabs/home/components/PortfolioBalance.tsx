@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components/native';
 import {BaseText} from '../../../../components/styled/Text';
-import {SlateDark, White} from '../../../../styles/colors';
+import {Black, LuckySevens, SlateDark, White} from '../../../../styles/colors';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import {
@@ -35,6 +35,15 @@ const PortfolioBalanceText = styled(BaseText)`
   font-weight: bold;
   font-size: 31px;
   color: ${({theme}) => theme.colors.text};
+`;
+
+const PercentageText = styled(BaseText)`
+  font-size: 12px;
+  color: ${({theme: {dark}}) => (dark ? LuckySevens : Black)};
+`;
+
+const PercentageContainer = styled.View`
+  flex-direction: row;
 `;
 
 const PortfolioBalance = () => {
@@ -84,7 +93,10 @@ const PortfolioBalance = () => {
         )}
       </PortfolioBalanceText>
       {percentageDifference ? (
-        <Percentage percentageDifference={percentageDifference} />
+        <PercentageContainer>
+          <Percentage percentageDifference={percentageDifference} />
+          <PercentageText> Last Day</PercentageText>
+        </PercentageContainer>
       ) : null}
     </PortfolioContainer>
   );
