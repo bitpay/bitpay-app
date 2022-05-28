@@ -222,6 +222,7 @@ export const buildTxDetails =
         recipientName: name,
         recipientAddress: address && formatCryptoAddress(address),
         img: wallet.img,
+        recipientFullAddress: address,
       },
       fee: {
         feeLevel,
@@ -283,7 +284,6 @@ const buildTransactionProposal =
     return new Promise(async resolve => {
       const {
         currency,
-        customData,
         feeLevel,
         feePerKb,
         invoiceID,
@@ -292,6 +292,19 @@ const buildTransactionProposal =
         sendMax,
         wallet,
       } = tx;
+      let {customData} = tx;
+
+      if (!customData) {
+        if (tx.recipient?.type === 'wallet') {
+          customData = {
+            toWalletName: tx.recipient.name || null,
+          };
+        } else if (tx.recipient?.type === 'coinbase') {
+          customData = {
+            service: 'coinbase',
+          };
+        }
+      }
       // base tx
       const txp: Partial<TransactionProposal> = {
         coin: currency,

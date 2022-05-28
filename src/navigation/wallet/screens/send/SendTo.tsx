@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {HeaderTitle} from '../../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
@@ -13,7 +13,7 @@ import {RouteProp} from '@react-navigation/core';
 import {WalletScreens, WalletStackParamList} from '../../WalletStack';
 import {Effect, RootState} from '../../../../store';
 import {formatFiatAmount, sleep} from '../../../../utils/helper-methods';
-import {Key, Recipient} from '../../../../store/wallet/wallet.models';
+import {Key} from '../../../../store/wallet/wallet.models';
 import debounce from 'lodash.debounce';
 import {
   CheckIfLegacyBCH,
@@ -321,6 +321,7 @@ const SendTo = () => {
         walletId,
         keyId,
         address,
+        currency: credentials.coin,
       };
 
       dispatch(

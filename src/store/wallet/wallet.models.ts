@@ -362,6 +362,7 @@ export interface TxDetailsSendingTo {
   recipientName?: string;
   recipientAddress?: string;
   img: string | ((props?: any) => ReactElement);
+  recipientFullAddress?: string;
 }
 
 export interface TxDetailsSendingFrom {
