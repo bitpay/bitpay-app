@@ -63,6 +63,13 @@ import {
 import {coinbaseUpdateExchangeRate} from '../../../coinbase/coinbase.effects';
 import {hashPin} from '../../../../components/modal/pin/PinModal';
 import {navigationRef} from '../../../../Root';
+import {
+  CardConfigMap,
+  GiftCard,
+  LegacyGiftCard,
+} from '../../../shop/shop.models';
+import {ShopActions} from '../../../shop';
+import {initialShopState} from '../../../shop/shop.reducer';
 
 const BWC = BwcProvider.getInstance();
 
@@ -233,6 +240,76 @@ export const startMigration =
         dispatch(LogActions.info('Successfully migrated config settings'));
       } catch (err) {
         dispatch(LogActions.info('Failed to migrate config settings'));
+      }
+      // gift cards
+      try {
+        dispatch(LogActions.info('Migrating gift cards'));
+        const supportedCardMap = JSON.parse(
+          await RNFS.readFile(
+            cordovaStoragePath + 'giftCardConfigCache',
+            'utf8',
+          ).catch(_ => '{}'),
+        ) as CardConfigMap;
+        dispatch(
+          ShopActions.successFetchCatalog({
+            availableCardMap: supportedCardMap || {},
+            categoriesAndCurations: initialShopState.categoriesAndCurations,
+            integrations: initialShopState.integrations,
+          }),
+        );
+        const supportedCardNames = Object.keys(supportedCardMap);
+        const getStorageKey = (cardName: string) => {
+          switch (cardName) {
+            case 'Amazon.com':
+              return 'amazonGiftCards-livenet';
+            case 'Amazon.co.jp':
+              return 'amazonGiftCards-livenet-japan';
+            case 'Mercado Livre':
+              return 'MercadoLibreGiftCards-livenet';
+            default:
+              return `giftCards-${cardName}-livenet`;
+          }
+        };
+        const purchasedCardPromises = supportedCardNames.map(cardName =>
+          RNFS.readFile(
+            cordovaStoragePath + getStorageKey(cardName),
+            'utf8',
+          ).catch(_ => '{}'),
+        );
+        const purchasedCardResponses = await Promise.all(purchasedCardPromises);
+        const purchasedCards = purchasedCardResponses
+          .map(res => {
+            try {
+              return JSON.parse(res);
+            } catch (err) {}
+            return {};
+          })
+          .map((giftCardMap: {[invoiceId: string]: LegacyGiftCard}) => {
+            const legacyGiftCards = Object.values(giftCardMap);
+            const migratedGiftCards = legacyGiftCards.map(legacyGiftCard => ({
+              ...legacyGiftCard,
+              clientId: legacyGiftCard.uuid,
+            }));
+            return migratedGiftCards as GiftCard[];
+          })
+          .filter(brand => brand.length);
+        const allGiftCards = purchasedCards
+          .flat()
+          .filter(
+            giftCard =>
+              supportedCardNames.includes(giftCard.name) &&
+              giftCard.status !== 'UNREDEEMED',
+          );
+        const numActiveGiftCards = allGiftCards.filter(
+          giftCard => !giftCard.archived,
+        ).length;
+        const giftCards = allGiftCards.map(giftCard => ({
+          ...giftCard,
+          archived: numActiveGiftCards > 3 ? true : giftCard.archived,
+        }));
+        dispatch(ShopActions.setPurchasedGiftCards({giftCards}));
+      } catch (err) {
+        dispatch(LogActions.info('Failed to migrate gift cards'));
       }
 
       // address book
