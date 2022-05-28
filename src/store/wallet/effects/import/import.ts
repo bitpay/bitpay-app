@@ -70,6 +70,7 @@ import {
 } from '../../../shop/shop.models';
 import {ShopActions} from '../../../shop';
 import {initialShopState} from '../../../shop/shop.reducer';
+import {StackActions} from '@react-navigation/native';
 
 const BWC = BwcProvider.getInstance();
 
@@ -98,17 +99,30 @@ export const startMigration =
   async (dispatch): Promise<void> => {
     return new Promise(async resolve => {
       const goToNewUserOnboarding = () => {
-        navigationRef.navigate('Onboarding', {screen: 'OnboardingStart'});
         dispatch(setIntroCompleted());
+        navigationRef.dispatch(
+          StackActions.replace('Onboarding', {
+            screen: 'OnboardingStart',
+          }),
+        );
       };
 
       // keys and wallets
       try {
+        // cordova directory not found
+        if (!(await RNFS.exists(cordovaStoragePath))) {
+          dispatch(
+            LogActions.info('directory not found -> new user onboarding'),
+          );
+          goToNewUserOnboarding();
+          return resolve();
+        }
+
         const files = (await RNFS.readDir(cordovaStoragePath)) as {
           name: string;
         }[];
 
-        // key file does not exist = new user -> skip intro and navigate to onboarding start
+        // key file does not exist
         if (!files.find(file => file.name === 'keys')) {
           dispatch(
             LogActions.info('Key file not found -> new user onboarding'),
@@ -125,7 +139,7 @@ export const startMigration =
           await RNFS.readFile(cordovaStoragePath + 'profile', 'utf8'),
         ) as {credentials: Wallet[]};
 
-        // no keys = new user -> skip intro and navigate to onboarding start
+        // no keys
         if (!keys.length) {
           dispatch(LogActions.info('No keys -> new user onboarding'));
           goToNewUserOnboarding();
