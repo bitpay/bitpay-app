@@ -190,7 +190,11 @@ const HomeRoot = () => {
                   if (needsBackup) {
                     dispatch(
                       showBottomNotificationModal(
-                        keyBackupRequired(Object.values(keys)[0], navigation),
+                        keyBackupRequired(
+                          Object.values(keys)[0],
+                          navigation,
+                          dispatch,
+                        ),
                       ),
                     );
                   } else {
