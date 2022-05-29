@@ -148,11 +148,29 @@ export const buildUIFormattedWallet: (
   walletName: walletName || credentials.walletName,
   cryptoBalance: balance.crypto,
   cryptoLockedBalance: balance.cryptoLocked,
+  cryptoConfirmedLockedBalance: balance.cryptoConfirmedLocked,
+  cryptoSpendableBalance: balance.cryptoSpendable,
+  cryptoPendingBalance: balance.cryptoPending,
   fiatBalance: formatFiatAmount(balance.fiat, defaultAltCurrencyIsoCode, {
     currencyDisplay,
   }),
   fiatLockedBalance: formatFiatAmount(
     balance.fiatLocked,
+    defaultAltCurrencyIsoCode,
+    {currencyDisplay},
+  ),
+  fiatConfirmedLockedBalance: formatFiatAmount(
+    balance.fiatConfirmedLocked,
+    defaultAltCurrencyIsoCode,
+    {currencyDisplay},
+  ),
+  fiatSpendableBalance: formatFiatAmount(
+    balance.fiatSpendable,
+    defaultAltCurrencyIsoCode,
+    {currencyDisplay},
+  ),
+  fiatPendingBalance: formatFiatAmount(
+    balance.fiatPending,
     defaultAltCurrencyIsoCode,
     {currencyDisplay},
   ),

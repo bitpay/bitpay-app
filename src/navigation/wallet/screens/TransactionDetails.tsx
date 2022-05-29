@@ -93,7 +93,7 @@ const VerticalSpace = styled.View`
 `;
 
 const MemoHeader = styled(H7)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)}
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   margin: 10px 0;
 `;
 
@@ -417,7 +417,7 @@ const TransactionDetails = () => {
           ) : null}
 
           {currencyAbbreviation === 'btc' &&
-          IsReceived(txs.action) &&
+          (IsReceived(txs.action) || IsMoved(txs.action)) &&
           txs.lowAmount ? (
             <Banner
               type={'warning'}
