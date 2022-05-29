@@ -1,5 +1,5 @@
 import {
-  AvailableCardMap,
+  CardConfigMap,
   CategoriesAndCurations,
   DirectIntegrationMap,
   GiftCard,
@@ -19,6 +19,7 @@ export enum ShopActionTypes {
   UPDATED_GIFT_CARD_STATUS = 'SHOP/UPDATED_GIFT_CARD_STATUS',
   UPDATED_PHONE = 'SHOP/UPDATED_PHONE',
   REDEEMED_GIFT_CARD = 'SHOP/REDEEMED_GIFT_CARD',
+  SET_PURCHASED_GIFT_CARDS = 'SHOP/SET_PURCHASED_GIFT_CARDS',
   TOGGLED_GIFT_CARD_ARCHIVED_STATUS = 'SHOP/TOGGLED_GIFT_CARD_ARCHIVED_STATUS',
   CLEARED_GIFT_CARDS = 'SHOP/CLEARED_GIFT_CARDS',
 }
@@ -26,7 +27,7 @@ export enum ShopActionTypes {
 interface successFetchCatalog {
   type: typeof ShopActionTypes.SUCCESS_FETCH_CATALOG;
   payload: {
-    availableCardMap: AvailableCardMap;
+    availableCardMap: CardConfigMap;
     categoriesAndCurations: CategoriesAndCurations;
     integrations: DirectIntegrationMap;
   };
@@ -45,6 +46,12 @@ interface initializedUnsoldGiftCard {
   type: typeof ShopActionTypes.INITIALIZED_UNSOLD_GIFT_CARD;
   payload: {
     giftCard: UnsoldGiftCard;
+  };
+}
+interface setPurchasedGiftCards {
+  type: typeof ShopActionTypes.SET_PURCHASED_GIFT_CARDS;
+  payload: {
+    giftCards: GiftCard[];
   };
 }
 interface deletedUnsoldGiftCard {
@@ -92,6 +99,7 @@ export type ShopActionType =
   | successCreateGiftCardInvoice
   | failedCreateGiftCardInvoice
   | initializedUnsoldGiftCard
+  | setPurchasedGiftCards
   | deletedUnsoldGiftCard
   | redeemedGiftCard
   | toggledGiftCardArchivedStatus

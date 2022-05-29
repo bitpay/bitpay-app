@@ -82,7 +82,7 @@ const GiftCardStack = () => {
         name={GiftCardScreens.ENTER_PHONE}
         component={EnterPhone}
         options={{
-          headerTitle: () => <HeaderTitle>Enter your phone number</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>Enter Phone</HeaderTitle>,
         }}
       />
       <GiftCards.Screen

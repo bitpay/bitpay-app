@@ -5,10 +5,8 @@ import {WalletScreens, WalletStackParamList} from '../../../WalletStack';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {
   Balance,
-  H4,
   H6,
   Smallest,
-  TextAlign,
   Type,
 } from '../../../../../components/styled/Text';
 import {
@@ -23,21 +21,12 @@ import {
   createPayProTxProposal,
   handleCreateTxProposalError,
   removeTxp,
-  showNoWalletsModal,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
-import SheetModal from '../../../../../components/modal/base/sheet/SheetModal';
-import {
-  WalletSelectMenuBodyContainer,
-  WalletSelectMenuContainer,
-  WalletSelectMenuHeaderContainer,
-} from '../../GlobalSelect';
-import CoinbaseSmall from '../../../../../../assets/img/logos/coinbase-small.svg';
-import KeyWalletsRow from '../../../../../components/list/KeyWalletsRow';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
 import {
   Amount,
@@ -46,6 +35,7 @@ import {
   Header,
   SendingFrom,
   SharedDetailRow,
+  WalletSelector,
 } from './Shared';
 import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../components/ErrorMessages';
@@ -110,8 +100,7 @@ const Confirm = () => {
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const network = useAppSelector(({APP}) => APP.network);
 
-  const [walletSelectModalVisible, setWalletSelectModalVisible] =
-    useState(false);
+  const [walletSelectorVisible, setWalletSelectorVisible] = useState(false);
   const [key, setKey] = useState(keys[_wallet ? _wallet.keyId : '']);
   const [wallet, setWallet] = useState(_wallet);
   const [coinbaseAccount, setCoinbaseAccount] =
@@ -134,32 +123,11 @@ const Confirm = () => {
 
   const reshowWalletSelector = async () => {
     await sleep(400);
-    setWalletSelectModalVisible(true);
+    setWalletSelectorVisible(true);
   };
 
   const openKeyWalletSelector = () => {
-    const {keyWallets, coinbaseWallets} = memoizedKeysAndWalletsList;
-    if (keyWallets.length || coinbaseWallets.length) {
-      if (
-        keyWallets.length === 1 &&
-        keyWallets[0].wallets.length === 1 &&
-        coinbaseWallets.length === 0
-      ) {
-        onWalletSelect(keyWallets[0].wallets[0]);
-        return;
-      }
-      if (
-        coinbaseWallets.length === 1 &&
-        coinbaseWallets[0].wallets.length === 1 &&
-        keyWallets.length === 0
-      ) {
-        onCoinbaseAccountSelect(coinbaseWallets[0].wallets[0]);
-        return;
-      }
-      setWalletSelectModalVisible(true);
-    } else {
-      dispatch(showNoWalletsModal({navigation}));
-    }
+    setWalletSelectorVisible(true);
   };
 
   const createTopUpInvoice = async ({
@@ -169,9 +137,6 @@ const Confirm = () => {
     walletId: string;
     transactionCurrency: string;
   }) => {
-    setWalletSelectModalVisible(false);
-    // Wait to close wallet selection modal
-    await sleep(500);
     dispatch(
       startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
     );
@@ -489,34 +454,20 @@ const Confirm = () => {
         </>
       ) : null}
 
-      <SheetModal
-        isVisible={walletSelectModalVisible}
+      <WalletSelector
+        isVisible={walletSelectorVisible}
+        setWalletSelectorVisible={setWalletSelectorVisible}
+        walletsAndAccounts={memoizedKeysAndWalletsList}
+        onWalletSelect={onWalletSelect}
+        onCoinbaseAccountSelect={onCoinbaseAccountSelect}
         onBackdropPress={async () => {
-          setWalletSelectModalVisible(false);
+          setWalletSelectorVisible(false);
           if (!wallet && !coinbaseAccount) {
             await sleep(100);
             navigation.goBack();
           }
-        }}>
-        <WalletSelectMenuContainer>
-          <WalletSelectMenuHeaderContainer>
-            <TextAlign align={'center'}>
-              <H4>Select a wallet</H4>
-            </TextAlign>
-          </WalletSelectMenuHeaderContainer>
-          <WalletSelectMenuBodyContainer>
-            <KeyWalletsRow
-              keyWallets={memoizedKeysAndWalletsList.keyWallets}
-              onPress={onWalletSelect}
-            />
-            <KeyWalletsRow<WalletRowProps>
-              keyWallets={memoizedKeysAndWalletsList.coinbaseWallets}
-              keySvg={CoinbaseSmall}
-              onPress={onCoinbaseAccountSelect}
-            />
-          </WalletSelectMenuBodyContainer>
-        </WalletSelectMenuContainer>
-      </SheetModal>
+        }}
+      />
 
       <PaymentSent
         isVisible={showPaymentSentModal}

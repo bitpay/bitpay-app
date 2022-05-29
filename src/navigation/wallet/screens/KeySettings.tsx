@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useRef} from 'react';
+import React, {useEffect, useLayoutEffect, useRef} from 'react';
 import {
   BaseText,
   HeaderTitle,
@@ -121,10 +121,7 @@ const KeySettings = () => {
   const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
   const {keyName} = _key || {};
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerTitle: () => <HeaderTitle>Key Settings</HeaderTitle>,
-    });
+  useEffect(() => {
     if (context === 'createEncryptPassword') {
       navigation.navigate('Wallet', {
         screen: 'CreateEncryptPassword',
@@ -132,6 +129,12 @@ const KeySettings = () => {
       });
       scrollViewRef?.current?.scrollToEnd({animated: false});
     }
+  }, [context]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => <HeaderTitle>Key Settings</HeaderTitle>,
+    });
   });
 
   const buildEncryptModalConfig = (

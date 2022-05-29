@@ -9,6 +9,7 @@ interface Props {
   icon?: ReactElement;
   description: string;
   onPress?: () => void;
+  dropDown?: boolean;
 }
 
 const PillContainer = styled.Pressable`
@@ -29,7 +30,7 @@ const ArrowContainer = styled.View`
   margin-left: 8px;
 `;
 
-const SendToPill = ({icon, description, onPress}: Props) => {
+const SendToPill = ({icon, description, onPress, dropDown}: Props) => {
   const [toggleArrow, setToggleArrow] = useState(false);
   const _onPress = () => {
     setToggleArrow(!toggleArrow);
@@ -44,7 +45,7 @@ const SendToPill = ({icon, description, onPress}: Props) => {
         {description}
       </PillText>
 
-      {onPress ? (
+      {dropDown ? (
         <ArrowContainer>
           {toggleArrow ? (
             <ArrowUpSvg width={12} height={12} />

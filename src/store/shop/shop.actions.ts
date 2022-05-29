@@ -1,6 +1,6 @@
 import {ShopActionType, ShopActionTypes} from './shop.types';
 import {
-  AvailableCardMap,
+  CardConfigMap,
   CategoriesAndCurations,
   DirectIntegrationMap,
   GiftCard,
@@ -10,7 +10,7 @@ import {
 } from './shop.models';
 
 export const successFetchCatalog = (payload: {
-  availableCardMap: AvailableCardMap;
+  availableCardMap: CardConfigMap;
   categoriesAndCurations: CategoriesAndCurations;
   integrations: DirectIntegrationMap;
 }): ShopActionType => ({
@@ -37,6 +37,13 @@ export const initializedUnsoldGiftCard = (payload: {
   giftCard: UnsoldGiftCard;
 }): ShopActionType => ({
   type: ShopActionTypes.INITIALIZED_UNSOLD_GIFT_CARD,
+  payload,
+});
+
+export const setPurchasedGiftCards = (payload: {
+  giftCards: GiftCard[];
+}): ShopActionType => ({
+  type: ShopActionTypes.SET_PURCHASED_GIFT_CARDS,
   payload,
 });
 

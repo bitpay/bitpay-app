@@ -41,7 +41,7 @@ static void InitializeFlipper(UIApplication *application) {
     [bridge moduleForClass:[RCTDevLoadingView class]];
   #endif
   RCTRootView *rootView = [[RCTRootView alloc] initWithBridge:bridge
-                                                   moduleName:@"BitPayApp"
+                                                   moduleName:@"BitPay"
                                             initialProperties:nil];
 
   if (@available(iOS 13.0, *)) {
@@ -107,4 +107,13 @@ static void InitializeFlipper(UIApplication *application) {
 {
   return [RCTLinkingManager application:application openURL:url options:options];
 }
+
+- (BOOL)application:(UIApplication *)application continueUserActivity:(nonnull NSUserActivity *)userActivity
+ restorationHandler:(nonnull void (^)(NSArray<id<UIUserActivityRestoring>> * _Nullable))restorationHandler
+{
+ return [RCTLinkingManager application:application
+                  continueUserActivity:userActivity
+                    restorationHandler:restorationHandler];
+}
+
 @end

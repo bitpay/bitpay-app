@@ -4,12 +4,13 @@ import {
   baseNavigatorOptions,
   baseScreenOptions,
 } from '../../../constants/NavigationOptions';
-import ShopHome from './ShopHome';
+import ShopHome, {ShopHomeParamList} from './ShopHome';
 import {HeaderTitle} from '../../../components/styled/Text';
 import {t} from 'i18next';
+import {NavigatorScreenParams} from '@react-navigation/native';
 
 export type ShopStackParamList = {
-  Home: undefined;
+  Home: NavigatorScreenParams<ShopHomeParamList>;
 };
 
 export enum ShopScreens {
@@ -30,6 +31,7 @@ const ShopStack = () => {
         name={ShopScreens.HOME}
         component={ShopHome}
         options={{
+          headerLeft: () => null,
           headerTitle: () => <HeaderTitle>{t('Shop with crypto')}</HeaderTitle>,
         }}
       />

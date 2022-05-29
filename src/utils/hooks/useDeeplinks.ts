@@ -1,9 +1,12 @@
 import {LinkingOptions} from '@react-navigation/native';
 import {useEffect} from 'react';
-import {Linking} from 'react-native';
+import {InteractionManager, Linking} from 'react-native';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {useDispatch} from 'react-redux';
-import {APP_DEEPLINK_PREFIX} from '../../constants/config';
+import {
+  APP_DEEPLINK_PREFIX,
+  APP_UNIVERSAL_LINK_DOMAINS,
+} from '../../constants/config';
 import {BitpayIdScreens} from '../../navigation/bitpay-id/BitpayIdStack';
 import {CardScreens} from '../../navigation/card/CardStack';
 import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoStack';
@@ -14,6 +17,15 @@ import {useLogger} from '.';
 import {TabsScreens} from '../../navigation/tabs/TabsStack';
 import {SettingsScreens} from '../../navigation/tabs/settings/SettingsStack';
 import {incomingData} from '../../store/scan/scan.effects';
+import {showBlur} from '../../store/app/app.actions';
+
+const isUniversalLink = (url: string): boolean => {
+  const domain = url.split('https://')[1].split('/')[0];
+  return APP_UNIVERSAL_LINK_DOMAINS.includes(domain);
+};
+
+const isDeepLink = (url: string): boolean =>
+  url.startsWith(APP_DEEPLINK_PREFIX);
 
 export const useDeeplinks = () => {
   const dispatch = useDispatch();
@@ -21,9 +33,9 @@ export const useDeeplinks = () => {
 
   useEffect(() => {
     const urlEventHandler = ({url}: {url: string}) => {
-      if (url && url.startsWith(APP_DEEPLINK_PREFIX)) {
+      if (url && (isDeepLink(url) || isUniversalLink(url))) {
         logger.info(`Deep link received: ${url}`);
-
+        dispatch(showBlur(false));
         dispatch(incomingData(url));
 
         try {

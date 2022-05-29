@@ -4,29 +4,36 @@ import styled from 'styled-components/native';
 import {ScrollView} from 'react-native';
 import GiftCardCatalog from './components/GiftCardCatalog';
 import {
-  getCardConfigFromApiConfigMap,
+  getGiftCardConfigList,
   getGiftCardCurations,
 } from '../../../lib/gift-cards/gift-card';
 import {useDispatch} from 'react-redux';
-import {RootState} from '../../../store';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import {ScreenOptions} from '../../../styles/tabNavigator';
 import {ShopOnline} from './components/ShopOnline';
-import {
-  CardConfig,
-  Category,
-  DirectIntegrationApiObject,
-  GiftCard,
-} from '../../../store/shop/shop.models';
+import {CardConfig, Category, GiftCard} from '../../../store/shop/shop.models';
 import {ShopEffects} from '../../../store/shop';
-import {selectAvailableGiftCards} from '../../../store/shop/shop.selectors';
+import {
+  selectAvailableGiftCards,
+  selectCategories,
+  selectCategoriesAndCurations,
+  selectCategoriesWithIntegrations,
+  selectIntegrations,
+} from '../../../store/shop/shop.selectors';
 import {APP_NETWORK} from '../../../constants/config';
 import {useAppSelector} from '../../../utils/hooks';
+import {StackScreenProps} from '@react-navigation/stack';
+import {ShopScreens, ShopStackParamList} from './ShopStack';
 
-enum ShopTabs {
+export enum ShopTabs {
   GIFT_CARDS = 'Gift Cards',
   SHOP_ONLINE = 'Shop Online',
 }
+
+export type ShopHomeParamList = {
+  [ShopTabs.GIFT_CARDS]: undefined;
+  [ShopTabs.SHOP_ONLINE]: undefined;
+};
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -80,16 +87,11 @@ const getScrollViewHeight = (
     : getShopOnlineScrollViewHeight(integrationsCategories);
 };
 
-const ShopHome = () => {
-  const availableCardMap = useAppSelector(
-    ({SHOP}: RootState) => SHOP.availableCardMap,
-  );
-  const supportedCardMap = useAppSelector(
-    ({SHOP}: RootState) => SHOP.supportedCardMap,
-  );
-  const integrationsMap = useAppSelector(
-    ({SHOP}: RootState) => SHOP.integrations,
-  );
+const ShopHome: React.FC<
+  StackScreenProps<ShopStackParamList, ShopScreens.HOME>
+> = ({route}) => {
+  const availableCardMap = useAppSelector(({SHOP}) => SHOP.availableCardMap);
+  const supportedCardMap = useAppSelector(({SHOP}) => SHOP.supportedCardMap);
   const giftCards = useAppSelector(
     ({SHOP}) => SHOP.giftCards[APP_NETWORK],
   ) as GiftCard[];
@@ -99,18 +101,14 @@ const ShopHome = () => {
   const activeGiftCards = purchasedGiftCards.filter(
     giftCard => !giftCard.archived,
   );
-  const categoriesAndCurations = useAppSelector(
-    ({SHOP}: RootState) => SHOP.categoriesAndCurations,
-  );
+  const categoriesAndCurations = useAppSelector(selectCategoriesAndCurations);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const availableGiftCards = useAppSelector(selectAvailableGiftCards);
-
   const supportedGiftCards = useMemo(
-    () => getCardConfigFromApiConfigMap(supportedCardMap || availableCardMap),
+    () => getGiftCardConfigList(supportedCardMap || availableCardMap),
     [supportedCardMap, availableCardMap],
   );
-
   const curations = useMemo(
     () =>
       getGiftCardCurations(
@@ -121,27 +119,10 @@ const ShopHome = () => {
     [availableGiftCards, categoriesAndCurations, purchasedGiftCards],
   );
 
-  const integrations = useMemo(
-    () => Object.values(integrationsMap) as DirectIntegrationApiObject[],
-    [integrationsMap],
-  );
-
-  const categories = useMemo(
-    () => Object.values(categoriesAndCurations.categories) as Category[],
-    [categoriesAndCurations.categories],
-  );
-
-  const categoriesWitIntegrations = useMemo(
-    () =>
-      categories
-        .map(category => ({
-          ...category,
-          integrations: integrations.filter(integration =>
-            category.tags.some((tag: string) => integration.tags.includes(tag)),
-          ),
-        }))
-        .filter(category => category.integrations.length),
-    [categories, integrations],
+  const integrations = useAppSelector(selectIntegrations);
+  const categories = useAppSelector(selectCategories);
+  const categoriesWitIntegrations = useAppSelector(
+    selectCategoriesWithIntegrations,
   );
 
   const categoriesWithGiftCards = categories
@@ -204,6 +185,12 @@ const ShopHome = () => {
     dispatch(ShopEffects.startFetchCatalog());
     dispatch(ShopEffects.retryGiftCardRedemptions());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (route.params?.screen) {
+      setActiveTab(route.params.screen);
+    }
+  }, [route.params?.screen]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSetScrollViewHeight = useCallback(

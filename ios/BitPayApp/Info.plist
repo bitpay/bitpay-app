@@ -10,7 +10,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>BitPayApp</string>
+	<string>BitPay</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -28,6 +28,10 @@
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.bitpay.wallet</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>bitpay</string>
@@ -37,7 +41,7 @@
 	<key>CFBundleVersion</key>
 	<string>38</string>
 	<key>LSRequiresIPhoneOS</key>
-	<true />
+	<true/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSExceptionDomains</key>
@@ -45,18 +49,18 @@
 			<key>localhost</key>
 			<dict>
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<true />
+				<true/>
 			</dict>
 		</dict>
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Enable the camera to get started</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string />
-	<key>NSUserTrackingUsageDescription</key>
-	<string>Tracking is used to identify source of traffic, optimize campaigns, and improve user experiences in the app.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Enabling Face ID allows you quick and secure access to your account.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string></string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Tracking is used to identify source of traffic, optimize campaigns, and improve user experiences in the app.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Heebo-Black.ttf</string>
@@ -78,6 +82,6 @@
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
-	<false />
+	<false/>
 </dict>
 </plist>

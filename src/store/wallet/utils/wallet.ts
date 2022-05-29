@@ -60,11 +60,15 @@ export const buildWalletObj =
       balance = {
         crypto: '0',
         cryptoLocked: '0',
+        cryptoConfirmedLocked: '0',
         cryptoSpendable: '0',
+        cryptoPending: '0',
         fiat: 0,
         fiatLastDay: 0,
         fiatLocked: 0,
+        fiatConfirmedLocked: 0,
         fiatSpendable: 0,
+        fiatPending: 0,
         sat: 0,
         satAvailable: 0,
         satLocked: 0,
@@ -72,15 +76,20 @@ export const buildWalletObj =
         satConfirmed: 0,
         satConfirmedAvailable: 0,
         satSpendable: 0,
+        satPending: 0,
       },
       tokens,
       keyId,
       network,
       n,
       m,
+      hideWallet = false,
+      hideBalance = false,
     }: Credentials & {
       balance?: WalletBalance;
       tokens?: any;
+      hideWallet?: boolean; // ionic migration only
+      hideBalance?: boolean; // ionic migration only
       network: Network;
     },
     tokenOpts?: {[key in string]: Token},
@@ -109,8 +118,8 @@ export const buildWalletObj =
       n,
       m,
       isRefreshing: false,
-      hideWallet: false,
-      hideBalance: false,
+      hideWallet,
+      hideBalance,
       pendingTxps: [],
     };
   };
@@ -139,6 +148,34 @@ export const buildKeyObj = ({
     isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
     backupComplete,
     keyName: 'My Key',
+  };
+};
+
+export const buildMigrationKeyObj = ({
+  key,
+  wallets,
+  totalBalance = 0,
+  totalBalanceLastDay = 0,
+  backupComplete,
+  keyName = 'My Key',
+}: {
+  key: any;
+  wallets: Wallet[];
+  backupComplete: boolean;
+  keyName: string | undefined;
+  totalBalance?: number;
+  totalBalanceLastDay?: number;
+}): Key => {
+  return {
+    id: key.id,
+    wallets,
+    properties: key.methods.toObj(),
+    methods: key.methods,
+    totalBalance,
+    totalBalanceLastDay,
+    isPrivKeyEncrypted: key.methods.isPrivKeyEncrypted(),
+    backupComplete,
+    keyName,
   };
 };
 
@@ -214,7 +251,7 @@ export const generateKeyExportCode = (
   key: Key,
   getKeyMnemonic?: string | undefined,
 ): string => {
-  return `1|${getKeyMnemonic}|null|null|${key.properties.mnemonic}|null`;
+  return `1|${getKeyMnemonic}|null|null|${key.properties.mnemonicHasPassphrase}|null`;
 };
 
 export const isSegwit = (addressType: string): boolean => {
@@ -400,6 +437,11 @@ export const BuildKeysAndWalletsList = ({
     .filter(key => key.wallets.length);
 };
 
+export interface WalletsAndAccounts {
+  keyWallets: KeyWalletsRowProps<KeyWallet>[];
+  coinbaseWallets: KeyWalletsRowProps<WalletRowProps>[];
+}
+
 export const BuildPayProWalletSelectorList =
   ({
     keys,
@@ -411,10 +453,7 @@ export const BuildPayProWalletSelectorList =
     network?: Network;
     payProOptions?: PayProOptions;
     defaultAltCurrencyIsoCode?: string;
-  }): Effect<{
-    keyWallets: KeyWalletsRowProps<KeyWallet>[];
-    coinbaseWallets: KeyWalletsRowProps<WalletRowProps>[];
-  }> =>
+  }): Effect<WalletsAndAccounts> =>
   (_, getState) => {
     const {COINBASE} = getState();
     const coinbaseAccounts = COINBASE.accounts[COINBASE_ENV];

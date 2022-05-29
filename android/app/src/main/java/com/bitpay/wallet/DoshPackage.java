@@ -1,4 +1,4 @@
-package com.bitpayapp;
+package com.bitpay.wallet;
 
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.NativeModule;

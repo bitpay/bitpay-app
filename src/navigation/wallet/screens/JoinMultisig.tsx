@@ -1,7 +1,7 @@
-import React from 'react';
+import React, {useCallback} from 'react';
 import styled from 'styled-components/native';
 import {Caution} from '../../../styles/colors';
-import {BaseText} from '../../../components/styled/Text';
+import {BaseText, ImportTitle} from '../../../components/styled/Text';
 import Button from '../../../components/button/Button';
 import {useDispatch} from 'react-redux';
 import {
@@ -13,13 +13,13 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import {useForm, Controller} from 'react-hook-form';
 import BoxInput from '../../../components/form/BoxInput';
-import {useLogger} from '../../../utils/hooks/useLogger';
-import {KeyOptions} from '../../../store/wallet/wallet.models';
+import {KeyOptions, Status} from '../../../store/wallet/wallet.models';
 import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
 import {
-  CtaContainer as _CtaContainer,
-  ScanContainer as _ScanContainer,
   ActiveOpacity,
+  CtaContainer as _CtaContainer,
+  HeaderContainer,
+  ScanContainer,
 } from '../../../components/styled/Containers';
 import {
   startJoinMultisig,
@@ -32,14 +32,21 @@ import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
+import {BWCErrorMessage} from '../../../constants/BWCError';
+import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
+import {CustomErrorMessage} from '../components/ErrorMessages';
 
 export type JoinMultisigParamList = {
   key?: Key;
+  invitationCode?: string;
 };
 
 const schema = yup.object().shape({
   myName: yup.string().required(),
-  invitationCode: yup.string().required(),
+  invitationCode: yup
+    .string()
+    .required()
+    .matches(/^[0-9A-HJ-NP-Za-km-z]{70,80}$/, 'Invalid invitation code'),
 });
 
 const Gutter = '10px';
@@ -59,27 +66,15 @@ const ErrorText = styled(BaseText)`
   padding: 5px 0 0 10px;
 `;
 
-const InvitationInputContainer = styled.View`
-  margin-top: 20px;
-`;
-
-const ScanContainer = styled(_ScanContainer)`
-  position: absolute;
-  right: 10px;
-  bottom: 23px;
-  z-index: 1;
-`;
-
 const CtaContainer = styled(_CtaContainer)`
   padding: 10px 0;
 `;
 
 const JoinMultisig = () => {
   const dispatch = useDispatch();
-  const logger = useLogger();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'JoinMultisig'>>();
-  const {key} = route.params || {};
+  const {key, invitationCode} = route.params || {};
 
   const {
     control,
@@ -88,52 +83,20 @@ const JoinMultisig = () => {
     formState: {errors},
   } = useForm({resolver: yupResolver(schema)});
 
-  // const showJoinWarningModal = (opts: Partial<KeyOptions>) =>
-  //   dispatch(
-  //     showBottomNotificationModal({
-  //       type: 'warning',
-  //       title: 'Someone asked you to join a multisig wallet?',
-  //       message:
-  //         'You are about to join a shared wallet. This is an advanced feature, make sure you understand how multisig wallets work before putting funds in it. If a third party invited you to join, make sure you trust them, if you have purchased cryptocurrency they may be scamming you.',
-  //       enableBackdropDismiss: true,
-  //       actions: [
-  //         {
-  //           text: 'OK',
-  //           action: () => {
-  //             JoinMultisigWallet(opts);
-  //           },
-  //           primary: true,
-  //         },
-  //       ],
-  //     }),
-  //   );
-
-  const showErrorModal = (e: string) => {
-    dispatch(
-      showBottomNotificationModal({
-        type: 'warning',
-        title: 'Something went wrong',
-        message: e,
-        enableBackdropDismiss: true,
-        actions: [
-          {
-            text: 'OK',
-            action: () => {},
-            primary: true,
-          },
-        ],
-      }),
-    );
-  };
+  const showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
 
   const onSubmit = (formData: {invitationCode: string; myName: string}) => {
     const {invitationCode, myName} = formData;
-
     let opts: Partial<KeyOptions> = {};
     opts.invitationCode = invitationCode;
     opts.myName = myName;
 
-    // TODO showJoinWarningModal(opts);
     JoinMultisigWallet(opts);
   };
 
@@ -141,9 +104,7 @@ const JoinMultisig = () => {
     opts: Partial<KeyOptions>,
   ): Promise<void> => {
     try {
-      await dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.JOIN_WALLET),
-      );
+      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.JOIN_WALLET));
 
       if (key) {
         const wallet = (await dispatch<any>(
@@ -153,27 +114,76 @@ const JoinMultisig = () => {
           }),
         )) as Wallet;
 
-        navigation.dispatch(
-          CommonActions.reset({
-            index: 2,
-            routes: [
-              {
-                name: 'Tabs',
-                params: {screen: 'Home'},
-              },
-              {
-                name: 'Wallet',
-                params: {screen: 'KeyOverview', params: {id: key.id}},
-              },
-              {
-                name: 'Wallet',
-                params: {
-                  screen: 'WalletDetails',
-                  params: {walletId: wallet.id, key},
-                },
-              },
-            ],
-          }),
+        wallet.getStatus(
+          {network: wallet.network},
+          async (err: any, status: Status) => {
+            if (err) {
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 1,
+                  routes: [
+                    {
+                      name: 'Tabs',
+                      params: {screen: 'Home'},
+                    },
+                    {
+                      name: 'Wallet',
+                      params: {screen: 'KeyOverview', params: {id: key.id}},
+                    },
+                  ],
+                }),
+              );
+            } else if (status.wallet && status.wallet.status === 'complete') {
+              wallet.openWallet({}, () => {
+                navigation.dispatch(
+                  CommonActions.reset({
+                    index: 2,
+                    routes: [
+                      {
+                        name: 'Tabs',
+                        params: {screen: 'Home'},
+                      },
+                      {
+                        name: 'Wallet',
+                        params: {screen: 'KeyOverview', params: {id: key.id}},
+                      },
+                      {
+                        name: 'Wallet',
+                        params: {
+                          screen: 'WalletDetails',
+                          params: {walletId: wallet.id, key},
+                        },
+                      },
+                    ],
+                  }),
+                );
+              });
+            } else {
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 2,
+                  routes: [
+                    {
+                      name: 'Tabs',
+                      params: {screen: 'Home'},
+                    },
+                    {
+                      name: 'Wallet',
+                      params: {screen: 'KeyOverview', params: {id: key.id}},
+                    },
+                    {
+                      name: 'Wallet',
+                      params: {
+                        screen: 'Copayers',
+                        params: {wallet: wallet, status: status.wallet},
+                      },
+                    },
+                  ],
+                }),
+              );
+            }
+            dispatch(dismissOnGoingProcessModal());
+          },
         );
       } else {
         const multisigKey = (await dispatch<any>(
@@ -186,14 +196,17 @@ const JoinMultisig = () => {
           screen: 'BackupKey',
           params: {context: 'createNewKey', key: multisigKey},
         });
+        dispatch(dismissOnGoingProcessModal());
       }
-
-      dispatch(dismissOnGoingProcessModal());
     } catch (e: any) {
-      logger.error(e.message);
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
-      showErrorModal(e.message);
+      await showErrorMessage(
+        CustomErrorMessage({
+          errMsg: BWCErrorMessage(e),
+          title: 'Uh oh, something went wrong',
+        }),
+      );
       return;
     }
   };
@@ -219,7 +232,9 @@ const JoinMultisig = () => {
           <ErrorText>{errors?.myName?.message}</ErrorText>
         )}
 
-        <InvitationInputContainer>
+        <HeaderContainer>
+          <ImportTitle>Wallet invitation</ImportTitle>
+
           <ScanContainer
             activeOpacity={ActiveOpacity}
             onPress={() =>
@@ -236,25 +251,24 @@ const JoinMultisig = () => {
             }>
             <ScanSvg />
           </ScanContainer>
+        </HeaderContainer>
 
-          <Controller
-            control={control}
-            render={({field: {onChange, onBlur, value}}) => (
-              <BoxInput
-                label={'WALLET INVITATION'}
-                onChangeText={(text: string) => onChange(text)}
-                onBlur={onBlur}
-                value={value}
-              />
-            )}
-            name="invitationCode"
-            defaultValue=""
-          />
-
-          {errors?.invitationCode?.message && (
-            <ErrorText>{errors?.invitationCode?.message}</ErrorText>
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur, value}}) => (
+            <BoxInput
+              onChangeText={(text: string) => onChange(text)}
+              onBlur={onBlur}
+              value={value}
+            />
           )}
-        </InvitationInputContainer>
+          name="invitationCode"
+          defaultValue={invitationCode}
+        />
+
+        {errors?.invitationCode?.message && (
+          <ErrorText>{errors?.invitationCode?.message}</ErrorText>
+        )}
 
         <CtaContainer>
           <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
