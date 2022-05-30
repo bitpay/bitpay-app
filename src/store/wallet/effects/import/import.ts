@@ -182,6 +182,7 @@ export const startMigration =
       }
 
       // config
+      let emailNotificationsConfig: {email: string} = {email: ''};
       try {
         dispatch(LogActions.info('Migrating config settings'));
         const config = JSON.parse(
@@ -191,6 +192,7 @@ export const startMigration =
         const {
           // TODO - handle Notifications;
           confirmedTxsNotifications,
+          emailNotifications,
           pushNotifications,
           offersAndPromotions,
           productsUpdates,
@@ -200,6 +202,8 @@ export const startMigration =
           lock,
           wallet,
         } = config || {};
+
+        emailNotificationsConfig = emailNotifications;
 
         // lock
         if (lock) {
@@ -322,6 +326,36 @@ export const startMigration =
           archived: numActiveGiftCards > 3 ? true : giftCard.archived,
         }));
         dispatch(ShopActions.setPurchasedGiftCards({giftCards}));
+
+        const giftCardEmail = await RNFS.readFile(
+          cordovaStoragePath + 'amazonUserInfo',
+          'utf8',
+        )
+          .then(
+            (emailObjectString: string) => JSON.parse(emailObjectString).email,
+          )
+          .catch(_ => '');
+        const email = giftCardEmail || emailNotificationsConfig?.email;
+        dispatch(ShopActions.updatedEmailAddress({email}));
+
+        const phoneCountryInfoPromise = async () => {
+          try {
+            return JSON.parse(
+              await RNFS.readFile(
+                cordovaStoragePath + 'phoneCountryInfo',
+                'utf8',
+              ),
+            );
+          } catch (e) {}
+        };
+
+        const [phone, phoneCountryInfo] = await Promise.all([
+          RNFS.readFile(cordovaStoragePath + 'phone', 'utf8'),
+          phoneCountryInfoPromise(),
+        ]);
+        if (phone && phoneCountryInfo) {
+          dispatch(ShopActions.updatedPhone({phone, phoneCountryInfo}));
+        }
       } catch (err) {
         dispatch(LogActions.info('Failed to migrate gift cards'));
       }
