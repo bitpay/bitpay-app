@@ -26,6 +26,8 @@ import {
   IsValidDogecoinAddress,
   IsValidLitecoinAddress,
   IsValidBitPayInvoice,
+  IsValidImportPrivateKey,
+  IsValidJoinCode,
 } from '../wallet/utils/validations';
 import {APP_NAME} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
@@ -111,6 +113,12 @@ export const incomingData =
         // Plain Address (Litecoin)
       } else if (IsValidLitecoinAddress(data)) {
         dispatch(handlePlainAddress(data, 'ltc', wallet));
+        // Import Private Key
+      } else if (IsValidImportPrivateKey(data)) {
+        goToImport(data);
+        // Join multisig wallet
+      } else if (IsValidJoinCode(data)) {
+        dispatch(goToJoinWallet(data));
       }
     } catch (err) {
       dispatch(dismissOnGoingProcessModal());
@@ -365,7 +373,7 @@ const handleBitcoinUri =
       dispatch(goToAmount({coin, recipient, wallet, opts: {message}}));
     } else {
       const amount = Number(dispatch(FormatAmount(coin, parsed.amount)));
-      dispatch(goToConfirm({recipient, amount, coin, wallet, opts: {message}}));
+      dispatch(goToConfirm({recipient, amount, wallet, opts: {message}}));
     }
   };
 
@@ -700,4 +708,44 @@ const handlePlainAddress =
       address,
     };
     dispatch(goToAmount({coin, recipient, wallet}));
+  };
+
+const goToImport = (importQrCodeData: string): void => {
+  navigationRef.navigate('Wallet', {
+    screen: WalletScreens.IMPORT,
+    params: {
+      importQrCodeData,
+    },
+  });
+};
+
+const goToJoinWallet =
+  (data: string): Effect<void> =>
+  (dispatch, getState) => {
+    console.log('Incoming-data (redirect): Code to join to a multisig wallet');
+    const keys = Object.values(getState().WALLET.keys);
+    if (!keys.length) {
+      navigationRef.navigate('Wallet', {
+        screen: 'JoinMultisig',
+        params: {
+          invitationCode: data,
+        },
+      });
+    } else if (keys.length === 1) {
+      navigationRef.navigate('Wallet', {
+        screen: 'JoinMultisig',
+        params: {
+          key: keys[0],
+          invitationCode: data,
+        },
+      });
+    } else {
+      navigationRef.navigate('Wallet', {
+        screen: 'KeyGlobalSelect',
+        params: {
+          context: 'join',
+          invitationCode: data,
+        },
+      });
+    }
   };

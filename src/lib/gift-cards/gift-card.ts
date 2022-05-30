@@ -9,12 +9,31 @@ import {
   ApiCardConfig,
   AvailableCardMap,
   CardConfig,
+  CardConfigMap,
   GiftCard,
   GiftCardActivationFee,
   GiftCardCuration,
   UnsoldGiftCard,
 } from '../../store/shop/shop.models';
 import {formatFiatAmount} from '../../utils/helper-methods';
+
+export function getGiftCardConfigList(
+  cardConfigMap: CardConfigMap,
+): CardConfig[] {
+  return Object.entries(cardConfigMap).reduce((fullList, currentEntry) => {
+    const [name, cardConfig] = currentEntry;
+    return [...fullList, {...cardConfig, name}];
+  }, [] as CardConfig[]);
+}
+
+export function getCardConfigMapFromApiConfigMap(
+  availableApiCardMap: AvailableCardMap,
+): CardConfigMap {
+  return getCardConfigFromApiConfigMap(availableApiCardMap).reduce(
+    (map, cardConfig) => ({...map, [cardConfig.name]: cardConfig}),
+    {},
+  );
+}
 
 export function getCardConfigFromApiConfigMap(
   availableCardMap: AvailableCardMap,
@@ -28,7 +47,6 @@ export function getCardConfigFromApiConfigMap(
     .map(cardName =>
       getCardConfigFromApiBrandConfig(cardName, availableCardMap[cardName]),
     )
-    .filter(config => !config.hidden)
     .map(cardConfig => ({
       ...cardConfig,
       displayName: cardConfig.displayName || cardConfig.name,
@@ -232,11 +250,11 @@ export function getVisibleDiscount(cardConfig: CardConfig) {
   );
 }
 
-export function getGiftCardIcons(supportedCardMap: AvailableCardMap) {
+export function getGiftCardIcons(supportedCardMap: CardConfigMap) {
   return Object.keys(supportedCardMap).reduce(
     (iconMap, cardName) => ({
       ...iconMap,
-      [cardName]: supportedCardMap[cardName][0].icon,
+      [cardName]: supportedCardMap[cardName].icon,
     }),
     {} as {[cardName: string]: string},
   );

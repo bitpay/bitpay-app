@@ -61,7 +61,7 @@ const _getErrorMessage = (err: Error) => {
     case 'COPAYER_IN_WALLET':
       return 'Copayer already in this wallet';
     case 'WALLET_FULL':
-      return 'Wallet is full';
+      return 'Wallet is full. All copayers already join the wallet.';
     case 'WALLET_NOT_FOUND':
       return 'Wallet not found';
     case 'INSUFFICIENT_FUNDS_FOR_FEE':

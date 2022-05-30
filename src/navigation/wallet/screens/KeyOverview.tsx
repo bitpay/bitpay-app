@@ -148,6 +148,9 @@ export const buildUIFormattedWallet: (
   walletName: walletName || credentials.walletName,
   cryptoBalance: balance.crypto,
   cryptoLockedBalance: balance.cryptoLocked,
+  cryptoConfirmedLockedBalance: balance.cryptoConfirmedLocked,
+  cryptoSpendableBalance: balance.cryptoSpendable,
+  cryptoPendingBalance: balance.cryptoPending,
   fiatBalance: formatFiatAmount(balance.fiat, defaultAltCurrencyIsoCode, {
     currencyDisplay,
   }),
@@ -156,11 +159,30 @@ export const buildUIFormattedWallet: (
     defaultAltCurrencyIsoCode,
     {currencyDisplay},
   ),
+  fiatConfirmedLockedBalance: formatFiatAmount(
+    balance.fiatConfirmedLocked,
+    defaultAltCurrencyIsoCode,
+    {currencyDisplay},
+  ),
+  fiatSpendableBalance: formatFiatAmount(
+    balance.fiatSpendable,
+    defaultAltCurrencyIsoCode,
+    {currencyDisplay},
+  ),
+  fiatPendingBalance: formatFiatAmount(
+    balance.fiatPending,
+    defaultAltCurrencyIsoCode,
+    {currencyDisplay},
+  ),
   network: credentials.network,
   isRefreshing,
   hideWallet,
   hideBalance,
   pendingTxps,
+  multisig:
+    credentials.n > 1
+      ? `- Multisig ${credentials.m}/${credentials.n}`
+      : undefined,
 });
 
 // Key overview list builder
@@ -213,11 +235,13 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
             activeOpacity={ActiveOpacity}
             disabled={!hasMultipleKeys}
             onPress={() => setShowKeyDropdown(true)}>
-            {theme.dark ? (
-              <EncryptPasswordDarkModeImg />
-            ) : (
-              <EncryptPasswordImg />
-            )}
+            {key.methods.isPrivKeyEncrypted() ? (
+              theme.dark ? (
+                <EncryptPasswordDarkModeImg />
+              ) : (
+                <EncryptPasswordImg />
+              )
+            ) : null}
             <HeaderTitleContainer>
               <HeaderTitle style={{textAlign: 'center'}}>
                 {key?.keyName}
@@ -228,7 +252,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
         );
       },
       headerRight: () => {
-        return key.methods.isPrivKeyEncrypted() ? (
+        return key?.methods.isPrivKeyEncrypted() ? (
           <HeaderRightContainer>
             <CogIconContainer
               onPress={() =>
@@ -265,11 +289,11 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
     );
 
     return buildNestedWalletList(coins, tokens, defaultAltCurrency.isoCode);
-  }, [wallets, defaultAltCurrency.isoCode]);
+  }, [keys, wallets, defaultAltCurrency.isoCode]);
 
   const keyOptions: Array<Option> = [];
 
-  if (!key.methods.isPrivKeyEncrypted()) {
+  if (!key?.methods.isPrivKeyEncrypted()) {
     keyOptions.push({
       img: <Icons.Encrypt />,
       title: 'Encrypt your Key',
@@ -346,7 +370,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
         />
       );
     },
-    [navigation, key],
+    [navigation, keys],
   );
 
   return (

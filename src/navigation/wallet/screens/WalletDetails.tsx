@@ -11,7 +11,7 @@ import React, {
 } from 'react';
 import analytics from '@segment/analytics-react-native';
 import {useTranslation} from 'react-i18next';
-import {RefreshControl, SectionList, Share, View} from 'react-native';
+import {RefreshControl, SectionList, Share, Text, View} from 'react-native';
 import {batch} from 'react-redux';
 import styled from 'styled-components/native';
 import Settings from '../../../components/settings/Settings';
@@ -22,6 +22,7 @@ import {
   H5,
   HeaderTitle,
   Paragraph,
+  Small,
 } from '../../../components/styled/Text';
 import {Network} from '../../../constants';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -31,6 +32,7 @@ import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {
   Air,
+  Black,
   LightBlack,
   LuckySevens,
   SlateDark,
@@ -50,6 +52,7 @@ import {
 } from '../components/ErrorMessages';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import ReceiveAddress from '../components/ReceiveAddress';
+import BalanceDetailsModal from '../components/BalanceDetailsModal';
 import Icons from '../components/WalletIcons';
 import {WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
@@ -62,6 +65,7 @@ import {
   GroupTransactionHistory,
   IsMoved,
   IsReceived,
+  IsShared,
   TX_HISTORY_LIMIT,
 } from '../../../store/wallet/effects/transactions/transactions';
 import {ScreenGutter} from '../../../components/styled/Containers';
@@ -84,7 +88,10 @@ import {
   handleCreateTxProposalError,
 } from '../../../store/wallet/effects/send/send';
 import KeySvg from '../../../../assets/img/key.svg';
+import TimerSvg from '../../../../assets/img/timer.svg';
+import InfoSvg from '../../../../assets/img/info.svg';
 import {Effect} from '../../../store';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -104,6 +111,13 @@ const Row = styled.View`
   flex-direction: row;
   justify-content: center;
   align-items: flex-end;
+`;
+
+const TouchableRow = styled.TouchableOpacity`
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
 `;
 
 const BalanceContainer = styled.View`
@@ -255,9 +269,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     defaultAltCurrency.isoCode,
     'symbol',
   );
-
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
+  const [showBalanceDetailsModal, setShowBalanceDetailsModal] = useState(false);
   const walletType = getWalletType(key, fullWalletObj);
 
   useLayoutEffect(() => {
@@ -371,8 +385,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const {
     cryptoBalance,
     cryptoLockedBalance,
+    cryptoSpendableBalance,
     fiatBalance,
     fiatLockedBalance,
+    fiatSpendableBalance,
     currencyAbbreviation,
     network,
     hideBalance,
@@ -443,6 +459,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   loadHistoryRef.current = loadHistory;
 
   useEffect(() => {
+    dispatch(startUpdateWalletStatus({key, wallet: fullWalletObj}));
     const subscription = DeviceEventEmitter.addListener(
       DeviceEmitterEvents.WALLET_LOAD_HISTORY,
       () => {
@@ -599,6 +616,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     }
   };
 
+  const showBalanceDetailsButton = (): boolean => {
+    if (!fullWalletObj) {
+      return false;
+    }
+    return fullWalletObj.balance?.sat != fullWalletObj.balance?.satSpendable;
+  };
+
   const onPressTransaction = useMemo(
     () => (transaction: any) => {
       const {hasUnconfirmedInputs, action, isRBF} = transaction;
@@ -729,6 +753,24 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       <Paragraph>{fiatBalance}</Paragraph>
                     )}
                   </Row>
+                  {!hideBalance && showBalanceDetailsButton() && (
+                    <TouchableRow
+                      onPress={() => setShowBalanceDetailsModal(true)}>
+                      <TimerSvg
+                        width={28}
+                        height={15}
+                        fill={theme.dark ? White : Black}
+                      />
+                      <Small>
+                        <Text style={{fontWeight: 'bold'}}>
+                          {cryptoSpendableBalance} {currencyAbbreviation}
+                        </Text>
+                        {showFiatBalance && (
+                          <Text> ({fiatSpendableBalance})</Text>
+                        )}
+                      </Small>
+                    </TouchableRow>
+                  )}
                   <Row>
                     {walletType && (
                       <TypeContainer>
@@ -744,6 +786,27 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           <Icons.Network />
                         </IconContainer>
                         <TypeText>{chain}</TypeText>
+                      </TypeContainer>
+                    ) : null}
+                    {IsShared(fullWalletObj) ? (
+                      <TypeContainer>
+                        <TypeText>
+                          Multisig {fullWalletObj.credentials.m}/
+                          {fullWalletObj.credentials.n}
+                        </TypeText>
+                      </TypeContainer>
+                    ) : null}
+                    {['xrp'].includes(fullWalletObj?.currencyAbbreviation) ? (
+                      <TouchableOpacity
+                        onPress={() => setShowBalanceDetailsModal(true)}>
+                        <InfoSvg />
+                      </TouchableOpacity>
+                    ) : null}
+                    {['xrp'].includes(fullWalletObj?.currencyAbbreviation) &&
+                    Number(fullWalletObj?.balance?.cryptoConfirmedLocked) >=
+                      20 ? (
+                      <TypeContainer>
+                        <TypeText>Activated</TypeText>
                       </TypeContainer>
                     ) : null}
                   </Row>
@@ -874,6 +937,14 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         title={t('WalletOptions')}
         options={assetOptions}
       />
+
+      {fullWalletObj ? (
+        <BalanceDetailsModal
+          isVisible={showBalanceDetailsModal}
+          closeModal={() => setShowBalanceDetailsModal(false)}
+          wallet={uiFormattedWallet}
+        />
+      ) : null}
 
       {fullWalletObj ? (
         <ReceiveAddress

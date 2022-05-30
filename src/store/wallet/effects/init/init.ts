@@ -11,7 +11,7 @@ export const startWalletStoreInit =
       const {WALLET, APP} = getState();
       const defaultAltCurrencyIsoCode = APP.defaultAltCurrency.isoCode;
 
-      dispatch(startGetTokenOptions());
+      await dispatch(startGetTokenOptions());
 
       if (Object.keys(WALLET.keys).length) {
         dispatch(startUpdateAllKeyAndWalletStatus());

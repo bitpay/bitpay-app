@@ -1,7 +1,7 @@
 import {Network} from '../../constants';
 import {APP_NETWORK} from '../../constants/config';
 import {
-  AvailableCardMap,
+  CardConfigMap,
   CategoriesAndCurations,
   DirectIntegrationMap,
   GiftCard,
@@ -14,8 +14,8 @@ type ShopReduxPersistBlackList = [];
 export const shopReduxPersistBlackList: ShopReduxPersistBlackList = [];
 
 export interface ShopState {
-  availableCardMap: AvailableCardMap;
-  supportedCardMap: AvailableCardMap;
+  availableCardMap: CardConfigMap;
+  supportedCardMap: CardConfigMap;
   categoriesAndCurations: CategoriesAndCurations;
   integrations: DirectIntegrationMap;
   email: string;
@@ -26,7 +26,7 @@ export interface ShopState {
   };
 }
 
-const initialState: ShopState = {
+export const initialShopState: ShopState = {
   availableCardMap: {},
   supportedCardMap: {},
   categoriesAndCurations: {curated: {}, categories: {}},
@@ -44,20 +44,21 @@ const initialState: ShopState = {
 };
 
 export const shopReducer = (
-  state: ShopState = initialState,
+  state: ShopState = initialShopState,
   action: ShopActionType,
 ): ShopState => {
   switch (action.type) {
     case ShopActionTypes.SUCCESS_FETCH_CATALOG:
       const {availableCardMap, categoriesAndCurations, integrations} =
         action.payload;
+      const supportedCardMap = {
+        ...(state.supportedCardMap || {}),
+        ...availableCardMap,
+      };
       return {
         ...state,
         availableCardMap,
-        supportedCardMap: {
-          ...(state.supportedCardMap || {}),
-          ...availableCardMap,
-        },
+        supportedCardMap,
         categoriesAndCurations,
         integrations,
       };
@@ -68,6 +69,15 @@ export const shopReducer = (
         giftCards: {
           ...state.giftCards,
           [APP_NETWORK]: state.giftCards[APP_NETWORK].concat(giftCard),
+        },
+      };
+    case ShopActionTypes.SET_PURCHASED_GIFT_CARDS:
+      const {giftCards} = action.payload;
+      return {
+        ...state,
+        giftCards: {
+          ...state.giftCards,
+          [APP_NETWORK]: giftCards,
         },
       };
     case ShopActionTypes.DELETED_UNSOLD_GIFT_CARDS:

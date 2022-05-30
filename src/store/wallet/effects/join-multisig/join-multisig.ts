@@ -44,7 +44,6 @@ export const startJoinMultisig =
 
         resolve(key);
       } catch (err) {
-        console.error(err);
         reject(err);
       }
     });
@@ -77,7 +76,6 @@ export const addWalletJoinMultisig =
 
         resolve(newWallet);
       } catch (err) {
-        console.error(err);
         reject(err);
       }
     });
@@ -88,52 +86,54 @@ const joinMultisigWallet = (params: {
   opts: Partial<KeyOptions>;
 }): Promise<API> => {
   return new Promise((resolve, reject) => {
-    const bwcClient = BWC.getClient();
-    const {key, opts} = params;
+    try {
+      const bwcClient = BWC.getClient();
+      const {key, opts} = params;
 
-    bwcClient.fromString(
-      key.createCredentials(undefined, {
-        coin: opts.coin,
-        network: opts.networkName,
-        account: opts.account || 0,
-        n: opts.n,
-      }),
-    );
+      bwcClient.fromString(
+        key.createCredentials(undefined, {
+          coin: opts.coin,
+          network: opts.networkName,
+          account: opts.account || 0,
+          n: opts.n,
+        }),
+      );
 
-    bwcClient.joinWallet(
-      opts.invitationCode,
-      opts.myName,
-      {
-        coin: opts.coin,
-      },
-      (err: Error) => {
-        if (err) {
-          console.log(err);
-          switch (err.name) {
-            case 'bwc.ErrorCOPAYER_REGISTERED': {
-              const account = opts.account || 0;
-              if (account >= 20) {
-                return reject(
-                  new Error(
-                    '20 Wallet limit from the same coin and network has been reached.',
-                  ),
+      bwcClient.joinWallet(
+        opts.invitationCode,
+        opts.myName,
+        {
+          coin: opts.coin,
+        },
+        (err: Error) => {
+          if (err) {
+            switch (err.name) {
+              case 'bwc.ErrorCOPAYER_REGISTERED': {
+                const account = opts.account || 0;
+                if (account >= 20) {
+                  return reject(
+                    new Error(
+                      '20 Wallet limit from the same coin and network has been reached.',
+                    ),
+                  );
+                }
+                return resolve(
+                  joinMultisigWallet({
+                    key,
+                    opts: {...opts, account: account + 1},
+                  }),
                 );
               }
-              return resolve(
-                joinMultisigWallet({
-                  key,
-                  opts: {...opts, account: account + 1},
-                }),
-              );
             }
-          }
 
-          return reject(err);
-        } else {
-          console.log('added coin', opts.coin);
-          return resolve(bwcClient);
-        }
-      },
-    );
+            return reject(err);
+          } else {
+            return resolve(bwcClient);
+          }
+        },
+      );
+    } catch (err) {
+      reject(err);
+    }
   });
 };

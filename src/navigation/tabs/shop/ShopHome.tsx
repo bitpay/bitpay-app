@@ -4,7 +4,7 @@ import styled from 'styled-components/native';
 import {ScrollView} from 'react-native';
 import GiftCardCatalog from './components/GiftCardCatalog';
 import {
-  getCardConfigFromApiConfigMap,
+  getGiftCardConfigList,
   getGiftCardCurations,
 } from '../../../lib/gift-cards/gift-card';
 import {useDispatch} from 'react-redux';
@@ -105,12 +105,10 @@ const ShopHome: React.FC<
   const scrollViewRef = useRef<ScrollView>(null);
 
   const availableGiftCards = useAppSelector(selectAvailableGiftCards);
-
   const supportedGiftCards = useMemo(
-    () => getCardConfigFromApiConfigMap(supportedCardMap || availableCardMap),
+    () => getGiftCardConfigList(supportedCardMap || availableCardMap),
     [supportedCardMap, availableCardMap],
   );
-
   const curations = useMemo(
     () =>
       getGiftCardCurations(

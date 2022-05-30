@@ -1,7 +1,7 @@
 import React from 'react';
 import * as Svg from 'react-native-svg';
 import styled from 'styled-components/native';
-import {Midnight, ProgressBlue} from '../../styles/colors';
+import {LinkBlue, Midnight} from '../../styles/colors';
 import ProfileIcon from './ProfileIcon';
 
 export interface AvatarProps {
@@ -39,7 +39,7 @@ const Initials: React.FC<InitialsProps> = ({size = 24, initials}) => {
       />
       <Svg.Text
         id="initials-text"
-        fill={ProgressBlue}
+        fill={LinkBlue}
         fontSize="11"
         fontWeight="500"
         x="12"

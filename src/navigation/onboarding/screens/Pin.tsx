@@ -25,8 +25,22 @@ import {
   authOptionalConfigObject,
 } from '../../../constants/BiometricError';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {useThemeType} from '../../../utils/hooks/useThemeType';
 
-const PinImage = require('../../../../assets/img/onboarding/pin.png');
+const PinImage = {
+  light: (
+    <OnboardingImage
+      style={{width: 180, height: 247}}
+      source={require('../../../../assets/img/onboarding/light/pin.png')}
+    />
+  ),
+  dark: (
+    <OnboardingImage
+      style={{width: 151, height: 247}}
+      source={require('../../../../assets/img/onboarding/dark/pin.png')}
+    />
+  ),
+};
 
 const PinContainer = styled.SafeAreaView`
   flex: 1;
@@ -36,6 +50,7 @@ const PinContainer = styled.SafeAreaView`
 const PinScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const themeType = useThemeType();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -60,10 +75,7 @@ const PinScreen = () => {
 
   const onSetPinPress = () => {
     haptic('impactLight');
-    dispatch(AppActions.showPinModal({type: 'set'}));
-    navigation.navigate('Onboarding', {
-      screen: 'CreateKey',
-    });
+    dispatch(AppActions.showPinModal({type: 'set', context: 'onboarding'}));
   };
 
   const onSetBiometricPress = () => {
@@ -99,9 +111,7 @@ const PinScreen = () => {
   useAndroidBackHandler(() => true);
   return (
     <PinContainer>
-      <ImageContainer>
-        <OnboardingImage style={{width: 151, height: 247}} source={PinImage} />
-      </ImageContainer>
+      <ImageContainer>{PinImage[themeType]}</ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>
           <H3>Protect your wallet</H3>

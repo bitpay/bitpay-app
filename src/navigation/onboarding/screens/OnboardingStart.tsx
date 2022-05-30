@@ -20,6 +20,8 @@ import {OnboardingImage} from '../components/Containers';
 import OnboardingSlide from '../components/OnboardingSlide';
 import {OnboardingStackParamList} from '../OnboardingStack';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
+import {askForTrackingPermissionAndEnableSdks} from '../../../store/app/app.effects';
+import {useThemeType} from '../../../utils/hooks/useThemeType';
 
 type OnboardingStartScreenProps = StackScreenProps<
   OnboardingStackParamList,
@@ -28,10 +30,62 @@ type OnboardingStartScreenProps = StackScreenProps<
 
 // IMAGES
 const OnboardingImages = {
-  card: require('../../../../assets/img/onboarding/card.png'),
-  spend: require('../../../../assets/img/onboarding/spend.png'),
-  wallet: require('../../../../assets/img/onboarding/wallet.png'),
-  swap: require('../../../../assets/img/onboarding/swap.png'),
+  card: {
+    light: (
+      <OnboardingImage
+        style={{height: 247, width: 215}}
+        source={require('../../../../assets/img/onboarding/light/card.png')}
+      />
+    ),
+    dark: (
+      <OnboardingImage
+        style={{height: 247, width: 192}}
+        source={require('../../../../assets/img/onboarding/dark/card.png')}
+      />
+    ),
+  },
+  spend: {
+    light: (
+      <OnboardingImage
+        style={{height: 247, width: 217}}
+        source={require('../../../../assets/img/onboarding/light/spend.png')}
+      />
+    ),
+    dark: (
+      <OnboardingImage
+        style={{height: 247, width: 200}}
+        source={require('../../../../assets/img/onboarding/dark/spend.png')}
+      />
+    ),
+  },
+  wallet: {
+    light: (
+      <OnboardingImage
+        style={{height: 170, width: 220}}
+        source={require('../../../../assets/img/onboarding/light/wallet.png')}
+      />
+    ),
+    dark: (
+      <OnboardingImage
+        style={{height: 170, width: 230}}
+        source={require('../../../../assets/img/onboarding/dark/wallet.png')}
+      />
+    ),
+  },
+  swap: {
+    light: (
+      <OnboardingImage
+        style={{height: 203, width: 210}}
+        source={require('../../../../assets/img/onboarding/light/swap.png')}
+      />
+    ),
+    dark: (
+      <OnboardingImage
+        style={{height: 170, width: 200}}
+        source={require('../../../../assets/img/onboarding/dark/swap.png')}
+      />
+    ),
+  },
 };
 
 const OnboardingContainer = styled.SafeAreaView`
@@ -59,11 +113,18 @@ const LinkText = styled(Link)`
 const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
+  const themeType = useThemeType();
   const isPaired = useSelector<RootState, boolean>(({APP, BITPAY_ID}) => {
     return !!BITPAY_ID.apiToken[APP.network];
   });
 
   useAndroidBackHandler(() => true);
+
+  const askForTrackingThenNavigate = async (cb: () => void) => {
+    haptic('impactLight');
+    await dispatch(askForTrackingPermissionAndEnableSdks());
+    cb();
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -82,20 +143,21 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
           ) : (
             <Button
               buttonType={'pill'}
-              onPress={() => {
-                haptic('impactLight');
-                navigation.navigate('Auth', {
-                  screen: 'Login',
-                  params: {
-                    onLoginSuccess: () => {
-                      haptic('impactLight');
-                      navigation.navigate('Onboarding', {
-                        screen: 'Notifications',
-                      });
+              onPress={() =>
+                askForTrackingThenNavigate(() => {
+                  navigation.navigate('Auth', {
+                    screen: 'Login',
+                    params: {
+                      onLoginSuccess: async () => {
+                        haptic('impactLight');
+                        navigation.navigate('Onboarding', {
+                          screen: 'Notifications',
+                        });
+                      },
                     },
-                  },
-                });
-              }}>
+                  });
+                })
+              }>
               Log In
             </Button>
           )}
@@ -112,42 +174,22 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
       title: 'Turn crypto into dollars with our BitPay Card',
       text: 'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
       subText: '*Currently available in the USA. More countries coming soon.',
-      img: () => (
-        <OnboardingImage
-          style={{height: 247, width: 170}}
-          source={OnboardingImages.card}
-        />
-      ),
+      img: () => OnboardingImages.card[themeType],
     },
     {
       title: 'Spend crypto at your favorite places',
       text: 'Discover a curated list of places you can spend your crypto. Purchase, manage and spend store credits instantly.',
-      img: () => (
-        <OnboardingImage
-          style={{height: 247, width: 175}}
-          source={OnboardingImages.spend}
-        />
-      ),
+      img: () => OnboardingImages.spend[themeType],
     },
     {
       title: 'Keep your funds safe & secure',
       text: 'Websites and exchanges get hacked. BitPay allows you to privately store, manage and use your crypto funds without having to trust a centralized bank or exchange.',
-      img: () => (
-        <OnboardingImage
-          style={{height: 170, width: 205}}
-          source={OnboardingImages.wallet}
-        />
-      ),
+      img: () => OnboardingImages.wallet[themeType],
     },
     {
       title: 'Seamlessly buy & swap with a decentralized exchange',
       text: 'Buy with a credit card or existing funds, then seamlessly swap coins at competitive rates without leaving the app.',
-      img: () => (
-        <OnboardingImage
-          style={{height: 218, width: 194}}
-          source={OnboardingImages.swap}
-        />
-      ),
+      img: () => OnboardingImages.swap[themeType],
     },
   ];
 
@@ -196,9 +238,10 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
               <Button
                 buttonStyle={'primary'}
                 onPress={() => {
-                  haptic('impactLight');
-                  navigation.navigate('Auth', {
-                    screen: 'CreateAccount',
+                  askForTrackingThenNavigate(() => {
+                    navigation.navigate('Auth', {
+                      screen: 'CreateAccount',
+                    });
                   });
                 }}>
                 Get Started
@@ -207,9 +250,10 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
               <Button
                 buttonStyle={'primary'}
                 onPress={() => {
-                  haptic('impactLight');
-                  navigation.navigate('Onboarding', {
-                    screen: 'Notifications',
+                  askForTrackingThenNavigate(() => {
+                    navigation.navigate('Onboarding', {
+                      screen: 'Notifications',
+                    });
                   });
                 }}>
                 Continue
@@ -223,9 +267,10 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
               <Button
                 buttonType={'link'}
                 onPress={() => {
-                  haptic('impactLight');
-                  navigation.navigate('Onboarding', {
-                    screen: 'Notifications',
+                  askForTrackingThenNavigate(() => {
+                    navigation.navigate('Onboarding', {
+                      screen: 'Notifications',
+                    });
                   });
                 }}>
                 <LinkText>Continue without an account</LinkText>
