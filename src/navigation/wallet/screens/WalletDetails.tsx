@@ -459,6 +459,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   loadHistoryRef.current = loadHistory;
 
   useEffect(() => {
+    dispatch(startUpdateWalletStatus({key, wallet: fullWalletObj}));
     const subscription = DeviceEventEmitter.addListener(
       DeviceEmitterEvents.WALLET_LOAD_HISTORY,
       () => {
