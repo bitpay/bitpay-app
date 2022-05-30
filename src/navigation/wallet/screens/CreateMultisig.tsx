@@ -320,6 +320,15 @@ const CreateMultisig = () => {
     }
   };
 
+  const toggleTestnet = () => {
+    const _testnetEnabled = !testnetEnabled;
+    setTestnetEnabled(_testnetEnabled);
+    setOptions({
+      ...options,
+      networkName: _testnetEnabled ? 'testnet' : 'livenet',
+    });
+  };
+
   return (
     <ScrollViewContainer>
       <MultisigContainer>
@@ -509,54 +518,17 @@ const CreateMultisig = () => {
             )}
             {showOptions && (
               <AdvancedOptions>
-                <RowContainer
-                  onPress={() => {
-                    setTestnetEnabled(!testnetEnabled);
-                    setOptions({
-                      ...options,
-                      networkName: testnetEnabled ? 'testnet' : 'livenet',
-                    });
-                  }}>
+                <RowContainer onPress={toggleTestnet}>
                   <Column>
                     <OptionTitle>Testnet</OptionTitle>
                   </Column>
                   <CheckBoxContainer>
                     <Checkbox
                       checked={testnetEnabled}
-                      onPress={() => {
-                        setTestnetEnabled(!testnetEnabled);
-                        setOptions({
-                          ...options,
-                          networkName: testnetEnabled ? 'testnet' : 'livenet',
-                        });
-                      }}
+                      onPress={toggleTestnet}
                     />
                   </CheckBoxContainer>
                 </RowContainer>
-
-                {/*{testnetEnabled && (*/}
-                {/*  <>*/}
-                {/*    <Info>*/}
-                {/*      <InfoTriangle />*/}
-
-                {/*      <InfoHeader>*/}
-                {/*        <InfoImageContainer infoMargin={'0 10px 0 0'}>*/}
-                {/*          <WarningSvg />*/}
-                {/*        </InfoImageContainer>*/}
-
-                {/*        <InfoTitle>*/}
-                {/*          Did someone asked you to create this wallet?*/}
-                {/*        </InfoTitle>*/}
-                {/*      </InfoHeader>*/}
-                {/*      <InfoDescription>*/}
-                {/*        Testnet coins have no value and cannot be converted into*/}
-                {/*        "actual" coins. If you are purchasing cryptocurrency*/}
-                {/*        through a third party, and they have requested you to*/}
-                {/*        create this type of wallet, they are scamming you.*/}
-                {/*      </InfoDescription>*/}
-                {/*    </Info>*/}
-                {/*  </>*/}
-                {/*)}*/}
               </AdvancedOptions>
             )}
 
