@@ -148,11 +148,29 @@ export const buildUIFormattedWallet: (
   walletName: walletName || credentials.walletName,
   cryptoBalance: balance.crypto,
   cryptoLockedBalance: balance.cryptoLocked,
+  cryptoConfirmedLockedBalance: balance.cryptoConfirmedLocked,
+  cryptoSpendableBalance: balance.cryptoSpendable,
+  cryptoPendingBalance: balance.cryptoPending,
   fiatBalance: formatFiatAmount(balance.fiat, defaultAltCurrencyIsoCode, {
     currencyDisplay,
   }),
   fiatLockedBalance: formatFiatAmount(
     balance.fiatLocked,
+    defaultAltCurrencyIsoCode,
+    {currencyDisplay},
+  ),
+  fiatConfirmedLockedBalance: formatFiatAmount(
+    balance.fiatConfirmedLocked,
+    defaultAltCurrencyIsoCode,
+    {currencyDisplay},
+  ),
+  fiatSpendableBalance: formatFiatAmount(
+    balance.fiatSpendable,
+    defaultAltCurrencyIsoCode,
+    {currencyDisplay},
+  ),
+  fiatPendingBalance: formatFiatAmount(
+    balance.fiatPending,
     defaultAltCurrencyIsoCode,
     {currencyDisplay},
   ),
@@ -234,7 +252,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
         );
       },
       headerRight: () => {
-        return key.methods.isPrivKeyEncrypted() ? (
+        return key?.methods.isPrivKeyEncrypted() ? (
           <HeaderRightContainer>
             <CogIconContainer
               onPress={() =>
@@ -275,7 +293,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
 
   const keyOptions: Array<Option> = [];
 
-  if (!key.methods.isPrivKeyEncrypted()) {
+  if (!key?.methods.isPrivKeyEncrypted()) {
     keyOptions.push({
       img: <Icons.Encrypt />,
       title: 'Encrypt your Key',

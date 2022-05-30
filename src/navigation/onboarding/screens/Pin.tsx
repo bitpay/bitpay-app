@@ -75,10 +75,7 @@ const PinScreen = () => {
 
   const onSetPinPress = () => {
     haptic('impactLight');
-    dispatch(AppActions.showPinModal({type: 'set'}));
-    navigation.navigate('Onboarding', {
-      screen: 'CreateKey',
-    });
+    dispatch(AppActions.showPinModal({type: 'set', context: 'onboarding'}));
   };
 
   const onSetBiometricPress = () => {
