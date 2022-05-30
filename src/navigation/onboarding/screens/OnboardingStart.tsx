@@ -1,8 +1,9 @@
 import {useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useLayoutEffect, useRef, useState} from 'react';
+import React, {useCallback, useLayoutEffect, useRef, useState} from 'react';
+import {ScrollView, View} from 'react-native';
 import Carousel, {Pagination} from 'react-native-snap-carousel';
-import {useDispatch, useSelector} from 'react-redux';
+import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -10,17 +11,18 @@ import {
   ActionContainer,
   CtaContainerAbsolute,
   HeaderRightContainer,
+  HEIGHT,
   WIDTH,
 } from '../../../components/styled/Containers';
 import {Link} from '../../../components/styled/Text';
-import {RootState} from '../../../store';
+import {askForTrackingPermissionAndEnableSdks} from '../../../store/app/app.effects';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
 import {Action, LuckySevens} from '../../../styles/colors';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {OnboardingImage} from '../components/Containers';
 import OnboardingSlide from '../components/OnboardingSlide';
+import ScrollHint from '../components/ScrollHint';
 import {OnboardingStackParamList} from '../OnboardingStack';
-import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import {askForTrackingPermissionAndEnableSdks} from '../../../store/app/app.effects';
 
 type OnboardingStartScreenProps = StackScreenProps<
   OnboardingStackParamList,
@@ -57,20 +59,76 @@ const LinkText = styled(Link)`
   font-size: 18px;
 `;
 
+const ScrollHintContainer = styled.View`
+  bottom: 0;
+  position: absolute;
+  width: 100%;
+`;
+
+// estimated a number, tweak if neccessary
+const scrollEnabledForSmallScreens = HEIGHT < 700;
+
+const ONBOARDING_SLIDES = [
+  {
+    title: 'Turn crypto into dollars with our BitPay Card',
+    text: 'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
+    subText: '*Currently available in the USA. More countries coming soon.',
+    img: () => (
+      <OnboardingImage
+        style={{height: 247, width: 170}}
+        source={OnboardingImages.card}
+      />
+    ),
+  },
+  {
+    title: 'Spend crypto at your favorite places',
+    text: 'Discover a curated list of places you can spend your crypto. Purchase, manage and spend store credits instantly.',
+    img: () => (
+      <OnboardingImage
+        style={{height: 247, width: 175}}
+        source={OnboardingImages.spend}
+      />
+    ),
+  },
+  {
+    title: 'Keep your funds safe & secure',
+    text: 'Websites and exchanges get hacked. BitPay allows you to privately store, manage and use your crypto funds without having to trust a centralized bank or exchange.',
+    img: () => (
+      <OnboardingImage
+        style={{height: 170, width: 205}}
+        source={OnboardingImages.wallet}
+      />
+    ),
+  },
+  {
+    title: 'Seamlessly buy & swap with a decentralized exchange',
+    text: 'Buy with a credit card or existing funds, then seamlessly swap coins at competitive rates without leaving the app.',
+    img: () => (
+      <OnboardingImage
+        style={{height: 218, width: 194}}
+        source={OnboardingImages.swap}
+      />
+    ),
+  },
+];
+
 const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const isPaired = useSelector<RootState, boolean>(({APP, BITPAY_ID}) => {
+  const isPaired = useAppSelector(({APP, BITPAY_ID}) => {
     return !!BITPAY_ID.apiToken[APP.network];
   });
 
   useAndroidBackHandler(() => true);
 
-  const askForTrackingThenNavigate = async (cb: () => void) => {
-    haptic('impactLight');
-    await dispatch(askForTrackingPermissionAndEnableSdks());
-    cb();
-  };
+  const askForTrackingThenNavigate = useCallback(
+    async (cb: () => void) => {
+      haptic('impactLight');
+      await dispatch(askForTrackingPermissionAndEnableSdks());
+      cb();
+    },
+    [dispatch],
+  );
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -110,81 +168,49 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
         </HeaderRightContainer>
       ),
     });
-  }, [navigation, isPaired, dispatch]);
+  }, [navigation, isPaired, dispatch, askForTrackingThenNavigate]);
 
-  const ref = useRef(null);
+  const carouselRef = useRef(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
-
-  const onboardingSlides = [
-    {
-      title: 'Turn crypto into dollars with our BitPay Card',
-      text: 'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
-      subText: '*Currently available in the USA. More countries coming soon.',
-      img: () => (
-        <OnboardingImage
-          style={{height: 247, width: 170}}
-          source={OnboardingImages.card}
-        />
-      ),
-    },
-    {
-      title: 'Spend crypto at your favorite places',
-      text: 'Discover a curated list of places you can spend your crypto. Purchase, manage and spend store credits instantly.',
-      img: () => (
-        <OnboardingImage
-          style={{height: 247, width: 175}}
-          source={OnboardingImages.spend}
-        />
-      ),
-    },
-    {
-      title: 'Keep your funds safe & secure',
-      text: 'Websites and exchanges get hacked. BitPay allows you to privately store, manage and use your crypto funds without having to trust a centralized bank or exchange.',
-      img: () => (
-        <OnboardingImage
-          style={{height: 170, width: 205}}
-          source={OnboardingImages.wallet}
-        />
-      ),
-    },
-    {
-      title: 'Seamlessly buy & swap with a decentralized exchange',
-      text: 'Buy with a credit card or existing funds, then seamlessly swap coins at competitive rates without leaving the app.',
-      img: () => (
-        <OnboardingImage
-          style={{height: 218, width: 194}}
-          source={OnboardingImages.swap}
-        />
-      ),
-    },
-  ];
+  const [scrollHintHeight, setScrollHintHeight] = useState(0);
 
   return (
     <OnboardingContainer>
-      <Carousel
-        vertical={false}
-        layout={'default'}
-        useExperimentalSnap={true}
-        data={onboardingSlides}
-        renderItem={slideProps => <OnboardingSlide {...slideProps} />}
-        ref={ref}
-        sliderWidth={WIDTH}
-        itemWidth={Math.round(WIDTH)}
-        onScrollIndexChanged={(index: number) => {
-          haptic('impactLight');
-          setActiveSlideIndex(index);
-        }}
-        // @ts-ignore
-        disableIntervalMomentum={true}
-      />
-      <CtaContainerAbsolute>
+      <ScrollView scrollEnabled={scrollEnabledForSmallScreens}>
+        <Carousel
+          vertical={false}
+          layout={'default'}
+          useExperimentalSnap={true}
+          data={ONBOARDING_SLIDES}
+          renderItem={({item}) => <OnboardingSlide item={item} />}
+          ref={carouselRef}
+          sliderWidth={WIDTH}
+          itemWidth={Math.round(WIDTH)}
+          onScrollIndexChanged={(index: number) => {
+            haptic('impactLight');
+            setActiveSlideIndex(index);
+          }}
+          // @ts-ignore
+          disableIntervalMomentum={true}
+        />
+        <View style={{height: scrollHintHeight}} />
+      </ScrollView>
+
+      <ScrollHintContainer>
+        <ScrollHint height={scrollHintHeight} />
+      </ScrollHintContainer>
+
+      <CtaContainerAbsolute
+        onLayout={e => {
+          setScrollHintHeight(e.nativeEvent.layout.height + 20);
+        }}>
         <Row>
           <Column>
             <Pagination
-              dotsLength={onboardingSlides.length}
+              dotsLength={ONBOARDING_SLIDES.length}
               activeDotIndex={activeSlideIndex}
               tappableDots={true}
-              carouselRef={ref}
+              carouselRef={carouselRef}
               animatedDuration={100}
               animatedFriction={100}
               animatedTension={100}
