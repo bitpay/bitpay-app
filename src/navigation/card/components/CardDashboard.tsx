@@ -23,17 +23,16 @@ import {
 } from '../../../components/styled/Containers';
 import {Smallest} from '../../../components/styled/Text';
 import {CardProvider} from '../../../constants/card';
-import {CARD_WIDTH, ProviderConfig} from '../../../constants/config.card';
+import {CARD_WIDTH} from '../../../constants/config.card';
 import {navigationRef} from '../../../Root';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {selectBrazeCardOffers} from '../../../store/app/app.selectors';
 import {CardEffects} from '../../../store/card';
+import {Card, UiTransaction} from '../../../store/card/card.models';
 import {
-  Card,
-  TopUp,
-  Transaction,
-  UiTransaction,
-} from '../../../store/card/card.models';
-import {selectCardGroups} from '../../../store/card/card.selectors';
+  selectCardGroups,
+  selectDashboardTransactions,
+} from '../../../store/card/card.selectors';
 import {isActivationRequired} from '../../../utils/card';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {BuyCryptoScreens} from '../../services/buy-crypto/BuyCryptoStack';
@@ -52,6 +51,7 @@ import {
   TransactionListHeaderIcon,
   TransactionListHeaderTitle,
 } from './CardDashboard.styled';
+import CardOffers from './CardOffers';
 import CardOverviewSlide from './CardOverviewSlide';
 import ShippingStatus from './CardShippingStatus';
 import TransactionRow from './CardTransactionRow';
@@ -65,56 +65,15 @@ const CardsRowContainer = styled.View`
   padding: ${ScreenGutter};
 `;
 
+const CardOffersContainer = styled(TouchableOpacity)`
+  margin: -16px;
+  padding: 16px;
+`;
+
 const BelowCarouselSpacer = styled.View`
   height: 32px;
 `;
 
-const toUiTransaction = (tx: Transaction, settled: boolean) => {
-  const uiTx: UiTransaction = {
-    ...tx,
-    settled,
-  };
-
-  return uiTx;
-};
-
-const topUpToUiTopUp = (topUp: TopUp) => {
-  const uiTx: UiTransaction = {
-    id: topUp.id,
-    displayMerchant: 'BitPay Load',
-    settled: false,
-    displayPrice: Number(topUp.amount),
-    merchant: topUp.displayMerchant,
-    provider: topUp.provider,
-    status: 'pending',
-    dates: {
-      auth: topUp.invoice.invoiceTime as string,
-      post: topUp.invoice.invoiceTime as string,
-    },
-
-    // unused
-    type: '',
-    description: '',
-  };
-
-  return uiTx;
-};
-
-const sortPendingTxByTimestamp = (
-  a: Pick<UiTransaction, 'dates'>,
-  b: Pick<UiTransaction, 'dates'>,
-) => {
-  const timestampA = a.dates.auth;
-  const timestampB = b.dates.auth;
-
-  if (timestampA > timestampB) {
-    return -1;
-  }
-  if (timestampA < timestampB) {
-    return 1;
-  }
-  return 0;
-};
 const CardDashboard: React.FC<CardDashboardProps> = props => {
   const dispatch = useAppDispatch();
   const navigator = useNavigation();
@@ -133,6 +92,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   );
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const network = useAppSelector(({APP}) => APP.network);
+  const brazeCardOffers = useAppSelector(selectBrazeCardOffers);
 
   const getLengthOfWalletsWithBalance = useMemo(
     () =>
@@ -151,6 +111,10 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const activeCard = currentGroup[0];
   const unactivatedCard = currentGroup.find(
     c => c.cardType === 'physical' && isActivationRequired(c),
+  );
+
+  const dashboardTransactions = useAppSelector(rootState =>
+    selectDashboardTransactions(rootState, activeCard.id),
   );
 
   const goToCardSettings = () => {
@@ -267,29 +231,6 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     }, [uninitializedId, autoInitState, dispatch]),
   );
 
-  const {filters} = ProviderConfig[activeCard.provider];
-  const settledTxList = useAppSelector(
-    ({CARD}) => CARD.settledTransactions[activeCard.id]?.transactionList,
-  );
-  const pendingTxList = useAppSelector(
-    ({CARD}) => CARD.pendingTransactions[activeCard.id],
-  );
-  const topUpHistory = useAppSelector(({CARD}) => CARD.topUpHistory[id]);
-
-  const filteredTransactions = useMemo(() => {
-    const uiPendingTxList = [
-      ...(pendingTxList || []).map(tx => toUiTransaction(tx, false)),
-      ...(topUpHistory || []).map(tu => topUpToUiTopUp(tu)),
-    ].sort(sortPendingTxByTimestamp);
-
-    return [
-      ...uiPendingTxList,
-      ...(settledTxList || [])
-        .filter(filters.settledTx)
-        .map(tx => toUiTransaction(tx, true)),
-    ];
-  }, [settledTxList, pendingTxList, topUpHistory, filters]);
-
   const listFooterComponent = useMemo(
     () => (
       <TransactionListFooter>
@@ -384,11 +325,40 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     });
   }, []);
 
+  const additionalContent: {key: string; content: JSX.Element}[] = [];
+
+  if (unactivatedCard) {
+    additionalContent.push({
+      key: 'shipping-status',
+      content: (
+        <ShippingStatus
+          card={unactivatedCard}
+          onActivatePress={onActivatePress}
+        />
+      ),
+    });
+  }
+
+  if (brazeCardOffers.length) {
+    additionalContent.push({
+      key: 'card-offers',
+      content: (
+        <CardOffersContainer
+          activeOpacity={ActiveOpacity}
+          onPress={() => {
+            dispatch(CardEffects.startOpenDosh(user?.email || ''));
+          }}>
+          <CardOffers contentCard={brazeCardOffers[0]} />
+        </CardOffersContainer>
+      ),
+    });
+  }
+
   return (
     <>
       <FlatList
         contentContainerStyle={{minHeight: '100%'}}
-        data={filteredTransactions}
+        data={dashboardTransactions}
         renderItem={renderTransaction}
         initialNumToRender={30}
         onEndReachedThreshold={0.1}
@@ -418,13 +388,10 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
               }}
             />
 
-            {unactivatedCard ? (
-              <CardsRowContainer>
-                <ShippingStatus
-                  card={unactivatedCard}
-                  onActivatePress={onActivatePress}
-                />
-              </CardsRowContainer>
+            {additionalContent.length ? (
+              additionalContent.map(({key, content}) => (
+                <CardsRowContainer key={key}>{content}</CardsRowContainer>
+              ))
             ) : (
               <BelowCarouselSpacer />
             )}
@@ -432,7 +399,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
             {!isLoadingInitial ? (
               <TransactionListHeader>
                 <TransactionListHeaderTitle>
-                  {filteredTransactions.length <= 0 ? null : 'Recent Activity'}
+                  {dashboardTransactions.length <= 0 ? null : 'Recent Activity'}
                 </TransactionListHeaderTitle>
 
                 <TransactionListHeaderIcon onPress={() => onRefresh()}>

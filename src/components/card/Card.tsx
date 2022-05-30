@@ -37,25 +37,13 @@ export interface CardProps {
   body?: ReactNode;
   footer?: ReactNode;
   backgroundImg?: () => ReactElement;
-  containerProps?: {
-    backgroundColor?: string;
-  };
   style?: StyleProp<ViewStyle>;
 }
 
-const Card = ({
-  header,
-  body,
-  footer,
-  backgroundImg,
-  containerProps,
-  style,
-}: CardProps) => {
+const Card = ({header, body, footer, backgroundImg, style}: CardProps) => {
   const theme = useTheme();
-  const backgroundColor = containerProps && containerProps.backgroundColor;
   return (
     <CardContainer
-      backgroundColor={backgroundColor}
       style={{
         ...(theme.dark ? {} : BoxShadow),
         ...((style as object) || {}),

@@ -158,17 +158,17 @@ const HomeCard: React.FC<HomeCardProps> = ({body, onCTAPress, header}) => {
     </FooterArrow>
   );
 
-  const containerProps = {
-    backgroundColor: theme.dark ? LightBlack : White,
-  };
-
   return (
     <CardContainer activeOpacity={ActiveOpacity} onPress={_onPress}>
       <Card
         header={HeaderComp}
         body={BodyComp}
         footer={FooterComp}
-        containerProps={containerProps}
+        style={{
+          backgroundColor: theme.dark ? LightBlack : White,
+          height: 200,
+          width: 170,
+        }}
       />
     </CardContainer>
   );
