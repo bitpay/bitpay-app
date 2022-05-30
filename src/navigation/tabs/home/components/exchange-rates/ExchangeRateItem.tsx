@@ -111,7 +111,7 @@ const ExchangeRateItem = ({
         )}
         <SubTextContainer>
           {showLossGainOrNeutralArrow(average)}
-          <ExchangeRateSubText>{average}%</ExchangeRateSubText>
+          <ExchangeRateSubText>{Math.abs(average || 0)}%</ExchangeRateSubText>
         </SubTextContainer>
       </NoteContainer>
     </RowContainer>
