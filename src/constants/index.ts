@@ -27,6 +27,9 @@ export const URL = {
   TOU_BITPAY_ID:
     'https://bitpay.com/legal/terms-of-use/#bitpay-id-terms-of-use',
   TOU_WALLET: 'https://bitpay.com/legal/terms-of-use/#wallet-terms-of-use',
+  MERCHANT_DASHBOARD: 'https://bitpay.com/dashboard',
+  PERSONAL_DASHBOARD: 'https://bitpay.com/id',
+  PERSONAL_DASHBOARD_CARD: 'https://bitpay.com/id/card',
 
   /**
    * Help articles

@@ -10,7 +10,6 @@ import {HeaderTitle} from '../../../components/styled/Text';
 import SwapCryptoRoot from './screens/SwapCryptoRoot';
 import ChangellyCheckout from './screens/ChangellyCheckout';
 import {HeaderRightContainer} from '../../../components/styled/Containers';
-import Button from '../../../components/button/Button';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import HistoryIcon from '../../../../assets/img/services/swap-crypto/icon-history.svg';
 import {useAppSelector} from '../../../utils/hooks';
@@ -63,16 +62,6 @@ const SwapCryptoStack = () => {
           headerTitle: () => <HeaderTitle>Swap Crypto</HeaderTitle>,
           headerRight: () => (
             <HeaderRightContainer>
-              {!changellyTxs.length && (
-                <Button
-                  buttonType={'pill'}
-                  buttonStyle={'cancel'}
-                  onPress={() => {
-                    navigation.dispatch(StackActions.pop(2));
-                  }}>
-                  Cancel
-                </Button>
-              )}
               {!!changellyTxs.length && (
                 <TouchableOpacity
                   onPress={() => {
@@ -93,18 +82,6 @@ const SwapCryptoStack = () => {
         options={{
           gestureEnabled: false,
           headerTitle: () => <HeaderTitle>Swap Checkout</HeaderTitle>,
-          headerRight: () => (
-            <HeaderRightContainer>
-              <Button
-                buttonType={'pill'}
-                buttonStyle={'cancel'}
-                onPress={() => {
-                  navigation.dispatch(StackActions.pop(2));
-                }}>
-                Cancel
-              </Button>
-            </HeaderRightContainer>
-          ),
         }}
       />
     </SwapCrypto.Navigator>

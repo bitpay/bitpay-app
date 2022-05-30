@@ -1,11 +1,11 @@
 import React, {useCallback} from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import CardComponent from '../../../components/card/Card';
 import ProgressBar from '../../../components/progress-bar/ProgressBar';
 import {BaseText, H3} from '../../../components/styled/Text';
 import {Card} from '../../../store/card/card.models';
-import {Action, Slate, SlateDark, White} from '../../../styles/colors';
+import {Action, SlateDark, White} from '../../../styles/colors';
 import ShippingStatusCardIcon from './ShippingStatusCardIcon';
 
 interface ShippingStatusProps {
@@ -18,7 +18,7 @@ const StyledHeading = styled(H3)`
 `;
 
 const Description = styled(BaseText)`
-  color: ${Slate};
+  color: ${({theme}) => theme.colors.description};
   font-size: 14px;
   margin-bottom: 12px;
   margin-top: 12px;
@@ -31,7 +31,6 @@ const ButtonText = styled(BaseText)`
 
 const ShippingStatus: React.FC<ShippingStatusProps> = props => {
   const {card, onActivatePress} = props;
-  const theme = useTheme();
 
   const renderShippingIcon = useCallback(() => {
     return card.brand ? <ShippingStatusCardIcon brand={card.brand} /> : null;
@@ -52,23 +51,12 @@ const ShippingStatus: React.FC<ShippingStatusProps> = props => {
   );
 
   const footer = (
-    <Button buttonStyle="secondary" onPress={() => onActivatePress?.(card)}>
-      <ButtonText>Activate Physical Card</ButtonText>
+    <Button buttonStyle="primary" onPress={() => onActivatePress?.(card)}>
+      Activate Physical Card
     </Button>
   );
 
-  return (
-    <CardComponent
-      style={{
-        height: 'auto',
-        width: '100%',
-        backgroundColor: theme.dark ? '#1d1d1d' : White,
-      }}
-      header={header}
-      body={body}
-      footer={footer}
-    />
-  );
+  return <CardComponent header={header} body={body} footer={footer} />;
 };
 
 export default ShippingStatus;

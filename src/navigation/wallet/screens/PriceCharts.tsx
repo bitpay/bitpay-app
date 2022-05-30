@@ -320,7 +320,7 @@ const PriceCharts = () => {
         )}
         <RowContainer>
           {showLossGainOrNeutralArrow(average)}
-          <CurrencyAverageText>{average}%</CurrencyAverageText>
+          <CurrencyAverageText>{Math.abs(average || 0)}%</CurrencyAverageText>
         </RowContainer>
       </HeaderContainer>
 

@@ -115,15 +115,10 @@ export const CurrencyImageContainer = styled.View`
 // Card
 export const CardGutter = '15px';
 
-interface CardContainerProps {
-  backgroundColor?: string;
-}
-export const CardContainer = styled.View<CardContainerProps>`
-  width: 170px;
-  height: 200px;
-  background: ${({backgroundColor}: CardContainerProps) =>
-    backgroundColor || NeutralSlate};
+export const CardContainer = styled.View`
+  background: ${({theme}) => (theme.dark ? LightBlack : White)};
   border-radius: 21px;
+  overflow: hidden;
 `;
 
 export interface SheetParams {

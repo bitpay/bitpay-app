@@ -25,10 +25,24 @@ import {
 import {AppActions} from '../../../store/app';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {useAppDispatch} from '../../../utils/hooks';
-import {OnboardingImage} from '../components/Containers';
+import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingStackParamList} from '../OnboardingStack';
+import {OnboardingImage} from '../components/Containers';
 
-const PinImage = require('../../../../assets/img/onboarding/pin.png');
+const PinImage = {
+  light: (
+    <OnboardingImage
+      style={{width: 180, height: 247}}
+      source={require('../../../../assets/img/onboarding/light/pin.png')}
+    />
+  ),
+  dark: (
+    <OnboardingImage
+      style={{width: 151, height: 247}}
+      source={require('../../../../assets/img/onboarding/dark/pin.png')}
+    />
+  ),
+};
 
 const PinContainer = styled.SafeAreaView`
   flex: 1;
@@ -39,6 +53,7 @@ const PinScreen: React.VFC<
   StackScreenProps<OnboardingStackParamList, 'Pin'>
 > = ({navigation}) => {
   const dispatch = useAppDispatch();
+  const themeType = useThemeType();
 
   useAndroidBackHandler(() => true);
 
@@ -100,12 +115,7 @@ const PinScreen: React.VFC<
         contentContainerStyle={{
           alignItems: 'center',
         }}>
-        <ImageContainer>
-          <OnboardingImage
-            style={{width: 151, height: 247}}
-            source={PinImage}
-          />
-        </ImageContainer>
+        <ImageContainer>{PinImage[themeType]}</ImageContainer>
         <TitleContainer>
           <TextAlign align={'center'}>
             <H3>Protect your wallet</H3>

@@ -55,3 +55,7 @@ export const isQuickLink = (contentCard: ContentCard) => {
 export const isDoMore = (contentCard: ContentCard) => {
   return contentCard.extras.feed_type === 'do_more';
 };
+
+export const isCardOffer = (contentCard: ContentCard) => {
+  return contentCard.extras.feed_type === 'card_promotion';
+};

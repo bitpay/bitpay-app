@@ -18,15 +18,29 @@ import {
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {AppActions} from '../../../store/app';
 import {useAppDispatch} from '../../../utils/hooks';
-import {OnboardingImage} from '../components/Containers';
+import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingStackParamList} from '../OnboardingStack';
+import {OnboardingImage} from '../components/Containers';
 
 const NotificationsContainer = styled.SafeAreaView`
   flex: 1;
   align-items: stretch;
 `;
 
-const NotificationImage = require('../../../../assets/img/onboarding/notifications.png');
+const NotificationImage = {
+  light: (
+    <OnboardingImage
+      style={{width: 190, height: 178}}
+      source={require('../../../../assets/img/onboarding/light/notifications.png')}
+    />
+  ),
+  dark: (
+    <OnboardingImage
+      style={{width: 190, height: 170}}
+      source={require('../../../../assets/img/onboarding/dark/notifications.png')}
+    />
+  ),
+};
 
 // estimated a number, tweak if neccessary based on the content length
 const scrollEnabledForSmallScreens = HEIGHT < 600;
@@ -35,6 +49,7 @@ const NotificationsScreen: React.VFC<
   StackScreenProps<OnboardingStackParamList, 'Notifications'>
 > = ({navigation}) => {
   const dispatch = useAppDispatch();
+  const themeType = useThemeType();
 
   useAndroidBackHandler(() => true);
 
@@ -94,10 +109,7 @@ const NotificationsScreen: React.VFC<
         }}
         scrollEnabled={scrollEnabledForSmallScreens}>
         <ImageContainer justifyContent={'flex-end'}>
-          <OnboardingImage
-            style={{width: 182, height: 213}}
-            source={NotificationImage}
-          />
+          {NotificationImage[themeType]}
         </ImageContainer>
         <TitleContainer>
           <TextAlign align={'center'}>

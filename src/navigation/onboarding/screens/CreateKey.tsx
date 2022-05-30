@@ -3,8 +3,8 @@ import React, {useLayoutEffect} from 'react';
 import {ScrollView} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
-import Button from '../../../components/button/Button';
 import {OnboardingImage} from '../components/Containers';
+import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   ActionContainer,
@@ -15,17 +15,32 @@ import {
   TitleContainer,
 } from '../../../components/styled/Containers';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
+import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingStackParamList} from '../OnboardingStack';
 
 const CreateKeyContainer = styled.SafeAreaView`
   flex: 1;
   align-items: stretch;
 `;
-const KeyImage = require('../../../../assets/img/onboarding/create-wallet.png');
+const KeyImage = {
+  light: (
+    <OnboardingImage
+      style={{width: 212, height: 247}}
+      source={require('../../../../assets/img/onboarding/light/create-wallet.png')}
+    />
+  ),
+  dark: (
+    <OnboardingImage
+      style={{width: 189, height: 247}}
+      source={require('../../../../assets/img/onboarding/dark/create-wallet.png')}
+    />
+  ),
+};
 
 const CreateOrImportKey: React.VFC<
   StackScreenProps<OnboardingStackParamList, 'CreateKey'>
 > = ({navigation}) => {
+  const themeType = useThemeType();
   useAndroidBackHandler(() => true);
 
   useLayoutEffect(() => {
@@ -55,12 +70,7 @@ const CreateOrImportKey: React.VFC<
         contentContainerStyle={{
           alignItems: 'center',
         }}>
-        <ImageContainer>
-          <OnboardingImage
-            style={{width: 155, height: 247}}
-            source={KeyImage}
-          />
-        </ImageContainer>
+        <ImageContainer>{KeyImage[themeType]}</ImageContainer>
         <TitleContainer>
           <TextAlign align={'center'}>
             <H3>Create a key or import an existing key</H3>
