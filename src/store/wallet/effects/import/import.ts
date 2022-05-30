@@ -71,6 +71,8 @@ import {
 import {ShopActions} from '../../../shop';
 import {initialShopState} from '../../../shop/shop.reducer';
 import {StackActions} from '@react-navigation/native';
+import {BuyCryptoActions} from '../../../buy-crypto';
+import {SwapCryptoActions} from '../../../swap-crypto';
 
 const BWC = BwcProvider.getInstance();
 
@@ -157,6 +159,11 @@ export const startMigration =
               cordovaStoragePath + `Key-${key.id}`,
               'utf8',
             )) as string;
+          } catch (e) {
+            // not found. Continue anyway
+          }
+
+          try {
             backupComplete = (await RNFS.readFile(
               cordovaStoragePath + `walletGroupBackup-${key.id}`,
               'utf8',
@@ -255,6 +262,79 @@ export const startMigration =
       } catch (err) {
         dispatch(LogActions.info('Failed to migrate config settings'));
       }
+
+      // buy crypto
+      // simplex
+      try {
+        dispatch(LogActions.info('Migrating simplex'));
+        const buyCryptoSimplexData = JSON.parse(
+          await RNFS.readFile(
+            cordovaStoragePath + 'simplex-production',
+            'utf8',
+          ).catch(_ => '{}'),
+        ) as any;
+        Object.values(buyCryptoSimplexData).forEach(
+          (simplexPaymentData: any) => {
+            simplexPaymentData.env = 'prod';
+            delete simplexPaymentData.error;
+            dispatch(
+              BuyCryptoActions.successPaymentRequestSimplex({
+                simplexPaymentData,
+              }),
+            );
+          },
+        );
+      } catch (err) {
+        dispatch(LogActions.info('Failed to migrate simplex'));
+      }
+
+      // wyre
+      try {
+        dispatch(LogActions.info('Migrating wyre'));
+        const buyCryptoWyreData = JSON.parse(
+          await RNFS.readFile(
+            cordovaStoragePath + 'wyre-production',
+            'utf8',
+          ).catch(_ => '{}'),
+        ) as any;
+        Object.values(buyCryptoWyreData).forEach((wyrePaymentData: any) => {
+          wyrePaymentData.env = 'prod';
+          delete wyrePaymentData.error;
+          dispatch(
+            BuyCryptoActions.successPaymentRequestWyre({
+              wyrePaymentData,
+            }),
+          );
+        });
+      } catch (err) {
+        dispatch(LogActions.info('Failed to migrate wyre'));
+      }
+
+      // swap crypto
+      // changelly
+      try {
+        dispatch(LogActions.info('Migrating changelly'));
+        const swapCryptoChangellyData = JSON.parse(
+          await RNFS.readFile(
+            cordovaStoragePath + 'changelly-production',
+            'utf8',
+          ).catch(_ => '{}'),
+        ) as any;
+        Object.values(swapCryptoChangellyData).forEach(
+          (changellyTxData: any) => {
+            changellyTxData.env = 'prod';
+            delete changellyTxData.error;
+            dispatch(
+              SwapCryptoActions.successTxChangelly({
+                changellyTxData,
+              }),
+            );
+          },
+        );
+      } catch (err) {
+        dispatch(LogActions.info('Failed to migrate simplex'));
+      }
+
       // gift cards
       try {
         dispatch(LogActions.info('Migrating gift cards'));
