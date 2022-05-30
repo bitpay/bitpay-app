@@ -211,6 +211,7 @@ export const initializeBrazeContent =
         dispatch(setBrazeEid(user.eid));
       } else {
         const eid = APP.brazeEid || uuid.v4().toString();
+        console.log('[app.effects.ts:216]###### EXTERNAL ID: ', eid); /* TODO */
         ReactAppboy.changeUser(eid);
         dispatch(setBrazeEid(eid));
       }
@@ -449,7 +450,10 @@ export const setNotifications =
   (accepted: boolean): Effect =>
   async (dispatch, getState) => {
     dispatch(setNotificationsAccepted(accepted));
-    const value = accepted ? 'subscribed' : 'unsubscribed';
+    const value = accepted
+      ? ReactAppboy.NotificationSubscriptionTypes.SUBSCRIBED
+      : ReactAppboy.NotificationSubscriptionTypes.UNSUBSCRIBED;
+
     ReactAppboy.setPushNotificationSubscriptionType(value);
     const {
       WALLET: {keys},

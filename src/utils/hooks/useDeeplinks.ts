@@ -33,6 +33,7 @@ export const useDeeplinks = () => {
 
   useEffect(() => {
     const urlEventHandler = ({url}: {url: string}) => {
+      console.log('[useDeeplinks.ts:35]######### Deep Link', url); /* TODO */
       if (url && (isDeepLink(url) || isUniversalLink(url))) {
         logger.info(`Deep link received: ${url}`);
         dispatch(showBlur(false));
