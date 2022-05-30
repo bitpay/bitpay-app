@@ -332,7 +332,7 @@ export const startMigration =
           },
         );
       } catch (err) {
-        dispatch(LogActions.info('Failed to migrate simplex'));
+        dispatch(LogActions.info('Failed to migrate changelly'));
       }
 
       // gift cards
