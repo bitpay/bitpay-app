@@ -250,11 +250,11 @@ export function getVisibleDiscount(cardConfig: CardConfig) {
   );
 }
 
-export function getGiftCardIcons(supportedCardMap: AvailableCardMap) {
+export function getGiftCardIcons(supportedCardMap: CardConfigMap) {
   return Object.keys(supportedCardMap).reduce(
     (iconMap, cardName) => ({
       ...iconMap,
-      [cardName]: supportedCardMap[cardName][0].icon,
+      [cardName]: supportedCardMap[cardName].icon,
     }),
     {} as {[cardName: string]: string},
   );
