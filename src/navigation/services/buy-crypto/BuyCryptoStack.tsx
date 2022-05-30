@@ -1,6 +1,6 @@
 import React from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
-import {useNavigation, StackActions} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
@@ -8,8 +8,6 @@ import {
 import {HeaderTitle} from '../../../components/styled/Text';
 import BuyCryptoRoot from './screens/BuyCryptoRoot';
 import BuyCryptoOffers from './screens/BuyCryptoOffers';
-import {HeaderRightContainer} from '../../../components/styled/Containers';
-import Button from '../../../components/button/Button';
 
 export type BuyCryptoStackParamList = {
   BuyCryptoRoot:
@@ -52,18 +50,6 @@ const BuyCryptoStack = () => {
         component={BuyCryptoRoot}
         options={{
           headerTitle: () => <HeaderTitle>Order Summary</HeaderTitle>,
-          headerRight: () => (
-            <HeaderRightContainer>
-              <Button
-                buttonType={'pill'}
-                buttonStyle={'cancel'}
-                onPress={() => {
-                  navigation.dispatch(StackActions.pop(2));
-                }}>
-                Cancel
-              </Button>
-            </HeaderRightContainer>
-          ),
         }}
       />
       <BuyCrypto.Screen
@@ -72,18 +58,6 @@ const BuyCryptoStack = () => {
         options={{
           ...baseScreenOptions,
           headerTitle: () => <HeaderTitle>Offers</HeaderTitle>,
-          headerRight: () => (
-            <HeaderRightContainer>
-              <Button
-                buttonType={'pill'}
-                buttonStyle={'cancel'}
-                onPress={() => {
-                  navigation.dispatch(StackActions.pop(2));
-                }}>
-                Cancel
-              </Button>
-            </HeaderRightContainer>
-          ),
         }}
       />
     </BuyCrypto.Navigator>
