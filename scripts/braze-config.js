@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-require('dotenv').config();
 const fs = require('fs');
 
 if (['development', 'production'].includes(process.env.NODE_ENV)) {
   const envFile = `${__dirname}/../.env.${process.env.NODE_ENV}`;
-  const newEnvFile = `${__dirname}/../.env`;
-  fs.copyFileSync(envFile, newEnvFile);
-  console.log('.env file created!');
+  const result = require('dotenv').config({path: envFile});
+  if (result.error) {
+    throw result.error;
+  }
 } else {
   console.log('Please, set NODE_ENV ["development" | "production"]');
   return;
