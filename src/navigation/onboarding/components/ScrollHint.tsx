@@ -1,20 +1,24 @@
 import React from 'react';
 import Svg, {Defs, LinearGradient, Rect, Stop} from 'react-native-svg';
-import {useTheme} from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 
 interface ScrollHintProps {
   height: number;
   offset?: number;
 }
 
+export const ScrollHintContainer = styled.View`
+  bottom: 0;
+  position: absolute;
+  width: 100%;
+`;
+
 const ScrollHint: React.VFC<ScrollHintProps> = props => {
   const {height, offset = 0.25} = props;
   const theme = useTheme();
 
   return (
-    <Svg
-      height={height}
-      width={'100%'}>
+    <Svg height={height} width={'100%'}>
       <Defs>
         <LinearGradient
           id="overlay-bg"

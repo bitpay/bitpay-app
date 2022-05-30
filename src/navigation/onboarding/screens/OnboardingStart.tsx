@@ -21,7 +21,7 @@ import {Action, LuckySevens} from '../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {OnboardingImage} from '../components/Containers';
 import OnboardingSlide from '../components/OnboardingSlide';
-import ScrollHint from '../components/ScrollHint';
+import ScrollHint, {ScrollHintContainer} from '../components/ScrollHint';
 import {OnboardingStackParamList} from '../OnboardingStack';
 
 type OnboardingStartScreenProps = StackScreenProps<
@@ -59,13 +59,7 @@ const LinkText = styled(Link)`
   font-size: 18px;
 `;
 
-const ScrollHintContainer = styled.View`
-  bottom: 0;
-  position: absolute;
-  width: 100%;
-`;
-
-// estimated a number, tweak if neccessary
+// estimated a number, tweak if neccessary based on the content length
 const scrollEnabledForSmallScreens = HEIGHT < 700;
 
 const ONBOARDING_SLIDES = [
