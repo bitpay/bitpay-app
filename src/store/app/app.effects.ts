@@ -321,7 +321,7 @@ export const openUrlWithInAppBrowser =
   };
 
 export const askForTrackingPermissionAndEnableSdks =
-  (): Effect => async dispatch => {
+  (): Effect<Promise<void>> => async dispatch => {
     return new Promise(async resolve => {
       const trackingStatus = await requestTrackingPermission();
       if (['authorized', 'unavailable'].includes(trackingStatus) && !__DEV__) {
