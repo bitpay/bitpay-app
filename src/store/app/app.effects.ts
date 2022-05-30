@@ -38,7 +38,14 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     await dispatch(startWalletStoreInit());
 
-    if (!getState().APP.migrationComplete) {
+    const {onboardingCompleted, migrationComplete} = getState().APP;
+
+    // init analytics -> post onboarding or migration
+    if (onboardingCompleted) {
+      dispatch(askForTrackingPermissionAndEnableSdks());
+    }
+
+    if (!migrationComplete) {
       await dispatch(startMigration());
       dispatch(setMigrationComplete());
     }

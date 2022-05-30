@@ -108,7 +108,7 @@ export default (props: {cardConfig: CardConfig; amount: number}) => {
       <LogoContainer>
         {cardConfig ? (
           <>
-            {cardConfig.logo.endsWith('.svg') ? (
+            {cardConfig.logo?.endsWith('.svg') ? (
               <ErrorBoundary
                 FallbackComponent={() => (
                   <PlaceholderText>{cardConfig.displayName}</PlaceholderText>
