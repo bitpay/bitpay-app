@@ -1,5 +1,5 @@
 import BitAuth from 'bitauth';
-import {Linking} from 'react-native';
+import {Linking, Platform} from 'react-native';
 import uuid from 'react-native-uuid';
 import ReactAppboy from 'react-native-appboy-sdk';
 import InAppBrowser, {
@@ -28,13 +28,12 @@ import {requestTrackingPermission} from 'react-native-tracking-transparency';
 import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
 import {
   setConfirmedTxAccepted,
-  setHomeCarouselConfig,
   setNotificationsAccepted,
   setOffersAndPromotionsAccepted,
   setProductsUpdatesAccepted,
   setBrazeEid,
   showBlur,
-  setMigrationComplete
+  setMigrationComplete,
 } from './app.actions';
 import {batch} from 'react-redux';
 import i18n from 'i18next';
@@ -211,7 +210,7 @@ export const initializeBrazeContent =
         dispatch(setBrazeEid(user.eid));
       } else {
         const eid = APP.brazeEid || uuid.v4().toString();
-        console.log('[app.effects.ts:216]###### EXTERNAL ID: ', eid); /* TODO */
+        console.log('###### EXTERNAL ID: ', eid); /* TODO */
         ReactAppboy.changeUser(eid);
         dispatch(setBrazeEid(eid));
       }
@@ -405,17 +404,12 @@ const getAllWalletClients = (keys: {
 
 const subscribePushNotifications = (walletClient: any, eid: string) => {
   const opts = {
-    //token: this._token, // TODO: token optional
-    external_user_id: eid, // todo add external user id
-    platform: null, // TODO: add platform
-    packageName: 'BitPayApp',
+    externalUserId: eid,
+    platform: Platform.OS,
+    packageName: 'BitPay',
     walletId: walletClient.credentials.walletId,
   };
-  console.log(
-    '[app.effects.ts:444] SUBSCRIBED PUSH NOTIFICATIONS',
-    walletClient.credentials.walletName,
-    opts,
-  ); /* TODO */
+  console.log('#### SUBSCRIBED PUSH NOTIFICATIONS', opts); /* TODO */
   /*
    * TODO: uncomment after deploy BWS
   walletClient.pushNotificationsSubscribe(opts, (err: any) => {
@@ -429,11 +423,7 @@ const subscribePushNotifications = (walletClient: any, eid: string) => {
 };
 
 const unSubscribePushNotifications = (walletClient: any, eid: string) => {
-  console.log(
-    '[app.effects.ts:464] UNSUBSCRIBED PUSH NOTIFICATIONS',
-    walletClient.credentials.walletName,
-    eid,
-  ); /* TODO */
+  console.log('#### UNSUBSCRIBED PUSH NOTIFICATIONS', eid); /* TODO */
   /*
    * TODO: uncomment after deploy BWS
   walletClient.pushNotificationsUnsubscribe(eid, (err: any) => {
