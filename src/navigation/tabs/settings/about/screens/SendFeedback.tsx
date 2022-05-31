@@ -19,6 +19,7 @@ import {useAppDispatch} from '../../../../../utils/hooks';
 import {BoxShadow} from '../../../home/components/Styled';
 import {Platform, Share} from 'react-native';
 import {APP_NAME, DOWNLOAD_BITPAY_URL} from '../../../../../constants/config';
+import Rate, {AndroidMarket} from 'react-native-rate';
 
 const SendFeedbackContainer = styled.SafeAreaView`
   flex: 1;
@@ -57,7 +58,23 @@ const SendFeedback = () => {
     {
       key: 1,
       onPress: () => {
-        //    TODO: Update me
+        const options = {
+          AppleAppID: '1149581638',
+          GooglePackageName: 'com.bitpay.wallet',
+          preferredAndroidMarket: AndroidMarket.Google,
+          preferInApp: false,
+          openAppStoreIfInAppFails: true,
+        };
+
+        Rate.rate(options, (success, errorMessage) => {
+          if (success) {
+            // this technically only tells us if the user successfully went to the Review Page. Whether they actually did anything, we do not know.
+          }
+          if (errorMessage) {
+            // errorMessage comes from the native code. Useful for debugging, but probably not for users to view
+            console.log(`Error Rating App: ${errorMessage}`);
+          }
+        });
       },
       description: 'Write a Review',
       leftIcon: <Start width={20} height={20} />,
