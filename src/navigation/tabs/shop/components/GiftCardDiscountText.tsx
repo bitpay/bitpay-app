@@ -1,19 +1,9 @@
 import React from 'react';
-import styled, {useTheme} from 'styled-components/native';
-import {BaseText} from '../../../../components/styled/Text';
+import {useTheme} from 'styled-components/native';
 import {CardConfig, GiftCardDiscount} from '../../../../store/shop/shop.models';
 import {Action, ProgressBlue} from '../../../../styles/colors';
 import {isDark} from '../../../../utils/color';
-import {formatFiatAmount} from '../../../../utils/helper-methods';
-
-interface DiscountTextProps {
-  color: string;
-}
-
-const DiscountText = styled(BaseText)<DiscountTextProps>`
-  font-weight: 600;
-  color: ${({color}) => color};
-`;
+import ShopDiscountText from './ShopDiscountText';
 
 const GiftCardDiscountText = ({
   cardConfig,
@@ -39,19 +29,11 @@ const GiftCardDiscountText = ({
       : brandColor;
   };
   return (
-    <DiscountText color={color || getDiscountTextColor()}>
-      {!short ? <>Save </> : null}
-      {discount.type === 'percentage' ? (
-        <>{discount.amount}%</>
-      ) : (
-        <>
-          {formatFiatAmount(discount.amount, cardConfig.currency, {
-            customPrecision: 'minimal',
-          })}
-        </>
-      )}{' '}
-      off every purchase
-    </DiscountText>
+    <ShopDiscountText
+      discount={discount}
+      short={short}
+      color={color || getDiscountTextColor()}
+    />
   );
 };
 
