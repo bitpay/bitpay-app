@@ -39,7 +39,7 @@ const BackupImage = {
 type BackupScreenProps = StackScreenProps<WalletStackParamList, 'BackupKey'>;
 
 export type BackupParamList = {
-  context: 'onboarding' | 'createNewKey';
+  context: 'onboarding' | 'createNewKey' | 'createNewMultisigKey';
   key: Key;
 };
 
@@ -74,6 +74,13 @@ export const backupRedirect = ({
       screen: 'TermsOfUse',
       params: {key},
     });
+  } else if (context === 'createNewMultisigKey') {
+    navigation.dispatch(
+      StackActions.replace('Wallet', {
+        screen: 'KeyOverview',
+        params: {id: key.id, context},
+      }),
+    );
   } else {
     navigation.dispatch(
       StackActions.replace('Wallet', {

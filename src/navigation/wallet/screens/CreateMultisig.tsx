@@ -307,7 +307,7 @@ const CreateMultisig = () => {
 
         navigation.navigate('Wallet', {
           screen: 'BackupKey',
-          params: {context: 'createNewKey', key: multisigKey},
+          params: {context: 'createNewMultisigKey', key: multisigKey},
         });
         dispatch(dismissOnGoingProcessModal());
       }
