@@ -1,6 +1,6 @@
 import {LinkingOptions} from '@react-navigation/native';
 import {useEffect} from 'react';
-import {InteractionManager, Linking} from 'react-native';
+import {Linking} from 'react-native';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {useDispatch} from 'react-redux';
 import {
@@ -18,7 +18,6 @@ import {TabsScreens} from '../../navigation/tabs/TabsStack';
 import {SettingsScreens} from '../../navigation/tabs/settings/SettingsStack';
 import {incomingData} from '../../store/scan/scan.effects';
 import {showBlur} from '../../store/app/app.actions';
-import {WalletScreens} from '../../navigation/wallet/WalletStack';
 
 const isUniversalLink = (url: string): boolean => {
   const domain = url.split('https://')[1].split('/')[0];
@@ -34,7 +33,6 @@ export const useDeeplinks = () => {
 
   useEffect(() => {
     const urlEventHandler = ({url}: {url: string}) => {
-      console.log('#### Deep Link', url); /* TODO */
       if (url && (isDeepLink(url) || isUniversalLink(url))) {
         logger.info(`Deep link received: ${url}`);
         dispatch(showBlur(false));
@@ -107,12 +105,6 @@ export const useDeeplinks = () => {
         [RootStacks.COINBASE]: {
           screens: {
             [CoinbaseScreens.ROOT]: 'coinbase',
-          },
-        },
-        [RootStacks.WALLET]: {
-          path: 'wallet/',
-          screens: {
-            [WalletScreens.WALLET_DETAILS]: ':walletId',
           },
         },
       },
