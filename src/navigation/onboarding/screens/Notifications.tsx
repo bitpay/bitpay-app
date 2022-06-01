@@ -54,12 +54,15 @@ const NotificationsScreen = () => {
   const dispatch = useDispatch();
 
   const onSetNotificationsPress = async (notificationsAccepted: boolean) => {
-    const setAndNavigate = (accepted: boolean) => {
+    const setAndNavigate = async (accepted: boolean) => {
       haptic('impactLight');
-      dispatch(AppEffects.setNotifications(accepted));
-      dispatch(AppEffects.setConfirmTxNotifications(accepted));
-      dispatch(AppEffects.setProductsUpdatesNotifications(accepted));
-      dispatch(AppEffects.setOffersAndPromotionsNotifications(accepted));
+      const systemEnabled = await AppEffects.checkNotificationsPermissions();
+      if (systemEnabled) {
+        dispatch(AppEffects.setNotifications(accepted));
+        dispatch(AppEffects.setConfirmTxNotifications(accepted));
+        dispatch(AppEffects.setProductsUpdatesNotifications(accepted));
+        dispatch(AppEffects.setOffersAndPromotionsNotifications(accepted));
+      }
       navigation.navigate('Onboarding', {
         screen: 'Pin',
       });

@@ -5,6 +5,7 @@ import ReactAppboy from 'react-native-appboy-sdk';
 import InAppBrowser, {
   InAppBrowserOptions,
 } from 'react-native-inappbrowser-reborn';
+import {checkNotifications, RESULTS} from 'react-native-permissions';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import BitPayApi from '../../api/bitpay';
 import GraphQlApi from '../../api/graphql';
@@ -423,7 +424,11 @@ const subscribePushNotifications = (walletClient: any, eid: string) => {
 };
 
 const unSubscribePushNotifications = (walletClient: any, eid: string) => {
-  console.log('#### UNSUBSCRIBED PUSH NOTIFICATIONS', eid); /* TODO */
+  console.log(
+    '#### UNSUBSCRIBED PUSH NOTIFICATIONS',
+    walletClient.credentials.walletId,
+    eid,
+  ); /* TODO */
   /*
    * TODO: uncomment after deploy BWS
   walletClient.pushNotificationsUnsubscribe(eid, (err: any) => {
@@ -436,9 +441,21 @@ const unSubscribePushNotifications = (walletClient: any, eid: string) => {
   */
 };
 
+export const checkNotificationsPermissions = (): Promise<boolean> => {
+  return new Promise(async resolve => {
+    checkNotifications().then(({status}) => {
+      if (status === RESULTS.GRANTED) {
+        return resolve(true);
+      } else {
+        return resolve(false);
+      }
+    });
+  });
+};
+
 export const setNotifications =
   (accepted: boolean): Effect =>
-  async (dispatch, getState) => {
+  (dispatch, getState) => {
     dispatch(setNotificationsAccepted(accepted));
     const value = accepted
       ? ReactAppboy.NotificationSubscriptionTypes.SUBSCRIBED
