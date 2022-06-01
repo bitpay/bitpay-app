@@ -7,6 +7,7 @@ import Blur from '../../../blur/Blur';
 interface Props extends SheetParams {
   isVisible: boolean;
   onBackdropPress: (props?: any) => void;
+  coverScreen?: boolean;
 }
 
 const SheetModal: React.FC<Props> = ({
@@ -14,6 +15,7 @@ const SheetModal: React.FC<Props> = ({
   isVisible,
   onBackdropPress,
   placement,
+  coverScreen = true,
 }) => {
   const showBlur = useAppSelector(({APP}) => APP.showBlur);
   return (
@@ -25,6 +27,7 @@ const SheetModal: React.FC<Props> = ({
       useNativeDriverForBackdrop={true}
       useNativeDriver={true}
       testID="modalBackdrop"
+      coverScreen={coverScreen}
       onBackdropPress={onBackdropPress}
       animationIn={placement === 'top' ? 'slideInDown' : 'slideInUp'}
       animationOut={placement === 'top' ? 'slideOutUp' : 'slideOutDown'}

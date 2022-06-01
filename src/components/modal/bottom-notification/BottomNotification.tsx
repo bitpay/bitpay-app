@@ -137,6 +137,7 @@ const BottomNotification = () => {
 
   return (
     <SheetModal
+      coverScreen={false}
       isVisible={isVisible}
       onBackdropPress={() => {
         if (enableBackdropDismiss) {
