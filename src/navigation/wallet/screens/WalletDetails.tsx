@@ -28,7 +28,10 @@ import {Network} from '../../../constants';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {findWalletById, isSegwit} from '../../../store/wallet/utils/wallet';
-import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
+import {
+  toggleHideBalance,
+  updatePortfolioBalance,
+} from '../../../store/wallet/wallet.actions';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {
   Air,
@@ -739,20 +742,25 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             <>
               <HeaderContainer>
                 <BalanceContainer>
-                  <Row>
-                    {!hideBalance ? (
-                      <Balance scale={shouldScale(cryptoBalance)}>
-                        {cryptoBalance} {currencyAbbreviation}
-                      </Balance>
-                    ) : (
-                      <H2>****</H2>
-                    )}
-                  </Row>
-                  <Row>
-                    {showFiatBalance && !hideBalance && (
-                      <Paragraph>{fiatBalance}</Paragraph>
-                    )}
-                  </Row>
+                  <TouchableOpacity
+                    onLongPress={() => {
+                      dispatch(toggleHideBalance({wallet: fullWalletObj}));
+                    }}>
+                    <Row>
+                      {!hideBalance ? (
+                        <Balance scale={shouldScale(cryptoBalance)}>
+                          {cryptoBalance} {currencyAbbreviation}
+                        </Balance>
+                      ) : (
+                        <H2>****</H2>
+                      )}
+                    </Row>
+                    <Row>
+                      {showFiatBalance && !hideBalance && (
+                        <Paragraph>{fiatBalance}</Paragraph>
+                      )}
+                    </Row>
+                  </TouchableOpacity>
                   {!hideBalance && showBalanceDetailsButton() && (
                     <TouchableRow
                       onPress={() => setShowBalanceDetailsModal(true)}>
