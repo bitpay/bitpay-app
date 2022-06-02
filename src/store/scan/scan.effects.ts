@@ -6,6 +6,7 @@ import {
   ExtractBitPayUriAddress,
   GetPayProUrl,
 } from '../wallet/utils/decode-uri';
+import isEqual from 'lodash.isequal';
 import {
   IsValidPayPro,
   isValidWalletConnectUri,
@@ -47,7 +48,7 @@ import {
   handleCreateTxProposalError,
 } from '../wallet/effects/send/send';
 import {showBottomNotificationModal} from '../app/app.actions';
-import {Wallet} from '../wallet/wallet.models';
+import {Wallet, Key} from '../wallet/wallet.models';
 import {FormatAmount} from '../wallet/effects/amount/amount';
 import {ButtonState} from '../../components/button/Button';
 import {InteractionManager} from 'react-native';
@@ -321,36 +322,65 @@ export const goToAmount =
 const handleBitPayUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   (dispatch, getState) => {
-    console.log('Incoming-data: BitPay URI');
-    const address = ExtractBitPayUriAddress(data);
-    const params: URLSearchParams = new URLSearchParams(
-      data.replace(`bitpay:${address}`, ''),
-    );
-    const message = params.get('message') || undefined;
-    let feePerKb;
-    const coin = params.get('coin')!;
+    console.log('### Incoming-data: BitPay URI');
 
-    if (params.get('gasPrice')) {
-      feePerKb = Number(params.get('gasPrice'));
-    }
-    const recipient = {
-      type: 'address',
-      currency: coin,
-      address,
-    };
-
-    if (!params.get('amount')) {
-      dispatch(goToAmount({coin, recipient, wallet, opts: {message}}));
-    } else {
-      const amount = Number(params.get('amount'));
-      dispatch(
-        goToConfirm({
-          recipient,
-          amount,
-          wallet,
-          opts: {message, feePerKb},
-        }),
+    // From Braze (push notifications)
+    if (data.indexOf('bitpay://wallet?') === 0) {
+      const params: URLSearchParams = new URLSearchParams(
+        data.replace('bitpay://wallet?', ''),
       );
+      const walletIdHashed = params.get('walletId')!;
+      const tokenAddress = params.get('tokenAddress');
+      const multisigContractAddress = params.get('multisigContractAddress');
+
+      const keys = Object.values(getState().WALLET.keys);
+
+      const fullWalletObj = findWallet(
+        keys,
+        walletIdHashed,
+        tokenAddress,
+        multisigContractAddress,
+      );
+
+      if (fullWalletObj) {
+        navigationRef.navigate('Wallet', {
+          screen: WalletScreens.WALLET_DETAILS,
+          params: {
+            walletId: fullWalletObj.credentials.walletId,
+          },
+        });
+      }
+    } else {
+      const address = ExtractBitPayUriAddress(data);
+      const params: URLSearchParams = new URLSearchParams(
+        data.replace(`bitpay:${address}`, ''),
+      );
+      const message = params.get('message') || undefined;
+      let feePerKb;
+      const coin = params.get('coin')!;
+
+      if (params.get('gasPrice')) {
+        feePerKb = Number(params.get('gasPrice'));
+      }
+      const recipient = {
+        type: 'address',
+        currency: coin,
+        address,
+      };
+
+      if (!params.get('amount')) {
+        dispatch(goToAmount({coin, recipient, wallet, opts: {message}}));
+      } else {
+        const amount = Number(params.get('amount'));
+        dispatch(
+          goToConfirm({
+            recipient,
+            amount,
+            wallet,
+            opts: {message, feePerKb},
+          }),
+        );
+      }
     }
   };
 
@@ -749,3 +779,32 @@ const goToJoinWallet =
       });
     }
   };
+
+const findWallet = (
+  keys: Key[],
+  walletIdHashed: string,
+  tokenAddress: string | null,
+  multisigContractAddress?: string | null,
+) => {
+  let walletIdHash;
+  const sjcl = BwcProvider.getInstance().getSJCL();
+
+  const wallets = Object.values(keys).flatMap(k => k.wallets);
+
+  const wallet = wallets.find(w => {
+    if (tokenAddress || multisigContractAddress) {
+      const walletId = w.credentials.walletId;
+      const lastHyphenPosition = walletId.lastIndexOf('-');
+      const walletIdWithoutTokenAddress = walletId.substring(
+        0,
+        lastHyphenPosition,
+      );
+      walletIdHash = sjcl.hash.sha256.hash(walletIdWithoutTokenAddress);
+    } else {
+      walletIdHash = sjcl.hash.sha256.hash(w.credentials.walletId);
+    }
+    return isEqual(walletIdHashed, sjcl.codec.hex.fromBits(walletIdHash));
+  });
+
+  return wallet;
+};

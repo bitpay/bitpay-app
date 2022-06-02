@@ -259,14 +259,18 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const {t} = useTranslation();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {walletId, key, skipInitializeHistory} = route.params;
-  const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
+  const {walletId, skipInitializeHistory} = route.params;
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+
+  const wallets = Object.values(keys).flatMap(k => k.wallets);
+
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
   const fullWalletObj = findWalletById(wallets, walletId) as Wallet;
+  const key = keys[fullWalletObj.keyId];
   const uiFormattedWallet = buildUIFormattedWallet(
     fullWalletObj,
     defaultAltCurrency.isoCode,

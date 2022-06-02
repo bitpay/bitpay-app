@@ -12,7 +12,7 @@ import {
 import Button from '../../../components/button/Button';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {useDispatch} from 'react-redux';
-import {AppActions} from '../../../store/app';
+import {AppEffects} from '../../../store/app';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useNavigation} from '@react-navigation/native';
 import {OnboardingImage} from '../components/Containers';
@@ -68,9 +68,15 @@ const NotificationsScreen = () => {
   const dispatch = useDispatch();
 
   const onSetNotificationsPress = async (notificationsAccepted: boolean) => {
-    const setAndNavigate = (accepted: boolean) => {
+    const setAndNavigate = async (accepted: boolean) => {
       haptic('impactLight');
-      dispatch(AppActions.setNotificationsAccepted(accepted));
+      const systemEnabled = await AppEffects.checkNotificationsPermissions();
+      if (systemEnabled) {
+        dispatch(AppEffects.setNotifications(accepted));
+        dispatch(AppEffects.setConfirmTxNotifications(accepted));
+        dispatch(AppEffects.setProductsUpdatesNotifications(accepted));
+        dispatch(AppEffects.setOffersAndPromotionsNotifications(accepted));
+      }
       navigation.navigate('Onboarding', {
         screen: 'Pin',
       });
