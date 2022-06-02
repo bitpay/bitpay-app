@@ -13,7 +13,10 @@ import {
 } from './card.types';
 import CardQueries from './card.queries';
 import CardMutations from './card.mutations';
-import {StartActivateCardParams} from '../../store/card/card.effects';
+import {
+  AppleWalletProvisioningRequestParams,
+  StartActivateCardParams,
+} from '../../store/card/card.effects';
 
 const fetchAll = async (token: string) => {
   const query = CardQueries.FETCH_CARDS(token);
@@ -212,6 +215,22 @@ const activateCard = async (
   return data;
 };
 
+const startCreateAppleWalletProvisioningRequest = async (
+  token: string,
+  id: string,
+  payload: AppleWalletProvisioningRequestParams,
+) => {
+  const query = CardMutations.START_CREATE_APPLE_WALLET_PROVISIONING_REQUEST(
+    token,
+    id,
+    payload,
+  );
+
+  const {data} = await GraphQlApi.getInstance().request<any>(query);
+
+  return data;
+};
+
 const CardApi = {
   activateCard,
   fetchAll,
@@ -223,6 +242,7 @@ const CardApi = {
   fetchVirtualCardImageUrls,
   updateCardLock,
   updateCardName,
+  startCreateAppleWalletProvisioningRequest,
 };
 
 export default CardApi;

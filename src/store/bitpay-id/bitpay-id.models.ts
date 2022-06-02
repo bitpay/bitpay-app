@@ -35,4 +35,5 @@ export interface User {
     syncGiftCardPurchases: boolean;
   };
   referralCode?: string;
+  name?: string;
 }

@@ -1,4 +1,7 @@
-import {StartActivateCardParams} from '../../store/card/card.effects';
+import {
+  AppleWalletProvisioningRequestParams,
+  StartActivateCardParams,
+} from '../../store/card/card.effects';
 import {GqlQueryParams} from '../graphql/graphql.types';
 
 type NameCardInputType = {
@@ -94,10 +97,49 @@ export const ACTIVATE_CARD = (
   };
 };
 
+export const START_CREATE_APPLE_WALLET_PROVISIONING_REQUEST = (
+  token: string,
+  id: string,
+  {
+    cert1,
+    cert2,
+    nonce,
+    nonceSignature,
+    walletProvider,
+  }: AppleWalletProvisioningRequestParams,
+): GqlQueryParams<AppleWalletProvisioningRequestParams> => {
+  return {
+    query: `
+            mutation START_CREATE_PROVISIONING_REQUEST($token:String!, $csrf:String, $cardId:String!, $input:ProvisionInputType!) {
+              user:bitpayUser(token:$token, csrf:$csrf) {
+                card:debitCard(cardId:$cardId) {
+                  provisioningData:createProvisioningRequest(input:$input) {
+                    activationData,
+                    encryptedPassData,
+                    wrappedKey
+                  }
+                }
+              }
+            }
+          `,
+    variables: {
+      cardId: id,
+      input: {
+        walletProvider,
+        cert1,
+        cert2,
+        nonce,
+        nonceSignature,
+      },
+    },
+  };
+};
+
 const CardMutations = {
   NAME_CARD,
   LOCK_CARD,
   ACTIVATE_CARD,
+  START_CREATE_APPLE_WALLET_PROVISIONING_REQUEST,
 };
 
 export default CardMutations;

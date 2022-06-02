@@ -104,3 +104,19 @@ export interface ReferredUsersType {
   givenName: string;
   status: string;
 }
+
+export interface CardData {
+  cardholderName: string;
+  primaryAccountNumberSuffix: string;
+  localizedDescription?: string;
+  paymentNetwork?: string;
+}
+
+export interface AddAppleWalletData {
+  id: string;
+  data: {
+    cardholderName: string;
+    primaryAccountSuffix: string;
+    encryptionScheme: string;
+  };
+}
