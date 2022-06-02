@@ -4,13 +4,13 @@ import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {Keyboard, SafeAreaView, TextInput} from 'react-native';
 import * as yup from 'yup';
-import AlertBox from '../../../components/alert-box/AlertBox';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {Link} from '../../../components/styled/Text';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {navigationRef, RootStacks} from '../../../Root';
+import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
@@ -71,6 +71,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
 
       if (onLoginSuccess) {
         onLoginSuccess();
+        dispatch(BitPayIdActions.updateLoginStatus(null));
         return;
       }
 
@@ -84,12 +85,31 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
         });
       }
 
+      dispatch(BitPayIdActions.updateLoginStatus(null));
       return;
     }
 
     if (loginStatus === 'failed') {
-      // TODO
       captchaRef.current?.reset();
+
+      dispatch(
+        AppActions.showBottomNotificationModal({
+          type: 'error',
+          title: 'Login failed',
+          message:
+            loginError ||
+            'Could not log in. Please review your information and try again.',
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: 'OK',
+              action: () => {
+                dispatch(BitPayIdActions.updateLoginStatus(null));
+              },
+            },
+          ],
+        }),
+      );
       return;
     }
 
@@ -102,7 +122,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
       navigation.navigate('EmailAuthentication');
       return;
     }
-  }, [loginStatus, navigation, dispatch, onLoginSuccess]);
+  }, [dispatch, onLoginSuccess, navigation, loginStatus, loginError]);
 
   const onSubmit = handleSubmit(({email, password}) => {
     Keyboard.dismiss();
@@ -132,15 +152,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   return (
     <SafeAreaView>
       <AuthFormContainer>
-        {loginStatus === 'failed' ? (
-          <AuthRowContainer>
-            <AlertBox type="warning">
-              {loginError ||
-                'Could not log in. Please review your information and try again.'}
-            </AlertBox>
-          </AuthRowContainer>
-        ) : null}
-
         <AuthRowContainer>
           <Controller
             control={control}
