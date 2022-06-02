@@ -97,7 +97,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
       id: card.id,
       data: {
         cardholderName: user?.name || '',
-        primaryAccountSuffix: card.lastFourDigits,
+        primaryAccountNumberSuffix: card.lastFourDigits,
         encryptionScheme: 'ECC_V2',
       },
     };
@@ -105,7 +105,17 @@ const SettingsList: React.FC<SettingsListProps> = props => {
     dispatch(CardEffects.startAddToAppleWallet(params));
   };
 
-  const onAddGooglePay = () => {};
+  const onAddGooglePay = () => {
+    dispatch(
+      CardEffects.startAddToGooglePay({
+        id: card.id,
+        data: {
+          name: user?.name || '',
+          lastFourDigits: card.lastFourDigits,
+        },
+      }),
+    );
+  };
 
   useEffect(() => {
     // whether success or fail, lockedByUser will be correct so update the local state and reset the flag
@@ -197,7 +207,6 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
           <Hr />
 
-          {/* TODO: Get new icons*/}
           {card.cardType === 'virtual' ? (
             <>
               {Platform.OS === 'ios' ? (

@@ -231,6 +231,20 @@ const startCreateAppleWalletProvisioningRequest = async (
   return data;
 };
 
+const startCreateGooglePayProvisioningRequest = async (
+  token: string,
+  id: string,
+) => {
+  const query = CardMutations.START_CREATE_GOOGLE_PAY_PROVISIONING_REQUEST(
+    token,
+    id,
+  );
+
+  const {data} = await GraphQlApi.getInstance().request<any>(query);
+
+  return data;
+};
+
 const CardApi = {
   activateCard,
   fetchAll,
@@ -243,6 +257,7 @@ const CardApi = {
   updateCardLock,
   updateCardName,
   startCreateAppleWalletProvisioningRequest,
+  startCreateGooglePayProvisioningRequest,
 };
 
 export default CardApi;
