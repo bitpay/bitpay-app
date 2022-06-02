@@ -146,13 +146,18 @@ export default ({
   const numActiveGiftCards = activeGiftCards.length;
   const activeGiftCardsHeight = numActiveGiftCards * 62 + 215;
 
-  const updateSearchResults = debounce((text: string) => {
-    setSearchVal(text);
-    const newSearchResults = availableGiftCards.filter(giftCard =>
-      giftCard.displayName.toLowerCase().includes(text.toLocaleLowerCase()),
-    );
-    setSearchResults(newSearchResults);
-  }, 300);
+  const updateSearchResults = useMemo(
+    () =>
+      debounce((text: string) => {
+        setSearchVal(text);
+        const lowerCaseText = text.toLocaleLowerCase();
+        const newSearchResults = availableGiftCards.filter(giftCard =>
+          giftCard.displayName.toLowerCase().includes(lowerCaseText),
+        );
+        setSearchResults(newSearchResults);
+      }, 300),
+    [availableGiftCards],
+  );
 
   const underlayColor = theme.dark ? '#121212' : '#fbfbff';
 

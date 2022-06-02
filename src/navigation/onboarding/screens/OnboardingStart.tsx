@@ -115,13 +115,13 @@ const LinkText = styled(Link)`
 // estimated a number, tweak if neccessary based on the content length
 const scrollEnabledForSmallScreens = HEIGHT < 700;
 
-const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
+const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const themeType = useThemeType();
-  const isPaired = useAppSelector(({APP, BITPAY_ID}) => {
-    return !!BITPAY_ID.apiToken[APP.network];
-  });
+  const isPaired = useAppSelector(
+    ({APP, BITPAY_ID}) => !!BITPAY_ID.apiToken[APP.network],
+  );
 
   useAndroidBackHandler(() => true);
 
@@ -134,38 +134,42 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
     [dispatch],
   );
 
+  const onLoginPress = () => {
+    askForTrackingThenNavigate(() => {
+      navigation.navigate('Auth', {
+        screen: 'Login',
+        params: {
+          onLoginSuccess: async () => {
+            haptic('impactLight');
+            navigation.navigate('Onboarding', {
+              screen: 'Notifications',
+            });
+          },
+        },
+      });
+    });
+  };
+  const onLoginPressRef = useRef(onLoginPress);
+  onLoginPressRef.current = onLoginPress;
+
+  const onLogoutPress = () => {
+    haptic('impactLight');
+    dispatch(BitPayIdEffects.startDisconnectBitPayId());
+  };
+  const onLogoutPressRef = useRef(onLogoutPress);
+  onLogoutPressRef.current = onLogoutPress;
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => null,
       headerRight: () => (
         <HeaderRightContainer>
           {isPaired ? (
-            <Button
-              buttonType="pill"
-              onPress={() => {
-                haptic('impactLight');
-                dispatch(BitPayIdEffects.startDisconnectBitPayId());
-              }}>
+            <Button buttonType="pill" onPress={onLogoutPressRef.current}>
               Log Out
             </Button>
           ) : (
-            <Button
-              buttonType={'pill'}
-              onPress={() =>
-                askForTrackingThenNavigate(() => {
-                  navigation.navigate('Auth', {
-                    screen: 'Login',
-                    params: {
-                      onLoginSuccess: async () => {
-                        haptic('impactLight');
-                        navigation.navigate('Onboarding', {
-                          screen: 'Notifications',
-                        });
-                      },
-                    },
-                  });
-                })
-              }>
+            <Button buttonType={'pill'} onPress={onLoginPressRef.current}>
               Log In
             </Button>
           )}
