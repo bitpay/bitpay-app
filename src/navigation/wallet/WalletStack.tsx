@@ -76,7 +76,7 @@ export type WalletStackParamList = {
   RecoveryPhrase: RecoveryPhraseParamList;
   VerifyPhrase: VerifyPhraseParamList;
   TermsOfUse: TermsOfUseParamList;
-  KeyOverview: {id: string};
+  KeyOverview: {id: string; context?: 'createNewMultisigKey'};
   KeyExplanation: undefined;
   KeySettings: {key: Key; context?: 'createEncryptPassword'};
   UpdateKeyOrWalletName: {
