@@ -73,6 +73,10 @@ export const toggledGiftCardArchivedStatus = (payload: {
   payload,
 });
 
+export const toggledSyncGiftCardPurchasesWithBitPayId = (): ShopActionType => ({
+  type: ShopActionTypes.TOGGLED_SYNC_GIFT_CARD_PURCHASES_WITH_BITPAY_ID,
+});
+
 export const updatedEmailAddress = (payload: {
   email: string;
 }): ShopActionType => ({

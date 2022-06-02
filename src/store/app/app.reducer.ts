@@ -57,6 +57,9 @@ export interface AppState {
   bottomNotificationModalConfig: BottomNotificationConfig | undefined;
   currentRoute: [keyof RootStackParamList, NavScreenParams] | undefined;
   notificationsAccepted: boolean;
+  confirmedTxAccepted: boolean;
+  productsUpdatesAccepted: boolean;
+  offersAndPromotionsAccepted: boolean;
   showOnboardingFinishModal: boolean;
   showDecryptPasswordModal: boolean;
   decryptPasswordConfig: DecryptPasswordConfig | undefined;
@@ -70,6 +73,7 @@ export interface AppState {
   defaultLanguage: string;
   showPortfolioValue: boolean;
   brazeContentCards: ContentCard[];
+  brazeEid: string | undefined;
   showBiometricModal: boolean;
   biometricLockActive: boolean;
   lockAuthorizedUntil: number | undefined;
@@ -108,6 +112,9 @@ const initialState: AppState = {
   bottomNotificationModalConfig: undefined,
   currentRoute: undefined,
   notificationsAccepted: false,
+  confirmedTxAccepted: false,
+  productsUpdatesAccepted: false,
+  offersAndPromotionsAccepted: false,
   showOnboardingFinishModal: false,
   showDecryptPasswordModal: false,
   decryptPasswordConfig: undefined,
@@ -121,6 +128,7 @@ const initialState: AppState = {
   defaultLanguage: i18n.language || 'en',
   showPortfolioValue: true,
   brazeContentCards: [],
+  brazeEid: undefined,
   showBiometricModal: false,
   biometricLockActive: false,
   lockAuthorizedUntil: undefined,
@@ -225,6 +233,24 @@ export const appReducer = (
         notificationsAccepted: action.payload,
       };
 
+    case AppActionTypes.SET_CONFIRMED_TX_ACCEPTED:
+      return {
+        ...state,
+        confirmedTxAccepted: action.payload,
+      };
+
+    case AppActionTypes.SET_PRODUCTS_UPDATES_ACCEPTED:
+      return {
+        ...state,
+        productsUpdatesAccepted: action.payload,
+      };
+
+    case AppActionTypes.SET_OFFERS_AND_PROMOTIONS_ACCEPTED:
+      return {
+        ...state,
+        offersAndPromotionsAccepted: action.payload,
+      };
+
     case AppActionTypes.SHOW_ONBOARDING_FINISH_MODAL:
       return {
         ...state,
@@ -317,6 +343,12 @@ export const appReducer = (
       return {
         ...state,
         brazeContentCards: action.payload.contentCards,
+      };
+
+    case AppActionTypes.SET_BRAZE_EID:
+      return {
+        ...state,
+        brazeEid: action.payload,
       };
 
     case AppActionTypes.SHOW_BIOMETRIC_MODAL:

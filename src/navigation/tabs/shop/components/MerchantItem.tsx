@@ -7,6 +7,7 @@ import RemoteImage from './RemoteImage';
 import {BaseText, H6, Paragraph} from '../../../../components/styled/Text';
 import {WIDTH} from '../../../../components/styled/Containers';
 import {horizontalPadding} from './styled/ShopTabComponents';
+import ShopDiscountText from './ShopDiscountText';
 interface MerchantBoxProps {
   height: number;
   marginLeft?: number;
@@ -68,10 +69,21 @@ interface MerchantItemProps extends MerchantBoxProps {
 
 export default ({merchant, height, marginLeft, width}: MerchantItemProps) => {
   const {caption, displayName, icon, discount} = merchant;
+  const hasDiscount =
+    discount && ['percentage', 'flatrate', 'custom'].includes(discount.type);
   const [descriptionNumLines, setDescriptionNumLines] = useState(3);
   const onTextLayout = useCallback(
-    e => setDescriptionNumLines(e.nativeEvent.lines.length > 1 ? 3 : 4),
-    [],
+    e => {
+      const numMerchantNameLines = e.nativeEvent.lines.length;
+      const maxLines = height === 200 ? 5 : 4;
+      const numLinesIfNoDiscount =
+        numMerchantNameLines > 1 ? maxLines - 1 : maxLines;
+      const numLines = discount
+        ? numLinesIfNoDiscount - 2
+        : numLinesIfNoDiscount;
+      setDescriptionNumLines(numLines);
+    },
+    [discount, height],
   );
   return (
     <MerchantBox height={height} marginLeft={marginLeft} width={width}>
@@ -84,10 +96,12 @@ export default ({merchant, height, marginLeft, width}: MerchantItemProps) => {
           {caption}
         </MerchantDescription>
       </MerchantBoxBody>
-      {discount ? (
+      {hasDiscount ? (
         <PromoFooter>
           <TagSvg />
-          <PromoText>{discount.value}</PromoText>
+          <PromoText>
+            <ShopDiscountText discount={discount} />
+          </PromoText>
         </PromoFooter>
       ) : null}
     </MerchantBox>

@@ -16,7 +16,12 @@ import {
   SectionDivider,
   SectionSpacer,
 } from '../../components/styled/ShopTabComponents';
-import {H3, H5, Paragraph} from '../../../../../components/styled/Text';
+import {
+  H3,
+  H5,
+  HeaderTitle,
+  Paragraph,
+} from '../../../../../components/styled/Text';
 import {useTheme} from '@react-navigation/native';
 
 const GradientBox = styled(LinearGradient)`
@@ -53,7 +58,9 @@ const MerchantDetails = ({
   const iconHeight = 70;
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: directIntegration.displayName,
+      headerTitle: () => (
+        <HeaderTitle>{directIntegration.displayName}</HeaderTitle>
+      ),
     });
   });
   return (

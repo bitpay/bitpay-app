@@ -1,9 +1,11 @@
 import BitAuth from 'bitauth';
-import {Linking} from 'react-native';
+import {Linking, Platform} from 'react-native';
+import uuid from 'react-native-uuid';
 import ReactAppboy from 'react-native-appboy-sdk';
 import InAppBrowser, {
   InAppBrowserOptions,
 } from 'react-native-inappbrowser-reborn';
+import {checkNotifications, RESULTS} from 'react-native-permissions';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import BitPayApi from '../../api/bitpay';
 import GraphQlApi from '../../api/graphql';
@@ -25,11 +27,25 @@ import {SEGMENT_API_KEY, APPSFLYER_API_KEY, APP_ID} from '@env';
 import appsFlyer from 'react-native-appsflyer';
 import {requestTrackingPermission} from 'react-native-tracking-transparency';
 import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
-import {setMigrationComplete, showBlur} from './app.actions';
+import {
+  setConfirmedTxAccepted,
+  setNotificationsAccepted,
+  setOffersAndPromotionsAccepted,
+  setProductsUpdatesAccepted,
+  setBrazeEid,
+  showBlur,
+  setMigrationComplete,
+} from './app.actions';
 import {batch} from 'react-redux';
 import i18n from 'i18next';
 import {WalletActions} from '../wallet';
 import {coinbaseInitialize} from '../coinbase';
+import {Key} from '../wallet/wallet.models';
+
+// Subscription groups (Braze)
+const CONFIRMED_TX_GROUP_ID = 'dff24ef2-1896-4dee-81fd-7dca9c9c7a8a';
+const PRODUCTS_UPDATES_GROUP_ID = '27c86a0b-2a91-4383-b05b-5e671554f186';
+const OFFERS_AND_PROMOTIONS_GROUP_ID = '6be103aa-4df0-46f6-a3fa-438e61aadced';
 
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
@@ -199,6 +215,12 @@ export const initializeBrazeContent =
       if (user) {
         ReactAppboy.changeUser(user.eid);
         ReactAppboy.setEmail(user.email);
+        dispatch(setBrazeEid(user.eid));
+      } else {
+        const eid = APP.brazeEid || uuid.v4().toString();
+        console.log('###### EXTERNAL ID: ', eid); /* TODO */
+        ReactAppboy.changeUser(eid);
+        dispatch(setBrazeEid(eid));
       }
 
       ReactAppboy.requestContentCardsRefresh();
@@ -321,46 +343,179 @@ export const openUrlWithInAppBrowser =
   };
 
 export const askForTrackingPermissionAndEnableSdks =
-  (): Effect => async dispatch => {
-    return new Promise(async resolve => {
-      const trackingStatus = await requestTrackingPermission();
-      if (['authorized', 'unavailable'].includes(trackingStatus) && !__DEV__) {
-        try {
-          await new Promise<void>((resolve2, reject2) => {
-            appsFlyer.initSdk(
-              {
-                devKey: APPSFLYER_API_KEY,
-                isDebug: __DEV__,
-                appId: APP_ID, // iOS app id
-              },
-              result => {
-                console.log(result);
-                resolve2();
-              },
-              error => {
-                console.log(error);
-                reject2(error);
-              },
-            );
-          });
-        } catch (err) {
-          dispatch(LogActions.error('Appsflyer setup failed'));
-          dispatch(LogActions.error(JSON.stringify(err)));
-        }
+  (): Effect<Promise<void>> => async dispatch => {
+    const trackingStatus = await requestTrackingPermission();
 
-        try {
-          await analytics.setup(SEGMENT_API_KEY, {
-            recordScreenViews: false,
-            trackAppLifecycleEvents: true,
-          });
-        } catch (err) {
-          dispatch(LogActions.error('Segment setup failed'));
-          dispatch(LogActions.error(JSON.stringify(err)));
-        }
+    if (['authorized', 'unavailable'].includes(trackingStatus) && !__DEV__) {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          appsFlyer.initSdk(
+            {
+              devKey: APPSFLYER_API_KEY,
+              isDebug: __DEV__,
+              appId: APP_ID, // iOS app id
+            },
+            result => {
+              console.log(result);
+              resolve();
+            },
+            error => {
+              console.log(error);
+              reject(error);
+            },
+          );
+        });
+      } catch (err) {
+        dispatch(LogActions.error('Appsflyer setup failed'));
+        dispatch(LogActions.error(JSON.stringify(err)));
       }
 
-      resolve();
+      try {
+        await analytics.setup(SEGMENT_API_KEY, {
+          recordScreenViews: false,
+          trackAppLifecycleEvents: true,
+        });
+      } catch (err) {
+        dispatch(LogActions.error('Segment setup failed'));
+        dispatch(LogActions.error(JSON.stringify(err)));
+      }
+    }
+  };
+
+const getAllWalletClients = (keys: {
+  [key in string]: Key;
+}): Promise<any[]> => {
+  return new Promise(async (resolve, reject) => {
+    const walletClients: any[] = [];
+    try {
+      await Promise.all(
+        Object.values(keys).map(key => {
+          key.wallets
+            .filter(
+              wallet =>
+                !wallet.credentials.token && wallet.credentials.isComplete(),
+            )
+            .forEach(walletClient => {
+              walletClients.push(walletClient);
+            });
+        }),
+      );
+      resolve(walletClients);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+const subscribePushNotifications = (walletClient: any, eid: string) => {
+  const opts = {
+    externalUserId: eid,
+    platform: Platform.OS,
+    packageName: 'BitPay',
+    walletId: walletClient.credentials.walletId,
+  };
+  console.log('#### SUBSCRIBED PUSH NOTIFICATIONS', opts); /* TODO */
+  /*
+   * TODO: uncomment after deploy BWS
+  walletClient.pushNotificationsSubscribe(opts, (err: any) => {
+    if (err) {
+      console.log('[app.effects.ts:449] ERROR', err)
+    } else {
+      console.log('[app.effects.ts:449] SUCCESS', walletClient.credentials.walletName);
+    }
+  });
+  */
+};
+
+const unSubscribePushNotifications = (walletClient: any, eid: string) => {
+  console.log(
+    '#### UNSUBSCRIBED PUSH NOTIFICATIONS',
+    walletClient.credentials.walletId,
+    eid,
+  ); /* TODO */
+  /*
+   * TODO: uncomment after deploy BWS
+  walletClient.pushNotificationsUnsubscribe(eid, (err: any) => {
+    if (err) {
+      console.log('[app.effects.ts:449] ERROR', err)
+    } else {
+      console.log('[app.effects.ts:449] SUCCESS', walletClient.credentials.walletName);
+    }
+  });
+  */
+};
+
+export const checkNotificationsPermissions = (): Promise<boolean> => {
+  return new Promise(async resolve => {
+    checkNotifications().then(({status}) => {
+      if (status === RESULTS.GRANTED) {
+        return resolve(true);
+      } else {
+        return resolve(false);
+      }
     });
+  });
+};
+
+export const setNotifications =
+  (accepted: boolean): Effect =>
+  (dispatch, getState) => {
+    dispatch(setNotificationsAccepted(accepted));
+    const value = accepted
+      ? ReactAppboy.NotificationSubscriptionTypes.SUBSCRIBED
+      : ReactAppboy.NotificationSubscriptionTypes.UNSUBSCRIBED;
+
+    ReactAppboy.setPushNotificationSubscriptionType(value);
+    const {
+      WALLET: {keys},
+      APP,
+    } = getState();
+
+    getAllWalletClients(keys).then(walletClients => {
+      if (accepted) {
+        walletClients.forEach(walletClient => {
+          subscribePushNotifications(walletClient, APP.brazeEid!);
+        });
+      } else {
+        walletClients.forEach(walletClient => {
+          unSubscribePushNotifications(walletClient, APP.brazeEid!);
+        });
+      }
+      dispatch(LogActions.info('Push Notifications: ' + value));
+    });
+  };
+
+export const setConfirmTxNotifications =
+  (accepted: boolean): Effect =>
+  async dispatch => {
+    dispatch(setConfirmedTxAccepted(accepted));
+    if (accepted) {
+      ReactAppboy.addToSubscriptionGroup(CONFIRMED_TX_GROUP_ID);
+    } else {
+      ReactAppboy.removeFromSubscriptionGroup(CONFIRMED_TX_GROUP_ID);
+    }
+  };
+
+export const setProductsUpdatesNotifications =
+  (accepted: boolean): Effect =>
+  async dispatch => {
+    dispatch(setProductsUpdatesAccepted(accepted));
+    if (accepted) {
+      ReactAppboy.addToSubscriptionGroup(PRODUCTS_UPDATES_GROUP_ID);
+    } else {
+      ReactAppboy.removeFromSubscriptionGroup(PRODUCTS_UPDATES_GROUP_ID);
+    }
+  };
+
+export const setOffersAndPromotionsNotifications =
+  (accepted: boolean): Effect =>
+  async dispatch => {
+    dispatch(setOffersAndPromotionsAccepted(accepted));
+    if (accepted) {
+      ReactAppboy.addToSubscriptionGroup(OFFERS_AND_PROMOTIONS_GROUP_ID);
+    } else {
+      ReactAppboy.removeFromSubscriptionGroup(OFFERS_AND_PROMOTIONS_GROUP_ID);
+    }
   };
 
 export const resetAllSettings = (): Effect => dispatch => {
