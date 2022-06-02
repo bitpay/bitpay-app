@@ -2,7 +2,7 @@ import {useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import Carousel, {Pagination} from 'react-native-snap-carousel';
-import {useDispatch, useSelector} from 'react-redux';
+import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -13,15 +13,14 @@ import {
   WIDTH,
 } from '../../../components/styled/Containers';
 import {Link} from '../../../components/styled/Text';
-import {RootState} from '../../../store';
+import {askForTrackingPermissionAndEnableSdks} from '../../../store/app/app.effects';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
 import {Action, LuckySevens} from '../../../styles/colors';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingImage} from '../components/Containers';
 import OnboardingSlide from '../components/OnboardingSlide';
 import {OnboardingStackParamList} from '../OnboardingStack';
-import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import {askForTrackingPermissionAndEnableSdks} from '../../../store/app/app.effects';
-import {useThemeType} from '../../../utils/hooks/useThemeType';
 
 type OnboardingStartScreenProps = StackScreenProps<
   OnboardingStackParamList,
@@ -110,13 +109,13 @@ const LinkText = styled(Link)`
   font-size: 18px;
 `;
 
-const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
-  const dispatch = useDispatch();
+const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const themeType = useThemeType();
-  const isPaired = useSelector<RootState, boolean>(({APP, BITPAY_ID}) => {
-    return !!BITPAY_ID.apiToken[APP.network];
-  });
+  const isPaired = useAppSelector(
+    ({APP, BITPAY_ID}) => !!BITPAY_ID.apiToken[APP.network],
+  );
 
   useAndroidBackHandler(() => true);
 
@@ -126,38 +125,42 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
     cb();
   };
 
+  const onLoginPress = () => {
+    askForTrackingThenNavigate(() => {
+      navigation.navigate('Auth', {
+        screen: 'Login',
+        params: {
+          onLoginSuccess: async () => {
+            haptic('impactLight');
+            navigation.navigate('Onboarding', {
+              screen: 'Notifications',
+            });
+          },
+        },
+      });
+    });
+  };
+  const onLoginPressRef = useRef(onLoginPress);
+  onLoginPressRef.current = onLoginPress;
+
+  const onLogoutPress = () => {
+    haptic('impactLight');
+    dispatch(BitPayIdEffects.startDisconnectBitPayId());
+  };
+  const onLogoutPressRef = useRef(onLogoutPress);
+  onLogoutPressRef.current = onLogoutPress;
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => null,
       headerRight: () => (
         <HeaderRightContainer>
           {isPaired ? (
-            <Button
-              buttonType="pill"
-              onPress={() => {
-                haptic('impactLight');
-                dispatch(BitPayIdEffects.startDisconnectBitPayId());
-              }}>
+            <Button buttonType="pill" onPress={onLogoutPressRef.current}>
               Log Out
             </Button>
           ) : (
-            <Button
-              buttonType={'pill'}
-              onPress={() =>
-                askForTrackingThenNavigate(() => {
-                  navigation.navigate('Auth', {
-                    screen: 'Login',
-                    params: {
-                      onLoginSuccess: async () => {
-                        haptic('impactLight');
-                        navigation.navigate('Onboarding', {
-                          screen: 'Notifications',
-                        });
-                      },
-                    },
-                  });
-                })
-              }>
+            <Button buttonType={'pill'} onPress={onLoginPressRef.current}>
               Log In
             </Button>
           )}
