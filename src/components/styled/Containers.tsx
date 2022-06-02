@@ -24,7 +24,6 @@ export const HeaderRightContainer = styled.View`
 
 export const ImageContainer = styled.View<{justifyContent?: string}>`
   margin: 10px 0;
-  height: 247px;
   display: flex;
   justify-content: ${({justifyContent}) => justifyContent || 'center'};
 `;

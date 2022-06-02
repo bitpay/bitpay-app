@@ -20,6 +20,10 @@ interface OnboardingSlide {
   img: () => ReactElement;
 }
 
+interface OnboardingSlideProps {
+  item: OnboardingSlide;
+}
+
 const SlideContainer = styled.View`
   background: transparent;
   justify-content: center;
@@ -27,7 +31,7 @@ const SlideContainer = styled.View`
   margin-top: 20px;
 `;
 
-export const OnboardingSlide = ({item}: {item: OnboardingSlide}) => {
+export const OnboardingSlide: React.VFC<OnboardingSlideProps> = ({item}) => {
   const {title, text, subText, img} = item;
   const theme = useTheme();
   const themedText = {color: theme.colors.text};
