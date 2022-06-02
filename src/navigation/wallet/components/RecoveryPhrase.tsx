@@ -417,7 +417,7 @@ const RecoveryPhrase = () => {
     } catch (e: any) {
       logger.error(e.message);
       dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
+      await sleep(600);
       showErrorModal(e);
       return;
     }
