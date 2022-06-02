@@ -13,6 +13,8 @@ import {Card} from '../../../store/card/card.models';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import CustomizeCardIcon from '../assets/settings/icon-card.svg';
 import EditCardNameIcon from '../assets/settings/icon-cardname.svg';
+import GooglePayIcon from '../assets/settings/icon-google-pay.svg';
+import ApplePayIcon from '../assets/settings/icon-apple-pay.svg';
 import FaqsIcon from '../assets/settings/icon-faqs.svg';
 import GetHelpIcon from '../assets/settings/icon-help.svg';
 import DownloadHistoryIcon from '../assets/settings/icon-history.svg';
@@ -22,6 +24,7 @@ import ReferEarnIcon from '../assets/settings/icon-referearn.svg';
 import {CardStackParamList} from '../CardStack';
 import * as Styled from './CardSettingsList.styled';
 import {ToggleSpinnerState} from './ToggleSpinner';
+import {Platform} from 'react-native';
 
 interface SettingsListProps {
   card: Card;
@@ -179,8 +182,33 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
           <Hr />
 
+          {/* TODO: Get new icons*/}
           {card.cardType === 'virtual' ? (
             <>
+              {Platform.OS === 'ios' ? (
+                <>
+                  <Styled.SettingsLink
+                    Icon={ApplePayIcon}
+                    onPress={() => {
+                      //  TODO: Add apple wallet
+                    }}>
+                    {t('Add to Apple Wallet')}
+                  </Styled.SettingsLink>
+
+                  <Hr />
+                </>
+              ) : (
+                <>
+                  <Styled.SettingsLink
+                    Icon={GooglePayIcon}
+                    onPress={() => {
+                      //    TODO: Add Google pay
+                    }}>
+                    {t('Add to Google Pay')}
+                  </Styled.SettingsLink>
+                  <Hr />
+                </>
+              )}
               <Styled.SettingsLink
                 Icon={CustomizeCardIcon}
                 onPress={() =>
