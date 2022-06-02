@@ -16,7 +16,7 @@ import {
   TitleContainer,
 } from '../../../components/styled/Containers';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
-import {AppActions} from '../../../store/app';
+import {AppEffects} from '../../../store/app';
 import {useAppDispatch} from '../../../utils/hooks';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingStackParamList} from '../OnboardingStack';
@@ -73,9 +73,15 @@ const NotificationsScreen: React.VFC<
   }, [navigation]);
 
   const onSetNotificationsPress = async (notificationsAccepted: boolean) => {
-    const setAndNavigate = (accepted: boolean) => {
+    const setAndNavigate = async (accepted: boolean) => {
       haptic('impactLight');
-      dispatch(AppActions.setNotificationsAccepted(accepted));
+      const systemEnabled = await AppEffects.checkNotificationsPermissions();
+      if (systemEnabled) {
+        dispatch(AppEffects.setNotifications(accepted));
+        dispatch(AppEffects.setConfirmTxNotifications(accepted));
+        dispatch(AppEffects.setProductsUpdatesNotifications(accepted));
+        dispatch(AppEffects.setOffersAndPromotionsNotifications(accepted));
+      }
       navigation.navigate('Pin');
     };
 

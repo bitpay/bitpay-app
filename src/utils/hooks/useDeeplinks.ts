@@ -1,6 +1,6 @@
 import {LinkingOptions} from '@react-navigation/native';
 import {useEffect} from 'react';
-import {InteractionManager, Linking} from 'react-native';
+import {Linking} from 'react-native';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {useDispatch} from 'react-redux';
 import {

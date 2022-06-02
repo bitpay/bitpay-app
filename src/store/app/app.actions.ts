@@ -90,6 +90,27 @@ export const setNotificationsAccepted = (
   payload: notificationsAccepted,
 });
 
+export const setConfirmedTxAccepted = (
+  confirmedTxAccepted: boolean,
+): AppActionType => ({
+  type: AppActionTypes.SET_CONFIRMED_TX_ACCEPTED,
+  payload: confirmedTxAccepted,
+});
+
+export const setProductsUpdatesAccepted = (
+  productsUpdatesAccepted: boolean,
+): AppActionType => ({
+  type: AppActionTypes.SET_PRODUCTS_UPDATES_ACCEPTED,
+  payload: productsUpdatesAccepted,
+});
+
+export const setOffersAndPromotionsAccepted = (
+  offersAndPromotionsAccepted: boolean,
+): AppActionType => ({
+  type: AppActionTypes.SET_OFFERS_AND_PROMOTIONS_ACCEPTED,
+  payload: offersAndPromotionsAccepted,
+});
+
 export const showOnboardingFinishModal = (): AppActionType => ({
   type: AppActionTypes.SHOW_ONBOARDING_FINISH_MODAL,
 });
@@ -159,6 +180,11 @@ export const brazeContentCardsFetched = (
 ): AppActionType => ({
   type: AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED,
   payload: {contentCards},
+});
+
+export const setBrazeEid = (eid: string): AppActionType => ({
+  type: AppActionTypes.SET_BRAZE_EID,
+  payload: eid,
 });
 
 export const showBiometricModal = (): AppActionType => ({

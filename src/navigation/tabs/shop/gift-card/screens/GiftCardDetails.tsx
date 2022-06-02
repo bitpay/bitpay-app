@@ -17,6 +17,7 @@ import {
 } from '../../../../../components/styled/Containers';
 import {
   BaseText,
+  HeaderTitle,
   Link,
   Paragraph,
   TextAlign,
@@ -193,7 +194,7 @@ const GiftCardDetails = ({
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: cardConfig.displayName,
+      headerTitle: () => <HeaderTitle>{cardConfig.displayName}</HeaderTitle>,
       headerRight: () => (
         <HeaderRightContainer>
           <NavIconButtonContainer
@@ -411,7 +412,7 @@ const GiftCardDetails = ({
             Created <TimeAgo time={giftCard.date} />
           </Paragraph>
         ) : null}
-        <Terms maxWidth={maxWidth}>{cardConfig.terms}</Terms>
+        <Terms>{cardConfig.terms}</Terms>
       </ScrollView>
     </>
   );

@@ -163,7 +163,7 @@ export const successInitializeStore = (
   type: BitPayIdActionTypes.SUCCESS_INITIALIZE_STORE,
   payload: {
     network,
-    user: {...data.basicInfo, localSettings: {syncGiftCardPurchases: true}},
+    user: data.basicInfo,
     doshToken: data.doshToken,
   },
 });

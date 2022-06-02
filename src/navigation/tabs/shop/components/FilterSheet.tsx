@@ -6,7 +6,7 @@ import {
   SheetContainer,
   SheetParams,
 } from '../../../../components/styled/Containers';
-import {Platform} from 'react-native';
+import {Platform, ScrollView} from 'react-native';
 import {Action, LightBlack, LinkBlue, White} from '../../../../styles/colors';
 import {horizontalPadding} from './styled/ShopTabComponents';
 import {sleep} from '../../../../utils/helper-methods';
@@ -93,27 +93,29 @@ const FilterSheet = ({
         closeModal();
       }}>
       <PillSheetContainer>
-        <SheetTitleContainer>
-          <TextAlign align={'left'}>
-            <H4>Filter Gift Cards</H4>
-          </TextAlign>
-        </SheetTitleContainer>
-        <Pills>
-          {Object.keys(categoryMap).map(category => (
-            <Pill key={category} selected={categoryMap[category]}>
-              <PillText
-                selected={categoryMap[category]}
-                onPress={() =>
-                  setCategoryMap({
-                    ...categoryMap,
-                    [category]: !categoryMap[category],
-                  })
-                }>
-                {category}
-              </PillText>
-            </Pill>
-          ))}
-        </Pills>
+        <ScrollView>
+          <SheetTitleContainer>
+            <TextAlign align={'left'}>
+              <H4>Filter Gift Cards</H4>
+            </TextAlign>
+          </SheetTitleContainer>
+          <Pills>
+            {Object.keys(categoryMap).map(category => (
+              <Pill key={category} selected={categoryMap[category]}>
+                <PillText
+                  selected={categoryMap[category]}
+                  onPress={() =>
+                    setCategoryMap({
+                      ...categoryMap,
+                      [category]: !categoryMap[category],
+                    })
+                  }>
+                  {category}
+                </PillText>
+              </Pill>
+            ))}
+          </Pills>
+        </ScrollView>
         <BottomNotificationHr />
         <CtaContainer platform={Platform.OS}>
           <BottomNotificationCta

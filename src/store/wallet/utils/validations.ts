@@ -132,6 +132,16 @@ export const IsValidBitPayUri = (data: string): boolean => {
   if (!(data && data.indexOf('bitpay:') === 0)) {
     return false;
   }
+
+  if (data.indexOf('bitpay://wallet?') === 0) {
+    const params: URLSearchParams = new URLSearchParams(
+      data.replace('bitpay://wallet?', ''),
+    );
+    if (params.get('walletId')) {
+      return true;
+    }
+  }
+
   const address = ExtractBitPayUriAddress(data);
   if (!address) {
     return false;

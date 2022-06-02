@@ -15,7 +15,7 @@ import {
   White,
 } from '../../../styles/colors';
 import haptic from '../../haptic-feedback/haptic';
-import {Platform} from 'react-native';
+import {Platform, ScrollView} from 'react-native';
 import SuccessSvg from '../../../../assets/img/success.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
 import WarningSvg from '../../../../assets/img/warning.svg';
@@ -25,6 +25,7 @@ import {sleep} from '../../../utils/helper-methods';
 import {Theme, useNavigation, useTheme} from '@react-navigation/native';
 import Markdown from 'react-native-markdown-display';
 import {resetBottomNotificationModalConfig} from '../../../store/app/app.actions';
+import {HEIGHT} from '../../styled/Containers';
 
 export interface BottomNotificationConfig {
   type: 'success' | 'info' | 'warning' | 'error' | 'question';
@@ -58,6 +59,7 @@ const BottomNotificationContainer = styled.View`
   padding: 25px;
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
+  max-height: ${HEIGHT - 100}px;
 `;
 
 const Row = styled.View`
@@ -148,26 +150,28 @@ const BottomNotification = () => {
         }
       }}>
       <BottomNotificationContainer>
-        <Row>
-          <ImageContainer>{notificationType[type || 'info']}</ImageContainer>
-          <H4>{title}</H4>
-        </Row>
-        <MessageContainer>
-          {message ? (
-            <Markdown
-              style={{
-                body: {
-                  color: theme.colors.text,
-                  fontFamily,
-                  fontSize: 16,
-                  lineHeight: 24,
-                },
-              }}>
-              {message}
-            </Markdown>
-          ) : null}
-        </MessageContainer>
-        {message2 ? message2 : null}
+        <ScrollView>
+          <Row>
+            <ImageContainer>{notificationType[type || 'info']}</ImageContainer>
+            <H4>{title}</H4>
+          </Row>
+          <MessageContainer>
+            {message ? (
+              <Markdown
+                style={{
+                  body: {
+                    color: theme.colors.text,
+                    fontFamily,
+                    fontSize: 16,
+                    lineHeight: 24,
+                  },
+                }}>
+                {message}
+              </Markdown>
+            ) : null}
+          </MessageContainer>
+          {message2 ? message2 : null}
+        </ScrollView>
         <BottomNotificationHr />
         <CtaContainer platform={Platform.OS}>
           {actions?.map(({primary, action, text}, index) => {
