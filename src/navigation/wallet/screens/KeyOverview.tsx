@@ -228,6 +228,10 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
     Object.values(keys).filter(k => k.backupComplete).length > 1;
 
   useLayoutEffect(() => {
+    if (!key) {
+      return;
+    }
+
     navigation.setOptions({
       headerTitle: () => {
         return (
