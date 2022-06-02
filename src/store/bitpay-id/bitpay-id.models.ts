@@ -31,8 +31,5 @@ export interface User {
     agreedCardholderAgreement?: boolean;
     optInEmailMarketing?: boolean;
   };
-  localSettings: {
-    syncGiftCardPurchases: boolean;
-  };
   referralCode?: string;
 }

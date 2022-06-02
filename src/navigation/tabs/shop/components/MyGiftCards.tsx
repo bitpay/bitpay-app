@@ -22,6 +22,7 @@ import {
   redemptionFailuresLessThanADayOld,
   sortByDescendingDate,
 } from '../../../../lib/gift-cards/gift-card';
+import {ShopScreens} from '../ShopStack';
 
 const MyGiftCardsHeaderContainer = styled(SectionHeaderContainer)`
   margin-bottom: -10px;
@@ -71,8 +72,8 @@ const MyGiftCards = ({
   const seeArchivedGiftCards = () => {
     shouldShowArchivedSlide
       ? setSlideIndex(1)
-      : navigation.navigate('GiftCard', {
-          screen: GiftCardScreens.ARCHIVED_GIFT_CARDS,
+      : navigation.navigate('Shop', {
+          screen: ShopScreens.ARCHIVED_GIFT_CARDS,
           params: {
             giftCards: archivedGiftCards,
             supportedGiftCards,

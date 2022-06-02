@@ -20,7 +20,7 @@ import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 
 export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
   try {
-    const {APP, BITPAY_ID, LOCATION} = getState();
+    const {APP, BITPAY_ID, LOCATION, SHOP} = getState();
     const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
     const user = BITPAY_ID.user[APP.network];
     const incentiveLevelId = user?.incentiveLevelId;
@@ -29,7 +29,7 @@ export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
       await Promise.all([
         axios.get(
           `${baseUrl}/gift-cards/catalog/${country}${
-            incentiveLevelId && user.localSettings.syncGiftCardPurchases
+            incentiveLevelId && SHOP.syncGiftCardPurchasesWithBitPayId
               ? `/${incentiveLevelId}`
               : ''
           }`,
@@ -63,7 +63,7 @@ export const startCreateGiftCardInvoice =
       const {BITPAY_ID, SHOP} = getState();
       const baseUrl = BASE_BITPAY_URLS[APP_NETWORK];
       const user = BITPAY_ID.user[APP_NETWORK];
-      const shouldSync = user?.localSettings.syncGiftCardPurchases;
+      const shouldSync = user && SHOP.syncGiftCardPurchasesWithBitPayId;
       const fullParams = {
         ...params,
         ...(cardConfig.emailRequired && {

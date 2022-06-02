@@ -135,6 +135,7 @@ export const SheetContainer = styled.View<SheetParams>`
     placement === 'top' ? 'bottom' : 'top'}-left-radius: 17px;
   border-${({placement}: SheetParams) =>
     placement === 'top' ? 'bottom' : 'top'}-right-radius: 17px;
+  max-height: ${HEIGHT - 100}px;
 `;
 
 // Settings List
