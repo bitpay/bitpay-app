@@ -493,7 +493,7 @@ export const startAddToAppleWallet =
     id: string;
     data: {
       cardholderName: string;
-      primaryAccountSuffix: string;
+      primaryAccountNumberSuffix: string;
       encryptionScheme: string;
     };
   }): Effect =>
@@ -577,4 +577,45 @@ export const completeAddApplePaymentPass =
       dispatch(LogActions.debug(`appleWallet - completeAddPaymentPass - ${e}`));
       dispatch(AppActions.showBottomNotificationModal(GeneralError));
     }
+  };
+
+export const startAddToGooglePay =
+  ({
+    id,
+    data,
+  }: {
+    id: string;
+    data: {lastFourDigits: string; name: string};
+  }): Effect =>
+  async (dispatch, getState) => {
+    try {
+      const {APP, BITPAY_ID} = getState();
+      const {network} = APP;
+      const token = BITPAY_ID.apiToken[network];
+
+      const {data: provisioningData} =
+        await CardApi.startCreateGooglePayProvisioningRequest(token, id);
+
+      if (provisioningData.errors) {
+        dispatch(AppActions.showBottomNotificationModal(GeneralError));
+      } else {
+        const params = {
+          ...data,
+          opc: provisioningData.data.user.card.provisioningData
+            .opaquePaymentCard,
+          address: {
+            name: '',
+            address: '',
+            locality: '',
+            administrativeArea: '',
+            countryCode: 'USA',
+            postalCode: '',
+            phoneNumber: '',
+          },
+          tsp: 'MASTER',
+        };
+
+        //  TODO: GooglePayIssuer
+      }
+    } catch (e) {}
   };

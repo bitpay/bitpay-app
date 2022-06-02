@@ -135,11 +135,37 @@ export const START_CREATE_APPLE_WALLET_PROVISIONING_REQUEST = (
   };
 };
 
+export const START_CREATE_GOOGLE_PAY_PROVISIONING_REQUEST = (
+  token: string,
+  id: string,
+) => {
+  return {
+    query: `
+      mutation START_CREATE_PROVISIONING_REQUEST($token:String!, $csrf:String, $cardId:String!, $input:ProvisionInputType!) {
+        user:bitpayUser(token:$token, csrf:$csrf) {
+          card:debitCard(cardId:$cardId) {
+            provisioningData:createProvisioningRequest(input:$input) {
+              opaquePaymentCard
+            }
+          }
+        }
+      }
+    `,
+    variables: {
+      cardId: id,
+      input: {
+        walletProvider: 'google',
+      },
+    },
+  };
+};
+
 const CardMutations = {
   NAME_CARD,
   LOCK_CARD,
   ACTIVATE_CARD,
   START_CREATE_APPLE_WALLET_PROVISIONING_REQUEST,
+  START_CREATE_GOOGLE_PAY_PROVISIONING_REQUEST,
 };
 
 export default CardMutations;
