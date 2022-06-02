@@ -343,46 +343,43 @@ export const openUrlWithInAppBrowser =
   };
 
 export const askForTrackingPermissionAndEnableSdks =
-  (): Effect => async dispatch => {
-    return new Promise(async resolve => {
-      const trackingStatus = await requestTrackingPermission();
-      if (['authorized', 'unavailable'].includes(trackingStatus) && !__DEV__) {
-        try {
-          await new Promise<void>((resolve2, reject2) => {
-            appsFlyer.initSdk(
-              {
-                devKey: APPSFLYER_API_KEY,
-                isDebug: __DEV__,
-                appId: APP_ID, // iOS app id
-              },
-              result => {
-                console.log(result);
-                resolve2();
-              },
-              error => {
-                console.log(error);
-                reject2(error);
-              },
-            );
-          });
-        } catch (err) {
-          dispatch(LogActions.error('Appsflyer setup failed'));
-          dispatch(LogActions.error(JSON.stringify(err)));
-        }
+  (): Effect<Promise<void>> => async dispatch => {
+    const trackingStatus = await requestTrackingPermission();
 
-        try {
-          await analytics.setup(SEGMENT_API_KEY, {
-            recordScreenViews: false,
-            trackAppLifecycleEvents: true,
-          });
-        } catch (err) {
-          dispatch(LogActions.error('Segment setup failed'));
-          dispatch(LogActions.error(JSON.stringify(err)));
-        }
+    if (['authorized', 'unavailable'].includes(trackingStatus) && !__DEV__) {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          appsFlyer.initSdk(
+            {
+              devKey: APPSFLYER_API_KEY,
+              isDebug: __DEV__,
+              appId: APP_ID, // iOS app id
+            },
+            result => {
+              console.log(result);
+              resolve();
+            },
+            error => {
+              console.log(error);
+              reject(error);
+            },
+          );
+        });
+      } catch (err) {
+        dispatch(LogActions.error('Appsflyer setup failed'));
+        dispatch(LogActions.error(JSON.stringify(err)));
       }
 
-      resolve();
-    });
+      try {
+        await analytics.setup(SEGMENT_API_KEY, {
+          recordScreenViews: false,
+          trackAppLifecycleEvents: true,
+        });
+      } catch (err) {
+        dispatch(LogActions.error('Segment setup failed'));
+        dispatch(LogActions.error(JSON.stringify(err)));
+      }
+    }
   };
 
 const getAllWalletClients = (keys: {
