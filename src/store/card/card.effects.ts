@@ -20,6 +20,8 @@ import {setHomeCarouselConfig} from '../app/app.actions';
 import {Card, DebitCardTopUpInvoiceParams} from './card.models';
 import {Invoice} from '../shop/shop.models';
 import {BASE_BITPAY_URLS} from '../../constants/config';
+import AppleWalletProvider from '../../lib/apple-wallet/apple-wallet';
+import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
 
 const DoshWhitelist: string[] = [];
 
@@ -36,6 +38,14 @@ export interface StartActivateCardParams {
   expirationDate: string;
   lastFourDigits?: string;
   cardNumber?: string;
+}
+
+export interface AppleWalletProvisioningRequestParams {
+  walletProvider: string;
+  cert1: any;
+  cert2: any;
+  nonce: any;
+  nonceSignature: any;
 }
 
 export const startCardStoreInit =
@@ -472,5 +482,99 @@ export const startOpenDosh =
         LogActions.error('Something went wrong trying to open Dosh Rewards'),
       );
       dispatch(LogActions.error(JSON.stringify(err)));
+    }
+  };
+
+export const startAddToAppleWallet =
+  ({
+    id,
+    data,
+  }: {
+    id: string;
+    data: {
+      cardholderName: string;
+      primaryAccountSuffix: string;
+      encryptionScheme: string;
+    };
+  }): Effect =>
+  async (dispatch, getState) => {
+    try {
+      const {APP, BITPAY_ID} = getState();
+      const {network} = APP;
+      const token = BITPAY_ID.apiToken[network];
+
+      const {data: certs} = await AppleWalletProvider.startAddPaymentPass(data);
+
+      dispatch(LogActions.debug('appleWallet - startAddPaymentPass - success'));
+      dispatch(LogActions.debug(JSON.stringify(certs)));
+
+      const {
+        certificateLeaf: cert1,
+        certificateSubCA: cert2,
+        nonce,
+        nonceSignature,
+      }: any = certs || {};
+
+      const res = await CardApi.startCreateAppleWalletProvisioningRequest(
+        token,
+        id,
+        {cert1, cert2, nonce, nonceSignature, walletProvider: 'apple'},
+      );
+
+      dispatch(LogActions.debug(JSON.stringify(res)));
+      dispatch(completeAddApplePaymentPass({res}));
+    } catch (e) {
+      dispatch(
+        LogActions.debug(
+          `appleWallet - startAddPaymentPassError - ${JSON.stringify(e)}`,
+        ),
+      );
+      dispatch(
+        LogActions.debug(JSON.stringify(e, Object.getOwnPropertyNames(e))),
+      );
+    }
+  };
+
+export const completeAddApplePaymentPass =
+  ({res}: {res: {data: any}}): Effect =>
+  async dispatch => {
+    try {
+      dispatch(
+        LogActions.debug(
+          `appleWallet - completeAddPaymentPass - ${JSON.stringify(res)}`,
+        ),
+      );
+
+      const {
+        user: {
+          card: {provisioningData},
+        },
+      } = res.data;
+
+      if (!provisioningData) {
+        return;
+      }
+
+      const {
+        wrappedKey: ephemeralPublicKey,
+        activationData,
+        encryptedPassData,
+      }: any = provisioningData || {};
+
+      const completeAddPaymentPassRes =
+        await AppleWalletProvider.completeAddPaymentPass({
+          activationData,
+          encryptedPassData,
+          ephemeralPublicKey,
+        });
+
+      if (completeAddPaymentPassRes === 'success') {
+        //   Todo: update me
+      } else {
+        dispatch(AppActions.showBottomNotificationModal(GeneralError));
+      }
+    } catch (e) {
+      dispatch(LogActions.debug(`appleWallet - completeAddPaymentPass - ${e}`));
+      dispatch(AppActions.showBottomNotificationModal(GeneralError));
     }
   };

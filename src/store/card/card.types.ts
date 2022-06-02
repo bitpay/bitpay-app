@@ -1,5 +1,6 @@
 import {Network} from '../../constants';
 import {
+  AddAppleWalletData,
   Card,
   PagedTransactionData,
   ReferredUsersType,
@@ -64,6 +65,7 @@ export enum CardActionTypes {
   SUCCESS_ACTIVATE_CARD = 'CARD/SUCCESS_ACTIVATE_CARD',
   FAILED_ACTIVATE_CARD = 'CARD/FAILED_ACTIVATE_CARD',
   UPDATE_ACTIVATE_CARD_STATUS = 'CARD/UPDATE_ACTIVATE_CARD_STATUS',
+  START_ADD_TO_APPLE_WALLET = 'CARD/START_ADD_TO_APPLE_WALLET',
 }
 
 interface SuccessInitializeStore {
@@ -209,6 +211,11 @@ interface UpdateActivateCardStatus {
   payload: ActivateCardStatus;
 }
 
+interface StartAddToAppleWallet {
+  type: CardActionTypes.START_ADD_TO_APPLE_WALLET;
+  payload: AddAppleWalletData;
+}
+
 export type CardActionType =
   | SuccessInitializeStore
   | SuccessFetchCards
@@ -236,4 +243,5 @@ export type CardActionType =
   | FailedFetchReferredUsers
   | SuccessActivateCard
   | FailedActivateCard
-  | UpdateActivateCardStatus;
+  | UpdateActivateCardStatus
+  | StartAddToAppleWallet;

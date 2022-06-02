@@ -92,6 +92,21 @@ const SettingsList: React.FC<SettingsListProps> = props => {
     dispatch(CardEffects.START_UPDATE_CARD_LOCK(card.id, locked));
   };
 
+  const onAddAppleWallet = () => {
+    const params = {
+      id: card.id,
+      data: {
+        cardholderName: user?.name || '',
+        primaryAccountSuffix: card.lastFourDigits,
+        encryptionScheme: 'ECC_V2',
+      },
+    };
+
+    dispatch(CardEffects.startAddToAppleWallet(params));
+  };
+
+  const onAddGooglePay = () => {};
+
   useEffect(() => {
     // whether success or fail, lockedByUser will be correct so update the local state and reset the flag
     if (
@@ -189,9 +204,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
                 <>
                   <Styled.SettingsLink
                     Icon={ApplePayIcon}
-                    onPress={() => {
-                      //  TODO: Add apple wallet
-                    }}>
+                    onPress={onAddAppleWallet}>
                     {t('Add to Apple Wallet')}
                   </Styled.SettingsLink>
 
@@ -201,9 +214,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
                 <>
                   <Styled.SettingsLink
                     Icon={GooglePayIcon}
-                    onPress={() => {
-                      //    TODO: Add Google pay
-                    }}>
+                    onPress={onAddGooglePay}>
                     {t('Add to Google Pay')}
                   </Styled.SettingsLink>
                   <Hr />
