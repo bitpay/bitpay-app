@@ -41,11 +41,13 @@ import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
 import {HeaderContainer, HomeContainer} from './components/Styled';
 import KeyMigrationFailureModal from './components/KeyMigrationFailureModal';
 import {batch} from 'react-redux';
+import {useThemeType} from '../../../utils/hooks/useThemeType';
 
 const HomeRoot = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const theme = useTheme();
+  const themeType = useThemeType();
   const [refreshing, setRefreshing] = useState(false);
   const brazeShopWithCrypto = useAppSelector(selectBrazeShopWithCrypto);
   const brazeDoMore = useAppSelector(selectBrazeDoMore);
@@ -77,13 +79,13 @@ const HomeRoot = () => {
   // Do More
   const memoizedDoMoreCards = useMemo(() => {
     if (STATIC_CONTENT_CARDS_ENABLED && !brazeDoMore.length) {
-      return DefaultAdvertisements.filter(advertisement => {
+      return DefaultAdvertisements(themeType).filter(advertisement => {
         return hasCards ? advertisement.id !== 'card' : true;
       });
     }
 
     return brazeDoMore;
-  }, [brazeDoMore, hasCards]);
+  }, [brazeDoMore, hasCards, themeType]);
 
   // Exchange Rates
   const priceHistory = useAppSelector(({WALLET}) => WALLET.priceHistory);
