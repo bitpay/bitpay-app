@@ -1,6 +1,8 @@
+import {useFocusEffect} from '@react-navigation/native';
 import React from 'react';
 import {Linking} from 'react-native';
 import ReactAppboy, {ContentCard} from 'react-native-appboy-sdk';
+import FastImage, {Source} from 'react-native-fast-image';
 import styled, {useTheme} from 'styled-components/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {
@@ -22,7 +24,6 @@ import {
 } from '../../../../../utils/braze';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {BoxShadow} from '../Styled';
-import FastImage, {Source} from 'react-native-fast-image';
 
 const QUICK_LINK_ICON_HEIGHT = 35;
 const QUICK_LINK_ICON_WIDTH = 35;
@@ -116,6 +117,12 @@ const QuickLinksCard: React.FC<QuickLinksCardProps> = props => {
       Linking.openURL(url);
     }
   };
+
+  useFocusEffect(() => {
+    if (!contentCard.id.startsWith('dev_')) {
+      ReactAppboy.logContentCardImpression(contentCard.id);
+    }
+  });
 
   return (
     <QuickLinkCardContainer

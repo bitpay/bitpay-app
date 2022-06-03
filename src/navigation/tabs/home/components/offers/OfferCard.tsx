@@ -1,4 +1,8 @@
-import {getStateFromPath, useNavigation} from '@react-navigation/native';
+import {
+  getStateFromPath,
+  useFocusEffect,
+  useNavigation,
+} from '@react-navigation/native';
 import React from 'react';
 import {Linking} from 'react-native';
 import ReactAppboy, {ContentCard} from 'react-native-appboy-sdk';
@@ -136,6 +140,12 @@ const OfferCard: React.FC<OfferCardProps> = props => {
       Linking.openURL(url);
     }
   };
+
+  useFocusEffect(() => {
+    if (!contentCard.id.startsWith('dev_')) {
+      ReactAppboy.logContentCardImpression(contentCard.id);
+    }
+  });
 
   return (
     <LinkCard

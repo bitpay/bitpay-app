@@ -1,6 +1,4 @@
 import {ClassicContentCard} from 'react-native-appboy-sdk';
-import BuyIcon from '../../../../../../assets/img/advertisement/adv-buy.svg';
-import SwapIcon from '../../../../../../assets/img/advertisement/adv-swap.svg';
 import CardIcon from '../../../../../../assets/img/card/bitpay-card-mc-angled-plain-small.svg';
 import {APP_DEEPLINK_PREFIX} from '../../../../../constants/config';
 import {DEFAULT_CLASSIC_CONTENT_CARD} from '../../../../../utils/braze';

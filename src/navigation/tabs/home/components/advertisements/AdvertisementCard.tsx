@@ -1,4 +1,4 @@
-import {useLinkTo} from '@react-navigation/native';
+import {useFocusEffect, useLinkTo} from '@react-navigation/native';
 import React from 'react';
 import {ImageStyle, Linking, StyleProp} from 'react-native';
 import ReactAppboy, {ContentCard} from 'react-native-appboy-sdk';
@@ -142,6 +142,12 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   ) : imageSource ? (
     imageSource
   ) : null;
+
+  useFocusEffect(() => {
+    if (!contentCard.id.startsWith('dev_')) {
+      ReactAppboy.logContentCardImpression(contentCard.id);
+    }
+  });
 
   return (
     <AdvertisementCardContainer
