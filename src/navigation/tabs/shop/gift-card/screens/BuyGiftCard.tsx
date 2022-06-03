@@ -1,5 +1,5 @@
 import React, {useLayoutEffect, useState} from 'react';
-import {Platform, ScrollView} from 'react-native';
+import {Platform, ScrollView, View} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import LinearGradient from 'react-native-linear-gradient';
 import Markdown from 'react-native-markdown-display';
@@ -115,12 +115,15 @@ const BuyGiftCard = ({
   const theme = useTheme();
   const {cardConfig} = route.params;
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[APP_NETWORK]);
+  const syncGiftCardPurchasesWithBitPayId = useAppSelector(
+    ({SHOP}) => SHOP.syncGiftCardPurchasesWithBitPayId,
+  );
   const {
     email: savedEmail,
     phone: savedPhone,
     phoneCountryInfo: savedPhoneCountryInfo,
   } = useAppSelector(({SHOP}) => SHOP);
-  const shouldSync = user?.localSettings.syncGiftCardPurchases;
+  const shouldSync = user && syncGiftCardPurchasesWithBitPayId;
   const [selectedAmountIndex, setSelectedAmountIndex] = useState(
     getMiddleIndex(cardConfig.supportedAmounts || []),
   );
@@ -288,12 +291,21 @@ const BuyGiftCard = ({
           minHeight: HEIGHT - (Platform.OS === 'android' ? 80 : 110),
         }}>
         <GradientBox colors={getMastheadGradient(theme)}>
-          <RemoteImage
-            uri={cardConfig.cardImage}
-            height={169}
-            width={270}
-            borderRadius={10}
-          />
+          <View
+            style={{
+              shadowColor: '#000',
+              shadowOffset: {width: 0, height: 12},
+              shadowOpacity: 0.08,
+              shadowRadius: 30,
+              elevation: 5,
+            }}>
+            <RemoteImage
+              uri={cardConfig.cardImage}
+              height={169}
+              width={270}
+              borderRadius={10}
+            />
+          </View>
           <AmountContainer>
             {cardConfig.supportedAmounts ? (
               <DenomSelectionContainer>

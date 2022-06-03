@@ -8,9 +8,8 @@ import {BaseText, H3, Paragraph} from '../../../components/styled/Text';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {Network} from '../../../constants';
 import {RootState} from '../../../store';
-import {BitPayIdActions} from '../../../store/bitpay-id';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
-import {ShopEffects} from '../../../store/shop';
+import {ShopActions, ShopEffects} from '../../../store/shop';
 import {BitpayIdStackParamList} from '../BitpayIdStack';
 
 type ProfileProps = StackScreenProps<BitpayIdStackParamList, 'Profile'>;
@@ -53,6 +52,9 @@ const SettingsSectionDescription = styled(BaseText)`
 export const ProfileSettingsScreen: React.FC<ProfileProps> = () => {
   const dispatch = useDispatch();
   const network = useSelector<RootState, Network>(({APP}) => APP.network);
+  const syncGiftCardPurchasesWithBitPayId = useSelector<RootState, boolean>(
+    ({SHOP}) => SHOP.syncGiftCardPurchasesWithBitPayId,
+  );
   const user = useSelector<RootState, User | null>(
     ({BITPAY_ID}) => BITPAY_ID.user[network],
   );
@@ -87,9 +89,9 @@ export const ProfileSettingsScreen: React.FC<ProfileProps> = () => {
           </SettingsSectionDescription>
         </SettingsSectionBody>
         <ToggleSwitch
-          isEnabled={user.localSettings.syncGiftCardPurchases}
+          isEnabled={syncGiftCardPurchasesWithBitPayId}
           onChange={() => {
-            dispatch(BitPayIdActions.toggleSyncGiftCardPurchases(network));
+            dispatch(ShopActions.toggledSyncGiftCardPurchasesWithBitPayId());
             dispatch(ShopEffects.startFetchCatalog());
           }}
         />

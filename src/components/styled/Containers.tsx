@@ -24,7 +24,6 @@ export const HeaderRightContainer = styled.View`
 
 export const ImageContainer = styled.View<{justifyContent?: string}>`
   margin: 10px 0;
-  height: 247px;
   display: flex;
   justify-content: ${({justifyContent}) => justifyContent || 'center'};
 `;
@@ -135,6 +134,7 @@ export const SheetContainer = styled.View<SheetParams>`
     placement === 'top' ? 'bottom' : 'top'}-left-radius: 17px;
   border-${({placement}: SheetParams) =>
     placement === 'top' ? 'bottom' : 'top'}-right-radius: 17px;
+  max-height: ${HEIGHT - 100}px;
 `;
 
 // Settings List

@@ -11,7 +11,14 @@ import React, {
 } from 'react';
 import analytics from '@segment/analytics-react-native';
 import {useTranslation} from 'react-i18next';
-import {RefreshControl, SectionList, Share, Text, View} from 'react-native';
+import {
+  Linking,
+  RefreshControl,
+  SectionList,
+  Share,
+  Text,
+  View,
+} from 'react-native';
 import {batch} from 'react-redux';
 import styled from 'styled-components/native';
 import Settings from '../../../components/settings/Settings';
@@ -95,6 +102,7 @@ import TimerSvg from '../../../../assets/img/timer.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
 import {Effect} from '../../../store';
 import {TouchableOpacity} from 'react-native-gesture-handler';
+import {Currencies} from '../../../constants/currencies';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -259,14 +267,18 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const {t} = useTranslation();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {walletId, key, skipInitializeHistory} = route.params;
-  const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
+  const {walletId, skipInitializeHistory} = route.params;
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+
+  const wallets = Object.values(keys).flatMap(k => k.wallets);
+
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
   const fullWalletObj = findWalletById(wallets, walletId) as Wallet;
+  const key = keys[fullWalletObj.keyId];
   const uiFormattedWallet = buildUIFormattedWallet(
     fullWalletObj,
     defaultAltCurrency.isoCode,
@@ -626,6 +638,68 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     return fullWalletObj.balance?.sat != fullWalletObj.balance?.satSpendable;
   };
 
+  const viewOnBlockchain = async () => {
+    const coin = fullWalletObj.currencyAbbreviation.toLowerCase();
+    if (['eth', 'xrp'].includes(coin) || dispatch(IsERCToken(coin))) {
+      let address;
+      try {
+        address = (await dispatch<any>(
+          createWalletAddress({wallet: fullWalletObj, newAddress: false}),
+        )) as string;
+      } catch {
+        return;
+      }
+
+      let url: string | undefined;
+      if (coin === 'xrp') {
+        url =
+          fullWalletObj.network === 'livenet'
+            ? `https://${Currencies.xrp.paymentInfo.blockExplorerUrls}account/${address}`
+            : `https://${Currencies.xrp.paymentInfo.blockExplorerUrlsTestnet}account/${address}`;
+      }
+      if (coin === 'eth') {
+        url =
+          fullWalletObj.network === 'livenet'
+            ? `https://${Currencies.eth.paymentInfo.blockExplorerUrls}address/${address}`
+            : `https://${Currencies.eth.paymentInfo.blockExplorerUrlsTestnet}address/${address}`;
+      }
+      if (dispatch(IsERCToken(coin))) {
+        url =
+          fullWalletObj.network === 'livenet'
+            ? `https://${Currencies.eth?.paymentInfo.blockExplorerUrls}address/${address}#tokentxns`
+            : `https://${Currencies.eth?.paymentInfo.blockExplorerUrlsTestnet}address/${address}#tokentxns`;
+      }
+
+      if (url) {
+        openPopUpConfirmation(coin, url);
+      }
+    }
+  };
+
+  const openPopUpConfirmation = (coin: string, url: string): void => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'question',
+        title: 'View on blockchain',
+        message: `Continue to view ${coin.toUpperCase()} transaction history`,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'CONTINUE',
+            action: () => {
+              Linking.openURL(url);
+            },
+            primary: true,
+          },
+          {
+            text: 'GO BACK',
+            action: () => {},
+          },
+        ],
+      }),
+    );
+  };
+
   const onPressTransaction = useMemo(
     () => (transaction: any) => {
       const {hasUnconfirmedInputs, action, isRBF} = transaction;
@@ -927,9 +1001,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         stickySectionHeadersEnabled={true}
         keyExtractor={keyExtractor}
         renderItem={renderTransaction}
-        renderSectionHeader={({section: {title}}) => (
-          <TransactionSectionHeader>{title}</TransactionSectionHeader>
-        )}
+        renderSectionHeader={({section: {title}}) => {
+          return (
+            <TouchableOpacity onPress={() => viewOnBlockchain()}>
+              <TransactionSectionHeader>{title}</TransactionSectionHeader>
+            </TouchableOpacity>
+          );
+        }}
         ItemSeparatorComponent={() => <BorderBottom />}
         ListFooterComponent={listFooterComponent}
         onEndReached={() => loadHistory()}

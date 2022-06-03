@@ -1,4 +1,10 @@
-import React, {useCallback, useLayoutEffect, useMemo, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {useTheme} from '@react-navigation/native';
 import {FlatList, LogBox, RefreshControl, TouchableOpacity} from 'react-native';
 import styled from 'styled-components/native';
@@ -219,7 +225,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   const theme = useTheme();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {id} = route.params;
+  const {id, context} = route.params;
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
@@ -280,6 +286,24 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
       },
     });
   }, [navigation, key, hasMultipleKeys, theme.dark]);
+
+  useEffect(() => {
+    if (context === 'createNewMultisigKey') {
+      key.wallets[0].getStatus(
+        {network: 'livenet'},
+        (err: any, status: Status) => {
+          if (err) {
+            // TODO
+            console.log(err);
+          }
+          navigation.navigate('Copayers', {
+            wallet: key.wallets[0],
+            status: status.wallet,
+          });
+        },
+      );
+    }
+  }, []);
 
   const {wallets = [], totalBalance} =
     useAppSelector(({WALLET}) => WALLET.keys[id]) || {};

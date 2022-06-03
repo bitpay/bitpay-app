@@ -84,7 +84,7 @@ export const ShopOnline = ({
             </SectionHeaderContainer>
           </SectionContainer>
           <ShopCarouselList
-            items={category.integrations}
+            items={category.integrations.slice(0, 5)}
             itemComponent={(item: ShopCarouselItem) => {
               const categoryHasDiscount = category.integrations.some(
                 merchant => !!merchant.discount,
