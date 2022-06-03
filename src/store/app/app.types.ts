@@ -13,6 +13,7 @@ import {
 } from './app.models';
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
+import {ModalId} from './app.reducer';
 
 export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
@@ -61,6 +62,7 @@ export enum AppActionTypes {
   SET_KEY_MIGRATION_FAILURE = 'APP/SET_KEY_MIGRATION_FAILURE',
   SET_SHOW_KEY_MIGRATION_FAILURE_MODAL = 'APP/SET_SHOW_KEY_MIGRATION_FAILURE_MODAL',
   SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN = 'APP/SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN',
+  ACTIVE_MODAL_UPDATED = 'APP/ACTIVE_MODAL_UPDATED',
 }
 
 interface NetworkChanged {
@@ -276,6 +278,11 @@ interface SetKeyMigrationFailureModalHasBeenShown {
   type: typeof AppActionTypes.SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN;
 }
 
+interface ActiveModalUpdated {
+  type: typeof AppActionTypes.ACTIVE_MODAL_UPDATED;
+  payload: ModalId | null;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
@@ -322,4 +329,5 @@ export type AppActionType =
   | SetKeyMigrationFailure
   | SetShowKeyMigrationFailureModal
   | SetKeyMigrationFailureModalHasBeenShown
-  | SetDefaultAltCurrency;
+  | SetDefaultAltCurrency
+  | ActiveModalUpdated;
