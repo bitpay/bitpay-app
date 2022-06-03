@@ -18,7 +18,7 @@ const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({
   const {connectors} = useAppSelector(({WALLET_CONNECT}) => WALLET_CONNECT);
 
   const CTA_OVERRIDES: {[key in string]: () => void} = {
-    walletConnect: () => {
+    dev_walletConnect: () => {
       if (Object.keys(connectors).length) {
         navigation.navigate('WalletConnect', {
           screen: 'WalletConnectConnections',

@@ -1,6 +1,6 @@
 import React from 'react';
 import {Linking} from 'react-native';
-import {ContentCard} from 'react-native-appboy-sdk';
+import ReactAppboy, {ContentCard} from 'react-native-appboy-sdk';
 import styled, {useTheme} from 'styled-components/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {
@@ -95,6 +95,10 @@ const QuickLinksCard: React.FC<QuickLinksCardProps> = props => {
   }
 
   const onPress = () => {
+    if (!contentCard.id.startsWith('dev_')) {
+      ReactAppboy.logContentCardClicked(contentCard.id);
+    }
+
     if (ctaOverride) {
       ctaOverride();
       return;

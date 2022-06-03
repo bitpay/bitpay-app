@@ -1,7 +1,7 @@
 import {useLinkTo} from '@react-navigation/native';
 import React from 'react';
 import {ImageStyle, Linking, StyleProp} from 'react-native';
-import {ContentCard} from 'react-native-appboy-sdk';
+import ReactAppboy, {ContentCard} from 'react-native-appboy-sdk';
 import {Source} from 'react-native-fast-image';
 import {SvgProps} from 'react-native-svg';
 import styled, {useTheme} from 'styled-components/native';
@@ -100,6 +100,10 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
 
   const onPress = () => {
     haptic('impactLight');
+
+    if (!contentCard.id.startsWith('dev_')) {
+      ReactAppboy.logContentCardClicked(contentCard.id);
+    }
 
     if (ctaOverride) {
       ctaOverride();
