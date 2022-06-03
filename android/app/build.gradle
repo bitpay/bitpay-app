@@ -222,6 +222,9 @@ dependencies {
     implementation('com.dosh:poweredby:2.0.0') {
       exclude group:'com.squareup.okhttp3', module:'okhttp'
     }
+
+    // AppsFlyer
+    compile project(':react-native-appsflyer')
 }
 
 // Run this once to be able to run the application with BUCK
