@@ -4,7 +4,6 @@ import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {SafeAreaView, TextInput} from 'react-native';
 import * as yup from 'yup';
-import AlertBox from '../../../components/alert-box/AlertBox';
 import A from '../../../components/anchor/Anchor';
 import Button from '../../../components/button/Button';
 import Checkbox from '../../../components/checkbox/Checkbox';
@@ -13,6 +12,7 @@ import {Link} from '../../../components/styled/Text';
 import {URL} from '../../../constants';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {navigationRef} from '../../../Root';
+import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {AuthStackParamList} from '../AuthStack';
@@ -103,9 +103,31 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
       }
     } else if (createAccountStatus === 'failed') {
       captchaRef.current?.reset();
+      dispatch(
+        AppActions.showBottomNotificationModal({
+          type: 'error',
+          title: 'Create account failed',
+          message: createAccountError || 'An unexpected error occurred.',
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: 'OK',
+              action: () => {
+                dispatch(BitPayIdActions.updateCreateAccountStatus(null));
+              },
+            },
+          ],
+        }),
+      );
       return;
     }
-  }, [createAccountStatus, isVerified, navigation, dispatch]);
+  }, [
+    dispatch,
+    navigation,
+    createAccountStatus,
+    isVerified,
+    createAccountError,
+  ]);
 
   const onSubmit = handleSubmit(formData => {
     const {email, givenName, familyName, agreedToTOSandPP, password} = formData;
@@ -147,14 +169,6 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
   return (
     <SafeAreaView>
       <AuthFormContainer>
-        {createAccountStatus === 'failed' ? (
-          <AuthRowContainer>
-            <AlertBox type="warning">
-              {createAccountError || 'An unexpected error occurred.'}
-            </AlertBox>
-          </AuthRowContainer>
-        ) : null}
-
         <AuthRowContainer>
           <Controller
             control={control}
