@@ -23,7 +23,7 @@ import {AppActions} from './';
 import {AppIdentity} from './app.models';
 import RNBootSplash from 'react-native-bootsplash';
 import analytics from '@segment/analytics-react-native';
-import {SEGMENT_API_KEY, APPSFLYER_API_KEY, APP_ID} from '@env';
+import {SEGMENT_API_KEY, APPSFLYER_API_KEY, APPSFLYER_APP_ID} from '@env';
 import appsFlyer from 'react-native-appsflyer';
 import {requestTrackingPermission} from 'react-native-tracking-transparency';
 import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
@@ -353,7 +353,7 @@ export const askForTrackingPermissionAndEnableSdks =
             {
               devKey: APPSFLYER_API_KEY,
               isDebug: __DEV__,
-              appId: APP_ID, // iOS app id
+              appId: APPSFLYER_APP_ID, // iOS app id
             },
             result => {
               console.log(result);
