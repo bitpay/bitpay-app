@@ -28,36 +28,18 @@ const BrandDetails = styled.View`
   padding-right: 45px;
 `;
 
-export default ({
-  cardConfig,
-  giftCard,
-}: {
-  cardConfig: CardConfig;
-  giftCard?: GiftCard;
-}) => {
+export default ({cardConfig}: {cardConfig: CardConfig}) => {
   const {displayName, icon} = cardConfig;
   return (
     <GiftCardItemContainer>
       <RemoteImage uri={icon} height={50} borderRadius={30} />
       <BrandDetails>
-        <GiftCardBrandName>
-          {giftCard
-            ? formatFiatAmount(giftCard.amount, giftCard.currency)
-            : displayName}
-        </GiftCardBrandName>
-        {giftCard ? (
-          <GiftCardDenomText>
-            <TimeAgo time={parseInt(giftCard.date, 10)} />
-          </GiftCardDenomText>
+        <GiftCardBrandName>{displayName}</GiftCardBrandName>
+        {cardConfig.discounts &&
+        isSupportedDiscountType(cardConfig.discounts[0].type) ? (
+          <GiftCardDiscountText cardConfig={cardConfig} short={true} />
         ) : (
-          <>
-            {cardConfig.discounts &&
-            isSupportedDiscountType(cardConfig.discounts[0].type) ? (
-              <GiftCardDiscountText cardConfig={cardConfig} short={true} />
-            ) : (
-              <GiftCardDenoms cardConfig={cardConfig} />
-            )}
-          </>
+          <GiftCardDenoms cardConfig={cardConfig} />
         )}
       </BrandDetails>
     </GiftCardItemContainer>

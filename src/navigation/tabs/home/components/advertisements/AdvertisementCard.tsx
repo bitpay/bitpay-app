@@ -2,7 +2,7 @@ import {useLinkTo} from '@react-navigation/native';
 import React from 'react';
 import {ImageStyle, Linking, StyleProp} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
-import {Source} from 'react-native-fast-image';
+import FastImage, {Source} from 'react-native-fast-image';
 import {SvgProps} from 'react-native-svg';
 import styled, {useTheme} from 'styled-components/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
@@ -136,7 +136,15 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   const icon = isSvgComponent(MaybeSvgComponent) ? (
     <MaybeSvgComponent style={IconStyle} />
   ) : imageSource ? (
-    imageSource
+    imageSource.uri ? (
+      <FastImage
+        source={imageSource}
+        style={IconStyle}
+        resizeMode={'contain'}
+      />
+    ) : (
+      imageSource
+    )
   ) : null;
 
   return (

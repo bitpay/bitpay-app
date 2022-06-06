@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import debounce from 'lodash.debounce';
 import {useTheme} from 'styled-components/native';
 import pickBy from 'lodash.pickby';
@@ -128,11 +128,7 @@ export default ({
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as CardConfig[]);
   const [isFilterSheetShown, setIsFilterSheetShown] = useState(false);
-  const [purchasedGiftCards] = useState(
-    giftCards
-      .filter(c => c.status === 'SUCCESS')
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-  );
+  const [purchasedGiftCards, setPurchasedGiftCards] = useState<GiftCard[]>([]);
   const [selectedCategoryMap, setSelectedCategoryMap] = useState(
     initializeCategoryMap(categories.map(category => category.displayName)),
   );
@@ -174,6 +170,18 @@ export default ({
       : 100;
     return yPos;
   };
+
+  useEffect(
+    () =>
+      setPurchasedGiftCards(
+        giftCards
+          .filter(c => c.status === 'SUCCESS')
+          .sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+          ),
+      ),
+    [giftCards],
+  );
 
   return (
     <>
