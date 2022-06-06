@@ -13,6 +13,20 @@ const BitcoreDoge = BWC.getBitcoreDoge();
 const BitcoreLtc = BWC.getBitcoreLtc();
 const Core = BWC.getCore();
 
+export interface BitcoreLibs {
+  bch: any;
+  btc: any;
+  doge: any;
+  ltc: any;
+}
+
+export const bitcoreLibs: BitcoreLibs = {
+  bch: BitcoreCash,
+  btc: Bitcore,
+  doge: BitcoreDoge,
+  ltc: BitcoreLtc,
+};
+
 interface Address {
   address: string;
   coin: string;
@@ -112,18 +126,20 @@ export interface CoinNetwork {
   network: string;
 }
 
+export const GetAddressNetwork = (address: string, coin: keyof BitcoreLibs) => {
+  return bitcoreLibs[coin].Address(address).network.name;
+};
+
 export const GetCoinAndNetwork = (
   str: string,
   network: string = 'livenet',
 ): CoinNetwork | null => {
   const address = ExtractCoinNetworkAddress(str);
   try {
-    network = Bitcore.Address(address).network.name;
-    return {coin: 'btc', network};
+    return {coin: 'btc', network: GetAddressNetwork(address, 'btc')};
   } catch (e) {
     try {
-      network = BitcoreCash.Address(address).network.name;
-      return {coin: 'bch', network};
+      return {coin: 'bch', network: GetAddressNetwork(address, 'bch')};
     } catch (bchErr) {
       try {
         const isValidEthAddress = Core.Validation.validateAddress(
@@ -150,12 +166,10 @@ export const GetCoinAndNetwork = (
           }
         } catch (xrpErr) {
           try {
-            network = BitcoreDoge.Address(address).network.name;
-            return {coin: 'doge', network};
+            return {coin: 'doge', network: GetAddressNetwork(address, 'doge')};
           } catch (dogeErr) {
             try {
-              network = BitcoreLtc.Address(address).network.name;
-              return {coin: 'ltc', network};
+              return {coin: 'ltc', network: GetAddressNetwork(address, 'ltc')};
             } catch (ltcErr) {
               return null;
             }
