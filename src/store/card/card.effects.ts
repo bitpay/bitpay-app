@@ -502,27 +502,34 @@ export const startAddToAppleWallet =
       const {APP, BITPAY_ID} = getState();
       const {network} = APP;
       const token = BITPAY_ID.apiToken[network];
+      const {cardholderName, primaryAccountNumberSuffix} = data;
 
-      const {data: certs} = await AppleWalletProvider.startAddPaymentPass(data);
-
-      dispatch(LogActions.debug('appleWallet - startAddPaymentPass - success'));
-      dispatch(LogActions.debug(JSON.stringify(certs)));
-
-      const {
-        certificateLeaf: cert1,
-        certificateSubCA: cert2,
-        nonce,
-        nonceSignature,
-      }: any = certs || {};
-
-      const res = await CardApi.startCreateAppleWalletProvisioningRequest(
-        token,
-        id,
-        {cert1, cert2, nonce, nonceSignature, walletProvider: 'apple'},
+      await AppleWalletProvider.startAddPaymentPass(
+        primaryAccountNumberSuffix,
+        cardholderName,
       );
 
-      dispatch(LogActions.debug(JSON.stringify(res)));
-      dispatch(completeAddApplePaymentPass({res}));
+      AppleWalletProvider.eventEmitter.addListener(
+        'getPassAndActivation',
+        async ({data: certs}) => {
+          AppleWalletProvider.eventEmitter.removeAllListeners(
+            'getPassAndActivation',
+          );
+          const {
+            certificateLeaf: cert1,
+            certificateSubCA: cert2,
+            nonce,
+            nonceSignature,
+          }: any = certs || {};
+
+          const res = await CardApi.startCreateAppleWalletProvisioningRequest(
+            token,
+            id,
+            {cert1, cert2, nonce, nonceSignature, walletProvider: 'apple'},
+          );
+          dispatch(completeAddApplePaymentPass({res}));
+        },
+      );
     } catch (e) {
       dispatch(
         LogActions.debug(
@@ -531,6 +538,9 @@ export const startAddToAppleWallet =
       );
       dispatch(
         LogActions.debug(JSON.stringify(e, Object.getOwnPropertyNames(e))),
+      );
+      AppleWalletProvider.eventEmitter.removeAllListeners(
+        'getPassAndActivation',
       );
     }
   };
@@ -561,19 +571,19 @@ export const completeAddApplePaymentPass =
         encryptedPassData,
       }: any = provisioningData || {};
 
-      const completeAddPaymentPassRes =
-        await AppleWalletProvider.completeAddPaymentPass({
-          activationData,
-          encryptedPassData,
-          ephemeralPublicKey,
-        });
+      await AppleWalletProvider.completeAddPaymentPass(
+        activationData,
+        encryptedPassData,
+        ephemeralPublicKey,
+      );
 
-      if (completeAddPaymentPassRes === 'success') {
-        //   Todo: update me
-      } else {
-        dispatch(AppActions.showBottomNotificationModal(GeneralError));
-      }
+      // if (completeAddPaymentPassRes === 'success') {
+      //   //   Todo: update me
+      // } else {
+      //   dispatch(AppActions.showBottomNotificationModal(GeneralError));
+      // }
     } catch (e) {
+      console.log(e);
       dispatch(LogActions.debug(`appleWallet - completeAddPaymentPass - ${e}`));
       dispatch(AppActions.showBottomNotificationModal(GeneralError));
     }

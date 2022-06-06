@@ -123,6 +123,7 @@ export const START_CREATE_APPLE_WALLET_PROVISIONING_REQUEST = (
             }
           `,
     variables: {
+      token,
       cardId: id,
       input: {
         walletProvider,

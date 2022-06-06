@@ -1,38 +1,53 @@
-//TODO: update me
-import {CardData} from '../../store/card/card.models';
+import ReactNative from 'react-native';
+import {NativeEventEmitter} from 'react-native';
 
-const appleWallet = {
-  available: () => new Promise(() => {}),
-  startAddPaymentPass: (params: CardData) => new Promise(() => {}),
-  completeAddPaymentPass: (params: any) => new Promise(() => {}),
-  checkPairedDevicesBySuffix: (params: any) => new Promise(() => {}),
-  graphRequest: (headers: any, json: any) => new Promise(() => {}),
+interface AppleWalletModule {
+  canAddPaymentPass: () => Promise<boolean>;
+  addPaymentPass: (last4: string, cardHolderName: string) => Promise<any>;
+  completeAddPaymentPass: (
+    activationData: string,
+    encryptedPassData: string,
+    ephemeralPublicKey: string,
+  ) => Promise<any>;
+  checkPairedDevicesBySuffix: (cardSuffix: string) => Promise<any>;
+}
+
+const module = ReactNative.NativeModules.PaymentPass;
+const AppleWalletModule = module as AppleWalletModule;
+const eventEmitter = new NativeEventEmitter(module);
+
+const canAddPaymentPass = (): Promise<boolean> => {
+  return AppleWalletModule.canAddPaymentPass();
 };
 
-const available = (): Promise<any> => {
-  return appleWallet.available();
+const startAddPaymentPass = (
+  last4: string,
+  cardHolderName: string,
+): Promise<any> => {
+  console.log(AppleWalletModule);
+  return AppleWalletModule.addPaymentPass(last4, cardHolderName);
 };
 
-const startAddPaymentPass = (params: CardData): Promise<any> => {
-  return appleWallet.startAddPaymentPass(params);
-};
-
-const completeAddPaymentPass = (params: any): Promise<any> => {
-  return appleWallet.completeAddPaymentPass(params);
+const completeAddPaymentPass = (
+  activationData: string,
+  encryptedPassData: string,
+  ephemeralPublicKey: string,
+): Promise<any> => {
+  return AppleWalletModule.completeAddPaymentPass(
+    activationData,
+    encryptedPassData,
+    ephemeralPublicKey,
+  );
 };
 
 const checkPairedDevicesBySuffix = (cardSuffix: string): Promise<any> => {
-  return appleWallet.checkPairedDevicesBySuffix(cardSuffix);
-};
-
-const graphRequest = (headers: any, json: any): Promise<any> => {
-  return appleWallet.graphRequest(headers, json);
+  return AppleWalletModule.checkPairedDevicesBySuffix(cardSuffix);
 };
 
 export default {
-  available,
+  canAddPaymentPass,
   startAddPaymentPass,
   completeAddPaymentPass,
   checkPairedDevicesBySuffix,
-  graphRequest,
+  eventEmitter,
 };
