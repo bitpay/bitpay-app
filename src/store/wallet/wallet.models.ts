@@ -50,6 +50,7 @@ export interface Key {
   totalBalanceLastDay: number;
   isPrivKeyEncrypted?: boolean;
   keyName?: string;
+  hideKeyBalance: boolean;
 }
 
 export interface Wallet extends WalletObj, API {}

@@ -58,10 +58,14 @@ import {
 } from '../../../store/wallet/effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import merge from 'lodash.merge';
-import {syncWallets} from '../../../store/wallet/wallet.actions';
+import {
+  syncWallets,
+  toggleHideKeyBalance,
+} from '../../../store/wallet/wallet.actions';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {RootState} from '../../../store';
 import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
+import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 
 const WalletSettingsContainer = styled.View`
   flex: 1;
@@ -119,7 +123,7 @@ const KeySettings = () => {
   );
 
   const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
-  const {keyName} = _key || {};
+  const {keyName, hideKeyBalance} = _key || {};
 
   useEffect(() => {
     if (context === 'createEncryptPassword') {
@@ -278,6 +282,19 @@ const KeySettings = () => {
 
           <ChevronRightSvg height={16} />
         </WalletNameContainer>
+        <Hr />
+
+        <SettingView>
+          <WalletSettingsTitle>Hide Balance</WalletSettingsTitle>
+
+          <ToggleSwitch
+            onChange={() => {
+              dispatch(toggleHideKeyBalance({keyId: key.id}));
+            }}
+            isEnabled={!!hideKeyBalance}
+          />
+        </SettingView>
+
         <Hr />
 
         <WalletHeaderContainer>
