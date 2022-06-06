@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="PoweredBy.Main">
+    <style name="PoweredBy.Default.Main">
         <item name="android:statusBarColor">@color/dosh_core_navigation_bar_background</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
