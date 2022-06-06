@@ -222,7 +222,7 @@ dependencies {
     implementation('com.dosh:poweredby:2.8.0') {
       exclude group:'com.squareup.okhttp3', module:'okhttp'
     }
-    // Upgrading Dosh SDK from 2.0.0 to 2.7.0 requires updated okhttp version
+    // Dosh SDK requires updated okhttp version
     // If React Native updates their version, this can be removed
     implementation "com.squareup.okhttp3:okhttp:4.8.0"
     implementation "com.squareup.okhttp3:okhttp-urlconnection:4.8.0"
