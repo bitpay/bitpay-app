@@ -23,7 +23,7 @@ class BpErrorCodes {
 public class DoshModule extends ReactContextBaseJavaModule {
   private boolean initialized = false;
   private PoweredByUiOptions uiOptions = new PoweredByUiOptions("Dosh Rewards", DoshLogoStyle.CIRCLE, DoshBrandDetailsHeaderStyle.RECTANGLE, null, null);
-  private String applicationId = "REPLACE_ME";
+  private String applicationId = "DOSH_APP_ID_REPLACE_ME";
 
   DoshModule(ReactApplicationContext context) {
     super(context);

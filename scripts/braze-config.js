@@ -39,4 +39,6 @@ contentAndroid = contentAndroid.replace(
 );
 fs.writeFileSync(brazeConfigFileAndroid, contentAndroid);
 
-console.log('Braze config successfully updated.');
+console.log(
+  `${process.env.NODE_ENV.toUpperCase()} Braze config successfully updated.`,
+);

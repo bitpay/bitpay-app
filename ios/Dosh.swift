@@ -33,7 +33,7 @@ struct CustomTheme: PoweredByDoshTheme {
 public class DoshAdapter: NSObject {
   
   @objc static func initDosh(uiOptions: Dictionary<String, String>) {
-    let instance = Dosh.initialize(applicationId: "REPLACE_ME")
+    let instance = Dosh.initialize(applicationId: "DOSH_APP_ID_REPLACE_ME")
     
     let programName = uiOptions["feedTitle"];
     let logoStyle = uiOptions["logoStyle"] == "RECTANGLE"
