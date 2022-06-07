@@ -73,6 +73,13 @@ import {initialShopState} from '../../../shop/shop.reducer';
 import {StackActions} from '@react-navigation/native';
 import {BuyCryptoActions} from '../../../buy-crypto';
 import {SwapCryptoActions} from '../../../swap-crypto';
+import {
+  checkNotificationsPermissions,
+  setConfirmTxNotifications,
+  setNotifications,
+  setOffersAndPromotionsNotifications,
+  setProductsUpdatesNotifications,
+} from '../../../app/app.effects';
 
 const BWC = BwcProvider.getInstance();
 
@@ -197,7 +204,6 @@ export const startMigration =
         );
 
         const {
-          // TODO - handle Notifications;
           confirmedTxsNotifications,
           emailNotifications,
           pushNotifications,
@@ -211,6 +217,23 @@ export const startMigration =
         } = config || {};
 
         emailNotificationsConfig = emailNotifications;
+
+        // push notifications
+        const systemEnabled = await checkNotificationsPermissions();
+        if (systemEnabled) {
+          if (pushNotifications?.enabled) {
+            dispatch(setNotifications(true));
+            if (confirmedTxsNotifications?.enabled) {
+              dispatch(setConfirmTxNotifications(true));
+            }
+            if (offersAndPromotions?.enabled) {
+              dispatch(setOffersAndPromotionsNotifications(true));
+            }
+            if (productsUpdates?.enabled) {
+              dispatch(setProductsUpdatesNotifications(true));
+            }
+          }
+        }
 
         // lock
         if (lock) {

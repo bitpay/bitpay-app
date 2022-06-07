@@ -407,43 +407,53 @@ const getAllWalletClients = (keys: {
   });
 };
 
-const subscribePushNotifications = (walletClient: any, eid: string) => {
-  const opts = {
-    externalUserId: eid,
-    platform: Platform.OS,
-    packageName: 'BitPay',
-    walletId: walletClient.credentials.walletId,
+const subscribePushNotifications =
+  (walletClient: any, eid: string): Effect<Promise<void>> =>
+  async dispatch => {
+    const opts = {
+      externalUserId: eid,
+      platform: Platform.OS,
+      packageName: 'BitPay',
+      walletId: walletClient.credentials.walletId,
+    };
+    walletClient.pushNotificationsSubscribe(opts, (err: any) => {
+      if (err) {
+        dispatch(
+          LogActions.error(
+            'Push Notifications error subscribing: ' + JSON.stringify(err),
+          ),
+        );
+      } else {
+        dispatch(
+          LogActions.info(
+            'Push Notifications success subscribing: ' +
+              walletClient.credentials.walletName,
+          ),
+        );
+      }
+    });
   };
-  console.log('#### SUBSCRIBED PUSH NOTIFICATIONS', opts); /* TODO */
-  /*
-   * TODO: uncomment after deploy BWS
-  walletClient.pushNotificationsSubscribe(opts, (err: any) => {
-    if (err) {
-      console.log('[app.effects.ts:449] ERROR', err)
-    } else {
-      console.log('[app.effects.ts:449] SUCCESS', walletClient.credentials.walletName);
-    }
-  });
-  */
-};
 
-const unSubscribePushNotifications = (walletClient: any, eid: string) => {
-  console.log(
-    '#### UNSUBSCRIBED PUSH NOTIFICATIONS',
-    walletClient.credentials.walletId,
-    eid,
-  ); /* TODO */
-  /*
-   * TODO: uncomment after deploy BWS
-  walletClient.pushNotificationsUnsubscribe(eid, (err: any) => {
-    if (err) {
-      console.log('[app.effects.ts:449] ERROR', err)
-    } else {
-      console.log('[app.effects.ts:449] SUCCESS', walletClient.credentials.walletName);
-    }
-  });
-  */
-};
+const unSubscribePushNotifications =
+  (walletClient: any, eid: string): Effect<Promise<void>> =>
+  async dispatch => {
+    walletClient.pushNotificationsUnsubscribe(eid, (err: any) => {
+      if (err) {
+        dispatch(
+          LogActions.error(
+            'Push Notifications error unsubscribing: ' + JSON.stringify(err),
+          ),
+        );
+      } else {
+        dispatch(
+          LogActions.info(
+            'Push Notifications success unsubscribing: ' +
+              walletClient.credentials.walletName,
+          ),
+        );
+      }
+    });
+  };
 
 export const checkNotificationsPermissions = (): Promise<boolean> => {
   return new Promise(async resolve => {
@@ -474,11 +484,11 @@ export const setNotifications =
     getAllWalletClients(keys).then(walletClients => {
       if (accepted) {
         walletClients.forEach(walletClient => {
-          subscribePushNotifications(walletClient, APP.brazeEid!);
+          dispatch(subscribePushNotifications(walletClient, APP.brazeEid!));
         });
       } else {
         walletClients.forEach(walletClient => {
-          unSubscribePushNotifications(walletClient, APP.brazeEid!);
+          dispatch(unSubscribePushNotifications(walletClient, APP.brazeEid!));
         });
       }
       dispatch(LogActions.info('Push Notifications: ' + value));
