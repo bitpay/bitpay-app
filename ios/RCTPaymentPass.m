@@ -16,25 +16,8 @@ RCT_EXPORT_METHOD(canAddPaymentPass:(RCTPromiseResolveBlock)resolve
   resolve(@([PKAddPassesViewController canAddPasses]));
 }
 
-- (NSDictionary *)constantsToExport {
-  PKAddPassButton *addPassButton = [[PKAddPassButton alloc] initWithAddPassButtonStyle:PKAddPassButtonStyleBlack];
-  [addPassButton layoutIfNeeded];
-
-  return @{
-           @"AddPassButtonStyle": @{
-               @"black": @(PKAddPassButtonStyleBlack),
-               @"blackOutline": @(PKAddPassButtonStyleBlackOutline),
-               },
-           @"AddPassButtonWidth": @(CGRectGetWidth(addPassButton.frame)),
-           @"AddPassButtonHeight": @(CGRectGetHeight(addPassButton.frame)),
-           };
-}
-
-+ (BOOL)requiresMainQueueSetup {
-    return YES;
-}
-
-RCT_EXPORT_METHOD(addPaymentPass:(NSString *)last4 cardHolderName: (NSString *)cardHolderName
+// init native view
+RCT_EXPORT_METHOD(startAddPaymentPass:(NSString *)last4 cardHolderName: (NSString *)cardHolderName
 resolver:(RCTPromiseResolveBlock)resolve
 rejector:(RCTPromiseRejectBlock)reject) {
     if (![PKAddPaymentPassViewController canAddPaymentPass]) {
@@ -65,7 +48,7 @@ rejector:(RCTPromiseRejectBlock)reject) {
     });
 
 }
-
+// completion method
 RCT_EXPORT_METHOD(completeAddPaymentPass:(NSString *)activationString encryptedPass: (NSString *)encryptedPass pubKey: (NSString *)pubKey ) {
   NSLog(@"LOG completeAddPaymentPass top");
   if (self.isRequestIssued == true){
@@ -79,7 +62,6 @@ RCT_EXPORT_METHOD(completeAddPaymentPass:(NSString *)activationString encryptedP
   }
   
   PKAddPaymentPassRequest* request = [[PKAddPaymentPassRequest alloc] init];
-  NSLog(@"LOG completeAddPaymentPass bottom");
   request.activationData = [[NSData alloc] initWithBase64EncodedString:activationString options:0];
   request.encryptedPassData = [[NSData alloc] initWithBase64EncodedString:encryptedPass options:0];
   request.ephemeralPublicKey = [[NSData alloc] initWithBase64EncodedString:pubKey options:0];
@@ -88,7 +70,7 @@ RCT_EXPORT_METHOD(completeAddPaymentPass:(NSString *)activationString encryptedP
 
 #pragma mark - PKAddPaymentPassViewControllerDelegate
 
-
+// get certs and pass to js -> js passes to bitpay -> certs signed -> js calls complete method ^
 - (void)addPaymentPassViewController:(PKAddPaymentPassViewController *)controller didFinishAddingPaymentPass:(PKPaymentPass *)pass error:(NSError *)error  {
 
     [controller dismissViewControllerAnimated:YES completion:nil];

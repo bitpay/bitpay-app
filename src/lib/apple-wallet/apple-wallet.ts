@@ -3,7 +3,7 @@ import {NativeEventEmitter} from 'react-native';
 
 interface AppleWalletModule {
   canAddPaymentPass: () => Promise<boolean>;
-  addPaymentPass: (last4: string, cardHolderName: string) => Promise<any>;
+  startAddPaymentPass: (last4: string, cardHolderName: string) => Promise<any>;
   completeAddPaymentPass: (
     activationData: string,
     encryptedPassData: string,
@@ -24,8 +24,7 @@ const startAddPaymentPass = (
   last4: string,
   cardHolderName: string,
 ): Promise<any> => {
-  console.log(AppleWalletModule);
-  return AppleWalletModule.addPaymentPass(last4, cardHolderName);
+  return AppleWalletModule.startAddPaymentPass(last4, cardHolderName);
 };
 
 const completeAddPaymentPass = (
