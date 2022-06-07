@@ -16,6 +16,8 @@ import {
   showBottomNotificationModal,
   dismissOnGoingProcessModal,
   setHomeCarouselConfig,
+  showDecryptPasswordModal,
+  dismissDecryptPasswordModal,
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -51,6 +53,7 @@ import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {
   startCreateKeyMultisig,
   addWalletMultisig,
+  CreateWalletWithOptions,
 } from '../../../store/wallet/effects';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
@@ -59,6 +62,8 @@ import PlusIcon from '../../../components/plus/Plus';
 import MinusIcon from '../../../components/minus/Minus';
 import {sleep} from '../../../utils/helper-methods';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
+import {checkEncryptPassword} from '../../../store/wallet/utils/wallet';
+import {WrongPasswordError} from '../components/ErrorMessages';
 export interface CreateMultisigProps {
   currency?: string;
   key?: Key;
@@ -221,7 +226,7 @@ const CreateMultisig = () => {
   }) => {
     const {name, myName, requiredSignatures, totalCopayers} = formData;
 
-    let opts: Partial<KeyOptions> = {};
+    let opts: CreateWalletWithOptions = {};
     opts.name = name;
     opts.myName = myName;
     opts.m = requiredSignatures;
@@ -235,10 +240,28 @@ const CreateMultisig = () => {
   };
 
   const CreateMultisigWallet = async (
-    opts: Partial<KeyOptions>,
+    opts: CreateWalletWithOptions,
   ): Promise<void> => {
     try {
       if (key) {
+        if (key.isPrivKeyEncrypted) {
+          opts.password = await new Promise<string>((resolve, reject) => {
+            dispatch(
+              showDecryptPasswordModal({
+                onSubmitHandler: async (_password: string) => {
+                  dispatch(dismissDecryptPasswordModal());
+                  await sleep(500);
+                  if (checkEncryptPassword(key, _password)) {
+                    resolve(_password);
+                  } else {
+                    return reject({message: 'invalid password'});
+                  }
+                },
+              }),
+            );
+          });
+        }
+
         await dispatch(
           startOnGoingProcessModal(OnGoingProcessMessages.ADDING_WALLET),
         );
@@ -313,10 +336,14 @@ const CreateMultisig = () => {
       }
     } catch (e: any) {
       logger.error(e.message);
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
-      showErrorModal(e.message);
-      return;
+      if (e.message === 'invalid password') {
+        dispatch(showBottomNotificationModal(WrongPasswordError()));
+      } else {
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+        showErrorModal(e.message);
+        return;
+      }
     }
   };
 

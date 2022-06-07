@@ -6,7 +6,7 @@ import {
   SupportedCoins,
   SupportedTokens,
 } from '../../../../constants/currencies';
-import {Effect, RootState} from '../../../index';
+import {Effect} from '../../../index';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
@@ -25,6 +25,10 @@ export interface CreateOptions {
   network?: Network;
   account?: number;
   walletName?: string;
+  password?: string;
+}
+
+export interface CreateWalletWithOptions extends Partial<KeyOptions> {
   password?: string;
 }
 
@@ -368,14 +372,14 @@ export const startCreateKeyWithOpts =
 
 export const createWalletWithOpts = (params: {
   key: KeyMethods;
-  opts: Partial<KeyOptions>;
+  opts: CreateWalletWithOptions;
 }): Promise<API> => {
   return new Promise((resolve, reject) => {
     const bwcClient = BWC.getClient();
     const {key, opts} = params;
     try {
       bwcClient.fromString(
-        key.createCredentials(undefined, {
+        key.createCredentials(opts.password, {
           coin: opts.coin || 'btc',
           network: opts.networkName || 'livenet',
           account: opts.account || 0,
