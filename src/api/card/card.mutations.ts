@@ -153,6 +153,7 @@ export const START_CREATE_GOOGLE_PAY_PROVISIONING_REQUEST = (
       }
     `,
     variables: {
+      token,
       cardId: id,
       input: {
         walletProvider: 'google',

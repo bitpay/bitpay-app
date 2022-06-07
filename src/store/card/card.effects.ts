@@ -22,6 +22,7 @@ import {Invoice} from '../shop/shop.models';
 import {BASE_BITPAY_URLS} from '../../constants/config';
 import AppleWalletProvider from '../../lib/apple-wallet/apple-wallet';
 import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
+import GooglePushProvisioningModule from '../../lib/google-provisioning/GooglePushProvisioning';
 
 const DoshWhitelist: string[] = [];
 
@@ -576,15 +577,11 @@ export const completeAddApplePaymentPass =
         encryptedPassData,
         ephemeralPublicKey,
       );
-
-      // if (completeAddPaymentPassRes === 'success') {
-      //   //   Todo: update me
-      // } else {
-      //   dispatch(AppActions.showBottomNotificationModal(GeneralError));
-      // }
     } catch (e) {
-      console.log(e);
-      dispatch(LogActions.debug(`appleWallet - completeAddPaymentPass - ${e}`));
+      console.error(e);
+      dispatch(
+        LogActions.error(`appleWallet - completeAddPaymentPassError - ${e}`),
+      );
       dispatch(AppActions.showBottomNotificationModal(GeneralError));
     }
   };
@@ -609,23 +606,21 @@ export const startAddToGooglePay =
       if (provisioningData.errors) {
         dispatch(AppActions.showBottomNotificationModal(GeneralError));
       } else {
-        const params = {
-          ...data,
-          opc: provisioningData.data.user.card.provisioningData
-            .opaquePaymentCard,
-          address: {
-            name: '',
-            address: '',
-            locality: '',
-            administrativeArea: '',
-            countryCode: 'USA',
-            postalCode: '',
-            phoneNumber: '',
-          },
-          tsp: 'MASTER',
-        };
+        const {lastFourDigits, name} = data;
+        const opc =
+          provisioningData.user.card.provisioningData.opaquePaymentCard;
 
-        //  TODO: GooglePayIssuer
+        await GooglePushProvisioningModule.startPushProvision(
+          opc,
+          lastFourDigits,
+          name,
+        );
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error(e);
+      dispatch(
+        LogActions.error(`googlePay - completePushProvisionError - ${e}`),
+      );
+      dispatch(AppActions.showBottomNotificationModal(GeneralError));
+    }
   };
