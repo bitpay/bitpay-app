@@ -496,6 +496,7 @@ const CoinbaseAccount = ({
         <AmountContainer>
           <Amount
             useAsModal={true}
+            hideSendMaxProp={true}
             currencyAbbreviationProp={account?.balance.currency}
             onDismiss={onEnteredAmount}
           />
