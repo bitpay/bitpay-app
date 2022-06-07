@@ -37,7 +37,6 @@ import {useDispatch} from 'react-redux';
 import {AppActions} from '../../../../../store/app';
 import GiftCardDiscountText from '../../components/GiftCardDiscountText';
 import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
-import {WalletScreens} from '../../../../wallet/WalletStack';
 import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
 import {ShopActions} from '../../../../../store/shop';
 import {APP_NETWORK} from '../../../../../constants/config';
@@ -169,8 +168,8 @@ const BuyGiftCard = ({
 
   const goToConfirmScreen = async (amount: number) => {
     const discount = getVisibleDiscount(cardConfig);
-    navigator.navigate('Wallet', {
-      screen: WalletScreens.GIFT_CARD_CONFIRM,
+    navigator.navigate('GiftCard', {
+      screen: GiftCardScreens.GIFT_CARD_CONFIRM,
       params: {
         amount,
         cardConfig,
@@ -180,8 +179,8 @@ const BuyGiftCard = ({
   };
 
   const goToAmountScreen = (phone?: string) => {
-    navigator.navigate('Wallet', {
-      screen: WalletScreens.AMOUNT,
+    navigator.navigate('GiftCard', {
+      screen: GiftCardScreens.GIFT_CARD_AMOUNT,
       params: {
         fiatCurrencyAbbreviation: cardConfig.currency,
         opts: {hideSendMax: true},

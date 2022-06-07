@@ -282,7 +282,7 @@ const Confirm = () => {
       dispatch(ShopEffects.waitForConfirmation(giftCard.invoiceId));
     }
     navigation.dispatch(StackActions.popToTop());
-    navigation.dispatch(StackActions.pop(3));
+    navigation.dispatch(StackActions.pop());
     navigation.navigate('GiftCard', {
       screen: 'GiftCardDetails',
       params: {

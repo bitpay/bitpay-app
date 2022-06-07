@@ -1,5 +1,5 @@
 import React from 'react';
-import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
+import {createStackNavigator} from '@react-navigation/stack';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
@@ -14,6 +14,10 @@ import GiftCardDetails from './screens/GiftCardDetails';
 import EnterPhone from './screens/EnterPhone';
 import EnterEmail from './screens/EnterEmail';
 import {HeaderTitle} from '../../../../components/styled/Text';
+import Amount, {AmountParamList} from '../../../wallet/screens/Amount';
+import Confirm, {
+  GiftCardConfirmParamList,
+} from '../../../wallet/screens/send/confirm/GiftCardConfirm';
 
 export type GiftCardStackParamList = {
   BuyGiftCard: {cardConfig: CardConfig};
@@ -35,7 +39,8 @@ export type GiftCardStackParamList = {
     }) => void;
   };
   GiftCardDetails: {cardConfig: CardConfig; giftCard: GiftCard};
-  GiftCardDetailsModal: {cardConfig: CardConfig; giftCard: GiftCard};
+  GiftCardAmount: AmountParamList;
+  GiftCardConfirm: GiftCardConfirmParamList;
 };
 
 export enum GiftCardScreens {
@@ -44,6 +49,8 @@ export enum GiftCardScreens {
   ENTER_PHONE = 'EnterPhone',
   GIFT_CARD_DETAILS = 'GiftCardDetails',
   GIFT_CARD_DETAILS_MODAL = 'GiftCardDetailsModal',
+  GIFT_CARD_AMOUNT = 'GiftCardAmount',
+  GIFT_CARD_CONFIRM = 'GiftCardConfirm',
 }
 
 const GiftCards = createStackNavigator<GiftCardStackParamList>();
@@ -82,10 +89,16 @@ const GiftCardStack = () => {
         }}
       />
       <GiftCards.Screen
-        name={GiftCardScreens.GIFT_CARD_DETAILS_MODAL}
-        component={GiftCardDetails}
+        name={GiftCardScreens.GIFT_CARD_AMOUNT}
+        component={Amount}
         options={{
-          ...TransitionPresets.ModalPresentationIOS,
+          gestureEnabled: false,
+        }}
+      />
+      <GiftCards.Screen
+        name={GiftCardScreens.GIFT_CARD_CONFIRM}
+        component={Confirm}
+        options={{
           gestureEnabled: false,
         }}
       />
