@@ -152,6 +152,7 @@ const BuyGiftCard = ({
         } gift cards contain an additional activation fee of ${formatFiatAmount(
           activationFee,
           cardConfig.currency,
+          {currencyDisplay: 'symbol'},
         )}.`,
         enableBackdropDismiss: true,
         actions: [
@@ -203,7 +204,7 @@ const BuyGiftCard = ({
             errMsg: `The purchase amount must be at least ${formatFiatAmount(
               minAmount,
               cardConfig.currency,
-              {customPrecision: 'minimal'},
+              {customPrecision: 'minimal', currencyDisplay: 'symbol'},
             )}. Please modify your amount.`,
           }),
         ),
@@ -218,7 +219,7 @@ const BuyGiftCard = ({
             errMsg: `The purchase amount is limited to ${formatFiatAmount(
               maxAmount,
               cardConfig.currency,
-              {customPrecision: 'minimal'},
+              {customPrecision: 'minimal', currencyDisplay: 'symbol'},
             )}. Please modify your amount.`,
           }),
         ),
@@ -328,7 +329,11 @@ const BuyGiftCard = ({
               </DenomSelectionContainer>
             ) : (
               <TouchableWithoutFeedback onPress={() => buyGiftCard()}>
-                <Amount>{formatFiatAmount(0, cardConfig.currency)}</Amount>
+                <Amount>
+                  {formatFiatAmount(0, cardConfig.currency, {
+                    currencyDisplay: 'symbol',
+                  })}
+                </Amount>
               </TouchableWithoutFeedback>
             )}
           </AmountContainer>
