@@ -332,11 +332,11 @@ const KeySettings = () => {
             onPress={() => {
               haptic('impactLight');
               navigation.navigate('Wallet', {
-                screen: 'CurrencySelection',
-                params: {context: 'addWallet', key},
+                screen: 'AddingOptions',
+                params: {key},
               });
             }}>
-            Add a wallet
+            Add Wallet
           </Link>
         </VerticalPadding>
 
