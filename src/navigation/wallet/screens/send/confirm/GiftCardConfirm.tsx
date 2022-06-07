@@ -76,10 +76,7 @@ const GiftCardHeader = ({
       </Header>
       <DetailContainer height={73}>
         <DetailRow>
-          <H4>
-            {formatFiatAmount(amount, cardConfig.currency)}{' '}
-            {cardConfig.currency}
-          </H4>
+          <H4>{formatFiatAmount(amount, cardConfig.currency)}</H4>
           <RemoteImage uri={cardConfig.icon} height={40} borderRadius={40} />
         </DetailRow>
       </DetailContainer>

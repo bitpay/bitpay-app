@@ -10,6 +10,7 @@ import {
   BaseText,
   fontFamily,
   HeaderTitle,
+  TextAlign,
 } from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
 import {
@@ -97,6 +98,7 @@ const DenomSelectionContainer = styled.View`
 const SupportedAmounts = styled.View`
   margin-top: 10px;
   align-items: center;
+  padding: 0 30px;
 `;
 
 const SupportedAmountsLabel = styled(GiftCardDenomText)`
@@ -319,7 +321,9 @@ const BuyGiftCard = ({
                   <SupportedAmountsLabel>
                     Purchase Amounts:
                   </SupportedAmountsLabel>
-                  <GiftCardDenoms cardConfig={cardConfig} />
+                  <TextAlign align="center">
+                    <GiftCardDenoms cardConfig={cardConfig} />
+                  </TextAlign>
                 </SupportedAmounts>
               </DenomSelectionContainer>
             ) : (
