@@ -43,9 +43,6 @@ import {coinbaseInitialize} from '../coinbase';
 import {Key} from '../wallet/wallet.models';
 
 // Subscription groups (Braze)
-const CONFIRMED_TX_GROUP_ID = __DEV__
-  ? 'dff24ef2-1896-4dee-81fd-7dca9c9c7a8a'
-  : '2169b32a-f6a9-43e8-9227-bc4d30a15cd2';
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
   ? '27c86a0b-2a91-4383-b05b-5e671554f186'
   : 'fe2146a6-f5ed-4df7-81de-7ed9cd019d23';
@@ -505,11 +502,6 @@ export const setConfirmTxNotifications =
   (accepted: boolean): Effect =>
   async dispatch => {
     dispatch(setConfirmedTxAccepted(accepted));
-    if (accepted) {
-      ReactAppboy.addToSubscriptionGroup(CONFIRMED_TX_GROUP_ID);
-    } else {
-      ReactAppboy.removeFromSubscriptionGroup(CONFIRMED_TX_GROUP_ID);
-    }
   };
 
 export const setProductsUpdatesNotifications =
