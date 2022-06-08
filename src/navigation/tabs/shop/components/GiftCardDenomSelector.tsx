@@ -59,6 +59,7 @@ export default ({
       <SelectedAmount>
         {formatFiatAmount(amounts[selectedIndex], cardConfig.currency, {
           customPrecision: 'minimal',
+          currencyDisplay: 'symbol',
         })}
       </SelectedAmount>
       <TouchableWithoutFeedback

@@ -1,12 +1,10 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import TimeAgo from 'react-native-timeago';
-import {CardConfig, GiftCard} from '../../../../store/shop/shop.models';
+import {CardConfig} from '../../../../store/shop/shop.models';
 import RemoteImage from './RemoteImage';
-import GiftCardDenoms, {GiftCardDenomText} from './GiftCardDenoms';
+import GiftCardDenoms from './GiftCardDenoms';
 import {BaseText} from '../../../../components/styled/Text';
 import GiftCardDiscountText from './GiftCardDiscountText';
-import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {isSupportedDiscountType} from '../../../../lib/gift-cards/gift-card';
 
 const GiftCardItemContainer = styled.View`
