@@ -612,7 +612,11 @@ const SwapCryptoRoot: React.FC = () => {
         toWalletData: toWalletData!,
         fixedRateId: rateData!.fixedRateId,
         amountFrom: amountFrom,
-        useSendMax: useSendMax,
+        useSendMax: dispatch(
+          IsERCToken(fromWalletSelected!.currencyAbbreviation.toLowerCase()),
+        )
+          ? false
+          : useSendMax,
         sendMaxInfo: sendMaxInfo,
       },
     });
@@ -915,18 +919,29 @@ const SwapCryptoRoot: React.FC = () => {
           if (opts?.close) {
             return;
           }
-          if (opts?.sendMax && fromWalletData) {
-            setUseSendMax(true);
-
-            const data = await getSendMaxData();
-            setSendMaxInfo(data);
-            if (data?.amount) {
-              newAmount = dispatch(
-                SatToUnit(
-                  data.amount,
-                  fromWalletData.currencyAbbreviation.toLowerCase(),
+          if (opts?.sendMax && fromWalletSelected) {
+            if (
+              dispatch(
+                IsERCToken(
+                  fromWalletSelected.currencyAbbreviation.toLowerCase(),
                 ),
-              );
+              )
+            ) {
+              setUseSendMax(true);
+              setSendMaxInfo(undefined);
+              newAmount = Number(fromWalletSelected.balance.cryptoSpendable);
+            } else {
+              setUseSendMax(true);
+              const data = await getSendMaxData();
+              setSendMaxInfo(data);
+              if (data?.amount) {
+                newAmount = dispatch(
+                  SatToUnit(
+                    data.amount,
+                    fromWalletSelected.currencyAbbreviation.toLowerCase(),
+                  ),
+                );
+              }
             }
           } else {
             setUseSendMax(false);
