@@ -43,9 +43,15 @@ import {coinbaseInitialize} from '../coinbase';
 import {Key} from '../wallet/wallet.models';
 
 // Subscription groups (Braze)
-const CONFIRMED_TX_GROUP_ID = 'dff24ef2-1896-4dee-81fd-7dca9c9c7a8a';
-const PRODUCTS_UPDATES_GROUP_ID = '27c86a0b-2a91-4383-b05b-5e671554f186';
-const OFFERS_AND_PROMOTIONS_GROUP_ID = '6be103aa-4df0-46f6-a3fa-438e61aadced';
+const CONFIRMED_TX_GROUP_ID = __DEV__
+  ? 'dff24ef2-1896-4dee-81fd-7dca9c9c7a8a'
+  : '2169b32a-f6a9-43e8-9227-bc4d30a15cd2';
+const PRODUCTS_UPDATES_GROUP_ID = __DEV__
+  ? '27c86a0b-2a91-4383-b05b-5e671554f186'
+  : 'fe2146a6-f5ed-4df7-81de-7ed9cd019d23';
+const OFFERS_AND_PROMOTIONS_GROUP_ID = __DEV__
+  ? '6be103aa-4df0-46f6-a3fa-438e61aadced'
+  : '1d1db929-909d-40e0-93ec-34106ea576b4';
 
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
