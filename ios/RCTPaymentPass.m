@@ -67,7 +67,7 @@ RCT_EXPORT_METHOD(completeAddPaymentPass:(NSString *)activationString encryptedP
 }
 
 - (NSArray<NSString *> *)supportedEvents {
-  return @[@"getPassAndActivation"];
+  return @[@"getPassAndActivation", @"addPaymentPassViewControllerDidFinish"];
 }
 
 #pragma mark - PKAddPaymentPassViewControllerDelegate
