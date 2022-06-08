@@ -412,7 +412,8 @@ export const BuildKeysAndWalletsList = ({
           .map(walletObj => {
             const {
               balance,
-              credentials: {network},
+              credentials: {network, walletName: fallbackName},
+              walletName,
             } = walletObj;
             return merge(cloneDeep(walletObj), {
               cryptoBalance: balance.crypto,
@@ -426,6 +427,7 @@ export const BuildKeysAndWalletsList = ({
                 defaultAltCurrencyIsoCode,
               ),
               network,
+              walletName: walletName || fallbackName,
             });
           }),
       };
