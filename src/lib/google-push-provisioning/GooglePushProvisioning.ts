@@ -5,9 +5,8 @@ interface GooglePushProvisioningModule {
   startPushProvision: any;
 }
 
-const module = ReactNative.NativeModules.GooglePushProvisioning;
+const module = ReactNative.NativeModules?.GooglePushProvisioning || {};
 const GooglePushProvisioning = module as GooglePushProvisioningModule;
-console.dir(ReactNative.NativeModules.GooglePushProvisioning);
 const eventEmitter = new NativeEventEmitter(module);
 
 const startPushProvision = (

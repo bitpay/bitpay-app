@@ -12,7 +12,7 @@ interface AppleWalletModule {
   checkPairedDevicesBySuffix: (cardSuffix: string) => Promise<any>;
 }
 
-const module = ReactNative.NativeModules.PaymentPass;
+const module = ReactNative.NativeModules?.PaymentPass || {};
 const AppleWalletModule = module as AppleWalletModule;
 const eventEmitter = new NativeEventEmitter(module);
 

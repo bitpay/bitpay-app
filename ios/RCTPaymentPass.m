@@ -9,8 +9,6 @@ typedef void (^completedPaymentProcessHandler)(PKAddPaymentPassRequest *request)
 @end
 @implementation RCTPaymentPass
 
-RCT_EXPORT_MODULE()
-
 RCT_EXPORT_METHOD(canAddPaymentPass:(RCTPromiseResolveBlock)resolve
                   rejector:(RCTPromiseRejectBlock)reject) {
   resolve(@([PKAddPassesViewController canAddPasses]));
@@ -68,6 +66,10 @@ RCT_EXPORT_METHOD(completeAddPaymentPass:(NSString *)activationString encryptedP
   self.completionHandler(request);
 }
 
+- (NSArray<NSString *> *)supportedEvents {
+  return @[@"getPassAndActivation"];
+}
+
 #pragma mark - PKAddPaymentPassViewControllerDelegate
 
 // get certs and pass to js -> js passes to bitpay -> certs signed -> js calls complete method ^
@@ -95,7 +97,11 @@ RCT_EXPORT_METHOD(completeAddPaymentPass:(NSString *)activationString encryptedP
                                        @"nonceSignature" : nonceSignatureString,
                                     }
                                };
+  
+  
   [self sendEventWithName:@"getPassAndActivation" body:dictionary];
 }
+
+RCT_EXPORT_MODULE()
 
 @end

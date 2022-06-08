@@ -20,9 +20,9 @@ import {setHomeCarouselConfig} from '../app/app.actions';
 import {Card, DebitCardTopUpInvoiceParams} from './card.models';
 import {Invoice} from '../shop/shop.models';
 import {BASE_BITPAY_URLS} from '../../constants/config';
-import AppleWalletProvider from '../../lib/apple-wallet/apple-wallet';
+import ApplePushProvisioningModule from '../../lib/apple-push-provisioning/ApplePushProvisioning';
 import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
-import GooglePushProvisioningModule from '../../lib/google-provisioning/GooglePushProvisioning';
+import GooglePushProvisioningModule from '../../lib/google-push-provisioning/GooglePushProvisioning';
 
 const DoshWhitelist: string[] = [];
 
@@ -505,15 +505,15 @@ export const startAddToAppleWallet =
       const token = BITPAY_ID.apiToken[network];
       const {cardholderName, primaryAccountNumberSuffix} = data;
 
-      await AppleWalletProvider.startAddPaymentPass(
+      await ApplePushProvisioningModule.startAddPaymentPass(
         primaryAccountNumberSuffix,
         cardholderName,
       );
 
-      AppleWalletProvider.eventEmitter.addListener(
+      ApplePushProvisioningModule.eventEmitter.addListener(
         'getPassAndActivation',
         async ({data: certs}) => {
-          AppleWalletProvider.eventEmitter.removeAllListeners(
+          ApplePushProvisioningModule.eventEmitter.removeAllListeners(
             'getPassAndActivation',
           );
           const {
@@ -540,7 +540,7 @@ export const startAddToAppleWallet =
       dispatch(
         LogActions.debug(JSON.stringify(e, Object.getOwnPropertyNames(e))),
       );
-      AppleWalletProvider.eventEmitter.removeAllListeners(
+      ApplePushProvisioningModule.eventEmitter.removeAllListeners(
         'getPassAndActivation',
       );
     }
@@ -572,7 +572,7 @@ export const completeAddApplePaymentPass =
         encryptedPassData,
       }: any = provisioningData || {};
 
-      await AppleWalletProvider.completeAddPaymentPass(
+      await ApplePushProvisioningModule.completeAddPaymentPass(
         activationData,
         encryptedPassData,
         ephemeralPublicKey,
