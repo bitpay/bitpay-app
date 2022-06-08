@@ -24,6 +24,8 @@ import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 export interface CreateOptions {
   network?: Network;
   account?: number;
+  useNativeSegwit?: boolean;
+  singleAddress?: boolean;
   walletName?: string;
   password?: string;
 }
@@ -186,7 +188,11 @@ const createMultipleWallets =
     const wallets: API[] = [];
 
     for (const coin of supportedCoins) {
-      const wallet = (await createWallet({key, coin, options})) as Wallet;
+      const wallet = (await createWallet({
+        key,
+        coin,
+        options: {...options, useNativeSegwit: ['btc', 'ltc'].includes(coin)},
+      })) as Wallet;
       wallets.push(wallet);
 
       if (coin === 'eth') {
@@ -226,7 +232,7 @@ const createWallet = (params: {
     const {key, coin, options} = params;
 
     // set defaults
-    const {account, network, password} = {
+    const {account, network, password, singleAddress, useNativeSegwit} = {
       ...DEFAULT_CREATION_OPTIONS,
       ...options,
     };
@@ -248,9 +254,9 @@ const createWallet = (params: {
       1,
       {
         network,
-        singleAddress: false,
+        singleAddress,
         coin,
-        useNativeSegwit: ['btc', 'ltc'].includes(coin),
+        useNativeSegwit,
       },
       (err: any) => {
         if (err) {

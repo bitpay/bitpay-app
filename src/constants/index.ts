@@ -45,6 +45,8 @@ export const URL = {
     'https://support.bitpay.com/hc/en-us/articles/360025484512-Missing-transactions-Why-is-my-transaction-unconfirmed-',
   HELP_FORGOT_WALLET_ENCRYPT_PASSWORD:
     'https://support.bitpay.com/hc/en-us/articles/115003004403-I-forgot-my-wallet-s-encrypted-password-What-can-I-do-',
+  HELP_SINGLE_ADDRESS:
+    'https://support.bitpay.com/hc/en-us/articles/360015920572-Setting-up-the-Single-Address-Feature-for-your-BitPay-Wallet',
 
   /**
    * Quick Links
