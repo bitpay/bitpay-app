@@ -62,8 +62,8 @@ import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {URL} from '../../../constants';
 
 export interface CreateMultisigProps {
-  currency?: string;
-  key?: Key;
+  currency: string;
+  key: Key;
 }
 
 const schema = yup.object().shape({
@@ -178,10 +178,13 @@ const CreateMultisig = () => {
   const dispatch = useDispatch();
   const logger = useLogger();
   const navigation = useNavigation();
+  const route = useRoute<RouteProp<WalletStackParamList, 'CreateMultisig'>>();
+  const {currency, key} = route.params;
+  const segwitSupported = ['btc', 'ltc'].includes(currency.toLowerCase());
   const [showOptions, setShowOptions] = useState(false);
   const [testnetEnabled, setTestnetEnabled] = useState(false);
   const [options, setOptions] = useState({
-    useNativeSegwit: true,
+    useNativeSegwit: segwitSupported,
     networkName: 'livenet',
     singleAddress: false,
   });
@@ -192,8 +195,6 @@ const CreateMultisig = () => {
     formState: {errors},
   } = useForm({resolver: yupResolver(schema)});
 
-  const route = useRoute<RouteProp<WalletStackParamList, 'CreateMultisig'>>();
-  const {currency, key} = route.params || {};
   const singleAddressCurrency =
     Currencies[currency?.toLowerCase() as string].properties.singleAddress;
 
@@ -492,7 +493,7 @@ const CreateMultisig = () => {
               )}
             </AdvancedOptionsButton>
 
-            {showOptions && (
+            {showOptions && segwitSupported && (
               <AdvancedOptions>
                 <RowContainer
                   onPress={() => {
