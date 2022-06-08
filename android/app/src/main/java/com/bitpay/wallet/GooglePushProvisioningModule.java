@@ -100,7 +100,7 @@ public class GooglePushProvisioningModule extends ReactContextBaseJavaModule {
                 break;
 
             case Activity.RESULT_CANCELED:
-                requestPaymentPromise.reject("CANCELLED");
+                requestPaymentPromise.reject("CANCELED");
                 break;
 
             case TAP_AND_PAY_INVALID_TOKEN_STATE:

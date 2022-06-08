@@ -612,8 +612,8 @@ export const startAddToGooglePay =
 
         await GooglePushProvisioningModule.startPushProvision(
           opc,
-          lastFourDigits,
           name,
+          lastFourDigits,
         );
       }
     } catch (e) {
@@ -621,6 +621,13 @@ export const startAddToGooglePay =
       dispatch(
         LogActions.error(`googlePay - completePushProvisionError - ${e}`),
       );
+
+      if (e instanceof Error) {
+        if (['CANCELED'].includes(e.message)) {
+          return;
+        }
+      }
+
       dispatch(AppActions.showBottomNotificationModal(GeneralError));
     }
   };
