@@ -176,10 +176,13 @@ const CreateMultisig = () => {
   const dispatch = useDispatch();
   const logger = useLogger();
   const navigation = useNavigation();
+  const route = useRoute<RouteProp<WalletStackParamList, 'CreateMultisig'>>();
+  const {currency, key} = route.params || {};
+  const segwitSupported = currency !== 'BCH';
   const [showOptions, setShowOptions] = useState(false);
   const [testnetEnabled, setTestnetEnabled] = useState(false);
   const [options, setOptions] = useState({
-    useNativeSegwit: true,
+    useNativeSegwit: segwitSupported,
     networkName: 'livenet',
     singleAddress: false,
   });
@@ -190,8 +193,6 @@ const CreateMultisig = () => {
     formState: {errors},
   } = useForm({resolver: yupResolver(schema)});
 
-  const route = useRoute<RouteProp<WalletStackParamList, 'CreateMultisig'>>();
-  const {currency, key} = route.params || {};
   const singleAddressCurrency =
     Currencies[currency?.toLowerCase() as string].properties.singleAddress;
 
@@ -490,7 +491,7 @@ const CreateMultisig = () => {
               )}
             </AdvancedOptionsButton>
 
-            {showOptions && (
+            {showOptions && segwitSupported && (
               <AdvancedOptions>
                 <RowContainer
                   onPress={() => {
