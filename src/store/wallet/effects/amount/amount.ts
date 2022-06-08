@@ -119,7 +119,7 @@ export const GetExcludedUtxosMessage =
   (coin: string, sendMaxInfo: SendMaxInfo): Effect<string> =>
   dispatch => {
     const warningMsg = [];
-    if (sendMaxInfo.utxosBelowFee >= 0) {
+    if (sendMaxInfo.utxosBelowFee > 0) {
       const amountBelowFeeStr = dispatch(
         SatToUnit(sendMaxInfo.amountBelowFee, coin),
       );
@@ -127,7 +127,7 @@ export const GetExcludedUtxosMessage =
       warningMsg.push(message);
     }
 
-    if (sendMaxInfo.utxosAboveMaxSize >= 0) {
+    if (sendMaxInfo.utxosAboveMaxSize > 0) {
       const amountAboveMaxSizeStr = dispatch(
         SatToUnit(sendMaxInfo.amountAboveMaxSize, coin),
       );
