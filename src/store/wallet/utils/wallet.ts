@@ -131,12 +131,14 @@ export const buildKeyObj = ({
   totalBalance = 0,
   totalBalanceLastDay = 0,
   backupComplete = false,
+  hideKeyBalance = false,
 }: {
   key: KeyMethods;
   wallets: Wallet[];
   totalBalance?: number;
   totalBalanceLastDay?: number;
   backupComplete?: boolean;
+  hideKeyBalance: boolean;
 }): Key => {
   return {
     id: key.id,
@@ -148,6 +150,7 @@ export const buildKeyObj = ({
     isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
     backupComplete,
     keyName: 'My Key',
+    hideKeyBalance,
   };
 };
 
@@ -176,6 +179,7 @@ export const buildMigrationKeyObj = ({
     isPrivKeyEncrypted: key.methods.isPrivKeyEncrypted(),
     backupComplete,
     keyName,
+    hideKeyBalance: false,
   };
 };
 

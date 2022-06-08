@@ -8,7 +8,7 @@ import {
   Row,
   ScreenGutter,
 } from '../../../components/styled/Containers';
-import {H5} from '../../../components/styled/Text';
+import {H3, H5} from '../../../components/styled/Text';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {
   HeaderImg,
@@ -27,6 +27,7 @@ interface Props {
   totalBalance: number;
   onPress: (keyId: string) => void;
   defaultAltCurrencyIsoCode: string;
+  hideKeyBalance: boolean;
 }
 
 const OptionContainer = styled.TouchableOpacity`
@@ -56,6 +57,7 @@ const KeyDropdownOption = ({
   wallets,
   totalBalance,
   defaultAltCurrencyIsoCode,
+  hideKeyBalance,
   onPress,
 }: Props) => {
   const _wallets = wallets.filter(wallet => !wallet.hideWallet);
@@ -90,12 +92,18 @@ const KeyDropdownOption = ({
             </HeaderImg>
           ) : null}
         </Column>
-        <Row style={{alignItems: 'center', justifyContent: 'flex-end'}}>
-          <Balance>
-            {formatFiatAmount(totalBalance, defaultAltCurrencyIsoCode)}
-          </Balance>
-          <AngleRight style={{marginLeft: 10}} />
-        </Row>
+        {!hideKeyBalance ? (
+          <>
+            <Row style={{alignItems: 'center', justifyContent: 'flex-end'}}>
+              <Balance>
+                {formatFiatAmount(totalBalance, defaultAltCurrencyIsoCode)}
+              </Balance>
+              <AngleRight style={{marginLeft: 10}} />
+            </Row>
+          </>
+        ) : (
+          <H3>****</H3>
+        )}
       </Row>
     </OptionContainer>
   );

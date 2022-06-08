@@ -10,7 +10,7 @@ import {FlatList, LogBox, RefreshControl, TouchableOpacity} from 'react-native';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
-import {BaseText, H5, HeaderTitle} from '../../../components/styled/Text';
+import {BaseText, H2, H5, HeaderTitle} from '../../../components/styled/Text';
 import Settings from '../../../components/settings/Settings';
 import {
   Hr,
@@ -20,7 +20,10 @@ import {
 } from '../../../components/styled/Containers';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
-import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
+import {
+  toggleHideKeyBalance,
+  updatePortfolioBalance,
+} from '../../../store/wallet/wallet.actions';
 import {Wallet, Status} from '../../../store/wallet/wallet.models';
 import {
   LightBlack,
@@ -54,6 +57,12 @@ type KeyOverviewScreenProps = StackScreenProps<
   WalletStackParamList,
   'KeyOverview'
 >;
+
+const Row = styled.View`
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-end;
+`;
 
 const OverviewContainer = styled.View`
   flex: 1;
@@ -404,11 +413,22 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   return (
     <OverviewContainer>
       <BalanceContainer>
-        <Balance scale={shouldScale(totalBalance)}>
-          {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
-            currencyDisplay: 'symbol',
-          })}
-        </Balance>
+        <TouchableOpacity
+          onLongPress={() => {
+            dispatch(toggleHideKeyBalance({keyId: key.id}));
+          }}>
+          <Row>
+            {!key?.hideKeyBalance ? (
+              <Balance scale={shouldScale(totalBalance)}>
+                {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
+                  currencyDisplay: 'symbol',
+                })}
+              </Balance>
+            ) : (
+              <H2>****</H2>
+            )}
+          </Row>
+        </TouchableOpacity>
       </BalanceContainer>
 
       <Hr />
@@ -479,6 +499,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
                     });
                   }}
                   defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
+                  hideKeyBalance={_key.hideKeyBalance}
                 />
               ))}
           </KeyDropdownOptionsContainer>
