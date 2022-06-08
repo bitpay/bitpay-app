@@ -8,7 +8,7 @@ import {
   calculatePercentageDifference,
   formatFiatAmount,
 } from '../../../../utils/helper-methods';
-import QuestionSvg from '../../../../../assets/img/question.svg';
+import InfoSvg from '../../../../../assets/img/info.svg';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
@@ -83,7 +83,7 @@ const PortfolioBalance = () => {
         activeOpacity={ActiveOpacity}
         onPress={showPortfolioBalanceInfoModal}>
         <PortfolioBalanceTitle>Portfolio Balance</PortfolioBalanceTitle>
-        <QuestionSvg width={12} height={12} />
+        <InfoSvg width={12} height={12} />
       </PortfolioBalanceHeader>
       <PortfolioBalanceText>
         {formatFiatAmount(

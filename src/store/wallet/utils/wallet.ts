@@ -58,11 +58,11 @@ export const buildWalletObj =
       walletId,
       coin,
       balance = {
-        crypto: '0',
-        cryptoLocked: '0',
-        cryptoConfirmedLocked: '0',
-        cryptoSpendable: '0',
-        cryptoPending: '0',
+        crypto: '0.00',
+        cryptoLocked: '0.00',
+        cryptoConfirmedLocked: '0.00',
+        cryptoSpendable: '0.00',
+        cryptoPending: '0.00',
         fiat: 0,
         fiatLastDay: 0,
         fiatLocked: 0,
@@ -131,12 +131,14 @@ export const buildKeyObj = ({
   totalBalance = 0,
   totalBalanceLastDay = 0,
   backupComplete = false,
+  hideKeyBalance = false,
 }: {
   key: KeyMethods;
   wallets: Wallet[];
   totalBalance?: number;
   totalBalanceLastDay?: number;
   backupComplete?: boolean;
+  hideKeyBalance: boolean;
 }): Key => {
   return {
     id: key.id,
@@ -148,6 +150,7 @@ export const buildKeyObj = ({
     isPrivKeyEncrypted: key.isPrivKeyEncrypted(),
     backupComplete,
     keyName: 'My Key',
+    hideKeyBalance,
   };
 };
 
@@ -176,6 +179,7 @@ export const buildMigrationKeyObj = ({
     isPrivKeyEncrypted: key.methods.isPrivKeyEncrypted(),
     backupComplete,
     keyName,
+    hideKeyBalance: false,
   };
 };
 
@@ -412,7 +416,8 @@ export const BuildKeysAndWalletsList = ({
           .map(walletObj => {
             const {
               balance,
-              credentials: {network},
+              credentials: {network, walletName: fallbackName},
+              walletName,
             } = walletObj;
             return merge(cloneDeep(walletObj), {
               cryptoBalance: balance.crypto,
@@ -426,6 +431,7 @@ export const BuildKeysAndWalletsList = ({
                 defaultAltCurrencyIsoCode,
               ),
               network,
+              walletName: walletName || fallbackName,
             });
           }),
       };

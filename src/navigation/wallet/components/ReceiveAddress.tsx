@@ -116,6 +116,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
   const [bchAddressType, setBchAddressType] = useState('Cash Address');
   const [bchAddress, setBchAddress] = useState('');
   const [wasInit, setWasInit] = useState(false);
+  const [singleAddress, setSingleAddress] = useState(false);
 
   const copyToClipboard = () => {
     haptic('impactLight');
@@ -124,6 +125,18 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
       setCopied(true);
     }
   };
+
+  const setIsSingleAddress = () => {
+    wallet?.getStatus({network: wallet.network}, (err: any, status: any) => {
+      if (!err) {
+        setSingleAddress(status.wallet.singleAddress);
+      }
+    });
+  };
+
+  useEffect(() => {
+    setIsSingleAddress();
+  }, []);
 
   useEffect(() => {
     if (!copied) {
@@ -249,11 +262,13 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={_closeModal}>
       <ReceiveAddressContainer>
-        <ReceiveAddressHeader
-          onPressRefresh={() => createAddress(true)}
-          contextHandlers={headerContextHandlers}
-          showRefresh={isUtxo}
-        />
+        {!singleAddress ? (
+          <ReceiveAddressHeader
+            onPressRefresh={() => createAddress(true)}
+            contextHandlers={headerContextHandlers}
+            showRefresh={isUtxo}
+          />
+        ) : null}
 
         {address ? (
           <>

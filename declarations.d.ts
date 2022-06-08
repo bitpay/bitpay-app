@@ -11,4 +11,5 @@ declare module '@env' {
   export const COINBASE_CLIENT_SECRET: string;
   export const DOSH_WHITELIST: string;
   export const SEGMENT_API_KEY: string;
+  export const GIT_COMMIT_HASH: string;
 }

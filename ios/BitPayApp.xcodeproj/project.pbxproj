@@ -18,7 +18,10 @@
 		5B31AAFF2786387B002765E1 /* RCTDosh.m in Sources */ = {isa = PBXBuildFile; fileRef = 5B31AAFD2786387B002765E1 /* RCTDosh.m */; };
 		5B31AB5F2786515A002765E1 /* Dosh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B31AB5E2786515A002765E1 /* Dosh.swift */; };
 		5B31AB602786515A002765E1 /* Dosh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B31AB5E2786515A002765E1 /* Dosh.swift */; };
+		5B5631782838854000C395A8 /* PassKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B5631772838854000C395A8 /* PassKit.framework */; };
 		5BCF1C352740B8B2006D872E /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5BCF1C342740B8B2006D872E /* BootSplash.storyboard */; };
+		5BEA4BF02838402700AB2121 /* RCTPaymentPass.m in Sources */ = {isa = PBXBuildFile; fileRef = 5BEA4BEF2838402700AB2121 /* RCTPaymentPass.m */; };
+		5BEA4BF12838402700AB2121 /* RCTPaymentPass.m in Sources */ = {isa = PBXBuildFile; fileRef = 5BEA4BEF2838402700AB2121 /* RCTPaymentPass.m */; };
 		66FFDC8F0B063607A7715F70 /* libPods-BitPayApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C6D2B83099A369CC71732940 /* libPods-BitPayApp.a */; };
 		71BABDA4524A43E98A190C87 /* Heebo-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6D649751C2644FDCA18A5547 /* Heebo-Light.ttf */; };
 		D34892F44CAB44409EC335A9 /* Heebo-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F4435EB64D2448EC885B3036 /* Heebo-Black.ttf */; };
@@ -54,11 +57,13 @@
 		5B31AAFC2786381C002765E1 /* RCTDosh.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTDosh.h; sourceTree = "<group>"; };
 		5B31AAFD2786387B002765E1 /* RCTDosh.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RCTDosh.m; sourceTree = "<group>"; };
 		5B31AB5E2786515A002765E1 /* Dosh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dosh.swift; sourceTree = "<group>"; };
+		5B5631772838854000C395A8 /* PassKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PassKit.framework; path = System/Library/Frameworks/PassKit.framework; sourceTree = SDKROOT; };
 		5BC1477B27B490E5004A8EEA /* BitPayApp-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "BitPayApp-Bridging-Header.h"; sourceTree = "<group>"; };
 		5BC1477C27B490FA004A8EEA /* BitPayAppTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "BitPayAppTests-Bridging-Header.h"; sourceTree = "<group>"; };
 		5BC9567927AF3C6A00ACED07 /* BitPayAppDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = BitPayAppDebug.entitlements; path = BitPayApp/BitPayAppDebug.entitlements; sourceTree = "<group>"; };
 		5BCF1C342740B8B2006D872E /* BootSplash.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = BootSplash.storyboard; path = BitPayApp/BootSplash.storyboard; sourceTree = "<group>"; };
-		5BF16B79284D185500677852 /* BitPayAppRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = BitPayAppRelease.entitlements; path = BitPayApp/BitPayAppRelease.entitlements; sourceTree = "<group>"; };
+		5BEA4BEE2838400700AB2121 /* RCTPaymentPass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTPaymentPass.h; sourceTree = "<group>"; };
+		5BEA4BEF2838402700AB2121 /* RCTPaymentPass.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RCTPaymentPass.m; sourceTree = "<group>"; };
 		6D649751C2644FDCA18A5547 /* Heebo-Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Light.ttf"; path = "../assets/fonts/Heebo-Light.ttf"; sourceTree = "<group>"; };
 		6EEF4B2FDB87531BFD34B491 /* Pods-BitPayApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp.release.xcconfig"; path = "Target Support Files/Pods-BitPayApp/Pods-BitPayApp.release.xcconfig"; sourceTree = "<group>"; };
 		715670CB346B45A7A9EC2044 /* Heebo-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Bold.ttf"; path = "../assets/fonts/Heebo-Bold.ttf"; sourceTree = "<group>"; };
@@ -84,6 +89,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5B5631782838854000C395A8 /* PassKit.framework in Frameworks */,
 				66FFDC8F0B063607A7715F70 /* libPods-BitPayApp.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -111,7 +117,6 @@
 		13B07FAE1A68108700A75B9A /* BitPayApp */ = {
 			isa = PBXGroup;
 			children = (
-				5BF16B79284D185500677852 /* BitPayAppRelease.entitlements */,
 				5BC9567927AF3C6A00ACED07 /* BitPayAppDebug.entitlements */,
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
 				13B07FB01A68108700A75B9A /* AppDelegate.m */,
@@ -124,6 +129,8 @@
 				5B31AB5E2786515A002765E1 /* Dosh.swift */,
 				5BC1477B27B490E5004A8EEA /* BitPayApp-Bridging-Header.h */,
 				5BC1477C27B490FA004A8EEA /* BitPayAppTests-Bridging-Header.h */,
+				5BEA4BEE2838400700AB2121 /* RCTPaymentPass.h */,
+				5BEA4BEF2838402700AB2121 /* RCTPaymentPass.m */,
 			);
 			name = BitPayApp;
 			sourceTree = "<group>";
@@ -131,6 +138,7 @@
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				5B5631772838854000C395A8 /* PassKit.framework */,
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				C6D2B83099A369CC71732940 /* libPods-BitPayApp.a */,
 				AC97D07A9C8650B1D63AB7CB /* libPods-BitPayApp-BitPayAppTests.a */,
@@ -459,6 +467,7 @@
 			files = (
 				5B31AB602786515A002765E1 /* Dosh.swift in Sources */,
 				00E356F31AD99517003FC87E /* BitPayAppTests.m in Sources */,
+				5BEA4BF12838402700AB2121 /* RCTPaymentPass.m in Sources */,
 				5B31AAFF2786387B002765E1 /* RCTDosh.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -469,6 +478,7 @@
 			files = (
 				5B31AAFE2786387B002765E1 /* RCTDosh.m in Sources */,
 				13B07FBC1A68108700A75B9A /* AppDelegate.m in Sources */,
+				5BEA4BF02838402700AB2121 /* RCTPaymentPass.m in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				5B31AB5F2786515A002765E1 /* Dosh.swift in Sources */,
 			);
@@ -553,7 +563,9 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = BitPayApp/BitPayAppDebug.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "${PROJECT_DIR}/${PROJECT_NAME}/BitPayApp${CONFIGURATION}.entitlements";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = 884JRH5R93;
@@ -572,6 +584,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.bitpay.wallet;
 				PRODUCT_NAME = BitPayApp;
+				PROVISIONING_PROFILE_SPECIFIER = "BitPay Development Profile (ApplePay)";
 				SWIFT_OBJC_BRIDGING_HEADER = "BitPayApp-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -605,6 +618,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.bitpay.wallet;
 				PRODUCT_NAME = BitPayApp;
+				PROVISIONING_PROFILE_SPECIFIER = "BitPay Development Profile (ApplePay)";
 				SWIFT_OBJC_BRIDGING_HEADER = "BitPayApp-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";

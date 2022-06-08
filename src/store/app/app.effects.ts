@@ -43,9 +43,12 @@ import {coinbaseInitialize} from '../coinbase';
 import {Key} from '../wallet/wallet.models';
 
 // Subscription groups (Braze)
-const CONFIRMED_TX_GROUP_ID = 'dff24ef2-1896-4dee-81fd-7dca9c9c7a8a';
-const PRODUCTS_UPDATES_GROUP_ID = '27c86a0b-2a91-4383-b05b-5e671554f186';
-const OFFERS_AND_PROMOTIONS_GROUP_ID = '6be103aa-4df0-46f6-a3fa-438e61aadced';
+const PRODUCTS_UPDATES_GROUP_ID = __DEV__
+  ? '27c86a0b-2a91-4383-b05b-5e671554f186'
+  : 'fe2146a6-f5ed-4df7-81de-7ed9cd019d23';
+const OFFERS_AND_PROMOTIONS_GROUP_ID = __DEV__
+  ? '6be103aa-4df0-46f6-a3fa-438e61aadced'
+  : '1d1db929-909d-40e0-93ec-34106ea576b4';
 
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
@@ -407,43 +410,53 @@ const getAllWalletClients = (keys: {
   });
 };
 
-const subscribePushNotifications = (walletClient: any, eid: string) => {
-  const opts = {
-    externalUserId: eid,
-    platform: Platform.OS,
-    packageName: 'BitPay',
-    walletId: walletClient.credentials.walletId,
+export const subscribePushNotifications =
+  (walletClient: any, eid: string): Effect<Promise<void>> =>
+  async dispatch => {
+    const opts = {
+      externalUserId: eid,
+      platform: Platform.OS,
+      packageName: 'BitPay',
+      walletId: walletClient.credentials.walletId,
+    };
+    walletClient.pushNotificationsSubscribe(opts, (err: any) => {
+      if (err) {
+        dispatch(
+          LogActions.error(
+            'Push Notifications error subscribing: ' + JSON.stringify(err),
+          ),
+        );
+      } else {
+        dispatch(
+          LogActions.info(
+            'Push Notifications success subscribing: ' +
+              walletClient.credentials.walletName,
+          ),
+        );
+      }
+    });
   };
-  console.log('#### SUBSCRIBED PUSH NOTIFICATIONS', opts); /* TODO */
-  /*
-   * TODO: uncomment after deploy BWS
-  walletClient.pushNotificationsSubscribe(opts, (err: any) => {
-    if (err) {
-      console.log('[app.effects.ts:449] ERROR', err)
-    } else {
-      console.log('[app.effects.ts:449] SUCCESS', walletClient.credentials.walletName);
-    }
-  });
-  */
-};
 
-const unSubscribePushNotifications = (walletClient: any, eid: string) => {
-  console.log(
-    '#### UNSUBSCRIBED PUSH NOTIFICATIONS',
-    walletClient.credentials.walletId,
-    eid,
-  ); /* TODO */
-  /*
-   * TODO: uncomment after deploy BWS
-  walletClient.pushNotificationsUnsubscribe(eid, (err: any) => {
-    if (err) {
-      console.log('[app.effects.ts:449] ERROR', err)
-    } else {
-      console.log('[app.effects.ts:449] SUCCESS', walletClient.credentials.walletName);
-    }
-  });
-  */
-};
+export const unSubscribePushNotifications =
+  (walletClient: any, eid: string): Effect<Promise<void>> =>
+  async dispatch => {
+    walletClient.pushNotificationsUnsubscribe(eid, (err: any) => {
+      if (err) {
+        dispatch(
+          LogActions.error(
+            'Push Notifications error unsubscribing: ' + JSON.stringify(err),
+          ),
+        );
+      } else {
+        dispatch(
+          LogActions.info(
+            'Push Notifications success unsubscribing: ' +
+              walletClient.credentials.walletName,
+          ),
+        );
+      }
+    });
+  };
 
 export const checkNotificationsPermissions = (): Promise<boolean> => {
   return new Promise(async resolve => {
@@ -474,11 +487,11 @@ export const setNotifications =
     getAllWalletClients(keys).then(walletClients => {
       if (accepted) {
         walletClients.forEach(walletClient => {
-          subscribePushNotifications(walletClient, APP.brazeEid!);
+          dispatch(subscribePushNotifications(walletClient, APP.brazeEid!));
         });
       } else {
         walletClients.forEach(walletClient => {
-          unSubscribePushNotifications(walletClient, APP.brazeEid!);
+          dispatch(unSubscribePushNotifications(walletClient, APP.brazeEid!));
         });
       }
       dispatch(LogActions.info('Push Notifications: ' + value));
@@ -489,11 +502,6 @@ export const setConfirmTxNotifications =
   (accepted: boolean): Effect =>
   async dispatch => {
     dispatch(setConfirmedTxAccepted(accepted));
-    if (accepted) {
-      ReactAppboy.addToSubscriptionGroup(CONFIRMED_TX_GROUP_ID);
-    } else {
-      ReactAppboy.removeFromSubscriptionGroup(CONFIRMED_TX_GROUP_ID);
-    }
   };
 
 export const setProductsUpdatesNotifications =

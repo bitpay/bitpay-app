@@ -264,6 +264,13 @@ export const toggleHideBalance = (payload: {
   payload,
 });
 
+export const toggleHideKeyBalance = (payload: {
+  keyId: string;
+}): WalletActionType => ({
+  type: WalletActionTypes.TOGGLE_HIDE_KEY_BALANCE,
+  payload,
+});
+
 export const updateCacheFeeLevel = (
   payload: CacheFeeLevel,
 ): WalletActionType => ({

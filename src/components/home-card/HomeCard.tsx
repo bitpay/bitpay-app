@@ -12,7 +12,7 @@ import {
 import Card from '../card/Card';
 import Percentage from '../percentage/Percentage';
 import {View} from 'react-native';
-import {BaseText} from '../styled/Text';
+import {BaseText, H3} from '../styled/Text';
 import * as Svg from 'react-native-svg';
 import {shouldScale} from '../../utils/helper-methods';
 
@@ -36,6 +36,7 @@ interface BodyProps {
   pillText?: string;
   needsBackup?: boolean;
   percentageDifference?: number;
+  hideKeyBalance: boolean;
 }
 
 interface HomeCardProps {
@@ -119,22 +120,29 @@ const HomeCard: React.FC<HomeCardProps> = ({body, onCTAPress, header}) => {
     pillText,
     description,
     needsBackup,
+    hideKeyBalance,
   } = body;
 
   const BodyComp = (
     <View>
       {title && <CardBodyHeader>{title}</CardBodyHeader>}
-      {value && <CardPrice scale={shouldScale(value)}>{value}</CardPrice>}
-      {percentageDifference ? (
-        <Percentage
-          percentageDifference={percentageDifference}
-          darkModeColor={Slate}
-        />
-      ) : null}
-      {pillText && (
-        <CardPill>
-          <CardPillText>{pillText}</CardPillText>
-        </CardPill>
+      {!hideKeyBalance ? (
+        <>
+          {value && <CardPrice scale={shouldScale(value)}>{value}</CardPrice>}
+          {percentageDifference ? (
+            <Percentage
+              percentageDifference={percentageDifference}
+              darkModeColor={Slate}
+            />
+          ) : null}
+          {pillText && (
+            <CardPill>
+              <CardPillText>{pillText}</CardPillText>
+            </CardPill>
+          )}
+        </>
+      ) : (
+        <H3>****</H3>
       )}
       {needsBackup && (
         <Row>

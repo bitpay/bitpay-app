@@ -24,6 +24,7 @@ import {
   WalletSelectMenuBodyContainer,
 } from '../../wallet/screens/GlobalSelect';
 import KeyWalletsRow, {
+  KeyWallet,
   KeyWalletsRowProps,
 } from '../../../components/list/KeyWalletsRow';
 import merge from 'lodash.merge';
@@ -98,7 +99,7 @@ export default ({
     [allWallets],
   );
 
-  let keyWallets: KeyWalletsRowProps[] = [];
+  let keyWallets: KeyWalletsRowProps<KeyWallet>[] = [];
 
   supportedCoins.forEach(supportedCoin => {
     const keyWallet = Object.keys(supportedCoin.availableWalletsByKey).map(
@@ -111,7 +112,8 @@ export default ({
             const {
               balance,
               currencyAbbreviation,
-              credentials: {network},
+              credentials: {network, walletName: fallbackName},
+              walletName,
             } = wallet;
             return merge(cloneDeep(wallet), {
               cryptoBalance: balance.crypto,
@@ -121,6 +123,7 @@ export default ({
               ),
               currencyAbbreviation: currencyAbbreviation.toUpperCase(),
               network,
+              walletName: walletName || fallbackName,
             });
           }),
         };

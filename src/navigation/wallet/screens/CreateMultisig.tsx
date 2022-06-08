@@ -64,6 +64,8 @@ import {sleep} from '../../../utils/helper-methods';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {checkEncryptPassword} from '../../../store/wallet/utils/wallet';
 import {WrongPasswordError} from '../components/ErrorMessages';
+import {URL} from '../../../constants';
+
 export interface CreateMultisigProps {
   currency?: string;
   key?: Key;
@@ -607,9 +609,7 @@ const CreateMultisig = () => {
                           onPress={() => {
                             Haptic('impactLight');
                             dispatch(
-                              openUrlWithInAppBrowser(
-                                'https://support.bitpay.com/hc/en-us/articles/360015920572-Setting-up-the-Single-Address-Feature-for-your-BitPay-Wallet',
-                              ),
+                              openUrlWithInAppBrowser(URL.HELP_SINGLE_ADDRESS),
                             );
                           }}>
                           <Link>Learn More</Link>

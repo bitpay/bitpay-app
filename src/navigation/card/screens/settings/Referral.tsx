@@ -6,7 +6,7 @@ import {useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {CardStackParamList} from '../../CardStack';
 import LargePresentSvg from '../../../../../assets/img/large-present.svg';
-import PresentSvg from '../../../../../assets/img/card/settings/refer-and-earn.svg';
+import PresentSvg from '../../assets/settings/icon-referearn.svg';
 import styled from 'styled-components/native';
 import {
   Air,

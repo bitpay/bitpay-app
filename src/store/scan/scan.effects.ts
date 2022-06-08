@@ -52,6 +52,12 @@ import {Wallet, Key} from '../wallet/wallet.models';
 import {FormatAmount} from '../wallet/effects/amount/amount';
 import {ButtonState} from '../../components/button/Button';
 import {InteractionManager} from 'react-native';
+import {
+  BitcoreLibs,
+  bitcoreLibs,
+  GetAddressNetwork,
+} from '../wallet/effects/address/address';
+import {Network} from '../../constants';
 
 export const incomingData =
   (data: string, wallet?: Wallet): Effect<Promise<void>> =>
@@ -283,7 +289,12 @@ export const goToAmount =
     opts: urlOpts,
   }: {
     coin: string;
-    recipient: {type: string; address: string; currency: string};
+    recipient: {
+      type: string;
+      address: string;
+      currency: string;
+      network?: Network;
+    };
     wallet?: Wallet;
     opts?: {
       message?: string;
@@ -396,6 +407,7 @@ const handleBitcoinUri =
       type: 'address',
       currency: coin,
       address,
+      network: address && GetAddressNetwork(address, coin),
     };
     if (parsed.r) {
       dispatch(goToPayPro(parsed.r));
@@ -425,6 +437,7 @@ const handleBitcoinCashUri =
       type: 'address',
       currency: coin,
       address,
+      network: address && GetAddressNetwork(address, coin),
     };
     if (parsed.r) {
       dispatch(goToPayPro(parsed.r));
@@ -466,6 +479,7 @@ const handleBitcoinCashUriLegacyAddress =
       type: 'address',
       currency: coin,
       address,
+      network: address && GetAddressNetwork(address, coin),
     };
     if (parsed.r) {
       dispatch(goToPayPro(parsed.r));
@@ -557,6 +571,7 @@ const handleDogecoinUri =
       type: 'address',
       currency: coin,
       address,
+      network: address && GetAddressNetwork(address, coin),
     };
 
     if (parsed.r) {
@@ -582,6 +597,7 @@ const handleLitecoinUri =
       type: 'address',
       currency: coin,
       address,
+      network: address && GetAddressNetwork(address, coin),
     };
     if (parsed.r) {
       dispatch(goToPayPro(parsed.r));
@@ -732,10 +748,14 @@ const handlePlainAddress =
   (address: string, coin: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
     console.log(`Incoming-data: ${coin} plain address`);
+    const network =
+      Object.keys(bitcoreLibs).includes(coin) &&
+      GetAddressNetwork(address, coin as keyof BitcoreLibs);
     const recipient = {
       type: 'address',
       currency: coin,
       address,
+      network,
     };
     dispatch(goToAmount({coin, recipient, wallet}));
   };
