@@ -20,6 +20,7 @@ import API from 'bitcore-wallet-client/ts_build';
 import {Key, KeyMethods, KeyOptions, Token, Wallet} from '../../wallet.models';
 import {Network} from '../../../../constants';
 import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
+import {subscribePushNotifications} from '../../../app/app.effects';
 
 export interface CreateOptions {
   network?: Network;
@@ -87,11 +88,14 @@ export const addWallet =
     return new Promise(async (resolve, reject) => {
       try {
         let newWallet;
-        const state = getState();
+        const {
+          APP: {notificationsAccepted, brazeEid},
+          WALLET,
+        } = getState();
         const tokenOpts = {
           ...BitpaySupportedTokenOpts,
-          ...state.WALLET.tokenOptions,
-          ...state.WALLET.customTokenOptions,
+          ...WALLET.tokenOptions,
+          ...WALLET.customTokenOptions,
         };
         const {walletName} = options;
 
@@ -130,6 +134,11 @@ export const addWallet =
           return reject();
         }
 
+        // subscribe new wallet to push notifications
+        if (notificationsAccepted) {
+          dispatch(subscribePushNotifications(newWallet, brazeEid!));
+        }
+
         key.wallets.push(
           merge(
             newWallet,
@@ -165,7 +174,10 @@ const createMultipleWallets =
     options: CreateOptions;
   }): Effect<Promise<Wallet[]>> =>
   async (dispatch, getState) => {
-    const {WALLET} = getState();
+    const {
+      WALLET,
+      APP: {notificationsAccepted, brazeEid},
+    } = getState();
     const tokenOpts = {
       ...BitpaySupportedTokenOpts,
       ...WALLET.tokenOptions,
@@ -202,6 +214,10 @@ const createMultipleWallets =
 
     // build out app specific props
     return wallets.map(wallet => {
+      // subscribe new wallet to push notifications
+      if (notificationsAccepted) {
+        dispatch(subscribePushNotifications(wallet, brazeEid!));
+      }
       return merge(
         wallet,
         dispatch(buildWalletObj(wallet.credentials, tokenOpts)),
@@ -325,9 +341,12 @@ const createTokenWallet = (
 
 export const startCreateKeyWithOpts =
   (opts: Partial<KeyOptions>): Effect =>
-  async (dispatch): Promise<Key> => {
+  async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
       try {
+        const {
+          APP: {notificationsAccepted, brazeEid},
+        } = getState();
         const _key = BWC.createKey({
           seedType: opts.seedType!,
           seedData: opts.mnemonic || opts.extendedPrivateKey,
@@ -337,6 +356,11 @@ export const startCreateKeyWithOpts =
         });
 
         const _wallet = await createWalletWithOpts({key: _key, opts});
+
+        // subscribe new wallet to push notifications
+        if (notificationsAccepted) {
+          dispatch(subscribePushNotifications(_wallet, brazeEid!));
+        }
 
         // build out app specific props
         const wallet = merge(

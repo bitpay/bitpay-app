@@ -5,14 +5,18 @@ import {buildKeyObj, buildWalletObj} from '../../utils/wallet';
 import {successCreateKey, successAddWallet} from '../../wallet.actions';
 import API from 'bitcore-wallet-client/ts_build';
 import {Key, KeyMethods, KeyOptions, Wallet} from '../../wallet.models';
+import {subscribePushNotifications} from '../../../app/app.effects';
 
 const BWC = BwcProvider.getInstance();
 
 export const startJoinMultisig =
   (opts: Partial<KeyOptions>): Effect =>
-  async (dispatch): Promise<Key> => {
+  async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
       try {
+        const {
+          APP: {notificationsAccepted, brazeEid},
+        } = getState();
         const walletData = BWC.parseSecret(opts.invitationCode as string);
         opts.networkName = walletData.network;
         opts.coin = walletData.coin;
@@ -28,6 +32,12 @@ export const startJoinMultisig =
         });
 
         const _wallet = await joinMultisigWallet({key: _key, opts});
+
+        // subscribe new wallet to push notifications
+        if (notificationsAccepted) {
+          dispatch(subscribePushNotifications(_wallet, brazeEid!));
+        }
+
         // build out app specific props
         const wallet = merge(
           _wallet,
@@ -51,9 +61,13 @@ export const startJoinMultisig =
 
 export const addWalletJoinMultisig =
   ({key, opts}: {key: Key; opts: Partial<KeyOptions>}): Effect =>
-  async (dispatch): Promise<Wallet> => {
+  async (dispatch, getState): Promise<Wallet> => {
     return new Promise(async (resolve, reject) => {
       try {
+        const {
+          APP: {notificationsAccepted, brazeEid},
+        } = getState();
+
         const walletData = BWC.parseSecret(opts.invitationCode as string);
         opts.networkName = walletData.network;
         opts.coin = walletData.coin;
@@ -65,6 +79,12 @@ export const addWalletJoinMultisig =
           key: key.methods,
           opts,
         })) as Wallet;
+
+        // subscribe new wallet to push notifications
+        if (notificationsAccepted) {
+          dispatch(subscribePushNotifications(newWallet, brazeEid!));
+        }
+
         key.wallets.push(
           merge(
             newWallet,

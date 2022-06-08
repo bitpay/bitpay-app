@@ -407,7 +407,7 @@ const getAllWalletClients = (keys: {
   });
 };
 
-const subscribePushNotifications =
+export const subscribePushNotifications =
   (walletClient: any, eid: string): Effect<Promise<void>> =>
   async dispatch => {
     const opts = {
@@ -434,7 +434,7 @@ const subscribePushNotifications =
     });
   };
 
-const unSubscribePushNotifications =
+export const unSubscribePushNotifications =
   (walletClient: any, eid: string): Effect<Promise<void>> =>
   async dispatch => {
     walletClient.pushNotificationsUnsubscribe(eid, (err: any) => {
