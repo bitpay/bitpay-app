@@ -25,6 +25,7 @@ import General from './components/General';
 import Security from './components/Security';
 import Notifications from './components/Notifications';
 import Connections from './components/Connections';
+import ExternalServices from './components/ExternalServices';
 import About from './components/About';
 import Contacts from './components/Contacts';
 import {useSelector} from 'react-redux';
@@ -105,6 +106,7 @@ export type SettingsListType =
   | 'Crypto'
   | 'Wallets & Keys'
   | 'Security'
+  | 'External Services'
   | 'Notifications'
   | 'Connections'
   | 'About BitPay';
@@ -163,7 +165,6 @@ const SettingsHomeScreen: React.FC<SettingsHomeProps> = ({route}) => {
       subListComponent: <Security />,
     },
     {
-      // Settings for Buy/Swap Crypto will be momentarily commented
       id: 'Notifications',
       title: t('Notifications'),
       onPress: () => {},
@@ -174,6 +175,12 @@ const SettingsHomeScreen: React.FC<SettingsHomeProps> = ({route}) => {
       title: t('Connections'),
       onPress: () => {},
       subListComponent: <Connections redirectTo={redirectTo} />,
+    },
+    {
+      id: 'External Services',
+      title: t('External Services'),
+      onPress: () => {},
+      subListComponent: <ExternalServices />,
     },
     {
       id: 'About BitPay',
