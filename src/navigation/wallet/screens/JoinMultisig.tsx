@@ -3,7 +3,6 @@ import styled from 'styled-components/native';
 import {Caution} from '../../../styles/colors';
 import {BaseText, ImportTitle} from '../../../components/styled/Text';
 import Button from '../../../components/button/Button';
-import {useDispatch} from 'react-redux';
 import {
   showBottomNotificationModal,
   dismissOnGoingProcessModal,
@@ -24,6 +23,7 @@ import {
 import {
   startJoinMultisig,
   addWalletJoinMultisig,
+  getDecryptPassword,
 } from '../../../store/wallet/effects';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
@@ -34,7 +34,11 @@ import {WalletStackParamList} from '../WalletStack';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
-import {CustomErrorMessage} from '../components/ErrorMessages';
+import {
+  CustomErrorMessage,
+  WrongPasswordError,
+} from '../components/ErrorMessages';
+import {useAppDispatch} from '../../../utils/hooks';
 
 export type JoinMultisigParamList = {
   key?: Key;
@@ -71,7 +75,7 @@ const CtaContainer = styled(_CtaContainer)`
 `;
 
 const JoinMultisig = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'JoinMultisig'>>();
   const {key, invitationCode} = route.params || {};
@@ -104,9 +108,13 @@ const JoinMultisig = () => {
     opts: Partial<KeyOptions>,
   ): Promise<void> => {
     try {
-      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.JOIN_WALLET));
-
       if (key) {
+        if (key.isPrivKeyEncrypted) {
+          opts.password = await dispatch(getDecryptPassword(key));
+        }
+
+        dispatch(startOnGoingProcessModal(OnGoingProcessMessages.JOIN_WALLET));
+
         const wallet = (await dispatch<any>(
           addWalletJoinMultisig({
             key,
@@ -186,6 +194,8 @@ const JoinMultisig = () => {
           },
         );
       } else {
+        dispatch(startOnGoingProcessModal(OnGoingProcessMessages.JOIN_WALLET));
+
         const multisigKey = (await dispatch<any>(
           startJoinMultisig(opts),
         )) as Key;
@@ -200,13 +210,17 @@ const JoinMultisig = () => {
       }
     } catch (e: any) {
       dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
-      await showErrorMessage(
-        CustomErrorMessage({
-          errMsg: BWCErrorMessage(e),
-          title: 'Uh oh, something went wrong',
-        }),
-      );
+      if (e.message === 'invalid password') {
+        dispatch(showBottomNotificationModal(WrongPasswordError()));
+      } else {
+        await sleep(500);
+        await showErrorMessage(
+          CustomErrorMessage({
+            errMsg: BWCErrorMessage(e),
+            title: 'Uh oh, something went wrong',
+          }),
+        );
+      }
       return;
     }
   };

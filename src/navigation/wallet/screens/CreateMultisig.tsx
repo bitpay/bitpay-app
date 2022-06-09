@@ -11,7 +11,6 @@ import {
   InfoDescription,
 } from '../../../components/styled/Text';
 import Button from '../../../components/button/Button';
-import {useDispatch} from 'react-redux';
 import {
   showBottomNotificationModal,
   dismissOnGoingProcessModal,
@@ -51,6 +50,7 @@ import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {
   startCreateKeyMultisig,
   addWalletMultisig,
+  getDecryptPassword,
 } from '../../../store/wallet/effects';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
@@ -59,7 +59,9 @@ import PlusIcon from '../../../components/plus/Plus';
 import MinusIcon from '../../../components/minus/Minus';
 import {sleep} from '../../../utils/helper-methods';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
+import {WrongPasswordError} from '../components/ErrorMessages';
 import {URL} from '../../../constants';
+import {useAppDispatch} from '../../../utils/hooks';
 
 export interface CreateMultisigProps {
   currency: string;
@@ -175,7 +177,7 @@ const CtaContainer = styled(_CtaContainer)`
 `;
 
 const CreateMultisig = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const logger = useLogger();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'CreateMultisig'>>();
@@ -242,6 +244,10 @@ const CreateMultisig = () => {
   ): Promise<void> => {
     try {
       if (key) {
+        if (key.isPrivKeyEncrypted) {
+          opts.password = await dispatch(getDecryptPassword(key));
+        }
+
         await dispatch(
           startOnGoingProcessModal(OnGoingProcessMessages.ADDING_WALLET),
         );
@@ -316,10 +322,14 @@ const CreateMultisig = () => {
       }
     } catch (e: any) {
       logger.error(e.message);
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
-      showErrorModal(e.message);
-      return;
+      if (e.message === 'invalid password') {
+        dispatch(showBottomNotificationModal(WrongPasswordError()));
+      } else {
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+        showErrorModal(e.message);
+        return;
+      }
     }
   };
 
