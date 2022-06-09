@@ -5,7 +5,11 @@ import ReactAppboy from 'react-native-appboy-sdk';
 import InAppBrowser, {
   InAppBrowserOptions,
 } from 'react-native-inappbrowser-reborn';
-import {checkNotifications, RESULTS} from 'react-native-permissions';
+import {
+  checkNotifications,
+  requestNotifications,
+  RESULTS,
+} from 'react-native-permissions';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import BitPayApi from '../../api/bitpay';
 import GraphQlApi from '../../api/graphql';
@@ -464,7 +468,17 @@ export const checkNotificationsPermissions = (): Promise<boolean> => {
       if (status === RESULTS.GRANTED) {
         return resolve(true);
       } else {
-        return resolve(false);
+        if (Platform.OS === 'ios') {
+          requestNotifications(['alert', 'badge', 'sound']).then(({status}) => {
+            if (status === RESULTS.GRANTED) {
+              return resolve(true);
+            } else {
+              return resolve(false);
+            }
+          });
+        } else {
+          return resolve(false);
+        }
       }
     });
   });
