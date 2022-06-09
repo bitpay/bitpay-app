@@ -45,6 +45,10 @@
                 android:name="com.google.android.gms.wallet.api.enabled"
                 android:value="true" />
 
+        <meta-data
+                android:name="com.google.android.gms.ads.AD_MANAGER_APP"
+                android:value="true"/>
+
         <activity
                 android:screenOrientation="portrait"
                 android:name=".MainActivity"
