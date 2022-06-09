@@ -232,6 +232,8 @@ dependencies {
     }
 
     implementation project(':react-native-advertising-id-bp')
+    // AppsFlyer
+    compile project(':react-native-appsflyer')
     // Dosh SDK requires updated okhttp version
     // If React Native updates their version, this can be removed
     implementation "com.squareup.okhttp3:okhttp:4.8.0"

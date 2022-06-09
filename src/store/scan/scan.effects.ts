@@ -62,6 +62,7 @@ import {Network} from '../../constants';
 export const incomingData =
   (data: string, wallet?: Wallet): Effect<Promise<void>> =>
   async dispatch => {
+    const coin = wallet?.currencyAbbreviation?.toLowerCase();
     try {
       if (IsValidBitPayInvoice(data)) {
         dispatch(goToPayPro(data));
@@ -104,22 +105,22 @@ export const incomingData =
         dispatch(handleBitPayUri(data, wallet));
         // Plain Address (Bitcoin)
       } else if (IsValidBitcoinAddress(data)) {
-        dispatch(handlePlainAddress(data, 'btc', wallet));
+        dispatch(handlePlainAddress(data, coin || 'btc', wallet));
         // Plain Address (Bitcoin Cash)
       } else if (IsValidBitcoinCashAddress(data)) {
-        dispatch(handlePlainAddress(data, 'bch', wallet));
+        dispatch(handlePlainAddress(data, coin || 'bch', wallet));
         // Address (Ethereum)
       } else if (IsValidEthereumAddress(data)) {
-        dispatch(handlePlainAddress(data, 'eth', wallet));
+        dispatch(handlePlainAddress(data, coin || 'eth', wallet));
         // Address (Ripple)
       } else if (IsValidRippleAddress(data)) {
-        dispatch(handlePlainAddress(data, 'xrp', wallet));
+        dispatch(handlePlainAddress(data, coin || 'xrp', wallet));
         // Plain Address (Doge)
       } else if (IsValidDogecoinAddress(data)) {
-        dispatch(handlePlainAddress(data, 'doge', wallet));
+        dispatch(handlePlainAddress(data, coin || 'doge', wallet));
         // Plain Address (Litecoin)
       } else if (IsValidLitecoinAddress(data)) {
-        dispatch(handlePlainAddress(data, 'ltc', wallet));
+        dispatch(handlePlainAddress(data, coin || 'ltc', wallet));
         // Import Private Key
       } else if (IsValidImportPrivateKey(data)) {
         goToImport(data);

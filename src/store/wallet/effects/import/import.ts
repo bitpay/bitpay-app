@@ -856,7 +856,7 @@ const createKeyAndCredentials = async (
       });
 
       bwcClient.fromString(
-        key.createCredentials(opts.passphrase, {
+        key.createCredentials(undefined, {
           coin,
           network,
           account,
