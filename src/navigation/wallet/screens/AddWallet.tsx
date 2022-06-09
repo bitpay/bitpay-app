@@ -191,9 +191,10 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const [currencyAbbreviation, setCurrencyAbbreviation] = useState(
     _currencyAbbreviation,
   );
+
   const singleAddressCurrency =
-    Currencies[_currencyAbbreviation?.toLowerCase() as string].properties
-      .singleAddress;
+    Currencies[_currencyAbbreviation?.toLowerCase() as string]?.properties
+      ?.singleAddress;
   const nativeSegwitCurrency = ['btc', 'ltc'].includes(
     _currencyAbbreviation!.toLowerCase(),
   );
