@@ -24,11 +24,6 @@ const Description = styled(BaseText)`
   margin-top: 12px;
 `;
 
-const ButtonText = styled(BaseText)`
-  color: ${({theme}) => (theme.dark ? White : Action)};
-  font-weight: 500;
-`;
-
 const ShippingStatus: React.FC<ShippingStatusProps> = props => {
   const {card, onActivatePress} = props;
 

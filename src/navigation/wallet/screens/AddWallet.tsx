@@ -9,6 +9,10 @@ import {
   BaseText,
   H4,
   HeaderTitle,
+  InfoDescription,
+  InfoHeader,
+  InfoTitle,
+  Link,
   TextAlign,
 } from '../../../components/styled/Text';
 import styled from 'styled-components/native';
@@ -23,13 +27,19 @@ import {
   SheetContainer,
   Row,
   ScreenGutter,
+  Info,
+  InfoTriangle,
+  InfoImageContainer,
 } from '../../../components/styled/Containers';
 import {StackScreenProps} from '@react-navigation/stack';
 import {WalletStackParamList} from '../WalletStack';
 import {Key, Token, Wallet} from '../../../store/wallet/wallet.models';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {
+  openUrlWithInAppBrowser,
+  startOnGoingProcessModal,
+} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissDecryptPasswordModal,
@@ -67,6 +77,10 @@ import {checkEncryptPassword} from '../../../store/wallet/utils/wallet';
 import {getTokenContractInfo} from '../../../store/wallet/effects/status/status';
 import {GetCoinAndNetwork} from '../../../store/wallet/effects/address/address';
 import {addCustomTokenOption} from '../../../store/wallet/effects/currencies/currencies';
+import {Currencies} from '../../../constants/currencies';
+import {TouchableOpacity} from 'react-native-gesture-handler';
+import InfoSvg from '../../../../assets/img/info.svg';
+import {URL} from '../../../constants';
 
 type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
 
@@ -150,6 +164,10 @@ const WalletAdvancedOptionsContainer = styled(AdvancedOptionsContainer)`
   margin-top: 20px;
 `;
 
+const VerticalPadding = styled.View`
+  padding: ${ScreenGutter} 0;
+`;
+
 const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const dispatch = useAppDispatch();
   const {
@@ -163,6 +181,8 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const network = useAppSelector(({APP}) => APP.network);
   const [showOptions, setShowOptions] = useState(false);
   const [isTestnet, setIsTestnet] = useState(false);
+  const [singleAddress, setSingleAddress] = useState(false);
+  const [useNativeSegwit, setUseNativeSegwit] = useState(true);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const [customTokenAddress, setCustomTokenAddress] = useState<
     string | undefined
@@ -170,6 +190,13 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const [currencyName, setCurrencyName] = useState(_currencyName);
   const [currencyAbbreviation, setCurrencyAbbreviation] = useState(
     _currencyAbbreviation,
+  );
+
+  const singleAddressCurrency =
+    Currencies[_currencyAbbreviation?.toLowerCase() as string]?.properties
+      ?.singleAddress;
+  const nativeSegwitCurrency = ['btc', 'ltc'].includes(
+    _currencyAbbreviation!.toLowerCase(),
   );
 
   useLayoutEffect(() => {
@@ -309,6 +336,8 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
           options: {
             password,
             network: isTestnet ? Network.testnet : network,
+            useNativeSegwit,
+            singleAddress,
             walletName: walletName === currencyName ? undefined : walletName,
           },
         }),
@@ -497,6 +526,27 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
               )}
             </AdvancedOptionsButton>
 
+            {showOptions && nativeSegwitCurrency && (
+              <AdvancedOptions>
+                <RowContainer
+                  onPress={() => {
+                    setUseNativeSegwit(!useNativeSegwit);
+                  }}>
+                  <Column>
+                    <OptionTitle>Segwit</OptionTitle>
+                  </Column>
+                  <CheckBoxContainer>
+                    <Checkbox
+                      checked={useNativeSegwit}
+                      onPress={() => {
+                        setUseNativeSegwit(!useNativeSegwit);
+                      }}
+                    />
+                  </CheckBoxContainer>
+                </RowContainer>
+              </AdvancedOptions>
+            )}
+
             {showOptions && (
               <AdvancedOptions>
                 <RowContainer
@@ -520,6 +570,60 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
                     />
                   </CheckBoxContainer>
                 </RowContainer>
+              </AdvancedOptions>
+            )}
+
+            {showOptions && !singleAddressCurrency && (
+              <AdvancedOptions>
+                <RowContainer
+                  activeOpacity={1}
+                  onPress={() => {
+                    setSingleAddress(!singleAddress);
+                  }}>
+                  <Column>
+                    <OptionTitle>Single Address</OptionTitle>
+                  </Column>
+                  <CheckBoxContainer>
+                    <Checkbox
+                      checked={singleAddress}
+                      onPress={() => {
+                        setSingleAddress(!singleAddress);
+                      }}
+                    />
+                  </CheckBoxContainer>
+                </RowContainer>
+
+                {singleAddress && (
+                  <>
+                    <Info style={{marginHorizontal: 10}}>
+                      <InfoTriangle />
+
+                      <InfoHeader>
+                        <InfoImageContainer infoMargin={'0 8px 0 0'}>
+                          <InfoSvg />
+                        </InfoImageContainer>
+
+                        <InfoTitle>Single Address Wallet</InfoTitle>
+                      </InfoHeader>
+                      <InfoDescription>
+                        The single address feature will force the wallet to only
+                        use one address rather than generating new addresses.
+                      </InfoDescription>
+
+                      <VerticalPadding>
+                        <TouchableOpacity
+                          onPress={() => {
+                            Haptic('impactLight');
+                            dispatch(
+                              openUrlWithInAppBrowser(URL.HELP_SINGLE_ADDRESS),
+                            );
+                          }}>
+                          <Link>Learn More</Link>
+                        </TouchableOpacity>
+                      </VerticalPadding>
+                    </Info>
+                  </>
+                )}
               </AdvancedOptions>
             )}
           </WalletAdvancedOptionsContainer>

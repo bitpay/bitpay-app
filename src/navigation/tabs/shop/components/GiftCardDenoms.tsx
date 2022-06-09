@@ -18,10 +18,12 @@ export default ({cardConfig}: {cardConfig: CardConfig}) => {
         <>
           {formatFiatAmount(cardConfig.minAmount, cardConfig.currency, {
             customPrecision: 'minimal',
+            currencyDisplay: 'symbol',
           })}
           &nbsp;—&nbsp;
           {formatFiatAmount(cardConfig.maxAmount, cardConfig.currency, {
             customPrecision: 'minimal',
+            currencyDisplay: 'symbol',
           })}
         </>
       )}

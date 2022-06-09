@@ -71,9 +71,13 @@ const Copayers: React.FC<CopayersProps> = props => {
   const [refreshing, setRefreshing] = useState(false);
 
   useLayoutEffect(() => {
+    const walletName =
+      wallet?.walletName ||
+      wallet?.credentials?.walletName ||
+      `${wallet?.currencyName} multisig`;
     navigation.setOptions({
       headerTitle: () => (
-        <HeaderTitle>{`${wallet?.currencyName} multisig [${wallet?.m}-${wallet?.n}]`}</HeaderTitle>
+        <HeaderTitle>{`${walletName} [${wallet?.m}-${wallet?.n}]`}</HeaderTitle>
       ),
     });
   }, [navigation]);

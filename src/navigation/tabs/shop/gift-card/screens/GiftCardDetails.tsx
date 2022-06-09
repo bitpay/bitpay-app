@@ -276,7 +276,11 @@ const GiftCardDetails = ({
             />
           ) : undefined
         }>
-        <Amount>{formatFiatAmount(giftCard.amount, giftCard.currency)}</Amount>
+        <Amount>
+          {formatFiatAmount(giftCard.amount, giftCard.currency, {
+            currencyDisplay: 'symbol',
+          })}
+        </Amount>
         <RemoteImage
           uri={cardConfig.cardImage}
           height={169}

@@ -41,6 +41,10 @@
                 android:name="com.google.android.geo.API_KEY"
                 android:value="REPLACE_ME"/>
 
+        <meta-data
+                android:name="com.google.android.gms.wallet.api.enabled"
+                android:value="true" />
+
         <activity
                 android:screenOrientation="portrait"
                 android:name=".MainActivity"

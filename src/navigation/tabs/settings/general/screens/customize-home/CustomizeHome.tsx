@@ -121,7 +121,7 @@ const CustomizeHome = () => {
             await sleep(1000);
             const list = [...visibleList, ...hiddenList].map(({key, show}) => ({
               id: key,
-              show,
+              show: !!show,
             }));
             dispatch(setHomeCarouselConfig(list));
             dispatch(setHomeCarouselLayoutType(layoutType));

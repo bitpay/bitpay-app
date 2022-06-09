@@ -126,6 +126,7 @@ export default (props: {cardConfig: CardConfig; amount: number}) => {
       <GiftCardAmount logoBackgroundColor={logoBackgroundColor}>
         {formatFiatAmount(amount, cardConfig.currency, {
           customPrecision: 'minimal',
+          currencyDisplay: 'symbol',
         })}
       </GiftCardAmount>
     </GiftCardItem>

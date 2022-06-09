@@ -1,7 +1,11 @@
-import {getStateFromPath, useNavigation} from '@react-navigation/native';
+import {
+  getStateFromPath,
+  useFocusEffect,
+  useNavigation,
+} from '@react-navigation/native';
 import React from 'react';
 import {Linking} from 'react-native';
-import {ContentCard} from 'react-native-appboy-sdk';
+import ReactAppboy, {ContentCard} from 'react-native-appboy-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {APP_DEEPLINK_PREFIX} from '../../../../../constants/config';
@@ -54,6 +58,10 @@ const OfferCard: React.FC<OfferCardProps> = props => {
   }
 
   const _onPress = () => {
+    if (!contentCard.id.startsWith('dev_')) {
+      ReactAppboy.logContentCardClicked(contentCard.id);
+    }
+
     if (!url) {
       return;
     }
@@ -132,6 +140,12 @@ const OfferCard: React.FC<OfferCardProps> = props => {
       Linking.openURL(url);
     }
   };
+
+  useFocusEffect(() => {
+    if (!contentCard.id.startsWith('dev_')) {
+      ReactAppboy.logContentCardImpression(contentCard.id);
+    }
+  });
 
   return (
     <LinkCard
