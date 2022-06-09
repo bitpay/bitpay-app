@@ -6,7 +6,6 @@ import {
   baseScreenOptions,
 } from '../../../../constants/NavigationOptions';
 import {HeaderTitle} from '../../../../components/styled/Text';
-import ExternalServicesRoot from './screens/ExternalServicesRoot';
 import SimplexSettings from './screens/SimplexSettings';
 import SimplexDetails from './screens/SimplexDetails';
 import WyreSettings from './screens/WyreSettings';
@@ -21,17 +20,20 @@ import {
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 
 export type ExternalServicesSettingsStackParamList = {
-  Root: undefined;
-  SimplexSettings: {
-    incomingPaymentRequest?: simplexIncomingData;
-  };
+  SimplexSettings:
+    | {
+        incomingPaymentRequest?: simplexIncomingData;
+      }
+    | undefined;
   SimplexDetails: {
     paymentRequest: simplexPaymentData;
   };
-  WyreSettings: {
-    incomingPaymentRequest?: wyrePaymentData;
-    paymentRequestError?: boolean;
-  };
+  WyreSettings:
+    | {
+        incomingPaymentRequest?: wyrePaymentData;
+        paymentRequestError?: boolean;
+      }
+    | undefined;
   WyreDetails: {
     paymentRequest: wyrePaymentData;
   };
@@ -42,7 +44,6 @@ export type ExternalServicesSettingsStackParamList = {
 };
 
 export enum ExternalServicesSettingsScreens {
-  ROOT = 'Root',
   SIMPLEX_SETTINGS = 'SimplexSettings',
   SIMPLEX_DETAILS = 'SimplexDetails',
   WYRE_SETTINGS = 'WyreSettings',
@@ -58,20 +59,10 @@ const ExternalServicesSettingsStack = () => {
   const {t} = useTranslation();
   return (
     <ExternalServicesSettings.Navigator
-      initialRouteName={ExternalServicesSettingsScreens.ROOT}
       screenOptions={{
         ...baseNavigatorOptions,
         ...baseScreenOptions,
       }}>
-      <ExternalServicesSettings.Screen
-        name={ExternalServicesSettingsScreens.ROOT}
-        component={ExternalServicesRoot}
-        options={{
-          headerTitle: () => (
-            <HeaderTitle>{t('External Services')}</HeaderTitle>
-          ),
-        }}
-      />
       <ExternalServicesSettings.Screen
         name={ExternalServicesSettingsScreens.SIMPLEX_SETTINGS}
         component={SimplexSettings}
