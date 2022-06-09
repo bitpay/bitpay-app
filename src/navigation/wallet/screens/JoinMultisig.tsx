@@ -3,13 +3,10 @@ import styled from 'styled-components/native';
 import {Caution} from '../../../styles/colors';
 import {BaseText, ImportTitle} from '../../../components/styled/Text';
 import Button from '../../../components/button/Button';
-import {useDispatch} from 'react-redux';
 import {
   showBottomNotificationModal,
   dismissOnGoingProcessModal,
   setHomeCarouselConfig,
-  showDecryptPasswordModal,
-  dismissDecryptPasswordModal,
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -26,6 +23,7 @@ import {
 import {
   startJoinMultisig,
   addWalletJoinMultisig,
+  getDecryptPassword,
 } from '../../../store/wallet/effects';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
@@ -40,7 +38,7 @@ import {
   CustomErrorMessage,
   WrongPasswordError,
 } from '../components/ErrorMessages';
-import {checkEncryptPassword} from '../../../store/wallet/utils/wallet';
+import {useAppDispatch} from '../../../utils/hooks';
 
 export type JoinMultisigParamList = {
   key?: Key;
@@ -77,7 +75,7 @@ const CtaContainer = styled(_CtaContainer)`
 `;
 
 const JoinMultisig = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'JoinMultisig'>>();
   const {key, invitationCode} = route.params || {};
@@ -112,21 +110,7 @@ const JoinMultisig = () => {
     try {
       if (key) {
         if (key.isPrivKeyEncrypted) {
-          opts.password = await new Promise<string>((resolve, reject) => {
-            dispatch(
-              showDecryptPasswordModal({
-                onSubmitHandler: async (_password: string) => {
-                  dispatch(dismissDecryptPasswordModal());
-                  await sleep(500);
-                  if (checkEncryptPassword(key, _password)) {
-                    resolve(_password);
-                  } else {
-                    return reject({message: 'invalid password'});
-                  }
-                },
-              }),
-            );
-          });
+          opts.password = await dispatch(getDecryptPassword(key));
         }
 
         dispatch(startOnGoingProcessModal(OnGoingProcessMessages.JOIN_WALLET));

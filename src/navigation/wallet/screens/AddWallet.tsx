@@ -42,12 +42,10 @@ import {
 } from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {
-  dismissDecryptPasswordModal,
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showDecryptPasswordModal,
 } from '../../../store/app/app.actions';
-import {addWallet} from '../../../store/wallet/effects';
+import {addWallet, getDecryptPassword} from '../../../store/wallet/effects';
 import {Controller, useForm} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -73,7 +71,6 @@ import Checkbox from '../../../components/checkbox/Checkbox';
 import {Network} from '../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {WrongPasswordError} from '../components/ErrorMessages';
-import {checkEncryptPassword} from '../../../store/wallet/utils/wallet';
 import {getTokenContractInfo} from '../../../store/wallet/effects/status/status';
 import {GetCoinAndNetwork} from '../../../store/wallet/effects/address/address';
 import {addCustomTokenOption} from '../../../store/wallet/effects/currencies/currencies';
@@ -302,21 +299,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       let password: string | undefined;
 
       if (key.isPrivKeyEncrypted) {
-        password = await new Promise<string>((resolve, reject) => {
-          dispatch(
-            showDecryptPasswordModal({
-              onSubmitHandler: async (_password: string) => {
-                dispatch(dismissDecryptPasswordModal());
-                await sleep(500);
-                if (checkEncryptPassword(key, _password)) {
-                  resolve(_password);
-                } else {
-                  return reject('invalid password');
-                }
-              },
-            }),
-          );
-        });
+        password = await dispatch(getDecryptPassword(key));
       }
 
       navigation.popToTop();
@@ -350,7 +333,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
 
       dispatch(dismissOnGoingProcessModal());
     } catch (err: any) {
-      if (err === 'invalid password') {
+      if (err.message === 'invalid password') {
         dispatch(showBottomNotificationModal(WrongPasswordError()));
       } else {
         dispatch(dismissOnGoingProcessModal());

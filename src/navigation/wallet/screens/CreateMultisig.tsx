@@ -11,13 +11,10 @@ import {
   InfoDescription,
 } from '../../../components/styled/Text';
 import Button from '../../../components/button/Button';
-import {useDispatch} from 'react-redux';
 import {
   showBottomNotificationModal,
   dismissOnGoingProcessModal,
   setHomeCarouselConfig,
-  showDecryptPasswordModal,
-  dismissDecryptPasswordModal,
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -53,6 +50,7 @@ import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {
   startCreateKeyMultisig,
   addWalletMultisig,
+  getDecryptPassword,
 } from '../../../store/wallet/effects';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
@@ -61,9 +59,9 @@ import PlusIcon from '../../../components/plus/Plus';
 import MinusIcon from '../../../components/minus/Minus';
 import {sleep} from '../../../utils/helper-methods';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
-import {checkEncryptPassword} from '../../../store/wallet/utils/wallet';
 import {WrongPasswordError} from '../components/ErrorMessages';
 import {URL} from '../../../constants';
+import {useAppDispatch} from '../../../utils/hooks';
 
 export interface CreateMultisigProps {
   currency?: string;
@@ -179,7 +177,7 @@ const CtaContainer = styled(_CtaContainer)`
 `;
 
 const CreateMultisig = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const logger = useLogger();
   const navigation = useNavigation();
   const [showOptions, setShowOptions] = useState(false);
@@ -246,21 +244,7 @@ const CreateMultisig = () => {
     try {
       if (key) {
         if (key.isPrivKeyEncrypted) {
-          opts.password = await new Promise<string>((resolve, reject) => {
-            dispatch(
-              showDecryptPasswordModal({
-                onSubmitHandler: async (_password: string) => {
-                  dispatch(dismissDecryptPasswordModal());
-                  await sleep(500);
-                  if (checkEncryptPassword(key, _password)) {
-                    resolve(_password);
-                  } else {
-                    return reject({message: 'invalid password'});
-                  }
-                },
-              }),
-            );
-          });
+          opts.password = await dispatch(getDecryptPassword(key));
         }
 
         await dispatch(
