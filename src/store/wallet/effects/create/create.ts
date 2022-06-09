@@ -31,10 +31,6 @@ export interface CreateOptions {
   password?: string;
 }
 
-export interface CreateWalletWithOptions extends Partial<KeyOptions> {
-  password?: string;
-}
-
 const BWC = BwcProvider.getInstance();
 
 export const startCreateKey =
@@ -402,7 +398,7 @@ export const startCreateKeyWithOpts =
 
 export const createWalletWithOpts = (params: {
   key: KeyMethods;
-  opts: CreateWalletWithOptions;
+  opts: Partial<KeyOptions>;
 }): Promise<API> => {
   return new Promise((resolve, reject) => {
     const bwcClient = BWC.getClient();

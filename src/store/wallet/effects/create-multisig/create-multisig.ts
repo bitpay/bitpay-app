@@ -4,7 +4,7 @@ import merge from 'lodash.merge';
 import {buildKeyObj, buildWalletObj} from '../../utils/wallet';
 import {successCreateKey, successAddWallet} from '../../wallet.actions';
 import {Key, KeyOptions, Wallet} from '../../wallet.models';
-import {CreateWalletWithOptions, createWalletWithOpts} from '../create/create';
+import {createWalletWithOpts} from '../create/create';
 import {subscribePushNotifications} from '../../../app/app.effects';
 
 const BWC = BwcProvider.getInstance();
@@ -52,7 +52,7 @@ export const startCreateKeyMultisig =
   };
 
 export const addWalletMultisig =
-  ({key, opts}: {key: Key; opts: CreateWalletWithOptions}): Effect =>
+  ({key, opts}: {key: Key; opts: Partial<KeyOptions>}): Effect =>
   async (dispatch, getState): Promise<Wallet> => {
     return new Promise(async (resolve, reject) => {
       try {

@@ -138,7 +138,7 @@ export const buildKeyObj = ({
   totalBalance?: number;
   totalBalanceLastDay?: number;
   backupComplete?: boolean;
-  hideKeyBalance: boolean;
+  hideKeyBalance?: boolean;
 }): Key => {
   return {
     id: key.id,

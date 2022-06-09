@@ -53,7 +53,6 @@ import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {
   startCreateKeyMultisig,
   addWalletMultisig,
-  CreateWalletWithOptions,
 } from '../../../store/wallet/effects';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
@@ -228,7 +227,7 @@ const CreateMultisig = () => {
   }) => {
     const {name, myName, requiredSignatures, totalCopayers} = formData;
 
-    let opts: CreateWalletWithOptions = {};
+    let opts: Partial<KeyOptions> = {};
     opts.name = name;
     opts.myName = myName;
     opts.m = requiredSignatures;
@@ -242,7 +241,7 @@ const CreateMultisig = () => {
   };
 
   const CreateMultisigWallet = async (
-    opts: CreateWalletWithOptions,
+    opts: Partial<KeyOptions>,
   ): Promise<void> => {
     try {
       if (key) {
