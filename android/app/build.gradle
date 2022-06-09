@@ -231,7 +231,7 @@ dependencies {
       exclude group:'com.squareup.okhttp3', module:'okhttp'
     }
 
-    implementation project(':react-native-advertising-id')
+    implementation project(':react-native-advertising-id-bp')
     // Dosh SDK requires updated okhttp version
     // If React Native updates their version, this can be removed
     implementation "com.squareup.okhttp3:okhttp:4.8.0"
