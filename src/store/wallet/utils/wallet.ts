@@ -206,7 +206,9 @@ export const toFiat =
     const ratesPerCurrency = rates[currencyAbbreviation];
 
     if (!ratesPerCurrency) {
-      throw Error(`Rate not found for currency: ${currencyAbbreviation}`);
+      // Rate not found return 0
+      console.log(`Rate not found for currency: ${currencyAbbreviation}`);
+      return 0;
     }
 
     const rateObj = ratesPerCurrency.find(
@@ -216,15 +218,19 @@ export const toFiat =
     const fiatRate = customRate || rate;
 
     if (!fiatRate) {
-      throw Error(
+      // Rate not found for fiat/currency pair
+      console.log(
         `Rate not found for fiat/currency pair: ${fiatCode} -> ${currencyAbbreviation}`,
       );
+      return 0;
     }
 
     const precision = dispatch(GetPrecision(currencyAbbreviation));
 
     if (!precision) {
-      throw Error(`precision not found for currency ${currencyAbbreviation}`);
+      // precision not found return 0
+      console.log(`precision not found for currency ${currencyAbbreviation}`);
+      return 0;
     } else {
     }
 
