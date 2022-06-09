@@ -8,6 +8,8 @@ import {
   showBottomNotificationModal,
   dismissOnGoingProcessModal,
   setHomeCarouselConfig,
+  showDecryptPasswordModal,
+  dismissDecryptPasswordModal,
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -34,7 +36,11 @@ import {WalletStackParamList} from '../WalletStack';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
-import {CustomErrorMessage} from '../components/ErrorMessages';
+import {
+  CustomErrorMessage,
+  WrongPasswordError,
+} from '../components/ErrorMessages';
+import {checkEncryptPassword} from '../../../store/wallet/utils/wallet';
 
 export type JoinMultisigParamList = {
   key?: Key;
@@ -104,9 +110,27 @@ const JoinMultisig = () => {
     opts: Partial<KeyOptions>,
   ): Promise<void> => {
     try {
-      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.JOIN_WALLET));
-
       if (key) {
+        if (key.isPrivKeyEncrypted) {
+          opts.password = await new Promise<string>((resolve, reject) => {
+            dispatch(
+              showDecryptPasswordModal({
+                onSubmitHandler: async (_password: string) => {
+                  dispatch(dismissDecryptPasswordModal());
+                  await sleep(500);
+                  if (checkEncryptPassword(key, _password)) {
+                    resolve(_password);
+                  } else {
+                    return reject({message: 'invalid password'});
+                  }
+                },
+              }),
+            );
+          });
+        }
+
+        dispatch(startOnGoingProcessModal(OnGoingProcessMessages.JOIN_WALLET));
+
         const wallet = (await dispatch<any>(
           addWalletJoinMultisig({
             key,
@@ -186,6 +210,8 @@ const JoinMultisig = () => {
           },
         );
       } else {
+        dispatch(startOnGoingProcessModal(OnGoingProcessMessages.JOIN_WALLET));
+
         const multisigKey = (await dispatch<any>(
           startJoinMultisig(opts),
         )) as Key;
@@ -200,13 +226,17 @@ const JoinMultisig = () => {
       }
     } catch (e: any) {
       dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
-      await showErrorMessage(
-        CustomErrorMessage({
-          errMsg: BWCErrorMessage(e),
-          title: 'Uh oh, something went wrong',
-        }),
-      );
+      if (e.message === 'invalid password') {
+        dispatch(showBottomNotificationModal(WrongPasswordError()));
+      } else {
+        await sleep(500);
+        await showErrorMessage(
+          CustomErrorMessage({
+            errMsg: BWCErrorMessage(e),
+            title: 'Uh oh, something went wrong',
+          }),
+        );
+      }
       return;
     }
   };
