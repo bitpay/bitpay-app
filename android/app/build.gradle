@@ -227,9 +227,13 @@ dependencies {
     }
 
     // Dosh
-    implementation('com.dosh:poweredby:2.0.0') {
+    implementation('com.dosh:poweredby:2.8.0') {
       exclude group:'com.squareup.okhttp3', module:'okhttp'
     }
+    // Dosh SDK requires updated okhttp version
+    // If React Native updates their version, this can be removed
+    implementation "com.squareup.okhttp3:okhttp:4.8.0"
+    implementation "com.squareup.okhttp3:okhttp-urlconnection:4.8.0"
     implementation 'com.google.android.gms:play-services-tapandpay:18.2.0'
 }
 
