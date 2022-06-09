@@ -534,7 +534,7 @@ export const publishAndSign =
     wallet: Wallet;
     recipient?: Recipient;
   }): Effect<Promise<Partial<TransactionProposal> | void>> =>
-  async dispatch => {
+  async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       let password;
       if (key.isPrivKeyEncrypted) {
@@ -598,6 +598,19 @@ export const publishAndSign =
         } else {
           dispatch(startUpdateWalletStatus({key, wallet}));
         }
+        // Check if ConfirmTx notification is enabled
+        const {APP} = getState();
+        if (APP.confirmedTxAccepted) {
+          wallet.txConfirmationSubscribe(
+            {txid: broadcastedTx?.id, amount: txp.amount},
+            (err: any) => {
+              if (err) {
+                console.log('-------- push notification', err);
+              }
+            },
+          );
+        }
+
         resolve(broadcastedTx);
       } catch (err) {
         console.log(err);

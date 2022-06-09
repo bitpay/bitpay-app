@@ -487,6 +487,21 @@ export const walletReducer = (
       };
     }
 
+    case WalletActionTypes.TOGGLE_HIDE_KEY_BALANCE: {
+      const {keyId} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      keyToUpdate.hideKeyBalance = !keyToUpdate.hideKeyBalance;
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
     case WalletActionTypes.UPDATE_CACHE_FEE_LEVEL: {
       const newFeeLevel = state.feeLevel;
       newFeeLevel[action.payload.currency] = action.payload.feeLevel;

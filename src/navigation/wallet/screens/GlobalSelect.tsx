@@ -20,6 +20,7 @@ import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import _ from 'lodash';
 import KeyWalletsRow, {
+  KeyWallet,
   KeyWalletsRowProps,
 } from '../../../components/list/KeyWalletsRow';
 import merge from 'lodash.merge';
@@ -199,7 +200,8 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   const [walletSelectModalVisible, setWalletSelectModalVisible] =
     useState(false);
   // object to pass to select modal
-  const [keyWallets, setKeysWallets] = useState<KeyWalletsRowProps[]>();
+  const [keyWallets, setKeysWallets] =
+    useState<KeyWalletsRowProps<KeyWallet>[]>();
 
   const NON_BITPAY_SUPPORTED_TOKENS = Object.keys(tokens).filter(
     token => !SUPPORTED_CURRENCIES.includes(token),
@@ -270,7 +272,8 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                 const {
                   balance,
                   currencyAbbreviation,
-                  credentials: {network},
+                  credentials: {network, walletName: fallbackName},
+                  walletName,
                 } = wallet;
                 return merge(cloneDeep(wallet), {
                   cryptoBalance: balance.crypto,
@@ -285,6 +288,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                   ),
                   currencyAbbreviation: currencyAbbreviation.toUpperCase(),
                   network,
+                  walletName: walletName || fallbackName,
                 });
               }),
           };

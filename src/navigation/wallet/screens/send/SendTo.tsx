@@ -93,7 +93,7 @@ const BuildKeyWalletRow = (
   currentNetwork: string,
   defaultAltCurrencyIsoCode: string,
 ) => {
-  let filteredKeys: KeyWalletsRowProps[] = [];
+  let filteredKeys: KeyWalletsRowProps<KeyWallet>[] = [];
   Object.entries(keys).forEach(([key, value]) => {
     const wallets: KeyWallet[] = [];
     value.wallets
@@ -109,7 +109,8 @@ const BuildKeyWalletRow = (
         const {
           balance,
           currencyAbbreviation,
-          credentials: {network},
+          credentials: {network, walletName: fallbackName},
+          walletName,
         } = wallet;
         // Clone wallet to avoid altering store values
         const _wallet = merge(cloneDeep(wallet), {
@@ -122,6 +123,7 @@ const BuildKeyWalletRow = (
           fiatLockedBalance: '',
           currencyAbbreviation: currencyAbbreviation.toUpperCase(),
           network,
+          walletName: walletName || fallbackName,
         });
         wallets.push(_wallet);
       });
@@ -165,7 +167,7 @@ const SendTo = () => {
     id,
     credentials: {network},
   } = wallet;
-  const keyWallets: KeyWalletsRowProps[] = BuildKeyWalletRow(
+  const keyWallets: KeyWalletsRowProps<KeyWallet>[] = BuildKeyWalletRow(
     keys,
     id,
     currencyAbbreviation,

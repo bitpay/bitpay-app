@@ -73,6 +73,14 @@ import {initialShopState} from '../../../shop/shop.reducer';
 import {StackActions} from '@react-navigation/native';
 import {BuyCryptoActions} from '../../../buy-crypto';
 import {SwapCryptoActions} from '../../../swap-crypto';
+import {
+  checkNotificationsPermissions,
+  setConfirmTxNotifications,
+  setNotifications,
+  setOffersAndPromotionsNotifications,
+  setProductsUpdatesNotifications,
+  subscribePushNotifications,
+} from '../../../app/app.effects';
 
 const BWC = BwcProvider.getInstance();
 
@@ -197,7 +205,6 @@ export const startMigration =
         );
 
         const {
-          // TODO - handle Notifications;
           confirmedTxsNotifications,
           emailNotifications,
           pushNotifications,
@@ -211,6 +218,23 @@ export const startMigration =
         } = config || {};
 
         emailNotificationsConfig = emailNotifications;
+
+        // push notifications
+        const systemEnabled = await checkNotificationsPermissions();
+        if (systemEnabled) {
+          if (pushNotifications?.enabled) {
+            dispatch(setNotifications(true));
+            if (confirmedTxsNotifications?.enabled) {
+              dispatch(setConfirmTxNotifications(true));
+            }
+            if (offersAndPromotions?.enabled) {
+              dispatch(setOffersAndPromotionsNotifications(true));
+            }
+            if (productsUpdates?.enabled) {
+              dispatch(setProductsUpdatesNotifications(true));
+            }
+          }
+        }
 
         // lock
         if (lock) {
@@ -610,11 +634,14 @@ export const startImportMnemonic =
   async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
       try {
-        const state = getState();
+        const {
+          WALLET,
+          APP: {notificationsAccepted, brazeEid},
+        } = getState();
         const tokenOpts = {
           ...BitpaySupportedTokenOpts,
-          ...state.WALLET.tokenOptions,
-          ...state.WALLET.customTokenOptions,
+          ...WALLET.tokenOptions,
+          ...WALLET.customTokenOptions,
         };
         const {words, xPrivKey} = importData;
         opts.words = normalizeMnemonic(words);
@@ -626,23 +653,27 @@ export const startImportMnemonic =
         const {key: _key, wallets} = findMatchedKeyAndUpdate(
           data.wallets,
           data.key,
-          Object.values(state.WALLET.keys),
+          Object.values(WALLET.keys),
           opts,
         );
 
         // To clear encrypt password
-        if (opts.keyId && isMatch(_key, state.WALLET.keys[opts.keyId])) {
+        if (opts.keyId && isMatch(_key, WALLET.keys[opts.keyId])) {
           dispatch(deleteKey({keyId: opts.keyId}));
         }
 
         const key = buildKeyObj({
           key: _key,
-          wallets: wallets.map(wallet =>
-            merge(
+          wallets: wallets.map(wallet => {
+            // subscribe new wallet to push notifications
+            if (notificationsAccepted) {
+              dispatch(subscribePushNotifications(wallet, brazeEid!));
+            }
+            return merge(
               wallet,
               dispatch(buildWalletObj(wallet.credentials, tokenOpts)),
-            ),
-          ),
+            );
+          }),
           backupComplete: true,
         });
 
@@ -664,11 +695,14 @@ export const startImportFile =
   async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
       try {
-        const state = getState();
+        const {
+          WALLET,
+          APP: {notificationsAccepted, brazeEid},
+        } = getState();
         const tokenOpts = {
           ...BitpaySupportedTokenOpts,
-          ...state.WALLET.tokenOptions,
-          ...state.WALLET.customTokenOptions,
+          ...WALLET.tokenOptions,
+          ...WALLET.customTokenOptions,
         };
         let {key: _key, wallet} = await createKeyAndCredentialsWithFile(
           decryptBackupText,
@@ -676,10 +710,7 @@ export const startImportFile =
         );
         let wallets = [wallet];
 
-        const matchedKey = getMatchedKey(
-          _key,
-          Object.values(state.WALLET.keys),
-        );
+        const matchedKey = getMatchedKey(_key, Object.values(WALLET.keys));
 
         if (matchedKey && !opts?.keyId) {
           _key = matchedKey.methods;
@@ -703,12 +734,16 @@ export const startImportFile =
 
         const key = buildKeyObj({
           key: _key,
-          wallets: wallets.map(wallet =>
-            merge(
+          wallets: wallets.map(wallet => {
+            // subscribe new wallet to push notifications
+            if (notificationsAccepted) {
+              dispatch(subscribePushNotifications(wallet, brazeEid!));
+            }
+            return merge(
               wallet,
               dispatch(buildWalletObj(wallet.credentials, tokenOpts)),
-            ),
-          ),
+            );
+          }),
           backupComplete: true,
         });
 
@@ -734,11 +769,14 @@ export const startImportWithDerivationPath =
   async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
       try {
-        const state = getState();
+        const {
+          WALLET,
+          APP: {notificationsAccepted, brazeEid},
+        } = getState();
         const tokenOpts = {
           ...BitpaySupportedTokenOpts,
-          ...state.WALLET.tokenOptions,
-          ...state.WALLET.customTokenOptions,
+          ...WALLET.tokenOptions,
+          ...WALLET.customTokenOptions,
         };
         const {words, xPrivKey} = importData;
         opts.mnemonic = words;
@@ -765,6 +803,10 @@ export const startImportWithDerivationPath =
               err = new Error('WALLET_DOES_NOT_EXIST');
             }
             return reject(err);
+          }
+          // subscribe new wallet to push notifications
+          if (notificationsAccepted) {
+            dispatch(subscribePushNotifications(wallet, brazeEid!));
           }
           const key = buildKeyObj({
             key: _key,

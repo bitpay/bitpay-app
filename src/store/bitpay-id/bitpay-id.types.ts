@@ -46,7 +46,6 @@ export enum BitPayIdActionTypes {
   SUCCESS_FETCH_DOSH_TOKEN = 'BitPayId/SUCCESS_FETCH_DOSH_TOKEN',
   FAILED_FETCH_DOSH_TOKEN = 'BitPayId/FAILED_FETCH_DOSH_TOKEN',
   UPDATE_FETCH_DOSH_TOKEN_STATUS = 'BitPayId/UPDATE_FETCH_DOSH_TOKEN_STATUS',
-  TOGGLE_SYNC_GIFT_CARD_PURCHASES = 'BitPayId/TOGGLE_SYNC_GIFT_CARD_PURCHASES',
   FORGOT_PASSWORD_EMAIL_STATUS = 'BitPayId/FORGOT_PASSWORD_EMAIL_STATUS',
   RESET_FORGOT_PASSWORD_EMAIL_STATUS = 'BitPayId/RESET_FORGOT_PASSWORD_EMAIL_STATUS',
 }
@@ -202,13 +201,6 @@ interface UpdateFetchDoshTokenStatus {
   payload: FetchDoshTokenStatus;
 }
 
-interface ToggleSyncGiftCardPurchases {
-  type: typeof BitPayIdActionTypes.TOGGLE_SYNC_GIFT_CARD_PURCHASES;
-  payload: {
-    network: Network;
-  };
-}
-
 interface ForgotPasswordEmailStatus {
   type: typeof BitPayIdActionTypes.FORGOT_PASSWORD_EMAIL_STATUS;
   payload: {
@@ -266,7 +258,6 @@ export type BitPayIdActionType =
   | SuccessFetchDoshToken
   | FailedFetchDoshToken
   | UpdateFetchDoshTokenStatus
-  | ToggleSyncGiftCardPurchases
   // Reset Password
   | ForgotPasswordEmailStatus
   | ResetForgotPasswordEmailStatus;
