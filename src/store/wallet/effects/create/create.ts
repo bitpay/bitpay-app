@@ -6,11 +6,15 @@ import {
   SupportedCoins,
   SupportedTokens,
 } from '../../../../constants/currencies';
-import {Effect, RootState} from '../../../index';
+import {Effect} from '../../../index';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
-import {buildKeyObj, buildWalletObj} from '../../utils/wallet';
+import {
+  buildKeyObj,
+  buildWalletObj,
+  checkEncryptPassword,
+} from '../../utils/wallet';
 import {
   failedAddWallet,
   successAddWallet,
@@ -21,6 +25,11 @@ import {Key, KeyMethods, KeyOptions, Token, Wallet} from '../../wallet.models';
 import {Network} from '../../../../constants';
 import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 import {subscribePushNotifications} from '../../../app/app.effects';
+import {
+  dismissDecryptPasswordModal,
+  showDecryptPasswordModal,
+} from '../../../app/app.actions';
+import {sleep} from '../../../../utils/helper-methods';
 
 export interface CreateOptions {
   network?: Network;
@@ -405,7 +414,7 @@ export const createWalletWithOpts = (params: {
     const {key, opts} = params;
     try {
       bwcClient.fromString(
-        key.createCredentials(undefined, {
+        key.createCredentials(opts.password, {
           coin: opts.coin || 'btc',
           network: opts.networkName || 'livenet',
           account: opts.account || 0,
@@ -458,3 +467,23 @@ export const createWalletWithOpts = (params: {
     }
   });
 };
+
+export const getDecryptPassword =
+  (key: Key): Effect<Promise<string>> =>
+  async dispatch => {
+    return new Promise<string>((resolve, reject) => {
+      dispatch(
+        showDecryptPasswordModal({
+          onSubmitHandler: async (_password: string) => {
+            dispatch(dismissDecryptPasswordModal());
+            await sleep(500);
+            if (checkEncryptPassword(key, _password)) {
+              return resolve(_password);
+            } else {
+              return reject({message: 'invalid password'});
+            }
+          },
+        }),
+      );
+    });
+  };

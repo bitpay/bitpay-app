@@ -111,7 +111,7 @@ const joinMultisigWallet = (params: {
       const {key, opts} = params;
 
       bwcClient.fromString(
-        key.createCredentials(undefined, {
+        key.createCredentials(opts.password, {
           coin: opts.coin,
           network: opts.networkName,
           account: opts.account || 0,

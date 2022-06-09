@@ -21,7 +21,7 @@
     "braze": "node ./scripts/braze-config.js",
     "dosh": "node ./scripts/dosh-config.js",
     "set:prod": "export NODE_ENV=production && yarn braze && yarn dosh",
-    "set:dev": "export NODE_ENV=development && yarn braze && yarn dosh"
+    "set:dev": "export NODE_ENV=development && yarn braze && yarn dosh && node ./scripts/dev-overrides.js"
   },
   "dependencies": {
     "@freakycoder/react-native-bounceable": "0.2.5",
