@@ -13,6 +13,8 @@ import {Card} from '../../../store/card/card.models';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import CustomizeCardIcon from '../assets/settings/icon-card.svg';
 import EditCardNameIcon from '../assets/settings/icon-cardname.svg';
+import GooglePayIcon from '../assets/settings/icon-google-pay.svg';
+import ApplePayIcon from '../assets/settings/icon-apple-pay.svg';
 import FaqsIcon from '../assets/settings/icon-faqs.svg';
 import GetHelpIcon from '../assets/settings/icon-help.svg';
 import DownloadHistoryIcon from '../assets/settings/icon-history.svg';
@@ -22,6 +24,7 @@ import ReferEarnIcon from '../assets/settings/icon-referearn.svg';
 import {CardStackParamList} from '../CardStack';
 import * as Styled from './CardSettingsList.styled';
 import {ToggleSpinnerState} from './ToggleSpinner';
+import {Platform} from 'react-native';
 
 interface SettingsListProps {
   card: Card;
@@ -87,6 +90,31 @@ const SettingsList: React.FC<SettingsListProps> = props => {
     setLocalLockState(locked);
     setLocalLockStatus('loading');
     dispatch(CardEffects.START_UPDATE_CARD_LOCK(card.id, locked));
+  };
+
+  const onAddAppleWallet = () => {
+    const params = {
+      id: card.id,
+      data: {
+        cardholderName: user?.name || '',
+        primaryAccountNumberSuffix: card.lastFourDigits,
+        encryptionScheme: 'ECC_V2',
+      },
+    };
+
+    dispatch(CardEffects.startAddToAppleWallet(params));
+  };
+
+  const onAddGooglePay = () => {
+    dispatch(
+      CardEffects.startAddToGooglePay({
+        id: card.id,
+        data: {
+          name: user?.name || '',
+          lastFourDigits: card.lastFourDigits,
+        },
+      }),
+    );
   };
 
   useEffect(() => {
@@ -181,6 +209,26 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
           {card.cardType === 'virtual' ? (
             <>
+              {Platform.OS === 'ios' ? (
+                <>
+                  <Styled.SettingsLink
+                    Icon={ApplePayIcon}
+                    onPress={onAddAppleWallet}>
+                    {t('Add to Apple Wallet')}
+                  </Styled.SettingsLink>
+
+                  <Hr />
+                </>
+              ) : (
+                <>
+                  <Styled.SettingsLink
+                    Icon={GooglePayIcon}
+                    onPress={onAddGooglePay}>
+                    {t('Add to Google Pay')}
+                  </Styled.SettingsLink>
+                  <Hr />
+                </>
+              )}
               <Styled.SettingsLink
                 Icon={CustomizeCardIcon}
                 onPress={() =>

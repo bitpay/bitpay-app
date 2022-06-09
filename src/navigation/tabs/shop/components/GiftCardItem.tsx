@@ -1,12 +1,10 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import TimeAgo from 'react-native-timeago';
-import {CardConfig, GiftCard} from '../../../../store/shop/shop.models';
+import {CardConfig} from '../../../../store/shop/shop.models';
 import RemoteImage from './RemoteImage';
-import GiftCardDenoms, {GiftCardDenomText} from './GiftCardDenoms';
+import GiftCardDenoms from './GiftCardDenoms';
 import {BaseText} from '../../../../components/styled/Text';
 import GiftCardDiscountText from './GiftCardDiscountText';
-import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {isSupportedDiscountType} from '../../../../lib/gift-cards/gift-card';
 
 const GiftCardItemContainer = styled.View`
@@ -28,36 +26,18 @@ const BrandDetails = styled.View`
   padding-right: 45px;
 `;
 
-export default ({
-  cardConfig,
-  giftCard,
-}: {
-  cardConfig: CardConfig;
-  giftCard?: GiftCard;
-}) => {
+export default ({cardConfig}: {cardConfig: CardConfig}) => {
   const {displayName, icon} = cardConfig;
   return (
     <GiftCardItemContainer>
       <RemoteImage uri={icon} height={50} borderRadius={30} />
       <BrandDetails>
-        <GiftCardBrandName>
-          {giftCard
-            ? formatFiatAmount(giftCard.amount, giftCard.currency)
-            : displayName}
-        </GiftCardBrandName>
-        {giftCard ? (
-          <GiftCardDenomText>
-            <TimeAgo time={parseInt(giftCard.date, 10)} />
-          </GiftCardDenomText>
+        <GiftCardBrandName>{displayName}</GiftCardBrandName>
+        {cardConfig.discounts &&
+        isSupportedDiscountType(cardConfig.discounts[0].type) ? (
+          <GiftCardDiscountText cardConfig={cardConfig} short={true} />
         ) : (
-          <>
-            {cardConfig.discounts &&
-            isSupportedDiscountType(cardConfig.discounts[0].type) ? (
-              <GiftCardDiscountText cardConfig={cardConfig} short={true} />
-            ) : (
-              <GiftCardDenoms cardConfig={cardConfig} />
-            )}
-          </>
+          <GiftCardDenoms cardConfig={cardConfig} />
         )}
       </BrandDetails>
     </GiftCardItemContainer>
