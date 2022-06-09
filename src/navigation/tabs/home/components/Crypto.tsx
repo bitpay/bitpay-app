@@ -179,6 +179,7 @@ const createHomeCardList = ({
           <WalletCardComponent
             layout={homeCarouselLayoutType}
             keyName={key.keyName}
+            hideKeyBalance={key.hideKeyBalance}
             wallets={wallets}
             totalBalance={totalBalance}
             percentageDifference={percentageDifference}

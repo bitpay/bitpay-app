@@ -76,10 +76,7 @@ const GiftCardHeader = ({
       </Header>
       <DetailContainer height={73}>
         <DetailRow>
-          <H4>
-            {formatFiatAmount(amount, cardConfig.currency)}{' '}
-            {cardConfig.currency}
-          </H4>
+          <H4>{formatFiatAmount(amount, cardConfig.currency)}</H4>
           <RemoteImage uri={cardConfig.icon} height={40} borderRadius={40} />
         </DetailRow>
       </DetailContainer>
@@ -282,7 +279,7 @@ const Confirm = () => {
       dispatch(ShopEffects.waitForConfirmation(giftCard.invoiceId));
     }
     navigation.dispatch(StackActions.popToTop());
-    navigation.dispatch(StackActions.pop(3));
+    navigation.dispatch(StackActions.pop());
     navigation.navigate('GiftCard', {
       screen: 'GiftCardDetails',
       params: {

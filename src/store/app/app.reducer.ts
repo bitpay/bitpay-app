@@ -1,11 +1,13 @@
 import i18n from 'i18next';
 import {ColorSchemeName} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
+import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
+import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
+import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {Network} from '../../constants';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
-import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
-import {PinModalConfig} from '../../components/modal/pin/PinModal';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {NavScreenParams, RootStackParamList} from '../../Root';
 import {
@@ -14,10 +16,8 @@ import {
   HomeCarouselLayoutType,
 } from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
-import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
-import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 
-type AppReduxPersistBlackList = [
+export const appReduxPersistBlackList: Array<keyof AppState> = [
   'appIsLoading',
   'showOnGoingProcessModal',
   'onGoingProcessModalMessage',
@@ -26,21 +26,10 @@ type AppReduxPersistBlackList = [
   'pinModalConfig',
   'showBottomNotificationModal',
   'showBiometricModal',
-  'dismissBiometricModal',
-  'checkingBiometric',
+  'activeModalId',
 ];
-export const appReduxPersistBlackList: AppReduxPersistBlackList = [
-  'appIsLoading',
-  'showOnGoingProcessModal',
-  'onGoingProcessModalMessage',
-  'showDecryptPasswordModal',
-  'showPinModal',
-  'pinModalConfig',
-  'showBottomNotificationModal',
-  'showBiometricModal',
-  'dismissBiometricModal',
-  'checkingBiometric',
-];
+
+export type ModalId = 'sheetModal' | 'ongoingProcess';
 
 export interface AppState {
   identity: {
@@ -86,6 +75,7 @@ export interface AppState {
   keyMigrationFailure: boolean;
   showKeyMigrationFailureModal: boolean;
   keyMigrationFailureModalHasBeenShown: boolean;
+  activeModalId: ModalId | null;
 }
 
 const initialState: AppState = {
@@ -141,6 +131,7 @@ const initialState: AppState = {
   keyMigrationFailure: false,
   showKeyMigrationFailureModal: false,
   keyMigrationFailureModalHasBeenShown: false,
+  activeModalId: null,
 };
 
 export const appReducer = (
@@ -444,6 +435,12 @@ export const appReducer = (
       return {
         ...state,
         keyMigrationFailureModalHasBeenShown: true,
+      };
+
+    case AppActionTypes.ACTIVE_MODAL_UPDATED:
+      return {
+        ...state,
+        activeModalId: action.payload,
       };
 
     default:

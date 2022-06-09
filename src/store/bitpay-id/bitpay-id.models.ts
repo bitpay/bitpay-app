@@ -32,4 +32,5 @@ export interface User {
     optInEmailMarketing?: boolean;
   };
   referralCode?: string;
+  name?: string;
 }

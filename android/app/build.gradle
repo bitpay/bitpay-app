@@ -137,8 +137,8 @@ android {
         applicationId "com.bitpay.wallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 91212011
-        versionName "14.1.0"
+        versionCode 91212012
+        versionName "14.1.1"
         missingDimensionStrategy 'react-native-camera', 'mlkit'
     }
     splits {
@@ -156,6 +156,14 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            if (project.hasProperty('APP_UPLOAD_STORE_FILE')) {
+                storeFile file(APP_UPLOAD_STORE_FILE)
+                storePassword APP_UPLOAD_STORE_PASSWORD
+                keyAlias APP_UPLOAD_KEY_ALIAS
+                keyPassword APP_UPLOAD_KEY_PASSWORD
+            }
+        }
     }
     buildTypes {
         debug {
@@ -164,7 +172,7 @@ android {
         release {
             // Caution! In production, you need to generate your own keystore file.
             // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
@@ -219,12 +227,17 @@ dependencies {
     }
 
     // Dosh
-    implementation('com.dosh:poweredby:2.0.0') {
+    implementation('com.dosh:poweredby:2.8.0') {
       exclude group:'com.squareup.okhttp3', module:'okhttp'
     }
 
     // AppsFlyer
     compile project(':react-native-appsflyer')
+    // Dosh SDK requires updated okhttp version
+    // If React Native updates their version, this can be removed
+    implementation "com.squareup.okhttp3:okhttp:4.8.0"
+    implementation "com.squareup.okhttp3:okhttp-urlconnection:4.8.0"
+    implementation 'com.google.android.gms:play-services-tapandpay:18.2.0'
 }
 
 // Run this once to be able to run the application with BUCK

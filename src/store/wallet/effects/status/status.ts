@@ -297,7 +297,10 @@ export const startUpdateAllWalletStatusForKey =
               if (
                 status &&
                 success &&
-                (force || status.balance.totalAmount !== cachedBalance.sat)
+                (force ||
+                  status.balance.availableAmount !==
+                    cachedBalance.satAvailable ||
+                  status.pendingTxps?.length > 0)
               ) {
                 const newBalance = dispatch(
                   buildBalance({

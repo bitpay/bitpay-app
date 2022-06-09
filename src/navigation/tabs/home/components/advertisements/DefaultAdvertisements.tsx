@@ -1,6 +1,4 @@
 import {ClassicContentCard} from 'react-native-appboy-sdk';
-import BuyIcon from '../../../../../../assets/img/advertisement/adv-buy.svg';
-import SwapIcon from '../../../../../../assets/img/advertisement/adv-swap.svg';
 import CardIcon from '../../../../../../assets/img/card/bitpay-card-mc-angled-plain-small.svg';
 import {APP_DEEPLINK_PREFIX} from '../../../../../constants/config';
 import {DEFAULT_CLASSIC_CONTENT_CARD} from '../../../../../utils/braze';
@@ -43,7 +41,7 @@ const DefaultAdvertisements = (
   return [
     {
       ...DEFAULT_CLASSIC_CONTENT_CARD,
-      id: 'card',
+      id: 'dev_card',
       image: CardIcon as any,
       title: 'Get the BitPay Prepaid Mastercard®',
       cardDescription: 'Turn your crypto into dollars. Spend instantly.',
@@ -52,7 +50,7 @@ const DefaultAdvertisements = (
     },
     {
       ...DEFAULT_CLASSIC_CONTENT_CARD,
-      id: 'swapCrypto',
+      id: 'dev_swapCrypto',
       image: imgSrc.swap[theme],
       title: 'Swap Crypto',
       cardDescription: 'Exchange ERC-20 Tokens or cross chain assets.',
@@ -61,7 +59,7 @@ const DefaultAdvertisements = (
     },
     {
       ...DEFAULT_CLASSIC_CONTENT_CARD,
-      id: 'buyCrypto',
+      id: 'dev_buyCrypto',
       image: imgSrc.buy[theme],
       title: 'Buy Crypto',
       cardDescription:

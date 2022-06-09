@@ -65,7 +65,7 @@ const CardsRowContainer = styled.View`
   padding: ${ScreenGutter};
 `;
 
-const CardOffersContainer = styled(TouchableOpacity)`
+const CardOffersContainer = styled.View`
   margin: -16px;
   padding: 16px;
 `;
@@ -343,12 +343,11 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     additionalContent.push({
       key: 'card-offers',
       content: (
-        <CardOffersContainer
-          activeOpacity={ActiveOpacity}
-          onPress={() => {
-            dispatch(CardEffects.startOpenDosh(user?.email || ''));
-          }}>
-          <CardOffers contentCard={brazeCardOffers[0]} />
+        <CardOffersContainer>
+          <CardOffers
+            contentCard={brazeCardOffers[0]}
+            userEmail={user?.email}
+          />
         </CardOffersContainer>
       ),
     });

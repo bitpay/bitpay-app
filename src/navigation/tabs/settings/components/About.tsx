@@ -16,6 +16,7 @@ import {View} from 'react-native';
 import {useDispatch} from 'react-redux';
 import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
+import {GIT_COMMIT_HASH} from '@env';
 
 interface LinkSetting {
   title: string;
@@ -54,6 +55,17 @@ const About = () => {
       </Setting>
 
       <Hr />
+
+      {GIT_COMMIT_HASH ? (
+        <>
+          <Setting>
+            <SettingTitle>Commit Hash</SettingTitle>
+
+            <Button buttonType="pill">{GIT_COMMIT_HASH}</Button>
+          </Setting>
+          <Hr />
+        </>
+      ) : null}
 
       <Setting
         onPress={() => navigation.navigate('About', {screen: 'SessionLogs'})}>

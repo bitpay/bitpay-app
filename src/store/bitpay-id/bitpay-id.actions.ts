@@ -211,13 +211,6 @@ export const updateFetchDoshTokenStatus = (
   payload: status,
 });
 
-export const toggleSyncGiftCardPurchases = (
-  network: Network,
-): BitPayIdActionType => ({
-  type: BitPayIdActionTypes.TOGGLE_SYNC_GIFT_CARD_PURCHASES,
-  payload: {network},
-});
-
 export const forgotPasswordEmailStatus = (
   status: 'success' | 'failed',
   message: string,

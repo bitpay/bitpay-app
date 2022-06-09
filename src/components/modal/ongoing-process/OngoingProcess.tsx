@@ -1,11 +1,11 @@
-import Modal from 'react-native-modal';
 import React from 'react';
-import {BaseText} from '../../styled/Text';
-import styled from 'styled-components/native';
 import {ActivityIndicator} from 'react-native';
+import styled from 'styled-components/native';
 import {LightBlack, SlateDark, White} from '../../../styles/colors';
 import {useAppSelector} from '../../../utils/hooks';
 import Blur from '../../blur/Blur';
+import {BaseText} from '../../styled/Text';
+import BaseModal from '../base/BaseModal';
 
 export enum OnGoingProcessMessages {
   GENERAL_AWAITING = "Just a second, we're setting a few things up",
@@ -65,8 +65,10 @@ const OnGoingProcessModal: React.FC = () => {
   const message = useAppSelector(({APP}) => APP.onGoingProcessModalMessage);
   const isVisible = useAppSelector(({APP}) => APP.showOnGoingProcessModal);
   const showBlur = useAppSelector(({APP}) => APP.showBlur);
+
   return (
-    <Modal
+    <BaseModal
+      id={'ongoingProcess'}
       isVisible={isVisible}
       backdropOpacity={0.4}
       animationIn={'fadeInRight'}
@@ -87,7 +89,7 @@ const OnGoingProcessModal: React.FC = () => {
           {showBlur && <Blur />}
         </Row>
       </OnGoingProcessContainer>
-    </Modal>
+    </BaseModal>
   );
 };
 

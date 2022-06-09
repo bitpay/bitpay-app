@@ -37,6 +37,7 @@ public class MainApplication extends Application implements ReactApplication {
           // packages.add(new MyReactNativePackage());
 
           packages.add(new DoshPackage());
+          packages.add(new GooglePushProvisioningPackage());
 
           return packages;
         }

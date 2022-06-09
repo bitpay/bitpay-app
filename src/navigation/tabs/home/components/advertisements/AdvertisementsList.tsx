@@ -59,15 +59,15 @@ const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
     navigation.navigate('SwapCrypto', {screen: 'Root'});
   });
   const CTA_OVERRIDES: {[key in string]: () => void} = {
-    card: () =>
+    dev_card: () =>
       navigation.navigate('Tabs', {
         screen: 'Card',
         params: {
           screen: 'CardHome',
         },
       }),
-    swapCrypto: swapCryptoCta,
-    buyCrypto: buyCryptoCta,
+    dev_swapCrypto: swapCryptoCta,
+    dev_buyCrypto: buyCryptoCta,
   };
 
   return (

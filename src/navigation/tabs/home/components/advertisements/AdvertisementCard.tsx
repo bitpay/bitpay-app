@@ -1,8 +1,8 @@
-import {useLinkTo} from '@react-navigation/native';
+import {useFocusEffect, useLinkTo} from '@react-navigation/native';
 import React from 'react';
 import {ImageStyle, Linking, StyleProp} from 'react-native';
-import {ContentCard} from 'react-native-appboy-sdk';
-import {Source} from 'react-native-fast-image';
+import ReactAppboy, {ContentCard} from 'react-native-appboy-sdk';
+import FastImage, {Source} from 'react-native-fast-image';
 import {SvgProps} from 'react-native-svg';
 import styled, {useTheme} from 'styled-components/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
@@ -101,6 +101,10 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   const onPress = () => {
     haptic('impactLight');
 
+    if (!contentCard.id.startsWith('dev_')) {
+      ReactAppboy.logContentCardClicked(contentCard.id);
+    }
+
     if (ctaOverride) {
       ctaOverride();
       return;
@@ -136,8 +140,22 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   const icon = isSvgComponent(MaybeSvgComponent) ? (
     <MaybeSvgComponent style={IconStyle} />
   ) : imageSource ? (
-    imageSource
+    imageSource.uri ? (
+      <FastImage
+        source={imageSource}
+        style={IconStyle}
+        resizeMode={'contain'}
+      />
+    ) : (
+      imageSource
+    )
   ) : null;
+
+  useFocusEffect(() => {
+    if (!contentCard.id.startsWith('dev_')) {
+      ReactAppboy.logContentCardImpression(contentCard.id);
+    }
+  });
 
   return (
     <AdvertisementCardContainer

@@ -349,7 +349,10 @@ const Amount: React.FC<AmountProps> = ({
           ) : null}
         </AmountHeroContainer>
         <View>
-          <VirtualKeyboard onCellPress={onCellPress} />
+          <VirtualKeyboard
+            onCellPress={onCellPress}
+            showDot={currency !== 'JPY'}
+          />
           <ActionContainer>
             <Button
               state={buttonState}
