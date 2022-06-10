@@ -6,7 +6,15 @@ import {
 import {createStackNavigator} from '@react-navigation/stack';
 import debounce from 'lodash.debounce';
 import React, {useEffect, useState} from 'react';
-import {Appearance, AppState, AppStateStatus, StatusBar} from 'react-native';
+import {
+  Appearance,
+  AppState,
+  AppStateStatus,
+  DeviceEventEmitter,
+  NativeEventEmitter,
+  NativeModules,
+  StatusBar,
+} from 'react-native';
 import 'react-native-gesture-handler';
 import {ThemeProvider} from 'styled-components/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
@@ -82,6 +90,7 @@ import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
 import CardActivationStack, {
   CardActivationStackParamList,
 } from './navigation/card-activation/CardActivationStack';
+import ReactAppboy from 'react-native-appboy-sdk';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -158,6 +167,18 @@ declare global {
     interface RootParamList extends RootStackParamList {}
   }
 }
+
+export type SilentPushEvent = {
+  b_use_webview?: number;
+  multisigContractAddress?: string | null;
+  ab_uri?: string;
+  walletId?: string;
+  copayerId?: string;
+  aps?: any;
+  notification_type?: string;
+  ab?: any;
+  tokenAddress?: string | null;
+};
 
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 export const navigate = (
@@ -254,6 +275,17 @@ export default () => {
     biometricLockActive,
     appIsLoading,
   ]);
+
+  // Silent Push Notifications
+  useEffect(() => {
+    function onMessageReceived(response: SilentPushEvent) {
+      // TODO: handle response
+      console.log('##### Received message', response);
+    }
+    const eventEmitter = new NativeEventEmitter(NativeModules.SilentPushEvent);
+    eventEmitter.addListener('SilentPushNotification', onMessageReceived);
+    return () => DeviceEventEmitter.removeAllListeners('inAppMessageReceived');
+  }, []);
 
   // THEME
   useEffect(() => {

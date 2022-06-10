@@ -1,4 +1,5 @@
 #import "AppDelegate.h"
+#import "SilentPushEvent.h"
 #import "Appboy-iOS-SDK/AppboyKit.h"
 #import <React/RCTBridge.h>
 #import <React/RCTBundleURLProvider.h>
@@ -74,6 +75,7 @@ static void InitializeFlipper(UIApplication *application) {
   [[Appboy sharedInstance] registerApplication:application
                   didReceiveRemoteNotification:userInfo
                         fetchCompletionHandler:completionHandler];
+  [SilentPushEvent emitEventWithName:@"SilentPushNotification" andPayload:userInfo];
 }
 
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(UNNotificationResponse *)response  withCompletionHandler:(void (^)(void))completionHandler   {
