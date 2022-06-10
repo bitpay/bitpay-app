@@ -28,7 +28,7 @@
     "set-braze": "node ./scripts/braze-config.js",
     "set-dosh": "node ./scripts/dosh-config.js",
     "set-google-maps": "node ./scripts/google-maps.js",
-    "reset:dev": "export NODE_ENV=development && yarn reset-all",
+    "reset:dev": "export NODE_ENV=development && yarn reset-all && node ./scripts/dev-overrides-reset.js",
     "reset:prod": "export NODE_ENV=production && yarn reset-all",
     "reset-all": "yarn reset-braze && yarn reset-dosh && yarn reset-google-maps",
     "reset-braze": "node ./scripts/braze-config-reset.js",

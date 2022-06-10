@@ -10,8 +10,8 @@ const fs = require('fs');
   const networkSecurityConfig = `${__dirname}/../android/app/src/main/res/xml/network_security_config.xml`;
   let content = fs.readFileSync(networkSecurityConfig, 'utf8');
   content = content.replaceAll(
-    'cleartextTrafficPermitted="false"',
     'cleartextTrafficPermitted="true"',
+    'cleartextTrafficPermitted="false"',
   );
   fs.writeFileSync(networkSecurityConfig, content);
 
