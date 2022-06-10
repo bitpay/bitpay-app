@@ -218,7 +218,18 @@ const goToConfirm =
       if (!wallet) {
         navigationRef.navigate('Wallet', {
           screen: 'GlobalSelect',
-          params: {context: 'scanner', recipient, amount},
+          params: {
+            context: 'scanner',
+            recipient: {
+              ...recipient,
+              ...{
+                opts: {
+                  showERC20Tokens: recipient.currency.toLowerCase() === 'eth', // no wallet selected - if ETH address show token wallets in next view
+                },
+              },
+            },
+            amount,
+          },
         });
         return Promise.resolve();
       }
@@ -307,7 +318,17 @@ export const goToAmount =
     if (!wallet) {
       navigationRef.navigate('Wallet', {
         screen: 'GlobalSelect',
-        params: {context: 'scanner', recipient},
+        params: {
+          context: 'scanner',
+          recipient: {
+            ...recipient,
+            ...{
+              opts: {
+                showERC20Tokens: recipient.currency.toLowerCase() === 'eth', // no wallet selected - if ETH address show token wallets in next view
+              },
+            },
+          },
+        },
       });
       return Promise.resolve();
     }

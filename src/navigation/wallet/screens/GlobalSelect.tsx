@@ -45,6 +45,7 @@ import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {ButtonState} from '../../../components/button/Button';
+import {IsERCToken} from '../../../store/wallet/utils/currency';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -116,6 +117,7 @@ export type GlobalSelectParamList = {
       message?: string;
       feePerKb?: number;
       destinationTag?: string;
+      showERC20Tokens?: boolean;
     };
   };
   amount?: number;
@@ -223,7 +225,10 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   if (recipient && ['coinbase', 'contact', 'scanner'].includes(context)) {
     if (recipient?.currency) {
       wallets = wallets.filter(
-        wallet => wallet.currencyAbbreviation === recipient?.currency,
+        wallet =>
+          wallet.currencyAbbreviation === recipient?.currency ||
+          (recipient?.opts?.showERC20Tokens &&
+            dispatch(IsERCToken(wallet.currencyAbbreviation))),
       );
     }
     if (recipient?.network) {
