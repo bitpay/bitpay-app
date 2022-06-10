@@ -844,6 +844,7 @@ const SwapCryptoRoot: React.FC = () => {
       <WalletSelectorModal
         isVisible={walletSelectorModalVisible}
         customSupportedCurrencies={swapCryptoSupportedCoinsTo}
+        livenetOnly={true}
         modalTitle={'Select Destination'}
         onDismiss={(toWallet?: Wallet) => {
           hideModal('walletSelector');
