@@ -27,6 +27,8 @@ import {SEGMENT_API_KEY, APPSFLYER_API_KEY, APPSFLYER_APP_ID} from '@env';
 import appsFlyer from 'react-native-appsflyer';
 import {requestTrackingPermission} from 'react-native-tracking-transparency';
 import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
+import AdID from 'react-native-advertising-id-bp';
+
 import {
   setConfirmedTxAccepted,
   setNotificationsAccepted,
@@ -377,7 +379,12 @@ export const askForTrackingPermissionAndEnableSdks =
         await analytics.setup(SEGMENT_API_KEY, {
           recordScreenViews: false,
           trackAppLifecycleEvents: true,
+          ios: {
+            trackAdvertising: true,
+          },
         });
+        const {advertisingId} = await AdID.getAdvertisingId();
+        analytics.setIDFA(advertisingId);
       } catch (err) {
         dispatch(LogActions.error('Segment setup failed'));
         dispatch(LogActions.error(JSON.stringify(err)));

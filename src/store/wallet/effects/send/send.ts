@@ -326,149 +326,153 @@ export const buildTxDetails =
 const buildTransactionProposal =
   (tx: Partial<TransactionOptions>): Effect<Promise<object>> =>
   dispatch => {
-    return new Promise(async resolve => {
-      const {
-        currency,
-        feeLevel,
-        feePerKb,
-        invoiceID,
-        message,
-        payProUrl,
-        sendMax,
-        wallet,
-      } = tx;
-      let {customData} = tx;
-
-      if (!customData) {
-        if (tx.recipient?.type === 'wallet') {
-          customData = {
-            toWalletName: tx.recipient.name || null,
-          };
-        } else if (tx.recipient?.type === 'coinbase') {
-          customData = {
-            service: 'coinbase',
-          };
-        }
-      }
-      // base tx
-      const txp: Partial<TransactionProposal> = {
-        coin: currency,
-        chain: dispatch(GetChain(currency!)).toLowerCase(),
-        customData,
-        feePerKb,
-        ...(!feePerKb && {feeLevel}),
-        invoiceID,
-        message,
-      };
-      // currency specific
-      switch (currency) {
-        case 'btc':
-          txp.enableRBF = tx.enableRBF;
-          txp.replaceTxByFee = tx.replaceTxByFee;
-          break;
-        case 'eth':
-          txp.from = tx.from;
-          txp.nonce = tx.nonce;
-          txp.tokenAddress = tx.tokenAddress;
-          txp.multisigContractAddress = tx.multisigContractAddress;
-          break;
-        case 'xrp':
-          txp.destinationTag = tx.destinationTag;
-          break;
-        case 'bch':
-          tx.toAddress = ToCashAddress(tx.toAddress!, false);
-          break;
-      }
-
-      // send max
-      if (sendMax && wallet) {
-        const {amount, inputs, fee} = await getSendMaxInfo({
+    return new Promise(async (resolve, reject) => {
+      try {
+        const {
+          currency,
+          feeLevel,
+          feePerKb,
+          invoiceID,
+          message,
+          payProUrl,
+          sendMax,
           wallet,
-          opts: {feePerKb, excludeUnconfirmedUtxos: true, returnInputs: true},
-        });
+        } = tx;
+        let {customData} = tx;
 
-        txp.amount = tx.amount = amount;
-        txp.inputs = inputs;
-        // Either fee or feePerKb can be available
-        txp.fee = fee;
-        txp.feePerKb = undefined;
-      }
+        if (!customData) {
+          if (tx.recipient?.type === 'wallet') {
+            customData = {
+              toWalletName: tx.recipient.name || null,
+            };
+          } else if (tx.recipient?.type === 'coinbase') {
+            customData = {
+              service: 'coinbase',
+            };
+          }
+        }
+        // base tx
+        const txp: Partial<TransactionProposal> = {
+          coin: currency,
+          chain: dispatch(GetChain(currency!)).toLowerCase(),
+          customData,
+          feePerKb,
+          ...(!feePerKb && {feeLevel}),
+          invoiceID,
+          message,
+        };
+        // currency specific
+        switch (currency) {
+          case 'btc':
+            txp.enableRBF = tx.enableRBF;
+            txp.replaceTxByFee = tx.replaceTxByFee;
+            break;
+          case 'eth':
+            txp.from = tx.from;
+            txp.nonce = tx.nonce;
+            txp.tokenAddress = tx.tokenAddress;
+            txp.multisigContractAddress = tx.multisigContractAddress;
+            break;
+          case 'xrp':
+            txp.destinationTag = tx.destinationTag;
+            break;
+          case 'bch':
+            tx.toAddress = ToCashAddress(tx.toAddress!, false);
+            break;
+        }
 
-      // unconfirmed funds
-      txp.excludeUnconfirmedUtxos = !tx.useUnconfirmedFunds;
-
-      const {context} = tx;
-      // outputs
-      txp.outputs = [];
-      switch (context) {
-        case 'multisend':
-          break;
-        case 'paypro':
-          txp.payProUrl = payProUrl;
-          txp.outputs.push({
-            toAddress: tx.toAddress,
-            amount: tx.amount!,
-            message: tx.message,
-            data: tx.data,
-            gasLimit: tx.gasLimit,
+        // send max
+        if (sendMax && wallet) {
+          const {amount, inputs, fee} = await getSendMaxInfo({
+            wallet,
+            opts: {feePerKb, excludeUnconfirmedUtxos: true, returnInputs: true},
           });
-          break;
-        case 'selectInputs':
-          break;
-        case 'fromReplaceByFee':
-          txp.inputs = tx.inputs;
-          txp.replaceTxByFee = true;
 
-          txp.outputs.push({
-            toAddress: tx.toAddress,
-            amount: tx.amount!,
-            message: tx.description,
-            data: tx.data,
-          });
-          break;
-        case 'speedupBtcReceive':
-          txp.inputs = tx.inputs;
-          txp.excludeUnconfirmedUtxos = true;
-          txp.fee = tx.fee;
-          txp.feeLevel = undefined;
+          txp.amount = tx.amount = amount;
+          txp.inputs = inputs;
+          // Either fee or feePerKb can be available
+          txp.fee = fee;
+          txp.feePerKb = undefined;
+        }
 
-          txp.outputs.push({
-            toAddress: tx.toAddress,
-            amount: tx.amount!,
-            message: tx.description,
-            data: tx.data,
-          });
-          break;
-        default:
-          txp.outputs.push({
-            toAddress: tx.toAddress,
-            amount: tx.amount!,
-            message: tx.description,
-            data: tx.data,
-            gasLimit: tx.gasLimit,
-          });
-      }
+        // unconfirmed funds
+        txp.excludeUnconfirmedUtxos = !tx.useUnconfirmedFunds;
 
-      if (tx.tokenAddress) {
-        txp.tokenAddress = tx.tokenAddress;
-        if (tx.context !== 'paypro') {
-          for (const output of txp.outputs) {
-            if (!output.data) {
-              output.data = BwcProvider.getInstance()
-                .getCore()
-                .Transactions.get({chain: 'ERC20'})
-                .encodeData({
-                  recipients: [
-                    {address: output.toAddress, amount: output.amount},
-                  ],
-                  tokenAddress: tx.tokenAddress,
-                });
+        const {context} = tx;
+        // outputs
+        txp.outputs = [];
+        switch (context) {
+          case 'multisend':
+            break;
+          case 'paypro':
+            txp.payProUrl = payProUrl;
+            txp.outputs.push({
+              toAddress: tx.toAddress,
+              amount: tx.amount!,
+              message: tx.message,
+              data: tx.data,
+              gasLimit: tx.gasLimit,
+            });
+            break;
+          case 'selectInputs':
+            break;
+          case 'fromReplaceByFee':
+            txp.inputs = tx.inputs;
+            txp.replaceTxByFee = true;
+
+            txp.outputs.push({
+              toAddress: tx.toAddress,
+              amount: tx.amount!,
+              message: tx.description,
+              data: tx.data,
+            });
+            break;
+          case 'speedupBtcReceive':
+            txp.inputs = tx.inputs;
+            txp.excludeUnconfirmedUtxos = true;
+            txp.fee = tx.fee;
+            txp.feeLevel = undefined;
+
+            txp.outputs.push({
+              toAddress: tx.toAddress,
+              amount: tx.amount!,
+              message: tx.description,
+              data: tx.data,
+            });
+            break;
+          default:
+            txp.outputs.push({
+              toAddress: tx.toAddress,
+              amount: tx.amount!,
+              message: tx.description,
+              data: tx.data,
+              gasLimit: tx.gasLimit,
+            });
+        }
+
+        if (tx.tokenAddress) {
+          txp.tokenAddress = tx.tokenAddress;
+          if (tx.context !== 'paypro') {
+            for (const output of txp.outputs) {
+              if (!output.data) {
+                output.data = BwcProvider.getInstance()
+                  .getCore()
+                  .Transactions.get({chain: 'ERC20'})
+                  .encodeData({
+                    recipients: [
+                      {address: output.toAddress, amount: output.amount},
+                    ],
+                    tokenAddress: tx.tokenAddress,
+                  });
+              }
             }
           }
         }
-      }
 
-      resolve(txp);
+        resolve(txp);
+      } catch (error) {
+        reject(error);
+      }
     });
   };
 

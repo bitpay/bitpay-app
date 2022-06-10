@@ -137,8 +137,8 @@ android {
         applicationId "com.bitpay.wallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 91212012
-        versionName "14.1.1"
+        versionCode 91212013
+        versionName "14.2.0"
         missingDimensionStrategy 'react-native-camera', 'mlkit'
     }
     splits {
@@ -230,6 +230,10 @@ dependencies {
     implementation('com.dosh:poweredby:2.8.0') {
       exclude group:'com.squareup.okhttp3', module:'okhttp'
     }
+
+    implementation project(':react-native-advertising-id-bp')
+    // AppsFlyer
+    compile project(':react-native-appsflyer')
     // Dosh SDK requires updated okhttp version
     // If React Native updates their version, this can be removed
     implementation "com.squareup.okhttp3:okhttp:4.8.0"

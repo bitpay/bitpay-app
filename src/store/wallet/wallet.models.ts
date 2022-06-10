@@ -140,6 +140,7 @@ export interface KeyOptions {
   xPrivKey?: string;
   invitationCode?: string;
   seedType?: string;
+  password?: string;
 }
 
 export interface Token {

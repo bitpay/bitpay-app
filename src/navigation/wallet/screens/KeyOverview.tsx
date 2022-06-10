@@ -391,6 +391,15 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
                     // TODO
                     console.log(err);
                   }
+                  if (status.wallet.status === 'complete') {
+                    fullWalletObj.openWallet({}, () => {
+                      navigation.navigate('WalletDetails', {
+                        walletId: item.id,
+                        key,
+                      });
+                    });
+                    return;
+                  }
                   navigation.navigate('Copayers', {
                     wallet: fullWalletObj,
                     status: status.wallet,
@@ -407,7 +416,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
         />
       );
     },
-    [navigation, keys],
+    [key, navigation],
   );
 
   return (
