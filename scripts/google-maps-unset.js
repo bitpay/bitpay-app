@@ -15,15 +15,17 @@ const dotenv = require('dotenv');
     throw result.error;
   }
   
-  const androidManifestPath = `${__dirname}/../android/app/src/main/AndroidManifest.xml`;
-  let androidManifestContent = fs.readFileSync(androidManifestPath, 'utf-8');
+  if (process.env.GOOGLE_MAPS_API_KEY) {
+    const androidManifestPath = `${__dirname}/../android/app/src/main/AndroidManifest.xml`;
+    let androidManifestContent = fs.readFileSync(androidManifestPath, 'utf-8');
 
-  androidManifestContent = androidManifestContent.replace(
-    process.env.GOOGLE_MAPS_API_KEY,
-    'GOOGLE_MAPS_API_KEY_REPLACE_ME',
-  );
+    androidManifestContent = androidManifestContent.replace(
+      process.env.GOOGLE_MAPS_API_KEY,
+      'GOOGLE_MAPS_API_KEY_REPLACE_ME',
+    );
 
-  fs.writeFileSync(androidManifestPath, androidManifestContent);
+    fs.writeFileSync(androidManifestPath, androidManifestContent);
+  }
 
   console.log(
     `${process.env.NODE_ENV.toUpperCase()} Google Maps API key successfully updated.`,
