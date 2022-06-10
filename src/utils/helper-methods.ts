@@ -145,8 +145,14 @@ const getFormatter = (
   } = {},
 ) =>
   new Intl.NumberFormat('en-US', {
-    minimumSignificantDigits: getSignificantDigits(opts.currencyAbbreviation),
-    maximumSignificantDigits: getSignificantDigits(opts.currencyAbbreviation),
+    minimumSignificantDigits:
+      amount === 0
+        ? undefined
+        : getSignificantDigits(opts.currencyAbbreviation),
+    maximumSignificantDigits:
+      amount === 0
+        ? undefined
+        : getSignificantDigits(opts.currencyAbbreviation),
     style: 'currency',
     currency: currency.toLowerCase(),
     ...(opts.customPrecision === 'minimal' &&
