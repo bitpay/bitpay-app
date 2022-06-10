@@ -18,8 +18,8 @@ const dotenv = require('dotenv');
   const doshConfigFileIOS = `${__dirname}/../ios/Dosh.swift`;
   let contentiOS = fs.readFileSync(doshConfigFileIOS, 'utf8');
   contentiOS = contentiOS.replace(
-    'DOSH_APP_ID_REPLACE_ME',
     process.env.DOSH_APP_ID,
+    'DOSH_APP_ID_REPLACE_ME',
   );
   fs.writeFileSync(doshConfigFileIOS, contentiOS);
 
@@ -27,8 +27,8 @@ const dotenv = require('dotenv');
   const doshConfigFileAndroid = `${__dirname}/../android/app/src/main/java/com/bitpay/wallet/DoshModule.java`;
   let contentAndroid = fs.readFileSync(doshConfigFileAndroid, 'utf8');
   contentAndroid = contentAndroid.replace(
-    'DOSH_APP_ID_REPLACE_ME',
     process.env.DOSH_APP_ID,
+    'DOSH_APP_ID_REPLACE_ME',
   );
   fs.writeFileSync(doshConfigFileAndroid, contentAndroid);
 

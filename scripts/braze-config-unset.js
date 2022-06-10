@@ -19,8 +19,8 @@ const dotenv = require('dotenv');
   const brazeConfigFileIOS = `${__dirname}/../ios/BitPayApp/AppDelegate.m`;
   let contentiOS = fs.readFileSync(brazeConfigFileIOS, 'utf8');
   contentiOS = contentiOS.replace(
-    'BRAZE_API_KEY_REPLACE_ME',
     process.env.BRAZE_API_KEY_IOS,
+    'BRAZE_API_KEY_REPLACE_ME',
   );
   fs.writeFileSync(brazeConfigFileIOS, contentiOS);
 
@@ -29,16 +29,16 @@ const dotenv = require('dotenv');
   let contentAndroid = fs.readFileSync(brazeConfigFileAndroid, 'utf8');
 
   contentAndroid = contentAndroid.replace(
-    'BRAZE_API_KEY_REPLACE_ME',
     process.env.BRAZE_API_KEY_ANDROID,
+    'BRAZE_API_KEY_REPLACE_ME',
   );
   contentAndroid = contentAndroid.replace(
-    'BRAZE_API_ENDPOINT_REPLACE_ME',
     process.env.BRAZE_API_ENDPOINT,
+    'BRAZE_API_ENDPOINT_REPLACE_ME',
   );
   contentAndroid = contentAndroid.replace(
-    'BRAZE_SENDER_ID_REPLACE_ME',
     process.env.BRAZE_SENDER_ID,
+    'BRAZE_SENDER_ID_REPLACE_ME',
   );
   fs.writeFileSync(brazeConfigFileAndroid, contentAndroid);
 

@@ -19,8 +19,8 @@ const dotenv = require('dotenv');
   let androidManifestContent = fs.readFileSync(androidManifestPath, 'utf-8');
 
   androidManifestContent = androidManifestContent.replace(
-    'GOOGLE_MAPS_API_KEY_REPLACE_ME',
     process.env.GOOGLE_MAPS_API_KEY,
+    'GOOGLE_MAPS_API_KEY_REPLACE_ME',
   );
 
   fs.writeFileSync(androidManifestPath, androidManifestContent);
