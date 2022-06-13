@@ -92,3 +92,11 @@ export interface FetchReferredUsers {
     referredUsers: ReferredUsersType[];
   };
 }
+
+export interface FetchPinChangeRequestInfoResponse {
+  user: {
+    card: {
+      pinChangeRequestInfo: string;
+    };
+  };
+}
