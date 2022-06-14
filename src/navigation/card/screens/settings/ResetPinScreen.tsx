@@ -48,6 +48,7 @@ const ResetPinScreen: React.VFC<
   );
   const [isStaleUri, setStaleUri] = useState(false && !!uri);
 
+  // only loading the iframe with a valid uri / fresh token
   const iframeSrc: string | null = uri && !isStaleUri ? uri : null;
 
   const goBackToSettingsScreen = useCallback(() => {
@@ -155,17 +156,20 @@ const ResetPinScreen: React.VFC<
 
   useEffect(() => {
     return () => {
+      // since tokens expire, reset the data on unmount
       dispatch(CardActions.resetPinChangeRequestInfo(id));
     };
   }, [dispatch, id]);
 
   useEffect(() => {
+    // token is persisted somehow from a previous fetch, clear it so we can fetch a new one
     if (isStaleUri) {
       dispatch(CardActions.resetPinChangeRequestInfo(id));
       setStaleUri(false);
       return;
     }
 
+    // fetching a fresh token on mount
     if (!uri) {
       dispatch(CardEffects.startFetchPinChangeRequestInfo(id));
       return;
