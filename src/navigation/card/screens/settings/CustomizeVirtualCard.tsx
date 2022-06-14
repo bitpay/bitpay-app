@@ -30,7 +30,6 @@ import CardFront from '../../components/CardFront';
 import CheckIcon from './CheckIcon';
 import * as Styled from './CustomizeVirtualCard.styled';
 import {CardBrand} from '../../../../constants/card';
-import {format} from '../../../../utils/currency';
 
 export interface CustomizeVirtualCardParamList {
   card: Card;
@@ -157,8 +156,6 @@ const CustomizeVirtualCard: React.FC<
     ({CARD}) => CARD.balances[card.id],
   );
 
-  const formattedBalance = format(balance, card.currency.code);
-
   const onSavePress = () => {
     dispatch(CardActions.virtualDesignCurrencyUpdated(selectedDesign));
 
@@ -186,7 +183,7 @@ const CustomizeVirtualCard: React.FC<
             provider={card.provider}
             fiat={card.currency.code}
             fiatSymbol={card.currency.symbol}
-            balance={formattedBalance}
+            balance={balance}
             nickname={card.nickname}
             designCurrency={selectedDesign}
           />
