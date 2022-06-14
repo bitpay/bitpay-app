@@ -11,6 +11,7 @@ import {
   ActivateCardStatus,
   FetchCardsStatus,
   FetchOverviewStatus,
+  FetchPinChangeRequestInfoStatus,
   FetchSettledTransactionsStatus,
   FetchVirtualCardImageUrlsStatus,
   referredUsersStatus,
@@ -227,4 +228,33 @@ export const updateActivateCardStatus = (
 ): CardActionType => ({
   type: CardActionTypes.UPDATE_ACTIVATE_CARD_STATUS,
   payload: status,
+});
+
+export const successFetchPinChangeRequestInfo = (
+  id: string,
+  pinChangeRequestInfo: string,
+): CardActionType => ({
+  type: CardActionTypes.SUCCESS_FETCH_PIN_CHANGE_REQUEST_INFO,
+  payload: {id, pinChangeRequestInfo},
+});
+
+export const failedFetchPinChangeRequestInfo = (
+  id: string,
+  error: string,
+): CardActionType => ({
+  type: CardActionTypes.FAILED_FETCH_PIN_CHANGE_REQUEST_INFO,
+  payload: {id, error},
+});
+
+export const updateFetchPinChangeRequestInfoStatus = (
+  id: string,
+  status: FetchPinChangeRequestInfoStatus,
+): CardActionType => ({
+  type: CardActionTypes.UPDATE_FETCH_PIN_CHANGE_REQUEST_INFO_STATUS,
+  payload: {id, status},
+});
+
+export const resetPinChangeRequestInfo = (id: string): CardActionType => ({
+  type: CardActionTypes.RESET_PIN_CHANGE_REQUEST_INFO,
+  payload: {id},
 });
