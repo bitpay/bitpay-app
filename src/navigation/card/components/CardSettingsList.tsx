@@ -21,7 +21,7 @@ import DownloadHistoryIcon from '../assets/settings/icon-history.svg';
 import LockIcon from '../assets/settings/icon-lock.svg';
 import OffersIcon from '../assets/settings/icon-offers.svg';
 import ReferEarnIcon from '../assets/settings/icon-referearn.svg';
-import {CardStackParamList} from '../CardStack';
+import {CardScreens, CardStackParamList} from '../CardStack';
 import * as Styled from './CardSettingsList.styled';
 import {ToggleSpinnerState} from './ToggleSpinner';
 import {Platform} from 'react-native';
@@ -239,7 +239,21 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
               <Hr />
             </>
-          ) : null}
+          ) : (
+            <>
+              <Styled.SettingsLink
+                Icon={EditCardNameIcon}
+                onPress={() => {
+                  navigation.navigate(CardScreens.RESET_PIN, {
+                    id: card.id,
+                  });
+                }}>
+                {t('Reset PIN')}
+              </Styled.SettingsLink>
+
+              <Hr />
+            </>
+          )}
 
           <Styled.SettingsLink
             Icon={EditCardNameIcon}
