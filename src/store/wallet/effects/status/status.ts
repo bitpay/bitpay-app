@@ -356,7 +356,8 @@ export const startUpdateAllWalletStatusForKey =
   };
 
 export const startUpdateAllKeyAndWalletStatus =
-  (): Effect => async (dispatch, getState) => {
+  ({force}: {force?: boolean}): Effect =>
+  async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
         const {
@@ -370,7 +371,7 @@ export const startUpdateAllKeyAndWalletStatus =
 
         await Promise.all(
           Object.values(keys).map(key => {
-            dispatch(startUpdateAllWalletStatusForKey({key}));
+            dispatch(startUpdateAllWalletStatusForKey({key, force}));
           }),
         );
         dispatch(successUpdateAllKeysAndStatus());
