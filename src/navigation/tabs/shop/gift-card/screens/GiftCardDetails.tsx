@@ -276,11 +276,14 @@ const GiftCardDetails = ({
             />
           ) : undefined
         }>
-        <Amount>
-          {formatFiatAmount(giftCard.amount, giftCard.currency, {
-            currencyDisplay: 'symbol',
-          })}
-        </Amount>
+        <TouchableWithoutFeedback
+          onPress={() => copyToClipboard(`${giftCard.amount}`)}>
+          <Amount>
+            {formatFiatAmount(giftCard.amount, giftCard.currency, {
+              currencyDisplay: 'symbol',
+            })}
+          </Amount>
+        </TouchableWithoutFeedback>
         <RemoteImage
           uri={cardConfig.cardImage}
           height={169}
