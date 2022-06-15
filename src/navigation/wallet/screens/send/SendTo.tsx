@@ -148,7 +148,6 @@ const SendTo = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const {t} = useTranslation();
   const logger = useLogger();
   const route = useRoute<RouteProp<WalletStackParamList, 'SendTo'>>();
 
