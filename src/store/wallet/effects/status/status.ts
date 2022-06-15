@@ -287,7 +287,10 @@ export const startUpdateAllWalletStatusForKey =
                 bulkStatus.find(bStatus => {
                   if (typeof bStatus.tokenAddress === 'string') {
                     return (
-                      bStatus.tokenAddress === wallet.credentials.token?.address
+                      bStatus.tokenAddress ===
+                        wallet.credentials.token?.address &&
+                      `${bStatus.walletId}-${bStatus.tokenAddress}` ===
+                        wallet.id
                     );
                   }
 
