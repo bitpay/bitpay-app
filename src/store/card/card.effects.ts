@@ -624,3 +624,31 @@ export const startAddToGooglePay =
       dispatch(AppActions.showBottomNotificationModal(GeneralError));
     }
   };
+
+export const startFetchPinChangeRequestInfo =
+  (id: string): Effect =>
+  async (dispatch, getState) => {
+    const {APP, BITPAY_ID} = getState();
+    const token = BITPAY_ID.apiToken[APP.network];
+
+    const res = await CardApi.fetchPinChangeRequestInfo(token, id);
+
+    if (!res.data) {
+      let errMsg;
+
+      if (res.errors) {
+        errMsg = res.errors.map(e => e.message).join(', ');
+      } else {
+        errMsg = `An unexpected error occurred while requesting PIN change for ${id}.`;
+      }
+
+      dispatch(CardActions.failedFetchPinChangeRequestInfo(id, errMsg));
+    } else {
+      dispatch(
+        CardActions.successFetchPinChangeRequestInfo(
+          id,
+          res.data.user.card.pinChangeRequestInfo,
+        ),
+      );
+    }
+  };

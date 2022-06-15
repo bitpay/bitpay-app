@@ -5,7 +5,7 @@ import CardComponent from '../../../components/card/Card';
 import ProgressBar from '../../../components/progress-bar/ProgressBar';
 import {BaseText, H3} from '../../../components/styled/Text';
 import {Card} from '../../../store/card/card.models';
-import {Action, SlateDark, White} from '../../../styles/colors';
+import {SlateDark, White} from '../../../styles/colors';
 import ShippingStatusCardIcon from './ShippingStatusCardIcon';
 
 interface ShippingStatusProps {

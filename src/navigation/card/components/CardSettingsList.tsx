@@ -1,7 +1,7 @@
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Linking, View} from 'react-native';
+import {Linking, Platform, View} from 'react-native';
 import styled from 'styled-components/native';
 import {Br, Hr} from '../../../components/styled/Containers';
 import {Link, Smallest} from '../../../components/styled/Text';
@@ -11,20 +11,20 @@ import {AppEffects} from '../../../store/app';
 import {CardActions, CardEffects} from '../../../store/card';
 import {Card} from '../../../store/card/card.models';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import ApplePayIcon from '../assets/settings/icon-apple-pay.svg';
 import CustomizeCardIcon from '../assets/settings/icon-card.svg';
 import EditCardNameIcon from '../assets/settings/icon-cardname.svg';
-import GooglePayIcon from '../assets/settings/icon-google-pay.svg';
-import ApplePayIcon from '../assets/settings/icon-apple-pay.svg';
 import FaqsIcon from '../assets/settings/icon-faqs.svg';
+import GooglePayIcon from '../assets/settings/icon-google-pay.svg';
 import GetHelpIcon from '../assets/settings/icon-help.svg';
 import DownloadHistoryIcon from '../assets/settings/icon-history.svg';
+import ResetPinIcon from '../assets/settings/icon-info.svg';
 import LockIcon from '../assets/settings/icon-lock.svg';
 import OffersIcon from '../assets/settings/icon-offers.svg';
 import ReferEarnIcon from '../assets/settings/icon-referearn.svg';
-import {CardStackParamList} from '../CardStack';
+import {CardScreens, CardStackParamList} from '../CardStack';
 import * as Styled from './CardSettingsList.styled';
 import {ToggleSpinnerState} from './ToggleSpinner';
-import {Platform} from 'react-native';
 
 interface SettingsListProps {
   card: Card;
@@ -239,7 +239,21 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
               <Hr />
             </>
-          ) : null}
+          ) : (
+            <>
+              <Styled.SettingsLink
+                Icon={ResetPinIcon}
+                onPress={() => {
+                  navigation.navigate(CardScreens.RESET_PIN, {
+                    id: card.id,
+                  });
+                }}>
+                {t('Reset PIN')}
+              </Styled.SettingsLink>
+
+              <Hr />
+            </>
+          )}
 
           <Styled.SettingsLink
             Icon={EditCardNameIcon}
