@@ -12,6 +12,7 @@ import {
 } from '../../../../../components/styled/Containers';
 import {LanguageList} from '../../../../../constants/LanguageSelectionList';
 import i18n from 'i18next';
+import {logSegmentEvent} from '../../../../../store/app/app.effects';
 
 const LanguageSettings: React.FC = () => {
   const dispatch = useDispatch();
@@ -21,6 +22,11 @@ const LanguageSettings: React.FC = () => {
     setSelected(lng);
     i18n.changeLanguage(lng);
     dispatch(AppActions.setDefaultLanguage(lng));
+    dispatch(
+      logSegmentEvent('track', 'Saved Language', {
+        language: lng,
+      }),
+    );
   };
   return (
     <SettingsContainer>

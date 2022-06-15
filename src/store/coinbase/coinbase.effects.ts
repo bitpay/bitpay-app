@@ -44,6 +44,7 @@ import {COINBASE_ENV} from '../../api/coinbase/coinbase.constants';
 import {SupportedCurrencyOptions} from '../../constants/SupportedCurrencyOptions';
 import {LogActions} from '../log';
 import {setHomeCarouselConfig} from '../app/app.actions';
+import {logSegmentEvent} from '../app/app.effects';
 
 const isRevokedTokenError = (error: CoinbaseErrorsProps): boolean => {
   return error.errors.some(err => err.id === 'revoked_token');
@@ -133,6 +134,9 @@ export const coinbaseLinkAccount =
       await dispatch(coinbaseUpdateExchangeRate());
       dispatch(setHomeCarouselConfig({id: 'coinbaseBalanceCard', show: true}));
       dispatch(coinbaseGetAccountsAndBalance());
+      dispatch(
+        logSegmentEvent('track', 'Connect to Coinbase success', {}, true),
+      );
     } catch (error: CoinbaseErrorsProps | any) {
       dispatch(accessTokenFailed(error));
       dispatch(LogActions.error(coinbaseParseErrorToString(error)));

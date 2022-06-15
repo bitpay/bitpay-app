@@ -34,6 +34,7 @@ import {LightBlack, NeutralSlate, Slate} from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import WalletIcons from '../../../wallet/components/WalletIcons';
 import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../../store/app/app.effects';
 
 const InputContainer = styled.View<{hideInput?: boolean}>`
   display: ${({hideInput}) => (!hideInput ? 'flex' : 'none')};
@@ -294,6 +295,11 @@ const ContactsAdd: React.FC = () => {
   );
 
   const goToScan = () => {
+    dispatch(
+      logSegmentEvent('track', 'Open Scanner', {
+        context: 'contactsAdd',
+      }),
+    );
     navigation.navigate('Scan', {
       screen: 'Root',
       params: {

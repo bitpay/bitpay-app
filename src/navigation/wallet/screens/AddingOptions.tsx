@@ -19,6 +19,8 @@ import {WalletStackParamList} from '../WalletStack';
 import MultisigOptions from './MultisigOptions';
 import {Option} from './CreationOptions';
 import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../store/app/app.effects';
+import {useAppDispatch} from '../../../utils/hooks';
 
 export type AddingOptionsParamList = {
   key: Key;
@@ -27,6 +29,7 @@ export type AddingOptionsParamList = {
 const AddingOptions: React.FC = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
   const route = useRoute<RouteProp<WalletStackParamList, 'AddingOptions'>>();
   const {key} = route.params;
   const [showMultisigOptions, setShowMultisigOptions] = useState(false);
@@ -46,11 +49,17 @@ const AddingOptions: React.FC = () => {
       description: t(
         'Add coins like Bitcoin and Dogecoin, and also tokens like USDC and PAX',
       ),
-      cta: () =>
+      cta: () => {
+        dispatch(
+          logSegmentEvent('track', 'Clicked Create Basic Wallet', {
+            context: 'AddingOptions',
+          }),
+        );
         navigation.navigate('Wallet', {
           screen: 'CurrencySelection',
           params: {context: 'addWallet', key},
-        }),
+        });
+      },
     },
     {
       id: 'multisig',

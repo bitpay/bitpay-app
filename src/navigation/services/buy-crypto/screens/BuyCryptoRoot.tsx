@@ -38,11 +38,11 @@ import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.s
 import {simplexSupportedCoins} from '../utils/simplex-utils';
 import {wyreSupportedCoins} from '../utils/wyre-utils';
 import {sleep} from '../../../../utils/helper-methods';
-import analytics from '@segment/analytics-react-native';
 import {AppActions} from '../../../../store/app';
 import {IsERCToken} from '../../../../store/wallet/utils/currency';
 import {isPaymentMethodSupported} from '../utils/buy-crypto-utils';
 import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../../store/app/app.effects';
 
 const CtaContainer = styled.View`
   margin: 20px 15px;
@@ -60,9 +60,6 @@ const BuyCryptoRoot: React.FC<
   const theme = useTheme();
   const logger = useLogger();
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
-  );
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
 
@@ -294,14 +291,20 @@ const BuyCryptoRoot: React.FC<
   };
 
   const continueToViewOffers = () => {
-    analytics.track('BitPay App - Buy Crypto "View Offers"', {
-      walletId: selectedWallet!.id,
-      fiatAmount: amount,
-      fiatCurrency,
-      paymentMethod: selectedPaymentMethod.method,
-      coin: selectedWallet!.currencyAbbreviation,
-      appUser: user?.eid || '',
-    });
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Buy Crypto "View Offers"',
+        {
+          walletId: selectedWallet!.id,
+          fiatAmount: amount,
+          fiatCurrency,
+          paymentMethod: selectedPaymentMethod.method,
+          coin: selectedWallet!.currencyAbbreviation,
+        },
+        true,
+      ),
+    );
 
     navigation.navigate('BuyCryptoOffers', {
       amount,

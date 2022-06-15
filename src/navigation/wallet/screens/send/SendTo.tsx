@@ -34,7 +34,10 @@ import {
   PayProPaymentOption,
 } from '../../../../store/wallet/effects/paypro/paypro';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
-import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissOnGoingProcessModal,
@@ -369,6 +372,11 @@ const SendTo = () => {
             activeOpacity={0.75}
             onPress={() => {
               haptic('impactLight');
+              dispatch(
+                logSegmentEvent('track', 'Open Scanner', {
+                  context: 'SendTo',
+                }),
+              );
               navigation.navigate('Scan', {
                 screen: 'Root',
                 params: {

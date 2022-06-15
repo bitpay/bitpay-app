@@ -26,7 +26,10 @@ import {
 } from '../../../store/app/app.actions';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
@@ -105,6 +108,17 @@ const FileOrText = () => {
         walletTermsAccepted,
         key,
       });
+      dispatch(
+        logSegmentEvent(
+          'track',
+          'Import Key success',
+          {
+            context: route.params?.context || '',
+            type: 'FileOrText',
+          },
+          true,
+        ),
+      );
       dispatch(dismissOnGoingProcessModal());
     } catch (e: any) {
       logger.error(e.message);

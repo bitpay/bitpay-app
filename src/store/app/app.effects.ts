@@ -22,7 +22,7 @@ import {startMigration, startWalletStoreInit} from '../wallet/effects';
 import {AppActions} from './';
 import {AppIdentity} from './app.models';
 import RNBootSplash from 'react-native-bootsplash';
-import analytics from '@segment/analytics-react-native';
+import analytics, {JsonMap} from '@segment/analytics-react-native';
 import {SEGMENT_API_KEY, APPSFLYER_API_KEY, APPSFLYER_APP_ID} from '@env';
 import appsFlyer from 'react-native-appsflyer';
 import {requestTrackingPermission} from 'react-native-tracking-transparency';
@@ -389,6 +389,31 @@ export const askForTrackingPermissionAndEnableSdks =
         dispatch(LogActions.error('Segment setup failed'));
         dispatch(LogActions.error(JSON.stringify(err)));
       }
+    }
+  };
+
+export const logSegmentEvent =
+  (
+    eventType: 'screen' | 'track',
+    eventKey: string,
+    data: JsonMap | undefined = {},
+    includeAppUser?: boolean,
+  ): Effect<void> =>
+  (dispatch, getState) => {
+    if (includeAppUser) {
+      const {BITPAY_ID, APP} = getState();
+      const user = BITPAY_ID.user[APP.network];
+      data.appUser = user?.eid || '';
+    }
+
+    switch (eventType) {
+      case 'screen':
+        analytics.screen(eventKey, data);
+        break;
+
+      case 'track':
+        analytics.track(`BitPay App - ${eventKey}`, data);
+        break;
     }
   };
 

@@ -9,7 +9,10 @@ import {
   setShowKeyMigrationFailureModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
-import {startRefreshBrazeContent} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startRefreshBrazeContent,
+} from '../../../store/app/app.effects';
 import {
   selectBrazeDoMore,
   selectBrazeQuickLinks,
@@ -62,9 +65,6 @@ const HomeRoot = () => {
     ({APP}) => APP.keyMigrationFailureModalHasBeenShown,
   );
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
-  );
   const hasKeys = Object.values(keys).length;
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups.length > 0;
@@ -228,12 +228,15 @@ const HomeRoot = () => {
                           {
                             text: 'Add funds',
                             action: () => {
-                              analytics.track(
-                                'BitPay App - Clicked Buy Crypto',
-                                {
-                                  from: 'HomeRoot',
-                                  appUser: user?.eid || '',
-                                },
+                              dispatch(
+                                logSegmentEvent(
+                                  'track',
+                                  'Clicked Buy Crypto',
+                                  {
+                                    context: 'HomeRoot',
+                                  },
+                                  true,
+                                ),
                               );
                               navigation.navigate('Wallet', {
                                 screen: 'Amount',

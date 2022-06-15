@@ -13,7 +13,7 @@ import Dosh from '../../lib/dosh';
 import {isAxiosError, isRateLimitError} from '../../utils/axios';
 import {generateSalt, hashPassword} from '../../utils/password';
 import {AppActions, AppEffects} from '../app/';
-import {startOnGoingProcessModal} from '../app/app.effects';
+import {logSegmentEvent, startOnGoingProcessModal} from '../app/app.effects';
 import {CardEffects} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
@@ -168,6 +168,8 @@ export const startLogin =
       dispatch(
         LogActions.info('Successfully authenticated BitPayID credentials.'),
       );
+
+      dispatch(logSegmentEvent('track', 'Log In User success', {}, true));
 
       // start pairing
       const secret = await AuthApi.generatePairingCode(
@@ -409,6 +411,8 @@ export const startDisconnectBitPayId =
       }
 
       dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
+
+      dispatch(logSegmentEvent('track', 'Log Out User success', {}, true));
     } catch (err) {
       // log but swallow this error
       dispatch(LogActions.error('An error occurred while logging out.'));

@@ -64,7 +64,10 @@ import {
   ArrowContainer,
 } from '../styled/SwapCryptoCheckout.styled';
 import {startGetRates} from '../../../../store/wallet/effects';
-import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../../store/app/app.effects';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -77,7 +80,6 @@ import {
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 import {SwapCryptoActions} from '../../../../store/swap-crypto';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
-import analytics from '@segment/analytics-react-native';
 import {useTranslation} from 'react-i18next';
 
 // Styled
@@ -132,9 +134,6 @@ const ChangellyCheckout: React.FC = () => {
   const [paymentExpired, setPaymentExpired] = useState(false);
   const key = useAppSelector(
     ({WALLET}) => WALLET.keys[fromWalletSelected.keyId],
-  );
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
@@ -526,15 +525,21 @@ const ChangellyCheckout: React.FC = () => {
 
     logger.debug('Saved swap with: ' + JSON.stringify(newData));
 
-    analytics.track('BitPay App - Successful Crypto Swap', {
-      fromWalletId: fromWalletSelected.id,
-      toWalletId: toWalletSelected.id,
-      fromCoin: fromWalletSelected.currencyAbbreviation,
-      toCoin: toWalletSelected.currencyAbbreviation,
-      amountFrom: amountFrom,
-      exchange: 'changelly',
-      appUser: user?.eid || '',
-    });
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Successful Crypto Swap',
+        {
+          fromWalletId: fromWalletSelected.id,
+          toWalletId: toWalletSelected.id,
+          fromCoin: fromWalletSelected.currencyAbbreviation,
+          toCoin: toWalletSelected.currencyAbbreviation,
+          amountFrom: amountFrom,
+          exchange: 'changelly',
+        },
+        true,
+      ),
+    );
   };
 
   const showError = async (msg?: string, title?: string, actions?: any) => {

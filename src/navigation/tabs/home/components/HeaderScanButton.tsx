@@ -10,6 +10,8 @@ import {
   NeutralSlate,
 } from '../../../../styles/colors';
 import {useTheme} from 'styled-components/native';
+import {logSegmentEvent} from '../../../../store/app/app.effects';
+import {useAppDispatch} from '../../../../utils/hooks';
 
 const ScanIcon = () => {
   const theme = useTheme();
@@ -104,11 +106,19 @@ const ScanIcon = () => {
 
 const ScanButton: React.FC = () => {
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
 
   return (
     <HeaderButtonContainer>
       <TouchableOpacity
-        onPress={() => navigation.navigate('Scan', {screen: 'Root'})}>
+        onPress={() => {
+          dispatch(
+            logSegmentEvent('track', 'Open Scanner', {
+              context: 'HeaderScanButton',
+            }),
+          );
+          navigation.navigate('Scan', {screen: 'Root'});
+        }}>
         <ScanIcon />
       </TouchableOpacity>
     </HeaderButtonContainer>

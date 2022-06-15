@@ -28,6 +28,7 @@ import {updatePortfolioBalance} from '../../../../../store/wallet/wallet.actions
 import {getPriceHistory} from '../../../../../store/wallet/effects';
 import {batch} from 'react-redux';
 import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../../../store/app/app.effects';
 
 const AltCurrencySettingsContainer = styled.SafeAreaView`
   margin-top: 20px;
@@ -114,6 +115,11 @@ const AltCurrencySettings = () => {
             onPress={async () => {
               Keyboard.dismiss();
               navigation.goBack();
+              dispatch(
+                logSegmentEvent('track', 'Saved Display Currency', {
+                  currency: item.isoCode,
+                }),
+              );
               InteractionManager.runAfterInteractions(() => {
                 batch(() => {
                   dispatch(setDefaultAltCurrency(item));
