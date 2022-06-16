@@ -15,7 +15,7 @@ import {
   White,
 } from '../../../styles/colors';
 import haptic from '../../haptic-feedback/haptic';
-import {Platform, ScrollView} from 'react-native';
+import {Platform} from 'react-native';
 import SuccessSvg from '../../../../assets/img/success.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
 import WarningSvg from '../../../../assets/img/warning.svg';
