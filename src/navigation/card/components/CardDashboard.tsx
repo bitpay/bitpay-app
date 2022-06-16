@@ -156,12 +156,12 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
       dispatch(
         showBottomNotificationModal({
           type: 'warning',
-          title: 'No funds available',
-          message: 'You do not have any funds to send.',
+          title: t('No funds available'),
+          message: t('You do not have any funds to send.'),
           enableBackdropDismiss: true,
           actions: [
             {
-              text: 'Add funds',
+              text: t('Add funds'),
               action: () => {
                 analytics.track('BitPay App - Clicked Buy Crypto', {
                   from: 'CardDashboard',
@@ -187,7 +187,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
               primary: true,
             },
             {
-              text: 'Got It',
+              text: t('Got It'),
               action: () => null,
               primary: false,
             },
@@ -258,8 +258,9 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
             <GhostImg />
           </EmptyGhostContainer>
           <EmptyListDescription>
-            Load your cash account and get instant access to spending at
-            thousands of merchants.
+            {t(
+              'Load your cash account and get instant access to spending at thousands of merchants.',
+            )}
           </EmptyListDescription>
         </EmptyListContainer>
       ),
@@ -398,7 +399,9 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
             {!isLoadingInitial ? (
               <TransactionListHeader>
                 <TransactionListHeaderTitle>
-                  {dashboardTransactions.length <= 0 ? null : 'Recent Activity'}
+                  {dashboardTransactions.length <= 0
+                    ? null
+                    : t('Recent Activity')}
                 </TransactionListHeaderTitle>
 
                 <TransactionListHeaderIcon onPress={() => onRefresh()}>

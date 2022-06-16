@@ -15,7 +15,7 @@ import {
 import {ActiveOpacity} from '../styled/Containers';
 import {BaseText} from '../styled/Text';
 
-type InputType = 'password' | 'phone' | 'search';
+type InputType = 'password' | 'phone' | 'search' | 'number';
 
 const INPUT_HEIGHT = 55;
 const SEPARATOR_HEIGHT = 37;

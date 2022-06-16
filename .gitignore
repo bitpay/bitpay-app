@@ -67,3 +67,6 @@ buck-out/
 #
 .jest/
 coverage/
+
+# Crowdin
+crowdin-credentials.yml

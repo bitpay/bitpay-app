@@ -16,12 +16,14 @@ import {keyBackupRequired} from '../../home/components/Crypto';
 import {useAppDispatch} from '../../../../utils/hooks';
 import {View} from 'react-native';
 import {Key} from '../../../../store/wallet/wallet.models';
+import {useTranslation} from 'react-i18next';
 
 const CreateOrImportLink = styled(Link)`
   font-weight: 500;
   font-size: 18px;
 `;
 const WalletsAndKeys = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -52,7 +54,7 @@ const WalletsAndKeys = () => {
                   </Button>
                 ) : (
                   <Button buttonType={'pill'} onPress={() => onPressKey(key)}>
-                    Needs Backup
+                    {t('Needs Backup')}
                   </Button>
                 )}
               </Setting>
@@ -66,7 +68,7 @@ const WalletsAndKeys = () => {
           navigation.navigate('Wallet', {screen: 'CreationOptions'})
         }
         activeOpacity={ActiveOpacity}>
-        <CreateOrImportLink>Create or Import Key</CreateOrImportLink>
+        <CreateOrImportLink>{t('Create or Import Key')}</CreateOrImportLink>
       </Setting>
     </SettingsComponent>
   );

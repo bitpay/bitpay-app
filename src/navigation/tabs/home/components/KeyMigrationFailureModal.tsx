@@ -14,6 +14,7 @@ import {Linking} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {setShowKeyMigrationFailureModal} from '../../../../store/app/app.actions';
+import {useTranslation} from 'react-i18next';
 
 const KeyMigrationFailureModalContainer = styled.View`
   justify-content: center;
@@ -37,6 +38,7 @@ const CtaContainer = styled.View`
 `;
 
 const KeyMigrationFailureModal: React.FC = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const showKeyMigrationFailureModal = useAppSelector(
@@ -70,25 +72,25 @@ const KeyMigrationFailureModal: React.FC = () => {
         <TitleContainer style={{marginTop: 10, marginBottom: 20}}>
           <TitleRow>
             <ErrorSvg width={25} height={25} />
-            <Title>Problem Importing Keys</Title>
+            <Title>{t('Problem Importing Keys')}</Title>
           </TitleRow>
         </TitleContainer>
         <TextAlign align={'left'}>
           <Paragraph>
-            There was a problem importing your keys. You can either import your
-            keys with your 12-word Recovery Phrase or you can restore to the
-            previous version of the BitPay app.
+            {t(
+              'There was a problem importing your keys. You can either import your keys with your 12-word Recovery Phrase or you can restore to the previous version of the BitPay app.',
+            )}
           </Paragraph>
         </TextAlign>
         <CtaContainer>
           <ActionContainer style={{marginTop: 10, marginBottom: 15}}>
             <Button buttonStyle={'primary'} onPress={getHelp}>
-              Get Help
+              {t('Get Help')}
             </Button>
           </ActionContainer>
           <ActionContainer>
             <Button buttonStyle={'secondary'} onPress={gotoImport}>
-              Import Recovery Phrase
+              {t('Import Recovery Phrase')}
             </Button>
           </ActionContainer>
         </CtaContainer>

@@ -25,6 +25,7 @@ import {
 import Clipboard from '@react-native-community/clipboard';
 import {useAppDispatch} from '../../../utils/hooks';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
+import {useTranslation} from 'react-i18next';
 
 const MisunderstoodOutputsText = styled(H7)`
   margin-bottom: 5px;
@@ -51,6 +52,7 @@ const MultiOptionsMessage = styled(H7)`
 `;
 
 const MultipleOutputsTx = ({tx}: {tx: any}) => {
+  const {t} = useTranslation();
   let {coin, network} = tx;
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const dispatch = useAppDispatch();
@@ -87,7 +89,7 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
     );
 
     output.addressToShow =
-      addressToShow === 'false' ? 'Unparsed address' : addressToShow;
+      addressToShow === 'false' ? t('Unparsed address') : addressToShow;
 
     output.contactName = GetContactName(outputAddr, contactList);
   });
@@ -118,10 +120,12 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
     <>
       <DetailContainer>
         <DetailRow>
-          <H7>Sending to</H7>
+          <H7>{t('Sending to')}</H7>
 
           <DetailColumn>
-            {tx.misunderstoodOutputs ? <H7>Multiple recipients</H7> : null}
+            {tx.misunderstoodOutputs ? (
+              <H7>{t('Multiple recipients')}</H7>
+            ) : null}
 
             {!tx.hasMultiplesOutputs ? (
               <DetailRow>
@@ -194,7 +198,9 @@ const MultipleOutputsTx = ({tx}: {tx: any}) => {
 
       {tx.misunderstoodOutputs ? (
         <MisunderstoodOutputsText>
-          There are some misunderstood outputs, please view on blockchain.
+          {t(
+            'There are some misunderstood outputs, please view on blockchain.',
+          )}
         </MisunderstoodOutputsText>
       ) : null}
 

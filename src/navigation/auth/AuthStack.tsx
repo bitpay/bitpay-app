@@ -28,6 +28,7 @@ import VerifyEmailScreen, {
 import ForgotPassword, {
   ForgotPasswordParamList,
 } from './screens/ForgotPassword';
+import {useTranslation} from 'react-i18next';
 
 export enum AuthScreens {
   LOGIN = 'Login',
@@ -51,6 +52,7 @@ export type AuthStackParamList = {
 
 const Auth = createStackNavigator<AuthStackParamList>();
 const AuthStack: React.FC = () => {
+  const {t} = useTranslation();
   const dispatch = useDispatch();
   const loginStatus = useSelector<RootState, LoginStatus>(
     ({BITPAY_ID}) => BITPAY_ID.loginStatus,
@@ -75,21 +77,21 @@ const AuthStack: React.FC = () => {
         name={AuthScreens.LOGIN}
         component={LoginScreen}
         options={{
-          headerTitle: () => <HeaderTitle>Welcome Back!</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Welcome Back!')}</HeaderTitle>,
         }}
       />
       <Auth.Screen
         name={AuthScreens.CREATE_ACCOUNT}
         component={CreateAccountScreen}
         options={{
-          headerTitle: () => <HeaderTitle>Create Account</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Create Account')}</HeaderTitle>,
         }}
       />
       <Auth.Screen
         name={AuthScreens.VERIFY_EMAIL}
         component={VerifyEmailScreen}
         options={{
-          headerTitle: () => <HeaderTitle>Check Your Inbox</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Check Your Inbox')}</HeaderTitle>,
         }}
       />
       {isTwoFactorPending && (
@@ -98,7 +100,9 @@ const AuthStack: React.FC = () => {
             name={AuthScreens.TWO_FACTOR_AUTH}
             component={TwoFactorAuthentication}
             options={{
-              headerTitle: () => <HeaderTitle>2-Step Verification</HeaderTitle>,
+              headerTitle: () => (
+                <HeaderTitle>{t('2-Step Verification')}</HeaderTitle>
+              ),
             }}
           />
           <Auth.Screen
@@ -106,7 +110,7 @@ const AuthStack: React.FC = () => {
             component={TwoFactorPairing}
             options={{
               headerTitle: () => (
-                <HeaderTitle>Additional Verification</HeaderTitle>
+                <HeaderTitle>{t('Additional Verification')}</HeaderTitle>
               ),
             }}
           />
@@ -117,7 +121,9 @@ const AuthStack: React.FC = () => {
           name={AuthScreens.EMAIL_AUTH}
           component={EmailAuthentication}
           options={{
-            headerTitle: () => <HeaderTitle>Check Your Inbox</HeaderTitle>,
+            headerTitle: () => (
+              <HeaderTitle>{t('Check Your Inbox')}</HeaderTitle>
+            ),
           }}
         />
       )}
@@ -125,7 +131,7 @@ const AuthStack: React.FC = () => {
         name={AuthScreens.FORGOT_PASSWORD}
         component={ForgotPassword}
         options={{
-          headerTitle: () => <HeaderTitle>Reset Password</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Reset Password')}</HeaderTitle>,
         }}
       />
     </Auth.Navigator>

@@ -12,6 +12,7 @@ import {
 import {CloseSvg} from '../components/svg/ShopTabSvgs';
 import {Action, Cloud, LightBlack} from '../../../../styles/colors';
 import RemoteImage from './RemoteImage';
+import {useTranslation} from 'react-i18next';
 
 const ModalHeader = styled.View`
   flex-direction: row;
@@ -68,6 +69,7 @@ const PhoneCountryModal = ({
   phoneCountryCodes: PhoneCountryCode[];
   visible: boolean;
 }) => {
+  const {t} = useTranslation();
   const theme = useTheme();
   const [searchValue, setSearchValue] = useState('');
   const [searchResults, setSearchResults] = useState(phoneCountryCodes);
@@ -87,12 +89,12 @@ const PhoneCountryModal = ({
             <CloseSvg theme={theme} />
           </NavIconButtonContainer>
         </TouchableWithoutFeedback>
-        <ModalTitle>Select Country</ModalTitle>
+        <ModalTitle>{t('Select Country')}</ModalTitle>
         <NavIconButtonContainer style={{opacity: 0}} />
       </ModalHeader>
       <SearchContainer>
         <SearchBox
-          placeholder={'Search countries'}
+          placeholder={t('Search countries')}
           theme={theme}
           onChangeText={(text: string) => {
             setSearchValue(text);

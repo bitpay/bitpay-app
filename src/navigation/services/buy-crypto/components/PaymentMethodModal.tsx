@@ -19,6 +19,7 @@ import SimplexLogo from '../../../../components/icons/external-services/simplex/
 import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 import {Action, LightBlack, SlateDark, White} from '../../../../styles/colors';
 import {useAppSelector} from '../../../../utils/hooks';
+import {useTranslation} from 'react-i18next';
 
 interface PaymentMethodsModalProps {
   isVisible: boolean;
@@ -78,6 +79,7 @@ const PaymentMethodsModal = ({
   coin,
   currency,
 }: PaymentMethodsModalProps) => {
+  const {t} = useTranslation();
   const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
 
   const EnabledPaymentMethods = getEnabledPaymentMethods(
@@ -93,13 +95,13 @@ const PaymentMethodsModal = ({
       <ModalContainer>
         <SafeAreaView style={{height: '100%'}}>
           <ModalHeader>
-            <ModalHeaderText>Payment Method</ModalHeaderText>
+            <ModalHeaderText>{t('Payment Method')}</ModalHeaderText>
             <ModalHeaderRight>
               <Button
                 buttonType={'pill'}
                 buttonStyle={'cancel'}
                 onPress={onBackdropPress ? onBackdropPress : () => {}}>
-                Close
+                {t('Close')}
               </Button>
             </ModalHeaderRight>
           </ModalHeader>
@@ -125,7 +127,7 @@ const PaymentMethodsModal = ({
 
                       <PaymentMethodProvider>
                         <PaymentMethodProviderText>
-                          Provided by
+                          {t('Provided by')}
                         </PaymentMethodProviderText>
                         {coin &&
                         currency &&

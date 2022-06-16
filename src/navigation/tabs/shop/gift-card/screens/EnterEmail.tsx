@@ -2,6 +2,7 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useRef} from 'react';
 import {Controller, useForm} from 'react-hook-form';
+import {useTranslation} from 'react-i18next';
 import {Keyboard, TextInput} from 'react-native';
 import styled from 'styled-components/native';
 import * as yup from 'yup';
@@ -29,6 +30,7 @@ const schema = yup.object().shape({
 const EnterEmail = ({
   route,
 }: StackScreenProps<GiftCardStackParamList, 'EnterEmail'>) => {
+  const {t} = useTranslation();
   const {onSubmit, initialEmail} = route.params;
   const emailRef = useRef<TextInput>(null);
 
@@ -48,7 +50,9 @@ const EnterEmail = ({
   return (
     <AuthFormContainer>
       <AuthFormParagraph>
-        Your email address will be used for payment notifications and receipts.
+        {t(
+          'Your email address will be used for payment notifications and receipts.',
+        )}
       </AuthFormParagraph>
       <AuthRowContainer>
         <Controller
@@ -57,12 +61,12 @@ const EnterEmail = ({
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
               placeholder={'satoshi@bitpay.com'}
-              label={'EMAIL ADDRESS'}
+              label={t('EMAIL ADDRESS')}
               onBlur={onBlur}
               onChangeText={(text: string) => onChange(text)}
               error={
                 errors.email?.message
-                  ? 'Please enter a valid email address.'
+                  ? t('Please enter a valid email address.')
                   : undefined
               }
               keyboardType={'email-address'}
@@ -78,7 +82,7 @@ const EnterEmail = ({
 
       <AuthActionsContainer>
         <PrimaryActionContainer>
-          <Button onPress={onFormSubmit}>Continue</Button>
+          <Button onPress={onFormSubmit}>{t('Continue')}</Button>
         </PrimaryActionContainer>
       </AuthActionsContainer>
     </AuthFormContainer>

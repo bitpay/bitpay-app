@@ -215,7 +215,9 @@ const SettingsHomeScreen: React.FC<SettingsHomeProps> = ({route}) => {
               <BitPayIdUserText>{user.email}</BitPayIdUserText>
             </BitPayIdUserContainer>
           ) : (
-            <BitPayIdSettingTitle>Log In or Sign Up</BitPayIdSettingTitle>
+            <BitPayIdSettingTitle>
+              {t('Log In or Sign Up')}
+            </BitPayIdSettingTitle>
           )}
           <SettingIcon suffix>
             <AngleRight />

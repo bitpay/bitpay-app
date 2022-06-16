@@ -57,6 +57,7 @@ import {ShopActions, ShopEffects} from '../../../../../store/shop';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {DeviceEmitterEvents} from '../../../../../constants/device-emitter-events';
 import Icons from '../../../../wallet/components/WalletIcons';
+import {useTranslation} from 'react-i18next';
 
 const maxWidth = 320;
 
@@ -129,27 +130,11 @@ const ArchiveButtonContainer = styled.View`
   margin-top: 15px;
 `;
 
-const showCopiedNotification = (copiedValue: string, cardConfig: CardConfig) =>
-  AppActions.showBottomNotificationModal({
-    type: 'success',
-    title: `Copied: ${copiedValue}`,
-    message:
-      cardConfig.redeemInstructions ||
-      `Paste this code on ${cardConfig.website}. This gift card cannot be recovered if your claim code is lost.`,
-    enableBackdropDismiss: true,
-    actions: [
-      {
-        text: 'GOT IT',
-        action: () => null,
-        primary: true,
-      },
-    ],
-  });
-
 const GiftCardDetails = ({
   route,
   navigation,
 }: StackScreenProps<GiftCardStackParamList, 'GiftCardDetails'>) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const [refreshing, setRefreshing] = useState(false);
@@ -206,15 +191,38 @@ const GiftCardDetails = ({
     });
   });
 
+  const showCopiedNotification = (
+    copiedValue: string,
+    cardConfig: CardConfig,
+  ) =>
+    AppActions.showBottomNotificationModal({
+      type: 'success',
+      title: t('Copied: ', {copiedValue}),
+      message:
+        cardConfig.redeemInstructions ||
+        t(
+          'Paste this code on . This gift card cannot be recovered if your claim code is lost.',
+          {website: cardConfig.website},
+        ),
+      enableBackdropDismiss: true,
+      actions: [
+        {
+          text: t('GOT IT'),
+          action: () => null,
+          primary: true,
+        },
+      ],
+    });
+
   const assetOptions: Array<Option> = [
     {
       img: <ArchiveSvg theme={theme} />,
-      description: giftCard.archived ? 'Unarchive Card' : 'Archive Card',
+      description: giftCard.archived ? t('Unarchive Card') : t('Archive Card'),
       onPress: () => toggleArchiveStatus(),
     },
     {
       img: <InvoiceSvg theme={theme} />,
-      description: 'View Invoice',
+      description: t('View Invoice'),
       onPress: () =>
         Linking.openURL(
           `${BASE_BITPAY_URLS[APP_NETWORK]}/invoice?id=${giftCard.invoiceId}`,
@@ -222,7 +230,7 @@ const GiftCardDetails = ({
     },
     {
       img: <ExternalLinkSvg theme={theme} />,
-      description: 'Share Claim Code',
+      description: t('Share Claim Code'),
       onPress: async () => {
         await sleep(500);
         Share.share(
@@ -294,7 +302,7 @@ const GiftCardDetails = ({
           <>
             {cardConfig.defaultClaimCodeType !== 'link' ? (
               <ClaimCodeBox>
-                <Paragraph>Claim Code</Paragraph>
+                <Paragraph>{t('Claim Code')}</Paragraph>
                 {giftCard.barcodeImage &&
                 cardConfig.defaultClaimCodeType === 'barcode' ? (
                   <ScannableCodeContainer
@@ -319,7 +327,7 @@ const GiftCardDetails = ({
                 {giftCard.pin ? (
                   <>
                     <Divider />
-                    <Paragraph>Pin</Paragraph>
+                    <Paragraph>{t('Pin')}</Paragraph>
                     <TouchableWithoutFeedback
                       onPress={() => copyToClipboard(giftCard.pin as string)}>
                       <ClaimCode>{giftCard.pin}</ClaimCode>
@@ -327,14 +335,14 @@ const GiftCardDetails = ({
                   </>
                 ) : (
                   <Paragraph style={{marginBottom: 30}}>
-                    Created <TimeAgo time={giftCard.date} />
+                    {t('Created')} <TimeAgo time={giftCard.date} />
                   </Paragraph>
                 )}
               </ClaimCodeBox>
             ) : null}
             {giftCard.pin || cardConfig.defaultClaimCodeType === 'link' ? (
               <Paragraph style={{marginTop: 15}}>
-                Created <TimeAgo time={giftCard.date} />
+                {t('Created')} <TimeAgo time={giftCard.date} />
               </Paragraph>
             ) : null}
             {!giftCard.archived ||
@@ -350,7 +358,7 @@ const GiftCardDetails = ({
                       )
                     }
                     buttonStyle={'primary'}>
-                    Redeem Now
+                    {t('Redeem Now')}
                   </Button>
                 ) : cardConfig.defaultClaimCodeType === 'link' ? (
                   <Button
@@ -364,7 +372,7 @@ const GiftCardDetails = ({
                   <Button
                     onPress={() => copyToClipboard(giftCard.claimCode)}
                     buttonStyle={'primary'}>
-                    Copy Code
+                    {t('Copy Code')}
                   </Button>
                 )}
                 {!giftCard.archived ? (
@@ -372,7 +380,7 @@ const GiftCardDetails = ({
                     <Button
                       onPress={() => toggleArchiveStatus()}
                       buttonStyle={'secondary'}>
-                      I've used this card
+                      {t("I've used this card")}
                     </Button>
                   </ArchiveButtonContainer>
                 ) : null}
@@ -385,26 +393,29 @@ const GiftCardDetails = ({
           <ClaimCodeBox>
             {giftCard.status === 'PENDING' ? (
               <TextAlign align="center">
-                <Paragraph>Awaiting payment to confirm</Paragraph>
+                <Paragraph>{t('Awaiting payment to confirm')}</Paragraph>
               </TextAlign>
             ) : (
               <>
                 <TextAlign align="center">
                   <Paragraph>
-                    Claim code not yet available. Please check back later.
+                    {t(
+                      'Claim code not yet available. Please check back later.',
+                    )}
                   </Paragraph>
                 </TextAlign>
                 <SectionSpacer />
                 <TextAlign align="center">
                   <Paragraph>
-                    If this issue persists for more than 2 hours, please&nbsp;
+                    {t('If this issue persists for more than 2 hours, please')}
+                    &nbsp;
                     <Link
                       onPress={() =>
                         Linking.openURL(
                           'https://bitpay.com/request-help/wizard',
                         )
                       }>
-                      contact BitPay Support
+                      {t('contact BitPay Support')}
                     </Link>
                     .
                   </Paragraph>
@@ -416,7 +427,7 @@ const GiftCardDetails = ({
         )}
         {giftCard.status === 'PENDING' ? (
           <Paragraph style={{marginTop: 15}}>
-            Created <TimeAgo time={giftCard.date} />
+            {t('Created')} <TimeAgo time={giftCard.date} />
           </Paragraph>
         ) : null}
         <Terms>{cardConfig.terms}</Terms>

@@ -39,6 +39,7 @@ import {Key} from '../../../store/wallet/wallet.models';
 import {WalletStackParamList} from '../WalletStack';
 import {backupRedirect} from './Backup';
 import {StackScreenProps} from '@react-navigation/stack';
+import {useTranslation} from 'react-i18next';
 
 type VerifyPhraseScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -98,6 +99,7 @@ const WordSelectorText = styled(BaseText)`
 `;
 
 const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {params} = route;
@@ -110,7 +112,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
-      headerTitle: () => <HeaderTitle>Verify your Phrase</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Verify your Phrase')}</HeaderTitle>,
       headerLeft: () => null,
       headerRight: () => (
         <HeaderRightContainer>
@@ -132,13 +134,14 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
               dispatch(
                 AppActions.showBottomNotificationModal({
                   type: 'warning',
-                  title: "Don't risk losing your money",
-                  message:
+                  title: t("Don't risk losing your money"),
+                  message: t(
                     'Your recovery key is composed of 12 randomly selected words. Take a couple of minutes to carefully write down each word in order they appear.',
+                  ),
                   enableBackdropDismiss: true,
                   actions: [
                     {
-                      text: "I'M SURE",
+                      text: t("I'M SURE"),
                       action: () =>
                         backupRedirect({
                           context,
@@ -152,12 +155,12 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
                 }),
               );
             }}>
-            Cancel
+            {t('Cancel')}
           </Button>
         </HeaderRightContainer>
       ),
     });
-  }, [navigation]);
+  }, [navigation, t]);
 
   const ref = useRef(null);
   const shuffledWords = useRef<Array<{word: string; isActive: boolean}>>(
@@ -207,13 +210,14 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
         dispatch(
           AppActions.showBottomNotificationModal({
             type: 'success',
-            title: 'Phrase verified',
-            message:
+            title: t('Phrase verified'),
+            message: t(
               'In order to protect your funds from being accessible to hackers and thieves, store this recovery phrase in a safe and secure place.',
+            ),
             enableBackdropDismiss: false,
             actions: [
               {
-                text: 'OK',
+                text: t('OK'),
                 action: () =>
                   backupRedirect({
                     context,
@@ -230,12 +234,12 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
         dispatch(
           AppActions.showBottomNotificationModal({
             type: 'warning',
-            title: 'Incorrect recovery phrase',
-            message: 'The recovery phrase you provided was incorrect.',
+            title: t('Incorrect recovery phrase'),
+            message: t('The recovery phrase you provided was incorrect.'),
             enableBackdropDismiss: false,
             actions: [
               {
-                text: 'TRY AGAIN',
+                text: t('TRY AGAIN'),
                 action: async () => {
                   navigation.navigate(
                     context === 'onboarding' ? 'Onboarding' : 'Wallet',
@@ -304,7 +308,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
         <BottomContainer>
           <DirectionsContainer>
             <TextAlign align={'center'}>
-              <Paragraph>Tap each word in the correct order.</Paragraph>
+              <Paragraph>{t('Tap each word in the correct order.')}</Paragraph>
             </TextAlign>
           </DirectionsContainer>
           <WordSelectorContainer>

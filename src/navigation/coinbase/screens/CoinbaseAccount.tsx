@@ -50,6 +50,7 @@ import {
 } from '../../../store/wallet/effects/address/address';
 import Amount from '../../wallet/screens/Amount';
 import {Wallet} from '../../../store/wallet/wallet.models';
+import {useTranslation} from 'react-i18next';
 
 const AccountContainer = styled.View`
   flex: 1;
@@ -126,6 +127,7 @@ export type CoinbaseAccountScreenParamList = {
 const CoinbaseAccount = ({
   route,
 }: StackScreenProps<CoinbaseStackParamList, 'CoinbaseAccount'>) => {
+  const {t} = useTranslation();
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -229,8 +231,8 @@ const CoinbaseAccount = ({
           <EmptyListContainer>
             <H5>
               {!errorLoadingTxs
-                ? "It's a ghost town in here"
-                : 'Could not update transaction history'}
+                ? t("It's a ghost town in here")
+                : t('Could not update transaction history')}
             </H5>
             <GhostSvg style={{marginTop: 20}} />
           </EmptyListContainer>
@@ -373,12 +375,12 @@ const CoinbaseAccount = ({
     dispatch(
       showBottomNotificationModal({
         type: 'error',
-        title: 'Coinbase error',
+        title: t('Coinbase error'),
         message: errMsg,
         enableBackdropDismiss: true,
         actions: [
           {
-            text: 'OK',
+            text: t('OK'),
             action: () => {},
             primary: true,
           },
@@ -432,14 +434,14 @@ const CoinbaseAccount = ({
         <LinkingButtons
           receive={{
             cta: deposit,
-            label: 'deposit',
+            label: t('deposit'),
             hide: !availableWalletToDeposit,
           }}
           send={{
             cta: () => {
               setWalletModalVisible(true);
             },
-            label: 'withdraw',
+            label: t('withdraw'),
             hide: !availableWalletToWithdraw,
           }}
           buy={{cta: () => null, hide: true}}
@@ -459,7 +461,7 @@ const CoinbaseAccount = ({
           if (txs[0]) {
             return (
               <TransactionListHeader>
-                <H5>Transactions</H5>
+                <H5>{t('Transactions')}</H5>
               </TransactionListHeader>
             );
           } else {
@@ -478,7 +480,7 @@ const CoinbaseAccount = ({
         onBackdropPress={() => setWalletModalVisible(false)}>
         <GlobalSelectContainer>
           <GlobalSelect
-            modalTitle={'Select destination wallet'}
+            modalTitle={t('Select destination wallet')}
             customSupportedCurrencies={customSupportedCurrencies}
             useAsModal={true}
             onDismiss={onSelectedWallet}

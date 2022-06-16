@@ -19,6 +19,7 @@ import {getRemainingWalletCount} from '../../../../../../store/wallet/utils/wall
 import {CurrencyImage} from '../../../../../../components/currency-image/CurrencyImage';
 import CoinbaseSvg from '../../../../../../../assets/img/logos/coinbase.svg';
 import {NeedBackupText} from '../../../../../../components/home-card/HomeCard';
+import {useTranslation} from 'react-i18next';
 
 export const StarSvg = ({favorited}: {favorited: boolean}) => {
   return (
@@ -211,6 +212,7 @@ export const CustomizeCard = ({
   item: CustomizeItem;
   toggle: () => void;
 }) => {
+  const {t} = useTranslation();
   const walletInfo = wallets?.slice(0, WALLET_DISPLAY_LIMIT);
   const remainingWalletCount = getRemainingWalletCount(wallets);
 
@@ -218,7 +220,7 @@ export const CustomizeCard = ({
     if (needsBackup) {
       return (
         <NeedsBackupContainer>
-          <NeedBackupText>Needs Backup</NeedBackupText>
+          <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
         </NeedsBackupContainer>
       );
     }

@@ -47,6 +47,7 @@ import {
 } from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTranslation} from 'react-i18next';
 
 const CIRCLE_SIZE = 20;
 
@@ -200,6 +201,7 @@ const TransactionLevel = ({
     img,
     credentials: {coin, network},
   } = wallet;
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
@@ -268,7 +270,7 @@ const TransactionLevel = ({
 
       feeOption.feePerSatByte = (feePerKb / feeUnitAmount).toFixed();
       feeOption.uiFeePerSatByte = `${feeOption.feePerSatByte} ${
-        coin === 'btc' ? 'Satoshis per byte' : feeUnit
+        coin === 'btc' ? t('Satoshis per byte') : feeUnit
       }`;
 
       if (coin === 'eth' || dispatch(IsERCToken(coin))) {
@@ -280,9 +282,9 @@ const TransactionLevel = ({
         feeOption.avgConfirmationTime =
           hours > 0
             ? hours === 1
-              ? 'within an hour'
-              : `within ${hours} hours`
-            : `within ${min} minutes`;
+              ? t('within an hour')
+              : t('within hours', {hours})
+            : t('within minutes', {min});
       }
 
       if (level === feeLevel) {
@@ -317,7 +319,7 @@ const TransactionLevel = ({
       if (_.isEmpty(_feeLevels)) {
         dispatch(
           showBottomNotificationModal(
-            CustomErrorMessage({errMsg: 'Could not get fee levels'}),
+            CustomErrorMessage({errMsg: t('Could not get fee levels')}),
           ),
         );
         return;
@@ -477,14 +479,14 @@ const TransactionLevel = ({
             <Back opacity={1} background={themedBackground} />
           </TouchableOpacity>
           <TitleContainer>
-            <HeaderTitle>Transaction Speed</HeaderTitle>
+            <HeaderTitle>{t('Transaction Speed')}</HeaderTitle>
           </TitleContainer>
         </SheetHeaderContainer>
 
         <TxSpeedParagraph>
-          The higher the fee, the greater the incentive a miner has to include
-          that transaction in a block. Current fees are determined based on
-          network load and the selected policy.
+          {t(
+            'The higher the fee, the greater the incentive a miner has to include that transaction in a block. Current fees are determined based on network load and the selected policy.',
+          )}
         </TxSpeedParagraph>
 
         <View>
@@ -496,7 +498,8 @@ const TransactionLevel = ({
                     <CurrencyImage img={img} size={20} />
                   </CurrencyImageContainer>
                   <H4>
-                    {coin === 'btc' ? 'Bitcoin' : 'Ethereum'} Network Fee Policy
+                    {coin === 'btc' ? 'Bitcoin' : 'Ethereum'}{' '}
+                    {t('Network Fee Policy')}
                   </H4>
                 </FeeLevelStepsHeader>
 
@@ -582,7 +585,7 @@ const TransactionLevel = ({
                 <FeeLevelStepBottomLabel>
                   {feeOptions[0].uiLevel}
                 </FeeLevelStepBottomLabel>
-                <FeeLevelStepBottomLabel>Custom</FeeLevelStepBottomLabel>
+                <FeeLevelStepBottomLabel>{t('Custom')}</FeeLevelStepBottomLabel>
               </BottomLabelContainer>
 
               <DetailsList>
@@ -597,25 +600,38 @@ const TransactionLevel = ({
                       }}
                     />
                     {error === 'required' ? (
-                      <ErrorText>Fee is required.</ErrorText>
+                      <ErrorText>{t('Fee is required')}.</ErrorText>
                     ) : null}
                     {error === 'showMinWarning' ? (
-                      <ErrorText>Fee is lower than recommended.</ErrorText>
+                      <ErrorText>
+                        {t('Fee is lower than recommended.')}
+                      </ErrorText>
                     ) : null}
                     {error === 'showMaxWarning' ? (
                       <ErrorText>
-                        Fee should not be higher than {maxFeeRecommended}{' '}
-                        {feeUnit}.
+                        {t('Fee should not be higher than ') +
+                          maxFeeRecommended +
+                          ' ' +
+                          feeUnit +
+                          '.'}
                       </ErrorText>
                     ) : null}
                     {error === 'showMinError' ? (
                       <ErrorText>
-                        Fee should be higher than {minFeeAllowed} {feeUnit}.
+                        {t('Fee should be higher than ') +
+                          minFeeAllowed +
+                          ' ' +
+                          feeUnit +
+                          '.'}
                       </ErrorText>
                     ) : null}
                     {error === 'showMaxError' ? (
                       <ErrorText>
-                        Fee Should be lesser than {maxFeeAllowed} {feeUnit}.
+                        {t('Fee Should be lesser than ') +
+                          maxFeeAllowed +
+                          ' ' +
+                          feeUnit +
+                          '.'}
                       </ErrorText>
                     ) : null}
                   </ActionContainer>
@@ -624,7 +640,7 @@ const TransactionLevel = ({
 
               <CtaContainer>
                 <Button onPress={() => onApply()} disabled={disableApply}>
-                  Apply
+                  {t('Apply')}
                 </Button>
               </CtaContainer>
             </>

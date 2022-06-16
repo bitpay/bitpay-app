@@ -33,6 +33,7 @@ import NetworkSelectionRow, {
 import {LightBlack, NeutralSlate, Slate} from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import WalletIcons from '../../../wallet/components/WalletIcons';
+import {useTranslation} from 'react-i18next';
 
 const InputContainer = styled.View<{hideInput?: boolean}>`
   display: ${({hideInput}) => (!hideInput ? 'flex' : 'none')};
@@ -116,6 +117,7 @@ const schema = yup.object().shape({
 });
 
 const ContactsAdd: React.FC = () => {
+  const {t} = useTranslation();
   const {
     control,
     handleSubmit,
@@ -217,7 +219,7 @@ const ContactsAdd: React.FC = () => {
     if (!validAddress) {
       setError('address', {
         type: 'manual',
-        message: 'Invalid address',
+        message: t('Invalid address'),
       });
       return;
     }
@@ -228,7 +230,7 @@ const ContactsAdd: React.FC = () => {
     } else {
       setError('address', {
         type: 'manual',
-        message: 'Coin or Network invalid',
+        message: t('Coin or Network invalid'),
       });
       return;
     }
@@ -236,7 +238,7 @@ const ContactsAdd: React.FC = () => {
     if (coinValue === 'xrp' && !contact.tag) {
       setError('tag', {
         type: 'manual',
-        message: 'Tag number is required for XRP address',
+        message: t('Tag number is required for XRP address'),
       });
       return;
     }
@@ -244,7 +246,7 @@ const ContactsAdd: React.FC = () => {
     if (findContact(contacts, addressValue, coinValue, networkValue)) {
       setError('address', {
         type: 'manual',
-        message: 'Contact already exists',
+        message: t('Contact already exists'),
       });
       return;
     }
@@ -311,7 +313,7 @@ const ContactsAdd: React.FC = () => {
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
               placeholder={'Satoshi Nakamoto'}
-              label={'NAME'}
+              label={t('NAME')}
               onBlur={onBlur}
               onChangeText={onChange}
               error={errors.name?.message}
@@ -329,7 +331,7 @@ const ContactsAdd: React.FC = () => {
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
               placeholder={'satoshi@example.com'}
-              label={'EMAIL (OPTIONAL)'}
+              label={t('EMAIL (OPTIONAL)')}
               onBlur={onBlur}
               onChangeText={onChange}
               error={errors.email?.message}
@@ -346,7 +348,7 @@ const ContactsAdd: React.FC = () => {
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
               placeholder={'Crypto address'}
-              label={'ADDRESS'}
+              label={t('ADDRESS')}
               onBlur={onBlur}
               onChangeText={(newValue: string) => {
                 onChange(newValue);
@@ -376,7 +378,7 @@ const ContactsAdd: React.FC = () => {
           render={({field: {onChange, onBlur}}) => (
             <BoxInput
               placeholder={'Tag'}
-              label={'TAG'}
+              label={t('TAG')}
               onBlur={onBlur}
               onChangeText={onChange}
               error={errors.tag?.message}
@@ -390,7 +392,7 @@ const ContactsAdd: React.FC = () => {
       </InputContainer>
 
       <CurrencySelectorContainer hideSelector={true}>
-        <Label>CURRENCY</Label>
+        <Label>{t('CURRENCY')}</Label>
         <CurrencyContainer
           activeOpacity={ActiveOpacity}
           onPress={() => {
@@ -413,7 +415,7 @@ const ContactsAdd: React.FC = () => {
       </CurrencySelectorContainer>
 
       <CurrencySelectorContainer hideSelector={true}>
-        <Label>NETWORK</Label>
+        <Label>{t('NETWORK')}</Label>
         <CurrencyContainer
           activeOpacity={ActiveOpacity}
           onPress={() => {
@@ -433,14 +435,14 @@ const ContactsAdd: React.FC = () => {
       </CurrencySelectorContainer>
 
       <ActionContainer>
-        <Button onPress={onSubmit}>Add Contact</Button>
+        <Button onPress={onSubmit}>{t('Add Contact')}</Button>
       </ActionContainer>
       <SheetModal
         isVisible={currencyModalVisible}
         onBackdropPress={() => setCurrencyModalVisible(false)}>
         <CurrencySelectionModalContainer>
           <TextAlign align={'center'}>
-            <H4>Select a Coin</H4>
+            <H4>{t('Select a Coin')}</H4>
           </TextAlign>
           <FlatList
             contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
@@ -455,7 +457,7 @@ const ContactsAdd: React.FC = () => {
         onBackdropPress={() => setNetworkModalVisible(false)}>
         <CurrencySelectionModalContainer>
           <TextAlign align={'center'}>
-            <H4>Select a Network</H4>
+            <H4>{t('Select a Network')}</H4>
           </TextAlign>
           <FlatList
             contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}

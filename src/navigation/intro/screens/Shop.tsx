@@ -1,5 +1,6 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import styled, {useTheme} from 'styled-components/native';
 import FocusedStatusBar from '../../../components/focused-status-bar/FocusedStatusBar';
 import {RootStackParamList} from '../../../Root';
@@ -35,6 +36,7 @@ const TextContainer = styled.View`
 type IntroShopScreenProps = StackScreenProps<RootStackParamList, 'Intro'>;
 
 const IntroShop: React.VFC<IntroShopScreenProps> = ({navigation}) => {
+  const {t} = useTranslation();
   const theme = useTheme();
   const dispatch = useAppDispatch();
 
@@ -61,14 +63,14 @@ const IntroShop: React.VFC<IntroShopScreenProps> = ({navigation}) => {
         <BodyContainer>
           <TextContainer>
             <IntroText>
-              Shop with crypto and {'\n'} buy gift cards in the
+              {t('Shop with crypto and \nbuy gift cards in the')}
             </IntroText>
-            <IntroTextBold>Shop Tab.</IntroTextBold>
+            <IntroTextBold>{t('Shop Tab.')}</IntroTextBold>
           </TextContainer>
         </BodyContainer>
 
         <ButtonContainer>
-          <IntroButton onPress={onFinish}>Finish</IntroButton>
+          <IntroButton onPress={onFinish}>{t('Finish')}</IntroButton>
         </ButtonContainer>
       </Body>
     </IntroShopContainer>

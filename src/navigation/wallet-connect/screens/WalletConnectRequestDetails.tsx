@@ -41,6 +41,7 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {useTranslation} from 'react-i18next';
 
 export type WalletConnectRequestDetailsParamList = {
   peerId: string;
@@ -99,6 +100,7 @@ const InfoSubTitle = styled(InfoTitle)`
 `;
 
 const WalletConnectRequestDetails = () => {
+  const {t} = useTranslation();
   const {
     params: {peerId, requestId, wallet, peerName},
   } = useRoute<RouteProp<{params: WalletConnectRequestDetailsParamList}>>();
@@ -138,12 +140,16 @@ const WalletConnectRequestDetails = () => {
       case 'wallet_switchEthereumChain':
         setIsMethodSupported(false);
         setMethodNotSupportedMsg(
-          `${peerName} wants to change network to a different one than the selected wallet. Please, try connecting to a different DeFi or DApp.`,
+          t(
+            'wants to change network to a different one than the selected wallet. Please, try connecting to a different DeFi or DApp.',
+            {peerName},
+          ),
         );
         break;
       default:
-        const defaultErrorMsg =
-          'Sorry, we currently do not support this method.';
+        const defaultErrorMsg = t(
+          'Sorry, we currently do not support this method.',
+        );
         setIsMethodSupported(false);
         setMethodNotSupportedMsg(defaultErrorMsg);
         break;
@@ -155,6 +161,7 @@ const WalletConnectRequestDetails = () => {
     setMessage,
     setIsMethodSupported,
     setMethodNotSupportedMsg,
+    t,
   ]);
 
   const copyToClipboard = (value: string, type: string) => {
@@ -190,7 +197,7 @@ const WalletConnectRequestDetails = () => {
       setRejectButtonState('loading');
       const response = {
         id: request?.payload.id,
-        error: {message: 'User rejected call request'},
+        error: {message: t('User rejected call request')},
       };
       await dispatch(walletConnectRejectCallRequest(peerId, response));
       setRejectButtonState('success');
@@ -200,7 +207,7 @@ const WalletConnectRequestDetails = () => {
       await showErrorMessage(
         CustomErrorMessage({
           errMsg: BWCErrorMessage(e),
-          title: 'Uh oh, something went wrong',
+          title: t('Uh oh, something went wrong'),
           action: () => {
             setRejectButtonState(undefined);
           },
@@ -245,7 +252,7 @@ const WalletConnectRequestDetails = () => {
             throw methodNotSupportedMsg;
         }
       } else {
-        throw 'Address requested does not match active account';
+        throw t('Address requested does not match active account');
       }
       await dispatch(
         walletConnectApproveCallRequest(peerId, {
@@ -269,7 +276,7 @@ const WalletConnectRequestDetails = () => {
           await showErrorMessage(
             CustomErrorMessage({
               errMsg: BWCErrorMessage(err),
-              title: 'Uh oh, something went wrong',
+              title: t('Uh oh, something went wrong'),
               action: () => {
                 setApproveButtonState(undefined);
               },
@@ -293,11 +300,11 @@ const WalletConnectRequestDetails = () => {
         <RequestDetailsContainer>
           {isMethodSupported ? (
             <>
-              <HeaderTitle>Summary</HeaderTitle>
+              <HeaderTitle>{t('Summary')}</HeaderTitle>
               <Hr />
               <ItemContainer>
                 <ItemTitleContainer>
-                  <H7>Address</H7>
+                  <H7>{t('Address')}</H7>
                 </ItemTitleContainer>
                 <AddressContainer>
                   {clipboardObj.copied && clipboardObj.type === 'address' ? (
@@ -317,7 +324,7 @@ const WalletConnectRequestDetails = () => {
               <Hr />
               <MessageTitleContainer>
                 <ItemTitleContainer>
-                  <H7>Message</H7>
+                  <H7>{t('Message')}</H7>
                 </ItemTitleContainer>
                 <MessageNoteContainer>
                   {clipboardObj.copied && clipboardObj.type === 'message' ? (
@@ -352,7 +359,7 @@ const WalletConnectRequestDetails = () => {
               state={approveButtonState}
               buttonStyle={'primary'}
               onPress={approveRequest}>
-              Approve
+              {t('Approve')}
             </Button>
           </ActionContainer>
           <ActionContainer>
@@ -360,7 +367,7 @@ const WalletConnectRequestDetails = () => {
               state={rejectButtonState}
               buttonStyle={'secondary'}
               onPress={rejectRequest}>
-              Reject
+              {t('Reject')}
             </Button>
           </ActionContainer>
         </CtaContainer>

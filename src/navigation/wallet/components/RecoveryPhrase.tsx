@@ -87,6 +87,7 @@ import {
   GetName,
   isSingleAddressCoin,
 } from '../../../store/wallet/utils/currency';
+import {useTranslation} from 'react-i18next';
 
 const ScrollViewContainer = styled.ScrollView`
   margin-top: 20px;
@@ -174,6 +175,7 @@ const CtaContainer = styled(_CtaContainer)`
 `;
 
 const RecoveryPhrase = () => {
+  const {t} = useTranslation();
   const dispatch = useDispatch();
   const logger = useLogger();
   const navigation = useNavigation();
@@ -207,13 +209,14 @@ const RecoveryPhrase = () => {
       dispatch(
         showBottomNotificationModal({
           type: 'warning',
-          title: "We couldn't find your wallet",
-          message:
+          title: t("We couldn't find your wallet"),
+          message: t(
             'There are no records of your wallet on our servers. If you are importing a BIP44 compatible wallet from a 3rd party you can continue to recreate it. If you wallet is not BIP44 compatible, you will not be able to access its funds.',
+          ),
           enableBackdropDismiss: true,
           actions: [
             {
-              text: 'Continue',
+              text: t('Continue'),
               action: async () => {
                 await sleep(500);
                 if (derivationPathEnabled) {
@@ -228,7 +231,7 @@ const RecoveryPhrase = () => {
               primary: true,
             },
             {
-              text: 'Go Back',
+              text: t('Go Back'),
               action: () => {},
               primary: false,
             },
@@ -239,12 +242,12 @@ const RecoveryPhrase = () => {
       dispatch(
         showBottomNotificationModal({
           type: 'warning',
-          title: 'Something went wrong',
+          title: t('Something went wrong'),
           message: e.message,
           enableBackdropDismiss: true,
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {},
               primary: true,
             },
@@ -268,19 +271,19 @@ const RecoveryPhrase = () => {
       };
 
       if (!isValidPhrase(recoveryObj.data)) {
-        showErrorModal(new Error('The recovery phrase is invalid.'));
+        showErrorModal(new Error(t('The recovery phrase is invalid.')));
         return;
       }
       if (recoveryObj.type == '1' && recoveryObj.hasPassphrase) {
         dispatch(
           showBottomNotificationModal({
             type: 'info',
-            title: 'Password required',
-            message: 'Make sure to enter your password in advanced options',
+            title: t('Password required'),
+            message: t('Make sure to enter your password in advanced options'),
             enableBackdropDismiss: true,
             actions: [
               {
-                text: 'OK',
+                text: t('OK'),
                 action: () => {},
                 primary: true,
               },
@@ -352,13 +355,13 @@ const RecoveryPhrase = () => {
         !keyOpts.derivationStrategy ||
         !Number.isInteger(keyOpts.account)
       ) {
-        throw new Error('Invalid derivation path');
+        throw new Error(t('Invalid derivation path'));
       }
 
       if (
         !isValidDerivationPathCoin(advancedOpts.derivationPath, keyOpts.coin)
       ) {
-        throw new Error('Invalid derivation path for selected coin');
+        throw new Error(t('Invalid derivation path for selected coin'));
       }
     }
   };
@@ -383,7 +386,7 @@ const RecoveryPhrase = () => {
       const words = text;
       if (!isValidPhrase(words)) {
         logger.error('Incorrect words length');
-        showErrorModal(new Error('The recovery phrase is invalid.'));
+        showErrorModal(new Error(t('The recovery phrase is invalid.')));
         return;
       }
       importWallet({words}, keyOpts);
@@ -453,7 +456,7 @@ const RecoveryPhrase = () => {
         keyOpts.seedType = 'mnemonic';
         if (!isValidPhrase(text)) {
           logger.error('Incorrect words length');
-          showErrorModal(new Error('The recovery phrase is invalid.'));
+          showErrorModal(new Error(t('The recovery phrase is invalid.')));
           return;
         }
       }
@@ -542,15 +545,13 @@ const RecoveryPhrase = () => {
     <ScrollViewContainer>
       <ImportContainer>
         <Paragraph>
-          Enter your recovery phrase (usually 12-words) in the correct order.
-          Separate each word with a single space only (no commas or any other
-          punctuation). For backup phrases in non-English languages: Some words
-          may include special symbols, so be sure to spell all the words
-          correctly.
+          {t(
+            'Enter your recovery phrase (usually 12-words) in the correct order. Separate each word with a single space only (no commas or any other punctuation). For backup phrases in non-English languages: Some words may include special symbols, so be sure to spell all the words correctly.',
+          )}
         </Paragraph>
 
         <HeaderContainer>
-          <ImportTitle>Recovery phrase</ImportTitle>
+          <ImportTitle>{t('Recovery phrase')}</ImportTitle>
 
           <ScanContainer
             activeOpacity={ActiveOpacity}
@@ -585,7 +586,7 @@ const RecoveryPhrase = () => {
         />
 
         {errors?.text?.message && (
-          <ErrorText>Recovery phrase is required.</ErrorText>
+          <ErrorText>{t('Recovery phrase is required.')}</ErrorText>
         )}
 
         <CtaContainer>
@@ -598,14 +599,14 @@ const RecoveryPhrase = () => {
               {showAdvancedOptions ? (
                 <>
                   <AdvancedOptionsButtonText>
-                    Hide Advanced Options
+                    {t('Hide Advanced Options')}
                   </AdvancedOptionsButtonText>
                   <ChevronUpSvg />
                 </>
               ) : (
                 <>
                   <AdvancedOptionsButtonText>
-                    Show Advanced Options
+                    {t('Show Advanced Options')}
                   </AdvancedOptionsButtonText>
                   <ChevronDownSvg />
                 </>
@@ -620,7 +621,7 @@ const RecoveryPhrase = () => {
                     setDerivationPathEnabled(!derivationPathEnabled);
                   }}>
                   <Column>
-                    <OptionTitle>Specify Derivation Path</OptionTitle>
+                    <OptionTitle>{t('Specify Derivation Path')}</OptionTitle>
                   </Column>
                   <CheckBoxContainer>
                     <Checkbox
@@ -637,7 +638,7 @@ const RecoveryPhrase = () => {
             {showAdvancedOptions && derivationPathEnabled && (
               <AdvancedOptions>
                 <CurrencySelectorContainer>
-                  <Label>CURRENCY</Label>
+                  <Label>{t('CURRENCY')}</Label>
                   <CurrencyContainer
                     activeOpacity={ActiveOpacity}
                     onPress={() => {
@@ -666,7 +667,7 @@ const RecoveryPhrase = () => {
               onBackdropPress={() => setCurrencyModalVisible(false)}>
               <CurrencySelectionModalContainer>
                 <TextAlign align={'center'}>
-                  <H4>Select a Coin</H4>
+                  <H4>{t('Select a Coin')}</H4>
                 </TextAlign>
                 <FlatList
                   contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
@@ -708,7 +709,7 @@ const RecoveryPhrase = () => {
                       });
                     }}>
                     <Column>
-                      <OptionTitle>Shared Wallet</OptionTitle>
+                      <OptionTitle>{t('Shared Wallet')}</OptionTitle>
                     </Column>
                     <CheckBoxContainer>
                       <Checkbox
@@ -738,9 +739,9 @@ const RecoveryPhrase = () => {
                   />
                 </InputContainer>
                 <PasswordParagraph>
-                  This field is only for users who, in previous versions (it's
-                  not supported anymore), set a password to protect their
-                  recovery phrase. This field is not for your encrypt password.
+                  {t(
+                    "This field is only for users who, in previous versions (it's not supported anymore), set a password to protect their recovery phrase. This field is not for your encrypt password.",
+                  )}
                 </PasswordParagraph>
               </AdvancedOptions>
             )}
@@ -749,7 +750,7 @@ const RecoveryPhrase = () => {
 
         <CtaContainer>
           <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
-            Import Wallet
+            {t('Import Wallet')}
           </Button>
         </CtaContainer>
       </ImportContainer>

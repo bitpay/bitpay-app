@@ -16,12 +16,14 @@
     "clean": "react-native-clean-project",
     "pod:install": "command -v pod && (cd ios/ && pod install && cd ..) || echo \"pod command not found\"",
     "splash": "react-native generate-bootsplash assets/img/logos/bitpay.png --background-color=\"#1A3B8B\" --logo-width 130",
-    "extract": "yarn run i18next 'src/**/*.{js,jsx,ts,tsx}'",
     "postversion": "react-native-version",
     "braze": "node ./scripts/braze-config.js",
     "dosh": "node ./scripts/dosh-config.js",
     "set:prod": "export NODE_ENV=production && yarn braze && yarn dosh",
-    "set:dev": "export NODE_ENV=development && yarn braze && yarn dosh && node ./scripts/dev-overrides.js"
+    "set:dev": "export NODE_ENV=development && yarn braze && yarn dosh && node ./scripts/dev-overrides.js",
+    "translation:extract": "yarn run i18next 'src/**/*.{js,jsx,ts,tsx}'",
+    "translation:upload": "crowdin upload sources --identity crowdin-credentials.yml",
+    "translation:download": "crowdin download --identity crowdin-credentials.yml"
   },
   "dependencies": {
     "@freakycoder/react-native-bounceable": "0.2.5",

@@ -37,6 +37,7 @@ import {TouchableOpacity, View} from 'react-native';
 import {GetAmFormatDate} from '../../../../store/wallet/utils/time';
 import Clipboard from '@react-native-community/clipboard';
 import AddressesSkeleton from './AddressesSkeleton';
+import {useTranslation} from 'react-i18next';
 
 const ADDRESS_LIMIT = 5;
 
@@ -78,6 +79,7 @@ const SubText = styled(H7)`
 `;
 
 const Addresses = () => {
+  const {t} = useTranslation();
   const {
     params: {wallet},
   } = useRoute<RouteProp<WalletStackParamList, 'Addresses'>>();
@@ -93,14 +95,14 @@ const Addresses = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>Addresses</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Addresses')}</HeaderTitle>,
     });
 
     return navigation.addListener('blur', async () => {
       await sleep(300);
       setButtonState(undefined);
     });
-  }, [navigation]);
+  }, [navigation, t]);
   const [buttonState, setButtonState] = useState<ButtonState>();
   const key = useAppSelector(({WALLET}) => WALLET.keys[wallet.keyId]);
   const [viewAll, setViewAll] = useState<boolean>();
@@ -183,7 +185,7 @@ const Addresses = () => {
       dispatch(
         showBottomNotificationModal(
           CustomErrorMessage({
-            errMsg: BWCErrorMessage(e, 'Could not update wallet'),
+            errMsg: BWCErrorMessage(e, t('Could not update wallet')),
           }),
         ),
       );
@@ -260,19 +262,19 @@ const Addresses = () => {
     <AddressesContainer>
       <ScrollView>
         <AddressesParagraph>
-          Each wallet (except for ETH/ERC20) can generate billions of addresses
-          from your 12-word recovery phrase. A new address is automatically
-          generated and shown each time you receive a payment.
+          {t(
+            'Each wallet (except for ETH/ERC20) can generate billions of addresses from your 12-word recovery phrase. A new address is automatically generated and shown each time you receive a payment.',
+          )}
         </AddressesParagraph>
         <AddressesParagraph>
-          It's a good idea to avoid reusing addresses - this both protects your
-          privacy and keeps your bitcoins secure against hypothetical attacks by
-          quantum computers.
+          {t(
+            "It's a good idea to avoid reusing addresses - this both protects your privacy and keeps your bitcoins secure against hypothetical attacks by quantum computers.",
+          )}
         </AddressesParagraph>
 
         <AddressesContainer>
           <Button onPress={scan} state={buttonState}>
-            Scan Addresses for Funds
+            {t('Scan Addresses for Funds')}
           </Button>
         </AddressesContainer>
 
@@ -294,17 +296,17 @@ const Addresses = () => {
                     },
                   });
                 }}>
-                <LinkText>View all addresses</LinkText>
+                <LinkText>{t('View all addresses')}</LinkText>
               </AllAddressesLink>
             ) : null}
 
             {allUtxosNb ? (
               <>
                 <VerticalPadding>
-                  <Title>Wallet Inputs</Title>
+                  <Title>{t('Wallet Inputs')}</Title>
 
                   <SettingView>
-                    <SettingTitle>Total wallet inputs</SettingTitle>
+                    <SettingTitle>{t('Total wallet inputs')}</SettingTitle>
 
                     <H7>
                       {allUtxosNb} [{allUtxosSum}]
@@ -314,7 +316,7 @@ const Addresses = () => {
                   <Hr />
 
                   <SettingView>
-                    <SettingTitle>Low amount inputs</SettingTitle>
+                    <SettingTitle>{t('Low amount inputs')}</SettingTitle>
 
                     <H7>
                       {lowUtxosNb} [{lowUtxosSum}]
@@ -325,8 +327,9 @@ const Addresses = () => {
 
                   <SettingView>
                     <SettingTitle numberOfLines={2}>
-                      Approximate Bitcoin network fee to transfer wallet's
-                      balance (with normal priority)
+                      {t(
+                        "Approximate Bitcoin network fee to transfer wallet's balance (with normal priority)",
+                      )}
                     </SettingTitle>
 
                     <H7>
@@ -341,7 +344,7 @@ const Addresses = () => {
             {latestUsedAddress?.length ? (
               <>
                 <VerticalPadding>
-                  <Title>Addresses with balance</Title>
+                  <Title>{t('Addresses with balance')}</Title>
 
                   {latestUsedAddress.map(({address, amount}, index) => (
                     <View key={index}>
@@ -373,7 +376,7 @@ const Addresses = () => {
             {latestUnusedAddress?.length ? (
               <>
                 <VerticalPadding>
-                  <Title>Unused addresses</Title>
+                  <Title>{t('Unused addresses')}</Title>
 
                   {latestUnusedAddress.map(({address, path, uiTime}, index) => (
                     <View key={index}>

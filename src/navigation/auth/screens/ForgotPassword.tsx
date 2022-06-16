@@ -1,6 +1,7 @@
 import {yupResolver} from '@hookform/resolvers/yup';
 import React, {useEffect, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
+import {useTranslation} from 'react-i18next';
 import {Keyboard, SafeAreaView} from 'react-native';
 import * as yup from 'yup';
 import Button from '../../../components/button/Button';
@@ -30,6 +31,7 @@ interface ResetPasswordFormFieldValues {
 }
 
 const ForgotPassword = () => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const session = useAppSelector(({BITPAY_ID}) => BITPAY_ID.session);
   const [isCaptchaModalVisible, setCaptchaModalVisible] = useState(false);
@@ -55,12 +57,12 @@ const ForgotPassword = () => {
       dispatch(
         AppActions.showBottomNotificationModal({
           type: 'success',
-          title: 'Email Sent',
+          title: t('Email Sent'),
           message,
           enableBackdropDismiss: false,
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {
                 dispatch(BitPayIdActions.resetForgotPasswordEmailStatus());
               },
@@ -72,12 +74,12 @@ const ForgotPassword = () => {
       dispatch(
         AppActions.showBottomNotificationModal({
           type: 'error',
-          title: 'Error',
+          title: t('Error'),
           message,
           enableBackdropDismiss: false,
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {
                 dispatch(BitPayIdActions.resetForgotPasswordEmailStatus());
               },
@@ -86,7 +88,7 @@ const ForgotPassword = () => {
         }),
       );
     }
-  }, [dispatch, forgotPasswordEmailStatus]);
+  }, [dispatch, forgotPasswordEmailStatus, t]);
 
   const onSubmit = handleSubmit(({email}) => {
     Keyboard.dismiss();
@@ -120,7 +122,7 @@ const ForgotPassword = () => {
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 placeholder={'satoshi@example.com'}
-                label={'EMAIL'}
+                label={t('EMAIL')}
                 onBlur={onBlur}
                 onChangeText={(text: string) => onChange(text)}
                 error={errors.email?.message}
@@ -136,7 +138,7 @@ const ForgotPassword = () => {
 
         <AuthActionsContainer>
           <AuthActionRow>
-            <Button onPress={onSubmit}>Reset Password</Button>
+            <Button onPress={onSubmit}>{t('Reset Password')}</Button>
           </AuthActionRow>
         </AuthActionsContainer>
 

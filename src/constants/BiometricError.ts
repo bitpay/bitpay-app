@@ -1,3 +1,4 @@
+import {useTranslation} from 'react-i18next';
 import {BottomNotificationConfig} from '../components/modal/bottom-notification/BottomNotification';
 
 export const TO_HANDLE_ERRORS: {[key in string]: string} = {
@@ -36,14 +37,15 @@ export const BiometricErrorNotification = (
   message: string,
   onDismissModal?: () => void,
 ): BottomNotificationConfig => {
+  const {t} = useTranslation();
   return {
     type: 'error',
-    title: 'Error',
+    title: t('Error'),
     message,
     enableBackdropDismiss: true,
     actions: [
       {
-        text: 'OK',
+        text: t('OK'),
         action: () => {
           if (onDismissModal) {
             onDismissModal();

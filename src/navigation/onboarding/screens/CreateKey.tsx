@@ -17,6 +17,7 @@ import {
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingStackParamList} from '../OnboardingStack';
+import {useTranslation} from 'react-i18next';
 
 const CreateKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -40,6 +41,7 @@ const KeyImage = {
 const CreateOrImportKey: React.VFC<
   StackScreenProps<OnboardingStackParamList, 'CreateKey'>
 > = ({navigation}) => {
+  const {t} = useTranslation();
   const themeType = useThemeType();
   useAndroidBackHandler(() => true);
 
@@ -57,12 +59,12 @@ const CreateOrImportKey: React.VFC<
                 context: 'TOUOnly',
               });
             }}>
-            Skip
+            {t('Skip')}
           </Button>
         </HeaderRightContainer>
       ),
     });
-  }, [navigation]);
+  }, [navigation, t]);
 
   return (
     <CreateKeyContainer>
@@ -73,15 +75,15 @@ const CreateOrImportKey: React.VFC<
         <ImageContainer>{KeyImage[themeType]}</ImageContainer>
         <TitleContainer>
           <TextAlign align={'center'}>
-            <H3>Create a key or import an existing key</H3>
+            <H3>{t('Create a key or import an existing key')}</H3>
           </TextAlign>
         </TitleContainer>
         <TextContainer>
           <TextAlign align={'center'}>
             <Paragraph>
-              Store your assets safely and securely with BitPay's non-custodial
-              app. Reminder: you own your keys, so be sure to have a pen and
-              paper handy to write down your 12 words.
+              {t(
+                "Store your assets safely and securely with BitPay's non-custodial app. Reminder: you own your keys, so be sure to have a pen and paper handy to write down your 12 words.",
+              )}
             </Paragraph>
           </TextAlign>
         </TextContainer>
@@ -94,7 +96,7 @@ const CreateOrImportKey: React.VFC<
                   context: 'onboarding',
                 })
               }>
-              Create a Key
+              {t('Create a Key')}
             </Button>
           </ActionContainer>
           <ActionContainer>
@@ -105,7 +107,7 @@ const CreateOrImportKey: React.VFC<
                   context: 'onboarding',
                 })
               }>
-              I already have a Key
+              {t('I already have a Key')}
             </Button>
           </ActionContainer>
         </CtaContainer>

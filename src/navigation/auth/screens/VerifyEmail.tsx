@@ -1,5 +1,6 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef} from 'react';
+import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import {Link} from '../../../components/styled/Text';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
@@ -24,6 +25,7 @@ const VerifyEmailParagraph = styled(AuthFormParagraph)`
 `;
 
 const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const pollId = useRef<ReturnType<typeof setInterval>>();
   const pollCountdown = useRef(POLL_TIMEOUT);
@@ -87,20 +89,24 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
     <AuthFormContainer>
       {isTimedOut && (
         <VerifyEmailParagraph>
-          Didn't get an email? Try logging in again later.
+          {t("Didn't get an email? Try logging in again later.")}
         </VerifyEmailParagraph>
       )}
 
       {!isTimedOut && (
         <>
           <VerifyEmailParagraph>
-            We sent a verification email to {email || 'your email address'}.
-            Open the link inside to continue.
+            {t(
+              'We sent a verification email to. Open the link inside to continue.',
+              {email: email || t('your email address')},
+            )}
           </VerifyEmailParagraph>
 
           <VerifyEmailParagraph>
-            Email didn't arrive?{' '}
-            <Link onPress={() => resendVerificationEmail()}>Resend link</Link>
+            {t("Email didn't arrive?")}{' '}
+            <Link onPress={() => resendVerificationEmail()}>
+              {t('Resend link')}
+            </Link>
           </VerifyEmailParagraph>
         </>
       )}

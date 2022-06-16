@@ -54,9 +54,9 @@ const Crypto = () => {
       <Info>
         <InfoTriangle />
         <InfoDescription>
-          If enabled, wallets will also try to spend unconfirmed funds. However,
-          unconfirmed funds are not allowed for spending with merchants, BitPay
-          Card loads, or BitPay in-app gift card purchases.
+          {t(
+            'If enabled, wallets will also try to spend unconfirmed funds. However, unconfirmed funds are not allowed for spending with merchants, BitPay Card loads, or BitPay in-app gift card purchases.',
+          )}
         </InfoDescription>
       </Info>
       <Hr />
@@ -70,8 +70,9 @@ const Crypto = () => {
       <Info>
         <InfoTriangle />
         <InfoDescription>
-          If enabled, the transaction nonce could be changed on the confirm
-          view. This is an advanced feature, use cautiously.
+          {t(
+            'If enabled, the transaction nonce could be changed on the confirm view. This is an advanced feature, use cautiously.',
+          )}
         </InfoDescription>
       </Info>
       <Hr />
@@ -87,10 +88,9 @@ const Crypto = () => {
       <Info>
         <InfoTriangle />
         <InfoDescription>
-          If enabled, your transactions will be marked as non-final, and you
-          will have the possibility, while they are unconfirmed, to replace them
-          with transactions that pay higher fees. Note that some merchants do
-          not accept non-final transactions until they are confirmed.
+          {t(
+            'If enabled, your transactions will be marked as non-final, and you will have the possibility, while they are unconfirmed, to replace them with transactions that pay higher fees. Note that some merchants do not accept non-final transactions until they are confirmed.',
+          )}
         </InfoDescription>
       </Info>
     </SettingsComponent>
