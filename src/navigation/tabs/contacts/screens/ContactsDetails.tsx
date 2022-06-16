@@ -28,6 +28,7 @@ import DeleteIconWhite from '../../../../../assets/img/delete-icon-white.svg';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import {ToCashAddress} from '../../../../store/wallet/effects/address/address';
 import {useTranslation} from 'react-i18next';
+import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 
 const ContactsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -72,11 +73,13 @@ const ContactImageHeader = styled.View`
 const AddressText = styled(BaseText)`
   font-size: 16px;
   color: ${({theme: {dark}}) => (dark ? NeutralSlate : '#6F7782')};
+  max-width: 250px;
 `;
 
 const AddressContainer = styled.TouchableOpacity`
-  align-items: flex-end;
-  max-width: 250px;
+  align-items: center;
+  flex-direction: row;
+  justify-content: flex-end;
 `;
 
 const OptionContainer = styled.TouchableOpacity<{lastElement?: string}>`
@@ -110,6 +113,11 @@ const ModalContainer = styled.View`
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
   padding: 30px 0 0 0;
+`;
+
+const CopyImgContainer = styled.View`
+  justify-content: center;
+  margin-right: 5px;
 `;
 
 interface ModalOpt {
@@ -269,8 +277,11 @@ const ContactsDetails = ({
             <Title>{t('Address')}</Title>
             <DetailInfo align="right">
               <AddressContainer onPress={copyToClipboard} activeOpacity={0.7}>
+                <CopyImgContainer>
+                  {copied ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainer>
                 <AddressText numberOfLines={1} ellipsizeMode={'tail'}>
-                  {!copied ? address : t('Copied to clipboard!')}
+                  {address}
                 </AddressText>
               </AddressContainer>
             </DetailInfo>
