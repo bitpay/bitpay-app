@@ -42,6 +42,7 @@ import analytics from '@segment/analytics-react-native';
 import {AppActions} from '../../../../store/app';
 import {IsERCToken} from '../../../../store/wallet/utils/currency';
 import {isPaymentMethodSupported} from '../utils/buy-crypto-utils';
+import {useTranslation} from 'react-i18next';
 
 const CtaContainer = styled.View`
   margin: 20px 15px;
@@ -54,6 +55,7 @@ const ArrowContainer = styled.View`
 const BuyCryptoRoot: React.FC<
   StackScreenProps<BuyCryptoStackParamList, 'BuyCryptoRoot'>
 > = ({navigation, route}) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const logger = useLogger();
@@ -252,14 +254,20 @@ const BuyCryptoRoot: React.FC<
     dispatch(
       AppActions.showBottomNotificationModal({
         type: 'info',
-        title: 'Reminder',
-        message: `Keep in mind that once the funds are received in your ${selectedWallet?.currencyAbbreviation.toUpperCase()} wallet, to move them you will need to have enough funds in your Ethereum linked wallet ${
-          linkedWalletName ? `(${linkedWalletName}) ` : ' '
-        }to pay the ETH miner fees.`,
+        title: t('Reminder'),
+        message: t(
+          'Keep in mind that once the funds are received in your wallet, to move them you will need to have enough funds in your Ethereum linked wallet to pay the ETH miner fees.',
+          {
+            selectedWallet: selectedWallet?.currencyAbbreviation.toUpperCase(),
+            linkedWalletName: linkedWalletName
+              ? '(' + linkedWalletName + ') '
+              : ' ',
+          },
+        ),
         enableBackdropDismiss: true,
         actions: [
           {
-            text: 'GOT IT',
+            text: t('GOT IT'),
             action: () => {
               continueToViewOffers();
             },
@@ -369,40 +377,48 @@ const BuyCryptoRoot: React.FC<
     let title, message: string;
     switch (type) {
       case 'walletNotSupported':
-        title = 'Wallet not supported';
-        message =
-          'The selected wallet is currently not supported for buying cryptocurrencies';
+        title = t('Wallet not supported');
+        message = t(
+          'The selected wallet is currently not supported for buying cryptocurrencies',
+        );
         break;
       case 'needsBackup':
-        title = 'Needs backup';
-        message =
-          'The key of the selected wallet needs backup before being able to receive funds';
+        title = t('Needs backup');
+        message = t(
+          'The key of the selected wallet needs backup before being able to receive funds',
+        );
         break;
       case 'walletNotCompleted':
-        title = 'Incomplete Wallet';
-        message =
-          'The selected wallet needs to be complete before being able to receive funds';
+        title = t('Incomplete Wallet');
+        message = t(
+          'The selected wallet needs to be complete before being able to receive funds',
+        );
         break;
       case 'noWalletsAbleToBuy':
-        title = 'No wallets';
+        title = t('No wallets');
         message = coin
-          ? `No ${coin.toUpperCase()} wallets available to receive funds.`
-          : 'No wallets available to receive funds.';
+          ? t('No wallets available to receive funds.', {
+              coin: coin.toUpperCase(),
+            })
+          : t('No wallets available to receive funds.');
         break;
       case 'keysNoSupportedWallet':
-        title = 'Not supported wallets';
+        title = t('Not supported wallets');
         message = coin
-          ? `Your keys do not have ${coin.toUpperCase()} wallets able to buy crypto`
-          : 'Your keys do not have supported wallets able to buy crypto';
+          ? t('Your keys do not have wallets able to buy crypto', {
+              coin: coin.toUpperCase(),
+            })
+          : t('Your keys do not have supported wallets able to buy crypto');
         break;
       case 'emptyKeyList':
-        title = 'No keys with supported wallets';
-        message =
-          'There are no keys with wallets able to receive funds. Remember to backup your keys before using this feature.';
+        title = t('No keys with supported wallets');
+        message = t(
+          'There are no keys with wallets able to receive funds. Remember to backup your keys before using this feature.',
+        );
         break;
       default:
-        title = 'Error';
-        message = 'Unknown Error';
+        title = t('Error');
+        message = t('Unknown Error');
         break;
     }
     await sleep(1000);
@@ -414,7 +430,7 @@ const BuyCryptoRoot: React.FC<
         enableBackdropDismiss: true,
         actions: [
           {
-            text: 'OK',
+            text: t('OK'),
             action: () => {
               dispatch(dismissBottomNotificationModal());
             },
@@ -455,7 +471,7 @@ const BuyCryptoRoot: React.FC<
           onPress={() => {
             showModal('amount');
           }}>
-          <BuyCryptoItemTitle>Amount</BuyCryptoItemTitle>
+          <BuyCryptoItemTitle>{t('Amount')}</BuyCryptoItemTitle>
           <ActionsContainer>
             <SelectedOptionContainer>
               <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
@@ -481,7 +497,7 @@ const BuyCryptoRoot: React.FC<
           onPress={() => {
             showModal('walletSelector');
           }}>
-          <BuyCryptoItemTitle>Deposit to</BuyCryptoItemTitle>
+          <BuyCryptoItemTitle>{t('Deposit to')}</BuyCryptoItemTitle>
           {!selectedWallet && (
             <ActionsContainer>
               <SelectedOptionContainer style={{backgroundColor: Action}}>
@@ -489,7 +505,7 @@ const BuyCryptoRoot: React.FC<
                   style={{color: White}}
                   numberOfLines={1}
                   ellipsizeMode={'tail'}>
-                  Select Destination
+                  t{'Select Destination'}
                 </SelectedOptionText>
                 <ArrowContainer>
                   <SelectorArrowDown
@@ -546,7 +562,7 @@ const BuyCryptoRoot: React.FC<
           onPress={() => {
             showModal('paymentMethod');
           }}>
-          <BuyCryptoItemTitle>Payment Method</BuyCryptoItemTitle>
+          <BuyCryptoItemTitle>{t('Payment Method')}</BuyCryptoItemTitle>
           {!selectedPaymentMethod && (
             <ActionsContainer>
               <SelectedOptionContainer style={{backgroundColor: Action}}>
@@ -554,7 +570,7 @@ const BuyCryptoRoot: React.FC<
                   style={{color: White}}
                   numberOfLines={1}
                   ellipsizeMode={'tail'}>
-                  Select Payment Method
+                  t{'Select Payment Method'}
                 </SelectedOptionText>
                 <ArrowContainer>
                   <SelectorArrowDown
@@ -590,7 +606,7 @@ const BuyCryptoRoot: React.FC<
             onPress={() => {
               checkIfErc20Token();
             }}>
-            View Offers
+            {t('View Offers')}
           </Button>
         </CtaContainer>
       </ScrollView>

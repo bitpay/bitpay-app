@@ -50,6 +50,7 @@ import LossArrow from '../../../../assets/img/home/exchange-rates/decrement-arro
 import NeutralArrow from '../../../../assets/img/home/exchange-rates/flat-arrow.svg';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {useRequireKeyAndWalletRedirect} from '../../../utils/hooks/useRequireKeyAndWalletRedirect';
+import {useTranslation} from 'react-i18next';
 
 export type PriceChartsParamList = {
   item: ExchangeRateItemProps;
@@ -156,6 +157,7 @@ const getFormattedData = (rates: Array<number>): ChartDataType => {
 };
 
 const PriceCharts = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
@@ -264,7 +266,7 @@ const PriceCharts = () => {
         await showErrorMessage(
           CustomErrorMessage({
             errMsg: BWCErrorMessage(e),
-            title: 'Uh oh, something went wrong',
+            title: t('Uh oh, something went wrong'),
           }),
         );
       }
@@ -410,7 +412,7 @@ const PriceCharts = () => {
           </RangeDateSelectorContainer>
         ) : null}
         <Button onPress={goToBuyCrypto} buttonStyle={'primary'}>
-          Buy {currencyName}
+          {t('Buy ') + currencyName}
         </Button>
       </CtaContainer>
     </SafeAreaView>

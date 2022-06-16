@@ -67,6 +67,7 @@ import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {FormatAmount} from '../../../store/wallet/effects/amount/amount';
 import {TransactionOptionsContext} from '../../../store/wallet/wallet.models';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
+import {useTranslation} from 'react-i18next';
 
 const TxsDetailsContainer = styled.View`
   flex: 1;
@@ -223,7 +224,7 @@ const TransactionDetails = () => {
     params: {transaction, wallet},
   } = useRoute<RouteProp<WalletStackParamList, 'TransactionDetails'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const [txs, setTxs] = useState<any>();
@@ -320,7 +321,7 @@ const TransactionDetails = () => {
           enableBackdropDismiss: false,
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {},
             },
           ],
@@ -401,7 +402,7 @@ const TransactionDetails = () => {
             ) : null}
 
             {!NotZeroAmountEth(txs.amount, currencyAbbreviation) ? (
-              <SubTitle>Interaction with contract</SubTitle>
+              <SubTitle>{t('Interaction with contract')}</SubTitle>
             ) : null}
           </>
 
@@ -411,8 +412,10 @@ const TransactionDetails = () => {
           txs.error ? (
             <Banner
               type={'error'}
-              title={'Waning!'}
-              description={`Error encountered during contract execution (${txs.error})`}
+              title={t('Waning!')}
+              description={t('Error encountered during contract execution ()', {
+                error: txs.error,
+              })}
             />
           ) : null}
 
@@ -421,12 +424,12 @@ const TransactionDetails = () => {
           txs.lowAmount ? (
             <Banner
               type={'warning'}
-              title={'Amount Too Low To Spend'}
-              description={
-                'This transaction amount is too small compared to current Bitcoin network fees.'
-              }
+              title={t('Amount Too Low To Spend')}
+              description={t(
+                'This transaction amount is too small compared to current Bitcoin network fees.',
+              )}
               link={{
-                text: 'Learn More',
+                text: t('Learn More'),
                 onPress: () => {
                   dispatch(openUrlWithInAppBrowser(URL.HELP_LOW_AMOUNT));
                 },
@@ -439,12 +442,12 @@ const TransactionDetails = () => {
           (IsSent(txs.action) || IsMoved(txs.action)) ? (
             <Banner
               type={'info'}
-              title={'RBF transaction'}
-              description={
-                'This transaction can be accelerated using a higher fee.'
-              }
+              title={t('RBF transaction')}
+              description={t(
+                'This transaction can be accelerated using a higher fee.',
+              )}
               link={{
-                text: 'Speed Up',
+                text: t('Speed Up'),
                 onPress: speedup,
               }}
             />
@@ -453,16 +456,16 @@ const TransactionDetails = () => {
           {IsReceived(txs.action) && txs.lowFee ? (
             <Banner
               type={'error'}
-              title={'Low Fee'}
-              description={
-                'This transaction may take time to confirm or be dropped due to the low fee set by the sender.'
-              }
+              title={t('Low Fee')}
+              description={t(
+                'This transaction may take time to confirm or be dropped due to the low fee set by the sender.',
+              )}
             />
           ) : null}
           {/* ------------------------------------------- */}
 
           <DetailContainer>
-            <H6>DETAILS</H6>
+            <H6>{t('DETAILS')}</H6>
           </DetailContainer>
           <Hr />
 
@@ -470,7 +473,7 @@ const TransactionDetails = () => {
             <>
               <DetailContainer>
                 <DetailRow>
-                  <H7>Miner fee</H7>
+                  <H7>{t('Miner fee')}</H7>
                   <DetailColumn>
                     <H6>{txs.feeStr}</H6>
                     {!isTestnet ? (
@@ -481,7 +484,7 @@ const TransactionDetails = () => {
                           : null}
                       </H7>
                     ) : (
-                      <SubTitle>Test Only - No Value</SubTitle>
+                      <SubTitle>{t('Test Only - No Value')}</SubTitle>
                     )}
                   </DetailColumn>
                 </DetailRow>
@@ -496,7 +499,7 @@ const TransactionDetails = () => {
             <>
               <DetailContainer>
                 <DetailRow>
-                  <H7>Created by</H7>
+                  <H7>{t('Created by')}</H7>
 
                   <H7>{txs.creatorName}</H7>
                 </DetailRow>
@@ -507,7 +510,7 @@ const TransactionDetails = () => {
 
           <DetailContainer>
             <DetailRow>
-              <H7>Date</H7>
+              <H7>{t('Date')}</H7>
               <H7>
                 {GetAmFormatDate((txs.ts || txs.createdOn || txs.time) * 1000)}
               </H7>
@@ -520,7 +523,7 @@ const TransactionDetails = () => {
             <>
               <DetailContainer>
                 <DetailRow>
-                  <H7>Nonce</H7>
+                  <H7>{t('Nonce')}</H7>
                   <H7>{txs.nonce}</H7>
                 </DetailRow>
               </DetailContainer>
@@ -530,7 +533,7 @@ const TransactionDetails = () => {
 
           <DetailContainer>
             <DetailRow>
-              <H7>Confirmations</H7>
+              <H7>{t('Confirmations')}</H7>
               <DetailColumn>
                 {!txs.confirmations ? (
                   <TouchableOpacity
@@ -540,11 +543,11 @@ const TransactionDetails = () => {
                         openUrlWithInAppBrowser(URL.HELP_TXS_UNCONFIRMED),
                       );
                     }}>
-                    <DetailLink>Unconfirmed?</DetailLink>
+                    <DetailLink>{t('Unconfirmed')}?</DetailLink>
                   </TouchableOpacity>
                 ) : null}
                 {txs.feeRate ? (
-                  <SubTitle>Fee rate: {txs.feeRate}</SubTitle>
+                  <SubTitle>{t('Fee rate: ') + txs.feeRate}</SubTitle>
                 ) : null}
                 {!!txs.confirmations && !txs.safeConfirmed ? (
                   <H7>{txs.conformations}</H7>
@@ -557,7 +560,7 @@ const TransactionDetails = () => {
           <Hr />
 
           <VerticalSpace>
-            <MemoHeader>MEMO</MemoHeader>
+            <MemoHeader>{t('MEMO')}</MemoHeader>
 
             <InputText
               multiline
@@ -572,7 +575,7 @@ const TransactionDetails = () => {
 
           <DetailContainer>
             <DetailRow>
-              <H7>Transaction ID</H7>
+              <H7>{t('Transaction ID')}</H7>
 
               <CopyTransactionId onPress={() => copyText(txs.txid)}>
                 <CopyImgContainer>
@@ -592,7 +595,7 @@ const TransactionDetails = () => {
           {!IsMultisigEthInfo(wallet) && txs.actionsList?.length ? (
             <>
               <TimelineContainer>
-                <H7>Timeline</H7>
+                <H7>{t('Timeline')}</H7>
 
                 <TimelineList actions={txs.actionsList} />
               </TimelineContainer>
@@ -603,7 +606,7 @@ const TransactionDetails = () => {
 
           <VerticalSpace>
             <Button buttonStyle={'secondary'} onPress={goToBlockchain}>
-              View On Blockchain
+              {t('View On Blockchain')}
             </Button>
           </VerticalSpace>
         </ScrollView>

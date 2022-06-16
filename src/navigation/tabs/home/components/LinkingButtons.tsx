@@ -10,6 +10,7 @@ import {useNavigation} from '@react-navigation/native';
 import {Path, Svg} from 'react-native-svg';
 import {useRequireKeyAndWalletRedirect} from '../../../../utils/hooks/useRequireKeyAndWalletRedirect';
 import analytics from '@segment/analytics-react-native';
+import {useTranslation} from 'react-i18next';
 
 const ButtonsRow = styled.View`
   justify-content: center;
@@ -126,6 +127,7 @@ interface Props {
 }
 
 const LinkingButtons = ({buy, receive, send, swap}: Props) => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
@@ -170,25 +172,25 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
   const buttonsList: Array<ButtonListProps> = [
     // TODO: update icons
     {
-      label: 'buy',
+      label: t('buy'),
       img: <BuySvg />,
       cta: buyCryptoCta,
       hide: !!buy?.hide,
     },
     {
-      label: 'swap',
+      label: t('swap'),
       img: <SwapSvg />,
       cta: swapCryptoCta,
       hide: !!swap?.hide,
     },
     {
-      label: receive.label || 'receive',
+      label: receive.label || t('receive'),
       img: <ReceiveSvg />,
       cta: receive.cta,
       hide: !!receive?.hide,
     },
     {
-      label: send.label || 'send',
+      label: send.label || t('send'),
       img: <SendSvg />,
       cta: send.cta,
       hide: !!send?.hide,

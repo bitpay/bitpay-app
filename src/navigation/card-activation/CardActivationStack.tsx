@@ -1,5 +1,6 @@
 import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {HeaderTitle} from '../../components/styled/Text';
 import {
   baseNavigatorOptions,
@@ -25,6 +26,7 @@ export enum CardActivationScreens {
 const CardActivation = createStackNavigator<CardActivationStackParamList>();
 
 const CardActivationStack: React.FC = () => {
+  const {t} = useTranslation();
   return (
     <CardActivation.Navigator
       initialRouteName={CardActivationScreens.ACTIVATE}
@@ -36,7 +38,9 @@ const CardActivationStack: React.FC = () => {
         name={CardActivationScreens.ACTIVATE}
         component={ActivateScreen}
         options={{
-          headerTitle: () => <HeaderTitle>Activate BitPay Card</HeaderTitle>,
+          headerTitle: () => (
+            <HeaderTitle>{t('Activate BitPay Card')}</HeaderTitle>
+          ),
         }}
       />
       <CardActivation.Screen

@@ -20,6 +20,7 @@ import {FormatAmountStr} from '../../../../store/wallet/effects/amount/amount';
 import {sleep} from '../../../../utils/helper-methods';
 import {APP_NAME} from '../../../../constants/config';
 import {useAppDispatch} from '../../../../utils/hooks';
+import {useTranslation} from 'react-i18next';
 
 export type AllAddressesParamList = {
   walletName: string;
@@ -53,6 +54,7 @@ const SubText = styled(H7)`
 `;
 
 const AllAddresses = () => {
+  const {t} = useTranslation();
   const {
     params: {walletName, currencyAbbreviation, usedAddresses, unusedAddresses},
   } = useRoute<RouteProp<WalletStackParamList, 'AllAddresses'>>();
@@ -64,7 +66,7 @@ const AllAddresses = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>All Addresses</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('All Addresses')}</HeaderTitle>,
     });
   });
 
@@ -80,11 +82,11 @@ const AllAddresses = () => {
 
       const appName = APP_NAME;
 
-      let body: string =
-        appName +
-        ' Wallet "' +
-        walletName +
-        '" Addresses\nOnly Main Addresses are shown.\n\n\n';
+      let body: string = t(
+        ' Wallet "" Addresses\nOnly Main Addresses are shown.\n\n\n\'',
+        {appName, walletName},
+      );
+
       body += allAddresses
         .map(({address, path, uiTime}) => {
           return `*  ${address} xpub ${path.substring(1)} ${uiTime || ''}`;
@@ -111,7 +113,7 @@ const AllAddresses = () => {
         {usedAddresses?.length ? (
           <>
             <VerticalPadding>
-              <Title>Addresses with balance</Title>
+              <Title>{t('Addresses with balance')}</Title>
 
               {usedAddresses.map(({address, amount}, index) => (
                 <View key={index}>
@@ -145,7 +147,7 @@ const AllAddresses = () => {
         {unusedAddresses?.length ? (
           <>
             <VerticalPadding>
-              <Title>Unused addresses</Title>
+              <Title>{t('Unused addresses')}</Title>
 
               {unusedAddresses.map(({address, path, uiTime}, index) => (
                 <View key={index}>
@@ -181,7 +183,7 @@ const AllAddresses = () => {
           elevation: 5,
         }}>
         <Button onPress={sendAddresses} state={buttonState}>
-          Send Addresses by Email
+          {t('Send Addresses by Email')}
         </Button>
       </CtaContainerAbsolute>
     </AddressesContainer>

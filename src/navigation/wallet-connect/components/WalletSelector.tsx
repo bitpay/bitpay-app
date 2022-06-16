@@ -31,6 +31,7 @@ import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import _ from 'lodash';
 import {isValidWalletConnectUri} from '../../../store/wallet/utils/validations';
+import {useTranslation} from 'react-i18next';
 
 export type WalletConnectIntroParamList = {
   uri?: string;
@@ -61,6 +62,7 @@ export default ({
   dappUri: string;
   onBackdropPress: () => void;
 }) => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const [uri, setUri] = useState(dappUri);
@@ -164,12 +166,12 @@ export default ({
         await showErrorMessage(
           CustomErrorMessage({
             errMsg: BWCErrorMessage(e),
-            title: 'Uh oh, something went wrong',
+            title: t('Uh oh, something went wrong'),
           }),
         );
       }
     },
-    [dispatch, navigation, showErrorMessage],
+    [dispatch, navigation, showErrorMessage, t],
   );
 
   const goToScanView = useCallback(
@@ -199,14 +201,16 @@ export default ({
     <SheetModal isVisible={isVisible} onBackdropPress={onBackdropPress}>
       <WalletSelectorContainer>
         <TextAlign align={'center'}>
-          <H4>Select a Wallet</H4>
+          <H4>{t('Select a Wallet')}</H4>
         </TextAlign>
         {keyWallets.length ? (
           <DescriptionText>
-            Which Ethereum wallet would you like to use for WalletConnect?
+            {t(
+              'Which Ethereum wallet would you like to use for WalletConnect?',
+            )}
           </DescriptionText>
         ) : (
-          <DescriptionText>No wallets available</DescriptionText>
+          <DescriptionText>{t('No wallets available')}</DescriptionText>
         )}
         <WalletSelectMenuBodyContainer>
           <KeyWalletsRow keyWallets={keyWallets!} onPress={onWalletSelect} />

@@ -15,6 +15,7 @@ import {View} from 'react-native';
 import {BaseText, H3} from '../styled/Text';
 import * as Svg from 'react-native-svg';
 import {shouldScale} from '../../utils/helper-methods';
+import {useTranslation} from 'react-i18next';
 
 const Arrow = ({isDark}: {isDark: boolean}) => {
   return (
@@ -111,6 +112,7 @@ export const NeedBackupText = styled(BaseText)`
 `;
 
 const HomeCard: React.FC<HomeCardProps> = ({body, onCTAPress, header}) => {
+  const {t} = useTranslation();
   const HeaderComp = <CardHeader>{header}</CardHeader>;
   const theme = useTheme();
   const {
@@ -146,7 +148,7 @@ const HomeCard: React.FC<HomeCardProps> = ({body, onCTAPress, header}) => {
       )}
       {needsBackup && (
         <Row>
-          <NeedBackupText>Needs Backup</NeedBackupText>
+          <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
         </Row>
       )}
       {description && <CardBodyDesc>{description}</CardBodyDesc>}

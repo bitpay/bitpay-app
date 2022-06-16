@@ -3,6 +3,7 @@ import {Theme, useNavigation} from '@react-navigation/native';
 import LinkCard from './LinkCard';
 import {Path, Svg} from 'react-native-svg';
 import {White} from '../../../../../styles/colors';
+import {useTranslation} from 'react-i18next';
 
 const image = (theme: Theme) => {
   return (
@@ -18,11 +19,12 @@ const image = (theme: Theme) => {
 };
 
 const CreateWallet = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   return (
     <LinkCard
       image={image}
-      description={'Create, import or join a shared wallet'}
+      description={t('Create, import or join a shared wallet')}
       onPress={() => navigation.navigate('Wallet', {screen: 'CreationOptions'})}
     />
   );

@@ -1,4 +1,5 @@
 import React, {useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {ColorSchemeName, StyleProp, TextStyle, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {useTheme} from 'styled-components/native';
@@ -14,6 +15,7 @@ import {LogActions} from '../../../../../store/log';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 
 const ThemeSettings: React.FC = () => {
+  const {t} = useTranslation();
   const dispatch = useDispatch();
   const currentTheme = useSelector(({APP}: RootState) => APP.colorScheme);
   const onSetThemePress = (setScheme: ColorSchemeName) => {
@@ -28,9 +30,9 @@ const ThemeSettings: React.FC = () => {
   const textStyle: StyleProp<TextStyle> = {color: selectedTheme.colors.text};
 
   const SETTINGS: {title: string; theme: ColorSchemeName}[] = [
-    {title: 'Light Mode', theme: 'light'},
-    {title: 'Dark Mode', theme: 'dark'},
-    {title: 'System Default', theme: null},
+    {title: t('Light Mode'), theme: 'light'},
+    {title: t('Dark Mode'), theme: 'dark'},
+    {title: t('System Default'), theme: null},
   ];
 
   return (

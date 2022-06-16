@@ -21,6 +21,7 @@ import {View} from 'react-native';
 import WalletInformationSkeleton from './WalletInformationSkeleton';
 import {sleep} from '../../../../utils/helper-methods';
 import {useAppDispatch} from '../../../../utils/hooks';
+import {useTranslation} from 'react-i18next';
 
 const InfoContainer = styled.SafeAreaView`
   flex: 1;
@@ -69,6 +70,7 @@ export const getLinkedWallet = (key: Key, wallet: Wallet) => {
 };
 
 const WalletInformation = () => {
+  const {t} = useTranslation();
   const {
     params: {wallet},
   } = useRoute<RouteProp<WalletStackParamList, 'WalletInformation'>>();
@@ -97,9 +99,9 @@ const WalletInformation = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>Wallet Information</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Wallet Information')}</HeaderTitle>,
     });
-  }, [navigation]);
+  }, [navigation, t]);
 
   const copyText = (text: string) => {
     Clipboard.setString(text);
@@ -135,7 +137,7 @@ const WalletInformation = () => {
         ) : (
           <>
             <InfoSettingsRow>
-              <SettingTitle>Name (at creation)</SettingTitle>
+              <SettingTitle>{t('Name (at creation)')}</SettingTitle>
 
               <InfoLabel>
                 <H7>{walletName}</H7>
@@ -144,7 +146,7 @@ const WalletInformation = () => {
             <Hr />
 
             <InfoSettingsRow>
-              <SettingTitle>Coin</SettingTitle>
+              <SettingTitle>{t('Coin')}</SettingTitle>
 
               <InfoLabel>
                 <H7>{coin.toUpperCase()}</H7>
@@ -153,7 +155,7 @@ const WalletInformation = () => {
             <Hr />
 
             <InfoSettingsRow>
-              <SettingTitle>WalletId</SettingTitle>
+              <SettingTitle>{t('WalletId')}</SettingTitle>
             </InfoSettingsRow>
 
             <CopyButton onPress={() => copyText(walletId)}>
@@ -166,7 +168,7 @@ const WalletInformation = () => {
             {token ? (
               <>
                 <InfoSettingsRow>
-                  <SettingTitle>Linked Ethereum Wallet</SettingTitle>
+                  <SettingTitle>{t('Linked Ethereum Wallet')}</SettingTitle>
 
                   <InfoLabel>
                     <H7>{getLinkedWallet(key, wallet)}</H7>
@@ -177,7 +179,7 @@ const WalletInformation = () => {
             ) : null}
 
             <InfoSettingsRow>
-              <SettingTitle>Configuration (m-n)</SettingTitle>
+              <SettingTitle>{t('Configuration (m-n)')}</SettingTitle>
 
               <InfoLabel>
                 <H7>
@@ -188,7 +190,7 @@ const WalletInformation = () => {
             <Hr />
 
             <InfoSettingsRow>
-              <SettingTitle>Network</SettingTitle>
+              <SettingTitle>{t('Network')}</SettingTitle>
 
               <InfoLabel>
                 <H7>{network}</H7>
@@ -199,7 +201,7 @@ const WalletInformation = () => {
             {IsUtxoCoin(coin) ? (
               <>
                 <InfoSettingsRow>
-                  <SettingTitle>Address Type</SettingTitle>
+                  <SettingTitle>{t('Address Type')}</SettingTitle>
 
                   <InfoLabel>
                     <H7>{addressType || 'P2SH'}</H7>
@@ -210,7 +212,7 @@ const WalletInformation = () => {
             ) : null}
 
             <InfoSettingsRow>
-              <SettingTitle>Derivation Path</SettingTitle>
+              <SettingTitle>{t('Derivation Path')}</SettingTitle>
 
               <InfoLabel>
                 <H7>{rootPath}</H7>
@@ -221,10 +223,10 @@ const WalletInformation = () => {
             {!keyId ? (
               <>
                 <InfoSettingsRow>
-                  <SettingTitle>Read Only Wallet</SettingTitle>
+                  <SettingTitle>{t('Read Only Wallet')}</SettingTitle>
 
                   <InfoLabel>
-                    <H7>No private key</H7>
+                    <H7>{t('No private key')}</H7>
                   </InfoLabel>
                 </InfoSettingsRow>
                 <Hr />
@@ -232,7 +234,7 @@ const WalletInformation = () => {
             ) : null}
 
             <InfoSettingsRow>
-              <SettingTitle>Account</SettingTitle>
+              <SettingTitle>{t('Account')}</SettingTitle>
 
               <InfoLabel>
                 <H7>#{account}</H7>
@@ -243,7 +245,7 @@ const WalletInformation = () => {
             {copayers ? (
               <>
                 <SettingsHeader>
-                  <H5>Copayers</H5>
+                  <H5>{t('Copayers')}</H5>
                 </SettingsHeader>
 
                 {copayers.map((copayer, index) => (
@@ -252,7 +254,7 @@ const WalletInformation = () => {
 
                     {copayer.id === copayerId ? (
                       <InfoLabel>
-                        <H7>(Me)</H7>
+                        <H7>{t('(Me)')}</H7>
                       </InfoLabel>
                     ) : null}
                   </InfoSettingsRow>
@@ -262,14 +264,14 @@ const WalletInformation = () => {
             ) : null}
 
             <SettingsHeader>
-              <H5>Extended Public Keys</H5>
+              <H5>{t('Extended Public Keys')}</H5>
             </SettingsHeader>
 
             {publicKeyRing.map(
               ({xPubKey}: {xPubKey: string}, index: number) => (
                 <View key={index}>
                   <InfoSettingsRow>
-                    <SettingTitle>Copayer {index}</SettingTitle>
+                    <SettingTitle>{t('Copayer ') + index}</SettingTitle>
                   </InfoSettingsRow>
 
                   <CopyButton onPress={() => copyText(xPubKey)}>
@@ -287,7 +289,7 @@ const WalletInformation = () => {
             {balanceByAddress?.length ? (
               <>
                 <SettingsHeader>
-                  <H5>Balance By Address</H5>
+                  <H5>{t('Balance By Address')}</H5>
                 </SettingsHeader>
 
                 {balanceByAddress.map((a, index: number) => (

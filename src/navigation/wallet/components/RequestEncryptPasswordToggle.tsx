@@ -12,8 +12,10 @@ import {WalletActions} from '../../../store/wallet';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {DecryptError, WrongPasswordError} from './ErrorMessages';
 import {sleep} from '../../../utils/helper-methods';
+import {useTranslation} from 'react-i18next';
 
 const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const logger = useLogger();
@@ -44,13 +46,14 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
         dispatch(
           showBottomNotificationModal({
             type: 'success',
-            title: 'Password removed',
-            message:
+            title: t('Password removed'),
+            message: t(
               'Your encryption password has been removed. This key is now decrypted.',
+            ),
             enableBackdropDismiss: true,
             actions: [
               {
-                text: 'GOT IT',
+                text: t('GOT IT'),
                 action: () => {
                   dispatch(dismissBottomNotificationModal());
                 },
@@ -85,8 +88,9 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
           dispatch(
             AppActions.showDecryptPasswordModal({
               onSubmitHandler: onSubmitPassword,
-              description:
+              description: t(
                 'To disable encryption for your wallet, please enter your encryption password below.',
+              ),
             }),
           );
         }

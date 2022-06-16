@@ -2,6 +2,7 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
+import {useTranslation} from 'react-i18next';
 import {Keyboard, TextInput} from 'react-native';
 import styled from 'styled-components/native';
 import * as yup from 'yup';
@@ -31,6 +32,7 @@ const schema = yup.object().shape({
 const PayProConfirmTwoFactor = ({
   route,
 }: StackScreenProps<WalletStackParamList, 'PayProConfirmTwoFactor'>) => {
+  const {t} = useTranslation();
   const {onSubmit} = route.params;
   const codeRef = useRef<TextInput>(null);
   const [submitDisabled, setSubmitDisabled] = useState(false);
@@ -58,7 +60,7 @@ const PayProConfirmTwoFactor = ({
   return (
     <AuthFormContainer>
       <AuthFormParagraph>
-        Please enter your two-step verification code.
+        {t('Please enter your two-step verification code.')}
       </AuthFormParagraph>
       <AuthRowContainer>
         <Controller
@@ -66,7 +68,7 @@ const PayProConfirmTwoFactor = ({
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
               placeholder={'1231234'}
-              label={'TWO-STEP VERIFICATION CODE'}
+              label={t('TWO-STEP VERIFICATION CODE')}
               onBlur={onBlur}
               onChangeText={(text: string) => {
                 onChange(text);
@@ -76,7 +78,7 @@ const PayProConfirmTwoFactor = ({
               }}
               error={
                 errors.code?.message
-                  ? 'Please enter a valid verification code.'
+                  ? t('Please enter a valid verification code.')
                   : undefined
               }
               keyboardType={'numeric'}
@@ -95,7 +97,7 @@ const PayProConfirmTwoFactor = ({
       <AuthActionsContainer>
         <PrimaryActionContainer>
           <Button onPress={onFormSubmit} disabled={submitDisabled}>
-            Continue
+            {t('Continue')}
           </Button>
         </PrimaryActionContainer>
       </AuthActionsContainer>

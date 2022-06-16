@@ -32,6 +32,7 @@ import PinDarkModeImg from '../../../../../assets/img/pin-darkmode.svg';
 import styled from 'styled-components/native';
 import {Midnight, SlateDark, White} from '../../../../styles/colors';
 import {H4, Paragraph} from '../../../../components/styled/Text';
+import {useTranslation} from 'react-i18next';
 const FingerprintSvg = {
   light: <FingerprintImg />,
   dark: <FingerprintDarkModeImg />,
@@ -79,6 +80,7 @@ const ImgRow = styled.View`
 `;
 
 const Security = () => {
+  const {t} = useTranslation();
   const dispatch = useDispatch();
   const themeType = useThemeType();
   const [modalVisible, setModalVisible] = useState(false);
@@ -169,7 +171,7 @@ const Security = () => {
     <>
       <SettingsComponent>
         <Setting onPress={onPressLockButton}>
-          <SettingTitle>Lock App</SettingTitle>
+          <SettingTitle>{t('Lock App')}</SettingTitle>
           <Button onPress={onPressLockButton} buttonType={'pill'}>
             {biometricLockActive || pinLockActive ? 'Enabled' : 'Disabled'}
           </Button>
@@ -178,11 +180,11 @@ const Security = () => {
       <SheetModal isVisible={modalVisible} onBackdropPress={hideModal}>
         <SheetContainer>
           <Header>
-            <Title>Enable Lock</Title>
+            <Title>{t('Enable Lock')}</Title>
           </Header>
 
           <EnableLockModalParagraph>
-            Secure the app with biometric or PIN.
+            {t('Secure the app with biometric or PIN.')}
           </EnableLockModalParagraph>
 
           <ImgRow>

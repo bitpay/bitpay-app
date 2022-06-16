@@ -18,12 +18,14 @@ import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import MultisigOptions from './MultisigOptions';
 import {Option} from './CreationOptions';
+import {useTranslation} from 'react-i18next';
 
 export type AddingOptionsParamList = {
   key: Key;
 };
 
 const AddingOptions: React.FC = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'AddingOptions'>>();
   const {key} = route.params;
@@ -32,17 +34,18 @@ const AddingOptions: React.FC = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
-      headerTitle: () => <HeaderTitle>Select Wallet Type</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Select Wallet Type')}</HeaderTitle>,
       headerTitleAlign: 'center',
     });
-  }, [navigation]);
+  }, [navigation, t]);
 
   const optionList: Option[] = [
     {
       id: 'basic',
-      title: 'Basic wallet',
-      description:
+      title: t('Basic wallet'),
+      description: t(
         'Add coins like Bitcoin and Dogecoin, and also tokens like USDC and PAX',
+      ),
       cta: () =>
         navigation.navigate('Wallet', {
           screen: 'CurrencySelection',
@@ -51,8 +54,10 @@ const AddingOptions: React.FC = () => {
     },
     {
       id: 'multisig',
-      title: 'Multisig Wallet',
-      description: 'Requires multiple people or devices and is the most secure',
+      title: t('Multisig Wallet'),
+      description: t(
+        'Requires multiple people or devices and is the most secure',
+      ),
       cta: () => setShowMultisigOptions(true),
     },
   ];

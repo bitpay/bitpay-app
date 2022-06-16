@@ -6,6 +6,7 @@ import {WIDTH} from '../../../components/styled/Containers';
 import PaymentCompleteSvg from '../../../../assets/img/wallet/payment-complete.svg';
 import {BaseText} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
+import {useTranslation} from 'react-i18next';
 
 const PaymentSentContainer = styled.View`
   flex: 1;
@@ -49,6 +50,7 @@ interface PaymentSentModal {
 }
 
 const PaymentSent = ({isVisible, onCloseModal}: PaymentSentModal) => {
+  const {t} = useTranslation();
   return (
     <Modal
       isVisible={isVisible}
@@ -66,7 +68,7 @@ const PaymentSent = ({isVisible, onCloseModal}: PaymentSentModal) => {
       <PaymentSentContainer>
         <PaymentSentHero>
           <PaymentCompleteSvg />
-          <Title>Payment Sent</Title>
+          <Title>{t('Payment Sent')}</Title>
         </PaymentSentHero>
         <PaymentSentFooter>
           <CloseButton
@@ -74,7 +76,7 @@ const PaymentSent = ({isVisible, onCloseModal}: PaymentSentModal) => {
               haptic('impactLight');
               onCloseModal();
             }}>
-            <CloseText>CLOSE</CloseText>
+            <CloseText>{t('CLOSE')}</CloseText>
           </CloseButton>
         </PaymentSentFooter>
       </PaymentSentContainer>

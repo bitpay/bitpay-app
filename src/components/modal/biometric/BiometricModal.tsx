@@ -24,6 +24,7 @@ import {
 } from '../../../constants/BiometricError';
 import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {useTranslation} from 'react-i18next';
 
 const BiometricContainer = styled.View`
   flex: 1;
@@ -70,6 +71,7 @@ const ImgContainer = styled(Animated.View)`
 `;
 
 const BiometricModal: React.FC = () => {
+  const {t} = useTranslation();
   const dispatch = useDispatch();
   const isVisible = useSelector(({APP}: RootState) => APP.showBiometricModal);
   const [animation, setAnimation] = useState(new Animated.Value(0));
@@ -147,7 +149,7 @@ const BiometricModal: React.FC = () => {
       style={{margin: 0}}>
       <BiometricContainer>
         <BiometricModalTitleContainer>
-          <BiometricModalTitle>Unlock App</BiometricModalTitle>
+          <BiometricModalTitle>{t('Unlock App')}</BiometricModalTitle>
         </BiometricModalTitleContainer>
         <BiometricModalImgContainer onPress={() => authenticate()}>
           <ImgContainer style={{transform: [{scale}]}}>

@@ -16,6 +16,7 @@ import {AppActions} from '../../../store/app';
 import {White} from '../../../styles/colors';
 import LinearGradient from 'react-native-linear-gradient';
 import haptic from '../../../components/haptic-feedback/haptic';
+import {useTranslation} from 'react-i18next';
 
 interface OnboardingFinishModalProps {
   id: string;
@@ -47,6 +48,7 @@ const OnboardingFinishModalContainer = styled.View`
 `;
 
 const OnboardingFinishModal: React.FC = () => {
+  const {t} = useTranslation();
   const isVisible = useSelector(
     ({APP}: RootState) => APP.showOnboardingFinishModal,
   );
@@ -65,17 +67,19 @@ const OnboardingFinishModal: React.FC = () => {
   } = {
     addFunds: {
       id: 'addFunds',
-      title: "Let's add funds",
-      description: 'To start using your wallets, you will need to have crypto.',
+      title: t("Let's add funds"),
+      description: t(
+        'To start using your wallets, you will need to have crypto.',
+      ),
       buttons: [
         {
-          text: 'Buy Crypto',
+          text: t('Buy Crypto'),
           onPress: () => {
             dismissModal();
           },
         },
         {
-          text: 'Receive Crypto',
+          text: t('Receive Crypto'),
           onPress: () => {
             dismissModal();
           },
@@ -84,18 +88,19 @@ const OnboardingFinishModal: React.FC = () => {
     },
     createWallet: {
       id: 'createWallet',
-      title: "Let's create a key",
-      description:
+      title: t("Let's create a key"),
+      description: t(
         'To start using the app, you need to have a key. You can create or import a key.',
+      ),
       buttons: [
         {
-          text: 'Create key',
+          text: t('Create key'),
           onPress: () => {
             dismissModal();
           },
         },
         {
-          text: 'Import',
+          text: t('Import'),
           onPress: () => {
             dismissModal();
           },

@@ -8,6 +8,7 @@ import {HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
 import {WalletStackParamList} from '../WalletStack';
 import {StackScreenProps} from '@react-navigation/stack';
+import {useTranslation} from 'react-i18next';
 
 type ImportScreenProps = StackScreenProps<WalletStackParamList, 'Import'>;
 
@@ -23,27 +24,28 @@ const ImportContainer = styled.SafeAreaView`
 `;
 
 const Import: React.FC<ImportScreenProps> = ({route}) => {
+  const {t} = useTranslation();
   const Tab = createMaterialTopTabNavigator();
   const navigation = useNavigation();
 
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
-      headerTitle: () => <HeaderTitle>Import</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Import')}</HeaderTitle>,
       headerTitleAlign: 'center',
     });
-  }, [navigation]);
+  }, [navigation, t]);
 
   return (
     <ImportContainer>
       <Tab.Navigator screenOptions={{...ScreenOptions(150)}}>
         <Tab.Screen
-          name="Recovery Phrase"
+          name={t('Recovery Phrase')}
           component={RecoveryPhrase}
           initialParams={route.params}
         />
         <Tab.Screen
-          name="File/Text"
+          name={t('File/Text')}
           component={FileOrText}
           initialParams={route.params}
         />

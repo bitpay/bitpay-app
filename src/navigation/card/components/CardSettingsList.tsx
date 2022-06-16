@@ -150,7 +150,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
       {card.provider === 'firstView' ? (
         <>
           <Styled.CategoryRow>
-            <Styled.CategoryHeading>Account</Styled.CategoryHeading>
+            <Styled.CategoryHeading>{t('Account')}</Styled.CategoryHeading>
           </Styled.CategoryRow>
 
           <Hr />
@@ -168,7 +168,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
       {card.provider === CardProvider.galileo ? (
         <>
           <Styled.CategoryRow>
-            <Styled.CategoryHeading>Security</Styled.CategoryHeading>
+            <Styled.CategoryHeading>{t('Security')}</Styled.CategoryHeading>
           </Styled.CategoryRow>
 
           <Hr />
@@ -184,7 +184,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
           <Hr />
 
           <Styled.CategoryRow>
-            <Styled.CategoryHeading>Account</Styled.CategoryHeading>
+            <Styled.CategoryHeading>{t('Account')}</Styled.CategoryHeading>
           </Styled.CategoryRow>
 
           <Hr />
@@ -202,7 +202,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
             onPress={async () => {
               dispatch(CardEffects.startOpenDosh(user?.email || ''));
             }}>
-            Card Offers
+            {t('Card Offers')}
           </Styled.SettingsLink>
 
           <Hr />

@@ -145,6 +145,7 @@ const BuildKeyWalletRow = (
 };
 
 const SendTo = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
@@ -357,7 +358,7 @@ const SendTo = () => {
       <ScrollView>
         <SearchContainer>
           <SearchInput
-            placeholder={'Search contact or enter address'}
+            placeholder={t('Search contact or enter address')}
             placeholderTextColor={placeHolderTextColor}
             value={searchInput}
             onChangeText={(text: string) => {

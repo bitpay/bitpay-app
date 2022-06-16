@@ -32,6 +32,7 @@ import {sleep} from '../../../../utils/helper-methods';
 import NetworkPolicyPlaceholder from '../components/NetworkPolicyPlaceholder';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {updateCacheFeeLevel} from '../../../../store/wallet/wallet.actions';
+import {useTranslation} from 'react-i18next';
 
 const NetworkFeePolicyContainer = styled.SafeAreaView`
   flex: 1;
@@ -201,6 +202,7 @@ const FeeOptions = ({
 };
 
 const NetworkFeePolicy = () => {
+  const {t} = useTranslation();
   const network = 'livenet';
   const [ethFeeOptions, setEthFeeOptions] = useState<any[]>();
   const [btcFeeOptions, setBtcFeeOptions] = useState<any[]>();
@@ -231,7 +233,7 @@ const NetworkFeePolicy = () => {
         };
         feeOption.feePerSatByte = (feePerKb / feeUnitAmount).toFixed();
         feeOption.uiFeePerSatByte = `${feeOption.feePerSatByte} ${
-          currencyAbbreviation === 'btc' ? 'Satoshis per byte' : feeUnit
+          currencyAbbreviation === 'btc' ? t('Satoshis per byte') : feeUnit
         }`;
 
         if (
@@ -248,9 +250,9 @@ const NetworkFeePolicy = () => {
           feeOption.avgConfirmationTime =
             hours > 0
               ? hours === 1
-                ? 'within an hour'
-                : `within ${hours} hours`
-              : `within ${min} minutes`;
+                ? t('within an hour')
+                : t('within hours', {hours})
+              : t('within minutes', {min});
         }
         feeOptions.push(feeOption);
       });
@@ -282,9 +284,9 @@ const NetworkFeePolicy = () => {
     <NetworkFeePolicyContainer>
       <ScrollView>
         <NetworkFeePolicyParagraph>
-          The higher the fee, the greater the incentive a miner has to include
-          that transaction in a block. Current fees are determined based on
-          network load and the selected policy.
+          {t(
+            'The higher the fee, the greater the incentive a miner has to include that transaction in a block. Current fees are determined based on network load and the selected policy.',
+          )}
         </NetworkFeePolicyParagraph>
 
         {isLoading ? (

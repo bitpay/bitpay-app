@@ -13,6 +13,7 @@ import {HeaderRightContainer} from '../../../components/styled/Containers';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import HistoryIcon from '../../../../assets/img/services/swap-crypto/icon-history.svg';
 import {useAppSelector} from '../../../utils/hooks';
+import {useTranslation} from 'react-i18next';
 
 export type SwapCryptoStackParamList = {
   Root:
@@ -42,6 +43,7 @@ export enum SwapCryptoScreens {
 const SwapCrypto = createStackNavigator<SwapCryptoStackParamList>();
 
 const SwapCryptoStack = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const changellyHistory = useAppSelector(
     ({SWAP_CRYPTO}) => SWAP_CRYPTO.changelly,
@@ -59,7 +61,7 @@ const SwapCryptoStack = () => {
         name={SwapCryptoScreens.ROOT}
         component={SwapCryptoRoot}
         options={{
-          headerTitle: () => <HeaderTitle>Swap Crypto</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Swap Crypto')}</HeaderTitle>,
           headerRight: () => (
             <HeaderRightContainer>
               {!!changellyTxs.length && (
@@ -81,7 +83,7 @@ const SwapCryptoStack = () => {
         component={ChangellyCheckout}
         options={{
           gestureEnabled: false,
-          headerTitle: () => <HeaderTitle>Swap Checkout</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Swap Checkout')}</HeaderTitle>,
         }}
       />
     </SwapCrypto.Navigator>

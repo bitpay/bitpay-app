@@ -28,6 +28,7 @@ import {BoxShadow} from './Styled';
 import {View} from 'react-native';
 import Percentage from '../../../../components/percentage/Percentage';
 import {useAppSelector} from '../../../../utils/hooks';
+import {useTranslation} from 'react-i18next';
 
 interface WalletCardComponentProps {
   wallets: Wallet[];
@@ -104,6 +105,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   hideKeyBalance,
   layout,
 }) => {
+  const {t} = useTranslation();
   const theme = useTheme();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const walletInfo = wallets.slice(0, WALLET_DISPLAY_LIMIT);
@@ -149,7 +151,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
           </Column>
           <Column style={{justifyContent: 'center', alignItems: 'flex-end'}}>
             {needsBackup ? (
-              <NeedBackupText>Needs Backup</NeedBackupText>
+              <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
             ) : !hideKeyBalance ? (
               <>
                 <Balance>

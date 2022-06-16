@@ -18,6 +18,7 @@ import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {sleep} from '../../../utils/helper-methods';
+import {useTranslation} from 'react-i18next';
 
 export type CoinbaseRootScreenParamList =
   | {
@@ -35,6 +36,7 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({
   navigation,
   route,
 }) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
 
   const tokenError = useAppSelector(
@@ -52,12 +54,12 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({
       dispatch(
         showBottomNotificationModal({
           type: 'error',
-          title: 'Coinbase error',
+          title: t('Coinbase error'),
           message: errMsg,
           enableBackdropDismiss: true,
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {
                 dispatch(clearErrorStatus());
                 navigation.goBack();
@@ -68,7 +70,7 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({
         }),
       );
     },
-    [dispatch, navigation],
+    [dispatch, navigation, t],
   );
 
   useEffect(() => {

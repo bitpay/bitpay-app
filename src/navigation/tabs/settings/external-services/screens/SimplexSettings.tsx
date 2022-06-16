@@ -28,6 +28,7 @@ import {
   FooterSupport,
   SupportTxt,
 } from '../styled/ExternalServicesSettings';
+import {useTranslation} from 'react-i18next';
 
 export interface SimplexSettingsProps {
   incomingPaymentRequest: {
@@ -39,6 +40,7 @@ export interface SimplexSettingsProps {
 }
 
 const SimplexSettings: React.FC = () => {
+  const {t} = useTranslation();
   const simplexHistory = useSelector(
     ({BUY_CRYPTO}: RootState) => BUY_CRYPTO.simplex,
   );
@@ -75,7 +77,7 @@ const SimplexSettings: React.FC = () => {
       <SettingsContainer>
         <Settings style={{paddingBottom: 500}}>
           {paymentRequests && paymentRequests.length > 0 && (
-            <PrTitle>Payment Requests</PrTitle>
+            <PrTitle>{t('Payment Requests')}</PrTitle>
           )}
           {paymentRequests &&
             paymentRequests.length > 0 &&
@@ -100,16 +102,18 @@ const SimplexSettings: React.FC = () => {
                       </PrTxtFiatAmount>
                       {pr.status === 'failed' && (
                         <PrTxtStatus style={{color: '#df5264'}}>
-                          Payment request rejected
+                          {t('Payment request rejected')}
                         </PrTxtStatus>
                       )}
                       {pr.status === 'success' && (
                         <PrTxtStatus style={{color: '#01d1a2'}}>
-                          Payment request approved
+                          {t('Payment request approved')}
                         </PrTxtStatus>
                       )}
                       {pr.status === 'paymentRequestSent' && (
-                        <PrTxtStatus>Attempted payment request</PrTxtStatus>
+                        <PrTxtStatus>
+                          {t('Attempted payment request')}
+                        </PrTxtStatus>
                       )}
                     </PrRowLeft>
                     <PrRowRight>
@@ -122,7 +126,9 @@ const SimplexSettings: React.FC = () => {
                 );
               })}
           {(!paymentRequests || paymentRequests.length === 0) && (
-            <NoPrMsg>There are currently no transactions with Simplex</NoPrMsg>
+            <NoPrMsg>
+              {t('There are currently no transactions with Simplex')}
+            </NoPrMsg>
           )}
         </Settings>
       </SettingsContainer>
@@ -135,7 +141,7 @@ const SimplexSettings: React.FC = () => {
               openUrlWithInAppBrowser('https://www.simplex.com/support/'),
             );
           }}>
-          <Link>Contact the Simplex support team.</Link>
+          <Link>{t('Contact the Simplex support team.')}</Link>
         </TouchableOpacity>
       </FooterSupport>
     </>

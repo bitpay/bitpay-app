@@ -27,6 +27,7 @@ import {
   SectionSpacer,
 } from './styled/ShopTabComponents';
 import GhostSvg from '../../../../../assets/img/ghost-cheeky.svg';
+import {useTranslation} from 'react-i18next';
 
 const SearchResults = styled.View`
   display: flex;
@@ -48,6 +49,7 @@ export const ShopOnline = ({
   integrations: DirectIntegrationApiObject[];
   categories: CategoryWithIntegrations[];
 }) => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const theme = useTheme();
   const {control} = useForm();
@@ -79,7 +81,7 @@ export const ShopOnline = ({
                     },
                   });
                 }}>
-                <SectionHeaderButton>See all</SectionHeaderButton>
+                <SectionHeaderButton>{t('See all')}</SectionHeaderButton>
               </TouchableWithoutFeedback>
             </SectionHeaderContainer>
           </SectionContainer>
@@ -129,7 +131,7 @@ export const ShopOnline = ({
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <SearchBox
-              placeholder={'Search for a brand'}
+              placeholder={t('Search for a brand')}
               onBlur={onBlur}
               onChangeText={(text: string) => {
                 onChange(text);
@@ -159,16 +161,16 @@ export const ShopOnline = ({
               <GhostSvg />
             </NoResultsImgContainer>
             <Paragraph>
-              {"We couldn't find a match for "}
+              {t("We couldn't find a match for ")}
               <BaseText style={{fontWeight: 'bold'}}>{searchVal}</BaseText>.
             </Paragraph>
-            <Paragraph>Please try searching something else.</Paragraph>
+            <Paragraph>{t('Please try searching something else.')}</Paragraph>
           </NoResultsContainer>
         </NoResultsContainer>
       </HideableView>
       <HideableView show={!!(searchVal && searchResults.length)}>
         <SectionContainer>
-          <SectionHeader>Search Results for "{searchVal}"</SectionHeader>
+          <SectionHeader>{t('Search Results for ') + searchVal}</SectionHeader>
         </SectionContainer>
         <SearchResults>
           {searchResults.map(integration => {

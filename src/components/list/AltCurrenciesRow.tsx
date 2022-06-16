@@ -10,6 +10,7 @@ import {
 } from '../../styles/colors';
 import {useTheme, css} from 'styled-components/native';
 import {Column} from '../styled/Containers';
+import {useTranslation} from 'react-i18next';
 
 const AltCurrencyContainer = styled.TouchableHighlight<{selected?: boolean}>`
   ${({selected}) =>
@@ -80,6 +81,7 @@ interface Props {
 }
 
 const AltCurrencyRow = ({altCurrency, selected, onPress}: Props) => {
+  const {t} = useTranslation();
   const theme = useTheme();
   const underlayColor = theme.colors.background;
   const {isoCode, name} = altCurrency;
@@ -90,7 +92,7 @@ const AltCurrencyRow = ({altCurrency, selected, onPress}: Props) => {
       onPress={onPress}>
       <RowContainer>
         <Column>
-          {selected ? <SelectedLabel>Selected</SelectedLabel> : null}
+          {selected ? <SelectedLabel>{t('Selected')}</SelectedLabel> : null}
           <AltCurrencyName selected={selected}>{name}</AltCurrencyName>
         </Column>
         <AltCurrencyIsoCodeContainer selected={selected}>

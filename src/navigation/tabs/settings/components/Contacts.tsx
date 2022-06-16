@@ -13,6 +13,7 @@ import {
 import {View} from 'react-native';
 import styled from 'styled-components/native';
 import Icons from '../../../wallet/components/WalletIcons';
+import {useTranslation} from 'react-i18next';
 
 const SeeAllLink = styled(Link)`
   font-weight: 500;
@@ -24,6 +25,7 @@ const PlusIconContainer = styled.View`
 `;
 
 const Contacts = () => {
+  const {t} = useTranslation();
   const contacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const navigation = useNavigation();
   return (
@@ -56,7 +58,7 @@ const Contacts = () => {
           <Icons.Add />
         </PlusIconContainer>
 
-        <H6 medium={true}>Add Contact</H6>
+        <H6 medium={true}>{t('Add Contact')}</H6>
       </Setting>
 
       {contacts.length > 2 ? (
@@ -64,7 +66,9 @@ const Contacts = () => {
           style={{justifyContent: 'center'}}
           onPress={() => navigation.navigate('Contacts', {screen: 'Root'})}
           activeOpacity={ActiveOpacity}>
-          <SeeAllLink>View All {contacts.length} Contacts</SeeAllLink>
+          <SeeAllLink>
+            {t('View All Contacts', {contactsLength: contacts.length})}
+          </SeeAllLink>
         </Setting>
       ) : null}
     </SettingsComponent>

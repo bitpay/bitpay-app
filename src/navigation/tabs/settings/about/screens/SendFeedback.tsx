@@ -19,6 +19,7 @@ import {useAppDispatch} from '../../../../../utils/hooks';
 import {BoxShadow} from '../../../home/components/Styled';
 import {Platform, Share} from 'react-native';
 import {APP_NAME, DOWNLOAD_BITPAY_URL} from '../../../../../constants/config';
+import {useTranslation} from 'react-i18next';
 
 const SendFeedbackContainer = styled.SafeAreaView`
   flex: 1;
@@ -41,11 +42,15 @@ const LeftIconContainer = styled.View`
   margin-right: 10px;
 `;
 const SendFeedback = () => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const share = async () => {
     try {
-      let message = `Spend and control your cryptocurrency by downloading the ${APP_NAME} app.`;
+      let message = t(
+        'Spend and control your cryptocurrency by downloading the app.',
+        {APP_NAME},
+      );
 
       if (Platform.OS !== 'ios') {
         message = `${message} ${DOWNLOAD_BITPAY_URL}`;
@@ -59,14 +64,14 @@ const SendFeedback = () => {
       onPress: () => {
         //    TODO: Update me
       },
-      description: 'Write a Review',
+      description: t('Write a Review'),
       leftIcon: <Start width={20} height={20} />,
       rightIcon: <AngleRight />,
     },
     {
       key: 2,
       onPress: () => share(),
-      description: 'Share with Friends',
+      description: t('Share with Friends'),
       leftIcon: <ShareSvg width={20} height={20} />,
       rightIcon: <AngleRight />,
     },
@@ -75,7 +80,7 @@ const SendFeedback = () => {
       onPress: () => {
         dispatch(openUrlWithInAppBrowser(URL.REQUEST_FEATURE));
       },
-      description: 'Request a Feature',
+      description: t('Request a Feature'),
       leftIcon: <Feature width={20} height={20} />,
       rightIcon: <LinkSvg />,
     },
@@ -84,7 +89,7 @@ const SendFeedback = () => {
       onPress: () => {
         dispatch(openUrlWithInAppBrowser(URL.REPORT_ISSUE));
       },
-      description: 'Report an Issue',
+      description: t('Report an Issue'),
       leftIcon: <Bug width={20} height={20} />,
       rightIcon: <LinkSvg />,
     },
@@ -97,9 +102,9 @@ const SendFeedback = () => {
   return (
     <SendFeedbackContainer>
       <SendFeedbackParagraph>
-        We’re always listening for ways we can improve your experience. Feel
-        free to leave us a review in the app store or request a new feature.
-        Also, let us know if you experience any technical issues.
+        {t(
+          'We’re always listening for ways we can improve your experience. Feel free to leave us a review in the app store or request a new feature. Also, let us know if you experience any technical issues.',
+        )}
       </SendFeedbackParagraph>
 
       {feedbackList.map(item => (

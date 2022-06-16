@@ -50,6 +50,7 @@ import {
 import TransactionLevel from '../../wallet/screens/send/TransactionLevel';
 import {Alert} from 'react-native';
 import {GetFeeOptions} from '../../../store/wallet/effects/fee/fee';
+import {useTranslation} from 'react-i18next';
 
 const HeaderRightContainer = styled.View`
   margin-right: 15px;
@@ -66,6 +67,7 @@ export interface WalletConnectConfirmParamList {
 }
 
 const WalletConnectConfirm = () => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route =
@@ -137,7 +139,7 @@ const WalletConnectConfirm = () => {
           await showErrorMessage(
             CustomErrorMessage({
               errMsg: BWCErrorMessage(err),
-              title: 'Uh oh, something went wrong',
+              title: t('Uh oh, something went wrong'),
             }),
           );
       }
@@ -160,7 +162,7 @@ const WalletConnectConfirm = () => {
       );
       const response = {
         id: request?.payload.id,
-        error: {message: 'User rejected call request'},
+        error: {message: t('User rejected call request')},
       };
       (await dispatch<any>(
         walletConnectRejectCallRequest(request.peerId, response),
@@ -172,23 +174,23 @@ const WalletConnectConfirm = () => {
       await showErrorMessage(
         CustomErrorMessage({
           errMsg: BWCErrorMessage(err),
-          title: 'Uh oh, something went wrong',
+          title: t('Uh oh, something went wrong'),
         }),
       );
     }
-  }, [dispatch, navigation, request, showErrorMessage]);
+  }, [dispatch, navigation, request, showErrorMessage, t]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <HeaderRightContainer>
           <Button onPress={rejectCallRequest} buttonType="pill">
-            Reject
+            {t('Reject')}
           </Button>
         </HeaderRightContainer>
       ),
     });
-  }, [navigation, rejectCallRequest]);
+  }, [navigation, rejectCallRequest, t]);
 
   useEffect(() => {
     if (!resetSwipeButton) {
@@ -236,7 +238,7 @@ const WalletConnectConfirm = () => {
           enableBackdropDismiss: false,
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {},
             },
           ],
@@ -264,12 +266,12 @@ const WalletConnectConfirm = () => {
       '',
       [
         {
-          text: 'Cancel',
+          text: t('Cancel'),
           onPress: () => {},
           style: 'cancel',
         },
         {
-          text: 'OK',
+          text: t('OK'),
           onPress: value => {
             const opts: {nonce?: number; feePerKb?: number; feeLevel?: any} =
               {};
@@ -307,14 +309,14 @@ const WalletConnectConfirm = () => {
         />
         {gasPrice !== undefined ? (
           <SharedDetailRow
-            description={'Gas price'}
+            description={t('Gas price')}
             value={gasPrice.toFixed(2) + ' Gwei'}
-            onPress={() => editValue('Edit gas price', 'gasPrice')}
+            onPress={() => editValue(t('Edit gas price'), 'gasPrice')}
             hr
           />
         ) : null}
         {gasLimit !== undefined ? (
-          <SharedDetailRow description={'Gas limit'} value={gasLimit} hr />
+          <SharedDetailRow description={t('Gas limit')} value={gasLimit} hr />
         ) : null}
         {nonce !== undefined && nonce !== null ? (
           <SharedDetailRow
@@ -322,18 +324,18 @@ const WalletConnectConfirm = () => {
             value={nonce}
             onPress={
               customizeNonce
-                ? () => editValue('Edit nonce', 'nonce')
+                ? () => editValue(t('Edit nonce'), 'nonce')
                 : undefined
             }
             hr
           />
         ) : null}
         <SendingFrom sender={sendingFrom} hr />
-        <Amount description={'SubTotal'} amount={subTotal} />
-        <Amount description={'Total'} amount={total} />
+        <Amount description={t('SubTotal')} amount={subTotal} />
+        <Amount description={t('Total')} amount={total} />
       </DetailsList>
       <SwipeButton
-        title={'Slide to approve'}
+        title={t('Slide to approve')}
         onSwipeComplete={approveCallRequest}
         forceReset={resetSwipeButton}
       />

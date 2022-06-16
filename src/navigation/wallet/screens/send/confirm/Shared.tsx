@@ -36,6 +36,7 @@ import {useAppDispatch} from '../../../../../utils/hooks';
 import {showNoWalletsModal} from '../../../../../store/wallet/effects/send/send';
 import Clipboard from '@react-native-community/clipboard';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
+import {useTranslation} from 'react-i18next';
 
 // Styled
 export const ConfirmContainer = styled.SafeAreaView`
@@ -107,6 +108,7 @@ export const SendingTo = ({
   recipient: TxDetailsSendingTo | undefined;
   hr?: boolean;
 }): JSX.Element | null => {
+  const {t} = useTranslation();
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     if (!copied) {
@@ -134,7 +136,7 @@ export const SendingTo = ({
       <>
         <DetailContainer height={83}>
           <DetailRow>
-            <H7>Sending to</H7>
+            <H7>{t('Sending to')}</H7>
             <SendToPill
               onPress={() => copyText(recipientFullAddress || '')}
               icon={
@@ -169,6 +171,7 @@ export const Fee = ({
   hr?: boolean;
   onPress?: () => void;
 }): JSX.Element | null => {
+  const {t} = useTranslation();
   if (fee) {
     const {feeLevel, cryptoAmount, fiatAmount, percentageOfTotalAmount} = fee;
     // @ts-ignore
@@ -178,12 +181,15 @@ export const Fee = ({
         <Pressable disabled={!onPress} onPress={onPress}>
           <DetailContainer>
             <DetailRow>
-              <H7>Miner fee</H7>
+              <H7>{t('Miner fee')}</H7>
               <DetailColumn>
                 {feeLevel && !hideFeeOptions ? <H5>{viewFee}</H5> : null}
                 <H6>{cryptoAmount}</H6>
                 <H7>
-                  {fiatAmount} ({percentageOfTotalAmount} of total amount)
+                  {t(' ( of total amount)', {
+                    fiatAmount,
+                    percentageOfTotalAmount,
+                  })}
                 </H7>
               </DetailColumn>
               {onPress ? (
@@ -211,13 +217,14 @@ export const SendingFrom = ({
   onPress?: () => void;
   hr?: boolean;
 }): JSX.Element | null => {
+  const {t} = useTranslation();
   if (sender) {
     const {walletName, img} = sender;
     return (
       <>
         <DetailContainer height={83}>
           <DetailRow>
-            <H7>Sending from</H7>
+            <H7>{t('Sending from')}</H7>
             <SendToPill
               onPress={onPress}
               icon={CurrencyImage({img, size: 18})}
@@ -323,6 +330,7 @@ export const WalletSelector = ({
   isVisible: boolean;
   setWalletSelectorVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const [selectorVisible, setSelectorVisible] = useState(false);
@@ -389,7 +397,7 @@ export const WalletSelector = ({
       <WalletSelectMenuContainer>
         <WalletSelectMenuHeaderContainer>
           <TextAlign align={'center'}>
-            <H4>Select a wallet</H4>
+            <H4>{t('Select a wallet')}</H4>
           </TextAlign>
         </WalletSelectMenuHeaderContainer>
         <WalletSelectMenuBodyContainer>

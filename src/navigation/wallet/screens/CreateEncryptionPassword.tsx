@@ -19,6 +19,7 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {TextInput} from 'react-native';
+import {useTranslation} from 'react-i18next';
 
 const EncryptPasswordContainer = styled.SafeAreaView`
   flex: 1;
@@ -68,6 +69,7 @@ interface EncryptPasswordFieldValues {
 }
 
 const CreateEncryptionPassword = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const {
     params: {key},
@@ -100,13 +102,14 @@ const CreateEncryptionPassword = () => {
         dispatch(
           showBottomNotificationModal({
             type: 'success',
-            title: 'Password set',
-            message:
+            title: t('Password set'),
+            message: t(
               'Your encryption password has been set. This key is now encrypted.',
+            ),
             enableBackdropDismiss: true,
             actions: [
               {
-                text: 'GOT IT',
+                text: t('GOT IT'),
                 action: () => {
                   dispatch(dismissBottomNotificationModal());
                 },
@@ -117,19 +120,21 @@ const CreateEncryptionPassword = () => {
         );
         logger.debug('Key encrypted');
       } else {
-        setGenericError('Something went wrong. Please try again.');
+        setGenericError(t('Something went wrong. Please try again.'));
       }
     } catch (e) {
       if (!e) {
         return;
       }
-      setGenericError(`Could not encrypt/decrypt group wallets: ${e}`);
+      setGenericError(t('Could not encrypt/decrypt group wallets: ') + e);
     }
   };
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>Create Encryption Password</HeaderTitle>,
+      headerTitle: () => (
+        <HeaderTitle>{t('Create Encryption Password')}</HeaderTitle>
+      ),
     });
   });
 
@@ -137,9 +142,9 @@ const CreateEncryptionPassword = () => {
     <EncryptPasswordContainer>
       <ScrollView>
         <Paragraph>
-          Your wallet will be encrypted. Whenever you make a transaction, we
-          will ask for the password. This cannot be recovered, so be sure to
-          store it safely.
+          {t(
+            'Your wallet will be encrypted. Whenever you make a transaction, we will ask for the password. This cannot be recovered, so be sure to store it safely.',
+          )}
         </Paragraph>
 
         <PasswordFormContainer>
@@ -150,7 +155,7 @@ const CreateEncryptionPassword = () => {
               render={({field: {onChange, onBlur, value}}) => (
                 <BoxInput
                   placeholder={'strongPassword123'}
-                  label={'ENCRYPTION PASSWORD'}
+                  label={t('ENCRYPTION PASSWORD')}
                   type={'password'}
                   onBlur={onBlur}
                   onChangeText={(text: string) => onChange(text)}
@@ -173,7 +178,7 @@ const CreateEncryptionPassword = () => {
                 <BoxInput
                   ref={confirmPasswordRef}
                   placeholder={'strongPassword123'}
-                  label={'CONFIRM ENCRYPTION PASSWORD'}
+                  label={t('CONFIRM ENCRYPTION PASSWORD')}
                   type={'password'}
                   onBlur={onBlur}
                   onChangeText={(text: string) => onChange(text)}
@@ -189,7 +194,7 @@ const CreateEncryptionPassword = () => {
 
           <PasswordActionContainer>
             <Button onPress={handleSubmit(onSubmit)}>
-              Save Encryption Password
+              {t('Save Encryption Password')}
             </Button>
           </PasswordActionContainer>
         </PasswordFormContainer>

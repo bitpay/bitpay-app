@@ -49,7 +49,7 @@ const About = () => {
   return (
     <SettingsComponent style={{marginBottom: 10}}>
       <Setting>
-        <SettingTitle>Version</SettingTitle>
+        <SettingTitle>{t('Version')}</SettingTitle>
 
         <Button buttonType="pill">{version}</Button>
       </Setting>
@@ -69,7 +69,7 @@ const About = () => {
 
       <Setting
         onPress={() => navigation.navigate('About', {screen: 'SessionLogs'})}>
-        <SettingTitle>Session Log</SettingTitle>
+        <SettingTitle>{t('Session Log')}</SettingTitle>
         <AngleRight />
       </Setting>
 
@@ -77,7 +77,7 @@ const About = () => {
 
       <Setting
         onPress={() => navigation.navigate('About', {screen: 'SendFeedback'})}>
-        <SettingTitle>Send Feedback</SettingTitle>
+        <SettingTitle>{t('Send Feedback')}</SettingTitle>
         <AngleRight />
       </Setting>
 
