@@ -29,6 +29,7 @@ import {BWCErrorMessage} from '../../../constants/BWCError';
 import {IWCRequest} from '../../../store/wallet-connect/wallet-connect.models';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import ConnectionSkeletonRow from './ConnectionSkeletonRow';
+import {useTranslation} from 'react-i18next';
 
 const NestedArrowContainer = styled.View`
   padding-right: 11px;
@@ -52,6 +53,7 @@ export default ({
   session: IWalletConnectSession;
   wallet: Wallet;
 }) => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const {peerId, peerMeta, key} = session;
@@ -114,12 +116,12 @@ export default ({
             dispatch(
               showBottomNotificationModal({
                 type: 'question',
-                title: 'Confirm delete',
-                message: 'Are you sure you want to delete this connection?',
+                title: t('Confirm delete'),
+                message: t('Are you sure you want to delete this connection?'),
                 enableBackdropDismiss: true,
                 actions: [
                   {
-                    text: 'DELETE',
+                    text: t('DELETE'),
                     action: async () => {
                       try {
                         dispatch(dismissBottomNotificationModal());
@@ -134,7 +136,7 @@ export default ({
                         await showErrorMessage(
                           CustomErrorMessage({
                             errMsg: BWCErrorMessage(e),
-                            title: 'Uh oh, something went wrong',
+                            title: t('Uh oh, something went wrong'),
                           }),
                         );
                       } finally {
@@ -144,7 +146,7 @@ export default ({
                     primary: true,
                   },
                   {
-                    text: 'GO BACK',
+                    text: t('GO BACK'),
                     action: () => {},
                   },
                 ],

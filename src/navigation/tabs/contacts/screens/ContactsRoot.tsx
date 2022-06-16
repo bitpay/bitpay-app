@@ -210,14 +210,14 @@ const ContactsRoot: React.FC = () => {
               }}
               render={({field: {onChange, onBlur, value}}) => (
                 <SearchBox
-                  placeholder={'Search Contacts'}
+                  placeholder={t('Search Contacts')}
                   onBlur={onBlur}
                   onChangeText={(text: string) => {
                     onChange(text);
                     updateSearchResults(text);
                   }}
                   value={value}
-                  type={'search'}
+                  type={t('search')}
                 />
               )}
               name="search"

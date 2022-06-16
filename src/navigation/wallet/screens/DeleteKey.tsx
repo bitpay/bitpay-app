@@ -19,6 +19,7 @@ import {
 } from '../../../store/wallet/wallet.actions';
 import useAppSelector from '../../../utils/hooks/useAppSelector';
 import {setHomeCarouselConfig} from '../../../store/app/app.actions';
+import {useTranslation} from 'react-i18next';
 
 const DeleteKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -38,6 +39,7 @@ const DeleteKeyParagraph = styled(Paragraph)`
 `;
 
 const DeleteKey = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
@@ -48,7 +50,7 @@ const DeleteKey = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>Delete Key</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Delete Key')}</HeaderTitle>,
     });
   });
 
@@ -72,19 +74,20 @@ const DeleteKey = () => {
   return (
     <DeleteKeyContainer>
       <ScrollView>
-        <Title>Warning!</Title>
+        <Title>{t('Warning!')}</Title>
         <DeleteKeyParagraph>
-          Permanently deletes all wallets using this key. {'\n'}
-          THIS ACTION CANNOT BE REVERSED.
+          {t(
+            'Permanently deletes all wallets using this key. \nTHIS ACTION CANNOT BE REVERSED.',
+          )}
         </DeleteKeyParagraph>
 
-        <Button onPress={() => setIsVisible(true)}>Delete</Button>
+        <Button onPress={() => setIsVisible(true)}>{t('Delete')}</Button>
       </ScrollView>
 
       <DeleteConfirmationModal
-        description={
-          'Are you sure you want to delete all wallets using this key?'
-        }
+        description={t(
+          'Are you sure you want to delete all wallets using this key?',
+        )}
         onPressOk={startDeleteKey}
         isVisible={isVisible}
         onPressCancel={() => setIsVisible(false)}

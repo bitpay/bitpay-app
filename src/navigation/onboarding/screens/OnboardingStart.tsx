@@ -1,6 +1,7 @@
 import {useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useCallback, useLayoutEffect, useRef, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {ScrollView, View} from 'react-native';
 import Carousel, {Pagination} from 'react-native-snap-carousel';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
@@ -116,6 +117,7 @@ const LinkText = styled(Link)`
 const scrollEnabledForSmallScreens = HEIGHT < 700;
 
 const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const themeType = useThemeType();
@@ -166,17 +168,17 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
         <HeaderRightContainer>
           {isPaired ? (
             <Button buttonType="pill" onPress={onLogoutPressRef.current}>
-              Log Out
+              {t('Log Out')}
             </Button>
           ) : (
             <Button buttonType={'pill'} onPress={onLoginPressRef.current}>
-              Log In
+              {t('Log In')}
             </Button>
           )}
         </HeaderRightContainer>
       ),
     });
-  }, [navigation, isPaired, dispatch, askForTrackingThenNavigate]);
+  }, [navigation, isPaired, dispatch, askForTrackingThenNavigate, t]);
 
   const carouselRef = useRef(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
@@ -184,24 +186,34 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
 
   const onboardingSlides = [
     {
-      title: 'Turn crypto into dollars with our BitPay Card',
-      text: 'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
-      subText: '*Currently available in the USA. More countries coming soon.',
+      title: t('Turn crypto into dollars with our BitPay Card'),
+      text: t(
+        'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
+      ),
+      subText: t(
+        '*Currently available in the USA. More countries coming soon.',
+      ),
       img: () => OnboardingImages.card[themeType],
     },
     {
-      title: 'Spend crypto at your favorite places',
-      text: 'Discover a curated list of places you can spend your crypto. Purchase, manage and spend store credits instantly.',
+      title: t('Spend crypto at your favorite places'),
+      text: t(
+        'Discover a curated list of places you can spend your crypto. Purchase, manage and spend store credits instantly.',
+      ),
       img: () => OnboardingImages.spend[themeType],
     },
     {
-      title: 'Keep your funds safe & secure',
-      text: 'Websites and exchanges get hacked. BitPay allows you to privately store, manage and use your crypto funds without having to trust a centralized bank or exchange.',
+      title: t('Keep your funds safe & secure'),
+      text: t(
+        'Websites and exchanges get hacked. BitPay allows you to privately store, manage and use your crypto funds without having to trust a centralized bank or exchange.',
+      ),
       img: () => OnboardingImages.wallet[themeType],
     },
     {
-      title: 'Seamlessly buy & swap with a decentralized exchange',
-      text: 'Buy with a credit card or existing funds, then seamlessly swap coins at competitive rates without leaving the app.',
+      title: t('Seamlessly buy & swap with a decentralized exchange'),
+      text: t(
+        'Buy with a credit card or existing funds, then seamlessly swap coins at competitive rates without leaving the app.',
+      ),
       img: () => OnboardingImages.swap[themeType],
     },
   ];
@@ -268,7 +280,7 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
                     });
                   });
                 }}>
-                Get Started
+                {t('Get Started')}
               </Button>
             ) : (
               <Button
@@ -280,7 +292,7 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
                     });
                   });
                 }}>
-                Continue
+                {t('Continue')}
               </Button>
             )}
           </Column>
@@ -297,7 +309,7 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
                     });
                   });
                 }}>
-                <LinkText>Continue without an account</LinkText>
+                <LinkText>{t('Continue without an account')}</LinkText>
               </Button>
             </ActionContainer>
           </Row>

@@ -59,6 +59,7 @@ import {isPaymentMethodSupported} from '../utils/buy-crypto-utils';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
 import analytics from '@segment/analytics-react-native';
+import {useTranslation} from 'react-i18next';
 
 export interface BuyCryptoOffersProps {
   amount: number;
@@ -261,7 +262,7 @@ const BuyCryptoOffers: React.FC = () => {
       paymentMethod,
     },
   } = useRoute<RouteProp<{params: BuyCryptoOffersProps}>>();
-
+  const {t} = useTranslation();
   const logger = useLogger();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -297,7 +298,14 @@ const BuyCryptoOffers: React.FC = () => {
       amount < offers.simplex.amountLimits.min ||
       amount > offers.simplex.amountLimits.max
     ) {
-      offers.simplex.outOfLimitMsg = `There are no Simplex offers available, as the current purchase limits for this exchange must be between ${offers.simplex.amountLimits.min} ${fiatCurrency} and ${offers.simplex.amountLimits.max} ${fiatCurrency}`;
+      offers.simplex.outOfLimitMsg = t(
+        'There are no Simplex offers available, as the current purchase limits for this exchange must be between and',
+        {
+          min: offers.simplex.amountLimits.min,
+          max: offers.simplex.amountLimits.max,
+          fiatCurrency,
+        },
+      );
       setFinishedSimplex(!finishedSimplex);
       return;
     } else {
@@ -356,7 +364,9 @@ const BuyCryptoOffers: React.FC = () => {
             if (data.errors) {
               logger.error(data.errors);
             }
-            let err = "Can't get rates at this moment. Please try again later";
+            let err = t(
+              "Can't get rates at this moment. Please try again later",
+            );
             showSimplexError(err);
           }
         })
@@ -367,7 +377,7 @@ const BuyCryptoOffers: React.FC = () => {
   };
 
   const showSimplexError = (err?: any) => {
-    let msg = 'Could not get crypto offer. Please, try again later.';
+    let msg = t('Could not get crypto offer. Please try again later.');
     if (err) {
       if (typeof err === 'string') {
         msg = err;
@@ -389,7 +399,7 @@ const BuyCryptoOffers: React.FC = () => {
   };
 
   const showWyreError = (err?: any) => {
-    let msg = 'Could not get crypto offer. Please, try again later.';
+    let msg = t('Could not get crypto offer. Please try again later.');
     if (err) {
       if (typeof err === 'string') {
         msg = err;
@@ -398,7 +408,7 @@ const BuyCryptoOffers: React.FC = () => {
         if (err.errorCode) {
           switch (err.errorCode) {
             case 'validation.unsupportedCountry':
-              msg = 'Country not supported: ' + country;
+              msg = t('Country not supported: ') + country;
               break;
             default:
               msg = err.message;
@@ -426,7 +436,14 @@ const BuyCryptoOffers: React.FC = () => {
       amount < offers.wyre.amountLimits.min ||
       amount > offers.wyre.amountLimits.max
     ) {
-      offers.wyre.outOfLimitMsg = `There are no Wyre offers available, as the current purchase limits for this exchange must be between ${offers.wyre.amountLimits.min} ${fiatCurrency} and ${offers.wyre.amountLimits.max} ${fiatCurrency}`;
+      offers.wyre.outOfLimitMsg = t(
+        'There are no Wyre offers available, as the current purchase limits for this exchange must be between and',
+        {
+          min: offers.wyre.amountLimits.min,
+          max: offers.wyre.amountLimits.max,
+          fiatCurrency,
+        },
+      );
     } else {
       let address: string = '';
       try {
@@ -474,7 +491,9 @@ const BuyCryptoOffers: React.FC = () => {
           offers.wyre.fee = data.sourceAmount - data.sourceAmountWithoutFees;
 
           if (offers.wyre.fee < 0) {
-            const err = `Wyre has returned a wrong value for the fee. Fee: ${offers.wyre.fee}`;
+            const err =
+              t('Wyre has returned a wrong value for the fee. Fee: ') +
+              offers.wyre.fee;
             showWyreError(err);
             return;
           }
@@ -688,21 +707,24 @@ const BuyCryptoOffers: React.FC = () => {
 
     switch (exchange) {
       case 'simplex':
-        title = 'Continue to Simplex';
-        message =
-          "In order to finish the payment process you will be redirected to Simplex's page";
+        title = t('Continue to Simplex');
+        message = t(
+          "In order to finish the payment process you will be redirected to Simplex's page",
+        );
         break;
 
       case 'wyre':
-        title = 'Continue to Wyre';
-        message =
-          "In order to finish the payment process you will be redirected to Wyre's page";
+        title = t('Continue to Wyre');
+        message = t(
+          "In order to finish the payment process you will be redirected to Wyre's page",
+        );
         break;
 
       default:
-        title = 'Continue to the exchange page';
-        message =
-          'In order to finish the payment process you will be redirected to the exchange page';
+        title = t('Continue to the exchange page');
+        message = t(
+          'In order to finish the payment process you will be redirected to the exchange page',
+        );
         break;
     }
 
@@ -714,7 +736,7 @@ const BuyCryptoOffers: React.FC = () => {
         enableBackdropDismiss: true,
         actions: [
           {
-            text: 'CONTINUE',
+            text: t('CONTINUE'),
             action: () => {
               dispatch(dismissBottomNotificationModal());
               switch (exchange) {
@@ -739,7 +761,7 @@ const BuyCryptoOffers: React.FC = () => {
             primary: true,
           },
           {
-            text: 'GO BACK',
+            text: t('GO BACK'),
             action: () => {
               console.log('Continue to the exchange website CANCELED');
             },
@@ -777,7 +799,7 @@ const BuyCryptoOffers: React.FC = () => {
     <ScrollView>
       <SummaryRow>
         <SummaryItemContainer>
-          <SummaryTitle>Amount</SummaryTitle>
+          <SummaryTitle>{t('Amount')}</SummaryTitle>
           <SummaryData>
             {formatFiatAmount(Number(amount), fiatCurrency, {
               customPrecision: 'minimal',
@@ -785,7 +807,7 @@ const BuyCryptoOffers: React.FC = () => {
           </SummaryData>
         </SummaryItemContainer>
         <SummaryItemContainer>
-          <SummaryTitle>Crypto</SummaryTitle>
+          <SummaryTitle>{t('Crypto')}</SummaryTitle>
           <CoinContainer>
             <CoinIconContainer>
               <CurrencyImage img={selectedWallet.img} size={20} />
@@ -794,7 +816,7 @@ const BuyCryptoOffers: React.FC = () => {
           </CoinContainer>
         </SummaryItemContainer>
         <SummaryItemContainer>
-          <SummaryTitle>Payment Type</SummaryTitle>
+          <SummaryTitle>{t('Payment Type')}</SummaryTitle>
           <SummaryData>{paymentMethod.label}</SummaryData>
         </SummaryItemContainer>
         <SummaryCtaContainer>
@@ -839,7 +861,7 @@ const BuyCryptoOffers: React.FC = () => {
                 {!offer.fiatMoney && offer.errorMsg && (
                   <OfferDataContainer>
                     <OfferDataInfoLabel>
-                      Error: {offer.errorMsg}
+                      {t('Error: ') + offer.errorMsg}
                     </OfferDataInfoLabel>
                   </OfferDataContainer>
                 )}
@@ -862,7 +884,9 @@ const BuyCryptoOffers: React.FC = () => {
                         </>
                       )}
                     <OfferDataInfoContainer>
-                      <OfferDataInfoLabel>Provided By</OfferDataInfoLabel>
+                      <OfferDataInfoLabel>
+                        {t('Provided By')}
+                      </OfferDataInfoLabel>
                       {offer.logo}
                     </OfferDataInfoContainer>
                   </OfferDataContainer>
@@ -884,7 +908,7 @@ const BuyCryptoOffers: React.FC = () => {
                   <>
                     <ItemDivisor style={{marginTop: 20}} />
                     <OfferExpandibleItem>
-                      <OfferDataInfoLabel>Buy Amount</OfferDataInfoLabel>
+                      <OfferDataInfoLabel>{t('Buy Amount')}</OfferDataInfoLabel>
                       <OfferDataRightContainer>
                         <OfferDataInfoText>
                           {formatFiatAmount(
@@ -900,14 +924,14 @@ const BuyCryptoOffers: React.FC = () => {
                     </OfferExpandibleItem>
                     <ItemDivisor />
                     <OfferExpandibleItem>
-                      <OfferDataInfoLabel>Fee</OfferDataInfoLabel>
+                      <OfferDataInfoLabel>{t('Fee')}</OfferDataInfoLabel>
                       <OfferDataInfoText>
                         {formatFiatAmount(Number(offer.fee), fiatCurrency)}
                       </OfferDataInfoText>
                     </OfferExpandibleItem>
                     <ItemDivisor />
                     <OfferExpandibleItem>
-                      <OfferDataInfoTotal>TOTAL</OfferDataInfoTotal>
+                      <OfferDataInfoTotal>{t('TOTAL')}</OfferDataInfoTotal>
                       <OfferDataInfoTotal>
                         {formatFiatAmount(
                           Number(offer.amountCost),
@@ -919,19 +943,18 @@ const BuyCryptoOffers: React.FC = () => {
                     {offer.key == 'simplex' && (
                       <ExchangeTermsContainer>
                         <ExchangeTermsText>
-                          What service fees am I paying?
+                          {t('What service fees am I paying?')}
                         </ExchangeTermsText>
                         {paymentMethod.method == 'sepaBankTransfer' && (
                           <ExchangeTermsText>
-                            1.5% of the amount.
+                            {t('1.5% of the amount.')}
                           </ExchangeTermsText>
                         )}
                         {paymentMethod.method != 'sepaBankTransfer' && (
                           <ExchangeTermsText>
-                            Can range from 3.5% to 5% of the transaction,
-                            depending on the volume of traffic (with a minimum
-                            of 10 USD or its equivalent in any other fiat
-                            currency) + 1% of the transaction.
+                            {t(
+                              'Can range from 3.5% to 5% of the transaction, depending on the volume of traffic (with a minimum of 10 USD or its equivalent in any other fiat currency) + 1% of the transaction.',
+                            )}
                             <TouchableOpacity
                               onPress={() => {
                                 haptic('impactLight');
@@ -943,14 +966,15 @@ const BuyCryptoOffers: React.FC = () => {
                               }}>
                               <Link
                                 style={{fontSize: 12, marginLeft: 2, top: 2}}>
-                                Read more
+                                {t('Read more')}
                               </Link>
                             </TouchableOpacity>
                           </ExchangeTermsText>
                         )}
                         <ExchangeTermsText style={{marginTop: 4}}>
-                          This service is provided by a third party, and you are
-                          subject to their
+                          {t(
+                            'This service is provided by a third party, and you are subject to their',
+                          )}
                           <TouchableOpacity
                             onPress={() => {
                               haptic('impactLight');
@@ -961,7 +985,7 @@ const BuyCryptoOffers: React.FC = () => {
                               );
                             }}>
                             <Link style={{fontSize: 12, top: 2}}>
-                              Terms of use
+                              {t('Terms of use')}
                             </Link>
                           </TouchableOpacity>
                         </ExchangeTermsText>
@@ -970,23 +994,27 @@ const BuyCryptoOffers: React.FC = () => {
                     {offer.key == 'wyre' && (
                       <ExchangeTermsContainer>
                         <ExchangeTermsText>
-                          What service fees am I paying?
+                          {t('What service fees am I paying?')}
                         </ExchangeTermsText>
                         {country == 'US' && (
                           <ExchangeTermsText>
-                            5 USD minimum fee or 2.9% of the amount + 0.30 USD,
-                            whichever is greater + Required miners fee.
+                            {t(
+                              '5 USD minimum fee or 2.9% of the amount + 0.30 USD, whichever is greater + Required miners fee.',
+                            )}
                           </ExchangeTermsText>
                         )}
                         {country != 'US' && (
                           <ExchangeTermsText>
-                            5 USD minimum fee or 3.9% of the amount + 0.30 USD,
-                            whichever is greater + Required miners fee.
+                            {t(
+                              '5 USD minimum fee or 3.9% of the amount + 0.30 USD, whichever is greater + Required miners fee.',
+                            )}
                           </ExchangeTermsText>
                         )}
                         {fiatCurrency.toUpperCase() != 'USD' && (
                           <ExchangeTermsText>
-                            Or its equivalent in {fiatCurrency.toUpperCase()}.
+                            {t('Or its equivalent in .', {
+                              fiatCurrency: fiatCurrency.toUpperCase(),
+                            })}
                           </ExchangeTermsText>
                         )}
                         <TouchableOpacity
@@ -998,11 +1026,14 @@ const BuyCryptoOffers: React.FC = () => {
                               ),
                             );
                           }}>
-                          <Link style={{fontSize: 12, top: 2}}>Read more</Link>
+                          <Link style={{fontSize: 12, top: 2}}>
+                            {t('Read more')}
+                          </Link>
                         </TouchableOpacity>
                         <ExchangeTermsText style={{marginTop: 4}}>
-                          This service is provided by a third party, and you are
-                          subject to their
+                          {t(
+                            'This service is provided by a third party, and you are subject to their',
+                          )}
                           <TouchableOpacity
                             onPress={() => {
                               haptic('impactLight');
@@ -1013,7 +1044,7 @@ const BuyCryptoOffers: React.FC = () => {
                               );
                             }}>
                             <Link style={{fontSize: 12, top: 2}}>
-                              User Agreement
+                              {t('User Agreement')}
                             </Link>
                           </TouchableOpacity>
                         </ExchangeTermsText>
@@ -1028,10 +1059,11 @@ const BuyCryptoOffers: React.FC = () => {
 
       <TermsContainer>
         <TermsText>
-          The final crypto amount you receive when the transaction is complete
-          may differ because it is based on the exchange rates of the providers.
+          {t(
+            'The final crypto amount you receive when the transaction is complete may differ because it is based on the exchange rates of the providers.',
+          )}
         </TermsText>
-        <TermsText>Additional third-party fees may apply.</TermsText>
+        <TermsText>{t('Additional third-party fees may apply.')}</TermsText>
       </TermsContainer>
     </ScrollView>
   );

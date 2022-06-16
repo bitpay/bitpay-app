@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import {CARD_HEIGHT, CARD_WIDTH} from '../../../constants/config.card';
 import {White} from '../../../styles/colors';
@@ -26,6 +27,7 @@ const LockText = styled.Text`
 `;
 
 const LockCardOverlay: React.FC = () => {
+  const {t} = useTranslation();
   return (
     <LockCardOverlayContainer>
       <CardOverlayBackground />
@@ -33,7 +35,7 @@ const LockCardOverlay: React.FC = () => {
       <LockCardOverlayContent>
         <LockIcon />
 
-        <LockText>Card is locked</LockText>
+        <LockText>{t('Card is locked')}</LockText>
       </LockCardOverlayContent>
     </LockCardOverlayContainer>
   );

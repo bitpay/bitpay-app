@@ -22,8 +22,10 @@ import {
   SupportTxt,
 } from '../styled/ExternalServicesSettings';
 import {changellyGetStatusColor} from '../../../../services/swap-crypto/utils/changelly-utils';
+import {useTranslation} from 'react-i18next';
 
 const ChangellySettings: React.FC = () => {
+  const {t} = useTranslation();
   const changellyHistory = useAppSelector(
     ({SWAP_CRYPTO}) => SWAP_CRYPTO.changelly,
   );
@@ -43,7 +45,7 @@ const ChangellySettings: React.FC = () => {
     <>
       <SettingsContainer>
         <Settings style={{paddingBottom: 500}}>
-          {!!swapTxs?.length && <PrTitle>Transactions</PrTitle>}
+          {!!swapTxs?.length && <PrTitle>{t('Transactions')}</PrTitle>}
           {!!swapTxs?.length &&
             swapTxs.map(swapTx => {
               return (
@@ -83,13 +85,13 @@ const ChangellySettings: React.FC = () => {
             })}
           {!swapTxs?.length && (
             <NoPrMsg>
-              There are currently no transactions with Changelly
+              {t('There are currently no transactions with Changelly')}
             </NoPrMsg>
           )}
         </Settings>
       </SettingsContainer>
       <FooterSupport>
-        <SupportTxt>Having problems with Changelly?</SupportTxt>
+        <SupportTxt>{t('Having problems with Changelly?')}</SupportTxt>
         <TouchableOpacity
           onPress={() => {
             haptic('impactLight');
@@ -99,7 +101,7 @@ const ChangellySettings: React.FC = () => {
               ),
             );
           }}>
-          <Link>Contact the Changelly support team.</Link>
+          <Link>{t('Contact the Changelly support team.')}</Link>
         </TouchableOpacity>
       </FooterSupport>
     </>

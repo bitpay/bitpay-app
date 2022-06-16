@@ -14,6 +14,7 @@ import {
 } from '../styled/WalletConnectContainers';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import WalletSelector from '../components/WalletSelector';
+import {useTranslation} from 'react-i18next';
 
 export type WalletConnectIntroParamList = {
   uri?: string;
@@ -25,6 +26,7 @@ const LinkContainer = styled.View`
 `;
 
 const WalletConnectIntro = () => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const route = useRoute<RouteProp<{params: WalletConnectIntroParamList}>>();
   const {uri} = route.params || {};
@@ -54,8 +56,9 @@ const WalletConnectIntro = () => {
     <WalletConnectContainer>
       <ScrollView>
         <Paragraph>
-          WalletConnect is an open source protocol for connecting decentralized
-          applications to mobile wallets with QR code scanning or deep linking.
+          {t(
+            'WalletConnect is an open source protocol for connecting decentralized applications to mobile wallets with QR code scanning or deep linking.',
+          )}
         </Paragraph>
         <LinkContainer>
           <TouchableOpacity
@@ -63,11 +66,11 @@ const WalletConnectIntro = () => {
               haptic('impactLight');
               dispatch(openUrlWithInAppBrowser('https://walletconnect.org/'));
             }}>
-            <Link>Learn More</Link>
+            <Link>{t('Learn More')}</Link>
           </TouchableOpacity>
         </LinkContainer>
         <Button buttonStyle={'primary'} onPress={showWalletSelector}>
-          Connect
+          {t('Connect')}
         </Button>
         <WalletSelector
           isVisible={walletSelectorModalVisible}

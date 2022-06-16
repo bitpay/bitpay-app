@@ -27,6 +27,7 @@ import DeleteIcon from '../../../../../assets/img/delete-icon.svg';
 import DeleteIconWhite from '../../../../../assets/img/delete-icon-white.svg';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import {ToCashAddress} from '../../../../store/wallet/effects/address/address';
+import {useTranslation} from 'react-i18next';
 
 const ContactsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -120,6 +121,7 @@ interface ModalOpt {
 const ContactsDetails = ({
   route,
 }: StackScreenProps<ContactsStackParamList, 'ContactsDetails'>) => {
+  const {t} = useTranslation();
   const theme = useTheme();
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -151,7 +153,7 @@ const ContactsDetails = ({
     }
     contactOptions.push({
       img: theme.dark ? <SendIconWhite /> : <SendIcon />,
-      title: 'Send ' + coin.toUpperCase(),
+      title: t('Send ') + coin.toUpperCase(),
       onPress: () => {
         setShowIconOptions(false);
         navigation.navigate('Wallet', {
@@ -172,7 +174,7 @@ const ContactsDetails = ({
 
   contactOptions.push({
     img: theme.dark ? <DeleteIconWhite /> : <DeleteIcon />,
-    title: 'Delete Contact',
+    title: t('Delete Contact'),
     onPress: async () => {
       setShowIconOptions(false);
       await sleep(500);
@@ -219,19 +221,21 @@ const ContactsDetails = ({
     dispatch(
       showBottomNotificationModal({
         type: 'question',
-        title: 'Are you sure?',
-        message: 'Deleting this contact will remove them from your contacts.',
+        title: t('Are you sure?'),
+        message: t(
+          'Deleting this contact will remove them from your contacts.',
+        ),
         enableBackdropDismiss: true,
         actions: [
           {
-            text: 'Delete Contact',
+            text: t('Delete Contact'),
             action: () => {
               deleteContactView();
             },
             primary: true,
           },
           {
-            text: 'Nevermind',
+            text: t('Nevermind'),
             action: () => {},
             primary: false,
           },
@@ -250,23 +254,23 @@ const ContactsDetails = ({
           {email ? (
             <>
               <Detail>
-                <Title>Email</Title>
+                <Title>{t('Email')}</Title>
                 <DetailInfo align="right">{email}</DetailInfo>
               </Detail>
               <Hr />
             </>
           ) : null}
           <Detail>
-            <Title>Name</Title>
+            <Title>{t('Name')}</Title>
             <DetailInfo align="right">{name}</DetailInfo>
           </Detail>
           <Hr />
           <Detail>
-            <Title>Address</Title>
+            <Title>{t('Address')}</Title>
             <DetailInfo align="right">
               <AddressContainer onPress={copyToClipboard} activeOpacity={0.7}>
                 <AddressText numberOfLines={1} ellipsizeMode={'tail'}>
-                  {!copied ? address : 'Copied to clipboard!'}
+                  {!copied ? address : t('Copied to clipboard!')}
                 </AddressText>
               </AddressContainer>
             </DetailInfo>
@@ -275,7 +279,7 @@ const ContactsDetails = ({
             <>
               <Hr />
               <Detail>
-                <Title>Network</Title>
+                <Title>{t('Network')}</Title>
                 <DetailInfo align="right">{network}</DetailInfo>
               </Detail>
             </>
@@ -284,7 +288,7 @@ const ContactsDetails = ({
             <>
               <Hr />
               <Detail>
-                <Title>Coin</Title>
+                <Title>{t('Coin')}</Title>
                 <DetailInfo align="right">{coin.toUpperCase()}</DetailInfo>
               </Detail>
             </>
@@ -293,7 +297,7 @@ const ContactsDetails = ({
             <>
               <Hr />
               <Detail>
-                <Title>Tag</Title>
+                <Title>{t('Tag')}</Title>
                 <DetailInfo align="right">{tag}</DetailInfo>
               </Detail>
             </>

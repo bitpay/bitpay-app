@@ -16,6 +16,7 @@ import {
   UpdateCardNameStatus,
   UpdateCardLockStatus,
   referredUsersStatus,
+  FetchPinChangeRequestInfoStatus,
 } from './card.reducer';
 
 export const TTL = {
@@ -66,6 +67,10 @@ export enum CardActionTypes {
   FAILED_ACTIVATE_CARD = 'CARD/FAILED_ACTIVATE_CARD',
   UPDATE_ACTIVATE_CARD_STATUS = 'CARD/UPDATE_ACTIVATE_CARD_STATUS',
   START_ADD_TO_APPLE_WALLET = 'CARD/START_ADD_TO_APPLE_WALLET',
+  SUCCESS_FETCH_PIN_CHANGE_REQUEST_INFO = 'CARD/SUCCESS_FETCH_PIN_CHANGE_REQUEST_INFO',
+  FAILED_FETCH_PIN_CHANGE_REQUEST_INFO = 'CARD/FAILED_FETCH_PIN_CHANGE_REQUEST_INFO',
+  UPDATE_FETCH_PIN_CHANGE_REQUEST_INFO_STATUS = 'CARD/UPDATE_FETCH_PIN_CHANGE_REQUEST_INFO_STATUS',
+  RESET_PIN_CHANGE_REQUEST_INFO = 'CARD/RESET_PIN_CHANGE_REQUEST_INFO',
 }
 
 interface SuccessInitializeStore {
@@ -216,6 +221,26 @@ interface StartAddToAppleWallet {
   payload: AddAppleWalletData;
 }
 
+interface SuccessFetchPinChangeRequestInfo {
+  type: CardActionTypes.SUCCESS_FETCH_PIN_CHANGE_REQUEST_INFO;
+  payload: {id: string; pinChangeRequestInfo: string};
+}
+
+interface FailedFetchPinChangeRequestInfo {
+  type: CardActionTypes.FAILED_FETCH_PIN_CHANGE_REQUEST_INFO;
+  payload: {id: string; error: string};
+}
+
+interface UpdateFetchPinChangeRequestInfoStatus {
+  type: CardActionTypes.UPDATE_FETCH_PIN_CHANGE_REQUEST_INFO_STATUS;
+  payload: {id: string; status: FetchPinChangeRequestInfoStatus};
+}
+
+interface ResetPinChangeRequestInfo {
+  type: CardActionTypes.RESET_PIN_CHANGE_REQUEST_INFO;
+  payload: {id: string};
+}
+
 export type CardActionType =
   | SuccessInitializeStore
   | SuccessFetchCards
@@ -244,4 +269,8 @@ export type CardActionType =
   | SuccessActivateCard
   | FailedActivateCard
   | UpdateActivateCardStatus
-  | StartAddToAppleWallet;
+  | StartAddToAppleWallet
+  | SuccessFetchPinChangeRequestInfo
+  | FailedFetchPinChangeRequestInfo
+  | UpdateFetchPinChangeRequestInfoStatus
+  | ResetPinChangeRequestInfo;

@@ -28,6 +28,7 @@ import {Hr} from '../../../components/styled/Containers';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import CoinbaseSvg from '../../../../assets/img/logos/coinbase.svg';
 import {coinbaseAccountToWalletRow} from '../../../store/wallet/utils/wallet';
+import {useTranslation} from 'react-i18next';
 
 const OverviewContainer = styled.View`
   flex: 1;
@@ -65,6 +66,7 @@ const HeaderTitleContainer = styled.View`
 `;
 
 const CoinbaseDashboard = () => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const theme = useTheme();
@@ -142,12 +144,12 @@ const CoinbaseDashboard = () => {
     dispatch(
       showBottomNotificationModal({
         type: 'error',
-        title: 'Coinbase error',
+        title: t('Coinbase error'),
         message: errMsg,
         enableBackdropDismiss: true,
         actions: [
           {
-            text: 'OK',
+            text: t('OK'),
             action: () => {
               navigation.navigate('Tabs', {screen: 'Home'});
             },
@@ -211,7 +213,7 @@ const CoinbaseDashboard = () => {
         ListHeaderComponent={() => {
           return (
             <WalletListHeader>
-              <H5>My Wallets</H5>
+              <H5>{t('My Wallets')}</H5>
             </WalletListHeader>
           );
         }}

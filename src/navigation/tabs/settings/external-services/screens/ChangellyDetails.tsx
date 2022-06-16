@@ -35,12 +35,14 @@ import {
   ColumnData,
   RemoveCta,
 } from '../styled/ExternalServicesDetails';
+import {useTranslation} from 'react-i18next';
 
 export interface ChangellyDetailsProps {
   swapTx: changellyTxData;
 }
 
 const ChangellyDetails: React.FC = () => {
+  const {t} = useTranslation();
   const {
     params: {swapTx},
   } = useRoute<RouteProp<{params: ChangellyDetailsProps}>>();
@@ -98,7 +100,7 @@ const ChangellyDetails: React.FC = () => {
       <Settings>
         <RowDataContainer>
           <CryptoAmountContainer>
-            <CryptoTitle>Receiving amount</CryptoTitle>
+            <CryptoTitle>{t('Receiving amount')}</CryptoTitle>
             <CryptoContainer>
               <CryptoAmount>{swapTx.amountTo}</CryptoAmount>
               <CryptoUnit>{swapTx.coinTo.toUpperCase()}</CryptoUnit>
@@ -113,20 +115,20 @@ const ChangellyDetails: React.FC = () => {
               haptic('impactLight');
               copyText(swapTx.addressTo);
             }}>
-            <RowLabel>Deposit address</RowLabel>
+            <RowLabel>{t('Deposit address')}</RowLabel>
             <ColumnData>{swapTx.addressTo}</ColumnData>
           </TouchableOpacity>
         </ColumnDataContainer>
 
         <RowDataContainer style={{marginTop: 20}}>
-          <RowLabel>Paying</RowLabel>
+          <RowLabel>{t('Paying')}</RowLabel>
           <RowData>
             {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
           </RowData>
         </RowDataContainer>
 
         <RowDataContainer>
-          <RowLabel>Created</RowLabel>
+          <RowLabel>{t('Created')}</RowLabel>
           <RowData>
             {moment(swapTx.date).format('MMM DD, YYYY hh:mm a')}
           </RowData>
@@ -134,7 +136,7 @@ const ChangellyDetails: React.FC = () => {
 
         {!!swapTx.status && (
           <RowDataContainer>
-            <RowLabel>Status</RowLabel>
+            <RowLabel>{t('Status')}</RowLabel>
             <RowData
               style={{
                 color: changellyGetStatusColor(swapTx.status),
@@ -156,7 +158,7 @@ const ChangellyDetails: React.FC = () => {
                   copyText('security@changelly.com');
                 }}>
                 <LabelTipText>
-                  Please contact Changelly support:{' '}
+                  {t('Please contact Changelly support:')}{' '}
                   <LabelTipText style={{fontWeight: '700'}}>
                     security@changelly.com
                   </LabelTipText>
@@ -169,7 +171,7 @@ const ChangellyDetails: React.FC = () => {
                   copyText(swapTx.exchangeTxId);
                 }}>
                 <LabelTipText>
-                  Provide the transaction id:{' '}
+                  {t('Provide the transaction id:')}{' '}
                   <LabelTipText style={{fontWeight: '700'}}>
                     {swapTx.exchangeTxId}
                   </LabelTipText>
@@ -185,7 +187,7 @@ const ChangellyDetails: React.FC = () => {
               haptic('impactLight');
               copyText(swapTx.payinAddress);
             }}>
-            <RowLabel>Exchange address (Payin)</RowLabel>
+            <RowLabel>{t('Exchange address (Payin)')}</RowLabel>
             <ColumnData>{swapTx.payinAddress}</ColumnData>
           </TouchableOpacity>
         </ColumnDataContainer>
@@ -197,7 +199,7 @@ const ChangellyDetails: React.FC = () => {
                 haptic('impactLight');
                 copyText(swapTx.payinExtraId!);
               }}>
-              <RowLabel>Destination Tag (Payin Extra Id)</RowLabel>
+              <RowLabel>{t('Destination Tag (Payin Extra Id)')}</RowLabel>
               <ColumnData>{swapTx.payinExtraId}</ColumnData>
             </TouchableOpacity>
           </ColumnDataContainer>
@@ -209,7 +211,7 @@ const ChangellyDetails: React.FC = () => {
               haptic('impactLight');
               copyText(swapTx.refundAddress);
             }}>
-            <RowLabel>Refund address</RowLabel>
+            <RowLabel>{t('Refund address')}</RowLabel>
             <ColumnData>{swapTx.refundAddress}</ColumnData>
           </TouchableOpacity>
         </ColumnDataContainer>
@@ -220,7 +222,7 @@ const ChangellyDetails: React.FC = () => {
               haptic('impactLight');
               copyText(swapTx.exchangeTxId);
             }}>
-            <RowLabel>Exchange Transaction ID</RowLabel>
+            <RowLabel>{t('Exchange Transaction ID')}</RowLabel>
             <ColumnData>{swapTx.exchangeTxId}</ColumnData>
           </TouchableOpacity>
         </ColumnDataContainer>
@@ -231,13 +233,14 @@ const ChangellyDetails: React.FC = () => {
             dispatch(
               showBottomNotificationModal({
                 type: 'question',
-                title: 'Removing transaction data',
-                message:
+                title: t('Removing transaction data'),
+                message: t(
                   "The data of this swap will be deleted from your device. Make sure you don't need it",
+                ),
                 enableBackdropDismiss: true,
                 actions: [
                   {
-                    text: 'REMOVE',
+                    text: t('REMOVE'),
                     action: () => {
                       dispatch(dismissBottomNotificationModal());
                       dispatch(
@@ -250,7 +253,7 @@ const ChangellyDetails: React.FC = () => {
                     primary: true,
                   },
                   {
-                    text: 'GO BACK',
+                    text: t('GO BACK'),
                     action: () => {
                       console.log('Removing transaction data CANCELED');
                     },
@@ -259,7 +262,7 @@ const ChangellyDetails: React.FC = () => {
               }),
             );
           }}>
-          <Text style={{color: 'red'}}>Remove</Text>
+          <Text style={{color: 'red'}}>{t('Remove')}</Text>
         </RemoveCta>
       </Settings>
     </SettingsContainer>

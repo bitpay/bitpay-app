@@ -1,5 +1,6 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import Avatar from '../../../components/avatar/BitPayIdAvatar';
@@ -50,6 +51,7 @@ const SettingsSectionDescription = styled(BaseText)`
 `;
 
 export const ProfileSettingsScreen: React.FC<ProfileProps> = () => {
+  const {t} = useTranslation();
   const dispatch = useDispatch();
   const network = useSelector<RootState, Network>(({APP}) => APP.network);
   const syncGiftCardPurchasesWithBitPayId = useSelector<RootState, boolean>(
@@ -80,12 +82,12 @@ export const ProfileSettingsScreen: React.FC<ProfileProps> = () => {
       <SettingsSection>
         <SettingsSectionBody>
           <SettingsSectionHeader>
-            Sync Gift Card Purchases
+            {t('Sync Gift Card Purchases')}
           </SettingsSectionHeader>
           <SettingsSectionDescription>
-            If enabled, your gift card purchases will be associated with your
-            BitPay ID, allowing you to keep track of your gift card purchases
-            even if this device is lost.
+            {t(
+              'If enabled, your gift card purchases will be associated with your BitPay ID, allowing you to keep track of your gift card purchases even if this device is lost.',
+            )}
           </SettingsSectionDescription>
         </SettingsSectionBody>
         <ToggleSwitch

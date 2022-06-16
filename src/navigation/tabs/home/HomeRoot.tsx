@@ -42,8 +42,10 @@ import {HeaderContainer, HomeContainer} from './components/Styled';
 import KeyMigrationFailureModal from './components/KeyMigrationFailureModal';
 import {batch} from 'react-redux';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
+import {useTranslation} from 'react-i18next';
 
 const HomeRoot = () => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const theme = useTheme();
@@ -138,7 +140,7 @@ const HomeRoot = () => {
       dispatch(getPriceHistory(defaultAltCurrency.isoCode));
       await dispatch(startGetRates({force: true}));
       await Promise.all([
-        dispatch(startUpdateAllKeyAndWalletStatus()),
+        dispatch(startUpdateAllKeyAndWalletStatus({force: true})),
         dispatch(startRefreshBrazeContent()),
         sleep(1000),
       ]);
@@ -219,8 +221,8 @@ const HomeRoot = () => {
                     dispatch(
                       showBottomNotificationModal({
                         type: 'warning',
-                        title: 'No funds available',
-                        message: 'You do not have any funds to send.',
+                        title: t('No funds available'),
+                        message: t('You do not have any funds to send.'),
                         enableBackdropDismiss: true,
                         actions: [
                           {
@@ -253,7 +255,7 @@ const HomeRoot = () => {
                             primary: true,
                           },
                           {
-                            text: 'Got It',
+                            text: t('Got It'),
                             action: () => null,
                             primary: false,
                           },
@@ -280,7 +282,7 @@ const HomeRoot = () => {
         {/* ////////////////////////////// SHOP WITH CRYPTO */}
         {memoizedShopWithCryptoCards.length ? (
           <HomeSection
-            title="Shop with Crypto"
+            title={t('Shop with Crypto')}
             action="See all"
             onActionPress={() => navigation.navigate('Tabs', {screen: 'Shop'})}>
             <OffersCarousel contentCards={memoizedShopWithCryptoCards} />
@@ -289,14 +291,14 @@ const HomeRoot = () => {
 
         {/* ////////////////////////////// DO MORE */}
         {memoizedDoMoreCards.length ? (
-          <HomeSection title="Do More">
+          <HomeSection title={t('Do More')}>
             <AdvertisementsList contentCards={memoizedDoMoreCards} />
           </HomeSection>
         ) : null}
 
         {/* ////////////////////////////// EXCHANGE RATES */}
         {memoizedExchangeRates.length ? (
-          <HomeSection title="Exchange Rates" label="1D">
+          <HomeSection title={t('Exchange Rates')} label="1D">
             <ExchangeRatesList
               items={memoizedExchangeRates}
               defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
@@ -306,7 +308,7 @@ const HomeRoot = () => {
 
         {/* ////////////////////////////// QUICK LINKS - Leave feedback etc */}
         {memoizedQuickLinks.length ? (
-          <HomeSection title="Quick Links">
+          <HomeSection title={t('Quick Links')}>
             <QuickLinksCarousel contentCards={memoizedQuickLinks} />
           </HomeSection>
         ) : null}

@@ -2,8 +2,10 @@ import {showBottomNotificationModal} from '../../store/app/app.actions';
 import {keyBackupRequired} from '../../navigation/tabs/home/components/Crypto';
 import {useAppDispatch, useAppSelector} from '../../utils/hooks';
 import {useNavigation} from '@react-navigation/native';
+import {useTranslation} from 'react-i18next';
 
 export const useRequireKeyAndWalletRedirect = (cta: () => void) => {
+  const {t} = useTranslation();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -28,12 +30,14 @@ export const useRequireKeyAndWalletRedirect = (cta: () => void) => {
         dispatch(
           showBottomNotificationModal({
             type: 'warning',
-            title: 'Wallet required',
-            message: 'To continue you will need to add a wallet to your key.',
+            title: t('Wallet required'),
+            message: t(
+              'To continue you will need to add a wallet to your key.',
+            ),
             enableBackdropDismiss: true,
             actions: [
               {
-                text: 'Add wallet',
+                text: t('Add wallet'),
                 action: () => {
                   navigation.navigate('Wallet', {
                     screen: 'AddingOptions',
@@ -43,7 +47,7 @@ export const useRequireKeyAndWalletRedirect = (cta: () => void) => {
                 primary: true,
               },
               {
-                text: 'maybe later',
+                text: t('maybe later'),
                 action: () => {},
                 primary: false,
               },
@@ -58,20 +62,21 @@ export const useRequireKeyAndWalletRedirect = (cta: () => void) => {
       dispatch(
         showBottomNotificationModal({
           type: 'warning',
-          title: 'Key and wallet required',
-          message:
+          title: t('Key and wallet required'),
+          message: t(
             'To continue you will need to create a key and add a wallet.',
+          ),
           enableBackdropDismiss: true,
           actions: [
             {
-              text: 'Continue',
+              text: t('Continue'),
               action: () => {
                 navigation.navigate('Wallet', {screen: 'CreationOptions'});
               },
               primary: true,
             },
             {
-              text: 'maybe later',
+              text: t('maybe later'),
               action: () => {},
               primary: false,
             },

@@ -7,6 +7,7 @@ import {SlateDark, White} from '../../../styles/colors';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import QRCode from 'react-native-qrcode-svg';
+import {useTranslation} from 'react-i18next';
 
 const ExportKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -41,6 +42,7 @@ const KeyName = styled(H6)`
 `;
 
 const ExportKey = () => {
+  const {t} = useTranslation();
   const {
     params: {code, keyName},
   } = useRoute<RouteProp<WalletStackParamList, 'ExportKey'>>();
@@ -49,24 +51,23 @@ const ExportKey = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>Export Key</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Export Key')}</HeaderTitle>,
     });
-  }, [navigation]);
+  }, [navigation, t]);
 
   return (
     <ExportKeyContainer>
       <ScrollView>
         <ExportKeyParagraph>
-          Your wallet is all that is needed to access your funds. Be sure to
-          protect your wallet and store it only on secure devices. BitPay does
-          not have access to your recovery phrase, so you alone are responsible
-          for your wallets. If you share wallet access with external services,
-          you take responsibility for the risk of theft or breach.
+          {t(
+            'Your wallet is all that is needed to access your funds. Be sure to protect your wallet and store it only on secure devices. BitPay does not have access to your recovery phrase, so you alone are responsible for your wallets. If you share wallet access with external services, you take responsibility for the risk of theft or breach.',
+          )}
         </ExportKeyParagraph>
 
         <ExportKeyParagraph>
-          You can import this wallet into other devices through the BitPay
-          scanner.
+          {t(
+            'You can import this wallet into other devices through the BitPay scanner.',
+          )}
         </ExportKeyParagraph>
 
         <QRCodeContainer>

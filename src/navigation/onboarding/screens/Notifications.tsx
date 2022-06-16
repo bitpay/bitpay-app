@@ -21,6 +21,7 @@ import {useAppDispatch} from '../../../utils/hooks';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingStackParamList} from '../OnboardingStack';
 import {OnboardingImage} from '../components/Containers';
+import {useTranslation} from 'react-i18next';
 
 const NotificationsContainer = styled.SafeAreaView`
   flex: 1;
@@ -48,6 +49,7 @@ const scrollEnabledForSmallScreens = HEIGHT < 600;
 const NotificationsScreen: React.VFC<
   StackScreenProps<OnboardingStackParamList, 'Notifications'>
 > = ({navigation}) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const themeType = useThemeType();
 
@@ -65,12 +67,12 @@ const NotificationsScreen: React.VFC<
               haptic('impactLight');
               navigation.navigate('Pin');
             }}>
-            Skip
+            {t('Skip')}
           </Button>
         </HeaderRightContainer>
       ),
     });
-  }, [navigation]);
+  }, [navigation, t]);
 
   const onSetNotificationsPress = async (notificationsAccepted: boolean) => {
     const setAndNavigate = async (accepted: boolean) => {
@@ -119,14 +121,15 @@ const NotificationsScreen: React.VFC<
         </ImageContainer>
         <TitleContainer>
           <TextAlign align={'center'}>
-            <H3>Turn on notifications</H3>
+            <H3>{t('Turn on notifications')}</H3>
           </TextAlign>
         </TitleContainer>
         <TextContainer>
           <TextAlign align={'center'}>
             <Paragraph>
-              Get important updates on your account, new features, promos and
-              more. You can change this at any time in Settings.
+              {t(
+                'Get important updates on your account, new features, promos and more. You can change this at any time in Settings.',
+              )}
             </Paragraph>
           </TextAlign>
         </TextContainer>
@@ -136,14 +139,14 @@ const NotificationsScreen: React.VFC<
             <Button
               buttonStyle={'primary'}
               onPress={() => onSetNotificationsPress(true)}>
-              Allow
+              {t('Allow')}
             </Button>
           </ActionContainer>
           <ActionContainer>
             <Button
               buttonStyle={'secondary'}
               onPress={() => onSetNotificationsPress(false)}>
-              Deny
+              {t('Deny')}
             </Button>
           </ActionContainer>
         </CtaContainer>

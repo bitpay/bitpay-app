@@ -40,6 +40,7 @@ import {
 } from './Shared';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {COINBASE_ENV} from '../../../../../../api/coinbase/coinbase.constants';
+import {useTranslation} from 'react-i18next';
 
 enum LayoutTypes {
   CAROUSEL = 'Carousel',
@@ -50,6 +51,7 @@ enum LayoutTypes {
 const Noop = () => null;
 
 const CustomizeHome = () => {
+  const {t} = useTranslation();
   useAndroidBackHandler(() => true);
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -129,7 +131,7 @@ const CustomizeHome = () => {
             dispatch(dismissOnGoingProcessModal());
           }}
           buttonStyle={'primary'}>
-          Save Layout
+          {t('Save Layout')}
         </Button>
       </ListFooterButtonContainer>
     );
@@ -158,7 +160,7 @@ const CustomizeHome = () => {
   return (
     <CustomizeHomeContainer>
       <LayoutToggleContainer>
-        <H7>Home Layout</H7>
+        <H7>{t('Home Layout')}</H7>
         <Tab.Navigator
           initialRouteName={
             layoutType === 'carousel'
@@ -209,7 +211,7 @@ const CustomizeHome = () => {
 
       <DraggableFlatList
         ListHeaderComponent={() =>
-          visibleList.length ? <ListHeader>Favorites</ListHeader> : null
+          visibleList.length ? <ListHeader>{t('Favorites')}</ListHeader> : null
         }
         ListFooterComponent={memoizedFooterList}
         contentContainerStyle={{paddingTop: 20, paddingBottom: 250}}

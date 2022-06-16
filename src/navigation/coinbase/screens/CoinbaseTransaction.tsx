@@ -12,6 +12,7 @@ import {CoinbaseStackParamList} from '../CoinbaseStack';
 import CoinbaseIcon from '../components/CoinbaseIcon';
 import {View} from 'react-native';
 import {formatCryptoAddress} from '../../../utils/helper-methods';
+import {useTranslation} from 'react-i18next';
 
 const TransactionContainer = styled.SafeAreaView`
   flex: 1;
@@ -91,6 +92,7 @@ export type CoinbaseTransactionScreenParamList = {
 const CoinbaseTransaction = ({
   route,
 }: StackScreenProps<CoinbaseStackParamList, 'CoinbaseTransaction'>) => {
+  const {t} = useTranslation();
   const {tx} = route.params;
 
   const parseTime = (timestamp?: string) => {
@@ -120,37 +122,37 @@ const CoinbaseTransaction = ({
           <HeaderIcon>{getIcon()}</HeaderIcon>
         </HeaderContainer>
         <SummaryContainer>
-          <Title>Summary</Title>
+          <Title>{t('Summary')}</Title>
           <Hr />
           <Details>
             <Detail>
-              <Item>Amount</Item>
+              <Item>{t('Amount')}</Item>
               <DetailInfo align="right">
                 {tx.amount.amount} {tx.amount.currency}
               </DetailInfo>
             </Detail>
             <Hr />
             <Detail>
-              <Item>Native Amount</Item>
+              <Item>{t('Native Amount')}</Item>
               <DetailInfo align="right">
                 {tx.native_amount.amount} {tx.native_amount.currency}
               </DetailInfo>
             </Detail>
             <Hr />
             <Detail>
-              <Item>Status</Item>
+              <Item>{t('Status')}</Item>
               <DetailInfo align="right">{tx.status}</DetailInfo>
             </Detail>
             <Hr />
             <Detail>
-              <Item>Date</Item>
+              <Item>{t('Date')}</Item>
               <DetailInfo align="right">{parseTime(tx.created_at)}</DetailInfo>
             </Detail>
             <Hr />
             {tx.to && tx.to.address ? (
               <>
                 <Detail>
-                  <Item>To</Item>
+                  <Item>{t('To')}</Item>
                   <DetailInfo align="right">
                     {formatCryptoAddress(tx.to.address)}
                   </DetailInfo>

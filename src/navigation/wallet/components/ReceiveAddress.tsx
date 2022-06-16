@@ -35,6 +35,7 @@ import {
   GetProtocolPrefix,
   IsUtxoCoin,
 } from '../../../store/wallet/utils/currency';
+import {useTranslation} from 'react-i18next';
 
 export const BchAddressTypes = ['Cash Address', 'Legacy'];
 
@@ -107,6 +108,7 @@ interface Props {
 }
 
 const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const [copied, setCopied] = useState(false);
@@ -291,17 +293,19 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
           </>
         ) : loading ? (
           <LoadingContainer>
-            <LoadingText>Generating Address...</LoadingText>
+            <LoadingText>{t('Generating Address...')}</LoadingText>
           </LoadingContainer>
         ) : (
           <LoadingContainer>
             <GhostSvg />
-            <LoadingText>Something went wrong. Please try again.</LoadingText>
+            <LoadingText>
+              {t('Something went wrong. Please try again.')}
+            </LoadingText>
           </LoadingContainer>
         )}
 
         <CloseButton onPress={_closeModal}>
-          <CloseButtonText>CLOSE</CloseButtonText>
+          <CloseButtonText>{t('CLOSE')}</CloseButtonText>
         </CloseButton>
       </ReceiveAddressContainer>
     </SheetModal>

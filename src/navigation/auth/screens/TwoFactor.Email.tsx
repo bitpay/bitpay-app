@@ -1,5 +1,6 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef} from 'react';
+import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import Spinner from '../../../components/spinner/Spinner';
 import {
@@ -30,6 +31,7 @@ const SpinnerWrapper = styled.View`
 const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
   navigation,
 }) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const pollId = useRef<ReturnType<typeof setInterval>>();
   const pollCountdown = useRef(TWO_FACTOR_EMAIL_POLL_TIMEOUT);
@@ -101,12 +103,12 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
         dispatch(
           AppActions.showBottomNotificationModal({
             type: 'error',
-            title: 'Login failed',
-            message: 'Something went wrong while authenticating.',
+            title: t('Login failed'),
+            message: t('Something went wrong while authenticating.'),
             enableBackdropDismiss: false,
             actions: [
               {
-                text: 'OK',
+                text: t('OK'),
                 action: () => {
                   navigation.navigate('Login');
                 },
@@ -116,14 +118,14 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
         );
         return;
     }
-  }, [emailPairingStatus, navigation, dispatch]);
+  }, [emailPairingStatus, navigation, dispatch, t]);
 
   return (
     <AuthFormContainer>
       {isTimedOut && (
         <>
           <AuthFormParagraph>
-            Didn't get an email? Try logging in again later.
+            {t("Didn't get an email? Try logging in again later.")}
           </AuthFormParagraph>
         </>
       )}
@@ -135,8 +137,9 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
           </SpinnerWrapper>
 
           <AuthFormParagraph>
-            We sent an email containing a link to authenticate this login
-            attempt.
+            {t(
+              'We sent an email containing a link to authenticate this login attempt.',
+            )}
           </AuthFormParagraph>
         </>
       )}

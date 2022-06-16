@@ -39,6 +39,7 @@ import {
   WrongPasswordError,
 } from '../components/ErrorMessages';
 import {useAppDispatch} from '../../../utils/hooks';
+import {useTranslation} from 'react-i18next';
 
 export type JoinMultisigParamList = {
   key?: Key;
@@ -76,6 +77,7 @@ const CtaContainer = styled(_CtaContainer)`
 
 const JoinMultisig = () => {
   const dispatch = useAppDispatch();
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'JoinMultisig'>>();
   const {key, invitationCode} = route.params || {};
@@ -217,7 +219,7 @@ const JoinMultisig = () => {
         await showErrorMessage(
           CustomErrorMessage({
             errMsg: BWCErrorMessage(e),
-            title: 'Uh oh, something went wrong',
+            title: t('Uh oh, something went wrong'),
           }),
         );
       }
@@ -232,7 +234,7 @@ const JoinMultisig = () => {
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
-              label={'YOUR NAME'}
+              label={t('YOUR NAME')}
               onChangeText={(text: string) => onChange(text)}
               onBlur={onBlur}
               value={value}
@@ -247,7 +249,7 @@ const JoinMultisig = () => {
         )}
 
         <HeaderContainer>
-          <ImportTitle>Wallet invitation</ImportTitle>
+          <ImportTitle>{t('Wallet invitation')}</ImportTitle>
 
           <ScanContainer
             activeOpacity={ActiveOpacity}
@@ -286,7 +288,7 @@ const JoinMultisig = () => {
 
         <CtaContainer>
           <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
-            Join
+            {t('Join')}
           </Button>
         </CtaContainer>
       </JoinContainer>

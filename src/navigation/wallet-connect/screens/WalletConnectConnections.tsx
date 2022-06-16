@@ -21,6 +21,7 @@ import {
 } from '../../../store/wallet-connect/wallet-connect.models';
 import Connections from '../components/Connections';
 import WalletSelector from '../components/WalletSelector';
+import {useTranslation} from 'react-i18next';
 
 const KeyConnectionsContainer = styled.View`
   margin-top: 26px;
@@ -48,6 +49,7 @@ const AddConnectionContainer = styled.TouchableOpacity`
 `;
 
 const WalletConnectConnections = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const [groupedConnectors, setGroupedConnectors] = useState({});
   const [walletSelectorModalVisible, setWalletSelectorModalVisible] =
@@ -93,7 +95,7 @@ const WalletConnectConnections = () => {
   return (
     <WalletConnectContainer>
       <ScrollView>
-        <HeaderTitle>Connections</HeaderTitle>
+        <HeaderTitle>{t('Connections')}</HeaderTitle>
         {Object.entries(groupedConnectors).map(([keyId, connectorsByKey]) => {
           return (
             <KeyConnectionsContainer key={keyId}>
