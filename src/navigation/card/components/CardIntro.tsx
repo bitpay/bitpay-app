@@ -42,6 +42,7 @@ const ContentContainer = styled.View`
 `;
 
 const IntroHero = () => {
+  const {t} = useTranslation();
   return (
     <View style={{flexDirection: 'row'}}>
       <View
@@ -52,11 +53,11 @@ const IntroHero = () => {
           paddingRight: 40,
         }}>
         <View>
-          <H3>Fund it.</H3>
+          <H3>{t('Fund it.')}</H3>
 
-          <H3>Spend it.</H3>
+          <H3>{t('Spend it.')}</H3>
 
-          <H3>Live on crypto.</H3>
+          <H3>{t('Live on crypto.')}</H3>
         </View>
       </View>
       <View>
@@ -105,8 +106,9 @@ const CardIntro: React.FC<CardIntroProps> = props => {
           <Spacer height={32} />
 
           <Paragraph>
-            The fastest, easiest way to turn your crypto into dollars for
-            shopping. Load funds in the BitPay App and spend in minutes.
+            {t(
+              'The fastest, easiest way to turn your crypto into dollars for shopping. Load funds in the BitPay App and spend in minutes.',
+            )}
           </Paragraph>
 
           <Spacer height={24} />
@@ -116,8 +118,9 @@ const CardIntro: React.FC<CardIntroProps> = props => {
           <Spacer height={24} />
 
           <Paragraph>
-            Shop online or in stores instantly with the virtual BitPay Prepaid
-            Mastercard©, or order your physical card for free today.
+            {t(
+              'Shop online or in stores instantly with the virtual BitPay Prepaid Mastercard©, or order your physical card for free today.',
+            )}
           </Paragraph>
         </ContentContainer>
 
@@ -133,11 +136,11 @@ const CardIntro: React.FC<CardIntroProps> = props => {
 
         <ContentContainer>
           <Smallest>
-            <Exp i={1} /> Network fees and miner fees may apply.
+            <Exp i={1} /> {t('Network fees and miner fees may apply.')}
           </Smallest>
 
           <Smallest>
-            <Exp i={2} /> Third party fees may apply.
+            <Exp i={2} /> {t('Third party fees may apply.')}
           </Smallest>
 
           <Br />
@@ -152,7 +155,7 @@ const CardIntro: React.FC<CardIntroProps> = props => {
         <ContentContainer style={{marginBottom: 200}}>
           <TextAlign align="center">
             <A href={URL.MASTERCARD_CARDHOLDER_AGREEMENT} download>
-              Cardholder Agreement
+              {t('Cardholder Agreement')}
             </A>
           </TextAlign>
         </ContentContainer>
@@ -169,7 +172,7 @@ const CardIntro: React.FC<CardIntroProps> = props => {
         }}>
         <ActionContainer>
           <Button onPress={() => onGetCardPress('createAccount')}>
-            Sign Up
+            {t('Sign Up')}
           </Button>
         </ActionContainer>
 
@@ -177,7 +180,7 @@ const CardIntro: React.FC<CardIntroProps> = props => {
           <Button
             buttonStyle="secondary"
             onPress={() => onGetCardPress('login')}>
-            I already have an account
+            {t('I already have an account')}
           </Button>
         </ActionContainer>
       </CtaContainerAbsolute>

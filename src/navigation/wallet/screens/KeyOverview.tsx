@@ -48,6 +48,7 @@ import KeyDropdownOption from '../components/KeyDropdownOption';
 import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
 import EncryptPasswordImg from '../../../../assets/img/tinyicon-encrypt.svg';
 import EncryptPasswordDarkModeImg from '../../../../assets/img/tinyicon-encrypt-darkmode.svg';
+import {useTranslation} from 'react-i18next';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -230,6 +231,7 @@ export const buildNestedWalletList = (
 };
 
 const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
@@ -333,9 +335,10 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
   if (!key?.methods.isPrivKeyEncrypted()) {
     keyOptions.push({
       img: <Icons.Encrypt />,
-      title: 'Encrypt your Key',
-      description:
+      title: t('Encrypt your Key'),
+      description: t(
         'Prevent an unauthorized user from sending funds out of your wallet.',
+      ),
       onPress: () => {
         haptic('impactLight');
         navigation.navigate('KeySettings', {
@@ -347,8 +350,8 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
 
     keyOptions.push({
       img: <Icons.Settings />,
-      title: 'Key Settings',
-      description: 'View all the ways to manage and configure your key.',
+      title: t('Key Settings'),
+      description: t('View all the ways to manage and configure your key.'),
       onPress: () => {
         haptic('impactLight');
         navigation.navigate('KeySettings', {
@@ -453,7 +456,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
         ListHeaderComponent={() => {
           return (
             <WalletListHeader>
-              <H5>My Wallets</H5>
+              <H5>{t('My Wallets')}</H5>
             </WalletListHeader>
           );
         }}
@@ -468,7 +471,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
                 });
               }}>
               <Icons.Add />
-              <WalletListFooterText>Add Wallet</WalletListFooterText>
+              <WalletListFooterText>{t('Add Wallet')}</WalletListFooterText>
             </WalletListFooter>
           );
         }}
@@ -479,7 +482,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
       {keyOptions.length > 0 ? (
         <OptionsSheet
           isVisible={showKeyOptions}
-          title={'Key Options'}
+          title={t('Key Options')}
           options={keyOptions}
           closeModal={() => setShowKeyOptions(false)}
         />
@@ -490,7 +493,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
         placement={'top'}
         onBackdropPress={() => setShowKeyDropdown(false)}>
         <KeyDropdown>
-          <HeaderTitle style={{margin: 15}}>Other Keys</HeaderTitle>
+          <HeaderTitle style={{margin: 15}}>{t('Other Keys')}</HeaderTitle>
           <KeyDropdownOptionsContainer>
             {Object.values(keys)
               .filter(_key => _key.backupComplete && _key.id !== id)

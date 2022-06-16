@@ -10,6 +10,7 @@ import SheetModal from '../base/sheet/SheetModal';
 import Icons from './TransactMenuIcons';
 import analytics from '@segment/analytics-react-native';
 import {useAppSelector} from '../../../utils/hooks';
+import {useTranslation} from 'react-i18next';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -77,6 +78,7 @@ interface TransactMenuItemProps {
 }
 
 const TransactModal = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
   const hideModal = () => setModalVisible(false);
@@ -89,8 +91,8 @@ const TransactModal = () => {
     {
       id: 'buyCrypto',
       img: () => <Icons.BuyCrypto />,
-      title: 'Buy Crypto',
-      description: 'Buy crypto with cash',
+      title: t('Buy Crypto'),
+      description: t('Buy crypto with cash'),
       onPress: () => {
         analytics.track('BitPay App - Clicked Buy Crypto', {
           from: 'TransactMenu',
@@ -117,8 +119,8 @@ const TransactModal = () => {
     {
       id: 'exchange',
       img: () => <Icons.Exchange />,
-      title: 'Exchange',
-      description: 'Swap crypto for another',
+      title: t('Exchange'),
+      description: t('Swap crypto for another'),
       onPress: () => {
         analytics.track('BitPay App - Clicked Swap Crypto', {
           from: 'TransactMenu',
@@ -130,8 +132,8 @@ const TransactModal = () => {
     {
       id: 'receive',
       img: () => <Icons.Receive />,
-      title: 'Receive',
-      description: 'Get crypto from another wallet',
+      title: t('Receive'),
+      description: t('Get crypto from another wallet'),
       onPress: () => {
         navigation.navigate('Wallet', {
           screen: 'GlobalSelect',
@@ -142,8 +144,8 @@ const TransactModal = () => {
     {
       id: 'send',
       img: () => <Icons.Send />,
-      title: 'Send',
-      description: 'Send crypto to another wallet',
+      title: t('Send'),
+      description: t('Send crypto to another wallet'),
       onPress: () => {
         navigation.navigate('Wallet', {
           screen: 'GlobalSelect',
@@ -154,8 +156,8 @@ const TransactModal = () => {
     {
       id: 'buyGiftCard',
       img: () => <Icons.BuyGiftCard />,
-      title: 'Buy Gift Cards',
-      description: 'Buy gift cards with crypto',
+      title: t('Buy Gift Cards'),
+      description: t('Buy gift cards with crypto'),
       onPress: () => {},
     },
   ];
@@ -163,7 +165,7 @@ const TransactModal = () => {
   const ScanButton: TransactMenuItemProps = {
     id: 'scan',
     img: () => <Icons.Scan />,
-    title: 'Scan',
+    title: t('Scan'),
     onPress: () => {
       navigation.navigate('Scan', {screen: 'Root'});
     },

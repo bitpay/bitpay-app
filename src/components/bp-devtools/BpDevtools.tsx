@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
   Appearance,
   ColorSchemeName,
@@ -58,6 +59,7 @@ const NetworkToggle = () => {
 };
 
 const ThemeToggle = () => {
+  const {t} = useTranslation();
   const dispatch = useDispatch();
   const scheme =
     useSelector<RootState, ColorSchemeName>(({APP}) => APP.colorScheme) ||
@@ -70,13 +72,14 @@ const ThemeToggle = () => {
 
   return (
     <Container>
-      <Text>Dark Mode</Text>
+      <Text>{t('Dark Mode')}</Text>
       <Switch value={scheme === 'dark'} onChange={() => toggleTheme()} />
     </Container>
   );
 };
 
 const LanguageToggle = () => {
+  const {t} = useTranslation();
   const dispatch = useDispatch();
   const language = useSelector<RootState, string>(
     ({APP}) => APP.defaultLanguage,
@@ -89,13 +92,14 @@ const LanguageToggle = () => {
 
   return (
     <Container>
-      <Text>Español</Text>
+      <Text>{t('Spanish')}</Text>
       <Switch value={language === 'es'} onChange={() => toggleLanguage()} />
     </Container>
   );
 };
 
 const SkipIntroButton = () => {
+  const {t} = useTranslation();
   const dispatch = useDispatch();
   const onboardingCompleted = useSelector<RootState, boolean>(
     ({APP}) => APP.onboardingCompleted,
@@ -114,7 +118,7 @@ const SkipIntroButton = () => {
   return (
     <Container>
       <DebugButton disabled={onboardingCompleted} onPress={onPress}>
-        <DebugButtonText>Skip Onboarding</DebugButtonText>
+        <DebugButtonText>{t('Skip Onboarding')}</DebugButtonText>
       </DebugButton>
     </Container>
   );

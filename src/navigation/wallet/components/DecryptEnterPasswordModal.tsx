@@ -18,6 +18,7 @@ import Button from '../../../components/button/Button';
 import {HeaderTitle, Paragraph} from '../../../components/styled/Text';
 import {Keyboard} from 'react-native';
 import {sleep} from '../../../utils/helper-methods';
+import {useTranslation} from 'react-i18next';
 
 const DecryptFormContainer = styled.View`
   justify-content: center;
@@ -55,6 +56,7 @@ export interface DecryptPasswordConfig {
 }
 
 const DecryptEnterPasswordModal = () => {
+  const {t} = useTranslation();
   const dispatch = useDispatch();
   const isVisible = useSelector(
     ({APP}: RootState) => APP.showDecryptPasswordModal,
@@ -112,7 +114,7 @@ const DecryptEnterPasswordModal = () => {
       }}>
       <DecryptFormContainer>
         <PasswordFormContainer>
-          <HeaderTitle>Enter encryption password</HeaderTitle>
+          <HeaderTitle>{t('Enter encryption password')}</HeaderTitle>
 
           {description ? (
             <PasswordFormDescription>{description}</PasswordFormDescription>
@@ -137,11 +139,11 @@ const DecryptEnterPasswordModal = () => {
           </PasswordInputContainer>
 
           <ActionContainer>
-            <Button onPress={handleSubmit(onSubmit)}>Continue</Button>
+            <Button onPress={handleSubmit(onSubmit)}>{t('Continue')}</Button>
           </ActionContainer>
           <ActionContainer>
             <Button onPress={dismissModal} buttonStyle={'secondary'}>
-              Cancel
+              {t('Cancel')}
             </Button>
           </ActionContainer>
         </PasswordFormContainer>

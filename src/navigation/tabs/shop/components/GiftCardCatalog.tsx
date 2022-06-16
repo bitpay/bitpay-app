@@ -37,6 +37,7 @@ import FilterSheet, {initializeCategoryMap} from './FilterSheet';
 import {useAppSelector} from '../../../../utils/hooks';
 import {APP_NETWORK} from '../../../../constants/config';
 import GhostSvg from '../../../../../assets/img/ghost-cheeky.svg';
+import {useTranslation} from 'react-i18next';
 
 const Curations = ({
   curations,
@@ -120,6 +121,7 @@ export default ({
   categories: CategoryWithGiftCards[];
   onSelectedGiftCardsChange: (newNumSelectedGiftCards: number) => void;
 }) => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const theme = useTheme();
   const giftCards = useAppSelector(
@@ -215,7 +217,7 @@ export default ({
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <SearchBox
-                placeholder={'Search Gift Cards'}
+                placeholder={t('Search Gift Cards')}
                 theme={theme}
                 onBlur={onBlur}
                 onFocus={() => {
@@ -265,10 +267,10 @@ export default ({
                 <GhostSvg />
               </NoResultsImgContainer>
               <Paragraph>
-                {"We couldn't find a match for "}
+                {t("We couldn't find a match for ")}
                 <BaseText style={{fontWeight: 'bold'}}>{searchVal}</BaseText>.
               </Paragraph>
-              <Paragraph>Please try searching something else.</Paragraph>
+              <Paragraph>{t('Please try searching something else.')}</Paragraph>
             </NoResultsContainer>
           )}
         </HideableView>
@@ -276,7 +278,7 @@ export default ({
           {memoizedCurations}
           <SectionContainer>
             <SectionHeaderContainer>
-              <SectionHeader>All Gift Cards</SectionHeader>
+              <SectionHeader>{t('All Gift Cards')}</SectionHeader>
               <TouchableWithoutFeedback
                 onPress={() => setIsFilterSheetShown(!isFilterSheetShown)}>
                 <SectionHeaderButton>

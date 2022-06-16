@@ -78,6 +78,7 @@ import {Currencies} from '../../../constants/currencies';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import InfoSvg from '../../../../assets/img/info.svg';
 import {URL} from '../../../constants';
+import {useTranslation} from 'react-i18next';
 
 type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
 
@@ -166,6 +167,7 @@ const VerticalPadding = styled.View`
 `;
 
 const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const {
     currencyAbbreviation: _currencyAbbreviation,
@@ -202,15 +204,15 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
         return (
           <HeaderTitle>
             {isCustomToken
-              ? 'Add Custom Token'
+              ? t('Add Custom Token')
               : isToken
-              ? `Add ${currencyAbbreviation} Token`
-              : `Add ${currencyAbbreviation} Wallet`}
+              ? t('Add Token', {currencyAbbreviation})
+              : t('Add Wallet', {currencyAbbreviation})}
           </HeaderTitle>
         );
       },
     });
-  }, [navigation]);
+  }, [navigation, t]);
 
   // find all eth wallets for key
   const ethWallets = key.wallets.filter(
@@ -278,13 +280,14 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
               dispatch(
                 showBottomNotificationModal({
                   type: 'warning',
-                  title: 'Currency already added',
-                  message:
+                  title: t('Currency already added'),
+                  message: t(
                     'This currency is already associated with the selected wallet',
+                  ),
                   enableBackdropDismiss: true,
                   actions: [
                     {
-                      text: 'OK',
+                      text: t('OK'),
                       action: () => {},
                       primary: true,
                     },
@@ -348,12 +351,12 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
     dispatch(
       showBottomNotificationModal({
         type: 'warning',
-        title: 'Something went wrong',
+        title: t('Something went wrong'),
         message: e,
         enableBackdropDismiss: true,
         actions: [
           {
-            text: 'OK',
+            text: t('OK'),
             action: () => {},
             primary: true,
           },
@@ -423,8 +426,9 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       Keyboard.dismiss();
       setCustomTokenAddress(undefined);
       await sleep(200);
-      const err =
-        'Could not find any ERC20 contract attached to the provided address. Recheck the contract address and network of the associated wallet.';
+      const err = t(
+        'Could not find any ERC20 contract attached to the provided address. Recheck the contract address and network of the associated wallet.',
+      );
       showErrorModal(err);
     }
   };
@@ -452,7 +456,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
 
         {showAssociatedWalletSelectionDropdown && (
           <AssociatedWalletContainer>
-            <Label>ASSOCIATED WALLET</Label>
+            <Label>{t('ASSOCIATED WALLET')}</Label>
             <AssociatedWallet
               activeOpacity={ActiveOpacity}
               onPress={() => {
@@ -475,8 +479,8 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
 
         {isCustomToken ? (
           <BoxInput
-            placeholder={'Token Address'}
-            label={'CUSTOM TOKEN CONTRACT'}
+            placeholder={t('Token Address')}
+            label={t('CUSTOM TOKEN CONTRACT')}
             onChangeText={(text: string) => {
               setTokenInfo(text);
             }}
@@ -495,14 +499,14 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
               {showOptions ? (
                 <>
                   <AdvancedOptionsButtonText>
-                    Hide Advanced Options
+                    {t('Hide Advanced Options')}
                   </AdvancedOptionsButtonText>
                   <ChevronUpSvg />
                 </>
               ) : (
                 <>
                   <AdvancedOptionsButtonText>
-                    Show Advanced Options
+                    {t('Show Advanced Options')}
                   </AdvancedOptionsButtonText>
                   <ChevronDownSvg />
                 </>
@@ -617,7 +621,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
           onBackdropPress={() => setAssociatedWalletModalVisible(false)}>
           <AssociatedWalletSelectionModalContainer>
             <TextAlign align={'center'}>
-              <H4>Select a Wallet</H4>
+              <H4>{t('Select a Wallet')}</H4>
             </TextAlign>
             <FlatList
               contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
@@ -633,7 +637,12 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
             disabled={!currencyAbbreviation || !currencyName}
             onPress={add}
             buttonStyle={'primary'}>
-            Add {isCustomToken ? 'Custom Token' : isToken ? 'Token' : 'Wallet'}
+            {t('Add ') +
+              (isCustomToken
+                ? t('Custom Token')
+                : isToken
+                ? t('Token')
+                : t('Wallet'))}
           </Button>
         </ButtonContainer>
       </ScrollView>

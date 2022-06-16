@@ -43,6 +43,7 @@ interface CardTableData {
   description: React.ReactNode;
 }
 
+/* add translation */
 const LIMITS: CardTableData[] = [
   {
     title: 'Cash Withdrawal (ATM & bank teller)',

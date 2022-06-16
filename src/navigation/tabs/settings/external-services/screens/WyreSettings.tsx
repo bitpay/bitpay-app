@@ -33,6 +33,7 @@ import {
   showBottomNotificationModal,
 } from '../../../../../store/app/app.actions';
 import {sleep} from '../../../../../utils/helper-methods';
+import {useTranslation} from 'react-i18next';
 
 export interface WyreSettingsProps {
   incomingPaymentRequest?: wyrePaymentData;
@@ -40,6 +41,7 @@ export interface WyreSettingsProps {
 }
 
 const WyreSettings: React.FC = () => {
+  const {t} = useTranslation();
   const wyreHistory = useSelector(({BUY_CRYPTO}: RootState) => BUY_CRYPTO.wyre);
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -56,12 +58,14 @@ const WyreSettings: React.FC = () => {
       dispatch(
         showBottomNotificationModal({
           type: 'error',
-          title: 'Payment Error',
-          message: 'There was an error with the payment process through Wyre.',
+          title: t('Payment Error'),
+          message: t(
+            'There was an error with the payment process through Wyre.',
+          ),
           enableBackdropDismiss: true,
           actions: [
             {
-              text: 'Visit Help Center',
+              text: t('Visit Help Center'),
               action: async () => {
                 await sleep(600);
                 dispatch(
@@ -73,7 +77,7 @@ const WyreSettings: React.FC = () => {
               primary: true,
             },
             {
-              text: 'GOT IT',
+              text: t('GOT IT'),
               action: () => {
                 dispatch(dismissBottomNotificationModal());
               },
@@ -105,7 +109,7 @@ const WyreSettings: React.FC = () => {
       <SettingsContainer>
         <Settings style={{paddingBottom: 500}}>
           {paymentRequests && paymentRequests.length > 0 && (
-            <PrTitle>Payment Requests</PrTitle>
+            <PrTitle>{t('Payment Requests')}</PrTitle>
           )}
           {paymentRequests &&
             paymentRequests.length > 0 &&
@@ -130,16 +134,18 @@ const WyreSettings: React.FC = () => {
                       </PrTxtFiatAmount>
                       {pr.status === 'failed' && (
                         <PrTxtStatus style={{color: '#df5264'}}>
-                          Payment request rejected
+                          {t('Payment request rejected')}
                         </PrTxtStatus>
                       )}
                       {pr.status === 'success' && (
                         <PrTxtStatus style={{color: '#01d1a2'}}>
-                          Payment request approved
+                          {t('Payment request approved')}
                         </PrTxtStatus>
                       )}
                       {pr.status === 'paymentRequestSent' && (
-                        <PrTxtStatus>Processing payment request</PrTxtStatus>
+                        <PrTxtStatus>
+                          {t('Processing payment request')}
+                        </PrTxtStatus>
                       )}
                     </PrRowLeft>
                     <PrRowRight>
@@ -152,12 +158,14 @@ const WyreSettings: React.FC = () => {
                 );
               })}
           {(!paymentRequests || paymentRequests.length == 0) && (
-            <NoPrMsg>There are currently no transactions with Wyre</NoPrMsg>
+            <NoPrMsg>
+              {t('There are currently no transactions with Wyre')}
+            </NoPrMsg>
           )}
         </Settings>
       </SettingsContainer>
       <FooterSupport>
-        <SupportTxt>Having problems with Wyre?</SupportTxt>
+        <SupportTxt>{t('Having problems with Wyre?')}</SupportTxt>
         <TouchableOpacity
           onPress={() => {
             haptic('impactLight');
@@ -167,7 +175,7 @@ const WyreSettings: React.FC = () => {
               ),
             );
           }}>
-          <Link>Contact the Wyre support team.</Link>
+          <Link>{t('Contact the Wyre support team.')}</Link>
         </TouchableOpacity>
       </FooterSupport>
     </>

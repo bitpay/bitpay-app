@@ -146,10 +146,12 @@ const Confirm = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
-        <HeaderTitle>Confirm {speedup ? 'Speed Up' : 'Payment'}</HeaderTitle>
+        <HeaderTitle>
+          {t('Confirm ', {title: speedup ? t('Speed Up') : t('Payment')})}
+        </HeaderTitle>
       ),
     });
-  }, [navigation, speedup]);
+  }, [navigation, speedup, t]);
 
   const isTxLevelAvailable = () => {
     const excludeCurrencies = ['bch', 'doge', 'ltc', 'xrp'];
@@ -177,12 +179,12 @@ const Confirm = () => {
       '',
       [
         {
-          text: 'Cancel',
+          text: t('Cancel'),
           onPress: () => {},
           style: 'cancel',
         },
         {
-          text: 'OK',
+          text: t('OK'),
           onPress: value => {
             const opts: {
               nonce?: number;
@@ -254,7 +256,7 @@ const Confirm = () => {
           enableBackdropDismiss: false,
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {},
             },
           ],
@@ -329,26 +331,26 @@ const Confirm = () => {
         ) : null}
         {gasPrice !== undefined ? (
           <SharedDetailRow
-            description={'Gas price'}
+            description={t('Gas price')}
             value={gasPrice.toFixed(2) + ' Gwei'}
             hr
           />
         ) : null}
         {gasLimit !== undefined ? (
           <SharedDetailRow
-            description={'Gas limit'}
+            description={t('Gas limit')}
             value={gasLimit}
-            onPress={() => editValue('Edit gas limit', 'gasLimit')}
+            onPress={() => editValue(t('Edit gas limit'), 'gasLimit')}
             hr
           />
         ) : null}
         {nonce !== undefined && nonce !== null ? (
           <SharedDetailRow
-            description={'Nonce'}
+            description={t('Nonce')}
             value={nonce}
             onPress={
               customizeNonce
-                ? () => editValue('Edit nonce', 'nonce')
+                ? () => editValue(t('Edit nonce'), 'nonce')
                 : undefined
             }
             hr
@@ -358,17 +360,18 @@ const Confirm = () => {
         {currencyAbbreviation === 'xrp' ? (
           <>
             <SharedDetailRow
-              description={'Destination Tag'}
+              description={t('Destination Tag')}
               value={destinationTag || 'edit'}
               onPress={() =>
-                editValue('Edit destination tag', 'destinationTag')
+                editValue(t('Edit destination tag'), 'destinationTag')
               }
             />
             <Info>
               <InfoTriangle />
               <InfoDescription>
-                A Destination Tag is an optional number that corresponds to an
-                invoice or a XRP account on an exchange.
+                {t(
+                  'A Destination Tag is an optional number that corresponds to an invoice or a XRP account on an exchange.',
+                )}
               </InfoDescription>
 
               <VerticalPadding>
@@ -386,12 +389,12 @@ const Confirm = () => {
             </Info>
           </>
         ) : null}
-        <Amount description={'SubTotal'} amount={subTotal} />
-        <Amount description={'Total'} amount={total} />
+        <Amount description={t('SubTotal')} amount={subTotal} />
+        <Amount description={t('Total')} amount={total} />
       </DetailsList>
 
       <SwipeButton
-        title={speedup ? 'Speed Up' : 'Slide to send'}
+        title={speedup ? t('Speed Up') : t('Slide to send')}
         forceReset={resetSwipeButton}
         onSwipeComplete={async () => {
           try {
@@ -416,7 +419,7 @@ const Confirm = () => {
                 await showErrorMessage(
                   CustomErrorMessage({
                     errMsg: BWCErrorMessage(err),
-                    title: 'Uh oh, something went wrong',
+                    title: t('Uh oh, something went wrong'),
                   }),
                 );
                 await sleep(500);

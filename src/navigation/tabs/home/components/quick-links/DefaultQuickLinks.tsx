@@ -2,7 +2,9 @@ import {ClassicContentCard} from 'react-native-appboy-sdk';
 import {URL} from '../../../../../constants';
 import {DEFAULT_CLASSIC_CONTENT_CARD} from '../../../../../utils/braze';
 import {APP_DEEPLINK_PREFIX} from '../../../../../constants/config';
-
+{
+  /* add translation */
+}
 const DefaultQuickLinks: ClassicContentCard[] = [
   {
     ...DEFAULT_CLASSIC_CONTENT_CARD,

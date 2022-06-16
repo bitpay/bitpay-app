@@ -10,8 +10,10 @@ import {
 } from '../../../../components/styled/Containers';
 import Checkbox from '../../../../components/checkbox/Checkbox';
 import {Alert, View, AppState, AppStateStatus, Linking} from 'react-native';
+import {useTranslation} from 'react-i18next';
 
 const Notifications = () => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const notificationsState = useAppSelector(({APP}: RootState) => {
     return {
@@ -36,23 +38,25 @@ const Notifications = () => {
 
   const openSettings = useCallback(() => {
     Alert.alert(
-      'Notifications Disabled',
-      'If you want to get important updates on your account, new features, promos and more, go to Settings and tap Allow Notifications.',
+      t('Notifications Disabled'),
+      t(
+        'If you want to get important updates on your account, new features, promos and more, go to Settings and tap Allow Notifications.',
+      ),
       [
         {
-          text: 'Cancel',
+          text: t('Cancel'),
           onPress: () => {},
           style: 'cancel',
         },
         {
-          text: 'Change Settings',
+          text: t('Change Settings'),
           onPress: () => {
             Linking.openSettings();
           },
         },
       ],
     );
-  }, []);
+  }, [t]);
 
   const setNotificationValue = useCallback(
     async (accepted: boolean) => {
@@ -75,7 +79,7 @@ const Notifications = () => {
 
   const notificationsList = [
     {
-      title: 'Enable Push Notifications',
+      title: t('Enable Push Notifications'),
       checked: pushNotifications,
       show: true,
       onPress: () => {
@@ -84,7 +88,7 @@ const Notifications = () => {
       },
     },
     {
-      title: 'Confirmed Transactions',
+      title: t('Confirmed Transactions'),
       checked: confirmedTx,
       show: pushNotifications,
       onPress: () => {
@@ -94,7 +98,7 @@ const Notifications = () => {
       },
     },
     {
-      title: 'Product Updates',
+      title: t('Product Updates'),
       checked: productsUpdates,
       show: pushNotifications,
       onPress: () => {
@@ -104,7 +108,7 @@ const Notifications = () => {
       },
     },
     {
-      title: 'Offers & Promotions',
+      title: t('Offers & Promotions'),
       checked: offersAndPromotions,
       show: pushNotifications,
       onPress: () => {

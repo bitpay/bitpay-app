@@ -28,6 +28,7 @@ import {useAppDispatch} from '../../../utils/hooks';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingStackParamList} from '../OnboardingStack';
 import {OnboardingImage} from '../components/Containers';
+import {useTranslation} from 'react-i18next';
 
 const PinImage = {
   light: (
@@ -52,6 +53,7 @@ const PinContainer = styled.SafeAreaView`
 const PinScreen: React.VFC<
   StackScreenProps<OnboardingStackParamList, 'Pin'>
 > = ({navigation}) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const themeType = useThemeType();
 
@@ -69,12 +71,12 @@ const PinScreen: React.VFC<
               haptic('impactLight');
               navigation.navigate('CreateKey');
             }}>
-            Skip
+            {t('Skip')}
           </Button>
         </HeaderRightContainer>
       ),
     });
-  }, [navigation]);
+  }, [navigation, t]);
 
   const onSetPinPress = () => {
     haptic('impactLight');
@@ -118,27 +120,29 @@ const PinScreen: React.VFC<
         <ImageContainer>{PinImage[themeType]}</ImageContainer>
         <TitleContainer>
           <TextAlign align={'center'}>
-            <H3>Protect your wallet</H3>
+            <H3>{t('Protect your wallet')}</H3>
           </TextAlign>
         </TitleContainer>
         <TextContainer>
           <TextAlign align={'center'}>
             <Paragraph>
-              Set up an extra layer of security to keep your wallet secure.
+              {t(
+                'Set up an extra layer of security to keep your wallet secure.',
+              )}
             </Paragraph>
           </TextAlign>
         </TextContainer>
         <CtaContainer>
           <ActionContainer>
             <Button onPress={() => onSetPinPress()} buttonStyle={'primary'}>
-              PIN
+              {t('PIN')}
             </Button>
           </ActionContainer>
           <ActionContainer>
             <Button
               onPress={() => onSetBiometricPress()}
               buttonStyle={'secondary'}>
-              Biometric
+              {t('Biometric')}
             </Button>
           </ActionContainer>
         </CtaContainer>

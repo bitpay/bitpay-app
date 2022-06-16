@@ -7,6 +7,7 @@ import {H4, Link, Paragraph} from '../../../components/styled/Text';
 import {SlateDark, White} from '../../../styles/colors';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {TouchableOpacity} from 'react-native';
+import {useTranslation} from 'react-i18next';
 
 interface ConfirmationModalProps {
   description: string;
@@ -47,12 +48,13 @@ const DeleteConfirmationModal = ({
   isVisible,
   onPressCancel,
 }: ConfirmationModalProps) => {
+  const {t} = useTranslation();
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onPressCancel}>
       <SheetContainer>
         <Header>
           <CautionSvg />
-          <Title>Warning!</Title>
+          <Title>{t('Warning!')}</Title>
         </Header>
 
         <DeleteModalParagraph>{description}</DeleteModalParagraph>
@@ -63,14 +65,14 @@ const DeleteConfirmationModal = ({
               haptic('impactLight');
               onPressOk();
             }}>
-            <Link>DELETE</Link>
+            <Link>{t('DELETE')}</Link>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
               haptic('impactLight');
               onPressCancel();
             }}>
-            <SecondaryActionText>NEVERMIND</SecondaryActionText>
+            <SecondaryActionText>{t('NEVERMIND')}</SecondaryActionText>
           </TouchableOpacity>
         </ActionsContainer>
       </SheetContainer>

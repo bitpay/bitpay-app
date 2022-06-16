@@ -30,12 +30,14 @@ import {
   ColumnData,
   RemoveCta,
 } from '../styled/ExternalServicesDetails';
+import {useTranslation} from 'react-i18next';
 
 export interface SimplexDetailsProps {
   paymentRequest: simplexPaymentData;
 }
 
 const SimplexDetails: React.FC = () => {
+  const {t} = useTranslation();
   const {
     params: {paymentRequest},
   } = useRoute<RouteProp<{params: SimplexDetailsProps}>>();
@@ -47,7 +49,7 @@ const SimplexDetails: React.FC = () => {
       <Settings>
         <RowDataContainer>
           <CryptoAmountContainer>
-            <CryptoTitle>Approximate receiving amount</CryptoTitle>
+            <CryptoTitle>{t('Approximate receiving amount')}</CryptoTitle>
             <CryptoContainer>
               <CryptoAmount>{paymentRequest.crypto_amount}</CryptoAmount>
               <CryptoUnit>{paymentRequest.coin}</CryptoUnit>
@@ -57,7 +59,7 @@ const SimplexDetails: React.FC = () => {
         </RowDataContainer>
 
         <RowDataContainer>
-          <RowLabel>Approximate receiving fiat amount</RowLabel>
+          <RowLabel>{t('Approximate receiving fiat amount')}</RowLabel>
           <RowData>
             {paymentRequest.fiat_base_amount}{' '}
             {paymentRequest.fiat_total_amount_currency}
@@ -65,13 +67,14 @@ const SimplexDetails: React.FC = () => {
         </RowDataContainer>
         <LabelTip type="warn">
           <LabelTipText>
-            The final crypto amount you receive when the transaction is complete
-            may differ because it is based on Simplex's exchange rate.
+            {t(
+              "The final crypto amount you receive when the transaction is complete may differ because it is based on Simplex's exchange rate.",
+            )}
           </LabelTipText>
         </LabelTip>
 
         <RowDataContainer>
-          <RowLabel>Paying</RowLabel>
+          <RowLabel>{t('Paying')}</RowLabel>
           <RowData>
             {paymentRequest.fiat_total_amount}{' '}
             {paymentRequest.fiat_total_amount_currency}
@@ -79,7 +82,7 @@ const SimplexDetails: React.FC = () => {
         </RowDataContainer>
 
         <RowDataContainer>
-          <RowLabel>Created</RowLabel>
+          <RowLabel>{t('Created')}</RowLabel>
           <RowData>
             {moment(paymentRequest.created_on).format('MMM DD, YYYY hh:mm a')}
           </RowData>
@@ -87,13 +90,17 @@ const SimplexDetails: React.FC = () => {
 
         {['failed', 'success'].includes(paymentRequest.status) && (
           <RowDataContainer>
-            <RowLabel>Status</RowLabel>
+            <RowLabel>{t('Status')}</RowLabel>
             <RowData>
               {paymentRequest.status === 'failed' && (
-                <Text style={{color: '#df5264'}}>Payment request rejected</Text>
+                <Text style={{color: '#df5264'}}>
+                  {t('Payment request rejected')}
+                </Text>
               )}
               {paymentRequest.status === 'success' && (
-                <Text style={{color: '#01d1a2'}}>Payment request approved</Text>
+                <Text style={{color: '#01d1a2'}}>
+                  {t('Payment request approved')}
+                </Text>
               )}
             </RowData>
           </RowDataContainer>
@@ -101,8 +108,9 @@ const SimplexDetails: React.FC = () => {
 
         <LabelTip type="info">
           <LabelTipText>
-            If you have successfully completed the entire payment process,
-            remember that receiving crypto usually takes up to 3 hours.
+            {t(
+              'If you have successfully completed the entire payment process, remember that receiving crypto usually takes up to 3 hours.',
+            )}
           </LabelTipText>
           <TouchableOpacity
             onPress={() => {
@@ -114,23 +122,23 @@ const SimplexDetails: React.FC = () => {
               );
             }}>
             <Link style={{marginTop: 15}}>
-              What is the status of my payment?
+              {t('What is the status of my payment?')}
             </Link>
           </TouchableOpacity>
         </LabelTip>
 
         <ColumnDataContainer>
-          <RowLabel>Deposit address</RowLabel>
+          <RowLabel>{t('Deposit address')}</RowLabel>
           <ColumnData>{paymentRequest.address}</ColumnData>
         </ColumnDataContainer>
 
         <ColumnDataContainer>
-          <RowLabel>Payment ID</RowLabel>
+          <RowLabel>{t('Payment ID')}</RowLabel>
           <ColumnData>{paymentRequest.payment_id}</ColumnData>
         </ColumnDataContainer>
 
         <ColumnDataContainer>
-          <RowLabel>Order ID</RowLabel>
+          <RowLabel>{t('Order ID')}</RowLabel>
           <ColumnData>{paymentRequest.order_id}</ColumnData>
         </ColumnDataContainer>
 
@@ -140,13 +148,14 @@ const SimplexDetails: React.FC = () => {
             dispatch(
               showBottomNotificationModal({
                 type: 'question',
-                title: 'Removing payment request data',
-                message:
+                title: t('Removing payment request data'),
+                message: t(
                   "The data of this payment request will be deleted. Make sure you don't need it",
+                ),
                 enableBackdropDismiss: true,
                 actions: [
                   {
-                    text: 'REMOVE',
+                    text: t('REMOVE'),
                     action: () => {
                       dispatch(dismissBottomNotificationModal());
                       dispatch(
@@ -159,7 +168,7 @@ const SimplexDetails: React.FC = () => {
                     primary: true,
                   },
                   {
-                    text: 'GO BACK',
+                    text: t('GO BACK'),
                     action: () => {
                       console.log('Removing payment Request CANCELED');
                     },
@@ -168,7 +177,7 @@ const SimplexDetails: React.FC = () => {
               }),
             );
           }}>
-          <Text style={{color: 'red'}}>Remove</Text>
+          <Text style={{color: 'red'}}>{t('Remove')}</Text>
         </RemoveCta>
       </Settings>
     </SettingsContainer>

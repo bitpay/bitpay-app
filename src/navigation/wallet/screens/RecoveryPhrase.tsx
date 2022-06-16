@@ -28,6 +28,7 @@ import {WalletStackParamList} from '../WalletStack';
 import {backupRedirect} from './Backup';
 import {StackScreenProps} from '@react-navigation/stack';
 import {useAppSelector} from '../../../utils/hooks';
+import {useTranslation} from 'react-i18next';
 
 type RecoveryPhraseScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -81,6 +82,7 @@ export const CountText = styled(BaseText)`
 `;
 
 const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {params} = route;
@@ -92,7 +94,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
-      headerTitle: () => <HeaderTitle>Recovery Phrase</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Recovery Phrase')}</HeaderTitle>,
       headerLeft: () => null,
       headerRight: () => (
         <HeaderRightContainer>
@@ -109,13 +111,14 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
               dispatch(
                 showBottomNotificationModal({
                   type: 'warning',
-                  title: "Don't risk losing your money",
-                  message:
+                  title: t("Don't risk losing your money"),
+                  message: t(
                     'Your recovery key is composed of 12 randomly selected words. Take a couple of minutes to carefully write down each word in the order they appear.',
+                  ),
                   enableBackdropDismiss: true,
                   actions: [
                     {
-                      text: "I'M SURE",
+                      text: t("I'M SURE"),
                       action: () =>
                         backupRedirect({
                           context,
@@ -129,7 +132,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
                 }),
               );
             }}>
-            Cancel
+            {t('Cancel')}
           </Button>
         </HeaderRightContainer>
       ),
@@ -178,7 +181,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
       <BodyContainer>
         <DirectionsContainer>
           <TextAlign align={'center'}>
-            <Paragraph>Write down each word.</Paragraph>
+            <Paragraph>{t('Write down each word.')}</Paragraph>
           </TextAlign>
         </DirectionsContainer>
         <Carousel
@@ -214,7 +217,7 @@ const RecoveryPhrase: React.FC<RecoveryPhraseScreenProps> = ({route}) => {
             buttonStyle={'primary'}
             debounceTime={Platform.OS === 'android' ? 200 : 0}
             onPress={next}>
-            Next
+            {t('Next')}
           </Button>
         </CtaContainer>
       </BodyContainer>

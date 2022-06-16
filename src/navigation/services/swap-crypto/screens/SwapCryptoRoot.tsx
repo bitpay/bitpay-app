@@ -66,6 +66,7 @@ import ArrowDown from '../../../../../assets/img/services/swap-crypto/down-arrow
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import analytics from '@segment/analytics-react-native';
 import {AppActions} from '../../../../store/app';
+import {useTranslation} from 'react-i18next';
 
 export interface RateData {
   fixedRateId: string;
@@ -74,6 +75,7 @@ export interface RateData {
 }
 
 const SwapCryptoRoot: React.FC = () => {
+  const {t} = useTranslation();
   const theme = useTheme();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -227,8 +229,9 @@ const SwapCryptoRoot: React.FC = () => {
         );
 
         if (spendableAmount < amountFrom) {
-          const msg =
-            'You are trying to send more funds than you have available. Make sure you do not have funds locked by pending transaction proposals or enter a valid amount.';
+          const msg = t(
+            'You are trying to send more funds than you have available. Make sure you do not have funds locked by pending transaction proposals or enter a valid amount.',
+          );
           showError(msg);
           setLoading(false);
           setAmountFrom(0);
@@ -253,7 +256,7 @@ const SwapCryptoRoot: React.FC = () => {
       .then((data: any) => {
         if (data.error) {
           const msg =
-            'Changelly getFixRateForAmount Error: ' + data.error.message;
+            t('Changelly getFixRateForAmount Error: ') + data.error.message;
           showError(msg);
           return;
         }
@@ -271,8 +274,9 @@ const SwapCryptoRoot: React.FC = () => {
           'Changelly getFixRateForAmount Error: ' + JSON.stringify(err),
         );
         const title = 'Changelly Error';
-        const msg =
-          'Changelly is not available at this moment. Please, try again later.';
+        const msg = t(
+          'Changelly is not available at this moment. Please try again later.',
+        );
         showError(msg, title);
       });
   };
@@ -298,19 +302,19 @@ const SwapCryptoRoot: React.FC = () => {
       .then(async (data: any) => {
         if (data.error) {
           let msg: string;
-          const title = 'Changelly Error';
+          const title = t('Changelly Error');
           if (
             Math.abs(data.error.code) == 32602 &&
             data.error.message.indexOf('Invalid currency:') != -1
           ) {
             const actions = [
               {
-                text: 'OK',
+                text: t('OK'),
                 action: () => {},
                 primary: true,
               },
               {
-                text: 'Submit a ticket',
+                text: t('Submit a ticket'),
                 action: async () => {
                   await sleep(1000);
                   dispatch(
@@ -322,10 +326,15 @@ const SwapCryptoRoot: React.FC = () => {
                 primary: true,
               },
             ];
-            msg = `${data.error.message}. This is a temporary Changelly decision. If you have further questions please reach out to them.`;
+            msg =
+              data.error.message +
+              '.' +
+              t(
+                'This is a temporary Changelly decision. If you have further questions please reach out to them.',
+              );
             showError(msg, title, actions);
           } else {
-            msg = 'Changelly getPairsParams Error: ' + data.error.message;
+            msg = t('Changelly getPairsParams Error: ') + data.error.message;
             showError(msg);
           }
           return;
@@ -336,15 +345,15 @@ const SwapCryptoRoot: React.FC = () => {
           data.result[0] &&
           Number(data.result[0].maxAmountFixed) <= 0
         ) {
-          const title = 'Changelly Error';
+          const title = t('Changelly Error');
           const actions = [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {},
               primary: true,
             },
             {
-              text: 'Submit a ticket',
+              text: t('Submit a ticket'),
               action: async () => {
                 await sleep(1000);
                 dispatch(
@@ -356,7 +365,13 @@ const SwapCryptoRoot: React.FC = () => {
               primary: true,
             },
           ];
-          const msg = `Changelly has temporarily disabled ${fromWalletSelected.currencyAbbreviation}-${toWalletSelected.currencyAbbreviation} pair. If you have further questions please reach out to them.`;
+          const msg = t(
+            'Changelly has temporarily disabled - pair. If you have further questions please reach out to them.',
+            {
+              fromWalletSelected: fromWalletSelected.currencyAbbreviation,
+              toWalletSelected: toWalletSelected.currencyAbbreviation,
+            },
+          );
           showError(msg, title, actions);
           return;
         }
@@ -384,15 +399,19 @@ const SwapCryptoRoot: React.FC = () => {
         // onGoingProcessProvider.clear();
 
         if (amountFrom > maxAmount) {
-          const msg = `The amount entered is greater than the maximum allowed: ${maxAmount} ${fromWalletData?.currencyAbbreviation}`;
+          const msg =
+            t('The amount entered is greater than the maximum allowed: ') +
+            maxAmount +
+            ' ' +
+            fromWalletData?.currencyAbbreviation;
           const actions = [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {},
               primary: true,
             },
             {
-              text: 'Use Max Amount',
+              text: t('Use Max Amount'),
               action: async () => {
                 setAmountFrom(maxAmount);
                 await sleep(400);
@@ -440,15 +459,19 @@ const SwapCryptoRoot: React.FC = () => {
           //   });
           //   return;
           // } else {
-          const msg = `The amount entered is lower than the minimum allowed: ${minAmount} ${fromWalletData?.currencyAbbreviation}`;
+          const msg =
+            t('The amount entered is lower than the minimum allowed: ') +
+            minAmount +
+            ' ' +
+            fromWalletData?.currencyAbbreviation;
           const actions = [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {},
               primary: true,
             },
             {
-              text: 'Use Min Amount',
+              text: t('Use Min Amount'),
               action: async () => {
                 setAmountFrom(minAmount);
                 await sleep(400);
@@ -465,8 +488,9 @@ const SwapCryptoRoot: React.FC = () => {
       })
       .catch(err => {
         logger.error('Changelly getPairsParams Error: ' + JSON.stringify(err));
-        const msg =
-          'Changelly is not available at this moment. Please, try again later.';
+        const msg = t(
+          'Changelly is not available at this moment. Please try again later.',
+        );
         showError(msg);
       });
   };
@@ -479,14 +503,14 @@ const SwapCryptoRoot: React.FC = () => {
     dispatch(
       showBottomNotificationModal({
         type: 'error',
-        title: title ? title : 'Error',
-        message: msg ? msg : 'Unknown Error',
+        title: title ? title : t('Error'),
+        message: msg ? msg : t('Unknown Error'),
         enableBackdropDismiss: true,
         actions: actions
           ? actions
           : [
               {
-                text: 'OK',
+                text: t('OK'),
                 action: () => {},
                 primary: true,
               },
@@ -514,14 +538,21 @@ const SwapCryptoRoot: React.FC = () => {
     dispatch(
       AppActions.showBottomNotificationModal({
         type: 'info',
-        title: 'Reminder',
-        message: `Keep in mind that once the funds are received in your ${toWalletSelected?.currencyAbbreviation.toUpperCase()} wallet, to move them you will need to have enough funds in your Ethereum linked wallet ${
-          linkedWalletName ? `(${linkedWalletName}) ` : ' '
-        }to pay the ETH miner fees.`,
+        title: t('Reminder'),
+        message: t(
+          'Keep in mind that once the funds are received in your wallet, to move them you will need to have enough funds in your Ethereum linked wallet to pay the ETH miner fees.',
+          {
+            selectedWallet:
+              toWalletSelected?.currencyAbbreviation.toUpperCase(),
+            linkedWalletName: linkedWalletName
+              ? '(' + linkedWalletName + ') '
+              : ' ',
+          },
+        ),
         enableBackdropDismiss: true,
         actions: [
           {
-            text: 'GOT IT',
+            text: t('GOT IT'),
             action: async () => {
               await sleep(400);
               continueToCheckout();
@@ -619,8 +650,9 @@ const SwapCryptoRoot: React.FC = () => {
         dispatch(dismissOnGoingProcessModal());
       } catch (err) {
         logger.error('Changelly getCurrencies Error: ' + JSON.stringify(err));
-        const msg =
-          'Changelly is not available at this moment. Please, try again later.';
+        const msg = t(
+          'Changelly is not available at this moment. Please try again later.',
+        );
         dispatch(dismissOnGoingProcessModal());
         await sleep(200);
         showError(msg);
@@ -644,7 +676,7 @@ const SwapCryptoRoot: React.FC = () => {
     <>
       <ScrollView>
         <SwapCryptoCard>
-          <SummaryTitle>From</SummaryTitle>
+          <SummaryTitle>{t('From')}</SummaryTitle>
           {!fromWalletSelected && (
             <ActionsContainer>
               <SelectedOptionContainer
@@ -657,7 +689,7 @@ const SwapCryptoRoot: React.FC = () => {
                   style={{color: White}}
                   numberOfLines={1}
                   ellipsizeMode={'tail'}>
-                  Select Wallet
+                  {t('Select Wallet')}
                 </SelectedOptionText>
                 <SelectorArrowContainer>
                   <SelectorArrowDown
@@ -714,7 +746,8 @@ const SwapCryptoRoot: React.FC = () => {
                 <ActionsContainer>
                   <BottomDataText>
                     {fromWalletSelected.balance.crypto}{' '}
-                    {fromWalletData?.currencyAbbreviation} available to swap
+                    {fromWalletData?.currencyAbbreviation}{' '}
+                    {t('available to swap')}
                   </BottomDataText>
                 </ActionsContainer>
               ) : null}
@@ -727,7 +760,7 @@ const SwapCryptoRoot: React.FC = () => {
         </ArrowContainer>
 
         <SwapCryptoCard>
-          <SummaryTitle>To</SummaryTitle>
+          <SummaryTitle>{t('To')}</SummaryTitle>
           {!toWalletSelected && (
             <ActionsContainer>
               <SelectedOptionContainer
@@ -743,7 +776,7 @@ const SwapCryptoRoot: React.FC = () => {
                   style={{color: White}}
                   numberOfLines={1}
                   ellipsizeMode={'tail'}>
-                  Select Wallet
+                  {t('Select Wallet')}
                 </SelectedOptionText>
                 <SelectorArrowContainer>
                   <SelectorArrowDown
@@ -818,11 +851,11 @@ const SwapCryptoRoot: React.FC = () => {
             onPress={() => {
               checkIfErc20Token();
             }}>
-            Continue
+            {t('Continue')}
           </Button>
         </CtaContainer>
         <ProviderContainer>
-          <ProviderLabel>Provided By</ProviderLabel>
+          <ProviderLabel>{t('Provided By')}</ProviderLabel>
           <ChangellyLogo width={100} height={30} />
         </ProviderContainer>
       </ScrollView>

@@ -25,6 +25,7 @@ import {ParseAmount} from '../../../store/wallet/effects/amount/amount';
 import haptic from '../../../components/haptic-feedback/haptic';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';
 import {useAppDispatch} from '../../../utils/hooks';
+import {useTranslation} from 'react-i18next';
 
 const HeaderContainer = styled(HeaderRightContainer)`
   justify-content: center;
@@ -129,6 +130,7 @@ const Amount: React.FC<AmountProps> = ({
   currencyAbbreviationProp,
   onDismiss,
 }) => {
+  const {t} = useTranslation();
   const route = useRoute<RouteProp<WalletStackParamList, 'Amount'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   let {
@@ -254,13 +256,13 @@ const Amount: React.FC<AmountProps> = ({
               buttonType="pill"
               buttonStyle="cancel"
               onPress={() => onSendMaxPressedRef.current()}>
-              Send Max
+              {t('Send Max')}
             </Button>
           </HeaderContainer>
         ),
       });
     }
-  }, [showSendMaxButton, navigation]);
+  }, [showSendMaxButton, navigation, t]);
 
   const onCellPress = useCallback((val: string) => {
     haptic('soft');
@@ -366,7 +368,7 @@ const Amount: React.FC<AmountProps> = ({
                   onAmountSelected(amount, setButtonState);
                 }
               }}>
-              Continue
+              {t('Continue')}
             </Button>
           </ActionContainer>
         </View>
