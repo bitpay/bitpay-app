@@ -1,10 +1,14 @@
-import React from 'react';
+import React, {ReactElement} from 'react';
 import styled from 'styled-components/native';
 
 import Avatar from '../../../../components/avatar/Avatar';
 
 import {CurrencyListIcons} from '../../../../constants/SupportedCurrencyOptions';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
+import {SUPPORTED_CURRENCIES} from '../../../../constants/currencies';
+import {useAppSelector} from '../../../../utils/hooks';
+import {RootState} from '../../../../store';
+import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
 
 interface ContactIconProps {
   size?: number;
@@ -13,7 +17,7 @@ interface ContactIconProps {
 }
 
 interface BadgeProps {
-  coin: string;
+  img: string | ((props?: any) => ReactElement);
   size?: number;
 }
 
@@ -27,8 +31,7 @@ const CoinBadgeContainer = styled.View`
   bottom: -1px;
 `;
 
-const CoinBadge: React.FC<BadgeProps> = ({coin, size = 20}) => {
-  const img = CurrencyListIcons[coin];
+const CoinBadge: React.FC<BadgeProps> = ({size = 20, img}) => {
   return (
     <CoinBadgeContainer>
       <CurrencyImage img={img} size={size} />
@@ -37,7 +40,20 @@ const CoinBadge: React.FC<BadgeProps> = ({coin, size = 20}) => {
 };
 
 const ContactIcon: React.FC<ContactIconProps> = ({coin, size = 50, name}) => {
-  const badge = coin ? <CoinBadge coin={coin} size={size / 2.5} /> : null;
+  const tokenOptions = useAppSelector(({WALLET}: RootState) => {
+    return {
+      ...BitpaySupportedTokenOpts,
+      ...WALLET.tokenOptions,
+      ...WALLET.customTokenOptions,
+    };
+  });
+  const img = SUPPORTED_CURRENCIES.includes(coin)
+    ? CurrencyListIcons[coin]
+    : tokenOptions && tokenOptions[coin]?.logoURI
+    ? (tokenOptions[coin].logoURI as string)
+    : '';
+
+  const badge = coin ? <CoinBadge size={size / 2.5} img={img} /> : null;
   const initials = name
     ? name
         .trim()
