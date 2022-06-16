@@ -150,28 +150,26 @@ const BottomNotification = () => {
         }
       }}>
       <BottomNotificationContainer>
-        <ScrollView>
-          <Row>
-            <ImageContainer>{notificationType[type || 'info']}</ImageContainer>
-            <H4>{title}</H4>
-          </Row>
-          <MessageContainer>
-            {message ? (
-              <Markdown
-                style={{
-                  body: {
-                    color: theme.colors.text,
-                    fontFamily,
-                    fontSize: 16,
-                    lineHeight: 24,
-                  },
-                }}>
-                {message}
-              </Markdown>
-            ) : null}
-          </MessageContainer>
-          {message2 ? message2 : null}
-        </ScrollView>
+        <Row>
+          <ImageContainer>{notificationType[type || 'info']}</ImageContainer>
+          <H4>{title}</H4>
+        </Row>
+        <MessageContainer>
+          {message ? (
+            <Markdown
+              style={{
+                body: {
+                  color: theme.colors.text,
+                  fontFamily,
+                  fontSize: 16,
+                  lineHeight: 24,
+                },
+              }}>
+              {message}
+            </Markdown>
+          ) : null}
+        </MessageContainer>
+        {message2 ? message2 : null}
         <BottomNotificationHr />
         <CtaContainer platform={Platform.OS}>
           {actions?.map(({primary, action, text}, index) => {
