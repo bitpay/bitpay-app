@@ -18,6 +18,7 @@ import {
 import PaymentSent from '../../../components/PaymentSent';
 import {sleep} from '../../../../../utils/helper-methods';
 import {
+  logSegmentEvent,
   openUrlWithInAppBrowser,
   startOnGoingProcessModal,
 } from '../../../../../store/app/app.effects';
@@ -404,6 +405,17 @@ const Confirm = () => {
             await sleep(400);
             await dispatch(startSendPayment({txp, key, wallet, recipient}));
             dispatch(dismissOnGoingProcessModal());
+            dispatch(
+              logSegmentEvent(
+                'track',
+                'Sent Crypto',
+                {
+                  context: 'Confirm',
+                  coin: currencyAbbreviation || '',
+                },
+                true,
+              ),
+            );
             await sleep(400);
             setShowPaymentSentModal(true);
           } catch (err) {

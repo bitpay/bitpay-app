@@ -368,6 +368,17 @@ export const coinbaseSendTransaction =
         code,
       );
       dispatch(sendTransactionSuccess());
+      dispatch(
+        logSegmentEvent(
+          'track',
+          'Sent Crypto',
+          {
+            context: 'Coinbase Withdraw Confirm',
+            coin: tx?.currency || '',
+          },
+          true,
+        ),
+      );
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {
         dispatch(LogActions.warn('Token expired. Getting new token...'));

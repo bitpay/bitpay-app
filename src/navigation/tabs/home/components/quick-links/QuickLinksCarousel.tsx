@@ -5,7 +5,8 @@ import {WIDTH} from '../../../../../components/styled/Containers';
 import QuickLinksCard from './QuickLinksCard';
 import {CarouselItemContainer} from '../Styled';
 import {useNavigation} from '@react-navigation/native';
-import {useAppSelector} from '../../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {logSegmentEvent} from '../../../../../store/app/app.effects';
 
 interface QuickLinksCarouselProps {
   contentCards: ContentCard[];
@@ -15,15 +16,26 @@ const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({
   contentCards,
 }) => {
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
   const {connectors} = useAppSelector(({WALLET_CONNECT}) => WALLET_CONNECT);
 
   const CTA_OVERRIDES: {[key in string]: () => void} = {
     dev_walletConnect: () => {
       if (Object.keys(connectors).length) {
+        dispatch(
+          logSegmentEvent('track', 'Clicked WalletConnect', {
+            context: 'QuickLinks',
+          }),
+        );
         navigation.navigate('WalletConnect', {
           screen: 'WalletConnectConnections',
         });
       } else {
+        dispatch(
+          logSegmentEvent('track', 'Clicked Leave Feedback', {
+            context: 'QuickLinks',
+          }),
+        );
         navigation.navigate('WalletConnect', {
           screen: 'Root',
           params: {uri: undefined},
