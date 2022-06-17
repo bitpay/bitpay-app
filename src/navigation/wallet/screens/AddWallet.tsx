@@ -181,7 +181,6 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const [showOptions, setShowOptions] = useState(false);
   const [isTestnet, setIsTestnet] = useState(false);
   const [singleAddress, setSingleAddress] = useState(false);
-  const [useNativeSegwit, setUseNativeSegwit] = useState(true);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const [customTokenAddress, setCustomTokenAddress] = useState<
     string | undefined
@@ -198,6 +197,8 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
     _currencyAbbreviation!.toLowerCase(),
   );
 
+  const [useNativeSegwit, setUseNativeSegwit] = useState(nativeSegwitCurrency);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => {
@@ -207,7 +208,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
               ? t('Add Custom Token')
               : isToken
               ? t('Add Token', {currencyAbbreviation})
-              : t('Add Wallet', {currencyAbbreviation})}
+              : t('AddWallet', {currencyAbbreviation})}
           </HeaderTitle>
         );
       },

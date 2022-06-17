@@ -105,6 +105,12 @@ const WalletSettingsTitle = styled(SettingTitle)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
+const AddWalletText = styled(Link)`
+  font-size: 18px;
+  font-weight: 500;
+  margin: 10px 0;
+`;
+
 const KeySettings = () => {
   const {t} = useTranslation();
   const {
@@ -347,7 +353,7 @@ const KeySettings = () => {
         )}
 
         <VerticalPadding style={{alignItems: 'center'}}>
-          <Link
+          <AddWalletText
             onPress={() => {
               haptic('impactLight');
               navigation.navigate('Wallet', {
@@ -356,7 +362,7 @@ const KeySettings = () => {
               });
             }}>
             {t('Add Wallet')}
-          </Link>
+          </AddWalletText>
         </VerticalPadding>
 
         <VerticalPadding>
