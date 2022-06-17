@@ -207,7 +207,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
               ? t('Add Custom Token')
               : isToken
               ? t('Add Token', {currencyAbbreviation})
-              : t('Add Wallet', {currencyAbbreviation})}
+              : t('AddWallet', {currencyAbbreviation})}
           </HeaderTitle>
         );
       },
