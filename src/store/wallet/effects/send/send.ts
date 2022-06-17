@@ -381,6 +381,9 @@ const buildTransactionProposal =
             break;
         }
 
+        // unconfirmed funds
+        txp.excludeUnconfirmedUtxos = !tx.useUnconfirmedFunds;
+
         // send max
         if (sendMax && wallet) {
           if (dispatch(IsERCToken(wallet.currencyAbbreviation))) {
@@ -390,7 +393,7 @@ const buildTransactionProposal =
               wallet,
               opts: {
                 feePerKb,
-                excludeUnconfirmedUtxos: true,
+                excludeUnconfirmedUtxos: txp.excludeUnconfirmedUtxos,
                 returnInputs: true,
               },
             });
@@ -402,9 +405,6 @@ const buildTransactionProposal =
             txp.feePerKb = undefined;
           }
         }
-
-        // unconfirmed funds
-        txp.excludeUnconfirmedUtxos = !tx.useUnconfirmedFunds;
 
         const {context} = tx;
         // outputs
