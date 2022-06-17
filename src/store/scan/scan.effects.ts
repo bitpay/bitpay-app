@@ -770,9 +770,9 @@ const handlePlainAddress =
   (address: string, coin: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
     console.log(`Incoming-data: ${coin} plain address`);
-    const network =
-      Object.keys(bitcoreLibs).includes(coin) &&
-      GetAddressNetwork(address, coin as keyof BitcoreLibs);
+    const network = Object.keys(bitcoreLibs).includes(coin)
+      ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
+      : undefined; // There is no way to tell if an eth address is kovan or livenet so let's skip the network filter
     const recipient = {
       type: 'address',
       currency: coin,
