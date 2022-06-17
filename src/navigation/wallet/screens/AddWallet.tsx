@@ -181,7 +181,6 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const [showOptions, setShowOptions] = useState(false);
   const [isTestnet, setIsTestnet] = useState(false);
   const [singleAddress, setSingleAddress] = useState(false);
-  const [useNativeSegwit, setUseNativeSegwit] = useState(true);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const [customTokenAddress, setCustomTokenAddress] = useState<
     string | undefined
@@ -197,6 +196,8 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const nativeSegwitCurrency = ['btc', 'ltc'].includes(
     _currencyAbbreviation!.toLowerCase(),
   );
+
+  const [useNativeSegwit, setUseNativeSegwit] = useState(nativeSegwitCurrency);
 
   useLayoutEffect(() => {
     navigation.setOptions({
