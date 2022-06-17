@@ -628,6 +628,7 @@ const BuyCryptoRoot: React.FC<
             ? [fromCurrencyAbbreviation]
             : buyCryptoSupportedCoins
         }
+        livenetOnly={!__DEV__}
         modalTitle={'Select Destination'}
         onDismiss={(newWallet?: Wallet) => {
           hideModal('walletSelector');
