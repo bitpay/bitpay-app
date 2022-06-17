@@ -37,6 +37,8 @@ import {
   setBrazeEid,
   showBlur,
   setMigrationComplete,
+  setAppFirstOpenEventDate,
+  setAppFirstOpenEventComplete,
 } from './app.actions';
 import {batch} from 'react-redux';
 import i18n from 'i18next';
@@ -59,11 +61,16 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     await dispatch(startWalletStoreInit());
 
-    const {onboardingCompleted, migrationComplete} = getState().APP;
+    const {appFirstOpenData, onboardingCompleted, migrationComplete} =
+      getState().APP;
+
+    if (!appFirstOpenData?.firstOpenDate) {
+      dispatch(setAppFirstOpenEventDate());
+    }
 
     // init analytics -> post onboarding or migration
     if (onboardingCompleted) {
-      dispatch(askForTrackingPermissionAndEnableSdks());
+      dispatch(askForTrackingPermissionAndEnableSdks(true));
     }
 
     if (!migrationComplete) {
@@ -348,7 +355,8 @@ export const openUrlWithInAppBrowser =
   };
 
 export const askForTrackingPermissionAndEnableSdks =
-  (): Effect<Promise<void>> => async dispatch => {
+  (appInit?: boolean): Effect<Promise<void>> =>
+  async (dispatch, getState) => {
     const trackingStatus = await requestTrackingPermission();
 
     if (['authorized', 'unavailable'].includes(trackingStatus) && !__DEV__) {
@@ -385,6 +393,28 @@ export const askForTrackingPermissionAndEnableSdks =
         });
         const {advertisingId} = await AdID.getAdvertisingId();
         analytics.setIDFA(advertisingId);
+        if (appInit) {
+          const {appFirstOpenData} = getState().APP;
+
+          if (
+            appFirstOpenData?.firstOpenDate &&
+            !appFirstOpenData?.firstOpenEventComplete
+          ) {
+            dispatch(setAppFirstOpenEventComplete());
+            dispatch(
+              logSegmentEvent(
+                'track',
+                'First Opened App',
+                {
+                  date: appFirstOpenData?.firstOpenDate || '',
+                },
+                true,
+              ),
+            );
+          } else {
+            dispatch(logSegmentEvent('track', 'Last Opened App', {}, true));
+          }
+        }
       } catch (err) {
         dispatch(LogActions.error('Segment setup failed'));
         dispatch(LogActions.error(JSON.stringify(err)));

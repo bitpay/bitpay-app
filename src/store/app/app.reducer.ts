@@ -31,6 +31,11 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
 
 export type ModalId = 'sheetModal' | 'ongoingProcess';
 
+export type AppFirstOpenData = {
+  firstOpenEventComplete: boolean;
+  firstOpenDate: number | undefined;
+};
+
 export interface AppState {
   identity: {
     [key in Network]: AppIdentity;
@@ -38,6 +43,7 @@ export interface AppState {
   network: Network;
   baseBitPayURL: string;
   appIsLoading: boolean;
+  appFirstOpenData: AppFirstOpenData;
   introCompleted: boolean;
   onboardingCompleted: boolean;
   showOnGoingProcessModal: boolean;
@@ -94,6 +100,7 @@ const initialState: AppState = {
   network: APP_NETWORK,
   baseBitPayURL: BASE_BITPAY_URLS[Network.mainnet],
   appIsLoading: true,
+  appFirstOpenData: {firstOpenEventComplete: false, firstOpenDate: undefined},
   introCompleted: false,
   onboardingCompleted: false,
   showOnGoingProcessModal: false,
@@ -149,6 +156,24 @@ export const appReducer = (
       return {
         ...state,
         appIsLoading: false,
+      };
+
+    case AppActionTypes.SET_APP_FIRST_OPEN_EVENT_COMPLETE:
+      return {
+        ...state,
+        appFirstOpenData: {
+          ...state.appFirstOpenData,
+          firstOpenEventComplete: true,
+        },
+      };
+
+    case AppActionTypes.SET_APP_FIRST_OPEN_DATE:
+      return {
+        ...state,
+        appFirstOpenData: {
+          ...state.appFirstOpenData,
+          firstOpenDate: Math.floor(Date.now() / 1000),
+        },
       };
 
     case AppActionTypes.SET_ONBOARDING_COMPLETED:

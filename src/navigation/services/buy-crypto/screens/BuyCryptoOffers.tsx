@@ -371,6 +371,7 @@ const BuyCryptoOffers: React.FC = () => {
         })
         .catch((err: any) => {
           console.log('Simplex getting quote: FAILED', err);
+          showSimplexError(err);
         });
     }
   };
@@ -390,6 +391,23 @@ const BuyCryptoOffers: React.FC = () => {
     }
 
     logger.error('Simplex error: ' + msg);
+
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Failed Buy Crypto',
+        {
+          exchange: 'simplex',
+          context: 'BuyCryptoOffers',
+          message: msg || '',
+          paymentMethod: paymentMethod.method || '',
+          amount: Number(amount) || '',
+          coin: coin || '',
+          fiatCurrency: fiatCurrency || '',
+        },
+        true,
+      ),
+    );
 
     offers.simplex.errorMsg = msg;
     offers.simplex.fiatMoney = undefined;
@@ -418,6 +436,23 @@ const BuyCryptoOffers: React.FC = () => {
         }
       }
     }
+
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Failed Buy Crypto',
+        {
+          exchange: 'wyre',
+          context: 'BuyCryptoOffers',
+          message: msg || '',
+          paymentMethod: paymentMethod.method || '',
+          amount: Number(amount) || '',
+          coin: coin || '',
+          fiatCurrency: fiatCurrency || '',
+        },
+        true,
+      ),
+    );
 
     logger.error('Crypto offer error: ' + msg);
     offers.wyre.errorMsg = msg;
@@ -509,6 +544,7 @@ const BuyCryptoOffers: React.FC = () => {
         })
         .catch((err: any) => {
           console.log('Wyre getting quote: FAILED', err);
+          showWyreError(err);
         });
     }
   };

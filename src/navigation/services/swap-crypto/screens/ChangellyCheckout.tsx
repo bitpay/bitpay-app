@@ -341,6 +341,21 @@ const ChangellyCheckout: React.FC = () => {
         /* later */
         clearInterval(countDown);
       }
+      dispatch(
+        logSegmentEvent(
+          'track',
+          'Failed Swap Crypto',
+          {
+            exchange: 'changelly',
+            context: 'ChangellyCheckout',
+            message: 'The time to make the payment expired',
+            amountFrom: amountFrom || '',
+            fromCoin: fromWalletSelected.currencyAbbreviation || '',
+            toCoin: toWalletSelected.currencyAbbreviation || '',
+          },
+          true,
+        ),
+      );
       return;
     }
 
@@ -545,6 +560,21 @@ const ChangellyCheckout: React.FC = () => {
   const showError = async (msg?: string, title?: string, actions?: any) => {
     dispatch(dismissOnGoingProcessModal());
     await sleep(1000);
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Failed Swap Crypto',
+        {
+          exchange: 'changelly',
+          context: 'ChangellyCheckout',
+          message: msg || '',
+          amountFrom: amountFrom || '',
+          fromCoin: fromWalletSelected.currencyAbbreviation || '',
+          toCoin: toWalletSelected.currencyAbbreviation || '',
+        },
+        true,
+      ),
+    );
     dispatch(
       showBottomNotificationModal({
         type: 'error',
