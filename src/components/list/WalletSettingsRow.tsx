@@ -58,7 +58,7 @@ const WalletSettingsRow = ({
           <NestedArrowIcon />
         </NestedArrowContainer>
       )}
-      <CurrencyImage img={img} size={45} />
+      <CurrencyImage img={img} size={40} />
       <CurrencyName style={textStyle}>
         {walletName || currencyName} {isToken}
       </CurrencyName>
