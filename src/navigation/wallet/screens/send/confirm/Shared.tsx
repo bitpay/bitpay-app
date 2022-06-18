@@ -315,6 +315,52 @@ export const SharedDetailRow = ({
   );
 };
 
+export const RemainingTime = ({
+  invoiceExpirationTime,
+}: {
+  invoiceExpirationTime: number;
+  setDisableSwipeSendButton: React.Dispatch<React.SetStateAction<boolean>>;
+}) => {
+  const {t} = useTranslation();
+  const [remainingTime, setRemainingTime] = useState<string>('15:00');
+
+  const expirationTime = Math.floor(
+    new Date(invoiceExpirationTime).getTime() / 1000,
+  );
+
+  useEffect(() => {
+    let interval: any;
+    if (expirationTime) {
+      interval = setInterval(() => {
+        const now = Math.floor(Date.now() / 1000);
+
+        if (now > expirationTime) {
+          setRemainingTime('Expired');
+          // setDisableSwipeSendButton(true);
+          clearInterval(interval);
+          return;
+        }
+
+        const totalSecs = expirationTime - now;
+        const m = Math.floor(totalSecs / 60);
+        const s = totalSecs % 60;
+
+        const _remainingTimeStr =
+          ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2);
+        setRemainingTime(_remainingTimeStr);
+      }, 1000); //each count lasts for a second
+    }
+    //cleanup the interval on complete
+    if (interval) {
+      return () => clearInterval(interval);
+    }
+  }, [expirationTime]);
+
+  return (
+    <SharedDetailRow description={t('Expires')} value={remainingTime} hr />
+  );
+};
+
 export const WalletSelector = ({
   walletsAndAccounts,
   onWalletSelect,
