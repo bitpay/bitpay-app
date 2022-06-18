@@ -31,6 +31,7 @@ import {
   DetailsList,
   Fee,
   Header,
+  RemainingTime,
   SendingFrom,
   SendingTo,
   WalletSelector,
@@ -85,6 +86,7 @@ const PayProConfirm = () => {
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const {fee, sendingFrom, subTotal, total} = txDetails || {};
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
+  const [disableSwipeSendButton, setDisableSwipeSendButton] = useState(false);
   const payProHost = payProOptions.payProUrl
     .replace('https://', '')
     .split('/')[0];
@@ -111,20 +113,25 @@ const PayProConfirm = () => {
       startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
     );
     try {
-      const {txDetails: newTxDetails, txp: newTxp} = await dispatch(
-        await createPayProTxProposal({
-          wallet: selectedWallet,
-          paymentUrl: payProOptions.payProUrl,
-          payProOptions,
-          invoiceID: payProOptions.paymentId,
-        }),
-      );
+      const [{txDetails: newTxDetails, txp: newTxp}, fetchedInvoice] =
+        await Promise.all([
+          dispatch(
+            await createPayProTxProposal({
+              wallet: selectedWallet,
+              paymentUrl: payProOptions.payProUrl,
+              payProOptions,
+              invoiceID: payProOptions.paymentId,
+            }),
+          ),
+          fetchInvoice(payProOptions.payProUrl),
+        ]);
       setWallet(selectedWallet);
       setKey(keys[selectedWallet.keyId]);
       await sleep(400);
       dispatch(dismissOnGoingProcessModal());
       updateTxDetails(newTxDetails);
       updateTxp(newTxp);
+      setInvoice(fetchedInvoice);
       setRecipient({address: newTxDetails.sendingTo.recipientAddress} as {
         address: string;
       });
@@ -176,19 +183,24 @@ const PayProConfirm = () => {
     );
   };
 
+  const fetchInvoice = async (payProUrl: string) => {
+    const invoiceId = payProUrl.split('/').slice(-1)[0];
+    const getInvoiceResponse = await axios.get(
+      `https://${payProHost}/invoices/${invoiceId}`,
+    );
+    const {
+      data: {data: fetchedInvoice},
+    } = getInvoiceResponse as {data: {data: Invoice}};
+    return fetchedInvoice;
+  };
+
   const onCoinbaseAccountSelect = async (walletRowProps: WalletRowProps) => {
     dispatch(
       startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
     );
     const selectedCoinbaseAccount = walletRowProps.coinbaseAccount!;
     try {
-      const invoiceId = payProOptions.payProUrl.split('/').slice(-1);
-      const getInvoiceResponse = await axios.get(
-        `https://bitpay.com/invoices/${invoiceId}`,
-      );
-      const {
-        data: {data: fetchedInvoice},
-      } = getInvoiceResponse as {data: {data: Invoice}};
+      const fetchedInvoice = await fetchInvoice(payProOptions.payProUrl);
       const rates = await dispatch(startGetRates({}));
       const newTxDetails = dispatch(
         buildTxDetails({
@@ -321,6 +333,12 @@ const PayProConfirm = () => {
               onPress={openKeyWalletSelector}
               hr
             />
+            {invoice ? (
+              <RemainingTime
+                invoiceExpirationTime={invoice.expirationTime}
+                setDisableSwipeSendButton={setDisableSwipeSendButton}
+              />
+            ) : null}
             <Amount description={'SubTotal'} amount={subTotal} />
             <Amount description={'Total'} amount={total} />
           </>
@@ -329,6 +347,7 @@ const PayProConfirm = () => {
       {wallet || coinbaseAccount ? (
         <>
           <SwipeButton
+            disabled={disableSwipeSendButton}
             title={'Slide to send'}
             forceReset={resetSwipeButton}
             onSwipeComplete={async () => {

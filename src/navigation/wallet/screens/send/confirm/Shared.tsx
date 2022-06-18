@@ -317,15 +317,27 @@ export const SharedDetailRow = ({
 
 export const RemainingTime = ({
   invoiceExpirationTime,
+  setDisableSwipeSendButton,
 }: {
   invoiceExpirationTime: number;
   setDisableSwipeSendButton: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   const {t} = useTranslation();
-  const [remainingTime, setRemainingTime] = useState<string>('15:00');
 
   const expirationTime = Math.floor(
     new Date(invoiceExpirationTime).getTime() / 1000,
+  );
+
+  const computeRemainingTime = useCallback(() => {
+    const now = Math.floor(Date.now() / 1000);
+    const totalSecs = expirationTime - now;
+    const m = Math.floor(totalSecs / 60);
+    const s = totalSecs % 60;
+    return ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2);
+  }, [expirationTime]);
+
+  const [remainingTime, setRemainingTime] = useState<string>(
+    computeRemainingTime(),
   );
 
   useEffect(() => {
@@ -336,25 +348,19 @@ export const RemainingTime = ({
 
         if (now > expirationTime) {
           setRemainingTime('Expired');
-          // setDisableSwipeSendButton(true);
+          setDisableSwipeSendButton(true);
           clearInterval(interval);
           return;
         }
 
-        const totalSecs = expirationTime - now;
-        const m = Math.floor(totalSecs / 60);
-        const s = totalSecs % 60;
-
-        const _remainingTimeStr =
-          ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2);
-        setRemainingTime(_remainingTimeStr);
+        setRemainingTime(computeRemainingTime());
       }, 1000); //each count lasts for a second
     }
     //cleanup the interval on complete
     if (interval) {
       return () => clearInterval(interval);
     }
-  }, [expirationTime]);
+  }, [computeRemainingTime, expirationTime, setDisableSwipeSendButton]);
 
   return (
     <SharedDetailRow description={t('Expires')} value={remainingTime} hr />

@@ -35,7 +35,6 @@ import {
   Header,
   RemainingTime,
   SendingFrom,
-  SharedDetailRow,
   WalletSelector,
 } from './Shared';
 import {AppActions} from '../../../../../store/app';
