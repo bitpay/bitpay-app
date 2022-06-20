@@ -11,13 +11,13 @@ export const startWalletStoreInit =
       const {WALLET, APP} = getState();
       const defaultAltCurrencyIsoCode = APP.defaultAltCurrency.isoCode;
 
-      await dispatch(startGetTokenOptions());
+      // both needed for startUpdateAllKeyAndWalletStatus
+      await dispatch(startGetTokenOptions()); // get more recent 1inch tokens list
+      await dispatch(startGetRates({init: true})); // populate rates and alternative currency list
 
       if (Object.keys(WALLET.keys).length) {
         dispatch(startUpdateAllKeyAndWalletStatus({}));
       }
-
-      await dispatch(startGetRates({init: true})); // populate rates and alternative currency list
 
       dispatch(getPriceHistory(defaultAltCurrencyIsoCode));
       dispatch(updatePortfolioBalance());
