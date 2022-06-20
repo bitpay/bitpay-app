@@ -1,5 +1,5 @@
 #import "AppDelegate.h"
-#import "SilentPushEvent.h"
+#import "../SilentPushEvent.h"
 #import "Appboy-iOS-SDK/AppboyKit.h"
 #import <React/RCTBridge.h>
 #import <React/RCTBundleURLProvider.h>
