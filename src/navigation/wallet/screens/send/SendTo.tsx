@@ -273,7 +273,11 @@ const SendTo = () => {
       return false;
     };
 
-  const validateAndNavigateToConfirm = async (text: string) => {
+  const validateAndNavigateToConfirm = async (
+    text: string,
+    context?: string,
+    name?: string,
+  ) => {
     const data = ValidateURI(text);
     if (data?.type === 'PayPro' || data?.type === 'InvoiceUri') {
       try {
@@ -321,7 +325,7 @@ const SendTo = () => {
       if (dispatch(checkCoinAndNetwork(text))) {
         setSearchInput(text);
         await sleep(0);
-        dispatch(incomingData(text, wallet));
+        dispatch(incomingData(text, {wallet, context, name}));
       }
     }
   };
@@ -445,7 +449,11 @@ const SendTo = () => {
                     onPress={() => {
                       try {
                         if (item) {
-                          validateAndNavigateToConfirm(item.address);
+                          validateAndNavigateToConfirm(
+                            item.address,
+                            'contact',
+                            item.name,
+                          );
                         }
                       } catch (err) {
                         console.log(err);

@@ -60,9 +60,12 @@ import {
 import {Network} from '../../constants';
 
 export const incomingData =
-  (data: string, wallet?: Wallet): Effect<Promise<void>> =>
+  (
+    data: string,
+    opts?: {wallet?: Wallet; context?: string; name?: string},
+  ): Effect<Promise<void>> =>
   async dispatch => {
-    const coin = wallet?.currencyAbbreviation?.toLowerCase();
+    const coin = opts?.wallet?.currencyAbbreviation?.toLowerCase();
     try {
       if (IsValidBitPayInvoice(data)) {
         dispatch(goToPayPro(data));
@@ -72,25 +75,25 @@ export const incomingData =
         dispatch(goToPayPro(data));
         // Bitcoin  URI
       } else if (IsValidBitcoinUri(data)) {
-        dispatch(handleBitcoinUri(data, wallet));
+        dispatch(handleBitcoinUri(data, opts?.wallet));
         // Bitcoin Cash URI
       } else if (IsValidBitcoinCashUri(data)) {
-        dispatch(handleBitcoinCashUri(data, wallet));
+        dispatch(handleBitcoinCashUri(data, opts?.wallet));
         // Bitcoin Cash URI using Bitcoin Core legacy address
       } else if (IsValidBitcoinCashUriWithLegacyAddress(data)) {
-        dispatch(handleBitcoinCashUriLegacyAddress(data, wallet));
+        dispatch(handleBitcoinCashUriLegacyAddress(data, opts?.wallet));
         // Ethereum URI
       } else if (IsValidEthereumUri(data)) {
-        dispatch(handleEthereumUri(data, wallet));
+        dispatch(handleEthereumUri(data, opts?.wallet));
         // Ripple URI
       } else if (IsValidRippleUri(data)) {
-        dispatch(handleRippleUri(data, wallet));
+        dispatch(handleRippleUri(data, opts?.wallet));
         // Dogecoin URI
       } else if (IsValidDogecoinUri(data)) {
-        dispatch(handleDogecoinUri(data, wallet));
+        dispatch(handleDogecoinUri(data, opts?.wallet));
         // Litecoin URI
       } else if (IsValidLitecoinUri(data)) {
-        dispatch(handleLitecoinUri(data, wallet));
+        dispatch(handleLitecoinUri(data, opts?.wallet));
         // Wallet Connect URI
       } else if (isValidWalletConnectUri(data)) {
         handleWalletConnectUri(data);
@@ -102,25 +105,25 @@ export const incomingData =
         dispatch(handleWyreUri(data));
         // BitPay URI
       } else if (IsValidBitPayUri(data)) {
-        dispatch(handleBitPayUri(data, wallet));
+        dispatch(handleBitPayUri(data, opts?.wallet));
         // Plain Address (Bitcoin)
       } else if (IsValidBitcoinAddress(data)) {
-        dispatch(handlePlainAddress(data, coin || 'btc', wallet));
+        dispatch(handlePlainAddress(data, coin || 'btc', opts));
         // Plain Address (Bitcoin Cash)
       } else if (IsValidBitcoinCashAddress(data)) {
-        dispatch(handlePlainAddress(data, coin || 'bch', wallet));
+        dispatch(handlePlainAddress(data, coin || 'bch', opts));
         // Address (Ethereum)
       } else if (IsValidEthereumAddress(data)) {
-        dispatch(handlePlainAddress(data, coin || 'eth', wallet));
+        dispatch(handlePlainAddress(data, coin || 'eth', opts));
         // Address (Ripple)
       } else if (IsValidRippleAddress(data)) {
-        dispatch(handlePlainAddress(data, coin || 'xrp', wallet));
+        dispatch(handlePlainAddress(data, coin || 'xrp', opts));
         // Plain Address (Doge)
       } else if (IsValidDogecoinAddress(data)) {
-        dispatch(handlePlainAddress(data, coin || 'doge', wallet));
+        dispatch(handlePlainAddress(data, coin || 'doge', opts));
         // Plain Address (Litecoin)
       } else if (IsValidLitecoinAddress(data)) {
-        dispatch(handlePlainAddress(data, coin || 'ltc', wallet));
+        dispatch(handlePlainAddress(data, coin || 'ltc', opts));
         // Import Private Key
       } else if (IsValidImportPrivateKey(data)) {
         goToImport(data);
@@ -767,19 +770,24 @@ const handleWalletConnectUri = (data: string) => {
 };
 
 const handlePlainAddress =
-  (address: string, coin: string, wallet?: Wallet): Effect<void> =>
+  (
+    address: string,
+    coin: string,
+    opts?: {wallet?: Wallet; context?: string; name?: string},
+  ): Effect<void> =>
   dispatch => {
     console.log(`Incoming-data: ${coin} plain address`);
     const network = Object.keys(bitcoreLibs).includes(coin)
       ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
       : undefined; // There is no way to tell if an eth address is kovan or livenet so let's skip the network filter
     const recipient = {
-      type: 'address',
+      type: opts?.context || 'address',
+      name: opts?.name,
       currency: coin,
       address,
       network,
     };
-    dispatch(goToAmount({coin, recipient, wallet}));
+    dispatch(goToAmount({coin, recipient, wallet: opts?.wallet}));
   };
 
 const goToImport = (importQrCodeData: string): void => {
