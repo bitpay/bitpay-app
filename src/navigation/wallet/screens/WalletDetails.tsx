@@ -103,6 +103,7 @@ import InfoSvg from '../../../../assets/img/info.svg';
 import {Effect} from '../../../store';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import {Currencies} from '../../../constants/currencies';
+import {t as translation} from 'i18next';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -230,7 +231,7 @@ const getWalletType = (
     credentials: {token, walletId, addressType, keyId},
   } = wallet;
   if (!keyId) {
-    return {title: 'Read Only'};
+    return {title: translation('Read Only')};
   }
   if (token) {
     const linkedWallet = key.wallets.find(({tokens}) =>
@@ -641,7 +642,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     if (!fullWalletObj) {
       return false;
     }
-    return fullWalletObj.balance?.sat != fullWalletObj.balance?.satSpendable;
+    return fullWalletObj.balance?.sat !== fullWalletObj.balance?.satSpendable;
   };
 
   const viewOnBlockchain = async () => {
@@ -686,19 +687,19 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     dispatch(
       showBottomNotificationModal({
         type: 'question',
-        title: 'View on blockchain',
-        message: `Continue to view ${coin.toUpperCase()} transaction history`,
+        title: t('View on blockchain'),
+        message: t('ViewTxHistory', {coin: coin.toUpperCase()}),
         enableBackdropDismiss: true,
         actions: [
           {
-            text: 'CONTINUE',
+            text: t('CONTINUE'),
             action: () => {
               Linking.openURL(url);
             },
             primary: true,
           },
           {
-            text: 'GO BACK',
+            text: t('GO BACK'),
             action: () => {},
           },
         ],
@@ -993,7 +994,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     </Value>
                     <Fiat>
                       {network === 'testnet'
-                        ? 'Test Only - No Value'
+                        ? t('Test Only - No Value')
                         : fiatLockedBalance}
                     </Fiat>
                   </TailContainer>
