@@ -30,7 +30,7 @@ public class CustomBroadcastReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        ReactContext reactContext; // TODO: initialize
+        ReactContext reactContext = null; // TODO: initialize
         String action = intent.getAction();
         if (action == null) {
             return;
