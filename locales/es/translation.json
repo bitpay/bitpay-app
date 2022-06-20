@@ -848,7 +848,7 @@
   "Please enter your two-step verification code.": "Por favor, introduzca su código de verificación de dos pasos.",
   "TWO-STEP VERIFICATION CODE": "CÓDIGO DE VERIFICACIÓN DE DOS PASOS",
   "Please enter a valid verification code.": "Por favor, introduzca un código de verificación válido.",
-  " ( of total amount)": " ( del monto total)",
+  " ( of total amount)": "{{fiatAmount}} ({{percentageOfTotalAmount}} del monto total)",
   "Sending from": "Enviando desde",
   "Search contact or enter address": "Buscar contacto o ingresar dirección",
   "Paste from clipboard": "Pegar desde el portapapeles",
