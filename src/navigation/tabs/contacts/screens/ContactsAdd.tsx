@@ -41,7 +41,6 @@ import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {GetChain} from '../../../../store/wallet/utils/currency';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import debounce from 'lodash.debounce';
-import {t} from 'i18next';
 import {useTranslation} from 'react-i18next';
 
 const InputContainer = styled.View<{hideInput?: boolean}>`
