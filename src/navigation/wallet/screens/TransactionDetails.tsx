@@ -412,7 +412,7 @@ const TransactionDetails = () => {
           txs.error ? (
             <Banner
               type={'error'}
-              title={t('Waning!')}
+              title={t('Warning!')}
               description={t('Error encountered during contract execution ()', {
                 error: txs.error,
               })}
