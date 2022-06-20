@@ -162,8 +162,8 @@ export const Currencies: {[key in string]: CurrencyOpts} = {
     },
     theme: {
       coinColor: '#6b71d6',
-      backgroundColor: '#1e90ff',
-      gradientBackgroundColor: '#1e90ff',
+      backgroundColor: '#6b71d6',
+      gradientBackgroundColor: '#6b71d6',
     },
   },
   xrp: {
