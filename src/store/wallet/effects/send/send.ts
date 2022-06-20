@@ -383,16 +383,24 @@ const buildTransactionProposal =
 
         // send max
         if (sendMax && wallet) {
-          const {amount, inputs, fee} = await getSendMaxInfo({
-            wallet,
-            opts: {feePerKb, excludeUnconfirmedUtxos: true, returnInputs: true},
-          });
+          if (dispatch(IsERCToken(wallet.currencyAbbreviation))) {
+            txp.amount = tx.amount = wallet.balance.satAvailable;
+          } else {
+            const {amount, inputs, fee} = await getSendMaxInfo({
+              wallet,
+              opts: {
+                feePerKb,
+                excludeUnconfirmedUtxos: true,
+                returnInputs: true,
+              },
+            });
 
-          txp.amount = tx.amount = amount;
-          txp.inputs = inputs;
-          // Either fee or feePerKb can be available
-          txp.fee = fee;
-          txp.feePerKb = undefined;
+            txp.amount = tx.amount = amount;
+            txp.inputs = inputs;
+            // Either fee or feePerKb can be available
+            txp.fee = fee;
+            txp.feePerKb = undefined;
+          }
         }
 
         // unconfirmed funds

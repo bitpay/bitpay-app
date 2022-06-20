@@ -145,6 +145,7 @@ const BuildKeyWalletRow = (
 };
 
 const SendTo = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
