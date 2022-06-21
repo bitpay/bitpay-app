@@ -282,7 +282,7 @@ export default ({
               <TouchableWithoutFeedback
                 onPress={() => setIsFilterSheetShown(!isFilterSheetShown)}>
                 <SectionHeaderButton>
-                  Filter
+                  {t('Filter')}
                   {numSelectedCategories ? ` (${numSelectedCategories})` : null}
                 </SectionHeaderButton>
               </TouchableWithoutFeedback>

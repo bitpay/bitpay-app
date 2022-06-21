@@ -45,6 +45,7 @@ import ReferredUsersSkeleton from '../../components/ReferredUsersSkeleton';
 import ReferralCodeSkeleton from '../../components/ReferralCodeSkeleton';
 import {BASE_BITPAY_URLS} from '../../../../constants/config';
 import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../../store/app/app.effects';
 
 export interface ReferralParamList {
   card: Card;
@@ -152,6 +153,9 @@ const Referral = ({}) => {
     if (!copied) {
       Clipboard.setString(code);
       setCopied(true);
+      dispatch(
+        logSegmentEvent('track', 'Copied Share Referral Code', {}, true),
+      );
     }
   };
 
@@ -177,6 +181,10 @@ const Referral = ({}) => {
       await Share.share({
         message,
       });
+
+      dispatch(
+        logSegmentEvent('track', 'Clicked Share Referral Code', {}, true),
+      );
     } catch (e) {}
   };
   const currentDate = new Date().getTime();

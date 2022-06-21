@@ -36,14 +36,18 @@ import {GetPayProDetails, HandlePayPro, PayProOptions} from '../paypro/paypro';
 import {
   dismissBottomNotificationModal,
   dismissDecryptPasswordModal,
+  dismissOnGoingProcessModal,
   showBottomNotificationModal,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
 import {GetPrecision, GetChain, IsERCToken} from '../../utils/currency';
 import {CommonActions} from '@react-navigation/native';
 import {BwcProvider} from '../../../../lib/bwc';
-import {ToCashAddress} from '../address/address';
+import {createWalletAddress, ToCashAddress} from '../address/address';
 import {WalletRowProps} from '../../../../components/list/WalletRow';
+import {t} from 'i18next';
+import {startOnGoingProcessModal} from '../../../app/app.effects';
+import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -78,16 +82,33 @@ export const createProposalAndBuildTxDetails =
 
         const chain = dispatch(GetChain(currencyAbbreviation)).toLowerCase();
 
+        const {
+          WALLET: {
+            feeLevel: cachedFeeLevel,
+            useUnconfirmedFunds,
+            queuedTransactions,
+          },
+        } = getState();
+        const {
+          APP: {defaultAltCurrency},
+        } = getState();
+
         if (
           chain === 'eth' &&
           wallet.transactionHistory?.hasConfirmingTxs &&
           context !== 'speedupEth'
         ) {
-          return reject({
-            err: new Error(
-              'There is a pending transaction with a lower account nonce. Wait for your pending transactions to confirm or enable "ETH Queued transactions" in Advanced Settings.',
-            ),
-          });
+          if (!queuedTransactions) {
+            return reject({
+              err: new Error(
+                t(
+                  'There is a pending transaction with a lower account nonce. Wait for your pending transactions to confirm or enable "ETH Queued transactions" in Advanced Settings.',
+                ),
+              ),
+            });
+          } else {
+            await dispatch(setEthAddressNonce(wallet, tx));
+          }
         }
 
         if (
@@ -96,17 +117,12 @@ export const createProposalAndBuildTxDetails =
         ) {
           return reject({
             err: new Error(
-              'Cannot send XRP to the same wallet you are trying to send from. Please check the destination address and try it again.',
+              t(
+                'Cannot send XRP to the same wallet you are trying to send from. Please check the destination address and try it again.',
+              ),
             ),
           });
         }
-
-        const {
-          WALLET: {feeLevel: cachedFeeLevel, useUnconfirmedFunds},
-        } = getState();
-        const {
-          APP: {defaultAltCurrency},
-        } = getState();
 
         const feeLevel =
           customFeeLevel ||
@@ -174,6 +190,118 @@ export const createProposalAndBuildTxDetails =
       }
     });
   };
+
+const setEthAddressNonce =
+  (wallet: Wallet, tx: TransactionOptions): Effect<Promise<void>> =>
+  async (dispatch, getState) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const {
+          coin: currencyAbbreviation,
+          keyId,
+          walletId,
+        } = wallet.credentials;
+        const chain = dispatch(GetChain(currencyAbbreviation)).toLowerCase();
+
+        if (chain !== 'eth' || tx.context === 'speedupEth') {
+          return resolve();
+        }
+
+        let transactionHistory;
+        let nonceWallet: Wallet;
+        // linked eth wallet could have pendings txs from different tokens
+        // this means we need to check pending txs from the linked wallet if is ERC20Token instead of the sending wallet
+        if (dispatch(IsERCToken(wallet.currencyAbbreviation))) {
+          const {WALLET} = getState();
+          const key = WALLET.keys[keyId];
+          const linkedWallet = key.wallets.find(({tokens}) =>
+            tokens?.includes(walletId),
+          );
+          transactionHistory = linkedWallet?.transactionHistory?.transactions;
+          nonceWallet = linkedWallet!;
+        } else {
+          transactionHistory = wallet.transactionHistory?.transactions;
+          nonceWallet = wallet;
+        }
+
+        let address = nonceWallet?.receiveAddress;
+
+        if (!address) {
+          dispatch(
+            startOnGoingProcessModal(OnGoingProcessMessages.GENERATING_ADDRESS),
+          );
+          address = await dispatch<Promise<string>>(
+            createWalletAddress({wallet: nonceWallet, newAddress: false}),
+          );
+          dispatch(dismissOnGoingProcessModal());
+        }
+
+        const nonce = await getNonce(nonceWallet, chain, address);
+        let suggestedNonce: number = nonce;
+
+        const pendingTxsNonce = [];
+        if (transactionHistory && transactionHistory[0]) {
+          for (let transaction of transactionHistory) {
+            if (
+              transaction.action === 'sent' ||
+              transaction.action === 'moved'
+            ) {
+              if (transaction.confirmations === 0) {
+                pendingTxsNonce.push(transaction.nonce);
+              } else {
+                break;
+              }
+            }
+          }
+        }
+
+        if (pendingTxsNonce && pendingTxsNonce.length > 0) {
+          pendingTxsNonce.sort((a, b) => a! - b!);
+          for (let i = 0; i < pendingTxsNonce.length; i++) {
+            if (pendingTxsNonce[i]! + 1 != pendingTxsNonce[i + 1]) {
+              suggestedNonce = pendingTxsNonce[i]! + 1;
+              break;
+            }
+          }
+        }
+
+        console.log(
+          `Using web3 nonce: ${nonce} - Suggested Nonce: ${suggestedNonce} - pending txs: ${
+            suggestedNonce! - nonce
+          }`,
+        );
+
+        tx.nonce = suggestedNonce;
+
+        return resolve();
+      } catch (error: any) {
+        console.log('Could not get address nonce', error.message);
+        return resolve();
+      }
+    });
+  };
+
+export const getNonce = (
+  wallet: Wallet,
+  coin: string,
+  address: string,
+): Promise<number> => {
+  return new Promise((resolve, reject) => {
+    wallet.getNonce(
+      {
+        coin,
+        network: wallet.network,
+        address,
+      },
+      (err: any, nonce: number) => {
+        if (err) {
+          return reject(err);
+        }
+        return resolve(nonce);
+      },
+    );
+  });
+};
 
 export const getInvoiceEffectiveRate =
   (invoice: Invoice, coin: string): Effect<number | undefined> =>
@@ -724,7 +852,7 @@ export const handleCreateTxProposalError =
           const {tx, txp, getState} = proposalErrorProps;
 
           if (!tx || !txp || !getState) {
-            return GeneralError;
+            return GeneralError();
           }
 
           const {wallet, amount} = tx;
@@ -743,25 +871,26 @@ export const handleCreateTxProposalError =
                 feeRatePerKb
           ) {
             return CustomErrorMessage({
-              title: 'Insufficient confirmed funds',
-              errMsg:
+              title: t('Insufficient confirmed funds'),
+              errMsg: t(
                 'You do not have enough confirmed funds to make this payment. Wait for your pending transactions to confirm or enable "Use unconfirmed funds" in Advanced Settings.',
+              ),
             });
           } else {
             return CustomErrorMessage({
-              title: 'Insufficient funds',
+              title: t('Insufficient funds'),
               errMsg: BWCErrorMessage(err),
             });
           }
 
         default:
           return CustomErrorMessage({
-            title: 'Error',
+            title: t('Error'),
             errMsg: BWCErrorMessage(err),
           });
       }
     } catch (err2) {
-      return GeneralError;
+      return GeneralError();
     }
   };
 
@@ -964,13 +1093,14 @@ export const showNoWalletsModal =
     dispatch(
       showBottomNotificationModal({
         type: 'info',
-        title: 'No compatible wallets',
-        message:
+        title: t('No compatible wallets'),
+        message: t(
           "You currently don't have any wallets capable of sending this payment. Would you like to import one?",
+        ),
         enableBackdropDismiss: false,
         actions: [
           {
-            text: 'Import Wallet',
+            text: t('Import Wallet'),
             action: () => {
               dispatch(dismissBottomNotificationModal());
               navigation.dispatch(
@@ -994,7 +1124,7 @@ export const showNoWalletsModal =
             primary: true,
           },
           {
-            text: 'Maybe Later',
+            text: t('Maybe Later'),
             action: () => {
               dispatch(dismissBottomNotificationModal());
               while (navigation.canGoBack()) {

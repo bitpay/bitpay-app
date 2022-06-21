@@ -33,7 +33,7 @@ import {GetMinFee} from '../fee/fee';
 import {updateWalletTxHistory} from '../../wallet.actions';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {getGiftCardIcons} from '../../../../lib/gift-cards/gift-card';
-
+import {t} from 'i18next';
 const BWC = BwcProvider.getInstance();
 const Errors = BWC.getErrors();
 
@@ -377,7 +377,7 @@ export const GroupTransactionHistory = (history: any[]) => {
     .map((group: any[]) => {
       const time = group[0].time * 1000;
       const title = IsDateInCurrentMonth(time)
-        ? 'Recent'
+        ? t('Recent')
         : moment(time).format('MMMM');
       return {title, data: group};
     });
@@ -466,12 +466,12 @@ export const GetTransactionHistory =
           // look for sent or moved unconfirmed until find a confirmed
           if (transactionHistory && transactionHistory[0]) {
             for (let tx of transactionHistory) {
-              if (tx.confirmations === 0) {
-                if (tx.action === 'sent' || tx.action === 'moved') {
+              if (tx.action === 'sent' || tx.action === 'moved') {
+                if (tx.confirmations === 0) {
                   hasConfirmingTxs = true;
+                } else {
+                  break;
                 }
-              } else {
-                break;
               }
             }
           }
@@ -631,16 +631,16 @@ export const BuildUiFriendlyList = (
           }
         } else {
           if (isSent) {
-            transaction.uiDescription = 'Sending';
+            transaction.uiDescription = t('Sending');
           }
 
           if (isMoved) {
-            transaction.uiDescription = 'Moving';
+            transaction.uiDescription = t('Moving');
           }
         }
 
         if (isReceived) {
-          transaction.uiDescription = 'Receiving';
+          transaction.uiDescription = t('Receiving');
         }
       }
     }
@@ -666,9 +666,12 @@ export const BuildUiFriendlyList = (
           } else if (contactName) {
             transaction.uiDescription = contactName;
           } else if (toWalletName) {
-            transaction.uiDescription = `Sent to ${toWalletName}`;
+            // t('SentToWalletName')
+            transaction.uiDescription = t('SentToWalletName', {
+              walletName: toWalletName,
+            });
           } else {
-            transaction.uiDescription = 'Sent';
+            transaction.uiDescription = t('Sent');
           }
         }
       }
@@ -681,7 +684,7 @@ export const BuildUiFriendlyList = (
         } else if (contactName) {
           transaction.uiDescription = contactName;
         } else {
-          transaction.uiDescription = 'Received';
+          transaction.uiDescription = t('Received');
         }
       }
 
@@ -693,14 +696,14 @@ export const BuildUiFriendlyList = (
         } else if (message) {
           transaction.uiDescription = message;
         } else {
-          transaction.uiDescription = 'Sent to self';
+          transaction.uiDescription = t('Sent to self');
         }
       }
 
       if (isInvalid) {
         transaction.uiIcon = TransactionIcons.error;
 
-        transaction.uiDescription = 'Invalid';
+        transaction.uiDescription = t('Invalid');
       }
     }
 
@@ -709,13 +712,13 @@ export const BuildUiFriendlyList = (
       transaction.uiIcon = TransactionIcons.contractInteraction;
 
       transaction.uiDescription = uiDescription
-        ? `Interaction with contract ${uiDescription}`
-        : 'Interaction with contract';
+        ? t('Interaction with contract') + ` ${uiDescription}`
+        : t('Interaction with contract');
       transaction.uiValue = feeStr;
     }
 
     if (isInvalid) {
-      transaction.uiValue = '(possible double spend)';
+      transaction.uiValue = t('(possible double spend)');
     } else {
       if (notZeroAmountEth) {
         transaction.uiValue = amountStr;
@@ -771,13 +774,13 @@ export const getDetailsTitle = (transaction: any, wallet: Wallet) => {
 
   if (!IsInvalid(action)) {
     if (coin === 'eth' && error) {
-      return 'Failed';
+      return t('Failed');
     } else if (IsSent(action)) {
-      return 'Sent';
+      return t('Sent');
     } else if (IsReceived(action)) {
-      return 'Received';
+      return t('Received');
     } else if (IsMoved(action)) {
-      return 'Sent to self';
+      return t('Sent to self');
     }
   }
 };
@@ -894,10 +897,9 @@ const UpdateFiatRate =
           parseFloat((rate * amountValueStr).toFixed(2)),
           alternativeCurrency,
         ) +
-        ` @ ${formatFiatAmount(
-          rate,
-          alternativeCurrency,
-        )} per ${currency.toUpperCase()}`;
+        ` @ ${formatFiatAmount(rate, alternativeCurrency)} ` +
+        t('per') +
+        ` ${currency.toUpperCase()}`;
     } else {
       // Get current fiat value when historic rates are unavailable
       fiatRateStr = dispatch(
@@ -926,11 +928,11 @@ const GetActionsList = (transaction: any, wallet: Wallet) => {
   const actionList: TxActions[] = [];
 
   let actionDescriptions: {[key in string]: string} = {
-    created: 'Proposal Created',
-    failed: 'Execution Failed',
-    accept: 'Accepted',
-    reject: 'Rejected',
-    broadcasted: 'Broadcasted',
+    created: t('Proposal Created'),
+    failed: t('Execution Failed'),
+    accept: t('Accepted'),
+    reject: t('Rejected'),
+    broadcasted: t('Broadcasted'),
   };
 
   actionList.push({

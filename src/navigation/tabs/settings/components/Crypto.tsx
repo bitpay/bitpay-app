@@ -15,6 +15,7 @@ import {useTranslation} from 'react-i18next';
 import {WalletActions} from '../../../../store/wallet';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import {useNavigation} from '@react-navigation/native';
+import {logSegmentEvent} from '../../../../store/app/app.effects';
 
 const Crypto = () => {
   const dispatch = useAppDispatch();
@@ -23,6 +24,9 @@ const Crypto = () => {
     ({WALLET}) => WALLET.useUnconfirmedFunds,
   );
   const customizeNonce = useAppSelector(({WALLET}) => WALLET.customizeNonce);
+  const queuedTransactions = useAppSelector(
+    ({WALLET}) => WALLET.queuedTransactions,
+  );
   const enableReplaceByFee = useAppSelector(
     ({WALLET}) => WALLET.enableReplaceByFee,
   );
@@ -45,9 +49,19 @@ const Crypto = () => {
       <Setting activeOpacity={1}>
         <SettingTitle>{t('Use Unconfirmed Funds')}</SettingTitle>
         <ToggleSwitch
-          onChange={value =>
-            dispatch(WalletActions.setUseUnconfirmedFunds(value))
-          }
+          onChange={value => {
+            dispatch(WalletActions.setUseUnconfirmedFunds(value));
+            dispatch(
+              logSegmentEvent(
+                'track',
+                'Set Use Unconfirmed Funds',
+                {
+                  value,
+                },
+                true,
+              ),
+            );
+          }}
           isEnabled={useUnconfirmedFunds}
         />
       </Setting>
@@ -63,7 +77,19 @@ const Crypto = () => {
       <Setting activeOpacity={1}>
         <SettingTitle>{t('Customize ETH Nonce')}</SettingTitle>
         <ToggleSwitch
-          onChange={value => dispatch(WalletActions.setCustomizeNonce(value))}
+          onChange={value => {
+            dispatch(WalletActions.setCustomizeNonce(value));
+            dispatch(
+              logSegmentEvent(
+                'track',
+                'Set Customize ETH Nonce',
+                {
+                  value,
+                },
+                true,
+              ),
+            );
+          }}
           isEnabled={customizeNonce}
         />
       </Setting>
@@ -77,11 +103,39 @@ const Crypto = () => {
       </Info>
       <Hr />
       <Setting activeOpacity={1}>
-        <SettingTitle>{t('Enable BTC Replace-By-Fee')}</SettingTitle>
+        <SettingTitle>{t('ETH Queued transactions')}</SettingTitle>
         <ToggleSwitch
           onChange={value =>
-            dispatch(WalletActions.setEnableReplaceByFee(value))
+            dispatch(WalletActions.setQueuedTransactions(value))
           }
+          isEnabled={queuedTransactions}
+        />
+      </Setting>
+      <Info>
+        <InfoTriangle />
+        <InfoDescription>
+          {t(
+            'If enabled, your eth transactions will be queued if there is a pending transaction with a lower account nonce. This is an advanced feature, use cautiously.',
+          )}
+        </InfoDescription>
+      </Info>
+      <Hr />
+      <Setting activeOpacity={1}>
+        <SettingTitle>{t('Enable BTC Replace-By-Fee')}</SettingTitle>
+        <ToggleSwitch
+          onChange={value => {
+            dispatch(WalletActions.setEnableReplaceByFee(value));
+            dispatch(
+              logSegmentEvent(
+                'track',
+                'Set Enable BTC Replace-By-Fee',
+                {
+                  value,
+                },
+                true,
+              ),
+            );
+          }}
           isEnabled={enableReplaceByFee}
         />
       </Setting>

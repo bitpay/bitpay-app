@@ -20,7 +20,10 @@ import {
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import RemoteImage from '../../../../tabs/shop/components/RemoteImage';
@@ -406,6 +409,17 @@ const Confirm = () => {
               try {
                 await sendPayment();
                 await redeemGiftCardAndNavigateToGiftCardDetails();
+                dispatch(
+                  logSegmentEvent(
+                    'track',
+                    'Purchased Gift Card',
+                    {
+                      amount: amount,
+                      brand: cardConfig.name,
+                    },
+                    true,
+                  ),
+                );
               } catch (err: any) {
                 dispatch(
                   ShopActions.updatedGiftCardStatus({

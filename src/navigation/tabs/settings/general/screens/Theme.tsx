@@ -11,6 +11,7 @@ import {
 } from '../../../../../components/styled/Containers';
 import {RootState} from '../../../../../store';
 import {AppActions} from '../../../../../store/app';
+import {logSegmentEvent} from '../../../../../store/app/app.effects';
 import {LogActions} from '../../../../../store/log';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 
@@ -23,6 +24,11 @@ const ThemeSettings: React.FC = () => {
     dispatch(AppActions.setColorScheme(setScheme));
     dispatch(
       LogActions.info('Theme updated to ' + (setScheme || 'system default')),
+    );
+    dispatch(
+      logSegmentEvent('track', 'Saved Theme', {
+        theme: setScheme || 'system default',
+      }),
     );
   };
   const [selected, setSelected] = useState(currentTheme);

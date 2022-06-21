@@ -30,7 +30,6 @@ import {AppEffects, AppActions} from './store/app';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 import {LogActions} from './store/log';
 import {useAppDispatch, useAppSelector, useDeeplinks} from './utils/hooks';
-import analytics from '@segment/analytics-react-native';
 import i18n from 'i18next';
 
 import BitpayIdStack, {
@@ -91,6 +90,7 @@ import CardActivationStack, {
   CardActivationStackParamList,
 } from './navigation/card-activation/CardActivationStack';
 import ReactAppboy from 'react-native-appboy-sdk';
+import {logSegmentEvent} from './store/app/app.effects';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -211,9 +211,6 @@ export default () => {
   );
   const lockAuthorizedUntil = useAppSelector(
     ({APP}) => APP.lockAuthorizedUntil,
-  );
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
 
   // MAIN APP INIT
@@ -357,10 +354,16 @@ export default () => {
                   const tabName = history[history.length - 1].key.split('-')[0];
                   name = `${tabName} Tab`;
                 }
-                analytics.screen(name, {
-                  screen: params?.screen || '',
-                  appUser: user?.eid || '',
-                });
+                dispatch(
+                  logSegmentEvent(
+                    'screen',
+                    name,
+                    {
+                      screen: params?.screen || '',
+                    },
+                    true,
+                  ),
+                );
               }
             }
           }, 300)}>

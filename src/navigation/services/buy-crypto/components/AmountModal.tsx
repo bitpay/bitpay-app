@@ -23,7 +23,11 @@ const AmountModal: React.FC<AmountModalProps> = ({isVisible, onDismiss}) => {
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onDismiss}>
       <AmountModalWrapper>
-        <Amount useAsModal={true} onDismiss={onDismiss} />
+        <Amount
+          useAsModal={true}
+          onDismiss={onDismiss}
+          hideSendMaxProp={true}
+        />
       </AmountModalWrapper>
     </SheetModal>
   );

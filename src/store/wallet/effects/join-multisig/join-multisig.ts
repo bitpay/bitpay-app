@@ -6,6 +6,7 @@ import {successCreateKey, successAddWallet} from '../../wallet.actions';
 import API from 'bitcore-wallet-client/ts_build';
 import {Key, KeyMethods, KeyOptions, Wallet} from '../../wallet.models';
 import {subscribePushNotifications} from '../../../app/app.effects';
+import {t} from 'i18next';
 
 const BWC = BwcProvider.getInstance();
 
@@ -133,7 +134,9 @@ const joinMultisigWallet = (params: {
                 if (account >= 20) {
                   return reject(
                     new Error(
-                      '20 Wallet limit from the same coin and network has been reached.',
+                      t(
+                        '20 Wallet limit from the same coin and network has been reached.',
+                      ),
                     ),
                   );
                 }

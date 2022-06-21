@@ -10,6 +10,7 @@ import Coinbase from '../../../api/coinbase/index';
 import {AppEffects} from '../../../store/app';
 import {useAppDispatch} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../store/app/app.effects';
 
 const signupUrl: string = 'https://www.coinbase.com/signup';
 
@@ -63,6 +64,16 @@ const CoinbaseIntro = () => {
     } else {
       url = signupUrl;
     }
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Clicked Connect to Coinbase',
+        {
+          context,
+        },
+        true,
+      ),
+    );
     dispatch(AppEffects.openUrlWithInAppBrowser(url));
   };
 

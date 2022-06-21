@@ -9,7 +9,10 @@ import {
   setShowKeyMigrationFailureModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
-import {startRefreshBrazeContent} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startRefreshBrazeContent,
+} from '../../../store/app/app.effects';
 import {
   selectBrazeDoMore,
   selectBrazeQuickLinks,
@@ -62,9 +65,6 @@ const HomeRoot = () => {
     ({APP}) => APP.keyMigrationFailureModalHasBeenShown,
   );
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
-  );
   const hasKeys = Object.values(keys).length;
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups.length > 0;
@@ -72,7 +72,7 @@ const HomeRoot = () => {
   // Shop with Crypto
   const memoizedShopWithCryptoCards = useMemo(() => {
     if (STATIC_CONTENT_CARDS_ENABLED && !brazeShopWithCrypto.length) {
-      return MockOffers;
+      return MockOffers();
     }
 
     return brazeShopWithCrypto;
@@ -120,7 +120,7 @@ const HomeRoot = () => {
   // Quick Links
   const memoizedQuickLinks = useMemo(() => {
     if (STATIC_CONTENT_CARDS_ENABLED && !brazeQuickLinks.length) {
-      return DefaultQuickLinks;
+      return DefaultQuickLinks();
     }
 
     return brazeQuickLinks;
@@ -146,7 +146,7 @@ const HomeRoot = () => {
       ]);
       dispatch(updatePortfolioBalance());
     } catch (err) {
-      dispatch(showBottomNotificationModal(BalanceUpdateError));
+      dispatch(showBottomNotificationModal(BalanceUpdateError()));
     }
     setRefreshing(false);
   };
@@ -202,6 +202,16 @@ const HomeRoot = () => {
                       ),
                     );
                   } else {
+                    dispatch(
+                      logSegmentEvent(
+                        'track',
+                        'Clicked Receive',
+                        {
+                          context: 'HomeRoot',
+                        },
+                        true,
+                      ),
+                    );
                     navigation.navigate('Wallet', {
                       screen: 'GlobalSelect',
                       params: {context: 'receive'},
@@ -226,14 +236,17 @@ const HomeRoot = () => {
                         enableBackdropDismiss: true,
                         actions: [
                           {
-                            text: 'Add funds',
+                            text: t('Add funds'),
                             action: () => {
-                              analytics.track(
-                                'BitPay App - Clicked Buy Crypto',
-                                {
-                                  from: 'HomeRoot',
-                                  appUser: user?.eid || '',
-                                },
+                              dispatch(
+                                logSegmentEvent(
+                                  'track',
+                                  'Clicked Buy Crypto',
+                                  {
+                                    context: 'HomeRoot',
+                                  },
+                                  true,
+                                ),
                               );
                               navigation.navigate('Wallet', {
                                 screen: 'Amount',
@@ -263,6 +276,16 @@ const HomeRoot = () => {
                       }),
                     );
                   } else {
+                    dispatch(
+                      logSegmentEvent(
+                        'track',
+                        'Clicked Send',
+                        {
+                          context: 'HomeRoot',
+                        },
+                        true,
+                      ),
+                    );
                     navigation.navigate('Wallet', {
                       screen: 'GlobalSelect',
                       params: {context: 'send'},
@@ -283,7 +306,7 @@ const HomeRoot = () => {
         {memoizedShopWithCryptoCards.length ? (
           <HomeSection
             title={t('Shop with Crypto')}
-            action="See all"
+            action={t('See all')}
             onActionPress={() => navigation.navigate('Tabs', {screen: 'Shop'})}>
             <OffersCarousel contentCards={memoizedShopWithCryptoCards} />
           </HomeSection>

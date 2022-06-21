@@ -28,6 +28,14 @@ export const failedAppInit = (): AppActionType => ({
   type: AppActionTypes.FAILED_APP_INIT,
 });
 
+export const setAppFirstOpenEventComplete = (): AppActionType => ({
+  type: AppActionTypes.SET_APP_FIRST_OPEN_EVENT_COMPLETE,
+});
+
+export const setAppFirstOpenEventDate = (): AppActionType => ({
+  type: AppActionTypes.SET_APP_FIRST_OPEN_DATE,
+});
+
 export const setIntroCompleted = (): AppActionType => ({
   type: AppActionTypes.SET_INTRO_COMPLETED,
 });

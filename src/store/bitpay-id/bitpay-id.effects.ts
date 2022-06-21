@@ -13,12 +13,13 @@ import Dosh from '../../lib/dosh';
 import {isAxiosError, isRateLimitError} from '../../utils/axios';
 import {generateSalt, hashPassword} from '../../utils/password';
 import {AppActions, AppEffects} from '../app/';
-import {startOnGoingProcessModal} from '../app/app.effects';
+import {logSegmentEvent, startOnGoingProcessModal} from '../app/app.effects';
 import {CardEffects} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
 import {ShopEffects} from '../shop';
 import {BitPayIdActions} from './index';
+import {t} from 'i18next';
 
 interface StartLoginParams {
   email: string;
@@ -96,14 +97,14 @@ export const startCreateAccount =
       let errMsg;
 
       if (isRateLimitError(err)) {
-        errMsg = err.response?.data.error || 'Rate limited';
+        errMsg = err.response?.data.error || t('Rate limited');
       } else if (isAxiosError<RegisterErrorResponse>(err)) {
         errMsg =
           err.response?.data.message ||
           err.message ||
-          'An unexpected error occurred.';
+          t('An unexpected error occurred.');
       } else if (err instanceof Error) {
-        errMsg = err.message || 'An unexpected error occurred.';
+        errMsg = err.message || t('An unexpected error occurred.');
       } else {
         errMsg = JSON.stringify(err);
       }
@@ -177,6 +178,16 @@ export const startLogin =
       await dispatch(startPairAndLoadUser(APP.network, secret));
 
       // complete
+      dispatch(
+        logSegmentEvent(
+          'track',
+          'Log In User success',
+          {
+            type: 'basicAuth',
+          },
+          true,
+        ),
+      );
       dispatch(BitPayIdActions.successLogin(APP.network, session));
     } catch (err) {
       batch(() => {
@@ -186,7 +197,7 @@ export const startLogin =
           errMsg = upperFirst(
             err.response?.data.message ||
               err.message ||
-              'An unexpected error occurred.',
+              t('An unexpected error occurred.'),
           );
           console.error(errMsg);
         } else {
@@ -221,6 +232,16 @@ export const startTwoFactorAuth =
 
       // complete
       dispatch(
+        logSegmentEvent(
+          'track',
+          'Log In User success',
+          {
+            type: 'twoFactorAuth',
+          },
+          true,
+        ),
+      );
+      dispatch(
         BitPayIdActions.successSubmitTwoFactorAuth(APP.network, session),
       );
     } catch (err) {
@@ -231,7 +252,7 @@ export const startTwoFactorAuth =
           errMsg = upperFirst(
             err.response?.data ||
               err.message ||
-              'An unexpected error occurred.',
+              t('An unexpected error occurred.'),
           );
           console.error(errMsg);
         } else {
@@ -270,7 +291,7 @@ export const startTwoFactorPairing =
           errMsg = upperFirst(
             err.response?.data ||
               err.message ||
-              'An unexpected error occurred.',
+              t('An unexpected error occurred.'),
           );
           console.error(errMsg);
         } else if (err instanceof Error) {
@@ -302,6 +323,16 @@ export const startEmailPairing =
 
       await dispatch(startPairAndLoadUser(APP.network, secret));
 
+      dispatch(
+        logSegmentEvent(
+          'track',
+          'Log In User success',
+          {
+            type: 'emailAuth',
+          },
+          true,
+        ),
+      );
       dispatch(BitPayIdActions.successEmailPairing());
     } catch (err) {
       batch(() => {
@@ -409,6 +440,8 @@ export const startDisconnectBitPayId =
       }
 
       dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
+
+      dispatch(logSegmentEvent('track', 'Log Out User success', {}, true));
     } catch (err) {
       // log but swallow this error
       dispatch(LogActions.error('An error occurred while logging out.'));
@@ -467,7 +500,7 @@ export const startSubmitForgotPasswordEmail =
   }): Effect =>
   async (dispatch, getState) => {
     const {APP, BITPAY_ID} = getState();
-    const errMsg = 'Error sending forgot password request.';
+    const errMsg = t('Error sending forgot password request.');
 
     try {
       dispatch(BitPayIdActions.resetForgotPasswordEmailStatus());
@@ -482,7 +515,9 @@ export const startSubmitForgotPasswordEmail =
         dispatch(
           BitPayIdActions.forgotPasswordEmailStatus(
             'success',
-            "Email sent. If an account with that email address exists, you'll receive an email with a link to reset your password.",
+            t(
+              "Email sent. If an account with that email address exists, you'll receive an email with a link to reset your password.",
+            ),
           ),
         );
       } else {

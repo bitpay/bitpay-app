@@ -19,6 +19,8 @@ export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
   SUCCESS_APP_INIT = 'APP/SUCCESS_APP_INIT',
   FAILED_APP_INIT = 'APP/FAILED_APP_INIT',
+  SET_APP_FIRST_OPEN_EVENT_COMPLETE = 'APP/SET_APP_FIRST_OPEN_EVENT_COMPLETE',
+  SET_APP_FIRST_OPEN_DATE = 'APP/SET_APP_FIRST_OPEN_DATE',
   SET_INTRO_COMPLETED = 'APP/SET_INTRO_COMPLETED',
   SET_ONBOARDING_COMPLETED = 'APP/SET_ONBOARDING_COMPLETED',
   SHOW_ONGOING_PROCESS_MODAL = 'APP/SHOW_ONGOING_PROCESS_MODAL',
@@ -76,6 +78,14 @@ interface SuccessAppInit {
 
 interface FailedAppInit {
   type: typeof AppActionTypes.FAILED_APP_INIT;
+}
+
+interface setAppFirstOpenEventComplete {
+  type: typeof AppActionTypes.SET_APP_FIRST_OPEN_EVENT_COMPLETE;
+}
+
+interface setAppFirstOpenDate {
+  type: typeof AppActionTypes.SET_APP_FIRST_OPEN_DATE;
 }
 
 interface SetIntroCompleted {
@@ -287,6 +297,8 @@ export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
   | FailedAppInit
+  | setAppFirstOpenEventComplete
+  | setAppFirstOpenDate
   | SetIntroCompleted
   | SetOnboardingCompleted
   | ShowOnGoingProcessModal

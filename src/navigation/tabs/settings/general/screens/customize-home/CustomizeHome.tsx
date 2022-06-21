@@ -41,6 +41,7 @@ import {
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {COINBASE_ENV} from '../../../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../../../../store/app/app.effects';
 
 enum LayoutTypes {
   CAROUSEL = 'Carousel',
@@ -125,6 +126,11 @@ const CustomizeHome = () => {
               id: key,
               show: !!show,
             }));
+            dispatch(
+              logSegmentEvent('track', 'Save Layout', {
+                layoutType: layoutType,
+              }),
+            );
             dispatch(setHomeCarouselConfig(list));
             dispatch(setHomeCarouselLayoutType(layoutType));
             navigation.goBack();
@@ -163,9 +169,7 @@ const CustomizeHome = () => {
         <H7>{t('Home Layout')}</H7>
         <Tab.Navigator
           initialRouteName={
-            layoutType === 'carousel'
-              ? LayoutTypes.CAROUSEL
-              : LayoutTypes.LIST_VIEW
+            layoutType === 'carousel' ? t('Carousel') : t('List View')
           }
           style={{marginTop: 20}}
           screenOptions={{
