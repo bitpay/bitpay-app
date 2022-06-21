@@ -197,17 +197,13 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
     {
       label: receive.label || t('receive'),
       img: <ReceiveSvg />,
-      cta: () => {
-        receive.cta;
-      },
+      cta: receive.cta,
       hide: !!receive?.hide,
     },
     {
       label: send.label || t('send'),
       img: <SendSvg />,
-      cta: () => {
-        send.cta;
-      },
+      cta: send.cta,
       hide: !!send?.hide,
     },
   ];
