@@ -21,7 +21,10 @@ import {
 } from '../../../constants/currencies';
 import {startCreateKey} from '../../../store/wallet/effects';
 import {FlatList, TouchableOpacity} from 'react-native';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {BaseText, HeaderTitle, Link} from '../../../components/styled/Text';
@@ -241,6 +244,17 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
                   screen: 'BackupKey',
                   params: {context, key},
                 },
+              );
+              dispatch(
+                logSegmentEvent(
+                  'track',
+                  'Create New Key success',
+                  {
+                    context,
+                    currencies,
+                  },
+                  true,
+                ),
               );
               dispatch(dismissOnGoingProcessModal());
             } catch (e: any) {

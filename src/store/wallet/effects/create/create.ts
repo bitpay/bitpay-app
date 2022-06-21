@@ -30,6 +30,7 @@ import {
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
 import {sleep} from '../../../../utils/helper-methods';
+import {t} from 'i18next';
 
 export interface CreateOptions {
   network?: Network;
@@ -293,7 +294,9 @@ const createWallet = (params: {
               if (account >= 20) {
                 return reject(
                   new Error(
-                    '20 Wallet limit from the same coin and network has been reached.',
+                    t(
+                      '20 Wallet limit from the same coin and network has been reached.',
+                    ),
                   ),
                 );
               }
@@ -442,7 +445,9 @@ export const createWalletWithOpts = (params: {
                 if (account >= 20) {
                   return reject(
                     new Error(
-                      '20 Wallet limit from the same coin and network has been reached.',
+                      t(
+                        '20 Wallet limit from the same coin and network has been reached.',
+                      ),
                     ),
                   );
                 }

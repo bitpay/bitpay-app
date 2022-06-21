@@ -15,6 +15,8 @@ import {
 import haptic from '../../../components/haptic-feedback/haptic';
 import MultisigOptions from './MultisigOptions';
 import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../store/app/app.effects';
+import {useAppDispatch} from '../../../utils/hooks';
 
 export interface Option {
   id: string;
@@ -26,6 +28,7 @@ export interface Option {
 const CreationOptions: React.FC = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
   const [showMultisigOptions, setShowMultisigOptions] = useState(false);
 
   useLayoutEffect(() => {
@@ -43,11 +46,17 @@ const CreationOptions: React.FC = () => {
       description: t(
         'Add coins like Bitcoin and Dogecoin and also tokens like USDC and PAX',
       ),
-      cta: () =>
+      cta: () => {
+        dispatch(
+          logSegmentEvent('track', 'Clicked Create New Key', {
+            context: 'CreationOptions',
+          }),
+        );
         navigation.navigate('Wallet', {
           screen: 'CurrencySelection',
           params: {context: 'createNewKey'},
-        }),
+        });
+      },
     },
     {
       id: 'import',
@@ -55,10 +64,16 @@ const CreationOptions: React.FC = () => {
       description: t(
         'Use an existing recovery phrase to import an existing wallet',
       ),
-      cta: () =>
+      cta: () => {
+        dispatch(
+          logSegmentEvent('track', 'Clicked Import Key', {
+            context: 'CreationOptions',
+          }),
+        );
         navigation.navigate('Wallet', {
           screen: 'Import',
-        }),
+        });
+      },
     },
     {
       id: 'multisig',

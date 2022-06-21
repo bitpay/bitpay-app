@@ -53,7 +53,10 @@ import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import DefaultSvg from '../../../../assets/img/currencies/default.svg';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
 import {publishAndSign} from '../../../store/wallet/effects/send/send';
@@ -501,6 +504,17 @@ const TransactionProposalDetails = () => {
               await sleep(400);
               await dispatch(publishAndSign({txp: txs, key, wallet}));
               dispatch(dismissOnGoingProcessModal());
+              dispatch(
+                logSegmentEvent(
+                  'track',
+                  'Sent Crypto',
+                  {
+                    context: 'Transaction Proposal Details',
+                    coin: currencyAbbreviation || '',
+                  },
+                  true,
+                ),
+              );
               await sleep(400);
               setShowPaymentSentModal(true);
             } catch (err) {

@@ -4,13 +4,13 @@ import {Action, White} from '../../../../styles/colors';
 import Haptic from '../../../../components/haptic-feedback/haptic';
 import {BaseText} from '../../../../components/styled/Text';
 import {titleCasing} from '../../../../utils/helper-methods';
-import {useAppSelector} from '../../../../utils/hooks';
+import {useAppDispatch} from '../../../../utils/hooks';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
 import {useNavigation} from '@react-navigation/native';
 import {Path, Svg} from 'react-native-svg';
 import {useRequireKeyAndWalletRedirect} from '../../../../utils/hooks/useRequireKeyAndWalletRedirect';
-import analytics from '@segment/analytics-react-native';
 import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../../store/app/app.effects';
 
 const ButtonsRow = styled.View`
   justify-content: center;
@@ -129,17 +129,22 @@ interface Props {
 const LinkingButtons = ({buy, receive, send, swap}: Props) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
-  );
+  const dispatch = useAppDispatch();
+
   const buyCryptoCta = useRequireKeyAndWalletRedirect(
     buy && buy.cta
       ? buy.cta
       : () => {
-          analytics.track('BitPay App - Clicked Buy Crypto', {
-            from: 'LinkingButtons',
-            appUser: user?.eid || '',
-          });
+          dispatch(
+            logSegmentEvent(
+              'track',
+              'Clicked Buy Crypto',
+              {
+                context: 'LinkingButtons',
+              },
+              true,
+            ),
+          );
           navigation.navigate('Wallet', {
             screen: 'Amount',
             params: {
@@ -162,10 +167,16 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
     swap && swap.cta
       ? swap.cta
       : () => {
-          analytics.track('BitPay App - Clicked Swap Crypto', {
-            from: 'LinkingButtons',
-            appUser: user?.eid || '',
-          });
+          dispatch(
+            logSegmentEvent(
+              'track',
+              'Clicked Swap Crypto',
+              {
+                context: 'LinkingButtons',
+              },
+              true,
+            ),
+          );
           navigation.navigate('SwapCrypto', {screen: 'Root'});
         },
   );
@@ -186,13 +197,17 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
     {
       label: receive.label || t('receive'),
       img: <ReceiveSvg />,
-      cta: receive.cta,
+      cta: () => {
+        receive.cta;
+      },
       hide: !!receive?.hide,
     },
     {
       label: send.label || t('send'),
       img: <SendSvg />,
-      cta: send.cta,
+      cta: () => {
+        send.cta;
+      },
       hide: !!send?.hide,
     },
   ];

@@ -28,6 +28,7 @@ import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-proce
 import {
   Wallet,
   TransactionProposal,
+  SendMaxInfo,
 } from '../../../../store/wallet/wallet.models';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {
@@ -39,7 +40,11 @@ import {
   IsERCToken,
   GetChain,
 } from '../../../../store/wallet/utils/currency';
-import {FormatAmountStr} from '../../../../store/wallet/effects/amount/amount';
+import {
+  FormatAmountStr,
+  GetExcludedUtxosMessage,
+  SatToUnit,
+} from '../../../../store/wallet/effects/amount/amount';
 import {
   changellyCreateFixTransaction,
   changellyGetFixRateForAmount,
@@ -64,7 +69,10 @@ import {
   ArrowContainer,
 } from '../styled/SwapCryptoCheckout.styled';
 import {startGetRates} from '../../../../store/wallet/effects';
-import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../../store/app/app.effects';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -77,8 +85,8 @@ import {
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 import {SwapCryptoActions} from '../../../../store/swap-crypto';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
-import analytics from '@segment/analytics-react-native';
 import {useTranslation} from 'react-i18next';
+import {Currencies} from '../../../../constants/currencies';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -94,7 +102,7 @@ export interface ChangellyCheckoutProps {
   fixedRateId: string;
   amountFrom: number;
   useSendMax?: boolean;
-  sendMaxInfo?: any;
+  sendMaxInfo?: SendMaxInfo;
 }
 
 const ChangellyCheckout: React.FC = () => {
@@ -132,9 +140,6 @@ const ChangellyCheckout: React.FC = () => {
   const [paymentExpired, setPaymentExpired] = useState(false);
   const key = useAppSelector(
     ({WALLET}) => WALLET.keys[fromWalletSelected.keyId],
-  );
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
@@ -295,8 +300,7 @@ const ChangellyCheckout: React.FC = () => {
             await sleep(400);
 
             if (useSendMax) {
-              console.log('TODO: handle send max');
-              // showWarningSheet();
+              showSendMaxWarning(ctxp.coin);
             }
             return;
           })
@@ -342,6 +346,21 @@ const ChangellyCheckout: React.FC = () => {
         /* later */
         clearInterval(countDown);
       }
+      dispatch(
+        logSegmentEvent(
+          'track',
+          'Failed Swap Crypto',
+          {
+            exchange: 'changelly',
+            context: 'ChangellyCheckout',
+            message: 'The time to make the payment expired',
+            amountFrom: amountFrom || '',
+            fromCoin: fromWalletSelected.currencyAbbreviation || '',
+            toCoin: toWalletSelected.currencyAbbreviation || '',
+          },
+          true,
+        ),
+      );
       return;
     }
 
@@ -526,20 +545,74 @@ const ChangellyCheckout: React.FC = () => {
 
     logger.debug('Saved swap with: ' + JSON.stringify(newData));
 
-    analytics.track('BitPay App - Successful Crypto Swap', {
-      fromWalletId: fromWalletSelected.id,
-      toWalletId: toWalletSelected.id,
-      fromCoin: fromWalletSelected.currencyAbbreviation,
-      toCoin: toWalletSelected.currencyAbbreviation,
-      amountFrom: amountFrom,
-      exchange: 'changelly',
-      appUser: user?.eid || '',
-    });
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Successful Crypto Swap',
+        {
+          fromCoin: fromWalletSelected.currencyAbbreviation,
+          toCoin: toWalletSelected.currencyAbbreviation,
+          amountFrom: amountFrom,
+          exchange: 'changelly',
+        },
+        true,
+      ),
+    );
+  };
+
+  const showSendMaxWarning = async (coin: string) => {
+    if (!sendMaxInfo || !coin) {
+      return;
+    }
+
+    const warningMsg = dispatch(GetExcludedUtxosMessage(coin, sendMaxInfo));
+    const chainName = dispatch(IsERCToken(coin))
+      ? Currencies.eth.name
+      : Currencies[coin]?.name;
+    const fee = dispatch(SatToUnit(sendMaxInfo.fee, coin));
+
+    const msg =
+      `Because you are sending the maximum amount contained in this wallet, the ${chainName} miner fee (${fee} ${coin.toUpperCase()}) will be deducted from the total.` +
+      `\n${warningMsg}`;
+
+    await sleep(400);
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: 'Miner Fee Notice',
+        message: msg,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'OK',
+            action: async () => {
+              dispatch(dismissBottomNotificationModal());
+            },
+            primary: true,
+          },
+        ],
+      }),
+    );
   };
 
   const showError = async (msg?: string, title?: string, actions?: any) => {
     dispatch(dismissOnGoingProcessModal());
     await sleep(1000);
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Failed Swap Crypto',
+        {
+          exchange: 'changelly',
+          context: 'ChangellyCheckout',
+          message: msg || '',
+          amountFrom: amountFrom || '',
+          fromCoin: fromWalletSelected.currencyAbbreviation || '',
+          toCoin: toWalletSelected.currencyAbbreviation || '',
+        },
+        true,
+      ),
+    );
     dispatch(
       showBottomNotificationModal({
         type: 'error',

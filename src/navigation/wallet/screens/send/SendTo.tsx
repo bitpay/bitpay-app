@@ -1,5 +1,5 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {HeaderTitle, Link} from '../../../../components/styled/Text';
+import {BaseText, HeaderTitle, Link} from '../../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import Clipboard from '@react-native-community/clipboard';
@@ -9,7 +9,13 @@ import {
   SearchInput,
 } from '../../../../components/styled/Containers';
 import ScanSvg from '../../../../../assets/img/onboarding/scan.svg';
-import {NeutralSlate} from '../../../../styles/colors';
+import ContactsSvg from '../../../../../assets/img/tab-icons/contacts.svg';
+import {
+  LightBlack,
+  NeutralSlate,
+  SlateDark,
+  White,
+} from '../../../../styles/colors';
 import {RouteProp} from '@react-navigation/core';
 import {WalletScreens, WalletStackParamList} from '../../WalletStack';
 import {Effect, RootState} from '../../../../store';
@@ -34,7 +40,10 @@ import {
   PayProPaymentOption,
 } from '../../../../store/wallet/effects/paypro/paypro';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
-import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissOnGoingProcessModal,
@@ -61,6 +70,7 @@ import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {GetChain} from '../../../../store/wallet/utils/currency';
 import {goToAmount, incomingData} from '../../../../store/scan/scan.effects';
 import {useTranslation} from 'react-i18next';
+import SettingsContactRow from '../../../../components/list/SettingsContactRow';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -93,6 +103,24 @@ const PasteClipboardContainer = styled.TouchableOpacity`
   flex-direction: row;
   justify-content: center;
   padding: 10px;
+`;
+
+const SendContactRow = styled.View`
+  padding: 20px 0px;
+`;
+
+const ContactTitleContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
+  border-bottom-width: 1px;
+  margin-bottom: 10px;
+`;
+
+const ContactTitle = styled(BaseText)`
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  margin-left: 10px;
 `;
 
 const BuildKeyWalletRow = (
@@ -152,6 +180,7 @@ const SendTo = () => {
   const route = useRoute<RouteProp<WalletStackParamList, 'SendTo'>>();
 
   const keys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
+  const allContacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const theme = useTheme();
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
@@ -177,6 +206,11 @@ const SendTo = () => {
     currencyAbbreviation,
     network,
     defaultAltCurrency.isoCode,
+  );
+
+  const contacts = allContacts.filter(
+    contact =>
+      contact.coin === currencyAbbreviation && contact.network === network,
   );
 
   const onErrorMessageDismiss = () => {
@@ -242,7 +276,11 @@ const SendTo = () => {
       return false;
     };
 
-  const validateAndNavigateToConfirm = async (text: string) => {
+  const validateAndNavigateToConfirm = async (
+    text: string,
+    context?: string,
+    name?: string,
+  ) => {
     const data = ValidateURI(text);
     if (data?.type === 'PayPro' || data?.type === 'InvoiceUri') {
       try {
@@ -290,7 +328,7 @@ const SendTo = () => {
       if (dispatch(checkCoinAndNetwork(text))) {
         setSearchInput(text);
         await sleep(0);
-        dispatch(incomingData(text, wallet));
+        dispatch(incomingData(text, {wallet, context, name}));
       }
     }
   };
@@ -369,6 +407,11 @@ const SendTo = () => {
             activeOpacity={0.75}
             onPress={() => {
               haptic('impactLight');
+              dispatch(
+                logSegmentEvent('track', 'Open Scanner', {
+                  context: 'SendTo',
+                }),
+              );
               navigation.navigate('Scan', {
                 screen: 'Root',
                 params: {
@@ -387,6 +430,7 @@ const SendTo = () => {
             <ScanSvg />
           </TouchableOpacity>
         </SearchContainer>
+
         {clipboardData ? (
           <PasteClipboardContainer
             activeOpacity={0.75}
@@ -398,6 +442,37 @@ const SendTo = () => {
             <Link>{t('Paste from clipboard')}</Link>
           </PasteClipboardContainer>
         ) : null}
+
+        {contacts.length > 0
+          ? contacts.map((item, index) => {
+              return (
+                <SendContactRow key={index}>
+                  <ContactTitleContainer>
+                    {ContactsSvg({})}
+                    <ContactTitle>{'Contacts'}</ContactTitle>
+                  </ContactTitleContainer>
+
+                  <SettingsContactRow
+                    contact={item}
+                    onPress={() => {
+                      try {
+                        if (item) {
+                          validateAndNavigateToConfirm(
+                            item.address,
+                            'contact',
+                            item.name,
+                          );
+                        }
+                      } catch (err) {
+                        console.log(err);
+                      }
+                    }}
+                  />
+                </SendContactRow>
+              );
+            })
+          : null}
+
         <View>
           <KeyWalletsRow
             keyWallets={keyWallets}

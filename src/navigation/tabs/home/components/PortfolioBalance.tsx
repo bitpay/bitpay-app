@@ -85,7 +85,7 @@ const PortfolioBalance = () => {
       <PortfolioBalanceHeader
         activeOpacity={ActiveOpacity}
         onPress={showPortfolioBalanceInfoModal}>
-        <PortfolioBalanceTitle>Portfolio Balance</PortfolioBalanceTitle>
+        <PortfolioBalanceTitle>{t('Portfolio Balance')}</PortfolioBalanceTitle>
         <InfoSvg width={12} height={12} />
       </PortfolioBalanceHeader>
       <PortfolioBalanceText>

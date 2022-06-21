@@ -49,6 +49,7 @@ export enum WalletActionTypes {
   SUCCESS_GET_RECEIVE_ADDRESS = 'WALLET/SUCCESS_GET_RECEIVE_ADDRESS',
   SET_USE_UNCONFIRMED_FUNDS = 'WALLET/SET_USE_UNCONFIRMED_FUNDS',
   SET_CUSTOMIZE_NONCE = 'WALLET/SET_CUSTOMIZE_NONCE',
+  SET_QUEUED_TRANSACTIONS = 'WALLET/SET_QUEUED_TRANSACTIONS',
   SET_ENABLE_REPLACE_BY_FEE = 'WALLET/SET_ENABLE_REPLACE_BY_FEE',
   UPDATE_WALLET_TX_HISTORY = 'WALLET/UPDATE_WALLET_TX_HISTORY',
   SYNC_WALLETS = 'WALLET/SYNC_WALLETS',
@@ -274,6 +275,10 @@ interface setCustomizeNonce {
   type: typeof WalletActionTypes.SET_CUSTOMIZE_NONCE;
   payload: boolean;
 }
+interface setQueuedTransactions {
+  type: typeof WalletActionTypes.SET_QUEUED_TRANSACTIONS;
+  payload: boolean;
+}
 interface setEnableReplaceByFee {
   type: typeof WalletActionTypes.SET_ENABLE_REPLACE_BY_FEE;
   payload: boolean;
@@ -362,6 +367,7 @@ export type WalletActionType =
   | successGetReceiveAddress
   | setUseUnconfirmedFunds
   | setCustomizeNonce
+  | setQueuedTransactions
   | setEnableReplaceByFee
   | updateWalletTxHistory
   | syncWallets

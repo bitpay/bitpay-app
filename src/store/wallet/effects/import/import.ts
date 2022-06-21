@@ -81,6 +81,7 @@ import {
   setProductsUpdatesNotifications,
   subscribePushNotifications,
 } from '../../../app/app.effects';
+import {t} from 'i18next';
 
 const BWC = BwcProvider.getInstance();
 
@@ -716,7 +717,7 @@ export const startImportFile =
           _key = matchedKey.methods;
           opts.keyId = null;
           if (isMatchedWallet(wallets[0], matchedKey.wallets)) {
-            throw new Error('The wallet is already in the app.');
+            throw new Error(t('The wallet is already in the app.'));
           }
           wallets[0].keyId = matchedKey.id;
           wallets = wallets.concat(matchedKey.wallets);
@@ -887,7 +888,7 @@ const createKeyAndCredentials = async (
       throw e;
     }
   } else {
-    throw new Error('No data provided');
+    throw new Error(t('No data provided'));
   }
   let wallet;
   try {
@@ -929,7 +930,7 @@ const createKeyAndCredentialsWithFile = async (
           seedData: data.key,
         });
       } else {
-        throw new Error('New format. Could not import. Check input file.');
+        throw new Error(t('New format. Could not import. Check input file.'));
       }
     }
   } else {
@@ -952,13 +953,15 @@ const createKeyAndCredentialsWithFile = async (
       key = migrated.key;
       addressBook = data.addressBook ? data.addressBook : {};
     } catch (error) {
-      throw new Error('Old format. Could not import. Check input file.');
+      throw new Error(t('Old format. Could not import. Check input file.'));
     }
   }
 
   if (!credentials.n) {
     throw new Error(
-      'Backup format not recognized. If you are using a Copay Beta backup and version is older than 0.10, please see: https://github.com/bitpay/copay/issues/4730#issuecomment-244522614',
+      t(
+        'Backup format not recognized. If you are using a Copay Beta backup and version is older than 0.10, please see:',
+      ) + ' https://github.com/bitpay/copay/issues/4730#issuecomment-244522614',
     );
   }
 

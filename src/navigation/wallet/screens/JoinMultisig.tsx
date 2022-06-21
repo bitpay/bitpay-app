@@ -25,7 +25,10 @@ import {
   addWalletJoinMultisig,
   getDecryptPassword,
 } from '../../../store/wallet/effects';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {sleep} from '../../../utils/helper-methods';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
@@ -124,6 +127,17 @@ const JoinMultisig = () => {
           }),
         )) as Wallet;
 
+        dispatch(
+          logSegmentEvent(
+            'track',
+            'Join Multisig Wallet success',
+            {
+              addedToExistingKey: true,
+            },
+            true,
+          ),
+        );
+
         wallet.getStatus(
           {network: wallet.network},
           async (err: any, status: Status) => {
@@ -202,6 +216,17 @@ const JoinMultisig = () => {
           startJoinMultisig(opts),
         )) as Key;
 
+        dispatch(
+          logSegmentEvent(
+            'track',
+            'Join Multisig Wallet success',
+            {
+              addedToExistingKey: false,
+            },
+            true,
+          ),
+        );
+
         dispatch(setHomeCarouselConfig({id: multisigKey.id, show: true}));
 
         navigation.navigate('Wallet', {
@@ -253,7 +278,12 @@ const JoinMultisig = () => {
 
           <ScanContainer
             activeOpacity={ActiveOpacity}
-            onPress={() =>
+            onPress={() => {
+              dispatch(
+                logSegmentEvent('track', 'Open Scanner', {
+                  context: 'JoinMultisig',
+                }),
+              );
               navigation.navigate('Scan', {
                 screen: 'Root',
                 params: {
@@ -263,8 +293,8 @@ const JoinMultisig = () => {
                     });
                   },
                 },
-              })
-            }>
+              });
+            }}>
             <ScanSvg />
           </ScanContainer>
         </HeaderContainer>

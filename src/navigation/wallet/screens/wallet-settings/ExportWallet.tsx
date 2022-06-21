@@ -30,6 +30,7 @@ import Clipboard from '@react-native-community/clipboard';
 import {sleep} from '../../../../utils/helper-methods';
 import {Linking} from 'react-native';
 import {useTranslation} from 'react-i18next';
+import i18next from 'i18next';
 
 const BWC = BwcProvider.getInstance();
 
@@ -62,13 +63,13 @@ const PasswordActionContainer = styled.View`
 const PasswordInputContainer = styled.View`
   margin: 15px 0;
 `;
-/* add translation */
+
 const schema = yup.object().shape({
   password: yup.string().required(),
   confirmPassword: yup
     .string()
-    .required('Confirm Encryption Password is required field')
-    .oneOf([yup.ref('password')], 'Passwords must match'),
+    .required(() => i18next.t('Confirm Encryption Password is required field'))
+    .oneOf([yup.ref('password')], () => i18next.t('Passwords must match')),
 });
 
 interface ExportWalletPasswordFieldValues {
@@ -224,7 +225,7 @@ const ExportWallet = () => {
               render={({field: {onChange, onBlur, value}}) => (
                 <BoxInput
                   placeholder={'strongPassword123'}
-                  label={'EXPORT PASSWORD'}
+                  label={t('EXPORT PASSWORD')}
                   type={'password'}
                   onBlur={onBlur}
                   onChangeText={(text: string) => onChange(text)}
@@ -243,7 +244,7 @@ const ExportWallet = () => {
               render={({field: {onChange, onBlur, value}}) => (
                 <BoxInput
                   placeholder={'strongPassword123'}
-                  label={'CONFIRM EXPORT PASSWORD'}
+                  label={t('CONFIRM EXPORT PASSWORD')}
                   type={'password'}
                   onBlur={onBlur}
                   onChangeText={(text: string) => onChange(text)}

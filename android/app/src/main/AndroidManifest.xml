@@ -39,7 +39,7 @@
         <!-- Used by Dosh Android SDK -->
         <meta-data
                 android:name="com.google.android.geo.API_KEY"
-                android:value="REPLACE_ME"/>
+                android:value="GOOGLE_MAPS_API_KEY_REPLACE_ME"/>
 
         <meta-data
                 android:name="com.google.android.gms.wallet.api.enabled"
