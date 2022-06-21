@@ -466,12 +466,12 @@ export const GetTransactionHistory =
           // look for sent or moved unconfirmed until find a confirmed
           if (transactionHistory && transactionHistory[0]) {
             for (let tx of transactionHistory) {
-              if (tx.confirmations === 0) {
-                if (tx.action === 'sent' || tx.action === 'moved') {
+              if (tx.action === 'sent' || tx.action === 'moved') {
+                if (tx.confirmations === 0) {
                   hasConfirmingTxs = true;
+                } else {
+                  break;
                 }
-              } else {
-                break;
               }
             }
           }
