@@ -181,22 +181,31 @@ export const walletReducer = (
       };
     }
 
-    case WalletActionTypes.SUCCESS_UPDATE_KEY_TOTAL_BALANCE: {
-      const {keyId, totalBalance, totalBalanceLastDay} = action.payload;
-      const keyToUpdate = state.keys[keyId];
-      keyToUpdate.totalBalance = totalBalance;
-      keyToUpdate.totalBalanceLastDay = totalBalanceLastDay;
+    case WalletActionTypes.SUCCESS_UPDATE_KEYS_TOTAL_BALANCE: {
+      const updatedKeys: any = {};
+      const updatedBalanceCacheKeys: any = {};
+      const dateNow = Date.now();
+
+      action.payload.forEach(updates => {
+        const {keyId, totalBalance, totalBalanceLastDay} = updates;
+        const keyToUpdate = state.keys[keyId];
+
+        keyToUpdate.totalBalance = totalBalance;
+        keyToUpdate.totalBalanceLastDay = totalBalanceLastDay;
+
+        updatedKeys[keyId] = {...keyToUpdate};
+        updatedBalanceCacheKeys[keyId] = dateNow;
+      });
+
       return {
         ...state,
         keys: {
           ...state.keys,
-          [keyId]: {
-            ...keyToUpdate,
-          },
+          ...updatedKeys,
         },
         balanceCacheKey: {
           ...state.balanceCacheKey,
-          [keyId]: Date.now(),
+          ...updatedBalanceCacheKeys,
         },
       };
     }

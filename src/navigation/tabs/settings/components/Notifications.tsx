@@ -1,28 +1,23 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
-import {RootState} from '../../../../store';
-import {AppEffects} from '../../../../store/app';
-import {SettingsComponent} from '../SettingsRoot';
+import {useTranslation} from 'react-i18next';
+import {Alert, View, AppState, AppStateStatus, Linking} from 'react-native';
+import Checkbox from '../../../../components/checkbox/Checkbox';
 import {
   Hr,
   Setting,
   SettingTitle,
 } from '../../../../components/styled/Containers';
-import Checkbox from '../../../../components/checkbox/Checkbox';
-import {Alert, View, AppState, AppStateStatus, Linking} from 'react-native';
-import {useTranslation} from 'react-i18next';
+import {AppEffects} from '../../../../store/app';
+import {selectSettingsNotificationState} from '../../../../store/app/app.selectors';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
+import {SettingsComponent} from '../SettingsRoot';
 
 const Notifications = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
-  const notificationsState = useAppSelector(({APP}: RootState) => {
-    return {
-      pushNotifications: APP.notificationsAccepted,
-      confirmedTx: APP.confirmedTxAccepted,
-      productsUpdates: APP.productsUpdatesAccepted,
-      offersAndPromotions: APP.offersAndPromotionsAccepted,
-    };
-  });
+
+  const notificationsState = useAppSelector(selectSettingsNotificationState);
+
   const [pushNotifications, setPushNotifications] = useState(
     notificationsState.pushNotifications,
   );
@@ -74,7 +69,7 @@ const Notifications = () => {
         }
       }
     },
-    [dispatch, notificationsState, openSettings],
+    [dispatch, openSettings, notificationsState.pushNotifications],
   );
 
   const notificationsList = [
@@ -128,7 +123,7 @@ const Notifications = () => {
     }
     AppState.addEventListener('change', onAppStateChange);
     return () => AppState.removeEventListener('change', onAppStateChange);
-  }, [dispatch, setNotificationValue, notificationsState]);
+  }, [dispatch, setNotificationValue, notificationsState.pushNotifications]);
 
   return (
     <SettingsComponent>

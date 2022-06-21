@@ -39,6 +39,7 @@ export enum WalletActionTypes {
   SUCCESS_UPDATE_WALLET_STATUS = 'WALLET/SUCCESS_UPDATE_WALLET_STATUS',
   FAILED_UPDATE_WALLET_STATUS = 'WALLET/FAILED_UPDATE_WALLET_STATUS',
   SUCCESS_UPDATE_KEY_TOTAL_BALANCE = 'WALLET/SUCCESS_UPDATE_KEY_TOTAL_BALANCE',
+  SUCCESS_UPDATE_KEYS_TOTAL_BALANCE = 'WALLET/SUCCESS_UPDATE_KEYS_TOTAL_BALANCE',
   FAILED_UPDATE_KEY_TOTAL_BALANCE = 'WALLET/FAILED_UPDATE_KEY_TOTAL_BALANCE',
   SUCCESS_UPDATE_ALL_KEYS_AND_STATUS = 'WALLET/SUCCESS_UPDATE_ALL_KEYS_AND_STATUS',
   FAILED_UPDATE_ALL_KEYS_AND_STATUS = 'WALLET/FAILED_UPDATE_ALL_KEYS_AND_STATUS',
@@ -207,13 +208,13 @@ interface failedUpdateWalletStatus {
   };
 }
 
-interface successUpdateKeyTotalBalance {
-  type: typeof WalletActionTypes.SUCCESS_UPDATE_KEY_TOTAL_BALANCE;
+interface successUpdateKeysTotalBalance {
+  type: typeof WalletActionTypes.SUCCESS_UPDATE_KEYS_TOTAL_BALANCE;
   payload: {
     keyId: string;
     totalBalance: number;
     totalBalanceLastDay: number;
-  };
+  }[];
 }
 
 interface failedUpdateKeyTotalBalance {
@@ -356,7 +357,7 @@ export type WalletActionType =
   | setWalletTermsAccepted
   | successUpdateWalletStatus
   | failedUpdateWalletStatus
-  | successUpdateKeyTotalBalance
+  | successUpdateKeysTotalBalance
   | failedUpdateKeyTotalBalance
   | updatePortfolioBalance
   | successUpdateAllKeysAndStatus

@@ -18,7 +18,7 @@ import {
   setWalletRefreshing,
   successUpdateAllKeysAndStatus,
   successUpdateKey,
-  successUpdateKeyTotalBalance,
+  successUpdateKeysTotalBalance,
   successUpdateWalletStatus,
   updatePortfolioBalance,
 } from '../../wallet.actions';
@@ -200,11 +200,13 @@ export const startUpdateWalletStatus =
           );
 
           dispatch(
-            successUpdateKeyTotalBalance({
-              keyId: key.id,
-              totalBalance: totalFiatBalance,
-              totalBalanceLastDay: totalLastDayFiatBalance,
-            }),
+            successUpdateKeysTotalBalance([
+              {
+                keyId: key.id,
+                totalBalance: totalFiatBalance,
+                totalBalanceLastDay: totalLastDayFiatBalance,
+              },
+            ]),
           );
         }
 
@@ -222,140 +224,156 @@ export const startUpdateWalletStatus =
     });
   };
 
-export const startUpdateAllWalletStatusForKey =
-  ({key, force}: {key: Key; force?: boolean}): Effect =>
+export const startUpdateAllWalletStatusForKeys =
+  ({keys, force}: {keys: Key[]; force?: boolean}): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
-        const {
-          WALLET: {rates, lastDayRates, balanceCacheKey},
-          APP: {defaultAltCurrency},
-        } = getState();
-
-        if (!isCacheKeyStale(balanceCacheKey[key.id], BALANCE_CACHE_DURATION)) {
-          console.log(`Key: ${key.id} - skipping balance update`);
-          return resolve();
-        }
-
-        const walletOptions = {} as {
-          [key in string]: {
-            tokenAddresses: string[] | undefined;
-            multisigContractAddress: string | null;
-          };
-        };
-
-        key.wallets
-          .filter(
-            wallet =>
-              !wallet.credentials.token && wallet.credentials.isComplete(),
-          )
-          .forEach(({credentials: {copayerId, multisigEthInfo}, tokens}) => {
-            walletOptions[copayerId] = {
-              tokenAddresses: tokens?.map(
-                address => '0x' + address.split('0x')[1],
-              ),
-              multisigContractAddress: multisigEthInfo
-                ? multisigEthInfo.multisigContractAddress
-                : null,
-            };
-          });
-
+        const {APP, WALLET} = getState();
+        const {defaultAltCurrency} = APP;
+        const {rates, lastDayRates, balanceCacheKey} = WALLET;
         const {bulkClient} = BwcProvider.getInstance().getClient();
-        const credentials = key.wallets
-          .filter(
-            wallet =>
-              !wallet.credentials.token && wallet.credentials.isComplete(),
-          )
-          .map(wallet => wallet.credentials);
 
-        if (!credentials.length) {
-          return resolve();
-        }
+        const keyUpdates = keys.reduce((acc, key) => {
+          if (
+            !isCacheKeyStale(balanceCacheKey[key.id], BALANCE_CACHE_DURATION)
+          ) {
+            console.log(`Key: ${key.id} - skipping balance update`);
+            return acc;
+          }
 
-        bulkClient.getStatusAll(
-          credentials,
-          {includeExtendedInfo: true, twoStep: true, wallets: walletOptions},
-          (err: Error, bulkStatus: BulkStatus[]) => {
-            if (err) {
-              console.log(err);
+          const walletOptions = {} as Record<
+            string,
+            {
+              tokenAddresses: string[] | undefined;
+              multisigContractAddress: string | null;
             }
+          >;
 
-            const balances = key.wallets.map(wallet => {
-              const {balance: cachedBalance} = wallet;
+          key.wallets
+            .filter(wallet => {
+              return (
+                !wallet.credentials.token && wallet.credentials.isComplete()
+              );
+            })
+            .forEach(({credentials: {copayerId, multisigEthInfo}, tokens}) => {
+              const tokenAddresses = tokens?.map(
+                address => '0x' + address.split('0x')[1],
+              );
+              const multisigContractAddress =
+                multisigEthInfo?.multisigContractAddress || null;
 
-              const {status, success} =
-                bulkStatus.find(bStatus => {
-                  if (typeof bStatus.tokenAddress === 'string') {
-                    return (
-                      bStatus.tokenAddress ===
-                        wallet.credentials.token?.address &&
-                      `${bStatus.walletId}-${bStatus.tokenAddress}` ===
-                        wallet.id
-                    );
-                  }
-
-                  return bStatus.walletId === wallet.id;
-                }) || {};
-
-              if (
-                status &&
-                success &&
-                (force ||
-                  status.balance.availableAmount !==
-                    cachedBalance.satAvailable ||
-                  status.pendingTxps?.length > 0)
-              ) {
-                const newBalance = dispatch(
-                  buildBalance({
-                    wallet,
-                    status,
-                    defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-                    rates,
-                    lastDayRates,
-                  }),
-                );
-
-                const newPendingTxps = dispatch(
-                  buildPendingTxps({wallet, status}),
-                );
-
-                dispatch(
-                  successUpdateWalletStatus({
-                    keyId: key.id,
-                    walletId: wallet.id,
-                    status: {
-                      balance: newBalance,
-                      pendingTxps: newPendingTxps,
-                    },
-                  }),
-                );
-
-                console.log(
-                  `Wallet: ${wallet.currencyAbbreviation} ${wallet.id} - status updated`,
-                );
-
-                return newBalance;
-              } else {
-                return cachedBalance;
-              }
+              walletOptions[copayerId] = {
+                tokenAddresses,
+                multisigContractAddress,
+              };
             });
 
-            dispatch(
-              successUpdateKeyTotalBalance({
+          const credentials = key.wallets
+            .filter(
+              wallet =>
+                !wallet.credentials.token && wallet.credentials.isComplete(),
+            )
+            .map(wallet => wallet.credentials);
+
+          if (!credentials.length) {
+            return acc;
+          }
+
+          bulkClient.getStatusAll(
+            credentials,
+            {includeExtendedInfo: true, twoStep: true, wallets: walletOptions},
+            (err: Error, bulkStatus: BulkStatus[]) => {
+              if (err) {
+                console.log(err);
+              }
+
+              const balances = key.wallets.map(wallet => {
+                const {balance: cachedBalance} = wallet;
+
+                const {status, success} =
+                  bulkStatus.find(bStatus => {
+                    if (typeof bStatus.tokenAddress === 'string') {
+                      return (
+                        bStatus.tokenAddress ===
+                          wallet.credentials.token?.address &&
+                        `${bStatus.walletId}-${bStatus.tokenAddress}` ===
+                          wallet.id
+                      );
+                    }
+
+                    return bStatus.walletId === wallet.id;
+                  }) || {};
+
+                if (
+                  status &&
+                  success &&
+                  (force ||
+                    status.balance.availableAmount !==
+                      cachedBalance.satAvailable ||
+                    status.pendingTxps?.length > 0)
+                ) {
+                  const newBalance = dispatch(
+                    buildBalance({
+                      wallet,
+                      status,
+                      defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+                      rates,
+                      lastDayRates,
+                    }),
+                  );
+
+                  const newPendingTxps = dispatch(
+                    buildPendingTxps({wallet, status}),
+                  );
+
+                  dispatch(
+                    successUpdateWalletStatus({
+                      keyId: key.id,
+                      walletId: wallet.id,
+                      status: {
+                        balance: newBalance,
+                        pendingTxps: newPendingTxps,
+                      },
+                    }),
+                  );
+
+                  console.log(
+                    `Wallet: ${wallet.currencyAbbreviation} ${wallet.id} - status updated`,
+                  );
+
+                  return newBalance;
+                } else {
+                  return cachedBalance;
+                }
+              });
+
+              acc.push({
                 keyId: key.id,
                 totalBalance: getTotalFiatBalance(balances),
                 totalBalanceLastDay: getTotalFiatLastDayBalance(balances),
-              }),
-            );
+              });
+            },
+          );
 
-            resolve();
-          },
-        );
+          return acc;
+        }, [] as {keyId: string; totalBalance: number; totalBalanceLastDay: number}[]);
+
+        dispatch(successUpdateKeysTotalBalance(keyUpdates));
+        resolve();
       } catch (err) {
         dispatch(failedUpdateKeyTotalBalance());
         reject(err);
       }
     });
+  };
+
+export const startUpdateAllWalletStatusForKey =
+  ({key, force}: {key: Key; force?: boolean}): Effect<Promise<void>> =>
+  dispatch => {
+    const keys = [key];
+
+    return dispatch(startUpdateAllWalletStatusForKeys({keys, force}));
   };
 
 export const startUpdateAllKeyAndWalletStatus =
@@ -372,10 +390,8 @@ export const startUpdateAllKeyAndWalletStatus =
           return resolve();
         }
 
-        await Promise.all(
-          Object.values(keys).map(key => {
-            dispatch(startUpdateAllWalletStatusForKey({key, force}));
-          }),
+        await dispatch(
+          startUpdateAllWalletStatusForKeys({keys: Object.values(keys), force}),
         );
         dispatch(updatePortfolioBalance()); // update portfolio balance after updating all keys balances
         dispatch(successUpdateAllKeysAndStatus());

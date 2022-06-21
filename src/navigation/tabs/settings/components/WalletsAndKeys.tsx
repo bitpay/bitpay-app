@@ -1,22 +1,21 @@
+import {useNavigation} from '@react-navigation/native';
 import React from 'react';
-import {SettingsComponent} from '../SettingsRoot';
+import {useTranslation} from 'react-i18next';
+import {View} from 'react-native';
+import styled from 'styled-components/native';
+import Button from '../../../../components/button/Button';
 import {
   ActiveOpacity,
   Hr,
   Setting,
   SettingTitle,
 } from '../../../../components/styled/Containers';
-import styled from 'styled-components/native';
 import {Link} from '../../../../components/styled/Text';
-import {useNavigation} from '@react-navigation/native';
-import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
-import Button from '../../../../components/button/Button';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
-import {keyBackupRequired} from '../../home/components/Crypto';
-import {useAppDispatch} from '../../../../utils/hooks';
-import {View} from 'react-native';
 import {Key} from '../../../../store/wallet/wallet.models';
-import {useTranslation} from 'react-i18next';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
+import {keyBackupRequired} from '../../home/components/Crypto';
+import {SettingsComponent} from '../SettingsRoot';
 
 const CreateOrImportLink = styled(Link)`
   font-weight: 500;
@@ -27,6 +26,7 @@ const WalletsAndKeys = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const keyList = Object.values(keys);
 
   const onPressKey = (key: Key) => {
     key.backupComplete
@@ -40,10 +40,11 @@ const WalletsAndKeys = () => {
           ),
         );
   };
+
   return (
     <SettingsComponent>
-      {Object.values(keys).length
-        ? Object.values(keys).map(key => (
+      {keyList.length
+        ? keyList.map(key => (
             <View key={key.id}>
               <Setting onPress={() => onPressKey(key)}>
                 <SettingTitle>{key.keyName}</SettingTitle>
