@@ -468,7 +468,7 @@ const ContactsAdd: React.FC = () => {
         />
       </InputContainer>
 
-      <CurrencySelectorContainer hideSelector={ethValidAddress}>
+      <CurrencySelectorContainer hideSelector={!ethValidAddress}>
         <Label>{t('CURRENCY')}</Label>
         <CurrencyContainer
           activeOpacity={ActiveOpacity}
@@ -481,7 +481,7 @@ const ContactsAdd: React.FC = () => {
               justifyContent: 'space-between',
             }}>
             <Row style={{alignItems: 'center'}}>
-              <CurrencyImage img={selectedCurrency.img} size={30} />
+              {selectedCurrency?.img ? <CurrencyImage img={selectedCurrency.img} size={30} /> : null }
               <CurrencyName>
                 {selectedCurrency?.currencyAbbreviation}
               </CurrencyName>
