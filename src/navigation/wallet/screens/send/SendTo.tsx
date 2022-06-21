@@ -106,7 +106,7 @@ const PasteClipboardContainer = styled.TouchableOpacity`
 `;
 
 const SendContactRow = styled.View`
-  padding: 20px 0px;
+  padding: 10px 0px;
 `;
 
 const ContactTitleContainer = styled.View`
@@ -213,7 +213,9 @@ const SendTo = () => {
 
   const contacts = allContacts.filter(
     contact =>
-      contact.coin === currencyAbbreviation && contact.network === network,
+      contact.coin === currencyAbbreviation &&
+      contact.network === network &&
+      contact.name.toLowerCase().includes(searchInput.toLowerCase()),
   );
 
   const onErrorMessageDismiss = () => {
@@ -446,15 +448,16 @@ const SendTo = () => {
           </PasteClipboardContainer>
         ) : null}
 
-        {contacts.length > 0
-          ? contacts.map((item, index) => {
+        {contacts.length > 0 ? (
+          <>
+            <ContactTitleContainer>
+              {ContactsSvg({})}
+              <ContactTitle>{'Contacts'}</ContactTitle>
+            </ContactTitleContainer>
+
+            {contacts.map((item, index) => {
               return (
                 <SendContactRow key={index}>
-                  <ContactTitleContainer>
-                    {ContactsSvg({})}
-                    <ContactTitle>{'Contacts'}</ContactTitle>
-                  </ContactTitleContainer>
-
                   <SettingsContactRow
                     contact={item}
                     onPress={() => {
@@ -473,10 +476,11 @@ const SendTo = () => {
                   />
                 </SendContactRow>
               );
-            })
-          : null}
+            })}
+          </>
+        ) : null}
 
-        <View>
+        <View style={{marginTop: 10}}>
           <KeyWalletsRow
             keyWallets={keyWallets}
             onPress={(selectedWallet: KeyWallet) => {
