@@ -43,7 +43,6 @@ const HighlightTitle = styled(H4)`
 const SubText = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? LuckySevens : Black)};
 `;
-/* add translation */
 const CARD_HIGHLIGHTS = (): CardHighlight[] => {
   return [
     {
