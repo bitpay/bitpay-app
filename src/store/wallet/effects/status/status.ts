@@ -377,6 +377,7 @@ export const startUpdateAllKeyAndWalletStatus =
             dispatch(startUpdateAllWalletStatusForKey({key, force}));
           }),
         );
+        dispatch(updatePortfolioBalance()); // update portfolio balance after updating all keys balances
         dispatch(successUpdateAllKeysAndStatus());
         resolve();
       } catch (err) {
