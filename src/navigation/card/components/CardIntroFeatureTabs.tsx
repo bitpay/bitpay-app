@@ -86,8 +86,9 @@ const FEES = (): CardTableData[] => {
       description: t('$0.00'),
     },
     {
-      title:
-        t('Cash Withdrawal Fee (ATM or Inside Financial Institution) Physical Card Only'),
+      title: t(
+        'Cash Withdrawal Fee (ATM or Inside Financial Institution) Physical Card Only',
+      ),
       description: t('$2.50'),
     },
     {
@@ -96,7 +97,9 @@ const FEES = (): CardTableData[] => {
         <View>
           <TextAlign align="right">{t('No conversion fee')}</TextAlign>
           <TextAlign align="right">
-            <A href={URL.HELP_MINER_FEES}>{t('Network and miner fees may apply')}</A>
+            <A href={URL.HELP_MINER_FEES}>
+              {t('Network and miner fees may apply')}
+            </A>
           </TextAlign>
         </View>
       ),
