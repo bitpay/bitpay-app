@@ -71,7 +71,7 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
     } else {
       dispatch(AppActions.dismissDecryptPasswordModal());
       await sleep(500); // Wait to close Decrypt Password modal
-      dispatch(showBottomNotificationModal(DecryptError));
+      dispatch(showBottomNotificationModal(DecryptError()));
       logger.debug('Missing Key Error');
     }
   };

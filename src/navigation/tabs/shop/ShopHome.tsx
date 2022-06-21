@@ -24,6 +24,7 @@ import {APP_NETWORK} from '../../../constants/config';
 import {useAppSelector} from '../../../utils/hooks';
 import {StackScreenProps} from '@react-navigation/stack';
 import {ShopScreens, ShopStackParamList} from './ShopStack';
+import {useTranslation} from 'react-i18next';
 
 export enum ShopTabs {
   GIFT_CARDS = 'Gift Cards',
@@ -90,6 +91,7 @@ const getScrollViewHeight = (
 const ShopHome: React.FC<
   StackScreenProps<ShopStackParamList, ShopScreens.HOME>
 > = ({route}) => {
+  const {t} = useTranslation();
   const availableCardMap = useAppSelector(({SHOP}) => SHOP.availableCardMap);
   const supportedCardMap = useAppSelector(({SHOP}) => SHOP.supportedCardMap);
   const giftCards = useAppSelector(
@@ -235,8 +237,8 @@ const ShopHome: React.FC<
                 if (tab.target) {
                   setActiveTab(
                     tab.target.includes(ShopTabs.GIFT_CARDS)
-                      ? ShopTabs.GIFT_CARDS
-                      : ShopTabs.SHOP_ONLINE,
+                      ? t('Gift Cards')
+                      : t('Shop Online'),
                   );
                 }
               },

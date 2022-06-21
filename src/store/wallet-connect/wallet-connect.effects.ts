@@ -23,6 +23,7 @@ import {
 import {checkEncryptPassword} from '../wallet/utils/wallet';
 import {WrongPasswordError} from '../../navigation/wallet/components/ErrorMessages';
 import {LogActions} from '../log';
+import {t} from 'i18next';
 
 const BWC = BwcProvider.getInstance();
 
@@ -81,8 +82,9 @@ export const walletConnectOnSessionRequest =
       await sleep(5000);
       if (isWaitingForEvent) {
         // reject promise if Dapp doesn't respond
-        const error =
-          'Session request failed or rejected. Please try again by refreshing the QR code.';
+        const error = t(
+          'Session request failed or rejected. Please try again by refreshing the QR code.',
+        );
         dispatch(
           LogActions.error(`[WC/walletConnectOnSessionRequest]: ${error}`),
         );

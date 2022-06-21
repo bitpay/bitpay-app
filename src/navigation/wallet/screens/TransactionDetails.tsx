@@ -396,7 +396,7 @@ const TransactionDetails = () => {
                 {!txs.fiatRateStr
                   ? '...'
                   : isTestnet
-                  ? 'Test Only - No Value'
+                  ? t('Test Only - No Value')
                   : txs.fiatRateStr}
               </SubTitle>
             ) : null}

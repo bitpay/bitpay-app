@@ -22,6 +22,7 @@ import {BASE_BITPAY_URLS} from '../../constants/config';
 import ApplePushProvisioningModule from '../../lib/apple-push-provisioning/ApplePushProvisioning';
 import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
 import GooglePushProvisioningModule from '../../lib/google-push-provisioning/GooglePushProvisioning';
+import {t} from 'i18next';
 
 const DoshWhitelist: string[] = [];
 
@@ -453,12 +454,12 @@ export const startOpenDosh =
       dispatch(
         AppActions.showBottomNotificationModal({
           type: 'warning',
-          title: 'Unavailable',
-          message: 'Cards Offers unavailable at this time',
+          title: t('Unavailable'),
+          message: t('Cards Offers unavailable at this time'),
           enableBackdropDismiss: true,
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {},
               primary: true,
             },
@@ -575,7 +576,7 @@ export const completeAddApplePaymentPass =
       dispatch(
         LogActions.error(`appleWallet - completeAddPaymentPassError - ${e}`),
       );
-      dispatch(AppActions.showBottomNotificationModal(GeneralError));
+      dispatch(AppActions.showBottomNotificationModal(GeneralError()));
     }
   };
 
@@ -597,7 +598,7 @@ export const startAddToGooglePay =
         await CardApi.startCreateGooglePayProvisioningRequest(token, id);
 
       if (provisioningData.errors) {
-        dispatch(AppActions.showBottomNotificationModal(GeneralError));
+        dispatch(AppActions.showBottomNotificationModal(GeneralError()));
       } else {
         const {lastFourDigits, name} = data;
         const opc =
@@ -621,7 +622,7 @@ export const startAddToGooglePay =
         }
       }
 
-      dispatch(AppActions.showBottomNotificationModal(GeneralError));
+      dispatch(AppActions.showBottomNotificationModal(GeneralError()));
     }
   };
 
@@ -639,7 +640,9 @@ export const startFetchPinChangeRequestInfo =
       if (res.errors) {
         errMsg = res.errors.map(e => e.message).join(', ');
       } else {
-        errMsg = `An unexpected error occurred while requesting PIN change for ${id}.`;
+        errMsg =
+          t('An unexpected error occurred while requesting PIN change for') +
+          ` ${id}.`;
       }
 
       dispatch(CardActions.failedFetchPinChangeRequestInfo(id, errMsg));

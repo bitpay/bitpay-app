@@ -113,7 +113,7 @@ const CardIntro: React.FC<CardIntroProps> = props => {
 
           <Spacer height={24} />
 
-          {CardHighlights}
+          {CardHighlights()}
 
           <Spacer height={24} />
 

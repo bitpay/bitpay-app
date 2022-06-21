@@ -19,6 +19,7 @@ import {Effect} from '../index';
 import {LogActions} from '../log';
 import {ShopEffects} from '../shop';
 import {BitPayIdActions} from './index';
+import {t} from 'i18next';
 
 interface StartLoginParams {
   email: string;
@@ -96,14 +97,14 @@ export const startCreateAccount =
       let errMsg;
 
       if (isRateLimitError(err)) {
-        errMsg = err.response?.data.error || 'Rate limited';
+        errMsg = err.response?.data.error || t('Rate limited');
       } else if (isAxiosError<RegisterErrorResponse>(err)) {
         errMsg =
           err.response?.data.message ||
           err.message ||
-          'An unexpected error occurred.';
+          t('An unexpected error occurred.');
       } else if (err instanceof Error) {
-        errMsg = err.message || 'An unexpected error occurred.';
+        errMsg = err.message || t('An unexpected error occurred.');
       } else {
         errMsg = JSON.stringify(err);
       }
@@ -196,7 +197,7 @@ export const startLogin =
           errMsg = upperFirst(
             err.response?.data.message ||
               err.message ||
-              'An unexpected error occurred.',
+              t('An unexpected error occurred.'),
           );
           console.error(errMsg);
         } else {
@@ -251,7 +252,7 @@ export const startTwoFactorAuth =
           errMsg = upperFirst(
             err.response?.data ||
               err.message ||
-              'An unexpected error occurred.',
+              t('An unexpected error occurred.'),
           );
           console.error(errMsg);
         } else {
@@ -290,7 +291,7 @@ export const startTwoFactorPairing =
           errMsg = upperFirst(
             err.response?.data ||
               err.message ||
-              'An unexpected error occurred.',
+              t('An unexpected error occurred.'),
           );
           console.error(errMsg);
         } else if (err instanceof Error) {
@@ -499,7 +500,7 @@ export const startSubmitForgotPasswordEmail =
   }): Effect =>
   async (dispatch, getState) => {
     const {APP, BITPAY_ID} = getState();
-    const errMsg = 'Error sending forgot password request.';
+    const errMsg = t('Error sending forgot password request.');
 
     try {
       dispatch(BitPayIdActions.resetForgotPasswordEmailStatus());
@@ -514,7 +515,9 @@ export const startSubmitForgotPasswordEmail =
         dispatch(
           BitPayIdActions.forgotPasswordEmailStatus(
             'success',
-            "Email sent. If an account with that email address exists, you'll receive an email with a link to reset your password.",
+            t(
+              "Email sent. If an account with that email address exists, you'll receive an email with a link to reset your password.",
+            ),
           ),
         );
       } else {
