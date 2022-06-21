@@ -30,3 +30,38 @@ export const selectBrazeCardOffers = createSelector(
   [selectBrazeContentCards],
   contentCards => contentCards.filter(isCardOffer),
 );
+
+export const selectNotificationsAccepted: AppSelector<boolean> = ({APP}) =>
+  APP.notificationsAccepted;
+
+export const selectConfirmedTxAccepted: AppSelector<boolean> = ({APP}) =>
+  APP.confirmedTxAccepted;
+
+export const selectProductsUpdatesAccepted: AppSelector<boolean> = ({APP}) =>
+  APP.productsUpdatesAccepted;
+
+export const selectOffersAndPromotionsAccepted: AppSelector<boolean> = ({
+  APP,
+}) => APP.offersAndPromotionsAccepted;
+
+export const selectSettingsNotificationState = createSelector(
+  [
+    selectNotificationsAccepted,
+    selectConfirmedTxAccepted,
+    selectProductsUpdatesAccepted,
+    selectOffersAndPromotionsAccepted,
+  ],
+  (
+    notificationsAccepted,
+    confirmedTxAccepted,
+    productsUpdatesAccepted,
+    offersAndPromotionsAccepted,
+  ) => {
+    return {
+      pushNotifications: notificationsAccepted,
+      confirmedTx: confirmedTxAccepted,
+      productsUpdates: productsUpdatesAccepted,
+      offersAndPromotions: offersAndPromotionsAccepted,
+    };
+  },
+);
