@@ -127,10 +127,13 @@ const HomeRoot = () => {
   }, [brazeQuickLinks]);
 
   const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
+  const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
-      dispatch(updatePortfolioBalance());
+      if (!appIsLoading) {
+        dispatch(updatePortfolioBalance());
+      } // portfolio balance is updated in app init
     });
   }, [dispatch, navigation]);
 
