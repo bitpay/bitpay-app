@@ -154,12 +154,14 @@ export const failedUpdateWalletStatus = (payload: {
   payload,
 });
 
-export const successUpdateKeyTotalBalance = (payload: {
-  keyId: string;
-  totalBalance: number;
-  totalBalanceLastDay: number;
-}): WalletActionType => ({
-  type: WalletActionTypes.SUCCESS_UPDATE_KEY_TOTAL_BALANCE,
+export const successUpdateKeysTotalBalance = (
+  payload: {
+    keyId: string;
+    totalBalance: number;
+    totalBalanceLastDay: number;
+  }[],
+): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_UPDATE_KEYS_TOTAL_BALANCE,
   payload,
 });
 
