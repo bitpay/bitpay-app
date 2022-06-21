@@ -904,7 +904,7 @@
   "Please enter your two-step verification code.": "Please enter your two-step verification code.",
   "TWO-STEP VERIFICATION CODE": "TWO-STEP VERIFICATION CODE",
   "Please enter a valid verification code.": "Please enter a valid verification code.",
-  " ( of total amount)": " ( of total amount)",
+  " ( of total amount)": "{{fiatAmount}} ({{percentageOfTotalAmount}} of total amount)",
   "Sending from": "Sending from",
   "Search contact or enter address": "Search contact or enter address",
   "Paste from clipboard": "Paste from clipboard",
