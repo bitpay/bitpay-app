@@ -481,7 +481,9 @@ const ContactsAdd: React.FC = () => {
               justifyContent: 'space-between',
             }}>
             <Row style={{alignItems: 'center'}}>
-              {selectedCurrency?.img ? <CurrencyImage img={selectedCurrency.img} size={30} /> : null }
+              {selectedCurrency?.img ? (
+                <CurrencyImage img={selectedCurrency.img} size={30} />
+              ) : null}
               <CurrencyName>
                 {selectedCurrency?.currencyAbbreviation}
               </CurrencyName>
