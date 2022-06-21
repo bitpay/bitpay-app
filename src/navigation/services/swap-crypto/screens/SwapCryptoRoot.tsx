@@ -48,11 +48,9 @@ import {
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {sleep} from '../../../../utils/helper-methods';
 import {useLogger} from '../../../../utils/hooks/useLogger';
-import {
-  GetPrecision,
-  IsERCToken,
-} from '../../../../store/wallet/utils/currency';
-import {Wallet} from '../../../../store/wallet/wallet.models';
+import {GetChain, IsERCToken} from '../../../../store/wallet/utils/currency';
+import {getFeeRatePerKb} from '../../../../store/wallet/effects/fee/fee';
+import {Wallet, SendMaxInfo} from '../../../../store/wallet/wallet.models';
 import {changellyGetCurrencies} from '../../../../store/swap-crypto/effects/changelly/changelly';
 import {
   startOnGoingProcessModal,
@@ -67,6 +65,11 @@ import ArrowDown from '../../../../../assets/img/services/swap-crypto/down-arrow
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import {AppActions} from '../../../../store/app';
 import {useTranslation} from 'react-i18next';
+import {getSendMaxInfo} from '../../../../store/wallet/effects/send/send';
+import {
+  GetExcludedUtxosMessage,
+  SatToUnit,
+} from '../../../../store/wallet/effects/amount/amount';
 
 export interface RateData {
   fixedRateId: string;
@@ -101,6 +104,8 @@ const SwapCryptoRoot: React.FC = () => {
   >([]);
   const [rateData, setRateData] = useState<RateData>();
   const [loading, setLoading] = useState<boolean>(false);
+  const [useSendMax, setUseSendMax] = useState<boolean>(false);
+  const [sendMaxInfo, setSendMaxInfo] = useState<SendMaxInfo | undefined>();
 
   const selectedWallet = route.params?.selectedWallet;
   const SupportedCurrencies: string[] = Object.keys(Currencies);
@@ -165,12 +170,14 @@ const SwapCryptoRoot: React.FC = () => {
   };
 
   const setFromWallet = (fromWallet: Wallet) => {
-    setFromWalletSelected(fromWallet);
     if (!useDefaultToWallet) {
       setToWalletSelected(undefined);
       setToWalletData(undefined);
     }
     setAmountFrom(0);
+    setUseSendMax(false);
+    setSendMaxInfo(undefined);
+    setFromWalletSelected(fromWallet);
     setLoading(false);
     setRateData(undefined);
 
@@ -214,27 +221,24 @@ const SwapCryptoRoot: React.FC = () => {
     }
 
     if (fromWalletSelected.balance?.satSpendable) {
-      const {unitToSatoshi, unitDecimals} =
-        dispatch(GetPrecision(fromWalletSelected.currencyAbbreviation)) || {};
-      if (unitToSatoshi && unitDecimals) {
-        const satToUnit = 1 / unitToSatoshi;
+      const spendableAmount = dispatch(
+        SatToUnit(
+          fromWalletSelected.balance.satSpendable,
+          fromWalletSelected.currencyAbbreviation,
+        ),
+      );
 
-        const spendableAmount = parseFloat(
-          (fromWalletSelected.balance.satSpendable * satToUnit).toFixed(
-            unitDecimals,
-          ),
+      if (!!spendableAmount && spendableAmount < amountFrom) {
+        const msg = t(
+          'You are trying to send more funds than you have available. Make sure you do not have funds locked by pending transaction proposals or enter a valid amount.',
         );
-
-        if (spendableAmount < amountFrom) {
-          const msg = t(
-            'You are trying to send more funds than you have available. Make sure you do not have funds locked by pending transaction proposals or enter a valid amount.',
-          );
-          showError(msg);
-          setLoading(false);
-          setAmountFrom(0);
-          setRateData(undefined);
-          return;
-        }
+        showError(msg);
+        setLoading(false);
+        setAmountFrom(0);
+        setUseSendMax(false);
+        setSendMaxInfo(undefined);
+        setRateData(undefined);
+        return;
       }
     }
 
@@ -377,24 +381,6 @@ const SwapCryptoRoot: React.FC = () => {
         maxAmount = Number(data.result[0].maxAmountFixed);
         logger.debug(`Min amount: ${minAmount} - Max amount: ${maxAmount}`);
 
-        // TODO: send max
-        // if (useSendMax && shouldUseSendMax()) {
-        //   // onGoingProcessProvider.set('calculatingSendMax');
-        //   sendMaxInfo = await getSendMaxInfo();
-        //   if (sendMaxInfo) {
-        //     console.log('Send max info', sendMaxInfo);
-        //     amountFrom = txFormatProvider.satToUnit(
-        //       sendMaxInfo.amount,
-        //       fromWalletSelected.currencyAbbreviation
-        //     );
-        //     estimatedFee = txFormatProvider.satToUnit(
-        //       sendMaxInfo.fee,
-        //       fromWalletSelected.currencyAbbreviation
-        //     );
-        //   }
-        // }
-        // onGoingProcessProvider.clear();
-
         if (amountFrom > maxAmount) {
           const msg =
             t('The amount entered is greater than the maximum allowed: ') +
@@ -422,64 +408,56 @@ const SwapCryptoRoot: React.FC = () => {
           return;
         }
         if (amountFrom < minAmount) {
-          // TODO: Handle min amount if useSendMax is true
-          // if (useSendMax && shouldUseSendMax()) {
-          //   let msg;
-          //   if (sendMaxInfo) {
-          //     const warningMsg = exchangeCryptoProvider.verifyExcludedUtxos(
-          //       fromWalletSelected.currencyAbbreviation,
-          //       sendMaxInfo
-          //     );
-          //     msg = !_.isEmpty(warningMsg) ? warningMsg : '';
-          //   }
+          if (useSendMax && sendMaxInfo) {
+            let msg = '';
+            if (sendMaxInfo) {
+              const warningMsg = dispatch(
+                GetExcludedUtxosMessage(
+                  fromWalletSelected.currencyAbbreviation,
+                  sendMaxInfo,
+                ),
+              );
+              msg = warningMsg;
+            }
 
-          //   const errorActionSheet = actionSheetProvider.createInfoSheet(
-          //     'send-max-min-amount',
-          //     {
-          //       amount: amountFrom,
-          //       fee: estimatedFee,
-          //       minAmount: minAmount,
-          //       coin: fromWalletData.currencyAbbreviation,
-          //       msg
-          //     }
-          //   );
-          //   errorActionSheet.present();
-          //   errorActionSheet.onDidDismiss(() => {
-          //     setLoading(false);
-          //     useSendMax = null;
-          //     amountFrom = null;
-          //     amountTo = null;
-          //     estimatedFee = null;
-          //     sendMaxInfo = null;
-          //     rate = null;
-          //     fixedRateId = null;
-          //   });
-          //   return;
-          // } else {
-          const msg =
+            const estimatedFee = dispatch(
+              SatToUnit(
+                sendMaxInfo.fee,
+                fromWalletSelected.currencyAbbreviation,
+              ),
+            );
+            const coin = fromWalletSelected.currencyAbbreviation.toUpperCase();
+
+            const ErrMsg =
+              `As the estimated miner fee to complete the transaction is ${estimatedFee} ${coin}, the maximum spendable amount of your wallet is ${amountFrom} ${coin} which is lower than the minimum allowed by the exchange: ${minAmount} ${coin}.` +
+              `\n${msg}`;
+            showError(ErrMsg);
+            return;
+          } else {
+            const msg =
             t('The amount entered is lower than the minimum allowed: ') +
             minAmount +
             ' ' +
             fromWalletData?.currencyAbbreviation;
-          const actions = [
-            {
-              text: t('OK'),
-              action: () => {},
-              primary: true,
-            },
-            {
-              text: t('Use Min Amount'),
-              action: async () => {
-                setAmountFrom(minAmount);
-                await sleep(400);
+            const actions = [
+              {
+                text: t('OK'),
+                action: () => {},
+                primary: true,
               },
-              primary: true,
-            },
-          ];
+              {
+                text: t('Use Min Amount'),
+                action: async () => {
+                  setAmountFrom(minAmount);
+                  await sleep(400);
+                },
+                primary: true,
+              },
+            ];
 
-          showError(msg, undefined, actions);
-          return;
-          // }
+            showError(msg, undefined, actions);
+            return;
+          }
         }
         updateReceivingAmount();
       })
@@ -490,6 +468,42 @@ const SwapCryptoRoot: React.FC = () => {
         );
         showError(msg);
       });
+  };
+
+  const getChain = (coin: string): string => {
+    return dispatch(GetChain(coin)).toLowerCase();
+  };
+
+  const getSendMaxData = (): Promise<any> => {
+    return new Promise(async (resolve, reject) => {
+      if (!fromWalletSelected) {
+        return resolve(undefined);
+      }
+      try {
+        const feeLevel =
+          fromWalletSelected.currencyAbbreviation == 'btc' ||
+          getChain(fromWalletSelected.currencyAbbreviation) == 'eth'
+            ? 'priority'
+            : 'normal';
+
+        const feeRate = await getFeeRatePerKb({
+          wallet: fromWalletSelected,
+          feeLevel,
+        });
+
+        const res = await getSendMaxInfo({
+          wallet: fromWalletSelected,
+          opts: {
+            feePerKb: feeRate,
+            excludeUnconfirmedUtxos: true, // Do not use unconfirmed UTXOs
+            returnInputs: true,
+          },
+        });
+        return resolve(res);
+      } catch (err) {
+        return reject(err);
+      }
+    });
   };
 
   const showError = async (msg?: string, title?: string, actions?: any) => {
@@ -599,8 +613,12 @@ const SwapCryptoRoot: React.FC = () => {
         toWalletData: toWalletData!,
         fixedRateId: rateData!.fixedRateId,
         amountFrom: amountFrom,
-        // useSendMax: useSendMax,
-        // sendMaxInfo: sendMaxInfo
+        useSendMax: dispatch(
+          IsERCToken(fromWalletSelected!.currencyAbbreviation.toLowerCase()),
+        )
+          ? false
+          : useSendMax,
+        sendMaxInfo: sendMaxInfo,
       },
     });
   };
@@ -737,18 +755,21 @@ const SwapCryptoRoot: React.FC = () => {
                     onPress={() => {
                       showModal('amount');
                     }}>
-                    <DataText>
-                      {amountFrom && amountFrom > 0 ? amountFrom : '0.00'}
-                    </DataText>
+                    {useSendMax ? (
+                      <DataText style={{fontSize: 14}}>Maximum Amount</DataText>
+                    ) : (
+                      <DataText>
+                        {amountFrom && amountFrom > 0 ? amountFrom : '0.00'}
+                      </DataText>
+                    )}
                   </TouchableOpacity>
                 </SelectedOptionCol>
               </ActionsContainer>
-              {fromWalletSelected.balance?.crypto ? (
+              {fromWalletSelected.balance?.cryptoSpendable ? (
                 <ActionsContainer>
                   <BottomDataText>
-                    {fromWalletSelected.balance.crypto}{' '}
-                    {fromWalletData?.currencyAbbreviation}{' '}
-                    {t('available to swap')}
+                    {fromWalletSelected.balance.cryptoSpendable}{' '}
+                    {fromWalletData?.currencyAbbreviation} {t('available to swap')}
                   </BottomDataText>
                 </ActionsContainer>
               ) : null}
@@ -891,11 +912,45 @@ const SwapCryptoRoot: React.FC = () => {
       <AmountModal
         isVisible={amountModalVisible}
         currencyAbbreviation={fromWalletData?.currencyAbbreviation}
-        onDismiss={(newAmount?: number) => {
+        onDismiss={async (
+          newAmount?: number,
+          opts?: {sendMax?: boolean; close?: boolean},
+        ) => {
+          hideModal('amount');
+          if (opts?.close) {
+            return;
+          }
+          if (opts?.sendMax && fromWalletSelected) {
+            if (
+              dispatch(
+                IsERCToken(
+                  fromWalletSelected.currencyAbbreviation.toLowerCase(),
+                ),
+              )
+            ) {
+              setUseSendMax(true);
+              setSendMaxInfo(undefined);
+              newAmount = Number(fromWalletSelected.balance.cryptoSpendable);
+            } else {
+              setUseSendMax(true);
+              const data = await getSendMaxData();
+              setSendMaxInfo(data);
+              if (data?.amount) {
+                newAmount = dispatch(
+                  SatToUnit(
+                    data.amount,
+                    fromWalletSelected.currencyAbbreviation.toLowerCase(),
+                  ),
+                );
+              }
+            }
+          } else {
+            setUseSendMax(false);
+            setSendMaxInfo(undefined);
+          }
           if (newAmount) {
             setAmountFrom(newAmount);
           }
-          hideModal('amount');
         }}
       />
     </>

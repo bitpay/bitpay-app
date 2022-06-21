@@ -28,6 +28,7 @@ import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-proce
 import {
   Wallet,
   TransactionProposal,
+  SendMaxInfo,
 } from '../../../../store/wallet/wallet.models';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {
@@ -39,7 +40,11 @@ import {
   IsERCToken,
   GetChain,
 } from '../../../../store/wallet/utils/currency';
-import {FormatAmountStr} from '../../../../store/wallet/effects/amount/amount';
+import {
+  FormatAmountStr,
+  GetExcludedUtxosMessage,
+  SatToUnit,
+} from '../../../../store/wallet/effects/amount/amount';
 import {
   changellyCreateFixTransaction,
   changellyGetFixRateForAmount,
@@ -81,6 +86,7 @@ import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models'
 import {SwapCryptoActions} from '../../../../store/swap-crypto';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {useTranslation} from 'react-i18next';
+import {Currencies} from '../../../../constants/currencies';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -96,7 +102,7 @@ export interface ChangellyCheckoutProps {
   fixedRateId: string;
   amountFrom: number;
   useSendMax?: boolean;
-  sendMaxInfo?: any;
+  sendMaxInfo?: SendMaxInfo;
 }
 
 const ChangellyCheckout: React.FC = () => {
@@ -294,8 +300,7 @@ const ChangellyCheckout: React.FC = () => {
             await sleep(400);
 
             if (useSendMax) {
-              console.log('TODO: handle send max');
-              // showWarningSheet();
+              showSendMaxWarning(ctxp.coin);
             }
             return;
           })
@@ -552,6 +557,41 @@ const ChangellyCheckout: React.FC = () => {
         },
         true,
       ),
+    );
+  };
+
+  const showSendMaxWarning = async (coin: string) => {
+    if (!sendMaxInfo || !coin) {
+      return;
+    }
+
+    const warningMsg = dispatch(GetExcludedUtxosMessage(coin, sendMaxInfo));
+    const chainName = dispatch(IsERCToken(coin))
+      ? Currencies.eth.name
+      : Currencies[coin]?.name;
+    const fee = dispatch(SatToUnit(sendMaxInfo.fee, coin));
+
+    const msg =
+      `Because you are sending the maximum amount contained in this wallet, the ${chainName} miner fee (${fee} ${coin.toUpperCase()}) will be deducted from the total.` +
+      `\n${warningMsg}`;
+
+    await sleep(400);
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: 'Miner Fee Notice',
+        message: msg,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'OK',
+            action: async () => {
+              dispatch(dismissBottomNotificationModal());
+            },
+            primary: true,
+          },
+        ],
+      }),
     );
   };
 

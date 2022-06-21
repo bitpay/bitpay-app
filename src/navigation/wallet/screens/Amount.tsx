@@ -37,8 +37,9 @@ const ModalHeader = styled.View`
 `;
 
 const CloseModalButton = styled.TouchableOpacity`
-  margin: 15px;
-  padding: 5px;
+  position: absolute;
+  left: 20px;
+  top: 20px;
   height: 41px;
   width: 41px;
   border-radius: 50px;
@@ -46,6 +47,12 @@ const CloseModalButton = styled.TouchableOpacity`
   display: flex;
   justify-content: center;
   align-items: center;
+`;
+
+const ModalHeaderRight = styled(BaseText)`
+  position: absolute;
+  right: 5px;
+  top: 20px;
 `;
 
 const SafeAreaView = styled.SafeAreaView`
@@ -122,12 +129,17 @@ export interface AmountParamList {
 interface AmountProps {
   useAsModal: any;
   currencyAbbreviationProp?: string;
-  onDismiss?: (amount?: number) => void;
+  hideSendMaxProp?: boolean;
+  onDismiss?: (
+    amount?: number,
+    opts?: {sendMax?: boolean; close?: boolean},
+  ) => void;
 }
 
 const Amount: React.FC<AmountProps> = ({
   useAsModal,
   currencyAbbreviationProp,
+  hideSendMaxProp,
   onDismiss,
 }) => {
   const {t} = useTranslation();
@@ -149,6 +161,8 @@ const Amount: React.FC<AmountProps> = ({
   const cryptoCurrencyAbbreviation = currencyAbbreviationRouteParam
     ? currencyAbbreviationRouteParam
     : currencyAbbreviationProp;
+
+  const hideSendMax = opts?.hideSendMax ? opts.hideSendMax : hideSendMaxProp;
 
   // flag for primary selector type
   const [rate, setRate] = useState(0);
@@ -242,16 +256,21 @@ const Amount: React.FC<AmountProps> = ({
     });
   }, [navigation]);
 
-  const onSendMaxPressed = () =>
-    onAmountSelected
-      ? onAmountSelected(amount, setButtonState, {sendMax: true})
-      : () => {};
+  const onSendMaxPressed = () => {
+    if (useAsModal) {
+      return onDismiss ? onDismiss(Number(amount), {sendMax: true}) : () => {};
+    } else {
+      return onAmountSelected
+        ? onAmountSelected(amount, setButtonState, {sendMax: true})
+        : () => {};
+    }
+  };
   const onSendMaxPressedRef = useRef(onSendMaxPressed);
   onSendMaxPressedRef.current = onSendMaxPressed;
 
-  const showSendMaxButton = !opts?.hideSendMax && !useAsModal;
+  const showSendMaxButton = !hideSendMax;
   useLayoutEffect(() => {
-    if (showSendMaxButton) {
+    if (showSendMaxButton && !useAsModal) {
       navigation.setOptions({
         headerRight: () => (
           <HeaderContainer>
@@ -297,7 +316,7 @@ const Amount: React.FC<AmountProps> = ({
           <CloseModalButton
             onPress={() => {
               if (onDismiss) {
-                onDismiss();
+                onDismiss(undefined, {close: true});
               }
             }}>
             <CloseModal
@@ -308,6 +327,16 @@ const Amount: React.FC<AmountProps> = ({
               }}
             />
           </CloseModalButton>
+          {showSendMaxButton ? (
+            <ModalHeaderRight>
+              <Button
+                buttonType="pill"
+                buttonStyle="cancel"
+                onPress={() => onSendMaxPressedRef.current()}>
+                Send Max
+              </Button>
+            </ModalHeaderRight>
+          ) : null}
         </ModalHeader>
       )}
       <AmountContainer>
