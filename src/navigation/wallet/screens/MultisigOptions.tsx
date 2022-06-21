@@ -4,6 +4,8 @@ import {Key} from '../../../store/wallet/wallet.models';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../store/app/app.effects';
+import {useAppDispatch} from '../../../utils/hooks';
 
 const MultisigSharedOptionImage = {
   light: require('../../../../assets/img/wallet/wallet-type/add-multisig.png'),
@@ -28,16 +30,23 @@ const MultisigOptions = ({
 }: MultisigOptionsProps) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
   const themeType = useThemeType();
   const optionList: Option[] = [
     {
       title: t('Create a Shared Wallet'),
       description: t('Use more than one device to create a multisig wallet'),
-      onPress: () =>
+      onPress: () => {
+        dispatch(
+          logSegmentEvent('track', 'Clicked Create Multisig Wallet', {
+            context: walletKey ? 'AddingOptions' : 'CreationOptions',
+          }),
+        );
         navigation.navigate('Wallet', {
           screen: 'CurrencySelection',
           params: {context: 'addWalletMultisig', key: walletKey},
-        }),
+        });
+      },
       imgSrc: MultisigSharedOptionImage[themeType],
     },
     {
@@ -45,11 +54,17 @@ const MultisigOptions = ({
       description: t(
         "Joining another user's multisig wallet requires an invitation to join",
       ),
-      onPress: () =>
+      onPress: () => {
+        dispatch(
+          logSegmentEvent('track', 'Clicked Join Multisig Wallet', {
+            context: walletKey ? 'AddingOptions' : 'CreationOptions',
+          }),
+        );
         navigation.navigate('Wallet', {
           screen: 'JoinMultisig',
           params: {key: walletKey},
-        }),
+        });
+      },
       imgSrc: MultisigJoinOptionImage[themeType],
     },
   ];

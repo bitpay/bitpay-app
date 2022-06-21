@@ -43,7 +43,10 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import {ImportObj} from '../../../store/scan/scan.models';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
@@ -416,6 +419,17 @@ const RecoveryPhrase = () => {
         walletTermsAccepted,
         key,
       });
+      dispatch(
+        logSegmentEvent(
+          'track',
+          'Import Key success',
+          {
+            context: route.params?.context || '',
+            type: 'RecoveryPhrase',
+          },
+          true,
+        ),
+      );
       dispatch(dismissOnGoingProcessModal());
     } catch (e: any) {
       logger.error(e.message);
@@ -555,7 +569,12 @@ const RecoveryPhrase = () => {
 
           <ScanContainer
             activeOpacity={ActiveOpacity}
-            onPress={() =>
+            onPress={() => {
+              dispatch(
+                logSegmentEvent('track', 'Open Scanner', {
+                  context: 'RecoveryPhrase',
+                }),
+              );
               navigation.navigate('Scan', {
                 screen: 'Root',
                 params: {
@@ -563,8 +582,8 @@ const RecoveryPhrase = () => {
                     processImportQrCode(data);
                   },
                 },
-              })
-            }>
+              });
+            }}>
             <ScanSvg />
           </ScanContainer>
         </HeaderContainer>

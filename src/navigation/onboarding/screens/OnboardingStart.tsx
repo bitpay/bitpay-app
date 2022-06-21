@@ -130,7 +130,7 @@ const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
   const askForTrackingThenNavigate = useCallback(
     async (cb: () => void) => {
       haptic('impactLight');
-      await dispatch(askForTrackingPermissionAndEnableSdks());
+      await dispatch(askForTrackingPermissionAndEnableSdks(true));
       cb();
     },
     [dispatch],

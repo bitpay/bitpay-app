@@ -49,7 +49,10 @@ import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
 } from '../../../../store/app/app.actions';
-import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  openUrlWithInAppBrowser,
+} from '../../../../store/app/app.effects';
 import {BuyCryptoActions} from '../../../../store/buy-crypto';
 import {simplexPaymentData} from '../../../../store/buy-crypto/buy-crypto.models';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
@@ -58,7 +61,6 @@ import {APP_NAME} from '../../../../constants/config';
 import {isPaymentMethodSupported} from '../utils/buy-crypto-utils';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
-import analytics from '@segment/analytics-react-native';
 import {useTranslation} from 'react-i18next';
 
 export interface BuyCryptoOffersProps {
@@ -285,9 +287,6 @@ const BuyCryptoOffers: React.FC = () => {
   const [updateView, setUpdateView] = useState(false);
 
   const createdOn = useAppSelector(({WALLET}: RootState) => WALLET.createdOn);
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
-  );
 
   const getSimplexQuote = (): void => {
     logger.debug('Simplex getting quote');
@@ -372,6 +371,7 @@ const BuyCryptoOffers: React.FC = () => {
         })
         .catch((err: any) => {
           console.log('Simplex getting quote: FAILED', err);
+          showSimplexError(err);
         });
     }
   };
@@ -391,6 +391,23 @@ const BuyCryptoOffers: React.FC = () => {
     }
 
     logger.error('Simplex error: ' + msg);
+
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Failed Buy Crypto',
+        {
+          exchange: 'simplex',
+          context: 'BuyCryptoOffers',
+          message: msg || '',
+          paymentMethod: paymentMethod.method || '',
+          amount: Number(amount) || '',
+          coin: coin || '',
+          fiatCurrency: fiatCurrency || '',
+        },
+        true,
+      ),
+    );
 
     offers.simplex.errorMsg = msg;
     offers.simplex.fiatMoney = undefined;
@@ -419,6 +436,23 @@ const BuyCryptoOffers: React.FC = () => {
         }
       }
     }
+
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Failed Buy Crypto',
+        {
+          exchange: 'wyre',
+          context: 'BuyCryptoOffers',
+          message: msg || '',
+          paymentMethod: paymentMethod.method || '',
+          amount: Number(amount) || '',
+          coin: coin || '',
+          fiatCurrency: fiatCurrency || '',
+        },
+        true,
+      ),
+    );
 
     logger.error('Crypto offer error: ' + msg);
     offers.wyre.errorMsg = msg;
@@ -510,6 +544,7 @@ const BuyCryptoOffers: React.FC = () => {
         })
         .catch((err: any) => {
           console.log('Wyre getting quote: FAILED', err);
+          showWyreError(err);
         });
     }
   };
@@ -581,15 +616,20 @@ const BuyCryptoOffers: React.FC = () => {
           }),
         );
 
-        analytics.track('BitPay App - Requested Crypto Purchase', {
-          exchange: 'simplex',
-          walletId: selectedWallet.id,
-          fiatAmount: amount,
-          fiatCurrency: fiatCurrency,
-          paymentMethod: paymentMethod.method,
-          coin: selectedWallet.currencyAbbreviation,
-          appUser: user?.eid || '',
-        });
+        dispatch(
+          logSegmentEvent(
+            'track',
+            'Requested Crypto Purchase',
+            {
+              exchange: 'simplex',
+              fiatAmount: amount,
+              fiatCurrency: fiatCurrency,
+              paymentMethod: paymentMethod.method,
+              coin: selectedWallet.currencyAbbreviation,
+            },
+            true,
+          ),
+        );
 
         const paymentUrl: string = getPaymentUrl(
           selectedWallet,
@@ -667,15 +707,20 @@ const BuyCryptoOffers: React.FC = () => {
   };
 
   const continueToWyre = (paymentUrl: string) => {
-    analytics.track('BitPay App - Requested Crypto Purchase', {
-      exchange: 'wyre',
-      walletId: selectedWallet.id,
-      fiatAmount: amount,
-      fiatCurrency: fiatCurrency,
-      paymentMethod: paymentMethod.method,
-      coin: selectedWallet.currencyAbbreviation,
-      appUser: user?.eid || '',
-    });
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Requested Crypto Purchase',
+        {
+          exchange: 'wyre',
+          fiatAmount: amount,
+          fiatCurrency: fiatCurrency,
+          paymentMethod: paymentMethod.method,
+          coin: selectedWallet.currencyAbbreviation,
+        },
+        true,
+      ),
+    );
     Linking.openURL(paymentUrl)
       .then(() => {
         navigation.goBack();

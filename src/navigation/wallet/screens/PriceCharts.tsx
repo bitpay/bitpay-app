@@ -44,13 +44,13 @@ import {
 import {DateRanges} from '../../../store/wallet/wallet.models';
 import {Defs, Stop, LinearGradient} from 'react-native-svg';
 import _ from 'lodash';
-import analytics from '@segment/analytics-react-native';
 import GainArrow from '../../../../assets/img/home/exchange-rates/increment-arrow.svg';
 import LossArrow from '../../../../assets/img/home/exchange-rates/decrement-arrow.svg';
 import NeutralArrow from '../../../../assets/img/home/exchange-rates/flat-arrow.svg';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {useRequireKeyAndWalletRedirect} from '../../../utils/hooks/useRequireKeyAndWalletRedirect';
 import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../store/app/app.effects';
 
 export type PriceChartsParamList = {
   item: ExchangeRateItemProps;
@@ -274,11 +274,17 @@ const PriceCharts = () => {
   };
 
   const goToBuyCrypto = useRequireKeyAndWalletRedirect(() => {
-    analytics.track('BitPay App - Clicked Buy Crypto', {
-      from: 'PriceChart',
-      coin: currencyAbbreviation || '',
-      appUser: user?.eid || '',
-    });
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Clicked Buy Crypto',
+        {
+          context: 'PriceChart',
+          coin: currencyAbbreviation || '',
+        },
+        true,
+      ),
+    );
     navigation.navigate('Wallet', {
       screen: 'Amount',
       params: {
