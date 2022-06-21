@@ -9,7 +9,7 @@ const dotenv = require('dotenv');
 
   const envFile = `${__dirname}/../.env.${process.env.NODE_ENV}`;
   const result = dotenv.config({path: envFile});
-  
+
   if (result.error) {
     throw result.error;
   }
