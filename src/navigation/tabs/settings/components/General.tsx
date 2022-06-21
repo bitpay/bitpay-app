@@ -42,10 +42,10 @@ const General = () => {
             navigation.navigate('GeneralSettings', {screen: 'Theme'})
           }>
           {colorScheme === 'light'
-            ? 'Light Mode'
+            ? t('Light Mode')
             : colorScheme === 'dark'
-            ? 'Dark Mode'
-            : 'System Default'}
+            ? t('Dark Mode')
+            : t('System Default')}
         </Button>
       </Setting>
       <Hr />
