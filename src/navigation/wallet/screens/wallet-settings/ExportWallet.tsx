@@ -30,7 +30,7 @@ import Clipboard from '@react-native-community/clipboard';
 import {sleep} from '../../../../utils/helper-methods';
 import {Linking} from 'react-native';
 import {useTranslation} from 'react-i18next';
-import {t as translation} from 'i18next';
+import i18next from 'i18next';
 
 const BWC = BwcProvider.getInstance();
 
@@ -68,10 +68,8 @@ const schema = yup.object().shape({
   password: yup.string().required(),
   confirmPassword: yup
     .string()
-    .required(() =>
-      translation('Confirm Encryption Password is required field'),
-    )
-    .oneOf([yup.ref('password')], () => translation('Passwords must match')),
+    .required(() => i18next.t('Confirm Encryption Password is required field'))
+    .oneOf([yup.ref('password')], () => i18next.t('Passwords must match')),
 });
 
 interface ExportWalletPasswordFieldValues {

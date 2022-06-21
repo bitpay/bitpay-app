@@ -103,7 +103,7 @@ import InfoSvg from '../../../../assets/img/info.svg';
 import {Effect} from '../../../store';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import {Currencies} from '../../../constants/currencies';
-import {t as translation} from 'i18next';
+import i18next from 'i18next';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -231,7 +231,7 @@ const getWalletType = (
     credentials: {token, walletId, addressType, keyId},
   } = wallet;
   if (!keyId) {
-    return {title: translation('Read Only')};
+    return {title: i18next.t('Read Only')};
   }
   if (token) {
     const linkedWallet = key.wallets.find(({tokens}) =>
