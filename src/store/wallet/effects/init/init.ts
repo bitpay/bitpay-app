@@ -3,7 +3,6 @@ import {WalletActions} from '../../index';
 import {getPriceHistory, startGetRates} from '../rates/rates';
 import {startGetTokenOptions} from '../currencies/currencies';
 import {startUpdateAllKeyAndWalletStatus} from '../status/status';
-import {updatePortfolioBalance} from '../../wallet.actions';
 
 export const startWalletStoreInit =
   (): Effect<Promise<void>> => async (dispatch, getState: () => RootState) => {
@@ -11,16 +10,15 @@ export const startWalletStoreInit =
       const {WALLET, APP} = getState();
       const defaultAltCurrencyIsoCode = APP.defaultAltCurrency.isoCode;
 
-      await dispatch(startGetTokenOptions());
+      // both needed for startUpdateAllKeyAndWalletStatus
+      await dispatch(startGetTokenOptions()); // needed for getRates. Get more recent 1inch tokens list
+      await dispatch(startGetRates({init: true})); // populate rates and alternative currency list
 
       if (Object.keys(WALLET.keys).length) {
         dispatch(startUpdateAllKeyAndWalletStatus({}));
       }
 
-      await dispatch(startGetRates({init: true})); // populate rates and alternative currency list
-
       dispatch(getPriceHistory(defaultAltCurrencyIsoCode));
-      dispatch(updatePortfolioBalance());
       dispatch(WalletActions.successWalletStoreInit());
     } catch (e) {
       console.error(e);

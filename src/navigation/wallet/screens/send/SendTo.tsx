@@ -106,7 +106,7 @@ const PasteClipboardContainer = styled.TouchableOpacity`
 `;
 
 const SendContactRow = styled.View`
-  padding: 20px 0px;
+  padding: 10px 0px;
 `;
 
 const ContactTitleContainer = styled.View`
@@ -129,6 +129,7 @@ const BuildKeyWalletRow = (
   currentCurrencyAbbreviation: string,
   currentNetwork: string,
   defaultAltCurrencyIsoCode: string,
+  searchInput: string,
 ) => {
   let filteredKeys: KeyWalletsRowProps<KeyWallet>[] = [];
   Object.entries(keys).forEach(([key, value]) => {
@@ -136,11 +137,12 @@ const BuildKeyWalletRow = (
     value.wallets
       .filter(({hideWallet}) => !hideWallet)
       .filter(
-        ({currencyAbbreviation, id, credentials: {network}}) =>
+        ({currencyAbbreviation, id, credentials: {network, walletName}}) =>
           currencyAbbreviation.toLowerCase() ===
             currentCurrencyAbbreviation.toLowerCase() &&
           id !== currentWalletId &&
-          network === currentNetwork,
+          network === currentNetwork &&
+          walletName.toLowerCase().includes(searchInput.toLowerCase()),
       )
       .map(wallet => {
         const {
@@ -189,7 +191,7 @@ const SendTo = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>Send To</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Send To')}</HeaderTitle>,
     });
   });
 
@@ -206,11 +208,15 @@ const SendTo = () => {
     currencyAbbreviation,
     network,
     defaultAltCurrency.isoCode,
+    searchInput,
   );
 
   const contacts = allContacts.filter(
     contact =>
-      contact.coin === currencyAbbreviation && contact.network === network,
+      contact.coin === currencyAbbreviation &&
+      contact.network === network &&
+      (contact.name.toLowerCase().includes(searchInput.toLowerCase()) ||
+        contact.email?.toLowerCase().includes(searchInput.toLowerCase())),
   );
 
   const onErrorMessageDismiss = () => {
@@ -443,15 +449,16 @@ const SendTo = () => {
           </PasteClipboardContainer>
         ) : null}
 
-        {contacts.length > 0
-          ? contacts.map((item, index) => {
+        {contacts.length > 0 ? (
+          <>
+            <ContactTitleContainer>
+              {ContactsSvg({})}
+              <ContactTitle>{'Contacts'}</ContactTitle>
+            </ContactTitleContainer>
+
+            {contacts.map((item, index) => {
               return (
                 <SendContactRow key={index}>
-                  <ContactTitleContainer>
-                    {ContactsSvg({})}
-                    <ContactTitle>{'Contacts'}</ContactTitle>
-                  </ContactTitleContainer>
-
                   <SettingsContactRow
                     contact={item}
                     onPress={() => {
@@ -470,10 +477,11 @@ const SendTo = () => {
                   />
                 </SendContactRow>
               );
-            })
-          : null}
+            })}
+          </>
+        ) : null}
 
-        <View>
+        <View style={{marginTop: 10}}>
           <KeyWalletsRow
             keyWallets={keyWallets}
             onPress={(selectedWallet: KeyWallet) => {
