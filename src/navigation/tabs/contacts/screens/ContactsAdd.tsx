@@ -2,7 +2,7 @@ import React, {useState, useMemo, useCallback} from 'react';
 import {FlatList} from 'react-native';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import {Controller, useForm} from 'react-hook-form';
 import Button from '../../../../components/button/Button';
 import BoxInput from '../../../../components/form/BoxInput';
@@ -11,16 +11,18 @@ import {
   SheetContainer,
   Row,
   ActiveOpacity,
+  SearchContainer,
+  SearchInput,
 } from '../../../../components/styled/Containers';
 import {ValidateCoinAddress} from '../../../../store/wallet/utils/validations';
 import {GetCoinAndNetwork} from '../../../../store/wallet/effects/address/address';
 import {ContactRowProps} from '../../../../components/list/ContactRow';
 import {useNavigation} from '@react-navigation/core';
-import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import {createContact} from '../../../../store/contact/contact.actions';
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
 import SuccessIcon from '../../../../../assets/img/success.svg';
+import SearchSvg from '../../../../../assets/img/search.svg';
 import Icons from '../../../../components/modal/transact-menu/TransactMenuIcons';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import {keyExtractor, findContact} from '../../../../utils/helper-methods';
@@ -33,6 +35,12 @@ import NetworkSelectionRow, {
 import {LightBlack, NeutralSlate, Slate} from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import WalletIcons from '../../../wallet/components/WalletIcons';
+import {SUPPORTED_CURRENCIES} from '../../../../constants/currencies';
+import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
+import {GetChain} from '../../../../store/wallet/utils/currency';
+import {TouchableOpacity} from 'react-native-gesture-handler';
+import debounce from 'lodash.debounce';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../../store/app/app.effects';
 
@@ -117,6 +125,11 @@ const schema = yup.object().shape({
   address: yup.string().required(),
 });
 
+const SearchImageContainer = styled.View`
+  width: 50px;
+  align-items: center;
+`;
+
 const ContactsAdd: React.FC = () => {
   const {t} = useTranslation();
   const {
@@ -127,13 +140,17 @@ const ContactsAdd: React.FC = () => {
     formState: {errors, dirtyFields},
   } = useForm<ContactRowProps>({resolver: yupResolver(schema)});
 
-  const contacts = useSelector(({CONTACT}: RootState) => CONTACT.list);
+  const theme = useTheme();
+  const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
+
+  const contacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const [validAddress, setvalidAddress] = useState(false);
   const [xrpValidAddress, setXrpValidAddress] = useState(false);
   const [ethValidAddress, setEthValidAddress] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
 
   const [addressValue, setAddressValue] = useState('');
   const [coinValue, setCoinValue] = useState('');
@@ -142,20 +159,79 @@ const ContactsAdd: React.FC = () => {
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
   const [networkModalVisible, setNetworkModalVisible] = useState(false);
 
-  const DEFAULT_CURRENCY_OPTIONS = useMemo(
-    () => [...SupportedCurrencyOptions],
+  const tokenOptions = useAppSelector(({WALLET}: RootState) => {
+    return {
+      ...BitpaySupportedTokenOpts,
+      ...WALLET.tokenOptions,
+      ...WALLET.customTokenOptions,
+    };
+  });
+
+  const ALL_CUSTOM_TOKENS = useMemo(
+    () =>
+      Object.values(tokenOptions)
+        .filter(
+          token => !SUPPORTED_CURRENCIES.includes(token.symbol.toLowerCase()),
+        )
+        .map(({symbol, name, logoURI}) => {
+          return {
+            id: symbol.toLowerCase(),
+            currencyAbbreviation: symbol,
+            currencyName: name,
+            img: logoURI,
+            isToken: true,
+            checked: false,
+          };
+        }),
+    [tokenOptions],
+  );
+
+  const ALL_CURRENCIES = useMemo(
+    () => [...SupportedCurrencyOptions, ...ALL_CUSTOM_TOKENS],
+    [SupportedCurrencyOptions, ALL_CUSTOM_TOKENS],
+  );
+
+  const ETH_CHAIN_CURRENCIES = useMemo(
+    () =>
+      ALL_CURRENCIES.filter(
+        currency =>
+          dispatch(GetChain(currency.currencyAbbreviation)).toLowerCase() ===
+          'eth',
+      ),
     [],
   );
 
-  const [currencyOptions, setCurrencyOptions] = useState<Array<any>>([
-    ...DEFAULT_CURRENCY_OPTIONS,
+  const [ethCurrencyOptions, setEthCurrencyOptions] = useState<Array<any>>([
+    ...ETH_CHAIN_CURRENCIES,
   ]);
-  const [selectedCurrency, setSelectedCurrency] = useState(currencyOptions[0]);
+
+  const [selectedCurrency, setSelectedCurrency] = useState(
+    ETH_CHAIN_CURRENCIES[0],
+  );
 
   const networkOptions = [
     {id: 'livenet', name: 'Livenet'},
     {id: 'testnet', name: 'Testnet'},
   ];
+
+  const onSearchInputChange = useMemo(
+    () =>
+      debounce((search: string) => {
+        let _searchList: Array<any> = [];
+        if (search) {
+          search = search.toLowerCase();
+          _searchList = ethCurrencyOptions.filter(
+            ({currencyAbbreviation, currencyName}) =>
+              currencyAbbreviation.toLowerCase().includes(search) ||
+              currencyName.toLowerCase().includes(search),
+          );
+        } else {
+          _searchList = ethCurrencyOptions;
+        }
+        setEthCurrencyOptions(_searchList);
+      }, 300),
+    [selectedCurrency],
+  );
 
   const setValidValues = (address: string, coin: string, network: string) => {
     setvalidAddress(true);
@@ -169,11 +245,6 @@ const ContactsAdd: React.FC = () => {
     switch (coin) {
       case 'eth':
         setEthValidAddress(true);
-        // List all tokens and ETH
-        const currencyList = SupportedCurrencyOptions.filter(
-          currency => currency.isToken || currency.id === 'eth',
-        );
-        setCurrencyOptions(currencyList);
         return;
       case 'xrp':
         setXrpValidAddress(true);
@@ -257,7 +328,7 @@ const ContactsAdd: React.FC = () => {
   });
 
   const _setSelectedCurrency = (id: string) => {
-    const _selectedCurrency = currencyOptions.filter(
+    const _selectedCurrency = ethCurrencyOptions.filter(
       currency => currency.id === id,
     );
     setSelectedCurrency(_selectedCurrency[0]);
@@ -397,7 +468,7 @@ const ContactsAdd: React.FC = () => {
         />
       </InputContainer>
 
-      <CurrencySelectorContainer hideSelector={true}>
+      <CurrencySelectorContainer hideSelector={ethValidAddress}>
         <Label>{t('CURRENCY')}</Label>
         <CurrencyContainer
           activeOpacity={ActiveOpacity}
@@ -447,12 +518,37 @@ const ContactsAdd: React.FC = () => {
         isVisible={currencyModalVisible}
         onBackdropPress={() => setCurrencyModalVisible(false)}>
         <CurrencySelectionModalContainer>
-          <TextAlign align={'center'}>
+          <TextAlign align={'center'} style={{paddingBottom: 20}}>
             <H4>{t('Select a Coin')}</H4>
           </TextAlign>
+          <SearchContainer>
+            <SearchInput
+              placeholder={t('Search Currency')}
+              placeholderTextColor={placeHolderTextColor}
+              value={searchInput}
+              onChangeText={(text: string) => {
+                setSearchInput(text);
+                onSearchInputChange(text);
+              }}
+            />
+            <SearchImageContainer>
+              {!searchInput ? (
+                <SearchSvg />
+              ) : (
+                <TouchableOpacity
+                  activeOpacity={ActiveOpacity}
+                  onPress={() => {
+                    setSearchInput('');
+                    onSearchInputChange('');
+                  }}>
+                  <WalletIcons.Delete />
+                </TouchableOpacity>
+              )}
+            </SearchImageContainer>
+          </SearchContainer>
           <FlatList
-            contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
-            data={currencyOptions}
+            contentContainerStyle={{height: '100%'}}
+            data={ethCurrencyOptions}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
           />
