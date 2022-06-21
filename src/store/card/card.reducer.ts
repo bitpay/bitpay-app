@@ -25,6 +25,9 @@ export const cardReduxPersistBlacklist: Array<keyof CardState> = [
   'balances',
   'settledTransactions',
   'pendingTransactions',
+  'pinChangeRequestInfo',
+  'pinChangeRequestInfoStatus',
+  'pinChangeRequestInfoError',
 ];
 
 export type FetchCardsStatus = 'success' | 'failed' | null;
@@ -35,6 +38,7 @@ export type UpdateCardLockStatus = 'success' | 'failed' | null;
 export type UpdateCardNameStatus = 'success' | 'failed' | null;
 export type referredUsersStatus = 'loading' | 'failed';
 export type ActivateCardStatus = 'success' | 'failed' | null;
+export type FetchPinChangeRequestInfoStatus = 'success' | 'failed' | null;
 
 export interface CardState {
   lastUpdates: {
@@ -82,6 +86,9 @@ export interface CardState {
   };
   activateCardStatus: ActivateCardStatus;
   activateCardError: string | null;
+  pinChangeRequestInfo: Record<string, string | null>;
+  pinChangeRequestInfoStatus: Record<string, FetchPinChangeRequestInfoStatus>;
+  pinChangeRequestInfoError: Record<string, string | null>;
 }
 
 const initialState: CardState = {
@@ -109,6 +116,9 @@ const initialState: CardState = {
   referredUsers: {},
   activateCardStatus: null,
   activateCardError: null,
+  pinChangeRequestInfo: {},
+  pinChangeRequestInfoStatus: {},
+  pinChangeRequestInfoError: {},
 };
 
 export const cardReducer = (
@@ -438,6 +448,59 @@ export const cardReducer = (
       return {
         ...state,
         activateCardStatus: action.payload,
+      };
+
+    case CardActionTypes.SUCCESS_FETCH_PIN_CHANGE_REQUEST_INFO:
+      return {
+        ...state,
+        pinChangeRequestInfoStatus: {
+          ...state.pinChangeRequestInfoStatus,
+          [action.payload.id]: 'success',
+        },
+        pinChangeRequestInfoError: {
+          ...state.pinChangeRequestInfoError,
+          [action.payload.id]: null,
+        },
+        pinChangeRequestInfo: {
+          ...state.pinChangeRequestInfo,
+          [action.payload.id]: action.payload.pinChangeRequestInfo,
+        },
+      };
+    case CardActionTypes.FAILED_FETCH_PIN_CHANGE_REQUEST_INFO:
+      return {
+        ...state,
+        pinChangeRequestInfoStatus: {
+          ...state.pinChangeRequestInfoStatus,
+          [action.payload.id]: 'failed',
+        },
+        pinChangeRequestInfoError: {
+          ...state.pinChangeRequestInfoError,
+          [action.payload.id]: action.payload.error,
+        },
+      };
+    case CardActionTypes.UPDATE_FETCH_PIN_CHANGE_REQUEST_INFO_STATUS:
+      return {
+        ...state,
+        pinChangeRequestInfoStatus: {
+          ...state.pinChangeRequestInfoStatus,
+          [action.payload.id]: action.payload.status,
+        },
+      };
+    case CardActionTypes.RESET_PIN_CHANGE_REQUEST_INFO:
+      return {
+        ...state,
+        pinChangeRequestInfo: {
+          ...state.pinChangeRequestInfo,
+          [action.payload.id]: null,
+        },
+        pinChangeRequestInfoStatus: {
+          ...state.pinChangeRequestInfoStatus,
+          [action.payload.id]: null,
+        },
+        pinChangeRequestInfoError: {
+          ...state.pinChangeRequestInfoError,
+          [action.payload.id]: null,
+        },
       };
 
     default:

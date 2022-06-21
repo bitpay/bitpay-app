@@ -21,7 +21,10 @@ import {
 } from '../../../../../store/wallet/effects/send/send';
 import PaymentSent from '../../../components/PaymentSent';
 import {sleep} from '../../../../../utils/helper-methods';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
@@ -47,6 +50,7 @@ import {
   CoinbaseErrorMessages,
 } from '../../../../../api/coinbase/coinbase.types';
 import {coinbasePayInvoice} from '../../../../../store/coinbase';
+import {useTranslation} from 'react-i18next';
 
 export interface PayProConfirmParamList {
   wallet?: Wallet;
@@ -57,6 +61,7 @@ export interface PayProConfirmParamList {
 }
 
 const PayProConfirm = () => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'PayProConfirm'>>();
@@ -136,7 +141,7 @@ const PayProConfirm = () => {
       dispatch(
         AppActions.showBottomNotificationModal(
           CustomErrorMessage({
-            title: 'Error',
+            title: t('Error'),
             errMsg:
               err.response?.data?.message || err.message || errorConfig.message,
             action: () => (wallet ? null : reshowWalletSelector()),
@@ -165,7 +170,7 @@ const PayProConfirm = () => {
     dispatch(
       AppActions.showBottomNotificationModal(
         CustomErrorMessage({
-          title: 'Error',
+          title: t('Error'),
           errMsg:
             err.response?.data?.message || err.message || errorConfig.message,
           action: () => reshowWalletSelector(),
@@ -240,7 +245,7 @@ const PayProConfirm = () => {
     dispatch(
       AppActions.showBottomNotificationModal(
         CustomErrorMessage({
-          title: 'Error',
+          title: t('Error'),
           errMsg: error?.message || defaultErrorMessage,
           action: () => onDismiss && onDismiss(),
         }),
@@ -284,7 +289,7 @@ const PayProConfirm = () => {
     setCoinbaseAccount(undefined);
     showError({
       error,
-      defaultErrorMessage: 'Could not send transaction',
+      defaultErrorMessage: t('Could not send transaction'),
       onDismiss: () => reshowWalletSelector(),
     });
   };
@@ -332,6 +337,17 @@ const PayProConfirm = () => {
             onSwipeComplete={async () => {
               try {
                 await sendPayment();
+                dispatch(
+                  logSegmentEvent(
+                    'track',
+                    'Sent Crypto',
+                    {
+                      context: 'PayPro Confirm',
+                      coin: wallet?.currencyAbbreviation || '',
+                    },
+                    true,
+                  ),
+                );
               } catch (err: any) {
                 dispatch(dismissOnGoingProcessModal());
                 await sleep(400);

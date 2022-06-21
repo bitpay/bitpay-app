@@ -5,7 +5,7 @@ import {WIDTH} from '../../../../../components/styled/Containers';
 import QuickLinksCard from './QuickLinksCard';
 import {CarouselItemContainer} from '../Styled';
 import {useNavigation} from '@react-navigation/native';
-import {useAppSelector} from '../../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 
 interface QuickLinksCarouselProps {
   contentCards: ContentCard[];

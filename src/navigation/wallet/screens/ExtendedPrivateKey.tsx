@@ -7,6 +7,7 @@ import Button from '../../../components/button/Button';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import Clipboard from '@react-native-community/clipboard';
+import {useTranslation} from 'react-i18next';
 
 const ExtendedPrivateKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -26,6 +27,7 @@ const ExtendedPrivateKeyParagraph = styled(Paragraph)`
 `;
 
 const ExtendedPrivateKey = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
 
   const {
@@ -36,7 +38,7 @@ const ExtendedPrivateKey = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>Extended Private Key</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Extended Private Key')}</HeaderTitle>,
     });
   });
 
@@ -54,19 +56,15 @@ const ExtendedPrivateKey = () => {
   return (
     <ExtendedPrivateKeyContainer>
       <ScrollView>
-        <Title>Warning!</Title>
+        <Title>{t('Warning!')}</Title>
         <ExtendedPrivateKeyParagraph>
-          Your extended private keys are all that is needed to access your
-          funds. Be sure to protect your private keys and store them only on
-          secure devices. BitPay does not have access to your private keys, so
-          you alone are responsible for your keys. If you share key access with
-          external services, you take responsibility for the risk of theft or
-          breach. Only advanced users should handle extended private keys
-          directly.
+          {t(
+            'Your extended private keys are all that is needed to access your funds. Be sure to protect your private keys and store them only on secure devices. BitPay does not have access to your private keys, so you alone are responsible for your keys. If you share key access with external services, you take responsibility for the risk of theft or breach. Only advanced users should handle extended private keys directly.',
+          )}
         </ExtendedPrivateKeyParagraph>
 
         <Button onPress={copyXPrivKey}>
-          {!copied ? 'Copy to Clipboard' : 'Copied!'}
+          {!copied ? t('Copy to Clipboard') : t('Copied!')}
         </Button>
       </ScrollView>
     </ExtendedPrivateKeyContainer>

@@ -36,6 +36,8 @@ import {IWCCustomData} from '../../../store/wallet-connect/wallet-connect.models
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
+import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../store/app/app.effects';
 
 export type WalletConnectStartParamList = {
   keyId: string | undefined;
@@ -77,6 +79,7 @@ const DescriptionItem = styled(Paragraph)`
 `;
 
 const WalletConnectStart = () => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const [retryCount, setRetryCount] = useState(0);
@@ -127,14 +130,22 @@ const WalletConnectStart = () => {
       );
       setButtonState('success');
       dispatch(
+        logSegmentEvent(
+          'track',
+          'WalletConnect Session Request Approved',
+          {},
+          true,
+        ),
+      );
+      dispatch(
         showBottomNotificationModal({
           type: 'success',
-          title: 'Connected',
-          message: 'You can now return to your browser.',
+          title: t('Connected'),
+          message: t('You can now return to your browser.'),
           enableBackdropDismiss: false,
           actions: [
             {
-              text: 'GOT IT',
+              text: t('GOT IT'),
               action: () => {
                 navigation.dispatch(
                   StackActions.replace('WalletConnect', {
@@ -158,14 +169,14 @@ const WalletConnectStart = () => {
             setAddress(walletAddress);
             setRetryCount(r => r + 1);
           } else {
-            throw 'Failed to create wallet address';
+            throw t('Failed to create wallet address');
           }
         } catch (error) {
           setButtonState('failed');
           await showErrorMessage(
             CustomErrorMessage({
               errMsg: BWCErrorMessage(error),
-              title: 'Uh oh, something went wrong',
+              title: t('Uh oh, something went wrong'),
             }),
           );
         }
@@ -174,7 +185,7 @@ const WalletConnectStart = () => {
         await showErrorMessage(
           CustomErrorMessage({
             errMsg: BWCErrorMessage(e),
-            title: 'Uh oh, something went wrong',
+            title: t('Uh oh, something went wrong'),
           }),
         );
       }
@@ -187,6 +198,7 @@ const WalletConnectStart = () => {
     retryCount,
     showErrorMessage,
     wallet,
+    t,
   ]);
 
   useEffect(() => {
@@ -209,7 +221,7 @@ const WalletConnectStart = () => {
         {peerMeta && (
           <View>
             <Paragraph>
-              {peerMeta?.name} wants to connect to your wallet.
+              {peerMeta?.name + t(' wants to connect to your wallet.')}
             </Paragraph>
             <UriContainer>
               <Paragraph>{peerMeta?.url}</Paragraph>
@@ -218,13 +230,13 @@ const WalletConnectStart = () => {
               <DescriptionItemContainer>
                 <WalletIcon />
                 <DescriptionItem>
-                  View your wallet balance and activity.
+                  {t('View your wallet balance and activity.')}
                 </DescriptionItem>
               </DescriptionItemContainer>
               <DescriptionItemContainer>
                 <VerifiedIcon />
                 <DescriptionItem>
-                  Request approval for transactions.
+                  {t('Request approval for transactions.')}
                 </DescriptionItem>
               </DescriptionItemContainer>
             </DescriptionContainer>
@@ -238,7 +250,7 @@ const WalletConnectStart = () => {
             haptic('impactLight');
             approveSessionRequest();
           }}>
-          Connect
+          {t('Connect')}
         </Button>
       </ScrollView>
     </WalletConnectContainer>

@@ -8,6 +8,7 @@ import {
 import {HeaderTitle} from '../../../components/styled/Text';
 import BuyCryptoRoot from './screens/BuyCryptoRoot';
 import BuyCryptoOffers from './screens/BuyCryptoOffers';
+import {useTranslation} from 'react-i18next';
 
 export type BuyCryptoStackParamList = {
   BuyCryptoRoot:
@@ -36,6 +37,7 @@ export enum BuyCryptoScreens {
 const BuyCrypto = createStackNavigator<BuyCryptoStackParamList>();
 
 const BuyCryptoStack = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
 
   return (
@@ -49,7 +51,7 @@ const BuyCryptoStack = () => {
         name={BuyCryptoScreens.ROOT}
         component={BuyCryptoRoot}
         options={{
-          headerTitle: () => <HeaderTitle>Order Summary</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Order Summary')}</HeaderTitle>,
         }}
       />
       <BuyCrypto.Screen
@@ -57,7 +59,7 @@ const BuyCryptoStack = () => {
         component={BuyCryptoOffers}
         options={{
           ...baseScreenOptions,
-          headerTitle: () => <HeaderTitle>Offers</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Offers')}</HeaderTitle>,
         }}
       />
     </BuyCrypto.Navigator>

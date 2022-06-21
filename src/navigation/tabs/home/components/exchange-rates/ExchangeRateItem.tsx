@@ -19,6 +19,7 @@ import {
   SlateDark,
 } from '../../../../../styles/colors';
 import {View} from 'react-native';
+import {useAppSelector} from '../../../../../utils/hooks';
 
 const RowContainer = styled.TouchableOpacity`
   flex-direction: row;
@@ -74,10 +75,28 @@ const ExchangeRateItem = ({
   onPress: () => void;
   defaultAltCurrencyIsoCode: string;
 }) => {
+  const allRates = useAppSelector(({WALLET}) => WALLET.rates);
+  let currentPriceToShow: number | undefined;
   const {img, currencyName, currentPrice, average, currencyAbbreviation} = item;
 
+  // Avoid displaying rounded values for low amounts
+  // TODO: https://bitpay.com/currencies/prices?currencyPairs["DOGE:USD"]
+  // This endpoint should return more exact values for currentPrice and rates of the last 24 hours
+  if (
+    currencyAbbreviation &&
+    allRates &&
+    ['doge', 'xrp'].includes(currencyAbbreviation.toLowerCase()) &&
+    allRates[currencyAbbreviation.toLowerCase()]
+  ) {
+    currentPriceToShow = allRates[currencyAbbreviation.toLowerCase()].find(
+      r => r.code === defaultAltCurrencyIsoCode,
+    )!.rate;
+  } else {
+    currentPriceToShow = currentPrice;
+  }
+
   const {amount, code} = formatFiatAmountObj(
-    currentPrice!,
+    currentPriceToShow!,
     defaultAltCurrencyIsoCode,
     {
       customPrecision: 'minimal',

@@ -34,12 +34,14 @@ import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
 import {wyreGetWalletOrderDetails} from '../../../../../store/buy-crypto/effects/wyre/wyre';
 import {handleWyreStatus} from '../../../../services/buy-crypto/utils/wyre-utils';
+import {useTranslation} from 'react-i18next';
 
 export interface WyreDetailsProps {
   paymentRequest: wyrePaymentData;
 }
 
 const WyreDetails: React.FC = () => {
+  const {t} = useTranslation();
   const {
     params: {paymentRequest},
   } = useRoute<RouteProp<{params: WyreDetailsProps}>>();
@@ -98,7 +100,7 @@ const WyreDetails: React.FC = () => {
       <Settings>
         <RowDataContainer>
           <CryptoAmountContainer>
-            <CryptoTitle>Approximate receiving amount</CryptoTitle>
+            <CryptoTitle>{t('Approximate receiving amount')}</CryptoTitle>
             <CryptoContainer>
               <CryptoAmount>{paymentData.destAmount}</CryptoAmount>
               <CryptoUnit>{paymentData.destCurrency}</CryptoUnit>
@@ -108,27 +110,28 @@ const WyreDetails: React.FC = () => {
         </RowDataContainer>
 
         <RowDataContainer>
-          <RowLabel>Approximate receiving fiat amount</RowLabel>
+          <RowLabel>{t('Approximate receiving fiat amount')}</RowLabel>
           <RowData>
             {paymentData.purchaseAmount} {paymentData.sourceCurrency}
           </RowData>
         </RowDataContainer>
         <LabelTip type="warn">
           <LabelTipText>
-            The final crypto amount you receive when the transaction is complete
-            may differ because it is based on Wyre's exchange rate.
+            {t(
+              "The final crypto amount you receive when the transaction is complete may differ because it is based on Wyre's exchange rate.",
+            )}
           </LabelTipText>
         </LabelTip>
 
         <RowDataContainer>
-          <RowLabel>Paying</RowLabel>
+          <RowLabel>{t('Paying')}</RowLabel>
           <RowData>
             {paymentData.sourceAmount} {paymentData.sourceCurrency}
           </RowData>
         </RowDataContainer>
 
         <RowDataContainer>
-          <RowLabel>Created</RowLabel>
+          <RowLabel>{t('Created')}</RowLabel>
           <RowData>
             {moment(paymentData.created_on).format('MMM DD, YYYY hh:mm a')}
           </RowData>
@@ -136,16 +139,20 @@ const WyreDetails: React.FC = () => {
 
         {!!paymentData.status && (
           <RowDataContainer>
-            <RowLabel>Status</RowLabel>
+            <RowLabel>{t('Status')}</RowLabel>
             <RowData>
               {paymentData.status === 'paymentRequestSent' && (
-                <Text>Processing payment request</Text>
+                <Text>{t('Processing payment request')}</Text>
               )}
               {paymentData.status === 'failed' && (
-                <Text style={{color: '#df5264'}}>Payment request rejected</Text>
+                <Text style={{color: '#df5264'}}>
+                  {t('Payment request rejected')}
+                </Text>
               )}
               {paymentData.status === 'success' && (
-                <Text style={{color: '#01d1a2'}}>Payment request approved</Text>
+                <Text style={{color: '#01d1a2'}}>
+                  {t('Payment request approved')}
+                </Text>
               )}
             </RowData>
           </RowDataContainer>
@@ -153,35 +160,35 @@ const WyreDetails: React.FC = () => {
 
         {!!paymentData.dest && (
           <ColumnDataContainer>
-            <RowLabel>Deposit address</RowLabel>
+            <RowLabel>{t('Deposit address')}</RowLabel>
             <ColumnData>{paymentData.dest}</ColumnData>
           </ColumnDataContainer>
         )}
 
         {!!paymentData.paymentMethodName && (
           <ColumnDataContainer>
-            <RowLabel>Payment method</RowLabel>
+            <RowLabel>{t('Payment method')}</RowLabel>
             <ColumnData>{paymentData.paymentMethodName}</ColumnData>
           </ColumnDataContainer>
         )}
 
         {!!paymentData.transferId && (
           <ColumnDataContainer>
-            <RowLabel>Transfer ID</RowLabel>
+            <RowLabel>{t('Transfer ID')}</RowLabel>
             <ColumnData>{paymentData.transferId}</ColumnData>
           </ColumnDataContainer>
         )}
 
         {!!paymentData.orderId && (
           <ColumnDataContainer>
-            <RowLabel>Order ID</RowLabel>
+            <RowLabel>{t('Order ID')}</RowLabel>
             <ColumnData>{paymentData.orderId}</ColumnData>
           </ColumnDataContainer>
         )}
 
         {!!paymentData.blockchainNetworkTx && (
           <ColumnDataContainer>
-            <RowLabel>Blockchain Network Tx</RowLabel>
+            <RowLabel>{t('Blockchain Network Tx')}</RowLabel>
             <ColumnData>{paymentData.blockchainNetworkTx}</ColumnData>
           </ColumnDataContainer>
         )}
@@ -192,13 +199,14 @@ const WyreDetails: React.FC = () => {
             dispatch(
               showBottomNotificationModal({
                 type: 'question',
-                title: 'Removing payment request data',
-                message:
+                title: t('Removing payment request data'),
+                message: t(
                   "The data of this payment request will be deleted. Make sure you don't need it",
+                ),
                 enableBackdropDismiss: true,
                 actions: [
                   {
-                    text: 'REMOVE',
+                    text: t('REMOVE'),
                     action: () => {
                       dispatch(dismissBottomNotificationModal());
                       dispatch(
@@ -211,7 +219,7 @@ const WyreDetails: React.FC = () => {
                     primary: true,
                   },
                   {
-                    text: 'GO BACK',
+                    text: t('GO BACK'),
                     action: () => {
                       logger.debug('Removing payment Request CANCELED');
                     },
@@ -220,7 +228,7 @@ const WyreDetails: React.FC = () => {
               }),
             );
           }}>
-          <Text style={{color: 'red'}}>Remove</Text>
+          <Text style={{color: 'red'}}>{t('Remove')}</Text>
         </RemoveCta>
       </Settings>
     </SettingsContainer>

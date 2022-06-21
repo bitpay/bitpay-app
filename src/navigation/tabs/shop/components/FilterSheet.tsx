@@ -14,6 +14,7 @@ import {
   BottomNotificationCta,
   BottomNotificationHr,
 } from '../../../../components/modal/bottom-notification/BottomNotification';
+import {useTranslation} from 'react-i18next';
 
 const SheetTitleContainer = styled.View`
   margin-bottom: 25px;
@@ -83,6 +84,7 @@ const FilterSheet = ({
   categories,
   onSelectionChange,
 }: Props) => {
+  const {t} = useTranslation();
   const [initialCategoryMap, setInitialCategoryMap] = useState(categories);
   const [categoryMap, setCategoryMap] = useState(categories);
   return (
@@ -96,7 +98,7 @@ const FilterSheet = ({
         <ScrollView>
           <SheetTitleContainer>
             <TextAlign align={'left'}>
-              <H4>Filter Gift Cards</H4>
+              <H4>{t('Filter Gift Cards')}</H4>
             </TextAlign>
           </SheetTitleContainer>
           <Pills>
@@ -127,7 +129,7 @@ const FilterSheet = ({
               await sleep(1000);
               setInitialCategoryMap(categoryMap);
             }}>
-            {'Apply Filter'.toUpperCase()}
+            {t('Apply Filter').toUpperCase()}
           </BottomNotificationCta>
           <BottomNotificationCta
             suppressHighlighting={true}
@@ -135,7 +137,7 @@ const FilterSheet = ({
             onPress={() =>
               setCategoryMap(initializeCategoryMap(Object.keys(categoryMap)))
             }>
-            {'Clear'.toUpperCase()}
+            {t('Clear').toUpperCase()}
           </BottomNotificationCta>
         </CtaContainer>
       </PillSheetContainer>

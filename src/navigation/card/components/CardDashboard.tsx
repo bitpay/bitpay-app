@@ -1,6 +1,5 @@
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
-import analytics from '@segment/analytics-react-native';
 import React, {useCallback, useLayoutEffect, useMemo} from 'react';
 import {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
@@ -26,6 +25,7 @@ import {CardProvider} from '../../../constants/card';
 import {CARD_WIDTH} from '../../../constants/config.card';
 import {navigationRef} from '../../../Root';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {logSegmentEvent} from '../../../store/app/app.effects';
 import {selectBrazeCardOffers} from '../../../store/app/app.selectors';
 import {CardEffects} from '../../../store/card';
 import {Card, UiTransaction} from '../../../store/card/card.models';
@@ -118,6 +118,8 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   );
 
   const goToCardSettings = () => {
+    dispatch(logSegmentEvent('track', 'Clicked Card Settings', {}, true));
+
     navigation.navigate('Settings', {
       id: activeCard.id,
     });
@@ -126,6 +128,8 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   goToCardSettingsRef.current = goToCardSettings;
 
   const goToReferAndEarn = () => {
+    dispatch(logSegmentEvent('track', 'Clicked Refer and Earn', {}, true));
+
     navigation.navigate('Referral', {card: activeCard});
   };
   const goToReferAndEarnRef = useRef(goToReferAndEarn);
@@ -156,17 +160,23 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
       dispatch(
         showBottomNotificationModal({
           type: 'warning',
-          title: 'No funds available',
-          message: 'You do not have any funds to send.',
+          title: t('No funds available'),
+          message: t('You do not have any funds to send.'),
           enableBackdropDismiss: true,
           actions: [
             {
-              text: 'Add funds',
+              text: t('Add funds'),
               action: () => {
-                analytics.track('BitPay App - Clicked Buy Crypto', {
-                  from: 'CardDashboard',
-                  appUser: user?.eid || '',
-                });
+                dispatch(
+                  logSegmentEvent(
+                    'track',
+                    'Clicked Buy Crypto',
+                    {
+                      context: 'CardDashboard',
+                    },
+                    true,
+                  ),
+                );
                 navigator.navigate('Wallet', {
                   screen: WalletScreens.AMOUNT,
                   params: {
@@ -187,7 +197,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
               primary: true,
             },
             {
-              text: 'Got It',
+              text: t('Got It'),
               action: () => null,
               primary: false,
             },
@@ -258,8 +268,9 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
             <GhostImg />
           </EmptyGhostContainer>
           <EmptyListDescription>
-            Load your cash account and get instant access to spending at
-            thousands of merchants.
+            {t(
+              'Load your cash account and get instant access to spending at thousands of merchants.',
+            )}
           </EmptyListDescription>
         </EmptyListContainer>
       ),
@@ -398,7 +409,9 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
             {!isLoadingInitial ? (
               <TransactionListHeader>
                 <TransactionListHeaderTitle>
-                  {dashboardTransactions.length <= 0 ? null : 'Recent Activity'}
+                  {dashboardTransactions.length <= 0
+                    ? null
+                    : t('Recent Activity')}
                 </TransactionListHeaderTitle>
 
                 <TransactionListHeaderIcon onPress={() => onRefresh()}>

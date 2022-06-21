@@ -1,4 +1,5 @@
 import React, {useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {ColorSchemeName, StyleProp, TextStyle, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {useTheme} from 'styled-components/native';
@@ -10,10 +11,12 @@ import {
 } from '../../../../../components/styled/Containers';
 import {RootState} from '../../../../../store';
 import {AppActions} from '../../../../../store/app';
+import {logSegmentEvent} from '../../../../../store/app/app.effects';
 import {LogActions} from '../../../../../store/log';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 
 const ThemeSettings: React.FC = () => {
+  const {t} = useTranslation();
   const dispatch = useDispatch();
   const currentTheme = useSelector(({APP}: RootState) => APP.colorScheme);
   const onSetThemePress = (setScheme: ColorSchemeName) => {
@@ -22,15 +25,20 @@ const ThemeSettings: React.FC = () => {
     dispatch(
       LogActions.info('Theme updated to ' + (setScheme || 'system default')),
     );
+    dispatch(
+      logSegmentEvent('track', 'Saved Theme', {
+        theme: setScheme || 'system default',
+      }),
+    );
   };
   const [selected, setSelected] = useState(currentTheme);
   const selectedTheme = useTheme();
   const textStyle: StyleProp<TextStyle> = {color: selectedTheme.colors.text};
 
   const SETTINGS: {title: string; theme: ColorSchemeName}[] = [
-    {title: 'Light Mode', theme: 'light'},
-    {title: 'Dark Mode', theme: 'dark'},
-    {title: 'System Default', theme: null},
+    {title: t('Light Mode'), theme: 'light'},
+    {title: t('Dark Mode'), theme: 'dark'},
+    {title: t('System Default'), theme: null},
   ];
 
   return (

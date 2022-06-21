@@ -36,9 +36,8 @@ import {
   simplexIncomingData,
   wyrePaymentData,
 } from '../buy-crypto/buy-crypto.models';
-import analytics from '@segment/analytics-react-native';
 import {LogActions} from '../log';
-import {startOnGoingProcessModal} from '../app/app.effects';
+import {logSegmentEvent, startOnGoingProcessModal} from '../app/app.effects';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {dismissOnGoingProcessModal} from '../app/app.actions';
 import {sleep} from '../../utils/helper-methods';
@@ -660,18 +659,22 @@ const handleSimplexUri =
       }),
     );
 
-    const {APP, BITPAY_ID, BUY_CRYPTO} = getState();
-    const user = BITPAY_ID.user[APP.network];
+    const {BUY_CRYPTO} = getState();
     const order = BUY_CRYPTO.simplex[paymentId];
 
-    analytics.track('BitPay App - Successfully Complete Crypto Purchase ', {
-      exchange: 'simplex',
-      walletId: userId || '',
-      fiatAmount: order?.fiat_total_amount || '',
-      fiatCurrency: order?.fiat_total_amount_currency || '',
-      coin: order?.coin || '',
-      appUser: user?.eid || '',
-    });
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Successfully Complete Crypto Purchase',
+        {
+          exchange: 'simplex',
+          fiatAmount: order?.fiat_total_amount || '',
+          fiatCurrency: order?.fiat_total_amount_currency || '',
+          coin: order?.coin || '',
+        },
+        true,
+      ),
+    );
 
     navigationRef.navigate('ExternalServicesSettings', {
       screen: 'SimplexSettings',
@@ -737,17 +740,19 @@ const handleWyreUri =
       }),
     );
 
-    const {APP, BITPAY_ID} = getState();
-    const user = BITPAY_ID.user[APP.network];
-
-    analytics.track('BitPay App - Successfully Complete Crypto Purchase ', {
-      exchange: 'wyre',
-      walletId: walletId || '',
-      fiatAmount: sourceAmount || '',
-      fiatCurrency: sourceCurrency || '',
-      coin: destCurrency || '',
-      appUser: user?.eid || '',
-    });
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Successfully Complete Crypto Purchase',
+        {
+          exchange: 'wyre',
+          fiatAmount: sourceAmount || '',
+          fiatCurrency: sourceCurrency || '',
+          coin: destCurrency || '',
+        },
+        true,
+      ),
+    );
 
     navigationRef.navigate('ExternalServicesSettings', {
       screen: 'WyreSettings',
@@ -770,9 +775,9 @@ const handlePlainAddress =
   (address: string, coin: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
     console.log(`Incoming-data: ${coin} plain address`);
-    const network =
-      Object.keys(bitcoreLibs).includes(coin) &&
-      GetAddressNetwork(address, coin as keyof BitcoreLibs);
+    const network = Object.keys(bitcoreLibs).includes(coin)
+      ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
+      : undefined; // There is no way to tell if an eth address is kovan or livenet so let's skip the network filter
     const recipient = {
       type: 'address',
       currency: coin,

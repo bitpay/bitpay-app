@@ -4,6 +4,7 @@ import {
   FetchAllCardsResponse,
   FetchCardResponse,
   FetchOverviewResponse,
+  FetchPinChangeRequestInfoResponse,
   FetchReferralCodeResponse,
   FetchReferredUsers,
   FetchSettledTransactionsResponse,
@@ -245,11 +246,23 @@ const startCreateGooglePayProvisioningRequest = async (
   return data;
 };
 
+const fetchPinChangeRequestInfo = async (token: string, id: string) => {
+  const query = CardQueries.FETCH_PIN_CHANGE_REQUEST_INFO(token, id);
+
+  const {data} =
+    await GraphQlApi.getInstance().request<FetchPinChangeRequestInfoResponse>(
+      query,
+    );
+
+  return data;
+};
+
 const CardApi = {
   activateCard,
   fetchAll,
   fetchOne,
   fetchOverview,
+  fetchPinChangeRequestInfo,
   fetchReferralCode,
   fetchReferredUsers,
   fetchSettledTransactions,

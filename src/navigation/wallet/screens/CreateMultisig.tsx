@@ -46,7 +46,10 @@ import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import {Currencies} from '../../../constants/currencies';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {WalletStackParamList} from '../WalletStack';
-import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  openUrlWithInAppBrowser,
+} from '../../../store/app/app.effects';
 import {
   startCreateKeyMultisig,
   addWalletMultisig,
@@ -62,7 +65,7 @@ import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {WrongPasswordError} from '../components/ErrorMessages';
 import {URL} from '../../../constants';
 import {useAppDispatch} from '../../../utils/hooks';
-
+import {useTranslation} from 'react-i18next';
 export interface CreateMultisigProps {
   currency: string;
   key: Key;
@@ -178,6 +181,7 @@ const CtaContainer = styled(_CtaContainer)`
 
 const CreateMultisig = () => {
   const dispatch = useAppDispatch();
+  const {t} = useTranslation();
   const logger = useLogger();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'CreateMultisig'>>();
@@ -204,12 +208,12 @@ const CreateMultisig = () => {
     dispatch(
       showBottomNotificationModal({
         type: 'warning',
-        title: 'Something went wrong',
+        title: t('Something went wrong'),
         message: e,
         enableBackdropDismiss: true,
         actions: [
           {
-            text: 'OK',
+            text: t('OK'),
             action: () => {},
             primary: true,
           },
@@ -257,6 +261,19 @@ const CreateMultisig = () => {
             opts,
           }),
         )) as Wallet;
+
+        dispatch(
+          logSegmentEvent(
+            'track',
+            'Create Multisig Wallet success',
+            {
+              coin: currency?.toLowerCase(),
+              type: `${opts.m}-${opts.n}`,
+              addedToExistingKey: true,
+            },
+            true,
+          ),
+        );
 
         wallet.getStatus(
           {network: wallet.network},
@@ -312,6 +329,19 @@ const CreateMultisig = () => {
           startCreateKeyMultisig(opts),
         )) as Key;
 
+        dispatch(
+          logSegmentEvent(
+            'track',
+            'Create Multisig Wallet success',
+            {
+              coin: currency?.toLowerCase(),
+              type: `${opts.m}-${opts.n}`,
+              addedToExistingKey: false,
+            },
+            true,
+          ),
+        );
+
         dispatch(setHomeCarouselConfig({id: multisigKey.id, show: true}));
 
         navigation.navigate('Wallet', {
@@ -346,9 +376,9 @@ const CreateMultisig = () => {
     <ScrollViewContainer>
       <MultisigContainer>
         <Paragraph>
-          Multisig wallets require multisig devices to set up. It takes longer
-          to complete but it's the recommended security configuration for long
-          term storage.
+          {
+            "Multisig wallets require multisig devices to set up. It takes longer to complete but it's the recommended security configuration for long term storage."
+          }
         </Paragraph>
 
         <InputContainer>
@@ -356,7 +386,7 @@ const CreateMultisig = () => {
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
-                label={'WALLET NAME'}
+                label={t('WALLET NAME')}
                 onChangeText={(text: string) => onChange(text)}
                 onBlur={onBlur}
                 value={value}
@@ -376,7 +406,7 @@ const CreateMultisig = () => {
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
-                label={'YOUR NAME'}
+                label={t('YOUR NAME')}
                 onChangeText={(text: string) => onChange(text)}
                 onBlur={onBlur}
                 value={value}
@@ -396,7 +426,7 @@ const CreateMultisig = () => {
           render={({field: {value}}) => (
             <>
               <OptionContainer>
-                <OptionTitle>Required number of signatures</OptionTitle>
+                <OptionTitle>{t('Required number of signatures')}</OptionTitle>
                 <CounterContainer>
                   <RemoveButton
                     onPress={() => {
@@ -440,7 +470,7 @@ const CreateMultisig = () => {
           render={({field: {value}}) => (
             <OptionContainer>
               <Column>
-                <OptionTitle>Total number of copayers</OptionTitle>
+                <OptionTitle>{t('Total number of copayers')}</OptionTitle>
               </Column>
               <CounterContainer>
                 <RemoveButton
@@ -489,14 +519,14 @@ const CreateMultisig = () => {
               {showOptions ? (
                 <>
                   <AdvancedOptionsButtonText>
-                    Hide Advanced Options
+                    {t('Hide Advanced Options')}
                   </AdvancedOptionsButtonText>
                   <ChevronUpSvg />
                 </>
               ) : (
                 <>
                   <AdvancedOptionsButtonText>
-                    Show Advanced Options
+                    {t('Show Advanced Options')}
                   </AdvancedOptionsButtonText>
                   <ChevronDownSvg />
                 </>
@@ -556,7 +586,7 @@ const CreateMultisig = () => {
                     });
                   }}>
                   <Column>
-                    <OptionTitle>Single Address</OptionTitle>
+                    <OptionTitle>{t('Single Address')}</OptionTitle>
                   </Column>
                   <CheckBoxContainer>
                     <Checkbox
@@ -581,11 +611,12 @@ const CreateMultisig = () => {
                           <InfoSvg />
                         </InfoImageContainer>
 
-                        <InfoTitle>Single Address Wallet</InfoTitle>
+                        <InfoTitle>{t('Single Address Wallet')}</InfoTitle>
                       </InfoHeader>
                       <InfoDescription>
-                        The single address feature will force the wallet to only
-                        use one address rather than generating new addresses.
+                        {t(
+                          'The single address feature will force the wallet to only use one address rather than generating new addresses.',
+                        )}
                       </InfoDescription>
 
                       <VerticalPadding>
@@ -596,7 +627,7 @@ const CreateMultisig = () => {
                               openUrlWithInAppBrowser(URL.HELP_SINGLE_ADDRESS),
                             );
                           }}>
-                          <Link>Learn More</Link>
+                          <Link>{t('Learn More')}</Link>
                         </TouchableOpacity>
                       </VerticalPadding>
                     </Info>
@@ -609,7 +640,7 @@ const CreateMultisig = () => {
 
         <CtaContainer>
           <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
-            Create Wallet
+            {t('Create Wallet')}
           </Button>
         </CtaContainer>
       </MultisigContainer>

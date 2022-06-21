@@ -15,6 +15,7 @@ import Button from '../../../components/button/Button';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
+import {useTranslation} from 'react-i18next';
 
 export type ClearEncryptPasswordParamList = {
   keyId: string;
@@ -40,6 +41,7 @@ const ClearEncryptPasswordParagraphLink = styled(Link)`
 `;
 
 const ClearEncryptPassword = () => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const {
@@ -50,17 +52,19 @@ const ClearEncryptPassword = () => {
     <ClearEncryptPasswordContainer>
       <ScrollView>
         <ClearEncryptPasswordParagraph>
-          Because your encrypted password is not stored by BitPay, there is no
-          way to reset it.
+          {t(
+            'Because your encrypted password is not stored by BitPay, there is no way to reset it.',
+          )}
         </ClearEncryptPasswordParagraph>
         <ClearEncryptPasswordParagraph>
-          If you need to regain access to your wallet because you have forgotten
-          or lost the encrypt password, you must restore the wallet using the 12
-          word recovery phrase.
+          {t(
+            'If you need to regain access to your wallet because you have forgotten or lost the encrypt password, you must restore the wallet using the 12 word recovery phrase.',
+          )}
         </ClearEncryptPasswordParagraph>
         <ClearEncryptPasswordParagraph>
-          If you do not have the recovery phrase, you will not be able to regain
-          access to your wallet{' '}
+          {t(
+            'If you do not have the recovery phrase, you will not be able to regain access to your wallet',
+          )}{' '}
           <Pressable
             style={{maxHeight: 22, alignSelf: 'flex-start'}}
             onPress={() =>
@@ -71,7 +75,7 @@ const ClearEncryptPassword = () => {
               )
             }>
             <ClearEncryptPasswordParagraphLink>
-              Read more.
+              {t('Read more.')}
             </ClearEncryptPasswordParagraphLink>
           </Pressable>
         </ClearEncryptPasswordParagraph>
@@ -84,7 +88,7 @@ const ClearEncryptPassword = () => {
                 params: {keyId},
               });
             }}>
-            Continue
+            {t('Continue')}
           </Button>
         </ActionContainer>
       </ScrollView>

@@ -27,6 +27,8 @@ import {FormatKeyBalances} from '../../../../../store/wallet/effects/status/stat
 import {updatePortfolioBalance} from '../../../../../store/wallet/wallet.actions';
 import {getPriceHistory} from '../../../../../store/wallet/effects';
 import {batch} from 'react-redux';
+import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../../../store/app/app.effects';
 
 const AltCurrencySettingsContainer = styled.SafeAreaView`
   margin-top: 20px;
@@ -68,6 +70,7 @@ const HideableView = styled.View<HideableViewProps>`
 `;
 
 const AltCurrencySettings = () => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const alternativeCurrencies = useAppSelector(
@@ -112,6 +115,11 @@ const AltCurrencySettings = () => {
             onPress={async () => {
               Keyboard.dismiss();
               navigation.goBack();
+              dispatch(
+                logSegmentEvent('track', 'Saved Display Currency', {
+                  currency: item.isoCode,
+                }),
+              );
               InteractionManager.runAfterInteractions(() => {
                 batch(() => {
                   dispatch(setDefaultAltCurrency(item));
@@ -132,7 +140,7 @@ const AltCurrencySettings = () => {
   return (
     <AltCurrencySettingsContainer>
       <Header>
-        <Label>Search Currency</Label>
+        <Label>{t('Search Currency')}</Label>
         <SearchContainer>
           <SearchInput
             placeholder={''}
@@ -160,7 +168,7 @@ const AltCurrencySettings = () => {
               <GhostSvg style={{marginTop: 20}} />
             </NoResultsImgContainer>
             <NoResultsDescription>
-              {"We couldn't find a match for "}
+              {t("We couldn't find a match for ")}
               <BaseText style={{fontWeight: 'bold'}}>{searchVal}</BaseText>.
             </NoResultsDescription>
           </NoResultsContainer>

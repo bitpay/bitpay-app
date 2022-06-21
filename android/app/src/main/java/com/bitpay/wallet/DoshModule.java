@@ -43,10 +43,14 @@ public class DoshModule extends ReactContextBaseJavaModule {
     activity.runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        PoweredByDosh.Companion.initialize(self.applicationId, self.getReactApplicationContext());
-        self.initialized = true;
-        self.uiOptions = self.mapToUiOptions(uiOptions);
-        promise.resolve(true);
+        try {
+          PoweredByDosh.Companion.initialize(self.applicationId, self.getReactApplicationContext());
+          self.initialized = true;
+          self.uiOptions = self.mapToUiOptions(uiOptions);
+          promise.resolve(true);
+        } catch (Exception ex) {
+          promise.reject(BpErrorCodes.UNEXPECTED_ERROR, ex.getMessage());
+        }
       }
     });
   }

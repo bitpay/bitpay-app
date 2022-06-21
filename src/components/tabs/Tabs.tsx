@@ -5,7 +5,7 @@ import {ScreenGutter} from '../styled/Containers';
 import TabButton from './TabButton';
 
 interface TabsProps {
-  tabs: {
+  tabs: () => {
     title: React.ReactNode;
     content: React.ReactNode;
   }[];
@@ -21,11 +21,11 @@ const TabsHeader = styled.View`
 const Tabs: React.FC<TabsProps> = props => {
   const [activeTabIdx, setActiveIdx] = useState(0);
 
-  if (!props.tabs || !props.tabs.length) {
+  if (!props.tabs() || !props.tabs().length) {
     return null;
   }
 
-  const tabs = props.tabs.map((t, idx) => ({
+  const tabs = props.tabs().map((t, idx) => ({
     ...t,
     key: 'tab-' + idx,
   }));

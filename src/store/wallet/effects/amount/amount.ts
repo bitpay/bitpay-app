@@ -1,7 +1,7 @@
 import {Effect} from '../../..';
 import {BwcProvider} from '../../../../lib/bwc';
 import {GetPrecision, IsCustomERCToken} from '../../utils/currency';
-import {Wallet} from '../../wallet.models';
+import {SendMaxInfo, Wallet} from '../../wallet.models';
 import {GetMinFee} from '../fee/fee';
 const LOW_AMOUNT_RATIO = 0.15;
 const TOTAL_LOW_WARNING_RATIO = 0.3;
@@ -99,6 +99,42 @@ export const FormatAmount =
     return BwcProvider.getInstance()
       .getUtils()
       .formatAmount(satoshis, currencyAbbreviation, opts); // This util returns a string
+  };
+
+export const SatToUnit =
+  (amount: number, currencyAbbreviation: string): Effect<number | undefined> =>
+  dispatch => {
+    const {unitToSatoshi, unitDecimals} =
+      dispatch(GetPrecision(currencyAbbreviation.toLowerCase())) || {};
+    let spendableAmount: number | undefined;
+    if (unitToSatoshi && unitDecimals) {
+      const satToUnit = 1 / unitToSatoshi;
+
+      spendableAmount = parseFloat((amount * satToUnit).toFixed(unitDecimals));
+    }
+    return spendableAmount;
+  };
+
+export const GetExcludedUtxosMessage =
+  (coin: string, sendMaxInfo: SendMaxInfo): Effect<string> =>
+  dispatch => {
+    const warningMsg = [];
+    if (sendMaxInfo.utxosBelowFee > 0) {
+      const amountBelowFeeStr = dispatch(
+        SatToUnit(sendMaxInfo.amountBelowFee, coin),
+      );
+      const message = `A total of ${amountBelowFeeStr} ${coin.toUpperCase()} were excluded. These funds come from UTXOs smaller than the network fee provided.`;
+      warningMsg.push(message);
+    }
+
+    if (sendMaxInfo.utxosAboveMaxSize > 0) {
+      const amountAboveMaxSizeStr = dispatch(
+        SatToUnit(sendMaxInfo.amountAboveMaxSize, coin),
+      );
+      const message = `A total of ${amountAboveMaxSizeStr} ${coin.toUpperCase()} were excluded. The maximum size allowed for a transaction was exceeded.`;
+      warningMsg.push(message);
+    }
+    return warningMsg.join('\n');
   };
 
 // Approx utxo amount, from which the uxto is economically redeemable

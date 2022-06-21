@@ -16,6 +16,7 @@ import {
   updateKeyName,
   updateWalletName,
 } from '../../../store/wallet/wallet.actions';
+import {useTranslation} from 'react-i18next';
 
 type UpdateKeyOrWalletNameScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -42,6 +43,7 @@ const schema = yup.object().shape({
 const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
   route,
 }) => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const {key, wallet, context} = route.params;
@@ -49,10 +51,12 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
-        <HeaderTitle>Update {titleCasing(context)} Name</HeaderTitle>
+        <HeaderTitle>
+          {t('Update Name', {context: titleCasing(context)})}
+        </HeaderTitle>
       ),
     });
-  }, [navigation]);
+  }, [navigation, t]);
 
   const {
     control,
@@ -78,8 +82,8 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
-              placeholder={context === 'key' ? 'My Key' : 'My Wallet'}
-              label={`${context.toUpperCase()} NAME`}
+              placeholder={context === 'key' ? t('My Key') : t('My Wallet')}
+              label={context.toUpperCase() + t(' NAME')}
               onBlur={onBlur}
               onChangeText={(text: string) => onChange(text)}
               error={errors.name?.message}
@@ -93,7 +97,7 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
       </FormContainer>
       <ButtonContainer>
         <Button onPress={handleSubmit(updateName)} buttonStyle={'primary'}>
-          Update
+          {t('Update')}
         </Button>
       </ButtonContainer>
     </UpdateContainer>

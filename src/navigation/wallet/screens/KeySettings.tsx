@@ -66,6 +66,7 @@ import {BWCErrorMessage} from '../../../constants/BWCError';
 import {RootState} from '../../../store';
 import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
+import {useTranslation} from 'react-i18next';
 
 const WalletSettingsContainer = styled.View`
   flex: 1;
@@ -104,7 +105,14 @@ const WalletSettingsTitle = styled(SettingTitle)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
+const AddWalletText = styled(Link)`
+  font-size: 18px;
+  font-weight: 500;
+  margin: 10px 0;
+`;
+
 const KeySettings = () => {
+  const {t} = useTranslation();
   const {
     params: {key, context},
   } = useRoute<RouteProp<WalletStackParamList, 'KeySettings'>>();
@@ -137,7 +145,7 @@ const KeySettings = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>Key Settings</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Key Settings')}</HeaderTitle>,
     });
   });
 
@@ -162,7 +170,7 @@ const KeySettings = () => {
           dispatch(showBottomNotificationModal(WrongPasswordError()));
         }
       },
-      description: 'To continue please enter your encryption password.',
+      description: t('To continue please enter your encryption password.'),
       onCancelHandler: () => null,
     };
   };
@@ -214,11 +222,11 @@ const KeySettings = () => {
         if (syncWalletsLength) {
           message =
             syncWalletsLength === 1
-              ? 'New wallet found'
-              : `${syncWalletsLength} wallets found`;
+              ? t('New wallet found')
+              : t('wallets found', {syncWalletsLength});
           dispatch(syncWallets({keyId: _key.id, wallets: _syncWallets}));
         } else {
-          message = 'Your key is already synced';
+          message = t('Your key is already synced');
         }
 
         dispatch(dismissOnGoingProcessModal());
@@ -226,12 +234,12 @@ const KeySettings = () => {
         dispatch(
           showBottomNotificationModal({
             type: 'error',
-            title: 'Sync wallet',
+            title: t('Sync wallet'),
             message,
             enableBackdropDismiss: true,
             actions: [
               {
-                text: 'OK',
+                text: t('OK'),
                 action: () => {},
                 primary: true,
               },
@@ -244,7 +252,7 @@ const KeySettings = () => {
         await dispatch(
           showBottomNotificationModal(
             CustomErrorMessage({
-              errMsg: 'Failed to Sync wallets',
+              errMsg: t('Failed to Sync wallets'),
             }),
           ),
         );
@@ -256,7 +264,7 @@ const KeySettings = () => {
         showBottomNotificationModal(
           CustomErrorMessage({
             errMsg: BWCErrorMessage(e),
-            title: 'Error',
+            title: t('Error'),
           }),
         ),
       );
@@ -276,7 +284,7 @@ const KeySettings = () => {
             });
           }}>
           <View>
-            <Title>Key Name</Title>
+            <Title>{t('Key Name')}</Title>
             <WalletSettingsTitle>{keyName}</WalletSettingsTitle>
           </View>
 
@@ -285,7 +293,7 @@ const KeySettings = () => {
         <Hr />
 
         <SettingView>
-          <WalletSettingsTitle>Hide Balance</WalletSettingsTitle>
+          <WalletSettingsTitle>{t('Hide Balance')}</WalletSettingsTitle>
 
           <ToggleSwitch
             onChange={() => {
@@ -298,7 +306,7 @@ const KeySettings = () => {
         <Hr />
 
         <WalletHeaderContainer>
-          <Title>Wallets</Title>
+          <Title>{t('Wallets')}</Title>
           <InfoImageContainer infoMargin={'0 0 0 8px'}>
             <TouchableOpacity
               onPress={() => {
@@ -345,7 +353,7 @@ const KeySettings = () => {
         )}
 
         <VerticalPadding style={{alignItems: 'center'}}>
-          <Link
+          <AddWalletText
             onPress={() => {
               haptic('impactLight');
               navigation.navigate('Wallet', {
@@ -353,12 +361,12 @@ const KeySettings = () => {
                 params: {key},
               });
             }}>
-            Add Wallet
-          </Link>
+            {t('Add Wallet')}
+          </AddWalletText>
         </VerticalPadding>
 
         <VerticalPadding>
-          <Title>Security</Title>
+          <Title>{t('Security')}</Title>
           <Setting
             onPress={() => {
               haptic('impactLight');
@@ -392,13 +400,15 @@ const KeySettings = () => {
                 );
               }
             }}>
-            <WalletSettingsTitle>Backup</WalletSettingsTitle>
+            <WalletSettingsTitle>{t('Backup')}</WalletSettingsTitle>
           </Setting>
 
           <Hr />
 
           <SettingView>
-            <WalletSettingsTitle>Request Encrypt Password</WalletSettingsTitle>
+            <WalletSettingsTitle>
+              {t('Request Encrypt Password')}
+            </WalletSettingsTitle>
 
             <RequestEncryptPasswordToggle currentKey={key} />
           </SettingView>
@@ -411,11 +421,12 @@ const KeySettings = () => {
                 <InfoSvg />
               </InfoImageContainer>
 
-              <InfoTitle>Password Not Recoverable</InfoTitle>
+              <InfoTitle>{t('Password Not Recoverable')}</InfoTitle>
             </InfoHeader>
             <InfoDescription>
-              This password cannot be recovered. If this password is lost, funds
-              can only be recovered by reimporting your 12-word recovery phrase.
+              {t(
+                'This password cannot be recovered. If this password is lost, funds can only be recovered by reimporting your 12-word recovery phrase.',
+              )}
             </InfoDescription>
 
             <VerticalPadding>
@@ -425,7 +436,7 @@ const KeySettings = () => {
                   haptic('impactLight');
                   dispatch(openUrlWithInAppBrowser(URL.HELP_SPENDING_PASSWORD));
                 }}>
-                <Link>Learn More</Link>
+                <Link>{t('Learn More')}</Link>
               </TouchableOpacity>
             </VerticalPadding>
           </Info>
@@ -444,7 +455,7 @@ const KeySettings = () => {
                     });
                   }}>
                   <WalletSettingsTitle>
-                    Clear Encrypt Password
+                    {t('Clear Encrypt Password')}
                   </WalletSettingsTitle>
                 </Setting>
               </SettingView>
@@ -454,7 +465,7 @@ const KeySettings = () => {
         </VerticalPadding>
 
         <VerticalPadding>
-          <Title>Advanced</Title>
+          <Title>{t('Advanced')}</Title>
           <Setting
             activeOpacity={ActiveOpacity}
             onPress={() => {
@@ -472,7 +483,7 @@ const KeySettings = () => {
               }
             }}>
             <WalletSettingsTitle>
-              Sync Wallets Across Devices
+              {t('Sync Wallets Across Devices')}
             </WalletSettingsTitle>
           </Setting>
           <Hr />
@@ -503,7 +514,7 @@ const KeySettings = () => {
                 );
               }
             }}>
-            <WalletSettingsTitle>Export Key</WalletSettingsTitle>
+            <WalletSettingsTitle>{t('Export Key')}</WalletSettingsTitle>
           </Setting>
           <Hr />
 
@@ -531,7 +542,9 @@ const KeySettings = () => {
                 );
               }
             }}>
-            <WalletSettingsTitle>Extended Private Key</WalletSettingsTitle>
+            <WalletSettingsTitle>
+              {t('Extended Private Key')}
+            </WalletSettingsTitle>
           </Setting>
           <Hr />
 
@@ -545,7 +558,7 @@ const KeySettings = () => {
                 params: {keyId: key.id},
               });
             }}>
-            <WalletSettingsTitle>Delete</WalletSettingsTitle>
+            <WalletSettingsTitle>{t('Delete')}</WalletSettingsTitle>
           </Setting>
         </VerticalPadding>
       </ScrollContainer>

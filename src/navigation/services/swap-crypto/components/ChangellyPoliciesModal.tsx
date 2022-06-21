@@ -10,6 +10,7 @@ import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
 import {useAppDispatch} from '../../../../utils/hooks';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CloseModal from '../../../../../assets/img/close-modal-icon.svg';
+import {useTranslation} from 'react-i18next';
 
 const ChangellyPoliciesContainer = styled.SafeAreaView`
   flex: 1;
@@ -69,6 +70,7 @@ const ChangellyPoliciesModal: React.FC<ChangellyPoliciesModalProps> = ({
   isVisible,
   onDismiss,
 }) => {
+  const {t} = useTranslation();
   const theme = useTheme();
   const dispatch = useAppDispatch();
 
@@ -117,7 +119,7 @@ const ChangellyPoliciesModal: React.FC<ChangellyPoliciesModalProps> = ({
               openUrlWithInAppBrowser('https://changelly.com/terms-of-use'),
             );
           }}>
-          <PoliciesText>Terms of Use</PoliciesText>
+          <PoliciesText>{t('Terms of Use')}</PoliciesText>
           <ArrowContainer>
             <SelectorArrowRight
               {...{
@@ -133,7 +135,7 @@ const ChangellyPoliciesModal: React.FC<ChangellyPoliciesModalProps> = ({
             haptic('impactLight');
             dispatch(openUrlWithInAppBrowser('https://changelly.com/aml-kyc'));
           }}>
-          <PoliciesText>AML/KYC Policy</PoliciesText>
+          <PoliciesText>{t('AML/KYC Policy')}</PoliciesText>
           <ArrowContainer>
             <SelectorArrowRight
               {...{
@@ -145,7 +147,7 @@ const ChangellyPoliciesModal: React.FC<ChangellyPoliciesModalProps> = ({
           </ArrowContainer>
         </PoliciesContainer>
         <ProviderContainer>
-          <ProviderLabel>Provided By</ProviderLabel>
+          <ProviderLabel>{t('Provided By')}</ProviderLabel>
           <ChangellyLogo width={100} height={30} />
         </ProviderContainer>
       </ChangellyPoliciesContainer>

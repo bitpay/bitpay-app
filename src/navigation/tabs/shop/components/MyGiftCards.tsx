@@ -23,6 +23,7 @@ import {
   sortByDescendingDate,
 } from '../../../../lib/gift-cards/gift-card';
 import {ShopScreens} from '../ShopStack';
+import {useTranslation} from 'react-i18next';
 
 const MyGiftCardsHeaderContainer = styled(SectionHeaderContainer)`
   margin-bottom: -10px;
@@ -47,6 +48,7 @@ const MyGiftCards = ({
 }: {
   supportedGiftCards: CardConfig[];
 }) => {
+  const {t} = useTranslation();
   const carouselRef = useRef<Carousel<GiftCard[]>>(null);
   const navigation = useNavigation();
   const [slideIndex, setSlideIndex] = useState(0);
@@ -96,18 +98,20 @@ const MyGiftCards = ({
       <SectionContainer>
         <MyGiftCardsHeaderContainer>
           <SectionHeader>
-            {slideIndex === 0 ? 'My Gift Cards' : 'My Archived Gift Cards'}
+            {slideIndex === 0
+              ? t('My Gift Cards')
+              : t('My Archived Gift Cards')}
           </SectionHeader>
           {archivedGiftCards.length ? (
             <>
               {slideIndex === 0 ? (
                 <TouchableWithoutFeedback
                   onPress={() => seeArchivedGiftCards()}>
-                  <SectionHeaderButton>See Archived</SectionHeaderButton>
+                  <SectionHeaderButton>{t('See Archived')}</SectionHeaderButton>
                 </TouchableWithoutFeedback>
               ) : (
                 <TouchableWithoutFeedback onPress={() => setSlideIndex(0)}>
-                  <SectionHeaderButton>See Active</SectionHeaderButton>
+                  <SectionHeaderButton>{t('See Active')}</SectionHeaderButton>
                 </TouchableWithoutFeedback>
               )}
             </>
@@ -163,7 +167,7 @@ const MyGiftCards = ({
             ) : (
               <NoGiftCards>
                 <NoGiftCardsText>
-                  You have no active gift cards.
+                  {t('You have no active gift cards.')}
                 </NoGiftCardsText>
               </NoGiftCards>
             )}

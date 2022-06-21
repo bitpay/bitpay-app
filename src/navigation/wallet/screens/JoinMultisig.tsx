@@ -25,7 +25,10 @@ import {
   addWalletJoinMultisig,
   getDecryptPassword,
 } from '../../../store/wallet/effects';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {sleep} from '../../../utils/helper-methods';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
@@ -39,6 +42,7 @@ import {
   WrongPasswordError,
 } from '../components/ErrorMessages';
 import {useAppDispatch} from '../../../utils/hooks';
+import {useTranslation} from 'react-i18next';
 
 export type JoinMultisigParamList = {
   key?: Key;
@@ -76,6 +80,7 @@ const CtaContainer = styled(_CtaContainer)`
 
 const JoinMultisig = () => {
   const dispatch = useAppDispatch();
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'JoinMultisig'>>();
   const {key, invitationCode} = route.params || {};
@@ -121,6 +126,17 @@ const JoinMultisig = () => {
             opts,
           }),
         )) as Wallet;
+
+        dispatch(
+          logSegmentEvent(
+            'track',
+            'Join Multisig Wallet success',
+            {
+              addedToExistingKey: true,
+            },
+            true,
+          ),
+        );
 
         wallet.getStatus(
           {network: wallet.network},
@@ -200,6 +216,17 @@ const JoinMultisig = () => {
           startJoinMultisig(opts),
         )) as Key;
 
+        dispatch(
+          logSegmentEvent(
+            'track',
+            'Join Multisig Wallet success',
+            {
+              addedToExistingKey: false,
+            },
+            true,
+          ),
+        );
+
         dispatch(setHomeCarouselConfig({id: multisigKey.id, show: true}));
 
         navigation.navigate('Wallet', {
@@ -217,7 +244,7 @@ const JoinMultisig = () => {
         await showErrorMessage(
           CustomErrorMessage({
             errMsg: BWCErrorMessage(e),
-            title: 'Uh oh, something went wrong',
+            title: t('Uh oh, something went wrong'),
           }),
         );
       }
@@ -232,7 +259,7 @@ const JoinMultisig = () => {
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
-              label={'YOUR NAME'}
+              label={t('YOUR NAME')}
               onChangeText={(text: string) => onChange(text)}
               onBlur={onBlur}
               value={value}
@@ -247,11 +274,16 @@ const JoinMultisig = () => {
         )}
 
         <HeaderContainer>
-          <ImportTitle>Wallet invitation</ImportTitle>
+          <ImportTitle>{t('Wallet invitation')}</ImportTitle>
 
           <ScanContainer
             activeOpacity={ActiveOpacity}
-            onPress={() =>
+            onPress={() => {
+              dispatch(
+                logSegmentEvent('track', 'Open Scanner', {
+                  context: 'JoinMultisig',
+                }),
+              );
               navigation.navigate('Scan', {
                 screen: 'Root',
                 params: {
@@ -261,8 +293,8 @@ const JoinMultisig = () => {
                     });
                   },
                 },
-              })
-            }>
+              });
+            }}>
             <ScanSvg />
           </ScanContainer>
         </HeaderContainer>
@@ -286,7 +318,7 @@ const JoinMultisig = () => {
 
         <CtaContainer>
           <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
-            Join
+            {t('Join')}
           </Button>
         </CtaContainer>
       </JoinContainer>

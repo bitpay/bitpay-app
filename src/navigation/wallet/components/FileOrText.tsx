@@ -26,13 +26,17 @@ import {
 } from '../../../store/app/app.actions';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
 import {sleep} from '../../../utils/helper-methods';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
+import {useTranslation} from 'react-i18next';
 
 const BWCProvider = BwcProvider.getInstance();
 
@@ -67,6 +71,7 @@ const schema = yup.object().shape({
 });
 
 const FileOrText = () => {
+  const {t} = useTranslation();
   const logger = useLogger();
   const dispatch = useDispatch();
   const navigation = useNavigation();
@@ -103,6 +108,17 @@ const FileOrText = () => {
         walletTermsAccepted,
         key,
       });
+      dispatch(
+        logSegmentEvent(
+          'track',
+          'Import Key success',
+          {
+            context: route.params?.context || '',
+            type: 'FileOrText',
+          },
+          true,
+        ),
+      );
       dispatch(dismissOnGoingProcessModal());
     } catch (e: any) {
       logger.error(e.message);
@@ -117,12 +133,12 @@ const FileOrText = () => {
     dispatch(
       showBottomNotificationModal({
         type: 'warning',
-        title: 'Something went wrong',
+        title: t('Something went wrong'),
         message: e,
         enableBackdropDismiss: true,
         actions: [
           {
-            text: 'OK',
+            text: t('OK'),
             action: () => {},
             primary: true,
           },
@@ -143,7 +159,7 @@ const FileOrText = () => {
       decryptBackupText = BWCProvider.getSJCL().decrypt(password, text);
     } catch (e: any) {
       logger.error(`Import: could not decrypt file ${e.message}`);
-      showErrorModal('Could not decrypt file, check your password');
+      showErrorModal(t('Could not decrypt file, check your password'));
       return;
     }
     importWallet(decryptBackupText, opts);
@@ -154,7 +170,7 @@ const FileOrText = () => {
       <ImportContainer>
         <FormRow>
           <HeaderContainer>
-            <ImportTitle>Backup plain text code</ImportTitle>
+            <ImportTitle>{t('Backup plain text code')}</ImportTitle>
           </HeaderContainer>
           <Controller
             control={control}
@@ -172,7 +188,7 @@ const FileOrText = () => {
           />
 
           {errors?.text?.message && (
-            <ErrorText>Backup text is required.</ErrorText>
+            <ErrorText>{t('Backup text is required.')}</ErrorText>
           )}
         </FormRow>
 
@@ -187,7 +203,7 @@ const FileOrText = () => {
                 onChangeText={onChange}
                 onBlur={onBlur}
                 value={value}
-                error={errors?.password?.message && 'Password is required.'}
+                error={errors?.password?.message && t('Password is required.')}
               />
             )}
             name="password"
@@ -197,7 +213,7 @@ const FileOrText = () => {
 
         <CtaContainer>
           <Button buttonStyle={'primary'} onPress={onSubmit}>
-            Import Wallet
+            {t('Import Wallet')}
           </Button>
         </CtaContainer>
       </ImportContainer>

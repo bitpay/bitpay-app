@@ -18,6 +18,7 @@ import Amount, {AmountParamList} from '../../../wallet/screens/Amount';
 import Confirm, {
   GiftCardConfirmParamList,
 } from '../../../wallet/screens/send/confirm/GiftCardConfirm';
+import {useTranslation} from 'react-i18next';
 
 export type GiftCardStackParamList = {
   BuyGiftCard: {cardConfig: CardConfig};
@@ -56,6 +57,7 @@ export enum GiftCardScreens {
 const GiftCards = createStackNavigator<GiftCardStackParamList>();
 
 const GiftCardStack = () => {
+  const {t} = useTranslation();
   return (
     <GiftCards.Navigator
       initialRouteName={GiftCardScreens.BUY_GIFT_CARD}
@@ -71,14 +73,14 @@ const GiftCardStack = () => {
         name={GiftCardScreens.ENTER_EMAIL}
         component={EnterEmail}
         options={{
-          headerTitle: () => <HeaderTitle>Enter Email</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Enter Email')}</HeaderTitle>,
         }}
       />
       <GiftCards.Screen
         name={GiftCardScreens.ENTER_PHONE}
         component={EnterPhone}
         options={{
-          headerTitle: () => <HeaderTitle>Enter Phone</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Enter Phone')}</HeaderTitle>,
         }}
       />
       <GiftCards.Screen

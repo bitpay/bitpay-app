@@ -2,6 +2,7 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useMemo} from 'react';
 import {Controller, useForm} from 'react-hook-form';
+import {useTranslation} from 'react-i18next';
 import {useDispatch, useSelector} from 'react-redux';
 import * as yup from 'yup';
 import Button from '../../../components/button/Button';
@@ -36,6 +37,7 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
   navigation,
   route,
 }) => {
+  const {t} = useTranslation();
   const dispatch = useDispatch();
   const {prevCode} = route.params;
   const schema = useMemo(() => {
@@ -94,12 +96,13 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
         dispatch(
           AppActions.showBottomNotificationModal({
             type: 'error',
-            title: 'Login failed',
-            message: twoFactorPairingError || 'An unexpected error occurred.',
+            title: t('Login failed'),
+            message:
+              twoFactorPairingError || t('An unexpected error occurred.'),
             enableBackdropDismiss: false,
             actions: [
               {
-                text: 'OK',
+                text: t('OK'),
                 action: () => {
                   dispatch(BitPayIdActions.updateTwoFactorPairStatus(null));
                 },
@@ -115,6 +118,7 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
     navigation,
     twoFactorPairingStatus,
     twoFactorPairingError,
+    t,
   ]);
 
   const onSubmit = handleSubmit(({code}) => {
@@ -128,10 +132,9 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
   return (
     <AuthFormContainer>
       <AuthFormParagraph>
-        This additional verification will allow your device to be marked as a
-        verified device. You will be securely connected to your BitPay ID
-        without having to login. Please go to your authenticator app and enter
-        the new verification code generated.
+        {t(
+          'This additional verification will allow your device to be marked as a verified device. You will be securely connected to your BitPay ID without having to login. Please go to your authenticator app and enter the new verification code generated.',
+        )}
       </AuthFormParagraph>
 
       <AuthRowContainer>
@@ -140,7 +143,7 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
               placeholder={'eg. 123456'}
-              label={'Code'}
+              label={t('Code')}
               onBlur={onBlur}
               onChangeText={onChange}
               error={errors.code?.message}
@@ -156,7 +159,7 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
 
       <AuthActionsContainer>
         <Button onPress={onSubmit} disabled={!isValid}>
-          Submit
+          {t('Submit')}
         </Button>
       </AuthActionsContainer>
     </AuthFormContainer>

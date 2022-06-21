@@ -4,7 +4,7 @@ module.exports = {
   contextSeparator: '_',
   // Key separator used in your translation keys
 
-  createOldCatalogs: true,
+  createOldCatalogs: false,
   // Save the \_old files
 
   defaultNamespace: 'translation',
@@ -20,7 +20,7 @@ module.exports = {
   keepRemoved: false,
   // Keep keys from the catalog that are no longer in code
 
-  keySeparator: '.',
+  keySeparator: false,
   // Key separator used in your translation keys
   // If you want to use plain english keys, separators such as `.` and `:` will conflict. You might want to set `keySeparator: false` and `namespaceSeparator: false`. That way, `t('Status: Loading...')` will not think that there are a namespace and three separator dots for instance.
 
@@ -30,7 +30,7 @@ module.exports = {
   locales: ['en', 'es'],
   // An array of the locales in your applications
 
-  namespaceSeparator: ':',
+  namespaceSeparator: false,
   // Namespace separator used in your translation keys
   // If you want to use plain english keys, separators such as `.` and `:` will conflict. You might want to set `keySeparator: false` and `namespaceSeparator: false`. That way, `t('Status: Loading...')` will not think that there are a namespace and three separator dots for instance.
 

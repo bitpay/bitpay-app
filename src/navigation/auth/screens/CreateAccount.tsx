@@ -2,6 +2,7 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
+import {useTranslation} from 'react-i18next';
 import {SafeAreaView, TextInput} from 'react-native';
 import * as yup from 'yup';
 import A from '../../../components/anchor/Anchor';
@@ -52,6 +53,7 @@ interface CreateAccountFieldValues {
 const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
   navigation,
 }) => {
+  const {t} = useTranslation();
   const {
     control,
     handleSubmit,
@@ -106,12 +108,12 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
       dispatch(
         AppActions.showBottomNotificationModal({
           type: 'error',
-          title: 'Create account failed',
-          message: createAccountError || 'An unexpected error occurred.',
+          title: t('Create account failed'),
+          message: createAccountError || t('An unexpected error occurred.'),
           enableBackdropDismiss: false,
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {
                 dispatch(BitPayIdActions.updateCreateAccountStatus(null));
               },
@@ -127,6 +129,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
     createAccountStatus,
     isVerified,
     createAccountError,
+    t,
   ]);
 
   const onSubmit = handleSubmit(formData => {
@@ -175,7 +178,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 placeholder={'Satoshi'}
-                label={'FIRST NAME'}
+                label={t('FIRST NAME')}
                 onBlur={onBlur}
                 onChangeText={(text: string) => onChange(text)}
                 error={errors.givenName?.message}
@@ -197,7 +200,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
               <BoxInput
                 ref={familyNameRef}
                 placeholder={'Nakamoto'}
-                label={'LAST NAME'}
+                label={t('LAST NAME')}
                 onBlur={onBlur}
                 onChangeText={(text: string) => onChange(text)}
                 error={errors.familyName?.message}
@@ -219,7 +222,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
               <BoxInput
                 ref={emailRef}
                 placeholder={'satoshi@example.com'}
-                label={'EMAIL'}
+                label={t('EMAIL')}
                 onBlur={onBlur}
                 onChangeText={(text: string) => onChange(text)}
                 error={errors.email?.message}
@@ -242,7 +245,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
                 ref={passwordRef}
                 type="password"
                 placeholder={'strongPassword123'}
-                label={'PASSWORD'}
+                label={t('PASSWORD')}
                 onBlur={onBlur}
                 onChangeText={(text: string) => onChange(text)}
                 error={errors.password?.message}
@@ -287,17 +290,17 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
 
         <AuthActionsContainer>
           <AuthActionRow>
-            <Button onPress={onSubmit}>Create Account</Button>
+            <Button onPress={onSubmit}>{t('Create Account')}</Button>
           </AuthActionRow>
 
           <AuthActionRow>
             <AuthActionText>
-              Already have an account?{' '}
+              {t('Already have an account?')}{' '}
               <Link
                 onPress={() => {
                   navigation.navigate('Login');
                 }}>
-                Log In
+                {t('Log In')}
               </Link>
             </AuthActionText>
           </AuthActionRow>

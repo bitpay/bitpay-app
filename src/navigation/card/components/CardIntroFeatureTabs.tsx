@@ -7,6 +7,7 @@ import {BaseText, TextAlign} from '../../../components/styled/Text';
 import Tabs from '../../../components/tabs/Tabs';
 import {URL} from '../../../constants';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
+import {t} from 'i18next';
 
 interface TableRowProps {
   index?: number;
@@ -43,101 +44,111 @@ interface CardTableData {
   description: React.ReactNode;
 }
 
-const LIMITS: CardTableData[] = [
-  {
-    title: 'Cash Withdrawal (ATM & bank teller)',
-    description:
-      '$2,000 per withdrawal, 3 withdrawals per day, $25,000 per month',
-  },
-  {
-    title: 'Load Limits',
-    description: '$10,000 per day',
-  },
-  {
-    title: 'Spending Limits',
-    description: '$10,000 per day',
-  },
-  {
-    title: 'Maximum Balance',
-    description: '$25,000',
-  },
-];
+const LIMITS = (): CardTableData[] => {
+  return [
+    {
+      title: t('Cash Withdrawal (ATM & bank teller)'),
+      description: t(
+        '$2,000 per withdrawal, 3 withdrawals per day, $25,000 per month',
+      ),
+    },
+    {
+      title: t('Load Limits'),
+      description: t('$10,000 per day'),
+    },
+    {
+      title: t('Spending Limits'),
+      description: t('$10,000 per day'),
+    },
+    {
+      title: t('Maximum Balance'),
+      description: t('$25,000'),
+    },
+  ];
+};
 
-const FEES: CardTableData[] = [
-  {
-    title: 'Virtual Card Issuance and Replacement',
-    description: '$0.00',
-  },
-  {
-    title: 'Physical Card Issuance',
-    description: '$10.00',
-  },
-  {
-    title: 'Physical Card Replacement',
-    description: '$10.00',
-  },
-  {
-    title: 'Monthly Fee',
-    description: '$0.00',
-  },
-  {
-    title:
-      'Cash Withdrawal Fee (ATM or Inside Financial Institution) Physical Card Only',
-    description: '$2.50',
-  },
-  {
-    title: 'Card Load',
-    description: (
-      <View>
-        <TextAlign align="right">No conversion fee</TextAlign>
-        <TextAlign align="right">
-          <A href={URL.HELP_MINER_FEES}>Network and miner fees may apply</A>
-        </TextAlign>
-      </View>
-    ),
-  },
-  {
-    title: 'International Currency Conversion',
-    description: '3%',
-  },
-  {
-    title: 'Inactivity Fee',
-    description: '$5 per month after 90 days with no transactions',
-  },
-];
+const FEES = (): CardTableData[] => {
+  return [
+    {
+      title: t('Virtual Card Issuance and Replacement'),
+      description: t('$0.00'),
+    },
+    {
+      title: t('Physical Card Issuance'),
+      description: t('$10.00'),
+    },
+    {
+      title: t('Physical Card Replacement'),
+      description: t('$10.00'),
+    },
+    {
+      title: t('Monthly Fee'),
+      description: t('$0.00'),
+    },
+    {
+      title: t(
+        'Cash Withdrawal Fee (ATM or Inside Financial Institution) Physical Card Only',
+      ),
+      description: t('$2.50'),
+    },
+    {
+      title: 'Card Load',
+      description: (
+        <View>
+          <TextAlign align="right">{t('No conversion fee')}</TextAlign>
+          <TextAlign align="right">
+            <A href={URL.HELP_MINER_FEES}>
+              {t('Network and miner fees may apply')}
+            </A>
+          </TextAlign>
+        </View>
+      ),
+    },
+    {
+      title: t('International Currency Conversion'),
+      description: t('3%'),
+    },
+    {
+      title: t('Inactivity Fee'),
+      description: t('$5 per month after 90 days with no transactions'),
+    },
+  ];
+};
 
-const CARD_INTRO_TABS = [
-  {
-    title: 'Limits',
-    content: (
-      <>
-        {LIMITS.map((row, idx) => {
-          return (
-            <TableRow key={idx} index={idx}>
-              <TableCellTitle>{row.title}</TableCellTitle>
-              <TableCellDescription>{row.description}</TableCellDescription>
-            </TableRow>
-          );
-        })}
-      </>
-    ),
-  },
-  {
-    title: 'Fees',
-    content: (
-      <>
-        {FEES.map((row, idx) => {
-          return (
-            <TableRow key={idx} index={idx}>
-              <TableCellTitle>{row.title}</TableCellTitle>
-              <TableCellDescription>{row.description}</TableCellDescription>
-            </TableRow>
-          );
-        })}
-      </>
-    ),
-  },
-];
+const CARD_INTRO_TABS = () => {
+  return [
+    {
+      title: t('Limits'),
+      content: (
+        <>
+          {LIMITS().map((row, idx) => {
+            return (
+              <TableRow key={idx} index={idx}>
+                <TableCellTitle>{row.title}</TableCellTitle>
+                <TableCellDescription>{row.description}</TableCellDescription>
+              </TableRow>
+            );
+          })}
+        </>
+      ),
+    },
+    {
+      title: t('Fees'),
+      content: (
+        <>
+          {FEES().map((row, idx) => {
+            return (
+              <TableRow key={idx} index={idx}>
+                <TableCellTitle>{row.title}</TableCellTitle>
+                <TableCellDescription>{row.description}</TableCellDescription>
+              </TableRow>
+            );
+          })}
+        </>
+      ),
+    },
+  ];
+};
 
 const FeatureTabs = <Tabs tabs={CARD_INTRO_TABS} />;
 

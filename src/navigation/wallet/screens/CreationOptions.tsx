@@ -14,6 +14,9 @@ import {
 } from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import MultisigOptions from './MultisigOptions';
+import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../store/app/app.effects';
+import {useAppDispatch} from '../../../utils/hooks';
 
 export interface Option {
   id: string;
@@ -23,43 +26,61 @@ export interface Option {
 }
 
 const CreationOptions: React.FC = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
   const [showMultisigOptions, setShowMultisigOptions] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
-      headerTitle: () => <HeaderTitle>Select an option</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Select an option')}</HeaderTitle>,
       headerTitleAlign: 'center',
     });
-  }, [navigation]);
+  }, [navigation, t]);
 
   const optionList: Option[] = [
     {
       id: 'basic',
-      title: 'New Key',
-      description:
+      title: t('New Key'),
+      description: t(
         'Add coins like Bitcoin and Dogecoin and also tokens like USDC and PAX',
-      cta: () =>
+      ),
+      cta: () => {
+        dispatch(
+          logSegmentEvent('track', 'Clicked Create New Key', {
+            context: 'CreationOptions',
+          }),
+        );
         navigation.navigate('Wallet', {
           screen: 'CurrencySelection',
           params: {context: 'createNewKey'},
-        }),
+        });
+      },
     },
     {
       id: 'import',
-      title: 'Import Key',
-      description:
+      title: t('Import Key'),
+      description: t(
         'Use an existing recovery phrase to import an existing wallet',
-      cta: () =>
+      ),
+      cta: () => {
+        dispatch(
+          logSegmentEvent('track', 'Clicked Import Key', {
+            context: 'CreationOptions',
+          }),
+        );
         navigation.navigate('Wallet', {
           screen: 'Import',
-        }),
+        });
+      },
     },
     {
       id: 'multisig',
-      title: 'Multisig Wallet',
-      description: 'Requires multiple people or devices and is the most secure',
+      title: t('Multisig Wallet'),
+      description: t(
+        'Requires multiple people or devices and is the most secure',
+      ),
       cta: () => setShowMultisigOptions(true),
     },
   ];

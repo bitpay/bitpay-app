@@ -46,6 +46,7 @@ import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {ButtonState} from '../../../components/button/Button';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
+import {useTranslation} from 'react-i18next';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -179,6 +180,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   modalContext,
   livenetOnly,
 }) => {
+  const {t} = useTranslation();
   const route = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
   let {context, recipient, amount} = route.params || {};
   if (useAsModal && modalContext) {
@@ -440,7 +442,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             enableBackdropDismiss: false,
             actions: [
               {
-                text: 'OK',
+                text: t('OK'),
                 action: () => {
                   if (setButtonState) {
                     setButtonState(undefined);
@@ -531,7 +533,9 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         {[...supportedCoins, ...otherCoins].length === 0 &&
           context === 'send' && (
             <NoWalletsMsg>
-              There are no wallets with funds available to use this feature.
+              {t(
+                'There are no wallets with funds available to use this feature.',
+              )}
             </NoWalletsMsg>
           )}
         <SheetModal
@@ -540,7 +544,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
           <WalletSelectMenuContainer>
             <WalletSelectMenuHeaderContainer>
               <TextAlign align={'center'}>
-                <H4>Select a wallet</H4>
+                <H4>{t('Select a wallet')}</H4>
               </TextAlign>
             </WalletSelectMenuHeaderContainer>
             <WalletSelectMenuBodyContainer>

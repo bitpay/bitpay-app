@@ -11,6 +11,7 @@ import {ScanStackParamList} from '../ScanStack';
 import {navigationRef} from '../../../Root';
 import {AppActions} from '../../../store/app';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
+import {useTranslation} from 'react-i18next';
 
 const ScanContainer = styled.SafeAreaView`
   flex: 1;
@@ -29,6 +30,7 @@ interface Props {
 }
 
 const Scan = () => {
+  const {t} = useTranslation();
   const dispatch = useDispatch();
   const route = useRoute<RouteProp<ScanStackParamList, 'Root'>>();
   const {onScanComplete} = route.params || {};
@@ -42,10 +44,10 @@ const Scan = () => {
       flashMode={RNCamera.Constants.FlashMode.auto}
       captureAudio={false}
       androidCameraPermissionOptions={{
-        title: 'Permission to use camera',
-        message: 'We need your permission to use your camera',
-        buttonPositive: 'Ok',
-        buttonNegative: 'Cancel',
+        title: t('Permission to use camera'),
+        message: t('We need your permission to use your camera'),
+        buttonPositive: t('Ok'),
+        buttonNegative: t('Cancel'),
       }}
       onBarCodeRead={debounce(
         async ({data}) => {
@@ -60,8 +62,8 @@ const Scan = () => {
               dispatch(
                 AppActions.showBottomNotificationModal(
                   CustomErrorMessage({
-                    title: 'Error',
-                    errMsg: error?.message || 'Unable to read QR code',
+                    title: t('Error'),
+                    errMsg: error?.message || t('Unable to read QR code'),
                   }),
                 ),
               );

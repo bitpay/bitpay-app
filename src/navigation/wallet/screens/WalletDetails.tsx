@@ -103,6 +103,8 @@ import InfoSvg from '../../../../assets/img/info.svg';
 import {Effect} from '../../../store';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import {Currencies} from '../../../constants/currencies';
+import i18next from 'i18next';
+import {logSegmentEvent} from '../../../store/app/app.effects';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -230,7 +232,7 @@ const getWalletType = (
     credentials: {token, walletId, addressType, keyId},
   } = wallet;
   if (!keyId) {
-    return {title: 'Read Only'};
+    return {title: i18next.t('Read Only')};
   }
   if (token) {
     const linkedWallet = key.wallets.find(({tokens}) =>
@@ -332,9 +334,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const assetOptions: Array<Option> = [
     {
       img: <Icons.RequestAmount />,
-      title: 'Request a specific amount',
-      description:
+      title: t('Request a specific amount'),
+      description: t(
         'This will generate an invoice, which the person you send it to can pay using any wallet.',
+      ),
       onPress: () => {
         navigation.navigate('Wallet', {
           screen: 'Amount',
@@ -358,15 +361,16 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     },
     {
       img: <Icons.ShareAddress />,
-      title: 'Share Address',
-      description:
+      title: t('Share Address'),
+      description: t(
         'Share your wallet address to someone in your contacts so they can send you funds.',
+      ),
       onPress: ShareAddress,
     },
     {
       img: <Icons.Settings />,
-      title: 'Wallet Settings',
-      description: 'View all the ways to manage and configure your wallet.',
+      title: t('Wallet Settings'),
+      description: t('View all the ways to manage and configure your wallet.'),
       onPress: () =>
         navigation.navigate('Wallet', {
           screen: 'WalletSettings',
@@ -392,7 +396,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       ]);
       dispatch(updatePortfolioBalance());
     } catch (err) {
-      dispatch(showBottomNotificationModal(BalanceUpdateError));
+      dispatch(showBottomNotificationModal(BalanceUpdateError()));
     }
     setRefreshing(false);
   };
@@ -512,14 +516,14 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       <>
         {!isLoading && !errorLoadingTxs && (
           <EmptyListContainer>
-            <H5>It's a ghost town in here</H5>
+            <H5>{t("It's a ghost town in here")}</H5>
             <GhostSvg style={{marginTop: 20}} />
           </EmptyListContainer>
         )}
 
         {!isLoading && errorLoadingTxs && (
           <EmptyListContainer>
-            <H5>Could not update transaction history</H5>
+            <H5>{t('Could not update transaction history')}</H5>
             <GhostSvg style={{marginTop: 20}} />
           </EmptyListContainer>
         )}
@@ -557,12 +561,15 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         dispatch(
           showBottomNotificationModal({
             type: 'warning',
-            title: 'Miner fee notice',
-            message: `Because you are speeding up this transaction, the Bitcoin miner fee (${tx.speedupFee} ${currencyAbbreviation}) will be deducted from the total.`,
+            title: t('Miner fee notice'),
+            message: t(
+              'Because you are speeding up this transaction, the Bitcoin miner fee () will be deducted from the total.',
+              {speedupFee: tx.speedupFee, currencyAbbreviation},
+            ),
             enableBackdropDismiss: true,
             actions: [
               {
-                text: 'Got It',
+                text: t('Got It'),
                 action: () => {
                   goToConfirm(tx);
                 },
@@ -584,8 +591,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           dispatch(
             showBottomNotificationModal(
               CustomErrorMessage({
-                errMsg:
+                errMsg: t(
                   'Error getting "Speed Up" information. Please try again later.',
+                ),
               }),
             ),
           );
@@ -622,7 +630,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           enableBackdropDismiss: false,
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {},
             },
           ],
@@ -635,7 +643,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     if (!fullWalletObj) {
       return false;
     }
-    return fullWalletObj.balance?.sat != fullWalletObj.balance?.satSpendable;
+    return fullWalletObj.balance?.sat !== fullWalletObj.balance?.satSpendable;
   };
 
   const viewOnBlockchain = async () => {
@@ -680,19 +688,19 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     dispatch(
       showBottomNotificationModal({
         type: 'question',
-        title: 'View on blockchain',
-        message: `Continue to view ${coin.toUpperCase()} transaction history`,
+        title: t('View on blockchain'),
+        message: t('ViewTxHistory', {coin: coin.toUpperCase()}),
         enableBackdropDismiss: true,
         actions: [
           {
-            text: 'CONTINUE',
+            text: t('CONTINUE'),
             action: () => {
               Linking.openURL(url);
             },
             primary: true,
           },
           {
-            text: 'GO BACK',
+            text: t('GO BACK'),
             action: () => {},
           },
         ],
@@ -888,7 +896,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     Number(fullWalletObj?.balance?.cryptoConfirmedLocked) >=
                       20 ? (
                       <TypeContainer>
-                        <TypeText>Activated</TypeText>
+                        <TypeText>{t('Activated')}</TypeText>
                       </TypeContainer>
                     ) : null}
                   </Row>
@@ -901,11 +909,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         fullWalletObj.currencyAbbreviation,
                       ),
                       cta: () => {
-                        analytics.track('BitPay App - Clicked Buy Crypto', {
-                          from: 'walletDetails',
-                          coin: fullWalletObj.currencyAbbreviation,
-                          appUser: user?.eid || '',
-                        });
+                        dispatch(
+                          logSegmentEvent(
+                            'track',
+                            'Clicked Buy Crypto',
+                            {
+                              context: 'WalletDetails',
+                              coin: fullWalletObj.currencyAbbreviation,
+                            },
+                            true,
+                          ),
+                        );
                         navigation.navigate('Wallet', {
                           screen: 'Amount',
                           params: {
@@ -932,11 +946,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           fullWalletObj.currencyAbbreviation,
                         ),
                       cta: () => {
-                        analytics.track('BitPay App - Clicked Swap Crypto', {
-                          from: 'walletDetails',
-                          coin: fullWalletObj.currencyAbbreviation,
-                          appUser: user?.eid || '',
-                        });
+                        dispatch(
+                          logSegmentEvent(
+                            'track',
+                            'Clicked Swap Crypto',
+                            {
+                              context: 'WalletDetails',
+                              coin: fullWalletObj.currencyAbbreviation,
+                            },
+                            true,
+                          ),
+                        );
                         navigation.navigate('SwapCrypto', {
                           screen: 'Root',
                           params: {
@@ -946,15 +966,40 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       },
                     }}
                     receive={{
-                      cta: () => setShowReceiveAddressBottomModal(true),
+                      cta: () => {
+                        dispatch(
+                          logSegmentEvent(
+                            'track',
+                            'Clicked Receive',
+                            {
+                              context: 'WalletDetails',
+                              coin: fullWalletObj.currencyAbbreviation,
+                            },
+                            true,
+                          ),
+                        );
+                        setShowReceiveAddressBottomModal(true);
+                      },
                     }}
                     send={{
                       hide: !fullWalletObj.balance.sat,
-                      cta: () =>
+                      cta: () => {
+                        dispatch(
+                          logSegmentEvent(
+                            'track',
+                            'Clicked Send',
+                            {
+                              context: 'WalletDetails',
+                              coin: fullWalletObj.currencyAbbreviation,
+                            },
+                            true,
+                          ),
+                        );
                         navigation.navigate('Wallet', {
                           screen: 'SendTo',
                           params: {wallet: fullWalletObj},
-                        }),
+                        });
+                      },
                     }}
                   />
                 ) : null}
@@ -962,8 +1007,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
               {pendingTxps && pendingTxps[0] ? (
                 <TransactionSectionHeader>
                   {fullWalletObj.credentials.m > 1
-                    ? 'Pending Proposals'
-                    : 'Unsent Transactions'}
+                    ? t('Pending Proposals')
+                    : t('Unsent Transactions')}
                 </TransactionSectionHeader>
               ) : null}
               <FlatList
@@ -977,7 +1022,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                 <LockedBalanceContainer>
                   <HeadContainer>
                     <Description numberOfLines={1} ellipsizeMode={'tail'}>
-                      Total Locked Balance
+                      {t('Total Locked Balance')}
                     </Description>
                   </HeadContainer>
 
@@ -987,7 +1032,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     </Value>
                     <Fiat>
                       {network === 'testnet'
-                        ? 'Test Only - No Value'
+                        ? t('Test Only - No Value')
                         : fiatLockedBalance}
                     </Fiat>
                   </TailContainer>

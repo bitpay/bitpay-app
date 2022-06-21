@@ -13,7 +13,10 @@ const AmountContainer = styled.View`
 interface AmountModalProps {
   isVisible: boolean;
   currencyAbbreviation?: string;
-  onDismiss: (amount?: number) => void;
+  onDismiss: (
+    amount?: number,
+    opts?: {sendMax?: boolean; close?: boolean},
+  ) => void;
 }
 
 const AmountModal: React.FC<AmountModalProps> = ({
@@ -26,6 +29,7 @@ const AmountModal: React.FC<AmountModalProps> = ({
       <AmountContainer>
         <Amount
           useAsModal={true}
+          hideSendMaxProp={false}
           onDismiss={onDismiss}
           currencyAbbreviationProp={currencyAbbreviation}
         />

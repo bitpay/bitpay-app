@@ -5,6 +5,7 @@ import {IsERCToken} from '../../utils/currency';
 import {BwcProvider} from '../../../../lib/bwc';
 import {Effect} from '../../..';
 const BWC = BwcProvider.getInstance();
+import {t} from 'i18next';
 
 export enum FeeLevels {
   URGENT = 'urgent',
@@ -27,12 +28,12 @@ export const GetFeeOptions =
       currencyAbbreviation === 'eth' ||
       dispatch(IsERCToken(currencyAbbreviation));
     return {
-      urgent: isEthOrToken ? 'High' : 'Urgent',
-      priority: isEthOrToken ? 'Average' : 'Priority',
-      normal: isEthOrToken ? 'Low' : 'Normal',
-      economy: 'Economy',
-      superEconomy: 'Super Economy',
-      custom: 'Custom',
+      urgent: isEthOrToken ? t('High') : t('Urgent'),
+      priority: isEthOrToken ? t('Average') : t('Priority'),
+      normal: isEthOrToken ? t('Low') : t('Normal'),
+      economy: t('Economy'),
+      superEconomy: t('Super Economy'),
+      custom: t('Custom'),
     };
   };
 
@@ -136,7 +137,7 @@ export const getFeeLevelsUsingBwcClient = (
       network,
       (errLivenet: Error, feeLevels: Fee[]) => {
         if (errLivenet) {
-          return reject('Could not get dynamic fee');
+          return reject(t('Could not get dynamic fee'));
         }
 
         if (currencyAbbreviation.toLowerCase() === 'eth') {

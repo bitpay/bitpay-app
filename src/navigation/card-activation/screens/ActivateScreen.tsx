@@ -2,6 +2,7 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
+import {t} from 'i18next';
 import {TextInput} from 'react-native';
 import * as yup from 'yup';
 import Button, {ButtonState} from '../../../components/button/Button';
@@ -36,10 +37,10 @@ const getDisplayFields = (card: Card) => {
 const getDescription = (card: Card) => {
   // the order should match the template
   const fieldToText: Record<string, string> = {
-    cardNumber: 'your card number',
-    lastFourDigits: 'the last 4 digits of your card number',
-    expirationDate: 'the expiration date',
-    cvv: 'the cvv',
+    cardNumber: t('your card number'),
+    lastFourDigits: t('the last 4 digits of your card number'),
+    expirationDate: t('the expiration date'),
+    cvv: t('the cvv'),
   };
 
   const fieldKeys = Object.keys(getDisplayFields(card));
@@ -202,7 +203,7 @@ const ActivateScreen: React.FC<
             control={control}
             render={({field: {value, onChange, onBlur}}) => (
               <BoxInput
-                label={'Card Number'}
+                label={t('Card Number')}
                 onChangeText={onChange}
                 onBlur={onBlur}
                 error={errors.cardNumber?.message}
@@ -234,7 +235,7 @@ const ActivateScreen: React.FC<
             render={({field: {value, onChange, onBlur}}) => {
               return (
                 <BoxInput
-                  label={'Last 4 Digits'}
+                  label={t('Last 4 Digits')}
                   onChangeText={onChange}
                   onBlur={onBlur}
                   error={errors.lastFourDigits?.message}
@@ -287,7 +288,7 @@ const ActivateScreen: React.FC<
 
               return (
                 <BoxInput
-                  label={'Expiration Date (MM/YY)'}
+                  label={t('Expiration Date (MM/YY)')}
                   onBlur={_onBlur}
                   onChangeText={onChange}
                   error={errors.expirationDate?.message}
@@ -318,7 +319,7 @@ const ActivateScreen: React.FC<
             control={control}
             render={({field: {value, onChange, onBlur}}) => (
               <BoxInput
-                label={'CVV'}
+                label={t('CVV')}
                 onChangeText={onChange}
                 onBlur={onBlur}
                 error={errors.cvv?.message}
@@ -337,7 +338,7 @@ const ActivateScreen: React.FC<
       <AuthActionsContainer>
         <AuthActionRow>
           <Button onPress={onSubmit} state={buttonState}>
-            Activate Card
+            {t('Activate Card')}
           </Button>
         </AuthActionRow>
       </AuthActionsContainer>

@@ -1,7 +1,8 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {HeaderTitle} from '../../../../components/styled/Text';
+import {HeaderTitle, Link} from '../../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
+import Clipboard from '@react-native-community/clipboard';
 import {
   ScreenGutter,
   SearchContainer,
@@ -33,7 +34,10 @@ import {
   PayProPaymentOption,
 } from '../../../../store/wallet/effects/paypro/paypro';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
-import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissOnGoingProcessModal,
@@ -59,6 +63,7 @@ import {
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {GetChain} from '../../../../store/wallet/utils/currency';
 import {goToAmount, incomingData} from '../../../../store/scan/scan.effects';
+import {useTranslation} from 'react-i18next';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -84,6 +89,13 @@ const ScrollView = styled.ScrollView`
   flex: 1;
   margin-top: 20px;
   padding: 0 ${ScreenGutter};
+`;
+
+const PasteClipboardContainer = styled.TouchableOpacity`
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  padding: 10px;
 `;
 
 const BuildKeyWalletRow = (
@@ -136,6 +148,7 @@ const BuildKeyWalletRow = (
 };
 
 const SendTo = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
@@ -146,17 +159,11 @@ const SendTo = () => {
   const theme = useTheme();
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
   const [searchInput, setSearchInput] = useState('');
+  const [clipboardData, setClipboardData] = useState('');
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>Send To</HeaderTitle>,
-      //TODO: Update me
-      // headerRight: () => (
-      //     <Settings
-      //         onPress={() => {
-      //         }}
-      //     />
-      // ),
     });
   });
 
@@ -333,6 +340,15 @@ const SendTo = () => {
       console.error(err);
     }
   };
+
+  useEffect(() => {
+    const getString = async () => {
+      const clipboardData = await Clipboard.getString();
+      setClipboardData(clipboardData);
+    };
+    getString();
+  }, []);
+
   useEffect(() => {
     return navigation.addListener('blur', () =>
       setTimeout(() => setSearchInput(''), 300),
@@ -344,7 +360,7 @@ const SendTo = () => {
       <ScrollView>
         <SearchContainer>
           <SearchInput
-            placeholder={'Search contact or enter address'}
+            placeholder={t('Search contact or enter address')}
             placeholderTextColor={placeHolderTextColor}
             value={searchInput}
             onChangeText={(text: string) => {
@@ -356,6 +372,11 @@ const SendTo = () => {
             activeOpacity={0.75}
             onPress={() => {
               haptic('impactLight');
+              dispatch(
+                logSegmentEvent('track', 'Open Scanner', {
+                  context: 'SendTo',
+                }),
+              );
               navigation.navigate('Scan', {
                 screen: 'Root',
                 params: {
@@ -374,7 +395,17 @@ const SendTo = () => {
             <ScanSvg />
           </TouchableOpacity>
         </SearchContainer>
-
+        {clipboardData ? (
+          <PasteClipboardContainer
+            activeOpacity={0.75}
+            onPress={() => {
+              haptic('impactLight');
+              setSearchInput(clipboardData);
+              validateAndNavigateToConfirm(clipboardData);
+            }}>
+            <Link>{t('Paste from clipboard')}</Link>
+          </PasteClipboardContainer>
+        ) : null}
         <View>
           <KeyWalletsRow
             keyWallets={keyWallets}

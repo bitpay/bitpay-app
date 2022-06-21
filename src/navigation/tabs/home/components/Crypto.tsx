@@ -45,6 +45,9 @@ import Button from '../../../../components/button/Button';
 import CoinbaseBalanceCard from '../../../coinbase/components/CoinbaseBalanceCard';
 import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
+import {useTranslation} from 'react-i18next';
+import {t} from 'i18next';
+import {logSegmentEvent} from '../../../../store/app/app.effects';
 
 const CryptoContainer = styled.View`
   background: ${({theme}) => (theme.dark ? '#111111' : Feather)};
@@ -80,12 +83,12 @@ export const keyBackupRequired = (
 ): BottomNotificationConfig => {
   return {
     type: 'error',
-    title: 'Key backup required',
-    message: 'To continue you will need to back up your key.',
+    title: t('Key backup required'),
+    message: t('To continue you will need to back up your key.'),
     enableBackdropDismiss: true,
     actions: [
       {
-        text: 'Back up Key',
+        text: t('Back up Key'),
         action: async () => {
           if (key.properties.mnemonicEncrypted) {
             await sleep(500);
@@ -129,7 +132,7 @@ export const keyBackupRequired = (
         primary: true,
       },
       {
-        text: 'maybe later',
+        text: t('maybe later'),
         action: () => {},
         primary: false,
       },
@@ -234,6 +237,7 @@ const createHomeCardList = ({
 };
 
 const Crypto = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -281,27 +285,40 @@ const Crypto = () => {
       <CryptoContainer>
         <SectionHeaderContainer style={{marginBottom: 0}}>
           <Column>
-            <HomeSectionTitle>My Crypto</HomeSectionTitle>
+            <HomeSectionTitle>{t('My Crypto')}</HomeSectionTitle>
             <Row style={{justifyContent: 'space-between'}}>
               <HomeSectionSubtext style={{width: '90%'}}>
-                You don’t have any crypto. Create a wallet, import a wallet or
-                connect your Coinbase account.
+                {t(
+                  'You don’t have any crypto. Create a wallet, import a wallet or connect your Coinbase account.',
+                )}
               </HomeSectionSubtext>
             </Row>
             <ButtonContainer>
               <Button
                 style={{marginBottom: 15}}
-                onPress={() =>
-                  navigation.navigate('Wallet', {screen: 'CreationOptions'})
-                }>
-                Create, import or join a shared wallet
+                onPress={() => {
+                  dispatch(
+                    logSegmentEvent('track', 'Clicked create, import or join', {
+                      context: 'NoKeysCryptoContainer',
+                    }),
+                  );
+                  navigation.navigate('Wallet', {screen: 'CreationOptions'});
+                }}>
+                {t('Create, import or join a shared wallet')}
               </Button>
               <Button
                 buttonStyle={'secondary'}
-                onPress={() =>
-                  navigation.navigate('Coinbase', {screen: 'CoinbaseRoot'})
-                }>
-                {linkedCoinbase ? 'Coinbase' : 'Connect your Coinbase account'}
+                onPress={() => {
+                  dispatch(
+                    logSegmentEvent('track', 'Clicked Connect Coinbase', {
+                      context: 'NoKeysCryptoContainer',
+                    }),
+                  );
+                  navigation.navigate('Coinbase', {screen: 'CoinbaseRoot'});
+                }}>
+                {linkedCoinbase
+                  ? 'Coinbase'
+                  : t('Connect your Coinbase account')}
               </Button>
             </ButtonContainer>
           </Column>
@@ -314,10 +331,12 @@ const Crypto = () => {
     <CryptoContainer>
       <SectionHeaderContainer style={{marginBottom: 0}}>
         <Column>
-          <HomeSectionTitle>My Crypto</HomeSectionTitle>
+          <HomeSectionTitle>{t('My Crypto')}</HomeSectionTitle>
           <Row style={{justifyContent: 'space-between'}}>
             <HomeSectionSubtext style={{width: '75%'}}>
-              View your wallets, card balance, connect to Coinbase and more.
+              {t(
+                'View your wallets, card balance, connect to Coinbase and more.',
+              )}
             </HomeSectionSubtext>
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
@@ -357,7 +376,9 @@ const Crypto = () => {
       {/* ////////////////////////////// CREATE DEFAULTS */}
       <CarouselContainer>
         <SectionHeaderContainer style={{marginTop: 0, position: 'absolute'}}>
-          <HomeSectionSubTitle>Expand your Portfolio</HomeSectionSubTitle>
+          <HomeSectionSubTitle>
+            {t('Expand your Portfolio')}
+          </HomeSectionSubTitle>
         </SectionHeaderContainer>
         <Carousel
           vertical={false}

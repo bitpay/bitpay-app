@@ -14,7 +14,7 @@ export const startWalletStoreInit =
       await dispatch(startGetTokenOptions());
 
       if (Object.keys(WALLET.keys).length) {
-        dispatch(startUpdateAllKeyAndWalletStatus());
+        dispatch(startUpdateAllKeyAndWalletStatus({}));
       }
 
       await dispatch(startGetRates({init: true})); // populate rates and alternative currency list

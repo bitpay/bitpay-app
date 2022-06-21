@@ -24,7 +24,10 @@ import {
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
@@ -55,6 +58,7 @@ import {
   CoinbaseErrorMessages,
 } from '../../../../../api/coinbase/coinbase.types';
 import {coinbasePayInvoice} from '../../../../../store/coinbase';
+import {useTranslation} from 'react-i18next';
 
 export interface DebitCardConfirmParamList {
   amount: number;
@@ -84,6 +88,7 @@ const BalanceContainer = styled.View`
 `;
 
 const Confirm = () => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'DebitCardConfirm'>>();
@@ -166,7 +171,7 @@ const Confirm = () => {
     dispatch(
       AppActions.showBottomNotificationModal(
         CustomErrorMessage({
-          title: 'Error',
+          title: t('Error'),
           errMsg:
             err.response?.data?.message || err.message || errorConfig.message,
           action: () => reshowWalletSelector(),
@@ -264,7 +269,7 @@ const Confirm = () => {
     dispatch(
       AppActions.showBottomNotificationModal(
         CustomErrorMessage({
-          title: 'Error',
+          title: t('Error'),
           errMsg: error?.message || defaultErrorMessage,
           action: () => onDismiss && onDismiss(),
         }),
@@ -285,7 +290,7 @@ const Confirm = () => {
     setCoinbaseAccount(undefined);
     showError({
       error,
-      defaultErrorMessage: 'Could not send transaction',
+      defaultErrorMessage: t('Could not send transaction'),
       onDismiss: () => reshowWalletSelector(),
     });
   };
@@ -354,21 +359,21 @@ const Confirm = () => {
                   <MasterCardSvg height={55} width={55} />
                 </RightMargin>
                 <RightMargin>
-                  <H6>BitPay Card</H6>
+                  <H6>{t('BitPay Card')}</H6>
                 </RightMargin>
 
                 <RightMargin>
-                  <Type>Virtual</Type>
+                  <Type>{t('Virtual')}</Type>
                 </RightMargin>
 
-                <Type noAutoMarginLeft={true}>Physical</Type>
+                <Type noAutoMarginLeft={true}>{t('Physical')}</Type>
               </CardDetailsContainer>
             ) : (
               <CardDetailsContainer>
                 <RightMargin>
                   <VisaCardSvg height={55} width={55} />
                 </RightMargin>
-                <H6>BitPay Visa&reg; Card ({lastFourDigits})</H6>
+                <H6>{t('BitPay Visa&reg; Card ()', {lastFourDigits})}</H6>
               </CardDetailsContainer>
             )}
 
@@ -393,36 +398,34 @@ const Confirm = () => {
             )}
             {remainingTime ? (
               <SharedDetailRow
-                description={'Expires'}
+                description={t('Expires')}
                 value={remainingTime}
                 hr
               />
             ) : null}
             <Amount
-              description={'Network Cost'}
+              description={t('Network Cost')}
               amount={networkCost}
               fiatOnly
               hr
             />
-            <Amount description={'Miner fee'} amount={fee} fiatOnly hr />
+            <Amount description={t('Miner fee')} amount={fee} fiatOnly hr />
 
-            <Amount description={'SubTotal'} amount={subTotal} />
+            <Amount description={t('SubTotal')} amount={subTotal} />
 
-            <Amount description={'Total'} amount={total} />
+            <Amount description={t('Total')} amount={total} />
 
             <CardTermsContainer>
               <Smallest>
-                BY USING THIS CARD YOU AGREE WITH THE TERMS AND CONDITIONS OF
-                THE CARDHOLDER AGREEMENT AND FEE SCHEDULE, IF ANY. This card is
-                issued by Metropolitan Commercial Bank (Member FDIC) pursuant to
-                a license from Mastercard International. "Metropolitan
-                Commercial Bank" and "Metropolitan" are registered trademarks of
-                Metropolitan Commercial Bank ©2014.
+                {t(
+                  'BY USING THIS CARD YOU AGREE WITH THE TERMS AND CONDITIONS OF THE CARDHOLDER AGREEMENT AND FEE SCHEDULE, IF ANY. This card is issued by Metropolitan Commercial Bank (Member FDIC) pursuant to a license from Mastercard International. "Metropolitan Commercial Bank" and "Metropolitan" are registered trademarks of Metropolitan Commercial Bank ©2014.',
+                )}
               </Smallest>
               <Br />
               <Smallest>
-                Mastercard is a registered trademark and the circles design is a
-                trademark of Mastercard International Incorporated.
+                {t(
+                  'Mastercard is a registered trademark and the circles design is a trademark of Mastercard International Incorporated.',
+                )}
               </Smallest>
             </CardTermsContainer>
           </>
@@ -437,6 +440,17 @@ const Confirm = () => {
             onSwipeComplete={async () => {
               try {
                 await sendPayment();
+                dispatch(
+                  logSegmentEvent(
+                    'track',
+                    'Adding funds to Debit Card',
+                    {
+                      amount: amount,
+                      brand: brand || '',
+                    },
+                    true,
+                  ),
+                );
               } catch (err: any) {
                 dispatch(dismissOnGoingProcessModal());
                 await sleep(400);
