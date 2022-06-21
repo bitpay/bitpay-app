@@ -668,7 +668,6 @@ const handleSimplexUri =
         'Successfully Complete Crypto Purchase',
         {
           exchange: 'simplex',
-          walletId: userId || '',
           fiatAmount: order?.fiat_total_amount || '',
           fiatCurrency: order?.fiat_total_amount_currency || '',
           coin: order?.coin || '',
@@ -747,7 +746,6 @@ const handleWyreUri =
         'Successfully Complete Crypto Purchase',
         {
           exchange: 'wyre',
-          walletId: walletId || '',
           fiatAmount: sourceAmount || '',
           fiatCurrency: sourceCurrency || '',
           coin: destCurrency || '',

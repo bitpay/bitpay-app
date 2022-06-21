@@ -622,7 +622,6 @@ const BuyCryptoOffers: React.FC = () => {
             'Requested Crypto Purchase',
             {
               exchange: 'simplex',
-              walletId: selectedWallet.id,
               fiatAmount: amount,
               fiatCurrency: fiatCurrency,
               paymentMethod: paymentMethod.method,
@@ -714,7 +713,6 @@ const BuyCryptoOffers: React.FC = () => {
         'Requested Crypto Purchase',
         {
           exchange: 'wyre',
-          walletId: selectedWallet.id,
           fiatAmount: amount,
           fiatCurrency: fiatCurrency,
           paymentMethod: paymentMethod.method,

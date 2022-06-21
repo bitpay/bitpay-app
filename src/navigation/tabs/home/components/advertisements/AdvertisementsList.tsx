@@ -6,8 +6,6 @@ import AdvertisementCard from './AdvertisementCard';
 import {BoxShadow} from '../Styled';
 import {useNavigation} from '@react-navigation/native';
 import {useRequireKeyAndWalletRedirect} from '../../../../../utils/hooks/useRequireKeyAndWalletRedirect';
-import {useAppDispatch} from '../../../../../utils/hooks';
-import {logSegmentEvent} from '../../../../../store/app/app.effects';
 
 interface AdvertisementListProps {
   contentCards: ContentCard[];
@@ -25,20 +23,9 @@ const AdvertisementCardContainer = styled.View<{isLast: boolean}>`
 const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
   const {contentCards} = props;
   const theme = useTheme();
-  const dispatch = useAppDispatch();
   const navigation = useNavigation();
 
   const buyCryptoCta = useRequireKeyAndWalletRedirect(() => {
-    dispatch(
-      logSegmentEvent(
-        'track',
-        'Clicked Buy Crypto',
-        {
-          context: 'Advertisement',
-        },
-        true,
-      ),
-    );
     navigation.navigate('Wallet', {
       screen: 'Amount',
       params: {
@@ -57,16 +44,6 @@ const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
     });
   });
   const swapCryptoCta = useRequireKeyAndWalletRedirect(() => {
-    dispatch(
-      logSegmentEvent(
-        'track',
-        'Clicked Swap Crypto',
-        {
-          context: 'Advertisement',
-        },
-        true,
-      ),
-    );
     navigation.navigate('SwapCrypto', {screen: 'Root'});
   });
   const CTA_OVERRIDES: {[key in string]: () => void} = {

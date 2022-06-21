@@ -296,7 +296,6 @@ const BuyCryptoRoot: React.FC<
         'track',
         'Buy Crypto "View Offers"',
         {
-          walletId: selectedWallet!.id,
           fiatAmount: amount,
           fiatCurrency,
           paymentMethod: selectedPaymentMethod.method,

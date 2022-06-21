@@ -169,8 +169,6 @@ export const startLogin =
         LogActions.info('Successfully authenticated BitPayID credentials.'),
       );
 
-      dispatch(logSegmentEvent('track', 'Log In User success', {}, true));
-
       // start pairing
       const secret = await AuthApi.generatePairingCode(
         APP.network,
@@ -179,6 +177,16 @@ export const startLogin =
       await dispatch(startPairAndLoadUser(APP.network, secret));
 
       // complete
+      dispatch(
+        logSegmentEvent(
+          'track',
+          'Log In User success',
+          {
+            type: 'basicAuth',
+          },
+          true,
+        ),
+      );
       dispatch(BitPayIdActions.successLogin(APP.network, session));
     } catch (err) {
       batch(() => {
@@ -222,6 +230,16 @@ export const startTwoFactorAuth =
       const session = await AuthApi.fetchSession(APP.network);
 
       // complete
+      dispatch(
+        logSegmentEvent(
+          'track',
+          'Log In User success',
+          {
+            type: 'twoFactorAuth',
+          },
+          true,
+        ),
+      );
       dispatch(
         BitPayIdActions.successSubmitTwoFactorAuth(APP.network, session),
       );
@@ -304,6 +322,16 @@ export const startEmailPairing =
 
       await dispatch(startPairAndLoadUser(APP.network, secret));
 
+      dispatch(
+        logSegmentEvent(
+          'track',
+          'Log In User success',
+          {
+            type: 'emailAuth',
+          },
+          true,
+        ),
+      );
       dispatch(BitPayIdActions.successEmailPairing());
     } catch (err) {
       batch(() => {

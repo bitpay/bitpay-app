@@ -545,8 +545,6 @@ const ChangellyCheckout: React.FC = () => {
         'track',
         'Successful Crypto Swap',
         {
-          fromWalletId: fromWalletSelected.id,
-          toWalletId: toWalletSelected.id,
           fromCoin: fromWalletSelected.currencyAbbreviation,
           toCoin: toWalletSelected.currencyAbbreviation,
           amountFrom: amountFrom,

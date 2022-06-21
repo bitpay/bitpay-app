@@ -582,8 +582,6 @@ const SwapCryptoRoot: React.FC = () => {
         'track',
         'Requested Swap Crypto',
         {
-          fromWalletId: fromWalletSelected!.id,
-          toWalletId: toWalletSelected!.id,
           fromCoin: fromWalletSelected!.currencyAbbreviation,
           toCoin: toWalletSelected!.currencyAbbreviation,
           amountFrom: amountFrom,

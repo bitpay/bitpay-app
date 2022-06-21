@@ -198,16 +198,6 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
       label: receive.label || t('receive'),
       img: <ReceiveSvg />,
       cta: () => {
-        dispatch(
-          logSegmentEvent(
-            'track',
-            'Clicked Receive',
-            {
-              context: 'LinkingButtons',
-            },
-            true,
-          ),
-        );
         receive.cta;
       },
       hide: !!receive?.hide,
@@ -216,16 +206,6 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
       label: send.label || t('send'),
       img: <SendSvg />,
       cta: () => {
-        dispatch(
-          logSegmentEvent(
-            'track',
-            'Clicked Send',
-            {
-              context: 'LinkingButtons',
-            },
-            true,
-          ),
-        );
         send.cta;
       },
       hide: !!send?.hide,

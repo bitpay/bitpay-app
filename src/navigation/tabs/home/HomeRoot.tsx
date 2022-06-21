@@ -202,6 +202,16 @@ const HomeRoot = () => {
                       ),
                     );
                   } else {
+                    dispatch(
+                      logSegmentEvent(
+                        'track',
+                        'Clicked Receive',
+                        {
+                          context: 'HomeRoot',
+                        },
+                        true,
+                      ),
+                    );
                     navigation.navigate('Wallet', {
                       screen: 'GlobalSelect',
                       params: {context: 'receive'},
@@ -266,6 +276,16 @@ const HomeRoot = () => {
                       }),
                     );
                   } else {
+                    dispatch(
+                      logSegmentEvent(
+                        'track',
+                        'Clicked Send',
+                        {
+                          context: 'HomeRoot',
+                        },
+                        true,
+                      ),
+                    );
                     navigation.navigate('Wallet', {
                       screen: 'GlobalSelect',
                       params: {context: 'send'},
