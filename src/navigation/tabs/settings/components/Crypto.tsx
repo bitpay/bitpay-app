@@ -24,6 +24,9 @@ const Crypto = () => {
     ({WALLET}) => WALLET.useUnconfirmedFunds,
   );
   const customizeNonce = useAppSelector(({WALLET}) => WALLET.customizeNonce);
+  const queuedTransactions = useAppSelector(
+    ({WALLET}) => WALLET.queuedTransactions,
+  );
   const enableReplaceByFee = useAppSelector(
     ({WALLET}) => WALLET.enableReplaceByFee,
   );
@@ -95,6 +98,24 @@ const Crypto = () => {
         <InfoDescription>
           {t(
             'If enabled, the transaction nonce could be changed on the confirm view. This is an advanced feature, use cautiously.',
+          )}
+        </InfoDescription>
+      </Info>
+      <Hr />
+      <Setting activeOpacity={1}>
+        <SettingTitle>{t('ETH Queued transactions')}</SettingTitle>
+        <ToggleSwitch
+          onChange={value =>
+            dispatch(WalletActions.setQueuedTransactions(value))
+          }
+          isEnabled={queuedTransactions}
+        />
+      </Setting>
+      <Info>
+        <InfoTriangle />
+        <InfoDescription>
+          {t(
+            'If enabled, your eth transactions will be queued if there is a pending transaction with a lower account nonce. This is an advanced feature, use cautiously.',
           )}
         </InfoDescription>
       </Info>

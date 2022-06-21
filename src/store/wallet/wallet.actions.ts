@@ -237,6 +237,11 @@ export const setCustomizeNonce = (payload: boolean): WalletActionType => ({
   payload,
 });
 
+export const setQueuedTransactions = (payload: boolean): WalletActionType => ({
+  type: WalletActionTypes.SET_QUEUED_TRANSACTIONS,
+  payload,
+});
+
 export const setEnableReplaceByFee = (payload: boolean): WalletActionType => ({
   type: WalletActionTypes.SET_ENABLE_REPLACE_BY_FEE,
   payload,

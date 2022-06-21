@@ -31,6 +31,7 @@ export interface WalletState {
   feeLevel: {[key in string]: FeeLevels};
   useUnconfirmedFunds: boolean;
   customizeNonce: boolean;
+  queuedTransactions: boolean;
   enableReplaceByFee: boolean;
 }
 
@@ -65,6 +66,7 @@ const initialState: WalletState = {
   },
   useUnconfirmedFunds: false,
   customizeNonce: false,
+  queuedTransactions: false,
   enableReplaceByFee: false,
 };
 
@@ -415,6 +417,13 @@ export const walletReducer = (
       return {
         ...state,
         customizeNonce: action.payload,
+      };
+    }
+
+    case WalletActionTypes.SET_QUEUED_TRANSACTIONS: {
+      return {
+        ...state,
+        queuedTransactions: action.payload,
       };
     }
 
