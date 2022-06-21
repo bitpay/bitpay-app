@@ -215,7 +215,8 @@ const SendTo = () => {
     contact =>
       contact.coin === currencyAbbreviation &&
       contact.network === network &&
-      contact.name.toLowerCase().includes(searchInput.toLowerCase()),
+      (contact.name.toLowerCase().includes(searchInput.toLowerCase()) ||
+        contact.email?.toLowerCase().includes(searchInput.toLowerCase())),
   );
 
   const onErrorMessageDismiss = () => {
