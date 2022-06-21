@@ -14,11 +14,15 @@ import {URL} from '../../../../constants';
 import {useTranslation} from 'react-i18next';
 import {View} from 'react-native';
 import {useDispatch} from 'react-redux';
-import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  openUrlWithInAppBrowser,
+} from '../../../../store/app/app.effects';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import {GIT_COMMIT_HASH} from '@env';
 
 interface LinkSetting {
+  key: string;
   title: string;
   link: string;
 }
@@ -30,18 +34,22 @@ const About = () => {
 
   const LINKS: LinkSetting[] = [
     {
+      key: 'HelpAndSupport',
       title: t('Help & Support'),
       link: URL.HELP_AND_SUPPORT,
     },
     {
+      key: 'TermsOfUse',
       title: t('Terms of Use'),
       link: URL.TOU_WALLET,
     },
     {
+      key: 'Privacy',
       title: t('Privacy'),
       link: URL.PRIVACY_POLICY,
     },
     {
+      key: 'AccessibilityStatement',
       title: t('Accessibility Statement'),
       link: URL.ACCESSIBILITY_STATEMENT,
     },
@@ -82,12 +90,24 @@ const About = () => {
       </Setting>
 
       <Hr />
-      {LINKS.map(({title, link}, index) => {
+      {LINKS.map(({key, title, link}, index) => {
         return (
-          <View key={title}>
+          <View key={key}>
             <Setting
               activeOpacity={ActiveOpacity}
-              onPress={() => dispatch(openUrlWithInAppBrowser(link))}>
+              onPress={() => {
+                dispatch(
+                  logSegmentEvent(
+                    'track',
+                    'Clicked About BitPay Link',
+                    {
+                      key,
+                    },
+                    true,
+                  ),
+                );
+                dispatch(openUrlWithInAppBrowser(link));
+              }}>
               <SettingTitle>{title}</SettingTitle>
             </Setting>
             {LINKS.length - 1 !== index && <Hr />}

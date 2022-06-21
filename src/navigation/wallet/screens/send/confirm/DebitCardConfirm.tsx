@@ -24,7 +24,10 @@ import {
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
@@ -437,6 +440,17 @@ const Confirm = () => {
             onSwipeComplete={async () => {
               try {
                 await sendPayment();
+                dispatch(
+                  logSegmentEvent(
+                    'track',
+                    'Adding funds to Debit Card',
+                    {
+                      amount: amount,
+                      brand: brand || '',
+                    },
+                    true,
+                  ),
+                );
               } catch (err: any) {
                 dispatch(dismissOnGoingProcessModal());
                 await sleep(400);

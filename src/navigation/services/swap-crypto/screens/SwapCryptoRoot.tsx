@@ -57,6 +57,7 @@ import {changellyGetCurrencies} from '../../../../store/swap-crypto/effects/chan
 import {
   startOnGoingProcessModal,
   openUrlWithInAppBrowser,
+  logSegmentEvent,
 } from '../../../../store/app/app.effects';
 import {
   dismissOnGoingProcessModal,
@@ -64,7 +65,6 @@ import {
 } from '../../../../store/app/app.actions';
 import ArrowDown from '../../../../../assets/img/services/swap-crypto/down-arrow.svg';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
-import analytics from '@segment/analytics-react-native';
 import {AppActions} from '../../../../store/app';
 import {useTranslation} from 'react-i18next';
 
@@ -80,9 +80,6 @@ const SwapCryptoRoot: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
-  );
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
   const route = useRoute<RouteProp<SwapCryptoStackParamList, 'Root'>>();
@@ -580,15 +577,19 @@ const SwapCryptoRoot: React.FC = () => {
   };
 
   const continueToCheckout = () => {
-    analytics.track('BitPay App - Requested Swap Crypto', {
-      fromWalletId: fromWalletSelected!.id,
-      toWalletId: toWalletSelected!.id,
-      fromCoin: fromWalletSelected!.currencyAbbreviation,
-      toCoin: toWalletSelected!.currencyAbbreviation,
-      amountFrom: amountFrom,
-      exchange: 'changelly',
-      appUser: user?.eid || '',
-    });
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Requested Swap Crypto',
+        {
+          fromCoin: fromWalletSelected!.currencyAbbreviation,
+          toCoin: toWalletSelected!.currencyAbbreviation,
+          amountFrom: amountFrom,
+          exchange: 'changelly',
+        },
+        true,
+      ),
+    );
     navigation.navigate('SwapCrypto', {
       screen: 'ChangellyCheckout',
       params: {

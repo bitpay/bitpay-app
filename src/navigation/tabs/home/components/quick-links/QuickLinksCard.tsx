@@ -11,6 +11,7 @@ import {
 } from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
 import {AppEffects} from '../../../../../store/app';
+import {logSegmentEvent} from '../../../../../store/app/app.effects';
 import {
   Action,
   LightBlack,
@@ -110,6 +111,12 @@ const QuickLinksCard: React.FC<QuickLinksCardProps> = props => {
     }
 
     haptic('impactLight');
+
+    dispatch(
+      logSegmentEvent('track', 'Clicked QuickLinks', {
+        id: contentCard.id || '',
+      }),
+    );
 
     if (openURLInWebView) {
       dispatch(AppEffects.openUrlWithInAppBrowser(url));

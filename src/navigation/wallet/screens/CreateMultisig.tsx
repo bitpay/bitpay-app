@@ -46,7 +46,10 @@ import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import {Currencies} from '../../../constants/currencies';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {WalletStackParamList} from '../WalletStack';
-import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  openUrlWithInAppBrowser,
+} from '../../../store/app/app.effects';
 import {
   startCreateKeyMultisig,
   addWalletMultisig,
@@ -259,6 +262,19 @@ const CreateMultisig = () => {
           }),
         )) as Wallet;
 
+        dispatch(
+          logSegmentEvent(
+            'track',
+            'Create Multisig Wallet success',
+            {
+              coin: currency?.toLowerCase(),
+              type: `${opts.m}-${opts.n}`,
+              addedToExistingKey: true,
+            },
+            true,
+          ),
+        );
+
         wallet.getStatus(
           {network: wallet.network},
           (err: any, status: Status) => {
@@ -312,6 +328,19 @@ const CreateMultisig = () => {
         const multisigKey = (await dispatch<any>(
           startCreateKeyMultisig(opts),
         )) as Key;
+
+        dispatch(
+          logSegmentEvent(
+            'track',
+            'Create Multisig Wallet success',
+            {
+              coin: currency?.toLowerCase(),
+              type: `${opts.m}-${opts.n}`,
+              addedToExistingKey: false,
+            },
+            true,
+          ),
+        );
 
         dispatch(setHomeCarouselConfig({id: multisigKey.id, show: true}));
 

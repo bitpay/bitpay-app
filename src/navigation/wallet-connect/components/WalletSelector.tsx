@@ -32,6 +32,7 @@ import cloneDeep from 'lodash.clonedeep';
 import _ from 'lodash';
 import {isValidWalletConnectUri} from '../../../store/wallet/utils/validations';
 import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../store/app/app.effects';
 
 export type WalletConnectIntroParamList = {
   uri?: string;
@@ -176,6 +177,11 @@ export default ({
 
   const goToScanView = useCallback(
     (wallet: Wallet) => {
+      dispatch(
+        logSegmentEvent('track', 'Open Scanner', {
+          context: 'WalletSelector',
+        }),
+      );
       navigation.navigate('Scan', {
         screen: 'Root',
         params: {

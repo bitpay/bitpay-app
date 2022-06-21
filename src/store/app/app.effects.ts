@@ -22,7 +22,7 @@ import {startMigration, startWalletStoreInit} from '../wallet/effects';
 import {AppActions} from './';
 import {AppIdentity} from './app.models';
 import RNBootSplash from 'react-native-bootsplash';
-import analytics from '@segment/analytics-react-native';
+import analytics, {JsonMap} from '@segment/analytics-react-native';
 import {SEGMENT_API_KEY, APPSFLYER_API_KEY, APPSFLYER_APP_ID} from '@env';
 import appsFlyer from 'react-native-appsflyer';
 import {requestTrackingPermission} from 'react-native-tracking-transparency';
@@ -37,6 +37,8 @@ import {
   setBrazeEid,
   showBlur,
   setMigrationComplete,
+  setAppFirstOpenEventDate,
+  setAppFirstOpenEventComplete,
 } from './app.actions';
 import {batch} from 'react-redux';
 import i18n from 'i18next';
@@ -59,11 +61,16 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     await dispatch(startWalletStoreInit());
 
-    const {onboardingCompleted, migrationComplete} = getState().APP;
+    const {appFirstOpenData, onboardingCompleted, migrationComplete} =
+      getState().APP;
+
+    if (!appFirstOpenData?.firstOpenDate) {
+      dispatch(setAppFirstOpenEventDate());
+    }
 
     // init analytics -> post onboarding or migration
     if (onboardingCompleted) {
-      dispatch(askForTrackingPermissionAndEnableSdks());
+      dispatch(askForTrackingPermissionAndEnableSdks(true));
     }
 
     if (!migrationComplete) {
@@ -348,7 +355,8 @@ export const openUrlWithInAppBrowser =
   };
 
 export const askForTrackingPermissionAndEnableSdks =
-  (): Effect<Promise<void>> => async dispatch => {
+  (appInit?: boolean): Effect<Promise<void>> =>
+  async (dispatch, getState) => {
     const trackingStatus = await requestTrackingPermission();
 
     if (['authorized', 'unavailable'].includes(trackingStatus) && !__DEV__) {
@@ -385,10 +393,57 @@ export const askForTrackingPermissionAndEnableSdks =
         });
         const {advertisingId} = await AdID.getAdvertisingId();
         analytics.setIDFA(advertisingId);
+        if (appInit) {
+          const {appFirstOpenData} = getState().APP;
+
+          if (
+            appFirstOpenData?.firstOpenDate &&
+            !appFirstOpenData?.firstOpenEventComplete
+          ) {
+            dispatch(setAppFirstOpenEventComplete());
+            dispatch(
+              logSegmentEvent(
+                'track',
+                'First Opened App',
+                {
+                  date: appFirstOpenData?.firstOpenDate || '',
+                },
+                true,
+              ),
+            );
+          } else {
+            dispatch(logSegmentEvent('track', 'Last Opened App', {}, true));
+          }
+        }
       } catch (err) {
         dispatch(LogActions.error('Segment setup failed'));
         dispatch(LogActions.error(JSON.stringify(err)));
       }
+    }
+  };
+
+export const logSegmentEvent =
+  (
+    eventType: 'screen' | 'track',
+    eventKey: string,
+    data: JsonMap | undefined = {},
+    includeAppUser?: boolean,
+  ): Effect<void> =>
+  (dispatch, getState) => {
+    if (includeAppUser) {
+      const {BITPAY_ID, APP} = getState();
+      const user = BITPAY_ID.user[APP.network];
+      data.appUser = user?.eid || '';
+    }
+
+    switch (eventType) {
+      case 'screen':
+        analytics.screen(eventKey, data);
+        break;
+
+      case 'track':
+        analytics.track(`BitPay App - ${eventKey}`, data);
+        break;
     }
   };
 

@@ -13,7 +13,7 @@ import Dosh from '../../lib/dosh';
 import {isAxiosError, isRateLimitError} from '../../utils/axios';
 import {generateSalt, hashPassword} from '../../utils/password';
 import {AppActions, AppEffects} from '../app/';
-import {startOnGoingProcessModal} from '../app/app.effects';
+import {logSegmentEvent, startOnGoingProcessModal} from '../app/app.effects';
 import {CardEffects} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
@@ -178,6 +178,16 @@ export const startLogin =
       await dispatch(startPairAndLoadUser(APP.network, secret));
 
       // complete
+      dispatch(
+        logSegmentEvent(
+          'track',
+          'Log In User success',
+          {
+            type: 'basicAuth',
+          },
+          true,
+        ),
+      );
       dispatch(BitPayIdActions.successLogin(APP.network, session));
     } catch (err) {
       batch(() => {
@@ -221,6 +231,16 @@ export const startTwoFactorAuth =
       const session = await AuthApi.fetchSession(APP.network);
 
       // complete
+      dispatch(
+        logSegmentEvent(
+          'track',
+          'Log In User success',
+          {
+            type: 'twoFactorAuth',
+          },
+          true,
+        ),
+      );
       dispatch(
         BitPayIdActions.successSubmitTwoFactorAuth(APP.network, session),
       );
@@ -303,6 +323,16 @@ export const startEmailPairing =
 
       await dispatch(startPairAndLoadUser(APP.network, secret));
 
+      dispatch(
+        logSegmentEvent(
+          'track',
+          'Log In User success',
+          {
+            type: 'emailAuth',
+          },
+          true,
+        ),
+      );
       dispatch(BitPayIdActions.successEmailPairing());
     } catch (err) {
       batch(() => {
@@ -410,6 +440,8 @@ export const startDisconnectBitPayId =
       }
 
       dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
+
+      dispatch(logSegmentEvent('track', 'Log Out User success', {}, true));
     } catch (err) {
       // log but swallow this error
       dispatch(LogActions.error('An error occurred while logging out.'));

@@ -51,6 +51,7 @@ import {
 import Amount from '../../wallet/screens/Amount';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../store/app/app.effects';
 
 const AccountContainer = styled.View`
   flex: 1;
@@ -321,6 +322,16 @@ const CoinbaseAccount = ({
     dispatch(
       showOnGoingProcessModal(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
     );
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Clicked Receive',
+        {
+          context: 'CoinbaseAccount',
+        },
+        true,
+      ),
+    );
     dispatch(coinbaseCreateAddress(accountId))
       .then(async newAddress => {
         dispatch(dismissOnGoingProcessModal());
@@ -353,6 +364,16 @@ const CoinbaseAccount = ({
 
   const onSelectedWallet = async (newWallet?: Wallet) => {
     setWalletModalVisible(false);
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Clicked Send',
+        {
+          context: 'CoinbaseAccount',
+        },
+        true,
+      ),
+    );
     if (newWallet) {
       setSelectedWallet(newWallet);
       await sleep(500);

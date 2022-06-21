@@ -16,7 +16,10 @@ import {
   startSendPayment,
 } from '../../../store/wallet/effects/send/send';
 import {sleep} from '../../../utils/helper-methods';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissOnGoingProcessModal,
@@ -124,6 +127,17 @@ const WalletConnectConfirm = () => {
       };
       await dispatch(walletConnectApproveCallRequest(request.peerId, response));
       dispatch(dismissOnGoingProcessModal());
+      dispatch(
+        logSegmentEvent(
+          'track',
+          'Sent Crypto',
+          {
+            context: 'WalletConnect Confirm',
+            coin: wallet?.currencyAbbreviation || '',
+          },
+          true,
+        ),
+      );
       await sleep(500);
       setShowPaymentSentModal(true);
     } catch (err) {

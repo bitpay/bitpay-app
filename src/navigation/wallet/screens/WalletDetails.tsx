@@ -104,6 +104,7 @@ import {Effect} from '../../../store';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import {Currencies} from '../../../constants/currencies';
 import i18next from 'i18next';
+import {logSegmentEvent} from '../../../store/app/app.effects';
 
 type WalletDetailsScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -908,11 +909,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         fullWalletObj.currencyAbbreviation,
                       ),
                       cta: () => {
-                        analytics.track('BitPay App - Clicked Buy Crypto', {
-                          from: 'walletDetails',
-                          coin: fullWalletObj.currencyAbbreviation,
-                          appUser: user?.eid || '',
-                        });
+                        dispatch(
+                          logSegmentEvent(
+                            'track',
+                            'Clicked Buy Crypto',
+                            {
+                              context: 'WalletDetails',
+                              coin: fullWalletObj.currencyAbbreviation,
+                            },
+                            true,
+                          ),
+                        );
                         navigation.navigate('Wallet', {
                           screen: 'Amount',
                           params: {
@@ -939,11 +946,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           fullWalletObj.currencyAbbreviation,
                         ),
                       cta: () => {
-                        analytics.track('BitPay App - Clicked Swap Crypto', {
-                          from: 'walletDetails',
-                          coin: fullWalletObj.currencyAbbreviation,
-                          appUser: user?.eid || '',
-                        });
+                        dispatch(
+                          logSegmentEvent(
+                            'track',
+                            'Clicked Swap Crypto',
+                            {
+                              context: 'WalletDetails',
+                              coin: fullWalletObj.currencyAbbreviation,
+                            },
+                            true,
+                          ),
+                        );
                         navigation.navigate('SwapCrypto', {
                           screen: 'Root',
                           params: {
@@ -953,15 +966,40 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       },
                     }}
                     receive={{
-                      cta: () => setShowReceiveAddressBottomModal(true),
+                      cta: () => {
+                        dispatch(
+                          logSegmentEvent(
+                            'track',
+                            'Clicked Receive',
+                            {
+                              context: 'WalletDetails',
+                              coin: fullWalletObj.currencyAbbreviation,
+                            },
+                            true,
+                          ),
+                        );
+                        setShowReceiveAddressBottomModal(true);
+                      },
                     }}
                     send={{
                       hide: !fullWalletObj.balance.sat,
-                      cta: () =>
+                      cta: () => {
+                        dispatch(
+                          logSegmentEvent(
+                            'track',
+                            'Clicked Send',
+                            {
+                              context: 'WalletDetails',
+                              coin: fullWalletObj.currencyAbbreviation,
+                            },
+                            true,
+                          ),
+                        );
                         navigation.navigate('Wallet', {
                           screen: 'SendTo',
                           params: {wallet: fullWalletObj},
-                        }),
+                        });
+                      },
                     }}
                   />
                 ) : null}

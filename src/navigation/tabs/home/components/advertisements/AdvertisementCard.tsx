@@ -10,6 +10,7 @@ import {ActiveOpacity} from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
 import {APP_DEEPLINK_PREFIX} from '../../../../../constants/config';
 import {AppEffects} from '../../../../../store/app';
+import {logSegmentEvent} from '../../../../../store/app/app.effects';
 import {LogActions} from '../../../../../store/log';
 import {
   LightBlack,
@@ -113,6 +114,17 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
     if (!url) {
       return;
     }
+
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Clicked Advertisement',
+        {
+          id: contentCard.id || '',
+        },
+        true,
+      ),
+    );
 
     if (url.startsWith(APP_DEEPLINK_PREFIX)) {
       try {
