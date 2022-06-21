@@ -114,9 +114,9 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
             ),
           );
         }
-        await dispatch(LocationEffects.getCountry());
+        dispatch(LocationEffects.getCountry());
         await dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
-        await dispatch(CardEffects.startCardStoreInit(data.user));
+        dispatch(CardEffects.startCardStoreInit(data.user));
       } catch (err: any) {
         if (isAxiosError(err)) {
           dispatch(LogActions.error(`${err.name}: ${err.message}`));

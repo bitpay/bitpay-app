@@ -50,8 +50,8 @@ export interface AppleWalletProvisioningRequestParams {
 }
 
 export const startCardStoreInit =
-  (initialData: InitialUserData): Effect<Promise<void>> =>
-  async (dispatch, getState) => {
+  (initialData: InitialUserData): Effect<void> =>
+  (dispatch, getState) => {
     const {APP} = getState();
 
     dispatch(CardActions.successInitializeStore(APP.network, initialData));
@@ -70,36 +70,38 @@ export const startCardStoreInit =
     }
 
     // Dosh card rewards
-    try {
-      dispatch(LogActions.info('Initializing Dosh...'));
+    dispatch(LogActions.info('Initializing Dosh...'));
 
-      if (!Dosh) {
-        dispatch(LogActions.debug('Dosh module not found.'));
-        return;
-      }
-
+    if (!Dosh) {
+      dispatch(LogActions.debug('Dosh module not found.'));
+    } else {
       const options = new DoshUiOptions('Card Offers', 'CIRCLE', 'DIAGONAL');
 
-      await Dosh.initializeDosh(options);
-      dispatch(LogActions.info('Successfully initialized Dosh.'));
+      Dosh.initializeDosh(options)
+        .then(() => {
+          dispatch(LogActions.info('Successfully initialized Dosh.'));
 
-      const {doshToken} = initialData;
-      if (!doshToken) {
-        dispatch(LogActions.debug('No doshToken provided.'));
-        return;
-      }
+          const {doshToken} = initialData;
+          if (!doshToken) {
+            dispatch(LogActions.debug('No doshToken provided.'));
+            return;
+          }
 
-      await Dosh.setDoshToken(doshToken);
-    } catch (err) {
-      dispatch(LogActions.error('An error occurred while initializing Dosh.'));
+          return Dosh.setDoshToken(doshToken);
+        })
+        .catch(err => {
+          dispatch(
+            LogActions.error('An error occurred while initializing Dosh.'),
+          );
 
-      // check for Android exception (see: DoshModule.java)
-      // TODO: iOS exceptions
-      if ((err as any).message) {
-        dispatch(LogActions.error((err as any).message));
-      } else {
-        dispatch(LogActions.error(JSON.stringify(err)));
-      }
+          // check for Android exception (see: DoshModule.java)
+          // TODO: iOS exceptions
+          if ((err as any).message) {
+            dispatch(LogActions.error((err as any).message));
+          } else {
+            dispatch(LogActions.error(JSON.stringify(err)));
+          }
+        });
     }
   };
 
