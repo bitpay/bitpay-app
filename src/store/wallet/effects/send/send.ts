@@ -729,7 +729,7 @@ export const handleCreateTxProposalError =
           const {tx, txp, getState} = proposalErrorProps;
 
           if (!tx || !txp || !getState) {
-            return GeneralError;
+            return GeneralError();
           }
 
           const {wallet, amount} = tx;
@@ -767,7 +767,7 @@ export const handleCreateTxProposalError =
           });
       }
     } catch (err2) {
-      return GeneralError;
+      return GeneralError();
     }
   };
 

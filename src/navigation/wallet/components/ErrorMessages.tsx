@@ -13,53 +13,53 @@ interface BottomNotificationListType {
 const List = styled(BaseText)`
   margin-bottom: 10px;
 `;
-{
-  /* add translation */
-}
-export const DecryptError: BottomNotificationConfig = {
-  type: 'error',
-  title: 'Something went wrong',
-  message: 'Could not decrypt wallet.',
-  enableBackdropDismiss: true,
-  actions: [
-    {
-      text: 'OK',
-      action: () => {},
-      primary: true,
-    },
-  ],
+
+export const DecryptError = (): BottomNotificationConfig => {
+  return {
+    type: 'error',
+    title: t('Something went wrong'),
+    message: t('Could not decrypt wallet.'),
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: t('OK'),
+        action: () => {},
+        primary: true,
+      },
+    ],
+  };
 };
-{
-  /* add translation */
-}
-export const GeneralError: BottomNotificationConfig = {
-  type: 'error',
-  title: 'Uh oh, Something went wrong',
-  message: 'Please try again later.',
-  enableBackdropDismiss: true,
-  actions: [
-    {
-      text: 'OK',
-      action: () => {},
-      primary: true,
-    },
-  ],
+
+export const GeneralError = (): BottomNotificationConfig => {
+  return {
+    type: 'error',
+    title: t('Uh oh, Something went wrong'),
+    message: t('Please try again later.'),
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: t('OK'),
+        action: () => {},
+        primary: true,
+      },
+    ],
+  };
 };
-{
-  /* add translation */
-}
-export const BalanceUpdateError: BottomNotificationConfig = {
-  type: 'error',
-  title: 'Something went wrong',
-  message: 'Failed to update balance, please try again later.',
-  enableBackdropDismiss: true,
-  actions: [
-    {
-      text: 'OK',
-      action: () => {},
-      primary: true,
-    },
-  ],
+
+export const BalanceUpdateError = (): BottomNotificationConfig => {
+  return {
+    type: 'error',
+    title: t('Something went wrong'),
+    message: t('Failed to update balance, please try again later.'),
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: t('OK'),
+        action: () => {},
+        primary: true,
+      },
+    ],
+  };
 };
 
 export const WrongPasswordError = (): BottomNotificationConfig => {

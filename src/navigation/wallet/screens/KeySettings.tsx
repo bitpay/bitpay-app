@@ -293,7 +293,7 @@ const KeySettings = () => {
         <Hr />
 
         <SettingView>
-          <WalletSettingsTitle>Hide Balance</WalletSettingsTitle>
+          <WalletSettingsTitle>{t('Hide Balance')}</WalletSettingsTitle>
 
           <ToggleSwitch
             onChange={() => {

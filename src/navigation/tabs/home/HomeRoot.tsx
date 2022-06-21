@@ -72,7 +72,7 @@ const HomeRoot = () => {
   // Shop with Crypto
   const memoizedShopWithCryptoCards = useMemo(() => {
     if (STATIC_CONTENT_CARDS_ENABLED && !brazeShopWithCrypto.length) {
-      return MockOffers;
+      return MockOffers();
     }
 
     return brazeShopWithCrypto;
@@ -120,7 +120,7 @@ const HomeRoot = () => {
   // Quick Links
   const memoizedQuickLinks = useMemo(() => {
     if (STATIC_CONTENT_CARDS_ENABLED && !brazeQuickLinks.length) {
-      return DefaultQuickLinks;
+      return DefaultQuickLinks();
     }
 
     return brazeQuickLinks;
@@ -146,7 +146,7 @@ const HomeRoot = () => {
       ]);
       dispatch(updatePortfolioBalance());
     } catch (err) {
-      dispatch(showBottomNotificationModal(BalanceUpdateError));
+      dispatch(showBottomNotificationModal(BalanceUpdateError()));
     }
     setRefreshing(false);
   };
@@ -226,7 +226,7 @@ const HomeRoot = () => {
                         enableBackdropDismiss: true,
                         actions: [
                           {
-                            text: 'Add funds',
+                            text: t('Add funds'),
                             action: () => {
                               analytics.track(
                                 'BitPay App - Clicked Buy Crypto',
@@ -283,7 +283,7 @@ const HomeRoot = () => {
         {memoizedShopWithCryptoCards.length ? (
           <HomeSection
             title={t('Shop with Crypto')}
-            action="See all"
+            action={t('See all')}
             onActionPress={() => navigation.navigate('Tabs', {screen: 'Shop'})}>
             <OffersCarousel contentCards={memoizedShopWithCryptoCards} />
           </HomeSection>

@@ -372,7 +372,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
       ]);
       dispatch(updatePortfolioBalance());
     } catch (err) {
-      dispatch(showBottomNotificationModal(BalanceUpdateError));
+      dispatch(showBottomNotificationModal(BalanceUpdateError()));
     }
     setRefreshing(false);
   };

@@ -395,7 +395,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       ]);
       dispatch(updatePortfolioBalance());
     } catch (err) {
-      dispatch(showBottomNotificationModal(BalanceUpdateError));
+      dispatch(showBottomNotificationModal(BalanceUpdateError()));
     }
     setRefreshing(false);
   };

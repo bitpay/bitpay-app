@@ -239,7 +239,7 @@ export const CustomizeCard = ({
         })}
         {remainingWalletCount ? (
           <RemainingAssetsLabel>
-            + {getRemainingWalletCount(wallets)} more
+            + {getRemainingWalletCount(wallets)} {t('more')}
           </RemainingAssetsLabel>
         ) : null}
       </HeaderImg>

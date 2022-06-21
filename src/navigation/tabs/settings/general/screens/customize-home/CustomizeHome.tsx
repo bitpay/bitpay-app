@@ -163,9 +163,7 @@ const CustomizeHome = () => {
         <H7>{t('Home Layout')}</H7>
         <Tab.Navigator
           initialRouteName={
-            layoutType === 'carousel'
-              ? LayoutTypes.CAROUSEL
-              : LayoutTypes.LIST_VIEW
+            layoutType === 'carousel' ? t('Carousel') : t('List View')
           }
           style={{marginTop: 20}}
           screenOptions={{

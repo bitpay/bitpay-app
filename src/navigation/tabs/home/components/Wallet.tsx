@@ -126,7 +126,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
       {remainingWalletCount ? (
         <View style={isListView ? {paddingBottom: 5} : null}>
           <RemainingAssetsLabel>
-            + {remainingWalletCount} more{' '}
+            + {remainingWalletCount} {t('more')}{' '}
           </RemainingAssetsLabel>
         </View>
       ) : null}

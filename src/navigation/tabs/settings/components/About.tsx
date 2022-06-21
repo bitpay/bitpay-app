@@ -59,7 +59,7 @@ const About = () => {
       {GIT_COMMIT_HASH ? (
         <>
           <Setting>
-            <SettingTitle>Commit Hash</SettingTitle>
+            <SettingTitle>{t('Commit Hash')}</SettingTitle>
 
             <Button buttonType="pill">{GIT_COMMIT_HASH}</Button>
           </Setting>
