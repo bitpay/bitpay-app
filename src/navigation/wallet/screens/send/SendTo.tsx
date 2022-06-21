@@ -129,6 +129,7 @@ const BuildKeyWalletRow = (
   currentCurrencyAbbreviation: string,
   currentNetwork: string,
   defaultAltCurrencyIsoCode: string,
+  searchInput: string,
 ) => {
   let filteredKeys: KeyWalletsRowProps<KeyWallet>[] = [];
   Object.entries(keys).forEach(([key, value]) => {
@@ -136,11 +137,12 @@ const BuildKeyWalletRow = (
     value.wallets
       .filter(({hideWallet}) => !hideWallet)
       .filter(
-        ({currencyAbbreviation, id, credentials: {network}}) =>
+        ({currencyAbbreviation, id, credentials: {network, walletName}}) =>
           currencyAbbreviation.toLowerCase() ===
             currentCurrencyAbbreviation.toLowerCase() &&
           id !== currentWalletId &&
-          network === currentNetwork,
+          network === currentNetwork &&
+          walletName.toLowerCase().includes(searchInput.toLowerCase()),
       )
       .map(wallet => {
         const {
@@ -189,7 +191,7 @@ const SendTo = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>Send To</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Send To')}</HeaderTitle>,
     });
   });
 
@@ -206,6 +208,7 @@ const SendTo = () => {
     currencyAbbreviation,
     network,
     defaultAltCurrency.isoCode,
+    searchInput,
   );
 
   const contacts = allContacts.filter(
