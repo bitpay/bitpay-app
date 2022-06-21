@@ -31,6 +31,7 @@ import {
   DetailsList,
   Fee,
   Header,
+  Memo,
   RemainingTime,
   SendingFrom,
   SendingTo,
@@ -211,6 +212,7 @@ const PayProConfirm = () => {
         }),
       );
       updateTxDetails(newTxDetails);
+      updateTxp(undefined);
       setInvoice(fetchedInvoice);
       setCoinbaseAccount(selectedCoinbaseAccount);
       dispatch(dismissOnGoingProcessModal());
@@ -340,7 +342,13 @@ const PayProConfirm = () => {
               />
             ) : null}
             <Amount description={'SubTotal'} amount={subTotal} />
-            <Amount description={'Total'} amount={total} />
+            <Amount description={'Total'} amount={total} hr={!!txp} />
+            {txp ? (
+              <Memo
+                memo={txp.message}
+                onChange={message => updateTxp({...txp, message})}
+              />
+            ) : null}
           </>
         ) : null}
       </DetailsList>
