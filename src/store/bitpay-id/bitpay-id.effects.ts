@@ -418,7 +418,7 @@ const startPairAndLoadUser =
       dispatch(AppEffects.initializeBrazeContent());
 
       const {basicInfo} = data.user;
-      if (basicInfo) {
+      if (!__DEV__ && basicInfo) {
         const {eid, email, name} = basicInfo;
         analytics.identify(eid, {email, name});
       }
