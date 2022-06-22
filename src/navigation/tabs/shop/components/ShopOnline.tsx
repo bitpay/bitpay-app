@@ -28,6 +28,8 @@ import {
 } from './styled/ShopTabComponents';
 import GhostSvg from '../../../../../assets/img/ghost-cheeky.svg';
 import {useTranslation} from 'react-i18next';
+import {useAppDispatch} from '../../../../utils/hooks';
+import {logSegmentEvent} from '../../../../store/app/app.effects';
 
 const SearchResults = styled.View`
   display: flex;
@@ -50,6 +52,7 @@ export const ShopOnline = ({
   categories: CategoryWithIntegrations[];
 }) => {
   const {t} = useTranslation();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const theme = useTheme();
   const {control} = useForm();
@@ -62,6 +65,9 @@ export const ShopOnline = ({
       integration.displayName.toLowerCase().includes(text.toLocaleLowerCase()),
     );
     setSearchResults(newSearchResults);
+    dispatch(
+      logSegmentEvent('track', 'Searched Online Brands', {search: text}, true),
+    );
   }, 300);
 
   const FullIntegrationsList = () => (

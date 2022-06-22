@@ -168,7 +168,24 @@ const TransactModal = () => {
       img: () => <Icons.BuyGiftCard />,
       title: t('Buy Gift Cards'),
       description: t('Buy gift cards with crypto'),
-      onPress: () => {},
+      onPress: () => {
+        navigation.navigate('Tabs', {
+          screen: 'Shop',
+          params: {
+            screen: 'Home',
+          },
+        });
+        dispatch(
+          logSegmentEvent(
+            'track',
+            'Clicked Buy Gift Cards',
+            {
+              context: 'TransactMenu',
+            },
+            true,
+          ),
+        );
+      },
     },
   ];
 

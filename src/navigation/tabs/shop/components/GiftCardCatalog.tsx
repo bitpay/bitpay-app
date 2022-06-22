@@ -34,10 +34,11 @@ import {useNavigation} from '@react-navigation/native';
 import {GiftCardScreens} from '../gift-card/GiftCardStack';
 import MyGiftCards from './MyGiftCards';
 import FilterSheet, {initializeCategoryMap} from './FilterSheet';
-import {useAppSelector} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {APP_NETWORK} from '../../../../constants/config';
 import GhostSvg from '../../../../../assets/img/ghost-cheeky.svg';
 import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../../store/app/app.effects';
 
 const Curations = ({
   curations,
@@ -121,6 +122,7 @@ export default ({
   categories: CategoryWithGiftCards[];
   onSelectedGiftCardsChange: (newNumSelectedGiftCards: number) => void;
 }) => {
+  const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const navigation = useNavigation();
   const theme = useTheme();
@@ -153,8 +155,11 @@ export default ({
           giftCard.displayName.toLowerCase().includes(lowerCaseText),
         );
         setSearchResults(newSearchResults);
+        dispatch(
+          logSegmentEvent('track', 'Searched Gift Cards', {search: text}, true),
+        );
       }, 300),
-    [availableGiftCards],
+    [availableGiftCards, dispatch],
   );
 
   const underlayColor = theme.dark ? '#121212' : '#fbfbff';

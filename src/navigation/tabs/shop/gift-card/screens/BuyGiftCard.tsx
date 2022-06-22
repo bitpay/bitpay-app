@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {Platform, ScrollView, View} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import LinearGradient from 'react-native-linear-gradient';
@@ -44,6 +44,7 @@ import {APP_NETWORK} from '../../../../../constants/config';
 import {useAppSelector} from '../../../../../utils/hooks';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../../../store/app/app.effects';
 
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;
@@ -141,6 +142,18 @@ const BuyGiftCard = ({
       },
     });
   });
+  useEffect(() => {
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Viewed Gift Card',
+        {
+          giftCardBrand: cardConfig.name,
+        },
+        true,
+      ),
+    );
+  }, [cardConfig.name, dispatch]);
 
   const showActivationFeeSheet = (
     activationFee: number,
@@ -287,6 +300,16 @@ const BuyGiftCard = ({
   };
 
   const buyGiftCard = () => {
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Started Gift Card Purchase',
+        {
+          giftCardBrand: cardConfig.name,
+        },
+        true,
+      ),
+    );
     const selectedAmount = (cardConfig.supportedAmounts || [])[
       selectedAmountIndex
     ];
