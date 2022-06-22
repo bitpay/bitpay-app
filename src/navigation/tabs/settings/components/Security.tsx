@@ -173,7 +173,9 @@ const Security = () => {
         <Setting onPress={onPressLockButton}>
           <SettingTitle>{t('Lock App')}</SettingTitle>
           <Button onPress={onPressLockButton} buttonType={'pill'}>
-            {biometricLockActive || pinLockActive ? 'Enabled' : 'Disabled'}
+            {biometricLockActive || pinLockActive
+              ? t('Enabled')
+              : t('Disabled')}
           </Button>
         </Setting>
       </SettingsComponent>

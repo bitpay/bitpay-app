@@ -435,10 +435,10 @@ const SwapCryptoRoot: React.FC = () => {
             return;
           } else {
             const msg =
-            t('The amount entered is lower than the minimum allowed: ') +
-            minAmount +
-            ' ' +
-            fromWalletData?.currencyAbbreviation;
+              t('The amount entered is lower than the minimum allowed: ') +
+              minAmount +
+              ' ' +
+              fromWalletData?.currencyAbbreviation;
             const actions = [
               {
                 text: t('OK'),
@@ -769,7 +769,8 @@ const SwapCryptoRoot: React.FC = () => {
                 <ActionsContainer>
                   <BottomDataText>
                     {fromWalletSelected.balance.cryptoSpendable}{' '}
-                    {fromWalletData?.currencyAbbreviation} {t('available to swap')}
+                    {fromWalletData?.currencyAbbreviation}{' '}
+                    {t('available to swap')}
                   </BottomDataText>
                 </ActionsContainer>
               ) : null}

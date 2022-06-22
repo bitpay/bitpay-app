@@ -47,8 +47,7 @@ const QuickLinkCardContainer = styled.TouchableOpacity`
 `;
 
 const TextContainer = styled.View`
-  padding: 20px 0 20px 20px;
-  width: 130px;
+  padding: 11px 18px 11px 76px;
 `;
 
 const TitleText = styled(BaseText)`
@@ -68,7 +67,7 @@ const DescriptionText = styled(BaseText)`
 
 const IconContainer = styled.View`
   position: absolute;
-  right: 20px;
+  left: 16px;
 `;
 
 const QuickLinksCard: React.FC<QuickLinksCardProps> = props => {
@@ -136,12 +135,6 @@ const QuickLinksCard: React.FC<QuickLinksCardProps> = props => {
       activeOpacity={ActiveOpacity}
       onPress={onPress}
       style={!theme.dark && BoxShadow}>
-      <TextContainer>
-        <TitleText>{title}</TitleText>
-        <DescriptionText numberOfLines={2} ellipsizeMode={'tail'}>
-          {description}
-        </DescriptionText>
-      </TextContainer>
       {imageSource ? (
         <IconContainer>
           <FastImage
@@ -154,6 +147,12 @@ const QuickLinksCard: React.FC<QuickLinksCardProps> = props => {
           />
         </IconContainer>
       ) : null}
+      <TextContainer>
+        <TitleText>{title}</TitleText>
+        <DescriptionText numberOfLines={2} ellipsizeMode={'tail'}>
+          {description}
+        </DescriptionText>
+      </TextContainer>
     </QuickLinkCardContainer>
   );
 };

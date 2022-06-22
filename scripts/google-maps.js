@@ -14,7 +14,7 @@ const dotenv = require('dotenv');
   if (result.error) {
     throw result.error;
   }
-  
+
   if (process.env.GOOGLE_MAPS_API_KEY) {
     const androidManifestPath = `${__dirname}/../android/app/src/main/AndroidManifest.xml`;
     let androidManifestContent = fs.readFileSync(androidManifestPath, 'utf-8');
@@ -29,5 +29,5 @@ const dotenv = require('dotenv');
 
   console.log(
     `${process.env.NODE_ENV.toUpperCase()} Google Maps API key successfully updated.`,
-  )
+  );
 })();

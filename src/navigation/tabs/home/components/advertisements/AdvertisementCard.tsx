@@ -41,7 +41,7 @@ const AdvertisementCardContainer = styled.TouchableOpacity`
   justify-content: center;
   min-height: 100px;
   overflow: hidden;
-  padding: 20px 100px 20px 20px;
+  padding: 16px 35px 16px 76px;
   position: relative;
 `;
 
@@ -61,7 +61,7 @@ const AdvertisementCardDescription = styled(BaseText)`
 
 const IconContainer = styled.View`
   position: absolute;
-  right: 20px;
+  left: 16px;
 `;
 
 const ADVERTISEMENT_ICON_HEIGHT = 50;
