@@ -134,6 +134,12 @@ const Confirm = () => {
     setWalletSelectorVisible(true);
   };
 
+  const getTransactionCurrency = () => {
+    return wallet
+      ? wallet.currencyAbbreviation.toUpperCase()
+      : coinbaseAccount!.currency.code;
+  };
+
   useEffect(() => {
     return () => {
       dispatch(ShopActions.deletedUnsoldGiftCards());
@@ -294,6 +300,23 @@ const Confirm = () => {
         cardConfig,
       },
     });
+    const purchaseEventName =
+      giftCard.status === 'FAILURE'
+        ? 'Failed Gift Card'
+        : 'Purchased Gift Card';
+    dispatch(
+      logSegmentEvent(
+        'track',
+        purchaseEventName,
+        {
+          giftCardAmount: amount,
+          giftCardBrand: cardConfig.name,
+          giftCardCurrency: cardConfig.currency,
+          coin: getTransactionCurrency(),
+        },
+        true,
+      ),
+    );
   };
 
   const showError = ({
