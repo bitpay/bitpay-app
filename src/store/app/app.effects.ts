@@ -91,6 +91,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     await dispatch(initializeApi(network, identity));
 
+    dispatch(LocationEffects.getCountry());
+
     if (isPaired) {
       try {
         dispatch(
@@ -114,7 +116,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
             ),
           );
         }
-        dispatch(LocationEffects.getCountry());
         await dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
         dispatch(CardEffects.startCardStoreInit(data.user));
       } catch (err: any) {

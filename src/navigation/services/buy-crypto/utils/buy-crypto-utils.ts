@@ -9,16 +9,19 @@ import {
 } from './simplex-utils';
 import {wyreSupportedCoins, wyreSupportedFiatCurrencies} from './wyre-utils';
 import * as _ from 'lodash';
+import {CountryData} from '../../../../store/location/location.models';
 
 export const getEnabledPaymentMethods = (
-  country: any,
+  countryData?: CountryData | null,
   currency?: string,
   coin?: string,
 ): PaymentMethods => {
-  if (!currency || !coin || !country) {
+  if (!currency || !coin) {
     return {};
   }
-  PaymentMethodsAvailable.sepaBankTransfer.enabled = !!country.isEuCountry;
+  PaymentMethodsAvailable.sepaBankTransfer.enabled = countryData
+    ? !!countryData.isEuCountry
+    : false;
   const EnabledPaymentMethods = _.pickBy(PaymentMethodsAvailable, method => {
     return (
       method.enabled &&
