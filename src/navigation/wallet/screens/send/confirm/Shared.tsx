@@ -1,6 +1,5 @@
 import {
   FeeOptions,
-  TransactionProposal,
   TxDetailsAmount,
   TxDetailsFee,
   TxDetailsSendingFrom,
@@ -40,10 +39,16 @@ import Clipboard from '@react-native-community/clipboard';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 import {useTranslation} from 'react-i18next';
 import {SlateDark, White} from '../../../../../styles/colors';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 // Styled
 export const ConfirmContainer = styled.SafeAreaView`
   flex: 1;
+`;
+
+export const ConfirmScrollView = styled(KeyboardAwareScrollView)`
+  margin-top: 20px;
+  padding: 0 ${ScreenGutter};
 `;
 
 export const HeaderTitle = styled(H6)`

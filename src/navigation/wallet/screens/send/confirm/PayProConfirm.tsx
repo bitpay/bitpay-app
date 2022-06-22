@@ -28,6 +28,7 @@ import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/w
 import {
   Amount,
   ConfirmContainer,
+  ConfirmScrollView,
   DetailsList,
   Fee,
   Header,
@@ -307,51 +308,96 @@ const PayProConfirm = () => {
 
   return (
     <ConfirmContainer>
-      <DetailsList>
-        <Header hr>Summary</Header>
-        <SendingTo
-          recipient={{
-            recipientName: payProHost,
-            img: () => (
-              <SecureLockIcon height={18} width={18} style={{marginTop: -2}} />
-            ),
-          }}
-          hr
-        />
-        {wallet || coinbaseAccount ? (
-          <>
-            {wallet ? (
-              <Fee
-                fee={fee}
-                hideFeeOptions
-                feeOptions={dispatch(
-                  GetFeeOptions(wallet.currencyAbbreviation),
-                )}
+      <ConfirmScrollView>
+        <DetailsList>
+          <Header hr>Summary</Header>
+          <SendingTo
+            recipient={{
+              recipientName: payProHost,
+              img: () => (
+                <SecureLockIcon
+                  height={18}
+                  width={18}
+                  style={{marginTop: -2}}
+                />
+              ),
+            }}
+            hr
+          />
+          {wallet || coinbaseAccount ? (
+            <>
+              {wallet ? (
+                <Fee
+                  fee={fee}
+                  hideFeeOptions
+                  feeOptions={dispatch(
+                    GetFeeOptions(wallet.currencyAbbreviation),
+                  )}
+                  hr
+                />
+              ) : null}
+              <SendingFrom
+                sender={sendingFrom!}
+                onPress={openKeyWalletSelector}
                 hr
               />
-            ) : null}
-            <SendingFrom
-              sender={sendingFrom!}
-              onPress={openKeyWalletSelector}
-              hr
-            />
-            {invoice ? (
-              <RemainingTime
-                invoiceExpirationTime={invoice.expirationTime}
-                setDisableSwipeSendButton={setDisableSwipeSendButton}
-              />
-            ) : null}
-            <Amount description={'SubTotal'} amount={subTotal} />
-            <Amount description={'Total'} amount={total} hr={!!txp} />
-            {txp ? (
-              <Memo
-                memo={txp.message}
-                onChange={message => updateTxp({...txp, message})}
-              />
-            ) : null}
-          </>
-        ) : null}
-      </DetailsList>
+              {invoice ? (
+                <RemainingTime
+                  invoiceExpirationTime={invoice.expirationTime}
+                  setDisableSwipeSendButton={setDisableSwipeSendButton}
+                />
+              ) : null}
+              <Amount description={'SubTotal'} amount={subTotal} />
+              <Amount description={'Total'} amount={total} hr={!!txp} />
+              {txp ? (
+                <Memo
+                  memo={txp.message}
+                  onChange={message => updateTxp({...txp, message})}
+                />
+              ) : null}
+            </>
+          ) : null}
+        </DetailsList>
+
+        <WalletSelector
+          isVisible={walletSelectorVisible}
+          setWalletSelectorVisible={setWalletSelectorVisible}
+          walletsAndAccounts={memoizedKeysAndWalletsList}
+          onWalletSelect={onWalletSelect}
+          onCoinbaseAccountSelect={onCoinbaseAccountSelect}
+          onBackdropPress={async () => {
+            setWalletSelectorVisible(false);
+            if (!wallet && !coinbaseAccount) {
+              await sleep(100);
+              navigation.goBack();
+            }
+          }}
+        />
+
+        <PaymentSent
+          isVisible={showPaymentSentModal}
+          onCloseModal={async () => {
+            navigation.dispatch(StackActions.popToTop());
+            if (coinbaseAccount) {
+              navigation.dispatch(StackActions.pop(3));
+            }
+            coinbaseAccount
+              ? navigation.navigate('Coinbase', {
+                  screen: 'CoinbaseAccount',
+                  params: {accountId: coinbaseAccount.id, refresh: true},
+                })
+              : navigation.navigate('Wallet', {
+                  screen: 'WalletDetails',
+                  params: {
+                    walletId: wallet!.id,
+                    key,
+                  },
+                });
+            await sleep(0);
+            setShowPaymentSentModal(false);
+          }}
+        />
+      </ConfirmScrollView>
       {wallet || coinbaseAccount ? (
         <>
           <SwipeButton
@@ -377,45 +423,6 @@ const PayProConfirm = () => {
           />
         </>
       ) : null}
-
-      <WalletSelector
-        isVisible={walletSelectorVisible}
-        setWalletSelectorVisible={setWalletSelectorVisible}
-        walletsAndAccounts={memoizedKeysAndWalletsList}
-        onWalletSelect={onWalletSelect}
-        onCoinbaseAccountSelect={onCoinbaseAccountSelect}
-        onBackdropPress={async () => {
-          setWalletSelectorVisible(false);
-          if (!wallet && !coinbaseAccount) {
-            await sleep(100);
-            navigation.goBack();
-          }
-        }}
-      />
-
-      <PaymentSent
-        isVisible={showPaymentSentModal}
-        onCloseModal={async () => {
-          navigation.dispatch(StackActions.popToTop());
-          if (coinbaseAccount) {
-            navigation.dispatch(StackActions.pop(3));
-          }
-          coinbaseAccount
-            ? navigation.navigate('Coinbase', {
-                screen: 'CoinbaseAccount',
-                params: {accountId: coinbaseAccount.id, refresh: true},
-              })
-            : navigation.navigate('Wallet', {
-                screen: 'WalletDetails',
-                params: {
-                  walletId: wallet!.id,
-                  key,
-                },
-              });
-          await sleep(0);
-          setShowPaymentSentModal(false);
-        }}
-      />
     </ConfirmContainer>
   );
 };
