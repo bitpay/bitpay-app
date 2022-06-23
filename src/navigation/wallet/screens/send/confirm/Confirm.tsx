@@ -33,6 +33,7 @@ import {
   DetailsList,
   Fee,
   Header,
+  Memo,
   SendingFrom,
   SendingTo,
   SharedDetailRow,
@@ -391,7 +392,18 @@ const Confirm = () => {
           </>
         ) : null}
         <Amount description={t('SubTotal')} amount={subTotal} />
-        <Amount description={t('Total')} amount={total} />
+        <Amount
+          description={t('Total')}
+          amount={total}
+          hr={currencyAbbreviation !== 'xrp'}
+        />
+
+        {txp && currencyAbbreviation !== 'xrp' ? (
+          <Memo
+            memo={txp.message || ''}
+            onChange={message => setTxp({...txp, message})}
+          />
+        ) : null}
       </DetailsList>
 
       <SwipeButton
