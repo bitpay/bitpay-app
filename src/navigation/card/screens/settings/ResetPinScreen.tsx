@@ -197,7 +197,7 @@ const ResetPinScreen: React.VFC<
         }),
       );
     }
-  }, [dispatch, goBackToSettingsScreen, fetchUriStatus]);
+  }, [dispatch, goBackToSettingsScreen, fetchUriStatus, id]);
 
   return (
     <>
