@@ -31,9 +31,12 @@ import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/w
 import {
   Amount,
   ConfirmContainer,
+  ConfirmScrollView,
   DetailsList,
   Fee,
   Header,
+  Memo,
+  RemainingTime,
   SendingFrom,
   SendingTo,
   WalletSelector,
@@ -88,6 +91,7 @@ const PayProConfirm = () => {
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const {fee, sendingFrom, subTotal, total} = txDetails || {};
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
+  const [disableSwipeSendButton, setDisableSwipeSendButton] = useState(false);
   const payProHost = payProOptions.payProUrl
     .replace('https://', '')
     .split('/')[0];
@@ -114,20 +118,25 @@ const PayProConfirm = () => {
       startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
     );
     try {
-      const {txDetails: newTxDetails, txp: newTxp} = await dispatch(
-        await createPayProTxProposal({
-          wallet: selectedWallet,
-          paymentUrl: payProOptions.payProUrl,
-          payProOptions,
-          invoiceID: payProOptions.paymentId,
-        }),
-      );
+      const [{txDetails: newTxDetails, txp: newTxp}, fetchedInvoice] =
+        await Promise.all([
+          dispatch(
+            await createPayProTxProposal({
+              wallet: selectedWallet,
+              paymentUrl: payProOptions.payProUrl,
+              payProOptions,
+              invoiceID: payProOptions.paymentId,
+            }),
+          ),
+          fetchInvoice(payProOptions.payProUrl),
+        ]);
       setWallet(selectedWallet);
       setKey(keys[selectedWallet.keyId]);
       await sleep(400);
       dispatch(dismissOnGoingProcessModal());
       updateTxDetails(newTxDetails);
       updateTxp(newTxp);
+      setInvoice(fetchedInvoice);
       setRecipient({address: newTxDetails.sendingTo.recipientAddress} as {
         address: string;
       });
@@ -179,19 +188,24 @@ const PayProConfirm = () => {
     );
   };
 
+  const fetchInvoice = async (payProUrl: string) => {
+    const invoiceId = payProUrl.split('/').slice(-1)[0];
+    const getInvoiceResponse = await axios.get(
+      `https://${payProHost}/invoices/${invoiceId}`,
+    );
+    const {
+      data: {data: fetchedInvoice},
+    } = getInvoiceResponse as {data: {data: Invoice}};
+    return fetchedInvoice;
+  };
+
   const onCoinbaseAccountSelect = async (walletRowProps: WalletRowProps) => {
     dispatch(
       startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
     );
     const selectedCoinbaseAccount = walletRowProps.coinbaseAccount!;
     try {
-      const invoiceId = payProOptions.payProUrl.split('/').slice(-1);
-      const getInvoiceResponse = await axios.get(
-        `https://bitpay.com/invoices/${invoiceId}`,
-      );
-      const {
-        data: {data: fetchedInvoice},
-      } = getInvoiceResponse as {data: {data: Invoice}};
+      const fetchedInvoice = await fetchInvoice(payProOptions.payProUrl);
       const rates = await dispatch(startGetRates({}));
       const newTxDetails = dispatch(
         buildTxDetails({
@@ -202,6 +216,7 @@ const PayProConfirm = () => {
         }),
       );
       updateTxDetails(newTxDetails);
+      updateTxp(undefined);
       setInvoice(fetchedInvoice);
       setCoinbaseAccount(selectedCoinbaseAccount);
       dispatch(dismissOnGoingProcessModal());
@@ -296,42 +311,100 @@ const PayProConfirm = () => {
 
   return (
     <ConfirmContainer>
-      <DetailsList>
-        <Header hr>Summary</Header>
-        <SendingTo
-          recipient={{
-            recipientName: payProHost,
-            img: () => (
-              <SecureLockIcon height={18} width={18} style={{marginTop: -2}} />
-            ),
-          }}
-          hr
-        />
-        {wallet || coinbaseAccount ? (
-          <>
-            {wallet ? (
-              <Fee
-                fee={fee}
-                hideFeeOptions
-                feeOptions={dispatch(
-                  GetFeeOptions(wallet.currencyAbbreviation),
-                )}
+      <ConfirmScrollView>
+        <DetailsList>
+          <Header hr>Summary</Header>
+          <SendingTo
+            recipient={{
+              recipientName: payProHost,
+              img: () => (
+                <SecureLockIcon
+                  height={18}
+                  width={18}
+                  style={{marginTop: -2}}
+                />
+              ),
+            }}
+            hr
+          />
+          {wallet || coinbaseAccount ? (
+            <>
+              {wallet ? (
+                <Fee
+                  fee={fee}
+                  hideFeeOptions
+                  feeOptions={dispatch(
+                    GetFeeOptions(wallet.currencyAbbreviation),
+                  )}
+                  hr
+                />
+              ) : null}
+              <SendingFrom
+                sender={sendingFrom!}
+                onPress={openKeyWalletSelector}
                 hr
               />
-            ) : null}
-            <SendingFrom
-              sender={sendingFrom!}
-              onPress={openKeyWalletSelector}
-              hr
-            />
-            <Amount description={'SubTotal'} amount={subTotal} />
-            <Amount description={'Total'} amount={total} />
-          </>
-        ) : null}
-      </DetailsList>
+              {invoice ? (
+                <RemainingTime
+                  invoiceExpirationTime={invoice.expirationTime}
+                  setDisableSwipeSendButton={setDisableSwipeSendButton}
+                />
+              ) : null}
+              <Amount description={'SubTotal'} amount={subTotal} />
+              <Amount description={'Total'} amount={total} hr={!!txp} />
+              {txp ? (
+                <Memo
+                  memo={txp.message}
+                  onChange={message => updateTxp({...txp, message})}
+                />
+              ) : null}
+            </>
+          ) : null}
+        </DetailsList>
+
+        <WalletSelector
+          isVisible={walletSelectorVisible}
+          setWalletSelectorVisible={setWalletSelectorVisible}
+          walletsAndAccounts={memoizedKeysAndWalletsList}
+          onWalletSelect={onWalletSelect}
+          onCoinbaseAccountSelect={onCoinbaseAccountSelect}
+          onBackdropPress={async () => {
+            setWalletSelectorVisible(false);
+            if (!wallet && !coinbaseAccount) {
+              await sleep(100);
+              navigation.goBack();
+            }
+          }}
+        />
+
+        <PaymentSent
+          isVisible={showPaymentSentModal}
+          onCloseModal={async () => {
+            navigation.dispatch(StackActions.popToTop());
+            if (coinbaseAccount) {
+              navigation.dispatch(StackActions.pop(3));
+            }
+            coinbaseAccount
+              ? navigation.navigate('Coinbase', {
+                  screen: 'CoinbaseAccount',
+                  params: {accountId: coinbaseAccount.id, refresh: true},
+                })
+              : navigation.navigate('Wallet', {
+                  screen: 'WalletDetails',
+                  params: {
+                    walletId: wallet!.id,
+                    key,
+                  },
+                });
+            await sleep(0);
+            setShowPaymentSentModal(false);
+          }}
+        />
+      </ConfirmScrollView>
       {wallet || coinbaseAccount ? (
         <>
           <SwipeButton
+            disabled={disableSwipeSendButton}
             title={'Slide to send'}
             forceReset={resetSwipeButton}
             onSwipeComplete={async () => {
@@ -364,45 +437,6 @@ const PayProConfirm = () => {
           />
         </>
       ) : null}
-
-      <WalletSelector
-        isVisible={walletSelectorVisible}
-        setWalletSelectorVisible={setWalletSelectorVisible}
-        walletsAndAccounts={memoizedKeysAndWalletsList}
-        onWalletSelect={onWalletSelect}
-        onCoinbaseAccountSelect={onCoinbaseAccountSelect}
-        onBackdropPress={async () => {
-          setWalletSelectorVisible(false);
-          if (!wallet && !coinbaseAccount) {
-            await sleep(100);
-            navigation.goBack();
-          }
-        }}
-      />
-
-      <PaymentSent
-        isVisible={showPaymentSentModal}
-        onCloseModal={async () => {
-          navigation.dispatch(StackActions.popToTop());
-          if (coinbaseAccount) {
-            navigation.dispatch(StackActions.pop(3));
-          }
-          coinbaseAccount
-            ? navigation.navigate('Coinbase', {
-                screen: 'CoinbaseAccount',
-                params: {accountId: coinbaseAccount.id, refresh: true},
-              })
-            : navigation.navigate('Wallet', {
-                screen: 'WalletDetails',
-                params: {
-                  walletId: wallet!.id,
-                  key,
-                },
-              });
-          await sleep(0);
-          setShowPaymentSentModal(false);
-        }}
-      />
     </ConfirmContainer>
   );
 };

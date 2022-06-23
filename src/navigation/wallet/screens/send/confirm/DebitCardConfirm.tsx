@@ -36,8 +36,8 @@ import {
   ConfirmContainer,
   DetailsList,
   Header,
+  RemainingTime,
   SendingFrom,
-  SharedDetailRow,
   WalletSelector,
 } from './Shared';
 import {AppActions} from '../../../../../store/app';
@@ -118,8 +118,6 @@ const Confirm = () => {
   const {fee, networkCost, sendingFrom, total, subTotal} = txDetails || {};
   const [disableSwipeSendButton, setDisableSwipeSendButton] = useState(false);
 
-  const [remainingTime, setRemainingTime] = useState<string>();
-  const [invoiceExpirationTime, setInvoiceExpirationTime] = useState<number>();
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const memoizedKeysAndWalletsList = useMemo(
     () => dispatch(BuildPayProWalletSelectorList({keys, network})),
@@ -153,9 +151,6 @@ const Confirm = () => {
         transactionCurrency,
         walletId,
       }),
-    );
-    setInvoiceExpirationTime(
-      Math.floor(new Date(newInvoice.expirationTime).getTime() / 1000),
     );
     setInvoice(newInvoice);
     return {invoiceId, invoice: newInvoice};
@@ -317,34 +312,6 @@ const Confirm = () => {
     setResetSwipeButton(true);
   };
 
-  useEffect(() => {
-    let interval: any;
-    if (invoiceExpirationTime) {
-      interval = setInterval(() => {
-        const now = Math.floor(Date.now() / 1000);
-
-        if (now > invoiceExpirationTime) {
-          setRemainingTime('Expired');
-          setDisableSwipeSendButton(true);
-          clearInterval(interval);
-          return;
-        }
-
-        const totalSecs = invoiceExpirationTime - now;
-        const m = Math.floor(totalSecs / 60);
-        const s = totalSecs % 60;
-
-        const _remainingTimeStr =
-          ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2);
-        setRemainingTime(_remainingTimeStr);
-      }, 1000); //each count lasts for a second
-    }
-    //cleanup the interval on complete
-    if (interval) {
-      return () => clearInterval(interval);
-    }
-  }, [invoiceExpirationTime]);
-
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => openKeyWalletSelector(), []);
 
@@ -396,11 +363,10 @@ const Confirm = () => {
                 hr
               />
             )}
-            {remainingTime ? (
-              <SharedDetailRow
-                description={t('Expires')}
-                value={remainingTime}
-                hr
+            {invoice ? (
+              <RemainingTime
+                invoiceExpirationTime={invoice.expirationTime}
+                setDisableSwipeSendButton={setDisableSwipeSendButton}
               />
             ) : null}
             <Amount
