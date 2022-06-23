@@ -5,7 +5,11 @@ import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {BaseText, H4, TextAlign} from '../../../components/styled/Text';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
+import {
+  convertToFiat,
+  formatFiatAmount,
+  sleep,
+} from '../../../utils/helper-methods';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {walletConnectOnSessionRequest} from '../../../store/wallet-connect/wallet-connect.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
@@ -33,6 +37,7 @@ import _ from 'lodash';
 import {isValidWalletConnectUri} from '../../../store/wallet/utils/validations';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../store/app/app.effects';
+import {toFiat} from '../../../store/wallet/utils/wallet';
 
 export type WalletConnectIntroParamList = {
   uri?: string;
@@ -67,7 +72,7 @@ export default ({
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const [uri, setUri] = useState(dappUri);
-  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const {keys, rates} = useAppSelector(({WALLET}) => WALLET);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   let allWallets = Object.values(keys)
@@ -114,6 +119,7 @@ export default ({
           wallets: supportedCoin.availableWalletsByKey[keyId].map(wallet => {
             const {
               balance,
+              hideWallet,
               currencyAbbreviation,
               credentials: {network, walletName: fallbackName},
               walletName,
@@ -121,7 +127,18 @@ export default ({
             return merge(cloneDeep(wallet), {
               cryptoBalance: balance.crypto,
               fiatBalance: formatFiatAmount(
-                balance.fiat,
+                convertToFiat(
+                  dispatch(
+                    toFiat(
+                      balance.sat,
+                      defaultAltCurrency.isoCode,
+                      currencyAbbreviation,
+                      rates,
+                    ),
+                  ),
+                  hideWallet,
+                  network,
+                ),
                 defaultAltCurrency.isoCode,
               ),
               currencyAbbreviation: currencyAbbreviation.toUpperCase(),
