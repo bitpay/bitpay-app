@@ -1,50 +1,50 @@
+import {SEGMENT_API_KEY, APPSFLYER_API_KEY, APPSFLYER_APP_ID} from '@env';
+import analytics, {JsonMap} from '@segment/analytics-react-native';
+import {Options} from '@segment/analytics-react-native/build/esm/bridge';
 import BitAuth from 'bitauth';
+import i18n from 'i18next';
 import {Linking, Platform} from 'react-native';
-import uuid from 'react-native-uuid';
+import AdID from 'react-native-advertising-id-bp';
 import ReactAppboy from 'react-native-appboy-sdk';
+import AppsFlyer from 'react-native-appsflyer';
+import RNBootSplash from 'react-native-bootsplash';
 import InAppBrowser, {
   InAppBrowserOptions,
 } from 'react-native-inappbrowser-reborn';
 import {checkNotifications, RESULTS} from 'react-native-permissions';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {requestTrackingPermission} from 'react-native-tracking-transparency';
+import uuid from 'react-native-uuid';
+import {batch} from 'react-redux';
+import {AppActions} from '.';
 import BitPayApi from '../../api/bitpay';
 import GraphQlApi from '../../api/graphql';
 import UserApi from '../../api/user';
+import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
 import {isAxiosError} from '../../utils/axios';
 import {sleep} from '../../utils/helper-methods';
 import {BitPayIdEffects} from '../bitpay-id';
 import {CardEffects} from '../card';
-import {LocationEffects} from '../location';
+import {coinbaseInitialize} from '../coinbase';
 import {RootState, Effect} from '../index';
+import {LocationEffects} from '../location';
 import {LogActions} from '../log';
-import {startMigration, startWalletStoreInit} from '../wallet/effects';
-import {AppActions} from './';
-import {AppIdentity} from './app.models';
-import RNBootSplash from 'react-native-bootsplash';
-import analytics, {JsonMap} from '@segment/analytics-react-native';
-import {SEGMENT_API_KEY, APPSFLYER_API_KEY, APPSFLYER_APP_ID} from '@env';
-import appsFlyer from 'react-native-appsflyer';
-import {requestTrackingPermission} from 'react-native-tracking-transparency';
+import {WalletActions} from '../wallet';
 import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
-import AdID from 'react-native-advertising-id-bp';
-
+import {startMigration, startWalletStoreInit} from '../wallet/effects';
+import {Key} from '../wallet/wallet.models';
 import {
+  setAppFirstOpenEventComplete,
+  setAppFirstOpenEventDate,
+  setBrazeEid,
   setConfirmedTxAccepted,
+  setMigrationComplete,
   setNotificationsAccepted,
   setOffersAndPromotionsAccepted,
   setProductsUpdatesAccepted,
-  setBrazeEid,
   showBlur,
-  setMigrationComplete,
-  setAppFirstOpenEventDate,
-  setAppFirstOpenEventComplete,
 } from './app.actions';
-import {batch} from 'react-redux';
-import i18n from 'i18next';
-import {WalletActions} from '../wallet';
-import {coinbaseInitialize} from '../coinbase';
-import {Key} from '../wallet/wallet.models';
+import {AppIdentity} from './app.models';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -362,7 +362,7 @@ export const askForTrackingPermissionAndEnableSdks =
     if (['authorized', 'unavailable'].includes(trackingStatus) && !__DEV__) {
       try {
         await new Promise<void>((resolve, reject) => {
-          appsFlyer.initSdk(
+          AppsFlyer.initSdk(
             {
               devKey: APPSFLYER_API_KEY,
               isDebug: __DEV__,
@@ -425,24 +425,36 @@ export const askForTrackingPermissionAndEnableSdks =
 export const logSegmentEvent =
   (
     eventType: 'screen' | 'track',
-    eventKey: string,
-    data: JsonMap | undefined = {},
-    includeAppUser?: boolean,
+    eventName: string,
+    eventProperties: JsonMap = {},
+    includeAppUser: boolean = false,
   ): Effect<void> =>
-  (dispatch, getState) => {
+  (_dispatch, getState) => {
     if (includeAppUser) {
       const {BITPAY_ID, APP} = getState();
       const user = BITPAY_ID.user[APP.network];
-      data.appUser = user?.eid || '';
+      eventProperties.appUser = user?.eid || '';
     }
+
+    const eventOptions: Options = {
+      integrations: {
+        AppsFlyer: {
+          appsFlyerId: APPSFLYER_APP_ID,
+        },
+      },
+    };
 
     switch (eventType) {
       case 'screen':
-        analytics.screen(eventKey, data);
+        analytics.screen(eventName, eventProperties, eventOptions);
         break;
 
       case 'track':
-        analytics.track(`BitPay App - ${eventKey}`, data);
+        analytics.track(
+          `BitPay App - ${eventName}`,
+          eventProperties,
+          eventOptions,
+        );
         break;
     }
   };
