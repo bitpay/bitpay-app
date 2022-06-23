@@ -19,9 +19,7 @@ export const getEnabledPaymentMethods = (
   if (!currency || !coin) {
     return {};
   }
-  PaymentMethodsAvailable.sepaBankTransfer.enabled = countryData
-    ? !!countryData.isEuCountry
-    : false;
+  PaymentMethodsAvailable.sepaBankTransfer.enabled = !!countryData?.isEuCountry;
   const EnabledPaymentMethods = _.pickBy(PaymentMethodsAvailable, method => {
     return (
       method.enabled &&
