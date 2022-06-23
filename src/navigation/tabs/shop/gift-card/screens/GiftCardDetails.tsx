@@ -58,6 +58,7 @@ import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {DeviceEmitterEvents} from '../../../../../constants/device-emitter-events';
 import Icons from '../../../../wallet/components/WalletIcons';
 import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../../../store/app/app.effects';
 
 const maxWidth = 320;
 
@@ -350,13 +351,25 @@ const GiftCardDetails = ({
               <ActionContainer>
                 {cardConfig.redeemUrl ? (
                   <Button
-                    onPress={() =>
+                    onPress={() => {
                       Linking.openURL(
                         `${cardConfig.redeemUrl as string}${
                           giftCard.claimCode
                         }`,
-                      )
-                    }
+                      );
+                      dispatch(
+                        logSegmentEvent(
+                          'track',
+                          'Redeemed Gift Card',
+                          {
+                            giftCardAmount: giftCard.amount,
+                            giftCardBrand: cardConfig.name,
+                            giftCardCurrency: cardConfig.currency,
+                          },
+                          true,
+                        ),
+                      );
+                    }}
                     buttonStyle={'primary'}>
                     {t('Redeem Now')}
                   </Button>

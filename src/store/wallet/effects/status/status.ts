@@ -234,12 +234,18 @@ export const startUpdateAllWalletStatusForKeys =
         const {rates, lastDayRates, balanceCacheKey} = WALLET;
         const {bulkClient} = BwcProvider.getInstance().getClient();
 
-        const keyUpdates = keys.reduce((acc, key) => {
+        const keyUpdatesPromises: Promise<{
+          keyId: string;
+          totalBalance: number;
+          totalBalanceLastDay: number;
+        }>[] = [];
+
+        keys.forEach(key => {
           if (
             !isCacheKeyStale(balanceCacheKey[key.id], BALANCE_CACHE_DURATION)
           ) {
             console.log(`Key: ${key.id} - skipping balance update`);
-            return acc;
+            return;
           }
 
           const walletOptions = {} as Record<
@@ -277,87 +283,95 @@ export const startUpdateAllWalletStatusForKeys =
             .map(wallet => wallet.credentials);
 
           if (!credentials.length) {
-            return acc;
+            return;
           }
 
-          bulkClient.getStatusAll(
-            credentials,
-            {includeExtendedInfo: true, twoStep: true, wallets: walletOptions},
-            (err: Error, bulkStatus: BulkStatus[]) => {
-              if (err) {
-                console.log(err);
-              }
+          keyUpdatesPromises.push(
+            new Promise(resolveKeyBalanceStatus => {
+              bulkClient.getStatusAll(
+                credentials,
+                {
+                  includeExtendedInfo: true,
+                  twoStep: true,
+                  wallets: walletOptions,
+                },
+                (err: Error, bulkStatus: BulkStatus[]) => {
+                  if (err) {
+                    console.log(err);
+                  }
 
-              const balances = key.wallets.map(wallet => {
-                const {balance: cachedBalance} = wallet;
+                  const balances = key.wallets.map(wallet => {
+                    const {balance: cachedBalance} = wallet;
 
-                const {status, success} =
-                  bulkStatus.find(bStatus => {
-                    if (typeof bStatus.tokenAddress === 'string') {
-                      return (
-                        bStatus.tokenAddress ===
-                          wallet.credentials.token?.address &&
-                        `${bStatus.walletId}-${bStatus.tokenAddress}` ===
-                          wallet.id
+                    const {status, success} =
+                      bulkStatus.find(bStatus => {
+                        if (typeof bStatus.tokenAddress === 'string') {
+                          return (
+                            bStatus.tokenAddress ===
+                              wallet.credentials.token?.address &&
+                            `${bStatus.walletId}-${bStatus.tokenAddress}` ===
+                              wallet.id
+                          );
+                        }
+
+                        return bStatus.walletId === wallet.id;
+                      }) || {};
+
+                    if (
+                      status &&
+                      success &&
+                      (force ||
+                        status.balance.availableAmount !==
+                          cachedBalance.satAvailable ||
+                        status.pendingTxps?.length > 0)
+                    ) {
+                      const newBalance = dispatch(
+                        buildBalance({
+                          wallet,
+                          status,
+                          defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+                          rates,
+                          lastDayRates,
+                        }),
                       );
+
+                      const newPendingTxps = dispatch(
+                        buildPendingTxps({wallet, status}),
+                      );
+
+                      dispatch(
+                        successUpdateWalletStatus({
+                          keyId: key.id,
+                          walletId: wallet.id,
+                          status: {
+                            balance: newBalance,
+                            pendingTxps: newPendingTxps,
+                          },
+                        }),
+                      );
+
+                      console.log(
+                        `Wallet: ${wallet.currencyAbbreviation} ${wallet.id} - status updated`,
+                      );
+
+                      return newBalance;
+                    } else {
+                      return cachedBalance;
                     }
+                  });
 
-                    return bStatus.walletId === wallet.id;
-                  }) || {};
-
-                if (
-                  status &&
-                  success &&
-                  (force ||
-                    status.balance.availableAmount !==
-                      cachedBalance.satAvailable ||
-                    status.pendingTxps?.length > 0)
-                ) {
-                  const newBalance = dispatch(
-                    buildBalance({
-                      wallet,
-                      status,
-                      defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-                      rates,
-                      lastDayRates,
-                    }),
-                  );
-
-                  const newPendingTxps = dispatch(
-                    buildPendingTxps({wallet, status}),
-                  );
-
-                  dispatch(
-                    successUpdateWalletStatus({
-                      keyId: key.id,
-                      walletId: wallet.id,
-                      status: {
-                        balance: newBalance,
-                        pendingTxps: newPendingTxps,
-                      },
-                    }),
-                  );
-
-                  console.log(
-                    `Wallet: ${wallet.currencyAbbreviation} ${wallet.id} - status updated`,
-                  );
-
-                  return newBalance;
-                } else {
-                  return cachedBalance;
-                }
-              });
-
-              acc.push({
-                keyId: key.id,
-                totalBalance: getTotalFiatBalance(balances),
-                totalBalanceLastDay: getTotalFiatLastDayBalance(balances),
-              });
-            },
+                  resolveKeyBalanceStatus({
+                    keyId: key.id,
+                    totalBalance: getTotalFiatBalance(balances),
+                    totalBalanceLastDay: getTotalFiatLastDayBalance(balances),
+                  });
+                },
+              );
+            }),
           );
+        });
 
-          return acc;
-        }, [] as {keyId: string; totalBalance: number; totalBalanceLastDay: number}[]);
+        const keyUpdates = await Promise.all(keyUpdatesPromises);
 
         dispatch(successUpdateKeysTotalBalance(keyUpdates));
         resolve();

@@ -6,7 +6,7 @@ import {
   RegisterErrorResponse,
 } from '../../api/auth/auth.types';
 import UserApi from '../../api/user';
-import {BasicUserInfo, InitialUserData} from '../../api/user/user.types';
+import {InitialUserData} from '../../api/user/user.types';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
 import Dosh from '../../lib/dosh';
@@ -20,6 +20,7 @@ import {LogActions} from '../log';
 import {ShopEffects} from '../shop';
 import {BitPayIdActions} from './index';
 import {t} from 'i18next';
+import analytics from '@segment/analytics-react-native';
 
 interface StartLoginParams {
   email: string;
@@ -415,6 +416,12 @@ const startPairAndLoadUser =
       dispatch(startBitPayIdStoreInit(data.user));
       dispatch(CardEffects.startCardStoreInit(data.user));
       dispatch(AppEffects.initializeBrazeContent());
+
+      const {basicInfo} = data.user;
+      if (!__DEV__ && basicInfo) {
+        const {eid, email, name} = basicInfo;
+        analytics.identify(eid, {email, name});
+      }
     } catch (err) {
       let errMsg;
 

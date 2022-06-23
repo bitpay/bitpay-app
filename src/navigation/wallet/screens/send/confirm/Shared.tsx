@@ -10,6 +10,7 @@ import SendToPill from '../../../components/SendToPill';
 import {
   Column,
   Hr,
+  ImportTextInput,
   Row,
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
@@ -37,10 +38,17 @@ import {showNoWalletsModal} from '../../../../../store/wallet/effects/send/send'
 import Clipboard from '@react-native-community/clipboard';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 import {useTranslation} from 'react-i18next';
+import {SlateDark, White} from '../../../../../styles/colors';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 // Styled
 export const ConfirmContainer = styled.SafeAreaView`
   flex: 1;
+`;
+
+export const ConfirmScrollView = styled(KeyboardAwareScrollView)`
+  margin-top: 20px;
+  padding: 0 ${ScreenGutter};
 `;
 
 export const HeaderTitle = styled(H6)`
@@ -79,6 +87,17 @@ export const DetailColumn = styled(Column)`
 
 export const DetailsList = styled(ScrollView)`
   padding: 0 ${ScreenGutter};
+`;
+
+const MemoInput = styled(ImportTextInput)`
+  height: 75px;
+`;
+const MemoRow = styled.View`
+  margin: 10px 0;
+`;
+const MemoHeader = styled(H7)`
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  margin: 10px 0;
 `;
 
 // Row UI
@@ -312,6 +331,79 @@ export const SharedDetailRow = ({
       )}
       {hr && <Hr />}
     </>
+  );
+};
+
+export const Memo = ({
+  memo,
+  onChange,
+}: {
+  memo: string;
+  onChange: (memo: string) => void;
+}) => {
+  const {t} = useTranslation();
+  return (
+    <MemoRow>
+      <MemoHeader>{t('MEMO')}</MemoHeader>
+      <MemoInput
+        multiline
+        numberOfLines={3}
+        value={memo}
+        onChangeText={text => onChange(text)}
+      />
+    </MemoRow>
+  );
+};
+
+export const RemainingTime = ({
+  invoiceExpirationTime,
+  setDisableSwipeSendButton,
+}: {
+  invoiceExpirationTime: number;
+  setDisableSwipeSendButton: React.Dispatch<React.SetStateAction<boolean>>;
+}) => {
+  const {t} = useTranslation();
+
+  const expirationTime = Math.floor(
+    new Date(invoiceExpirationTime).getTime() / 1000,
+  );
+
+  const computeRemainingTime = useCallback(() => {
+    const now = Math.floor(Date.now() / 1000);
+    const totalSecs = expirationTime - now;
+    const m = Math.floor(totalSecs / 60);
+    const s = totalSecs % 60;
+    return ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2);
+  }, [expirationTime]);
+
+  const [remainingTime, setRemainingTime] = useState<string>(
+    computeRemainingTime(),
+  );
+
+  useEffect(() => {
+    let interval: any;
+    if (expirationTime) {
+      interval = setInterval(() => {
+        const now = Math.floor(Date.now() / 1000);
+
+        if (now > expirationTime) {
+          setRemainingTime('Expired');
+          setDisableSwipeSendButton(true);
+          clearInterval(interval);
+          return;
+        }
+
+        setRemainingTime(computeRemainingTime());
+      }, 1000); //each count lasts for a second
+    }
+    //cleanup the interval on complete
+    if (interval) {
+      return () => clearInterval(interval);
+    }
+  }, [computeRemainingTime, expirationTime, setDisableSwipeSendButton]);
+
+  return (
+    <SharedDetailRow description={t('Expires')} value={remainingTime} hr />
   );
 };
 

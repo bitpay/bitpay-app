@@ -25,6 +25,8 @@ import {useAppSelector} from '../../../utils/hooks';
 import {StackScreenProps} from '@react-navigation/stack';
 import {ShopScreens, ShopStackParamList} from './ShopStack';
 import {useTranslation} from 'react-i18next';
+import {useFocusEffect} from '@react-navigation/native';
+import {logSegmentEvent} from '../../../store/app/app.effects';
 
 export enum ShopTabs {
   GIFT_CARDS = 'Gift Cards',
@@ -222,6 +224,10 @@ const ShopHome: React.FC<
     activeGiftCards,
     curations,
   ]);
+
+  useFocusEffect(() => {
+    dispatch(logSegmentEvent('track', 'Viewed Shop Tab', undefined, true));
+  });
 
   return (
     <ShopContainer>
