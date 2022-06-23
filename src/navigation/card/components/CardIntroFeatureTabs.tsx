@@ -1,3 +1,4 @@
+import {t} from 'i18next';
 import React from 'react';
 import {View} from 'react-native';
 import styled from 'styled-components/native';
@@ -7,7 +8,6 @@ import {BaseText, TextAlign} from '../../../components/styled/Text';
 import Tabs from '../../../components/tabs/Tabs';
 import {URL} from '../../../constants';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
-import {t} from 'i18next';
 
 interface TableRowProps {
   index?: number;
