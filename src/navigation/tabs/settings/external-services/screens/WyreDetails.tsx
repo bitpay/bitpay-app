@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {Text, View} from 'react-native';
+import {Text, TouchableOpacity, View} from 'react-native';
+import Clipboard from '@react-native-community/clipboard';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
 import moment from 'moment';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
@@ -27,6 +28,8 @@ import {
   ColumnDataContainer,
   ColumnData,
   RemoveCta,
+  CopiedContainer,
+  CopyImgContainerRight,
 } from '../styled/ExternalServicesDetails';
 import {sleep} from '../../../../../utils/helper-methods';
 import {useLogger} from '../../../../../utils/hooks/useLogger';
@@ -35,10 +38,16 @@ import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-pr
 import {wyreGetWalletOrderDetails} from '../../../../../store/buy-crypto/effects/wyre/wyre';
 import {handleWyreStatus} from '../../../../services/buy-crypto/utils/wyre-utils';
 import {useTranslation} from 'react-i18next';
+import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 
 export interface WyreDetailsProps {
   paymentRequest: wyrePaymentData;
 }
+
+const copyText = (text: string) => {
+  haptic('impactLight');
+  Clipboard.setString(text);
+};
 
 const WyreDetails: React.FC = () => {
   const {t} = useTranslation();
@@ -50,6 +59,11 @@ const WyreDetails: React.FC = () => {
   const logger = useLogger();
   const [paymentData, setPaymentData] =
     useState<wyrePaymentData>(paymentRequest);
+  const [copiedDepositAddress, setCopiedDepositAddress] = useState(false);
+  const [copiedTransferId, setCopiedTransferId] = useState(false);
+  const [copiedOrderId, setCopiedOrderId] = useState(false);
+  const [copiedBlockchainNetworkTx, setCopiedBlockchainNetworkTx] =
+    useState(false);
 
   useEffect(() => {
     const getWalletOrderDetails = async (orderId: string) => {
@@ -95,6 +109,34 @@ const WyreDetails: React.FC = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedDepositAddress(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedDepositAddress]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedTransferId(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedTransferId]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedOrderId(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedOrderId]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedBlockchainNetworkTx(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedBlockchainNetworkTx]);
+
   return (
     <SettingsContainer>
       <Settings>
@@ -137,7 +179,7 @@ const WyreDetails: React.FC = () => {
           </RowData>
         </RowDataContainer>
 
-        {!!paymentData.status && (
+        {paymentData.status ? (
           <RowDataContainer>
             <RowLabel>{t('Status')}</RowLabel>
             <RowData>
@@ -156,42 +198,94 @@ const WyreDetails: React.FC = () => {
               )}
             </RowData>
           </RowDataContainer>
-        )}
+        ) : null}
 
-        {!!paymentData.dest && (
+        {paymentData.dest ? (
           <ColumnDataContainer>
-            <RowLabel>{t('Deposit address')}</RowLabel>
-            <ColumnData>{paymentData.dest}</ColumnData>
+            <TouchableOpacity
+              onPress={() => {
+                copyText(paymentData.dest!);
+                setCopiedDepositAddress(true);
+              }}>
+              <RowLabel>{t('Deposit address')}</RowLabel>
+              <CopiedContainer>
+                <ColumnData style={{maxWidth: '90%'}}>
+                  {paymentData.dest}
+                </ColumnData>
+                <CopyImgContainerRight style={{minWidth: '10%'}}>
+                  {copiedDepositAddress ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainerRight>
+              </CopiedContainer>
+            </TouchableOpacity>
           </ColumnDataContainer>
-        )}
+        ) : null}
 
-        {!!paymentData.paymentMethodName && (
+        {paymentData.paymentMethodName ? (
           <ColumnDataContainer>
             <RowLabel>{t('Payment method')}</RowLabel>
             <ColumnData>{paymentData.paymentMethodName}</ColumnData>
           </ColumnDataContainer>
-        )}
+        ) : null}
 
-        {!!paymentData.transferId && (
+        {paymentData.transferId ? (
           <ColumnDataContainer>
-            <RowLabel>{t('Transfer ID')}</RowLabel>
-            <ColumnData>{paymentData.transferId}</ColumnData>
+            <TouchableOpacity
+              onPress={() => {
+                copyText(paymentData.transferId!);
+                setCopiedTransferId(true);
+              }}>
+              <RowLabel>{t('Transfer ID')}</RowLabel>
+              <CopiedContainer>
+                <ColumnData style={{maxWidth: '90%'}}>
+                  {paymentData.transferId}
+                </ColumnData>
+                <CopyImgContainerRight style={{minWidth: '10%'}}>
+                  {copiedTransferId ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainerRight>
+              </CopiedContainer>
+            </TouchableOpacity>
           </ColumnDataContainer>
-        )}
+        ) : null}
 
         {!!paymentData.orderId && (
           <ColumnDataContainer>
-            <RowLabel>{t('Order ID')}</RowLabel>
-            <ColumnData>{paymentData.orderId}</ColumnData>
+            <TouchableOpacity
+              onPress={() => {
+                copyText(paymentData.orderId);
+                setCopiedOrderId(true);
+              }}>
+              <RowLabel>{t('Order ID')}</RowLabel>
+              <CopiedContainer>
+                <ColumnData style={{maxWidth: '90%'}}>
+                  {paymentData.orderId}
+                </ColumnData>
+                <CopyImgContainerRight style={{minWidth: '10%'}}>
+                  {copiedOrderId ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainerRight>
+              </CopiedContainer>
+            </TouchableOpacity>
           </ColumnDataContainer>
         )}
 
-        {!!paymentData.blockchainNetworkTx && (
+        {paymentData.blockchainNetworkTx ? (
           <ColumnDataContainer>
-            <RowLabel>{t('Blockchain Network Tx')}</RowLabel>
-            <ColumnData>{paymentData.blockchainNetworkTx}</ColumnData>
+            <TouchableOpacity
+              onPress={() => {
+                copyText(paymentData.blockchainNetworkTx!);
+                setCopiedBlockchainNetworkTx(true);
+              }}>
+              <RowLabel>{t('Blockchain Network Tx')}</RowLabel>
+              <CopiedContainer>
+                <ColumnData style={{maxWidth: '90%'}}>
+                  {paymentData.blockchainNetworkTx}
+                </ColumnData>
+                <CopyImgContainerRight style={{minWidth: '10%'}}>
+                  {copiedBlockchainNetworkTx ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainerRight>
+              </CopiedContainer>
+            </TouchableOpacity>
           </ColumnDataContainer>
-        )}
+        ) : null}
 
         <RemoveCta
           onPress={async () => {

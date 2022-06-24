@@ -7,10 +7,10 @@ import {
   Rates,
   Token,
   Wallet,
-  WalletBalance,
   TransactionProposal,
   RatesByDateRange,
   CacheFeeLevel,
+  CryptoBalance,
 } from './wallet.models';
 
 export enum WalletActionTypes {
@@ -194,7 +194,7 @@ interface successUpdateWalletStatus {
     keyId: string;
     walletId: string;
     status: {
-      balance: WalletBalance;
+      balance: CryptoBalance;
       pendingTxps: TransactionProposal[];
     };
   };

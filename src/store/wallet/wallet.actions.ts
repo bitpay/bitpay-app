@@ -7,10 +7,10 @@ import {
   Rates,
   Token,
   Wallet,
-  WalletBalance,
   TransactionProposal,
   RatesByDateRange,
   CacheFeeLevel,
+  CryptoBalance,
 } from './wallet.models';
 import {CurrencyOpts} from '../../constants/currencies';
 
@@ -138,7 +138,7 @@ export const successUpdateWalletStatus = (payload: {
   keyId: string;
   walletId: string;
   status: {
-    balance: WalletBalance;
+    balance: CryptoBalance;
     pendingTxps: TransactionProposal[];
   };
 }): WalletActionType => ({

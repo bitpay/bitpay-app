@@ -10,6 +10,7 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {
+  convertToFiat,
   formatFiatAmount,
   keyExtractor,
   sleep,
@@ -47,6 +48,7 @@ import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/
 import {ButtonState} from '../../../components/button/Button';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {useTranslation} from 'react-i18next';
+import {toFiat} from '../../../store/wallet/utils/wallet';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -188,7 +190,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   }
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const {keys, rates} = useAppSelector(({WALLET}) => WALLET);
   const tokens = useAppSelector(({WALLET}: RootState) => {
     return {
       ...BitpaySupportedTokenOpts,
@@ -278,6 +280,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
               .map(wallet => {
                 const {
                   balance,
+                  hideWallet,
                   currencyAbbreviation,
                   credentials: {network, walletName: fallbackName},
                   walletName,
@@ -286,11 +289,33 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
                   cryptoBalance: balance.crypto,
                   cryptoLockedBalance: balance.cryptoLocked,
                   fiatBalance: formatFiatAmount(
-                    balance.fiat,
+                    convertToFiat(
+                      dispatch(
+                        toFiat(
+                          balance.sat,
+                          defaultAltCurrency.isoCode,
+                          currencyAbbreviation,
+                          rates,
+                        ),
+                      ),
+                      hideWallet,
+                      network,
+                    ),
                     defaultAltCurrency.isoCode,
                   ),
                   fiatLockedBalance: formatFiatAmount(
-                    balance.fiatLocked,
+                    convertToFiat(
+                      dispatch(
+                        toFiat(
+                          balance.satLocked,
+                          defaultAltCurrency.isoCode,
+                          currencyAbbreviation,
+                          rates,
+                        ),
+                      ),
+                      hideWallet,
+                      network,
+                    ),
                     defaultAltCurrency.isoCode,
                   ),
                   currencyAbbreviation: currencyAbbreviation.toUpperCase(),

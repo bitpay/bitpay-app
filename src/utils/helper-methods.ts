@@ -1,6 +1,7 @@
 import {Currencies} from '../constants/currencies';
 import {Key} from '../store/wallet/wallet.models';
 import {ContactRowProps} from '../components/list/ContactRow';
+import {Network} from '../constants';
 
 export const sleep = async (duration: number) =>
   await new Promise(resolve => setTimeout(resolve, duration));
@@ -275,3 +276,9 @@ export const formatFiatAmountObj = (
     .reduce((string, part) => string + part);
   return {amount: numberString, code};
 };
+
+export const convertToFiat = (
+  fiat: number,
+  hideWallet: boolean | undefined,
+  network: Network,
+) => (network === Network.mainnet && !hideWallet ? fiat : 0);

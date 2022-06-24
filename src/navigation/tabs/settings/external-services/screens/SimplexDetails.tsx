@@ -1,6 +1,7 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {Text, TouchableOpacity} from 'react-native';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
+import Clipboard from '@react-native-community/clipboard';
 import moment from 'moment';
 import {Link} from '../../../../../components/styled/Text';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
@@ -21,7 +22,6 @@ import {
   CryptoContainer,
   CryptoAmount,
   CryptoUnit,
-  IconContainer,
   RowLabel,
   RowData,
   LabelTip,
@@ -29,12 +29,19 @@ import {
   ColumnDataContainer,
   ColumnData,
   RemoveCta,
+  CopiedContainer,
+  CopyImgContainerRight,
 } from '../styled/ExternalServicesDetails';
 import {useTranslation} from 'react-i18next';
-
+import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 export interface SimplexDetailsProps {
   paymentRequest: simplexPaymentData;
 }
+
+const copyText = (text: string) => {
+  haptic('impactLight');
+  Clipboard.setString(text);
+};
 
 const SimplexDetails: React.FC = () => {
   const {t} = useTranslation();
@@ -43,6 +50,30 @@ const SimplexDetails: React.FC = () => {
   } = useRoute<RouteProp<{params: SimplexDetailsProps}>>();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const [copiedDepositAddress, setCopiedDepositAddress] = useState(false);
+  const [copiedPaymentId, setCopiedPaymentId] = useState(false);
+  const [copiedOrderId, setCopiedOrderId] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedDepositAddress(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedDepositAddress]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedPaymentId(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedPaymentId]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedOrderId(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedOrderId]);
 
   return (
     <SettingsContainer>
@@ -128,18 +159,57 @@ const SimplexDetails: React.FC = () => {
         </LabelTip>
 
         <ColumnDataContainer>
-          <RowLabel>{t('Deposit address')}</RowLabel>
-          <ColumnData>{paymentRequest.address}</ColumnData>
+          <TouchableOpacity
+            onPress={() => {
+              copyText(paymentRequest.address);
+              setCopiedDepositAddress(true);
+            }}>
+            <RowLabel>{t('Deposit address')}</RowLabel>
+            <CopiedContainer>
+              <ColumnData style={{maxWidth: '90%'}}>
+                {paymentRequest.address}
+              </ColumnData>
+              <CopyImgContainerRight style={{minWidth: '10%'}}>
+                {copiedDepositAddress ? <CopiedSvg width={17} /> : null}
+              </CopyImgContainerRight>
+            </CopiedContainer>
+          </TouchableOpacity>
         </ColumnDataContainer>
 
         <ColumnDataContainer>
-          <RowLabel>{t('Payment ID')}</RowLabel>
-          <ColumnData>{paymentRequest.payment_id}</ColumnData>
+          <TouchableOpacity
+            onPress={() => {
+              copyText(paymentRequest.payment_id);
+              setCopiedPaymentId(true);
+            }}>
+            <RowLabel>{t('Payment ID')}</RowLabel>
+            <CopiedContainer>
+              <ColumnData style={{maxWidth: '90%'}}>
+                {paymentRequest.payment_id}
+              </ColumnData>
+              <CopyImgContainerRight style={{minWidth: '10%'}}>
+                {copiedPaymentId ? <CopiedSvg width={17} /> : null}
+              </CopyImgContainerRight>
+            </CopiedContainer>
+          </TouchableOpacity>
         </ColumnDataContainer>
 
         <ColumnDataContainer>
-          <RowLabel>{t('Order ID')}</RowLabel>
-          <ColumnData>{paymentRequest.order_id}</ColumnData>
+          <TouchableOpacity
+            onPress={() => {
+              copyText(paymentRequest.order_id);
+              setCopiedOrderId(true);
+            }}>
+            <RowLabel>{t('Order ID')}</RowLabel>
+            <CopiedContainer>
+              <ColumnData style={{maxWidth: '90%'}}>
+                {paymentRequest.order_id}
+              </ColumnData>
+              <CopyImgContainerRight style={{minWidth: '10%'}}>
+                {copiedOrderId ? <CopiedSvg width={17} /> : null}
+              </CopyImgContainerRight>
+            </CopiedContainer>
+          </TouchableOpacity>
         </ColumnDataContainer>
 
         <RemoveCta

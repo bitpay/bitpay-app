@@ -190,7 +190,7 @@ export const startMigration =
 
         // update store with token rates from coin gecko and update balances
         await dispatch(startGetRates({force: true}));
-        await dispatch(startUpdateAllKeyAndWalletStatus({force: true}));
+        await dispatch(startUpdateAllKeyAndWalletStatus());
       } catch (err) {
         dispatch(LogActions.info('Failed to migrate keys'));
         // flag for showing error modal

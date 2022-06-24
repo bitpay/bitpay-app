@@ -14,7 +14,7 @@ import {BwcProvider} from '../../../lib/bwc';
 import {GetName, GetPrecision, GetProtocolPrefix} from './currency';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
-import {formatFiatAmount} from '../../../utils/helper-methods';
+import {convertToFiat, formatFiatAmount} from '../../../utils/helper-methods';
 import {WALLET_DISPLAY_LIMIT} from '../../../navigation/tabs/home/components/Wallet';
 import {Network} from '../../../constants';
 import {PayProOptions} from '../effects/paypro/paypro';
@@ -31,6 +31,7 @@ import {
   KeyWallet,
   KeyWalletsRowProps,
 } from '../../../components/list/KeyWalletsRow';
+import {AppDispatch} from '../../../utils/hooks';
 
 const mapAbbreviationAndName =
   (
@@ -383,11 +384,15 @@ export const BuildKeysAndWalletsList = ({
   network,
   payProOptions,
   defaultAltCurrencyIsoCode = 'USD',
+  rates,
+  dispatch,
 }: {
   keys: {[key in string]: Key};
   network?: Network;
   payProOptions?: PayProOptions;
   defaultAltCurrencyIsoCode?: string;
+  rates: Rates;
+  dispatch: AppDispatch;
 }) => {
   const selectedPaymentOptions = payProOptions?.paymentOptions?.filter(
     option => option.selected,
@@ -421,6 +426,8 @@ export const BuildKeysAndWalletsList = ({
           })
           .map(walletObj => {
             const {
+              currencyAbbreviation,
+              hideWallet,
               balance,
               credentials: {network, walletName: fallbackName},
               walletName,
@@ -428,12 +435,34 @@ export const BuildKeysAndWalletsList = ({
             return merge(cloneDeep(walletObj), {
               cryptoBalance: balance.crypto,
               fiatBalance: formatFiatAmount(
-                balance.fiat,
+                convertToFiat(
+                  dispatch(
+                    toFiat(
+                      balance.sat,
+                      defaultAltCurrencyIsoCode,
+                      currencyAbbreviation,
+                      rates,
+                    ),
+                  ),
+                  hideWallet,
+                  network,
+                ),
                 defaultAltCurrencyIsoCode,
               ),
               cryptoLockedBalance: balance.cryptoLocked,
               fiatLockedBalance: formatFiatAmount(
-                balance.fiatLocked,
+                convertToFiat(
+                  dispatch(
+                    toFiat(
+                      balance.satLocked,
+                      defaultAltCurrencyIsoCode,
+                      currencyAbbreviation,
+                      rates,
+                    ),
+                  ),
+                  hideWallet,
+                  network,
+                ),
                 defaultAltCurrencyIsoCode,
               ),
               network,
@@ -466,8 +495,11 @@ export const BuildPayProWalletSelectorList =
     payProOptions?: PayProOptions;
     defaultAltCurrencyIsoCode?: string;
   }): Effect<WalletsAndAccounts> =>
-  (_, getState) => {
+  (dispatch, getState) => {
     const {COINBASE} = getState();
+    const {
+      WALLET: {rates},
+    } = getState();
     const coinbaseAccounts = COINBASE.accounts[COINBASE_ENV];
     const coinbaseUser = COINBASE.user[COINBASE_ENV];
     const coinbaseExchangeRates = COINBASE.exchangeRates;
@@ -476,6 +508,8 @@ export const BuildPayProWalletSelectorList =
       network,
       payProOptions,
       defaultAltCurrencyIsoCode,
+      rates,
+      dispatch,
     });
     const coinbaseWallets = BuildCoinbaseWalletsList({
       coinbaseAccounts,
