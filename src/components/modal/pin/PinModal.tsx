@@ -1,6 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import isEqual from 'lodash.isequal';
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Animated, TouchableOpacity, View} from 'react-native';
 import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
@@ -86,7 +86,7 @@ const Pin = gestureHandlerRootHOC(() => {
 
   useEffect(() => {
     setHeaderMargin(type === 'set' ? '10%' : '40%');
-  }, []);
+  }, [type]);
 
   // checkPin
   const currentPin = useAppSelector(({APP}) => APP.currentPin);
@@ -132,6 +132,8 @@ const Pin = gestureHandlerRootHOC(() => {
     await sleep(10);
     dispatch(AppActions.dismissPinModal());
   };
+  const gotoCreateKeyRef = useRef(gotoCreateKey);
+  gotoCreateKeyRef.current = gotoCreateKey;
 
   const setCurrentPin = useCallback(
     (newPin: Array<string>) => {
@@ -146,7 +148,7 @@ const Pin = gestureHandlerRootHOC(() => {
         dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
 
         if (context === 'onboarding') {
-          gotoCreateKey();
+          gotoCreateKeyRef.current();
         } else {
           dispatch(AppActions.dismissPinModal());
         }
@@ -155,7 +157,7 @@ const Pin = gestureHandlerRootHOC(() => {
         reset();
       }
     },
-    [dispatch, setShakeDots, reset, firstPinEntered],
+    [dispatch, setShakeDots, reset, firstPinEntered, context],
   );
 
   const handleCellPress = useCallback(
