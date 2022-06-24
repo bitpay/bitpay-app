@@ -1,25 +1,25 @@
-import Modal from 'react-native-modal';
-import React, {useState, useEffect, useCallback} from 'react';
-import {AppActions} from '../../../store/app';
-import PinDots from './PinDots';
-import haptic from '../../haptic-feedback/haptic';
-import {BwcProvider} from '../../../lib/bwc';
-import isEqual from 'lodash.isequal';
-import {sleep} from '../../../utils/helper-methods';
-import VirtualKeyboard from '../../../components/virtual-keyboard/VirtualKeyboard';
-import styled, {useTheme} from 'styled-components/native';
-import {Animated, TouchableOpacity, View} from 'react-native';
-import {H5} from '../../styled/Text';
-import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
-import {BitPay, White} from '../../../styles/colors';
-import BitPayLogo from '../../../../assets/img/logos/bitpay-white.svg';
-import {ActiveOpacity} from '../../styled/Containers';
-import Back from '../../back/Back';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {useNavigation} from '@react-navigation/native';
+import isEqual from 'lodash.isequal';
+import React, {useState, useEffect, useCallback} from 'react';
 import {useTranslation} from 'react-i18next';
+import {Animated, TouchableOpacity, View} from 'react-native';
+import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import styled, {useTheme} from 'styled-components/native';
+import BitPayLogo from '../../../../assets/img/logos/bitpay-white.svg';
+import VirtualKeyboard from '../../../components/virtual-keyboard/VirtualKeyboard';
+import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
+import {BwcProvider} from '../../../lib/bwc';
+import {AppActions} from '../../../store/app';
+import {BitPay, White} from '../../../styles/colors';
+import {sleep} from '../../../utils/helper-methods';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import Back from '../../back/Back';
+import haptic from '../../haptic-feedback/haptic';
+import {ActiveOpacity} from '../../styled/Containers';
+import {H5} from '../../styled/Text';
+import BaseModal from '../base/BaseModal';
+import PinDots from './PinDots';
 
 export interface PinModalConfig {
   type: 'set' | 'check';
@@ -325,7 +325,8 @@ const PinModal: React.FC = () => {
   const theme = useTheme();
 
   return (
-    <Modal
+    <BaseModal
+      id={'pin'}
       isVisible={isVisible}
       coverScreen={true}
       backdropTransitionOutTiming={0}
@@ -338,7 +339,7 @@ const PinModal: React.FC = () => {
       useNativeDriver={true}
       style={{margin: 0}}>
       <Pin />
-    </Modal>
+    </BaseModal>
   );
 };
 

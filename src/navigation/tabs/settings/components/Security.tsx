@@ -22,7 +22,6 @@ import {
 } from '../../../../constants/BiometricError';
 import {LOCK_AUTHORIZED_TIME} from '../../../../constants/Lock';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
-import {sleep} from '../../../../utils/helper-methods';
 import FingerprintImg from '../../../../../assets/img/fingerprint.svg';
 import FingerprintDarkModeImg from '../../../../../assets/img/fingerprint-darkmode.svg';
 import FaceImg from '../../../../../assets/img/face.svg';
@@ -162,7 +161,6 @@ const Security = () => {
         break;
 
       case 'pin':
-        await sleep(400); // avoid modal conflicting with options sheet
         setPin();
         break;
     }
