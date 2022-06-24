@@ -37,7 +37,11 @@ import {
   wyrePaymentData,
 } from '../buy-crypto/buy-crypto.models';
 import {LogActions} from '../log';
-import {logSegmentEvent, startOnGoingProcessModal} from '../app/app.effects';
+import {
+  logSegmentEvent,
+  openUrlWithInAppBrowser,
+  startOnGoingProcessModal,
+} from '../app/app.effects';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {dismissOnGoingProcessModal} from '../app/app.actions';
 import {sleep} from '../../utils/helper-methods';
@@ -50,13 +54,17 @@ import {showBottomNotificationModal} from '../app/app.actions';
 import {Wallet, Key} from '../wallet/wallet.models';
 import {FormatAmount} from '../wallet/effects/amount/amount';
 import {ButtonState} from '../../components/button/Button';
-import {InteractionManager} from 'react-native';
+import {InteractionManager, Linking} from 'react-native';
 import {
   BitcoreLibs,
   bitcoreLibs,
   GetAddressNetwork,
 } from '../wallet/effects/address/address';
 import {Network} from '../../constants';
+import BitPayIdApi from '../../api/bitpay';
+import axios from 'axios';
+import {t} from 'i18next';
+import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
 
 export const incomingData =
   (
@@ -67,7 +75,7 @@ export const incomingData =
     const coin = opts?.wallet?.currencyAbbreviation?.toLowerCase();
     try {
       if (IsValidBitPayInvoice(data)) {
-        dispatch(goToPayPro(data));
+        dispatch(handleUnlock(data));
       }
       // Paypro
       else if (IsValidPayPro(data)) {
@@ -193,6 +201,124 @@ const goToPayPro =
           ],
         }),
       );
+    }
+  };
+
+const handleUnlock =
+  (data: string): Effect =>
+  async (dispatch, getState) => {
+    const invoiceId = data.split('i/')[1].split('?')[0];
+    const result = await dispatch(unlockInvoice(invoiceId));
+
+    if (result === 'unlockSuccess') {
+      dispatch(goToPayPro(data));
+      return;
+    }
+
+    const {host} = new URL(GetPayProUrl(data));
+    try {
+      const invoice = await axios.get(
+        `https://${host}/invoiceData/${invoiceId}`,
+      );
+      if (invoice) {
+        dispatch(goToPayPro(data));
+        return;
+      }
+    } catch {}
+    switch (result) {
+      // call IAB and attempt pairing
+      case 'pairingRequired':
+        // TODO: handle me
+        break;
+
+      // needs verification - send to bitpay id verify
+      case 'userShopperNotFound':
+      case 'tierNotMet':
+        dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: t('Connect Your BitPay ID'),
+            enableBackdropDismiss: false,
+            message: t(
+              'To complete this payment, please login with your BitPay ID.',
+            ),
+            actions: [
+              {
+                text: t('CONTINUE'),
+                action: () => {
+                  Linking.openURL(
+                    `https://${host}/id/verify?context=unlockv&id=${invoiceId}`,
+                  );
+                },
+              },
+              {
+                text: t('Cancel'),
+                action: () => {},
+              },
+            ],
+          }),
+        );
+        //TODO: handle return url
+        break;
+      default:
+        dispatch(showBottomNotificationModal(GeneralError()));
+        break;
+    }
+  };
+
+const unlockInvoice =
+  (invoiceId: string): Effect<Promise<string>> =>
+  async (dispatch, getState) => {
+    const {APP, BITPAY_ID} = getState();
+    const token = BITPAY_ID.apiToken[APP.network];
+
+    const isPaired = !!token && token !== '';
+    if (!isPaired) {
+      return 'pairingRequired';
+    }
+
+    try {
+      const tokens = (await BitPayIdApi.getInstance()
+        .request('getProductTokens', token)
+        .then(res => {
+          if (res.data.error) {
+            throw new Error(res.data.error);
+          }
+          return res.data;
+        })) as any;
+
+      const {token: userShopperToken} = tokens.find(
+        ({facade}: {facade: string}) => facade === 'userShopper',
+      );
+
+      if (!userShopperToken) {
+        return 'userShopperNotFound';
+      }
+
+      try {
+        const unlockInvoiceResponse = await BitPayIdApi.getInstance()
+          .request('unlockInvoice', userShopperToken, {invoiceId})
+          .then(res => {
+            if (res.data.error) {
+              throw new Error(res.data.error);
+            }
+
+            return res.data;
+          });
+
+        const {data} = unlockInvoiceResponse as {data: any};
+        const {meetsRequiredTier} = data;
+
+        if (!meetsRequiredTier) {
+          return 'tierNotMet';
+        }
+
+        return 'unlockSuccess';
+      } catch (e) {
+        return 'invalidInvoice';
+      }
+    } catch (e) {
+      return 'somethingWentWrong';
     }
   };
 
