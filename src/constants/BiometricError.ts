@@ -1,9 +1,11 @@
-import {useTranslation} from 'react-i18next';
+import {t} from 'i18next';
 import {BottomNotificationConfig} from '../components/modal/bottom-notification/BottomNotification';
 
 export const TO_HANDLE_ERRORS: {[key in string]: string} = {
   NOT_ENROLLED:
     'Authentication could not start because biometric is not enrolled.',
+  FALLBACK_NOT_ENROLLED:
+    'Authentication could not start because biometric fallback is not enrolled.',
   NOT_AVAILABLE:
     'Authentication could not start because biometric is not available on the device.',
   NOT_PRESENT: 'Biometry hardware not present',
@@ -37,7 +39,6 @@ export const BiometricErrorNotification = (
   message: string,
   onDismissModal?: () => void,
 ): BottomNotificationConfig => {
-  const {t} = useTranslation();
   return {
     type: 'error',
     title: t('Error'),
