@@ -35,7 +35,7 @@ const WalletConnectIntro = () => {
   const showWalletSelector = () => setWalletSelectorModalVisible(true);
   const hideWalletSelector = () => setWalletSelectorModalVisible(false);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-
+  const rates = useAppSelector(({WALLET}) => WALLET.rates);
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
   let allEthWallets: WalletRowProps[] = [];
   Object.entries(allKeys).map(([_, value]) => {
@@ -47,7 +47,12 @@ const WalletConnectIntro = () => {
       wallet => wallet.currencyAbbreviation === 'eth',
     );
     const UIFormattedEthWallets = ethWallets.map(wallet =>
-      buildUIFormattedWallet(wallet, defaultAltCurrency.isoCode),
+      buildUIFormattedWallet(
+        wallet,
+        defaultAltCurrency.isoCode,
+        rates,
+        dispatch,
+      ),
     );
     allEthWallets = [...allEthWallets, ...UIFormattedEthWallets];
   });
