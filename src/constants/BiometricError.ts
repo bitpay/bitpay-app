@@ -35,6 +35,10 @@ export interface BiometricError {
   code: BiometricErrorCodes;
 }
 
+export const isTouchIDError = (error: any): error is BiometricError => {
+  return error?.name === 'TouchIDError';
+};
+
 export const BiometricErrorNotification = (
   message: string,
   onDismissModal?: () => void,
