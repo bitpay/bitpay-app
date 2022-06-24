@@ -67,7 +67,7 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="bitpay"/>
             </intent-filter>
-            <intent-filter android:autoVerify="true" android:label="filter_react_native">
+            <intent-filter android:autoVerify="true" android:label="BitPay">
                 <data android:host="link.bitpay.com" android:pathPattern="*" android:pathPrefix="/i/"
                     android:scheme="https"/>
                 <data android:host="link.bitpay.com" android:pathPattern="*" android:pathPrefix="/wallet/wc"
