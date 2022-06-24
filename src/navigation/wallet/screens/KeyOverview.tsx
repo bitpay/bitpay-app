@@ -458,7 +458,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
       dispatch(getPriceHistory(defaultAltCurrency.isoCode));
       await dispatch(startGetRates({force: true}));
       await Promise.all([
-        dispatch(startUpdateAllWalletStatusForKey({key, force: true})),
+        dispatch(startUpdateAllWalletStatusForKey({key})),
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());

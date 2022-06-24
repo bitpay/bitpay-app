@@ -250,7 +250,7 @@ export const startUpdateWalletStatus =
   };
 
 export const startUpdateAllWalletStatusForKeys =
-  ({keys, force}: {keys: Key[]; force?: boolean}): Effect<Promise<void>> =>
+  ({keys}: {keys: Key[]}): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -345,9 +345,8 @@ export const startUpdateAllWalletStatusForKeys =
                     if (
                       status &&
                       success &&
-                      (force ||
-                        status.balance.availableAmount !==
-                          cachedBalance.satAvailable ||
+                      (status.balance.availableAmount !==
+                        cachedBalance.satAvailable ||
                         status.pendingTxps?.length > 0)
                     ) {
                       const cryptoBalance = dispatch(
@@ -431,16 +430,15 @@ export const startUpdateAllWalletStatusForKeys =
   };
 
 export const startUpdateAllWalletStatusForKey =
-  ({key, force}: {key: Key; force?: boolean}): Effect<Promise<void>> =>
+  ({key}: {key: Key}): Effect<Promise<void>> =>
   dispatch => {
     const keys = [key];
 
-    return dispatch(startUpdateAllWalletStatusForKeys({keys, force}));
+    return dispatch(startUpdateAllWalletStatusForKeys({keys}));
   };
 
 export const startUpdateAllKeyAndWalletStatus =
-  ({force}: {force?: boolean}): Effect =>
-  async (dispatch, getState) => {
+  (): Effect => async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
         const {
@@ -453,7 +451,7 @@ export const startUpdateAllKeyAndWalletStatus =
         }
 
         await dispatch(
-          startUpdateAllWalletStatusForKeys({keys: Object.values(keys), force}),
+          startUpdateAllWalletStatusForKeys({keys: Object.values(keys)}),
         );
         dispatch(updatePortfolioBalance()); // update portfolio balance after updating all keys balances
         dispatch(successUpdateAllKeysAndStatus());
