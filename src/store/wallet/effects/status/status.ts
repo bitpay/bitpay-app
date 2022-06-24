@@ -346,7 +346,7 @@ export const startUpdateAllWalletStatusForKeys =
                       status &&
                       success &&
                       (status.balance.availableAmount !==
-                        cachedBalance.satAvailable ||
+                        cachedBalance?.satAvailable ||
                         status.pendingTxps?.length > 0)
                     ) {
                       const cryptoBalance = dispatch(
