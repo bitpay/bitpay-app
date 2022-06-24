@@ -498,6 +498,7 @@ const buildTransactionProposal =
           case 'eth':
             txp.from = tx.from;
             txp.nonce = tx.nonce;
+            txp.gasLimit = tx.gasLimit;
             txp.tokenAddress = tx.tokenAddress;
             txp.multisigContractAddress = tx.multisigContractAddress;
             break;
