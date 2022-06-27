@@ -16,7 +16,11 @@ import AuthFormContainer, {
   AuthFormParagraph,
 } from '../components/AuthFormContainer';
 
-export type EmailAuthenticationParamList = {} | undefined;
+export type EmailAuthenticationParamList =
+  | {
+      onLoginSuccess?: ((...args: any[]) => any) | undefined;
+    }
+  | undefined;
 
 type EmailAuthenticationScreenProps = StackScreenProps<
   AuthStackParamList,
@@ -29,10 +33,11 @@ const SpinnerWrapper = styled.View`
 `;
 
 const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
-  navigation,
+  navigation, route,
 }) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const {onLoginSuccess} = route.params || {};
   const pollId = useRef<ReturnType<typeof setInterval>>();
   const pollCountdown = useRef(TWO_FACTOR_EMAIL_POLL_TIMEOUT);
   const isAuthenticated = useAppSelector(
@@ -86,6 +91,10 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
     switch (emailPairingStatus) {
       case 'success':
         dispatch(BitPayIdActions.completedPairing());
+        if (onLoginSuccess) {
+          onLoginSuccess();
+          return;
+        }
 
         const navParent = navigation.getParent();
 
@@ -118,7 +127,7 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
         );
         return;
     }
-  }, [emailPairingStatus, navigation, dispatch, t]);
+  }, [emailPairingStatus, navigation, dispatch, t, onLoginSuccess]);
 
   return (
     <AuthFormContainer>

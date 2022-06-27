@@ -18,7 +18,11 @@ import AuthFormContainer, {
   AuthRowContainer,
 } from '../components/AuthFormContainer';
 
-export type TwoFactorAuthenticationParamList = {} | undefined;
+export type TwoFactorAuthenticationParamList =
+  | {
+      onLoginSuccess?: ((...args: any[]) => any) | undefined;
+    }
+  | undefined;
 
 type TwoFactorAuthenticationScreenProps = StackScreenProps<
   AuthStackParamList,
@@ -37,7 +41,8 @@ const TwoFactorAuthentication: React.FC<
   TwoFactorAuthenticationScreenProps
 > = props => {
   const {t} = useTranslation();
-  const {navigation} = props;
+  const {navigation, route} = props;
+  const {onLoginSuccess} = route.params || {};
   const dispatch = useDispatch();
   const twoFactorAuthStatus = useSelector<RootState, TwoFactorAuthStatus>(
     ({BITPAY_ID}) => BITPAY_ID.twoFactorAuthStatus,
@@ -67,7 +72,10 @@ const TwoFactorAuthentication: React.FC<
       case 'success':
         const {code} = getValues();
         resetField('code');
-        navigation.navigate('TwoFactorPairing', {prevCode: code});
+        navigation.navigate('TwoFactorPairing', {
+          prevCode: code,
+          onLoginSuccess,
+        });
 
         return;
 
@@ -98,6 +106,7 @@ const TwoFactorAuthentication: React.FC<
     twoFactorAuthStatus,
     twoFactorAuthError,
     t,
+    onLoginSuccess,
   ]);
 
   const onSubmit = handleSubmit(({code}) => {

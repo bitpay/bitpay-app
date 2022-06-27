@@ -8,27 +8,27 @@ import {
 } from '../wallet/utils/decode-uri';
 import isEqual from 'lodash.isequal';
 import {
-  IsValidPayPro,
-  isValidWalletConnectUri,
-  isValidSimplexUri,
-  isValidWyreUri,
-  IsValidBitcoinUri,
-  IsValidBitcoinCashUri,
-  IsValidEthereumUri,
-  IsValidRippleUri,
-  IsValidDogecoinUri,
-  IsValidLitecoinUri,
-  IsValidBitPayUri,
-  IsValidBitcoinCashUriWithLegacyAddress,
   IsValidBitcoinAddress,
   IsValidBitcoinCashAddress,
-  IsValidEthereumAddress,
-  IsValidRippleAddress,
-  IsValidDogecoinAddress,
-  IsValidLitecoinAddress,
+  IsValidBitcoinCashUri,
+  IsValidBitcoinCashUriWithLegacyAddress,
+  IsValidBitcoinUri,
   IsValidBitPayInvoice,
+  IsValidBitPayUri,
+  IsValidDogecoinAddress,
+  IsValidDogecoinUri,
+  IsValidEthereumAddress,
+  IsValidEthereumUri,
   IsValidImportPrivateKey,
   IsValidJoinCode,
+  IsValidLitecoinAddress,
+  IsValidLitecoinUri,
+  IsValidPayPro,
+  IsValidRippleAddress,
+  IsValidRippleUri,
+  isValidSimplexUri,
+  isValidWalletConnectUri,
+  isValidWyreUri,
 } from '../wallet/utils/validations';
 import {APP_NAME} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
@@ -37,21 +37,19 @@ import {
   wyrePaymentData,
 } from '../buy-crypto/buy-crypto.models';
 import {LogActions} from '../log';
-import {
-  logSegmentEvent,
-  openUrlWithInAppBrowser,
-  startOnGoingProcessModal,
-} from '../app/app.effects';
+import {logSegmentEvent, startOnGoingProcessModal} from '../app/app.effects';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
-import {dismissOnGoingProcessModal} from '../app/app.actions';
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+} from '../app/app.actions';
 import {sleep} from '../../utils/helper-methods';
 import {BwcProvider} from '../../lib/bwc';
 import {
   createProposalAndBuildTxDetails,
   handleCreateTxProposalError,
 } from '../wallet/effects/send/send';
-import {showBottomNotificationModal} from '../app/app.actions';
-import {Wallet, Key} from '../wallet/wallet.models';
+import {Key, Wallet} from '../wallet/wallet.models';
 import {FormatAmount} from '../wallet/effects/amount/amount';
 import {ButtonState} from '../../components/button/Button';
 import {InteractionManager, Linking} from 'react-native';
@@ -208,7 +206,8 @@ const handleUnlock =
   (data: string): Effect =>
   async (dispatch, getState) => {
     const invoiceId = data.split('i/')[1].split('?')[0];
-    const result = await dispatch(unlockInvoice(invoiceId));
+    const network = data.includes('test') ? Network.testnet : Network.mainnet;
+    const result = await dispatch(unlockInvoice(invoiceId, network));
 
     if (result === 'unlockSuccess') {
       dispatch(goToPayPro(data));
@@ -226,9 +225,23 @@ const handleUnlock =
       }
     } catch {}
     switch (result) {
-      // call IAB and attempt pairing
       case 'pairingRequired':
-        // TODO: handle me
+        navigationRef.navigate('Auth', {
+          screen: 'Login',
+          params: {
+            onLoginSuccess: () => {
+              const parentNav = navigationRef.getParent();
+
+              if (parentNav?.canGoBack()) {
+                parentNav.goBack();
+              } else {
+                navigationRef.navigate('Tabs', {screen: 'Home'});
+              }
+
+              dispatch(incomingData(data));
+            },
+          },
+        });
         break;
 
       // needs verification - send to bitpay id verify
@@ -247,7 +260,7 @@ const handleUnlock =
                 text: t('CONTINUE'),
                 action: () => {
                   Linking.openURL(
-                    `https://${host}/id/verify?context=unlockv&id=${invoiceId}`,
+                    `https://${host}/id/verify?context=unlockAppV&id=${invoiceId}`,
                   );
                 },
               },
@@ -258,7 +271,6 @@ const handleUnlock =
             ],
           }),
         );
-        //TODO: handle return url
         break;
       default:
         dispatch(showBottomNotificationModal(GeneralError()));
@@ -267,10 +279,10 @@ const handleUnlock =
   };
 
 const unlockInvoice =
-  (invoiceId: string): Effect<Promise<string>> =>
+  (invoiceId: string, network: Network): Effect<Promise<string>> =>
   async (dispatch, getState) => {
-    const {APP, BITPAY_ID} = getState();
-    const token = BITPAY_ID.apiToken[APP.network];
+    const {BITPAY_ID} = getState();
+    const token = BITPAY_ID.apiToken[network];
 
     const isPaired = !!token && token !== '';
     if (!isPaired) {
