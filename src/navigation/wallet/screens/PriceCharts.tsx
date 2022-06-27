@@ -299,6 +299,7 @@ const PriceCharts = () => {
         },
         opts: {
           hideSendMax: true,
+          context: 'buyCrypto',
         },
       },
     });

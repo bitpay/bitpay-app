@@ -936,6 +936,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                             },
                             opts: {
                               hideSendMax: true,
+                              context: 'buyCrypto',
                             },
                           },
                         });

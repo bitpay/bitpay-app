@@ -39,6 +39,7 @@ const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
         },
         opts: {
           hideSendMax: true,
+          context: 'buyCrypto',
         },
       },
     });
