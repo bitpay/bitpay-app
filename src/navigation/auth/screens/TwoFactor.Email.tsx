@@ -33,7 +33,8 @@ const SpinnerWrapper = styled.View`
 `;
 
 const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
-  navigation, route,
+  navigation,
+  route,
 }) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();

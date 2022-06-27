@@ -210,7 +210,7 @@ const goToPayPro =
 
 const handleUnlock =
   (data: string): Effect =>
-  async (dispatch, getState) => {
+  async dispatch => {
     const invoiceId = data.split('i/')[1].split('?')[0];
     const network = data.includes('test') ? Network.testnet : Network.mainnet;
     const result = await dispatch(unlockInvoice(invoiceId, network));
