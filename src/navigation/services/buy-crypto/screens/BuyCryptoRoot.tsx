@@ -265,7 +265,7 @@ const BuyCryptoRoot: React.FC<
           {
             selectedWallet: selectedWallet?.currencyAbbreviation.toUpperCase(),
             linkedWalletName: linkedWalletName
-              ? '(' + linkedWalletName + ') '
+              ? '(' + linkedWalletName + ')'
               : ' ',
           },
         ),
@@ -515,7 +515,7 @@ const BuyCryptoRoot: React.FC<
                   style={{color: White}}
                   numberOfLines={1}
                   ellipsizeMode={'tail'}>
-                  t{'Select Destination'}
+                  {t('Select Destination')}
                 </SelectedOptionText>
                 <ArrowContainer>
                   <SelectorArrowDown
