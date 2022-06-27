@@ -282,7 +282,7 @@ export default () => {
         '##### Received Silent Push Notification',
         JSON.stringify(response),
       );
-      handleBwsEvent(response);
+      dispatch(handleBwsEvent(response));
     }
     const eventEmitter = new NativeEventEmitter(NativeModules.SilentPushEvent);
     eventEmitter.addListener('SilentPushNotification', onMessageReceived);

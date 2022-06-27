@@ -3,7 +3,7 @@ import analytics, {JsonMap} from '@segment/analytics-react-native';
 import {Options} from '@segment/analytics-react-native/build/esm/bridge';
 import BitAuth from 'bitauth';
 import i18n from 'i18next';
-import {Linking, Platform} from 'react-native';
+import {DeviceEventEmitter, Linking, Platform} from 'react-native';
 import AdID from 'react-native-advertising-id-bp';
 import ReactAppboy from 'react-native-appboy-sdk';
 import AppsFlyer from 'react-native-appsflyer';
@@ -52,8 +52,11 @@ import {
 import {SilentPushEvent} from '../../Root';
 import {
   startUpdateAllKeyAndWalletStatus,
+  startUpdateAllWalletStatusForKey,
   startUpdateWalletStatus,
 } from '../wallet/effects/status/status';
+import {createWalletAddress} from '../wallet/effects/address/address';
+import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -619,33 +622,37 @@ export const handleBwsEvent =
           response.tokenAddress.toLowerCase();
         console.log(`### event for token wallet: ${walletId}`);
       }
+
       // TODO showInappNotification(data);
+
       console.log(
         `BWS Event: ${response.notification_type}: `,
         JSON.stringify(response),
       );
 
+      const keyObj = await findKeyByKeyId(keyId, keys);
+
       switch (response.notification_type) {
         case 'NewAddress':
-          // TODO this.walletProvider.expireAddress(data.walletId);
+          dispatch(createWalletAddress({wallet, newAddress: true}));
           break;
         case 'NewBlock':
           if (response.network && response.network === 'livenet') {
             dispatch(startUpdateAllKeyAndWalletStatus());
+            DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
           }
           break;
         case 'TxProposalAcceptedBy':
         case 'TxProposalRejectedBy':
         case 'TxProposalRemoved':
-          // TODO this.updateTxps();
+          dispatch(startUpdateAllWalletStatusForKey({key: keyObj}));
           break;
         case 'NewOutgoingTx':
         case 'NewIncomingTx':
         case 'NewTxProposal':
         case 'TxConfirmation':
-          const keyObj = await findKeyByKeyId(keyId, keys);
           dispatch(startUpdateWalletStatus({key: keyObj, wallet}));
-          // TODO this.updateTxps();
+          DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
           break;
       }
     }

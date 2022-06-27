@@ -643,11 +643,13 @@ export const findWalletByIdHashed = (
 ): Promise<{wallet: Wallet | undefined; keyId: string | undefined}> => {
   let walletIdHash;
   const sjcl = BwcProvider.getInstance().getSJCL();
-
   return new Promise(resolve => {
     getAllWalletClients(keys).then(wallets => {
       const wallet = find(wallets, w => {
-        if (tokenAddress || multisigContractAddress) {
+        if (
+          (tokenAddress && tokenAddress !== 'null') ||
+          (multisigContractAddress && multisigContractAddress !== 'null')
+        ) {
           const walletId = w.credentials.walletId;
           const lastHyphenPosition = walletId.lastIndexOf('-');
           const walletIdWithoutTokenAddress = walletId.substring(
