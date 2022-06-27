@@ -274,7 +274,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
           </EmptyListDescription>
         </EmptyListContainer>
       ),
-    [isLoadingInitial],
+    [t, isLoadingInitial],
   );
 
   const renderSlide = useCallback(

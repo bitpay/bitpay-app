@@ -95,8 +95,9 @@ import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
 import CardActivationStack, {
   CardActivationStackParamList,
 } from './navigation/card-activation/CardActivationStack';
-import {logSegmentEvent} from './store/app/app.effects';
 import {sleep} from './utils/helper-methods';
+import ReactAppboy from 'react-native-appboy-sdk';
+import {handleBwsEvent, logSegmentEvent} from './store/app/app.effects';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -184,6 +185,8 @@ export type SilentPushEvent = {
   notification_type?: string;
   ab?: any;
   tokenAddress?: string | null;
+  coin?: string;
+  network?: string;
 };
 
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
@@ -283,8 +286,11 @@ export default () => {
   // Silent Push Notifications
   useEffect(() => {
     function onMessageReceived(response: SilentPushEvent) {
-      // TODO: handle response
-      console.log('##### Received message', response);
+      console.log(
+        '##### Received Silent Push Notification',
+        JSON.stringify(response),
+      );
+      handleBwsEvent(response);
     }
     const eventEmitter = new NativeEventEmitter(NativeModules.SilentPushEvent);
     eventEmitter.addListener('SilentPushNotification', onMessageReceived);

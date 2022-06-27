@@ -14,7 +14,7 @@ import {BwcProvider} from '../../../lib/bwc';
 import {GetName, GetPrecision, GetProtocolPrefix} from './currency';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
-import {formatFiatAmount} from '../../../utils/helper-methods';
+import {convertToFiat, formatFiatAmount} from '../../../utils/helper-methods';
 import {WALLET_DISPLAY_LIMIT} from '../../../navigation/tabs/home/components/Wallet';
 import {Network} from '../../../constants';
 import {PayProOptions} from '../effects/paypro/paypro';
@@ -31,6 +31,8 @@ import {
   KeyWallet,
   KeyWalletsRowProps,
 } from '../../../components/list/KeyWalletsRow';
+import {AppDispatch} from '../../../utils/hooks';
+import {find, isEqual} from 'lodash';
 
 const mapAbbreviationAndName =
   (
@@ -383,11 +385,15 @@ export const BuildKeysAndWalletsList = ({
   network,
   payProOptions,
   defaultAltCurrencyIsoCode = 'USD',
+  rates,
+  dispatch,
 }: {
   keys: {[key in string]: Key};
   network?: Network;
   payProOptions?: PayProOptions;
   defaultAltCurrencyIsoCode?: string;
+  rates: Rates;
+  dispatch: AppDispatch;
 }) => {
   const selectedPaymentOptions = payProOptions?.paymentOptions?.filter(
     option => option.selected,
@@ -421,6 +427,8 @@ export const BuildKeysAndWalletsList = ({
           })
           .map(walletObj => {
             const {
+              currencyAbbreviation,
+              hideWallet,
               balance,
               credentials: {network, walletName: fallbackName},
               walletName,
@@ -428,12 +436,34 @@ export const BuildKeysAndWalletsList = ({
             return merge(cloneDeep(walletObj), {
               cryptoBalance: balance.crypto,
               fiatBalance: formatFiatAmount(
-                balance.fiat,
+                convertToFiat(
+                  dispatch(
+                    toFiat(
+                      balance.sat,
+                      defaultAltCurrencyIsoCode,
+                      currencyAbbreviation,
+                      rates,
+                    ),
+                  ),
+                  hideWallet,
+                  network,
+                ),
                 defaultAltCurrencyIsoCode,
               ),
               cryptoLockedBalance: balance.cryptoLocked,
               fiatLockedBalance: formatFiatAmount(
-                balance.fiatLocked,
+                convertToFiat(
+                  dispatch(
+                    toFiat(
+                      balance.satLocked,
+                      defaultAltCurrencyIsoCode,
+                      currencyAbbreviation,
+                      rates,
+                    ),
+                  ),
+                  hideWallet,
+                  network,
+                ),
                 defaultAltCurrencyIsoCode,
               ),
               network,
@@ -466,8 +496,11 @@ export const BuildPayProWalletSelectorList =
     payProOptions?: PayProOptions;
     defaultAltCurrencyIsoCode?: string;
   }): Effect<WalletsAndAccounts> =>
-  (_, getState) => {
+  (dispatch, getState) => {
     const {COINBASE} = getState();
+    const {
+      WALLET: {rates},
+    } = getState();
     const coinbaseAccounts = COINBASE.accounts[COINBASE_ENV];
     const coinbaseUser = COINBASE.user[COINBASE_ENV];
     const coinbaseExchangeRates = COINBASE.exchangeRates;
@@ -476,6 +509,8 @@ export const BuildPayProWalletSelectorList =
       network,
       payProOptions,
       defaultAltCurrencyIsoCode,
+      rates,
+      dispatch,
     });
     const coinbaseWallets = BuildCoinbaseWalletsList({
       coinbaseAccounts,
@@ -554,4 +589,79 @@ export const isMatchedWallet = (newWallet: Wallet, wallets: Wallet[]) => {
   return wallets.find(
     wallet => wallet.credentials.walletId === newWallet.credentials.walletId,
   );
+};
+
+export const findKeyByKeyId = (
+  keyId: string,
+  keys: {[key in string]: Key},
+): Promise<Key> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      await Promise.all(
+        Object.values(keys).map(key => {
+          if (key.id === keyId) {
+            return resolve(key);
+          }
+        }),
+      );
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const getAllWalletClients = (keys: {
+  [key in string]: Key;
+}): Promise<Wallet[]> => {
+  return new Promise(async (resolve, reject) => {
+    const walletClients: any[] = [];
+    try {
+      await Promise.all(
+        Object.values(keys).map(key => {
+          key.wallets
+            .filter(
+              wallet =>
+                !wallet.credentials.token && wallet.credentials.isComplete(),
+            )
+            .forEach(walletClient => {
+              walletClients.push(walletClient);
+            });
+        }),
+      );
+      resolve(walletClients);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const findWalletByIdHashed = (
+  keys: {[key in string]: Key},
+  walletIdHashed: string,
+  tokenAddress: string | null | undefined,
+  multisigContractAddress?: string,
+): Promise<{wallet: Wallet | undefined; keyId: string | undefined}> => {
+  let walletIdHash;
+  const sjcl = BwcProvider.getInstance().getSJCL();
+
+  return new Promise(resolve => {
+    getAllWalletClients(keys).then(wallets => {
+      const wallet = find(wallets, w => {
+        if (tokenAddress || multisigContractAddress) {
+          const walletId = w.credentials.walletId;
+          const lastHyphenPosition = walletId.lastIndexOf('-');
+          const walletIdWithoutTokenAddress = walletId.substring(
+            0,
+            lastHyphenPosition,
+          );
+          walletIdHash = sjcl.hash.sha256.hash(walletIdWithoutTokenAddress);
+        } else {
+          walletIdHash = sjcl.hash.sha256.hash(w.credentials.walletId);
+        }
+        return isEqual(walletIdHashed, sjcl.codec.hex.fromBits(walletIdHash));
+      });
+
+      return resolve({wallet, keyId: wallet?.keyId});
+    });
+  });
 };

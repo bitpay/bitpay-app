@@ -32,7 +32,6 @@ import {LogActions} from '../log';
 import {WalletActions} from '../wallet';
 import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
 import {startMigration, startWalletStoreInit} from '../wallet/effects';
-import {Key} from '../wallet/wallet.models';
 import {
   setAppFirstOpenEventComplete,
   setAppFirstOpenEventDate,
@@ -45,6 +44,16 @@ import {
   showBlur,
 } from './app.actions';
 import {AppIdentity} from './app.models';
+import {
+  findKeyByKeyId,
+  findWalletByIdHashed,
+  getAllWalletClients,
+} from '../wallet/utils/wallet';
+import {SilentPushEvent} from '../../Root';
+import {
+  startUpdateAllKeyAndWalletStatus,
+  startUpdateWalletStatus,
+} from '../wallet/effects/status/status';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -91,6 +100,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     await dispatch(initializeApi(network, identity));
 
+    dispatch(LocationEffects.getCountry());
+
     if (isPaired) {
       try {
         dispatch(
@@ -114,7 +125,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
             ),
           );
         }
-        dispatch(LocationEffects.getCountry());
         await dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
         dispatch(CardEffects.startCardStoreInit(data.user));
       } catch (err: any) {
@@ -143,6 +153,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     // Update Coinbase
     dispatch(coinbaseInitialize());
     dispatch(showBlur(pinLockActive || biometricLockActive));
+    dispatch(AppActions.successAppInit());
     await sleep(500);
     dispatch(LogActions.info('Initialized app successfully.'));
     dispatch(LogActions.debug(`Pin Lock Active: ${pinLockActive}`));
@@ -156,7 +167,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       if (biometricLockActive) {
         dispatch(AppActions.showBiometricModal());
       }
-      dispatch(AppActions.successAppInit());
     });
   } catch (err) {
     console.error(err);
@@ -459,31 +469,6 @@ export const logSegmentEvent =
     }
   };
 
-const getAllWalletClients = (keys: {
-  [key in string]: Key;
-}): Promise<any[]> => {
-  return new Promise(async (resolve, reject) => {
-    const walletClients: any[] = [];
-    try {
-      await Promise.all(
-        Object.values(keys).map(key => {
-          key.wallets
-            .filter(
-              wallet =>
-                !wallet.credentials.token && wallet.credentials.isComplete(),
-            )
-            .forEach(walletClient => {
-              walletClients.push(walletClient);
-            });
-        }),
-      );
-      resolve(walletClients);
-    } catch (err) {
-      reject(err);
-    }
-  });
-};
-
 export const subscribePushNotifications =
   (walletClient: any, eid: string): Effect<Promise<void>> =>
   async dispatch => {
@@ -597,6 +582,72 @@ export const setOffersAndPromotionsNotifications =
       ReactAppboy.addToSubscriptionGroup(OFFERS_AND_PROMOTIONS_GROUP_ID);
     } else {
       ReactAppboy.removeFromSubscriptionGroup(OFFERS_AND_PROMOTIONS_GROUP_ID);
+    }
+  };
+
+export const handleBwsEvent =
+  (response: SilentPushEvent): Effect =>
+  async (dispatch, getState) => {
+    const {
+      WALLET: {keys},
+    } = getState();
+    if (response && response.walletId) {
+      const {wallet, keyId} = await findWalletByIdHashed(
+        keys,
+        response.walletId,
+        response.tokenAddress,
+      );
+      if (!wallet || !keyId) {
+        return;
+      }
+
+      if (
+        !wallet.credentials.walletId &&
+        response.notification_type !== 'NewBlock'
+      ) {
+        return;
+      }
+      console.log(
+        '#### wallet found! Sending Event...',
+        wallet.credentials.walletId,
+      );
+      let walletId = wallet.credentials.walletId;
+      if (response.tokenAddress) {
+        walletId =
+          wallet.credentials.walletId +
+          '-' +
+          response.tokenAddress.toLowerCase();
+        console.log(`### event for token wallet: ${walletId}`);
+      }
+      // TODO showInappNotification(data);
+      console.log(
+        `BWS Event: ${response.notification_type}: `,
+        JSON.stringify(response),
+      );
+
+      switch (response.notification_type) {
+        case 'NewAddress':
+          // TODO this.walletProvider.expireAddress(data.walletId);
+          break;
+        case 'NewBlock':
+          if (response.network && response.network === 'livenet') {
+            dispatch(startUpdateAllKeyAndWalletStatus());
+          }
+          break;
+        case 'TxProposalAcceptedBy':
+        case 'TxProposalRejectedBy':
+        case 'TxProposalRemoved':
+          // TODO this.updateTxps();
+          break;
+        case 'NewOutgoingTx':
+        case 'NewIncomingTx':
+        case 'NewTxProposal':
+        case 'TxConfirmation':
+          const keyObj = await findKeyByKeyId(keyId, keys);
+          dispatch(startUpdateWalletStatus({key: keyObj, wallet}));
+          // TODO this.updateTxps();
+          break;
+      }
     }
   };
 
