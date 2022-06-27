@@ -27,6 +27,7 @@ const AmountModal: React.FC<AmountModalProps> = ({isVisible, onDismiss}) => {
           useAsModal={true}
           onDismiss={onDismiss}
           hideSendMaxProp={true}
+          contextProp={'buyCrypto'}
         />
       </AmountModalWrapper>
     </SheetModal>
