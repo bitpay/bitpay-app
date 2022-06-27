@@ -43,7 +43,7 @@ public class MainActivity extends ReactActivity {
         win.setStatusBarColor(Color.TRANSPARENT);
       }
       BrazeInAppMessageManager.getInstance().ensureSubscribedToInAppMessageEvents(MainActivity.this);
-    }
+  }
 
     public static void setWindowFlag(Activity activity, final int bits, boolean on) {
       Window win = activity.getWindow();
