@@ -38,7 +38,6 @@ export const startBitPayIdStoreInit =
       dispatch(
         BitPayIdActions.successInitializeStore(APP.network, initialData),
       );
-      dispatch(ShopEffects.startFetchCatalog());
     }
   };
 
@@ -416,6 +415,7 @@ const startPairAndLoadUser =
       dispatch(startBitPayIdStoreInit(data.user));
       dispatch(CardEffects.startCardStoreInit(data.user));
       dispatch(AppEffects.initializeBrazeContent());
+      dispatch(ShopEffects.startFetchCatalog());
 
       const {basicInfo} = data.user;
       if (!__DEV__ && basicInfo) {

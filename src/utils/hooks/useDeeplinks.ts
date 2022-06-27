@@ -27,36 +27,41 @@ const isUniversalLink = (url: string): boolean => {
 const isDeepLink = (url: string): boolean =>
   url.startsWith(APP_DEEPLINK_PREFIX);
 
+export const useUrlEventHandler = () => {
+  const dispatch = useDispatch();
+  const logger = useLogger();
+  const urlEventHandler = ({url}: {url: string | null}) => {
+    if (url && (isDeepLink(url) || isUniversalLink(url))) {
+      logger.info(`Deep link received: ${url}`);
+      dispatch(showBlur(false));
+      dispatch(incomingData(url));
+
+      try {
+        // clicking a deeplink from the IAB in iOS doesn't auto-close the IAB, so do it manually
+        InAppBrowser.isAvailable().then(isAvailable => {
+          if (isAvailable) {
+            InAppBrowser.close();
+          }
+        });
+      } catch (err) {
+        console.log(err);
+      }
+    }
+  };
+  return urlEventHandler;
+};
+
 export const useDeeplinks = () => {
   const dispatch = useDispatch();
   const logger = useLogger();
+  const urlEventHandler = useUrlEventHandler();
 
   useEffect(() => {
-    const urlEventHandler = ({url}: {url: string}) => {
-      if (url && (isDeepLink(url) || isUniversalLink(url))) {
-        logger.info(`Deep link received: ${url}`);
-        dispatch(showBlur(false));
-        dispatch(incomingData(url));
-
-        try {
-          // clicking a deeplink from the IAB in iOS doesn't auto-close the IAB, so do it manually
-          InAppBrowser.isAvailable().then(isAvailable => {
-            if (isAvailable) {
-              InAppBrowser.close();
-            }
-          });
-        } catch (err) {
-          console.log(err);
-        }
-      }
-    };
-
     Linking.addEventListener('url', urlEventHandler);
-
     return () => {
       Linking.removeEventListener('url', urlEventHandler);
     };
-  }, [dispatch, logger]);
+  }, [dispatch, logger, urlEventHandler]);
 
   const linkingOptions: LinkingOptions<RootStackParamList> = {
     prefixes: [APP_DEEPLINK_PREFIX],

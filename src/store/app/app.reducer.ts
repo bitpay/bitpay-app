@@ -29,7 +29,7 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'activeModalId',
 ];
 
-export type ModalId = 'sheetModal' | 'ongoingProcess';
+export type ModalId = 'sheetModal' | 'ongoingProcess' | 'pin';
 
 export type AppFirstOpenData = {
   firstOpenEventComplete: boolean;
