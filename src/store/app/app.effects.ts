@@ -597,13 +597,16 @@ export const handleBwsEvent =
         response.walletId,
         response.tokenAddress,
       );
-      if (!wallet || !keyId) return;
+      if (!wallet || !keyId) {
+        return;
+      }
 
       if (
         !wallet.credentials.walletId &&
         response.notification_type !== 'NewBlock'
-      )
+      ) {
         return;
+      }
       console.log(
         '#### wallet found! Sending Event...',
         wallet.credentials.walletId,
