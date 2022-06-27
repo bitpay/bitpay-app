@@ -118,18 +118,16 @@ const PayProConfirm = () => {
       startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
     );
     try {
-      const [{txDetails: newTxDetails, txp: newTxp}, fetchedInvoice] =
-        await Promise.all([
-          dispatch(
-            await createPayProTxProposal({
-              wallet: selectedWallet,
-              paymentUrl: payProOptions.payProUrl,
-              payProOptions,
-              invoiceID: payProOptions.paymentId,
-            }),
-          ),
-          fetchInvoice(payProOptions.payProUrl),
-        ]);
+      const fetchedInvoice = await fetchInvoice(payProOptions.payProUrl);
+      const {txDetails: newTxDetails, txp: newTxp} = await dispatch(
+        await createPayProTxProposal({
+          wallet: selectedWallet,
+          paymentUrl: payProOptions.payProUrl,
+          payProOptions,
+          invoiceID: payProOptions.paymentId,
+          invoice: fetchedInvoice,
+        }),
+      );
       setWallet(selectedWallet);
       setKey(keys[selectedWallet.keyId]);
       await sleep(400);
