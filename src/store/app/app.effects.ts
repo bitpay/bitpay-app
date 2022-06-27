@@ -153,6 +153,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     // Update Coinbase
     dispatch(coinbaseInitialize());
     dispatch(showBlur(pinLockActive || biometricLockActive));
+    dispatch(AppActions.successAppInit());
     await sleep(500);
     dispatch(LogActions.info('Initialized app successfully.'));
     dispatch(LogActions.debug(`Pin Lock Active: ${pinLockActive}`));
@@ -166,7 +167,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       if (biometricLockActive) {
         dispatch(AppActions.showBiometricModal());
       }
-      dispatch(AppActions.successAppInit());
     });
   } catch (err) {
     console.error(err);

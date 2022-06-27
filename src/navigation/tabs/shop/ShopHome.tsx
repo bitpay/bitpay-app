@@ -14,7 +14,6 @@ import {ShopOnline} from './components/ShopOnline';
 import {CardConfig, Category, GiftCard} from '../../../store/shop/shop.models';
 import {ShopEffects} from '../../../store/shop';
 import {
-  selectAvailableGiftCards,
   selectCategories,
   selectCategoriesAndCurations,
   selectCategoriesWithIntegrations,
@@ -99,16 +98,22 @@ const ShopHome: React.FC<
   const giftCards = useAppSelector(
     ({SHOP}) => SHOP.giftCards[APP_NETWORK],
   ) as GiftCard[];
-  const purchasedGiftCards = giftCards.filter(
-    giftCard => giftCard.status !== 'UNREDEEMED',
+  const purchasedGiftCards = useMemo(
+    () => giftCards.filter(giftCard => giftCard.status !== 'UNREDEEMED'),
+    [giftCards],
   );
-  const activeGiftCards = purchasedGiftCards.filter(
-    giftCard => !giftCard.archived,
+  const activeGiftCards = useMemo(
+    () => purchasedGiftCards.filter(giftCard => !giftCard.archived),
+    [purchasedGiftCards],
   );
   const categoriesAndCurations = useAppSelector(selectCategoriesAndCurations);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const availableGiftCards = useAppSelector(selectAvailableGiftCards);
+  const availableGiftCards = useMemo(
+    () =>
+      getGiftCardConfigList(availableCardMap).filter(config => !config.hidden),
+    [availableCardMap],
+  );
   const supportedGiftCards = useMemo(
     () => getGiftCardConfigList(supportedCardMap || availableCardMap),
     [supportedCardMap, availableCardMap],
