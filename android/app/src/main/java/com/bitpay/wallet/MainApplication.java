@@ -39,6 +39,7 @@ public class MainApplication extends Application implements ReactApplication {
 
           packages.add(new DoshPackage());
           packages.add(new GooglePushProvisioningPackage());
+          packages.add(new SilentPushPackage());
 
           return packages;
         }
