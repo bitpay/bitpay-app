@@ -282,8 +282,13 @@ const handleUnlock =
 const unlockInvoice =
   (invoiceId: string, network: Network): Effect<Promise<string>> =>
   async (dispatch, getState) => {
-    const {BITPAY_ID} = getState();
-    const token = BITPAY_ID.apiToken[network];
+    const {BITPAY_ID, APP} = getState();
+
+    if (APP.network !== network) {
+      return 'networkMismatch';
+    }
+
+    const token = BITPAY_ID.apiToken[APP.network];
 
     const isPaired = !!token;
     if (!isPaired) {
