@@ -35,7 +35,6 @@ import {
   DetailsList,
   Fee,
   Header,
-  Memo,
   RemainingTime,
   SendingFrom,
   SendingTo,
@@ -54,6 +53,7 @@ import {
 } from '../../../../../api/coinbase/coinbase.types';
 import {coinbasePayInvoice} from '../../../../../store/coinbase';
 import {useTranslation} from 'react-i18next';
+import {Memo} from './Memo';
 
 export interface PayProConfirmParamList {
   wallet?: Wallet;

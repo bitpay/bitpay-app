@@ -34,7 +34,6 @@ import {
   DetailsList,
   Fee,
   Header,
-  Memo,
   SendingFrom,
   SendingTo,
   SharedDetailRow,
@@ -65,6 +64,7 @@ import {
 import {Alert, TouchableOpacity} from 'react-native';
 import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
 import haptic from '../../../../../components/haptic-feedback/haptic';
+import {Memo} from './Memo';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
