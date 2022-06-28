@@ -348,14 +348,14 @@ const PayProConfirm = () => {
                   setDisableSwipeSendButton={setDisableSwipeSendButton}
                 />
               ) : null}
-              <Amount description={'SubTotal'} amount={subTotal} />
-              <Amount description={'Total'} amount={total} hr={!!txp} />
               {txp ? (
                 <Memo
                   memo={txp.message}
                   onChange={message => updateTxp({...txp, message})}
                 />
               ) : null}
+              <Amount description={'SubTotal'} amount={subTotal} height={83} />
+              <Amount description={'Total'} amount={total} height={83} />
             </>
           ) : null}
         </DetailsList>

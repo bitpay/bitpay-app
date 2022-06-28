@@ -1,9 +1,9 @@
 import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useRef} from 'react';
+import React from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
-import {Keyboard, TextInput} from 'react-native';
+import {Keyboard} from 'react-native';
 import styled from 'styled-components/native';
 import * as yup from 'yup';
 import Button from '../../../../../components/button/Button';
@@ -32,7 +32,6 @@ const EnterEmail = ({
 }: StackScreenProps<GiftCardStackParamList, 'EnterEmail'>) => {
   const {t} = useTranslation();
   const {onSubmit, initialEmail} = route.params;
-  const emailRef = useRef<TextInput>(null);
 
   const {
     control,
@@ -72,7 +71,6 @@ const EnterEmail = ({
               keyboardType={'email-address'}
               value={value}
               returnKeyType="next"
-              onSubmitEditing={() => emailRef.current?.focus()}
               blurOnSubmit={false}
             />
           )}
