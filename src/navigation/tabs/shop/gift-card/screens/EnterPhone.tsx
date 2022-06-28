@@ -42,7 +42,6 @@ const AreaCodeContainer = styled.View`
   padding-left: 15px;
   padding-right: 10px;
   height: 37px;
-  width: 80px;
 `;
 
 const AreaCode = styled(BaseText)`
