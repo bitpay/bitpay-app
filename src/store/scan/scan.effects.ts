@@ -211,8 +211,10 @@ const goToPayPro =
 const handleUnlock =
   (data: string): Effect =>
   async dispatch => {
-    const invoiceId = data.split('i/')[1].split('?')[0];
-    const network = data.includes('test') ? Network.testnet : Network.mainnet;
+    const invoiceId = data.split('/i/')[1].split('?')[0];
+    const network = data.includes('test.bitpay.com')
+      ? Network.testnet
+      : Network.mainnet;
     const result = await dispatch(unlockInvoice(invoiceId, network));
 
     if (result === 'unlockSuccess') {
@@ -236,14 +238,7 @@ const handleUnlock =
           screen: 'Login',
           params: {
             onLoginSuccess: () => {
-              const parentNav = navigationRef.getParent();
-
-              if (parentNav?.canGoBack()) {
-                parentNav.goBack();
-              } else {
-                navigationRef.navigate('Tabs', {screen: 'Home'});
-              }
-
+              navigationRef.navigate('Tabs', {screen: 'Home'});
               dispatch(incomingData(data));
             },
           },
@@ -290,7 +285,7 @@ const unlockInvoice =
     const {BITPAY_ID} = getState();
     const token = BITPAY_ID.apiToken[network];
 
-    const isPaired = !!token && token !== '';
+    const isPaired = !!token;
     if (!isPaired) {
       return 'pairingRequired';
     }
@@ -303,11 +298,11 @@ const unlockInvoice =
             throw new Error(res.data.error);
           }
           return res.data;
-        })) as any;
+        })) as [{facade: string; token: string; name: string}];
 
-      const {token: userShopperToken} = tokens.find(
-        ({facade}: {facade: string}) => facade === 'userShopper',
-      );
+      const {token: userShopperToken} =
+        tokens.find(({facade}: {facade: string}) => facade === 'userShopper') ||
+        {};
 
       if (!userShopperToken) {
         return 'userShopperNotFound';
@@ -359,7 +354,7 @@ const goToConfirm =
       destinationTag?: string;
     };
   }): Effect<Promise<void>> =>
-  async (dispatch, getState) => {
+  async dispatch => {
     try {
       if (!wallet) {
         navigationRef.navigate('Wallet', {
@@ -460,7 +455,7 @@ export const goToAmount =
       destinationTag?: string;
     };
   }): Effect<Promise<void>> =>
-  async (dispatch, getState) => {
+  async dispatch => {
     if (!wallet) {
       navigationRef.navigate('Wallet', {
         screen: 'GlobalSelect',
@@ -565,7 +560,7 @@ const handleBitPayUri =
 
 const handleBitcoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
-  (dispatch, getState) => {
+  dispatch => {
     console.log('Incoming-data: Bitcoin URI');
     const coin = 'btc';
     const parsed = BwcProvider.getInstance().getBitcore().URI(data);
@@ -589,7 +584,7 @@ const handleBitcoinUri =
 
 const handleBitcoinCashUri =
   (data: string, wallet?: Wallet): Effect<void> =>
-  (dispatch, getState) => {
+  dispatch => {
     console.log('Incoming-data: BitcoinCash URI');
     const coin = 'bch';
     const parsed = BwcProvider.getInstance().getBitcoreCash().URI(data);
@@ -619,7 +614,7 @@ const handleBitcoinCashUri =
 
 const handleBitcoinCashUriLegacyAddress =
   (data: string, wallet?: Wallet): Effect<void> =>
-  (dispatch, getState) => {
+  dispatch => {
     console.log('Incoming-data: Bitcoin Cash URI with legacy address');
     const coin = 'bch';
     const parsed = BwcProvider.getInstance()
@@ -661,7 +656,7 @@ const handleBitcoinCashUriLegacyAddress =
 
 const handleEthereumUri =
   (data: string, wallet?: Wallet): Effect<void> =>
-  (dispatch, getState) => {
+  dispatch => {
     console.log('Incoming-data: Ethereum URI');
     const coin = 'eth';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
@@ -694,7 +689,7 @@ const handleEthereumUri =
 
 const handleRippleUri =
   (data: string, wallet?: Wallet): Effect<void> =>
-  (dispatch, getState) => {
+  dispatch => {
     console.log('Incoming-data: Ripple URI');
     const coin = 'xrp';
     const amountParam = /[\?\&]amount=(\d+([\,\.]\d+)?)/i;
@@ -728,7 +723,7 @@ const handleRippleUri =
 
 const handleDogecoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
-  (dispatch, getState) => {
+  dispatch => {
     console.log('Incoming-data: Dogecoin URI');
     const coin = 'doge';
     const parsed = BwcProvider.getInstance().getBitcoreDoge().URI(data);
@@ -754,7 +749,7 @@ const handleDogecoinUri =
 
 const handleLitecoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
-  (dispatch, getState) => {
+  dispatch => {
     console.log('Incoming-data: Litecoin URI');
     const coin = 'ltc';
     const parsed = BwcProvider.getInstance().getBitcoreLtc().URI(data);
@@ -833,7 +828,7 @@ const handleSimplexUri =
 
 const handleWyreUri =
   (data: string): Effect<void> =>
-  (dispatch, getState) => {
+  dispatch => {
     dispatch(LogActions.info('Incoming-data (redirect): Wyre URL: ' + data));
 
     if (data.indexOf(APP_NAME + '://wyreError') >= 0) {
