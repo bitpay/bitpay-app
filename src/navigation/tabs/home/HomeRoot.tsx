@@ -266,6 +266,7 @@ const HomeRoot = () => {
                                     },
                                     opts: {
                                       hideSendMax: true,
+                                      context: 'buyCrypto',
                                     },
                                   },
                                 });

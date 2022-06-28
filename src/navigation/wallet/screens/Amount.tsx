@@ -26,6 +26,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';
 import {useAppDispatch} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
+import {getAvailableFiatCurrencies} from '../../services/buy-crypto/utils/buy-crypto-utils';
 
 const HeaderContainer = styled(HeaderRightContainer)`
   justify-content: center;
@@ -123,6 +124,7 @@ export interface AmountParamList {
   fiatCurrencyAbbreviation?: string;
   opts?: {
     hideSendMax?: boolean;
+    context?: string;
   };
 }
 
@@ -130,6 +132,7 @@ interface AmountProps {
   useAsModal: any;
   currencyAbbreviationProp?: string;
   hideSendMaxProp?: boolean;
+  contextProp?: string;
   onDismiss?: (
     amount?: number,
     opts?: {sendMax?: boolean; close?: boolean},
@@ -140,6 +143,7 @@ const Amount: React.FC<AmountProps> = ({
   useAsModal,
   currencyAbbreviationProp,
   hideSendMaxProp,
+  contextProp,
   onDismiss,
 }) => {
   const {t} = useTranslation();
@@ -156,13 +160,27 @@ const Amount: React.FC<AmountProps> = ({
   const dispatch = useAppDispatch();
   const [buttonState, setButtonState] = useState<ButtonState>();
 
-  const fiatCurrency = fiatCurrencyAbbreviation || defaultAltCurrency.isoCode;
+  const hideSendMax = opts?.hideSendMax ? opts.hideSendMax : hideSendMaxProp;
+  const context = opts?.context ? opts.context : contextProp;
+
+  const getFiatCurrency = () => {
+    if (fiatCurrencyAbbreviation) {
+      return fiatCurrencyAbbreviation;
+    }
+    if (context === 'buyCrypto') {
+      return getAvailableFiatCurrencies().includes(defaultAltCurrency.isoCode)
+        ? defaultAltCurrency.isoCode
+        : 'USD';
+    }
+
+    return defaultAltCurrency.isoCode;
+  };
+
+  const fiatCurrency = getFiatCurrency();
 
   const cryptoCurrencyAbbreviation = currencyAbbreviationRouteParam
     ? currencyAbbreviationRouteParam
     : currencyAbbreviationProp;
-
-  const hideSendMax = opts?.hideSendMax ? opts.hideSendMax : hideSendMaxProp;
 
   // flag for primary selector type
   const [rate, setRate] = useState(0);

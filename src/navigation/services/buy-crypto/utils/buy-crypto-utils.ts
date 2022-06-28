@@ -31,6 +31,20 @@ export const getEnabledPaymentMethods = (
   return EnabledPaymentMethods;
 };
 
+export const getAvailableFiatCurrencies = (exchange?: string): string[] => {
+  switch (exchange) {
+    case 'simplex':
+      return simplexSupportedFiatCurrencies;
+    case 'wyre':
+      return wyreSupportedFiatCurrencies;
+    default:
+      const allSupportedFiatCurrencies = simplexSupportedFiatCurrencies.filter(
+        fiatCurrency => wyreSupportedFiatCurrencies.includes(fiatCurrency),
+      );
+      return allSupportedFiatCurrencies;
+  }
+};
+
 export const isPaymentMethodSupported = (
   exchange: string,
   paymentMethod: PaymentMethod,
