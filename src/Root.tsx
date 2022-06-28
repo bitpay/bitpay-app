@@ -11,6 +11,7 @@ import {
   AppState,
   AppStateStatus,
   DeviceEventEmitter,
+  Linking,
   NativeEventEmitter,
   NativeModules,
   StatusBar,
@@ -29,7 +30,12 @@ import BiometricModal from './components/modal/biometric/BiometricModal';
 import {AppEffects, AppActions} from './store/app';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 import {LogActions} from './store/log';
-import {useAppDispatch, useAppSelector, useDeeplinks} from './utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useDeeplinks,
+  useUrlEventHandler,
+} from './utils/hooks';
 import i18n from 'i18next';
 
 import BitpayIdStack, {
@@ -89,8 +95,9 @@ import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
 import CardActivationStack, {
   CardActivationStackParamList,
 } from './navigation/card-activation/CardActivationStack';
+import {sleep} from './utils/helper-methods';
 import ReactAppboy from 'react-native-appboy-sdk';
-import {logSegmentEvent} from './store/app/app.effects';
+import {handleBwsEvent, logSegmentEvent} from './store/app/app.effects';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -178,6 +185,8 @@ export type SilentPushEvent = {
   notification_type?: string;
   ab?: any;
   tokenAddress?: string | null;
+  coin?: string;
+  network?: string;
 };
 
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
@@ -196,6 +205,7 @@ export default () => {
   const dispatch = useAppDispatch();
   const [, rerender] = useState({});
   const linking = useDeeplinks();
+  const urlEventHandler = useUrlEventHandler();
   const onboardingCompleted = useAppSelector(
     ({APP}) => APP.onboardingCompleted,
   );
@@ -276,8 +286,11 @@ export default () => {
   // Silent Push Notifications
   useEffect(() => {
     function onMessageReceived(response: SilentPushEvent) {
-      // TODO: handle response
-      console.log('##### Received message', response);
+      console.log(
+        '##### Received Silent Push Notification',
+        JSON.stringify(response),
+      );
+      dispatch(handleBwsEvent(response));
     }
     const eventEmitter = new NativeEventEmitter(NativeModules.SilentPushEvent);
     eventEmitter.addListener('SilentPushNotification', onMessageReceived);
@@ -327,7 +340,7 @@ export default () => {
           ref={navigationRef}
           theme={theme}
           linking={linking}
-          onReady={() => {
+          onReady={async () => {
             // routing to previous route if onboarding
             if (currentRoute && !onboardingCompleted) {
               const [currentStack, params] = currentRoute;
@@ -339,6 +352,10 @@ export default () => {
                   )}`,
                 ),
               );
+            } else {
+              const url = await Linking.getInitialURL();
+              await sleep(10);
+              urlEventHandler({url});
             }
           }}
           onStateChange={debounce(navEvent => {

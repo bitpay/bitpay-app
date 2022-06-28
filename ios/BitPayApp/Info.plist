@@ -22,7 +22,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>14.2.0</string>
+	<string>14.3.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleURLTypes</key>
@@ -71,10 +71,10 @@
 		<string>Heebo-Regular.ttf</string>
 		<string>Heebo-Thin.ttf</string>
 	</array>
-  <key>UIBackgroundModes</key>
-  <array>
-    <string>remote-notification</string>
-  </array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>BootSplash</string>
 	<key>UIRequiredDeviceCapabilities</key>

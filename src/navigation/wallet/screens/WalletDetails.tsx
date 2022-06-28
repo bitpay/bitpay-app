@@ -270,7 +270,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const {walletId, skipInitializeHistory} = route.params;
-  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const {keys, rates} = useAppSelector(({WALLET}) => WALLET);
 
   const wallets = Object.values(keys).flatMap(k => k.wallets);
 
@@ -284,6 +284,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const uiFormattedWallet = buildUIFormattedWallet(
     fullWalletObj,
     defaultAltCurrency.isoCode,
+    rates,
+    dispatch,
     'symbol',
   );
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
@@ -934,6 +936,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                             },
                             opts: {
                               hideSendMax: true,
+                              context: 'buyCrypto',
                             },
                           },
                         });

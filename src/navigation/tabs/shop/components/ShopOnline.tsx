@@ -59,16 +59,27 @@ export const ShopOnline = ({
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as typeof integrations);
 
-  const updateSearchResults = debounce((text: string) => {
-    setSearchVal(text);
-    const newSearchResults = integrations.filter(integration =>
-      integration.displayName.toLowerCase().includes(text.toLocaleLowerCase()),
-    );
-    setSearchResults(newSearchResults);
-    dispatch(
-      logSegmentEvent('track', 'Searched Online Brands', {search: text}, true),
-    );
-  }, 300);
+  const updateSearchResults = useMemo(
+    () =>
+      debounce((text: string) => {
+        setSearchVal(text);
+        const newSearchResults = integrations.filter(integration =>
+          integration.displayName
+            .toLowerCase()
+            .includes(text.toLocaleLowerCase()),
+        );
+        setSearchResults(newSearchResults);
+        dispatch(
+          logSegmentEvent(
+            'track',
+            'Searched Online Brands',
+            {search: text},
+            true,
+          ),
+        );
+      }, 300),
+    [dispatch, setSearchVal, integrations],
+  );
 
   const FullIntegrationsList = () => (
     <>

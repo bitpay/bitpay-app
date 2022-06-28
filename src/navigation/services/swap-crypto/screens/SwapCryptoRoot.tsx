@@ -556,7 +556,7 @@ const SwapCryptoRoot: React.FC = () => {
             selectedWallet:
               toWalletSelected?.currencyAbbreviation.toUpperCase(),
             linkedWalletName: linkedWalletName
-              ? '(' + linkedWalletName + ') '
+              ? '(' + linkedWalletName + ')'
               : ' ',
           },
         ),

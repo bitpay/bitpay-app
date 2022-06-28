@@ -490,7 +490,7 @@ const buildTransactionProposal =
           message,
         };
         // currency specific
-        switch (currency) {
+        switch (dispatch(GetChain(currency!)).toLowerCase()) {
           case 'btc':
             txp.enableRBF = tx.enableRBF;
             txp.replaceTxByFee = tx.replaceTxByFee;
@@ -498,6 +498,7 @@ const buildTransactionProposal =
           case 'eth':
             txp.from = tx.from;
             txp.nonce = tx.nonce;
+            txp.gasLimit = tx.gasLimit;
             txp.tokenAddress = tx.tokenAddress;
             txp.multisigContractAddress = tx.multisigContractAddress;
             break;

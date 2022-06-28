@@ -91,7 +91,7 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
 
       navigation.navigate('CreateAccount');
     }
-  }, [isVerified, csrfToken, navigation, dispatch]);
+  }, [dispatch, navigation, isVerified, csrfToken, email]);
 
   const resendVerificationEmail = () => {
     dispatch(BitPayIdEffects.startSendVerificationEmail());

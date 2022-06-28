@@ -40,7 +40,10 @@ import {wyreSupportedCoins} from '../utils/wyre-utils';
 import {sleep} from '../../../../utils/helper-methods';
 import {AppActions} from '../../../../store/app';
 import {IsERCToken} from '../../../../store/wallet/utils/currency';
-import {isPaymentMethodSupported} from '../utils/buy-crypto-utils';
+import {
+  getAvailableFiatCurrencies,
+  isPaymentMethodSupported,
+} from '../utils/buy-crypto-utils';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../../store/app/app.effects';
 
@@ -62,6 +65,7 @@ const BuyCryptoRoot: React.FC<
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const countryData = useAppSelector(({LOCATION}) => LOCATION.countryData);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const fromWallet = route.params?.fromWallet;
   const fromAmount = route.params?.amount;
@@ -84,7 +88,11 @@ const BuyCryptoRoot: React.FC<
   const [buyCryptoSupportedCoins, setbuyCryptoSupportedCoins] = useState([
     ...new Set([...simplexSupportedCoins, ...wyreSupportedCoins]),
   ]);
-  const fiatCurrency = 'USD';
+  const fiatCurrency = getAvailableFiatCurrencies().includes(
+    defaultAltCurrency.isoCode,
+  )
+    ? defaultAltCurrency.isoCode
+    : 'USD';
 
   const showModal = (id: string) => {
     switch (id) {
@@ -257,7 +265,7 @@ const BuyCryptoRoot: React.FC<
           {
             selectedWallet: selectedWallet?.currencyAbbreviation.toUpperCase(),
             linkedWalletName: linkedWalletName
-              ? '(' + linkedWalletName + ') '
+              ? '(' + linkedWalletName + ')'
               : ' ',
           },
         ),
@@ -477,7 +485,7 @@ const BuyCryptoRoot: React.FC<
           <ActionsContainer>
             <SelectedOptionContainer>
               <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
-                USD
+                {fiatCurrency}
               </SelectedOptionText>
             </SelectedOptionContainer>
             <SelectedOptionCol>
@@ -507,7 +515,7 @@ const BuyCryptoRoot: React.FC<
                   style={{color: White}}
                   numberOfLines={1}
                   ellipsizeMode={'tail'}>
-                  t{'Select Destination'}
+                  {t('Select Destination')}
                 </SelectedOptionText>
                 <ArrowContainer>
                   <SelectorArrowDown

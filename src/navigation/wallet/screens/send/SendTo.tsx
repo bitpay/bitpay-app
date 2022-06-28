@@ -19,8 +19,12 @@ import {
 import {RouteProp} from '@react-navigation/core';
 import {WalletScreens, WalletStackParamList} from '../../WalletStack';
 import {Effect, RootState} from '../../../../store';
-import {formatFiatAmount, sleep} from '../../../../utils/helper-methods';
-import {Key} from '../../../../store/wallet/wallet.models';
+import {
+  convertToFiat,
+  formatFiatAmount,
+  sleep,
+} from '../../../../utils/helper-methods';
+import {Key, Rates} from '../../../../store/wallet/wallet.models';
 import debounce from 'lodash.debounce';
 import {
   CheckIfLegacyBCH,
@@ -51,6 +55,7 @@ import {
 } from '../../../../store/app/app.actions';
 import {Currencies} from '../../../../constants/currencies';
 import {
+  AppDispatch,
   useAppDispatch,
   useAppSelector,
   useLogger,
@@ -71,6 +76,7 @@ import {GetChain} from '../../../../store/wallet/utils/currency';
 import {goToAmount, incomingData} from '../../../../store/scan/scan.effects';
 import {useTranslation} from 'react-i18next';
 import SettingsContactRow from '../../../../components/list/SettingsContactRow';
+import {toFiat} from '../../../../store/wallet/utils/wallet';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -130,6 +136,8 @@ const BuildKeyWalletRow = (
   currentNetwork: string,
   defaultAltCurrencyIsoCode: string,
   searchInput: string,
+  rates: Rates,
+  dispatch: AppDispatch,
 ) => {
   let filteredKeys: KeyWalletsRowProps<KeyWallet>[] = [];
   Object.entries(keys).forEach(([key, value]) => {
@@ -147,6 +155,7 @@ const BuildKeyWalletRow = (
       .map(wallet => {
         const {
           balance,
+          hideWallet,
           currencyAbbreviation,
           credentials: {network, walletName: fallbackName},
           walletName,
@@ -156,7 +165,18 @@ const BuildKeyWalletRow = (
           cryptoBalance: balance.crypto,
           cryptoLockedBalance: '',
           fiatBalance: formatFiatAmount(
-            balance.fiat,
+            convertToFiat(
+              dispatch(
+                toFiat(
+                  balance.sat,
+                  defaultAltCurrencyIsoCode,
+                  currencyAbbreviation,
+                  rates,
+                ),
+              ),
+              hideWallet,
+              network,
+            ),
             defaultAltCurrencyIsoCode,
           ),
           fiatLockedBalance: '',
@@ -181,7 +201,7 @@ const SendTo = () => {
   const logger = useLogger();
   const route = useRoute<RouteProp<WalletStackParamList, 'SendTo'>>();
 
-  const keys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
+  const {keys, rates} = useAppSelector(({WALLET}: RootState) => WALLET);
   const allContacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const theme = useTheme();
@@ -209,6 +229,8 @@ const SendTo = () => {
     network,
     defaultAltCurrency.isoCode,
     searchInput,
+    rates,
+    dispatch,
   );
 
   const contacts = allContacts.filter(

@@ -182,6 +182,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const [isTestnet, setIsTestnet] = useState(false);
   const [singleAddress, setSingleAddress] = useState(false);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const rates = useAppSelector(({WALLET}) => WALLET.rates);
   const [customTokenAddress, setCustomTokenAddress] = useState<
     string | undefined
   >('');
@@ -224,7 +225,12 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const UIFormattedEthWallets = useMemo(
     () =>
       ethWallets.map(wallet =>
-        buildUIFormattedWallet(wallet, defaultAltCurrency.isoCode),
+        buildUIFormattedWallet(
+          wallet,
+          defaultAltCurrency.isoCode,
+          rates,
+          dispatch,
+        ),
       ),
     [],
   );

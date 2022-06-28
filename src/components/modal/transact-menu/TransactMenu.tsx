@@ -115,6 +115,7 @@ const TransactModal = () => {
             },
             opts: {
               hideSendMax: true,
+              context: 'buyCrypto',
             },
           },
         });
