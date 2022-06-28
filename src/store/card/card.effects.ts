@@ -131,7 +131,10 @@ export const startFetchOverview =
   async (dispatch, getState) => {
     try {
       dispatch(
-        AppActions.showOnGoingProcessModal(OnGoingProcessMessages.LOADING),
+        AppActions.showOnGoingProcessModal(
+          // t('Loading')
+          t(OnGoingProcessMessages.LOADING),
+        ),
       );
       dispatch(CardActions.updateFetchOverviewStatus(id, 'loading'));
 
@@ -234,7 +237,10 @@ export const startFetchSettledTransactions =
   async (dispatch, getState) => {
     try {
       dispatch(
-        AppActions.showOnGoingProcessModal(OnGoingProcessMessages.LOADING),
+        AppActions.showOnGoingProcessModal(
+          // t('Loading')
+          t(OnGoingProcessMessages.LOADING),
+        ),
       );
 
       const {APP, BITPAY_ID, CARD} = getState();

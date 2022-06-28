@@ -402,7 +402,10 @@ const RecoveryPhrase = () => {
   ): Promise<void> => {
     try {
       await dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.IMPORTING),
+        startOnGoingProcessModal(
+          // t('Importing')
+          t(OnGoingProcessMessages.IMPORTING),
+        ),
       );
       const key = !derivationPathEnabled
         ? ((await dispatch<any>(startImportMnemonic(importData, opts))) as Key)
@@ -476,7 +479,10 @@ const RecoveryPhrase = () => {
       }
 
       await dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.CREATING_KEY),
+        startOnGoingProcessModal(
+          // t('Creating Key')
+          t(OnGoingProcessMessages.CREATING_KEY),
+        ),
       );
 
       const key = (await dispatch<any>(startCreateKeyWithOpts(keyOpts))) as Key;

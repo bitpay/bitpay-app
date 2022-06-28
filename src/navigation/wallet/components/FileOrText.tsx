@@ -92,7 +92,10 @@ const FileOrText = () => {
   ) => {
     try {
       await dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.IMPORTING),
+        startOnGoingProcessModal(
+          // t('Importing')
+          t(OnGoingProcessMessages.IMPORTING),
+        ),
       );
       // @ts-ignore
       const key = await dispatch<Key>(startImportFile(decryptBackupText, opts));

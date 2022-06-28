@@ -58,7 +58,12 @@ const DeleteKey = () => {
   const startDeleteKey = async () => {
     setIsVisible(false);
     await sleep(500);
-    dispatch(startOnGoingProcessModal(OnGoingProcessMessages.DELETING_KEY));
+    dispatch(
+      startOnGoingProcessModal(
+        // t('Deleting Key')
+        t(OnGoingProcessMessages.DELETING_KEY),
+      ),
+    );
     await sleep(300);
     dispatch(deleteKey({keyId}));
     dispatch(

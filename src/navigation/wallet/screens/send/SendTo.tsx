@@ -315,7 +315,8 @@ const SendTo = () => {
         const invoiceUrl = GetPayProUrl(text);
         dispatch(
           startOnGoingProcessModal(
-            OnGoingProcessMessages.FETCHING_PAYMENT_OPTIONS,
+            //  t('Fetching payment options...')
+            t(OnGoingProcessMessages.FETCHING_PAYMENT_OPTIONS),
           ),
         );
 
@@ -379,7 +380,10 @@ const SendTo = () => {
 
       if (!address) {
         dispatch(
-          startOnGoingProcessModal(OnGoingProcessMessages.GENERATING_ADDRESS),
+          startOnGoingProcessModal(
+            // t('Generating Address')
+            t(OnGoingProcessMessages.GENERATING_ADDRESS),
+          ),
         );
         address = await dispatch<Promise<string>>(
           createWalletAddress({wallet: selectedWallet, newAddress: false}),

@@ -128,7 +128,8 @@ export default ({
                         await sleep(500);
                         dispatch(
                           showOnGoingProcessModal(
-                            OnGoingProcessMessages.LOADING,
+                            //  t('Loading')
+                            t(OnGoingProcessMessages.LOADING),
                           ),
                         );
                         dispatch(walletConnectKillSession(peerId));

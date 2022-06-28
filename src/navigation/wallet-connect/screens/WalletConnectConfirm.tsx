@@ -115,7 +115,10 @@ const WalletConnectConfirm = () => {
   const approveCallRequest = async () => {
     try {
       dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT),
+        startOnGoingProcessModal(
+          // t('Sending Payment')
+          t(OnGoingProcessMessages.SENDING_PAYMENT),
+        ),
       );
       const broadcastedTx = (await dispatch<any>(
         startSendPayment({txp, key, wallet, recipient}),
@@ -172,7 +175,10 @@ const WalletConnectConfirm = () => {
     haptic('impactLight');
     try {
       dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.REJECTING_CALL_REQUEST),
+        startOnGoingProcessModal(
+          // t('Rejecting Call Request')
+          t(OnGoingProcessMessages.REJECTING_CALL_REQUEST),
+        ),
       );
       const response = {
         id: request?.payload.id,
@@ -219,7 +225,12 @@ const WalletConnectConfirm = () => {
 
   const updateTxProposal = async (newOpts: any) => {
     try {
-      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.UPDATING_TXP));
+      dispatch(
+        startOnGoingProcessModal(
+          // t('Updating Transaction')
+          t(OnGoingProcessMessages.UPDATING_TXP),
+        ),
+      );
       const {txDetails: _txDetails, txp: newTxp} = await dispatch(
         createProposalAndBuildTxDetails({
           wallet,

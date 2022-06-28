@@ -230,7 +230,10 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
               ) as Array<SupportedCurrencies>;
 
               await dispatch(
-                startOnGoingProcessModal(OnGoingProcessMessages.CREATING_KEY),
+                startOnGoingProcessModal(
+                  // t('Creating Key')
+                  t(OnGoingProcessMessages.CREATING_KEY),
+                ),
               );
               const key = (await dispatch<any>(
                 startCreateKey(currencies),

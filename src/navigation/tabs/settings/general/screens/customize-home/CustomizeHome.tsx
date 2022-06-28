@@ -119,7 +119,10 @@ const CustomizeHome = () => {
           disabled={!dirty}
           onPress={async () => {
             dispatch(
-              showOnGoingProcessModal(OnGoingProcessMessages.SAVING_LAYOUT),
+              showOnGoingProcessModal(
+                // t('Saving Layout')
+                t(OnGoingProcessMessages.SAVING_LAYOUT),
+              ),
             );
             await sleep(1000);
             const list = [...visibleList, ...hiddenList].map(({key, show}) => ({

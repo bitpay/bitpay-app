@@ -253,7 +253,10 @@ const CreateMultisig = () => {
         }
 
         await dispatch(
-          startOnGoingProcessModal(OnGoingProcessMessages.ADDING_WALLET),
+          startOnGoingProcessModal(
+            // t('Adding Wallet')
+            t(OnGoingProcessMessages.ADDING_WALLET),
+          ),
         );
         const wallet = (await dispatch<any>(
           addWalletMultisig({
@@ -323,7 +326,10 @@ const CreateMultisig = () => {
         );
       } else {
         await dispatch(
-          startOnGoingProcessModal(OnGoingProcessMessages.CREATING_KEY),
+          startOnGoingProcessModal(
+            // t('Creating Key')
+            t(OnGoingProcessMessages.CREATING_KEY),
+          ),
         );
         const multisigKey = (await dispatch<any>(
           startCreateKeyMultisig(opts),
@@ -376,9 +382,9 @@ const CreateMultisig = () => {
     <ScrollViewContainer>
       <MultisigContainer>
         <Paragraph>
-          {
-            "Multisig wallets require multisig devices to set up. It takes longer to complete but it's the recommended security configuration for long term storage."
-          }
+          {t(
+            "Multisig wallets require multisig devices to set up. It takes longer to complete but it's the recommended security configuration for long term storage.",
+          )}
         </Paragraph>
 
         <InputContainer>
