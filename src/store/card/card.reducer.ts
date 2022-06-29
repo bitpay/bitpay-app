@@ -1,6 +1,6 @@
 import {Network} from '../../constants';
 import {ProviderConfig} from '../../constants/config.card';
-import {isInvalidCardStatus} from '../../utils/card';
+import {isInvalidCard} from '../../utils/card';
 import {
   BitPayIdActionType,
   BitPayIdActionTypes,
@@ -149,7 +149,7 @@ export const cardReducer = (
       const filteredCards = (action.payload.cards || []).filter(card => {
         const options = ProviderConfig[card.provider];
 
-        return options.displayInApp && !isInvalidCardStatus(card);
+        return options.displayInApp && !isInvalidCard(card);
       });
 
       return {
@@ -168,7 +168,7 @@ export const cardReducer = (
       const filteredCards = (action.payload.cards || []).filter(card => {
         const options = ProviderConfig[card.provider];
 
-        return options.displayInApp && !isInvalidCardStatus(card);
+        return options.displayInApp && !isInvalidCard(card);
       });
 
       return {

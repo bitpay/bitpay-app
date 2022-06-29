@@ -25,8 +25,13 @@ const invalidStatusMap: Record<string, boolean> = {
   stolen: true,
   canceled: true,
 };
-export const isInvalidCardStatus = (card: Card) => {
-  return invalidStatusMap[card?.status] || false;
+/**
+ * Checks whether the card should be persisted in the app based on disabled flag and card status.
+ * @param card Card to check.
+ * @returns true if card is disabled or lost/stolen/canceledd
+ */
+export const isInvalidCard = (card: Card) => {
+  return card?.disabled || invalidStatusMap[card?.status] || false;
 };
 
 export const isActivationRequired = (card: Card) => {
