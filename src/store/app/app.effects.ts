@@ -69,7 +69,7 @@ const OFFERS_AND_PROMOTIONS_GROUP_ID = __DEV__
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     dispatch(LogActions.clear());
-    dispatch(LogActions.info('Initializing app...'));
+    dispatch(LogActions.info(`Initializing app (${__DEV__ ? 'D' : 'P'})...`));
 
     await dispatch(startWalletStoreInit());
 
