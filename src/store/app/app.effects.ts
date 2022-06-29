@@ -455,10 +455,13 @@ export const logSegmentEvent =
     includeAppUser: boolean = false,
   ): Effect<void> =>
   (_dispatch, getState) => {
+    // TODO: always include userId if available?
     if (includeAppUser) {
       const {BITPAY_ID, APP} = getState();
       const user = BITPAY_ID.user[APP.network];
-      eventProperties.appUser = user?.eid || '';
+      eventProperties.userId = user?.eid || '';
+    } else {
+      eventProperties.userId = '';
     }
 
     const eventOptions: Options = {
