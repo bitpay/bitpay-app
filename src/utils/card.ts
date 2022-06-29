@@ -20,6 +20,15 @@ export const getCardCurrencyColorPalette = (
   return config.palette;
 };
 
+const invalidStatusMap: Record<string, boolean> = {
+  lost: true,
+  stolen: true,
+  canceled: true,
+};
+export const isInvalidCardStatus = (card: Card) => {
+  return invalidStatusMap[card?.status] || false;
+};
+
 export const isActivationRequired = (card: Card) => {
   const {provider} = card;
 

@@ -1,5 +1,6 @@
 import {Network} from '../../constants';
-import {CardProvider} from '../../constants/card';
+import {ProviderConfig} from '../../constants/config.card';
+import {isInvalidCardStatus} from '../../utils/card';
 import {
   BitPayIdActionType,
   BitPayIdActionTypes,
@@ -145,15 +146,17 @@ export const cardReducer = (
         {} as {[id: string]: number},
       );
 
-      const filterFirstViewCards = (action.payload.cards || []).filter(
-        c => c.provider !== CardProvider.firstView,
-      );
+      const filteredCards = (action.payload.cards || []).filter(card => {
+        const options = ProviderConfig[card.provider];
+
+        return options.displayInApp && !isInvalidCardStatus(card);
+      });
 
       return {
         ...state,
         cards: {
           ...state.cards,
-          [action.payload.network]: filterFirstViewCards,
+          [action.payload.network]: filteredCards,
         },
         balances: {
           ...state.balances,
@@ -162,16 +165,18 @@ export const cardReducer = (
       };
     }
     case CardActionTypes.SUCCESS_FETCH_CARDS: {
-      const filterFirstViewCards = (action.payload.cards || []).filter(
-        c => c.provider !== CardProvider.firstView,
-      );
+      const filteredCards = (action.payload.cards || []).filter(card => {
+        const options = ProviderConfig[card.provider];
+
+        return options.displayInApp && !isInvalidCardStatus(card);
+      });
 
       return {
         ...state,
         fetchCardsStatus: 'success',
         cards: {
           ...state.cards,
-          [action.payload.network]: filterFirstViewCards,
+          [action.payload.network]: filteredCards,
         },
       };
     }
