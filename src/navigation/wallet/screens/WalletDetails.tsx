@@ -799,6 +799,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   }, []);
 
   const keyExtractor = useCallback(item => item.txid, []);
+  const pendingTxpsKeyExtractor = useCallback(item => item.id, []);
 
   const getItemLayout = useCallback(
     (data, index) => ({
@@ -1017,7 +1018,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
               <FlatList
                 contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
                 data={pendingTxps} // TODO use needActionPendingTxps
-                keyExtractor={keyExtractor}
+                keyExtractor={pendingTxpsKeyExtractor}
                 renderItem={renderTxp}
               />
 
