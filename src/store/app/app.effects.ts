@@ -81,8 +81,13 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     }
 
     // init analytics -> post onboarding or migration
+    let analyticsSetupComplete: Promise<any>;
     if (onboardingCompleted) {
-      dispatch(askForTrackingPermissionAndEnableSdks(true));
+      analyticsSetupComplete = dispatch(
+        askForTrackingPermissionAndEnableSdks(true),
+      );
+    } else {
+      analyticsSetupComplete = Promise.resolve();
     }
 
     if (!migrationComplete) {
@@ -130,6 +135,11 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
         }
         await dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
         dispatch(CardEffects.startCardStoreInit(data.user));
+        analyticsSetupComplete.then(() => {
+          const {eid, email, name} = data.user.basicInfo;
+
+          return dispatch(analyticsIdentify(eid, {email, name}));
+        });
       } catch (err: any) {
         if (isAxiosError(err)) {
           dispatch(LogActions.error(`${err.name}: ${err.message}`));
@@ -368,7 +378,7 @@ export const openUrlWithInAppBrowser =
   };
 
 export const askForTrackingPermissionAndEnableSdks =
-  (appInit?: boolean): Effect<Promise<void>> =>
+  (appInit: boolean = false): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     const trackingStatus = await requestTrackingPermission();
 
@@ -404,8 +414,10 @@ export const askForTrackingPermissionAndEnableSdks =
             trackAdvertising: true,
           },
         });
+
         const {advertisingId} = await AdID.getAdvertisingId();
         analytics.setIDFA(advertisingId);
+
         if (appInit) {
           const {appFirstOpenData} = getState().APP;
 
@@ -470,6 +482,26 @@ export const logSegmentEvent =
         );
         break;
     }
+  };
+
+/**
+ * Makes a call to identify a user through the analytics SDK.
+ *
+ * @param user database ID (or email address) for this user.
+ * If you don't have a userId but want to record traits, you should pass nil.
+ * For more information on how we generate the UUID and Apple's policies on IDs, see https://segment.io/libraries/ios#ids
+ * @param traits A dictionary of traits you know about the user. Things like: email, name, plan, etc.
+ */
+export const analyticsIdentify =
+  (user: string | null, traits?: JsonMap): Effect<Promise<void>> =>
+  () => {
+    if (!__DEV__) {
+      const options: Options = {};
+
+      return analytics.identify(user, traits, options);
+    }
+
+    return Promise.resolve();
   };
 
 export const subscribePushNotifications =
