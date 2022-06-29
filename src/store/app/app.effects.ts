@@ -81,13 +81,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     }
 
     // init analytics -> post onboarding or migration
-    let analyticsSetupComplete: Promise<any>;
     if (onboardingCompleted) {
-      analyticsSetupComplete = dispatch(
-        askForTrackingPermissionAndEnableSdks(true),
-      );
-    } else {
-      analyticsSetupComplete = Promise.resolve();
+      dispatch(askForTrackingPermissionAndEnableSdks(true));
     }
 
     if (!migrationComplete) {
@@ -135,11 +130,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
         }
         await dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
         dispatch(CardEffects.startCardStoreInit(data.user));
-        analyticsSetupComplete.then(() => {
-          const {eid, email, name} = data.user.basicInfo;
-
-          return dispatch(analyticsIdentify(eid, {email, name}));
-        });
       } catch (err: any) {
         if (isAxiosError(err)) {
           dispatch(LogActions.error(`${err.name}: ${err.message}`));
