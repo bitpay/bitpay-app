@@ -37,6 +37,7 @@ import {Key, Token, Wallet} from '../../../store/wallet/wallet.models';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
 import {
+  logSegmentEvent,
   openUrlWithInAppBrowser,
   startOnGoingProcessModal,
 } from '../../../store/app/app.effects';
@@ -319,6 +320,18 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
         startOnGoingProcessModal(
           // t('Adding Wallet')
           t(OnGoingProcessMessages.ADDING_WALLET),
+        ),
+      );
+
+      dispatch(
+        logSegmentEvent(
+          'track',
+          'Create Basic Wallet success',
+          {
+            coin: currency,
+            isErc20Token: !!isToken,
+          },
+          true,
         ),
       );
 

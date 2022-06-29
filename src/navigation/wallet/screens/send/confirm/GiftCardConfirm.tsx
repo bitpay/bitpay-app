@@ -443,17 +443,6 @@ const Confirm = () => {
               try {
                 await sendPayment();
                 await redeemGiftCardAndNavigateToGiftCardDetails();
-                dispatch(
-                  logSegmentEvent(
-                    'track',
-                    'Purchased Gift Card',
-                    {
-                      amount: amount,
-                      brand: cardConfig.name,
-                    },
-                    true,
-                  ),
-                );
               } catch (err: any) {
                 dispatch(
                   ShopActions.updatedGiftCardStatus({
