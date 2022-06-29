@@ -110,7 +110,10 @@ const CoinbaseWithdrawConfirm = () => {
         currency: currency,
       };
       dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT),
+        startOnGoingProcessModal(
+          // t('Sending Payment')
+          t(OnGoingProcessMessages.SENDING_PAYMENT),
+        ),
       );
       await sleep(400);
       dispatch(coinbaseSendTransaction(accountId, buildTx, code));

@@ -228,7 +228,10 @@ const setEthAddressNonce =
 
         if (!address) {
           dispatch(
-            startOnGoingProcessModal(OnGoingProcessMessages.GENERATING_ADDRESS),
+            startOnGoingProcessModal(
+              // t('Generating Address')
+              t(OnGoingProcessMessages.GENERATING_ADDRESS),
+            ),
           );
           address = await dispatch<Promise<string>>(
             createWalletAddress({wallet: nonceWallet, newAddress: false}),

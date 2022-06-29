@@ -316,7 +316,10 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       navigation.popToTop();
 
       await dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.ADDING_WALLET),
+        startOnGoingProcessModal(
+          // t('Adding Wallet')
+          t(OnGoingProcessMessages.ADDING_WALLET),
+        ),
       );
 
       // adds wallet and binds to key obj - creates eth wallet if needed

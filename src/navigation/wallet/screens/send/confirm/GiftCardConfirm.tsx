@@ -159,7 +159,10 @@ const Confirm = () => {
     transactionCurrency: string;
   }) => {
     dispatch(
-      startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
+      startOnGoingProcessModal(
+        // t('Fetching payment information...')
+        t(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
+      ),
     );
     dispatch(ShopActions.deletedUnsoldGiftCards());
     const invoiceCreationParams = {
@@ -260,7 +263,12 @@ const Confirm = () => {
   };
 
   const sendPayment = async (twoFactorCode?: string) => {
-    dispatch(startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT));
+    dispatch(
+      startOnGoingProcessModal(
+        // t('Sending Payment')
+        t(OnGoingProcessMessages.SENDING_PAYMENT),
+      ),
+    );
     dispatch(
       ShopActions.updatedGiftCardStatus({
         invoiceId: invoice!.id,
@@ -280,7 +288,10 @@ const Confirm = () => {
 
   const redeemGiftCardAndNavigateToGiftCardDetails = async () => {
     dispatch(
-      startOnGoingProcessModal(OnGoingProcessMessages.GENERATING_GIFT_CARD),
+      startOnGoingProcessModal(
+        // t('Generating Gift Card')
+        t(OnGoingProcessMessages.GENERATING_GIFT_CARD),
+      ),
     );
     const giftCard = await dispatch(
       ShopEffects.startRedeemGiftCard(invoice!.id),

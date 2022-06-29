@@ -117,7 +117,10 @@ const WalletConnectHome = () => {
                 dispatch(dismissBottomNotificationModal());
                 await sleep(500);
                 dispatch(
-                  showOnGoingProcessModal(OnGoingProcessMessages.LOADING),
+                  showOnGoingProcessModal(
+                    // t('Loading')
+                    t(OnGoingProcessMessages.LOADING),
+                  ),
                 );
 
                 const {

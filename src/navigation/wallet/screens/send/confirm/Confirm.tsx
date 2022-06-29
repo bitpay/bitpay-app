@@ -224,7 +224,12 @@ const Confirm = () => {
 
   const updateTxProposal = async (newOpts: any) => {
     try {
-      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.UPDATING_TXP));
+      dispatch(
+        startOnGoingProcessModal(
+          // t('Updating Transaction')
+          t(OnGoingProcessMessages.UPDATING_TXP),
+        ),
+      );
       const {txDetails: _txDetails, txp: newTxp} = await dispatch(
         createProposalAndBuildTxDetails({
           wallet,
@@ -412,7 +417,10 @@ const Confirm = () => {
         onSwipeComplete={async () => {
           try {
             dispatch(
-              startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT),
+              startOnGoingProcessModal(
+                // t('Sending Payment')
+                t(OnGoingProcessMessages.SENDING_PAYMENT),
+              ),
             );
             await sleep(400);
             await dispatch(startSendPayment({txp, key, wallet, recipient}));

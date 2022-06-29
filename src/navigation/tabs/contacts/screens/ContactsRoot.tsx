@@ -150,7 +150,9 @@ const ContactsRoot: React.FC = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => {
-        return contacts.length ? <HeaderTitle>My Contacts</HeaderTitle> : null;
+        return contacts.length ? (
+          <HeaderTitle>{t('My Contacts')}</HeaderTitle>
+        ) : null;
       },
     });
   }, [navigation, contacts]);

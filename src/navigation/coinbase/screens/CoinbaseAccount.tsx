@@ -320,7 +320,10 @@ const CoinbaseAccount = ({
       return;
     }
     dispatch(
-      showOnGoingProcessModal(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
+      showOnGoingProcessModal(
+        // t('Fetching data from Coinbase...')
+        t(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
+      ),
     );
     dispatch(
       logSegmentEvent(
