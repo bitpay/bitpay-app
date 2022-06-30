@@ -226,8 +226,8 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     ({CARD}) => CARD.settledTransactions[activeCard.id],
   );
   // only auto-initialize once per mount
-  const [autoInitState, setAutoInitState] = useState(
-    {} as {[k: string]: boolean},
+  const [autoInitState, setAutoInitState] = useState<Record<string, boolean>>(
+    {},
   );
   const uninitializedId = autoInitState[activeCard.id] ? null : activeCard.id;
   const isLoadingInitial = fetchOverviewStatus === 'loading' && !pageData;
