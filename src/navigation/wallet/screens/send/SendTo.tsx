@@ -72,11 +72,14 @@ import {
   TranslateToBchCashAddress,
 } from '../../../../store/wallet/effects/address/address';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
-import {GetChain} from '../../../../store/wallet/utils/currency';
+import {GetChain, IsUtxoCoin} from '../../../../store/wallet/utils/currency';
 import {goToAmount, incomingData} from '../../../../store/scan/scan.effects';
 import {useTranslation} from 'react-i18next';
 import SettingsContactRow from '../../../../components/list/SettingsContactRow';
 import {toFiat} from '../../../../store/wallet/utils/wallet';
+import Settings from '../../../../components/settings/Settings';
+import OptionsSheet, {Option} from '../../components/OptionsSheet';
+import Icons from '../../components/WalletIcons';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -111,11 +114,11 @@ const PasteClipboardContainer = styled.TouchableOpacity`
   padding: 10px;
 `;
 
-const SendContactRow = styled.View`
+export const SendContactRow = styled.View`
   padding: 10px 0px;
 `;
 
-const ContactTitleContainer = styled.View`
+export const ContactTitleContainer = styled.View`
   flex-direction: row;
   align-items: center;
   padding-bottom: 10px;
@@ -124,12 +127,12 @@ const ContactTitleContainer = styled.View`
   margin-bottom: 10px;
 `;
 
-const ContactTitle = styled(BaseText)`
+export const ContactTitle = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   margin-left: 10px;
 `;
 
-const BuildKeyWalletRow = (
+export const BuildKeyWalletRow = (
   keys: {[key in string]: Key},
   currentWalletId: string,
   currentCurrencyAbbreviation: string,
@@ -208,20 +211,48 @@ const SendTo = () => {
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
   const [searchInput, setSearchInput] = useState('');
   const [clipboardData, setClipboardData] = useState('');
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerTitle: () => <HeaderTitle>{t('Send To')}</HeaderTitle>,
-    });
-  });
+  const [showWalletOptions, setShowWalletOptions] = useState(false);
 
   const {wallet} = route.params;
-
   const {
     currencyAbbreviation,
     id,
     credentials: {network},
   } = wallet;
+
+  const isUtxo = IsUtxoCoin(wallet?.currencyAbbreviation);
+
+  const selectInputOption: Option = {
+    img: <Icons.SelectInputs />,
+    title: t('Select Inputs for this Transaction'),
+    description: t("Choose which inputs you'd like to use to send crypto."),
+    onPress: () => {
+      navigation.navigate('Wallet', {
+        screen: 'SendToOptions',
+        params: {
+          title: t('Select Inputs'),
+          wallet,
+        },
+      });
+    },
+  };
+
+  const assetOptions: Array<Option> = isUtxo ? [selectInputOption] : [];
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => <HeaderTitle>{t('Send To')}</HeaderTitle>,
+      headerRight: () =>
+        assetOptions.length ? (
+          <Settings
+            onPress={() => {
+              setShowWalletOptions(true);
+            }}
+          />
+        ) : null,
+    });
+  });
+
   const keyWallets: KeyWalletsRowProps<KeyWallet>[] = BuildKeyWalletRow(
     keys,
     id,
@@ -506,6 +537,12 @@ const SendTo = () => {
             })}
           </>
         ) : null}
+
+        <OptionsSheet
+          isVisible={showWalletOptions}
+          closeModal={() => setShowWalletOptions(false)}
+          options={assetOptions}
+        />
 
         <View style={{marginTop: 10}}>
           <KeyWalletsRow
