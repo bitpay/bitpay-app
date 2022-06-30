@@ -129,11 +129,6 @@ const Confirm = () => {
     [dispatch, keys],
   );
 
-  const reshowWalletSelector = async () => {
-    await sleep(400);
-    setWalletSelectorVisible(true);
-  };
-
   const getTransactionCurrency = () => {
     return wallet
       ? wallet.currencyAbbreviation.toUpperCase()
@@ -147,7 +142,10 @@ const Confirm = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const openWalletSelector = () => {
+  const openWalletSelector = async (delay?: number) => {
+    if (delay) {
+      await sleep(delay);
+    }
     setWalletSelectorVisible(true);
   };
 
@@ -198,7 +196,7 @@ const Confirm = () => {
     showError({
       defaultErrorMessage:
         err.response?.data?.message || err.message || errorConfig.message,
-      onDismiss: () => reshowWalletSelector(),
+      onDismiss: () => openWalletSelector(400),
     });
   };
 
@@ -364,7 +362,7 @@ const Confirm = () => {
     showError({
       error,
       defaultErrorMessage: t('Could not send transaction'),
-      onDismiss: () => reshowWalletSelector(),
+      onDismiss: () => openWalletSelector(400),
     });
   };
 
@@ -392,7 +390,7 @@ const Confirm = () => {
   };
 
   useEffect(() => {
-    openWalletSelector();
+    openWalletSelector(100);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
