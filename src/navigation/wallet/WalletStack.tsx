@@ -68,6 +68,8 @@ import ClearEncryptPassword, {
 } from './screens/ClearEncryptPassword';
 import PayProConfirmTwoFactor from './screens/send/confirm/PayProConfirmTwoFactor';
 import {useTranslation} from 'react-i18next';
+import SendToOptions, {SendToOptionsParamList} from './screens/SendToOptions';
+import SelectInputs, {SelectInputsParamList} from './screens/SelectInputs';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -127,6 +129,8 @@ export type WalletStackParamList = {
   AllAddresses: AllAddressesParamList;
   PriceCharts: PriceChartsParamList;
   ClearEncryptPassword: ClearEncryptPasswordParamList;
+  SendToOptions: SendToOptionsParamList;
+  SelectInputs: SelectInputsParamList;
 };
 
 export enum WalletScreens {
@@ -171,6 +175,8 @@ export enum WalletScreens {
   ALL_ADDRESSES = 'AllAddresses',
   PRICE_CHARTS = 'PriceCharts',
   CLEAR_ENCRYPT_PASSWORD = 'ClearEncryptPassword',
+  SEND_TO_OPTIONS = 'SendToOptions',
+  SELECT_INPUTS = 'SelectInputs',
 }
 
 const Wallet = createStackNavigator<WalletStackParamList>();
@@ -400,6 +406,14 @@ const WalletStack = () => {
           }}
           name={WalletScreens.CLEAR_ENCRYPT_PASSWORD}
           component={ClearEncryptPassword}
+        />
+        <Wallet.Screen
+          name={WalletScreens.SEND_TO_OPTIONS}
+          component={SendToOptions}
+        />
+        <Wallet.Screen
+          name={WalletScreens.SELECT_INPUTS}
+          component={SelectInputs}
         />
       </Wallet.Navigator>
     </>
