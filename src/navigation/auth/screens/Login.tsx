@@ -118,12 +118,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
     }
 
     if (loginStatus === 'twoFactorPending') {
-      navigation.navigate('TwoFactorAuthentication');
+      navigation.navigate('TwoFactorAuthentication', {onLoginSuccess});
       return;
     }
 
     if (loginStatus === 'emailAuthenticationPending') {
-      navigation.navigate('EmailAuthentication');
+      navigation.navigate('EmailAuthentication', {onLoginSuccess});
       return;
     }
   }, [dispatch, onLoginSuccess, navigation, loginStatus, loginError, t]);
