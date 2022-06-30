@@ -3,6 +3,7 @@ import {
   Rates,
   Wallet,
   TransactionProposal,
+  Utxo,
 } from '../../wallet.models';
 import {FormatAmountStr} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
@@ -974,7 +975,7 @@ const GetActionsList = (transaction: any, wallet: Wallet) => {
   return actionList.reverse();
 };
 
-export const GetUtxos = (wallet: Wallet): Promise<any> => {
+export const GetUtxos = (wallet: Wallet): Promise<Utxo[]> => {
   return new Promise((resolve, reject) => {
     wallet.getUtxos(
       {

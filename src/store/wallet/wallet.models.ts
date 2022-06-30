@@ -422,3 +422,17 @@ export interface BulkStatus {
   walletId: string;
   tokenAddress?: string;
 }
+
+export interface Utxo {
+  address: string;
+  amount: number;
+  confirmations: number;
+  locked: boolean;
+  path: string;
+  publicKeys: Array<string>;
+  satoshis: number;
+  scriptPubKey: string;
+  spent: boolean;
+  txid: string;
+  vout: number;
+}
