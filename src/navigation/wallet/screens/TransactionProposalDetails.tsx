@@ -498,7 +498,8 @@ const TransactionProposalDetails = () => {
             try {
               dispatch(
                 startOnGoingProcessModal(
-                  OnGoingProcessMessages.SENDING_PAYMENT,
+                  //  t('Sending Payment')
+                  t(OnGoingProcessMessages.SENDING_PAYMENT),
                 ),
               );
               await sleep(400);

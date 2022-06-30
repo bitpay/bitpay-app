@@ -424,7 +424,10 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
           setButtonState('loading');
         } else {
           dispatch(
-            startOnGoingProcessModal(OnGoingProcessMessages.CREATING_TXP),
+            startOnGoingProcessModal(
+              // t('Creating Transaction')
+              t(OnGoingProcessMessages.CREATING_TXP),
+            ),
           );
         }
         const {txDetails, txp} = await dispatch(

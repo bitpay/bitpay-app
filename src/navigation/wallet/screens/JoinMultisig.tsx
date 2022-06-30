@@ -118,7 +118,12 @@ const JoinMultisig = () => {
           opts.password = await dispatch(getDecryptPassword(key));
         }
 
-        dispatch(startOnGoingProcessModal(OnGoingProcessMessages.JOIN_WALLET));
+        dispatch(
+          startOnGoingProcessModal(
+            // t('Joining Wallet')
+            t(OnGoingProcessMessages.JOIN_WALLET),
+          ),
+        );
 
         const wallet = (await dispatch<any>(
           addWalletJoinMultisig({
@@ -210,7 +215,12 @@ const JoinMultisig = () => {
           },
         );
       } else {
-        dispatch(startOnGoingProcessModal(OnGoingProcessMessages.JOIN_WALLET));
+        dispatch(
+          startOnGoingProcessModal(
+            // t('Joining Wallet')
+            t(OnGoingProcessMessages.JOIN_WALLET),
+          ),
+        );
 
         const multisigKey = (await dispatch<any>(
           startJoinMultisig(opts),

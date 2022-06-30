@@ -163,7 +163,12 @@ export default ({
   const goToStartView = useCallback(
     async (wallet: Wallet, wcUri: string) => {
       try {
-        dispatch(showOnGoingProcessModal(OnGoingProcessMessages.LOADING));
+        dispatch(
+          showOnGoingProcessModal(
+            // t('Loading')
+            t(OnGoingProcessMessages.LOADING),
+          ),
+        );
         const peer = (await dispatch<any>(
           walletConnectOnSessionRequest(wcUri),
         )) as any;

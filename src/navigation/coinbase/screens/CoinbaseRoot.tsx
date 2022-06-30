@@ -80,7 +80,10 @@ const CoinbaseRoot: React.FC<CoinbaseRootScreenProps> = ({
       if (!token && code && state && tokenStatus !== 'failed') {
         await sleep(1000);
         dispatch(
-          showOnGoingProcessModal(OnGoingProcessMessages.CONNECTING_COINBASE),
+          showOnGoingProcessModal(
+            // t('Connecting with Coinbase...')
+            t(OnGoingProcessMessages.CONNECTING_COINBASE),
+          ),
         );
         await dispatch(coinbaseLinkAccount(code, state));
         // reset params to prevent re-triggering flow based on cached params when disconnecting

@@ -33,6 +33,7 @@ import NetworkPolicyPlaceholder from '../components/NetworkPolicyPlaceholder';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {updateCacheFeeLevel} from '../../../../store/wallet/wallet.actions';
 import {useTranslation} from 'react-i18next';
+import i18next from 'i18next';
 
 const NetworkFeePolicyContainer = styled.SafeAreaView`
   flex: 1;
@@ -129,7 +130,9 @@ const FeeOptions = ({
               size={20}
             />
           </CurrencyImageContainer>
-          <H4>{currencyName} Network Fee Policy</H4>
+          <H4>
+            {currencyName} {i18next.t('Network Fee Policy')}
+          </H4>
         </FeeLevelStepsHeader>
 
         <FeeLevelStepsHeaderSubTitle>

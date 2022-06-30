@@ -243,14 +243,24 @@ const PriceCharts = () => {
 
   const redrawChart = async (dateRange: DateRanges) => {
     if (cachedRates[dateRange].domain) {
-      dispatch(showOnGoingProcessModal(OnGoingProcessMessages.LOADING));
+      dispatch(
+        showOnGoingProcessModal(
+          // t('Loading')
+          t(OnGoingProcessMessages.LOADING),
+        ),
+      );
       await sleep(500);
       setDisplayData(cachedRates[dateRange]);
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
     } else {
       try {
-        dispatch(showOnGoingProcessModal(OnGoingProcessMessages.LOADING));
+        dispatch(
+          showOnGoingProcessModal(
+            // t('Loading')
+            t(OnGoingProcessMessages.LOADING),
+          ),
+        );
         await sleep(500);
         let {data, domain}: ChartDataType = await getHistoricalFiatRates(
           dateRange,
