@@ -200,7 +200,7 @@ const FileOrText = () => {
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
-                label="PASSWORD"
+                label={t('PASSWORD')}
                 placeholder={'strongPassword123'}
                 type={'password'}
                 onChangeText={onChange}

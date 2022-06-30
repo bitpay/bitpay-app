@@ -17,6 +17,13 @@ import {CardProvider} from './card';
 
 type ProviderConfigType = {
   [k in CardProvider]: {
+    /**
+     * Whether to display cards from this provider in the app. If false, any cards fetched from this provider will not be persisted in the store.
+     */
+    displayInApp: boolean;
+    /**
+     * The year BitPay started using this provider. Used as a max date range to fetch transactions.
+     */
     programStartYear: number;
     /**
      * Maximum number of days ago that we can query for transaction history.
@@ -50,6 +57,7 @@ export const CARD_WIDTH = 324;
 
 export const ProviderConfig: ProviderConfigType = {
   galileo: {
+    displayInApp: true,
     programStartYear: 2020,
     maxHistoryDateRange: 1095,
     groupEnabled: true,
@@ -96,6 +104,7 @@ export const ProviderConfig: ProviderConfigType = {
     },
   },
   firstView: {
+    displayInApp: false,
     programStartYear: 2016,
     maxHistoryDateRange: 30,
     groupEnabled: false,

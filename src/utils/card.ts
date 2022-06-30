@@ -20,6 +20,20 @@ export const getCardCurrencyColorPalette = (
   return config.palette;
 };
 
+const invalidStatusMap: Record<string, boolean> = {
+  lost: true,
+  stolen: true,
+  canceled: true,
+};
+/**
+ * Checks whether the card should be persisted in the app based on disabled flag and card status.
+ * @param card Card to check.
+ * @returns true if card is disabled or lost/stolen/canceledd
+ */
+export const isInvalidCard = (card: Card) => {
+  return card?.disabled || invalidStatusMap[card?.status] || false;
+};
+
 export const isActivationRequired = (card: Card) => {
   const {provider} = card;
 

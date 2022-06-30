@@ -13,7 +13,11 @@ import Dosh from '../../lib/dosh';
 import {isAxiosError, isRateLimitError} from '../../utils/axios';
 import {generateSalt, hashPassword} from '../../utils/password';
 import {AppActions, AppEffects} from '../app/';
-import {logSegmentEvent, startOnGoingProcessModal} from '../app/app.effects';
+import {
+  analyticsIdentify,
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../app/app.effects';
 import {CardEffects} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
@@ -440,10 +444,10 @@ const startPairAndLoadUser =
       dispatch(AppEffects.initializeBrazeContent());
       dispatch(ShopEffects.startFetchCatalog());
 
-      const {basicInfo} = data.user;
-      if (!__DEV__ && basicInfo) {
-        const {eid, email, name} = basicInfo;
-        analytics.identify(eid, {email, name});
+      if (data.user.basicInfo) {
+        const {eid, email, name} = data.user.basicInfo;
+
+        dispatch(analyticsIdentify(eid, {email, name}));
       }
     } catch (err) {
       let errMsg;

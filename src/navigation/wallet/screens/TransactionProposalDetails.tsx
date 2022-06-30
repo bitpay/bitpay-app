@@ -366,9 +366,9 @@ const TransactionProposalDetails = () => {
               {IsShared(wallet) ? (
                 <Banner
                   type={'info'}
-                  description={
-                    '* A payment proposal can be deleted if 1) you are the creator, and no other copayer has signed, or 2) 10 minutes have passed since the proposal was created.'
-                  }
+                  description={t(
+                    '* A payment proposal can be deleted if 1) you are the creator, and no other copayer has signed, or 2) 10 minutes have passed since the proposal was created.',
+                  )}
                 />
               ) : null}
               <Button
@@ -409,7 +409,7 @@ const TransactionProposalDetails = () => {
                       <H7>
                         {txs.feeFiatStr}{' '}
                         {txs.feeRateStr
-                          ? '(' + txs.feeRateStr + ' of total amount)'
+                          ? '(' + txs.feeRateStr + t(' of total amount') + ')'
                           : null}
                       </H7>
                     ) : (

@@ -22,6 +22,7 @@ import AuthFormContainer, {
 
 export type TwoFactorPairingParamList = {
   prevCode: string;
+  onLoginSuccess?: ((...args: any[]) => any) | undefined;
 };
 
 type TwoFactorPairingScreenProps = StackScreenProps<
@@ -39,7 +40,7 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
 }) => {
   const {t} = useTranslation();
   const dispatch = useDispatch();
-  const {prevCode} = route.params;
+  const {prevCode, onLoginSuccess} = route.params;
   const schema = useMemo(() => {
     return yup.object().shape({
       code: yup
@@ -82,6 +83,11 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
         resetField('code');
         dispatch(BitPayIdActions.completedPairing());
 
+        if (onLoginSuccess) {
+          onLoginSuccess();
+          return;
+        }
+
         if (parentNav?.canGoBack()) {
           parentNav.goBack();
         } else {
@@ -119,6 +125,7 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
     twoFactorPairingStatus,
     twoFactorPairingError,
     t,
+    onLoginSuccess,
   ]);
 
   const onSubmit = handleSubmit(({code}) => {

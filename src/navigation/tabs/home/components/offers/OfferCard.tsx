@@ -23,6 +23,7 @@ import {
 import {ShopTabs} from '../../../shop/ShopHome';
 import LinkCard from '../cards/LinkCard';
 import {ShopScreens} from '../../../shop/ShopStack';
+import {logSegmentEvent} from '../../../../../store/app/app.effects';
 
 interface OfferCardProps {
   contentCard: ContentCard;
@@ -125,6 +126,17 @@ const OfferCard: React.FC<OfferCardProps> = props => {
           });
         }
       }
+      dispatch(
+        logSegmentEvent(
+          'track',
+          'Clicked Shop with Crypto',
+          {
+            context: 'OfferCard',
+            merchantName: merchantName || '',
+          },
+          true,
+        ),
+      );
 
       return;
     } catch (err) {
