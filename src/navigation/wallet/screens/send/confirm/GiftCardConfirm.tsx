@@ -129,11 +129,6 @@ const Confirm = () => {
     [dispatch, keys],
   );
 
-  const reshowWalletSelector = async () => {
-    await sleep(400);
-    setWalletSelectorVisible(true);
-  };
-
   const getTransactionCurrency = () => {
     return wallet
       ? wallet.currencyAbbreviation.toUpperCase()
@@ -147,7 +142,10 @@ const Confirm = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const openWalletSelector = () => {
+  const openWalletSelector = async (delay?: number) => {
+    if (delay) {
+      await sleep(delay);
+    }
     setWalletSelectorVisible(true);
   };
 
@@ -159,7 +157,10 @@ const Confirm = () => {
     transactionCurrency: string;
   }) => {
     dispatch(
-      startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
+      startOnGoingProcessModal(
+        // t('Fetching payment information...')
+        t(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
+      ),
     );
     dispatch(ShopActions.deletedUnsoldGiftCards());
     const invoiceCreationParams = {
@@ -195,7 +196,7 @@ const Confirm = () => {
     showError({
       defaultErrorMessage:
         err.response?.data?.message || err.message || errorConfig.message,
-      onDismiss: () => reshowWalletSelector(),
+      onDismiss: () => openWalletSelector(400),
     });
   };
 
@@ -260,7 +261,12 @@ const Confirm = () => {
   };
 
   const sendPayment = async (twoFactorCode?: string) => {
-    dispatch(startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT));
+    dispatch(
+      startOnGoingProcessModal(
+        // t('Sending Payment')
+        t(OnGoingProcessMessages.SENDING_PAYMENT),
+      ),
+    );
     dispatch(
       ShopActions.updatedGiftCardStatus({
         invoiceId: invoice!.id,
@@ -280,7 +286,10 @@ const Confirm = () => {
 
   const redeemGiftCardAndNavigateToGiftCardDetails = async () => {
     dispatch(
-      startOnGoingProcessModal(OnGoingProcessMessages.GENERATING_GIFT_CARD),
+      startOnGoingProcessModal(
+        // t('Generating Gift Card')
+        t(OnGoingProcessMessages.GENERATING_GIFT_CARD),
+      ),
     );
     const giftCard = await dispatch(
       ShopEffects.startRedeemGiftCard(invoice!.id),
@@ -353,7 +362,7 @@ const Confirm = () => {
     showError({
       error,
       defaultErrorMessage: t('Could not send transaction'),
-      onDismiss: () => reshowWalletSelector(),
+      onDismiss: () => openWalletSelector(400),
     });
   };
 
@@ -381,7 +390,7 @@ const Confirm = () => {
   };
 
   useEffect(() => {
-    openWalletSelector();
+    openWalletSelector(100);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -432,17 +441,6 @@ const Confirm = () => {
               try {
                 await sendPayment();
                 await redeemGiftCardAndNavigateToGiftCardDetails();
-                dispatch(
-                  logSegmentEvent(
-                    'track',
-                    'Purchased Gift Card',
-                    {
-                      amount: amount,
-                      brand: cardConfig.name,
-                    },
-                    true,
-                  ),
-                );
               } catch (err: any) {
                 dispatch(
                   ShopActions.updatedGiftCardStatus({

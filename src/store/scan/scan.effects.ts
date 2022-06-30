@@ -169,7 +169,10 @@ const goToPayPro =
   (data: string): Effect =>
   async dispatch => {
     dispatch(
-      startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_OPTIONS),
+      startOnGoingProcessModal(
+        //  t('Fetching payment options...')
+        t(OnGoingProcessMessages.FETCHING_PAYMENT_OPTIONS),
+      ),
     );
 
     const payProUrl = GetPayProUrl(data);
@@ -193,12 +196,12 @@ const goToPayPro =
       dispatch(
         showBottomNotificationModal({
           type: 'warning',
-          title: 'Something went wrong',
+          title: t('Something went wrong'),
           message: e?.message,
           enableBackdropDismiss: true,
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {},
               primary: true,
             },
@@ -383,7 +386,12 @@ const goToConfirm =
       if (setButtonState) {
         setButtonState('loading');
       } else {
-        dispatch(startOnGoingProcessModal(OnGoingProcessMessages.CREATING_TXP));
+        dispatch(
+          startOnGoingProcessModal(
+            // t('Creating Transaction')
+            t(OnGoingProcessMessages.CREATING_TXP),
+          ),
+        );
       }
 
       const {txDetails, txp} = await dispatch(

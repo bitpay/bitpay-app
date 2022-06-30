@@ -1,7 +1,7 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {ReactElement, useMemo} from 'react';
 import {useTranslation} from 'react-i18next';
-import {View} from 'react-native';
+import {View, LayoutAnimation} from 'react-native';
 import styled from 'styled-components/native';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import Avatar from '../../../components/avatar/BitPayIdAvatar';
@@ -198,6 +198,9 @@ const SettingsHomeScreen: React.VFC<SettingsHomeProps> = ({route}) => {
             <DropdownSetting
               activeOpacity={ActiveOpacity}
               onPress={() => {
+                LayoutAnimation.configureNext(
+                  LayoutAnimation.Presets.easeInEaseOut,
+                );
                 dispatch(updateSettingsListConfig(id));
                 onPress();
               }}>

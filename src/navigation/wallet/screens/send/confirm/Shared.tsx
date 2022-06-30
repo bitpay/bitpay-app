@@ -10,7 +10,6 @@ import SendToPill from '../../../components/SendToPill';
 import {
   Column,
   Hr,
-  ImportTextInput,
   Row,
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
@@ -37,8 +36,8 @@ import {useAppDispatch} from '../../../../../utils/hooks';
 import {showNoWalletsModal} from '../../../../../store/wallet/effects/send/send';
 import Clipboard from '@react-native-community/clipboard';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
+
 import {useTranslation} from 'react-i18next';
-import {SlateDark, White} from '../../../../../styles/colors';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 // Styled
@@ -48,7 +47,6 @@ export const ConfirmContainer = styled.SafeAreaView`
 
 export const ConfirmScrollView = styled(KeyboardAwareScrollView)`
   margin-top: 20px;
-  padding: 0 ${ScreenGutter};
 `;
 
 export const HeaderTitle = styled(H6)`
@@ -87,17 +85,6 @@ export const DetailColumn = styled(Column)`
 
 export const DetailsList = styled(ScrollView)`
   padding: 0 ${ScreenGutter};
-`;
-
-const MemoInput = styled(ImportTextInput)`
-  height: 75px;
-`;
-const MemoRow = styled.View`
-  margin: 10px 0;
-`;
-const MemoHeader = styled(H7)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin: 10px 0;
 `;
 
 // Row UI
@@ -198,7 +185,7 @@ export const Fee = ({
     return (
       <>
         <Pressable disabled={!onPress} onPress={onPress}>
-          <DetailContainer>
+          <DetailContainer height={84}>
             <DetailRow>
               <H7>{t('Miner fee')}</H7>
               <DetailColumn>
@@ -263,18 +250,20 @@ export const Amount = ({
   description,
   amount,
   fiatOnly,
+  height,
   hr,
 }: {
   description: string | undefined;
   amount: TxDetailsAmount | undefined;
   fiatOnly?: boolean;
+  height?: number;
   hr?: boolean;
 }): JSX.Element | null => {
   if (amount && description) {
     const {cryptoAmount, fiatAmount} = amount;
     return (
       <>
-        <DetailContainer>
+        <DetailContainer height={height}>
           <DetailRow>
             {fiatOnly ? (
               <H7>{description}</H7>
@@ -304,11 +293,13 @@ export const Amount = ({
 export const SharedDetailRow = ({
   description,
   value,
+  height,
   hr,
   onPress,
 }: {
   description: string;
   value: number | string;
+  height?: number;
   hr?: boolean;
   onPress?: () => void;
 }): JSX.Element | null => {
@@ -322,7 +313,7 @@ export const SharedDetailRow = ({
           </DetailRow>
         </PressableDetailContainer>
       ) : (
-        <DetailContainer>
+        <DetailContainer height={height}>
           <DetailRow>
             <H7>{description}</H7>
             <H7>{value}</H7>
@@ -331,27 +322,6 @@ export const SharedDetailRow = ({
       )}
       {hr && <Hr />}
     </>
-  );
-};
-
-export const Memo = ({
-  memo,
-  onChange,
-}: {
-  memo: string;
-  onChange: (memo: string) => void;
-}) => {
-  const {t} = useTranslation();
-  return (
-    <MemoRow>
-      <MemoHeader>{t('MEMO')}</MemoHeader>
-      <MemoInput
-        multiline
-        numberOfLines={3}
-        value={memo}
-        onChangeText={text => onChange(text)}
-      />
-    </MemoRow>
   );
 };
 
@@ -403,7 +373,12 @@ export const RemainingTime = ({
   }, [computeRemainingTime, expirationTime, setDisableSwipeSendButton]);
 
   return (
-    <SharedDetailRow description={t('Expires')} value={remainingTime} hr />
+    <SharedDetailRow
+      description={t('Expires')}
+      height={60}
+      value={remainingTime}
+      hr
+    />
   );
 };
 

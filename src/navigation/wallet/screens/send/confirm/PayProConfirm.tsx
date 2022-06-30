@@ -35,7 +35,6 @@ import {
   DetailsList,
   Fee,
   Header,
-  Memo,
   RemainingTime,
   SendingFrom,
   SendingTo,
@@ -54,6 +53,7 @@ import {
 } from '../../../../../api/coinbase/coinbase.types';
 import {coinbasePayInvoice} from '../../../../../store/coinbase';
 import {useTranslation} from 'react-i18next';
+import {Memo} from './Memo';
 
 export interface PayProConfirmParamList {
   wallet?: Wallet;
@@ -115,7 +115,10 @@ const PayProConfirm = () => {
 
   const createTxp = async (selectedWallet: Wallet) => {
     dispatch(
-      startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
+      startOnGoingProcessModal(
+        // t('Fetching payment information...')
+        t(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
+      ),
     );
     try {
       const fetchedInvoice = await fetchInvoice(payProOptions.payProUrl);
@@ -199,7 +202,10 @@ const PayProConfirm = () => {
 
   const onCoinbaseAccountSelect = async (walletRowProps: WalletRowProps) => {
     dispatch(
-      startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
+      startOnGoingProcessModal(
+        // t('Fetching payment information...')
+        t(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
+      ),
     );
     const selectedCoinbaseAccount = walletRowProps.coinbaseAccount!;
     try {
@@ -231,7 +237,12 @@ const PayProConfirm = () => {
   };
 
   const sendPayment = async (twoFactorCode?: string) => {
-    dispatch(startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT));
+    dispatch(
+      startOnGoingProcessModal(
+        // t('Sending Payment')
+        t(OnGoingProcessMessages.SENDING_PAYMENT),
+      ),
+    );
     txp && wallet && recipient
       ? await dispatch(startSendPayment({txp, key, wallet, recipient}))
       : await dispatch(
@@ -348,14 +359,14 @@ const PayProConfirm = () => {
                   setDisableSwipeSendButton={setDisableSwipeSendButton}
                 />
               ) : null}
-              <Amount description={'SubTotal'} amount={subTotal} />
-              <Amount description={'Total'} amount={total} hr={!!txp} />
               {txp ? (
                 <Memo
                   memo={txp.message}
                   onChange={message => updateTxp({...txp, message})}
                 />
               ) : null}
+              <Amount description={'SubTotal'} amount={subTotal} height={83} />
+              <Amount description={'Total'} amount={total} height={83} />
             </>
           ) : null}
         </DetailsList>

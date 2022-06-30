@@ -68,7 +68,10 @@ const WyreDetails: React.FC = () => {
   useEffect(() => {
     const getWalletOrderDetails = async (orderId: string) => {
       dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.GENERAL_AWAITING),
+        startOnGoingProcessModal(
+          // t("Just a second, we're setting a few things up")
+          t(OnGoingProcessMessages.GENERAL_AWAITING),
+        ),
       );
       await sleep(400);
       const orderData = await wyreGetWalletOrderDetails(orderId);

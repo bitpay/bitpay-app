@@ -196,7 +196,10 @@ const CoinbaseSettings = () => {
   const onRefresh = async () => {
     setRefreshing(true);
     dispatch(
-      showOnGoingProcessModal(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
+      showOnGoingProcessModal(
+        // t('Fetching data from Coinbase...')
+        t(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
+      ),
     );
     await sleep(1000);
 

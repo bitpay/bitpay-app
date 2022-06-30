@@ -192,7 +192,10 @@ const KeySettings = () => {
       await sleep(500);
     }
     await dispatch(
-      startOnGoingProcessModal(OnGoingProcessMessages.SYNCING_WALLETS),
+      startOnGoingProcessModal(
+        // t('Syncing Wallets...')
+        t(OnGoingProcessMessages.SYNCING_WALLETS),
+      ),
     );
     const opts = {
       words: normalizeMnemonic(mnemonic),

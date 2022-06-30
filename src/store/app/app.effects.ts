@@ -69,7 +69,7 @@ const OFFERS_AND_PROMOTIONS_GROUP_ID = __DEV__
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     dispatch(LogActions.clear());
-    dispatch(LogActions.info('Initializing app...'));
+    dispatch(LogActions.info(`Initializing app (${__DEV__ ? 'D' : 'P'})...`));
 
     await dispatch(startWalletStoreInit());
 
@@ -368,7 +368,7 @@ export const openUrlWithInAppBrowser =
   };
 
 export const askForTrackingPermissionAndEnableSdks =
-  (appInit?: boolean): Effect<Promise<void>> =>
+  (appInit: boolean = false): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     const trackingStatus = await requestTrackingPermission();
 
@@ -404,8 +404,10 @@ export const askForTrackingPermissionAndEnableSdks =
             trackAdvertising: true,
           },
         });
+
         const {advertisingId} = await AdID.getAdvertisingId();
         analytics.setIDFA(advertisingId);
+
         if (appInit) {
           const {appFirstOpenData} = getState().APP;
 
@@ -443,10 +445,13 @@ export const logSegmentEvent =
     includeAppUser: boolean = false,
   ): Effect<void> =>
   (_dispatch, getState) => {
+    // TODO: always include userId if available?
     if (includeAppUser) {
       const {BITPAY_ID, APP} = getState();
       const user = BITPAY_ID.user[APP.network];
-      eventProperties.appUser = user?.eid || '';
+      eventProperties.userId = user?.eid || '';
+    } else {
+      eventProperties.userId = '';
     }
 
     const eventOptions: Options = {
@@ -470,6 +475,26 @@ export const logSegmentEvent =
         );
         break;
     }
+  };
+
+/**
+ * Makes a call to identify a user through the analytics SDK.
+ *
+ * @param user database ID (or email address) for this user.
+ * If you don't have a userId but want to record traits, you should pass nil.
+ * For more information on how we generate the UUID and Apple's policies on IDs, see https://segment.io/libraries/ios#ids
+ * @param traits A dictionary of traits you know about the user. Things like: email, name, plan, etc.
+ */
+export const analyticsIdentify =
+  (user: string | null, traits?: JsonMap): Effect<Promise<void>> =>
+  () => {
+    if (!__DEV__) {
+      const options: Options = {};
+
+      return analytics.identify(user, traits, options);
+    }
+
+    return Promise.resolve();
   };
 
 export const subscribePushNotifications =

@@ -487,7 +487,10 @@ const ChangellyCheckout: React.FC = () => {
   const makePayment = async () => {
     try {
       dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT),
+        startOnGoingProcessModal(
+          // t('Sending Payment')
+          t(OnGoingProcessMessages.SENDING_PAYMENT),
+        ),
       );
       await sleep(400);
 
@@ -638,7 +641,10 @@ const ChangellyCheckout: React.FC = () => {
 
   useEffect(() => {
     dispatch(
-      startOnGoingProcessModal(OnGoingProcessMessages.EXCHANGE_GETTING_DATA),
+      startOnGoingProcessModal(
+        // t('Getting data from the exchange...')
+        t(OnGoingProcessMessages.EXCHANGE_GETTING_DATA),
+      ),
     );
     createFixTransaction(1);
   }, []);

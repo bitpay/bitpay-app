@@ -13,7 +13,11 @@ import Dosh from '../../lib/dosh';
 import {isAxiosError, isRateLimitError} from '../../utils/axios';
 import {generateSalt, hashPassword} from '../../utils/password';
 import {AppActions, AppEffects} from '../app/';
-import {logSegmentEvent, startOnGoingProcessModal} from '../app/app.effects';
+import {
+  analyticsIdentify,
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../app/app.effects';
 import {CardEffects} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
@@ -133,7 +137,12 @@ export const startLogin =
   ({email, password, gCaptchaResponse}: StartLoginParams): Effect =>
   async (dispatch, getState) => {
     try {
-      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
+      dispatch(
+        startOnGoingProcessModal(
+          // t('Logging In')
+          t(OnGoingProcessMessages.LOGGING_IN),
+        ),
+      );
       dispatch(BitPayIdActions.updateLoginStatus(null));
 
       const {APP, BITPAY_ID} = getState();
@@ -217,7 +226,12 @@ export const startTwoFactorAuth =
   (code: string): Effect =>
   async (dispatch, getState) => {
     try {
-      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
+      dispatch(
+        startOnGoingProcessModal(
+          // t('Logging In')
+          t(OnGoingProcessMessages.LOGGING_IN),
+        ),
+      );
 
       const {APP, BITPAY_ID} = getState();
 
@@ -272,7 +286,12 @@ export const startTwoFactorPairing =
   (code: string): Effect =>
   async (dispatch, getState) => {
     try {
-      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
+      dispatch(
+        startOnGoingProcessModal(
+          // t('Logging In')
+          t(OnGoingProcessMessages.LOGGING_IN),
+        ),
+      );
 
       const {APP, BITPAY_ID} = getState();
       const secret = await AuthApi.generatePairingCode(
@@ -317,7 +336,12 @@ export const startEmailPairing =
   async (dispatch, getState) => {
     try {
       const {APP} = getState();
-      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
+      dispatch(
+        startOnGoingProcessModal(
+          // t('Logging In')
+          t(OnGoingProcessMessages.LOGGING_IN),
+        ),
+      );
 
       const secret = await AuthApi.generatePairingCode(APP.network, csrfToken);
 
@@ -354,7 +378,10 @@ export const startDeeplinkPairing =
 
     try {
       dispatch(
-        AppEffects.startOnGoingProcessModal(OnGoingProcessMessages.PAIRING),
+        AppEffects.startOnGoingProcessModal(
+          // t('Pairing')
+          t(OnGoingProcessMessages.PAIRING),
+        ),
       );
       await dispatch(startPairAndLoadUser(network, secret, code));
     } catch (err) {
@@ -417,10 +444,10 @@ const startPairAndLoadUser =
       dispatch(AppEffects.initializeBrazeContent());
       dispatch(ShopEffects.startFetchCatalog());
 
-      const {basicInfo} = data.user;
-      if (!__DEV__ && basicInfo) {
-        const {eid, email, name} = basicInfo;
-        analytics.identify(eid, {email, name});
+      if (data.user.basicInfo) {
+        const {eid, email, name} = data.user.basicInfo;
+
+        dispatch(analyticsIdentify(eid, {email, name}));
       }
     } catch (err) {
       let errMsg;
@@ -511,7 +538,12 @@ export const startSubmitForgotPasswordEmail =
 
     try {
       dispatch(BitPayIdActions.resetForgotPasswordEmailStatus());
-      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.SENDING_EMAIL));
+      dispatch(
+        startOnGoingProcessModal(
+          // t('Sending Email')
+          t(OnGoingProcessMessages.SENDING_EMAIL),
+        ),
+      );
       const data = await AuthApi.submitForgotPasswordEmail(
         APP.network,
         BITPAY_ID.session.csrfToken,

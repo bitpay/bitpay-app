@@ -663,7 +663,10 @@ const SwapCryptoRoot: React.FC = () => {
     InteractionManager.runAfterInteractions(async () => {
       try {
         dispatch(
-          startOnGoingProcessModal(OnGoingProcessMessages.GENERAL_AWAITING),
+          startOnGoingProcessModal(
+            // t("Just a second, we're setting a few things up")
+            t(OnGoingProcessMessages.GENERAL_AWAITING),
+          ),
         );
         await Promise.all([getChangellyCurrencies(), sleep(400)]);
         dispatch(dismissOnGoingProcessModal());
