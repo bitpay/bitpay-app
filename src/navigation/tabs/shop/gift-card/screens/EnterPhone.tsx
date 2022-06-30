@@ -1,9 +1,9 @@
 import * as yup from 'yup';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useRef, useState} from 'react';
+import React, {useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
-import {Keyboard, TextInput, View} from 'react-native';
+import {Keyboard, View} from 'react-native';
 import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
@@ -89,7 +89,6 @@ const EnterPhone = ({
     t('Must be no longer than 15 digits'),
   );
   const dispatch = useDispatch();
-  const phoneRef = useRef<TextInput>(null);
   const {cardConfig, onSubmit, initialPhone, initialPhoneCountryInfo} =
     route.params;
 
@@ -207,7 +206,6 @@ const EnterPhone = ({
                 value={value}
                 type={'phone'}
                 returnKeyType="next"
-                onSubmitEditing={() => phoneRef.current?.focus()}
                 blurOnSubmit={false}
               />
             )}

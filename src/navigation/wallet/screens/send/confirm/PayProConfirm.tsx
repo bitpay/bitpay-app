@@ -35,7 +35,6 @@ import {
   DetailsList,
   Fee,
   Header,
-  Memo,
   RemainingTime,
   SendingFrom,
   SendingTo,
@@ -54,6 +53,7 @@ import {
 } from '../../../../../api/coinbase/coinbase.types';
 import {coinbasePayInvoice} from '../../../../../store/coinbase';
 import {useTranslation} from 'react-i18next';
+import {Memo} from './Memo';
 
 export interface PayProConfirmParamList {
   wallet?: Wallet;
@@ -359,14 +359,14 @@ const PayProConfirm = () => {
                   setDisableSwipeSendButton={setDisableSwipeSendButton}
                 />
               ) : null}
-              <Amount description={'SubTotal'} amount={subTotal} />
-              <Amount description={'Total'} amount={total} hr={!!txp} />
               {txp ? (
                 <Memo
                   memo={txp.message}
                   onChange={message => updateTxp({...txp, message})}
                 />
               ) : null}
+              <Amount description={'SubTotal'} amount={subTotal} height={83} />
+              <Amount description={'Total'} amount={total} height={83} />
             </>
           ) : null}
         </DetailsList>
