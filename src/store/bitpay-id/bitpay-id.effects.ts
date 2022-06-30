@@ -14,7 +14,7 @@ import {isAxiosError, isRateLimitError} from '../../utils/axios';
 import {generateSalt, hashPassword} from '../../utils/password';
 import {AppActions, AppEffects} from '../app/';
 import {
-  analyticsIdentify,
+  Analytics,
   logSegmentEvent,
   startOnGoingProcessModal,
 } from '../app/app.effects';
@@ -24,7 +24,6 @@ import {LogActions} from '../log';
 import {ShopEffects} from '../shop';
 import {BitPayIdActions} from './index';
 import {t} from 'i18next';
-import analytics from '@segment/analytics-react-native';
 
 interface StartLoginParams {
   email: string;
@@ -447,7 +446,7 @@ const startPairAndLoadUser =
       if (data.user.basicInfo) {
         const {eid, email, name} = data.user.basicInfo;
 
-        dispatch(analyticsIdentify(eid, {email, name}));
+        dispatch(Analytics.identify(eid, {email, name}));
       }
     } catch (err) {
       let errMsg;
