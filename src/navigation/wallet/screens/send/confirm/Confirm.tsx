@@ -309,7 +309,7 @@ const Confirm = () => {
 
   return (
     <ConfirmContainer>
-      <ConfirmScrollView>
+      <ConfirmScrollView contentContainerStyle={{paddingBottom: 50}}>
         <DetailsList>
           <Header>Summary</Header>
           <SendingTo recipient={recipientData} hr />

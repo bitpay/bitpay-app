@@ -61,14 +61,14 @@ export interface DetailContainerParams {
 }
 
 export const DetailContainer = styled.View<DetailContainerParams>`
-  min-height: 53px;
+  min-height: 60px;
   padding: 20px 0;
   justify-content: center;
   ${({height}) => (height ? `height: ${height}px;` : '')}
 `;
 
 export const PressableDetailContainer = styled.TouchableOpacity<DetailContainerParams>`
-  min-height: 53px;
+  min-height: 60px;
   padding: 20px 0;
   justify-content: center;
   ${({height}) => (height ? `height: ${height}px;` : '')}
@@ -373,12 +373,7 @@ export const RemainingTime = ({
   }, [computeRemainingTime, expirationTime, setDisableSwipeSendButton]);
 
   return (
-    <SharedDetailRow
-      description={t('Expires')}
-      height={60}
-      value={remainingTime}
-      hr
-    />
+    <SharedDetailRow description={t('Expires')} value={remainingTime} hr />
   );
 };
 
