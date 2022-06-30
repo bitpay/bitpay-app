@@ -18,6 +18,7 @@ import PairingScreen, {
   BitPayIdPairingScreenParamList,
 } from './screens/BitPayIdPairingScreen';
 import Profile from './screens/ProfileSettings';
+import {useTranslation} from 'react-i18next';
 
 export type BitpayIdStackParamList = {
   BitPayIdPairingScreen: BitPayIdPairingScreenParamList;
@@ -32,6 +33,7 @@ export enum BitpayIdScreens {
 const BitpayId = createStackNavigator<BitpayIdStackParamList>();
 
 const BitpayIdStack = () => {
+  const {t} = useTranslation();
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const user = useSelector<RootState, User | null>(
@@ -47,7 +49,7 @@ const BitpayIdStack = () => {
         component={PairingScreen}
         options={{
           ...baseScreenOptions,
-          headerTitle: () => <HeaderTitle>Pairing...</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Pairing...')}</HeaderTitle>,
         }}
       />
       <BitpayId.Screen
@@ -74,7 +76,7 @@ const BitpayIdStack = () => {
                       navigation.navigate('Auth', {screen: 'Login'});
                     }
                   }}>
-                  {user ? 'Log Out' : 'Log In'}
+                  {user ? t('Log Out') : t('Log In')}
                 </Button>
               </HeaderRightContainer>
             );

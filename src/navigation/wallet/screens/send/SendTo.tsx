@@ -479,7 +479,7 @@ const SendTo = () => {
           <>
             <ContactTitleContainer>
               {ContactsSvg({})}
-              <ContactTitle>{'Contacts'}</ContactTitle>
+              <ContactTitle>{t('Contacts')}</ContactTitle>
             </ContactTitleContainer>
 
             {contacts.map((item, index) => {
