@@ -182,7 +182,7 @@ const SwapCryptoRoot: React.FC = () => {
     setRateData(undefined);
 
     const coinsTo = cloneDeep(swapCryptoSupportedCoinsFrom).filter(
-      coin => coin !== fromWallet.currencyAbbreviation.toLowerCase(),
+      coin => coin !== fromWallet?.currencyAbbreviation?.toLowerCase(),
     );
 
     setSwapCryptoSupportedCoinsTo(coinsTo);
@@ -201,14 +201,14 @@ const SwapCryptoRoot: React.FC = () => {
     if (fromWalletSelected) {
       setFromWalletData(
         SupportedCurrencyOptions.find(
-          ({id}) => id === fromWalletSelected?.credentials.coin,
+          ({id}) => id === fromWalletSelected?.credentials?.coin,
         ),
       );
     }
     if (toWalletSelected) {
       setToWalletData(
         SupportedCurrencyOptions.find(
-          ({id}) => id === toWalletSelected?.credentials.coin,
+          ({id}) => id === toWalletSelected?.credentials?.coin,
         ),
       );
     }
