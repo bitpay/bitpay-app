@@ -16,7 +16,6 @@ import {
 import VirtualKeyboard from '../../../components/virtual-keyboard/VirtualKeyboard';
 import SwapButton from '../../../components/swap-button/SwapButton';
 import Button, {ButtonState} from '../../../components/button/Button';
-import {View} from 'react-native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
@@ -72,10 +71,11 @@ export const AmountHeroContainer = styled.View`
   padding: 0 ${ScreenGutter};
 `;
 
-const ActionContainer = styled.View`
+const ActionContainer = styled.View<{isModal?: boolean}>`
   position: absolute;
   bottom: 15px;
   width: 100%;
+  padding-bottom: ${({isModal}) => (isModal ? '20px' : '0')};
 `;
 
 const ButtonContainer = styled.View`
@@ -410,7 +410,7 @@ const Amount: React.FC<AmountProps> = ({
             </SwapButtonContainer>
           ) : null}
         </AmountHeroContainer>
-        <ActionContainer>
+        <ActionContainer isModal={useAsModal}>
           <VirtualKeyboardContainer>
             <VirtualKeyboard
               onCellPress={onCellPress}
