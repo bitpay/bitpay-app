@@ -75,7 +75,7 @@ const ActionContainer = styled.View<{isModal?: boolean}>`
   position: absolute;
   bottom: 15px;
   width: 100%;
-  padding-bottom: ${({isModal}) => (isModal ? '20px' : '0')};
+  padding-bottom: ${({isModal}) => (isModal ? '45px' : '0')};
 `;
 
 const ButtonContainer = styled.View`
