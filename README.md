@@ -25,8 +25,8 @@ Install dependencies with `yarn` >= 14.15.0
 
     2.3 From your home directory, open or create `~/.gradle/gradle.properties` and add `M2_REPOSITORY_URL=../../../.m2/repository` (or wherever you put yours, the path should be relative to `[app root]/android/app/build.gradle`). 
 
-2. `yarn start` to start dev server
-3. Build and deploy to simulator or device `yarn android`
+3. `yarn start` to start dev server
+4. Build and deploy to simulator or device `yarn android`
 
 #### Accessing your local server
 To make requests to your local server, first take your local BitPay server cert and copy it into `android/app/src/main/res/raw` folder in either .pem or .der format.
