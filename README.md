@@ -11,8 +11,22 @@ Install dependencies with `yarn` >= 14.15.0
 3. Build and deploy to simulator `yarn ios` or device `yarn ios:device`
 
 ### Android
-1. `yarn start` to start dev server
-2. Build and deploy to simulator or device `yarn android`
+1. Install a JDK:
+
+    1.1 Install JDK 1.8.0_x (1.7 =  Java 7, 1.8 = Java 8, etc.) where x is the latest update number (currently 1.8.0_333). You can try a newer JDK but some dependencies might not compile properly.
+
+    1.2 Add a `JAVA_HOME` environment variable to your `~/.profile` or `~/bash_profile` set to your JDK folder. *eg.* `JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8_0_333.jdk/Contents/Home`
+
+2. Google TapAndPay setup: 
+
+    2.1 Google only makes this repository available if you have a TapAndPay dev account, we have one as a team so ask a team member to send you an ENCRYPTED email with a copy of the TapAndPay repository. 
+
+    2.2 Create a `.m2/` directory somewhere (I put mine in the parent dir of the app root dir so I don't accidentally check it in) then copy the repository  folder you received into the `.m2` folder so the path looks like `../.m2/repository/`.
+
+    2.3 From your home directory, open or create `~/.gradle/gradle.properties` and add `M2_REPOSITORY_URL=../../../.m2/repository` (or wherever you put yours, the path should be relative to `[app root]/android/app/build.gradle`). 
+
+2. `yarn start` to start dev server
+3. Build and deploy to simulator or device `yarn android`
 
 #### Accessing your local server
 To make requests to your local server, first take your local BitPay server cert and copy it into `android/app/src/main/res/raw` folder in either .pem or .der format.
