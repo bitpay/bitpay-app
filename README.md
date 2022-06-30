@@ -56,6 +56,11 @@ This project uses `react-redux` https://react-redux.js.org/ for state management
 1. In `src/contants/config.ts` change `APP_LOAD_STORY_BOOK=false` to `APP_LOAD_STORY_BOOK=true`
 2. Run `yarn <platform>` ex: `yarn ios`. Since we set `APP_LOAD_STORY_BOOK=true`, this runs Storybook instead of your actual app.
 
+## Integrations
+To test integrations such as Braze, Dosh, etc. you will need to get API keys from another team member. Then create `.env.production` and `.env.development` in the app root by copying the `.env.template` contents and populating the values appropriately.
+
+To switch to using dev or prod keys, run `yarn set:dev` or `yarn set:prod` respectively which will run replace scripts to populate these values into the appropriate build files, or run `yarn reset:dev` or `yarn reset:prod` to reset values.
+
 ## Deeplinking
 Test deeplinking via command line with these commands (note: ampersand must be escaped for multiple params): 
 
