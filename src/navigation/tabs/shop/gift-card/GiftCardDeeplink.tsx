@@ -1,8 +1,9 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef} from 'react';
 import {RootStackParamList} from '../../../../Root';
+import {logSegmentEvent} from '../../../../store/app/app.effects';
 import {selectAvailableGiftCards} from '../../../../store/shop/shop.selectors';
-import {useAppSelector} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 
 export type GiftCardDeeplinkScreenParamList =
   | {
@@ -19,6 +20,7 @@ const GiftCardDeeplinkScreen: React.FC<
 > = ({navigation, route}) => {
   const merchantName = ((route.params || {}).merchant || '').toLowerCase();
   const availableGiftCards = useAppSelector(selectAvailableGiftCards);
+  const dispatch = useAppDispatch();
   const targetedGiftCard = availableGiftCards.find(
     gc => gc.name.toLowerCase() === merchantName,
   );
@@ -26,6 +28,16 @@ const GiftCardDeeplinkScreen: React.FC<
   targetedGiftCardRef.current = targetedGiftCard;
 
   useEffect(() => {
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Clicked Shop with Crypto',
+        {
+          context: 'GiftCardDeeplink',
+        },
+        true,
+      ),
+    );
     if (targetedGiftCardRef.current) {
       navigation.replace('GiftCard', {
         screen: 'BuyGiftCard',

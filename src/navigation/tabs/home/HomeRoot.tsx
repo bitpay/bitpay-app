@@ -313,9 +313,19 @@ const HomeRoot = () => {
             <HomeSection
               title={t('Shop with Crypto')}
               action={t('See all')}
-              onActionPress={() =>
-                navigation.navigate('Tabs', {screen: 'Shop'})
-              }>
+              onActionPress={() => {
+                navigation.navigate('Tabs', {screen: 'Shop'});
+                dispatch(
+                  logSegmentEvent(
+                    'track',
+                    'Clicked Shop with Crypto',
+                    {
+                      context: 'HomeRoot',
+                    },
+                    true,
+                  ),
+                );
+              }}>
               <OffersCarousel contentCards={memoizedShopWithCryptoCards} />
             </HomeSection>
           ) : null}
