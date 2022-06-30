@@ -61,17 +61,34 @@ const SafeAreaView = styled.SafeAreaView`
 `;
 
 const SwapButtonContainer = styled.View`
-  margin-top: 30px;
+  margin-top: 20px;
   align-self: flex-end;
 `;
 
 export const AmountHeroContainer = styled.View`
   flex-direction: column;
   align-items: center;
+  margin-top: 20px;
+  padding: 0 ${ScreenGutter};
 `;
 
 const ActionContainer = styled.View`
-  margin: 20px 0;
+  position: absolute;
+  bottom: 15px;
+  width: 100%;
+`;
+
+const ButtonContainer = styled.View`
+  padding: 0 ${ScreenGutter};
+`;
+
+const ViewContainer = styled.View`
+  height: 100%;
+`;
+
+const VirtualKeyboardContainer = styled.View`
+  justify-content: center;
+  align-items: center;
 `;
 
 const Row = styled.View`
@@ -103,13 +120,6 @@ export const CurrencyText = styled(BaseText)`
   font-size: 20px;
   color: ${({theme}) => theme.colors.text};
   position: absolute;
-`;
-
-export const AmountContainer = styled.View`
-  flex: 1;
-  justify-content: space-between;
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
 `;
 
 export interface AmountParamList {
@@ -357,7 +367,7 @@ const Amount: React.FC<AmountProps> = ({
           ) : null}
         </ModalHeader>
       )}
-      <AmountContainer>
+      <ViewContainer>
         <AmountHeroContainer>
           <Row>
             <AmountText
@@ -400,12 +410,14 @@ const Amount: React.FC<AmountProps> = ({
             </SwapButtonContainer>
           ) : null}
         </AmountHeroContainer>
-        <View>
-          <VirtualKeyboard
-            onCellPress={onCellPress}
-            showDot={currency !== 'JPY'}
-          />
-          <ActionContainer>
+        <ActionContainer>
+          <VirtualKeyboardContainer>
+            <VirtualKeyboard
+              onCellPress={onCellPress}
+              showDot={currency !== 'JPY'}
+            />
+          </VirtualKeyboardContainer>
+          <ButtonContainer>
             <Button
               state={buttonState}
               disabled={!+amount}
@@ -420,9 +432,9 @@ const Amount: React.FC<AmountProps> = ({
               }}>
               {t('Continue')}
             </Button>
-          </ActionContainer>
-        </View>
-      </AmountContainer>
+          </ButtonContainer>
+        </ActionContainer>
+      </ViewContainer>
     </SafeAreaView>
   );
 };
