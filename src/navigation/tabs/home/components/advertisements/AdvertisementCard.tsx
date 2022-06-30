@@ -1,4 +1,8 @@
-import {useFocusEffect, useLinkTo} from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useLinkTo,
+  useNavigation,
+} from '@react-navigation/native';
 import React from 'react';
 import {ImageStyle, Linking, StyleProp} from 'react-native';
 import ReactAppboy, {ContentCard} from 'react-native-appboy-sdk';
@@ -75,6 +79,7 @@ const IconStyle: StyleProp<ImageStyle> = {
 const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   const {contentCard, ctaOverride} = props;
   const {image, url, openURLInWebView} = contentCard;
+  const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const linkTo = useLinkTo();
   const theme = useTheme();
@@ -129,7 +134,10 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
     if (url.startsWith(APP_DEEPLINK_PREFIX)) {
       try {
         const path = '/' + url.replace(APP_DEEPLINK_PREFIX, '');
-
+        if (path === '/giftcard') {
+          navigation.navigate('Tabs', {screen: 'Shop'});
+          return;
+        }
         linkTo(path);
 
         return;
