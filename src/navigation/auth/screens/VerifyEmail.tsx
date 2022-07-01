@@ -3,7 +3,7 @@ import React, {useEffect, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import {Link} from '../../../components/styled/Text';
-import {logSegmentEvent} from '../../../store/app/app.effects';
+import {Analytics} from '../../../store/app/app.effects';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {AuthStackParamList} from '../AuthStack';
@@ -79,8 +79,7 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
       }
 
       dispatch(
-        logSegmentEvent(
-          'track',
+        Analytics.track(
           'Verified Email',
           {
             email: email || '',

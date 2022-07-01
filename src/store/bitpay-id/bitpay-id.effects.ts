@@ -13,11 +13,7 @@ import Dosh from '../../lib/dosh';
 import {isAxiosError, isRateLimitError} from '../../utils/axios';
 import {generateSalt, hashPassword} from '../../utils/password';
 import {AppActions, AppEffects} from '../app/';
-import {
-  Analytics,
-  logSegmentEvent,
-  startOnGoingProcessModal,
-} from '../app/app.effects';
+import {Analytics, startOnGoingProcessModal} from '../app/app.effects';
 import {CardEffects} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
@@ -187,8 +183,7 @@ export const startLogin =
 
       // complete
       dispatch(
-        logSegmentEvent(
-          'track',
+        Analytics.track(
           'Log In User success',
           {
             type: 'basicAuth',
@@ -245,8 +240,7 @@ export const startTwoFactorAuth =
 
       // complete
       dispatch(
-        logSegmentEvent(
-          'track',
+        Analytics.track(
           'Log In User success',
           {
             type: 'twoFactorAuth',
@@ -347,8 +341,7 @@ export const startEmailPairing =
       await dispatch(startPairAndLoadUser(APP.network, secret));
 
       dispatch(
-        logSegmentEvent(
-          'track',
+        Analytics.track(
           'Log In User success',
           {
             type: 'emailAuth',
@@ -465,16 +458,15 @@ const startPairAndLoadUser =
 export const startDisconnectBitPayId =
   (): Effect => async (dispatch, getState) => {
     try {
-      const {APP, BITPAY_ID, CARD} = getState();
+      const {APP, BITPAY_ID} = getState();
       const {isAuthenticated, csrfToken} = BITPAY_ID.session;
 
       if (isAuthenticated && csrfToken) {
-        AuthApi.logout(APP.network, csrfToken);
+        await AuthApi.logout(APP.network, csrfToken);
       }
 
+      dispatch(Analytics.track('Log Out User success', {}, true));
       dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
-
-      dispatch(logSegmentEvent('track', 'Log Out User success', {}, true));
     } catch (err) {
       // log but swallow this error
       dispatch(LogActions.error('An error occurred while logging out.'));

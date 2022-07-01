@@ -45,7 +45,7 @@ import ReferredUsersSkeleton from '../../components/ReferredUsersSkeleton';
 import ReferralCodeSkeleton from '../../components/ReferralCodeSkeleton';
 import {BASE_BITPAY_URLS} from '../../../../constants/config';
 import {useTranslation} from 'react-i18next';
-import {logSegmentEvent} from '../../../../store/app/app.effects';
+import {Analytics} from '../../../../store/app/app.effects';
 
 export interface ReferralParamList {
   card: Card;
@@ -140,12 +140,9 @@ const Referral = ({}) => {
   const code = useAppSelector(({CARD}) => CARD.referralCode[id]);
   const referredUsers = useAppSelector(({CARD}) => CARD.referredUsers[id]);
 
-  const init = () => {
+  useEffect(() => {
     dispatch(CardEffects.START_FETCH_REFERRAL_CODE(id));
     dispatch(CardEffects.START_FETCH_REFERRED_USERS(id));
-  };
-  useEffect(() => {
-    init();
   }, [id]);
 
   const copyToClipboard = () => {
@@ -153,9 +150,7 @@ const Referral = ({}) => {
     if (!copied) {
       Clipboard.setString(code);
       setCopied(true);
-      dispatch(
-        logSegmentEvent('track', 'Copied Share Referral Code', {}, true),
-      );
+      dispatch(Analytics.track('Copied Share Referral Code', {}, true));
     }
   };
 
@@ -182,9 +177,7 @@ const Referral = ({}) => {
         message,
       });
 
-      dispatch(
-        logSegmentEvent('track', 'Clicked Share Referral Code', {}, true),
-      );
+      dispatch(Analytics.track('Clicked Share Referral Code', {}, true));
     } catch (e) {}
   };
   const currentDate = new Date().getTime();

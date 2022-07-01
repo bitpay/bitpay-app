@@ -418,8 +418,7 @@ export const askForTrackingPermissionAndEnableSdks =
           ) {
             dispatch(setAppFirstOpenEventComplete());
             dispatch(
-              logSegmentEvent(
-                'track',
+              Analytics.track(
                 'First Opened App',
                 {
                   date: appFirstOpenData?.firstOpenDate || '',
@@ -428,7 +427,7 @@ export const askForTrackingPermissionAndEnableSdks =
               ),
             );
           } else {
-            dispatch(logSegmentEvent('track', 'Last Opened App', {}, true));
+            dispatch(Analytics.track('Last Opened App', {}, true));
           }
         }
       } catch (err) {
@@ -453,7 +452,7 @@ export const logSegmentEvent =
         const user = BITPAY_ID.user[APP.network];
         eventProperties.userId = user?.eid || '';
       } else {
-        eventProperties.userId = '';
+        eventProperties.userId = eventProperties.userId || '';
       }
 
       const eventOptions: Options = {
