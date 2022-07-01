@@ -8,6 +8,7 @@ import {Link, Smallest} from '../../../components/styled/Text';
 import {URL} from '../../../constants';
 import {CardBrand, CardProvider} from '../../../constants/card';
 import {AppEffects} from '../../../store/app';
+import {Analytics} from '../../../store/app/app.effects';
 import {CardActions, CardEffects} from '../../../store/card';
 import {Card} from '../../../store/card/card.models';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
@@ -200,6 +201,13 @@ const SettingsList: React.FC<SettingsListProps> = props => {
           <Styled.SettingsLink
             Icon={OffersIcon}
             onPress={async () => {
+              dispatch(
+                Analytics.track(
+                  'Clicked Card Offer',
+                  {context: 'Card Settings'},
+                  true,
+                ),
+              );
               dispatch(CardEffects.startOpenDosh(user?.email || ''));
             }}>
             {t('Card Offers')}
