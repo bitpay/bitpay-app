@@ -320,7 +320,7 @@ const PayProConfirm = () => {
 
   return (
     <ConfirmContainer>
-      <ConfirmScrollView>
+      <ConfirmScrollView contentContainerStyle={{paddingBottom: 50}}>
         <DetailsList>
           <Header hr>Summary</Header>
           <SendingTo
