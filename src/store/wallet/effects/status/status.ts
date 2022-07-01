@@ -321,12 +321,25 @@ export const startUpdateAllWalletStatusForKeys =
                   wallets: walletOptions,
                 },
                 (err: Error, bulkStatus: BulkStatus[]) => {
-                  if (err) {
-                    console.log(err);
-                  }
-
                   const balances = key.wallets.map(wallet => {
                     const {balance: cachedBalance} = wallet;
+
+                    if (err || !bulkStatus) {
+                      console.log('getStatusAll error', err);
+                      return {
+                        ...cachedBalance,
+                        ...dispatch(
+                          buildFiatBalance({
+                            wallet,
+                            cryptoBalance: cachedBalance,
+                            defaultAltCurrencyIsoCode:
+                              defaultAltCurrency.isoCode,
+                            rates,
+                            lastDayRates,
+                          }),
+                        ),
+                      };
+                    }
 
                     const {status, success} =
                       bulkStatus.find(bStatus => {
