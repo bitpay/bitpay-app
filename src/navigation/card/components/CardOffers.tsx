@@ -9,7 +9,7 @@ import {
   CardContainer,
 } from '../../../components/styled/Containers';
 import {BaseText} from '../../../components/styled/Text';
-import {logSegmentEvent} from '../../../store/app/app.effects';
+import {Analytics} from '../../../store/app/app.effects';
 import {CardEffects} from '../../../store/card';
 import {
   isCaptionedContentCard,
@@ -89,11 +89,11 @@ const CardOffers: React.VFC<CardOffersProps> = props => {
       ReactAppboy.logContentCardClicked(contentCard.id);
 
       dispatch(
-        logSegmentEvent(
-          'track',
+        Analytics.track(
           'Clicked Card Offer',
           {
             id: contentCard.id || '',
+            context: 'Card Offers component',
           },
           true,
         ),

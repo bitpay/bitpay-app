@@ -30,7 +30,7 @@ import CardFront from '../../components/CardFront';
 import CheckIcon from './CheckIcon';
 import * as Styled from './CustomizeVirtualCard.styled';
 import {CardBrand} from '../../../../constants/card';
-import {logSegmentEvent} from '../../../../store/app/app.effects';
+import {Analytics} from '../../../../store/app/app.effects';
 
 export interface CustomizeVirtualCardParamList {
   card: Card;
@@ -161,9 +161,13 @@ const CustomizeVirtualCard: React.FC<
     dispatch(CardActions.virtualDesignCurrencyUpdated(selectedDesign));
 
     dispatch(
-      logSegmentEvent('track', 'Save Virtual Card selected design', {
-        selectedDesign: selectedDesign || '',
-      }),
+      Analytics.track(
+        'Save Virtual Card selected design',
+        {
+          selectedDesign: selectedDesign || '',
+        },
+        true,
+      ),
     );
 
     if (navigation.canGoBack()) {

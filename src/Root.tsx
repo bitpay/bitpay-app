@@ -89,15 +89,14 @@ import CoinbaseStack, {
   CoinbaseStackParamList,
 } from './navigation/coinbase/CoinbaseStack';
 import BpDevtools from './components/bp-devtools/BpDevtools';
-import {DEVTOOLS_ENABLED} from './constants/config';
+import {APP_ANALYTICS_ENABLED, DEVTOOLS_ENABLED} from './constants/config';
 import Blur from './components/blur/Blur';
 import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
 import CardActivationStack, {
   CardActivationStackParamList,
 } from './navigation/card-activation/CardActivationStack';
 import {sleep} from './utils/helper-methods';
-import ReactAppboy from 'react-native-appboy-sdk';
-import {handleBwsEvent, logSegmentEvent} from './store/app/app.effects';
+import {Analytics, handleBwsEvent} from './store/app/app.effects';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -365,21 +364,16 @@ export default () => {
               let {name, params} = navEvent.routes[routes.length - 1];
               dispatch(AppActions.setCurrentRoute([name, params]));
               dispatch(LogActions.info(`Navigation event... ${name}`));
-              if (!__DEV__) {
+
+              if (APP_ANALYTICS_ENABLED) {
                 if (name === 'Tabs') {
                   const {history} = navEvent.routes[routes.length - 1].state;
                   const tabName = history[history.length - 1].key.split('-')[0];
                   name = `${tabName} Tab`;
                 }
+
                 dispatch(
-                  logSegmentEvent(
-                    'screen',
-                    name,
-                    {
-                      screen: params?.screen || '',
-                    },
-                    true,
-                  ),
+                  Analytics.screen(name, {screen: params?.screen || ''}),
                 );
               }
             }

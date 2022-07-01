@@ -25,7 +25,7 @@ import {
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
 import {
-  logSegmentEvent,
+  Analytics,
   startOnGoingProcessModal,
 } from '../../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
@@ -415,8 +415,7 @@ const Confirm = () => {
               try {
                 await sendPayment();
                 dispatch(
-                  logSegmentEvent(
-                    'track',
+                  Analytics.track(
                     'Adding funds to Debit Card',
                     {
                       amount: amount,
