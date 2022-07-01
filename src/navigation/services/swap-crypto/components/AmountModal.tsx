@@ -1,5 +1,5 @@
 import React from 'react';
-import Amount from '../../../../navigation/wallet/screens/Amount';
+import Amount from '../../../wallet/screens/Amount';
 import {Black, White} from '../../../../styles/colors';
 import styled from 'styled-components/native';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
@@ -19,27 +19,34 @@ interface AmountModalProps {
   ) => void;
 }
 
+const AmountComponent = gestureHandlerRootHOC<
+  Omit<AmountModalProps, 'isVisible'>
+>(props => {
+  const {currencyAbbreviation, onDismiss} = props;
+
+  return (
+    <AmountContainer>
+      <Amount
+        useAsModal={true}
+        hideSendMaxProp={false}
+        onDismiss={onDismiss}
+        currencyAbbreviationProp={currencyAbbreviation}
+      />
+    </AmountContainer>
+  );
+});
+
 const AmountModal: React.FC<AmountModalProps> = ({
   isVisible,
   currencyAbbreviation,
   onDismiss,
 }) => {
-  const AmountComponent = gestureHandlerRootHOC(() => {
-    return (
-      <AmountContainer>
-        <Amount
-          useAsModal={true}
-          hideSendMaxProp={false}
-          onDismiss={onDismiss}
-          currencyAbbreviationProp={currencyAbbreviation}
-        />
-      </AmountContainer>
-    );
-  });
-
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={onDismiss}>
-      <AmountComponent />
+      <AmountComponent
+        currencyAbbreviation={currencyAbbreviation}
+        onDismiss={onDismiss}
+      />
     </SheetModal>
   );
 };
