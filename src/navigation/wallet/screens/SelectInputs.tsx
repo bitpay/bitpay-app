@@ -1,9 +1,10 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import styled from 'styled-components/native';
 import {
   Recipient,
+  TransactionOptionsContext,
   TxDetailsSendingTo,
   Utxo,
   Wallet,
@@ -25,12 +26,34 @@ import {
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {GetUtxos} from '../../../store/wallet/effects/transactions/transactions';
 import haptic from '../../../components/haptic-feedback/haptic';
-import InputSelectionRow, {
-  InputSelectionToggleProps,
-} from '../../../components/list/InputsRow';
+import InputSelectionRow from '../../../components/list/InputsRow';
 import {GetPrecision} from '../../../store/wallet/utils/currency';
-import {useAppDispatch, useLogger} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import Button from '../../../components/button/Button';
+import {FlatList} from 'react-native';
+import _ from 'lodash';
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+  showOnGoingProcessModal,
+} from '../../../store/app/app.actions';
+import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
+import {
+  FormatAmount,
+  ParseAmount,
+  SatToUnit,
+} from '../../../store/wallet/effects/amount/amount';
+import {
+  createProposalAndBuildTxDetails,
+  handleCreateTxProposalError,
+} from '../../../store/wallet/effects/send/send';
+import {sleep} from '../../../utils/helper-methods';
+import {GetEstimatedTxSize} from '../../../store/wallet/utils/wallet';
+import {
+  FeeLevels,
+  getFeeRatePerKb,
+  GetMinFee,
+} from '../../../store/wallet/effects/fee/fee';
 
 export const CurrencyColumn = styled(Column)`
   margin-left: 8px;
@@ -63,7 +86,7 @@ const SelectInputsDetailsContainer = styled.View`
   padding: 0 15px;
 `;
 
-const ScrollViewContainer = styled.ScrollView`
+const InputSelectionRowContainer = styled.View`
   padding: 0 15px;
 `;
 
@@ -88,14 +111,16 @@ const SelectInputs = () => {
   const navigation = useNavigation();
   const {t} = useTranslation();
   const route = useRoute<RouteProp<WalletStackParamList, 'SelectInputs'>>();
-  const [inputs, setInputs] = useState<Utxo[]>();
+  const useUnconfirmedFunds = useAppSelector(
+    ({WALLET}) => WALLET.useUnconfirmedFunds,
+  );
+  const [inputs, setInputs] = useState<Utxo[]>([]);
   const {wallet, recipient} = route.params;
   const precision = dispatch(GetPrecision(wallet?.credentials.coin));
   const [totalAmount, setTotalAmount] = useState(
     Number(0).toFixed(precision?.unitDecimals),
   );
   const logger = useLogger();
-
   let recipientData: TxDetailsSendingTo;
 
   if (recipient.type === 'contact') {
@@ -114,7 +139,10 @@ const SelectInputs = () => {
 
   const init = async () => {
     try {
-      const utxos = await GetUtxos(wallet);
+      let utxos = await GetUtxos(wallet);
+      if (!useUnconfirmedFunds) {
+        utxos = utxos.filter(u => u.confirmations !== 0);
+      }
       setInputs(utxos);
     } catch (err) {
       logger.error(`An error occurred while getting utxos: ${err}`);
@@ -131,16 +159,99 @@ const SelectInputs = () => {
     init();
   }, []);
 
-  const inputToggled = ({amount, checked}: InputSelectionToggleProps) => {
+  const inputToggled = (item: Utxo, index: number) => {
+    setInputs(prevInputs => {
+      prevInputs[index] = item;
+      return prevInputs;
+    });
     setTotalAmount(prevTotalAmountStr => {
       let prevTotalAmount = Number(prevTotalAmountStr);
-      if (checked) {
-        prevTotalAmount += amount;
+      if (item.checked) {
+        prevTotalAmount += item.amount;
       } else {
-        prevTotalAmount -= amount;
+        prevTotalAmount -= item.amount;
       }
       return Number(prevTotalAmount).toFixed(precision!.unitDecimals);
     });
+  };
+
+  const renderItem = useCallback(
+    ({item, index}) => (
+      <InputSelectionRowContainer>
+        <InputSelectionRow
+          item={item}
+          emit={inputToggled}
+          key={item}
+          unitCode={precision?.unitCode}
+          index={index}
+        />
+        <Hr />
+      </InputSelectionRowContainer>
+    ),
+    [],
+  );
+
+  const goToConfirmView = async () => {
+    try {
+      dispatch(
+        showOnGoingProcessModal(
+          t(OnGoingProcessMessages.LOADING),
+        ),
+      );
+      const estimatedFee = await GetMinFee(wallet, 1, inputs.length);
+      const {currencyAbbreviation} = wallet;
+      const formattedestimatedFee = dispatch(
+        SatToUnit(estimatedFee, currencyAbbreviation),
+      );
+
+      const amount = Number(totalAmount) - formattedestimatedFee!;
+      const tx = {
+        wallet,
+        recipient,
+        inputs: inputs.filter(i => i.checked),
+        amount,
+        fee: estimatedFee,
+        context: 'selectInputs' as TransactionOptionsContext,
+      };
+      const {txDetails, txp} = (await dispatch<any>(
+        createProposalAndBuildTxDetails(tx),
+      )) as any;
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      navigation.navigate('Wallet', {
+        screen: 'Confirm',
+        params: {
+          wallet,
+          recipient,
+          txp,
+          txDetails,
+          amount,
+          selectInputs: true,
+          inputs,
+        },
+      });
+    } catch (err: any) {
+      const errorMessageConfig = (
+        await Promise.all([
+          dispatch(handleCreateTxProposalError(err)),
+          sleep(500),
+        ])
+      )[0];
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      dispatch(
+        showBottomNotificationModal({
+          ...errorMessageConfig,
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: t('OK'),
+              action: () => {},
+            },
+          ],
+        }),
+      );
+    }
   };
 
   return (
@@ -179,19 +290,14 @@ const SelectInputs = () => {
         <Hr />
       </SelectInputsDetailsContainer>
       {inputs && inputs.length ? (
-        <ScrollViewContainer>
-          {inputs.map((input, index) => (
-            <>
-              <InputSelectionRow
-                item={input}
-                emit={inputToggled}
-                key={index}
-                unitCode={precision?.unitCode}
-              />
-              <Hr />
-            </>
-          ))}
-        </ScrollViewContainer>
+        <FlatList
+          contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
+          data={inputs}
+          keyExtractor={(_item, index) => index.toString()}
+          renderItem={({item, index}: {item: Utxo; index: number}) =>
+            renderItem({item, index})
+          }
+        />
       ) : (
         <>
           <ItemRowContainer style={{paddingHorizontal: 15}}>
@@ -203,17 +309,8 @@ const SelectInputs = () => {
       <CtaContainer>
         <Button
           buttonStyle={'primary'}
-          onPress={() => {
-            haptic('impactLight');
-            navigation.navigate('Wallet', {
-              screen: 'SelectInputs',
-              params: {
-                recipient: recipient!,
-                wallet,
-              },
-            });
-          }}
-          disabled={!recipient}>
+          onPress={goToConfirmView}
+          disabled={!inputs.find(i => i.checked)}>
           {t('Continue')}
         </Button>
       </CtaContainer>

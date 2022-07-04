@@ -7,6 +7,7 @@ import {
   Recipient,
   TransactionProposal,
   TxDetails,
+  Utxo,
   Wallet,
 } from '../../../../../store/wallet/wallet.models';
 import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
@@ -65,6 +66,7 @@ import {Alert, TouchableOpacity} from 'react-native';
 import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {Memo} from './Memo';
+import {GetEstimatedTxSize} from '../../../../../store/wallet/utils/wallet';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -77,6 +79,8 @@ export interface ConfirmParamList {
   amount: number;
   speedup?: boolean;
   sendMax?: boolean;
+  selectInputs?: boolean;
+  inputs?: Utxo[];
 }
 
 export const Setting = styled.TouchableOpacity`
@@ -111,6 +115,8 @@ const Confirm = () => {
     amount,
     speedup,
     sendMax,
+    selectInputs,
+    inputs,
   } = route.params;
   const [txp, setTxp] = useState(_txp);
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -237,6 +243,7 @@ const Confirm = () => {
           recipient,
           amount,
           sendMax,
+          inputs,
           ...txp,
           ...newOpts,
         }),
