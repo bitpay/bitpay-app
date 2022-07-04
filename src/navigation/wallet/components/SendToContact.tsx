@@ -36,7 +36,7 @@ const SendToContactContainer = styled.View`
 `;
 
 const CtaContainer = styled(_CtaContainer)`
-  padding: 10px 0;
+  padding: 10px 16px;
 `;
 
 const SendToContact = () => {

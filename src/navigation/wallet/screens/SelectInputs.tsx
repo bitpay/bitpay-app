@@ -31,29 +31,21 @@ import {GetPrecision} from '../../../store/wallet/utils/currency';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import Button from '../../../components/button/Button';
 import {FlatList} from 'react-native';
-import _ from 'lodash';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
   showOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
-import {
-  FormatAmount,
-  ParseAmount,
-  SatToUnit,
-} from '../../../store/wallet/effects/amount/amount';
+import {SatToUnit} from '../../../store/wallet/effects/amount/amount';
 import {
   createProposalAndBuildTxDetails,
   handleCreateTxProposalError,
 } from '../../../store/wallet/effects/send/send';
 import {sleep} from '../../../utils/helper-methods';
-import {GetEstimatedTxSize} from '../../../store/wallet/utils/wallet';
-import {
-  FeeLevels,
-  getFeeRatePerKb,
-  GetMinFee,
-} from '../../../store/wallet/effects/fee/fee';
+import {GetMinFee} from '../../../store/wallet/effects/fee/fee';
+import AmountModal from '../components/AmountModal';
+import {Caution} from '../../../styles/colors';
 
 export const CurrencyColumn = styled(Column)`
   margin-left: 8px;
@@ -91,7 +83,14 @@ const InputSelectionRowContainer = styled.View`
 `;
 
 const CtaContainer = styled(_CtaContainer)`
-  padding: 10px 0;
+  padding: 10px 16px;
+`;
+
+const ErrorText = styled(BaseText)`
+  color: ${Caution};
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 0 0 0;
 `;
 
 export const InputTouchableContainer = styled.TouchableOpacity`
@@ -116,10 +115,15 @@ const SelectInputs = () => {
   );
   const [inputs, setInputs] = useState<Utxo[]>([]);
   const {wallet, recipient} = route.params;
+  const {currencyAbbreviation} = wallet;
   const precision = dispatch(GetPrecision(wallet?.credentials.coin));
   const [totalAmount, setTotalAmount] = useState(
     Number(0).toFixed(precision?.unitDecimals),
   );
+  const [amountModalVisible, setAmountModalVisible] = useState(false);
+  const [specifiedAmount, setSpecifiedAmount] = useState<number | undefined>();
+  const [canContinue, setCanContinue] = useState<boolean>(false);
+
   const logger = useLogger();
   let recipientData: TxDetailsSendingTo;
 
@@ -159,21 +163,24 @@ const SelectInputs = () => {
     init();
   }, []);
 
-  const inputToggled = (item: Utxo, index: number) => {
-    setInputs(prevInputs => {
-      prevInputs[index] = item;
-      return prevInputs;
-    });
-    setTotalAmount(prevTotalAmountStr => {
-      let prevTotalAmount = Number(prevTotalAmountStr);
-      if (item.checked) {
-        prevTotalAmount += item.amount;
-      } else {
-        prevTotalAmount -= item.amount;
-      }
-      return Number(prevTotalAmount).toFixed(precision!.unitDecimals);
-    });
-  };
+  const inputToggled = useCallback(
+    (item: Utxo, index: number) => {
+      setInputs(prevInputs => {
+        prevInputs[index] = item;
+        return prevInputs;
+      });
+      setTotalAmount(prevTotalAmountStr => {
+        let prevTotalAmount = Number(prevTotalAmountStr);
+        if (item.checked) {
+          prevTotalAmount += item.amount;
+        } else {
+          prevTotalAmount -= item.amount;
+        }
+        return Number(prevTotalAmount).toFixed(precision!.unitDecimals);
+      });
+    },
+    [precision],
+  );
 
   const renderItem = useCallback(
     ({item, index}) => (
@@ -188,18 +195,14 @@ const SelectInputs = () => {
         <Hr />
       </InputSelectionRowContainer>
     ),
-    [],
+    [inputToggled, precision],
   );
 
   const goToConfirmView = async () => {
     try {
-      dispatch(
-        showOnGoingProcessModal(
-          t(OnGoingProcessMessages.LOADING),
-        ),
-      );
+      haptic('impactLight');
+      dispatch(showOnGoingProcessModal(t(OnGoingProcessMessages.LOADING)));
       const estimatedFee = await GetMinFee(wallet, 1, inputs.length);
-      const {currencyAbbreviation} = wallet;
       const formattedestimatedFee = dispatch(
         SatToUnit(estimatedFee, currencyAbbreviation),
       );
@@ -226,7 +229,6 @@ const SelectInputs = () => {
           txp,
           txDetails,
           amount,
-          selectInputs: true,
           inputs,
         },
       });
@@ -254,6 +256,13 @@ const SelectInputs = () => {
     }
   };
 
+  useEffect(() => {
+    setCanContinue(
+      inputs.filter(i => i.checked).length > 0 &&
+        (specifiedAmount ? Number(totalAmount) > specifiedAmount : true),
+    );
+  }, [totalAmount, specifiedAmount, inputs]);
+
   return (
     <SelectInputsContainer>
       <SelectInputsDetailsContainer>
@@ -270,8 +279,18 @@ const SelectInputs = () => {
                 {recipientData.recipientName || recipientData.recipientAddress}
               </H7>
             </RecipientContainer>
-            <SpecifyAmountContainer>
-              <Link>{t('Specify Amount')}</Link>
+            <SpecifyAmountContainer
+              onPress={() => {
+                haptic('impactLight');
+                setAmountModalVisible(true);
+              }}>
+              {specifiedAmount ? (
+                <Link>
+                  {specifiedAmount + ' ' + currencyAbbreviation.toUpperCase()}
+                </Link>
+              ) : (
+                <Link>{t('Specify Amount')}</Link>
+              )}
             </SpecifyAmountContainer>
           </ItemRowContainer>
           <Hr />
@@ -279,10 +298,24 @@ const SelectInputs = () => {
         <SectionContainer>
           <H5>{t('Total Selected Inputs')}</H5>
           <Hr />
-          <ItemRowContainer>
+          <ItemRowContainer
+            style={{
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              justifyContent: 'center',
+            }}>
             <BaseText>
               {totalAmount} {precision?.unitCode.toUpperCase()}
             </BaseText>
+
+            {specifiedAmount && Number(totalAmount) < specifiedAmount ? (
+              <ErrorText>
+                {t('The sum of the selected amounts must be at least:', {
+                  specifiedAmount,
+                  currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+                })}
+              </ErrorText>
+            ) : null}
           </ItemRowContainer>
           <Hr />
         </SectionContainer>
@@ -291,7 +324,7 @@ const SelectInputs = () => {
       </SelectInputsDetailsContainer>
       {inputs && inputs.length ? (
         <FlatList
-          contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
+          contentContainerStyle={{paddingBottom: 20}}
           data={inputs}
           keyExtractor={(_item, index) => index.toString()}
           renderItem={({item, index}: {item: Utxo; index: number}) =>
@@ -310,10 +343,22 @@ const SelectInputs = () => {
         <Button
           buttonStyle={'primary'}
           onPress={goToConfirmView}
-          disabled={!inputs.find(i => i.checked)}>
+          disabled={!canContinue}>
           {t('Continue')}
         </Button>
       </CtaContainer>
+
+      <AmountModal
+        isVisible={amountModalVisible}
+        opts={{
+          hideSendMax: true,
+          currencyAbbreviation,
+        }}
+        onDismiss={(amount?: number) => {
+          setSpecifiedAmount(amount);
+          setAmountModalVisible(false);
+        }}
+      />
     </SelectInputsContainer>
   );
 };
