@@ -7,19 +7,11 @@ import haptic from '../haptic-feedback/haptic';
 import Checkbox from '../checkbox/Checkbox';
 import {Utxo} from '../../store/wallet/wallet.models';
 
-export interface InputProps extends Utxo {
-  checked?: boolean;
-}
-
-export interface InputSelectionToggleProps {
-  checked: boolean;
-  amount: number;
-}
-
 interface Props {
-  item: InputProps;
+  item: Utxo;
   unitCode?: string;
-  emit: (props: InputSelectionToggleProps) => void;
+  emit: (item: Utxo, index: number) => void;
+  index: number;
 }
 
 const CheckBoxContainer = styled.View`
@@ -31,17 +23,14 @@ const InputColumn = styled(Column)`
   margin-left: 16px;
 `;
 
-const InputSelectionRow = ({item, unitCode, emit}: Props) => {
+const InputSelectionRow = ({item, unitCode, emit, index}: Props) => {
   const {amount, address, checked: initialCheckValue} = item;
 
   const [checked, setChecked] = useState(!!initialCheckValue);
   const toggle = (): void => {
     setChecked(!checked);
     haptic('impactLight');
-    emit({
-      checked: !checked,
-      amount,
-    });
+    emit({...item, ...{checked: !checked}}, index);
   };
 
   return (

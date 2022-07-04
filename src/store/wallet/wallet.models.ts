@@ -271,7 +271,7 @@ export interface TransactionOptions {
   useUnconfirmedFunds?: boolean;
   // fromReplaceByFee
   fee?: number;
-  inputs?: any[];
+  inputs?: Utxo[];
 }
 
 export interface Action {
@@ -435,4 +435,5 @@ export interface Utxo {
   spent: boolean;
   txid: string;
   vout: number;
+  checked?: boolean;
 }

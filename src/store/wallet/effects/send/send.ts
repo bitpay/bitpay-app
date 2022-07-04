@@ -473,6 +473,7 @@ const buildTransactionProposal =
           payProUrl,
           sendMax,
           wallet,
+          inputs,
         } = tx;
         let {customData} = tx;
 
@@ -560,6 +561,18 @@ const buildTransactionProposal =
             });
             break;
           case 'selectInputs':
+            txp.inputs = inputs;
+            txp.fee = tx.fee;
+            txp.feeLevel = undefined;
+            if (tx.replaceTxByFee) {
+              txp.replaceTxByFee = true;
+            }
+            txp.outputs.push({
+              toAddress: tx.toAddress,
+              amount: tx.amount!,
+              message: tx.description,
+              data: tx.data,
+            });
             break;
           case 'fromReplaceByFee':
             txp.inputs = tx.inputs;
