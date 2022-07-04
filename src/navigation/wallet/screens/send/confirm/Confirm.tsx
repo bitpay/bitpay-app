@@ -79,7 +79,6 @@ export interface ConfirmParamList {
   amount: number;
   speedup?: boolean;
   sendMax?: boolean;
-  selectInputs?: boolean;
   inputs?: Utxo[];
 }
 
@@ -115,7 +114,6 @@ const Confirm = () => {
     amount,
     speedup,
     sendMax,
-    selectInputs,
     inputs,
   } = route.params;
   const [txp, setTxp] = useState(_txp);

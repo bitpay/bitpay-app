@@ -72,7 +72,7 @@ const ErrorText = styled(BaseText)`
 `;
 
 const CtaContainer = styled(_CtaContainer)`
-  padding: 10px 0;
+  padding: 10px 16px;
 `;
 
 const SendToAddress = () => {
@@ -225,7 +225,7 @@ const SendToAddress = () => {
         </Paragraph>
         <SearchContainer style={{marginTop: 25, marginBottom: 0}}>
           <SearchInput
-            placeholder={t('Enter address')}
+            placeholder={t('Enter address or select wallet')}
             placeholderTextColor={placeHolderTextColor}
             value={searchInput}
             onChangeText={(text: string) => {
