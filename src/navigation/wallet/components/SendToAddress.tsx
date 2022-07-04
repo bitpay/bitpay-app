@@ -167,10 +167,9 @@ const SendToAddress = () => {
         setErrorMessage('');
         setRecipient({address: text});
       }
-      {
-      }
     } else {
       setErrorMessage(text.length > 15 ? 'Invalid Address' : '');
+      setRecipient(undefined);
     }
   };
 
@@ -202,8 +201,7 @@ const SendToAddress = () => {
         )) as string;
         dispatch(dismissOnGoingProcessModal());
       }
-      setSearchInput(walletName || credentials.walletName);
-      setRecipient({
+      goToNextView({
         type: 'wallet',
         name: walletName || credentials.walletName,
         walletId,
@@ -213,6 +211,16 @@ const SendToAddress = () => {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const goToNextView = (walletRecipient?: Recipient) => {
+    navigation.navigate('Wallet', {
+      screen: 'SelectInputs',
+      params: {
+        recipient: walletRecipient || recipient!,
+        wallet,
+      },
+    });
   };
 
   return (
@@ -278,13 +286,7 @@ const SendToAddress = () => {
           buttonStyle={'primary'}
           onPress={() => {
             haptic('impactLight');
-            navigation.navigate('Wallet', {
-              screen: 'SelectInputs',
-              params: {
-                recipient: recipient!,
-                wallet,
-              },
-            });
+            goToNextView();
           }}
           disabled={!recipient}>
           {t('Continue')}

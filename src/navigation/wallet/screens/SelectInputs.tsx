@@ -275,7 +275,7 @@ const SelectInputs = () => {
               <H7
                 numberOfLines={1}
                 ellipsizeMode={'tail'}
-                style={{marginLeft: 8}}>
+                style={{marginLeft: 8, width: '60%'}}>
                 {recipientData.recipientName || recipientData.recipientAddress}
               </H7>
             </RecipientContainer>
