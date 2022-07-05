@@ -309,8 +309,11 @@ const Confirm = () => {
 
   return (
     <ConfirmContainer>
-      <ConfirmScrollView>
-        <DetailsList>
+      <ConfirmScrollView
+        extraScrollHeight={50}
+        contentContainerStyle={{paddingBottom: 50}}
+        keyboardShouldPersistTaps={'handled'}>
+        <DetailsList keyboardShouldPersistTaps={'handled'}>
           <Header>Summary</Header>
           <SendingTo recipient={recipientData} hr />
           <Fee

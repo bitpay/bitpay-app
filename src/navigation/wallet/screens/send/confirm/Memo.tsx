@@ -134,7 +134,8 @@ const MemoInputContainer = styled.View<MemoInputContainerParams>`
     hasFocus
       ? Action
       : getMemoBorderColor({hasFocus, isEditMode, isEmpty}, theme.dark)};
-  border-right-width: ${({isEmpty}) => (isEmpty ? memoBorderWidth : 0)}px;
+  border-right-width: ${({isEmpty, isEditMode}) =>
+    isEmpty && !isEditMode ? memoBorderWidth : 0}px;
   flex-direction: row;
 `;
 
@@ -183,6 +184,11 @@ export const Memo = ({
   const [draftMemo, setDraftMemo] = useState(memo);
   const theme = useTheme();
   const inputRef = useRef<TextInput>(null);
+  const save = () => {
+    setIsEditMode(false);
+    onChange(draftMemo);
+    inputRef.current?.blur();
+  };
   return (
     <>
       <MemoRow>
@@ -235,20 +241,26 @@ export const Memo = ({
           </MemoInputContainer>
           {draftMemo || isEditMode ? (
             <MemoOuterButtonContainer isEditMode={isEditMode}>
-              <MemoOuterButton
-                onPress={async () => {
-                  setIsEditMode(!isEditMode);
-                  await sleep(0);
-                  isEditMode ? onChange(draftMemo) : inputRef.current?.focus();
-                }}>
-                {isEditMode ? (
+              {isEditMode ? (
+                <MemoOuterButton
+                  onPress={async () => {
+                    save();
+                    // Prevent refocus after delayed autocorrect
+                    await sleep(300);
+                    save();
+                  }}>
                   <CheckSvg width={14} />
-                ) : theme.dark ? (
-                  <PencilDarkSvg />
-                ) : (
-                  <PencilSvg />
-                )}
-              </MemoOuterButton>
+                </MemoOuterButton>
+              ) : (
+                <MemoOuterButton
+                  onPress={async () => {
+                    setIsEditMode(true);
+                    await sleep(0);
+                    inputRef.current?.focus();
+                  }}>
+                  {theme.dark ? <PencilDarkSvg /> : <PencilSvg />}
+                </MemoOuterButton>
+              )}
             </MemoOuterButtonContainer>
           ) : null}
         </MemoContainer>
