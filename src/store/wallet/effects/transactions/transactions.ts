@@ -96,6 +96,9 @@ export const ProcessPendingTxps =
         tx.createdOn = now;
       }
 
+      tx.copayerId = wallet.credentials.copayerId;
+      tx.walletId = wallet.credentials.walletId;
+
       const action: any = tx.actions.find(
         (a: any) => a.copayerId === wallet.credentials.copayerId,
       );
