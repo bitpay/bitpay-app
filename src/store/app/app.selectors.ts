@@ -44,24 +44,20 @@ export const selectOffersAndPromotionsAccepted: AppSelector<boolean> = ({
   APP,
 }) => APP.offersAndPromotionsAccepted;
 
+export const selectAnnouncementsAccepted: AppSelector<boolean> = ({APP}) =>
+  APP.announcementsAccepted;
+
 export const selectSettingsNotificationState = createSelector(
   [
     selectNotificationsAccepted,
     selectConfirmedTxAccepted,
-    selectProductsUpdatesAccepted,
-    selectOffersAndPromotionsAccepted,
+    selectAnnouncementsAccepted,
   ],
-  (
-    notificationsAccepted,
-    confirmedTxAccepted,
-    productsUpdatesAccepted,
-    offersAndPromotionsAccepted,
-  ) => {
+  (notificationsAccepted, confirmedTxAccepted, selectAnnouncementsAccepted) => {
     return {
       pushNotifications: notificationsAccepted,
       confirmedTx: confirmedTxAccepted,
-      productsUpdates: productsUpdatesAccepted,
-      offersAndPromotions: offersAndPromotionsAccepted,
+      announcements: selectAnnouncementsAccepted,
     };
   },
 );

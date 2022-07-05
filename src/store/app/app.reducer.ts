@@ -55,6 +55,7 @@ export interface AppState {
   confirmedTxAccepted: boolean;
   productsUpdatesAccepted: boolean;
   offersAndPromotionsAccepted: boolean;
+  announcementsAccepted: boolean;
   showOnboardingFinishModal: boolean;
   showDecryptPasswordModal: boolean;
   decryptPasswordConfig: DecryptPasswordConfig | undefined;
@@ -112,6 +113,7 @@ const initialState: AppState = {
   confirmedTxAccepted: false,
   productsUpdatesAccepted: false,
   offersAndPromotionsAccepted: false,
+  announcementsAccepted: false,
   showOnboardingFinishModal: false,
   showDecryptPasswordModal: false,
   decryptPasswordConfig: undefined,
@@ -265,6 +267,12 @@ export const appReducer = (
       return {
         ...state,
         offersAndPromotionsAccepted: action.payload,
+      };
+
+    case AppActionTypes.SET_ANNOUNCEMENTS_ACCEPTED:
+      return {
+        ...state,
+        announcementsAccepted: action.payload,
       };
 
     case AppActionTypes.SHOW_ONBOARDING_FINISH_MODAL:

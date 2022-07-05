@@ -1,143 +1,43 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import {useTranslation} from 'react-i18next';
-import {Alert, View, AppState, AppStateStatus, Linking} from 'react-native';
-import Checkbox from '../../../../components/checkbox/Checkbox';
+import React from 'react';
 import {
-  Hr,
+  ActiveOpacity,
   Setting,
   SettingTitle,
 } from '../../../../components/styled/Containers';
-import {AppEffects} from '../../../../store/app';
-import {selectSettingsNotificationState} from '../../../../store/app/app.selectors';
-import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
+import AngleRight from '../../../../../assets/img/angle-right.svg';
 import {SettingsComponent} from '../SettingsRoot';
+import {useTranslation} from 'react-i18next';
+import {useNavigation} from '@react-navigation/native';
 
 const Notifications = () => {
   const {t} = useTranslation();
-  const dispatch = useAppDispatch();
-
-  const notificationsState = useAppSelector(selectSettingsNotificationState);
-
-  const [pushNotifications, setPushNotifications] = useState(
-    notificationsState.pushNotifications,
-  );
-  const [confirmedTx, setConfirmedTx] = useState(
-    notificationsState.confirmedTx,
-  );
-  const [productsUpdates, setProductsUpdates] = useState(
-    notificationsState.productsUpdates,
-  );
-  const [offersAndPromotions, setOffersAndPromotions] = useState(
-    notificationsState.offersAndPromotions,
-  );
-
-  const openSettings = useCallback(() => {
-    Alert.alert(
-      t('Notifications Disabled'),
-      t(
-        'If you want to get important updates on your account, new features, promos and more, go to Settings and tap Allow Notifications.',
-      ),
-      [
-        {
-          text: t('Cancel'),
-          onPress: () => {},
-          style: 'cancel',
-        },
-        {
-          text: t('Change Settings'),
-          onPress: () => {
-            Linking.openSettings();
-          },
-        },
-      ],
-    );
-  }, [t]);
-
-  const setNotificationValue = useCallback(
-    async (accepted: boolean) => {
-      const systemEnabled = await AppEffects.checkNotificationsPermissions();
-      if (systemEnabled) {
-        if (accepted !== notificationsState.pushNotifications) {
-          setPushNotifications(accepted);
-          dispatch(AppEffects.setNotifications(accepted));
-        }
-      } else {
-        openSettings();
-        if (notificationsState.pushNotifications) {
-          setPushNotifications(false);
-          dispatch(AppEffects.setNotifications(false));
-        }
-      }
-    },
-    [dispatch, openSettings, notificationsState.pushNotifications],
-  );
-
-  const notificationsList = [
-    {
-      title: t('Enable Push Notifications'),
-      checked: pushNotifications,
-      show: true,
-      onPress: () => {
-        const accepted = !pushNotifications;
-        setNotificationValue(accepted);
-      },
-    },
-    {
-      title: t('Confirmed Transactions'),
-      checked: confirmedTx,
-      show: pushNotifications,
-      onPress: () => {
-        const accepted = !confirmedTx;
-        setConfirmedTx(accepted);
-        dispatch(AppEffects.setConfirmTxNotifications(accepted));
-      },
-    },
-    {
-      title: t('Product Updates'),
-      checked: productsUpdates,
-      show: pushNotifications,
-      onPress: () => {
-        const accepted = !productsUpdates;
-        setProductsUpdates(accepted);
-        dispatch(AppEffects.setProductsUpdatesNotifications(accepted));
-      },
-    },
-    {
-      title: t('Offers & Promotions'),
-      checked: offersAndPromotions,
-      show: pushNotifications,
-      onPress: () => {
-        const accepted = !offersAndPromotions;
-        setOffersAndPromotions(accepted);
-        dispatch(AppEffects.setOffersAndPromotionsNotifications(accepted));
-      },
-    },
-  ];
-
-  useEffect(() => {
-    function onAppStateChange(status: AppStateStatus) {
-      // status === 'active' when the app goes from background to foreground,
-      if (status === 'active') {
-        setNotificationValue(notificationsState.pushNotifications);
-      }
-    }
-    AppState.addEventListener('change', onAppStateChange);
-    return () => AppState.removeEventListener('change', onAppStateChange);
-  }, [dispatch, setNotificationValue, notificationsState.pushNotifications]);
+  const navigation = useNavigation();
 
   return (
     <SettingsComponent>
-      {notificationsList.map(({title, checked, onPress, show}, i) =>
-        show ? (
-          <View key={i}>
-            {i !== 0 ? <Hr /> : null}
-            <Setting onPress={onPress}>
-              <SettingTitle>{title}</SettingTitle>
-              <Checkbox onPress={onPress} checked={checked} />
-            </Setting>
-          </View>
-        ) : null,
-      )}
+      <Setting
+        activeOpacity={ActiveOpacity}
+        onPress={() =>
+          navigation.navigate('NotificationsSettings', {
+            screen: 'PushNotifications',
+          })
+        }>
+        <SettingTitle>{t('Push Notifications')}</SettingTitle>
+        <AngleRight />
+      </Setting>
+
+      {/*----------------------------------------------------------------------*/}
+
+      <Setting
+        activeOpacity={ActiveOpacity}
+        onPress={() =>
+          navigation.navigate('NotificationsSettings', {
+            screen: 'EmailNotifications',
+          })
+        }>
+        <SettingTitle>{t('Email Notifications')}</SettingTitle>
+        <AngleRight />
+      </Setting>
     </SettingsComponent>
   );
 };

@@ -33,6 +33,7 @@ import {WalletActions} from '../wallet';
 import {walletConnectInit} from '../wallet-connect/wallet-connect.effects';
 import {startMigration, startWalletStoreInit} from '../wallet/effects';
 import {
+  setAnnouncementsAccepted,
   setAppFirstOpenEventComplete,
   setAppFirstOpenEventDate,
   setBrazeEid,
@@ -609,6 +610,19 @@ export const setOffersAndPromotionsNotifications =
     if (accepted) {
       ReactAppboy.addToSubscriptionGroup(OFFERS_AND_PROMOTIONS_GROUP_ID);
     } else {
+      ReactAppboy.removeFromSubscriptionGroup(OFFERS_AND_PROMOTIONS_GROUP_ID);
+    }
+  };
+
+export const setAnnouncementsNotifications =
+  (accepted: boolean): Effect =>
+  async dispatch => {
+    dispatch(setAnnouncementsAccepted(accepted));
+    if (accepted) {
+      ReactAppboy.addToSubscriptionGroup(OFFERS_AND_PROMOTIONS_GROUP_ID);
+      ReactAppboy.addToSubscriptionGroup(PRODUCTS_UPDATES_GROUP_ID);
+    } else {
+      ReactAppboy.removeFromSubscriptionGroup(PRODUCTS_UPDATES_GROUP_ID);
       ReactAppboy.removeFromSubscriptionGroup(OFFERS_AND_PROMOTIONS_GROUP_ID);
     }
   };

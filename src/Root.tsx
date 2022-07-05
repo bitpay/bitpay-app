@@ -98,6 +98,9 @@ import CardActivationStack, {
 import {sleep} from './utils/helper-methods';
 import ReactAppboy from 'react-native-appboy-sdk';
 import {handleBwsEvent, logSegmentEvent} from './store/app/app.effects';
+import NotificationsSettingsStack, {
+  NotificationsSettingsStackParamsList,
+} from './navigation/tabs/settings/notifications/NotificationsStack';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -122,6 +125,7 @@ export type RootStackParamList = {
   SwapCrypto: NavigatorScreenParams<SwapCryptoStackParamList>;
   WalletConnect: NavigatorScreenParams<WalletConnectStackParamList>;
   Debug: DebugScreenParamList;
+  NotificationsSettings: NavigatorScreenParams<NotificationsSettingsStackParamsList>;
 };
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
@@ -147,6 +151,7 @@ export enum RootStacks {
   SWAP_CRYPTO = 'SwapCrypto',
   WALLET_CONNECT = 'WalletConnect',
   DEBUG = 'Debug',
+  NOTIFICATIONS_SETTINGS = 'NotificationsSettings',
 }
 
 // ROOT NAVIGATION CONFIG
@@ -166,7 +171,8 @@ export type NavScreenParams = NavigatorScreenParams<
     BuyCryptoStackParamList &
     SwapCryptoStackParamList &
     ScanStackParamList &
-    WalletConnectStackParamList
+    WalletConnectStackParamList &
+    NotificationsSettingsStackParamsList
 >;
 
 declare global {
@@ -449,6 +455,10 @@ export default () => {
             <Root.Screen
               name={RootStacks.EXTERNAL_SERVICES_SETTINGS}
               component={ExternalServicesSettingsStack}
+            />
+            <Root.Screen
+              name={RootStacks.NOTIFICATIONS_SETTINGS}
+              component={NotificationsSettingsStack}
             />
             <Root.Screen name={RootStacks.ABOUT} component={AboutStack} />
             <Root.Screen name={RootStacks.COINBASE} component={CoinbaseStack} />

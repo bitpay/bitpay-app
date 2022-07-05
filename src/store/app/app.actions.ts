@@ -120,6 +120,13 @@ export const setOffersAndPromotionsAccepted = (
   payload: offersAndPromotionsAccepted,
 });
 
+export const setAnnouncementsAccepted = (
+  announcementsAccepted: boolean,
+): AppActionType => ({
+  type: AppActionTypes.SET_ANNOUNCEMENTS_ACCEPTED,
+  payload: announcementsAccepted,
+});
+
 export const showOnboardingFinishModal = (): AppActionType => ({
   type: AppActionTypes.SHOW_ONBOARDING_FINISH_MODAL,
 });
