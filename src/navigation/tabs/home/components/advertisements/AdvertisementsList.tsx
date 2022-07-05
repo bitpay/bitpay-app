@@ -6,6 +6,7 @@ import AdvertisementCard from './AdvertisementCard';
 import {BoxShadow} from '../Styled';
 import {useNavigation} from '@react-navigation/native';
 import {useRequireKeyAndWalletRedirect} from '../../../../../utils/hooks/useRequireKeyAndWalletRedirect';
+import {WalletScreens} from '../../../../wallet/WalletStack';
 
 interface AdvertisementListProps {
   contentCards: ContentCard[];
@@ -27,7 +28,7 @@ const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
 
   const buyCryptoCta = useRequireKeyAndWalletRedirect(() => {
     navigation.navigate('Wallet', {
-      screen: 'Amount',
+      screen: WalletScreens.AMOUNT,
       params: {
         onAmountSelected: (amount: string) => {
           navigation.navigate('BuyCrypto', {

@@ -45,6 +45,7 @@ import KeyMigrationFailureModal from './components/KeyMigrationFailureModal';
 import {batch} from 'react-redux';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {useTranslation} from 'react-i18next';
+import {WalletScreens} from '../../wallet/WalletStack';
 
 const HomeRoot = () => {
   const {t} = useTranslation();
@@ -254,7 +255,7 @@ const HomeRoot = () => {
                                   ),
                                 );
                                 navigation.navigate('Wallet', {
-                                  screen: 'Amount',
+                                  screen: WalletScreens.AMOUNT,
                                   params: {
                                     onAmountSelected: (amount: string) => {
                                       navigation.navigate('BuyCrypto', {

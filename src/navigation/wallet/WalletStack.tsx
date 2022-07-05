@@ -33,7 +33,7 @@ import TermsOfUse, {
   TermsOfUseParamList,
 } from '../onboarding/screens/TermsOfUse';
 import AddWallet, {AddWalletParamList} from './screens/AddWallet';
-import Amount, {AmountParamList} from './screens/Amount';
+import AmountScreen, {AmountScreenParamList} from './screens/AmountScreen';
 import SendTo from './screens/send/SendTo';
 import Confirm, {ConfirmParamList} from './screens/send/confirm/Confirm';
 import CreateMultisig, {CreateMultisigProps} from './screens/CreateMultisig';
@@ -97,7 +97,7 @@ export type WalletStackParamList = {
   ExtendedPrivateKey: {xPrivKey: string};
   DeleteKey: {keyId: string};
   ExportKey: {code: string; keyName: string | undefined};
-  Amount: AmountParamList;
+  WalletAmountScreen: AmountScreenParamList;
   SendTo: {
     wallet: WalletModel;
   };
@@ -149,7 +149,7 @@ export enum WalletScreens {
   EXTENDED_PRIVATE_KEY = 'ExtendedPrivateKey',
   DELETE_KEY = 'DeleteKey',
   EXPORT_KEY = 'ExportKey',
-  AMOUNT = 'Amount',
+  AMOUNT = 'WalletAmountScreen',
   SEND_TO = 'SendTo',
   CONFIRM = 'Confirm',
   DEBIT_CARD_CONFIRM = 'DebitCardConfirm',
@@ -267,7 +267,7 @@ const WalletStack = () => {
           name={WalletScreens.TERMS_OF_USE}
           component={TermsOfUse}
         />
-        <Wallet.Screen name={WalletScreens.AMOUNT} component={Amount} />
+        <Wallet.Screen name={WalletScreens.AMOUNT} component={AmountScreen} />
         <Wallet.Screen name={WalletScreens.SEND_TO} component={SendTo} />
         <Wallet.Screen name={WalletScreens.CONFIRM} component={Confirm} />
         <Wallet.Screen

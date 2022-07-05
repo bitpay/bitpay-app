@@ -418,6 +418,7 @@ const goToConfirm =
           amount,
         },
       });
+      sleep(300).then(() => setButtonState?.(null));
     } catch (err: any) {
       if (setButtonState) {
         setButtonState('failed');
@@ -490,7 +491,7 @@ export const goToAmount =
     navigationRef.navigate('Wallet', {
       screen: WalletScreens.AMOUNT,
       params: {
-        currencyAbbreviationRouteParam: coin.toUpperCase(),
+        cryptoCurrencyAbbreviation: coin.toUpperCase(),
         onAmountSelected: async (amount, setButtonState, amountOpts) => {
           dispatch(
             goToConfirm({

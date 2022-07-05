@@ -64,7 +64,7 @@ import OptionsSheet, {Option} from '../components/OptionsSheet';
 import ReceiveAddress from '../components/ReceiveAddress';
 import BalanceDetailsModal from '../components/BalanceDetailsModal';
 import Icons from '../components/WalletIcons';
-import {WalletStackParamList} from '../WalletStack';
+import {WalletScreens, WalletStackParamList} from '../WalletStack';
 import {buildUIFormattedWallet} from './KeyOverview';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {getPriceHistory, startGetRates} from '../../../store/wallet/effects';
@@ -342,9 +342,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       ),
       onPress: () => {
         navigation.navigate('Wallet', {
-          screen: 'Amount',
+          screen: WalletScreens.AMOUNT,
           params: {
-            currencyAbbreviationRouteParam:
+            cryptoCurrencyAbbreviation:
               fullWalletObj.currencyAbbreviation.toUpperCase(),
             onAmountSelected: async (amount, setButtonState) => {
               setButtonState('success');
@@ -353,6 +353,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                 screen: 'RequestSpecificAmountQR',
                 params: {wallet: fullWalletObj, requestAmount: Number(amount)},
               });
+              sleep(300).then(() => setButtonState(null));
             },
             opts: {
               hideSendMax: true,
@@ -924,7 +925,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           ),
                         );
                         navigation.navigate('Wallet', {
-                          screen: 'Amount',
+                          screen: WalletScreens.AMOUNT,
                           params: {
                             onAmountSelected: async (amount: string) => {
                               navigation.navigate('BuyCrypto', {

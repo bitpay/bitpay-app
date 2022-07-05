@@ -358,7 +358,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
               screen: WalletScreens.AMOUNT,
               params: {
                 opts: {hideSendMax: true},
-                currencyAbbreviationRouteParam:
+                cryptoCurrencyAbbreviation:
                   wallet.currencyAbbreviation.toUpperCase(),
                 onAmountSelected: async (amount, setButtonState, opts) => {
                   dispatch(

@@ -11,6 +11,7 @@ import Icons from './TransactMenuIcons';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch} from '../../../utils/hooks';
 import {logSegmentEvent} from '../../../store/app/app.effects';
+import {WalletScreens} from '../../../navigation/wallet/WalletStack';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -103,7 +104,7 @@ const TransactModal = () => {
           ),
         );
         navigation.navigate('Wallet', {
-          screen: 'Amount',
+          screen: WalletScreens.AMOUNT,
           params: {
             onAmountSelected: async (amount: string, setButtonState: any) => {
               navigation.navigate('BuyCrypto', {
