@@ -97,8 +97,6 @@ import CardActivationStack, {
 } from './navigation/card-activation/CardActivationStack';
 import {sleep} from './utils/helper-methods';
 import {Analytics, handleBwsEvent} from './store/app/app.effects';
-import ReactAppboy from 'react-native-appboy-sdk';
-import {handleBwsEvent, logSegmentEvent} from './store/app/app.effects';
 import NotificationsSettingsStack, {
   NotificationsSettingsStackParamsList,
 } from './navigation/tabs/settings/notifications/NotificationsStack';
