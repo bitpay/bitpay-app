@@ -1,7 +1,7 @@
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 import styled from 'styled-components/native';
-import {H7} from '../../../components/styled/Text';
+import {H7, Smallest} from '../../../components/styled/Text';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
 import EthIcon from '../../../../assets/img/currencies/eth.svg';
 import AngleRight from '../../../../assets/img/angle-right.svg';
@@ -46,6 +46,7 @@ import {Wallet} from '../../../store/wallet/wallet.models';
 import {convertHexToNumber} from '@walletconnect/utils';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {useTranslation} from 'react-i18next';
+import {GetAmFormatDate} from '../../../store/wallet/utils/time';
 
 export type WalletConnectHomeParamList = {
   peerId: string;
@@ -334,7 +335,16 @@ const WalletConnectHome = () => {
                       ) : null}
                     </ItemTitleContainer>
                     <ItemNoteContainer>
-                      <IconLabel>{amountStr}</IconLabel>
+                      <View style={{alignItems: 'flex-end'}}>
+                        <IconLabel>{amountStr}</IconLabel>
+                        {request.createdOn ? (
+                          <Smallest style={{marginRight: 12}}>
+                            {t('Created on', {
+                              createdOn: GetAmFormatDate(request.createdOn),
+                            })}
+                          </Smallest>
+                        ) : null}
+                      </View>
                       <IconContainer>
                         <AngleRight />
                       </IconContainer>
