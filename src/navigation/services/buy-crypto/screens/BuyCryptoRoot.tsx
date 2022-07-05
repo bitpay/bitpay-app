@@ -11,7 +11,7 @@ import {BuyCryptoStackParamList} from '../BuyCryptoStack';
 import {PaymentMethodsAvailable} from '../constants/BuyCryptoConstants';
 import PaymentMethodsModal from '../components/PaymentMethodModal';
 import WalletSelectorModal from '../components/WalletSelectorModal';
-import AmountModal from '../components/AmountModal';
+import AmountModal from '../../../../components/amount/AmountModal';
 import {
   BuyCryptoItemCard,
   BuyCryptoItemTitle,
@@ -623,12 +623,12 @@ const BuyCryptoRoot: React.FC<
 
       <AmountModal
         isVisible={amountModalVisible}
-        onDismiss={(newAmount?: number) => {
-          if (newAmount) {
-            setAmount(newAmount);
-          }
+        context={'buyCrypto'}
+        onSubmit={newAmount => {
+          setAmount(newAmount);
           hideModal('amount');
         }}
+        onClose={() => hideModal('amount')}
       />
 
       <WalletSelectorModal
