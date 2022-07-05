@@ -27,6 +27,7 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'showBottomNotificationModal',
   'showBiometricModal',
   'activeModalId',
+  'failedAppInit',
 ];
 
 export type ModalId = 'sheetModal' | 'ongoingProcess' | 'pin';
@@ -82,6 +83,7 @@ export interface AppState {
   showKeyMigrationFailureModal: boolean;
   keyMigrationFailureModalHasBeenShown: boolean;
   activeModalId: ModalId | null;
+  failedAppInit: boolean;
 }
 
 const initialState: AppState = {
@@ -139,6 +141,7 @@ const initialState: AppState = {
   showKeyMigrationFailureModal: false,
   keyMigrationFailureModalHasBeenShown: false,
   activeModalId: null,
+  failedAppInit: false,
 };
 
 export const appReducer = (
@@ -466,6 +469,12 @@ export const appReducer = (
       return {
         ...state,
         activeModalId: action.payload,
+      };
+
+    case AppActionTypes.FAILED_APP_INIT:
+      return {
+        ...state,
+        failedAppInit: action.payload,
       };
 
     default:
