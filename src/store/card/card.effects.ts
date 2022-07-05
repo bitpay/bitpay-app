@@ -78,31 +78,31 @@ export const startCardStoreInit =
     } else {
       const options = new DoshUiOptions('Card Offers', 'CIRCLE', 'DIAGONAL');
 
-      Dosh.initializeDosh(options)
-        .then(() => {
-          dispatch(LogActions.info('Successfully initialized Dosh.'));
+      try {
+        Dosh.initializeDosh(options);
 
-          const {doshToken} = initialData;
-          if (!doshToken) {
-            dispatch(LogActions.debug('No doshToken provided.'));
-            return;
-          }
+        dispatch(LogActions.info('Successfully initialized Dosh.'));
 
-          return Dosh.setDoshToken(doshToken);
-        })
-        .catch(err => {
-          dispatch(
-            LogActions.error('An error occurred while initializing Dosh.'),
-          );
+        const {doshToken} = initialData;
+        if (!doshToken) {
+          dispatch(LogActions.debug('No doshToken provided.'));
+          return;
+        }
 
-          // check for Android exception (see: DoshModule.java)
-          // TODO: iOS exceptions
-          if ((err as any).message) {
-            dispatch(LogActions.error((err as any).message));
-          } else {
-            dispatch(LogActions.error(JSON.stringify(err)));
-          }
-        });
+        Dosh.setDoshToken(doshToken);
+      } catch (err: any) {
+        dispatch(
+          LogActions.error('An error occurred while initializing Dosh.'),
+        );
+
+        // check for Android exception (see: DoshModule.java)
+        // TODO: iOS exceptions
+        if ((err as any).message) {
+          dispatch(LogActions.error((err as any).message));
+        } else {
+          dispatch(LogActions.error(JSON.stringify(err)));
+        }
+      }
     }
   };
 
