@@ -43,6 +43,7 @@ import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../store/app/app.effects';
+import {GetAmFormatDate} from '../../../store/wallet/utils/time';
 
 export type WalletConnectRequestDetailsParamList = {
   peerId: string;
@@ -358,6 +359,21 @@ const WalletConnectRequestDetails = () => {
             </Info>
           )}
           <Hr />
+          {request?.createdOn ? (
+            <>
+              <ItemContainer>
+                <ItemTitleContainer>
+                  <H7>{t('Date')}</H7>
+                </ItemTitleContainer>
+                <MessageNoteContainer>
+                  <H7 numberOfLines={1} ellipsizeMode={'middle'}>
+                    {GetAmFormatDate(request?.createdOn)}
+                  </H7>
+                </MessageNoteContainer>
+              </ItemContainer>
+              <Hr />
+            </>
+          ) : null}
         </RequestDetailsContainer>
         <CtaContainer>
           <ActionContainer>
