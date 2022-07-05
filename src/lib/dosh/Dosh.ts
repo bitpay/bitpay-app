@@ -42,8 +42,10 @@ interface DoshModule {
 interface Dosh extends Omit<DoshModule, 'initializeDosh'> {
   /**
    * This should be done before any other calls to the PoweredByDosh SDK.
+   *
+   * TODO: returns a Promise<any> on Android, but void iOS. See if we can update iOS bridge.
    */
-  initializeDosh: (uiOptions: DoshUiOptions) => Promise<any>;
+  initializeDosh: (uiOptions: DoshUiOptions) => void;
 }
 
 const DoshModule = ReactNative.NativeModules.Dosh as DoshModule;
