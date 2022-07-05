@@ -37,13 +37,6 @@ export const selectNotificationsAccepted: AppSelector<boolean> = ({APP}) =>
 export const selectConfirmedTxAccepted: AppSelector<boolean> = ({APP}) =>
   APP.confirmedTxAccepted;
 
-export const selectProductsUpdatesAccepted: AppSelector<boolean> = ({APP}) =>
-  APP.productsUpdatesAccepted;
-
-export const selectOffersAndPromotionsAccepted: AppSelector<boolean> = ({
-  APP,
-}) => APP.offersAndPromotionsAccepted;
-
 export const selectAnnouncementsAccepted: AppSelector<boolean> = ({APP}) =>
   APP.announcementsAccepted;
 

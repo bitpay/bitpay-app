@@ -106,20 +106,6 @@ export const setConfirmedTxAccepted = (
   payload: confirmedTxAccepted,
 });
 
-export const setProductsUpdatesAccepted = (
-  productsUpdatesAccepted: boolean,
-): AppActionType => ({
-  type: AppActionTypes.SET_PRODUCTS_UPDATES_ACCEPTED,
-  payload: productsUpdatesAccepted,
-});
-
-export const setOffersAndPromotionsAccepted = (
-  offersAndPromotionsAccepted: boolean,
-): AppActionType => ({
-  type: AppActionTypes.SET_OFFERS_AND_PROMOTIONS_ACCEPTED,
-  payload: offersAndPromotionsAccepted,
-});
-
 export const setAnnouncementsAccepted = (
   announcementsAccepted: boolean,
 ): AppActionType => ({

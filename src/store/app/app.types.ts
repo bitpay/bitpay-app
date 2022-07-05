@@ -34,8 +34,6 @@ export enum AppActionTypes {
   FAILED_GENERATE_APP_IDENTITY = 'APP/FAILED_GENERATE_APP_IDENTITY',
   SET_NOTIFICATIONS_ACCEPTED = 'APP/SET_NOTIFICATIONS_ACCEPTED',
   SET_CONFIRMED_TX_ACCEPTED = 'APP/SET_CONFIRMED_TX_ACCEPTED',
-  SET_PRODUCTS_UPDATES_ACCEPTED = 'APP/SET_PRODUCTS_UPDATES_ACCEPTED',
-  SET_OFFERS_AND_PROMOTIONS_ACCEPTED = 'APP/SET_OFFERS_AND_PROMOTIONS_ACCEPTED',
   SET_ANNOUNCEMENTS_ACCEPTED = 'APP/SET_ANNOUNCEMENTS_ACCEPTED',
   SHOW_ONBOARDING_FINISH_MODAL = 'APP/SHOW_ONBOARDING_FINISH_MODAL',
   DISMISS_ONBOARDING_FINISH_MODAL = 'APP/DISMISS_ONBOARDING_FINISH_MODAL',
@@ -145,16 +143,6 @@ interface SetNotificationsAccepted {
 
 interface SetConfirmedTxAccepted {
   type: typeof AppActionTypes.SET_CONFIRMED_TX_ACCEPTED;
-  payload: boolean;
-}
-
-interface SetProductsUpdatesAccepted {
-  type: typeof AppActionTypes.SET_PRODUCTS_UPDATES_ACCEPTED;
-  payload: boolean;
-}
-
-interface SetOffersAndPromotionsAccepted {
-  type: typeof AppActionTypes.SET_OFFERS_AND_PROMOTIONS_ACCEPTED;
   payload: boolean;
 }
 
@@ -318,8 +306,6 @@ export type AppActionType =
   | FailedGenerateAppIdentity
   | SetNotificationsAccepted
   | SetConfirmedTxAccepted
-  | SetProductsUpdatesAccepted
-  | SetOffersAndPromotionsAccepted
   | setAnnouncementsAccepted
   | ShowOnboardingFinishModal
   | DismissOnboardingFinishModal

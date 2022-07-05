@@ -6,6 +6,7 @@ import {AppEffects} from '../../../../../store/app';
 import {
   Hr,
   Setting,
+  SettingDescription,
   SettingTitle,
 } from '../../../../../components/styled/Containers';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
@@ -13,6 +14,14 @@ import {Settings, SettingsContainer} from '../../SettingsRoot';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {useNavigation} from '@react-navigation/native';
 import {sleep} from '../../../../../utils/helper-methods';
+import styled from 'styled-components/native';
+
+const SettingRow = styled(View)`
+  flex-grow: 1;
+  justify-content: center;
+  flex-direction: column;
+  padding: 8px 0;
+`;
 
 const PushNotifications = () => {
   const {t} = useTranslation();
@@ -21,6 +30,12 @@ const PushNotifications = () => {
 
   const notificationsState = useAppSelector(selectSettingsNotificationState);
 
+  const [confirmedTx, setConfirmedTx] = useState(
+    notificationsState.confirmedTx,
+  );
+  const [annnouncements, setAnnouncements] = useState(
+    notificationsState.announcements,
+  );
   const [pushNotifications, setPushNotifications] = useState(
     notificationsState.pushNotifications,
   );
@@ -62,13 +77,6 @@ const PushNotifications = () => {
     checkSystemEnabled();
   }, []);
 
-  const [confirmedTx, setConfirmedTx] = useState(
-    notificationsState.confirmedTx,
-  );
-  const [annnouncements, setAnnouncements] = useState(
-    notificationsState.announcements,
-  );
-
   const notificationsList = [
     {
       title: t('Enable Push Notifications'),
@@ -88,6 +96,7 @@ const PushNotifications = () => {
     {
       title: t('Transactions'),
       checked: confirmedTx,
+      description: t('Automated alerts about wallet or card.'),
       onPress: () => {
         if (!pushNotifications) {
           dispatch(AppEffects.setNotifications(true));
@@ -102,6 +111,7 @@ const PushNotifications = () => {
     {
       title: t('Announcements'),
       checked: annnouncements,
+      description: t('Updates on new features and other relevant news.'),
       onPress: () => {
         if (!pushNotifications) {
           dispatch(AppEffects.setNotifications(true));
@@ -119,10 +129,17 @@ const PushNotifications = () => {
     <SettingsContainer>
       <Settings>
         <Hr />
-        {notificationsList.map(({title, checked, onPress}, i) => (
+        {notificationsList.map(({title, checked, onPress, description}, i) => (
           <View key={i}>
             <Setting onPress={onPress}>
-              <SettingTitle>{title}</SettingTitle>
+              <SettingRow>
+                <SettingTitle style={{flexGrow: 0}}>{title}</SettingTitle>
+
+                {description ? (
+                  <SettingDescription>{description}</SettingDescription>
+                ) : null}
+              </SettingRow>
+
               <Checkbox radio={true} onPress={onPress} checked={checked} />
             </Setting>
             <Hr />

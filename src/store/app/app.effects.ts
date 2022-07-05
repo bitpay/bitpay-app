@@ -40,8 +40,6 @@ import {
   setConfirmedTxAccepted,
   setMigrationComplete,
   setNotificationsAccepted,
-  setOffersAndPromotionsAccepted,
-  setProductsUpdatesAccepted,
   showBlur,
 } from './app.actions';
 import {AppIdentity} from './app.models';
@@ -590,28 +588,6 @@ export const setConfirmTxNotifications =
   (accepted: boolean): Effect =>
   async dispatch => {
     dispatch(setConfirmedTxAccepted(accepted));
-  };
-
-export const setProductsUpdatesNotifications =
-  (accepted: boolean): Effect =>
-  async dispatch => {
-    dispatch(setProductsUpdatesAccepted(accepted));
-    if (accepted) {
-      ReactAppboy.addToSubscriptionGroup(PRODUCTS_UPDATES_GROUP_ID);
-    } else {
-      ReactAppboy.removeFromSubscriptionGroup(PRODUCTS_UPDATES_GROUP_ID);
-    }
-  };
-
-export const setOffersAndPromotionsNotifications =
-  (accepted: boolean): Effect =>
-  async dispatch => {
-    dispatch(setOffersAndPromotionsAccepted(accepted));
-    if (accepted) {
-      ReactAppboy.addToSubscriptionGroup(OFFERS_AND_PROMOTIONS_GROUP_ID);
-    } else {
-      ReactAppboy.removeFromSubscriptionGroup(OFFERS_AND_PROMOTIONS_GROUP_ID);
-    }
   };
 
 export const setAnnouncementsNotifications =

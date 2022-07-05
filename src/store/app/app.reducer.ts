@@ -53,8 +53,6 @@ export interface AppState {
   currentRoute: [keyof RootStackParamList, NavScreenParams] | undefined;
   notificationsAccepted: boolean;
   confirmedTxAccepted: boolean;
-  productsUpdatesAccepted: boolean;
-  offersAndPromotionsAccepted: boolean;
   announcementsAccepted: boolean;
   showOnboardingFinishModal: boolean;
   showDecryptPasswordModal: boolean;
@@ -111,8 +109,6 @@ const initialState: AppState = {
   currentRoute: undefined,
   notificationsAccepted: false,
   confirmedTxAccepted: false,
-  productsUpdatesAccepted: false,
-  offersAndPromotionsAccepted: false,
   announcementsAccepted: false,
   showOnboardingFinishModal: false,
   showDecryptPasswordModal: false,
@@ -255,18 +251,6 @@ export const appReducer = (
       return {
         ...state,
         confirmedTxAccepted: action.payload,
-      };
-
-    case AppActionTypes.SET_PRODUCTS_UPDATES_ACCEPTED:
-      return {
-        ...state,
-        productsUpdatesAccepted: action.payload,
-      };
-
-    case AppActionTypes.SET_OFFERS_AND_PROMOTIONS_ACCEPTED:
-      return {
-        ...state,
-        offersAndPromotionsAccepted: action.payload,
       };
 
     case AppActionTypes.SET_ANNOUNCEMENTS_ACCEPTED:
