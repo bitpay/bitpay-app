@@ -13,6 +13,7 @@ import {
 import {LanguageList} from '../../../../../constants/LanguageSelectionList';
 import i18n from 'i18next';
 import {logSegmentEvent} from '../../../../../store/app/app.effects';
+import _ from 'lodash';
 
 const LanguageSettings: React.FC = () => {
   const dispatch = useDispatch();
@@ -28,10 +29,12 @@ const LanguageSettings: React.FC = () => {
       }),
     );
   };
+  const sortedLanguages = _.sortBy(LanguageList, 'name');
+
   return (
     <SettingsContainer>
       <Settings>
-        {LanguageList.map(({name, isoCode}) => {
+        {sortedLanguages.map(({name, isoCode}) => {
           return (
             <View key={isoCode}>
               <Setting onPress={() => onSetLanguage(isoCode)}>
