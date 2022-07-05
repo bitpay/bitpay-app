@@ -1,4 +1,6 @@
 import React from 'react';
+import { Alert } from 'react-native';
+import Mailer from 'react-native-mail';
 import {StackScreenProps} from '@react-navigation/stack';
 import {useAppSelector} from '../utils/hooks';
 import {LogLevel} from '../store/log/log.models';
@@ -7,6 +9,7 @@ import {RootState} from '../store';
 import {BaseText} from '../components/styled/Text';
 import styled from 'styled-components/native';
 import {Caution, SlateDark, White} from '../styles/colors';
+import Button from '../components/button/Button';
 
 export type DebugScreenParamList =
   | {
@@ -16,6 +19,10 @@ export type DebugScreenParamList =
 
 const DebugContainer = styled.SafeAreaView`
   flex: 1;
+`;
+
+const ButtonContainer = styled.View`
+  padding: 20px;
 `;
 
 const ScrollView = styled.ScrollView`
@@ -45,13 +52,37 @@ const DebugScreen: React.FC<StackScreenProps<RootStackParamList, 'Debug'>> = ({
   const logs = useAppSelector(({LOG}: RootState) => LOG.logs);
   const {name} = route.params || {};
 
+  let logStr: string =
+      'Session Logs.\nBe careful, this could contain sensitive private data\n\n';
+  logStr += '\n\n';
+
   const filteredLogs = logs
     .filter(log => log.level <= LogLevel.Debug)
     .map(log => {
       const formattedLevel = LogLevel[log.level].toLowerCase();
 
-      return `[${log.timestamp}] [${formattedLevel}] ${log.message}\n`;
+      const output = `[${log.timestamp}] [${formattedLevel}] ${log.message}\n`;
+      logStr += output;
+      return output;
     });
+
+    const handleEmail = (data: string) => {
+      Mailer.mail({
+        subject: 'BitPay Log',
+        body: data,
+        isHTML: false,
+      }, (error, event) => {
+        Alert.alert(
+          error,
+          event,
+          [
+            {text: 'Ok', onPress: () => console.log('OK: Email Error Response')},
+            {text: 'Cancel', onPress: () => console.log('CANCEL: Email Error Response')}
+          ],
+          { cancelable: true }
+        )
+      });
+    }
 
   return (
     <DebugContainer>
@@ -60,6 +91,9 @@ const DebugScreen: React.FC<StackScreenProps<RootStackParamList, 'Debug'>> = ({
       <ScrollView>
         <LogError>{filteredLogs}</LogError>
       </ScrollView>
+      <ButtonContainer>
+        <Button onPress={() => handleEmail(logStr)}>Send Logs By Email</Button>
+      </ButtonContainer>
     </DebugContainer>
   );
 };
