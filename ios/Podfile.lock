@@ -386,6 +386,8 @@ PODS:
     - react-native-config/App (= 1.4.5)
   - react-native-config/App (1.4.5):
     - React-Core
+  - react-native-mail (6.1.1):
+    - React-Core
   - react-native-pager-view (5.4.9):
     - React-Core
   - react-native-randombytes (3.6.1):
@@ -592,6 +594,7 @@ DEPENDENCIES:
   - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
   - react-native-camera/BarcodeDetectorMLKit (from `../node_modules/react-native-camera`)
   - react-native-config (from `../node_modules/react-native-config`)
+  - react-native-mail (from `../node_modules/react-native-mail`)
   - react-native-pager-view (from `../node_modules/react-native-pager-view`)
   - react-native-randombytes (from `../node_modules/react-native-randombytes`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
@@ -716,6 +719,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-camera"
   react-native-config:
     :path: "../node_modules/react-native-config"
+  react-native-mail:
+    :path: "../node_modules/react-native-mail"
   react-native-pager-view:
     :path: "../node_modules/react-native-pager-view"
   react-native-randombytes:
@@ -804,7 +809,7 @@ SPEC CHECKSUMS:
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   DoubleConversion: cf9b38bf0b2d048436d9a82ad2abe1404f11e7de
   FBLazyVector: 7b423f9e248eae65987838148c36eec1dbfe0b53
-  FBReactNativeSpec: bb9e5fca9dd1ab3b46eaddb816ba05bbb02072a0
+  FBReactNativeSpec: 34c9a8671ac35275417afb2af880d77855c02ddc
   Flipper: d3da1aa199aad94455ae725e9f3aa43f3ec17021
   Flipper-DoubleConversion: 38631e41ef4f9b12861c67d17cb5518d06badc41
   Flipper-Folly: 755929a4f851b2fb2c347d533a23f191b008554c
@@ -850,6 +855,7 @@ SPEC CHECKSUMS:
   react-native-blur: cad4d93b364f91e7b7931b3fa935455487e5c33c
   react-native-camera: 3eae183c1d111103963f3dd913b65d01aef8110f
   react-native-config: 6502b1879f97ed5ac570a029961fc35ea606cd14
+  react-native-mail: 8fdcd3aef007c33a6877a18eb4cf7447a1d4ce4a
   react-native-pager-view: 3ee7d4c7697fb3ef788346e834a60cca97ed8540
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
   react-native-safe-area-context: 584dc04881deb49474363f3be89e4ca0e854c057
@@ -893,6 +899,6 @@ SPEC CHECKSUMS:
   Yoga: a7de31c64fe738607e7a3803e3f591a4b1df7393
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
 
-PODFILE CHECKSUM: 451380963bb172ae54dd514dfded200c243b9a86
+PODFILE CHECKSUM: ca8c5c63da7550220f322edd5b3716bd0343e768
 
 COCOAPODS: 1.11.2
