@@ -265,10 +265,7 @@ const HomeRoot = () => {
                                         },
                                       });
                                     },
-                                    opts: {
-                                      hideSendMax: true,
-                                      context: 'buyCrypto',
-                                    },
+                                    context: 'buyCrypto',
                                   },
                                 });
                               },

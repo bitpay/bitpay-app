@@ -157,10 +157,7 @@ const LinkingButtons = ({buy, receive, send, swap}: Props) => {
                   },
                 });
               },
-              opts: {
-                hideSendMax: true,
-                context: 'buyCrypto',
-              },
+              context: 'buyCrypto',
             },
           });
         },

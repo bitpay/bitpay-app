@@ -355,9 +355,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
               });
               sleep(300).then(() => setButtonState(null));
             },
-            opts: {
-              hideSendMax: true,
-            },
           },
         });
       },
@@ -937,7 +934,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                               });
                             },
                             opts: {
-                              hideSendMax: true,
                               context: 'buyCrypto',
                             },
                           },

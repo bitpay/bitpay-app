@@ -357,7 +357,6 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             navigation.navigate('Wallet', {
               screen: WalletScreens.AMOUNT,
               params: {
-                opts: {hideSendMax: true},
                 cryptoCurrencyAbbreviation:
                   wallet.currencyAbbreviation.toUpperCase(),
                 onAmountSelected: async (amount, setButtonState, opts) => {

@@ -26,12 +26,10 @@ export interface AmountScreenParamList {
     setButtonState: (state: ButtonState) => void,
     opts?: {sendMax?: boolean},
   ) => void;
+  sendMaxEnabled?: boolean;
   cryptoCurrencyAbbreviation?: string;
   fiatCurrencyAbbreviation?: string;
-  opts?: {
-    hideSendMax?: boolean;
-    context?: string;
-  };
+  context?: string;
 }
 
 const AmountScreen: React.VFC<
@@ -42,13 +40,11 @@ const AmountScreen: React.VFC<
 
   const {
     onAmountSelected,
+    sendMaxEnabled,
     cryptoCurrencyAbbreviation,
     fiatCurrencyAbbreviation,
-    opts,
+    context,
   } = route.params || {};
-
-  const showSendMaxButton = !opts?.hideSendMax;
-  const context = opts?.context;
 
   const onSendMaxPressed = () => {
     return onAmountSelected?.('', setButtonState, {sendMax: true});
@@ -57,7 +53,7 @@ const AmountScreen: React.VFC<
   onSendMaxPressedRef.current = onSendMaxPressed;
 
   useLayoutEffect(() => {
-    if (showSendMaxButton) {
+    if (sendMaxEnabled) {
       navigation.setOptions({
         headerRight: () => (
           <HeaderContainer>
@@ -71,7 +67,7 @@ const AmountScreen: React.VFC<
         ),
       });
     }
-  }, [navigation, t, showSendMaxButton]);
+  }, [navigation, t, sendMaxEnabled]);
 
   return (
     <WalletScreenContainer>

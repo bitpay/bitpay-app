@@ -14,7 +14,9 @@ import GiftCardDetails from './screens/GiftCardDetails';
 import EnterPhone from './screens/EnterPhone';
 import EnterEmail from './screens/EnterEmail';
 import {HeaderTitle} from '../../../../components/styled/Text';
-import AmountScreen, {AmountScreenParamList} from '../../../wallet/screens/AmountScreen';
+import AmountScreen, {
+  AmountScreenParamList,
+} from '../../../wallet/screens/AmountScreen';
 import Confirm, {
   GiftCardConfirmParamList,
 } from '../../../wallet/screens/send/confirm/GiftCardConfirm';

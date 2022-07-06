@@ -491,6 +491,7 @@ export const goToAmount =
     navigationRef.navigate('Wallet', {
       screen: WalletScreens.AMOUNT,
       params: {
+        sendMaxEnabled: true,
         cryptoCurrencyAbbreviation: coin.toUpperCase(),
         onAmountSelected: async (amount, setButtonState, amountOpts) => {
           dispatch(
