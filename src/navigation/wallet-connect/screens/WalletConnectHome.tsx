@@ -46,7 +46,11 @@ import {Wallet} from '../../../store/wallet/wallet.models';
 import {convertHexToNumber} from '@walletconnect/utils';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {useTranslation} from 'react-i18next';
-import {GetAmFormatDate} from '../../../store/wallet/utils/time';
+import {
+  GetAmFormatDate,
+  GetAmTimeAgo,
+  WithinPastDay,
+} from '../../../store/wallet/utils/time';
 
 export type WalletConnectHomeParamList = {
   peerId: string;
@@ -337,13 +341,20 @@ const WalletConnectHome = () => {
                     <ItemNoteContainer>
                       <View style={{alignItems: 'flex-end'}}>
                         <IconLabel>{amountStr}</IconLabel>
-                        {request.createdOn ? (
-                          <Smallest style={{marginRight: 12}}>
-                            {t('Created on', {
-                              createdOn: GetAmFormatDate(request.createdOn),
-                            })}
-                          </Smallest>
-                        ) : null}
+                        {request.createdOn &&
+                          (WithinPastDay(request.createdOn) ? (
+                            <Smallest style={{marginRight: 12}}>
+                              {t('Created ', {
+                                date: GetAmTimeAgo(request.createdOn),
+                              })}
+                            </Smallest>
+                          ) : (
+                            <Smallest style={{marginRight: 12}}>
+                              {t('Created on', {
+                                date: GetAmFormatDate(request.createdOn),
+                              })}
+                            </Smallest>
+                          ))}
                       </View>
                       <IconContainer>
                         <AngleRight />
