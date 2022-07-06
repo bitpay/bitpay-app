@@ -305,7 +305,7 @@ const SelectInputs = () => {
               justifyContent: 'center',
             }}>
             <BaseText>
-              {totalAmount} {precision?.unitCode.toUpperCase()}
+              {Number(totalAmount)} {precision?.unitCode.toUpperCase()}
             </BaseText>
 
             {specifiedAmount && Number(totalAmount) < specifiedAmount ? (
