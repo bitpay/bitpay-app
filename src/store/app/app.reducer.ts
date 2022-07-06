@@ -54,6 +54,10 @@ export interface AppState {
   notificationsAccepted: boolean;
   confirmedTxAccepted: boolean;
   announcementsAccepted: boolean;
+  emailNotifications: {
+    accepted: boolean;
+    email: string | null;
+  };
   showOnboardingFinishModal: boolean;
   showDecryptPasswordModal: boolean;
   decryptPasswordConfig: DecryptPasswordConfig | undefined;
@@ -110,6 +114,10 @@ const initialState: AppState = {
   notificationsAccepted: false,
   confirmedTxAccepted: false,
   announcementsAccepted: false,
+  emailNotifications: {
+    accepted: false,
+    email: null,
+  },
   showOnboardingFinishModal: false,
   showDecryptPasswordModal: false,
   decryptPasswordConfig: undefined,
@@ -257,6 +265,15 @@ export const appReducer = (
       return {
         ...state,
         announcementsAccepted: action.payload,
+      };
+
+    case AppActionTypes.SET_EMAIL_NOTIFICATIONS_ACCEPTED:
+      return {
+        ...state,
+        emailNotifications: {
+          accepted: action.payload.accepted,
+          email: action.payload.email,
+        },
       };
 
     case AppActionTypes.SHOW_ONBOARDING_FINISH_MODAL:

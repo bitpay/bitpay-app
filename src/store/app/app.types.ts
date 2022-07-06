@@ -35,6 +35,7 @@ export enum AppActionTypes {
   SET_NOTIFICATIONS_ACCEPTED = 'APP/SET_NOTIFICATIONS_ACCEPTED',
   SET_CONFIRMED_TX_ACCEPTED = 'APP/SET_CONFIRMED_TX_ACCEPTED',
   SET_ANNOUNCEMENTS_ACCEPTED = 'APP/SET_ANNOUNCEMENTS_ACCEPTED',
+  SET_EMAIL_NOTIFICATIONS_ACCEPTED = 'APP/SET_EMAIL_NOTIFICATIONS_ACCEPTED',
   SHOW_ONBOARDING_FINISH_MODAL = 'APP/SHOW_ONBOARDING_FINISH_MODAL',
   DISMISS_ONBOARDING_FINISH_MODAL = 'APP/DISMISS_ONBOARDING_FINISH_MODAL',
   SHOW_DECRYPT_PASSWORD_MODAL = 'APP/SHOW_DECRYPT_PASSWORD_MODAL',
@@ -146,9 +147,14 @@ interface SetConfirmedTxAccepted {
   payload: boolean;
 }
 
-interface setAnnouncementsAccepted {
+interface SetAnnouncementsAccepted {
   type: typeof AppActionTypes.SET_ANNOUNCEMENTS_ACCEPTED;
   payload: boolean;
+}
+
+interface SetEmailNotificationsAccepted {
+  type: typeof AppActionTypes.SET_EMAIL_NOTIFICATIONS_ACCEPTED;
+  payload: {accepted: boolean; email: string | null};
 }
 
 interface ShowOnboardingFinishModal {
@@ -306,7 +312,8 @@ export type AppActionType =
   | FailedGenerateAppIdentity
   | SetNotificationsAccepted
   | SetConfirmedTxAccepted
-  | setAnnouncementsAccepted
+  | SetAnnouncementsAccepted
+  | SetEmailNotificationsAccepted
   | ShowOnboardingFinishModal
   | DismissOnboardingFinishModal
   | SetDefaultLanguage

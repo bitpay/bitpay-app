@@ -113,6 +113,14 @@ export const setAnnouncementsAccepted = (
   payload: announcementsAccepted,
 });
 
+export const setEmailNotificationsAccepted = (
+  accepted: boolean,
+  email: string | null,
+): AppActionType => ({
+  type: AppActionTypes.SET_EMAIL_NOTIFICATIONS_ACCEPTED,
+  payload: {accepted, email},
+});
+
 export const showOnboardingFinishModal = (): AppActionType => ({
   type: AppActionTypes.SHOW_ONBOARDING_FINISH_MODAL,
 });

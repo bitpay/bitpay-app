@@ -1,11 +1,13 @@
-import {SEGMENT_API_KEY, APPSFLYER_API_KEY, APPSFLYER_APP_ID} from '@env';
+import {APPSFLYER_API_KEY, APPSFLYER_APP_ID, SEGMENT_API_KEY} from '@env';
 import Segment, {JsonMap} from '@segment/analytics-react-native';
 import {Options} from '@segment/analytics-react-native/build/esm/bridge';
 import BitAuth from 'bitauth';
 import i18n from 'i18next';
 import {DeviceEventEmitter, Linking, Platform} from 'react-native';
 import AdID from 'react-native-advertising-id-bp';
-import ReactAppboy from 'react-native-appboy-sdk';
+import ReactAppboy, {
+  NotificationSubscriptionTypes,
+} from 'react-native-appboy-sdk';
 import AppsFlyer from 'react-native-appsflyer';
 import RNBootSplash from 'react-native-bootsplash';
 import InAppBrowser, {
@@ -26,7 +28,7 @@ import {sleep} from '../../utils/helper-methods';
 import {BitPayIdEffects} from '../bitpay-id';
 import {CardEffects} from '../card';
 import {coinbaseInitialize} from '../coinbase';
-import {RootState, Effect} from '../index';
+import {Effect, RootState} from '../index';
 import {LocationEffects} from '../location';
 import {LogActions} from '../log';
 import {WalletActions} from '../wallet';
@@ -38,6 +40,7 @@ import {
   setAppFirstOpenEventDate,
   setBrazeEid,
   setConfirmedTxAccepted,
+  setEmailNotificationsAccepted,
   setMigrationComplete,
   setNotificationsAccepted,
   showBlur,
@@ -591,6 +594,51 @@ export const unSubscribePushNotifications =
     });
   };
 
+export const subscribeEmailNotifications =
+  (
+    walletClient: any,
+    prefs: {email: string; language: string; unit: string},
+  ): Effect<Promise<void>> =>
+  async dispatch => {
+    walletClient.savePreferences(prefs, (err: any) => {
+      if (err) {
+        dispatch(
+          LogActions.error(
+            'Email Notifications error subscribing: ' + JSON.stringify(err),
+          ),
+        );
+      } else {
+        dispatch(
+          LogActions.info(
+            'Email Notifications success subscribing: ' +
+              walletClient.credentials.walletName,
+          ),
+        );
+      }
+    });
+  };
+
+export const unSubscribeEmailNotifications =
+  (walletClient: any): Effect<Promise<void>> =>
+  async dispatch => {
+    walletClient.savePreferences({}, (err: any) => {
+      if (err) {
+        dispatch(
+          LogActions.error(
+            'Email Notifications error unsubscribing: ' + JSON.stringify(err),
+          ),
+        );
+      } else {
+        dispatch(
+          LogActions.info(
+            'Email Notifications success unsubscribing: ' +
+              walletClient.credentials.walletName,
+          ),
+        );
+      }
+    });
+  };
+
 export const checkNotificationsPermissions = (): Promise<boolean> => {
   return new Promise(async resolve => {
     checkNotifications().then(({status}) => {
@@ -648,6 +696,49 @@ export const setAnnouncementsNotifications =
       ReactAppboy.removeFromSubscriptionGroup(PRODUCTS_UPDATES_GROUP_ID);
       ReactAppboy.removeFromSubscriptionGroup(OFFERS_AND_PROMOTIONS_GROUP_ID);
     }
+  };
+
+export const setEmailNotifications =
+  (
+    accepted: boolean,
+    email: string | null,
+    agreedToMarketingCommunications: boolean,
+  ): Effect =>
+  (dispatch, getState) => {
+    const _email = accepted ? email : null;
+    dispatch(setEmailNotificationsAccepted(accepted, _email));
+
+    if (agreedToMarketingCommunications) {
+      ReactAppboy.setEmailNotificationSubscriptionType(
+        NotificationSubscriptionTypes.OPTED_IN,
+      );
+    } else {
+      ReactAppboy.setEmailNotificationSubscriptionType(
+        NotificationSubscriptionTypes.SUBSCRIBED,
+      );
+    }
+
+    const {
+      WALLET: {keys},
+      APP,
+    } = getState();
+
+    getAllWalletClients(keys).then(walletClients => {
+      if (accepted && email) {
+        const prefs = {
+          email,
+          language: APP.defaultLanguage,
+          unit: 'btc', // deprecated
+        };
+        walletClients.forEach(walletClient => {
+          dispatch(subscribeEmailNotifications(walletClient, prefs));
+        });
+      } else {
+        walletClients.forEach(walletClient => {
+          dispatch(unSubscribeEmailNotifications(walletClient));
+        });
+      }
+    });
   };
 
 export const handleBwsEvent =
