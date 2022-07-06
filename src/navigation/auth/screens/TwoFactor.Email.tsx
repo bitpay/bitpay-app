@@ -1,6 +1,6 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef} from 'react';
-import {useDispatch, useSelector} from 'react-redux';
+import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import Spinner from '../../../components/spinner/Spinner';
 import {
@@ -8,15 +8,19 @@ import {
   TWO_FACTOR_EMAIL_POLL_TIMEOUT,
 } from '../../../constants/config';
 import {navigationRef} from '../../../Root';
-import {RootState} from '../../../store';
+import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
-import {EmailPairingStatus} from '../../../store/bitpay-id/bitpay-id.reducer';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {AuthStackParamList} from '../AuthStack';
 import AuthFormContainer, {
   AuthFormParagraph,
 } from '../components/AuthFormContainer';
 
-export type EmailAuthenticationParamList = {} | undefined;
+export type EmailAuthenticationParamList =
+  | {
+      onLoginSuccess?: ((...args: any[]) => any) | undefined;
+    }
+  | undefined;
 
 type EmailAuthenticationScreenProps = StackScreenProps<
   AuthStackParamList,
@@ -30,17 +34,20 @@ const SpinnerWrapper = styled.View`
 
 const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
   navigation,
+  route,
 }) => {
-  const dispatch = useDispatch();
+  const {t} = useTranslation();
+  const dispatch = useAppDispatch();
+  const {onLoginSuccess} = route.params || {};
   const pollId = useRef<ReturnType<typeof setInterval>>();
   const pollCountdown = useRef(TWO_FACTOR_EMAIL_POLL_TIMEOUT);
-  const isAuthenticated = useSelector<RootState, boolean>(
+  const isAuthenticated = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.session.isAuthenticated,
   );
-  const csrfToken = useSelector<RootState, string>(
+  const csrfToken = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.session.csrfToken,
   );
-  const emailPairingStatus = useSelector<RootState, EmailPairingStatus>(
+  const emailPairingStatus = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.emailPairingStatus,
   );
   const isTimedOut = pollCountdown.current <= 0;
@@ -53,6 +60,9 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
     }, TWO_FACTOR_EMAIL_POLL_INTERVAL);
 
     return () => {
+      dispatch(BitPayIdActions.updateLoginStatus(null));
+      dispatch(BitPayIdActions.updateEmailPairingStatus(null));
+
       if (pollId.current) {
         clearInterval(pollId.current);
       }
@@ -82,6 +92,10 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
     switch (emailPairingStatus) {
       case 'success':
         dispatch(BitPayIdActions.completedPairing());
+        if (onLoginSuccess) {
+          onLoginSuccess();
+          return;
+        }
 
         const navParent = navigation.getParent();
 
@@ -96,40 +110,49 @@ const EmailAuthentication: React.FC<EmailAuthenticationScreenProps> = ({
         return;
 
       case 'failed':
-        console.error('Pairing failed.');
+        dispatch(
+          AppActions.showBottomNotificationModal({
+            type: 'error',
+            title: t('Login failed'),
+            message: t('Something went wrong while authenticating.'),
+            enableBackdropDismiss: false,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {
+                  navigation.navigate('Login');
+                },
+              },
+            ],
+          }),
+        );
         return;
     }
-  }, [emailPairingStatus, navigation, dispatch]);
+  }, [emailPairingStatus, navigation, dispatch, t, onLoginSuccess]);
 
   return (
     <AuthFormContainer>
       {isTimedOut && (
         <>
           <AuthFormParagraph>
-            Didn't get an email? Try logging in again later.
+            {t("Didn't get an email? Try logging in again later.")}
           </AuthFormParagraph>
         </>
       )}
 
-      {!isTimedOut &&
-        (emailPairingStatus === 'failed' ? (
-          <>
-            <AuthFormParagraph>
-              Something went wrong while authenticating.
-            </AuthFormParagraph>
-          </>
-        ) : (
-          <>
-            <SpinnerWrapper>
-              <Spinner size={78} />
-            </SpinnerWrapper>
+      {!isTimedOut && (
+        <>
+          <SpinnerWrapper>
+            <Spinner size={78} />
+          </SpinnerWrapper>
 
-            <AuthFormParagraph>
-              We sent an email containing a link to authenticate this login
-              attempt.
-            </AuthFormParagraph>
-          </>
-        ))}
+          <AuthFormParagraph>
+            {t(
+              'We sent an email containing a link to authenticate this login attempt.',
+            )}
+          </AuthFormParagraph>
+        </>
+      )}
     </AuthFormContainer>
   );
 };

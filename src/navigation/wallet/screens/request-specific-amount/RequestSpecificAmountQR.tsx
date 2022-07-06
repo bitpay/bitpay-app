@@ -30,6 +30,7 @@ import {
   ParseAmount,
 } from '../../../../store/wallet/effects/amount/amount';
 import {useAppDispatch} from '../../../../utils/hooks';
+import {useTranslation} from 'react-i18next';
 
 const SpecificAmtQRContainer = styled.SafeAreaView`
   flex: 1;
@@ -101,6 +102,7 @@ const ShareIconContainer = styled.TouchableOpacity`
 `;
 
 const RequestSpecificAmountQR = () => {
+  const {t} = useTranslation();
   const route =
     useRoute<RouteProp<WalletStackParamList, 'RequestSpecificAmountQR'>>();
   const {wallet, requestAmount} = route.params;
@@ -193,11 +195,13 @@ const RequestSpecificAmountQR = () => {
   return (
     <SpecificAmtQRContainer>
       <ScrollView>
-        <H5>Payment Request</H5>
+        <H5>{t('Payment Request')}</H5>
         <ParagraphContainer>
           <Paragraph>
-            Share this QR code to receive {formattedAmountObj?.amountUnitStr} in
-            your wallet {wallet.walletName || wallet.credentials.walletName}.
+            {t('Share this QR code to receive in your wallet .', {
+              amountUnitStr: formattedAmountObj?.amountUnitStr,
+              walletName: wallet.walletName || wallet.credentials.walletName,
+            })}
           </Paragraph>
         </ParagraphContainer>
 
@@ -214,7 +218,9 @@ const RequestSpecificAmountQR = () => {
           ]}>
           {qrValue ? (
             <>
-              <QRHeader>Receive {formattedAmountObj?.amountUnitStr}</QRHeader>
+              <QRHeader>
+                {t('Receive ') + formattedAmountObj?.amountUnitStr}
+              </QRHeader>
               <CopyToClipboard onPress={copyToClipboard} activeOpacity={0.7}>
                 <CopyImgContainer>
                   {!copied ? <CopySvg width={17} /> : <CopiedSvg width={17} />}
@@ -229,11 +235,13 @@ const RequestSpecificAmountQR = () => {
               </QRCodeContainer>
             </>
           ) : loading ? (
-            <QRHeader>Generating Address...</QRHeader>
+            <QRHeader>{t('Generating Address...')}</QRHeader>
           ) : (
             <>
               <GhostSvg />
-              <QRHeader>Something went wrong. Please try again.</QRHeader>
+              <QRHeader>
+                {t('Something went wrong. Please try again.')}
+              </QRHeader>
             </>
           )}
         </QRContainer>

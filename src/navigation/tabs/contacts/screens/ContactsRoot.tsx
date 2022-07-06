@@ -150,7 +150,9 @@ const ContactsRoot: React.FC = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => {
-        return contacts.length ? <HeaderTitle>My Contacts</HeaderTitle> : null;
+        return contacts.length ? (
+          <HeaderTitle>{t('My Contacts')}</HeaderTitle>
+        ) : null;
       },
     });
   }, [navigation, contacts]);
@@ -210,14 +212,14 @@ const ContactsRoot: React.FC = () => {
               }}
               render={({field: {onChange, onBlur, value}}) => (
                 <SearchBox
-                  placeholder={'Search Contacts'}
+                  placeholder={t('Search Contacts')}
                   onBlur={onBlur}
                   onChangeText={(text: string) => {
                     onChange(text);
                     updateSearchResults(text);
                   }}
                   value={value}
-                  type={'search'}
+                  type={t('search')}
                 />
               )}
               name="search"

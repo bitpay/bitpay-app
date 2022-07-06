@@ -1,7 +1,11 @@
-import {useLinkTo} from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useLinkTo,
+  useNavigation,
+} from '@react-navigation/native';
 import React from 'react';
 import {ImageStyle, Linking, StyleProp} from 'react-native';
-import {ContentCard} from 'react-native-appboy-sdk';
+import ReactAppboy, {ContentCard} from 'react-native-appboy-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
 import {SvgProps} from 'react-native-svg';
 import styled, {useTheme} from 'styled-components/native';
@@ -10,6 +14,7 @@ import {ActiveOpacity} from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
 import {APP_DEEPLINK_PREFIX} from '../../../../../constants/config';
 import {AppEffects} from '../../../../../store/app';
+import {logSegmentEvent} from '../../../../../store/app/app.effects';
 import {LogActions} from '../../../../../store/log';
 import {
   LightBlack,
@@ -40,7 +45,7 @@ const AdvertisementCardContainer = styled.TouchableOpacity`
   justify-content: center;
   min-height: 100px;
   overflow: hidden;
-  padding: 20px 100px 20px 20px;
+  padding: 16px 35px 16px 76px;
   position: relative;
 `;
 
@@ -60,7 +65,7 @@ const AdvertisementCardDescription = styled(BaseText)`
 
 const IconContainer = styled.View`
   position: absolute;
-  right: 20px;
+  left: 16px;
 `;
 
 const ADVERTISEMENT_ICON_HEIGHT = 50;
@@ -74,6 +79,7 @@ const IconStyle: StyleProp<ImageStyle> = {
 const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   const {contentCard, ctaOverride} = props;
   const {image, url, openURLInWebView} = contentCard;
+  const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const linkTo = useLinkTo();
   const theme = useTheme();
@@ -101,6 +107,10 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   const onPress = () => {
     haptic('impactLight');
 
+    if (!contentCard.id.startsWith('dev_')) {
+      ReactAppboy.logContentCardClicked(contentCard.id);
+    }
+
     if (ctaOverride) {
       ctaOverride();
       return;
@@ -110,10 +120,24 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
       return;
     }
 
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Clicked Advertisement',
+        {
+          id: contentCard.id || '',
+        },
+        true,
+      ),
+    );
+
     if (url.startsWith(APP_DEEPLINK_PREFIX)) {
       try {
         const path = '/' + url.replace(APP_DEEPLINK_PREFIX, '');
-
+        if (path === '/giftcard') {
+          navigation.navigate('Tabs', {screen: 'Shop'});
+          return;
+        }
         linkTo(path);
 
         return;
@@ -136,9 +160,22 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   const icon = isSvgComponent(MaybeSvgComponent) ? (
     <MaybeSvgComponent style={IconStyle} />
   ) : imageSource ? (
-    // @ts-ignore
-    <FastImage source={imageSource} style={IconStyle} />
+    imageSource.uri ? (
+      <FastImage
+        source={imageSource}
+        style={IconStyle}
+        resizeMode={'contain'}
+      />
+    ) : (
+      imageSource
+    )
   ) : null;
+
+  useFocusEffect(() => {
+    if (!contentCard.id.startsWith('dev_')) {
+      ReactAppboy.logContentCardImpression(contentCard.id);
+    }
+  });
 
   return (
     <AdvertisementCardContainer

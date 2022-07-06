@@ -21,6 +21,9 @@ import {View} from 'react-native';
 import WalletInformationSkeleton from './WalletInformationSkeleton';
 import {sleep} from '../../../../utils/helper-methods';
 import {useAppDispatch} from '../../../../utils/hooks';
+import {useTranslation} from 'react-i18next';
+import haptic from '../../../../components/haptic-feedback/haptic';
+import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 
 const InfoContainer = styled.SafeAreaView`
   flex: 1;
@@ -48,8 +51,18 @@ const SettingsHeader = styled(InfoSettingsRow)`
   margin: 15px 0 5px 0;
 `;
 
-const CopyButton = styled.TouchableOpacity`
-  margin-bottom: 15px;
+const CopyImgContainer = styled.View`
+  justify-content: center;
+  margin-right: 5px;
+`;
+
+const CopyImgContainerRight = styled.View`
+  justify-content: center;
+  margin-left: 5px;
+`;
+
+const CopyRow = styled.TouchableOpacity`
+  flex-direction: row;
 `;
 
 export const getLinkedWallet = (key: Key, wallet: Wallet) => {
@@ -69,6 +82,7 @@ export const getLinkedWallet = (key: Key, wallet: Wallet) => {
 };
 
 const WalletInformation = () => {
+  const {t} = useTranslation();
   const {
     params: {wallet},
   } = useRoute<RouteProp<WalletStackParamList, 'WalletInformation'>>();
@@ -94,37 +108,80 @@ const WalletInformation = () => {
   const dispatch = useAppDispatch();
   const key = useAppSelector(({WALLET}) => WALLET.keys[wallet.keyId]);
   const [isLoading, setIsLoading] = useState(true);
+  const [copiedWalletId, setCopiedWalletId] = useState(false);
+  const [copiedAddressType, setCopiedAddressType] = useState(false);
+  const [copiedRootPath, setCopiedRootPath] = useState(false);
+  const [copiedXPubKey, setCopiedXPubKey] = useState('');
+  const [copiedAddress, setCopiedAddress] = useState('');
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>Wallet Information</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Wallet Information')}</HeaderTitle>,
     });
-  }, [navigation]);
+  }, [navigation, t]);
 
-  const copyText = (text: string) => {
+  const copyToClipboard = (text: string) => {
+    haptic('impactLight');
     Clipboard.setString(text);
   };
 
-  const unitToSatoshi = dispatch(GetPrecision(coin))?.unitToSatoshi || 0;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedWalletId(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedWalletId]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedAddressType(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedAddressType]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedRootPath(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedRootPath]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedXPubKey('');
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedXPubKey]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedAddress('');
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedAddress]);
+
+  const {unitToSatoshi, unitDecimals} = dispatch(GetPrecision(coin))!;
 
   const [copayers, setCopayers] = useState<any[]>();
   const [balanceByAddress, setBalanceByAddress] = useState<any[]>();
 
   useEffect(() => {
-    // TODO
-    wallet.getStatus({network: 'livenet'}, async (err: any, status: Status) => {
-      if (err) {
-        // TODO
-        console.log(err);
-        setIsLoading(false);
-      }
-      if (status) {
-        setCopayers(status.wallet.copayers);
-        setBalanceByAddress(status.balance.byAddress);
-        await sleep(500);
-        setIsLoading(false);
-      }
-    });
+    wallet.getStatus(
+      {
+        tokenAddress: token ? token.address : null,
+        network: wallet.network,
+      },
+      async (err: any, status: Status) => {
+        if (err) {
+          setIsLoading(false);
+        } else if (status) {
+          setCopayers(status.wallet.copayers);
+          setBalanceByAddress(status.balance.byAddress);
+          await sleep(500);
+          setIsLoading(false);
+        }
+      },
+    );
   }, [wallet]);
 
   return (
@@ -135,7 +192,7 @@ const WalletInformation = () => {
         ) : (
           <>
             <InfoSettingsRow>
-              <SettingTitle>Name (at creation)</SettingTitle>
+              <SettingTitle>{t('Name (at creation)')}</SettingTitle>
 
               <InfoLabel>
                 <H7>{walletName}</H7>
@@ -144,7 +201,7 @@ const WalletInformation = () => {
             <Hr />
 
             <InfoSettingsRow>
-              <SettingTitle>Coin</SettingTitle>
+              <SettingTitle>{t('Coin')}</SettingTitle>
 
               <InfoLabel>
                 <H7>{coin.toUpperCase()}</H7>
@@ -153,20 +210,31 @@ const WalletInformation = () => {
             <Hr />
 
             <InfoSettingsRow>
-              <SettingTitle>WalletId</SettingTitle>
+              <SettingTitle>{t('WalletId')}</SettingTitle>
             </InfoSettingsRow>
 
-            <CopyButton onPress={() => copyText(walletId)}>
-              <H7 numberOfLines={1} ellipsizeMode={'tail'}>
+            <CopyRow
+              style={{marginBottom: 15}}
+              onPress={() => {
+                copyToClipboard(walletId);
+                setCopiedWalletId(true);
+              }}>
+              <H7
+                numberOfLines={1}
+                ellipsizeMode={'tail'}
+                style={{maxWidth: '90%'}}>
                 {walletId}
               </H7>
-            </CopyButton>
+              <CopyImgContainerRight style={{minWidth: '10%'}}>
+                {copiedWalletId ? <CopiedSvg width={17} /> : null}
+              </CopyImgContainerRight>
+            </CopyRow>
             <Hr />
 
             {token ? (
               <>
                 <InfoSettingsRow>
-                  <SettingTitle>Linked Ethereum Wallet</SettingTitle>
+                  <SettingTitle>{t('Linked Ethereum Wallet')}</SettingTitle>
 
                   <InfoLabel>
                     <H7>{getLinkedWallet(key, wallet)}</H7>
@@ -177,7 +245,7 @@ const WalletInformation = () => {
             ) : null}
 
             <InfoSettingsRow>
-              <SettingTitle>Configuration (m-n)</SettingTitle>
+              <SettingTitle>{t('Configuration (m-n)')}</SettingTitle>
 
               <InfoLabel>
                 <H7>
@@ -188,7 +256,7 @@ const WalletInformation = () => {
             <Hr />
 
             <InfoSettingsRow>
-              <SettingTitle>Network</SettingTitle>
+              <SettingTitle>{t('Network')}</SettingTitle>
 
               <InfoLabel>
                 <H7>{network}</H7>
@@ -199,32 +267,46 @@ const WalletInformation = () => {
             {IsUtxoCoin(coin) ? (
               <>
                 <InfoSettingsRow>
-                  <SettingTitle>Address Type</SettingTitle>
+                  <SettingTitle>{t('Address Type')}</SettingTitle>
 
-                  <InfoLabel>
+                  <CopyRow
+                    onPress={() => {
+                      copyToClipboard(addressType);
+                      setCopiedAddressType(true);
+                    }}>
+                    <CopyImgContainer>
+                      {copiedAddressType ? <CopiedSvg width={17} /> : null}
+                    </CopyImgContainer>
                     <H7>{addressType || 'P2SH'}</H7>
-                  </InfoLabel>
+                  </CopyRow>
                 </InfoSettingsRow>
                 <Hr />
               </>
             ) : null}
 
             <InfoSettingsRow>
-              <SettingTitle>Derivation Path</SettingTitle>
+              <SettingTitle>{t('Derivation Path')}</SettingTitle>
 
-              <InfoLabel>
+              <CopyRow
+                onPress={() => {
+                  copyToClipboard(rootPath);
+                  setCopiedRootPath(true);
+                }}>
+                <CopyImgContainer>
+                  {copiedRootPath ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainer>
                 <H7>{rootPath}</H7>
-              </InfoLabel>
+              </CopyRow>
             </InfoSettingsRow>
             <Hr />
 
             {!keyId ? (
               <>
                 <InfoSettingsRow>
-                  <SettingTitle>Read Only Wallet</SettingTitle>
+                  <SettingTitle>{t('Read Only Wallet')}</SettingTitle>
 
                   <InfoLabel>
-                    <H7>No private key</H7>
+                    <H7>{t('No private key')}</H7>
                   </InfoLabel>
                 </InfoSettingsRow>
                 <Hr />
@@ -232,7 +314,7 @@ const WalletInformation = () => {
             ) : null}
 
             <InfoSettingsRow>
-              <SettingTitle>Account</SettingTitle>
+              <SettingTitle>{t('Account')}</SettingTitle>
 
               <InfoLabel>
                 <H7>#{account}</H7>
@@ -243,7 +325,7 @@ const WalletInformation = () => {
             {copayers ? (
               <>
                 <SettingsHeader>
-                  <H5>Copayers</H5>
+                  <H5>{t('Copayers')}</H5>
                 </SettingsHeader>
 
                 {copayers.map((copayer, index) => (
@@ -252,7 +334,7 @@ const WalletInformation = () => {
 
                     {copayer.id === copayerId ? (
                       <InfoLabel>
-                        <H7>(Me)</H7>
+                        <H7>{t('(Me)')}</H7>
                       </InfoLabel>
                     ) : null}
                   </InfoSettingsRow>
@@ -262,22 +344,31 @@ const WalletInformation = () => {
             ) : null}
 
             <SettingsHeader>
-              <H5>Extended Public Keys</H5>
+              <H5>{t('Extended Public Keys')}</H5>
             </SettingsHeader>
 
             {publicKeyRing.map(
               ({xPubKey}: {xPubKey: string}, index: number) => (
                 <View key={index}>
                   <InfoSettingsRow>
-                    <SettingTitle>Copayer {index}</SettingTitle>
+                    <SettingTitle>{t('Copayer ') + index}</SettingTitle>
                   </InfoSettingsRow>
 
-                  <CopyButton onPress={() => copyText(xPubKey)}>
-                    <H7>{xPubKey}</H7>
-                  </CopyButton>
+                  <CopyRow
+                    onPress={() => {
+                      copyToClipboard(xPubKey);
+                      setCopiedXPubKey(xPubKey);
+                    }}>
+                    <H7 style={{width: '90%'}}>{xPubKey}</H7>
+                    <CopyImgContainerRight style={{width: '10%'}}>
+                      {copiedXPubKey === xPubKey ? (
+                        <CopiedSvg width={17} />
+                      ) : null}
+                    </CopyImgContainerRight>
+                  </CopyRow>
 
                   <InfoSettingsRow>
-                    {index === 0 ? <H7>({rootPath})</H7> : null}
+                    <H7>({rootPath})</H7>
                   </InfoSettingsRow>
                   <Hr />
                 </View>
@@ -287,23 +378,30 @@ const WalletInformation = () => {
             {balanceByAddress?.length ? (
               <>
                 <SettingsHeader>
-                  <H5>Balance By Address</H5>
+                  <H5>{t('Balance By Address')}</H5>
                 </SettingsHeader>
 
                 {balanceByAddress.map((a, index: number) => (
                   <View key={index}>
                     <InfoSettingsRow style={{justifyContent: 'space-between'}}>
                       <View>
-                        <CopyButton
-                          style={{marginBottom: 0}}
-                          onPress={() => copyText(a.address)}>
-                          <SettingTitle
+                        <CopyRow
+                          onPress={() => {
+                            copyToClipboard(a.address);
+                            setCopiedAddress(a.address);
+                          }}>
+                          <H7
                             numberOfLines={1}
                             ellipsizeMode={'tail'}
                             style={{maxWidth: 200}}>
                             {a.address}
-                          </SettingTitle>
-                        </CopyButton>
+                          </H7>
+                          <CopyImgContainerRight style={{minWidth: '10%'}}>
+                            {copiedAddress === a.address ? (
+                              <CopiedSvg width={17} />
+                            ) : null}
+                          </CopyImgContainerRight>
+                        </CopyRow>
                       </View>
 
                       <InfoLabel>
@@ -313,8 +411,6 @@ const WalletInformation = () => {
                         </H7>
                       </InfoLabel>
                     </InfoSettingsRow>
-
-                    <Hr />
                   </View>
                 ))}
                 <Hr />

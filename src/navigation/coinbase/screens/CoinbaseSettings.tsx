@@ -30,6 +30,8 @@ import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import CoinbaseSvg from '../../../../assets/img/logos/coinbase.svg';
 import {CoinbaseStackParamList} from '../CoinbaseStack';
+import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../store/app/app.effects';
 
 const SettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -95,6 +97,7 @@ export type CoinbaseSettingsScreenParamList = {
 };
 
 const CoinbaseSettings = () => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
 
@@ -117,12 +120,12 @@ const CoinbaseSettings = () => {
       dispatch(
         showBottomNotificationModal({
           type: 'error',
-          title: 'Coinbase error',
+          title: t('Coinbase error'),
           message: errMsg,
           enableBackdropDismiss: true,
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {
                 navigation.goBack();
               },
@@ -132,7 +135,7 @@ const CoinbaseSettings = () => {
         }),
       );
     },
-    [dispatch, navigation],
+    [dispatch, navigation, t],
   );
 
   useEffect(() => {
@@ -147,6 +150,7 @@ const CoinbaseSettings = () => {
 
   const deleteAccount = async () => {
     await dispatch(coinbaseDisconnectAccount());
+    dispatch(logSegmentEvent('track', 'Coinbase Disconnected', {}, true));
     if (fromScreen === 'CoinbaseDashboard') {
       navigation.navigate('Tabs', {screen: 'Home'});
     } else {
@@ -159,20 +163,21 @@ const CoinbaseSettings = () => {
     dispatch(
       showBottomNotificationModal({
         type: 'warning',
-        title: 'Confirm',
-        message:
+        title: t('Confirm'),
+        message: t(
           'Are you sure you would like to log out of your Coinbase account?',
+        ),
         enableBackdropDismiss: false,
         actions: [
           {
-            text: "Yes, I'm sure",
+            text: t("Yes, I'm sure"),
             action: () => {
               deleteAccount();
             },
             primary: true,
           },
           {
-            text: 'No, cancel',
+            text: t('No, cancel'),
             action: () => {},
             primary: false,
           },
@@ -191,7 +196,10 @@ const CoinbaseSettings = () => {
   const onRefresh = async () => {
     setRefreshing(true);
     dispatch(
-      showOnGoingProcessModal(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
+      showOnGoingProcessModal(
+        // t('Fetching data from Coinbase...')
+        t(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
+      ),
     );
     await sleep(1000);
 
@@ -221,36 +229,36 @@ const CoinbaseSettings = () => {
         <Hr />
         <Details>
           <Detail>
-            <Item>Name</Item>
+            <Item>{t('Name')}</Item>
             <DetailInfo align="right">{userData?.data.name}</DetailInfo>
           </Detail>
           <Hr />
           <Detail>
-            <Item>Email</Item>
+            <Item>{t('Email')}</Item>
             <DetailInfo align="right">{userData?.data.email}</DetailInfo>
           </Detail>
           <Hr />
           <Detail>
-            <Item>Country</Item>
+            <Item>{t('Country')}</Item>
             <DetailInfo align="right">{userData?.data.country.name}</DetailInfo>
           </Detail>
           <Hr />
           <Detail>
-            <Item>Native Currency</Item>
+            <Item>{t('Native Currency')}</Item>
             <DetailInfo align="right">
               {userData?.data.native_currency}
             </DetailInfo>
           </Detail>
           <Hr />
           <Detail>
-            <Item>Created at</Item>
+            <Item>{t('Created at')}</Item>
             <DetailInfo align="right">
               {parseTime(userData?.data.created_at)}
             </DetailInfo>
           </Detail>
           <Hr />
           <Detail>
-            <Item>Time Zone</Item>
+            <Item>{t('Time Zone')}</Item>
             <DetailInfo align="right">{userData?.data.time_zone}</DetailInfo>
           </Detail>
           <Hr />
@@ -258,7 +266,7 @@ const CoinbaseSettings = () => {
       </SettingsScrollContainer>
       <ButtonContainer>
         <Button onPress={() => confirmDelete()} buttonStyle={'secondary'}>
-          Sign out
+          {t('Sign out')}
         </Button>
       </ButtonContainer>
     </SettingsContainer>

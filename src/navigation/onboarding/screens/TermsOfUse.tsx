@@ -1,6 +1,7 @@
 import {StackActions, useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {ReactElement, useLayoutEffect, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {Linking, ScrollView} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {useDispatch} from 'react-redux';
@@ -51,51 +52,6 @@ const StatementLink = styled(Link)`
   line-height: 25px;
   letter-spacing: 0;
 `;
-const Terms: Array<TermsOfUseModel> = [
-  {
-    id: 1,
-    statement: (
-      <StatementText>
-        My funds are held and controlled on this device.{' '}
-        <StatementTextUnderline>
-          BitPay has no custody, access or control over my funds
-        </StatementTextUnderline>
-        .
-      </StatementText>
-    ),
-  },
-  {
-    id: 2,
-    statement: (
-      <StatementText>
-        <StatementTextBold>
-          BitPay can never recover my funds for me.
-        </StatementTextBold>{' '}
-        <StatementTextUnderline>
-          It is my responsibility to save and maintain the 12-word recovery
-          phrase
-        </StatementTextUnderline>
-        . Using my 12-word phrase is the only way to recover my funds if this
-        app is deleted or the device is lost.{' '}
-        <StatementTextUnderline>
-          If I lose my recovery phrase, it can’t be recovered
-        </StatementTextUnderline>
-        .
-      </StatementText>
-    ),
-  },
-  {
-    id: 3,
-    statement: (
-      <StatementText>
-        I have read, understood and accepted the{' '}
-        <StatementLink onPress={() => Linking.openURL(URL.TOU_WALLET)}>
-          Wallet Terms of Use.
-        </StatementLink>
-      </StatementText>
-    ),
-  },
-];
 
 const TermsOfUseContainer = styled.SafeAreaView`
   position: relative;
@@ -108,10 +64,58 @@ const TermsContainer = styled.View`
 `;
 
 const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {key, context} = route.params || {};
   const [agreed, setAgreed] = useState<number[]>([]);
+  const Terms: Array<TermsOfUseModel> = [
+    {
+      id: 1,
+      statement: (
+        <StatementText>
+          {t('My funds are held and controlled on this device.')}{' '}
+          <StatementTextUnderline>
+            {t('BitPay has no custody, access or control over my funds')}
+          </StatementTextUnderline>
+          .
+        </StatementText>
+      ),
+    },
+    {
+      id: 2,
+      statement: (
+        <StatementText>
+          <StatementTextBold>
+            {t('BitPay can never recover my funds for me.')}
+          </StatementTextBold>{' '}
+          <StatementTextUnderline>
+            {t(
+              'It is my responsibility to save and maintain the 12-word recovery phrase',
+            )}
+          </StatementTextUnderline>
+          {t(
+            '. Using my 12-word phrase is the only way to recover my funds if this app is deleted or the device is lost.',
+          )}{' '}
+          <StatementTextUnderline>
+            {t('If I lose my recovery phrase, it can’t be recovered')}
+          </StatementTextUnderline>
+          .
+        </StatementText>
+      ),
+    },
+    {
+      id: 3,
+      statement: (
+        <StatementText>
+          {t('I have read, understood and accepted the')}{' '}
+          <StatementLink onPress={() => Linking.openURL(URL.TOU_WALLET)}>
+            {t('Wallet Terms of Use.')}
+          </StatementLink>
+        </StatementText>
+      ),
+    },
+  ];
   const [termsList] = useState(() => {
     if (context === 'TOUOnly') {
       return Terms.filter(term => term.id === 3);
@@ -125,11 +129,11 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
-      headerTitle: () => <HeaderTitle>Important</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Important')}</HeaderTitle>,
       headerLeft: () => null,
       headerRight: () => null,
     });
-  }, [navigation]);
+  }, [navigation, t]);
 
   useAndroidBackHandler(() => true);
   const setChecked = (id: number) => {
@@ -140,7 +144,7 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
     <TermsOfUseContainer>
       <ScrollView>
         <TermsContainer>
-          <StatementText>I understand that:</StatementText>
+          <StatementText>{t('I understand that:')}</StatementText>
           {termsList.map((term: TermsOfUseModel) => {
             return <TermsBox term={term} emit={setChecked} key={term.id} />;
           })}
@@ -167,7 +171,7 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route}) => {
           }}
           buttonStyle={'primary'}
           disabled={agreed.length !== termsList.length}>
-          Agree and Continue
+          {t('Agree and Continue')}
         </Button>
       </CtaContainerAbsolute>
     </TermsOfUseContainer>

@@ -1,4 +1,5 @@
 import React, {useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import * as Svg from 'react-native-svg';
 import styled from 'styled-components/native';
 import {BaseText} from '../../../components/styled/Text';
@@ -120,6 +121,7 @@ const CardFront: React.FC<CardFrontProps> = props => {
   );
 
   const formattedBalance = format(balance, fiat);
+  const {t} = useTranslation();
 
   return (
     <CardFrontContainer>
@@ -249,7 +251,7 @@ const CardFront: React.FC<CardFrontProps> = props => {
 
       {!basic ? (
         <>
-          <CardBalanceLabelRow>BALANCE</CardBalanceLabelRow>
+          <CardBalanceLabelRow>{t('BALANCE')}</CardBalanceLabelRow>
 
           <CardBalanceValueRow>
             <CardBalance

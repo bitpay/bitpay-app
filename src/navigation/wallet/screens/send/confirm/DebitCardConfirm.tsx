@@ -24,7 +24,10 @@ import {
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
+import {
+  Analytics,
+  startOnGoingProcessModal,
+} from '../../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
@@ -33,8 +36,8 @@ import {
   ConfirmContainer,
   DetailsList,
   Header,
+  RemainingTime,
   SendingFrom,
-  SharedDetailRow,
   WalletSelector,
 } from './Shared';
 import {AppActions} from '../../../../../store/app';
@@ -55,6 +58,7 @@ import {
   CoinbaseErrorMessages,
 } from '../../../../../api/coinbase/coinbase.types';
 import {coinbasePayInvoice} from '../../../../../store/coinbase';
+import {useTranslation} from 'react-i18next';
 
 export interface DebitCardConfirmParamList {
   amount: number;
@@ -84,6 +88,7 @@ const BalanceContainer = styled.View`
 `;
 
 const Confirm = () => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'DebitCardConfirm'>>();
@@ -113,8 +118,6 @@ const Confirm = () => {
   const {fee, networkCost, sendingFrom, total, subTotal} = txDetails || {};
   const [disableSwipeSendButton, setDisableSwipeSendButton] = useState(false);
 
-  const [remainingTime, setRemainingTime] = useState<string>();
-  const [invoiceExpirationTime, setInvoiceExpirationTime] = useState<number>();
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const memoizedKeysAndWalletsList = useMemo(
     () => dispatch(BuildPayProWalletSelectorList({keys, network})),
@@ -138,7 +141,10 @@ const Confirm = () => {
     transactionCurrency: string;
   }) => {
     dispatch(
-      startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
+      startOnGoingProcessModal(
+        // t('Fetching payment information...')
+        t(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
+      ),
     );
     const invoiceCurrency = card.currency.code;
     const {invoiceId, invoice: newInvoice} = await dispatch(
@@ -148,9 +154,6 @@ const Confirm = () => {
         transactionCurrency,
         walletId,
       }),
-    );
-    setInvoiceExpirationTime(
-      Math.floor(new Date(newInvoice.expirationTime).getTime() / 1000),
     );
     setInvoice(newInvoice);
     return {invoiceId, invoice: newInvoice};
@@ -166,7 +169,7 @@ const Confirm = () => {
     dispatch(
       AppActions.showBottomNotificationModal(
         CustomErrorMessage({
-          title: 'Error',
+          title: t('Error'),
           errMsg:
             err.response?.data?.message || err.message || errorConfig.message,
           action: () => reshowWalletSelector(),
@@ -237,7 +240,12 @@ const Confirm = () => {
   };
 
   const sendPayment = async (twoFactorCode?: string) => {
-    dispatch(startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT));
+    dispatch(
+      startOnGoingProcessModal(
+        // t('Sending Payment')
+        t(OnGoingProcessMessages.SENDING_PAYMENT),
+      ),
+    );
     txp && wallet && recipient
       ? await dispatch(startSendPayment({txp, key, wallet, recipient}))
       : await dispatch(
@@ -264,7 +272,7 @@ const Confirm = () => {
     dispatch(
       AppActions.showBottomNotificationModal(
         CustomErrorMessage({
-          title: 'Error',
+          title: t('Error'),
           errMsg: error?.message || defaultErrorMessage,
           action: () => onDismiss && onDismiss(),
         }),
@@ -285,7 +293,7 @@ const Confirm = () => {
     setCoinbaseAccount(undefined);
     showError({
       error,
-      defaultErrorMessage: 'Could not send transaction',
+      defaultErrorMessage: t('Could not send transaction'),
       onDismiss: () => reshowWalletSelector(),
     });
   };
@@ -312,34 +320,6 @@ const Confirm = () => {
     setResetSwipeButton(true);
   };
 
-  useEffect(() => {
-    let interval: any;
-    if (invoiceExpirationTime) {
-      interval = setInterval(() => {
-        const now = Math.floor(Date.now() / 1000);
-
-        if (now > invoiceExpirationTime) {
-          setRemainingTime('Expired');
-          setDisableSwipeSendButton(true);
-          clearInterval(interval);
-          return;
-        }
-
-        const totalSecs = invoiceExpirationTime - now;
-        const m = Math.floor(totalSecs / 60);
-        const s = totalSecs % 60;
-
-        const _remainingTimeStr =
-          ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2);
-        setRemainingTime(_remainingTimeStr);
-      }, 1000); //each count lasts for a second
-    }
-    //cleanup the interval on complete
-    if (interval) {
-      return () => clearInterval(interval);
-    }
-  }, [invoiceExpirationTime]);
-
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => openKeyWalletSelector(), []);
 
@@ -354,21 +334,21 @@ const Confirm = () => {
                   <MasterCardSvg height={55} width={55} />
                 </RightMargin>
                 <RightMargin>
-                  <H6>BitPay Card</H6>
+                  <H6>{t('BitPay Card')}</H6>
                 </RightMargin>
 
                 <RightMargin>
-                  <Type>Virtual</Type>
+                  <Type>{t('Virtual')}</Type>
                 </RightMargin>
 
-                <Type noAutoMarginLeft={true}>Physical</Type>
+                <Type noAutoMarginLeft={true}>{t('Physical')}</Type>
               </CardDetailsContainer>
             ) : (
               <CardDetailsContainer>
                 <RightMargin>
                   <VisaCardSvg height={55} width={55} />
                 </RightMargin>
-                <H6>BitPay Visa&reg; Card ({lastFourDigits})</H6>
+                <H6>{t('BitPay Visa&reg; Card ()', {lastFourDigits})}</H6>
               </CardDetailsContainer>
             )}
 
@@ -391,38 +371,35 @@ const Confirm = () => {
                 hr
               />
             )}
-            {remainingTime ? (
-              <SharedDetailRow
-                description={'Expires'}
-                value={remainingTime}
-                hr
+            {invoice ? (
+              <RemainingTime
+                invoiceExpirationTime={invoice.expirationTime}
+                setDisableSwipeSendButton={setDisableSwipeSendButton}
               />
             ) : null}
             <Amount
-              description={'Network Cost'}
+              description={t('Network Cost')}
               amount={networkCost}
               fiatOnly
               hr
             />
-            <Amount description={'Miner fee'} amount={fee} fiatOnly hr />
+            <Amount description={t('Miner fee')} amount={fee} fiatOnly hr />
 
-            <Amount description={'SubTotal'} amount={subTotal} />
+            <Amount description={t('SubTotal')} amount={subTotal} />
 
-            <Amount description={'Total'} amount={total} />
+            <Amount description={t('Total')} amount={total} />
 
             <CardTermsContainer>
               <Smallest>
-                BY USING THIS CARD YOU AGREE WITH THE TERMS AND CONDITIONS OF
-                THE CARDHOLDER AGREEMENT AND FEE SCHEDULE, IF ANY. This card is
-                issued by Metropolitan Commercial Bank (Member FDIC) pursuant to
-                a license from Mastercard International. "Metropolitan
-                Commercial Bank" and "Metropolitan" are registered trademarks of
-                Metropolitan Commercial Bank ©2014.
+                {t(
+                  'BY USING THIS CARD YOU AGREE WITH THE TERMS AND CONDITIONS OF THE CARDHOLDER AGREEMENT AND FEE SCHEDULE, IF ANY. This card is issued by Metropolitan Commercial Bank (Member FDIC) pursuant to a license from Mastercard International. "Metropolitan Commercial Bank" and "Metropolitan" are registered trademarks of Metropolitan Commercial Bank ©2014.',
+                )}
               </Smallest>
               <Br />
               <Smallest>
-                Mastercard is a registered trademark and the circles design is a
-                trademark of Mastercard International Incorporated.
+                {t(
+                  'Mastercard is a registered trademark and the circles design is a trademark of Mastercard International Incorporated.',
+                )}
               </Smallest>
             </CardTermsContainer>
           </>
@@ -437,6 +414,16 @@ const Confirm = () => {
             onSwipeComplete={async () => {
               try {
                 await sendPayment();
+                dispatch(
+                  Analytics.track(
+                    'Adding funds to Debit Card',
+                    {
+                      amount: amount,
+                      brand: brand || '',
+                    },
+                    true,
+                  ),
+                );
               } catch (err: any) {
                 dispatch(dismissOnGoingProcessModal());
                 await sleep(400);

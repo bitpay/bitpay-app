@@ -1,5 +1,9 @@
 rootProject.name = 'BitPay'
+include ':react-native-appsflyer'
+project(':react-native-appsflyer').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-appsflyer/android')
 include ':react-native-haptic-feedback'
 project(':react-native-haptic-feedback').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-haptic-feedback/android')
 apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
 include ':app'
+include ':react-native-advertising-id-bp'
+project(':react-native-advertising-id-bp').projectDir = new File(rootProject.projectDir, 	'../node_modules/react-native-advertising-id-bp/android')

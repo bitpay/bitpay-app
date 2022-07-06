@@ -1,5 +1,13 @@
-import React, {useEffect, useState} from 'react';
-import styled from 'styled-components/native';
+import {StackScreenProps} from '@react-navigation/stack';
+import React from 'react';
+import {useTranslation} from 'react-i18next';
+import styled, {useTheme} from 'styled-components/native';
+import FocusedStatusBar from '../../../components/focused-status-bar/FocusedStatusBar';
+import {RootStackParamList} from '../../../Root';
+import {askForTrackingPermissionAndEnableSdks} from '../../../store/app/app.effects';
+import {sleep} from '../../../utils/helper-methods';
+import {useAppDispatch} from '../../../utils/hooks';
+import IntroButton from '../components/intro-button/IntroButton';
 import {
   Body,
   IntroText,
@@ -11,17 +19,9 @@ import {
   TopNavFillOverlay,
   Overlay,
 } from '../components/styled/Styled';
-import IntroButton from '../components/intro-button/IntroButton';
-import {useTheme} from '@react-navigation/native';
-import FocusedStatusBar from '../../../components/focused-status-bar/FocusedStatusBar';
+
 const lightBackground = require('../../../../assets/img/intro/light/shop-background.png');
 const darkBackground = require('../../../../assets/img/intro/dark/shop-background.png');
-import Animated, {Easing, FadeIn} from 'react-native-reanimated';
-import {askForTrackingPermissionAndEnableSdks} from '../../../store/app/app.effects';
-import {useAppDispatch} from '../../../utils/hooks';
-import {StackScreenProps} from '@react-navigation/stack';
-import {RootStackParamList} from '../../../Root';
-import {IntroAnimeDelay} from '../IntroStack';
 
 const IntroShopContainer = styled.View`
   flex: 1;
@@ -33,16 +33,19 @@ const TextContainer = styled.View`
   margin-bottom: 10px;
 `;
 
-type IntroContactsScreenProps = StackScreenProps<RootStackParamList, 'Intro'>;
+type IntroShopScreenProps = StackScreenProps<RootStackParamList, 'Intro'>;
 
-const IntroShop = ({navigation}: IntroContactsScreenProps) => {
+const IntroShop: React.VFC<IntroShopScreenProps> = ({navigation}) => {
+  const {t} = useTranslation();
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const [delay, setDelay] = useState(0);
 
-  useEffect(() => {
-    setDelay(IntroAnimeDelay);
-  }, []);
+  const onFinish = async () => {
+    await dispatch(askForTrackingPermissionAndEnableSdks());
+    await sleep(500);
+
+    navigation.navigate('Tabs', {screen: 'Home'});
+  };
 
   return (
     <IntroShopContainer>
@@ -55,30 +58,19 @@ const IntroShop = ({navigation}: IntroContactsScreenProps) => {
         source={theme.dark ? darkBackground : lightBackground}
         resizeMode="contain"
       />
+
       <Body>
         <BodyContainer>
-          {delay ? (
-            <Animated.View
-              entering={FadeIn.easing(Easing.linear)
-                .duration(300)
-                .delay(delay)}>
-              <TextContainer>
-                <IntroText>
-                  Shop with crypto and {'\n'} buy gift cards in the
-                </IntroText>
-                <IntroTextBold>Shop Tab.</IntroTextBold>
-              </TextContainer>
-            </Animated.View>
-          ) : null}
+          <TextContainer>
+            <IntroText>
+              {t('Shop with crypto and \nbuy gift cards in the')}
+            </IntroText>
+            <IntroTextBold>{t('Shop Tab.')}</IntroTextBold>
+          </TextContainer>
         </BodyContainer>
+
         <ButtonContainer>
-          <IntroButton
-            onPress={async () => {
-              await dispatch(askForTrackingPermissionAndEnableSdks());
-              navigation.navigate('Tabs', {screen: 'Home'});
-            }}>
-            Finish
-          </IntroButton>
+          <IntroButton onPress={onFinish}>{t('Finish')}</IntroButton>
         </ButtonContainer>
       </Body>
     </IntroShopContainer>

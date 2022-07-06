@@ -45,6 +45,7 @@ import {
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {convertHexToNumber} from '@walletconnect/utils';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
+import {useTranslation} from 'react-i18next';
 
 export type WalletConnectHomeParamList = {
   peerId: string;
@@ -80,6 +81,7 @@ const ClipboardContainer = styled.View`
 `;
 
 const WalletConnectHome = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
@@ -101,18 +103,24 @@ const WalletConnectHome = () => {
     dispatch(
       showBottomNotificationModal({
         type: 'question',
-        title: 'Confirm request',
-        message: `Please check on ${session?.peerMeta?.name} that the request is still waiting for confirmation and the swap amount is correct before proceeding to the confirmation step.`,
+        title: t('Confirm request'),
+        message: t(
+          'Please check on that the request is still waiting for confirmation and the swap amount is correct before proceeding to the confirmation step.',
+          {name: session?.peerMeta?.name},
+        ),
         enableBackdropDismiss: true,
         actions: [
           {
-            text: 'CONTINUE',
+            text: t('CONTINUE'),
             action: async () => {
               try {
                 dispatch(dismissBottomNotificationModal());
                 await sleep(500);
                 dispatch(
-                  showOnGoingProcessModal(OnGoingProcessMessages.LOADING),
+                  showOnGoingProcessModal(
+                    // t('Loading')
+                    t(OnGoingProcessMessages.LOADING),
+                  ),
                 );
 
                 const {
@@ -176,7 +184,7 @@ const WalletConnectHome = () => {
                     enableBackdropDismiss: false,
                     actions: [
                       {
-                        text: 'OK',
+                        text: t('OK'),
                         action: () => {},
                       },
                     ],
@@ -187,7 +195,7 @@ const WalletConnectHome = () => {
             primary: true,
           },
           {
-            text: 'GO BACK',
+            text: t('GO BACK'),
             action: () => {},
           },
         ],
@@ -228,10 +236,10 @@ const WalletConnectHome = () => {
     <WalletConnectContainer>
       <ScrollView>
         <SummaryContainer>
-          <HeaderTitle>Summary</HeaderTitle>
+          <HeaderTitle>{t('Summary')}</HeaderTitle>
           <Hr />
           <ItemContainer>
-            <H7>Connected to</H7>
+            <H7>{t('Connected to')}</H7>
             {session && session.peerMeta ? (
               <ClipboardContainer>
                 {clipboardObj.copied && clipboardObj.type === 'dappUri' ? (
@@ -260,7 +268,7 @@ const WalletConnectHome = () => {
           </ItemContainer>
           <Hr />
           <ItemContainer>
-            <H7>Linked Wallet</H7>
+            <H7>{t('Linked Wallet')}</H7>
             {session && session.accounts && session.accounts[0] ? (
               <ClipboardContainer>
                 {clipboardObj.copied && clipboardObj.type === 'address' ? (
@@ -284,7 +292,7 @@ const WalletConnectHome = () => {
           <Hr />
         </SummaryContainer>
         <PRContainer>
-          <HeaderTitle>Pending Requests</HeaderTitle>
+          <HeaderTitle>{t('Pending Requests')}</HeaderTitle>
           <Hr />
           {requests && requests.length ? (
             requests.map((request, id) => {
@@ -339,7 +347,7 @@ const WalletConnectHome = () => {
           ) : (
             <ItemContainer>
               <ItemTitleContainer>
-                <H7>No pending requests</H7>
+                <H7>{t('No pending requests')}</H7>
               </ItemTitleContainer>
             </ItemContainer>
           )}

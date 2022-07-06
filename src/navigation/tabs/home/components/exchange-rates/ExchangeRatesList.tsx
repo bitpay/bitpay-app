@@ -3,6 +3,8 @@ import React, {ReactElement} from 'react';
 import styled from 'styled-components/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
+import {logSegmentEvent} from '../../../../../store/app/app.effects';
+import {useAppDispatch} from '../../../../../utils/hooks';
 import ExchangeRateItem from './ExchangeRateItem';
 
 export interface ExchangeRateItemProps {
@@ -26,6 +28,7 @@ interface ExchangeRateProps {
 const ExchangeRatesList: React.FC<ExchangeRateProps> = props => {
   const {items, defaultAltCurrencyIsoCode} = props;
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
 
   return (
     <ExchangeRateListContainer>
@@ -35,6 +38,11 @@ const ExchangeRatesList: React.FC<ExchangeRateProps> = props => {
           key={item.id}
           onPress={() => {
             haptic('impactLight');
+            dispatch(
+              logSegmentEvent('track', 'Clicked Exchange Rate Item', {
+                coin: item.currencyAbbreviation || '',
+              }),
+            );
             navigation.navigate('Wallet', {
               screen: 'PriceCharts',
               params: {item},

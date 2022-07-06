@@ -1,25 +1,29 @@
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Linking, View} from 'react-native';
+import {Linking, Platform, View} from 'react-native';
 import styled from 'styled-components/native';
 import {Br, Hr} from '../../../components/styled/Containers';
 import {Link, Smallest} from '../../../components/styled/Text';
 import {URL} from '../../../constants';
 import {CardBrand, CardProvider} from '../../../constants/card';
 import {AppEffects} from '../../../store/app';
+import {Analytics} from '../../../store/app/app.effects';
 import {CardActions, CardEffects} from '../../../store/card';
 import {Card} from '../../../store/card/card.models';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import ApplePayIcon from '../assets/settings/icon-apple-pay.svg';
 import CustomizeCardIcon from '../assets/settings/icon-card.svg';
 import EditCardNameIcon from '../assets/settings/icon-cardname.svg';
 import FaqsIcon from '../assets/settings/icon-faqs.svg';
+import GooglePayIcon from '../assets/settings/icon-google-pay.svg';
 import GetHelpIcon from '../assets/settings/icon-help.svg';
 import DownloadHistoryIcon from '../assets/settings/icon-history.svg';
+import ResetPinIcon from '../assets/settings/icon-info.svg';
 import LockIcon from '../assets/settings/icon-lock.svg';
 import OffersIcon from '../assets/settings/icon-offers.svg';
 import ReferEarnIcon from '../assets/settings/icon-referearn.svg';
-import {CardStackParamList} from '../CardStack';
+import {CardScreens, CardStackParamList} from '../CardStack';
 import * as Styled from './CardSettingsList.styled';
 import {ToggleSpinnerState} from './ToggleSpinner';
 
@@ -89,6 +93,31 @@ const SettingsList: React.FC<SettingsListProps> = props => {
     dispatch(CardEffects.START_UPDATE_CARD_LOCK(card.id, locked));
   };
 
+  const onAddAppleWallet = () => {
+    const params = {
+      id: card.id,
+      data: {
+        cardholderName: user?.name || '',
+        primaryAccountNumberSuffix: card.lastFourDigits,
+        encryptionScheme: 'ECC_V2',
+      },
+    };
+
+    dispatch(CardEffects.startAddToAppleWallet(params));
+  };
+
+  const onAddGooglePay = () => {
+    dispatch(
+      CardEffects.startAddToGooglePay({
+        id: card.id,
+        data: {
+          name: user?.name || '',
+          lastFourDigits: card.lastFourDigits,
+        },
+      }),
+    );
+  };
+
   useEffect(() => {
     // whether success or fail, lockedByUser will be correct so update the local state and reset the flag
     if (
@@ -122,7 +151,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
       {card.provider === 'firstView' ? (
         <>
           <Styled.CategoryRow>
-            <Styled.CategoryHeading>Account</Styled.CategoryHeading>
+            <Styled.CategoryHeading>{t('Account')}</Styled.CategoryHeading>
           </Styled.CategoryRow>
 
           <Hr />
@@ -140,7 +169,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
       {card.provider === CardProvider.galileo ? (
         <>
           <Styled.CategoryRow>
-            <Styled.CategoryHeading>Security</Styled.CategoryHeading>
+            <Styled.CategoryHeading>{t('Security')}</Styled.CategoryHeading>
           </Styled.CategoryRow>
 
           <Hr />
@@ -156,7 +185,7 @@ const SettingsList: React.FC<SettingsListProps> = props => {
           <Hr />
 
           <Styled.CategoryRow>
-            <Styled.CategoryHeading>Account</Styled.CategoryHeading>
+            <Styled.CategoryHeading>{t('Account')}</Styled.CategoryHeading>
           </Styled.CategoryRow>
 
           <Hr />
@@ -172,15 +201,42 @@ const SettingsList: React.FC<SettingsListProps> = props => {
           <Styled.SettingsLink
             Icon={OffersIcon}
             onPress={async () => {
+              dispatch(
+                Analytics.track(
+                  'Clicked Card Offer',
+                  {context: 'Card Settings'},
+                  true,
+                ),
+              );
               dispatch(CardEffects.startOpenDosh(user?.email || ''));
             }}>
-            Card Offers
+            {t('Card Offers')}
           </Styled.SettingsLink>
 
           <Hr />
 
           {card.cardType === 'virtual' ? (
             <>
+              {Platform.OS === 'ios' ? (
+                <>
+                  <Styled.SettingsLink
+                    Icon={ApplePayIcon}
+                    onPress={onAddAppleWallet}>
+                    {t('Add to Apple Wallet')}
+                  </Styled.SettingsLink>
+
+                  <Hr />
+                </>
+              ) : (
+                <>
+                  <Styled.SettingsLink
+                    Icon={GooglePayIcon}
+                    onPress={onAddGooglePay}>
+                    {t('Add to Google Pay')}
+                  </Styled.SettingsLink>
+                  <Hr />
+                </>
+              )}
               <Styled.SettingsLink
                 Icon={CustomizeCardIcon}
                 onPress={() =>
@@ -191,7 +247,21 @@ const SettingsList: React.FC<SettingsListProps> = props => {
 
               <Hr />
             </>
-          ) : null}
+          ) : (
+            <>
+              <Styled.SettingsLink
+                Icon={ResetPinIcon}
+                onPress={() => {
+                  navigation.navigate(CardScreens.RESET_PIN, {
+                    id: card.id,
+                  });
+                }}>
+                {t('Reset PIN')}
+              </Styled.SettingsLink>
+
+              <Hr />
+            </>
+          )}
 
           <Styled.SettingsLink
             Icon={EditCardNameIcon}

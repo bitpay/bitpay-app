@@ -2,15 +2,16 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
+import {useTranslation} from 'react-i18next';
 import {Keyboard, SafeAreaView, TextInput} from 'react-native';
 import * as yup from 'yup';
-import AlertBox from '../../../components/alert-box/AlertBox';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {Link} from '../../../components/styled/Text';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {navigationRef, RootStacks} from '../../../Root';
+import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
@@ -43,6 +44,7 @@ interface LoginFormFieldValues {
 }
 
 const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const {
     control,
@@ -71,6 +73,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
 
       if (onLoginSuccess) {
         onLoginSuccess();
+        dispatch(BitPayIdActions.updateLoginStatus(null));
         return;
       }
 
@@ -84,25 +87,46 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
         });
       }
 
+      dispatch(BitPayIdActions.updateLoginStatus(null));
       return;
     }
 
     if (loginStatus === 'failed') {
-      // TODO
       captchaRef.current?.reset();
+
+      dispatch(
+        AppActions.showBottomNotificationModal({
+          type: 'error',
+          title: t('Login failed'),
+          message:
+            loginError ||
+            t(
+              'Could not log in. Please review your information and try again.',
+            ),
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: t('OK'),
+              action: () => {
+                dispatch(BitPayIdActions.updateLoginStatus(null));
+              },
+            },
+          ],
+        }),
+      );
       return;
     }
 
     if (loginStatus === 'twoFactorPending') {
-      navigation.navigate('TwoFactorAuthentication');
+      navigation.navigate('TwoFactorAuthentication', {onLoginSuccess});
       return;
     }
 
     if (loginStatus === 'emailAuthenticationPending') {
-      navigation.navigate('EmailAuthentication');
+      navigation.navigate('EmailAuthentication', {onLoginSuccess});
       return;
     }
-  }, [loginStatus, navigation, dispatch, onLoginSuccess]);
+  }, [dispatch, onLoginSuccess, navigation, loginStatus, loginError, t]);
 
   const onSubmit = handleSubmit(({email, password}) => {
     Keyboard.dismiss();
@@ -132,22 +156,13 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   return (
     <SafeAreaView>
       <AuthFormContainer>
-        {loginStatus === 'failed' ? (
-          <AuthRowContainer>
-            <AlertBox type="warning">
-              {loginError ||
-                'Could not log in. Please review your information and try again.'}
-            </AlertBox>
-          </AuthRowContainer>
-        ) : null}
-
         <AuthRowContainer>
           <Controller
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 placeholder={'satoshi@example.com'}
-                label={'EMAIL'}
+                label={t('EMAIL')}
                 onBlur={onBlur}
                 onChangeText={(text: string) => onChange(text)}
                 error={errors.email?.message}
@@ -170,7 +185,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
               <BoxInput
                 ref={passwordRef}
                 placeholder={'strongPassword123'}
-                label={'PASSWORD'}
+                label={t('PASSWORD')}
                 type={'password'}
                 onBlur={onBlur}
                 onChangeText={(text: string) => onChange(text)}
@@ -186,17 +201,17 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
 
         <AuthActionsContainer>
           <AuthActionRow>
-            <Button onPress={onSubmit}>Log In</Button>
+            <Button onPress={onSubmit}>{t('Log In')}</Button>
           </AuthActionRow>
 
           <AuthActionRow>
             <AuthActionText>
-              Don't have an account?{' '}
+              {t("Don't have an account?")}{' '}
               <Link
                 onPress={() => {
                   navigation.navigate('CreateAccount');
                 }}>
-                Create Account
+                {t('Create Account')}
               </Link>
             </AuthActionText>
           </AuthActionRow>
@@ -204,7 +219,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
           <AuthActionRow>
             <AuthActionText>
               <Link onPress={() => onTroubleLoggingIn()}>
-                Trouble logging in?
+                {t('Trouble logging in?')}
               </Link>
             </AuthActionText>
           </AuthActionRow>

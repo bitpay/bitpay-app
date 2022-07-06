@@ -1,5 +1,6 @@
 import {DOSH_WHITELIST} from '@env';
 import axios from 'axios';
+import {t} from 'i18next';
 import BitPayIdApi from '../../api/bitpay';
 import FastImage from 'react-native-fast-image';
 import {batch} from 'react-redux';
@@ -8,6 +9,7 @@ import {InitialUserData} from '../../api/user/user.types';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {sleep} from '../../utils/helper-methods';
 import {AppActions} from '../app';
+import {Analytics} from '../app/app.effects';
 import {Effect} from '../index';
 import {LogActions} from '../log';
 import {ProviderConfig} from '../../constants/config.card';
@@ -16,10 +18,12 @@ import Dosh, {DoshUiOptions} from '../../lib/dosh';
 import {isAxiosError} from '../../utils/axios';
 import {CardActions} from '.';
 import {TTL} from './card.types';
-import {setHomeCarouselConfig} from '../app/app.actions';
 import {Card, DebitCardTopUpInvoiceParams} from './card.models';
 import {Invoice} from '../shop/shop.models';
 import {BASE_BITPAY_URLS} from '../../constants/config';
+import ApplePushProvisioningModule from '../../lib/apple-push-provisioning/ApplePushProvisioning';
+import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
+import GooglePushProvisioningModule from '../../lib/google-push-provisioning/GooglePushProvisioning';
 
 const DoshWhitelist: string[] = [];
 
@@ -38,9 +42,17 @@ export interface StartActivateCardParams {
   cardNumber?: string;
 }
 
+export interface AppleWalletProvisioningRequestParams {
+  walletProvider: string;
+  cert1: any;
+  cert2: any;
+  nonce: any;
+  nonceSignature: any;
+}
+
 export const startCardStoreInit =
-  (initialData: InitialUserData): Effect<Promise<void>> =>
-  async (dispatch, getState) => {
+  (initialData: InitialUserData): Effect<void> =>
+  (dispatch, getState) => {
     const {APP} = getState();
 
     dispatch(CardActions.successInitializeStore(APP.network, initialData));
@@ -53,41 +65,44 @@ export const startCardStoreInit =
 
       if (virtualCardIds.length) {
         dispatch(startFetchVirtualCardImageUrls(virtualCardIds));
-        dispatch(
-          setHomeCarouselConfig([
-            ...APP.homeCarouselConfig,
-            {id: 'bitpayCard', show: true},
-          ]),
-        );
       }
     } catch (err) {
       // swallow error so initialize is uninterrupted
     }
 
     // Dosh card rewards
-    try {
-      dispatch(LogActions.info('Initializing Dosh...'));
+    dispatch(LogActions.info('Initializing Dosh...'));
 
-      if (!Dosh) {
-        dispatch(LogActions.debug('Dosh module not found.'));
-        return;
-      }
-
+    if (!Dosh) {
+      dispatch(LogActions.debug('Dosh module not found.'));
+    } else {
       const options = new DoshUiOptions('Card Offers', 'CIRCLE', 'DIAGONAL');
 
-      await Dosh.initializeDosh(options);
-      dispatch(LogActions.info('Successfully initialized Dosh.'));
+      try {
+        Dosh.initializeDosh(options);
 
-      const {doshToken} = initialData;
-      if (!doshToken) {
-        dispatch(LogActions.debug('No doshToken provided.'));
-        return;
+        dispatch(LogActions.info('Successfully initialized Dosh.'));
+
+        const {doshToken} = initialData;
+        if (!doshToken) {
+          dispatch(LogActions.debug('No doshToken provided.'));
+          return;
+        }
+
+        Dosh.setDoshToken(doshToken);
+      } catch (err: any) {
+        dispatch(
+          LogActions.error('An error occurred while initializing Dosh.'),
+        );
+
+        // check for Android exception (see: DoshModule.java)
+        // TODO: iOS exceptions
+        if ((err as any).message) {
+          dispatch(LogActions.error((err as any).message));
+        } else {
+          dispatch(LogActions.error(JSON.stringify(err)));
+        }
       }
-
-      await Dosh.setDoshToken(doshToken);
-    } catch (err) {
-      dispatch(LogActions.error('An error occurred while initializing Dosh.'));
-      dispatch(LogActions.error(JSON.stringify(err)));
     }
   };
 
@@ -117,7 +132,10 @@ export const startFetchOverview =
   async (dispatch, getState) => {
     try {
       dispatch(
-        AppActions.showOnGoingProcessModal(OnGoingProcessMessages.LOADING),
+        AppActions.showOnGoingProcessModal(
+          // t('Loading')
+          t(OnGoingProcessMessages.LOADING),
+        ),
       );
       dispatch(CardActions.updateFetchOverviewStatus(id, 'loading'));
 
@@ -220,7 +238,10 @@ export const startFetchSettledTransactions =
   async (dispatch, getState) => {
     try {
       dispatch(
-        AppActions.showOnGoingProcessModal(OnGoingProcessMessages.LOADING),
+        AppActions.showOnGoingProcessModal(
+          // t('Loading')
+          t(OnGoingProcessMessages.LOADING),
+        ),
       );
 
       const {APP, BITPAY_ID, CARD} = getState();
@@ -449,12 +470,12 @@ export const startOpenDosh =
       dispatch(
         AppActions.showBottomNotificationModal({
           type: 'warning',
-          title: 'Unavailable',
-          message: 'Cards Offers unavailable at this time',
+          title: t('Unavailable'),
+          message: t('Cards Offers unavailable at this time'),
           enableBackdropDismiss: true,
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {},
               primary: true,
             },
@@ -472,5 +493,198 @@ export const startOpenDosh =
         LogActions.error('Something went wrong trying to open Dosh Rewards'),
       );
       dispatch(LogActions.error(JSON.stringify(err)));
+    }
+  };
+
+export const startAddToAppleWallet =
+  ({
+    id,
+    data,
+  }: {
+    id: string;
+    data: {
+      cardholderName: string;
+      primaryAccountNumberSuffix: string;
+      encryptionScheme: string;
+    };
+  }): Effect =>
+  async (dispatch, getState) => {
+    try {
+      const {APP, BITPAY_ID} = getState();
+      const {network} = APP;
+      const token = BITPAY_ID.apiToken[network];
+      const {cardholderName, primaryAccountNumberSuffix} = data;
+
+      await ApplePushProvisioningModule.startAddPaymentPass(
+        primaryAccountNumberSuffix,
+        cardholderName,
+      );
+
+      ApplePushProvisioningModule.eventEmitter.addListener(
+        'getPassAndActivation',
+        async ({data: certs}) => {
+          ApplePushProvisioningModule.eventEmitter.removeAllListeners(
+            'getPassAndActivation',
+          );
+          const {
+            certificateLeaf: cert1,
+            certificateSubCA: cert2,
+            nonce,
+            nonceSignature,
+          }: any = certs || {};
+
+          const res = await CardApi.startCreateAppleWalletProvisioningRequest(
+            token,
+            id,
+            {cert1, cert2, nonce, nonceSignature, walletProvider: 'apple'},
+          );
+          dispatch(completeAddApplePaymentPass({res}));
+        },
+      );
+    } catch (e) {
+      dispatch(
+        LogActions.debug(
+          `appleWallet - startAddPaymentPassError - ${JSON.stringify(e)}`,
+        ),
+      );
+      dispatch(
+        LogActions.debug(JSON.stringify(e, Object.getOwnPropertyNames(e))),
+      );
+      ApplePushProvisioningModule.eventEmitter.removeAllListeners(
+        'getPassAndActivation',
+      );
+    }
+  };
+
+export const completeAddApplePaymentPass =
+  ({res}: {res: {data: any}}): Effect =>
+  async dispatch => {
+    try {
+      dispatch(
+        LogActions.debug(
+          `appleWallet - completeAddPaymentPass - ${JSON.stringify(res)}`,
+        ),
+      );
+
+      const {
+        user: {
+          card: {brand, provisioningData},
+        },
+      } = res.data;
+
+      if (!provisioningData) {
+        return;
+      }
+
+      const {
+        wrappedKey: ephemeralPublicKey,
+        activationData,
+        encryptedPassData,
+      }: any = provisioningData || {};
+
+      await ApplePushProvisioningModule.completeAddPaymentPass(
+        activationData,
+        encryptedPassData,
+        ephemeralPublicKey,
+      );
+
+      dispatch(
+        Analytics.track(
+          'Added card to Apple Wallet',
+          {brand: brand || ''},
+          true,
+        ),
+      );
+    } catch (e) {
+      console.error(e);
+      dispatch(
+        LogActions.error(`appleWallet - completeAddPaymentPassError - ${e}`),
+      );
+      dispatch(AppActions.showBottomNotificationModal(GeneralError()));
+    }
+  };
+
+export const startAddToGooglePay =
+  ({
+    id,
+    data,
+  }: {
+    id: string;
+    data: {lastFourDigits: string; name: string};
+  }): Effect =>
+  async (dispatch, getState) => {
+    try {
+      const {APP, BITPAY_ID, CARD} = getState();
+      const {network} = APP;
+      const token = BITPAY_ID.apiToken[network];
+      const card = CARD.cards[network].find(c => c.id === id);
+
+      const {data: provisioningData} =
+        await CardApi.startCreateGooglePayProvisioningRequest(token, id);
+
+      if (provisioningData.errors) {
+        dispatch(AppActions.showBottomNotificationModal(GeneralError()));
+      } else {
+        const {lastFourDigits, name} = data;
+        const opc =
+          provisioningData.user.card.provisioningData.opaquePaymentCard;
+
+        await GooglePushProvisioningModule.startPushProvision(
+          opc,
+          name,
+          lastFourDigits,
+        );
+
+        dispatch(
+          Analytics.track(
+            'Added card to Google Pay',
+            {brand: card?.brand || ''},
+            true,
+          ),
+        );
+      }
+    } catch (e) {
+      console.error(e);
+      dispatch(
+        LogActions.error(`googlePay - completePushProvisionError - ${e}`),
+      );
+
+      if (e instanceof Error) {
+        if (['CANCELED'].includes(e.message)) {
+          return;
+        }
+      }
+
+      dispatch(AppActions.showBottomNotificationModal(GeneralError()));
+    }
+  };
+
+export const startFetchPinChangeRequestInfo =
+  (id: string): Effect =>
+  async (dispatch, getState) => {
+    const {APP, BITPAY_ID} = getState();
+    const token = BITPAY_ID.apiToken[APP.network];
+
+    const res = await CardApi.fetchPinChangeRequestInfo(token, id);
+
+    if (!res.data) {
+      let errMsg;
+
+      if (res.errors) {
+        errMsg = res.errors.map(e => e.message).join(', ');
+      } else {
+        errMsg =
+          t('An unexpected error occurred while requesting PIN change for') +
+          ` ${id}.`;
+      }
+
+      dispatch(CardActions.failedFetchPinChangeRequestInfo(id, errMsg));
+    } else {
+      dispatch(
+        CardActions.successFetchPinChangeRequestInfo(
+          id,
+          res.data.user.card.pinChangeRequestInfo,
+        ),
+      );
     }
   };

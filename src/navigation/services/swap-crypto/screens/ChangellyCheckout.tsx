@@ -28,6 +28,7 @@ import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-proce
 import {
   Wallet,
   TransactionProposal,
+  SendMaxInfo,
 } from '../../../../store/wallet/wallet.models';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {
@@ -39,7 +40,11 @@ import {
   IsERCToken,
   GetChain,
 } from '../../../../store/wallet/utils/currency';
-import {FormatAmountStr} from '../../../../store/wallet/effects/amount/amount';
+import {
+  FormatAmountStr,
+  GetExcludedUtxosMessage,
+  SatToUnit,
+} from '../../../../store/wallet/effects/amount/amount';
 import {
   changellyCreateFixTransaction,
   changellyGetFixRateForAmount,
@@ -64,7 +69,10 @@ import {
   ArrowContainer,
 } from '../styled/SwapCryptoCheckout.styled';
 import {startGetRates} from '../../../../store/wallet/effects';
-import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../../store/app/app.effects';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -77,7 +85,8 @@ import {
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 import {SwapCryptoActions} from '../../../../store/swap-crypto';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
-import analytics from '@segment/analytics-react-native';
+import {useTranslation} from 'react-i18next';
+import {Currencies} from '../../../../constants/currencies';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -93,7 +102,7 @@ export interface ChangellyCheckoutProps {
   fixedRateId: string;
   amountFrom: number;
   useSendMax?: boolean;
-  sendMaxInfo?: any;
+  sendMaxInfo?: SendMaxInfo;
 }
 
 const ChangellyCheckout: React.FC = () => {
@@ -109,7 +118,7 @@ const ChangellyCheckout: React.FC = () => {
       sendMaxInfo,
     },
   } = useRoute<RouteProp<{params: ChangellyCheckoutProps}>>();
-
+  const {t} = useTranslation();
   const logger = useLogger();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -131,9 +140,6 @@ const ChangellyCheckout: React.FC = () => {
   const [paymentExpired, setPaymentExpired] = useState(false);
   const key = useAppSelector(
     ({WALLET}) => WALLET.keys[fromWalletSelected.keyId],
-  );
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
@@ -197,8 +203,9 @@ const ChangellyCheckout: React.FC = () => {
             if (tries < 2) {
               updateReceivingAmount(tries);
             } else {
-              const msg =
-                'Failed to create transaction for Changelly, please try again later.';
+              const msg = t(
+                'Failed to create transaction for Changelly, please try again later.',
+              );
               showError(msg);
             }
           } else {
@@ -293,14 +300,13 @@ const ChangellyCheckout: React.FC = () => {
             await sleep(400);
 
             if (useSendMax) {
-              console.log('TODO: handle send max');
-              // showWarningSheet();
+              showSendMaxWarning(ctxp.coin);
             }
             return;
           })
           .catch(async err => {
             logger.error(err.message);
-            const msg = 'Error creating transaction';
+            const msg = t('Error creating transaction');
             showError(msg);
             return;
           });
@@ -309,8 +315,9 @@ const ChangellyCheckout: React.FC = () => {
         logger.error(
           'Changelly createFixTransaction Error: ' + JSON.stringify(err),
         );
-        const msg =
-          'Changelly is not available at this moment. Please, try again later.';
+        const msg = t(
+          'Changelly is not available at this moment. Please try again later.',
+        );
         showError(msg);
         return;
       });
@@ -339,6 +346,21 @@ const ChangellyCheckout: React.FC = () => {
         /* later */
         clearInterval(countDown);
       }
+      dispatch(
+        logSegmentEvent(
+          'track',
+          'Failed Swap Crypto',
+          {
+            exchange: 'changelly',
+            context: 'ChangellyCheckout',
+            message: 'The time to make the payment expired',
+            amountFrom: amountFrom || '',
+            fromCoin: fromWalletSelected.currencyAbbreviation || '',
+            toCoin: toWalletSelected.currencyAbbreviation || '',
+          },
+          true,
+        ),
+      );
       return;
     }
 
@@ -362,7 +384,7 @@ const ChangellyCheckout: React.FC = () => {
       .then(data => {
         if (data.error) {
           const msg =
-            'Changelly getFixRateForAmount Error: ' + data.error.message;
+            t('Changelly getFixRateForAmount Error: ') + data.error.message;
           showError(msg);
           return;
         }
@@ -373,8 +395,9 @@ const ChangellyCheckout: React.FC = () => {
       })
       .catch(err => {
         logger.error(JSON.stringify(err));
-        let msg =
-          'Changelly is not available at this moment. Please, try again later.';
+        let msg = t(
+          'Changelly is not available at this moment. Please try again later.',
+        );
         showError(msg);
       });
   };
@@ -388,7 +411,7 @@ const ChangellyCheckout: React.FC = () => {
     try {
       const message =
         fromWalletSelected.currencyAbbreviation.toUpperCase() +
-        ' to ' +
+        t(' to ') +
         toWalletSelected.currencyAbbreviation.toUpperCase();
       let outputs = [];
 
@@ -455,7 +478,7 @@ const ChangellyCheckout: React.FC = () => {
       return Promise.resolve(ctxp);
     } catch (err) {
       return Promise.reject({
-        title: 'Could not create transaction',
+        title: t('Could not create transaction'),
         message: BWCErrorMessage(err),
       });
     }
@@ -464,7 +487,10 @@ const ChangellyCheckout: React.FC = () => {
   const makePayment = async () => {
     try {
       dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT),
+        startOnGoingProcessModal(
+          // t('Sending Payment')
+          t(OnGoingProcessMessages.SENDING_PAYMENT),
+        ),
       );
       await sleep(400);
 
@@ -522,31 +548,85 @@ const ChangellyCheckout: React.FC = () => {
 
     logger.debug('Saved swap with: ' + JSON.stringify(newData));
 
-    analytics.track('BitPay App - Successful Crypto Swap', {
-      fromWalletId: fromWalletSelected.id,
-      toWalletId: toWalletSelected.id,
-      fromCoin: fromWalletSelected.currencyAbbreviation,
-      toCoin: toWalletSelected.currencyAbbreviation,
-      amountFrom: amountFrom,
-      exchange: 'changelly',
-      appUser: user?.eid || '',
-    });
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Successful Crypto Swap',
+        {
+          fromCoin: fromWalletSelected.currencyAbbreviation,
+          toCoin: toWalletSelected.currencyAbbreviation,
+          amountFrom: amountFrom,
+          exchange: 'changelly',
+        },
+        true,
+      ),
+    );
+  };
+
+  const showSendMaxWarning = async (coin: string) => {
+    if (!sendMaxInfo || !coin) {
+      return;
+    }
+
+    const warningMsg = dispatch(GetExcludedUtxosMessage(coin, sendMaxInfo));
+    const chainName = dispatch(IsERCToken(coin))
+      ? Currencies.eth.name
+      : Currencies[coin]?.name;
+    const fee = dispatch(SatToUnit(sendMaxInfo.fee, coin));
+
+    const msg =
+      `Because you are sending the maximum amount contained in this wallet, the ${chainName} miner fee (${fee} ${coin.toUpperCase()}) will be deducted from the total.` +
+      `\n${warningMsg}`;
+
+    await sleep(400);
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: 'Miner Fee Notice',
+        message: msg,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: 'OK',
+            action: async () => {
+              dispatch(dismissBottomNotificationModal());
+            },
+            primary: true,
+          },
+        ],
+      }),
+    );
   };
 
   const showError = async (msg?: string, title?: string, actions?: any) => {
     dispatch(dismissOnGoingProcessModal());
     await sleep(1000);
     dispatch(
+      logSegmentEvent(
+        'track',
+        'Failed Swap Crypto',
+        {
+          exchange: 'changelly',
+          context: 'ChangellyCheckout',
+          message: msg || '',
+          amountFrom: amountFrom || '',
+          fromCoin: fromWalletSelected.currencyAbbreviation || '',
+          toCoin: toWalletSelected.currencyAbbreviation || '',
+        },
+        true,
+      ),
+    );
+    dispatch(
       showBottomNotificationModal({
         type: 'error',
-        title: title ? title : 'Error',
-        message: msg ? msg : 'Unknown Error',
+        title: title ? title : t('Error'),
+        message: msg ? msg : t('Unknown Error'),
         enableBackdropDismiss: true,
         actions: actions
           ? actions
           : [
               {
-                text: 'OK',
+                text: t('OK'),
                 action: async () => {
                   dispatch(dismissBottomNotificationModal());
                   await sleep(1000);
@@ -561,7 +641,10 @@ const ChangellyCheckout: React.FC = () => {
 
   useEffect(() => {
     dispatch(
-      startOnGoingProcessModal(OnGoingProcessMessages.EXCHANGE_GETTING_DATA),
+      startOnGoingProcessModal(
+        // t('Getting data from the exchange...')
+        t(OnGoingProcessMessages.EXCHANGE_GETTING_DATA),
+      ),
     );
     createFixTransaction(1);
   }, []);
@@ -581,11 +664,11 @@ const ChangellyCheckout: React.FC = () => {
     <SwapCheckoutContainer>
       <ScrollView>
         <RowDataContainer>
-          <H5>SUMMARY</H5>
+          <H5>{t('SUMMARY')}</H5>
         </RowDataContainer>
         <ItemDivisor />
         <RowDataContainer>
-          <RowLabel>Selling</RowLabel>
+          <RowLabel>{t('Selling')}</RowLabel>
           <SelectedOptionContainer>
             <SelectedOptionCol>
               {fromWalletData && (
@@ -603,7 +686,7 @@ const ChangellyCheckout: React.FC = () => {
         </RowDataContainer>
         <ItemDivisor />
         <RowDataContainer>
-          <RowLabel>Receiving</RowLabel>
+          <RowLabel>{t('Receiving')}</RowLabel>
           <SelectedOptionContainer>
             <SelectedOptionCol>
               {toWalletData && (
@@ -621,7 +704,7 @@ const ChangellyCheckout: React.FC = () => {
         </RowDataContainer>
         <ItemDivisor />
         <RowDataContainer>
-          <RowLabel>Paying</RowLabel>
+          <RowLabel>{t('Paying')}</RowLabel>
           {amountFrom ? (
             <RowData>
               {Number(amountFrom.toFixed(6))}{' '}
@@ -631,7 +714,7 @@ const ChangellyCheckout: React.FC = () => {
         </RowDataContainer>
         <ItemDivisor />
         <RowDataContainer>
-          <RowLabel>Miner Fee</RowLabel>
+          <RowLabel>{t('Miner Fee')}</RowLabel>
           {fee && (
             <RowData>
               {dispatch(
@@ -647,7 +730,7 @@ const ChangellyCheckout: React.FC = () => {
         </RowDataContainer>
         <ItemDivisor />
         <RowDataContainer>
-          <RowLabel>Exchange Fee</RowLabel>
+          <RowLabel>{t('Exchange Fee')}</RowLabel>
           {!!totalExchangeFee && (
             <RowData>
               {' '}
@@ -658,7 +741,7 @@ const ChangellyCheckout: React.FC = () => {
         </RowDataContainer>
         <ItemDivisor />
         <RowDataContainer>
-          <RowLabel>Expires</RowLabel>
+          <RowLabel>{t('Expires')}</RowLabel>
           {!!remainingTimeStr && (
             <RowData
               style={{
@@ -670,7 +753,7 @@ const ChangellyCheckout: React.FC = () => {
         </RowDataContainer>
         <ItemDivisor />
         <RowDataContainer style={{marginTop: 25, marginBottom: 5}}>
-          <H7>TOTAL TO RECEIVE</H7>
+          <H7>{t('TOTAL TO RECEIVE')}</H7>
           {!!amountTo && (
             <H5>
               {amountTo} {toWalletSelected.currencyAbbreviation.toUpperCase()}
@@ -695,16 +778,16 @@ const ChangellyCheckout: React.FC = () => {
             checked={termsAccepted}
           />
           <CheckboxText>
-            Exchange services provided by Changelly. By clicking “Accept”, I
-            acknowledge and understand that my transaction may trigger AML/KYC
-            verification according to Changelly AML/KYC
+            {t(
+              'Exchange services provided by Changelly. By clicking “Accept”, I acknowledge and understand that my transaction may trigger AML/KYC verification according to Changelly AML/KYC',
+            )}
           </CheckboxText>
         </CheckBoxContainer>
         <PoliciesContainer
           onPress={() => {
             setChangellyPoliciesModalVisible(true);
           }}>
-          <PoliciesText>Review Changelly policies</PoliciesText>
+          <PoliciesText>{t('Review Changelly policies')}</PoliciesText>
           <ArrowContainer>
             <SelectorArrowRight
               {...{

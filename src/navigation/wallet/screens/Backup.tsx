@@ -21,6 +21,7 @@ import {StackActions} from '@react-navigation/native';
 import {RootState} from '../../../store';
 import {StackScreenProps} from '@react-navigation/stack';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
+import {useTranslation} from 'react-i18next';
 const BackupImage = {
   light: (
     <OnboardingImage
@@ -39,7 +40,7 @@ const BackupImage = {
 type BackupScreenProps = StackScreenProps<WalletStackParamList, 'BackupKey'>;
 
 export type BackupParamList = {
-  context: 'onboarding' | 'createNewKey';
+  context: 'onboarding' | 'createNewKey' | 'createNewMultisigKey';
   key: Key;
 };
 
@@ -74,6 +75,13 @@ export const backupRedirect = ({
       screen: 'TermsOfUse',
       params: {key},
     });
+  } else if (context === 'createNewMultisigKey') {
+    navigation.dispatch(
+      StackActions.replace('Wallet', {
+        screen: 'KeyOverview',
+        params: {id: key.id, context},
+      }),
+    );
   } else {
     navigation.dispatch(
       StackActions.replace('Wallet', {
@@ -85,6 +93,7 @@ export const backupRedirect = ({
 };
 
 const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
+  const {t} = useTranslation();
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const themeType = useThemeType();
@@ -121,18 +130,19 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
               dispatch(
                 showBottomNotificationModal({
                   type: 'warning',
-                  title: 'Are you sure?',
-                  message:
+                  title: t('Are you sure?'),
+                  message: t(
                     'You will not be able to add funds to your wallet until you backup your recovery phrase.',
+                  ),
                   enableBackdropDismiss: true,
                   actions: [
                     {
-                      text: 'BACKUP YOUR KEY',
+                      text: t('BACKUP YOUR KEY'),
                       action: gotoBackup,
                       primary: true,
                     },
                     {
-                      text: 'LATER',
+                      text: t('LATER'),
                       action: () =>
                         backupRedirect({
                           context,
@@ -145,12 +155,12 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
                 }),
               );
             }}>
-            Skip
+            {t('Skip')}
           </Button>
         </HeaderRightContainer>
       ),
     });
-  }, [navigation]);
+  }, [navigation, t]);
 
   useAndroidBackHandler(() => true);
 
@@ -159,20 +169,21 @@ const BackupScreen: React.FC<BackupScreenProps> = ({route}) => {
       <ImageContainer>{BackupImage[themeType]}</ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>
-          <H3>Would you like to backup your key?</H3>
+          <H3>{t('Would you like to backup your key?')}</H3>
         </TextAlign>
       </TitleContainer>
       <TextContainer>
         <TextAlign align={'center'}>
           <Paragraph>
-            If you delete the BitPay app or lose your device, you'll need your
-            recovery phrase regain access to your funds.
+            {t(
+              "If you delete the BitPay app or lose your device, you'll need your recovery phrase regain access to your funds.",
+            )}
           </Paragraph>
         </TextAlign>
       </TextContainer>
       <CtaContainer>
         <Button buttonStyle={'primary'} onPress={gotoBackup}>
-          Backup your Recovery Phrase
+          {t('Backup your Recovery Phrase')}
         </Button>
       </CtaContainer>
     </BackupContainer>

@@ -1,19 +1,30 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {HeaderTitle} from '../../../../components/styled/Text';
+import {BaseText, HeaderTitle, Link} from '../../../../components/styled/Text';
 import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import styled from 'styled-components/native';
+import Clipboard from '@react-native-community/clipboard';
 import {
   ScreenGutter,
   SearchContainer,
   SearchInput,
 } from '../../../../components/styled/Containers';
 import ScanSvg from '../../../../../assets/img/onboarding/scan.svg';
-import {NeutralSlate} from '../../../../styles/colors';
+import ContactsSvg from '../../../../../assets/img/tab-icons/contacts.svg';
+import {
+  LightBlack,
+  NeutralSlate,
+  SlateDark,
+  White,
+} from '../../../../styles/colors';
 import {RouteProp} from '@react-navigation/core';
 import {WalletScreens, WalletStackParamList} from '../../WalletStack';
 import {Effect, RootState} from '../../../../store';
-import {formatFiatAmount, sleep} from '../../../../utils/helper-methods';
-import {Key} from '../../../../store/wallet/wallet.models';
+import {
+  convertToFiat,
+  formatFiatAmount,
+  sleep,
+} from '../../../../utils/helper-methods';
+import {Key, Rates} from '../../../../store/wallet/wallet.models';
 import debounce from 'lodash.debounce';
 import {
   CheckIfLegacyBCH,
@@ -33,7 +44,10 @@ import {
   PayProPaymentOption,
 } from '../../../../store/wallet/effects/paypro/paypro';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
-import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
 import {
   dismissOnGoingProcessModal,
@@ -41,6 +55,7 @@ import {
 } from '../../../../store/app/app.actions';
 import {Currencies} from '../../../../constants/currencies';
 import {
+  AppDispatch,
   useAppDispatch,
   useAppSelector,
   useLogger,
@@ -59,6 +74,9 @@ import {
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {GetChain} from '../../../../store/wallet/utils/currency';
 import {goToAmount, incomingData} from '../../../../store/scan/scan.effects';
+import {useTranslation} from 'react-i18next';
+import SettingsContactRow from '../../../../components/list/SettingsContactRow';
+import {toFiat} from '../../../../store/wallet/utils/wallet';
 
 const ValidDataTypes: string[] = [
   'BitcoinAddress',
@@ -86,42 +104,85 @@ const ScrollView = styled.ScrollView`
   padding: 0 ${ScreenGutter};
 `;
 
+const PasteClipboardContainer = styled.TouchableOpacity`
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  padding: 10px;
+`;
+
+const SendContactRow = styled.View`
+  padding: 10px 0px;
+`;
+
+const ContactTitleContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
+  border-bottom-width: 1px;
+  margin-bottom: 10px;
+`;
+
+const ContactTitle = styled(BaseText)`
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  margin-left: 10px;
+`;
+
 const BuildKeyWalletRow = (
   keys: {[key in string]: Key},
   currentWalletId: string,
   currentCurrencyAbbreviation: string,
   currentNetwork: string,
   defaultAltCurrencyIsoCode: string,
+  searchInput: string,
+  rates: Rates,
+  dispatch: AppDispatch,
 ) => {
-  let filteredKeys: KeyWalletsRowProps[] = [];
+  let filteredKeys: KeyWalletsRowProps<KeyWallet>[] = [];
   Object.entries(keys).forEach(([key, value]) => {
     const wallets: KeyWallet[] = [];
     value.wallets
       .filter(({hideWallet}) => !hideWallet)
       .filter(
-        ({currencyAbbreviation, id, credentials: {network}}) =>
+        ({currencyAbbreviation, id, credentials: {network, walletName}}) =>
           currencyAbbreviation.toLowerCase() ===
             currentCurrencyAbbreviation.toLowerCase() &&
           id !== currentWalletId &&
-          network === currentNetwork,
+          network === currentNetwork &&
+          walletName.toLowerCase().includes(searchInput.toLowerCase()),
       )
       .map(wallet => {
         const {
           balance,
+          hideWallet,
           currencyAbbreviation,
-          credentials: {network},
+          credentials: {network, walletName: fallbackName},
+          walletName,
         } = wallet;
         // Clone wallet to avoid altering store values
         const _wallet = merge(cloneDeep(wallet), {
           cryptoBalance: balance.crypto,
           cryptoLockedBalance: '',
           fiatBalance: formatFiatAmount(
-            balance.fiat,
+            convertToFiat(
+              dispatch(
+                toFiat(
+                  balance.sat,
+                  defaultAltCurrencyIsoCode,
+                  currencyAbbreviation,
+                  rates,
+                ),
+              ),
+              hideWallet,
+              network,
+            ),
             defaultAltCurrencyIsoCode,
           ),
           fiatLockedBalance: '',
           currencyAbbreviation: currencyAbbreviation.toUpperCase(),
           network,
+          walletName: walletName || fallbackName,
         });
         wallets.push(_wallet);
       });
@@ -134,27 +195,23 @@ const BuildKeyWalletRow = (
 };
 
 const SendTo = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const route = useRoute<RouteProp<WalletStackParamList, 'SendTo'>>();
 
-  const keys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
+  const {keys, rates} = useAppSelector(({WALLET}: RootState) => WALLET);
+  const allContacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const theme = useTheme();
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
   const [searchInput, setSearchInput] = useState('');
+  const [clipboardData, setClipboardData] = useState('');
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>Send To</HeaderTitle>,
-      //TODO: Update me
-      // headerRight: () => (
-      //     <Settings
-      //         onPress={() => {
-      //         }}
-      //     />
-      // ),
+      headerTitle: () => <HeaderTitle>{t('Send To')}</HeaderTitle>,
     });
   });
 
@@ -165,12 +222,23 @@ const SendTo = () => {
     id,
     credentials: {network},
   } = wallet;
-  const keyWallets: KeyWalletsRowProps[] = BuildKeyWalletRow(
+  const keyWallets: KeyWalletsRowProps<KeyWallet>[] = BuildKeyWalletRow(
     keys,
     id,
     currencyAbbreviation,
     network,
     defaultAltCurrency.isoCode,
+    searchInput,
+    rates,
+    dispatch,
+  );
+
+  const contacts = allContacts.filter(
+    contact =>
+      contact.coin === currencyAbbreviation &&
+      contact.network === network &&
+      (contact.name.toLowerCase().includes(searchInput.toLowerCase()) ||
+        contact.email?.toLowerCase().includes(searchInput.toLowerCase())),
   );
 
   const onErrorMessageDismiss = () => {
@@ -236,14 +304,19 @@ const SendTo = () => {
       return false;
     };
 
-  const validateAndNavigateToConfirm = async (text: string) => {
+  const validateAndNavigateToConfirm = async (
+    text: string,
+    context?: string,
+    name?: string,
+  ) => {
     const data = ValidateURI(text);
     if (data?.type === 'PayPro' || data?.type === 'InvoiceUri') {
       try {
         const invoiceUrl = GetPayProUrl(text);
         dispatch(
           startOnGoingProcessModal(
-            OnGoingProcessMessages.FETCHING_PAYMENT_OPTIONS,
+            //  t('Fetching payment options...')
+            t(OnGoingProcessMessages.FETCHING_PAYMENT_OPTIONS),
           ),
         );
 
@@ -284,7 +357,7 @@ const SendTo = () => {
       if (dispatch(checkCoinAndNetwork(text))) {
         setSearchInput(text);
         await sleep(0);
-        dispatch(incomingData(text, wallet));
+        dispatch(incomingData(text, {wallet, context, name}));
       }
     }
   };
@@ -307,7 +380,10 @@ const SendTo = () => {
 
       if (!address) {
         dispatch(
-          startOnGoingProcessModal(OnGoingProcessMessages.GENERATING_ADDRESS),
+          startOnGoingProcessModal(
+            // t('Generating Address')
+            t(OnGoingProcessMessages.GENERATING_ADDRESS),
+          ),
         );
         address = await dispatch<Promise<string>>(
           createWalletAddress({wallet: selectedWallet, newAddress: false}),
@@ -331,6 +407,15 @@ const SendTo = () => {
       console.error(err);
     }
   };
+
+  useEffect(() => {
+    const getString = async () => {
+      const clipboardData = await Clipboard.getString();
+      setClipboardData(clipboardData);
+    };
+    getString();
+  }, []);
+
   useEffect(() => {
     return navigation.addListener('blur', () =>
       setTimeout(() => setSearchInput(''), 300),
@@ -342,7 +427,7 @@ const SendTo = () => {
       <ScrollView>
         <SearchContainer>
           <SearchInput
-            placeholder={'Search contact or enter address'}
+            placeholder={t('Search contact or enter address')}
             placeholderTextColor={placeHolderTextColor}
             value={searchInput}
             onChangeText={(text: string) => {
@@ -354,6 +439,11 @@ const SendTo = () => {
             activeOpacity={0.75}
             onPress={() => {
               haptic('impactLight');
+              dispatch(
+                logSegmentEvent('track', 'Open Scanner', {
+                  context: 'SendTo',
+                }),
+              );
               navigation.navigate('Scan', {
                 screen: 'Root',
                 params: {
@@ -373,7 +463,51 @@ const SendTo = () => {
           </TouchableOpacity>
         </SearchContainer>
 
-        <View>
+        {clipboardData ? (
+          <PasteClipboardContainer
+            activeOpacity={0.75}
+            onPress={() => {
+              haptic('impactLight');
+              setSearchInput(clipboardData);
+              validateAndNavigateToConfirm(clipboardData);
+            }}>
+            <Link>{t('Paste from clipboard')}</Link>
+          </PasteClipboardContainer>
+        ) : null}
+
+        {contacts.length > 0 ? (
+          <>
+            <ContactTitleContainer>
+              {ContactsSvg({})}
+              <ContactTitle>{t('Contacts')}</ContactTitle>
+            </ContactTitleContainer>
+
+            {contacts.map((item, index) => {
+              return (
+                <SendContactRow key={index}>
+                  <SettingsContactRow
+                    contact={item}
+                    onPress={() => {
+                      try {
+                        if (item) {
+                          validateAndNavigateToConfirm(
+                            item.address,
+                            'contact',
+                            item.name,
+                          );
+                        }
+                      } catch (err) {
+                        console.log(err);
+                      }
+                    }}
+                  />
+                </SendContactRow>
+              );
+            })}
+          </>
+        ) : null}
+
+        <View style={{marginTop: 10}}>
           <KeyWalletsRow
             keyWallets={keyWallets}
             onPress={(selectedWallet: KeyWallet) => {

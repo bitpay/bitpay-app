@@ -1,8 +1,9 @@
-import {useNavigation} from '@react-navigation/core';
-import React, {ReactElement} from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import {StackScreenProps} from '@react-navigation/stack';
+import React, {ReactElement, useMemo} from 'react';
+import {useTranslation} from 'react-i18next';
+import {View, LayoutAnimation} from 'react-native';
+import styled from 'styled-components/native';
 import AngleRight from '../../../../assets/img/angle-right.svg';
-import {StyleProp, TextStyle, View} from 'react-native';
 import Avatar from '../../../components/avatar/BitPayIdAvatar';
 import {
   ActiveOpacity,
@@ -11,13 +12,13 @@ import {
   SettingIcon,
   SettingTitle,
 } from '../../../components/styled/Containers';
-import {useTranslation} from 'react-i18next';
 import {RootState} from '../../../store';
 import {AppActions} from '../../../store/app';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
 import {Black, Feather, LightBlack, White} from '../../../styles/colors';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
+import {navigationRef} from '../../../Root';
 import {updateSettingsListConfig} from '../../../store/app/app.actions';
 import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
 
@@ -25,13 +26,13 @@ import General from './components/General';
 import Security from './components/Security';
 import Notifications from './components/Notifications';
 import Connections from './components/Connections';
+import ExternalServices from './components/ExternalServices';
 import About from './components/About';
 import Contacts from './components/Contacts';
 import {useSelector} from 'react-redux';
 import Crypto from './components/Crypto';
 import WalletsAndKeys from './components/WalletsAndKeys';
 import {SettingsStackParamList} from './SettingsStack';
-import {StackScreenProps} from '@react-navigation/stack';
 
 interface HomeSetting {
   id: SettingsListType;
@@ -105,16 +106,15 @@ export type SettingsListType =
   | 'Crypto'
   | 'Wallets & Keys'
   | 'Security'
+  | 'External Services'
   | 'Notifications'
   | 'Connections'
   | 'About BitPay';
 
-const SettingsHomeScreen: React.FC<SettingsHomeProps> = ({route}) => {
+const SettingsHomeScreen: React.VFC<SettingsHomeProps> = ({route}) => {
   const {redirectTo} = route.params || {};
   const {t} = useTranslation();
-  const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const theme = useTheme();
   const user = useSelector<RootState, User | null>(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
@@ -122,66 +122,101 @@ const SettingsHomeScreen: React.FC<SettingsHomeProps> = ({route}) => {
   const biometricLockActive = useAppSelector(
     ({APP}: RootState) => APP.biometricLockActive,
   );
-  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
   const hideList = useAppSelector(({APP}) => APP.settingsListConfig);
-  const SETTINGS: HomeSetting[] = [
-    {
-      id: 'General',
-      title: t('General'),
-      onPress: () => {},
-      subListComponent: <General />,
-    },
-    {
-      id: 'Contacts',
-      title: t('Contacts'),
-      onPress: () => {},
-      subListComponent: <Contacts />,
-    },
-    {
-      id: 'Crypto',
-      title: t('Crypto'),
-      onPress: () => {},
-      subListComponent: <Crypto />,
-    },
-    {
-      id: 'Wallets & Keys',
-      title: t('Wallets & Keys'),
-      onPress: () => {},
-      subListComponent: <WalletsAndKeys />,
-    },
-    {
-      id: 'Security',
-      title: t('Security'),
-      onPress: () => {
-        if (biometricLockActive) {
-          dispatch(AppActions.showBiometricModal());
-        }
-        if (pinLockActive) {
-          dispatch(AppActions.showPinModal({type: 'check'}));
-        }
+  const memoizedSettingsConfigs: HomeSetting[] = useMemo(
+    () => [
+      {
+        id: 'General',
+        title: t('General'),
+        onPress: () => {},
+        subListComponent: <General />,
       },
-      subListComponent: <Security />,
-    },
-    {
-      // Settings for Buy/Swap Crypto will be momentarily commented
-      id: 'Notifications',
-      title: t('Notifications'),
-      onPress: () => {},
-      subListComponent: <Notifications />,
-    },
-    {
-      id: 'Connections',
-      title: t('Connections'),
-      onPress: () => {},
-      subListComponent: <Connections redirectTo={redirectTo} />,
-    },
-    {
-      id: 'About BitPay',
-      title: t('About BitPay'),
-      onPress: () => {},
-      subListComponent: <About />,
-    },
-  ];
+      {
+        id: 'Contacts',
+        title: t('Contacts'),
+        onPress: () => {},
+        subListComponent: <Contacts />,
+      },
+      {
+        id: 'Crypto',
+        title: t('Crypto'),
+        onPress: () => {},
+        subListComponent: <Crypto />,
+      },
+      {
+        id: 'Wallets & Keys',
+        title: t('Wallets & Keys'),
+        onPress: () => {},
+        subListComponent: <WalletsAndKeys />,
+      },
+      {
+        id: 'Security',
+        title: t('Security'),
+        onPress: () => {
+          if (biometricLockActive) {
+            dispatch(AppActions.showBiometricModal());
+          }
+          if (pinLockActive) {
+            dispatch(AppActions.showPinModal({type: 'check'}));
+          }
+        },
+        subListComponent: <Security />,
+      },
+      {
+        id: 'Notifications',
+        title: t('Notifications'),
+        onPress: () => {},
+        subListComponent: <Notifications />,
+      },
+      {
+        id: 'Connections',
+        title: t('Connections'),
+        onPress: () => {},
+        subListComponent: <Connections redirectTo={redirectTo} />,
+      },
+      {
+        id: 'External Services',
+        title: t('External Services'),
+        onPress: () => {},
+        subListComponent: <ExternalServices />,
+      },
+      {
+        id: 'About BitPay',
+        title: t('About BitPay'),
+        onPress: () => {},
+        subListComponent: <About />,
+      },
+    ],
+    [t],
+  );
+
+  const memoizedSettingsList = useMemo(() => {
+    return memoizedSettingsConfigs.map(
+      ({id, title, onPress, subListComponent}) => {
+        return (
+          <View key={id}>
+            <DropdownSetting
+              activeOpacity={ActiveOpacity}
+              onPress={() => {
+                LayoutAnimation.configureNext(
+                  LayoutAnimation.Presets.easeInEaseOut,
+                );
+                dispatch(updateSettingsListConfig(id));
+                onPress();
+              }}>
+              <SettingTitle>{title}</SettingTitle>
+              <SettingIcon suffix>
+                {!hideList.includes(id) ? <ChevronDownSvg /> : <ChevronUpSvg />}
+              </SettingIcon>
+            </DropdownSetting>
+            {!hideList.includes(id) && subListComponent ? (
+              <>{subListComponent}</>
+            ) : null}
+          </View>
+        );
+      },
+    );
+  }, [dispatch, memoizedSettingsConfigs, hideList]);
 
   return (
     <SettingsContainer>
@@ -190,9 +225,9 @@ const SettingsHomeScreen: React.FC<SettingsHomeProps> = ({route}) => {
           style={{paddingHorizontal: 15}}
           onPress={() => {
             if (user) {
-              navigation.navigate('BitpayId', {screen: 'Profile'});
+              navigationRef.navigate('BitpayId', {screen: 'Profile'});
             } else {
-              navigation.navigate('Auth', {screen: 'Login'});
+              navigationRef.navigate('Auth', {screen: 'Login'});
             }
           }}>
           <BitPayIdAvatarContainer>
@@ -208,35 +243,16 @@ const SettingsHomeScreen: React.FC<SettingsHomeProps> = ({route}) => {
               <BitPayIdUserText>{user.email}</BitPayIdUserText>
             </BitPayIdUserContainer>
           ) : (
-            <BitPayIdSettingTitle>Log In or Sign Up</BitPayIdSettingTitle>
+            <BitPayIdSettingTitle>
+              {t('Log In or Sign Up')}
+            </BitPayIdSettingTitle>
           )}
           <SettingIcon suffix>
             <AngleRight />
           </SettingIcon>
         </BitPayIdSettingsLink>
 
-        {SETTINGS.map(({id, title, onPress, subListComponent}) => {
-          return (
-            <View key={id}>
-              <DropdownSetting
-                activeOpacity={ActiveOpacity}
-                onPress={() => {
-                  dispatch(updateSettingsListConfig(id));
-                  onPress();
-                }}>
-                <SettingTitle style={textStyle}>{title}</SettingTitle>
-                <SettingIcon suffix>
-                  {!hideList.includes(id) ? (
-                    <ChevronDownSvg />
-                  ) : (
-                    <ChevronUpSvg />
-                  )}
-                </SettingIcon>
-              </DropdownSetting>
-              {!hideList.includes(id) ? <>{subListComponent}</> : null}
-            </View>
-          );
-        })}
+        {memoizedSettingsList}
       </SettingsHome>
     </SettingsContainer>
   );

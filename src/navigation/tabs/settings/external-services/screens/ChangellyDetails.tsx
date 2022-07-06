@@ -34,13 +34,18 @@ import {
   ColumnDataContainer,
   ColumnData,
   RemoveCta,
+  CopiedContainer,
+  CopyImgContainerRight,
 } from '../styled/ExternalServicesDetails';
+import {useTranslation} from 'react-i18next';
+import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 
 export interface ChangellyDetailsProps {
   swapTx: changellyTxData;
 }
 
 const ChangellyDetails: React.FC = () => {
+  const {t} = useTranslation();
   const {
     params: {swapTx},
   } = useRoute<RouteProp<{params: ChangellyDetailsProps}>>();
@@ -51,8 +56,18 @@ const ChangellyDetails: React.FC = () => {
     statusTitle: undefined,
     statusDescription: undefined,
   });
+  const [copiedDepositAddress, setCopiedDepositAddress] = useState(false);
+  const [copiedPayinAddress, setCopiedPayinAddress] = useState(false);
+  const [copiedPayinExtraId, setCopiedPayinExtraId] = useState(false);
+  const [copiedRefundAddress, setCopiedRefundAddress] = useState(false);
+  const [copiedExchangeTxId, setCopiedExchangeTxId] = useState(false);
+  const [copiedSupportEmailLabelTip, setCopiedSupportEmailLabelTip] =
+    useState(false);
+  const [copiedExchangeTxIdLabelTip, setCopiedExchangeTxIdLabelTip] =
+    useState(false);
 
   const copyText = (text: string) => {
+    haptic('impactLight');
     Clipboard.setString(text);
   };
 
@@ -93,12 +108,61 @@ const ChangellyDetails: React.FC = () => {
     getStatus();
   }, []);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedDepositAddress(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedDepositAddress]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedPayinAddress(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedPayinAddress]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedPayinExtraId(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedPayinExtraId]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedRefundAddress(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedRefundAddress]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedExchangeTxId(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedExchangeTxId]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedSupportEmailLabelTip(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedSupportEmailLabelTip]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedExchangeTxIdLabelTip(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedExchangeTxIdLabelTip]);
+
   return (
     <SettingsContainer>
       <Settings>
         <RowDataContainer>
           <CryptoAmountContainer>
-            <CryptoTitle>Receiving amount</CryptoTitle>
+            <CryptoTitle>{t('Receiving amount')}</CryptoTitle>
             <CryptoContainer>
               <CryptoAmount>{swapTx.amountTo}</CryptoAmount>
               <CryptoUnit>{swapTx.coinTo.toUpperCase()}</CryptoUnit>
@@ -110,23 +174,30 @@ const ChangellyDetails: React.FC = () => {
         <ColumnDataContainer>
           <TouchableOpacity
             onPress={() => {
-              haptic('impactLight');
               copyText(swapTx.addressTo);
+              setCopiedDepositAddress(true);
             }}>
-            <RowLabel>Deposit address</RowLabel>
-            <ColumnData>{swapTx.addressTo}</ColumnData>
+            <RowLabel>{t('Deposit address')}</RowLabel>
+            <CopiedContainer>
+              <ColumnData style={{maxWidth: '90%'}}>
+                {swapTx.addressTo}
+              </ColumnData>
+              <CopyImgContainerRight style={{minWidth: '10%'}}>
+                {copiedDepositAddress ? <CopiedSvg width={17} /> : null}
+              </CopyImgContainerRight>
+            </CopiedContainer>
           </TouchableOpacity>
         </ColumnDataContainer>
 
         <RowDataContainer style={{marginTop: 20}}>
-          <RowLabel>Paying</RowLabel>
+          <RowLabel>{t('Paying')}</RowLabel>
           <RowData>
             {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
           </RowData>
         </RowDataContainer>
 
         <RowDataContainer>
-          <RowLabel>Created</RowLabel>
+          <RowLabel>{t('Created')}</RowLabel>
           <RowData>
             {moment(swapTx.date).format('MMM DD, YYYY hh:mm a')}
           </RowData>
@@ -134,7 +205,7 @@ const ChangellyDetails: React.FC = () => {
 
         {!!swapTx.status && (
           <RowDataContainer>
-            <RowLabel>Status</RowLabel>
+            <RowLabel>{t('Status')}</RowLabel>
             <RowData
               style={{
                 color: changellyGetStatusColor(swapTx.status),
@@ -147,81 +218,121 @@ const ChangellyDetails: React.FC = () => {
 
         <LabelTip type="info">
           <LabelTipText>{status.statusDescription}</LabelTipText>
-          {!!swapTx.status && ['failed', 'hold'].includes(swapTx.status) && (
+          {!!swapTx.status && ['failed', 'hold'].includes(swapTx.status) ? (
             <>
               <Br />
-              <TouchableOpacity
-                onPress={() => {
-                  haptic('impactLight');
-                  copyText('security@changelly.com');
-                }}>
-                <LabelTipText>
-                  Please contact Changelly support:{' '}
-                  <LabelTipText style={{fontWeight: '700'}}>
-                    security@changelly.com
+              <CopiedContainer>
+                <TouchableOpacity
+                  style={{maxWidth: '90%'}}
+                  onPress={() => {
+                    copyText('security@changelly.com');
+                    setCopiedSupportEmailLabelTip(true);
+                  }}>
+                  <LabelTipText>
+                    {t('Please contact Changelly support:')}{' '}
+                    <LabelTipText style={{fontWeight: '700'}}>
+                      security@changelly.com
+                    </LabelTipText>
                   </LabelTipText>
-                </LabelTipText>
-              </TouchableOpacity>
+                </TouchableOpacity>
+                <CopyImgContainerRight style={{minWidth: '10%', paddingTop: 0}}>
+                  {copiedSupportEmailLabelTip ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainerRight>
+              </CopiedContainer>
               <Br />
-              <TouchableOpacity
-                onPress={() => {
-                  haptic('impactLight');
-                  copyText(swapTx.exchangeTxId);
-                }}>
-                <LabelTipText>
-                  Provide the transaction id:{' '}
-                  <LabelTipText style={{fontWeight: '700'}}>
-                    {swapTx.exchangeTxId}
+              <CopiedContainer>
+                <TouchableOpacity
+                  style={{maxWidth: '90%'}}
+                  onPress={() => {
+                    copyText(swapTx.exchangeTxId);
+                    setCopiedExchangeTxIdLabelTip(true);
+                  }}>
+                  <LabelTipText>
+                    {t('Provide the transaction id:')}{' '}
+                    <LabelTipText style={{fontWeight: '700'}}>
+                      {swapTx.exchangeTxId}
+                    </LabelTipText>
                   </LabelTipText>
-                </LabelTipText>
-              </TouchableOpacity>
+                </TouchableOpacity>
+                <CopyImgContainerRight style={{minWidth: '10%', paddingTop: 0}}>
+                  {copiedExchangeTxIdLabelTip ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainerRight>
+              </CopiedContainer>
             </>
-          )}
+          ) : null}
         </LabelTip>
 
         <ColumnDataContainer>
           <TouchableOpacity
             onPress={() => {
-              haptic('impactLight');
               copyText(swapTx.payinAddress);
+              setCopiedPayinAddress(true);
             }}>
-            <RowLabel>Exchange address (Payin)</RowLabel>
-            <ColumnData>{swapTx.payinAddress}</ColumnData>
+            <RowLabel>{t('Exchange address (Payin)')}</RowLabel>
+            <CopiedContainer>
+              <ColumnData style={{maxWidth: '90%'}}>
+                {swapTx.payinAddress}
+              </ColumnData>
+              <CopyImgContainerRight style={{minWidth: '10%'}}>
+                {copiedPayinAddress ? <CopiedSvg width={17} /> : null}
+              </CopyImgContainerRight>
+            </CopiedContainer>
           </TouchableOpacity>
         </ColumnDataContainer>
 
-        {!!swapTx.payinExtraId && (
+        {swapTx.payinExtraId ? (
           <ColumnDataContainer>
             <TouchableOpacity
               onPress={() => {
-                haptic('impactLight');
                 copyText(swapTx.payinExtraId!);
+                setCopiedPayinExtraId(true);
               }}>
-              <RowLabel>Destination Tag (Payin Extra Id)</RowLabel>
-              <ColumnData>{swapTx.payinExtraId}</ColumnData>
+              <RowLabel>{t('Destination Tag (Payin Extra Id)')}</RowLabel>
+              <CopiedContainer>
+                <ColumnData style={{maxWidth: '90%'}}>
+                  {swapTx.payinExtraId}
+                </ColumnData>
+                <CopyImgContainerRight style={{minWidth: '10%'}}>
+                  {copiedPayinExtraId ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainerRight>
+              </CopiedContainer>
             </TouchableOpacity>
           </ColumnDataContainer>
-        )}
+        ) : null}
 
         <ColumnDataContainer>
           <TouchableOpacity
             onPress={() => {
-              haptic('impactLight');
               copyText(swapTx.refundAddress);
+              setCopiedRefundAddress(true);
             }}>
-            <RowLabel>Refund address</RowLabel>
-            <ColumnData>{swapTx.refundAddress}</ColumnData>
+            <RowLabel>{t('Refund address')}</RowLabel>
+            <CopiedContainer>
+              <ColumnData style={{maxWidth: '90%'}}>
+                {swapTx.refundAddress}
+              </ColumnData>
+              <CopyImgContainerRight style={{minWidth: '10%'}}>
+                {copiedRefundAddress ? <CopiedSvg width={17} /> : null}
+              </CopyImgContainerRight>
+            </CopiedContainer>
           </TouchableOpacity>
         </ColumnDataContainer>
 
         <ColumnDataContainer>
           <TouchableOpacity
             onPress={() => {
-              haptic('impactLight');
               copyText(swapTx.exchangeTxId);
+              setCopiedExchangeTxId(true);
             }}>
-            <RowLabel>Exchange Transaction ID</RowLabel>
-            <ColumnData>{swapTx.exchangeTxId}</ColumnData>
+            <RowLabel>{t('Exchange Transaction ID')}</RowLabel>
+            <CopiedContainer>
+              <ColumnData style={{maxWidth: '90%'}}>
+                {swapTx.exchangeTxId}
+              </ColumnData>
+              <CopyImgContainerRight style={{minWidth: '10%'}}>
+                {copiedExchangeTxId ? <CopiedSvg width={17} /> : null}
+              </CopyImgContainerRight>
+            </CopiedContainer>
           </TouchableOpacity>
         </ColumnDataContainer>
 
@@ -231,13 +342,14 @@ const ChangellyDetails: React.FC = () => {
             dispatch(
               showBottomNotificationModal({
                 type: 'question',
-                title: 'Removing transaction data',
-                message:
+                title: t('Removing transaction data'),
+                message: t(
                   "The data of this swap will be deleted from your device. Make sure you don't need it",
+                ),
                 enableBackdropDismiss: true,
                 actions: [
                   {
-                    text: 'REMOVE',
+                    text: t('REMOVE'),
                     action: () => {
                       dispatch(dismissBottomNotificationModal());
                       dispatch(
@@ -250,7 +362,7 @@ const ChangellyDetails: React.FC = () => {
                     primary: true,
                   },
                   {
-                    text: 'GO BACK',
+                    text: t('GO BACK'),
                     action: () => {
                       console.log('Removing transaction data CANCELED');
                     },
@@ -259,7 +371,7 @@ const ChangellyDetails: React.FC = () => {
               }),
             );
           }}>
-          <Text style={{color: 'red'}}>Remove</Text>
+          <Text style={{color: 'red'}}>{t('Remove')}</Text>
         </RemoveCta>
       </Settings>
     </SettingsContainer>

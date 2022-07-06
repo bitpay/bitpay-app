@@ -13,6 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import com.facebook.react.bridge.JSIModulePackage;
 import com.swmansion.reanimated.ReanimatedJSIModulePackage;
+import info.applike.advertisingid.RNAdvertisingIdPackage;
 
 // Register custom font
 import com.facebook.react.views.text.ReactFontManager;
@@ -37,6 +38,8 @@ public class MainApplication extends Application implements ReactApplication {
           // packages.add(new MyReactNativePackage());
 
           packages.add(new DoshPackage());
+          packages.add(new GooglePushProvisioningPackage());
+          packages.add(new SilentPushPackage());
 
           return packages;
         }

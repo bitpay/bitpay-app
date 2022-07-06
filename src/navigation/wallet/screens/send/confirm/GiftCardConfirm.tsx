@@ -20,7 +20,10 @@ import {
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../../../components/modal/ongoing-process/OngoingProcess';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import RemoteImage from '../../../../tabs/shop/components/RemoteImage';
@@ -52,6 +55,8 @@ import {
 } from '../../../../../api/coinbase/coinbase.types';
 import {startGetRates} from '../../../../../store/wallet/effects';
 import {coinbasePayInvoice} from '../../../../../store/coinbase';
+import {useTranslation} from 'react-i18next';
+
 export interface GiftCardConfirmParamList {
   amount: number;
   cardConfig: CardConfig;
@@ -69,17 +74,15 @@ const GiftCardHeader = ({
   amount: number;
   cardConfig: CardConfig;
 }): JSX.Element | null => {
+  const {t} = useTranslation();
   return (
     <>
       <Header hr>
-        <>{cardConfig.displayName} Gift Card</>
+        <>{t(' Gift Card', {displayName: cardConfig.displayName})}</>
       </Header>
       <DetailContainer height={73}>
         <DetailRow>
-          <H4>
-            {formatFiatAmount(amount, cardConfig.currency)}{' '}
-            {cardConfig.currency}
-          </H4>
+          <H4>{formatFiatAmount(amount, cardConfig.currency)}</H4>
           <RemoteImage uri={cardConfig.icon} height={40} borderRadius={40} />
         </DetailRow>
       </DetailContainer>
@@ -89,6 +92,7 @@ const GiftCardHeader = ({
 };
 
 const Confirm = () => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletStackParamList, 'GiftCardConfirm'>>();
@@ -125,9 +129,10 @@ const Confirm = () => {
     [dispatch, keys],
   );
 
-  const reshowWalletSelector = async () => {
-    await sleep(400);
-    setWalletSelectorVisible(true);
+  const getTransactionCurrency = () => {
+    return wallet
+      ? wallet.currencyAbbreviation.toUpperCase()
+      : coinbaseAccount!.currency.code;
   };
 
   useEffect(() => {
@@ -137,7 +142,10 @@ const Confirm = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const openWalletSelector = () => {
+  const openWalletSelector = async (delay?: number) => {
+    if (delay) {
+      await sleep(delay);
+    }
     setWalletSelectorVisible(true);
   };
 
@@ -149,7 +157,10 @@ const Confirm = () => {
     transactionCurrency: string;
   }) => {
     dispatch(
-      startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
+      startOnGoingProcessModal(
+        // t('Fetching payment information...')
+        t(OnGoingProcessMessages.FETCHING_PAYMENT_INFO),
+      ),
     );
     dispatch(ShopActions.deletedUnsoldGiftCards());
     const invoiceCreationParams = {
@@ -185,7 +196,7 @@ const Confirm = () => {
     showError({
       defaultErrorMessage:
         err.response?.data?.message || err.message || errorConfig.message,
-      onDismiss: () => reshowWalletSelector(),
+      onDismiss: () => openWalletSelector(400),
     });
   };
 
@@ -250,7 +261,12 @@ const Confirm = () => {
   };
 
   const sendPayment = async (twoFactorCode?: string) => {
-    dispatch(startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT));
+    dispatch(
+      startOnGoingProcessModal(
+        // t('Sending Payment')
+        t(OnGoingProcessMessages.SENDING_PAYMENT),
+      ),
+    );
     dispatch(
       ShopActions.updatedGiftCardStatus({
         invoiceId: invoice!.id,
@@ -270,7 +286,10 @@ const Confirm = () => {
 
   const redeemGiftCardAndNavigateToGiftCardDetails = async () => {
     dispatch(
-      startOnGoingProcessModal(OnGoingProcessMessages.GENERATING_GIFT_CARD),
+      startOnGoingProcessModal(
+        // t('Generating Gift Card')
+        t(OnGoingProcessMessages.GENERATING_GIFT_CARD),
+      ),
     );
     const giftCard = await dispatch(
       ShopEffects.startRedeemGiftCard(invoice!.id),
@@ -282,7 +301,7 @@ const Confirm = () => {
       dispatch(ShopEffects.waitForConfirmation(giftCard.invoiceId));
     }
     navigation.dispatch(StackActions.popToTop());
-    navigation.dispatch(StackActions.pop(3));
+    navigation.dispatch(StackActions.pop());
     navigation.navigate('GiftCard', {
       screen: 'GiftCardDetails',
       params: {
@@ -290,6 +309,23 @@ const Confirm = () => {
         cardConfig,
       },
     });
+    const purchaseEventName =
+      giftCard.status === 'FAILURE'
+        ? 'Failed Gift Card'
+        : 'Purchased Gift Card';
+    dispatch(
+      logSegmentEvent(
+        'track',
+        purchaseEventName,
+        {
+          giftCardAmount: amount,
+          giftCardBrand: cardConfig.name,
+          giftCardCurrency: cardConfig.currency,
+          coin: getTransactionCurrency(),
+        },
+        true,
+      ),
+    );
   };
 
   const showError = ({
@@ -304,7 +340,7 @@ const Confirm = () => {
     dispatch(
       AppActions.showBottomNotificationModal(
         CustomErrorMessage({
-          title: 'Error',
+          title: t('Error'),
           errMsg: error?.message || defaultErrorMessage,
           action: () => onDismiss && onDismiss(),
         }),
@@ -325,8 +361,8 @@ const Confirm = () => {
     setCoinbaseAccount(undefined);
     showError({
       error,
-      defaultErrorMessage: 'Could not send transaction',
-      onDismiss: () => reshowWalletSelector(),
+      defaultErrorMessage: t('Could not send transaction'),
+      onDismiss: () => openWalletSelector(400),
     });
   };
 
@@ -354,7 +390,7 @@ const Confirm = () => {
   };
 
   useEffect(() => {
-    openWalletSelector();
+    openWalletSelector(100);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -385,13 +421,13 @@ const Confirm = () => {
               />
             ) : null}
             <Amount
-              description={'Network Cost'}
+              description={t('Network Cost')}
               amount={networkCost}
               fiatOnly
               hr
             />
-            <Amount description={'Miner fee'} amount={fee} fiatOnly hr />
-            <Amount description={'Total'} amount={total} />
+            <Amount description={t('Miner fee')} amount={fee} fiatOnly hr />
+            <Amount description={t('Total')} amount={total} />
             <Terms>{cardConfig.terms}</Terms>
           </>
         ) : null}
@@ -399,7 +435,7 @@ const Confirm = () => {
       {wallet || coinbaseAccount ? (
         <>
           <SwipeButton
-            title={'Slide to send'}
+            title={t('Slide to send')}
             forceReset={resetSwipeButton}
             onSwipeComplete={async () => {
               try {

@@ -1,7 +1,6 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import React, {useEffect, useMemo, useState} from 'react';
 import {RefreshControl, ScrollView} from 'react-native';
-import analytics from '@segment/analytics-react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {
@@ -9,7 +8,10 @@ import {
   setShowKeyMigrationFailureModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
-import {startRefreshBrazeContent} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startRefreshBrazeContent,
+} from '../../../store/app/app.effects';
 import {
   selectBrazeDoMore,
   selectBrazeQuickLinks,
@@ -41,11 +43,15 @@ import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
 import {HeaderContainer, HomeContainer} from './components/Styled';
 import KeyMigrationFailureModal from './components/KeyMigrationFailureModal';
 import {batch} from 'react-redux';
+import {useThemeType} from '../../../utils/hooks/useThemeType';
+import {useTranslation} from 'react-i18next';
 
 const HomeRoot = () => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const theme = useTheme();
+  const themeType = useThemeType();
   const [refreshing, setRefreshing] = useState(false);
   const brazeShopWithCrypto = useAppSelector(selectBrazeShopWithCrypto);
   const brazeDoMore = useAppSelector(selectBrazeDoMore);
@@ -58,9 +64,6 @@ const HomeRoot = () => {
     ({APP}) => APP.keyMigrationFailureModalHasBeenShown,
   );
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
-  );
   const hasKeys = Object.values(keys).length;
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups.length > 0;
@@ -68,7 +71,7 @@ const HomeRoot = () => {
   // Shop with Crypto
   const memoizedShopWithCryptoCards = useMemo(() => {
     if (STATIC_CONTENT_CARDS_ENABLED && !brazeShopWithCrypto.length) {
-      return MockOffers;
+      return MockOffers();
     }
 
     return brazeShopWithCrypto;
@@ -77,13 +80,13 @@ const HomeRoot = () => {
   // Do More
   const memoizedDoMoreCards = useMemo(() => {
     if (STATIC_CONTENT_CARDS_ENABLED && !brazeDoMore.length) {
-      return DefaultAdvertisements.filter(advertisement => {
+      return DefaultAdvertisements(themeType).filter(advertisement => {
         return hasCards ? advertisement.id !== 'card' : true;
       });
     }
 
     return brazeDoMore;
-  }, [brazeDoMore, hasCards]);
+  }, [brazeDoMore, hasCards, themeType]);
 
   // Exchange Rates
   const priceHistory = useAppSelector(({WALLET}) => WALLET.priceHistory);
@@ -116,17 +119,20 @@ const HomeRoot = () => {
   // Quick Links
   const memoizedQuickLinks = useMemo(() => {
     if (STATIC_CONTENT_CARDS_ENABLED && !brazeQuickLinks.length) {
-      return DefaultQuickLinks;
+      return DefaultQuickLinks();
     }
 
     return brazeQuickLinks;
   }, [brazeQuickLinks]);
 
   const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
+  const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
-      dispatch(updatePortfolioBalance());
+      if (!appIsLoading) {
+        dispatch(updatePortfolioBalance());
+      } // portfolio balance is updated in app init
     });
   }, [dispatch, navigation]);
 
@@ -142,7 +148,7 @@ const HomeRoot = () => {
       ]);
       dispatch(updatePortfolioBalance());
     } catch (err) {
-      dispatch(showBottomNotificationModal(BalanceUpdateError));
+      dispatch(showBottomNotificationModal(BalanceUpdateError()));
     }
     setRefreshing(false);
   };
@@ -158,157 +164,197 @@ const HomeRoot = () => {
 
   return (
     <HomeContainer>
-      <ScrollView
-        refreshControl={
-          <RefreshControl
-            tintColor={theme.dark ? White : SlateDark}
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-          />
-        }>
-        <HeaderContainer>
-          <ScanButton />
-          <ProfileButton />
-        </HeaderContainer>
+      {appIsLoading ? null : (
+        <ScrollView
+          refreshControl={
+            <RefreshControl
+              tintColor={theme.dark ? White : SlateDark}
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+            />
+          }>
+          <HeaderContainer>
+            <ScanButton />
+            <ProfileButton />
+          </HeaderContainer>
 
-        {/* ////////////////////////////// PORTFOLIO BALANCE */}
-        {showPortfolioValue ? (
-          <HomeSection style={{marginTop: 5}} slimContainer={true}>
-            <PortfolioBalance />
-          </HomeSection>
-        ) : null}
+          {/* ////////////////////////////// PORTFOLIO BALANCE */}
+          {showPortfolioValue ? (
+            <HomeSection style={{marginTop: 5}} slimContainer={true}>
+              <PortfolioBalance />
+            </HomeSection>
+          ) : null}
 
-        {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
-        {hasKeys ? (
-          <HomeSection style={{marginBottom: 25}}>
-            <LinkingButtons
-              receive={{
-                cta: () => {
-                  const needsBackup = !Object.values(keys).filter(
-                    key => key.backupComplete,
-                  ).length;
-                  if (needsBackup) {
-                    dispatch(
-                      showBottomNotificationModal(
-                        keyBackupRequired(
-                          Object.values(keys)[0],
-                          navigation,
-                          dispatch,
+          {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
+          {hasKeys ? (
+            <HomeSection style={{marginBottom: 25}}>
+              <LinkingButtons
+                receive={{
+                  cta: () => {
+                    const needsBackup = !Object.values(keys).filter(
+                      key => key.backupComplete,
+                    ).length;
+                    if (needsBackup) {
+                      dispatch(
+                        showBottomNotificationModal(
+                          keyBackupRequired(
+                            Object.values(keys)[0],
+                            navigation,
+                            dispatch,
+                          ),
                         ),
-                      ),
-                    );
-                  } else {
-                    navigation.navigate('Wallet', {
-                      screen: 'GlobalSelect',
-                      params: {context: 'receive'},
-                    });
-                  }
-                },
-              }}
-              send={{
-                cta: () => {
-                  const walletsWithBalance = Object.values(keys)
-                    .filter(key => key.backupComplete)
-                    .flatMap(key => key.wallets)
-                    .filter(wallet => !wallet.hideWallet && wallet.isComplete())
-                    .filter(wallet => wallet.balance.sat > 0);
-
-                  if (!walletsWithBalance.length) {
-                    dispatch(
-                      showBottomNotificationModal({
-                        type: 'warning',
-                        title: 'No funds available',
-                        message: 'You do not have any funds to send.',
-                        enableBackdropDismiss: true,
-                        actions: [
+                      );
+                    } else {
+                      dispatch(
+                        logSegmentEvent(
+                          'track',
+                          'Clicked Receive',
                           {
-                            text: 'Add funds',
-                            action: () => {
-                              analytics.track(
-                                'BitPay App - Clicked Buy Crypto',
-                                {
-                                  from: 'HomeRoot',
-                                  appUser: user?.eid || '',
-                                },
-                              );
-                              navigation.navigate('Wallet', {
-                                screen: 'Amount',
-                                params: {
-                                  onAmountSelected: (amount: string) => {
-                                    navigation.navigate('BuyCrypto', {
-                                      screen: 'BuyCryptoRoot',
-                                      params: {
-                                        amount: Number(amount),
-                                      },
-                                    });
+                            context: 'HomeRoot',
+                          },
+                          true,
+                        ),
+                      );
+                      navigation.navigate('Wallet', {
+                        screen: 'GlobalSelect',
+                        params: {context: 'receive'},
+                      });
+                    }
+                  },
+                }}
+                send={{
+                  cta: () => {
+                    const walletsWithBalance = Object.values(keys)
+                      .filter(key => key.backupComplete)
+                      .flatMap(key => key.wallets)
+                      .filter(
+                        wallet => !wallet.hideWallet && wallet.isComplete(),
+                      )
+                      .filter(wallet => wallet.balance.sat > 0);
+
+                    if (!walletsWithBalance.length) {
+                      dispatch(
+                        showBottomNotificationModal({
+                          type: 'warning',
+                          title: t('No funds available'),
+                          message: t('You do not have any funds to send.'),
+                          enableBackdropDismiss: true,
+                          actions: [
+                            {
+                              text: t('Add funds'),
+                              action: () => {
+                                dispatch(
+                                  logSegmentEvent(
+                                    'track',
+                                    'Clicked Buy Crypto',
+                                    {
+                                      context: 'HomeRoot',
+                                    },
+                                    true,
+                                  ),
+                                );
+                                navigation.navigate('Wallet', {
+                                  screen: 'Amount',
+                                  params: {
+                                    onAmountSelected: (amount: string) => {
+                                      navigation.navigate('BuyCrypto', {
+                                        screen: 'BuyCryptoRoot',
+                                        params: {
+                                          amount: Number(amount),
+                                        },
+                                      });
+                                    },
+                                    opts: {
+                                      hideSendMax: true,
+                                      context: 'buyCrypto',
+                                    },
                                   },
-                                  opts: {
-                                    hideSendMax: true,
-                                  },
-                                },
-                              });
+                                });
+                              },
+                              primary: true,
                             },
-                            primary: true,
-                          },
+                            {
+                              text: t('Got It'),
+                              action: () => null,
+                              primary: false,
+                            },
+                          ],
+                        }),
+                      );
+                    } else {
+                      dispatch(
+                        logSegmentEvent(
+                          'track',
+                          'Clicked Send',
                           {
-                            text: 'Got It',
-                            action: () => null,
-                            primary: false,
+                            context: 'HomeRoot',
                           },
-                        ],
-                      }),
-                    );
-                  } else {
-                    navigation.navigate('Wallet', {
-                      screen: 'GlobalSelect',
-                      params: {context: 'send'},
-                    });
-                  }
-                },
-              }}
-            />
-          </HomeSection>
-        ) : null}
+                          true,
+                        ),
+                      );
+                      navigation.navigate('Wallet', {
+                        screen: 'GlobalSelect',
+                        params: {context: 'send'},
+                      });
+                    }
+                  },
+                }}
+              />
+            </HomeSection>
+          ) : null}
 
-        {/* ////////////////////////////// CRYPTO */}
-        <HomeSection slimContainer={true}>
-          <Crypto />
-        </HomeSection>
-
-        {/* ////////////////////////////// SHOP WITH CRYPTO */}
-        {memoizedShopWithCryptoCards.length ? (
-          <HomeSection
-            title="Shop with Crypto"
-            action="See all"
-            onActionPress={() => navigation.navigate('Tabs', {screen: 'Shop'})}>
-            <OffersCarousel contentCards={memoizedShopWithCryptoCards} />
+          {/* ////////////////////////////// CRYPTO */}
+          <HomeSection slimContainer={true}>
+            <Crypto />
           </HomeSection>
-        ) : null}
 
-        {/* ////////////////////////////// DO MORE */}
-        {memoizedDoMoreCards.length ? (
-          <HomeSection title="Do More">
-            <AdvertisementsList contentCards={memoizedDoMoreCards} />
-          </HomeSection>
-        ) : null}
+          {/* ////////////////////////////// SHOP WITH CRYPTO */}
+          {memoizedShopWithCryptoCards.length ? (
+            <HomeSection
+              title={t('Shop with Crypto')}
+              action={t('See all')}
+              onActionPress={() => {
+                navigation.navigate('Tabs', {screen: 'Shop'});
+                dispatch(
+                  logSegmentEvent(
+                    'track',
+                    'Clicked Shop with Crypto',
+                    {
+                      context: 'HomeRoot',
+                    },
+                    true,
+                  ),
+                );
+              }}>
+              <OffersCarousel contentCards={memoizedShopWithCryptoCards} />
+            </HomeSection>
+          ) : null}
 
-        {/* ////////////////////////////// EXCHANGE RATES */}
-        {memoizedExchangeRates.length ? (
-          <HomeSection title="Exchange Rates" label="1D">
-            <ExchangeRatesList
-              items={memoizedExchangeRates}
-              defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
-            />
-          </HomeSection>
-        ) : null}
+          {/* ////////////////////////////// DO MORE */}
+          {memoizedDoMoreCards.length ? (
+            <HomeSection title={t('Do More')}>
+              <AdvertisementsList contentCards={memoizedDoMoreCards} />
+            </HomeSection>
+          ) : null}
 
-        {/* ////////////////////////////// QUICK LINKS - Leave feedback etc */}
-        {memoizedQuickLinks.length ? (
-          <HomeSection title="Quick Links">
-            <QuickLinksCarousel contentCards={memoizedQuickLinks} />
-          </HomeSection>
-        ) : null}
-      </ScrollView>
+          {/* ////////////////////////////// EXCHANGE RATES */}
+          {memoizedExchangeRates.length ? (
+            <HomeSection title={t('Exchange Rates')} label="1D">
+              <ExchangeRatesList
+                items={memoizedExchangeRates}
+                defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
+              />
+            </HomeSection>
+          ) : null}
+
+          {/* ////////////////////////////// QUICK LINKS - Leave feedback etc */}
+          {memoizedQuickLinks.length ? (
+            <HomeSection title={t('Quick Links')}>
+              <QuickLinksCarousel contentCards={memoizedQuickLinks} />
+            </HomeSection>
+          ) : null}
+        </ScrollView>
+      )}
       <KeyMigrationFailureModal />
     </HomeContainer>
   );

@@ -31,6 +31,7 @@ export interface WalletState {
   feeLevel: {[key in string]: FeeLevels};
   useUnconfirmedFunds: boolean;
   customizeNonce: boolean;
+  queuedTransactions: boolean;
   enableReplaceByFee: boolean;
 }
 
@@ -65,6 +66,7 @@ const initialState: WalletState = {
   },
   useUnconfirmedFunds: false,
   customizeNonce: false,
+  queuedTransactions: false,
   enableReplaceByFee: false,
 };
 
@@ -179,22 +181,31 @@ export const walletReducer = (
       };
     }
 
-    case WalletActionTypes.SUCCESS_UPDATE_KEY_TOTAL_BALANCE: {
-      const {keyId, totalBalance, totalBalanceLastDay} = action.payload;
-      const keyToUpdate = state.keys[keyId];
-      keyToUpdate.totalBalance = totalBalance;
-      keyToUpdate.totalBalanceLastDay = totalBalanceLastDay;
+    case WalletActionTypes.SUCCESS_UPDATE_KEYS_TOTAL_BALANCE: {
+      const updatedKeys: any = {};
+      const updatedBalanceCacheKeys: any = {};
+      const dateNow = Date.now();
+
+      action.payload.forEach(updates => {
+        const {keyId, totalBalance, totalBalanceLastDay} = updates;
+        const keyToUpdate = state.keys[keyId];
+
+        keyToUpdate.totalBalance = totalBalance;
+        keyToUpdate.totalBalanceLastDay = totalBalanceLastDay;
+
+        updatedKeys[keyId] = {...keyToUpdate};
+        updatedBalanceCacheKeys[keyId] = dateNow;
+      });
+
       return {
         ...state,
         keys: {
           ...state.keys,
-          [keyId]: {
-            ...keyToUpdate,
-          },
+          ...updatedKeys,
         },
         balanceCacheKey: {
           ...state.balanceCacheKey,
-          [keyId]: Date.now(),
+          ...updatedBalanceCacheKeys,
         },
       };
     }
@@ -418,6 +429,13 @@ export const walletReducer = (
       };
     }
 
+    case WalletActionTypes.SET_QUEUED_TRANSACTIONS: {
+      return {
+        ...state,
+        queuedTransactions: action.payload,
+      };
+    }
+
     case WalletActionTypes.SET_ENABLE_REPLACE_BY_FEE: {
       return {
         ...state,
@@ -476,6 +494,21 @@ export const walletReducer = (
         return wallet;
       });
 
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
+    case WalletActionTypes.TOGGLE_HIDE_KEY_BALANCE: {
+      const {keyId} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      keyToUpdate.hideKeyBalance = !keyToUpdate.hideKeyBalance;
       return {
         ...state,
         keys: {

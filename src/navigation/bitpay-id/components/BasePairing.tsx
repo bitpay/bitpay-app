@@ -1,4 +1,5 @@
 import React, {useEffect} from 'react';
+import {useTranslation} from 'react-i18next';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import Spinner from '../../../components/spinner/Spinner';
@@ -26,6 +27,7 @@ const SpinnerWrapper = styled.View`
 `;
 
 const BasePairing = (props: BasePairingParamList) => {
+  const {t} = useTranslation();
   const {secret, code, onSuccess, onFailure, onComplete} = props;
 
   const dispatch = useDispatch();
@@ -47,12 +49,12 @@ const BasePairing = (props: BasePairingParamList) => {
 
       dispatch(
         AppActions.showBottomNotificationModal({
-          title: 'Pairing failed',
-          message: 'No pairing data received.',
+          title: t('Pairing failed'),
+          message: t('No pairing data received.'),
           type: 'warning',
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: done,
             },
           ],
@@ -61,7 +63,7 @@ const BasePairing = (props: BasePairingParamList) => {
         }),
       );
     }
-  }, [dispatch, onFailure, onComplete, secret, code]);
+  }, [dispatch, onFailure, onComplete, secret, code, t]);
 
   useEffect(() => {
     if (pairingStatus) {
@@ -86,13 +88,13 @@ const BasePairing = (props: BasePairingParamList) => {
         dispatch(
           AppActions.showBottomNotificationModal({
             type: 'error',
-            title: 'Pairing failed',
+            title: t('Pairing failed'),
             message: pairingError,
             actions: [
               {
                 primary: true,
                 action: failure,
-                text: 'OK',
+                text: t('OK'),
               },
             ],
             enableBackdropDismiss: true,
@@ -101,7 +103,15 @@ const BasePairing = (props: BasePairingParamList) => {
         );
       }
     }
-  }, [dispatch, onSuccess, onFailure, onComplete, pairingStatus, pairingError]);
+  }, [
+    dispatch,
+    onSuccess,
+    onFailure,
+    onComplete,
+    pairingStatus,
+    pairingError,
+    t,
+  ]);
 
   return (
     <PairingContainer>

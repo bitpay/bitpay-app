@@ -37,9 +37,16 @@ import {showNoWalletsModal} from '../../../../../store/wallet/effects/send/send'
 import Clipboard from '@react-native-community/clipboard';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 
+import {useTranslation} from 'react-i18next';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+
 // Styled
 export const ConfirmContainer = styled.SafeAreaView`
   flex: 1;
+`;
+
+export const ConfirmScrollView = styled(KeyboardAwareScrollView)`
+  margin-top: 20px;
 `;
 
 export const HeaderTitle = styled(H6)`
@@ -54,14 +61,14 @@ export interface DetailContainerParams {
 }
 
 export const DetailContainer = styled.View<DetailContainerParams>`
-  min-height: 53px;
+  min-height: 60px;
   padding: 20px 0;
   justify-content: center;
   ${({height}) => (height ? `height: ${height}px;` : '')}
 `;
 
 export const PressableDetailContainer = styled.TouchableOpacity<DetailContainerParams>`
-  min-height: 53px;
+  min-height: 60px;
   padding: 20px 0;
   justify-content: center;
   ${({height}) => (height ? `height: ${height}px;` : '')}
@@ -107,6 +114,7 @@ export const SendingTo = ({
   recipient: TxDetailsSendingTo | undefined;
   hr?: boolean;
 }): JSX.Element | null => {
+  const {t} = useTranslation();
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     if (!copied) {
@@ -134,7 +142,7 @@ export const SendingTo = ({
       <>
         <DetailContainer height={83}>
           <DetailRow>
-            <H7>Sending to</H7>
+            <H7>{t('Sending to')}</H7>
             <SendToPill
               onPress={() => copyText(recipientFullAddress || '')}
               icon={
@@ -169,6 +177,7 @@ export const Fee = ({
   hr?: boolean;
   onPress?: () => void;
 }): JSX.Element | null => {
+  const {t} = useTranslation();
   if (fee) {
     const {feeLevel, cryptoAmount, fiatAmount, percentageOfTotalAmount} = fee;
     // @ts-ignore
@@ -176,14 +185,17 @@ export const Fee = ({
     return (
       <>
         <Pressable disabled={!onPress} onPress={onPress}>
-          <DetailContainer>
+          <DetailContainer height={84}>
             <DetailRow>
-              <H7>Miner fee</H7>
+              <H7>{t('Miner fee')}</H7>
               <DetailColumn>
                 {feeLevel && !hideFeeOptions ? <H5>{viewFee}</H5> : null}
                 <H6>{cryptoAmount}</H6>
                 <H7>
-                  {fiatAmount} ({percentageOfTotalAmount} of total amount)
+                  {t(' ( of total amount)', {
+                    fiatAmount,
+                    percentageOfTotalAmount,
+                  })}
                 </H7>
               </DetailColumn>
               {onPress ? (
@@ -211,13 +223,14 @@ export const SendingFrom = ({
   onPress?: () => void;
   hr?: boolean;
 }): JSX.Element | null => {
+  const {t} = useTranslation();
   if (sender) {
     const {walletName, img} = sender;
     return (
       <>
         <DetailContainer height={83}>
           <DetailRow>
-            <H7>Sending from</H7>
+            <H7>{t('Sending from')}</H7>
             <SendToPill
               onPress={onPress}
               icon={CurrencyImage({img, size: 18})}
@@ -237,18 +250,20 @@ export const Amount = ({
   description,
   amount,
   fiatOnly,
+  height,
   hr,
 }: {
   description: string | undefined;
   amount: TxDetailsAmount | undefined;
   fiatOnly?: boolean;
+  height?: number;
   hr?: boolean;
 }): JSX.Element | null => {
   if (amount && description) {
     const {cryptoAmount, fiatAmount} = amount;
     return (
       <>
-        <DetailContainer>
+        <DetailContainer height={height}>
           <DetailRow>
             {fiatOnly ? (
               <H7>{description}</H7>
@@ -278,11 +293,13 @@ export const Amount = ({
 export const SharedDetailRow = ({
   description,
   value,
+  height,
   hr,
   onPress,
 }: {
   description: string;
   value: number | string;
+  height?: number;
   hr?: boolean;
   onPress?: () => void;
 }): JSX.Element | null => {
@@ -296,7 +313,7 @@ export const SharedDetailRow = ({
           </DetailRow>
         </PressableDetailContainer>
       ) : (
-        <DetailContainer>
+        <DetailContainer height={height}>
           <DetailRow>
             <H7>{description}</H7>
             <H7>{value}</H7>
@@ -305,6 +322,58 @@ export const SharedDetailRow = ({
       )}
       {hr && <Hr />}
     </>
+  );
+};
+
+export const RemainingTime = ({
+  invoiceExpirationTime,
+  setDisableSwipeSendButton,
+}: {
+  invoiceExpirationTime: number;
+  setDisableSwipeSendButton: React.Dispatch<React.SetStateAction<boolean>>;
+}) => {
+  const {t} = useTranslation();
+
+  const expirationTime = Math.floor(
+    new Date(invoiceExpirationTime).getTime() / 1000,
+  );
+
+  const computeRemainingTime = useCallback(() => {
+    const now = Math.floor(Date.now() / 1000);
+    const totalSecs = expirationTime - now;
+    const m = Math.floor(totalSecs / 60);
+    const s = totalSecs % 60;
+    return ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2);
+  }, [expirationTime]);
+
+  const [remainingTime, setRemainingTime] = useState<string>(
+    computeRemainingTime(),
+  );
+
+  useEffect(() => {
+    let interval: any;
+    if (expirationTime) {
+      interval = setInterval(() => {
+        const now = Math.floor(Date.now() / 1000);
+
+        if (now > expirationTime) {
+          setRemainingTime('Expired');
+          setDisableSwipeSendButton(true);
+          clearInterval(interval);
+          return;
+        }
+
+        setRemainingTime(computeRemainingTime());
+      }, 1000); //each count lasts for a second
+    }
+    //cleanup the interval on complete
+    if (interval) {
+      return () => clearInterval(interval);
+    }
+  }, [computeRemainingTime, expirationTime, setDisableSwipeSendButton]);
+
+  return (
+    <SharedDetailRow description={t('Expires')} value={remainingTime} hr />
   );
 };
 
@@ -323,6 +392,7 @@ export const WalletSelector = ({
   isVisible: boolean;
   setWalletSelectorVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const [selectorVisible, setSelectorVisible] = useState(false);
@@ -389,7 +459,7 @@ export const WalletSelector = ({
       <WalletSelectMenuContainer>
         <WalletSelectMenuHeaderContainer>
           <TextAlign align={'center'}>
-            <H4>Select a wallet</H4>
+            <H4>{t('Select a wallet')}</H4>
           </TextAlign>
         </WalletSelectMenuHeaderContainer>
         <WalletSelectMenuBodyContainer>

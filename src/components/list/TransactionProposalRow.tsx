@@ -2,6 +2,7 @@ import React, {ReactElement, memo} from 'react';
 import {BaseText, ListItemSubText} from '../styled/Text';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../styled/Containers';
+import {useTranslation} from 'react-i18next';
 export const TRANSACTION_PROPOSAL_ROW_HEIGHT = 75;
 
 const TransactionContainer = styled.TouchableOpacity`
@@ -54,15 +55,16 @@ const TransactionProposalRow = ({
   time,
   onPressTransaction,
 }: Props) => {
+  const {t} = useTranslation();
   return (
     <TransactionContainer onPress={onPressTransaction}>
       {icon && <IconContainer>{icon}</IconContainer>}
 
       <HeadContainer>
         <Description numberOfLines={1} ellipsizeMode={'tail'}>
-          Sending
+          {t('Sending')}
         </Description>
-        {creator && <Creator>Created by {creator}</Creator>}
+        {creator && <Creator>{t('Created by ', {creator})}</Creator>}
       </HeadContainer>
 
       <TailContainer>

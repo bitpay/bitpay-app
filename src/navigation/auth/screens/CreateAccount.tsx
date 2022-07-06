@@ -2,9 +2,9 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
+import {useTranslation} from 'react-i18next';
 import {SafeAreaView, TextInput} from 'react-native';
 import * as yup from 'yup';
-import AlertBox from '../../../components/alert-box/AlertBox';
 import A from '../../../components/anchor/Anchor';
 import Button from '../../../components/button/Button';
 import Checkbox from '../../../components/checkbox/Checkbox';
@@ -13,6 +13,7 @@ import {Link} from '../../../components/styled/Text';
 import {URL} from '../../../constants';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import {navigationRef} from '../../../Root';
+import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {AuthStackParamList} from '../AuthStack';
@@ -52,6 +53,7 @@ interface CreateAccountFieldValues {
 const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
   navigation,
 }) => {
+  const {t} = useTranslation();
   const {
     control,
     handleSubmit,
@@ -103,9 +105,32 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
       }
     } else if (createAccountStatus === 'failed') {
       captchaRef.current?.reset();
+      dispatch(
+        AppActions.showBottomNotificationModal({
+          type: 'error',
+          title: t('Create account failed'),
+          message: createAccountError || t('An unexpected error occurred.'),
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: t('OK'),
+              action: () => {
+                dispatch(BitPayIdActions.updateCreateAccountStatus(null));
+              },
+            },
+          ],
+        }),
+      );
       return;
     }
-  }, [createAccountStatus, isVerified, navigation, dispatch]);
+  }, [
+    dispatch,
+    navigation,
+    createAccountStatus,
+    isVerified,
+    createAccountError,
+    t,
+  ]);
 
   const onSubmit = handleSubmit(formData => {
     const {email, givenName, familyName, agreedToTOSandPP, password} = formData;
@@ -147,21 +172,13 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
   return (
     <SafeAreaView>
       <AuthFormContainer>
-        {createAccountStatus === 'failed' ? (
-          <AuthRowContainer>
-            <AlertBox type="warning">
-              {createAccountError || 'An unexpected error occurred.'}
-            </AlertBox>
-          </AuthRowContainer>
-        ) : null}
-
         <AuthRowContainer>
           <Controller
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 placeholder={'Satoshi'}
-                label={'FIRST NAME'}
+                label={t('FIRST NAME')}
                 onBlur={onBlur}
                 onChangeText={(text: string) => onChange(text)}
                 error={errors.givenName?.message}
@@ -183,7 +200,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
               <BoxInput
                 ref={familyNameRef}
                 placeholder={'Nakamoto'}
-                label={'LAST NAME'}
+                label={t('LAST NAME')}
                 onBlur={onBlur}
                 onChangeText={(text: string) => onChange(text)}
                 error={errors.familyName?.message}
@@ -205,7 +222,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
               <BoxInput
                 ref={emailRef}
                 placeholder={'satoshi@example.com'}
-                label={'EMAIL'}
+                label={t('EMAIL')}
                 onBlur={onBlur}
                 onChangeText={(text: string) => onChange(text)}
                 error={errors.email?.message}
@@ -228,7 +245,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
                 ref={passwordRef}
                 type="password"
                 placeholder={'strongPassword123'}
-                label={'PASSWORD'}
+                label={t('PASSWORD')}
                 onBlur={onBlur}
                 onChangeText={(text: string) => onChange(text)}
                 error={errors.password?.message}
@@ -273,17 +290,17 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
 
         <AuthActionsContainer>
           <AuthActionRow>
-            <Button onPress={onSubmit}>Create Account</Button>
+            <Button onPress={onSubmit}>{t('Create Account')}</Button>
           </AuthActionRow>
 
           <AuthActionRow>
             <AuthActionText>
-              Already have an account?{' '}
+              {t('Already have an account?')}{' '}
               <Link
                 onPress={() => {
                   navigation.navigate('Login');
                 }}>
-                Log In
+                {t('Log In')}
               </Link>
             </AuthActionText>
           </AuthActionRow>

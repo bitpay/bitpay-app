@@ -7,10 +7,10 @@ import {
   Rates,
   Token,
   Wallet,
-  WalletBalance,
   TransactionProposal,
   RatesByDateRange,
   CacheFeeLevel,
+  CryptoBalance,
 } from './wallet.models';
 
 export enum WalletActionTypes {
@@ -39,6 +39,7 @@ export enum WalletActionTypes {
   SUCCESS_UPDATE_WALLET_STATUS = 'WALLET/SUCCESS_UPDATE_WALLET_STATUS',
   FAILED_UPDATE_WALLET_STATUS = 'WALLET/FAILED_UPDATE_WALLET_STATUS',
   SUCCESS_UPDATE_KEY_TOTAL_BALANCE = 'WALLET/SUCCESS_UPDATE_KEY_TOTAL_BALANCE',
+  SUCCESS_UPDATE_KEYS_TOTAL_BALANCE = 'WALLET/SUCCESS_UPDATE_KEYS_TOTAL_BALANCE',
   FAILED_UPDATE_KEY_TOTAL_BALANCE = 'WALLET/FAILED_UPDATE_KEY_TOTAL_BALANCE',
   SUCCESS_UPDATE_ALL_KEYS_AND_STATUS = 'WALLET/SUCCESS_UPDATE_ALL_KEYS_AND_STATUS',
   FAILED_UPDATE_ALL_KEYS_AND_STATUS = 'WALLET/FAILED_UPDATE_ALL_KEYS_AND_STATUS',
@@ -49,11 +50,13 @@ export enum WalletActionTypes {
   SUCCESS_GET_RECEIVE_ADDRESS = 'WALLET/SUCCESS_GET_RECEIVE_ADDRESS',
   SET_USE_UNCONFIRMED_FUNDS = 'WALLET/SET_USE_UNCONFIRMED_FUNDS',
   SET_CUSTOMIZE_NONCE = 'WALLET/SET_CUSTOMIZE_NONCE',
+  SET_QUEUED_TRANSACTIONS = 'WALLET/SET_QUEUED_TRANSACTIONS',
   SET_ENABLE_REPLACE_BY_FEE = 'WALLET/SET_ENABLE_REPLACE_BY_FEE',
   UPDATE_WALLET_TX_HISTORY = 'WALLET/UPDATE_WALLET_TX_HISTORY',
   SYNC_WALLETS = 'WALLET/SYNC_WALLETS',
   TOGGLE_HIDE_WALLET = 'WALLET/TOGGLE_HIDE_WALLET',
   TOGGLE_HIDE_BALANCE = 'WALLET/TOGGLE_HIDE_BALANCE',
+  TOGGLE_HIDE_KEY_BALANCE = 'WALLET/TOGGLE_HIDE_KEY_BALANCE',
   UPDATE_CACHE_FEE_LEVEL = 'WALLET/UPDATE_CACHE_FEE_LEVEL',
 }
 
@@ -191,7 +194,7 @@ interface successUpdateWalletStatus {
     keyId: string;
     walletId: string;
     status: {
-      balance: WalletBalance;
+      balance: CryptoBalance;
       pendingTxps: TransactionProposal[];
     };
   };
@@ -205,13 +208,13 @@ interface failedUpdateWalletStatus {
   };
 }
 
-interface successUpdateKeyTotalBalance {
-  type: typeof WalletActionTypes.SUCCESS_UPDATE_KEY_TOTAL_BALANCE;
+interface successUpdateKeysTotalBalance {
+  type: typeof WalletActionTypes.SUCCESS_UPDATE_KEYS_TOTAL_BALANCE;
   payload: {
     keyId: string;
     totalBalance: number;
     totalBalanceLastDay: number;
-  };
+  }[];
 }
 
 interface failedUpdateKeyTotalBalance {
@@ -273,6 +276,10 @@ interface setCustomizeNonce {
   type: typeof WalletActionTypes.SET_CUSTOMIZE_NONCE;
   payload: boolean;
 }
+interface setQueuedTransactions {
+  type: typeof WalletActionTypes.SET_QUEUED_TRANSACTIONS;
+  payload: boolean;
+}
 interface setEnableReplaceByFee {
   type: typeof WalletActionTypes.SET_ENABLE_REPLACE_BY_FEE;
   payload: boolean;
@@ -313,6 +320,13 @@ interface toggleHideBalance {
   };
 }
 
+interface toggleHideKeyBalance {
+  type: typeof WalletActionTypes.TOGGLE_HIDE_KEY_BALANCE;
+  payload: {
+    keyId: string;
+  };
+}
+
 interface updateCacheFeeLevel {
   type: typeof WalletActionTypes.UPDATE_CACHE_FEE_LEVEL;
   payload: CacheFeeLevel;
@@ -343,7 +357,7 @@ export type WalletActionType =
   | setWalletTermsAccepted
   | successUpdateWalletStatus
   | failedUpdateWalletStatus
-  | successUpdateKeyTotalBalance
+  | successUpdateKeysTotalBalance
   | failedUpdateKeyTotalBalance
   | updatePortfolioBalance
   | successUpdateAllKeysAndStatus
@@ -354,9 +368,11 @@ export type WalletActionType =
   | successGetReceiveAddress
   | setUseUnconfirmedFunds
   | setCustomizeNonce
+  | setQueuedTransactions
   | setEnableReplaceByFee
   | updateWalletTxHistory
   | syncWallets
   | toggleHideWallet
   | toggleHideBalance
+  | toggleHideKeyBalance
   | updateCacheFeeLevel;

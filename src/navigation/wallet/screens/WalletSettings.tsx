@@ -37,6 +37,7 @@ import {
   updatePortfolioBalance,
 } from '../../../store/wallet/wallet.actions';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
+import {useTranslation} from 'react-i18next';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -75,6 +76,7 @@ const WalletSettingsTitle = styled(SettingTitle)`
 `;
 
 const WalletSettings = () => {
+  const {t} = useTranslation();
   const {
     params: {walletId, key},
   } = useRoute<RouteProp<WalletStackParamList, 'WalletSettings'>>();
@@ -112,14 +114,14 @@ const WalletSettings = () => {
           dispatch(showBottomNotificationModal(WrongPasswordError()));
         }
       },
-      description: 'To continue please enter your encryption password.',
+      description: t('To continue please enter your encryption password.'),
       onCancelHandler: () => null,
     };
   };
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>Wallet Settings</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Wallet Settings')}</HeaderTitle>,
     });
   });
   return (
@@ -142,7 +144,7 @@ const WalletSettings = () => {
             });
           }}>
           <View>
-            <Title>Name</Title>
+            <Title>{t('Name')}</Title>
             <WalletSettingsTitle>
               {walletName || credentialsWalletName}
             </WalletSettingsTitle>
@@ -154,7 +156,7 @@ const WalletSettings = () => {
         <Hr />
 
         <SettingView>
-          <WalletSettingsTitle>Hide Wallet</WalletSettingsTitle>
+          <WalletSettingsTitle>{t('Hide Wallet')}</WalletSettingsTitle>
 
           <ToggleSwitch
             onChange={() => {
@@ -169,13 +171,13 @@ const WalletSettings = () => {
           <Info>
             <InfoTriangle />
             <InfoDescription>
-              This wallet will not be removed from the device.
+              {t('This wallet will not be removed from the device.')}
             </InfoDescription>
           </Info>
         ) : null}
 
         <SettingView>
-          <WalletSettingsTitle>Hide Balance</WalletSettingsTitle>
+          <WalletSettingsTitle>{t('Hide Balance')}</WalletSettingsTitle>
 
           <ToggleSwitch
             onChange={() => {
@@ -188,7 +190,7 @@ const WalletSettings = () => {
         <Hr />
 
         <VerticalPadding>
-          <Title>Advanced</Title>
+          <Title>{t('Advanced')}</Title>
           <Setting
             activeOpacity={ActiveOpacity}
             onPress={() => {
@@ -198,7 +200,7 @@ const WalletSettings = () => {
                 params: {wallet},
               });
             }}>
-            <WalletSettingsTitle>Information</WalletSettingsTitle>
+            <WalletSettingsTitle>{t('Information')}</WalletSettingsTitle>
           </Setting>
           <Hr />
 
@@ -211,7 +213,7 @@ const WalletSettings = () => {
                 params: {wallet},
               });
             }}>
-            <WalletSettingsTitle>Addresses</WalletSettingsTitle>
+            <WalletSettingsTitle>{t('Addresses')}</WalletSettingsTitle>
           </Setting>
           <Hr />
 
@@ -254,7 +256,7 @@ const WalletSettings = () => {
                 });
               }
             }}>
-            <WalletSettingsTitle>Export Wallet</WalletSettingsTitle>
+            <WalletSettingsTitle>{t('Export Wallet')}</WalletSettingsTitle>
           </Setting>
         </VerticalPadding>
       </ScrollView>

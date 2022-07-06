@@ -6,20 +6,20 @@ import {
   RegisterErrorResponse,
 } from '../../api/auth/auth.types';
 import UserApi from '../../api/user';
-import {BasicUserInfo, InitialUserData} from '../../api/user/user.types';
+import {InitialUserData} from '../../api/user/user.types';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
 import Dosh from '../../lib/dosh';
 import {isAxiosError, isRateLimitError} from '../../utils/axios';
 import {generateSalt, hashPassword} from '../../utils/password';
 import {AppActions, AppEffects} from '../app/';
-import {startOnGoingProcessModal} from '../app/app.effects';
+import {Analytics, startOnGoingProcessModal} from '../app/app.effects';
 import {CardEffects} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
 import {ShopEffects} from '../shop';
 import {BitPayIdActions} from './index';
-import {setHomeCarouselConfig} from '../app/app.actions';
+import {t} from 'i18next';
 
 interface StartLoginParams {
   email: string;
@@ -37,7 +37,6 @@ export const startBitPayIdStoreInit =
       dispatch(
         BitPayIdActions.successInitializeStore(APP.network, initialData),
       );
-      dispatch(ShopEffects.startFetchCatalog());
     }
   };
 
@@ -97,14 +96,14 @@ export const startCreateAccount =
       let errMsg;
 
       if (isRateLimitError(err)) {
-        errMsg = err.response?.data.error || 'Rate limited';
+        errMsg = err.response?.data.error || t('Rate limited');
       } else if (isAxiosError<RegisterErrorResponse>(err)) {
         errMsg =
           err.response?.data.message ||
           err.message ||
-          'An unexpected error occurred.';
+          t('An unexpected error occurred.');
       } else if (err instanceof Error) {
-        errMsg = err.message || 'An unexpected error occurred.';
+        errMsg = err.message || t('An unexpected error occurred.');
       } else {
         errMsg = JSON.stringify(err);
       }
@@ -133,7 +132,12 @@ export const startLogin =
   ({email, password, gCaptchaResponse}: StartLoginParams): Effect =>
   async (dispatch, getState) => {
     try {
-      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
+      dispatch(
+        startOnGoingProcessModal(
+          // t('Logging In')
+          t(OnGoingProcessMessages.LOGGING_IN),
+        ),
+      );
       dispatch(BitPayIdActions.updateLoginStatus(null));
 
       const {APP, BITPAY_ID} = getState();
@@ -178,6 +182,15 @@ export const startLogin =
       await dispatch(startPairAndLoadUser(APP.network, secret));
 
       // complete
+      dispatch(
+        Analytics.track(
+          'Log In User success',
+          {
+            type: 'basicAuth',
+          },
+          true,
+        ),
+      );
       dispatch(BitPayIdActions.successLogin(APP.network, session));
     } catch (err) {
       batch(() => {
@@ -187,7 +200,7 @@ export const startLogin =
           errMsg = upperFirst(
             err.response?.data.message ||
               err.message ||
-              'An unexpected error occurred.',
+              t('An unexpected error occurred.'),
           );
           console.error(errMsg);
         } else {
@@ -207,7 +220,12 @@ export const startTwoFactorAuth =
   (code: string): Effect =>
   async (dispatch, getState) => {
     try {
-      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
+      dispatch(
+        startOnGoingProcessModal(
+          // t('Logging In')
+          t(OnGoingProcessMessages.LOGGING_IN),
+        ),
+      );
 
       const {APP, BITPAY_ID} = getState();
 
@@ -222,6 +240,15 @@ export const startTwoFactorAuth =
 
       // complete
       dispatch(
+        Analytics.track(
+          'Log In User success',
+          {
+            type: 'twoFactorAuth',
+          },
+          true,
+        ),
+      );
+      dispatch(
         BitPayIdActions.successSubmitTwoFactorAuth(APP.network, session),
       );
     } catch (err) {
@@ -232,7 +259,7 @@ export const startTwoFactorAuth =
           errMsg = upperFirst(
             err.response?.data ||
               err.message ||
-              'An unexpected error occurred.',
+              t('An unexpected error occurred.'),
           );
           console.error(errMsg);
         } else {
@@ -252,7 +279,12 @@ export const startTwoFactorPairing =
   (code: string): Effect =>
   async (dispatch, getState) => {
     try {
-      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
+      dispatch(
+        startOnGoingProcessModal(
+          // t('Logging In')
+          t(OnGoingProcessMessages.LOGGING_IN),
+        ),
+      );
 
       const {APP, BITPAY_ID} = getState();
       const secret = await AuthApi.generatePairingCode(
@@ -271,7 +303,7 @@ export const startTwoFactorPairing =
           errMsg = upperFirst(
             err.response?.data ||
               err.message ||
-              'An unexpected error occurred.',
+              t('An unexpected error occurred.'),
           );
           console.error(errMsg);
         } else if (err instanceof Error) {
@@ -297,12 +329,26 @@ export const startEmailPairing =
   async (dispatch, getState) => {
     try {
       const {APP} = getState();
-      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.LOGGING_IN));
+      dispatch(
+        startOnGoingProcessModal(
+          // t('Logging In')
+          t(OnGoingProcessMessages.LOGGING_IN),
+        ),
+      );
 
       const secret = await AuthApi.generatePairingCode(APP.network, csrfToken);
 
       await dispatch(startPairAndLoadUser(APP.network, secret));
 
+      dispatch(
+        Analytics.track(
+          'Log In User success',
+          {
+            type: 'emailAuth',
+          },
+          true,
+        ),
+      );
       dispatch(BitPayIdActions.successEmailPairing());
     } catch (err) {
       batch(() => {
@@ -324,7 +370,10 @@ export const startDeeplinkPairing =
 
     try {
       dispatch(
-        AppEffects.startOnGoingProcessModal(OnGoingProcessMessages.PAIRING),
+        AppEffects.startOnGoingProcessModal(
+          // t('Pairing')
+          t(OnGoingProcessMessages.PAIRING),
+        ),
       );
       await dispatch(startPairAndLoadUser(network, secret, code));
     } catch (err) {
@@ -385,6 +434,13 @@ const startPairAndLoadUser =
       dispatch(startBitPayIdStoreInit(data.user));
       dispatch(CardEffects.startCardStoreInit(data.user));
       dispatch(AppEffects.initializeBrazeContent());
+      dispatch(ShopEffects.startFetchCatalog());
+
+      if (data.user.basicInfo) {
+        const {eid, email, name} = data.user.basicInfo;
+
+        dispatch(Analytics.identify(eid, {email, name}));
+      }
     } catch (err) {
       let errMsg;
 
@@ -402,21 +458,14 @@ const startPairAndLoadUser =
 export const startDisconnectBitPayId =
   (): Effect => async (dispatch, getState) => {
     try {
-      const {APP, BITPAY_ID, CARD} = getState();
+      const {APP, BITPAY_ID} = getState();
       const {isAuthenticated, csrfToken} = BITPAY_ID.session;
 
       if (isAuthenticated && csrfToken) {
-        AuthApi.logout(APP.network, csrfToken);
+        await AuthApi.logout(APP.network, csrfToken);
       }
 
-      if (CARD.cards[APP.network].length) {
-        dispatch(
-          setHomeCarouselConfig(
-            APP.homeCarouselConfig.filter(item => item.id !== 'bitpayCard'),
-          ),
-        );
-      }
-
+      dispatch(Analytics.track('Log Out User success', {}, true));
       dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
     } catch (err) {
       // log but swallow this error
@@ -476,11 +525,16 @@ export const startSubmitForgotPasswordEmail =
   }): Effect =>
   async (dispatch, getState) => {
     const {APP, BITPAY_ID} = getState();
-    const errMsg = 'Error sending forgot password request.';
+    const errMsg = t('Error sending forgot password request.');
 
     try {
       dispatch(BitPayIdActions.resetForgotPasswordEmailStatus());
-      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.SENDING_EMAIL));
+      dispatch(
+        startOnGoingProcessModal(
+          // t('Sending Email')
+          t(OnGoingProcessMessages.SENDING_EMAIL),
+        ),
+      );
       const data = await AuthApi.submitForgotPasswordEmail(
         APP.network,
         BITPAY_ID.session.csrfToken,
@@ -491,7 +545,9 @@ export const startSubmitForgotPasswordEmail =
         dispatch(
           BitPayIdActions.forgotPasswordEmailStatus(
             'success',
-            "Email sent. If an account with that email address exists, you'll receive an email with a link to reset your password.",
+            t(
+              "Email sent. If an account with that email address exists, you'll receive an email with a link to reset your password.",
+            ),
           ),
         );
       } else {

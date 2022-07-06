@@ -5,7 +5,11 @@ import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {BaseText, H4, TextAlign} from '../../../components/styled/Text';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
+import {
+  convertToFiat,
+  formatFiatAmount,
+  sleep,
+} from '../../../utils/helper-methods';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {walletConnectOnSessionRequest} from '../../../store/wallet-connect/wallet-connect.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
@@ -24,12 +28,16 @@ import {
   WalletSelectMenuBodyContainer,
 } from '../../wallet/screens/GlobalSelect';
 import KeyWalletsRow, {
+  KeyWallet,
   KeyWalletsRowProps,
 } from '../../../components/list/KeyWalletsRow';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import _ from 'lodash';
 import {isValidWalletConnectUri} from '../../../store/wallet/utils/validations';
+import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../store/app/app.effects';
+import {toFiat} from '../../../store/wallet/utils/wallet';
 
 export type WalletConnectIntroParamList = {
   uri?: string;
@@ -60,10 +68,11 @@ export default ({
   dappUri: string;
   onBackdropPress: () => void;
 }) => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const [uri, setUri] = useState(dappUri);
-  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const {keys, rates} = useAppSelector(({WALLET}) => WALLET);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   let allWallets = Object.values(keys)
@@ -98,7 +107,7 @@ export default ({
     [allWallets],
   );
 
-  let keyWallets: KeyWalletsRowProps[] = [];
+  let keyWallets: KeyWalletsRowProps<KeyWallet>[] = [];
 
   supportedCoins.forEach(supportedCoin => {
     const keyWallet = Object.keys(supportedCoin.availableWalletsByKey).map(
@@ -110,17 +119,31 @@ export default ({
           wallets: supportedCoin.availableWalletsByKey[keyId].map(wallet => {
             const {
               balance,
+              hideWallet,
               currencyAbbreviation,
-              credentials: {network},
+              credentials: {network, walletName: fallbackName},
+              walletName,
             } = wallet;
             return merge(cloneDeep(wallet), {
               cryptoBalance: balance.crypto,
               fiatBalance: formatFiatAmount(
-                balance.fiat,
+                convertToFiat(
+                  dispatch(
+                    toFiat(
+                      balance.sat,
+                      defaultAltCurrency.isoCode,
+                      currencyAbbreviation,
+                      rates,
+                    ),
+                  ),
+                  hideWallet,
+                  network,
+                ),
                 defaultAltCurrency.isoCode,
               ),
               currencyAbbreviation: currencyAbbreviation.toUpperCase(),
               network,
+              walletName: walletName || fallbackName,
             });
           }),
         };
@@ -140,7 +163,12 @@ export default ({
   const goToStartView = useCallback(
     async (wallet: Wallet, wcUri: string) => {
       try {
-        dispatch(showOnGoingProcessModal(OnGoingProcessMessages.LOADING));
+        dispatch(
+          showOnGoingProcessModal(
+            // t('Loading')
+            t(OnGoingProcessMessages.LOADING),
+          ),
+        );
         const peer = (await dispatch<any>(
           walletConnectOnSessionRequest(wcUri),
         )) as any;
@@ -161,16 +189,21 @@ export default ({
         await showErrorMessage(
           CustomErrorMessage({
             errMsg: BWCErrorMessage(e),
-            title: 'Uh oh, something went wrong',
+            title: t('Uh oh, something went wrong'),
           }),
         );
       }
     },
-    [dispatch, navigation, showErrorMessage],
+    [dispatch, navigation, showErrorMessage, t],
   );
 
   const goToScanView = useCallback(
     (wallet: Wallet) => {
+      dispatch(
+        logSegmentEvent('track', 'Open Scanner', {
+          context: 'WalletSelector',
+        }),
+      );
       navigation.navigate('Scan', {
         screen: 'Root',
         params: {
@@ -196,14 +229,16 @@ export default ({
     <SheetModal isVisible={isVisible} onBackdropPress={onBackdropPress}>
       <WalletSelectorContainer>
         <TextAlign align={'center'}>
-          <H4>Select a Wallet</H4>
+          <H4>{t('Select a Wallet')}</H4>
         </TextAlign>
         {keyWallets.length ? (
           <DescriptionText>
-            Which Ethereum wallet would you like to use for WalletConnect?
+            {t(
+              'Which Ethereum wallet would you like to use for WalletConnect?',
+            )}
           </DescriptionText>
         ) : (
-          <DescriptionText>No wallets available</DescriptionText>
+          <DescriptionText>{t('No wallets available')}</DescriptionText>
         )}
         <WalletSelectMenuBodyContainer>
           <KeyWalletsRow keyWallets={keyWallets!} onPress={onWalletSelect} />

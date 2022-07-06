@@ -78,6 +78,18 @@ export const ColumnData = styled(BaseText)`
   padding-top: 10px;
 `;
 
+export const CopyImgContainerRight = styled.View`
+  margin-left: 5px;
+  padding-top: 8px;
+`;
+
+export const CopiedContainer = styled.View`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+`;
+
 export const RemoveCta = styled.TouchableOpacity`
   display: flex;
   flex-direction: row;

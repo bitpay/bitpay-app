@@ -15,14 +15,14 @@ import {AppActions} from '../../../../store/app';
 import TouchID from 'react-native-touch-id';
 import {
   authOptionalConfigObject,
-  BiometricError,
+  BiometricErrorCodes,
   BiometricErrorNotification,
   isSupportedOptionalConfigObject,
+  isTouchIDError,
   TO_HANDLE_ERRORS,
 } from '../../../../constants/BiometricError';
 import {LOCK_AUTHORIZED_TIME} from '../../../../constants/Lock';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
-import {sleep} from '../../../../utils/helper-methods';
 import FingerprintImg from '../../../../../assets/img/fingerprint.svg';
 import FingerprintDarkModeImg from '../../../../../assets/img/fingerprint-darkmode.svg';
 import FaceImg from '../../../../../assets/img/face.svg';
@@ -32,6 +32,9 @@ import PinDarkModeImg from '../../../../../assets/img/pin-darkmode.svg';
 import styled from 'styled-components/native';
 import {Midnight, SlateDark, White} from '../../../../styles/colors';
 import {H4, Paragraph} from '../../../../components/styled/Text';
+import {useTranslation} from 'react-i18next';
+import {sleep} from '../../../../utils/helper-methods';
+import {LogActions} from '../../../../store/log';
 const FingerprintSvg = {
   light: <FingerprintImg />,
   dark: <FingerprintDarkModeImg />,
@@ -79,6 +82,7 @@ const ImgRow = styled.View`
 `;
 
 const Security = () => {
+  const {t} = useTranslation();
   const dispatch = useDispatch();
   const themeType = useThemeType();
   const [modalVisible, setModalVisible] = useState(false);
@@ -119,17 +123,31 @@ const Security = () => {
         dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
         dispatch(AppActions.biometricLockActive(true));
       })
-      .catch((error: BiometricError) => {
-        if (error.code && TO_HANDLE_ERRORS[error.code]) {
-          const err = TO_HANDLE_ERRORS[error.code];
-          dispatch(
-            showBottomNotificationModal(
-              BiometricErrorNotification(err, () => {
-                setModalVisible(true);
-              }),
-            ),
-          );
+      .catch(error => {
+        let uiErrMsg: string;
+        let debugMsg: string;
+
+        if (isTouchIDError(error)) {
+          uiErrMsg =
+            TO_HANDLE_ERRORS[error.code] ||
+            TO_HANDLE_ERRORS[BiometricErrorCodes.UNKNOWN_ERROR];
+          debugMsg = `${error.code} - ${error.message}`;
+        } else {
+          uiErrMsg = TO_HANDLE_ERRORS[BiometricErrorCodes.UNKNOWN_ERROR];
+          debugMsg = JSON.stringify(error);
         }
+
+        dispatch(
+          LogActions.error(`setBiometric failed with error: ${debugMsg}`),
+        );
+        dispatch(
+          showBottomNotificationModal(
+            BiometricErrorNotification(uiErrMsg, async () => {
+              await sleep(500); // wait for error modal to close before reopening this modal
+              setModalVisible(true);
+            }),
+          ),
+        );
       });
   };
 
@@ -156,11 +174,11 @@ const Security = () => {
     switch (selectedLock) {
       case 'fingerprint':
       case 'face':
+        await sleep(500); // avoid modal conflicting with options sheet or error sheet
         setBiometric();
         break;
 
       case 'pin':
-        await sleep(400); // avoid modal conflicting with options sheet
         setPin();
         break;
     }
@@ -169,20 +187,22 @@ const Security = () => {
     <>
       <SettingsComponent>
         <Setting onPress={onPressLockButton}>
-          <SettingTitle>Lock App</SettingTitle>
+          <SettingTitle>{t('Lock App')}</SettingTitle>
           <Button onPress={onPressLockButton} buttonType={'pill'}>
-            {biometricLockActive || pinLockActive ? 'Enabled' : 'Disabled'}
+            {biometricLockActive || pinLockActive
+              ? t('Enabled')
+              : t('Disabled')}
           </Button>
         </Setting>
       </SettingsComponent>
       <SheetModal isVisible={modalVisible} onBackdropPress={hideModal}>
         <SheetContainer>
           <Header>
-            <Title>Enable Lock</Title>
+            <Title>{t('Enable Lock')}</Title>
           </Header>
 
           <EnableLockModalParagraph>
-            Secure the app with biometric or PIN.
+            {t('Secure the app with biometric or PIN.')}
           </EnableLockModalParagraph>
 
           <ImgRow>

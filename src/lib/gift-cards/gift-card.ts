@@ -131,7 +131,11 @@ export function spreadAmounts(values: Array<number>, currency: string): string {
   let caption = '';
   values.forEach((value: number, index: number) => {
     caption =
-      caption + formatFiatAmount(value, currency, {customPrecision: 'minimal'});
+      caption +
+      formatFiatAmount(value, currency, {
+        customPrecision: 'minimal',
+        currencyDisplay: 'symbol',
+      });
     if (values.length - index >= 2) {
       caption += ', ';
     }

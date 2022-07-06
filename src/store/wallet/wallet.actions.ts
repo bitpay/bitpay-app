@@ -7,10 +7,10 @@ import {
   Rates,
   Token,
   Wallet,
-  WalletBalance,
   TransactionProposal,
   RatesByDateRange,
   CacheFeeLevel,
+  CryptoBalance,
 } from './wallet.models';
 import {CurrencyOpts} from '../../constants/currencies';
 
@@ -138,7 +138,7 @@ export const successUpdateWalletStatus = (payload: {
   keyId: string;
   walletId: string;
   status: {
-    balance: WalletBalance;
+    balance: CryptoBalance;
     pendingTxps: TransactionProposal[];
   };
 }): WalletActionType => ({
@@ -154,12 +154,14 @@ export const failedUpdateWalletStatus = (payload: {
   payload,
 });
 
-export const successUpdateKeyTotalBalance = (payload: {
-  keyId: string;
-  totalBalance: number;
-  totalBalanceLastDay: number;
-}): WalletActionType => ({
-  type: WalletActionTypes.SUCCESS_UPDATE_KEY_TOTAL_BALANCE,
+export const successUpdateKeysTotalBalance = (
+  payload: {
+    keyId: string;
+    totalBalance: number;
+    totalBalanceLastDay: number;
+  }[],
+): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_UPDATE_KEYS_TOTAL_BALANCE,
   payload,
 });
 
@@ -237,6 +239,11 @@ export const setCustomizeNonce = (payload: boolean): WalletActionType => ({
   payload,
 });
 
+export const setQueuedTransactions = (payload: boolean): WalletActionType => ({
+  type: WalletActionTypes.SET_QUEUED_TRANSACTIONS,
+  payload,
+});
+
 export const setEnableReplaceByFee = (payload: boolean): WalletActionType => ({
   type: WalletActionTypes.SET_ENABLE_REPLACE_BY_FEE,
   payload,
@@ -261,6 +268,13 @@ export const toggleHideBalance = (payload: {
   wallet: Wallet;
 }): WalletActionType => ({
   type: WalletActionTypes.TOGGLE_HIDE_BALANCE,
+  payload,
+});
+
+export const toggleHideKeyBalance = (payload: {
+  keyId: string;
+}): WalletActionType => ({
+  type: WalletActionTypes.TOGGLE_HIDE_KEY_BALANCE,
   payload,
 });
 

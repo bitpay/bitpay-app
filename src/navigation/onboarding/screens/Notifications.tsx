@@ -1,28 +1,31 @@
+import {StackScreenProps} from '@react-navigation/stack';
 import React, {useLayoutEffect} from 'react';
+import {Platform, ScrollView} from 'react-native';
+import {requestNotifications, RESULTS} from 'react-native-permissions';
+import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
-import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
+import Button from '../../../components/button/Button';
+import haptic from '../../../components/haptic-feedback/haptic';
 import {
   ActionContainer,
   CtaContainer,
   HeaderRightContainer,
+  HEIGHT,
   ImageContainer,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
-import Button from '../../../components/button/Button';
-import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import {useDispatch} from 'react-redux';
-import {AppActions} from '../../../store/app';
-import haptic from '../../../components/haptic-feedback/haptic';
-import {useNavigation} from '@react-navigation/native';
-import {OnboardingImage} from '../components/Containers';
-import {requestNotifications, RESULTS} from 'react-native-permissions';
-import {Platform} from 'react-native';
+import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
+import {AppEffects} from '../../../store/app';
+import {useAppDispatch} from '../../../utils/hooks';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
+import {OnboardingStackParamList} from '../OnboardingStack';
+import {OnboardingImage} from '../components/Containers';
+import {useTranslation} from 'react-i18next';
 
 const NotificationsContainer = styled.SafeAreaView`
   flex: 1;
-  align-items: center;
+  align-items: stretch;
 `;
 
 const NotificationImage = {
@@ -39,9 +42,18 @@ const NotificationImage = {
     />
   ),
 };
-const NotificationsScreen = () => {
-  const navigation = useNavigation();
+
+// estimated a number, tweak if neccessary based on the content length
+const scrollEnabledForSmallScreens = HEIGHT < 600;
+
+const NotificationsScreen: React.VFC<
+  StackScreenProps<OnboardingStackParamList, 'Notifications'>
+> = ({navigation}) => {
+  const {t} = useTranslation();
+  const dispatch = useAppDispatch();
   const themeType = useThemeType();
+
+  useAndroidBackHandler(() => true);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -53,27 +65,26 @@ const NotificationsScreen = () => {
             buttonType={'pill'}
             onPress={() => {
               haptic('impactLight');
-              navigation.navigate('Onboarding', {
-                screen: 'Pin',
-              });
+              navigation.navigate('Pin');
             }}>
-            Skip
+            {t('Skip')}
           </Button>
         </HeaderRightContainer>
       ),
     });
-  }, [navigation]);
-
-  useAndroidBackHandler(() => true);
-  const dispatch = useDispatch();
+  }, [navigation, t]);
 
   const onSetNotificationsPress = async (notificationsAccepted: boolean) => {
-    const setAndNavigate = (accepted: boolean) => {
+    const setAndNavigate = async (accepted: boolean) => {
       haptic('impactLight');
-      dispatch(AppActions.setNotificationsAccepted(accepted));
-      navigation.navigate('Onboarding', {
-        screen: 'Pin',
-      });
+      const systemEnabled = await AppEffects.checkNotificationsPermissions();
+      if (systemEnabled) {
+        dispatch(AppEffects.setNotifications(accepted));
+        dispatch(AppEffects.setConfirmTxNotifications(accepted));
+        dispatch(AppEffects.setProductsUpdatesNotifications(accepted));
+        dispatch(AppEffects.setOffersAndPromotionsNotifications(accepted));
+      }
+      navigation.navigate('Pin');
     };
 
     if (!notificationsAccepted) {
@@ -100,38 +111,46 @@ const NotificationsScreen = () => {
 
   return (
     <NotificationsContainer>
-      <ImageContainer justifyContent={'flex-end'}>
-        {NotificationImage[themeType]}
-      </ImageContainer>
-      <TitleContainer>
-        <TextAlign align={'center'}>
-          <H3>Turn on notifications</H3>
-        </TextAlign>
-      </TitleContainer>
-      <TextContainer>
-        <TextAlign align={'center'}>
-          <Paragraph>
-            Get important updates on your account, new features, promos and
-            more. You can change this at any time in Settings.
-          </Paragraph>
-        </TextAlign>
-      </TextContainer>
-      <CtaContainer>
-        <ActionContainer>
-          <Button
-            buttonStyle={'primary'}
-            onPress={() => onSetNotificationsPress(true)}>
-            Allow
-          </Button>
-        </ActionContainer>
-        <ActionContainer>
-          <Button
-            buttonStyle={'secondary'}
-            onPress={() => onSetNotificationsPress(false)}>
-            Deny
-          </Button>
-        </ActionContainer>
-      </CtaContainer>
+      <ScrollView
+        contentContainerStyle={{
+          alignItems: 'center',
+        }}
+        scrollEnabled={scrollEnabledForSmallScreens}>
+        <ImageContainer justifyContent={'flex-end'}>
+          {NotificationImage[themeType]}
+        </ImageContainer>
+        <TitleContainer>
+          <TextAlign align={'center'}>
+            <H3>{t('Turn on notifications')}</H3>
+          </TextAlign>
+        </TitleContainer>
+        <TextContainer>
+          <TextAlign align={'center'}>
+            <Paragraph>
+              {t(
+                'Get important updates on your account, new features, promos and more. You can change this at any time in Settings.',
+              )}
+            </Paragraph>
+          </TextAlign>
+        </TextContainer>
+
+        <CtaContainer>
+          <ActionContainer>
+            <Button
+              buttonStyle={'primary'}
+              onPress={() => onSetNotificationsPress(true)}>
+              {t('Allow')}
+            </Button>
+          </ActionContainer>
+          <ActionContainer>
+            <Button
+              buttonStyle={'secondary'}
+              onPress={() => onSetNotificationsPress(false)}>
+              {t('Deny')}
+            </Button>
+          </ActionContainer>
+        </CtaContainer>
+      </ScrollView>
     </NotificationsContainer>
   );
 };

@@ -16,7 +16,6 @@ import {
 import VirtualKeyboard from '../../../components/virtual-keyboard/VirtualKeyboard';
 import SwapButton from '../../../components/swap-button/SwapButton';
 import Button, {ButtonState} from '../../../components/button/Button';
-import {View} from 'react-native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletStackParamList} from '../WalletStack';
 import {formatFiatAmount, sleep} from '../../../utils/helper-methods';
@@ -25,6 +24,8 @@ import {ParseAmount} from '../../../store/wallet/effects/amount/amount';
 import haptic from '../../../components/haptic-feedback/haptic';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';
 import {useAppDispatch} from '../../../utils/hooks';
+import {useTranslation} from 'react-i18next';
+import {getAvailableFiatCurrencies} from '../../services/buy-crypto/utils/buy-crypto-utils';
 
 const HeaderContainer = styled(HeaderRightContainer)`
   justify-content: center;
@@ -36,8 +37,9 @@ const ModalHeader = styled.View`
 `;
 
 const CloseModalButton = styled.TouchableOpacity`
-  margin: 15px;
-  padding: 5px;
+  position: absolute;
+  left: 20px;
+  top: 20px;
   height: 41px;
   width: 41px;
   border-radius: 50px;
@@ -47,22 +49,46 @@ const CloseModalButton = styled.TouchableOpacity`
   align-items: center;
 `;
 
+const ModalHeaderRight = styled(BaseText)`
+  position: absolute;
+  right: 5px;
+  top: 20px;
+`;
+
 const SafeAreaView = styled.SafeAreaView`
   flex: 1;
 `;
 
 const SwapButtonContainer = styled.View`
-  margin-top: 30px;
+  margin-top: 20px;
   align-self: flex-end;
 `;
 
 export const AmountHeroContainer = styled.View`
   flex-direction: column;
   align-items: center;
+  margin-top: 20px;
+  padding: 0 ${ScreenGutter};
 `;
 
-const ActionContainer = styled.View`
-  margin: 20px 0;
+const ActionContainer = styled.View<{isModal?: boolean}>`
+  position: absolute;
+  bottom: 15px;
+  width: 100%;
+  padding-bottom: ${({isModal}) => (isModal ? '45px' : '0')};
+`;
+
+const ButtonContainer = styled.View`
+  padding: 0 ${ScreenGutter};
+`;
+
+const ViewContainer = styled.View`
+  height: 100%;
+`;
+
+const VirtualKeyboardContainer = styled.View`
+  justify-content: center;
+  align-items: center;
 `;
 
 const Row = styled.View`
@@ -96,13 +122,6 @@ export const CurrencyText = styled(BaseText)`
   position: absolute;
 `;
 
-export const AmountContainer = styled.View`
-  flex: 1;
-  justify-content: space-between;
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
-`;
-
 export interface AmountParamList {
   onAmountSelected: (
     // crypto amount
@@ -115,20 +134,29 @@ export interface AmountParamList {
   fiatCurrencyAbbreviation?: string;
   opts?: {
     hideSendMax?: boolean;
+    context?: string;
   };
 }
 
 interface AmountProps {
   useAsModal: any;
   currencyAbbreviationProp?: string;
-  onDismiss?: (amount?: number) => void;
+  hideSendMaxProp?: boolean;
+  contextProp?: string;
+  onDismiss?: (
+    amount?: number,
+    opts?: {sendMax?: boolean; close?: boolean},
+  ) => void;
 }
 
 const Amount: React.FC<AmountProps> = ({
   useAsModal,
   currencyAbbreviationProp,
+  hideSendMaxProp,
+  contextProp,
   onDismiss,
 }) => {
+  const {t} = useTranslation();
   const route = useRoute<RouteProp<WalletStackParamList, 'Amount'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   let {
@@ -142,7 +170,23 @@ const Amount: React.FC<AmountProps> = ({
   const dispatch = useAppDispatch();
   const [buttonState, setButtonState] = useState<ButtonState>();
 
-  const fiatCurrency = fiatCurrencyAbbreviation || defaultAltCurrency.isoCode;
+  const hideSendMax = opts?.hideSendMax ? opts.hideSendMax : hideSendMaxProp;
+  const context = opts?.context ? opts.context : contextProp;
+
+  const getFiatCurrency = () => {
+    if (fiatCurrencyAbbreviation) {
+      return fiatCurrencyAbbreviation;
+    }
+    if (context === 'buyCrypto') {
+      return getAvailableFiatCurrencies().includes(defaultAltCurrency.isoCode)
+        ? defaultAltCurrency.isoCode
+        : 'USD';
+    }
+
+    return defaultAltCurrency.isoCode;
+  };
+
+  const fiatCurrency = getFiatCurrency();
 
   const cryptoCurrencyAbbreviation = currencyAbbreviationRouteParam
     ? currencyAbbreviationRouteParam
@@ -200,6 +244,9 @@ const Amount: React.FC<AmountProps> = ({
           ).amount;
     const fiatAmount = formatFiatAmount(val * rate, fiatCurrency, {
       currencyDisplay: 'symbol',
+      currencyAbbreviation: primaryIsFiat
+        ? undefined
+        : cryptoCurrencyAbbreviation,
     });
 
     updateAmountConfig(current => ({
@@ -237,16 +284,21 @@ const Amount: React.FC<AmountProps> = ({
     });
   }, [navigation]);
 
-  const onSendMaxPressed = () =>
-    onAmountSelected
-      ? onAmountSelected(amount, setButtonState, {sendMax: true})
-      : () => {};
+  const onSendMaxPressed = () => {
+    if (useAsModal) {
+      return onDismiss ? onDismiss(Number(amount), {sendMax: true}) : () => {};
+    } else {
+      return onAmountSelected
+        ? onAmountSelected(amount, setButtonState, {sendMax: true})
+        : () => {};
+    }
+  };
   const onSendMaxPressedRef = useRef(onSendMaxPressed);
   onSendMaxPressedRef.current = onSendMaxPressed;
 
-  const showSendMaxButton = !opts?.hideSendMax && !useAsModal;
+  const showSendMaxButton = !hideSendMax;
   useLayoutEffect(() => {
-    if (showSendMaxButton) {
+    if (showSendMaxButton && !useAsModal) {
       navigation.setOptions({
         headerRight: () => (
           <HeaderContainer>
@@ -254,13 +306,13 @@ const Amount: React.FC<AmountProps> = ({
               buttonType="pill"
               buttonStyle="cancel"
               onPress={() => onSendMaxPressedRef.current()}>
-              Send Max
+              {t('Send Max')}
             </Button>
           </HeaderContainer>
         ),
       });
     }
-  }, [showSendMaxButton, navigation]);
+  }, [showSendMaxButton, navigation, t]);
 
   const onCellPress = useCallback((val: string) => {
     haptic('soft');
@@ -292,7 +344,7 @@ const Amount: React.FC<AmountProps> = ({
           <CloseModalButton
             onPress={() => {
               if (onDismiss) {
-                onDismiss();
+                onDismiss(undefined, {close: true});
               }
             }}>
             <CloseModal
@@ -303,9 +355,19 @@ const Amount: React.FC<AmountProps> = ({
               }}
             />
           </CloseModalButton>
+          {showSendMaxButton ? (
+            <ModalHeaderRight>
+              <Button
+                buttonType="pill"
+                buttonStyle="cancel"
+                onPress={() => onSendMaxPressedRef.current()}>
+                Send Max
+              </Button>
+            </ModalHeaderRight>
+          ) : null}
         </ModalHeader>
       )}
-      <AmountContainer>
+      <ViewContainer>
         <AmountHeroContainer>
           <Row>
             <AmountText
@@ -348,9 +410,14 @@ const Amount: React.FC<AmountProps> = ({
             </SwapButtonContainer>
           ) : null}
         </AmountHeroContainer>
-        <View>
-          <VirtualKeyboard onCellPress={onCellPress} />
-          <ActionContainer>
+        <ActionContainer isModal={useAsModal}>
+          <VirtualKeyboardContainer>
+            <VirtualKeyboard
+              onCellPress={onCellPress}
+              showDot={currency !== 'JPY'}
+            />
+          </VirtualKeyboardContainer>
+          <ButtonContainer>
             <Button
               state={buttonState}
               disabled={!+amount}
@@ -363,11 +430,11 @@ const Amount: React.FC<AmountProps> = ({
                   onAmountSelected(amount, setButtonState);
                 }
               }}>
-              Continue
+              {t('Continue')}
             </Button>
-          </ActionContainer>
-        </View>
-      </AmountContainer>
+          </ButtonContainer>
+        </ActionContainer>
+      </ViewContainer>
     </SafeAreaView>
   );
 };

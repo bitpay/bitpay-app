@@ -3,6 +3,7 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import styled from 'styled-components/native';
 import {BaseText} from '../../../components/styled/Text';
 import {FlatList} from 'react-native';
+import {t} from 'i18next';
 
 interface BottomNotificationListType {
   key: number;
@@ -13,79 +14,88 @@ const List = styled(BaseText)`
   margin-bottom: 10px;
 `;
 
-export const DecryptError: BottomNotificationConfig = {
-  type: 'error',
-  title: 'Something went wrong',
-  message: 'Could not decrypt wallet.',
-  enableBackdropDismiss: true,
-  actions: [
-    {
-      text: 'OK',
-      action: () => {},
-      primary: true,
-    },
-  ],
+export const DecryptError = (): BottomNotificationConfig => {
+  return {
+    type: 'error',
+    title: t('Something went wrong'),
+    message: t('Could not decrypt wallet.'),
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: t('OK'),
+        action: () => {},
+        primary: true,
+      },
+    ],
+  };
 };
 
-export const GeneralError: BottomNotificationConfig = {
-  type: 'error',
-  title: 'Uh oh, Something went wrong',
-  message: 'Please try again later.',
-  enableBackdropDismiss: true,
-  actions: [
-    {
-      text: 'OK',
-      action: () => {},
-      primary: true,
-    },
-  ],
+export const GeneralError = (): BottomNotificationConfig => {
+  return {
+    type: 'error',
+    title: t('Uh oh, Something went wrong'),
+    message: t('Please try again later.'),
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: t('OK'),
+        action: () => {},
+        primary: true,
+      },
+    ],
+  };
 };
 
-export const BalanceUpdateError: BottomNotificationConfig = {
-  type: 'error',
-  title: 'Something went wrong',
-  message: 'Failed to update balance, please try again later.',
-  enableBackdropDismiss: true,
-  actions: [
-    {
-      text: 'OK',
-      action: () => {},
-      primary: true,
-    },
-  ],
+export const BalanceUpdateError = (): BottomNotificationConfig => {
+  return {
+    type: 'error',
+    title: t('Something went wrong'),
+    message: t('Failed to update balance, please try again later.'),
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: t('OK'),
+        action: () => {},
+        primary: true,
+      },
+    ],
+  };
 };
 
 export const WrongPasswordError = (): BottomNotificationConfig => {
   const wrongPasswordList: BottomNotificationListType[] = [
     {
       key: 1,
-      description: 'Try entering any passwords you may have set in the past',
+      description: t('Try entering any passwords you may have set in the past'),
     },
     {
       key: 2,
-      description:
+      description: t(
         'Remember there are no special requirements for the password (numbers, symbols, etc.)',
+      ),
     },
     {
       key: 3,
-      description:
+      description: t(
         'Keep in mind your encryption password is not the 12-word recovery phrase',
+      ),
     },
     {
       key: 4,
-      description:
+      description: t(
         'You can always reset your encryption password on your key settings under the option Clear Encryption Password using your 12-word recovery phrase',
+      ),
     },
   ];
 
   return {
     type: 'error',
-    title: 'Wrong password',
-    message: 'Forgot Password?',
+    title: t('Wrong password'),
+    message: t('Forgot Password?'),
     enableBackdropDismiss: true,
     actions: [
       {
-        text: 'GOT IT',
+        text: t('GOT IT'),
         action: () => {},
         primary: true,
       },
@@ -114,13 +124,13 @@ export const CustomErrorMessage = ({
 }): BottomNotificationConfig => {
   return {
     type: 'error',
-    title: title || 'Something went wrong',
+    title: title || t('Something went wrong'),
     message: errMsg,
     enableBackdropDismiss: true,
     onBackdropDismiss: action,
     actions: [
       {
-        text: 'OK',
+        text: t('OK'),
         action,
         primary: true,
       },
@@ -134,20 +144,23 @@ export const BchLegacyAddressInfo = (
 ): BottomNotificationConfig => {
   return {
     type: 'warning',
-    title: `${appName} BCH wallets use the CashAddr format by default`,
-    message:
+    title: t(' BCH wallets use the CashAddr format by default', {
+      appName,
+    }),
+    message: t(
       'If you need to send to "old" addresses (like the one you just pasted), and you are SURE those are BCH addresses, you can "translate" them to the corresponding address in CashAddr format.',
+    ),
     enableBackdropDismiss: true,
     actions: [
       {
-        text: 'Translate address',
+        text: t('Translate address'),
         action: () => {
           action();
         },
         primary: true,
       },
       {
-        text: 'GOT IT',
+        text: t('GOT IT'),
         action: () => {},
         primary: false,
       },
@@ -158,13 +171,14 @@ export const BchLegacyAddressInfo = (
 export const Mismatch = (action: () => void): BottomNotificationConfig => {
   return {
     type: 'error',
-    title: 'Error',
-    message:
+    title: t('Error'),
+    message: t(
       'The wallet you are using does not match the network and/or the currency of the address provided',
+    ),
     enableBackdropDismiss: true,
     actions: [
       {
-        text: 'OK',
+        text: t('OK'),
         action: () => {
           action();
         },
@@ -179,13 +193,14 @@ export const UnconfirmedInputs = (
 ): BottomNotificationConfig => {
   return {
     type: 'error',
-    title: 'Unconfirmed inputs',
-    message:
+    title: t('Unconfirmed inputs'),
+    message: t(
       ' Be careful. Some inputs of this transaction have no confirmations. Please wait until they are confirmed.',
+    ),
     enableBackdropDismiss: true,
     actions: [
       {
-        text: 'View Details',
+        text: t('View Details'),
         action: () => {
           action();
         },
@@ -201,20 +216,21 @@ export const RbfTransaction = (
 ): BottomNotificationConfig => {
   return {
     type: 'error',
-    title: 'RBF transaction',
-    message:
+    title: t('RBF transaction'),
+    message: t(
       'Be careful. Until it confirms, the transaction could be replaced/redirected by the sender. You can try to speed it up by using a higher fee',
+    ),
     enableBackdropDismiss: true,
     actions: [
       {
-        text: 'Speed up transaction',
+        text: t('Speed up transaction'),
         action: () => {
           speedup();
         },
         primary: true,
       },
       {
-        text: 'View details',
+        text: t('View details'),
         action: () => {
           viewDetails();
         },
@@ -230,20 +246,21 @@ export const SpeedupTransaction = (
 ): BottomNotificationConfig => {
   return {
     type: 'warning',
-    title: 'Transaction still unconfirmed',
-    message:
+    title: t('Transaction still unconfirmed'),
+    message: t(
       'This transaction is taking longer than usual to confirm. You can try to speed it up by using a higher fee.',
+    ),
     enableBackdropDismiss: true,
     actions: [
       {
-        text: 'Speed up transaction',
+        text: t('Speed up transaction'),
         action: () => {
           speedup();
         },
         primary: true,
       },
       {
-        text: 'View details',
+        text: t('View details'),
         action: () => {
           viewDetails();
         },
@@ -259,19 +276,19 @@ export const SpeedupEthTransaction = (
 ): BottomNotificationConfig => {
   return {
     type: 'warning',
-    title: 'Transaction unconfirmed',
-    message: 'You can try to speed it up by using a higher fee',
+    title: t('Transaction unconfirmed'),
+    message: t('You can try to speed it up by using a higher fee'),
     enableBackdropDismiss: true,
     actions: [
       {
-        text: 'Speed up transaction',
+        text: t('Speed up transaction'),
         action: () => {
           speedup();
         },
         primary: true,
       },
       {
-        text: 'View details',
+        text: t('View details'),
         action: () => {
           viewDetails();
         },
@@ -284,18 +301,19 @@ export const SpeedupEthTransaction = (
 export const MinFeeWarning = (gotIt: () => void): BottomNotificationConfig => {
   return {
     type: 'warning',
-    title: 'Warning!',
-    message:
+    title: t('Warning!'),
+    message: t(
       'The fee you are using is lower than Super Economy level. It’s not recommended as this transaction may not confirm or will take very long to confirm.',
+    ),
     enableBackdropDismiss: true,
     actions: [
       {
-        text: 'Change Miner Fee',
+        text: t('Change Miner Fee'),
         action: () => {},
         primary: true,
       },
       {
-        text: 'Got It',
+        text: t('Got It'),
         action: () => {
           gotIt();
         },
@@ -308,12 +326,12 @@ export const MinFeeWarning = (gotIt: () => void): BottomNotificationConfig => {
 export const SpeedupInsufficientFunds = (): BottomNotificationConfig => {
   return {
     type: 'error',
-    title: 'Error',
-    message: 'Insufficient funds for paying speed up fee.',
+    title: t('Error'),
+    message: t('Insufficient funds for paying speed up fee.'),
     enableBackdropDismiss: true,
     actions: [
       {
-        text: 'Ok',
+        text: t('Ok'),
         action: () => {},
         primary: true,
       },
@@ -324,12 +342,12 @@ export const SpeedupInsufficientFunds = (): BottomNotificationConfig => {
 export const SpeedupInvalidTx = (): BottomNotificationConfig => {
   return {
     type: 'error',
-    title: 'Error',
-    message: 'Transaction not found. Probably invalid.',
+    title: t('Error'),
+    message: t('Transaction not found. Probably invalid.'),
     enableBackdropDismiss: true,
     actions: [
       {
-        text: 'Ok',
+        text: t('Ok'),
         action: () => {},
         primary: true,
       },

@@ -11,6 +11,7 @@ import LockSvg from '../../../../assets/img/wallet/balance/lock.svg';
 import SigmaSvg from '../../../../assets/img/wallet/balance/sigma.svg';
 import CheckmarkSvg from '../../../../assets/img/wallet/balance/checkmark.svg';
 import ConfirmingSvg from '../../../../assets/img/wallet/balance/confirming.svg';
+import {useTranslation} from 'react-i18next';
 
 const BalanceDetailsContainer = styled(SheetContainer)`
   background-color: ${({theme: {dark}}) => (dark ? Black : White)};
@@ -105,26 +106,29 @@ interface Props {
 }
 
 const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
+  const {t} = useTranslation();
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={closeModal}>
       <BalanceDetailsContainer>
         <SafeAreaView style={{height: '100%'}}>
           <ModalHeader>
-            <ModalHeaderText>Spendable balance</ModalHeaderText>
+            <ModalHeaderText>{t('Spendable balance')}</ModalHeaderText>
             <ModalHeaderRight>
               <Button
                 buttonType={'pill'}
                 buttonStyle={'cancel'}
                 onPress={closeModal}>
-                Close
+                {t('Close')}
               </Button>
             </ModalHeaderRight>
           </ModalHeader>
           <ScrollView showsVerticalScrollIndicator={false}>
             <LabelTip type="warn">
               <LabelTipText>
-                All of your {wallet.currencyName} wallet balance may not be
-                available for immediate spending.
+                {t(
+                  'All of your wallet balance may not be available for immediate spending.',
+                  {currencyName: wallet.currencyName},
+                )}
               </LabelTipText>
             </LabelTip>
 
@@ -133,7 +137,7 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                 <Row>
                   <RowLabelContainer>
                     <LockSvg width={30} height={20} />
-                    <RowLabel>XRP Locked Balance</RowLabel>
+                    <RowLabel>{t('XRP Locked Balance')}</RowLabel>
                   </RowLabelContainer>
                   <BalanceContainer>
                     <CryptoBalance type="caution">
@@ -146,9 +150,9 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                 </Row>
                 <LabelTip type="info">
                   <LabelTipText>
-                    The XRP ledger requires that all wallets maintain a minimum
-                    balance of 20 XRP. This non-refundable 20 XRP will remain
-                    permanently locked in your wallet.
+                    {t(
+                      'The XRP ledger requires that all wallets maintain a minimum balance of 20 XRP. This non-refundable 20 XRP will remain permanently locked in your wallet.',
+                    )}
                   </LabelTipText>
                 </LabelTip>
               </>
@@ -157,7 +161,7 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
             <Row>
               <RowLabelContainer>
                 <SigmaSvg width={30} height={20} />
-                <RowLabel>Total</RowLabel>
+                <RowLabel>{t('Total')}</RowLabel>
               </RowLabelContainer>
               <BalanceContainer>
                 <CryptoBalance>
@@ -169,13 +173,14 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
             <LabelTip type="info">
               <LabelTipText>
                 <Text>
-                  The total amount of {wallet.currencyName} stored in this
-                  wallet.
+                  {t('The total amount of stored in this wallet.', {
+                    wallet: wallet.currencyName,
+                  })}
                 </Text>
                 {wallet.currencyAbbreviation.toLowerCase() === 'xrp' ? (
                   <Text>
                     {' '}
-                    Not including locked funds required for activation.
+                    {t('Not including locked funds required for activation.')}
                   </Text>
                 ) : null}
               </LabelTipText>
@@ -184,7 +189,7 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
             <Row>
               <RowLabelContainer>
                 <CheckmarkSvg width={30} height={30} />
-                <RowLabel>Available</RowLabel>
+                <RowLabel>{t('Available')}</RowLabel>
               </RowLabelContainer>
               <BalanceContainer>
                 <CryptoBalance type="success">
@@ -195,15 +200,16 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
             </Row>
             <LabelTip type="info">
               <LabelTipText>
-                The amount of {wallet.currencyName} immediately spendable from
-                this wallet.
+                {t('The amount of immediately spendable from this wallet.', {
+                  currencyName: wallet.currencyName,
+                })}
               </LabelTipText>
             </LabelTip>
 
             <Row>
               <RowLabelContainer>
                 <ConfirmingSvg width={30} height={18} />
-                <RowLabel>Confirming</RowLabel>
+                <RowLabel>{t('Confirming')}</RowLabel>
               </RowLabelContainer>
               <BalanceContainer>
                 <CryptoBalance type="warn">
@@ -214,15 +220,17 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
             </Row>
             <LabelTip type="info">
               <LabelTipText>
-                The amount of {wallet.currencyName} stored in this wallet with
-                less than 1 blockchain confirmation.
+                {t(
+                  'The amount of stored in this wallet with less than 1 blockchain confirmation.',
+                  {currencyName: wallet.currencyName},
+                )}
               </LabelTipText>
             </LabelTip>
 
             <Row>
               <RowLabelContainer>
                 <LockSvg width={30} height={20} />
-                <RowLabel>Locked</RowLabel>
+                <RowLabel>{t('Locked')}</RowLabel>
               </RowLabelContainer>
               <BalanceContainer>
                 <CryptoBalance type="caution">
@@ -233,11 +241,10 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
             </Row>
             <LabelTip type="info">
               <LabelTipText>
-                The amount of {wallet.currencyName} stored in this wallet that
-                is allocated as inputs to your pending transaction proposals.
-                The amount is determined using unspent transaction outputs
-                associated with this wallet and may be more than the actual
-                amounts associated with your pending transaction proposals.
+                {t(
+                  'The amount of stored in this wallet that is allocated as inputs to your pending transaction proposals. The amount is determined using unspent transaction outputs associated with this wallet and may be more than the actual amounts associated with your pending transaction proposals.',
+                  {currencyName: wallet.currencyName},
+                )}
               </LabelTipText>
             </LabelTip>
           </ScrollView>

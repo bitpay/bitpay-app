@@ -1,5 +1,5 @@
-import React, {useLayoutEffect, useState} from 'react';
-import {Platform, ScrollView} from 'react-native';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
+import {Platform, ScrollView, View} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import LinearGradient from 'react-native-linear-gradient';
 import Markdown from 'react-native-markdown-display';
@@ -10,6 +10,7 @@ import {
   BaseText,
   fontFamily,
   HeaderTitle,
+  TextAlign,
 } from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
 import {
@@ -37,12 +38,13 @@ import {useDispatch} from 'react-redux';
 import {AppActions} from '../../../../../store/app';
 import GiftCardDiscountText from '../../components/GiftCardDiscountText';
 import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
-import {WalletScreens} from '../../../../wallet/WalletStack';
 import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
 import {ShopActions} from '../../../../../store/shop';
 import {APP_NETWORK} from '../../../../../constants/config';
 import {useAppSelector} from '../../../../../utils/hooks';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
+import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../../../store/app/app.effects';
 
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;
@@ -98,6 +100,7 @@ const DenomSelectionContainer = styled.View`
 const SupportedAmounts = styled.View`
   margin-top: 10px;
   align-items: center;
+  padding: 0 30px;
 `;
 
 const SupportedAmountsLabel = styled(GiftCardDenomText)`
@@ -110,17 +113,21 @@ const BuyGiftCard = ({
   route,
   navigation,
 }: StackScreenProps<GiftCardStackParamList, 'BuyGiftCard'>) => {
+  const {t} = useTranslation();
   const navigator = useNavigation();
   const dispatch = useDispatch();
   const theme = useTheme();
   const {cardConfig} = route.params;
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[APP_NETWORK]);
+  const syncGiftCardPurchasesWithBitPayId = useAppSelector(
+    ({SHOP}) => SHOP.syncGiftCardPurchasesWithBitPayId,
+  );
   const {
     email: savedEmail,
     phone: savedPhone,
     phoneCountryInfo: savedPhoneCountryInfo,
   } = useAppSelector(({SHOP}) => SHOP);
-  const shouldSync = user?.localSettings.syncGiftCardPurchases;
+  const shouldSync = user && syncGiftCardPurchasesWithBitPayId;
   const [selectedAmountIndex, setSelectedAmountIndex] = useState(
     getMiddleIndex(cardConfig.supportedAmounts || []),
   );
@@ -128,11 +135,25 @@ const BuyGiftCard = ({
     navigation.setOptions({
       headerTitle: () => {
         return (
-          <HeaderTitle>{`Buy ${cardConfig.displayName} Gift Card`}</HeaderTitle>
+          <HeaderTitle>
+            {t('BuyGiftCard', {displayName: cardConfig.displayName})}
+          </HeaderTitle>
         );
       },
     });
   });
+  useEffect(() => {
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Viewed Gift Card',
+        {
+          giftCardBrand: cardConfig.name,
+        },
+        true,
+      ),
+    );
+  }, [cardConfig.name, dispatch]);
 
   const showActivationFeeSheet = (
     activationFee: number,
@@ -142,17 +163,17 @@ const BuyGiftCard = ({
     dispatch(
       AppActions.showBottomNotificationModal({
         type: 'info',
-        title: 'Activation fee',
-        message: `${
-          cardConfig.displayName
-        } gift cards contain an additional activation fee of ${formatFiatAmount(
-          activationFee,
-          cardConfig.currency,
-        )}.`,
+        title: t('Activation fee'),
+        message: t('gift cards contain an additional activation fee of .', {
+          displayName: cardConfig.displayName,
+          fiatAmount: formatFiatAmount(activationFee, cardConfig.currency, {
+            currencyDisplay: 'symbol',
+          }),
+        }),
         enableBackdropDismiss: true,
         actions: [
           {
-            text: 'GOT IT',
+            text: t('GOT IT'),
             action: async () => {
               await sleep(400);
               next(amount, phone);
@@ -166,8 +187,8 @@ const BuyGiftCard = ({
 
   const goToConfirmScreen = async (amount: number) => {
     const discount = getVisibleDiscount(cardConfig);
-    navigator.navigate('Wallet', {
-      screen: WalletScreens.GIFT_CARD_CONFIRM,
+    navigator.navigate('GiftCard', {
+      screen: GiftCardScreens.GIFT_CARD_CONFIRM,
       params: {
         amount,
         cardConfig,
@@ -177,8 +198,8 @@ const BuyGiftCard = ({
   };
 
   const goToAmountScreen = (phone?: string) => {
-    navigator.navigate('Wallet', {
-      screen: WalletScreens.AMOUNT,
+    navigator.navigate('GiftCard', {
+      screen: GiftCardScreens.GIFT_CARD_AMOUNT,
       params: {
         fiatCurrencyAbbreviation: cardConfig.currency,
         opts: {hideSendMax: true},
@@ -195,12 +216,16 @@ const BuyGiftCard = ({
       dispatch(
         AppActions.showBottomNotificationModal(
           CustomErrorMessage({
-            title: 'Below Minimum Amount',
-            errMsg: `The purchase amount must be at least ${formatFiatAmount(
-              minAmount,
-              cardConfig.currency,
-              {customPrecision: 'minimal'},
-            )}. Please modify your amount.`,
+            title: t('Below Minimum Amount'),
+            errMsg: t(
+              'The purchase amount must be at least . Please modify your amount.',
+              {
+                fiatAmount: formatFiatAmount(minAmount, cardConfig.currency, {
+                  customPrecision: 'minimal',
+                  currencyDisplay: 'symbol',
+                }),
+              },
+            ),
           }),
         ),
       );
@@ -210,12 +235,16 @@ const BuyGiftCard = ({
       dispatch(
         AppActions.showBottomNotificationModal(
           CustomErrorMessage({
-            title: 'Purchase Limit Exceeded',
-            errMsg: `The purchase amount is limited to ${formatFiatAmount(
-              maxAmount,
-              cardConfig.currency,
-              {customPrecision: 'minimal'},
-            )}. Please modify your amount.`,
+            title: t('Purchase Limit Exceeded'),
+            errMsg: t(
+              'The purchase amount is limited to . Please modify your amount.',
+              {
+                fiatAmount: formatFiatAmount(maxAmount, cardConfig.currency, {
+                  customPrecision: 'minimal',
+                  currencyDisplay: 'symbol',
+                }),
+              },
+            ),
           }),
         ),
       );
@@ -271,6 +300,16 @@ const BuyGiftCard = ({
   };
 
   const buyGiftCard = () => {
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Started Gift Card Purchase',
+        {
+          giftCardBrand: cardConfig.name,
+        },
+        true,
+      ),
+    );
     const selectedAmount = (cardConfig.supportedAmounts || [])[
       selectedAmountIndex
     ];
@@ -288,12 +327,21 @@ const BuyGiftCard = ({
           minHeight: HEIGHT - (Platform.OS === 'android' ? 80 : 110),
         }}>
         <GradientBox colors={getMastheadGradient(theme)}>
-          <RemoteImage
-            uri={cardConfig.cardImage}
-            height={169}
-            width={270}
-            borderRadius={10}
-          />
+          <View
+            style={{
+              shadowColor: '#000',
+              shadowOffset: {width: 0, height: 12},
+              shadowOpacity: 0.08,
+              shadowRadius: 30,
+              elevation: 5,
+            }}>
+            <RemoteImage
+              uri={cardConfig.cardImage}
+              height={169}
+              width={270}
+              borderRadius={10}
+            />
+          </View>
           <AmountContainer>
             {cardConfig.supportedAmounts ? (
               <DenomSelectionContainer>
@@ -306,14 +354,20 @@ const BuyGiftCard = ({
                 />
                 <SupportedAmounts>
                   <SupportedAmountsLabel>
-                    Purchase Amounts:
+                    {t('Purchase Amounts:')}
                   </SupportedAmountsLabel>
-                  <GiftCardDenoms cardConfig={cardConfig} />
+                  <TextAlign align="center">
+                    <GiftCardDenoms cardConfig={cardConfig} />
+                  </TextAlign>
                 </SupportedAmounts>
               </DenomSelectionContainer>
             ) : (
               <TouchableWithoutFeedback onPress={() => buyGiftCard()}>
-                <Amount>{formatFiatAmount(0, cardConfig.currency)}</Amount>
+                <Amount>
+                  {formatFiatAmount(0, cardConfig.currency, {
+                    currencyDisplay: 'symbol',
+                  })}
+                </Amount>
               </TouchableWithoutFeedback>
             )}
           </AmountContainer>
@@ -353,7 +407,7 @@ const BuyGiftCard = ({
           elevation: 5,
         }}>
         <Button onPress={() => buyGiftCard()} buttonStyle={'primary'}>
-          {cardConfig.supportedAmounts ? 'Continue' : 'Buy Gift Card'}
+          {cardConfig.supportedAmounts ? t('Continue') : t('Buy Gift Card')}
         </Button>
       </FooterButton>
     </>

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {Text, TouchableOpacity} from 'react-native';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
+import Clipboard from '@react-native-community/clipboard';
 import moment from 'moment';
 import {Link} from '../../../../../components/styled/Text';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
@@ -21,7 +22,6 @@ import {
   CryptoContainer,
   CryptoAmount,
   CryptoUnit,
-  IconContainer,
   RowLabel,
   RowData,
   LabelTip,
@@ -29,25 +29,58 @@ import {
   ColumnDataContainer,
   ColumnData,
   RemoveCta,
+  CopiedContainer,
+  CopyImgContainerRight,
 } from '../styled/ExternalServicesDetails';
-
+import {useTranslation} from 'react-i18next';
+import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 export interface SimplexDetailsProps {
   paymentRequest: simplexPaymentData;
 }
 
+const copyText = (text: string) => {
+  haptic('impactLight');
+  Clipboard.setString(text);
+};
+
 const SimplexDetails: React.FC = () => {
+  const {t} = useTranslation();
   const {
     params: {paymentRequest},
   } = useRoute<RouteProp<{params: SimplexDetailsProps}>>();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const [copiedDepositAddress, setCopiedDepositAddress] = useState(false);
+  const [copiedPaymentId, setCopiedPaymentId] = useState(false);
+  const [copiedOrderId, setCopiedOrderId] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedDepositAddress(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedDepositAddress]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedPaymentId(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedPaymentId]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCopiedOrderId(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copiedOrderId]);
 
   return (
     <SettingsContainer>
       <Settings>
         <RowDataContainer>
           <CryptoAmountContainer>
-            <CryptoTitle>Approximate receiving amount</CryptoTitle>
+            <CryptoTitle>{t('Approximate receiving amount')}</CryptoTitle>
             <CryptoContainer>
               <CryptoAmount>{paymentRequest.crypto_amount}</CryptoAmount>
               <CryptoUnit>{paymentRequest.coin}</CryptoUnit>
@@ -57,7 +90,7 @@ const SimplexDetails: React.FC = () => {
         </RowDataContainer>
 
         <RowDataContainer>
-          <RowLabel>Approximate receiving fiat amount</RowLabel>
+          <RowLabel>{t('Approximate receiving fiat amount')}</RowLabel>
           <RowData>
             {paymentRequest.fiat_base_amount}{' '}
             {paymentRequest.fiat_total_amount_currency}
@@ -65,13 +98,14 @@ const SimplexDetails: React.FC = () => {
         </RowDataContainer>
         <LabelTip type="warn">
           <LabelTipText>
-            The final crypto amount you receive when the transaction is complete
-            may differ because it is based on Simplex's exchange rate.
+            {t(
+              "The final crypto amount you receive when the transaction is complete may differ because it is based on Simplex's exchange rate.",
+            )}
           </LabelTipText>
         </LabelTip>
 
         <RowDataContainer>
-          <RowLabel>Paying</RowLabel>
+          <RowLabel>{t('Paying')}</RowLabel>
           <RowData>
             {paymentRequest.fiat_total_amount}{' '}
             {paymentRequest.fiat_total_amount_currency}
@@ -79,7 +113,7 @@ const SimplexDetails: React.FC = () => {
         </RowDataContainer>
 
         <RowDataContainer>
-          <RowLabel>Created</RowLabel>
+          <RowLabel>{t('Created')}</RowLabel>
           <RowData>
             {moment(paymentRequest.created_on).format('MMM DD, YYYY hh:mm a')}
           </RowData>
@@ -87,13 +121,17 @@ const SimplexDetails: React.FC = () => {
 
         {['failed', 'success'].includes(paymentRequest.status) && (
           <RowDataContainer>
-            <RowLabel>Status</RowLabel>
+            <RowLabel>{t('Status')}</RowLabel>
             <RowData>
               {paymentRequest.status === 'failed' && (
-                <Text style={{color: '#df5264'}}>Payment request rejected</Text>
+                <Text style={{color: '#df5264'}}>
+                  {t('Payment request rejected')}
+                </Text>
               )}
               {paymentRequest.status === 'success' && (
-                <Text style={{color: '#01d1a2'}}>Payment request approved</Text>
+                <Text style={{color: '#01d1a2'}}>
+                  {t('Payment request approved')}
+                </Text>
               )}
             </RowData>
           </RowDataContainer>
@@ -101,8 +139,9 @@ const SimplexDetails: React.FC = () => {
 
         <LabelTip type="info">
           <LabelTipText>
-            If you have successfully completed the entire payment process,
-            remember that receiving crypto usually takes up to 3 hours.
+            {t(
+              'If you have successfully completed the entire payment process, remember that receiving crypto usually takes up to 3 hours.',
+            )}
           </LabelTipText>
           <TouchableOpacity
             onPress={() => {
@@ -114,24 +153,63 @@ const SimplexDetails: React.FC = () => {
               );
             }}>
             <Link style={{marginTop: 15}}>
-              What is the status of my payment?
+              {t('What is the status of my payment?')}
             </Link>
           </TouchableOpacity>
         </LabelTip>
 
         <ColumnDataContainer>
-          <RowLabel>Deposit address</RowLabel>
-          <ColumnData>{paymentRequest.address}</ColumnData>
+          <TouchableOpacity
+            onPress={() => {
+              copyText(paymentRequest.address);
+              setCopiedDepositAddress(true);
+            }}>
+            <RowLabel>{t('Deposit address')}</RowLabel>
+            <CopiedContainer>
+              <ColumnData style={{maxWidth: '90%'}}>
+                {paymentRequest.address}
+              </ColumnData>
+              <CopyImgContainerRight style={{minWidth: '10%'}}>
+                {copiedDepositAddress ? <CopiedSvg width={17} /> : null}
+              </CopyImgContainerRight>
+            </CopiedContainer>
+          </TouchableOpacity>
         </ColumnDataContainer>
 
         <ColumnDataContainer>
-          <RowLabel>Payment ID</RowLabel>
-          <ColumnData>{paymentRequest.payment_id}</ColumnData>
+          <TouchableOpacity
+            onPress={() => {
+              copyText(paymentRequest.payment_id);
+              setCopiedPaymentId(true);
+            }}>
+            <RowLabel>{t('Payment ID')}</RowLabel>
+            <CopiedContainer>
+              <ColumnData style={{maxWidth: '90%'}}>
+                {paymentRequest.payment_id}
+              </ColumnData>
+              <CopyImgContainerRight style={{minWidth: '10%'}}>
+                {copiedPaymentId ? <CopiedSvg width={17} /> : null}
+              </CopyImgContainerRight>
+            </CopiedContainer>
+          </TouchableOpacity>
         </ColumnDataContainer>
 
         <ColumnDataContainer>
-          <RowLabel>Order ID</RowLabel>
-          <ColumnData>{paymentRequest.order_id}</ColumnData>
+          <TouchableOpacity
+            onPress={() => {
+              copyText(paymentRequest.order_id);
+              setCopiedOrderId(true);
+            }}>
+            <RowLabel>{t('Order ID')}</RowLabel>
+            <CopiedContainer>
+              <ColumnData style={{maxWidth: '90%'}}>
+                {paymentRequest.order_id}
+              </ColumnData>
+              <CopyImgContainerRight style={{minWidth: '10%'}}>
+                {copiedOrderId ? <CopiedSvg width={17} /> : null}
+              </CopyImgContainerRight>
+            </CopiedContainer>
+          </TouchableOpacity>
         </ColumnDataContainer>
 
         <RemoveCta
@@ -140,13 +218,14 @@ const SimplexDetails: React.FC = () => {
             dispatch(
               showBottomNotificationModal({
                 type: 'question',
-                title: 'Removing payment request data',
-                message:
+                title: t('Removing payment request data'),
+                message: t(
                   "The data of this payment request will be deleted. Make sure you don't need it",
+                ),
                 enableBackdropDismiss: true,
                 actions: [
                   {
-                    text: 'REMOVE',
+                    text: t('REMOVE'),
                     action: () => {
                       dispatch(dismissBottomNotificationModal());
                       dispatch(
@@ -159,7 +238,7 @@ const SimplexDetails: React.FC = () => {
                     primary: true,
                   },
                   {
-                    text: 'GO BACK',
+                    text: t('GO BACK'),
                     action: () => {
                       console.log('Removing payment Request CANCELED');
                     },
@@ -168,7 +247,7 @@ const SimplexDetails: React.FC = () => {
               }),
             );
           }}>
-          <Text style={{color: 'red'}}>Remove</Text>
+          <Text style={{color: 'red'}}>{t('Remove')}</Text>
         </RemoveCta>
       </Settings>
     </SettingsContainer>

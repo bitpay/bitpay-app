@@ -1,5 +1,5 @@
 import React from 'react';
-import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
+import {createStackNavigator} from '@react-navigation/stack';
 import {
   baseNavigatorOptions,
   baseScreenOptions,
@@ -11,13 +11,16 @@ import {
 } from '../../../../store/shop/shop.models';
 import BuyGiftCard from './screens/BuyGiftCard';
 import GiftCardDetails from './screens/GiftCardDetails';
-import ArchivedGiftCards from './screens/ArchivedGiftCards';
 import EnterPhone from './screens/EnterPhone';
 import EnterEmail from './screens/EnterEmail';
 import {HeaderTitle} from '../../../../components/styled/Text';
+import Amount, {AmountParamList} from '../../../wallet/screens/Amount';
+import Confirm, {
+  GiftCardConfirmParamList,
+} from '../../../wallet/screens/send/confirm/GiftCardConfirm';
+import {useTranslation} from 'react-i18next';
 
 export type GiftCardStackParamList = {
-  ArchivedGiftCards: {giftCards: GiftCard[]; supportedGiftCards: CardConfig[]};
   BuyGiftCard: {cardConfig: CardConfig};
   EnterEmail: {
     cardConfig: CardConfig;
@@ -37,21 +40,24 @@ export type GiftCardStackParamList = {
     }) => void;
   };
   GiftCardDetails: {cardConfig: CardConfig; giftCard: GiftCard};
-  GiftCardDetailsModal: {cardConfig: CardConfig; giftCard: GiftCard};
+  GiftCardAmount: AmountParamList;
+  GiftCardConfirm: GiftCardConfirmParamList;
 };
 
 export enum GiftCardScreens {
-  ARCHIVED_GIFT_CARDS = 'ArchivedGiftCards',
   BUY_GIFT_CARD = 'BuyGiftCard',
   ENTER_EMAIL = 'EnterEmail',
   ENTER_PHONE = 'EnterPhone',
   GIFT_CARD_DETAILS = 'GiftCardDetails',
   GIFT_CARD_DETAILS_MODAL = 'GiftCardDetailsModal',
+  GIFT_CARD_AMOUNT = 'GiftCardAmount',
+  GIFT_CARD_CONFIRM = 'GiftCardConfirm',
 }
 
 const GiftCards = createStackNavigator<GiftCardStackParamList>();
 
 const GiftCardStack = () => {
+  const {t} = useTranslation();
   return (
     <GiftCards.Navigator
       initialRouteName={GiftCardScreens.BUY_GIFT_CARD}
@@ -60,14 +66,6 @@ const GiftCardStack = () => {
         ...baseScreenOptions,
       }}>
       <GiftCards.Screen
-        name={GiftCardScreens.ARCHIVED_GIFT_CARDS}
-        component={ArchivedGiftCards}
-        options={{
-          gestureEnabled: false,
-          headerTitle: 'Archived Gift Cards',
-        }}
-      />
-      <GiftCards.Screen
         name={GiftCardScreens.BUY_GIFT_CARD}
         component={BuyGiftCard}
       />
@@ -75,14 +73,14 @@ const GiftCardStack = () => {
         name={GiftCardScreens.ENTER_EMAIL}
         component={EnterEmail}
         options={{
-          headerTitle: () => <HeaderTitle>Enter Email</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Enter Email')}</HeaderTitle>,
         }}
       />
       <GiftCards.Screen
         name={GiftCardScreens.ENTER_PHONE}
         component={EnterPhone}
         options={{
-          headerTitle: () => <HeaderTitle>Enter Phone</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Enter Phone')}</HeaderTitle>,
         }}
       />
       <GiftCards.Screen
@@ -93,10 +91,16 @@ const GiftCardStack = () => {
         }}
       />
       <GiftCards.Screen
-        name={GiftCardScreens.GIFT_CARD_DETAILS_MODAL}
-        component={GiftCardDetails}
+        name={GiftCardScreens.GIFT_CARD_AMOUNT}
+        component={Amount}
         options={{
-          ...TransitionPresets.ModalPresentationIOS,
+          gestureEnabled: false,
+        }}
+      />
+      <GiftCards.Screen
+        name={GiftCardScreens.GIFT_CARD_CONFIRM}
+        component={Confirm}
+        options={{
           gestureEnabled: false,
         }}
       />

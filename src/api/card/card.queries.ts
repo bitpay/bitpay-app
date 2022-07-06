@@ -291,7 +291,7 @@ const FETCH_REFERRAL_CODE = (token: string): GqlQueryParams => {
 const FETCH_REFERRED_USERS = (token: string): GqlQueryParams => {
   return {
     query: `
-      query START_GET_REFERRED_USERS($token:String!, $csrf:String) {
+      query FETCH_REFERRED_USERS($token:String!, $csrf:String) {
         user:bitpayUser(token:$token, csrf:$csrf) {
           referredUsers: getReferredUsers{
             givenName
@@ -308,14 +308,36 @@ const FETCH_REFERRED_USERS = (token: string): GqlQueryParams => {
   };
 };
 
+const FETCH_PIN_CHANGE_REQUEST_INFO = (
+  token: string,
+  id: string,
+): GqlQueryParams => {
+  return {
+    query: `
+      query FETCH_PIN_CHANGE_REQUEST_INFO($token:String!, $csrf:String, $cardId:String!) {
+        user:bitpayUser(token:$token, csrf:$csrf) {
+          card:debitCard(cardId:$cardId) {
+            pinChangeRequestInfo
+          }
+        }
+      }
+    `,
+    variables: {
+      token,
+      cardId: id,
+    },
+  };
+};
+
 const CardQueries = {
   FETCH_CARDS,
   FETCH_CARD,
   FETCH_OVERVIEW,
-  FETCH_SETTLED_TRANSACTIONS,
-  FETCH_VIRTUAL_CARD_IMAGE_URLS,
+  FETCH_PIN_CHANGE_REQUEST_INFO,
   FETCH_REFERRAL_CODE,
   FETCH_REFERRED_USERS,
+  FETCH_SETTLED_TRANSACTIONS,
+  FETCH_VIRTUAL_CARD_IMAGE_URLS,
 };
 
 export default CardQueries;

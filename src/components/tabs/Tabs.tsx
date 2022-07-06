@@ -1,11 +1,11 @@
-import React, {useState} from 'react';
+import React, {useMemo, useState} from 'react';
 import {View} from 'react-native';
 import styled from 'styled-components/native';
 import {ScreenGutter} from '../styled/Containers';
 import TabButton from './TabButton';
 
 interface TabsProps {
-  tabs: {
+  tabs: () => {
     title: React.ReactNode;
     content: React.ReactNode;
   }[];
@@ -18,19 +18,24 @@ const TabsHeader = styled.View`
   padding-right: ${ScreenGutter};
 `;
 
-const Tabs: React.FC<TabsProps> = props => {
+const Tabs: React.VFC<TabsProps> = props => {
+  const {tabs} = props;
   const [activeTabIdx, setActiveIdx] = useState(0);
 
-  if (!props.tabs || !props.tabs.length) {
-    return null;
-  }
+  const memoizedTabs = useMemo(() => {
+    const tabData = tabs();
 
-  const tabs = props.tabs.map((t, idx) => ({
-    ...t,
-    key: 'tab-' + idx,
-  }));
+    if (!tabData || !tabData.length) {
+      return [];
+    }
 
-  const TabButtons = tabs.map((d, idx) => (
+    return tabData.map((t, idx) => ({
+      ...t,
+      key: 'tab-' + idx,
+    }));
+  }, [tabs]);
+
+  const TabButtons = memoizedTabs.map((d, idx) => (
     <TabButton
       bold
       key={d.key}
@@ -44,7 +49,7 @@ const Tabs: React.FC<TabsProps> = props => {
     <View>
       <TabsHeader>{TabButtons}</TabsHeader>
 
-      <View>{tabs[activeTabIdx].content}</View>
+      <View>{memoizedTabs[activeTabIdx].content}</View>
     </View>
   );
 };

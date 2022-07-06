@@ -1,6 +1,10 @@
-import React, {useEffect, useState} from 'react';
-import styled from 'styled-components/native';
-import {useNavigation, useTheme} from '@react-navigation/native';
+import {StackScreenProps} from '@react-navigation/stack';
+import React from 'react';
+import {useTranslation} from 'react-i18next';
+import {View} from 'react-native';
+import styled, {useTheme} from 'styled-components/native';
+import FocusedStatusBar from '../../../components/focused-status-bar/FocusedStatusBar';
+import IntroButton from '../components/intro-button/IntroButton';
 import {
   BackgroundImage,
   Body,
@@ -9,26 +13,25 @@ import {
   Overlay,
   BodyContainer,
 } from '../components/styled/Styled';
+import {IntroStackParamList} from '../IntroStack';
+
 const lightImage = require('../../../../assets/img/intro/light/whats-new.png');
 const darkImage = require('../../../../assets/img/intro/dark/whats-new.png');
-import Animated, {Easing, FadeIn} from 'react-native-reanimated';
-import IntroButton from '../components/intro-button/IntroButton';
-import FocusedStatusBar from '../../../components/focused-status-bar/FocusedStatusBar';
-import {IntroAnimeDelay} from '../IntroStack';
 
 const IntroWhatsNewContainer = styled.View`
   flex: 1;
   background: ${({theme}) => theme.colors.background};
 `;
 
-const WhatsNew = () => {
-  const theme = useTheme();
-  const navigation = useNavigation();
-  const [delay, setDelay] = useState(0);
+type WhatsNewScreenProps = StackScreenProps<IntroStackParamList, 'WhatsNew'>;
 
-  useEffect(() => {
-    setDelay(IntroAnimeDelay);
-  }, []);
+const WhatsNew: React.VFC<WhatsNewScreenProps> = ({navigation}) => {
+  const {t} = useTranslation();
+  const theme = useTheme();
+
+  const onNext = () => {
+    navigation.navigate('CustomizeHome');
+  };
 
   return (
     <IntroWhatsNewContainer>
@@ -42,28 +45,22 @@ const WhatsNew = () => {
       <Overlay />
 
       <Body>
-        {delay ? (
-          <Animated.View
-            entering={FadeIn.delay(delay).easing(Easing.linear)}
-            style={{
-              flex: 1,
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              left: 0,
-              right: 0,
-            }}>
-            <BodyContainer>
-              <IntroText>Here’s what’s new.</IntroText>
-            </BodyContainer>
-          </Animated.View>
-        ) : null}
+        <View
+          style={{
+            flex: 1,
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+          }}>
+          <BodyContainer>
+            <IntroText>{t("Here's what's new.")}</IntroText>
+          </BodyContainer>
+        </View>
+
         <ButtonContainer>
-          <IntroButton
-            onPress={() => {
-              navigation.navigate('Intro', {screen: 'CustomizeHome'});
-            }}
-          />
+          <IntroButton onPress={onNext} />
         </ButtonContainer>
       </Body>
     </IntroWhatsNewContainer>

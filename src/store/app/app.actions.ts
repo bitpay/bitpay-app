@@ -1,18 +1,19 @@
 import {ColorSchemeName} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
+import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
-import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {Network} from '../../constants';
+import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {
   AppIdentity,
   HomeCarouselConfig,
   HomeCarouselLayoutType,
 } from './app.models';
+import {ModalId} from './app.reducer';
 import {AppActionType, AppActionTypes} from './app.types';
-import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
-import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 
 export const networkChanged = (network: Network): AppActionType => ({
   type: AppActionTypes.NETWORK_CHANGED,
@@ -25,6 +26,15 @@ export const successAppInit = (): AppActionType => ({
 
 export const failedAppInit = (): AppActionType => ({
   type: AppActionTypes.FAILED_APP_INIT,
+  payload: true,
+});
+
+export const setAppFirstOpenEventComplete = (): AppActionType => ({
+  type: AppActionTypes.SET_APP_FIRST_OPEN_EVENT_COMPLETE,
+});
+
+export const setAppFirstOpenEventDate = (): AppActionType => ({
+  type: AppActionTypes.SET_APP_FIRST_OPEN_DATE,
 });
 
 export const setIntroCompleted = (): AppActionType => ({
@@ -88,6 +98,27 @@ export const setNotificationsAccepted = (
 ): AppActionType => ({
   type: AppActionTypes.SET_NOTIFICATIONS_ACCEPTED,
   payload: notificationsAccepted,
+});
+
+export const setConfirmedTxAccepted = (
+  confirmedTxAccepted: boolean,
+): AppActionType => ({
+  type: AppActionTypes.SET_CONFIRMED_TX_ACCEPTED,
+  payload: confirmedTxAccepted,
+});
+
+export const setProductsUpdatesAccepted = (
+  productsUpdatesAccepted: boolean,
+): AppActionType => ({
+  type: AppActionTypes.SET_PRODUCTS_UPDATES_ACCEPTED,
+  payload: productsUpdatesAccepted,
+});
+
+export const setOffersAndPromotionsAccepted = (
+  offersAndPromotionsAccepted: boolean,
+): AppActionType => ({
+  type: AppActionTypes.SET_OFFERS_AND_PROMOTIONS_ACCEPTED,
+  payload: offersAndPromotionsAccepted,
 });
 
 export const showOnboardingFinishModal = (): AppActionType => ({
@@ -159,6 +190,11 @@ export const brazeContentCardsFetched = (
 ): AppActionType => ({
   type: AppActionTypes.BRAZE_CONTENT_CARDS_FETCHED,
   payload: {contentCards},
+});
+
+export const setBrazeEid = (eid: string): AppActionType => ({
+  type: AppActionTypes.SET_BRAZE_EID,
+  payload: eid,
 });
 
 export const showBiometricModal = (): AppActionType => ({
@@ -233,4 +269,9 @@ export const setShowKeyMigrationFailureModal = (
 
 export const setKeyMigrationFailureModalHasBeenShown = (): AppActionType => ({
   type: AppActionTypes.SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN,
+});
+
+export const activeModalUpdated = (id: ModalId | null): AppActionType => ({
+  type: AppActionTypes.ACTIVE_MODAL_UPDATED,
+  payload: id,
 });

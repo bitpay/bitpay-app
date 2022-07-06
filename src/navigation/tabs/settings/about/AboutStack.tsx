@@ -7,6 +7,7 @@ import {
 
 import SessionLogsScreen, {SessionLogsParamList} from './screens/SessionLog';
 import SendFeedback from './screens/SendFeedback';
+import {useTranslation} from 'react-i18next';
 
 export type AboutStackParamList = {
   SessionLogs: SessionLogsParamList | undefined;
@@ -21,6 +22,7 @@ export enum AboutScreens {
 const About = createStackNavigator<AboutStackParamList>();
 
 const AboutStack = () => {
+  const {t} = useTranslation();
   return (
     <About.Navigator
       screenOptions={{
@@ -31,7 +33,7 @@ const AboutStack = () => {
         name={AboutScreens.SESSION_LOGS}
         component={SessionLogsScreen}
         options={{
-          headerTitle: 'Session Logs',
+          headerTitle: t('Session Logs'),
         }}
       />
 
@@ -39,7 +41,7 @@ const AboutStack = () => {
         name={AboutScreens.SEND_FEEDBACK}
         component={SendFeedback}
         options={{
-          headerTitle: 'Send Feedback',
+          headerTitle: t('Send Feedback'),
         }}
       />
     </About.Navigator>

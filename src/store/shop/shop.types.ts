@@ -21,6 +21,7 @@ export enum ShopActionTypes {
   REDEEMED_GIFT_CARD = 'SHOP/REDEEMED_GIFT_CARD',
   SET_PURCHASED_GIFT_CARDS = 'SHOP/SET_PURCHASED_GIFT_CARDS',
   TOGGLED_GIFT_CARD_ARCHIVED_STATUS = 'SHOP/TOGGLED_GIFT_CARD_ARCHIVED_STATUS',
+  TOGGLED_SYNC_GIFT_CARD_PURCHASES_WITH_BITPAY_ID = 'SHOP/TOGGLED_SYNC_GIFT_CARD_PURCHASES_WITH_BITPAY_ID',
   CLEARED_GIFT_CARDS = 'SHOP/CLEARED_GIFT_CARDS',
 }
 
@@ -69,6 +70,9 @@ interface toggledGiftCardArchivedStatus {
     giftCard: GiftCard;
   };
 }
+interface toggledSyncGiftCardPurchasesWithBitPayId {
+  type: typeof ShopActionTypes.TOGGLED_SYNC_GIFT_CARD_PURCHASES_WITH_BITPAY_ID;
+}
 interface updatedEmailAddress {
   type: typeof ShopActionTypes.UPDATED_EMAIL_ADDRESS;
   payload: {
@@ -103,6 +107,7 @@ export type ShopActionType =
   | deletedUnsoldGiftCard
   | redeemedGiftCard
   | toggledGiftCardArchivedStatus
+  | toggledSyncGiftCardPurchasesWithBitPayId
   | updatedEmailAddress
   | updatedGiftCardStatus
   | updatedPhone

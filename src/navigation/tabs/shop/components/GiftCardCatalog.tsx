@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import debounce from 'lodash.debounce';
 import {useTheme} from 'styled-components/native';
 import pickBy from 'lodash.pickby';
@@ -34,9 +34,11 @@ import {useNavigation} from '@react-navigation/native';
 import {GiftCardScreens} from '../gift-card/GiftCardStack';
 import MyGiftCards from './MyGiftCards';
 import FilterSheet, {initializeCategoryMap} from './FilterSheet';
-import {useAppSelector} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {APP_NETWORK} from '../../../../constants/config';
 import GhostSvg from '../../../../../assets/img/ghost-cheeky.svg';
+import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../../store/app/app.effects';
 
 const Curations = ({
   curations,
@@ -120,6 +122,8 @@ export default ({
   categories: CategoryWithGiftCards[];
   onSelectedGiftCardsChange: (newNumSelectedGiftCards: number) => void;
 }) => {
+  const dispatch = useAppDispatch();
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const theme = useTheme();
   const giftCards = useAppSelector(
@@ -128,11 +132,7 @@ export default ({
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as CardConfig[]);
   const [isFilterSheetShown, setIsFilterSheetShown] = useState(false);
-  const [purchasedGiftCards] = useState(
-    giftCards
-      .filter(c => c.status === 'SUCCESS')
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-  );
+  const [purchasedGiftCards, setPurchasedGiftCards] = useState<GiftCard[]>([]);
   const [selectedCategoryMap, setSelectedCategoryMap] = useState(
     initializeCategoryMap(categories.map(category => category.displayName)),
   );
@@ -146,13 +146,21 @@ export default ({
   const numActiveGiftCards = activeGiftCards.length;
   const activeGiftCardsHeight = numActiveGiftCards * 62 + 215;
 
-  const updateSearchResults = debounce((text: string) => {
-    setSearchVal(text);
-    const newSearchResults = availableGiftCards.filter(giftCard =>
-      giftCard.displayName.toLowerCase().includes(text.toLocaleLowerCase()),
-    );
-    setSearchResults(newSearchResults);
-  }, 300);
+  const updateSearchResults = useMemo(
+    () =>
+      debounce((text: string) => {
+        setSearchVal(text);
+        const lowerCaseText = text.toLocaleLowerCase();
+        const newSearchResults = availableGiftCards.filter(giftCard =>
+          giftCard.displayName.toLowerCase().includes(lowerCaseText),
+        );
+        setSearchResults(newSearchResults);
+        dispatch(
+          logSegmentEvent('track', 'Searched Gift Cards', {search: text}, true),
+        );
+      }, 300),
+    [availableGiftCards, dispatch],
+  );
 
   const underlayColor = theme.dark ? '#121212' : '#fbfbff';
 
@@ -169,6 +177,18 @@ export default ({
       : 100;
     return yPos;
   };
+
+  useEffect(
+    () =>
+      setPurchasedGiftCards(
+        giftCards
+          .filter(c => c.status === 'SUCCESS')
+          .sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+          ),
+      ),
+    [giftCards],
+  );
 
   return (
     <>
@@ -202,7 +222,7 @@ export default ({
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <SearchBox
-                placeholder={'Search Gift Cards'}
+                placeholder={t('Search Gift Cards')}
                 theme={theme}
                 onBlur={onBlur}
                 onFocus={() => {
@@ -252,10 +272,10 @@ export default ({
                 <GhostSvg />
               </NoResultsImgContainer>
               <Paragraph>
-                {"We couldn't find a match for "}
+                {t("We couldn't find a match for ")}
                 <BaseText style={{fontWeight: 'bold'}}>{searchVal}</BaseText>.
               </Paragraph>
-              <Paragraph>Please try searching something else.</Paragraph>
+              <Paragraph>{t('Please try searching something else.')}</Paragraph>
             </NoResultsContainer>
           )}
         </HideableView>
@@ -263,11 +283,11 @@ export default ({
           {memoizedCurations}
           <SectionContainer>
             <SectionHeaderContainer>
-              <SectionHeader>All Gift Cards</SectionHeader>
+              <SectionHeader>{t('All Gift Cards')}</SectionHeader>
               <TouchableWithoutFeedback
                 onPress={() => setIsFilterSheetShown(!isFilterSheetShown)}>
                 <SectionHeaderButton>
-                  Filter
+                  {t('Filter')}
                   {numSelectedCategories ? ` (${numSelectedCategories})` : null}
                 </SectionHeaderButton>
               </TouchableWithoutFeedback>

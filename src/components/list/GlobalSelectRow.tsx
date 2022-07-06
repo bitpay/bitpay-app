@@ -11,6 +11,7 @@ import {GlobalSelectObj} from '../../navigation/wallet/screens/GlobalSelect';
 import styled from 'styled-components/native';
 import {LightBlack, NeutralSlate} from '../../styles/colors';
 import AngleRightSvg from '../../../assets/img/angle-right.svg';
+import {useTranslation} from 'react-i18next';
 
 interface Props {
   item: GlobalSelectObj;
@@ -28,6 +29,7 @@ export const AvailableWalletsPill = styled.View`
 `;
 
 const GlobalSelectRow = ({item, emit}: Props) => {
+  const {t} = useTranslation();
   const {currencyName, total, img} = item;
   return (
     <RowContainer activeOpacity={ActiveOpacity} onPress={() => emit(item)}>
@@ -39,7 +41,9 @@ const GlobalSelectRow = ({item, emit}: Props) => {
       </CurrencyColumn>
       {total > 1 && (
         <AvailableWalletsPill>
-          <H7 medium={true}>{total} Wallets</H7>
+          <H7 medium={true}>
+            {total} {t('Wallets')}
+          </H7>
         </AvailableWalletsPill>
       )}
 

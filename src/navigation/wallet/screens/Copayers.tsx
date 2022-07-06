@@ -24,6 +24,7 @@ import {WalletStackParamList} from '../WalletStack';
 import {White, SlateDark} from '../../../styles/colors';
 import {useNavigation} from '@react-navigation/native';
 import Button from '../../../components/button/Button';
+import {useTranslation} from 'react-i18next';
 
 const CircleCheckIcon = require('../../../../assets/img/circle-check.png');
 interface CopayersProps {
@@ -61,6 +62,7 @@ const CopayersContainer = styled(RowContainer)`
 `;
 
 const Copayers: React.FC<CopayersProps> = props => {
+  const {t} = useTranslation();
   const route = useRoute<RouteProp<WalletStackParamList, 'Copayers'>>();
   const {wallet, status} = route.params || {};
   const [walletStatus, setWalletStatus] = useState(status);
@@ -71,9 +73,13 @@ const Copayers: React.FC<CopayersProps> = props => {
   const [refreshing, setRefreshing] = useState(false);
 
   useLayoutEffect(() => {
+    const walletName =
+      wallet?.walletName ||
+      wallet?.credentials?.walletName ||
+      `${wallet?.currencyName} multisig`;
     navigation.setOptions({
       headerTitle: () => (
-        <HeaderTitle>{`${wallet?.currencyName} multisig [${wallet?.m}-${wallet?.n}]`}</HeaderTitle>
+        <HeaderTitle>{`${walletName} [${wallet?.m}-${wallet?.n}]`}</HeaderTitle>
       ),
     });
   }, [navigation]);
@@ -130,9 +136,9 @@ const Copayers: React.FC<CopayersProps> = props => {
       }>
       <JoinCopayersContainer>
         <Paragraph>
-          Share this invitation with the devices joining this account. Each
-          copayer has their own recovery phrase. To recover funds stored in a
-          Shared Wallet you will need the recovery phrase from each copayer.
+          {t(
+            'Share this invitation with the devices joining this account. Each copayer has their own recovery phrase. To recover funds stored in a Shared Wallet you will need the recovery phrase from each copayer.',
+          )}
         </Paragraph>
         <TouchableOpacity
           onPress={copyToClipboard}
@@ -145,7 +151,7 @@ const Copayers: React.FC<CopayersProps> = props => {
         </TouchableOpacity>
         <TitleContainer>
           <TextAlign align={'left'}>
-            <H6>Waiting for authorized copayers to join</H6>
+            <H6>{t('Waiting for authorized copayers to join')}</H6>
           </TextAlign>
         </TitleContainer>
         {walletStatus.copayers.map((item: any, index: any) => {
@@ -158,7 +164,9 @@ const Copayers: React.FC<CopayersProps> = props => {
         })}
 
         <ActionContainer>
-          <Button onPress={shareInvitation}>Share this Invitation</Button>
+          <Button onPress={shareInvitation}>
+            {t('Share this Invitation')}
+          </Button>
         </ActionContainer>
       </JoinCopayersContainer>
     </ScrollView>

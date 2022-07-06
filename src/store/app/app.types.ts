@@ -13,11 +13,14 @@ import {
 } from './app.models';
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
+import {ModalId} from './app.reducer';
 
 export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
   SUCCESS_APP_INIT = 'APP/SUCCESS_APP_INIT',
   FAILED_APP_INIT = 'APP/FAILED_APP_INIT',
+  SET_APP_FIRST_OPEN_EVENT_COMPLETE = 'APP/SET_APP_FIRST_OPEN_EVENT_COMPLETE',
+  SET_APP_FIRST_OPEN_DATE = 'APP/SET_APP_FIRST_OPEN_DATE',
   SET_INTRO_COMPLETED = 'APP/SET_INTRO_COMPLETED',
   SET_ONBOARDING_COMPLETED = 'APP/SET_ONBOARDING_COMPLETED',
   SHOW_ONGOING_PROCESS_MODAL = 'APP/SHOW_ONGOING_PROCESS_MODAL',
@@ -30,6 +33,9 @@ export enum AppActionTypes {
   SUCCESS_GENERATE_APP_IDENTITY = 'APP/SUCCESS_GENERATE_APP_IDENTITY',
   FAILED_GENERATE_APP_IDENTITY = 'APP/FAILED_GENERATE_APP_IDENTITY',
   SET_NOTIFICATIONS_ACCEPTED = 'APP/SET_NOTIFICATIONS_ACCEPTED',
+  SET_CONFIRMED_TX_ACCEPTED = 'APP/SET_CONFIRMED_TX_ACCEPTED',
+  SET_PRODUCTS_UPDATES_ACCEPTED = 'APP/SET_PRODUCTS_UPDATES_ACCEPTED',
+  SET_OFFERS_AND_PROMOTIONS_ACCEPTED = 'APP/SET_OFFERS_AND_PROMOTIONS_ACCEPTED',
   SHOW_ONBOARDING_FINISH_MODAL = 'APP/SHOW_ONBOARDING_FINISH_MODAL',
   DISMISS_ONBOARDING_FINISH_MODAL = 'APP/DISMISS_ONBOARDING_FINISH_MODAL',
   SHOW_DECRYPT_PASSWORD_MODAL = 'APP/SHOW_DECRYPT_PASSWORD_MODAL',
@@ -44,6 +50,7 @@ export enum AppActionTypes {
   SHOW_BLUR = 'APP/SHOW_BLUR',
   SHOW_PORTFOLIO_VALUE = 'APP/SHOW_PORTFOLIO_VALUE',
   BRAZE_CONTENT_CARDS_FETCHED = 'APP/BRAZE_CONTENT_CARDS_FETCHED',
+  SET_BRAZE_EID = 'APP/SET_BRAZE_EID',
   SHOW_BIOMETRIC_MODAL = 'APP/SHOW_BIOMETRIC_MODAL',
   DISMISS_BIOMETRIC_MODAL = 'APP/DISMISS_BIOMETRIC_MODAL',
   BIOMETRIC_LOCK_ACTIVE = 'APP/BIOMETRIC_LOCK_ACTIVE',
@@ -57,6 +64,7 @@ export enum AppActionTypes {
   SET_KEY_MIGRATION_FAILURE = 'APP/SET_KEY_MIGRATION_FAILURE',
   SET_SHOW_KEY_MIGRATION_FAILURE_MODAL = 'APP/SET_SHOW_KEY_MIGRATION_FAILURE_MODAL',
   SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN = 'APP/SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN',
+  ACTIVE_MODAL_UPDATED = 'APP/ACTIVE_MODAL_UPDATED',
 }
 
 interface NetworkChanged {
@@ -70,6 +78,15 @@ interface SuccessAppInit {
 
 interface FailedAppInit {
   type: typeof AppActionTypes.FAILED_APP_INIT;
+  payload: boolean;
+}
+
+interface setAppFirstOpenEventComplete {
+  type: typeof AppActionTypes.SET_APP_FIRST_OPEN_EVENT_COMPLETE;
+}
+
+interface setAppFirstOpenDate {
+  type: typeof AppActionTypes.SET_APP_FIRST_OPEN_DATE;
 }
 
 interface SetIntroCompleted {
@@ -123,6 +140,21 @@ interface FailedGenerateAppIdentity {
 
 interface SetNotificationsAccepted {
   type: typeof AppActionTypes.SET_NOTIFICATIONS_ACCEPTED;
+  payload: boolean;
+}
+
+interface SetConfirmedTxAccepted {
+  type: typeof AppActionTypes.SET_CONFIRMED_TX_ACCEPTED;
+  payload: boolean;
+}
+
+interface SetProductsUpdatesAccepted {
+  type: typeof AppActionTypes.SET_PRODUCTS_UPDATES_ACCEPTED;
+  payload: boolean;
+}
+
+interface SetOffersAndPromotionsAccepted {
+  type: typeof AppActionTypes.SET_OFFERS_AND_PROMOTIONS_ACCEPTED;
   payload: boolean;
 }
 
@@ -210,6 +242,11 @@ interface BrazeContentCardsFetched {
   payload: {contentCards: ContentCard[]};
 }
 
+interface SetBrazeEid {
+  type: typeof AppActionTypes.SET_BRAZE_EID;
+  payload: string;
+}
+
 interface SetHomeCarouselConfig {
   type: typeof AppActionTypes.SET_HOME_CAROUSEL_CONFIG;
   payload: HomeCarouselConfig[] | HomeCarouselConfig;
@@ -252,10 +289,17 @@ interface SetKeyMigrationFailureModalHasBeenShown {
   type: typeof AppActionTypes.SET_KEY_MIGRATION_FAILURE_MODAL_HAS_BEEN_SHOWN;
 }
 
+interface ActiveModalUpdated {
+  type: typeof AppActionTypes.ACTIVE_MODAL_UPDATED;
+  payload: ModalId | null;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
   | FailedAppInit
+  | setAppFirstOpenEventComplete
+  | setAppFirstOpenDate
   | SetIntroCompleted
   | SetOnboardingCompleted
   | ShowOnGoingProcessModal
@@ -268,6 +312,9 @@ export type AppActionType =
   | SuccessGenerateAppIdentity
   | FailedGenerateAppIdentity
   | SetNotificationsAccepted
+  | SetConfirmedTxAccepted
+  | SetProductsUpdatesAccepted
+  | SetOffersAndPromotionsAccepted
   | ShowOnboardingFinishModal
   | DismissOnboardingFinishModal
   | SetDefaultLanguage
@@ -282,6 +329,7 @@ export type AppActionType =
   | ShowBlur
   | ShowPortfolioValue
   | BrazeContentCardsFetched
+  | SetBrazeEid
   | ShowBiometricModal
   | DismissBiometricModal
   | BiometricLockActive
@@ -294,4 +342,5 @@ export type AppActionType =
   | SetKeyMigrationFailure
   | SetShowKeyMigrationFailureModal
   | SetKeyMigrationFailureModalHasBeenShown
-  | SetDefaultAltCurrency;
+  | SetDefaultAltCurrency
+  | ActiveModalUpdated;

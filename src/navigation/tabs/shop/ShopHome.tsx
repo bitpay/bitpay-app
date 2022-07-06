@@ -14,7 +14,6 @@ import {ShopOnline} from './components/ShopOnline';
 import {CardConfig, Category, GiftCard} from '../../../store/shop/shop.models';
 import {ShopEffects} from '../../../store/shop';
 import {
-  selectAvailableGiftCards,
   selectCategories,
   selectCategoriesAndCurations,
   selectCategoriesWithIntegrations,
@@ -24,6 +23,9 @@ import {APP_NETWORK} from '../../../constants/config';
 import {useAppSelector} from '../../../utils/hooks';
 import {StackScreenProps} from '@react-navigation/stack';
 import {ShopScreens, ShopStackParamList} from './ShopStack';
+import {useTranslation} from 'react-i18next';
+import {useFocusEffect} from '@react-navigation/native';
+import {logSegmentEvent} from '../../../store/app/app.effects';
 
 export enum ShopTabs {
   GIFT_CARDS = 'Gift Cards',
@@ -90,21 +92,28 @@ const getScrollViewHeight = (
 const ShopHome: React.FC<
   StackScreenProps<ShopStackParamList, ShopScreens.HOME>
 > = ({route}) => {
+  const {t} = useTranslation();
   const availableCardMap = useAppSelector(({SHOP}) => SHOP.availableCardMap);
   const supportedCardMap = useAppSelector(({SHOP}) => SHOP.supportedCardMap);
   const giftCards = useAppSelector(
     ({SHOP}) => SHOP.giftCards[APP_NETWORK],
   ) as GiftCard[];
-  const purchasedGiftCards = giftCards.filter(
-    giftCard => giftCard.status !== 'UNREDEEMED',
+  const purchasedGiftCards = useMemo(
+    () => giftCards.filter(giftCard => giftCard.status !== 'UNREDEEMED'),
+    [giftCards],
   );
-  const activeGiftCards = purchasedGiftCards.filter(
-    giftCard => !giftCard.archived,
+  const activeGiftCards = useMemo(
+    () => purchasedGiftCards.filter(giftCard => !giftCard.archived),
+    [purchasedGiftCards],
   );
   const categoriesAndCurations = useAppSelector(selectCategoriesAndCurations);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const availableGiftCards = useAppSelector(selectAvailableGiftCards);
+  const availableGiftCards = useMemo(
+    () =>
+      getGiftCardConfigList(availableCardMap).filter(config => !config.hidden),
+    [availableCardMap],
+  );
   const supportedGiftCards = useMemo(
     () => getGiftCardConfigList(supportedCardMap || availableCardMap),
     [supportedCardMap, availableCardMap],
@@ -221,6 +230,10 @@ const ShopHome: React.FC<
     curations,
   ]);
 
+  useFocusEffect(() => {
+    dispatch(logSegmentEvent('track', 'Viewed Shop Tab', undefined, true));
+  });
+
   return (
     <ShopContainer>
       <ScrollView ref={scrollViewRef} keyboardDismissMode="on-drag">
@@ -235,8 +248,8 @@ const ShopHome: React.FC<
                 if (tab.target) {
                   setActiveTab(
                     tab.target.includes(ShopTabs.GIFT_CARDS)
-                      ? ShopTabs.GIFT_CARDS
-                      : ShopTabs.SHOP_ONLINE,
+                      ? t('Gift Cards')
+                      : t('Shop Online'),
                   );
                 }
               },

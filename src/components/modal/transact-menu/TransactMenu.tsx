@@ -8,8 +8,9 @@ import {ActiveOpacity, SheetContainer} from '../../styled/Containers';
 import {BaseText, H6} from '../../styled/Text';
 import SheetModal from '../base/sheet/SheetModal';
 import Icons from './TransactMenuIcons';
-import analytics from '@segment/analytics-react-native';
-import {useAppSelector} from '../../../utils/hooks';
+import {useTranslation} from 'react-i18next';
+import {useAppDispatch} from '../../../utils/hooks';
+import {logSegmentEvent} from '../../../store/app/app.effects';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -77,25 +78,30 @@ interface TransactMenuItemProps {
 }
 
 const TransactModal = () => {
+  const {t} = useTranslation();
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
   const hideModal = () => setModalVisible(false);
   const showModal = () => setModalVisible(true);
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
-  );
+  const dispatch = useAppDispatch();
 
   const TransactMenuList: Array<TransactMenuItemProps> = [
     {
       id: 'buyCrypto',
       img: () => <Icons.BuyCrypto />,
-      title: 'Buy Crypto',
-      description: 'Buy crypto with cash',
+      title: t('Buy Crypto'),
+      description: t('Buy crypto with cash'),
       onPress: () => {
-        analytics.track('BitPay App - Clicked Buy Crypto', {
-          from: 'TransactMenu',
-          appUser: user?.eid || '',
-        });
+        dispatch(
+          logSegmentEvent(
+            'track',
+            'Clicked Buy Crypto',
+            {
+              context: 'TransactMenu',
+            },
+            true,
+          ),
+        );
         navigation.navigate('Wallet', {
           screen: 'Amount',
           params: {
@@ -109,6 +115,7 @@ const TransactModal = () => {
             },
             opts: {
               hideSendMax: true,
+              context: 'buyCrypto',
             },
           },
         });
@@ -117,21 +124,27 @@ const TransactModal = () => {
     {
       id: 'exchange',
       img: () => <Icons.Exchange />,
-      title: 'Exchange',
-      description: 'Swap crypto for another',
+      title: t('Exchange'),
+      description: t('Swap crypto for another'),
       onPress: () => {
-        analytics.track('BitPay App - Clicked Swap Crypto', {
-          from: 'TransactMenu',
-          appUser: user?.eid || '',
-        });
+        dispatch(
+          logSegmentEvent(
+            'track',
+            'Clicked Swap Crypto',
+            {
+              context: 'TransactMenu',
+            },
+            true,
+          ),
+        );
         navigation.navigate('SwapCrypto', {screen: 'Root'});
       },
     },
     {
       id: 'receive',
       img: () => <Icons.Receive />,
-      title: 'Receive',
-      description: 'Get crypto from another wallet',
+      title: t('Receive'),
+      description: t('Get crypto from another wallet'),
       onPress: () => {
         navigation.navigate('Wallet', {
           screen: 'GlobalSelect',
@@ -142,8 +155,8 @@ const TransactModal = () => {
     {
       id: 'send',
       img: () => <Icons.Send />,
-      title: 'Send',
-      description: 'Send crypto to another wallet',
+      title: t('Send'),
+      description: t('Send crypto to another wallet'),
       onPress: () => {
         navigation.navigate('Wallet', {
           screen: 'GlobalSelect',
@@ -154,17 +167,39 @@ const TransactModal = () => {
     {
       id: 'buyGiftCard',
       img: () => <Icons.BuyGiftCard />,
-      title: 'Buy Gift Cards',
-      description: 'Buy gift cards with crypto',
-      onPress: () => {},
+      title: t('Buy Gift Cards'),
+      description: t('Buy gift cards with crypto'),
+      onPress: () => {
+        navigation.navigate('Tabs', {
+          screen: 'Shop',
+          params: {
+            screen: 'Home',
+          },
+        });
+        dispatch(
+          logSegmentEvent(
+            'track',
+            'Clicked Buy Gift Cards',
+            {
+              context: 'TransactMenu',
+            },
+            true,
+          ),
+        );
+      },
     },
   ];
 
   const ScanButton: TransactMenuItemProps = {
     id: 'scan',
     img: () => <Icons.Scan />,
-    title: 'Scan',
+    title: t('Scan'),
     onPress: () => {
+      dispatch(
+        logSegmentEvent('track', 'Open Scanner', {
+          context: 'TransactMenu',
+        }),
+      );
       navigation.navigate('Scan', {screen: 'Root'});
     },
   };

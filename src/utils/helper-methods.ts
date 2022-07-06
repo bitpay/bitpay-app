@@ -1,6 +1,7 @@
 import {Currencies} from '../constants/currencies';
 import {Key} from '../store/wallet/wallet.models';
 import {ContactRowProps} from '../components/list/ContactRow';
+import {Network} from '../constants';
 
 export const sleep = async (duration: number) =>
   await new Promise(resolve => setTimeout(resolve, duration));
@@ -145,8 +146,14 @@ const getFormatter = (
   } = {},
 ) =>
   new Intl.NumberFormat('en-US', {
-    minimumSignificantDigits: getSignificantDigits(opts.currencyAbbreviation),
-    maximumSignificantDigits: getSignificantDigits(opts.currencyAbbreviation),
+    minimumSignificantDigits:
+      amount === 0
+        ? undefined
+        : getSignificantDigits(opts.currencyAbbreviation),
+    maximumSignificantDigits:
+      amount === 0
+        ? undefined
+        : getSignificantDigits(opts.currencyAbbreviation),
     style: 'currency',
     currency: currency.toLowerCase(),
     ...(opts.customPrecision === 'minimal' &&
@@ -269,3 +276,9 @@ export const formatFiatAmountObj = (
     .reduce((string, part) => string + part);
   return {amount: numberString, code};
 };
+
+export const convertToFiat = (
+  fiat: number,
+  hideWallet: boolean | undefined,
+  network: Network,
+) => (network === Network.mainnet && !hideWallet ? fiat : 0);

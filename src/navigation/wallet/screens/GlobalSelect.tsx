@@ -10,6 +10,7 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {
+  convertToFiat,
   formatFiatAmount,
   keyExtractor,
   sleep,
@@ -20,6 +21,7 @@ import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import _ from 'lodash';
 import KeyWalletsRow, {
+  KeyWallet,
   KeyWalletsRowProps,
 } from '../../../components/list/KeyWalletsRow';
 import merge from 'lodash.merge';
@@ -44,6 +46,9 @@ import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {ButtonState} from '../../../components/button/Button';
+import {IsERCToken} from '../../../store/wallet/utils/currency';
+import {useTranslation} from 'react-i18next';
+import {toFiat} from '../../../store/wallet/utils/wallet';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -115,6 +120,7 @@ export type GlobalSelectParamList = {
       message?: string;
       feePerKb?: number;
       destinationTag?: string;
+      showERC20Tokens?: boolean;
     };
   };
   amount?: number;
@@ -176,6 +182,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   modalContext,
   livenetOnly,
 }) => {
+  const {t} = useTranslation();
   const route = useRoute<RouteProp<WalletStackParamList, 'GlobalSelect'>>();
   let {context, recipient, amount} = route.params || {};
   if (useAsModal && modalContext) {
@@ -183,7 +190,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   }
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const {keys, rates} = useAppSelector(({WALLET}) => WALLET);
   const tokens = useAppSelector(({WALLET}: RootState) => {
     return {
       ...BitpaySupportedTokenOpts,
@@ -199,7 +206,8 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   const [walletSelectModalVisible, setWalletSelectModalVisible] =
     useState(false);
   // object to pass to select modal
-  const [keyWallets, setKeysWallets] = useState<KeyWalletsRowProps[]>();
+  const [keyWallets, setKeysWallets] =
+    useState<KeyWalletsRowProps<KeyWallet>[]>();
 
   const NON_BITPAY_SUPPORTED_TOKENS = Object.keys(tokens).filter(
     token => !SUPPORTED_CURRENCIES.includes(token),
@@ -221,7 +229,10 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
   if (recipient && ['coinbase', 'contact', 'scanner'].includes(context)) {
     if (recipient?.currency) {
       wallets = wallets.filter(
-        wallet => wallet.currencyAbbreviation === recipient?.currency,
+        wallet =>
+          wallet.currencyAbbreviation === recipient?.currency ||
+          (recipient?.opts?.showERC20Tokens &&
+            dispatch(IsERCToken(wallet.currencyAbbreviation))),
       );
     }
     if (recipient?.network) {
@@ -269,22 +280,47 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
               .map(wallet => {
                 const {
                   balance,
+                  hideWallet,
                   currencyAbbreviation,
-                  credentials: {network},
+                  credentials: {network, walletName: fallbackName},
+                  walletName,
                 } = wallet;
                 return merge(cloneDeep(wallet), {
                   cryptoBalance: balance.crypto,
                   cryptoLockedBalance: balance.cryptoLocked,
                   fiatBalance: formatFiatAmount(
-                    balance.fiat,
+                    convertToFiat(
+                      dispatch(
+                        toFiat(
+                          balance.sat,
+                          defaultAltCurrency.isoCode,
+                          currencyAbbreviation,
+                          rates,
+                        ),
+                      ),
+                      hideWallet,
+                      network,
+                    ),
                     defaultAltCurrency.isoCode,
                   ),
                   fiatLockedBalance: formatFiatAmount(
-                    balance.fiatLocked,
+                    convertToFiat(
+                      dispatch(
+                        toFiat(
+                          balance.satLocked,
+                          defaultAltCurrency.isoCode,
+                          currencyAbbreviation,
+                          rates,
+                        ),
+                      ),
+                      hideWallet,
+                      network,
+                    ),
                     defaultAltCurrency.isoCode,
                   ),
                   currencyAbbreviation: currencyAbbreviation.toUpperCase(),
                   network,
+                  walletName: walletName || fallbackName,
                 });
               }),
           };
@@ -388,7 +424,10 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
           setButtonState('loading');
         } else {
           dispatch(
-            startOnGoingProcessModal(OnGoingProcessMessages.CREATING_TXP),
+            startOnGoingProcessModal(
+              // t('Creating Transaction')
+              t(OnGoingProcessMessages.CREATING_TXP),
+            ),
           );
         }
         const {txDetails, txp} = await dispatch(
@@ -431,7 +470,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
             enableBackdropDismiss: false,
             actions: [
               {
-                text: 'OK',
+                text: t('OK'),
                 action: () => {
                   if (setButtonState) {
                     setButtonState(undefined);
@@ -522,7 +561,9 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
         {[...supportedCoins, ...otherCoins].length === 0 &&
           context === 'send' && (
             <NoWalletsMsg>
-              There are no wallets with funds available to use this feature.
+              {t(
+                'There are no wallets with funds available to use this feature.',
+              )}
             </NoWalletsMsg>
           )}
         <SheetModal
@@ -531,7 +572,7 @@ const GlobalSelect: React.FC<GlobalSelectProps> = ({
           <WalletSelectMenuContainer>
             <WalletSelectMenuHeaderContainer>
               <TextAlign align={'center'}>
-                <H4>Select a wallet</H4>
+                <H4>{t('Select a wallet')}</H4>
               </TextAlign>
             </WalletSelectMenuHeaderContainer>
             <WalletSelectMenuBodyContainer>

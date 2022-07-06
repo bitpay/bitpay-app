@@ -1,9 +1,9 @@
 import * as yup from 'yup';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useRef, useState} from 'react';
+import React, {useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
-import {Keyboard, TextInput, View} from 'react-native';
+import {Keyboard, View} from 'react-native';
 import {useDispatch} from 'react-redux';
 import styled from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
@@ -24,6 +24,7 @@ import {
   getPhoneCountryCodes,
   PhoneCountryCode,
 } from '../../../../../lib/gift-cards/gift-card';
+import {t} from 'i18next';
 
 function getPhoneMask(phoneCountryCode: string) {
   const usMask = '([000]) [000]-[0000]';
@@ -41,7 +42,6 @@ const AreaCodeContainer = styled.View`
   padding-left: 15px;
   padding-right: 10px;
   height: 37px;
-  width: 80px;
 `;
 
 const AreaCode = styled(BaseText)`
@@ -59,12 +59,14 @@ export const showCountryCodeRequiredSheet = (
   const {countryCode, name} = phoneCountryCode;
   return AppActions.showBottomNotificationModal({
     type: 'info',
-    title: `${countryCode === 'US' ? 'U.S.' : countryCode} phone required`,
-    message: `Only a ${name} phone number can be used for this purchase.`,
+    title: t('phone required', {
+      countryCode: countryCode === 'US' ? 'U.S.' : countryCode,
+    }),
+    message: t('Only a phone number can be used for this purchase.', {name}),
     enableBackdropDismiss: true,
     actions: [
       {
-        text: 'GOT IT',
+        text: t('GOT IT'),
         action: () => undefined,
         primary: true,
       },
@@ -72,12 +74,6 @@ export const showCountryCodeRequiredSheet = (
   });
 };
 
-const basePhoneSchema = yup.string().required();
-const usPhoneSchema = basePhoneSchema.min(10, 'Must be exactly 10 digits');
-const intlPhoneSchema = basePhoneSchema.max(
-  15,
-  'Must be no longer than 15 digits',
-);
 interface PhoneFormFieldValues {
   phone: string;
 }
@@ -85,8 +81,13 @@ interface PhoneFormFieldValues {
 const EnterPhone = ({
   route,
 }: StackScreenProps<GiftCardStackParamList, 'EnterPhone'>) => {
+  const basePhoneSchema = yup.string().required();
+  const usPhoneSchema = basePhoneSchema.min(10, t('Must be exactly 10 digits'));
+  const intlPhoneSchema = basePhoneSchema.max(
+    15,
+    t('Must be no longer than 15 digits'),
+  );
   const dispatch = useDispatch();
-  const phoneRef = useRef<TextInput>(null);
   const {cardConfig, onSubmit, initialPhone, initialPhoneCountryInfo} =
     route.params;
 
@@ -156,8 +157,9 @@ const EnterPhone = ({
     <>
       <AuthFormContainer>
         <AuthFormParagraph>
-          Your phone number will be used to secure your gift card with 2-factor
-          authentication.
+          {t(
+            'Your phone number will be used to secure your gift card with 2-factor authentication.',
+          )}
         </AuthFormParagraph>
         <AuthRowContainer>
           <Controller
@@ -166,7 +168,7 @@ const EnterPhone = ({
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 placeholder={getPlaceholder(selectedPhoneCountryCode.phone)}
-                label={'PHONE NUMBER'}
+                label={t('PHONE NUMBER')}
                 onBlur={onBlur}
                 onChangeText={(formatted: string, extracted?: string) =>
                   onChange(extracted)
@@ -195,7 +197,7 @@ const EnterPhone = ({
                 )}
                 error={
                   errors.phone?.message
-                    ? 'Please enter a valid phone number.'
+                    ? t('Please enter a valid phone number.')
                     : undefined
                 }
                 mask={getPhoneMask(selectedPhoneCountryCode.phone)}
@@ -203,7 +205,6 @@ const EnterPhone = ({
                 value={value}
                 type={'phone'}
                 returnKeyType="next"
-                onSubmitEditing={() => phoneRef.current?.focus()}
                 blurOnSubmit={false}
               />
             )}
@@ -213,7 +214,7 @@ const EnterPhone = ({
 
         <AuthActionsContainer>
           <PrimaryActionContainer>
-            <Button onPress={onFormSubmit}>Continue</Button>
+            <Button onPress={onFormSubmit}>{t('Continue')}</Button>
           </PrimaryActionContainer>
         </AuthActionsContainer>
       </AuthFormContainer>

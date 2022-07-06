@@ -53,7 +53,10 @@ import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import DefaultSvg from '../../../../assets/img/currencies/default.svg';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
 import {publishAndSign} from '../../../store/wallet/effects/send/send';
@@ -65,6 +68,7 @@ import {
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
+import {useTranslation} from 'react-i18next';
 
 const TxsDetailsContainer = styled.View`
   flex: 1;
@@ -189,6 +193,7 @@ const TimelineList = ({actions}: {actions: TxActions[]}) => {
 };
 
 const TransactionProposalDetails = () => {
+  const {t} = useTranslation();
   const {
     params: {transaction, wallet, key},
   } = useRoute<RouteProp<WalletStackParamList, 'TransactionProposalDetails'>>();
@@ -252,12 +257,12 @@ const TransactionProposalDetails = () => {
       dispatch(
         showBottomNotificationModal({
           type: 'warning',
-          title: 'Warning!',
-          message: 'Are you sure you want to remove this transaction?',
+          title: t('Warning!'),
+          message: t('Are you sure you want to remove this transaction?'),
           enableBackdropDismiss: true,
           actions: [
             {
-              text: 'YES',
+              text: t('YES'),
               action: async () => {
                 await RemoveTxProposal(wallet, txs);
                 dispatch(startUpdateWalletStatus({key, wallet}));
@@ -266,7 +271,7 @@ const TransactionProposalDetails = () => {
               primary: true,
             },
             {
-              text: 'CANCEL',
+              text: t('CANCEL'),
               action: () => {},
               primary: true,
             },
@@ -283,12 +288,12 @@ const TransactionProposalDetails = () => {
       dispatch(
         showBottomNotificationModal({
           type: 'warning',
-          title: 'Warning!',
-          message: 'Are you sure you want to reject this transaction?',
+          title: t('Warning!'),
+          message: t('Are you sure you want to reject this transaction?'),
           enableBackdropDismiss: true,
           actions: [
             {
-              text: 'YES',
+              text: t('YES'),
               action: async () => {
                 await RejectTxProposal(wallet, txs);
                 dispatch(startUpdateWalletStatus({key, wallet}));
@@ -297,7 +302,7 @@ const TransactionProposalDetails = () => {
               primary: true,
             },
             {
-              text: 'CANCEL',
+              text: t('CANCEL'),
               action: () => {},
               primary: true,
             },
@@ -344,13 +349,13 @@ const TransactionProposalDetails = () => {
                 {!txs.fiatRateStr
                   ? '...'
                   : isTestnet
-                  ? 'Test Only - No Value'
+                  ? t('Test Only - No Value')
                   : txs.fiatRateStr}
               </SubTitle>
             ) : null}
 
             {!NotZeroAmountEth(txs.amount, currencyAbbreviation) ? (
-              <SubTitle>Interaction with contract</SubTitle>
+              <SubTitle>{t('Interaction with contract')}</SubTitle>
             ) : null}
           </>
 
@@ -361,16 +366,16 @@ const TransactionProposalDetails = () => {
               {IsShared(wallet) ? (
                 <Banner
                   type={'info'}
-                  description={
-                    '* A payment proposal can be deleted if 1) you are the creator, and no other copayer has signed, or 2) 10 minutes have passed since the proposal was created.'
-                  }
+                  description={t(
+                    '* A payment proposal can be deleted if 1) you are the creator, and no other copayer has signed, or 2) 10 minutes have passed since the proposal was created.',
+                  )}
                 />
               ) : null}
               <Button
                 onPress={removePaymentProposal}
                 buttonType={'link'}
                 buttonStyle={'danger'}>
-                <Link>Delete payment proposal</Link>
+                <Link>{t('Delete payment proposal')}</Link>
               </Button>
             </>
           ) : null}
@@ -384,12 +389,12 @@ const TransactionProposalDetails = () => {
               onPress={rejectPaymentProposal}
               buttonType={'link'}
               buttonStyle={'danger'}>
-              <Link>Reject Payment Proposal</Link>
+              <Link>{t('Reject Payment Proposal')}</Link>
             </Button>
           ) : null}
 
           <DetailContainer>
-            <H6>DETAILS</H6>
+            <H6>{t('DETAILS')}</H6>
           </DetailContainer>
           <Hr />
 
@@ -397,18 +402,18 @@ const TransactionProposalDetails = () => {
             <>
               <DetailContainer>
                 <DetailRow>
-                  <H7>Miner fee</H7>
+                  <H7>{t('Miner fee')}</H7>
                   <DetailColumn>
                     <H6>{txs.feeStr}</H6>
                     {!isTestnet ? (
                       <H7>
                         {txs.feeFiatStr}{' '}
                         {txs.feeRateStr
-                          ? '(' + txs.feeRateStr + ' of total amount)'
+                          ? '(' + txs.feeRateStr + t(' of total amount') + ')'
                           : null}
                       </H7>
                     ) : (
-                      <SubTitle>Test Only - No Value</SubTitle>
+                      <SubTitle>{t('Test Only - No Value')}</SubTitle>
                     )}
                   </DetailColumn>
                 </DetailRow>
@@ -422,7 +427,7 @@ const TransactionProposalDetails = () => {
           <>
             <DetailContainer>
               <DetailRow>
-                <H7>Sending from</H7>
+                <H7>{t('Sending from')}</H7>
                 <SendToPill
                   icon={getIcon()}
                   description={wallet.credentials.walletName}
@@ -435,7 +440,7 @@ const TransactionProposalDetails = () => {
             <>
               <DetailContainer>
                 <DetailRow>
-                  <H7>Created by</H7>
+                  <H7>{t('Created by')}</H7>
 
                   <H7>{txs.creatorName}</H7>
                 </DetailRow>
@@ -446,7 +451,7 @@ const TransactionProposalDetails = () => {
 
           <DetailContainer>
             <DetailRow>
-              <H7>Date</H7>
+              <H7>{t('Date')}</H7>
               <H7>
                 {GetAmFormatDate((txs.ts || txs.createdOn || txs.time) * 1000)}
               </H7>
@@ -458,7 +463,7 @@ const TransactionProposalDetails = () => {
           {txs.message ? (
             <DetailContainer>
               <DetailRow>
-                <H7>Memo</H7>
+                <H7>{t('Memo')}</H7>
                 <H7>{txs.message}</H7>
               </DetailRow>
             </DetailContainer>
@@ -471,7 +476,7 @@ const TransactionProposalDetails = () => {
           {!IsMultisigEthInfo(wallet) && txs.actionsList?.length ? (
             <>
               <TimelineContainer>
-                <H7>Timeline</H7>
+                <H7>{t('Timeline')}</H7>
 
                 <TimelineList actions={txs.actionsList} />
               </TimelineContainer>
@@ -487,18 +492,30 @@ const TransactionProposalDetails = () => {
       txs.pendingForUs &&
       (IsShared(wallet) || txs.multisigContractAddress) ? (
         <SwipeButton
-          title={'Slide to send'}
+          title={t('Slide to send')}
           forceReset={resetSwipeButton}
           onSwipeComplete={async () => {
             try {
               dispatch(
                 startOnGoingProcessModal(
-                  OnGoingProcessMessages.SENDING_PAYMENT,
+                  //  t('Sending Payment')
+                  t(OnGoingProcessMessages.SENDING_PAYMENT),
                 ),
               );
               await sleep(400);
               await dispatch(publishAndSign({txp: txs, key, wallet}));
               dispatch(dismissOnGoingProcessModal());
+              dispatch(
+                logSegmentEvent(
+                  'track',
+                  'Sent Crypto',
+                  {
+                    context: 'Transaction Proposal Details',
+                    coin: currencyAbbreviation || '',
+                  },
+                  true,
+                ),
+              );
               await sleep(400);
               setShowPaymentSentModal(true);
             } catch (err) {
@@ -514,7 +531,7 @@ const TransactionProposalDetails = () => {
                   await showErrorMessage(
                     CustomErrorMessage({
                       errMsg: BWCErrorMessage(err),
-                      title: 'Uh oh, something went wrong',
+                      title: t('Uh oh, something went wrong'),
                     }),
                   );
               }

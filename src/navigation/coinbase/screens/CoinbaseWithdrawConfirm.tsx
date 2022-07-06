@@ -32,6 +32,7 @@ import {createWalletAddress} from '../../../store/wallet/effects/address/address
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {sleep} from '../../../utils/helper-methods';
+import {useTranslation} from 'react-i18next';
 
 export interface CoinbaseWithdrawConfirmParamList {
   accountId: string;
@@ -40,6 +41,7 @@ export interface CoinbaseWithdrawConfirmParamList {
 }
 
 const CoinbaseWithdrawConfirm = () => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route =
@@ -108,7 +110,10 @@ const CoinbaseWithdrawConfirm = () => {
         currency: currency,
       };
       dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT),
+        startOnGoingProcessModal(
+          // t('Sending Payment')
+          t(OnGoingProcessMessages.SENDING_PAYMENT),
+        ),
       );
       await sleep(400);
       dispatch(coinbaseSendTransaction(accountId, buildTx, code));
@@ -122,12 +127,12 @@ const CoinbaseWithdrawConfirm = () => {
       dispatch(
         showBottomNotificationModal({
           type: 'error',
-          title: 'Error sending transaction',
+          title: t('Error sending transaction'),
           message: errMsg,
           enableBackdropDismiss: false,
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {
                 dispatch(coinbaseClearSendTransactionStatus());
                 navigation.goBack();
@@ -138,23 +143,25 @@ const CoinbaseWithdrawConfirm = () => {
         }),
       );
     },
-    [dispatch, navigation],
+    [dispatch, navigation, t],
   );
 
   const askForTwoFactor = useCallback(() => {
     Alert.prompt(
-      'Enter 2FA code',
-      'Two Factor verification code is required for sending this transaction.',
+      t('Enter 2FA code'),
+      t(
+        'Two Factor verification code is required for sending this transaction.',
+      ),
       [
         {
-          text: 'Cancel',
+          text: t('Cancel'),
           onPress: () => {
             showError(sendError);
           },
           style: 'cancel',
         },
         {
-          text: 'OK',
+          text: t('OK'),
           onPress: code => {
             dispatch(coinbaseClearSendTransactionStatus());
             sendTransaction(code);
@@ -165,7 +172,7 @@ const CoinbaseWithdrawConfirm = () => {
       '',
       'number-pad',
     );
-  }, [dispatch, showError, sendError, sendTransaction]);
+  }, [dispatch, showError, sendError, sendTransaction, t]);
 
   const generateReceiveAddress = useCallback(
     async (newWallet?: Wallet) => {
@@ -193,7 +200,7 @@ const CoinbaseWithdrawConfirm = () => {
 
       if (!apiLoading && sendStatus === 'success') {
         dispatch(dismissOnGoingProcessModal());
-        await sleep(500);
+        await sleep(1000);
         setShowPaymentSentModal(true);
       }
 
@@ -220,11 +227,11 @@ const CoinbaseWithdrawConfirm = () => {
         <Header>Summary</Header>
         <SendingTo recipient={recipientData} hr />
         <SendingFrom sender={sendingFrom} hr />
-        <Amount description={'Total'} amount={total} />
+        <Amount description={t('Total')} amount={total} />
       </DetailsList>
 
       <SwipeButton
-        title={'Slide to withdraw'}
+        title={t('Slide to withdraw')}
         forceReset={resetSwipeButton}
         onSwipeComplete={sendTransaction}
       />

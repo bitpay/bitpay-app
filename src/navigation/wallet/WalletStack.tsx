@@ -68,6 +68,7 @@ import ClearEncryptPassword, {
   ClearEncryptPasswordParamList,
 } from './screens/ClearEncryptPassword';
 import PayProConfirmTwoFactor from './screens/send/confirm/PayProConfirmTwoFactor';
+import {useTranslation} from 'react-i18next';
 
 export type WalletStackParamList = {
   CurrencySelection: CurrencySelectionParamList;
@@ -76,7 +77,7 @@ export type WalletStackParamList = {
   RecoveryPhrase: RecoveryPhraseParamList;
   VerifyPhrase: VerifyPhraseParamList;
   TermsOfUse: TermsOfUseParamList;
-  KeyOverview: {id: string};
+  KeyOverview: {id: string; context?: 'createNewMultisigKey'};
   KeyExplanation: undefined;
   KeySettings: {key: Key; context?: 'createEncryptPassword'};
   UpdateKeyOrWalletName: {
@@ -84,7 +85,11 @@ export type WalletStackParamList = {
     wallet?: {walletId: string; walletName: string | undefined};
     context: 'key' | 'wallet';
   };
-  WalletDetails: {walletId: string; key: Key; skipInitializeHistory?: boolean};
+  WalletDetails: {
+    walletId: string;
+    key?: Key;
+    skipInitializeHistory?: boolean;
+  };
   WalletSettings: {walletId: string; key: Key};
   CreationOptions: undefined;
   Import: ImportParamList | undefined;
@@ -171,6 +176,7 @@ export enum WalletScreens {
 const Wallet = createStackNavigator<WalletStackParamList>();
 
 const WalletStack = () => {
+  const {t} = useTranslation();
   return (
     <>
       <Wallet.Navigator
@@ -178,7 +184,9 @@ const WalletStack = () => {
         initialRouteName={WalletScreens.BACKUP_KEY}>
         <Wallet.Screen
           options={{
-            headerTitle: () => <HeaderTitle>Select Currencies</HeaderTitle>,
+            headerTitle: () => (
+              <HeaderTitle>{t('Select Currencies')}</HeaderTitle>
+            ),
             headerTitleAlign: 'center',
             gestureEnabled: false,
           }}
@@ -264,7 +272,7 @@ const WalletStack = () => {
         <Wallet.Screen name={WalletScreens.CONFIRM} component={Confirm} />
         <Wallet.Screen
           options={{
-            headerTitle: () => <HeaderTitle>Add Funds</HeaderTitle>,
+            headerTitle: () => <HeaderTitle>{t('Add Funds')}</HeaderTitle>,
             ...TransitionPresets.ModalPresentationIOS,
           }}
           name={WalletScreens.DEBIT_CARD_CONFIRM}
@@ -272,7 +280,9 @@ const WalletStack = () => {
         />
         <Wallet.Screen
           options={{
-            headerTitle: () => <HeaderTitle>Confirm Payment</HeaderTitle>,
+            headerTitle: () => (
+              <HeaderTitle>{t('Confirm Payment')}</HeaderTitle>
+            ),
             ...TransitionPresets.ModalPresentationIOS,
           }}
           name={WalletScreens.GIFT_CARD_CONFIRM}
@@ -280,14 +290,18 @@ const WalletStack = () => {
         />
         <Wallet.Screen
           options={{
-            headerTitle: () => <HeaderTitle>Confirm Payment</HeaderTitle>,
+            headerTitle: () => (
+              <HeaderTitle>{t('Confirm Payment')}</HeaderTitle>
+            ),
           }}
           name={WalletScreens.PAY_PRO_CONFIRM}
           component={PayProConfirm}
         />
         <Wallet.Screen
           options={{
-            headerTitle: () => <HeaderTitle>Two-Step Verification</HeaderTitle>,
+            headerTitle: () => (
+              <HeaderTitle>{t('Two-Step Verification')}</HeaderTitle>
+            ),
           }}
           name={WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR}
           component={PayProConfirmTwoFactor}
@@ -295,7 +309,7 @@ const WalletStack = () => {
         <Wallet.Screen
           options={{
             headerTitle: () => (
-              <HeaderTitle>Create Multisig Wallet</HeaderTitle>
+              <HeaderTitle>{t('Create Multisig Wallet')}</HeaderTitle>
             ),
           }}
           name={WalletScreens.CREATE_MULTISIG}
@@ -303,14 +317,16 @@ const WalletStack = () => {
         />
         <Wallet.Screen
           options={{
-            headerTitle: () => <HeaderTitle>Join Shared Wallet</HeaderTitle>,
+            headerTitle: () => (
+              <HeaderTitle>{t('Join Shared Wallet')}</HeaderTitle>
+            ),
           }}
           name={WalletScreens.JOIN_MULTISIG}
           component={JoinMultisig}
         />
         <Wallet.Screen
           options={{
-            headerTitle: () => <HeaderTitle>Invitation</HeaderTitle>,
+            headerTitle: () => <HeaderTitle>{t('Invitation')}</HeaderTitle>,
           }}
           name={WalletScreens.COPAYERS}
           component={Copayers}
@@ -342,14 +358,16 @@ const WalletStack = () => {
         />
         <Wallet.Screen
           options={{
-            headerTitle: () => <HeaderTitle>Select a currency</HeaderTitle>,
+            headerTitle: () => (
+              <HeaderTitle>{t('Select a currency')}</HeaderTitle>
+            ),
           }}
           name={WalletScreens.GLOBAL_SELECT}
           component={GlobalSelect}
         />
         <Wallet.Screen
           options={{
-            headerTitle: () => <HeaderTitle>Select a key</HeaderTitle>,
+            headerTitle: () => <HeaderTitle>{t('Select a key')}</HeaderTitle>,
           }}
           name={WalletScreens.KEY_GLOBAL_SELECT}
           component={KeyGlobalSelect}
@@ -380,7 +398,7 @@ const WalletStack = () => {
         <Wallet.Screen
           options={{
             headerTitle: () => (
-              <HeaderTitle>Clear Encrypt Password</HeaderTitle>
+              <HeaderTitle>{t('Clear Encrypt Password')}</HeaderTitle>
             ),
           }}
           name={WalletScreens.CLEAR_ENCRYPT_PASSWORD}

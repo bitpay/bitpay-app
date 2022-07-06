@@ -6,83 +6,105 @@ import {
   ExtractBitPayUriAddress,
   GetPayProUrl,
 } from '../wallet/utils/decode-uri';
+import isEqual from 'lodash.isequal';
 import {
-  IsValidPayPro,
-  isValidWalletConnectUri,
-  isValidSimplexUri,
-  isValidWyreUri,
-  IsValidBitcoinUri,
-  IsValidBitcoinCashUri,
-  IsValidEthereumUri,
-  IsValidRippleUri,
-  IsValidDogecoinUri,
-  IsValidLitecoinUri,
-  IsValidBitPayUri,
-  IsValidBitcoinCashUriWithLegacyAddress,
   IsValidBitcoinAddress,
   IsValidBitcoinCashAddress,
-  IsValidEthereumAddress,
-  IsValidRippleAddress,
-  IsValidDogecoinAddress,
-  IsValidLitecoinAddress,
+  IsValidBitcoinCashUri,
+  IsValidBitcoinCashUriWithLegacyAddress,
+  IsValidBitcoinUri,
   IsValidBitPayInvoice,
+  IsValidBitPayUri,
+  IsValidDogecoinAddress,
+  IsValidDogecoinUri,
+  IsValidEthereumAddress,
+  IsValidEthereumUri,
   IsValidImportPrivateKey,
   IsValidJoinCode,
+  IsValidLitecoinAddress,
+  IsValidLitecoinUri,
+  IsValidPayPro,
+  IsValidRippleAddress,
+  IsValidRippleUri,
+  isValidSimplexUri,
+  isValidWalletConnectUri,
+  isValidWyreUri,
 } from '../wallet/utils/validations';
-import {APP_NAME} from '../../constants/config';
+import {APP_DEEPLINK_PREFIX, APP_NAME} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
 import {
   simplexIncomingData,
   wyrePaymentData,
 } from '../buy-crypto/buy-crypto.models';
-import analytics from '@segment/analytics-react-native';
 import {LogActions} from '../log';
-import {startOnGoingProcessModal} from '../app/app.effects';
+import {logSegmentEvent, startOnGoingProcessModal} from '../app/app.effects';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
-import {dismissOnGoingProcessModal} from '../app/app.actions';
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+} from '../app/app.actions';
 import {sleep} from '../../utils/helper-methods';
 import {BwcProvider} from '../../lib/bwc';
 import {
   createProposalAndBuildTxDetails,
   handleCreateTxProposalError,
 } from '../wallet/effects/send/send';
-import {showBottomNotificationModal} from '../app/app.actions';
-import {Wallet} from '../wallet/wallet.models';
+import {Key, Wallet} from '../wallet/wallet.models';
 import {FormatAmount} from '../wallet/effects/amount/amount';
 import {ButtonState} from '../../components/button/Button';
-import {InteractionManager} from 'react-native';
+import {InteractionManager, Linking} from 'react-native';
+import {
+  BitcoreLibs,
+  bitcoreLibs,
+  GetAddressNetwork,
+} from '../wallet/effects/address/address';
+import {Network} from '../../constants';
+import BitPayIdApi from '../../api/bitpay';
+import axios from 'axios';
+import {t} from 'i18next';
+import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
 
 export const incomingData =
-  (data: string, wallet?: Wallet): Effect<Promise<void>> =>
+  (
+    data: string,
+    opts?: {wallet?: Wallet; context?: string; name?: string},
+  ): Effect<Promise<void>> =>
   async dispatch => {
+    if (data.includes(APP_DEEPLINK_PREFIX)) {
+      data = data.replace(APP_DEEPLINK_PREFIX, '');
+      // wait to close blur
+      await sleep(200);
+    }
+
+    const coin = opts?.wallet?.currencyAbbreviation?.toLowerCase();
     try {
       if (IsValidBitPayInvoice(data)) {
-        dispatch(goToPayPro(data));
+        dispatch(handleUnlock(data));
       }
       // Paypro
       else if (IsValidPayPro(data)) {
         dispatch(goToPayPro(data));
         // Bitcoin  URI
       } else if (IsValidBitcoinUri(data)) {
-        dispatch(handleBitcoinUri(data, wallet));
+        dispatch(handleBitcoinUri(data, opts?.wallet));
         // Bitcoin Cash URI
       } else if (IsValidBitcoinCashUri(data)) {
-        dispatch(handleBitcoinCashUri(data, wallet));
+        dispatch(handleBitcoinCashUri(data, opts?.wallet));
         // Bitcoin Cash URI using Bitcoin Core legacy address
       } else if (IsValidBitcoinCashUriWithLegacyAddress(data)) {
-        dispatch(handleBitcoinCashUriLegacyAddress(data, wallet));
+        dispatch(handleBitcoinCashUriLegacyAddress(data, opts?.wallet));
         // Ethereum URI
       } else if (IsValidEthereumUri(data)) {
-        dispatch(handleEthereumUri(data, wallet));
+        dispatch(handleEthereumUri(data, opts?.wallet));
         // Ripple URI
       } else if (IsValidRippleUri(data)) {
-        dispatch(handleRippleUri(data, wallet));
+        dispatch(handleRippleUri(data, opts?.wallet));
         // Dogecoin URI
       } else if (IsValidDogecoinUri(data)) {
-        dispatch(handleDogecoinUri(data, wallet));
+        dispatch(handleDogecoinUri(data, opts?.wallet));
         // Litecoin URI
       } else if (IsValidLitecoinUri(data)) {
-        dispatch(handleLitecoinUri(data, wallet));
+        dispatch(handleLitecoinUri(data, opts?.wallet));
         // Wallet Connect URI
       } else if (isValidWalletConnectUri(data)) {
         handleWalletConnectUri(data);
@@ -94,25 +116,25 @@ export const incomingData =
         dispatch(handleWyreUri(data));
         // BitPay URI
       } else if (IsValidBitPayUri(data)) {
-        dispatch(handleBitPayUri(data, wallet));
+        dispatch(handleBitPayUri(data, opts?.wallet));
         // Plain Address (Bitcoin)
       } else if (IsValidBitcoinAddress(data)) {
-        dispatch(handlePlainAddress(data, 'btc', wallet));
+        dispatch(handlePlainAddress(data, coin || 'btc', opts));
         // Plain Address (Bitcoin Cash)
       } else if (IsValidBitcoinCashAddress(data)) {
-        dispatch(handlePlainAddress(data, 'bch', wallet));
+        dispatch(handlePlainAddress(data, coin || 'bch', opts));
         // Address (Ethereum)
       } else if (IsValidEthereumAddress(data)) {
-        dispatch(handlePlainAddress(data, 'eth', wallet));
+        dispatch(handlePlainAddress(data, coin || 'eth', opts));
         // Address (Ripple)
       } else if (IsValidRippleAddress(data)) {
-        dispatch(handlePlainAddress(data, 'xrp', wallet));
+        dispatch(handlePlainAddress(data, coin || 'xrp', opts));
         // Plain Address (Doge)
       } else if (IsValidDogecoinAddress(data)) {
-        dispatch(handlePlainAddress(data, 'doge', wallet));
+        dispatch(handlePlainAddress(data, coin || 'doge', opts));
         // Plain Address (Litecoin)
       } else if (IsValidLitecoinAddress(data)) {
-        dispatch(handlePlainAddress(data, 'ltc', wallet));
+        dispatch(handlePlainAddress(data, coin || 'ltc', opts));
         // Import Private Key
       } else if (IsValidImportPrivateKey(data)) {
         goToImport(data);
@@ -147,7 +169,10 @@ const goToPayPro =
   (data: string): Effect =>
   async dispatch => {
     dispatch(
-      startOnGoingProcessModal(OnGoingProcessMessages.FETCHING_PAYMENT_OPTIONS),
+      startOnGoingProcessModal(
+        //  t('Fetching payment options...')
+        t(OnGoingProcessMessages.FETCHING_PAYMENT_OPTIONS),
+      ),
     );
 
     const payProUrl = GetPayProUrl(data);
@@ -171,18 +196,150 @@ const goToPayPro =
       dispatch(
         showBottomNotificationModal({
           type: 'warning',
-          title: 'Something went wrong',
+          title: t('Something went wrong'),
           message: e?.message,
           enableBackdropDismiss: true,
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {},
               primary: true,
             },
           ],
         }),
       );
+    }
+  };
+
+const handleUnlock =
+  (data: string): Effect =>
+  async dispatch => {
+    const invoiceId = data.split('/i/')[1].split('?')[0];
+    const network = data.includes('test.bitpay.com')
+      ? Network.testnet
+      : Network.mainnet;
+    const result = await dispatch(unlockInvoice(invoiceId, network));
+
+    if (result === 'unlockSuccess') {
+      dispatch(goToPayPro(data));
+      return;
+    }
+
+    const {host} = new URL(GetPayProUrl(data));
+    try {
+      const invoice = await axios.get(
+        `https://${host}/invoiceData/${invoiceId}`,
+      );
+      if (invoice) {
+        dispatch(goToPayPro(data));
+        return;
+      }
+    } catch {}
+    switch (result) {
+      case 'pairingRequired':
+        navigationRef.navigate('Auth', {
+          screen: 'Login',
+          params: {
+            onLoginSuccess: () => {
+              navigationRef.navigate('Tabs', {screen: 'Home'});
+              dispatch(incomingData(data));
+            },
+          },
+        });
+        break;
+
+      // needs verification - send to bitpay id verify
+      case 'userShopperNotFound':
+      case 'tierNotMet':
+        dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: t('Connect Your BitPay ID'),
+            enableBackdropDismiss: false,
+            message: t(
+              'To complete this payment, please login with your BitPay ID.',
+            ),
+            actions: [
+              {
+                text: t('CONTINUE'),
+                action: () => {
+                  Linking.openURL(
+                    `https://${host}/id/verify?context=unlockAppV&id=${invoiceId}`,
+                  );
+                },
+              },
+              {
+                text: t('Cancel'),
+                action: () => {},
+              },
+            ],
+          }),
+        );
+        break;
+      default:
+        dispatch(showBottomNotificationModal(GeneralError()));
+        break;
+    }
+  };
+
+const unlockInvoice =
+  (invoiceId: string, network: Network): Effect<Promise<string>> =>
+  async (dispatch, getState) => {
+    const {BITPAY_ID, APP} = getState();
+
+    if (APP.network !== network) {
+      return 'networkMismatch';
+    }
+
+    const token = BITPAY_ID.apiToken[APP.network];
+
+    const isPaired = !!token;
+    if (!isPaired) {
+      return 'pairingRequired';
+    }
+
+    try {
+      const tokens = (await BitPayIdApi.getInstance()
+        .request('getProductTokens', token)
+        .then(res => {
+          if (res.data.error) {
+            throw new Error(res.data.error);
+          }
+          return res.data;
+        })) as [{facade: string; token: string; name: string}];
+
+      const {token: userShopperToken} =
+        tokens.find(({facade}: {facade: string}) => facade === 'userShopper') ||
+        {};
+
+      if (!userShopperToken) {
+        return 'userShopperNotFound';
+      }
+
+      try {
+        const unlockInvoiceResponse = await BitPayIdApi.getInstance()
+          .request('unlockInvoice', userShopperToken, {invoiceId})
+          .then(res => {
+            if (res.data.error) {
+              throw new Error(res.data.error);
+            }
+
+            return res.data;
+          });
+
+        const {data} = unlockInvoiceResponse as {data: any};
+        const {meetsRequiredTier} = data;
+
+        if (!meetsRequiredTier) {
+          return 'tierNotMet';
+        }
+
+        return 'unlockSuccess';
+      } catch (e) {
+        return 'invalidInvoice';
+      }
+    } catch (e) {
+      return 'somethingWentWrong';
     }
   };
 
@@ -205,12 +362,23 @@ const goToConfirm =
       destinationTag?: string;
     };
   }): Effect<Promise<void>> =>
-  async (dispatch, getState) => {
+  async dispatch => {
     try {
       if (!wallet) {
         navigationRef.navigate('Wallet', {
           screen: 'GlobalSelect',
-          params: {context: 'scanner', recipient, amount},
+          params: {
+            context: 'scanner',
+            recipient: {
+              ...recipient,
+              ...{
+                opts: {
+                  showERC20Tokens: recipient.currency.toLowerCase() === 'eth', // no wallet selected - if ETH address show token wallets in next view
+                },
+              },
+            },
+            amount,
+          },
         });
         return Promise.resolve();
       }
@@ -218,7 +386,12 @@ const goToConfirm =
       if (setButtonState) {
         setButtonState('loading');
       } else {
-        dispatch(startOnGoingProcessModal(OnGoingProcessMessages.CREATING_TXP));
+        dispatch(
+          startOnGoingProcessModal(
+            // t('Creating Transaction')
+            t(OnGoingProcessMessages.CREATING_TXP),
+          ),
+        );
       }
 
       const {txDetails, txp} = await dispatch(
@@ -282,7 +455,12 @@ export const goToAmount =
     opts: urlOpts,
   }: {
     coin: string;
-    recipient: {type: string; address: string; currency: string};
+    recipient: {
+      type: string;
+      address: string;
+      currency: string;
+      network?: Network;
+    };
     wallet?: Wallet;
     opts?: {
       message?: string;
@@ -290,11 +468,21 @@ export const goToAmount =
       destinationTag?: string;
     };
   }): Effect<Promise<void>> =>
-  async (dispatch, getState) => {
+  async dispatch => {
     if (!wallet) {
       navigationRef.navigate('Wallet', {
         screen: 'GlobalSelect',
-        params: {context: 'scanner', recipient},
+        params: {
+          context: 'scanner',
+          recipient: {
+            ...recipient,
+            ...{
+              opts: {
+                showERC20Tokens: recipient.currency.toLowerCase() === 'eth', // no wallet selected - if ETH address show token wallets in next view
+              },
+            },
+          },
+        },
       });
       return Promise.resolve();
     }
@@ -321,42 +509,71 @@ export const goToAmount =
 const handleBitPayUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   (dispatch, getState) => {
-    console.log('Incoming-data: BitPay URI');
-    const address = ExtractBitPayUriAddress(data);
-    const params: URLSearchParams = new URLSearchParams(
-      data.replace(`bitpay:${address}`, ''),
-    );
-    const message = params.get('message') || undefined;
-    let feePerKb;
-    const coin = params.get('coin')!;
+    console.log('### Incoming-data: BitPay URI');
 
-    if (params.get('gasPrice')) {
-      feePerKb = Number(params.get('gasPrice'));
-    }
-    const recipient = {
-      type: 'address',
-      currency: coin,
-      address,
-    };
-
-    if (!params.get('amount')) {
-      dispatch(goToAmount({coin, recipient, wallet, opts: {message}}));
-    } else {
-      const amount = Number(params.get('amount'));
-      dispatch(
-        goToConfirm({
-          recipient,
-          amount,
-          wallet,
-          opts: {message, feePerKb},
-        }),
+    // From Braze (push notifications)
+    if (data.indexOf('bitpay://wallet?') === 0) {
+      const params: URLSearchParams = new URLSearchParams(
+        data.replace('bitpay://wallet?', ''),
       );
+      const walletIdHashed = params.get('walletId')!;
+      const tokenAddress = params.get('tokenAddress');
+      const multisigContractAddress = params.get('multisigContractAddress');
+
+      const keys = Object.values(getState().WALLET.keys);
+
+      const fullWalletObj = findWallet(
+        keys,
+        walletIdHashed,
+        tokenAddress,
+        multisigContractAddress,
+      );
+
+      if (fullWalletObj) {
+        navigationRef.navigate('Wallet', {
+          screen: WalletScreens.WALLET_DETAILS,
+          params: {
+            walletId: fullWalletObj.credentials.walletId,
+          },
+        });
+      }
+    } else {
+      const address = ExtractBitPayUriAddress(data);
+      const params: URLSearchParams = new URLSearchParams(
+        data.replace(`bitpay:${address}`, ''),
+      );
+      const message = params.get('message') || undefined;
+      let feePerKb;
+      const coin = params.get('coin')!;
+
+      if (params.get('gasPrice')) {
+        feePerKb = Number(params.get('gasPrice'));
+      }
+      const recipient = {
+        type: 'address',
+        currency: coin,
+        address,
+      };
+
+      if (!params.get('amount')) {
+        dispatch(goToAmount({coin, recipient, wallet, opts: {message}}));
+      } else {
+        const amount = Number(params.get('amount'));
+        dispatch(
+          goToConfirm({
+            recipient,
+            amount,
+            wallet,
+            opts: {message, feePerKb},
+          }),
+        );
+      }
     }
   };
 
 const handleBitcoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
-  (dispatch, getState) => {
+  dispatch => {
     console.log('Incoming-data: Bitcoin URI');
     const coin = 'btc';
     const parsed = BwcProvider.getInstance().getBitcore().URI(data);
@@ -366,6 +583,7 @@ const handleBitcoinUri =
       type: 'address',
       currency: coin,
       address,
+      network: address && GetAddressNetwork(address, coin),
     };
     if (parsed.r) {
       dispatch(goToPayPro(parsed.r));
@@ -379,7 +597,7 @@ const handleBitcoinUri =
 
 const handleBitcoinCashUri =
   (data: string, wallet?: Wallet): Effect<void> =>
-  (dispatch, getState) => {
+  dispatch => {
     console.log('Incoming-data: BitcoinCash URI');
     const coin = 'bch';
     const parsed = BwcProvider.getInstance().getBitcoreCash().URI(data);
@@ -395,6 +613,7 @@ const handleBitcoinCashUri =
       type: 'address',
       currency: coin,
       address,
+      network: address && GetAddressNetwork(address, coin),
     };
     if (parsed.r) {
       dispatch(goToPayPro(parsed.r));
@@ -408,7 +627,7 @@ const handleBitcoinCashUri =
 
 const handleBitcoinCashUriLegacyAddress =
   (data: string, wallet?: Wallet): Effect<void> =>
-  (dispatch, getState) => {
+  dispatch => {
     console.log('Incoming-data: Bitcoin Cash URI with legacy address');
     const coin = 'bch';
     const parsed = BwcProvider.getInstance()
@@ -436,6 +655,7 @@ const handleBitcoinCashUriLegacyAddress =
       type: 'address',
       currency: coin,
       address,
+      network: address && GetAddressNetwork(address, coin),
     };
     if (parsed.r) {
       dispatch(goToPayPro(parsed.r));
@@ -449,7 +669,7 @@ const handleBitcoinCashUriLegacyAddress =
 
 const handleEthereumUri =
   (data: string, wallet?: Wallet): Effect<void> =>
-  (dispatch, getState) => {
+  dispatch => {
     console.log('Incoming-data: Ethereum URI');
     const coin = 'eth';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
@@ -482,7 +702,7 @@ const handleEthereumUri =
 
 const handleRippleUri =
   (data: string, wallet?: Wallet): Effect<void> =>
-  (dispatch, getState) => {
+  dispatch => {
     console.log('Incoming-data: Ripple URI');
     const coin = 'xrp';
     const amountParam = /[\?\&]amount=(\d+([\,\.]\d+)?)/i;
@@ -516,7 +736,7 @@ const handleRippleUri =
 
 const handleDogecoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
-  (dispatch, getState) => {
+  dispatch => {
     console.log('Incoming-data: Dogecoin URI');
     const coin = 'doge';
     const parsed = BwcProvider.getInstance().getBitcoreDoge().URI(data);
@@ -527,6 +747,7 @@ const handleDogecoinUri =
       type: 'address',
       currency: coin,
       address,
+      network: address && GetAddressNetwork(address, coin),
     };
 
     if (parsed.r) {
@@ -541,7 +762,7 @@ const handleDogecoinUri =
 
 const handleLitecoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
-  (dispatch, getState) => {
+  dispatch => {
     console.log('Incoming-data: Litecoin URI');
     const coin = 'ltc';
     const parsed = BwcProvider.getInstance().getBitcoreLtc().URI(data);
@@ -552,6 +773,7 @@ const handleLitecoinUri =
       type: 'address',
       currency: coin,
       address,
+      network: address && GetAddressNetwork(address, coin),
     };
     if (parsed.r) {
       dispatch(goToPayPro(parsed.r));
@@ -592,18 +814,22 @@ const handleSimplexUri =
       }),
     );
 
-    const {APP, BITPAY_ID, BUY_CRYPTO} = getState();
-    const user = BITPAY_ID.user[APP.network];
+    const {BUY_CRYPTO} = getState();
     const order = BUY_CRYPTO.simplex[paymentId];
 
-    analytics.track('BitPay App - Successfully Complete Crypto Purchase ', {
-      exchange: 'simplex',
-      walletId: userId || '',
-      fiatAmount: order?.fiat_total_amount || '',
-      fiatCurrency: order?.fiat_total_amount_currency || '',
-      coin: order?.coin || '',
-      appUser: user?.eid || '',
-    });
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Successfully Complete Crypto Purchase',
+        {
+          exchange: 'simplex',
+          fiatAmount: order?.fiat_total_amount || '',
+          fiatCurrency: order?.fiat_total_amount_currency || '',
+          coin: order?.coin || '',
+        },
+        true,
+      ),
+    );
 
     navigationRef.navigate('ExternalServicesSettings', {
       screen: 'SimplexSettings',
@@ -615,7 +841,7 @@ const handleSimplexUri =
 
 const handleWyreUri =
   (data: string): Effect<void> =>
-  (dispatch, getState) => {
+  dispatch => {
     dispatch(LogActions.info('Incoming-data (redirect): Wyre URL: ' + data));
 
     if (data.indexOf(APP_NAME + '://wyreError') >= 0) {
@@ -669,17 +895,19 @@ const handleWyreUri =
       }),
     );
 
-    const {APP, BITPAY_ID} = getState();
-    const user = BITPAY_ID.user[APP.network];
-
-    analytics.track('BitPay App - Successfully Complete Crypto Purchase ', {
-      exchange: 'wyre',
-      walletId: walletId || '',
-      fiatAmount: sourceAmount || '',
-      fiatCurrency: sourceCurrency || '',
-      coin: destCurrency || '',
-      appUser: user?.eid || '',
-    });
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Successfully Complete Crypto Purchase',
+        {
+          exchange: 'wyre',
+          fiatAmount: sourceAmount || '',
+          fiatCurrency: sourceCurrency || '',
+          coin: destCurrency || '',
+        },
+        true,
+      ),
+    );
 
     navigationRef.navigate('ExternalServicesSettings', {
       screen: 'WyreSettings',
@@ -699,15 +927,24 @@ const handleWalletConnectUri = (data: string) => {
 };
 
 const handlePlainAddress =
-  (address: string, coin: string, wallet?: Wallet): Effect<void> =>
+  (
+    address: string,
+    coin: string,
+    opts?: {wallet?: Wallet; context?: string; name?: string},
+  ): Effect<void> =>
   dispatch => {
     console.log(`Incoming-data: ${coin} plain address`);
+    const network = Object.keys(bitcoreLibs).includes(coin)
+      ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
+      : undefined; // There is no way to tell if an eth address is kovan or livenet so let's skip the network filter
     const recipient = {
-      type: 'address',
+      type: opts?.context || 'address',
+      name: opts?.name,
       currency: coin,
       address,
+      network,
     };
-    dispatch(goToAmount({coin, recipient, wallet}));
+    dispatch(goToAmount({coin, recipient, wallet: opts?.wallet}));
   };
 
 const goToImport = (importQrCodeData: string): void => {
@@ -749,3 +986,32 @@ const goToJoinWallet =
       });
     }
   };
+
+const findWallet = (
+  keys: Key[],
+  walletIdHashed: string,
+  tokenAddress: string | null,
+  multisigContractAddress?: string | null,
+) => {
+  let walletIdHash;
+  const sjcl = BwcProvider.getInstance().getSJCL();
+
+  const wallets = Object.values(keys).flatMap(k => k.wallets);
+
+  const wallet = wallets.find(w => {
+    if (tokenAddress || multisigContractAddress) {
+      const walletId = w.credentials.walletId;
+      const lastHyphenPosition = walletId.lastIndexOf('-');
+      const walletIdWithoutTokenAddress = walletId.substring(
+        0,
+        lastHyphenPosition,
+      );
+      walletIdHash = sjcl.hash.sha256.hash(walletIdWithoutTokenAddress);
+    } else {
+      walletIdHash = sjcl.hash.sha256.hash(w.credentials.walletId);
+    }
+    return isEqual(walletIdHashed, sjcl.codec.hex.fromBits(walletIdHash));
+  });
+
+  return wallet;
+};

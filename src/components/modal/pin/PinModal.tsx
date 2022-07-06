@@ -1,24 +1,25 @@
-import Modal from 'react-native-modal';
-import React, {useState, useEffect, useCallback} from 'react';
-import {AppActions} from '../../../store/app';
-import PinDots from './PinDots';
-import haptic from '../../haptic-feedback/haptic';
-import {BwcProvider} from '../../../lib/bwc';
-import isEqual from 'lodash.isequal';
-import {sleep} from '../../../utils/helper-methods';
-import VirtualKeyboard from '../../../components/virtual-keyboard/VirtualKeyboard';
-import styled, {useTheme} from 'styled-components/native';
-import {Animated, TouchableOpacity, View} from 'react-native';
-import {H5} from '../../styled/Text';
-import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
-import {BitPay, White} from '../../../styles/colors';
-import BitPayLogo from '../../../../assets/img/logos/bitpay-white.svg';
-import {ActiveOpacity} from '../../styled/Containers';
-import Back from '../../back/Back';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {useNavigation} from '@react-navigation/native';
+import isEqual from 'lodash.isequal';
+import React, {useState, useEffect, useCallback, useRef} from 'react';
+import {useTranslation} from 'react-i18next';
+import {Animated, TouchableOpacity, View} from 'react-native';
+import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import styled, {useTheme} from 'styled-components/native';
+import BitPayLogo from '../../../../assets/img/logos/bitpay-white.svg';
+import VirtualKeyboard from '../../../components/virtual-keyboard/VirtualKeyboard';
+import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
+import {BwcProvider} from '../../../lib/bwc';
+import {AppActions} from '../../../store/app';
+import {BitPay, White} from '../../../styles/colors';
+import {sleep} from '../../../utils/helper-methods';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import Back from '../../back/Back';
+import haptic from '../../haptic-feedback/haptic';
+import {ActiveOpacity} from '../../styled/Containers';
+import {H5} from '../../styled/Text';
+import BaseModal from '../base/BaseModal';
+import PinDots from './PinDots';
 
 export interface PinModalConfig {
   type: 'set' | 'check';
@@ -66,11 +67,12 @@ export const hashPin = (pin: string[]) => {
 };
 
 const Pin = gestureHandlerRootHOC(() => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const {type, context} = useAppSelector(({APP}) => APP.pinModalConfig) || {};
   const [pin, setPin] = useState<Array<string | undefined>>([]);
   const [headerMargin, setHeaderMargin] = useState<string | undefined>();
-  const [message, setMessage] = useState('Please enter your PIN');
+  const [message, setMessage] = useState<string>(t('Please enter your PIN'));
   const [shakeDots, setShakeDots] = useState(false);
   const insets = useSafeAreaInsets();
   const [showBackButton, setShowBackButton] = useState<boolean>();
@@ -84,7 +86,7 @@ const Pin = gestureHandlerRootHOC(() => {
 
   useEffect(() => {
     setHeaderMargin(type === 'set' ? '10%' : '40%');
-  }, []);
+  }, [type]);
 
   // checkPin
   const currentPin = useAppSelector(({APP}) => APP.currentPin);
@@ -97,11 +99,11 @@ const Pin = gestureHandlerRootHOC(() => {
   >([]);
 
   const reset = useCallback(() => {
-    setMessage('Please enter your PIN');
+    setMessage(t('Please enter your PIN'));
     setFirstPinEntered([]);
     setAttempts(0);
     setPin([]);
-  }, [setMessage, setFirstPinEntered, setAttempts, setPin]);
+  }, [setMessage, setFirstPinEntered, setAttempts, setPin, t]);
 
   const checkPin = useCallback(
     (pinToCheck: Array<string>) => {
@@ -115,12 +117,12 @@ const Pin = gestureHandlerRootHOC(() => {
         dispatch(AppActions.dismissPinModal()); // Correct PIN dismiss modal
       } else {
         setShakeDots(true);
-        setMessage('Incorrect PIN, try again');
+        setMessage(t('Incorrect PIN, try again'));
         setPin([]);
         setAttempts(_attempts => _attempts + 1); // Incorrect increment attempts
       }
     },
-    [dispatch, setShakeDots, setMessage, setPin, setAttempts, currentPin],
+    [dispatch, setShakeDots, setMessage, setPin, setAttempts, currentPin, t],
   );
 
   const gotoCreateKey = async () => {
@@ -130,6 +132,8 @@ const Pin = gestureHandlerRootHOC(() => {
     await sleep(10);
     dispatch(AppActions.dismissPinModal());
   };
+  const gotoCreateKeyRef = useRef(gotoCreateKey);
+  gotoCreateKeyRef.current = gotoCreateKey;
 
   const setCurrentPin = useCallback(
     (newPin: Array<string>) => {
@@ -144,7 +148,7 @@ const Pin = gestureHandlerRootHOC(() => {
         dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
 
         if (context === 'onboarding') {
-          gotoCreateKey();
+          gotoCreateKeyRef.current();
         } else {
           dispatch(AppActions.dismissPinModal());
         }
@@ -153,7 +157,7 @@ const Pin = gestureHandlerRootHOC(() => {
         reset();
       }
     },
-    [dispatch, setShakeDots, reset, firstPinEntered],
+    [dispatch, setShakeDots, reset, firstPinEntered, context],
   );
 
   const handleCellPress = useCallback(
@@ -207,7 +211,7 @@ const Pin = gestureHandlerRootHOC(() => {
         if (firstPinEntered.length) {
           setCurrentPin(newPin as Array<string>);
         } else {
-          setMessage('Confirm your PIN');
+          setMessage(t('Confirm your PIN'));
           setFirstPinEntered(newPin);
           setPin([]);
         }
@@ -225,6 +229,7 @@ const Pin = gestureHandlerRootHOC(() => {
       firstPinEntered.length,
       pinBannedUntil,
       type,
+      t,
     ],
   );
 
@@ -243,11 +248,13 @@ const Pin = gestureHandlerRootHOC(() => {
         const m = Math.floor(totalSecs / 60);
         const s = totalSecs % 60;
         setMessage(
-          `Try again in ${('0' + m).slice(-2)}:${('0' + s).slice(-2)}`,
+          t('Try again in ', {
+            time: ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2),
+          }),
         );
       }, 1000);
     },
-    [dispatch, setMessage, reset],
+    [dispatch, setMessage, reset, t],
   );
 
   useEffect(() => {
@@ -320,7 +327,8 @@ const PinModal: React.FC = () => {
   const theme = useTheme();
 
   return (
-    <Modal
+    <BaseModal
+      id={'pin'}
       isVisible={isVisible}
       coverScreen={true}
       backdropTransitionOutTiming={0}
@@ -333,7 +341,7 @@ const PinModal: React.FC = () => {
       useNativeDriver={true}
       style={{margin: 0}}>
       <Pin />
-    </Modal>
+    </BaseModal>
   );
 };
 

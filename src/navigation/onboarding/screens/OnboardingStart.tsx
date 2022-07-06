@@ -1,8 +1,10 @@
 import {useNavigation} from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useLayoutEffect, useRef, useState} from 'react';
+import React, {useCallback, useLayoutEffect, useRef, useState} from 'react';
+import {useTranslation} from 'react-i18next';
+import {ScrollView, View} from 'react-native';
 import Carousel, {Pagination} from 'react-native-snap-carousel';
-import {useDispatch, useSelector} from 'react-redux';
+import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -10,18 +12,19 @@ import {
   ActionContainer,
   CtaContainerAbsolute,
   HeaderRightContainer,
+  HEIGHT,
   WIDTH,
 } from '../../../components/styled/Containers';
 import {Link} from '../../../components/styled/Text';
-import {RootState} from '../../../store';
+import {askForTrackingPermissionAndEnableSdks} from '../../../store/app/app.effects';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
 import {Action, LuckySevens} from '../../../styles/colors';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingImage} from '../components/Containers';
 import OnboardingSlide from '../components/OnboardingSlide';
+import ScrollHint, {ScrollHintContainer} from '../components/ScrollHint';
 import {OnboardingStackParamList} from '../OnboardingStack';
-import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import {askForTrackingPermissionAndEnableSdks} from '../../../store/app/app.effects';
-import {useThemeType} from '../../../utils/hooks/useThemeType';
 
 type OnboardingStartScreenProps = StackScreenProps<
   OnboardingStackParamList,
@@ -110,21 +113,53 @@ const LinkText = styled(Link)`
   font-size: 18px;
 `;
 
-const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
-  const dispatch = useDispatch();
+// estimated a number, tweak if neccessary based on the content length
+const scrollEnabledForSmallScreens = HEIGHT < 700;
+
+const OnboardingStart: React.VFC<OnboardingStartScreenProps> = () => {
+  const {t} = useTranslation();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const themeType = useThemeType();
-  const isPaired = useSelector<RootState, boolean>(({APP, BITPAY_ID}) => {
-    return !!BITPAY_ID.apiToken[APP.network];
-  });
+  const isPaired = useAppSelector(
+    ({APP, BITPAY_ID}) => !!BITPAY_ID.apiToken[APP.network],
+  );
 
   useAndroidBackHandler(() => true);
 
-  const askForTrackingThenNavigate = async (cb: () => void) => {
-    haptic('impactLight');
-    await dispatch(askForTrackingPermissionAndEnableSdks());
-    cb();
+  const askForTrackingThenNavigate = useCallback(
+    async (cb: () => void) => {
+      haptic('impactLight');
+      await dispatch(askForTrackingPermissionAndEnableSdks(true));
+      cb();
+    },
+    [dispatch],
+  );
+
+  const onLoginPress = () => {
+    askForTrackingThenNavigate(() => {
+      navigation.navigate('Auth', {
+        screen: 'Login',
+        params: {
+          onLoginSuccess: async () => {
+            haptic('impactLight');
+            navigation.navigate('Onboarding', {
+              screen: 'Notifications',
+            });
+          },
+        },
+      });
+    });
   };
+  const onLoginPressRef = useRef(onLoginPress);
+  onLoginPressRef.current = onLoginPress;
+
+  const onLogoutPress = () => {
+    haptic('impactLight');
+    dispatch(BitPayIdEffects.startDisconnectBitPayId());
+  };
+  const onLogoutPressRef = useRef(onLogoutPress);
+  onLogoutPressRef.current = onLogoutPress;
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -132,93 +167,94 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
       headerRight: () => (
         <HeaderRightContainer>
           {isPaired ? (
-            <Button
-              buttonType="pill"
-              onPress={() => {
-                haptic('impactLight');
-                dispatch(BitPayIdEffects.startDisconnectBitPayId());
-              }}>
-              Log Out
+            <Button buttonType="pill" onPress={onLogoutPressRef.current}>
+              {t('Log Out')}
             </Button>
           ) : (
-            <Button
-              buttonType={'pill'}
-              onPress={() =>
-                askForTrackingThenNavigate(() => {
-                  navigation.navigate('Auth', {
-                    screen: 'Login',
-                    params: {
-                      onLoginSuccess: async () => {
-                        haptic('impactLight');
-                        navigation.navigate('Onboarding', {
-                          screen: 'Notifications',
-                        });
-                      },
-                    },
-                  });
-                })
-              }>
-              Log In
+            <Button buttonType={'pill'} onPress={onLoginPressRef.current}>
+              {t('Log In')}
             </Button>
           )}
         </HeaderRightContainer>
       ),
     });
-  }, [navigation, isPaired, dispatch]);
+  }, [navigation, isPaired, dispatch, askForTrackingThenNavigate, t]);
 
-  const ref = useRef(null);
+  const carouselRef = useRef(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+  const [scrollHintHeight, setScrollHintHeight] = useState(0);
 
   const onboardingSlides = [
     {
-      title: 'Turn crypto into dollars with our BitPay Card',
-      text: 'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
-      subText: '*Currently available in the USA. More countries coming soon.',
+      title: t('Turn crypto into dollars with our BitPay Card'),
+      text: t(
+        'Instantly reload your card balance with no conversion fees. Powered by our competitive exchange rates.',
+      ),
+      subText: t(
+        '*Currently available in the USA. More countries coming soon.',
+      ),
       img: () => OnboardingImages.card[themeType],
     },
     {
-      title: 'Spend crypto at your favorite places',
-      text: 'Discover a curated list of places you can spend your crypto. Purchase, manage and spend store credits instantly.',
+      title: t('Spend crypto at your favorite places'),
+      text: t(
+        'Discover a curated list of places you can spend your crypto. Purchase, manage and spend store credits instantly.',
+      ),
       img: () => OnboardingImages.spend[themeType],
     },
     {
-      title: 'Keep your funds safe & secure',
-      text: 'Websites and exchanges get hacked. BitPay allows you to privately store, manage and use your crypto funds without having to trust a centralized bank or exchange.',
+      title: t('Keep your funds safe & secure'),
+      text: t(
+        'Websites and exchanges get hacked. BitPay allows you to privately store, manage and use your crypto funds without having to trust a centralized bank or exchange.',
+      ),
       img: () => OnboardingImages.wallet[themeType],
     },
     {
-      title: 'Seamlessly buy & swap with a decentralized exchange',
-      text: 'Buy with a credit card or existing funds, then seamlessly swap coins at competitive rates without leaving the app.',
+      title: t('Seamlessly buy & swap with a decentralized exchange'),
+      text: t(
+        'Buy with a credit card or existing funds, then seamlessly swap coins at competitive rates without leaving the app.',
+      ),
       img: () => OnboardingImages.swap[themeType],
     },
   ];
 
   return (
     <OnboardingContainer>
-      <Carousel
-        vertical={false}
-        layout={'default'}
-        useExperimentalSnap={true}
-        data={onboardingSlides}
-        renderItem={slideProps => <OnboardingSlide {...slideProps} />}
-        ref={ref}
-        sliderWidth={WIDTH}
-        itemWidth={Math.round(WIDTH)}
-        onScrollIndexChanged={(index: number) => {
-          haptic('impactLight');
-          setActiveSlideIndex(index);
-        }}
-        // @ts-ignore
-        disableIntervalMomentum={true}
-      />
-      <CtaContainerAbsolute>
+      <ScrollView scrollEnabled={scrollEnabledForSmallScreens}>
+        <Carousel
+          vertical={false}
+          layout={'default'}
+          useExperimentalSnap={true}
+          data={onboardingSlides}
+          renderItem={({item}) => <OnboardingSlide item={item} />}
+          ref={carouselRef}
+          sliderWidth={WIDTH}
+          itemWidth={Math.round(WIDTH)}
+          onScrollIndexChanged={(index: number) => {
+            haptic('impactLight');
+            setActiveSlideIndex(index);
+          }}
+          // @ts-ignore
+          disableIntervalMomentum={true}
+        />
+        <View style={{height: scrollHintHeight}} />
+      </ScrollView>
+
+      <ScrollHintContainer>
+        <ScrollHint height={scrollHintHeight} />
+      </ScrollHintContainer>
+
+      <CtaContainerAbsolute
+        onLayout={e => {
+          setScrollHintHeight(e.nativeEvent.layout.height + 20);
+        }}>
         <Row>
           <Column>
             <Pagination
               dotsLength={onboardingSlides.length}
               activeDotIndex={activeSlideIndex}
               tappableDots={true}
-              carouselRef={ref}
+              carouselRef={carouselRef}
               animatedDuration={100}
               animatedFriction={100}
               animatedTension={100}
@@ -244,7 +280,7 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
                     });
                   });
                 }}>
-                Get Started
+                {t('Get Started')}
               </Button>
             ) : (
               <Button
@@ -256,7 +292,7 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
                     });
                   });
                 }}>
-                Continue
+                {t('Continue')}
               </Button>
             )}
           </Column>
@@ -273,7 +309,7 @@ const OnboardingStart: React.FC<OnboardingStartScreenProps> = () => {
                     });
                   });
                 }}>
-                <LinkText>Continue without an account</LinkText>
+                <LinkText>{t('Continue without an account')}</LinkText>
               </Button>
             </ActionContainer>
           </Row>

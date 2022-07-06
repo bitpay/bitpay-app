@@ -21,7 +21,10 @@ import {
 } from '../../../constants/currencies';
 import {startCreateKey} from '../../../store/wallet/effects';
 import {FlatList, TouchableOpacity} from 'react-native';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  startOnGoingProcessModal,
+} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {BaseText, HeaderTitle, Link} from '../../../components/styled/Text';
@@ -51,6 +54,7 @@ import SearchSvg from '../../../../assets/img/search.svg';
 import GhostSvg from '../../../../assets/img/ghost-cheeky.svg';
 import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
 import {BitpaySupportedTokenOpts} from '../../../constants/tokens';
+import {useTranslation} from 'react-i18next';
 
 type CurrencySelectionScreenProps = StackScreenProps<
   WalletStackParamList,
@@ -113,6 +117,7 @@ const SearchImageContainer = styled.View`
 `;
 
 const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
+  const {t} = useTranslation();
   // setting context
   const navigation = useNavigation();
   const {context, key} = route.params;
@@ -154,12 +159,12 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     dispatch(
       showBottomNotificationModal({
         type: 'warning',
-        title: 'Something went wrong',
+        title: t('Something went wrong'),
         message: e,
         enableBackdropDismiss: true,
         actions: [
           {
-            text: 'OK',
+            text: t('OK'),
             action: () => {},
             primary: true,
           },
@@ -215,7 +220,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
         return {
           // @ts-ignore
           currencies: _currencies,
-          ctaTitle: 'Create Key',
+          ctaTitle: t('Create Key'),
           bottomCta: async ({selectedCurrencies, dispatch, navigation}) => {
             try {
               const currencies = checkEthIfTokenSelected(
@@ -225,7 +230,10 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
               ) as Array<SupportedCurrencies>;
 
               await dispatch(
-                startOnGoingProcessModal(OnGoingProcessMessages.CREATING_KEY),
+                startOnGoingProcessModal(
+                  // t('Creating Key')
+                  t(OnGoingProcessMessages.CREATING_KEY),
+                ),
               );
               const key = (await dispatch<any>(
                 startCreateKey(currencies),
@@ -239,6 +247,17 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
                   screen: 'BackupKey',
                   params: {context, key},
                 },
+              );
+              dispatch(
+                logSegmentEvent(
+                  'track',
+                  'Create New Key success',
+                  {
+                    context,
+                    currencies,
+                  },
+                  true,
+                ),
               );
               dispatch(dismissOnGoingProcessModal());
             } catch (e: any) {
@@ -255,7 +274,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
         return {
           // @ts-ignore
           currencies: _currencies,
-          headerTitle: 'Select Currency',
+          headerTitle: t('Select Currency'),
           hideBottomCta: true,
           removeCheckbox: true,
           selectionCta: async ({
@@ -279,7 +298,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
       case 'addWalletMultisig': {
         return {
           currencies: _multiSigCurrencies,
-          headerTitle: 'Select Currency',
+          headerTitle: t('Select Currency'),
           hideBottomCta: true,
           removeCheckbox: true,
           selectionCta: async ({currencyAbbreviation, navigation}) => {
@@ -308,7 +327,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     navigation.setOptions({
       gestureEnabled: false,
       headerTitle: () => (
-        <HeaderTitle>{headerTitle || 'Select Currencies'}</HeaderTitle>
+        <HeaderTitle>{headerTitle || t('Select Currencies')}</HeaderTitle>
       ),
       headerTitleAlign: 'center',
       headerRight: () =>
@@ -325,12 +344,12 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
                   },
                 });
               }}>
-              Skip
+              {t('Skip')}
             </Button>
           </HeaderRightContainer>
         ),
     });
-  }, [navigation]);
+  }, [navigation, t]);
 
   const [selectedCurrencies, setSelectedCurrencies] = useState<Array<string>>(
     [],
@@ -422,7 +441,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
     <CurrencySelectionContainer>
       <SearchContainer>
         <SearchInput
-          placeholder={'Search Currency'}
+          placeholder={t('Search Currency')}
           placeholderTextColor={placeHolderTextColor}
           value={searchInput}
           onChangeText={(text: string) => {
@@ -461,7 +480,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
             <GhostSvg style={{marginTop: 20}} />
           </NoResultsImgContainer>
           <NoResultsDescription>
-            {"We couldn't find a match for "}
+            {t("We couldn't find a match for ")}
             <BaseText style={{fontWeight: 'bold'}}>{searchInput}</BaseText>.
           </NoResultsDescription>
           {key ? (
@@ -474,7 +493,7 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
                   params: {key, isCustomToken: true, isToken: true},
                 });
               }}>
-              Add custom token
+              {t('Add custom token')}
             </Link>
           ) : null}
         </NoResultsContainer>

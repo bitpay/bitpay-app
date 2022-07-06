@@ -1,6 +1,5 @@
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
-import analytics from '@segment/analytics-react-native';
 import React, {useCallback, useLayoutEffect, useMemo} from 'react';
 import {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
@@ -26,6 +25,7 @@ import {CardProvider} from '../../../constants/card';
 import {CARD_WIDTH} from '../../../constants/config.card';
 import {navigationRef} from '../../../Root';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
+import {Analytics} from '../../../store/app/app.effects';
 import {selectBrazeCardOffers} from '../../../store/app/app.selectors';
 import {CardEffects} from '../../../store/card';
 import {Card, UiTransaction} from '../../../store/card/card.models';
@@ -65,7 +65,7 @@ const CardsRowContainer = styled.View`
   padding: ${ScreenGutter};
 `;
 
-const CardOffersContainer = styled(TouchableOpacity)`
+const CardOffersContainer = styled.View`
   margin: -16px;
   padding: 16px;
 `;
@@ -94,12 +94,12 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const network = useAppSelector(({APP}) => APP.network);
   const brazeCardOffers = useAppSelector(selectBrazeCardOffers);
 
-  const getLengthOfWalletsWithBalance = useMemo(
+  const hasWalletsWithBalance = useMemo(
     () =>
       Object.values(keys)
         .flatMap(key => key.wallets)
         .filter(wallet => wallet.balance.sat > 0 && wallet.network === network)
-        .length,
+        .length > 0,
     [keys, network],
   );
 
@@ -118,6 +118,8 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   );
 
   const goToCardSettings = () => {
+    dispatch(Analytics.track('Clicked Card Settings', {}, true));
+
     navigation.navigate('Settings', {
       id: activeCard.id,
     });
@@ -126,6 +128,8 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   goToCardSettingsRef.current = goToCardSettings;
 
   const goToReferAndEarn = () => {
+    dispatch(Analytics.track('Clicked Refer and Earn', {}, true));
+
     navigation.navigate('Referral', {card: activeCard});
   };
   const goToReferAndEarnRef = useRef(goToReferAndEarn);
@@ -142,7 +146,10 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   };
 
   const goToAmountScreen = () => {
-    if (getLengthOfWalletsWithBalance) {
+    dispatch(
+      Analytics.track('Clicked Add Funds', {context: 'CardDashboard'}, true),
+    );
+    if (hasWalletsWithBalance) {
       navigator.navigate('Wallet', {
         screen: WalletScreens.AMOUNT,
         params: {
@@ -156,17 +163,22 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
       dispatch(
         showBottomNotificationModal({
           type: 'warning',
-          title: 'No funds available',
-          message: 'You do not have any funds to send.',
+          title: t('No funds available'),
+          message: t('You do not have any funds to send.'),
           enableBackdropDismiss: true,
           actions: [
             {
-              text: 'Add funds',
+              text: t('Add funds'),
               action: () => {
-                analytics.track('BitPay App - Clicked Buy Crypto', {
-                  from: 'CardDashboard',
-                  appUser: user?.eid || '',
-                });
+                dispatch(
+                  Analytics.track(
+                    'Clicked Buy Crypto',
+                    {
+                      context: 'CardDashboard - No funds availiable',
+                    },
+                    true,
+                  ),
+                );
                 navigator.navigate('Wallet', {
                   screen: WalletScreens.AMOUNT,
                   params: {
@@ -187,7 +199,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
               primary: true,
             },
             {
-              text: 'Got It',
+              text: t('Got It'),
               action: () => null,
               primary: false,
             },
@@ -216,8 +228,8 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     ({CARD}) => CARD.settledTransactions[activeCard.id],
   );
   // only auto-initialize once per mount
-  const [autoInitState, setAutoInitState] = useState(
-    {} as {[k: string]: boolean},
+  const [autoInitState, setAutoInitState] = useState<Record<string, boolean>>(
+    {},
   );
   const uninitializedId = autoInitState[activeCard.id] ? null : activeCard.id;
   const isLoadingInitial = fetchOverviewStatus === 'loading' && !pageData;
@@ -258,12 +270,13 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
             <GhostImg />
           </EmptyGhostContainer>
           <EmptyListDescription>
-            Load your cash account and get instant access to spending at
-            thousands of merchants.
+            {t(
+              'Load your cash account and get instant access to spending at thousands of merchants.',
+            )}
           </EmptyListDescription>
         </EmptyListContainer>
       ),
-    [isLoadingInitial],
+    [t, isLoadingInitial],
   );
 
   const renderSlide = useCallback(
@@ -343,12 +356,11 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     additionalContent.push({
       key: 'card-offers',
       content: (
-        <CardOffersContainer
-          activeOpacity={ActiveOpacity}
-          onPress={() => {
-            dispatch(CardEffects.startOpenDosh(user?.email || ''));
-          }}>
-          <CardOffers contentCard={brazeCardOffers[0]} />
+        <CardOffersContainer>
+          <CardOffers
+            contentCard={brazeCardOffers[0]}
+            userEmail={user?.email}
+          />
         </CardOffersContainer>
       ),
     });
@@ -399,7 +411,9 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
             {!isLoadingInitial ? (
               <TransactionListHeader>
                 <TransactionListHeaderTitle>
-                  {dashboardTransactions.length <= 0 ? null : 'Recent Activity'}
+                  {dashboardTransactions.length <= 0
+                    ? null
+                    : t('Recent Activity')}
                 </TransactionListHeaderTitle>
 
                 <TransactionListHeaderIcon onPress={() => onRefresh()}>

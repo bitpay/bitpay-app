@@ -9,6 +9,10 @@ import {
   BaseText,
   H4,
   HeaderTitle,
+  InfoDescription,
+  InfoHeader,
+  InfoTitle,
+  Link,
   TextAlign,
 } from '../../../components/styled/Text';
 import styled from 'styled-components/native';
@@ -23,21 +27,26 @@ import {
   SheetContainer,
   Row,
   ScreenGutter,
+  Info,
+  InfoTriangle,
+  InfoImageContainer,
 } from '../../../components/styled/Containers';
 import {StackScreenProps} from '@react-navigation/stack';
 import {WalletStackParamList} from '../WalletStack';
 import {Key, Token, Wallet} from '../../../store/wallet/wallet.models';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {
+  logSegmentEvent,
+  openUrlWithInAppBrowser,
+  startOnGoingProcessModal,
+} from '../../../store/app/app.effects';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
 import {
-  dismissDecryptPasswordModal,
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
-  showDecryptPasswordModal,
 } from '../../../store/app/app.actions';
-import {addWallet} from '../../../store/wallet/effects';
+import {addWallet, getDecryptPassword} from '../../../store/wallet/effects';
 import {Controller, useForm} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -63,10 +72,14 @@ import Checkbox from '../../../components/checkbox/Checkbox';
 import {Network} from '../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {WrongPasswordError} from '../components/ErrorMessages';
-import {checkEncryptPassword} from '../../../store/wallet/utils/wallet';
 import {getTokenContractInfo} from '../../../store/wallet/effects/status/status';
 import {GetCoinAndNetwork} from '../../../store/wallet/effects/address/address';
 import {addCustomTokenOption} from '../../../store/wallet/effects/currencies/currencies';
+import {Currencies} from '../../../constants/currencies';
+import {TouchableOpacity} from 'react-native-gesture-handler';
+import InfoSvg from '../../../../assets/img/info.svg';
+import {URL} from '../../../constants';
+import {useTranslation} from 'react-i18next';
 
 type AddWalletScreenProps = StackScreenProps<WalletStackParamList, 'AddWallet'>;
 
@@ -150,7 +163,12 @@ const WalletAdvancedOptionsContainer = styled(AdvancedOptionsContainer)`
   margin-top: 20px;
 `;
 
+const VerticalPadding = styled.View`
+  padding: ${ScreenGutter} 0;
+`;
+
 const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const {
     currencyAbbreviation: _currencyAbbreviation,
@@ -163,7 +181,9 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const network = useAppSelector(({APP}) => APP.network);
   const [showOptions, setShowOptions] = useState(false);
   const [isTestnet, setIsTestnet] = useState(false);
+  const [singleAddress, setSingleAddress] = useState(false);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const rates = useAppSelector(({WALLET}) => WALLET.rates);
   const [customTokenAddress, setCustomTokenAddress] = useState<
     string | undefined
   >('');
@@ -172,21 +192,30 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
     _currencyAbbreviation,
   );
 
+  const singleAddressCurrency =
+    Currencies[_currencyAbbreviation?.toLowerCase() as string]?.properties
+      ?.singleAddress;
+  const nativeSegwitCurrency = _currencyAbbreviation
+    ? ['btc', 'ltc'].includes(_currencyAbbreviation.toLowerCase())
+    : false;
+
+  const [useNativeSegwit, setUseNativeSegwit] = useState(nativeSegwitCurrency);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => {
         return (
           <HeaderTitle>
             {isCustomToken
-              ? 'Add Custom Token'
+              ? t('Add Custom Token')
               : isToken
-              ? `Add ${currencyAbbreviation} Token`
-              : `Add ${currencyAbbreviation} Wallet`}
+              ? t('Add Token', {currencyAbbreviation})
+              : t('AddWallet', {currencyAbbreviation})}
           </HeaderTitle>
         );
       },
     });
-  }, [navigation]);
+  }, [navigation, t]);
 
   // find all eth wallets for key
   const ethWallets = key.wallets.filter(
@@ -197,7 +226,12 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
   const UIFormattedEthWallets = useMemo(
     () =>
       ethWallets.map(wallet =>
-        buildUIFormattedWallet(wallet, defaultAltCurrency.isoCode),
+        buildUIFormattedWallet(
+          wallet,
+          defaultAltCurrency.isoCode,
+          rates,
+          dispatch,
+        ),
       ),
     [],
   );
@@ -254,13 +288,14 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
               dispatch(
                 showBottomNotificationModal({
                   type: 'warning',
-                  title: 'Currency already added',
-                  message:
+                  title: t('Currency already added'),
+                  message: t(
                     'This currency is already associated with the selected wallet',
+                  ),
                   enableBackdropDismiss: true,
                   actions: [
                     {
-                      text: 'OK',
+                      text: t('OK'),
                       action: () => {},
                       primary: true,
                     },
@@ -276,27 +311,28 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       let password: string | undefined;
 
       if (key.isPrivKeyEncrypted) {
-        password = await new Promise<string>((resolve, reject) => {
-          dispatch(
-            showDecryptPasswordModal({
-              onSubmitHandler: async (_password: string) => {
-                dispatch(dismissDecryptPasswordModal());
-                await sleep(500);
-                if (checkEncryptPassword(key, _password)) {
-                  resolve(_password);
-                } else {
-                  return reject('invalid password');
-                }
-              },
-            }),
-          );
-        });
+        password = await dispatch(getDecryptPassword(key));
       }
 
       navigation.popToTop();
 
       await dispatch(
-        startOnGoingProcessModal(OnGoingProcessMessages.ADDING_WALLET),
+        startOnGoingProcessModal(
+          // t('Adding Wallet')
+          t(OnGoingProcessMessages.ADDING_WALLET),
+        ),
+      );
+
+      dispatch(
+        logSegmentEvent(
+          'track',
+          'Create Basic Wallet success',
+          {
+            coin: currency,
+            isErc20Token: !!isToken,
+          },
+          true,
+        ),
       );
 
       // adds wallet and binds to key obj - creates eth wallet if needed
@@ -309,6 +345,8 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
           options: {
             password,
             network: isTestnet ? Network.testnet : network,
+            useNativeSegwit,
+            singleAddress,
             walletName: walletName === currencyName ? undefined : walletName,
           },
         }),
@@ -322,7 +360,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
 
       dispatch(dismissOnGoingProcessModal());
     } catch (err: any) {
-      if (err === 'invalid password') {
+      if (err.message === 'invalid password') {
         dispatch(showBottomNotificationModal(WrongPasswordError()));
       } else {
         dispatch(dismissOnGoingProcessModal());
@@ -336,12 +374,12 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
     dispatch(
       showBottomNotificationModal({
         type: 'warning',
-        title: 'Something went wrong',
+        title: t('Something went wrong'),
         message: e,
         enableBackdropDismiss: true,
         actions: [
           {
-            text: 'OK',
+            text: t('OK'),
             action: () => {},
             primary: true,
           },
@@ -411,8 +449,9 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       Keyboard.dismiss();
       setCustomTokenAddress(undefined);
       await sleep(200);
-      const err =
-        'Could not find any ERC20 contract attached to the provided address. Recheck the contract address and network of the associated wallet.';
+      const err = t(
+        'Could not find any ERC20 contract attached to the provided address. Recheck the contract address and network of the associated wallet.',
+      );
       showErrorModal(err);
     }
   };
@@ -440,7 +479,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
 
         {showAssociatedWalletSelectionDropdown && (
           <AssociatedWalletContainer>
-            <Label>ASSOCIATED WALLET</Label>
+            <Label>{t('ASSOCIATED WALLET')}</Label>
             <AssociatedWallet
               activeOpacity={ActiveOpacity}
               onPress={() => {
@@ -463,8 +502,8 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
 
         {isCustomToken ? (
           <BoxInput
-            placeholder={'Token Address'}
-            label={'CUSTOM TOKEN CONTRACT'}
+            placeholder={t('Token Address')}
+            label={t('CUSTOM TOKEN CONTRACT')}
             onChangeText={(text: string) => {
               setTokenInfo(text);
             }}
@@ -483,19 +522,40 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
               {showOptions ? (
                 <>
                   <AdvancedOptionsButtonText>
-                    Hide Advanced Options
+                    {t('Hide Advanced Options')}
                   </AdvancedOptionsButtonText>
                   <ChevronUpSvg />
                 </>
               ) : (
                 <>
                   <AdvancedOptionsButtonText>
-                    Show Advanced Options
+                    {t('Show Advanced Options')}
                   </AdvancedOptionsButtonText>
                   <ChevronDownSvg />
                 </>
               )}
             </AdvancedOptionsButton>
+
+            {showOptions && nativeSegwitCurrency && (
+              <AdvancedOptions>
+                <RowContainer
+                  onPress={() => {
+                    setUseNativeSegwit(!useNativeSegwit);
+                  }}>
+                  <Column>
+                    <OptionTitle>Segwit</OptionTitle>
+                  </Column>
+                  <CheckBoxContainer>
+                    <Checkbox
+                      checked={useNativeSegwit}
+                      onPress={() => {
+                        setUseNativeSegwit(!useNativeSegwit);
+                      }}
+                    />
+                  </CheckBoxContainer>
+                </RowContainer>
+              </AdvancedOptions>
+            )}
 
             {showOptions && (
               <AdvancedOptions>
@@ -522,6 +582,60 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
                 </RowContainer>
               </AdvancedOptions>
             )}
+
+            {showOptions && !singleAddressCurrency && (
+              <AdvancedOptions>
+                <RowContainer
+                  activeOpacity={1}
+                  onPress={() => {
+                    setSingleAddress(!singleAddress);
+                  }}>
+                  <Column>
+                    <OptionTitle>Single Address</OptionTitle>
+                  </Column>
+                  <CheckBoxContainer>
+                    <Checkbox
+                      checked={singleAddress}
+                      onPress={() => {
+                        setSingleAddress(!singleAddress);
+                      }}
+                    />
+                  </CheckBoxContainer>
+                </RowContainer>
+
+                {singleAddress && (
+                  <>
+                    <Info style={{marginHorizontal: 10}}>
+                      <InfoTriangle />
+
+                      <InfoHeader>
+                        <InfoImageContainer infoMargin={'0 8px 0 0'}>
+                          <InfoSvg />
+                        </InfoImageContainer>
+
+                        <InfoTitle>Single Address Wallet</InfoTitle>
+                      </InfoHeader>
+                      <InfoDescription>
+                        The single address feature will force the wallet to only
+                        use one address rather than generating new addresses.
+                      </InfoDescription>
+
+                      <VerticalPadding>
+                        <TouchableOpacity
+                          onPress={() => {
+                            Haptic('impactLight');
+                            dispatch(
+                              openUrlWithInAppBrowser(URL.HELP_SINGLE_ADDRESS),
+                            );
+                          }}>
+                          <Link>Learn More</Link>
+                        </TouchableOpacity>
+                      </VerticalPadding>
+                    </Info>
+                  </>
+                )}
+              </AdvancedOptions>
+            )}
           </WalletAdvancedOptionsContainer>
         )}
 
@@ -530,7 +644,7 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
           onBackdropPress={() => setAssociatedWalletModalVisible(false)}>
           <AssociatedWalletSelectionModalContainer>
             <TextAlign align={'center'}>
-              <H4>Select a Wallet</H4>
+              <H4>{t('Select a Wallet')}</H4>
             </TextAlign>
             <FlatList
               contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
@@ -546,7 +660,12 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
             disabled={!currencyAbbreviation || !currencyName}
             onPress={add}
             buttonStyle={'primary'}>
-            Add {isCustomToken ? 'Custom Token' : isToken ? 'Token' : 'Wallet'}
+            {t('Add ') +
+              (isCustomToken
+                ? t('Custom Token')
+                : isToken
+                ? t('Token')
+                : t('Wallet'))}
           </Button>
         </ButtonContainer>
       </ScrollView>

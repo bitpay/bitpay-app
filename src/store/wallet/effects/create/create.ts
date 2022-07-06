@@ -6,11 +6,15 @@ import {
   SupportedCoins,
   SupportedTokens,
 } from '../../../../constants/currencies';
-import {Effect, RootState} from '../../../index';
+import {Effect} from '../../../index';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
-import {buildKeyObj, buildWalletObj} from '../../utils/wallet';
+import {
+  buildKeyObj,
+  buildWalletObj,
+  checkEncryptPassword,
+} from '../../utils/wallet';
 import {
   failedAddWallet,
   successAddWallet,
@@ -20,10 +24,19 @@ import API from 'bitcore-wallet-client/ts_build';
 import {Key, KeyMethods, KeyOptions, Token, Wallet} from '../../wallet.models';
 import {Network} from '../../../../constants';
 import {BitpaySupportedTokenOpts} from '../../../../constants/tokens';
+import {subscribePushNotifications} from '../../../app/app.effects';
+import {
+  dismissDecryptPasswordModal,
+  showDecryptPasswordModal,
+} from '../../../app/app.actions';
+import {sleep} from '../../../../utils/helper-methods';
+import {t} from 'i18next';
 
 export interface CreateOptions {
   network?: Network;
   account?: number;
+  useNativeSegwit?: boolean;
+  singleAddress?: boolean;
   walletName?: string;
   password?: string;
 }
@@ -87,11 +100,14 @@ export const addWallet =
     return new Promise(async (resolve, reject) => {
       try {
         let newWallet;
-        const state = getState();
+        const {
+          APP: {notificationsAccepted, brazeEid},
+          WALLET,
+        } = getState();
         const tokenOpts = {
           ...BitpaySupportedTokenOpts,
-          ...state.WALLET.tokenOptions,
-          ...state.WALLET.customTokenOptions,
+          ...WALLET.tokenOptions,
+          ...WALLET.customTokenOptions,
         };
         const {walletName} = options;
 
@@ -130,6 +146,11 @@ export const addWallet =
           return reject();
         }
 
+        // subscribe new wallet to push notifications
+        if (notificationsAccepted) {
+          dispatch(subscribePushNotifications(newWallet, brazeEid!));
+        }
+
         key.wallets.push(
           merge(
             newWallet,
@@ -165,7 +186,10 @@ const createMultipleWallets =
     options: CreateOptions;
   }): Effect<Promise<Wallet[]>> =>
   async (dispatch, getState) => {
-    const {WALLET} = getState();
+    const {
+      WALLET,
+      APP: {notificationsAccepted, brazeEid},
+    } = getState();
     const tokenOpts = {
       ...BitpaySupportedTokenOpts,
       ...WALLET.tokenOptions,
@@ -186,7 +210,11 @@ const createMultipleWallets =
     const wallets: API[] = [];
 
     for (const coin of supportedCoins) {
-      const wallet = (await createWallet({key, coin, options})) as Wallet;
+      const wallet = (await createWallet({
+        key,
+        coin,
+        options: {...options, useNativeSegwit: ['btc', 'ltc'].includes(coin)},
+      })) as Wallet;
       wallets.push(wallet);
 
       if (coin === 'eth') {
@@ -202,6 +230,10 @@ const createMultipleWallets =
 
     // build out app specific props
     return wallets.map(wallet => {
+      // subscribe new wallet to push notifications
+      if (notificationsAccepted) {
+        dispatch(subscribePushNotifications(wallet, brazeEid!));
+      }
       return merge(
         wallet,
         dispatch(buildWalletObj(wallet.credentials, tokenOpts)),
@@ -226,7 +258,7 @@ const createWallet = (params: {
     const {key, coin, options} = params;
 
     // set defaults
-    const {account, network, password} = {
+    const {account, network, password, singleAddress, useNativeSegwit} = {
       ...DEFAULT_CREATION_OPTIONS,
       ...options,
     };
@@ -248,9 +280,9 @@ const createWallet = (params: {
       1,
       {
         network,
-        singleAddress: false,
+        singleAddress,
         coin,
-        useNativeSegwit: ['btc', 'ltc'].includes(coin),
+        useNativeSegwit,
       },
       (err: any) => {
         if (err) {
@@ -262,7 +294,9 @@ const createWallet = (params: {
               if (account >= 20) {
                 return reject(
                   new Error(
-                    '20 Wallet limit from the same coin and network has been reached.',
+                    t(
+                      '20 Wallet limit from the same coin and network has been reached.',
+                    ),
                   ),
                 );
               }
@@ -325,9 +359,12 @@ const createTokenWallet = (
 
 export const startCreateKeyWithOpts =
   (opts: Partial<KeyOptions>): Effect =>
-  async (dispatch): Promise<Key> => {
+  async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
       try {
+        const {
+          APP: {notificationsAccepted, brazeEid},
+        } = getState();
         const _key = BWC.createKey({
           seedType: opts.seedType!,
           seedData: opts.mnemonic || opts.extendedPrivateKey,
@@ -337,6 +374,11 @@ export const startCreateKeyWithOpts =
         });
 
         const _wallet = await createWalletWithOpts({key: _key, opts});
+
+        // subscribe new wallet to push notifications
+        if (notificationsAccepted) {
+          dispatch(subscribePushNotifications(_wallet, brazeEid!));
+        }
 
         // build out app specific props
         const wallet = merge(
@@ -375,7 +417,7 @@ export const createWalletWithOpts = (params: {
     const {key, opts} = params;
     try {
       bwcClient.fromString(
-        key.createCredentials(undefined, {
+        key.createCredentials(opts.password, {
           coin: opts.coin || 'btc',
           network: opts.networkName || 'livenet',
           account: opts.account || 0,
@@ -403,7 +445,9 @@ export const createWalletWithOpts = (params: {
                 if (account >= 20) {
                   return reject(
                     new Error(
-                      '20 Wallet limit from the same coin and network has been reached.',
+                      t(
+                        '20 Wallet limit from the same coin and network has been reached.',
+                      ),
                     ),
                   );
                 }
@@ -428,3 +472,23 @@ export const createWalletWithOpts = (params: {
     }
   });
 };
+
+export const getDecryptPassword =
+  (key: Key): Effect<Promise<string>> =>
+  async dispatch => {
+    return new Promise<string>((resolve, reject) => {
+      dispatch(
+        showDecryptPasswordModal({
+          onSubmitHandler: async (_password: string) => {
+            dispatch(dismissDecryptPasswordModal());
+            await sleep(500);
+            if (checkEncryptPassword(key, _password)) {
+              return resolve(_password);
+            } else {
+              return reject({message: 'invalid password'});
+            }
+          },
+        }),
+      );
+    });
+  };

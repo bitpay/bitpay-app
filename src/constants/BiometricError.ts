@@ -1,8 +1,11 @@
+import {t} from 'i18next';
 import {BottomNotificationConfig} from '../components/modal/bottom-notification/BottomNotification';
 
 export const TO_HANDLE_ERRORS: {[key in string]: string} = {
   NOT_ENROLLED:
     'Authentication could not start because biometric is not enrolled.',
+  FALLBACK_NOT_ENROLLED:
+    'Authentication could not start because biometric fallback is not enrolled.',
   NOT_AVAILABLE:
     'Authentication could not start because biometric is not available on the device.',
   NOT_PRESENT: 'Biometry hardware not present',
@@ -32,18 +35,22 @@ export interface BiometricError {
   code: BiometricErrorCodes;
 }
 
+export const isTouchIDError = (error: any): error is BiometricError => {
+  return error?.name === 'TouchIDError';
+};
+
 export const BiometricErrorNotification = (
   message: string,
   onDismissModal?: () => void,
 ): BottomNotificationConfig => {
   return {
     type: 'error',
-    title: 'Error',
+    title: t('Error'),
     message,
     enableBackdropDismiss: true,
     actions: [
       {
-        text: 'OK',
+        text: t('OK'),
         action: () => {
           if (onDismissModal) {
             onDismissModal();

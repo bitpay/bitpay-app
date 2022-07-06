@@ -8,11 +8,12 @@ import {
   calculatePercentageDifference,
   formatFiatAmount,
 } from '../../../../utils/helper-methods';
-import QuestionSvg from '../../../../../assets/img/question.svg';
+import InfoSvg from '../../../../../assets/img/info.svg';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import Percentage from '../../../../components/percentage/Percentage';
+import {useTranslation} from 'react-i18next';
 
 const PortfolioContainer = styled.View`
   justify-content: center;
@@ -47,6 +48,7 @@ const PercentageContainer = styled.View`
 `;
 
 const PortfolioBalance = () => {
+  const {t} = useTranslation();
   const portfolioBalance = useSelector(
     ({WALLET}: RootState) => WALLET.portfolioBalance,
   );
@@ -62,13 +64,14 @@ const PortfolioBalance = () => {
     dispatch(
       showBottomNotificationModal({
         type: 'info',
-        title: 'Portfolio balance',
-        message:
+        title: t('Portfolio balance'),
+        message: t(
           'Your Portfolio Balance is the total of all your crypto assets.',
+        ),
         enableBackdropDismiss: true,
         actions: [
           {
-            text: 'GOT IT',
+            text: t('GOT IT'),
             action: () => null,
             primary: true,
           },
@@ -82,8 +85,8 @@ const PortfolioBalance = () => {
       <PortfolioBalanceHeader
         activeOpacity={ActiveOpacity}
         onPress={showPortfolioBalanceInfoModal}>
-        <PortfolioBalanceTitle>Portfolio Balance</PortfolioBalanceTitle>
-        <QuestionSvg width={12} height={12} />
+        <PortfolioBalanceTitle>{t('Portfolio Balance')}</PortfolioBalanceTitle>
+        <InfoSvg width={12} height={12} />
       </PortfolioBalanceHeader>
       <PortfolioBalanceText>
         {formatFiatAmount(
@@ -95,7 +98,7 @@ const PortfolioBalance = () => {
       {percentageDifference ? (
         <PercentageContainer>
           <Percentage percentageDifference={percentageDifference} />
-          <PercentageText> Last Day</PercentageText>
+          <PercentageText> {t('Last Day')}</PercentageText>
         </PercentageContainer>
       ) : null}
     </PortfolioContainer>

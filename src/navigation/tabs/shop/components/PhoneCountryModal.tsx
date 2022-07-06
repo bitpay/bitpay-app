@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Modal, ScrollView, TouchableWithoutFeedback} from 'react-native';
+import {Modal, TouchableWithoutFeedback, FlatList} from 'react-native';
 import styled, {useTheme} from 'styled-components/native';
 import {BaseText} from '../../../../components/styled/Text';
 import {PhoneCountryCode} from '../../../../lib/gift-cards/gift-card';
@@ -12,12 +12,15 @@ import {
 import {CloseSvg} from '../components/svg/ShopTabSvgs';
 import {Action, Cloud, LightBlack} from '../../../../styles/colors';
 import RemoteImage from './RemoteImage';
+import {useTranslation} from 'react-i18next';
 
 const ModalHeader = styled.View`
   flex-direction: row;
   padding: 20px;
+  height: 55px;
   align-items: center;
   padding-bottom: 0;
+  padding-top: 10px;
   background-color: ${({theme}) => theme.colors.background};
 `;
 
@@ -68,6 +71,7 @@ const PhoneCountryModal = ({
   phoneCountryCodes: PhoneCountryCode[];
   visible: boolean;
 }) => {
+  const {t} = useTranslation();
   const theme = useTheme();
   const [searchValue, setSearchValue] = useState('');
   const [searchResults, setSearchResults] = useState(phoneCountryCodes);
@@ -82,17 +86,15 @@ const PhoneCountryModal = ({
         paddingHorizontal: horizontalPadding,
       }}>
       <ModalHeader>
-        <TouchableWithoutFeedback onPress={() => onClose()}>
-          <NavIconButtonContainer>
-            <CloseSvg theme={theme} />
-          </NavIconButtonContainer>
-        </TouchableWithoutFeedback>
-        <ModalTitle>Select Country</ModalTitle>
+        <NavIconButtonContainer onPress={() => onClose()}>
+          <CloseSvg theme={theme} />
+        </NavIconButtonContainer>
+        <ModalTitle>{t('Select Country')}</ModalTitle>
         <NavIconButtonContainer style={{opacity: 0}} />
       </ModalHeader>
       <SearchContainer>
         <SearchBox
-          placeholder={'Search countries'}
+          placeholder={t('Search countries')}
           theme={theme}
           onChangeText={(text: string) => {
             setSearchValue(text);
@@ -108,31 +110,31 @@ const PhoneCountryModal = ({
           type={'search'}
         />
       </SearchContainer>
-      <ScrollView
+      <FlatList
         style={{
           backgroundColor: theme.colors.background,
         }}
         contentContainerStyle={{
           padding: horizontalPadding,
           backgroundColor: theme.colors.background,
-        }}>
-        {searchResults.map(countryCode => {
-          return (
-            <TouchableWithoutFeedback
-              key={`${countryCode.phone}${countryCode.name}`}
-              onPress={() => onSelectedPhoneCountryCode(countryCode)}>
-              <CountryItem>
-                <RemoteImage
-                  height={20}
-                  uri={`https://bitpay.com/img/flags-round/${countryCode.countryCode.toLowerCase()}.svg`}
-                />
-                <CountryName>{countryCode.name}</CountryName>
-                <CountryCode>+{countryCode.phone}</CountryCode>
-              </CountryItem>
-            </TouchableWithoutFeedback>
-          );
-        })}
-      </ScrollView>
+        }}
+        data={searchResults}
+        renderItem={({item: countryCode}: {item: PhoneCountryCode}) => (
+          <TouchableWithoutFeedback
+            key={`${countryCode.phone}${countryCode.name}`}
+            onPress={() => onSelectedPhoneCountryCode(countryCode)}>
+            <CountryItem>
+              <RemoteImage
+                height={20}
+                uri={`https://bitpay.com/img/flags-round/${countryCode.countryCode.toLowerCase()}.svg`}
+              />
+              <CountryName>{countryCode.name}</CountryName>
+              <CountryCode>+{countryCode.phone}</CountryCode>
+            </CountryItem>
+          </TouchableWithoutFeedback>
+        )}
+        keyExtractor={item => `${item.phone}${item.name}`}
+      />
     </Modal>
   );
 };

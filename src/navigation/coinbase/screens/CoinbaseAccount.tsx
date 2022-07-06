@@ -50,6 +50,8 @@ import {
 } from '../../../store/wallet/effects/address/address';
 import Amount from '../../wallet/screens/Amount';
 import {Wallet} from '../../../store/wallet/wallet.models';
+import {useTranslation} from 'react-i18next';
+import {logSegmentEvent} from '../../../store/app/app.effects';
 
 const AccountContainer = styled.View`
   flex: 1;
@@ -126,6 +128,7 @@ export type CoinbaseAccountScreenParamList = {
 const CoinbaseAccount = ({
   route,
 }: StackScreenProps<CoinbaseStackParamList, 'CoinbaseAccount'>) => {
+  const {t} = useTranslation();
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -229,8 +232,8 @@ const CoinbaseAccount = ({
           <EmptyListContainer>
             <H5>
               {!errorLoadingTxs
-                ? "It's a ghost town in here"
-                : 'Could not update transaction history'}
+                ? t("It's a ghost town in here")
+                : t('Could not update transaction history')}
             </H5>
             <GhostSvg style={{marginTop: 20}} />
           </EmptyListContainer>
@@ -317,7 +320,20 @@ const CoinbaseAccount = ({
       return;
     }
     dispatch(
-      showOnGoingProcessModal(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
+      showOnGoingProcessModal(
+        // t('Fetching data from Coinbase...')
+        t(OnGoingProcessMessages.FETCHING_COINBASE_DATA),
+      ),
+    );
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Clicked Receive',
+        {
+          context: 'CoinbaseAccount',
+        },
+        true,
+      ),
     );
     dispatch(coinbaseCreateAddress(accountId))
       .then(async newAddress => {
@@ -351,6 +367,16 @@ const CoinbaseAccount = ({
 
   const onSelectedWallet = async (newWallet?: Wallet) => {
     setWalletModalVisible(false);
+    dispatch(
+      logSegmentEvent(
+        'track',
+        'Clicked Send',
+        {
+          context: 'CoinbaseAccount',
+        },
+        true,
+      ),
+    );
     if (newWallet) {
       setSelectedWallet(newWallet);
       await sleep(500);
@@ -373,12 +399,12 @@ const CoinbaseAccount = ({
     dispatch(
       showBottomNotificationModal({
         type: 'error',
-        title: 'Coinbase error',
+        title: t('Coinbase error'),
         message: errMsg,
         enableBackdropDismiss: true,
         actions: [
           {
-            text: 'OK',
+            text: t('OK'),
             action: () => {},
             primary: true,
           },
@@ -432,14 +458,14 @@ const CoinbaseAccount = ({
         <LinkingButtons
           receive={{
             cta: deposit,
-            label: 'deposit',
+            label: t('deposit'),
             hide: !availableWalletToDeposit,
           }}
           send={{
             cta: () => {
               setWalletModalVisible(true);
             },
-            label: 'withdraw',
+            label: t('withdraw'),
             hide: !availableWalletToWithdraw,
           }}
           buy={{cta: () => null, hide: true}}
@@ -459,7 +485,7 @@ const CoinbaseAccount = ({
           if (txs[0]) {
             return (
               <TransactionListHeader>
-                <H5>Transactions</H5>
+                <H5>{t('Transactions')}</H5>
               </TransactionListHeader>
             );
           } else {
@@ -478,7 +504,7 @@ const CoinbaseAccount = ({
         onBackdropPress={() => setWalletModalVisible(false)}>
         <GlobalSelectContainer>
           <GlobalSelect
-            modalTitle={'Select destination wallet'}
+            modalTitle={t('Select destination wallet')}
             customSupportedCurrencies={customSupportedCurrencies}
             useAsModal={true}
             onDismiss={onSelectedWallet}
@@ -494,6 +520,7 @@ const CoinbaseAccount = ({
         <AmountContainer>
           <Amount
             useAsModal={true}
+            hideSendMaxProp={true}
             currencyAbbreviationProp={account?.balance.currency}
             onDismiss={onEnteredAmount}
           />

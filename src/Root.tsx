@@ -6,7 +6,16 @@ import {
 import {createStackNavigator} from '@react-navigation/stack';
 import debounce from 'lodash.debounce';
 import React, {useEffect, useState} from 'react';
-import {Appearance, AppState, AppStateStatus, StatusBar} from 'react-native';
+import {
+  Appearance,
+  AppState,
+  AppStateStatus,
+  DeviceEventEmitter,
+  Linking,
+  NativeEventEmitter,
+  NativeModules,
+  StatusBar,
+} from 'react-native';
 import 'react-native-gesture-handler';
 import {ThemeProvider} from 'styled-components/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
@@ -21,8 +30,12 @@ import BiometricModal from './components/modal/biometric/BiometricModal';
 import {AppEffects, AppActions} from './store/app';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 import {LogActions} from './store/log';
-import {useAppDispatch, useAppSelector, useDeeplinks} from './utils/hooks';
-import analytics from '@segment/analytics-react-native';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useDeeplinks,
+  useUrlEventHandler,
+} from './utils/hooks';
 import i18n from 'i18next';
 
 import BitpayIdStack, {
@@ -76,12 +89,14 @@ import CoinbaseStack, {
   CoinbaseStackParamList,
 } from './navigation/coinbase/CoinbaseStack';
 import BpDevtools from './components/bp-devtools/BpDevtools';
-import {DEVTOOLS_ENABLED} from './constants/config';
+import {APP_ANALYTICS_ENABLED, DEVTOOLS_ENABLED} from './constants/config';
 import Blur from './components/blur/Blur';
 import DebugScreen, {DebugScreenParamList} from './navigation/Debug';
 import CardActivationStack, {
   CardActivationStackParamList,
 } from './navigation/card-activation/CardActivationStack';
+import {sleep} from './utils/helper-methods';
+import {Analytics, handleBwsEvent} from './store/app/app.effects';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -159,6 +174,20 @@ declare global {
   }
 }
 
+export type SilentPushEvent = {
+  b_use_webview?: number;
+  multisigContractAddress?: string | null;
+  ab_uri?: string;
+  walletId?: string;
+  copayerId?: string;
+  aps?: any;
+  notification_type?: string;
+  ab?: any;
+  tokenAddress?: string | null;
+  coin?: string;
+  network?: string;
+};
+
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 export const navigate = (
   name: keyof RootStackParamList,
@@ -175,6 +204,7 @@ export default () => {
   const dispatch = useAppDispatch();
   const [, rerender] = useState({});
   const linking = useDeeplinks();
+  const urlEventHandler = useUrlEventHandler();
   const onboardingCompleted = useAppSelector(
     ({APP}) => APP.onboardingCompleted,
   );
@@ -185,20 +215,22 @@ export default () => {
   const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
   const pinLockActive = useAppSelector(({APP}) => APP.pinLockActive);
   const showBlur = useAppSelector(({APP}) => APP.showBlur);
+  const failedAppInit = useAppSelector(({APP}) => APP.failedAppInit);
   const biometricLockActive = useAppSelector(
     ({APP}) => APP.biometricLockActive,
   );
   const lockAuthorizedUntil = useAppSelector(
     ({APP}) => APP.lockAuthorizedUntil,
   );
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
-  );
 
   // MAIN APP INIT
   useEffect(() => {
-    dispatch(AppEffects.startAppInit());
-  }, [dispatch]);
+    if (!failedAppInit) {
+      dispatch(AppEffects.startAppInit());
+    } else {
+      navigationRef.navigate(RootStacks.DEBUG, {name: 'Failed app init'});
+    }
+  }, [dispatch, failedAppInit]);
 
   // LANGUAGE
   useEffect(() => {
@@ -239,6 +271,8 @@ export default () => {
           } else {
             showLockOption();
           }
+        } else if (failedAppInit) {
+          dispatch(AppActions.showBlur(false));
         } else {
           dispatch(AppActions.showBlur(true));
         }
@@ -253,7 +287,22 @@ export default () => {
     lockAuthorizedUntil,
     biometricLockActive,
     appIsLoading,
+    failedAppInit,
   ]);
+
+  // Silent Push Notifications
+  useEffect(() => {
+    function onMessageReceived(response: SilentPushEvent) {
+      console.log(
+        '##### Received Silent Push Notification',
+        JSON.stringify(response),
+      );
+      dispatch(handleBwsEvent(response));
+    }
+    const eventEmitter = new NativeEventEmitter(NativeModules.SilentPushEvent);
+    eventEmitter.addListener('SilentPushNotification', onMessageReceived);
+    return () => DeviceEventEmitter.removeAllListeners('inAppMessageReceived');
+  }, []);
 
   // THEME
   useEffect(() => {
@@ -298,7 +347,7 @@ export default () => {
           ref={navigationRef}
           theme={theme}
           linking={linking}
-          onReady={() => {
+          onReady={async () => {
             // routing to previous route if onboarding
             if (currentRoute && !onboardingCompleted) {
               const [currentStack, params] = currentRoute;
@@ -310,6 +359,10 @@ export default () => {
                   )}`,
                 ),
               );
+            } else {
+              const url = await Linking.getInitialURL();
+              await sleep(10);
+              urlEventHandler({url});
             }
           }}
           onStateChange={debounce(navEvent => {
@@ -319,16 +372,17 @@ export default () => {
               let {name, params} = navEvent.routes[routes.length - 1];
               dispatch(AppActions.setCurrentRoute([name, params]));
               dispatch(LogActions.info(`Navigation event... ${name}`));
-              if (!__DEV__) {
+
+              if (APP_ANALYTICS_ENABLED) {
                 if (name === 'Tabs') {
                   const {history} = navEvent.routes[routes.length - 1].state;
                   const tabName = history[history.length - 1].key.split('-')[0];
                   name = `${tabName} Tab`;
                 }
-                analytics.screen(name, {
-                  screen: params?.screen || '',
-                  appUser: user?.eid || '',
-                });
+
+                dispatch(
+                  Analytics.screen(name, {screen: params?.screen || ''}),
+                );
               }
             }
           }, 300)}>
@@ -343,8 +397,8 @@ export default () => {
               component={DebugScreen}
               options={{
                 ...baseNavigatorOptions,
-                headerShown: true,
-                headerTitle: 'Debug',
+                gestureEnabled: false,
+                animationEnabled: false,
               }}
             />
             <Root.Screen name={RootStacks.AUTH} component={AuthStack} />

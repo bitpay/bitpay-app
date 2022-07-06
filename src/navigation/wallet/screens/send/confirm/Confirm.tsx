@@ -18,6 +18,7 @@ import {
 import PaymentSent from '../../../components/PaymentSent';
 import {sleep} from '../../../../../utils/helper-methods';
 import {
+  logSegmentEvent,
   openUrlWithInAppBrowser,
   startOnGoingProcessModal,
 } from '../../../../../store/app/app.effects';
@@ -29,6 +30,7 @@ import {
 import {
   Amount,
   ConfirmContainer,
+  ConfirmScrollView,
   DetailsList,
   Fee,
   Header,
@@ -62,6 +64,7 @@ import {
 import {Alert, TouchableOpacity} from 'react-native';
 import {GetFeeOptions} from '../../../../../store/wallet/effects/fee/fee';
 import haptic from '../../../../../components/haptic-feedback/haptic';
+import {Memo} from './Memo';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -146,10 +149,12 @@ const Confirm = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
-        <HeaderTitle>Confirm {speedup ? 'Speed Up' : 'Payment'}</HeaderTitle>
+        <HeaderTitle>
+          {t('Confirm ', {title: speedup ? t('Speed Up') : t('Payment')})}
+        </HeaderTitle>
       ),
     });
-  }, [navigation, speedup]);
+  }, [navigation, speedup, t]);
 
   const isTxLevelAvailable = () => {
     const excludeCurrencies = ['bch', 'doge', 'ltc', 'xrp'];
@@ -177,12 +182,12 @@ const Confirm = () => {
       '',
       [
         {
-          text: 'Cancel',
+          text: t('Cancel'),
           onPress: () => {},
           style: 'cancel',
         },
         {
-          text: 'OK',
+          text: t('OK'),
           onPress: value => {
             const opts: {
               nonce?: number;
@@ -220,7 +225,12 @@ const Confirm = () => {
 
   const updateTxProposal = async (newOpts: any) => {
     try {
-      dispatch(startOnGoingProcessModal(OnGoingProcessMessages.UPDATING_TXP));
+      dispatch(
+        startOnGoingProcessModal(
+          // t('Updating Transaction')
+          t(OnGoingProcessMessages.UPDATING_TXP),
+        ),
+      );
       const {txDetails: _txDetails, txp: newTxp} = await dispatch(
         createProposalAndBuildTxDetails({
           wallet,
@@ -254,7 +264,7 @@ const Confirm = () => {
           enableBackdropDismiss: false,
           actions: [
             {
-              text: 'OK',
+              text: t('OK'),
               action: () => {},
             },
           ],
@@ -299,108 +309,187 @@ const Confirm = () => {
 
   return (
     <ConfirmContainer>
-      <DetailsList>
-        <Header>Summary</Header>
-        <SendingTo recipient={recipientData} hr />
-        <Fee
-          onPress={
-            isTxLevelAvailable()
-              ? () => setShowTransactionLevel(true)
-              : undefined
-          }
-          fee={fee}
-          feeOptions={feeOptions}
-          hr
-        />
-        {enableReplaceByFee ? (
-          <>
-            <Setting activeOpacity={1}>
-              <SettingTitle>{t('Enable Replace-By-Fee')}</SettingTitle>
-              <ToggleSwitch
-                onChange={value => {
-                  setEnableRBF(value);
-                  onChangeEnableReplaceByFee(value);
-                }}
-                isEnabled={enableRBF}
-              />
-            </Setting>
-            <Hr />
-          </>
-        ) : null}
-        {gasPrice !== undefined ? (
-          <SharedDetailRow
-            description={'Gas price'}
-            value={gasPrice.toFixed(2) + ' Gwei'}
-            hr
-          />
-        ) : null}
-        {gasLimit !== undefined ? (
-          <SharedDetailRow
-            description={'Gas limit'}
-            value={gasLimit}
-            onPress={() => editValue('Edit gas limit', 'gasLimit')}
-            hr
-          />
-        ) : null}
-        {nonce !== undefined && nonce !== null ? (
-          <SharedDetailRow
-            description={'Nonce'}
-            value={nonce}
+      <ConfirmScrollView
+        extraScrollHeight={50}
+        contentContainerStyle={{paddingBottom: 50}}
+        keyboardShouldPersistTaps={'handled'}>
+        <DetailsList keyboardShouldPersistTaps={'handled'}>
+          <Header>Summary</Header>
+          <SendingTo recipient={recipientData} hr />
+          <Fee
             onPress={
-              customizeNonce
-                ? () => editValue('Edit nonce', 'nonce')
+              isTxLevelAvailable()
+                ? () => setShowTransactionLevel(true)
                 : undefined
             }
+            fee={fee}
+            feeOptions={feeOptions}
             hr
           />
-        ) : null}
-        <SendingFrom sender={sendingFrom} hr />
-        {currencyAbbreviation === 'xrp' ? (
-          <>
+          {enableReplaceByFee && currencyAbbreviation === 'btc' ? (
+            <>
+              <Setting activeOpacity={1}>
+                <SettingTitle>{t('Enable Replace-By-Fee')}</SettingTitle>
+                <ToggleSwitch
+                  onChange={value => {
+                    setEnableRBF(value);
+                    onChangeEnableReplaceByFee(value);
+                  }}
+                  isEnabled={enableRBF}
+                />
+              </Setting>
+              <Hr />
+            </>
+          ) : null}
+          {gasPrice !== undefined ? (
             <SharedDetailRow
-              description={'Destination Tag'}
-              value={destinationTag || 'edit'}
-              onPress={() =>
-                editValue('Edit destination tag', 'destinationTag')
-              }
+              description={t('Gas price')}
+              value={gasPrice.toFixed(2) + ' Gwei'}
+              hr
             />
-            <Info>
-              <InfoTriangle />
-              <InfoDescription>
-                A Destination Tag is an optional number that corresponds to an
-                invoice or a XRP account on an exchange.
-              </InfoDescription>
+          ) : null}
+          {gasLimit !== undefined ? (
+            <SharedDetailRow
+              description={t('Gas limit')}
+              value={gasLimit}
+              onPress={() => editValue(t('Edit gas limit'), 'gasLimit')}
+              hr
+            />
+          ) : null}
+          {nonce !== undefined && nonce !== null ? (
+            <SharedDetailRow
+              description={t('Nonce')}
+              value={nonce}
+              onPress={
+                customizeNonce
+                  ? () => editValue(t('Edit nonce'), 'nonce')
+                  : undefined
+              }
+              hr
+            />
+          ) : null}
+          <SendingFrom sender={sendingFrom} hr />
+          {currencyAbbreviation === 'xrp' ? (
+            <>
+              <SharedDetailRow
+                description={t('Destination Tag')}
+                value={destinationTag || 'edit'}
+                onPress={() =>
+                  editValue(t('Edit destination tag'), 'destinationTag')
+                }
+              />
+              <Info>
+                <InfoTriangle />
+                <InfoDescription>
+                  {t(
+                    'A Destination Tag is an optional number that corresponds to an invoice or a XRP account on an exchange.',
+                  )}
+                </InfoDescription>
 
-              <VerticalPadding>
-                <TouchableOpacity
-                  activeOpacity={ActiveOpacity}
-                  onPress={() => {
-                    haptic('impactLight');
-                    dispatch(
-                      openUrlWithInAppBrowser('URL.HELP_DESTINATION_TAG'),
-                    );
-                  }}>
-                  <Link>Learn More</Link>
-                </TouchableOpacity>
-              </VerticalPadding>
-            </Info>
-          </>
-        ) : null}
-        <Amount description={'SubTotal'} amount={subTotal} />
-        <Amount description={'Total'} amount={total} />
-      </DetailsList>
+                <VerticalPadding>
+                  <TouchableOpacity
+                    activeOpacity={ActiveOpacity}
+                    onPress={() => {
+                      haptic('impactLight');
+                      dispatch(
+                        openUrlWithInAppBrowser('URL.HELP_DESTINATION_TAG'),
+                      );
+                    }}>
+                    <Link>Learn More</Link>
+                  </TouchableOpacity>
+                </VerticalPadding>
+              </Info>
+            </>
+          ) : null}
+          {txp && currencyAbbreviation !== 'xrp' ? (
+            <Memo
+              memo={txp.message || ''}
+              onChange={message => setTxp({...txp, message})}
+            />
+          ) : null}
+          <Amount description={t('SubTotal')} amount={subTotal} height={83} />
+          <Amount description={t('Total')} amount={total} height={83} />
+        </DetailsList>
 
+        <PaymentSent
+          isVisible={showPaymentSentModal}
+          onCloseModal={async () => {
+            setShowPaymentSentModal(false);
+            if (recipient.type === 'coinbase') {
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 2,
+                  routes: [
+                    {
+                      name: 'Tabs',
+                      params: {screen: 'Home'},
+                    },
+                    {
+                      name: 'Coinbase',
+                      params: {
+                        screen: 'CoinbaseRoot',
+                      },
+                    },
+                  ],
+                }),
+              );
+            } else if (recipient.type === 'contact') {
+              navigation.dispatch(StackActions.popToTop());
+            } else {
+              navigation.dispatch(StackActions.popToTop());
+              navigation.dispatch(
+                StackActions.replace('WalletDetails', {
+                  walletId: wallet!.id,
+                  key,
+                }),
+              );
+              await sleep(0);
+              setShowPaymentSentModal(false);
+            }
+          }}
+        />
+
+        <TransactionLevel
+          feeLevel={fee.feeLevel}
+          wallet={wallet}
+          isVisible={showTransactionLevel}
+          onCloseModal={(selectedLevel, customFeePerKB) =>
+            onCloseTxLevelModal(selectedLevel, customFeePerKB)
+          }
+          customFeePerKB={fee.feeLevel === 'custom' ? txp?.feePerKb : undefined}
+          feePerSatByte={
+            fee.feeLevel === 'custom' && txp?.feePerKb
+              ? txp?.feePerKb / 1000
+              : undefined
+          }
+          isSpeedUpTx={speedup}
+        />
+      </ConfirmScrollView>
       <SwipeButton
-        title={speedup ? 'Speed Up' : 'Slide to send'}
+        title={speedup ? t('Speed Up') : t('Slide to send')}
         forceReset={resetSwipeButton}
         onSwipeComplete={async () => {
           try {
             dispatch(
-              startOnGoingProcessModal(OnGoingProcessMessages.SENDING_PAYMENT),
+              startOnGoingProcessModal(
+                // t('Sending Payment')
+                t(OnGoingProcessMessages.SENDING_PAYMENT),
+              ),
             );
             await sleep(400);
             await dispatch(startSendPayment({txp, key, wallet, recipient}));
             dispatch(dismissOnGoingProcessModal());
+            dispatch(
+              logSegmentEvent(
+                'track',
+                'Sent Crypto',
+                {
+                  context: 'Confirm',
+                  coin: currencyAbbreviation || '',
+                },
+                true,
+              ),
+            );
             await sleep(400);
             setShowPaymentSentModal(true);
           } catch (err) {
@@ -416,7 +505,7 @@ const Confirm = () => {
                 await showErrorMessage(
                   CustomErrorMessage({
                     errMsg: BWCErrorMessage(err),
-                    title: 'Uh oh, something went wrong',
+                    title: t('Uh oh, something went wrong'),
                   }),
                 );
                 await sleep(500);
@@ -424,60 +513,6 @@ const Confirm = () => {
             }
           }
         }}
-      />
-
-      <PaymentSent
-        isVisible={showPaymentSentModal}
-        onCloseModal={async () => {
-          setShowPaymentSentModal(false);
-          if (recipient.type === 'coinbase') {
-            navigation.dispatch(
-              CommonActions.reset({
-                index: 2,
-                routes: [
-                  {
-                    name: 'Tabs',
-                    params: {screen: 'Home'},
-                  },
-                  {
-                    name: 'Coinbase',
-                    params: {
-                      screen: 'CoinbaseRoot',
-                    },
-                  },
-                ],
-              }),
-            );
-          } else if (recipient.type === 'contact') {
-            navigation.dispatch(StackActions.popToTop());
-          } else {
-            navigation.dispatch(StackActions.popToTop());
-            navigation.dispatch(
-              StackActions.replace('WalletDetails', {
-                walletId: wallet!.id,
-                key,
-              }),
-            );
-            await sleep(0);
-            setShowPaymentSentModal(false);
-          }
-        }}
-      />
-
-      <TransactionLevel
-        feeLevel={fee.feeLevel}
-        wallet={wallet}
-        isVisible={showTransactionLevel}
-        onCloseModal={(selectedLevel, customFeePerKB) =>
-          onCloseTxLevelModal(selectedLevel, customFeePerKB)
-        }
-        customFeePerKB={fee.feeLevel === 'custom' ? txp?.feePerKb : undefined}
-        feePerSatByte={
-          fee.feeLevel === 'custom' && txp?.feePerKb
-            ? txp?.feePerKb / 1000
-            : undefined
-        }
-        isSpeedUpTx={speedup}
       />
     </ConfirmContainer>
   );

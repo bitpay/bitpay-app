@@ -1,5 +1,6 @@
 package com.bitpay.wallet;
 
+import com.braze.ui.inappmessage.BrazeInAppMessageManager;
 import com.facebook.react.ReactActivity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -41,7 +42,8 @@ public class MainActivity extends ReactActivity {
         setWindowFlag(this, WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, false);
         win.setStatusBarColor(Color.TRANSPARENT);
       }
-    }
+      BrazeInAppMessageManager.getInstance().ensureSubscribedToInAppMessageEvents(MainActivity.this);
+  }
 
     public static void setWindowFlag(Activity activity, final int bits, boolean on) {
       Window win = activity.getWindow();
@@ -58,5 +60,20 @@ public class MainActivity extends ReactActivity {
   public void onNewIntent(Intent intent) {
     super.onNewIntent(intent);
     setIntent(intent);
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    // Registers the BrazeInAppMessageManager for the current Activity. This Activity will now listen for
+    // in-app messages from Braze.
+    BrazeInAppMessageManager.getInstance().registerInAppMessageManager(MainActivity.this);
+  }
+
+  @Override
+  public void onPause() {
+    super.onPause();
+    // Unregisters the BrazeInAppMessageManager for the current Activity.
+    BrazeInAppMessageManager.getInstance().unregisterInAppMessageManager(MainActivity.this);
   }
 }

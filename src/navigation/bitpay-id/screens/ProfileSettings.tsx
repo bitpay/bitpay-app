@@ -1,5 +1,6 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import Avatar from '../../../components/avatar/BitPayIdAvatar';
@@ -8,9 +9,8 @@ import {BaseText, H3, Paragraph} from '../../../components/styled/Text';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {Network} from '../../../constants';
 import {RootState} from '../../../store';
-import {BitPayIdActions} from '../../../store/bitpay-id';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
-import {ShopEffects} from '../../../store/shop';
+import {ShopActions, ShopEffects} from '../../../store/shop';
 import {BitpayIdStackParamList} from '../BitpayIdStack';
 
 type ProfileProps = StackScreenProps<BitpayIdStackParamList, 'Profile'>;
@@ -51,8 +51,12 @@ const SettingsSectionDescription = styled(BaseText)`
 `;
 
 export const ProfileSettingsScreen: React.FC<ProfileProps> = () => {
+  const {t} = useTranslation();
   const dispatch = useDispatch();
   const network = useSelector<RootState, Network>(({APP}) => APP.network);
+  const syncGiftCardPurchasesWithBitPayId = useSelector<RootState, boolean>(
+    ({SHOP}) => SHOP.syncGiftCardPurchasesWithBitPayId,
+  );
   const user = useSelector<RootState, User | null>(
     ({BITPAY_ID}) => BITPAY_ID.user[network],
   );
@@ -78,18 +82,18 @@ export const ProfileSettingsScreen: React.FC<ProfileProps> = () => {
       <SettingsSection>
         <SettingsSectionBody>
           <SettingsSectionHeader>
-            Sync Gift Card Purchases
+            {t('Sync Gift Card Purchases')}
           </SettingsSectionHeader>
           <SettingsSectionDescription>
-            If enabled, your gift card purchases will be associated with your
-            BitPay ID, allowing you to keep track of your gift card purchases
-            even if this device is lost.
+            {t(
+              'If enabled, your gift card purchases will be associated with your BitPay ID, allowing you to keep track of your gift card purchases even if this device is lost.',
+            )}
           </SettingsSectionDescription>
         </SettingsSectionBody>
         <ToggleSwitch
-          isEnabled={user.localSettings.syncGiftCardPurchases}
+          isEnabled={syncGiftCardPurchasesWithBitPayId}
           onChange={() => {
-            dispatch(BitPayIdActions.toggleSyncGiftCardPurchases(network));
+            dispatch(ShopActions.toggledSyncGiftCardPurchasesWithBitPayId());
             dispatch(ShopEffects.startFetchCatalog());
           }}
         />

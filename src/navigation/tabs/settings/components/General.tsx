@@ -42,10 +42,10 @@ const General = () => {
             navigation.navigate('GeneralSettings', {screen: 'Theme'})
           }>
           {colorScheme === 'light'
-            ? 'Light Mode'
+            ? t('Light Mode')
             : colorScheme === 'dark'
-            ? 'Dark Mode'
-            : 'System Default'}
+            ? t('Dark Mode')
+            : t('System Default')}
         </Button>
       </Setting>
       <Hr />
@@ -97,24 +97,24 @@ const General = () => {
           dispatch(
             showBottomNotificationModal({
               type: 'warning',
-              title: 'Reset all settings',
-              message: 'Are you sure you want to reset all settings?',
+              title: t('Reset all settings'),
+              message: t('Are you sure you want to reset all settings?'),
               enableBackdropDismiss: true,
               actions: [
                 {
-                  text: 'RESET',
+                  text: t('RESET'),
                   action: async () => {
                     dispatch(resetAllSettings());
                     await sleep(400);
                     dispatch(
                       showBottomNotificationModal({
                         type: 'success',
-                        title: 'Reset complete',
-                        message: 'All settings have been reset.',
+                        title: t('Reset complete'),
+                        message: t('All settings have been reset.'),
                         enableBackdropDismiss: true,
                         actions: [
                           {
-                            text: 'OK',
+                            text: t('OK'),
                             action: () => null,
                             primary: true,
                           },
@@ -125,7 +125,7 @@ const General = () => {
                   primary: true,
                 },
                 {
-                  text: 'CANCEL',
+                  text: t('CANCEL'),
                   action: () => {},
                   primary: true,
                 },

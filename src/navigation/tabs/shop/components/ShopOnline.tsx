@@ -27,6 +27,9 @@ import {
   SectionSpacer,
 } from './styled/ShopTabComponents';
 import GhostSvg from '../../../../../assets/img/ghost-cheeky.svg';
+import {useTranslation} from 'react-i18next';
+import {useAppDispatch} from '../../../../utils/hooks';
+import {logSegmentEvent} from '../../../../store/app/app.effects';
 
 const SearchResults = styled.View`
   display: flex;
@@ -48,19 +51,35 @@ export const ShopOnline = ({
   integrations: DirectIntegrationApiObject[];
   categories: CategoryWithIntegrations[];
 }) => {
+  const {t} = useTranslation();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const theme = useTheme();
   const {control} = useForm();
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as typeof integrations);
 
-  const updateSearchResults = debounce((text: string) => {
-    setSearchVal(text);
-    const newSearchResults = integrations.filter(integration =>
-      integration.displayName.toLowerCase().includes(text.toLocaleLowerCase()),
-    );
-    setSearchResults(newSearchResults);
-  }, 300);
+  const updateSearchResults = useMemo(
+    () =>
+      debounce((text: string) => {
+        setSearchVal(text);
+        const newSearchResults = integrations.filter(integration =>
+          integration.displayName
+            .toLowerCase()
+            .includes(text.toLocaleLowerCase()),
+        );
+        setSearchResults(newSearchResults);
+        dispatch(
+          logSegmentEvent(
+            'track',
+            'Searched Online Brands',
+            {search: text},
+            true,
+          ),
+        );
+      }, 300),
+    [dispatch, setSearchVal, integrations],
+  );
 
   const FullIntegrationsList = () => (
     <>
@@ -79,12 +98,12 @@ export const ShopOnline = ({
                     },
                   });
                 }}>
-                <SectionHeaderButton>See all</SectionHeaderButton>
+                <SectionHeaderButton>{t('See all')}</SectionHeaderButton>
               </TouchableWithoutFeedback>
             </SectionHeaderContainer>
           </SectionContainer>
           <ShopCarouselList
-            items={category.integrations}
+            items={category.integrations.slice(0, 5)}
             itemComponent={(item: ShopCarouselItem) => {
               const categoryHasDiscount = category.integrations.some(
                 merchant => !!merchant.discount,
@@ -129,7 +148,7 @@ export const ShopOnline = ({
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <SearchBox
-              placeholder={'Search for a brand'}
+              placeholder={t('Search for a brand')}
               onBlur={onBlur}
               onChangeText={(text: string) => {
                 onChange(text);
@@ -159,16 +178,16 @@ export const ShopOnline = ({
               <GhostSvg />
             </NoResultsImgContainer>
             <Paragraph>
-              {"We couldn't find a match for "}
+              {t("We couldn't find a match for ")}
               <BaseText style={{fontWeight: 'bold'}}>{searchVal}</BaseText>.
             </Paragraph>
-            <Paragraph>Please try searching something else.</Paragraph>
+            <Paragraph>{t('Please try searching something else.')}</Paragraph>
           </NoResultsContainer>
         </NoResultsContainer>
       </HideableView>
       <HideableView show={!!(searchVal && searchResults.length)}>
         <SectionContainer>
-          <SectionHeader>Search Results for "{searchVal}"</SectionHeader>
+          <SectionHeader>{t('Search Results for ') + searchVal}</SectionHeader>
         </SectionContainer>
         <SearchResults>
           {searchResults.map(integration => {

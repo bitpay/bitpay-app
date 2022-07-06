@@ -1,6 +1,8 @@
+import {useFocusEffect} from '@react-navigation/native';
 import React from 'react';
 import {Linking} from 'react-native';
-import {ContentCard} from 'react-native-appboy-sdk';
+import ReactAppboy, {ContentCard} from 'react-native-appboy-sdk';
+import FastImage, {Source} from 'react-native-fast-image';
 import styled, {useTheme} from 'styled-components/native';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {
@@ -9,6 +11,7 @@ import {
 } from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
 import {AppEffects} from '../../../../../store/app';
+import {logSegmentEvent} from '../../../../../store/app/app.effects';
 import {
   Action,
   LightBlack,
@@ -22,7 +25,6 @@ import {
 } from '../../../../../utils/braze';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {BoxShadow} from '../Styled';
-import FastImage, {Source} from 'react-native-fast-image';
 
 const QUICK_LINK_ICON_HEIGHT = 35;
 const QUICK_LINK_ICON_WIDTH = 35;
@@ -45,8 +47,7 @@ const QuickLinkCardContainer = styled.TouchableOpacity`
 `;
 
 const TextContainer = styled.View`
-  padding: 20px 0 20px 20px;
-  width: 130px;
+  padding: 11px 18px 11px 76px;
 `;
 
 const TitleText = styled(BaseText)`
@@ -66,7 +67,7 @@ const DescriptionText = styled(BaseText)`
 
 const IconContainer = styled.View`
   position: absolute;
-  right: 20px;
+  left: 16px;
 `;
 
 const QuickLinksCard: React.FC<QuickLinksCardProps> = props => {
@@ -95,6 +96,10 @@ const QuickLinksCard: React.FC<QuickLinksCardProps> = props => {
   }
 
   const onPress = () => {
+    if (!contentCard.id.startsWith('dev_')) {
+      ReactAppboy.logContentCardClicked(contentCard.id);
+    }
+
     if (ctaOverride) {
       ctaOverride();
       return;
@@ -106,6 +111,12 @@ const QuickLinksCard: React.FC<QuickLinksCardProps> = props => {
 
     haptic('impactLight');
 
+    dispatch(
+      logSegmentEvent('track', 'Clicked QuickLinks', {
+        id: contentCard.id || '',
+      }),
+    );
+
     if (openURLInWebView) {
       dispatch(AppEffects.openUrlWithInAppBrowser(url));
     } else {
@@ -113,17 +124,17 @@ const QuickLinksCard: React.FC<QuickLinksCardProps> = props => {
     }
   };
 
+  useFocusEffect(() => {
+    if (!contentCard.id.startsWith('dev_')) {
+      ReactAppboy.logContentCardImpression(contentCard.id);
+    }
+  });
+
   return (
     <QuickLinkCardContainer
       activeOpacity={ActiveOpacity}
       onPress={onPress}
       style={!theme.dark && BoxShadow}>
-      <TextContainer>
-        <TitleText>{title}</TitleText>
-        <DescriptionText numberOfLines={2} ellipsizeMode={'tail'}>
-          {description}
-        </DescriptionText>
-      </TextContainer>
       {imageSource ? (
         <IconContainer>
           <FastImage
@@ -136,6 +147,12 @@ const QuickLinksCard: React.FC<QuickLinksCardProps> = props => {
           />
         </IconContainer>
       ) : null}
+      <TextContainer>
+        <TitleText>{title}</TitleText>
+        <DescriptionText numberOfLines={2} ellipsizeMode={'tail'}>
+          {description}
+        </DescriptionText>
+      </TextContainer>
     </QuickLinkCardContainer>
   );
 };

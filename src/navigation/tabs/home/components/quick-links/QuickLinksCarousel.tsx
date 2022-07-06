@@ -5,7 +5,7 @@ import {WIDTH} from '../../../../../components/styled/Containers';
 import QuickLinksCard from './QuickLinksCard';
 import {CarouselItemContainer} from '../Styled';
 import {useNavigation} from '@react-navigation/native';
-import {useAppSelector} from '../../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 
 interface QuickLinksCarouselProps {
   contentCards: ContentCard[];
@@ -18,7 +18,7 @@ const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({
   const {connectors} = useAppSelector(({WALLET_CONNECT}) => WALLET_CONNECT);
 
   const CTA_OVERRIDES: {[key in string]: () => void} = {
-    walletConnect: () => {
+    dev_walletConnect: () => {
       if (Object.keys(connectors).length) {
         navigation.navigate('WalletConnect', {
           screen: 'WalletConnectConnections',

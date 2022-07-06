@@ -1,7 +1,7 @@
 import React from 'react';
 import styled, {useTheme} from 'styled-components/native';
 import HomeCard from '../../../../components/home-card/HomeCard';
-import {BaseText} from '../../../../components/styled/Text';
+import {BaseText, H3} from '../../../../components/styled/Text';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {
   LightBlack,
@@ -28,6 +28,7 @@ import {BoxShadow} from './Styled';
 import {View} from 'react-native';
 import Percentage from '../../../../components/percentage/Percentage';
 import {useAppSelector} from '../../../../utils/hooks';
+import {useTranslation} from 'react-i18next';
 
 interface WalletCardComponentProps {
   wallets: Wallet[];
@@ -37,6 +38,7 @@ interface WalletCardComponentProps {
   needsBackup: boolean;
   keyName: string | undefined;
   layout: HomeCarouselLayoutType;
+  hideKeyBalance: boolean;
 }
 
 export const HeaderImg = styled.View`
@@ -100,8 +102,10 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   onPress,
   needsBackup,
   keyName = 'My Key',
+  hideKeyBalance,
   layout,
 }) => {
+  const {t} = useTranslation();
   const theme = useTheme();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const walletInfo = wallets.slice(0, WALLET_DISPLAY_LIMIT);
@@ -122,7 +126,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
       {remainingWalletCount ? (
         <View style={isListView ? {paddingBottom: 5} : null}>
           <RemainingAssetsLabel>
-            + {remainingWalletCount} more{' '}
+            + {remainingWalletCount} {t('more')}{' '}
           </RemainingAssetsLabel>
         </View>
       ) : null}
@@ -147,8 +151,8 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
           </Column>
           <Column style={{justifyContent: 'center', alignItems: 'flex-end'}}>
             {needsBackup ? (
-              <NeedBackupText>Needs Backup</NeedBackupText>
-            ) : (
+              <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
+            ) : !hideKeyBalance ? (
               <>
                 <Balance>
                   {amount}
@@ -165,6 +169,8 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
                   />
                 ) : null}
               </>
+            ) : (
+              <H3>****</H3>
             )}
           </Column>
         </Row>
@@ -183,6 +189,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
         value: formatFiatAmount(totalBalance, defaultAltCurrency.isoCode),
         percentageDifference,
         needsBackup,
+        hideKeyBalance,
       }}
       onCTAPress={onPress}
     />

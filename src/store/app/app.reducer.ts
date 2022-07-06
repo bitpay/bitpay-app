@@ -1,11 +1,13 @@
 import i18n from 'i18next';
 import {ColorSchemeName} from 'react-native';
 import {ContentCard} from 'react-native-appboy-sdk';
+import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
+import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
+import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {Network} from '../../constants';
 import {APP_NETWORK, BASE_BITPAY_URLS} from '../../constants/config';
-import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
-import {PinModalConfig} from '../../components/modal/pin/PinModal';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
+import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {DecryptPasswordConfig} from '../../navigation/wallet/components/DecryptEnterPasswordModal';
 import {NavScreenParams, RootStackParamList} from '../../Root';
 import {
@@ -14,10 +16,8 @@ import {
   HomeCarouselLayoutType,
 } from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
-import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
-import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 
-type AppReduxPersistBlackList = [
+export const appReduxPersistBlackList: Array<keyof AppState> = [
   'appIsLoading',
   'showOnGoingProcessModal',
   'onGoingProcessModalMessage',
@@ -26,21 +26,16 @@ type AppReduxPersistBlackList = [
   'pinModalConfig',
   'showBottomNotificationModal',
   'showBiometricModal',
-  'dismissBiometricModal',
-  'checkingBiometric',
+  'activeModalId',
+  'failedAppInit',
 ];
-export const appReduxPersistBlackList: AppReduxPersistBlackList = [
-  'appIsLoading',
-  'showOnGoingProcessModal',
-  'onGoingProcessModalMessage',
-  'showDecryptPasswordModal',
-  'showPinModal',
-  'pinModalConfig',
-  'showBottomNotificationModal',
-  'showBiometricModal',
-  'dismissBiometricModal',
-  'checkingBiometric',
-];
+
+export type ModalId = 'sheetModal' | 'ongoingProcess' | 'pin';
+
+export type AppFirstOpenData = {
+  firstOpenEventComplete: boolean;
+  firstOpenDate: number | undefined;
+};
 
 export interface AppState {
   identity: {
@@ -49,6 +44,7 @@ export interface AppState {
   network: Network;
   baseBitPayURL: string;
   appIsLoading: boolean;
+  appFirstOpenData: AppFirstOpenData;
   introCompleted: boolean;
   onboardingCompleted: boolean;
   showOnGoingProcessModal: boolean;
@@ -57,6 +53,9 @@ export interface AppState {
   bottomNotificationModalConfig: BottomNotificationConfig | undefined;
   currentRoute: [keyof RootStackParamList, NavScreenParams] | undefined;
   notificationsAccepted: boolean;
+  confirmedTxAccepted: boolean;
+  productsUpdatesAccepted: boolean;
+  offersAndPromotionsAccepted: boolean;
   showOnboardingFinishModal: boolean;
   showDecryptPasswordModal: boolean;
   decryptPasswordConfig: DecryptPasswordConfig | undefined;
@@ -70,6 +69,7 @@ export interface AppState {
   defaultLanguage: string;
   showPortfolioValue: boolean;
   brazeContentCards: ContentCard[];
+  brazeEid: string | undefined;
   showBiometricModal: boolean;
   biometricLockActive: boolean;
   lockAuthorizedUntil: number | undefined;
@@ -82,6 +82,8 @@ export interface AppState {
   keyMigrationFailure: boolean;
   showKeyMigrationFailureModal: boolean;
   keyMigrationFailureModalHasBeenShown: boolean;
+  activeModalId: ModalId | null;
+  failedAppInit: boolean;
 }
 
 const initialState: AppState = {
@@ -100,6 +102,7 @@ const initialState: AppState = {
   network: APP_NETWORK,
   baseBitPayURL: BASE_BITPAY_URLS[Network.mainnet],
   appIsLoading: true,
+  appFirstOpenData: {firstOpenEventComplete: false, firstOpenDate: undefined},
   introCompleted: false,
   onboardingCompleted: false,
   showOnGoingProcessModal: false,
@@ -108,6 +111,9 @@ const initialState: AppState = {
   bottomNotificationModalConfig: undefined,
   currentRoute: undefined,
   notificationsAccepted: false,
+  confirmedTxAccepted: false,
+  productsUpdatesAccepted: false,
+  offersAndPromotionsAccepted: false,
   showOnboardingFinishModal: false,
   showDecryptPasswordModal: false,
   decryptPasswordConfig: undefined,
@@ -121,6 +127,7 @@ const initialState: AppState = {
   defaultLanguage: i18n.language || 'en',
   showPortfolioValue: true,
   brazeContentCards: [],
+  brazeEid: undefined,
   showBiometricModal: false,
   biometricLockActive: false,
   lockAuthorizedUntil: undefined,
@@ -133,6 +140,8 @@ const initialState: AppState = {
   keyMigrationFailure: false,
   showKeyMigrationFailureModal: false,
   keyMigrationFailureModalHasBeenShown: false,
+  activeModalId: null,
+  failedAppInit: false,
 };
 
 export const appReducer = (
@@ -150,6 +159,24 @@ export const appReducer = (
       return {
         ...state,
         appIsLoading: false,
+      };
+
+    case AppActionTypes.SET_APP_FIRST_OPEN_EVENT_COMPLETE:
+      return {
+        ...state,
+        appFirstOpenData: {
+          ...state.appFirstOpenData,
+          firstOpenEventComplete: true,
+        },
+      };
+
+    case AppActionTypes.SET_APP_FIRST_OPEN_DATE:
+      return {
+        ...state,
+        appFirstOpenData: {
+          ...state.appFirstOpenData,
+          firstOpenDate: Math.floor(Date.now() / 1000),
+        },
       };
 
     case AppActionTypes.SET_ONBOARDING_COMPLETED:
@@ -223,6 +250,24 @@ export const appReducer = (
       return {
         ...state,
         notificationsAccepted: action.payload,
+      };
+
+    case AppActionTypes.SET_CONFIRMED_TX_ACCEPTED:
+      return {
+        ...state,
+        confirmedTxAccepted: action.payload,
+      };
+
+    case AppActionTypes.SET_PRODUCTS_UPDATES_ACCEPTED:
+      return {
+        ...state,
+        productsUpdatesAccepted: action.payload,
+      };
+
+    case AppActionTypes.SET_OFFERS_AND_PROMOTIONS_ACCEPTED:
+      return {
+        ...state,
+        offersAndPromotionsAccepted: action.payload,
       };
 
     case AppActionTypes.SHOW_ONBOARDING_FINISH_MODAL:
@@ -319,6 +364,12 @@ export const appReducer = (
         brazeContentCards: action.payload.contentCards,
       };
 
+    case AppActionTypes.SET_BRAZE_EID:
+      return {
+        ...state,
+        brazeEid: action.payload,
+      };
+
     case AppActionTypes.SHOW_BIOMETRIC_MODAL:
       return {
         ...state,
@@ -412,6 +463,18 @@ export const appReducer = (
       return {
         ...state,
         keyMigrationFailureModalHasBeenShown: true,
+      };
+
+    case AppActionTypes.ACTIVE_MODAL_UPDATED:
+      return {
+        ...state,
+        activeModalId: action.payload,
+      };
+
+    case AppActionTypes.FAILED_APP_INIT:
+      return {
+        ...state,
+        failedAppInit: action.payload,
       };
 
     default:

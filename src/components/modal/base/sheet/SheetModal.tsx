@@ -1,8 +1,8 @@
-import Modal from 'react-native-modal';
 import React from 'react';
-import {SheetParams} from '../../../styled/Containers';
 import {useAppSelector} from '../../../../utils/hooks';
 import Blur from '../../../blur/Blur';
+import {SheetParams} from '../../../styled/Containers';
+import BaseModal from '../BaseModal';
 
 interface Props extends SheetParams {
   isVisible: boolean;
@@ -16,8 +16,10 @@ const SheetModal: React.FC<Props> = ({
   placement,
 }) => {
   const showBlur = useAppSelector(({APP}) => APP.showBlur);
+
   return (
-    <Modal
+    <BaseModal
+      id={'sheetModal'}
       isVisible={isVisible}
       backdropOpacity={0.4}
       backdropTransitionOutTiming={0}
@@ -39,7 +41,7 @@ const SheetModal: React.FC<Props> = ({
         {children}
         {showBlur && <Blur />}
       </>
-    </Modal>
+    </BaseModal>
   );
 };
 

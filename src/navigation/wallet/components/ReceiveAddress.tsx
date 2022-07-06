@@ -35,6 +35,7 @@ import {
   GetProtocolPrefix,
   IsUtxoCoin,
 } from '../../../store/wallet/utils/currency';
+import {useTranslation} from 'react-i18next';
 
 export const BchAddressTypes = ['Cash Address', 'Legacy'];
 
@@ -107,6 +108,7 @@ interface Props {
 }
 
 const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const [copied, setCopied] = useState(false);
@@ -116,6 +118,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
   const [bchAddressType, setBchAddressType] = useState('Cash Address');
   const [bchAddress, setBchAddress] = useState('');
   const [wasInit, setWasInit] = useState(false);
+  const [singleAddress, setSingleAddress] = useState(false);
 
   const copyToClipboard = () => {
     haptic('impactLight');
@@ -124,6 +127,18 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
       setCopied(true);
     }
   };
+
+  const setIsSingleAddress = () => {
+    wallet?.getStatus({network: wallet.network}, (err: any, status: any) => {
+      if (!err) {
+        setSingleAddress(status.wallet.singleAddress);
+      }
+    });
+  };
+
+  useEffect(() => {
+    setIsSingleAddress();
+  }, []);
 
   useEffect(() => {
     if (!copied) {
@@ -249,11 +264,13 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={_closeModal}>
       <ReceiveAddressContainer>
-        <ReceiveAddressHeader
-          onPressRefresh={() => createAddress(true)}
-          contextHandlers={headerContextHandlers}
-          showRefresh={isUtxo}
-        />
+        {!singleAddress ? (
+          <ReceiveAddressHeader
+            onPressRefresh={() => createAddress(true)}
+            contextHandlers={headerContextHandlers}
+            showRefresh={isUtxo}
+          />
+        ) : null}
 
         {address ? (
           <>
@@ -276,17 +293,19 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
           </>
         ) : loading ? (
           <LoadingContainer>
-            <LoadingText>Generating Address...</LoadingText>
+            <LoadingText>{t('Generating Address...')}</LoadingText>
           </LoadingContainer>
         ) : (
           <LoadingContainer>
             <GhostSvg />
-            <LoadingText>Something went wrong. Please try again.</LoadingText>
+            <LoadingText>
+              {t('Something went wrong. Please try again.')}
+            </LoadingText>
           </LoadingContainer>
         )}
 
         <CloseButton onPress={_closeModal}>
-          <CloseButtonText>CLOSE</CloseButtonText>
+          <CloseButtonText>{t('CLOSE')}</CloseButtonText>
         </CloseButton>
       </ReceiveAddressContainer>
     </SheetModal>

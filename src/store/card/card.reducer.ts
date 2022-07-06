@@ -1,5 +1,6 @@
 import {Network} from '../../constants';
-import {CardProvider} from '../../constants/card';
+import {ProviderConfig} from '../../constants/config.card';
+import {isInvalidCard} from '../../utils/card';
 import {
   BitPayIdActionType,
   BitPayIdActionTypes,
@@ -25,6 +26,9 @@ export const cardReduxPersistBlacklist: Array<keyof CardState> = [
   'balances',
   'settledTransactions',
   'pendingTransactions',
+  'pinChangeRequestInfo',
+  'pinChangeRequestInfoStatus',
+  'pinChangeRequestInfoError',
 ];
 
 export type FetchCardsStatus = 'success' | 'failed' | null;
@@ -35,6 +39,7 @@ export type UpdateCardLockStatus = 'success' | 'failed' | null;
 export type UpdateCardNameStatus = 'success' | 'failed' | null;
 export type referredUsersStatus = 'loading' | 'failed';
 export type ActivateCardStatus = 'success' | 'failed' | null;
+export type FetchPinChangeRequestInfoStatus = 'success' | 'failed' | null;
 
 export interface CardState {
   lastUpdates: {
@@ -82,6 +87,9 @@ export interface CardState {
   };
   activateCardStatus: ActivateCardStatus;
   activateCardError: string | null;
+  pinChangeRequestInfo: Record<string, string | null>;
+  pinChangeRequestInfoStatus: Record<string, FetchPinChangeRequestInfoStatus>;
+  pinChangeRequestInfoError: Record<string, string | null>;
 }
 
 const initialState: CardState = {
@@ -109,6 +117,9 @@ const initialState: CardState = {
   referredUsers: {},
   activateCardStatus: null,
   activateCardError: null,
+  pinChangeRequestInfo: {},
+  pinChangeRequestInfoStatus: {},
+  pinChangeRequestInfoError: {},
 };
 
 export const cardReducer = (
@@ -135,15 +146,17 @@ export const cardReducer = (
         {} as {[id: string]: number},
       );
 
-      const filterFirstViewCards = (action.payload.cards || []).filter(
-        c => c.provider !== CardProvider.firstView,
-      );
+      const filteredCards = (action.payload.cards || []).filter(card => {
+        const options = ProviderConfig[card.provider];
+
+        return options.displayInApp && !isInvalidCard(card);
+      });
 
       return {
         ...state,
         cards: {
           ...state.cards,
-          [action.payload.network]: filterFirstViewCards,
+          [action.payload.network]: filteredCards,
         },
         balances: {
           ...state.balances,
@@ -152,16 +165,18 @@ export const cardReducer = (
       };
     }
     case CardActionTypes.SUCCESS_FETCH_CARDS: {
-      const filterFirstViewCards = (action.payload.cards || []).filter(
-        c => c.provider !== CardProvider.firstView,
-      );
+      const filteredCards = (action.payload.cards || []).filter(card => {
+        const options = ProviderConfig[card.provider];
+
+        return options.displayInApp && !isInvalidCard(card);
+      });
 
       return {
         ...state,
         fetchCardsStatus: 'success',
         cards: {
           ...state.cards,
-          [action.payload.network]: filterFirstViewCards,
+          [action.payload.network]: filteredCards,
         },
       };
     }
@@ -438,6 +453,59 @@ export const cardReducer = (
       return {
         ...state,
         activateCardStatus: action.payload,
+      };
+
+    case CardActionTypes.SUCCESS_FETCH_PIN_CHANGE_REQUEST_INFO:
+      return {
+        ...state,
+        pinChangeRequestInfoStatus: {
+          ...state.pinChangeRequestInfoStatus,
+          [action.payload.id]: 'success',
+        },
+        pinChangeRequestInfoError: {
+          ...state.pinChangeRequestInfoError,
+          [action.payload.id]: null,
+        },
+        pinChangeRequestInfo: {
+          ...state.pinChangeRequestInfo,
+          [action.payload.id]: action.payload.pinChangeRequestInfo,
+        },
+      };
+    case CardActionTypes.FAILED_FETCH_PIN_CHANGE_REQUEST_INFO:
+      return {
+        ...state,
+        pinChangeRequestInfoStatus: {
+          ...state.pinChangeRequestInfoStatus,
+          [action.payload.id]: 'failed',
+        },
+        pinChangeRequestInfoError: {
+          ...state.pinChangeRequestInfoError,
+          [action.payload.id]: action.payload.error,
+        },
+      };
+    case CardActionTypes.UPDATE_FETCH_PIN_CHANGE_REQUEST_INFO_STATUS:
+      return {
+        ...state,
+        pinChangeRequestInfoStatus: {
+          ...state.pinChangeRequestInfoStatus,
+          [action.payload.id]: action.payload.status,
+        },
+      };
+    case CardActionTypes.RESET_PIN_CHANGE_REQUEST_INFO:
+      return {
+        ...state,
+        pinChangeRequestInfo: {
+          ...state.pinChangeRequestInfo,
+          [action.payload.id]: null,
+        },
+        pinChangeRequestInfoStatus: {
+          ...state.pinChangeRequestInfoStatus,
+          [action.payload.id]: null,
+        },
+        pinChangeRequestInfoError: {
+          ...state.pinChangeRequestInfoError,
+          [action.payload.id]: null,
+        },
       };
 
     default:

@@ -163,7 +163,7 @@ export const successInitializeStore = (
   type: BitPayIdActionTypes.SUCCESS_INITIALIZE_STORE,
   payload: {
     network,
-    user: {...data.basicInfo, localSettings: {syncGiftCardPurchases: true}},
+    user: data.basicInfo,
     doshToken: data.doshToken,
   },
 });
@@ -209,13 +209,6 @@ export const updateFetchDoshTokenStatus = (
 ): BitPayIdActionType => ({
   type: BitPayIdActionTypes.UPDATE_FETCH_DOSH_TOKEN_STATUS,
   payload: status,
-});
-
-export const toggleSyncGiftCardPurchases = (
-  network: Network,
-): BitPayIdActionType => ({
-  type: BitPayIdActionTypes.TOGGLE_SYNC_GIFT_CARD_PURCHASES,
-  payload: {network},
 });
 
 export const forgotPasswordEmailStatus = (

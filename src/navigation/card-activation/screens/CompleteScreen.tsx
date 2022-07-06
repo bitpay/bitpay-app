@@ -1,5 +1,6 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
@@ -38,6 +39,7 @@ const Description = styled(Paragraph)`
 const CompleteScreen: React.FC<
   StackScreenProps<CardActivationStackParamList, 'Complete'>
 > = () => {
+  const {t} = useTranslation();
   const onViewCardPress = () => {
     navigationRef.navigate('Tabs', {
       screen: 'Card',
@@ -56,14 +58,15 @@ const CompleteScreen: React.FC<
       </HeroImageContainer>
 
       <ContentContainer>
-        <Heading>Your card is now activated!</Heading>
+        <Heading>{t('Your card is now activated!')}</Heading>
 
         <Description>
-          You can now use your card at over 40 million locations in 210
-          countries and territories.
+          {t(
+            'You can now use your card at over 40 million locations in 210 countries and territories.',
+          )}
         </Description>
 
-        <Button onPress={onViewCardPress}>View My Card</Button>
+        <Button onPress={onViewCardPress}>{t('View My Card')}</Button>
       </ContentContainer>
     </SafeAreaView>
   );

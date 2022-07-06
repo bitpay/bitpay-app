@@ -4,6 +4,7 @@ import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
 import styled from 'styled-components/native';
 import {BaseText, H4} from '../../../components/styled/Text';
 import {Action, NeutralSlate, SlateDark} from '../../../styles/colors';
+import {useTranslation} from 'react-i18next';
 
 const Header = styled.View`
   margin-bottom: 30px;
@@ -77,6 +78,7 @@ const ReceiveAddressHeader = ({
   contextHandlers,
   showRefresh,
 }: Props) => {
+  const {t} = useTranslation();
   const {currency} = contextHandlers || {};
   switch (currency) {
     case 'bch':
@@ -84,7 +86,7 @@ const ReceiveAddressHeader = ({
         contextHandlers || {};
       return (
         <BchHeader>
-          <Title>Address</Title>
+          <Title>{t('Address')}</Title>
 
           <BchHeaderActions>
             {items &&
@@ -114,7 +116,7 @@ const ReceiveAddressHeader = ({
     default:
       return (
         <Header>
-          <Title>Address</Title>
+          <Title>{t('Address')}</Title>
           {showRefresh ? (
             <Refresh
               onPress={() => {

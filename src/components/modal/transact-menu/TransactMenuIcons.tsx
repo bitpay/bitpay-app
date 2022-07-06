@@ -1,13 +1,7 @@
 import React from 'react';
 import * as Svg from 'react-native-svg';
 import {useTheme} from 'styled-components/native';
-import {
-  Action,
-  Midnight,
-  NeutralSlate,
-  ProgressBlue,
-  White,
-} from '../../../styles/colors';
+import {Action, Midnight, White} from '../../../styles/colors';
 import {BitPayTheme} from '../../../themes/bitpay';
 
 const BuyCrypto = () => {
@@ -61,8 +55,6 @@ const BuyGiftCard = () => {
 };
 
 const Close = () => {
-  const theme = useTheme();
-
   return (
     <Svg.Svg width="37" height="37" viewBox="0 0 37 37" fill="none">
       <Svg.Rect width="36.2319" height="36.2319" rx="18.1159" fill={Action} />

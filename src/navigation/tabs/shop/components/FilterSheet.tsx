@@ -6,7 +6,7 @@ import {
   SheetContainer,
   SheetParams,
 } from '../../../../components/styled/Containers';
-import {Platform} from 'react-native';
+import {Platform, ScrollView} from 'react-native';
 import {Action, LightBlack, LinkBlue, White} from '../../../../styles/colors';
 import {horizontalPadding} from './styled/ShopTabComponents';
 import {sleep} from '../../../../utils/helper-methods';
@@ -14,6 +14,7 @@ import {
   BottomNotificationCta,
   BottomNotificationHr,
 } from '../../../../components/modal/bottom-notification/BottomNotification';
+import {useTranslation} from 'react-i18next';
 
 const SheetTitleContainer = styled.View`
   margin-bottom: 25px;
@@ -83,6 +84,7 @@ const FilterSheet = ({
   categories,
   onSelectionChange,
 }: Props) => {
+  const {t} = useTranslation();
   const [initialCategoryMap, setInitialCategoryMap] = useState(categories);
   const [categoryMap, setCategoryMap] = useState(categories);
   return (
@@ -93,27 +95,29 @@ const FilterSheet = ({
         closeModal();
       }}>
       <PillSheetContainer>
-        <SheetTitleContainer>
-          <TextAlign align={'left'}>
-            <H4>Filter Gift Cards</H4>
-          </TextAlign>
-        </SheetTitleContainer>
-        <Pills>
-          {Object.keys(categoryMap).map(category => (
-            <Pill key={category} selected={categoryMap[category]}>
-              <PillText
-                selected={categoryMap[category]}
-                onPress={() =>
-                  setCategoryMap({
-                    ...categoryMap,
-                    [category]: !categoryMap[category],
-                  })
-                }>
-                {category}
-              </PillText>
-            </Pill>
-          ))}
-        </Pills>
+        <ScrollView>
+          <SheetTitleContainer>
+            <TextAlign align={'left'}>
+              <H4>{t('Filter Gift Cards')}</H4>
+            </TextAlign>
+          </SheetTitleContainer>
+          <Pills>
+            {Object.keys(categoryMap).map(category => (
+              <Pill key={category} selected={categoryMap[category]}>
+                <PillText
+                  selected={categoryMap[category]}
+                  onPress={() =>
+                    setCategoryMap({
+                      ...categoryMap,
+                      [category]: !categoryMap[category],
+                    })
+                  }>
+                  {category}
+                </PillText>
+              </Pill>
+            ))}
+          </Pills>
+        </ScrollView>
         <BottomNotificationHr />
         <CtaContainer platform={Platform.OS}>
           <BottomNotificationCta
@@ -125,7 +129,7 @@ const FilterSheet = ({
               await sleep(1000);
               setInitialCategoryMap(categoryMap);
             }}>
-            {'Apply Filter'.toUpperCase()}
+            {t('Apply Filter').toUpperCase()}
           </BottomNotificationCta>
           <BottomNotificationCta
             suppressHighlighting={true}
@@ -133,7 +137,7 @@ const FilterSheet = ({
             onPress={() =>
               setCategoryMap(initializeCategoryMap(Object.keys(categoryMap)))
             }>
-            {'Clear'.toUpperCase()}
+            {t('Clear').toUpperCase()}
           </BottomNotificationCta>
         </CtaContainer>
       </PillSheetContainer>

@@ -29,6 +29,8 @@ import {BwcProvider} from '../../../../lib/bwc';
 import Clipboard from '@react-native-community/clipboard';
 import {sleep} from '../../../../utils/helper-methods';
 import {Linking} from 'react-native';
+import {useTranslation} from 'react-i18next';
+import i18next from 'i18next';
 
 const BWC = BwcProvider.getInstance();
 
@@ -66,8 +68,8 @@ const schema = yup.object().shape({
   password: yup.string().required(),
   confirmPassword: yup
     .string()
-    .required('Confirm Encryption Password is required field')
-    .oneOf([yup.ref('password')], 'Passwords must match'),
+    .required(() => i18next.t('Confirm Encryption Password is required field'))
+    .oneOf([yup.ref('password')], () => i18next.t('Passwords must match')),
 });
 
 interface ExportWalletPasswordFieldValues {
@@ -93,6 +95,7 @@ const CheckBoxContainer = styled.View`
 `;
 
 const ExportWallet = () => {
+  const {t} = useTranslation();
   const {
     params: {wallet, keyObj},
   } = useRoute<RouteProp<WalletStackParamList, 'ExportWallet'>>();
@@ -112,9 +115,9 @@ const ExportWallet = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>Export Wallet</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Export Wallet')}</HeaderTitle>,
     });
-  }, [navigation]);
+  }, [navigation, t]);
 
   const {
     control,
@@ -184,12 +187,15 @@ const ExportWallet = () => {
       let name = walletName || cWalletName || walletId;
 
       if (dontIncludePrivateKey) {
-        name = `${name} (No Private Key)`;
+        name = name + t(' (No Private Key)');
       }
 
       // TODO: Update app name
-      const subject = `BitPay Wallet Backup: ${name}`;
-      const body = `Here is the encrypted backup of the wallet ${name}: \n\n${_sendWallet} \n\nTo import this backup, copy all text between {...}, including the symbols {}`;
+      const subject = t('BitPay Wallet Backup: ') + name;
+      const body = t(
+        'Here is the encrypted backup of the wallet : \n\n \n\nTo import this backup, copy all text between {...}, including the symbols {}',
+        {name, sendWallet: _sendWallet},
+      );
 
       // Works only on device
       await Linking.openURL(`mailto:?subject=${subject}&body=${body}`);
@@ -209,7 +215,7 @@ const ExportWallet = () => {
     <ExportWalletContainer>
       <ScrollView>
         <ExportWalletParagraph>
-          Export your asset by creating a password
+          {t('Export your asset by creating a password')}
         </ExportWalletParagraph>
 
         <PasswordFormContainer>
@@ -219,7 +225,7 @@ const ExportWallet = () => {
               render={({field: {onChange, onBlur, value}}) => (
                 <BoxInput
                   placeholder={'strongPassword123'}
-                  label={'EXPORT PASSWORD'}
+                  label={t('EXPORT PASSWORD')}
                   type={'password'}
                   onBlur={onBlur}
                   onChangeText={(text: string) => onChange(text)}
@@ -238,7 +244,7 @@ const ExportWallet = () => {
               render={({field: {onChange, onBlur, value}}) => (
                 <BoxInput
                   placeholder={'strongPassword123'}
-                  label={'CONFIRM EXPORT PASSWORD'}
+                  label={t('CONFIRM EXPORT PASSWORD')}
                   type={'password'}
                   onBlur={onBlur}
                   onChangeText={(text: string) => onChange(text)}
@@ -262,14 +268,14 @@ const ExportWallet = () => {
                 {showOptions ? (
                   <>
                     <AdvancedOptionsButtonText>
-                      Hide Advanced Options
+                      {t('Hide Advanced Options')}
                     </AdvancedOptionsButtonText>
                     <ChevronUpSvg />
                   </>
                 ) : (
                   <>
                     <AdvancedOptionsButtonText>
-                      Show Advanced Options
+                      {t('Show Advanced Options')}
                     </AdvancedOptionsButtonText>
                     <ChevronDownSvg />
                   </>
@@ -285,7 +291,7 @@ const ExportWallet = () => {
                     }}>
                     <Column>
                       <AdvancedOptionsText>
-                        Do not include private key
+                        {t('Do not include private key')}
                       </AdvancedOptionsText>
                     </Column>
                     <CheckBoxContainer>
@@ -306,7 +312,7 @@ const ExportWallet = () => {
             <Button
               onPress={handleSubmit(onCopyToClipboard)}
               state={copyButtonState}>
-              Copy to Clipboard
+              {t('Copy to Clipboard')}
             </Button>
           </PasswordActionContainer>
 
@@ -315,7 +321,7 @@ const ExportWallet = () => {
               onPress={handleSubmit(onSendByEmail)}
               state={sendButtonState}
               buttonStyle={'secondary'}>
-              Send by Email
+              {t('Send by Email')}
             </Button>
           </PasswordActionContainer>
         </PasswordFormContainer>

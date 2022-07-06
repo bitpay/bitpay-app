@@ -6,8 +6,6 @@ import AdvertisementCard from './AdvertisementCard';
 import {BoxShadow} from '../Styled';
 import {useNavigation} from '@react-navigation/native';
 import {useRequireKeyAndWalletRedirect} from '../../../../../utils/hooks/useRequireKeyAndWalletRedirect';
-import {useAppSelector} from '../../../../../utils/hooks';
-import analytics from '@segment/analytics-react-native';
 
 interface AdvertisementListProps {
   contentCards: ContentCard[];
@@ -26,14 +24,8 @@ const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
   const {contentCards} = props;
   const theme = useTheme();
   const navigation = useNavigation();
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
-  );
+
   const buyCryptoCta = useRequireKeyAndWalletRedirect(() => {
-    analytics.track('BitPay App - Clicked Buy Crypto', {
-      from: 'Advertisement',
-      appUser: user?.eid || '',
-    });
     navigation.navigate('Wallet', {
       screen: 'Amount',
       params: {
@@ -47,27 +39,24 @@ const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
         },
         opts: {
           hideSendMax: true,
+          context: 'buyCrypto',
         },
       },
     });
   });
   const swapCryptoCta = useRequireKeyAndWalletRedirect(() => {
-    analytics.track('BitPay App - Clicked Swap Crypto', {
-      from: 'Advertisement',
-      appUser: user?.eid || '',
-    });
     navigation.navigate('SwapCrypto', {screen: 'Root'});
   });
   const CTA_OVERRIDES: {[key in string]: () => void} = {
-    card: () =>
+    dev_card: () =>
       navigation.navigate('Tabs', {
         screen: 'Card',
         params: {
           screen: 'CardHome',
         },
       }),
-    swapCrypto: swapCryptoCta,
-    buyCrypto: buyCryptoCta,
+    dev_swapCrypto: swapCryptoCta,
+    dev_buyCrypto: buyCryptoCta,
   };
 
   return (

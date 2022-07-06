@@ -50,22 +50,17 @@ export interface Key {
   totalBalanceLastDay: number;
   isPrivKeyEncrypted?: boolean;
   keyName?: string;
+  hideKeyBalance: boolean;
 }
 
 export interface Wallet extends WalletObj, API {}
 
-export interface WalletBalance {
+export interface CryptoBalance {
   crypto: string;
   cryptoLocked: string;
   cryptoConfirmedLocked: string;
   cryptoSpendable: string;
   cryptoPending: string;
-  fiat: number;
-  fiatLastDay: number;
-  fiatLocked: number;
-  fiatConfirmedLocked: number;
-  fiatSpendable: number;
-  fiatPending: number;
   sat: number;
   satAvailable: number;
   satLocked: number;
@@ -76,8 +71,18 @@ export interface WalletBalance {
   satPending: number;
 }
 
+export interface FiatBalance {
+  fiat: number;
+  fiatLastDay: number;
+  fiatLocked: number;
+  fiatConfirmedLocked: number;
+  fiatSpendable: number;
+  fiatPending: number;
+}
+export interface WalletBalance extends CryptoBalance, FiatBalance {}
+
 export interface WalletStatus {
-  balance: WalletBalance;
+  balance: CryptoBalance;
   pendingTxps: TransactionProposal[];
 }
 export interface WalletObj {
@@ -87,7 +92,7 @@ export interface WalletObj {
   currencyAbbreviation: string;
   m: number;
   n: number;
-  balance: WalletBalance;
+  balance: CryptoBalance;
   pendingTxps: TransactionProposal[];
   tokens?: string[];
   walletName?: string;
@@ -139,6 +144,7 @@ export interface KeyOptions {
   xPrivKey?: string;
   invitationCode?: string;
   seedType?: string;
+  password?: string;
 }
 
 export interface Token {

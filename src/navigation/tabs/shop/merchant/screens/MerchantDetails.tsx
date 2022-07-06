@@ -16,8 +16,14 @@ import {
   SectionDivider,
   SectionSpacer,
 } from '../../components/styled/ShopTabComponents';
-import {H3, H5, Paragraph} from '../../../../../components/styled/Text';
+import {
+  H3,
+  H5,
+  HeaderTitle,
+  Paragraph,
+} from '../../../../../components/styled/Text';
 import {useTheme} from '@react-navigation/native';
+import {useTranslation} from 'react-i18next';
 
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;
@@ -48,12 +54,15 @@ const MerchantDetails = ({
   route,
   navigation,
 }: StackScreenProps<MerchantStackParamList, 'MerchantDetails'>) => {
+  const {t} = useTranslation();
   const theme = useTheme();
   const {directIntegration} = route.params;
   const iconHeight = 70;
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: directIntegration.displayName,
+      headerTitle: () => (
+        <HeaderTitle>{directIntegration.displayName}</HeaderTitle>
+      ),
     });
   });
   return (
@@ -72,7 +81,7 @@ const MerchantDetails = ({
             <MerchantName>{directIntegration.displayName}</MerchantName>
             <Paragraph>{directIntegration.caption}</Paragraph>
             <Divider />
-            <SectionHeader>Payment Instructions</SectionHeader>
+            <SectionHeader>{t('Payment Instructions')}</SectionHeader>
             <Paragraph>{directIntegration.instructions}</Paragraph>
           </ContentContainer>
         </SectionContainer>
@@ -89,7 +98,7 @@ const MerchantDetails = ({
         <Button
           onPress={() => Linking.openURL(directIntegration.link)}
           buttonStyle={'primary'}>
-          Go to {directIntegration.displayName}
+          {t('Go to ') + directIntegration.displayName}
         </Button>
       </FooterButton>
     </>
