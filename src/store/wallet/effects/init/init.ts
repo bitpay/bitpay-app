@@ -20,8 +20,9 @@ export const startWalletStoreInit =
 
       dispatch(getPriceHistory(defaultAltCurrencyIsoCode));
       dispatch(WalletActions.successWalletStoreInit());
+      Promise.resolve();
     } catch (e) {
-      console.error(e);
       dispatch(WalletActions.failedWalletStoreInit());
+      Promise.reject(e);
     }
   };

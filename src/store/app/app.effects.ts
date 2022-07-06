@@ -179,10 +179,12 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     } else {
       errorStr = JSON.stringify(err);
     }
+    // wait for navigationRef
+    await sleep(2000);
     dispatch(AppActions.failedAppInit());
     dispatch(LogActions.error('Failed to initialize app.'));
     dispatch(LogActions.error(errorStr));
-    await sleep(2000);
+    await sleep(500);
     dispatch(showBlur(false));
     RNBootSplash.hide();
   }

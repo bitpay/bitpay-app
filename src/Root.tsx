@@ -222,14 +222,12 @@ export default () => {
   const lockAuthorizedUntil = useAppSelector(
     ({APP}) => APP.lockAuthorizedUntil,
   );
-  const [initFailed, setInitFailed] = useState(false as boolean);
 
   // MAIN APP INIT
   useEffect(() => {
     if (!failedAppInit) {
       dispatch(AppEffects.startAppInit());
     } else {
-      setInitFailed(true);
       navigationRef.navigate(RootStacks.DEBUG, {name: 'Failed app init'});
     }
   }, [dispatch, failedAppInit]);
