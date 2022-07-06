@@ -172,11 +172,21 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
         dispatch(AppActions.showBiometricModal());
       }
     });
-  } catch (err) {
-    console.error(err);
+  } catch (err: unknown) {
+    let errorStr;
+    if (err instanceof Error) {
+      errorStr = err.message;
+    } else {
+      errorStr = JSON.stringify(err);
+    }
+    // wait for navigationRef
+    await sleep(2000);
     dispatch(AppActions.failedAppInit());
     dispatch(LogActions.error('Failed to initialize app.'));
-    dispatch(LogActions.error(JSON.stringify(err)));
+    dispatch(LogActions.error(errorStr));
+    await sleep(500);
+    dispatch(showBlur(false));
+    RNBootSplash.hide();
   }
 };
 
