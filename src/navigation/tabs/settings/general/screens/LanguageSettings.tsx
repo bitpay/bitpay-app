@@ -14,13 +14,11 @@ import {LanguageList} from '../../../../../constants/LanguageSelectionList';
 import i18n from 'i18next';
 import {logSegmentEvent} from '../../../../../store/app/app.effects';
 import _ from 'lodash';
-import {useTranslation} from 'react-i18next';
 
 const LanguageSettings: React.FC = () => {
   const dispatch = useDispatch();
   const appLanguage = useSelector(({APP}: RootState) => APP.defaultLanguage);
   const [selected, setSelected] = useState(appLanguage);
-  const {t} = useTranslation();
   const onSetLanguage = (lng: string) => {
     setSelected(lng);
     i18n.changeLanguage(lng);
@@ -41,7 +39,7 @@ const LanguageSettings: React.FC = () => {
           return (
             <View key={isoCode}>
               <Setting onPress={() => onSetLanguage(isoCode)}>
-                <SettingTitle>{t(name)}</SettingTitle>
+                <SettingTitle>{name}</SettingTitle>
                 <Checkbox
                   radio={true}
                   onPress={() => onSetLanguage(isoCode)}
