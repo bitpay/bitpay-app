@@ -68,7 +68,7 @@ const AddressTextContainer = styled.TouchableOpacity`
   border-radius: 40px;
   height: 37px;
   width: 103px;
-  justify-content: flex-start;
+  justify-content: center;
   padding-right: 13px;
   padding-left: 17px;
   padding-top: ${Platform.OS === 'ios' ? '4px' : 0};
