@@ -105,440 +105,490 @@ export const normalizeMnemonic = (words?: string): string | undefined => {
   return wordList.join(isJA ? '\u3000' : ' ');
 };
 
-export const startMigration =
-  (): Effect<Promise<void>> =>
-  async (dispatch): Promise<void> => {
-    return new Promise(async resolve => {
-      const goToNewUserOnboarding = () => {
-        dispatch(setIntroCompleted());
-        navigationRef.dispatch(
-          StackActions.replace('Onboarding', {
-            screen: 'OnboardingStart',
-          }),
-        );
-      };
+export const startMigration = (): Effect<Promise<void>> => dispatch => {
+  return new Promise(async resolve => {
+    const goToNewUserOnboarding = () => {
+      dispatch(setIntroCompleted());
+      navigationRef.dispatch(
+        StackActions.replace('Onboarding', {
+          screen: 'OnboardingStart',
+        }),
+      );
+    };
 
-      // keys and wallets
-      try {
-        // cordova directory not found
-        if (!(await RNFS.exists(cordovaStoragePath))) {
-          dispatch(
-            LogActions.info('directory not found -> new user onboarding'),
-          );
-          goToNewUserOnboarding();
-          return resolve();
-        }
-
-        const files = (await RNFS.readDir(cordovaStoragePath)) as {
-          name: string;
-        }[];
-
-        // key file does not exist
-        if (!files.find(file => file.name === 'keys')) {
-          dispatch(
-            LogActions.info('Key file not found -> new user onboarding'),
-          );
-          goToNewUserOnboarding();
-          return resolve();
-        }
-
-        const keys = JSON.parse(
-          await RNFS.readFile(cordovaStoragePath + 'keys', 'utf8'),
-        ) as KeyProperties[];
-
-        const profile = JSON.parse(
-          await RNFS.readFile(cordovaStoragePath + 'profile', 'utf8'),
-        ) as {credentials: Wallet[]};
-
-        // no keys
-        if (!keys.length) {
-          dispatch(LogActions.info('No keys -> new user onboarding'));
-          goToNewUserOnboarding();
-          return resolve();
-        }
-
-        for (const key of keys) {
-          const wallets = profile.credentials.filter(
-            credentials => credentials.keyId === key.id,
-          );
-          let keyName: string | undefined;
-          let backupComplete: string | undefined;
-          try {
-            keyName = (await RNFS.readFile(
-              cordovaStoragePath + `Key-${key.id}`,
-              'utf8',
-            )) as string;
-          } catch (e) {
-            // not found. Continue anyway
-          }
-
-          try {
-            backupComplete = (await RNFS.readFile(
-              cordovaStoragePath + `walletGroupBackup-${key.id}`,
-              'utf8',
-            )) as string;
-          } catch (e) {
-            // not found. Continue anyway
-          }
-          const keyConfig = {
-            backupComplete: !!backupComplete,
-            keyName,
-          };
-          await dispatch(migrateKeyAndWallets({key, wallets, keyConfig}));
-          dispatch(setHomeCarouselConfig({id: key.id, show: true}));
-        }
-
-        // update store with token rates from coin gecko and update balances
-        await dispatch(startGetRates({force: true}));
-        await dispatch(startUpdateAllKeyAndWalletStatus());
-      } catch (err) {
-        dispatch(LogActions.info('Failed to migrate keys'));
-        // flag for showing error modal
-        dispatch(setKeyMigrationFailure());
+    // keys and wallets
+    try {
+      // cordova directory not found
+      if (!(await RNFS.exists(cordovaStoragePath))) {
+        dispatch(LogActions.info('directory not found -> new user onboarding'));
+        goToNewUserOnboarding();
+        return resolve();
       }
 
-      // config
-      let emailNotificationsConfig: {email: string} = {email: ''};
-      try {
-        dispatch(LogActions.info('Migrating config settings'));
-        const config = JSON.parse(
-          await RNFS.readFile(cordovaStoragePath + 'config', 'utf8'),
-        );
+      const files = (await RNFS.readDir(cordovaStoragePath)) as {
+        name: string;
+      }[];
 
+      // key file does not exist
+      if (!files.find(file => file.name === 'keys')) {
+        dispatch(LogActions.info('Key file not found -> new user onboarding'));
+        goToNewUserOnboarding();
+        return resolve();
+      }
+
+      const keys = JSON.parse(
+        await RNFS.readFile(cordovaStoragePath + 'keys', 'utf8'),
+      ) as KeyProperties[];
+
+      const profile = JSON.parse(
+        await RNFS.readFile(cordovaStoragePath + 'profile', 'utf8'),
+      ) as {credentials: Wallet[]};
+
+      // no keys
+      if (!keys.length) {
+        dispatch(LogActions.info('No keys -> new user onboarding'));
+        goToNewUserOnboarding();
+        return resolve();
+      }
+
+      for (const key of keys) {
+        const wallets = profile.credentials.filter(
+          credentials => credentials.keyId === key.id,
+        );
+        let keyName: string | undefined;
+        let backupComplete: string | undefined;
+        try {
+          keyName = (await RNFS.readFile(
+            cordovaStoragePath + `Key-${key.id}`,
+            'utf8',
+          )) as string;
+        } catch (e) {
+          // not found. Continue anyway
+        }
+
+        try {
+          backupComplete = (await RNFS.readFile(
+            cordovaStoragePath + `walletGroupBackup-${key.id}`,
+            'utf8',
+          )) as string;
+        } catch (e) {
+          // not found. Continue anyway
+        }
+        const keyConfig = {
+          backupComplete: !!backupComplete,
+          keyName,
+        };
+        await dispatch(migrateKeyAndWallets({key, wallets, keyConfig}));
+        dispatch(setHomeCarouselConfig({id: key.id, show: true}));
+      }
+
+      // update store with token rates from coin gecko and update balances
+      await dispatch(startGetRates({force: true}));
+      await dispatch(startUpdateAllKeyAndWalletStatus());
+    } catch (err: unknown) {
+      let errorStr;
+      if (err instanceof Error) {
+        errorStr = err.message;
+      } else {
+        errorStr = JSON.stringify(err);
+      }
+      dispatch(LogActions.info('Failed to migrate keys'));
+      dispatch(LogActions.error(errorStr));
+      // flag for showing error modal
+      dispatch(setKeyMigrationFailure());
+    }
+
+    // config
+    let emailNotificationsConfig: {email: string} = {email: ''};
+    try {
+      dispatch(LogActions.info('Migrating config settings'));
+      const config = JSON.parse(
+        await RNFS.readFile(cordovaStoragePath + 'config', 'utf8'),
+      );
+
+      const {
+        confirmedTxsNotifications,
+        emailNotifications,
+        pushNotifications,
+        offersAndPromotions,
+        productsUpdates,
+        totalBalance,
+        feeLevels,
+        theme,
+        lock,
+        wallet,
+      } = config || {};
+
+      emailNotificationsConfig = emailNotifications;
+
+      // push notifications
+      const systemEnabled = await checkNotificationsPermissions();
+      if (systemEnabled) {
+        if (pushNotifications?.enabled) {
+          dispatch(setNotifications(true));
+          if (confirmedTxsNotifications?.enabled) {
+            dispatch(setConfirmTxNotifications(true));
+          }
+          if (offersAndPromotions?.enabled) {
+            dispatch(setOffersAndPromotionsNotifications(true));
+          }
+          if (productsUpdates?.enabled) {
+            dispatch(setProductsUpdatesNotifications(true));
+          }
+        }
+      }
+
+      // lock
+      if (lock) {
+        const {method, value} = lock;
+        if (method === 'pin') {
+          dispatch(currentPin(hashPin(value.split(''))));
+          dispatch(pinLockActive(true));
+        } else if (method === 'fingerprint') {
+          dispatch(biometricLockActive(true));
+        }
+      }
+
+      // settings
+      if (wallet) {
         const {
-          confirmedTxsNotifications,
-          emailNotifications,
-          pushNotifications,
-          offersAndPromotions,
-          productsUpdates,
-          totalBalance,
-          feeLevels,
-          theme,
-          lock,
-          wallet,
-        } = config || {};
-
-        emailNotificationsConfig = emailNotifications;
-
-        // push notifications
-        const systemEnabled = await checkNotificationsPermissions();
-        if (systemEnabled) {
-          if (pushNotifications?.enabled) {
-            dispatch(setNotifications(true));
-            if (confirmedTxsNotifications?.enabled) {
-              dispatch(setConfirmTxNotifications(true));
-            }
-            if (offersAndPromotions?.enabled) {
-              dispatch(setOffersAndPromotionsNotifications(true));
-            }
-            if (productsUpdates?.enabled) {
-              dispatch(setProductsUpdatesNotifications(true));
-            }
-          }
-        }
-
-        // lock
-        if (lock) {
-          const {method, value} = lock;
-          if (method === 'pin') {
-            dispatch(currentPin(hashPin(value.split(''))));
-            dispatch(pinLockActive(true));
-          } else if (method === 'fingerprint') {
-            dispatch(biometricLockActive(true));
-          }
-        }
-
-        // settings
-        if (wallet) {
-          const {
-            showCustomizeNonce,
-            showEnableRBF,
-            spendUnconfirmed,
-            settings: {alternativeIsoCode: isoCode, alternativeName: name},
-          } = wallet;
-          dispatch(setDefaultAltCurrency({isoCode, name}));
-          dispatch(setCustomizeNonce(showCustomizeNonce));
-          dispatch(setUseUnconfirmedFunds(spendUnconfirmed));
-          dispatch(setEnableReplaceByFee(showEnableRBF));
-        }
-        // portfolio balance hide/show
-        if (totalBalance) {
-          dispatch(showPortfolioValue(totalBalance.show));
-        }
-
-        // fee level policy
-        if (feeLevels) {
-          Object.keys(feeLevels).forEach(currency => {
-            dispatch(
-              updateCacheFeeLevel({
-                currency: currency as 'btc' | 'eth',
-                feeLevel: feeLevels[currency],
-              }),
-            );
-          });
-        }
-
-        // theme
-        if (theme) {
-          dispatch(
-            setColorScheme(
-              theme.system ? null : theme.name === 'light' ? 'light' : 'dark',
-            ),
-          );
-        }
-
-        dispatch(LogActions.info('Successfully migrated config settings'));
-      } catch (err) {
-        dispatch(LogActions.info('Failed to migrate config settings'));
+          showCustomizeNonce,
+          showEnableRBF,
+          spendUnconfirmed,
+          settings: {alternativeIsoCode: isoCode, alternativeName: name},
+        } = wallet;
+        dispatch(setDefaultAltCurrency({isoCode, name}));
+        dispatch(setCustomizeNonce(showCustomizeNonce));
+        dispatch(setUseUnconfirmedFunds(spendUnconfirmed));
+        dispatch(setEnableReplaceByFee(showEnableRBF));
+      }
+      // portfolio balance hide/show
+      if (totalBalance) {
+        dispatch(showPortfolioValue(totalBalance.show));
       }
 
-      // buy crypto
-      // simplex
-      try {
-        dispatch(LogActions.info('Migrating simplex'));
-        const buyCryptoSimplexData = JSON.parse(
-          await RNFS.readFile(
-            cordovaStoragePath + 'simplex-production',
-            'utf8',
-          ).catch(_ => '{}'),
-        ) as any;
-        Object.values(buyCryptoSimplexData).forEach(
-          (simplexPaymentData: any) => {
-            simplexPaymentData.env = 'prod';
-            delete simplexPaymentData.error;
-            dispatch(
-              BuyCryptoActions.successPaymentRequestSimplex({
-                simplexPaymentData,
-              }),
-            );
-          },
-        );
-      } catch (err) {
-        dispatch(LogActions.info('Failed to migrate simplex'));
-      }
-
-      // wyre
-      try {
-        dispatch(LogActions.info('Migrating wyre'));
-        const buyCryptoWyreData = JSON.parse(
-          await RNFS.readFile(
-            cordovaStoragePath + 'wyre-production',
-            'utf8',
-          ).catch(_ => '{}'),
-        ) as any;
-        Object.values(buyCryptoWyreData).forEach((wyrePaymentData: any) => {
-          wyrePaymentData.env = 'prod';
-          delete wyrePaymentData.error;
+      // fee level policy
+      if (feeLevels) {
+        Object.keys(feeLevels).forEach(currency => {
           dispatch(
-            BuyCryptoActions.successPaymentRequestWyre({
-              wyrePaymentData,
+            updateCacheFeeLevel({
+              currency: currency as 'btc' | 'eth',
+              feeLevel: feeLevels[currency],
             }),
           );
         });
-      } catch (err) {
-        dispatch(LogActions.info('Failed to migrate wyre'));
       }
 
-      // swap crypto
-      // changelly
-      try {
-        dispatch(LogActions.info('Migrating changelly'));
-        const swapCryptoChangellyData = JSON.parse(
-          await RNFS.readFile(
-            cordovaStoragePath + 'changelly-production',
-            'utf8',
-          ).catch(_ => '{}'),
-        ) as any;
-        Object.values(swapCryptoChangellyData).forEach(
-          (changellyTxData: any) => {
-            changellyTxData.env = 'prod';
-            delete changellyTxData.error;
-            dispatch(
-              SwapCryptoActions.successTxChangelly({
-                changellyTxData,
-              }),
-            );
-          },
-        );
-      } catch (err) {
-        dispatch(LogActions.info('Failed to migrate changelly'));
-      }
-
-      // gift cards
-      try {
-        dispatch(LogActions.info('Migrating gift cards'));
-        const supportedCardMap = JSON.parse(
-          await RNFS.readFile(
-            cordovaStoragePath + 'giftCardConfigCache',
-            'utf8',
-          ).catch(_ => '{}'),
-        ) as CardConfigMap;
+      // theme
+      if (theme) {
         dispatch(
-          ShopActions.successFetchCatalog({
-            availableCardMap: supportedCardMap || {},
-            categoriesAndCurations: initialShopState.categoriesAndCurations,
-            integrations: initialShopState.integrations,
+          setColorScheme(
+            theme.system ? null : theme.name === 'light' ? 'light' : 'dark',
+          ),
+        );
+      }
+
+      dispatch(LogActions.info('Successfully migrated config settings'));
+    } catch (err: unknown) {
+      let errorStr;
+      if (err instanceof Error) {
+        errorStr = err.message;
+      } else {
+        errorStr = JSON.stringify(err);
+      }
+      dispatch(LogActions.info('Failed to migrate config settings'));
+      dispatch(LogActions.error(errorStr));
+    }
+
+    // buy crypto
+    // simplex
+    try {
+      dispatch(LogActions.info('Migrating simplex'));
+      const buyCryptoSimplexData = JSON.parse(
+        await RNFS.readFile(
+          cordovaStoragePath + 'simplex-production',
+          'utf8',
+        ).catch(_ => '{}'),
+      ) as any;
+      Object.values(buyCryptoSimplexData).forEach((simplexPaymentData: any) => {
+        simplexPaymentData.env = 'prod';
+        delete simplexPaymentData.error;
+        dispatch(
+          BuyCryptoActions.successPaymentRequestSimplex({
+            simplexPaymentData,
           }),
         );
-        const supportedCardNames = Object.keys(supportedCardMap);
-        const getStorageKey = (cardName: string) => {
-          switch (cardName) {
-            case 'Amazon.com':
-              return 'amazonGiftCards-livenet';
-            case 'Amazon.co.jp':
-              return 'amazonGiftCards-livenet-japan';
-            case 'Mercado Livre':
-              return 'MercadoLibreGiftCards-livenet';
-            default:
-              return `giftCards-${cardName}-livenet`;
-          }
-        };
-        const purchasedCardPromises = supportedCardNames.map(cardName =>
-          RNFS.readFile(
-            cordovaStoragePath + getStorageKey(cardName),
-            'utf8',
-          ).catch(_ => '{}'),
-        );
-        const purchasedCardResponses = await Promise.all(purchasedCardPromises);
-        const purchasedCards = purchasedCardResponses
-          .map(res => {
-            try {
-              return JSON.parse(res);
-            } catch (err) {}
-            return {};
-          })
-          .map((giftCardMap: {[invoiceId: string]: LegacyGiftCard}) => {
-            const legacyGiftCards = Object.values(giftCardMap);
-            const migratedGiftCards = legacyGiftCards.map(legacyGiftCard => ({
-              ...legacyGiftCard,
-              clientId: legacyGiftCard.uuid,
-            }));
-            return migratedGiftCards as GiftCard[];
-          })
-          .filter(brand => brand.length);
-        const allGiftCards = purchasedCards
-          .flat()
-          .filter(
-            giftCard =>
-              supportedCardNames.includes(giftCard.name) &&
-              giftCard.status !== 'UNREDEEMED',
-          );
-        const numActiveGiftCards = allGiftCards.filter(
-          giftCard => !giftCard.archived,
-        ).length;
-        const giftCards = allGiftCards.map(giftCard => ({
-          ...giftCard,
-          archived: numActiveGiftCards > 3 ? true : giftCard.archived,
-        }));
-        dispatch(ShopActions.setPurchasedGiftCards({giftCards}));
+      });
+    } catch (err: unknown) {
+      let errorStr;
+      if (err instanceof Error) {
+        errorStr = err.message;
+      } else {
+        errorStr = JSON.stringify(err);
+      }
+      dispatch(LogActions.info('Failed to migrate simplex'));
+      dispatch(LogActions.error(errorStr));
+    }
 
-        const giftCardEmail = await RNFS.readFile(
-          cordovaStoragePath + 'amazonUserInfo',
+    // wyre
+    try {
+      dispatch(LogActions.info('Migrating wyre'));
+      const buyCryptoWyreData = JSON.parse(
+        await RNFS.readFile(
+          cordovaStoragePath + 'wyre-production',
           'utf8',
-        )
-          .then(
-            (emailObjectString: string) => JSON.parse(emailObjectString).email,
-          )
-          .catch(_ => '');
-        const email = giftCardEmail || emailNotificationsConfig?.email;
-        dispatch(ShopActions.updatedEmailAddress({email}));
+        ).catch(_ => '{}'),
+      ) as any;
+      Object.values(buyCryptoWyreData).forEach((wyrePaymentData: any) => {
+        wyrePaymentData.env = 'prod';
+        delete wyrePaymentData.error;
+        dispatch(
+          BuyCryptoActions.successPaymentRequestWyre({
+            wyrePaymentData,
+          }),
+        );
+      });
+    } catch (err: unknown) {
+      let errorStr;
+      if (err instanceof Error) {
+        errorStr = err.message;
+      } else {
+        errorStr = JSON.stringify(err);
+      }
+      dispatch(LogActions.info('Failed to migrate wyre'));
+      dispatch(LogActions.error(errorStr));
+    }
 
-        const phoneCountryInfoPromise = async () => {
-          try {
-            return JSON.parse(
-              await RNFS.readFile(
-                cordovaStoragePath + 'phoneCountryInfo',
-                'utf8',
-              ),
-            );
-          } catch (e) {}
-        };
+    // swap crypto
+    // changelly
+    try {
+      dispatch(LogActions.info('Migrating changelly'));
+      const swapCryptoChangellyData = JSON.parse(
+        await RNFS.readFile(
+          cordovaStoragePath + 'changelly-production',
+          'utf8',
+        ).catch(_ => '{}'),
+      ) as any;
+      Object.values(swapCryptoChangellyData).forEach((changellyTxData: any) => {
+        changellyTxData.env = 'prod';
+        delete changellyTxData.error;
+        dispatch(
+          SwapCryptoActions.successTxChangelly({
+            changellyTxData,
+          }),
+        );
+      });
+    } catch (err: unknown) {
+      let errorStr;
+      if (err instanceof Error) {
+        errorStr = err.message;
+      } else {
+        errorStr = JSON.stringify(err);
+      }
+      dispatch(LogActions.info('Failed to migrate changelly'));
+      dispatch(LogActions.error(errorStr));
+    }
 
-        const [phone, phoneCountryInfo] = await Promise.all([
-          RNFS.readFile(cordovaStoragePath + 'phone', 'utf8'),
-          phoneCountryInfoPromise(),
-        ]);
-        if (phone && phoneCountryInfo) {
-          dispatch(ShopActions.updatedPhone({phone, phoneCountryInfo}));
+    // gift cards
+    try {
+      dispatch(LogActions.info('Migrating gift cards'));
+      const supportedCardMap = JSON.parse(
+        await RNFS.readFile(
+          cordovaStoragePath + 'giftCardConfigCache',
+          'utf8',
+        ).catch(_ => '{}'),
+      ) as CardConfigMap;
+      dispatch(
+        ShopActions.successFetchCatalog({
+          availableCardMap: supportedCardMap || {},
+          categoriesAndCurations: initialShopState.categoriesAndCurations,
+          integrations: initialShopState.integrations,
+        }),
+      );
+      const supportedCardNames = Object.keys(supportedCardMap);
+      const getStorageKey = (cardName: string) => {
+        switch (cardName) {
+          case 'Amazon.com':
+            return 'amazonGiftCards-livenet';
+          case 'Amazon.co.jp':
+            return 'amazonGiftCards-livenet-japan';
+          case 'Mercado Livre':
+            return 'MercadoLibreGiftCards-livenet';
+          default:
+            return `giftCards-${cardName}-livenet`;
         }
-      } catch (err) {
-        dispatch(LogActions.info('Failed to migrate gift cards'));
-      }
-
-      // address book
-      try {
-        dispatch(LogActions.info('Migrating address book'));
-        const addressBook = JSON.parse(
-          await RNFS.readFile(
-            cordovaStoragePath + 'addressbook-v2-livenet',
-            'utf8',
-          ),
-        ) as {[key in string]: ContactRowProps};
-        Object.values(addressBook).forEach((contact: ContactRowProps) => {
-          dispatch(createContact(contact));
-        });
-        dispatch(LogActions.info('Successfully migrated address book'));
-      } catch (err) {
-        dispatch(LogActions.info('Failed to migrate address book'));
-      }
-
-      // app identity
-      try {
-        dispatch(LogActions.info('Migrating app identity'));
-        const identity = JSON.parse(
-          await RNFS.readFile(
-            cordovaStoragePath + 'appIdentity-livenet',
-            'utf8',
-          ),
-        ) as AppIdentity;
-        dispatch(LogActions.info('Successfully migrated app identity'));
-        dispatch(successGenerateAppIdentity(Network.mainnet, identity));
-      } catch (err) {
-        dispatch(LogActions.info('Failed to migrate app identity'));
-      }
-
-      // bitpay id
-      try {
-        dispatch(LogActions.info('Migrating bitpay id'));
-        const token = await RNFS.readFile(
-          cordovaStoragePath + 'bitpayIdToken-livenet',
+      };
+      const purchasedCardPromises = supportedCardNames.map(cardName =>
+        RNFS.readFile(
+          cordovaStoragePath + getStorageKey(cardName),
           'utf8',
+        ).catch(_ => '{}'),
+      );
+      const purchasedCardResponses = await Promise.all(purchasedCardPromises);
+      const purchasedCards = purchasedCardResponses
+        .map(res => {
+          try {
+            return JSON.parse(res);
+          } catch (err) {}
+          return {};
+        })
+        .map((giftCardMap: {[invoiceId: string]: LegacyGiftCard}) => {
+          const legacyGiftCards = Object.values(giftCardMap);
+          const migratedGiftCards = legacyGiftCards.map(legacyGiftCard => ({
+            ...legacyGiftCard,
+            clientId: legacyGiftCard.uuid,
+          }));
+          return migratedGiftCards as GiftCard[];
+        })
+        .filter(brand => brand.length);
+      const allGiftCards = purchasedCards
+        .flat()
+        .filter(
+          giftCard =>
+            supportedCardNames.includes(giftCard.name) &&
+            giftCard.status !== 'UNREDEEMED',
         );
-        dispatch(LogActions.info('Successfully migrated bitpay id'));
-        await dispatch(successPairingBitPayId(Network.mainnet, token));
-      } catch (err) {
-        dispatch(LogActions.info('Failed to migrate bitpay id'));
+      const numActiveGiftCards = allGiftCards.filter(
+        giftCard => !giftCard.archived,
+      ).length;
+      const giftCards = allGiftCards.map(giftCard => ({
+        ...giftCard,
+        archived: numActiveGiftCards > 3 ? true : giftCard.archived,
+      }));
+      dispatch(ShopActions.setPurchasedGiftCards({giftCards}));
+
+      const giftCardEmail = await RNFS.readFile(
+        cordovaStoragePath + 'amazonUserInfo',
+        'utf8',
+      )
+        .then(
+          (emailObjectString: string) => JSON.parse(emailObjectString).email,
+        )
+        .catch(_ => '');
+      const email = giftCardEmail || emailNotificationsConfig?.email;
+      dispatch(ShopActions.updatedEmailAddress({email}));
+
+      const phoneCountryInfoPromise = async () => {
+        try {
+          return JSON.parse(
+            await RNFS.readFile(
+              cordovaStoragePath + 'phoneCountryInfo',
+              'utf8',
+            ),
+          );
+        } catch (e) {}
+      };
+
+      const [phone, phoneCountryInfo] = await Promise.all([
+        RNFS.readFile(cordovaStoragePath + 'phone', 'utf8'),
+        phoneCountryInfoPromise(),
+      ]);
+      if (phone && phoneCountryInfo) {
+        dispatch(ShopActions.updatedPhone({phone, phoneCountryInfo}));
       }
-
-      // coinbase
-      try {
-        dispatch(LogActions.info('Migrating Coinbase tokens'));
-        const account = JSON.parse(
-          await RNFS.readFile(
-            cordovaStoragePath + 'coinbase-production',
-            'utf8',
-          ),
-        ) as {token: CoinbaseTokenProps};
-        dispatch(
-          accessTokenSuccess(CoinbaseEnvironment.production, account.token),
-        );
-        await dispatch(coinbaseGetUser());
-        await dispatch(coinbaseUpdateExchangeRate());
-        await dispatch(coinbaseGetAccountsAndBalance());
-        dispatch(
-          setHomeCarouselConfig({id: 'coinbaseBalanceCard', show: true}),
-        );
-        dispatch(LogActions.info('Successfully migrated Coinbase account'));
-      } catch (err) {
-        dispatch(LogActions.info('Failed to migrate Coinbase account'));
+    } catch (err: unknown) {
+      let errorStr;
+      if (err instanceof Error) {
+        errorStr = err.message;
+      } else {
+        errorStr = JSON.stringify(err);
       }
+      dispatch(LogActions.info('Failed to migrate gift cards'));
+      dispatch(LogActions.error(errorStr));
+    }
 
-      dispatch(setOnboardingCompleted());
-      dispatch(setWalletTermsAccepted());
+    // address book
+    try {
+      dispatch(LogActions.info('Migrating address book'));
+      const addressBook = JSON.parse(
+        await RNFS.readFile(
+          cordovaStoragePath + 'addressbook-v2-livenet',
+          'utf8',
+        ),
+      ) as {[key in string]: ContactRowProps};
+      Object.values(addressBook).forEach((contact: ContactRowProps) => {
+        dispatch(createContact(contact));
+      });
+      dispatch(LogActions.info('Successfully migrated address book'));
+    } catch (err: unknown) {
+      let errorStr;
+      if (err instanceof Error) {
+        errorStr = err.message;
+      } else {
+        errorStr = JSON.stringify(err);
+      }
+      dispatch(LogActions.info('Failed to migrate address book'));
+      dispatch(LogActions.error(errorStr));
+    }
 
-      resolve();
-    });
-  };
+    // app identity
+    try {
+      dispatch(LogActions.info('Migrating app identity'));
+      const identity = JSON.parse(
+        await RNFS.readFile(cordovaStoragePath + 'appIdentity-livenet', 'utf8'),
+      ) as AppIdentity;
+      dispatch(LogActions.info('Successfully migrated app identity'));
+      dispatch(successGenerateAppIdentity(Network.mainnet, identity));
+    } catch (err: unknown) {
+      let errorStr;
+      if (err instanceof Error) {
+        errorStr = err.message;
+      } else {
+        errorStr = JSON.stringify(err);
+      }
+      dispatch(LogActions.info('Failed to migrate app identity'));
+      dispatch(LogActions.error(errorStr));
+    }
+
+    // bitpay id
+    try {
+      dispatch(LogActions.info('Migrating bitpay id'));
+      const token = await RNFS.readFile(
+        cordovaStoragePath + 'bitpayIdToken-livenet',
+        'utf8',
+      );
+      dispatch(LogActions.info('Successfully migrated bitpay id'));
+      await dispatch(successPairingBitPayId(Network.mainnet, token));
+    } catch (err: unknown) {
+      let errorStr;
+      if (err instanceof Error) {
+        errorStr = err.message;
+      } else {
+        errorStr = JSON.stringify(err);
+      }
+      dispatch(LogActions.info('Failed to migrate bitpay id'));
+      dispatch(LogActions.error(errorStr));
+    }
+
+    // coinbase
+    try {
+      dispatch(LogActions.info('Migrating Coinbase tokens'));
+      const account = JSON.parse(
+        await RNFS.readFile(cordovaStoragePath + 'coinbase-production', 'utf8'),
+      ) as {token: CoinbaseTokenProps};
+      dispatch(
+        accessTokenSuccess(CoinbaseEnvironment.production, account.token),
+      );
+      await dispatch(coinbaseGetUser());
+      await dispatch(coinbaseUpdateExchangeRate());
+      await dispatch(coinbaseGetAccountsAndBalance());
+      dispatch(setHomeCarouselConfig({id: 'coinbaseBalanceCard', show: true}));
+      dispatch(LogActions.info('Successfully migrated Coinbase account'));
+    } catch (err: unknown) {
+      let errorStr;
+      if (err instanceof Error) {
+        errorStr = err.message;
+      } else {
+        errorStr = JSON.stringify(err);
+      }
+      dispatch(LogActions.info('Failed to migrate Coinbase account'));
+      dispatch(LogActions.error(errorStr));
+    }
+
+    dispatch(setOnboardingCompleted());
+    dispatch(setWalletTermsAccepted());
+  });
+};
 
 export const migrateKeyAndWallets =
   (migrationData: {
