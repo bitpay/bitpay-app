@@ -200,7 +200,7 @@ const CoinbaseWithdrawConfirm = () => {
 
       if (!apiLoading && sendStatus === 'success') {
         dispatch(dismissOnGoingProcessModal());
-        await sleep(500);
+        await sleep(1000);
         setShowPaymentSentModal(true);
       }
 

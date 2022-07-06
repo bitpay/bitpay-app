@@ -320,8 +320,11 @@ const PayProConfirm = () => {
 
   return (
     <ConfirmContainer>
-      <ConfirmScrollView>
-        <DetailsList>
+      <ConfirmScrollView
+        extraScrollHeight={50}
+        contentContainerStyle={{paddingBottom: 50}}
+        keyboardShouldPersistTaps={'handled'}>
+        <DetailsList keyboardShouldPersistTaps={'handled'}>
           <Header hr>Summary</Header>
           <SendingTo
             recipient={{

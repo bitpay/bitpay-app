@@ -1,5 +1,6 @@
 import {DOSH_WHITELIST} from '@env';
 import axios from 'axios';
+import {t} from 'i18next';
 import BitPayIdApi from '../../api/bitpay';
 import FastImage from 'react-native-fast-image';
 import {batch} from 'react-redux';
@@ -8,6 +9,7 @@ import {InitialUserData} from '../../api/user/user.types';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {sleep} from '../../utils/helper-methods';
 import {AppActions} from '../app';
+import {Analytics} from '../app/app.effects';
 import {Effect} from '../index';
 import {LogActions} from '../log';
 import {ProviderConfig} from '../../constants/config.card';
@@ -22,7 +24,6 @@ import {BASE_BITPAY_URLS} from '../../constants/config';
 import ApplePushProvisioningModule from '../../lib/apple-push-provisioning/ApplePushProvisioning';
 import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
 import GooglePushProvisioningModule from '../../lib/google-push-provisioning/GooglePushProvisioning';
-import {t} from 'i18next';
 
 const DoshWhitelist: string[] = [];
 
@@ -77,31 +78,31 @@ export const startCardStoreInit =
     } else {
       const options = new DoshUiOptions('Card Offers', 'CIRCLE', 'DIAGONAL');
 
-      Dosh.initializeDosh(options)
-        .then(() => {
-          dispatch(LogActions.info('Successfully initialized Dosh.'));
+      try {
+        Dosh.initializeDosh(options);
 
-          const {doshToken} = initialData;
-          if (!doshToken) {
-            dispatch(LogActions.debug('No doshToken provided.'));
-            return;
-          }
+        dispatch(LogActions.info('Successfully initialized Dosh.'));
 
-          return Dosh.setDoshToken(doshToken);
-        })
-        .catch(err => {
-          dispatch(
-            LogActions.error('An error occurred while initializing Dosh.'),
-          );
+        const {doshToken} = initialData;
+        if (!doshToken) {
+          dispatch(LogActions.debug('No doshToken provided.'));
+          return;
+        }
 
-          // check for Android exception (see: DoshModule.java)
-          // TODO: iOS exceptions
-          if ((err as any).message) {
-            dispatch(LogActions.error((err as any).message));
-          } else {
-            dispatch(LogActions.error(JSON.stringify(err)));
-          }
-        });
+        Dosh.setDoshToken(doshToken);
+      } catch (err: any) {
+        dispatch(
+          LogActions.error('An error occurred while initializing Dosh.'),
+        );
+
+        // check for Android exception (see: DoshModule.java)
+        // TODO: iOS exceptions
+        if ((err as any).message) {
+          dispatch(LogActions.error((err as any).message));
+        } else {
+          dispatch(LogActions.error(JSON.stringify(err)));
+        }
+      }
     }
   };
 
@@ -567,7 +568,7 @@ export const completeAddApplePaymentPass =
 
       const {
         user: {
-          card: {provisioningData},
+          card: {brand, provisioningData},
         },
       } = res.data;
 
@@ -585,6 +586,14 @@ export const completeAddApplePaymentPass =
         activationData,
         encryptedPassData,
         ephemeralPublicKey,
+      );
+
+      dispatch(
+        Analytics.track(
+          'Added card to Apple Wallet',
+          {brand: brand || ''},
+          true,
+        ),
       );
     } catch (e) {
       console.error(e);
@@ -605,9 +614,10 @@ export const startAddToGooglePay =
   }): Effect =>
   async (dispatch, getState) => {
     try {
-      const {APP, BITPAY_ID} = getState();
+      const {APP, BITPAY_ID, CARD} = getState();
       const {network} = APP;
       const token = BITPAY_ID.apiToken[network];
+      const card = CARD.cards[network].find(c => c.id === id);
 
       const {data: provisioningData} =
         await CardApi.startCreateGooglePayProvisioningRequest(token, id);
@@ -623,6 +633,14 @@ export const startAddToGooglePay =
           opc,
           name,
           lastFourDigits,
+        );
+
+        dispatch(
+          Analytics.track(
+            'Added card to Google Pay',
+            {brand: card?.brand || ''},
+            true,
+          ),
         );
       }
     } catch (e) {

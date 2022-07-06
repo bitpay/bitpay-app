@@ -642,7 +642,7 @@ const BuyCryptoRoot: React.FC<
         modalTitle={'Select Destination'}
         onDismiss={(newWallet?: Wallet) => {
           hideModal('walletSelector');
-          if (newWallet) {
+          if (newWallet?.currencyAbbreviation) {
             setWallet(newWallet);
           }
         }}

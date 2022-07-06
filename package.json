@@ -1,6 +1,6 @@
 {
   "name": "bitpay",
-  "version": "14.3.0",
+  "version": "14.3.2",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -99,6 +99,7 @@
     "react-native-level-fs": "3.0.1",
     "react-native-linear-gradient": "2.5.6",
     "react-native-localize": "2.1.7",
+    "react-native-mail": "6.1.1",
     "react-native-markdown-display": "7.0.0-alpha.2",
     "react-native-modal": "11.10.0",
     "react-native-os": "1.2.6",

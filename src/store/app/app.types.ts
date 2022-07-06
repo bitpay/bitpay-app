@@ -78,6 +78,7 @@ interface SuccessAppInit {
 
 interface FailedAppInit {
   type: typeof AppActionTypes.FAILED_APP_INIT;
+  payload: boolean;
 }
 
 interface setAppFirstOpenEventComplete {

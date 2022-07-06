@@ -8,26 +8,27 @@ interface DoshModule {
   /**
    * This should be done before any other calls to the PoweredByDosh SDK.
    * TODO: pass in applicationId from JS?
+   * TODO: returns a Promise<any> on Android, but void iOS. See if we can update iOS bridge.
    * @param uiOptions Required on Android. Options to customize the SDK's header title and brand page UI.
    */
-  initializeDosh: (uiOptions: DoshUiOptions) => Promise<any>;
+  initializeDosh: (uiOptions: DoshUiOptions) => void;
 
   /**
    * User authorization between the app and Dosh is coordinated by providing the SDK with an authorization token.
    * This token should be requested from the BitPay server.
    */
-  setDoshToken: (token: string) => Promise<any>;
+  setDoshToken: (token: string) => void;
 
   /**
    * Present a full screen view that is managed by the SDK.
    */
-  present: () => Promise<any>;
+  present: () => void;
 
   /**
    * Any time the app's current user changes, such as when the user logs out, the user's information should be cleared.
    * As of now only written for the Android bridge.
    */
-  clearUser: () => Promise<any>;
+  clearUser: () => void;
 
   /**
    * @deprecated For development purposes only. Do not call this in production.
@@ -43,7 +44,7 @@ interface Dosh extends Omit<DoshModule, 'initializeDosh'> {
   /**
    * This should be done before any other calls to the PoweredByDosh SDK.
    */
-  initializeDosh: (uiOptions: DoshUiOptions) => Promise<any>;
+  initializeDosh: (uiOptions: DoshUiOptions) => void;
 }
 
 const DoshModule = ReactNative.NativeModules.Dosh as DoshModule;

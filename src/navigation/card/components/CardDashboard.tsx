@@ -25,7 +25,7 @@ import {CardProvider} from '../../../constants/card';
 import {CARD_WIDTH} from '../../../constants/config.card';
 import {navigationRef} from '../../../Root';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {logSegmentEvent} from '../../../store/app/app.effects';
+import {Analytics} from '../../../store/app/app.effects';
 import {selectBrazeCardOffers} from '../../../store/app/app.selectors';
 import {CardEffects} from '../../../store/card';
 import {Card, UiTransaction} from '../../../store/card/card.models';
@@ -94,12 +94,12 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const network = useAppSelector(({APP}) => APP.network);
   const brazeCardOffers = useAppSelector(selectBrazeCardOffers);
 
-  const getLengthOfWalletsWithBalance = useMemo(
+  const hasWalletsWithBalance = useMemo(
     () =>
       Object.values(keys)
         .flatMap(key => key.wallets)
         .filter(wallet => wallet.balance.sat > 0 && wallet.network === network)
-        .length,
+        .length > 0,
     [keys, network],
   );
 
@@ -118,7 +118,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   );
 
   const goToCardSettings = () => {
-    dispatch(logSegmentEvent('track', 'Clicked Card Settings', {}, true));
+    dispatch(Analytics.track('Clicked Card Settings', {}, true));
 
     navigation.navigate('Settings', {
       id: activeCard.id,
@@ -128,7 +128,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   goToCardSettingsRef.current = goToCardSettings;
 
   const goToReferAndEarn = () => {
-    dispatch(logSegmentEvent('track', 'Clicked Refer and Earn', {}, true));
+    dispatch(Analytics.track('Clicked Refer and Earn', {}, true));
 
     navigation.navigate('Referral', {card: activeCard});
   };
@@ -146,7 +146,10 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   };
 
   const goToAmountScreen = () => {
-    if (getLengthOfWalletsWithBalance) {
+    dispatch(
+      Analytics.track('Clicked Add Funds', {context: 'CardDashboard'}, true),
+    );
+    if (hasWalletsWithBalance) {
       navigator.navigate('Wallet', {
         screen: WalletScreens.AMOUNT,
         params: {
@@ -168,11 +171,10 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
               text: t('Add funds'),
               action: () => {
                 dispatch(
-                  logSegmentEvent(
-                    'track',
+                  Analytics.track(
                     'Clicked Buy Crypto',
                     {
-                      context: 'CardDashboard',
+                      context: 'CardDashboard - No funds availiable',
                     },
                     true,
                   ),

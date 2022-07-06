@@ -106,7 +106,7 @@ export const normalizeMnemonic = (words?: string): string | undefined => {
 };
 
 export const startMigration =
-  (): Effect =>
+  (): Effect<Promise<void>> =>
   async (dispatch): Promise<void> => {
     return new Promise(async resolve => {
       const goToNewUserOnboarding = () => {
