@@ -34,7 +34,7 @@ export type LoginScreenParamList =
 type LoginScreenProps = StackScreenProps<AuthStackParamList, 'Login'>;
 
 const schema = yup.object().shape({
-  email: yup.string().email().required(),
+  email: yup.string().email().required().trim(),
   password: yup.string().required(),
 });
 
