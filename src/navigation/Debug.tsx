@@ -22,23 +22,24 @@ const DebugContainer = styled.SafeAreaView`
 `;
 
 const ButtonContainer = styled.View`
-  padding: 20px;
+  padding: 20px 15px;
 `;
 
 const ScrollView = styled.ScrollView`
-  margin: 20px 0;
+  margin: 20px 15px;
 `;
 
 const TitleError = styled(BaseText)`
   font-size: 18px;
   font-weight: bold;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  margin: 30px 0 8px 0;
+  padding: 50px 15px 8px 15px;
 `;
 
 const DescriptionError = styled(BaseText)`
   font-size: 14px;
   color: ${Caution};
+  padding: 0 15px;
 `;
 
 const LogError = styled(BaseText)`
@@ -61,7 +62,7 @@ const DebugScreen: React.FC<StackScreenProps<RootStackParamList, 'Debug'>> = ({
     .map(log => {
       const formattedLevel = LogLevel[log.level].toLowerCase();
 
-      const output = `[${log.timestamp}] [${formattedLevel}] ${log.message}\n`;
+      const output = `[${formattedLevel}] ${log.message}\n`;
       logStr += output;
       return output;
     });
@@ -82,7 +83,19 @@ const DebugScreen: React.FC<StackScreenProps<RootStackParamList, 'Debug'>> = ({
           { cancelable: true }
         )
       });
-    }
+    };
+
+    const showDisclaimer = (data: string) => {
+      Alert.alert(
+        'Warning',
+        'Be careful, this could contain sensitive private data.',
+        [
+          {text: 'Continue', onPress: () => handleEmail(data)},
+          {text: 'Cancel'}
+        ],
+        { cancelable: true }
+      )
+    };
 
   return (
     <DebugContainer>
@@ -92,7 +105,7 @@ const DebugScreen: React.FC<StackScreenProps<RootStackParamList, 'Debug'>> = ({
         <LogError>{filteredLogs}</LogError>
       </ScrollView>
       <ButtonContainer>
-        <Button onPress={() => handleEmail(logStr)}>Send Logs By Email</Button>
+        <Button onPress={() => showDisclaimer(logStr)}>Send Logs By Email</Button>
       </ButtonContainer>
     </DebugContainer>
   );
