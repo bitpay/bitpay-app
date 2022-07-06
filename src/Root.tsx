@@ -302,7 +302,7 @@ export default () => {
     const eventEmitter = new NativeEventEmitter(NativeModules.SilentPushEvent);
     eventEmitter.addListener('SilentPushNotification', onMessageReceived);
     return () => DeviceEventEmitter.removeAllListeners('inAppMessageReceived');
-  }, []);
+  }, [dispatch]);
 
   // THEME
   useEffect(() => {
@@ -420,7 +420,7 @@ export default () => {
             />
             <Root.Screen
               options={{
-                gestureEnabled: false,
+                gestureEnabled: true,
               }}
               name={RootStacks.WALLET}
               component={WalletStack}
