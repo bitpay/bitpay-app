@@ -1,5 +1,3 @@
-import {t} from 'i18next';
-
 interface ItemProps {
   name: string;
   isoCode: string;
@@ -7,39 +5,39 @@ interface ItemProps {
 
 export const LanguageList: Array<ItemProps> = [
   {
-    name: t('Dutch'),
+    name: 'Dutch',
     isoCode: 'nl',
   },
   {
-    name: t('English'),
+    name: 'English',
     isoCode: 'en',
   },
   {
-    name: t('Spanish'),
+    name: 'Spanish',
     isoCode: 'es',
   },
   {
-    name: t('French'),
+    name: 'French',
     isoCode: 'fr',
   },
   {
-    name: t('Japanese'),
+    name: 'Japanese',
     isoCode: 'ja',
   },
   {
-    name: t('German'),
+    name: 'German',
     isoCode: 'de',
   },
   {
-    name: t('Portuguese'),
+    name: 'Portuguese',
     isoCode: 'pt',
   },
   {
-    name: t('Russian'),
+    name: 'Russian',
     isoCode: 'ru',
   },
   {
-    name: t('Chinese'),
+    name: 'Chinese',
     isoCode: 'zh',
   },
 ];
