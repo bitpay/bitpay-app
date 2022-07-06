@@ -151,8 +151,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     }
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here
-    await dispatch(walletConnectInit());
-    await dispatch(initializeBrazeContent());
+    dispatch(walletConnectInit());
+    dispatch(initializeBrazeContent());
 
     // Update Coinbase
     dispatch(coinbaseInitialize());
@@ -379,32 +379,34 @@ export const openUrlWithInAppBrowser =
   };
 
 export const askForTrackingPermissionAndEnableSdks =
-  (appInit: boolean = false): Effect<Promise<void>> =>
+  (appInit: boolean = false): Effect =>
   async (dispatch, getState) => {
     const trackingStatus = await requestTrackingPermission();
 
     if (['authorized', 'unavailable'].includes(trackingStatus) && !__DEV__) {
       try {
-        await new Promise<void>((resolve, reject) => {
-          AppsFlyer.initSdk(
-            {
-              devKey: APPSFLYER_API_KEY,
-              isDebug: __DEV__,
-              appId: APPSFLYER_APP_ID, // iOS app id
-            },
-            result => {
-              console.log(result);
-              resolve();
-            },
-            error => {
-              console.log(error);
-              reject(error);
-            },
-          );
-        });
-      } catch (err) {
+        AppsFlyer.initSdk(
+          {
+            devKey: APPSFLYER_API_KEY,
+            isDebug: __DEV__,
+            appId: APPSFLYER_APP_ID, // iOS app id
+          },
+          result => {
+            console.log(result);
+          },
+          error => {
+            throw error;
+          },
+        );
+      } catch (err: unknown) {
+        let errorStr;
+        if (err instanceof Error) {
+          errorStr = err.message;
+        } else {
+          errorStr = JSON.stringify(err);
+        }
         dispatch(LogActions.error('Appsflyer setup failed'));
-        dispatch(LogActions.error(JSON.stringify(err)));
+        dispatch(LogActions.error(errorStr));
       }
 
       try {
@@ -440,9 +442,15 @@ export const askForTrackingPermissionAndEnableSdks =
             dispatch(Analytics.track('Last Opened App', {}, true));
           }
         }
-      } catch (err) {
+      } catch (err: unknown) {
+        let errorStr;
+        if (err instanceof Error) {
+          errorStr = err.message;
+        } else {
+          errorStr = JSON.stringify(err);
+        }
         dispatch(LogActions.error('Segment setup failed'));
-        dispatch(LogActions.error(JSON.stringify(err)));
+        dispatch(LogActions.error(errorStr));
       }
     }
   };
