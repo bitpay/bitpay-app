@@ -117,9 +117,18 @@ export const startGetRates =
         );
         resolve(allRates);
       } catch (err) {
-        console.error(err);
+        let errMsg;
+
+        if (err instanceof Error) {
+          errMsg = err.message;
+        } else {
+          errMsg = JSON.stringify(err);
+        }
+
+        dispatch(LogActions.error('startGetRates failed'));
+        dispatch(LogActions.error(errMsg));
         dispatch(failedGetRates());
-        reject();
+        reject(err);
       }
     });
   };
