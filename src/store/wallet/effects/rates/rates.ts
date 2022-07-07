@@ -103,13 +103,15 @@ export const startGetRates =
 
         dispatch(
           LogActions.info(
-            `[startGetRates]: get request to: ${BASE_BWS_URL}/v3/fiatrates?ts=${yesterday}`,
+            `[startGetRates]: get request (yesterday) to: ${BASE_BWS_URL}/v3/fiatrates?ts=${yesterday}`,
           ),
         );
         const {data: lastDayRates} = await axios.get(
           `${BASE_BWS_URL}/v3/fiatrates?ts=${yesterday}`,
         );
-        dispatch(LogActions.info('[startGetRates]: success get request'));
+        dispatch(
+          LogActions.info('[startGetRates]: success get request (yesterday)'),
+        );
 
         if (init) {
           dispatch(
