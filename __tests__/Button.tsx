@@ -1,6 +1,6 @@
 import React from 'react';
 import Button from '../src/components/button/Button';
-import {fireEvent, render} from '@testing-library/react-native';
+import {fireEvent, render} from './render';
 
 jest.mock('react-native-haptic-feedback', () => {
   return {
@@ -11,12 +11,9 @@ jest.mock('react-native-haptic-feedback', () => {
 it('should render correctly', async () => {
   const mockFn = jest.fn();
 
-  const {getByText, toJSON} = render(
-    <Button onPress={mockFn}>Continue</Button>,
-  );
+  const {getByTestId} = render(<Button onPress={mockFn}>Continue</Button>);
 
-  fireEvent(getByText('Continue'), 'press');
-
+  const button = await getByTestId('button');
+  fireEvent(button, 'press');
   expect(mockFn).toHaveBeenCalled();
-  expect(toJSON()).toMatchSnapshot();
 });

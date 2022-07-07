@@ -18,7 +18,7 @@ export class BwcProvider {
   static API = BWC;
 
   constructor() {
-    console.log('BWC instance created');
+    //console.log('BWC instance created');
   }
   // creating singleton
   public static getInstance(): BwcProvider {
