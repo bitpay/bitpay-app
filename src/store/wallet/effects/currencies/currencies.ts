@@ -7,6 +7,7 @@ import {
   successGetTokenOptions,
 } from '../../wallet.actions';
 import {Currencies, CurrencyOpts} from '../../../../constants/currencies';
+import {LogActions} from '../../../log';
 
 export const startGetTokenOptions =
   (): Effect<Promise<void>> => async dispatch => {
@@ -40,7 +41,7 @@ export const startGetTokenOptions =
         }),
       );
     } catch (e) {
-      console.error(e);
+      dispatch(LogActions.error(`Get Token options: ${e}`));
       dispatch(failedGetTokenOptions());
     }
   };
@@ -69,7 +70,7 @@ export const addCustomTokenOption =
         }),
       );
     } catch (e) {
-      console.error(e);
+      dispatch(LogActions.error(`Add custom options: ${e}`));
       dispatch(failedGetTokenOptions());
     }
   };

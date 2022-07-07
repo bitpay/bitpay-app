@@ -34,6 +34,7 @@ import {updateWalletTxHistory} from '../../wallet.actions';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {getGiftCardIcons} from '../../../../lib/gift-cards/gift-card';
 import {t} from 'i18next';
+import {LogActions} from '../../../log';
 const BWC = BwcProvider.getInstance();
 const Errors = BWC.getErrors();
 
@@ -239,7 +240,9 @@ const ProcessNewTxs =
         ret.push(tx);
         txHistoryUnique[tx.txid] = true;
       } else {
-        console.log('Ignoring duplicate TX in history: ' + tx.txid);
+        dispatch(
+          LogActions.info(`Ignoring duplicate TX in history: ${tx.txid}`),
+        );
       }
     }
     return Promise.resolve(ret);
@@ -269,8 +272,10 @@ const GetNewTransactions =
           const _newTxs = await dispatch(ProcessNewTxs(wallet, _transactions));
           newTxs = newTxs.concat(_newTxs);
 
-          console.log(
-            `Merging TXs for: ${wallet.id}. Got: ${newTxs.length} Skip: ${skip} lastTransactionId: ${lastTransactionId} Load more: ${loadMore}`,
+          dispatch(
+            LogActions.info(
+              `Merging TXs for: ${wallet.id}. Got: ${newTxs.length} Skip: ${skip} lastTransactionId: ${lastTransactionId} Load more: ${loadMore}`,
+            ),
           );
 
           return resolve({
@@ -489,10 +494,11 @@ export const GetTransactionHistory =
         }
         return resolve({transactions: newHistory, loadMore});
       } catch (err) {
-        console.log(
-          '!! Could not update transaction history for ',
-          wallet.id,
-          err,
+        dispatch(
+          LogActions.error(
+            `!! Could not update transaction history for 
+          ${wallet.id} ${err}`,
+          ),
         );
         return reject(err);
       }

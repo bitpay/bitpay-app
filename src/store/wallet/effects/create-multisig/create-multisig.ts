@@ -6,6 +6,7 @@ import {successCreateKey, successAddWallet} from '../../wallet.actions';
 import {Key, KeyOptions, Wallet} from '../../wallet.models';
 import {createWalletWithOpts} from '../create/create';
 import {subscribePushNotifications} from '../../../app/app.effects';
+import {LogActions} from '../../../log';
 
 const BWC = BwcProvider.getInstance();
 
@@ -45,7 +46,7 @@ export const startCreateKeyMultisig =
 
         resolve(key);
       } catch (err) {
-        console.error(err);
+        dispatch(LogActions.error(`Error create key multisig: ${err}`));
         reject();
       }
     });
@@ -80,7 +81,7 @@ export const addWalletMultisig =
 
         resolve(newWallet);
       } catch (err) {
-        console.error(err);
+        dispatch(LogActions.error(`Error adding multisig wallet: ${err}`));
         reject(err);
       }
     });
