@@ -326,14 +326,9 @@ const CoinbaseAccount = ({
       ),
     );
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Clicked Receive',
-        {
-          context: 'CoinbaseAccount',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Clicked Receive', {
+        context: 'CoinbaseAccount',
+      }),
     );
     dispatch(coinbaseCreateAddress(accountId))
       .then(async newAddress => {
@@ -368,14 +363,9 @@ const CoinbaseAccount = ({
   const onSelectedWallet = async (newWallet?: Wallet) => {
     setWalletModalVisible(false);
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Clicked Send',
-        {
-          context: 'CoinbaseAccount',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Clicked Send', {
+        context: 'CoinbaseAccount',
+      }),
     );
     if (newWallet) {
       setSelectedWallet(newWallet);

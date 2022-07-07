@@ -266,16 +266,11 @@ const CreateMultisig = () => {
         )) as Wallet;
 
         dispatch(
-          logSegmentEvent(
-            'track',
-            'Create Multisig Wallet success',
-            {
-              coin: currency?.toLowerCase(),
-              type: `${opts.m}-${opts.n}`,
-              addedToExistingKey: true,
-            },
-            true,
-          ),
+          logSegmentEvent('track', 'Created Multisig Wallet', {
+            coin: currency?.toLowerCase(),
+            type: `${opts.m}-${opts.n}`,
+            addedToExistingKey: true,
+          }),
         );
 
         wallet.getStatus(
@@ -336,16 +331,18 @@ const CreateMultisig = () => {
         )) as Key;
 
         dispatch(
-          logSegmentEvent(
-            'track',
-            'Create Multisig Wallet success',
-            {
-              coin: currency?.toLowerCase(),
-              type: `${opts.m}-${opts.n}`,
-              addedToExistingKey: false,
-            },
-            true,
-          ),
+          logSegmentEvent('track', 'Created Multisig Wallet', {
+            coin: currency?.toLowerCase(),
+            type: `${opts.m}-${opts.n}`,
+            addedToExistingKey: false,
+          }),
+        );
+
+        dispatch(
+          logSegmentEvent('track', 'Created Key', {
+            context: 'createMultisig',
+            coins: [currency?.toLowerCase()],
+          }),
         );
 
         dispatch(setHomeCarouselConfig({id: multisigKey.id, show: true}));

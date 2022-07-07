@@ -415,14 +415,10 @@ const Confirm = () => {
               try {
                 await sendPayment();
                 dispatch(
-                  Analytics.track(
-                    'Adding funds to Debit Card',
-                    {
-                      amount: amount,
-                      brand: brand || '',
-                    },
-                    true,
-                  ),
+                  Analytics.track('Adding funds to Debit Card', {
+                    amount: amount,
+                    brand: brand || '',
+                  }),
                 );
               } catch (err: any) {
                 dispatch(dismissOnGoingProcessModal());

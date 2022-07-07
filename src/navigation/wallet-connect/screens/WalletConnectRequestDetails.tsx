@@ -202,9 +202,7 @@ const WalletConnectRequestDetails = () => {
       };
       await dispatch(walletConnectRejectCallRequest(peerId, response));
       setRejectButtonState('success');
-      dispatch(
-        logSegmentEvent('track', 'WalletConnect Request Rejected', {}, true),
-      );
+      dispatch(logSegmentEvent('track', 'WalletConnect Request Rejected', {}));
       goToWalletConnectHome();
     } catch (e) {
       setRejectButtonState('failed');
@@ -265,9 +263,7 @@ const WalletConnectRequestDetails = () => {
         }),
       );
       setApproveButtonState('success');
-      dispatch(
-        logSegmentEvent('track', 'WalletConnect Request Approved', {}, true),
-      );
+      dispatch(logSegmentEvent('track', 'WalletConnect Request Approved', {}));
       goToWalletConnectHome();
     } catch (err) {
       setApproveButtonState('failed');

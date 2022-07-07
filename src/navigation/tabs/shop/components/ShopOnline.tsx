@@ -70,12 +70,7 @@ export const ShopOnline = ({
         );
         setSearchResults(newSearchResults);
         dispatch(
-          logSegmentEvent(
-            'track',
-            'Searched Online Brands',
-            {search: text},
-            true,
-          ),
+          logSegmentEvent('track', 'Searched Online Brands', {search: text}),
         );
       }, 300),
     [dispatch, setSearchVal, integrations],

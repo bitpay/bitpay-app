@@ -249,15 +249,10 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
                 },
               );
               dispatch(
-                logSegmentEvent(
-                  'track',
-                  'Create New Key success',
-                  {
-                    context,
-                    currencies,
-                  },
-                  true,
-                ),
+                logSegmentEvent('track', 'Created Key', {
+                  context,
+                  coins: currencies,
+                }),
               );
               dispatch(dismissOnGoingProcessModal());
             } catch (e: any) {

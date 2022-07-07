@@ -131,15 +131,10 @@ const WalletConnectConfirm = () => {
       await dispatch(walletConnectApproveCallRequest(request.peerId, response));
       dispatch(dismissOnGoingProcessModal());
       dispatch(
-        logSegmentEvent(
-          'track',
-          'Sent Crypto',
-          {
-            context: 'WalletConnect Confirm',
-            coin: wallet?.currencyAbbreviation || '',
-          },
-          true,
-        ),
+        logSegmentEvent('track', 'Sent Crypto', {
+          context: 'WalletConnect Confirm',
+          coin: wallet?.currencyAbbreviation || '',
+        }),
       );
       await sleep(500);
       setShowPaymentSentModal(true);

@@ -89,14 +89,10 @@ const CardOffers: React.VFC<CardOffersProps> = props => {
       ReactAppboy.logContentCardClicked(contentCard.id);
 
       dispatch(
-        Analytics.track(
-          'Clicked Card Offer',
-          {
-            id: contentCard.id || '',
-            context: 'Card Offers component',
-          },
-          true,
-        ),
+        Analytics.track('Clicked Card Offer', {
+          id: contentCard.id || '',
+          context: 'Card Offers component',
+        }),
       );
     }
 

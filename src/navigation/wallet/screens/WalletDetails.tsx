@@ -913,15 +913,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       ),
                       cta: () => {
                         dispatch(
-                          logSegmentEvent(
-                            'track',
-                            'Clicked Buy Crypto',
-                            {
-                              context: 'WalletDetails',
-                              coin: fullWalletObj.currencyAbbreviation,
-                            },
-                            true,
-                          ),
+                          logSegmentEvent('track', 'Clicked Buy Crypto', {
+                            context: 'WalletDetails',
+                            coin: fullWalletObj.currencyAbbreviation,
+                          }),
                         );
                         navigation.navigate('Wallet', {
                           screen: 'Amount',
@@ -951,15 +946,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         ),
                       cta: () => {
                         dispatch(
-                          logSegmentEvent(
-                            'track',
-                            'Clicked Swap Crypto',
-                            {
-                              context: 'WalletDetails',
-                              coin: fullWalletObj.currencyAbbreviation,
-                            },
-                            true,
-                          ),
+                          logSegmentEvent('track', 'Clicked Swap Crypto', {
+                            context: 'WalletDetails',
+                            coin: fullWalletObj.currencyAbbreviation,
+                          }),
                         );
                         navigation.navigate('SwapCrypto', {
                           screen: 'Root',
@@ -972,15 +962,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     receive={{
                       cta: () => {
                         dispatch(
-                          logSegmentEvent(
-                            'track',
-                            'Clicked Receive',
-                            {
-                              context: 'WalletDetails',
-                              coin: fullWalletObj.currencyAbbreviation,
-                            },
-                            true,
-                          ),
+                          logSegmentEvent('track', 'Clicked Receive', {
+                            context: 'WalletDetails',
+                            coin: fullWalletObj.currencyAbbreviation,
+                          }),
                         );
                         setShowReceiveAddressBottomModal(true);
                       },
@@ -989,15 +974,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       hide: !fullWalletObj.balance.sat,
                       cta: () => {
                         dispatch(
-                          logSegmentEvent(
-                            'track',
-                            'Clicked Send',
-                            {
-                              context: 'WalletDetails',
-                              coin: fullWalletObj.currencyAbbreviation,
-                            },
-                            true,
-                          ),
+                          logSegmentEvent('track', 'Clicked Send', {
+                            context: 'WalletDetails',
+                            coin: fullWalletObj.currencyAbbreviation,
+                          }),
                         );
                         navigation.navigate('Wallet', {
                           screen: 'SendTo',

@@ -324,15 +324,10 @@ const AddWallet: React.FC<AddWalletScreenProps> = ({navigation, route}) => {
       );
 
       dispatch(
-        logSegmentEvent(
-          'track',
-          'Create Basic Wallet success',
-          {
-            coin: currency,
-            isErc20Token: !!isToken,
-          },
-          true,
-        ),
+        logSegmentEvent('track', 'Created Basic Wallet', {
+          coin: currency,
+          isErc20Token: !!isToken,
+        }),
       );
 
       // adds wallet and binds to key obj - creates eth wallet if needed

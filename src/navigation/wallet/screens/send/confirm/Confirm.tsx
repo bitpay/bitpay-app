@@ -480,15 +480,10 @@ const Confirm = () => {
             await dispatch(startSendPayment({txp, key, wallet, recipient}));
             dispatch(dismissOnGoingProcessModal());
             dispatch(
-              logSegmentEvent(
-                'track',
-                'Sent Crypto',
-                {
-                  context: 'Confirm',
-                  coin: currencyAbbreviation || '',
-                },
-                true,
-              ),
+              logSegmentEvent('track', 'Sent Crypto', {
+                context: 'Confirm',
+                coin: currencyAbbreviation || '',
+              }),
             );
             await sleep(400);
             setShowPaymentSentModal(true);

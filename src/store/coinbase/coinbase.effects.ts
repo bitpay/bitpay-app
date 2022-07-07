@@ -134,9 +134,7 @@ export const coinbaseLinkAccount =
       await dispatch(coinbaseUpdateExchangeRate());
       dispatch(setHomeCarouselConfig({id: 'coinbaseBalanceCard', show: true}));
       dispatch(coinbaseGetAccountsAndBalance());
-      dispatch(
-        logSegmentEvent('track', 'Connect to Coinbase success', {}, true),
-      );
+      dispatch(logSegmentEvent('track', 'Connect to Coinbase success', {}));
     } catch (error: CoinbaseErrorsProps | any) {
       dispatch(accessTokenFailed(error));
       dispatch(LogActions.error(coinbaseParseErrorToString(error)));
@@ -369,15 +367,10 @@ export const coinbaseSendTransaction =
       );
       dispatch(sendTransactionSuccess());
       dispatch(
-        logSegmentEvent(
-          'track',
-          'Sent Crypto',
-          {
-            context: 'Coinbase Withdraw Confirm',
-            coin: tx?.currency || '',
-          },
-          true,
-        ),
+        logSegmentEvent('track', 'Sent Crypto', {
+          context: 'Coinbase Withdraw Confirm',
+          coin: tx?.currency || '',
+        }),
       );
     } catch (error: CoinbaseErrorsProps | any) {
       if (isExpiredTokenError(error)) {

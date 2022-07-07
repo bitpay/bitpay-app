@@ -393,20 +393,14 @@ const BuyCryptoOffers: React.FC = () => {
     logger.error('Simplex error: ' + msg);
 
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Failed Buy Crypto',
-        {
-          exchange: 'simplex',
-          context: 'BuyCryptoOffers',
-          message: msg || '',
-          paymentMethod: paymentMethod.method || '',
-          amount: Number(amount) || '',
-          coin: coin || '',
-          fiatCurrency: fiatCurrency || '',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Failed Buy Crypto', {
+        exchange: 'simplex',
+        context: 'BuyCryptoOffers',
+        paymentMethod: paymentMethod.method || '',
+        amount: Number(amount) || '',
+        coin: coin || '',
+        fiatCurrency: fiatCurrency || '',
+      }),
     );
 
     offers.simplex.errorMsg = msg;
@@ -438,20 +432,14 @@ const BuyCryptoOffers: React.FC = () => {
     }
 
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Failed Buy Crypto',
-        {
-          exchange: 'wyre',
-          context: 'BuyCryptoOffers',
-          message: msg || '',
-          paymentMethod: paymentMethod.method || '',
-          amount: Number(amount) || '',
-          coin: coin || '',
-          fiatCurrency: fiatCurrency || '',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Failed Buy Crypto', {
+        exchange: 'wyre',
+        context: 'BuyCryptoOffers',
+        paymentMethod: paymentMethod.method || '',
+        amount: Number(amount) || '',
+        coin: coin || '',
+        fiatCurrency: fiatCurrency || '',
+      }),
     );
 
     logger.error('Crypto offer error: ' + msg);
@@ -617,18 +605,13 @@ const BuyCryptoOffers: React.FC = () => {
         );
 
         dispatch(
-          logSegmentEvent(
-            'track',
-            'Requested Crypto Purchase',
-            {
-              exchange: 'simplex',
-              fiatAmount: amount,
-              fiatCurrency: fiatCurrency,
-              paymentMethod: paymentMethod.method,
-              coin: selectedWallet.currencyAbbreviation,
-            },
-            true,
-          ),
+          logSegmentEvent('track', 'Requested Crypto Purchase', {
+            exchange: 'simplex',
+            fiatAmount: amount,
+            fiatCurrency: fiatCurrency,
+            paymentMethod: paymentMethod.method,
+            coin: selectedWallet.currencyAbbreviation,
+          }),
         );
 
         const paymentUrl: string = getPaymentUrl(
@@ -708,18 +691,13 @@ const BuyCryptoOffers: React.FC = () => {
 
   const continueToWyre = (paymentUrl: string) => {
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Requested Crypto Purchase',
-        {
-          exchange: 'wyre',
-          fiatAmount: amount,
-          fiatCurrency: fiatCurrency,
-          paymentMethod: paymentMethod.method,
-          coin: selectedWallet.currencyAbbreviation,
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Requested Crypto Purchase', {
+        exchange: 'wyre',
+        fiatAmount: amount,
+        fiatCurrency: fiatCurrency,
+        paymentMethod: paymentMethod.method,
+        coin: selectedWallet.currencyAbbreviation,
+      }),
     );
     Linking.openURL(paymentUrl)
       .then(() => {

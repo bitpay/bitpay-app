@@ -314,17 +314,12 @@ const Confirm = () => {
         ? 'Failed Gift Card'
         : 'Purchased Gift Card';
     dispatch(
-      logSegmentEvent(
-        'track',
-        purchaseEventName,
-        {
-          giftCardAmount: amount,
-          giftCardBrand: cardConfig.name,
-          giftCardCurrency: cardConfig.currency,
-          coin: getTransactionCurrency(),
-        },
-        true,
-      ),
+      logSegmentEvent('track', purchaseEventName, {
+        giftCardAmount: amount,
+        giftCardBrand: cardConfig.name,
+        giftCardCurrency: cardConfig.currency,
+        coin: getTransactionCurrency(),
+      }),
     );
   };
 
