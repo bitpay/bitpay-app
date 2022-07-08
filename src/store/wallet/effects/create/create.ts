@@ -165,10 +165,10 @@ export const addWallet =
         dispatch(LogActions.info(`Added Wallet ${currency}`));
         resolve(newWallet);
       } catch (err) {
+        const errstring =
+          err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(failedAddWallet());
-        dispatch(
-          LogActions.error(`Error adding wallet: ${JSON.stringify(err)}`),
-        );
+        dispatch(LogActions.error(`Error adding wallet: ${errstring}`));
         reject();
       }
     });
@@ -354,11 +354,9 @@ const createTokenWallet =
           resolve(bwcClient);
         });
       } catch (err) {
-        dispatch(
-          LogActions.error(
-            `Error creating token wallet: ${JSON.stringify(err)}`,
-          ),
-        );
+        const errstring =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error(`Error creating token wallet: ${errstring}`));
         reject();
       }
     });

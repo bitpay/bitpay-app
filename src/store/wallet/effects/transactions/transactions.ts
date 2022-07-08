@@ -494,10 +494,13 @@ export const GetTransactionHistory =
         }
         return resolve({transactions: newHistory, loadMore});
       } catch (err) {
+        const errString =
+          error instanceof Error ? err.message : JSON.stringify(err);
+
         dispatch(
           LogActions.error(
             `!! Could not update transaction history for 
-          ${wallet.id}: ${JSON.stringify(err)}`,
+          ${wallet.id}: ${errString}`,
           ),
         );
         return reject(err);

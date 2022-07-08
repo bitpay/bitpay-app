@@ -281,11 +281,9 @@ const setEthAddressNonce =
 
         return resolve();
       } catch (error: any) {
-        dispatch(
-          LogActions.error(
-            `Could not get address nonce ${JSON.stringify(error)}`,
-          ),
-        );
+        const errString =
+          error instanceof Error ? error.message : JSON.stringify(error);
+        dispatch(LogActions.error(`Could not get address nonce ${errString}`));
         return resolve();
       }
     });
