@@ -12,6 +12,7 @@ import {LogActions} from '../../../log';
 export const startGetTokenOptions =
   (): Effect<Promise<void>> => async dispatch => {
     try {
+      dispatch(LogActions.info('starting [startGetTokenOptions]'));
       const {
         data: {tokens},
       } = await axios.get<{
@@ -40,9 +41,16 @@ export const startGetTokenOptions =
           tokenOptionsByAddress,
         }),
       );
+      dispatch(LogActions.info('successful [startGetTokenOptions]'));
     } catch (e) {
-      dispatch(LogActions.error(`Get Token options: ${JSON.stringify(e)}`));
+      let errorStr;
+      if (e instanceof Error) {
+        errorStr = e.message;
+      } else {
+        errorStr = JSON.stringify(e);
+      }
       dispatch(failedGetTokenOptions());
+      dispatch(LogActions.error(`failed [startGetTokenOptions]: ${errorStr}`));
     }
   };
 

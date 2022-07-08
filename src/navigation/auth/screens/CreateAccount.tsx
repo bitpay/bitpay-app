@@ -37,7 +37,7 @@ type CreateAccountScreenProps = StackScreenProps<
 const schema = yup.object().shape({
   givenName: yup.string().required('Required'),
   familyName: yup.string().required('Required'),
-  email: yup.string().email().required('Required'),
+  email: yup.string().email().required('Required').trim(),
   password: yup.string().required('Required'),
   agreedToTOSandPP: yup.boolean().oneOf([true], 'Required'),
 });
