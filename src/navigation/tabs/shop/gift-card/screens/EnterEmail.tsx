@@ -24,7 +24,7 @@ interface EmailFormFieldValues {
 }
 
 const schema = yup.object().shape({
-  email: yup.string().email().required(),
+  email: yup.string().email().required().trim(),
 });
 
 const EnterEmail = ({

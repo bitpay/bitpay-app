@@ -120,7 +120,7 @@ const NetworkName = styled(BaseText)`
 
 const schema = yup.object().shape({
   name: yup.string().required(),
-  email: yup.string().email(),
+  email: yup.string().email().trim(),
   tag: yup.number(),
   address: yup.string().required(),
 });
