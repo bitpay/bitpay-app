@@ -134,7 +134,11 @@ export const coinbaseLinkAccount =
       await dispatch(coinbaseUpdateExchangeRate());
       dispatch(setHomeCarouselConfig({id: 'coinbaseBalanceCard', show: true}));
       dispatch(coinbaseGetAccountsAndBalance());
-      dispatch(logSegmentEvent('track', 'Connect to Coinbase success', {}));
+      dispatch(
+        logSegmentEvent('track', 'Connected Wallet', {
+          source: 'coinbase',
+        }),
+      );
     } catch (error: CoinbaseErrorsProps | any) {
       dispatch(accessTokenFailed(error));
       dispatch(LogActions.error(coinbaseParseErrorToString(error)));

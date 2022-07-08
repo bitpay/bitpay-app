@@ -366,17 +366,19 @@ const BuyCryptoOffers: React.FC = () => {
             let err = t(
               "Can't get rates at this moment. Please try again later",
             );
-            showSimplexError(err);
+            const reason = 'simplexGetQuote Error. "quote_id" not included.';
+            showSimplexError(err, reason);
           }
         })
         .catch((err: any) => {
           console.log('Simplex getting quote: FAILED', err);
-          showSimplexError(err);
+          const reason = 'simplexGetQuote Error';
+          showSimplexError(err, reason);
         });
     }
   };
 
-  const showSimplexError = (err?: any) => {
+  const showSimplexError = (err?: any, reason?: string) => {
     let msg = t('Could not get crypto offer. Please try again later.');
     if (err) {
       if (typeof err === 'string') {
@@ -396,6 +398,7 @@ const BuyCryptoOffers: React.FC = () => {
       logSegmentEvent('track', 'Failed Buy Crypto', {
         exchange: 'simplex',
         context: 'BuyCryptoOffers',
+        reason: reason || 'unknown',
         paymentMethod: paymentMethod.method || '',
         amount: Number(amount) || '',
         coin: coin || '',
@@ -409,7 +412,7 @@ const BuyCryptoOffers: React.FC = () => {
     setUpdateView(!updateView);
   };
 
-  const showWyreError = (err?: any) => {
+  const showWyreError = (err?: any, reason?: string) => {
     let msg = t('Could not get crypto offer. Please try again later.');
     if (err) {
       if (typeof err === 'string') {
@@ -435,6 +438,7 @@ const BuyCryptoOffers: React.FC = () => {
       logSegmentEvent('track', 'Failed Buy Crypto', {
         exchange: 'wyre',
         context: 'BuyCryptoOffers',
+        reason: reason || 'unknown',
         paymentMethod: paymentMethod.method || '',
         amount: Number(amount) || '',
         coin: coin || '',
@@ -474,7 +478,8 @@ const BuyCryptoOffers: React.FC = () => {
         )) as string;
       } catch (err) {
         console.error(err);
-        showWyreError(err);
+        const reason = 'createWalletAddress Error';
+        showWyreError(err, reason);
       }
 
       const dest = setPrefix(address, coin, selectedWallet.credentials.network);
@@ -504,7 +509,8 @@ const BuyCryptoOffers: React.FC = () => {
         .wyreWalletOrderQuotation(requestData)
         .then(data => {
           if (data && (data.exceptionId || data.error)) {
-            showWyreError(data);
+            const reason = 'wyreWalletOrderQuotation Error';
+            showWyreError(data, reason);
             return;
           }
 
@@ -516,7 +522,8 @@ const BuyCryptoOffers: React.FC = () => {
             const err =
               t('Wyre has returned a wrong value for the fee. Fee: ') +
               offers.wyre.fee;
-            showWyreError(err);
+            const reason = 'Fee not included';
+            showWyreError(err, reason);
             return;
           }
 
@@ -532,7 +539,8 @@ const BuyCryptoOffers: React.FC = () => {
         })
         .catch((err: any) => {
           console.log('Wyre getting quote: FAILED', err);
-          showWyreError(err);
+          const reason = 'wyreWalletOrderQuotation Error';
+          showWyreError(err, reason);
         });
     }
   };
@@ -556,7 +564,8 @@ const BuyCryptoOffers: React.FC = () => {
       )) as string;
     } catch (err) {
       console.error(err);
-      showSimplexError(err);
+      const reason = 'createWalletAddress Error';
+      showSimplexError(err, reason);
     }
 
     const quoteData = {
@@ -569,7 +578,8 @@ const BuyCryptoOffers: React.FC = () => {
     simplexPaymentRequest(selectedWallet, address, quoteData, createdOn)
       .then(req => {
         if (req && req.error) {
-          showSimplexError(req.error);
+          const reason = 'simplexPaymentRequest Error';
+          showSimplexError(req.error, reason);
           return;
         }
 
@@ -627,7 +637,8 @@ const BuyCryptoOffers: React.FC = () => {
           .catch(err => console.error("Couldn't load page", err));
       })
       .catch(err => {
-        showSimplexError(err);
+        const reason = 'simplexPaymentRequest Error';
+        showSimplexError(err, reason);
       });
   };
 
@@ -639,7 +650,8 @@ const BuyCryptoOffers: React.FC = () => {
       )) as string;
     } catch (err) {
       console.error(err);
-      showWyreError(err);
+      const reason = 'createWalletAddress Error';
+      showWyreError(err, reason);
     }
     let _paymentMethod: string;
     switch (paymentMethod.method) {
@@ -677,7 +689,8 @@ const BuyCryptoOffers: React.FC = () => {
       .wyreWalletOrderReservation(requestData)
       .then((data: any) => {
         if (data && (data.exceptionId || data.error)) {
-          showWyreError(data);
+          const reason = 'wyreWalletOrderReservation Error';
+          showWyreError(data, reason);
           return;
         }
 
@@ -685,7 +698,8 @@ const BuyCryptoOffers: React.FC = () => {
         openPopUpConfirmation('wyre', paymentUrl);
       })
       .catch((err: any) => {
-        showWyreError(err);
+        const reason = 'wyreWalletOrderReservation Error';
+        showWyreError(err, reason);
       });
   };
 

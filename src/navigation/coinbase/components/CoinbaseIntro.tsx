@@ -65,7 +65,7 @@ const CoinbaseIntro = () => {
       url = signupUrl;
     }
     dispatch(
-      logSegmentEvent('track', 'Clicked Connect to Coinbase', {
+      logSegmentEvent('track', 'Clicked Coinbase Intro', {
         context,
       }),
     );
