@@ -50,7 +50,7 @@ interface CreateAccountFieldValues {
   agreedToTOSandPP: boolean;
 }
 
-const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
+const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
   navigation,
 }) => {
   const {t} = useTranslation();
@@ -80,6 +80,8 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
   const captchaRef = useRef<CaptchaRef>(null);
 
   useEffect(() => {
+    dispatch(BitPayIdEffects.startFetchSession());
+
     return () => {
       dispatch(BitPayIdActions.updateCreateAccountStatus(null));
     };
