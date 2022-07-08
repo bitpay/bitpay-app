@@ -1,8 +1,4 @@
-import {
-  useFocusEffect,
-  useLinkTo,
-  useNavigation,
-} from '@react-navigation/native';
+import {useFocusEffect, useLinkTo} from '@react-navigation/native';
 import React from 'react';
 import {ImageStyle, Linking, StyleProp} from 'react-native';
 import ReactAppboy, {ContentCard} from 'react-native-appboy-sdk';
@@ -26,7 +22,10 @@ import {
   isCaptionedContentCard,
   isClassicContentCard,
 } from '../../../../../utils/braze';
-import {useAppDispatch} from '../../../../../utils/hooks';
+import {
+  useAppDispatch,
+  useShopDeepLinkHandler,
+} from '../../../../../utils/hooks';
 import {BoxShadow} from '../Styled';
 
 interface AdvertisementCardProps {
@@ -79,7 +78,7 @@ const IconStyle: StyleProp<ImageStyle> = {
 const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
   const {contentCard, ctaOverride} = props;
   const {image, url, openURLInWebView} = contentCard;
-  const navigation = useNavigation();
+  const shopDeepLinkHandler = useShopDeepLinkHandler();
   const dispatch = useAppDispatch();
   const linkTo = useLinkTo();
   const theme = useTheme();
@@ -133,13 +132,11 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
 
     if (url.startsWith(APP_DEEPLINK_PREFIX)) {
       try {
-        const path = '/' + url.replace(APP_DEEPLINK_PREFIX, '');
-        if (path === '/giftcard') {
-          navigation.navigate('Tabs', {screen: 'Shop'});
-          return;
+        const pathInfo = shopDeepLinkHandler(url);
+        if (!pathInfo) {
+          const path = '/' + url.replace(APP_DEEPLINK_PREFIX, '');
+          linkTo(path);
         }
-        linkTo(path);
-
         return;
       } catch (err) {
         dispatch(
