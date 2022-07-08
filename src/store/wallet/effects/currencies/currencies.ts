@@ -41,7 +41,7 @@ export const startGetTokenOptions =
         }),
       );
     } catch (e) {
-      dispatch(LogActions.error(`Get Token options: ${e}`));
+      dispatch(LogActions.error(`Get Token options: ${JSON.stringify(e)}`));
       dispatch(failedGetTokenOptions());
     }
   };
@@ -70,7 +70,7 @@ export const addCustomTokenOption =
         }),
       );
     } catch (e) {
-      dispatch(LogActions.error(`Add custom options: ${e}`));
+      dispatch(LogActions.error(`Add custom options: ${JSON.stringify(e)}`));
       dispatch(failedGetTokenOptions());
     }
   };

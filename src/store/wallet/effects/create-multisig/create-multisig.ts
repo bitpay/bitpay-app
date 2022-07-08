@@ -46,7 +46,9 @@ export const startCreateKeyMultisig =
 
         resolve(key);
       } catch (err) {
-        dispatch(LogActions.error(`Error create key multisig: ${err}`));
+        const errorStr =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error(`Error create key multisig: ${errorStr}`));
         reject();
       }
     });
@@ -81,7 +83,9 @@ export const addWalletMultisig =
 
         resolve(newWallet);
       } catch (err) {
-        dispatch(LogActions.error(`Error adding multisig wallet: ${err}`));
+        const errorStr =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error(`Error adding multisig wallet: ${errorStr}`));
         reject(err);
       }
     });

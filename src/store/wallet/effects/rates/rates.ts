@@ -55,7 +55,7 @@ export const getPriceHistory =
         });
       dispatch(successGetPriceHistory(formattedData));
     } catch (err) {
-      dispatch(LogActions.error(`Get price history: ${err}`));
+      dispatch(LogActions.error(`Get price history: ${JSON.stringify(err)}`));
       dispatch(failedGetPriceHistory());
     }
   };
@@ -117,7 +117,7 @@ export const startGetRates =
         );
         resolve(allRates);
       } catch (err) {
-        dispatch(LogActions.error(`Get rates: ${err}`));
+        dispatch(LogActions.error(`Get rates: ${JSON.stringify(err)}`));
         dispatch(failedGetRates());
         reject();
       }

@@ -166,7 +166,9 @@ export const addWallet =
         resolve(newWallet);
       } catch (err) {
         dispatch(failedAddWallet());
-        dispatch(LogActions.error(`Error adding wallet: ${err}`));
+        dispatch(
+          LogActions.error(`Error adding wallet: ${JSON.stringify(err)}`),
+        );
         reject();
       }
     });
@@ -352,7 +354,11 @@ const createTokenWallet =
           resolve(bwcClient);
         });
       } catch (err) {
-        dispatch(LogActions.error(`Error creating token wallet: ${err}`));
+        dispatch(
+          LogActions.error(
+            `Error creating token wallet: ${JSON.stringify(err)}`,
+          ),
+        );
         reject();
       }
     });

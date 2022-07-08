@@ -497,7 +497,7 @@ export const GetTransactionHistory =
         dispatch(
           LogActions.error(
             `!! Could not update transaction history for 
-          ${wallet.id} ${err}`,
+          ${wallet.id}: ${JSON.stringify(err)}`,
           ),
         );
         return reject(err);
