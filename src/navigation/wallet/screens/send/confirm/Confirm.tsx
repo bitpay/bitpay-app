@@ -79,6 +79,7 @@ export interface ConfirmParamList {
   amount: number;
   speedup?: boolean;
   sendMax?: boolean;
+  selectInputs?: boolean;
   inputs?: Utxo[];
 }
 
@@ -115,6 +116,7 @@ const Confirm = () => {
     speedup,
     sendMax,
     inputs,
+    selectInputs,
   } = route.params;
   const [txp, setTxp] = useState(_txp);
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -323,7 +325,7 @@ const Confirm = () => {
           <SendingTo recipient={recipientData} hr />
           <Fee
             onPress={
-              isTxLevelAvailable()
+              isTxLevelAvailable() && !selectInputs
                 ? () => setShowTransactionLevel(true)
                 : undefined
             }
