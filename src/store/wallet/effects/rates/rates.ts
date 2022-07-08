@@ -230,33 +230,37 @@ export const getTokenRates =
         dispatch(LogActions.info('[getTokenRates]: success get request'));
 
         Object.entries(data).map(([key, value]: [string, any]) => {
-          const tokenName = tokens[key].symbol.toLowerCase();
-          tokenRates[tokenName] = [];
-          tokenLastDayRates[tokenName] = [];
+          // only save token rates if exist in tokens list
+          if (tokens[key]) {
+            const tokenName = tokens[key]?.symbol?.toLowerCase();
+            tokenRates[tokenName] = [];
+            tokenLastDayRates[tokenName] = [];
 
-          altCurrencies.forEach(altCurrency => {
-            tokenRates[tokenName].push({
-              code: altCurrency.toUpperCase(),
-              fetchedOn: value.last_updated_at,
-              name: tokenName,
-              rate: value[altCurrency],
-              ts: value.last_updated_at,
-            });
+            altCurrencies.forEach(altCurrency => {
+              tokenRates[tokenName].push({
+                code: altCurrency.toUpperCase(),
+                fetchedOn: value.last_updated_at,
+                name: tokenName,
+                rate: value[altCurrency],
+                ts: value.last_updated_at,
+              });
 
-            const yesterday = moment
-              .unix(value.last_updated_at)
-              .subtract(1, 'days')
-              .unix();
-            tokenLastDayRates[tokenName].push({
-              code: altCurrency.toUpperCase(),
-              fetchedOn: yesterday,
-              name: tokenName,
-              rate:
-                value[altCurrency] +
-                (value[altCurrency] * value[`${altCurrency}_24h_change`]) / 100,
-              ts: yesterday,
+              const yesterday = moment
+                .unix(value.last_updated_at)
+                .subtract(1, 'days')
+                .unix();
+              tokenLastDayRates[tokenName].push({
+                code: altCurrency.toUpperCase(),
+                fetchedOn: yesterday,
+                name: tokenName,
+                rate:
+                  value[altCurrency] +
+                  (value[altCurrency] * value[`${altCurrency}_24h_change`]) /
+                    100,
+                ts: yesterday,
+              });
             });
-          });
+          }
         });
 
         dispatch(LogActions.info('success [getTokenRates]'));
