@@ -633,7 +633,9 @@ const SwapCryptoRoot: React.FC = () => {
           (coin: any) =>
             coin.enabled &&
             coin.fixRateEnabled &&
-            [...SupportedChains, 'ERC20'].includes(coin.protocol.toUpperCase()),
+            [...SupportedChains, 'ERC20'].includes(
+              coin.protocol?.toUpperCase(),
+            ),
         )
         .map(({name}: any) => name);
 
