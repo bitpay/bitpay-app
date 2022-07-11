@@ -168,6 +168,8 @@ const getParameterByName = (name: string, url: string): string | undefined => {
 const goToPayPro =
   (data: string): Effect =>
   async dispatch => {
+    dispatch(dismissOnGoingProcessModal());
+
     dispatch(
       startOnGoingProcessModal(
         //  t('Fetching payment options...')
@@ -254,17 +256,15 @@ const handleUnlock =
         dispatch(
           showBottomNotificationModal({
             type: 'warning',
-            title: t('Connect Your BitPay ID'),
+            title: t('Verification Required'),
             enableBackdropDismiss: false,
-            message: t(
-              'To complete this payment, please login with your BitPay ID.',
-            ),
+            message: t('To complete this payment please verify your account.'),
             actions: [
               {
-                text: t('CONTINUE'),
+                text: t('Verify'),
                 action: () => {
                   Linking.openURL(
-                    `https://${host}/id/verify?context=unlockAppV&id=${invoiceId}`,
+                    `https://${host}/id/verify?context=unlockv&id=${invoiceId}`,
                   );
                 },
               },
