@@ -1,4 +1,4 @@
-import React, {useCallback, useLayoutEffect, useState} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {FlatList, RefreshControl, View} from 'react-native';
 import styled from 'styled-components/native';
@@ -14,6 +14,8 @@ import {
   coinbaseGetTransactionsByAccount,
   coinbaseParseErrorToString,
   coinbaseGetAccountsAndBalance,
+  coinbaseDisconnectAccount,
+  isInvalidTokenError,
 } from '../../../store/coinbase';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import {useNavigation, useTheme} from '@react-navigation/native';
@@ -81,6 +83,9 @@ const CoinbaseDashboard = () => {
   const accounts = useAppSelector(
     ({COINBASE}) => COINBASE.accounts[COINBASE_ENV],
   );
+  const accountsError = useAppSelector(
+    ({COINBASE}) => COINBASE.getAccountsError,
+  );
   const balance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
 
@@ -139,26 +144,42 @@ const CoinbaseDashboard = () => {
     [dispatch, navigation, exchangeRates],
   );
 
-  const showError = async (error: CoinbaseErrorsProps) => {
-    const errMsg = coinbaseParseErrorToString(error);
-    dispatch(
-      showBottomNotificationModal({
-        type: 'error',
-        title: t('Coinbase error'),
-        message: errMsg,
-        enableBackdropDismiss: true,
-        actions: [
-          {
-            text: t('OK'),
-            action: () => {
-              navigation.navigate('Tabs', {screen: 'Home'});
+  const showError = useCallback(
+    (error: CoinbaseErrorsProps) => {
+      const errMsg = coinbaseParseErrorToString(error);
+      const isInvalidToken = isInvalidTokenError(error);
+      const textAction = isInvalidToken ? t('Re-Connect') : t('OK');
+      dispatch(
+        showBottomNotificationModal({
+          type: 'error',
+          title: t('Coinbase error'),
+          message: errMsg,
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: textAction,
+              action: async () => {
+                if (isInvalidToken) {
+                  await dispatch(coinbaseDisconnectAccount());
+                  navigation.goBack();
+                } else {
+                  navigation.navigate('Tabs', {screen: 'Home'});
+                }
+              },
+              primary: true,
             },
-            primary: true,
-          },
-        ],
-      }),
-    );
-  };
+            {
+              text: t('Back'),
+              action: () => {
+                navigation.goBack();
+              },
+            },
+          ],
+        }),
+      );
+    },
+    [dispatch, navigation, t],
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -172,6 +193,12 @@ const CoinbaseDashboard = () => {
     }
     setRefreshing(false);
   };
+
+  useEffect(() => {
+    if (accountsError) {
+      showError(accountsError);
+    }
+  }, [accountsError, showError]);
 
   return (
     <OverviewContainer>

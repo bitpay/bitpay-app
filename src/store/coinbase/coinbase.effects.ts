@@ -54,6 +54,10 @@ const isExpiredTokenError = (error: CoinbaseErrorsProps): boolean => {
   return error.errors.some(err => err.id === 'expired_token');
 };
 
+export const isInvalidTokenError = (error: CoinbaseErrorsProps): boolean => {
+  return error.errors.some(err => err.id === 'invalid_token');
+};
+
 export const coinbaseErrorIncludesErrorParams = (
   error: CoinbaseErrorsProps | any,
   errorParams: {
