@@ -127,15 +127,10 @@ const OfferCard: React.FC<OfferCardProps> = props => {
         }
       }
       dispatch(
-        logSegmentEvent(
-          'track',
-          'Clicked Shop with Crypto',
-          {
-            context: 'OfferCard',
-            merchantName: merchantName || '',
-          },
-          true,
-        ),
+        logSegmentEvent('track', 'Clicked Shop with Crypto', {
+          context: 'OfferCard',
+          merchantName: merchantName || '',
+        }),
       );
 
       return;

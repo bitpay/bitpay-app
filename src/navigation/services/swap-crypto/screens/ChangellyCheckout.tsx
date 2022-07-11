@@ -206,10 +206,12 @@ const ChangellyCheckout: React.FC = () => {
               const msg = t(
                 'Failed to create transaction for Changelly, please try again later.',
               );
-              showError(msg);
+              const reason = 'Rate expired or already used';
+              showError(msg, reason);
             }
           } else {
-            showError(data.error.message);
+            const reason = 'createFixTransaction Error';
+            showError(data.error.message, reason);
           }
           return;
         }
@@ -307,7 +309,8 @@ const ChangellyCheckout: React.FC = () => {
           .catch(async err => {
             logger.error(err.message);
             const msg = t('Error creating transaction');
-            showError(msg);
+            const reason = 'createTx Error';
+            showError(msg, reason);
             return;
           });
       })
@@ -347,19 +350,14 @@ const ChangellyCheckout: React.FC = () => {
         clearInterval(countDown);
       }
       dispatch(
-        logSegmentEvent(
-          'track',
-          'Failed Swap Crypto',
-          {
-            exchange: 'changelly',
-            context: 'ChangellyCheckout',
-            message: 'The time to make the payment expired',
-            amountFrom: amountFrom || '',
-            fromCoin: fromWalletSelected.currencyAbbreviation || '',
-            toCoin: toWalletSelected.currencyAbbreviation || '',
-          },
-          true,
-        ),
+        logSegmentEvent('track', 'Failed Crypto Swap', {
+          exchange: 'changelly',
+          context: 'ChangellyCheckout',
+          reasonForFailure: 'Time to make the payment expired',
+          amountFrom: amountFrom || '',
+          fromCoin: fromWalletSelected.currencyAbbreviation || '',
+          toCoin: toWalletSelected.currencyAbbreviation || '',
+        }),
       );
       return;
     }
@@ -385,7 +383,8 @@ const ChangellyCheckout: React.FC = () => {
         if (data.error) {
           const msg =
             t('Changelly getFixRateForAmount Error: ') + data.error.message;
-          showError(msg);
+          const reason = 'getFixRateForAmount Error';
+          showError(msg, reason);
           return;
         }
         fixedRateId = data.result[0].id;
@@ -398,7 +397,8 @@ const ChangellyCheckout: React.FC = () => {
         let msg = t(
           'Changelly is not available at this moment. Please try again later.',
         );
-        showError(msg);
+        const reason = 'getFixRateForAmount Error';
+        showError(msg, reason);
       });
   };
 
@@ -487,10 +487,7 @@ const ChangellyCheckout: React.FC = () => {
   const makePayment = async () => {
     try {
       dispatch(
-        startOnGoingProcessModal(
-          // t('Sending Payment')
-          t(OnGoingProcessMessages.SENDING_PAYMENT),
-        ),
+        startOnGoingProcessModal(t(OnGoingProcessMessages.SENDING_PAYMENT)),
       );
       await sleep(400);
 
@@ -513,13 +510,9 @@ const ChangellyCheckout: React.FC = () => {
           break;
         default:
           logger.error(JSON.stringify(err));
-        // TODO: handle this case
-        // await showErrorMessage(
-        //   CustomErrorMessage({
-        //     errMsg: BWCErrorMessage(err),
-        //     title: 'Uh oh, something went wrong',
-        //   }),
-        // );
+          const msg = t('Uh oh, something went wrong. Please try again later');
+          const reason = 'publishAndSign Error';
+          showError(msg, reason);
       }
     }
   };
@@ -550,17 +543,12 @@ const ChangellyCheckout: React.FC = () => {
     logger.debug('Saved swap with: ' + JSON.stringify(newData));
 
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Successful Crypto Swap',
-        {
-          fromCoin: fromWalletSelected.currencyAbbreviation,
-          toCoin: toWalletSelected.currencyAbbreviation,
-          amountFrom: amountFrom,
-          exchange: 'changelly',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Successful Crypto Swap', {
+        fromCoin: fromWalletSelected.currencyAbbreviation,
+        toCoin: toWalletSelected.currencyAbbreviation,
+        amountFrom: amountFrom,
+        exchange: 'changelly',
+      }),
     );
   };
 
@@ -599,43 +587,36 @@ const ChangellyCheckout: React.FC = () => {
     );
   };
 
-  const showError = async (msg?: string, title?: string, actions?: any) => {
+  const showError = async (msg?: string, reason?: any) => {
     dispatch(dismissOnGoingProcessModal());
     await sleep(1000);
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Failed Swap Crypto',
-        {
-          exchange: 'changelly',
-          context: 'ChangellyCheckout',
-          message: msg || '',
-          amountFrom: amountFrom || '',
-          fromCoin: fromWalletSelected.currencyAbbreviation || '',
-          toCoin: toWalletSelected.currencyAbbreviation || '',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Failed Crypto Swap', {
+        exchange: 'changelly',
+        context: 'ChangellyCheckout',
+        reasonForFailure: reason || 'unknown',
+        amountFrom: amountFrom || '',
+        fromCoin: fromWalletSelected.currencyAbbreviation || '',
+        toCoin: toWalletSelected.currencyAbbreviation || '',
+      }),
     );
     dispatch(
       showBottomNotificationModal({
         type: 'error',
-        title: title ? title : t('Error'),
+        title: t('Error'),
         message: msg ? msg : t('Unknown Error'),
-        enableBackdropDismiss: true,
-        actions: actions
-          ? actions
-          : [
-              {
-                text: t('OK'),
-                action: async () => {
-                  dispatch(dismissBottomNotificationModal());
-                  await sleep(1000);
-                  navigation.goBack();
-                },
-                primary: true,
-              },
-            ],
+        enableBackdropDismiss: false,
+        actions: [
+          {
+            text: t('OK'),
+            action: async () => {
+              dispatch(dismissBottomNotificationModal());
+              await sleep(1000);
+              navigation.goBack();
+            },
+            primary: true,
+          },
+        ],
       }),
     );
   };

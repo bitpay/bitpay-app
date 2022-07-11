@@ -423,15 +423,10 @@ const RecoveryPhrase = () => {
         key,
       });
       dispatch(
-        logSegmentEvent(
-          'track',
-          'Import Key success',
-          {
-            context: route.params?.context || '',
-            type: 'RecoveryPhrase',
-          },
-          true,
-        ),
+        logSegmentEvent('track', 'Imported Key', {
+          context: route.params?.context || '',
+          source: 'RecoveryPhrase',
+        }),
       );
       dispatch(dismissOnGoingProcessModal());
     } catch (e: any) {

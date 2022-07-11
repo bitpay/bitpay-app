@@ -589,11 +589,7 @@ export const completeAddApplePaymentPass =
       );
 
       dispatch(
-        Analytics.track(
-          'Added card to Apple Wallet',
-          {brand: brand || ''},
-          true,
-        ),
+        Analytics.track('Added card to Apple Wallet', {brand: brand || ''}),
       );
     } catch (e) {
       console.error(e);
@@ -636,11 +632,9 @@ export const startAddToGooglePay =
         );
 
         dispatch(
-          Analytics.track(
-            'Added card to Google Pay',
-            {brand: card?.brand || ''},
-            true,
-          ),
+          Analytics.track('Added card to Google Pay', {
+            brand: card?.brand || '',
+          }),
         );
       }
     } catch (e) {

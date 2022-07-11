@@ -183,13 +183,9 @@ export const startLogin =
 
       // complete
       dispatch(
-        Analytics.track(
-          'Log In User success',
-          {
-            type: 'basicAuth',
-          },
-          true,
-        ),
+        Analytics.track('Log In User success', {
+          type: 'basicAuth',
+        }),
       );
       dispatch(BitPayIdActions.successLogin(APP.network, session));
     } catch (err) {
@@ -240,13 +236,9 @@ export const startTwoFactorAuth =
 
       // complete
       dispatch(
-        Analytics.track(
-          'Log In User success',
-          {
-            type: 'twoFactorAuth',
-          },
-          true,
-        ),
+        Analytics.track('Log In User success', {
+          type: 'twoFactorAuth',
+        }),
       );
       dispatch(
         BitPayIdActions.successSubmitTwoFactorAuth(APP.network, session),
@@ -341,13 +333,9 @@ export const startEmailPairing =
       await dispatch(startPairAndLoadUser(APP.network, secret));
 
       dispatch(
-        Analytics.track(
-          'Log In User success',
-          {
-            type: 'emailAuth',
-          },
-          true,
-        ),
+        Analytics.track('Log In User success', {
+          type: 'emailAuth',
+        }),
       );
       dispatch(BitPayIdActions.successEmailPairing());
     } catch (err) {
@@ -465,7 +453,7 @@ export const startDisconnectBitPayId =
         await AuthApi.logout(APP.network, csrfToken);
       }
 
-      dispatch(Analytics.track('Log Out User success', {}, true));
+      dispatch(Analytics.track('Log Out User success', {}));
       dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
     } catch (err) {
       // log but swallow this error

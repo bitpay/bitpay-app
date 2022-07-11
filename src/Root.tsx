@@ -380,6 +380,10 @@ export default () => {
                   name = `${tabName} Tab`;
                 }
 
+                if (name === 'Shop Tab') {
+                  dispatch(Analytics.track('Clicked Shop tab', {}));
+                }
+
                 dispatch(
                   Analytics.screen(name, {screen: params?.screen || ''}),
                 );

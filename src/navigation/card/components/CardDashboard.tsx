@@ -118,7 +118,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   );
 
   const goToCardSettings = () => {
-    dispatch(Analytics.track('Clicked Card Settings', {}, true));
+    dispatch(Analytics.track('Clicked Card Settings', {}));
 
     navigation.navigate('Settings', {
       id: activeCard.id,
@@ -128,7 +128,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   goToCardSettingsRef.current = goToCardSettings;
 
   const goToReferAndEarn = () => {
-    dispatch(Analytics.track('Clicked Refer and Earn', {}, true));
+    dispatch(Analytics.track('Clicked Refer and Earn', {}));
 
     navigation.navigate('Referral', {card: activeCard});
   };
@@ -146,9 +146,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   };
 
   const goToAmountScreen = () => {
-    dispatch(
-      Analytics.track('Clicked Add Funds', {context: 'CardDashboard'}, true),
-    );
+    dispatch(Analytics.track('Clicked Add Funds', {context: 'CardDashboard'}));
     if (hasWalletsWithBalance) {
       navigator.navigate('Wallet', {
         screen: WalletScreens.AMOUNT,
@@ -171,13 +169,9 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
               text: t('Add funds'),
               action: () => {
                 dispatch(
-                  Analytics.track(
-                    'Clicked Buy Crypto',
-                    {
-                      context: 'CardDashboard - No funds availiable',
-                    },
-                    true,
-                  ),
+                  Analytics.track('Clicked Buy Crypto', {
+                    context: 'CardDashboard - No funds availiable',
+                  }),
                 );
                 navigator.navigate('Wallet', {
                   screen: WalletScreens.AMOUNT,
