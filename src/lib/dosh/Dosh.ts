@@ -1,3 +1,4 @@
+import {DOSH_APP_ID} from '@env';
 import ReactNative, {Platform} from 'react-native';
 import DoshUiOptions from './DoshUiOptions';
 
@@ -10,7 +11,7 @@ interface DoshModule {
    * TODO: pass in applicationId from JS?
    * @param uiOptions Options to customize the SDK's header title and brand page UI.
    */
-  initializeDosh: (uiOptions: DoshUiOptions) => Promise<boolean>;
+  initializeDosh: (id: string, uiOptions: DoshUiOptions) => Promise<boolean>;
 
   /**
    * User authorization between the app and Dosh is coordinated by providing the SDK with an authorization token.
@@ -36,9 +37,13 @@ interface DoshModule {
 }
 
 /**
- * React JS wrapper for calling the Dosh SDK to handle differences in the iOS/Android call signatures/implementations.
+ * React JS wrapper for calling the Dosh SDK.
  */
-interface Dosh extends DoshModule {}
+interface Dosh extends Omit<DoshModule, 'initializeDosh'> {
+  initializeDosh: (
+    uiOptions?: DoshUiOptions,
+  ) => ReturnType<DoshModule['initializeDosh']>;
+}
 
 const DoshModule = ReactNative.NativeModules.Dosh as DoshModule;
 
@@ -52,7 +57,7 @@ const Dosh: Dosh = {
       ...(uiOptions || {}),
     };
 
-    return DoshModule.initializeDosh(_uiOptions);
+    return DoshModule.initializeDosh(DOSH_APP_ID, _uiOptions);
   },
 
   setDoshToken(token: string) {

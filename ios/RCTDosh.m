@@ -13,9 +13,9 @@
 
 RCT_EXPORT_MODULE();
 
-RCT_EXPORT_METHOD(initializeDosh:(NSDictionary *)uiOptions:(RCTPromiseResolveBlock)resolve:(RCTPromiseRejectBlock)reject)
+RCT_EXPORT_METHOD(initializeDosh:(NSString *) id:(NSDictionary *)uiOptions:(RCTPromiseResolveBlock)resolve:(RCTPromiseRejectBlock)reject)
 {
-  [DoshAdapter initDoshWithUiOptions:uiOptions];
+  [DoshAdapter initDoshWithApplicationId:id uiOptions:uiOptions];
   RCTLogInfo(@"Initialized Dosh");
   resolve([NSNumber numberWithBool:true]);
 }
