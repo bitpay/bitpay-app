@@ -436,6 +436,9 @@ export default () => {
             <Root.Screen
               name={RootStacks.GIFT_CARD}
               component={GiftCardStack}
+              options={{
+                gestureEnabled: false,
+              }}
             />
             <Root.Screen
               name={RootStacks.GIFT_CARD_DEEPLINK}

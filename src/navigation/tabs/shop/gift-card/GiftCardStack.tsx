@@ -93,9 +93,6 @@ const GiftCardStack = () => {
       <GiftCards.Screen
         name={GiftCardScreens.GIFT_CARD_AMOUNT}
         component={Amount}
-        options={{
-          gestureEnabled: false,
-        }}
       />
       <GiftCards.Screen
         name={GiftCardScreens.GIFT_CARD_CONFIRM}
