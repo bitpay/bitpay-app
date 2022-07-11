@@ -96,15 +96,14 @@ const About = () => {
             <Setting
               activeOpacity={ActiveOpacity}
               onPress={() => {
+                const segmentEvent =
+                  key === 'HelpAndSupport'
+                    ? 'Clicked Support'
+                    : 'Clicked About BitPay Link';
                 dispatch(
-                  logSegmentEvent(
-                    'track',
-                    'Clicked About BitPay Link',
-                    {
-                      key,
-                    },
-                    true,
-                  ),
+                  logSegmentEvent('track', segmentEvent, {
+                    key,
+                  }),
                 );
                 dispatch(openUrlWithInAppBrowser(link));
               }}>

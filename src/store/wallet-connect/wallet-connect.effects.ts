@@ -200,6 +200,7 @@ export const walletConnectSubscribeToEvents =
         updatedRequests.push({
           peerId,
           payload: payload,
+          createdOn: Date.now(),
         });
 
         dispatch(WalletConnectActions.callRequest(updatedRequests));

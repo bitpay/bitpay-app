@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert } from 'react-native';
+import {Alert} from 'react-native';
 import Mailer from 'react-native-mail';
 import {StackScreenProps} from '@react-navigation/stack';
 import {useAppSelector} from '../utils/hooks';
@@ -54,7 +54,7 @@ const DebugScreen: React.FC<StackScreenProps<RootStackParamList, 'Debug'>> = ({
   const {name} = route.params || {};
 
   let logStr: string =
-      'Session Logs.\nBe careful, this could contain sensitive private data\n\n';
+    'Session Logs.\nBe careful, this could contain sensitive private data\n\n';
   logStr += '\n\n';
 
   const filteredLogs = logs
@@ -67,35 +67,41 @@ const DebugScreen: React.FC<StackScreenProps<RootStackParamList, 'Debug'>> = ({
       return output;
     });
 
-    const handleEmail = (data: string) => {
-      Mailer.mail({
+  const handleEmail = (data: string) => {
+    Mailer.mail(
+      {
         subject: 'BitPay Log',
         body: data,
         isHTML: false,
-      }, (error, event) => {
+      },
+      (error, event) => {
         Alert.alert(
           error,
           event,
           [
-            {text: 'Ok', onPress: () => console.log('OK: Email Error Response')},
-            {text: 'Cancel', onPress: () => console.log('CANCEL: Email Error Response')}
+            {
+              text: 'Ok',
+              onPress: () => console.log('OK: Email Error Response'),
+            },
+            {
+              text: 'Cancel',
+              onPress: () => console.log('CANCEL: Email Error Response'),
+            },
           ],
-          { cancelable: true }
-        )
-      });
-    };
+          {cancelable: true},
+        );
+      },
+    );
+  };
 
-    const showDisclaimer = (data: string) => {
-      Alert.alert(
-        'Warning',
-        'Be careful, this could contain sensitive private data.',
-        [
-          {text: 'Continue', onPress: () => handleEmail(data)},
-          {text: 'Cancel'}
-        ],
-        { cancelable: true }
-      )
-    };
+  const showDisclaimer = (data: string) => {
+    Alert.alert(
+      'Warning',
+      'Be careful, this could contain sensitive private data.',
+      [{text: 'Continue', onPress: () => handleEmail(data)}, {text: 'Cancel'}],
+      {cancelable: true},
+    );
+  };
 
   return (
     <DebugContainer>
@@ -105,7 +111,9 @@ const DebugScreen: React.FC<StackScreenProps<RootStackParamList, 'Debug'>> = ({
         <LogError>{filteredLogs}</LogError>
       </ScrollView>
       <ButtonContainer>
-        <Button onPress={() => showDisclaimer(logStr)}>Send Logs By Email</Button>
+        <Button onPress={() => showDisclaimer(logStr)}>
+          Send Logs By Email
+        </Button>
       </ButtonContainer>
     </DebugContainer>
   );

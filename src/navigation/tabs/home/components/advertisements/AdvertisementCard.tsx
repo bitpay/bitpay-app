@@ -120,14 +120,9 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
     }
 
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Clicked Advertisement',
-        {
-          id: contentCard.id || '',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Clicked Advertisement', {
+        id: contentCard.id || '',
+      }),
     );
 
     if (url.startsWith(APP_DEEPLINK_PREFIX)) {

@@ -133,14 +133,9 @@ const JoinMultisig = () => {
         )) as Wallet;
 
         dispatch(
-          logSegmentEvent(
-            'track',
-            'Join Multisig Wallet success',
-            {
-              addedToExistingKey: true,
-            },
-            true,
-          ),
+          logSegmentEvent('track', 'Join Multisig Wallet success', {
+            addedToExistingKey: true,
+          }),
         );
 
         wallet.getStatus(
@@ -227,14 +222,9 @@ const JoinMultisig = () => {
         )) as Key;
 
         dispatch(
-          logSegmentEvent(
-            'track',
-            'Join Multisig Wallet success',
-            {
-              addedToExistingKey: false,
-            },
-            true,
-          ),
+          logSegmentEvent('track', 'Join Multisig Wallet success', {
+            addedToExistingKey: false,
+          }),
         );
 
         dispatch(setHomeCarouselConfig({id: multisigKey.id, show: true}));

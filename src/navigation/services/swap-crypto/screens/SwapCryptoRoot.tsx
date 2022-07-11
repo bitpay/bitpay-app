@@ -593,17 +593,12 @@ const SwapCryptoRoot: React.FC = () => {
 
   const continueToCheckout = () => {
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Requested Swap Crypto',
-        {
-          fromCoin: fromWalletSelected!.currencyAbbreviation,
-          toCoin: toWalletSelected!.currencyAbbreviation,
-          amountFrom: amountFrom,
-          exchange: 'changelly',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Requested Swap Crypto', {
+        fromCoin: fromWalletSelected!.currencyAbbreviation,
+        toCoin: toWalletSelected!.currencyAbbreviation,
+        amountFrom: amountFrom,
+        exchange: 'changelly',
+      }),
     );
     navigation.navigate('SwapCrypto', {
       screen: 'ChangellyCheckout',
