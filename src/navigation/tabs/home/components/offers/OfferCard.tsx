@@ -62,23 +62,12 @@ const OfferCard: React.FC<OfferCardProps> = props => {
       const pathInfo = shopDeepLinkHandler(url);
       if (pathInfo) {
         dispatch(
-          logSegmentEvent(
-            'track',
-            'Clicked Shop with Crypto',
-            {
-              context: 'OfferCard',
-              merchantName: pathInfo.merchantName,
-            },
-            true,
-          ),
+          logSegmentEvent('track', 'Clicked Shop with Crypto', {
+            context: 'OfferCard',
+            merchantName: pathInfo.merchantName,
+          }),
         );
       }
-      dispatch(
-        logSegmentEvent('track', 'Clicked Shop with Crypto', {
-          context: 'OfferCard',
-          merchantName: merchantName || '',
-        }),
-      );
       return;
     } catch (err) {
       dispatch(
