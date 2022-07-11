@@ -79,6 +79,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     if (!appFirstOpenData?.firstOpenDate) {
       dispatch(setAppFirstOpenEventDate());
+      dispatch(LogActions.info('success [setAppFirstOpenEventDate]'));
     }
 
     // init analytics -> post onboarding or migration
@@ -89,6 +90,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     if (!migrationComplete) {
       await dispatch(startMigration());
       dispatch(setMigrationComplete());
+      dispatch(LogActions.info('success [setMigrationComplete]'));
     }
 
     const {BITPAY_ID} = getState();
@@ -381,9 +383,15 @@ export const openUrlWithInAppBrowser =
 export const askForTrackingPermissionAndEnableSdks =
   (appInit: boolean = false): Effect<Promise<void>> =>
   async (dispatch, getState) => {
+    dispatch(
+      LogActions.info('starting [askForTrackingPermissionAndEnableSdks]'),
+    );
     const trackingStatus = await requestTrackingPermission();
 
     if (['authorized', 'unavailable'].includes(trackingStatus) && !__DEV__) {
+      dispatch(
+        LogActions.info('[askForTrackingPermissionAndEnableSdks] - setup init'),
+      );
       try {
         await new Promise<void>((resolve, reject) => {
           AppsFlyer.initSdk(
@@ -428,16 +436,12 @@ export const askForTrackingPermissionAndEnableSdks =
           ) {
             dispatch(setAppFirstOpenEventComplete());
             dispatch(
-              Analytics.track(
-                'First Opened App',
-                {
-                  date: appFirstOpenData?.firstOpenDate || '',
-                },
-                true,
-              ),
+              Analytics.track('First Opened App', {
+                date: appFirstOpenData?.firstOpenDate || '',
+              }),
             );
           } else {
-            dispatch(Analytics.track('Last Opened App', {}, true));
+            dispatch(Analytics.track('Last Opened App', {}));
           }
         }
       } catch (err) {
@@ -445,6 +449,9 @@ export const askForTrackingPermissionAndEnableSdks =
         dispatch(LogActions.error(JSON.stringify(err)));
       }
     }
+    dispatch(
+      LogActions.info('success [askForTrackingPermissionAndEnableSdks]'),
+    );
   };
 
 export const logSegmentEvent =
@@ -452,17 +459,13 @@ export const logSegmentEvent =
     _eventType: 'track',
     eventName: string,
     eventProperties: JsonMap = {},
-    includeAppUser: boolean = false,
   ): Effect<Promise<void>> =>
   (_dispatch, getState) => {
     if (APP_ANALYTICS_ENABLED) {
-      // TODO: always include userId if available?
-      if (includeAppUser) {
+      if (!eventProperties?.userId) {
         const {BITPAY_ID, APP} = getState();
         const user = BITPAY_ID.user[APP.network];
         eventProperties.userId = user?.eid || '';
-      } else {
-        eventProperties.userId = eventProperties.userId || '';
       }
 
       const eventOptions: Options = {
@@ -543,14 +546,9 @@ export const Analytics = {
    * The SDK recommend using human-readable names like `Played a Song` or `Updated Status`.
    * @param properties A dictionary of properties for the event.
    * If the event was 'Added to Shopping Cart', it might have properties like price, productType, etc.
-   * @param includeAppUser Whether or not the userId should also be submitted. TODO: always include userId if availiable?
    */
-  track: (
-    event: string,
-    properties: JsonMap = {},
-    includeAppUser: boolean = false,
-  ) => {
-    return logSegmentEvent('track', event, properties, includeAppUser);
+  track: (event: string, properties: JsonMap = {}) => {
+    return logSegmentEvent('track', event, properties);
   },
 };
 

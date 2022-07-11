@@ -7,10 +7,12 @@ import {
   successGetTokenOptions,
 } from '../../wallet.actions';
 import {Currencies, CurrencyOpts} from '../../../../constants/currencies';
+import {LogActions} from '../../../log';
 
 export const startGetTokenOptions =
   (): Effect<Promise<void>> => async dispatch => {
     try {
+      dispatch(LogActions.info('starting [startGetTokenOptions]'));
       const {
         data: {tokens},
       } = await axios.get<{
@@ -39,9 +41,16 @@ export const startGetTokenOptions =
           tokenOptionsByAddress,
         }),
       );
+      dispatch(LogActions.info('successful [startGetTokenOptions]'));
     } catch (e) {
-      console.error(e);
+      let errorStr;
+      if (e instanceof Error) {
+        errorStr = e.message;
+      } else {
+        errorStr = JSON.stringify(e);
+      }
       dispatch(failedGetTokenOptions());
+      dispatch(LogActions.error(`failed [startGetTokenOptions]: ${errorStr}`));
     }
   };
 
@@ -69,7 +78,8 @@ export const addCustomTokenOption =
         }),
       );
     } catch (e) {
-      console.error(e);
+      const errString = e instanceof Error ? e.message : JSON.stringify(e);
+      dispatch(LogActions.error(`Add custom options: ${errString}`));
       dispatch(failedGetTokenOptions());
     }
   };

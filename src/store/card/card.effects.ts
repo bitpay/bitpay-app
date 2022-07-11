@@ -79,24 +79,22 @@ export const startCardStoreInit =
       const options = new DoshUiOptions('Card Offers', 'CIRCLE', 'DIAGONAL');
 
       try {
-        Dosh.initializeDosh(options);
+        Dosh.initializeDosh(options).then(() => {
+          dispatch(LogActions.info('Successfully initialized Dosh.'));
 
-        dispatch(LogActions.info('Successfully initialized Dosh.'));
+          const {doshToken} = initialData;
+          if (!doshToken) {
+            dispatch(LogActions.debug('No doshToken provided.'));
+            return;
+          }
 
-        const {doshToken} = initialData;
-        if (!doshToken) {
-          dispatch(LogActions.debug('No doshToken provided.'));
-          return;
-        }
-
-        Dosh.setDoshToken(doshToken);
+          return Dosh.setDoshToken(doshToken);
+        });
       } catch (err: any) {
         dispatch(
           LogActions.error('An error occurred while initializing Dosh.'),
         );
 
-        // check for Android exception (see: DoshModule.java)
-        // TODO: iOS exceptions
         if ((err as any).message) {
           dispatch(LogActions.error((err as any).message));
         } else {
@@ -589,11 +587,7 @@ export const completeAddApplePaymentPass =
       );
 
       dispatch(
-        Analytics.track(
-          'Added card to Apple Wallet',
-          {brand: brand || ''},
-          true,
-        ),
+        Analytics.track('Added card to Apple Wallet', {brand: brand || ''}),
       );
     } catch (e) {
       console.error(e);
@@ -636,11 +630,9 @@ export const startAddToGooglePay =
         );
 
         dispatch(
-          Analytics.track(
-            'Added card to Google Pay',
-            {brand: card?.brand || ''},
-            true,
-          ),
+          Analytics.track('Added card to Google Pay', {
+            brand: card?.brand || '',
+          }),
         );
       }
     } catch (e) {

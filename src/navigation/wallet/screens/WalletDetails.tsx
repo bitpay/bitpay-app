@@ -9,7 +9,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import analytics from '@segment/analytics-react-native';
 import {useTranslation} from 'react-i18next';
 import {
   Linking,
@@ -276,9 +275,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
-  );
   const fullWalletObj = findWalletById(wallets, walletId) as Wallet;
   const key = keys[fullWalletObj.keyId];
   const uiFormattedWallet = buildUIFormattedWallet(
@@ -913,15 +909,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       ),
                       cta: () => {
                         dispatch(
-                          logSegmentEvent(
-                            'track',
-                            'Clicked Buy Crypto',
-                            {
-                              context: 'WalletDetails',
-                              coin: fullWalletObj.currencyAbbreviation,
-                            },
-                            true,
-                          ),
+                          logSegmentEvent('track', 'Clicked Buy Crypto', {
+                            context: 'WalletDetails',
+                            coin: fullWalletObj.currencyAbbreviation,
+                          }),
                         );
                         navigation.navigate('Wallet', {
                           screen: 'Amount',
@@ -951,15 +942,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         ),
                       cta: () => {
                         dispatch(
-                          logSegmentEvent(
-                            'track',
-                            'Clicked Swap Crypto',
-                            {
-                              context: 'WalletDetails',
-                              coin: fullWalletObj.currencyAbbreviation,
-                            },
-                            true,
-                          ),
+                          logSegmentEvent('track', 'Clicked Swap Crypto', {
+                            context: 'WalletDetails',
+                            coin: fullWalletObj.currencyAbbreviation,
+                          }),
                         );
                         navigation.navigate('SwapCrypto', {
                           screen: 'Root',
@@ -972,15 +958,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     receive={{
                       cta: () => {
                         dispatch(
-                          logSegmentEvent(
-                            'track',
-                            'Clicked Receive',
-                            {
-                              context: 'WalletDetails',
-                              coin: fullWalletObj.currencyAbbreviation,
-                            },
-                            true,
-                          ),
+                          logSegmentEvent('track', 'Clicked Receive', {
+                            context: 'WalletDetails',
+                            coin: fullWalletObj.currencyAbbreviation,
+                          }),
                         );
                         setShowReceiveAddressBottomModal(true);
                       },
@@ -989,15 +970,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       hide: !fullWalletObj.balance.sat,
                       cta: () => {
                         dispatch(
-                          logSegmentEvent(
-                            'track',
-                            'Clicked Send',
-                            {
-                              context: 'WalletDetails',
-                              coin: fullWalletObj.currencyAbbreviation,
-                            },
-                            true,
-                          ),
+                          logSegmentEvent('track', 'Clicked Send', {
+                            context: 'WalletDetails',
+                            coin: fullWalletObj.currencyAbbreviation,
+                          }),
                         );
                         navigation.navigate('Wallet', {
                           screen: 'SendTo',

@@ -51,9 +51,6 @@ import KeyGlobalSelect, {
 import DebitCardConfirm, {
   DebitCardConfirmParamList,
 } from './screens/send/confirm/DebitCardConfirm';
-import GiftCardConfirm, {
-  GiftCardConfirmParamList,
-} from './screens/send/confirm/GiftCardConfirm';
 import WalletInformation from './screens/wallet-settings/WalletInformation';
 import ExportWallet from './screens/wallet-settings/ExportWallet';
 import Addresses from './screens/wallet-settings/Addresses';
@@ -103,7 +100,6 @@ export type WalletStackParamList = {
   };
   Confirm: ConfirmParamList;
   DebitCardConfirm: DebitCardConfirmParamList;
-  GiftCardConfirm: GiftCardConfirmParamList;
   PayProConfirm: PayProConfirmParamList;
   PayProConfirmTwoFactor: {onSubmit: (code: string) => Promise<void>};
   CreateMultisig: CreateMultisigProps;
@@ -277,16 +273,6 @@ const WalletStack = () => {
           }}
           name={WalletScreens.DEBIT_CARD_CONFIRM}
           component={DebitCardConfirm}
-        />
-        <Wallet.Screen
-          options={{
-            headerTitle: () => (
-              <HeaderTitle>{t('Confirm Payment')}</HeaderTitle>
-            ),
-            ...TransitionPresets.ModalPresentationIOS,
-          }}
-          name={WalletScreens.GIFT_CARD_CONFIRM}
-          component={GiftCardConfirm}
         />
         <Wallet.Screen
           options={{

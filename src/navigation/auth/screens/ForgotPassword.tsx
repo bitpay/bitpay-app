@@ -23,7 +23,7 @@ import RecaptchaModal from '../components/RecaptchaModal';
 export type ForgotPasswordParamList = {} | undefined;
 
 const schema = yup.object().shape({
-  email: yup.string().email().required(),
+  email: yup.string().email().required().trim(),
 });
 
 interface ResetPasswordFormFieldValues {

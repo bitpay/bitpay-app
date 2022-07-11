@@ -506,26 +506,22 @@ const TransactionProposalDetails = () => {
               await dispatch(publishAndSign({txp: txs, key, wallet}));
               dispatch(dismissOnGoingProcessModal());
               dispatch(
-                logSegmentEvent(
-                  'track',
-                  'Sent Crypto',
-                  {
-                    context: 'Transaction Proposal Details',
-                    coin: currencyAbbreviation || '',
-                  },
-                  true,
-                ),
+                logSegmentEvent('track', 'Sent Crypto', {
+                  context: 'Transaction Proposal Details',
+                  coin: currencyAbbreviation || '',
+                }),
               );
               await sleep(400);
               setShowPaymentSentModal(true);
             } catch (err) {
               dispatch(dismissOnGoingProcessModal());
               await sleep(500);
+              setResetSwipeButton(true);
               switch (err) {
                 case 'invalid password':
                   dispatch(showBottomNotificationModal(WrongPasswordError()));
+                  break;
                 case 'password canceled':
-                  setResetSwipeButton(true);
                   break;
                 default:
                   await showErrorMessage(
