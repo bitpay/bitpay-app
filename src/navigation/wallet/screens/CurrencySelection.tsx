@@ -325,7 +325,6 @@ const CurrencySelection: React.FC<CurrencySelectionScreenProps> = ({route}) => {
   // Configuring Header
   useLayoutEffect(() => {
     navigation.setOptions({
-      gestureEnabled: false,
       headerTitle: () => (
         <HeaderTitle>{headerTitle || t('Select Currencies')}</HeaderTitle>
       ),

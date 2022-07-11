@@ -81,6 +81,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     if (!appFirstOpenData?.firstOpenDate) {
       dispatch(setAppFirstOpenEventDate());
+      dispatch(LogActions.info('success [setAppFirstOpenEventDate]'));
     }
 
     // init analytics -> post onboarding or migration
@@ -91,6 +92,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     if (!migrationComplete) {
       await dispatch(startMigration());
       dispatch(setMigrationComplete());
+      dispatch(LogActions.info('success [setMigrationComplete]'));
     }
 
     const {BITPAY_ID} = getState();
@@ -174,11 +176,21 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
         dispatch(AppActions.showBiometricModal());
       }
     });
-  } catch (err) {
-    console.error(err);
+  } catch (err: unknown) {
+    let errorStr;
+    if (err instanceof Error) {
+      errorStr = err.message;
+    } else {
+      errorStr = JSON.stringify(err);
+    }
+    // wait for navigationRef
+    await sleep(2000);
     dispatch(AppActions.failedAppInit());
     dispatch(LogActions.error('Failed to initialize app.'));
-    dispatch(LogActions.error(JSON.stringify(err)));
+    dispatch(LogActions.error(errorStr));
+    await sleep(500);
+    dispatch(showBlur(false));
+    RNBootSplash.hide();
   }
 };
 
@@ -373,9 +385,15 @@ export const openUrlWithInAppBrowser =
 export const askForTrackingPermissionAndEnableSdks =
   (appInit: boolean = false): Effect<Promise<void>> =>
   async (dispatch, getState) => {
+    dispatch(
+      LogActions.info('starting [askForTrackingPermissionAndEnableSdks]'),
+    );
     const trackingStatus = await requestTrackingPermission();
 
     if (['authorized', 'unavailable'].includes(trackingStatus) && !__DEV__) {
+      dispatch(
+        LogActions.info('[askForTrackingPermissionAndEnableSdks] - setup init'),
+      );
       try {
         await new Promise<void>((resolve, reject) => {
           AppsFlyer.initSdk(
@@ -437,6 +455,9 @@ export const askForTrackingPermissionAndEnableSdks =
         dispatch(LogActions.error(JSON.stringify(err)));
       }
     }
+    dispatch(
+      LogActions.info('success [askForTrackingPermissionAndEnableSdks]'),
+    );
   };
 
 export const logSegmentEvent =

@@ -316,6 +316,8 @@ const PayProConfirm = () => {
       defaultErrorMessage: t('Could not send transaction'),
       onDismiss: () => reshowWalletSelector(),
     });
+    await sleep(400);
+    setResetSwipeButton(true);
   };
 
   return (

@@ -221,6 +221,7 @@ export default () => {
   const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
   const pinLockActive = useAppSelector(({APP}) => APP.pinLockActive);
   const showBlur = useAppSelector(({APP}) => APP.showBlur);
+  const failedAppInit = useAppSelector(({APP}) => APP.failedAppInit);
   const biometricLockActive = useAppSelector(
     ({APP}) => APP.biometricLockActive,
   );
@@ -230,8 +231,12 @@ export default () => {
 
   // MAIN APP INIT
   useEffect(() => {
-    dispatch(AppEffects.startAppInit());
-  }, [dispatch]);
+    if (!failedAppInit) {
+      dispatch(AppEffects.startAppInit());
+    } else {
+      navigationRef.navigate(RootStacks.DEBUG, {name: 'Failed app init'});
+    }
+  }, [dispatch, failedAppInit]);
 
   // LANGUAGE
   useEffect(() => {
@@ -272,6 +277,8 @@ export default () => {
           } else {
             showLockOption();
           }
+        } else if (failedAppInit) {
+          dispatch(AppActions.showBlur(false));
         } else {
           dispatch(AppActions.showBlur(true));
         }
@@ -286,6 +293,7 @@ export default () => {
     lockAuthorizedUntil,
     biometricLockActive,
     appIsLoading,
+    failedAppInit,
   ]);
 
   // Silent Push Notifications
@@ -395,8 +403,8 @@ export default () => {
               component={DebugScreen}
               options={{
                 ...baseNavigatorOptions,
-                headerShown: true,
-                headerTitle: 'Debug',
+                gestureEnabled: false,
+                animationEnabled: false,
               }}
             />
             <Root.Screen name={RootStacks.AUTH} component={AuthStack} />
@@ -434,6 +442,9 @@ export default () => {
             <Root.Screen
               name={RootStacks.GIFT_CARD}
               component={GiftCardStack}
+              options={{
+                gestureEnabled: false,
+              }}
             />
             <Root.Screen
               name={RootStacks.GIFT_CARD_DEEPLINK}

@@ -807,14 +807,13 @@ export const signTx = (
         signatures,
         (err: Error, signedTxp: any) => {
           if (err) {
-            throw err;
+            reject(err);
           }
           resolve(signedTxp);
         },
         null,
       );
     } catch (err) {
-      console.error(err);
       reject(err);
     }
   });
