@@ -13,6 +13,7 @@ import {ActiveOpacity} from '../../../../components/styled/Containers';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import Percentage from '../../../../components/percentage/Percentage';
+import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
 
 const PortfolioContainer = styled.View`
@@ -49,10 +50,25 @@ const PercentageContainer = styled.View`
 
 const PortfolioBalance = () => {
   const {t} = useTranslation();
+  const coinbaseUser = useAppSelector(
+    ({COINBASE}) => COINBASE.user[COINBASE_ENV],
+  );
+  const coinbaseBalance =
+    useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
   const portfolioBalance = useSelector(
     ({WALLET}: RootState) => WALLET.portfolioBalance,
   );
+
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+
+  // Sum only if same currency
+  var totalBalance: number = portfolioBalance.current;
+  if (
+    coinbaseUser &&
+    coinbaseUser.data.native_currency === defaultAltCurrency.isoCode
+  ) {
+    totalBalance += coinbaseBalance;
+  }
 
   const dispatch = useAppDispatch();
   const percentageDifference = calculatePercentageDifference(
@@ -89,11 +105,9 @@ const PortfolioBalance = () => {
         <InfoSvg width={12} height={12} />
       </PortfolioBalanceHeader>
       <PortfolioBalanceText>
-        {formatFiatAmount(
-          portfolioBalance.current,
-          defaultAltCurrency.isoCode,
-          {currencyDisplay: 'symbol'},
-        )}
+        {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
+          currencyDisplay: 'symbol',
+        })}
       </PortfolioBalanceText>
       {percentageDifference ? (
         <PercentageContainer>
