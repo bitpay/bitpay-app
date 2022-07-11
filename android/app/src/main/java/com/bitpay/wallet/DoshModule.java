@@ -65,7 +65,7 @@ public class DoshModule extends ReactContextBaseJavaModule {
       public void run() {
         try {
           PoweredByDosh.Companion.getInstance().presentIntegrationChecklist(context);
-          promise.resolve("true");
+          promise.resolve(true);
         } catch (Exception ex) {
           promise.reject(BpErrorCodes.UNEXPECTED_ERROR, ex.getMessage());
         }
