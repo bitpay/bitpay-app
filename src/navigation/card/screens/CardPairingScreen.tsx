@@ -26,6 +26,19 @@ const CardPairingScreen: React.FC<
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
 
+  const goToHomeTab = () => {
+    const navState = navigation.getState();
+
+    // @ts-ignore
+    if (navState.routeNames.some(name => name === 'Home')) {
+      navigation.navigate('Tabs', {
+        screen: 'Home',
+      });
+    } else {
+      navigation.dispatch(StackActions.replace('Tabs', {screen: 'Home'}));
+    }
+  };
+
   const onSuccess = useCallback(() => {
     if (dashboardRedirect) {
       const virtualDesignCurrency = route.params?.vcd as
@@ -40,24 +53,22 @@ const CardPairingScreen: React.FC<
       return;
     }
 
+    goToHomeTab();
+
     if (paymentUrl) {
       navigation.dispatch(StackActions.replace('Tabs', {screen: 'Home'}));
       //  Reconstructing the url since paymentUrl from deeplink is not in the right format
-      let url = 'https://';
       if (paymentUrl.includes('bitpay.com')) {
+        let url = 'https://';
         url = paymentUrl.includes('test')
           ? `${url}test.bitpay.com`
           : `${url}bitpay.com`;
+
+        const invoiceId = paymentUrl.split('/i/')[1].split('?')[0];
+        url = `${url}/i/${invoiceId}`;
+        dispatch(incomingData(url));
       }
-
-      const invoiceId = paymentUrl.split('/i/')[1].split('?')[0];
-      url = `${url}/i/${invoiceId}`;
-      dispatch(incomingData(url));
-      return;
     }
-
-    navigation.dispatch(StackActions.replace('Tabs', {screen: 'Home'}));
-    return;
   }, []);
 
   const onComplete = useCallback(() => {
@@ -77,7 +88,7 @@ const CardPairingScreen: React.FC<
 
   const onFailure = useCallback(() => {
     if (paymentUrl) {
-      navigation.dispatch(StackActions.replace('Tabs', {screen: 'Home'}));
+      goToHomeTab();
     }
   }, []);
 
