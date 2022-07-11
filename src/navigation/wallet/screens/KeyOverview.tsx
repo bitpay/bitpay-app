@@ -37,7 +37,6 @@ import {
   shouldScale,
   sleep,
 } from '../../../utils/helper-methods';
-import {Dispatch} from 'redux';
 import {BalanceUpdateError} from '../components/ErrorMessages';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Icons from '../components/WalletIcons';
@@ -399,7 +398,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
         },
       );
     }
-  }, []);
+  }, [navigation, key.wallets, context]);
 
   const {wallets = [], totalBalance} =
     useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
@@ -419,7 +418,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
       rates,
       dispatch,
     );
-  }, [keys, wallets, defaultAltCurrency.isoCode]);
+  }, [dispatch, wallets, defaultAltCurrency.isoCode, rates]);
 
   const keyOptions: Array<Option> = [];
 
@@ -476,7 +475,7 @@ const KeyOverview: React.FC<KeyOverviewScreenProps> = ({navigation, route}) => {
           wallet={item}
           onPress={() => {
             haptic('impactLight');
-            const fullWalletObj = key.wallets.find(({id}) => id === item.id)!;
+            const fullWalletObj = key.wallets.find(k => k.id === item.id)!;
             if (!fullWalletObj.isComplete()) {
               fullWalletObj.getStatus(
                 {network: 'livenet'},

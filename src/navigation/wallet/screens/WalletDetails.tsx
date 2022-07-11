@@ -9,7 +9,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import analytics from '@segment/analytics-react-native';
 import {useTranslation} from 'react-i18next';
 import {
   Linking,
@@ -276,9 +275,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const user = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
-  );
   const fullWalletObj = findWalletById(wallets, walletId) as Wallet;
   const key = keys[fullWalletObj.keyId];
   const uiFormattedWallet = buildUIFormattedWallet(
