@@ -4,6 +4,7 @@ import {BwcProvider} from '../../../../lib/bwc';
 import {ExtractCoinNetworkAddress} from '../../utils/decode-uri';
 import {Effect} from '../../../index';
 import {successGetReceiveAddress} from '../../wallet.actions';
+import {LogActions} from '../../../log';
 
 const BWC = BwcProvider.getInstance();
 
@@ -47,7 +48,7 @@ export const createWalletAddress =
       }
 
       if (!newAddress && wallet.receiveAddress) {
-        console.log('returned cached address');
+        dispatch(LogActions.info('returned cached wallet address'));
         return resolve(wallet.receiveAddress);
       }
 

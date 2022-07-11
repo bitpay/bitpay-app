@@ -78,7 +78,8 @@ export const addCustomTokenOption =
         }),
       );
     } catch (e) {
-      console.error(e);
+      const errString = e instanceof Error ? e.message : JSON.stringify(e);
+      dispatch(LogActions.error(`Add custom options: ${errString}`));
       dispatch(failedGetTokenOptions());
     }
   };

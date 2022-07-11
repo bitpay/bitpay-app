@@ -31,6 +31,7 @@ import {
 } from '../../../app/app.actions';
 import {sleep} from '../../../../utils/helper-methods';
 import {t} from 'i18next';
+import {LogActions} from '../../../log';
 
 export interface CreateOptions {
   network?: Network;
@@ -129,10 +130,8 @@ export const addWallet =
             );
           }
 
-          newWallet = (await createTokenWallet(
-            associatedWallet,
-            currency,
-            tokenOpts,
+          newWallet = (await dispatch(
+            createTokenWallet(associatedWallet, currency, tokenOpts),
           )) as Wallet;
         } else {
           newWallet = (await createWallet({
@@ -163,11 +162,13 @@ export const addWallet =
         );
 
         dispatch(successAddWallet({key}));
-        console.log('Added Wallet', currency);
+        dispatch(LogActions.info(`Added Wallet ${currency}`));
         resolve(newWallet);
       } catch (err) {
+        const errstring =
+          err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(failedAddWallet());
-        console.error(err);
+        dispatch(LogActions.error(`Error adding wallet: ${errstring}`));
         reject();
       }
     });
@@ -222,7 +223,9 @@ const createMultipleWallets =
           tokenAddresses: [],
         };
         for (const token of tokens) {
-          const tokenWallet = await createTokenWallet(wallet, token, tokenOpts);
+          const tokenWallet = await dispatch(
+            createTokenWallet(wallet, token, tokenOpts),
+          );
           wallets.push(tokenWallet);
         }
       }
@@ -322,38 +325,42 @@ const createWallet = (params: {
 
 /////////////////////////////////////////////////////////////
 
-const createTokenWallet = (
-  wallet: Wallet,
-  token: string,
-  tokenOpts: {[key in string]: Token},
-): Promise<API> => {
-  return new Promise((resolve, reject) => {
-    try {
-      const bwcClient = BWC.getClient();
-      const tokenCredentials: Credentials =
-        wallet.credentials.getTokenCredentials(tokenOpts[token]);
-      bwcClient.fromObj(tokenCredentials);
-      // push walletId as reference - this is used later to build out nested overview lists
-      wallet.tokens = wallet.tokens || [];
-      wallet.tokens.push(tokenCredentials.walletId);
-      // Add the token info to the ethWallet for BWC/BWS
-      wallet.preferences?.tokenAddresses?.push(
-        // @ts-ignore
-        tokenCredentials.token.address,
-      );
-      wallet.savePreferences(wallet.preferences, (err: any) => {
-        if (err) {
-          console.error(`Error saving token: ${token}`);
-        }
-        console.log('added token', token);
-        resolve(bwcClient);
-      });
-    } catch (err) {
-      console.error(err);
-      reject();
-    }
-  });
-};
+const createTokenWallet =
+  (
+    wallet: Wallet,
+    token: string,
+    tokenOpts: {[key in string]: Token},
+  ): Effect<Promise<API>> =>
+  async (dispatch): Promise<API> => {
+    return new Promise((resolve, reject) => {
+      try {
+        const bwcClient = BWC.getClient();
+        const tokenCredentials: Credentials =
+          wallet.credentials.getTokenCredentials(tokenOpts[token]);
+        bwcClient.fromObj(tokenCredentials);
+        // push walletId as reference - this is used later to build out nested overview lists
+        wallet.tokens = wallet.tokens || [];
+        wallet.tokens.push(tokenCredentials.walletId);
+        // Add the token info to the ethWallet for BWC/BWS
+        wallet.preferences?.tokenAddresses?.push(
+          // @ts-ignore
+          tokenCredentials.token.address,
+        );
+        wallet.savePreferences(wallet.preferences, (err: any) => {
+          if (err) {
+            dispatch(LogActions.error(`Error saving token: ${token}`));
+          }
+          dispatch(LogActions.info(`Added token ${token}`));
+          resolve(bwcClient);
+        });
+      } catch (err) {
+        const errstring =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error(`Error creating token wallet: ${errstring}`));
+        reject();
+      }
+    });
+  };
 
 /////////////////////////////////////////////////////////////
 

@@ -48,6 +48,7 @@ import {WalletRowProps} from '../../../../components/list/WalletRow';
 import {t} from 'i18next';
 import {startOnGoingProcessModal} from '../../../app/app.effects';
 import {OnGoingProcessMessages} from '../../../../components/modal/ongoing-process/OngoingProcess';
+import {LogActions} from '../../../log';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -194,7 +195,7 @@ export const createProposalAndBuildTxDetails =
 const setEthAddressNonce =
   (wallet: Wallet, tx: TransactionOptions): Effect<Promise<void>> =>
   async (dispatch, getState) => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async resolve => {
       try {
         const {
           coin: currencyAbbreviation,
@@ -268,17 +269,21 @@ const setEthAddressNonce =
           }
         }
 
-        console.log(
-          `Using web3 nonce: ${nonce} - Suggested Nonce: ${suggestedNonce} - pending txs: ${
-            suggestedNonce! - nonce
-          }`,
+        dispatch(
+          LogActions.info(
+            `Using web3 nonce: ${nonce} - Suggested Nonce: ${suggestedNonce} - pending txs: ${
+              suggestedNonce! - nonce
+            }`,
+          ),
         );
 
         tx.nonce = suggestedNonce;
 
         return resolve();
       } catch (error: any) {
-        console.log('Could not get address nonce', error.message);
+        const errString =
+          error instanceof Error ? error.message : JSON.stringify(error);
+        dispatch(LogActions.error(`Could not get address nonce ${errString}`));
         return resolve();
       }
     });
