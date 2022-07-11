@@ -302,7 +302,7 @@ export default () => {
     const eventEmitter = new NativeEventEmitter(NativeModules.SilentPushEvent);
     eventEmitter.addListener('SilentPushNotification', onMessageReceived);
     return () => DeviceEventEmitter.removeAllListeners('inAppMessageReceived');
-  }, []);
+  }, [dispatch]);
 
   // THEME
   useEffect(() => {
@@ -380,6 +380,10 @@ export default () => {
                   name = `${tabName} Tab`;
                 }
 
+                if (name === 'Shop Tab') {
+                  dispatch(Analytics.track('Clicked Shop tab', {}));
+                }
+
                 dispatch(
                   Analytics.screen(name, {screen: params?.screen || ''}),
                 );
@@ -420,7 +424,7 @@ export default () => {
             />
             <Root.Screen
               options={{
-                gestureEnabled: false,
+                gestureEnabled: true,
               }}
               name={RootStacks.WALLET}
               component={WalletStack}
@@ -436,6 +440,9 @@ export default () => {
             <Root.Screen
               name={RootStacks.GIFT_CARD}
               component={GiftCardStack}
+              options={{
+                gestureEnabled: false,
+              }}
             />
             <Root.Screen
               name={RootStacks.GIFT_CARD_DEEPLINK}

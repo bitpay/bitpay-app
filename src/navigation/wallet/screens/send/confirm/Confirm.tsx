@@ -480,26 +480,22 @@ const Confirm = () => {
             await dispatch(startSendPayment({txp, key, wallet, recipient}));
             dispatch(dismissOnGoingProcessModal());
             dispatch(
-              logSegmentEvent(
-                'track',
-                'Sent Crypto',
-                {
-                  context: 'Confirm',
-                  coin: currencyAbbreviation || '',
-                },
-                true,
-              ),
+              logSegmentEvent('track', 'Sent Crypto', {
+                context: 'Confirm',
+                coin: currencyAbbreviation || '',
+              }),
             );
             await sleep(400);
             setShowPaymentSentModal(true);
           } catch (err) {
             dispatch(dismissOnGoingProcessModal());
             await sleep(500);
+            setResetSwipeButton(true);
             switch (err) {
               case 'invalid password':
                 dispatch(showBottomNotificationModal(WrongPasswordError()));
+                break;
               case 'password canceled':
-                setResetSwipeButton(true);
                 break;
               default:
                 await showErrorMessage(
@@ -508,8 +504,6 @@ const Confirm = () => {
                     title: t('Uh oh, something went wrong'),
                   }),
                 );
-                await sleep(500);
-                setResetSwipeButton(true);
             }
           }
         }}

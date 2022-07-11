@@ -112,15 +112,10 @@ const FileOrText = () => {
         key,
       });
       dispatch(
-        logSegmentEvent(
-          'track',
-          'Import Key success',
-          {
-            context: route.params?.context || '',
-            type: 'FileOrText',
-          },
-          true,
-        ),
+        logSegmentEvent('track', 'Imported Key', {
+          context: route.params?.context || '',
+          source: 'FileOrText',
+        }),
       );
       dispatch(dismissOnGoingProcessModal());
     } catch (e: any) {

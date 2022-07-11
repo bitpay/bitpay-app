@@ -5,6 +5,7 @@ import {IJsonRpcRequest} from '@walletconnect/types';
 export interface IWCRequest {
   peerId: string;
   payload: IJsonRpcRequest;
+  createdOn?: number;
 }
 
 export interface IWCCustomData {

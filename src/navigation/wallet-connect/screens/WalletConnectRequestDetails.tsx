@@ -43,6 +43,7 @@ import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {useTranslation} from 'react-i18next';
 import {logSegmentEvent} from '../../../store/app/app.effects';
+import {GetAmFormatDate} from '../../../store/wallet/utils/time';
 
 export type WalletConnectRequestDetailsParamList = {
   peerId: string;
@@ -67,7 +68,7 @@ const AddressTextContainer = styled.TouchableOpacity`
   border-radius: 40px;
   height: 37px;
   width: 103px;
-  justify-content: flex-start;
+  justify-content: center;
   padding-right: 13px;
   padding-left: 17px;
   padding-top: ${Platform.OS === 'ios' ? '4px' : 0};
@@ -202,9 +203,7 @@ const WalletConnectRequestDetails = () => {
       };
       await dispatch(walletConnectRejectCallRequest(peerId, response));
       setRejectButtonState('success');
-      dispatch(
-        logSegmentEvent('track', 'WalletConnect Request Rejected', {}, true),
-      );
+      dispatch(logSegmentEvent('track', 'WalletConnect Request Rejected', {}));
       goToWalletConnectHome();
     } catch (e) {
       setRejectButtonState('failed');
@@ -265,9 +264,7 @@ const WalletConnectRequestDetails = () => {
         }),
       );
       setApproveButtonState('success');
-      dispatch(
-        logSegmentEvent('track', 'WalletConnect Request Approved', {}, true),
-      );
+      dispatch(logSegmentEvent('track', 'WalletConnect Request Approved', {}));
       goToWalletConnectHome();
     } catch (err) {
       setApproveButtonState('failed');
@@ -358,6 +355,21 @@ const WalletConnectRequestDetails = () => {
             </Info>
           )}
           <Hr />
+          {request?.createdOn ? (
+            <>
+              <ItemContainer>
+                <ItemTitleContainer>
+                  <H7>{t('Date')}</H7>
+                </ItemTitleContainer>
+                <MessageNoteContainer>
+                  <H7 numberOfLines={1} ellipsizeMode={'middle'}>
+                    {GetAmFormatDate(request?.createdOn)}
+                  </H7>
+                </MessageNoteContainer>
+              </ItemContainer>
+              <Hr />
+            </>
+          ) : null}
         </RequestDetailsContainer>
         <CtaContainer>
           <ActionContainer>

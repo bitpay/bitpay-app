@@ -194,6 +194,7 @@ const CoinbaseWithdrawConfirm = () => {
         if (sendError?.errors[0].id === 'two_factor_required') {
           askForTwoFactor();
         } else {
+          setResetSwipeButton(true);
           showError(sendError);
         }
       }

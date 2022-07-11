@@ -161,13 +161,9 @@ const CustomizeVirtualCard: React.FC<
     dispatch(CardActions.virtualDesignCurrencyUpdated(selectedDesign));
 
     dispatch(
-      Analytics.track(
-        'Save Virtual Card selected design',
-        {
-          selectedDesign: selectedDesign || '',
-        },
-        true,
-      ),
+      Analytics.track('Save Virtual Card selected design', {
+        selectedDesign: selectedDesign || '',
+      }),
     );
 
     if (navigation.canGoBack()) {

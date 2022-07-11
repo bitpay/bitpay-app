@@ -52,14 +52,9 @@ const Crypto = () => {
           onChange={value => {
             dispatch(WalletActions.setUseUnconfirmedFunds(value));
             dispatch(
-              logSegmentEvent(
-                'track',
-                'Set Use Unconfirmed Funds',
-                {
-                  value,
-                },
-                true,
-              ),
+              logSegmentEvent('track', 'Set Use Unconfirmed Funds', {
+                value,
+              }),
             );
           }}
           isEnabled={useUnconfirmedFunds}
@@ -80,14 +75,9 @@ const Crypto = () => {
           onChange={value => {
             dispatch(WalletActions.setCustomizeNonce(value));
             dispatch(
-              logSegmentEvent(
-                'track',
-                'Set Customize ETH Nonce',
-                {
-                  value,
-                },
-                true,
-              ),
+              logSegmentEvent('track', 'Set Customize ETH Nonce', {
+                value,
+              }),
             );
           }}
           isEnabled={customizeNonce}
@@ -126,14 +116,9 @@ const Crypto = () => {
           onChange={value => {
             dispatch(WalletActions.setEnableReplaceByFee(value));
             dispatch(
-              logSegmentEvent(
-                'track',
-                'Set Enable BTC Replace-By-Fee',
-                {
-                  value,
-                },
-                true,
-              ),
+              logSegmentEvent('track', 'Set Enable BTC Replace-By-Fee', {
+                value,
+              }),
             );
           }}
           isEnabled={enableReplaceByFee}
