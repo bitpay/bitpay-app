@@ -5,6 +5,8 @@ import {VirtualDesignCurrency} from '../../../store/card/card.types';
 import {useAppDispatch} from '../../../utils/hooks';
 import BasePairing from '../../bitpay-id/components/BasePairing';
 import {CardScreens, CardStackParamList} from '../CardStack';
+import {incomingData} from '../../../store/scan/scan.effects';
+import {StackActions, useNavigation} from '@react-navigation/native';
 
 export type CardPairingScreenParamList =
   | {
@@ -12,38 +14,72 @@ export type CardPairingScreenParamList =
       code?: string;
       dashboardRedirect?: string;
       vcd?: VirtualDesignCurrency;
+      paymentUrl?: string;
     }
   | undefined;
 
 const CardPairingScreen: React.FC<
   StackScreenProps<CardStackParamList, CardScreens.PAIRING>
 > = props => {
-  const {navigation, route} = props;
-  const {secret, code} = route.params || {};
-
+  const {route} = props;
+  const {secret, code, paymentUrl, dashboardRedirect} = route.params || {};
+  const navigation = useNavigation();
   const dispatch = useAppDispatch();
 
   const onSuccess = useCallback(() => {
-    const virtualDesignCurrency = route.params?.vcd as
-      | VirtualDesignCurrency
-      | undefined;
+    if (dashboardRedirect) {
+      const virtualDesignCurrency = route.params?.vcd as
+        | VirtualDesignCurrency
+        | undefined;
 
-    dispatch(
-      CardActions.virtualDesignCurrencyUpdated(
-        virtualDesignCurrency || 'bitpay-b',
-      ),
-    );
-  }, [dispatch, route.params?.vcd]);
+      dispatch(
+        CardActions.virtualDesignCurrencyUpdated(
+          virtualDesignCurrency || 'bitpay-b',
+        ),
+      );
+      return;
+    }
+
+    if (paymentUrl) {
+      navigation.dispatch(StackActions.replace('Tabs', {screen: 'Home'}));
+      //  Reconstructing the url since paymentUrl from deeplink is not in the right format
+      let url = 'https://';
+      if (paymentUrl.includes('bitpay.com')) {
+        url = paymentUrl.includes('test')
+          ? `${url}test.bitpay.com`
+          : `${url}bitpay.com`;
+      }
+
+      const invoiceId = paymentUrl.split('/i/')[1].split('?')[0];
+      url = `${url}/i/${invoiceId}`;
+      dispatch(incomingData(url));
+      return;
+    }
+
+    navigation.dispatch(StackActions.replace('Tabs', {screen: 'Home'}));
+    return;
+  }, []);
 
   const onComplete = useCallback(() => {
-    const navState = navigation.getState();
-
-    if (navState.routes.some(r => r.name === 'CardHome')) {
-      navigation.navigate('CardHome');
-    } else {
-      navigation.replace('CardHome');
+    if (!paymentUrl) {
+      const navState = navigation.getState();
+      // @ts-ignore
+      if (navState.routeNames.some(name => name === 'CardHome')) {
+        navigation.navigate('Tabs', {
+          screen: 'Card',
+          params: {screen: 'CardHome'},
+        });
+      } else {
+        navigation.dispatch(StackActions.replace('Card', {screen: 'CardHome'}));
+      }
     }
-  }, [navigation]);
+  }, []);
+
+  const onFailure = useCallback(() => {
+    if (paymentUrl) {
+      navigation.dispatch(StackActions.replace('Tabs', {screen: 'Home'}));
+    }
+  }, []);
 
   return (
     <BasePairing
@@ -51,6 +87,7 @@ const CardPairingScreen: React.FC<
       code={code}
       onSuccess={onSuccess}
       onComplete={onComplete}
+      onFailure={onFailure}
     />
   );
 };

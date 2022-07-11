@@ -176,6 +176,8 @@ const getParameterByName = (name: string, url: string): string | undefined => {
 const goToPayPro =
   (data: string): Effect =>
   async dispatch => {
+    dispatch(dismissOnGoingProcessModal());
+
     dispatch(
       startOnGoingProcessModal(
         //  t('Fetching payment options...')
