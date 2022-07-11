@@ -144,14 +144,9 @@ const BuyGiftCard = ({
   });
   useEffect(() => {
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Viewed Gift Card',
-        {
-          giftCardBrand: cardConfig.name,
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Viewed Gift Card', {
+        giftCardBrand: cardConfig.name,
+      }),
     );
   }, [cardConfig.name, dispatch]);
 
@@ -301,14 +296,9 @@ const BuyGiftCard = ({
 
   const buyGiftCard = () => {
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Started Gift Card Purchase',
-        {
-          giftCardBrand: cardConfig.name,
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Started Gift Card Purchase', {
+        giftCardBrand: cardConfig.name,
+      }),
     );
     const selectedAmount = (cardConfig.supportedAmounts || [])[
       selectedAmountIndex

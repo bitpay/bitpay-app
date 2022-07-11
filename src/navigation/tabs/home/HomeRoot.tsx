@@ -206,14 +206,9 @@ const HomeRoot = () => {
                       );
                     } else {
                       dispatch(
-                        logSegmentEvent(
-                          'track',
-                          'Clicked Receive',
-                          {
-                            context: 'HomeRoot',
-                          },
-                          true,
-                        ),
+                        logSegmentEvent('track', 'Clicked Receive', {
+                          context: 'HomeRoot',
+                        }),
                       );
                       navigation.navigate('Wallet', {
                         screen: 'GlobalSelect',
@@ -250,7 +245,6 @@ const HomeRoot = () => {
                                     {
                                       context: 'HomeRoot',
                                     },
-                                    true,
                                   ),
                                 );
                                 navigation.navigate('Wallet', {
@@ -283,14 +277,9 @@ const HomeRoot = () => {
                       );
                     } else {
                       dispatch(
-                        logSegmentEvent(
-                          'track',
-                          'Clicked Send',
-                          {
-                            context: 'HomeRoot',
-                          },
-                          true,
-                        ),
+                        logSegmentEvent('track', 'Clicked Send', {
+                          context: 'HomeRoot',
+                        }),
                       );
                       navigation.navigate('Wallet', {
                         screen: 'GlobalSelect',
@@ -316,14 +305,9 @@ const HomeRoot = () => {
               onActionPress={() => {
                 navigation.navigate('Tabs', {screen: 'Shop'});
                 dispatch(
-                  logSegmentEvent(
-                    'track',
-                    'Clicked Shop with Crypto',
-                    {
-                      context: 'HomeRoot',
-                    },
-                    true,
-                  ),
+                  logSegmentEvent('track', 'Clicked Shop with Crypto', {
+                    context: 'HomeRoot',
+                  }),
                 );
               }}>
               <OffersCarousel contentCards={memoizedShopWithCryptoCards} />

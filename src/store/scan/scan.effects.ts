@@ -818,17 +818,12 @@ const handleSimplexUri =
     const order = BUY_CRYPTO.simplex[paymentId];
 
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Successfully Complete Crypto Purchase',
-        {
-          exchange: 'simplex',
-          fiatAmount: order?.fiat_total_amount || '',
-          fiatCurrency: order?.fiat_total_amount_currency || '',
-          coin: order?.coin || '',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Purchased Buy Crypto', {
+        exchange: 'simplex',
+        fiatAmount: order?.fiat_total_amount || '',
+        fiatCurrency: order?.fiat_total_amount_currency || '',
+        coin: order?.coin || '',
+      }),
     );
 
     navigationRef.navigate('ExternalServicesSettings', {
@@ -896,17 +891,12 @@ const handleWyreUri =
     );
 
     dispatch(
-      logSegmentEvent(
-        'track',
-        'Successfully Complete Crypto Purchase',
-        {
-          exchange: 'wyre',
-          fiatAmount: sourceAmount || '',
-          fiatCurrency: sourceCurrency || '',
-          coin: destCurrency || '',
-        },
-        true,
-      ),
+      logSegmentEvent('track', 'Purchased Buy Crypto', {
+        exchange: 'wyre',
+        fiatAmount: sourceAmount || '',
+        fiatCurrency: sourceCurrency || '',
+        coin: destCurrency || '',
+      }),
     );
 
     navigationRef.navigate('ExternalServicesSettings', {

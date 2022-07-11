@@ -156,7 +156,7 @@ export default ({
         );
         setSearchResults(newSearchResults);
         dispatch(
-          logSegmentEvent('track', 'Searched Gift Cards', {search: text}, true),
+          logSegmentEvent('track', 'Searched Gift Cards', {search: text}),
         );
       }, 300),
     [availableGiftCards, dispatch],

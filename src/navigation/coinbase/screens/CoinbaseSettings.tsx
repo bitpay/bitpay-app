@@ -150,7 +150,7 @@ const CoinbaseSettings = () => {
 
   const deleteAccount = async () => {
     await dispatch(coinbaseDisconnectAccount());
-    dispatch(logSegmentEvent('track', 'Coinbase Disconnected', {}, true));
+    dispatch(logSegmentEvent('track', 'Coinbase Disconnected', {}));
     if (fromScreen === 'CoinbaseDashboard') {
       navigation.navigate('Tabs', {screen: 'Home'});
     } else {

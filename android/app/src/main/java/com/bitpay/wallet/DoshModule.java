@@ -23,7 +23,6 @@ class BpErrorCodes {
 public class DoshModule extends ReactContextBaseJavaModule {
   private boolean initialized = false;
   private PoweredByUiOptions uiOptions = new PoweredByUiOptions("Dosh Rewards", DoshLogoStyle.CIRCLE, DoshBrandDetailsHeaderStyle.RECTANGLE, null, null);
-  private String applicationId = "DOSH_APP_ID_REPLACE_ME";
 
   DoshModule(ReactApplicationContext context) {
     super(context);
@@ -36,7 +35,7 @@ public class DoshModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void initializeDosh(ReadableMap uiOptions, Promise promise) {
+  public void initializeDosh(String id, ReadableMap uiOptions, Promise promise) {
     DoshModule self = this;
     Activity activity = this.getCurrentActivity();
 
@@ -44,7 +43,7 @@ public class DoshModule extends ReactContextBaseJavaModule {
       @Override
       public void run() {
         try {
-          PoweredByDosh.Companion.initialize(self.applicationId, self.getReactApplicationContext());
+          PoweredByDosh.Companion.initialize(id, self.getReactApplicationContext());
           self.initialized = true;
           self.uiOptions = self.mapToUiOptions(uiOptions);
           promise.resolve(true);
@@ -65,7 +64,7 @@ public class DoshModule extends ReactContextBaseJavaModule {
       public void run() {
         try {
           PoweredByDosh.Companion.getInstance().presentIntegrationChecklist(context);
-          promise.resolve("true");
+          promise.resolve(true);
         } catch (Exception ex) {
           promise.reject(BpErrorCodes.UNEXPECTED_ERROR, ex.getMessage());
         }

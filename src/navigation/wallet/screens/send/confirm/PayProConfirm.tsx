@@ -316,6 +316,8 @@ const PayProConfirm = () => {
       defaultErrorMessage: t('Could not send transaction'),
       onDismiss: () => reshowWalletSelector(),
     });
+    await sleep(400);
+    setResetSwipeButton(true);
   };
 
   return (
@@ -423,15 +425,10 @@ const PayProConfirm = () => {
               try {
                 await sendPayment();
                 dispatch(
-                  logSegmentEvent(
-                    'track',
-                    'Sent Crypto',
-                    {
-                      context: 'PayPro Confirm',
-                      coin: wallet?.currencyAbbreviation || '',
-                    },
-                    true,
-                  ),
+                  logSegmentEvent('track', 'Sent Crypto', {
+                    context: 'PayPro Confirm',
+                    coin: wallet?.currencyAbbreviation || '',
+                  }),
                 );
               } catch (err: any) {
                 dispatch(dismissOnGoingProcessModal());

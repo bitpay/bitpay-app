@@ -358,16 +358,11 @@ const GiftCardDetails = ({
                         }`,
                       );
                       dispatch(
-                        logSegmentEvent(
-                          'track',
-                          'Redeemed Gift Card',
-                          {
-                            giftCardAmount: giftCard.amount,
-                            giftCardBrand: cardConfig.name,
-                            giftCardCurrency: cardConfig.currency,
-                          },
-                          true,
-                        ),
+                        logSegmentEvent('track', 'Redeemed Gift Card', {
+                          giftCardAmount: giftCard.amount,
+                          giftCardBrand: cardConfig.name,
+                          giftCardCurrency: cardConfig.currency,
+                        }),
                       );
                     }}
                     buttonStyle={'primary'}>
