@@ -79,24 +79,22 @@ export const startCardStoreInit =
       const options = new DoshUiOptions('Card Offers', 'CIRCLE', 'DIAGONAL');
 
       try {
-        Dosh.initializeDosh(options);
+        Dosh.initializeDosh(options).then(() => {
+          dispatch(LogActions.info('Successfully initialized Dosh.'));
 
-        dispatch(LogActions.info('Successfully initialized Dosh.'));
+          const {doshToken} = initialData;
+          if (!doshToken) {
+            dispatch(LogActions.debug('No doshToken provided.'));
+            return;
+          }
 
-        const {doshToken} = initialData;
-        if (!doshToken) {
-          dispatch(LogActions.debug('No doshToken provided.'));
-          return;
-        }
-
-        Dosh.setDoshToken(doshToken);
+          return Dosh.setDoshToken(doshToken);
+        });
       } catch (err: any) {
         dispatch(
           LogActions.error('An error occurred while initializing Dosh.'),
         );
 
-        // check for Android exception (see: DoshModule.java)
-        // TODO: iOS exceptions
         if ((err as any).message) {
           dispatch(LogActions.error((err as any).message));
         } else {
