@@ -70,14 +70,6 @@ export const incomingData =
     opts?: {wallet?: Wallet; context?: string; name?: string},
   ): Effect<Promise<void>> =>
   async dispatch => {
-    if (data.includes('https://link.bitpay.com/i/') && data.includes('?t=hv')) {
-      const invoiceId = data.split('/i/')[1].split('?')[0];
-      Linking.openURL(
-        `https://bitpay.com/id/verify?dest=v&invoiceId=${invoiceId}`,
-      );
-      return;
-    }
-
     if (data.includes(APP_DEEPLINK_PREFIX)) {
       data = data.replace(APP_DEEPLINK_PREFIX, '');
       // wait to close blur
@@ -264,14 +256,12 @@ const handleUnlock =
         dispatch(
           showBottomNotificationModal({
             type: 'warning',
-            title: t('Connect Your BitPay ID'),
+            title: t('Verification Required'),
             enableBackdropDismiss: false,
-            message: t(
-              'To complete this payment, please login with your BitPay ID.',
-            ),
+            message: t('To complete this payment please verify your account.'),
             actions: [
               {
-                text: t('CONTINUE'),
+                text: t('Verify'),
                 action: () => {
                   Linking.openURL(
                     `https://${host}/id/verify?context=unlockv&id=${invoiceId}`,
