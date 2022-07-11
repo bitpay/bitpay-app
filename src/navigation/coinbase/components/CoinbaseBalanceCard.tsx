@@ -76,6 +76,7 @@ const CoinbaseBalanceCard: React.FC<CoinbaseCardComponentProps> = ({
       balance,
       user?.data?.native_currency?.toUpperCase(),
     ),
+    hideKeyBalance: false, // TODO: adds this function to Coinbase Settings
   };
 
   if (layout === 'listView') {
