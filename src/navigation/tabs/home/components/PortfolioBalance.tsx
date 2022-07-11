@@ -62,7 +62,7 @@ const PortfolioBalance = () => {
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   // Sum only if same currency
-  var totalBalance: number = portfolioBalance.current;
+  let totalBalance: number = portfolioBalance.current;
   if (
     coinbaseUser &&
     coinbaseUser.data.native_currency === defaultAltCurrency.isoCode
