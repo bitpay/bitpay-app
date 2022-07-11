@@ -495,11 +495,12 @@ const Confirm = () => {
           } catch (err) {
             dispatch(dismissOnGoingProcessModal());
             await sleep(500);
+            setResetSwipeButton(true);
             switch (err) {
               case 'invalid password':
                 dispatch(showBottomNotificationModal(WrongPasswordError()));
+                break;
               case 'password canceled':
-                setResetSwipeButton(true);
                 break;
               default:
                 await showErrorMessage(
@@ -508,8 +509,6 @@ const Confirm = () => {
                     title: t('Uh oh, something went wrong'),
                   }),
                 );
-                await sleep(500);
-                setResetSwipeButton(true);
             }
           }
         }}
