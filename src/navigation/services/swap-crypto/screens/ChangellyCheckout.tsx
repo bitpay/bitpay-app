@@ -504,11 +504,12 @@ const ChangellyCheckout: React.FC = () => {
     } catch (err) {
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
+      setResetSwipeButton(true);
       switch (err) {
         case 'invalid password':
           dispatch(showBottomNotificationModal(WrongPasswordError()));
+          break;
         case 'password canceled':
-          setResetSwipeButton(true);
           break;
         default:
           logger.error(JSON.stringify(err));

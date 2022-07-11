@@ -364,6 +364,8 @@ const Confirm = () => {
       defaultErrorMessage: t('Could not send transaction'),
       onDismiss: () => openWalletSelector(400),
     });
+    await sleep(400);
+    setResetSwipeButton(true);
   };
 
   const request2FA = async () => {
