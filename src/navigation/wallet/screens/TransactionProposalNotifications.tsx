@@ -504,7 +504,6 @@ const TransactionProposalNotifications = () => {
             try {
               dispatch(
                 startOnGoingProcessModal(
-                  //  t('Sending Payment')
                   t(OnGoingProcessMessages.SENDING_PAYMENT),
                 ),
               );
@@ -548,6 +547,9 @@ const TransactionProposalNotifications = () => {
                 await sleep(400);
                 setShowPaymentSentModal(true);
               }
+              setSelectingProposalsWalletId('');
+              setTxpsToSign([]);
+              setTxpChecked({});
               setResetSwipeButton(true);
             } catch (err) {
               dispatch(dismissOnGoingProcessModal());
@@ -577,9 +579,6 @@ const TransactionProposalNotifications = () => {
         onCloseModal={async () => {
           setShowPaymentSentModal(false);
           await sleep(300);
-          // if (navigation.canGoBack() && _allTxps.length === 0) {
-          //   navigation.goBack();
-          // }
         }}
       />
     </NotificationsContainer>
