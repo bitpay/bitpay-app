@@ -79,7 +79,6 @@ const CoinbaseDashboard = () => {
     ({COINBASE}) => COINBASE.isApiLoading,
   );
   const exchangeRates = useAppSelector(({COINBASE}) => COINBASE.exchangeRates);
-  const user = useAppSelector(({COINBASE}) => COINBASE.user[COINBASE_ENV]);
   const accounts = useAppSelector(
     ({COINBASE}) => COINBASE.accounts[COINBASE_ENV],
   );
@@ -88,6 +87,7 @@ const CoinbaseDashboard = () => {
   );
   const balance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -125,7 +125,11 @@ const CoinbaseDashboard = () => {
 
   const renderItem = useCallback(
     ({item}: any) => {
-      const walletItem = coinbaseAccountToWalletRow(item, exchangeRates);
+      const walletItem = coinbaseAccountToWalletRow(
+        item,
+        exchangeRates,
+        defaultAltCurrency.isoCode,
+      );
       return (
         <WalletRow
           id={walletItem.id}
@@ -141,7 +145,7 @@ const CoinbaseDashboard = () => {
         />
       );
     },
-    [dispatch, navigation, exchangeRates],
+    [dispatch, navigation, exchangeRates, defaultAltCurrency.isoCode],
   );
 
   const showError = useCallback(
@@ -203,12 +207,9 @@ const CoinbaseDashboard = () => {
   return (
     <OverviewContainer>
       <BalanceContainer>
-        {balance ? (
+        {balance !== null ? (
           <Balance scale={shouldScale(balance)}>
-            {formatFiatAmount(
-              balance,
-              user?.data?.native_currency?.toUpperCase(),
-            )}
+            {formatFiatAmount(balance, defaultAltCurrency.isoCode)}
           </Balance>
         ) : (
           <SkeletonPlaceholder
