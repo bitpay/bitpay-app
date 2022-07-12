@@ -24,6 +24,7 @@ import {
   coinbaseParseErrorToString,
   coinbaseGetUser,
   coinbaseDisconnectAccount,
+  isInvalidTokenError,
 } from '../../../store/coinbase';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {OnGoingProcessMessages} from '../../../components/modal/ongoing-process/OngoingProcess';
@@ -117,19 +118,32 @@ const CoinbaseSettings = () => {
   const showError = useCallback(
     (error: CoinbaseErrorsProps) => {
       const errMsg = coinbaseParseErrorToString(error);
+      const isInvalidToken = isInvalidTokenError(error);
+      const textAction = isInvalidToken ? t('Re-Connect') : t('OK');
       dispatch(
         showBottomNotificationModal({
           type: 'error',
           title: t('Coinbase error'),
           message: errMsg,
-          enableBackdropDismiss: true,
+          enableBackdropDismiss: false,
           actions: [
             {
-              text: t('OK'),
+              text: textAction,
+              action: async () => {
+                if (isInvalidToken) {
+                  await dispatch(coinbaseDisconnectAccount());
+                  navigation.navigate('Tabs', {screen: 'Home'});
+                } else {
+                  navigation.goBack();
+                }
+              },
+              primary: true,
+            },
+            {
+              text: t('Back'),
               action: () => {
                 navigation.goBack();
               },
-              primary: true,
             },
           ],
         }),
